@@ -12,7 +12,7 @@ README.html: README.markdown
 	pandoc -f markdown -t html $< > $@
 
 pylint:
-	pylint pyrb
+	pylint pymor
 
 test:
 	nosetests --with-cov --cov dune --cov-config .coveragerc test/

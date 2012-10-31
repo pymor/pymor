@@ -4,13 +4,13 @@ from distutils.core import setup
 tests_require = ['nose-cov', 'nose', 'nosehtmloutput' ]
 
 setup(
-    name = 'pyRb',
+    name = 'pyMor',
     version = '0.0.1',
     author = 'Rene Milk',
     author_email = 'rene.milk@uni-muenster.de',
-    packages = ['pyrb'],
+    packages = ['pymor'],
     scripts = ['bin/%s'%n for n in [] ],
-    url = 'http://dune-project.uni-muenster.de/git/projects/pyrb',
+    url = 'http://dune-project.uni-muenster.de/git/projects/pymor',
     description = ' ',
     long_description = open('README.txt').read(),
     tests_require = tests_require,

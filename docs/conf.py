@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# pyRb documentation build configuration file, created by
+# pyMor documentation build configuration file, created by
 # sphinx-quickstart on Sun Jan 29 00:38:57 2012.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -40,7 +40,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'pyRb'
+project = u'pyMor'
 copyright = u'2012, Rene Milk'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -164,7 +164,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'pyRbdoc'
+htmlhelp_basename = 'pyMordoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -178,7 +178,7 @@ htmlhelp_basename = 'pyRbdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'pyRb.tex', u'pyRb Documentation',
+  ('index', 'pyMor.tex', u'pyMor Documentation',
    u'Rene Milk', 'manual'),
 ]
 
@@ -211,6 +211,6 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'pyrb', u'pyRb Documentation',
+    ('index', 'pymor', u'pyMor Documentation',
      [u'Rene Milk'], 1)
 ]

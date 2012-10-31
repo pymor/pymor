@@ -1,7 +1,7 @@
-pyrb
+pymor
 ====
 
 .. toctree::
    :maxdepth: 4
 
-   pyrb
+   pymor
