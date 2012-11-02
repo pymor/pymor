@@ -16,8 +16,8 @@ from decorators import contract, contracts_decorate
 class UberMeta(abc.ABCMeta):
     def __init__(cls, name, bases, namespace):
         '''I copy my class docstring if deriving class has none'''
-        doc = namespace.get("__doc__")
-        if doc == '':
+        doc = namespace.get("__doc__", None)
+        if not doc:
             for base in cls.__mro__[1:]:
                 if base.__doc__:
                     doc = base.__doc__
