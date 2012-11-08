@@ -64,20 +64,49 @@ class StupidInterface(object):
         """
         pass
 
+class BrilliantInterface(object):
+    '''I am a brilliant Interface'''
+
+    __metaclass__ = UberMeta
+
+    @contract
+    @abc.abstractmethod
+    def whisper(self, phrase, repeat):
+        """
+        :type phrase: str
+        :type repeat: int,=1
+        """
+        pass
+
 class StupidImplementer(StupidInterface):
 
     def shout(self, phrase, repeat):
         print(phrase*repeat)
+
+class AverageImplementer(StupidInterface, BrilliantInterface):
+
+    def shout(self, phrase, repeat):
+        print(phrase*repeat)
+
+    def whisper(self, phrase, repeat):
+        print(phrase*repeat)
+
+class DocImplementer(AverageImplementer):
+    """I got my own docstring"""
+    pass
 
 class FailImplementer(StupidInterface):
     pass
 
 def test_contract():
     s = StupidImplementer()
-    print(help(s))
-    s.shout('Wheee\n', 6)
+    b = AverageImplementer()
+    b = DocImplementer()
+    print(help(b))
+    b.shout('Wheee\n', 6)
+    b.whisper('Wheee\n', 2)
     s.shout('Wheee\n', -1)
-    s.shout(5, 6)
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
