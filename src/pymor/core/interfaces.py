@@ -93,19 +93,24 @@ class AverageImplementer(StupidInterface, BrilliantInterface):
 
 class DocImplementer(AverageImplementer):
     """I got my own docstring"""
-    pass
+
+    @contract
+    def whisper(self, phrase, repeat):
+        """my interface is stupid, I can whisper a lot more
+        :type phrase: str
+        :type repeat: int,>0
+        """
+        print(phrase*repeat)
 
 class FailImplementer(StupidInterface):
     pass
 
 def test_contract():
-    s = StupidImplementer()
     b = AverageImplementer()
     b = DocImplementer()
     print(help(b))
     b.shout('Wheee\n', 6)
     b.whisper('Wheee\n', 2)
-    s.shout('Wheee\n', -1)
 
 
 if __name__ == '__main__':
