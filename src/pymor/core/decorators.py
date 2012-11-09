@@ -137,12 +137,13 @@ def contract(*arg, **kwargs):
 
     #this bit tags function as decorated
     def tag_and_decorate(function, **kwargs):
-        cargs = copy.deepcopy(kwargs)
-        function.contract_kwargs = cargs or dict()
-        function.decorated = True
         @functools.wraps(function)
         def __functools_wrap(function, **kwargs):
-            return contracts.main.contracts_decorate(function, **kwargs)
+            new_f = contracts.main.contracts_decorate(function, **kwargs)
+            cargs = copy.deepcopy(kwargs)
+            new_f.contract_kwargs = cargs or dict()
+            new_f.decorated = 'contract'
+            return new_f
         return __functools_wrap(function, **kwargs)
 
     # OK, this is black magic. You are not expected to understand this.
@@ -177,3 +178,10 @@ def contract(*arg, **kwargs):
 
 #alias this so we need no contracts import outside this module
 contracts_decorate = contracts.main.contracts_decorate
+
+def contains_contract(string):
+    try:
+        contracts.parse_contract_string(string)
+        return True
+    except:
+        return False
