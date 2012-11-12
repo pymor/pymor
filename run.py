@@ -4,7 +4,7 @@
 def main():
     # Modify path so that development copy is picked up first, if available.
     import imp, os, sys
-    sys.path = [os.path.normpath(os.path.dirname(os.path.realpath(__file__)))] + sys.path
+    sys.path = [os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src'))] + sys.path
 
     if len(sys.argv) < 2:
         print """Usage: %s foo.py [arguments...]'
