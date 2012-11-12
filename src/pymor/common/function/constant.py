@@ -1,4 +1,6 @@
 
+import numpy as np
+
 from .interfaces import Interface
 
 class Constant(Interface):
@@ -8,7 +10,10 @@ class Constant(Interface):
         self._name = name
 
     def evaluate(self, x):
-        return self._value
+        if type(x) is np.ndarray:
+            return self._value * np.ones(x.shape)
+        else:
+            raise TypeError('in pymor.' + self._name + ': x has to be a numpy.array!')
 
-    def name(self, x):
+    def name(self):
         return self._name
