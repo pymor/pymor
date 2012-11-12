@@ -1,4 +1,8 @@
+
+from .interfaces import Interface
+
 class Constant(Interface):
-    def Constant(a):
-    def evaluate(x):
-        return a
+    def __init__(self, a):
+        self._a = a
+    def evaluate(self, x):
+        return self._a
