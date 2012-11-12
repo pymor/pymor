@@ -1,7 +1,9 @@
 
-#from __future__ import *
+import abc
 from pymor import core
 
 class Interface(core.BaseInterface):
-    def evaluate(x):
+
+    @abc.abstractmethod
+    def evaluate(self, x):
         pass
