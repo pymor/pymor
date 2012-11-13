@@ -2,6 +2,7 @@
 import abc
 from pymor import core
 
+
 class Interface(core.BaseInterface):
 
     @abc.abstractmethod
@@ -10,3 +11,6 @@ class Interface(core.BaseInterface):
 
     def name(self):
         return 'common.function'
+
+if __name__ == 'main':
+    i = Interface()
