@@ -2,10 +2,12 @@
 
 from __future__ import division
 import numpy as np
-from pymor import core
+
+from .exceptions import CodimError
+from .base import Base
 
 
-class Oned(core.BaseInterface):
+class Oned(Base):
 
     dim = 1
 
@@ -17,6 +19,7 @@ class Oned(core.BaseInterface):
         self._vertices = self._interval[0] + self._width * np.arange(self._size + 1)
         self._volumes_codim_0 = self._width * np.ones((1, self._size))
         self._volumes_codim_1 = np.ones((1, self._size))
+        self._subentities = np.vstack((np.arange(self._size), np.arange(self._size) + 1))
 
     def name(self):
         return 'grid.oned'
@@ -28,6 +31,11 @@ class Oned(core.BaseInterface):
             return self._size + 1
         else:
             raise ValueError('in pymor.' + self.name() + ': codim has to be between 0 and ' + self.dim + '!')
+
+    def subentities(self, codim=0, subentity_codim=None):
+        assert codim == 0, CodimError('Invalid codimension')
+        assert subentity_codim is None or subentity_codim == 1, CodimError('Invalid subentity codimension')
+        return self._subentities
 
     def centers(self, codim=0):
         '''
