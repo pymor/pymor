@@ -12,7 +12,7 @@ except ImportError:
     from functools32 import lru_cache
 
 import pymor.core as core
-from .exceptions import CodimError
+from pymor.core.exceptions import CodimError
 
 class IGrid(core.BaseInterface):
     '''Base interface for all grids. This is an incomplete prepreliminary version.

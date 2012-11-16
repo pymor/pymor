@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import math as m
 import numpy as np
 
-from .exceptions import CodimError
+from pymor.core.exceptions import CodimError
 from .interfaces import IGrid
 
 

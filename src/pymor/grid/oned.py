@@ -3,7 +3,7 @@
 from __future__ import division
 import numpy as np
 
-from .exceptions import CodimError
+from pymor.core.exceptions import CodimError
 from .interfaces import IGrid
 
 

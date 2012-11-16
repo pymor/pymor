@@ -9,3 +9,7 @@ class ConstError(Exception):
     '''I get thrown when you try to add a new member to
     a locked class instance'''
     pass
+
+class CodimError(Exception):
+    '''Is raised if an invalid codimension index is unsed.'''
+    pass
