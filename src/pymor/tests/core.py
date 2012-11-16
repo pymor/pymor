@@ -6,6 +6,8 @@ Created on Nov 16, 2012
 import unittest
 import logging
 
+from nose.tools import raises
+
 from pymor.core.interfaces import (BasicInterface, contract, abstractmethod)
 from pymor.core import exceptions
 
@@ -82,31 +84,23 @@ class InterfaceTest(unittest.TestCase):
         b.level = 43
         b.lock()
         b.level = 41
-        try:
+        with self.assertRaises(exceptions.ConstError):
             b.new = 42
-        except exceptions.ConstError as e:
-            print e
         b.freeze()
-        print(b.level)
-        try:
+        with self.assertRaises(exceptions.ConstError):
             b.level = 0
-        except exceptions.ConstError as e:
-            print e
         b.freeze(False)
         b.level = 0
         b.lock(False)
         b.level = 0
 
-    def testContract(self):
-        try:
-            #b = AverageImplementer()
-            b = StupidImplementer()
-            #b = DocImplementer()
-            b.shout('Wheee\n', 6)
-            #b.whisper('Wheee\n', -2)
-        except exceptions.ContractNotRespected as e:
-            pass
+    @raises(exceptions.ContractNotRespected)
+    def testContractFail(self):
+        AverageImplementer().whisper('Wheee\n', -2)
 
+    def testContractSuccess(self):
+        AverageImplementer().shout('Wheee\n', 6)
+            
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

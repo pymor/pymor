@@ -15,4 +15,4 @@ pylint:
 	pylint pymor
 
 test:
-	nosetests --with-cov --cov dune --cov-config .coveragerc test/
+	nosetests 
