@@ -8,50 +8,52 @@ from pymor import core
 
 class Interface(core.BasicInterface):
 
-    name = 'common.function.nonparametric'
-
+    id = 'common.function.nonparametric'
     dim_domain = 0
-
     dim_range = 0
 
     @core.interfaces.abstractmethod
     def evaluate(self, x):
-        pass
+        raise NotImplementedError()
 
 
 class Constant(Interface):
 
-    name = 'common.function.nonparametric.constant'
-
+    id = Interface.id + '.constant'
     dim_domain = 1
-
     dim_range = 1
+    name = id
 
-    def __init__(self, value=1.0, dim_domain=1, dim_range=1, name='common.function.nonparametric.constant'):
+    def __init__(self, value=1.0, dim_domain=1, dim_range=1, name=id):
+        '''
+        here should be a contract to enforce that np.array(value) is valid
+        '''
         self.dim_domain = dim_domain
         self.dim_range = dim_range
-        if type(value) is not np.ndarray:
-            value = np.array(value)
+        self.name = name
+        value = np.array(value, copy=False)
         if value.size == self.dim_range:
             self._value = value.reshape(self.dim_range, 1)
         else:
-            raise ValueError('in pymor.' + self.name() + ': given value has wrong size!')
-        self.name = name
+            raise ValueError('Given value has wrong size!')
 
     def evaluate(self, x):
-        if type(x) is not np.ndarray:
-            x = np.array(x)
-        print(x.ndim)
+        '''
+        here should be a contract to enforce that np.array(x) is valid
+        '''
+        x = np.array(x, copy=False, ndmin=1)
         if x.ndim == 1:
             if x.size == self.dim_domain:
                 return self._value
             else:
-                raise ValueError('in pymor.' + self.name + ': given x has wrong size!')
+                raise ValueError('Given value has wrong size!')
         elif x.ndim == 2:
             if x.shape[0] == self.dim_domain:
-                a
+                return np.tile(value, (1, self.dim_range))
             else:
-                raise ValueError('in pymor.' + self.name + ': given x has wrong size!')
+                raise ValueError('Given value has wrong size!')
+        else:
+            raise ValueError('Given value has wrong size!')
 
 
 if __name__ == '__main__':
