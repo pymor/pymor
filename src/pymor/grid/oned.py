@@ -4,10 +4,10 @@ from __future__ import division
 import numpy as np
 
 from .exceptions import CodimError
-from .base import Base
+from .interfaces import IGrid
 
 
-class Oned(Base):
+class Oned(IGrid):
 
     dim = 1
 

@@ -4,10 +4,10 @@ import math as m
 import numpy as np
 
 from .exceptions import CodimError
-from .base import Base
+from .interfaces import IGrid
 
 
-class Rect(Base):
+class Rect(IGrid):
     '''Ad-hoc implementation of a rectangular grid.
 
     The global face, edge and vertex indices are given as follows
