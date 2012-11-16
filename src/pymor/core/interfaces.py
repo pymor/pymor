@@ -60,16 +60,13 @@ class UberMeta(abc.ABCMeta):
         return super(UberMeta, cls).__new__(cls, classname, bases, classdict)
 
 
-class UberInterface(object):
+class BasicInterface(object):
     ''' All other interface classes should be a subclass of mine.
     '''
 
     __metaclass__ = UberMeta
     _locked = False
     _frozen = False
-
-    contract = decorators.contract
-    abstractmethod = abc.abstractmethod
     
     def __setattr__(self, key, value):
         if not self._locked:
@@ -94,4 +91,6 @@ class UberInterface(object):
         '''I do nothing yet'''
         pass
 
+contract = decorators.contract
+abstractmethod = abc.abstractmethod
 

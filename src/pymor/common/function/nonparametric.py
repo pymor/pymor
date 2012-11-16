@@ -6,7 +6,7 @@ import numpy as np
 from pymor import core
 
 
-class Interface(core.BaseInterface):
+class Interface(core.BasicInterface):
 
     name = 'common.function.nonparametric'
 
@@ -14,7 +14,7 @@ class Interface(core.BaseInterface):
 
     dim_range = 0
 
-    @core.BaseInterface.abstractmethod
+    @core.interfaces.abstractmethod
     def evaluate(self, x):
         pass
 

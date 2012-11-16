@@ -2,28 +2,28 @@
 
 from __future__ import print_function
 
-from pymor.core import BaseInterface
+from pymor.core import interfaces
 from pymor.common import function
 
 
-class Interface(BaseInterface):
+class Interface(interfaces.BasicInterface):
 
     def name(self):
         return 'problem.stationary.linear.elliptic'
 
-    @BaseInterface.abstractmethod
+    @interfaces.abstractmethod
     def diffusion(self):
         pass
 
-    @BaseInterface.abstractmethod
+    @interfaces.abstractmethod
     def force(self):
         pass
 
-    @BaseInterface.abstractmethod
+    @interfaces.abstractmethod
     def dirichlet(self):
         pass
 
-    @BaseInterface.abstractmethod
+    @interfaces.abstractmethod
     def neumann(self):
         pass
 

@@ -39,3 +39,4 @@ nosetests.xml
 .spyderproject
 README.html
 README.txt
+.settings/

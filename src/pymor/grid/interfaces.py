@@ -13,7 +13,7 @@ except ImportError:
 import pymor.core as core
 from pymor.core.exceptions import CodimError
 
-class IGrid(core.BaseInterface):
+class IGrid(core.BasicInterface):
     '''Base interface for all grids. This is an incomplete prepreliminary version.
     Until now, only the toplogy part of the interface is specified in here.
 
@@ -26,12 +26,12 @@ class IGrid(core.BaseInterface):
     at the same time.)
     '''
 
-    @core.BaseInterface.abstractmethod
+    @core.interfaces.abstractmethod
     def size(self, codim=0):
         '''size(codim) is the number of entities in the grid of codimension codim'''
         pass
 
-    @core.BaseInterface.abstractmethod
+    @core.interfaces.abstractmethod
     @lru_cache(maxsize=None)
     def subentities(self, codim=0, subentity_codim=None):
         '''retval[s,e] is the global index of the s-th codim-"subentity_codim"

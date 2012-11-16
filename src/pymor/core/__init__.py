@@ -1,1 +1,1 @@
-from pymor.core.interfaces import UberInterface as BaseInterface
+from pymor.core.interfaces import BasicInterface

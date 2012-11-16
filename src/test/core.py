@@ -6,14 +6,14 @@ Created on Nov 16, 2012
 import unittest
 import logging
 
-from pymor.core import BaseInterface
+from pymor.core.interfaces import (BasicInterface, contract, abstractmethod)
 from pymor.core import exceptions
 
-class StupidInterface(BaseInterface):
+class StupidInterface(BasicInterface):
     '''I am a stupid Interface'''
 
-    @BaseInterface.contract
-    @BaseInterface.abstractmethod
+    @contract
+    @abstractmethod
     def shout(self, phrase, repeat):
         """
         :type phrase: str
@@ -27,11 +27,11 @@ class StupidInterface(BaseInterface):
         '''
         pass
 
-class BrilliantInterface(BaseInterface):
+class BrilliantInterface(BasicInterface):
     '''I am a brilliant Interface'''
 
-    @BaseInterface.contract
-    @BaseInterface.abstractmethod
+    @contract
+    @abstractmethod
     def whisper(self, phrase, repeat):
         """
         :type phrase: str
@@ -56,7 +56,7 @@ class AverageImplementer(StupidInterface, BrilliantInterface):
 class DocImplementer(AverageImplementer):
     """I got my own docstring"""
 
-    @BaseInterface.contract
+    @contract
     def whisper(self, phrase, repeat):
         """my interface is stupid, I can whisper a lot more
         Since I'm overwriting an existing contract, I need to be decorated anew.

@@ -8,7 +8,7 @@ import pymor.problem.stationary.linear.elliptic.analytical
 import pymor.grid.oned
 
 
-class DiscontinuousGalerkin(core.BaseInterface):
+class DiscontinuousGalerkin(core.BasicInterface):
 
 #    @contract
     def __init__(self, problem, grid):

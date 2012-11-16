@@ -6,7 +6,7 @@ from pymor import core
 from pymor.common import function
 
 
-class Interface(core.BaseInterface):
+class Interface(core.BasicInterface):
 
     def name(self):
         return 'common.discretefunction.discontinuous'
