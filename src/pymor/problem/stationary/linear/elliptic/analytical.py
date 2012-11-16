@@ -1,29 +1,29 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-import abc
-import pymor.core
+
+from pymor.core import BaseInterface
 from pymor.common import function
 
 
-class Interface(pymor.core.BaseInterface):
+class Interface(BaseInterface):
 
     def name(self):
         return 'problem.stationary.linear.elliptic'
 
-    @abc.abstractmethod
+    @BaseInterface.abstractmethod
     def diffusion(self):
         pass
 
-    @abc.abstractmethod
+    @BaseInterface.abstractmethod
     def force(self):
         pass
 
-    @abc.abstractmethod
+    @BaseInterface.abstractmethod
     def dirichlet(self):
         pass
 
-    @abc.abstractmethod
+    @BaseInterface.abstractmethod
     def neumann(self):
         pass
 

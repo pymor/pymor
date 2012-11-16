@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-import abc
+
 import numpy as np
 from pymor import core
 
@@ -14,7 +14,7 @@ class Interface(core.BaseInterface):
 
     dim_range = 0
 
-    @abc.abstractmethod
+    @core.BaseInterface.abstractmethod
     def evaluate(self, x):
         pass
 

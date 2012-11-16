@@ -1,5 +1,8 @@
+from pymor.core import BaseInterface
 
-class Interface()
-	def operators()
-	def functionals()
+class Interface(BaseInterface):
+	def operators(self):
+		pass
+	def functionals(self):
+		pass
 

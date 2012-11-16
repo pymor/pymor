@@ -1,6 +1,5 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import abc
 import numpy as np
 
 # For python3.2 and greater, we user functools.lru_cache for caching. If our python
@@ -27,12 +26,12 @@ class IGrid(core.BaseInterface):
     at the same time.)
     '''
 
-    @abc.abstractmethod
+    @core.BaseInterface.abstractmethod
     def size(self, codim=0):
         '''size(codim) is the number of entities in the grid of codimension codim'''
         pass
 
-    @abc.abstractmethod
+    @core.BaseInterface.abstractmethod
     @lru_cache(maxsize=None)
     def subentities(self, codim=0, subentity_codim=None):
         '''retval[s,e] is the global index of the s-th codim-"subentity_codim"

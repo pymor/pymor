@@ -7,7 +7,6 @@ Created on Wed Oct 31 12:39:53 2012
 """
 
 import abc
-import logging
 import types
 
 from pymor.core import decorators 
