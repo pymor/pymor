@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 
-from __future__ import division
+from __future__ import division, print_function
 import numpy as np
 
 from pymor.core.exceptions import CodimError
-from .interfaces import IGrid
+from pymor.grid.interfaces import IGrid
 
 
 class Oned(IGrid):
 
     dim = 1
+    id = 'grid.oned'
 
     def __init__(self, interval=np.array((0, 1)), size=4):
         self._interval = interval
@@ -21,8 +22,13 @@ class Oned(IGrid):
         self._volumes_codim_1 = np.ones((1, self._size))
         self._subentities = np.vstack((np.arange(self._size), np.arange(self._size) + 1))
 
-    def name(self):
-        return 'grid.oned'
+    def __str__(self):
+        return (self.id + ' on domain [{xmin},{xmax}]\n' +
+                'elements: {elements}\n' +
+                'vertices: {vertices}').format(xmin=self._interval[0],
+                                               xmax=self._interval[1],
+                                               elements=self.size(0),
+                                               vertices=self.size(1))
 
     def size(self, codim=0):
         if codim == 0:
@@ -30,7 +36,7 @@ class Oned(IGrid):
         elif codim == 1:
             return self._size + 1
         else:
-            raise ValueError('in pymor.' + self.name() + ': codim has to be between 0 and ' + self.dim + '!')
+            raise CodimError('codim has to be between 0 and ' + self.dim + '!')
 
     def subentities(self, codim=0, subentity_codim=None):
         assert codim == 0, CodimError('Invalid codimension')
@@ -60,7 +66,4 @@ class Oned(IGrid):
 
 if __name__ == '__main__':
     g = Oned()
-    print(g.centers(0))
-    print(g.centers(1))
-    print(g.volumes(0))
-    print(g.volumes(1))
+    print(g)
