@@ -83,9 +83,9 @@ class IGrid(core.BaseInterface):
 
         SPE_COUNTS = np.zeros(SPE.shape[1], dtype=np.int32)
 
-        for index, se in np.ndenumerate(SE):
+        for index, se in np.ndenumerate(SE.T):
             if se >= 0:
-                SPE[SPE_COUNTS[se], se] = index[1]
+                SPE[SPE_COUNTS[se], se] = index[0]
                 SPE_COUNTS[se] += 1
 
         return SPE
