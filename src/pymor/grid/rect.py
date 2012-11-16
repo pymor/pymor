@@ -156,6 +156,20 @@ class Rect(Base):
         '''only at centers?'''
         return self._normals
 
+    def visualize(self, dofs):
+        import matplotlib.pyplot as plt
+        import matplotlib.cm as cm
+        assert dofs.size == self.size(), ValueError('DOF-vector has the wrong size')
+        im = plt.imshow(dofs.reshape((self.x1_num_intervals, self.x0_num_intervals)), cmap=cm.jet,
+                        aspect=self.x1_diameter / self.x0_diameter, extent=self.domain.T.ravel(),
+                        interpolation='none')
+
+        # make sure, the colorbar has the right height: (from mpl documentation)
+        from mpl_toolkits.axes_grid1 import make_axes_locatable
+        divider = make_axes_locatable(plt.gca())
+        cax = divider.append_axes("right", "5%", pad="3%")
+        plt.colorbar(im, cax=cax)
+        plt.show()
 
     #def center_distances(self):
      #   raise NotImplementedError
@@ -186,3 +200,8 @@ class Rect(Base):
     #def alpha(self):
         #'''to be renamed'''
         #pass
+
+if __name__ == '__main__':
+    g = Rect(num_intervals=(120,60), domain=[[0,0],[2,1]])
+    X = np.sin(2*np.pi*g.centers()[0,:])*np.sin(2*np.pi*g.centers()[1,:])
+    g.visualize(X)
