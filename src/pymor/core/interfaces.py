@@ -8,11 +8,9 @@ Created on Wed Oct 31 12:39:53 2012
 
 import abc
 import logging
-import pprint
 import types
 
-from pymor.core.decorators import (contract, contracts_decorate, contains_contract,
-                        )
+from pymor.core import decorators 
 from pymor.core.exceptions import ConstError
 
 
@@ -45,8 +43,8 @@ class UberMeta(abc.ABCMeta):
                         contract_kwargs = getattr(base_func, 'contract_kwargs', contract_kwargs)
                     if base_doc:
                         doc = getattr(item, '__doc__', '')
-                        has_base_contract_docs = contains_contract(base_doc)
-                        has_contract_docs = contains_contract(doc)
+                        has_base_contract_docs = decorators.contains_contract(base_doc)
+                        has_contract_docs = decorators.contains_contract(doc)
                         if has_base_contract_docs and not has_contract_docs:
                             base_doc += doc
                         elif not has_base_contract_docs and doc is not None:
@@ -56,7 +54,7 @@ class UberMeta(abc.ABCMeta):
                         #TODO why the rebind?
                         classdict['_H_%s'%attr] = item    # rebind the method
                         contract_kwargs = contract_kwargs or dict()
-                        p = contracts_decorate(item,modify_docstring=True,**contract_kwargs) # replace method by wrapper
+                        p = decorators.contracts_decorate(item,modify_docstring=True,**contract_kwargs) # replace method by wrapper
                         classdict[attr] = p
 
 
@@ -71,6 +69,9 @@ class UberInterface(object):
     _locked = False
     _frozen = False
 
+    contract = decorators.contract
+    abstractmethod = abc.abstractmethod
+    
     def __setattr__(self, key, value):
         if not self._locked:
             return object.__setattr__(self, key, value)
@@ -94,101 +95,4 @@ class UberInterface(object):
         '''I do nothing yet'''
         pass
 
-class StupidInterface(UberInterface):
-    '''I am a stupid Interface'''
 
-    @contract
-    @abc.abstractmethod
-    def shout(self, phrase, repeat):
-        """
-        :type phrase: str
-        :type repeat: int,>0
-        """
-        pass
-
-    def implementors(self):
-        '''I'm just here to overwrite my parent func's docstring
-        w/o having a decorator
-        '''
-        pass
-
-class BrilliantInterface(UberInterface):
-    '''I am a brilliant Interface'''
-
-    @contract
-    @abc.abstractmethod
-    def whisper(self, phrase, repeat):
-        """
-        :type phrase: str
-        :type repeat: int,=1
-        """
-        pass
-
-class StupidImplementer(StupidInterface):
-
-    def shout(self, phrase, repeat):
-        print(phrase*repeat)
-
-class AverageImplementer(StupidInterface, BrilliantInterface):
-
-    def shout(self, phrase, repeat):
-        #cannot change docstring here or else
-        print(phrase*repeat)
-
-    def whisper(self, phrase, repeat):
-        print(phrase*repeat)
-
-class DocImplementer(AverageImplementer):
-    """I got my own docstring"""
-
-    @contract
-    def whisper(self, phrase, repeat):
-        """my interface is stupid, I can whisper a lot more
-        Since I'm overwriting an existing contract, I need to be decorated anew.
-
-        :type phrase: str
-        :type repeat: int,>0
-        """
-        print(phrase*repeat)
-
-class FailImplementer(StupidInterface):
-    pass
-
-def test_contract():
-    #b = AverageImplementer()
-    b = StupidImplementer()
-    #b = DocImplementer()
-    print(help(b))
-    b.shout('Wheee\n', 6)
-    #b.whisper('Wheee\n', -2)
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    import contracts, traceback
-    try:
-        #test_contract()
-        pass
-    except contracts.ContractNotRespected as e:
-        logging.error(e.error + traceback.format_exc(e))
-
-    #f = FailImplementer()
-    b = AverageImplementer()
-    logging.basicConfig(level=logging.DEBUG)
-    b.level = 43
-    b.lock()
-    b.level = 41
-    try:
-        b.new = 42
-    except Exception as e:
-        print e
-    b.freeze()
-    print(b.level)
-    try:
-        b.level = 0
-    except Exception as e:
-        print e
-    b.freeze(False)
-    b.level = 0
-    b.lock(False)
-    b.level = 0
