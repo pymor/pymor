@@ -33,9 +33,16 @@ class Constant(Interface):
         self.name = name
         value = np.array(value, copy=False)
         if value.size == self.dim_range:
-            self._value = value.reshape(self.dim_range, 1)
+            if self.dim_range == 1:
+                self._value = value
+            else:
+                self._value = value.reshape(self.dim_range, 1)
         else:
             raise ValueError('Given value has wrong size!')
+
+    def __str__(self):
+        return ('{id} (value: {value}, name: {name})').format(id=self.id, value=self._value, name=self.name)
+
 
     def evaluate(self, x):
         '''
@@ -43,7 +50,9 @@ class Constant(Interface):
         '''
         x = np.array(x, copy=False, ndmin=1)
         if x.ndim == 1:
-            if x.size == self.dim_domain:
+            if self.dim_domain == 1:
+                return self._value * np.ones(x.size)
+            elif x.size == self.dim_domain:
                 return self._value
             else:
                 raise ValueError('Given value has wrong size!')
@@ -59,11 +68,12 @@ class Constant(Interface):
 if __name__ == '__main__':
     print('testing ', end='')
     value = 3.7
-    f = Constant(value)
-    print(f.name + '... ', end='')
+    f = Constant(value, name='test')
+    print(f.id + '... ', end='')
     result = f.evaluate(value)
     if result == np.array(value):
         print('done')
+        print('succesfully created {function}'.format(function=f))
     else:
         print('failed')
         print(value)
