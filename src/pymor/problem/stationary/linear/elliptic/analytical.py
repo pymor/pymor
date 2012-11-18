@@ -8,8 +8,7 @@ from pymor.common import function
 
 class Interface(interfaces.BasicInterface):
 
-    def name(self):
-        return 'problem.stationary.linear.elliptic'
+    id = 'problem.stationary.linear.elliptic'
 
     @interfaces.abstractmethod
     def diffusion(self):
@@ -29,16 +28,25 @@ class Interface(interfaces.BasicInterface):
 
 
 class Default(Interface):
+    
+    id = Interface.id + '.default'
 
-    def __init__(self, name='problem.stationary.linear.elliptic.default'):
-        self._name = name
-        self._diffusion = function.nonparametric.Constant(1, 'diffusion')
-        self._force = function.nonparametric.Constant(1, 'force')
-        self._dirichlet = function.nonparametric.Constant(0, 'dirichlet')
-        self._neumann = function.nonparametric.Constant(0, 'neumann')
-
-    def name(self):
-        return self._name
+    def __init__(self):
+        self._diffusion = function.nonparametric.Constant(1, name='diffusion')
+        self._force = function.nonparametric.Constant(1, name='force')
+        self._dirichlet = function.nonparametric.Constant(0, name='dirichlet')
+        self._neumann = function.nonparametric.Constant(0, name='neumann')
+        
+    def __str__(self):
+        return ('{id}\n' + 
+                '  diffusion: {diffusion}\n' + 
+                '  force:     {force}\n' + 
+                '  dirichlet: {dirichlet}\n' + 
+                '  neumann:   {neumann}').format(id=self.id,
+                                                 diffusion=self._diffusion,
+                                                 force=self._force,
+                                                 dirichlet=self._dirichlet,
+                                                 neumann=self._neumann)
 
     def diffusion(self):
         return self._diffusion
@@ -56,4 +64,5 @@ class Default(Interface):
 if __name__ == "__main__":
     print('creating problem... ', end='')
     p = Default()
-    print('done (' + p.name() + ')')
+    print('done:')
+    print(p)
