@@ -17,7 +17,7 @@ setup(
     # running `setup.py sdist' gives a warning about this, but 
     # install_requires is the only thing that works with pip/easy_install...
     # we do not list pyqt here since pip can't seem to install it
-    install_requires = ['matplotlib', 'numpy', 'pycontracts' ] + tests_require,
+    install_requires = ['scipy', 'functools32', 'matplotlib', 'numpy', 'pycontracts' ] + tests_require,
     classifiers = ['Development Status :: 1 - Planning',
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering :: Mathematics',
