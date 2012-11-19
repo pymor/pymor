@@ -1,21 +1,38 @@
 #!/usr/bin/env python
 
-from __future__ import print_function, division
-import pymor.core
+# pymor
+from pymor.core import interfaces
 
 
-class Interface(pymor.core.BasicInterface):
+class Interface(interfaces.BasicInterface):
 
     id = 'discretization.stationary.detailed'
 
     def __str__(self):
         return id
 
+    @interfaces.abstractmethod
+    def solve(self):
+        pass
+
+    @interfaces.abstractmethod
+    def visualize(self, vector):
+        pass
+
 
 class Scalar(Interface):
 
     id = Interface.id + '.scalar'
 
-    def __init__(self, problem, solver):
+    def __init__(self, problem, solver, discretizer):
         self.problem = problem
         self.solver = solver
+        self._discretizer = discretizer
+
+    def solve(self):
+        dof_vector = self.solver.solve(self.problem.operator,
+                                       self.problem.functional)
+        return self._discretizer.create_discrete_function(dof_vector, 'solution')
+
+    def visualize(self, discrete_function):
+        discrete_function.visualize()
