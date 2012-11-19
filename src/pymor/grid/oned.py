@@ -1,13 +1,20 @@
 #!/usr/bin/env python
 
-from __future__ import division, print_function
+# only needed for name == main
+from __future__ import print_function
+
+# future
+from __future__ import division
+
+# numpy
 import numpy as np
 
+# pymor
 from pymor.core.exceptions import CodimError
-from pymor.grid.interfaces import IGrid
+from interfaces import IGrid as Interface
 
 
-class Oned(IGrid):
+class Oned(Interface):
 
     dim = 1
     id = 'grid.oned'
@@ -23,12 +30,13 @@ class Oned(IGrid):
         self._subentities = np.vstack((np.arange(self._size), np.arange(self._size) + 1))
 
     def __str__(self):
-        return (self.id + ' on domain [{xmin},{xmax}]\n' +
-                'elements: {elements}\n' +
-                'vertices: {vertices}').format(xmin=self._interval[0],
-                                               xmax=self._interval[1],
-                                               elements=self.size(0),
-                                               vertices=self.size(1))
+        return (self.id + ', domain [{xmin},{xmax}]'
+                + ', {elements} elements'
+                + ', {vertices} vertices'
+                ).format(xmin=self._interval[0],
+                         xmax=self._interval[1],
+                         elements=self.size(0),
+                         vertices=self.size(1))
 
     def size(self, codim=0):
         if codim == 0:
@@ -53,7 +61,7 @@ class Oned(IGrid):
         elif codim == 1:
             return self._vertices
         else:
-            raise ValueError('in pymor.' + self.name() + ': codim has to be between 0 and ' + self.dim + '!')
+            raise CodimError('in pymor.' + self.name() + ': codim has to be between 0 and ' + self.dim + '!')
 
     def volumes(self, codim=0):
         if codim == 0:
@@ -61,7 +69,7 @@ class Oned(IGrid):
         elif codim == 1:
             return self._volumes_codim_1
         else:
-            raise ValueError('in pymor.' + self.name() + ': codim has to be between 0 and ' + self.dim + '!')
+            raise CodimError('in pymor.' + self.name() + ': codim has to be between 0 and ' + self.dim + '!')
 
 
 if __name__ == '__main__':
