@@ -1,1 +1,1 @@
-import nonparametric as nonparametric
+import nonparametric
