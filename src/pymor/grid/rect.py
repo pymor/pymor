@@ -4,7 +4,7 @@ import math as m
 import numpy as np
 
 from pymor.core.exceptions import CodimError
-from .interfaces import IGrid
+from interfaces import IGrid
 
 
 class Rect(IGrid):
