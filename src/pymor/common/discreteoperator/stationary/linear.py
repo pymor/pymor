@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
+# pymor
 from pymor.core import interfaces
 
 
@@ -9,6 +9,7 @@ class Interface(interfaces.BasicInterface):
     id = 'common.discreteoperator.stationary.linear'
     size = (0, 0)
 
+    @interfaces.abstractmethod
     def apply(self):
         pass
 
@@ -28,3 +29,6 @@ class ScipySparse(Interface):
         '''
         self.matrix = matrix
         self.size = self.matrix.shape
+
+    def apply(self, functional):
+        raise NotImplementedError
