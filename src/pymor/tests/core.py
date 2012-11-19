@@ -8,7 +8,7 @@ import logging
 
 from nose.tools import raises
 
-from pymor.core.interfaces import (BasicInterface, contract, abstractmethod)
+from pymor.core.interfaces import (BasicInterface, contract, abstractmethod, )
 from pymor.core import exceptions
 
 class StupidInterface(BasicInterface):
@@ -21,12 +21,6 @@ class StupidInterface(BasicInterface):
         :type phrase: str
         :type repeat: int,>0
         """
-        pass
-
-    def implementors(self):
-        '''I'm just here to overwrite my parent func's docstring
-        w/o having a decorator
-        '''
         pass
 
 class BrilliantInterface(BasicInterface):
@@ -100,6 +94,11 @@ class InterfaceTest(unittest.TestCase):
 
     def testContractSuccess(self):
         AverageImplementer().shout('Wheee\n', 6)
+        
+    def testImplementorlist(self):
+        self.assertEqual(['StupidImplementer', 'AverageImplementer', 'FailImplementer'], 
+                          StupidInterface.implementors(), '')
+        self.assertEqual(['AverageImplementer'], BrilliantInterface.implementors(), '')
             
 
 if __name__ == "__main__":

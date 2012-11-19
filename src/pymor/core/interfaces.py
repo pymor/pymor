@@ -15,7 +15,9 @@ from pymor.core.exceptions import ConstError
 
 class UberMeta(abc.ABCMeta):
     def __init__(cls, name, bases, namespace):
-        '''I copy my class docstring if deriving class has none'''
+        '''I copy my class docstring if deriving class has none. I tell base classes when I derive
+        a new class from them.
+        '''
         doc = namespace.get("__doc__", None)
         if not doc:
             for base in cls.__mro__[1:]:
@@ -23,6 +25,16 @@ class UberMeta(abc.ABCMeta):
                     doc = base.__doc__
                     break
         cls.__doc__ = doc
+
+        #all bases except object get the derived class' name appended      
+        for base in [b for b in bases if b != object]:
+            derived = cls.__name__
+            #mangle the name to the base scope
+            attribute = '_%s__implementors'%base.__name__
+            if hasattr(base, attribute):
+                getattr(base, attribute).append(derived)
+            else:
+                setattr(base, attribute, [derived])
         super(UberMeta, cls).__init__(name, bases, namespace)
 
     def __new__(cls,classname,bases,classdict):
@@ -35,7 +47,6 @@ class UberMeta(abc.ABCMeta):
                 for base in bases:
                     has_contract = False
                     base_func = getattr(base, item.__name__, None)
-                    #logging.debug()
                     if base_func:
                         base_doc = getattr(base_func, '__doc__', None)
                         has_contract = getattr(base_func,'decorated', None) == 'contract'
@@ -69,6 +80,9 @@ class BasicInterface(object):
     _frozen = False
     
     def __setattr__(self, key, value):
+        '''depending on _locked nad _frozen state I delegate the setattr call to object or
+        raise an Exception
+        '''
         if not self._locked:
             return object.__setattr__(self, key, value)
 
@@ -80,16 +94,17 @@ class BasicInterface(object):
             raise ConstError('Won\'t add "%s" to locked "%s"' % (key, self.__class__))
 
     def lock(self, doit=True):
-        '''Calling me results in subsequent changes to members throwing errors'''
+        '''Calling me results in subsequent adding of members throwing errors'''
         object.__setattr__(self, '_locked', doit)
 
     def freeze(self, doit=True):
         '''Calling me results in subsequent changes to members throwing errors'''
         object.__setattr__(self, '_frozen', doit)
 
-    def implementors(self):
-        '''I do nothing yet'''
-        pass
+    @classmethod    
+    def implementors(cls):
+        '''I return my immediate subclasses'''
+        return getattr(cls, '_%s__implementors' % cls.__name__)
 
 contract = decorators.contract
 abstractmethod = abc.abstractmethod
