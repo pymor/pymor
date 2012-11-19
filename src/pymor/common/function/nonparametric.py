@@ -13,8 +13,7 @@ class Interface(pymor.core.BasicInterface):
     name = id
 
     def __str__(self):
-        return ('{name}: R^{dim_domain} -> R^{dim_range}\n'
-                + '  of type {id}').format(name=self.name,
+        return ('{name} ({id}): R^{dim_domain} -> R^{dim_range}').format(name=self.name,
                                            dim_domain=self.dim_domain,
                                            dim_range=self.dim_range,
                                            id=self.id)
@@ -48,8 +47,7 @@ class Constant(Interface):
             raise ValueError('Given value has wrong size!')
 
     def __str__(self):
-        return ('{base}\n'
-                + '  with value {value}').format(base=Interface.__str__(self),
+        return ('{base}, x -> {value}').format(base=Interface.__str__(self),
                                                  value=self._value)
 
     def evaluate(self, x):
