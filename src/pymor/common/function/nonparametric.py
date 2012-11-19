@@ -1,18 +1,25 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-
 import numpy as np
-from pymor import core
+import pymor.core
 
 
-class Interface(core.BasicInterface):
+class Interface(pymor.core.BasicInterface):
 
     id = 'common.function.nonparametric'
     dim_domain = 0
     dim_range = 0
+    name = id
 
-    @core.interfaces.abstractmethod
+    def __str__(self):
+        return ('{name}: R^{dim_domain} -> R^{dim_range}\n'
+                + '  of type {id}').format(name=self.name,
+                                           dim_domain=self.dim_domain,
+                                           dim_range=self.dim_range,
+                                           id=self.id)
+
+    @pymor.core.interfaces.abstractmethod
     def evaluate(self, x):
         raise NotImplementedError()
 
@@ -26,7 +33,7 @@ class Constant(Interface):
 
     def __init__(self, value=1.0, dim_domain=1, dim_range=1, name=id):
         '''
-        here should be a contract to enforce that np.array(value) is valid
+        here should be a contract to enforce that np.array(value, copy=False) is valid
         '''
         self.dim_domain = dim_domain
         self.dim_range = dim_range
@@ -36,45 +43,65 @@ class Constant(Interface):
             if self.dim_range == 1:
                 self._value = value
             else:
-                self._value = value.reshape(self.dim_range, 1)
+                self._value = value.reshape(1, self.dim_range)
         else:
             raise ValueError('Given value has wrong size!')
 
     def __str__(self):
-        return ('{id} (value: {value}, name: {name})').format(id=self.id, value=self._value, name=self.name)
-
+        return ('{base}\n'
+                + '  with value {value}').format(base=Interface.__str__(self),
+                                                 value=self._value)
 
     def evaluate(self, x):
         '''
-        here should be a contract to enforce that np.array(x) is valid
+        \todo    here should be a contract to enforce that np.array(x, copy=False, ndmin=1) is valid
         '''
         x = np.array(x, copy=False, ndmin=1)
-        if x.ndim == 1:
-            if self.dim_domain == 1:
-                return self._value * np.ones(x.size)
-            elif x.size == self.dim_domain:
-                return self._value
-            else:
-                raise ValueError('Given value has wrong size!')
-        elif x.ndim == 2:
-            if x.shape[0] == self.dim_domain:
-                return np.tile(value, (1, self.dim_range))
-            else:
-                raise ValueError('Given value has wrong size!')
+        number_of_input_points = 0
+        if self.dim_domain == 1:
+            if x.ndim == 1:
+                number_of_input_points = x.size
+            elif x.ndim == 2:
+                assert x.shape[0] == 1 or x.shape[1] == 1, 'Given x has wrong size!'
+                number_of_input_points = x.size
         else:
-            raise ValueError('Given value has wrong size!')
+            if x.ndim == 1:
+                assert x.size == self.dim_domain, 'Given x has wrong size!'
+                number_of_input_points = 1
+            else:
+                assert x.ndim == 2, 'Given x has wrong size!'
+                assert x.shape[1] == self.dim_domain, 'Given x has wrong size!'
+                number_of_input_points = x.shape[0]
+        if self.dim_range == 1:
+            return self._value * np.ones(number_of_input_points)
+        else:
+            return np.tile(self._value, (number_of_input_points, 1))
 
 
 if __name__ == '__main__':
-    print('testing ', end='')
-    value = 3.7
-    f = Constant(value, name='test')
-    print(f.id + '... ', end='')
-    result = f.evaluate(value)
-    if result == np.array(value):
-        print('done')
-        print('succesfully created {function}'.format(function=f))
-    else:
-        print('failed')
-        print(value)
-        print(result)
+    def test_function(function, arguments):
+        print('testing {function}: '.format(function=function))
+        for argument in arguments:
+            print('    {name}({argument}) = {result}'.format(name=function.name,
+                                                             argument=argument,
+                                                             result=function.evaluate(argument)))
+    f_1_1 = Constant(dim_domain=1, dim_range=1, value=1., name='f_1_1')
+    x_scalar = 1.
+    x_scalar_array = np.array(x_scalar)
+    x_list = [1., 1., 1.]
+    x_list_array = np.array(x_list)
+    x_ones_array = np.ones((1, 3))
+    x_ones_array_transposed = np.ones((3, 1))
+    xes = [x_scalar, x_scalar_array, x_list_array, x_ones_array, x_ones_array_transposed]
+    test_function(f_1_1, xes)
+    f_1_2 = Constant(dim_domain=1, dim_range=2, value=[0., 1.], name='f_1_2')
+    test_function(f_1_2, xes)
+    f_2_1 = Constant(dim_domain=2, dim_range=1, value=1., name='f_2_1')
+    x_vector = [1., 1.]
+    x_vector_array = np.array(x_vector)
+    x_vectors_array = np.array([[1., 1.], [1., 1.], [1., 1.]])
+    x_ones_vectors_array = np.ones((3, 2))
+    xes = [x_vector, x_vector_array, x_vectors_array, x_ones_vectors_array]
+    test_function(f_2_1, xes)
+    f_2_2 = Constant(dim_domain=2, dim_range=2, value=[1., 2.], name='f_2_2')
+    test_function(f_2_2, xes)
