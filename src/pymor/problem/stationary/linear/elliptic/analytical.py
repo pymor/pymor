@@ -10,6 +10,17 @@ class Interface(interfaces.BasicInterface):
 
     id = 'problem.stationary.linear.elliptic'
 
+    def __str__(self):
+        return ('{id}\n' +
+                '  diffusion: {diffusion}\n' +
+                '  force:     {force}\n' +
+                '  dirichlet: {dirichlet}\n' +
+                '  neumann:   {neumann}').format(id=self.id,
+                                                 diffusion=self.diffusion(),
+                                                 force=self.force(),
+                                                 dirichlet=self.dirichlet(),
+                                                 neumann=self.neumann())
+
     @interfaces.abstractmethod
     def diffusion(self):
         pass
@@ -28,7 +39,7 @@ class Interface(interfaces.BasicInterface):
 
 
 class Default(Interface):
-    
+
     id = Interface.id + '.default'
 
     def __init__(self):
@@ -36,17 +47,6 @@ class Default(Interface):
         self._force = function.nonparametric.Constant(1, name='force')
         self._dirichlet = function.nonparametric.Constant(0, name='dirichlet')
         self._neumann = function.nonparametric.Constant(0, name='neumann')
-        
-    def __str__(self):
-        return ('{id}\n' + 
-                '  diffusion: {diffusion}\n' + 
-                '  force:     {force}\n' + 
-                '  dirichlet: {dirichlet}\n' + 
-                '  neumann:   {neumann}').format(id=self.id,
-                                                 diffusion=self._diffusion,
-                                                 force=self._force,
-                                                 dirichlet=self._dirichlet,
-                                                 neumann=self._neumann)
 
     def diffusion(self):
         return self._diffusion
