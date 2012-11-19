@@ -12,7 +12,7 @@ README.html: README.markdown
 	pandoc -f markdown -t html $< > $@
 
 pylint:
-	pylint pymor
+	cd src ; pylint --rcfile pylint.cfg pymor
 
 test:
 	nosetests 
