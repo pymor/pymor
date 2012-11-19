@@ -1,15 +1,18 @@
 #!/usr/bin/env python
 
 from __future__ import print_function, division
-import warnings
 import numpy as np
 import scipy.sparse
 import pymor.core
+from pymor.core.exceptions import warn, CallOrderWarning
 import pymor.problem.stationary.linear.elliptic.analytical
 import pymor.common.boundaryinfo
 import pymor.grid.oned
 import pymor.common.discreteoperator.stationary.linear
 import pymor.common.discretefunctional.linear
+import pymor.problem.stationary.linear.discrete
+import pymor.solver.stationary.linear.scalar
+import pymor.discretization.stationary.detailed
 
 
 class Interface(pymor.core.BasicInterface):
@@ -66,6 +69,25 @@ class P1(Interface):
             del self._two_to_n
             # finished
             self._discretized = True
+        # create discrete problem
+        discrete_problem = pymor.problem.stationary.linear.discrete.Scalar(self.grid,
+                                                                                self.problem,
+                                                                                self.boundaryinfo,
+                                                                                self._operator,
+                                                                                self._functional)
+        # create discrete solver
+        discrete_solver = pymor.solver.stationary.linear.scalar.Scipy()
+        # create detailed discretization
+        self._discretization = pymor.discretization.stationary.detailed.Scalar(discrete_problem,
+                                                                                        discrete_solver)
+        return self._discretization
+
+    def discretization(self):
+        if not self._discretized:
+            warn('Please call \'discretize()\' before calling \'discretization(), calling \'discretize()\' now!\'',
+                 CallOrderWarning)
+            self.discretize()
+        return self._discretization
 
     def _assemble_operator(self):
         # get stuff
@@ -164,9 +186,10 @@ if __name__ == '__main__':
     print('creating boundaryinfo... ', end='')
     boundaryinfo = pymor.common.boundaryinfo.oned.AllDirichlet()
     print('done (' + boundaryinfo.id + ')')
-    print('creating discretizer (', end='')
+    print('creating discretization (using ', end='')
     discretizer = P1(problem, grid)
-    print(discretizer.id + '):')
-    print('  discretizing... ', end='')
-    discretizer.discretize()
+    print(discretizer.id + ')... ', end='')
+    discretization = discretizer.discretize()
     print('done')
+    print('solving (', end='')
+
