@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
+# only for name == main
 from __future__ import print_function
 
+# pymor
 from pymor.core import interfaces
 from pymor.common import function
 
@@ -15,11 +17,12 @@ class Interface(interfaces.BasicInterface):
                 '  diffusion: {diffusion}\n' +
                 '  force:     {force}\n' +
                 '  dirichlet: {dirichlet}\n' +
-                '  neumann:   {neumann}').format(id=self.id,
-                                                 diffusion=self.diffusion(),
-                                                 force=self.force(),
-                                                 dirichlet=self.dirichlet(),
-                                                 neumann=self.neumann())
+                '  neumann:   {neumann}'
+                ).format(id=self.id,
+                         diffusion=self.diffusion(),
+                         force=self.force(),
+                         dirichlet=self.dirichlet(),
+                         neumann=self.neumann())
 
     @interfaces.abstractmethod
     def diffusion(self):
