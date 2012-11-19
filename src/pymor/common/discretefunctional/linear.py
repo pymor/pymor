@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
+# pymor
 from pymor.core import interfaces
 
 
@@ -8,9 +8,6 @@ class Interface(interfaces.BasicInterface):
 
     id = 'common.discretefunctional.linear'
     size = 0
-
-    def apply(self):
-        pass
 
     def __str__(self):
         return '{id}, size {size}'.format(id=self.id,
