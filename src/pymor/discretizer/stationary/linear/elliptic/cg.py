@@ -9,7 +9,7 @@ import pymor.problem.stationary.linear.elliptic.analytical
 import pymor.common.boundaryinfo
 import pymor.grid.oned
 import pymor.common.discreteoperator.stationary.linear
-
+from pymor.core.warnings import CallOrderWarning
 
 class Interface(pymor.core.BasicInterface):
 
@@ -45,13 +45,13 @@ class P1(Interface):
 
     def operator(self):
         if not self._assembled_operator:
-            warnings.warn('Please call init() before calling operator()! Calling init() now...')
+            warnings.warn('Please call init() before calling operator()! Calling init() now...', CallOrderWarning)
             self._assemble_operator()
         return self._operator
 
     def functional(self):
         if not self._assembled_functional:
-            warnings.warn('Please call init() before calling functional()! Calling init() now...')
+            warnings.warn('Please call init() before calling functional()! Calling init() now...', CallOrderWarning)
             self._assemble_functional()()
 
     def init(self):
