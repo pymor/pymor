@@ -1,11 +1,16 @@
 #!/usr/bin/env python
 
+# needed for name == main
 from __future__ import print_function
+
+# numpy
 import numpy as np
-import pymor.core
+
+# pymor
+from pymor.core import interfaces
 
 
-class Interface(pymor.core.BasicInterface):
+class Interface(interfaces.BasicInterface):
 
     id = 'common.function.nonparametric'
     dim_domain = 0
@@ -13,14 +18,15 @@ class Interface(pymor.core.BasicInterface):
     name = id
 
     def __str__(self):
-        return ('{name} ({id}): R^{dim_domain} -> R^{dim_range}').format(name=self.name,
-                                           dim_domain=self.dim_domain,
-                                           dim_range=self.dim_range,
-                                           id=self.id)
+        return ('{name} ({id}): R^{dim_domain} -> R^{dim_range}'
+                ).format(name=self.name,
+                         dim_domain=self.dim_domain,
+                         dim_range=self.dim_range,
+                         id=self.id)
 
-    @pymor.core.interfaces.abstractmethod
+    @interfaces.abstractmethod
     def evaluate(self, x):
-        raise NotImplementedError()
+        pass
 
 
 class Constant(Interface):
