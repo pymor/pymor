@@ -1,15 +1,22 @@
 #!/usr/bin/env python
 
-from __future__ import print_function, division
-import pymor.core
+# scipy
+from scipy.sparse.linalg import bicgstab
+
+# pymor
+from pymor.core import interfaces
 
 
-class Interface(pymor.core.interfaces.BasicInterface):
+class Interface(interfaces.BasicInterface):
 
     id = 'solver.stationary.linear.scalar'
 
     def __str__(self):
         return id
+
+    @interfaces.abstractmethod
+    def solve(self):
+        pass
 
 
 class Scipy(Interface):
@@ -18,3 +25,10 @@ class Scipy(Interface):
 
     def __init__(self):
         pass
+
+    def solve(self, operator, functional):
+        assert operator.size[1] == functional.size
+        system_matrix = operator.matrix
+        right_hand_side = functional.vector
+        result = bicgstab(system_matrix, right_hand_side)
+        return result[0]
