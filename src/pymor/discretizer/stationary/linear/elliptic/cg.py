@@ -1,21 +1,29 @@
 #!/usr/bin/env python
 
-from __future__ import print_function, division
+# only for name == main
+from __future__ import print_function
+
+# future
+from __future__ import division
+
+# scipy
 import numpy as np
-import scipy.sparse
-import pymor.core
+import scipy.sparse as sparse
+
+# pymor
+from pymor.core import interfaces
 from pymor.core.exceptions import warn, CallOrderWarning
-import pymor.problem.stationary.linear.elliptic.analytical
-import pymor.common.boundaryinfo
-import pymor.grid.oned
-import pymor.common.discreteoperator.stationary.linear
-import pymor.common.discretefunctional.linear
-import pymor.problem.stationary.linear.discrete
-import pymor.solver.stationary.linear.scalar
-import pymor.discretization.stationary.detailed
+import pymor.problem.stationary.linear.elliptic.analytical as analyticalproblem
+import pymor.grid.oned as grid
+import pymor.common.boundaryinfo.oned as boundaryinfo
+import pymor.common.discreteoperator.stationary.linear as operator
+import pymor.common.discretefunctional.linear as functional
+import pymor.problem.stationary.linear.discrete as discreteproblem
+import pymor.solver.stationary.linear.scalar as solver
+import pymor.discretization.stationary.detailed as discretization
+import pymor.common.discretefunction.continuous as discretefunction
 
-
-class Interface(pymor.core.BasicInterface):
+class Interface(interfaces.BasicInterface):
 
     id = 'discretizer.stationary.linear.elliptic.cg'
     trial_order = -1
@@ -25,6 +33,14 @@ class Interface(pymor.core.BasicInterface):
     def __str__(self):
         return id
 
+    @interfaces.abstractmethod
+    def discretize(self):
+        pass
+
+    @interfaces.abstractmethod
+    def discretization(self):
+        pass
+
 
 class P1(Interface):
 
@@ -33,9 +49,9 @@ class P1(Interface):
     test_order = 1
     data_order = 0
 
-    def __init__(self, problem=pymor.problem.stationary.linear.elliptic.analytical.Default(),
-                 grid=pymor.grid.oned.Oned(),
-                 boundaryinfo=pymor.common.boundaryinfo.oned.AllDirichlet()):
+    def __init__(self, problem=analyticalproblem.Default(),
+                 grid=grid.Oned(),
+                 boundaryinfo=boundaryinfo.AllDirichlet()):
         self.problem = problem
         self.grid = grid
         self.boundaryinfo = boundaryinfo
@@ -61,33 +77,37 @@ class P1(Interface):
             self._assemble_operator()
             self._assemble_functional()
             # clear common stuff
-            del self._h
-            del self._n
             del self._diffusion
+            del self._force
             del self._zero_to_n_minus_two
             del self._one_to_n_minus_one
             del self._two_to_n
             # finished
             self._discretized = True
         # create discrete problem
-        discrete_problem = pymor.problem.stationary.linear.discrete.Scalar(self.grid,
-                                                                                self.problem,
-                                                                                self.boundaryinfo,
-                                                                                self._operator,
-                                                                                self._functional)
+        discrete_problem = discreteproblem.Scalar(self.grid,
+                                                  self.problem,
+                                                  self.boundaryinfo,
+                                                  self._operator,
+                                                  self._functional)
         # create discrete solver
-        discrete_solver = pymor.solver.stationary.linear.scalar.Scipy()
+        discrete_solver = solver.Scipy()
         # create detailed discretization
-        self._discretization = pymor.discretization.stationary.detailed.Scalar(discrete_problem,
-                                                                                        discrete_solver)
+        self._discretization = discretization.Scalar(discrete_problem,
+                                                     discrete_solver,
+                                                     self)
         return self._discretization
 
     def discretization(self):
         if not self._discretized:
-            warn('Please call \'discretize()\' before calling \'discretization(), calling \'discretize()\' now!\'',
+            warn('Please call \'discretize()\' before calling \'discretization(),'
+                 + 'calling \'discretize()\' now!\'',
                  CallOrderWarning)
             self.discretize()
         return self._discretization
+
+    def create_discrete_function(self, vector, name):
+        return discretefunction.P1(self.grid, vector, name)
 
     def _assemble_operator(self):
         # get stuff
@@ -137,9 +157,9 @@ class P1(Interface):
         rows = np.array(rows_1 + rows_2 + rows_3 + rows_4 + rows_5)
         cols = np.array(cols_1 + cols_2 + cols_3 + cols_4 + cols_5)
         vals = np.concatenate((vals_1, vals_2, vals_3, vals_4, vals_5), axis=0)
-        matrix = scipy.sparse.csr_matrix((vals, (rows, cols)), shape=(n + 1, n + 1))
+        matrix = sparse.csr_matrix((vals, (rows, cols)), shape=(n + 1, n + 1))
         # create operator
-        self._operator = pymor.common.discreteoperator.stationary.linear.ScipySparse(matrix)
+        self._operator = operator.ScipySparse(matrix)
 
     def _assemble_functional(self):
         # get stuff
@@ -173,23 +193,27 @@ class P1(Interface):
         else:
             raise ValueError('wrong boundary type!')
         # create functional
-        self._functional = pymor.common.discretefunctional.linear.NumpyDense(vector)
+        self._functional = functional.NumpyDense(vector)
 
 
 if __name__ == '__main__':
-    print('creating problem... ', end='')
-    problem = pymor.problem.stationary.linear.elliptic.analytical.Default()
+    print('creating analytical problem... ', end='')
+    problem = analyticalproblem.Default()
     print('done (' + problem.id + ')')
     print('creating grid... ', end='')
-    grid = pymor.grid.oned.Oned()
+    grid = grid.Oned([0., 1.], 1000)
     print('done ({name}, ' 'size {size})'.format(name=grid.id, size=grid.size()))
     print('creating boundaryinfo... ', end='')
-    boundaryinfo = pymor.common.boundaryinfo.oned.AllDirichlet()
+    boundaryinfo = boundaryinfo.AllDirichlet()
     print('done (' + boundaryinfo.id + ')')
-    print('creating discretization (using ', end='')
+    print('creating discretizer... ', end='')
     discretizer = P1(problem, grid)
-    print(discretizer.id + ')... ', end='')
+    print('done (' + discretizer.id + ')')
+    print('creating discretization... ', end='')
     discretization = discretizer.discretize()
+    print('done (' + discretization.id + ')')
+    print('solving... ', end='')
+    solution = discretization.solve()
+    solution.name = discretizer.id + '.solution'
     print('done')
-    print('solving (', end='')
-
+    discretization.visualize(solution)
