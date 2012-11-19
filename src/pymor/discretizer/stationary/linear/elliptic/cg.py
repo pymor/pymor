@@ -12,18 +12,18 @@ import pymor.common.discreteoperator.stationary.linear
 
 
 class Interface(pymor.core.BasicInterface):
-    
+
     id = 'discretizer.stationary.linear.elliptic.cg'
     trial_order = -1
     test_order = -1
     data_order = -1
-    
+
     def __str__(self):
         return id
 
 
 class P1(Interface):
-    
+
     id = Interface.id + '.p1'
     trial_order = 1
     test_order = 1
@@ -48,13 +48,11 @@ class P1(Interface):
             warnings.warn('Please call init() before calling operator()! Calling init() now...')
             self._assemble_operator()
         return self._operator
-    
+
     def functional(self):
         if not self._assembled_functional:
             warnings.warn('Please call init() before calling functional()! Calling init() now...')
             self._assemble_functional()()
-        pass
-        
 
     def init(self):
         if not self._initialized:
