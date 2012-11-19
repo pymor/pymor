@@ -1,6 +1,12 @@
-import sample
+#import sample
+import pymor.core as core
 
-class Cubic(Interface):
-    def equidistant_sample():
-        return sample.Interface()
-    def adaptive_sample():
+
+class Cubic(core.BasicInterface):
+    
+    def equidistant_sample(self):
+        #return sample.Interface()
+        pass
+        
+    def adaptive_sample(self):
+        pass
