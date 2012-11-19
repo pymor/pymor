@@ -34,7 +34,7 @@ class IGrid(core.BasicInterface):
     @core.interfaces.abstractmethod
     @lru_cache(maxsize=None)
     def subentities(self, codim=0, subentity_codim=None):
-        '''retval[s,e] is the global index of the s-th codim-"subentity_codim"
+        '''retval[e,s] is the global index of the s-th codim-"subentity_codim"
         subentity of the codim-"codim" entity with global index e.
 
         If subentity_codim=None, it is set to codim+1.
@@ -49,14 +49,14 @@ class IGrid(core.BasicInterface):
             SESE = self.subentities(subentity_codim - 1, subentity_codim)
 
             # we assume that there is only one geometry type ...
-            num_subsubentities = np.unique(SESE[:, SE[:, 0]]).size
+            num_subsubentities = np.unique(SESE[SE[0]]).size
 
-            SSE = np.empty((num_subsubentities, SE.shape[1]), dtype=np.int32)
+            SSE = np.empty((SE.shape[0], num_subsubentities), dtype=np.int32)
             SSE.fill(-1)
 
-            for ei in xrange(SE.shape[1]):
-                X = SESE[:, SE[:, ei]].T.ravel()
-                SSE[:, ei] = X[np.sort(np.unique(X, return_index=True)[1])]
+            for ei in xrange(SE.shape[0]):
+                X = SESE[SE[ei]].ravel()
+                SSE[ei] = X[np.sort(np.unique(X, return_index=True)[1])]
 
             return SSE
         else:
@@ -64,7 +64,7 @@ class IGrid(core.BasicInterface):
 
     @lru_cache(maxsize=None)
     def superentities(self, codim, superentity_codim=None):
-        '''retval[s,e] is the global index of the s-th codim-"superentity_codim"
+        '''retval[e,s] is the global index of the s-th codim-"superentity_codim"
         superentity of the codim-"codim" entity with global index e.
 
         If superentity_codim == None, it is set to codim-1.
@@ -77,21 +77,21 @@ class IGrid(core.BasicInterface):
 
         SE = self.subentities(superentity_codim, codim)
         num_superentities = np.bincount(SE.ravel()).max()
-        SPE = np.empty((num_superentities, self.size(codim)), dtype=np.int32)
+        SPE = np.empty((self.size(codim), num_superentities), dtype=np.int32)
         SPE.fill(-1)
 
-        SPE_COUNTS = np.zeros(SPE.shape[1], dtype=np.int32)
+        SPE_COUNTS = np.zeros(SPE.shape[0], dtype=np.int32)
 
-        for index, se in np.ndenumerate(SE.T):
+        for index, se in np.ndenumerate(SE):
             if se >= 0:
-                SPE[SPE_COUNTS[se], se] = index[0]
+                SPE[se, SPE_COUNTS[se]] = index[0]
                 SPE_COUNTS[se] += 1
 
         return SPE
 
     @lru_cache(maxsize=None)
     def neighbours(self, codim=0, neighbour_codim=0, intersection_codim=None):
-        '''retval[n,e] is the global index of the n-th codim-"neighbour_codim"
+        '''retval[e,s] is the global index of the n-th codim-"neighbour_codim"
         entitiy of the codim-"codim" entity with global index e that shares
         with it an intersection of codimension "intersection_codim".
 
@@ -117,24 +117,24 @@ class IGrid(core.BasicInterface):
             EI = self.subentities(codim, intersection_codim)
             ISE = self.superentities(intersection_codim, neighbour_codim)
 
-            NB = np.empty((EI.shape[0] * ISE.shape[0], EI.shape[1]), dtype=np.int32)
+            NB = np.empty((EI.shape[0], EI.shape[1] * ISE.shape[1]), dtype=np.int32)
             NB.fill(-1)
-            NB_COUNTS = np.zeros(EI.shape[1], dtype=np.int32)
+            NB_COUNTS = np.zeros(EI.shape[0], dtype=np.int32)
 
             if codim == neighbour_codim:
                 for ii, i in np.ndenumerate(EI):
                     if i >= 0:
-                        for ni, n in np.ndenumerate(ISE[:, i]):
-                            if n != ii[1] and n not in NB[:, ii[1]]:
-                                NB[NB_COUNTS[ii[1]], ii[1]] = n
-                                NB_COUNTS[ii[1]] += 1
+                        for ni, n in np.ndenumerate(ISE[i]):
+                            if n != ii[0] and n not in NB[ii[0]]:
+                                NB[ii[0], NB_COUNTS[ii[0]]] = n
+                                NB_COUNTS[ii[0]] += 1
             else:
                 for ii, i in np.ndenumerate(EI):
                     if i >= 0:
-                        for ni, n in np.ndenumerate(ISE[:, i]):
-                            if n not in NB[:, ii[1]]:
-                                NB[NB_COUNTS[ii[1]], ii[1]] = n
-                                NB_COUNTS[ii[1]] += 1
+                        for ni, n in np.ndenumerate(ISE[i]):
+                            if n not in NB[ii[0]]:
+                                NB[ii[0], NB_COUNTS[ii[0]]] = n
+                                NB_COUNTS[ii[0]] += 1
 
-            NB.resize((NB_COUNTS.max(), NB.shape[1]))
+            NB = NB[:NB.shape[0], :NB_COUNTS.max()]
             return NB

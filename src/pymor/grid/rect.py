@@ -119,7 +119,7 @@ class Rect(IGrid):
     def subentities(self, codim=0, subentity_codim=None):
         assert 0 <= codim <= 1, CodimError('Invalid codimension')
         if subentity_codim is None or subentity_codim == codim + 1:
-            return self._subentities[codim]
+            return self._subentities[codim].T
         else:
             return super(Rect, self).subentities(codim, subentity_codim)
 
@@ -129,7 +129,7 @@ class Rect(IGrid):
 
     def centers(self, codim=0):
         assert 0 <= codim <= 2, CodimError('Invalid codimension')
-        return self._centers[codim]
+        return self._centers[codim].T
 
     def volumes(self, codim=0):
         assert 0 <= codim <= 2, CodimError('Invalid codimension')
@@ -154,7 +154,7 @@ class Rect(IGrid):
 
     def unit_outer_normals(self):
         '''only at centers?'''
-        return self._normals
+        return self._normals.T
 
     def visualize(self, dofs):
         import matplotlib.pyplot as plt

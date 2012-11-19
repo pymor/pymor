@@ -41,7 +41,7 @@ class Oned(IGrid):
     def subentities(self, codim=0, subentity_codim=None):
         assert codim == 0, CodimError('Invalid codimension')
         assert subentity_codim is None or subentity_codim == 1, CodimError('Invalid subentity codimension')
-        return self._subentities
+        return self._subentities.T
 
     def centers(self, codim=0):
         '''
