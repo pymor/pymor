@@ -4,10 +4,11 @@ import math as m
 import numpy as np
 
 from pymor.core.exceptions import CodimError
-from .interfaces import IConformalTopologicalGrid
+from .interfaces import ISimpleAffineGrid
+from .referenceelements import square
 
 
-class Rect(IConformalTopologicalGrid):
+class Rect(ISimpleAffineGrid):
     '''Ad-hoc implementation of a rectangular grid.
 
     The global face, edge and vertex indices are given as follows
@@ -30,6 +31,7 @@ class Rect(IConformalTopologicalGrid):
         self.num_intervals = num_intervals
         self.domain = np.array(domain)
 
+        self.reference_element = square
         self.x0_num_intervals = num_intervals[0]
         self.x1_num_intervals = num_intervals[1]
         self.x0_range = self.domain[:, 0]
@@ -42,7 +44,12 @@ class Rect(IConformalTopologicalGrid):
         self.diameter_min = min(self.x0_diameter, self.x1_diameter)
         n_elements = self.x0_num_intervals * self.x1_num_intervals
 
+
         # TOPOLOGY
+        self._sizes = (n_elements,
+                       (  (self.x0_num_intervals + 1) * self.x1_num_intervals +
+                          (self.x1_num_intervals + 1) * self.x0_num_intervals   ),
+                       (self.x0_num_intervals + 1) * (self.x1_num_intervals + 1) )
 
         # calculate subentities -- codim-0
         EVL = ((np.arange(self.x1_num_intervals) * (self.x0_num_intervals + 1))[:, np.newaxis] +
@@ -63,49 +70,17 @@ class Rect(IConformalTopologicalGrid):
 
         self._subentities = (codim0_subentities, codim1_subentities)
 
+
         # GEOMETRY
 
-        # calculate centers -- codim-0
-        x0_centers = np.arange(self.x0_num_intervals) * self.x0_diameter + self.x0_diameter / 2 + self.x0_range[0]
-        x1_centers = np.arange(self.x1_num_intervals) * self.x1_diameter + self.x1_diameter / 2 + self.x1_range[0]
-        codim0_centers = np.array(np.meshgrid(x0_centers, x1_centers)).reshape((2, -1))
+        # embeddings
+        x0_shifts = np.arange(self.x0_num_intervals) * self.x0_diameter + self.x0_range[0]
+        x1_shifts = np.arange(self.x1_num_intervals) * self.x1_diameter + self.x1_range[0]
+        shifts = np.array(np.meshgrid(x0_shifts, x1_shifts)).reshape((2, -1))
+        A = np.tile(np.diag([self.x0_diameter, self.x1_diameter]), (n_elements, 1, 1))
+        B = shifts.T
+        self._embeddings = (A, B)
 
-        # calculate centers -- codim-1
-        x0_centers_2 = np.arange(self.x0_num_intervals + 1) * self.x0_diameter + self.x0_range[0]
-        x1_centers_2 = np.arange(self.x1_num_intervals + 1) * self.x1_diameter + self.x1_range[0]
-        codim1_centers = np.hstack((np.array(np.meshgrid(x0_centers_2, x1_centers)).reshape((2, -1)),
-                                    np.array(np.meshgrid(x0_centers, x1_centers_2)).reshape((2, -1))))
-
-        # calculate centers -- codim-2
-        codim2_centers = np.array(np.meshgrid(x0_centers_2, x1_centers_2)).reshape((2, -1))
-
-        self._centers = (codim0_centers, codim1_centers, codim2_centers)
-
-        # diameters / volumes
-        codim0_diameters = np.empty_like(codim0_centers[0])
-        codim0_diameters.fill(m.sqrt(self.x0_diameter ** 2 + self.x1_diameter ** 2))
-        codim0_volumes = np.empty_like(codim0_diameters)
-        codim0_volumes.fill(self.x0_diameter * self.x1_diameter)
-
-        codim1_diameters = np.empty_like(codim1_centers[0])
-        codim1_diameters[:(self.x0_num_intervals + 1) * self.x1_num_intervals] = self.x1_diameter
-        codim1_diameters[(self.x0_num_intervals + 1) * self.x1_num_intervals:] = self.x0_diameter
-        codim1_volumes = codim1_diameters
-
-        self._volumes = (codim0_volumes, codim1_volumes)
-        self._volumes_inverse = (np.reciprocal(codim0_volumes), np.reciprocal(codim1_volumes))
-        self._diameters = (codim0_diameters, codim1_diameters)
-
-        # outer normals
-        self._normals = np.empty((2, 4, n_elements))
-        self._normals[0, 0, :] = 0
-        self._normals[1, 0, :] = -1
-        self._normals[0, 1, :] = 1
-        self._normals[1, 1, :] = 0
-        self._normals[0, 2, :] = 0
-        self._normals[1, 2, :] = 1
-        self._normals[0, 3, :] = -1
-        self._normals[1, 3, :] = 0
 
     def __str__(self):
         return ('Rect-Grid on domain [{xmin},{xmax}] x [{ymin},{ymax}]\n' +
@@ -116,6 +91,10 @@ class Rect(IConformalTopologicalGrid):
                     x0ni=self.x0_num_intervals, x1ni=self.x1_num_intervals,
                     faces=self.size(0), edges=self.size(1), verticies=self.size(2))
 
+    def size(self, codim=0):
+        assert 0 <= codim <= 2, CodimError('Invalid codimension')
+        return self._sizes[codim]
+
     def subentities(self, codim=0, subentity_codim=None):
         assert 0 <= codim <= 1, CodimError('Invalid codimension')
         if subentity_codim is None or subentity_codim == codim + 1:
@@ -123,38 +102,11 @@ class Rect(IConformalTopologicalGrid):
         else:
             return super(Rect, self).subentities(codim, subentity_codim)
 
-    def size(self, codim=0):
-        assert 0 <= codim <= 2, CodimError('Invalid codimension')
-        return self._centers[codim].shape[1]
-
-    def centers(self, codim=0):
-        assert 0 <= codim <= 2, CodimError('Invalid codimension')
-        return self._centers[codim].T
-
-    def volumes(self, codim=0):
-        assert 0 <= codim <= 2, CodimError('Invalid codimension')
-        if codim == 2:
-            return np.ones(self.size(2))
+    def embeddings(self, codim=0):
+        if codim == 0:
+            return self._embeddings
         else:
-            return self._volumes[codim]
-
-    def volumes_inverse(self, codim=0):
-        assert 0 <= codim <= 2, CodimError('Invalid codimension')
-        if codim == 2:
-            return np.ones(self.size(2))
-        else:
-            return self._volumes_inverse[codim]
-
-    def diameters(self, codim=0):
-        assert 0 <= codim <= 2, CodimError('Invalid codimension')
-        if codim == 2:
-            return np.ones(self.size(2))
-        else:
-            return self._diameters[codim]
-
-    def unit_outer_normals(self):
-        '''only at centers?'''
-        return self._normals.T
+            return super(Rect, self).embeddings(codim)
 
     def visualize(self, dofs):
         import matplotlib.pyplot as plt
