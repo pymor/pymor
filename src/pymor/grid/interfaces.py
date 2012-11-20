@@ -238,6 +238,32 @@ class ISimpleAffineGrid(IConformalTopologicalGrid):
 
     @core.interfaces.abstractmethod
     @lru_cache(maxsize=None)
+    def subentities(self, codim=0, subentity_codim=None):
+        # If codim > 0, we calculate the subentites of e as follows:
+        # - find the codim-0 parent entity e_0 with minimal global index
+        # - lookup the local indicies of the subentites of e inside e_0
+        #   using the reference element
+        # - map these local indicies to global indicies using
+        #   subentities(0, subentity_codim)
+        # This procedures assures that subentities(codim, subentity_codim)[i]
+        # has the right order w.r.t. the embedding determined by e_0, which
+        # is also the embedding return by embeddings(codim)
+        assert 0 <= codim < self.dim, CodimError('Invalid codimension')
+        assert 0 < codim, NotImplementedError
+        P = self.superentities(codim, 0)[:, 0] # we assume here that superentites() is sorted by global index
+        I = self.superentity_indices(codim, 0)[:, 0]
+        SE = self.subentities(0, subentity_codim)[P]
+        RSE = self.reference_element.subentities(codim, subentity_codim)[I]
+
+        SSE = np.empty_like(RSE)
+        for i in xrange(RSE.shape[0]):
+            SSE[i, :] = SE[i, RSE[i]]
+
+        return SSE
+
+
+    @core.interfaces.abstractmethod
+    @lru_cache(maxsize=None)
     def embeddings(self, codim=0):
         assert codim > 0, NotImplemented
         E = self.superentities(codim, 0)[:, 0]

@@ -52,22 +52,16 @@ class Rect(ISimpleAffineGrid):
                        (self.x0_num_intervals + 1) * (self.x1_num_intervals + 1) )
 
         # calculate subentities -- codim-0
-        EVL = ((np.arange(self.x1_num_intervals) * (self.x0_num_intervals + 1))[:, np.newaxis] +
-               np.arange(self.x0_num_intervals)).ravel()
-        EVR = ((np.arange(self.x1_num_intervals) * (self.x0_num_intervals + 1))[:, np.newaxis] +
-               np.arange(1, self.x0_num_intervals + 1)).ravel()
-        EHB = np.arange(n_elements) + (self.x0_num_intervals + 1) * self.x1_num_intervals
-        EHT = np.arange(n_elements) + (self.x0_num_intervals + 1) * self.x1_num_intervals + self.x0_num_intervals
-        codim0_subentities = np.array((EHB, EVR, EHT, EVL), dtype=np.int32)
+        EVL = ((np.arange(self.x1_num_intervals, dtype=np.int32) * (self.x0_num_intervals + 1))[:, np.newaxis] +
+               np.arange(self.x0_num_intervals, dtype=np.int32)).ravel()
+        EVR = EVL + 1
+        EHB = np.arange(n_elements, dtype=np.int32) + (self.x0_num_intervals + 1) * self.x1_num_intervals
+        EHT = EHB + self.x0_num_intervals
+        codim0_subentities = np.array((EHB, EVR, EHT, EVL)).T
 
         # calculate subentities -- codim-1
-        VVB = np.arange((self.x0_num_intervals + 1) * self.x1_num_intervals)
-        VVT = np.arange((self.x0_num_intervals + 1) * self.x1_num_intervals) + (self.x0_num_intervals + 1)
-        VHL = ((np.arange(self.x1_num_intervals + 1) * (self.x0_num_intervals + 1))[:, np.newaxis] +
-               np.arange(self.x0_num_intervals)).ravel()
-        VHR = VHL + 1
-        codim1_subentities = np.array(np.hstack((np.vstack((VVB, VVT)), np.vstack((VHL, VHR)))), dtype=np.int32)
-
+        codim1_subentities = (np.tile(EVL[:, np.newaxis], 4) +
+                              np.array([0, 1, self.x0_num_intervals + 2, self.x0_num_intervals + 1], dtype=np.int32))
         self._subentities = (codim0_subentities, codim1_subentities)
 
 
@@ -97,8 +91,10 @@ class Rect(ISimpleAffineGrid):
 
     def subentities(self, codim=0, subentity_codim=None):
         assert 0 <= codim <= 1, CodimError('Invalid codimension')
-        if subentity_codim is None or subentity_codim == codim + 1:
-            return self._subentities[codim].T
+        if subentity_codim is None:
+            subentity_codim = codim + 1
+        if codim == 0:
+            return self._subentities[subentity_codim - 1]
         else:
             return super(Rect, self).subentities(codim, subentity_codim)
 
