@@ -124,3 +124,12 @@ class BasicInterface(object):
 contract = decorators.contract
 abstractmethod = abc.abstractmethod
 
+import sys
+if sys.version_info >= (3,1,0):
+    abstractclassmethod = abc.abstractclassmethod
+    abstractstaticmethod = abc.abstractstaticmethod
+else:
+    #backport path for issue5867
+    import backports
+    abstractclassmethod = backports.abstractclassmethod
+    abstractstaticmethod = backports.abstractstaticmethod

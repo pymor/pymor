@@ -7,6 +7,7 @@ Created on Fri Nov  9 17:28:14 2012
 
 import contracts
 import warnings
+#import abc.
 
 warn = warnings.warn
 ContractNotRespected = contracts.ContractNotRespected
@@ -19,7 +20,7 @@ class ConstError(Exception):
 
 
 class CodimError(Exception):
-    '''Is raised if an invalid codimension index is unsed.'''
+    '''Is raised if an invalid codimension index is used.'''
     pass
 
 

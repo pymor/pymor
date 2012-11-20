@@ -8,7 +8,8 @@ import logging
 
 from nose.tools import raises
 
-from pymor.core.interfaces import (BasicInterface, contract, abstractmethod, )
+from pymor.core.interfaces import (BasicInterface, contract, abstractmethod, abstractstaticmethod, 
+                                   abstractclassmethod)
 from pymor.core import exceptions
 
 class StupidInterface(BasicInterface):
@@ -65,6 +66,12 @@ class DocImplementer(AverageImplementer):
 class FailImplementer(StupidInterface):
     pass
 
+class StaticImplementer(BasicInterface):
+    
+    @abstractclassmethod
+    def abstract_class_method(cls):
+        pass
+    
 class InterfaceTest(unittest.TestCase):
 
     def setUp(self):
@@ -100,6 +107,12 @@ class InterfaceTest(unittest.TestCase):
         self.assertEqual(imps, StupidInterface.implementor_names(), '')
         self.assertEqual(imps + ['DocImplementer'], StupidInterface.implementor_names(True), '')
         self.assertEqual(['AverageImplementer'], BrilliantInterface.implementor_names(), '')
+        
+    def testAbstractMethods(self):
+        with self.assertRaisesRegexp(TypeError, "Can't instantiate abstract class.*"):
+            inst = FailImplementer()
+        with self.assertRaisesRegexp(TypeError, "Can't instantiate abstract class.*"):
+            inst = StaticImplementer()
             
 
 if __name__ == "__main__":
