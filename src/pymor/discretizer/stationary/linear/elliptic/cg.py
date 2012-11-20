@@ -1,16 +1,10 @@
 #!/usr/bin/env python
 
-# only for name == main
 from __future__ import print_function
-
-# future
 from __future__ import division
-
-# scipy
 import numpy as np
 import scipy.sparse as sparse
 
-# pymor
 from pymor.core import interfaces
 from pymor.core.exceptions import warn, CallOrderWarning
 import pymor.problem.stationary.linear.elliptic.analytical as analyticalproblem
@@ -22,6 +16,7 @@ import pymor.problem.stationary.linear.discrete as discreteproblem
 import pymor.solver.stationary.linear.scalar as solver
 import pymor.discretization.stationary.detailed as discretization
 import pymor.common.discretefunction.continuous as discretefunction
+
 
 class Interface(interfaces.BasicInterface):
 
