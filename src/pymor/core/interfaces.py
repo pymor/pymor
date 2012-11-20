@@ -8,6 +8,7 @@ Created on Wed Oct 31 12:39:53 2012
 
 import abc
 import types
+import itertools
 
 from pymor.core import decorators 
 from pymor.core.exceptions import ConstError
@@ -28,7 +29,7 @@ class UberMeta(abc.ABCMeta):
 
         #all bases except object get the derived class' name appended      
         for base in [b for b in bases if b != object]:
-            derived = cls.__name__
+            derived = cls
             #mangle the name to the base scope
             attribute = '_%s__implementors'%base.__name__
             if hasattr(base, attribute):
@@ -102,9 +103,23 @@ class BasicInterface(object):
         object.__setattr__(self, '_frozen', doit)
 
     @classmethod    
-    def implementors(cls):
-        '''I return my immediate subclasses'''
-        return getattr(cls, '_%s__implementors' % cls.__name__)
+    def implementors(cls, descend=False):
+        '''I return a, potentially empty, list of my subclass-objects. 
+        If descend is True I traverse my entire subclass hierarchy and return a flattened list.
+        '''
+        if not hasattr(cls, '_%s__implementors' % cls.__name__):
+            return []
+        level = getattr(cls, '_%s__implementors' % cls.__name__)       
+        if not descend:
+            return level
+        subtrees = itertools.chain.from_iterable([sub.implementors() for sub in level if sub.implementors() != []]) 
+        level.extend(subtrees)
+        return level
+    
+    @classmethod    
+    def implementor_names(cls, descend=False):
+        '''For convenience I return a list of my implementor names instead of class objects'''
+        return [c.__name__ for c in cls.implementors(descend)]
 
 contract = decorators.contract
 abstractmethod = abc.abstractmethod

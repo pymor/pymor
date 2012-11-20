@@ -96,9 +96,10 @@ class InterfaceTest(unittest.TestCase):
         AverageImplementer().shout('Wheee\n', 6)
         
     def testImplementorlist(self):
-        self.assertEqual(['StupidImplementer', 'AverageImplementer', 'FailImplementer'], 
-                          StupidInterface.implementors(), '')
-        self.assertEqual(['AverageImplementer'], BrilliantInterface.implementors(), '')
+        imps = ['StupidImplementer', 'AverageImplementer', 'FailImplementer']
+        self.assertEqual(imps, StupidInterface.implementor_names(), '')
+        self.assertEqual(imps + ['DocImplementer'], StupidInterface.implementor_names(True), '')
+        self.assertEqual(['AverageImplementer'], BrilliantInterface.implementor_names(), '')
             
 
 if __name__ == "__main__":
