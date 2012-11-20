@@ -1,9 +1,6 @@
 #!/usr/bin/env python
-
-# numpy
 import numpy as np
 
-# pymor
 from pymor.core import interfaces
 
 
