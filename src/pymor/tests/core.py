@@ -3,6 +3,7 @@ Created on Nov 16, 2012
 
 @author: r_milk01
 '''
+from __future__ import print_function
 import unittest
 import logging
 
@@ -11,6 +12,7 @@ from nose.tools import raises
 from pymor.core.interfaces import (BasicInterface, contract, abstractmethod, abstractstaticmethod, 
                                    abstractclassmethod)
 from pymor.core import exceptions
+from pymor.core import timing
 
 class StupidInterface(BasicInterface):
     '''I am a stupid Interface'''
@@ -132,7 +134,28 @@ class InterfaceTest(unittest.TestCase):
         self.assertEqual(inst.abstract_class_method(), 'CompleteImplementer', '')
         self.assertEqual(inst.abstract_static_method(), 0, '')        
 
+class TimingTest(unittest.TestCase):
+    
+    def testTimingContext(self):
+        with timing.Timer('busywait',logging.info) as timer:
+            timing.busywait(1000)
+            
+    @timing.Timer('busywait_decorator', logging.info)
+    def wait(self):
+        timing.busywait(1000)
+            
+    def testTimingDecorator(self):        
+        self.wait()
+        
+    def testTiming(self):
+        timer = timing.Timer('busywait',logging.info)
+        timer.start()
+        timing.busywait(1000)
+        timer.stop()
+        logging.info('plain timing took %s seconds', timer.dt)
+
+        
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     unittest.main()
