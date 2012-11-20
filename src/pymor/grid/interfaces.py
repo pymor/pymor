@@ -305,3 +305,8 @@ class ISimpleAffineGrid(IConformalTopologicalGrid):
                CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, self.codim))
         return np.squeeze(self.reference_element.sub_reference_element(codim).mapped_diameter(self.embeddings(codim)[0]))
 
+    @lru_cache(maxsize=None)
+    def quadrature_points(self, codim=0, order=None, npoints=None, quadrature_type='default'):
+        P, _ = self.reference_element.sub_reference_element(codim).quadrature(order, npoints, quadrature_type)
+        A, B = self.embeddings(codim)
+        return np.einsum('eij,kj->eki', A, P) + B[:, np.newaxis, :]
