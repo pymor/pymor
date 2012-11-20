@@ -212,6 +212,9 @@ class ISimpleReferenceElement(core.BasicInterface):
         else:
             raise NotImplementedError
 
+    def __call__(self, codim):
+        return self.sub_reference_element(codim)
+
     @core.interfaces.abstractmethod
     def unit_outer_normals(self):
         pass
@@ -236,7 +239,11 @@ class ISimpleAffineGrid(IConformalTopologicalGrid):
 
     dim = None
     dim_outer = None
-    reference_element = None
+
+    @core.interfaces.abstractmethod
+    def reference_element(self, codim):
+        assert codim > 0, NotImplementedError
+        return self.reference_element(0).sub_reference_element(codim)
 
     @core.interfaces.abstractmethod
     @lru_cache(maxsize=None)
@@ -255,7 +262,7 @@ class ISimpleAffineGrid(IConformalTopologicalGrid):
         P = self.superentities(codim, 0)[:, 0] # we assume here that superentites() is sorted by global index
         I = self.superentity_indices(codim, 0)[:, 0]
         SE = self.subentities(0, subentity_codim)[P]
-        RSE = self.reference_element.subentities(codim, subentity_codim)[I]
+        RSE = self.reference_element(0).subentities(codim, subentity_codim)[I]
 
         SSE = np.empty_like(RSE)
         for i in xrange(RSE.shape[0]):
@@ -273,7 +280,7 @@ class ISimpleAffineGrid(IConformalTopologicalGrid):
         A0, B0 = self.embeddings(0)
         A0 = A0[E]
         B0 = B0[E]
-        A1, B1 = self.reference_element.subentity_embedding(codim)
+        A1, B1 = self.reference_element(0).subentity_embedding(codim)
         A = np.zeros((E.shape[0], A0.shape[1], A1.shape[2]))
         B = np.zeros((E.shape[0], A0.shape[1]))
         for i in xrange(A1.shape[0]):
@@ -306,7 +313,7 @@ class ISimpleAffineGrid(IConformalTopologicalGrid):
                CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, self.codim))
         if codim == self.dim:
             return np.ones(self.size(self.dim))
-        return self.reference_element.sub_reference_element(codim).volume * self.integration_element(codim)
+        return self.reference_element(codim).volume * self.integration_element(codim)
 
     @lru_cache(maxsize=None)
     def volumes_inverse(self, codim=0):
@@ -316,7 +323,7 @@ class ISimpleAffineGrid(IConformalTopologicalGrid):
     @lru_cache(maxsize=None)
     def unit_outer_normals(self):
         JIT = self.jacobian_inverse_transposed(0)
-        N = np.dot(JIT, self.reference_element.unit_outer_normals().T).swapaxes(1,2)
+        N = np.dot(JIT, self.reference_element(0).unit_outer_normals().T).swapaxes(1,2)
         return N / np.apply_along_axis(np.linalg.norm, 2, N)[:, :, np.newaxis]
 
     @lru_cache(maxsize=None)
@@ -324,17 +331,17 @@ class ISimpleAffineGrid(IConformalTopologicalGrid):
         assert 0 <= codim <= self.dim,\
                CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, self.codim))
         A, B = self.embeddings(codim)
-        C = self.reference_element.sub_reference_element(codim).center()
+        C = self.reference_element(codim).center()
         return np.dot(A, C) + B
 
     @lru_cache(maxsize=None)
     def diameters(self, codim=0):
         assert 0 <= codim <= self.dim,\
                CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, self.codim))
-        return np.squeeze(self.reference_element.sub_reference_element(codim).mapped_diameter(self.embeddings(codim)[0]))
+        return np.squeeze(self.reference_element(codim).mapped_diameter(self.embeddings(codim)[0]))
 
     @lru_cache(maxsize=None)
     def quadrature_points(self, codim=0, order=None, npoints=None, quadrature_type='default'):
-        P, _ = self.reference_element.sub_reference_element(codim).quadrature(order, npoints, quadrature_type)
+        P, _ = self.reference_element(codim).quadrature(order, npoints, quadrature_type)
         A, B = self.embeddings(codim)
         return np.einsum('eij,kj->eki', A, P) + B[:, np.newaxis, :]

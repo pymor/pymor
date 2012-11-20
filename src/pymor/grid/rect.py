@@ -27,12 +27,13 @@ class Rect(ISimpleAffineGrid):
 
     dim = 2
     dim_outer = 2
+    reference_element = square
+
 
     def __init__(self, num_intervals=(2, 2), domain=[[0, 0], [1, 1]]):
         self.num_intervals = num_intervals
         self.domain = np.array(domain)
 
-        self.reference_element = square
         self.x0_num_intervals = num_intervals[0]
         self.x1_num_intervals = num_intervals[1]
         self.x0_range = self.domain[:, 0]

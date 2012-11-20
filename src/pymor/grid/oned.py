@@ -13,6 +13,7 @@ class Oned(ISimpleAffineGrid):
 
     dim = 1
     dim_outer = 1
+    reference_element = line
     id = 'grid.oned'
 
     def __init__(self, interval=np.array((0, 1)), size=4):
