@@ -140,3 +140,71 @@ class IConformalTopologicalGrid(core.BasicInterface):
 
             NB = NB[:NB.shape[0], :NB_COUNTS.max()]
             return NB
+
+
+class ISimpleReferenceElement(core.BasicInterface):
+    '''Defines a reference element with the property that each of its subentities is
+    of the same type. I.e. a three-dimensional reference element cannot have triangles
+    and rectangles as faces at the same time
+    '''
+
+    dim = None
+    volume = None
+
+    @core.interfaces.abstractmethod
+    def size(self, codim=1):
+        'Number of subentites of codimension "codim"'
+
+    @core.interfaces.abstractmethod
+    def subentities(self, codim, subentity_codim):
+        '''subentities(c,sc)[i,j] is - with respect to the indexing inside the
+        reference element  - the index of the i-th "subentity_codim"-codim
+        subentity of the j-th "codim"-codim subentity of the reference element
+        '''
+        pass
+
+    @core.interfaces.abstractmethod
+    @lru_cache(maxsize=None)
+    def subentity_embedding(self, subentity_codim):
+        '''returns a tuple (A, B) which defines the embedding of the "subentity_codim"-
+        subentity with index "index" into the reference element.
+        for subsubentites, the embedding is by default given via its embedding into its
+        lowest index superentity
+        '''
+        if subentity_codim > 1:
+            A = []
+            B = []
+            for i in xrange(self.size(subentity_codim)):
+                P = np.where(self.subentities(1, subentity_codim) == i)
+                parent_index, local_index = P[0][0], P[1][0]
+                A0, B0 = self.subentity_embedding(1)
+                A0 = A0[parent_index]
+                B0 = B0[parent_index]
+                A1, B1 = self.sub_reference_element(1).subentity_embedding(subentity_codim-1)
+                A1 = A1[local_index]
+                B1 = B1[local_index]
+                A.append(np.dot(A0, A1))
+                B.append(np.dot(A0, B1) + B0)
+            return np.array(A), np.array(B)
+        else:
+            raise NotImplementedError
+
+    @core.interfaces.abstractmethod
+    @lru_cache(maxsize=None)
+    def sub_reference_element(self, codim=1):
+        if subentity_codim > 1:
+            return self.sub_reference_element(1).sub_reference_element(codim - 1)
+        else:
+            raise NotImplementedError
+
+    @core.interfaces.abstractmethod
+    def unit_outer_normals():
+        pass
+
+    @core.interfaces.abstractmethod
+    def center():
+        pass
+
+    @core.interfaces.abstractmethod
+    def mapped_diameter(A):
+        pass
