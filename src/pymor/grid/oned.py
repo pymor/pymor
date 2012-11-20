@@ -1,15 +1,9 @@
 #!/usr/bin/env python
 
-# only needed for name == main
 from __future__ import print_function
-
-# future
 from __future__ import division
-
-# numpy
 import numpy as np
 
-# pymor
 from pymor.core.exceptions import CodimError
 from pymor.grid.interfaces import ISimpleAffineGrid
 from .referenceelements import line
@@ -39,12 +33,9 @@ class Oned(ISimpleAffineGrid):
                          vertices=self.size(1))
 
     def size(self, codim=0):
-        if codim == 0:
-            return self._size
-        elif codim == 1:
-            return self._size + 1
-        else:
-            raise CodimError('codim has to be between 0 and ' + self.dim + '!')
+        if 0 <= codim <= 1:
+            return self._size + codim
+        raise CodimError('codim has to be between 0 and ' + self.dim + '!')
 
     def subentities(self, codim=0, subentity_codim=None):
         assert codim == 0, CodimError('Invalid codimension')
