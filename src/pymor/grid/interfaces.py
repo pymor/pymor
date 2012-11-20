@@ -213,15 +213,15 @@ class ISimpleReferenceElement(core.BasicInterface):
             raise NotImplementedError
 
     @core.interfaces.abstractmethod
-    def unit_outer_normals():
+    def unit_outer_normals(self):
         pass
 
     @core.interfaces.abstractmethod
-    def center():
+    def center(self):
         pass
 
     @core.interfaces.abstractmethod
-    def mapped_diameter(A):
+    def mapped_diameter(self, A):
         pass
 
 
