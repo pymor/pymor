@@ -13,7 +13,9 @@ except ImportError:
 import pymor.core as core
 from pymor.core.exceptions import CodimError
 
-class IGrid(core.BasicInterface):
+
+
+class IConformalTopologicalGrid(core.BasicInterface):
     '''Base interface for all grids. This is an incomplete prepreliminary version.
     Until now, only the toplogy part of the interface is specified in here.
 

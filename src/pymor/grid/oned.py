@@ -11,10 +11,10 @@ import numpy as np
 
 # pymor
 from pymor.core.exceptions import CodimError
-from interfaces import IGrid as Interface
+from pymor.grid.interfaces import IConformalTopologicalGrid
 
 
-class Oned(Interface):
+class Oned(IConformalTopologicalGrid):
 
     dim = 1
     id = 'grid.oned'

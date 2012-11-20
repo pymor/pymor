@@ -4,10 +4,10 @@ import math as m
 import numpy as np
 
 from pymor.core.exceptions import CodimError
-from interfaces import IGrid
+from .interfaces import IConformalTopologicalGrid
 
 
-class Rect(IGrid):
+class Rect(IConformalTopologicalGrid):
     '''Ad-hoc implementation of a rectangular grid.
 
     The global face, edge and vertex indices are given as follows
