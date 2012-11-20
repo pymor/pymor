@@ -224,6 +224,13 @@ class ISimpleReferenceElement(core.BasicInterface):
     def mapped_diameter(self, A):
         pass
 
+    @core.interfaces.abstractmethod
+    def quadrature(order=None, npoints=None, quadrature_type='default'):
+        '''returns tuple (P, W) where P is an array of quadrature points with corresponding weights W for
+        the given integration order "order" or with "npoints" integration points
+        '''
+        pass
+
 
 class ISimpleAffineGrid(IConformalTopologicalGrid):
 

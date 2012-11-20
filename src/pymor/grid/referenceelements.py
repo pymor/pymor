@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import numpy as np
 from pymor.core.exceptions import CodimError
+from pymor.common.quadratures import Gauss
 from .interfaces import ISimpleReferenceElement
 
 
@@ -35,6 +36,13 @@ class Point(ISimpleReferenceElement):
 
     def mapped_diameter(self, A):
         return np.ones(A.shape[:-2])
+
+    def quadrature(self, order=None, npoints=None, quadrature_type='default'):
+        if quadrature_type == 'default' or quadrature_type == 'gauss':
+            assert npoints is None or npoints == 1, ValueError('there is only one point in dimension 0!')
+            return np.zeros((1,0)), np.ones(1)
+        else:
+            raise NotImplementedError('quadrature_type must be "default" or "gauss"')
 
 point = Point()
 
@@ -84,6 +92,13 @@ class Line(ISimpleReferenceElement):
     def mapped_diameter(self, A):
         return np.apply_along_axis(np.linalg.norm, -2, A)
 
+    def quadrature(self, order=None, npoints=None, quadrature_type='default'):
+        if quadrature_type == 'default' or quadrature_type == 'gauss':
+            P, W = Gauss.quadrature(order, npoints)
+            return P[:, np.newaxis], W
+        else:
+            raise NotImplementedError('quadrature_type must be "default" or "gauss"')
+
 line = Line()
 
 
@@ -91,6 +106,19 @@ class Square(ISimpleReferenceElement):
 
     dim = 2
     volume = 1
+
+    def __init__(self):
+        def tensor_points(P):
+            PP0, PP1 = np.array(np.meshgrid(P, P))
+            return np.array((PP0.ravel(), PP1.ravel())).T
+
+        def tensor_weights(W):
+            return np.dot(W[:,np.newaxis], W[np.newaxis, :]).ravel()
+        self._quadrature_points  = [tensor_points(Gauss.quadrature(npoints=p+1)[0])  for p in xrange(Gauss.maxpoints())]
+        self._quadrature_weights = [tensor_weights(Gauss.quadrature(npoints=p+1)[1]) for p in xrange(Gauss.maxpoints())]
+        self._quadrature_npoints = np.arange(1, Gauss.maxpoints() + 1) ** 2
+        self._quadrature_orders  = Gauss.orders
+        self._quadrature_order_map = Gauss.order_map
 
     def size(self, codim=1):
         assert 0 <= codim <= 2, CodimError('Invalid codimension (must be between 0 and 2 but was {})'.format(codim))
@@ -150,6 +178,20 @@ class Square(ISimpleReferenceElement):
         VN0 = np.apply_along_axis(np.linalg.norm, -1, V0)
         VN1 = np.apply_along_axis(np.linalg.norm, -1, V1)
         return np.max((VN0, VN1), axis=0)
+
+    def quadrature(self, order=None, npoints=None, quadrature_type='default'):
+        if quadrature_type == 'default' or quadrature_type == 'tensored_gauss':
+            assert order is not None or npoints is not None, ValueError('must specify "order" or "npoints"')
+            assert order is None or npoints is None, ValueError('cannot specify "order" and "npoints"')
+            if order is not None:
+                assert 0 <= order <= self._quadrature_order_map.size - 1, ValueError('order {} not implmented'.format(order))
+                p = self._quadrature_order_map[order]
+            else:
+                assert npoints in self._quadrature_npoints, ValueError('not implemented with {} points'.format(npoints))
+                p = np.where(self._quadrature_npoints == npoints)[0]
+            return self._quadrature_points[p], self._quadrature_weights[p]
+        else:
+            raise NotImplementedError('quadrature_type must be "default" or "tensored_gauss"')
 
 
 
