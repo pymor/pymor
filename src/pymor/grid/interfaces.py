@@ -296,5 +296,5 @@ class ISimpleAffineGrid(IConformalTopologicalGrid):
     def diameters(self, codim=0):
         assert 0 <= codim <= self.dim,\
                CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, self.codim))
-        return self.reference_element.sub_reference_element(codim).mapped_diameter(self.embeddings(codim)[0])
+        return np.squeeze(self.reference_element.sub_reference_element(codim).mapped_diameter(self.embeddings(codim)[0]))
 

@@ -64,7 +64,7 @@ class Line(ISimpleReferenceElement):
         assert 0 <= subentity_codim <= 1,\
                CodimError('Invalid codimension (must be 0 or 1 but was {})'.format(subentity_codim))
         if subentity_codim == 0:
-            return np.array([1.]), np.array([0.])
+            return np.ones((1,1,1)), np.zeros((1,1,1))
         else:
             return np.array((np.zeros((1,0)), np.zeros((1,0)))), np.array(([0.], [1.]))
 
@@ -76,7 +76,7 @@ class Line(ISimpleReferenceElement):
             return point
 
     def unit_outer_normals(self):
-        return np.array([-1.], [1.])
+        return np.array(([-1.], [1.]))
 
     def center(self):
         return np.array([0.5])
