@@ -91,6 +91,21 @@ class IConformalTopologicalGrid(core.BasicInterface):
 
         return SPE
 
+    def superentity_indices(self, codim, superentity_codim=None):
+        assert 0 < codim <= self.dim, CodimError('Invalid codimension')
+        if superentity_codim is None:
+            superentity_codim = codim - 1
+        E = self.subentities(superentity_codim, codim)
+        SE = self.superentities(codim, superentity_codim)
+        SEI = np.empty_like(SE)
+        SEI.fill(-1)
+
+        for index, e in np.ndenumerate(SE):
+            if e >= 0:
+                SEI[index] = np.where(E[e] == index[0])[0]
+
+        return SEI
+
     @lru_cache(maxsize=None)
     def neighbours(self, codim=0, neighbour_codim=0, intersection_codim=None):
         '''retval[e,s] is the global index of the n-th codim-"neighbour_codim"
