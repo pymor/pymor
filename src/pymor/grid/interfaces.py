@@ -223,3 +223,78 @@ class ISimpleReferenceElement(core.BasicInterface):
     @core.interfaces.abstractmethod
     def mapped_diameter(A):
         pass
+
+
+class ISimpleAffineGrid(IConformalTopologicalGrid):
+
+    reference_element = None
+
+    @core.interfaces.abstractmethod
+    @lru_cache(maxsize=None)
+    def embeddings(self, codim=0):
+        assert codim > 0, NotImplemented
+        E = self.superentities(codim, 0)[:, 0]
+        I = self.superentity_indices(codim, 0)[:,0]
+        A0, B0 = self.embeddings(0)
+        A0 = A0[E]
+        B0 = B0[E]
+        A1, B1 = self.reference_element.subentity_embedding(codim)
+        A = np.zeros((E.shape[0], A0.shape[1], A1.shape[2]))
+        B = np.zeros((E.shape[0], A0.shape[1]))
+        for i in xrange(A1.shape[0]):
+            INDS = np.where(I == i)[0]
+            A[INDS] = np.dot(A0[INDS], A1[i])
+            B[INDS] = np.dot(A0[INDS], B1[i]) + B0[INDS]
+        return A, B
+
+    @lru_cache(maxsize=None)
+    def jacobian_inverse_transposed(self, codim=0):
+        assert 0 <= codim <= self.dim,\
+               CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, self.codim))
+        J = self.embeddings(codim)[0]
+        JIT = np.array(map(np.linalg.pinv, J)).swapaxes(1, 2)
+        return JIT
+
+    @lru_cache(maxsize=None)
+    def integration_element(self, codim=0):
+        assert 0 <= codim <= self.dim,\
+               CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, self.codim))
+        J = self.embeddings(codim)[0]
+        def f(A):
+            return np.linalg.det(np.dot(A.T, A))
+        V = np.array(map(f, J))
+        return np.sqrt(V)
+
+    @lru_cache(maxsize=None)
+    def volumes(self, codim=0):
+        assert 0 <= codim <= self.dim,\
+               CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, self.codim))
+        if codim == self.dim:
+            return np.ones(self.size(self.dim))
+        return self.reference_element.sub_reference_element(codim).volume * self.integration_element(codim)
+
+    @lru_cache(maxsize=None)
+    def volumes_inverse(self, codim=0):
+        return np.reciprocal(self.volumes(codim))
+
+
+    @lru_cache(maxsize=None)
+    def unit_outer_normals(self):
+        JIT = self.jacobian_inverse_transposed(0)
+        N = np.dot(JIT, self.reference_element.unit_outer_normals().T).swapaxes(1,2)
+        return N / np.apply_along_axis(np.linalg.norm, 2, N)[:, :, np.newaxis]
+
+    @lru_cache(maxsize=None)
+    def centers(self, codim=0):
+        assert 0 <= codim <= self.dim,\
+               CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, self.codim))
+        A, B = self.embeddings(codim)
+        C = self.reference_element.sub_reference_element(codim).center()
+        return np.dot(A, C) + B
+
+    @lru_cache(maxsize=None)
+    def diameters(self, codim=0):
+        assert 0 <= codim <= self.dim,\
+               CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, self.codim))
+        return self.reference_element.sub_reference_element(codim).mapped_diameter(self.embeddings(codim)[0])
+
