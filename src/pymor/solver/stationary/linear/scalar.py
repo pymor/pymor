@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # scipy
-from scipy.sparse.linalg import bicgstab
+from scipy.sparse.linalg import cg as la_solver
 
 # pymor
 from pymor.core import interfaces
@@ -30,5 +30,8 @@ class Scipy(Interface):
         assert operator.size[1] == functional.size
         system_matrix = operator.matrix
         right_hand_side = functional.vector
-        result = bicgstab(system_matrix, right_hand_side)
+        result = la_solver(system_matrix,
+                           right_hand_side,
+                           tol=1.e-12,
+                           maxiter=10000)
         return result[0]
