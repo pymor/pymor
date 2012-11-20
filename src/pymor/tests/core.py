@@ -65,13 +65,8 @@ class DocImplementer(AverageImplementer):
 
 class FailImplementer(StupidInterface):
     pass
-
-class StaticImplementer(BasicInterface):
-    
-    @abstractclassmethod
-    def abstract_class_method(cls):
-        pass
-    
+       
+        
 class InterfaceTest(unittest.TestCase):
 
     def setUp(self):
@@ -109,11 +104,33 @@ class InterfaceTest(unittest.TestCase):
         self.assertEqual(['AverageImplementer'], BrilliantInterface.implementor_names(), '')
         
     def testAbstractMethods(self):
+        class ClassImplementer(BasicInterface):
+    
+            @abstractclassmethod
+            def abstract_class_method(cls):
+                pass
+    
+        class StaticImplementer(BasicInterface):
+            
+            @abstractstaticmethod
+            def abstract_static_method():
+                pass
+        
+        class CompleteImplementer(ClassImplementer, StaticImplementer):
+            def abstract_class_method(cls):
+                return cls.__name__
+            def abstract_static_method():
+                return 0
+            
         with self.assertRaisesRegexp(TypeError, "Can't instantiate abstract class.*"):
             inst = FailImplementer()
         with self.assertRaisesRegexp(TypeError, "Can't instantiate abstract class.*"):
+            inst = ClassImplementer()
+        with self.assertRaisesRegexp(TypeError, "Can't instantiate abstract class.*"):
             inst = StaticImplementer()
-            
+        inst = CompleteImplementer()
+        self.assertEqual(inst.abstract_class_method(), 'CompleteImplementer', '')
+        self.assertEqual(inst.abstract_static_method(), 0, '')        
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

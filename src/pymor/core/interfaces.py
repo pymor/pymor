@@ -39,7 +39,10 @@ class UberMeta(abc.ABCMeta):
         super(UberMeta, cls).__init__(name, bases, namespace)
 
     def __new__(cls,classname,bases,classdict):
-        '''I copy contract decorations and docstrings from base class methods to deriving classes'''
+        '''I copy contract decorations and docstrings from base class methods to deriving classes.
+        I also forward "abstract{class|static}method" decorations in the base class to "{class|static}method" 
+        decorations in the new subclass. 
+        '''
         for attr,item in classdict.items():
             if isinstance(item, types.FunctionType):
                 #first copy docs
@@ -67,6 +70,11 @@ class UberMeta(abc.ABCMeta):
                         contract_kwargs = contract_kwargs or dict()
                         p = decorators.contracts_decorate(item,modify_docstring=True,**contract_kwargs) # replace method by wrapper
                         classdict[attr] = p
+                    if hasattr(base_func, "__isabstractstaticmethod__") and getattr(base_func, "__isabstractstaticmethod__"):
+                        classdict[attr] = staticmethod(classdict[attr])
+                    if hasattr(base_func, "__isabstractclassmethod__") and getattr(base_func, "__isabstractclassmethod__"):
+                        classdict[attr] = classmethod(classdict[attr])
+                        
 
 
         return super(UberMeta, cls).__new__(cls, classname, bases, classdict)
@@ -126,10 +134,30 @@ abstractmethod = abc.abstractmethod
 
 import sys
 if sys.version_info >= (3,1,0):
-    abstractclassmethod = abc.abstractclassmethod
-    abstractstaticmethod = abc.abstractstaticmethod
+    abstractclassmethod_base = abc.abstractclassmethod
+    abstractstaticmethod_base = abc.abstractstaticmethod
 else:
     #backport path for issue5867
     import backports
-    abstractclassmethod = backports.abstractclassmethod
-    abstractstaticmethod = backports.abstractstaticmethod
+    abstractclassmethod_base = backports.abstractclassmethod
+    abstractstaticmethod_base = backports.abstractstaticmethod
+    
+    
+class abstractclassmethod(abstractclassmethod_base):
+    '''I mark my wrapped function with an additional __isabstractclassmethod__ member,
+    where my abstractclassmethod_base sets __isabstractmethod__ = True.
+    '''
+    
+    def __init__(self, callable):
+        callable.__isabstractclassmethod__ = True
+        super(abstractclassmethod, self).__init__(callable)
+
+
+class abstractstaticmethod(abstractstaticmethod_base):
+    '''I mark my wrapped function with an additional __isabstractstaticmethod__ member,
+    where my abstractclassmethod_base sets __isabstractmethod__ = True.
+    '''
+    
+    def __init__(self, callable):
+        callable.__isabstractstaticmethod__ = True
+        super(abstractstaticmethod, self).__init__(callable)
