@@ -26,6 +26,7 @@ class Rect(ISimpleAffineGrid):
     '''
 
     dim = 2
+    dim_outer = 2
 
     def __init__(self, num_intervals=(2, 2), domain=[[0, 0], [1, 1]]):
         self.num_intervals = num_intervals
@@ -122,16 +123,6 @@ class Rect(ISimpleAffineGrid):
     #def center_distances(self):
      #   raise NotImplementedError
 
-    #def jacobian_inverse_transposed(self):
-     #   raise NotImplementedError
-
-    #def quadrature_points(self, codim=0, order=0):
-       # assert 0 <= codim <= 1, CodimError('Invalid codimension')
-       # raise NotImplementedError
-
-    #def quadrature_weights(self, codim=0, order=0):
-       # assert 0 <= codim <= 1, CodimError('Invalid codimension')
-       # raise NotImplementedError
 
     #def S(self):
         #'''to be renamed'''

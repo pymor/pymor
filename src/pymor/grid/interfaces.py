@@ -173,8 +173,8 @@ class ISimpleReferenceElement(core.BasicInterface):
     @core.interfaces.abstractmethod
     def subentities(self, codim, subentity_codim):
         '''subentities(c,sc)[i,j] is - with respect to the indexing inside the
-        reference element  - the index of the i-th "subentity_codim"-codim
-        subentity of the j-th "codim"-codim subentity of the reference element
+        reference element  - the index of the j-th "subentity_codim"-codim
+        subentity of the i-th "codim"-codim subentity of the reference element
         '''
         pass
 
@@ -234,6 +234,8 @@ class ISimpleReferenceElement(core.BasicInterface):
 
 class ISimpleAffineGrid(IConformalTopologicalGrid):
 
+    dim = None
+    dim_outer = None
     reference_element = None
 
     @core.interfaces.abstractmethod
