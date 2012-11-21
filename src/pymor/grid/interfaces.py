@@ -4,7 +4,7 @@ import pymor.core as core
 from .defaultimpl import *
 
 
-class IConformalTopologicalGrid(core.BasicInterface, IConformalTopologicalGridDefaultImplementation):
+class IConformalTopologicalGrid(IConformalTopologicalGridDefaultImplementation, core.BasicInterface):
     '''Base interface for all grids. This is an incomplete prepreliminary version.
     Until now, only the toplogy part of the interface is specified in here.
 
@@ -63,7 +63,7 @@ class IConformalTopologicalGrid(core.BasicInterface, IConformalTopologicalGridDe
         return self._neighbours(codim, neighbour_codim, intersection_codim)
 
 
-class ISimpleReferenceElement(core.BasicInterface, ISimpleReferenceElementDefaultImplementation):
+class ISimpleReferenceElement(ISimpleReferenceElementDefaultImplementation, core.BasicInterface):
     '''Defines a reference element with the property that each of its subentities is
     of the same type. I.e. a three-dimensional reference element cannot have triangles
     and rectangles as faces at the same time
@@ -120,7 +120,7 @@ class ISimpleReferenceElement(core.BasicInterface, ISimpleReferenceElementDefaul
         pass
 
 
-class ISimpleAffineGrid(IConformalTopologicalGrid, ISimpleAffineGridDefaultImplementation):
+class ISimpleAffineGrid(ISimpleAffineGridDefaultImplementation, IConformalTopologicalGrid):
 
     dim = None
     dim_outer = None
