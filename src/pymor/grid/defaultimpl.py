@@ -10,9 +10,7 @@ try:
 except ImportError:
     from functools32 import lru_cache
 
-import pymor.core as core
 from pymor.core.exceptions import CodimError
-
 
 
 class IConformalTopologicalGridDefaultImplementation():
@@ -127,7 +125,7 @@ class ISimpleReferenceElementDefaultImplementation():
                 A0, B0 = self.subentity_embedding(1)
                 A0 = A0[parent_index]
                 B0 = B0[parent_index]
-                A1, B1 = self.sub_reference_element(1).subentity_embedding(subentity_codim-1)
+                A1, B1 = self.sub_reference_element(1).subentity_embedding(subentity_codim - 1)
                 A1 = A1[local_index]
                 B1 = B1[local_index]
                 A.append(np.dot(A0, A1))
@@ -138,7 +136,7 @@ class ISimpleReferenceElementDefaultImplementation():
 
     @lru_cache(maxsize=None)
     def _sub_reference_element(self, codim):
-        if subentity_codim > 1:
+        if codim > 1:
             return self.sub_reference_element(1).sub_reference_element(codim - 1)
         else:
             raise NotImplementedError
@@ -150,7 +148,7 @@ class ISimpleAffineGridDefaultImplementation():
     def _subentities(self, codim, subentity_codim):
         assert 0 <= codim < self.dim, CodimError('Invalid codimension')
         assert 0 < codim, NotImplementedError
-        P = self.superentities(codim, 0)[:, 0] # we assume here that superentites() is sorted by global index
+        P = self.superentities(codim, 0)[:, 0]  # we assume here that superentites() is sorted by global index
         I = self.superentity_indices(codim, 0)[:, 0]
         SE = self.subentities(0, subentity_codim)[P]
         RSE = self.reference_element(0).subentities(codim, subentity_codim)[I]
@@ -161,12 +159,11 @@ class ISimpleAffineGridDefaultImplementation():
 
         return SSE
 
-
     @lru_cache(maxsize=None)
     def _embeddings(self, codim=0):
         assert codim > 0, NotImplemented
         E = self.superentities(codim, 0)[:, 0]
-        I = self.superentity_indices(codim, 0)[:,0]
+        I = self.superentity_indices(codim, 0)[:, 0]
         A0, B0 = self.embeddings(0)
         A0 = A0[E]
         B0 = B0[E]
@@ -182,7 +179,7 @@ class ISimpleAffineGridDefaultImplementation():
     @lru_cache(maxsize=None)
     def _jacobian_inverse_transposed(self, codim):
         assert 0 <= codim <= self.dim,\
-               CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
+            CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
         J = self.embeddings(codim)[0]
         JIT = np.array(map(np.linalg.pinv, J)).swapaxes(1, 2)
         return JIT
@@ -190,17 +187,19 @@ class ISimpleAffineGridDefaultImplementation():
     @lru_cache(maxsize=None)
     def _integration_element(self, codim):
         assert 0 <= codim <= self.dim,\
-               CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
+            CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
         J = self.embeddings(codim)[0]
+
         def f(A):
             return np.linalg.det(np.dot(A.T, A))
+
         V = np.array(map(f, J))
         return np.sqrt(V)
 
     @lru_cache(maxsize=None)
     def _volumes(self, codim):
         assert 0 <= codim <= self.dim,\
-               CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
+            CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
         if codim == self.dim:
             return np.ones(self.size(self.dim))
         return self.reference_element(codim).volume * self.integration_element(codim)
@@ -209,17 +208,16 @@ class ISimpleAffineGridDefaultImplementation():
     def _volumes_inverse(self, codim):
         return np.reciprocal(self.volumes(codim))
 
-
     @lru_cache(maxsize=None)
     def _unit_outer_normals(self):
         JIT = self.jacobian_inverse_transposed(0)
-        N = np.dot(JIT, self.reference_element(0).unit_outer_normals().T).swapaxes(1,2)
+        N = np.dot(JIT, self.reference_element(0).unit_outer_normals().T).swapaxes(1, 2)
         return N / np.apply_along_axis(np.linalg.norm, 2, N)[:, :, np.newaxis]
 
     @lru_cache(maxsize=None)
     def _centers(self, codim):
         assert 0 <= codim <= self.dim,\
-               CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
+            CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
         A, B = self.embeddings(codim)
         C = self.reference_element(codim).center()
         return np.dot(A, C) + B
@@ -227,7 +225,7 @@ class ISimpleAffineGridDefaultImplementation():
     @lru_cache(maxsize=None)
     def _diameters(self, codim):
         assert 0 <= codim <= self.dim,\
-               CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
+            CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
         return np.squeeze(self.reference_element(codim).mapped_diameter(self.embeddings(codim)[0]))
 
     @lru_cache(maxsize=None)

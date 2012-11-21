@@ -1,6 +1,5 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import math as m
 import numpy as np
 
 from pymor.core.exceptions import CodimError
@@ -29,7 +28,6 @@ class Rect(ISimpleAffineGrid):
     dim_outer = 2
     reference_element = square
 
-
     def __init__(self, num_intervals=(2, 2), domain=[[0, 0], [1, 1]]):
         self.num_intervals = num_intervals
         self.domain = np.array(domain)
@@ -46,12 +44,11 @@ class Rect(ISimpleAffineGrid):
         self.diameter_min = min(self.x0_diameter, self.x1_diameter)
         n_elements = self.x0_num_intervals * self.x1_num_intervals
 
-
         # TOPOLOGY
         self.__sizes = (n_elements,
-                        (  (self.x0_num_intervals + 1) * self.x1_num_intervals +
-                          (self.x1_num_intervals + 1) * self.x0_num_intervals   ),
-                        (self.x0_num_intervals + 1) * (self.x1_num_intervals + 1) )
+                        ((self.x0_num_intervals + 1) * self.x1_num_intervals +
+                         (self.x1_num_intervals + 1) * self.x0_num_intervals),
+                        (self.x0_num_intervals + 1) * (self.x1_num_intervals + 1))
 
         # calculate subentities -- codim-0
         EVL = ((np.arange(self.x1_num_intervals, dtype=np.int32) * (self.x0_num_intervals + 1))[:, np.newaxis] +
@@ -66,7 +63,6 @@ class Rect(ISimpleAffineGrid):
                               np.array([0, 1, self.x0_num_intervals + 2, self.x0_num_intervals + 1], dtype=np.int32))
         self.__subentities = (codim0_subentities, codim1_subentities)
 
-
         # GEOMETRY
 
         # embeddings
@@ -76,7 +72,6 @@ class Rect(ISimpleAffineGrid):
         A = np.tile(np.diag([self.x0_diameter, self.x1_diameter]), (n_elements, 1, 1))
         B = shifts.T
         self.__embeddings = (A, B)
-
 
     def __str__(self):
         return ('Rect-Grid on domain [{xmin},{xmax}] x [{ymin},{ymax}]\n' +
@@ -142,6 +137,6 @@ class Rect(ISimpleAffineGrid):
         #pass
 
 if __name__ == '__main__':
-    g = Rect(num_intervals=(120,60), domain=[[0,0],[2,1]])
-    X = np.sin(2*np.pi*g.centers(0)[:,0])*np.sin(2*np.pi*g.centers(0)[:,1])
+    g = Rect(num_intervals=(120, 60), domain=[[0, 0], [2, 1]])
+    X = np.sin(2 * np.pi * g.centers(0)[:, 0]) * np.sin(2 * np.pi * g.centers(0)[:, 1])
     g.visualize(X)

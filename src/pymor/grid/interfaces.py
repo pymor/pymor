@@ -1,11 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import numpy as np
-
 import pymor.core as core
-from pymor.core.exceptions import CodimError
 from .defaultimpl import *
-
 
 
 class IConformalTopologicalGrid(core.BasicInterface, IConformalTopologicalGridDefaultImplementation):
@@ -151,7 +147,6 @@ class ISimpleAffineGrid(IConformalTopologicalGrid, ISimpleAffineGridDefaultImple
         is also the embedding return by embeddings(codim)
         '''
         return self._subentities(codim, subentity_codim)
-
 
     @core.interfaces.abstractmethod
     def embeddings(self, codim):
