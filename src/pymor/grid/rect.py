@@ -109,7 +109,7 @@ class Rect(ISimpleAffineGrid):
     def visualize(self, dofs):
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
-        assert dofs.size == self.size(), ValueError('DOF-vector has the wrong size')
+        assert dofs.size == self.size(0), ValueError('DOF-vector has the wrong size')
         im = plt.imshow(dofs.reshape((self.x1_num_intervals, self.x0_num_intervals)), cmap=cm.jet,
                         aspect=self.x1_diameter / self.x0_diameter, extent=self.domain.T.ravel(),
                         interpolation='none')

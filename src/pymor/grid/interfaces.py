@@ -22,12 +22,12 @@ class IConformalTopologicalGrid(core.BasicInterface, IConformalTopologicalGridDe
     '''
 
     @core.interfaces.abstractmethod
-    def size(self, codim=0):
+    def size(self, codim):
         '''size(codim) is the number of entities in the grid of codimension codim'''
         pass
 
     @core.interfaces.abstractmethod
-    def subentities(self, codim=0, subentity_codim=None):
+    def subentities(self, codim, subentity_codim=None):
         '''retval[e,s] is the global index of the s-th codim-"subentity_codim"
         subentity of the codim-"codim" entity with global index e.
 
@@ -52,7 +52,7 @@ class IConformalTopologicalGrid(core.BasicInterface, IConformalTopologicalGridDe
     def superentity_indices(self, codim, superentity_codim=None):
         return self._superentity_indices(codim, superentity_codim)
 
-    def neighbours(self, codim=0, neighbour_codim=0, intersection_codim=None):
+    def neighbours(self, codim, neighbour_codim, intersection_codim=None):
         '''retval[e,s] is the global index of the n-th codim-"neighbour_codim"
         entitiy of the codim-"codim" entity with global index e that shares
         with it an intersection of codimension "intersection_codim".
@@ -77,7 +77,7 @@ class ISimpleReferenceElement(core.BasicInterface, ISimpleReferenceElementDefaul
     volume = None
 
     @core.interfaces.abstractmethod
-    def size(self, codim=1):
+    def size(self, codim):
         'Number of subentites of codimension "codim"'
 
     @core.interfaces.abstractmethod
@@ -98,7 +98,7 @@ class ISimpleReferenceElement(core.BasicInterface, ISimpleReferenceElementDefaul
         return self._subentity_embedding(subentity_codim)
 
     @core.interfaces.abstractmethod
-    def sub_reference_element(self, codim=1):
+    def sub_reference_element(self, codim):
         return self._sub_reference_element(codim)
 
     def __call__(self, codim):
@@ -134,7 +134,7 @@ class ISimpleAffineGrid(IConformalTopologicalGrid, ISimpleAffineGridDefaultImple
         pass
 
     @core.interfaces.abstractmethod
-    def subentities(self, codim=0, subentity_codim=None):
+    def subentities(self, codim, subentity_codim=None):
         '''retval[e,s] is the global index of the s-th codim-"subentity_codim"
         subentity of the codim-"codim" entity with global index e.
 
@@ -154,29 +154,29 @@ class ISimpleAffineGrid(IConformalTopologicalGrid, ISimpleAffineGridDefaultImple
 
 
     @core.interfaces.abstractmethod
-    def embeddings(self, codim=0):
+    def embeddings(self, codim):
         return self._embeddings(codim)
 
-    def jacobian_inverse_transposed(self, codim=0):
+    def jacobian_inverse_transposed(self, codim):
         return self._jacobian_inverse_transposed(codim)
 
-    def integration_element(self, codim=0):
+    def integration_element(self, codim):
         return self._integration_element(codim)
 
-    def volumes(self, codim=0):
+    def volumes(self, codim):
         return self._volumes(codim)
 
-    def volumes_inverse(self, codim=0):
+    def volumes_inverse(self, codim):
         return self._volumes_inverse(codim)
 
     def unit_outer_normals(self):
         return self._unit_outer_normals()
 
-    def centers(self, codim=0):
+    def centers(self, codim):
         return self._centers(codim)
 
-    def diameters(self, codim=0):
+    def diameters(self, codim):
         return self._diameters(codim)
 
-    def quadrature_points(self, codim=0, order=None, npoints=None, quadrature_type='default'):
+    def quadrature_points(self, codim, order=None, npoints=None, quadrature_type='default'):
         return self._quadrature_points(codim, order, npoints, quadrature_type)
