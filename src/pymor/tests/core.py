@@ -20,9 +20,16 @@ class StupidInterface(BasicInterface):
     @contract
     @abstractmethod
     def shout(self, phrase, repeat):
-        """
+        """ I repeatedly print a phrase.
+        
+        :param phrase: what I'm supposed to shout
+        :param repeat: how often I'm shouting phrase
         :type phrase: str
         :type repeat: int,>0
+        
+        .. seealso:: blabla
+        .. warning:: blabla
+        .. note:: blabla
         """
         pass
 
