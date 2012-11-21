@@ -48,10 +48,10 @@ class Rect(ISimpleAffineGrid):
 
 
         # TOPOLOGY
-        self._sizes = (n_elements,
-                       (  (self.x0_num_intervals + 1) * self.x1_num_intervals +
+        self.__sizes = (n_elements,
+                        (  (self.x0_num_intervals + 1) * self.x1_num_intervals +
                           (self.x1_num_intervals + 1) * self.x0_num_intervals   ),
-                       (self.x0_num_intervals + 1) * (self.x1_num_intervals + 1) )
+                        (self.x0_num_intervals + 1) * (self.x1_num_intervals + 1) )
 
         # calculate subentities -- codim-0
         EVL = ((np.arange(self.x1_num_intervals, dtype=np.int32) * (self.x0_num_intervals + 1))[:, np.newaxis] +
@@ -64,7 +64,7 @@ class Rect(ISimpleAffineGrid):
         # calculate subentities -- codim-1
         codim1_subentities = (np.tile(EVL[:, np.newaxis], 4) +
                               np.array([0, 1, self.x0_num_intervals + 2, self.x0_num_intervals + 1], dtype=np.int32))
-        self._subentities = (codim0_subentities, codim1_subentities)
+        self.__subentities = (codim0_subentities, codim1_subentities)
 
 
         # GEOMETRY
@@ -75,7 +75,7 @@ class Rect(ISimpleAffineGrid):
         shifts = np.array(np.meshgrid(x0_shifts, x1_shifts)).reshape((2, -1))
         A = np.tile(np.diag([self.x0_diameter, self.x1_diameter]), (n_elements, 1, 1))
         B = shifts.T
-        self._embeddings = (A, B)
+        self.__embeddings = (A, B)
 
 
     def __str__(self):
@@ -89,20 +89,20 @@ class Rect(ISimpleAffineGrid):
 
     def size(self, codim=0):
         assert 0 <= codim <= 2, CodimError('Invalid codimension')
-        return self._sizes[codim]
+        return self.__sizes[codim]
 
     def subentities(self, codim=0, subentity_codim=None):
         assert 0 <= codim <= 1, CodimError('Invalid codimension')
         if subentity_codim is None:
             subentity_codim = codim + 1
         if codim == 0:
-            return self._subentities[subentity_codim - 1]
+            return self.__subentities[subentity_codim - 1]
         else:
             return super(Rect, self).subentities(codim, subentity_codim)
 
     def embeddings(self, codim=0):
         if codim == 0:
-            return self._embeddings
+            return self.__embeddings
         else:
             return super(Rect, self).embeddings(codim)
 
@@ -143,5 +143,5 @@ class Rect(ISimpleAffineGrid):
 
 if __name__ == '__main__':
     g = Rect(num_intervals=(120,60), domain=[[0,0],[2,1]])
-    X = np.sin(2*np.pi*g.centers()[0,:])*np.sin(2*np.pi*g.centers()[1,:])
+    X = np.sin(2*np.pi*g.centers(0)[0,:])*np.sin(2*np.pi*g.centers(0)[1,:])
     g.visualize(X)

@@ -21,9 +21,9 @@ class Oned(ISimpleAffineGrid):
         self._interval = interval
         self._size = size
         self._width = np.abs(self._interval[1] - self._interval[0]) / self._size
-        self._subentities = np.vstack((np.arange(self._size), np.arange(self._size) + 1))
-        self._A = np.ones(self._size)[:, np.newaxis, np.newaxis] * self._width
-        self._B = (self._interval[0] + self._width * (np.arange(self._size)))[:, np.newaxis]
+        self.__subentities = np.vstack((np.arange(self._size), np.arange(self._size) + 1))
+        self.__A = np.ones(self._size)[:, np.newaxis, np.newaxis] * self._width
+        self.__B = (self._interval[0] + self._width * (np.arange(self._size)))[:, np.newaxis]
 
     def __str__(self):
         return (self.id + ', domain [{xmin},{xmax}]'
@@ -42,11 +42,11 @@ class Oned(ISimpleAffineGrid):
     def subentities(self, codim=0, subentity_codim=None):
         assert codim == 0, CodimError('Invalid codimension')
         assert subentity_codim is None or subentity_codim == 1, CodimError('Invalid subentity codimension')
-        return self._subentities.T
+        return self.__subentities.T
 
     def embeddings(self, codim=0):
         if codim == 0:
-            return self._A, self._B
+            return self.__A, self.__B
         else:
             return super(Oned, self).embeddings(codim)
 

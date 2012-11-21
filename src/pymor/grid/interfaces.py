@@ -2,20 +2,13 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import numpy as np
 
-# For python3.2 and greater, we user functools.lru_cache for caching. If our python
-# version is to old, we import the same decorator from the third-party functools32
-# package
-try:
-    from functools import lru_cache
-except ImportError:
-    from functools32 import lru_cache
-
 import pymor.core as core
 from pymor.core.exceptions import CodimError
+from .defaultimpl import *
 
 
 
-class IConformalTopologicalGrid(core.BasicInterface):
+class IConformalTopologicalGrid(core.BasicInterface, IConformalTopologicalGridDefaultImplementation):
     '''Base interface for all grids. This is an incomplete prepreliminary version.
     Until now, only the toplogy part of the interface is specified in here.
 
@@ -34,7 +27,6 @@ class IConformalTopologicalGrid(core.BasicInterface):
         pass
 
     @core.interfaces.abstractmethod
-    @lru_cache(maxsize=None)
     def subentities(self, codim=0, subentity_codim=None):
         '''retval[e,s] is the global index of the s-th codim-"subentity_codim"
         subentity of the codim-"codim" entity with global index e.
@@ -45,26 +37,8 @@ class IConformalTopologicalGrid(core.BasicInterface):
         subentities(codim, subentity_codim) is computed by calculating the
         transitive closure of subentities(codim, None)
         '''
-        assert 0 <= codim < self.dim, CodimError('Invalid codimension')
-        if subentity_codim > codim + 1:
-            SE = self.subentities(codim, subentity_codim - 1)
-            SESE = self.subentities(subentity_codim - 1, subentity_codim)
+        return self._subentities(codim, subentity_codim)
 
-            # we assume that there is only one geometry type ...
-            num_subsubentities = np.unique(SESE[SE[0]]).size
-
-            SSE = np.empty((SE.shape[0], num_subsubentities), dtype=np.int32)
-            SSE.fill(-1)
-
-            for ei in xrange(SE.shape[0]):
-                X = SESE[SE[ei]].ravel()
-                SSE[ei] = X[np.sort(np.unique(X, return_index=True)[1])]
-
-            return SSE
-        else:
-            raise NotImplementedError
-
-    @lru_cache(maxsize=None)
     def superentities(self, codim, superentity_codim=None):
         '''retval[e,s] is the global index of the s-th codim-"superentity_codim"
         superentity of the codim-"codim" entity with global index e.
@@ -73,40 +47,11 @@ class IConformalTopologicalGrid(core.BasicInterface):
 
         The default implementation is to compute the result from subentities()
         '''
-        assert 0 < codim <= self.dim, CodimError('Invalid codimension')
-        if superentity_codim is None:
-            superentity_codim = codim - 1
-
-        SE = self.subentities(superentity_codim, codim)
-        num_superentities = np.bincount(SE.ravel()).max()
-        SPE = np.empty((self.size(codim), num_superentities), dtype=np.int32)
-        SPE.fill(-1)
-
-        SPE_COUNTS = np.zeros(SPE.shape[0], dtype=np.int32)
-
-        for index, se in np.ndenumerate(SE):
-            if se >= 0:
-                SPE[se, SPE_COUNTS[se]] = index[0]
-                SPE_COUNTS[se] += 1
-
-        return SPE
+        return self._superentities(codim, superentity_codim)
 
     def superentity_indices(self, codim, superentity_codim=None):
-        assert 0 < codim <= self.dim, CodimError('Invalid codimension')
-        if superentity_codim is None:
-            superentity_codim = codim - 1
-        E = self.subentities(superentity_codim, codim)
-        SE = self.superentities(codim, superentity_codim)
-        SEI = np.empty_like(SE)
-        SEI.fill(-1)
+        return self._superentity_indices(codim, superentity_codim)
 
-        for index, e in np.ndenumerate(SE):
-            if e >= 0:
-                SEI[index] = np.where(E[e] == index[0])[0]
-
-        return SEI
-
-    @lru_cache(maxsize=None)
     def neighbours(self, codim=0, neighbour_codim=0, intersection_codim=None):
         '''retval[e,s] is the global index of the n-th codim-"neighbour_codim"
         entitiy of the codim-"codim" entity with global index e that shares
@@ -119,45 +64,10 @@ class IConformalTopologicalGrid(core.BasicInterface):
         The default implementation is to compute the result from subentities()
         and superentities().
         '''
-        if intersection_codim is None:
-            if codim == neighbour_codim:
-                intersection_codim = codim + 1
-            else:
-                intersection_codim = min(codim, neighbour_codim)
-
-        if intersection_codim == min(codim, neighbour_codim):
-            if codim <= neighbour_codim:
-                return self.subentities(codim, neighbour_codim)
-            else:
-                return self.superentities(codim, neighbour_codim)
-        else:
-            EI = self.subentities(codim, intersection_codim)
-            ISE = self.superentities(intersection_codim, neighbour_codim)
-
-            NB = np.empty((EI.shape[0], EI.shape[1] * ISE.shape[1]), dtype=np.int32)
-            NB.fill(-1)
-            NB_COUNTS = np.zeros(EI.shape[0], dtype=np.int32)
-
-            if codim == neighbour_codim:
-                for ii, i in np.ndenumerate(EI):
-                    if i >= 0:
-                        for ni, n in np.ndenumerate(ISE[i]):
-                            if n != ii[0] and n not in NB[ii[0]]:
-                                NB[ii[0], NB_COUNTS[ii[0]]] = n
-                                NB_COUNTS[ii[0]] += 1
-            else:
-                for ii, i in np.ndenumerate(EI):
-                    if i >= 0:
-                        for ni, n in np.ndenumerate(ISE[i]):
-                            if n not in NB[ii[0]]:
-                                NB[ii[0], NB_COUNTS[ii[0]]] = n
-                                NB_COUNTS[ii[0]] += 1
-
-            NB = NB[:NB.shape[0], :NB_COUNTS.max()]
-            return NB
+        return self._neighbours(codim, neighbour_codim, intersection_codim)
 
 
-class ISimpleReferenceElement(core.BasicInterface):
+class ISimpleReferenceElement(core.BasicInterface, ISimpleReferenceElementDefaultImplementation):
     '''Defines a reference element with the property that each of its subentities is
     of the same type. I.e. a three-dimensional reference element cannot have triangles
     and rectangles as faces at the same time
@@ -179,38 +89,17 @@ class ISimpleReferenceElement(core.BasicInterface):
         pass
 
     @core.interfaces.abstractmethod
-    @lru_cache(maxsize=None)
     def subentity_embedding(self, subentity_codim):
         '''returns a tuple (A, B) which defines the embedding of the "subentity_codim"-
         subentity with index "index" into the reference element.
         for subsubentites, the embedding is by default given via its embedding into its
         lowest index superentity
         '''
-        if subentity_codim > 1:
-            A = []
-            B = []
-            for i in xrange(self.size(subentity_codim)):
-                P = np.where(self.subentities(1, subentity_codim) == i)
-                parent_index, local_index = P[0][0], P[1][0]
-                A0, B0 = self.subentity_embedding(1)
-                A0 = A0[parent_index]
-                B0 = B0[parent_index]
-                A1, B1 = self.sub_reference_element(1).subentity_embedding(subentity_codim-1)
-                A1 = A1[local_index]
-                B1 = B1[local_index]
-                A.append(np.dot(A0, A1))
-                B.append(np.dot(A0, B1) + B0)
-            return np.array(A), np.array(B)
-        else:
-            raise NotImplementedError
+        return self._subentity_embedding(subentity_codim)
 
     @core.interfaces.abstractmethod
-    @lru_cache(maxsize=None)
     def sub_reference_element(self, codim=1):
-        if subentity_codim > 1:
-            return self.sub_reference_element(1).sub_reference_element(codim - 1)
-        else:
-            raise NotImplementedError
+        return self._sub_reference_element(codim)
 
     def __call__(self, codim):
         return self.sub_reference_element(codim)
@@ -235,113 +124,59 @@ class ISimpleReferenceElement(core.BasicInterface):
         pass
 
 
-class ISimpleAffineGrid(IConformalTopologicalGrid):
+class ISimpleAffineGrid(IConformalTopologicalGrid, ISimpleAffineGridDefaultImplementation):
 
     dim = None
     dim_outer = None
 
     @core.interfaces.abstractmethod
     def reference_element(self, codim):
-        assert codim > 0, NotImplementedError
-        return self.reference_element(0).sub_reference_element(codim)
+        pass
 
     @core.interfaces.abstractmethod
-    @lru_cache(maxsize=None)
     def subentities(self, codim=0, subentity_codim=None):
-        # If codim > 0, we calculate the subentites of e as follows:
-        # - find the codim-0 parent entity e_0 with minimal global index
-        # - lookup the local indicies of the subentites of e inside e_0
-        #   using the reference element
-        # - map these local indicies to global indicies using
-        #   subentities(0, subentity_codim)
-        # This procedures assures that subentities(codim, subentity_codim)[i]
-        # has the right order w.r.t. the embedding determined by e_0, which
-        # is also the embedding return by embeddings(codim)
-        assert 0 <= codim < self.dim, CodimError('Invalid codimension')
-        assert 0 < codim, NotImplementedError
-        P = self.superentities(codim, 0)[:, 0] # we assume here that superentites() is sorted by global index
-        I = self.superentity_indices(codim, 0)[:, 0]
-        SE = self.subentities(0, subentity_codim)[P]
-        RSE = self.reference_element(0).subentities(codim, subentity_codim)[I]
+        '''retval[e,s] is the global index of the s-th codim-"subentity_codim"
+        subentity of the codim-"codim" entity with global index e.
 
-        SSE = np.empty_like(RSE)
-        for i in xrange(RSE.shape[0]):
-            SSE[i, :] = SE[i, RSE[i]]
+        If subentity_codim=None, it is set to codim+1.
 
-        return SSE
+        If codim > 0, we calculate the subentites of e by default as follows:
+        - find the codim-0 parent entity e_0 with minimal global index
+        - lookup the local indicies of the subentites of e inside e_0
+          using the reference element
+        - map these local indicies to global indicies using
+          subentities(0, subentity_codim)
+        This procedures assures that subentities(codim, subentity_codim)[i]
+        has the right order w.r.t. the embedding determined by e_0, which
+        is also the embedding return by embeddings(codim)
+        '''
+        return self._subentities(codim, subentity_codim)
 
 
     @core.interfaces.abstractmethod
-    @lru_cache(maxsize=None)
     def embeddings(self, codim=0):
-        assert codim > 0, NotImplemented
-        E = self.superentities(codim, 0)[:, 0]
-        I = self.superentity_indices(codim, 0)[:,0]
-        A0, B0 = self.embeddings(0)
-        A0 = A0[E]
-        B0 = B0[E]
-        A1, B1 = self.reference_element(0).subentity_embedding(codim)
-        A = np.zeros((E.shape[0], A0.shape[1], A1.shape[2]))
-        B = np.zeros((E.shape[0], A0.shape[1]))
-        for i in xrange(A1.shape[0]):
-            INDS = np.where(I == i)[0]
-            A[INDS] = np.dot(A0[INDS], A1[i])
-            B[INDS] = np.dot(A0[INDS], B1[i]) + B0[INDS]
-        return A, B
+        return self._embeddings(codim)
 
-    @lru_cache(maxsize=None)
     def jacobian_inverse_transposed(self, codim=0):
-        assert 0 <= codim <= self.dim,\
-               CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, self.codim))
-        J = self.embeddings(codim)[0]
-        JIT = np.array(map(np.linalg.pinv, J)).swapaxes(1, 2)
-        return JIT
+        return self._jacobian_inverse_transposed(codim)
 
-    @lru_cache(maxsize=None)
     def integration_element(self, codim=0):
-        assert 0 <= codim <= self.dim,\
-               CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, self.codim))
-        J = self.embeddings(codim)[0]
-        def f(A):
-            return np.linalg.det(np.dot(A.T, A))
-        V = np.array(map(f, J))
-        return np.sqrt(V)
+        return self._integration_element(codim)
 
-    @lru_cache(maxsize=None)
     def volumes(self, codim=0):
-        assert 0 <= codim <= self.dim,\
-               CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, self.codim))
-        if codim == self.dim:
-            return np.ones(self.size(self.dim))
-        return self.reference_element(codim).volume * self.integration_element(codim)
+        return self._volumes(codim)
 
-    @lru_cache(maxsize=None)
     def volumes_inverse(self, codim=0):
-        return np.reciprocal(self.volumes(codim))
+        return self._volumes_inverse(codim)
 
-
-    @lru_cache(maxsize=None)
     def unit_outer_normals(self):
-        JIT = self.jacobian_inverse_transposed(0)
-        N = np.dot(JIT, self.reference_element(0).unit_outer_normals().T).swapaxes(1,2)
-        return N / np.apply_along_axis(np.linalg.norm, 2, N)[:, :, np.newaxis]
+        return self._unit_outer_normals()
 
-    @lru_cache(maxsize=None)
     def centers(self, codim=0):
-        assert 0 <= codim <= self.dim,\
-               CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, self.codim))
-        A, B = self.embeddings(codim)
-        C = self.reference_element(codim).center()
-        return np.dot(A, C) + B
+        return self._centers(codim)
 
-    @lru_cache(maxsize=None)
     def diameters(self, codim=0):
-        assert 0 <= codim <= self.dim,\
-               CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, self.codim))
-        return np.squeeze(self.reference_element(codim).mapped_diameter(self.embeddings(codim)[0]))
+        return self._diameters(codim)
 
-    @lru_cache(maxsize=None)
     def quadrature_points(self, codim=0, order=None, npoints=None, quadrature_type='default'):
-        P, _ = self.reference_element(codim).quadrature(order, npoints, quadrature_type)
-        A, B = self.embeddings(codim)
-        return np.einsum('eij,kj->eki', A, P) + B[:, np.newaxis, :]
+        return self._quadrature_points(codim, order, npoints, quadrature_type)
