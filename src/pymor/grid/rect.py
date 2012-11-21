@@ -143,5 +143,5 @@ class Rect(ISimpleAffineGrid):
 
 if __name__ == '__main__':
     g = Rect(num_intervals=(120,60), domain=[[0,0],[2,1]])
-    X = np.sin(2*np.pi*g.centers(0)[0,:])*np.sin(2*np.pi*g.centers(0)[1,:])
+    X = np.sin(2*np.pi*g.centers(0)[:,0])*np.sin(2*np.pi*g.centers(0)[:,1])
     g.visualize(X)
