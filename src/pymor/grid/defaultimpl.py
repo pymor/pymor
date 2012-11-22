@@ -120,12 +120,12 @@ class ISimpleReferenceElementDefaultImplementation():
             A = []
             B = []
             for i in xrange(self.size(subentity_codim)):
-                P = np.where(self.subentities(1, subentity_codim) == i)
+                P = np.where(self.subentities(subentity_codim - 1, subentity_codim) == i)
                 parent_index, local_index = P[0][0], P[1][0]
-                A0, B0 = self.subentity_embedding(1)
+                A0, B0 = self.subentity_embedding(subentity_codim - 1)
                 A0 = A0[parent_index]
                 B0 = B0[parent_index]
-                A1, B1 = self.sub_reference_element(1).subentity_embedding(subentity_codim - 1)
+                A1, B1 = self.sub_reference_element(subentity_codim - 1).subentity_embedding(1)
                 A1 = A1[local_index]
                 B1 = B1[local_index]
                 A.append(np.dot(A0, A1))
@@ -162,12 +162,12 @@ class ISimpleAffineGridDefaultImplementation():
     @lru_cache(maxsize=None)
     def _embeddings(self, codim=0):
         assert codim > 0, NotImplemented
-        E = self.superentities(codim, 0)[:, 0]
-        I = self.superentity_indices(codim, 0)[:, 0]
-        A0, B0 = self.embeddings(0)
+        E = self.superentities(codim, codim-1)[:, 0]
+        I = self.superentity_indices(codim, codim-1)[:, 0]
+        A0, B0 = self.embeddings(codim-1)
         A0 = A0[E]
         B0 = B0[E]
-        A1, B1 = self.reference_element(0).subentity_embedding(codim)
+        A1, B1 = self.reference_element(codim-1).subentity_embedding(1)
         A = np.zeros((E.shape[0], A0.shape[1], A1.shape[2]))
         B = np.zeros((E.shape[0], A0.shape[1]))
         for i in xrange(A1.shape[0]):

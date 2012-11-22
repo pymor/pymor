@@ -42,6 +42,7 @@ class IConformalTopologicalGrid(IConformalTopologicalGridDefaultImplementation, 
     def superentities(self, codim, superentity_codim=None):
         '''`retval[e,s]` is the global index of the `s`-th codim-`superentity_codim`
         superentity of the codim-`codim` entity with global index `e`.
+        `retval[e]` is sorted by global index.
 
         If `superentity_codim == None`, it is set to `codim - 1`.
 
@@ -104,8 +105,10 @@ class ISimpleReferenceElement(ISimpleReferenceElementDefaultImplementation, core
         '''returns a tuple `(A, B)` which defines the embedding of the codim-`subentity_codim`
         subentities into the reference element.
 
-        For `subentity_codim > 1', the embedding is by default given recursively via its
-        embedding into its lowest index codim-1 superentity.
+        For `subentity_codim > 1', the embedding is by default given recursively via
+        `subentity_embedding(subentity_codim - 1)` and
+        `sub_reference_element(subentity_codim - 1).subentity_embedding(1)` choosing always
+        the superentity with smallest index.
         '''
         return self._subentity_embedding(subentity_codim)
 
@@ -190,9 +193,9 @@ class ISimpleAffineGrid(ISimpleAffineGridDefaultImplementation, IConformalTopolo
         and the translation part of the map from the reference element of `e`
         to `e`.
 
-        For `codim > 0` the map is determined by the embedding of codim-0
+        For `codim > 0` the map is determined by the embedding of the codim-1
         parent entity `e_0` of `e` with lowest global index and by the
-        subentity_embedding of `e_0` into `e` determined by the reference
+        subentity_embedding of `e` into `e_0` determined by the reference
         element.
         '''
         return self._embeddings(codim)
