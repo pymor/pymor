@@ -13,9 +13,10 @@ from pymor.core.interfaces import (BasicInterface, contract, abstractmethod, abs
                                    abstractclassmethod)
 from pymor.core import exceptions
 from pymor.core import timing
+from contracts.interface import ContractNotRespected
 
 class UnknownInterface(BasicInterface):
-	pass
+    pass
 
 class StupidInterface(BasicInterface):
     '''I am a stupid Interface'''
@@ -28,7 +29,7 @@ class StupidInterface(BasicInterface):
         :param phrase: what I'm supposed to shout
         :param repeat: how often I'm shouting phrase
         :type phrase: str
-        :type repeat: UnknownInterface
+        :type repeat: int
         
         .. seealso:: blabla
         .. warning:: blabla
@@ -47,11 +48,19 @@ class BrilliantInterface(BasicInterface):
         :type repeat: int,=1
         """
         pass
-
+    
 class StupidImplementer(StupidInterface):
 
     def shout(self, phrase, repeat):
         print(phrase*repeat)
+        
+    @contract
+    def validate_interface(self, cls):
+        '''
+        :param cls: some interface class
+        :type cls: UnknownInterface
+        '''
+        pass
 
 class AverageImplementer(StupidInterface, BrilliantInterface):
 
@@ -141,9 +150,15 @@ class InterfaceTest(unittest.TestCase):
         with self.assertRaisesRegexp(TypeError, "Can't instantiate abstract class.*"):
             inst = StaticImplementer()
         inst = CompleteImplementer()
-        self.assertEqual(inst.abstract_class_method(), 'CompleteImplementer', '')
-        self.assertEqual(inst.abstract_static_method(), 0, '')        
+        self.assertEqual(inst.abstract_class_method(), 'CompleteImplementer')
+        self.assertEqual(inst.abstract_static_method(), 0)        
 
+    def test_custom_contract_types(self):
+        inst = StupidImplementer()
+        with self.assertRaises(exceptions.ContractNotRespected):
+            inst.validate_interface(object())
+        inst.validate_interface(UnknownInterface())
+            
 class TimingTest(unittest.TestCase):
     
     def testTimingContext(self):

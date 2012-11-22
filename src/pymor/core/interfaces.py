@@ -9,6 +9,7 @@ Created on Wed Oct 31 12:39:53 2012
 import abc
 import types
 import itertools
+import contracts
 
 from pymor.core import decorators 
 from pymor.core.exceptions import ConstError
@@ -17,7 +18,7 @@ from pymor.core.exceptions import ConstError
 class UberMeta(abc.ABCMeta):
     def __init__(cls, name, bases, namespace):
         '''I copy my class docstring if deriving class has none. I tell base classes when I derive
-        a new class from them.
+        a new class from them. I publish a new contract type for each new class I create. 
         '''
         doc = namespace.get("__doc__", None)
         if not doc:
@@ -26,11 +27,11 @@ class UberMeta(abc.ABCMeta):
                     doc = base.__doc__
                     break
         cls.__doc__ = doc
-        import pprint
-        import logging
-#        logging.error(pprint.pformat(decorators.__dict__))
-        decorators.__dict__[name] = cls
-        logging.error('%s: %s', name, pprint.pformat(decorators.__dict__[name]))
+        
+        #monkey a new contract into the decorator module so checking for that type at runtime can work
+        import logging, pprint
+        logging.error('CLS %s -- %s', cls, name)
+        decorators.__dict__[name] = contracts.new_contract(name, lambda x: isinstance(x, cls))
 
         #all bases except object get the derived class' name appended      
         for base in [b for b in bases if b != object]:
@@ -70,14 +71,16 @@ class UberMeta(abc.ABCMeta):
                             base_doc = doc
                         item.__doc__ = base_doc
                     if has_contract:
-                        #TODO why the rebind?
-                        classdict['_H_%s'%attr] = item    # rebind the method
+                        #TODO why is the rebind necessary?
+                        classdict['_H_%s'%attr] = item
                         contract_kwargs = contract_kwargs or dict()
-                        p = decorators.contracts_decorate(item,modify_docstring=True,**contract_kwargs) # replace method by wrapper
+                        p = decorators.contracts_decorate(item,modify_docstring=True,**contract_kwargs)
                         classdict[attr] = p
-                    if hasattr(base_func, "__isabstractstaticmethod__") and getattr(base_func, "__isabstractstaticmethod__"):
+                    if (hasattr(base_func, "__isabstractstaticmethod__") and 
+                        getattr(base_func, "__isabstractstaticmethod__")):
                         classdict[attr] = staticmethod(classdict[attr])
-                    if hasattr(base_func, "__isabstractclassmethod__") and getattr(base_func, "__isabstractclassmethod__"):
+                    if (hasattr(base_func, "__isabstractclassmethod__") and 
+                        getattr(base_func, "__isabstractclassmethod__")):
                         classdict[attr] = classmethod(classdict[attr])
                         
 
