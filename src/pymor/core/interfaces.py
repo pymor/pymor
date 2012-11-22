@@ -26,6 +26,11 @@ class UberMeta(abc.ABCMeta):
                     doc = base.__doc__
                     break
         cls.__doc__ = doc
+        import pprint
+        import logging
+#        logging.error(pprint.pformat(decorators.__dict__))
+        decorators.__dict__[name] = cls
+        logging.error('%s: %s', name, pprint.pformat(decorators.__dict__[name]))
 
         #all bases except object get the derived class' name appended      
         for base in [b for b in bases if b != object]:

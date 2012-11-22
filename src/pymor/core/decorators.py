@@ -156,6 +156,7 @@ def contract(*arg, **kwargs):
                 return tag_and_decorate(function, **kwargs)
             except contracts.ContractSyntaxError as e:
                 # Erase the stack
+                raise e
                 raise contracts.ContractSyntaxError(e.error, e.where)
         else:
             msg = ('I expect that  contracts() is called with '

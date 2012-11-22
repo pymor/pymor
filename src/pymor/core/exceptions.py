@@ -11,6 +11,7 @@ import warnings
 
 warn = warnings.warn
 ContractNotRespected = contracts.ContractNotRespected
+ContractException = contracts.ContractException
 
 
 class ConstError(Exception):

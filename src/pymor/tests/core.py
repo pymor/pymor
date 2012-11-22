@@ -14,6 +14,9 @@ from pymor.core.interfaces import (BasicInterface, contract, abstractmethod, abs
 from pymor.core import exceptions
 from pymor.core import timing
 
+class UnknownInterface(BasicInterface):
+	pass
+
 class StupidInterface(BasicInterface):
     '''I am a stupid Interface'''
 
@@ -25,7 +28,7 @@ class StupidInterface(BasicInterface):
         :param phrase: what I'm supposed to shout
         :param repeat: how often I'm shouting phrase
         :type phrase: str
-        :type repeat: int,>0
+        :type repeat: UnknownInterface
         
         .. seealso:: blabla
         .. warning:: blabla
