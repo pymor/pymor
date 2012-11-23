@@ -29,8 +29,6 @@ class UberMeta(abc.ABCMeta):
         cls.__doc__ = doc
         
         #monkey a new contract into the decorator module so checking for that type at runtime can work
-        import logging, pprint
-        logging.error('CLS %s -- %s', cls, name)
         decorators.__dict__[name] = contracts.new_contract(name, lambda x: isinstance(x, cls))
 
         #all bases except object get the derived class' name appended      
@@ -136,6 +134,11 @@ class BasicInterface(object):
     def implementor_names(cls, descend=False):
         '''For convenience I return a list of my implementor names instead of class objects'''
         return [c.__name__ for c in cls.implementors(descend)]
+    
+    @classmethod
+    def has_interface_name(cls):
+        name = cls.__name__
+        return name.startswith('I') and name[1].isupper()
 
 contract = decorators.contract
 abstractmethod = abc.abstractmethod
