@@ -196,3 +196,6 @@ class Square(ISimpleReferenceElement):
 
 
 square = Square()
+
+from mock import Mock
+triangle = Mock()
