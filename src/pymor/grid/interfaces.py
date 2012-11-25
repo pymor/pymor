@@ -166,6 +166,7 @@ class ISimpleAffineGrid(ISimpleAffineGridDefaultImplementation, IConformalTopolo
         '''the reference element of all codim-`codim` entities.'''
         pass
 
+    @core.interfaces.abstractmethod
     def subentities(self, codim, subentity_codim=None):
         '''`retval[e,s]` is the global index of the `s`-th codim-`subentity_codim`
         subentity of the codim-`codim` entity with global index `e`. The ordering
@@ -174,7 +175,8 @@ class ISimpleAffineGrid(ISimpleAffineGridDefaultImplementation, IConformalTopolo
 
         If `subentity_codim == None`, it is set to `codim + 1`.
 
-        If `codim > 0`, we calculate the subentites of `e` by default as follows:
+        For `codim > 0`, we provide a default implementation by calculating the
+        subentites of `e` as follows:
 
         1. Find the codim-0 parent entity `e_0` of `e` with minimal global index
         2. Lookup the local indicies of the subentites of `e` inside `e_0` using the reference element.
@@ -186,15 +188,16 @@ class ISimpleAffineGrid(ISimpleAffineGridDefaultImplementation, IConformalTopolo
         '''
         return self._subentities(codim, subentity_codim)
 
+    @core.interfaces.abstractmethod
     def embeddings(self, codim):
         '''`returns tuple `(A, B)` where `A[e]` and `B[e]` are the linear part
         and the translation part of the map from the reference element of `e`
         to `e`.
 
-        For `codim > 0` the map is determined by the embedding of the codim-1
-        parent entity `e_0` of `e` with lowest global index and by the
-        subentity_embedding of `e` into `e_0` determined by the reference
-        element.
+        For `codim > 0`, we provide a default implementation by
+        taking the embedding of the codim-1 parent entity `e_0` of `e` with
+        lowest global index and composing it with the subentity_embedding of `e`
+        into `e_0` determined by the reference element.
         '''
         return self._embeddings(codim)
 
