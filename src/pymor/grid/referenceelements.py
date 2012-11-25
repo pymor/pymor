@@ -194,8 +194,98 @@ class Square(ISimpleReferenceElement):
             raise NotImplementedError('quadrature_type must be "default" or "tensored_gauss"')
 
 
-
 square = Square()
 
-from mock import Mock
-triangle = Mock()
+
+class Triangle(ISimpleReferenceElement):
+
+    dim = 2
+    volume = 0.5
+
+    def __init__(self):
+        pass
+        # def tensor_points(P):
+            # PP0, PP1 = np.array(np.meshgrid(P, P))
+            # return np.array((PP0.ravel(), PP1.ravel())).T
+
+        # def tensor_weights(W):
+            # return np.dot(W[:,np.newaxis], W[np.newaxis, :]).ravel()
+        # self._quadrature_points  = [tensor_points(Gauss.quadrature(npoints=p+1)[0])  for p in xrange(Gauss.maxpoints())]
+        # self._quadrature_weights = [tensor_weights(Gauss.quadrature(npoints=p+1)[1]) for p in xrange(Gauss.maxpoints())]
+        # self._quadrature_npoints = np.arange(1, Gauss.maxpoints() + 1) ** 2
+        # self._quadrature_orders  = Gauss.orders
+        # self._quadrature_order_map = Gauss.order_map
+
+    def size(self, codim=1):
+        assert 0 <= codim <= 2, CodimError('Invalid codimension (must be between 0 and 2 but was {})'.format(codim))
+        if codim == 0:
+            return 1
+        elif codim == 1:
+            return 3
+        elif codim == 2:
+            return 3
+
+    def subentities(self, codim, subentity_codim):
+        assert 0 <= codim <= 2, CodimError('Invalid codimension (must be between 0 and 2 but was {})'.format(codim))
+        assert codim <= subentity_codim <= 2,\
+               CodimError('Invalid codimension (must be between {} and 2 but was {})'.format(codim, subentity_codim))
+        if codim == 0:
+            return np.arange(self.size(subentity_codim))
+        elif codim == 1:
+            if subentity_codim == 1:
+                return np.array(([0], [1], [2]))
+            else:
+                return np.array(([1, 2], [2, 0], [0, 1]))
+        elif codim == 2:
+            return np.array(([0], [1], [2]))
+
+    def subentity_embedding(self, subentity_codim):
+        assert 0 <= subentity_codim <= 2,\
+                CodimError('Invalid codimension (must betwen 0 and 2 but was {})'.format(subentity_codim))
+        if subentity_codim == 0:
+            return np.eye(2), np.zeros(2)
+        elif subentity_codim == 1:
+            A = np.array((np.array(([-1.], [1.])), np.array(([0.], [-1.])),
+                          np.array(([1.], [0.]))))
+            B = np.array((np.array([1., 0.]), np.array([0., 1.]),
+                          np.array([0., 0.])))
+            return A, B
+        else:
+            return super(Triangle, self).subentity_embedding(subentity_codim)
+
+    def sub_reference_element(self, codim=1):
+        assert 0 <= codim <= 2, CodimError('Invalid codimension (must be between 0 and 2 but was {})'.format(codim))
+        if codim == 0:
+            return self
+        elif codim == 1:
+            return line
+        else:
+            return point
+
+    def unit_outer_normals(self):
+        return np.array(([1., 1.], [-1., 0.], [0., -1.]))
+
+    def center(self):
+        return np.array([1. / 3., 1. / 3.])
+
+    def mapped_diameter(self, A):
+        V0 = np.dot(A, np.array([-1., 1.]))
+        V1 = np.dot(A, np.array([0., -1.]))
+        V2 = np.dot(A, np.array([1., 0.]))
+        VN0 = np.apply_along_axis(np.linalg.norm, -1, V0)
+        VN1 = np.apply_along_axis(np.linalg.norm, -1, V1)
+        VN2 = np.apply_along_axis(np.linalg.norm, -1, V2)
+        return np.max((VN0, VN1, VN2), axis=0)
+
+    def quadrature(self, order=None, npoints=None, quadrature_type='default'):
+        if quadrature_type == 'default':
+            assert order is not None or npoints is not None, ValueError('must specify "order" or "npoints"')
+            assert order is None or npoints is None, ValueError('cannot specify "order" and "npoints"')
+            assert order is None or order is 0, NotImplementedError
+            assert npoints is None or npoints is 1, NotImplementedError
+            return np.array((self.center(),)), np.array(self.volume)
+        else:
+            raise NotImplementedError('quadrature_type must be "default"')
+
+
+triangle = Triangle()
