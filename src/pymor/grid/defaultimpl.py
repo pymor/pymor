@@ -162,12 +162,12 @@ class ISimpleAffineGridDefaultImplementation():
     @lru_cache(maxsize=None)
     def _embeddings(self, codim=0):
         assert codim > 0, NotImplemented
-        E = self.superentities(codim, codim-1)[:, 0]
-        I = self.superentity_indices(codim, codim-1)[:, 0]
-        A0, B0 = self.embeddings(codim-1)
+        E = self.superentities(codim, codim - 1)[:, 0]
+        I = self.superentity_indices(codim, codim - 1)[:, 0]
+        A0, B0 = self.embeddings(codim - 1)
         A0 = A0[E]
         B0 = B0[E]
-        A1, B1 = self.reference_element(codim-1).subentity_embedding(1)
+        A1, B1 = self.reference_element(codim - 1).subentity_embedding(1)
         A = np.zeros((E.shape[0], A0.shape[1], A1.shape[2]))
         B = np.zeros((E.shape[0], A0.shape[1]))
         for i in xrange(A1.shape[0]):
