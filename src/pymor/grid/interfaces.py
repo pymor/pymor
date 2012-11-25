@@ -178,9 +178,9 @@ class ISimpleAffineGrid(ISimpleAffineGridDefaultImplementation, IConformalTopolo
         For `codim > 0`, we provide a default implementation by calculating the
         subentites of `e` as follows:
 
-        1. Find the codim-0 parent entity `e_0` of `e` with minimal global index
+        1. Find the codim - 1 parent entity `e_0` of `e` with minimal global index
         2. Lookup the local indicies of the subentites of `e` inside `e_0` using the reference element.
-        3. Map these local indicies to global indicies using `subentities(0, subentity_codim)`.
+        3. Map these local indicies to global indicies using `subentities(codim - 1, subentity_codim)`.
 
         This procedures assures that `subentities(codim, subentity_codim)[e]`
         has the right ordering w.r.t. the embedding determined by `e_0`, which
