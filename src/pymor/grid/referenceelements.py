@@ -18,11 +18,11 @@ class Point(ISimpleReferenceElement):
     def subentities(self, codim, subentity_codim):
         assert codim == 0, CodimError('Invalid codimension (must be 0 but was {})'.format(codim))
         assert subentity_codim == 0, CodimError('Invalid subentity codimension (must be 0 but was {})'.format(subentity_codim))
-        return np.array([0])
+        return np.array([0], dtype='int32')
 
     def subentity_embedding(self, subentity_codim):
         assert subentity_codim == 0, CodimError('Invalid codimension (must be 0 but was {})'.format(codim))
-        return np.zeros((0,0)), np.zeros((0))
+        return np.zeros((0,0), dtype='int32'), np.zeros((0), dtype='int32')
 
     def sub_reference_element(self, codim=1):
         assert codim == 0, CodimError('Invalid codimension (must be 0 but was {})'.format(codim))
@@ -64,9 +64,9 @@ class Line(ISimpleReferenceElement):
         assert codim <= subentity_codim <= 1,\
                CodimError('Invalid codimension (must be between {} and 1 but was {})'.format(codim, subentity_codim))
         if codim == 0:
-            return np.arange(self.size(subentity_codim))
+            return np.arange(self.size(subentity_codim), dtype='int32')
         else:
-            return np.array(([0], [1]))
+            return np.array(([0], [1]), dtype='int32')
 
     def subentity_embedding(self, subentity_codim):
         assert 0 <= subentity_codim <= 1,\
@@ -134,14 +134,14 @@ class Square(ISimpleReferenceElement):
         assert codim <= subentity_codim <= 2,\
                CodimError('Invalid codimension (must be between {} and 2 but was {})'.format(codim, subentity_codim))
         if codim == 0:
-            return np.arange(self.size(subentity_codim))
+            return np.arange(self.size(subentity_codim), dtype='int32')
         elif codim == 1:
             if subentity_codim == 1:
-                return np.array(([0], [1], [2], [3]))
+                return np.array(([0], [1], [2], [3]), dtype='int32')
             else:
-                return np.array(([0, 1], [1, 2], [2, 3], [3, 0]))
+                return np.array(([0, 1], [1, 2], [2, 3], [3, 0]), dtype='int32')
         elif codim == 2:
-            return np.array(([0], [1], [2], [3]))
+            return np.array(([0], [1], [2], [3]), dtype='int32')
 
     def subentity_embedding(self, subentity_codim):
         assert 0 <= subentity_codim <= 2,\
@@ -230,14 +230,14 @@ class Triangle(ISimpleReferenceElement):
         assert codim <= subentity_codim <= 2,\
                CodimError('Invalid codimension (must be between {} and 2 but was {})'.format(codim, subentity_codim))
         if codim == 0:
-            return np.arange(self.size(subentity_codim))
+            return np.arange(self.size(subentity_codim), dtype='int32')
         elif codim == 1:
             if subentity_codim == 1:
-                return np.array(([0], [1], [2]))
+                return np.array(([0], [1], [2]), dtype='int32')
             else:
-                return np.array(([1, 2], [2, 0], [0, 1]))
+                return np.array(([1, 2], [2, 0], [0, 1]), dtype='int32')
         elif codim == 2:
-            return np.array(([0], [1], [2]))
+            return np.array(([0], [1], [2]), dtype='int32')
 
     def subentity_embedding(self, subentity_codim):
         assert 0 <= subentity_codim <= 2,\
