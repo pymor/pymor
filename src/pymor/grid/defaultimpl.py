@@ -111,6 +111,30 @@ class IConformalTopologicalGridDefaultImplementation():
             NB = NB[:NB.shape[0], :NB_COUNTS.max()]
             return NB
 
+    @lru_cache(maxsize=None)
+    def _boundaries(self, codim):
+        if codim == 1:
+            SE = self.superentities(1, 0)
+            # a codim-1 entity can have at most 2 superentities, and it is a boundary
+            # if it has only one superentity
+            return np.where(np.any(SE == -1, axis = 1))[0].astype('int32')
+        elif codim == 0:
+            B0 = self.boundaries(1)
+            if B0.size > 0:
+                return np.unique(self.superentities(1, 0)[B0])[1:]
+            else:
+                return np.array([])
+        else:
+            B0 = self.boundaries(1)
+            if B0.size > 0:
+                BC = np.unique(self.subentities(1, codim)[B0])
+                if BC[0] == -1:
+                    return BC[1:]
+                else:
+                    return BC
+            else:
+                return np.array([])
+
 
 class ISimpleReferenceElementDefaultImplementation():
 
