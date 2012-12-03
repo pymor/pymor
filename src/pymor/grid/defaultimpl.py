@@ -135,6 +135,12 @@ class IConformalTopologicalGridDefaultImplementation():
             else:
                 return np.array([])
 
+    @lru_cache(maxsize=None)
+    def _boundary_mask(self, codim):
+        M = np.zeros(self.size(codim), dtype='bool')
+        M[self.boundaries(codim)] = True
+        return M
+
 
 class ISimpleReferenceElementDefaultImplementation():
 

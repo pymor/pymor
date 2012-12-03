@@ -73,6 +73,15 @@ class IConformalTopologicalGrid(IConformalTopologicalGridDefaultImplementation, 
         '''
         return self._neighbours(codim, neighbour_codim, intersection_codim)
 
+    def boundary_mask(self, codim):
+        '''`retval[e] is true iff the codim-`codim` entitt with global index
+        `e` is a boundary entity.
+        By definition, a codim-1 entity is a boundary entity if it has only one
+        codim-0 superentity. For `codim != 1`, a codim-`codim` entity is a
+        boundary entity if it has a codim-1 sub/super-entity.
+        '''
+        return self._boundary_mask(codim)
+
     def boundaries(self, codim):
         '''returns the global indices of all codim-`codim` boundary entities.
         By definition, a codim-1 entity is a boundary entity if it has only one
