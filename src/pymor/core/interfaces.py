@@ -29,7 +29,8 @@ class UberMeta(abc.ABCMeta):
         cls.__doc__ = doc
         
         #monkey a new contract into the decorator module so checking for that type at runtime can work
-        decorators.__dict__[name] = contracts.new_contract(name, lambda x: isinstance(x, cls))
+        #causes name clashs if different modules contain classes with the same name.
+        #decorators.__dict__[name] = contracts.new_contract(name, lambda x: isinstance(x, cls))   
 
         #all bases except object get the derived class' name appended      
         for base in [b for b in bases if b != object]:
