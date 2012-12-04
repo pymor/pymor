@@ -30,8 +30,7 @@ class UberMeta(abc.ABCMeta):
         
         #monkey a new contract into the decorator module so checking for that type at runtime can work
         #causes name clashs if different modules contain classes with the same name.
-        dname = str(cls.__module__) + '.' +name
-        dname = dname.replace('.', '_')
+        dname = (cls.__module__ + '.' +name).replace('.', '_')
         print(dname)
         decorators.__dict__[dname] = contracts.new_contract(dname, lambda x: isinstance(x, cls))   
 

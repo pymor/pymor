@@ -6,14 +6,19 @@ Created on Nov 16, 2012
 from __future__ import print_function
 import unittest
 import logging
-
 from nose.tools import raises
+import mock
 
 from pymor.core.interfaces import (BasicInterface, contract, abstractmethod, abstractstaticmethod, 
                                    abstractclassmethod)
 from pymor.core import exceptions
 from pymor.core import timing
-from contracts.interface import ContractNotRespected
+from pymor.core.exceptions import ContractNotRespected
+from pymor.common.boundaryinfo.basic import AllDirichlet as ADIA
+from pymor.common.boundaryinfo.oned import AllDirichlet as ADIB
+import pymor.common.boundaryinfo.basic
+import pymor.common.boundaryinfo.oned
+
 
 class UnknownInterface(BasicInterface):
     pass
@@ -83,22 +88,47 @@ class DocImplementer(AverageImplementer):
         :type repeat: int,>0
         """
         print(phrase*repeat)
+        
+    @contract
+    def dirichletTest(self, dirichletA, dirichletB):
+        ''' I'm used in testing whether contracts can distinguish 
+        between equally named classes in different modules
+        
+        :type dirichletA: pymor_common_boundaryinfo_basic_AllDirichlet
+        :type dirichletB:  pymor_common_boundaryinfo_oned_AllDirichlet
+        '''        
+        return dirichletA != dirichletB
 
 class FailImplementer(StupidInterface):
     pass
        
 
 class ContractTest(unittest.TestCase):
-	
-	def testNaming(self):
-		import pymor.common.boundaryinfo.basic
-		import pymor.common.boundaryinfo.oned
-		
-	def test_custom_contract_types(self):
-		inst = StupidImplementer()
-		with self.assertRaises(exceptions.ContractNotRespected):
-			inst.validate_interface(object())
-		inst.validate_interface(UnknownInterface())
+    
+    def testNaming(self):
+        imp = DocImplementer()
+        def _combo(dirichletA, dirichletB):
+            self.assertTrue(imp.dirichletTest(dirichletA, dirichletB))
+            with self.assertRaises(ContractNotRespected): 
+                imp.dirichletTest(dirichletA, dirichletA)
+            with self.assertRaises(ContractNotRespected): 
+                imp.dirichletTest(dirichletB, dirichletA)
+            with self.assertRaises(ContractNotRespected): 
+                imp.dirichletTest(dirichletA, 1)
+        grid = mock.Mock()
+        data = mock.Mock()
+        dirichletA = pymor.common.boundaryinfo.basic.AllDirichlet(grid, data)
+        dirichletB = pymor.common.boundaryinfo.oned.AllDirichlet()
+        _combo(dirichletA, dirichletB)
+        dirichletA = ADIA(grid, data)
+        dirichletB = ADIB()
+        _combo(dirichletA, dirichletB)
+        
+    def test_custom_contract_types(self):
+        inst = StupidImplementer()
+        with self.assertRaises(exceptions.ContractNotRespected):
+            inst.validate_interface(object())
+        inst.validate_interface(UnknownInterface())
 
 class InterfaceTest(unittest.TestCase):
 
