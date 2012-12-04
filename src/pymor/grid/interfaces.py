@@ -8,8 +8,8 @@ class IConformalTopologicalGrid(IConformalTopologicalGridDefaultImplementation, 
     '''desribes a conformal topological grid. The grid is determined via the subentity
     relation given by `subentities(codim, subentity_codim)`.
 
-    All results in the default implementations are cached for the next evaluation
-    using functools.lru_cache. Note that the current implementation is very slow
+    All results in the default implementations are cached for the next evaluation.
+    Note that the current implementation is very slow
     and should be moved to C code.
     For ``g = pymor.grid.rect.Rect((1000, 1000))`` it takes around 5
     minutes on modern hardware to calculate ``g.neighbours(0, 1, 2)``.

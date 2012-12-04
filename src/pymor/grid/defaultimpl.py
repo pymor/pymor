@@ -2,20 +2,13 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import numpy as np
 
-# For python3.2 and greater, we user functools.lru_cache for caching. If our python
-# version is to old, we import the same decorator from the third-party functools32
-# package
-try:
-    from functools import lru_cache
-except ImportError:
-    from functools32 import lru_cache
-
+import pymor.core as core
 from pymor.core.exceptions import CodimError
 
 
 class IConformalTopologicalGridDefaultImplementation():
 
-    @lru_cache(maxsize=None)
+    @core.cached
     def _subentities(self, codim, subentity_codim=None):
         assert 0 <= codim < self.dim, CodimError('Invalid codimension')
         if subentity_codim > codim + 1:
@@ -36,7 +29,7 @@ class IConformalTopologicalGridDefaultImplementation():
         else:
             raise NotImplementedError
 
-    @lru_cache(maxsize=None)
+    @core.cached
     def _superentities(self, codim, superentity_codim=None):
         assert 0 < codim <= self.dim, CodimError('Invalid codimension')
         if superentity_codim is None:
@@ -56,7 +49,7 @@ class IConformalTopologicalGridDefaultImplementation():
 
         return SPE
 
-    @lru_cache(maxsize=None)
+    @core.cached
     def _superentity_indices(self, codim, superentity_codim=None):
         assert 0 < codim <= self.dim, CodimError('Invalid codimension')
         if superentity_codim is None:
@@ -72,7 +65,7 @@ class IConformalTopologicalGridDefaultImplementation():
 
         return SEI
 
-    @lru_cache(maxsize=None)
+    @core.cached
     def _neighbours(self, codim, neighbour_codim, intersection_codim):
         if intersection_codim is None:
             if codim == neighbour_codim:
@@ -111,7 +104,7 @@ class IConformalTopologicalGridDefaultImplementation():
             NB = NB[:NB.shape[0], :NB_COUNTS.max()]
             return NB
 
-    @lru_cache(maxsize=None)
+    @core.cached
     def _boundaries(self, codim):
         if codim == 1:
             SE = self.superentities(1, 0)
@@ -135,7 +128,7 @@ class IConformalTopologicalGridDefaultImplementation():
             else:
                 return np.array([])
 
-    @lru_cache(maxsize=None)
+    @core.cached
     def _boundary_mask(self, codim):
         M = np.zeros(self.size(codim), dtype='bool')
         M[self.boundaries(codim)] = True
@@ -144,7 +137,7 @@ class IConformalTopologicalGridDefaultImplementation():
 
 class ISimpleReferenceElementDefaultImplementation():
 
-    @lru_cache(maxsize=None)
+    @core.cached
     def _subentity_embedding(self, subentity_codim):
         if subentity_codim > 1:
             A = []
@@ -164,7 +157,7 @@ class ISimpleReferenceElementDefaultImplementation():
         else:
             raise NotImplementedError
 
-    @lru_cache(maxsize=None)
+    @core.cached
     def _sub_reference_element(self, codim):
         if codim > 1:
             return self.sub_reference_element(1).sub_reference_element(codim - 1)
@@ -174,7 +167,7 @@ class ISimpleReferenceElementDefaultImplementation():
 
 class ISimpleAffineGridDefaultImplementation():
 
-    @lru_cache(maxsize=None)
+    @core.cached
     def _subentities(self, codim, subentity_codim):
         assert 0 <= codim < self.dim, CodimError('Invalid codimension')
         assert 0 < codim, NotImplementedError
@@ -189,7 +182,7 @@ class ISimpleAffineGridDefaultImplementation():
 
         return SSE
 
-    @lru_cache(maxsize=None)
+    @core.cached
     def _embeddings(self, codim=0):
         assert codim > 0, NotImplemented
         E = self.superentities(codim, codim - 1)[:, 0]
@@ -206,7 +199,7 @@ class ISimpleAffineGridDefaultImplementation():
             B[INDS] = np.dot(A0[INDS], B1[i]) + B0[INDS]
         return A, B
 
-    @lru_cache(maxsize=None)
+    @core.cached
     def _jacobian_inverse_transposed(self, codim):
         assert 0 <= codim <= self.dim,\
             CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
@@ -214,7 +207,7 @@ class ISimpleAffineGridDefaultImplementation():
         JIT = np.array(map(np.linalg.pinv, J)).swapaxes(1, 2)
         return JIT
 
-    @lru_cache(maxsize=None)
+    @core.cached
     def _integration_element(self, codim):
         assert 0 <= codim <= self.dim,\
             CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
@@ -226,7 +219,7 @@ class ISimpleAffineGridDefaultImplementation():
         V = np.array(map(f, J))
         return np.sqrt(V)
 
-    @lru_cache(maxsize=None)
+    @core.cached
     def _volumes(self, codim):
         assert 0 <= codim <= self.dim,\
             CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
@@ -234,17 +227,17 @@ class ISimpleAffineGridDefaultImplementation():
             return np.ones(self.size(self.dim))
         return self.reference_element(codim).volume * self.integration_element(codim)
 
-    @lru_cache(maxsize=None)
+    @core.cached
     def _volumes_inverse(self, codim):
         return np.reciprocal(self.volumes(codim))
 
-    @lru_cache(maxsize=None)
+    @core.cached
     def _unit_outer_normals(self):
         JIT = self.jacobian_inverse_transposed(0)
         N = np.dot(JIT, self.reference_element(0).unit_outer_normals().T).swapaxes(1, 2)
         return N / np.apply_along_axis(np.linalg.norm, 2, N)[:, :, np.newaxis]
 
-    @lru_cache(maxsize=None)
+    @core.cached
     def _centers(self, codim):
         assert 0 <= codim <= self.dim,\
             CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
@@ -252,13 +245,13 @@ class ISimpleAffineGridDefaultImplementation():
         C = self.reference_element(codim).center()
         return np.dot(A, C) + B
 
-    @lru_cache(maxsize=None)
+    @core.cached
     def _diameters(self, codim):
         assert 0 <= codim <= self.dim,\
             CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
         return np.squeeze(self.reference_element(codim).mapped_diameter(self.embeddings(codim)[0]))
 
-    @lru_cache(maxsize=None)
+    @core.cached
     def _quadrature_points(self, codim, order, npoints, quadrature_type):
         P, _ = self.reference_element(codim).quadrature(order, npoints, quadrature_type)
         A, B = self.embeddings(codim)

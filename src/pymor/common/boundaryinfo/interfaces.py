@@ -1,13 +1,5 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-# For python3.2 and greater, we user functools.lru_cache for caching. If our python
-# version is to old, we import the same decorator from the third-party functools32
-# package
-try:
-    from functools import lru_cache
-except ImportError:
-    from functools32 import lru_cache
-
 import numpy as np
 
 import pymor.core as core
@@ -63,13 +55,13 @@ class IBoundaryInfo(core.BasicInterface):
         return self.mask('neumann', codim)
 
     def dirichlet_boundaries(self, codim):
-        @lru_cache(maxsize=None)
+        @core.cached
         def _dirichlet_boundaries(codim):
             return np.where(self.dirichlet_mask(codim))[0].astype('int32')
         return _dirichlet_boundaries(codim)
 
     def neumann_boundaries(self, codim):
-        @lru_cache(maxsize=None)
+        @core.cached
         def _neumann_boundaries(codim):
             return np.where(self.neumann_mask(codim))[0].astype('int32')
         return _neumann_boundaries(codim)
