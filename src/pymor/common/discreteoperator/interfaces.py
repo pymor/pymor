@@ -21,7 +21,7 @@ class ILinearDiscreteOperator(IDiscreteOperator):
          ValueError('Invalid parameter dimensions (was {}, expected {})'.format(mu.size, self.parameter_dim))
 
     def matrix(self, mu=np.array([])):
-        if self._last_mu == mu:
+        if np.all(self._last_mu == mu):
             return self._last_mat
         else:
             self._last_mu = mu  # TODO: add some kind of log message here
