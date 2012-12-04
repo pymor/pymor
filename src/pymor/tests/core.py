@@ -94,8 +94,8 @@ class DocImplementer(AverageImplementer):
         ''' I'm used in testing whether contracts can distinguish 
         between equally named classes in different modules
         
-        :type dirichletA: pymor_common_boundaryinfo_basic_AllDirichlet
-        :type dirichletB:  pymor_common_boundaryinfo_oned_AllDirichlet
+        :type dirichletA: pymor.common.boundaryinfo.basic.AllDirichlet
+        :type dirichletB:  pymor.common.boundaryinfo.oned.AllDirichlet
         '''        
         return dirichletA != dirichletB
 
