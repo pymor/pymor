@@ -58,7 +58,7 @@ class StupidImplementer(StupidInterface):
     def validate_interface(self, cls):
         '''
         :param cls: some interface class
-        :type cls: UnknownInterface
+        :type cls: pymor_tests_core_UnknownInterface
         '''
         pass
 
@@ -87,7 +87,19 @@ class DocImplementer(AverageImplementer):
 class FailImplementer(StupidInterface):
     pass
        
-        
+
+class ContractTest(unittest.TestCase):
+	
+	def testNaming(self):
+		import pymor.common.boundaryinfo.basic
+		import pymor.common.boundaryinfo.oned
+		
+	def test_custom_contract_types(self):
+		inst = StupidImplementer()
+		with self.assertRaises(exceptions.ContractNotRespected):
+			inst.validate_interface(object())
+		inst.validate_interface(UnknownInterface())
+
 class InterfaceTest(unittest.TestCase):
 
     def setUp(self):
@@ -111,7 +123,7 @@ class InterfaceTest(unittest.TestCase):
         b.lock(False)
         b.level = 0
 
-    @raises(exceptions.ContractNotRespected)
+    @raises(ContractNotRespected)
     def testContractFail(self):
         AverageImplementer().whisper('Wheee\n', -2)
 
@@ -153,11 +165,6 @@ class InterfaceTest(unittest.TestCase):
         self.assertEqual(inst.abstract_class_method(), 'CompleteImplementer')
         self.assertEqual(inst.abstract_static_method(), 0)        
 
-    def test_custom_contract_types(self):
-        inst = StupidImplementer()
-        with self.assertRaises(exceptions.ContractNotRespected):
-            inst.validate_interface(object())
-        inst.validate_interface(UnknownInterface())
             
 class TimingTest(unittest.TestCase):
     

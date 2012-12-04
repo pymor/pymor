@@ -5,7 +5,7 @@ Created on Wed Oct 31 12:39:53 2012
 
 @author: r_milk01
 """
-
+from __future__ import print_function
 import abc
 import types
 import itertools
@@ -30,7 +30,10 @@ class UberMeta(abc.ABCMeta):
         
         #monkey a new contract into the decorator module so checking for that type at runtime can work
         #causes name clashs if different modules contain classes with the same name.
-        #decorators.__dict__[name] = contracts.new_contract(name, lambda x: isinstance(x, cls))   
+        dname = str(cls.__module__) + '.' +name
+        dname = dname.replace('.', '_')
+        print(dname)
+        decorators.__dict__[dname] = contracts.new_contract(dname, lambda x: isinstance(x, cls))   
 
         #all bases except object get the derived class' name appended      
         for base in [b for b in bases if b != object]:
