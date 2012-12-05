@@ -8,6 +8,43 @@ import pymor.core as core
 from pymor.grid.referenceelements import triangle
 from pymor.common.discreteoperator.interfaces import ILinearDiscreteOperator
 
+class L2ProductFunctionalP1D2(ILinearDiscreteOperator):
+    '''Scalar product with an L2-function for linear finite elements in two dimensions on a triangular
+    grid. The integral is simply calculated by evaluating the function on the codim-2 entities.
+    '''
+
+    def __init__(self, grid, boundary_info, function, dirichlet_set_values=True):
+        assert grid.reference_element(0) == triangle, ValueError('A triangular grid is expected!')
+        self.source_dim = grid.size(2)
+        self.range_dim = 1
+        self.grid = grid
+        self.boundary_info = boundary_info
+        self.function = function
+        self.dirichlet_set_values = dirichlet_set_values
+
+    def assemble(self, mu=np.array([])):
+        assert mu.size == self.parameter_dim,\
+         ValueError('Invalid parameter dimensions (was {}, expected {})'.format(mu.size, self.parameter_dim))
+
+        g = self.grid
+        bi = self.boundary_info
+
+        F = self.function(g.centers(2))
+        SE = g.superentities(2, 0)
+        V = np.sum(np.where(SE == -1, 0, g.volumes(0)[SE]), axis=1)
+
+        I = F * (1 / 3) * V
+
+        if bi.has_dirichlet:
+            DI = bi.dirichlet_boundaries(2)
+            if self.dirichlet_set_values:
+                I[DI] = bi.dirichlet_data(g.centers(2)[DI])
+            else:
+                I[DI] = 0
+
+        return I
+
+
 
 class DiffusionOperatorP1D2(ILinearDiscreteOperator):
     '''Simple Diffusion Operator for linear finite elements in two dimensions on an triangular grid and
