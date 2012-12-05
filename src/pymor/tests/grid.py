@@ -10,32 +10,40 @@ import pprint
 from pymor.grid.interfaces import IConformalTopologicalGrid, ISimpleAffineGrid 
 #mandatory so all Grid classes are created
 from pymor.grid import *
+import unittest
+
+def make_testcase_classes(grid_types, TestCase):
+    for GridType in grid_types:
+        if GridType.has_interface_name():
+            continue
+        cname = '{}Test'.format(GridType.__name__)
+        #saves a new type called cname with correct bases and class dict in globals
+        globals()[cname] = type(cname, (unittest.TestCase, TestCase), {'grid': GridType()})
 
 
-def check_sizes(grid):
-    dim = grid.dim
-    for codim in range(dim+1):
-        size = grid.size(codim)
-        assert size > 0, grid
+class SimpleAffineGridTest(object):
+    
+    def test_volumes(self):
+        grid = self.grid
+        dim = grid.dim
+        for codim in range(dim+1):
+            self.assertGreater(np.argmin(grid.volumes(codim)), 0)
+            self.assertGreater(np.argmin(grid.volumes_inverse(codim)), 0)
+            self.assertGreater(np.argmin(grid.diameters(codim)), 0)    
 
-def check_volumes(grid):
-    dim = grid.dim
-    for codim in range(dim+1):
-        assert np.argmin(grid.volumes(codim)) > 0, grid
-        assert np.argmin(grid.volumes_inverse(codim)) > 0, grid
-        assert np.argmin(grid.diameters(codim)) > 0, grid
+class ConformalTopologicalGridTest(object):
+    
+    def test_sizes(self):
+        grid = self.grid
+        dim = grid.dim
+        for codim in range(dim+1):
+            self.assertGreater(grid.size(codim), 0)
 
-def test_interface_conformance():
-    c_grids = set([g() for g in IConformalTopologicalGrid.implementors(True) if not g.has_interface_name()])
-    s_grids = set([g() for g in ISimpleAffineGrid.implementors(True) if not g.has_interface_name()])
-    logging.error('Testing IConformalTopologicalGrid implementors: %s', 
-                  pprint.pformat([c.__class__.__name__ for c in c_grids]))
-    logging.error('Testing ISimpleAffineGrid implementors: %s', 
-                  pprint.pformat([s.__class__.__name__ for s in s_grids]))
-    for g in c_grids:
-        yield check_sizes, g
-    for g in s_grids:
-        yield check_volumes, g
+make_testcase_classes(ISimpleAffineGrid.implementors(True), SimpleAffineGridTest)
+#this hard fails module import atm
+#make_testcase_classes(IConformalTopologicalGrid.implementors(True), ConformalTopologicalGridTest)
         
 if __name__ == "__main__":
-    nose.core.runmodule(name='__main__')
+#    nose.core.runmodule(name='__main__')
+    logging.basicConfig(level=logging.INFO)
+    unittest.main()
