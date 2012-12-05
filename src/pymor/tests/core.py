@@ -29,7 +29,7 @@ class StupidInterface(BasicInterface):
     @contract
     @abstractmethod
     def shout(self, phrase, repeat):
-        """ I repeatedly print a phrase.
+        ''' I repeatedly print a phrase.
         
         :param phrase: what I'm supposed to shout
         :param repeat: how often I'm shouting phrase
@@ -39,7 +39,7 @@ class StupidInterface(BasicInterface):
         .. seealso:: blabla
         .. warning:: blabla
         .. note:: blabla
-        """
+        '''
         pass
 
 class BrilliantInterface(BasicInterface):
@@ -48,10 +48,10 @@ class BrilliantInterface(BasicInterface):
     @contract
     @abstractmethod
     def whisper(self, phrase, repeat):
-        """
+        '''
         :type phrase: str
         :type repeat: int,=1
-        """
+        '''
         pass
     
 class StupidImplementer(StupidInterface):
@@ -69,16 +69,16 @@ class AverageImplementer(StupidInterface, BrilliantInterface):
         print(phrase*repeat)
 
 class DocImplementer(AverageImplementer):
-    """I got my own docstring"""
+    '''I got my own docstring'''
 
     @contract
     def whisper(self, phrase, repeat):
-        """my interface is stupid, I can whisper a lot more
+        '''my interface is stupid, I can whisper a lot more
         Since I'm overwriting an existing contract, I need to be decorated anew.
 
         :type phrase: str
         :type repeat: int,>0
-        """
+        '''
         print(phrase*repeat)
         
 class FailImplementer(StupidInterface):

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
+'''
 Created on Wed Oct 31 12:39:53 2012
 
 @author: r_milk01
-"""
+'''
 from __future__ import print_function
 import abc
 import types

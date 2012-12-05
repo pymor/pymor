@@ -2,7 +2,7 @@
 '''
 
 class abstractclassmethod(classmethod):
-    """
+    '''
     A decorator indicating abstract classmethods.
 
     Similar to abstractmethod.
@@ -16,7 +16,7 @@ class abstractclassmethod(classmethod):
 
     'abstractclassmethod' is deprecated. Use 'classmethod' with
     'abstractmethod' instead.
-    """
+    '''
 
     __isabstractmethod__ = True
 
@@ -26,7 +26,7 @@ class abstractclassmethod(classmethod):
 
 
 class abstractstaticmethod(staticmethod):
-    """
+    '''
     A decorator indicating abstract staticmethods.
 
     Similar to abstractmethod.
@@ -40,7 +40,7 @@ class abstractstaticmethod(staticmethod):
 
     'abstractstaticmethod' is deprecated. Use 'staticmethod' with
     'abstractmethod' instead.
-    """
+    '''
 
     __isabstractmethod__ = True
 

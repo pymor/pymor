@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""
+'''
 Created on Fri Nov  9 17:28:14 2012
 
 @author: r_milk01
-"""
+'''
 
 import contracts
 import warnings

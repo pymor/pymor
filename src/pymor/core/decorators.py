@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""
+'''
 Created on Fri Nov  2 10:12:55 2012
 Collection of function/class based decorators.
 
-"""
+'''
 
 import functools
 import types
@@ -36,7 +36,7 @@ def _is_decorated(func):
 
 
 class DecoratorBase(object):
-    """A base for all decorators that does the common automagic"""
+    '''A base for all decorators that does the common automagic'''
     def __init__(self, func):
         functools.wraps(func)(self)
         func.decorated = self
@@ -49,7 +49,7 @@ class DecoratorBase(object):
         return types.MethodType(self, obj)
 
 class DecoratorWithArgsBase(object):
-    """A base for all decorators with args that sadly can do little common automagic"""
+    '''A base for all decorators with args that sadly can do little common automagic'''
     def mark(self, func):
         functools.wraps(func)
         func.decorated = self
@@ -61,10 +61,10 @@ class DecoratorWithArgsBase(object):
 
 
 class Deprecated(DecoratorBase):
-    """This is a decorator which can be used to mark functions
+    '''This is a decorator which can be used to mark functions
     as deprecated. It will result in a warning being emitted
     when the function is used.
-    """
+    '''
 
     def __init__(self, alt='no alternative given'):
         self._alt = alt
@@ -108,11 +108,11 @@ def contract(*arg, **kwargs):
 
               @contract
               def my_function(a, b):
-                  """ Function description.
+                  ''' Function description.
                       :type a: int,>0
                       :type b: list[N],N>0
                       :rtype: list[N]
-                  """
+                  '''
                   pass
 
         **Signature and docstrings**: The signature of the decorated

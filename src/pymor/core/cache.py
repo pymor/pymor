@@ -58,11 +58,11 @@ def cached(user_function):
         return result
 
     def cache_info():
-        """Report cache statistics"""
+        '''Report cache statistics'''
         return _CacheInfo(hits[0], misses[0], maxsize, len(cache))
 
     def cache_clear():
-        """Clear the cache and cache statistics"""
+        '''Clear the cache and cache statistics'''
         cache.clear()
         hits[0] = misses[0] = 0
 
