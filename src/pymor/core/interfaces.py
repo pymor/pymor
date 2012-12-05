@@ -14,27 +14,7 @@ import logging
 
 from pymor.core import decorators 
 from pymor.core.exceptions import ConstError
-
-def _fixup_docstring(doc):
-    '''replaces all dots with underscores in contract lines
-    this is necessary to circumvent type identifier checking 
-    in pycontracts itself
-    '''
-    if doc is None:
-        return None
-    ret = []
-    for line in doc.split('\n'):
-        print('LINE ORG |%s' % line)
-        if line.startswith(' :type'):
-            #line's like: :type ParamName: Some.Module.Classname
-            tokens = line.split(' ')
-            print('LINE TOK %s' % tokens)
-            if len(tokens) > 3 and tokens[3].startswith('pymor.'):
-                line = ' %s %s %s' % (tokens[1], tokens[2], tokens[3].replace('.', '_'))
-                print('LINE MOD %s'% line)
-        ret.append(line)
-    return '\n'.join(ret)
-            
+          
              
 class UberMeta(abc.ABCMeta):   
         
@@ -46,14 +26,12 @@ class UberMeta(abc.ABCMeta):
         if not doc:
             for base in cls.__mro__[1:]:
                 if base.__doc__:
-                    doc = _fixup_docstring(base.__doc__)
+                    doc = base.__doc__
                     break
         cls.__doc__ = doc
         
         #monkey a new contract into the decorator module so checking for that type at runtime can work
-        #causes name clashs if different modules contain classes with the same name.
-        dname = (cls.__module__ + '.' +name).replace('.', '_')
-        #print(dname)
+        dname = (cls.__module__ + '.' +name).replace('__main__.','').replace('.', '_')
         decorators.__dict__[dname] = contracts.new_contract(dname, lambda x: isinstance(x, cls))   
 
         #all bases except object get the derived class' name appended      
@@ -74,7 +52,8 @@ class UberMeta(abc.ABCMeta):
         '''
         for attr,item in classdict.items():
             if isinstance(item, types.FunctionType):
-                #first copy docs
+                #first copy/fixup docs
+                item.__doc__ = decorators.fixup_docstring(item.__doc__)
                 base_doc = None
                 contract_kwargs = dict()
                 for base in bases:
@@ -85,7 +64,7 @@ class UberMeta(abc.ABCMeta):
                         has_contract = getattr(base_func,'decorated', None) == 'contract'
                         contract_kwargs = getattr(base_func, 'contract_kwargs', contract_kwargs)
                     if base_doc:
-                        doc = _fixup_docstring(getattr(item, '__doc__', ''))
+                        doc = decorators.fixup_docstring(getattr(item, '__doc__', ''))
                         has_base_contract_docs = decorators.contains_contract(base_doc)
                         has_contract_docs = decorators.contains_contract(doc)
                         if has_base_contract_docs and not has_contract_docs:
@@ -95,7 +74,6 @@ class UberMeta(abc.ABCMeta):
                         item.__doc__ = base_doc
                     if has_contract:
                         #TODO why is the rebind necessary?
-                        item.__doc__ = _fixup_docstring(item.__doc__)
                         classdict['_H_%s'%attr] = item
                         contract_kwargs = contract_kwargs or dict()
                         p = decorators.contracts_decorate(item,modify_docstring=True,**contract_kwargs)

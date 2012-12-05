@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Nov  2 10:12:55 2012
+Collection of function/class based decorators.
 
-@author: r_milk01
 """
-
-"""Collection of function/class based decorators."""
 
 import functools
 import types
@@ -13,6 +11,25 @@ import inspect
 import logging
 import contracts
 import copy
+
+def fixup_docstring(doc):
+    '''replaces all dots with underscores in contract lines
+    this is necessary to circumvent type identifier checking 
+    in pycontracts itself
+    '''
+    if doc is None:
+        return None
+    ret = []
+    for line in doc.split('\n'):
+        line = line.lstrip()
+        if line.startswith(':type'):
+            #line's like: :type ParamName: Some.Module.Classname
+            tokens = line.split()
+            idx = 2
+            if len(tokens) > idx and tokens[idx].startswith('pymor'):
+                line = ' %s %s %s' % (tokens[idx-2], tokens[idx-1], tokens[idx].replace('.', '_'))
+        ret.append(line)
+    return '\n'.join(ret)
 
 def _is_decorated(func):
     return 'decorated' in dir(func)
@@ -27,7 +44,7 @@ class DecoratorBase(object):
         assert _is_decorated(func)
 
     def __get__(self, obj, ownerClass=None):
-        # Return a wrapper that binds self as a method of obj (!)
+        '''Return a wrapper that binds self as a method of obj (!)'''
         self.obj = obj
         return types.MethodType(self, obj)
 
@@ -150,19 +167,20 @@ def contract(*arg, **kwargs):
         if isinstance(arg[0], types.FunctionType):
             # We were called without parameters
             function = arg[0]
+            function.__doc__ = fixup_docstring(function.__doc__)
             if contracts.all_disabled():
                 return function
             try:
                 return tag_and_decorate(function, **kwargs)
             except contracts.ContractSyntaxError as e:
                 # Erase the stack
-                raise e
                 raise contracts.ContractSyntaxError(e.error, e.where)
         else:
             msg = ('I expect that  contracts() is called with '
                     'only keyword arguments (passed: %r)' % arg)
             raise contracts.ContractException(msg)
     else:
+        function.__doc__ = fixup_docstring(function.__doc__)
         # We were called *with* parameters.
         if contracts.all_disabled():
             def tmp_wrap(function):
