@@ -87,11 +87,15 @@ class Rect(ISimpleAffineGrid):
         return self.__sizes[codim]
 
     def subentities(self, codim=0, subentity_codim=None):
-        assert 0 <= codim <= 1, CodimError('Invalid codimension')
+        assert 0 <= codim <= 2, CodimError('Invalid codimension')
         if subentity_codim is None:
             subentity_codim = codim + 1
+        assert codim <= subentity_codim <= self.dim, CodimError('Invalid subentity codimensoin')
         if codim == 0:
-            return self.__subentities[subentity_codim - 1]
+            if subentity_codim == 0:
+                return np.arange(self.size(0))[:, np.newaxis]
+            else:
+                return self.__subentities[subentity_codim - 1]
         else:
             return super(Rect, self).subentities(codim, subentity_codim)
 

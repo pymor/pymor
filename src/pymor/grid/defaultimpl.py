@@ -170,12 +170,12 @@ class ISimpleAffineGridDefaultImplementation():
 
     @core.cached
     def _subentities(self, codim, subentity_codim):
-        assert 0 <= codim < self.dim, CodimError('Invalid codimension')
+        assert 0 <= codim <= self.dim, CodimError('Invalid codimension')
         assert 0 < codim, NotImplementedError
         P = self.superentities(codim, codim - 1)[:, 0]  # we assume here that superentites() is sorted by global index
         I = self.superentity_indices(codim, codim - 1)[:, 0]
         SE = self.subentities(codim - 1, subentity_codim)[P]
-        RSE = self.reference_element(codim - 1).subentities(1, subentity_codim)[I]
+        RSE = self.reference_element(codim - 1).subentities(1, subentity_codim - (codim - 1))[I]
 
         SSE = np.empty_like(RSE)
         for i in xrange(RSE.shape[0]):
