@@ -108,11 +108,11 @@ def contract(*arg, **kwargs):
 
               @contract
               def my_function(a, b):
-                  ''' Function description.
+                  """Function description.
                       :type a: int,>0
                       :type b: list[N],N>0
                       :rtype: list[N]
-                  '''
+                  """
                   pass
 
         **Signature and docstrings**: The signature of the decorated
