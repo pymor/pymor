@@ -4,6 +4,7 @@ import numpy as np
 
 import pymor.core as core
 from pymor.core.exceptions import CodimError
+from pymor.la.algorithms.inverse import inv_transposed_two_by_two
 
 
 class IConformalTopologicalGridDefaultImplementation():
@@ -204,20 +205,30 @@ class ISimpleAffineGridDefaultImplementation():
         assert 0 <= codim <= self.dim,\
             CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
         J = self.embeddings(codim)[0]
-        JIT = np.array(map(np.linalg.pinv, J)).swapaxes(1, 2)
+        if J.shape[-1] == J.shape[-2] == 2:
+            JIT = inv_transposed_two_by_two(J)
+        else:
+            JIT = np.array(map(np.linalg.pinv, J)).swapaxes(1, 2)
         return JIT
 
     @core.cached
     def _integration_element(self, codim):
         assert 0 <= codim <= self.dim,\
             CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
+
         J = self.embeddings(codim)[0]
+        JTJ = np.einsum('eji,ejk->eik', J, J)
 
-        def f(A):
-            return np.linalg.det(np.dot(A.T, A))
+        if JTJ.shape[1] == 1:
+            D = JTJ
+        elif JTJ.shape[1] == 2:
+            D = JTJ[:, 0, 0] * JTJ[:, 1, 1] - JTJ[:, 1, 0] * JTJ[:, 0, 1]
+        else:
+            def f(A):
+                return np.linalg.det(A)
+            D = np.array(map(f, J))
 
-        V = np.array(map(f, J))
-        return np.sqrt(V)
+        return np.sqrt(D)
 
     @core.cached
     def _volumes(self, codim):
