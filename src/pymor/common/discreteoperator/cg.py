@@ -52,7 +52,7 @@ class DiffusionOperatorP1D2(ILinearDiscreteOperator):
     '''
 
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
-                 dirichlet_clear_columns=True, dirichlet_clear_diag=False):
+                 dirichlet_clear_columns=False, dirichlet_clear_diag=False):
         assert grid.reference_element(0) == triangle, ValueError('A triangular grid is expected!')
         self.source_dim = self.range_dim = grid.size(2)
         self.grid = grid
