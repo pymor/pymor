@@ -37,10 +37,11 @@ class LinearAffinelyDecomposedDOP(ILinearDiscreteOperator):
                 ValueError('Invalid parameter dimensions (was {}, expected {})'.format(mu.size, self.parameter_dim))
 
         if self.functionals is not None:
-            A = (sum(op.matrix() * f(mu) for op, f in izip(self.operators, self.functionals))
-                 + self.operator_affine_part.matrix())
+            A = sum(op.matrix() * f(mu) for op, f in izip(self.operators, self.functionals))
         else:
-            A = (sum(op.matrix() * m for op, m in izip(self.operators, mu))
-                 + self.operator_affine_part.matrix())
+            A = sum(op.matrix() * m for op, m in izip(self.operators, mu))
+
+        if self.operator_affine_part is not None:
+            A = A + self.operator_affine_part.matrix()
 
         return A
