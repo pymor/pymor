@@ -14,6 +14,19 @@ class LinearAffinelyDecomposedDOP(ILinearDiscreteOperator):
                 ValueError('If functionals is specified, parameter_dim must also be specified.')
         assert parameter_dim is None or functionals is not None,\
                 ValueError('If parameter_dim is specified, functionals must also be specified.')
+
+        if operator_affine_part is not None:
+            self.source_dim = operator_affine_part.source_dim
+            self.range_dim = operator_affine_part.range_dim
+        else:
+            self.source_dim = operators[0].source_dim
+            self.range_dim = operators[0].range_dimj
+
+        assert all(op.source_dim == self.source_dim for op in operators),\
+                ValueError('All operators must have the same source dimension.')
+        assert all(op.range_dim == self.range_dim for op in operators),\
+                ValueError('All operators must have the same range dimension.')
+
         self.parameter_dim = parameter_dim or len(operators)
         self.operators = operators
         self.operator_affine_part = operator_affine_part

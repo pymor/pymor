@@ -6,6 +6,8 @@ import pymor.core as core
 
 class IDiscreteOperator(core.BasicInterface):
 
+    source_dim = 0
+    range_dim = 0
     parameter_dim = 0
 
     @core.interfaces.abstractmethod
