@@ -120,6 +120,10 @@ class Rect(ISimpleAffineGrid):
         plt.colorbar(im, cax=cax)
         plt.show()
 
+    @staticmethod
+    def test_instances():
+        return [Rect((2,4)), Rect((1,1)), Rect((42,42)), Rect((100,100))]
+
     #def center_distances(self):
      #   raise NotImplementedError
 

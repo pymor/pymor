@@ -116,6 +116,11 @@ class Tria(ISimpleAffineGrid):
         else:
             return super(Tria, self).embeddings(codim)
 
+    @staticmethod
+    def test_instances():
+        return [Tria((2,4)), Tria((1,1)), Tria((42,42)), Tria((100,100))]
+
+
 
 if __name__ == '__main__':
     import matplotlib.pyplot as pl
