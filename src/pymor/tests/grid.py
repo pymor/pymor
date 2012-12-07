@@ -11,6 +11,7 @@ from pymor.grid.interfaces import IConformalTopologicalGrid, ISimpleAffineGrid
 #mandatory so all Grid classes are created
 from pymor.grid import *
 import unittest
+from itertools import product
 
 def make_testcase_classes(grid_types, TestCase):
     for GridType in grid_types:
@@ -131,6 +132,18 @@ class ConformalTopologicalGridTest(unittest.TestCase):
                         S = S[S >= 0]
                         self.assertEqual(S.size, np.unique(S).size)
 
+    def test_superentities_entries_sorted(self):
+        for g in self.grids:
+            for e in xrange(g.dim + 1):
+                for s in xrange(e):
+                    for S in g.superentities(e, s):
+                        i = 0
+                        while (i + 1 < len(S)) and (S[i] < S[i + 1]):
+                            i += 1
+                        self.assertTrue((i + 1 == len(S)) or (S[i + 1] == -1))
+                        if i + 1 < len(S):
+                            np.testing.assert_array_equal(S[i+1:], -1)
+
     def test_superentities_codim_d_codim_d(self):
         for g in self.grids:
             for d in xrange(g.dim + 1):
@@ -147,6 +160,125 @@ class ConformalTopologicalGridTest(unittest.TestCase):
                         for se in SE[i]:
                             if se != -1:
                                 self.assertTrue(i in SUBE[se])
+
+    def test_superentities_each_superentity_has_entry(self):
+        for g in self.grids:
+            for e in xrange(g.dim + 1):
+                for s in xrange(e):
+                    SE = g.superentities(e, s)
+                    SUBE = g.subentities(s, e)
+                    for i in xrange(SUBE.shape[0]):
+                        for se in SUBE[i]:
+                            if se != -1:
+                                self.assertTrue(i in SE[se])
+
+    def test_superentity_indices_wrong_arguments(self):
+        for g in self.grids:
+            for e in xrange(g.dim + 1):
+                with self.assertRaises(AssertionError):
+                    g.superentity_indices(e, -1)
+                with self.assertRaises(AssertionError):
+                    g.superentity_indices(e, e + 1)
+            with self.assertRaises(AssertionError):
+                g.superentity_indices(g.dim + 1, 0)
+            with self.assertRaises(AssertionError):
+                g.superentity_indices(-1, 0)
+            with self.assertRaises(AssertionError):
+                g.superentity_indices(-1, -2)
+
+    def test_superentity_indices_shape(self):
+        for g in self.grids:
+            for e in xrange(g.dim + 1):
+                for s in xrange(e):
+                    self.assertEqual(g.superentity_indices(e, s).shape, g.superentities(e, s).shape)
+
+    def test_superentity_indices_valid_entries(self):
+        for g in self.grids:
+            for e in xrange(g.dim + 1):
+                for s in xrange(e):
+                    SE = g.superentities(e, s)
+                    SEI = g.superentity_indices(e, s)
+                    SUBE = g.subentities(s, e)
+                    for index, superentity in np.ndenumerate(SE):
+                        if superentity > -1:
+                            self.assertEqual(SUBE[superentity, SEI[index]], index[0])
+
+    def test_neighbours_wrong_arguments(self):
+        for g in self.grids:
+            for e in xrange(g.dim + 1):
+                for n in xrange(g.dim + 1):
+                    with self.assertRaises(AssertionError):
+                        g.neighbours(e, n, -1)
+                    with self.assertRaises(AssertionError):
+                        g.neighbours(e, n, g.dim + 1)
+                    with self.assertRaises(AssertionError):
+                        g.neighbours(e, n, e - 1)
+                    with self.assertRaises(AssertionError):
+                        g.neighbours(e, n, n - 1)
+                with self.assertRaises(AssertionError):
+                    g.neighbours(e, g.dim + 1, g.dim)
+                with self.assertRaises(AssertionError):
+                    g.neighbours(e, -1, g.dim)
+            with self.assertRaises(AssertionError):
+                g.neighbours(g.dim+1, g.dim, g.dim)
+            with self.assertRaises(AssertionError):
+                g.neighbours(-1, 0, g.dim)
+
+    def test_neighbours_shape(self):
+        for g in self.grids:
+            for e, n in product(xrange(g.dim + 1), xrange(g.dim + 1)):
+                for s in xrange(max(e, n), g.dim + 1):
+                    self.assertEqual(g.neighbours(e, n, s).ndim, 2)
+                    self.assertEqual(g.neighbours(e, n, s).shape[0], g.size(e))
+
+    def test_neighbours_entry_value_range(self):
+        for g in self.grids:
+            for e, n in product(xrange(g.dim + 1), xrange(g.dim + 1)):
+                for s in xrange(max(e, n), g.dim + 1):
+                    np.testing.assert_array_less(g.neighbours(e, n, s), g.size(n))
+                    np.testing.assert_array_less(-2, g.neighbours(e, n, s))
+
+    def test_neighbours_entry_values_unique(self):
+        for g in self.grids:
+            for e, n in product(xrange(g.dim + 1), xrange(g.dim + 1)):
+                for s in xrange(max(e, n), g.dim + 1):
+                    for S in g.neighbours(e, n, s):
+                        S = S[S >= 0]
+                        self.assertEqual(S.size, np.unique(S).size)
+
+    def test_neighbours_each_entry_neighbour(self):
+        for g in self.grids:
+            for e, n in product(xrange(g.dim + 1), xrange(g.dim + 1)):
+                for s in xrange(max(e, n), g.dim + 1):
+                    N = g.neighbours(e, n, s)
+                    ESE = g.subentities(e, s)
+                    NSE = g.subentities(n, s)
+                    for index, neigh in np.ndenumerate(N):
+                        if neigh > -1:
+                            inter = set(ESE[index[0]]).intersection(set(NSE[neigh]))
+                            if -1 in inter:
+                                self.assertTrue(len(inter) > 1)
+                            else:
+                                self.assertTrue(len(inter) > 0)
+
+    def test_neighbours_each_neighbour_has_entry(self):
+        for g in self.grids:
+            for e, n in product(xrange(g.dim + 1), xrange(g.dim + 1)):
+                for s in xrange(max(e, n), g.dim + 1):
+                    N = g.neighbours(e, n, s)
+                    ESE = g.subentities(e, s)
+                    NSE = g.subentities(n, s)
+                    for ei, ni in product(xrange(ESE.shape[0]), xrange(NSE.shape[0])):
+                        if e == n and ei == ni:
+                            continue
+                        inter = set(ESE[ei]).intersection(set(NSE[ni]))
+                        if -1 in inter:
+                            if len(inter) > 1:
+                                self.assertTrue(ni in N[ei],
+                                        'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'.format(**locals()))
+                        elif len(inter) > 0:
+                            self.assertTrue(ni in N[ei],
+                                        'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'.format(**locals()))
 
 
 
