@@ -50,6 +50,11 @@ class Oned(ISimpleAffineGrid):
         else:
             return super(Oned, self).embeddings(codim)
 
+    def test_instances():
+        return [Oned(interval=np.array((-2, 2)), size=10),
+                Oned(interval=np.array((-2, -4)), size=100),
+                Oned(interval=np.array((3, 2)), size=10),
+                Oned(interval=np.array((1, 2)), size=10000)]
 
 if __name__ == '__main__':
     g = Oned()

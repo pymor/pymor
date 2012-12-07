@@ -90,6 +90,10 @@ class IConformalTopologicalGrid(IConformalTopologicalGridDefaultImplementation, 
         '''
         return self._boundaries(codim)
 
+    @core.interfaces.abstractstaticmethod
+    def test_instances():
+        '''returns a list of Grid instances suitable to be run through our Testcases'''
+        pass
 
 class ISimpleReferenceElement(ISimpleReferenceElementDefaultImplementation, core.BasicInterface):
     '''defines a reference element with the property that each of its subentities is

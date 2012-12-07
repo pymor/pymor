@@ -85,6 +85,8 @@ class PrescribedBoundaryGrid(IConformalTopologicalGrid):
 #            pylab.plot(self._px[t], self._py[t],'o')
 #        pylab.show()
             
+    def test_instances():
+        return [PrescribedBoundaryGrid()]
 
 if __name__ == "__main__":
     p = PrescribedBoundaryGrid(CircleBoundary(), sample_count=12)
