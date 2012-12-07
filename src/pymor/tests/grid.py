@@ -7,26 +7,34 @@ import numpy as np
 import logging
 import nose
 import pprint
+import unittest
+from itertools import product
+import types
 from pymor.grid.interfaces import IConformalTopologicalGrid, ISimpleAffineGrid
 #mandatory so all Grid classes are created
 from pymor.grid import *
-import unittest
-from itertools import product
 
-def make_testcase_classes(grid_types, TestCase):
+    
+class IGridClassTest(unittest.TestCase):
+    
+    '''empty list to make static analyzers happy'''
+    grids = []
+    '''only my subclasses will set this to True, prevents nose from thinking I'm an actual test'''
+    __test__ = False
+
+
+def make_case_classes(grid_types, TestCase):
+    '''cannot name this "*test*" or else nose picks it up and tries to execute it'''
     for GridType in grid_types:
         if GridType.has_interface_name():
             continue
         cname = '{}{}'.format(GridType.__name__, TestCase.__name__)
         #saves a new type called cname with correct bases and class dict in globals
-        globals()[cname] = type(cname, (TestCase,), {'Grid': GridType})
+        globals()[cname] = type(cname, (TestCase,), {'grids': GridType.test_instances(),
+                                                     '__test__': True})
 
 
-class ConformalTopologicalGridTest(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        cls.grids = cls.Grid.test_instances() if cls.__name__ != 'ConformalTopologicalGridTest' else []
+class ConformalTopologicalGridTest(IGridClassTest):
 
     def test_dim(self):
         for g in self.grids:
@@ -281,14 +289,10 @@ class ConformalTopologicalGridTest(unittest.TestCase):
                                         'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'.format(**locals()))
 
 
-
-class SimpleAffineGridTest(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        cls.grids = cls.Grid.test_instances() if cls.__name__ != 'SimpleAffineGridTest' else []
+class SimpleAffineGridTest(IGridClassTest):
 
     def test_volumes(self):
+        logging.error(self.__class__)
         for grid in self.grids:
             dim = grid.dim
             for codim in range(dim+1):
@@ -296,13 +300,9 @@ class SimpleAffineGridTest(unittest.TestCase):
                 self.assertGreater(np.min(grid.volumes_inverse(codim)), 0)
                 self.assertGreater(np.min(grid.diameters(codim)), 0)
 
-make_testcase_classes(IConformalTopologicalGrid.implementors(True), ConformalTopologicalGridTest)
-make_testcase_classes(ISimpleAffineGrid.implementors(True), SimpleAffineGridTest)
-
-#this hard fails module import atm
-#make_testcase_classes(IConformalTopologicalGrid.implementors(True), ConformalTopologicalGridTest)
+#make_case_classes(IConformalTopologicalGrid.implementors(True), ConformalTopologicalGridTest)
+make_case_classes(ISimpleAffineGrid.implementors(True), SimpleAffineGridTest)
 
 if __name__ == "__main__":
-#    nose.core.runmodule(name='__main__')
-    logging.basicConfig(level=logging.INFO)
-    unittest.main()
+    #logging.basicConfig(level=logging.ERROR)
+    nose.core.runmodule(name='__main__')
