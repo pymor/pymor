@@ -13,7 +13,6 @@ import types
 from pymor.grid.interfaces import IConformalTopologicalGrid, ISimpleAffineGrid
 #mandatory so all Grid classes are created
 from pymor.grid import *
-
     
 class IGridClassTest(unittest.TestCase):
     
@@ -23,17 +22,20 @@ class IGridClassTest(unittest.TestCase):
     __test__ = False
 
 
-def make_case_classes(grid_types, TestCase):
-    '''cannot name this "*test*" or else nose picks it up and tries to execute it'''
-    for GridType in grid_types:
-        if GridType.has_interface_name():
-            continue
-        cname = '{}{}'.format(GridType.__name__, TestCase.__name__)
-        #saves a new type called cname with correct bases and class dict in globals
-        globals()[cname] = type(cname, (TestCase,), {'grids': GridType.test_instances(),
+def SubclassForImplemetorsOf(InterfaceType):
+    '''A decorator that dynamically creates subclasses of the decorated base test class 
+    for all implementors of a given Interface
+    '''
+    def decorate(TestCase):
+        '''saves a new type called cname with correct bases and class dict in globals'''
+        for GridType in [T for T in InterfaceType.implementors(True) if not T.has_interface_name()]:
+            cname = '{}{}'.format(GridType.__name__, TestCase.__name__)
+            globals()[cname] = type(cname, (TestCase,), {'grids': GridType.test_instances(),
                                                      '__test__': True})
+        return TestCase
+    return decorate
 
-
+@SubclassForImplemetorsOf(IConformalTopologicalGrid)
 class ConformalTopologicalGridTest(IGridClassTest):
 
     def test_dim(self):
@@ -288,7 +290,7 @@ class ConformalTopologicalGridTest(IGridClassTest):
                             self.assertTrue(ni in N[ei],
                                         'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'.format(**locals()))
 
-
+@SubclassForImplemetorsOf(ISimpleAffineGrid)
 class SimpleAffineGridTest(IGridClassTest):
 
     def test_volumes(self):
@@ -300,8 +302,6 @@ class SimpleAffineGridTest(IGridClassTest):
                 self.assertGreater(np.min(grid.volumes_inverse(codim)), 0)
                 self.assertGreater(np.min(grid.diameters(codim)), 0)
 
-#make_case_classes(IConformalTopologicalGrid.implementors(True), ConformalTopologicalGridTest)
-make_case_classes(ISimpleAffineGrid.implementors(True), SimpleAffineGridTest)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.ERROR)
