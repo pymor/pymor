@@ -181,7 +181,7 @@ class BoringTestClass(BasicInterface):
         notation. For classes defined elsewhere you MUST use it. Only builtins and classes with
         UberMeta as their metaclass can be checked w/o manually defining a new contract type.
         
-        :type cls: BoringTestInterface
+        :type cls: pymor.tests.core.BoringTestInterface
         :type other: pymor.common.boundaryinfo.oned.AllDirichlet
         '''
         pass
@@ -225,6 +225,6 @@ class ContractTest(unittest.TestCase):
         inst.validate_interface(BoringTestInterface(), pymor.common.boundaryinfo.oned.AllDirichlet())
         
 if __name__ == "__main__":
-    #import sys;sys.argv = ['', 'Test.testName']
-    logging.basicConfig(level=logging.INFO)
-    unittest.main()
+    import nose
+    logging.basicConfig(level=logging.WARNING)
+    nose.core.runmodule(name='__main__')

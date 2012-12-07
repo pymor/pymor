@@ -304,5 +304,5 @@ class SimpleAffineGridTest(IGridClassTest):
 make_case_classes(ISimpleAffineGrid.implementors(True), SimpleAffineGridTest)
 
 if __name__ == "__main__":
-    #logging.basicConfig(level=logging.ERROR)
+    logging.basicConfig(level=logging.ERROR)
     nose.core.runmodule(name='__main__')
