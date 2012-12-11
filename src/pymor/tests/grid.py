@@ -276,19 +276,21 @@ class ConformalTopologicalGridTest(IGridClassTest):
             for e, n in product(xrange(g.dim + 1), xrange(g.dim + 1)):
                 for s in xrange(max(e, n), g.dim + 1):
                     N = g.neighbours(e, n, s)
-                    ESE = g.subentities(e, s)
-                    NSE = g.subentities(n, s)
-                    for ei, ni in product(xrange(ESE.shape[0]), xrange(NSE.shape[0])):
-                        if e == n and ei == ni:
-                            continue
-                        inter = set(ESE[ei]).intersection(set(NSE[ni]))
-                        if -1 in inter:
-                            if len(inter) > 1:
-                                self.assertTrue(ni in N[ei],
+                    SUE = g.superentities(s, e)
+                    SUN = g.superentities(s, n)
+                    if e != n:
+                        for si in xrange(SUE.shape[0]):
+                            for ei, ni in product(SUE[si], SUN[si]):
+                                if ei != -1 and ni != -1:
+                                    self.assertTrue(ni in N[ei],
+                                            'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'.format(**locals()))
+                    else:
+                        for si in xrange(SUE.shape[0]):
+                            for ei, ni in product(SUE[si], SUN[si]):
+                                if ei != ni and ei != -1 and ni != -1:
+                                    self.assertTrue(ni in N[ei],
                                         'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'.format(**locals()))
-                        elif len(inter) > 0:
-                            self.assertTrue(ni in N[ei],
-                                        'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'.format(**locals()))
+
 
 @SubclassForImplemetorsOf(ISimpleAffineGrid)
 class SimpleAffineGridTest(IGridClassTest):
