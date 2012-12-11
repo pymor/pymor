@@ -104,7 +104,7 @@ class Tria(ISimpleAffineGrid):
         assert codim <= subentity_codim <= 2, CodimError('Invalid subentity codimension')
         if codim == 0:
             if subentity_codim == 0:
-                return np.arange(self.size(0))[:, np.newaxis]
+                return np.arange(self.size(0), dtype='int32')[:, np.newaxis]
             else:
                 return self.__subentities[subentity_codim - 1]
         else:
