@@ -291,6 +291,15 @@ class ConformalTopologicalGridTest(IGridClassTest):
                                     self.assertTrue(ni in N[ei],
                                         'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'.format(**locals()))
 
+    def test_neighbours_not_neighbour_of_itself(self):
+        for g in self.grids:
+            for e in xrange(g.dim + 1):
+                for s in xrange(e, g.dim + 1):
+                    N = g.neighbours(e, e, s)
+                    for ei, E in enumerate(N):
+                        self.assertTrue(ei not in E,
+                                'Failed for\n{g}\ne={e}, s={s}, ei={ei}, E={E}'.format(**locals()))
+
 
 @SubclassForImplemetorsOf(ISimpleAffineGrid)
 class SimpleAffineGridTest(IGridClassTest):
