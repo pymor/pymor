@@ -11,7 +11,7 @@ import matplotlib.pyplot as pl
 from scipy.sparse.linalg import bicg
 
 from pymor.grid.tria import Tria
-from pymor.common.boundaryinfo import AllDirichletZero
+from pymor.common.boundaryinfo import AllDirichlet
 from pymor.common.discreteoperator.cg import DiffusionOperatorP1D2, L2ProductFunctionalP1D2
 from pymor.common.discreteoperator.affine import LinearAffinelyDecomposedDOP
 
@@ -30,7 +30,7 @@ print('Solving on Tria(({0},{0}))'.format(n))
 
 print('Setup grid ...')
 g = Tria((n, n))
-bi = AllDirichletZero(g)
+bi = AllDirichlet(g)
 
 d1 = lambda X: X[:, 0]
 d2 = lambda X: 1 - X[:, 0]

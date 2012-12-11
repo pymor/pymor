@@ -36,10 +36,10 @@ for n in [32, 64, 128, 256]:
 
     print('Setup grid ...')
     g = Tria((n, n))
-    bi = AllDirichlet(g, dirichlet)
+    bi = AllDirichlet(g)
 
     print('Assemble operators ...')
-    F = L2ProductFunctionalP1D2(g, bi, rhs)
+    F = L2ProductFunctionalP1D2(g, bi, rhs, dirichlet_data=dirichlet)
     L = DiffusionOperatorP1D2(g, bi)
     RHS = F.matrix()
     A = L.matrix()

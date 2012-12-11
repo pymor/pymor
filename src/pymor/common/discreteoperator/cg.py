@@ -13,14 +13,14 @@ class L2ProductFunctionalP1D2(ILinearDiscreteOperator):
     grid. The integral is simply calculated by evaluating the function on the codim-2 entities.
     '''
 
-    def __init__(self, grid, boundary_info, function, dirichlet_set_values=True):
+    def __init__(self, grid, boundary_info, function, dirichlet_data=None):
         assert grid.reference_element(0) == triangle, ValueError('A triangular grid is expected!')
         self.source_dim = grid.size(2)
         self.range_dim = 1
         self.grid = grid
         self.boundary_info = boundary_info
         self.function = function
-        self.dirichlet_set_values = dirichlet_set_values
+        self.dirichlet_data = dirichlet_data
 
     def assemble(self, mu=np.array([])):
         assert mu.size == self.parameter_dim,\
@@ -37,8 +37,8 @@ class L2ProductFunctionalP1D2(ILinearDiscreteOperator):
 
         if bi.has_dirichlet:
             DI = bi.dirichlet_boundaries(2)
-            if self.dirichlet_set_values:
-                I[DI] = bi.dirichlet_data(g.centers(2)[DI])
+            if self.dirichlet_data is not None:
+                I[DI] = self.dirichlet_data(g.centers(2)[DI])
             else:
                 I[DI] = 0
 

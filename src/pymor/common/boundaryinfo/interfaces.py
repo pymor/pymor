@@ -8,9 +8,7 @@ import pymor.core as core
 class IBoundaryInfo(core.BasicInterface):
     '''Describes boundary conditions associated to a grid. For every boundary
     condition type and codimension a mask is provided, marking grid entities
-    of the respective type and codimension by their global index. Additionaly,
-    for every condition type a data function is provided, mapping global
-    coordinates to boundary data values.
+    of the respective type and codimension by their global index.
     '''
 
     condition_types = set()
@@ -19,12 +17,6 @@ class IBoundaryInfo(core.BasicInterface):
         '''retval[i] is True iff the codim-`codim` entity of global
         index `i` is associated to the boundary condition of type
         `condition_type`
-        '''
-        raise ValueError('Has no condition_type "{}"'.format(condition_type))
-
-    def data(self, condition_type):
-        '''returns a vectorized function mapping global coordinates to
-        boundary data for the boundary condition of type 'condition_type'
         '''
         raise ValueError('Has no condition_type "{}"'.format(condition_type))
 
@@ -65,9 +57,3 @@ class IBoundaryInfo(core.BasicInterface):
         def _neumann_boundaries(codim):
             return np.where(self.neumann_mask(codim))[0].astype('int32')
         return _neumann_boundaries(codim)
-
-    def dirichlet_data(self, points):
-        return self.data('dirichlet')(points)
-
-    def neumann_data(self, points):
-        return self.data('neumann')(points)
