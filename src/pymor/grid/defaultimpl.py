@@ -221,7 +221,7 @@ class ISimpleAffineGridDefaultImplementation():
         return JIT
 
     @core.cached
-    def _integration_element(self, codim):
+    def _integration_elements(self, codim):
         assert 0 <= codim <= self.dim,\
             CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
 
@@ -248,7 +248,7 @@ class ISimpleAffineGridDefaultImplementation():
             CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
         if codim == self.dim:
             return np.ones(self.size(self.dim))
-        return self.reference_element(codim).volume * self.integration_element(codim)
+        return self.reference_element(codim).volume * self.integration_elements(codim)
 
     @core.cached
     def _volumes_inverse(self, codim):

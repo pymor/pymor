@@ -477,26 +477,26 @@ class SimpleAffineGridTest(IGridClassTest):
                 for e in xrange(g.size(d)):
                     np.testing.assert_allclose(JIT[e], np.linalg.pinv(A[e]).T)
 
-    def test_integration_element_wrong_arguments(self):
+    def test_integration_elements_wrong_arguments(self):
         for g in self.grids:
             with self.assertRaises(AssertionError):
-                g.integration_element(-1)
+                g.integration_elements(-1)
             with self.assertRaises(AssertionError):
-                g.integration_element(g.dim + 1)
+                g.integration_elements(g.dim + 1)
 
-    def test_integration_element_shape(self):
+    def test_integration_elements_shape(self):
         for g in self.grids:
             for d in xrange(g.dim):
-                self.assertEqual(g.integration_element(d).shape, (g.size(d),))
+                self.assertEqual(g.integration_elements(d).shape, (g.size(d),))
 
-    def test_integration_element_values(self):
+    def test_integration_elements_values(self):
         for g in self.grids:
             for d in xrange(g.dim - 1):
-                IE = g.integration_element(d)
+                IE = g.integration_elements(d)
                 A, _ = g.embeddings(d)
                 for e in xrange(g.size(d)):
                     np.testing.assert_allclose(IE[e], np.sqrt(np.linalg.det(np.dot(A[e].T, A[e]))))
-            np.testing.assert_allclose(g.integration_element(g.dim), 1)
+            np.testing.assert_allclose(g.integration_elements(g.dim), 1)
 
     def test_volumes_wrong_arguments(self):
         for g in self.grids:
@@ -514,7 +514,7 @@ class SimpleAffineGridTest(IGridClassTest):
         for g in self.grids:
             for d in xrange(g.dim - 1):
                 V = g.volumes(d)
-                IE = g.integration_element(d)
+                IE = g.integration_elements(d)
                 np.testing.assert_allclose(V, IE * g.reference_element(d).volume)
 
     def test_volumes_inverse_wrong_arguments(self):

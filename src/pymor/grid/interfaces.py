@@ -228,11 +228,11 @@ class ISimpleAffineGrid(ISimpleAffineGridDefaultImplementation, IConformalTopolo
         '''
         return self._jacobian_inverse_transposed(codim)
 
-    def integration_element(self, codim):
+    def integration_elements(self, codim):
         '''`retval[e]` is given as `sqrt(det(A^T*A))`, where
         `A = embeddings(codim)[0][e]`.
         '''
-        return self._integration_element(codim)
+        return self._integration_elements(codim)
 
     def volumes(self, codim):
         '''`retval[e]` is the (dim-codim)-dimensional volume of the
@@ -270,6 +270,6 @@ class ISimpleAffineGrid(ISimpleAffineGridDefaultImplementation, IConformalTopolo
         The quadrature is of order `order` or has `npoints` integration points. To
         integrate a function `f` over `e` one has to form
 
-        ``np.dot(f(quadrature_points(codim, order)[e]), reference_element(codim).quadrature(order)[1]) * integration_element(codim)[e]``.  # NOPEP8
+        ``np.dot(f(quadrature_points(codim, order)[e]), reference_element(codim).quadrature(order)[1]) * integration_elements(codim)[e]``.  # NOPEP8
         '''
         return self._quadrature_points(codim, order, npoints, quadrature_type)
