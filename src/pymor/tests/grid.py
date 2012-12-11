@@ -126,6 +126,7 @@ class ConformalTopologicalGridTest(IGridClassTest):
                 for s in xrange(e):
                     self.assertEqual(g.superentities(e, s).ndim, 2)
                     self.assertEqual(g.superentities(e, s).shape[0], g.size(e))
+                    self.assertGreater(g.superentities(e, s).shape[1], 0)
 
     def test_superentities_entry_value_range(self):
         for g in self.grids:
@@ -299,6 +300,74 @@ class ConformalTopologicalGridTest(IGridClassTest):
                     for ei, E in enumerate(N):
                         self.assertTrue(ei not in E,
                                 'Failed for\n{g}\ne={e}, s={s}, ei={ei}, E={E}'.format(**locals()))
+
+    def test_boundary_mask_wrong_arguments(self):
+        for g in self.grids:
+            with self.assertRaises(AssertionError):
+                g.boundary_mask(-1)
+            with self.assertRaises(AssertionError):
+                g.boundary_mask(g.dim + 1)
+
+    def test_boundary_mask_shape(self):
+        for g in self.grids:
+            for d in xrange(g.dim + 1):
+                self.assertEqual(g.boundary_mask(d).shape, (g.size(d),))
+
+    def test_boundary_mask_dtype(self):
+        for g in self.grids:
+            for d in xrange(g.dim + 1):
+                self.assertEqual(g.boundary_mask(d).dtype, np.dtype('bool'),
+                        'Failed for\n{g}\nd={d}'.format(**locals()))
+
+    def test_boundary_mask_entries_codim1(self):
+        for g in self.grids:
+            BM = g.boundary_mask(1)
+            SE = g.superentities(1, 0)
+            for ei, b in enumerate(BM):
+                E = SE[ei]
+                self.assertEqual(E[E > -1].size <= 1, b)
+
+    def test_boundary_mask_entries_codim0(self):
+        for g in self.grids:
+            BM0 = g.boundary_mask(0)
+            BM1 = g.boundary_mask(1)
+            SE = g.subentities(0, 1)
+            for ei, b in enumerate(BM0):
+                S = SE[ei]
+                self.assertEqual(np.any(BM1[S[S > -1]]), b)
+
+    def test_boundary_mask_entries_codim_d(self):
+        for g in self.grids:
+            for d in xrange(2, g.dim + 1):
+                BMD = g.boundary_mask(d)
+                BM1 = g.boundary_mask(1)
+                SE = g.superentities(d, 1)
+                for ei, b in enumerate(BMD):
+                    S = SE[ei]
+                    self.assertEqual(np.any(BM1[S[S > -1]]), b)
+
+    def test_boundaries_wrong_arguments(self):
+        for g in self.grids:
+            with self.assertRaises(AssertionError):
+                g.boundaries(-1)
+            with self.assertRaises(AssertionError):
+                g.boundaries(g.dim + 1)
+
+    def test_boundaries_shape(self):
+        for g in self.grids:
+            for d in xrange(g.dim + 1):
+                self.assertEqual(len(g.boundaries(d).shape), 1)
+
+    def test_boundaries_entry_value_range(self):
+        for g in self.grids:
+            for d in xrange(g.dim + 1):
+                np.testing.assert_array_less(g.boundaries(d), g.size(d))
+                np.testing.assert_array_less(-1, g.boundaries(d))
+
+    def test_boundaries_entries(self):
+        for g in self.grids:
+            for d in xrange(g.dim + 1):
+                np.testing.assert_array_equal(np.where(g.boundary_mask(d))[0], g.boundaries(d))
 
 
 @SubclassForImplemetorsOf(ISimpleAffineGrid)
