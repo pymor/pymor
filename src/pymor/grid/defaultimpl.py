@@ -117,28 +117,31 @@ class IConformalTopologicalGridDefaultImplementation():
             SE = self.superentities(1, 0)
             # a codim-1 entity can have at most 2 superentities, and it is a boundary
             # if it has only one superentity
-            return np.where(np.any(SE == -1, axis = 1))[0].astype('int32')
+            if SE.shape[1] > 1:
+                return np.where(np.any(SE == -1, axis = 1))[0].astype('int32')
+            else:
+                return np.arange(SE.shape[0], dtype='int32')
         elif codim == 0:
-            B0 = self.boundaries(1)
-            if B0.size > 0:
-                return np.unique(self.superentities(1, 0)[B0])[1:]
+            B1 = self.boundaries(1)
+            if B1.size > 0:
+                B0 = np.unique(self.superentities(1, 0)[B1])
+                return B0[1:] if B0[0] == -1 else B0
             else:
                 return np.array([])
         else:
-            B0 = self.boundaries(1)
-            if B0.size > 0:
-                BC = np.unique(self.subentities(1, codim)[B0])
-                if BC[0] == -1:
-                    return BC[1:]
-                else:
-                    return BC
+            B1 = self.boundaries(1)
+            if B1.size > 0:
+                BC = np.unique(self.subentities(1, codim)[B1])
+                return BC[1:] if BC[0] == -1 else BC
             else:
                 return np.array([])
 
     @core.cached
     def _boundary_mask(self, codim):
         M = np.zeros(self.size(codim), dtype='bool')
-        M[self.boundaries(codim)] = True
+        B = self.boundaries(codim)
+        if B.size > 0:
+            M[self.boundaries(codim)] = True
         return M
 
 
