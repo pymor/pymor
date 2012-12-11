@@ -72,6 +72,13 @@ class ConformalTopologicalGridTest(IGridClassTest):
                     self.assertEqual(g.subentities(e, s).ndim, 2)
                     self.assertEqual(g.subentities(e, s).shape[0], g.size(e))
 
+    def test_subentities_dtype(self):
+        for g in self.grids:
+            for e in xrange(g.dim + 1):
+                for s in xrange(e, g.dim + 1):
+                    self.assertEqual(g.subentities(e, s).dtype, np.dtype('int32'),
+                            'Failed for\n{g}\ne={e}, s={s}'.format(**locals()))
+
     def test_subentities_entry_value_range(self):
         for g in self.grids:
             for e in xrange(g.dim + 1):
@@ -127,6 +134,12 @@ class ConformalTopologicalGridTest(IGridClassTest):
                     self.assertEqual(g.superentities(e, s).ndim, 2)
                     self.assertEqual(g.superentities(e, s).shape[0], g.size(e))
                     self.assertGreater(g.superentities(e, s).shape[1], 0)
+
+    def test_superentities_dtype(self):
+        for g in self.grids:
+            for e in xrange(g.dim + 1):
+                for s in xrange(e):
+                    self.assertEqual(g.superentities(e, s).dtype, np.dtype('int32'))
 
     def test_superentities_entry_value_range(self):
         for g in self.grids:
@@ -203,6 +216,12 @@ class ConformalTopologicalGridTest(IGridClassTest):
                 for s in xrange(e):
                     self.assertEqual(g.superentity_indices(e, s).shape, g.superentities(e, s).shape)
 
+    def test_superentity_indices_dtype(self):
+        for g in self.grids:
+            for e in xrange(g.dim + 1):
+                for s in xrange(e):
+                    self.assertEqual(g.superentity_indices(e, s).dtype, np.dtype('int32'))
+
     def test_superentity_indices_valid_entries(self):
         for g in self.grids:
             for e in xrange(g.dim + 1):
@@ -241,6 +260,12 @@ class ConformalTopologicalGridTest(IGridClassTest):
                 for s in xrange(max(e, n), g.dim + 1):
                     self.assertEqual(g.neighbours(e, n, s).ndim, 2)
                     self.assertEqual(g.neighbours(e, n, s).shape[0], g.size(e))
+
+    def test_neighbours_dtype(self):
+        for g in self.grids:
+            for e, n in product(xrange(g.dim + 1), xrange(g.dim + 1)):
+                for s in xrange(max(e, n), g.dim + 1):
+                    self.assertEqual(g.neighbours(e, n, s).dtype, np.dtype('int32'))
 
     def test_neighbours_entry_value_range(self):
         for g in self.grids:
@@ -357,6 +382,12 @@ class ConformalTopologicalGridTest(IGridClassTest):
         for g in self.grids:
             for d in xrange(g.dim + 1):
                 self.assertEqual(len(g.boundaries(d).shape), 1)
+
+    def test_boundaries_dtype(self):
+        for g in self.grids:
+            for d in xrange(g.dim + 1):
+                self.assertEqual(g.boundaries(d).dtype, np.dtype('int32'),
+                        'Failed for\n{g}\nd={d}'.format(**locals()))
 
     def test_boundaries_entry_value_range(self):
         for g in self.grids:
