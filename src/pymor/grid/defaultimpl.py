@@ -32,9 +32,10 @@ class IConformalTopologicalGridDefaultImplementation():
 
     @core.cached
     def _superentities(self, codim, superentity_codim=None):
-        assert 0 < codim <= self.dim, CodimError('Invalid codimension')
+        assert 0 <= codim <= self.dim, CodimError('Invalid codimension (was {})'.format(codim))
         if superentity_codim is None:
-            superentity_codim = codim - 1
+            superentity_codim = codim - 1 if codim > 0 else 0
+        assert 0 <= superentity_codim <= codim, CodimError('Invalid codimension (was {})'.format(superentity_codim))
 
         SE = self.subentities(superentity_codim, codim)
         num_superentities = np.bincount(SE.ravel()).max()
