@@ -211,7 +211,7 @@ class ISimpleAffineGridDefaultImplementation():
 
     @core.cached
     def _jacobian_inverse_transposed(self, codim):
-        assert 0 <= codim <= self.dim,\
+        assert 0 <= codim < self.dim,\
             CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
         J = self.embeddings(codim)[0]
         if J.shape[-1] == J.shape[-2] == 2:
@@ -225,13 +225,16 @@ class ISimpleAffineGridDefaultImplementation():
         assert 0 <= codim <= self.dim,\
             CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
 
+        if codim == self.dim:
+            return np.ones(self.size(codim))
+
         J = self.embeddings(codim)[0]
         JTJ = np.einsum('eji,ejk->eik', J, J)
 
         if JTJ.shape[1] == 1:
-            D = JTJ
+            D = JTJ.ravel()
         elif JTJ.shape[1] == 2:
-            D = JTJ[:, 0, 0] * JTJ[:, 1, 1] - JTJ[:, 1, 0] * JTJ[:, 0, 1]
+            D = (JTJ[:, 0, 0] * JTJ[:, 1, 1] - JTJ[:, 1, 0] * JTJ[:, 0, 1]).ravel()
         else:
             def f(A):
                 return np.linalg.det(A)
