@@ -53,9 +53,9 @@ class IConformalTopologicalGridDefaultImplementation():
 
     @core.cached
     def _superentity_indices(self, codim, superentity_codim=None):
-        assert 0 < codim <= self.dim, CodimError('Invalid codimension')
+        assert 0 <= codim <= self.dim, CodimError('Invalid codimension')
         if superentity_codim is None:
-            superentity_codim = codim - 1
+            superentity_codim = codim - 1 if codim > 0 else 0
         E = self.subentities(superentity_codim, codim)
         SE = self.superentities(codim, superentity_codim)
         SEI = np.empty_like(SE)
@@ -69,17 +69,22 @@ class IConformalTopologicalGridDefaultImplementation():
 
     @core.cached
     def _neighbours(self, codim, neighbour_codim, intersection_codim):
+        assert 0 <= codim <= self.dim, CodimError('Invalid codimension')
+        assert 0 <= neighbour_codim <= self.dim, CodimError('Invalid codimension')
         if intersection_codim is None:
             if codim == neighbour_codim:
                 intersection_codim = codim + 1
             else:
                 intersection_codim = min(codim, neighbour_codim)
+        assert max(codim, neighbour_codim) <= intersection_codim <= self.dim, CodimError('Invalid codimension')
 
         if intersection_codim == min(codim, neighbour_codim):
-            if codim <= neighbour_codim:
+            if codim < neighbour_codim:
                 return self.subentities(codim, neighbour_codim)
-            else:
+            elif codim > neighbour_codim:
                 return self.superentities(codim, neighbour_codim)
+            else:
+                return np.zeros((self.size(codim), 0), dtype=np.int32)
         else:
             EI = self.subentities(codim, intersection_codim)
             ISE = self.superentities(intersection_codim, neighbour_codim)
