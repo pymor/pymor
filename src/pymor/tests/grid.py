@@ -10,7 +10,7 @@ import pprint
 import unittest
 from itertools import product
 import types
-from pymor.grid.interfaces import IConformalTopologicalGrid, ISimpleAffineGrid
+from pymor.grid.interfaces import IConformalTopologicalGrid, ISimpleAffineGrid, ISimpleReferenceElement
 #mandatory so all Grid classes are created
 from pymor.grid import *
     
@@ -34,6 +34,7 @@ def SubclassForImplemetorsOf(InterfaceType):
                                                      '__test__': True})
         return TestCase
     return decorate
+
 
 @SubclassForImplemetorsOf(IConformalTopologicalGrid)
 class ConformalTopologicalGridTest(IGridClassTest):
@@ -404,14 +405,136 @@ class ConformalTopologicalGridTest(IGridClassTest):
 @SubclassForImplemetorsOf(ISimpleAffineGrid)
 class SimpleAffineGridTest(IGridClassTest):
 
-    def test_volumes(self):
-        logging.error(self.__class__)
-        for grid in self.grids:
-            dim = grid.dim
-            for codim in range(dim+1):
-                self.assertGreater(np.min(grid.volumes(codim)), 0)
-                self.assertGreater(np.min(grid.volumes_inverse(codim)), 0)
-                self.assertGreater(np.min(grid.diameters(codim)), 0)
+    def test_dim_outer(self):
+        for g in self.grids:
+            self.assertIsInstance(g.dim_outer, int)
+            self.assertGreaterEqual(g.dim_outer, g.dim)
+
+    def test_reference_element_wrong_arguments(self):
+        for g in self.grids:
+            with self.assertRaises(AssertionError):
+                g.reference_element(-1)
+            with self.assertRaises(AssertionError):
+                g.reference_element(g.dim + 1)
+
+    def test_reference_element_type(self):
+        for g in self.grids:
+            for d in xrange(g.dim + 1):
+                self.assertIsInstance(g.reference_element(d), ISimpleReferenceElement)
+
+    def test_reference_element_transitivity(self):
+        for g in self.grids:
+            for d in xrange(1, g.dim + 1):
+                self.assertIs(g.reference_element(d), g.reference_element(0).sub_reference_element(d))
+
+    def test_embeddings_wrong_arguments(self):
+        for g in self.grids:
+            with self.assertRaises(AssertionError):
+                g.embeddings(-1)
+            with self.assertRaises(AssertionError):
+                g.embeddings(g.dim + 1)
+
+    def test_embeddings_shape(self):
+        for g in self.grids:
+            for d in xrange(g.dim + 1):
+                RES = g.embeddings(d)
+                self.assertEqual(len(RES), 2)
+                A, B = RES
+                self.assertEqual(A.shape, (g.size(d), g.dim_outer, g.dim - d))
+                self.assertEqual(B.shape, (g.size(d), g.dim_outer))
+
+    def test_embeddings_transitivity(self):
+        for g in self.grids:
+            for d in xrange(1, g.dim + 1):
+                AD1, BD1 = g.embeddings(d - 1)
+                AD, BD = g.embeddings(d)
+                SE = g.superentities(d, d - 1)
+                SEI = g.superentity_indices(d, d - 1)
+                ASUB, BSUB = g.reference_element(d - 1).subentity_embedding(1)
+                for e in xrange(g.size(d)):
+                    np.testing.assert_allclose(AD[e], np.dot(AD1[SE[e, 0]], ASUB[SEI[e, 0]]))
+                    np.testing.assert_allclose(BD[e], np.dot(AD1[SE[e, 0]], BSUB[SEI[e, 0]]) + BD1[SE[e, 0]])
+
+    def test_jacobian_inverse_transposed_wrong_arguments(self):
+        for g in self.grids:
+            with self.assertRaises(AssertionError):
+                g.jacobian_inverse_transposed(-1)
+            with self.assertRaises(AssertionError):
+                g.jacobian_inverse_transposed(g.dim + 1)
+            with self.assertRaises(AssertionError):
+                g.jacobian_inverse_transposed(g.dim)
+
+    def test_jacobian_inverse_transposed_shape(self):
+        for g in self.grids:
+            for d in xrange(g.dim):
+                self.assertEqual(g.jacobian_inverse_transposed(d).shape, (g.size(d), g.dim_outer, g.dim - d))
+
+    def test_jacobian_inverse_transposed_values(self):
+        for g in self.grids:
+            for d in xrange(g.dim):
+                JIT = g.jacobian_inverse_transposed(d)
+                A, _ = g.embeddings(d)
+                for e in xrange(g.size(d)):
+                    np.testing.assert_allclose(JIT[e], np.linalg.pinv(A[e]).T)
+
+    def test_integration_element_wrong_arguments(self):
+        for g in self.grids:
+            with self.assertRaises(AssertionError):
+                g.integration_element(-1)
+            with self.assertRaises(AssertionError):
+                g.integration_element(g.dim + 1)
+
+    def test_integration_element_shape(self):
+        for g in self.grids:
+            for d in xrange(g.dim):
+                self.assertEqual(g.integration_element(d).shape, (g.size(d),))
+
+    def test_integration_element_values(self):
+        for g in self.grids:
+            for d in xrange(g.dim - 1):
+                IE = g.integration_element(d)
+                A, _ = g.embeddings(d)
+                for e in xrange(g.size(d)):
+                    np.testing.assert_allclose(IE[e], np.sqrt(np.linalg.det(np.dot(A[e].T, A[e]))))
+            np.testing.assert_allclose(g.integration_element(g.dim), 1)
+
+    def test_volumes_wrong_arguments(self):
+        for g in self.grids:
+            with self.assertRaises(AssertionError):
+                g.volumes(-1)
+            with self.assertRaises(AssertionError):
+                g.volumes(g.dim + 1)
+
+    def test_volumes_shape(self):
+        for g in self.grids:
+            for d in xrange(g.dim):
+                self.assertEqual(g.volumes(d).shape, (g.size(d),))
+
+    def test_volumes_values(self):
+        for g in self.grids:
+            for d in xrange(g.dim - 1):
+                V = g.volumes(d)
+                IE = g.integration_element(d)
+                np.testing.assert_allclose(V, IE * g.reference_element(d).volume)
+
+    def test_volumes_inverse_wrong_arguments(self):
+        for g in self.grids:
+            with self.assertRaises(AssertionError):
+                g.volumes_inverse(-1)
+            with self.assertRaises(AssertionError):
+                g.volumes_inverse(g.dim + 1)
+
+    def test_volumes_inverse_shape(self):
+        for g in self.grids:
+            for d in xrange(g.dim):
+                self.assertEqual(g.volumes_inverse(d).shape, (g.size(d),))
+
+    def test_volumes_inverse_values(self):
+        for g in self.grids:
+            for d in xrange(g.dim - 1):
+                VI = g.volumes_inverse(d)
+                V = g.volumes(d)
+                np.testing.assert_allclose(VI, np.reciprocal(V))
 
 
 if __name__ == "__main__":
