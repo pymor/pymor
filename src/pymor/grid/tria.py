@@ -118,7 +118,7 @@ class Tria(ISimpleAffineGrid):
 
     @staticmethod
     def test_instances():
-        return [Tria((2,4)), Tria((1,1)), Tria((42,42)), Tria((100,100))]
+        return [Tria((2,4)), Tria((1,1)), Tria((42,42))]
 
 
 

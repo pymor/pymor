@@ -122,7 +122,7 @@ class Rect(ISimpleAffineGrid):
 
     @staticmethod
     def test_instances():
-        return [Rect((2,4)), Rect((1,1)), Rect((42,42)), Rect((100,100))]
+        return [Rect((2,4)), Rect((1,1)), Rect((42,42))]
 
     #def center_distances(self):
      #   raise NotImplementedError
