@@ -3,30 +3,32 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import numpy as np
 
 from .interfaces import IBoundaryInfo
+from pymor.common import BoundaryType
 
 
 class FromIndicators(IBoundaryInfo):
 
     def __init__(self, grid, indicators):
         self.grid = grid
-        self.condition_types = set(indicators.keys())
-        assert self.condition_types <= set(('dirichlet', 'neumann', 'robin')), ValueError('Unknown boundary type')
-        self._masks = {condition_type:[np.zeros(grid.size(codim), dtype='bool') for codim in xrange(grid.dim + 1)]
-                       for condition_type in self.condition_types}
-        for condition_type, codims in self._masks.iteritems():
-            for codim, mask in enumerate(codims):
-                mask[grid.boundaries(codim)] = indicators[condition_type](grid.centers(codim)[grid.boundaries(codim)])
+        self.boundary_types = indicators.keys()
+        self._masks = {boundary_type:[np.zeros(grid.size(codim), dtype='bool') for codim in xrange(1, grid.dim + 1)]
+                       for boundary_type in self.boundary_types}
+        for boundary_type, codims in self._masks.iteritems():
+            for c, mask in enumerate(codims):
+                mask[grid.boundaries(c + 1)] = indicators[boundary_type](grid.centers(c + 1)[grid.boundaries(c + 1)])
 
-    def mask(self, condition_type, codim):
-        return self._masks[condition_type][codim]
+    def mask(self, boundary_type, codim):
+        assert 1 <= codim <= self.grid.dim
+        return self._masks[boundary_type][codim - 1]
 
 
 class AllDirichlet(IBoundaryInfo):
 
     def __init__(self, grid):
         self.grid = grid
-        self.condition_types = set(('dirichlet',))
+        self.boundary_types = set((BoundaryType('dirichlet'),))
 
-    def mask(self, condition_type, codim):
-        assert condition_type == 'dirichlet', ValueError('Has no condition_type "{}"'.format(condition_type))
+    def mask(self, boundary_type, codim):
+        assert boundary_type == BoundaryType('dirichlet'), ValueError('Has no boundary_type "{}"'.format(boundary_type))
+        assert 1 <= codim <= self.grid.dim
         return np.ones(self.grid.size(codim), dtype='bool') * self.grid.boundary_mask(codim)

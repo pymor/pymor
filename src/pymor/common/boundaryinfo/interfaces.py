@@ -3,48 +3,48 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import numpy as np
 
 import pymor.core as core
+from pymor.common import BoundaryType
 
-
+# Is one entity allowed to have mor than one boundary type?
 class IBoundaryInfo(core.BasicInterface):
-    '''Describes boundary conditions associated to a grid. For every boundary
-    condition type and codimension a mask is provided, marking grid entities
+    '''Describes boundary types associated to a grid. For every boundary
+    type and codimension a mask is provided, marking grid entities
     of the respective type and codimension by their global index.
     '''
 
-    condition_types = set()
+    boundary_types = set()
 
-    def mask(self, condition_type, codim):
+    def mask(self, boundary_type, codim):
         '''retval[i] is True iff the codim-`codim` entity of global
-        index `i` is associated to the boundary condition of type
-        `condition_type`
+        index `i` is associated to the boundary type `boundary_type`
         '''
-        raise ValueError('Has no condition_type "{}"'.format(condition_type))
+        raise ValueError('Has no boundary_type "{}"'.format(boundary_type))
 
     @property
     def has_dirichlet(self):
-        return 'dirichlet' in self.condition_types
+        return BoundaryType('dirichlet') in self.boundary_types
 
     @property
     def has_neumann(self):
-        return 'neumann' in self.condition_types
+        return BoundaryType('neumann') in self.boundary_types
 
     @property
     def has_only_dirichlet(self):
-        return self.condition_types == set(('dirichlet',))
+        return self.boundary_types == set((BoundaryType('dirichlet'),))
 
     @property
     def has_only_neumann(self):
-        return self.condition_types == set(('neumann',))
+        return self.boundary_types == set((BoundaryType('neumann'),))
 
     @property
     def has_only_dirichletneumann(self):
-        return self.condition_types <= set(('dirichlet', 'neumann'))
+        return self.boundary_types <= set((BoundaryType('dirichlet'), BoundaryType('neumann')))
 
     def dirichlet_mask(self, codim):
-        return self.mask('dirichlet', codim)
+        return self.mask(BoundaryType('dirichlet'), codim)
 
     def neumann_mask(self, codim):
-        return self.mask('neumann', codim)
+        return self.mask(BoundaryType('neumann'), codim)
 
     def dirichlet_boundaries(self, codim):
         @core.cached
