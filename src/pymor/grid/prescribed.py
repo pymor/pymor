@@ -42,7 +42,7 @@ class PrescribedBoundaryGrid(IConformalTopologicalGrid):
     dim_outer = 2
     _ref_elements = {0: Refs.triangle, 1: Refs.line, 2: Refs.point} 
 
-    def __init__(self, boundary_callable=CircleBoundary, sample_count=20):
+    def __init__(self, boundary_callable=CircleBoundary(), sample_count=20):
         '''
     	:param boundary_callable: a callable we can sample sample_count times in 0,1
     	:param sample_count: how many points to sample from boundary_callable
@@ -85,6 +85,7 @@ class PrescribedBoundaryGrid(IConformalTopologicalGrid):
 #            pylab.plot(self._px[t], self._py[t],'o')
 #        pylab.show()
             
+    @staticmethod
     def test_instances():
         return [PrescribedBoundaryGrid()]
 
