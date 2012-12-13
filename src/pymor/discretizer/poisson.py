@@ -10,6 +10,7 @@ from pymor.common import domaindiscretizer
 from pymor.common.discreteoperator.cg import DiffusionOperatorP1D2, L2ProductFunctionalP1D2
 from pymor.common.discreteoperator.affine import LinearAffinelyDecomposedDOP
 from pymor import discretization
+from pymor.grid.tria import Tria as TriaGrid
 
 
 class PoissonCG(object):
@@ -22,6 +23,8 @@ class PoissonCG(object):
 
     def discretize(self, analytical_problem):
         grid, boundary_info = self.domain_discretizer.discretize(analytical_problem.domain)
+
+        assert isinstance(grid, TriaGrid)
 
         if analytical_problem.parameter_dependent:
             L0 = DiffusionOperatorP1D2(grid, boundary_info, diffusion_constant=0, name='diffusion_boundary_part')
