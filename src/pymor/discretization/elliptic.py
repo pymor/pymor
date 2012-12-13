@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import numpy as np
 from scipy.sparse.linalg import bicg
+from scipy.sparse import issparse
 
 import pymor.core as core
 from pymor.common import BoundaryType
@@ -25,7 +26,10 @@ class Elliptic(object):
         self.parameter_map = parameter_map or default_parameter_map
 
         def default_solver(A, RHS):
-            U, info = bicg(A, RHS)
+            if issparse(A):
+                U, info = bicg(A, RHS)
+            else:
+                U = np.linalg.solve(A, RHS)
             return U
         self.solver = solver or default_solver
 
