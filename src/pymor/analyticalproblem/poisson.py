@@ -4,8 +4,8 @@ import numpy as np
 
 import pymor.core as core
 from pymor.common import BoundaryType
-from common.domaindescription import Rect
-from common.function.nonparametric import Constant as ConstantFunc
+from pymor.common.domaindescription import Rect
+from pymor.common.function.nonparametric import Constant as ConstantFunc
 
 
 class Poisson(object):
