@@ -26,7 +26,7 @@ class Default(IDomainDiscretizer):
             elif grid_type == GRect:
                 grid = GRect(domain=domain_description.domain, num_intervals=(x0i, x1i))
             else:
-                raise NotImplemented('I do not know how to discretize {} with {}'.format('domaindescription.Rect',
+                raise NotImplementedError('I do not know how to discretize {} with {}'.format('domaindescription.Rect',
                                      grid_type))
 
             def indicator_factory(dd, bt):
@@ -44,4 +44,4 @@ class Default(IDomainDiscretizer):
             bi = FromIndicators(grid, indicators)
             return grid, bi
         else:
-            raise NotImplemented('I do not know how to discretize {}'.format(domain_description))
+            raise NotImplementedError('I do not know how to discretize {}'.format(domain_description))
