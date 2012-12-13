@@ -8,13 +8,11 @@ import sys
 import math as m
 
 import numpy as np
-import matplotlib.pyplot as pl
-from scipy.sparse.linalg import bicg
 
 from pymor.common import BoundaryType
 from pymor.common.domaindescription import Rect as DRect
-from pymor.common.domaindiscretizer import Default as DefaultDomainDiscretizer
-from pymor.common.discreteoperator.cg import DiffusionOperatorP1D2, L2ProductFunctionalP1D2
+from pymor.analyticalproblem import Poisson
+from pymor import discretizer
 
 if len(sys.argv) < 4:
     sys.exit('Usage: %s RHS-NUMBER BOUNDARY-DATA-NUMBER NEUMANN-COUNT'.format(sys.argv[0]))
@@ -45,22 +43,17 @@ domain = eval('domain{}'.format(nneumann))
 for n in [32, 128]:
     print('Solving on Tria(({0},{0}))'.format(n))
 
-    print('Setup grid ...')
-    domain_discretizer = DefaultDomainDiscretizer(diameter=m.sqrt(2) / n)
-    g, bi = domain_discretizer.discretize(domain)
+    print('Setup problem ...')
+    aproblem = Poisson(domain=domain, rhs=rhs, dirichlet_data=dirichlet)
 
-    print('Assemble operators ...')
-    F = L2ProductFunctionalP1D2(g, bi, rhs, dirichlet_data=dirichlet)
-    L = DiffusionOperatorP1D2(g, bi)
-    RHS = F.matrix()
-    A = L.matrix()
+    print('Discretize ...')
+    discrt = discretizer.PoissonCG(diameter=m.sqrt(2) / n)
+    discretization = discrt.discretize(aproblem)
 
     print('Solve ...')
-    U, info = bicg(A, RHS)
+    U = discretization.solve()
 
     print('Plot ...')
-    pl.tripcolor(g.centers(2)[:, 0], g.centers(2)[:, 1], g.subentities(0, 2), U)
-    pl.colorbar()
-    pl.show()
+    discretization.visualize(U)
 
     print('')
