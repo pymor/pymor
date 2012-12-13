@@ -28,6 +28,9 @@ class Interface(interfaces.BasicInterface):
     def evaluate(self, x):
         pass
 
+    def __call__(self, x):
+        return self.evaluate(x)
+
 
 class Constant(Interface):
 
