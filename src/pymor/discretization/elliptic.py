@@ -21,7 +21,7 @@ class Elliptic(object):
             self.parameter_dim = parameter_dim
 
         def default_parameter_map(mu):
-            return mu, np.array([])
+            return mu[:operator.parameter_dim], mu[operator.parameter_dim:]
         self.parameter_map = parameter_map or default_parameter_map
 
         def default_solver(A, RHS):
