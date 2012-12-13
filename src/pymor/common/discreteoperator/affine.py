@@ -7,7 +7,7 @@ from .interfaces import ILinearDiscreteOperator
 
 class LinearAffinelyDecomposedDOP(ILinearDiscreteOperator):
 
-    def __init__(self, operators, operator_affine_part=None, functionals=None, parameter_dim=None):
+    def __init__(self, operators, operator_affine_part=None, functionals=None, parameter_dim=None, name=None):
         assert functionals is None or len(operators) == len(functionals),\
                 ValueError('Operators and functionals must have the same length.')
         assert functionals is None or parameter_dim is not None,\
@@ -31,6 +31,7 @@ class LinearAffinelyDecomposedDOP(ILinearDiscreteOperator):
         self.operators = operators
         self.operator_affine_part = operator_affine_part
         self.functionals = functionals
+        self.name = name
 
     def assemble(self, mu):
         assert mu.size == self.parameter_dim,\

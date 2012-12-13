@@ -13,7 +13,7 @@ class L2ProductFunctionalP1D2(ILinearDiscreteOperator):
     grid. The integral is simply calculated by evaluating the function on the codim-2 entities.
     '''
 
-    def __init__(self, grid, boundary_info, function, dirichlet_data=None):
+    def __init__(self, grid, boundary_info, function, dirichlet_data=None, name=None):
         assert grid.reference_element(0) == triangle, ValueError('A triangular grid is expected!')
         self.source_dim = grid.size(2)
         self.range_dim = 1
@@ -21,6 +21,7 @@ class L2ProductFunctionalP1D2(ILinearDiscreteOperator):
         self.boundary_info = boundary_info
         self.function = function
         self.dirichlet_data = dirichlet_data
+        self.name = name
 
     def assemble(self, mu=np.array([])):
         assert mu.size == self.parameter_dim,\
@@ -52,7 +53,7 @@ class DiffusionOperatorP1D2(ILinearDiscreteOperator):
     '''
 
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
-                 dirichlet_clear_columns=False, dirichlet_clear_diag=False):
+                 dirichlet_clear_columns=False, dirichlet_clear_diag=False, name=None):
         assert grid.reference_element(0) == triangle, ValueError('A triangular grid is expected!')
         self.source_dim = self.range_dim = grid.size(2)
         self.grid = grid
@@ -61,6 +62,7 @@ class DiffusionOperatorP1D2(ILinearDiscreteOperator):
         self.diffusion_function = diffusion_function
         self.dirichlet_clear_columns = dirichlet_clear_columns
         self.dirichlet_clear_diag = dirichlet_clear_diag
+        self.name = name
 
     def assemble(self, mu=np.array([])):
         assert mu.size == self.parameter_dim,\
