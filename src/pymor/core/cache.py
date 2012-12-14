@@ -32,7 +32,7 @@ def cached(user_function):
         if len(cache_dt_nested) <= cache_miss_nesting:
             cache_dt_nested.append(0)
         msg = '|  ' * cache_miss_nesting + '/ CACHE MISS calling {}({},{})'.format(user_function.__name__, str(args), str(kwds))
-        logging.info(msg)
+        logging.debug(msg)
 
         cache_miss_nesting += 1
         timer = Timer('')
@@ -50,9 +50,9 @@ def cached(user_function):
 
         msg = '|  ' * cache_miss_nesting + '\ call took {}s (own code:{}s, nested cache misses:{}s)'.format(timer.dt,
                 timer.dt - dt_nested, dt_nested)
-        logging.info(msg)
+        logging.debug(msg)
         if cache_miss_nesting == 0:
-            logging.info('')
+            logging.debug('')
         cache[key] = result
         misses[0] += 1
         return result
