@@ -14,8 +14,8 @@ from pymor.common.domaindescription import Rect as DRect
 from pymor.analyticalproblem import Poisson
 from pymor import discretizer
 
-if len(sys.argv) < 2:
-    sys.exit('Usage: %s PROBLEM-NUMBER'.format(sys.argv[0]))
+if len(sys.argv) < 4:
+    sys.exit('Usage: %s PROBLEM-NUMBER N PLOT'.format(sys.argv[0]))
 
 rhs0 = lambda X: np.ones(X.shape[0]) * 10
 rhs1 = lambda X: (X[:, 0] - 0.5) ** 2 * 1000
@@ -24,10 +24,12 @@ nrhs = int(sys.argv[1])
 assert 0 <= nrhs <= 1, ValueError('Invalid rhs number.')
 rhs = eval('rhs{}'.format(nrhs))
 
+n = int(sys.argv[2])
+plot = bool(int(sys.argv[3]))
+
 d1 = lambda X: X[:, 0]
 d2 = lambda X: 1 - X[:, 0]
 
-n = 256
 
 print('Solving on Tria(({0},{0}))'.format(n))
 
@@ -42,7 +44,8 @@ for d in [1, 0.5, 0.25, 0.125]:
     print('Solve ...')
     U = discretization.solve(np.array((1, d)))
 
-    print('Plot ...')
-    discretization.visualize(U)
+    if plot:
+        print('Plot ...')
+        discretization.visualize(U)
 
     print('')
