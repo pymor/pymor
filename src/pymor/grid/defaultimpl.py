@@ -5,6 +5,7 @@ import numpy as np
 import pymor.core as core
 from pymor.core.exceptions import CodimError
 from pymor.la.algorithms.inverse import inv_transposed_two_by_two
+from pymor.common.relations import inverse_relation
 
 
 class IConformalTopologicalGridDefaultImplementation():
@@ -31,41 +32,21 @@ class IConformalTopologicalGridDefaultImplementation():
             raise NotImplementedError
 
     @core.cached
-    def _superentities(self, codim, superentity_codim=None):
+    def _superentities_with_indices(self, codim, superentity_codim=None):
         assert 0 <= codim <= self.dim, CodimError('Invalid codimension (was {})'.format(codim))
         if superentity_codim is None:
             superentity_codim = codim - 1 if codim > 0 else 0
         assert 0 <= superentity_codim <= codim, CodimError('Invalid codimension (was {})'.format(superentity_codim))
-
         SE = self.subentities(superentity_codim, codim)
-        num_superentities = np.bincount(SE.ravel()).max()
-        SPE = np.empty((self.size(codim), num_superentities), dtype=np.int32)
-        SPE.fill(-1)
+        return inverse_relation(SE, size_rhs=self.size(codim), with_indices=True)
 
-        SPE_COUNTS = np.zeros(SPE.shape[0], dtype=np.int32)
-
-        for index, se in np.ndenumerate(SE):
-            if se >= 0:
-                SPE[se, SPE_COUNTS[se]] = index[0]
-                SPE_COUNTS[se] += 1
-
-        return SPE
+    @core.cached
+    def _superentities(self, codim, superentity_codim=None):
+        return self._superentities_with_indices(codim, superentity_codim)[0]
 
     @core.cached
     def _superentity_indices(self, codim, superentity_codim=None):
-        assert 0 <= codim <= self.dim, CodimError('Invalid codimension')
-        if superentity_codim is None:
-            superentity_codim = codim - 1 if codim > 0 else 0
-        E = self.subentities(superentity_codim, codim)
-        SE = self.superentities(codim, superentity_codim)
-        SEI = np.empty_like(SE)
-        SEI.fill(-1)
-
-        for index, e in np.ndenumerate(SE):
-            if e >= 0:
-                SEI[index] = np.where(E[e] == index[0])[0]
-
-        return SEI
+        return self._superentities_with_indices(codim, superentity_codim)[1]
 
     @core.cached
     def _neighbours(self, codim, neighbour_codim, intersection_codim):
