@@ -7,7 +7,7 @@ from .interfaces import DomainDiscretizerInterface
 from pymor.common.domaindescription import RectDomain as DRect
 from pymor.grid.rect import RectGrid
 from pymor.grid.tria import TriaGrid
-from pymor.common.boundaryinfo import FromIndicators
+from pymor.common.boundaryinfo import BoundaryInfoFromIndicators
 
 
 class Default(DomainDiscretizerInterface):
@@ -41,7 +41,7 @@ class Default(DomainDiscretizerInterface):
                 return indicator
 
             indicators = {bt: indicator_factory(domain_description, bt) for bt in domain_description.boundary_types}
-            bi = FromIndicators(grid, indicators)
+            bi = BoundaryInfoFromIndicators(grid, indicators)
             return grid, bi
         else:
             raise NotImplementedError('I do not know how to discretize {}'.format(domain_description))

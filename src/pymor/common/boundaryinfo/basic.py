@@ -6,7 +6,7 @@ from .interfaces import BoundaryInfoInterface
 from pymor.common import BoundaryType
 
 
-class FromIndicators(BoundaryInfoInterface):
+class BoundaryInfoFromIndicators(BoundaryInfoInterface):
 
     def __init__(self, grid, indicators):
         self.grid = grid
