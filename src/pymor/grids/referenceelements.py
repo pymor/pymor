@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import numpy as np
 from pymor.core.exceptions import CodimError
-from pymor.common.quadratures import GaussQuadratures
+from pymor.tools.quadratures import GaussQuadratures
 from .interfaces import ReferenceElementInterface
 
 

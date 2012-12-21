@@ -5,7 +5,7 @@ import numpy as np
 import pymor.core as core
 from pymor.core.exceptions import CodimError
 from pymor.la.algorithms.inverse import inv_transposed_two_by_two
-from pymor.common.relations import inverse_relation
+from pymor.tools.relations import inverse_relation
 
 
 class ConformalTopologicalGridDefaultImplementations():
