@@ -4,10 +4,10 @@ import pymor.core as core
 
 
 class DomainDiscretizerInterface(core.BasicInterface):
-    '''Takes DomainDiscriptionInterface and generates GridInterface and BoundaryInfoInterface'''
+    '''Takes DomainDiscription and generates AffineGrid and BoundaryInfo'''
 
     @core.interfaces.abstractmethod
-    def discretize(domain_description):
-        '''Takes DomainDescriptionInterface and returns tuple (GridInterface, BoundaryInfoInterface)'''
+    def discretize():
+        '''Takes DomainDescription and returns tuple (AffineGrid, BoundaryInfo)'''
         pass
 
