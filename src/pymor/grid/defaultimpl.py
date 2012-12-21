@@ -8,7 +8,7 @@ from pymor.la.algorithms.inverse import inv_transposed_two_by_two
 from pymor.common.relations import inverse_relation
 
 
-class IConformalTopologicalGridDefaultImplementation():
+class ConformalTopologicalGridDefaultImplementations():
 
     @core.cached
     def _subentities(self, codim, subentity_codim=None):

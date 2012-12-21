@@ -4,7 +4,7 @@ import pymor.core as core
 from .defaultimpl import *  # NOQA
 
 
-class ConformalTopologicalGridInterface(IConformalTopologicalGridDefaultImplementation, core.BasicInterface):
+class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplementations, core.BasicInterface):
     '''desribes a conformal topological grid. The grid is determined via the subentity
     relation given by `subentities(codim, subentity_codim)`.
 
