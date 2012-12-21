@@ -12,7 +12,7 @@ import numpy as np
 from pymor.common import BoundaryType
 from pymor.common.domaindescription import RectDomain
 from pymor.analyticalproblems import PoissonProblem
-from pymor import discretizer
+from pymor import discretizers
 
 if len(sys.argv) < 4:
     sys.exit('Usage: %s RHS-NUMBER BOUNDARY-DATA-NUMBER NEUMANN-COUNT'.format(sys.argv[0]))
@@ -47,7 +47,7 @@ for n in [32, 128]:
     aproblem = PoissonProblem(domain=domain, rhs=rhs, dirichlet_data=dirichlet)
 
     print('Discretize ...')
-    discrt = discretizer.PoissonCGDiscretizer(diameter=m.sqrt(2) / n)
+    discrt = discretizers.PoissonCGDiscretizer(diameter=m.sqrt(2) / n)
     discretization = discrt.discretize(aproblem)
 
     print('Solve ...')

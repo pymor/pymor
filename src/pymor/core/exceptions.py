@@ -27,6 +27,6 @@ class CodimError(Exception):
 
 class CallOrderWarning(UserWarning):
     '''I am raised when there's a preferred call order, but the user didn't follow it.
-    For an Example see pymor.discretizer.stationary.elliptic.cg
+    For an Example see pymor.discretizers.stationary.elliptic.cg
     '''
     pass
