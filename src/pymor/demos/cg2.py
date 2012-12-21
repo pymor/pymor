@@ -9,10 +9,9 @@ import math as m
 
 import numpy as np
 
-from pymor.domaindescriptions import BoundaryType
 from pymor.domaindescriptions import RectDomain
 from pymor.analyticalproblems import PoissonProblem
-from pymor import discretizers
+from pymor.discretizers import PoissonCGDiscretizer
 
 if len(sys.argv) < 4:
     sys.exit('Usage: %s PROBLEM-NUMBER N PLOT'.format(sys.argv[0]))
@@ -34,11 +33,11 @@ d2 = lambda X: 1 - X[:, 0]
 print('Solving on TriaGrid(({0},{0}))'.format(n))
 
 print('Setup Problem ...')
-aproblem = PoissonProblem(domain=RectDomain(), rhs=rhs, diffusion_functions=(d1, d2))
+problem = PoissonProblem(domain=RectDomain(), rhs=rhs, diffusion_functions=(d1, d2))
 
 print('Discretize ...')
-discrt = discretizers.PoissonCGDiscretizer(diameter=m.sqrt(2) / n)
-discretization = discrt.discretize(aproblem)
+discretizer = PoissonCGDiscretizer(problem)
+discretization = discretizer.discretize(diameter=m.sqrt(2) / n)
 
 for d in [1, 0.5, 0.25, 0.125]:
     print('Solve ...')

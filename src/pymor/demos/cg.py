@@ -12,7 +12,7 @@ import numpy as np
 from pymor.domaindescriptions import BoundaryType
 from pymor.domaindescriptions import RectDomain
 from pymor.analyticalproblems import PoissonProblem
-from pymor import discretizers
+from pymor.discretizers import PoissonCGDiscretizer
 
 if len(sys.argv) < 4:
     sys.exit('Usage: %s RHS-NUMBER BOUNDARY-DATA-NUMBER NEUMANN-COUNT'.format(sys.argv[0]))
@@ -44,11 +44,11 @@ for n in [32, 128]:
     print('Solving on TriaGrid(({0},{0}))'.format(n))
 
     print('Setup problem ...')
-    aproblem = PoissonProblem(domain=domain, rhs=rhs, dirichlet_data=dirichlet)
+    problem = PoissonProblem(domain=domain, rhs=rhs, dirichlet_data=dirichlet)
 
     print('Discretize ...')
-    discrt = discretizers.PoissonCGDiscretizer(diameter=m.sqrt(2) / n)
-    discretization = discrt.discretize(aproblem)
+    discretizer = PoissonCGDiscretizer(problem)
+    discretization = discretizer.discretize(diameter=m.sqrt(2) / n)
 
     print('Solve ...')
     U = discretization.solve()
