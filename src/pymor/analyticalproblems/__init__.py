@@ -1,1 +1,1 @@
-from poisson import PoissonProblem
+from .poisson import PoissonProblem

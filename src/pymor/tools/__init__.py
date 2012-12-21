@@ -1,2 +1,2 @@
-import .relations
-import .quadratures
+from . import relations
+from . import quadratures
