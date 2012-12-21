@@ -9,7 +9,7 @@ from pymor.common import BoundaryType
 from pymor.common.function.nonparametric import Constant as ConstantFunc
 
 
-class Elliptic(object):
+class EllipticDiscretization(object):
 
     def __init__(self, operator, rhs, parameter_dim=None, parameter_map=None, solver=None, visualizer=None):
         self.operator = operator

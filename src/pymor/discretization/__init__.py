@@ -1,1 +1,1 @@
-from elliptic import Elliptic
+from elliptic import EllipticDiscretization

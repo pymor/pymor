@@ -46,6 +46,6 @@ class PoissonCG(object):
             pl.colorbar()
             pl.show()
 
-        discr = discretization.Elliptic(L, F, visualizer=visualize)
+        discr = discretization.EllipticDiscretization(L, F, visualizer=visualize)
 
         return discr
