@@ -6,7 +6,7 @@ from scipy.sparse import coo_matrix, csr_matrix
 import pymor.core as core
 
 from pymor.grid.referenceelements import triangle
-from pymor.common.discreteoperator.interfaces import LinearDiscreteOperatorInterface
+from pymor.discreteoperators.interfaces import LinearDiscreteOperatorInterface
 
 class L2ProductFunctionalP1D2(LinearDiscreteOperatorInterface):
     '''Scalar product with an L2-function for linear finite elements in two dimensions on a triangular

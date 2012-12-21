@@ -7,8 +7,8 @@ import matplotlib.pyplot as pl
 import pymor.core as core
 from pymor.common import BoundaryType
 from pymor.common import domaindiscretizer
-from pymor.common.discreteoperator.cg import DiffusionOperatorP1D2, L2ProductFunctionalP1D2
-from pymor.common.discreteoperator.affine import LinearAffinelyDecomposedOperator
+from pymor.discreteoperators.cg import DiffusionOperatorP1D2, L2ProductFunctionalP1D2
+from pymor.discreteoperators.affine import LinearAffinelyDecomposedOperator
 from pymor import discretization
 from pymor.grid.tria import TriaGrid
 

@@ -10,7 +10,7 @@ from pymor.core.exceptions import warn, CallOrderWarning
 import pymor.problem.stationary.linear.elliptic.analytical as analyticalproblem
 import pymor.grid.oned as grid
 import pymor.common.boundaryinfo.oned as boundaryinfo
-import pymor.common.discreteoperator.stationary.linear as operator
+import pymor.discreteoperators.stationary.linear as operator
 import pymor.common.discretefunctional.linear as functional
 import pymor.problem.stationary.linear.discrete as discreteproblem
 import pymor.solver.stationary.linear.scalar as solver
