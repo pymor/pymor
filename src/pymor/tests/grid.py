@@ -10,7 +10,7 @@ import pprint
 import unittest
 from itertools import product
 import types
-from pymor.grid.interfaces import ConformalTopologicalGridInterface, SimpleAffineGridInterface, SimpleReferenceElementInterface
+from pymor.grid.interfaces import ConformalTopologicalGridInterface, SimpleAffineGridInterface, ReferenceElementInterface
 #mandatory so all Grid classes are created
 from pymor.grid import *
     
@@ -420,7 +420,7 @@ class SimpleAffineGridTest(GridClassTestInterface):
     def test_reference_element_type(self):
         for g in self.grids:
             for d in xrange(g.dim + 1):
-                self.assertIsInstance(g.reference_element(d), SimpleReferenceElementInterface)
+                self.assertIsInstance(g.reference_element(d), ReferenceElementInterface)
 
     def test_reference_element_transitivity(self):
         for g in self.grids:

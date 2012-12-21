@@ -95,7 +95,7 @@ class ConformalTopologicalGridInterface(IConformalTopologicalGridDefaultImplemen
         '''returns a list of Grid instances suitable to be run through our Testcases'''
         pass
 
-class SimpleReferenceElementInterface(ISimpleReferenceElementDefaultImplementation, core.BasicInterface):
+class ReferenceElementInterface(ISimpleReferenceElementDefaultImplementation, core.BasicInterface):
     '''defines a reference element with the property that each of its subentities is
     of the same type. I.e. a three-dimensional reference element cannot have triangles
     and rectangles as faces at the same time.
@@ -173,7 +173,7 @@ class SimpleReferenceElementInterface(ISimpleReferenceElementDefaultImplementati
 
 class SimpleAffineGridInterface(ISimpleAffineGridDefaultImplementation, ConformalTopologicalGridInterface):
     '''describes a geometric grid where each codim-0 entity has the same
-    `SimpleReferenceElementInterface` reference element to which it is affinely
+    `ReferenceElementInterface` reference element to which it is affinely
     mapped.
 
     **dim_outer**
