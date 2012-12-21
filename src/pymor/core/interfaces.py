@@ -142,7 +142,7 @@ class BasicInterface(object):
     @classmethod
     def has_interface_name(cls):
         name = cls.__name__
-        return name.startswith('I') and name[1].isupper()
+        return name.endswith('Interface')
 
 contract = decorators.contract
 abstractmethod = abc.abstractmethod
