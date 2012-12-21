@@ -4,7 +4,7 @@ import math as m
 import numpy as np
 import pymor.core as core
 from .interfaces import DomainDiscretizerInterface
-from pymor.common.domaindescription import RectDomain as DRect
+from pymor.domaindescriptions import RectDomain as DRect
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
 from pymor.grids.boundaryinfos import BoundaryInfoFromIndicators

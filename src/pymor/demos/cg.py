@@ -10,7 +10,7 @@ import math as m
 import numpy as np
 
 from pymor.common import BoundaryType
-from pymor.common.domaindescription import RectDomain
+from pymor.domaindescriptions import RectDomain
 from pymor.analyticalproblems import PoissonProblem
 from pymor import discretizers
 

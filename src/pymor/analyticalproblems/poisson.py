@@ -4,7 +4,7 @@ import numpy as np
 
 import pymor.core as core
 from pymor.common import BoundaryType
-from pymor.common.domaindescription import RectDomain
+from pymor.domaindescriptions import RectDomain
 from pymor.common.function.nonparametric import Constant as ConstantFunc
 
 
