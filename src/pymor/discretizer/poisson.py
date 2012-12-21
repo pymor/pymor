@@ -8,7 +8,7 @@ import pymor.core as core
 from pymor.common import BoundaryType
 from pymor.common import domaindiscretizer
 from pymor.common.discreteoperator.cg import DiffusionOperatorP1D2, L2ProductFunctionalP1D2
-from pymor.common.discreteoperator.affine import LinearAffinelyDecomposedDOP
+from pymor.common.discreteoperator.affine import LinearAffinelyDecomposedOperator
 from pymor import discretization
 from pymor.grid.tria import TriaGrid
 
@@ -33,7 +33,7 @@ class PoissonCG(object):
                                              name='diffusion_{}'.format(i))
                        for i, df in enumerate(analytical_problem.diffusion_functions))
 
-            L = LinearAffinelyDecomposedDOP(Li, L0, name='diffusion')
+            L = LinearAffinelyDecomposedOperator(Li, L0, name='diffusion')
         else:
             L = DiffusionOperatorP1D2(grid, boundary_info, diffusion_function=analytical_problem.diffusion_functions[0],
                                       name='diffusion')
