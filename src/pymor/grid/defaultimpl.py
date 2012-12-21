@@ -156,7 +156,7 @@ class ISimpleReferenceElementDefaultImplementation():
             raise NotImplementedError
 
 
-class ISimpleAffineGridDefaultImplementation():
+class AffineGridDefaultImplementations():
 
     @core.cached
     def _subentities(self, codim, subentity_codim):
