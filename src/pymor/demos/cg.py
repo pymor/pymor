@@ -41,7 +41,7 @@ domain = eval('domain{}'.format(nneumann))
 
 
 for n in [32, 128]:
-    print('Solving on Tria(({0},{0}))'.format(n))
+    print('Solving on TriaGrid(({0},{0}))'.format(n))
 
     print('Setup problem ...')
     aproblem = Poisson(domain=domain, rhs=rhs, dirichlet_data=dirichlet)

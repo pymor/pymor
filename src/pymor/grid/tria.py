@@ -7,7 +7,7 @@ from .interfaces import AffineGridInterface
 from .referenceelements import triangle
 
 
-class Tria(AffineGridInterface):
+class TriaGrid(AffineGridInterface):
     '''Ad-hoc implementation of a rectangular grid.
 
     The global face, edge and vertex indices are given as follows
@@ -108,22 +108,22 @@ class Tria(AffineGridInterface):
             else:
                 return self.__subentities[subentity_codim - 1]
         else:
-            return super(Tria, self).subentities(codim, subentity_codim)
+            return super(TriaGrid, self).subentities(codim, subentity_codim)
 
     def embeddings(self, codim=0):
         if codim == 0:
             return self.__embeddings
         else:
-            return super(Tria, self).embeddings(codim)
+            return super(TriaGrid, self).embeddings(codim)
 
     @staticmethod
     def test_instances():
-        return [Tria((2,4)), Tria((1,1)), Tria((42,42))]
+        return [TriaGrid((2,4)), TriaGrid((1,1)), TriaGrid((42,42))]
 
 
 
 if __name__ == '__main__':
     import matplotlib.pyplot as pl
-    g = Tria((12, 24))
+    g = TriaGrid((12, 24))
     pl.tripcolor(g.centers(2)[:, 0], g.centers(2)[:, 1], g.subentities(0, 2), facecolors=np.arange(g.size(0)))
     pl.show()

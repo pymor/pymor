@@ -31,7 +31,7 @@ d1 = lambda X: X[:, 0]
 d2 = lambda X: 1 - X[:, 0]
 
 
-print('Solving on Tria(({0},{0}))'.format(n))
+print('Solving on TriaGrid(({0},{0}))'.format(n))
 
 print('Setup Problem ...')
 aproblem = Poisson(domain=DRect(), rhs=rhs, diffusion_functions=(d1, d2))

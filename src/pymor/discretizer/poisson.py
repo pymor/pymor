@@ -10,7 +10,7 @@ from pymor.common import domaindiscretizer
 from pymor.common.discreteoperator.cg import DiffusionOperatorP1D2, L2ProductFunctionalP1D2
 from pymor.common.discreteoperator.affine import LinearAffinelyDecomposedDOP
 from pymor import discretization
-from pymor.grid.tria import Tria as TriaGrid
+from pymor.grid.tria import TriaGrid
 
 
 class PoissonCG(object):

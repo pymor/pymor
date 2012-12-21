@@ -6,7 +6,7 @@ import pymor.core as core
 from .interfaces import DomainDiscretizerInterface
 from pymor.common.domaindescription import Rect as DRect
 from pymor.grid.rect import RectGrid
-from pymor.grid.tria import Tria as GTria
+from pymor.grid.tria import TriaGrid
 from pymor.common.boundaryinfo import FromIndicators
 
 
@@ -20,11 +20,11 @@ class Default(DomainDiscretizerInterface):
         if isinstance(domain_description, DRect):
             x0i = int(m.ceil(domain_description.width * m.sqrt(2) / self.diameter))
             x1i = int(m.ceil(domain_description.height * m.sqrt(2) / self.diameter))
-            grid_type = self.grid_type or GTria
-            if grid_type == GTria:
-                grid = GTria(domain=domain_description.domain, num_intervals=(x0i, x1i))
-            elif grid_type == GRect:
-                grid = GRect(domain=domain_description.domain, num_intervals=(x0i, x1i))
+            grid_type = self.grid_type or TriaGrid
+            if grid_type == TriaGrid:
+                grid = TriaGrid(domain=domain_description.domain, num_intervals=(x0i, x1i))
+            elif grid_type == RectGrid:
+                grid = RectGrid(domain=domain_description.domain, num_intervals=(x0i, x1i))
             else:
                 raise NotImplementedError('I do not know how to discretize {} with {}'.format('domaindescription.Rect',
                                      grid_type))

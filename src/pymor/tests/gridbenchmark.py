@@ -7,7 +7,7 @@ import numpy as np
 import timeit
 
 from pymor.grid.rect import RectGrid
-from pymor.grid.tria import Tria as TriaGrid
+from pymor.grid.tria import TriaGrid
 
 import os
 
