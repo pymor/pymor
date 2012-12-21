@@ -8,7 +8,7 @@ import scipy.sparse as sparse
 from pymor.core import interfaces
 from pymor.core.exceptions import warn, CallOrderWarning
 import pymor.problem.stationary.linear.elliptic.analytical as analyticalproblem
-import pymor.grid.oned as grid
+import pymor.grids.oned as grid
 import pymor.common.boundaryinfo.oned as boundaryinfo
 import pymor.discreteoperators.stationary.linear as operator
 import pymor.common.discretefunctional.linear as functional

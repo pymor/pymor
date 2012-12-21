@@ -5,9 +5,9 @@ import numpy as np
 import pymor.core as core
 from .interfaces import DomainDiscretizerInterface
 from pymor.common.domaindescription import RectDomain as DRect
-from pymor.grid.rect import RectGrid
-from pymor.grid.tria import TriaGrid
-from pymor.grid.boundaryinfos import BoundaryInfoFromIndicators
+from pymor.grids.rect import RectGrid
+from pymor.grids.tria import TriaGrid
+from pymor.grids.boundaryinfos import BoundaryInfoFromIndicators
 
 
 class DefaultDomainDiscretizer(DomainDiscretizerInterface):

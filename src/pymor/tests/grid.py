@@ -10,9 +10,9 @@ import pprint
 import unittest
 from itertools import product
 import types
-from pymor.grid.interfaces import ConformalTopologicalGridInterface, AffineGridInterface, ReferenceElementInterface
+from pymor.grids.interfaces import ConformalTopologicalGridInterface, AffineGridInterface, ReferenceElementInterface
 #mandatory so all Grid classes are created
-from pymor.grid import *
+from pymor.grids import *
     
 class GridClassTestInterface(unittest.TestCase):
     

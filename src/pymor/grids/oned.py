@@ -5,7 +5,7 @@ from __future__ import division
 import numpy as np
 
 from pymor.core.exceptions import CodimError
-from pymor.grid.interfaces import AffineGridInterface
+from pymor.grids.interfaces import AffineGridInterface
 from .referenceelements import line
 
 

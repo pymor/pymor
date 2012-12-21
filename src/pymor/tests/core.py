@@ -14,9 +14,9 @@ from pymor.core.interfaces import (BasicInterface, contract, abstractmethod, abs
 from pymor.core import exceptions
 from pymor.core import timing
 from pymor.core.exceptions import ContractNotRespected
-from pymor.grid import AllDirichletBoundaryInfo as ADIA
+from pymor.grids import AllDirichletBoundaryInfo as ADIA
 from pymor.playground.boundaryinfos.oned import AllDirichletBoundaryInfo as ADIB
-import pymor.grid.boundaryinfos
+import pymor.grids.boundaryinfos
 import pymor.playground.boundaryinfos.oned
 
 
@@ -191,7 +191,7 @@ class BoringTestClass(BasicInterface):
         '''I'm used in testing whether contracts can distinguish 
         between equally named classes in different modules
         
-        :type dirichletA: pymor.grid.AllDirichletBoundaryInfo
+        :type dirichletA: pymor.grids.AllDirichletBoundaryInfo
         :type dirichletB: pymor.playground.boundaryinfos.oned.AllDirichletBoundaryInfo
         '''        
         return dirichletA != dirichletB

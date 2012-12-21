@@ -54,7 +54,7 @@ class P1(Interface):
 
 
 if __name__ == '__main__':
-    import pymor.grid.oned as grid
+    import pymor.grids.oned as grid
     grid = grid.Oned([0., 1.], 8)
     vector = grid.centers(1)
     df = P1(grid, vector)
