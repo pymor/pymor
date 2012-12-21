@@ -14,10 +14,10 @@ from pymor.core.interfaces import (BasicInterface, contract, abstractmethod, abs
 from pymor.core import exceptions
 from pymor.core import timing
 from pymor.core.exceptions import ContractNotRespected
-from pymor.common.boundaryinfo.basic import AllDirichletBoundaryInfo as ADIA
-from pymor.common.boundaryinfo.oned import AllDirichletBoundaryInfo as ADIB
-import pymor.common.boundaryinfo.basic
-import pymor.common.boundaryinfo.oned
+from pymor.grid import AllDirichletBoundaryInfo as ADIA
+from pymor.playground.boundaryinfos.oned import AllDirichletBoundaryInfo as ADIB
+import pymor.grid.boundaryinfos
+import pymor.playground.boundaryinfos.oned
 
 
 class UnknownInterface(BasicInterface):
@@ -182,7 +182,7 @@ class BoringTestClass(BasicInterface):
         UberMeta as their metaclass can be checked w/o manually defining a new contract type.
         
         :type cls: pymor.tests.core.BoringTestInterface
-        :type other: pymor.common.boundaryinfo.oned.AllDirichletBoundaryInfo
+        :type other: pymor.playground.boundaryinfos.oned.AllDirichletBoundaryInfo
         '''
         pass
 
@@ -191,8 +191,8 @@ class BoringTestClass(BasicInterface):
         '''I'm used in testing whether contracts can distinguish 
         between equally named classes in different modules
         
-        :type dirichletA: pymor.common.boundaryinfo.basic.AllDirichletBoundaryInfo
-        :type dirichletB:  pymor.common.boundaryinfo.oned.AllDirichletBoundaryInfo
+        :type dirichletA: pymor.grid.AllDirichletBoundaryInfo
+        :type dirichletB: pymor.playground.boundaryinfos.oned.AllDirichletBoundaryInfo
         '''        
         return dirichletA != dirichletB
 
