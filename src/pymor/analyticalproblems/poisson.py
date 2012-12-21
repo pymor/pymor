@@ -5,7 +5,7 @@ import numpy as np
 import pymor.core as core
 from pymor.common import BoundaryType
 from pymor.domaindescriptions import RectDomain
-from pymor.common.function.nonparametric import Constant as ConstantFunc
+from pymor.functions.nonparametric import Constant as ConstantFunc
 
 
 class PoissonProblem(object):

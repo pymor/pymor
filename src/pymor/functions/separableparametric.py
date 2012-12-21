@@ -8,7 +8,7 @@ import parametric
 
 class Interface(parametric.Interface):
 
-    id = 'common.function.parametric.separable'
+    id = 'functions.parametric.separable'
     size = 0
     components = []
     coefficients = []

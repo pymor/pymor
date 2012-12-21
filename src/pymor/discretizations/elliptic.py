@@ -6,7 +6,7 @@ from scipy.sparse import issparse
 
 import pymor.core as core
 from pymor.common import BoundaryType
-from pymor.common.function.nonparametric import Constant as ConstantFunc
+from pymor.functions.nonparametric import Constant as ConstantFunc
 
 
 class EllipticDiscretization(object):

@@ -12,7 +12,7 @@ from pymor.core import interfaces
 
 class Interface(interfaces.BasicInterface):
 
-    id = 'common.function.nonparametric'
+    id = 'functions.nonparametric'
     dim_domain = 0
     dim_range = 0
     name = id
