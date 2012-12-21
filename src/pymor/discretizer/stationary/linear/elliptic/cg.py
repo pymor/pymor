@@ -14,7 +14,7 @@ import pymor.discreteoperators.stationary.linear as operator
 import pymor.common.discretefunctional.linear as functional
 import pymor.problem.stationary.linear.discrete as discreteproblem
 import pymor.solver.stationary.linear.scalar as solver
-import pymor.discretization.stationary.detailed as discretization
+import pymor.discretizations.stationary.detailed as discretization
 import pymor.common.discretefunction.continuous as discretefunction
 
 

@@ -9,7 +9,7 @@ from pymor.common import BoundaryType
 from pymor.common import domaindiscretizer
 from pymor.discreteoperators.cg import DiffusionOperatorP1D2, L2ProductFunctionalP1D2
 from pymor.discreteoperators.affine import LinearAffinelyDecomposedOperator
-from pymor import discretization
+from pymor import discretizations
 from pymor.grid.tria import TriaGrid
 
 
@@ -46,6 +46,6 @@ class PoissonCGDiscretizer(object):
             pl.colorbar()
             pl.show()
 
-        discr = discretization.EllipticDiscretization(L, F, visualizer=visualize)
+        discr = discretizations.EllipticDiscretization(L, F, visualizer=visualize)
 
         return discr
