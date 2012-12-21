@@ -27,7 +27,7 @@ class Interface(interfaces.BasicInterface):
         return self._right
 
 
-class AllDirichlet(Interface):
+class AllDirichletBoundaryInfo(Interface):
 
     id = Interface.id + '.alldirichlet'
 
@@ -42,7 +42,7 @@ class AllNeumann(Interface):
 
 if __name__ == '__main__':
     print('testing ', end='')
-    dirichlet = AllDirichlet()
+    dirichlet = AllDirichletBoundaryInfo()
     print('{id}... '.format(id=dirichlet.id), end='')
     assert dirichlet.left() == 'dirichlet'
     assert dirichlet.right() == 'dirichlet'

@@ -14,8 +14,8 @@ from pymor.core.interfaces import (BasicInterface, contract, abstractmethod, abs
 from pymor.core import exceptions
 from pymor.core import timing
 from pymor.core.exceptions import ContractNotRespected
-from pymor.common.boundaryinfo.basic import AllDirichlet as ADIA
-from pymor.common.boundaryinfo.oned import AllDirichlet as ADIB
+from pymor.common.boundaryinfo.basic import AllDirichletBoundaryInfo as ADIA
+from pymor.common.boundaryinfo.oned import AllDirichletBoundaryInfo as ADIB
 import pymor.common.boundaryinfo.basic
 import pymor.common.boundaryinfo.oned
 
@@ -182,7 +182,7 @@ class BoringTestClass(BasicInterface):
         UberMeta as their metaclass can be checked w/o manually defining a new contract type.
         
         :type cls: pymor.tests.core.BoringTestInterface
-        :type other: pymor.common.boundaryinfo.oned.AllDirichlet
+        :type other: pymor.common.boundaryinfo.oned.AllDirichletBoundaryInfo
         '''
         pass
 
@@ -191,8 +191,8 @@ class BoringTestClass(BasicInterface):
         '''I'm used in testing whether contracts can distinguish 
         between equally named classes in different modules
         
-        :type dirichletA: pymor.common.boundaryinfo.basic.AllDirichlet
-        :type dirichletB:  pymor.common.boundaryinfo.oned.AllDirichlet
+        :type dirichletA: pymor.common.boundaryinfo.basic.AllDirichletBoundaryInfo
+        :type dirichletB:  pymor.common.boundaryinfo.oned.AllDirichletBoundaryInfo
         '''        
         return dirichletA != dirichletB
 
@@ -211,8 +211,8 @@ class ContractTest(unittest.TestCase):
                 imp.dirichletTest(dirichletA, 1)
         grid = mock.Mock()
         data = mock.Mock()
-        dirichletA = pymor.common.boundaryinfo.basic.AllDirichlet(grid, data)
-        dirichletB = pymor.common.boundaryinfo.oned.AllDirichlet()
+        dirichletA = pymor.common.boundaryinfo.basic.AllDirichletBoundaryInfo(grid, data)
+        dirichletB = pymor.common.boundaryinfo.oned.AllDirichletBoundaryInfo()
         _combo(dirichletA, dirichletB)
         dirichletA = ADIA(grid, data)
         dirichletB = ADIB()
@@ -221,8 +221,8 @@ class ContractTest(unittest.TestCase):
     def test_custom_contract_types(self):
         inst = BoringTestClass()
         with self.assertRaises(exceptions.ContractNotRespected):
-            inst.validate_interface(object(), pymor.common.boundaryinfo.oned.AllDirichlet())
-        inst.validate_interface(BoringTestInterface(), pymor.common.boundaryinfo.oned.AllDirichlet())
+            inst.validate_interface(object(), pymor.common.boundaryinfo.oned.AllDirichletBoundaryInfo())
+        inst.validate_interface(BoringTestInterface(), pymor.common.boundaryinfo.oned.AllDirichletBoundaryInfo())
         
 if __name__ == "__main__":
     import nose

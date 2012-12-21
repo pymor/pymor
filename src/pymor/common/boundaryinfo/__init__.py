@@ -1,3 +1,3 @@
 import oned
 from .interfaces import BoundaryInfoInterface
-from .basic import BoundaryInfoFromIndicators, AllDirichlet
+from .basic import BoundaryInfoFromIndicators, AllDirichletBoundaryInfo

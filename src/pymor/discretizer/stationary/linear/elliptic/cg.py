@@ -46,7 +46,7 @@ class P1(Interface):
 
     def __init__(self, problem=analyticalproblem.Default(),
                  grid=grid.Oned(),
-                 boundaryinfo=boundaryinfo.AllDirichlet()):
+                 boundaryinfo=boundaryinfo.AllDirichletBoundaryInfo()):
         self.problem = problem
         self.grid = grid
         self.boundaryinfo = boundaryinfo
@@ -199,7 +199,7 @@ if __name__ == '__main__':
     grid = grid.Oned([0., 1.], 1000)
     print('done ({name}, ' 'size {size})'.format(name=grid.id, size=grid.size()))
     print('creating boundaryinfo... ', end='')
-    boundaryinfo = boundaryinfo.AllDirichlet()
+    boundaryinfo = boundaryinfo.AllDirichletBoundaryInfo()
     print('done (' + boundaryinfo.id + ')')
     print('creating discretizer... ', end='')
     discretizer = P1(problem, grid)

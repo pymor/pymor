@@ -22,7 +22,7 @@ class BoundaryInfoFromIndicators(BoundaryInfoInterface):
         return self._masks[boundary_type][codim - 1]
 
 
-class AllDirichlet(BoundaryInfoInterface):
+class AllDirichletBoundaryInfo(BoundaryInfoInterface):
 
     def __init__(self, grid):
         self.grid = grid
