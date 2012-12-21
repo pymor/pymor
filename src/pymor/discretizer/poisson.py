@@ -13,7 +13,7 @@ from pymor import discretization
 from pymor.grid.tria import TriaGrid
 
 
-class PoissonCG(object):
+class PoissonCGDiscretizer(object):
 
     def __init__(self, domain_discretizer=None, diameter=None):
         assert domain_discretizer is None or diameter is None, 'Cannot specifiy domain_discretizer and diameter'

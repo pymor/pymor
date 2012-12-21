@@ -1,1 +1,1 @@
-from .poisson import PoissonCG
+from .poisson import PoissonCGDiscretizer

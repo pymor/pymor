@@ -37,7 +37,7 @@ print('Setup Problem ...')
 aproblem = PoissonProblem(domain=RectDomain(), rhs=rhs, diffusion_functions=(d1, d2))
 
 print('Discretize ...')
-discrt = discretizer.PoissonCG(diameter=m.sqrt(2) / n)
+discrt = discretizer.PoissonCGDiscretizer(diameter=m.sqrt(2) / n)
 discretization = discrt.discretize(aproblem)
 
 for d in [1, 0.5, 0.25, 0.125]:

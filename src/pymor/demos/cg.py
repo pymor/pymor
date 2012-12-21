@@ -47,7 +47,7 @@ for n in [32, 128]:
     aproblem = PoissonProblem(domain=domain, rhs=rhs, dirichlet_data=dirichlet)
 
     print('Discretize ...')
-    discrt = discretizer.PoissonCG(diameter=m.sqrt(2) / n)
+    discrt = discretizer.PoissonCGDiscretizer(diameter=m.sqrt(2) / n)
     discretization = discrt.discretize(aproblem)
 
     print('Solve ...')
