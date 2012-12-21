@@ -1,3 +1,3 @@
-import nonparametric
-import parametric
-import separableparametric
+import .nonparametric
+import .parametric
+import .separableparametric
