@@ -18,7 +18,7 @@ class PoissonCG(object):
     def __init__(self, domain_discretizer=None, diameter=None):
         assert domain_discretizer is None or diameter is None, 'Cannot specifiy domain_discretizer and diameter'
         if diameter is not None:
-            domain_discretizer = domaindiscretizer.Default(diameter=diameter)
+            domain_discretizer = domaindiscretizer.DefaultDomainDiscretizer(diameter=diameter)
         self.domain_discretizer = domain_discretizer
 
     def discretize(self, analytical_problem):

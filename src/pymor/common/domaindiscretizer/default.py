@@ -10,7 +10,7 @@ from pymor.grid.tria import TriaGrid
 from pymor.common.boundaryinfo import BoundaryInfoFromIndicators
 
 
-class Default(DomainDiscretizerInterface):
+class DefaultDomainDiscretizer(DomainDiscretizerInterface):
 
     def __init__(self, grid_type=None, diameter=1 / 100):
         self.grid_type = grid_type
