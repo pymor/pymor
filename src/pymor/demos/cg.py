@@ -11,7 +11,7 @@ import numpy as np
 
 from pymor.common import BoundaryType
 from pymor.common.domaindescription import RectDomain
-from pymor.analyticalproblem import PoissonProblem
+from pymor.analyticalproblems import PoissonProblem
 from pymor import discretizer
 
 if len(sys.argv) < 4:
