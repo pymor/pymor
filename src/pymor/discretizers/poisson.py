@@ -6,7 +6,7 @@ import matplotlib.pyplot as pl
 
 import pymor.core as core
 from pymor.common import BoundaryType
-from pymor.common import domaindiscretizer
+from pymor import domaindiscretizers
 from pymor.discreteoperators.cg import DiffusionOperatorP1D2, L2ProductFunctionalP1D2
 from pymor.discreteoperators.affine import LinearAffinelyDecomposedOperator
 from pymor import discretizations
@@ -18,7 +18,7 @@ class PoissonCGDiscretizer(object):
     def __init__(self, domain_discretizer=None, diameter=None):
         assert domain_discretizer is None or diameter is None, 'Cannot specifiy domain_discretizer and diameter'
         if diameter is not None:
-            domain_discretizer = domaindiscretizer.DefaultDomainDiscretizer(diameter=diameter)
+            domain_discretizer = domaindiscretizers.DefaultDomainDiscretizer(diameter=diameter)
         self.domain_discretizer = domain_discretizer
 
     def discretize(self, analytical_problem):
