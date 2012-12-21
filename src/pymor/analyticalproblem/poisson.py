@@ -8,7 +8,7 @@ from pymor.common.domaindescription import RectDomain
 from pymor.common.function.nonparametric import Constant as ConstantFunc
 
 
-class Poisson(object):
+class PoissonProblem(object):
 
     def __init__(self, domain=RectDomain(), rhs=ConstantFunc(dim_domain=2), diffusion_functions=(ConstantFunc(dim_domain=2),),
                  dirichlet_data=ConstantFunc(value=0, dim_domain=2), parameter_dependent=None):

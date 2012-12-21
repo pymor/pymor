@@ -11,7 +11,7 @@ import numpy as np
 
 from pymor.common import BoundaryType
 from pymor.common.domaindescription import RectDomain
-from pymor.analyticalproblem import Poisson
+from pymor.analyticalproblem import PoissonProblem
 from pymor import discretizer
 
 if len(sys.argv) < 4:
@@ -34,7 +34,7 @@ d2 = lambda X: 1 - X[:, 0]
 print('Solving on TriaGrid(({0},{0}))'.format(n))
 
 print('Setup Problem ...')
-aproblem = Poisson(domain=RectDomain(), rhs=rhs, diffusion_functions=(d1, d2))
+aproblem = PoissonProblem(domain=RectDomain(), rhs=rhs, diffusion_functions=(d1, d2))
 
 print('Discretize ...')
 discrt = discretizer.PoissonCG(diameter=m.sqrt(2) / n)
