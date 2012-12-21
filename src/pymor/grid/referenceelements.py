@@ -3,10 +3,10 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import numpy as np
 from pymor.core.exceptions import CodimError
 from pymor.common.quadratures import Gauss
-from .interfaces import ISimpleReferenceElement
+from .interfaces import SimpleReferenceElementInterface
 
 
-class Point(ISimpleReferenceElement):
+class Point(SimpleReferenceElementInterface):
 
     dim = 0
     volume = 1
@@ -47,7 +47,7 @@ class Point(ISimpleReferenceElement):
 point = Point()
 
 
-class Line(ISimpleReferenceElement):
+class Line(SimpleReferenceElementInterface):
 
     dim = 1
     volume = 1
@@ -102,7 +102,7 @@ class Line(ISimpleReferenceElement):
 line = Line()
 
 
-class Square(ISimpleReferenceElement):
+class Square(SimpleReferenceElementInterface):
 
     dim = 2
     volume = 1
@@ -197,7 +197,7 @@ class Square(ISimpleReferenceElement):
 square = Square()
 
 
-class Triangle(ISimpleReferenceElement):
+class Triangle(SimpleReferenceElementInterface):
 
     dim = 2
     volume = 0.5

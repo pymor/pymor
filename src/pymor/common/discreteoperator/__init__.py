@@ -1,1 +1,1 @@
-from .interfaces import IDiscreteOperator, ILinearDiscreteOperator
+from .interfaces import DiscreteOperatorInterface, LinearDiscreteOperatorInterface

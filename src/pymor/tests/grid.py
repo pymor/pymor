@@ -10,11 +10,11 @@ import pprint
 import unittest
 from itertools import product
 import types
-from pymor.grid.interfaces import IConformalTopologicalGrid, ISimpleAffineGrid, ISimpleReferenceElement
+from pymor.grid.interfaces import ConformalTopologicalGridInterface, SimpleAffineGridInterface, SimpleReferenceElementInterface
 #mandatory so all Grid classes are created
 from pymor.grid import *
     
-class IGridClassTest(unittest.TestCase):
+class GridClassTestInterface(unittest.TestCase):
     
     '''empty list to make static analyzers happy'''
     grids = []
@@ -36,8 +36,8 @@ def SubclassForImplemetorsOf(InterfaceType):
     return decorate
 
 
-@SubclassForImplemetorsOf(IConformalTopologicalGrid)
-class ConformalTopologicalGridTest(IGridClassTest):
+@SubclassForImplemetorsOf(ConformalTopologicalGridInterface)
+class ConformalTopologicalGridTest(GridClassTestInterface):
 
     def test_dim(self):
         for g in self.grids:
@@ -402,8 +402,8 @@ class ConformalTopologicalGridTest(IGridClassTest):
                 np.testing.assert_array_equal(np.where(g.boundary_mask(d))[0], g.boundaries(d))
 
 
-@SubclassForImplemetorsOf(ISimpleAffineGrid)
-class SimpleAffineGridTest(IGridClassTest):
+@SubclassForImplemetorsOf(SimpleAffineGridInterface)
+class SimpleAffineGridTest(GridClassTestInterface):
 
     def test_dim_outer(self):
         for g in self.grids:
@@ -420,7 +420,7 @@ class SimpleAffineGridTest(IGridClassTest):
     def test_reference_element_type(self):
         for g in self.grids:
             for d in xrange(g.dim + 1):
-                self.assertIsInstance(g.reference_element(d), ISimpleReferenceElement)
+                self.assertIsInstance(g.reference_element(d), SimpleReferenceElementInterface)
 
     def test_reference_element_transitivity(self):
         for g in self.grids:

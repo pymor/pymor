@@ -4,7 +4,7 @@ import numpy as np
 from matplotlib.delaunay import delaunay
 import logging
 
-from pymor.grid.interfaces import ISimpleAffineGrid, IConformalTopologicalGrid
+from pymor.grid.interfaces import SimpleAffineGridInterface, ConformalTopologicalGridInterface
 from pymor.grid import referenceelements as Refs
 
 class CircleBoundary(object):
@@ -34,7 +34,7 @@ class StructuredSimplexCheat(object):
             self.count = 0
         return (x,y)
         
-class PrescribedBoundaryGrid(IConformalTopologicalGrid):
+class PrescribedBoundaryGrid(ConformalTopologicalGridInterface):
     '''given an analytical boundary descriptjon f: [0,1)mapto R2
 	I'll sample n points and construct a simplicial mesh of their convex hull
 	'''

@@ -4,7 +4,7 @@ import pymor.core as core
 from .defaultimpl import *  # NOQA
 
 
-class IConformalTopologicalGrid(IConformalTopologicalGridDefaultImplementation, core.BasicInterface):
+class ConformalTopologicalGridInterface(IConformalTopologicalGridDefaultImplementation, core.BasicInterface):
     '''desribes a conformal topological grid. The grid is determined via the subentity
     relation given by `subentities(codim, subentity_codim)`.
 
@@ -95,7 +95,7 @@ class IConformalTopologicalGrid(IConformalTopologicalGridDefaultImplementation, 
         '''returns a list of Grid instances suitable to be run through our Testcases'''
         pass
 
-class ISimpleReferenceElement(ISimpleReferenceElementDefaultImplementation, core.BasicInterface):
+class SimpleReferenceElementInterface(ISimpleReferenceElementDefaultImplementation, core.BasicInterface):
     '''defines a reference element with the property that each of its subentities is
     of the same type. I.e. a three-dimensional reference element cannot have triangles
     and rectangles as faces at the same time.
@@ -171,9 +171,9 @@ class ISimpleReferenceElement(ISimpleReferenceElementDefaultImplementation, core
         pass
 
 
-class ISimpleAffineGrid(ISimpleAffineGridDefaultImplementation, IConformalTopologicalGrid):
+class SimpleAffineGridInterface(ISimpleAffineGridDefaultImplementation, ConformalTopologicalGridInterface):
     '''describes a geometric grid where each codim-0 entity has the same
-    `ISimpleReferenceElement` reference element to which it is affinely
+    `SimpleReferenceElementInterface` reference element to which it is affinely
     mapped.
 
     **dim_outer**

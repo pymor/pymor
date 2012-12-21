@@ -3,14 +3,14 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import math as m
 import numpy as np
 import pymor.core as core
-from .interfaces import IDomainDiscretizer
+from .interfaces import DomainDiscretizerInterface
 from pymor.common.domaindescription import Rect as DRect
 from pymor.grid.rect import Rect as GRect
 from pymor.grid.tria import Tria as GTria
 from pymor.common.boundaryinfo import FromIndicators
 
 
-class Default(IDomainDiscretizer):
+class Default(DomainDiscretizerInterface):
 
     def __init__(self, grid_type=None, diameter=1 / 100):
         self.grid_type = grid_type

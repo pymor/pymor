@@ -3,11 +3,11 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import pymor.core as core
 
 
-class IDomainDiscretizer(core.BasicInterface):
-    '''Takes IDomainDiscription and generates IGrid and IBoundaryInfo'''
+class DomainDiscretizerInterface(core.BasicInterface):
+    '''Takes DomainDiscriptionInterface and generates GridInterface and BoundaryInfoInterface'''
 
     @core.interfaces.abstractmethod
     def discretize(domain_description):
-        '''Takes IDomainDescription and returns tuple (IGrid, IBoundaryInfo)'''
+        '''Takes DomainDescriptionInterface and returns tuple (GridInterface, BoundaryInfoInterface)'''
         pass
 

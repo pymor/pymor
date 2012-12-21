@@ -1,2 +1,2 @@
-from .interfaces import IDomainDiscretizer
+from .interfaces import DomainDiscretizerInterface
 from .default import Default

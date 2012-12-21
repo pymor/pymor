@@ -1,9 +1,9 @@
 import pymor.core as core
 
-class IParameterSpace(core.BasicInterface):
+class ParameterSpaceInterface(core.BasicInterface):
     pass
 
-class IParameterSample(core.BasicInterface):
+class ParameterSampleInterface(core.BasicInterface):
     pass
 
 

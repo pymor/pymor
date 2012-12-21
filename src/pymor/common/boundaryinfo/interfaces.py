@@ -6,7 +6,7 @@ import pymor.core as core
 from pymor.common import BoundaryType
 
 # Is one entity allowed to have mor than one boundary type?
-class IBoundaryInfo(core.BasicInterface):
+class BoundaryInfoInterface(core.BasicInterface):
     '''Describes boundary types associated to a grid. For every boundary
     type and codimension a mask is provided, marking grid entities
     of the respective type and codimension by their global index.

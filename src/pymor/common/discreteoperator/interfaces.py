@@ -4,7 +4,7 @@ import numpy as np
 
 import pymor.core as core
 
-class IDiscreteOperator(core.BasicInterface):
+class DiscreteOperatorInterface(core.BasicInterface):
 
     __name = None
     @property
@@ -30,7 +30,7 @@ class IDiscreteOperator(core.BasicInterface):
         pass
 
 
-class ILinearDiscreteOperator(IDiscreteOperator):
+class LinearDiscreteOperatorInterface(DiscreteOperatorInterface):
 
     @core.interfaces.abstractmethod
     def assemble(self, mu=np.array([])):

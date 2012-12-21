@@ -6,7 +6,7 @@ import pymor.core as core
 from pymor.common import BoundaryType
 
 
-class IDomainDescription(core.BasicInterface):
+class DomainDescriptionInterface(core.BasicInterface):
     '''Analytically describes a domain and its boundary (types).
     '''
 

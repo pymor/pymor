@@ -2,11 +2,11 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import numpy as np
 
-from .interfaces import IBoundaryInfo
+from .interfaces import BoundaryInfoInterface
 from pymor.common import BoundaryType
 
 
-class FromIndicators(IBoundaryInfo):
+class FromIndicators(BoundaryInfoInterface):
 
     def __init__(self, grid, indicators):
         self.grid = grid
@@ -22,7 +22,7 @@ class FromIndicators(IBoundaryInfo):
         return self._masks[boundary_type][codim - 1]
 
 
-class AllDirichlet(IBoundaryInfo):
+class AllDirichlet(BoundaryInfoInterface):
 
     def __init__(self, grid):
         self.grid = grid

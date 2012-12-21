@@ -4,10 +4,10 @@ import numpy as np
 
 import pymor.core as core
 from pymor.common import BoundaryType
-from .interfaces import IDomainDescription
+from .interfaces import DomainDescriptionInterface
 
 
-class Rect(IDomainDescription):
+class Rect(DomainDescriptionInterface):
     '''Describes a rectangular domain. Different boundary types can be associated
     to each side.
     '''

@@ -2,10 +2,10 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from itertools import izip
 
-from .interfaces import ILinearDiscreteOperator
+from .interfaces import LinearDiscreteOperatorInterface
 
 
-class LinearAffinelyDecomposedDOP(ILinearDiscreteOperator):
+class LinearAffinelyDecomposedDOP(LinearDiscreteOperatorInterface):
 
     def __init__(self, operators, operator_affine_part=None, functionals=None, parameter_dim=None, name=None):
         assert functionals is None or len(operators) == len(functionals),\
