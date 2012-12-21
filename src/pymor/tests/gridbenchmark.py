@@ -6,7 +6,7 @@ import logging
 import numpy as np
 import timeit
 
-from pymor.grid.rect import Rect as RectGrid
+from pymor.grid.rect import RectGrid
 from pymor.grid.tria import Tria as TriaGrid
 
 import os

@@ -5,7 +5,7 @@ import numpy as np
 import pymor.core as core
 from .interfaces import DomainDiscretizerInterface
 from pymor.common.domaindescription import Rect as DRect
-from pymor.grid.rect import Rect as GRect
+from pymor.grid.rect import RectGrid
 from pymor.grid.tria import Tria as GTria
 from pymor.common.boundaryinfo import FromIndicators
 

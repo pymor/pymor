@@ -7,7 +7,7 @@ from .interfaces import AffineGridInterface
 from .referenceelements import square
 
 
-class Rect(AffineGridInterface):
+class RectGrid(AffineGridInterface):
     '''Ad-hoc implementation of a rectangular grid.
 
     The global face, edge and vertex indices are given as follows
@@ -97,13 +97,13 @@ class Rect(AffineGridInterface):
             else:
                 return self.__subentities[subentity_codim - 1]
         else:
-            return super(Rect, self).subentities(codim, subentity_codim)
+            return super(RectGrid, self).subentities(codim, subentity_codim)
 
     def embeddings(self, codim=0):
         if codim == 0:
             return self.__embeddings
         else:
-            return super(Rect, self).embeddings(codim)
+            return super(RectGrid, self).embeddings(codim)
 
     def visualize(self, dofs):
         import matplotlib.pyplot as plt
@@ -122,7 +122,7 @@ class Rect(AffineGridInterface):
 
     @staticmethod
     def test_instances():
-        return [Rect((2,4)), Rect((1,1)), Rect((42,42))]
+        return [RectGrid((2,4)), RectGrid((1,1)), RectGrid((42,42))]
 
     #def center_distances(self):
      #   raise NotImplementedError
@@ -145,6 +145,6 @@ class Rect(AffineGridInterface):
         #pass
 
 if __name__ == '__main__':
-    g = Rect(num_intervals=(120, 60), domain=[[0, 0], [2, 1]])
+    g = RectGrid(num_intervals=(120, 60), domain=[[0, 0], [2, 1]])
     X = np.sin(2 * np.pi * g.centers(0)[:, 0]) * np.sin(2 * np.pi * g.centers(0)[:, 1])
     g.visualize(X)

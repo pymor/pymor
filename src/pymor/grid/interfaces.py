@@ -11,7 +11,7 @@ class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplement
     All results in the default implementations are cached for the next evaluation.
     Note that the current implementation is very slow
     and should be moved to C code.
-    For ``g = pymor.grid.rect.Rect((1000, 1000))`` it takes around 5
+    For ``g = pymor.grid.rect.RectGrid((1000, 1000))`` it takes around 5
     minutes on modern hardware to calculate ``g.neighbours(0, 1, 2)``.
     (The call involves calculating ``g.subentities(0, 2)``, ``g.subentities(1,2)``,
     ``g.superentities(1,0)``, ``g.superentities(2, 1)`` and ``g.superentity_indices(1,0)``
