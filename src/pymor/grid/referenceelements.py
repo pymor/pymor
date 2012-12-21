@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import numpy as np
 from pymor.core.exceptions import CodimError
-from pymor.common.quadratures import Gauss
+from pymor.common.quadratures import GaussQuadratures
 from .interfaces import ReferenceElementInterface
 
 
@@ -94,7 +94,7 @@ class Line(ReferenceElementInterface):
 
     def quadrature(self, order=None, npoints=None, quadrature_type='default'):
         if quadrature_type == 'default' or quadrature_type == 'gauss':
-            P, W = Gauss.quadrature(order, npoints)
+            P, W = GaussQuadratures.quadrature(order, npoints)
             return P[:, np.newaxis], W
         else:
             raise NotImplementedError('quadrature_type must be "default" or "gauss"')
@@ -114,11 +114,11 @@ class Square(ReferenceElementInterface):
 
         def tensor_weights(W):
             return np.dot(W[:,np.newaxis], W[np.newaxis, :]).ravel()
-        self._quadrature_points  = [tensor_points(Gauss.quadrature(npoints=p+1)[0])  for p in xrange(Gauss.maxpoints())]
-        self._quadrature_weights = [tensor_weights(Gauss.quadrature(npoints=p+1)[1]) for p in xrange(Gauss.maxpoints())]
-        self._quadrature_npoints = np.arange(1, Gauss.maxpoints() + 1) ** 2
-        self._quadrature_orders  = Gauss.orders
-        self._quadrature_order_map = Gauss.order_map
+        self._quadrature_points  = [tensor_points(GaussQuadratures.quadrature(npoints=p+1)[0])  for p in xrange(GaussQuadratures.maxpoints())]
+        self._quadrature_weights = [tensor_weights(GaussQuadratures.quadrature(npoints=p+1)[1]) for p in xrange(GaussQuadratures.maxpoints())]
+        self._quadrature_npoints = np.arange(1, GaussQuadratures.maxpoints() + 1) ** 2
+        self._quadrature_orders  = GaussQuadratures.orders
+        self._quadrature_order_map = GaussQuadratures.order_map
 
     def size(self, codim=1):
         assert 0 <= codim <= 2, CodimError('Invalid codimension (must be between 0 and 2 but was {})'.format(codim))

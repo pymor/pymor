@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import numpy as np
 
-class Gauss:
+class GaussQuadratures:
     '''Gauss quadrature on the interval [0, 1]'''
 
     @classmethod
