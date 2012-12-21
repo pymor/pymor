@@ -7,7 +7,7 @@ from .interfaces import DomainDiscretizerInterface
 from pymor.common.domaindescription import RectDomain as DRect
 from pymor.grid.rect import RectGrid
 from pymor.grid.tria import TriaGrid
-from pymor.common.boundaryinfo import BoundaryInfoFromIndicators
+from pymor.grid.boundaryinfos import BoundaryInfoFromIndicators
 
 
 class DefaultDomainDiscretizer(DomainDiscretizerInterface):
