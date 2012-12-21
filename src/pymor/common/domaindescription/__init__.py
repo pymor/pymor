@@ -1,2 +1,2 @@
 from .interfaces import DomainDescriptionInterface
-from .basic import Rect
+from .basic import RectDomain

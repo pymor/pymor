@@ -6,7 +6,6 @@ from scipy.sparse import issparse
 
 import pymor.core as core
 from pymor.common import BoundaryType
-from pymor.common.domaindescription import Rect
 from pymor.common.function.nonparametric import Constant as ConstantFunc
 
 

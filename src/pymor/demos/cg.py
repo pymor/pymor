@@ -10,7 +10,7 @@ import math as m
 import numpy as np
 
 from pymor.common import BoundaryType
-from pymor.common.domaindescription import Rect as DRect
+from pymor.common.domaindescription import RectDomain
 from pymor.analyticalproblem import Poisson
 from pymor import discretizer
 
@@ -22,10 +22,10 @@ rhs1 = lambda X: (X[:, 0] - 0.5) ** 2 * 1000
 dirichlet0 = lambda X: np.zeros(X.shape[0])
 dirichlet1 = lambda X: np.ones(X.shape[0])
 dirichlet2 = lambda X: X[:, 0]
-domain0 = DRect()
-domain1 = DRect(right=BoundaryType('neumann'))
-domain2 = DRect(right=BoundaryType('neumann'), top=BoundaryType('neumann'))
-domain3 = DRect(right=BoundaryType('neumann'), top=BoundaryType('neumann'), bottom=BoundaryType('neumann'))
+domain0 = RectDomain()
+domain1 = RectDomain(right=BoundaryType('neumann'))
+domain2 = RectDomain(right=BoundaryType('neumann'), top=BoundaryType('neumann'))
+domain3 = RectDomain(right=BoundaryType('neumann'), top=BoundaryType('neumann'), bottom=BoundaryType('neumann'))
 
 nrhs = int(sys.argv[1])
 assert 0 <= nrhs <= 1, ValueError('Invalid rhs number.')

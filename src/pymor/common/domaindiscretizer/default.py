@@ -4,7 +4,7 @@ import math as m
 import numpy as np
 import pymor.core as core
 from .interfaces import DomainDiscretizerInterface
-from pymor.common.domaindescription import Rect as DRect
+from pymor.common.domaindescription import RectDomain as DRect
 from pymor.grid.rect import RectGrid
 from pymor.grid.tria import TriaGrid
 from pymor.common.boundaryinfo import FromIndicators
@@ -26,7 +26,7 @@ class Default(DomainDiscretizerInterface):
             elif grid_type == RectGrid:
                 grid = RectGrid(domain=domain_description.domain, num_intervals=(x0i, x1i))
             else:
-                raise NotImplementedError('I do not know how to discretize {} with {}'.format('domaindescription.Rect',
+                raise NotImplementedError('I do not know how to discretize {} with {}'.format('domaindescription.RectDomain',
                                      grid_type))
 
             def indicator_factory(dd, bt):

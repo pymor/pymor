@@ -7,7 +7,7 @@ from pymor.common import BoundaryType
 from .interfaces import DomainDescriptionInterface
 
 
-class Rect(DomainDescriptionInterface):
+class RectDomain(DomainDescriptionInterface):
     '''Describes a rectangular domain. Different boundary types can be associated
     to each side.
     '''
