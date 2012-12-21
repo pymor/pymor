@@ -3,11 +3,11 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import numpy as np
 
 from pymor.core.exceptions import CodimError
-from .interfaces import SimpleAffineGridInterface
+from .interfaces import AffineGridInterface
 from .referenceelements import triangle
 
 
-class Tria(SimpleAffineGridInterface):
+class Tria(AffineGridInterface):
     '''Ad-hoc implementation of a rectangular grid.
 
     The global face, edge and vertex indices are given as follows

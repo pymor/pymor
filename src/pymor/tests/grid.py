@@ -10,7 +10,7 @@ import pprint
 import unittest
 from itertools import product
 import types
-from pymor.grid.interfaces import ConformalTopologicalGridInterface, SimpleAffineGridInterface, ReferenceElementInterface
+from pymor.grid.interfaces import ConformalTopologicalGridInterface, AffineGridInterface, ReferenceElementInterface
 #mandatory so all Grid classes are created
 from pymor.grid import *
     
@@ -402,7 +402,7 @@ class ConformalTopologicalGridTest(GridClassTestInterface):
                 np.testing.assert_array_equal(np.where(g.boundary_mask(d))[0], g.boundaries(d))
 
 
-@SubclassForImplemetorsOf(SimpleAffineGridInterface)
+@SubclassForImplemetorsOf(AffineGridInterface)
 class SimpleAffineGridTest(GridClassTestInterface):
 
     def test_dim_outer(self):

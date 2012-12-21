@@ -5,11 +5,11 @@ from __future__ import division
 import numpy as np
 
 from pymor.core.exceptions import CodimError
-from pymor.grid.interfaces import SimpleAffineGridInterface
+from pymor.grid.interfaces import AffineGridInterface
 from .referenceelements import line
 
 
-class Oned(SimpleAffineGridInterface):
+class Oned(AffineGridInterface):
 
     dim = 1
     dim_outer = 1

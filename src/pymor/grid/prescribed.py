@@ -4,7 +4,7 @@ import numpy as np
 from matplotlib.delaunay import delaunay
 import logging
 
-from pymor.grid.interfaces import SimpleAffineGridInterface, ConformalTopologicalGridInterface
+from pymor.grid.interfaces import AffineGridInterface, ConformalTopologicalGridInterface
 from pymor.grid import referenceelements as Refs
 
 class CircleBoundary(object):

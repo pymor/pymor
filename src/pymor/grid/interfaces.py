@@ -171,7 +171,7 @@ class ReferenceElementInterface(ISimpleReferenceElementDefaultImplementation, co
         pass
 
 
-class SimpleAffineGridInterface(ISimpleAffineGridDefaultImplementation, ConformalTopologicalGridInterface):
+class AffineGridInterface(ISimpleAffineGridDefaultImplementation, ConformalTopologicalGridInterface):
     '''describes a geometric grid where each codim-0 entity has the same
     `ReferenceElementInterface` reference element to which it is affinely
     mapped.
