@@ -8,7 +8,7 @@ DTYPE = np.int32
 ctypedef np.int32_t DTYPE_t
 
 @cython.boundscheck(False)
-def inverse_relation(np.ndarray[DTYPE_t, ndim=2] R, size_rhs=None, with_indices=False):
+def inverse_relation(np.ndarray[DTYPE_t, ndim=2] R, size_rhs=None, with_indices=False, unsafe=False):
     assert R.ndim == 2
     cdef int i
     cdef int j
@@ -18,7 +18,11 @@ def inverse_relation(np.ndarray[DTYPE_t, ndim=2] R, size_rhs=None, with_indices=
     cdef np.ndarray[DTYPE_t, ndim=1] RINV_COL_COUNTS
 
     num_columns_RINV = np.bincount(R.ravel()).max()
-    size_rhs = size_rhs or (R.max() + 1)
+    if size_rhs is None:
+        size_rhs = R.max() + 1
+    elif not unsafe:
+        assert size_rhs >= R.max() + 1
+
     RINV = np.empty((size_rhs, num_columns_RINV), dtype=DTYPE)
     RINV.fill(-1)
     if with_indices:
