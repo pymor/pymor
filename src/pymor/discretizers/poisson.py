@@ -5,7 +5,7 @@ from scipy.sparse.linalg import bicg
 import matplotlib.pyplot as pl
 
 import pymor.core as core
-from pymor.common import BoundaryType
+from pymor.domaindescriptions import BoundaryType
 from pymor import domaindiscretizers
 from pymor.discreteoperators.cg import DiffusionOperatorP1D2, L2ProductFunctionalP1D2
 from pymor.discreteoperators.affine import LinearAffinelyDecomposedOperator

@@ -5,7 +5,7 @@ from scipy.sparse.linalg import bicg
 from scipy.sparse import issparse
 
 import pymor.core as core
-from pymor.common import BoundaryType
+from pymor.domaindescriptions import BoundaryType
 from pymor.functions.nonparametric import Constant as ConstantFunc
 
 

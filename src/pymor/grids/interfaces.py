@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import numpy as np
 
 import pymor.core as core
-from pymor.common import BoundaryType
+from pymor.domaindescriptions import BoundaryType
 from .defaultimpl import *  # NOQA
 
 

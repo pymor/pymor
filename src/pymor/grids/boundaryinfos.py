@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import numpy as np
 
 from .interfaces import BoundaryInfoInterface
-from pymor.common import BoundaryType
+from pymor.domaindescriptions import BoundaryType
 
 
 class BoundaryInfoFromIndicators(BoundaryInfoInterface):
