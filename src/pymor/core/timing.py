@@ -2,9 +2,10 @@
 '''
 
 import time
-import logging
 import numpy as np
 import functools
+
+from pymor.logger import getLogger
 
 class Timer(object):
     '''You can use me as a context manager, plain instance or decorator to time execution
@@ -32,7 +33,7 @@ class Timer(object):
         print(timer.dt)
     '''
       
-    def __init__(self, section, log=logging.debug):
+    def __init__(self, section, log=getLogger(__name__)):
         self._section = section
         self._log = log
         

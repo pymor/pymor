@@ -8,9 +8,9 @@ Collection of function/class based decorators.
 import functools
 import types
 import inspect
-import logging
 import contracts
 import copy
+import warnings
 
 def fixup_docstring(doc):
     '''replaces all dots with underscores in contract lines
@@ -77,7 +77,7 @@ class Deprecated(DecoratorBase):
             msg = "DeprecationWarning. Call to deprecated function %s in %s:%s\nUse %s instead" % (
                             func.__name__, frame.f_code.co_filename,
                             frame.f_code.co_firstlineno, self._alt)
-            logging.warning(msg)
+            warnings.warn(msg)
             return func(*args, **kwargs)
         return new_func
 

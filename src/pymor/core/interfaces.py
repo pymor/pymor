@@ -10,7 +10,6 @@ import abc
 import types
 import itertools
 import contracts
-import logging
 
 from pymor.core import decorators 
 from pymor.core.exceptions import ConstError

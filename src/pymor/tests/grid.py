@@ -10,11 +10,11 @@ import pprint
 import unittest
 from itertools import product
 import types
-from pymor.grids.interfaces import ConformalTopologicalGridInterface, AffineGridInterface, ReferenceElementInterface
+from pymor.grid.interfaces import IConformalTopologicalGrid, ISimpleAffineGrid, ISimpleReferenceElement
 #mandatory so all Grid classes are created
-from pymor.grids import *
+from pymor.grid import *
     
-class GridClassTestInterface(unittest.TestCase):
+class IGridClassTest(unittest.TestCase):
     
     '''empty list to make static analyzers happy'''
     grids = []
@@ -36,8 +36,8 @@ def SubclassForImplemetorsOf(InterfaceType):
     return decorate
 
 
-@SubclassForImplemetorsOf(ConformalTopologicalGridInterface)
-class ConformalTopologicalGridTest(GridClassTestInterface):
+@SubclassForImplemetorsOf(IConformalTopologicalGrid)
+class ConformalTopologicalGridTest(IGridClassTest):
 
     def test_dim(self):
         for g in self.grids:
@@ -402,8 +402,8 @@ class ConformalTopologicalGridTest(GridClassTestInterface):
                 np.testing.assert_array_equal(np.where(g.boundary_mask(d))[0], g.boundaries(d))
 
 
-@SubclassForImplemetorsOf(AffineGridInterface)
-class SimpleAffineGridTest(GridClassTestInterface):
+@SubclassForImplemetorsOf(ISimpleAffineGrid)
+class SimpleAffineGridTest(IGridClassTest):
 
     def test_dim_outer(self):
         for g in self.grids:
@@ -420,7 +420,7 @@ class SimpleAffineGridTest(GridClassTestInterface):
     def test_reference_element_type(self):
         for g in self.grids:
             for d in xrange(g.dim + 1):
-                self.assertIsInstance(g.reference_element(d), ReferenceElementInterface)
+                self.assertIsInstance(g.reference_element(d), ISimpleReferenceElement)
 
     def test_reference_element_transitivity(self):
         for g in self.grids:
@@ -538,5 +538,6 @@ class SimpleAffineGridTest(GridClassTestInterface):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.ERROR)
+    import pymor
+    l = pymor.root_logger
     nose.core.runmodule(name='__main__')
