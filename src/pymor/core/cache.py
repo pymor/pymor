@@ -2,6 +2,7 @@ import logging
 import functools
 
 from .timing import Timer
+from pymor.logger import getLogger
 
 cache_miss_nesting = 0
 cache_dt_nested = []
@@ -20,6 +21,7 @@ def cached(user_function):
     def wrapper(*args, **kwds):
         global cache_miss_nesting
         global cache_dt_nested
+        logger = getLogger(__name__)
         key = args
         if kwds:
             key += kwd_mark + tuple(sorted(kwds.items()))
@@ -32,7 +34,7 @@ def cached(user_function):
         if len(cache_dt_nested) <= cache_miss_nesting:
             cache_dt_nested.append(0)
         msg = '|  ' * cache_miss_nesting + '/ CACHE MISS calling {}({},{})'.format(user_function.__name__, str(args), str(kwds))
-        logging.debug(msg)
+        logger.debug(msg)
 
         cache_miss_nesting += 1
         timer = Timer('')
@@ -50,9 +52,9 @@ def cached(user_function):
 
         msg = '|  ' * cache_miss_nesting + '\ call took {}s (own code:{}s, nested cache misses:{}s)'.format(timer.dt,
                 timer.dt - dt_nested, dt_nested)
-        logging.debug(msg)
+        logger.debug(msg)
         if cache_miss_nesting == 0:
-            logging.debug('')
+            logger.debug('')
         cache[key] = result
         misses[0] += 1
         return result

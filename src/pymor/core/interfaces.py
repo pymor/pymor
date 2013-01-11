@@ -11,6 +11,7 @@ import types
 import itertools
 import contracts
 
+from pymor import logger
 from pymor.core import decorators 
 from pymor.core.exceptions import ConstError
           
@@ -42,6 +43,7 @@ class UberMeta(abc.ABCMeta):
                 getattr(base, attribute).append(derived)
             else:
                 setattr(base, attribute, [derived])
+        cls.logger = logger.getLogger('{}.{}'.format(cls.__module__.replace('__main__','pymor'), name))
         super(UberMeta, cls).__init__(name, bases, namespace)
 
     def __new__(cls,classname,bases,classdict):
@@ -84,8 +86,6 @@ class UberMeta(abc.ABCMeta):
                         getattr(base_func, "__isabstractclassmethod__")):
                         classdict[attr] = classmethod(classdict[attr])
                         
-
-
         return super(UberMeta, cls).__new__(cls, classname, bases, classdict)
 
 

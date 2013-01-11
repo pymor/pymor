@@ -4,6 +4,7 @@ Cannot not be moved because it's needed to be imported in the root __init__.py O
 """
 
 import logging
+from buildbot.util.bbcollections import defaultdict
 
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 
@@ -30,13 +31,11 @@ LOGLEVEL_MAPPING = {
             'fatal'    : logging.FATAL,
         }
 
-FORMAT = '$BOLD%(levelname)s$RESET - %(asctime)s - %(message)s'
-#FORMAT = '%(message)s'
+FORMAT = '$BOLD%(levelname)s $BOLD%(name)s$RESET %(asctime)s - %(message)s'
 MAX_HIERACHY_LEVEL = 2
 
 def formatter_message(message, use_color = True):
     if use_color:
-        print('fnerionfvbi')
         message = message.replace("$RESET", RESET_SEQ).replace("$BOLD", BOLD_SEQ)
     else:
         message = message.replace("$RESET", "").replace("$BOLD", "")
@@ -54,39 +53,19 @@ class ColoredFormatter(logging.Formatter):
     def format(self, record):
         levelname = record.levelname
         if self.use_color and levelname in COLORS:
-            print('JFEIOHFWUI')
             levelname_color = COLOR_SEQ % (30 + COLORS[levelname]) + levelname + RESET_SEQ
             record.levelname = levelname_color
         return logging.Formatter.format(self, record)
 
-def getLogger(module, level='error',filename=None):
+def getLogger(module, level='debug', filename=None):
     module = 'pymor' if module == '__main__' else module
-    parts = module.split('.')
-    logger_name = '.'.join(parts[:MAX_HIERACHY_LEVEL])
-    g = logging.getLogger(logger_name)
-    print 'handlers GG',  g.handlers
-    return g
-
-def init(level='error',filename=None):
-    logger = logging.getLogger('pymor')
-#    for h in logger.handlers[:]:
-#        logger.removeHandler(h)
-#        print h
-    
-    streamhandler =  logging.StreamHandler()
+    logger_name = '.'.join(module.split('.')[:MAX_HIERACHY_LEVEL])
+    logger = logging.getLogger(logger_name)
+    streamhandler = logging.StreamHandler()
     streamformatter = ColoredFormatter(formatter_message(FORMAT, True))
     streamhandler.setFormatter(streamformatter)
-#    logger.addHandler(streamhandler)
     logger.handlers = [streamhandler]
-#    logger.handlers = []
-    print 'handlers',  logger.handlers   
-#    if filename != None:
-#        filehandler = logging.handlers.RotatingFileHandler(filename,
-#                                    maxBytes=1048576, backupCount=2) # 1MB files
-#        fileformatter = ColoredFormatter(formatter_message(FORMAT, False))
-#        filehandler.setFormatter(fileformatter)
-#        logger.addHandler(filehandler)
-#    logger.setLevel(logging.ERROR)
+    logger.propagate = False
     return logger
 
-#LOGGER = init()
+
