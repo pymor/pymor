@@ -4,22 +4,17 @@ Created on Nov 16, 2012
 @author: r_milk01
 '''
 import numpy as np
-import logging
 import nose
-import pprint
-import unittest
 from itertools import product
-import types
-from pymor.grid.interfaces import IConformalTopologicalGrid, ISimpleAffineGrid, ISimpleReferenceElement
+from pymor.grids.interfaces import (ConformalTopologicalGridInterface, AffineGridInterface, ReferenceElementInterface)
 #mandatory so all Grid classes are created
-from pymor.grid import *
-    
-class IGridClassTest(unittest.TestCase):
+from pymor.grids import *
+from pymor.tests.base import TestBase
+
+class IGridClassTest(TestBase):
     
     '''empty list to make static analyzers happy'''
     grids = []
-    '''only my subclasses will set this to True, prevents nose from thinking I'm an actual test'''
-    __test__ = False
 
 
 def SubclassForImplemetorsOf(InterfaceType):
@@ -36,7 +31,7 @@ def SubclassForImplemetorsOf(InterfaceType):
     return decorate
 
 
-@SubclassForImplemetorsOf(IConformalTopologicalGrid)
+@SubclassForImplemetorsOf(ConformalTopologicalGridInterface)
 class ConformalTopologicalGridTest(IGridClassTest):
 
     def test_dim(self):
@@ -402,7 +397,7 @@ class ConformalTopologicalGridTest(IGridClassTest):
                 np.testing.assert_array_equal(np.where(g.boundary_mask(d))[0], g.boundaries(d))
 
 
-@SubclassForImplemetorsOf(ISimpleAffineGrid)
+@SubclassForImplemetorsOf(AffineGridInterface)
 class SimpleAffineGridTest(IGridClassTest):
 
     def test_dim_outer(self):
@@ -538,6 +533,4 @@ class SimpleAffineGridTest(IGridClassTest):
 
 
 if __name__ == "__main__":
-    import pymor
-    l = pymor.root_logger
     nose.core.runmodule(name='__main__')
