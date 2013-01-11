@@ -415,7 +415,7 @@ class SimpleAffineGridTest(GridClassTestInterface):
     def test_reference_element_type(self):
         for g in self.grids:
             for d in xrange(g.dim + 1):
-                self.assertIsInstance(g.reference_element(d), ISimpleReferenceElement)
+                self.assertIsInstance(g.reference_element(d), ReferenceElementInterface)
 
     def test_reference_element_transitivity(self):
         for g in self.grids:
