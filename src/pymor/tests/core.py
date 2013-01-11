@@ -4,8 +4,6 @@ Created on Nov 16, 2012
 @author: r_milk01
 '''
 from __future__ import print_function
-import unittest
-import logging
 from nose.tools import raises
 import mock
 
@@ -84,7 +82,7 @@ class DocImplementer(AverageImplementer):
 class FailImplementer(StupidInterface):
     pass
 
-class InterfaceTest(unittest.TestCase):
+class InterfaceTest(TestBase):
 
     def setUp(self):
         pass
@@ -150,13 +148,13 @@ class InterfaceTest(unittest.TestCase):
         self.assertEqual(inst.abstract_static_method(), 0)        
 
             
-class TimingTest(unittest.TestCase):
+class TimingTest(TestBase):
     
     def testTimingContext(self):
-        with timing.Timer('busywait',logging.info) as timer:
+        with timing.Timer('busywait',self.logger.info) as timer:
             timing.busywait(1000)
             
-    @timing.Timer('busywait_decorator', logging.info)
+    @timing.Timer('busywait_decorator', TestBase.logger.info)
     def wait(self):
         timing.busywait(1000)
             
@@ -164,11 +162,11 @@ class TimingTest(unittest.TestCase):
         self.wait()
         
     def testTiming(self):
-        timer = timing.Timer('busywait',logging.info)
+        timer = timing.Timer('busywait',self.logger.info)
         timer.start()
         timing.busywait(1000)
         timer.stop()
-        logging.info('plain timing took %s seconds', timer.dt)
+        self.logger.info('plain timing took %s seconds', timer.dt)
 
 class BoringTestInterface(BasicInterface):
     pass
@@ -197,7 +195,7 @@ class BoringTestClass(BasicInterface):
         return dirichletA != dirichletB
 
 
-class ContractTest(unittest.TestCase):
+class ContractTest(TestBase):
     
     def testNaming(self):
         imp = BoringTestClass()
@@ -226,5 +224,4 @@ class ContractTest(unittest.TestCase):
         
 if __name__ == "__main__":
     import nose
-    logging.basicConfig(level=logging.WARNING)
     nose.core.runmodule(name='__main__')

@@ -11,7 +11,7 @@ from pymor.grids.interfaces import (ConformalTopologicalGridInterface, AffineGri
 from pymor.grids import *
 from pymor.tests.base import TestBase
 
-class IGridClassTest(TestBase):
+class GridClassTestInterface(TestBase):
     
     '''empty list to make static analyzers happy'''
     grids = []
@@ -32,7 +32,7 @@ def SubclassForImplemetorsOf(InterfaceType):
 
 
 @SubclassForImplemetorsOf(ConformalTopologicalGridInterface)
-class ConformalTopologicalGridTest(IGridClassTest):
+class ConformalTopologicalGridTest(GridClassTestInterface):
 
     def test_dim(self):
         for g in self.grids:
@@ -398,7 +398,7 @@ class ConformalTopologicalGridTest(IGridClassTest):
 
 
 @SubclassForImplemetorsOf(AffineGridInterface)
-class SimpleAffineGridTest(IGridClassTest):
+class SimpleAffineGridTest(GridClassTestInterface):
 
     def test_dim_outer(self):
         for g in self.grids:
