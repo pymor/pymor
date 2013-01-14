@@ -1,73 +1,51 @@
-import logging
-import functools
+from functools import wraps, partial
+from dogpile import cache as dc
+from os.path import join
+from tempfile import gettempdir
+import mock
 
-from .timing import Timer
-from pymor.logger import getLogger
+from pymor.core.interfaces import abstractmethod, BasicInterface
 
-cache_miss_nesting = 0
-cache_dt_nested = []
+DEFAULT_MEMORY_CONFIG = { "backend":'dogpile.cache.memory' }
+DEFAULT_DISK_CONFIG = { "backend":'dogpile.cache.dbm',
+        "arguments.filename": join(gettempdir(), 'pymor.cache.dbm')}
 
-def cached(user_function):
-    '''Our cache decorator. The current implementation is copied from
-    functools32.lru_cache without the 'lru' functionality.
-    '''
 
-    hits, misses = [0], [0]
-    kwd_mark = (object(),)          # separates positional and keyword args
+class cached(BasicInterface):
+    
+    def __init__(self, f):
+        self.f = f
+        self.cache = {}
+        self.expiration_time = None
 
-    cache = dict()              # simple cache without ordering or size limit
+    def __call__(self, im_self, *args, **kwargs):
+        cache = im_self._cache_region
+        keygen = im_self._keygen(im_self._namespace, self.f)
+        key = keygen(*args, **kwargs)
+        self.logger.debug('self {} key {} args {} kwargs {}'.format(im_self, key, str(*args), str(**kwargs)))
+        def creator():
+            return self.f(im_self, *args, **kwargs)
+        return cache.get_or_create(key, creator, self.expiration_time)
 
-    @functools.wraps(user_function)
-    def wrapper(*args, **kwds):
-        global cache_miss_nesting
-        global cache_dt_nested
-        logger = getLogger(__name__)
-        key = args
-        if kwds:
-            key += kwd_mark + tuple(sorted(kwds.items()))
-        try:
-            result = cache[key]
-            hits[0] += 1
-            return result
-        except KeyError:
-            pass
-        if len(cache_dt_nested) <= cache_miss_nesting:
-            cache_dt_nested.append(0)
-        msg = '|  ' * cache_miss_nesting + '/ CACHE MISS calling {}({},{})'.format(user_function.__name__, str(args), str(kwds))
-        logger.debug(msg)
-
-        cache_miss_nesting += 1
-        timer = Timer('')
-        timer.start()
-        result = user_function(*args, **kwds)
-        timer.stop()
-        cache_miss_nesting -= 1
-
-        if len(cache_dt_nested) > cache_miss_nesting + 1:
-            dt_nested = cache_dt_nested[cache_miss_nesting + 1]
-            cache_dt_nested[cache_miss_nesting + 1] = 0
-        else:
-            dt_nested = 0
-        cache_dt_nested[cache_miss_nesting] += timer.dt
-
-        msg = '|  ' * cache_miss_nesting + '\ call took {}s (own code:{}s, nested cache misses:{}s)'.format(timer.dt,
-                timer.dt - dt_nested, dt_nested)
-        logger.debug(msg)
-        if cache_miss_nesting == 0:
-            logger.debug('')
-        cache[key] = result
-        misses[0] += 1
-        return result
-
-    def cache_info():
-        '''Report cache statistics'''
-        return _CacheInfo(hits[0], misses[0], maxsize, len(cache))
-
-    def cache_clear():
-        '''Clear the cache and cache statistics'''
-        cache.clear()
-        hits[0] = misses[0] = 0
-
-    wrapper.cache_info = cache_info
-    wrapper.cache_clear = cache_clear
-    return wrapper
+    def __get__(self, instance, instancetype):
+        """Implement the descriptor protocol to make decorating instance method possible.
+        Return a partial function where the first argument is the instance of the decorated class.
+        """ 
+        return partial(self.__call__, instance)
+        
+        
+class Cachable(object):
+       
+    def __init__(self, config=DEFAULT_MEMORY_CONFIG):
+        self._cache_region = dc.make_region(function_key_generator = self._keygen)
+        self._cache_region.configure_from_config(config, '')
+        self._namespace = self.__class__.__name__
+    
+    def _keygen(self, namespace, function):
+        '''
+        '''
+        fname = function.__name__
+        namespace = str(namespace) 
+        def generate_key(*arg):
+            return namespace + "_" + fname + "_".join(str(s) for s in arg)
+        return generate_key

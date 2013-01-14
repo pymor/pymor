@@ -143,6 +143,7 @@ class BasicInterface(object):
         name = cls.__name__
         return name.endswith('Interface')
 
+
 contract = decorators.contract
 abstractmethod = abc.abstractmethod
 
