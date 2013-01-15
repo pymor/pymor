@@ -29,16 +29,12 @@ class CacheTest(TestBase):
     def test_runtime(self):
         for Class in [IamMemoryCached, IamDiskCached]:
             r = Class()
-            int0 = datetime.now()
-            r.me_takey_long_time('koko')
-            int1 = datetime.now()
-            self.logger.info(int1-int0)
-            r.me_takey_long_time('koko')
-            int2 = datetime.now()
-            self.logger.info(int2-int1)
-            r.me_takey_long_time('other')
-            int4 = datetime.now()
-            self.logger.warning(int4-int3)
+            for val in ['koko', 'koko', 'other']:                
+                int0 = datetime.now()
+                r.me_takey_long_time(val)
+                int1 = datetime.now()
+                self.logger.info(int1-int0)
+            
 
 if __name__ == "__main__":
     nose.core.runmodule(name='__main__')
