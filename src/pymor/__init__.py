@@ -6,10 +6,12 @@ except ImportError:
         import subprocess
         revstring = subprocess.check_output(['git', 'describe', '--tags', '--candidates', '20', '--match', '*.*.*'])
         pos = revstring.find('-')
-        version = tuple(revstring[:pos].split('.'))
+        version = tuple(int(x) for x in revstring[:pos].split('.'))
         if pos > -1:
-            git = revstring[pos+1:]
-            version += tuple(git)
+            git = revstring.strip().split('-')
+            distance = int(git[1])
+            shorthash = git[2]
+            version = version + (distance, shorthash)
     except:
         version = (0,0,0,'NOVERSION')
 finally:
