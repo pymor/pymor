@@ -5,8 +5,7 @@ import types
 import itertools
 import contracts
 
-from pymor import logger
-from pymor.core import decorators, backports
+from pymor.core import decorators, backports, logger
 from pymor.core.exceptions import ConstError
              
 class UberMeta(abc.ABCMeta):   

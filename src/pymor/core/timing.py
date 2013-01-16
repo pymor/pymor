@@ -3,7 +3,7 @@ import time
 import numpy as np
 import functools
 
-from pymor.logger import getLogger
+from pymor.core.logger import getLogger
 
 class Timer(object):
     '''You can use me as a context manager, plain instance or decorator to time execution
