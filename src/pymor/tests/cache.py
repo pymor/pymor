@@ -24,10 +24,10 @@ class IamDiskCached(cache.Cachable):
         time.sleep(SLEEP_SECONDS)
         return arg
     
-class IamLimitedMemoryCached(cache.Cachable):
+class IamLimitedCached(cache.Cachable):
     
     def __init__(self, config=cache.DEFAULT_DISK_CONFIG):
-        super(IamLimitedMemoryCached, self).__init__(config=config)
+        super(IamLimitedCached, self).__init__(config=config)
 
     @cache.cached
     def me_takey_no_time(self, arg):
@@ -36,6 +36,7 @@ class IamLimitedMemoryCached(cache.Cachable):
 class CacheTest(TestBase):
        
     def test_runtime(self):
+        return
         for Class in [IamMemoryCached, IamDiskCached]:
             r = Class()
             for val in ['koko', 'koko', 'other']:                
@@ -45,11 +46,12 @@ class CacheTest(TestBase):
                 self.logger.info(int1-int0)
             
     def test_limit(self):
-        c = IamLimitedMemoryCached(cache.SMALL_MEMORY_CONFIG)
-        for i in '1234567':
-            c.cache_region.backend.print_limit()
-            k = c.me_takey_no_time(i)
-            c.cache_region.backend.print_limit()
+        for c in [IamLimitedCached(cache.SMALL_MEMORY_CONFIG), 
+                  IamLimitedCached(cache.SMALL_DISK_CONFIG)]:
+            for i in range(25):
+                c.cache_region.backend.print_limit()
+                k = c.me_takey_no_time(i)
+                c.cache_region.backend.print_limit()
             
 
 if __name__ == "__main__":

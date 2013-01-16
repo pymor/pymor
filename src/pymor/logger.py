@@ -4,7 +4,7 @@ Cannot not be moved because it's needed to be imported in the root __init__.py O
 """
 
 import logging
-from buildbot.util.bbcollections import defaultdict
+from collections import defaultdict
 
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 
