@@ -1,15 +1,56 @@
-from functools import wraps, partial
+from functools import partial
 from dogpile import cache as dc
 from os.path import join
 from tempfile import gettempdir
-import mock
+from collections import OrderedDict
+from pprint import pformat
+import sys
 
-from pymor.core.interfaces import abstractmethod, BasicInterface
+from pymor.core.interfaces import BasicInterface
+from pymor.tools import memory
 
-DEFAULT_MEMORY_CONFIG = { "backend":'dogpile.cache.memory' }
+DEFAULT_MEMORY_CONFIG = { "backend":'LimitedMemory' }
+SMALL_MEMORY_CONFIG = { "backend":'LimitedMemory', 'arguments.max_keys':20, 
+                       'arguments.max_kbytes': 20}
 DEFAULT_DISK_CONFIG = { "backend":'dogpile.cache.dbm',
         "arguments.filename": join(gettempdir(), 'pymor.cache.dbm')}
 
+class LimitedMemoryBackend(BasicInterface, dc.api.CacheBackend):
+    
+    def __init__(self, argument_dict):
+        '''If argument_dict contains a value for max_kbytes this the total memory limit in kByte that is enforced on the 
+        internal cache dictionary, otherwise its set to sys.maxint.
+        If argument_dict contains a value for max_keys this maximum amount of cache values kept in the 
+        internal cache dictionary, otherwise its set to sys.maxlen.
+        If necessary values are deleted from the cache in FIFO order.
+        '''
+        self.logger.debug('Backend args {}'.format(pformat(argument_dict)))
+        self._max_keys = argument_dict.get('max_keys', sys.maxsize)
+        self._max_kbytes = argument_dict.get('max_kbytes', sys.maxint/(8*1024))*(8*1024)
+        self._cache = OrderedDict()
+        
+    def get(self, key):
+        return self._cache.get(key, dc.api.NO_VALUE)
+
+    def print_limit(self, additional_size=0):
+        self.logger.info('LimitedMemoryBackend at {}({}) -- {}({})'
+                         .format(len(self._cache), self._max_keys, memory.getsizeof(self._cache), self._max_kbytes))
+    
+    def _enforce_limits(self, new_value):
+        additional_size = memory.getsizeof(new_value)
+        while len(self._cache) > 0 and not (len(self._cache) <= self._max_keys 
+                and (memory.getsizeof(self._cache) + additional_size) <= self._max_kbytes):
+            self.logger.debug('shrinking limited memory cache')
+            self._cache.popitem(last=False)
+        
+    def set(self, key, value):
+        self._enforce_limits(value)
+        self._cache[key] = value
+
+    def delete(self, key):
+        self._cache.pop(key)
+
+dc.register_backend("LimitedMemory", "pymor.core.cache", "LimitedMemoryBackend")
 
 class cached(BasicInterface):
     
@@ -29,9 +70,9 @@ class cached(BasicInterface):
         return cache.get_or_create(key, creator_function, im_self.expiration_time)
 
     def __get__(self, instance, instancetype):
-        """Implement the descriptor protocol to make decorating instance method possible.
+        '''Implement the descriptor protocol to make decorating instance method possible.
         Return a partial function where the first argument is the instance of the decorated instance object.
-        """ 
+        ''' 
         return partial(self.__call__, instance)
         
         
@@ -54,3 +95,5 @@ class Cachable(object):
             return (namespace + "_" + fname + "_".join(str(s) for s in arg) 
                         + '__'.join(str(x) for x in kwargs.iteritems()))
         return keygen
+    
+    
