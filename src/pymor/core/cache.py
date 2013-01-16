@@ -1,3 +1,5 @@
+from __future__ import absolute_import, division, print_function
+#cannot use unicode_literals here, or else dbm backend fails
 from functools import partial
 from dogpile import cache as dc
 from dogpile.cache.backends.file import DBMBackend

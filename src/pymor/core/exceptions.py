@@ -1,13 +1,7 @@
 # -*- coding: utf-8 -*-
-'''
-Created on Fri Nov  9 17:28:14 2012
-
-@author: r_milk01
-'''
-
+from __future__ import absolute_import, division, print_function
 import contracts
 import warnings
-#import abc.
 
 warn = warnings.warn
 ContractNotRespected = contracts.ContractNotRespected

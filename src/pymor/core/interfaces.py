@@ -1,20 +1,13 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''
-Created on Wed Oct 31 12:39:53 2012
-
-@author: r_milk01
-'''
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 import abc
 import types
 import itertools
 import contracts
 
 from pymor import logger
-from pymor.core import decorators 
+from pymor.core import decorators, backports
 from pymor.core.exceptions import ConstError
-          
              
 class UberMeta(abc.ABCMeta):   
         
@@ -153,7 +146,6 @@ if sys.version_info >= (3,1,0):
     abstractstaticmethod_base = abc.abstractstaticmethod
 else:
     #backport path for issue5867
-    import backports
     abstractclassmethod_base = backports.abstractclassmethod
     abstractstaticmethod_base = backports.abstractstaticmethod
     

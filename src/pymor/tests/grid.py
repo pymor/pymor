@@ -1,8 +1,4 @@
-'''
-Created on Nov 16, 2012
-
-@author: r_milk01
-'''
+from __future__ import absolute_import, division, print_function
 import numpy as np
 import nose
 from itertools import product

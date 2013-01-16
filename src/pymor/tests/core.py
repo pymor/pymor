@@ -1,9 +1,4 @@
-'''
-Created on Nov 16, 2012
-
-@author: r_milk01
-'''
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 from nose.tools import raises
 import mock
 

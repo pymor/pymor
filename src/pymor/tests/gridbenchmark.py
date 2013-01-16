@@ -1,4 +1,4 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function
 
 import datetime
 import sys
@@ -24,7 +24,8 @@ def initialize_logging():
     # Output logging information to file
     t = datetime.datetime.now()
     filename = os.path.join(os.path.abspath(__file__).split('/src/')[0], 'logs',
-                            'gridbenchmark-{}-{}-{}-{}{}{}.log'.format(t.year, t.month, t.day, t.hour, t.minute, t.second))
+                            'gridbenchmark-{}-{}-{}-{}{}{}.log'.format(t.year, t.month, t.day, 
+                                                                       t.hour, t.minute, t.second))
     hfile = logging.FileHandler(filename)
     ffile = logging.Formatter('%(asctime)s %(levelname)s\t%(message)s')
     hfile.setFormatter(ffile)
