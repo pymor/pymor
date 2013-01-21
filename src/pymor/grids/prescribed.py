@@ -2,7 +2,7 @@ from __future__ import division
 import math
 import numpy as np
 from matplotlib.delaunay import delaunay
-
+from pymor.core import cache
 from pymor.grids.interfaces import ConformalTopologicalGridInterface
 from pymor.grids import referenceelements as Refs
 
@@ -33,7 +33,7 @@ class StructuredSimplexCheat(object):
             self.count = 0
         return (x,y)
         
-class PrescribedBoundaryGrid(ConformalTopologicalGridInterface):
+class PrescribedBoundaryGrid(ConformalTopologicalGridInterface,  cache.Cachable):
     '''given an analytical boundary descriptjon f: [0,1)mapto R2
 	I'll sample n points and construct a simplicial mesh of their convex hull
 	'''
@@ -48,6 +48,7 @@ class PrescribedBoundaryGrid(ConformalTopologicalGridInterface):
     	if boundary function is of that fancy cas package we could sample 
     	weighed by the absolute value of the gradient. otherwise sampling is uniform
     	'''
+        super(PrescribedBoundaryGrid, self).__init__()
         fac = 1 / sample_count
         self._px = np.array([boundary_callable(p * fac)[0] for p in range(sample_count)])
         self._py = np.array([boundary_callable(p * fac)[1] for p in range(sample_count)])
