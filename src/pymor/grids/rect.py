@@ -3,11 +3,12 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import numpy as np
 
 from pymor.core.exceptions import CodimError
+from pymor.core import cache
 from .interfaces import AffineGridInterface
 from .referenceelements import square
 
 
-class RectGrid(AffineGridInterface):
+class RectGrid(AffineGridInterface, cache.Cachable):
     '''Ad-hoc implementation of a rectangular grid.
 
     The global face, edge and vertex indices are given as follows
@@ -29,6 +30,7 @@ class RectGrid(AffineGridInterface):
     reference_element = square
 
     def __init__(self, num_intervals=(2, 2), domain=[[0, 0], [1, 1]]):
+        super(RectGrid, self).__init__()
         self.num_intervals = num_intervals
         self.domain = np.array(domain)
 

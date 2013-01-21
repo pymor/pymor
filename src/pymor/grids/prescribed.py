@@ -2,9 +2,8 @@ from __future__ import division
 import math
 import numpy as np
 from matplotlib.delaunay import delaunay
-import logging
 
-from pymor.grids.interfaces import AffineGridInterface, ConformalTopologicalGridInterface
+from pymor.grids.interfaces import ConformalTopologicalGridInterface
 from pymor.grids import referenceelements as Refs
 
 class CircleBoundary(object):
