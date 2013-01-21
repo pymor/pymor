@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 
 from pymor.core import cache
-from pymor.tests.base import TestBase
+from pymortests.base import TestBase
 
 SLEEP_SECONDS = 1
 
@@ -56,4 +56,4 @@ class CacheTest(TestBase):
             
 
 if __name__ == "__main__":
-    nose.core.runmodule(name='__main__')
+    nose.core.runmodule(name='pymortests.cache')

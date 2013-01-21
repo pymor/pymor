@@ -11,7 +11,7 @@ from pymor.grids import AllDirichletBoundaryInfo as ADIA
 from pymor.playground.boundaryinfos.oned import AllDirichletBoundaryInfo as ADIB
 import pymor.grids.boundaryinfos
 import pymor.playground.boundaryinfos.oned
-from pymor.tests.base import TestBase
+from pymortests.base import TestBase
 
 class UnknownInterface(BasicInterface):
     pass
@@ -174,7 +174,7 @@ class BoringTestClass(BasicInterface):
         notation. For classes defined elsewhere you MUST use it. Only builtins and classes with
         UberMeta as their metaclass can be checked w/o manually defining a new contract type.
         
-        :type cls: BoringTestInterface
+        :type cls: pymortests.core.BoringTestInterface
         :type other: pymor.playground.boundaryinfos.oned.AllDirichletBoundaryInfo
         '''
         pass
@@ -219,4 +219,4 @@ class ContractTest(TestBase):
         
 if __name__ == "__main__":
     import nose
-    nose.core.runmodule(name='__main__')
+    nose.core.runmodule(name='pymortests.core')

@@ -5,7 +5,7 @@ from itertools import product
 from pymor.grids.interfaces import (ConformalTopologicalGridInterface, AffineGridInterface, ReferenceElementInterface)
 #mandatory so all Grid classes are created
 from pymor.grids import *
-from pymor.tests.base import TestBase
+from pymortests.base import TestBase
 
 class GridClassTestInterface(TestBase):
     
@@ -19,8 +19,8 @@ def SubclassForImplemetorsOf(InterfaceType):
     '''
     def decorate(TestCase):
         '''saves a new type called cname with correct bases and class dict in globals'''
-        for GridType in [T for T in InterfaceType.implementors(True) if not T.has_interface_name()]:
-            cname = '{}{}'.format(GridType.__name__, TestCase.__name__)
+        for GridType in set([T for T in InterfaceType.implementors(True) if not T.has_interface_name()]):
+            cname = '{}_{}'.format(GridType.__name__, TestCase.__name__)
             globals()[cname] = type(cname, (TestCase,), {'grids': GridType.test_instances(),
                                                      '__test__': True})
         return TestCase
@@ -529,4 +529,4 @@ class SimpleAffineGridTest(GridClassTestInterface):
 
 
 if __name__ == "__main__":
-    nose.core.runmodule(name='__main__')
+    nose.core.runmodule(name='pymortests.grid')

@@ -23,7 +23,9 @@ def initialize_logging():
 
     # Output logging information to file
     t = datetime.datetime.now()
-    filename = os.path.join(os.path.abspath(__file__).split('/src/')[0], 'logs',
+    output_dir = os.path.join(os.path.abspath(__file__).split('/src/')[0], 'logs')
+    os.mkdir(output_dir) 
+    filename = os.path.join(output_dir,
                             'gridbenchmark-{}-{}-{}-{}{}{}.log'.format(t.year, t.month, t.day, 
                                                                        t.hour, t.minute, t.second))
     hfile = logging.FileHandler(filename)
@@ -70,20 +72,21 @@ class Superentity10BothBenchmark(GridBenchmark):
         self.g.superentities(1, 0)
         self.g.superentity_indices(1, 0)
 
-initialize_logging()
-grid_sizes = [128, 256, 512]
-
-for c in (RectGrid, TriaGrid):
-    log('Timing g.superentities(1, 0) for {}'.format(c.__name__))
-    for n in grid_sizes:
-        B = Superentities10Benchmark(c, ((n, n)))
-        log('{2}(({0},{0})): {1}'.format(n, B.benchmark(), c.__name__))
-    log('')
-
-for c in (RectGrid, TriaGrid):
-    log('Timing g.superentities(1, 0) and g.superentity_indices(1, 0) for {}'.format(c.__name__))
-    for n in grid_sizes:
-        B = Superentity10BothBenchmark(c, ((n, n)))
-        log('{2}(({0},{0})): {1}'.format(n, B.benchmark(), c.__name__))
-    log('')
-
+if __name__ == "__main__":
+    initialize_logging()
+    grid_sizes = [128, 256, 512]
+    
+    for c in (RectGrid, TriaGrid):
+        log('Timing g.superentities(1, 0) for {}'.format(c.__name__))
+        for n in grid_sizes:
+            B = Superentities10Benchmark(c, ((n, n)))
+            log('{2}(({0},{0})): {1}'.format(n, B.benchmark(), c.__name__))
+        log('')
+    
+    for c in (RectGrid, TriaGrid):
+        log('Timing g.superentities(1, 0) and g.superentity_indices(1, 0) for {}'.format(c.__name__))
+        for n in grid_sizes:
+            B = Superentity10BothBenchmark(c, ((n, n)))
+            log('{2}(({0},{0})): {1}'.format(n, B.benchmark(), c.__name__))
+        log('')
+    

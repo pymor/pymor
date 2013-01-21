@@ -16,11 +16,15 @@ class TestDiscoverySelector(nose.selector.Selector):
 
     def wantFile(self, filename):
         parts = os.path.split(filename)
-        return filename.endswith('.py') and 'src/pymor/tests' in filename
+        return filename.endswith('.py') and 'pymortests' in filename
 
     def wantModule(self, module):
         parts = module.__name__.split('.')
-        return 'tests' in parts
+        
+        ret = 'pymortests' in parts
+        if ret:
+            logging.getLogger('TEST').critical(module.__name__)
+        return ret
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.ERROR)
@@ -28,4 +32,4 @@ if __name__ == '__main__':
     selector = TestDiscoverySelector(cfg)
     loader = nose.loader.TestLoader()
     loader.selector = selector 
-    TestProgram(argv=[__file__, '-vv' ], testLoader=loader, module='pymor.tests')
+    TestProgram(argv=[__file__, '-vv' ], testLoader=loader, module='pymortests')
