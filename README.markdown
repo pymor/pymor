@@ -21,3 +21,9 @@ Scripts
  * tetgen2dgf
  * triangle2dgf
  * dune-supermodule: for a given dune.module creates a git supermodule with all dune dependencies as git submodules
+
+
+Debugging
+--------
+
+ * You can globally disable caching by having PYMOR_CACHE_DISABLE=1 in the process' environment

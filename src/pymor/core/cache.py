@@ -125,6 +125,9 @@ class cached(BasicInterface):
     
     def __init__(self, function):
         self.decorated_function = function
+        self._cache_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
+        if self._cache_disabled:
+            self.logger.warn('caching globally disabled')
         
     def __call__(self, im_self, *args, **kwargs):
         '''Via the magic that is partial functions returned from __get__, im_self is the instance object of the class
@@ -142,6 +145,8 @@ class cached(BasicInterface):
         '''Implement the descriptor protocol to make decorating instance method possible.
         Return a partial function where the first argument is the instance of the decorated instance object.
         ''' 
+        if self._cache_disabled:
+            return partial(self.decorated_function, instance)
         return partial(self.__call__, instance)
         
         
