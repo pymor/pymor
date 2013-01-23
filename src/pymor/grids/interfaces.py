@@ -77,7 +77,7 @@ class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplement
         return self._neighbours(codim, neighbour_codim, intersection_codim)
 
     def boundary_mask(self, codim):
-        '''`retval[e] is true iff the codim-`codim` entitt with global index
+        '''`retval[e] is true iff the codim-`codim` entity with global index
         `e` is a boundary entity.
         By definition, a codim-1 entity is a boundary entity if it has only one
         codim-0 superentity. For `codim != 1`, a codim-`codim` entity is a

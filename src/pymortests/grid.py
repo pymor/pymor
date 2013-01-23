@@ -28,7 +28,7 @@ def SubclassForImplemetorsOf(InterfaceType):
 
 
 @SubclassForImplemetorsOf(ConformalTopologicalGridInterface)
-class ConformalTopologicalGridTest(GridClassTestInterface):
+class ConformalTopologicalGridTestInterface(GridClassTestInterface):
 
     def test_dim(self):
         for g in self.grids:
@@ -394,7 +394,7 @@ class ConformalTopologicalGridTest(GridClassTestInterface):
 
 
 @SubclassForImplemetorsOf(AffineGridInterface)
-class SimpleAffineGridTest(GridClassTestInterface):
+class SimpleAffineGridTestInterface(GridClassTestInterface):
 
     def test_dim_outer(self):
         for g in self.grids:
