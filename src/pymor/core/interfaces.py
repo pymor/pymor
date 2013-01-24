@@ -23,7 +23,7 @@ class UberMeta(abc.ABCMeta):
         cls.__doc__ = doc
         
         #monkey a new contract into the decorator module so checking for that type at runtime can work
-        dname = (cls.__module__ + '.' +name).replace('__main__.','').replace('.', '_')
+        dname = (cls.__module__ + '.' +name).replace('__main__.','main.').replace('.', '_')
         if not dname in decorators.__dict__: 
             decorators.__dict__[dname] = contracts.new_contract(dname, lambda x: isinstance(x, cls)) 
   
