@@ -27,9 +27,8 @@ class TestDiscoverySelector(nose.selector.Selector):
         return ret
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.ERROR)
     cfg = nose.config.Config(files=['setup.cfg'])
     selector = TestDiscoverySelector(cfg)
     loader = nose.loader.TestLoader()
     loader.selector = selector 
-    TestProgram(argv=[__file__, '-vv' ], testLoader=loader, module='pymortests')
+    TestProgram(argv=[__file__, '-vv' ].extend(sys.argv[1:]), testLoader=loader, module='pymortests')

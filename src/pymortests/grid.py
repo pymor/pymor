@@ -5,7 +5,7 @@ from itertools import product
 from pymor.grids.interfaces import (ConformalTopologicalGridInterface, AffineGridInterface, ReferenceElementInterface)
 #mandatory so all Grid classes are created
 from pymor.grids import *
-from pymortests.base import TestBase
+from pymortests.base import TestBase, runmodule
 
 class GridClassTestInterface(TestBase):
     
@@ -19,8 +19,9 @@ def SubclassForImplemetorsOf(InterfaceType):
     '''
     def decorate(TestCase):
         '''saves a new type called cname with correct bases and class dict in globals'''
-        for GridType in set([T for T in InterfaceType.implementors(True) if not T.has_interface_name()]):
-            cname = '{}_{}'.format(GridType.__name__, TestCase.__name__)
+        for GridType in [prescribed.PrescribedBoundaryGrid]:#set([T for T in InterfaceType.implementors(True) if not T.has_interface_name()]):
+        #for GridType in [tria.TriaGrid]:#set([T for T in InterfaceType.implementors(True) if not T.has_interface_name()]):
+            cname = '{}_{}'.format(GridType.__name__, TestCase.__name__.replace('Interface', ''))
             globals()[cname] = type(cname, (TestCase,), {'grids': GridType.test_instances(),
                                                      '__test__': True})
         return TestCase
@@ -75,6 +76,7 @@ class ConformalTopologicalGridTestInterface(GridClassTestInterface):
         for g in self.grids:
             for e in xrange(g.dim + 1):
                 for s in xrange(e, g.dim + 1):
+                    self.logger.debug('E {} -- S {}'.format(e, s))
                     np.testing.assert_array_less(g.subentities(e, s), g.size(s))
                     np.testing.assert_array_less(-2, g.subentities(e, s))
 
@@ -529,4 +531,4 @@ class SimpleAffineGridTestInterface(GridClassTestInterface):
 
 
 if __name__ == "__main__":
-    nose.core.runmodule(name='pymortests.grid')
+    runmodule(name='pymortests.grid')

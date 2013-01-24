@@ -1,10 +1,9 @@
 from __future__ import absolute_import, division, print_function
-import nose
 import time
 from datetime import datetime
 
 from pymor.core import cache
-from pymortests.base import TestBase
+from pymortests.base import TestBase, runmodule
 
 SLEEP_SECONDS = 1
 
@@ -37,7 +36,6 @@ class IamLimitedCached(cache.Cachable):
 class CacheTest(TestBase):
        
     def test_runtime(self):
-        return
         for Class in [IamMemoryCached, IamDiskCached]:
             r = Class()
             for val in ['koko', 'koko', 'other']:                
@@ -56,4 +54,4 @@ class CacheTest(TestBase):
             
 
 if __name__ == "__main__":
-    nose.core.runmodule(name='pymortests.cache')
+    runmodule(name='pymortests.cache')

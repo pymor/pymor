@@ -11,7 +11,7 @@ from pymor.grids import AllDirichletBoundaryInfo as ADIA
 from pymor.playground.boundaryinfos.oned import AllDirichletBoundaryInfo as ADIB
 import pymor.grids.boundaryinfos
 import pymor.playground.boundaryinfos.oned
-from pymortests.base import TestBase
+from pymortests.base import TestBase, runmodule
 
 class UnknownInterface(BasicInterface):
     pass
@@ -218,5 +218,4 @@ class ContractTest(TestBase):
         inst.validate_interface(BoringTestInterface(), pymor.playground.boundaryinfos.oned.AllDirichletBoundaryInfo())
         
 if __name__ == "__main__":
-    import nose
-    nose.core.runmodule(name='pymortests.core')
+    runmodule(name='pymortests.core')
