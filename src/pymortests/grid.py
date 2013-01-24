@@ -1,6 +1,5 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
-import nose
 from itertools import product
 from pymor.grids.interfaces import (ConformalTopologicalGridInterface, AffineGridInterface, ReferenceElementInterface)
 #mandatory so all Grid classes are created

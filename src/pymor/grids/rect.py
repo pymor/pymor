@@ -4,8 +4,8 @@ import numpy as np
 
 from pymor.core.exceptions import CodimError
 from pymor.core import cache
-from .interfaces import AffineGridInterface
-from .referenceelements import square
+from pymor.grids.interfaces import AffineGridInterface
+from pymor.grids.referenceelements import square
 
 
 class RectGrid(AffineGridInterface, cache.Cachable):

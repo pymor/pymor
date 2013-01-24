@@ -1,9 +1,7 @@
-#!/usr/bin/env python
+from __future__ import absolute_import, division, print_function
 
-# pymor
 from pymor.core import interfaces
-# local
-import parametric
+from pymor.functions import parametric
 
 
 class Interface(parametric.Interface):
