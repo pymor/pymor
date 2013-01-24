@@ -7,15 +7,15 @@ import scipy.sparse as sparse
 
 from pymor.core import interfaces
 from pymor.core.exceptions import warn, CallOrderWarning
-import pymor.problem.stationary.linear.elliptic.analytical as analyticalproblem
+import pymor.playground.problem.stationary.linear.elliptic.analytical as analyticalproblem
 import pymor.grids.oned as grid
-import pymor.common.boundaryinfo.oned as boundaryinfo
+import pymor.playground.boundaryinfos.oned as boundaryinfo
 import pymor.discreteoperators.stationary.linear as operator
-import pymor.common.discretefunctional.linear as functional
-import pymor.problem.stationary.linear.discrete as discreteproblem
-import pymor.solver.stationary.linear.scalar as solver
+import pymor.playground.discretefunctional.linear as functional
+import pymor.playground.problem.stationary.linear.discrete as discreteproblem
+import pymor.playground.solver.stationary.linear.scalar as solver
 import pymor.discretizations.stationary.detailed as discretization
-import pymor.common.discretefunction.continuous as discretefunction
+import pymor.discretefunctions.continuous as discretefunction
 
 
 class Interface(interfaces.BasicInterface):
