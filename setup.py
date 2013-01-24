@@ -21,7 +21,7 @@ setup(
 		# running `setup.py sdist' gives a warning about this, but
 		# install_requires is the only thing that works with pip/easy_install...
 		# we do not list pyqt here since pip can't seem to install it
-		install_requires = ['scipy', 'matplotlib', 'numpy', 'pycontracts' ] + tests_require,
+		install_requires = ['scipy', 'matplotlib', 'numpy', 'pycontracts', 'sympy' ] + tests_require,
 		classifiers = ['Development Status :: 2 - Pre-Alpha',
 				'License :: OSI Approved :: BSD License',
 				'Programming Language :: Python :: 2.7',
