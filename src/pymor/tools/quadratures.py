@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import numpy as np
 
-class GaussQuadratures:
+class GaussQuadratures(object):
     '''Gauss quadrature on the interval [0, 1]'''
 
     @classmethod
@@ -10,10 +10,7 @@ class GaussQuadratures:
         return len(cls.points)
 
     @classmethod
-    def quadrature(cls, order=None, npoints=None):
-        '''returns tuple (P, W) where P is an array of Gauss points with corresponding weights W for
-        the given integration order "order" or with "npoints" integration points
-        '''
+    def _determine_order(cls, order=None, npoints=None):
         assert order is not None or npoints is not None, ValueError('must specify "order" or "npoints"')
         assert order is None or npoints is None, ValueError('cannot specify "order" and "npoints"')
         if order is not None:
@@ -22,7 +19,23 @@ class GaussQuadratures:
         else:
             assert 1 <= npoints <= cls.orders.size, ValueError('not implemented with {} points'.format(npoints))
             p = npoints - 1
+        return p
+    
+    @classmethod
+    def quadrature(cls, order=None, npoints=None):
+        '''returns tuple (P, W) where P is an array of Gauss points with corresponding weights W for
+        the given integration order "order" or with "npoints" integration points
+        '''
+        p = cls._determine_order(order, npoints)
         return cls.points[p], cls.weights[p]
+    
+    @classmethod
+    def iter_quadrature(cls, order=None, npoints=None):
+        '''iterates over a quadrature tuple wise
+        '''
+        p = cls._determine_order(order, npoints)
+        for i in xrange(len(cls.points[p])):
+            yield (cls.points[p][i], cls.weights[p][i])
 
     # taken from RBMatlab ...
 
