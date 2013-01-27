@@ -6,23 +6,16 @@ from scipy.sparse import issparse
 
 import pymor.core as core
 from pymor.domaindescriptions import BoundaryType
-from pymor.functions.nonparametric import Constant as ConstantFunc
+from pymor.parameters import Parametric
 
 
-class EllipticDiscretization(object):
+class EllipticDiscretization(Parametric):
 
-    def __init__(self, operator, rhs, parameter_dim=None, parameter_map=None, solver=None, visualizer=None):
+    def __init__(self, operator, rhs, solver=None, visualizer=None):
         self.operator = operator
         self.operators = {operator.name: operator}
         self.rhs = rhs
-        if parameter_dim is None:
-            self.parameter_dim = operator.parameter_dim + rhs.parameter_dim
-        else:
-            self.parameter_dim = parameter_dim
-
-        def default_parameter_map(mu):
-            return mu[:operator.parameter_dim], mu[operator.parameter_dim:]
-        self.parameter_map = parameter_map or default_parameter_map
+        self.set_parameter_type(inherits={'operator':operator, 'rhs':rhs})
 
         def default_solver(A, RHS):
             if issparse(A):
@@ -36,10 +29,8 @@ class EllipticDiscretization(object):
             self.visualize = visualizer
 
 
-    def solve(self, mu=np.array([])):
-        assert mu.size == self.parameter_dim
-        mu_operator, mu_rhs = self.parameter_map(mu)
-        A = self.operator.matrix(mu_operator)
-        RHS = self.rhs.matrix(mu_rhs)
+    def solve(self, mu={}):
+        A = self.operator.matrix(self.map_parameter(mu, 'operator'))
+        RHS = self.rhs.matrix(self.map_parameter(mu, 'rhs'))
         return self.solver(A, RHS)
 

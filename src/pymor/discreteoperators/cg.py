@@ -8,6 +8,7 @@ import pymor.core as core
 from pymor.grids.referenceelements import triangle
 from pymor.discreteoperators.interfaces import LinearDiscreteOperatorInterface
 
+
 class L2ProductFunctionalP1D2(LinearDiscreteOperatorInterface):
     '''Scalar product with an L2-function for linear finite elements in two dimensions on a triangular
     grid. The integral is simply calculated by evaluating the function on the codim-2 entities.
@@ -22,15 +23,13 @@ class L2ProductFunctionalP1D2(LinearDiscreteOperatorInterface):
         self.function = function
         self.dirichlet_data = dirichlet_data
         self.name = name
+        self.set_parameter_type(inherits={'function':function, 'dirichlet_data':dirichlet_data})
 
-    def assemble(self, mu=np.array([])):
-        assert mu.size == self.parameter_dim,\
-         ValueError('Invalid parameter dimensions (was {}, expected {})'.format(mu.size, self.parameter_dim))
-
+    def assemble(self, mu={}):
         g = self.grid
         bi = self.boundary_info
 
-        F = self.function(g.centers(2))
+        F = self.function(g.centers(2), mu=self.map_parameter(mu, 'function'))
         SE = g.superentities(2, 0)
         V = np.sum(np.where(SE == -1, 0, g.volumes(0)[SE]), axis=1)
 
@@ -39,7 +38,7 @@ class L2ProductFunctionalP1D2(LinearDiscreteOperatorInterface):
         if bi.has_dirichlet:
             DI = bi.dirichlet_boundaries(2)
             if self.dirichlet_data is not None:
-                I[DI] = self.dirichlet_data(g.centers(2)[DI])
+                I[DI] = self.dirichlet_data(g.centers(2)[DI], self.map_parameter(mu, 'dirichlet_data'))
             else:
                 I[DI] = 0
 
@@ -63,11 +62,11 @@ class DiffusionOperatorP1D2(LinearDiscreteOperatorInterface):
         self.dirichlet_clear_columns = dirichlet_clear_columns
         self.dirichlet_clear_diag = dirichlet_clear_diag
         self.name = name
+        if diffusion_function is not None:
+            self.set_parameter_type(inherits={'diffusion':diffusion_function})
 
-    def assemble(self, mu=np.array([])):
-        assert mu.size == self.parameter_dim,\
-         ValueError('Invalid parameter dimensions (was {}, expected {})'.format(mu.size, self.parameter_dim))
-
+    def assemble(self, mu={}):
+        self.map_parameter(mu)
         g = self.grid
         bi = self.boundary_info
 
@@ -81,7 +80,7 @@ class DiffusionOperatorP1D2(LinearDiscreteOperatorInterface):
 
         print('Calculate all local scalar products beween gradients ...')
         if self.diffusion_function is not None:
-            D = self.diffusion_function(self.grid.centers(0))
+            D = self.diffusion_function(self.grid.centers(0), mu=self.map_parameter(mu, 'diffusion')).ravel()
             SF_INTS = np.einsum('epi,eqi,e,e->epq', SF_GRADS, SF_GRADS, g.volumes(0), D).ravel()
         else:
             SF_INTS = np.einsum('epi,eqi,e->epq', SF_GRADS, SF_GRADS, g.volumes(0)).ravel()

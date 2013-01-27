@@ -13,15 +13,16 @@ from pymor.domaindescriptions import BoundaryType
 from pymor.domaindescriptions import RectDomain
 from pymor.analyticalproblems import PoissonProblem
 from pymor.discretizers import PoissonCGDiscretizer
+from pymor.functions import GenericFunction
 
 if len(sys.argv) < 4:
-    sys.exit('Usage: %s RHS-NUMBER BOUNDARY-DATA-NUMBER NEUMANN-COUNT'.format(sys.argv[0]))
+    sys.exit('Usage: {} RHS-NUMBER BOUNDARY-DATA-NUMBER NEUMANN-COUNT'.format(sys.argv[0]))
 
-rhs0 = lambda X: np.ones(X.shape[0]) * 10
-rhs1 = lambda X: (X[:, 0] - 0.5) ** 2 * 1000
-dirichlet0 = lambda X: np.zeros(X.shape[0])
-dirichlet1 = lambda X: np.ones(X.shape[0])
-dirichlet2 = lambda X: X[:, 0]
+rhs0 = GenericFunction(lambda X: np.ones(X.shape[0]) * 10, 2)
+rhs1 = GenericFunction(lambda X: (X[:, 0] - 0.5) ** 2 * 1000, 2)
+dirichlet0 = GenericFunction(lambda X: np.zeros(X.shape[0]), 2)
+dirichlet1 = GenericFunction(lambda X: np.ones(X.shape[0]), 2)
+dirichlet2 = GenericFunction(lambda X: X[:, 0], 2)
 domain0 = RectDomain()
 domain1 = RectDomain(right=BoundaryType('neumann'))
 domain2 = RectDomain(right=BoundaryType('neumann'), top=BoundaryType('neumann'))
