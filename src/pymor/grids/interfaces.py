@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import numpy as np
 
 import pymor.core as core
+from pymor.core.cache import Cachable, cached
 from pymor.domaindescriptions import BoundaryType
 from .defaultimpl import *  # NOQA
 
@@ -279,7 +280,7 @@ class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopological
 
 
 # Is one entity allowed to have mor than one boundary type?
-class BoundaryInfoInterface(core.BasicInterface):
+class BoundaryInfoInterface(core.BasicInterface, Cachable):
     '''Describes boundary types associated to a grid. For every boundary
     type and codimension a mask is provided, marking grid entities
     of the respective type and codimension by their global index.
@@ -319,14 +320,16 @@ class BoundaryInfoInterface(core.BasicInterface):
     def neumann_mask(self, codim):
         return self.mask(BoundaryType('neumann'), codim)
 
+    @cached
+    def _dirichlet_boundaries(self, codim):
+        return np.where(self.dirichlet_mask(codim))[0].astype('int32')
+
     def dirichlet_boundaries(self, codim):
-        @core.cached
-        def _dirichlet_boundaries(codim):
-            return np.where(self.dirichlet_mask(codim))[0].astype('int32')
-        return _dirichlet_boundaries(codim)
+        return self._dirichlet_boundaries(codim)
+
+    @cached
+    def _neumann_boundaries(self, codim):
+        return np.where(self.neumann_mask(codim))[0].astype('int32')
 
     def neumann_boundaries(self, codim):
-        @core.cached
-        def _neumann_boundaries(codim):
-            return np.where(self.neumann_mask(codim))[0].astype('int32')
-        return _neumann_boundaries(codim)
+        return self._neumann_boundaries(codim)

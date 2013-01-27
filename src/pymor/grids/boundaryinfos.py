@@ -9,6 +9,7 @@ from pymor.domaindescriptions import BoundaryType
 class BoundaryInfoFromIndicators(BoundaryInfoInterface):
 
     def __init__(self, grid, indicators):
+        super(BoundaryInfoFromIndicators, self).__init__()
         self.grid = grid
         self.boundary_types = indicators.keys()
         self._masks = {boundary_type:[np.zeros(grid.size(codim), dtype='bool') for codim in xrange(1, grid.dim + 1)]
@@ -25,6 +26,7 @@ class BoundaryInfoFromIndicators(BoundaryInfoInterface):
 class AllDirichletBoundaryInfo(BoundaryInfoInterface):
 
     def __init__(self, grid):
+        super(AllDirichletBoundaryInfo, self).__init__()
         self.grid = grid
         self.boundary_types = set((BoundaryType('dirichlet'),))
 
