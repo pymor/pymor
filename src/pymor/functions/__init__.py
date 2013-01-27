@@ -1,3 +1,2 @@
-from . import nonparametric
-from . import parametric
-from . import separableparametric
+from .interfaces import FunctionInterface
+from .basic import ConstantFunction, GenericFunction
