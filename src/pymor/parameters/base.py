@@ -146,3 +146,31 @@ class Parametric(object):
                 raise ValueError('Mismatching shapes for parameter {}: {} and {}'.format(k, parameter_type[k], v))
             parameter_type[k] = v
         self.parameter_type = parameter_type
+
+    def parameter_info(self):
+        msg = 'The parameter_type is: {}\n\n'.format(self.parameter_type)
+        msg += 'We have the following parameter-maps:\n\n'
+        for n,mp in self.parameter_maps.iteritems():
+            if not isinstance(mp, list):
+                pad = ' ' * (len(n) + 2)
+                msg += '{}: '.format(n)
+                for k, (v, f) in mp.iteritems():
+                    msg += '{} <- {}'.format(k, v)
+                    if v in self.parameter_user_map:
+                        msg += ' <- {}'.format(self.parameter_user_map[k])
+                    msg += '\n' + pad
+            else:
+                for i, m in mp.enumerate():
+                    tag = '{}[{}]: '.format(n, i)
+                    pad = ' ' * len(tag)
+                    msg += tag
+                    for k, (v, f) in m.iteritems():
+                        msg += '{} <- {}'.format(k, v)
+                        if f:
+                            msg += '[{}, ...]'.format(i)
+                        if v in self.parameter_user_map:
+                            msg += ' <- {}'.format(self.parameter_user_map[k])
+                        msg += '\n' + pad
+            msg += '\n'
+        return msg
+
