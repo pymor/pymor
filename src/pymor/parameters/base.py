@@ -26,8 +26,10 @@ class Parameter(OrderedDict):
 class Parametric(object):
 
     parameter_type = OrderedDict()
+    global_parameter_type = OrderedDict()
     local_parameter_type = OrderedDict()
     parameter_maps = {'self':{}}
+    parameter_user_map = {}
 
     def parse_parameter(self, mu):
         if not isinstance(mu, dict):
@@ -45,20 +47,23 @@ class Parametric(object):
             mu = Parameter((k, mu[k]) for k in self.parameter_type)
         for k, v in mu.iteritems():
             if not isinstance(v, np.ndarray):
-                mu[k] = np.array(v)
+                mu[k] = np.array(v, ndmin=1)
         if not all(mu[k].shape == self.parameter_type[k] for k in mu.keys()):
             raise ValueError('Component dimensions do not match')
         return mu
 
     def map_parameter(self, mu, target='self', component=None):
         mu = self.parse_parameter(mu)
+        mu_global = Parameter()
+        for k in self.global_parameter_type:
+            mu_global[k] = mu[self.parameter_user_map[k]] if k in self.parameter_user_map else mu[k]
         if component is None:
             parameter_map = self.parameter_maps[target]
         else:
             parameter_map = self.parameter_maps[target][component]
         mu_mapped = Parameter()
         for k, (v, m) in parameter_map.iteritems():
-            mu_mapped[k] = mu[v][component,...] if m else mu[v]
+            mu_mapped[k] = mu_global[v][component,...] if m else mu_global[v]
         return mu_mapped
 
     def set_parameter_type(self, local_type=OrderedDict(), inherits=OrderedDict(), local_global=False):
@@ -120,5 +125,24 @@ class Parametric(object):
                         parameter_map[k] = (k, False)
                 parameter_maps[n] = parameter_map
 
+        self.global_parameter_type = global_type
         self.parameter_type = global_type
         self.parameter_maps = parameter_maps
+
+    def rename_parameter(self, name_map):
+        for k, v in name_map.iteritems():
+            if not k.startswith('.'):
+                raise ValueError('Can only rename parameters with local name (starting with ".")')
+            if not k in self.global_parameter_type:
+                raise ValueError('There is no parameter named {}'.format(k))
+            if k in self.parameter_user_map:
+                raise ValueError('{} has already been renamed to {}'.format(k, self.parameter_user_map[k]))
+            self.parameter_user_map[k] = v
+        parameter_type = OrderedDict()
+        for k, v in self.global_parameter_type.iteritems():
+            if k in self.parameter_user_map:
+                k = self.parameter_user_map[k]
+            if k in parameter_type and parameter_type[k] != v:
+                raise ValueError('Mismatching shapes for parameter {}: {} and {}'.format(k, parameter_type[k], v))
+            parameter_type[k] = v
+        self.parameter_type = parameter_type
