@@ -12,10 +12,12 @@ class PoissonProblem(object):
 
     def __init__(self, domain=RectDomain(), rhs=ConstantFunction(dim_domain=2),
                  diffusion_functions=(ConstantFunction(dim_domain=2),),
+                 diffusion_functionals=None,
                  dirichlet_data=ConstantFunction(value=0, dim_domain=2), parameter_dependent=None):
         self.domain = domain
         self.rhs = rhs
         self.diffusion_functions = diffusion_functions
+        self.diffusion_functionals = diffusion_functionals
         self.dirichlet_data = dirichlet_data
         if parameter_dependent is None:
             self.parameter_dependent = len(diffusion_functions) > 1

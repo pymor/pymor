@@ -10,8 +10,6 @@ class LinearAffinelyDecomposedOperator(LinearDiscreteOperatorInterface):
     def __init__(self, operators, operator_affine_part=None, functionals=None, name=None):
         assert functionals is None or len(operators) == len(functionals),\
                 ValueError('Operators and functionals must have the same length.')
-        assert functionals is None or parameter_dim is not None,\
-                ValueError('If functionals is specified, parameter_dim must also be specified.')
 
         if operator_affine_part is not None:
             self.source_dim = operator_affine_part.source_dim

@@ -45,7 +45,11 @@ class PoissonCGDiscretizer(object):
                                              name='diffusion_{}'.format(i))
                        for i, df in enumerate(p.diffusion_functions))
 
-            L = LinearAffinelyDecomposedOperator(Li, L0, name='diffusion')
+            if p.diffusion_functionals is None:
+                L = LinearAffinelyDecomposedOperator(Li, L0, name='diffusion')
+                L.rename_parameter({'.coefficients':'.diffusion_coefficients'})
+            else:
+                L = LinearAffinelyDecomposedOperator(Li, L0, p.diffusion_functionals, name='diffusion')
         else:
             L = DiffusionOperatorP1D2(grid, boundary_info, diffusion_function=p.diffusion_functions[0],
                                       name='diffusion')
