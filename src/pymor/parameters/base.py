@@ -5,6 +5,7 @@ from collections import OrderedDict
 import numpy as np
 
 import pymor.core as core
+from .interfaces import ParameterSpaceInterface
 
 
 class Parameter(OrderedDict):
@@ -23,6 +24,41 @@ class Parameter(OrderedDict):
         return c
 
 
+def parse_parameter(mu, parameter_type={}):
+    if not isinstance(mu, dict):
+        if isinstance(mu, (tuple, list)):
+            if len(parameter_type) == 1 and len(mu) != 1:
+                mu = (mu, )
+        else:
+            mu = (mu, )
+        if len(mu) != len(parameter_type):
+            raise ValueError('Parameter length does not match.')
+        mu = Parameter(zip(parameter_type.keys(), mu))
+    elif set(mu.keys()) != set(parameter_type.keys()):
+        raise ValueError('Components do not match')
+    else:
+        mu = Parameter((k, mu[k]) for k in parameter_type)
+    for k, v in mu.iteritems():
+        if not isinstance(v, np.ndarray):
+            mu[k] = np.array(v)
+    if not all(mu[k].shape == parameter_type[k] for k in mu.keys()):
+        raise ValueError('Component dimensions do not match')
+    return mu
+
+
+def parse_parameter_type(parameter_type):
+    if isinstance(parameter_type, ParameterSpaceInterface):
+        return OrderedDict(parameter_type.parameter_type)
+    parameter_type = OrderedDict(parameter_type)
+    for k,v in parameter_type.iteritems():
+        if not isinstance(v, tuple):
+            if v == 0 or v == 1:
+                parameter_type[k] = tuple()
+            else:
+                parameter_type[k] = tuple((v,))
+    return parameter_type
+
+
 class Parametric(object):
 
     parameter_type = OrderedDict()
@@ -32,25 +68,7 @@ class Parametric(object):
     parameter_user_map = {}
 
     def parse_parameter(self, mu):
-        if not isinstance(mu, dict):
-            if isinstance(mu, (tuple, list)):
-                if len(mu) != 1 or not isinstance(mu[0], (tuple, list, np.ndarray)):
-                    mu = (mu, )
-            else:
-                mu = (mu, )
-            if len(mu) != len(self.parameter_type):
-                raise ValueError('Parameter length does not match.')
-            mu = Parameter(zip(self.parameter_type.keys(), mu))
-        elif set(mu.keys()) != set(self.parameter_type.keys()):
-            raise ValueError('Components do not match')
-        else:
-            mu = Parameter((k, mu[k]) for k in self.parameter_type)
-        for k, v in mu.iteritems():
-            if not isinstance(v, np.ndarray):
-                mu[k] = np.array(v, ndmin=1)
-        if not all(mu[k].shape == self.parameter_type[k] for k in mu.keys()):
-            raise ValueError('Component dimensions do not match')
-        return mu
+        return parse_parameter(mu, self.parameter_type)
 
     def map_parameter(self, mu, target='self', component=None):
         mu = self.parse_parameter(mu)
@@ -67,10 +85,7 @@ class Parametric(object):
         return mu_mapped
 
     def set_parameter_type(self, local_type=OrderedDict(), inherits=OrderedDict(), local_global=False):
-        local_type = OrderedDict(local_type)
-        for k,v in local_type.iteritems():
-            if not isinstance(v, tuple):
-                local_type[k] = tuple((v,))
+        local_type = parse_parameter_type(local_type)
         self.local_parameter_type = local_type
         parameter_maps = {}
         if local_global:
@@ -173,4 +188,3 @@ class Parametric(object):
                         msg += '\n' + pad
             msg += '\n'
         return msg
-
