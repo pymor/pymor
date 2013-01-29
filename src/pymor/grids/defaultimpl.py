@@ -125,7 +125,7 @@ class ConformalTopologicalGridDefaultImplementations(Cachable):
         return M
 
 
-class ISimpleReferenceElementDefaultImplementation():
+class ISimpleReferenceElementDefaultImplementation(object):
 
     @cached
     def _subentity_embedding(self, subentity_codim):
@@ -155,7 +155,7 @@ class ISimpleReferenceElementDefaultImplementation():
             raise NotImplementedError
 
 
-class AffineGridDefaultImplementations():
+class AffineGridDefaultImplementations(object):
 
     @cached
     def _subentities(self, codim, subentity_codim):
