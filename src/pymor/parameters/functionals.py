@@ -3,10 +3,10 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import numpy as np
 
 from pymor.core import interfaces
-from .interfaces import FunctionalInterface
+from .interfaces import ParameterFunctionalInterface
 
 
-class ProjectionFunctional(FunctionalInterface):
+class ProjectionParameterFunctional(ParameterFunctionalInterface):
 
     def __init__(self, parameter_type, component, coordinates=None, name=None):
         self.name = name
@@ -28,7 +28,7 @@ class ProjectionFunctional(FunctionalInterface):
             return mu[self.component][self.coordinates]
 
 
-class GenericFunctional(FunctionalInterface):
+class GenericParameterFunctional(ParameterFunctionalInterface):
 
     def __init__(self, parameter_type, mapping, name=None):
         self.name = name

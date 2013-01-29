@@ -1,3 +1,3 @@
-from .interfaces import FunctionalInterface
+from .interfaces import ParameterFunctionalInterface
 from .base import Parameter, Parametric
-from .functionals import ProjectionFunctional, GenericFunctional
+from .functionals import ProjectionParameterFunctional, GenericParameterFunctional

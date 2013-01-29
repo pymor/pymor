@@ -4,7 +4,7 @@ import pymor.core as core
 from pymor.tools import Named
 from .base import Parametric
 
-class FunctionalInterface(core.BasicInterface, Parametric, Named):
+class ParameterFunctionalInterface(core.BasicInterface, Parametric, Named):
 
     @core.interfaces.abstractmethod
     def evaluate(self, mu={}):
