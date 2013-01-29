@@ -23,7 +23,7 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
         '''
         mu = self.map_parameter(mu)
         if self.coordinates is None:
-            return mu[self.component][0]
+            return mu[self.component]
         else:
             return mu[self.component][self.coordinates]
 
