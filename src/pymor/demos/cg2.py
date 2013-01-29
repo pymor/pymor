@@ -13,7 +13,7 @@ from pymor.domaindescriptions import RectDomain
 from pymor.analyticalproblems import PoissonProblem
 from pymor.discretizers import PoissonCGDiscretizer
 from pymor.functions import GenericFunction
-from pymor.parameters import ProjectionParameterFunctional, GenericParameterFunctional
+from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional, GenericParameterFunctional
 from collections import OrderedDict
 
 if len(sys.argv) < 4:
@@ -32,9 +32,9 @@ plot = bool(int(sys.argv[3]))
 d0 = GenericFunction(lambda X: 1 - X[:, 0], dim_domain=2)
 d1 = GenericFunction(lambda X: X[:, 0], dim_domain=2)
 
-pspace = OrderedDict((('diffusionl',1),))
-f0 = ProjectionParameterFunctional(pspace, 'diffusionl')
-f1 = GenericParameterFunctional(pspace, lambda mu:1)
+parameter_space = CubicParameterSpace({'diffusionl':1}, 0.1, 1)
+f0 = ProjectionParameterFunctional(parameter_space, 'diffusionl')
+f1 = GenericParameterFunctional(parameter_space, lambda mu:1)
 
 print('Solving on TriaGrid(({0},{0}))'.format(n))
 
@@ -47,9 +47,9 @@ discretization = discretizer.discretize(diameter=m.sqrt(2) / n)
 
 print(discretization.parameter_info())
 
-for d in [1, 0.5, 0.25, 0.125]:
-    print('Solve ...')
-    U = discretization.solve(d)
+for mu in parameter_space.sample_uniformly(4):
+    print('Solving for mu = {} ...'.format(mu))
+    U = discretization.solve(mu)
 
     if plot:
         print('Plot ...')
