@@ -90,7 +90,7 @@ class L2ProductFunctionalP1D1(LinearDiscreteOperatorInterface):
         if bi.has_dirichlet:
             DI = bi.dirichlet_boundaries(1)
             if self.dirichlet_data is not None:
-                I[DI] = self.dirichlet_data(g.centers(2)[DI], self.map_parameter(mu, 'dirichlet_data'))
+                I[DI] = self.dirichlet_data(g.centers(1)[DI], self.map_parameter(mu, 'dirichlet_data'))
             else:
                 I[DI] = 0
 
