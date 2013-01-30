@@ -8,10 +8,11 @@ import pymor.core as core
 from pymor.analyticalproblems import PoissonProblem
 from pymor.domaindescriptions import BoundaryType
 from pymor.domaindiscretizers import DefaultDomainDiscretizer
-from pymor.discreteoperators.cg import DiffusionOperatorP1D2, L2ProductFunctionalP1D2
+from pymor.discreteoperators.cg import (DiffusionOperatorP1D2, L2ProductFunctionalP1D2,
+                                        DiffusionOperatorP1D1, L2ProductFunctionalP1D1)
 from pymor.discreteoperators.affine import LinearAffinelyDecomposedOperator
 from pymor.discretizations import EllipticDiscretization
-from pymor.grids import TriaGrid
+from pymor.grids import TriaGrid, OnedGrid
 
 
 class PoissonCGDiscretizer(object):
@@ -34,14 +35,17 @@ class PoissonCGDiscretizer(object):
         if grid is None:
             grid, boundary_info = self.discretize_domain(domain_discretizer, diameter)
 
-        assert isinstance(grid, TriaGrid)
+        assert isinstance(grid, (OnedGrid, TriaGrid))
+
+        Operator = DiffusionOperatorP1D2 if isinstance(grid, TriaGrid) else DiffusionOperatorP1D1
+        Functional = L2ProductFunctionalP1D2 if isinstance(grid, TriaGrid) else L2ProductFunctionalP1D1
 
         p = self.analytical_problem
 
         if p.parameter_dependent:
-            L0 = DiffusionOperatorP1D2(grid, boundary_info, diffusion_constant=0, name='diffusion_boundary_part')
+            L0 = Operator(grid, boundary_info, diffusion_constant=0, name='diffusion_boundary_part')
 
-            Li = tuple(DiffusionOperatorP1D2(grid, boundary_info, diffusion_function=df, dirichlet_clear_diag=True,
+            Li = tuple(Operator(grid, boundary_info, diffusion_function=df, dirichlet_clear_diag=True,
                                              name='diffusion_{}'.format(i))
                        for i, df in enumerate(p.diffusion_functions))
 
@@ -51,15 +55,21 @@ class PoissonCGDiscretizer(object):
             else:
                 L = LinearAffinelyDecomposedOperator(Li, L0, p.diffusion_functionals, name='diffusion')
         else:
-            L = DiffusionOperatorP1D2(grid, boundary_info, diffusion_function=p.diffusion_functions[0],
+            L = Operator(grid, boundary_info, diffusion_function=p.diffusion_functions[0],
                                       name='diffusion')
 
-        F = L2ProductFunctionalP1D2(grid, boundary_info, p.rhs, dirichlet_data=p.dirichlet_data)
+        F = Functional(grid, boundary_info, p.rhs, dirichlet_data=p.dirichlet_data)
 
-        def visualize(U):
-            pl.tripcolor(grid.centers(2)[:, 0], grid.centers(2)[:, 1], grid.subentities(0, 2), U)
-            pl.colorbar()
-            pl.show()
+        if isinstance(grid, TriaGrid):
+            def visualize(U):
+                pl.tripcolor(grid.centers(2)[:, 0], grid.centers(2)[:, 1], grid.subentities(0, 2), U)
+                pl.colorbar()
+                pl.show()
+        else:
+            def visualize(U):
+                pl.plot(grid.centers(1), U)
+                pl.show()
+                pass
 
         discr = EllipticDiscretization(L, F, visualizer=visualize)
 
