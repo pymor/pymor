@@ -5,7 +5,7 @@ from scipy.sparse import coo_matrix, csr_matrix
 
 import pymor.core as core
 
-from pymor.grids.referenceelements import triangle
+from pymor.grids.referenceelements import triangle, line
 from pymor.discreteoperators.interfaces import LinearDiscreteOperatorInterface
 
 
@@ -44,6 +44,57 @@ class L2ProductFunctionalP1D2(LinearDiscreteOperatorInterface):
 
         return I
 
+
+class L2ProductFunctionalP1D1(LinearDiscreteOperatorInterface):
+    '''Scalar product with an L2-function for linear finite elements in one dimension.
+    The integral is caculated with a two point Gauss quadrature.
+    '''
+
+    def __init__(self, grid, boundary_info, function, dirichlet_data=None, name=None):
+        assert grid.reference_element(0) == line
+        assert function.dim_range == 1
+        self.source_dim = grid.size(1)
+        self.range_dim = 1
+        self.grid = grid
+        self.boundary_info = boundary_info
+        self.function = function
+        self.dirichlet_data = dirichlet_data
+        self.name = name
+        self.set_parameter_type(inherits={'function':function, 'dirichlet_data':dirichlet_data}) 
+
+    def assemble(self, mu={}):
+        g = self.grid
+        bi = self.boundary_info
+
+        # evaluate function at all quadrature points -> shape = (g.size(0), 2, 1)
+        # the singleton dimension correspoints to the dimension of the range of the function
+        F = self.function(g.quadrature_points(0, order=2), mu=self.map_parameter(mu, 'function'))
+
+        # evaluate the shape functions (1-id) and id at the quadrature points on the reference
+        # element -> shape = (number of shape functions == 2, 2, 1)
+        q, w = line.quadrature(order=2)
+        SF = np.array((1-q, q))
+
+        # integrate the products of the function with the shape functions on each element
+        # -> shape = (g.size(0), number of shape functions == 2)
+        SF_INTS = np.einsum('eix,piy,e,i->ep', F, SF, g.integration_elements(0), w)
+
+        # map local DOFs to global DOFS
+        SE = g.subentities(0,1)
+        I = np.zeros(g.size(1))
+        I[SE[:, 0]] = SF_INTS[:, 0]
+        I[SE[:, 1]] += SF_INTS[:, 1]
+
+        # note that the same algorithm also works for a larger number of quadrature points
+
+        if bi.has_dirichlet:
+            DI = bi.dirichlet_boundaries(1)
+            if self.dirichlet_data is not None:
+                I[DI] = self.dirichlet_data(g.centers(2)[DI], self.map_parameter(mu, 'dirichlet_data'))
+            else:
+                I[DI] = 0
+
+        return I
 
 
 class DiffusionOperatorP1D2(LinearDiscreteOperatorInterface):
