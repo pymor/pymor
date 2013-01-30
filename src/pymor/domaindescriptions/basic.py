@@ -46,3 +46,20 @@ class RectDomain(DomainDescriptionInterface):
     @property
     def diameter(self):
         return np.sqrt(self.width ** 2 + self.height ** 2)
+
+
+class LineDomain(DomainDescriptionInterface):
+    '''Describes a rectangular domain. Different boundary types can be associated
+    to each side.
+    '''
+
+    def __init__(self, domain=[0, 1], left=BoundaryType('dirichlet'), right=BoundaryType('dirichlet')):
+        assert domain[0] <= domain[1]
+        self.boundary_types = set((left, right))
+        self.left = left
+        self.right = right
+        self.domain = np.array(domain)
+
+    @property
+    def width(self):
+        return self.domain[1] - self.domain[0]
