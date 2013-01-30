@@ -99,7 +99,7 @@ class Parametric(object):
         for n in inherits:
             if inherits[n] is None:
                 parameter_maps[n] = OrderedDict()
-                next
+                continue
             if isinstance(inherits[n], tuple) or isinstance(inherits[n], list):
                 merged_param_map = OrderedDict()
                 for k,v in inherits[n][0].parameter_type.iteritems():
