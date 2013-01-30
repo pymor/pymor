@@ -29,7 +29,7 @@ class L2ProductFunctionalP1D2(LinearDiscreteOperatorInterface):
         g = self.grid
         bi = self.boundary_info
 
-        F = self.function(g.centers(2), mu=self.map_parameter(mu, 'function'))
+        F = np.squeeze(self.function(g.centers(2), mu=self.map_parameter(mu, 'function')))
         SE = g.superentities(2, 0)
         V = np.sum(np.where(SE == -1, 0, g.volumes(0)[SE]), axis=1)
 

@@ -29,7 +29,7 @@ class ConstantFunction(FunctionInterface):
         x = np.array(x, copy=False, ndmin=1)
         if x.ndim == 1:
             assert x.shape[0] == self.dim_domain
-            return np.array(self._value)
+            return np.array(self._value, ndmin=min(1, self.dim_range))
         else:
             assert x.shape[-1] == self.dim_domain
             return np.tile(self._value, x.shape[:-1] + (1,))
@@ -54,11 +54,11 @@ class GenericFunction(FunctionInterface):
     def evaluate(self, x, mu={}):
         mu = self.map_parameter(mu)
         x = np.array(x, copy=False, ndmin=1)
-        if x.ndim == 1:
-            assert x.shape[0] == self.dim_domain
-        else:
-            assert x.shape[-1] == self.dim_domain
+        assert x.shape[-1] == self.dim_domain
         if self._with_mu:
-            return self._mapping((x, mu))
+            v = self._mapping((x, mu))
         else:
-            return self._mapping(x)
+            v = self._mapping(x)
+        if len(v.shape) < len(x.shape) and self.dim_range > 0:
+            v = v[..., np.newaxis]
+        return v
