@@ -19,7 +19,7 @@ from collections import OrderedDict
 if len(sys.argv) < 4:
     sys.exit('Usage: {} PROBLEM-NUMBER N PLOT'.format(sys.argv[0]))
 
-rhs0 = GenericFunction(lambda X: np.ones(X.shape[0]) * 10, dim_domain=2)
+rhs0 = GenericFunction(lambda X: np.ones(X.shape[:-1]) * 10, dim_domain=2)
 rhs1 = GenericFunction(lambda X: (X[..., 0] - 0.5) ** 2 * 1000, dim_domain=2)
 
 nrhs = int(sys.argv[1])

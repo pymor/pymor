@@ -18,10 +18,10 @@ from pymor.functions import GenericFunction
 if len(sys.argv) < 4:
     sys.exit('Usage: {} RHS-NUMBER BOUNDARY-DATA-NUMBER NEUMANN-COUNT'.format(sys.argv[0]))
 
-rhs0 = GenericFunction(lambda X: np.ones(X.shape[0]) * 10, 2)
+rhs0 = GenericFunction(lambda X: np.ones(X.shape[:-1]) * 10, 2)
 rhs1 = GenericFunction(lambda X: (X[..., 0] - 0.5) ** 2 * 1000, 2)
-dirichlet0 = GenericFunction(lambda X: np.zeros(X.shape[0]), 2)
-dirichlet1 = GenericFunction(lambda X: np.ones(X.shape[0]), 2)
+dirichlet0 = GenericFunction(lambda X: np.zeros(X.shape[:-1]), 2)
+dirichlet1 = GenericFunction(lambda X: np.ones(X.shape[:-1]), 2)
 dirichlet2 = GenericFunction(lambda X: X[..., 0], 2)
 domain0 = RectDomain()
 domain1 = RectDomain(right=BoundaryType('neumann'))
