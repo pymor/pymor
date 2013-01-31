@@ -31,6 +31,11 @@ class EllipticDiscretization(Parametric):
 
     def solve(self, mu={}):
         A = self.operator.matrix(self.map_parameter(mu, 'operator'))
-        RHS = self.rhs.matrix(self.map_parameter(mu, 'rhs'))
+        if A.size == 0:
+            return np.zeros(0)
+        RHS = np.squeeze(self.rhs.matrix(self.map_parameter(mu, 'rhs')))
+        if RHS.ndim == 0:
+            RHS = RHS[np.newaxis]
+
         return self.solver(A, RHS)
 
