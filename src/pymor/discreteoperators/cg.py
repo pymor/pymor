@@ -42,7 +42,7 @@ class L2ProductFunctionalP1D2(LinearDiscreteOperatorInterface):
             else:
                 I[DI] = 0
 
-        return I
+        return I.reshape((1,I.size))
 
 
 class L2ProductFunctionalP1D1(LinearDiscreteOperatorInterface):
@@ -94,7 +94,7 @@ class L2ProductFunctionalP1D1(LinearDiscreteOperatorInterface):
             else:
                 I[DI] = 0
 
-        return I
+        return I.reshape((1, I.size))
 
 
 class DiffusionOperatorP1D2(LinearDiscreteOperatorInterface):
