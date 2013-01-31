@@ -15,6 +15,32 @@ class DiscreteOperatorInterface(core.BasicInterface, Parametric, Named):
     def apply(self, U, mu={}, axis=-1):
         pass
 
+    def apply2(self, V, U, mu={}, product=None, pairwise=True):
+        ''' Treat the operator as a 2-form by calculating (V, A(U)).
+        If product is None, we take the standard L2-scalar product. I.e.
+        if A is given by multiplication with a matrix B, then
+            A.apply2(V, U) = V^T*B*U
+        '''
+        AU = self.apply(U, mu)
+        assert AU.shape == V.shape
+        if product is None:
+            if pairwise:
+                return np.sum(V * AU, axis=-1)
+            else:
+                return np.dot(V, AU.T)                              # use of np.dot for ndarrays?!
+        elif isinstance(product, DiscreteOperatorInterface):
+            return product.apply2(V, AU, pairwise)
+        else:
+            if pairwise:
+                return np.sum(V, np.dot(product, AU.T).T, axis=-1)
+            else:
+                return np.dot(V, np.dot(product, AU.T))
+
+    def __str__(self):
+        return '{}: R^{} --> R^{}  (parameter type: {})'.format(self.name, self.source_dim,
+                                                                self.range_dim, self.parameter_type)
+
+
 
 class LinearDiscreteOperatorInterface(DiscreteOperatorInterface):
 
