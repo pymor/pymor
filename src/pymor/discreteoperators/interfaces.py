@@ -58,7 +58,7 @@ class LinearDiscreteOperatorInterface(DiscreteOperatorInterface):
             return self._last_mat
 
     def apply(self, U, mu={}):
-        return self.matrix(mu).dot(U.T)  # TODO: Check what dot really does for a sparse matrix
+        return self.matrix(mu).dot(U.T).T  # TODO: Check what dot really does for a sparse matrix
 
     _last_mu = None
     _last_mat = None
