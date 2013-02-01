@@ -3,6 +3,8 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from .interfaces import DiscreteOperatorInterface, LinearDiscreteOperatorInterface
+from .affine import LinearAffinelyDecomposedOperator
+from .basic import GenericLinearOperator
 
 
 class ProjectedOperator(DiscreteOperatorInterface):
@@ -58,3 +60,28 @@ class ProjectedLinearOperator(LinearDiscreteOperatorInterface):
         else:
             return np.dot(self.range_basis, np.dot(self.product, AV))
 
+
+def project_operator(operator, source_basis, range_basis=None, product=None, name=None):
+
+    name = name or '{}_projected'.format(operator.name)
+
+    if isinstance(operator, LinearAffinelyDecomposedOperator):
+        proj_operators = tuple(project_operator(op, source_basis, range_basis, product,
+                                                name='{}_projected'.format(op.name))
+                                                                        for op in operator.operators)
+        if operator.operator_affine_part is not None:
+            proj_operator_ap = project_operator(operator.operator_affine_part, source_basis, range_basis, product,
+                                                name='{}_projected'.format(operator.operator_affine_part.name))
+        else:
+            proj_operator_ap = None
+        return LinearAffinelyDecomposedOperator(proj_operators, proj_operator_ap, operator.functionals, name)
+
+    elif isinstance(operator, LinearDiscreteOperatorInterface):
+        proj_operator = ProjectedLinearOperator(operator, source_basis, range_basis, product, name)
+        if proj_operator.parameter_type == {}:
+            return GenericLinearOperator(proj_operator.matrix(), name)
+        else:
+            return proj_operator
+
+    else:
+        return ProjectedOperator(operator, source_basis, range_basis, product, name)

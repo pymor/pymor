@@ -14,7 +14,7 @@ from pymor.analyticalproblems import PoissonProblem
 from pymor.discretizers import PoissonCGDiscretizer
 from pymor.functions import GenericFunction
 from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional, GenericParameterFunctional
-from pymor.discreteoperators import ProjectedLinearOperator
+from pymor.discreteoperators import project_operator
 from pymor.discretizations import EllipticDiscretization
 from collections import OrderedDict
 
@@ -61,8 +61,8 @@ for i, mu in enumerate(mu_snap):
 
 print('Projecting operators ...')
 
-AP = ProjectedLinearOperator(discretization.operator, RB)
-FP = ProjectedLinearOperator(discretization.rhs, RB, np.ones((1,1)))
+AP = project_operator(discretization.operator, RB)
+FP = project_operator(discretization.rhs, RB, np.ones((1,1)))
 rb_discretization = EllipticDiscretization(AP, FP)
 
 l2_err_max = -1
