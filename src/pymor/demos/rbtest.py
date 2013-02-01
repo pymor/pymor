@@ -18,6 +18,9 @@ from pymor.discreteoperators import ProjectedLinearOperator
 from pymor.discretizations import EllipticDiscretization
 from collections import OrderedDict
 
+# set log level
+from pymor.core import getLogger; getLogger('pymor').setLevel('INFO')
+
 if len(sys.argv) < 5:
     sys.exit('Usage: {} PROBLEM-NUMBER N RB PLOT'.format(sys.argv[0]))
 
