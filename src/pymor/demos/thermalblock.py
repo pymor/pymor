@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# vim: set filetype=python:
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -9,9 +10,7 @@ import numpy as np
 
 from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import PoissonCGDiscretizer
-from pymor.discreteoperators import project_operator
-from pymor.discretizations import EllipticDiscretization
-from collections import OrderedDict
+from pymor.reductors import GenericRBReductor
 
 # set log level
 # from pymor.core import getLogger; getLogger('pymor').setLevel('INFO')
@@ -53,9 +52,8 @@ for i, mu in enumerate(mu_snap):
 
 print('Projecting operators ...')
 
-AP = project_operator(discretization.operator, RB)
-FP = project_operator(discretization.rhs, RB)
-rb_discretization = EllipticDiscretization(AP, FP)
+reductor = GenericRBReductor(discretization)
+rb_discretization = reductor.reduce(RB)
 
 l2_err_max = -1
 for mu in discretization.parameter_space.sample_randomly(10):

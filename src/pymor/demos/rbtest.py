@@ -14,9 +14,7 @@ from pymor.analyticalproblems import PoissonProblem
 from pymor.discretizers import PoissonCGDiscretizer
 from pymor.functions import GenericFunction
 from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional, GenericParameterFunctional
-from pymor.discreteoperators import project_operator
-from pymor.discretizations import EllipticDiscretization
-from collections import OrderedDict
+from pymor.reductors import GenericRBReductor
 
 # set log level
 from pymor.core import getLogger; getLogger('pymor').setLevel('INFO')
@@ -61,9 +59,8 @@ for i, mu in enumerate(mu_snap):
 
 print('Projecting operators ...')
 
-AP = project_operator(discretization.operator, RB)
-FP = project_operator(discretization.rhs, RB)
-rb_discretization = EllipticDiscretization(AP, FP)
+reductor = GenericRBReductor(discretization)
+rb_discretization = reductor.reduce(RB)
 
 l2_err_max = -1
 for mu in parameter_space.sample_randomly(10):
