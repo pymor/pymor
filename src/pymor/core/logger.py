@@ -32,7 +32,7 @@ LOGLEVEL_MAPPING = {
         }
 
 FORMAT = '$BOLD%(levelname)s $BOLD%(name)s$RESET %(asctime)s - %(message)s'
-MAX_HIERACHY_LEVEL = 2
+MAX_HIERACHY_LEVEL = 4
 
 def formatter_message(message, use_color = True):
     if use_color:
