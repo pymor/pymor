@@ -98,7 +98,7 @@ class L2ProductFunctionalP1D1(LinearDiscreteOperatorInterface):
 
 
 class DiffusionOperatorP1D2(LinearDiscreteOperatorInterface):
-    '''Simple Diffusion Operator for linear finite elements in two dimensions on an triangular grid. 
+    '''Simple Diffusion Operator for linear finite elements in two dimensions on an triangular grid.
     Add more functionality later ...
     '''
 
@@ -126,10 +126,10 @@ class DiffusionOperatorP1D2(LinearDiscreteOperatorInterface):
                             [1., 0.],
                             [0., 1.]))
 
-        print('Calulate gradients of shape functions transformed by reference map ...')
+        self.logger.info('Calulate gradients of shape functions transformed by reference map ...')
         SF_GRADS = np.einsum('eij,pj->epi', g.jacobian_inverse_transposed(0), SF_GRAD)
 
-        print('Calculate all local scalar products beween gradients ...')
+        self.logger.info('Calculate all local scalar products beween gradients ...')
         if self.diffusion_function is not None:
             D = self.diffusion_function(self.grid.centers(0), mu=self.map_parameter(mu, 'diffusion')).ravel()
             SF_INTS = np.einsum('epi,eqi,e,e->epq', SF_GRADS, SF_GRADS, g.volumes(0), D).ravel()
@@ -139,11 +139,11 @@ class DiffusionOperatorP1D2(LinearDiscreteOperatorInterface):
         if self.diffusion_constant is not None:
             SF_INTS *= self.diffusion_constant
 
-        print('Determine global dofs ...')
+        self.logger.info('Determine global dofs ...')
         SF_I0 = np.repeat(g.subentities(0, 2), 3, axis=1).ravel()
         SF_I1 = np.tile(g.subentities(0, 2), [1, 3]).ravel()
 
-        print('Boundary treatment ...')
+        self.logger.info('Boundary treatment ...')
         if bi.has_dirichlet:
             SF_INTS = np.where(bi.dirichlet_mask(2)[SF_I0], 0, SF_INTS)
             if self.dirichlet_clear_columns:
@@ -155,7 +155,7 @@ class DiffusionOperatorP1D2(LinearDiscreteOperatorInterface):
             SF_I1 = np.hstack((SF_I1, bi.dirichlet_boundaries(2)))
 
 
-        print('Assemble system matrix ...')
+        self.logger.info('Assemble system matrix ...')
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(2), g.size(2)))
         A = csr_matrix(A)
 
@@ -189,10 +189,10 @@ class DiffusionOperatorP1D1(LinearDiscreteOperatorInterface):
         SF_GRAD = np.array(([-1.],
                             [1.,]))
 
-        print('Calulate gradients of shape functions transformed by reference map ...')
+        self.logger.info('Calulate gradients of shape functions transformed by reference map ...')
         SF_GRADS = np.einsum('eij,pj->epi', g.jacobian_inverse_transposed(0), SF_GRAD)
 
-        print('Calculate all local scalar products beween gradients ...')
+        self.logger.info('Calculate all local scalar products beween gradients ...')
         if self.diffusion_function is not None:
             D = self.diffusion_function(self.grid.centers(0), mu=self.map_parameter(mu, 'diffusion')).ravel()
             SF_INTS = np.einsum('epi,eqi,e,e->epq', SF_GRADS, SF_GRADS, g.volumes(0), D).ravel()
@@ -202,11 +202,11 @@ class DiffusionOperatorP1D1(LinearDiscreteOperatorInterface):
         if self.diffusion_constant is not None:
             SF_INTS *= self.diffusion_constant
 
-        print('Determine global dofs ...')
+        self.logger.info('Determine global dofs ...')
         SF_I0 = np.repeat(g.subentities(0, 1), 2, axis=1).ravel()
         SF_I1 = np.tile(g.subentities(0, 1), [1, 2]).ravel()
 
-        print('Boundary treatment ...')
+        self.logger.info('Boundary treatment ...')
         if bi.has_dirichlet:
             SF_INTS = np.where(bi.dirichlet_mask(1)[SF_I0], 0, SF_INTS)
             if self.dirichlet_clear_columns:
@@ -218,8 +218,10 @@ class DiffusionOperatorP1D1(LinearDiscreteOperatorInterface):
             SF_I1 = np.hstack((SF_I1, bi.dirichlet_boundaries(1)))
 
 
-        print('Assemble system matrix ...')
+        self.logger.info('Assemble system matrix ...')
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(1), g.size(1)))
         A = csr_matrix(A)
 
         return A
+
+
