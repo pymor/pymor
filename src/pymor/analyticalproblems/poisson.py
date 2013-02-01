@@ -20,6 +20,9 @@ class PoissonProblem(object):
         self.diffusion_functionals = diffusion_functionals
         self.dirichlet_data = dirichlet_data
         if parameter_dependent is None:
-            self.parameter_dependent = len(diffusion_functions) > 1
+            if diffusion_functionals is not None:
+                self.parameter_dependent = True
+            else:
+                self.parameter_dependent = len(diffusion_functions) > 1
         else:
             self.parameter_dependent = parameter_independent
