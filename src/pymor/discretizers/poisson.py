@@ -72,5 +72,7 @@ class PoissonCGDiscretizer(object):
                 pass
 
         discr = EllipticDiscretization(L, F, visualizer=visualize)
+        if hasattr(p, 'parameter_space'):
+            discr.parameter_space = p.parameter_space
 
         return discr
