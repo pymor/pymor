@@ -15,7 +15,7 @@ class ProjectedOperator(DiscreteOperatorInterface):
         assert isinstance(operator, DiscreteOperatorInterface)
         assert operator.source_dim == source_basis.shape[1]
         assert operator.range_dim == range_basis.shape[1]
-        self.build_parameter_type(inherits={'operator':operator})
+        self.build_parameter_type(operator.parameter_type, local_global=True)
         self.source_dim = source_basis.shape[0]
         self.range_dim = range_basis.shape[0]
         self.name = name
@@ -26,7 +26,7 @@ class ProjectedOperator(DiscreteOperatorInterface):
 
     def apply(self, U, mu={}):
         V = np.dot(U, self.source_basis)
-        AV = self.operator.apply(V, self.map_parameter(mu, 'operator'))
+        AV = self.operator.apply(V, self.map_parameter(mu))
         if self.product is None:
             return np.dot(AV, self.range_basis.T)
         elif isinstance(self.product, DiscreteOperatorInterface):
@@ -43,7 +43,7 @@ class ProjectedLinearOperator(LinearDiscreteOperatorInterface):
         assert isinstance(operator, LinearDiscreteOperatorInterface)
         assert operator.source_dim == source_basis.shape[1]
         assert operator.range_dim == range_basis.shape[1]
-        self.build_parameter_type(inherits={'operator':operator})
+        self.build_parameter_type(operator.parameter_type, local_global=True)
         self.source_dim = source_basis.shape[0]
         self.range_dim = range_basis.shape[0]
         self.name = name
@@ -53,7 +53,7 @@ class ProjectedLinearOperator(LinearDiscreteOperatorInterface):
         self.product = product
 
     def assemble(self, mu={}):
-        M = self.operator.matrix(self.map_parameter(mu, 'operator'))
+        M = self.operator.matrix(self.map_parameter(mu))
         MB = M.dot(self.source_basis.T)
         if self.product is None:
             return np.dot(self.range_basis, MB)
@@ -76,7 +76,9 @@ def project_operator(operator, source_basis, range_basis=None, product=None, nam
                                                 name='{}_projected'.format(operator.operator_affine_part.name))
         else:
             proj_operator_ap = None
-        return LinearAffinelyDecomposedOperator(proj_operators, proj_operator_ap, operator.functionals, name)
+        proj_operator = LinearAffinelyDecomposedOperator(proj_operators, proj_operator_ap, operator.functionals, name)
+        proj_operator.rename_parameter(operator.parameter_user_map)
+        return proj_operator
 
     elif isinstance(operator, LinearDiscreteOperatorInterface):
         proj_operator = ProjectedLinearOperator(operator, source_basis, range_basis, product, name)
