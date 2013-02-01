@@ -23,7 +23,7 @@ class L2ProductFunctionalP1D2(LinearDiscreteOperatorInterface):
         self.function = function
         self.dirichlet_data = dirichlet_data
         self.name = name
-        self.set_parameter_type(inherits={'function':function, 'dirichlet_data':dirichlet_data})
+        self.build_parameter_type(inherits={'function':function, 'dirichlet_data':dirichlet_data})
 
     def assemble(self, mu={}):
         g = self.grid
@@ -60,7 +60,7 @@ class L2ProductFunctionalP1D1(LinearDiscreteOperatorInterface):
         self.function = function
         self.dirichlet_data = dirichlet_data
         self.name = name
-        self.set_parameter_type(inherits={'function':function, 'dirichlet_data':dirichlet_data}) 
+        self.build_parameter_type(inherits={'function':function, 'dirichlet_data':dirichlet_data}) 
 
     def assemble(self, mu={}):
         g = self.grid
@@ -114,7 +114,7 @@ class DiffusionOperatorP1D2(LinearDiscreteOperatorInterface):
         self.dirichlet_clear_diag = dirichlet_clear_diag
         self.name = name
         if diffusion_function is not None:
-            self.set_parameter_type(inherits={'diffusion':diffusion_function})
+            self.build_parameter_type(inherits={'diffusion':diffusion_function})
 
     def assemble(self, mu={}):
         self.map_parameter(mu)
@@ -178,7 +178,7 @@ class DiffusionOperatorP1D1(LinearDiscreteOperatorInterface):
         self.dirichlet_clear_diag = dirichlet_clear_diag
         self.name = name
         if diffusion_function is not None:
-            self.set_parameter_type(inherits={'diffusion':diffusion_function})
+            self.build_parameter_type(inherits={'diffusion':diffusion_function})
 
     def assemble(self, mu={}):
         self.map_parameter(mu)

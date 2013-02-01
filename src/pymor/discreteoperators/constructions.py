@@ -15,7 +15,7 @@ class ProjectedOperator(DiscreteOperatorInterface):
         assert isinstance(operator, DiscreteOperatorInterface)
         assert operator.source_dim == source_basis.shape[1]
         assert operator.range_dim == range_basis.shape[1]
-        self.set_parameter_type(inherits={'operator':operator})
+        self.build_parameter_type(inherits={'operator':operator})
         self.source_dim = source_basis.shape[0]
         self.range_dim = range_basis.shape[0]
         self.name = name
@@ -43,7 +43,7 @@ class ProjectedLinearOperator(LinearDiscreteOperatorInterface):
         assert isinstance(operator, LinearDiscreteOperatorInterface)
         assert operator.source_dim == source_basis.shape[1]
         assert operator.range_dim == range_basis.shape[1]
-        self.set_parameter_type(inherits={'operator':operator})
+        self.build_parameter_type(inherits={'operator':operator})
         self.source_dim = source_basis.shape[0]
         self.range_dim = range_basis.shape[0]
         self.name = name

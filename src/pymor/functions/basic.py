@@ -43,7 +43,7 @@ class GenericFunction(FunctionInterface):
         self.name = name
         self._mapping = mapping
         if parameter_type is not None:
-            self.set_parameter_type(parameter_type)
+            self.build_parameter_type(parameter_type)
             self._with_mu = True
         else:
             self._with_mu = False

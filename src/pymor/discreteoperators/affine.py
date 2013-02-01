@@ -27,11 +27,11 @@ class LinearAffinelyDecomposedOperator(LinearDiscreteOperatorInterface):
         self.operator_affine_part = operator_affine_part
         self.functionals = functionals
         if functionals is not None:
-            self.set_parameter_type(inherits={'operators':operators,
+            self.build_parameter_type(inherits={'operators':operators,
                                               'operator_affine_part':operator_affine_part,
                                              'functionals':functionals})
         else:
-            self.set_parameter_type([('coefficients',len(operators))],
+            self.build_parameter_type([('coefficients',len(operators))],
                                     inherits={'operators':operators,
                                               'operator_affine_part':operator_affine_part})
         self.name = name

@@ -15,7 +15,7 @@ class EllipticDiscretization(Parametric):
         self.operator = operator
         self.operators = {operator.name: operator}
         self.rhs = rhs
-        self.set_parameter_type(inherits={'operator':operator, 'rhs':rhs})
+        self.build_parameter_type(inherits={'operator':operator, 'rhs':rhs})
 
         def default_solver(A, RHS):
             if issparse(A):

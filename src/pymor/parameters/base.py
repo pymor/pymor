@@ -95,7 +95,7 @@ class Parametric(object):
             mu_mapped[k] = mu_global[v][component,...] if m else mu_global[v]
         return mu_mapped
 
-    def set_parameter_type(self, local_type=OrderedDict(), inherits=OrderedDict(), local_global=False):
+    def build_parameter_type(self, local_type=OrderedDict(), inherits=OrderedDict(), local_global=False):
         local_type = parse_parameter_type(local_type)
         self.local_parameter_type = local_type
         parameter_maps = {}

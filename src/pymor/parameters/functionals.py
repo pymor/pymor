@@ -10,7 +10,7 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
 
     def __init__(self, parameter_type, component, coordinates=None, name=None):
         self.name = name
-        self.set_parameter_type(parameter_type, local_global=True)
+        self.build_parameter_type(parameter_type, local_global=True)
         assert component in self.parameter_type
         self.component = component
         if sum(self.parameter_type[component]) > 1:
@@ -33,7 +33,7 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
     def __init__(self, parameter_type, mapping, name=None):
         self.name = name
         self._mapping = mapping
-        self.set_parameter_type(parameter_type, local_global=True)
+        self.build_parameter_type(parameter_type, local_global=True)
 
     def evaluate(self, mu={}):
         mu = self.map_parameter(mu)
