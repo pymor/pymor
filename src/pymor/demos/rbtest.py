@@ -62,7 +62,7 @@ for i, mu in enumerate(mu_snap):
 print('Projecting operators ...')
 
 AP = project_operator(discretization.operator, RB)
-FP = project_operator(discretization.rhs, RB, np.ones((1,1)))
+FP = project_operator(discretization.rhs, RB)
 rb_discretization = EllipticDiscretization(AP, FP)
 
 l2_err_max = -1

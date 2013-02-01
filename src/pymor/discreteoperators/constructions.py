@@ -10,7 +10,8 @@ from .basic import GenericLinearOperator
 class ProjectedOperator(DiscreteOperatorInterface):
 
     def __init__(self, operator, source_basis, range_basis=None, product=None, name=None):
-        range_basis = range_basis or source_basis
+        if range_basis is None:
+            range_basis = np.ones((1,1)) if operator.range_dim == 1 else source_basis
         assert isinstance(operator, DiscreteOperatorInterface)
         assert operator.source_dim == source_basis.shape[1]
         assert operator.range_dim == range_basis.shape[1]
@@ -37,7 +38,8 @@ class ProjectedOperator(DiscreteOperatorInterface):
 class ProjectedLinearOperator(LinearDiscreteOperatorInterface):
 
     def __init__(self, operator, source_basis, range_basis=None, product=None, name=None):
-        range_basis = range_basis or source_basis
+        if range_basis is None:
+            range_basis = np.ones((1,1)) if operator.range_dim == 1 else source_basis
         assert isinstance(operator, LinearDiscreteOperatorInterface)
         assert operator.source_dim == source_basis.shape[1]
         assert operator.range_dim == range_basis.shape[1]
