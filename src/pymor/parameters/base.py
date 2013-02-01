@@ -67,6 +67,17 @@ class Parametric(object):
     parameter_maps = {'self':{}}
     parameter_user_map = {}
 
+    _parameter_space = None
+
+    @property
+    def parameter_space(self):
+        return self._parameter_space
+
+    @parameter_space.setter
+    def parameter_space(self, ps):
+        assert dict(self.parameter_type) == dict(ps.parameter_type)
+        self._parameter_space = ps
+
     def parse_parameter(self, mu):
         return parse_parameter(mu, self.parameter_type)
 
