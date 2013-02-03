@@ -60,12 +60,12 @@ for i, mu in enumerate(mu_snap):
 print('Projecting operators ...')
 
 reductor = GenericRBReductor(discretization)
-rb_discretization = reductor.reduce(RB)
+rb_discretization, reconstructor = reductor.reduce(RB)
 
 l2_err_max = -1
 for mu in parameter_space.sample_randomly(10):
     print('Solving RB-Scheme for mu = {} ... '.format(mu), end='')
-    URB = np.dot(rb_discretization.solve(mu), RB)
+    URB = reconstructor.reconstruct(rb_discretization.solve(mu))
     U = discretization.solve(mu)
     l2_err = np.sqrt(np.sum((U-URB)**2)) / np.sqrt(np.sum(U**2))
     if l2_err > l2_err_max:
