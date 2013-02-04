@@ -23,6 +23,16 @@ class Parameter(OrderedDict):
             c[k] = v.copy()
         return c
 
+    def __str__(self):
+        s = '{'
+        for k, v in self.iteritems():
+            if s == '{':
+                s += '{}: {}'.format(k, v.ravel())
+            else:
+                s += ', {}: {}'.format(k, v)
+        s += '}'
+        return s
+
 
 def parse_parameter(mu, parameter_type={}):
     if not isinstance(mu, dict):
