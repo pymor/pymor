@@ -15,12 +15,13 @@ from pymor.discretizers import PoissonCGDiscretizer
 from pymor.functions import GenericFunction
 from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional, GenericParameterFunctional
 from pymor.reductors import GenericRBReductor
+from pymor.algorithms import GreedyRB
 
 # set log level
-from pymor.core import getLogger; getLogger('pymor').setLevel('INFO')
+from pymor.core import getLogger; getLogger('pymor.algorithms').setLevel('INFO')
 
-if len(sys.argv) < 5:
-    sys.exit('Usage: {} PROBLEM-NUMBER N RB PLOT'.format(sys.argv[0]))
+if len(sys.argv) < 6:
+    sys.exit('Usage: {} PROBLEM-NUMBER N SNAP RB PLOT'.format(sys.argv[0]))
 
 rhs0 = GenericFunction(lambda X: np.ones(X.shape[:-1]) * 10, dim_domain=2)
 rhs1 = GenericFunction(lambda X: (X[..., 0] - 0.5) ** 2 * 1000, dim_domain=2)
@@ -30,8 +31,9 @@ assert 0 <= nrhs <= 1, ValueError('Invalid rhs number.')
 rhs = eval('rhs{}'.format(nrhs))
 
 n = int(sys.argv[2])
-rbsize = int(sys.argv[3])
-plot = bool(int(sys.argv[4]))
+snapshot_size = int(sys.argv[3])
+rbsize = int(sys.argv[4])
+plot = bool(int(sys.argv[5]))
 
 d0 = GenericFunction(lambda X: 1 - X[..., 0], dim_domain=2)
 d1 = GenericFunction(lambda X: X[..., 0], dim_domain=2)
@@ -51,17 +53,15 @@ discretization = discretizer.discretize(diameter=m.sqrt(2) / n)
 
 print(discretization.parameter_info())
 
-RB = np.empty((rbsize, discretization.operator.range_dim))
-mu_snap = tuple(parameter_space.sample_uniformly(rbsize))
-for i, mu in enumerate(mu_snap):
-    print('Solving for mu = {} ...'.format(mu))
-    RB[i] = discretization.solve(mu)
 
-print('Projecting operators ...')
+print('RB generation ...')
 
 reductor = GenericRBReductor(discretization)
-rb_discretization, reconstructor = reductor.reduce(RB)
+greedy = GreedyRB(discretization, reductor)
+greedy.run(parameter_space.sample_uniformly(snapshot_size), Nmax=rbsize)
+rb_discretization, reconstructor = greedy.rb_discretization, greedy.reconstructor
 
+print('\nSearching for maximum error on random snapshots ...')
 l2_err_max = -1
 for mu in parameter_space.sample_randomly(10):
     print('Solving RB-Scheme for mu = {} ... '.format(mu), end='')

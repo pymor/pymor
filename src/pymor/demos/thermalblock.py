@@ -11,18 +11,21 @@ import numpy as np
 from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import PoissonCGDiscretizer
 from pymor.reductors import GenericRBReductor
+from pymor.algorithms import GreedyRB
 
 # set log level
 # from pymor.core import getLogger; getLogger('pymor').setLevel('INFO')
+from pymor.core import getLogger; getLogger('pymor.algorithms').setLevel('INFO')
 
-if len(sys.argv) < 5:
-    sys.exit('Usage: {} X Y N RB PLOT'.format(sys.argv[0]))
+if len(sys.argv) < 6:
+    sys.exit('Usage: {} X Y N SNAP RB PLOT'.format(sys.argv[0]))
 
 nx = int(sys.argv[1])
 ny = int(sys.argv[2])
 n = int(sys.argv[3])
-rbsize = int(sys.argv[4])
-plot = bool(int(sys.argv[5]))
+snap_size = int(sys.argv[4])
+rb_size = int(sys.argv[5])
+plot = bool(int(sys.argv[6]))
 
 print('Solving on TriaGrid(({0},{0}))'.format(n))
 
@@ -44,17 +47,14 @@ if print:
         discretization.visualize(U)
 
 
-mu_snap = tuple(discretization.parameter_space.sample_uniformly(rbsize))
-RB = np.empty((len(mu_snap), discretization.operator.range_dim))
-for i, mu in enumerate(mu_snap):
-    print('Solving for mu = {} ...'.format(mu))
-    RB[i] = discretization.solve(mu)
-
-print('Projecting operators ...')
+print('RB generation ...')
 
 reductor = GenericRBReductor(discretization)
-rb_discretization, reconstructor = reductor.reduce(RB)
+greedy = GreedyRB(discretization, reductor)
+greedy.run(discretization.parameter_space.sample_uniformly(snap_size), Nmax=rb_size)
+rb_discretization, reconstructor = greedy.rb_discretization, greedy.reconstructor
 
+print('\nSearching for maximum error on random snapshots ...')
 l2_err_max = -1
 for mu in discretization.parameter_space.sample_randomly(10):
     print('Solving RB-Scheme for mu = {} ... '.format(mu), end='')
