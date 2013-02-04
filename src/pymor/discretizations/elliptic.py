@@ -32,6 +32,8 @@ class EllipticDiscretization(Parametric):
         if visualizer is not None:
             self.visualize = visualizer
 
+        self.solution_dim = operator.range_dim
+
     def copy(self):
         c = copy.copy(self)
         c.operators = c.operators.copy()
