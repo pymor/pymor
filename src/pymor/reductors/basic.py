@@ -2,10 +2,11 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
+import pymor.core as core
 from pymor.discreteoperators import project_operator
 
 
-class GenericRBReconstructor(object):
+class GenericRBReconstructor(core.BasicInterface):
 
     def __init__(self, RB):
         self.RB = RB
@@ -14,7 +15,7 @@ class GenericRBReconstructor(object):
         return np.dot(U, self.RB)
 
 
-class GenericRBReductor(object):
+class GenericRBReductor(core.BasicInterface):
 
     def __init__(self, discretization, product=None):
         self.discretization = discretization
