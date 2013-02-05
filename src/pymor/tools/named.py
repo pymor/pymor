@@ -7,12 +7,9 @@ class Named(object):
     def name(self):
         if self.__name is None:
             import uuid
-            self.__name = str(uuid.uuid4())
+            self.__name = '{}_{}'.format(self.__class__.__name__, uuid.uuid4())
         return self.__name
 
     @name.setter
     def name(self, n):
-        if self.__name is not None:
-            raise AttributeError('Name has already been set and cannot be changed')
-        else:
-            self.__name = n
+        self.__name = n
