@@ -19,6 +19,7 @@ from pymor.algorithms import GreedyRB
 
 # set log level
 from pymor.core import getLogger; getLogger('pymor.algorithms').setLevel('INFO')
+from pymor.core import getLogger; getLogger('pymor.discretizations').setLevel('INFO')
 
 if len(sys.argv) < 6:
     sys.exit('Usage: {} PROBLEM-NUMBER N SNAP RB PLOT'.format(sys.argv[0]))
