@@ -19,6 +19,8 @@ except:
 from pymor.core.interfaces import BasicInterface
 from pymor.tools import memory
 
+
+NO_CACHE_CONFIG = { "backend":'Dummy' }
 DEFAULT_MEMORY_CONFIG = { "backend":'LimitedMemory', 'arguments.max_kbytes': 20000 }
 SMALL_MEMORY_CONFIG = { "backend":'LimitedMemory', 'arguments.max_keys':20, 
                        'arguments.max_kbytes': 20}
@@ -28,6 +30,22 @@ DEFAULT_DISK_CONFIG = { "backend":'LimitedFile',
 SMALL_DISK_CONFIG = { "backend":'LimitedFile',
         "arguments.filename": join(gettempdir(), 'pymor.small_cache.dbm'),
         'arguments.max_keys':20}
+
+
+class DummyBackend(BasicInterface, dc.api.CacheBackend):
+
+    def __init__(self, argument_dict):
+        self.logger.debug('DummyBackend args {}'.format(pformat(argument_dict)))
+
+    def get(self, key):
+        return dc.api.NO_VALUE
+
+    def set(self, key, value):
+        pass
+
+    def delete(self, key):
+        pass
+
 
 class LimitedMemoryBackend(BasicInterface, dc.api.CacheBackend):
     
@@ -120,6 +138,7 @@ class LimitedFileBackend(BasicInterface, DBMBackend):
 
 dc.register_backend("LimitedMemory", "pymor.core.cache", "LimitedMemoryBackend")
 dc.register_backend("LimitedFile", "pymor.core.cache", "LimitedFileBackend")
+dc.register_backend("Dummy", "pymor.core.cache", "DummyBackend")
 
 class cached(BasicInterface):
     
