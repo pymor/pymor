@@ -71,7 +71,7 @@ class PoissonCGDiscretizer(object):
                 pl.show()
                 pass
 
-        discr = StationaryLinearDiscretization(L, F, visualizer=visualize)
+        discr = StationaryLinearDiscretization(L, F, visualizer=visualize, name='{}_CG'.format(p.name))
         if hasattr(p, 'parameter_space'):
             discr.parameter_space = p.parameter_space
 

@@ -8,17 +8,18 @@ from scipy.sparse import issparse
 
 from pymor.core import BasicInterface
 from pymor.core.cache import Cachable, cached, DEFAULT_DISK_CONFIG
-from pymor.tools import dict_property
+from pymor.tools import dict_property, Named
 from pymor.domaindescriptions import BoundaryType
 from pymor.parameters import Parametric
 
 
-class StationaryLinearDiscretization(BasicInterface, Parametric, Cachable):
+class StationaryLinearDiscretization(BasicInterface, Parametric, Cachable, Named):
 
+    disable_logging = False
     operator = dict_property('operators', 'operator')
     rhs = dict_property('operators', 'rhs')
 
-    def __init__(self, operator, rhs, solver=None, visualizer=None):
+    def __init__(self, operator, rhs, solver=None, visualizer=None, name=None):
         Cachable.__init__(self, config=DEFAULT_DISK_CONFIG)
         self.operators = {'operator': operator, 'rhs':rhs}
         self.build_parameter_type(inherits={'operator':operator, 'rhs':rhs})
@@ -35,6 +36,7 @@ class StationaryLinearDiscretization(BasicInterface, Parametric, Cachable):
             self.visualize = visualizer
 
         self.solution_dim = operator.range_dim
+        self.name = name
 
     def copy(self):
         c = copy.copy(self)

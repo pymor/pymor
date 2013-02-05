@@ -37,5 +37,5 @@ class ThermalBlockProblem(PoissonProblem):
                                     for x, y in product(xrange(num_blocks[0]), xrange(num_blocks[1])))
 
 
-        super(ThermalBlockProblem, self).__init__(domain, rhs, diffusion_functions, parameter_functionals)
+        super(ThermalBlockProblem, self).__init__(domain, rhs, diffusion_functions, parameter_functionals, name='ThermalBlock')
         self.parameter_space = parameter_space
