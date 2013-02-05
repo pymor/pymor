@@ -47,7 +47,8 @@ class StationaryLinearDiscretization(BasicInterface, Parametric, Cachable, Named
     @cached
     def solve(self, mu={}):
         mu = self.parse_parameter(mu)
-        self.logger.info('Solving for {} ...'.format(mu))
+        if not self.disable_logging:
+            self.logger.info('Solving {} for {} ...'.format(self.name, mu))
 
         A = self.operator.matrix(self.map_parameter(mu, 'operator'))
         if A.size == 0:
