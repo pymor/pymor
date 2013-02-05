@@ -11,7 +11,7 @@ from pymor.domaindiscretizers import DefaultDomainDiscretizer
 from pymor.discreteoperators.cg import (DiffusionOperatorP1D2, L2ProductFunctionalP1D2,
                                         DiffusionOperatorP1D1, L2ProductFunctionalP1D1)
 from pymor.discreteoperators.affine import LinearAffinelyDecomposedOperator
-from pymor.discretizations import EllipticDiscretization
+from pymor.discretizations import StationaryLinearDiscretization
 from pymor.grids import TriaGrid, OnedGrid
 
 
@@ -71,7 +71,7 @@ class PoissonCGDiscretizer(object):
                 pl.show()
                 pass
 
-        discr = EllipticDiscretization(L, F, visualizer=visualize)
+        discr = StationaryLinearDiscretization(L, F, visualizer=visualize)
         if hasattr(p, 'parameter_space'):
             discr.parameter_space = p.parameter_space
 

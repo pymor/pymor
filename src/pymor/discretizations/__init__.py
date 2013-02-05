@@ -1,1 +1,1 @@
-from .elliptic import EllipticDiscretization
+from .linear import StationaryLinearDiscretization

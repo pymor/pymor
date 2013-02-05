@@ -12,7 +12,7 @@ from pymor.domaindescriptions import BoundaryType
 from pymor.parameters import Parametric
 
 
-class EllipticDiscretization(Parametric):
+class StationaryLinearDiscretization(Parametric):
 
     operator = dict_property('operators', 'operator')
     rhs = dict_property('operators', 'rhs')
