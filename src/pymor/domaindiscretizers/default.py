@@ -6,6 +6,7 @@ import numpy as np
 from .interfaces import DomainDiscretizerInterface
 from pymor.domaindescriptions import RectDomain, LineDomain
 from pymor.grids import RectGrid, TriaGrid, OnedGrid, BoundaryInfoFromIndicators
+from pymor.la import float_cmp
 
 
 class DefaultDomainDiscretizer(DomainDiscretizerInterface):
@@ -35,10 +36,10 @@ class DefaultDomainDiscretizer(DomainDiscretizerInterface):
 
         def indicator_factory(dd, bt):
             def indicator(X):
-                L = np.logical_and(np.abs(X[:, 0] - dd.domain[0, 0]) < 10e-14, dd.left == bt)
-                R = np.logical_and(np.abs(X[:, 0] - dd.domain[1, 0]) < 10e-14, dd.right == bt)
-                T = np.logical_and(np.abs(X[:, 1] - dd.domain[1, 1]) < 10e-14, dd.top == bt)
-                B = np.logical_and(np.abs(X[:, 1] - dd.domain[0, 1]) < 10e-14, dd.bottom == bt)
+                L = np.logical_and(float_cmp(X[:, 0], dd.domain[0, 0]), dd.left == bt)
+                R = np.logical_and(float_cmp(X[:, 0], dd.domain[1, 0]), dd.right == bt)
+                T = np.logical_and(float_cmp(X[:, 1], dd.domain[1, 1]), dd.top == bt)
+                B = np.logical_and(float_cmp(X[:, 1], dd.domain[0, 1]), dd.bottom == bt)
                 LR = np.logical_or(L, R)
                 TB = np.logical_or(T, B)
                 return np.logical_or(LR, TB)
