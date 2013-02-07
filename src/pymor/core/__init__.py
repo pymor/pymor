@@ -1,5 +1,6 @@
 from .interfaces import BasicInterface
 from .logger import getLogger
+from .defaults import defaults
 
 
 # Set default log levels
