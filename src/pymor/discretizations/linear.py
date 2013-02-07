@@ -47,10 +47,12 @@ class StationaryLinearDiscretization(BasicInterface, Parametric, Cachable, Named
     @cached
     def solve(self, mu={}):
         mu = self.parse_parameter(mu)
-        if not self.disable_logging:
-            self.logger.info('Solving {} for {} ...'.format(self.name, mu))
-
         A = self.operator.matrix(self.map_parameter(mu, 'operator'))
+
+        if not self.disable_logging:
+            sparse = 'sparse' if issparse(A) else 'dense'
+            self.logger.info('Solving {} ({}) for {} ...'.format(self.name, sparse, mu))
+
         if A.size == 0:
             return np.zeros(0)
         RHS = np.squeeze(self.rhs.matrix(self.map_parameter(mu, 'rhs')))
