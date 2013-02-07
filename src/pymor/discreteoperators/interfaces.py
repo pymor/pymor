@@ -22,7 +22,7 @@ class DiscreteOperatorInterface(core.BasicInterface, Parametric, Named):
             A.apply2(V, U) = V^T*B*U
         '''
         AU = self.apply(U, mu)
-        assert AU.shape == V.shape
+        assert not pairwise or AU.shape == V.shape
         if product is None:
             if pairwise:
                 return np.sum(V * AU, axis=-1)
