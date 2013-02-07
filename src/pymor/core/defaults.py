@@ -18,7 +18,7 @@ class Defaults(BasicInterface):
     gram_schmidt_tol          = 1e-7  # according to comments in the rbmatlab source, such a high tolerance is
                                       # needed for treating nonlinear problems
     gram_schmidt_check        = True
-    gram_schmidt_check_tol    = 1e-10
+    gram_schmidt_check_tol    = 1e-7
 
     def __str__(self):
         return 'float_cmp_tol = {}'.format(self.float_cmp_tol)
