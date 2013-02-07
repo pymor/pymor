@@ -24,3 +24,7 @@ class CallOrderWarning(UserWarning):
     For an Example see pymor.discretizers.stationary.elliptic.cg
     '''
     pass
+
+
+class AccuracyError(Exception):
+    '''Is raised if the result of a computation is inaccurate'''
