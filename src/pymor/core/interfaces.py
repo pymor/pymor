@@ -98,7 +98,7 @@ class BasicInterface(object):
         if not self._locked:
             return object.__setattr__(self, key, value)
 
-        if self.__dict__.has_key(key):
+        if hasattr(self, key):
             if self._frozen:
                 raise ConstError('Changing "%s" is not allowed in "%s"' % (key, self.__class__))
             return object.__setattr__(self, key, value)
