@@ -12,6 +12,12 @@ def float_cmp(x, y, rtol=None, atol=None):
     We define almost equality as
 
        float_cmp(x,y) <=> |x - y| <= atol + |y|*rtol
+
+    NB. Numpy's allclose uses the same definition but treats arrays
+    containing infinities as close if the infinities are at the same
+    places and all other entries are close.
+    In our definition, arrays containing infinities can never be close
+    which seems more appropriate in most cases.
     '''
 
     rtol = rtol or defaults.float_cmp_tol
