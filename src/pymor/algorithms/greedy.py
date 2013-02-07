@@ -6,6 +6,7 @@ import numpy as np
 
 import pymor.core as core
 from pymor.core.interfaces import abstractmethod
+from pymor.la.algorithms import gram_schmidt
 
 
 class Greedy(core.BasicInterface):
@@ -38,7 +39,7 @@ class Greedy(core.BasicInterface):
         self.logger.info('Started greedy search on samples\n  {}'.format([str(mu) for mu in samples]))
         self.samples = samples
         self.additional_info = {}
-        self.logger.info('Initial projection ...')
+        self.logger.info('Initial projection')
         self.data = self.initial_data()
         self.reduce(self.data)
         self.errors = []; self.max_err = 0; self.max_er_mu = 0;
@@ -46,7 +47,8 @@ class Greedy(core.BasicInterface):
         while not self.finished_after_extend():
             self.errors = [self.estimate(mu) for mu in samples]
             self.max_err, self.max_err_mu = max(((err, mu) for err, mu in izip(self.errors, samples)), key=lambda t:t[0])
-            self.logger.info('Errors after {} extensions (max = {}):\n  {}\n'.format(self.extensions, self.max_err, self.errors))
+            self.logger.info('Maximal errors after {} extensions: {} (mu = {})\n'.format(self.extensions - 1, self.max_err,
+                                                                                        self.max_err_mu))
             if self.finished_after_estimate():
                 break
             self.logger.info('Extending with snapshot for mu = {}'.format(self.max_err_mu))
@@ -58,26 +60,34 @@ class Greedy(core.BasicInterface):
 
 class GreedyRB(Greedy):
 
-    def __init__(self, discretization, reductor):
+    def __init__(self, discretization, reductor, extension_algorithm='gram_schmidt'):
+        assert extension_algorithm in ('trivial', 'gram_schmidt')
         self.discretization = discretization
         self.reductor = reductor
+        self.extension_algorithm = extension_algorithm
 
     def reduce(self, data):
         self.rb_discretization, self.reconstructor = self.reductor.reduce(data)
 
     def initial_data(self):
+        self.basis_enlarged = True
         return np.zeros((0,self.discretization.solution_dim))
 
     def estimate(self, mu):
         U = self.discretization.solve(mu)
         URB = self.reconstructor.reconstruct(self.rb_discretization.solve(mu))
-        return np.sqrt(np.sum((U-URB)**2)) / np.sqrt(np.sum(U**2))
+        return np.sqrt(np.sum((U-URB)**2))
 
     def extend(self, mu):
         U = self.discretization.solve(mu)
         new_data = np.empty((self.data.shape[0] + 1, self.data.shape[1]))
         new_data[:-1, :] = self.data
         new_data[-1, :] = U
+        if self.extension_algorithm == 'gram_schmidt':
+            new_data = gram_schmidt(new_data, row_offset=self.data.shape[0])
+        self.basis_enlarged = (new_data.size > self.data.size)
+        if self.basis_enlarged:
+            self.logger.info('Extended basis to size {}'.format(self.data.shape[0]))
         return new_data
 
     def finished_after_estimate(self):
@@ -92,6 +102,9 @@ class GreedyRB(Greedy):
             return False
 
     def finished_after_extend(self):
+        if not self.basis_enlarged:
+            self.logger.info('Failed to enlarge basis. Stopping now.')
+            return True
         if self.Nmax is not None:
             if self.data.shape[0] >= self.Nmax:
                 self.logger.info('Reached maximal basis size of {} vectors'.format(self.Nmax))
@@ -105,4 +118,4 @@ class GreedyRB(Greedy):
         assert Nmax is not None or err is not None
         self.Nmax = Nmax
         self.target_err = err
-        super(GreedyRB, self).run(samples)
+        return super(GreedyRB, self).run(samples)
