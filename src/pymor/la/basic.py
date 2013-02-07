@@ -3,16 +3,7 @@ from __future__ import absolute_import, division, print_function
 import numbers
 
 import numpy as np
-
-float_cmp_tol = 2**3
-
-
-def float_cmp_get_tol():
-    return float_cmp_tol
-
-def float_cmp_set_tol(x):
-    global float_cmp_tol
-    float_cmp_tol = x
+from pymor.core import defaults
 
 
 def float_cmp(x, y, rtol=None, atol=None):
@@ -25,7 +16,7 @@ def float_cmp(x, y, rtol=None, atol=None):
        float_cmp(x,y) <=> |x - y| <= atol*eps + |y|*rtol*eps
     '''
 
-    rtol = rtol or float_cmp_tol
+    rtol = rtol or defaults.float_cmp_tol
     atol = atol or rtol
     if isinstance(x, (numbers.Rational, numbers.Integral)):
         x = float(x)
