@@ -3,28 +3,32 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from pymor.core import defaults
+from pymor.core.exceptions import AccuracyError
 from pymor.la import float_cmp_all
 from pymor.discreteoperators import DiscreteOperatorInterface, GenericLinearOperator
 
 
-def gram_schmidt(A, product=None, tol=None, row_offset=0, find_row_duplicates=True, find_col_duplicates=False):
+def gram_schmidt(A, product=None, tol=None, row_offset=0, find_row_duplicates=True, find_col_duplicates=False,
+                 check=None, check_tol=None):
 
     A = A.copy()
     if product is not None and not isinstance(product, DiscreteOperatorInterface):
         product = GenericLinearOperator(product)
     tol = defaults.gram_schmidt_tol if tol is None else tol
+    check = defaults.gram_schmidt_tol if check is None else check
+    check_tol = check_tol or defaults.gram_schmidt_check_tol
 
     # find duplicate rows since in some circumstances these cannot be detected in the main loop
     # (is this really needed or is in this cases the tolerance poorly chosen anyhow)
     if find_row_duplicates:
-        for i in xrange(A.shape[0]):
+        for i in xrange(row_offset, A.shape[0]):
             for j in xrange(i + 1, A.shape[0]):
                 if float_cmp_all(A[i], A[j]):
                     A[j] = 0
 
     # find duplicate columns
     if find_col_duplicates:
-        for i in xrange(A.shape[1]):
+        for i in xrange(row_offest, A.shape[1]):
             for j in xrange(i, A.shape[1]):
                 if float_cmp_all(A[:, i], A[:, j]):
                     A[:, j] = 0
@@ -50,4 +54,10 @@ def gram_schmidt(A, product=None, tol=None, row_offset=0, find_row_duplicates=Tr
         A[i + 1:] -= p[..., np.newaxis] * A[i]
 
     rows = np.logical_not(np.all(A == 0, axis=-1))
+
+    if check:
+        if not float_cmp_all(A.dot(A.T), np.eye(A.shape[0]), check_tol):
+            err = np.max(np.abs(A.dot(A.T) - np.eye(A.shape[0])))
+            raise AccuracyError('result not orthogonal (max err={})'.format(err))
+
     return A[rows]
