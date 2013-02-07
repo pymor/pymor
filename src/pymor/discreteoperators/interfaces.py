@@ -32,7 +32,7 @@ class DiscreteOperatorInterface(core.BasicInterface, Parametric, Named):
             return product.apply2(V, AU, pairwise)
         else:
             if pairwise:
-                return np.sum(V, np.dot(product, AU.T).T, axis=-1)
+                return np.sum(V * np.dot(product, AU.T).T, axis=-1)
             else:
                 return np.dot(V, np.dot(product, AU.T))
 
