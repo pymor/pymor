@@ -11,6 +11,7 @@ from pymor.core.cache import Cachable, cached, DEFAULT_DISK_CONFIG
 from pymor.tools import dict_property, Named
 from pymor.domaindescriptions import BoundaryType
 from pymor.parameters import Parametric
+from pymor.discreteoperators import LinearDiscreteOperatorInterface
 
 
 class StationaryLinearDiscretization(BasicInterface, Parametric, Cachable, Named):
@@ -20,6 +21,11 @@ class StationaryLinearDiscretization(BasicInterface, Parametric, Cachable, Named
     rhs = dict_property('operators', 'rhs')
 
     def __init__(self, operator, rhs, solver=None, visualizer=None, name=None):
+        assert isinstance(operator, LinearDiscreteOperatorInterface)
+        assert isinstance(rhs, LinearDiscreteOperatorInterface)
+        assert operator.source_dim == operator.range_dim == rhs.source_dim
+        assert rhs.range_dim == 1
+
         Cachable.__init__(self, config=DEFAULT_DISK_CONFIG)
         self.operators = {'operator': operator, 'rhs':rhs}
         self.build_parameter_type(inherits={'operator':operator, 'rhs':rhs})
