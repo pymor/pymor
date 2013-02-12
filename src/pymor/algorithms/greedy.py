@@ -47,7 +47,7 @@ class Greedy(core.BasicInterface):
         while not self.finished_after_extend():
             self.errors = [self.estimate(mu) for mu in samples]
             self.max_err, self.max_err_mu = max(((err, mu) for err, mu in izip(self.errors, samples)), key=lambda t:t[0])
-            self.logger.info('Maximal errors after {} extensions: {} (mu = {})\n'.format(self.extensions - 1, self.max_err,
+            self.logger.info('Maximal errors after {} extensions: {} (mu = {})\n'.format(self.extensions, self.max_err,
                                                                                         self.max_err_mu))
             if self.finished_after_estimate():
                 break
@@ -87,7 +87,7 @@ class GreedyRB(Greedy):
             new_data = gram_schmidt(new_data, row_offset=self.data.shape[0])
         self.basis_enlarged = (new_data.size > self.data.size)
         if self.basis_enlarged:
-            self.logger.info('Extended basis to size {}'.format(self.data.shape[0]))
+            self.logger.info('Extended basis to size {}'.format(new_data.shape[0]))
         return new_data
 
     def finished_after_estimate(self):
