@@ -89,6 +89,10 @@ class Parametric(object):
         assert dict(self.parameter_type) == dict(ps.parameter_type)
         self._parameter_space = ps
 
+    @property
+    def parametric(self):
+        return len(self.parameter_type) > 0
+
     def parse_parameter(self, mu):
         return parse_parameter(mu, self.parameter_type)
 
