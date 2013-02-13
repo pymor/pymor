@@ -10,7 +10,7 @@ import numpy as np
 
 from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import PoissonCGDiscretizer
-from pymor.reductors import GenericRBReductor
+from pymor.reductors.linear import StationaryAffineLinearReductor
 from pymor.algorithms import GreedyRB
 
 # set log level
@@ -51,7 +51,7 @@ if plot > 1:
 
 print('RB generation ...')
 
-reductor = GenericRBReductor(discretization)
+reductor = StationaryAffineLinearReductor(discretization, error_product=discretization.h1_product)
 greedy = GreedyRB(discretization, reductor, error_norm=discretization.h1_norm, extension_algorithm=ext_alg)
 RB = greedy.run(discretization.parameter_space.sample_uniformly(snap_size), Nmax=rb_size)
 rb_discretization, reconstructor = greedy.rb_discretization, greedy.reconstructor
