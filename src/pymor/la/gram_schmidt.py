@@ -4,7 +4,7 @@ import numpy as np
 
 from pymor.core import defaults
 from pymor.core.exceptions import AccuracyError
-from pymor.la import float_cmp_all
+from pymor.tools import float_cmp_all
 from pymor.discreteoperators import DiscreteOperatorInterface, GenericLinearOperator
 
 

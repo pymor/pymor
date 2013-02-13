@@ -6,7 +6,7 @@ import numpy as np
 
 import pymor.core as core
 from pymor.core.interfaces import abstractmethod
-from pymor.la.algorithms import gram_schmidt
+from pymor.la import gram_schmidt
 
 
 class Greedy(core.BasicInterface):

@@ -5,7 +5,7 @@ from collections import OrderedDict
 import numpy as np
 
 import pymor.core as core
-from pymor.la import float_cmp_all
+from pymor.tools import float_cmp_all
 from .interfaces import ParameterSpaceInterface
 
 

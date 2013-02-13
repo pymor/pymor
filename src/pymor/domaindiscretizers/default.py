@@ -6,7 +6,7 @@ import numpy as np
 from .interfaces import DomainDiscretizerInterface
 from pymor.domaindescriptions import RectDomain, LineDomain
 from pymor.grids import RectGrid, TriaGrid, OnedGrid, BoundaryInfoFromIndicators
-from pymor.la import float_cmp
+from pymor.tools import float_cmp
 
 
 class DefaultDomainDiscretizer(DomainDiscretizerInterface):

@@ -7,7 +7,7 @@ from .logger import getLogger
 
 class Defaults(BasicInterface):
     '''
-    float_cmp_tol:              tolerance for pymor.la.float_cmp
+    float_cmp_tol:              tolerance for pymor.tools.float_cmp
 
     gram_schmidt_tol:           tolerance for pymor.la.algroithms.gram_schmidt
     gram_schmidt_check:         check orthogonality of result

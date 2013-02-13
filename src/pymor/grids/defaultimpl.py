@@ -4,7 +4,7 @@ import numpy as np
 
 from pymor.core.cache import Cachable, cached
 from pymor.core.exceptions import CodimError
-from pymor.la.algorithms.inverse import inv_transposed_two_by_two
+from pymor.la.inverse import inv_transposed_two_by_two
 from pymor.tools.relations import inverse_relation
 
 class ConformalTopologicalGridDefaultImplementations(Cachable):

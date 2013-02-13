@@ -1,1 +1,1 @@
-from .basic import float_cmp, float_cmp_all
+from .gram_schmidt import gram_schmidt
