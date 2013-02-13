@@ -6,6 +6,17 @@ from .interfaces import BoundaryInfoInterface
 from pymor.domaindescriptions import BoundaryType
 
 
+class EmptyBoundaryInfo(BoundaryInfoInterface):
+
+    def __init__(self, grid):
+        super(EmptyBoundaryInfo, self).__init__()
+        self.grid = grid
+        self.boundary_types = set()
+
+    def mask(self, boundary_type, codim):
+        assert False, ValueError('Has no boundary_type "{}"'.format(boundary_type))
+
+
 class BoundaryInfoFromIndicators(BoundaryInfoInterface):
 
     def __init__(self, grid, indicators):

@@ -1,5 +1,5 @@
 from .interfaces import BoundaryInfoInterface
-from .boundaryinfos import BoundaryInfoFromIndicators, AllDirichletBoundaryInfo
+from .boundaryinfos import EmptyBoundaryInfo, BoundaryInfoFromIndicators, AllDirichletBoundaryInfo
 from .rect import RectGrid
 from .tria import TriaGrid
 from .oned import OnedGrid
