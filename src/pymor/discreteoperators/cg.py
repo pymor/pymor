@@ -97,6 +97,45 @@ class L2ProductFunctionalP1D1(LinearDiscreteOperatorInterface):
         return I.reshape((1, I.size))
 
 
+class L2ProductP1D2(LinearDiscreteOperatorInterface):
+    '''Gram matrix of L2 product for linear finite elements in two dimensions.
+    '''
+
+    def __init__(self, grid, name=None):
+        assert grid.reference_element(0) == triangle
+        self.source_dim = grid.size(1)
+        self.range_dim = self.source_dim
+        self.grid = grid
+        self.name = name
+
+    def assemble(self, mu={}):
+        g = self.grid
+
+        # our shape functions
+        SF = [lambda X: 1 - X[..., 0] - X[..., 1],
+              lambda X: X[..., 0],
+              lambda X: X[..., 1]                 ]
+
+        q, w = triangle.quadrature(order=2)
+
+        # evaluate the shape functions on the quadrature points
+        SFQ = np.array(tuple(f(q) for f in SF))
+
+        self.logger.info('Integrate the products of the shape functions on each element')
+        # -> shape = (g.size(0), number of shape functions ** 2)
+        SF_INTS = np.einsum('iq,jq,q,e->eij', SFQ, SFQ, w, g.integration_elements(0)).ravel()
+
+        self.logger.info('Determine global dofs ...')
+        SF_I0 = np.repeat(g.subentities(0, 2), 3, axis=1).ravel()
+        SF_I1 = np.tile(g.subentities(0, 2), [1, 3]).ravel()
+
+        self.logger.info('Assemble system matrix ...')
+        A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(2), g.size(2)))
+        A = csr_matrix(A)
+
+        return A
+
+
 class DiffusionOperatorP1D2(LinearDiscreteOperatorInterface):
     '''Simple Diffusion Operator for linear finite elements in two dimensions on an triangular grid.
     Add more functionality later ...
