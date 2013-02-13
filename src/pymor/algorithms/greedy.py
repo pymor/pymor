@@ -6,7 +6,7 @@ import numpy as np
 
 import pymor.core as core
 from pymor.core.interfaces import abstractmethod
-from pymor.la import gram_schmidt
+from pymor.la import gram_schmidt, l2_norm
 
 
 class Greedy(core.BasicInterface):
@@ -60,10 +60,11 @@ class Greedy(core.BasicInterface):
 
 class GreedyRB(Greedy):
 
-    def __init__(self, discretization, reductor, extension_algorithm='gram_schmidt'):
+    def __init__(self, discretization, reductor, error_norm=l2_norm, extension_algorithm='gram_schmidt'):
         assert extension_algorithm in ('trivial', 'gram_schmidt')
         self.discretization = discretization
         self.reductor = reductor
+        self.error_norm = l2_norm
         self.extension_algorithm = extension_algorithm
 
     def reduce(self, data):
@@ -76,7 +77,7 @@ class GreedyRB(Greedy):
     def estimate(self, mu):
         U = self.discretization.solve(mu)
         URB = self.reconstructor.reconstruct(self.rb_discretization.solve(mu))
-        return np.sqrt(np.sum((U-URB)**2))
+        return self.error_norm(U - URB)
 
     def extend(self, mu):
         U = self.discretization.solve(mu)
