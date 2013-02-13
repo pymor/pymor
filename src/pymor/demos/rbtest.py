@@ -58,25 +58,25 @@ print(discretization.parameter_info())
 print('RB generation ...')
 
 reductor = GenericRBReductor(discretization)
-greedy = GreedyRB(discretization, reductor)
+greedy = GreedyRB(discretization, reductor, error_norm=discretization.h1_norm)
 greedy.run(parameter_space.sample_uniformly(snapshot_size), Nmax=rbsize)
 rb_discretization, reconstructor = greedy.rb_discretization, greedy.reconstructor
 
 print('\nSearching for maximum error on random snapshots ...')
-l2_err_max = -1
+h1_err_max = -1
 for mu in parameter_space.sample_randomly(10):
     print('Solving RB-Scheme for mu = {} ... '.format(mu), end='')
     URB = reconstructor.reconstruct(rb_discretization.solve(mu))
     U = discretization.solve(mu)
-    l2_err = np.sqrt(np.sum((U-URB)**2)) / np.sqrt(np.sum(U**2))
-    if l2_err > l2_err_max:
-        l2_err_max = l2_err
+    h1_err = discretization.h1_norm(U - URB)
+    if h1_err > h1_err_max:
+        h1_err_max = h1_err
         Umax = U
         URBmax = URB
         mumax = mu
-    print('rel L2-error = {}'.format(l2_err))
+    print('H1-error = {}'.format(h1_err))
 
 print('')
-print('Maximal relative L2-error: {} for mu = {}'.format(l2_err_max, mu))
+print('Maximal relative H1-error: {} for mu = {}'.format(h1_err_max, mu))
 if plot:
     discretization.visualize(U-URB)

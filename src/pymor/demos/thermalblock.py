@@ -52,33 +52,33 @@ if plot > 1:
 print('RB generation ...')
 
 reductor = GenericRBReductor(discretization)
-greedy = GreedyRB(discretization, reductor, extension_algorithm=ext_alg)
+greedy = GreedyRB(discretization, reductor, error_norm=discretization.h1_norm, extension_algorithm=ext_alg)
 RB = greedy.run(discretization.parameter_space.sample_uniformly(snap_size), Nmax=rb_size)
 rb_discretization, reconstructor = greedy.rb_discretization, greedy.reconstructor
 
 print('\nSearching for maximum error on random snapshots ...')
-l2_err_max = -1
+h1_err_max = -1
 cond_max = -1
 for mu in discretization.parameter_space.sample_randomly(20):
     print('Solving RB-Scheme for mu = {} ... '.format(mu), end='')
     URB = reconstructor.reconstruct(rb_discretization.solve(mu))
     U = discretization.solve(mu)
-    l2_err = np.sqrt(np.sum((U-URB)**2))
+    h1_err = discretization.h1_norm(U-URB)
     cond = np.linalg.cond(rb_discretization.operator.matrix(mu))
-    if l2_err > l2_err_max:
-        l2_err_max = l2_err
+    if h1_err > h1_err_max:
+        h1_err_max = h1_err
         Umax = U
         URBmax = URB
         mumax = mu
     if cond > cond_max:
         cond_max = cond
         cond_max_mu = mu
-    print('L2-error = {}, condition = {}'.format(l2_err, cond))
+    print('H1-error = {}, condition = {}'.format(h1_err, cond))
 
 print('')
 print('Basis size: {}'.format(RB.shape[0]))
 print('')
-print('Maximal L2-error: {} for mu = {}'.format(l2_err_max, mu))
+print('Maximal H1-error: {} for mu = {}'.format(h1_err_max, mu))
 print('')
 print('Maximal condition of system matrix: {} for mu = {}'.format(cond_max, cond_max_mu))
 sys.stdout.flush()
