@@ -12,7 +12,8 @@ from pymor.discreteoperators.cg import (DiffusionOperatorP1D2, L2ProductFunction
                                         DiffusionOperatorP1D1, L2ProductFunctionalP1D1)
 from pymor.discreteoperators.affine import LinearAffinelyDecomposedOperator
 from pymor.discretizations import StationaryLinearDiscretization
-from pymor.grids import TriaGrid, OnedGrid
+from pymor.grids import TriaGrid, OnedGrid, EmptyBoundaryInfo
+from pymor.la import induced_norm
 
 
 class PoissonCGDiscretizer(object):
@@ -28,7 +29,8 @@ class PoissonCGDiscretizer(object):
         else:
             return domain_discretizer.discretize(diameter=diameter)
 
-    def discretize(self, domain_discretizer=None, diameter=None, grid=None, boundary_info=None):
+    def discretize(self, domain_discretizer=None, diameter=None, grid=None, boundary_info=None,
+                   h1_product=True):
         assert grid is None or boundary_info is None
         assert boundary_info is None or grid is None
         assert grid is None or domain_discretizer is None
@@ -72,6 +74,11 @@ class PoissonCGDiscretizer(object):
                 pass
 
         discr = StationaryLinearDiscretization(L, F, visualizer=visualize, name='{}_CG'.format(p.name))
+
+        if h1_product:
+            discr.h1_product = Operator(grid, EmptyBoundaryInfo(grid), name='h1_product')
+            discr.h1_norm = induced_norm(discr.h1_product)
+
         if hasattr(p, 'parameter_space'):
             discr.parameter_space = p.parameter_space
 
