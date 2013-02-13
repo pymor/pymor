@@ -149,10 +149,10 @@ class DiffusionOperatorP1D2(LinearDiscreteOperatorInterface):
             if self.dirichlet_clear_columns:
                 SF_INTS = np.where(bi.dirichlet_mask(2)[SF_I1], 0, SF_INTS)
 
-        if not self.dirichlet_clear_diag:
-            SF_INTS = np.hstack((SF_INTS, np.ones(bi.dirichlet_boundaries(2).size)))
-            SF_I0 = np.hstack((SF_I0, bi.dirichlet_boundaries(2)))
-            SF_I1 = np.hstack((SF_I1, bi.dirichlet_boundaries(2)))
+            if not self.dirichlet_clear_diag:
+                SF_INTS = np.hstack((SF_INTS, np.ones(bi.dirichlet_boundaries(2).size)))
+                SF_I0 = np.hstack((SF_I0, bi.dirichlet_boundaries(2)))
+                SF_I1 = np.hstack((SF_I1, bi.dirichlet_boundaries(2)))
 
 
         self.logger.info('Assemble system matrix ...')
@@ -212,10 +212,10 @@ class DiffusionOperatorP1D1(LinearDiscreteOperatorInterface):
             if self.dirichlet_clear_columns:
                 SF_INTS = np.where(bi.dirichlet_mask(1)[SF_I1], 0, SF_INTS)
 
-        if not self.dirichlet_clear_diag:
-            SF_INTS = np.hstack((SF_INTS, np.ones(bi.dirichlet_boundaries(1).size)))
-            SF_I0 = np.hstack((SF_I0, bi.dirichlet_boundaries(1)))
-            SF_I1 = np.hstack((SF_I1, bi.dirichlet_boundaries(1)))
+            if not self.dirichlet_clear_diag:
+                SF_INTS = np.hstack((SF_INTS, np.ones(bi.dirichlet_boundaries(1).size)))
+                SF_I0 = np.hstack((SF_I0, bi.dirichlet_boundaries(1)))
+                SF_I1 = np.hstack((SF_I1, bi.dirichlet_boundaries(1)))
 
 
         self.logger.info('Assemble system matrix ...')
