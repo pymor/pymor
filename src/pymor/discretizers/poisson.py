@@ -8,9 +8,10 @@ import pymor.core as core
 from pymor.analyticalproblems import PoissonProblem
 from pymor.domaindescriptions import BoundaryType
 from pymor.domaindiscretizers import DefaultDomainDiscretizer
-from pymor.discreteoperators.cg import (DiffusionOperatorP1D2, L2ProductFunctionalP1D2,
+from pymor.discreteoperators.cg import (DiffusionOperatorP1D2, L2ProductFunctionalP1D2, L2ProductP1D2,
                                         DiffusionOperatorP1D1, L2ProductFunctionalP1D1)
 from pymor.discreteoperators.affine import LinearAffinelyDecomposedOperator
+from pymor.discreteoperators import GenericLinearOperator
 from pymor.discretizations import StationaryLinearDiscretization
 from pymor.grids import TriaGrid, OnedGrid, EmptyBoundaryInfo
 from pymor.la import induced_norm
@@ -38,6 +39,7 @@ class PoissonCGDiscretizer(object):
             grid, boundary_info = self.discretize_domain(domain_discretizer, diameter)
 
         assert isinstance(grid, (OnedGrid, TriaGrid))
+        assert not h1_product or isinstance(grid, TriaGrid)
 
         Operator = DiffusionOperatorP1D2 if isinstance(grid, TriaGrid) else DiffusionOperatorP1D1
         Functional = L2ProductFunctionalP1D2 if isinstance(grid, TriaGrid) else L2ProductFunctionalP1D1
@@ -76,7 +78,9 @@ class PoissonCGDiscretizer(object):
         discr = StationaryLinearDiscretization(L, F, visualizer=visualize, name='{}_CG'.format(p.name))
 
         if h1_product:
-            discr.h1_product = Operator(grid, EmptyBoundaryInfo(grid), name='h1_product')
+            AH1 = Operator(grid, EmptyBoundaryInfo(grid), name='h1_product').matrix()
+            AL2 = L2ProductP1D2(grid).matrix()
+            discr.h1_product = GenericLinearOperator(AH1 + AL2)
             discr.h1_norm = induced_norm(discr.h1_product)
 
         if hasattr(p, 'parameter_space'):
