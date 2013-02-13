@@ -278,14 +278,25 @@ class Triangle(ReferenceElementInterface):
         return np.max((VN0, VN1, VN2), axis=0)
 
     def quadrature(self, order=None, npoints=None, quadrature_type='default'):
+        orders = {'center':(1,), 'edge_centers':(2,)}
+        points = {'center':(1,), 'edge_centers':(3,)}
+        assert order is not None or npoints is not None, ValueError('must specify "order" or "npoints"')
+        assert order is None or npoints is None, ValueError('cannot specify "order" and "npoints"')
         if quadrature_type == 'default':
-            assert order is not None or npoints is not None, ValueError('must specify "order" or "npoints"')
-            assert order is None or npoints is None, ValueError('cannot specify "order" and "npoints"')
-            assert order is None or order is 0, NotImplementedError
-            assert npoints is None or npoints is 1, NotImplementedError
+            if order == 1 or npoints == 1:
+                quadrature_type = 'center'
+            else:
+                quadrature_type = 'edge_centers'
+        assert order is None or order in orders[quadrature_type], NotImplementedError
+        assert npoints is None or npoints is points[quadrature_type], NotImplementedError
+
+        if quadrature_type == 'center':
             return np.array((self.center(),)), np.array(self.volume)
         else:
-            raise NotImplementedError('quadrature_type must be "default"')
+            #this would work for arbitrary reference elements
+            #L, A = self.subentity_embedding(1)
+            #return np.array(L.dot(self.sub_reference_element().center()) + A), np.ones(3) / len(A) * self.volume
+            return np.array(([0.5, 0.5], [0, 0.5], [0.5, 0])), np.ones(3) / 3 * self.volume
 
 
 triangle = Triangle()
