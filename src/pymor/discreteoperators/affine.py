@@ -2,6 +2,8 @@ from __future__ import absolute_import, division, print_function
 
 from itertools import izip
 
+import numpy as np
+
 from .interfaces import LinearDiscreteOperatorInterface
 
 
@@ -49,3 +51,9 @@ class LinearAffinelyDecomposedOperator(LinearDiscreteOperatorInterface):
             A = A + self.operator_affine_part.matrix(self.map_parameter(mu, 'operator_affine_part'))
 
         return A
+
+    def evaluate_coefficients(self, mu):
+        if self.functionals is not None:
+            return np.array(tuple(f(self.map_parameter(mu, 'functionals', n)) for n, f in enumerate(self.functionals)))
+        else:
+            return self.map_parameter(mu)['coefficients']
