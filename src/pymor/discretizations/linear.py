@@ -6,7 +6,7 @@ import numpy as np
 from scipy.sparse.linalg import bicg
 from scipy.sparse import issparse
 
-from pymor.core import BasicInterface
+from pymor.core import BasicInterface, defaults
 from pymor.core.cache import Cachable, cached, DEFAULT_DISK_CONFIG
 from pymor.tools import dict_property, Named
 from pymor.domaindescriptions import BoundaryType
@@ -32,7 +32,7 @@ class StationaryLinearDiscretization(BasicInterface, Parametric, Cachable, Named
 
         def default_solver(A, RHS):
             if issparse(A):
-                U, info = bicg(A, RHS)
+                U, info = bicg(A, RHS, tol=defaults.bicg_tol, maxiter=defaults.bicg_maxiter)
             else:
                 U = np.linalg.solve(A, RHS)
             return U
