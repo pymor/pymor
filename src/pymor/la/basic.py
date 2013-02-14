@@ -18,6 +18,13 @@ def induced_norm(product):
         product = GenericLinearOperator(product)
 
     def norm(U, mu={}):
-        return m.sqrt(product.apply2(U, U, mu, pairwise=True))
+        norm_squared = product.apply2(U, U, mu, pairwise=True)
+        if norm_squared < 0:
+            if (- norm_squared < defaults.induced_norm_tol):
+                return 0
+            if defaults.induced_norm_raise_negative:
+                raise ValueError('norm is not negative (square = {})'.format(norm_squared))
+            return 0
+        return m.sqrt(norm_squared)
 
     return norm
