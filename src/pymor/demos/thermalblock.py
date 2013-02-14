@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import sys
 import math as m
+import time
 
 import numpy as np
 
@@ -18,16 +19,24 @@ from pymor.algorithms import GreedyRB
 from pymor.core import getLogger; getLogger('pymor.algorithms').setLevel('INFO')
 from pymor.core import getLogger; getLogger('pymor.discretizations').setLevel('INFO')
 
-if len(sys.argv) < 8:
-    sys.exit('Usage: {} X Y N SNAP RB EXT_ALG PLOT'.format(sys.argv[0]))
+# parse arguments
+if len(sys.argv) < 11:
+    sys.exit('Usage: {} X Y N SNAP RB_SIZE USE_ESTIMATOR ESTIMATOR_NORM EXTENSION_ALG TEST_SIZE PLOT'.format(sys.argv[0]))
 
 nx = int(sys.argv[1])
 ny = int(sys.argv[2])
 n = int(sys.argv[3])
 snap_size = int(sys.argv[4])
 rb_size = int(sys.argv[5])
-ext_alg = sys.argv[6]
-plot = bool(int(sys.argv[7]))
+use_estimator = bool(int(sys.argv[6]))
+estimator_norm = sys.argv[7].lower()
+assert estimator_norm in {'trivial', 'h1'}
+ext_alg = sys.argv[8]
+assert ext_alg in {'trivial', 'gram_schmidt'}
+test_size = int(sys.argv[9])
+plot = bool(int(sys.argv[10]))
+
+
 
 print('Solving on TriaGrid(({0},{0}))'.format(n))
 
@@ -51,15 +60,19 @@ if plot > 1:
 
 print('RB generation ...')
 
-reductor = StationaryAffineLinearReductor(discretization, error_product=discretization.h1_product)
-greedy = GreedyRB(discretization, reductor, error_norm=discretization.h1_norm, extension_algorithm=ext_alg)
+tic = time.time()
+error_product = discretization.h1_product if estimator_norm == 'h1' else None
+reductor = StationaryAffineLinearReductor(discretization, error_product=error_product)
+greedy = GreedyRB(discretization, reductor, use_estimator=use_estimator, error_norm=discretization.h1_norm, extension_algorithm=ext_alg)
 RB = greedy.run(discretization.parameter_space.sample_uniformly(snap_size), Nmax=rb_size)
 rb_discretization, reconstructor = greedy.rb_discretization, greedy.reconstructor
 
 print('\nSearching for maximum error on random snapshots ...')
+
+toc = time.time()
 h1_err_max = -1
 cond_max = -1
-for mu in discretization.parameter_space.sample_randomly(20):
+for mu in discretization.parameter_space.sample_randomly(test_size):
     print('Solving RB-Scheme for mu = {} ... '.format(mu), end='')
     URB = reconstructor.reconstruct(rb_discretization.solve(mu))
     U = discretization.solve(mu)
@@ -74,13 +87,34 @@ for mu in discretization.parameter_space.sample_randomly(20):
         cond_max = cond
         cond_max_mu = mu
     print('H1-error = {}, condition = {}'.format(h1_err, cond))
+tac = time.time()
 
-print('')
-print('Basis size: {}'.format(RB.shape[0]))
-print('')
-print('Maximal H1-error: {} for mu = {}'.format(h1_err_max, mu))
-print('')
-print('Maximal condition of system matrix: {} for mu = {}'.format(cond_max, cond_max_mu))
+t_offline = toc - tic
+t_est = tac - toc
+
+print('''
+*** RESULTS ***
+
+Problem:
+   number of blocks:                   {nx}x{ny}
+   h:                                  sqrt(2)/{n}
+
+Greedy basis generation:
+   number of snapshots:                {snap_size}^({nx}x{ny})
+   used estimator:                     {use_estimator}
+   estimator norm:                     {estimator_norm}
+   extension method:                   {ext_alg}
+   prescribed basis size:              {rb_size}
+   actual basis size:                  {RB.shape[0]}
+   elapsed time:                       {t_offline}
+
+Stochastic error estimation:
+   number of samples:                  {test_size}
+   maximal H1-error:                   {h1_err_max}  (mu = {mumax})
+   maximal condition of system matrix: {cond_max}  (mu = {cond_max_mu})
+   elapsed time:                       {t_est}
+'''.format(**locals()))
+
 sys.stdout.flush()
 if plot:
     discretization.visualize(U-URB)
