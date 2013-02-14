@@ -45,6 +45,7 @@ class Greedy(core.BasicInterface):
         self.errors = []; self.max_err = 0; self.max_er_mu = 0;
         self.extensions = 0
         while not self.finished_after_extend():
+            self.logger.info('Estimating errors ...')
             self.errors = [self.estimate(mu) for mu in samples]
             self.max_err, self.max_err_mu = max(((err, mu) for err, mu in izip(self.errors, samples)), key=lambda t:t[0])
             self.logger.info('Maximal errors after {} extensions: {} (mu = {})\n'.format(self.extensions, self.max_err,
@@ -60,24 +61,37 @@ class Greedy(core.BasicInterface):
 
 class GreedyRB(Greedy):
 
-    def __init__(self, discretization, reductor, error_norm=l2_norm, extension_algorithm='gram_schmidt'):
+    def __init__(self, discretization, reductor, use_estimator=True, error_norm=l2_norm, extension_algorithm='gram_schmidt'):
         assert extension_algorithm in ('trivial', 'gram_schmidt')
         self.discretization = discretization
         self.reductor = reductor
+        self.use_estimator = use_estimator
         self.error_norm = l2_norm
         self.extension_algorithm = extension_algorithm
+        self.estimator_warning = False
 
     def reduce(self, data):
         self.rb_discretization, self.reconstructor = self.reductor.reduce(data)
+        self.estimator_warning = False
 
     def initial_data(self):
         self.basis_enlarged = True
         return np.zeros((0,self.discretization.solution_dim))
 
     def estimate(self, mu):
-        U = self.discretization.solve(mu)
-        URB = self.reconstructor.reconstruct(self.rb_discretization.solve(mu))
-        return self.error_norm(U - URB)
+        est = self.use_estimator
+        if self.use_estimator and not hasattr(self.rb_discretization, 'estimate'):
+            if not self.estimator_warning:
+                self.logger.warn('Reduced discretization has no estimator, computing detailed solution')
+                self.estimator_warning = True
+            est = False
+
+        if est:
+            return self.rb_discretization.estimate(self.rb_discretization.solve(mu), mu)
+        else:
+            U = self.discretization.solve(mu)
+            URB = self.reconstructor.reconstruct(self.rb_discretization.solve(mu))
+            return self.error_norm(U - URB)
 
     def extend(self, mu):
         U = self.discretization.solve(mu)
