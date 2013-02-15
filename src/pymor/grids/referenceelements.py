@@ -37,6 +37,10 @@ class Point(ReferenceElementInterface):
     def mapped_diameter(self, A):
         return np.ones(A.shape[:-2])
 
+    def quadrature_info(self):
+        # of course, the quadrature is of abritrary oder ...
+        return {'gauss':tuple(xrange(42))}, {'gauss':(1,)}
+
     def quadrature(self, order=None, npoints=None, quadrature_type='default'):
         if quadrature_type == 'default' or quadrature_type == 'gauss':
             assert npoints is None or npoints == 1, ValueError('there is only one point in dimension 0!')
@@ -91,6 +95,9 @@ class Line(ReferenceElementInterface):
 
     def mapped_diameter(self, A):
         return np.apply_along_axis(np.linalg.norm, -2, A)
+
+    def quadrature_info(self):
+        return {'gauss':GaussQuadratures.orders}, {'gauss':map(len, GaussQuadratures.points)}
 
     def quadrature(self, order=None, npoints=None, quadrature_type='default'):
         if quadrature_type == 'default' or quadrature_type == 'gauss':
@@ -178,6 +185,9 @@ class Square(ReferenceElementInterface):
         VN0 = np.apply_along_axis(np.linalg.norm, -1, V0)
         VN1 = np.apply_along_axis(np.linalg.norm, -1, V1)
         return np.max((VN0, VN1), axis=0)
+
+    def quadrature_info(self):
+        return {'tensored_gauss':self._quadrature_orders}, {'tensored_gauss': self._quadrature_npoints}
 
     def quadrature(self, order=None, npoints=None, quadrature_type='default'):
         if quadrature_type == 'default' or quadrature_type == 'tensored_gauss':
@@ -277,9 +287,11 @@ class Triangle(ReferenceElementInterface):
         VN2 = np.apply_along_axis(np.linalg.norm, -1, V2)
         return np.max((VN0, VN1, VN2), axis=0)
 
+    def quadrature_info(self):
+        return ({'center':(1,), 'edge_centers':(2,)},
+                {'center':(1,), 'edge_centers':(3,)} )
+
     def quadrature(self, order=None, npoints=None, quadrature_type='default'):
-        orders = {'center':(1,), 'edge_centers':(2,)}
-        points = {'center':(1,), 'edge_centers':(3,)}
         assert order is not None or npoints is not None, ValueError('must specify "order" or "npoints"')
         assert order is None or npoints is None, ValueError('cannot specify "order" and "npoints"')
         if quadrature_type == 'default':
@@ -287,16 +299,20 @@ class Triangle(ReferenceElementInterface):
                 quadrature_type = 'center'
             else:
                 quadrature_type = 'edge_centers'
-        assert order is None or order in orders[quadrature_type], NotImplementedError
-        assert npoints is None or npoints is points[quadrature_type], NotImplementedError
 
         if quadrature_type == 'center':
+            assert order is None or order == 1
+            assert npoints is None or npoints == 1
             return np.array((self.center(),)), np.array(self.volume)
-        else:
+        elif quadrature_type == 'edge_centers':
+            assert order is None or order <= 2
+            assert npoints is None or npoints == 3
             #this would work for arbitrary reference elements
             #L, A = self.subentity_embedding(1)
             #return np.array(L.dot(self.sub_reference_element().center()) + A), np.ones(3) / len(A) * self.volume
             return np.array(([0.5, 0.5], [0, 0.5], [0.5, 0])), np.ones(3) / 3 * self.volume
+        else:
+            raise NotImplementedError('quadrature_type must be "center" or "edge_centers"')
 
 
 triangle = Triangle()

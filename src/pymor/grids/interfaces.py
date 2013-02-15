@@ -166,13 +166,25 @@ class ReferenceElementInterface(ISimpleReferenceElementDefaultImplementation, co
         pass
 
     @core.interfaces.abstractmethod
-    def quadrature(order=None, npoints=None, quadrature_type='default'):
+    def quadrature(self, order=None, npoints=None, quadrature_type='default'):
         '''returns tuple `(P, W)` where P is an array of quadrature points with
         corresponding weights `W`.
 
         The quadrature is of order `order` or has `npoints` integration points.
         '''
         pass
+
+    @core.interfaces.abstractmethod
+    def quadrature_info(self):
+        '''returns a tuple of dicts `(O, N)` where O[quadrature_type] is a list
+        of orders which are implemented for `quadrature_type` and N[quadrature_type]
+        is a list of the corrsponding numbers of integration points.
+        '''
+        pass
+
+    def quadrature_types(self):
+        o, _ = self.quadrature_info()
+        return set(o.keys())
 
 
 class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopologicalGridInterface):
