@@ -252,7 +252,7 @@ class AffineGridDefaultImplementations(object):
     def _diameters(self, codim):
         assert 0 <= codim <= self.dim,\
             CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
-        return np.squeeze(self.reference_element(codim).mapped_diameter(self.embeddings(codim)[0]))
+        return np.reshape(self.reference_element(codim).mapped_diameter(self.embeddings(codim)[0]), (-1,))
 
     @cached
     def _quadrature_points(self, codim, order, npoints, quadrature_type):
