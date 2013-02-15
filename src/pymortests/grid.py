@@ -1,5 +1,9 @@
 from __future__ import absolute_import, division, print_function
+
+from itertools import izip
+
 import numpy as np
+
 from itertools import product
 from pymor.grids.interfaces import (ConformalTopologicalGridInterface, AffineGridInterface, ReferenceElementInterface)
 #mandatory so all Grid classes are created
@@ -18,8 +22,9 @@ def SubclassForImplemetorsOf(InterfaceType):
     '''
     def decorate(TestCase):
         '''saves a new type called cname with correct bases and class dict in globals'''
-        for GridType in [prescribed.PrescribedBoundaryGrid]:#set([T for T in InterfaceType.implementors(True) if not T.has_interface_name()]):
-        #for GridType in [tria.TriaGrid]:#set([T for T in InterfaceType.implementors(True) if not T.has_interface_name()]):
+        #for GridType in [prescribed.PrescribedBoundaryGrid]:#set([T for T in InterfaceType.implementors(True) if not T.has_interface_name()]):
+        #for GridType in [tria.TriaGrid]:
+        for GridType in set([T for T in InterfaceType.implementors(True) if not T.has_interface_name()]):
             cname = '{}_{}'.format(GridType.__name__, TestCase.__name__.replace('Interface', ''))
             globals()[cname] = type(cname, (TestCase,), {'grids': GridType.test_instances(),
                                                      '__test__': True})
@@ -127,6 +132,7 @@ class ConformalTopologicalGridTestInterface(GridClassTestInterface):
                     self.assertEqual(g.superentities(e, s).ndim, 2)
                     self.assertEqual(g.superentities(e, s).shape[0], g.size(e))
                     self.assertGreater(g.superentities(e, s).shape[1], 0)
+            self.assertLessEqual(g.superentities(1, 0).shape[1], 2)
 
     def test_superentities_dtype(self):
         for g in self.grids:
@@ -527,6 +533,114 @@ class SimpleAffineGridTestInterface(GridClassTestInterface):
                 VI = g.volumes_inverse(d)
                 V = g.volumes(d)
                 np.testing.assert_allclose(VI, np.reciprocal(V))
+
+    def test_unit_outer_normals_shape(self):
+        for g in self.grids:
+            SE = g.subentities(0, 1)
+            self.assertEqual(g.unit_outer_normals().shape, SE.shape + (g.dim_outer,))
+
+    def test_unit_outer_normals_normed(self):
+        for g in self.grids:
+            UON = g.unit_outer_normals()
+            np.testing.assert_allclose(np.sum(UON ** 2, axis=-1), 1)
+
+    def test_unit_outer_normals_normal(self):
+        for g in self.grids:
+            SE = g.subentities(0, 1)
+            A, _ = g.embeddings(1)
+            SEE = A[SE, ...]
+            UON = g.unit_outer_normals()
+            np.testing.assert_allclose(np.sum(SEE * UON[..., np.newaxis], axis=-2), 0)
+
+    def test_unit_outer_normals_neighbours(self):
+        for g in self.grids:
+            UON = g.unit_outer_normals()
+            SE = g.superentities(1)
+            SEI = g.superentity_indices(1)
+            if SE.shape[1] < 2:
+                continue
+            for se, sei in izip(SE, SEI):
+                if se[0] == -1 or se[1] == -1:
+                    continue
+                np.testing.assert_allclose(UON[se[0], sei[0]], -UON[se[1], sei[1]])
+
+    def test_centers_wrong_arguments(self):
+        for g in self.grids:
+            with self.assertRaises(AssertionError):
+                g.centers(-1)
+            with self.assertRaises(AssertionError):
+                g.centers(g.dim + 1)
+
+    def test_centers_shape(self):
+        for g in self.grids:
+            for d in xrange(g.dim):
+                self.assertEqual(g.centers(d).shape, (g.size(d), g.dim_outer))
+
+    def test_centers_values(self):
+        for g in self.grids:
+            for d in xrange(g.dim):
+                A, B = g.embeddings(d)
+                np.testing.assert_allclose(g.centers(d), B + A.dot(g.reference_element(d).center()))
+
+    def test_diameters_wrong_arguments(self):
+        for g in self.grids:
+            with self.assertRaises(AssertionError):
+                g.diameters(-1)
+            with self.assertRaises(AssertionError):
+                g.diameters(g.dim + 1)
+
+    def test_diameters_shape(self):
+        for g in self.grids:
+            for d in xrange(g.dim):
+                self.assertEqual(g.diameters(d).shape, (g.size(d),))
+
+    def test_diameters_non_negative(self):
+        for g in self.grids:
+            for d in xrange(g.dim - 1):
+                self.assertGreaterEqual(np.min(g.diameters(d)), 0)
+
+    def test_diameters_values(self):
+        for g in self.grids:
+            for d in xrange(g.dim - 1):
+                A, _ = g.embeddings(d)
+                np.testing.assert_allclose(g.diameters(d), g.reference_element(d).mapped_diameter(A))
+
+    def test_quadrature_points_wrong_arguments(self):
+        for g in self.grids:
+            for d in xrange(g.dim):
+                with self.assertRaises(Exception):
+                    g.quadrature_points(d, order=1, npoints=1)
+                with self.assertRaises(Exception):
+                    g.quadrature_points(d)
+                os, ps = g.reference_element(d).quadrature_info()
+                for t in os.keys():
+                    with self.assertRaises(Exception):
+                        g.quadrature_points(d, order=max(os[t]) + 1, quadrature_type=t)
+                    with self.assertRaises(Exception):
+                        g.quadrature_points(d, npoints=max(ps[t]) + 1, quadrature_type=t)
+
+    def test_quadrature_points_shape(self):
+        for g in self.grids:
+            for d in xrange(g.dim):
+                os, ps = g.reference_element(d).quadrature_info()
+                for t in os.keys():
+                    for o, p in izip(os[t], ps[t]):
+                        self.assertEqual(g.quadrature_points(d, order=o, quadrature_type=t).shape,
+                                         (g.size(d), p, g.dim_outer))
+                        self.assertEqual(g.quadrature_points(d, npoints=p, quadrature_type=t).shape,
+                                         (g.size(d), p, g.dim_outer))
+
+    def test_quadrature_points_values(self):
+        for g in self.grids:
+            for d in xrange(g.dim):
+                A, B = g.embeddings(d)
+                os, ps = g.reference_element(d).quadrature_info()
+                for t in os.keys():
+                    for o, p in izip(os[t], ps[t]):
+                        Q = g.quadrature_points(d, order=o, quadrature_type=t)
+                        q, _ = g.reference_element(d).quadrature(order=o, quadrature_type=t)
+                        np.testing.assert_allclose(Q, g.quadrature_points(d, npoints=p, quadrature_type=t))
+                        np.testing.assert_allclose(Q, B[:, np.newaxis, :] + np.einsum('eij,qj->eqi', A, q))
 
 
 if __name__ == "__main__":
