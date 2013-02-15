@@ -250,8 +250,8 @@ class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopological
         return self._volumes_inverse(codim)
 
     def unit_outer_normals(self):
-        '''`retval[e]` is the unit outer-normal vector to the codim-1 subentity
-        with global index `e`.
+        '''`retval[e,i]` is the unit outer normal to the i-th codim-1 subentity
+        of the codim-0 entitiy with global index `e`.
         '''
         return self._unit_outer_normals()
 
