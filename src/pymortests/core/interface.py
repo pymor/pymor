@@ -9,7 +9,7 @@ from pymor.core import exceptions
 from pymor.core import timing
 from pymortests.base import TestBase, runmodule
 from pymortests.core.dummies import *
-
+from pymor.grids import RectGrid
 
 class TimingTest(TestBase):
     
@@ -84,15 +84,17 @@ class InterfaceTest(TestBase):
         self.assertEqual(inst.abstract_static_method(), 0)        
         
     def testPickling(self):
-        with tempfile.NamedTemporaryFile(delete=False) as dump_file:
-            dummy = AverageImplementer()
-            dummy.some_attribute = 4
-            pickle.dump(dummy, dump_file)
-            dump_file.close()
-            f = open(dump_file.name, 'rb')
-            unpickled = pickle.load(f)
-            self.assert_(dummy.some_attribute == unpickled.some_attribute)
-            os.unlink(dump_file.name)
+        def picklme(obj,attribute_name):
+            with tempfile.NamedTemporaryFile(delete=False) as dump_file:
+                obj.some_attribute = 4
+                pickle.dump(obj, dump_file)
+                dump_file.close()
+                f = open(dump_file.name, 'rb')
+                unpickled = pickle.load(f)
+                self.assert_(getattr(obj, attribute_name) == getattr(unpickled, attribute_name))
+                os.unlink(dump_file.name)
+        picklme(AverageImplementer(), 'some_attribute')
+        picklme(CacheImplementer(), 'some_attribute')
         
         
 if __name__ == "__main__":

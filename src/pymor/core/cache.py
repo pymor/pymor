@@ -11,11 +11,6 @@ import sys
 import os
 from collections import deque
 
-try:
-    import cPickle as pickle
-except:
-    import pickle
-
 from pymor.core.interfaces import BasicInterface
 from pymor.tools import memory
 
@@ -170,13 +165,21 @@ class cached(BasicInterface):
         
         
 class Cachable(object):
+    '''Base class for anything that wants to use our built-in caching.
+    provides custom __{g,s}etstate__ functions to allow using derived
+    classes with the pickle module
+    '''
        
     def __init__(self, config=DEFAULT_MEMORY_CONFIG):
-        self.cache_region = dc.make_region(function_key_generator = self.keygen_generator)
-        self.cache_region.configure_from_config(config, '')
+        self._cache_config = config
+        self._init_cache()
         self.namespace = '{}_{}'.format(self.__class__.__name__, hash(self))
         self.expiration_time = None
     
+    def _init_cache(self):
+        self.cache_region = dc.make_region(function_key_generator = self.keygen_generator)
+        self.cache_region.configure_from_config(self._cache_config, '')
+        
     def keygen_generator(self, namespace, function):
         '''I am the default generator function for (potentially) function specific keygens.
         I construct a key from the function name and given namespace 
@@ -189,4 +192,16 @@ class Cachable(object):
                         + '__'.join(str(x) for x in kwargs.iteritems()))
         return keygen
     
+    def __getstate__(self):
+        '''cache regions contain lock objects that cannot be pickled.
+        Therefore we don't include them in the state that the pickle protocol gets to see.
+        '''
+        return {name:getattr(self, name) for name in self.__dict__.keys() if name != 'cache_region'}
     
+    def __setstate__(self, d):
+        '''Since we cannot pickle the cach region, we have to re-init
+        the region from the pickled config when the pickle module
+        calls this function.
+        ''' 
+        self.__dict__.update(d)
+        self._init_cache()
