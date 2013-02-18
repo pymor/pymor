@@ -85,7 +85,7 @@ class InterfaceTest(TestBase):
         
     def testPickling(self):
         def picklme(obj,attribute_name):
-            with tempfile.NamedTemporaryFile(delete=False) as dump_file:
+            with tempfile.NamedTemporaryFile(mode='wb', delete=False) as dump_file:
                 obj.some_attribute = 4
                 pickle.dump(obj, dump_file)
                 dump_file.close()
@@ -95,6 +95,7 @@ class InterfaceTest(TestBase):
                 os.unlink(dump_file.name)
         picklme(AverageImplementer(), 'some_attribute')
         picklme(CacheImplementer(), 'some_attribute')
+        picklme(RectGrid(num_intervals=(4, 4)), 'num_intervals')
         
         
 if __name__ == "__main__":
