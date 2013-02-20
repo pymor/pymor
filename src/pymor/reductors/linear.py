@@ -58,6 +58,8 @@ class StationaryAffineLinearReductor(GenericRBReductor):
         oa = 1 if not d.operator.parametric or d.operator.operator_affine_part is not None else 0
         ol = 0 if not d.operator.parametric else len(d.operator.operators)
 
+        # if RB is None: RB = np.zeros((0, d.operator.source_dim))
+        if RB is None: RB = np.zeros((0, next(d.operators.itervalues()).source_dim))
         R_R = np.empty((ra + rl, space_dim))
         R_O = np.empty(((oa + ol) * len(RB), space_dim))
         RR_R = np.empty((ra + rl, space_dim))

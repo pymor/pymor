@@ -25,6 +25,7 @@ class GenericRBReductor(core.BasicInterface):
 
     def reduce(self, RB):
         rd = self.discretization.copy()
+        if RB is None: RB = np.zeros((0, next(rd.operators.itervalues()).source_dim))
         for k, op in rd.operators.iteritems():
             rd.operators[k] = project_operator(op, RB, product=self.product)
         if self.disable_caching and isinstance(rd, Cachable):
