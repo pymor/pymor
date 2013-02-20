@@ -28,3 +28,10 @@ class CallOrderWarning(UserWarning):
 
 class AccuracyError(Exception):
     '''Is raised if the result of a computation is inaccurate'''
+
+class ExtensionError(Exception):
+    '''Is raised if a (basis) extension algorithm fails.
+
+    This will mostly happen during a basis extension when the new snapshot is already
+    in the span of the basis.
+    '''

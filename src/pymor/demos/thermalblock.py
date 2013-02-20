@@ -12,7 +12,8 @@ import numpy as np
 from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import PoissonCGDiscretizer
 from pymor.reductors.linear import StationaryAffineLinearReductor
-from pymor.algorithms import GreedyRB
+from pymor.algorithms import greedy, trivial_basis_extension, gram_schmidt_basis_extension
+from pymor.functions import GenericFunction
 
 # set log level
 # from pymor.core import getLogger; getLogger('pymor').setLevel('INFO')
@@ -33,8 +34,9 @@ estimator_norm = sys.argv[7].lower()
 assert estimator_norm in {'trivial', 'h1'}
 ext_alg = sys.argv[8]
 assert ext_alg in {'trivial', 'gram_schmidt'}
+extension_algorithm = gram_schmidt_basis_extension if ext_alg == 'gram_schmidt' else trivial_basis_extension
 test_size = int(sys.argv[9])
-plot = bool(int(sys.argv[10]))
+plot = int(sys.argv[10])
 
 
 
@@ -60,16 +62,16 @@ if plot > 1:
 
 print('RB generation ...')
 
-tic = time.time()
 error_product = discretization.h1_product if estimator_norm == 'h1' else None
 reductor = StationaryAffineLinearReductor(discretization, error_product=error_product)
-greedy = GreedyRB(discretization, reductor, use_estimator=use_estimator, error_norm=discretization.h1_norm, extension_algorithm=ext_alg)
-RB = greedy.run(discretization.parameter_space.sample_uniformly(snap_size), Nmax=rb_size)
-rb_discretization, reconstructor = greedy.rb_discretization, greedy.reconstructor
+greedy_data = greedy(discretization, reductor, discretization.parameter_space.sample_uniformly(snap_size),
+                     use_estimator=use_estimator, error_norm=discretization.h1_norm,
+                     extension_algorithm=extension_algorithm, max_extensions=rb_size)
+rb_discretization, reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
 
 print('\nSearching for maximum error on random snapshots ...')
 
-toc = time.time()
+tic = time.time()
 h1_err_max = -1
 cond_max = -1
 for mu in discretization.parameter_space.sample_randomly(test_size):
@@ -87,10 +89,8 @@ for mu in discretization.parameter_space.sample_randomly(test_size):
         cond_max = cond
         cond_max_mu = mu
     print('H1-error = {}, condition = {}'.format(h1_err, cond))
-tac = time.time()
-
-t_offline = toc - tic
-t_est = tac - toc
+toc = time.time()
+t_est = toc - tic
 
 print('''
 *** RESULTS ***
@@ -105,8 +105,8 @@ Greedy basis generation:
    estimator norm:                     {estimator_norm}
    extension method:                   {ext_alg}
    prescribed basis size:              {rb_size}
-   actual basis size:                  {RB.shape[0]}
-   elapsed time:                       {t_offline}
+   actual basis size:                  {greedy_data[data].shape[0]}
+   elapsed time:                       {greedy_data[time]}
 
 Stochastic error estimation:
    number of samples:                  {test_size}
