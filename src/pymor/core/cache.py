@@ -11,6 +11,12 @@ import sys
 import os
 from collections import deque
 
+try:
+    import cPickle as pickle
+except:
+    import pickle
+
+
 from pymor.core.interfaces import BasicInterface
 from pymor.tools import memory
 
