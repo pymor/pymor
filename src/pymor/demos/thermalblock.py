@@ -3,7 +3,8 @@
 '''Thermalblock demo.
 
 Usage:
-  thermalblock.py [options] XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
+  thermalblock.py [-ehp] [--estimator-norm=NORM] [--extension-alg=ALG] [--grid=NI]
+                  [--plot-solutions] [--test=COUNT] XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
 
 
 Arguments:
@@ -26,16 +27,16 @@ Options:
   --extension-alg=ALG    Basis extension algorithm (trivial, gram_schmidt) to be used
                          [default: gram_schmidt].
 
-  -g NI --grid=NI        Use grid with 2*NI*NI elements [default: 100].
+  --grid=NI              Use grid with 2*NI*NI elements [default: 100].
 
-  -h --help              Show this message.
+  -h, --help             Show this message.
 
-  -p --plot-err          Plot error.
+  -p, --plot-err         Plot error.
 
   --plot-solutions       Plot some example solutions.
 
   --test=COUNT           Use COUNT snapshots for stochastic error estimation
-                         [default: 20].
+                         [default: 10].
 '''
 
 from __future__ import absolute_import, division, print_function, unicode_literals
