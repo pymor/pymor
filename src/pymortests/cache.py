@@ -71,5 +71,14 @@ class CacheTest(TestBase):
         y_id = y.my_id(1)
         self.assertNotEqual(x_id, y_id)
 
+    def test_backend_api(self):
+        for backend_cls in [cache.LimitedFileBackend, cache.LimitedMemoryBackend, cache.DummyBackend]:
+            backend = backend_cls({})
+            self.assertEqual(backend.get('mykey'), cache.NO_VALUE)
+            backend.set('mykey', 1)
+            self.assertEqual(backend.get('mykey'), 1 if backend_cls != cache.DummyBackend else cache.NO_VALUE)
+            backend.delete('mykey')
+            self.assertEqual(backend.get('mykey'), cache.NO_VALUE)
+        
 if __name__ == "__main__":
     runmodule(name='pymortests.cache')

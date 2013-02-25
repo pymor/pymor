@@ -7,6 +7,7 @@ from pymor.core.interfaces import (BasicInterface, abstractmethod, abstractstati
                                    abstractclassmethod)
 from pymor.core import exceptions
 from pymor.core import timing
+from pymor.core import decorators
 from pymortests.base import TestBase, runmodule
 from pymortests.core.dummies import *
 from pymor.grids import RectGrid
@@ -97,6 +98,24 @@ class InterfaceTest(TestBase):
         picklme(CacheImplementer(), 'some_attribute')
         picklme(RectGrid(num_intervals=(4, 4)), 'num_intervals')
         
+    def testDeprecated(self):
+        @decorators.Deprecated('use other stuff instead')
+        def deprecated_function():
+            pass
+        # Cause all warnings to always be triggered.
+        import warnings
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            # Trigger a warning.
+            deprecated_function()
+            # Verify some things
+            self.assertEqual(len(w),1)
+            self.assertTrue(issubclass(w[-1].category, DeprecationWarning))
+            self.assertTrue("DeprecationWarning" in str(w[-1].message))
+    
+    def testVersion(self):
+        self.assertGreater(pymor.version, pymor.NO_VERSION)
+        self.assertIsInstance(pymor.version, tuple)
         
 if __name__ == "__main__":
     runmodule(name='pymortests.core.interface')

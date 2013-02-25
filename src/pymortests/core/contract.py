@@ -14,6 +14,7 @@ import pymor.playground.boundaryinfos.oned
 from pymortests.base import TestBase, runmodule
 from pymortests.core.dummies import *
 
+import contracts
 
 class ContractTest(TestBase):
     
@@ -48,6 +49,29 @@ class ContractTest(TestBase):
             grid = mock.Mock()
             inst.validate_interface(object(), pymor.grids.boundaryinfos.AllDirichletBoundaryInfo(grid))
         inst.validate_interface(BoringTestInterface(), pymor.playground.boundaryinfos.oned.AllDirichletBoundaryInfo())
+        
+    def test_disabled_contracts(self):
+        contracts.disable_all()
+        @contract
+        def disabled(phrase):
+            ''' 
+            :type phrase: str
+            '''
+            return phrase
+        #this should not throw w/ contracts disabled
+        disabled(int(8))
+        contracts.enable_all()
+        #this will still not throw because the disabled value is checked at decoration time only
+        disabled(int(8))
+        @contract
+        def enabled(phrase):
+            ''' 
+            :type phrase: str
+            '''
+            return phrase
+        #even a newly decorated function will not throw
+        
+        enabled(int(8))
         
 if __name__ == "__main__":
     runmodule(name='pymortests.core.contract')

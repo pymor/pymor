@@ -32,6 +32,7 @@ SMALL_DISK_CONFIG = { "backend":'LimitedFile',
         "arguments.filename": join(gettempdir(), 'pymor.small_cache.dbm'),
         'arguments.max_keys':20}
 
+NO_VALUE = dc.api.NO_VALUE
 
 class DummyBackend(BasicInterface, dc.api.CacheBackend):
 
@@ -91,6 +92,7 @@ class LimitedFileBackend(BasicInterface, DBMBackend):
         internal cache file, otherwise its set to sys.maxlen.
         If necessary values are deleted from the cache in FIFO order.
         '''
+        argument_dict['filename'] = argument_dict.get('filename', os.tempnam())
         DBMBackend.__init__(self,argument_dict)
         self.logger.debug('LimitedFileBackend args {}'.format(pformat(argument_dict)))
         self._max_keys = argument_dict.get('max_keys', sys.maxsize)
@@ -205,7 +207,7 @@ class Cachable(object):
         return {name:getattr(self, name) for name in self.__dict__.keys() if name != 'cache_region'}
     
     def __setstate__(self, d):
-        '''Since we cannot pickle the cach region, we have to re-init
+        '''Since we cannot pickle the cache region, we have to re-init
         the region from the pickled config when the pickle module
         calls this function.
         ''' 

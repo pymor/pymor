@@ -1,3 +1,5 @@
+NO_VERSION = (0,0,0,'NOVERSION')
+
 try:
     import pymorversion
     version = pymorversion.version
@@ -13,6 +15,6 @@ except ImportError:
             shorthash = git[2]
             version = version + (distance, shorthash)
     except:
-        version = (0,0,0,'NOVERSION')
+        version = NO_VERSION
 finally:
     print('Loading pymor version {}'.format(version))

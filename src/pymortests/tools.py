@@ -1,10 +1,14 @@
 from __future__ import absolute_import, division, print_function
 from math import pow, factorial, sin, pi, exp
 import numpy as np
+import itertools
 
 from pymortests.base import TestBase, runmodule
 from pymor.tools.memory import total_size
 from pymor.tools.quadratures import GaussQuadratures
+from pymor.tools.dictproperty import dict_property
+from pymor.tools.floatcmp import float_cmp
+from pymor.core import defaults
 
 class MemoryTest(TestBase):
        
@@ -73,6 +77,38 @@ class GaussQuadratureTest(TestBase):
             np.testing.assert_array_equal(P, np.sort(P))
             self.assertLess(0.0, P[0])
             self.assertLess(P[-1], 1.0)
+ 
+
+class DictProperyTest(TestBase):
+        
+    def test_props(self):
+        self.assertFalse(True, "test is missing")
+        
+        
+class CmpTest(TestBase):
+    
+    def test_props(self):
+        tol_range = [None, 0.0, 1, -1]
+        nan = float('nan')
+        inf = float('inf')
+        for (rtol,atol) in itertools.product(tol_range, tol_range):
+            msg='rtol: {} | atol {}'.format(rtol, atol)
+            self.assertTrue(float_cmp(0,0,   rtol, atol), msg)
+            self.assertTrue(float_cmp(-0,-0, rtol, atol), msg)
+            self.assertTrue(float_cmp(-1,-1, rtol, atol), msg)
+            self.assertTrue(float_cmp(0,-0,  rtol, atol), msg)
+            self.assertFalse(float_cmp(2,-2,  rtol, atol), msg)
+            
+            self.assertFalse(float_cmp(nan,nan,  rtol, atol), msg)
+            self.assertTrue(nan!=nan)
+            self.assertFalse(nan==nan)
+            self.assertFalse(float_cmp(-nan,nan,  rtol, atol), msg)
+            
+            self.assertFalse(float_cmp(inf,inf,  rtol, atol), msg)
+            self.assertFalse(inf!=inf)
+            self.assertTrue(inf==inf)
+            self.assertTrue(float_cmp(-inf,inf,  rtol, atol), msg)    
+        
         
 if __name__ == "__main__":
     runmodule(name='pymortests.tools')

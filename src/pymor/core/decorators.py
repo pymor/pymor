@@ -77,7 +77,7 @@ class Deprecated(DecoratorBase):
             msg = "DeprecationWarning. Call to deprecated function %s in %s:%s\nUse %s instead" % (
                             func.__name__, frame.f_code.co_filename,
                             frame.f_code.co_firstlineno, self._alt)
-            warnings.warn(msg)
+            warnings.warn(msg, DeprecationWarning)
             return func(*args, **kwargs)
         return new_func
 

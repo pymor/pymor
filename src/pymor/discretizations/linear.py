@@ -32,7 +32,7 @@ class StationaryLinearDiscretization(BasicInterface, Parametric, Cachable, Named
 
         def default_solver(A, RHS):
             if issparse(A):
-                U, info = bicg(A, RHS, tol=defaults.bicg_tol, maxiter=defaults.bicg_maxiter)
+                U, _ = bicg(A, RHS, tol=defaults.bicg_tol, maxiter=defaults.bicg_maxiter)
             else:
                 U = np.linalg.solve(A, RHS)
             return U
