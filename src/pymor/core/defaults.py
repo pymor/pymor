@@ -18,6 +18,8 @@ class Defaults(BasicInterface):
 
     induced_norm_raise_negative:    raise error in la.induced_norm if the squared norm is negative
     induced_norm_tol:               tolerance for clipping negative norm squares to zero
+
+    random_seed:                    seed for numpy's random generator; if None, use /dev/urandom as source for seed
     '''
 
     float_cmp_tol               = 2**4 * np.finfo(np.zeros(1).dtype).eps
@@ -34,6 +36,18 @@ class Defaults(BasicInterface):
     induced_norm_raise_negative = True
     induced_norm_tol            = 10e-10
 
+    _random_seed                = 123456
+    @property
+    def random_seed(self):
+        return self._random_seed
+
+    @random_seed.setter
+    def random_seed(self, s):
+        self._random_seed = s
+        np.random.seed(s)
+
+    def __init__(self):
+        np.random.seed(self.random_seed)
 
     def __str__(self):
         return '''
@@ -48,6 +62,8 @@ class Defaults(BasicInterface):
 
             induced_norm_raise_negative   = {0.induced_norm_raise_negative}
             induced_norm_tol              = {0.induced_norm_tol}
+
+            random_seed                   = {0.random_seed}
             '''.format(self)
 
 
