@@ -89,3 +89,46 @@ def project_operator(operator, source_basis, range_basis=None, product=None, nam
 
     else:
         return ProjectedOperator(operator, source_basis, range_basis, product, name)
+
+
+class SumOperator(DiscreteOperatorInterface):
+
+    def __init__(self, operators, name=None):
+        assert all(isinstance(op, DiscreteOperatorInterface) for op in operators)
+        assert all(op.source_dim == operators[0].source_dim for op in operators)
+        assert all(op.range_dim == operators[0].range_dim for op in operators)
+        self.build_parameter_type(inherits={'operators':operators})
+        self.operators = operators
+        self.source_dim = operators[0].source_dim
+        self.range_dim = operators[0].range_dim
+        self.name = name or '+'.join(op.name for op in operators)
+
+    def apply(self, U, mu={}):
+        return np.sum([op.apply(U, self.map_parameter(mu, 'operators', i)) for i, op in enumerate(self.operators)],
+                      axis=0)
+
+
+class LinearSumOperator(LinearDiscreteOperatorInterface):
+
+    def __init__(self, operators, name=None):
+        assert all(isinstance(op, LinearDiscreteOperatorInterface) for op in operators)
+        assert all(op.source_dim == operators[0].source_dim for op in operators)
+        assert all(op.range_dim == operators[0].range_dim for op in operators)
+        self.build_parameter_type(inherits={'operators':operators})
+        self.operators = operators
+        self.source_dim = operators[0].source_dim
+        self.range_dim = operators[0].range_dim
+        self.name = name or '+'.join(op.name for op in operators)
+
+    def assemble(self, mu={}):
+        M = self.operators[0].matrix(self.map_parameter(mu, 'operators', 0))
+        for i, op in enumerate(self.operators[1:]):
+            M = M + op.matrix(self.map_parameter(mu, 'operators', i + 1))
+        return M
+
+
+def add_operators(operators, name=None):
+    if all(isinstance(op, LinearDiscreteOperatorInterface) for op in operators):
+        return LinearSumOperator(operators, name)
+    else:
+        return SumOperator(operators, name)
