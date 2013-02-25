@@ -23,14 +23,14 @@ def trivial_basis_extension(basis, U):
     return new_basis
 
 
-def gram_schmidt_basis_extension(basis, U):
+def gram_schmidt_basis_extension(basis, U, product=None):
     if basis is None: basis = np.zeros((0, len(U)))
 
     assert isinstance(basis, np.ndarray)
     new_basis = np.empty((basis.shape[0] + 1, basis.shape[1]))
     new_basis[:-1, :] = basis
     new_basis[-1, :] = U
-    new_basis = gram_schmidt(new_basis, row_offset=basis.shape[0])
+    new_basis = gram_schmidt(new_basis, row_offset=basis.shape[0], product=product)
 
     if new_basis.size <= basis.size: raise ExtensionError
 
