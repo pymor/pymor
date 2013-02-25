@@ -13,6 +13,56 @@ from pymor.la import l2_norm
 
 def greedy(discretization, reductor, samples, initial_data=None, use_estimator=True, error_norm=l2_norm,
            extension_algorithm=trivial_basis_extension, target_error=None, max_extensions=None):
+    '''Greedy extension algorithm.
+
+    Parameters
+    ----------
+    discretization
+        The discretization to reduce.
+    reductor
+        Reductor for reducing the given discretization.
+    samples
+        The set of parameter samples on which to perform the greedy search.
+        Currently this set is fixed for the whole process.
+    initial_data
+        This is fed into reductor.reduce() for the initial projection.
+        Typically this will be the reduced basis with which the algorithm
+        starts.
+    use_estimator
+        If True, use reduced_discretization.estimate() to estimate the errors
+        on the sample set. Otherwise a detailed simulation is used to calculate
+        the error.
+    error_norm
+        If use_estimator == Flase, use this function to calculate the norm of
+        the error.
+    extension_algorithm
+        The extension algorithm to use to extend the current reduced basis with
+        the maximum error snapshot.
+    target_error
+        If not None, stop the search if the maximum error on the sample set
+        drops below this value.
+    max_extensions
+        If not None, stop algorithm after `max_extensions` extension steps.
+
+    Returns
+    -------
+    Dict with the following fields:
+        'data'
+            The reduced basis. (More generally the data which needs to be
+            fed into reduced_discretization.reduce().
+        'reduced_discretization'
+            The last reduced discretization which has been computed.
+        'reconstructor'
+            Reconstructor for `reduced_discretization`.
+        'max_err'
+            Last estimated maximum error on the sample set.
+        'max_err_mu'
+            The parameter that corresponds to `max_err`.
+        'max_errs'
+            Sequence of maximum errors during the greedy run.
+        'max_errs_mu'
+            The parameters corresponding to `max_err`.
+    '''
 
     logger = getLogger('pymor.algorithms.greedy.greedy')
     samples = list(samples)

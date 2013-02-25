@@ -10,9 +10,29 @@ from pymor.la import gram_schmidt
 
 
 def trivial_basis_extension(basis, U):
+    '''Trivially extend basis by just adding the new vector.
+
+    We check that the new vector is not already contained in the basis, but we do
+    not check for linear independence.
+
+    Parameters
+    ----------
+    basis
+        The basis to extend.
+    U
+        The new basis vector.
+
+    Returns
+    -------
+    The new basis.
+
+    Raises
+    ------
+    ExtensionError
+        Is raised if U is already contained in basis.
+    '''
     if basis is None: return np.reshape(U, (1, -1))
 
-    # check if snapshot is already contained in basis; we do not check for linear independence
     assert isinstance(basis, np.ndarray)
     if not all(not float_cmp_all(B, U) for B in basis): raise ExtensionError
 
@@ -24,6 +44,29 @@ def trivial_basis_extension(basis, U):
 
 
 def gram_schmidt_basis_extension(basis, U, product=None):
+    '''Extend basis using Gram-Schmidt orthonormalization.
+
+    Parameters
+    ----------
+    basis
+        The basis to extend.
+    U
+        The new basis vector.
+    product
+        The scalar product w.r.t. which to orthonormalize; if None, the l2-scalar
+        product on the coefficient vector is used.
+
+    Returns
+    -------
+    The new basis.
+
+    Raises
+    ------
+    ExtensionError
+        Gram-Schmidt orthonormalization fails. Usually this is the case when U
+        is not linearily independent from the basis. However this can also happen
+        due to rounding errors ...
+    '''
     if basis is None: basis = np.zeros((0, len(U)))
 
     assert isinstance(basis, np.ndarray)
