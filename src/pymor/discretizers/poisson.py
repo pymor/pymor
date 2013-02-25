@@ -44,7 +44,7 @@ class PoissonCGDiscretizer(object):
 
         p = self.analytical_problem
 
-        if p.parameter_dependent:
+        if p.diffusion_functionals is not None or len(p.diffusion_functions) > 1:
             L0 = Operator(grid, boundary_info, diffusion_constant=0, name='diffusion_boundary_part')
 
             Li = tuple(Operator(grid, boundary_info, diffusion_function=df, dirichlet_clear_diag=True,
