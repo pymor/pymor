@@ -14,6 +14,39 @@ from .elliptic import EllipticProblem
 
 
 class ThermalBlockProblem(EllipticProblem):
+    r'''Analytical description of a 2D thermal block diffusion problem.
+
+    This problem is to solve the elliptic equation
+
+    .. :math  - \nabla \cdot (d(x, \mu) \nabla u(x, \mu)) = f(x, \mu)
+
+    on the domain [0,1]^2 with Dirichlet zero boundary values. The domain is
+    partitioned into nx x ny blocks and the diffusion function d(x, mu) is
+    constant on each such block (i,j) with value d(x, mu_ij).
+
+           -------------------------------
+           |         |         |         |
+           |  mu_11  |  mu_12  |  mu_13  |
+           |         |         |         |
+           |------------------------------
+           |         |         |         |
+           |  mu_21  |  mu_22  |  mu_23  |
+           |         |         |         |
+           -------------------------------
+
+    The Problem is implemented as a special EllipticProblem with the
+    characteristic functions of the blocks as `diffusion_functions`.
+
+    Parameters
+    ----------
+    num_blocks
+        The tuple (nx, ny)
+    parameter_range
+        A tuple (mu_min, mu_max). Each parameter component m_ij is allowed
+        to lie in the interval [mu_min, mu_max].
+    rhs
+        The function f(x, mu).
+    '''
 
     def __init__(self, num_blocks=(3,3), parameter_range=(0.1,1), rhs=ConstantFunction(dim_domain=2)):
 
