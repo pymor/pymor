@@ -49,7 +49,7 @@ import numpy as np
 from docopt import docopt
 
 from pymor.analyticalproblems import ThermalBlockProblem
-from pymor.discretizers import PoissonCGDiscretizer
+from pymor.discretizers import EllipticCGDiscretizer
 from pymor.reductors.linear import StationaryAffineLinearReductor
 from pymor.algorithms import greedy, trivial_basis_extension, gram_schmidt_basis_extension
 from pymor.functions import GenericFunction
@@ -80,7 +80,7 @@ print('Setup Problem ...')
 problem = ThermalBlockProblem(num_blocks=(args['XBLOCKS'], args['YBLOCKS']))
 
 print('Discretize ...')
-discretizer = PoissonCGDiscretizer(problem)
+discretizer = EllipticCGDiscretizer(problem)
 discretization = discretizer.discretize(diameter=m.sqrt(2) / args['--grid'])
 
 print(discretization.parameter_info())

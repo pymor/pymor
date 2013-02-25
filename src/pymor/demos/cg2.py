@@ -11,7 +11,7 @@ import numpy as np
 
 from pymor.domaindescriptions import RectDomain
 from pymor.analyticalproblems import EllipticProblem
-from pymor.discretizers import PoissonCGDiscretizer
+from pymor.discretizers import EllipticCGDiscretizer
 from pymor.functions import GenericFunction
 from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional, GenericParameterFunctional
 from collections import OrderedDict
@@ -42,7 +42,7 @@ print('Setup Problem ...')
 problem = EllipticProblem(domain=RectDomain(), rhs=rhs, diffusion_functions=(d0, d1), diffusion_functionals=(f0, f1))
 
 print('Discretize ...')
-discretizer = PoissonCGDiscretizer(problem)
+discretizer = EllipticCGDiscretizer(problem)
 discretization = discretizer.discretize(diameter=m.sqrt(2) / n)
 
 print(discretization.parameter_info())

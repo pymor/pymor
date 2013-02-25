@@ -16,7 +16,7 @@ from pymor.grids import TriaGrid, OnedGrid, EmptyBoundaryInfo
 from pymor.la import induced_norm
 
 
-class PoissonCGDiscretizer(object):
+class EllipticCGDiscretizer(object):
 
     def __init__(self, analytical_problem):
         assert isinstance(analytical_problem, EllipticProblem)

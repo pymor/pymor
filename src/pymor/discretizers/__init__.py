@@ -1,1 +1,1 @@
-from .poisson import PoissonCGDiscretizer
+from .elliptic import EllipticCGDiscretizer
