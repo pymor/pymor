@@ -37,9 +37,9 @@ class DiscreteOperatorInterface(core.BasicInterface, Parametric, Named):
                 return np.dot(V, np.dot(product, AU.T))
 
     def __str__(self):
-        return '{}: R^{} --> R^{}  (parameter type: {})'.format(self.name, self.source_dim,
-                                                                self.range_dim, self.parameter_type)
-
+        return '{}: R^{} --> R^{}  (parameter type: {}, class: {})'.format(
+                                           self.name, self.source_dim, self.range_dim, self.parameter_type,
+                                           self.__class__.__name__)
 
 
 class LinearDiscreteOperatorInterface(DiscreteOperatorInterface):
