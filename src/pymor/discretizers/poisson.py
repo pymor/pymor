@@ -5,7 +5,7 @@ from scipy.sparse.linalg import bicg
 import matplotlib.pyplot as pl
 
 import pymor.core as core
-from pymor.analyticalproblems import PoissonProblem
+from pymor.analyticalproblems import EllipticProblem
 from pymor.domaindescriptions import BoundaryType
 from pymor.domaindiscretizers import DefaultDomainDiscretizer
 from pymor.discreteoperators.cg import DiffusionOperatorP1, L2ProductFunctionalP1, L2ProductP1
@@ -19,7 +19,7 @@ from pymor.la import induced_norm
 class PoissonCGDiscretizer(object):
 
     def __init__(self, analytical_problem):
-        assert isinstance(analytical_problem, PoissonProblem)
+        assert isinstance(analytical_problem, EllipticProblem)
         self.analytical_problem = analytical_problem
 
     def discretize_domain(self, domain_discretizer=None, diameter=None):

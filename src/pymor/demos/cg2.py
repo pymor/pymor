@@ -10,7 +10,7 @@ import math as m
 import numpy as np
 
 from pymor.domaindescriptions import RectDomain
-from pymor.analyticalproblems import PoissonProblem
+from pymor.analyticalproblems import EllipticProblem
 from pymor.discretizers import PoissonCGDiscretizer
 from pymor.functions import GenericFunction
 from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional, GenericParameterFunctional
@@ -39,7 +39,7 @@ f1 = GenericParameterFunctional(parameter_space, lambda mu:1)
 print('Solving on TriaGrid(({0},{0}))'.format(n))
 
 print('Setup Problem ...')
-problem = PoissonProblem(domain=RectDomain(), rhs=rhs, diffusion_functions=(d0, d1), diffusion_functionals=(f0, f1))
+problem = EllipticProblem(domain=RectDomain(), rhs=rhs, diffusion_functions=(d0, d1), diffusion_functionals=(f0, f1))
 
 print('Discretize ...')
 discretizer = PoissonCGDiscretizer(problem)

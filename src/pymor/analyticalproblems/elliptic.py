@@ -9,7 +9,7 @@ from pymor.domaindescriptions import RectDomain
 from pymor.functions import ConstantFunction
 
 
-class PoissonProblem(core.BasicInterface, Named):
+class EllipticProblem(core.BasicInterface, Named):
 
     def __init__(self, domain=RectDomain(), rhs=ConstantFunction(dim_domain=2),
                  diffusion_functions=(ConstantFunction(dim_domain=2),),

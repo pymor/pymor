@@ -7,12 +7,13 @@ import numpy as np
 import pymor.core as core
 from pymor.domaindescriptions import BoundaryType
 from pymor.domaindescriptions import RectDomain
-from pymor.analyticalproblems import PoissonProblem
 from pymor.functions import GenericFunction, ConstantFunction
 from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional
 
+from .elliptic import EllipticProblem
 
-class ThermalBlockProblem(PoissonProblem):
+
+class ThermalBlockProblem(EllipticProblem):
 
     def __init__(self, num_blocks=(3,3), parameter_range=(0.1,1), rhs=ConstantFunction(dim_domain=2)):
 

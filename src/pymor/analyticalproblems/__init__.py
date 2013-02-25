@@ -1,2 +1,2 @@
-from .poisson import PoissonProblem
+from .elliptic import EllipticProblem
 from .thermalblock import ThermalBlockProblem

@@ -11,7 +11,7 @@ import numpy as np
 
 from pymor.domaindescriptions import BoundaryType
 from pymor.domaindescriptions import RectDomain
-from pymor.analyticalproblems import PoissonProblem
+from pymor.analyticalproblems import EllipticProblem
 from pymor.discretizers import PoissonCGDiscretizer
 from pymor.functions import GenericFunction
 
@@ -45,7 +45,7 @@ for n in [32, 128]:
     print('Solving on TriaGrid(({0},{0}))'.format(n))
 
     print('Setup problem ...')
-    problem = PoissonProblem(domain=domain, rhs=rhs, dirichlet_data=dirichlet)
+    problem = EllipticProblem(domain=domain, rhs=rhs, dirichlet_data=dirichlet)
 
     print('Discretize ...')
     discretizer = PoissonCGDiscretizer(problem)
