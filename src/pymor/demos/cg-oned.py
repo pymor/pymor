@@ -2,7 +2,7 @@
 # Proof of concept for solving the poisson equation in 1D using linear finite elements
 # and our grid interface
 
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function
 
 import sys
 import math as m
