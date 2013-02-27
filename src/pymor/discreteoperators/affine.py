@@ -18,7 +18,7 @@ class LinearAffinelyDecomposedOperator(LinearDiscreteOperatorInterface):
             self.range_dim = operator_affine_part.range_dim
         else:
             self.source_dim = operators[0].source_dim
-            self.range_dim = operators[0].range_dimj
+            self.range_dim = operators[0].range_dim
 
         assert all(op.source_dim == self.source_dim for op in operators),\
                 ValueError('All operators must have the same source dimension.')
