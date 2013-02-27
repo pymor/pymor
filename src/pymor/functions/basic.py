@@ -56,7 +56,7 @@ class GenericFunction(FunctionInterface):
         x = np.array(x, copy=False, ndmin=1)
         assert x.shape[-1] == self.dim_domain
         if self._with_mu:
-            v = self._mapping((x, mu))
+            v = self._mapping(x, mu)
         else:
             v = self._mapping(x)
         if len(v.shape) < len(x.shape) and self.dim_range > 0:

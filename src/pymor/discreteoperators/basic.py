@@ -22,7 +22,7 @@ class GenericOperator(DiscreteOperatorInterface):
         mu = self.map_parameter(mu)
         assert U.shape[-1] == self.dim_domain
         if self._with_mu:
-            return self._mapping((U, mu))
+            return self._mapping(U, mu)
         else:
             return self._mapping(U)
 
