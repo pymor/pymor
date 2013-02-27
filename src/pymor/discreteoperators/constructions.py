@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
@@ -8,6 +9,39 @@ from .basic import GenericLinearOperator
 
 
 class ProjectedOperator(DiscreteOperatorInterface):
+    '''Projection of an operator to a subspace.
+
+    Given an operator L, a scalar product ( ⋅, ⋅), and vectors b_1, ..., b_N,
+    c_1, ..., c_M, the projected operator is defined by ::
+
+        [ L_P(b_j) ]_i = ( c_i, L(b_j) )
+
+    for all i,j.
+
+    In particular, if b_i = c_i are orthonormal w.r.t. the product, then
+    L_P is the coordinate representation of the orthogonal projection
+    of L onto the subspace spanned by the b_i (with b_i as basis).
+
+    From another point of view, if L represents the matrix of a bilinear form and
+    ( ⋅, ⋅ ) is the euclidean scalar product, then L_P represents the matrix of
+    the bilinear form restricted to the span of the b_i.
+
+    It is not checked whether the b_i and c_j are linear independent.
+
+    Parameters
+    ----------
+    operator
+        The `DiscreteOperator` to project.
+    source_basis
+        The b_1, ..., b_N as a 2d-array.
+    range_basis
+        The c_1, ..., c_M as a 2d-array. If None, `range_basis=source_basis`.
+    product
+        Either an 2d-array or a `DiscreteOperator` representing the scalar product.
+        If None, the euclidean product is chosen.
+    name
+        Name of the projected operator.
+    '''
 
     def __init__(self, operator, source_basis, range_basis=None, product=None, name=None):
         if range_basis is None:
@@ -36,6 +70,27 @@ class ProjectedOperator(DiscreteOperatorInterface):
 
 
 class ProjectedLinearOperator(LinearDiscreteOperatorInterface):
+    '''Projection of an linear operator to a subspace.
+
+    The same as ProjectedOperator, but the resulting operator is again a
+    `LinearDiscreteOperator`.
+
+    See also `ProjectedOperator`.
+
+    Parameters
+    ----------
+    operator
+        The `DiscreteLinearOperator` to project.
+    source_basis
+        The b_1, ..., b_N as a 2d-array.
+    range_basis
+        The c_1, ..., c_M as a 2d-array. If None, `range_basis=source_basis`.
+    product
+        Either an 2d-array or a `DiscreteOperator` representing the scalar product.
+        If None, the euclidean product is chosen.
+    name
+        Name of the projected operator.
+    '''
 
     def __init__(self, operator, source_basis, range_basis=None, product=None, name=None):
         if range_basis is None:
@@ -64,6 +119,29 @@ class ProjectedLinearOperator(LinearDiscreteOperatorInterface):
 
 
 def project_operator(operator, source_basis, range_basis=None, product=None, name=None):
+    '''Project operators to subspaces.
+
+    Replaces `DiscreteOperator`s by `ProjectedOperator`s and `LinearDiscreteOperator`s
+    by `ProjectedLinearOperator`s.
+    Moreover, `LinearAffinelyDecomposedOperator`s are projected by recursively
+    projecting each of its components.
+
+    See also `ProjectedOperator`.
+
+    Parameters
+    ----------
+    operator
+        The `DiscreteOperator` to project.
+    source_basis
+        The b_1, ..., b_N as a 2d-array.
+    range_basis
+        The c_1, ..., c_M as a 2d-array. If None, `range_basis=source_basis`.
+    product
+        Either an 2d-array or a `DiscreteOperator` representing the scalar product.
+        If None, the euclidean product is chosen.
+    name
+        Name of the projected operator.
+    '''
 
     name = name or '{}_projected'.format(operator.name)
 
@@ -92,6 +170,19 @@ def project_operator(operator, source_basis, range_basis=None, product=None, nam
 
 
 class SumOperator(DiscreteOperatorInterface):
+    '''Operator representing the sum operators.
+
+    Given operators L_1, ..., L_K, this defines the operator given by ::
+
+        L(u) = L_1(u) + ... + L_K(u)
+
+    Parameters
+    ----------
+    operators
+        List of the `DiscreteOperator`s L_1, ..., L_K.
+    name
+        Name of the operator.
+    '''
 
     def __init__(self, operators, name=None):
         assert all(isinstance(op, DiscreteOperatorInterface) for op in operators)
@@ -109,6 +200,19 @@ class SumOperator(DiscreteOperatorInterface):
 
 
 class LinearSumOperator(LinearDiscreteOperatorInterface):
+    '''Linear operator representing the sum linear operators.
+
+    Given linear operators L_1, ..., L_K, this defines the linear operator given by ::
+
+        L(u) = L_1(u) + ... + L_K(u)
+
+    Parameters
+    ----------
+    operators
+        List of the `LinearDiscreteOperator`s L_1, ..., L_K.
+    name
+        Name of the operator.
+    '''
 
     def __init__(self, operators, name=None):
         assert all(isinstance(op, LinearDiscreteOperatorInterface) for op in operators)
@@ -128,6 +232,22 @@ class LinearSumOperator(LinearDiscreteOperatorInterface):
 
 
 def add_operators(operators, name=None):
+    '''Operator representing the sum operators.
+
+    Given operators L_1, ..., L_K, this defines the operator given by ::
+
+        L(u) = L_1(u) + ... + L_K(u)
+
+    If all L_k are linear, a LinearSumOperator is returned, otherwise a
+    SumOperator.
+
+    Parameters
+    ----------
+    operators
+        List of the `DiscreteOperator`s L_1, ..., L_k.
+    name
+        Name of the operator.
+    '''
     if all(isinstance(op, LinearDiscreteOperatorInterface) for op in operators):
         return LinearSumOperator(operators, name)
     else:

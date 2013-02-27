@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 
 from itertools import izip
@@ -8,6 +9,28 @@ from .interfaces import LinearDiscreteOperatorInterface
 
 
 class LinearAffinelyDecomposedOperator(LinearDiscreteOperatorInterface):
+    '''Affine combination of given linear operators.
+
+    Given operators L_k and functionals θ_k, this operator represents ::
+
+                      K
+        L =  L_0  +   ∑  θ_k ⋅ L_k
+                     k=1
+
+    Parameters
+    ----------
+    operators
+        List of the discrete linear operators L_1, ..., L_K.
+    operator_affine_part
+        The discrete linear operator L_0.
+    functionals
+        If not None, list of the functionals θ_1, ..., θ_K.
+        If None, `.coefficients` is added to the `parameter_type` of the
+        operator with shape (K,) and θ_k(μ) is defined to be
+        `mu.coefficients[k-1]`.
+    name
+        Name of the operator.
+    '''
 
     def __init__(self, operators, operator_affine_part=None, functionals=None, name=None):
         assert functionals is None or len(operators) == len(functionals),\
@@ -53,6 +76,7 @@ class LinearAffinelyDecomposedOperator(LinearDiscreteOperatorInterface):
         return A
 
     def evaluate_coefficients(self, mu):
+        '''Returns [θ_1(mu), ..., θ_K(mu)].'''
         if self.functionals is not None:
             return np.array(tuple(f(self.map_parameter(mu, 'functionals', n)) for n, f in enumerate(self.functionals)))
         else:

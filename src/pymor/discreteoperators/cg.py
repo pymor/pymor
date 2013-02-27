@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
@@ -11,7 +12,28 @@ from pymor.discreteoperators.interfaces import LinearDiscreteOperatorInterface
 
 class L2ProductFunctionalP1(LinearDiscreteOperatorInterface):
     '''Scalar product with an L2-function for linear finite elements.
-    The integral is caculated with an order two Gauss quadrature.
+
+    It is moreover possible to specify a `BoundaryInfo` and a Dirichlet data function
+    such that boundary DOFs are evaluated to the corresponding dirichlet values.
+    This is useful for imposing boundary conditions on the solution.
+    The integral is caculated by an order two Gauss quadrature.
+
+    The current implementation works in one and two dimensions, but can be trivially
+    extended to arbitrary dimensions.
+
+    Parameters
+    ----------
+    grid
+        Grid over which to assemble the functional.
+    function
+        The `Function` with which to take the scalar product.
+    boundary_info
+        `BoundaryInfo` determining the Dirichlet boundaries or None.
+    dirichlet_data
+        The `Function` providing the Dirichlet boundary values. If None, zero boundary
+        is assumed.
+    name
+        The name of the functional.
     '''
 
     def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, name=None):
@@ -67,7 +89,19 @@ class L2ProductFunctionalP1(LinearDiscreteOperatorInterface):
 
 
 class L2ProductP1(LinearDiscreteOperatorInterface):
-    '''Gram matrix of L2 product for linear finite elements.
+    '''Operator representing the L2-product for linear finite functions.
+
+    To evaluate the product use the apply2 method.
+
+    The current implementation works in one and two dimensions, but can be trivially
+    extended to arbitrary dimensions.
+
+    Parameters
+    ----------
+    grid
+        The grid on which to assemble the product.
+    name
+        The name of the product.
     '''
 
     def __init__(self, grid, name=None):
@@ -112,8 +146,34 @@ class L2ProductP1(LinearDiscreteOperatorInterface):
 
 
 class DiffusionOperatorP1(LinearDiscreteOperatorInterface):
-    '''Simple Diffusion Operator for linear finite elements on a triangular grids.
-    Add more functionality later ...
+    '''Diffusion operator for linear finite elements.
+
+    The operator is of the form ::
+
+        (Lu)(x) = c ∇ ⋅ [ d(x) ∇ u(x) ]
+
+    The current implementation works in one and two dimensions, but can be trivially
+    extended to arbitrary dimensions.
+
+    Parameters
+    ----------
+    grid
+        The grid on which to assemble the operator.
+    boundary_info
+        BoundaryInfo associating boundary types to boundary entities.
+    diffusion_function
+        The `Function` d(x).
+    diffusion_constant
+        The constant c.
+    dirichlet_clear_columns
+        If True, set columns of the system matrix corresponding to Dirichlet boundary
+        DOFs to zero to obtain a symmetric system matrix. Otherwise, only the rows will
+        be set to zero.
+    dirichlet_clear_diag
+        If True, also set diagonal entries corresponding to Dirichlet boundary DOFs to
+        zero (e.g. for affine decomposition).
+    name
+        Name of the operator.
     '''
 
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
