@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
@@ -10,11 +11,13 @@ from pymor.functions import ConstantFunction
 
 
 class EllipticProblem(core.BasicInterface, Named):
-    r'''Standard elliptic analytical problem.
+    '''Standard elliptic analytical problem.
 
-    The problem consists in solving
+    The problem consists in solving ::
 
-    .. :math  - \nabla \cdot (\sum_{k=0}^K \theta_k(\mu) * d_k(x) \nabla u(x, \mu)) = f(x, \mu)
+            K
+      - ∇ ⋅ ∑  θ_k(x, μ) ⋅ d_k(x) ∇ u(x, μ) = f(x, μ)
+           k=0
 
     for u.
 

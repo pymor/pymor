@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 
 from itertools import product
@@ -14,25 +15,25 @@ from .elliptic import EllipticProblem
 
 
 class ThermalBlockProblem(EllipticProblem):
-    r'''Analytical description of a 2D thermal block diffusion problem.
+    '''Analytical description of a 2D thermal block diffusion problem.
 
-    This problem is to solve the elliptic equation
+    This problem is to solve the elliptic equation ::
 
-    .. :math  - \nabla \cdot (d(x, \mu) \nabla u(x, \mu)) = f(x, \mu)
+      - ∇ ⋅ [ d(x, μ) ∇ u(x, μ) ] = f(x, μ)
 
     on the domain [0,1]^2 with Dirichlet zero boundary values. The domain is
-    partitioned into nx x ny blocks and the diffusion function d(x, mu) is
-    constant on each such block (i,j) with value d(x, mu_ij).
+    partitioned into nx x ny blocks and the diffusion function d(x, μ) is
+    constant on each such block (i,j) with value d(x, μ_ij). ::
 
-           -------------------------------
-           |         |         |         |
-           |  mu_11  |  mu_12  |  mu_13  |
-           |         |         |         |
-           |------------------------------
-           |         |         |         |
-           |  mu_21  |  mu_22  |  mu_23  |
-           |         |         |         |
-           -------------------------------
+           ----------------------------
+           |        |        |        |
+           |  μ_11  |  μ_12  |  μ_13  |
+           |        |        |        |
+           |---------------------------
+           |        |        |        |
+           |  μ_21  |  μ_22  |  μ_23  |
+           |        |        |        |
+           ----------------------------
 
     The Problem is implemented as a special EllipticProblem with the
     characteristic functions of the blocks as `diffusion_functions`.
@@ -42,7 +43,7 @@ class ThermalBlockProblem(EllipticProblem):
     num_blocks
         The tuple (nx, ny)
     parameter_range
-        A tuple (mu_min, mu_max). Each parameter component m_ij is allowed
+        A tuple (mu_min, mu_max). Each parameter component mu_ij is allowed
         to lie in the interval [mu_min, mu_max].
     rhs
         The function f(x, mu).
