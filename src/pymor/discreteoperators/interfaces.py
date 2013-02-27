@@ -12,7 +12,7 @@ class DiscreteOperatorInterface(core.BasicInterface, Parametric, Named):
     dim_range = 0
 
     @core.interfaces.abstractmethod
-    def apply(self, U, mu={}, axis=-1):
+    def apply(self, U, mu={}):
         pass
 
     def apply2(self, V, U, mu={}, product=None, pairwise=True):
