@@ -18,7 +18,7 @@ class GenericOperator(DiscreteOperatorInterface):
         else:
             self._with_mu = False
 
-    def evaluate(self, U, mu={}):
+    def apply(self, U, mu={}):
         mu = self.map_parameter(mu)
         assert U.shape[-1] == self.dim_domain
         if self._with_mu:
