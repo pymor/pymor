@@ -23,8 +23,8 @@ class StationaryLinearDiscretization(BasicInterface, Parametric, Cachable, Named
     def __init__(self, operator, rhs, solver=None, visualizer=None, name=None):
         assert isinstance(operator, LinearDiscreteOperatorInterface)
         assert isinstance(rhs, LinearDiscreteOperatorInterface)
-        assert operator.source_dim == operator.range_dim == rhs.source_dim
-        assert rhs.range_dim == 1
+        assert operator.dim_source == operator.dim_range == rhs.dim_source
+        assert rhs.dim_range == 1
 
         Cachable.__init__(self, config=DEFAULT_DISK_CONFIG)
         self.operators = {'operator': operator, 'rhs':rhs}
@@ -41,7 +41,7 @@ class StationaryLinearDiscretization(BasicInterface, Parametric, Cachable, Named
         if visualizer is not None:
             self.visualize = visualizer
 
-        self.solution_dim = operator.range_dim
+        self.solution_dim = operator.dim_range
         self.name = name
 
     def copy(self):

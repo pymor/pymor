@@ -7,8 +7,8 @@ from .interfaces import DiscreteOperatorInterface, LinearDiscreteOperatorInterfa
 
 class GenericOperator(DiscreteOperatorInterface):
 
-    def __init__(self, mapping, dim_domain=1, dim_range=1, parameter_type=None, name=None):
-        self.dim_domain = dim_domain
+    def __init__(self, mapping, dim_source=1, dim_range=1, parameter_type=None, name=None):
+        self.dim_source = dim_source
         self.dim_range = dim_range
         self.name = name
         self._mapping = mapping
@@ -20,7 +20,7 @@ class GenericOperator(DiscreteOperatorInterface):
 
     def apply(self, U, mu={}):
         mu = self.map_parameter(mu)
-        assert U.shape[-1] == self.dim_domain
+        assert U.shape[-1] == self.dim_source
         if self._with_mu:
             return self._mapping(U, mu)
         else:
@@ -30,7 +30,7 @@ class GenericOperator(DiscreteOperatorInterface):
 class GenericLinearOperator(LinearDiscreteOperatorInterface):
 
     def __init__(self, matrix, name=None):
-        self.dim_domain = matrix.shape[1]
+        self.dim_source = matrix.shape[1]
         self.dim_range = matrix.shape[0]
         self.name = name
         self._matrix = matrix

@@ -11,13 +11,13 @@ class ProjectedOperator(DiscreteOperatorInterface):
 
     def __init__(self, operator, source_basis, range_basis=None, product=None, name=None):
         if range_basis is None:
-            range_basis = np.ones((1,1)) if operator.range_dim == 1 else source_basis
+            range_basis = np.ones((1,1)) if operator.dim_range == 1 else source_basis
         assert isinstance(operator, DiscreteOperatorInterface)
-        assert operator.source_dim == source_basis.shape[1]
-        assert operator.range_dim == range_basis.shape[1]
+        assert operator.dim_source == source_basis.shape[1]
+        assert operator.dim_range == range_basis.shape[1]
         self.build_parameter_type(operator.parameter_type, local_global=True)
-        self.source_dim = source_basis.shape[0]
-        self.range_dim = range_basis.shape[0]
+        self.dim_source = source_basis.shape[0]
+        self.dim_range = range_basis.shape[0]
         self.name = name
         self.operator = operator
         self.source_basis = source_basis
@@ -39,13 +39,13 @@ class ProjectedLinearOperator(LinearDiscreteOperatorInterface):
 
     def __init__(self, operator, source_basis, range_basis=None, product=None, name=None):
         if range_basis is None:
-            range_basis = np.ones((1,1)) if operator.range_dim == 1 else source_basis
+            range_basis = np.ones((1,1)) if operator.dim_range == 1 else source_basis
         assert isinstance(operator, LinearDiscreteOperatorInterface)
-        assert operator.source_dim == source_basis.shape[1]
-        assert operator.range_dim == range_basis.shape[1]
+        assert operator.dim_source == source_basis.shape[1]
+        assert operator.dim_range == range_basis.shape[1]
         self.build_parameter_type(operator.parameter_type, local_global=True)
-        self.source_dim = source_basis.shape[0]
-        self.range_dim = range_basis.shape[0]
+        self.dim_source = source_basis.shape[0]
+        self.dim_range = range_basis.shape[0]
         self.name = name
         self.operator = operator
         self.source_basis = source_basis
@@ -95,12 +95,12 @@ class SumOperator(DiscreteOperatorInterface):
 
     def __init__(self, operators, name=None):
         assert all(isinstance(op, DiscreteOperatorInterface) for op in operators)
-        assert all(op.source_dim == operators[0].source_dim for op in operators)
-        assert all(op.range_dim == operators[0].range_dim for op in operators)
+        assert all(op.dim_source == operators[0].dim_source for op in operators)
+        assert all(op.dim_range == operators[0].dim_range for op in operators)
         self.build_parameter_type(inherits={'operators':operators})
         self.operators = operators
-        self.source_dim = operators[0].source_dim
-        self.range_dim = operators[0].range_dim
+        self.dim_source = operators[0].dim_source
+        self.dim_range = operators[0].dim_range
         self.name = name or '+'.join(op.name for op in operators)
 
     def apply(self, U, mu={}):
@@ -112,12 +112,12 @@ class LinearSumOperator(LinearDiscreteOperatorInterface):
 
     def __init__(self, operators, name=None):
         assert all(isinstance(op, LinearDiscreteOperatorInterface) for op in operators)
-        assert all(op.source_dim == operators[0].source_dim for op in operators)
-        assert all(op.range_dim == operators[0].range_dim for op in operators)
+        assert all(op.dim_source == operators[0].dim_source for op in operators)
+        assert all(op.dim_range == operators[0].dim_range for op in operators)
         self.build_parameter_type(inherits={'operators':operators})
         self.operators = operators
-        self.source_dim = operators[0].source_dim
-        self.range_dim = operators[0].range_dim
+        self.dim_source = operators[0].dim_source
+        self.dim_range = operators[0].dim_range
         self.name = name or '+'.join(op.name for op in operators)
 
     def assemble(self, mu={}):

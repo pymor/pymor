@@ -8,8 +8,8 @@ from pymor.parameters import Parametric
 
 class DiscreteOperatorInterface(core.BasicInterface, Parametric, Named):
 
-    source_dim = 0
-    range_dim = 0
+    dim_source = 0
+    dim_range = 0
 
     @core.interfaces.abstractmethod
     def apply(self, U, mu={}, axis=-1):
@@ -38,7 +38,7 @@ class DiscreteOperatorInterface(core.BasicInterface, Parametric, Named):
 
     def __str__(self):
         return '{}: R^{} --> R^{}  (parameter type: {}, class: {})'.format(
-                                           self.name, self.source_dim, self.range_dim, self.parameter_type,
+                                           self.name, self.dim_source, self.dim_range, self.parameter_type,
                                            self.__class__.__name__)
 
 

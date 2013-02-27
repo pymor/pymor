@@ -17,8 +17,8 @@ class L2ProductFunctionalP1(LinearDiscreteOperatorInterface):
     def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, name=None):
         assert grid.reference_element(0) in {line, triangle}
         assert function.dim_range == 1
-        self.source_dim = grid.size(grid.dim)
-        self.range_dim = 1
+        self.dim_source = grid.size(grid.dim)
+        self.dim_range = 1
         self.grid = grid
         self.boundary_info = boundary_info
         self.function = function
@@ -72,8 +72,8 @@ class L2ProductP1(LinearDiscreteOperatorInterface):
 
     def __init__(self, grid, name=None):
         assert grid.reference_element in (line, triangle)
-        self.source_dim = grid.size(grid.dim)
-        self.range_dim = self.source_dim
+        self.dim_source = grid.size(grid.dim)
+        self.dim_range = self.dim_source
         self.grid = grid
         self.name = name
 
@@ -119,7 +119,7 @@ class DiffusionOperatorP1(LinearDiscreteOperatorInterface):
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
                  dirichlet_clear_columns=False, dirichlet_clear_diag=False, name=None):
         assert grid.reference_element(0) in {triangle, line}, ValueError('A simplicial grid is expected!')
-        self.source_dim = self.range_dim = grid.size(grid.dim)
+        self.dim_source = self.dim_range = grid.size(grid.dim)
         self.grid = grid
         self.boundary_info = boundary_info
         self.diffusion_constant = diffusion_constant
