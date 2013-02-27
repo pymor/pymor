@@ -60,7 +60,7 @@ class EllipticCGDiscretizer(object):
             L = Operator(grid, boundary_info, diffusion_function=p.diffusion_functions[0],
                                       name='diffusion')
 
-        F = Functional(grid, boundary_info, p.rhs, dirichlet_data=p.dirichlet_data)
+        F = Functional(grid, p.rhs, boundary_info, dirichlet_data=p.dirichlet_data)
 
         if isinstance(grid, TriaGrid):
             def visualize(U):

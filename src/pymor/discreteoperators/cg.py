@@ -14,7 +14,7 @@ class L2ProductFunctionalP1(LinearDiscreteOperatorInterface):
     The integral is caculated with an order two Gauss quadrature.
     '''
 
-    def __init__(self, grid, boundary_info, function, dirichlet_data=None, name=None):
+    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, name=None):
         assert grid.reference_element(0) in {line, triangle}
         assert function.dim_range == 1
         self.source_dim = grid.size(grid.dim)
@@ -56,7 +56,7 @@ class L2ProductFunctionalP1(LinearDiscreteOperatorInterface):
         I = np.array(coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).todense()).ravel()
 
         # boundary treatment
-        if bi.has_dirichlet:
+        if bi is not None and bi.has_dirichlet:
             DI = bi.dirichlet_boundaries(g.dim)
             if self.dirichlet_data is not None:
                 I[DI] = self.dirichlet_data(g.centers(g.dim)[DI], self.map_parameter(mu, 'dirichlet_data'))
