@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 
 import copy
@@ -15,6 +16,56 @@ from pymor.discreteoperators import LinearDiscreteOperatorInterface
 
 
 class StationaryLinearDiscretization(BasicInterface, Parametric, Cachable, Named):
+    '''Generic class for discretizations of stationary linear problems.
+
+    This class describes discrete problems given by the equation ::
+
+        L_h(μ) ⋅ u_h(μ) = f_h(μ)
+
+    which is to be solved for u_h.
+
+    Note that we do not make any distinction between detailed and reduced
+    discretizations here.
+
+    The results of solve() are cached by default so it is inexpensive to call solve
+    repeatedly for the same parameter.
+
+    Parameters
+    ----------
+    operator
+        The operator L_h given as a `LinearDiscreteOperator`.
+    rhs
+        The functional f_h given as a `LinearDiscreteOperator` with `dim_range == 1`.
+    solver
+        A function solver(A, RHS), which solves the matrix equation A*x = RHS.
+        If None, numpy.linalg.solve() or scipy.sparse.linalg.bicg are chosen as
+        solvers depending on the sparsity of A.
+    visualizer
+        A function visualize(U) which visualizes the solution vectors. Can be None,
+        in which case no visualization is availabe.
+    name
+        Name of the discretization.
+
+    Attributes
+    ----------
+    disable_logging
+        If True, no log message is displayed when calling solve. This is useful if
+        we want to log solves of detailed discretization but not of reduced ones.
+        In the future, this should be a feature of BasicInterface.
+    operator
+        The operator L_h. A synonym for operators['operator'].
+    operators
+        Dictionary of all operators contained in this discretization. The idea is
+        that this attribute will be common to all discretizations such that it can
+        be used for introspection. Compare the implementation of `GenericRBReductor`.
+        For this class, operators has the keys 'operator' and 'rhs'.
+    rhs
+        The functional f_h. A synonym for operators['rhs'].
+
+    Inherits
+    --------
+    BasicInterface, Parametric, Cachable, Named.
+    '''
 
     disable_logging = False
     operator = dict_property('operators', 'operator')

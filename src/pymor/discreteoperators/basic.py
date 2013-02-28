@@ -22,6 +22,10 @@ class GenericOperator(DiscreteOperatorInterface):
         Type of the parameter that mapping expects or None.
     name
         Name of the operator.
+
+    Inherits
+    --------
+    DiscreteOperatorInterface.
     '''
 
     def __init__(self, mapping, dim_source=1, dim_range=1, parameter_type=None, name=None):
@@ -55,6 +59,10 @@ class GenericLinearOperator(LinearDiscreteOperatorInterface):
         The matrix which is to be wrapped.
     name
         Name of the operator.
+
+    Inherits
+    --------
+    LinearDiscreteOperatorInterface.
     '''
 
     def __init__(self, matrix, name=None):

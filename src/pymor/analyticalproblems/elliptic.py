@@ -38,6 +38,10 @@ class EllipticProblem(core.BasicInterface, Named):
         Function providing the Dirichlet boundary values in global coordinates.
     name
         Name of the problem.
+
+    Inherits
+    --------
+    BasicInterface, Named.
     '''
 
     def __init__(self, domain=RectDomain(), rhs=ConstantFunction(dim_domain=2),

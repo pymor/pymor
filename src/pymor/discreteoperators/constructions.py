@@ -41,6 +41,10 @@ class ProjectedOperator(DiscreteOperatorInterface):
         If None, the euclidean product is chosen.
     name
         Name of the projected operator.
+
+    Inherits
+    --------
+    DiscreteOperatorInterface.
     '''
 
     def __init__(self, operator, source_basis, range_basis=None, product=None, name=None):
@@ -90,6 +94,10 @@ class ProjectedLinearOperator(LinearDiscreteOperatorInterface):
         If None, the euclidean product is chosen.
     name
         Name of the projected operator.
+
+    Inherits
+    --------
+    LinearDiscreteOperatorInterface.
     '''
 
     def __init__(self, operator, source_basis, range_basis=None, product=None, name=None):
@@ -182,6 +190,10 @@ class SumOperator(DiscreteOperatorInterface):
         List of the `DiscreteOperator`s L_1, ..., L_K.
     name
         Name of the operator.
+
+    Inherits
+    --------
+    DiscreteOperatorInterface.
     '''
 
     def __init__(self, operators, name=None):
@@ -212,6 +224,10 @@ class LinearSumOperator(LinearDiscreteOperatorInterface):
         List of the `LinearDiscreteOperator`s L_1, ..., L_K.
     name
         Name of the operator.
+
+    Inherits
+    --------
+    LinearDiscreteOperatorInterface.
     '''
 
     def __init__(self, operators, name=None):
