@@ -14,6 +14,37 @@ from pymor.la import induced_norm
 
 def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer=None,
                            grid=None, boundary_info=None):
+    '''Discretize an `EllipticProblem` using finite elements.
+
+    Since operators are not assembled during instatiation, calling this function is
+    cheap if the domain discretization proceeds quickly.
+
+    Parameters
+    ----------
+    analytical_problem
+        The `EllipticProblem` to discretize.
+    diameter
+        If not None, is passed to the domain_discretizer.
+    domain_discretizer
+        Discretizer to be used for discretizing the analytical domain. If None,
+        `DefaultDomainDiscretizer` is used.
+    grid
+        Instead of using a domain discretizer, the grid can be passed directly.
+    boundary_info
+        A `BoundaryInfo` specifying the boundary types of the grid boundary
+        entities. Must be provided is `grid` is provided.
+
+    Returns
+    -------
+    discretization
+        The discretization that has been generated.
+    data
+        Dict with the following entries:
+            grid
+                The generated grid.
+            boundary_info
+                The generated `BoundaryInfo`.
+    '''
 
     assert isinstance(analytical_problem, EllipticProblem)
     assert grid is None or boundary_info is not None
@@ -62,13 +93,13 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
             pl.show()
             pass
 
-    discr = StationaryLinearDiscretization(L, F, visualizer=visualize, name='{}_CG'.format(p.name))
+    discretization = StationaryLinearDiscretization(L, F, visualizer=visualize, name='{}_CG'.format(p.name))
 
-    discr.h1_product = add_operators((Operator(grid, EmptyBoundaryInfo(grid)), L2ProductP1(grid)),
+    discretization.h1_product = add_operators((Operator(grid, EmptyBoundaryInfo(grid)), L2ProductP1(grid)),
                                      name='h1_product')
-    discr.h1_norm = induced_norm(discr.h1_product)
+    discretization.h1_norm = induced_norm(discretization.h1_product)
 
     if hasattr(p, 'parameter_space'):
-        discr.parameter_space = p.parameter_space
+        discretization.parameter_space = p.parameter_space
 
-    return discr, {'grid':grid, 'boundary_info':boundary_info}
+    return discretization, {'grid':grid, 'boundary_info':boundary_info}
