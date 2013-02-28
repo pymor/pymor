@@ -25,7 +25,7 @@ class GenericOperator(DiscreteOperatorInterface):
 
     Inherits
     --------
-    DiscreteOperatorInterface.
+    DiscreteOperatorInterface
     '''
 
     def __init__(self, mapping, dim_source=1, dim_range=1, parameter_type=None, name=None):
@@ -62,7 +62,7 @@ class GenericLinearOperator(LinearDiscreteOperatorInterface):
 
     Inherits
     --------
-    LinearDiscreteOperatorInterface.
+    LinearDiscreteOperatorInterface
     '''
 
     def __init__(self, matrix, name=None):

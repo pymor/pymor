@@ -33,7 +33,7 @@ class LinearAffinelyDecomposedOperator(LinearDiscreteOperatorInterface):
 
     Inherits
     --------
-    LinearDiscreteOperatorInterface.
+    LinearDiscreteOperatorInterface
     '''
 
     def __init__(self, operators, operator_affine_part=None, functionals=None, name=None):

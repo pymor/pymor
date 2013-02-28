@@ -37,7 +37,7 @@ class L2ProductFunctionalP1(LinearDiscreteOperatorInterface):
 
     Inherits
     --------
-    LinearDiscreteOperatorInterface.
+    LinearDiscreteOperatorInterface
     '''
 
     def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, name=None):
@@ -109,7 +109,7 @@ class L2ProductP1(LinearDiscreteOperatorInterface):
 
     Inherits
     --------
-    LinearDiscreteOperatorInterface.
+    LinearDiscreteOperatorInterface
     '''
 
     def __init__(self, grid, name=None):
@@ -185,7 +185,7 @@ class DiffusionOperatorP1(LinearDiscreteOperatorInterface):
 
     Inherits
     --------
-    LinearDiscreteOperatorInterface.
+    LinearDiscreteOperatorInterface
     '''
 
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,

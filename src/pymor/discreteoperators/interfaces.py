@@ -23,7 +23,7 @@ class DiscreteOperatorInterface(core.BasicInterface, Parametric, Named):
 
     Inherits
     --------
-    BasicInterface, Parametric, Cachable, Named.
+    BasicInterface, Parametric, Cachable, Named
     '''
 
     dim_source = 0
@@ -83,7 +83,7 @@ class LinearDiscreteOperatorInterface(DiscreteOperatorInterface):
 
     Inherits
     --------
-    DiscreteOperatorInterface.
+    DiscreteOperatorInterface
     '''
 
     @core.interfaces.abstractmethod

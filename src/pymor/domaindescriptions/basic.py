@@ -8,8 +8,35 @@ from .interfaces import DomainDescriptionInterface
 
 
 class RectDomain(DomainDescriptionInterface):
-    '''Describes a rectangular domain. Different boundary types can be associated
-    to each side.
+    '''Describes a rectangular domain.
+
+    Boundary types can be associated edgewise.
+
+    Parameters
+    ----------
+    domain
+        List of two points defining the lower-left and upper-right corner
+        of the domain.
+    left
+        The `BoundaryType` of the left edge.
+    right
+        The `BoundaryType` of the right edge.
+    top
+        The `BoundaryType` of the top edge.
+    bottom
+        The `BoundaryType` of the bottom edge.
+
+    Attributes
+    ----------
+    domain
+    left
+    right
+    top
+    bottom
+
+    Inherits
+    --------
+    DomainDescriptionInterface
     '''
 
     def __init__(self, domain=[[0, 0], [1, 1]], left=BoundaryType('dirichlet'), right=BoundaryType('dirichlet'),
@@ -49,8 +76,28 @@ class RectDomain(DomainDescriptionInterface):
 
 
 class LineDomain(DomainDescriptionInterface):
-    '''Describes a rectangular domain. Different boundary types can be associated
-    to each side.
+    '''Describes an interval domain.
+
+    Boundary types can be associated edgewise.
+
+    Parameters
+    ----------
+    domain
+        List [x_l, x_r] providing the left and right endpoint.
+    left
+        The `BoundaryType` of the left endpoint.
+    right
+        The `BoundaryType` of the right endpoint.
+
+    Attributes
+    ----------
+    domain
+    left
+    right
+
+    Inherits
+    --------
+    DomainDescriptionInterface
     '''
 
     def __init__(self, domain=[0, 1], left=BoundaryType('dirichlet'), right=BoundaryType('dirichlet')):

@@ -44,7 +44,7 @@ class ProjectedOperator(DiscreteOperatorInterface):
 
     Inherits
     --------
-    DiscreteOperatorInterface.
+    DiscreteOperatorInterface
     '''
 
     def __init__(self, operator, source_basis, range_basis=None, product=None, name=None):
@@ -97,7 +97,7 @@ class ProjectedLinearOperator(LinearDiscreteOperatorInterface):
 
     Inherits
     --------
-    LinearDiscreteOperatorInterface.
+    LinearDiscreteOperatorInterface
     '''
 
     def __init__(self, operator, source_basis, range_basis=None, product=None, name=None):
@@ -193,7 +193,7 @@ class SumOperator(DiscreteOperatorInterface):
 
     Inherits
     --------
-    DiscreteOperatorInterface.
+    DiscreteOperatorInterface
     '''
 
     def __init__(self, operators, name=None):
@@ -227,7 +227,7 @@ class LinearSumOperator(LinearDiscreteOperatorInterface):
 
     Inherits
     --------
-    LinearDiscreteOperatorInterface.
+    LinearDiscreteOperatorInterface
     '''
 
     def __init__(self, operators, name=None):

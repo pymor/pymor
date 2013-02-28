@@ -64,7 +64,7 @@ class StationaryLinearDiscretization(BasicInterface, Parametric, Cachable, Named
 
     Inherits
     --------
-    BasicInterface, Parametric, Cachable, Named.
+    BasicInterface, Parametric, Cachable, Named
     '''
 
     disable_logging = False
