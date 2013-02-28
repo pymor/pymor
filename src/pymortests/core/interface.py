@@ -1,5 +1,4 @@
 from __future__ import absolute_import, division, print_function
-import pickle 
 import os
 import tempfile
 
@@ -11,6 +10,7 @@ from pymor.core import decorators
 from pymortests.base import TestBase, runmodule
 from pymortests.core.dummies import *
 from pymor.grids import RectGrid
+import pymor.core
 
 class TimingTest(TestBase):
     
@@ -88,10 +88,10 @@ class InterfaceTest(TestBase):
         def picklme(obj,attribute_name):
             with tempfile.NamedTemporaryFile(mode='wb', delete=False) as dump_file:
                 obj.some_attribute = 4
-                pickle.dump(obj, dump_file)
+                pymor.core.dump(obj, dump_file)
                 dump_file.close()
                 f = open(dump_file.name, 'rb')
-                unpickled = pickle.load(f)
+                unpickled = pymor.core.load(f)
                 self.assert_(getattr(obj, attribute_name) == getattr(unpickled, attribute_name))
                 os.unlink(dump_file.name)
         picklme(AverageImplementer(), 'some_attribute')

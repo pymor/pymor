@@ -9,30 +9,29 @@ from pymor.grids.interfaces import (ConformalTopologicalGridInterface, AffineGri
 #mandatory so all Grid classes are created
 from pymor.grids import *
 from pymortests.base import TestBase, runmodule
+import pymor.core.dynamic
 
 class GridClassTestInterface(TestBase):
     
     '''empty list to make static analyzers happy'''
-    grids = []
+    pass#grids = []
 
 
-def SubclassForImplemetorsOf(InterfaceType):
+def GridSubclassForImplemetorsOf(InterfaceType):
     '''A decorator that dynamically creates subclasses of the decorated base test class 
     for all implementors of a given Interface
     '''
     def decorate(TestCase):
         '''saves a new type called cname with correct bases and class dict in globals'''
-        #for GridType in [prescribed.PrescribedBoundaryGrid]:#set([T for T in InterfaceType.implementors(True) if not T.has_interface_name()]):
-        #for GridType in [tria.TriaGrid]:
         for GridType in set([T for T in InterfaceType.implementors(True) if not T.has_interface_name()]):
             cname = '{}_{}'.format(GridType.__name__, TestCase.__name__.replace('Interface', ''))
-            globals()[cname] = type(cname, (TestCase,), {'grids': GridType.test_instances(),
+            pymor.core.dynamic.__dict__[cname] = type(cname, (TestCase,), {'grids': GridType.test_instances(),
                                                      '__test__': True})
         return TestCase
     return decorate
 
 
-@SubclassForImplemetorsOf(ConformalTopologicalGridInterface)
+@GridSubclassForImplemetorsOf(ConformalTopologicalGridInterface)
 class ConformalTopologicalGridTestInterface(GridClassTestInterface):
 
     def test_dim(self):
@@ -400,7 +399,7 @@ class ConformalTopologicalGridTestInterface(GridClassTestInterface):
                 np.testing.assert_array_equal(np.where(g.boundary_mask(d))[0], g.boundaries(d))
 
 
-@SubclassForImplemetorsOf(AffineGridInterface)
+@GridSubclassForImplemetorsOf(AffineGridInterface)
 class AffineGridTestInterface(GridClassTestInterface):
 
     def test_dim_outer(self):
