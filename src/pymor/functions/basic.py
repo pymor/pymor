@@ -6,11 +6,27 @@ from .interfaces import FunctionInterface
 
 
 class ConstantFunction(FunctionInterface):
+    '''A constant function ::
+
+        f: R^d -> R^r, f(x) = c
+
+    Parameters
+    ----------
+    value
+        The constant c.
+    dim_domain
+        The dimension d.
+    dim_range
+        The dimension r.
+    name
+        The name of the function.
+
+    Inherits
+    --------
+    FunctionInterface
+    '''
 
     def __init__(self, value=1.0, dim_domain=1, dim_range=1, name=None):
-        '''
-        here should be a contract to enforce that np.array(value, copy=False) is valid
-        '''
         self.dim_domain = dim_domain
         self.dim_range = dim_range
         self.name = name
@@ -21,10 +37,7 @@ class ConstantFunction(FunctionInterface):
         return ('{name}: x -> {value}').format(name=self.name, value=self._value)
 
     def evaluate(self, x, mu={}):
-        '''
-        \todo    here should be a contract to enforce that np.array(x, copy=False, ndmin=1) is valid
-        '''
-        self.map_parameter(mu)  # ensure that there is no parameter ...
+        self.map_parameter(mu)   # ensure that there is no parameter ...
         x = np.array(x, copy=False, ndmin=1)
         if x.ndim == 1:
             assert x.shape[0] == self.dim_domain
@@ -35,6 +48,27 @@ class ConstantFunction(FunctionInterface):
 
 
 class GenericFunction(FunctionInterface):
+    '''A wrapper making an arbitrary python function a `Funtion`
+
+    Parameters
+    ----------
+    mapping
+        The function to wrap. If parameter_type is None, the function is of
+        the form `mapping(x)` and is expected to vectorized. If parameter_type
+        is not None, the function has to have the form `mapping(x, mu)`.
+    dim_domain
+        The dimension of the domain.
+    dim_range
+        The dimension of the range.
+    parameter_type
+        The type of the `Parameter` that mapping accepts.
+    name
+        The name of the function.
+
+    Inherits
+    --------
+    FunctionInterface
+    '''
 
     def __init__(self, mapping, dim_domain=1, dim_range=1, parameter_type=None, name=None):
         self.dim_domain = dim_domain
