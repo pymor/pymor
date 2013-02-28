@@ -12,7 +12,7 @@ import numpy as np
 from pymor.domaindescriptions import BoundaryType
 from pymor.domaindescriptions import RectDomain
 from pymor.analyticalproblems import EllipticProblem
-from pymor.discretizers import EllipticCGDiscretizer
+from pymor.discretizers import discretize_elliptic_cg
 from pymor.functions import GenericFunction
 
 if len(sys.argv) < 4:
@@ -48,8 +48,7 @@ for n in [32, 128]:
     problem = EllipticProblem(domain=domain, rhs=rhs, dirichlet_data=dirichlet)
 
     print('Discretize ...')
-    discretizer = EllipticCGDiscretizer(problem)
-    discretization = discretizer.discretize(diameter=m.sqrt(2) / n)
+    discretization, _ = discretize_elliptic_cg(problem, diameter=m.sqrt(2) / n)
 
     print('Solve ...')
     U = discretization.solve()
