@@ -8,6 +8,15 @@ from .boundarytypes import BoundaryType
 
 class DomainDescriptionInterface(core.BasicInterface):
     '''Analytically describes a domain and its boundary (types).
+
+    Attributes
+    ----------
+    boundary_types
+        Set of `BoundaryTypes` the domain has.
+
+    Inherits
+    --------
+    BasicInterface
     '''
 
     boundary_types = set()
