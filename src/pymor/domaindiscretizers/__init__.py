@@ -1,2 +1,1 @@
-from .interfaces import DomainDiscretizerInterface
-from .default import DefaultDomainDiscretizer
+from .default import discretize_domain_default

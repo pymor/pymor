@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 import matplotlib.pyplot as pl
 
 from pymor.analyticalproblems import EllipticProblem
-from pymor.domaindiscretizers import DefaultDomainDiscretizer
+from pymor.domaindiscretizers import discretize_domain_default
 from pymor.discreteoperators.cg import DiffusionOperatorP1, L2ProductFunctionalP1, L2ProductP1
 from pymor.discreteoperators.affine import LinearAffinelyDecomposedOperator
 from pymor.discreteoperators import add_operators
@@ -26,8 +26,10 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
     diameter
         If not None, is passed to the domain_discretizer.
     domain_discretizer
-        Discretizer to be used for discretizing the analytical domain. If None,
-        `DefaultDomainDiscretizer` is used.
+        Discretizer to be used for discretizing the analytical domain. This has
+        to be function `domain_discretizer(domain_description, diamter=...)`.
+        If further arguments should be passed to the discretizer, use
+        functools.partial. If None, `discretize_domain_default` is used.
     grid
         Instead of using a domain discretizer, the grid can be passed directly.
     boundary_info
@@ -52,11 +54,11 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
     assert grid is None or domain_discretizer is None
 
     if grid is None:
-        domain_discretizer = domain_discretizer or DefaultDomainDiscretizer(analytical_problem.domain)
+        domain_discretizer = domain_discretizer or discretize_domain_default
         if diameter is None:
-            grid, boundary_info = domain_discretizer.discretize()
+            grid, boundary_info = domain_discretizer(analytical_problem.domain)
         else:
-            grid, boundary_info = domain_discretizer.discretize(diameter=diameter)
+            grid, boundary_info = domain_discretizer(analytical_problem.domain, diameter=diameter)
 
     assert isinstance(grid, (OnedGrid, TriaGrid))
 
