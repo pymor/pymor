@@ -2,7 +2,7 @@
 import sys
 from distutils.core import setup
 
-tests_require = ['mock', 'nose-cov', 'nose', 'nosehtmloutput', 'nose-progressive']
+tests_require = ['mock', 'nose-cov', 'nose', 'nosehtmloutput', 'nose-progressive', 'tissue']
 
 setup(
 		name = 'pyMor',

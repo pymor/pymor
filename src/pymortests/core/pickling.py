@@ -17,7 +17,7 @@ class PickleMe(TestBase):
                 continue
             try:
                 inst = Type()
-            except ValueError:
+            except (ValueError,TypeError):
                 #no default init -> just test next type
                 continue
             dump(inst, tempfile.TemporaryFile())

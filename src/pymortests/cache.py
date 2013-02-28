@@ -5,7 +5,7 @@ from datetime import datetime
 from pymor.core import cache
 from pymortests.base import TestBase, runmodule
 
-SLEEP_SECONDS = 1
+SLEEP_SECONDS = 0.2
 
 class IamMemoryCached(cache.Cachable):
    
