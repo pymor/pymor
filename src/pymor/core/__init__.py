@@ -9,3 +9,15 @@ from .defaults import defaults
 
 getLogger('pymor').setLevel('WARN')
 getLogger('pymor.core').setLevel('WARN')
+
+try:
+    import cPickle as pickle
+except:
+    import pickle
+
+from functools import partial
+
+dump = partial(pickle.dump, protocol=-1)
+dumps = partial(pickle.dumps, protocol=-1)
+load = partial(pickle.load, protocol=-1)
+loads = partial(pickle.loads, protocol=-1)

@@ -11,12 +11,9 @@ import sys
 import os
 from collections import deque
 
-try:
-    import cPickle as pickle
-except:
-    import pickle
 
 
+import pymor.core
 from pymor.core.interfaces import BasicInterface
 from pymor.tools import memory
 
@@ -98,14 +95,14 @@ class LimitedFileBackend(BasicInterface, DBMBackend):
         self._max_keys = argument_dict.get('max_keys', sys.maxsize)
         self._keylist_fn = self.filename + '.keys'
         try:
-            self._keylist = pickle.load(self._keylist_fn)
+            self._keylist = pymor.core.load(self._keylist_fn)
         except:
             self._keylist = deque()
         self._enforce_limits(None)
         self.print_limit()
     
     def _dump_keylist(self):
-        pickle.dump(self._keylist, open(self._keylist_fn,'wb'))
+        pymor.core.dump(self._keylist, open(self._keylist_fn,'wb'))
         
     def _new_key(self, key):
         self._keylist.append(key)

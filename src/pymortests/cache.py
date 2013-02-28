@@ -81,4 +81,4 @@ class CacheTest(TestBase):
             self.assertEqual(backend.get('mykey'), cache.NO_VALUE)
         
 if __name__ == "__main__":
-    runmodule(name='pymortests.cache')
+    runmodule(name='pymortests.core.cache')
