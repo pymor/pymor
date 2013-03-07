@@ -1,11 +1,13 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-import logging
+
+from pymor.core import getLogger
+logger = getLogger(__name__)
 
 def inverse_relation(R, size_rhs=None, with_indices=False):
     assert R.ndim == 2
-    logging.warn('Call to unoptimized function inverse_relation')
+    logger.warn('Call to unoptimized function inverse_relation')
 
     num_columns_RINV = np.bincount(R.ravel()).max()
     size_rhs = size_rhs or (R.max() + 1)
