@@ -40,6 +40,8 @@ class PickleMeInterface(TestBase):
             os.unlink(dump_file.name)
         dump(obj, tempfile.TemporaryFile())
 
+#this needs to go into every module that wants to use dynamically generated types, ie. testcases, below the test code
+from pymor.core.dynamic import *
 if __name__ == "__main__":
     runmodule(name='pymortests.core.pickling')
     for fu,du in pymor.__dict__.items():        
