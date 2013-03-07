@@ -8,26 +8,8 @@ from itertools import product
 from pymor.grids.interfaces import (ConformalTopologicalGridInterface, AffineGridInterface, ReferenceElementInterface)
 #mandatory so all Grid classes are created
 from pymor.grids import *
-from pymortests.base import TestBase, runmodule
 
-class GridClassTestInterface(TestBase):
-    
-    '''empty list to make static analyzers happy'''
-    pass#grids = []
-
-
-def GridSubclassForImplemetorsOf(InterfaceType):
-    '''A decorator that dynamically creates subclasses of the decorated base test class 
-    for all implementors of a given Interface
-    '''
-    def decorate(TestCase):
-        '''saves a new type called cname with correct bases and class dict in globals'''
-        for GridType in set([T for T in InterfaceType.implementors(True) if not T.has_interface_name()]):
-            cname = '{}_{}'.format(GridType.__name__, TestCase.__name__.replace('Interface', ''))
-            pymor.core.dynamic.__dict__[cname] = type(cname, (TestCase,), {'grids': GridType.test_instances(),
-                                                     '__test__': True})
-        return TestCase
-    return decorate
+from pymortests.base import (runmodule, GridClassTestInterface, GridSubclassForImplemetorsOf)
 
 
 @GridSubclassForImplemetorsOf(ConformalTopologicalGridInterface)
@@ -401,6 +383,11 @@ class ConformalTopologicalGridTestInterface(GridClassTestInterface):
 @GridSubclassForImplemetorsOf(AffineGridInterface)
 class AffineGridTestInterface(GridClassTestInterface):
 
+    def setUp(self):
+        self.assertTrue(hasattr(self, 'grids'))
+        self.assertGreater(len(self.grids), 0)
+        
+        
     def test_dim_outer(self):
         for g in self.grids:
             self.assertIsInstance(g.dim_outer, int)

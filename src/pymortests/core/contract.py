@@ -69,9 +69,9 @@ class ContractTest(TestBase):
             :type phrase: str
             '''
             return phrase
-        #even a newly decorated function will not throw
-        
-        enabled(int(8))
+        # a newly decorated function will throw
+        with self.assertRaises(exceptions.ContractNotRespected):
+            enabled(int(8))
         
 if __name__ == "__main__":
     runmodule(name='pymortests.core.contract')
