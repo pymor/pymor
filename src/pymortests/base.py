@@ -11,6 +11,7 @@ from pymor.core import logger
 class PymorTestProgram(nose.core.TestProgram):
     pass
 
+
 class PymorTestSelector(nose.selector.Selector):
     
     def __init__(self,*args, **kwargs):
@@ -37,16 +38,6 @@ class PymorTestSelector(nose.selector.Selector):
             return ret and not cls.has_interface_name()
         return ret
 
-class PymorTestLoader(nose.loader.TestLoader, BasicInterface):
-    
-    def __init__(self, config=None, importer=None, workingDir=None,
-                 selector=None):
-        super(PymorTestLoader, self).__init__(config, importer, workingDir, selector)
-        
-    def loadTestsFromModule(self, module, path=None, discovered=False):
-        print('LOADER ' + str(module))
-        self.logger.critical('LOADER ' + str(module))
-        return super(PymorTestLoader, self).loadTestsFromModule(module, path, discovered)
     
 class TestBase(unittest.TestCase, BasicInterface):
     
@@ -61,7 +52,6 @@ def SubclassForImplemetorsOf(InterfaceType):
     '''A decorator that dynamically creates subclasses of the decorated base test class 
     for all implementors of a given Interface
     '''
-    logger.getLogger(__name__).critical('KOKO' + str(InterfaceType))
     def decorate(TestCase):
         '''saves a new type called cname with correct bases and class dict in globals'''
         import pymor.core.dynamic
@@ -73,9 +63,7 @@ def SubclassForImplemetorsOf(InterfaceType):
 
 
 class GridClassTestInterface(TestBase):
-    
-    '''empty list to make static analyzers happy'''
-    #grids = []
+    pass
 
 
 def GridSubclassForImplemetorsOf(InterfaceType):

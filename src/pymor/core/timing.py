@@ -34,6 +34,7 @@ class Timer(object):
     def __init__(self, section, log=getLogger(__name__)):
         self._section = section
         self._log = log
+        self._start = 0
         
     def start(self):
         self.dt = -1

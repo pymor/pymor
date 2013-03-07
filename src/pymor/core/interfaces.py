@@ -156,9 +156,9 @@ class abstractclassmethod(abstractclassmethod_base):
     where my abstractclassmethod_base sets __isabstractmethod__ = True.
     '''
     
-    def __init__(self, callable):
-        callable.__isabstractclassmethod__ = True
-        super(abstractclassmethod, self).__init__(callable)
+    def __init__(self, callable_method):
+        callable_method.__isabstractclassmethod__ = True
+        super(abstractclassmethod, self).__init__(callable_method)
 
 
 class abstractstaticmethod(abstractstaticmethod_base):
@@ -166,6 +166,6 @@ class abstractstaticmethod(abstractstaticmethod_base):
     where my abstractclassmethod_base sets __isabstractmethod__ = True.
     '''
     
-    def __init__(self, callable):
-        callable.__isabstractstaticmethod__ = True
-        super(abstractstaticmethod, self).__init__(callable)
+    def __init__(self, callable_method):
+        callable_method.__isabstractstaticmethod__ = True
+        super(abstractstaticmethod, self).__init__(callable_method)

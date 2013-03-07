@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 from nose.tools import raises
 import mock
+import contracts
 
 from pymor.core import exceptions
 from pymor.core.interfaces import ( contract, abstractmethod, abstractstaticmethod, 
@@ -13,8 +14,8 @@ import pymor.grids.boundaryinfos
 import pymor.playground.boundaryinfos.oned
 from pymortests.base import TestBase, runmodule
 from pymortests.core.dummies import *
+import pymor
 
-import contracts
 
 class ContractTest(TestBase):
     

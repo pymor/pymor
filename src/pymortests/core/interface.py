@@ -15,7 +15,7 @@ import pymor.core
 class TimingTest(TestBase):
     
     def testTimingContext(self):
-        with timing.Timer('busywait',self.logger.info) as timer:
+        with timing.Timer('busywait', self.logger.info):
             timing.busywait(1000)
             
     @timing.Timer('busywait_decorator', TestBase.logger.info)

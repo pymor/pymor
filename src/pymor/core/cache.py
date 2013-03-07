@@ -143,6 +143,7 @@ dc.register_backend("Dummy", "pymor.core.cache", "DummyBackend")
 class cached(BasicInterface):
     
     def __init__(self, function):
+        super(cached, self).__init__()
         self.decorated_function = function
         self._cache_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
         if self._cache_disabled:

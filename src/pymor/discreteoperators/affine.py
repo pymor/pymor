@@ -37,7 +37,7 @@ class LinearAffinelyDecomposedOperator(LinearDiscreteOperatorInterface):
     '''
 
     def __init__(self, operators, operator_affine_part=None, functionals=None, name=None):
-        assert functionals is None or len(operators) == len(functionals),\
+        assert functionals is None or len(operators) == len(functionals), \
                 ValueError('Operators and functionals must have the same length.')
 
         if operator_affine_part is not None:
@@ -47,9 +47,9 @@ class LinearAffinelyDecomposedOperator(LinearDiscreteOperatorInterface):
             self.dim_source = operators[0].dim_source
             self.dim_range = operators[0].dim_range
 
-        assert all(op.dim_source == self.dim_source for op in operators),\
+        assert all(op.dim_source == self.dim_source for op in operators), \
                 ValueError('All operators must have the same source dimension.')
-        assert all(op.dim_range == self.dim_range for op in operators),\
+        assert all(op.dim_range == self.dim_range for op in operators), \
                 ValueError('All operators must have the same range dimension.')
 
         self.operators = operators
