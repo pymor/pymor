@@ -19,5 +19,5 @@ from functools import partial
 
 dump = partial(pickle.dump, protocol=-1)
 dumps = partial(pickle.dumps, protocol=-1)
-load = partial(pickle.load, protocol=-1)
-loads = partial(pickle.loads, protocol=-1)
+load = pickle.load
+loads = pickle.loads

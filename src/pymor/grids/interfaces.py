@@ -5,8 +5,9 @@ import numpy as np
 import pymor.core as core
 from pymor.core.cache import Cachable, cached
 from pymor.domaindescriptions import BoundaryType
-from .defaultimpl import *  # NOQA
-
+from pymor.grids.defaultimpl import (ConformalTopologicalGridDefaultImplementations,
+                                     ISimpleReferenceElementDefaultImplementation,
+                                     AffineGridDefaultImplementations,)
 
 class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplementations, core.BasicInterface):
     '''desribes a conformal topological grid. The grid is determined via the subentity
