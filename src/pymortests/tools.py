@@ -88,7 +88,7 @@ class DictProperyTest(TestBase):
 class CmpTest(TestBase):
     
     def test_props(self):
-        tol_range = [None, 0.0, 1, -1]
+        tol_range = [None, 0.0, 1,]
         nan = float('nan')
         inf = float('inf')
         for (rtol,atol) in itertools.product(tol_range, tol_range):
