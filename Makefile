@@ -18,5 +18,4 @@ test:
 	/usr/bin/env python ./run_tests.py
 
 doc:
-	sphinx-apidoc -o docs -f -F -H pyMor -A AUTHORS -V 0.0.1 -R 0.0.1 src/
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html
