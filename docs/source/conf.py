@@ -19,8 +19,8 @@ needs_sphinx = '1.0'
 sys.path.insert(0, os.path.abspath('../../src'))
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 
-              'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
-              'sphinx.ext.doctest', 'sphinx.ext.autosummary',
+              'sphinx.ext.coverage',
+              'sphinx.ext.autosummary',
               ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -41,7 +41,7 @@ copyright = '2012-2013, the pyMor AUTHORS'
 #
 import pymor
 
-version = pymor.version
+version = '.'.join([str(v) for v in pymor.version])
 
 # The full version, including alpha/beta/rc tags.
 release = '.'.join([str(v) for v in pymor.version][:2])
@@ -89,7 +89,7 @@ pygments_style = 'sphinx'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = "%s v%s Manual (DRAFT)" % (project, version)
+html_title = "%s v%s Manual" % (project, version)
 
 # The name of an image file (within the static path) to place at the top of
 # the sidebar.
@@ -177,11 +177,6 @@ pngmath_use_preview = True
 latex_use_modindex = False
 
 
-# -----------------------------------------------------------------------------
-# Intersphinx configuration
-# -----------------------------------------------------------------------------
-intersphinx_mapping = {'http://docs.python.org/dev': '../../debian/python.org_objects.inv'}
-
 
 # -----------------------------------------------------------------------------
 # Numpy extensions
@@ -213,37 +208,4 @@ coverage_c_path = []
 coverage_c_regexes = {}
 coverage_ignore_c_items = {}
 
-
-# -----------------------------------------------------------------------------
-# Plots
-# -----------------------------------------------------------------------------
-plot_pre_code = """
-import numpy as np
-np.random.seed(0)
-"""
-plot_include_source = True
-plot_formats = [('png', 100), 'pdf']
-
-import math
-phi = (math.sqrt(5) + 1)/2
-
-try:
-    import matplotlib
-except ImportError:
-    sys.stderr.write('matplotlib is not available; disabling plots\n')
-else:
-    matplotlib.rcParams.update({
-        'font.size': 8,
-        'axes.titlesize': 8,
-        'axes.labelsize': 8,
-        'xtick.labelsize': 8,
-        'ytick.labelsize': 8,
-        'legend.fontsize': 8,
-        'figure.figsize': (3*phi, 3),
-        'figure.subplot.bottom': 0.2,
-        'figure.subplot.left': 0.2,
-        'figure.subplot.right': 0.9,
-        'figure.subplot.top': 0.85,
-        'figure.subplot.wspace': 0.4,
-        'text.usetex': False,
-        })
+autodoc_default_flags = ['members', 'undoc-members', 'private-members', 'special-members', 'inherited-members', 'show-inheritance']
