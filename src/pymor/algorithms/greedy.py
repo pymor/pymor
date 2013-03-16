@@ -3,8 +3,6 @@ from __future__ import absolute_import, division, print_function
 import time
 from itertools import izip
 
-import numpy as np
-
 from pymor.core import getLogger
 from pymor.core.exceptions import ExtensionError
 from pymor.algorithms.basisextension import trivial_basis_extension
@@ -84,7 +82,7 @@ def greedy(discretization, reductor, samples, initial_data=None, use_estimator=T
         else:
             errors = [error_norm(discretization.solve(mu) - rc.reconstruct(rd.solve(mu))) for mu in samples]
 
-        max_err, max_err_mu = max(((err, mu) for err, mu in izip(errors, samples)), key=lambda t:t[0])
+        max_err, max_err_mu = max(((err, mu) for err, mu in izip(errors, samples)), key=lambda t: t[0])
         max_errs.append(max_err)
         max_err_mus.append(max_err_mu)
         logger.info('Maximum error after {} extensions: {} (mu = {})'.format(extensions, max_err, max_err_mu))
@@ -110,5 +108,5 @@ def greedy(discretization, reductor, samples, initial_data=None, use_estimator=T
 
     tictoc = time.time() - tic
     logger.info('Greedy search took {} seconds'.format(tictoc))
-    return {'data':data, 'reduced_discretization':rd, 'reconstructor':rc, 'max_err':max_err, 'max_err_mu':max_err_mu,
-            'max_errs':max_errs, 'max_err_mus':max_err_mus, 'extensions':extensions, 'time':tictoc}
+    return {'data': data, 'reduced_discretization': rd, 'reconstructor': rc, 'max_err': max_err, 'max_err_mu': max_err_mu,
+            'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions, 'time': tictoc}

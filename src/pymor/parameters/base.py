@@ -4,7 +4,6 @@ from collections import OrderedDict
 
 import numpy as np
 
-import pymor.core as core
 from pymor.tools import float_cmp_all
 from .interfaces import ParameterSpaceInterface
 
@@ -13,14 +12,14 @@ class Parameter(OrderedDict):
     def allclose(self, mu):
         if set(self.keys()) != set(mu.keys()):
             return False
-        for k,v in self.iteritems():
+        for k, v in self.iteritems():
             if not float_cmp_all(v, mu[k]):
                 return False
         return True
 
     def copy(self):
         c = Parameter()
-        for k,v in self.iteritems():
+        for k, v in self.iteritems():
             c[k] = v.copy()
         return c
 
@@ -61,7 +60,7 @@ def parse_parameter_type(parameter_type):
     if isinstance(parameter_type, ParameterSpaceInterface):
         return OrderedDict(parameter_type.parameter_type)
     parameter_type = OrderedDict(parameter_type)
-    for k,v in parameter_type.iteritems():
+    for k, v in parameter_type.iteritems():
         if not isinstance(v, tuple):
             if v == 0 or v == 1:
                 parameter_type[k] = tuple()
@@ -75,7 +74,7 @@ class Parametric(object):
     parameter_type = OrderedDict()
     global_parameter_type = OrderedDict()
     local_parameter_type = OrderedDict()
-    parameter_maps = {'self':{}}
+    parameter_maps = {'self': {}}
     parameter_user_map = {}
 
     _parameter_space = None
@@ -107,7 +106,7 @@ class Parametric(object):
             parameter_map = self.parameter_maps[target][component]
         mu_mapped = Parameter()
         for k, (v, m) in parameter_map.iteritems():
-            mu_mapped[k] = mu_global[v][component,...] if m else mu_global[v]
+            mu_mapped[k] = mu_global[v][component, ...] if m else mu_global[v]
         return mu_mapped
 
     def build_parameter_type(self, local_type=OrderedDict(), inherits=OrderedDict(), local_global=False):
@@ -116,9 +115,9 @@ class Parametric(object):
         parameter_maps = {}
         if local_global:
             global_type = local_type.copy()
-            parameter_maps['self'] = OrderedDict((k,(k, False)) for k in local_type.keys())
+            parameter_maps['self'] = OrderedDict((k, (k, False)) for k in local_type.keys())
         else:
-            parameter_map = OrderedDict((k,('.{}'.format(k), False)) for k in local_type.keys())
+            parameter_map = OrderedDict((k, ('.{}'.format(k), False)) for k in local_type.keys())
             global_type = OrderedDict(('.{}'.format(k), v) for k, v in local_type.iteritems())
             parameter_maps['self'] = parameter_map
 
@@ -128,7 +127,7 @@ class Parametric(object):
                 continue
             if isinstance(inherits[n], tuple) or isinstance(inherits[n], list):
                 merged_param_map = OrderedDict()
-                for k,v in inherits[n][0].parameter_type.iteritems():
+                for k, v in inherits[n][0].parameter_type.iteritems():
                     if (k.startswith('.') and
                             all(v == inherits[n][i].parameter_type[k] for i in xrange(1, len(inherits[n])))):
                         global_name = '.{}{}'.format(n, k)
@@ -191,7 +190,7 @@ class Parametric(object):
     def parameter_info(self):
         msg = 'The parameter_type is: {}\n\n'.format(self.parameter_type)
         msg += 'We have the following parameter-maps:\n\n'
-        for n,mp in self.parameter_maps.iteritems():
+        for n, mp in self.parameter_maps.iteritems():
             if not isinstance(mp, list):
                 pad = ' ' * (len(n) + 2)
                 msg += '{}: '.format(n)

@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 
-import numpy as np
-
 import pymor.core as core
 from pymor.tools import Named
-from pymor.domaindescriptions import BoundaryType
 from pymor.domaindescriptions import RectDomain
 from pymor.functions import ConstantFunction
 

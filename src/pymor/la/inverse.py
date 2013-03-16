@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
+
 def inv_two_by_two(A):
     '''retval[i1,...,ik,m,n] = numpy.linalg.inv(A[i1,...,ik,:,:])'''
 
@@ -18,6 +19,7 @@ def inv_two_by_two(A):
     INV *= D[..., np.newaxis, np.newaxis]
 
     return INV
+
 
 def inv_transposed_two_by_two(A):
     '''retval[i1,...,ik,m,n] = numpy.linalg.inv(A[i1,...,ik,:,:])'''

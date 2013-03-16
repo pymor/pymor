@@ -2,7 +2,6 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-import pymor.core as core
 from pymor.domaindescriptions import BoundaryType
 from .interfaces import DomainDescriptionInterface
 

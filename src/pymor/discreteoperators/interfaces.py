@@ -7,6 +7,7 @@ import pymor.core as core
 from pymor.tools import Named
 from pymor.parameters import Parametric
 
+
 class DiscreteOperatorInterface(core.BasicInterface, Parametric, Named):
     '''Interface for parameter dependent discrete operators.
 
@@ -101,7 +102,7 @@ class LinearDiscreteOperatorInterface(DiscreteOperatorInterface):
         if self._last_mu is not None and self._last_mu.allclose(mu):
             return self._last_mat
         else:
-            self._last_mu = mu.copy() # TODO: add some kind of log message here
+            self._last_mu = mu.copy()  # TODO: add some kind of log message here
             self._last_mat = self.assemble(mu)
             return self._last_mat
 

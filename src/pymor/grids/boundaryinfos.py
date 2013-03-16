@@ -23,7 +23,7 @@ class BoundaryInfoFromIndicators(BoundaryInfoInterface):
         super(BoundaryInfoFromIndicators, self).__init__()
         self.grid = grid
         self.boundary_types = indicators.keys()
-        self._masks = {boundary_type:[np.zeros(grid.size(codim), dtype='bool') for codim in xrange(1, grid.dim + 1)]
+        self._masks = {boundary_type: [np.zeros(grid.size(codim), dtype='bool') for codim in xrange(1, grid.dim + 1)]
                        for boundary_type in self.boundary_types}
         for boundary_type, codims in self._masks.iteritems():
             for c, mask in enumerate(codims):

@@ -4,7 +4,6 @@ from collections import OrderedDict
 from itertools import izip, product
 import numpy as np
 
-import pymor.core as core
 from .interfaces import ParameterSpaceInterface
 from .base import parse_parameter, parse_parameter_type, Parameter
 
@@ -32,12 +31,12 @@ class CubicParameterSpace(ParameterSpaceInterface):
         if isinstance(counts, dict):
             pass
         elif isinstance(counts, (tuple, list, np.ndarray)):
-            counts = {k:c for k,c in izip(self.parameter_type, counts)}
+            counts = {k: c for k, c in izip(self.parameter_type, counts)}
         else:
-            counts = {k:counts for k in self.parameter_type}
+            counts = {k: counts for k in self.parameter_type}
         linspaces = tuple(np.linspace(self.ranges[k][0], self.ranges[k][1], num=counts[k]) for k in self.parameter_type)
-        iters = tuple(product(ls, repeat=max(1,np.zeros(sps).size))
-                                for ls,sps in izip(linspaces, self.parameter_type.values()) )
+        iters = tuple(product(ls, repeat=max(1, np.zeros(sps).size))
+                                for ls, sps in izip(linspaces, self.parameter_type.values()))
         for i in product(*iters):
             yield Parameter((k, np.array(v).reshape(shp))
                                           for k, v, shp in izip(self.parameter_type, i, self.parameter_type.values()))
@@ -48,4 +47,3 @@ class CubicParameterSpace(ParameterSpaceInterface):
             yield Parameter((k, np.random.uniform(r[0], r[1], shp)) for k, r, shp in
                                           izip(self.parameter_type, self.ranges.values(), self.parameter_type.values()))
             c += 1
-

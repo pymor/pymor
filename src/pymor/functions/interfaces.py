@@ -4,6 +4,7 @@ import pymor.core as core
 from pymor.tools import Named
 from pymor.parameters import Parametric
 
+
 class FunctionInterface(core.BasicInterface, Parametric, Named):
 
     dim_domain = 0

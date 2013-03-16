@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
+
 class GaussQuadratures(object):
     '''Gauss quadrature on the interval [0, 1]'''
 
@@ -20,7 +21,7 @@ class GaussQuadratures(object):
             assert 1 <= npoints <= cls.orders.size, ValueError('not implemented with {} points'.format(npoints))
             p = npoints - 1
         return p
-    
+
     @classmethod
     def quadrature(cls, order=None, npoints=None):
         '''returns tuple (P, W) where P is an array of Gauss points with corresponding weights W for
@@ -28,7 +29,7 @@ class GaussQuadratures(object):
         '''
         p = cls._determine_order(order, npoints)
         return cls.points[p], cls.weights[p]
-    
+
     @classmethod
     def iter_quadrature(cls, order=None, npoints=None):
         '''iterates over a quadrature tuple wise

@@ -2,7 +2,6 @@
 from __future__ import absolute_import, division, print_function
 
 from itertools import izip
-
 import numpy as np
 
 from .interfaces import LinearDiscreteOperatorInterface
@@ -56,13 +55,13 @@ class LinearAffinelyDecomposedOperator(LinearDiscreteOperatorInterface):
         self.operator_affine_part = operator_affine_part
         self.functionals = functionals
         if functionals is not None:
-            self.build_parameter_type(inherits={'operators':operators,
-                                              'operator_affine_part':operator_affine_part,
-                                             'functionals':functionals})
+            self.build_parameter_type(inherits={'operators': operators,
+                                              'operator_affine_part': operator_affine_part,
+                                             'functionals': functionals})
         else:
-            self.build_parameter_type([('coefficients',len(operators))],
-                                    inherits={'operators':operators,
-                                              'operator_affine_part':operator_affine_part})
+            self.build_parameter_type([('coefficients', len(operators))],
+                                    inherits={'operators': operators,
+                                              'operator_affine_part': operator_affine_part})
         self.name = name
 
     def assemble(self, mu):
@@ -72,7 +71,7 @@ class LinearAffinelyDecomposedOperator(LinearDiscreteOperatorInterface):
         else:
             my_mu = self.map_parameter(mu)
             A = sum(op.matrix(self.map_parameter(mu, 'operators', n)) * m
-                                    for n, op, m in izip(xrange(len(self.operators)), self.operators, my_mu['coefficients']))
+                            for n, op, m in izip(xrange(len(self.operators)), self.operators, my_mu['coefficients']))
 
         if self.operator_affine_part is not None:
             A = A + self.operator_affine_part.matrix(self.map_parameter(mu, 'operator_affine_part'))

@@ -1,4 +1,4 @@
-NO_VERSION = (0,0,0,'NOVERSION')
+NO_VERSION = (0, 0, 0, 'NOVERSION')
 
 try:
     import pymorversion

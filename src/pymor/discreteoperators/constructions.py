@@ -49,7 +49,7 @@ class ProjectedOperator(DiscreteOperatorInterface):
 
     def __init__(self, operator, source_basis, range_basis=None, product=None, name=None):
         if range_basis is None:
-            range_basis = np.ones((1,1)) if operator.dim_range == 1 else source_basis
+            range_basis = np.ones((1, 1)) if operator.dim_range == 1 else source_basis
         assert isinstance(operator, DiscreteOperatorInterface)
         assert operator.dim_source == source_basis.shape[1]
         assert operator.dim_range == range_basis.shape[1]
@@ -102,7 +102,7 @@ class ProjectedLinearOperator(LinearDiscreteOperatorInterface):
 
     def __init__(self, operator, source_basis, range_basis=None, product=None, name=None):
         if range_basis is None:
-            range_basis = np.ones((1,1)) if operator.dim_range == 1 else source_basis
+            range_basis = np.ones((1, 1)) if operator.dim_range == 1 else source_basis
         assert isinstance(operator, LinearDiscreteOperatorInterface)
         assert operator.dim_source == source_basis.shape[1]
         assert operator.dim_range == range_basis.shape[1]
@@ -200,7 +200,7 @@ class SumOperator(DiscreteOperatorInterface):
         assert all(isinstance(op, DiscreteOperatorInterface) for op in operators)
         assert all(op.dim_source == operators[0].dim_source for op in operators)
         assert all(op.dim_range == operators[0].dim_range for op in operators)
-        self.build_parameter_type(inherits={'operators':operators})
+        self.build_parameter_type(inherits={'operators': operators})
         self.operators = operators
         self.dim_source = operators[0].dim_source
         self.dim_range = operators[0].dim_range
@@ -234,7 +234,7 @@ class LinearSumOperator(LinearDiscreteOperatorInterface):
         assert all(isinstance(op, LinearDiscreteOperatorInterface) for op in operators)
         assert all(op.dim_source == operators[0].dim_source for op in operators)
         assert all(op.dim_range == operators[0].dim_range for op in operators)
-        self.build_parameter_type(inherits={'operators':operators})
+        self.build_parameter_type(inherits={'operators': operators})
         self.operators = operators
         self.dim_source = operators[0].dim_source
         self.dim_range = operators[0].dim_range

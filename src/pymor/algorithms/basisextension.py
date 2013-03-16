@@ -1,7 +1,5 @@
 from __future__ import absolute_import, division, print_function
 
-from itertools import izip
-
 import numpy as np
 
 from pymor.core.exceptions import ExtensionError
@@ -31,10 +29,12 @@ def trivial_basis_extension(basis, U):
     ExtensionError
         Is raised if U is already contained in basis.
     '''
-    if basis is None: return np.reshape(U, (1, -1))
+    if basis is None:
+        return np.reshape(U, (1, -1))
 
     assert isinstance(basis, np.ndarray)
-    if not all(not float_cmp_all(B, U) for B in basis): raise ExtensionError
+    if not all(not float_cmp_all(B, U) for B in basis):
+        raise ExtensionError
 
     new_basis = np.empty((basis.shape[0] + 1, basis.shape[1]))
     new_basis[:-1, :] = basis
@@ -67,7 +67,8 @@ def gram_schmidt_basis_extension(basis, U, product=None):
         is not linearily independent from the basis. However this can also happen
         due to rounding errors ...
     '''
-    if basis is None: basis = np.zeros((0, len(U)))
+    if basis is None:
+        basis = np.zeros((0, len(U)))
 
     assert isinstance(basis, np.ndarray)
     new_basis = np.empty((basis.shape[0] + 1, basis.shape[1]))
@@ -75,6 +76,7 @@ def gram_schmidt_basis_extension(basis, U, product=None):
     new_basis[-1, :] = U
     new_basis = gram_schmidt(new_basis, row_offset=basis.shape[0], product=product)
 
-    if new_basis.size <= basis.size: raise ExtensionError
+    if new_basis.size <= basis.size:
+        raise ExtensionError
 
     return new_basis

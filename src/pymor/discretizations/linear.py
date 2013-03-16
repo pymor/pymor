@@ -10,7 +10,6 @@ from scipy.sparse import issparse
 from pymor.core import BasicInterface, defaults
 from pymor.core.cache import Cachable, cached, DEFAULT_DISK_CONFIG
 from pymor.tools import dict_property, Named
-from pymor.domaindescriptions import BoundaryType
 from pymor.parameters import Parametric
 from pymor.discreteoperators import LinearDiscreteOperatorInterface
 
@@ -78,8 +77,8 @@ class StationaryLinearDiscretization(BasicInterface, Parametric, Cachable, Named
         assert rhs.dim_range == 1
 
         Cachable.__init__(self, config=DEFAULT_DISK_CONFIG)
-        self.operators = {'operator': operator, 'rhs':rhs}
-        self.build_parameter_type(inherits={'operator':operator, 'rhs':rhs})
+        self.operators = {'operator': operator, 'rhs': rhs}
+        self.build_parameter_type(inherits={'operator': operator, 'rhs': rhs})
 
         def default_solver(A, RHS):
             if issparse(A):
@@ -117,4 +116,3 @@ class StationaryLinearDiscretization(BasicInterface, Parametric, Cachable, Named
             RHS = RHS[np.newaxis]
 
         return self.solver(A, RHS)
-

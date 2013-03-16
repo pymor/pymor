@@ -21,8 +21,8 @@ class Point(ReferenceElementInterface):
         return np.array([0], dtype='int32')
 
     def subentity_embedding(self, subentity_codim):
-        assert subentity_codim == 0, CodimError('Invalid codimension (must be 0 but was {})'.format(codim))
-        return np.zeros((0,0), dtype='int32'), np.zeros((0), dtype='int32')
+        assert subentity_codim == 0, CodimError('Invalid codimension (must be 0 but was {})'.format(subentity_codim))
+        return np.zeros((0, 0), dtype='int32'), np.zeros((0), dtype='int32')
 
     def sub_reference_element(self, codim=1):
         assert codim == 0, CodimError('Invalid codimension (must be 0 but was {})'.format(codim))
@@ -39,12 +39,12 @@ class Point(ReferenceElementInterface):
 
     def quadrature_info(self):
         # of course, the quadrature is of abritrary oder ...
-        return {'gauss':tuple(xrange(42))}, {'gauss':(1,)}
+        return {'gauss': tuple(xrange(42))}, {'gauss': (1,)}
 
     def quadrature(self, order=None, npoints=None, quadrature_type='default'):
         if quadrature_type == 'default' or quadrature_type == 'gauss':
             assert npoints is None or npoints == 1, ValueError('there is only one point in dimension 0!')
-            return np.zeros((1,0)), np.ones(1)
+            return np.zeros((1, 0)), np.ones(1)
         else:
             raise NotImplementedError('quadrature_type must be "default" or "gauss"')
 
@@ -76,9 +76,9 @@ class Line(ReferenceElementInterface):
         assert 0 <= subentity_codim <= 1,\
                CodimError('Invalid codimension (must be 0 or 1 but was {})'.format(subentity_codim))
         if subentity_codim == 0:
-            return np.ones((1,1,1)), np.zeros((1,1,1))
+            return np.ones((1, 1, 1)), np.zeros((1, 1, 1))
         else:
-            return np.array((np.zeros((1,0)), np.zeros((1,0)))), np.array(([0.], [1.]))
+            return np.array((np.zeros((1, 0)), np.zeros((1, 0)))), np.array(([0.], [1.]))
 
     def sub_reference_element(self, codim=1):
         assert 0 <= codim <= 1, CodimError('Invalid codimension (must be 0 or 1 but was {})'.format(codim))
@@ -97,7 +97,7 @@ class Line(ReferenceElementInterface):
         return np.apply_along_axis(np.linalg.norm, -2, A)
 
     def quadrature_info(self):
-        return {'gauss':GaussQuadratures.orders}, {'gauss':map(len, GaussQuadratures.points)}
+        return {'gauss': GaussQuadratures.orders}, {'gauss': map(len, GaussQuadratures.points)}
 
     def quadrature(self, order=None, npoints=None, quadrature_type='default'):
         if quadrature_type == 'default' or quadrature_type == 'gauss':
@@ -120,11 +120,13 @@ class Square(ReferenceElementInterface):
             return np.array((PP0.ravel(), PP1.ravel())).T
 
         def tensor_weights(W):
-            return np.dot(W[:,np.newaxis], W[np.newaxis, :]).ravel()
-        self._quadrature_points  = [tensor_points(GaussQuadratures.quadrature(npoints=p+1)[0])  for p in xrange(GaussQuadratures.maxpoints())]
-        self._quadrature_weights = [tensor_weights(GaussQuadratures.quadrature(npoints=p+1)[1]) for p in xrange(GaussQuadratures.maxpoints())]
+            return np.dot(W[:, np.newaxis], W[np.newaxis, :]).ravel()
+        self._quadrature_points = [tensor_points(GaussQuadratures.quadrature(npoints=p + 1)[0])
+                                    for p in xrange(GaussQuadratures.maxpoints())]
+        self._quadrature_weights = [tensor_weights(GaussQuadratures.quadrature(npoints=p + 1)[1])
+                                    for p in xrange(GaussQuadratures.maxpoints())]
         self._quadrature_npoints = np.arange(1, GaussQuadratures.maxpoints() + 1) ** 2
-        self._quadrature_orders  = GaussQuadratures.orders
+        self._quadrature_orders = GaussQuadratures.orders
         self._quadrature_order_map = GaussQuadratures.order_map
 
     def size(self, codim=1):
@@ -187,7 +189,7 @@ class Square(ReferenceElementInterface):
         return np.max((VN0, VN1), axis=0)
 
     def quadrature_info(self):
-        return {'tensored_gauss':self._quadrature_orders}, {'tensored_gauss': self._quadrature_npoints}
+        return {'tensored_gauss': self._quadrature_orders}, {'tensored_gauss': self._quadrature_npoints}
 
     def quadrature(self, order=None, npoints=None, quadrature_type='default'):
         if quadrature_type == 'default' or quadrature_type == 'tensored_gauss':
@@ -288,8 +290,8 @@ class Triangle(ReferenceElementInterface):
         return np.max((VN0, VN1, VN2), axis=0)
 
     def quadrature_info(self):
-        return ({'center':(1,), 'edge_centers':(2,)},
-                {'center':(1,), 'edge_centers':(3,)} )
+        return ({'center': (1,), 'edge_centers': (2,)},
+                {'center': (1,), 'edge_centers': (3,)})
 
     def quadrature(self, order=None, npoints=None, quadrature_type='default'):
         assert order is not None or npoints is not None, ValueError('must specify "order" or "npoints"')

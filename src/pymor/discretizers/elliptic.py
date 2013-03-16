@@ -75,7 +75,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
 
         if p.diffusion_functionals is None:
             L = LinearAffinelyDecomposedOperator(Li, L0, name='diffusion')
-            L.rename_parameter({'.coefficients':'.diffusion_coefficients'})
+            L.rename_parameter({'.coefficients': '.diffusion_coefficients'})
         else:
             L = LinearAffinelyDecomposedOperator(Li, L0, p.diffusion_functionals, name='diffusion')
     else:
@@ -104,4 +104,4 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
     if hasattr(p, 'parameter_space'):
         discretization.parameter_space = p.parameter_space
 
-    return discretization, {'grid':grid, 'boundary_info':boundary_info}
+    return discretization, {'grid': grid, 'boundary_info': boundary_info}

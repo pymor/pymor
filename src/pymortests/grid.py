@@ -1,12 +1,10 @@
 from __future__ import absolute_import, division, print_function
 
-from itertools import izip
-
+from itertools import izip, product
 import numpy as np
 
-from itertools import product
 from pymor.grids.interfaces import (ConformalTopologicalGridInterface, AffineGridInterface, ReferenceElementInterface)
-#mandatory so all Grid classes are created
+# mandatory so all Grid classes are created
 from pymor.grids import *
 
 from pymortests.base import (runmodule, GridClassTestInterface, GridSubclassForImplemetorsOf)
@@ -145,7 +143,7 @@ class ConformalTopologicalGridTestInterface(GridClassTestInterface):
                             i += 1
                         self.assertTrue((i + 1 == len(S)) or (S[i + 1] == -1))
                         if i + 1 < len(S):
-                            np.testing.assert_array_equal(S[i+1:], -1)
+                            np.testing.assert_array_equal(S[i + 1:], -1)
 
     def test_superentities_codim_d_codim_d(self):
         for g in self.grids:
@@ -229,7 +227,7 @@ class ConformalTopologicalGridTestInterface(GridClassTestInterface):
                 with self.assertRaises(AssertionError):
                     g.neighbours(e, -1, g.dim)
             with self.assertRaises(AssertionError):
-                g.neighbours(g.dim+1, g.dim, g.dim)
+                g.neighbours(g.dim + 1, g.dim, g.dim)
             with self.assertRaises(AssertionError):
                 g.neighbours(-1, 0, g.dim)
 
@@ -386,8 +384,7 @@ class AffineGridTestInterface(GridClassTestInterface):
     def setUp(self):
         self.assertTrue(hasattr(self, 'grids'))
         self.assertGreater(len(self.grids), 0)
-        
-        
+
     def test_dim_outer(self):
         for g in self.grids:
             self.assertIsInstance(g.dim_outer, int)
@@ -627,7 +624,7 @@ class AffineGridTestInterface(GridClassTestInterface):
                         np.testing.assert_allclose(Q, g.quadrature_points(d, npoints=p, quadrature_type=t))
                         np.testing.assert_allclose(Q, B[:, np.newaxis, :] + np.einsum('eij,qj->eqi', A, q))
 
-#this needs to go into every module that wants to use dynamically generated types, ie. testcases, below the test code
+# this needs to go into every module that wants to use dynamically generated types, ie. testcases, below the test code
 from pymor.core.dynamic import *
 
 if __name__ == "__main__":

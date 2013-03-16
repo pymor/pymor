@@ -12,9 +12,10 @@ import contracts
 import copy
 import warnings
 
+
 def fixup_docstring(doc):
     '''replaces all dots with underscores in contract lines
-    this is necessary to circumvent type identifier checking 
+    this is necessary to circumvent type identifier checking
     in pycontracts itself
     '''
     if doc is None:
@@ -30,6 +31,7 @@ def fixup_docstring(doc):
                 line = ' %s %s %s' % (tokens[idx-2], tokens[idx-1], tokens[idx].replace('.', '_'))
         ret.append(line)
     return '\n'.join(ret)
+
 
 def _is_decorated(func):
     return 'decorated' in dir(func)
@@ -47,6 +49,7 @@ class DecoratorBase(object):
         '''Return a wrapper that binds self as a method of obj (!)'''
         self.obj = obj
         return types.MethodType(self, obj)
+
 
 class DecoratorWithArgsBase(object):
     '''A base for all decorators with args that sadly can do little common automagic'''
@@ -71,6 +74,7 @@ class Deprecated(DecoratorBase):
 
     def __call__(self, func):
         func.decorated = self
+
         @functools.wraps(func)
         def new_func(*args, **kwargs):
             frame = inspect.currentframe().f_back
@@ -80,6 +84,7 @@ class Deprecated(DecoratorBase):
             warnings.warn(msg, DeprecationWarning)
             return func(*args, **kwargs)
         return new_func
+
 
 def contract(*arg, **kwargs):
     '''
@@ -196,6 +201,7 @@ def contract(*arg, **kwargs):
 
 # alias this so we need no contracts import outside this module
 contracts_decorate = contracts.main.contracts_decorate
+
 
 def contains_contract(string):
     try:

@@ -2,6 +2,7 @@
 '''
 from __future__ import absolute_import, division, print_function
 
+
 class abstractclassmethod(classmethod):
     '''
     A decorator indicating abstract classmethods.

@@ -4,11 +4,8 @@ import types
 
 import numpy as np
 
-import pymor.core as core
-from pymor.core.cache import Cachable, NO_CACHE_CONFIG
-from pymor.discreteoperators import LinearAffinelyDecomposedOperator, project_operator
+from pymor.discreteoperators import LinearAffinelyDecomposedOperator
 from pymor.discretizations import StationaryLinearDiscretization
-from pymor.tools import float_cmp_all
 from pymor.la import induced_norm
 from .basic import GenericRBReductor
 
@@ -37,7 +34,6 @@ class StationaryAffineLinearReductor(GenericRBReductor):
         super(StationaryAffineLinearReductor, self).__init__(discretization, product=None, disable_caching=disable_caching)
         self.error_product = error_product
 
-
     def reduce(self, RB):
         rd, rc = super(StationaryAffineLinearReductor, self).reduce(RB)
 
@@ -59,7 +55,8 @@ class StationaryAffineLinearReductor(GenericRBReductor):
         ol = 0 if not d.operator.parametric else len(d.operator.operators)
 
         # if RB is None: RB = np.zeros((0, d.operator.dim_source))
-        if RB is None: RB = np.zeros((0, next(d.operators.itervalues()).dim_source))
+        if RB is None:
+            RB = np.zeros((0, next(d.operators.itervalues()).dim_source))
         R_R = np.empty((ra + rl, space_dim))
         R_O = np.empty(((oa + ol) * len(RB), space_dim))
         RR_R = np.empty((ra + rl, space_dim))
@@ -88,7 +85,7 @@ class StationaryAffineLinearReductor(GenericRBReductor):
         if len(RB) > 0 and d.operator.parametric:
             for i, op in enumerate(d.operator.operators):
                 A = R_O[(oa + i) * len(RB): (oa + i + 1) * len(RB)]
-                A[:] = np.array([- op.apply(B) for B in RB])
+                A[:] = np.array([-op.apply(B) for B in RB])
                 RR_O[(oa + i) * len(RB): (oa + i + 1) * len(RB)] = np.array(map(riesz_representative, A))
 
         # compute Gram matrix of the residuals

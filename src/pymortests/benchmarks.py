@@ -1,4 +1,7 @@
 from __future__ import absolute_import, division, print_function
+
+from pymortests.base import runmodule
+
+
 if __name__ == "__main__":
-    import nose
-    nose.core.runmodule(name='pymor.tests.benchmarks')
+    runmodule(name='pymortests.benchmarks')

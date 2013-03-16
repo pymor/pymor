@@ -120,8 +120,7 @@ class TriaGrid(AffineGridInterface, cache.Cachable):
 
     @staticmethod
     def test_instances():
-        return [TriaGrid((2,4)), TriaGrid((1,1)), TriaGrid((42,42))]
-
+        return [TriaGrid((2, 4)), TriaGrid((1, 1)), TriaGrid((42, 42))]
 
 
 if __name__ == '__main__':

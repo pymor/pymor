@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
+
 def dict_property(d, n):
     @property
     def prop(self):

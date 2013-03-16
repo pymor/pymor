@@ -9,6 +9,7 @@ from pymor.grids.defaultimpl import (ConformalTopologicalGridDefaultImplementati
                                      ISimpleReferenceElementDefaultImplementation,
                                      AffineGridDefaultImplementations,)
 
+
 class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplementations, core.BasicInterface):
     '''desribes a conformal topological grid. The grid is determined via the subentity
     relation given by `subentities(codim, subentity_codim)`.
@@ -99,6 +100,7 @@ class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplement
     def test_instances():
         '''returns a list of Grid instances suitable to be run through our Testcases'''
         pass
+
 
 class ReferenceElementInterface(ISimpleReferenceElementDefaultImplementation, core.BasicInterface):
     '''defines a reference element with the property that each of its subentities is

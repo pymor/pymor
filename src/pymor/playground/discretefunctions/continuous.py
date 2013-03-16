@@ -42,7 +42,7 @@ class P1(Interface):
         assert vector.ndim == 1 or (vector.ndim == 2
                                     and (vector.shape[0] == 1 or vector.shape[1] == 1))
         assert vector.size == self.grid.size(1)
-        self.size == vector.size
+        self.size = vector.size
         self.vector = vector
         self.name = name
 

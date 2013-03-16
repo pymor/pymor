@@ -56,8 +56,9 @@ from pymor.functions import GenericFunction
 
 # set log level
 # from pymor.core import getLogger; getLogger('pymor').setLevel('INFO')
-from pymor.core import getLogger; getLogger('pymor.algorithms').setLevel('INFO')
-from pymor.core import getLogger; getLogger('pymor.discretizations').setLevel('INFO')
+from pymor.core import getLogger
+getLogger('pymor.algorithms').setLevel('INFO')
+getLogger('pymor.discretizations').setLevel('INFO')
 
 # parse arguments
 args = docopt(__doc__)
@@ -113,7 +114,7 @@ for mu in discretization.parameter_space.sample_randomly(args['--test']):
     print('Solving RB-Scheme for mu = {} ... '.format(mu), end='')
     URB = reconstructor.reconstruct(rb_discretization.solve(mu))
     U = discretization.solve(mu)
-    h1_err = discretization.h1_norm(U-URB)
+    h1_err = discretization.h1_norm(U - URB)
     cond = np.linalg.cond(rb_discretization.operator.matrix(mu))
     if h1_err > h1_err_max:
         h1_err_max = h1_err
@@ -152,4 +153,4 @@ Stochastic error estimation:
 
 sys.stdout.flush()
 if args['--plot-err']:
-    discretization.visualize(U-URB)
+    discretization.visualize(U - URB)

@@ -124,10 +124,10 @@ class RectGrid(AffineGridInterface, cache.Cachable):
 
     @staticmethod
     def test_instances():
-        return [RectGrid((2,4)), RectGrid((1,1)), RectGrid((42,42))]
+        return [RectGrid((2, 4)), RectGrid((1, 1)), RectGrid((42, 42))]
 
     #def center_distances(self):
-     #   raise NotImplementedError
+    #   raise NotImplementedError
 
 
     #def S(self):

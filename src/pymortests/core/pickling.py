@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 import tempfile
 import os
 
-#import everything we might want to test so metaclass can register the types
+# import everything we might want to test so metaclass can register the types
 from pymor import *
 from pymor.core import *
 from pymor.grids import *
@@ -19,10 +19,11 @@ from pymor.tools import *
 from pymor.core.interfaces import (BasicInterface,)
 from pymortests.base import (TestBase, runmodule, SubclassForImplemetorsOf)
 from pymor import core
-    
+
+
 @SubclassForImplemetorsOf(BasicInterface)
 class PickleMeInterface(TestBase):
-    
+
     def testDump(self):
         try:
             obj = self.Type
@@ -30,7 +31,7 @@ class PickleMeInterface(TestBase):
             self.logger.debug('Not testing {} because its init failed: {}'.format(self.Type, str(e)))
             return
 
-        with tempfile.NamedTemporaryFile(mode='wb', delete=False) as dump_file:            
+        with tempfile.NamedTemporaryFile(mode='wb', delete=False) as dump_file:
             core.dump(obj, dump_file)
             dump_file.close()
             f = open(dump_file.name, 'rb')
@@ -40,10 +41,9 @@ class PickleMeInterface(TestBase):
             os.unlink(dump_file.name)
         dump(obj, tempfile.TemporaryFile())
 
-#this needs to go into every module that wants to use dynamically generated types, ie. testcases, below the test code
+# this needs to go into every module that wants to use dynamically generated types, ie. testcases, below the test code
 from pymor.core.dynamic import *
 
 if __name__ == "__main__":
     runmodule(name='pymortests.core.pickling')
 
-            

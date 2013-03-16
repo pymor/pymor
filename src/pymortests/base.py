@@ -13,11 +13,11 @@ class PymorTestProgram(nose.core.TestProgram):
 
 
 class PymorTestSelector(nose.selector.Selector):
-    
-    def __init__(self,*args, **kwargs):
+
+    def __init__(self, *args, **kwargs):
         super(PymorTestSelector, self).__init__(*args, **kwargs)
         self._skip_grid = 'PYMOR_NO_GRIDTESTS' in os.environ
-        
+
     def wantDirectory(self, dirname):
         return 'src' in dirname
 
@@ -25,12 +25,12 @@ class PymorTestSelector(nose.selector.Selector):
         if self._skip_grid and 'grid' in filename:
             return False
         return filename.endswith('.py') and ('pymortests' in filename or
-                'dynamic' in filename) 
+                'dynamic' in filename)
 
     def wantModule(self, module):
-        parts = module.__name__.split('.')     
-        return 'pymortests' in parts or 'pymor' in parts 
-    
+        parts = module.__name__.split('.')
+        return 'pymortests' in parts or 'pymor' in parts
+
     def wantClass(self, cls):
         ret = super(PymorTestSelector, self).wantClass(cls)
         #if issubclass(C, B)
@@ -38,18 +38,19 @@ class PymorTestSelector(nose.selector.Selector):
             return ret and not cls.has_interface_name()
         return ret
 
-    
+
 class TestBase(unittest.TestCase, BasicInterface):
-    
+
     @classmethod
     def _is_actual_testclass(cls):
         return cls.__name__ != 'TestBase' and not cls.has_interface_name()
-    
+
     '''only my subclasses will set this to True, prevents nose from thinking I'm an actual test'''
     __test__ = _is_actual_testclass
-    
+
+
 def SubclassForImplemetorsOf(InterfaceType):
-    '''A decorator that dynamically creates subclasses of the decorated base test class 
+    '''A decorator that dynamically creates subclasses of the decorated base test class
     for all implementors of a given Interface
     '''
     def decorate(TestCase):
@@ -67,7 +68,7 @@ class GridClassTestInterface(TestBase):
 
 
 def GridSubclassForImplemetorsOf(InterfaceType):
-    '''A decorator that dynamically creates subclasses of the decorated base test class 
+    '''A decorator that dynamically creates subclasses of the decorated base test class
     for all implementors of a given Interface
     '''
     def decorate(TestCase):
@@ -80,6 +81,7 @@ def GridSubclassForImplemetorsOf(InterfaceType):
             assert len(pymor.core.dynamic.__dict__[cname].grids) > 0
         return TestCase
     return decorate
+
 
 def runmodule(name):
     root_logger = logger.getLogger('pymor')

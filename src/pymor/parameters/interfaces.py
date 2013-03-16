@@ -2,12 +2,13 @@ from __future__ import absolute_import, division, print_function
 
 import pymor.core as core
 from pymor.tools import Named
+from .base import Parametric
+
 
 class ParameterSpaceInterface(core.BasicInterface):
 
     parameter_type = None
 
-from .base import Parametric
 
 class ParameterFunctionalInterface(core.BasicInterface, Parametric, Named):
 

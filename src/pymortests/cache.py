@@ -7,15 +7,17 @@ from pymortests.base import TestBase, runmodule
 
 SLEEP_SECONDS = 0.2
 
+
 class IamMemoryCached(cache.Cachable):
-   
+
     @cache.cached
     def me_takey_long_time(self, arg):
         time.sleep(SLEEP_SECONDS)
         return arg
 
+
 class IamDiskCached(cache.Cachable):
-    
+
     def __init__(self, ):
         super(IamDiskCached, self).__init__(config=cache.DEFAULT_DISK_CONFIG)
 
@@ -23,16 +25,17 @@ class IamDiskCached(cache.Cachable):
     def me_takey_long_time(self, arg):
         time.sleep(SLEEP_SECONDS)
         return arg
-    
+
+
 class IamLimitedCached(cache.Cachable):
-    
+
     def __init__(self, config=cache.DEFAULT_DISK_CONFIG):
         super(IamLimitedCached, self).__init__(config=config)
 
     @cache.cached
     def me_takey_no_time(self, arg):
         return int(arg)
-    
+
 
 class IWillBeCopied(cache.Cachable):
 
@@ -45,22 +48,22 @@ class IWillBeCopied(cache.Cachable):
 
 
 class CacheTest(TestBase):
-       
+
     def test_runtime(self):
         for Class in [IamMemoryCached, IamDiskCached]:
             r = Class()
-            for val in ['koko', 'koko', 'other']:                
+            for val in ['koko', 'koko', 'other']:
                 int0 = datetime.now()
                 r.me_takey_long_time(val)
                 int1 = datetime.now()
-                self.logger.info(int1-int0)
-            
+                self.logger.info(int1 - int0)
+
     def test_limit(self):
-        for c in [IamLimitedCached(cache.SMALL_MEMORY_CONFIG), 
+        for c in [IamLimitedCached(cache.SMALL_MEMORY_CONFIG),
                   IamLimitedCached(cache.SMALL_DISK_CONFIG)]:
             for i in range(25):
                 c.cache_region.backend.print_limit()
-                k = c.me_takey_no_time(i)
+                _ = c.me_takey_no_time(i)
                 c.cache_region.backend.print_limit()
 
     def test_copy(self):
@@ -79,6 +82,7 @@ class CacheTest(TestBase):
             self.assertEqual(backend.get('mykey'), 1 if backend_cls != cache.DummyBackend else cache.NO_VALUE)
             backend.delete('mykey')
             self.assertEqual(backend.get('mykey'), cache.NO_VALUE)
-        
+
+
 if __name__ == "__main__":
     runmodule(name='pymortests.core.cache')

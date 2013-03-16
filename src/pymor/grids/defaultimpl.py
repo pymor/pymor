@@ -7,6 +7,7 @@ from pymor.core.exceptions import CodimError
 from pymor.la.inverse import inv_transposed_two_by_two
 from pymor.tools.relations import inverse_relation
 
+
 class ConformalTopologicalGridDefaultImplementations(Cachable):
 
     @cached
@@ -76,14 +77,14 @@ class ConformalTopologicalGridDefaultImplementations(Cachable):
             if codim == neighbour_codim:
                 for ii, i in np.ndenumerate(EI):
                     if i >= 0:
-                        for ni, n in np.ndenumerate(ISE[i]):
+                        for _, n in np.ndenumerate(ISE[i]):
                             if n != ii[0] and n not in NB[ii[0]]:
                                 NB[ii[0], NB_COUNTS[ii[0]]] = n
                                 NB_COUNTS[ii[0]] += 1
             else:
                 for ii, i in np.ndenumerate(EI):
                     if i >= 0:
-                        for ni, n in np.ndenumerate(ISE[i]):
+                        for _, n in np.ndenumerate(ISE[i]):
                             if n not in NB[ii[0]]:
                                 NB[ii[0], NB_COUNTS[ii[0]]] = n
                                 NB_COUNTS[ii[0]] += 1
@@ -98,7 +99,7 @@ class ConformalTopologicalGridDefaultImplementations(Cachable):
             # a codim-1 entity can have at most 2 superentities, and it is a boundary
             # if it has only one superentity
             if SE.shape[1] > 1:
-                return np.where(np.any(SE == -1, axis = 1))[0].astype('int32')
+                return np.where(np.any(SE == -1, axis=1))[0].astype('int32')
             else:
                 return np.arange(SE.shape[0], dtype='int32')
         elif codim == 0:

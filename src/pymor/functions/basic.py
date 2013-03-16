@@ -2,7 +2,6 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor.core import interfaces
 from .interfaces import FunctionInterface
 
 
@@ -25,7 +24,7 @@ class ConstantFunction(FunctionInterface):
         '''
         \todo    here should be a contract to enforce that np.array(x, copy=False, ndmin=1) is valid
         '''
-        self.map_parameter(mu)   # ensure that there is no parameter ...
+        self.map_parameter(mu)  # ensure that there is no parameter ...
         x = np.array(x, copy=False, ndmin=1)
         if x.ndim == 1:
             assert x.shape[0] == self.dim_domain

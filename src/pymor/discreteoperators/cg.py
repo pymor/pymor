@@ -4,7 +4,6 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
 
-import pymor.core as core
 
 from pymor.grids.referenceelements import triangle, line
 from pymor.discreteoperators.interfaces import LinearDiscreteOperatorInterface
@@ -50,7 +49,7 @@ class L2ProductFunctionalP1(LinearDiscreteOperatorInterface):
         self.function = function
         self.dirichlet_data = dirichlet_data
         self.name = name
-        self.build_parameter_type(inherits={'function':function, 'dirichlet_data':dirichlet_data})
+        self.build_parameter_type(inherits={'function': function, 'dirichlet_data': dirichlet_data})
 
     def assemble(self, mu={}):
         g = self.grid
@@ -64,9 +63,9 @@ class L2ProductFunctionalP1(LinearDiscreteOperatorInterface):
         # element -> shape = (number of shape functions, number of quadrature points)
         q, w = g.reference_element.quadrature(order=2)
         if g.dim == 1:
-            SF = np.squeeze(np.array((1-q, q)))
+            SF = np.squeeze(np.array((1 - q, q)))
         elif g.dim == 2:
-            SF = np.array(((1-np.sum(q, axis=-1)),
+            SF = np.array(((1 - np.sum(q, axis= -1)),
                           q[..., 0],
                           q[..., 1]))
         else:
@@ -200,7 +199,7 @@ class DiffusionOperatorP1(LinearDiscreteOperatorInterface):
         self.dirichlet_clear_diag = dirichlet_clear_diag
         self.name = name
         if diffusion_function is not None:
-            self.build_parameter_type(inherits={'diffusion':diffusion_function})
+            self.build_parameter_type(inherits={'diffusion': diffusion_function})
 
     def assemble(self, mu={}):
         self.map_parameter(mu)
@@ -214,7 +213,7 @@ class DiffusionOperatorP1(LinearDiscreteOperatorInterface):
                                 [0., 1.]))
         elif g.dim == 1:
             SF_GRAD = np.array(([-1.],
-                                [1.,]))
+                                [1., ]))
         else:
             raise NotImplementedError
 
@@ -245,7 +244,6 @@ class DiffusionOperatorP1(LinearDiscreteOperatorInterface):
                 SF_INTS = np.hstack((SF_INTS, np.ones(bi.dirichlet_boundaries(g.dim).size)))
                 SF_I0 = np.hstack((SF_I0, bi.dirichlet_boundaries(g.dim)))
                 SF_I1 = np.hstack((SF_I1, bi.dirichlet_boundaries(g.dim)))
-
 
         self.logger.info('Assemble system matrix ...')
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))

@@ -36,7 +36,7 @@ class PymorTestSelector(nose.selector.Selector):
         return ret
 
 if __name__ == '__main__':
-#    cli = [__file__, '-vv', '--nologcapture', '-s', '--collect-only']
+    # cli = [__file__, '-vv', '--nologcapture', '-s', '--collect-only'] # useful to run nose plugins like tissue only
     cli = [__file__]
     cli.extend(sys.argv[1:])    
 

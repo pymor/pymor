@@ -1,7 +1,5 @@
 from __future__ import absolute_import, division, print_function
 
-import numpy as np
-
 import pymor.core as core
 
 
@@ -51,7 +49,7 @@ class BoundaryType(core.BasicInterface):
     def __eq__(self, other):
         if isinstance(other, BoundaryType):
             return self.name == other.name
-        #elif isinstance(other, str):       better not ...
+        # elif isinstance(other, str):       better not ...
         #    return self.name == other
         else:
             return NotImplemented

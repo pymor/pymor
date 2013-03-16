@@ -7,12 +7,13 @@ import contracts
 
 from pymor.core import decorators, backports, logger
 from pymor.core.exceptions import ConstError
-             
-class UberMeta(abc.ABCMeta):   
-        
+
+
+class UberMeta(abc.ABCMeta):
+
     def __init__(cls, name, bases, namespace):
         '''I copy my class docstring if deriving class has none. I tell base classes when I derive
-        a new class from them. I publish a new contract type for each new class I create. 
+        a new class from them. I publish a new contract type for each new class I create.
         '''
         doc = namespace.get("__doc__", None)
         if not doc:
@@ -21,33 +22,32 @@ class UberMeta(abc.ABCMeta):
                     doc = base.__doc__
                     break
         cls.__doc__ = doc
-        
-        #monkey a new contract into the decorator module so checking for that type at runtime can work
-        dname = (cls.__module__ + '.' +name).replace('__main__.','main.').replace('.', '_')
-        if not dname in decorators.__dict__: 
-            decorators.__dict__[dname] = contracts.new_contract(dname, lambda x: isinstance(x, cls)) 
-  
 
-        #all bases except object get the derived class' name appended      
+        # monkey a new contract into the decorator module so checking for that type at runtime can work
+        dname = (cls.__module__ + '.' + name).replace('__main__.', 'main.').replace('.', '_')
+        if not dname in decorators.__dict__:
+            decorators.__dict__[dname] = contracts.new_contract(dname, lambda x: isinstance(x, cls))
+
+        # all bases except object get the derived class' name appended
         for base in [b for b in bases if b != object]:
             derived = cls
-            #mangle the name to the base scope
-            attribute = '_%s__implementors'%base.__name__
+            # mangle the name to the base scope
+            attribute = '_%s__implementors' % base.__name__
             if hasattr(base, attribute):
                 getattr(base, attribute).append(derived)
             else:
                 setattr(base, attribute, [derived])
-        cls.logger = logger.getLogger('{}.{}'.format(cls.__module__.replace('__main__','pymor'), name))
+        cls.logger = logger.getLogger('{}.{}'.format(cls.__module__.replace('__main__', 'pymor'), name))
         super(UberMeta, cls).__init__(name, bases, namespace)
 
-    def __new__(cls,classname,bases,classdict):
+    def __new__(cls, classname, bases, classdict):
         '''I copy contract decorations and docstrings from base class methods to deriving classes.
-        I also forward "abstract{class|static}method" decorations in the base class to "{class|static}method" 
-        decorations in the new subclass. 
+        I also forward "abstract{class|static}method" decorations in the base class to "{class|static}method"
+        decorations in the new subclass.
         '''
-        for attr,item in classdict.items():
+        for attr, item in classdict.items():
             if isinstance(item, types.FunctionType):
-                #first copy/fixup docs
+                # first copy/fixup docs
                 item.__doc__ = decorators.fixup_docstring(item.__doc__)
                 base_doc = None
                 contract_kwargs = dict()
@@ -56,7 +56,7 @@ class UberMeta(abc.ABCMeta):
                     base_func = getattr(base, item.__name__, None)
                     if base_func:
                         base_doc = getattr(base_func, '__doc__', None)
-                        has_contract = getattr(base_func,'decorated', None) == 'contract'
+                        has_contract = getattr(base_func, 'decorated', None) == 'contract'
                         contract_kwargs = getattr(base_func, 'contract_kwargs', contract_kwargs)
                     if base_doc:
                         doc = decorators.fixup_docstring(getattr(item, '__doc__', ''))
@@ -68,18 +68,18 @@ class UberMeta(abc.ABCMeta):
                             base_doc = doc
                         item.__doc__ = base_doc
                     if has_contract:
-                        #TODO why is the rebind necessary?
-                        classdict['_H_%s'%attr] = item
+                        # TODO why is the rebind necessary?
+                        classdict['_H_%s' % attr] = item
                         contract_kwargs = contract_kwargs or dict()
-                        p = decorators.contracts_decorate(item,modify_docstring=True,**contract_kwargs)
+                        p = decorators.contracts_decorate(item, modify_docstring=True, **contract_kwargs)
                         classdict[attr] = p
-                    if (hasattr(base_func, "__isabstractstaticmethod__") and 
+                    if (hasattr(base_func, "__isabstractstaticmethod__") and
                         getattr(base_func, "__isabstractstaticmethod__")):
                         classdict[attr] = staticmethod(classdict[attr])
-                    if (hasattr(base_func, "__isabstractclassmethod__") and 
+                    if (hasattr(base_func, "__isabstractclassmethod__") and
                         getattr(base_func, "__isabstractclassmethod__")):
                         classdict[attr] = classmethod(classdict[attr])
-                        
+
         return super(UberMeta, cls).__new__(cls, classname, bases, classdict)
 
 
@@ -90,7 +90,7 @@ class BasicInterface(object):
     __metaclass__ = UberMeta
     _locked = False
     _frozen = False
-    
+
     def __setattr__(self, key, value):
         '''depending on _locked nad _frozen state I delegate the setattr call to object or
         raise an Exception
@@ -113,25 +113,25 @@ class BasicInterface(object):
         '''Calling me results in subsequent changes to members throwing errors'''
         object.__setattr__(self, '_frozen', doit)
 
-    @classmethod    
+    @classmethod
     def implementors(cls, descend=False):
-        '''I return a, potentially empty, list of my subclass-objects. 
+        '''I return a, potentially empty, list of my subclass-objects.
         If descend is True I traverse my entire subclass hierarchy and return a flattened list.
         '''
         if not hasattr(cls, '_%s__implementors' % cls.__name__):
             return []
-        level = getattr(cls, '_%s__implementors' % cls.__name__)       
+        level = getattr(cls, '_%s__implementors' % cls.__name__)
         if not descend:
             return level
-        subtrees = itertools.chain.from_iterable([sub.implementors() for sub in level if sub.implementors() != []]) 
+        subtrees = itertools.chain.from_iterable([sub.implementors() for sub in level if sub.implementors() != []])
         level.extend(subtrees)
         return level
-    
-    @classmethod    
+
+    @classmethod
     def implementor_names(cls, descend=False):
         '''For convenience I return a list of my implementor names instead of class objects'''
         return [c.__name__ for c in cls.implementors(descend)]
-    
+
     @classmethod
     def has_interface_name(cls):
         name = cls.__name__
@@ -142,20 +142,20 @@ contract = decorators.contract
 abstractmethod = abc.abstractmethod
 
 import sys
-if sys.version_info >= (3,1,0):
+if sys.version_info >= (3, 1, 0):
     abstractclassmethod_base = abc.abstractclassmethod
     abstractstaticmethod_base = abc.abstractstaticmethod
 else:
-    #backport path for issue5867
+    # backport path for issue5867
     abstractclassmethod_base = backports.abstractclassmethod
     abstractstaticmethod_base = backports.abstractstaticmethod
-    
-    
+
+
 class abstractclassmethod(abstractclassmethod_base):
     '''I mark my wrapped function with an additional __isabstractclassmethod__ member,
     where my abstractclassmethod_base sets __isabstractmethod__ = True.
     '''
-    
+
     def __init__(self, callable_method):
         callable_method.__isabstractclassmethod__ = True
         super(abstractclassmethod, self).__init__(callable_method)
@@ -165,7 +165,7 @@ class abstractstaticmethod(abstractstaticmethod_base):
     '''I mark my wrapped function with an additional __isabstractstaticmethod__ member,
     where my abstractclassmethod_base sets __isabstractmethod__ = True.
     '''
-    
+
     def __init__(self, callable_method):
         callable_method.__isabstractstaticmethod__ = True
         super(abstractstaticmethod, self).__init__(callable_method)

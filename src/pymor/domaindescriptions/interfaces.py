@@ -1,7 +1,5 @@
 from __future__ import absolute_import, division, print_function
 
-import numpy as np
-
 import pymor.core as core
 from .boundarytypes import BoundaryType
 
@@ -40,4 +38,3 @@ class DomainDescriptionInterface(core.BasicInterface):
     @property
     def has_only_dirichletneumann(self):
         return self.boundary_types <= set((BoundaryType('dirichlet'), BoundaryType('neumann')))
-

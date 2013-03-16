@@ -7,6 +7,7 @@ cimport numpy as np
 DTYPE = np.int32
 ctypedef np.int32_t DTYPE_t
 
+
 @cython.boundscheck(False)
 def inverse_relation(np.ndarray[DTYPE_t, ndim=2] R, size_rhs=None, with_indices=False, unsafe=False):
     assert R.ndim == 2
