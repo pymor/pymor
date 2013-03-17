@@ -1,11 +1,9 @@
 from __future__ import absolute_import, division, print_function
 
 from collections import OrderedDict
-
 import numpy as np
 
 from pymor.tools import float_cmp_all
-from .interfaces import ParameterSpaceInterface
 
 
 class Parameter(OrderedDict):
@@ -38,9 +36,9 @@ def parse_parameter(mu, parameter_type={}):
     if not isinstance(mu, dict):
         if isinstance(mu, (tuple, list)):
             if len(parameter_type) == 1 and len(mu) != 1:
-                mu = (mu, )
+                mu = (mu,)
         else:
-            mu = (mu, )
+            mu = (mu,)
         if len(mu) != len(parameter_type):
             raise ValueError('Parameter length does not match.')
         mu = Parameter(zip(parameter_type.keys(), mu))
@@ -57,6 +55,7 @@ def parse_parameter(mu, parameter_type={}):
 
 
 def parse_parameter_type(parameter_type):
+    from pymor.parameters.interfaces import ParameterSpaceInterface
     if isinstance(parameter_type, ParameterSpaceInterface):
         return OrderedDict(parameter_type.parameter_type)
     parameter_type = OrderedDict(parameter_type)

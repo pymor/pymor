@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import pymor.core as core
 from pymor.tools import Named
-from .base import Parametric
+from pymor.parameters.base import Parametric
 
 
 class ParameterSpaceInterface(core.BasicInterface):
