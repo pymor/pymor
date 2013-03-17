@@ -2,6 +2,16 @@ from __future__ import absolute_import, division, print_function
 
 from pymor.core.interfaces import (BasicInterface, contract, abstractmethod)
 from pymor.core.cache import Cachable, cached
+import pymor.grids.boundaryinfos
+from pymor.core import interfaces
+
+
+class BoundaryInterface(interfaces.BasicInterface):
+    pass
+
+
+class AllDirichletBoundaryInfo(BoundaryInterface):
+    pass
 
 
 class UnknownInterface(BasicInterface):
@@ -99,7 +109,7 @@ class BoringTestClass(BasicInterface):
         UberMeta as their metaclass can be checked w/o manually defining a new contract type.
 
         :type cls: pymortests.core.dummies.BoringTestInterface
-        :type other: pymor.playground.boundaryinfos.oned.AllDirichletBoundaryInfo
+        :type other: pymor.grids.boundaryinfos.AllDirichletBoundaryInfo
         '''
         pass
 
@@ -109,6 +119,6 @@ class BoringTestClass(BasicInterface):
         between equally named classes in different modules
 
         :type dirichletA: pymor.grids.interfaces.BoundaryInfoInterface
-        :type dirichletB: pymor.playground.boundaryinfos.oned.AllDirichletBoundaryInfo
+        :type dirichletB: pymortests.core.dummies.AllDirichletBoundaryInfo
         '''
         return dirichletA != dirichletB

@@ -4,16 +4,13 @@ import mock
 from nose.tools import raises
 
 from pymortests.base import TestBase, runmodule
-from pymortests.core.dummies import *
+from pymortests.core.dummies import (AllDirichletBoundaryInfo, AverageImplementer, BoringTestClass)
 from pymor.core.exceptions import ContractNotRespected
 import pymor.grids.boundaryinfos
-import pymor.playground.boundaryinfos.oned
 from pymor.core import exceptions
-from pymor.core.interfaces import (contract, abstractmethod, abstractstaticmethod,
-                                   abstractclassmethod)
-from pymor.core import timing
+from pymor.core.interfaces import (contract,)
+
 from pymor.grids import AllDirichletBoundaryInfo as ADIA
-from pymor.playground.boundaryinfos.oned import AllDirichletBoundaryInfo as ADIB
 
 
 class ContractTest(TestBase):
@@ -37,11 +34,10 @@ class ContractTest(TestBase):
             with self.assertRaises(ContractNotRespected):
                 imp.dirichletTest(dirichletA, 1)
         grid = mock.Mock()
+        dirichletB = AllDirichletBoundaryInfo()
         dirichletA = pymor.grids.boundaryinfos.AllDirichletBoundaryInfo(grid)
-        dirichletB = pymor.playground.boundaryinfos.oned.AllDirichletBoundaryInfo()
         _combo(dirichletA, dirichletB)
         dirichletA = ADIA(grid)
-        dirichletB = ADIB()
         _combo(dirichletA, dirichletB)
 
     def test_custom_contract_types(self):
@@ -49,7 +45,6 @@ class ContractTest(TestBase):
         with self.assertRaises(exceptions.ContractNotRespected):
             grid = mock.Mock()
             inst.validate_interface(object(), pymor.grids.boundaryinfos.AllDirichletBoundaryInfo(grid))
-        inst.validate_interface(BoringTestInterface(), pymor.playground.boundaryinfos.oned.AllDirichletBoundaryInfo())
 
     def test_disabled_contracts(self):
         contracts.disable_all()
