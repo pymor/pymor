@@ -1,9 +1,19 @@
 from __future__ import absolute_import, division, print_function
 import contracts
+import mock
+from nose.tools import raises
 
 from pymortests.base import TestBase, runmodule
 from pymortests.core.dummies import *
-import pymor
+from pymor.core.exceptions import ContractNotRespected
+import pymor.grids.boundaryinfos
+import pymor.playground.boundaryinfos.oned
+from pymor.core import exceptions
+from pymor.core.interfaces import (contract, abstractmethod, abstractstaticmethod,
+                                   abstractclassmethod)
+from pymor.core import timing
+from pymor.grids import AllDirichletBoundaryInfo as ADIA
+from pymor.playground.boundaryinfos.oned import AllDirichletBoundaryInfo as ADIB
 
 
 class ContractTest(TestBase):
