@@ -37,6 +37,7 @@ class Defaults(BasicInterface):
     induced_norm_tol            = 10e-10
 
     _random_seed                = 123456
+
     @property
     def random_seed(self):
         return self._random_seed

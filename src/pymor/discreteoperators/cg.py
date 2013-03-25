@@ -65,7 +65,7 @@ class L2ProductFunctionalP1(LinearDiscreteOperatorInterface):
         if g.dim == 1:
             SF = np.squeeze(np.array((1 - q, q)))
         elif g.dim == 2:
-            SF = np.array(((1 - np.sum(q, axis= -1)),
+            SF = np.array(((1 - np.sum(q, axis=-1)),
                           q[..., 0],
                           q[..., 1]))
         else:
@@ -125,10 +125,10 @@ class L2ProductP1(LinearDiscreteOperatorInterface):
         if g.dim == 2:
             SF = [lambda X: 1 - X[..., 0] - X[..., 1],
                   lambda X: X[..., 0],
-                  lambda X: X[..., 1]                 ]
+                  lambda X: X[..., 1]]
         elif g.dim == 1:
             SF = [lambda X: 1 - X[..., 0],
-                  lambda X: X[..., 0]                 ]
+                  lambda X: X[..., 0]]
         else:
             raise NotImplementedError
 

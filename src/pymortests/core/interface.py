@@ -72,6 +72,7 @@ class InterfaceTest(TestBase):
         class CompleteImplementer(ClassImplementer, StaticImplementer):
             def abstract_class_method(cls):
                 return cls.__name__
+
             def abstract_static_method():
                 return 0
 

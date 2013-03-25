@@ -17,7 +17,8 @@ class Point(ReferenceElementInterface):
 
     def subentities(self, codim, subentity_codim):
         assert codim == 0, CodimError('Invalid codimension (must be 0 but was {})'.format(codim))
-        assert subentity_codim == 0, CodimError('Invalid subentity codimension (must be 0 but was {})'.format(subentity_codim))
+        assert subentity_codim == 0, CodimError('Invalid subentity codimension (must be 0 but was {})'
+                                                .format(subentity_codim))
         return np.array([0], dtype='int32')
 
     def subentity_embedding(self, subentity_codim):
@@ -66,7 +67,7 @@ class Line(ReferenceElementInterface):
     def subentities(self, codim, subentity_codim):
         assert 0 <= codim <= 1, CodimError('Invalid codimension (must be 0 or 1 but was {})'.format(codim))
         assert codim <= subentity_codim <= 1,\
-               CodimError('Invalid codimension (must be between {} and 1 but was {})'.format(codim, subentity_codim))
+            CodimError('Invalid codimension (must be between {} and 1 but was {})'.format(codim, subentity_codim))
         if codim == 0:
             return np.arange(self.size(subentity_codim), dtype='int32')
         else:
@@ -74,7 +75,7 @@ class Line(ReferenceElementInterface):
 
     def subentity_embedding(self, subentity_codim):
         assert 0 <= subentity_codim <= 1,\
-               CodimError('Invalid codimension (must be 0 or 1 but was {})'.format(subentity_codim))
+            CodimError('Invalid codimension (must be 0 or 1 but was {})'.format(subentity_codim))
         if subentity_codim == 0:
             return np.ones((1, 1, 1)), np.zeros((1, 1, 1))
         else:
@@ -122,7 +123,7 @@ class Square(ReferenceElementInterface):
         def tensor_weights(W):
             return np.dot(W[:, np.newaxis], W[np.newaxis, :]).ravel()
         self._quadrature_points = [tensor_points(GaussQuadratures.quadrature(npoints=p + 1)[0])
-                                    for p in xrange(GaussQuadratures.maxpoints())]
+                                   for p in xrange(GaussQuadratures.maxpoints())]
         self._quadrature_weights = [tensor_weights(GaussQuadratures.quadrature(npoints=p + 1)[1])
                                     for p in xrange(GaussQuadratures.maxpoints())]
         self._quadrature_npoints = np.arange(1, GaussQuadratures.maxpoints() + 1) ** 2
@@ -141,7 +142,7 @@ class Square(ReferenceElementInterface):
     def subentities(self, codim, subentity_codim):
         assert 0 <= codim <= 2, CodimError('Invalid codimension (must be between 0 and 2 but was {})'.format(codim))
         assert codim <= subentity_codim <= 2,\
-               CodimError('Invalid codimension (must be between {} and 2 but was {})'.format(codim, subentity_codim))
+            CodimError('Invalid codimension (must be between {} and 2 but was {})'.format(codim, subentity_codim))
         if codim == 0:
             return np.arange(self.size(subentity_codim), dtype='int32')
         elif codim == 1:
@@ -154,7 +155,7 @@ class Square(ReferenceElementInterface):
 
     def subentity_embedding(self, subentity_codim):
         assert 0 <= subentity_codim <= 2,\
-                CodimError('Invalid codimension (must betwen 0 and 2 but was {})'.format(subentity_codim))
+            CodimError('Invalid codimension (must betwen 0 and 2 but was {})'.format(subentity_codim))
         if subentity_codim == 0:
             return np.eye(2), np.zeros(2)
         elif subentity_codim == 1:
@@ -196,7 +197,8 @@ class Square(ReferenceElementInterface):
             assert order is not None or npoints is not None, ValueError('must specify "order" or "npoints"')
             assert order is None or npoints is None, ValueError('cannot specify "order" and "npoints"')
             if order is not None:
-                assert 0 <= order <= self._quadrature_order_map.size - 1, ValueError('order {} not implmented'.format(order))
+                assert 0 <= order <= self._quadrature_order_map.size - 1,\
+                    ValueError('order {} not implmented'.format(order))
                 p = self._quadrature_order_map[order]
             else:
                 assert npoints in self._quadrature_npoints, ValueError('not implemented with {} points'.format(npoints))
@@ -222,8 +224,10 @@ class Triangle(ReferenceElementInterface):
 
         # def tensor_weights(W):
             # return np.dot(W[:,np.newaxis], W[np.newaxis, :]).ravel()
-        # self._quadrature_points  = [tensor_points(Gauss.quadrature(npoints=p+1)[0])  for p in xrange(Gauss.maxpoints())]
-        # self._quadrature_weights = [tensor_weights(Gauss.quadrature(npoints=p+1)[1]) for p in xrange(Gauss.maxpoints())]
+        # self._quadrature_points  = [tensor_points(Gauss.quadrature(npoints=p+1)[0])
+                                      # for p in xrange(Gauss.maxpoints())]
+        # self._quadrature_weights = [tensor_weights(Gauss.quadrature(npoints=p+1)[1])
+                                      # for p in xrange(Gauss.maxpoints())]
         # self._quadrature_npoints = np.arange(1, Gauss.maxpoints() + 1) ** 2
         # self._quadrature_orders  = Gauss.orders
         # self._quadrature_order_map = Gauss.order_map
@@ -240,7 +244,7 @@ class Triangle(ReferenceElementInterface):
     def subentities(self, codim, subentity_codim):
         assert 0 <= codim <= 2, CodimError('Invalid codimension (must be between 0 and 2 but was {})'.format(codim))
         assert codim <= subentity_codim <= 2,\
-               CodimError('Invalid codimension (must be between {} and 2 but was {})'.format(codim, subentity_codim))
+            CodimError('Invalid codimension (must be between {} and 2 but was {})'.format(codim, subentity_codim))
         if codim == 0:
             return np.arange(self.size(subentity_codim), dtype='int32')
         elif codim == 1:
@@ -253,7 +257,7 @@ class Triangle(ReferenceElementInterface):
 
     def subentity_embedding(self, subentity_codim):
         assert 0 <= subentity_codim <= 2,\
-                CodimError('Invalid codimension (must betwen 0 and 2 but was {})'.format(subentity_codim))
+            CodimError('Invalid codimension (must betwen 0 and 2 but was {})'.format(subentity_codim))
         if subentity_codim == 0:
             return np.eye(2), np.zeros(2)
         elif subentity_codim == 1:

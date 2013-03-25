@@ -70,7 +70,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
         L0 = Operator(grid, boundary_info, diffusion_constant=0, name='diffusion_boundary_part')
 
         Li = tuple(Operator(grid, boundary_info, diffusion_function=df, dirichlet_clear_diag=True,
-                                         name='diffusion_{}'.format(i))
+                            name='diffusion_{}'.format(i))
                    for i, df in enumerate(p.diffusion_functions))
 
         if p.diffusion_functionals is None:
@@ -80,7 +80,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
             L = LinearAffinelyDecomposedOperator(Li, L0, p.diffusion_functionals, name='diffusion')
     else:
         L = Operator(grid, boundary_info, diffusion_function=p.diffusion_functions[0],
-                                  name='diffusion')
+                     name='diffusion')
 
     F = Functional(grid, p.rhs, boundary_info, dirichlet_data=p.dirichlet_data)
 
@@ -98,7 +98,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
     discretization = StationaryLinearDiscretization(L, F, visualizer=visualize, name='{}_CG'.format(p.name))
 
     discretization.h1_product = add_operators((Operator(grid, EmptyBoundaryInfo(grid)), L2ProductP1(grid)),
-                                     name='h1_product')
+                                              name='h1_product')
     discretization.h1_norm = induced_norm(discretization.h1_product)
 
     if hasattr(p, 'parameter_space'):

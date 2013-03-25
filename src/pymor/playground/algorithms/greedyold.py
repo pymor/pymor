@@ -42,14 +42,17 @@ class Greedy(core.BasicInterface):
         self.logger.info('Initial projection')
         self.data = self.initial_data()
         self.reduce(self.data)
-        self.errors = []; self.max_err = 0; self.max_er_mu = 0;
+        self.errors = []
+        self.max_err = 0
+        self.max_er_mu = 0
         self.extensions = 0
         while not self.finished_after_extend():
             self.logger.info('Estimating errors ...')
             self.errors = [self.estimate(mu) for mu in samples]
-            self.max_err, self.max_err_mu = max(((err, mu) for err, mu in izip(self.errors, samples)), key=lambda t:t[0])
+            self.max_err, self.max_err_mu = max(((err, mu)
+                                                for err, mu in izip(self.errors, samples)), key=lambda t: t[0])
             self.logger.info('Maximal errors after {} extensions: {} (mu = {})\n'.format(self.extensions, self.max_err,
-                                                                                        self.max_err_mu))
+                                                                                         self.max_err_mu))
             if self.finished_after_estimate():
                 break
             self.logger.info('Extending with snapshot for mu = {}'.format(self.max_err_mu))
@@ -61,7 +64,8 @@ class Greedy(core.BasicInterface):
 
 class GreedyRB(Greedy):
 
-    def __init__(self, discretization, reductor, use_estimator=True, error_norm=l2_norm, extension_algorithm='gram_schmidt'):
+    def __init__(self, discretization, reductor, use_estimator=True, error_norm=l2_norm,
+                 extension_algorithm='gram_schmidt'):
         assert extension_algorithm in ('trivial', 'gram_schmidt')
         self.discretization = discretization
         self.reductor = reductor
@@ -76,7 +80,7 @@ class GreedyRB(Greedy):
 
     def initial_data(self):
         self.basis_enlarged = True
-        return np.zeros((0,self.discretization.solution_dim))
+        return np.zeros((0, self.discretization.solution_dim))
 
     def estimate(self, mu):
         est = self.use_estimator

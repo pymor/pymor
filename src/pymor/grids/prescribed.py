@@ -116,7 +116,7 @@ class PrescribedBoundaryGrid(AffineGridInterface, cache.Cachable):
                 self.logger.error(pprint.pformat(self._vertices))
                 raise e
             self.__embed_A[i] = [[R[0], R[1]],
-                                [R[2], R[3]]]
+                                 [R[2], R[3]]]
             self.__embed_B[i] = [R[4], R[5]]
         for i, k in self.__dict__.iteritems():
             try:

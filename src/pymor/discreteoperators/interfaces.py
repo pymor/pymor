@@ -75,8 +75,8 @@ class DiscreteOperatorInterface(core.BasicInterface, Parametric, Named):
 
     def __str__(self):
         return '{}: R^{} --> R^{}  (parameter type: {}, class: {})'.format(
-                                           self.name, self.dim_source, self.dim_range, self.parameter_type,
-                                           self.__class__.__name__)
+            self.name, self.dim_source, self.dim_range, self.parameter_type,
+            self.__class__.__name__)
 
 
 class LinearDiscreteOperatorInterface(DiscreteOperatorInterface):

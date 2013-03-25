@@ -74,10 +74,10 @@ class UberMeta(abc.ABCMeta):
                         p = decorators.contracts_decorate(item, modify_docstring=True, **contract_kwargs)
                         classdict[attr] = p
                     if (hasattr(base_func, "__isabstractstaticmethod__") and
-                        getattr(base_func, "__isabstractstaticmethod__")):
+                            getattr(base_func, "__isabstractstaticmethod__")):
                         classdict[attr] = staticmethod(classdict[attr])
                     if (hasattr(base_func, "__isabstractclassmethod__") and
-                        getattr(base_func, "__isabstractclassmethod__")):
+                            getattr(base_func, "__isabstractclassmethod__")):
                         classdict[attr] = classmethod(classdict[attr])
 
         return super(UberMeta, cls).__new__(cls, classname, bases, classdict)

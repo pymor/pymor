@@ -58,7 +58,8 @@ class GaussQuadratureTest(TestBase):
                 Q = GaussQuadratures.iter_quadrature(order)
                 ret = sum([function(p) * w for (p, w) in Q])
                 self.assertAlmostEqual(ret, integral,
-                            msg='{} integral wrong: {} vs {} (quadrature order {})'.format(name, integral, ret, order))
+                                       msg='{} integral wrong: {} vs {} (quadrature order {})'
+                                       .format(name, integral, ret, order))
 
     def test_other_functions(self):
         order = GaussQuadratures.orders[-1]
@@ -66,7 +67,8 @@ class GaussQuadratureTest(TestBase):
             Q = GaussQuadratures.iter_quadrature(order)
             ret = sum([function(p) * w for (p, w) in Q])
             self.assertAlmostEqual(ret, integral,
-                        msg='{} integral wrong: {} vs {} (quadrature order {})'.format(name, integral, ret, order))
+                                   msg='{} integral wrong: {} vs {} (quadrature order {})'
+                                   .format(name, integral, ret, order))
 
     def test_weights(self):
         for order in GaussQuadratures.orders:

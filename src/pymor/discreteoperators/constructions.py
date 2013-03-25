@@ -123,7 +123,7 @@ class ProjectedLinearOperator(LinearDiscreteOperatorInterface):
         elif isinstance(self.product, DiscreteOperatorInterface):
             return self.product.apply2(self.range_basis, MB.T, pairwise=False)
         else:
-            return np.dot(self.range_basis, np.dot(self.product, AV))
+            return np.dot(self.range_basis, np.dot(self.product, MB))
 
 
 def project_operator(operator, source_basis, range_basis=None, product=None, name=None):
@@ -156,7 +156,7 @@ def project_operator(operator, source_basis, range_basis=None, product=None, nam
     if isinstance(operator, LinearAffinelyDecomposedOperator):
         proj_operators = tuple(project_operator(op, source_basis, range_basis, product,
                                                 name='{}_projected'.format(op.name))
-                                                                        for op in operator.operators)
+                               for op in operator.operators)
         if operator.operator_affine_part is not None:
             proj_operator_ap = project_operator(operator.operator_affine_part, source_basis, range_basis, product,
                                                 name='{}_projected'.format(operator.operator_affine_part.name))

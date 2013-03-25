@@ -5,7 +5,6 @@
 from __future__ import absolute_import, division, print_function
 
 import sys
-import math as m
 
 import numpy as np
 
@@ -14,7 +13,6 @@ from pymor.analyticalproblems import EllipticProblem
 from pymor.discretizers import discretize_elliptic_cg
 from pymor.functions import GenericFunction, ConstantFunction
 from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional, GenericParameterFunctional
-from collections import OrderedDict
 
 if len(sys.argv) < 4:
     sys.exit('Usage: {} PROBLEM-NUMBER N PLOT'.format(sys.argv[0]))
@@ -32,14 +30,15 @@ plot = bool(int(sys.argv[3]))
 d0 = GenericFunction(lambda X: 1 - X[..., 0], dim_domain=1)
 d1 = GenericFunction(lambda X: X[..., 0], dim_domain=1)
 
-parameter_space = CubicParameterSpace({'diffusionl':1}, 0.1, 1)
+parameter_space = CubicParameterSpace({'diffusionl': 1}, 0.1, 1)
 f0 = ProjectionParameterFunctional(parameter_space, 'diffusionl')
-f1 = GenericParameterFunctional(parameter_space, lambda mu:1)
+f1 = GenericParameterFunctional(parameter_space, lambda mu: 1)
 
 print('Solving on OnedGrid(({0},{0}))'.format(n))
 
 print('Setup Problem ...')
-problem = EllipticProblem(domain=LineDomain(), rhs=rhs, diffusion_functions=(d0, d1), diffusion_functionals=(f0, f1), dirichlet_data=ConstantFunction(value=0, dim_domain=1))
+problem = EllipticProblem(domain=LineDomain(), rhs=rhs, diffusion_functions=(d0, d1), diffusion_functionals=(f0, f1),
+                          dirichlet_data=ConstantFunction(value=0, dim_domain=1))
 
 print('Discretize ...')
 discretization, _ = discretize_elliptic_cg(problem, diameter=1 / n)

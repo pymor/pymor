@@ -25,7 +25,7 @@ class PymorTestSelector(nose.selector.Selector):
         if self._skip_grid and 'grid' in filename:
             return False
         return filename.endswith('.py') and ('pymortests' in filename or
-                'dynamic' in filename)
+                                             'dynamic' in filename)
 
     def wantModule(self, module):
         parts = module.__name__.split('.')
@@ -77,7 +77,7 @@ def GridSubclassForImplemetorsOf(InterfaceType):
         for GridType in set([T for T in InterfaceType.implementors(True) if not T.has_interface_name()]):
             cname = '{}_{}'.format(GridType.__name__, TestCase.__name__.replace('Interface', ''))
             pymor.core.dynamic.__dict__[cname] = type(cname, (TestCase,), {'grids': GridType.test_instances(),
-                                                     '__test__': True})
+                                                      '__test__': True})
             assert len(pymor.core.dynamic.__dict__[cname].grids) > 0
         return TestCase
     return decorate

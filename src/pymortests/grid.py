@@ -52,7 +52,7 @@ class ConformalTopologicalGridTestInterface(GridClassTestInterface):
             for e in xrange(g.dim + 1):
                 for s in xrange(e, g.dim + 1):
                     self.assertEqual(g.subentities(e, s).dtype, np.dtype('int32'),
-                            'Failed for\n{g}\ne={e}, s={s}'.format(**locals()))
+                                     'Failed for\n{g}\ne={e}, s={s}'.format(**locals()))
 
     def test_subentities_entry_value_range(self):
         for g in self.grids:
@@ -286,13 +286,15 @@ class ConformalTopologicalGridTestInterface(GridClassTestInterface):
                             for ei, ni in product(SUE[si], SUN[si]):
                                 if ei != -1 and ni != -1:
                                     self.assertTrue(ni in N[ei],
-                                            'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'.format(**locals()))
+                                                    'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'
+                                                    .format(**locals()))
                     else:
                         for si in xrange(SUE.shape[0]):
                             for ei, ni in product(SUE[si], SUN[si]):
                                 if ei != ni and ei != -1 and ni != -1:
                                     self.assertTrue(ni in N[ei],
-                                        'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'.format(**locals()))
+                                                    'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'
+                                                    .format(**locals()))
 
     def test_neighbours_not_neighbour_of_itself(self):
         for g in self.grids:
@@ -301,7 +303,7 @@ class ConformalTopologicalGridTestInterface(GridClassTestInterface):
                     N = g.neighbours(e, e, s)
                     for ei, E in enumerate(N):
                         self.assertTrue(ei not in E,
-                                'Failed for\n{g}\ne={e}, s={s}, ei={ei}, E={E}'.format(**locals()))
+                                        'Failed for\n{g}\ne={e}, s={s}, ei={ei}, E={E}'.format(**locals()))
 
     def test_boundary_mask_wrong_arguments(self):
         for g in self.grids:
@@ -319,7 +321,7 @@ class ConformalTopologicalGridTestInterface(GridClassTestInterface):
         for g in self.grids:
             for d in xrange(g.dim + 1):
                 self.assertEqual(g.boundary_mask(d).dtype, np.dtype('bool'),
-                        'Failed for\n{g}\nd={d}'.format(**locals()))
+                                 'Failed for\n{g}\nd={d}'.format(**locals()))
 
     def test_boundary_mask_entries_codim1(self):
         for g in self.grids:
@@ -364,7 +366,7 @@ class ConformalTopologicalGridTestInterface(GridClassTestInterface):
         for g in self.grids:
             for d in xrange(g.dim + 1):
                 self.assertEqual(g.boundaries(d).dtype, np.dtype('int32'),
-                        'Failed for\n{g}\nd={d}'.format(**locals()))
+                                 'Failed for\n{g}\nd={d}'.format(**locals()))
 
     def test_boundaries_entry_value_range(self):
         for g in self.grids:

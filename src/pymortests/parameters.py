@@ -8,7 +8,7 @@ class TestCubicParameterspace(TestBase):
 
     def setUp(self):
         TestBase.setUp(self)
-        self.space = parameters.CubicParameterSpace({'diffusionl':1}, 0.1, 1)
+        self.space = parameters.CubicParameterSpace({'diffusionl': 1}, 0.1, 1)
         self.samples = 100
 
     def _check_values(self, values):

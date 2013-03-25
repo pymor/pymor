@@ -21,11 +21,11 @@ DEFAULT_MEMORY_CONFIG = {"backend": 'LimitedMemory', 'arguments.max_kbytes': 200
 SMALL_MEMORY_CONFIG = {"backend": 'LimitedMemory', 'arguments.max_keys': 20,
                        'arguments.max_kbytes': 20}
 DEFAULT_DISK_CONFIG = {"backend": 'LimitedFile',
-        "arguments.filename": join(gettempdir(), 'pymor.cache.dbm'),
-        'arguments.max_keys': 2000}
+                       "arguments.filename": join(gettempdir(), 'pymor.cache.dbm'),
+                       'arguments.max_keys': 2000}
 SMALL_DISK_CONFIG = {"backend": 'LimitedFile',
-        "arguments.filename": join(gettempdir(), 'pymor.small_cache.dbm'),
-        'arguments.max_keys': 20}
+                     "arguments.filename": join(gettempdir(), 'pymor.small_cache.dbm'),
+                     'arguments.max_keys': 20}
 
 NO_VALUE = dc.api.NO_VALUE
 
@@ -69,8 +69,8 @@ class LimitedMemoryBackend(BasicInterface, dc.api.CacheBackend):
 
     def _enforce_limits(self, new_value):
         additional_size = memory.getsizeof(new_value) / 8
-        while len(self._cache) > 0 and not (len(self._cache) <= self._max_keys
-                and (memory.getsizeof(self._cache) + additional_size) / 8 <= self._max_bytes):
+        while len(self._cache) > 0 and not (len(self._cache) <= self._max_keys and
+                                            (memory.getsizeof(self._cache) + additional_size) / 8 <= self._max_bytes):
             self.logger.debug('shrinking limited memory cache')
             self._cache.popitem(last=False)
 
@@ -198,7 +198,7 @@ class Cachable(object):
 
         def keygen(*arg, **kwargs):
             return (namespace + "_" + fname + "_".join(str(s) for s in arg)
-                        + '__'.join(str(x) for x in kwargs.iteritems()))
+                    + '__'.join(str(x) for x in kwargs.iteritems()))
         return keygen
 
     def __getstate__(self):

@@ -78,9 +78,8 @@ class Deprecated(DecoratorBase):
         @functools.wraps(func)
         def new_func(*args, **kwargs):
             frame = inspect.currentframe().f_back
-            msg = "DeprecationWarning. Call to deprecated function %s in %s:%s\nUse %s instead" % (
-                            func.__name__, frame.f_code.co_filename,
-                            frame.f_code.co_firstlineno, self._alt)
+            msg = ("DeprecationWarning. Call to deprecated function %s in %s:%s\nUse %s instead" %
+                   func.__name__, frame.f_code.co_filename, frame.f_code.co_firstlineno, self._alt)
             warnings.warn(msg, DeprecationWarning)
             return func(*args, **kwargs)
         return new_func
@@ -182,7 +181,7 @@ def contract(*arg, **kwargs):
                 raise contracts.ContractSyntaxError(e.error, e.where)
         else:
             msg = ('I expect that  contracts() is called with '
-                    'only keyword arguments (passed: %r)' % arg)
+                   'only keyword arguments (passed: %r)' % arg)
             raise contracts.ContractException(msg)
     else:
         function.__doc__ = fixup_docstring(function.__doc__)

@@ -52,7 +52,6 @@ from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import discretize_elliptic_cg
 from pymor.reductors.linear import StationaryAffineLinearReductor
 from pymor.algorithms import greedy, trivial_basis_extension, gram_schmidt_basis_extension
-from pymor.functions import GenericFunction
 
 # set log level
 # from pymor.core import getLogger; getLogger('pymor').setLevel('INFO')
@@ -98,7 +97,8 @@ print('RB generation ...')
 
 error_product = discretization.h1_product if args['--estimator-norm'] == 'h1' else None
 reductor = StationaryAffineLinearReductor(discretization, error_product=error_product)
-extension_algorithm = gram_schmidt_basis_extension if args['--extension-alg'] == 'gram_schmidt' else trivial_basis_extension
+extension_algorithm = (gram_schmidt_basis_extension if args['--extension-alg'] == 'gram_schmidt'
+                       else trivial_basis_extension)
 greedy_data = greedy(discretization, reductor, discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
                      use_estimator=args['--with-estimator'], error_norm=discretization.h1_norm,
                      extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'])
