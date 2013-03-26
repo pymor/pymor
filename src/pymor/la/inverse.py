@@ -4,7 +4,10 @@ import numpy as np
 
 
 def inv_two_by_two(A):
-    '''retval[i1,...,ik,m,n] = numpy.linalg.inv(A[i1,...,ik,:,:])'''
+    '''Compute the inverses of an array of 2x2-matrices.
+
+    retval[i1,...,ik,m,n] = numpy.linalg.inv(A[i1,...,ik,:,:])
+    '''
 
     assert A.shape[-1] == A.shape[-2] == 2, ValueError('Wrong shape of argmument.')
 
@@ -22,7 +25,10 @@ def inv_two_by_two(A):
 
 
 def inv_transposed_two_by_two(A):
-    '''retval[i1,...,ik,m,n] = numpy.linalg.inv(A[i1,...,ik,:,:])'''
+    '''Compute the tranposed inverses of an array of 2x2-matrices.
+
+    retval[i1,...,ik,m,n] = numpy.linalg.inv(A[i1,...,ik,:,:])
+    '''
 
     assert A.shape[-1] == A.shape[-2] == 2, ValueError('Wrong shape of argmument.')
 

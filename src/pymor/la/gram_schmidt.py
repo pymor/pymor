@@ -10,6 +10,35 @@ from pymor.discreteoperators import DiscreteOperatorInterface, GenericLinearOper
 
 def gram_schmidt(A, product=None, tol=None, row_offset=0, find_row_duplicates=True, find_col_duplicates=False,
                  check=None, check_tol=None):
+    '''Orthonormnalize a matrix using the Gram-Schmidt algorithm.
+
+    Parameters
+    ----------
+    A
+        The matrix which is to be orthonormalized.
+    product
+        The scalar product w.r.t. which to orthonormalize. Either a `DiscreteLinearOperator`
+        or a square matrix.
+    tol
+        Tolerance to determine a linear dependent row.
+    row_offset
+        Assume that the first `row_offset` rows are already orthogonal and start the
+        algorithm at the `row_offset + 1`-th row.
+    find_row_duplicates
+        If `True`, eliminate duplicate rows before the main loop.
+    find_col_duplicates
+        If `True`, eliminate duplicate columns before the main loop.
+    check
+        If `True`, check if the resulting matrix is really orthonormal. If `None`, use
+        `defaults.gram_schmidt_check`.
+    check_tol
+        Tolerance for the check. If `None`, `defaults.gram_schmidt_check_tol` is used.
+
+
+    Returns
+    -------
+    The orthonormalized matrix.
+    '''
 
     A = A.copy()
     if product is not None and not isinstance(product, DiscreteOperatorInterface):

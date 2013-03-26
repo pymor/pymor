@@ -12,6 +12,27 @@ def l2_norm(U):
 
 
 def induced_norm(product):
+    '''The induced norm of a scalar product.
+
+    The norm of a vector (an array of vectors) U is calcuated by
+    calling
+        product.apply2(U, U, mu, pairwise=True)
+
+    Parameters
+    ----------
+    product
+        The scalar product for which the norm is to be calculated.
+        Either a `DiscreteLinearOperator` or a square matrix.
+
+    Returns
+    -------
+    norm
+        A function `norm(U, mu={})` taking a vector or an array of
+        vectors as input together with the parameter `mu` which is
+        passed to the product.
+    '''
+
+
     if not isinstance(product, DiscreteOperatorInterface):
         product = GenericLinearOperator(product)
 

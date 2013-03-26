@@ -9,6 +9,37 @@ from pymor.tools import float_cmp
 
 
 def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=None):
+    '''Discretize a `DomainDescription` using a sensible default implementation.
+
+    This method can discretize the following `DomainDescriptions`:
+
+        +--------------------+-----------+---------+
+        | DomainDescription  | grid_type | default |
+        +====================+===========+---------+
+        | RectDomain         | TriaGrid  |    X    |
+        |                    +-----------+---------+
+        |                    | RectGrid  |         |
+        +--------------------+-----------+---------+
+        | LineDomain         | OnedGrid  |    X    |
+        +--------------------+-----------+---------+
+
+    Parameters
+    ----------
+    domain_description
+        A `DomainDescription` of the domain to discretize.
+    diameter
+        Maximal diameter of the codim-0 entities of the generated grid.
+    grid_type
+        The class of the grid which is to be constructed. If `None`, a default choice
+        is made according to the table above.
+
+    Returns
+    -------
+    grid
+        The generated grid.
+    boundary_info
+        The generated `BoundaryInfo`.
+    '''
 
     def discretize_RectDomain():
         x0i = int(m.ceil(domain_description.width * m.sqrt(2) / diameter))
@@ -41,8 +72,8 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
 
         def indicator_factory(dd, bt):
             def indicator(X):
-                L = np.logical_and(np.abs(X[:, 0] - dd.domain[0]) < 10e-14, dd.left == bt)
-                R = np.logical_and(np.abs(X[:, 0] - dd.domain[1]) < 10e-14, dd.right == bt)
+                L = np.logical_and(float_cmp(X[:, 0], dd.domain[0]), dd.left == bt)
+                R = np.logical_and(float_cmp(X[:, 0], dd.domain[1]), dd.right == bt)
                 return np.logical_or(L, R)
             return indicator
 
