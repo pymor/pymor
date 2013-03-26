@@ -11,14 +11,35 @@ from pymor.reductors.basic import reduce_generic_rb
 
 
 def reduce_stationary_affine_linear(discretization, RB, error_product=None, disable_caching=True):
-    '''Reductor for stationary linear problems whose operator and rhs are affinely
-    decomposed.
+    '''Reductor for stationary linear problems whose `operator` and `rhs` are affinely decomposed.
 
     We simply use reduce_generic_rb for the actual RB-projection. The only addition
     is an error estimator. The estimator evaluates the norm of the residual with
     respect to a given inner product. We do not estimate the norm or the coercivity
     constant of the operator, therefore the estimated error can be lower than the
     actual error.
+
+    Parameters
+    ----------
+    discretization
+        The discretization which is to be reduced.
+    RB
+        The reduced basis (i.e. an array of vectors) on which to project.
+    product
+        Scalar product corresponding to the norm of the error. Used to calculate
+        Riesz respresentatives of the components of the residual. If `None`, the
+        standard L2-product is used.
+    disable_caching
+        If `True`, caching of the solutions of the reduced discretization
+        is disabled.
+
+    Returns
+    -------
+    rd
+        The reduced discretization.
+    rc
+        The reconstructor providing a `reconstruct(U)` method which reconstructs
+        high-dimensional solutions from solutions U of the reduced discretization.
     '''
 
     assert isinstance(discretization, StationaryLinearDiscretization)
