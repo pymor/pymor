@@ -100,12 +100,12 @@ class PrescribedBoundaryGrid(AffineGridInterface, cache.Cachable):
 
         for i, triangle in enumerate(self._triangles):
             x = [(self._px[triangle.vertices[j]], self._py[triangle.vertices[j]]) for j in (0, 1, 2)]
-            W = np.array([[x[0][0], x[0][1], 0, 0, 1, 0],
-                          [      0, 0, x[0][0], x[0][1], 0, 1],
-                          [x[1][0], x[1][1], 0, 0, 1, 0],
-                          [      0, 0, x[1][0], x[1][1], 0, 1],
-                          [x[2][0], x[2][1], 0, 0, 1, 0],
-                          [      0, 0, x[2][0], x[2][1], 0, 1]])
+            W = np.array([[x[0][0], x[0][1], 0,       0,       1, 0],
+                          [0,       0,       x[0][0], x[0][1], 0, 1],
+                          [x[1][0], x[1][1], 0,       0,       1, 0],
+                          [0,       0,       x[1][0], x[1][1], 0, 1],
+                          [x[2][0], x[2][1], 0,       0,       1, 0],
+                          [0,       0,       x[2][0], x[2][1], 0, 1]])
             K = np.array([0, 0, 0, 1, 1, 1])
             try:
                 R = np.linalg.solve(W, K)

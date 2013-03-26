@@ -28,7 +28,7 @@ def fixup_docstring(doc):
             tokens = line.split()
             idx = 2
             if len(tokens) > idx and tokens[idx].startswith('pymor'):
-                line = ' %s %s %s' % (tokens[idx-2], tokens[idx-1], tokens[idx].replace('.', '_'))
+                line = ' %s %s %s' % (tokens[idx - 2], tokens[idx - 1], tokens[idx].replace('.', '_'))
         ret.append(line)
     return '\n'.join(ret)
 

@@ -24,7 +24,8 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
     assert isinstance(discretization, StationaryLinearDiscretization)
     assert isinstance(discretization.operator, LinearAffinelyDecomposedOperator)
     assert all(not op.parametric for op in discretization.operator.operators)
-    assert discretization.operator.operator_affine_part is None or not discretization.operator.operator_affine_part.parametric
+    assert discretization.operator.operator_affine_part is None\
+        or not discretization.operator.operator_affine_part.parametric
     if discretization.rhs.parametric:
         assert isinstance(discretization.rhs, LinearAffinelyDecomposedOperator)
         assert all(not op.parametric for op in discretization.rhs.operators)

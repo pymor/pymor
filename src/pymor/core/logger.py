@@ -13,21 +13,21 @@ RESET_SEQ = "\033[0m"
 COLOR_SEQ = "\033[1;%dm"
 BOLD_SEQ = "\033[1m"
 COLORS = {
-    'WARNING': YELLOW,
-    'INFO': GREEN,
-    'DEBUG': BLUE,
+    'WARNING':  YELLOW,
+    'INFO':     GREEN,
+    'DEBUG':    BLUE,
     'CRITICAL': MAGENTA,
-    'ERROR': RED
+    'ERROR':    RED
 }
 
 LOGLEVEL_MAPPING = {
-    'debug'    : logging.DEBUG,
-    'info'     : logging.INFO,
-    'error'    : logging.ERROR,
-    'warn'     : logging.WARN,
-    'warning'  : logging.WARNING,
-    'critical' : logging.CRITICAL,
-    'fatal'    : logging.FATAL,
+    'debug':     logging.DEBUG,
+    'info':      logging.INFO,
+    'error':     logging.ERROR,
+    'warn':      logging.WARN,
+    'warning':   logging.WARNING,
+    'critical':  logging.CRITICAL,
+    'fatal':     logging.FATAL,
 }
 
 FORMAT = '$BOLD%(levelname)s $BOLD%(name)s$RESET %(asctime)s - %(message)s'
