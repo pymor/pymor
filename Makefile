@@ -14,6 +14,12 @@ README.html: README.markdown
 pylint:
 	cd src ; pylint --rcfile pylint.cfg pymor
 
+pep8:
+	pep8 ./src
+
+flake8:
+	flake8 ./src
+
 test:
 	/usr/bin/env python ./run_tests.py
 
