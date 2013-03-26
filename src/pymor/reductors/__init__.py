@@ -1,1 +1,1 @@
-from .basic import GenericRBReductor
+from .basic import reduce_generic_rb

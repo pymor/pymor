@@ -7,129 +7,123 @@ import numpy as np
 from pymor.discreteoperators import LinearAffinelyDecomposedOperator
 from pymor.discretizations import StationaryLinearDiscretization
 from pymor.la import induced_norm
-from .basic import GenericRBReductor
+from pymor.reductors.basic import reduce_generic_rb
 
 
-class StationaryAffineLinearReductor(GenericRBReductor):
+def reduce_stationary_affine_linear(discretization, RB, error_product=None, disable_caching=True):
     '''Reductor for stationary linear problems whose operator and rhs are affinely
     decomposed.
 
-    We simply use GenericRBReductor for the actual RB-projection. The only addition
+    We simply use reduce_generic_rb for the actual RB-projection. The only addition
     is an error estimator. The estimator evaluates the norm of the residual with
     respect to a given inner product. We do not estimate the norm or the coercivity
     constant of the operator, therefore the estimated error can be lower than the
     actual error.
     '''
 
-    def __init__(self, discretization, error_product=None, disable_caching=True):
-        assert isinstance(discretization, StationaryLinearDiscretization)
-        assert isinstance(discretization.operator, LinearAffinelyDecomposedOperator)
-        assert all(not op.parametric for op in discretization.operator.operators)
-        assert discretization.operator.operator_affine_part is None or not discretization.operator.operator_affine_part.parametric
-        if discretization.rhs.parametric:
-            assert isinstance(discretization.rhs, LinearAffinelyDecomposedOperator)
-            assert all(not op.parametric for op in discretization.rhs.operators)
-            assert discretization.rhs.operator_affine_part is None or not discretization.rhs.operator_affine_part.parametric
+    assert isinstance(discretization, StationaryLinearDiscretization)
+    assert isinstance(discretization.operator, LinearAffinelyDecomposedOperator)
+    assert all(not op.parametric for op in discretization.operator.operators)
+    assert discretization.operator.operator_affine_part is None or not discretization.operator.operator_affine_part.parametric
+    if discretization.rhs.parametric:
+        assert isinstance(discretization.rhs, LinearAffinelyDecomposedOperator)
+        assert all(not op.parametric for op in discretization.rhs.operators)
+        assert discretization.rhs.operator_affine_part is None or not discretization.rhs.operator_affine_part.parametric
 
-        super(StationaryAffineLinearReductor, self).__init__(discretization, product=None, disable_caching=disable_caching)
-        self.error_product = error_product
+    d = discretization
+    rd, rc = reduce_generic_rb(d, RB, product=None, disable_caching=disable_caching)
 
-    def reduce(self, RB):
-        rd, rc = super(StationaryAffineLinearReductor, self).reduce(RB)
+    # compute data for estimator
+    space_dim = d.operator.dim_source
 
-        # compute data for estimator
-        d = self.discretization
+    # compute the Riesz representative of (U, .)_L2 with respect to error_product
+    def riesz_representative(U):
+        if error_product is None:
+            return U
+        return d.solver(error_product.matrix(), U)
 
-        space_dim = d.operator.dim_source
+    # compute all components of the residual
+    ra = 1 if not d.rhs.parametric or d.rhs.operator_affine_part is not None else 0
+    rl = 0 if not d.rhs.parametric else len(d.rhs.operators)
+    oa = 1 if not d.operator.parametric or d.operator.operator_affine_part is not None else 0
+    ol = 0 if not d.operator.parametric else len(d.operator.operators)
 
-        # compute the Riesz representative of (U, .)_L2 with respect to self.error_product
-        def riesz_representative(U):
-            if self.error_product is None:
-                return U
-            return d.solver(self.error_product.matrix(), U)
+    # if RB is None: RB = np.zeros((0, d.operator.dim_source))
+    if RB is None:
+        RB = np.zeros((0, next(d.operators.itervalues()).dim_source))
+    R_R = np.empty((ra + rl, space_dim))
+    R_O = np.empty(((oa + ol) * len(RB), space_dim))
+    RR_R = np.empty((ra + rl, space_dim))
+    RR_O = np.empty(((oa + ol) * len(RB), space_dim))
 
-        # compute all components of the residual
-        ra = 1 if not d.rhs.parametric or d.rhs.operator_affine_part is not None else 0
-        rl = 0 if not d.rhs.parametric else len(d.rhs.operators)
-        oa = 1 if not d.operator.parametric or d.operator.operator_affine_part is not None else 0
-        ol = 0 if not d.operator.parametric else len(d.operator.operators)
+    if not d.rhs.parametric:
+        R_R[0] = d.rhs.matrix().ravel()
+        RR_R[0] = riesz_representative(R_R[0])
 
-        # if RB is None: RB = np.zeros((0, d.operator.dim_source))
-        if RB is None:
-            RB = np.zeros((0, next(d.operators.itervalues()).dim_source))
-        R_R = np.empty((ra + rl, space_dim))
-        R_O = np.empty(((oa + ol) * len(RB), space_dim))
-        RR_R = np.empty((ra + rl, space_dim))
-        RR_O = np.empty(((oa + ol) * len(RB), space_dim))
+    if d.rhs.parametric and d.rhs.operator_affine_part is not None:
+        R_R[0] = d.rhs.operator_affine_part.matrix().ravel()
+        RR_R[0] = riesz_representative(R_R[0])
 
-        if not d.rhs.parametric:
-            R_R[0] = d.rhs.matrix().ravel()
-            RR_R[0] = riesz_representative(R_R[0])
+    if d.rhs.parametric:
+        R_R[ra:] = np.array([op.matrix().ravel() for op in enumerate(d.rhs.operators)])
+        RR_R[ra:] = np.array(map(riesz_representative, R_R[ra:]))
 
-        if d.rhs.parametric and d.rhs.operator_affine_part is not None:
-            R_R[0] = d.rhs.operator_affine_part.matrix().ravel()
-            RR_R[0] = riesz_representative(R_R[0])
+    if len(RB) > 0 and not d.operator.parametric:
+        R_O[0:len(RB)] = np.array([d.operator.apply(B) for B in RB])
+        RR_O[0:len(RB)] = np.array(map(riesz_representative, R_O[0:len(RB)]))
 
-        if d.rhs.parametric:
-            R_R[ra:] = np.array([op.matrix().ravel() for op in enumerate(d.rhs.operators)])
-            RR_R[ra:] = np.array(map(riesz_representative, R_R[ra:]))
+    if len(RB) > 0 and d.operator.parametric and d.operator.operator_affine_part is not None:
+        R_O[0:len(RB)] = np.array([d.operator.operator_affine_part.apply(B) for B in RB])
+        RR_O[0:len(RB)] = np.array(map(riesz_representative, R_O[0:len(RB)]))
 
-        if len(RB) > 0 and not d.operator.parametric:
-            R_O[0:len(RB)] = np.array([d.operator.apply(B) for B in RB])
-            RR_O[0:len(RB)] = np.array(map(riesz_representative, R_O[0:len(RB)]))
+    if len(RB) > 0 and d.operator.parametric:
+        for i, op in enumerate(d.operator.operators):
+            A = R_O[(oa + i) * len(RB): (oa + i + 1) * len(RB)]
+            A[:] = np.array([-op.apply(B) for B in RB])
+            RR_O[(oa + i) * len(RB): (oa + i + 1) * len(RB)] = np.array(map(riesz_representative, A))
 
-        if len(RB) > 0 and d.operator.parametric and d.operator.operator_affine_part is not None:
-            R_O[0:len(RB)] = np.array([d.operator.operator_affine_part.apply(B) for B in RB])
-            RR_O[0:len(RB)] = np.array(map(riesz_representative, R_O[0:len(RB)]))
+    # compute Gram matrix of the residuals
+    R_RR = np.dot(RR_R, R_R.T)
+    R_RO = np.dot(RR_R, R_O.T)
+    R_OO = np.dot(RR_O, R_O.T)
 
-        if len(RB) > 0 and d.operator.parametric:
-            for i, op in enumerate(d.operator.operators):
-                A = R_O[(oa + i) * len(RB): (oa + i + 1) * len(RB)]
-                A[:] = np.array([-op.apply(B) for B in RB])
-                RR_O[(oa + i) * len(RB): (oa + i + 1) * len(RB)] = np.array(map(riesz_representative, A))
+    estimator_matrix = np.empty((len(R_RR) + len(R_OO),) * 2)
+    estimator_matrix[:len(R_RR), :len(R_RR)] = R_RR
+    estimator_matrix[len(R_RR):, len(R_RR):] = R_OO
+    estimator_matrix[:len(R_RR), len(R_RR):] = R_RO
+    estimator_matrix[len(R_RR):, :len(R_RR)] = R_RO.T
 
-        # compute Gram matrix of the residuals
-        R_RR = np.dot(RR_R, R_R.T)
-        R_RO = np.dot(RR_R, R_O.T)
-        R_OO = np.dot(RR_O, R_O.T)
+    rd.estimator_matrix = estimator_matrix
 
-        estimator_matrix = np.empty((len(R_RR) + len(R_OO),) * 2)
-        estimator_matrix[:len(R_RR), :len(R_RR)] = R_RR
-        estimator_matrix[len(R_RR):, len(R_RR):] = R_OO
-        estimator_matrix[:len(R_RR), len(R_RR):] = R_RO
-        estimator_matrix[len(R_RR):, :len(R_RR)] = R_RO.T
+    # this is our estimator
+    def estimate(self, U, mu={}):
+        assert U.ndim == 1, 'Can estimate only one solution vector'
+        if not self.rhs.parametric or self.rhs.operator_affine_part is not None:
+            CRA = np.ones(1)
+        else:
+            CRA = np.ones(0)
 
-        rd.estimator_matrix = estimator_matrix
+        if self.rhs.parametric:
+            CRL = self.rhs.evaluate_coefficients(self.map_parameter(mu, 'rhs'))
+        else:
+            CRL = np.ones(0)
 
-        # this is our estimator
-        def estimate(self, U, mu={}):
-            assert U.ndim == 1, 'Can estimate only one solution vector'
-            if not self.rhs.parametric or self.rhs.operator_affine_part is not None:
-                CRA = np.ones(1)
-            else:
-                CRA = np.ones(0)
+        CR = np.hstack((CRA, CRL))
 
-            if self.rhs.parametric:
-                CRL = self.rhs.evaluate_coefficients(self.map_parameter(mu, 'rhs'))
-            else:
-                CRL = np.ones(0)
+        if not self.operator.parametric or self.operator.operator_affine_part is not None:
+            COA = np.ones(1)
+        else:
+            COA = np.ones(0)
 
-            CR = np.hstack((CRA, CRL))
+        if self.operator.parametric:
+            COL = self.operator.evaluate_coefficients(self.map_parameter(mu, 'operator'))
+        else:
+            COL = np.ones(0)
 
-            if not self.operator.parametric or self.operator.operator_affine_part is not None:
-                COA = np.ones(1)
-            else:
-                COA = np.ones(0)
+        C = np.hstack((CR, np.dot(np.hstack((COA, COL))[..., np.newaxis], U[np.newaxis, ...]).ravel()))
 
-            if self.operator.parametric:
-                COL = self.operator.evaluate_coefficients(self.map_parameter(mu, 'operator'))
-            else:
-                COL = np.ones(0)
+        return induced_norm(self.estimator_matrix)(C)
 
-            C = np.hstack((CR, np.dot(np.hstack((COA, COL))[..., np.newaxis], U[np.newaxis, ...]).ravel()))
+    rd.estimate = types.MethodType(estimate, rd)
 
-            return induced_norm(self.estimator_matrix)(C)
-
-        rd.estimate = types.MethodType(estimate, rd)
-
-        return rd, rc
+    return rd, rc

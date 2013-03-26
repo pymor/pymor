@@ -44,13 +44,14 @@ from __future__ import absolute_import, division, print_function
 import sys
 import math as m
 import time
+from functools import partial
 
 import numpy as np
 from docopt import docopt
 
 from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import discretize_elliptic_cg
-from pymor.reductors.linear import StationaryAffineLinearReductor
+from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor.algorithms import greedy, trivial_basis_extension, gram_schmidt_basis_extension
 
 # set log level
@@ -96,7 +97,7 @@ if args['--plot-solutions']:
 print('RB generation ...')
 
 error_product = discretization.h1_product if args['--estimator-norm'] == 'h1' else None
-reductor = StationaryAffineLinearReductor(discretization, error_product=error_product)
+reductor = partial(reduce_stationary_affine_linear, error_product=error_product)
 extension_algorithm = (gram_schmidt_basis_extension if args['--extension-alg'] == 'gram_schmidt'
                        else trivial_basis_extension)
 greedy_data = greedy(discretization, reductor, discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),

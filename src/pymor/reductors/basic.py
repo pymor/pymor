@@ -16,22 +16,15 @@ class GenericRBReconstructor(core.BasicInterface):
         return np.dot(U, self.RB)
 
 
-class GenericRBReductor(core.BasicInterface):
-
-    def __init__(self, discretization, product=None, disable_caching=True):
-        self.discretization = discretization
-        self.product = product
-        self.disable_caching = disable_caching
-
-    def reduce(self, RB):
-        rd = self.discretization.copy()
-        if RB is None:
-            RB = np.zeros((0, next(rd.operators.itervalues()).dim_source))
-        for k, op in rd.operators.iteritems():
-            rd.operators[k] = project_operator(op, RB, product=self.product)
-        if self.disable_caching and isinstance(rd, Cachable):
-            Cachable.__init__(rd, config=NO_CACHE_CONFIG)
-        rd.name += '_reduced'
-        rd.disable_logging = True
-        rc = GenericRBReconstructor(RB)
-        return rd, rc
+def reduce_generic_rb(discretization, RB, product=None, disable_caching=True):
+    rd = discretization.copy()
+    if RB is None:
+        RB = np.zeros((0, next(rd.operators.itervalues()).dim_source))
+    for k, op in rd.operators.iteritems():
+        rd.operators[k] = project_operator(op, RB, product=product)
+    if disable_caching and isinstance(rd, Cachable):
+        Cachable.__init__(rd, config=NO_CACHE_CONFIG)
+    rd.name += '_reduced'
+    rd.disable_logging = True
+    rc = GenericRBReconstructor(RB)
+    return rd, rc
