@@ -4,7 +4,7 @@
 
 Usage:
   thermalblock.py [-ehp] [--estimator-norm=NORM] [--extension-alg=ALG] [--grid=NI]
-                  [--plot-solutions] [--test=COUNT] XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
+                  [--help] [--plot-solutions] [--test=COUNT] XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
 
 
 Arguments:
@@ -55,7 +55,6 @@ from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor.algorithms import greedy, trivial_basis_extension, gram_schmidt_basis_extension
 
 # set log level
-# from pymor.core import getLogger; getLogger('pymor').setLevel('INFO')
 from pymor.core import getLogger
 getLogger('pymor.algorithms').setLevel('INFO')
 getLogger('pymor.discretizations').setLevel('INFO')
