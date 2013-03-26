@@ -7,6 +7,34 @@ logger = getLogger(__name__)
 
 
 def inverse_relation(R, size_rhs=None, with_indices=False):
+    '''Computes the inverse relation of a relation.
+
+    If `r` is a relation, then the inverse relation `ri` is defined by
+
+        x ri y  <=>  y r x
+
+    Parameters
+    ----------
+    R
+        Matrix of integers representing a relation r on the natural numbers
+        by
+            x r y <=> (x < R.size[0] and y in R[x]).
+        Rows of `R` which are to short are padded with -1.
+    size_rhs
+        Can be provided for speedup. Has to be greater than R.max().
+    with_indices
+        If `True`, also return the matrix RINVI.
+
+    Returns
+    -------
+    RINV
+        The matrix representation of the inverse relation.
+    RINVI
+        Matrix such that for RINV[i, j] != -1
+            R[RINV[i, j], RINVI[i, j]] = i.
+        Only returned if `with_indices` is `True`.
+    '''
+
     assert R.ndim == 2
     logger.warn('Call to unoptimized function inverse_relation')
 
