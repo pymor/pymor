@@ -7,6 +7,18 @@ from pymor.tools import float_cmp_all
 
 
 class Parameter(OrderedDict):
+    '''Class representing a parameter.
+
+    A parameter is simply an ordered dict of numpy arrays.
+    We overwrite copy() to ensure that not only the dict but
+    also the arrays are copied. Moreover an allclose() method
+    is provided to compare parameters for equality.
+
+    Inherits
+    --------
+    OrderedDict
+    '''
+
     def allclose(self, mu):
         if set(self.keys()) != set(mu.keys()):
             return False
@@ -33,6 +45,28 @@ class Parameter(OrderedDict):
 
 
 def parse_parameter(mu, parameter_type={}):
+    '''Takes a parameter specification `mu` and makes it a `Parameter` according to `parameter_type`.
+
+    Depending on the `parameter_type`, `mu` can be given as a `Parameter`, dict, tuple,
+    list, array or scalar.
+
+    Parameters
+    ----------
+    mu
+        The parameter specification.
+    parameter_type
+        The parameter type w.r.t. which `mu` is to be interpreted.
+
+    Returns
+    -------
+    The corresponding `Parameter`.
+
+    Raises
+    ------
+    ValueError
+        Is raised if `mu` cannot be interpreted as a `Paramter` of `parameter_type`.
+    '''
+
     if not isinstance(mu, dict):
         if isinstance(mu, (tuple, list)):
             if len(parameter_type) == 1 and len(mu) != 1:
@@ -55,6 +89,23 @@ def parse_parameter(mu, parameter_type={}):
 
 
 def parse_parameter_type(parameter_type):
+    '''Takes a parameter type specification and makes it a valid parameter type.
+
+    A parameter type is an ordered dict whose values are tuples of natural numbers
+    defining the shape of the corresponding parameter component.
+
+    Parameters
+    ----------
+    parameter_type
+        The parameter type specification. Can be a dict or OrderedDict, in which case
+        scalar values are made tuples of length 1, or a `ParameterSpace` whose
+        parameter_type is taken.
+
+    Returns
+    -------
+    The corresponding parameter type.
+    '''
+
     from pymor.parameters.interfaces import ParameterSpaceInterface
     if isinstance(parameter_type, ParameterSpaceInterface):
         return OrderedDict(parameter_type.parameter_type)
@@ -69,6 +120,23 @@ def parse_parameter_type(parameter_type):
 
 
 class Parametric(object):
+    '''Mixin class for objects whose evaluations depend on a parameter.
+
+    Attributes
+    ----------
+    parameter_type
+        The parameter type of the parameters the object takes.
+    global_parameter_type
+        The parameter type without any renamings by the user.
+    local_parameter_type
+        The parameter type of the parameter components which are introduced
+        by the object itself and are not inherited by other objects it
+        depends on.
+    parameter_space
+        If not `None` the `ParameterSpace` the parameter is expected to lie in.
+    parametric:
+        Is True if the object has a nontrivial parameter type.
+    '''
 
     parameter_type = OrderedDict()
     global_parameter_type = OrderedDict()
@@ -95,6 +163,23 @@ class Parametric(object):
         return parse_parameter(mu, self.parameter_type)
 
     def map_parameter(self, mu, target='self', component=None):
+        '''Maps a parameter to the local parameter type or to the parameter types of the objects from which
+        parameter components are inherited.
+
+        Parameters
+        ----------
+        mu
+            The parameter to map. Can be of the types accepted by `parse_parameter`.
+        target
+            If 'self', map to the local parameter type provided by `local_type` in
+            `build_parameter_type`. Otherwise `target` has to be a key of the `inherits`
+            parameter passed to `build_parameter_type` and `mu` is mapped to the corresponding
+            parameter type.
+
+        Returns
+        -------
+        The mapped `Parameter`.
+        '''
         mu = self.parse_parameter(mu)
         mu_global = Parameter()
         for k in self.global_parameter_type:
@@ -109,6 +194,27 @@ class Parametric(object):
         return mu_mapped
 
     def build_parameter_type(self, local_type=OrderedDict(), inherits=OrderedDict(), local_global=False):
+        '''Builds the parameter type of the object. To be called by __init__.
+
+        Parameters
+        ----------
+        local_type
+            Parameter type specification for the parameter components introduced by the object itself.
+        inherits
+            Ordered dict where each key is a string indentifier for an object from which parameter components
+            are inherited and where the value is the parameter type of the corresponding object.
+        local_global
+            If True, treat the components of local_type as global components.
+
+        Returns
+        -------
+        The parameter type of the object. It is built according to the following rules:
+            1. If local_global is False, a '.' is prepended to each key of `local_type`.
+            2. For each key `obj` of `inherits`:
+                    If a key of `inherits['obj']` begins with a '.', '.obj' is prepended to the key.
+            3. The parameter type is built by concatenating `local_type` with the values of `inherits`
+               ignoring duplicate keys. (The values of duplicate keys must be equal.)
+        '''
         local_type = parse_parameter_type(local_type)
         self.local_parameter_type = local_type
         parameter_maps = {}
@@ -169,6 +275,16 @@ class Parametric(object):
         self.parameter_maps = parameter_maps
 
     def rename_parameter(self, name_map):
+        '''Rename a parameter component of the object parameter type.
+
+        This method can be called by the object's owner to rename local parameter components
+        (whose name begins with '.') to global parameter components.
+
+        Parameters
+        ----------
+        name_map
+            A dictionary of the form `{'.oldname1': 'newname1', ...}` defining the name mapping.
+        '''
         for k, v in name_map.iteritems():
             if not k.startswith('.'):
                 raise ValueError('Can only rename parameters with local name (starting with ".")')
@@ -187,6 +303,8 @@ class Parametric(object):
         self.parameter_type = parameter_type
 
     def parameter_info(self):
+        '''Return an info string about the object's parameter type and how it is built.'''
+
         msg = 'The parameter_type is: {}\n\n'.format(self.parameter_type)
         msg += 'We have the following parameter-maps:\n\n'
         for n, mp in self.parameter_maps.iteritems():

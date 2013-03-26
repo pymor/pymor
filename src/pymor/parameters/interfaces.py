@@ -6,11 +6,33 @@ from pymor.parameters.base import Parametric
 
 
 class ParameterSpaceInterface(core.BasicInterface):
+    '''Represents a parameter space.
+
+    Attributes
+    ----------
+    parameter_type
+        Parameter type of the space.
+
+    Inherits
+    --------
+    BasicInterface
+    '''
 
     parameter_type = None
 
+    @core.interfaces.abstractmethod
+    def contains(self, mu):
+        '''True if `mu` is contained in the space.'''
+        pass
+
 
 class ParameterFunctionalInterface(core.BasicInterface, Parametric, Named):
+    '''Represents a functional on a parameter space.
+
+    Inherits
+    --------
+    BasicInterface, Parametric, Named
+    '''
 
     @core.interfaces.abstractmethod
     def evaluate(self, mu={}):

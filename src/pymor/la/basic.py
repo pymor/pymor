@@ -32,7 +32,6 @@ def induced_norm(product):
         passed to the product.
     '''
 
-
     if not isinstance(product, DiscreteOperatorInterface):
         product = GenericLinearOperator(product)
 
