@@ -11,6 +11,8 @@ README.txt: README.markdown
 README.html: README.markdown
 	pandoc -f markdown -t html $< > $@
 
+README: README.txt README.html
+
 pylint:
 	cd src ; pylint --rcfile pylint.cfg pymor
 
