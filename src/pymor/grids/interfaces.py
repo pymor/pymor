@@ -6,30 +6,31 @@ import pymor.core as core
 from pymor.core.cache import Cachable, cached
 from pymor.domaindescriptions import BoundaryType
 from pymor.grids.defaultimpl import (ConformalTopologicalGridDefaultImplementations,
-                                     ISimpleReferenceElementDefaultImplementation,
+                                     SimpleReferenceElementDefaultImplementations,
                                      AffineGridDefaultImplementations,)
 
 
 class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplementations, core.BasicInterface):
-    '''desribes a conformal topological grid. The grid is determined via the subentity
-    relation given by `subentities(codim, subentity_codim)`.
+    '''Desribes a conformal topological grid.
+
+    The grid is determined via the subentity relation given by `subentities(codim, subentity_codim)`.
 
     All results in the default implementations are cached for the next evaluation.
-    Note that the current implementation is very slow
-    and should be moved to C code.
-    For ``g = pymor.grid.rect.RectGrid((1000, 1000))`` it takes around 5
-    minutes on modern hardware to calculate ``g.neighbours(0, 1, 2)``.
-    (The call involves calculating ``g.subentities(0, 2)``, ``g.subentities(1,2)``,
-    ``g.superentities(1,0)``, ``g.superentities(2, 1)`` and ``g.superentity_indices(1,0)``
-    at the same time.)
+    Note that parts of the current default implementations are very slow and should be moved to C code.
 
-    **dim**
-        the dimension of the grid
+    Attributes
+    ----------
+    dim
+        The dimension of the grid.
+
+    Inhertis
+    --------
+    BasicInterface, ConformalTopologicalGridDefaultImplementations
     '''
 
     @core.interfaces.abstractmethod
     def size(self, codim):
-        '''the number of entities in the grid of codimension `codim`'''
+        '''The number of entities of codimension `codim`.'''
         pass
 
     @core.interfaces.abstractmethod
@@ -48,26 +49,25 @@ class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplement
     def superentities(self, codim, superentity_codim=None):
         '''`retval[e,s]` is the global index of the `s`-th codim-`superentity_codim`
         superentity of the codim-`codim` entity with global index `e`.
+
         `retval[e]` is sorted by global index.
 
         If `superentity_codim == None`, it is set to `codim - 1`.
 
         The default implementation is to compute the result from
-        `subentities(superentity_codim, codim)`
+        `subentities(superentity_codim, codim)`.
         '''
         return self._superentities(codim, superentity_codim)
 
     def superentity_indices(self, codim, superentity_codim=None):
         '''`retval[e,s]` is the local index of the codim-`codim` entity `e`
-        in the codim-`superentity_codim` superentity
-        `superentities(codim, superentity_codim)[e,s].`
+        in the codim-`superentity_codim` superentity `superentities(codim, superentity_codim)[e,s].`
         '''
         return self._superentity_indices(codim, superentity_codim)
 
     def neighbours(self, codim, neighbour_codim, intersection_codim=None):
-        '''`retval[e,n]` is the global index of the `n`-th codim-`neighbour_codim`
-        entitiy of the codim-`codim` entity `e` that shares
-        with `e` a subentity of codimension `intersection_codim`.
+        '''`retval[e,n]` is the global index of the `n`-th codim-`neighbour_codim` entitiy of the
+        codim-`codim` entity `e` that shares with `e` a subentity of codimension `intersection_codim`.
 
         If `intersection_codim == None`, it is set to
             `codim` if `codim == neighbour_codim` and to
@@ -82,6 +82,7 @@ class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplement
     def boundary_mask(self, codim):
         '''`retval[e] is true iff the codim-`codim` entity with global index
         `e` is a boundary entity.
+
         By definition, a codim-1 entity is a boundary entity if it has only one
         codim-0 superentity. For `codim != 1`, a codim-`codim` entity is a
         boundary entity if it has a codim-1 sub/super-entity.
@@ -89,7 +90,8 @@ class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplement
         return self._boundary_mask(codim)
 
     def boundaries(self, codim):
-        '''returns the global indices of all codim-`codim` boundary entities.
+        '''Returns the global indices of all codim-`codim` boundary entities.
+
         By definition, a codim-1 entity is a boundary entity if it has only one
         codim-0 superentity. For `codim != 1`, a codim-`codim` entity is a
         boundary entity if it has a codim-1 sub/super-entity.
@@ -98,19 +100,26 @@ class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplement
 
     @core.interfaces.abstractstaticmethod
     def test_instances():
-        '''returns a list of Grid instances suitable to be run through our Testcases'''
+        '''Returns a list of Grid instances suitable to be run through our test cases.'''
         pass
 
 
-class ReferenceElementInterface(ISimpleReferenceElementDefaultImplementation, core.BasicInterface):
-    '''defines a reference element with the property that each of its subentities is
-    of the same type. I.e. a three-dimensional reference element cannot have triangles
-    and rectangles as faces at the same time.
+class ReferenceElementInterface(SimpleReferenceElementDefaultImplementations, core.BasicInterface):
+    '''Defines a reference element with the property that each of its subentities is of the same type.
 
-    **dim**
-        the dimension of the reference element
-    **volume**
-        the volume of the reference element
+    I.e. a three-dimensional reference element cannot have triangles and rectangles as faces at the
+    same time.
+
+    Attributes
+    ----------
+    dim
+        The dimension of the reference element
+    volume
+        The volume of the reference element
+
+    Inhertis
+    --------
+    BasicInterface, ISimpleReferenceElementDefaultImplementation
     '''
 
     dim = None
@@ -118,7 +127,7 @@ class ReferenceElementInterface(ISimpleReferenceElementDefaultImplementation, co
 
     @core.interfaces.abstractmethod
     def size(self, codim):
-        'number of subentites of codimension `codim`'
+        'Number of subentites of codimension `codim`.'
 
     @core.interfaces.abstractmethod
     def subentities(self, codim, subentity_codim):
@@ -130,7 +139,7 @@ class ReferenceElementInterface(ISimpleReferenceElementDefaultImplementation, co
 
     @core.interfaces.abstractmethod
     def subentity_embedding(self, subentity_codim):
-        '''returns a tuple `(A, B)` which defines the embedding of the codim-`subentity_codim`
+        '''Returns a tuple `(A, B)` which defines the embedding of the codim-`subentity_codim`
         subentities into the reference element.
 
         For `subentity_codim > 1', the embedding is by default given recursively via
@@ -142,11 +151,11 @@ class ReferenceElementInterface(ISimpleReferenceElementDefaultImplementation, co
 
     @core.interfaces.abstractmethod
     def sub_reference_element(self, codim):
-        '''returns the reference relement of the codim-`codim` subentities.'''
+        '''Returns the reference relement of the codim-`codim` subentities.'''
         return self._sub_reference_element(codim)
 
     def __call__(self, codim):
-        '''returns the reference relement of the codim-`codim` subentities.'''
+        '''Returns the reference relement of the codim-`codim` subentities.'''
         return self.sub_reference_element(codim)
 
     @core.interfaces.abstractmethod
@@ -158,19 +167,19 @@ class ReferenceElementInterface(ISimpleReferenceElementDefaultImplementation, co
 
     @core.interfaces.abstractmethod
     def center(self):
-        '''coordinates of the barycenter.'''
+        '''Coordinates of the barycenter.'''
         pass
 
     @core.interfaces.abstractmethod
     def mapped_diameter(self, A):
-        '''the diameter of the reference element after tranforming it with the
+        '''The diameter of the reference element after tranforming it with the
         matrix `A` (vectorized).
         '''
         pass
 
     @core.interfaces.abstractmethod
     def quadrature(self, order=None, npoints=None, quadrature_type='default'):
-        '''returns tuple `(P, W)` where P is an array of quadrature points with
+        '''Returns tuple `(P, W)` where P is an array of quadrature points with
         corresponding weights `W`.
 
         The quadrature is of order `order` or has `npoints` integration points.
@@ -179,7 +188,7 @@ class ReferenceElementInterface(ISimpleReferenceElementDefaultImplementation, co
 
     @core.interfaces.abstractmethod
     def quadrature_info(self):
-        '''returns a tuple of dicts `(O, N)` where O[quadrature_type] is a list
+        '''Returns a tuple of dicts `(O, N)` where O[quadrature_type] is a list
         of orders which are implemented for `quadrature_type` and N[quadrature_type]
         is a list of the corrsponding numbers of integration points.
         '''
@@ -191,27 +200,34 @@ class ReferenceElementInterface(ISimpleReferenceElementDefaultImplementation, co
 
 
 class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopologicalGridInterface):
-    '''describes a geometric grid where each codim-0 entity has the same
+    '''Describes a geometric grid where each codim-0 entity has the same
     `ReferenceElementInterface` reference element to which it is affinely
     mapped.
 
-    **dim_outer**
-        the dimension of the space into which the grid is embedded
+    Attributes
+    ----------
+    dim_outer
+        The dimension of the space into which the grid is embedded.
+
+    Inherits
+    --------
+    ConformalTopologicalGridInterface, AffineGridDefaultImplementations
     '''
 
     dim_outer = None
 
     @core.interfaces.abstractmethod
     def reference_element(self, codim):
-        '''the reference element of all codim-`codim` entities.'''
+        '''The reference element of all codim-`codim` entities.'''
         pass
 
     @core.interfaces.abstractmethod
     def subentities(self, codim, subentity_codim=None):
         '''`retval[e,s]` is the global index of the `s`-th codim-`subentity_codim`
-        subentity of the codim-`codim` entity with global index `e`. The ordering
-        of subentities(0, subentity_codim)[e] has to correspond under the
-        embedding of `e` with the local ordering inside the reference element.
+        subentity of the codim-`codim` entity with global index `e`.
+
+        The ordering of subentities(0, subentity_codim)[e] has to correspond under
+        the embedding of `e` with the local ordering inside the reference element.
 
         If `subentity_codim == None`, it is set to `codim + 1`.
 
@@ -230,7 +246,7 @@ class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopological
 
     @core.interfaces.abstractmethod
     def embeddings(self, codim):
-        '''`returns tuple `(A, B)` where `A[e]` and `B[e]` are the linear part
+        '''Returns tuple `(A, B)` where `A[e]` and `B[e]` are the linear part
         and the translation part of the map from the reference element of `e`
         to `e`.
 
@@ -242,26 +258,20 @@ class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopological
         return self._embeddings(codim)
 
     def jacobian_inverse_transposed(self, codim):
-        '''`retval[e]` is the transposed (pseudo-)inverse of the jacobian
-        of `embeddings(codim)[e].`
+        '''`retval[e]` is the transposed (pseudo-)inverse of the jacobian of `embeddings(codim)[e]`.
         '''
         return self._jacobian_inverse_transposed(codim)
 
     def integration_elements(self, codim):
-        '''`retval[e]` is given as `sqrt(det(A^T*A))`, where
-        `A = embeddings(codim)[0][e]`.
-        '''
+        '''`retval[e]` is given as `sqrt(det(A^T*A))`, where `A = embeddings(codim)[0][e]`.'''
         return self._integration_elements(codim)
 
     def volumes(self, codim):
-        '''`retval[e]` is the (dim-codim)-dimensional volume of the
-        codim-`codim` entity with global index `e`.
-        '''
+        '''`retval[e]` is the (dim-codim)-dimensional volume of the codim-`codim` entity with global index `e`.'''
         return self._volumes(codim)
 
     def volumes_inverse(self, codim):
-        '''`retval[e] = 1 / volumes(codim)[e]`.
-        '''
+        '''`retval[e] = 1 / volumes(codim)[e]`.'''
         return self._volumes_inverse(codim)
 
     def unit_outer_normals(self):
@@ -271,15 +281,11 @@ class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopological
         return self._unit_outer_normals()
 
     def centers(self, codim):
-        '''`retval[e]` is the barycenter of the codim-`codim` entity with global
-        index `e`.
-        '''
+        '''`retval[e]` is the barycenter of the codim-`codim` entity with global index `e`.'''
         return self._centers(codim)
 
     def diameters(self, codim):
-        '''`retval[e]` is the diameter of the codim-`codim` entity with global
-        index `e`.
-        '''
+        '''`retval[e]` is the diameter of the codim-`codim` entity with global index `e`.'''
         return self._diameters(codim)
 
     def quadrature_points(self, codim, order=None, npoints=None, quadrature_type='default'):
@@ -296,16 +302,26 @@ class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopological
 
 # Is one entity allowed to have mor than one boundary type?
 class BoundaryInfoInterface(core.BasicInterface, Cachable):
-    '''Describes boundary types associated to a grid. For every boundary
-    type and codimension a mask is provided, marking grid entities
+    '''Describes boundary types associated to a grid.
+
+    For every boundary type and codimension a mask is provided, marking grid entities
     of the respective type and codimension by their global index.
+
+    Attributes
+    ----------
+    boundary_types
+        set of all `BoundaryTypes` the grid has.
+
+    Inherits
+    --------
+    BasicInterface, Cachable
     '''
 
     boundary_types = set()
 
     def mask(self, boundary_type, codim):
-        '''retval[i] is True iff the codim-`codim` entity of global
-        index `i` is associated to the boundary type `boundary_type`
+        '''retval[i] is True iff the codim-`codim` entity of global index `i` is
+        associated to the boundary type `boundary_type`.
         '''
         raise ValueError('Has no boundary_type "{}"'.format(boundary_type))
 

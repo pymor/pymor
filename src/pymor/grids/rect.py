@@ -3,12 +3,11 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from pymor.core.exceptions import CodimError
-from pymor.core import cache
 from pymor.grids.interfaces import AffineGridInterface
 from pymor.grids.referenceelements import square
 
 
-class RectGrid(AffineGridInterface, cache.Cachable):
+class RectGrid(AffineGridInterface):
     '''Ad-hoc implementation of a rectangular grid.
 
     The global face, edge and vertex indices are given as follows
@@ -23,6 +22,17 @@ class RectGrid(AffineGridInterface, cache.Cachable):
                  |       |       |
                  0---6---1---7---2
 
+    Parameters
+    ----------
+    num_intervals
+        Tuple (n0, n1) determining a grid with n0 x n1 codim-0 entities.
+    domain
+        Tuple (ll, ur) where ll defines the lower left and ur the upper right
+        corner of the domain.
+
+    Inherits
+    --------
+    AffineGridInterface
     '''
 
     dim = 2
@@ -124,29 +134,5 @@ class RectGrid(AffineGridInterface, cache.Cachable):
 
     @staticmethod
     def test_instances():
+        '''Used for unit testing.'''
         return [RectGrid((2, 4)), RectGrid((1, 1)), RectGrid((42, 42))]
-
-    #def center_distances(self):
-    #   raise NotImplementedError
-
-
-    #def S(self):
-        #'''to be renamed'''
-        #pass
-
-    #def ES(self):
-        #'''to be renamed'''
-        #pass
-
-    #def DS(self):
-        #'''to be renamed'''
-        #pass
-
-    #def alpha(self):
-        #'''to be renamed'''
-        #pass
-
-if __name__ == '__main__':
-    g = RectGrid(num_intervals=(120, 60), domain=[[0, 0], [2, 1]])
-    X = np.sin(2 * np.pi * g.centers(0)[:, 0]) * np.sin(2 * np.pi * g.centers(0)[:, 1])
-    g.visualize(X)

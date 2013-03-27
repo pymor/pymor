@@ -3,12 +3,11 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from pymor.core.exceptions import CodimError
-from pymor.core import cache
 from .interfaces import AffineGridInterface
 from .referenceelements import triangle
 
 
-class TriaGrid(AffineGridInterface, cache.Cachable):
+class TriaGrid(AffineGridInterface):
     '''Ad-hoc implementation of a rectangular grid.
 
     The global face, edge and vertex indices are given as follows
@@ -23,6 +22,17 @@ class TriaGrid(AffineGridInterface, cache.Cachable):
                  | 0    \  | 1     \ |
                  0----6----1----7----2
 
+    Parameters
+    ----------
+    num_intervals
+        Tuple (n0, n1) determining a grid with n0 x n1 codim-0 entities.
+    domain
+        Tuple (ll, ur) where ll defines the lower left and ur the upper right
+        corner of the domain.
+
+    Inherits
+    --------
+    AffineGridInterface
     '''
 
     dim = 2
@@ -120,11 +130,5 @@ class TriaGrid(AffineGridInterface, cache.Cachable):
 
     @staticmethod
     def test_instances():
+        '''Used for unit testing.'''
         return [TriaGrid((2, 4)), TriaGrid((1, 1)), TriaGrid((42, 42))]
-
-
-if __name__ == '__main__':
-    import matplotlib.pyplot as pl
-    g = TriaGrid((12, 24))
-    pl.tripcolor(g.centers(2)[:, 0], g.centers(2)[:, 1], g.subentities(0, 2), facecolors=np.arange(g.size(0)))
-    pl.show()

@@ -9,7 +9,7 @@ from .base import parse_parameter, parse_parameter_type, Parameter
 
 
 class CubicParameterSpace(ParameterSpaceInterface):
-    '''Simple parameter space where each summand is a cube.
+    '''Simple parameter space where each summand is an n-cube.
 
     Parameters
     ----------
@@ -22,10 +22,10 @@ class CubicParameterSpace(ParameterSpaceInterface):
         The maximum for each matrix entry of each parameter component.
         Must be `None` if `ranges` is not `None`.
     ranges
-       dict whose keys agree with parameter_type and whose values
-       are tuples (min, max) specifying the minimum and maximum of each
-       matrix entry of corresponding parameter component.
-       Must be `None` if `minimum` and `maximum` are specified.
+        dict whose keys agree with parameter_type and whose values
+        are tuples (min, max) specifying the minimum and maximum of each
+        matrix entry of corresponding parameter component.
+        Must be `None` if `minimum` and `maximum` are specified.
     '''
 
     def __init__(self, parameter_type, minimum=None, maximum=None, ranges=None):

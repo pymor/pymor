@@ -10,16 +10,28 @@ from .referenceelements import line
 
 
 class OnedGrid(AffineGridInterface):
+    '''One-dimensional grid on an interval.
+
+    Parameters
+    ----------
+    domain
+        Tuple (left, right) containing the left and right boundary of the domain.
+    num_intervals
+        The number of codim-0 entities.
+
+    Inherits
+    --------
+    AffineGridInterface
+    '''
 
     dim = 1
     dim_outer = 1
     reference_element = line
-    id = 'grid.oned'
 
-    def __init__(self, domain=np.array((0, 1)), num_intervals=4):
+    def __init__(self, domain=(0, 1), num_intervals=4):
         super(OnedGrid, self).__init__()
         self.reference_element = line
-        self._domain = domain
+        self._domain = np.array(domain)
         self._num_intervals = num_intervals
         self._width = np.abs(self._domain[1] - self._domain[0]) / self._num_intervals
         self.__subentities = np.vstack((np.arange(self._num_intervals, dtype=np.int32),
@@ -28,7 +40,7 @@ class OnedGrid(AffineGridInterface):
         self.__B = (self._domain[0] + self._width * (np.arange(self._num_intervals, dtype=np.int32)))[:, np.newaxis]
 
     def __str__(self):
-        return (self.id + ', domain [{xmin},{xmax}]'
+        return ('OnedGrid, domain [{xmin},{xmax}]'
                 + ', {elements} elements'
                 + ', {vertices} vertices'
                 ).format(xmin=self._domain[0],
@@ -60,7 +72,9 @@ class OnedGrid(AffineGridInterface):
         else:
             return super(OnedGrid, self).embeddings(codim)
 
+    @staticmethod
     def test_instances():
+        '''Used for unit testing.'''
         return [OnedGrid(domain=np.array((-2, 2)), num_intervals=10),
                 OnedGrid(domain=np.array((-2, -4)), num_intervals=100),
                 OnedGrid(domain=np.array((3, 2)), num_intervals=10),

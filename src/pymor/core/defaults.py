@@ -6,7 +6,9 @@ from .logger import getLogger
 
 
 class Defaults(BasicInterface):
-    '''
+    '''Class defining application-wide defaults. Do not instantiate but use
+    `pymor.core.defaults`.
+
     float_cmp_tol:                  tolerance for pymor.tools.float_cmp
 
     gram_schmidt_tol:               tolerance for pymor.la.algroithms.gram_schmidt

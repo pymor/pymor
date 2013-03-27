@@ -126,7 +126,7 @@ class ConformalTopologicalGridDefaultImplementations(Cachable):
         return M
 
 
-class ISimpleReferenceElementDefaultImplementation(object):
+class SimpleReferenceElementDefaultImplementations(object):
 
     @cached
     def _subentity_embedding(self, subentity_codim):
