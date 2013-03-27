@@ -1,20 +1,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 
-import copy
-
 import numpy as np
 from scipy.sparse.linalg import bicg
 from scipy.sparse import issparse
 
-from pymor.core import BasicInterface, defaults
-from pymor.core.cache import Cachable, cached, DEFAULT_DISK_CONFIG
-from pymor.tools import dict_property, Named
-from pymor.parameters import Parametric
+from pymor.core import defaults
+from pymor.tools import dict_property
 from pymor.discreteoperators import LinearDiscreteOperatorInterface
+from pymor.discretizations.interfaces import DiscretizationInterface
 
 
-class StationaryLinearDiscretization(BasicInterface, Parametric, Cachable, Named):
+class StationaryLinearDiscretization(DiscretizationInterface):
     '''Generic class for discretizations of stationary linear problems.
 
     This class describes discrete problems given by the equation ::
@@ -22,12 +19,6 @@ class StationaryLinearDiscretization(BasicInterface, Parametric, Cachable, Named
         L_h(μ) ⋅ u_h(μ) = f_h(μ)
 
     which is to be solved for u_h.
-
-    Note that we do not make any distinction between detailed and reduced
-    discretizations here.
-
-    The results of solve() are cached by default so it is inexpensive to call solve
-    repeatedly for the same parameter.
 
     Parameters
     ----------
@@ -63,7 +54,7 @@ class StationaryLinearDiscretization(BasicInterface, Parametric, Cachable, Named
 
     Inherits
     --------
-    BasicInterface, Parametric, Cachable, Named
+    DiscretizationInterface
     '''
 
     disable_logging = False
@@ -76,7 +67,7 @@ class StationaryLinearDiscretization(BasicInterface, Parametric, Cachable, Named
         assert operator.dim_source == operator.dim_range == rhs.dim_source
         assert rhs.dim_range == 1
 
-        Cachable.__init__(self, config=DEFAULT_DISK_CONFIG)
+        super(StationaryLinearDiscretization, self).__init__()
         self.operators = {'operator': operator, 'rhs': rhs}
         self.build_parameter_type(inherits={'operator': operator, 'rhs': rhs})
 
@@ -94,14 +85,7 @@ class StationaryLinearDiscretization(BasicInterface, Parametric, Cachable, Named
         self.solution_dim = operator.dim_range
         self.name = name
 
-    def copy(self):
-        c = copy.copy(self)
-        c.operators = c.operators.copy()
-        Cachable.__init__(c)
-        return c
-
-    @cached
-    def solve(self, mu={}):
+    def _solve(self, mu={}):
         mu = self.parse_parameter(mu)
         A = self.operator.matrix(self.map_parameter(mu, 'operator'))
 
