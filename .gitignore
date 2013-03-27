@@ -41,3 +41,4 @@ nosetests.xml
 README.html
 README.txt
 .settings/
+src/pymor/version.py
