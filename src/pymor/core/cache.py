@@ -10,6 +10,7 @@ from pprint import pformat
 import sys
 import os
 from collections import deque
+import uuid
 
 import pymor.core
 from pymor.core.interfaces import BasicInterface
@@ -89,7 +90,7 @@ class LimitedFileBackend(BasicInterface, DBMBackend):
         internal cache file, otherwise its set to sys.maxlen.
         If necessary values are deleted from the cache in FIFO order.
         '''
-        argument_dict['filename'] = argument_dict.get('filename', os.tempnam())
+        argument_dict['filename'] = argument_dict.get('filename', os.path.join(gettempdir(), str(uuid.uuid4())))
         DBMBackend.__init__(self, argument_dict)
         self.logger.debug('LimitedFileBackend args {}'.format(pformat(argument_dict)))
         self._max_keys = argument_dict.get('max_keys', sys.maxsize)
