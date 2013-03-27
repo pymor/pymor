@@ -4,6 +4,24 @@ from .interfaces import ParameterFunctionalInterface
 
 
 class ProjectionParameterFunctional(ParameterFunctionalInterface):
+    '''`ParameterFunctional` which returns a component of the parameter.
+
+    Parameters
+    ----------
+    parameter_type
+        The parameter type of the parameters the functional takes.
+    component
+        The component to return.
+    coordinates
+        If not `None` return `mu[component][coordinates]` instead of
+        `mu[component]`.
+    name
+        Name of the functional.
+
+    Inherits
+    --------
+    ParameterFunctionalInterface
+    '''
 
     def __init__(self, parameter_type, component, coordinates=None, name=None):
         self.name = name
@@ -15,9 +33,6 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
         self.coordinates = coordinates
 
     def evaluate(self, mu={}):
-        '''
-        \todo    here should be a contract to enforce that np.array(x, copy=False, ndmin=1) is valid
-        '''
         mu = self.map_parameter(mu)
         if self.coordinates is None:
             return mu[self.component]
@@ -26,6 +41,21 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
 
 
 class GenericParameterFunctional(ParameterFunctionalInterface):
+    '''A wrapper making an arbitrary python function a `ParameterFunctional`
+
+    Parameters
+    ----------
+    parameter_type
+        The parameter type of the parameters the functional takes.
+    mapping
+        The function to wrap. The function is of the form `mapping(mu)`.
+    name
+        The name of the functional.
+
+    Inherits
+    --------
+    ParameterFunctionalInterface
+    '''
 
     def __init__(self, parameter_type, mapping, name=None):
         self.name = name

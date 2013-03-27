@@ -166,6 +166,8 @@ class Parametric(object):
         '''Maps a parameter to the local parameter type or to the parameter types of the objects from which
         parameter components are inherited.
 
+        This method will be called by the implementor of the class.
+
         Parameters
         ----------
         mu
@@ -199,7 +201,7 @@ class Parametric(object):
         Parameters
         ----------
         local_type
-            Parameter type specification for the parameter components introduced by the object itself.
+            Parameter type for the parameter components introduced by the object itself.
         inherits
             Ordered dict where each key is a string indentifier for an object from which parameter components
             are inherited and where the value is the parameter type of the corresponding object.
@@ -275,7 +277,7 @@ class Parametric(object):
         self.parameter_maps = parameter_maps
 
     def rename_parameter(self, name_map):
-        '''Rename a parameter component of the object parameter type.
+        '''Rename a parameter component of the object's parameter type.
 
         This method can be called by the object's owner to rename local parameter components
         (whose name begins with '.') to global parameter components.
@@ -283,7 +285,7 @@ class Parametric(object):
         Parameters
         ----------
         name_map
-            A dictionary of the form `{'.oldname1': 'newname1', ...}` defining the name mapping.
+            A dict of the form `{'.oldname1': 'newname1', ...}` defining the name mapping.
         '''
         for k, v in name_map.iteritems():
             if not k.startswith('.'):
