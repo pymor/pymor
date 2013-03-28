@@ -36,6 +36,7 @@ import numpy as np
 from PySide import QtGui
 from OpenGL.GL import *
 from PySide import QtOpenGL
+import matplotlib
 
 from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import discretize_elliptic_cg
@@ -60,19 +61,21 @@ class SolutionWidget(QtOpenGL.QGLWidget):
         self.setMinimumSize(300, 300)
         self.sim = sim
         self.dl = 1
-        self.set(np.ones(sim.grid.size(2)))
+        self.U = np.ones(sim.grid.size(2))
+        self.set(self.U)
 
     def resizeGL(self, w, h):
         # Prevent A Divide By Zero If The Window Is Too Small
         h = max(1, h)
         glViewport(0, 0, w, h)
+        self.set(self.U)
 
     def initializeGL(self):
         glClearColor(1.0, 1.0, 1.0, 1.0)
         glShadeModel(GL_SMOOTH)
 
-        glEnable(GL_NORMALIZE)
-        glEnable(GL_BLEND)
+#        glEnable(GL_NORMALIZE)
+#        glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST)
         GL_MULTISAMPLE = 0x809D
@@ -83,6 +86,10 @@ class SolutionWidget(QtOpenGL.QGLWidget):
         glCallList(self.dl)
 
     def set(self, U):
+        self.U = U
+        jet = matplotlib.cm.get_cmap('jet')
+        cNorm = matplotlib.colors.Normalize(vmin=np.min(U), vmax=np.max(U))
+        scalarMap = matplotlib.cm.ScalarMappable(norm=cNorm, cmap=jet)
         glNewList(self.dl, GL_COMPILE)
         h = self.size().height()
         w = self.size().width()
@@ -94,14 +101,13 @@ class SolutionWidget(QtOpenGL.QGLWidget):
         glTranslatef(-0.5, -0.5, 0)
         pos_x = g.centers(2)[:, 0]
         pos_y = g.centers(2)[:, 1]
-        max_val = np.max(U)
 
         glBegin(GL_TRIANGLES)
         glNormal3f(0, 0, -1)
+        colors = scalarMap.to_rgba(U)
         for c in g.subentities(0, 2):
             for i in c:
-                v = U[i] / max_val
-                glColor3f(v, 0, 0)
+                glColor4fv(colors[i])
                 glVertex2f(pos_x[i], pos_y[i])
         glEnd()
         glEndList()
