@@ -3,8 +3,8 @@
 '''Thermalblock demo.
 
 Usage:
-  thermalblock.py [-ehp] [--estimator-norm=NORM] [--extension-alg=ALG] [--grid=NI]
-                  [--help] [--plot-solutions] [--test=COUNT] XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
+  thermalblock.py [-h] [--estimator-norm=NORM] [--grid=NI]
+                  [--help] XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
 
 
 Arguments:
@@ -19,20 +19,12 @@ Arguments:
 
 
 Options:
-  -e, --with-estimator   Use error estimator.
-
   --estimator-norm=NORM  Norm (trivial, h1) in which to calculate the residual
                          [default: trivial].
 
-  --extension-alg=ALG    Basis extension algorithm (trivial, gram_schmidt) to be used
-                         [default: gram_schmidt].
-
-  --grid=NI              Use grid with 2*NI*NI elements [default: 100].
+  --grid=NI              Use grid with 2*NI*NI elements [default: 60].
 
   -h, --help             Show this message.
-
-  --test=COUNT           Use COUNT snapshots for stochastic error estimation
-                         [default: 10].
 '''
 from __future__ import absolute_import, division, print_function
 import sys
@@ -41,29 +33,80 @@ import time
 from functools import partial
 import math as m
 import numpy as np
-import matplotlib
-matplotlib.use('Qt4Agg')
-matplotlib.rcParams['backend.qt4'] = 'PySide'
-
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
-
-from PySide import QtCore, QtGui
-
-PARAM_STEPS = 10
-PARAM_MIN = 0.01
-PARAM_MAX = 1
+from PySide import QtGui
+from OpenGL.GL import *
+from PySide import QtOpenGL
 
 from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import discretize_elliptic_cg
 from pymor.reductors.linear import reduce_stationary_affine_linear
-from pymor.algorithms import greedy, trivial_basis_extension, gram_schmidt_basis_extension
+from pymor.algorithms import greedy, gram_schmidt_basis_extension
 from pymor.parameters.base import Parameter
 
 # set log level
 from pymor.core import getLogger
 getLogger('pymor.algorithms').setLevel('DEBUG')
 getLogger('pymor.discretizations').setLevel('DEBUG')
+
+PARAM_STEPS = 10
+PARAM_MIN = 0.01
+PARAM_MAX = 1
+
+
+class SolutionWidget(QtOpenGL.QGLWidget):
+
+    def __init__(self, parent, sim):
+        super(SolutionWidget, self).__init__(parent)
+        self.setMinimumSize(300, 300)
+        self.sim = sim
+        self.dl = 1
+        self.set(np.ones(sim.grid.size(2)))
+
+    def resizeGL(self, w, h):
+        # Prevent A Divide By Zero If The Window Is Too Small
+        h = max(1, h)
+        glViewport(0, 0, w, h)
+
+    def initializeGL(self):
+        glClearColor(1.0, 1.0, 1.0, 1.0)
+        glShadeModel(GL_SMOOTH)
+
+        glEnable(GL_NORMALIZE)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST)
+        GL_MULTISAMPLE = 0x809D
+        glEnable(GL_MULTISAMPLE)
+
+    def paintGL(self):
+        glClear(GL_COLOR_BUFFER_BIT)
+        glCallList(self.dl)
+
+    def set(self, U):
+        glNewList(self.dl, GL_COMPILE)
+        h = self.size().height()
+        w = self.size().width()
+        glViewport(0, 0, w, h)
+        glLoadIdentity()
+
+        g = self.sim.grid
+        glScalef(2, 2, 2)
+        glTranslatef(-0.5, -0.5, 0)
+        pos_x = g.centers(2)[:, 0]
+        pos_y = g.centers(2)[:, 1]
+        max_val = np.max(U)
+
+        glBegin(GL_TRIANGLES)
+        glNormal3f(0, 0, -1)
+        for c in g.subentities(0, 2):
+            for i in c:
+                v = U[i] / max_val
+                glColor3f(v, 0, 0)
+                glVertex2f(pos_x[i], pos_y[i])
+        glEnd()
+        glEndList()
+        self.update()
+
 
 class ParamRuler(QtGui.QWidget):
     def __init__(self, parent, sim):
@@ -92,12 +135,10 @@ class SimPanel(QtGui.QWidget):
         super(SimPanel, self).__init__(parent)
         self.sim = sim
         box = QtGui.QHBoxLayout()
-        self.fig = Figure(figsize=(300, 300), dpi=72, facecolor=(1, 1, 1), edgecolor=(0, 0, 0))
-        self.ax = self.fig.add_subplot(111)
-        # generate the canvas to display the plot
-        self.canvas = FigureCanvas(self.fig)
-        box.addWidget(self.canvas)
-        box.addStretch()
+        self.solution = SolutionWidget(self, self.sim)
+#        box.addStretch()
+        box.addWidget(self.solution, 2)
+
         self.param_panel = ParamRuler(self, sim)
         box.addWidget(self.param_panel)
         self.setLayout(box)
@@ -112,11 +153,7 @@ class SimPanel(QtGui.QWidget):
         U = self.sim.solve(mu)
         print('Simtime {}'.format(time.time() - tic))
         tic = time.time()
-        grid = self.sim.grid
-        self.ax.clear()
-        self.ax.tripcolor(grid.centers(2)[:, 0], grid.centers(2)[:, 1], U)
-        self.fig.colorbar()
-        self.canvas.draw()
+        self.solution.set(U)
         self.param_panel.enable(True)
         print('Drawtime {}'.format(time.time() - tic))
 
@@ -130,6 +167,7 @@ class AllPanel(QtGui.QWidget):
         box.addWidget(SimPanel(self, detailed_sim))
         self.setLayout(box)
 
+
 class RBGui(QtGui.QMainWindow):
     def __init__(self, args):
         super(RBGui, self).__init__()
@@ -138,15 +176,13 @@ class RBGui(QtGui.QMainWindow):
         args['--grid'] = int(args['--grid'])
         args['SNAPSHOTS'] = int(args['SNAPSHOTS'])
         args['RBSIZE'] = int(args['RBSIZE'])
-        args['--test'] = int(args['--test'])
         args['--estimator-norm'] = args['--estimator-norm'].lower()
         assert args['--estimator-norm'] in {'trivial', 'h1'}
-        args['--extension-alg'] = args['--extension-alg'].lower()
-        assert args['--extension-alg'] in {'trivial', 'gram_schmidt'}
         reduced = ReducedSim(args)
         detailed = DetailedSim(args)
         panel = AllPanel(self, reduced, detailed)
         self.setCentralWidget(panel)
+
 
 class SimBase(object):
     def __init__(self, args):
@@ -157,6 +193,7 @@ class SimBase(object):
         self.discretization, pack = discretize_elliptic_cg(self.problem, diameter=m.sqrt(2) / args['--grid'])
         self.grid = pack['grid']
 
+
 class ReducedSim(SimBase):
 
     def __init__(self, args):
@@ -166,11 +203,11 @@ class ReducedSim(SimBase):
         args = self.args
         error_product = self.discretization.h1_product if args['--estimator-norm'] == 'h1' else None
         reductor = partial(reduce_stationary_affine_linear, error_product=error_product)
-        extension_algorithm = (gram_schmidt_basis_extension if args['--extension-alg'] == 'gram_schmidt'
-                       else trivial_basis_extension)
-        greedy_data = greedy(self.discretization, reductor, self.discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
-                            use_estimator=args['--with-estimator'], error_norm=self.discretization.h1_norm,
-                            extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'])
+
+        greedy_data = greedy(self.discretization, reductor,
+                             self.discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
+                             use_estimator=True, error_norm=self.discretization.h1_norm,
+                             extension_algorithm=gram_schmidt_basis_extension, max_extensions=args['RBSIZE'])
         self.rb_discretization, self.reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
         self.first = False
 
@@ -178,6 +215,7 @@ class ReducedSim(SimBase):
         if self.first:
             self._first()
         return self.reconstructor.reconstruct(self.rb_discretization.solve(mu))
+
 
 class DetailedSim(SimBase):
 
