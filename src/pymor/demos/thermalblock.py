@@ -49,15 +49,15 @@ from functools import partial
 import numpy as np
 from docopt import docopt
 
+import pymor.core as core
+core.logger.MAX_HIERACHY_LEVEL = 2
 from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import discretize_elliptic_cg
 from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor.algorithms import greedy, trivial_basis_extension, gram_schmidt_basis_extension
 
-# set log level
-from pymor.core import getLogger
-getLogger('pymor.algorithms').setLevel('INFO')
-getLogger('pymor.discretizations').setLevel('INFO')
+core.getLogger('pymor.algorithms').setLevel('INFO')
+core.getLogger('pymor.discretizations').setLevel('INFO')
 
 # parse arguments
 args = docopt(__doc__)

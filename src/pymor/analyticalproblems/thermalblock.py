@@ -6,8 +6,7 @@ from itertools import product
 from pymor.domaindescriptions import RectDomain
 from pymor.functions import GenericFunction, ConstantFunction
 from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional
-
-from .elliptic import EllipticProblem
+from pymor.analyticalproblems.elliptic import EllipticProblem
 
 
 class ThermalBlockProblem(EllipticProblem):
