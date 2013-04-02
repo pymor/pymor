@@ -82,17 +82,23 @@ VS = """
 // Attribute variable that contains coordinates of the vertices.
 layout(location = 0) in vec3 position;
  
-// Main function, which needs to set `gl_Position`.
+vec3 getJetColor(float value) {
+     float fourValue = 4 * value;
+     float red   = min(fourValue - 1.5, -fourValue + 4.5);
+     float green = min(fourValue - 0.5, -fourValue + 3.5);
+     float blue  = min(fourValue + 0.5, -fourValue + 2.5);
+ 
+     return clamp( vec3(red, green, blue), 0.0, 1.0 );
+}
 void main()
 {
     float x = position.z;
-    float blue = min(max(4 * (0.75 - x), 0.), 1.);
-    float red = min(max(4 * (x - 0.25), 0.), 1.);
-    float green = min(max(4 * abs(x - 0.5) - 1., 0.), 1.);
     gl_Position = vec4(position.x-0.5, position.y-0.5, 0., 0.5);
-    gl_FrontColor = vec4(red, green, blue, 1);
+    gl_FrontColor = vec4(getJetColor(x), 1);
 }
 """
+
+
 class SolutionWidget(QtOpenGL.QGLWidget):
 
     def __init__(self, parent, sim):
@@ -104,9 +110,6 @@ class SolutionWidget(QtOpenGL.QGLWidget):
         self.set(self.U)
 
     def resizeGL(self, w, h):
-        # Prevent A Divide By Zero If The Window Is Too Small
-        h = max(1, h)
-        glViewport(0, 0, w, h)
         self.set(self.U)
 
     def initializeGL(self):
@@ -120,23 +123,21 @@ class SolutionWidget(QtOpenGL.QGLWidget):
         gl.glUseProgram(self.shaders_program)
 
     def set(self, U):
+        # normalize U
         vmin = np.min(U)
         vmax = np.max(U)
         U -= vmin
         U /= float(vmax - vmin)
         self.U = U
-        glNewList(self.dl, GL_COMPILE)
         h = self.size().height()
         w = self.size().width()
-        glViewport(0, 0, w, h)
-        glLoadIdentity()
-
         g = self.sim.grid
-        glScalef(2, 2, 1)
-        glTranslatef(-0.5, -0.5, 0)
         pos_x = g.centers(2)[:, 0]
         pos_y = g.centers(2)[:, 1]
 
+        glNewList(self.dl, GL_COMPILE)
+        glViewport(0, 0, w, h)
+        glLoadIdentity()
         glBegin(GL_TRIANGLES)
         glNormal3f(0, 0, -1)
         for c in g.subentities(0, 2):
@@ -174,9 +175,7 @@ class SimPanel(QtGui.QWidget):
         self.sim = sim
         box = QtGui.QHBoxLayout()
         self.solution = SolutionWidget(self, self.sim)
-#        box.addStretch()
         box.addWidget(self.solution, 2)
-
         self.param_panel = ParamRuler(self, sim)
         box.addWidget(self.param_panel)
         self.setLayout(box)
