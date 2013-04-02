@@ -35,25 +35,64 @@ import math as m
 import numpy as np
 from PySide import QtGui
 from OpenGL.GL import *
+import OpenGL.GL as gl
 from PySide import QtOpenGL
-import matplotlib
+from PySide.QtOpenGL import QGLShader, QGLShaderProgram
 
+import pymor.core as core
+core.logger.MAX_HIERACHY_LEVEL = 2
 from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import discretize_elliptic_cg
 from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor.algorithms import greedy, gram_schmidt_basis_extension
 from pymor.parameters.base import Parameter
 
-# set log level
-from pymor.core import getLogger
-getLogger('pymor.algorithms').setLevel('DEBUG')
-getLogger('pymor.discretizations').setLevel('DEBUG')
+core.getLogger('pymor.algorithms').setLevel('DEBUG')
+core.getLogger('pymor.discretizations').setLevel('DEBUG')
 
 PARAM_STEPS = 10
-PARAM_MIN = 0.01
+PARAM_MIN = 0.1
 PARAM_MAX = 1
 
 
+def compile_vertex_shader(source):
+    """Compile a vertex shader from source."""
+    vertex_shader = gl.glCreateShader(gl.GL_VERTEX_SHADER)
+    gl.glShaderSource(vertex_shader, source)
+    gl.glCompileShader(vertex_shader)
+    # check compilation error
+    result = gl.glGetShaderiv(vertex_shader, gl.GL_COMPILE_STATUS)
+    if not(result):
+        raise RuntimeError(gl.glGetShaderInfoLog(vertex_shader))
+    return vertex_shader
+
+def link_shader_program(vertex_shader):
+    """Create a shader program with from compiled shaders."""
+    program = gl.glCreateProgram()
+    gl.glAttachShader(program, vertex_shader)
+    gl.glLinkProgram(program)
+    # check linking error
+    result = gl.glGetProgramiv(program, gl.GL_LINK_STATUS)
+    if not(result):
+        raise RuntimeError(gl.glGetProgramInfoLog(program))
+    return program
+
+VS = """
+#version 330
+// Attribute variable that contains coordinates of the vertices.
+layout(location = 0) in vec3 position;
+ 
+// Main function, which needs to set `gl_Position`.
+void main()
+{
+    float x = position.z;
+    float blue = min(max(4 * (0.75 - x), 0.), 1.);
+    float red = min(max(4 * (x - 0.25), 0.), 1.);
+    float green = min(max(4 * abs(x - 0.5) - 1., 0.), 1.);
+    gl_Position = vec4(position.x-0.5, position.y-0.5, 0., 0.5);
+    gl_FrontColor = vec4(red, green, blue, 1);
+}
+"""
 class SolutionWidget(QtOpenGL.QGLWidget):
 
     def __init__(self, parent, sim):
@@ -73,23 +112,19 @@ class SolutionWidget(QtOpenGL.QGLWidget):
     def initializeGL(self):
         glClearColor(1.0, 1.0, 1.0, 1.0)
         glShadeModel(GL_SMOOTH)
-
-#        glEnable(GL_NORMALIZE)
-#        glEnable(GL_BLEND)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST)
-        GL_MULTISAMPLE = 0x809D
-        glEnable(GL_MULTISAMPLE)
+        self.shaders_program = link_shader_program(compile_vertex_shader(VS))
 
     def paintGL(self):
         glClear(GL_COLOR_BUFFER_BIT)
         glCallList(self.dl)
+        gl.glUseProgram(self.shaders_program)
 
     def set(self, U):
+        vmin = np.min(U)
+        vmax = np.max(U)
+        U -= vmin
+        U /= float(vmax - vmin)
         self.U = U
-        jet = matplotlib.cm.get_cmap('jet')
-        cNorm = matplotlib.colors.Normalize(vmin=np.min(U), vmax=np.max(U))
-        scalarMap = matplotlib.cm.ScalarMappable(norm=cNorm, cmap=jet)
         glNewList(self.dl, GL_COMPILE)
         h = self.size().height()
         w = self.size().width()
@@ -97,22 +132,19 @@ class SolutionWidget(QtOpenGL.QGLWidget):
         glLoadIdentity()
 
         g = self.sim.grid
-        glScalef(2, 2, 2)
+        glScalef(2, 2, 1)
         glTranslatef(-0.5, -0.5, 0)
         pos_x = g.centers(2)[:, 0]
         pos_y = g.centers(2)[:, 1]
 
         glBegin(GL_TRIANGLES)
         glNormal3f(0, 0, -1)
-        colors = scalarMap.to_rgba(U)
         for c in g.subentities(0, 2):
             for i in c:
-                glColor4fv(colors[i])
-                glVertex2f(pos_x[i], pos_y[i])
+                glVertex3f(pos_x[i], pos_y[i], self.U[i])
         glEnd()
         glEndList()
         self.update()
-
 
 class ParamRuler(QtGui.QWidget):
     def __init__(self, parent, sim):
@@ -155,7 +187,6 @@ class SimPanel(QtGui.QWidget):
         args = self.sim.args
         shape = (args['XBLOCKS'], args['YBLOCKS'])
         mu = Parameter({'diffusion': np.array([s.value() for s in self.param_panel.spins]).reshape(shape)})
-        print(mu)
         U = self.sim.solve(mu)
         print('Simtime {}'.format(time.time() - tic))
         tic = time.time()
