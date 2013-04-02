@@ -34,10 +34,12 @@ from functools import partial
 import math as m
 import numpy as np
 from PySide import QtGui
+import OpenGL
+OpenGL.ERROR_ON_COPY = True
 from OpenGL.GL import *
 import OpenGL.GL as gl
+from OpenGL.arrays import vbo
 from PySide import QtOpenGL
-from PySide.QtOpenGL import QGLShader, QGLShaderProgram
 
 import pymor.core as core
 core.logger.MAX_HIERACHY_LEVEL = 2
@@ -97,7 +99,7 @@ void main()
     gl_FrontColor = vec4(getJetColor(x), 1);
 }
 """
-
+from OpenGL.arrays import ArrayDatatype
 
 class SolutionWidget(QtOpenGL.QGLWidget):
 
@@ -110,6 +112,8 @@ class SolutionWidget(QtOpenGL.QGLWidget):
         self.set(self.U)
 
     def resizeGL(self, w, h):
+        glViewport(0, 0, w, h)
+        glLoadIdentity()
         self.set(self.U)
 
     def initializeGL(self):
@@ -119,8 +123,12 @@ class SolutionWidget(QtOpenGL.QGLWidget):
 
     def paintGL(self):
         glClear(GL_COLOR_BUFFER_BIT)
-        glCallList(self.dl)
         gl.glUseProgram(self.shaders_program)
+        self.index_positions.bind()
+        self.vertex_positions.bind()
+        glEnableVertexAttribArray(0)
+        glVertexAttribPointer(0, 3, GL_FLOAT, False, 0, None)
+        glDrawElements(GL_TRIANGLES, self.sim.grid.size(2) * 9, GL_UNSIGNED_INT, None)
 
     def set(self, U):
         # normalize U
@@ -129,23 +137,14 @@ class SolutionWidget(QtOpenGL.QGLWidget):
         U -= vmin
         U /= float(vmax - vmin)
         self.U = U
-        h = self.size().height()
-        w = self.size().width()
-        g = self.sim.grid
-        pos_x = g.centers(2)[:, 0]
-        pos_y = g.centers(2)[:, 1]
 
-        glNewList(self.dl, GL_COMPILE)
-        glViewport(0, 0, w, h)
-        glLoadIdentity()
-        glBegin(GL_TRIANGLES)
-        glNormal3f(0, 0, -1)
-        for c in g.subentities(0, 2):
-            for i in c:
-                glVertex3f(pos_x[i], pos_y[i], self.U[i])
-        glEnd()
-        glEndList()
+        g = self.sim.grid
+        lpos = np.array([[g.centers(2)[:, 0][i], g.centers(2)[:, 1][i], self.U[i]] for i in xrange(g.size(2))],
+                        dtype='f')
+        self.vertex_positions = vbo.VBO(lpos)
+        self.index_positions = vbo.VBO(g.subentities(0, 2), target=GL_ELEMENT_ARRAY_BUFFER)
         self.update()
+
 
 class ParamRuler(QtGui.QWidget):
     def __init__(self, parent, sim):
