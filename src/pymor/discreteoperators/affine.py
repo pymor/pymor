@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 from itertools import izip
 import numpy as np
 
-from .interfaces import LinearDiscreteOperatorInterface
+from pymor.discreteoperators.interfaces import LinearDiscreteOperatorInterface
 
 
 class LinearAffinelyDecomposedOperator(LinearDiscreteOperatorInterface):

@@ -2,5 +2,5 @@
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from .interfaces import DiscretizationInterface
-from .linear import StationaryLinearDiscretization
+from pymor.discretizations.interfaces import DiscretizationInterface
+from pymor.discretizations.linear import StationaryLinearDiscretization

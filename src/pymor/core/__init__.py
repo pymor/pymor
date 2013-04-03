@@ -2,10 +2,9 @@
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from .interfaces import BasicInterface
-from .logger import getLogger
-from .defaults import defaults
-
+from pymor.core.interfaces import BasicInterface
+from pymor.core.logger import getLogger
+from pymor.core.defaults import defaults
 
 # Set default log levels
 # Log levels propagte downwards, i.e. if the level of "getLogger('a.b.c')" is not set

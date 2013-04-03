@@ -10,4 +10,4 @@ from pymor.grids.tria import TriaGrid
 from pymor.grids.oned import OnedGrid
 
 #import * from grid should not pull old reference implementations
-__all__ = ['rect', 'tria', 'oned', 'interfaces', 'prescribed', 'referenceelements', 'defaultimpl']
+__all__ = ['rect', 'tria', 'oned', 'interfaces', 'referenceelements', 'defaultimpl']
