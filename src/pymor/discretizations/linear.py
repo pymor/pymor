@@ -6,7 +6,7 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from scipy.sparse.linalg import bicg
+from scipy.sparse.linalg import bicgstab
 from scipy.sparse import issparse
 
 from pymor.core import defaults
@@ -32,7 +32,7 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         The functional f_h given as a `LinearDiscreteOperator` with `dim_range == 1`.
     solver
         A function solver(A, RHS), which solves the matrix equation A*x = RHS.
-        If None, numpy.linalg.solve() or scipy.sparse.linalg.bicg are chosen as
+        If None, numpy.linalg.solve() or scipy.sparse.linalg.bicgstab are chosen as
         solvers depending on the sparsity of A.
     visualizer
         A function visualize(U) which visualizes the solution vectors. Can be None,
@@ -77,7 +77,7 @@ class StationaryLinearDiscretization(DiscretizationInterface):
 
         def default_solver(A, RHS):
             if issparse(A):
-                U, _ = bicg(A, RHS, tol=defaults.bicg_tol, maxiter=defaults.bicg_maxiter)
+                U, _ = bicgstab(A, RHS, tol=defaults.bicgstab_tol, maxiter=defaults.bicgstab_maxiter)
             else:
                 U = np.linalg.solve(A, RHS)
             return U

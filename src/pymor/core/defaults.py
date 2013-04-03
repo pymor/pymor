@@ -19,8 +19,8 @@ class Defaults(BasicInterface):
     gram_schmidt_check:             check orthogonality of result
     gram_schmidt_check_tol:         tolerance for orthogonality check
 
-    bicg_tol:                       tolerance for scipy.sparse.linalg.bicg
-    bicg_maxiter:                   maximal number of iterations
+    bicgstab_tol:                   tolerance for scipy.sparse.linalg.bicg
+    bicgstab_maxiter:               maximal number of iterations
 
     induced_norm_raise_negative:    raise error in la.induced_norm if the squared norm is negative
     induced_norm_tol:               tolerance for clipping negative norm squares to zero
@@ -36,8 +36,8 @@ class Defaults(BasicInterface):
     gram_schmidt_check          = True
     gram_schmidt_check_tol      = 1e-3
 
-    bicg_tol                    = 1e-10
-    bicg_maxiter                = None
+    bicgstab_tol                = 1e-10
+    bicgstab_maxiter            = None
 
     induced_norm_raise_negative = True
     induced_norm_tol            = 10e-10
@@ -64,8 +64,8 @@ class Defaults(BasicInterface):
             gram_schmidt_check            = {0.gram_schmidt_check}
             gram_schmidt_check_tol        = {0.gram_schmidt_check_tol}
 
-            bicg_tol                      = {0.bicg_tol}
-            bicg_maxiter                  = {0.bicg_maxiter}
+            bicgstab_tol                  = {0.bicgstab_tol}
+            bicgstab_maxiter              = {0.bicgstab_maxiter}
 
             induced_norm_raise_negative   = {0.induced_norm_raise_negative}
             induced_norm_tol              = {0.induced_norm_tol}
