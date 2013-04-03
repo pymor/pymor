@@ -7,6 +7,8 @@ import unittest
 import nose
 import logging
 import os
+import pprint
+import pkgutil
 
 from pymor.core.interfaces import BasicInterface
 from pymor.core import logger
@@ -37,7 +39,7 @@ class PymorTestSelector(nose.selector.Selector):
 
     def wantClass(self, cls):
         ret = super(PymorTestSelector, self).wantClass(cls)
-        #if issubclass(C, B)
+        # if issubclass(C, B)
         if hasattr(cls, 'has_interface_name'):
             return ret and not cls.has_interface_name()
         return ret
@@ -52,15 +54,29 @@ class TestBase(unittest.TestCase, BasicInterface):
     '''only my subclasses will set this to True, prevents nose from thinking I'm an actual test'''
     __test__ = _is_actual_testclass
 
+def _load_all():
+    import pymor
+    fails = []
+    for _, module_name, _ in pkgutil.walk_packages(pymor.__path__, pymor.__name__ + '.',
+                                                        lambda n: fails.append((n, ''))):
+        try:
+            __import__(module_name, level=0)
+        except TypeError, t:
+            fails.append((module_name, t))
+    if len(fails) > 0:
+        logger.getLogger(__name__).fatal('Failed imports: {}'.format(pprint.pformat(fails)))
+        raise ImportError(__name__)
 
 def SubclassForImplemetorsOf(InterfaceType):
     '''A decorator that dynamically creates subclasses of the decorated base test class
     for all implementors of a given Interface
     '''
+    _load_all()
     def decorate(TestCase):
         '''saves a new type called cname with correct bases and class dict in globals'''
         import pymor.core.dynamic
-        for Type in set([T for T in InterfaceType.implementors(True) if not T.has_interface_name()]):
+        for Type in set([T for T in InterfaceType.implementors(True) if not T.has_interface_name()
+                                                                        and not issubclass(T, TestBase)]):
             cname = '{}_{}'.format(Type.__name__, TestCase.__name__.replace('Interface', ''))
             pymor.core.dynamic.__dict__[cname] = type(cname, (TestCase,), {'__test__': True, 'Type': Type})
         return TestCase
@@ -75,6 +91,7 @@ def GridSubclassForImplemetorsOf(InterfaceType):
     '''A decorator that dynamically creates subclasses of the decorated base test class
     for all implementors of a given Interface
     '''
+    _load_all()
     def decorate(TestCase):
         '''saves a new type called cname with correct bases and class dict in globals'''
         import pymor.core.dynamic
@@ -93,8 +110,8 @@ def runmodule(name):
     test_logger = logger.getLogger(name)
     test_logger.setLevel(logging.DEBUG)
     config_files = nose.config.all_config_files()
-    #config_files.append(os.path.join(os.path.dirname(pymor.__file__), '../../setup.cfg'))
-    #config defaults to no plugins -> specify defaults...
+    # config_files.append(os.path.join(os.path.dirname(pymor.__file__), '../../setup.cfg'))
+    # config defaults to no plugins -> specify defaults...
     manager = nose.plugins.manager.DefaultPluginManager()
     config = nose.config.Config(files=config_files, plugins=manager)
     config.exclude = []

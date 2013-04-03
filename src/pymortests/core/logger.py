@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 import pkgutil
 
 import pymor.core as core
-from pymortests.base import TestBase, runmodule
+from pymortests.base import runmodule
 
 def exercise_logger(logger):
     for lvl in core.logger.LOGLEVEL_MAPPING.values():
@@ -30,7 +30,8 @@ def test_logger():
         except TypeError, e:
             fails.append(pack_name)
     import pprint
-    core.getLogger(__name__).error('Failed imports: {}'.format(pprint.pformat(set(fails))))
+    if len(fails):
+        core.getLogger(__name__).error('Failed imports: {}'.format(pprint.pformat(set(fails))))
     for cls in pymor.core.interfaces.BasicInterface.implementors(True):
         yield logclass, cls
 
