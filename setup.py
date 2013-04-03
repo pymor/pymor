@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# pymor (http://www.pymor.org)
+# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 #make sure we got distribute in place
 from distribute_setup import use_setuptools

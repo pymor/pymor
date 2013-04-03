@@ -1,4 +1,8 @@
 #!python
+# pymor (http://www.pymor.org)
+# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+
 """Bootstrap distribute installation
 
 If you want to use setuptools in your package's setup.py, just include this

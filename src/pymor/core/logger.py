@@ -1,3 +1,7 @@
+# pymor (http://www.pymor.org)
+# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+
 """Utilities for colorized log output.
 via http://stackoverflow.com/questions/384076/how-can-i-make-the-python-logging-output-to-be-colored
 Cannot not be moved because it's needed to be imported in the root __init__.py OR ELSE

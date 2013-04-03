@@ -1,3 +1,7 @@
+# pymor (http://www.pymor.org)
+# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+
 '''This module contains pure python backports of library features from python >= 3 to 2.7
 '''
 from __future__ import absolute_import, division, print_function

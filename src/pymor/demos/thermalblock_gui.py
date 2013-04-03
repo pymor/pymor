@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+# pymor (http://www.pymor.org)
+# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+
 '''Thermalblock demo.
 
 Usage:
@@ -82,13 +86,13 @@ VS = """
 #version 330
 // Attribute variable that contains coordinates of the vertices.
 layout(location = 0) in vec3 position;
- 
+
 vec3 getJetColor(float value) {
      float fourValue = 4 * value;
      float red   = min(fourValue - 1.5, -fourValue + 4.5);
      float green = min(fourValue - 0.5, -fourValue + 3.5);
      float blue  = min(fourValue + 0.5, -fourValue + 2.5);
- 
+
      return clamp( vec3(red, green, blue), 0.0, 1.0 );
 }
 void main()
