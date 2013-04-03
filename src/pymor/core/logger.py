@@ -36,7 +36,7 @@ LOGLEVEL_MAPPING = {
 }
 
 FORMAT = '%(asctime)s - $BOLD%(name)s$RESET $BOLD%(levelname)s: %(message)s'
-MAX_HIERACHY_LEVEL = 4
+MAX_HIERACHY_LEVEL = 3
 
 
 def formatter_message(message, use_color):
@@ -61,6 +61,10 @@ class ColoredFormatter(logging.Formatter):
         logging.Formatter.__init__(self, formatter_message(FORMAT, self.use_color), datefmt=datefmt)
 
     def format(self, record):
+        tokens = record.name.split('.')
+        record.name = '.'.join(tokens[1:MAX_HIERACHY_LEVEL ])
+        if len(tokens) > MAX_HIERACHY_LEVEL - 1:
+            record.name += '.' + tokens[-1]
         levelname = record.levelname
         if self.use_color and levelname in COLORS.keys():
             levelname_color = COLOR_SEQ % (30 + COLORS[levelname]) + levelname + RESET_SEQ
@@ -70,8 +74,8 @@ class ColoredFormatter(logging.Formatter):
 
 def getLogger(module, level='debug', filename=None):
     module = 'pymor' if module == '__main__' else module
-    logger_name = '.'.join(module.split('.')[:MAX_HIERACHY_LEVEL])
-    logger = logging.getLogger(logger_name)
+    logger_name = module
+    logger = logging.getLogger(module)
     streamhandler = logging.StreamHandler()
     streamformatter = ColoredFormatter()
     streamhandler.setFormatter(streamformatter)
