@@ -8,7 +8,6 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
 
-
 from pymor.grids.referenceelements import triangle, line
 from pymor.discreteoperators.interfaces import LinearDiscreteOperatorInterface
 
@@ -151,7 +150,7 @@ class L2ProductP1(LinearDiscreteOperatorInterface):
 
         self.logger.info('Assemble system matrix ...')
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
-        A = csr_matrix(A)
+        A = csr_matrix(A).copy()   # See DiffusionOperatorP1 for why copy() is necessary
 
         return A
 
@@ -251,6 +250,15 @@ class DiffusionOperatorP1(LinearDiscreteOperatorInterface):
 
         self.logger.info('Assemble system matrix ...')
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
-        A = csr_matrix(A)
+        A = csr_matrix(A).copy()
+
+        # The call to copy() is necessary to resize the data arrays of the sparse matrix:
+        # During the conversion to crs_matrix, entries corresponding with the same
+        # coordinates are summed up, resulting in shorter data arrays. The shortening
+        # is implemented by calling self.prune() which creates the view self.data[:self.nnz].
+        # Thus, the original data array is not deleted and all memory stays allocated.
+
+        # from pymor.tools.memory import print_memory_usage
+        # print_memory_usage('matrix: {0:5.1f}'.format((A.data.nbytes + A.indptr.nbytes + A.indices.nbytes)/1024**2))
 
         return A
