@@ -42,7 +42,7 @@ class UberMeta(abc.ABCMeta):
             else:
                 setattr(base, attribute, [derived])
         cls.logger = logger.getLogger('{}.{}'.format(cls.__module__.replace('__main__', 'pymor'), name))
-        super(UberMeta, cls).__init__(name, bases, namespace)
+        abc.ABCMeta.__init__(cls, name, bases, namespace)
 
     def __new__(cls, classname, bases, classdict):
         '''I copy contract decorations and docstrings from base class methods to deriving classes.
@@ -84,7 +84,7 @@ class UberMeta(abc.ABCMeta):
                             getattr(base_func, "__isabstractclassmethod__")):
                         classdict[attr] = classmethod(classdict[attr])
 
-        return super(UberMeta, cls).__new__(cls, classname, bases, classdict)
+        return abc.ABCMeta.__new__(cls, classname, bases, classdict)
 
 
 class BasicInterface(object):
