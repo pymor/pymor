@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# vim: set filetype=python:
 '''Thermalblock demo.
 
 Usage:
