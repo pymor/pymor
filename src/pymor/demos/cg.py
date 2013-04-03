@@ -1,6 +1,8 @@
 #!/usr/bin/env python
-# Proof of concept for solving the poisson equation in 2D using linear finite elements
-# and our grid interface
+
+'''
+Proof of concept for solving the poisson equation in 1D using linear finite elements and our grid interface
+'''
 
 from __future__ import absolute_import, division, print_function
 
