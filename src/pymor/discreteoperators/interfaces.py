@@ -34,6 +34,9 @@ class DiscreteOperatorInterface(core.BasicInterface, Parametric, Named):
     dim_source = 0
     dim_range = 0
 
+    def __init__(self):
+        Parametric.__init__(self)
+
     @core.interfaces.abstractmethod
     def apply(self, U, mu={}):
         '''Evaluate L(U, mu).

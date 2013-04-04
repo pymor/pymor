@@ -57,6 +57,7 @@ class ProjectedOperator(DiscreteOperatorInterface):
         assert isinstance(operator, DiscreteOperatorInterface)
         assert operator.dim_source == source_basis.shape[1]
         assert operator.dim_range == range_basis.shape[1]
+        super(ProjectedOperator, self).__init__()
         self.build_parameter_type(operator.parameter_type, local_global=True)
         self.dim_source = source_basis.shape[0]
         self.dim_range = range_basis.shape[0]
@@ -110,6 +111,7 @@ class ProjectedLinearOperator(LinearDiscreteOperatorInterface):
         assert isinstance(operator, LinearDiscreteOperatorInterface)
         assert operator.dim_source == source_basis.shape[1]
         assert operator.dim_range == range_basis.shape[1]
+        super(ProjectedLinearOperator, self).__init__()
         self.build_parameter_type(operator.parameter_type, local_global=True)
         self.dim_source = source_basis.shape[0]
         self.dim_range = range_basis.shape[0]
@@ -204,6 +206,7 @@ class SumOperator(DiscreteOperatorInterface):
         assert all(isinstance(op, DiscreteOperatorInterface) for op in operators)
         assert all(op.dim_source == operators[0].dim_source for op in operators)
         assert all(op.dim_range == operators[0].dim_range for op in operators)
+        super(SumOperator, self).__init__()
         self.build_parameter_type(inherits={'operators': operators})
         self.operators = operators
         self.dim_source = operators[0].dim_source
@@ -238,6 +241,7 @@ class LinearSumOperator(LinearDiscreteOperatorInterface):
         assert all(isinstance(op, LinearDiscreteOperatorInterface) for op in operators)
         assert all(op.dim_source == operators[0].dim_source for op in operators)
         assert all(op.dim_range == operators[0].dim_range for op in operators)
+        super(LinearSumOperator, self).__init__()
         self.build_parameter_type(inherits={'operators': operators})
         self.operators = operators
         self.dim_source = operators[0].dim_source

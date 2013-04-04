@@ -36,6 +36,7 @@ class DiscretizationInterface(BasicInterface, Parametric, Cachable, Named):
 
     def __init__(self):
         Cachable.__init__(self, config=DEFAULT_DISK_CONFIG)
+        Parametric.__init__(self)
 
     def copy(self):
         c = copy.copy(self)

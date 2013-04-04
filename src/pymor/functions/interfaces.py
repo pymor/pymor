@@ -35,6 +35,9 @@ class FunctionInterface(core.BasicInterface, Parametric, Named):
     dim_domain = 0
     dim_range = 0
 
+    def __init__(self):
+        Parametric.__init__(self)
+
     @core.interfaces.abstractmethod
     def evaluate(self, x, mu={}):
         pass

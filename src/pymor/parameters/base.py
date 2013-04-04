@@ -142,11 +142,6 @@ class Parametric(object):
         Is True if the object has a nontrivial parameter type.
     '''
 
-    parameter_type = OrderedDict()
-    global_parameter_type = OrderedDict()
-    local_parameter_type = OrderedDict()
-    parameter_maps = {'self': {}}
-    parameter_user_map = {}
 
     _parameter_space = None
 
@@ -162,6 +157,13 @@ class Parametric(object):
     @property
     def parametric(self):
         return len(self.parameter_type) > 0
+
+    def __init__(self):
+        self.parameter_type = OrderedDict()
+        self.global_parameter_type = OrderedDict()
+        self.local_parameter_type = OrderedDict()
+        self.parameter_maps = {'self': {}}
+        self.parameter_user_map = {}
 
     def parse_parameter(self, mu):
         return parse_parameter(mu, self.parameter_type)
@@ -279,6 +281,7 @@ class Parametric(object):
         self.global_parameter_type = global_type
         self.parameter_type = global_type
         self.parameter_maps = parameter_maps
+        self.parameter_user_map = {}
 
     def rename_parameter(self, name_map):
         '''Rename a parameter component of the object's parameter type.

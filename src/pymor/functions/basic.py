@@ -31,6 +31,7 @@ class ConstantFunction(FunctionInterface):
     '''
 
     def __init__(self, value=1.0, dim_domain=1, dim_range=1, name=None):
+        super(ConstantFunction, self).__init__()
         self.dim_domain = dim_domain
         self.dim_range = dim_range
         self.name = name
@@ -75,6 +76,7 @@ class GenericFunction(FunctionInterface):
     '''
 
     def __init__(self, mapping, dim_domain=1, dim_range=1, parameter_type=None, name=None):
+        super(GenericFunction, self).__init__()
         self.dim_domain = dim_domain
         self.dim_range = dim_range
         self.name = name

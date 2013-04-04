@@ -43,6 +43,8 @@ class LinearAffinelyDecomposedOperator(LinearDiscreteOperatorInterface):
         assert functionals is None or len(operators) == len(functionals), \
             ValueError('Operators and functionals must have the same length.')
 
+        super(LinearAffinelyDecomposedOperator, self).__init__()
+
         if operator_affine_part is not None:
             self.dim_source = operator_affine_part.dim_source
             self.dim_range = operator_affine_part.dim_range

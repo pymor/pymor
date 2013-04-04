@@ -28,6 +28,7 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
     '''
 
     def __init__(self, parameter_type, component, coordinates=None, name=None):
+        super(ProjectionParameterFunctional, self).__init__()
         self.name = name
         self.build_parameter_type(parameter_type, local_global=True)
         assert component in self.parameter_type
@@ -62,6 +63,7 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
     '''
 
     def __init__(self, parameter_type, mapping, name=None):
+        super(ProjectionParameterFunctional, self).__init__()
         self.name = name
         self._mapping = mapping
         self.build_parameter_type(parameter_type, local_global=True)
