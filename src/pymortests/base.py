@@ -39,7 +39,6 @@ class PymorTestSelector(nose.selector.Selector):
 
     def wantClass(self, cls):
         ret = super(PymorTestSelector, self).wantClass(cls)
-        # if issubclass(C, B)
         if hasattr(cls, 'has_interface_name'):
             return ret and not cls.has_interface_name()
         return ret
@@ -66,6 +65,7 @@ def _load_all():
     if len(fails) > 0:
         logger.getLogger(__name__).fatal('Failed imports: {}'.format(pprint.pformat(fails)))
         raise ImportError(__name__)
+
 
 def SubclassForImplemetorsOf(InterfaceType):
     '''A decorator that dynamically creates subclasses of the decorated base test class

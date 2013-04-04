@@ -4,15 +4,8 @@
 
 import os
 import sys
-MYDIR = os.path.dirname(__file__)
-sys.path.insert(0, os.path.join(MYDIR, 'src'))
-
 import nose
-from tissue import Tissue
 
-import unittest
-import logging
-from rednose import success
 
 # TODO remove copypaste from pymortests.base
 class PymorTestSelector(nose.selector.Selector):
@@ -25,10 +18,10 @@ class PymorTestSelector(nose.selector.Selector):
         return 'src' in dirname
 
     def wantFile(self, filename):
-        parts = os.path.split(filename)
         if self._skip_grid and 'grid' in filename:
             return False
-        return filename.endswith('.py') and 'pymortests' in filename
+        return filename.endswith('.py') and ('pymortests' in filename or
+                                             'dynamic' in filename)
 
     def wantModule(self, module):
         parts = module.__name__.split('.')
@@ -36,7 +29,6 @@ class PymorTestSelector(nose.selector.Selector):
 
     def wantClass(self, cls):
         ret = super(PymorTestSelector, self).wantClass(cls)
-
         if hasattr(cls, 'has_interface_name'):
             return ret and not cls.has_interface_name()
         return ret
@@ -53,6 +45,6 @@ if __name__ == '__main__':
     cfg = nose.config.Config(files=config_files, plugins=manager)
     cfg.exclude = []
     selector = PymorTestSelector(config=cfg)
-    loader = nose.loader.defaultTestLoader(config=cfg, selector=selector, workingDir='.')  
+    loader = nose.loader.defaultTestLoader(config=cfg, selector=selector, workingDir='.')
     success = nose.core.run(argv=cli, testLoader=loader, config=cfg, module='pymortests')
     sys.exit(not success)
