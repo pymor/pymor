@@ -83,9 +83,9 @@ def link_shader_program(vertex_shader):
     return program
 
 VS = """
-#version 330
+#version 120
 // Attribute variable that contains coordinates of the vertices.
-layout(location = 0) in vec3 position;
+in vec3 position;
 
 vec3 getJetColor(float value) {
      float fourValue = 4 * value;
