@@ -6,7 +6,7 @@ from __future__ import division
 import math
 import numpy as np
 from matplotlib.delaunay import delaunay
-from pymor.core import cache
+from pymor.core import cache, Unpicklable
 from pymor.grids.interfaces import AffineGridInterface
 from pymor.grids import referenceelements as Refs
 from pymor.core.exceptions import CodimError
@@ -42,7 +42,7 @@ class StructuredSimplexCheat(object):
         return (x, y)
 
 
-class PrescribedBoundaryGrid(AffineGridInterface, cache.Cachable):
+class PrescribedBoundaryGrid(AffineGridInterface, cache.Cachable, Unpicklable):
     '''given an analytical boundary descriptjon f: [0,1)mapto R2
     I'll sample n points and construct a simplicial mesh of their convex hull
     '''

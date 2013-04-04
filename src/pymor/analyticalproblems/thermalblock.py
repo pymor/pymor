@@ -11,9 +11,9 @@ from pymor.domaindescriptions import RectDomain
 from pymor.functions import GenericFunction, ConstantFunction
 from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional
 from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.core import Unpicklable
 
-
-class ThermalBlockProblem(EllipticProblem):
+class ThermalBlockProblem(EllipticProblem, Unpicklable):
     '''Analytical description of a 2D thermal block diffusion problem.
 
     This problem is to solve the elliptic equation ::
@@ -36,6 +36,7 @@ class ThermalBlockProblem(EllipticProblem):
 
     The Problem is implemented as a special EllipticProblem with the
     characteristic functions of the blocks as `diffusion_functions`.
+    The problem cannot be pickled, because it gets lambdas as attributes.
 
     Parameters
     ----------

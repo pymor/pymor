@@ -17,9 +17,12 @@ class PickleMeInterface(TestBase):
 
     def testDump(self):
         try:
-            obj = self.Type
-        except (ValueError, TypeError) as e:
-            self.logger.debug('Not testing {} because its init failed: {}'.format(self.Type, str(e)))
+            obj = self.Type()
+            self.assertIsInstance(obj, self.Type)
+            if issubclass(self.Type, core.Unpicklable):
+                return
+        except TypeError as e:
+            self.logger.debug('PicklingError: Not testing {} because its init failed: {}'.format(self.Type, str(e)))
             return
 
         with tempfile.NamedTemporaryFile(mode='wb', delete=False) as dump_file:
@@ -27,8 +30,7 @@ class PickleMeInterface(TestBase):
             dump_file.close()
             f = open(dump_file.name, 'rb')
             unpickled = core.load(f)
-            self.assertTrue(obj.__class__ == unpickled.__class__)
-            self.assertTrue(obj.__dict__ == unpickled.__dict__)
+            self.assertEqual(obj.__class__, unpickled.__class__)
             os.unlink(dump_file.name)
 
 # this needs to go into every module that wants to use dynamically generated types, ie. testcases, below the test code
