@@ -52,6 +52,7 @@ from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor.algorithms import greedy, gram_schmidt_basis_extension
 from pymor.parameters.base import Parameter
 from glumpy.graphics.vertex_buffer import VertexBuffer
+from pymor.core.cache import Cachable, NO_CACHE_CONFIG
 
 core.getLogger('pymor.algorithms').setLevel('DEBUG')
 core.getLogger('pymor.discretizations').setLevel('DEBUG')
@@ -259,6 +260,7 @@ class DetailedSim(SimBase):
 
     def __init__(self, args):
         super(DetailedSim, self).__init__(args)
+        Cachable.__init__(self.discretization, config=NO_CACHE_CONFIG)
 
     def solve(self, mu):
         return self.discretization.solve(mu)
