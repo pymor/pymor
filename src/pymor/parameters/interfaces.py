@@ -38,6 +38,9 @@ class ParameterFunctionalInterface(core.BasicInterface, Parametric, Named):
     BasicInterface, Parametric, Named
     '''
 
+    def __init__(self):
+        Parametric.__init__(self)
+
     @core.interfaces.abstractmethod
     def evaluate(self, mu={}):
         pass
