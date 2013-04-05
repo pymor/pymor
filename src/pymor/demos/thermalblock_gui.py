@@ -142,7 +142,9 @@ class SolutionWidget(QtOpenGL.QGLWidget):
         U -= vmin
         U /= float(vmax - vmin)
         self.U = U
-        self.vbo.vertices['color'] = np.array([(u, 0, 0, 1) for u in self.U ], dtype='f4')
+        self.vbo.vertices['color'] = np.hstack((U[..., np.newaxis].astype('f4'),
+                                                np.zeros((U.size, 2), dtype='f4'),
+                                                np.ones((U.size, 1), dtype='f4')))
         self.vbo.upload()
         self.update()
 
