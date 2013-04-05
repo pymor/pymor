@@ -51,6 +51,7 @@ from pymor.discretizers import discretize_elliptic_cg
 from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor.algorithms import greedy, gram_schmidt_basis_extension
 from pymor.parameters.base import Parameter
+from glumpy.graphics.vertex_buffer import VertexBuffer
 
 core.getLogger('pymor.algorithms').setLevel('DEBUG')
 core.getLogger('pymor.discretizations').setLevel('DEBUG')
@@ -85,7 +86,7 @@ def link_shader_program(vertex_shader):
 VS = """
 #version 120
 // Attribute variable that contains coordinates of the vertices.
-in vec3 position;
+attribute vec4 position;
 
 vec3 getJetColor(float value) {
      float fourValue = 4 * value;
@@ -97,12 +98,11 @@ vec3 getJetColor(float value) {
 }
 void main()
 {
-    float x = position.z;
-    gl_Position = vec4(position.x-0.5, position.y-0.5, 0., 0.5);
-    gl_FrontColor = vec4(getJetColor(x), 1);
+    gl_Position = position;
+    gl_FrontColor = vec4(getJetColor(gl_Color.x), 1);
 }
 """
-from OpenGL.arrays import ArrayDatatype
+
 
 class SolutionWidget(QtOpenGL.QGLWidget):
 
@@ -112,7 +112,6 @@ class SolutionWidget(QtOpenGL.QGLWidget):
         self.sim = sim
         self.dl = 1
         self.U = np.ones(sim.grid.size(2))
-        self.set(self.U)
 
     def resizeGL(self, w, h):
         glViewport(0, 0, w, h)
@@ -123,29 +122,28 @@ class SolutionWidget(QtOpenGL.QGLWidget):
         glClearColor(1.0, 1.0, 1.0, 1.0)
         glShadeModel(GL_SMOOTH)
         self.shaders_program = link_shader_program(compile_vertex_shader(VS))
+        g = self.sim.grid
+        x, y = g.centers(2)[:, 0] - 0.5, g.centers(2)[:, 1] - 0.5
+        lpos = np.array([(x[i], y[i], 0, 0.5) for i in xrange(g.size(2))],
+                        dtype='f')
+        vertex_data = np.array([(lpos[i], (1, 1, 1, 1)) for i in xrange(g.size(2)) ],
+                dtype=[('position', 'f4', 4), ('color', 'f4', 4)])
+        self.vbo = VertexBuffer(vertex_data, indices=g.subentities(0, 2))
+        gl.glUseProgram(self.shaders_program)
+        self.set(self.U)
 
     def paintGL(self):
-        glClear(GL_COLOR_BUFFER_BIT)
-        gl.glUseProgram(self.shaders_program)
-        self.index_positions.bind()
-        self.vertex_positions.bind()
-        glEnableVertexAttribArray(0)
-        glVertexAttribPointer(0, 3, GL_FLOAT, False, 0, None)
-        glDrawElements(GL_TRIANGLES, self.sim.grid.size(2) * 9, GL_UNSIGNED_INT, None)
+        glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+        self.vbo.draw(gl.GL_TRIANGLES, 'pc')
 
     def set(self, U):
         # normalize U
-        vmin = np.min(U)
-        vmax = np.max(U)
+        vmin, vmax = np.min(U), np.max(U)
         U -= vmin
         U /= float(vmax - vmin)
         self.U = U
-
-        g = self.sim.grid
-        lpos = np.array([[g.centers(2)[:, 0][i], g.centers(2)[:, 1][i], self.U[i]] for i in xrange(g.size(2))],
-                        dtype='f')
-        self.vertex_positions = vbo.VBO(lpos)
-        self.index_positions = vbo.VBO(g.subentities(0, 2), target=GL_ELEMENT_ARRAY_BUFFER)
+        self.vbo.vertices['color'] = np.array([(u, 0, 0, 1) for u in self.U ], dtype='f4')
+        self.vbo.upload()
         self.update()
 
 
