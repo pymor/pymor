@@ -39,7 +39,7 @@ def setup_package():
         
     setup(
         name='pyMor',
-        version='0.0.1',
+        version='0.1',
         author='pyMor developers',
         author_email='pymor-dev@listserv.uni-muenster.de',
         maintainer='Rene Milk',
@@ -47,7 +47,7 @@ def setup_package():
         package_dir={'': 'src'},
         packages=find_packages('src'),
         scripts=['bin/%s' % n for n in [] ] + ['run_tests.py'],
-        url='http://dune-project.uni-muenster.de/git/projects/pymor',
+        url='http://pymor.org',
         description=' ' ,
         long_description=open('README.txt').read(),
         tests_require=tests_requires,
