@@ -23,8 +23,8 @@ def setup_package():
     write_version()
 
     tests_requires = ['mock', 'nose-cov', 'nose', 'nosehtmloutput', 'nose-progressive', 'tissue>=0.8']
-    install_requires = ['distribute', 'scipy', 'matplotlib', 'numpy', 'pycontracts',
-                        'sympy', 'docopt', 'dogpile.cache' ] + tests_requires
+    install_requires = ['distribute', 'scipy', 'matplotlib', 'numpy', 'PyContracts',
+                        'docopt', 'dogpile.cache' ] + tests_requires
     
     cmdclass = {}
     ext_modules = []
