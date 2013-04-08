@@ -21,6 +21,10 @@ needs_sphinx = '1.0'
 
 sys.path.insert(0, os.path.abspath('../../src'))
 
+#generate autodoc
+from sphinx.apidoc import main as apidoc
+apidoc(argv=[sys.argv[0], '-o', 'generated/', '../../src/'])
+
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 
               'sphinx.ext.coverage',
               'sphinx.ext.autosummary',
@@ -211,4 +215,4 @@ coverage_c_path = []
 coverage_c_regexes = {}
 coverage_ignore_c_items = {}
 
-autodoc_default_flags = ['members', 'undoc-members', 'private-members', 'special-members', 'inherited-members', 'show-inheritance']
+autodoc_default_flags = ['members', 'undoc-members', 'inherited-members', 'show-inheritance']

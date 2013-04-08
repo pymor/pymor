@@ -39,7 +39,7 @@ def setup_package():
         
     setup(
         name='pyMor',
-        version='0.1',
+        version='0.1.0',
         author='pyMor developers',
         author_email='pymor-dev@listserv.uni-muenster.de',
         maintainer='Rene Milk',
