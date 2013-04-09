@@ -16,9 +16,9 @@ class LinearAffinelyDecomposedOperator(LinearDiscreteOperatorInterface):
 
     Given operators L_k and functionals θ_k, this operator represents ::
 
-                      K
-        L =  L_0  +   ∑  θ_k ⋅ L_k
-                     k=1
+      |                K
+      |  L =  L_0  +   ∑  θ_k ⋅ L_k
+      |               k=1
 
     Parameters
     ----------

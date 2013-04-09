@@ -19,7 +19,7 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
 
         +--------------------+-----------+---------+
         | DomainDescription  | grid_type | default |
-        +====================+===========+---------+
+        +====================+===========+=========+
         | RectDomain         | TriaGrid  |    X    |
         |                    +-----------+---------+
         |                    | RectGrid  |         |

@@ -11,7 +11,7 @@ from pymor.core import defaults
 def float_cmp(x, y, rtol=None, atol=None):
     '''Compare x and y component-wise for almost equality.
 
-    For scalars we define almost equality as
+    For scalars we define almost equality as ::
 
        float_cmp(x,y) <=> |x - y| <= atol + |y|*rtol
 

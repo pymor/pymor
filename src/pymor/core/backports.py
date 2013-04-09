@@ -13,7 +13,7 @@ class abstractclassmethod(classmethod):
 
     Similar to abstractmethod.
 
-    Usage:
+    Usage::
 
         class C(metaclass=ABCMeta):
             @abstractclassmethod
@@ -37,7 +37,7 @@ class abstractstaticmethod(staticmethod):
 
     Similar to abstractmethod.
 
-    Usage:
+    Usage::
 
         class C(metaclass=ABCMeta):
             @abstractstaticmethod

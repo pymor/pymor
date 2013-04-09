@@ -49,7 +49,7 @@ class DiscreteOperatorInterface(core.BasicInterface, Parametric, Named):
         ''' Treat the operator as a 2-form by calculating (V, A(U)).
 
         If ( , ) is the euclidean scalar product and A is given by
-        multiplication with a matrix B, then
+        multiplication with a matrix B, then ::
 
             L.apply2(V, U) = V^T*B*U
 
@@ -60,9 +60,12 @@ class DiscreteOperatorInterface(core.BasicInterface, Parametric, Named):
             If None, the euclidean product is chosen.
         pairwise
             If False and V and U are multi-dimensional, then form is applied
-            to all combinations of vectors in V and U, i.e.
+            to all combinations of vectors in V and U, i.e. ::
+
                 L.apply2(V, U).shape = V.shape[:-1] + U.shape[:-1].
-            If True, the vectors in V and U are applied in pairs, i.e.
+
+            If True, the vectors in V and U are applied in pairs, i.e. ::
+
                 L.apply2(V, U).shape = V.shape[:-1] ( == U.shape[:-1]).
         '''
         AU = self.apply(U, mu)

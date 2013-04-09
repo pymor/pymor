@@ -12,7 +12,8 @@ from pymor.core.logger import getLogger
 
 class Timer(object):
     '''You can use me as a context manager, plain instance or decorator to time execution
-    of a code scope:
+    of a code scope::
+
         with Timer() as timer:
             do_some_stuff()
             do more stuff()

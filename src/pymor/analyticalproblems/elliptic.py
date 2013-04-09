@@ -16,9 +16,9 @@ class EllipticProblem(core.BasicInterface, Named):
 
     The problem consists in solving ::
 
-            K
-      - ∇ ⋅ ∑  θ_k(x, μ) ⋅ d_k(x) ∇ u(x, μ) = f(x, μ)
-           k=0
+      |       K
+      | - ∇ ⋅ ∑  θ_k(x, μ) ⋅ d_k(x) ∇ u(x, μ) = f(x, μ)
+      |      k=0
 
     for u.
 

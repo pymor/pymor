@@ -16,8 +16,8 @@ import sys
 
 
 class ProgressBar:
-    """ Creates a text-based progress bar. Call the object with the `print'
-        command to see the progress bar, which looks something like this:
+    """ Creates a text-based progress bar. Call the object with the `print`
+        command to see the progress bar, which looks something like this::
 
         [=======>        22%                  ]
 

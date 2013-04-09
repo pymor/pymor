@@ -135,9 +135,9 @@ class ProjectedLinearOperator(LinearDiscreteOperatorInterface):
 def project_operator(operator, source_basis, range_basis=None, product=None, name=None):
     '''Project operators to subspaces.
 
-    Replaces `DiscreteOperator`s by `ProjectedOperator`s and `LinearDiscreteOperator`s
-    by `ProjectedLinearOperator`s.
-    Moreover, `LinearAffinelyDecomposedOperator`s are projected by recursively
+    Replaces `DiscreteOperators` by `ProjectedOperators` and `LinearDiscreteOperators`
+    by `ProjectedLinearOperators`.
+    Moreover, `LinearAffinelyDecomposedOperators` are projected by recursively
     projecting each of its components.
 
     See also `ProjectedOperator`.
@@ -193,7 +193,7 @@ class SumOperator(DiscreteOperatorInterface):
     Parameters
     ----------
     operators
-        List of the `DiscreteOperator`s L_1, ..., L_K.
+        List of the `DiscreteOperators` L_1, ..., L_K.
     name
         Name of the operator.
 
@@ -228,7 +228,7 @@ class LinearSumOperator(LinearDiscreteOperatorInterface):
     Parameters
     ----------
     operators
-        List of the `LinearDiscreteOperator`s L_1, ..., L_K.
+        List of the `LinearDiscreteOperators` L_1, ..., L_K.
     name
         Name of the operator.
 
@@ -268,7 +268,7 @@ def add_operators(operators, name=None):
     Parameters
     ----------
     operators
-        List of the `DiscreteOperator`s L_1, ..., L_k.
+        List of the `DiscreteOperators` L_1, ..., L_k.
     name
         Name of the operator.
     '''
