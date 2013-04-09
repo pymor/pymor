@@ -28,6 +28,7 @@ apidoc(argv=[sys.argv[0], '-o', 'generated/', '../../src/'])
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 
               'sphinx.ext.coverage',
               'sphinx.ext.autosummary',
+              'numpydoc'
               ]
 
 # Add any paths that contain templates here, relative to this directory.
