@@ -26,10 +26,10 @@ def fixup_docstring(doc):
         return None
     ret = []
     for line in doc.split('\n'):
-        line = line.lstrip()
-        if line.startswith(':type'):
+        stripped_line = line.lstrip()
+        if stripped_line.startswith(':type'):
             #line's like: :type ParamName: Some.Module.Classname
-            tokens = line.split()
+            tokens = stripped_line.split()
             idx = 2
             if len(tokens) > idx and tokens[idx].startswith('pymor'):
                 line = ' %s %s %s' % (tokens[idx - 2], tokens[idx - 1], tokens[idx].replace('.', '_'))
@@ -140,11 +140,11 @@ def contract(*arg, **kwargs):
         be parseable as RestructuredText. This is relevant if you are using
         Sphinx.
         If the contract string has special RST characters in it, like ``*``,
-        you can include it in double ticks. |pycontracts| will remove
+        you can include it in double ticks. `pycontracts` will remove
         the double ticks before interpreting the string.
 
         For example, the two annotations in this docstring are equivalent
-        for |pycontracts|, but the latter is better for Sphinx: ::
+        for `pycontracts`, but the latter is better for Sphinx: ::
 
               """ My function
 
