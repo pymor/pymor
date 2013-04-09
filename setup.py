@@ -46,7 +46,7 @@ def setup_package():
         maintainer_email='rene.milk@wwu.de',
         package_dir={'': 'src'},
         packages=find_packages('src'),
-        scripts=['bin/%s' % n for n in [] ] + ['run_tests.py'],
+        scripts=['bin/%s' % n for n in [] ] + ['run_tests.py', 'distribute_setup.py'],
         url='http://pymor.org',
         description=' ' ,
         long_description=open('README.txt').read(),
