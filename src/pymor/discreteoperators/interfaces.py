@@ -25,10 +25,6 @@ class DiscreteOperatorInterface(core.BasicInterface, Parametric, Named):
         The dimension s of the source space.
     dim_range
         The dimension r of the range space.
-
-    Inherits
-    --------
-    BasicInterface, Parametric, Cachable, Named
     '''
 
     dim_source = 0
@@ -91,10 +87,6 @@ class DiscreteOperatorInterface(core.BasicInterface, Parametric, Named):
 
 class LinearDiscreteOperatorInterface(DiscreteOperatorInterface):
     '''Interface for linear parameter dependent discrete operators.
-
-    Inherits
-    --------
-    DiscreteOperatorInterface
     '''
 
     @core.interfaces.abstractmethod

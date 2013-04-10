@@ -12,10 +12,6 @@ from pymor.domaindescriptions import BoundaryType
 
 class EmptyBoundaryInfo(BoundaryInfoInterface):
     '''`BoundaryInfo` without any `BoundaryTypes`.
-
-    Inherits
-    --------
-    BoundaryInfoInterface
     '''
 
     def __init__(self, grid):
@@ -38,10 +34,6 @@ class BoundaryInfoFromIndicators(BoundaryInfoInterface):
         dict where each key is a `BoundaryType` and the corresponding value is a boolean
         valued function on the analytical domain indicating if a point belongs to a boundary
         of the `BoundaryType`. (The indicator functions must be vectorized.)
-
-    Inherits
-    --------
-    BoundaryInfoInterface
     '''
 
     def __init__(self, grid, indicators):
@@ -61,10 +53,6 @@ class BoundaryInfoFromIndicators(BoundaryInfoInterface):
 
 class AllDirichletBoundaryInfo(BoundaryInfoInterface):
     '''`BoundaryInfo` where each boundray entity has `BoundaryType('dirichlet')`.
-
-    Inherits
-    --------
-    BoundaryInfoInterface
     '''
 
     def __init__(self, grid):

@@ -24,10 +24,6 @@ class ConstantFunction(FunctionInterface):
         The dimension r.
     name
         The name of the function.
-
-    Inherits
-    --------
-    FunctionInterface
     '''
 
     def __init__(self, value=1.0, dim_domain=1, dim_range=1, name=None):
@@ -69,10 +65,6 @@ class GenericFunction(FunctionInterface):
         The type of the `Parameter` that mapping accepts.
     name
         The name of the function.
-
-    Inherits
-    --------
-    FunctionInterface
     '''
 
     def __init__(self, mapping, dim_domain=1, dim_range=1, parameter_type=None, name=None):

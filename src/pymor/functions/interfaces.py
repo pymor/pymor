@@ -26,10 +26,6 @@ class FunctionInterface(core.BasicInterface, Parametric, Named):
         The dimension d.
     dim_range
         The dimension r.
-
-    Inherits
-    --------
-    BasicInterface, Parametric, Named
     '''
 
     dim_domain = 0

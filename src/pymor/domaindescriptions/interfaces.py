@@ -15,10 +15,6 @@ class DomainDescriptionInterface(core.BasicInterface):
     ----------
     boundary_types
         Set of `BoundaryTypes` the domain has.
-
-    Inherits
-    --------
-    BasicInterface
     '''
 
     boundary_types = set()

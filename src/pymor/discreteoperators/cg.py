@@ -36,10 +36,6 @@ class L2ProductFunctionalP1(LinearDiscreteOperatorInterface):
         is assumed.
     name
         The name of the functional.
-
-    Inherits
-    --------
-    LinearDiscreteOperatorInterface
     '''
 
     def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, name=None):
@@ -109,10 +105,6 @@ class L2ProductP1(LinearDiscreteOperatorInterface):
         The grid on which to assemble the product.
     name
         The name of the product.
-
-    Inherits
-    --------
-    LinearDiscreteOperatorInterface
     '''
 
     def __init__(self, grid, name=None):
@@ -186,10 +178,6 @@ class DiffusionOperatorP1(LinearDiscreteOperatorInterface):
         zero (e.g. for affine decomposition).
     name
         Name of the operator.
-
-    Inherits
-    --------
-    LinearDiscreteOperatorInterface
     '''
 
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,

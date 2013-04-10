@@ -36,10 +36,6 @@ class RectDomain(DomainDescriptionInterface):
     right
     top
     bottom
-
-    Inherits
-    --------
-    DomainDescriptionInterface
     '''
 
     def __init__(self, domain=[[0, 0], [1, 1]], left=BoundaryType('dirichlet'), right=BoundaryType('dirichlet'),
@@ -97,10 +93,6 @@ class LineDomain(DomainDescriptionInterface):
     domain
     left
     right
-
-    Inherits
-    --------
-    DomainDescriptionInterface
     '''
 
     def __init__(self, domain=[0, 1], left=BoundaryType('dirichlet'), right=BoundaryType('dirichlet')):

@@ -21,10 +21,6 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
         `mu[component]`.
     name
         Name of the functional.
-
-    Inherits
-    --------
-    ParameterFunctionalInterface
     '''
 
     def __init__(self, parameter_type, component, coordinates=None, name=None):
@@ -56,10 +52,6 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
         The function to wrap. The function is of the form `mapping(mu)`.
     name
         The name of the functional.
-
-    Inherits
-    --------
-    ParameterFunctionalInterface
     '''
 
     def __init__(self, parameter_type, mapping, name=None):

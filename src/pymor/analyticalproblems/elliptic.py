@@ -47,10 +47,6 @@ class EllipticProblem(core.BasicInterface, Named):
     diffusion_functions
     diffusion_functionals
     dirichlet_data
-
-    Inherits
-    --------
-    BasicInterface, Named
     '''
 
     def __init__(self, domain=RectDomain(), rhs=ConstantFunction(dim_domain=2),

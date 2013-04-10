@@ -26,10 +26,6 @@ class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplement
     ----------
     dim
         The dimension of the grid.
-
-    Inhertis
-    --------
-    BasicInterface, ConformalTopologicalGridDefaultImplementations
     '''
 
     @core.interfaces.abstractmethod
@@ -120,10 +116,6 @@ class ReferenceElementInterface(SimpleReferenceElementDefaultImplementations, co
         The dimension of the reference element
     volume
         The volume of the reference element
-
-    Inhertis
-    --------
-    BasicInterface, ISimpleReferenceElementDefaultImplementation
     '''
 
     dim = None
@@ -212,10 +204,6 @@ class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopological
     ----------
     dim_outer
         The dimension of the space into which the grid is embedded.
-
-    Inherits
-    --------
-    ConformalTopologicalGridInterface, AffineGridDefaultImplementations
     '''
 
     dim_outer = None
@@ -315,10 +303,6 @@ class BoundaryInfoInterface(core.BasicInterface, Cachable):
     ----------
     boundary_types
         set of all `BoundaryTypes` the grid has.
-
-    Inherits
-    --------
-    BasicInterface, Cachable
     '''
 
     boundary_types = set()

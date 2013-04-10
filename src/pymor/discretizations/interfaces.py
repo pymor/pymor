@@ -26,10 +26,6 @@ class DiscretizationInterface(BasicInterface, Parametric, Cachable, Named):
         that this attribute will be common to all discretizations such that it can
         be used for introspection. Compare the implementation of `reduce_generic_rb`.
         For this class, operators has the keys 'operator' and 'rhs'.
-
-    Inherits
-    --------
-    BasicInterface, Parametric, Cachable, Named
     '''
 
     operators = dict()

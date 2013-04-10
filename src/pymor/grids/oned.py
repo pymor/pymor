@@ -21,10 +21,6 @@ class OnedGrid(AffineGridInterface):
         Tuple (left, right) containing the left and right boundary of the domain.
     num_intervals
         The number of codim-0 entities.
-
-    Inherits
-    --------
-    AffineGridInterface
     '''
 
     dim = 1

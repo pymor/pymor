@@ -26,10 +26,6 @@ class BoundaryType(core.BasicInterface):
     ----------
     types
         Set of the names of registered boundary types.
-
-    Inherits
-    --------
-    BasicInterface
     '''
 
     types = set(('dirichlet', 'neumann', 'robin'))

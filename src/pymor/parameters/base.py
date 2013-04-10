@@ -17,10 +17,6 @@ class Parameter(OrderedDict):
     We overwrite copy() to ensure that not only the dict but
     also the arrays are copied. Moreover an allclose() method
     is provided to compare parameters for equality.
-
-    Inherits
-    --------
-    OrderedDict
     '''
 
     def allclose(self, mu):

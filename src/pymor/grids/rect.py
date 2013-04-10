@@ -33,10 +33,6 @@ class RectGrid(AffineGridInterface):
     domain
         Tuple (ll, ur) where ll defines the lower left and ur the upper right
         corner of the domain.
-
-    Inherits
-    --------
-    AffineGridInterface
     '''
 
     dim = 2

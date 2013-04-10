@@ -55,10 +55,6 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         For this class, operators has the keys 'operator' and 'rhs'.
     rhs
         The functional f_h. A synonym for operators['rhs'].
-
-    Inherits
-    --------
-    DiscretizationInterface
     '''
 
     disable_logging = False

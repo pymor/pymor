@@ -16,10 +16,6 @@ class ParameterSpaceInterface(core.BasicInterface):
     ----------
     parameter_type
         Parameter type of the space.
-
-    Inherits
-    --------
-    BasicInterface
     '''
 
     parameter_type = None
@@ -32,10 +28,6 @@ class ParameterSpaceInterface(core.BasicInterface):
 
 class ParameterFunctionalInterface(core.BasicInterface, Parametric, Named):
     '''Represents a functional on a parameter space.
-
-    Inherits
-    --------
-    BasicInterface, Parametric, Named
     '''
 
     def __init__(self):

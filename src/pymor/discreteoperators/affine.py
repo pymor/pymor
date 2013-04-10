@@ -33,10 +33,6 @@ class LinearAffinelyDecomposedOperator(LinearDiscreteOperatorInterface):
         `mu.coefficients[k-1]`.
     name
         Name of the operator.
-
-    Inherits
-    --------
-    LinearDiscreteOperatorInterface
     '''
 
     def __init__(self, operators, operator_affine_part=None, functionals=None, name=None):
