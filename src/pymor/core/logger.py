@@ -62,7 +62,7 @@ class ColoredFormatter(logging.Formatter):
 
     def format(self, record):
         tokens = record.name.split('.')
-        record.name = '.'.join(tokens[1:MAX_HIERACHY_LEVEL ])
+        record.name = '.'.join(tokens[1:MAX_HIERACHY_LEVEL])
         if len(tokens) > MAX_HIERACHY_LEVEL - 1:
             record.name += '.' + tokens[-1]
         levelname = record.levelname

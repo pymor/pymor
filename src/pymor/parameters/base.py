@@ -138,7 +138,6 @@ class Parametric(object):
         Is True if the object has a nontrivial parameter type.
     '''
 
-
     _parameter_space = None
 
     @property

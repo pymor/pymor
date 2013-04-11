@@ -73,6 +73,7 @@ def compile_vertex_shader(source):
         raise RuntimeError(gl.glGetShaderInfoLog(vertex_shader))
     return vertex_shader
 
+
 def link_shader_program(vertex_shader):
     """Create a shader program with from compiled shaders."""
     program = gl.glCreateProgram()
@@ -127,8 +128,8 @@ class SolutionWidget(QtOpenGL.QGLWidget):
         x, y = g.centers(2)[:, 0] - 0.5, g.centers(2)[:, 1] - 0.5
         lpos = np.array([(x[i], y[i], 0, 0.5) for i in xrange(g.size(2))],
                         dtype='f')
-        vertex_data = np.array([(lpos[i], (1, 1, 1, 1)) for i in xrange(g.size(2)) ],
-                dtype=[('position', 'f4', 4), ('color', 'f4', 4)])
+        vertex_data = np.array([(lpos[i], (1, 1, 1, 1)) for i in xrange(g.size(2))],
+                               dtype=[('position', 'f4', 4), ('color', 'f4', 4)])
         self.vbo = VertexBuffer(vertex_data, indices=g.subentities(0, 2))
         gl.glUseProgram(self.shaders_program)
         self.set(self.U)
@@ -171,6 +172,7 @@ class ParamRuler(QtGui.QWidget):
     def enable(self, enable=True):
         for spin in self.spins:
             spin.isEnabled = enable
+
 
 class SimPanel(QtGui.QWidget):
     def __init__(self, parent, sim):

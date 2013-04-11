@@ -53,11 +53,12 @@ class TestBase(unittest.TestCase, BasicInterface):
     '''only my subclasses will set this to True, prevents nose from thinking I'm an actual test'''
     __test__ = _is_actual_testclass
 
+
 def _load_all():
     import pymor
     fails = []
     for _, module_name, _ in pkgutil.walk_packages(pymor.__path__, pymor.__name__ + '.',
-                                                        lambda n: fails.append((n, ''))):
+                                                   lambda n: fails.append((n, ''))):
         try:
             __import__(module_name, level=0)
         except TypeError, t:
@@ -72,11 +73,12 @@ def SubclassForImplemetorsOf(InterfaceType):
     for all implementors of a given Interface
     '''
     _load_all()
+
     def decorate(TestCase):
         '''saves a new type called cname with correct bases and class dict in globals'''
         import pymor.core.dynamic
-        for Type in set([T for T in InterfaceType.implementors(True) if not T.has_interface_name()
-                                                                        and not issubclass(T, TestBase)]):
+        for Type in set([T for T in InterfaceType.implementors(True) if (not T.has_interface_name()
+                                                                         and not issubclass(T, TestBase)])):
             cname = '{}_{}'.format(Type.__name__, TestCase.__name__.replace('Interface', ''))
             pymor.core.dynamic.__dict__[cname] = type(cname, (TestCase,), {'__test__': True, 'Type': Type})
         return TestCase
@@ -92,6 +94,7 @@ def GridSubclassForImplemetorsOf(InterfaceType):
     for all implementors of a given Interface
     '''
     _load_all()
+
     def decorate(TestCase):
         '''saves a new type called cname with correct bases and class dict in globals'''
         import pymor.core.dynamic

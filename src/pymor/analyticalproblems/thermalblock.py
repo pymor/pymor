@@ -13,6 +13,7 @@ from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.core import Unpicklable
 
+
 class ThermalBlockProblem(EllipticProblem, Unpicklable):
     '''Analytical description of a 2D thermal block diffusion problem.
 

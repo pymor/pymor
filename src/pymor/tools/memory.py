@@ -11,6 +11,8 @@ except ImportError:
 
 
 last_memory_usage = 0
+
+
 def memory_usage(unit='mb'):
     '''Returns the memory usage of the current process in bytes
 
@@ -31,6 +33,7 @@ def memory_usage(unit='mb'):
     x = last_memory_usage
     last_memory_usage = resource.getrusage(resource.RUSAGE_SELF)[2] * 1024
     return (last_memory_usage / factors[unit], (last_memory_usage - x) / factors[unit])
+
 
 def print_memory_usage(msg=None, unit='mb'):
     u = memory_usage(unit)

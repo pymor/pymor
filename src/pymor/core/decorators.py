@@ -83,7 +83,7 @@ class Deprecated(DecoratorBase):
         def new_func(*args, **kwargs):
             frame = inspect.currentframe().f_back
             msg = 'DeprecationWarning. Call to deprecated function {} in {}:{}\nUse {} instead'.format(
-                   func.__name__, frame.f_code.co_filename, frame.f_code.co_firstlineno, self._alt)
+                func.__name__, frame.f_code.co_filename, frame.f_code.co_firstlineno, self._alt)
             warnings.warn(msg, DeprecationWarning)
             return func(*args, **kwargs)
         return new_func

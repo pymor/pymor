@@ -4,6 +4,7 @@
 
 NO_VERSIONSTRING = '0.0.0-0-0'
 
+
 def _make_version(revstring):
     pos = revstring.find('-')
     version = tuple(int(x) for x in revstring[:pos].split('.'))
