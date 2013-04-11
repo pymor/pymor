@@ -9,7 +9,7 @@ from mock import Mock
 
 from pymor import la
 from pymor import discretizations
-from pymor.discreteoperators.cg import L2ProductP1
+from pymor.operators.cg import L2ProductP1
 from pymortests.base import TestBase, runmodule
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid

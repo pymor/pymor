@@ -8,7 +8,7 @@ import numpy as np
 
 import pymor.core as core
 from pymor.core.cache import Cachable, NO_CACHE_CONFIG
-from pymor.discreteoperators import project_operator
+from pymor.operators import project_operator
 
 
 class GenericRBReconstructor(core.BasicInterface):
@@ -23,7 +23,7 @@ class GenericRBReconstructor(core.BasicInterface):
 def reduce_generic_rb(discretization, RB, product=None, disable_caching=True):
     '''Generic reduced basis reductor.
 
-    Reduces a discretization by applying `discreteoperators.project_operator` to
+    Reduces a discretization by applying `operators.project_operator` to
     each of its `operators`.
 
     Parameters
@@ -34,7 +34,7 @@ def reduce_generic_rb(discretization, RB, product=None, disable_caching=True):
         The reduced basis (i.e. an array of vectors) on which to project.
     product
         Scalar product for the projection. (See
-        `discreteoperators.constructions.ProjectedOperator`)
+        `operators.constructions.ProjectedOperator`)
     disable_caching
         If `True`, caching of the solutions of the reduced discretization
         is disabled.

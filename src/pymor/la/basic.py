@@ -8,7 +8,7 @@ import numpy as np
 import math as m
 
 from pymor.core import defaults
-from pymor.discreteoperators import DiscreteOperatorInterface, GenericLinearOperator
+from pymor.operators import DiscreteOperatorInterface, GenericLinearOperator
 
 
 def l2_norm(U):

@@ -11,7 +11,7 @@ from scipy.sparse import issparse
 
 from pymor.core import defaults
 from pymor.tools import dict_property
-from pymor.discreteoperators import LinearDiscreteOperatorInterface
+from pymor.operators import LinearDiscreteOperatorInterface
 from pymor.discretizations.interfaces import DiscretizationInterface
 
 

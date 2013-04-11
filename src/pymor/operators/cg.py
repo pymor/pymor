@@ -9,7 +9,7 @@ import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
 
 from pymor.grids.referenceelements import triangle, line
-from pymor.discreteoperators.interfaces import LinearDiscreteOperatorInterface
+from pymor.operators.interfaces import LinearDiscreteOperatorInterface
 
 
 class L2ProductFunctionalP1(LinearDiscreteOperatorInterface):

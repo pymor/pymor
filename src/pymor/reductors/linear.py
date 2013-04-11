@@ -8,7 +8,7 @@ import types
 
 import numpy as np
 
-from pymor.discreteoperators import LinearAffinelyDecomposedOperator
+from pymor.operators import LinearAffinelyDecomposedOperator
 from pymor.discretizations import StationaryLinearDiscretization
 from pymor.la import induced_norm
 from pymor.reductors.basic import reduce_generic_rb

@@ -9,7 +9,7 @@ import numpy as np
 from pymor.core import defaults
 from pymor.core.exceptions import AccuracyError
 from pymor.tools import float_cmp_all
-from pymor.discreteoperators import DiscreteOperatorInterface, GenericLinearOperator
+from pymor.operators import DiscreteOperatorInterface, GenericLinearOperator
 
 
 def gram_schmidt(A, product=None, tol=None, row_offset=0, find_row_duplicates=True, find_col_duplicates=False,

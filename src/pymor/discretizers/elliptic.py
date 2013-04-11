@@ -8,9 +8,9 @@ import matplotlib.pyplot as pl
 
 from pymor.analyticalproblems import EllipticProblem
 from pymor.domaindiscretizers import discretize_domain_default
-from pymor.discreteoperators.cg import DiffusionOperatorP1, L2ProductFunctionalP1, L2ProductP1
-from pymor.discreteoperators.affine import LinearAffinelyDecomposedOperator
-from pymor.discreteoperators import add_operators
+from pymor.operators.cg import DiffusionOperatorP1, L2ProductFunctionalP1, L2ProductP1
+from pymor.operators.affine import LinearAffinelyDecomposedOperator
+from pymor.operators import add_operators
 from pymor.discretizations import StationaryLinearDiscretization
 from pymor.grids import TriaGrid, OnedGrid, EmptyBoundaryInfo
 from pymor.la import induced_norm
