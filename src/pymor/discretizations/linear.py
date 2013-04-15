@@ -11,7 +11,7 @@ from scipy.sparse import issparse
 
 from pymor.core import defaults
 from pymor.tools import dict_property
-from pymor.operators import LinearDiscreteOperatorInterface
+from pymor.operators import LinearOperatorInterface
 from pymor.discretizations.interfaces import DiscretizationInterface
 
 
@@ -27,9 +27,9 @@ class StationaryLinearDiscretization(DiscretizationInterface):
     Parameters
     ----------
     operator
-        The operator L_h given as a `LinearDiscreteOperator`.
+        The operator L_h given as a `LinearOperator`.
     rhs
-        The functional f_h given as a `LinearDiscreteOperator` with `dim_range == 1`.
+        The functional f_h given as a `LinearOperator` with `dim_range == 1`.
     solver
         A function solver(A, RHS), which solves the matrix equation A*x = RHS.
         If None, numpy.linalg.solve() or scipy.sparse.linalg.bicgstab are chosen as
@@ -62,8 +62,8 @@ class StationaryLinearDiscretization(DiscretizationInterface):
     rhs = dict_property('operators', 'rhs')
 
     def __init__(self, operator, rhs, solver=None, visualizer=None, name=None):
-        assert isinstance(operator, LinearDiscreteOperatorInterface)
-        assert isinstance(rhs, LinearDiscreteOperatorInterface)
+        assert isinstance(operator, LinearOperatorInterface)
+        assert isinstance(rhs, LinearOperatorInterface)
         assert operator.dim_source == operator.dim_range == rhs.dim_source
         assert rhs.dim_range == 1
 

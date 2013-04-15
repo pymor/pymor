@@ -8,7 +8,7 @@ import numpy as np
 import math as m
 
 from pymor.core import defaults
-from pymor.operators import DiscreteOperatorInterface, GenericLinearOperator
+from pymor.operators import OperatorInterface, GenericLinearOperator
 
 
 def l2_norm(U):
@@ -36,7 +36,7 @@ def induced_norm(product):
         passed to the product.
     '''
 
-    if not isinstance(product, DiscreteOperatorInterface):
+    if not isinstance(product, OperatorInterface):
         product = GenericLinearOperator(product)
 
     def norm(U, mu={}):

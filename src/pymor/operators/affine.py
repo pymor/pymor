@@ -8,10 +8,10 @@ from __future__ import absolute_import, division, print_function
 from itertools import izip
 import numpy as np
 
-from pymor.operators.interfaces import LinearDiscreteOperatorInterface
+from pymor.operators.interfaces import LinearOperatorInterface
 
 
-class LinearAffinelyDecomposedOperator(LinearDiscreteOperatorInterface):
+class LinearAffinelyDecomposedOperator(LinearOperatorInterface):
     '''Affine combination of given linear operators.
 
     Given operators L_k and functionals θ_k, this operator represents ::

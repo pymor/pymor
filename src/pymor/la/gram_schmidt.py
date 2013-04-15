@@ -9,7 +9,7 @@ import numpy as np
 from pymor.core import defaults
 from pymor.core.exceptions import AccuracyError
 from pymor.tools import float_cmp_all
-from pymor.operators import DiscreteOperatorInterface, GenericLinearOperator
+from pymor.operators import OperatorInterface, GenericLinearOperator
 
 
 def gram_schmidt(A, product=None, tol=None, row_offset=0, find_row_duplicates=True, find_col_duplicates=False,
@@ -45,7 +45,7 @@ def gram_schmidt(A, product=None, tol=None, row_offset=0, find_row_duplicates=Tr
     '''
 
     A = A.copy()
-    if product is not None and not isinstance(product, DiscreteOperatorInterface):
+    if product is not None and not isinstance(product, OperatorInterface):
         product = GenericLinearOperator(product)
     tol = defaults.gram_schmidt_tol if tol is None else tol
     check = defaults.gram_schmidt_tol if check is None else check

@@ -12,7 +12,7 @@ from pymor.tools import Named
 from pymor.parameters import Parametric
 
 
-class DiscreteOperatorInterface(core.BasicInterface, Parametric, Named):
+class OperatorInterface(core.BasicInterface, Parametric, Named):
     '''Interface for parameter dependent discrete operators.
 
     Every discrete operator is viewed as a map ::
@@ -52,7 +52,7 @@ class DiscreteOperatorInterface(core.BasicInterface, Parametric, Named):
         Parameters
         ----------
         product
-            `DiscreteOperator` or 2d-array representing the scalar product.
+            `Operator` or 2d-array representing the scalar product.
             If None, the euclidean product is chosen.
         pairwise
             If False and V and U are multi-dimensional, then form is applied
@@ -71,7 +71,7 @@ class DiscreteOperatorInterface(core.BasicInterface, Parametric, Named):
                 return np.sum(V * AU, axis=-1)
             else:
                 return np.dot(V, AU.T)                              # use of np.dot for ndarrays?!
-        elif isinstance(product, DiscreteOperatorInterface):
+        elif isinstance(product, OperatorInterface):
             return product.apply2(V, AU, pairwise)
         else:
             if pairwise:
@@ -85,7 +85,7 @@ class DiscreteOperatorInterface(core.BasicInterface, Parametric, Named):
             self.__class__.__name__)
 
 
-class LinearDiscreteOperatorInterface(DiscreteOperatorInterface):
+class LinearOperatorInterface(OperatorInterface):
     '''Interface for linear parameter dependent discrete operators.
     '''
 

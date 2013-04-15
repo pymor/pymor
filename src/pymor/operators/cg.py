@@ -9,10 +9,10 @@ import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
 
 from pymor.grids.referenceelements import triangle, line
-from pymor.operators.interfaces import LinearDiscreteOperatorInterface
+from pymor.operators.interfaces import LinearOperatorInterface
 
 
-class L2ProductFunctionalP1(LinearDiscreteOperatorInterface):
+class L2ProductFunctionalP1(LinearOperatorInterface):
     '''Scalar product with an L2-function for linear finite elements.
 
     It is moreover possible to specify a `BoundaryInfo` and a Dirichlet data function
@@ -91,7 +91,7 @@ class L2ProductFunctionalP1(LinearDiscreteOperatorInterface):
         return I.reshape((1, -1))
 
 
-class L2ProductP1(LinearDiscreteOperatorInterface):
+class L2ProductP1(LinearOperatorInterface):
     '''Operator representing the L2-product for linear finite functions.
 
     To evaluate the product use the apply2 method.
@@ -149,7 +149,7 @@ class L2ProductP1(LinearDiscreteOperatorInterface):
         return A
 
 
-class DiffusionOperatorP1(LinearDiscreteOperatorInterface):
+class DiffusionOperatorP1(LinearOperatorInterface):
     '''Diffusion operator for linear finite elements.
 
     The operator is of the form ::

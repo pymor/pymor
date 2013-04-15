@@ -4,10 +4,10 @@
 
 from __future__ import absolute_import, division, print_function
 
-from .interfaces import DiscreteOperatorInterface, LinearDiscreteOperatorInterface
+from .interfaces import OperatorInterface, LinearOperatorInterface
 
 
-class GenericOperator(DiscreteOperatorInterface):
+class GenericOperator(OperatorInterface):
     '''Wraps an apply function as a proper discrete operator.
 
     Parameters
@@ -47,7 +47,7 @@ class GenericOperator(DiscreteOperatorInterface):
             return self._mapping(U)
 
 
-class GenericLinearOperator(LinearDiscreteOperatorInterface):
+class GenericLinearOperator(LinearOperatorInterface):
     '''Wraps a matrix as a proper linear discrete operator.
 
     The resulting operator will be parameter independent.
