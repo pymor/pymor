@@ -78,7 +78,7 @@ def SubclassForImplemetorsOf(InterfaceType):
         '''saves a new type called cname with correct bases and class dict in globals'''
         import pymor.core.dynamic
         for Type in set([T for T in InterfaceType.implementors(True) if (not T.has_interface_name()
-                                                                         and not issubclass(T, TestBase)])):
+                                                                         and not issubclass(T, TestBase))]):
             cname = '{}_{}'.format(Type.__name__, TestCase.__name__.replace('Interface', ''))
             pymor.core.dynamic.__dict__[cname] = type(cname, (TestCase,), {'__test__': True, 'Type': Type})
         return TestCase
