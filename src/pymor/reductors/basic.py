@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 import pymor.core as core
+from pymor.la import NumpyVectorArray
 from pymor.core.cache import Cachable, NO_CACHE_CONFIG
 from pymor.operators import project_operator
 
@@ -17,7 +18,8 @@ class GenericRBReconstructor(core.BasicInterface):
         self.RB = RB
 
     def reconstruct(self, U):
-        return np.dot(U, self.RB)
+        assert isinstance(U, NumpyVectorArray)
+        return self.RB.lincomb(U._array)
 
 
 def reduce_generic_rb(discretization, RB, product=None, disable_caching=True):
@@ -50,7 +52,7 @@ def reduce_generic_rb(discretization, RB, product=None, disable_caching=True):
 
     rd = discretization.copy()
     if RB is None:
-        RB = np.zeros((0, next(rd.operators.itervalues()).dim_source))
+        RB = NumpyVectorArray(np.zeros((0, next(rd.operators.itervalues()).dim_source)))
     for k, op in rd.operators.iteritems():
         rd.operators[k] = project_operator(op, RB, product=product)
     if disable_caching and isinstance(rd, Cachable):

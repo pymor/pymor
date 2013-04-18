@@ -44,14 +44,22 @@ class LinearAffinelyDecomposedOperator(LinearOperatorInterface):
         if operator_affine_part is not None:
             self.dim_source = operator_affine_part.dim_source
             self.dim_range = operator_affine_part.dim_range
+            self.type_source = operator_affine_part.type_source
+            self.type_range = operator_affine_part.type_range
         else:
             self.dim_source = operators[0].dim_source
             self.dim_range = operators[0].dim_range
+            self.type_source = operators[0].type_source
+            self.type_range = operators[0].type_range
 
         assert all(op.dim_source == self.dim_source for op in operators), \
             ValueError('All operators must have the same source dimension.')
         assert all(op.dim_range == self.dim_range for op in operators), \
             ValueError('All operators must have the same range dimension.')
+        assert all(op.type_source == self.type_source for op in operators), \
+            ValueError('All operators must have the same source type.')
+        assert all(op.type_range == self.type_range for op in operators), \
+            ValueError('All operators must have the same range type.')
 
         self.operators = operators
         self.operator_affine_part = operator_affine_part
@@ -66,17 +74,17 @@ class LinearAffinelyDecomposedOperator(LinearOperatorInterface):
                                                 'operator_affine_part': operator_affine_part})
         self.name = name
 
-    def assemble(self, mu):
+    def _assemble(self, mu):
         if self.functionals is not None:
-            A = sum(op.matrix(self.map_parameter(mu, 'operators', n)) * f(self.map_parameter(mu, 'functionals', n))
+            A = sum(op.assemble(self.map_parameter(mu, 'operators', n)) * f(self.map_parameter(mu, 'functionals', n))
                     for n, op, f in izip(xrange(len(self.operators)), self.operators, self.functionals))
         else:
             my_mu = self.map_parameter(mu)
-            A = sum(op.matrix(self.map_parameter(mu, 'operators', n)) * m
+            A = sum(op.assemble(self.map_parameter(mu, 'operators', n)) * m
                     for n, op, m in izip(xrange(len(self.operators)), self.operators, my_mu['coefficients']))
 
         if self.operator_affine_part is not None:
-            A = A + self.operator_affine_part.matrix(self.map_parameter(mu, 'operator_affine_part'))
+            A = A + self.operator_affine_part.assemble(self.map_parameter(mu, 'operator_affine_part'))
 
         return A
 

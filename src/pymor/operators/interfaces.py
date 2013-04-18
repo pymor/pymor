@@ -7,12 +7,13 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-import pymor.core as core
+from pymor.core.interfaces import BasicInterface, abstractmethod, abstractproperty
+from pymor.la import VectorArray
 from pymor.tools import Named
 from pymor.parameters import Parametric
 
 
-class OperatorInterface(core.BasicInterface, Parametric, Named):
+class OperatorInterface(BasicInterface, Parametric, Named):
     '''Interface for parameter dependent discrete operators.
 
     Every discrete operator is viewed as a map ::
@@ -25,23 +26,41 @@ class OperatorInterface(core.BasicInterface, Parametric, Named):
         The dimension s of the source space.
     dim_range
         The dimension r of the range space.
+    type_source
+        The `VectorArray` class representing vectors of the source space.
+    type_range
+        The `VectorArray` class representing vectors of the range space.
     '''
 
     dim_source = 0
     dim_range = 0
 
+    type_source = None
+    type_range = None
+
     def __init__(self):
         Parametric.__init__(self)
 
-    @core.interfaces.abstractmethod
-    def apply(self, U, mu={}):
+    @abstractmethod
+    def apply(self, U, ind=None, mu={}):
         '''Evaluate L(U, mu).
 
-        If U is an nd-array, L is applied to the last axis.
+        Parameters
+        ----------
+        U : VectorArray
+            `VectorArray` of vectors to which the operator is applied.
+        ind
+            If None, the operator is applied to all elements of U.
+            Otherwise an iterable of the indices of the vectors to
+            which the operator is to be applied.
+
+        Returns
+        -------
+        `VectorArray` of shape `(len(ind), self.dim_range)`
         '''
         pass
 
-    def apply2(self, V, U, mu={}, product=None, pairwise=True):
+    def apply2(self, V, U, U_ind=None, V_ind=None, mu={}, product=None, pairwise=True):
         ''' Treat the operator as a 2-form by calculating (V, A(U)).
 
         If ( , ) is the euclidean scalar product and A is given by
@@ -51,33 +70,55 @@ class OperatorInterface(core.BasicInterface, Parametric, Named):
 
         Parameters
         ----------
+        V : VectorArray
+            Left arguments.
+        U : VectorArray
+            Right arguments.
+        V_ind
+            If None, the operator is applied to all elements of V.
+            Otherwise an iterable of the indices of the vectors to
+            which the operator is to be applied.
+        U_ind
+            If None, the operator is applied to all elements of U.
+            Otherwise an iterable of the indices of the vectors to
+            which the operator is to be applied.
         product
-            `Operator` or 2d-array representing the scalar product.
+            `Operator` representing the scalar product.
             If None, the euclidean product is chosen.
         pairwise
             If False and V and U are multi-dimensional, then form is applied
             to all combinations of vectors in V and U, i.e. ::
 
-                L.apply2(V, U).shape = V.shape[:-1] + U.shape[:-1].
+                L.apply2(V, U).shape = (len(V_ind), len(U_ind)).
 
             If True, the vectors in V and U are applied in pairs, i.e. ::
 
-                L.apply2(V, U).shape = V.shape[:-1] ( == U.shape[:-1]).
+                L.apply2(V, U).shape = (len(V_ind),) = (len(U_ind),).
+
+        Returns
+        -------
+        A numpy array of all operator evaluations.
         '''
-        AU = self.apply(U, mu)
-        assert not pairwise or AU.shape[:-1] == V.shape[:-1]
-        if product is None:
-            if pairwise:
-                return np.sum(V * AU, axis=-1)
-            else:
-                return np.dot(V, AU.T)                              # use of np.dot for ndarrays?!
-        elif isinstance(product, OperatorInterface):
-            return product.apply2(V, AU, pairwise)
-        else:
-            if pairwise:
-                return np.sum(V * np.dot(product, AU.T).T, axis=-1)
-            else:
-                return np.dot(V, np.dot(product, AU.T))
+        assert isinstance(V, VectorArray)
+        assert isinstance(U, VectorArray)
+        if pairwise:
+            lu = len(U_ind) if U_ind is not None else len(U)
+            lv = len(V_ind) if V_ind is not None else len(V)
+            assert lu == lv
+        AU = self.apply(U, ind=U_ind, mu=mu)
+        if product is not None:
+            AU = product.apply(AU)
+        return V.prod(AU, ind=V_ind, pairwise=pairwise)
+
+    def __add__(self, other):
+        from pymor.operators.constructions import LincombOperator
+        return LincombOperator([self, other])
+
+    __radd__ = __add__
+
+    def __mul__(self, other):
+        from pymor.operators.constructions import LincombOperator
+        return LincombOperator([self], factors=[other])
 
     def __str__(self):
         return '{}: R^{} --> R^{}  (parameter type: {}, class: {})'.format(
@@ -89,27 +130,38 @@ class LinearOperatorInterface(OperatorInterface):
     '''Interface for linear parameter dependent discrete operators.
     '''
 
-    @core.interfaces.abstractmethod
-    def assemble(self, mu={}):
-        '''Assembles the matrix of the operator for given parameter mu.
+    def as_vector_array(self):
+        raise NotImplementedError
 
-        This is what has to be implemented, but the user will usually call
-        matrix().
-        '''
+    @abstractmethod
+    def _assemble(self, mu={}):
         pass
 
-    def matrix(self, mu={}):
-        '''Same as assemble(), but the last result is cached.'''
+    def assemble(self, mu={}, force=False):
+        '''Assembles the matrix of the operator for given parameter mu.
+
+        Returns an assembled parameter independent linear operator.
+        '''
         mu = self.parse_parameter(mu)
-        if self._last_mu is not None and self._last_mu.allclose(mu):
+        if not force and self._last_mu is not None and self._last_mu.allclose(mu):
             return self._last_mat
         else:
             self._last_mu = mu.copy()  # TODO: add some kind of log message here
-            self._last_mat = self.assemble(mu)
+            self._last_mat = self._assemble(mu)
             return self._last_mat
 
-    def apply(self, U, mu={}):
-        return self.matrix(mu).dot(U.T).T  # TODO: Check what dot really does for a sparse matrix
+    def apply(self, U, ind=None, mu={}):
+        return self.assemble(mu).apply(U, ind=ind)
+
+    def __add__(self, other):
+        from pymor.operators.constructions import LinearLincombOperator
+        return LinearLincombOperator([self, other])
+
+    __radd__ = __add__
+
+    def __mul__(self, other):
+        from pymor.operators.constructions import LinearLinearcombOperator
+        return LinearLincombOperator([self], factors=[other])
 
     _last_mu = None
     _last_mat = None

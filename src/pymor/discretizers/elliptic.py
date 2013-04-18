@@ -90,12 +90,14 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
     import matplotlib.pyplot as pl
     if isinstance(grid, TriaGrid):
         def visualize(U):
-            pl.tripcolor(grid.centers(2)[:, 0], grid.centers(2)[:, 1], grid.subentities(0, 2), U)
+            assert len(U) == 1
+            pl.tripcolor(grid.centers(2)[:, 0], grid.centers(2)[:, 1], grid.subentities(0, 2), U.data.ravel())
             pl.colorbar()
             pl.show()
     else:
         def visualize(U):
-            pl.plot(grid.centers(1), U)
+            assert len(U) == 1
+            pl.plot(grid.centers(1), U.data.ravel())
             pl.show()
             pass
 

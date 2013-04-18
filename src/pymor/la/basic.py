@@ -4,15 +4,9 @@
 
 from __future__ import absolute_import, division, print_function
 
-import numpy as np
 import math as m
 
 from pymor.core import defaults
-from pymor.operators import OperatorInterface, GenericLinearOperator
-
-
-def l2_norm(U):
-    return np.sqrt(np.sum(U ** 2, axis=-1))
 
 
 def induced_norm(product):
@@ -21,7 +15,7 @@ def induced_norm(product):
     The norm of a vector (an array of vectors) U is calcuated by
     calling ::
 
-        product.apply2(U, U, mu, pairwise=True)
+        product.apply2(U, U, mu=mu, pairwise=True)
 
     Parameters
     ----------
@@ -37,11 +31,9 @@ def induced_norm(product):
         passed to the product.
     '''
 
-    if not isinstance(product, OperatorInterface):
-        product = GenericLinearOperator(product)
-
     def norm(U, mu={}):
-        norm_squared = product.apply2(U, U, mu, pairwise=True)
+        assert len(U) == 1
+        norm_squared = product.apply2(U, U, mu=mu, pairwise=True)
         if norm_squared < 0:
             if (-norm_squared < defaults.induced_norm_tol):
                 return 0

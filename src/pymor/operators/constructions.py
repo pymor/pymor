@@ -7,9 +7,10 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from .interfaces import OperatorInterface, LinearOperatorInterface
-from .affine import LinearAffinelyDecomposedOperator
-from .basic import GenericLinearOperator
+from pymor.la import NumpyVectorArray
+from pymor.operators.interfaces import OperatorInterface, LinearOperatorInterface
+from pymor.operators.affine import LinearAffinelyDecomposedOperator
+from pymor.operators.basic import NumpyLinearOperator
 
 
 class ProjectedOperator(OperatorInterface):
@@ -37,19 +38,21 @@ class ProjectedOperator(OperatorInterface):
     operator
         The `Operator` to project.
     source_basis
-        The b_1, ..., b_N as a 2d-array.
+        The b_1, ..., b_N as a `VectorArray`.
     range_basis
-        The c_1, ..., c_M as a 2d-array. If None, `range_basis=source_basis`.
+        The c_1, ..., c_M as a `VectorArray`. If None, `range_basis=source_basis`.
     product
-        Either an 2d-array or a `Operator` representing the scalar product.
+        An `Operator` representing the scalar product.
         If None, the euclidean product is chosen.
     name
         Name of the projected operator.
     '''
 
+    type_source = type_range = NumpyVectorArray
+
     def __init__(self, operator, source_basis, range_basis=None, product=None, name=None):
         if range_basis is None:
-            range_basis = np.ones((1, 1)) if operator.dim_range == 1 else source_basis
+            range_basis = NumpyMatrix(np.ones((1, 1))) if operator.dim_range == 1 else source_basis
         assert isinstance(operator, OperatorInterface)
         assert operator.dim_source == source_basis.shape[1]
         assert operator.dim_range == range_basis.shape[1]
@@ -63,15 +66,14 @@ class ProjectedOperator(OperatorInterface):
         self.range_basis = range_basis
         self.product = product
 
-    def apply(self, U, mu={}):
-        V = np.dot(U, self.source_basis)
-        AV = self.operator.apply(V, self.map_parameter(mu))
+    def apply(self, U, ind=None, mu={}):
+        U_array = U._array if ind is None else U._array[ind]
+        V = self.source_basis.lincomb(U_array)
         if self.product is None:
-            return np.dot(AV, self.range_basis.T)
-        elif isinstance(self.product, OperatorInterface):
-            return self.product.apply2(AV, self.range_basis, pairwise=False)
+            return NumpyVectorArray(self.operator.apply2(self.range_basis, V, mu=self.map_parameter(mu)).T)
         else:
-            return np.dot(np.dot(AV, self.product), self.range_basis.T)
+            V = self.operator.apply(V, mu=self.map_parameter(mu))
+            return NumpyVectorArray(self.product.apply2(self.range_basis, V).T)
 
 
 class ProjectedLinearOperator(LinearOperatorInterface):
@@ -97,31 +99,33 @@ class ProjectedLinearOperator(LinearOperatorInterface):
         Name of the projected operator.
     '''
 
+    type_source = type_range = NumpyVectorArray
+
     def __init__(self, operator, source_basis, range_basis=None, product=None, name=None):
         if range_basis is None:
-            range_basis = np.ones((1, 1)) if operator.dim_range == 1 else source_basis
+            range_basis = NumpyVectorArray(np.ones((1, 1))) if operator.dim_range == 1 else source_basis
         assert isinstance(operator, LinearOperatorInterface)
-        assert operator.dim_source == source_basis.shape[1]
-        assert operator.dim_range == range_basis.shape[1]
+        assert operator.dim_source == source_basis.dim
+        assert operator.dim_range == range_basis.dim
         super(ProjectedLinearOperator, self).__init__()
         self.build_parameter_type(operator.parameter_type, local_global=True)
-        self.dim_source = source_basis.shape[0]
-        self.dim_range = range_basis.shape[0]
+        self.dim_source = len(source_basis)
+        self.dim_range = len(range_basis)
         self.name = name
         self.operator = operator
         self.source_basis = source_basis
         self.range_basis = range_basis
         self.product = product
 
-    def assemble(self, mu={}):
-        M = self.operator.matrix(self.map_parameter(mu))
-        MB = M.dot(self.source_basis.T)
+    def _assemble(self, mu={}):
         if self.product is None:
-            return np.dot(self.range_basis, MB)
-        elif isinstance(self.product, OperatorInterface):
-            return self.product.apply2(self.range_basis, MB.T, pairwise=False)
+            return NumpyLinearOperator(self.operator.apply2(self.range_basis, self.source_basis,
+                                                            mu=self.map_parameter(mu), pairwise=False),
+                                       name='{}_assembled'.format(self.name))
         else:
-            return np.dot(self.range_basis, np.dot(self.product, MB))
+            AU = self.operator.apply(self.source_basis, mu=self.map_parameter(mu))
+            return NumpyLinearOperator(self.product.apply2(self.range_basis, AU, pairwise=False),
+                                       name='{}_assembled'.format(self.name))
 
 
 def project_operator(operator, source_basis, range_basis=None, product=None, name=None):
@@ -165,17 +169,12 @@ def project_operator(operator, source_basis, range_basis=None, product=None, nam
         return proj_operator
 
     elif isinstance(operator, LinearOperatorInterface):
-        proj_operator = ProjectedLinearOperator(operator, source_basis, range_basis, product, name)
-        if proj_operator.parameter_type == {}:
-            return GenericLinearOperator(proj_operator.matrix(), name)
-        else:
-            return proj_operator
-
+        return ProjectedLinearOperator(operator, source_basis, range_basis, product, name)
     else:
         return ProjectedOperator(operator, source_basis, range_basis, product, name)
 
 
-class SumOperator(OperatorInterface):
+class LincombOperator(OperatorInterface):
     '''Operator representing the sum operators.
 
     Given operators L_1, ..., L_K, this defines the operator given by ::
@@ -190,23 +189,28 @@ class SumOperator(OperatorInterface):
         Name of the operator.
     '''
 
-    def __init__(self, operators, name=None):
+    def __init__(self, operators, factors=None, name=None):
         assert all(isinstance(op, OperatorInterface) for op in operators)
         assert all(op.dim_source == operators[0].dim_source for op in operators)
         assert all(op.dim_range == operators[0].dim_range for op in operators)
-        super(SumOperator, self).__init__()
+        assert all(op.type_source == operators[0].type_source for op in operators)
+        assert all(op.type_range == operators[0].type_range for op in operators)
+        super(LincombOperator, self).__init__()
         self.build_parameter_type(inherits={'operators': operators})
         self.operators = operators
+        self.factors = np.ones(len(operators)) if factors is None else factors
         self.dim_source = operators[0].dim_source
         self.dim_range = operators[0].dim_range
+        self.type_source = operators[0].type_source
+        self.type_range = operators[0].type_range
         self.name = name or '+'.join(op.name for op in operators)
 
-    def apply(self, U, mu={}):
-        return np.sum([op.apply(U, self.map_parameter(mu, 'operators', i)) for i, op in enumerate(self.operators)],
-                      axis=0)
+    def apply(self, U, ind=None, mu={}):
+        return sum(op.apply(U, ind=ind, mu=self.map_parameter(mu, 'operators', i)) * self.factors[i]
+                   for i, op in enumerate(self.operators))
 
 
-class LinearSumOperator(LinearOperatorInterface):
+class LinearLincombOperator(LinearOperatorInterface):
     '''Linear operator representing the sum linear operators.
 
     Given linear operators L_1, ..., L_K, this defines the linear operator given by ::
@@ -221,21 +225,26 @@ class LinearSumOperator(LinearOperatorInterface):
         Name of the operator.
     '''
 
-    def __init__(self, operators, name=None):
+    def __init__(self, operators, factors=None, name=None):
         assert all(isinstance(op, LinearOperatorInterface) for op in operators)
         assert all(op.dim_source == operators[0].dim_source for op in operators)
         assert all(op.dim_range == operators[0].dim_range for op in operators)
-        super(LinearSumOperator, self).__init__()
+        assert all(op.type_source == operators[0].type_source for op in operators)
+        assert all(op.type_range == operators[0].type_range for op in operators)
+        super(LinearLincombOperator, self).__init__()
         self.build_parameter_type(inherits={'operators': operators})
         self.operators = operators
+        self.factors = np.ones(len(operators)) if factors is None else factors
         self.dim_source = operators[0].dim_source
         self.dim_range = operators[0].dim_range
+        self.type_source = operators[0].type_source
+        self.type_range = operators[0].type_range
         self.name = name or '+'.join(op.name for op in operators)
 
-    def assemble(self, mu={}):
-        M = self.operators[0].matrix(self.map_parameter(mu, 'operators', 0))
+    def _assemble(self, mu={}):
+        M = self.operators[0].assemble(self.map_parameter(mu, 'operators', 0))
         for i, op in enumerate(self.operators[1:]):
-            M = M + op.matrix(self.map_parameter(mu, 'operators', i + 1))
+            M = M + op.assemble(self.map_parameter(mu, 'operators', i + 1)) * self.factors[i]
         return M
 
 
@@ -257,6 +266,6 @@ def add_operators(operators, name=None):
         Name of the operator.
     '''
     if all(isinstance(op, LinearOperatorInterface) for op in operators):
-        return LinearSumOperator(operators, name)
+        return LinearLincombOperator(operators, name=name)
     else:
-        return SumOperator(operators, name)
+        return LincombOperator(operators, name=name)

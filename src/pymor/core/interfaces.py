@@ -144,6 +144,7 @@ class BasicInterface(object):
 
 contract = decorators.contract
 abstractmethod = abc.abstractmethod
+abstractproperty = abc.abstractproperty
 
 import sys
 if sys.version_info >= (3, 1, 0):

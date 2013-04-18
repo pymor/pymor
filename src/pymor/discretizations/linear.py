@@ -10,8 +10,9 @@ from scipy.sparse.linalg import bicgstab
 from scipy.sparse import issparse
 
 from pymor.core import defaults
+from pymor.la import NumpyVectorArray
 from pymor.tools import dict_property
-from pymor.operators import LinearOperatorInterface
+from pymor.operators import LinearOperatorInterface, NumpyLinearOperator
 from pymor.discretizations.interfaces import DiscretizationInterface
 
 
@@ -72,11 +73,19 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         self.build_parameter_type(inherits={'operator': operator, 'rhs': rhs})
 
         def default_solver(A, RHS):
+            assert isinstance(A, NumpyLinearOperator)
+            assert isinstance(RHS, NumpyLinearOperator)
+            A = A._matrix
+            RHS = RHS._matrix
+            assert len(RHS) == 1
+            if RHS.shape[1] == 0:
+                return NumpyVectorArray(RHS)
+            RHS = RHS.ravel()
             if issparse(A):
                 U, _ = bicgstab(A, RHS, tol=defaults.bicgstab_tol, maxiter=defaults.bicgstab_maxiter)
             else:
                 U = np.linalg.solve(A, RHS)
-            return U
+            return NumpyVectorArray(U)
         self.solver = solver or default_solver
 
         if visualizer is not None:
@@ -87,16 +96,12 @@ class StationaryLinearDiscretization(DiscretizationInterface):
 
     def _solve(self, mu={}):
         mu = self.parse_parameter(mu)
-        A = self.operator.matrix(self.map_parameter(mu, 'operator'))
+        A = self.operator.assemble(self.map_parameter(mu, 'operator'))
 
         if not self.disable_logging:
-            sparse = 'sparse' if issparse(A) else 'dense'
+            sparse = 'sparse' if isinstance(A, NumpyLinearOperator) and issparse(A._matrix) else 'dense'
             self.logger.info('Solving {} ({}) for {} ...'.format(self.name, sparse, mu))
 
-        if A.size == 0:
-            return np.zeros(0)
-        RHS = np.squeeze(self.rhs.matrix(self.map_parameter(mu, 'rhs')))
-        if RHS.ndim == 0:
-            RHS = RHS[np.newaxis]
+        RHS = self.rhs.assemble(self.map_parameter(mu, 'rhs'))
 
         return self.solver(A, RHS)

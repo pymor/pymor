@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from .interfaces import OperatorInterface, LinearOperatorInterface
-from .basic import GenericOperator, GenericLinearOperator
+from .basic import NumpyGenericOperator, NumpyLinearOperator
 from .affine import LinearAffinelyDecomposedOperator
 from .constructions import (ProjectedOperator, ProjectedLinearOperator, project_operator,
-                            SumOperator, LinearSumOperator, add_operators)
+                            LincombOperator, LinearLincombOperator, add_operators)

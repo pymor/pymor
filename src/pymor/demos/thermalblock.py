@@ -6,8 +6,8 @@
 '''Thermalblock demo.
 
 Usage:
-  thermalblock.py [-ehp] [--estimator-norm=NORM] [--extension-alg=ALG] [--grid=NI]
-                  [--help] [--plot-solutions] [--test=COUNT] XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
+  thermalblock.py [-ehp] [--estimator-norm=NORM] [--extension-alg=ALG] [--grid=NI] [--help]
+                  [--plot-solutions] [--reductor=RED] [--test=COUNT] XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
 
 
 Arguments:
@@ -27,8 +27,8 @@ Options:
   --estimator-norm=NORM  Norm (trivial, h1) in which to calculate the residual
                          [default: trivial].
 
-  --extension-alg=ALG    Basis extension algorithm (trivial, gram_schmidt) to be used
-                         [default: gram_schmidt].
+  --extension-alg=ALG    Basis extension algorithm (trivial, gram_schmidt, numpy_trivial, numpy_gram_schmidt)
+                         to be used [default: gram_schmidt].
 
   --grid=NI              Use grid with 2*NI*NI elements [default: 100].
 
@@ -37,6 +37,8 @@ Options:
   -p, --plot-err         Plot error.
 
   --plot-solutions       Plot some example solutions.
+
+  --reductor=RED         Reduction algorithm (default, numpy_default) [default: default].
 
   --test=COUNT           Use COUNT snapshots for stochastic error estimation
                          [default: 10].
@@ -56,9 +58,9 @@ import pymor.core as core
 core.logger.MAX_HIERACHY_LEVEL = 2
 from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import discretize_elliptic_cg
-from pymor.reductors.linear import reduce_stationary_affine_linear
+from pymor.reductors.linear import reduce_stationary_affine_linear, numpy_reduce_stationary_affine_linear
 from pymor.algorithms import greedy, trivial_basis_extension, gram_schmidt_basis_extension
-
+from pymor.algorithms.basisextension import numpy_trivial_basis_extension, numpy_gram_schmidt_basis_extension
 core.getLogger('pymor.algorithms').setLevel('INFO')
 core.getLogger('pymor.discretizations').setLevel('INFO')
 

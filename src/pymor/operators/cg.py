@@ -8,8 +8,10 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
 
+from pymor.la import NumpyVectorArray
 from pymor.grids.referenceelements import triangle, line
 from pymor.operators.interfaces import LinearOperatorInterface
+from pymor.operators.basic import NumpyLinearOperator
 
 
 class L2ProductFunctionalP1(LinearOperatorInterface):
@@ -38,6 +40,8 @@ class L2ProductFunctionalP1(LinearOperatorInterface):
         The name of the functional.
     '''
 
+    type_source = type_range = NumpyVectorArray
+
     def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, name=None):
         assert grid.reference_element(0) in {line, triangle}
         assert function.dim_range == 1
@@ -51,7 +55,7 @@ class L2ProductFunctionalP1(LinearOperatorInterface):
         self.name = name
         self.build_parameter_type(inherits={'function': function, 'dirichlet_data': dirichlet_data})
 
-    def assemble(self, mu={}):
+    def _assemble(self, mu={}):
         g = self.grid
         bi = self.boundary_info
 
@@ -88,7 +92,7 @@ class L2ProductFunctionalP1(LinearOperatorInterface):
             else:
                 I[DI] = 0
 
-        return I.reshape((1, -1))
+        return NumpyLinearOperator(I.reshape((1, -1)))
 
 
 class L2ProductP1(LinearOperatorInterface):
@@ -107,6 +111,8 @@ class L2ProductP1(LinearOperatorInterface):
         The name of the product.
     '''
 
+    type_source = type_range = NumpyVectorArray
+
     def __init__(self, grid, name=None):
         assert grid.reference_element in (line, triangle)
         super(L2ProductP1, self).__init__()
@@ -115,7 +121,7 @@ class L2ProductP1(LinearOperatorInterface):
         self.grid = grid
         self.name = name
 
-    def assemble(self, mu={}):
+    def _assemble(self, mu={}):
         g = self.grid
 
         # our shape functions
@@ -146,7 +152,7 @@ class L2ProductP1(LinearOperatorInterface):
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
         A = csr_matrix(A).copy()   # See DiffusionOperatorP1 for why copy() is necessary
 
-        return A
+        return NumpyLinearOperator(A)
 
 
 class DiffusionOperatorP1(LinearOperatorInterface):
@@ -180,6 +186,8 @@ class DiffusionOperatorP1(LinearOperatorInterface):
         Name of the operator.
     '''
 
+    type_source = type_range = NumpyVectorArray
+
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
                  dirichlet_clear_columns=False, dirichlet_clear_diag=False, name=None):
         assert grid.reference_element(0) in {triangle, line}, ValueError('A simplicial grid is expected!')
@@ -195,7 +203,7 @@ class DiffusionOperatorP1(LinearOperatorInterface):
         if diffusion_function is not None:
             self.build_parameter_type(inherits={'diffusion': diffusion_function})
 
-    def assemble(self, mu={}):
+    def _assemble(self, mu={}):
         self.map_parameter(mu)
         g = self.grid
         bi = self.boundary_info
@@ -252,4 +260,4 @@ class DiffusionOperatorP1(LinearOperatorInterface):
         # from pymor.tools.memory import print_memory_usage
         # print_memory_usage('matrix: {0:5.1f}'.format((A.data.nbytes + A.indptr.nbytes + A.indices.nbytes)/1024**2))
 
-        return A
+        return NumpyLinearOperator(A)

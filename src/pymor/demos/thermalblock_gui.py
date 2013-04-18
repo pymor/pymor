@@ -194,7 +194,7 @@ class SimPanel(QtGui.QWidget):
         U = self.sim.solve(mu)
         print('Simtime {}'.format(time.time() - tic))
         tic = time.time()
-        self.solution.set(U)
+        self.solution.set(U.data.ravel())
         self.param_panel.enable(True)
         print('Drawtime {}'.format(time.time() - tic))
 

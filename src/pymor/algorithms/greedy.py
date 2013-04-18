@@ -10,10 +10,9 @@ from itertools import izip
 from pymor.core import getLogger
 from pymor.core.exceptions import ExtensionError
 from pymor.algorithms.basisextension import trivial_basis_extension
-from pymor.la import l2_norm
 
 
-def greedy(discretization, reductor, samples, initial_data=None, use_estimator=True, error_norm=l2_norm,
+def greedy(discretization, reductor, samples, initial_data=None, use_estimator=True, error_norm=None,
            extension_algorithm=trivial_basis_extension, target_error=None, max_extensions=None):
     '''Greedy extension algorithm.
 
@@ -39,7 +38,7 @@ def greedy(discretization, reductor, samples, initial_data=None, use_estimator=T
         the error.
     error_norm
         If use_estimator == Flase, use this function to calculate the norm of
-        the error.
+        the error. [Default l2_norm]
     extension_algorithm
         The extension algorithm to use to extend the current reduced basis with
         the maximum error snapshot.
@@ -86,8 +85,10 @@ def greedy(discretization, reductor, samples, initial_data=None, use_estimator=T
         logger.info('Estimating errors ...')
         if use_estimator:
             errors = [rd.estimate(rd.solve(mu), mu) for mu in samples]
-        else:
+        elif error_norm is not None:
             errors = [error_norm(discretization.solve(mu) - rc.reconstruct(rd.solve(mu))) for mu in samples]
+        else:
+            errors = [(discretization.solve(mu) - rc.reconstruct(rd.solve(mu))).l2_norm() for mu in samples]
 
         max_err, max_err_mu = max(((err, mu) for err, mu in izip(errors, samples)), key=lambda t: t[0])
         max_errs.append(max_err)

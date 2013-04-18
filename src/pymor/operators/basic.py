@@ -4,10 +4,15 @@
 
 from __future__ import absolute_import, division, print_function
 
-from .interfaces import OperatorInterface, LinearOperatorInterface
+from numbers import Number
+
+import numpy as np
+
+from pymor.la import NumpyVectorArray
+from pymor.operators.interfaces import OperatorInterface, LinearOperatorInterface
 
 
-class GenericOperator(OperatorInterface):
+class NumpyGenericOperator(OperatorInterface):
     '''Wraps an apply function as a proper discrete operator.
 
     Parameters
@@ -26,8 +31,10 @@ class GenericOperator(OperatorInterface):
         Name of the operator.
     '''
 
+    type_source = type_range = NumpyVectorArray
+
     def __init__(self, mapping, dim_source=1, dim_range=1, parameter_type=None, name=None):
-        super(GenericOperator, self).__init__()
+        super(NumpyGenericOperator, self).__init__()
         self.dim_source = dim_source
         self.dim_range = dim_range
         self.name = name
@@ -38,16 +45,18 @@ class GenericOperator(OperatorInterface):
         else:
             self._with_mu = False
 
-    def apply(self, U, mu={}):
+    def apply(self, U, ind=None, mu={}):
+        assert isinstance(U, NumpyVectorArray)
         mu = self.map_parameter(mu)
-        assert U.shape[-1] == self.dim_source
+        assert U.dim == self.dim_source
+        U_array = U._array[:U._len] if ind is None else U._array[ind]
         if self._with_mu:
-            return self._mapping(U, mu)
+            return NumpyVectorArray(self._mapping(U_array, mu), copy=False)
         else:
-            return self._mapping(U)
+            return NumpyVectorArray(self._mapping(U_array), copy=False)
 
 
-class GenericLinearOperator(LinearOperatorInterface):
+class NumpyLinearOperator(LinearOperatorInterface):
     '''Wraps a matrix as a proper linear discrete operator.
 
     The resulting operator will be parameter independent.
@@ -55,18 +64,49 @@ class GenericLinearOperator(LinearOperatorInterface):
     Parameters
     ----------
     matrix
-        The matrix which is to be wrapped.
+        The Matrix which is to be wrapped.
     name
         Name of the operator.
     '''
 
+    type_source = type_range = NumpyVectorArray
+
     def __init__(self, matrix, name=None):
-        super(GenericLinearOperator, self).__init__()
+        super(NumpyLinearOperator, self).__init__()
+        assert matrix.ndim <= 2
+        if matrix.ndim == 1:
+            matrix = np.reshape(matrix, (1, -1))
         self.dim_source = matrix.shape[1]
         self.dim_range = matrix.shape[0]
         self.name = name
         self._matrix = matrix
 
-    def assemble(self, mu={}):
+    def as_vector_array(self):
+        return NumpyVectorArray(self._matrix, copy=True)
+
+    def _assemble(self, mu={}):
         mu = self.parse_parameter(mu)
-        return self._matrix
+        return self
+
+    def assemble(self, mu={}, force=False):
+        mu = self.parse_parameter(mu)
+        return self
+
+    def apply(self, U, ind=None, mu={}):
+        assert isinstance(U, NumpyVectorArray)
+        mu = self.parse_parameter(mu)
+        U_array = U._array[:U._len] if ind is None else U._array[ind]
+        return NumpyVectorArray(self._matrix.dot(U_array.T).T, copy=False)
+
+    def __add__(self, other):
+        if isinstance(other, NumpyLinearOperator):
+            return NumpyLinearOperator(self._matrix + other._matrix)
+        elif isinstance(other, Number):
+            return NumpyLinearOperator(self._matrix + other)
+        else:
+            return NotImplemented
+
+    __radd__ = __add__
+
+    def __mul__(self, other):
+        return NumpyLinearOperator(self._matrix * other)
