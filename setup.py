@@ -10,7 +10,7 @@ use_setuptools()
 import sys
 import os
 import subprocess
-from setuptools import setup, find_packages
+from setuptools import find_packages
 from distutils.extension import Extension
 
 def write_version():
@@ -19,25 +19,32 @@ def write_version():
     with open(filename, 'w') as out:
         out.write('revstring = \'{}\''.format(revstring))
 
+
+def _setup(**kwargs):
+    '''we'll make use of Distribution's init downloading setup_requires packages right away here'''
+    from setuptools.dist import Distribution
+    dist = Distribution(kwargs)
+    
+    # now that we supposedly have at least numpy + cython installed, use them
+    import Cython.Distutils
+    cmdclass = {'build_ext': Cython.Distutils.build_ext}
+    ext_modules = [Extension("pymor.tools.relations", ["src/pymor/tools/relations.pyx"])]
+
+    from numpy.distutils.core import setup
+    kwargs['cmdclass'] = cmdclass
+    kwargs['ext_modules'] = ext_modules
+    setup(**kwargs)
+
+
 def setup_package():
     write_version()
 
     tests_requires = ['mock', 'nose-cov', 'nose', 'nosehtmloutput', 'nose-progressive', 'tissue>=0.8']
     install_requires = ['distribute', 'scipy', 'matplotlib', 'numpy', 'PyContracts',
                         'docopt', 'dogpile.cache' , 'numpydoc'] + tests_requires
-    
-    cmdclass = {}
-    ext_modules = []
-    try:
-        import Cython.Distutils
-        cmdclass['build_ext'] = Cython.Distutils.build_ext
-        ext_modules.append(Extension("pymor.tools.relations", ["src/pymor/tools/relations.pyx"]))
-    except ImportError:
-        sys.stderr.write('*' * 79 + '\n')
-        sys.stderr.write('Failed to import build_ext from cython, no extension modules will be build.\n')
-        sys.stderr.write('*' * 79 + '\n')
+    setup_requires = ['cython', 'numpy']
         
-    setup(
+    _setup(
         name='pyMor',
         version='0.1.0',
         author='pyMor developers',
@@ -50,6 +57,7 @@ def setup_package():
         url='http://pymor.org',
         description=' ' ,
         long_description=open('README.txt').read(),
+        setup_requires=setup_requires,
         tests_require=tests_requires,
         install_requires=install_requires,
         classifiers=['Development Status :: 2 - Pre-Alpha',
@@ -60,8 +68,6 @@ def setup_package():
             'Topic :: Scientific/Engineering :: Mathematics',
             'Topic :: Scientific/Engineering :: Visualization'],
         license = 'LICENSE.txt',
-        cmdclass=cmdclass,
-        ext_modules=ext_modules,
     )
 
 if __name__ == '__main__':
