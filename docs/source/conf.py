@@ -25,9 +25,10 @@ sys.path.insert(0, os.path.abspath('../../src'))
 from sphinx.apidoc import main as apidoc
 apidoc(argv=[sys.argv[0], '-o', 'generated/', '../../src/'])
 
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath',
               'sphinx.ext.coverage',
               'sphinx.ext.autosummary',
+              'sphinx.ext.viewcode',
               'numpydoc'
               ]
 
