@@ -19,7 +19,8 @@ def induced_norm(product):
     '''The induced norm of a scalar product.
 
     The norm of a vector (an array of vectors) U is calcuated by
-    calling
+    calling ::
+
         product.apply2(U, U, mu, pairwise=True)
 
     Parameters

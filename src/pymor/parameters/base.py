@@ -122,7 +122,7 @@ def parse_parameter_type(parameter_type):
 class Parametric(object):
     '''Mixin class for objects whose evaluations depend on a parameter.
 
-    Attributes
+    Parameters
     ----------
     parameter_type
         The parameter type of the parameters the object takes.
