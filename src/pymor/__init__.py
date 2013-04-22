@@ -21,9 +21,11 @@ try:
     import pymor.version
     revstring = pymor.version.revstring
 except ImportError:
+    import os.path
     import subprocess
     try:
-        revstring = subprocess.check_output(['git', 'describe', '--tags', '--candidates', '20', '--match', '*.*.*'])
+        revstring = subprocess.check_output(['git', 'describe', '--tags', '--candidates', '20', '--match', '*.*.*'],
+                                            cwd=os.path.dirname(__file__))
     except:
         revstring = NO_VERSIONSTRING
 finally:
