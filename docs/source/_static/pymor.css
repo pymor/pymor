@@ -1,0 +1,6 @@
+@import "default.css";
+
+.field-list th {
+  white-space: nowrap;
+  background-color: #F2F2F2;
+}
