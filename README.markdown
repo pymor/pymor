@@ -5,8 +5,8 @@ pyMor - Model order reduction in Python
 Requirements
 ------------
 
- * distribute, scipy, matplotlib, numpy, pycontracts, docopt 
- * optional: sympy, sphinx
+ * distribute, scipy, numpy, pycontracts, docopt, dogpile.cache
+ * optional: sympy, sphinx, matplotlib
 
 
 Debugging
