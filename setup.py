@@ -9,6 +9,8 @@ use_setuptools()
 
 import sys
 import os
+#not using this directly, but neeeds to be imported for nose not to fail
+import multiprocessing
 import subprocess
 from setuptools import find_packages
 from distutils.extension import Extension
@@ -97,17 +99,17 @@ def _setup(**kwargs):
     import os
     os.environ['MPLCONFIGDIR'] = "."
  
-    from numpy.distutils.core import setup
+    from setuptools import setup
     setup(**kwargs)
 
 
 def setup_package():
     write_version()
 
-    tests_requires = ['mock', 'nose-cov', 'nose', 'nosehtmloutput', 'nose-progressive', 'tissue>=0.8']
+    tests_require = ['mock', 'nose-cov', 'nose', 'nosehtmloutput', 'nose-progressive', 'tissue>=0.8']
     install_requires = ['distribute', 'scipy', 'numpy', 'PyContracts',
-                        'docopt', 'dogpile.cache' , 'numpydoc'] + tests_requires
-    setup_requires = ['cython', 'numpy']
+                        'docopt', 'dogpile.cache' , 'numpydoc'] + tests_require
+    setup_requires = ['cython', 'numpy', 'nose']
         
     _setup(
         name='pyMor',
@@ -123,7 +125,7 @@ def setup_package():
         description=' ' ,
         long_description=open('README.txt').read(),
         setup_requires=setup_requires,
-        tests_require=tests_requires,
+        tests_require=tests_require,
         install_requires=install_requires,
         classifiers=['Development Status :: 2 - Pre-Alpha',
             'License :: OSI Approved :: BSD License',
@@ -132,6 +134,8 @@ def setup_package():
             'Intended Audience :: Science/Research',
             'Topic :: Scientific/Engineering :: Mathematics',
             'Topic :: Scientific/Engineering :: Visualization'],
+        license='LICENSE.txt',
+        zip_safe=False,
         license = 'LICENSE.txt',
     )
 

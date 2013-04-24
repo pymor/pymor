@@ -4,7 +4,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-import matplotlib.pyplot as pl
 
 from pymor.analyticalproblems import EllipticProblem
 from pymor.domaindiscretizers import discretize_domain_default
@@ -88,6 +87,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
 
     F = Functional(grid, p.rhs, boundary_info, dirichlet_data=p.dirichlet_data)
 
+    import matplotlib.pyplot as pl
     if isinstance(grid, TriaGrid):
         def visualize(U):
             pl.tripcolor(grid.centers(2)[:, 0], grid.centers(2)[:, 1], grid.subentities(0, 2), U)
