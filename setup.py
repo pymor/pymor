@@ -136,7 +136,7 @@ def setup_package():
             'Topic :: Scientific/Engineering :: Visualization'],
         license='LICENSE.txt',
         zip_safe=False,
-        license = 'LICENSE.txt',
+        test_suite='pymortests.base.suite',
     )
 
 if __name__ == '__main__':

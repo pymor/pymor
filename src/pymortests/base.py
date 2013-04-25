@@ -106,19 +106,27 @@ def GridSubclassForImplemetorsOf(InterfaceType):
         return TestCase
     return decorate
 
-
-def runmodule(name):
-    root_logger = logger.getLogger('pymor')
+def _setup(name='pymor'):
+    root_logger = logger.getLogger(name)
     root_logger.setLevel(logging.ERROR)
     test_logger = logger.getLogger(name)
-    test_logger.setLevel(logging.DEBUG)
-    config_files = nose.config.all_config_files()
-    # config_files.append(os.path.join(os.path.dirname(pymor.__file__), '../../setup.cfg'))
+    test_logger.setLevel(logging.DEBUG)  # config_files.append(os.path.join(os.path.dirname(pymor.__file__), '../../setup.cfg'))
     # config defaults to no plugins -> specify defaults...
     manager = nose.plugins.manager.DefaultPluginManager()
+    config_files = nose.config.all_config_files()
     config = nose.config.Config(files=config_files, plugins=manager)
     config.exclude = []
     selector = PymorTestSelector(config=config)
     loader = nose.loader.defaultTestLoader(config=config, selector=selector)
     cli = [__file__, '-vv', '-d']
-    return nose.core.runmodule(name=name, config=config, testLoader=loader, argv=cli)
+    return cli, loader, config
+
+def suite():
+    cli, loader, cfg = _setup()
+    prog = nose.core.TestProgram(argv=cli, testLoader=loader, config=cfg, module='pymortests')
+    prog.createTests()
+    return prog.suite
+
+def runmodule(name):
+    cli, loader, cfg = _setup(name)
+    return nose.core.runmodule(name=name, config=cfg, testLoader=loader, argv=cli)
