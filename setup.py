@@ -17,16 +17,16 @@ from distutils.extension import Extension
 
 _orig_generate_a_pyrex_source = None
 
-tests_require = ['mock', 'nose-cov', 'nose', 'nosehtmloutput', 'nose-progressive', 'tissue>=0.8']
+tests_require = ['mock', 'nose-cov', 'nose', 'nosehtmloutput', 'nose-progressive', 'tissue']
 install_requires = ['distribute', 'scipy', 'numpy', 'PyContracts',
-                    'docopt', 'dogpile.cache' , 'numpydoc'] + tests_require
+                    'docopt', 'dogpile.cache' , 'numpydoc']
 setup_requires = ['cython', 'numpy', 'nose']
-install_suggests = ['matplotlib', 'sympy']
+install_suggests = ['matplotlib', 'sympy'] + tests_require
 
 class DependencyMissing(Exception):
 
     def __init__(self, names):
-        super(DependencyMissing, self).__init__('Try: "pip install {}"'.format(' '.join(names)))
+        super(DependencyMissing, self).__init__('Try: "for i in {} ; do pip install $i ; done"'.format(' '.join(names)))
 
 
 def _numpy_monkey():
@@ -162,7 +162,7 @@ def setup_package():
 
     missing = list(_missing(install_suggests))
     if len(missing):
-        print('\n{0}\nThere are some suggested packages missing, try\npip install {1}\n{0}'
+        print('\n{0}\nThere are some suggested packages missing, try\nfor i in {1} ; do pip install $i ; done\n{0}'
               .format('*' * 79, ' '.join(missing)))
 
 
