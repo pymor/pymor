@@ -3,19 +3,25 @@
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-#make sure we got distribute in place
+# make sure we got distribute in place
 from distribute_setup import use_setuptools
 use_setuptools()
 
 import sys
 import os
-#not using this directly, but neeeds to be imported for nose not to fail
+# not using this directly, but neeeds to be imported for nose not to fail
 import multiprocessing
 import subprocess
 from setuptools import find_packages
 from distutils.extension import Extension
 
 _orig_generate_a_pyrex_source = None
+
+class DependencyMissing(Exception):
+
+    def __init__(self, names):
+        super(DependencyMissing, self).__init__('Try: "pip install {}"'.format(' '.join(names)))
+
 
 def _numpy_monkey():
     '''Apparently we need to monkey numpy's distutils to be able to build
@@ -43,7 +49,7 @@ def _numpy_monkey():
         '''
         if not 'pymor' in source:
             return _orig_generate_a_pyrex_source(self, base, ext_name, source, extension)
-        
+
         if self.inplace:
             target_dir = dirname(base)
         else:
@@ -65,8 +71,6 @@ def _numpy_monkey():
                     % (cython_result.num_errors, source))
         return target_file
 
-
-    
     build_src.build_src.generate_a_pyrex_source = generate_a_pyrex_source
 
 def write_version():
@@ -80,7 +84,7 @@ def _setup(**kwargs):
     '''we'll make use of Distribution's __init__ downloading setup_requires packages right away here'''
     from setuptools.dist import Distribution
     dist = Distribution(kwargs)
-    
+
     # now that we supposedly have at least numpy + cython installed, use them
     # they're dropped in cwd as egg-dirs however. let's discover those first
     from pkg_resources import require
@@ -89,28 +93,43 @@ def _setup(**kwargs):
     _numpy_monkey()
     import Cython.Distutils
     cmdclass = {'build_ext': Cython.Distutils.build_ext}
-    #from numpy import get_include
-    ext_modules = [Extension("pymor.tools.relations", ["src/pymor/tools/relations.pyx"])]#, include_dirs=[get_include()])]
+    from numpy import get_include
+    ext_modules = [Extension("pymor.tools.relations", ["src/pymor/tools/relations.pyx"], include_dirs=[get_include()])]
     kwargs['cmdclass'] = cmdclass
     kwargs['ext_modules'] = ext_modules
- 
-    # lastly we'll need to tweak matplotlibs config dir or else 
+
+    # lastly we'll need to tweak matplotlibs config dir or else
     # installing it from setup will result in a SandboxViolation
     import os
     os.environ['MPLCONFIGDIR'] = "."
- 
-    from setuptools import setup
-    setup(**kwargs)
+
+    from numpy.distutils.core import setup
+    return setup(**kwargs)
+
+def check_pre_require():
+    '''these are packages that need to be present before we start out setup, because
+    distribute/distutil/numpy.distutils makes automatic installation too unreliable
+    '''
+    def _missing():
+        for name in ['numpy', 'scipy']:
+            try:
+                __import__(name)
+            except ImportError:
+                yield name
+    missing = list(_missing())
+    if len(missing):
+        raise DependencyMissing(missing)
 
 
 def setup_package():
+    check_pre_require()
     write_version()
 
     tests_require = ['mock', 'nose-cov', 'nose', 'nosehtmloutput', 'nose-progressive', 'tissue>=0.8']
     install_requires = ['distribute', 'scipy', 'numpy', 'PyContracts',
                         'docopt', 'dogpile.cache' , 'numpydoc'] + tests_require
     setup_requires = ['cython', 'numpy', 'nose']
-        
+
     _setup(
         name='pyMor',
         version='0.1.0',
@@ -127,7 +146,7 @@ def setup_package():
         setup_requires=setup_requires,
         tests_require=tests_require,
         install_requires=install_requires,
-        classifiers=['Development Status :: 2 - Pre-Alpha',
+        classifiers=['Development Status :: 3 - Alpha',
             'License :: OSI Approved :: BSD License',
             'Programming Language :: Python :: 2.7',
             'Programming Language :: Python :: 3',
