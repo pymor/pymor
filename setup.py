@@ -17,6 +17,12 @@ from distutils.extension import Extension
 
 _orig_generate_a_pyrex_source = None
 
+tests_require = ['mock', 'nose-cov', 'nose', 'nosehtmloutput', 'nose-progressive', 'tissue>=0.8']
+install_requires = ['distribute', 'scipy', 'numpy', 'PyContracts',
+                    'docopt', 'dogpile.cache' , 'numpydoc'] + tests_require
+setup_requires = ['cython', 'numpy', 'nose']
+install_suggests = ['matplotlib', 'sympy']
+
 class DependencyMissing(Exception):
 
     def __init__(self, names):
@@ -106,17 +112,18 @@ def _setup(**kwargs):
     from numpy.distutils.core import setup
     return setup(**kwargs)
 
+def _missing(names):
+    for name in names:
+        try:
+            __import__(name)
+        except ImportError:
+            yield name
+
 def check_pre_require():
     '''these are packages that need to be present before we start out setup, because
     distribute/distutil/numpy.distutils makes automatic installation too unreliable
     '''
-    def _missing():
-        for name in ['numpy', 'scipy']:
-            try:
-                __import__(name)
-            except ImportError:
-                yield name
-    missing = list(_missing())
+    missing = list(_missing(['numpy', 'scipy']))
     if len(missing):
         raise DependencyMissing(missing)
 
@@ -124,11 +131,6 @@ def check_pre_require():
 def setup_package():
     check_pre_require()
     write_version()
-
-    tests_require = ['mock', 'nose-cov', 'nose', 'nosehtmloutput', 'nose-progressive', 'tissue>=0.8']
-    install_requires = ['distribute', 'scipy', 'numpy', 'PyContracts',
-                        'docopt', 'dogpile.cache' , 'numpydoc'] + tests_require
-    setup_requires = ['cython', 'numpy', 'nose']
 
     _setup(
         name='pyMor',
@@ -158,5 +160,12 @@ def setup_package():
         test_suite='pymortests.base.suite',
     )
 
+    missing = list(_missing(install_suggests))
+    if len(missing):
+        print('\n{0}\nThere are some suggested packages missing, try\npip install {1}\n{0}'
+              .format('*' * 79, ' '.join(missing)))
+
+
 if __name__ == '__main__':
     setup_package()
+
