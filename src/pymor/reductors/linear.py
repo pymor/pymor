@@ -29,7 +29,7 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
         The discretization which is to be reduced.
     RB
         The reduced basis (i.e. an array of vectors) on which to project.
-    product
+    error_product
         Scalar product corresponding to the norm of the error. Used to calculate
         Riesz respresentatives of the components of the residual. If `None`, the
         standard L2-product is used.
