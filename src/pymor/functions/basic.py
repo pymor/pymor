@@ -49,7 +49,7 @@ class ConstantFunction(FunctionInterface):
 
 
 class GenericFunction(FunctionInterface):
-    '''A wrapper making an arbitrary python function a `Funtion`
+    '''A wrapper making an arbitrary python function a `Function`
 
     Parameters
     ----------
