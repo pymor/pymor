@@ -55,7 +55,7 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
     '''
 
     def __init__(self, parameter_type, mapping, name=None):
-        super(ProjectionParameterFunctional, self).__init__()
+        super(ParameterFunctionalInterface, self).__init__()
         self.name = name
         self._mapping = mapping
         self.build_parameter_type(parameter_type, local_global=True)
