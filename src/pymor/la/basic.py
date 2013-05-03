@@ -26,12 +26,12 @@ def induced_norm(product):
     Returns
     -------
     norm
-        A function `norm(U, mu={})` taking a vector or an array of
+        A function `norm(U, mu=None)` taking a vector or an array of
         vectors as input together with the parameter `mu` which is
         passed to the product.
     '''
 
-    def norm(U, mu={}):
+    def norm(U, mu=None):
         assert len(U) == 1
         norm_squared = product.apply2(U, U, mu=mu, pairwise=True)
         if norm_squared < 0:

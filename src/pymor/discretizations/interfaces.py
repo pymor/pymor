@@ -41,12 +41,12 @@ class DiscretizationInterface(BasicInterface, Parametric, Cachable, Named):
         return c
 
     @abstractmethod
-    def _solve(self, mu={}):
+    def _solve(self, mu=None):
         '''Perform the actual solving.'''
         pass
 
     @cached
-    def solve(self, mu={}):
+    def solve(self, mu=None):
         '''Solve for a parameter `mu`.
 
         The result is cached by default.

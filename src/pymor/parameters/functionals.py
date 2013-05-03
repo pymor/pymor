@@ -33,7 +33,7 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
             assert coordinates is not None and coordinates < self.parameter_type[component]
         self.coordinates = coordinates
 
-    def evaluate(self, mu={}):
+    def evaluate(self, mu=None):
         mu = self.map_parameter(mu)
         if self.coordinates is None:
             return mu[self.component]
@@ -60,6 +60,6 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
         self._mapping = mapping
         self.build_parameter_type(parameter_type, local_global=True)
 
-    def evaluate(self, mu={}):
+    def evaluate(self, mu=None):
         mu = self.map_parameter(mu)
         return self._mapping(mu)

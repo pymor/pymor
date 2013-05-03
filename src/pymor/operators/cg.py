@@ -55,7 +55,7 @@ class L2ProductFunctionalP1(LinearOperatorInterface):
         self.name = name
         self.build_parameter_type(inherits={'function': function, 'dirichlet_data': dirichlet_data})
 
-    def _assemble(self, mu={}):
+    def _assemble(self, mu=None):
         g = self.grid
         bi = self.boundary_info
 
@@ -121,7 +121,8 @@ class L2ProductP1(LinearOperatorInterface):
         self.grid = grid
         self.name = name
 
-    def _assemble(self, mu={}):
+    def _assemble(self, mu=None):
+        assert mu is None
         g = self.grid
 
         # our shape functions
@@ -203,8 +204,8 @@ class DiffusionOperatorP1(LinearOperatorInterface):
         if diffusion_function is not None:
             self.build_parameter_type(inherits={'diffusion': diffusion_function})
 
-    def _assemble(self, mu={}):
-        self.map_parameter(mu)
+    def _assemble(self, mu=None):
+        mu = self.parse_parameter(mu)
         g = self.grid
         bi = self.boundary_info
 

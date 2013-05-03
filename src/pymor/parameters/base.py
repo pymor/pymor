@@ -4,13 +4,83 @@
 
 from __future__ import absolute_import, division, print_function
 
-from collections import OrderedDict
 import numpy as np
 
 from pymor.tools import float_cmp_all
 
 
-class Parameter(OrderedDict):
+class ParameterType(object):
+
+    def __init__(self, *args, **kwargs):
+        if len(args) > 1:
+            raise ValueError('ParameterType accepts at most one positional argument')
+        self._dict = {}
+        self._keys = []
+        self.update(*args, **kwargs)
+
+    def __setitem__(self, key, value):
+        if not key in self._dict:
+            self._keys.append(key)
+        self._dict[key] = value
+
+    def __getitem__(self, key):
+        return self._dict[key]
+
+    def __eq__(self, other):
+        if other.__class__ != ParameterType:
+            return False
+        else:
+            return self._dict == other._dict
+
+    def __nonzero__(self):
+        return bool(self._keys)
+
+    def __iter__(self):
+        return iter(self._keys)
+
+    def update(self, *args, **kwargs):
+        if len(args) > 1:
+            raise ValueError('update accepts at most one positional argument')
+        if len(args) > 0:
+            if hasattr(args[0], 'keys'):
+                for k in args[0]:
+                    self[k] = args[0][k]
+            else:
+                for k, v in args[0]:
+                    self[k] = v
+        for k in kwargs:
+            self[k] = kwargs[k]
+
+    def copy(self):
+        return ParameterType(self)
+
+    def keys(self):
+        return iter(self._keys)
+
+    def values(self):
+        for k in self._keys:
+            yield self._dict[k]
+
+    def iteritems(self):
+        for k in self._keys:
+            yield (k, self._dict[k])
+
+    def __str__(self):
+        s = 'ParameterType(('
+        for k, v in self.iteritems():
+            s += '({}, {}),'.format(k, v)
+        s += '))'
+        return s
+
+    def __repr__(self):
+        s = 'ParameterType(('
+        for k, v in self.iteritems():
+            s += '({}, {}),'.format(repr(k), repr(v))
+        s += '))'
+        return s
+
+
+class Parameter(dict):
     '''Class representing a parameter.
 
     A parameter is simply an ordered dict of numpy arrays.
@@ -18,6 +88,10 @@ class Parameter(OrderedDict):
     also the arrays are copied. Moreover an allclose() method
     is provided to compare parameters for equality.
     '''
+
+    def __init__(self, parameter_type, *args, **kwargs):
+        super(Parameter, self).__init__(*args, **kwargs)
+        self.parameter_type = parameter_type
 
     def allclose(self, mu):
         if set(self.keys()) != set(mu.keys()):
@@ -28,7 +102,7 @@ class Parameter(OrderedDict):
         return True
 
     def copy(self):
-        c = Parameter()
+        c = Parameter(self.parameter_type)
         for k, v in self.iteritems():
             c[k] = v.copy()
         return c
@@ -44,7 +118,7 @@ class Parameter(OrderedDict):
         return s
 
 
-def parse_parameter(mu, parameter_type={}):
+def parse_parameter(mu, parameter_type=None):
     '''Takes a parameter specification `mu` and makes it a `Parameter` according to `parameter_type`.
 
     Depending on the `parameter_type`, `mu` can be given as a `Parameter`, dict, tuple,
@@ -66,6 +140,13 @@ def parse_parameter(mu, parameter_type={}):
     ValueError
         Is raised if `mu` cannot be interpreted as a `Paramter` of `parameter_type`.
     '''
+    if not parameter_type:
+        assert mu is None
+        return None
+
+    if isinstance(mu, Parameter):
+        assert mu.parameter_type == parameter_type
+        return mu
 
     if not isinstance(mu, dict):
         if isinstance(mu, (tuple, list)):
@@ -75,11 +156,11 @@ def parse_parameter(mu, parameter_type={}):
             mu = (mu,)
         if len(mu) != len(parameter_type):
             raise ValueError('Parameter length does not match.')
-        mu = Parameter(zip(parameter_type.keys(), mu))
+        mu = Parameter(parameter_type, zip(parameter_type.keys(), mu))
     elif set(mu.keys()) != set(parameter_type.keys()):
         raise ValueError('Components do not match')
     else:
-        mu = Parameter((k, mu[k]) for k in parameter_type)
+        mu = Parameter(parameter_type, ((k, mu[k]) for k in parameter_type))
     for k, v in mu.iteritems():
         if not isinstance(v, np.ndarray):
             mu[k] = np.array(v)
@@ -107,9 +188,11 @@ def parse_parameter_type(parameter_type):
     '''
 
     from pymor.parameters.interfaces import ParameterSpaceInterface
+    if parameter_type is None:
+        return None
     if isinstance(parameter_type, ParameterSpaceInterface):
-        return OrderedDict(parameter_type.parameter_type)
-    parameter_type = OrderedDict(parameter_type)
+        return ParameterType(parameter_type.parameter_type)
+    parameter_type = ParameterType(parameter_type)
     for k, v in parameter_type.iteritems():
         if not isinstance(v, tuple):
             if v == 0 or v == 1:
@@ -138,6 +221,7 @@ class Parametric(object):
         Is True if the object has a nontrivial parameter type.
     '''
 
+    parameter_type = None
     _parameter_space = None
 
     @property
@@ -151,17 +235,18 @@ class Parametric(object):
 
     @property
     def parametric(self):
-        return len(self.parameter_type) > 0
-
-    def __init__(self):
-        self.parameter_type = OrderedDict()
-        self.global_parameter_type = OrderedDict()
-        self.local_parameter_type = OrderedDict()
-        self.parameter_maps = {'self': {}}
-        self.parameter_user_map = {}
+        return self.parameter_type is not None
 
     def parse_parameter(self, mu):
-        return parse_parameter(mu, self.parameter_type)
+        if not self.parameter_type:
+            assert mu is None
+            return None
+        if (mu.__class__ == Parameter and mu.parameter_type == self.parameter_type or
+                self._parameter_space is not None and mu.parameter_type == self._parameter_space.parameter_type):
+            return mu
+        else:
+            import ipdb; ipdb.set_trace()
+            return parse_parameter(mu, self.parameter_type)
 
     def map_parameter(self, mu, target='self', component=None):
         '''Maps a parameter to the local parameter type or to the parameter types of the objects from which
@@ -183,20 +268,40 @@ class Parametric(object):
         -------
         The mapped `Parameter`.
         '''
-        mu = self.parse_parameter(mu)
-        mu_global = Parameter()
-        for k in self.global_parameter_type:
-            mu_global[k] = mu[self.parameter_user_map[k]] if k in self.parameter_user_map else mu[k]
-        if component is None:
-            parameter_map = self.parameter_maps[target]
+        if self.parameter_type:
+            if component is None:
+                parameter_map = self.parameter_maps[target]
+                parameter_type = self.parameter_types[target]
+                if parameter_type is None:
+                    return None
+                parameter_name_map = self.parameter_name_map
+                if (mu.__class__ != Parameter
+                    or not (mu.parameter_type == self.parameter_type or
+                            self._parameter_space is not None
+                            and mu.parameter_type == self._parameter_space.parameter_type)):
+                    import ipdb; ipdb.set_trace()
+                    mu = parse_parameter(mu, self.parameter_type)
+                mu_mapped = {k: mu[parameter_name_map[v]] for k, (v, m) in parameter_map.iteritems()}
+            else:
+                parameter_map = self.parameter_maps[target][component]
+                parameter_type = self.parameter_types[target][component]
+                if parameter_type is None:
+                    return None
+                parameter_name_map = self.parameter_name_map
+                if (mu.__class__ != Parameter
+                    or not (mu.parameter_type == self.parameter_type or
+                            self._parameter_space is not None
+                            and mu.parameter_type == self._parameter_space.parameter_type)):
+                    import ipdb; ipdb.set_trace()
+                    mu = parse_parameter(mu, self.parameter_type)
+                mu_mapped = {k: mu[parameter_name_map[v]][component, ...] if m else mu[parameter_name_map[v]]
+                             for k, (v, m) in parameter_map.iteritems()}
+            return Parameter(parameter_type, mu_mapped)
         else:
-            parameter_map = self.parameter_maps[target][component]
-        mu_mapped = Parameter()
-        for k, (v, m) in parameter_map.iteritems():
-            mu_mapped[k] = mu_global[v][component, ...] if m else mu_global[v]
-        return mu_mapped
+            assert mu is None
+            return None
 
-    def build_parameter_type(self, local_type=OrderedDict(), inherits=OrderedDict(), local_global=False):
+    def build_parameter_type(self, local_type=None, inherits=None, local_global=False):
         '''Builds the parameter type of the object. To be called by __init__.
 
         Parameters
@@ -221,35 +326,61 @@ class Parametric(object):
         local_type = parse_parameter_type(local_type)
         self.local_parameter_type = local_type
         parameter_maps = {}
-        if local_global:
+        parameter_types = {}
+        if not local_type:
+            global_type = ParameterType()
+            parameter_maps['self'] = None
+            parameter_types['self'] = None
+        elif local_global:
             global_type = local_type.copy()
-            parameter_maps['self'] = OrderedDict((k, (k, False)) for k in local_type.keys())
+            parameter_maps['self'] = {k: (k, False) for k in local_type.keys()}
+            parameter_types['self'] = local_type
         else:
-            parameter_map = OrderedDict((k, ('.{}'.format(k), False)) for k in local_type.keys())
-            global_type = OrderedDict(('.{}'.format(k), v) for k, v in local_type.iteritems())
+            parameter_map = {k: ('.{}'.format(k), False) for k in local_type.keys()}
+            global_type = ParameterType(('.{}'.format(k), v) for k, v in local_type.iteritems())
             parameter_maps['self'] = parameter_map
+            parameter_types['self'] = local_type
 
-        for n in inherits:
-            if inherits[n] is None:
-                parameter_maps[n] = OrderedDict()
-                continue
-            if isinstance(inherits[n], tuple) or isinstance(inherits[n], list):
-                merged_param_map = OrderedDict()
-                for k, v in inherits[n][0].parameter_type.iteritems():
-                    if (k.startswith('.') and
-                            all(v == inherits[n][i].parameter_type[k] for i in xrange(1, len(inherits[n])))):
-                        global_name = '.{}{}'.format(n, k)
-                        global_type[global_name] = v
-                        merged_param_map[k] = (global_name, True)
-                parameter_map_list = list()
-                for i in xrange(len(inherits[n])):
-                    pt = inherits[n][i].parameter_type
-                    parameter_map = merged_param_map.copy()
-                    for k, v in pt.iteritems():
-                        if k in merged_param_map:
-                            next
+        if inherits:
+            for n in inherits:
+                if isinstance(inherits[n], tuple) or isinstance(inherits[n], list):
+                    merged_param_map = {}
+                    if all(op.parameter_type for op in inherits[n]):
+                        for k, v in inherits[n][0].parameter_type.iteritems():
+                            if (k.startswith('.')
+                                    and all(k in op.parameter_type for op in inherits[n])
+                                    and all(op.parameter_type[k] == v for o in inherits[n])):
+                                global_name = '.{}{}'.format(n, k)
+                                global_type[global_name] = v
+                                merged_param_map[k] = (global_name, True)
+                    parameter_map_list = list()
+                    parameter_type_list = list()
+                    for i, op in enumerate(inherits[n]):
+                        if op.parameter_type:
+                            parameter_map = merged_param_map.copy()
+                            for k, v in op.parameter_type.iteritems():
+                                if k in merged_param_map:
+                                    continue
+                                if k.startswith('.'):
+                                    global_name = '.{}_{}{}'.format(n, i, k)
+                                    global_type[global_name] = v
+                                    parameter_map[k] = (global_name, False)
+                                else:
+                                    if k in global_type and global_type[k] != v:
+                                        raise ValueError('Dimensions of global name {} do not match'.format(k))
+                                    global_type[k] = v
+                                    parameter_map[k] = (k, False)
+                            parameter_map_list.append(parameter_map)
+                        else:
+                            parameter_map_list.append(None)
+                        parameter_type_list.append(op.parameter_type)
+                    parameter_maps[n] = parameter_map_list
+                    parameter_types[n] = parameter_type_list
+                elif inherits[n].parameter_type:
+                    parameter_map = {}
+                    for k, v in inherits[n].parameter_type.iteritems():
                         if k.startswith('.'):
-                            global_name = '.{}_{}{}'.format(n, i, k)
+                            global_name = '.{}{}'.format(n, k)
                             global_type[global_name] = v
                             parameter_map[k] = (global_name, False)
                         else:
@@ -257,26 +388,18 @@ class Parametric(object):
                                 raise ValueError('Component dimensions of global name {} do not match'.format(k))
                             global_type[k] = v
                             parameter_map[k] = (k, False)
-                    parameter_map_list.append(parameter_map)
-                parameter_maps[n] = parameter_map_list
-            else:
-                parameter_map = OrderedDict()
-                for k, v in inherits[n].parameter_type.iteritems():
-                    if k.startswith('.'):
-                        global_name = '.{}{}'.format(n, k)
-                        global_type[global_name] = v
-                        parameter_map[k] = (global_name, False)
-                    else:
-                        if k in global_type and global_type[k] != v:
-                            raise ValueError('Component dimensions of global name {} do not match'.format(k))
-                        global_type[k] = v
-                        parameter_map[k] = (k, False)
-                parameter_maps[n] = parameter_map
+                    parameter_maps[n] = parameter_map
+                    parameter_types[n] = inherits[n].parameter_type
+                else:
+                    parameter_maps[n] = None
+                    parameter_types[n] = None
 
-        self.global_parameter_type = global_type
-        self.parameter_type = global_type
+        self.global_parameter_type = global_type or None
+        self.parameter_type = global_type or None
+        self.parameter_types = parameter_types
         self.parameter_maps = parameter_maps
         self.parameter_user_map = {}
+        self.parameter_name_map = {k: k for k in global_type}
 
     def rename_parameter(self, name_map):
         '''Rename a parameter component of the object's parameter type.
@@ -289,6 +412,7 @@ class Parametric(object):
         name_map
             A dict of the form `{'.oldname1': 'newname1', ...}` defining the name mapping.
         '''
+        assert self.parametric
         for k, v in name_map.iteritems():
             if not k.startswith('.'):
                 raise ValueError('Can only rename parameters with local name (starting with ".")')
@@ -297,7 +421,9 @@ class Parametric(object):
             if k in self.parameter_user_map:
                 raise ValueError('{} has already been renamed to {}'.format(k, self.parameter_user_map[k]))
             self.parameter_user_map[k] = v
-        parameter_type = OrderedDict()
+        self.parameter_name_map = {k: self.parameter_user_map[k] if k in self.parameter_user_map else k
+                                   for k in self.global_parameter_type}
+        parameter_type = ParameterType()
         for k, v in self.global_parameter_type.iteritems():
             if k in self.parameter_user_map:
                 k = self.parameter_user_map[k]
@@ -309,10 +435,15 @@ class Parametric(object):
     def parameter_info(self):
         '''Return an info string about the object's parameter type and how it is built.'''
 
+        if not self.parametric:
+            return 'The parameter_type is None\n'
+
         msg = 'The parameter_type is: {}\n\n'.format(self.parameter_type)
         msg += 'We have the following parameter-maps:\n\n'
         for n, mp in self.parameter_maps.iteritems():
-            if not isinstance(mp, list):
+            if not mp:
+                msg += '{}: None'.format(n)
+            elif not isinstance(mp, list):
                 pad = ' ' * (len(n) + 2)
                 msg += '{}: '.format(n)
                 for k, (v, f) in mp.iteritems():
@@ -325,12 +456,15 @@ class Parametric(object):
                     tag = '{}[{}]: '.format(n, i)
                     pad = ' ' * len(tag)
                     msg += tag
-                    for k, (v, f) in m.iteritems():
-                        msg += '{} <- {}'.format(k, v)
-                        if f:
-                            msg += '[{}, ...]'.format(i)
-                        if v in self.parameter_user_map:
-                            msg += ' <- {}'.format(self.parameter_user_map[k])
-                        msg += '\n' + pad
+                    if not m:
+                        msg += 'None\n'
+                    else:
+                        for k, (v, f) in m.iteritems():
+                            msg += '{} <- {}'.format(k, v)
+                            if f:
+                                msg += '[{}, ...]'.format(i)
+                            if v in self.parameter_user_map:
+                                msg += ' <- {}'.format(self.parameter_user_map[k])
+                            msg += '\n' + pad
             msg += '\n'
         return msg

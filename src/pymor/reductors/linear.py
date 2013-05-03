@@ -126,7 +126,7 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
     rd.estimator_matrix = NumpyLinearOperator(estimator_matrix)
 
     # this is our estimator
-    def estimate(self, U, mu={}):
+    def estimate(self, U, mu=None):
         assert len(U) == 1, 'Can estimate only one solution vector'
         if not self.rhs.parametric or self.rhs.operator_affine_part is not None:
             CRA = np.ones(1)
@@ -267,7 +267,7 @@ def numpy_reduce_stationary_affine_linear(discretization, RB, error_product=None
     rd.estimator_matrix = NumpyLinearOperator(estimator_matrix)
 
     # this is our estimator
-    def estimate(self, U, mu={}):
+    def estimate(self, U, mu=None):
         assert len(U) == 1, 'Can estimate only one solution vector'
         if not self.rhs.parametric or self.rhs.operator_affine_part is not None:
             CRA = np.ones(1)

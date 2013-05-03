@@ -66,7 +66,7 @@ class ProjectedOperator(OperatorInterface):
         self.range_basis = range_basis
         self.product = product
 
-    def apply(self, U, ind=None, mu={}):
+    def apply(self, U, ind=None, mu=None):
         U_array = U._array if ind is None else U._array[ind]
         V = self.source_basis.lincomb(U_array)
         if self.product is None:
@@ -117,7 +117,7 @@ class ProjectedLinearOperator(LinearOperatorInterface):
         self.range_basis = range_basis
         self.product = product
 
-    def _assemble(self, mu={}):
+    def _assemble(self, mu=None):
         if self.product is None:
             return NumpyLinearOperator(self.operator.apply2(self.range_basis, self.source_basis,
                                                             mu=self.map_parameter(mu), pairwise=False),
@@ -205,7 +205,7 @@ class LincombOperator(OperatorInterface):
         self.type_range = operators[0].type_range
         self.name = name or '+'.join(op.name for op in operators)
 
-    def apply(self, U, ind=None, mu={}):
+    def apply(self, U, ind=None, mu=None):
         return sum(op.apply(U, ind=ind, mu=self.map_parameter(mu, 'operators', i)) * self.factors[i]
                    for i, op in enumerate(self.operators))
 
@@ -241,7 +241,7 @@ class LinearLincombOperator(LinearOperatorInterface):
         self.type_range = operators[0].type_range
         self.name = name or '+'.join(op.name for op in operators)
 
-    def _assemble(self, mu={}):
+    def _assemble(self, mu=None):
         M = self.operators[0].assemble(self.map_parameter(mu, 'operators', 0))
         for i, op in enumerate(self.operators[1:]):
             M = M + op.assemble(self.map_parameter(mu, 'operators', i + 1)) * self.factors[i]

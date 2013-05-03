@@ -45,14 +45,15 @@ class NumpyGenericOperator(OperatorInterface):
         else:
             self._with_mu = False
 
-    def apply(self, U, ind=None, mu={}):
+    def apply(self, U, ind=None, mu=None):
         assert isinstance(U, NumpyVectorArray)
-        mu = self.map_parameter(mu)
         assert U.dim == self.dim_source
         U_array = U._array[:U._len] if ind is None else U._array[ind]
         if self._with_mu:
+            mu = self.map_parameter(mu)
             return NumpyVectorArray(self._mapping(U_array, mu), copy=False)
         else:
+            assert mu is None
             return NumpyVectorArray(self._mapping(U_array), copy=False)
 
 
@@ -84,17 +85,17 @@ class NumpyLinearOperator(LinearOperatorInterface):
     def as_vector_array(self):
         return NumpyVectorArray(self._matrix, copy=True)
 
-    def _assemble(self, mu={}):
+    def _assemble(self, mu=None):
         mu = self.parse_parameter(mu)
         return self
 
-    def assemble(self, mu={}, force=False):
-        mu = self.parse_parameter(mu)
+    def assemble(self, mu=None, force=False):
+        assert mu is None
         return self
 
-    def apply(self, U, ind=None, mu={}):
+    def apply(self, U, ind=None, mu=None):
         assert isinstance(U, NumpyVectorArray)
-        mu = self.parse_parameter(mu)
+        assert mu is None
         U_array = U._array[:U._len] if ind is None else U._array[ind]
         return NumpyVectorArray(self._matrix.dot(U_array.T).T, copy=False)
 

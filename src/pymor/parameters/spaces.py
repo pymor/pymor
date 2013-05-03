@@ -63,14 +63,16 @@ class CubicParameterSpace(ParameterSpaceInterface):
         iters = tuple(product(ls, repeat=max(1, np.zeros(sps).size))
                       for ls, sps in izip(linspaces, self.parameter_type.values()))
         for i in product(*iters):
-            yield Parameter((k, np.array(v).reshape(shp))
-                            for k, v, shp in izip(self.parameter_type, i, self.parameter_type.values()))
+            yield Parameter(self.parameter_type,
+                            ((k, np.array(v).reshape(shp))
+                             for k, v, shp in izip(self.parameter_type, i, self.parameter_type.values())))
 
     def sample_randomly(self, count=None):
         '''Iterator sampling random parameter values from the space.'''
         c = 0
         while count is None or c < count:
-            yield Parameter((k, np.random.uniform(r[0], r[1], shp))
-                            for k, r, shp in izip(self.parameter_type, self.ranges.values(),
-                                                  self.parameter_type.values()))
+            yield Parameter(self.parameter_type,
+                            ((k, np.random.uniform(r[0], r[1], shp))
+                             for k, r, shp in izip(self.parameter_type, self.ranges.values(),
+                                                    self.parameter_type.values())))
             c += 1

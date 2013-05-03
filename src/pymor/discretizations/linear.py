@@ -94,7 +94,7 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         self.solution_dim = operator.dim_range
         self.name = name
 
-    def _solve(self, mu={}):
+    def _solve(self, mu=None):
         mu = self.parse_parameter(mu)
         A = self.operator.assemble(self.map_parameter(mu, 'operator'))
 

@@ -42,7 +42,7 @@ class OperatorInterface(BasicInterface, Parametric, Named):
         Parametric.__init__(self)
 
     @abstractmethod
-    def apply(self, U, ind=None, mu={}):
+    def apply(self, U, ind=None, mu=None):
         '''Evaluate L(U, mu).
 
         Parameters
@@ -60,7 +60,7 @@ class OperatorInterface(BasicInterface, Parametric, Named):
         '''
         pass
 
-    def apply2(self, V, U, U_ind=None, V_ind=None, mu={}, product=None, pairwise=True):
+    def apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None, pairwise=True):
         ''' Treat the operator as a 2-form by calculating (V, A(U)).
 
         If ( , ) is the euclidean scalar product and A is given by
@@ -134,23 +134,31 @@ class LinearOperatorInterface(OperatorInterface):
         raise NotImplementedError
 
     @abstractmethod
-    def _assemble(self, mu={}):
+    def _assemble(self, mu=None):
         pass
 
-    def assemble(self, mu={}, force=False):
+    def assemble(self, mu=None, force=False):
         '''Assembles the matrix of the operator for given parameter mu.
 
         Returns an assembled parameter independent linear operator.
         '''
-        mu = self.parse_parameter(mu)
-        if not force and self._last_mu is not None and self._last_mu.allclose(mu):
-            return self._last_mat
+        if self.parameter_type is None:
+            assert mu is None
+            if force or not self._last_mat:
+                self._last_mat = self._assemble(mu)
+                return self._last_mat
+            else:
+                return self._last_mat
         else:
-            self._last_mu = mu.copy()  # TODO: add some kind of log message here
-            self._last_mat = self._assemble(mu)
-            return self._last_mat
+            mu = self.parse_parameter(mu)
+            if not force and self._last_mu is not None and self._last_mu.allclose(mu):
+                return self._last_mat
+            else:
+                self._last_mu = mu.copy()  # TODO: add some kind of log message here
+                self._last_mat = self._assemble(mu)
+                return self._last_mat
 
-    def apply(self, U, ind=None, mu={}):
+    def apply(self, U, ind=None, mu=None):
         return self.assemble(mu).apply(U, ind=ind)
 
     def __add__(self, other):
