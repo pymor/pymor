@@ -268,38 +268,38 @@ class Parametric(object):
         -------
         The mapped `Parameter`.
         '''
-        if self.parameter_type:
-            if component is None:
-                parameter_map = self.parameter_maps[target]
-                parameter_type = self.parameter_types[target]
-                if parameter_type is None:
-                    return None
-                parameter_name_map = self.parameter_name_map
-                if (mu.__class__ != Parameter
-                    or not (mu.parameter_type == self.parameter_type or
-                            self._parameter_space is not None
-                            and mu.parameter_type == self._parameter_space.parameter_type)):
-                    import ipdb; ipdb.set_trace()
-                    mu = parse_parameter(mu, self.parameter_type)
-                mu_mapped = {k: mu[parameter_name_map[v]] for k, (v, m) in parameter_map.iteritems()}
-            else:
-                parameter_map = self.parameter_maps[target][component]
-                parameter_type = self.parameter_types[target][component]
-                if parameter_type is None:
-                    return None
-                parameter_name_map = self.parameter_name_map
-                if (mu.__class__ != Parameter
-                    or not (mu.parameter_type == self.parameter_type or
-                            self._parameter_space is not None
-                            and mu.parameter_type == self._parameter_space.parameter_type)):
-                    import ipdb; ipdb.set_trace()
-                    mu = parse_parameter(mu, self.parameter_type)
-                mu_mapped = {k: mu[parameter_name_map[v]][component, ...] if m else mu[parameter_name_map[v]]
-                             for k, (v, m) in parameter_map.iteritems()}
-            return Parameter(parameter_type, mu_mapped)
-        else:
+        if self.parameter_type is None:
             assert mu is None
             return None
+        elif component is None:
+            parameter_map = self.parameter_maps[target]
+            parameter_type = self.parameter_types[target]
+            if parameter_type is None:
+                return None
+            parameter_name_map = self.parameter_name_map
+            if (mu.__class__ != Parameter
+                or not (mu.parameter_type == self.parameter_type or
+                        self._parameter_space is not None
+                        and mu.parameter_type == self._parameter_space.parameter_type)):
+                import ipdb; ipdb.set_trace()
+                mu = parse_parameter(mu, self.parameter_type)
+            mu_mapped = {k: mu[parameter_name_map[v]] for k, (v, m) in parameter_map.iteritems()}
+            return Parameter(parameter_type, mu_mapped)
+        else:
+            parameter_map = self.parameter_maps[target][component]
+            parameter_type = self.parameter_types[target][component]
+            if parameter_type is None:
+                return None
+            parameter_name_map = self.parameter_name_map
+            if (mu.__class__ != Parameter
+                or not (mu.parameter_type == self.parameter_type or
+                        self._parameter_space is not None
+                        and mu.parameter_type == self._parameter_space.parameter_type)):
+                import ipdb; ipdb.set_trace()
+                mu = parse_parameter(mu, self.parameter_type)
+            mu_mapped = {k: mu[parameter_name_map[v]][component, ...] if m else mu[parameter_name_map[v]]
+                         for k, (v, m) in parameter_map.iteritems()}
+            return Parameter(parameter_type, mu_mapped)
 
     def build_parameter_type(self, local_type=None, inherits=None, local_global=False):
         '''Builds the parameter type of the object. To be called by __init__.
