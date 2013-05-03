@@ -118,7 +118,7 @@ def thermalblock_demo(args):
         URB = reconstructor.reconstruct(rb_discretization.solve(mu))
         U = discretization.solve(mu)
         h1_err = discretization.h1_norm(U - URB)
-        cond = np.linalg.cond(rb_discretization.operator.matrix(mu))
+        cond = np.linalg.cond(rb_discretization.operator.assemble(mu)._matrix)
         if h1_err > h1_err_max:
             h1_err_max = h1_err
             Umax = U
@@ -130,23 +130,24 @@ def thermalblock_demo(args):
         print('H1-error = {}, condition = {}'.format(h1_err, cond))
     toc = time.time()
     t_est = toc - tic
+    real_rb_size = len(greedy_data['data'])
 
     print('''
     *** RESULTS ***
-    
+
     Problem:
        number of blocks:                   {args[XBLOCKS]}x{args[YBLOCKS]}
        h:                                  sqrt(2)/{args[--grid]}
-    
+
     Greedy basis generation:
        number of snapshots:                {args[SNAPSHOTS]}^({args[XBLOCKS]}x{args[YBLOCKS]})
        used estimator:                     {args[--with-estimator]}
        estimator norm:                     {args[--estimator-norm]}
        extension method:                   {args[--extension-alg]}
        prescribed basis size:              {args[RBSIZE]}
-       actual basis size:                  {greedy_data[data].shape[0]}
+       actual basis size:                  {real_rb_size}
        elapsed time:                       {greedy_data[time]}
-    
+
     Stochastic error estimation:
        number of samples:                  {args[--test]}
        maximal H1-error:                   {h1_err_max}  (mu = {mumax})
