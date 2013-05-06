@@ -32,6 +32,12 @@ class ParameterType(object):
         else:
             return self._dict == other._dict
 
+    def __ne__(self, other):
+        if other.__class__ != ParameterType:
+            return True
+        else:
+            return self._dict != other._dict
+
     def __nonzero__(self):
         return bool(self._keys)
 
@@ -230,7 +236,7 @@ class Parametric(object):
 
     @parameter_space.setter
     def parameter_space(self, ps):
-        assert dict(self.parameter_type) == dict(ps.parameter_type)
+        assert self.parameter_type == ps.parameter_type
         self._parameter_space = ps
 
     @property
@@ -241,14 +247,12 @@ class Parametric(object):
         if not self.parameter_type:
             assert mu is None
             return None
-        if (mu.__class__ == Parameter and mu.parameter_type == self.parameter_type or
-                self._parameter_space is not None and mu.parameter_type == self._parameter_space.parameter_type):
+        if mu.__class__ == Parameter and mu.parameter_type == self.parameter_type:
             return mu
         else:
-            import ipdb; ipdb.set_trace()
             return parse_parameter(mu, self.parameter_type)
 
-    def map_parameter(self, mu, target='self', component=None):
+    def map_parameter(self, mu, target='self', component=None, provide=None):
         '''Maps a parameter to the local parameter type or to the parameter types of the objects from which
         parameter components are inherited.
 
@@ -271,37 +275,28 @@ class Parametric(object):
         if self.parameter_type is None:
             assert mu is None
             return None
-        elif component is None:
-            parameter_map = self.parameter_maps[target]
-            parameter_type = self.parameter_types[target]
-            if parameter_type is None:
-                return None
-            parameter_name_map = self.parameter_name_map
-            if (mu.__class__ != Parameter
-                or not (mu.parameter_type == self.parameter_type or
-                        self._parameter_space is not None
-                        and mu.parameter_type == self._parameter_space.parameter_type)):
-                import ipdb; ipdb.set_trace()
-                mu = parse_parameter(mu, self.parameter_type)
-            mu_mapped = {k: mu[parameter_name_map[v]] for k, (v, m) in parameter_map.iteritems()}
-            return Parameter(parameter_type, mu_mapped)
-        else:
-            parameter_map = self.parameter_maps[target][component]
-            parameter_type = self.parameter_types[target][component]
-            if parameter_type is None:
-                return None
-            parameter_name_map = self.parameter_name_map
-            if (mu.__class__ != Parameter
-                or not (mu.parameter_type == self.parameter_type or
-                        self._parameter_space is not None
-                        and mu.parameter_type == self._parameter_space.parameter_type)):
-                import ipdb; ipdb.set_trace()
-                mu = parse_parameter(mu, self.parameter_type)
-            mu_mapped = {k: mu[parameter_name_map[v]][component, ...] if m else mu[parameter_name_map[v]]
-                         for k, (v, m) in parameter_map.iteritems()}
-            return Parameter(parameter_type, mu_mapped)
 
-    def build_parameter_type(self, local_type=None, inherits=None, local_global=False):
+        if mu.__class__ != Parameter or mu.parameter_type != self.parameter_type:
+            mu = parse_parameter(mu, self.parameter_type)
+
+        parameter_type = self.parameter_types[target] if component is None else self.parameter_types[target][component]
+        if parameter_type is None:
+            return None
+
+        if provide is not None:
+            assert all(provide[k].shape == self.parameter_provided[k] for k in provide)
+            mu.update(provide)
+
+        if component is None:
+            parameter_map = self.parameter_maps_renamed[target]
+            mu_mapped = {k: mu[v] for k, (v, m) in parameter_map.iteritems()}
+        else:
+            parameter_map = self.parameter_maps_renamed[target][component]
+            mu_mapped = {k: mu[v][component, ...] if m else mu[v] for k, (v, m) in parameter_map.iteritems()}
+
+        return Parameter(parameter_type, mu_mapped)
+
+    def build_parameter_type(self, local_type=None, inherits=None, local_global=False, provides=None):
         '''Builds the parameter type of the object. To be called by __init__.
 
         Parameters
@@ -341,6 +336,9 @@ class Parametric(object):
             parameter_maps['self'] = parameter_map
             parameter_types['self'] = local_type
 
+        provides = parse_parameter_type(provides)
+        provides = provides or {}
+
         if inherits:
             for n in inherits:
                 if isinstance(inherits[n], tuple) or isinstance(inherits[n], list):
@@ -351,7 +349,11 @@ class Parametric(object):
                                     and all(k in op.parameter_type for op in inherits[n])
                                     and all(op.parameter_type[k] == v for o in inherits[n])):
                                 global_name = '.{}{}'.format(n, k)
-                                global_type[global_name] = v
+                                if global_name in provides:
+                                    if v != provides[global_name][1:] or len(inherits[n]) != provides[global_name][0]:
+                                        raise ValueError('Component dimensions of provided name {} do not match'.format(k))
+                                else:
+                                    global_type[global_name] = v
                                 merged_param_map[k] = (global_name, True)
                     parameter_map_list = list()
                     parameter_type_list = list()
@@ -363,13 +365,16 @@ class Parametric(object):
                                     continue
                                 if k.startswith('.'):
                                     global_name = '.{}_{}{}'.format(n, i, k)
-                                    global_type[global_name] = v
-                                    parameter_map[k] = (global_name, False)
                                 else:
                                     if k in global_type and global_type[k] != v:
                                         raise ValueError('Dimensions of global name {} do not match'.format(k))
-                                    global_type[k] = v
-                                    parameter_map[k] = (k, False)
+                                    global_name = k
+                                if global_name in provides:
+                                    if v != provides[global_name]:
+                                        raise ValueError('Component dimensions of provided name {} do not match'.format(k))
+                                else:
+                                    global_type[global_name] = v
+                                parameter_map[k] = (global_name, False)
                             parameter_map_list.append(parameter_map)
                         else:
                             parameter_map_list.append(None)
@@ -381,13 +386,18 @@ class Parametric(object):
                     for k, v in inherits[n].parameter_type.iteritems():
                         if k.startswith('.'):
                             global_name = '.{}{}'.format(n, k)
-                            global_type[global_name] = v
-                            parameter_map[k] = (global_name, False)
                         else:
                             if k in global_type and global_type[k] != v:
                                 raise ValueError('Component dimensions of global name {} do not match'.format(k))
-                            global_type[k] = v
-                            parameter_map[k] = (k, False)
+                            global_name = k
+
+                        if global_name in provides:
+                            if v != provides[global_name]:
+                                raise ValueError('Component dimensions of provided name {} do not match'.format(k))
+                        else:
+                            global_type[global_name] = v
+                        parameter_map[k] = (global_name, False)
+
                     parameter_maps[n] = parameter_map
                     parameter_types[n] = inherits[n].parameter_type
                 else:
@@ -397,9 +407,10 @@ class Parametric(object):
         self.global_parameter_type = global_type or None
         self.parameter_type = global_type or None
         self.parameter_types = parameter_types
+        self.parameter_provided = provides or None
         self.parameter_maps = parameter_maps
-        self.parameter_user_map = {}
-        self.parameter_name_map = {k: k for k in global_type}
+        self.parameter_maps_renamed = parameter_maps
+        self.parameter_name_map = {}
 
     def rename_parameter(self, name_map):
         '''Rename a parameter component of the object's parameter type.
@@ -418,15 +429,24 @@ class Parametric(object):
                 raise ValueError('Can only rename parameters with local name (starting with ".")')
             if not k in self.global_parameter_type:
                 raise ValueError('There is no parameter named {}'.format(k))
-            if k in self.parameter_user_map:
-                raise ValueError('{} has already been renamed to {}'.format(k, self.parameter_user_map[k]))
-            self.parameter_user_map[k] = v
-        self.parameter_name_map = {k: self.parameter_user_map[k] if k in self.parameter_user_map else k
-                                   for k in self.global_parameter_type}
+            if k in self.parameter_name_map:
+                raise ValueError('{} has already been renamed to {}'.format(k, self.parameter_name_map[k]))
+            self.parameter_name_map[k] = v
+
+        # rebuild parameter_maps_renamed
+        def rename_map(m):
+            if m is None:
+                return None
+            return {k: self.parameter_name_map[v] if k in self.parameter_name_map else v for k, v in m.iteritems()}
+
+        self.parameter_map_renamed = {k: map(rename_map, m) if isinstance(m, list) else rename_map(m)
+                                      for k, m in self.parameter_maps.iteritems()}
+
+        # rebuild parameter_type
         parameter_type = ParameterType()
         for k, v in self.global_parameter_type.iteritems():
-            if k in self.parameter_user_map:
-                k = self.parameter_user_map[k]
+            if k in self.parameter_name_map:
+                k = self.parameter_name_map[k]
             if k in parameter_type and parameter_type[k] != v:
                 raise ValueError('Mismatching shapes for parameter {}: {} and {}'.format(k, parameter_type[k], v))
             parameter_type[k] = v
@@ -448,8 +468,8 @@ class Parametric(object):
                 msg += '{}: '.format(n)
                 for k, (v, f) in mp.iteritems():
                     msg += '{} <- {}'.format(k, v)
-                    if v in self.parameter_user_map:
-                        msg += ' <- {}'.format(self.parameter_user_map[k])
+                    if v in self.parameter_name_map:
+                        msg += ' <- {}'.format(self.parameter_name_map[k])
                     msg += '\n' + pad
             else:
                 for i, m in mp.enumerate():
@@ -463,8 +483,8 @@ class Parametric(object):
                             msg += '{} <- {}'.format(k, v)
                             if f:
                                 msg += '[{}, ...]'.format(i)
-                            if v in self.parameter_user_map:
-                                msg += ' <- {}'.format(self.parameter_user_map[k])
+                            if v in self.parameter_name_map:
+                                msg += ' <- {}'.format(self.parameter_name_map[k])
                             msg += '\n' + pad
             msg += '\n'
         return msg

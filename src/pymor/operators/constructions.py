@@ -165,7 +165,7 @@ def project_operator(operator, source_basis, range_basis=None, product=None, nam
         else:
             proj_operator_ap = None
         proj_operator = LinearAffinelyDecomposedOperator(proj_operators, proj_operator_ap, operator.functionals, name)
-        proj_operator.rename_parameter(operator.parameter_user_map)
+        proj_operator.rename_parameter(operator.parameter_name_map)
         return proj_operator
 
     elif isinstance(operator, LinearOperatorInterface):
