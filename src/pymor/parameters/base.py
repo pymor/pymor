@@ -89,10 +89,14 @@ class ParameterType(object):
 class Parameter(dict):
     '''Class representing a parameter.
 
-    A parameter is simply an ordered dict of numpy arrays.
-    We overwrite copy() to ensure that not only the dict but
-    also the arrays are copied. Moreover an allclose() method
-    is provided to compare parameters for equality.
+    A parameter is simply a dict of numpy arrays together with
+    a `ParameterType`. We overwrite copy() to ensure that not only
+    the dict but also the arrays are copied. Moreover an
+    allclose() method is provided to compare parameters for equality.
+
+    Note that for performance reasons we do not check if the provided
+    `ParameterType` actually fits the parameter, so be very careful
+    when modifying `Parameter` objects.
     '''
 
     def __init__(self, parameter_type, *args, **kwargs):
@@ -100,12 +104,13 @@ class Parameter(dict):
         self.parameter_type = parameter_type
 
     def allclose(self, mu):
+        assert isinstance(mu, Parameter)
         if set(self.keys()) != set(mu.keys()):
             return False
-        for k, v in self.iteritems():
-            if not float_cmp_all(v, mu[k]):
-                return False
-        return True
+        if not all(float_cmp_all(v, mu[k]) for k, v in self.iteritems()):
+            return False
+        else:
+            return True
 
     def copy(self):
         c = Parameter(self.parameter_type)
@@ -166,19 +171,19 @@ def parse_parameter(mu, parameter_type=None):
     elif set(mu.keys()) != set(parameter_type.keys()):
         raise ValueError('Components do not match')
     else:
-        mu = Parameter(parameter_type, ((k, mu[k]) for k in parameter_type))
+        mu = Parameter(parameter_type, mu)
     for k, v in mu.iteritems():
         if not isinstance(v, np.ndarray):
             mu[k] = np.array(v)
-    if not all(mu[k].shape == parameter_type[k] for k in mu.keys()):
+    if not all(mu[k].shape == parameter_type[k] for k in mu):
         raise ValueError('Component dimensions do not match')
     return mu
 
 
 def parse_parameter_type(parameter_type):
-    '''Takes a parameter type specification and makes it a valid parameter type.
+    '''Takes a parameter type specification and makes it a `ParameterType`.
 
-    A parameter type is an ordered dict whose values are tuples of natural numbers
+    A `ParameterType` is an ordered dict whose values are tuples of natural numbers
     defining the shape of the corresponding parameter component.
 
     Parameters
@@ -267,11 +272,19 @@ class Parametric(object):
             `build_parameter_type`. Otherwise `target` has to be a key of the `inherits`
             parameter passed to `build_parameter_type` and `mu` is mapped to the corresponding
             parameter type.
+        component
+            If `target` consists of a tuple of `Parametric`s, this specifies the index of the
+            `Parametric` to map to. Otherwise must be `None`.
+        provide
+            Dict of additionaly provided parameters which are not part of `self.parameter_type` or
+            `None`. Note that the value of each parameter has to be a numpy array of the correct
+            shape. No automatic conversion is performed.
 
         Returns
         -------
         The mapped `Parameter`.
         '''
+
         if self.parameter_type is None:
             assert mu is None
             return None
@@ -308,6 +321,10 @@ class Parametric(object):
             are inherited and where the value is the parameter type of the corresponding object.
         local_global
             If True, treat the components of local_type as global components.
+        provides
+            Dict where the keys specify parameter names and the values are corresponding shapes. The
+            parameters listed in `provides` will not become part of the parameter type. Instead they
+            have to be provided using the `provides` parameter of the `map_parameter` method.
 
         Returns
         -------
@@ -344,62 +361,63 @@ class Parametric(object):
                 if isinstance(inherits[n], tuple) or isinstance(inherits[n], list):
                     merged_param_map = {}
                     if all(op.parameter_type for op in inherits[n]):
-                        for k, v in inherits[n][0].parameter_type.iteritems():
-                            if (k.startswith('.')
-                                    and all(k in op.parameter_type for op in inherits[n])
-                                    and all(op.parameter_type[k] == v for o in inherits[n])):
-                                global_name = '.{}{}'.format(n, k)
+                        for name, shape in inherits[n][0].parameter_type.iteritems():
+                            if (name.startswith('.')
+                                    and all(name in op.parameter_type for op in inherits[n])
+                                    and all(op.parameter_type[name] == shape for op in inherits[n])):
+                                global_name = '.{}{}'.format(n, name)
                                 if global_name in provides:
-                                    if v != provides[global_name][1:] or len(inherits[n]) != provides[global_name][0]:
-                                        raise ValueError('Component dimensions of provided name {} do not match'.format(k))
+                                    if provides[global_name][1:] != shape or len(inherits[n]) != provides[global_name][0]:
+                                        raise ValueError('Component dimensions of provided name {} do not match'
+                                                         .format(name))
                                 else:
-                                    global_type[global_name] = v
-                                merged_param_map[k] = (global_name, True)
+                                    global_type[global_name] = shape
+                                merged_param_map[name] = (global_name, True)
                     parameter_map_list = list()
-                    parameter_type_list = list()
                     for i, op in enumerate(inherits[n]):
                         if op.parameter_type:
                             parameter_map = merged_param_map.copy()
-                            for k, v in op.parameter_type.iteritems():
-                                if k in merged_param_map:
+                            for name, shape in op.parameter_type.iteritems():
+                                if name in merged_param_map:
                                     continue
-                                if k.startswith('.'):
-                                    global_name = '.{}_{}{}'.format(n, i, k)
+                                if name.startswith('.'):
+                                    global_name = '.{}_{}{}'.format(n, i, name)
                                 else:
-                                    if k in global_type and global_type[k] != v:
-                                        raise ValueError('Dimensions of global name {} do not match'.format(k))
-                                    global_name = k
+                                    if name in global_type and global_type[name] != shape:
+                                        raise ValueError('Dimensions of global name {} do not match'.format(name))
+                                    global_name = name
                                 if global_name in provides:
-                                    if v != provides[global_name]:
-                                        raise ValueError('Component dimensions of provided name {} do not match'.format(k))
+                                    if provides[global_name] != shape:
+                                        raise ValueError('Component dimensions of provided name {} do not match'
+                                                         .format(name))
                                 else:
-                                    global_type[global_name] = v
-                                parameter_map[k] = (global_name, False)
+                                    global_type[global_name] = shape
+                                parameter_map[name] = (global_name, False)
                             parameter_map_list.append(parameter_map)
                         else:
                             parameter_map_list.append(None)
-                        parameter_type_list.append(op.parameter_type)
                     parameter_maps[n] = parameter_map_list
-                    parameter_types[n] = parameter_type_list
+                    parameter_types[n] = [op.parameter_type.copy() if op.parameter_type is not None else None
+                                          for op in inherits[n]]
                 elif inherits[n].parameter_type:
                     parameter_map = {}
-                    for k, v in inherits[n].parameter_type.iteritems():
-                        if k.startswith('.'):
-                            global_name = '.{}{}'.format(n, k)
+                    for name, shape in inherits[n].parameter_type.iteritems():
+                        if name.startswith('.'):
+                            global_name = '.{}{}'.format(name, shape)
                         else:
-                            if k in global_type and global_type[k] != v:
-                                raise ValueError('Component dimensions of global name {} do not match'.format(k))
-                            global_name = k
+                            if name in global_type and global_type[name] != shape:
+                                raise ValueError('Component dimensions of global name {} do not match'.format(name))
+                            global_name = name
 
                         if global_name in provides:
-                            if v != provides[global_name]:
-                                raise ValueError('Component dimensions of provided name {} do not match'.format(k))
+                            if provides[global_name] != shape:
+                                raise ValueError('Component dimensions of provided name {} do not match'.format(name))
                         else:
-                            global_type[global_name] = v
-                        parameter_map[k] = (global_name, False)
+                            global_type[global_name] = shape
+                        parameter_map[name] = (global_name, False)
 
                     parameter_maps[n] = parameter_map
-                    parameter_types[n] = inherits[n].parameter_type
+                    parameter_types[n] = inherits[n].parameter_type.copy()
                 else:
                     parameter_maps[n] = None
                     parameter_types[n] = None
@@ -416,7 +434,8 @@ class Parametric(object):
         '''Rename a parameter component of the object's parameter type.
 
         This method can be called by the object's owner to rename local parameter components
-        (whose name begins with '.') to global parameter components.
+        (whose name begins with '.') to global parameter components. This should be called
+        directly after instantiation.
 
         Parameters
         ----------
