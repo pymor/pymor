@@ -84,7 +84,7 @@ def write_version():
     filename = os.path.join(os.path.dirname(__file__), 'src', 'pymor', 'version.py')
     with open(filename, 'w') as out:
         out.write('revstring = \'{}\''.format(revstring))
-
+    return revstring
 
 def _setup(**kwargs):
     '''we'll make use of Distribution's __init__ downloading setup_requires packages right away here'''
@@ -130,11 +130,11 @@ def check_pre_require():
 
 def setup_package():
     check_pre_require()
-    write_version()
+    revstring = write_version()
 
     _setup(
         name='pyMor',
-        version='0.1.0',
+        version=revstring,
         author='pyMor developers',
         author_email='pymor-dev@listserv.uni-muenster.de',
         maintainer='Rene Milk',
