@@ -72,7 +72,7 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
 
 class ExpressionParameterFunctional(GenericParameterFunctional):
 
-    functions = {k: np.__dict__[k] for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',
+    functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',
                                              'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
                                              'exp', 'exp2', 'log', 'log2', 'log10',
                                              'min', 'minimum', 'max', 'maximum', }}

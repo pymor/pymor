@@ -5,6 +5,54 @@
 
 import sys, os, re
 
+# Fix documentation generation for readthedocs.org
+
+if os.environ.get('READTHEDOCS', None) == 'True':
+
+    class Mock(object):
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __call__(self, *args, **kwargs):
+            return Mock()
+
+        @classmethod
+        def __getattr__(cls, name):
+            if name in ('__file__', '__path__'):
+                return '/dev/null'
+            elif name in cls.__dict__:
+                return cls.__dict.get(name)
+            elif name == 'QtGui':
+                return Mock()
+            elif name[0] == name[0].upper():
+                mockType = type(name, (), {})
+                mockType.__module__ = __name__
+                return mockType
+            else:
+                return Mock()
+
+        QWidget = object
+
+    MOCK_MODULES = ['scipy', 'scipy.sparse', 'scipy.linalg', 'scipy.sparse.linalg',
+                    'contracts',
+                    'docopt',
+                    'dogpile', 'dogpile.cache', 'dogpile.cache.backends', 'dogpile.cache.backends.file',
+                    'dogpile.cache.compat',
+                    'PySide', 'PySide.QtGui', 'PySide.QtCore', 'PySide.QtOpenGL',
+                    'glumpy', 'glumpy.graphics', 'glumpy.graphics.vertex_buffer',
+                    'OpenGL', 'OpenGL.GL',
+                    'matplotlib', 'matplotlib.backends', 'matplotlib.backends.backend_qt4agg', 'matplotlib.figure',
+                    'matplotlib.pyplot',
+                    'pyvtk',
+                    'IPython',
+                    'IPython.parallel',
+                    'sympy',
+                    'pytest']
+
+    for mod_name in MOCK_MODULES:
+        sys.modules[mod_name] = Mock()
+
+
 # Check Sphinx version
 import sphinx
 if sphinx.__version__ < "1.0.1":
@@ -25,10 +73,10 @@ sys.path.insert(0, os.path.abspath('.'))
 #generate autodoc
 import gen_apidoc
 import pymor
-import pymortests
+#import pymortests
 import pymordemos
 gen_apidoc.walk(pymor)
-gen_apidoc.walk(pymortests)
+# gen_apidoc.walk(pymortests)
 gen_apidoc.walk(pymordemos)
 
 
@@ -103,6 +151,7 @@ pygments_style = 'sphinx'
 # must exist either in Sphinx' static/ path, or in one of the custom paths
 # given in html_static_path.
 html_style = 'pymor.css'
+html_theme = 'default'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
