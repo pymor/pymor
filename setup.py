@@ -20,7 +20,7 @@ _orig_generate_a_pyrex_source = None
 tests_require = ['mock', 'nose-cov', 'nose', 'nosehtmloutput', 'nose-progressive', 'tissue']
 install_requires = ['distribute', 'scipy', 'numpy', 'PyContracts',
                     'docopt', 'dogpile.cache' , 'numpydoc']
-setup_requires = ['cython', 'numpy', 'nose']
+setup_requires = ['cython', 'numpy', 'nose', 'sympy']
 install_suggests = ['matplotlib', 'sympy'] + tests_require
 
 class DependencyMissing(Exception):

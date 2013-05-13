@@ -1,7 +1,7 @@
 
-.PHONY: all pylint test
+.PHONY: README.txt README.html pylint test
 
-all: README.txt README.html
+all: 
 
 # PyPI wants ReStructured text
 README.txt: README.markdown
@@ -23,7 +23,7 @@ flake8:
 	flake8 ./src
 
 test:
-	/usr/bin/env python ./run_tests.py
+	python setup.py test
 
 doc:
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html
