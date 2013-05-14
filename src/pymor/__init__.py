@@ -5,11 +5,14 @@
 NO_VERSIONSTRING = '0.0.0-0-0'
 
 
-def _make_version(revstring):
-    pos = revstring.find('-')
-    version = tuple(int(x) for x in revstring[:pos].split('.'))
+def _make_version(string):
+    pos = string.find('-')
+    if pos == -1:
+        string += '-0-0'
+        pos = -4
+    version = tuple(int(x) for x in string[:pos].split('.'))
     if pos > -1:
-        git = revstring.strip().split('-')
+        git = string.strip().split('-')
         distance = int(git[1])
         shorthash = git[2]
         version = version + (distance, shorthash)
@@ -29,13 +32,7 @@ except ImportError:
     except:
         revstring = NO_VERSIONSTRING
 finally:
-    pos = revstring.find('-')
-    version = tuple(int(x) for x in revstring[:pos].split('.'))
-    if pos > -1:
-        git = revstring.strip().split('-')
-        distance = int(git[1])
-        shorthash = git[2]
-        version = version + (distance, shorthash)
+    version = _make_version(revstring)
 
 VERSION = version
 print('Loading pymor version {}'.format(VERSION))
