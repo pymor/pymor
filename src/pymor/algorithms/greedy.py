@@ -111,6 +111,8 @@ def greedy(discretization, reductor, samples, initial_data=None, use_estimator=T
 
         if max_extensions is not None and extensions >= max_extensions:
             logger.info('Maximal number of {} extensions reached.'.format(max_extensions))
+            logger.info('Reducing once more ...')
+            rd, rc = reductor(discretization, data)
             break
 
     tictoc = time.time() - tic
