@@ -46,7 +46,7 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
         high-dimensional solutions from solutions U of the reduced discretization.
     '''
 
-    assert isinstance(discretization, StationaryLinearDiscretization)
+    #assert isinstance(discretization, StationaryLinearDiscretization)
     assert isinstance(discretization.operator, LinearAffinelyDecomposedOperator)
     assert all(not op.parametric for op in discretization.operator.operators)
     assert discretization.operator.operator_affine_part is None\
