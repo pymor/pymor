@@ -5,4 +5,4 @@
 from pymor.la.interfaces import VectorArray, Communicable
 from pymor.la.numpyvectorarray import NumpyVectorArray
 from pymor.la.basic import induced_norm
-from pymor.la.gram_schmidt import gram_schmidt, numpy_gram_schmidt
+# from pymor.la.gram_schmidt import gram_schmidt, numpy_gram_schmidt

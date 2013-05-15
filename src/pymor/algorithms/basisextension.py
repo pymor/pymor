@@ -8,7 +8,8 @@ import numpy as np
 
 from pymor.core.exceptions import ExtensionError
 from pymor.tools import float_cmp_all
-from pymor.la import VectorArray, NumpyVectorArray, gram_schmidt, numpy_gram_schmidt
+from pymor.la import VectorArray, NumpyVectorArray
+from pymor.la.gram_schmidt import gram_schmidt, numpy_gram_schmidt
 
 
 def trivial_basis_extension(basis, U, U_ind=None, copy_basis=True, copy_U=True):
