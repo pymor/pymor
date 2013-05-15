@@ -63,6 +63,9 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
     space_dim = d.operator.dim_source
     space_type = d.operator.type_source
 
+    if error_product is not None:
+        error_product = error_product.assemble()
+
     # compute the Riesz representative of (U, .)_L2 with respect to error_product
     def riesz_representative(U):
         if error_product is None:
