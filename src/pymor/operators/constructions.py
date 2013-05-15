@@ -240,11 +240,26 @@ class LinearLincombOperator(LinearOperatorInterface):
         self.type_source = operators[0].type_source
         self.type_range = operators[0].type_range
         self.name = name or '+'.join(op.name for op in operators)
+        self.assembled = False
+
+    def apply(self, U, ind=None, mu=None):
+        if self.assembled:
+            assert mu == None
+            return sum(op.apply(U, ind=ind, mu=None) * self.factors[i]
+                       for i, op in enumerate(self.operators))
+        else:
+            return self.assemble(mu).apply(U, ind=ind)
 
     def _assemble(self, mu=None):
-        M = self.operators[0].assemble(self.map_parameter(mu, 'operators', 0))
+        if self.assembled:
+            return self
+        M = self.operators[0].assemble(self.map_parameter(mu, 'operators', 0)) * self.factors[0]
+        if isinstance(M, LinearLincombOperator):
+            M.assembled = True
         for i, op in enumerate(self.operators[1:]):
-            M = M + op.assemble(self.map_parameter(mu, 'operators', i + 1)) * self.factors[i]
+            M = M + op.assemble(self.map_parameter(mu, 'operators', i + 1)) * self.factors[i + 1]
+            if isinstance(M, LinearLincombOperator):
+                M.assembled = True
         return M
 
 
