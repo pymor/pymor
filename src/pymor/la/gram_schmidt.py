@@ -66,6 +66,7 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=True,
 
             if norm < tol:
                 remove.append(i)
+                i += 1
                 continue
             else:
                 A.iadd_mult(None, factor=1/norm, o_factor=0, ind=[i])
