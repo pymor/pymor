@@ -7,6 +7,8 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
+from numbers import Number
+
 from pymor.core.interfaces import BasicInterface, abstractmethod, abstractproperty
 from pymor.la import VectorArray
 from pymor.tools import Named
@@ -111,6 +113,9 @@ class OperatorInterface(BasicInterface, Parametric, Named):
         return V.prod(AU, ind=V_ind, pairwise=pairwise)
 
     def __add__(self, other):
+        if isinstance(other, Number):
+            assert other == 0.
+            return self
         from pymor.operators.constructions import LincombOperator
         return LincombOperator([self, other])
 
@@ -162,13 +167,16 @@ class LinearOperatorInterface(OperatorInterface):
         return self.assemble(mu).apply(U, ind=ind)
 
     def __add__(self, other):
+        if isinstance(other, Number):
+            assert other == 0.
+            return self
         from pymor.operators.constructions import LinearLincombOperator
         return LinearLincombOperator([self, other])
 
     __radd__ = __add__
 
     def __mul__(self, other):
-        from pymor.operators.constructions import LinearLinearcombOperator
+        from pymor.operators.constructions import LinearLincombOperator
         return LinearLincombOperator([self], factors=[other])
 
     _last_mu = None
