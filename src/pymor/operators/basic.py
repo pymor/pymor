@@ -86,7 +86,7 @@ class NumpyLinearOperator(LinearOperatorInterface):
         return NumpyVectorArray(self._matrix, copy=True)
 
     def _assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert mu is None
         return self
 
     def assemble(self, mu=None, force=False):
