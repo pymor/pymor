@@ -40,6 +40,9 @@ class DiscretizationInterface(BasicInterface, Parametric, Cachable, Named):
         Cachable.__init__(c)
         return c
 
+    def with_projected_operators(self, operators):
+        raise NotImplementedError
+
     @abstractmethod
     def _solve(self, mu=None):
         '''Perform the actual solving.'''

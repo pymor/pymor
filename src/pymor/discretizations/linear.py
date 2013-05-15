@@ -74,9 +74,9 @@ class StationaryLinearDiscretization(DiscretizationInterface):
 
         def default_solver(A, RHS):
             assert isinstance(A, NumpyLinearOperator)
-            assert isinstance(RHS, NumpyLinearOperator)
+            assert isinstance(RHS, (NumpyLinearOperator, NumpyVectorArray))
             A = A._matrix
-            RHS = RHS._matrix
+            RHS = RHS._matrix if isinstance(RHS, NumpyLinearOperator) else RHS._array
             assert len(RHS) == 1
             if RHS.shape[1] == 0:
                 return NumpyVectorArray(RHS)
@@ -93,6 +93,10 @@ class StationaryLinearDiscretization(DiscretizationInterface):
 
         self.solution_dim = operator.dim_range
         self.name = name
+
+    def with_projected_operators(self, operators):
+        assert set(operators.keys()) == {'operator', 'rhs'}
+        return StationaryLinearDiscretization(operator=operators['operator'], rhs=operators['rhs'])
 
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu)
