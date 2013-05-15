@@ -50,11 +50,13 @@ def reduce_generic_rb(discretization, RB, product=None, disable_caching=True):
         high-dimensional solutions from solutions U of the reduced discretization.
     '''
 
-    rd = discretization.copy()
     if RB is None:
-        RB = NumpyVectorArray(np.zeros((0, next(rd.operators.itervalues()).dim_source)))
-    for k, op in rd.operators.iteritems():
-        rd.operators[k] = project_operator(op, RB, product=product)
+        RB = NumpyVectorArray(np.zeros((0, next(discretization.operators.itervalues()).dim_source)))
+
+    projected_operators = {k: project_operator(op, RB, product=product)
+                           for k, op in discretization.operators.iteritems()}
+    rd = discretization.with_projected_operators(projected_operators)
+
     if disable_caching and isinstance(rd, Cachable):
         Cachable.__init__(rd, config=NO_CACHE_CONFIG)
     rd.name += '_reduced'
