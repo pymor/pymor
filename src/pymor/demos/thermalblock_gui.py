@@ -190,7 +190,7 @@ class SimPanel(QtGui.QWidget):
         self.param_panel.enable(False)
         args = self.sim.args
         shape = (args['XBLOCKS'], args['YBLOCKS'])
-        mu = Parameter({'diffusion': np.array([s.value() for s in self.param_panel.spins]).reshape(shape)})
+        mu = {'diffusion': np.array([s.value() for s in self.param_panel.spins]).reshape(shape)}
         U = self.sim.solve(mu)
         print('Simtime {}'.format(time.time() - tic))
         tic = time.time()
