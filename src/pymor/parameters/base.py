@@ -456,10 +456,11 @@ class Parametric(object):
         def rename_map(m):
             if m is None:
                 return None
-            return {k: self.parameter_name_map[v] if k in self.parameter_name_map else v for k, v in m.iteritems()}
+            return {k: (self.parameter_name_map[v], b) if v in self.parameter_name_map else (v, b)
+                    for k, (v, b) in m.iteritems()}
 
-        self.parameter_map_renamed = {k: map(rename_map, m) if isinstance(m, list) else rename_map(m)
-                                      for k, m in self.parameter_maps.iteritems()}
+        self.parameter_maps_renamed = {k: map(rename_map, m) if isinstance(m, list) else rename_map(m)
+                                       for k, m in self.parameter_maps.iteritems()}
 
         # rebuild parameter_type
         parameter_type = ParameterType()
