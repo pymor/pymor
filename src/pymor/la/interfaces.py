@@ -181,6 +181,7 @@ class VectorArray(BasicInterface):
         -------
         Numpy array of the truth values of the comparinson.
         '''
+        pass
 
     @abstractmethod
     def add_mult(self, other, factor=1., o_factor=1., ind=None, o_ind=None):
