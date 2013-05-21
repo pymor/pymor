@@ -62,7 +62,7 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=True,
             if product is None:
                 norm = A.l2_norm(ind=[i])[0]
             else:
-                norm = np.sqrt(product.apply2(A, A, ind=[i], o_ind=[i], pairwise=True))[0]
+                norm = np.sqrt(product.apply2(A, A, V_ind=[i], U_ind=[i], pairwise=True))[0]
 
             if norm < tol:
                 remove.append(i)
@@ -84,8 +84,11 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=True,
         A.remove(remove)
 
     if check:
-        if not float_cmp_all(A.prod(A, pairwise=False), np.eye(len(A)), check_tol):
+        if not product and not float_cmp_all(A.prod(A, pairwise=False), np.eye(len(A)), check_tol):
             err = np.max(np.abs(A.prod(A, pairwise=False) - np.eye(len(A))))
+            raise AccuracyError('result not orthogonal (max err={})'.format(err))
+        elif product and not float_cmp_all(product.apply2(A, A, pairwise=False), np.eye(len(A)), check_tol):
+            err = np.max(np.abs(product.apply2(A, A, pairwise=False) - np.eye(len(A))))
             raise AccuracyError('result not orthogonal (max err={})'.format(err))
 
     return A
@@ -169,8 +172,11 @@ def numpy_gram_schmidt(A, product=None, tol=None, row_offset=0, find_row_duplica
     A = A[rows]
 
     if check:
-        if not float_cmp_all(A.dot(A.T), np.eye(A.shape[0]), check_tol):
+        if not product and not float_cmp_all(A.dot(A.T), np.eye(A.shape[0]), check_tol):
             err = np.max(np.abs(A.dot(A.T) - np.eye(A.shape[0])))
+            raise AccuracyError('result not orthogonal (max err={})'.format(err))
+        elif product and not float_cmp_all(product.apply2(A, A, pairwise=False), np.eye(len(A)), check_tol):
+            err = np.max(np.abs(product.apply2(A, A, pairwise=False) - np.eye(len(A))))
             raise AccuracyError('result not orthogonal (max err={})'.format(err))
 
     return A
