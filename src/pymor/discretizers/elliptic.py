@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 
 from pymor.analyticalproblems import EllipticProblem
 from pymor.domaindiscretizers import discretize_domain_default
-from pymor.operators.cg import DiffusionOperatorP1, L2ProductFunctionalP1, L2ProductP1
+from pymor.operators.cg import DiffusionOperatorP1, L2ProductFunctionalP1
 from pymor.operators.affine import LinearAffinelyDecomposedOperator
 from pymor.operators import add_operators
 from pymor.discretizations import StationaryLinearDiscretization
@@ -103,8 +103,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
 
     discretization = StationaryLinearDiscretization(L, F, visualizer=visualize, name='{}_CG'.format(p.name))
 
-    discretization.h1_product = add_operators((Operator(grid, EmptyBoundaryInfo(grid)), L2ProductP1(grid)),
-                                              name='h1_product')
+    discretization.h1_product = Operator(grid, boundary_info)
     discretization.h1_norm = induced_norm(discretization.h1_product)
 
     if hasattr(p, 'parameter_space'):
