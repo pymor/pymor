@@ -27,8 +27,8 @@ Options:
   --estimator-norm=NORM  Norm (trivial, h1) in which to calculate the residual
                          [default: trivial].
 
-  --extension-alg=ALG    Basis extension algorithm (trivial, gram_schmidt, numpy_trivial, numpy_gram_schmidt)
-                         to be used [default: gram_schmidt].
+  --extension-alg=ALG    Basis extension algorithm (trivial, gram_schmidt, h1_gram_schmidt,
+                         numpy_trivial, numpy_gram_schmidt) to be used [default: h1_gram_schmidt].
 
   --grid=NI              Use grid with 2*NI*NI elements [default: 100].
 
@@ -75,7 +75,10 @@ def thermalblock_demo(args):
     args['--estimator-norm'] = args['--estimator-norm'].lower()
     assert args['--estimator-norm'] in {'trivial', 'h1'}
     args['--extension-alg'] = args['--extension-alg'].lower()
-    assert args['--extension-alg'] in {'trivial', 'gram_schmidt'}
+    assert args['--extension-alg'] in {'trivial', 'gram_schmidt', 'h1_gram_schmidt', 'numpy_trivial',
+                                       'numpy_gram_schmidt'}
+    args['--reductor'] = args['--reductor'].lower()
+    assert args['--reductor'] in {'default', 'numpy_default'}
 
     print('Solving on TriaGrid(({0},{0}))'.format(args['--grid']))
 
@@ -99,9 +102,15 @@ def thermalblock_demo(args):
     print('RB generation ...')
 
     error_product = discretization.h1_product if args['--estimator-norm'] == 'h1' else None
-    reductor = partial(reduce_stationary_affine_linear, error_product=error_product)
-    extension_algorithm = (gram_schmidt_basis_extension if args['--extension-alg'] == 'gram_schmidt'
-                           else trivial_basis_extension)
+    reductors = {'default': partial(reduce_stationary_affine_linear, error_product=error_product),
+                 'numpy_default': partial(numpy_reduce_stationary_affine_linear, error_product=error_product)}
+    reductor = reductors[args['--reductor']]
+    extension_algorithms = {'trivial': trivial_basis_extension,
+                            'gram_schmidt': gram_schmidt_basis_extension,
+                            'h1_gram_schmidt': partial(gram_schmidt_basis_extension, product=discretization.h1_product),
+                            'numpy_trivial': numpy_trivial_basis_extension,
+                            'numpy_gram_schmidt': numpy_gram_schmidt_basis_extension}
+    extension_algorithm = extension_algorithms[args['--extension-alg']]
     greedy_data = greedy(discretization, reductor, discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
                          use_estimator=args['--with-estimator'], error_norm=discretization.h1_norm,
                          extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'])
