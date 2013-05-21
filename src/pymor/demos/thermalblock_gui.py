@@ -158,14 +158,14 @@ class ParamRuler(QtGui.QWidget):
         self.setMinimumSize(200, 100)
         box = QtGui.QGridLayout()
         self.spins = []
-        for i in xrange(args['XBLOCKS']):
-            for j in xrange(args['YBLOCKS']):
+        for j in xrange(args['YBLOCKS']):
+            for i in xrange(args['XBLOCKS']):
                 spin = QtGui.QDoubleSpinBox()
                 spin.setRange(PARAM_MIN, PARAM_MAX)
                 spin.setSingleStep((PARAM_MAX - PARAM_MIN) / PARAM_STEPS)
                 spin.setValue(PARAM_MIN)
                 self.spins.append(spin)
-                box.addWidget(spin, i, j)
+                box.addWidget(spin, j, i)
                 spin.valueChanged.connect(parent.solve_update)
         self.setLayout(box)
 
@@ -189,7 +189,7 @@ class SimPanel(QtGui.QWidget):
         tic = time.time()
         self.param_panel.enable(False)
         args = self.sim.args
-        shape = (args['XBLOCKS'], args['YBLOCKS'])
+        shape = (args['YBLOCKS'], args['XBLOCKS'])
         mu = Parameter({'diffusion': np.array([s.value() for s in self.param_panel.spins]).reshape(shape)})
         U = self.sim.solve(mu)
         print('Simtime {}'.format(time.time() - tic))
