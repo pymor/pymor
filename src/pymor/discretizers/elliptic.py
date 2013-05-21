@@ -30,7 +30,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
         If not None, is passed to the domain_discretizer.
     domain_discretizer
         Discretizer to be used for discretizing the analytical domain. This has
-        to be function `domain_discretizer(domain_description, diamter=...)`.
+        to be function `domain_discretizer(domain_description, diameter=...)`.
         If further arguments should be passed to the discretizer, use
         functools.partial. If None, `discretize_domain_default` is used.
     grid
