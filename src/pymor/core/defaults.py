@@ -36,7 +36,7 @@ class Defaults(BasicInterface):
     gram_schmidt_check          = True
     gram_schmidt_check_tol      = 1e-3
 
-    bicgstab_tol                = 1e-10
+    bicgstab_tol                = 1e-12
     bicgstab_maxiter            = None
 
     induced_norm_raise_negative = True
