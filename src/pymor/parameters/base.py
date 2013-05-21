@@ -41,6 +41,9 @@ class ParameterType(object):
     def __nonzero__(self):
         return bool(self._keys)
 
+    def __len__(self):
+        return len(self._keys)
+
     def __iter__(self):
         return iter(self._keys)
 
