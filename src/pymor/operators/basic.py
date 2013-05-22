@@ -71,6 +71,7 @@ class NumpyLinearOperator(LinearOperatorInterface):
     '''
 
     type_source = type_range = NumpyVectorArray
+    assembled = True
 
     def __init__(self, matrix, name=None):
         super(NumpyLinearOperator, self).__init__()

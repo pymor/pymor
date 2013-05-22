@@ -18,6 +18,7 @@ from dunelinearellipticcg2dsgrid import DuneVector
 class DuneLinearOperator(LinearOperatorInterface):
 
     type_source = type_range = DuneVectorArray
+    assembled = True
 
     def __init__(self, dune_op, dim, name=None):
         super(DuneLinearOperator, self).__init__()
@@ -45,6 +46,7 @@ class DuneLinearFunctional(LinearOperatorInterface):
 
     type_source = DuneVectorArray
     type_range = NumpyVectorArray
+    assembled = True
 
     def __init__(self, dune_vec, name=None):
         super(DuneLinearFunctional, self).__init__()

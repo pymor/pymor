@@ -135,8 +135,13 @@ class LinearOperatorInterface(OperatorInterface):
     '''Interface for linear parameter dependent discrete operators.
     '''
 
-    def as_vector_array(self):
-        raise NotImplementedError
+    assembled = False
+
+    def as_vector_array(self, mu=None):
+        if not self.assembled:
+            return self.assemble(mu).as_vector_array()
+        else:
+            raise NotImplementedError
 
     @abstractmethod
     def _assemble(self, mu=None):
@@ -147,7 +152,10 @@ class LinearOperatorInterface(OperatorInterface):
 
         Returns an assembled parameter independent linear operator.
         '''
-        if self.parameter_type is None:
+        if self.assembled:
+            assert mu is None
+            return self
+        elif self.parameter_type is None:
             assert mu is None
             if force or not self._last_mat:
                 self._last_mat = self._assemble(mu)
@@ -164,7 +172,10 @@ class LinearOperatorInterface(OperatorInterface):
                 return self._last_mat
 
     def apply(self, U, ind=None, mu=None):
-        return self.assemble(mu).apply(U, ind=ind)
+        if not self.assembled:
+            return self.assemble(mu).apply(U, ind=ind)
+        else:
+            raise NotImplementedError
 
     def __add__(self, other):
         if isinstance(other, Number):
