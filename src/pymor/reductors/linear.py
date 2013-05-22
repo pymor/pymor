@@ -9,6 +9,7 @@ import types
 import numpy as np
 
 from pymor.operators import LinearAffinelyDecomposedOperator, NumpyLinearOperator
+from pymor.operators.solvers import solve_linear
 from pymor.discretizations import StationaryLinearDiscretization
 from pymor.la import NumpyVectorArray, induced_norm
 from pymor.reductors.basic import reduce_generic_rb
@@ -66,11 +67,14 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
     if error_product is not None:
         error_product = error_product.assemble()
 
+    solver = d.solver if hasattr(d, 'solver') else solve_linear
+
     # compute the Riesz representative of (U, .)_L2 with respect to error_product
     def riesz_representative(U):
         if error_product is None:
             return U.copy()
-        return d.solver(error_product, U)
+        else:
+            return solver(error_product, U)
 
     def append_vector(U, R, RR):
         RR.append(riesz_representative(U), remove_from_other=True)
