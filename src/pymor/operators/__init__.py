@@ -2,8 +2,8 @@
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from .interfaces import OperatorInterface, LinearOperatorInterface
-from .basic import NumpyGenericOperator, NumpyLinearOperator
-from .affine import LinearAffinelyDecomposedOperator
-from .constructions import (ProjectedOperator, ProjectedLinearOperator, project_operator,
-                            LincombOperator, LinearLincombOperator, add_operators)
+from pymor.operators.interfaces import OperatorInterface, LinearOperatorInterface
+from pymor.operators.numpy import NumpyGenericOperator, NumpyLinearOperator
+from pymor.operators.affine import LinearAffinelyDecomposedOperator
+from pymor.operators.constructions import (ProjectedOperator, ProjectedLinearOperator, project_operator,
+                                           LincombOperator, LinearLincombOperator, add_operators)

@@ -10,7 +10,7 @@ import numpy as np
 from pymor.la import NumpyVectorArray
 from pymor.operators.interfaces import OperatorInterface, LinearOperatorInterface
 from pymor.operators.affine import LinearAffinelyDecomposedOperator
-from pymor.operators.basic import NumpyLinearOperator
+from pymor.operators.numpy import NumpyLinearOperator
 
 
 class ProjectedOperator(OperatorInterface):
