@@ -41,6 +41,7 @@ class L2ProductFunctionalP1(LinearOperatorInterface):
     '''
 
     type_source = type_range = NumpyVectorArray
+    sparse = False
 
     def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, name=None):
         assert grid.reference_element(0) in {line, triangle}
@@ -112,6 +113,7 @@ class L2ProductP1(LinearOperatorInterface):
     '''
 
     type_source = type_range = NumpyVectorArray
+    sparse = True
 
     def __init__(self, grid, name=None):
         assert grid.reference_element in (line, triangle)
@@ -188,6 +190,7 @@ class DiffusionOperatorP1(LinearOperatorInterface):
     '''
 
     type_source = type_range = NumpyVectorArray
+    sparse = True
 
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
                  dirichlet_clear_columns=False, dirichlet_clear_diag=False, name=None):

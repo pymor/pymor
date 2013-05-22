@@ -136,6 +136,7 @@ class LinearOperatorInterface(OperatorInterface):
     '''
 
     assembled = False
+    sparse = None
 
     def as_vector_array(self, mu=None):
         if not self.assembled:

@@ -100,6 +100,7 @@ class ProjectedLinearOperator(LinearOperatorInterface):
     '''
 
     type_source = type_range = NumpyVectorArray
+    sparse = False
 
     def __init__(self, operator, source_basis, range_basis=None, product=None, name=None):
         if range_basis is None:

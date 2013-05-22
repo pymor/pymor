@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function
 from numbers import Number
 
 import numpy as np
+from scipy.sparse import issparse
 
 from pymor.la import NumpyVectorArray
 from pymor.operators.interfaces import OperatorInterface, LinearOperatorInterface
@@ -82,6 +83,7 @@ class NumpyLinearOperator(LinearOperatorInterface):
         self.dim_range = matrix.shape[0]
         self.name = name
         self._matrix = matrix
+        self.sparse = issparse(matrix)
 
     def as_vector_array(self):
         return NumpyVectorArray(self._matrix, copy=True)
