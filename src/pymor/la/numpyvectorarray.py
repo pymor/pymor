@@ -128,7 +128,7 @@ class NumpyVectorArray(VectorArray, Communicable):
         return R
 
     def add_mult(self, other, factor=1., o_factor=1., ind=None, o_ind=None):
-        assert other is None or o_factor != 0
+        assert o_factor == 0 or other is not None
         if other is not None:
             assert self._compatible_shape(other, ind, o_ind)
         # TODO Treat special cases more efficiently
@@ -141,7 +141,7 @@ class NumpyVectorArray(VectorArray, Communicable):
             return NumpyVectorArray(A * factor + B * o_factor, copy=False)
 
     def iadd_mult(self, other, factor=1., o_factor=1., ind=None, o_ind=None):
-        assert other is None or o_factor != 0
+        assert o_factor == 0 or other is not None
         if other is not None:
             assert self._compatible_shape(other, ind, o_ind)
         # TODO Treat special cases more efficiently
