@@ -5,7 +5,8 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from PySide import QtOpenGL
+from PySide.QtOpenGL import QGLWidget
+from PySide.QtGui import QSizePolicy
 from glumpy.graphics.vertex_buffer import VertexBuffer
 import OpenGL.GL as gl
 
@@ -56,12 +57,13 @@ void main()
 }
 """
 
-class GlumpyPatchWidget(QtOpenGL.QGLWidget):
+class GlumpyPatchWidget(QGLWidget):
 
     def __init__(self, parent, grid, vmin=None, vmax=None):
         assert grid.reference_element == triangle
         super(GlumpyPatchWidget, self).__init__(parent)
         self.setMinimumSize(300, 300)
+        self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
         self.grid = grid
         self.U = np.zeros(grid.size(2))
         self.vmin = vmin
@@ -70,7 +72,7 @@ class GlumpyPatchWidget(QtOpenGL.QGLWidget):
     def resizeGL(self, w, h):
         gl.glViewport(0, 0, w, h)
         gl.glLoadIdentity()
-        self.set(self.U)
+        self.update()
 
     def upload_buffer(self):
         self.vbo.vertices['color'] = np.hstack((self.U[..., np.newaxis].astype('f4'),
