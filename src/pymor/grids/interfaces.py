@@ -70,7 +70,7 @@ class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplement
         codim-`codim` entity `e` that shares with `e` a subentity of codimension `intersection_codim`.
 
         If `intersection_codim == None`, it is set to
-            `codim` if `codim == neighbour_codim` and to
+            `codim + 1` if `codim == neighbour_codim` and to
             `min(codim, neighbour_codim)` otherwise.
 
         The default implementation is to compute the result from
