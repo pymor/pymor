@@ -406,7 +406,7 @@ class Parametric(object):
                     parameter_map = {}
                     for name, shape in inherits[n].parameter_type.iteritems():
                         if name.startswith('.'):
-                            global_name = '.{}{}'.format(name, shape)
+                            global_name = '.{}{}'.format(n, name)
                         else:
                             if name in global_type and global_type[name] != shape:
                                 raise ValueError('Component dimensions of global name {} do not match'.format(name))
