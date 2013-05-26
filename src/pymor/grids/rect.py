@@ -63,14 +63,14 @@ class RectGrid(AffineGridInterface):
         # calculate subentities -- codim-0
         codim1_subentities = np.empty((ni1, ni0, 4), dtype=np.int32)
         if identify_left_right:
-            codim1_subentities[:, :,  3] = np.arange(ni0 * ni1).reshape((ni0, ni1))
+            codim1_subentities[:, :,  3] = np.arange(ni0 * ni1).reshape((ni1, ni0))
             codim1_subentities[:, :,  1] = codim1_subentities[:, :, 3] + 1
             codim1_subentities[:, -1, 1] = codim1_subentities[:, 0, 3]
         else:
             codim1_subentities[:, :,  3] = (np.arange(ni0)[np.newaxis, :] + (np.arange(ni1) * (ni0 + 1))[:, np.newaxis])
             codim1_subentities[:, :,  1] = codim1_subentities[:, :, 3] + 1
         offset = np.max(codim1_subentities[:, :, [1, 3]]) + 1
-        codim1_subentities[:, :, 0] = (np.arange(ni0 * ni1) + offset).reshape((ni0, ni1))
+        codim1_subentities[:, :, 0] = (np.arange(ni0 * ni1) + offset).reshape((ni1, ni0))
         codim1_subentities[:, :, 2] = codim1_subentities[:, :, 0] + num_intervals[0]
         if identify_bottom_top:
             codim1_subentities[-1, :, 2] = codim1_subentities[0, :, 0]
@@ -79,7 +79,7 @@ class RectGrid(AffineGridInterface):
         # calculate subentities -- codim-1
         codim2_subentities = np.empty((ni1, ni0, 4), dtype=np.int32)
         if identify_left_right:
-            codim2_subentities[:, :,  0] = np.arange(ni0 * ni1).reshape((ni0, ni1))
+            codim2_subentities[:, :,  0] = np.arange(ni0 * ni1).reshape((ni1, ni0))
             codim2_subentities[:, :,  1] = codim2_subentities[:, :, 0] + 1
             codim2_subentities[:, -1, 1] = codim2_subentities[:, 0, 0]
             codim2_subentities[:, :,  3] = codim2_subentities[:, :, 0] + ni0
