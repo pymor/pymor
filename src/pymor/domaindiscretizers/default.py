@@ -7,8 +7,8 @@ from __future__ import absolute_import, division, print_function
 import math as m
 import numpy as np
 
-from pymor.domaindescriptions import RectDomain, LineDomain
-from pymor.grids import RectGrid, TriaGrid, OnedGrid, BoundaryInfoFromIndicators
+from pymor.domaindescriptions import RectDomain, CylindricalDomain, TorusDomain, LineDomain
+from pymor.grids import RectGrid, TriaGrid, OnedGrid, BoundaryInfoFromIndicators, EmptyBoundaryInfo
 from pymor.tools import float_cmp
 
 
@@ -23,6 +23,14 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
         | RectDomain         | TriaGrid  |    X    |
         |                    +-----------+---------+
         |                    | RectGrid  |         |
+        +--------------------+-----------+---------+
+        | CylindricalDomain  | TriaGrid  |   n.a.  |
+        |                    +-----------+---------+
+        |                    | RectGrid  |    X    |
+        +--------------------+-----------+---------+
+        | TorusDomain        | TriaGrid  |   n.a.  |
+        |                    +-----------+---------+
+        |                    | RectGrid  |    X    |
         +--------------------+-----------+---------+
         | LineDomain         | OnedGrid  |    X    |
         +--------------------+-----------+---------+
@@ -70,6 +78,38 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
 
         return grid, bi
 
+    def discretize_CylindricalDomain():
+        x0i = int(m.ceil(domain_description.width * m.sqrt(2) / diameter))
+        x1i = int(m.ceil(domain_description.height * m.sqrt(2) / diameter))
+        assert grid_type == RectGrid
+        grid = RectGrid(domain=domain_description.domain, num_intervals=(x0i, x1i),
+                        identify_left_right=True)
+
+        def indicator_factory(dd, bt):
+            def indicator(X):
+                T = np.logical_and(float_cmp(X[:, 1], dd.domain[1, 1]), dd.top == bt)
+                B = np.logical_and(float_cmp(X[:, 1], dd.domain[0, 1]), dd.bottom == bt)
+                TB = np.logical_or(T, B)
+                return TB
+            return indicator
+
+        indicators = {bt: indicator_factory(domain_description, bt)
+                      for bt in domain_description.boundary_types}
+        bi = BoundaryInfoFromIndicators(grid, indicators)
+
+        return grid, bi
+
+    def discretize_TorusDomain():
+        x0i = int(m.ceil(domain_description.width * m.sqrt(2) / diameter))
+        x1i = int(m.ceil(domain_description.height * m.sqrt(2) / diameter))
+        assert grid_type == RectGrid
+        grid = RectGrid(domain=domain_description.domain, num_intervals=(x0i, x1i),
+                        identify_left_right=True, identify_bottom_top=True)
+
+        bi = EmptyBoundaryInfo(grid)
+
+        return grid, bi
+
     def discretize_LineDomain():
         ni = int(m.ceil(domain_description.width / diameter))
         grid = OnedGrid(domain=domain_description.domain, num_intervals=ni)
@@ -87,13 +127,22 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
 
         return grid, bi
 
-    if not isinstance(domain_description, (RectDomain, LineDomain)):
+    if not isinstance(domain_description, (RectDomain, CylindricalDomain, TorusDomain, LineDomain)):
         raise NotImplementedError('I do not know how to discretize {}'.format(domain_description))
     if isinstance(domain_description, RectDomain):
         grid_type = grid_type or TriaGrid
         if grid_type not in (TriaGrid, RectGrid):
             raise NotImplementedError('I do not know how to discretize {} with {}'.format('RectDomain', grid_type))
         return discretize_RectDomain()
+    elif isinstance(domain_description, (CylindricalDomain, TorusDomain)):
+        grid_type = grid_type or RectGrid
+        if grid_type not in (RectGrid, ):
+            raise NotImplementedError('I do not know how to discretize {} with {}'
+                                      .format(type(DomainDescription), grid_type))
+        if isinstance(domain_description, CylindricalDomain):
+            return discretize_CylindricalDomain()
+        else:
+            return discretize_TorusDomain()
     else:
         grid_type = grid_type or OnedGrid
         if grid_type is not OnedGrid:
