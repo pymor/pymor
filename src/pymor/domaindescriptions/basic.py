@@ -74,6 +74,107 @@ class RectDomain(DomainDescriptionInterface):
         return np.sqrt(self.width ** 2 + self.height ** 2)
 
 
+class CylindricalDomain(DomainDescriptionInterface):
+    '''Describes a cylindrical domain.
+
+    Boundary types can be associated edgewise.
+
+    Parameters
+    ----------
+    domain
+        List of two points defining the lower-left and upper-right corner
+        of the domain. The left and right edge are identified.
+    top
+        The `BoundaryType` of the top edge.
+    bottom
+        The `BoundaryType` of the bottom edge.
+
+    Attributes
+    ----------
+    domain
+    top
+    bottom
+    '''
+
+    def __init__(self, domain=[[0, 0], [1, 1]], top=BoundaryType('dirichlet'), bottom=BoundaryType('dirichlet')):
+        assert domain[0][0] <= domain[1][0]
+        assert domain[0][1] <= domain[1][1]
+        self.boundary_types = set((top, bottom))
+        self.top = top
+        self.bottom = bottom
+        self.domain = np.array(domain)
+
+    @property
+    def lower_left(self):
+        return self.domain[0]
+
+    @property
+    def upper_right(self):
+        return self.domain[1]
+
+    @property
+    def width(self):
+        return self.domain[1, 0] - self.domain[0, 0]
+
+    @property
+    def height(self):
+        return self.domain[1, 1] - self.domain[0, 1]
+
+    @property
+    def volume(self):
+        return self.width * self.height
+
+    @property
+    def diameter(self):
+        return np.sqrt(self.width ** 2 + self.height ** 2)
+
+
+class TorusDomain(DomainDescriptionInterface):
+    '''Describes a domain with the topology of a torus.
+
+    Parameters
+    ----------
+    domain
+        List of two points defining the lower-left and upper-right corner
+        of the domain. The left and right edge are identified, as well as the
+        bottom and top edge
+
+    Attributes
+    ----------
+    domain
+    '''
+
+    def __init__(self, domain=[[0, 0], [1, 1]]):
+        assert domain[0][0] <= domain[1][0]
+        assert domain[0][1] <= domain[1][1]
+        self.boundary_types = set()
+        self.domain = np.array(domain)
+
+    @property
+    def lower_left(self):
+        return self.domain[0]
+
+    @property
+    def upper_right(self):
+        return self.domain[1]
+
+    @property
+    def width(self):
+        return self.domain[1, 0] - self.domain[0, 0]
+
+    @property
+    def height(self):
+        return self.domain[1, 1] - self.domain[0, 1]
+
+    @property
+    def volume(self):
+        return self.width * self.height
+
+    @property
+    def diameter(self):
+        return np.sqrt(self.width ** 2 + self.height ** 2)
+
+
 class LineDomain(DomainDescriptionInterface):
     '''Describes an interval domain.
 
