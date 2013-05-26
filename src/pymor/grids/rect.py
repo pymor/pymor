@@ -39,7 +39,8 @@ class RectGrid(AffineGridInterface):
     dim_outer = 2
     reference_element = square
 
-    def __init__(self, num_intervals=(2, 2), domain=[[0, 0], [1, 1]]):
+    def __init__(self, num_intervals=(2, 2), domain=[[0, 0], [1, 1]],
+                 identify_left_right=False, identify_bottom_top=False):
         super(RectGrid, self).__init__()
         self.num_intervals = num_intervals
         self.domain = np.array(domain)
@@ -55,25 +56,51 @@ class RectGrid(AffineGridInterface):
         self.diameter_max = max(self.x0_diameter, self.x1_diameter)
         self.diameter_min = min(self.x0_diameter, self.x1_diameter)
         n_elements = self.x0_num_intervals * self.x1_num_intervals
+        ni0, ni1 = num_intervals
 
         # TOPOLOGY
-        self.__sizes = (n_elements,
-                        ((self.x0_num_intervals + 1) * self.x1_num_intervals +
-                         (self.x1_num_intervals + 1) * self.x0_num_intervals),
-                        (self.x0_num_intervals + 1) * (self.x1_num_intervals + 1))
 
         # calculate subentities -- codim-0
-        EVL = ((np.arange(self.x1_num_intervals, dtype=np.int32) * (self.x0_num_intervals + 1))[:, np.newaxis] +
-               np.arange(self.x0_num_intervals, dtype=np.int32)).ravel()
-        EVR = EVL + 1
-        EHB = np.arange(n_elements, dtype=np.int32) + (self.x0_num_intervals + 1) * self.x1_num_intervals
-        EHT = EHB + self.x0_num_intervals
-        codim0_subentities = np.array((EHB, EVR, EHT, EVL)).T
+        codim1_subentities = np.empty((ni1, ni0, 4), dtype=np.int32)
+        if identify_left_right:
+            codim1_subentities[:, :,  3] = np.arange(ni0 * ni1).reshape((ni0, ni1))
+            codim1_subentities[:, :,  1] = codim1_subentities[:, :, 3] + 1
+            codim1_subentities[:, -1, 1] = codim1_subentities[:, 0, 3]
+        else:
+            codim1_subentities[:, :,  3] = (np.arange(ni0)[np.newaxis, :] + (np.arange(ni1) * (ni0 + 1))[:, np.newaxis])
+            codim1_subentities[:, :,  1] = codim1_subentities[:, :, 3] + 1
+        offset = np.max(codim1_subentities[:, :, [1, 3]]) + 1
+        codim1_subentities[:, :, 0] = (np.arange(ni0 * ni1) + offset).reshape((ni0, ni1))
+        codim1_subentities[:, :, 2] = codim1_subentities[:, :, 0] + num_intervals[0]
+        if identify_bottom_top:
+            codim1_subentities[-1, :, 2] = codim1_subentities[0, :, 0]
+        codim1_subentities = codim1_subentities.reshape((-1, 4))
 
         # calculate subentities -- codim-1
-        codim1_subentities = (np.tile(EVL[:, np.newaxis], 4) +
-                              np.array([0, 1, self.x0_num_intervals + 2, self.x0_num_intervals + 1], dtype=np.int32))
-        self.__subentities = (codim0_subentities, codim1_subentities)
+        codim2_subentities = np.empty((ni1, ni0, 4), dtype=np.int32)
+        if identify_left_right:
+            codim2_subentities[:, :,  0] = np.arange(ni0 * ni1).reshape((ni0, ni1))
+            codim2_subentities[:, :,  1] = codim2_subentities[:, :, 0] + 1
+            codim2_subentities[:, -1, 1] = codim2_subentities[:, 0, 0]
+            codim2_subentities[:, :,  3] = codim2_subentities[:, :, 0] + ni0
+            codim2_subentities[:, :,  2] = codim2_subentities[:, :, 1] + ni0
+        else:
+            codim2_subentities[:, :,  0] = (np.arange(ni0)[np.newaxis, :] +
+                                            (np.arange(ni1) * (ni0 + 1))[:, np.newaxis])
+            codim2_subentities[:, :,  1] = codim2_subentities[:, :, 0] + 1
+            codim2_subentities[:, :,  3] = codim2_subentities[:, :, 0] + (ni0 + 1)
+            codim2_subentities[:, :,  2] = codim2_subentities[:, :, 0] + (ni0 + 2)
+        if identify_bottom_top:
+            codim2_subentities[-1, :, 3] = codim2_subentities[0, :, 0]
+            codim2_subentities[-1, :, 2] = codim2_subentities[0, :, 1]
+        codim2_subentities = codim2_subentities.reshape((-1, 4))
+
+        self.__subentities = (codim1_subentities, codim2_subentities)
+
+        # calculate number of elements
+        self.__sizes = (n_elements,
+                        np.max(codim1_subentities) + 1,
+                        np.max(codim2_subentities) + 1)
 
         # GEOMETRY
 
@@ -135,4 +162,10 @@ class RectGrid(AffineGridInterface):
     @staticmethod
     def test_instances():
         '''Used for unit testing.'''
-        return [RectGrid((2, 4)), RectGrid((1, 1)), RectGrid((42, 42))]
+        return [RectGrid((2, 4)), RectGrid((1, 1)), RectGrid((42, 42)),
+                RectGrid((2, 4), identify_left_right=True),
+                RectGrid((2, 4), identify_bottom_top=True),
+                RectGrid((2, 4), identify_left_right=True, identify_bottom_top=True),
+                RectGrid((1, 1), identify_left_right=True),
+                RectGrid((1, 1), identify_bottom_top=True),
+                RectGrid((1, 1), identify_left_right=True, identify_bottom_top=True)]
