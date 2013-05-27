@@ -100,7 +100,8 @@ def _setup(**kwargs):
     import Cython.Distutils
     cmdclass = {'build_ext': Cython.Distutils.build_ext}
     from numpy import get_include
-    ext_modules = [Extension("pymor.tools.relations", ["src/pymor/tools/relations.pyx"], include_dirs=[get_include()])]
+    ext_modules = [Extension("pymor.tools.relations", ["src/pymor/tools/relations.pyx"], include_dirs=[get_include()]),
+                   Extension("pymor.tools.inplace", ["src/pymor/tools/inplace.pyx"], include_dirs=[get_include()])]
     kwargs['cmdclass'] = cmdclass
     kwargs['ext_modules'] = ext_modules
 
