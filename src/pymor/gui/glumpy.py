@@ -93,7 +93,6 @@ class GlumpyPatchWidget(QGLWidget):
 
     def initializeGL(self):
         gl.glClearColor(1.0, 1.0, 1.0, 1.0)
-        gl.glShadeModel(gl.GL_SMOOTH)
         self.shaders_program = link_shader_program(compile_vertex_shader(VS))
         g = self.grid
         bb = self.bounding_box
@@ -171,7 +170,6 @@ class ColorBarWidget(QGLWidget):
 
     def initializeGL(self):
         gl.glClearColor(1.0, 1.0, 1.0, 1.0)
-        gl.glShadeModel(gl.GL_SMOOTH)
         self.shaders_program = link_shader_program(compile_vertex_shader(VS))
         gl.glUseProgram(self.shaders_program)
 
