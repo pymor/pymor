@@ -347,7 +347,7 @@ class VectorArray(BasicInterface):
     __radd__ = __add__
 
     def __sub__(self, other):
-        return self.add_mult(other, factor=-1.)
+        return self.add_mult(other, o_factor=-1.)
 
     def __mul__(self, other):
         return self.add_mult(self, factor=other, o_factor=0.)
