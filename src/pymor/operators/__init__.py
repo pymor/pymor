@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.operators.interfaces import OperatorInterface, LinearOperatorInterface
+from pymor.operators.basic import ConstantOperator
 from pymor.operators.numpy import NumpyGenericOperator, NumpyLinearOperator
 from pymor.operators.affine import LinearAffinelyDecomposedOperator
 from pymor.operators.constructions import (ProjectedOperator, ProjectedLinearOperator, project_operator,
