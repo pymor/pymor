@@ -13,7 +13,7 @@ from PySide.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QSlider, QApplicati
 from PySide.QtCore import Qt, QCoreApplication, QTimer
 
 from pymor.la.interfaces import Communicable
-from pymor.gui.glumpy import GlumpyPatchWidget
+from pymor.gui.glumpy import GlumpyPatchWidget, ColorBarWidget
 
 
 def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2):
@@ -27,8 +27,12 @@ def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2):
 
             layout = QVBoxLayout()
 
+            plotBox = QHBoxLayout()
             plot = GlumpyPatchWidget(self, grid, vmin=np.min(U), vmax=np.max(U), bounding_box=bounding_box, codim=codim)
-            layout.addWidget(plot)
+            bar = ColorBarWidget(self, vmin=np.min(U), vmax=np.max(U))
+            plotBox.addWidget(plot)
+            plotBox.addWidget(bar)
+            layout.addLayout(plotBox)
 
             if len(U) == 1:
                 plot.set(U.ravel())

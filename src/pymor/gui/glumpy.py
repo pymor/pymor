@@ -57,6 +57,7 @@ void main()
 }
 """
 
+
 class GlumpyPatchWidget(QGLWidget):
 
     def __init__(self, parent, grid, vmin=None, vmax=None, bounding_box=[[0,0], [1,1]], codim=2):
@@ -80,7 +81,7 @@ class GlumpyPatchWidget(QGLWidget):
         self.update()
 
     def upload_buffer(self):
-        if self.codim ==2:
+        if self.codim == 2:
             self.vbo.vertices['color'] = np.hstack((self.U[..., np.newaxis].astype('f4'),
                                                     np.zeros((self.U.size, 2), dtype='f4'),
                                                     np.ones((self.U.size, 1), dtype='f4')))
@@ -152,3 +153,42 @@ class GlumpyPatchWidget(QGLWidget):
         if hasattr(self, 'vbo'):
             self.upload_buffer()
         self.update()
+
+
+class ColorBarWidget(QGLWidget):
+
+    def __init__(self, parent, vmin=None, vmax=None):
+        super(ColorBarWidget, self).__init__(parent)
+        self.setMinimumSize(20, 300)
+        self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
+        self.vmin = vmin or 0
+        self.vmax = vmax or 1
+
+    def resizeGL(self, w, h):
+        gl.glViewport(0, 0, w, h)
+        gl.glLoadIdentity()
+        self.update()
+
+    def initializeGL(self):
+        gl.glClearColor(1.0, 1.0, 1.0, 1.0)
+        gl.glShadeModel(gl.GL_SMOOTH)
+        self.shaders_program = link_shader_program(compile_vertex_shader(VS))
+        gl.glUseProgram(self.shaders_program)
+
+    def set(self, U):
+        # normalize U
+        U = np.array(U)
+        self.vmin = np.min(U) if self.vmin is None else self.vmin
+        self.vmax = np.max(U) if self.vmax is None else self.vmax
+
+    def paintGL(self):
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+        gl.glBegin(gl.GL_QUAD_STRIP)
+        steps = 40
+        for i in xrange(steps):
+            y = i * (1 / steps)
+            gl.glColor(y, 0, 0)
+            gl.glVertex(-1.0, (1.9*y-0.9), 0.0)
+            gl.glVertex(-0.5, (1.9*y-0.9), 0.0)
+        gl.glEnd()
+        
