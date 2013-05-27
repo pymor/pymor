@@ -16,7 +16,7 @@ from pymor.la.interfaces import Communicable
 from pymor.gui.glumpy import GlumpyPatchWidget
 
 
-def visualize_glumpy_patch(grid, U):
+def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2):
 
     class MainWindow(QWidget):
         def __init__(self, grid, U):
@@ -27,7 +27,7 @@ def visualize_glumpy_patch(grid, U):
 
             layout = QVBoxLayout()
 
-            plot = GlumpyPatchWidget(self, grid, vmin=np.min(U), vmax=np.max(U))
+            plot = GlumpyPatchWidget(self, grid, vmin=np.min(U), vmax=np.max(U), bounding_box=bounding_box, codim=codim)
             layout.addWidget(plot)
 
             if len(U) == 1:
@@ -43,7 +43,7 @@ def visualize_glumpy_patch(grid, U):
                 self.slider.setTickPosition(QSlider.TicksBelow)
                 hlayout.addWidget(self.slider)
 
-                lcd = QLCDNumber(m.ceil(m.log10(len(U) - 1)))
+                lcd = QLCDNumber(m.ceil(m.log10(len(U))))
                 lcd.setDecMode()
                 lcd.setSegmentStyle(QLCDNumber.Flat)
                 hlayout.addWidget(lcd)
