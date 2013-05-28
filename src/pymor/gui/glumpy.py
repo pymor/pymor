@@ -9,6 +9,7 @@ from PySide.QtOpenGL import QGLWidget
 from PySide.QtGui import QSizePolicy
 from glumpy.graphics.vertex_buffer import VertexBuffer
 import OpenGL.GL as gl
+import OpenGL.GLUT as glut
 
 from pymor.la.numpyvectorarray import NumpyVectorArray
 from pymor.grids.referenceelements import triangle, square
@@ -158,7 +159,7 @@ class ColorBarWidget(QGLWidget):
 
     def __init__(self, parent, vmin=None, vmax=None):
         super(ColorBarWidget, self).__init__(parent)
-        self.setMinimumSize(20, 300)
+        self.setMinimumSize(90, 300)
         self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
         self.vmin = vmin or 0
         self.vmax = vmax or 1
@@ -169,6 +170,7 @@ class ColorBarWidget(QGLWidget):
         self.update()
 
     def initializeGL(self):
+        glut.glutInit()
         gl.glClearColor(1.0, 1.0, 1.0, 1.0)
         self.shaders_program = link_shader_program(compile_vertex_shader(VS))
         gl.glUseProgram(self.shaders_program)
@@ -181,6 +183,7 @@ class ColorBarWidget(QGLWidget):
 
     def paintGL(self):
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+
         gl.glBegin(gl.GL_QUAD_STRIP)
         steps = 40
         for i in xrange(steps):
@@ -189,4 +192,26 @@ class ColorBarWidget(QGLWidget):
             gl.glVertex(-1.0, (1.9*y-0.9), 0.0)
             gl.glVertex(-0.5, (1.9*y-0.9), 0.0)
         gl.glEnd()
-        
+        self.drawText()
+
+    def drawText(self):
+        gl.glUseProgram(0)
+        gl.glPushMatrix()
+        gl.glLoadIdentity()
+        gl.glLineWidth(2)
+
+        def print_chars(string):
+            scale = 0.002
+            gl.glScale(scale, 0.5 * scale, scale)
+            gl.glColor3f(0, 0, 0)
+            glut.glutStrokeString(glut.GLUT_STROKE_MONO_ROMAN, string)
+            gl.glLoadIdentity()
+
+        gl.glTranslate(-0.45, -0.95, 0)
+        print_chars(str(self.vmin))
+
+        gl.glTranslate(-0.45, 0.8, 0)
+        print_chars(str(self.vmax))
+
+        gl.glPopMatrix()
+        gl.glUseProgram(self.shaders_program)
