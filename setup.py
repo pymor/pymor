@@ -80,10 +80,18 @@ def _numpy_monkey():
     build_src.build_src.generate_a_pyrex_source = generate_a_pyrex_source
 
 def write_version():
-    revstring = subprocess.check_output(['git', 'describe', '--tags', '--candidates', '20', '--match', '*.*.*']).strip()
     filename = os.path.join(os.path.dirname(__file__), 'src', 'pymor', 'version.py')
-    with open(filename, 'w') as out:
-        out.write('revstring = \'{}\''.format(revstring))
+    try:
+        revstring = subprocess.check_output(['git', 'describe', '--tags', '--candidates', '20', '--match', '*.*.*']).strip()
+        with open(filename, 'w') as out:
+            out.write('revstring = \'{}\''.format(revstring))
+    except:
+        if os.path.exists(filename):
+            loc = {}
+            execfile(filename, loc, loc)
+            revstring = loc['revstring']
+        else:
+            revstring = '0.0.0-0-0'
     return revstring
 
 def _setup(**kwargs):
