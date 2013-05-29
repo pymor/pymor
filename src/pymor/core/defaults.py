@@ -19,6 +19,12 @@ class Defaults(BasicInterface):
     gram_schmidt_check:             check orthogonality of result
     gram_schmidt_check_tol:         tolerance for orthogonality check
 
+    pod_tol:                        tolerance below which eigenvalues are treated as zero
+    pod_symmetrize                  symmetrize the Gram matrix
+    pod_orthonormalize              orthonormalize the result again
+    pod_check                       check orthogonality of result
+    pod_check_tol                   tolerance for orthogonality check
+
     bicgstab_tol:                   tolerance for scipy.sparse.linalg.bicg
     bicgstab_maxiter:               maximal number of iterations
 
@@ -35,6 +41,12 @@ class Defaults(BasicInterface):
     #                                   # needed for treating nonlinear problems
     gram_schmidt_check          = True
     gram_schmidt_check_tol      = 1e-3
+
+    pod_tol                     = 2e-12
+    pod_symmetrize              = False
+    pod_orthonormalize          = False
+    pod_check                   = True
+    pod_check_tol               = 1e-10
 
     bicgstab_tol                = 1e-12
     bicgstab_maxiter            = None
@@ -63,6 +75,12 @@ class Defaults(BasicInterface):
             gram_schmidt_tol              = {0.gram_schmidt_tol}
             gram_schmidt_check            = {0.gram_schmidt_check}
             gram_schmidt_check_tol        = {0.gram_schmidt_check_tol}
+
+            pod_tol                       = {0.pod_tol}
+            pod_symmetrize                = {0.pod_symmetrize}
+            pod_orthonormalize            = {0.pod_orthonormalize}
+            pod_check                     = {0.pod_check}
+            pod_check_tol                 = {0.pod_check_tol}
 
             bicgstab_tol                  = {0.bicgstab_tol}
             bicgstab_maxiter              = {0.bicgstab_maxiter}
