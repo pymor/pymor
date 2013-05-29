@@ -46,6 +46,9 @@ def pod(A, modes=None, product=None, tol=None, symmetrize=None, orthonormalize=F
     EVALS = EVALS[:last_above_tol + 1]
     EVECS = EVECS[:last_above_tol + 1]
 
+    if len(EVALS) == 0:
+        return type(A).empty(A.dim)
+
     POD = A.lincomb(EVECS / np.sqrt(EVALS[:, np.newaxis]))
 
     if orthonormalize:
