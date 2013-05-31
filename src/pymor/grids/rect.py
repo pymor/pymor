@@ -41,6 +41,10 @@ class RectGrid(AffineGridInterface):
 
     def __init__(self, num_intervals=(2, 2), domain=[[0, 0], [1, 1]],
                  identify_left_right=False, identify_bottom_top=False):
+        if identify_left_right:
+            assert num_intervals[0] > 1
+        if identify_bottom_top:
+            assert num_intervals[1] > 1
         super(RectGrid, self).__init__()
         self.num_intervals = num_intervals
         self.domain = np.array(domain)
@@ -162,10 +166,10 @@ class RectGrid(AffineGridInterface):
     @staticmethod
     def test_instances():
         '''Used for unit testing.'''
-        return [RectGrid((2, 4)), RectGrid((1, 1)), RectGrid((42, 42)),
+        return [RectGrid((2, 4)),  RectGrid((1, 1)), RectGrid((42, 42)),
                 RectGrid((2, 4), identify_left_right=True),
                 RectGrid((2, 4), identify_bottom_top=True),
                 RectGrid((2, 4), identify_left_right=True, identify_bottom_top=True),
-                RectGrid((1, 1), identify_left_right=True),
-                RectGrid((1, 1), identify_bottom_top=True),
-                RectGrid((1, 1), identify_left_right=True, identify_bottom_top=True)]
+                RectGrid((2, 1), identify_left_right=True),
+                RectGrid((1, 2), identify_bottom_top=True),
+                RectGrid((2, 2), identify_left_right=True, identify_bottom_top=True)]
