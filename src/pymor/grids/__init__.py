@@ -8,6 +8,7 @@ from pymor.grids.boundaryinfos import EmptyBoundaryInfo, BoundaryInfoFromIndicat
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
 from pymor.grids.oned import OnedGrid
+from pymor.grids.subgrid import SubGrid
 
 #import * from grid should not pull old reference implementations
-__all__ = ['rect', 'tria', 'oned', 'interfaces', 'referenceelements', 'defaultimpl']
+__all__ = ['rect', 'tria', 'oned', 'subgrid', 'interfaces', 'referenceelements', 'defaultimpl']
