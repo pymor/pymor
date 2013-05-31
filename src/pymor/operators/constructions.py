@@ -50,16 +50,16 @@ class ProjectedOperator(OperatorInterface):
 
     type_source = type_range = NumpyVectorArray
 
-    def __init__(self, operator, source_basis, range_basis=None, product=None, name=None):
-        if range_basis is None:
-            range_basis = NumpyMatrix(np.ones((1, 1))) if operator.dim_range == 1 else source_basis
+    def __init__(self, operator, source_basis, range_basis, product=None, name=None):
+        assert source_basis is not None or operator.dim_source == 0
+        assert range_basis is not None
         assert isinstance(operator, OperatorInterface)
-        assert operator.dim_source == source_basis.shape[1]
-        assert operator.dim_range == range_basis.shape[1]
+        assert source_basis is None or operator.dim_source == source_basis.dim
+        assert operator.dim_range == range_basis.dim
         super(ProjectedOperator, self).__init__()
         self.build_parameter_type(operator.parameter_type, local_global=True)
-        self.dim_source = source_basis.shape[0]
-        self.dim_range = range_basis.shape[0]
+        self.dim_source = len(source_basis) if operator.dim_source > 0 else 0
+        self.dim_range = len(range_basis)
         self.name = name
         self.operator = operator
         self.source_basis = source_basis
@@ -67,13 +67,21 @@ class ProjectedOperator(OperatorInterface):
         self.product = product
 
     def apply(self, U, ind=None, mu=None):
-        U_array = U._array if ind is None else U._array[ind]
-        V = self.source_basis.lincomb(U_array)
-        if self.product is None:
-            return NumpyVectorArray(self.operator.apply2(self.range_basis, V, mu=self.map_parameter(mu)).T)
+        if self.source_basis is not None:
+            U_array = U._array if ind is None else U._array[ind]
+            V = self.source_basis.lincomb(U_array)
+            if self.product is None:
+                return NumpyVectorArray(self.operator.apply2(self.range_basis, V, mu=self.map_parameter(mu),
+                                                             pairwise=False).T)
+            else:
+                V = self.operator.apply(V, mu=self.map_parameter(mu))
+                return NumpyVectorArray(self.product.apply2(V, self.range_basis, pairwise=False))
         else:
-            V = self.operator.apply(V, mu=self.map_parameter(mu))
-            return NumpyVectorArray(self.product.apply2(self.range_basis, V).T)
+            V = self.operator.apply(U, ind=ind, mu=self.map_parameter(mu))
+            if self.product is None:
+                return NumpyVectorArray(V.prod(self.range_basis))
+            else:
+                return NumpyVectorArray(self.product.apply2(V, self.range_basis, pairwise=False))
 
 
 class ProjectedLinearOperator(LinearOperatorInterface):
@@ -102,9 +110,7 @@ class ProjectedLinearOperator(LinearOperatorInterface):
     type_source = type_range = NumpyVectorArray
     sparse = False
 
-    def __init__(self, operator, source_basis, range_basis=None, product=None, name=None):
-        if range_basis is None:
-            range_basis = NumpyVectorArray(np.ones((1, 1))) if operator.dim_range == 1 else source_basis
+    def __init__(self, operator, source_basis, range_basis, product=None, name=None):
         assert isinstance(operator, LinearOperatorInterface)
         assert operator.dim_source == source_basis.dim
         assert operator.dim_range == range_basis.dim
@@ -129,7 +135,7 @@ class ProjectedLinearOperator(LinearOperatorInterface):
                                        name='{}_assembled'.format(self.name))
 
 
-def project_operator(operator, source_basis, range_basis=None, product=None, name=None):
+def project_operator(operator, source_basis, range_basis, product=None, name=None):
     '''Project operators to subspaces.
 
     Replaces `Operators` by `ProjectedOperators` and `LinearOperators`
@@ -146,7 +152,7 @@ def project_operator(operator, source_basis, range_basis=None, product=None, nam
     source_basis
         The b_1, ..., b_N as a 2d-array.
     range_basis
-        The c_1, ..., c_M as a 2d-array. If None, `range_basis=source_basis`.
+        The c_1, ..., c_M as a 2d-array.
     product
         Either an 2d-array or a `Operator` representing the scalar product.
         If None, the euclidean product is chosen.
@@ -173,6 +179,24 @@ def project_operator(operator, source_basis, range_basis=None, product=None, nam
         return ProjectedLinearOperator(operator, source_basis, range_basis, product, name)
     else:
         return ProjectedOperator(operator, source_basis, range_basis, product, name)
+
+
+def rb_project_operator(operator, rb, product=None, name=None):
+    if operator.dim_source > 0:
+        assert operator.dim_source == rb.dim
+        source_basis = rb
+    else:
+        source_basis = None
+    if operator.dim_range > 1:
+        assert operator.dim_range == rb.dim
+        range_basis = rb
+    elif operator.dim_range == 1:
+        if operator.type_range is not NumpyVectorArray:
+            raise NotImplementedError
+        range_basis = NumpyVectorArray(np.ones((1,1)))
+    else:
+        raise NotImplementedError
+    return project_operator(operator, source_basis, range_basis, product=product, name=name)
 
 
 class LincombOperator(OperatorInterface):
