@@ -7,4 +7,4 @@ from pymor.operators.basic import ConstantOperator
 from pymor.operators.numpy import NumpyGenericOperator, NumpyLinearOperator
 from pymor.operators.affine import LinearAffinelyDecomposedOperator
 from pymor.operators.constructions import (ProjectedOperator, ProjectedLinearOperator, project_operator,
-                                           LincombOperator, LinearLincombOperator, add_operators)
+                                           rb_project_operator, LincombOperator, LinearLincombOperator, add_operators)
