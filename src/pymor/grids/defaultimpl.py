@@ -98,6 +98,7 @@ class ConformalTopologicalGridDefaultImplementations(Cachable):
 
     @cached
     def _boundaries(self, codim):
+        assert 0 <= codim <= self.dim, 'Invalid codimension'
         if codim == 1:
             SE = self.superentities(1, 0)
             # a codim-1 entity can have at most 2 superentities, and it is a boundary
@@ -112,14 +113,14 @@ class ConformalTopologicalGridDefaultImplementations(Cachable):
                 B0 = np.unique(self.superentities(1, 0)[B1])
                 return B0[1:] if B0[0] == -1 else B0
             else:
-                return np.array([])
+                return np.array([], dtype=np.int32)
         else:
             B1 = self.boundaries(1)
             if B1.size > 0:
                 BC = np.unique(self.subentities(1, codim)[B1])
                 return BC[1:] if BC[0] == -1 else BC
             else:
-                return np.array([])
+                return np.array([], dtype=np.int32)
 
     @cached
     def _boundary_mask(self, codim):
