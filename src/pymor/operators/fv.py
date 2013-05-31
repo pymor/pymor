@@ -6,11 +6,11 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from scipy.sparse import coo_matrix, csr_matrix
+from scipy.sparse import coo_matrix, csr_matrix, diags
 
 from pymor.la import NumpyVectorArray
 from pymor.grids.referenceelements import triangle, line
-from pymor.operators.interfaces import OperatorInterface
+from pymor.operators.interfaces import OperatorInterface, LinearOperatorInterface
 from pymor.operators.numpy import NumpyLinearOperator
 from pymor.tools.inplace import iadd_masked, isub_masked
 
@@ -75,3 +75,34 @@ class NonlinearAdvectionLaxFriedrichs(OperatorInterface):
         R /= grid.volumes(0)
 
         return NumpyVectorArray(R)
+
+
+class L2Product(LinearOperatorInterface):
+    '''Operator representing the L2-product for finite volume functions.
+
+    To evaluate the product use the apply2 method.
+
+    Parameters
+    ----------
+    grid
+        The grid on which to assemble the product.
+    name
+        The name of the product.
+    '''
+
+    type_source = type_range = NumpyVectorArray
+    sparse = True
+
+    def __init__(self, grid, name=None):
+        super(L2Product, self).__init__()
+        self.dim_source = grid.size(0)
+        self.dim_range = self.dim_source
+        self.grid = grid
+        self.name = name
+
+    def _assemble(self, mu=None):
+        assert mu is None
+
+        A = diags(self.grid.volumes(0), 0)
+
+        return NumpyLinearOperator(A)
