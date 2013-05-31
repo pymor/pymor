@@ -10,6 +10,7 @@ from pymor.core.exceptions import ExtensionError
 from pymor.tools import float_cmp_all
 from pymor.la import VectorArray, NumpyVectorArray
 from pymor.la.gram_schmidt import gram_schmidt, numpy_gram_schmidt
+from pymor.la.pod import pod
 
 
 def trivial_basis_extension(basis, U, U_ind=None, copy_basis=True, copy_U=True):
@@ -177,3 +178,49 @@ def numpy_gram_schmidt_basis_extension(basis, U, product=None):
         raise ExtensionError
 
     return NumpyVectorArray(new_basis)
+
+
+def pod_basis_extension(basis, U, count=1, copy_basis=True, product=None):
+    '''Extend basis with the first `count` POD modes of the projection error of U
+
+    Parameters
+    ----------
+    basis
+        The basis to extend. The basis is expected to be orthonormal w.r.t. `product`.
+    U
+        The vectors to which the POD is applied
+    product
+        The scalar product w.r.t. which to orthonormalize; if None, the l2-scalar
+        product on the coefficient vector is used.
+    copy_basis
+        If copy_basis is False, the old basis is extended in-place.
+
+    Returns
+    -------
+    The new basis.
+
+    Raises
+    ------
+    ExtensionError
+        POD produces new vectors. Usually this is the case when U
+        is not linearily independent from the basis. However this can also happen
+        due to rounding errors ...
+    '''
+    if basis is None:
+        return pod(U, modes=count, product=product)
+
+    basis_length = len(basis)
+
+    new_basis = basis.copy() if copy_basis else basis
+
+    if product is None:
+        U_proj_err = U - basis.lincomb(U.prod(basis, pairwise=False))
+    else:
+        U_proj_err = U - basis.lincomb(product.apply2(U, basis, pairwise=False))
+
+    new_basis.append(pod(U_proj_err, modes=count, product=product))
+
+    if len(new_basis) <= basis_length:
+        raise ExtensionError
+
+    return new_basis
