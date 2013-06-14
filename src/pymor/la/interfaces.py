@@ -121,7 +121,7 @@ class VectorArray(BasicInterface):
 
     @abstractmethod
     def remove(self, ind):
-        '''Remove vectors to the array.
+        '''Remove vectors from the array.
 
         Parameters
         ----------
@@ -133,7 +133,7 @@ class VectorArray(BasicInterface):
 
     @abstractmethod
     def replace(self, other, ind=None, o_ind=None, remove_from_other=False):
-        '''Append vectors of the array.
+        '''Replace vectors of the array.
 
         Parameters
         ----------
@@ -154,13 +154,14 @@ class VectorArray(BasicInterface):
 
     @abstractmethod
     def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
-        '''Check vecotrs for equality.
+        '''Check vectors for equality.
 
         Equality of two vectors is defined as in `pymor.tools.float_cmp_all`.
 
         The dimensions of `self` and `other` have to agree. If the length
         of `self` (`ind`) resp. `other` (`o_ind`) is 1, the one specified
-        vector is compared to all vectors of the other summand.
+        vector is compared to all vectors of the other summand. Otherwise
+        the length of ind and o_ind have to agree.
 
         Parameters
         ----------
