@@ -55,6 +55,26 @@ class Communicable(BasicInterface):
 
 
 class VectorArrayInterface(BasicInterface):
+    '''Interface for vector arrays.
+
+    A vector array should be thought of as a list of (possibly high-dimensional) vectors.
+    While the vectors themselves will be inaccessible in general (e.g. because they are
+    managed by external code on large systems), operations on the vectors like addition can
+    be performed via the interface.
+
+    It is moreover assumed that the count of vectors is small enough such that scalar data
+    associated to each vector can be handled on the python side. I.e. methods like `l2_norm()`
+    or `gramian()` will always return numpy arrays.
+
+    An implementation of the interface via numpy arrays is given by `NumpyVectorArray`.
+    In general, it is the implementors decision how memory is allocated internally (e.g.
+    continuous block of memory vs. list of pointers to the individual vectors.) Thus no
+    general assumptions can be made on the costs of operations like appending or removing
+    vectors from the array. As a hint for 'continuous block of memory' implementations,
+    `VectorArray` constructors should provide a `reserve` keyword argument which allows
+    to specify to what sizes the array is assumed to grow.
+    '''
+
     @abstractclassmethod
     def empty(cls, dim, reserve=0):
         '''Create an empty VectorArray
