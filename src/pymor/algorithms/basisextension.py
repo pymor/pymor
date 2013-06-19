@@ -188,7 +188,9 @@ def pod_basis_extension(basis, U, count=1, copy_basis=True, product=None):
     basis
         The basis to extend. The basis is expected to be orthonormal w.r.t. `product`.
     U
-        The vectors to which the POD is applied
+        The vectors to which the POD is applied:
+    count
+        Number of POD modes that are to be appended to the basis.
     product
         The scalar product w.r.t. which to orthonormalize; if None, the l2-scalar
         product on the coefficient vector is used.
