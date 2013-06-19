@@ -332,29 +332,6 @@ class VectorArrayInterface(BasicInterface):
         '''Shorthand for `prod(self, ind=ind, o_ind=ind, pairwise=Flase)`.'''
         return self.prod(self, ind=ind, o_ind=ind, pairwise=False)
 
-    def _compatible_shape(self, other, ind=None, o_ind=None, broadcast=True):
-        if self.dim != other.dim:
-            return False
-        if broadcast:
-            if o_ind == None and len(other) == 1:
-                return True
-            elif o_ind != None and len(o_ind) == 1:
-                return True
-        if ind is None:
-            if len(self) == 1:
-                return True
-            if o_ind is None:
-                return len(self) == len(other)
-            else:
-                return len(self) == len(oind)
-        else:
-            if len(ind) == 1:
-                return True
-            if o_ind is None:
-                return len(ind) == len(other)
-            else:
-                return len(ind) == len(oind)
-
     def __add__(self, other):
         return self.add_mult(other)
 
