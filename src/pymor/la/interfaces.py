@@ -221,9 +221,9 @@ class VectorArrayInterface(BasicInterface):
         other
             A `VectorArray` containing the second summands.
         coeff
-            The coefficient factor with which the vectors in `self` are multiplied
+            The coefficient with which the vectors in `self` are multiplied
         o_coeff
-            The coefficient factor with which the vectors in `other` are multiplied
+            The coefficient with which the vectors in `other` are multiplied
         ind
             If None, the whole array is added. Otherwise an iterable
             of the indices of the vectors to be added.
@@ -296,7 +296,7 @@ class VectorArrayInterface(BasicInterface):
 
             result[i] = ∑ self[j] * coefficients[i,j]
 
-        in case `factors` is of dimension 2, otherwise
+        in case `coefficients` is of dimension 2, otherwise
         `len(result) == 1` and
 
             result[1] = ∑ self[j] * coefficients[j].

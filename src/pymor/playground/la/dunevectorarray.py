@@ -97,46 +97,46 @@ class DuneVectorArray(VectorArrayInterface):
 
         return np.array([vec_almost_equal(v, w) for v, w in izip(A, B)])
 
-    def add_mult(self, other, factor=1., o_factor=1., ind=None, o_ind=None):
-        assert other is not None or o_factor == 0
+    def add_mult(self, other, coeff=1., o_coeff=1., ind=None, o_ind=None):
+        assert other is not None or o_coeff == 0
         if isinstance(other, Number):
             assert other == 0
             other = None
-            o_factor = 0
+            o_coeff = 0
         if other is not None:
             assert self._compatible_shape(other, ind, o_ind)
-        if o_factor == 0:
+        if o_coeff == 0:
             R = self.copy(ind)
             for v in R._vectors:
-                v.scale(factor)
+                v.scale(coeff)
             return R
         else:
             ind = ind or xrange(len(self))
             o_ind = o_ind or xrange(len(other))
-            if factor == 1:
+            if coeff == 1:
                 S1 = [self._vectors[i] for i in ind]
             else:
                 S1 = [DuneVector(self._vectors[i]) for i in ind]
                 for v in S1:
-                    v.scale(factor)
-            if o_factor == 1:
+                    v.scale(coeff)
+            if o_coeff == 1:
                 S2 = [other._vectors[i] for i in o_ind]
             else:
                 S2 = [DuneVector(other._vectors[i]) for i in o_ind]
                 for v in S2:
-                    v.scale(o_factor)
+                    v.scale(o_coeff)
         return DuneVectorArray([v1.add(v2) for v1, v2 in izip(S1, S2)], dim=self._dim)
 
-    def iadd_mult(self, other, factor=1., o_factor=1., ind=None, o_ind=None):
-        assert other is None or o_factor != 0
+    def iadd_mult(self, other, coeff=1., o_coeff=1., ind=None, o_ind=None):
+        assert other is None or o_coeff != 0
         if other is not None:
             assert self._compatible_shape(other, ind, o_ind)
-        if o_factor == 0:
+        if o_coeff == 0:
             ind = ind or xrange(len(self))
             for i in ind:
-                self._vectors[i].scale(factor)
+                self._vectors[i].scale(coeff)
         else:
-            self.replace(self.add_mult(other, factor=factor, o_factor=o_factor, ind=ind, o_ind=o_ind),
+            self.replace(self.add_mult(other, coeff=coeff, o_coeff=o_coeff, ind=ind, o_ind=o_ind),
                          ind=ind, remove_from_other=True)
         return self
 
@@ -155,17 +155,17 @@ class DuneVectorArray(VectorArrayInterface):
                     R[i, j] = v1.dot(v2)
             return R
 
-    def lincomb(self, factors, ind=None):
-        if factors.ndim > 1:
-            if len(factors) > 1:
+    def lincomb(self, coefficients, ind=None):
+        if coefficients.ndim > 1:
+            if len(coefficients) > 1:
                 raise NotImplementedError
             else:
-                factors = factors.ravel()
+                coefficients = coefficients.ravel()
         V = self.copy(ind)._vectors
-        assert len(V) == len(factors)
+        assert len(V) == len(coefficients)
         if len(V) == 0:
             return DuneVectorArray(DuneVector(self.dim))
-        for v, f in izip(V, factors):
+        for v, f in izip(V, coefficients):
             v.scale(f)
         R = V[0]
         for v in V[1:]:

@@ -127,37 +127,37 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
             R = R[np.newaxis, ...]
         return R
 
-    def add_mult(self, other, factor=1., o_factor=1., ind=None, o_ind=None):
-        assert o_factor == 0 or other is not None
+    def add_mult(self, other, coeff=1., o_coeff=1., ind=None, o_ind=None):
+        assert o_coeff == 0 or other is not None
         if other is not None:
             assert self._compatible_shape(other, ind, o_ind)
         # TODO Treat special cases more efficiently
-        if o_factor == 0:
+        if o_coeff == 0:
             A = self._array[:self._len] if ind is None else self._array[ind]
-            return NumpyVectorArray(A * factor, copy=False)
+            return NumpyVectorArray(A * coeff, copy=False)
         else:
             A = self._array[:self._len] if ind is None else self._array[ind]
             B = other._array[:other._len] if o_ind is None else other._array[o_ind]
-            return NumpyVectorArray(A * factor + B * o_factor, copy=False)
+            return NumpyVectorArray(A * coeff + B * o_coeff, copy=False)
 
-    def iadd_mult(self, other, factor=1., o_factor=1., ind=None, o_ind=None):
-        assert o_factor == 0 or other is not None
+    def iadd_mult(self, other, coeff=1., o_coeff=1., ind=None, o_ind=None):
+        assert o_coeff == 0 or other is not None
         if other is not None:
             assert self._compatible_shape(other, ind, o_ind)
         # TODO Treat special cases more efficiently
-        if o_factor == 0:
+        if o_coeff == 0:
             if ind is None:
-                self._array[:self._len] *= factor
+                self._array[:self._len] *= coeff
             else:
-                self._array[ind] *= factor
+                self._array[ind] *= coeff
         else:
             B = other._array[:other._len] if o_ind is None else other._array[o_ind]
             if ind is None:
-                self._array[:self._len] *= factor
-                self._array[:self._len] += B * o_factor
+                self._array[:self._len] *= coeff
+                self._array[:self._len] += B * o_coeff
             else:
-                self._array[ind] *= factor
-                self._array[ind] += B * o_factor
+                self._array[ind] *= coeff
+                self._array[ind] += B * o_coeff
         return self
 
     def prod(self, other, ind=None, o_ind=None, pairwise=True):
@@ -170,15 +170,15 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
             assert self.dim == other.dim
             return A.dot(B.T)
 
-    def lincomb(self, factors, ind=None):
-        assert 1 <= factors.ndim <= 2
-        if factors.ndim == 1:
-            factors = factors[np.newaxis, ...]
+    def lincomb(self, coefficients, ind=None):
+        assert 1 <= coefficients.ndim <= 2
+        if coefficients.ndim == 1:
+            coefficients = coefficients[np.newaxis, ...]
         if ind is None:
-            assert len(self) == factors.shape[1]
+            assert len(self) == coefficients.shape[1]
         else:
-            assert len(ind) == factors.shape[1]
-        return NumpyVectorArray(factors.dot(self._array[:self._len]), copy=False)
+            assert len(ind) == coefficients.shape[1]
+        return NumpyVectorArray(coefficients.dot(self._array[:self._len]), copy=False)
 
     def lp_norm(self, p, ind=None):
         A = self._array[:self._len] if ind is None else self._array[ind]

@@ -69,14 +69,14 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=True,
                 i += 1
                 continue
             else:
-                A.iadd_mult(None, factor=1/norm, o_factor=0, ind=[i])
+                A.iadd_mult(None, coeff=1/norm, o_coeff=0, ind=[i])
 
         for j in xrange(max(offset, i + 1), len(A)):
             if product is None:
                 p = A.prod(A, ind=[j], o_ind=[i], pairwise=True)[0]
             else:
                 p = product.apply2(A, A, V_ind=[j], U_ind=[i], pairwise=True)[0]
-            A.iadd_mult(A, o_factor=-p, ind=[j], o_ind=[i])
+            A.iadd_mult(A, o_coeff=-p, ind=[j], o_ind=[i])
 
         i += 1
 
