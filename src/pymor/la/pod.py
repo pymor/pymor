@@ -11,14 +11,14 @@ from pymor.core import defaults
 from pymor.core.exceptions import AccuracyError
 from pymor.tools import float_cmp_all
 from pymor.operators import OperatorInterface
-from pymor.la import VectorArray
+from pymor.la import VectorArrayInterface
 from pymor.la.gram_schmidt import gram_schmidt
 
 
 def pod(A, modes=None, product=None, tol=None, symmetrize=None, orthonormalize=False,
         check=None, check_tol=None):
 
-    assert isinstance(A, VectorArray)
+    assert isinstance(A, VectorArrayInterface)
     assert len(A) > 0
     assert modes is None or modes <= len(A)
     assert product is None or isinstance(product, OperatorInterface)

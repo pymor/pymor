@@ -10,7 +10,7 @@ import numpy as np
 from numbers import Number
 
 from pymor.core.interfaces import BasicInterface, abstractmethod, abstractproperty
-from pymor.la import VectorArray
+from pymor.la import VectorArrayInterface
 from pymor.tools import Named
 from pymor.parameters import Parametric
 
@@ -101,8 +101,8 @@ class OperatorInterface(BasicInterface, Parametric, Named):
         -------
         A numpy array of all operator evaluations.
         '''
-        assert isinstance(V, VectorArray)
-        assert isinstance(U, VectorArray)
+        assert isinstance(V, VectorArrayInterface)
+        assert isinstance(U, VectorArrayInterface)
         if pairwise:
             lu = len(U_ind) if U_ind is not None else len(U)
             lv = len(V_ind) if V_ind is not None else len(V)

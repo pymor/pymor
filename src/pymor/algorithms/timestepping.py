@@ -4,7 +4,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymor.la import VectorArray
+from pymor.la import VectorArrayInterface
 from pymor.operators import OperatorInterface, LinearOperatorInterface
 from pymor.operators.solvers import solve_linear
 
@@ -16,7 +16,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu_A=None, mu_F=None, solver=None):
     if not A_time_dep:
         A = A.assemble(mu_A)
 
-    assert isinstance(F, (LinearOperatorInterface, VectorArray))
+    assert isinstance(F, (LinearOperatorInterface, VectorArrayInterface))
     if isinstance(F, LinearOperatorInterface):
         assert F.dim_range == 1
         assert F.dim_source == A.dim_source
@@ -33,7 +33,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu_A=None, mu_F=None, solver=None):
         assert M.dim_source == M.dim_range == A.dim_source
         M = M.assemble()
 
-    assert isinstance(U0, VectorArray)
+    assert isinstance(U0, VectorArrayInterface)
     assert len(U0) == 1
     assert U0.dim == A.dim_source
 
@@ -70,7 +70,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu_A=None, mu_F=None):
     assert A.dim_source == A.dim_range
     A_time_dep = A.parameter_type and '_t' in A.parameter_type
 
-    assert isinstance(F, (LinearOperatorInterface, VectorArray))
+    assert isinstance(F, (LinearOperatorInterface, VectorArrayInterface))
     if isinstance(F, LinearOperatorInterface):
         assert F.dim_range == 1
         assert F.dim_source == A.dim_source
@@ -83,7 +83,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu_A=None, mu_F=None):
         F_ass = F
         F_time_dep = False
 
-    assert isinstance(U0, VectorArray)
+    assert isinstance(U0, VectorArrayInterface)
     assert len(U0) == 1
     assert U0.dim == A.dim_source
 

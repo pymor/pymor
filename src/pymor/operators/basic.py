@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 from numbers import Number
 
-from pymor.la.interfaces import VectorArray
+from pymor.la.interfaces import VectorArrayInterface
 from pymor.la.numpyvectorarray import NumpyVectorArray
 from pymor.operators.interfaces import OperatorInterface
 
@@ -18,7 +18,7 @@ class ConstantOperator(OperatorInterface):
     dim_source = 0
 
     def __init__(self, value, name=None):
-        assert isinstance(value, VectorArray)
+        assert isinstance(value, VectorArrayInterface)
         assert len(value) == 1
 
         super(ConstantOperator, self).__init__()

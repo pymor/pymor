@@ -54,7 +54,7 @@ class Communicable(BasicInterface):
             raise CommunicationError
 
 
-class VectorArray(BasicInterface):
+class VectorArrayInterface(BasicInterface):
     @abstractclassmethod
     def empty(cls, dim, reserve=0):
         '''Create an empty VectorArray

@@ -11,11 +11,11 @@ import math as m
 
 import numpy as np
 
-from pymor.la.interfaces import VectorArray
+from pymor.la.interfaces import VectorArrayInterface
 from pymor.core import defaults
 from dunelinearellipticcg2dsgrid import DuneVector
 
-class DuneVectorArray(VectorArray):
+class DuneVectorArray(VectorArrayInterface):
 
     def empty(cls, dim, reserve=0):
         return cls([], dim=dim)

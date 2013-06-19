@@ -12,11 +12,11 @@ from scipy.sparse import issparse
 
 from pymor.core.interfaces import BasicInterface, abstractmethod, abstractproperty
 from pymor.core.exceptions import CommunicationError
-from pymor.la.interfaces import VectorArray, Communicable
+from pymor.la.interfaces import VectorArrayInterface, Communicable
 from pymor.tools import float_cmp
 
 
-class NumpyVectorArray(VectorArray, Communicable):
+class NumpyVectorArray(VectorArrayInterface, Communicable):
 
     @classmethod
     def empty(cls, dim, reserve=0):
