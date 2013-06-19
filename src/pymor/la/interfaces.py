@@ -73,6 +73,16 @@ class VectorArrayInterface(BasicInterface):
     vectors from the array. As a hint for 'continuous block of memory' implementations,
     `VectorArray` constructors should provide a `reserve` keyword argument which allows
     to specify to what sizes the array is assumed to grow.
+
+    Most methods provide `ind` and/or `o_ind` arguments which are used to specify on which
+    vectors the method is supposed to operate. If `ind` (`o_ind`) is `None` the whole array
+    is selected. Otherwise, ::
+
+        ind = numpy.array(ind, copy=False, dtype=np.int)
+
+    is called to convert the argument to a numpy array. The resulting array has to be
+    one-dimensional. Its entries will be used as the indices of the vectors which are
+    selected. One index can be repeated several times.
     '''
 
     @abstractclassmethod
@@ -112,8 +122,7 @@ class VectorArrayInterface(BasicInterface):
         Parameters
         ----------
         ind
-            If None, a copy of the whole array is returned. Otherwise an
-            iterable of the indices of the vectors that are to be copied.
+            Indices of the vectors that are to be copied (see class documentation).
 
         Returns
         -------
@@ -130,8 +139,7 @@ class VectorArrayInterface(BasicInterface):
         other
             A `VectorArray` containing the vectors to be appended.
         o_ind
-            If None, the whole array is appended. Otherwise an iterable
-            of the indices of the vectors that are to be appended.
+            Indices of the vectors that are to be appended (see class documentation).
         remove_from_other
             If `True`, the appended vectors are removed from `other`.
             For list-like implementations of `VectorArray` this can be
@@ -146,8 +154,7 @@ class VectorArrayInterface(BasicInterface):
         Parameters
         ----------
         ind
-            If None, the whole array is emptied. Otherwise an iterable
-            of the indices of the vectors that are to be removed.
+            Indices of the vectors that are to be removed (see class documentation).
         '''
         pass
 
@@ -160,11 +167,10 @@ class VectorArrayInterface(BasicInterface):
         other
             A `VectorArray` containing the replacement vectors.
         ind
-            If None, the whole array is replaced. Otherwise an iterable
-            of the indices of the vectors that are to be replaced.
+            Indices of the vectors that are to be replaced (see class documentation).
         o_ind
-            An iterable of the indices of the vectors that are to be
-            taken from `other`. If None, the whole array is selected.
+            Indices of the replacement vectors (see class documentation).
+            `len(ind)` has to agree with `len(o_ind)`.
         remove_from_other
             If `True`, the new vectors are removed from `other?.
             For list-like implementations of `VectorArray` this can be
@@ -188,11 +194,9 @@ class VectorArrayInterface(BasicInterface):
         other
             A `VectorArray` containing the vectors to compare with.
         ind
-            If None, the whole array is compared. Otherwise an iterable
-            of the indices of the vectors that are to be compared.
+            Indices of the vectors that are to be compared (see class documentation).
         o_ind
-            An iterable of the indices of the vectors that are to be
-            taken from `other`. If None, the whole array is selected.
+            Indices of the vectors in `other` that are to be compared (see class documentation).
         rtol
             See `pymor.tools.float_cmp_all`
         atol
@@ -225,11 +229,9 @@ class VectorArrayInterface(BasicInterface):
         o_coeff
             The coefficient with which the vectors in `other` are multiplied
         ind
-            If None, the whole array is added. Otherwise an iterable
-            of the indices of the vectors to be added.
+            Indices of the vectors that are to be added (see class documentation).
         o_ind
-            If None, the whole `other` array is added. Otherwise an iterable
-            of the indices of the vectors to be added.
+            Indices of the vectors in `other` that are to be added (see class documentation).
 
         Returns
         -------
@@ -251,13 +253,11 @@ class VectorArrayInterface(BasicInterface):
         other
             A `VectorArray` containing the second factors.
         ind
-            If None, all vectors in `self` are taken as factors.
-            Otherwise an iterable of the indices of the vectors
-            in `self` whose scalar products are to be taken.
+            Indices of the vectors whose scalar products are to be taken
+            (see class documentation).
         o_ind
-            If None, all vectors in `other` are taken as factors.
-            Otherwise an iterable of the indices in of the vectors
-            in `other` whose scalar products are to be taken.
+            Indices of the vectors in `other` whose scalar products are to be
+            taken (see class documentation).
         pairwise
             See return value documentation.
 
@@ -286,9 +286,7 @@ class VectorArrayInterface(BasicInterface):
             coeffcients. `coefficients.shape[-1]` has to agree with
             `len(self)`.
         ind
-            If None, all vectors in `self` are taken for the linear
-            combination. Otherwise an iterable of the indices of
-            the vectors in `self` which are to be used.
+            Indices of the vectors which are linear combined (see class documentation).
 
         Returns
         -------
@@ -313,9 +311,7 @@ class VectorArrayInterface(BasicInterface):
             If `p == 0`, the sup-norm is computed, otherwise the
             usual l^p norm.
         ind
-            If None, the norms of all vectors in `self` are computed.
-            Otherwise an iterable of the indices of the vectors in
-            `self` whose norms are to be computed.
+            Indices of the vectors whose norm is to be calculated (see class documentation).
 
         Returns
         -------
