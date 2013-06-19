@@ -205,12 +205,12 @@ class VectorArrayInterface(BasicInterface):
         pass
 
     @abstractmethod
-    def add_mult(self, other, factor=1., o_factor=1., ind=None, o_ind=None):
+    def add_mult(self, other, coeff=1., o_coeff=1., ind=None, o_ind=None):
         '''Linear combination of two `VectorArray` instances.
 
         This method forms the sum ::
 
-            self[ind] * factor + other[ind] * factor
+            self[ind] * coeff + other[ind] * o_coeff
 
         The dimensions of `self` and `other` have to agree. If the length
         of `self` (`ind`) resp. `other` (`o_ind`) is 1, the one specified
@@ -220,10 +220,10 @@ class VectorArrayInterface(BasicInterface):
         ----------
         other
             A `VectorArray` containing the second summands.
-        factor
-            The factor with which the vectors in `self` are multiplied
-        o_factor
-            The factor with which the vectors in `other` are multiplied
+        coeff
+            The coefficient factor with which the vectors in `self` are multiplied
+        o_coeff
+            The coefficient factor with which the vectors in `other` are multiplied
         ind
             If None, the whole array is added. Otherwise an iterable
             of the indices of the vectors to be added.
@@ -238,7 +238,7 @@ class VectorArrayInterface(BasicInterface):
         pass
 
     @abstractmethod
-    def iadd_mult(self, other, factor=1., o_factor=1., ind=None, o_ind=None):
+    def iadd_mult(self, other, coeff=1., o_coeff=1., ind=None, o_ind=None):
         '''In-place version of `add_mult`.'''
         pass
 
@@ -276,30 +276,30 @@ class VectorArrayInterface(BasicInterface):
         pass
 
     @abstractmethod
-    def lincomb(self, factors, ind=None):
+    def lincomb(self, coefficients, ind=None):
         '''Returns linear combinations of the vectors contained in the array.
 
         Parameters
         ----------
-        factors
+        coefficients
             A numpy array of dimension 1 or 2 containing the linear
-            coeffcients. `factors.shape[-1]` has to agree with
+            coeffcients. `coefficients.shape[-1]` has to agree with
             `len(self)`.
         ind
             If None, all vectors in `self` are taken for the linear
-            combination. Otherwise an iterable of the indices in of
+            combination. Otherwise an iterable of the indices of
             the vectors in `self` which are to be used.
 
         Returns
         -------
         A `VectorArray` `result` such that ::
 
-            result[i] = ∑ self[j] * factors[i,j]
+            result[i] = ∑ self[j] * coefficients[i,j]
 
         in case `factors` is of dimension 2, otherwise
         `len(result) == 1` and
 
-            result[1] = ∑ self[j] * factors[j].
+            result[1] = ∑ self[j] * coefficients[j].
         '''
         pass
 
@@ -313,8 +313,8 @@ class VectorArrayInterface(BasicInterface):
             If `p == 0`, the sup-norm is computed, otherwise the
             usual l^p norm.
         ind
-            If None, tho norms of all vectors in `self` are computed.
-            Otherwise an iterable of the indices in of the vectors in
+            If None, the norms of all vectors in `self` are computed.
+            Otherwise an iterable of the indices of the vectors in
             `self` whose norms are to be computed.
 
         Returns
@@ -368,13 +368,13 @@ class VectorArrayInterface(BasicInterface):
     __radd__ = __add__
 
     def __sub__(self, other):
-        return self.add_mult(other, o_factor=-1.)
+        return self.add_mult(other, o_coeff=-1.)
 
     def __mul__(self, other):
-        return self.add_mult(self, factor=other, o_factor=0.)
+        return self.add_mult(self, coeff=other, o_coeff=0.)
 
     def __imul__(self, other):
-        return self.iadd_mult(self, factor=other, o_factor=0.)
+        return self.iadd_mult(self, coeff=other, o_coeff=0.)
 
     def __neg__(self):
-        return self.add_mult(None, factor=-1, o_factor=0)
+        return self.add_mult(None, coeff=-1, o_coeff=0)
