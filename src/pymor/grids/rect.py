@@ -16,6 +16,10 @@ class RectGrid(AffineGridInterface):
 
     The global face, edge and vertex indices are given as follows
 
+                 x1
+                 ^
+                 |
+
                  6--10---7--11---8
                  |       |       |
                  3   2   4   3   5
@@ -24,7 +28,7 @@ class RectGrid(AffineGridInterface):
                  |       |       |
                  0   0   1   1   2
                  |       |       |
-                 0---6---1---7---2
+                 0---6---1---7---2  --> x0
 
     Parameters
     ----------
@@ -63,6 +67,12 @@ class RectGrid(AffineGridInterface):
         ni0, ni1 = num_intervals
 
         # TOPOLOGY
+
+        # mapping of structured indices to global codim-0 indices
+        self._structured_to_global = np.arange(ni0 * ni1, dtype=np.int32).reshape((ni1, ni0)).swapaxes(0, 1)
+        self._global_to_structured = np.empty((ni0 * ni1, 2), dtype=np.int32)
+        self._global_to_structured[:, 0] = np.tile(np.arange(ni0, dtype=np.int32), ni1)
+        self._global_to_structured[:, 1] = np.repeat(np.arange(ni1, dtype=np.int32), ni0)
 
         # calculate subentities -- codim-0
         codim1_subentities = np.empty((ni1, ni0, 4), dtype=np.int32)
@@ -147,6 +157,22 @@ class RectGrid(AffineGridInterface):
             return self.__embeddings
         else:
             return super(RectGrid, self).embeddings(codim)
+
+    def structured_to_global(self):
+        '''Returns an array which maps structured indices to global codim-0 indices.
+
+        In other words `structed_to_global()[i, j]` is the global index of the i-th in
+        x0-direction and j-th in x1-direction codim-0 entity of the grid.
+        '''
+        return self._structured_to_global
+
+    def global_to_structured(self):
+        '''Returns an array which maps global codim-0 indices to structured indices.
+
+        I.e. if `GTS = global_to_structured()` and `STG = structured_to_global()`, then
+        `STG[GTS[:, 0], GTS[:, 1]] == numpy.arange(size(0))`.
+        '''
+        return self._global_to_structured
 
     def visualize(self, dofs):
         import matplotlib.pyplot as plt
