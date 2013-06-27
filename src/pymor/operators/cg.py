@@ -108,6 +108,18 @@ class L2ProductP1(LinearOperatorInterface):
     ----------
     grid
         The grid on which to assemble the product.
+    boundary_info
+        BoundaryInfo associating boundary types to boundary entities.
+    dirichlet_clear_rows
+        If True, set rows of the system matrix corresponding to Dirichlet boundary
+        DOFs to zero. (Useful when used as mass matrix in time-stepping schemes.)
+    dirichlet_clear_columns
+        If True, set columns of the system matrix corresponding to Dirichlet boundary
+        DOFs to zero (to obtain a symmetric matrix).
+    dirichlet_clear_diag
+        If True, also set diagonal entries corresponding to Dirichlet boundary DOFs to
+        zero (e.g. for affine decomposition). Otherwise, if either dirichlet_clear_rows or
+        dirichlet_clear_columns is true, they are set to one.
     name
         The name of the product.
     '''
@@ -115,17 +127,23 @@ class L2ProductP1(LinearOperatorInterface):
     type_source = type_range = NumpyVectorArray
     sparse = True
 
-    def __init__(self, grid, name=None):
+    def __init__(self, grid, boundary_info, dirichlet_clear_rows=True, dirichlet_clear_columns=False,
+                 dirichlet_clear_diag=False, name=None):
         assert grid.reference_element in (line, triangle)
         super(L2ProductP1, self).__init__()
         self.dim_source = grid.size(grid.dim)
         self.dim_range = self.dim_source
         self.grid = grid
+        self.boundary_info = boundary_info
+        self.dirichlet_clear_rows = dirichlet_clear_rows
+        self.dirichlet_clear_columns = dirichlet_clear_columns
+        self.dirichlet_clear_diag = dirichlet_clear_diag
         self.name = name
 
     def _assemble(self, mu=None):
         assert mu is None
         g = self.grid
+        bi = self.boundary_info
 
         # our shape functions
         if g.dim == 2:
@@ -150,6 +168,17 @@ class L2ProductP1(LinearOperatorInterface):
         self.logger.info('Determine global dofs ...')
         SF_I0 = np.repeat(g.subentities(0, g.dim), g.dim + 1, axis=1).ravel()
         SF_I1 = np.tile(g.subentities(0, g.dim), [1, g.dim + 1]).ravel()
+
+        self.logger.info('Boundary treatment ...')
+        if bi.has_dirichlet:
+            if self.dirichlet_clear_rows:
+                SF_INTS = np.where(bi.dirichlet_mask(g.dim)[SF_I0], 0, SF_INTS)
+            if self.dirichlet_clear_columns:
+                SF_INTS = np.where(bi.dirichlet_mask(g.dim)[SF_I1], 0, SF_INTS)
+            if not self.dirichlet_clear_diag and (self.dirichlet_clear_rows or self.dirichlet_clear_columns):
+                SF_INTS = np.hstack((SF_INTS, np.ones(bi.dirichlet_boundaries(g.dim).size)))
+                SF_I0 = np.hstack((SF_I0, bi.dirichlet_boundaries(g.dim)))
+                SF_I1 = np.hstack((SF_I1, bi.dirichlet_boundaries(g.dim)))
 
         self.logger.info('Assemble system matrix ...')
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
@@ -184,7 +213,7 @@ class DiffusionOperatorP1(LinearOperatorInterface):
         be set to zero.
     dirichlet_clear_diag
         If True, also set diagonal entries corresponding to Dirichlet boundary DOFs to
-        zero (e.g. for affine decomposition).
+        zero (e.g. for affine decomposition). Otherwise they are set to one.
     name
         Name of the operator.
     '''

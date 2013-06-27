@@ -105,7 +105,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
 
     discretization.h1_product = Operator(grid, boundary_info)
     discretization.h1_norm = induced_norm(discretization.h1_product)
-    discretization.l2_product = L2ProductP1(grid)
+    discretization.l2_product = L2ProductP1(grid, boundary_info)
 
     if hasattr(p, 'parameter_space'):
         discretization.parameter_space = p.parameter_space
