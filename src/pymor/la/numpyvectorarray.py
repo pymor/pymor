@@ -56,7 +56,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
         return self._array.shape[1]
 
     def copy(self, ind=None):
-        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int)
+        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int).ravel()
 
         if ind is None:
             return NumpyVectorArray(self._array[:self._len], copy=True)
@@ -67,7 +67,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
             return C
 
     def append(self, other, o_ind=None, remove_from_other=False):
-        o_ind = None if o_ind is None else np.array(o_ind, copy=False, ndmin=1, dtype=np.int)
+        o_ind = None if o_ind is None else np.array(o_ind, copy=False, ndmin=1, dtype=np.int).ravel()
 
         if o_ind == None:
             len_other = other._len
@@ -92,7 +92,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
                 other._len -= len(o_ind)
 
     def remove(self, ind):
-        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int)
+        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int).ravel()
 
         if ind == None:
             self._array = np.zeros((0, self.dim))
@@ -104,8 +104,8 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
             self._array = self._array.copy()
 
     def replace(self, other, ind=None, o_ind=None, remove_from_other=False):
-        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int)
-        o_ind = None if o_ind is None else np.array(o_ind, copy=False, ndmin=1, dtype=np.int)
+        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int).ravel()
+        o_ind = None if o_ind is None else np.array(o_ind, copy=False, ndmin=1, dtype=np.int).ravel()
         assert self._compatible_shape(other, ind, o_ind)
 
         if ind is None:
@@ -132,8 +132,8 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
                 other._array = self._array.copy()
 
     def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
-        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int)
-        o_ind = None if o_ind is None else np.array(o_ind, copy=False, ndmin=1, dtype=np.int)
+        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int).ravel()
+        o_ind = None if o_ind is None else np.array(o_ind, copy=False, ndmin=1, dtype=np.int).ravel()
         assert self._compatible_shape(other, ind, o_ind)
 
         A = self._array[:self._len] if ind is None else self._array[ind]
@@ -144,7 +144,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
         return R
 
     def scal(self, alpha, ind=None):
-        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int)
+        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int).ravel()
 
         if ind is None:
             self._array[:self._len] *= alpha
@@ -152,8 +152,8 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
             self._array[ind] *= alpha
 
     def axpy(self, alpha, x, ind=None, x_ind=None):
-        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int)
-        x_ind = None if x_ind is None else np.array(x_ind, copy=False, ndmin=1, dtype=np.int)
+        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int).ravel()
+        x_ind = None if x_ind is None else np.array(x_ind, copy=False, ndmin=1, dtype=np.int).ravel()
         assert self._compatible_shape(x, ind, x_ind)
 
         B = x._array[:x._len] if x_ind is None else x._array[x_ind]
@@ -180,8 +180,8 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
                 self._array[ind] += B * alpha
 
     def dot(self, other, pairwise, ind=None, o_ind=None):
-        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int)
-        o_ind = None if o_ind is None else np.array(o_ind, copy=False, ndmin=1, dtype=np.int)
+        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int).ravel()
+        o_ind = None if o_ind is None else np.array(o_ind, copy=False, ndmin=1, dtype=np.int).ravel()
 
         A = self._array[:self._len] if ind is None else self._array[ind]
         B = other._array[:other._len] if o_ind is None else other._array[o_ind]
@@ -193,7 +193,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
             return A.dot(B.T)
 
     def lincomb(self, coefficients, ind=None):
-        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int)
+        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int).ravel()
         assert 1 <= coefficients.ndim <= 2
 
         if coefficients.ndim == 1:
@@ -205,25 +205,25 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
         return NumpyVectorArray(coefficients.dot(self._array[:self._len]), copy=False)
 
     def l1_norm(self, p, ind=None):
-        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int)
+        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int).ravel()
 
         A = self._array[:self._len] if ind is None else self._array[ind]
         return np.sum(np.abs(A), axis=1)
 
     def l2_norm(self, p, ind=None):
-        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int)
+        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int).ravel()
 
         A = self._array[:self._len] if ind is None else self._array[ind]
         return np.sum(np.power(A, 2), axis=1)**(1/2)
 
     def components(self, component_indices, ind=None):
-        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int)
+        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int).ravel()
 
         A = self._array[:self._len] if ind is None else self._array[ind]
         return A[:, component_indices]
 
     def amax(self, ind=None):
-        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int)
+        ind = None if ind is None else np.array(ind, copy=False, ndmin=1, dtype=np.int).ravel()
 
         A = self._array[:self._len] if ind is None else self._array[ind]
         A = np.abs(A)
