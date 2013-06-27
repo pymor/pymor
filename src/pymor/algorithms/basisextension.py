@@ -216,7 +216,7 @@ def pod_basis_extension(basis, U, count=1, copy_basis=True, product=None):
     new_basis = basis.copy() if copy_basis else basis
 
     if product is None:
-        U_proj_err = U - basis.lincomb(U.prod(basis, pairwise=False))
+        U_proj_err = U - basis.lincomb(U.dot(basis, pairwise=False))
     else:
         U_proj_err = U - basis.lincomb(product.apply2(U, basis, pairwise=False))
 

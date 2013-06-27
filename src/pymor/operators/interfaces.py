@@ -110,7 +110,7 @@ class OperatorInterface(BasicInterface, Parametric, Named):
         AU = self.apply(U, ind=U_ind, mu=mu)
         if product is not None:
             AU = product.apply(AU)
-        return V.prod(AU, ind=V_ind, pairwise=pairwise)
+        return V.dot(AU, ind=V_ind, pairwise=pairwise)
 
     def __add__(self, other):
         if isinstance(other, Number):

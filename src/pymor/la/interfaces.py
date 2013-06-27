@@ -102,6 +102,24 @@ class VectorArrayInterface(BasicInterface):
         '''
         pass
 
+    @abstractclassmethod
+    def zeros(cls, dim, count=1):
+        '''Create an VectorArray of null vectors
+
+        Parameters
+        ----------
+        dim
+            The dimension of the array.
+        count
+            The number of vectors.
+
+        Returns
+        -------
+        An `VectorArray` containing `count` vectors of dimension `dim`
+        whith each component zero.
+        '''
+        pass
+
     @abstractmethod
     def __len__(self):
         '''The number of vectors in the array.'''
@@ -182,7 +200,7 @@ class VectorArrayInterface(BasicInterface):
     def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
         '''Check vectors for equality.
 
-        Equality of two vectors is defined as in `pymor.tools.float_cmp_all`.
+        Equality of two vectors should be defined as in `pymor.tools.float_cmp_all`.
 
         The dimensions of `self` and `other` have to agree. If the length
         of `self` (`ind`) resp. `other` (`o_ind`) is 1, the one specified
@@ -204,62 +222,68 @@ class VectorArrayInterface(BasicInterface):
 
         Returns
         -------
-        Numpy array of the truth values of the comparinson.
+        Numpy array of the truth values of the comparison.
         '''
         pass
 
     @abstractmethod
-    def add_mult(self, other, coeff=1., o_coeff=1., ind=None, o_ind=None):
-        '''Linear combination of two `VectorArray` instances.
+    def scal(self, alpha, ind=None):
+        '''BLAS SCAL operation (in-place sclar multiplication).
 
-        This method forms the sum ::
+        This method calculates ::
 
-            self[ind] * coeff + other[ind] * o_coeff
-
-        The dimensions of `self` and `other` have to agree. If the length
-        of `self` (`ind`) resp. `other` (`o_ind`) is 1, the one specified
-        vector is added to all vectors of the other summand.
+            self[ind] = alpha*self[ind]
 
         Parameters
         ----------
-        other
-            A `VectorArray` containing the second summands.
-        coeff
-            The coefficient with which the vectors in `self` are multiplied
-        o_coeff
-            The coefficient with which the vectors in `other` are multiplied
+        alpha
+            The scalar coefficient with which the vectors in `self` are multiplied
         ind
-            Indices of the vectors that are to be added (see class documentation).
-        o_ind
-            Indices of the vectors in `other` that are to be added (see class documentation).
-
-        Returns
-        -------
-        A `VectorArray` of the linear combinations.
+            Indices of the vectors of `self` that are to be scaled (see class documentation).
         '''
         pass
 
     @abstractmethod
-    def iadd_mult(self, other, coeff=1., o_coeff=1., ind=None, o_ind=None):
-        '''In-place version of `add_mult`.'''
+    def axpy(self, alpha, x, ind=None, x_ind=None):
+        '''BLAS AXPY operation.
+
+        This method forms the sum ::
+
+            self[ind] = alpha*x[o_ind] + self[ind]
+
+        If the length of `x` (`o_ind`) is 1, the one specified vector is added to all
+        vectors of `self` specified by `ind`. Otherwise, the lengths of `self` (`ind`) and
+        `x` (`x_ind`) have to be equal. The dimensions of `self` and `x` have to agree.
+
+        Parameters
+        ----------
+        alpha
+            The scalar coefficient with which the vectors in `x` are multiplied
+        x
+            A `VectorArray` containing the x-summands.
+        ind
+            Indices of the vectors of `self` that are to be added (see class documentation).
+        x_ind
+            Indices of the vectors in `x` that are to be added (see class documentation).
+        '''
         pass
 
     @abstractmethod
-    def prod(self, other, ind=None, o_ind=None, pairwise=True):
+    def dot(self, other, pairwise, ind=None, o_ind=None):
         '''Returns the scalar products between `VectorArray` elements.
 
         Parameters
         ----------
         other
             A `VectorArray` containing the second factors.
+        pairwise
+            See return value documentation.
         ind
             Indices of the vectors whose scalar products are to be taken
             (see class documentation).
         o_ind
             Indices of the vectors in `other` whose scalar products are to be
             taken (see class documentation).
-        pairwise
-            See return value documentation.
 
         Returns
         -------
@@ -302,14 +326,11 @@ class VectorArrayInterface(BasicInterface):
         pass
 
     @abstractmethod
-    def lp_norm(self, p, ind=None):
-        '''The l^p norms of the vectors contained in the array.
+    def l1_norm(self, ind=None):
+        '''The l1-norms of the vectors contained in the array.
 
         Parameters
         ----------
-        p
-            If `p == 0`, the sup-norm is computed, otherwise the
-            usual l^p norm.
         ind
             Indices of the vectors whose norm is to be calculated (see class documentation).
 
@@ -320,34 +341,109 @@ class VectorArrayInterface(BasicInterface):
         '''
         pass
 
+    @abstractmethod
     def l2_norm(self, ind=None):
-        '''Shorthand for `lp_norm(2, ind)`.'''
-        return self.lp_norm(2, ind)
+        '''The l2-norms of the vectors contained in the array.
+
+        Parameters
+        ----------
+        ind
+            Indices of the vectors whose norm is to be calculated (see class documentation).
+
+        Returns
+        -------
+        A numpy array `result` such that `result[i]` contains the norm
+        of `self[ind][i]`.
+        '''
+        pass
 
     def sup_norm(self, ind=None):
-        '''Shorthand for `lp_norm(0, ind)`.'''
-        return self.lp_norm(0, ind)
+        '''The l-infintiy--norms of the vectors contained in the array.
+
+        Parameters
+        ----------
+        ind
+            Indices of the vectors whose norm is to be calculated (see class documentation).
+
+        Returns
+        -------
+        A numpy array `result` such that `result[i]` contains the norm
+        of `self[ind][i]`.
+        '''
+        _, max_val = self.amax(ind)
+        return max_val
+
+    @abstractmethod
+    def components(self, component_indices, ind=None):
+        '''Extract components of the vectors contained in the array.
+
+        Parameters
+        ----------
+        component_indices
+            Indices of the vector components that are to be returned.
+        ind
+            Indices of the vectors whose components to be calculated (see class documentation).
+
+        Returns
+        -------
+        A numpy array `result` such that `result[i, j]` is the `component_indices[j]`-th
+        component of the `ind[i]`-th vector of the array.
+        '''
+        pass
+
+    @abstractmethod
+    def amax(self, ind=None):
+        '''The maximum absolute value of the vectors contained in the array.
+
+        Parameters
+        ----------
+        ind
+            Indices of the vectors whose maximum absolute value is to be calculated
+            (see class documentation).
+
+        Returns
+        -------
+        max_ind
+            Numpy array containing for each vector an index at which the maximum is
+            attained.
+        max_val
+            Numpy array containing for each vector the maximum absolute value of its
+            components.
+        '''
+        pass
 
     def gramian(self, ind=None):
-        '''Shorthand for `prod(self, ind=ind, o_ind=ind, pairwise=Flase)`.'''
-        return self.prod(self, ind=ind, o_ind=ind, pairwise=False)
+        '''Shorthand for `dot(self, pairwise=False, ind=ind, o_ind=ind)`.'''
+        return self.dot(self, pairwise=False, ind=ind, o_ind=ind)
 
     def __add__(self, other):
-        return self.add_mult(other)
+        return self.copy().axpy(1, other)
 
     def __iadd__(self, other):
-        return self.iadd_mult(other)
+        self.axpy(1, other)
+        return self
 
     __radd__ = __add__
 
     def __sub__(self, other):
-        return self.add_mult(other, o_coeff=-1.)
+        result = self.copy()
+        result.axpy(-1, other)
+        return result
+
+    def __isub__(self, other):
+        self.axpy(-1, other)
+        return self
 
     def __mul__(self, other):
-        return self.add_mult(self, coeff=other, o_coeff=0.)
+        result = self.copy()
+        result.scal(other)
+        return result
 
     def __imul__(self, other):
-        return self.iadd_mult(self, coeff=other, o_coeff=0.)
+        self.scal(other)
+        return self
 
     def __neg__(self):
-        return self.add_mult(None, coeff=-1, o_coeff=0)
+        result = self.copy()
+        result.scal(-1)
+        return result

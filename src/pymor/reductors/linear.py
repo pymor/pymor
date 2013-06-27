@@ -120,9 +120,9 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
                 append_vector(-op.apply(RB, [i]), R_O, RR_O)
 
     # compute Gram matrix of the residuals
-    R_RR = RR_R.prod(R_R, pairwise=False)
-    R_RO = RR_R.prod(R_O, pairwise=False)
-    R_OO = RR_O.prod(R_O, pairwise=False)
+    R_RR = RR_R.dot(R_R, pairwise=False)
+    R_RO = RR_R.dot(R_O, pairwise=False)
+    R_OO = RR_O.dot(R_O, pairwise=False)
 
     estimator_matrix = np.empty((len(R_RR) + len(R_OO),) * 2)
     estimator_matrix[:len(R_RR), :len(R_RR)] = R_RR

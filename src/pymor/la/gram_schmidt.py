@@ -69,14 +69,14 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=True,
                 i += 1
                 continue
             else:
-                A.iadd_mult(None, coeff=1/norm, o_coeff=0, ind=[i])
+                A.scal(1/norm, ind=[i])
 
         for j in xrange(max(offset, i + 1), len(A)):
             if product is None:
-                p = A.prod(A, ind=[j], o_ind=[i], pairwise=True)[0]
+                p = A.dot(A, ind=[j], o_ind=[i], pairwise=True)[0]
             else:
                 p = product.apply2(A, A, V_ind=[j], U_ind=[i], pairwise=True)[0]
-            A.iadd_mult(A, o_coeff=-p, ind=[j], o_ind=[i])
+            A.axpy(-p, A, ind=[j], x_ind=[i])
 
         i += 1
 
@@ -84,8 +84,8 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=True,
         A.remove(remove)
 
     if check:
-        if not product and not float_cmp_all(A.prod(A, pairwise=False), np.eye(len(A)), check_tol):
-            err = np.max(np.abs(A.prod(A, pairwise=False) - np.eye(len(A))))
+        if not product and not float_cmp_all(A.dot(A, pairwise=False), np.eye(len(A)), check_tol):
+            err = np.max(np.abs(A.dot(A, pairwise=False) - np.eye(len(A))))
             raise AccuracyError('result not orthogonal (max err={})'.format(err))
         elif product and not float_cmp_all(product.apply2(A, A, pairwise=False), np.eye(len(A)), check_tol):
             err = np.max(np.abs(product.apply2(A, A, pairwise=False) - np.eye(len(A))))

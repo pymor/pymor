@@ -79,7 +79,7 @@ class ProjectedOperator(OperatorInterface):
         else:
             V = self.operator.apply(U, ind=ind, mu=self.map_parameter(mu))
             if self.product is None:
-                return NumpyVectorArray(V.prod(self.range_basis))
+                return NumpyVectorArray(V.dot(self.range_basis))
             else:
                 return NumpyVectorArray(self.product.apply2(V, self.range_basis, pairwise=False))
 

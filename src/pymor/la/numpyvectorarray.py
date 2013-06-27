@@ -25,6 +25,10 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
         va._len = 0
         return va
 
+    @classmethod
+    def zeros(cls, dim, count=1):
+        return cls(np.zeros((count, dim)))
+
     def __init__(self, object, dtype=None, copy=False, order=None, subok=False):
         if isinstance(object, np.ndarray) and not copy:
             self._array = object
@@ -127,40 +131,38 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
             R = R[np.newaxis, ...]
         return R
 
-    def add_mult(self, other, coeff=1., o_coeff=1., ind=None, o_ind=None):
-        assert o_coeff == 0 or other is not None
-        if other is not None:
-            assert self._compatible_shape(other, ind, o_ind)
-        # TODO Treat special cases more efficiently
-        if o_coeff == 0:
-            A = self._array[:self._len] if ind is None else self._array[ind]
-            return NumpyVectorArray(A * coeff, copy=False)
+    def scal(self, alpha, ind=None):
+        if ind is None:
+            self._array[:self._len] *= alpha
         else:
-            A = self._array[:self._len] if ind is None else self._array[ind]
-            B = other._array[:other._len] if o_ind is None else other._array[o_ind]
-            return NumpyVectorArray(A * coeff + B * o_coeff, copy=False)
+            self._array[ind] *= alpha
 
-    def iadd_mult(self, other, coeff=1., o_coeff=1., ind=None, o_ind=None):
-        assert o_coeff == 0 or other is not None
-        if other is not None:
-            assert self._compatible_shape(other, ind, o_ind)
-        # TODO Treat special cases more efficiently
-        if o_coeff == 0:
+    def axpy(self, alpha, x, ind=None, x_ind=None):
+        assert self._compatible_shape(x, ind, x_ind)
+        B = x._array[:x._len] if x_ind is None else x._array[x_ind]
+
+        if alpha == 0:
             if ind is None:
-                self._array[:self._len] *= coeff
+                self._array[:self._len] = 0
             else:
-                self._array[ind] *= coeff
+                self._array[ind] = 0
+        elif alpha == 1:
+            if ind is None:
+                self._array[:self._len] += B
+            else:
+                self._array[ind] += B
+        elif alpha == -1:
+            if ind is None:
+                self._array[:self._len] -= B
+            else:
+                self._array[ind] -= B
         else:
-            B = other._array[:other._len] if o_ind is None else other._array[o_ind]
             if ind is None:
-                self._array[:self._len] *= coeff
-                self._array[:self._len] += B * o_coeff
+                self._array[:self._len] += B * alpha
             else:
-                self._array[ind] *= coeff
-                self._array[ind] += B * o_coeff
-        return self
+                self._array[ind] += B * alpha
 
-    def prod(self, other, ind=None, o_ind=None, pairwise=True):
+    def dot(self, other, pairwise, ind=None, o_ind=None):
         A = self._array[:self._len] if ind is None else self._array[ind]
         B = other._array[:other._len] if o_ind is None else other._array[o_ind]
         if pairwise:
@@ -180,16 +182,24 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
             assert len(ind) == coefficients.shape[1]
         return NumpyVectorArray(coefficients.dot(self._array[:self._len]), copy=False)
 
-    def lp_norm(self, p, ind=None):
+    def l1_norm(self, p, ind=None):
         A = self._array[:self._len] if ind is None else self._array[ind]
-        if p == 0.:
-            return np.max(np.abs(A), axis=1)
-        elif p == 1:
-            return np.sum(np.abs(A), axis=1)
-        elif p % 2 == 0:
-            return np.sum(np.power(A, p), axis=1)**(1/p)
-        else:
-            return np.sum(np.power(np.abs(A), p), axis=1)**(1/p)
+        return np.sum(np.abs(A), axis=1)
+
+    def l2_norm(self, p, ind=None):
+        A = self._array[:self._len] if ind is None else self._array[ind]
+        return np.sum(np.power(A, 2), axis=1)**(1/2)
+
+    def components(self, component_indices, ind=None):
+        A = self._array[:self._len] if ind is None else self._array[ind]
+        return A[:, component_indices]
+
+    def amax(self, ind=None):
+        A = self._array[:self._len] if ind is None else self._array[ind]
+        A = np.abs(A)
+        max_ind = np.argmax(A, axis=1)
+        max_val = np.max(A, axis=1)
+        return (max_ind, max_val)
 
     def __str__(self):
         return self._array[:self._len].__str__()
@@ -219,4 +229,3 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
                 return len(ind) == len(other)
             else:
                 return len(ind) == len(oind)
-
