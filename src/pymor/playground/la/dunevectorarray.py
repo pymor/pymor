@@ -140,7 +140,7 @@ class DuneVectorArray(VectorArrayInterface):
                          ind=ind, remove_from_other=True)
         return self
 
-    def prod(self, other, ind=None, o_ind=None, pairwise=True):
+    def dot(self, other, ind=None, o_ind=None, pairwise=True):
         F1 = self._vectors if ind is None else [self._vectors[i] for i in ind]
         F2 = other._vectors if o_ind is None else [other._vectors[i] for i in o_ind]
         if pairwise:
@@ -175,7 +175,7 @@ class DuneVectorArray(VectorArrayInterface):
     def lp_norm(self, p, ind=None):
         if p != 2:
             raise NotImplementedError
-        return np.sqrt(self.prod(self, ind=ind, o_ind=ind, pairwise=True))
+        return np.sqrt(self.dot(self, ind=ind, o_ind=ind, pairwise=True))
 
     def _compatible_shape(self, other, ind=None, o_ind=None, broadcast=True):
         if self.dim != other.dim:

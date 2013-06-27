@@ -103,6 +103,8 @@ class OperatorInterface(BasicInterface, Parametric, Named):
         '''
         assert isinstance(V, VectorArrayInterface)
         assert isinstance(U, VectorArrayInterface)
+        U_ind = None if U_ind is None else np.array(U_ind, copy=False, dtype=np.int, ndmin=1)
+        V_ind = None if V_ind is None else np.array(V_ind, copy=False, dtype=np.int, ndmin=1)
         if pairwise:
             lu = len(U_ind) if U_ind is not None else len(U)
             lv = len(V_ind) if V_ind is not None else len(V)

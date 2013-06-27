@@ -60,9 +60,9 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=True,
 
         if i >= offset:
             if product is None:
-                norm = A.l2_norm(ind=[i])[0]
+                norm = A.l2_norm(ind=i)[0]
             else:
-                norm = np.sqrt(product.apply2(A, A, V_ind=[i], U_ind=[i], pairwise=True))[0]
+                norm = np.sqrt(product.apply2(A, A, V_ind=i, U_ind=i, pairwise=True))[0]
 
             if norm < tol:
                 remove.append(i)
@@ -73,10 +73,10 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=True,
 
         for j in xrange(max(offset, i + 1), len(A)):
             if product is None:
-                p = A.dot(A, ind=[j], o_ind=[i], pairwise=True)[0]
+                p = A.dot(A, ind=j, o_ind=i, pairwise=True)[0]
             else:
-                p = product.apply2(A, A, V_ind=[j], U_ind=[i], pairwise=True)[0]
-            A.axpy(-p, A, ind=[j], x_ind=[i])
+                p = product.apply2(A, A, V_ind=j, U_ind=i, pairwise=True)[0]
+            A.axpy(-p, A, ind=j, x_ind=i)
 
         i += 1
 
