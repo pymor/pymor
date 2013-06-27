@@ -115,7 +115,7 @@ def thermalblock_demo(args):
         print('Solving RB-Scheme for mu = {} ... '.format(mu), end='')
         URB = reconstructor.reconstruct(rb_discretization.solve(mu))
         U = discretization.solve(mu)
-        h1_err = discretization.h1_norm(U - URB)
+        h1_err = discretization.h1_norm(U - URB)[0]
         cond = np.linalg.cond(rb_discretization.operator.assemble(mu)._matrix)
         if h1_err > h1_err_max:
             h1_err_max = h1_err
