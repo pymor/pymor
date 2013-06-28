@@ -417,7 +417,9 @@ class VectorArrayInterface(BasicInterface):
         return self.dot(self, pairwise=False, ind=ind, o_ind=ind)
 
     def __add__(self, other):
-        return self.copy().axpy(1, other)
+        result = self.copy()
+        result.axpy(1, other)
+        return result
 
     def __iadd__(self, other):
         self.axpy(1, other)
