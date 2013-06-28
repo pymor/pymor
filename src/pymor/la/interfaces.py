@@ -76,13 +76,9 @@ class VectorArrayInterface(BasicInterface):
 
     Most methods provide `ind` and/or `o_ind` arguments which are used to specify on which
     vectors the method is supposed to operate. If `ind` (`o_ind`) is `None` the whole array
-    is selected. Otherwise, ::
-
-        ind = numpy.array(ind, copy=False, dtype=np.int)
-
-    is called to convert the argument to a numpy array. The resulting array has to be
-    one-dimensional. Its entries will be used as the indices of the vectors which are
-    selected. One index can be repeated several times.
+    is selected. Otherwise, `ind` can be a single index in `range(len(self))`, a `list`
+    of indices or a one-dimensional numpy array of indices. One index can be repeated
+    in which case the corresponding vector is selected several times.
     '''
 
     @abstractclassmethod
@@ -449,3 +445,9 @@ class VectorArrayInterface(BasicInterface):
         result = self.copy()
         result.scal(-1)
         return result
+
+    def check_ind(self, ind):
+        '''Check if `ind` is an admissable list of indices in the sense of the class documentation.'''
+        return (ind is None or
+                isinstance(ind, (Number, list)) or
+                isinstance(ind, np.ndarray) and ind.ndim == 1)

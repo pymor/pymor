@@ -49,7 +49,7 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=True,
     # (is this really needed or is in this cases the tolerance poorly chosen anyhow)
     if find_duplicates:
         for i in xrange(len(A)):
-            duplicates = A.almost_equal(A, ind=[i], o_ind=xrange(max(offset, i + 1), len(A)))
+            duplicates = A.almost_equal(A, ind=i, o_ind=np.arange(max(offset, i + 1), len(A)))
             if np.any(duplicates):
                 A.remove(np.where(duplicates))
 
