@@ -9,7 +9,7 @@ from numbers import Number
 import numpy as np
 
 from pymor.la import NumpyVectorArray
-from pymor.playground.la.dunevectorarray import DuneVectorArray
+from pymor.playground.la.dunevectorarray import DuneVectorArray, WrappedDuneVector
 from pymor.operators.interfaces import LinearOperatorInterface
 
 from dunelinearellipticcg2dsgrid import DuneVector
@@ -38,8 +38,8 @@ class DuneLinearOperator(LinearOperatorInterface):
     def apply(self, U, ind=None, mu=None):
         assert isinstance(U, DuneVectorArray)
         assert mu is None
-        vectors = U._vectors if ind is None else [U._vectors[i] for i in ind]
-        return DuneVectorArray([self.dune_op.apply(v) for v in vectors], dim=self.dim_source)
+        vectors = U._list if ind is None else [U._list[i] for i in ind]
+        return DuneVectorArray([WrappedDuneVector(self.dune_op.apply(v._vector)) for v in vectors], dim=self.dim_source)
 
 
 class DuneLinearFunctional(LinearOperatorInterface):
@@ -66,11 +66,11 @@ class DuneLinearFunctional(LinearOperatorInterface):
     def apply(self, U, ind=None, mu=None):
         assert isinstance(U, DuneVectorArray)
         assert mu is None
-        vectors = U._vectors if ind is None else [U._vectors[i] for i in ind]
+        vectors = U._list if ind is None else [U._list[i] for i in ind]
         if len(vectors) == 0:
             return NumpyVectorArray.empty(dim=1)
         else:
-            return NumpyVectorArray([[self.dune_vec.dot(v)] for v in vectors])
+            return NumpyVectorArray([[self.dune_vec.dot(v._vector)] for v in vectors])
 
     def as_vector_array(self):
-        return DuneVectorArray(DuneVector(self.dune_vec))
+        return DuneVectorArray([WrappedDuneVector(DuneVector(self.dune_vec))])

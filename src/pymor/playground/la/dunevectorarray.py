@@ -11,191 +11,60 @@ import math as m
 
 import numpy as np
 
-from pymor.la.interfaces import VectorArrayInterface
 from pymor.core import defaults
+from pymor.la.listvectorarray import VectorInterface, ListVectorArray
 from dunelinearellipticcg2dsgrid import DuneVector
 
-class DuneVectorArray(VectorArrayInterface):
 
-    def empty(cls, dim, reserve=0):
-        return cls([], dim=dim)
+class WrappedDuneVector(VectorInterface):
 
-    def __init__(self, vectors, dim=None):
-        if isinstance(vectors, DuneVector):
-            self._vectors = [vectors]
-            self._dim = vectors.len()
-            assert dim is None or dim == self._dim
-        else:
-            self._vectors = list(vectors)
-            if len(self._vectors) == 0:
-                assert dim is not None
-                self._dim = dim
-            else:
-                self._dim = self._vectors[0].len()
-                assert all(v.len() == self._dim for v in self._vectors)
+    def __init__(self, vector):
+        assert isinstance(vector, DuneVector)
+        self._vector = vector
 
-    def __len__(self):
-        return len(self._vectors)
+    @classmethod
+    def zeros(cls, dim):
+        return cls(DuneVector(dim))
 
     @property
     def dim(self):
-        return self._dim
+        return self._vector.len()
 
-    def copy(self, ind=None):
-        if ind is None:
-            return DuneVectorArray([DuneVector(v) for v in self._vectors], self.dim)
-        else:
-            return DuneVectorArray([DuneVector(self._vectors[i]) for i in ind], self.dim)
+    def copy(self):
+        return type(self)(DuneVector(self._vector))
 
-    def append(self, other, o_ind=None, remove_from_other=False):
-        assert other.dim == self.dim
-        new_vectors = other._vectors if o_ind is None else [other._vectors[i] for i in o_ind]
-        if not remove_from_other:
-            self._vectors.extend([DuneVector(v) for v in new_vectors])
-        else:
-            self._vectors.extend(new_vectors)
-            o_ind = o_ind or []
-            other._vectors = [v for i, v in enumerate(other._vectors) if i not in o_ind]
-
-    def remove(self, ind):
-        ind = ind or []
-        self._vectors = [v for i, v in enumerate(self._vectors) if i not in ind]
-
-    def replace(self, other, ind=None, o_ind=None, remove_from_other=False):
-        assert other.dim == self.dim
-        if ind == None:
-            c = DuneVectorArray.empty(self.dim)
-            c.append(other, o_ind=o_ind, remove_from_other=remove_from_other)
-            assert len(c) == len(self)
-            self._vectors = c._vectors
-        else:
-            o_ind = o_ind or xrange(len(other))
-            assert len(ind) == len(o_ind)
-            if not remove_from_other:
-                for i, oi in izip(ind, o_ind):
-                    self._vectors[i] = DuneVector(other._vectors[oi])
-            else:
-                for i, oi in izip(ind, o_ind):
-                    self._vectors[i] = other._vectors[oi]
-                other._vectors = [v for i, v in enumerate(other._vectors) if i not in o_ind]
-
-    def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
-        assert self._compatible_shape(other, ind, o_ind)
+    def almost_equal(self, other, rtol=None, atol=None):
         rtol = rtol or defaults.float_cmp_tol
         atol = atol or rtol
-        A = self._vectors if ind is None else [self._vectors[i] for i in ind]
-        B = other._vectors if o_ind is None else [other._vectors[i] for i in o_ind]
+        return (self - other).l2_norm() <= atol + other.l2_norm()*rtol
 
-        def vec_almost_equal(v, w):
-            ws = DuneVector(w)
-            ws.scale(-1)
-            error = v.add(ws)
-            del ws
-            error_norm = m.sqrt(error.dot(error))
-            w_norm = m.sqrt(w.dot(w))
-            return error_norm <= atol + w_norm*rtol
+    def scal(self, alpha):
+        self._vector.scale(alpha)
 
-        return np.array([vec_almost_equal(v, w) for v, w in izip(A, B)])
+    def axpy(self, alpha, x):
+        xx = x.copy()
+        xx.scal(alpha)
+        self._vector = self._vector.add(xx._vector)
 
-    def add_mult(self, other, coeff=1., o_coeff=1., ind=None, o_ind=None):
-        assert other is not None or o_coeff == 0
-        if isinstance(other, Number):
-            assert other == 0
-            other = None
-            o_coeff = 0
-        if other is not None:
-            assert self._compatible_shape(other, ind, o_ind)
-        if o_coeff == 0:
-            R = self.copy(ind)
-            for v in R._vectors:
-                v.scale(coeff)
-            return R
-        else:
-            ind = ind or xrange(len(self))
-            o_ind = o_ind or xrange(len(other))
-            if coeff == 1:
-                S1 = [self._vectors[i] for i in ind]
-            else:
-                S1 = [DuneVector(self._vectors[i]) for i in ind]
-                for v in S1:
-                    v.scale(coeff)
-            if o_coeff == 1:
-                S2 = [other._vectors[i] for i in o_ind]
-            else:
-                S2 = [DuneVector(other._vectors[i]) for i in o_ind]
-                for v in S2:
-                    v.scale(o_coeff)
-        return DuneVectorArray([v1.add(v2) for v1, v2 in izip(S1, S2)], dim=self._dim)
+    def dot(self, other):
+        return self._vector.dot(other._vector)
 
-    def iadd_mult(self, other, coeff=1., o_coeff=1., ind=None, o_ind=None):
-        assert other is None or o_coeff != 0
-        if other is not None:
-            assert self._compatible_shape(other, ind, o_ind)
-        if o_coeff == 0:
-            ind = ind or xrange(len(self))
-            for i in ind:
-                self._vectors[i].scale(coeff)
-        else:
-            self.replace(self.add_mult(other, coeff=coeff, o_coeff=o_coeff, ind=ind, o_ind=o_ind),
-                         ind=ind, remove_from_other=True)
-        return self
+    def l1_norm(self):
+        raise NotImplementedError
 
-    def dot(self, other, ind=None, o_ind=None, pairwise=True):
-        F1 = self._vectors if ind is None else [self._vectors[i] for i in ind]
-        F2 = other._vectors if o_ind is None else [other._vectors[i] for i in o_ind]
-        if pairwise:
-            assert self.dim == other.dim
-            assert len(F1) == len(F2)
-            return np.array([v1.dot(v2) for v1, v2 in izip(F1, F2)])
-        else:
-            assert self.dim == other.dim
-            R = np.empty((len(F1), len(F2)))
-            for i, v1 in enumerate(F1):
-                for j, v2 in enumerate(F2):
-                    R[i, j] = v1.dot(v2)
-            return R
+    def l2_norm(self):
+        return m.sqrt(self.dot(self))
 
-    def lincomb(self, coefficients, ind=None):
-        if coefficients.ndim > 1:
-            if len(coefficients) > 1:
-                raise NotImplementedError
-            else:
-                coefficients = coefficients.ravel()
-        V = self.copy(ind)._vectors
-        assert len(V) == len(coefficients)
-        if len(V) == 0:
-            return DuneVectorArray(DuneVector(self.dim))
-        for v, f in izip(V, coefficients):
-            v.scale(f)
-        R = V[0]
-        for v in V[1:]:
-            R = R.add(v)
-        return DuneVectorArray(R)
+    def sup_norm(self):
+        raise NotImplementedError
 
-    def lp_norm(self, p, ind=None):
-        if p != 2:
-            raise NotImplementedError
-        return np.sqrt(self.dot(self, ind=ind, o_ind=ind, pairwise=True))
+    def components(self, component_indices):
+        raise NotImplementedError
 
-    def _compatible_shape(self, other, ind=None, o_ind=None, broadcast=True):
-        if self.dim != other.dim:
-            return False
-        if broadcast:
-            if o_ind == None and len(other) == 1:
-                return True
-            elif o_ind != None and len(o_ind) == 1:
-                return True
-        if ind is None:
-            if len(self) == 1:
-                return True
-            if o_ind is None:
-                return len(self) == len(other)
-            else:
-                return len(self) == len(oind)
-        else:
-            if len(ind) == 1:
-                return True
-            if o_ind is None:
-                return len(ind) == len(other)
-            else:
-                return len(ind) == len(oind)
+    def amax(self):
+        raise NotImplementedError
+
+
+class DuneVectorArray(ListVectorArray):
+
+    vector_type = WrappedDuneVector

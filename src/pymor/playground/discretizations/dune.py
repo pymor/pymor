@@ -16,7 +16,7 @@ from pymor.operators import LinearAffinelyDecomposedOperator
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.discretizations import StationaryLinearDiscretization
 from pymor.playground.operators.dune import DuneLinearOperator, DuneLinearFunctional
-from pymor.playground.la.dunevectorarray import DuneVectorArray
+from pymor.playground.la.dunevectorarray import DuneVectorArray, WrappedDuneVector
 from pymor.parameters.spaces import CubicParameterSpace
 from pymor.la import induced_norm
 
@@ -59,7 +59,7 @@ class DuneLinearEllipticCGDiscretization(DiscretizationInterface):
         if not self.disable_logging:
             self.logger.info('Solving {} (sparse) for {} ...'.format(self.name, mu))
 
-        return DuneVectorArray(self.example.solve(list(mu['diffusion'])))
+        return DuneVectorArray([WrappedDuneVector(self.example.solve(list(mu['diffusion'])))])
 
     def with_projected_operators(self, operators):
         assert set(operators.keys()) == {'operator', 'rhs'}
@@ -69,5 +69,5 @@ class DuneLinearEllipticCGDiscretization(DiscretizationInterface):
         import os
         assert isinstance(U, DuneVectorArray)
         assert len(U) == 1
-        self.example.visualize(U._vectors[0], 'visualization', 'solution')
+        self.example.visualize(U._list[0]._vector, 'visualization', 'solution')
         os.system('paraview visualization.vtu')
