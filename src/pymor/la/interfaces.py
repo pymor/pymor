@@ -413,6 +413,10 @@ class VectorArrayInterface(BasicInterface):
         return self.dot(self, pairwise=False, ind=ind, o_ind=ind)
 
     def __add__(self, other):
+        if isinstance(other, Number):
+            assert other == 0
+            return self.copy()
+
         result = self.copy()
         result.axpy(1, other)
         return result
