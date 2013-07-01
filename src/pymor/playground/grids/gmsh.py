@@ -234,5 +234,7 @@ class GmshGrid(AffineGridInterface):
         else:
             return super(GmshGrid, self).embeddings(codim)
 
-    def test_instances(self):
-        return None
+    @staticmethod
+    def test_instances():
+        import os.path
+        return (GmshGrid(open(os.path.join(os.path.dirname(__file__), '../../../../testdata/gmsh_1.msh'))),)
