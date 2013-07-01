@@ -207,11 +207,12 @@ class GmshGrid(AffineGridInterface):
         TRANS = TRANS.swapaxes(1, 2)
 
         self.__embeddings = (TRANS, SHIFTS)
-        self.__subentities = (np.arange(len(codim1_subentities), dtype=np.int32), codim1_subentities, codim2_subentities)
+        self.__subentities = (np.arange(len(codim1_subentities), dtype=np.int32).reshape(-1,1),
+                              codim1_subentities, codim2_subentities)
         self.__sizes = (len(codim1_subentities), len(lines), len(codim2_centers))
 
     def __str__(self):
-        return 'GmshGrid with {} vertices, {} lines, {} triangles'.format(*self._sizes)
+        return 'GmshGrid with {} vertices, {} lines, {} triangles'.format(*self.__sizes)
 
     def size(self, codim=0):
         assert 0 <= codim <= 2, 'Invalid codimension'
