@@ -93,29 +93,19 @@ class BasicInterface(object):
 
     __metaclass__ = UberMeta
     _locked = False
-    _frozen = False
 
     def __setattr__(self, key, value):
-        '''depending on _locked nad _frozen state I delegate the setattr call to object or
+        '''depending on _locked state I delegate the setattr call to object or
         raise an Exception
         '''
         if not self._locked:
             return object.__setattr__(self, key, value)
-
-        if hasattr(self, key):
-            if self._frozen:
-                raise ConstError('Changing "%s" is not allowed in "%s"' % (key, self.__class__))
-            return object.__setattr__(self, key, value)
         else:
-            raise ConstError('Won\'t add "%s" to locked "%s"' % (key, self.__class__))
+            raise ConstError('Changing "%s" is not allowed in locked "%s"' % (key, self.__class__))
 
     def lock(self, doit=True):
-        '''Calling me results in subsequent adding of members throwing errors'''
-        object.__setattr__(self, '_locked', doit)
-
-    def freeze(self, doit=True):
         '''Calling me results in subsequent changes to members throwing errors'''
-        object.__setattr__(self, '_frozen', doit)
+        object.__setattr__(self, '_locked', doit)
 
     @classmethod
     def implementors(cls, descend=False):
