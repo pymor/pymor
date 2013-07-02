@@ -93,6 +93,7 @@ class BasicInterface(object):
 
     __metaclass__ = UberMeta
     _locked = False
+    _lock_whitelist = None
 
     def __setattr__(self, key, value):
         '''depending on _locked state I delegate the setattr call to object or
@@ -105,10 +106,18 @@ class BasicInterface(object):
         else:
             raise ConstError('Changing "%s" is not allowed in locked "%s"' % (key, self.__class__))
 
-    def lock(self, doit=True, whitelist=set()):
+    @property
+    def locked(self):
+        return self._locked
+
+    def lock(self, doit=True, whitelist=None):
         '''Calling me results in subsequent changes to members throwing errors'''
         object.__setattr__(self, '_locked', doit)
-        object.__setattr__(self, '_lock_whitelist', whitelist)
+        if whitelist is not None:
+            object.__setattr__(self, '_lock_whitelist', whitelist)
+
+    def unlock(self):
+        object.__setattr__(self, '_locked', False)
 
     @classmethod
     def implementors(cls, descend=False):
