@@ -33,6 +33,7 @@ class ConstantFunction(FunctionInterface):
         self.name = name
         value = np.array(value, copy=False)
         self._value = value.reshape((self.dim_range,))
+        self.lock()
 
     def __str__(self):
         return ('{name}: x -> {value}').format(name=self.name, value=self._value)
@@ -78,6 +79,7 @@ class GenericFunction(FunctionInterface):
             self._with_mu = True
         else:
             self._with_mu = False
+        self.lock()
 
     def __str__(self):
         return ('{name}: x -> {mapping}').format(name=self.name, mapping=self._mapping)
