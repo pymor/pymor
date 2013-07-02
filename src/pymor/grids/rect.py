@@ -132,6 +132,7 @@ class RectGrid(AffineGridInterface):
         A = np.tile(np.diag([self.x0_diameter, self.x1_diameter]), (n_elements, 1, 1))
         B = shifts.T
         self.__embeddings = (A, B)
+        self.lock()
 
     def __str__(self):
         return ('Rect-Grid on domain [{xmin},{xmax}] x [{ymin},{ymax}]\n' +
