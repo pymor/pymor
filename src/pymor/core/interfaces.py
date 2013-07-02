@@ -100,7 +100,7 @@ class BasicInterface(object):
         '''
         if not self._locked:
             return object.__setattr__(self, key, value)
-        elif key in _lock_whitelist:
+        elif key.startswith('_') or key in _lock_whitelist:
             return object.__setattr__(self, key, value)
         else:
             raise ConstError('Changing "%s" is not allowed in locked "%s"' % (key, self.__class__))
