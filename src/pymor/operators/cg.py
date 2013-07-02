@@ -43,7 +43,7 @@ class L2ProductFunctionalP1(LinearOperatorInterface):
     type_source = type_range = NumpyVectorArray
     sparse = False
 
-    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, name=None):
+    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, name_map=None, name=None):
         assert grid.reference_element(0) in {line, triangle}
         assert function.dim_range == 1
         super(L2ProductFunctionalP1, self).__init__()
@@ -54,7 +54,8 @@ class L2ProductFunctionalP1(LinearOperatorInterface):
         self.function = function
         self.dirichlet_data = dirichlet_data
         self.name = name
-        self.build_parameter_type(inherits={'function': function, 'dirichlet_data': dirichlet_data})
+        self.build_parameter_type(inherits={'function': function, 'dirichlet_data': dirichlet_data}, name_map=name_map)
+        self.lock()
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -139,6 +140,7 @@ class L2ProductP1(LinearOperatorInterface):
         self.dirichlet_clear_columns = dirichlet_clear_columns
         self.dirichlet_clear_diag = dirichlet_clear_diag
         self.name = name
+        self.lock()
 
     def _assemble(self, mu=None):
         assert mu is None
@@ -222,7 +224,7 @@ class DiffusionOperatorP1(LinearOperatorInterface):
     sparse = True
 
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
-                 dirichlet_clear_columns=False, dirichlet_clear_diag=False, name=None):
+                 dirichlet_clear_columns=False, dirichlet_clear_diag=False, name_map=None, name=None):
         assert grid.reference_element(0) in {triangle, line}, ValueError('A simplicial grid is expected!')
         super(DiffusionOperatorP1, self).__init__()
         self.dim_source = self.dim_range = grid.size(grid.dim)
@@ -234,7 +236,8 @@ class DiffusionOperatorP1(LinearOperatorInterface):
         self.dirichlet_clear_diag = dirichlet_clear_diag
         self.name = name
         if diffusion_function is not None:
-            self.build_parameter_type(inherits={'diffusion': diffusion_function})
+            self.build_parameter_type(inherits={'diffusion': diffusion_function}, name_map=name_map)
+        self.lock()
 
     def _assemble(self, mu=None):
         mu = self.parse_parameter(mu)

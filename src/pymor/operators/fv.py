@@ -26,7 +26,7 @@ class NonlinearAdvectionLaxFriedrichs(OperatorInterface):
 
     type_source = type_range = NumpyVectorArray
 
-    def __init__(self, grid, boundary_info, flux, lxf_lambda=1.0, dirichlet_data=None, name=None):
+    def __init__(self, grid, boundary_info, flux, lxf_lambda=1.0, dirichlet_data=None, name_map=None, name=None):
         assert dirichlet_data is None or isinstance(dirichlet_data, FunctionInterface)
 
         super(NonlinearAdvectionLaxFriedrichs, self).__init__()
@@ -38,14 +38,15 @@ class NonlinearAdvectionLaxFriedrichs(OperatorInterface):
         self.name = name
         if isinstance(dirichlet_data, FunctionInterface) and boundary_info.has_dirichlet:
             if dirichlet_data.parametric:
-                self.build_parameter_type(inherits={'flux': flux, 'dirichlet_data': dirichlet_data})
+                self.build_parameter_type(inherits={'flux': flux, 'dirichlet_data': dirichlet_data}, name_map=name_map)
             else:
                 self._dirichlet_values = self.dirichlet_data(grid.centers(1)[boundary_info.dirichlet_boundaries(1)])
                 self._dirichlet_values = self._dirichlet_values.ravel()
-                self.build_parameter_type(inherits={'flux': flux})
+                self.build_parameter_type(inherits={'flux': flux}, name_map=name_map)
         else:
-            self.build_parameter_type(inherits={'flux': flux})
+            self.build_parameter_type(inherits={'flux': flux}, name_map=name_map)
         self.dim_source = self.dim_range = grid.size(0)
+        self.lock()
 
     def restricted(self, components):
         source_dofs = np.setdiff1d(np.union1d(self.grid.neighbours(0, 0)[components].ravel(), components),
@@ -249,6 +250,7 @@ class L2Product(LinearOperatorInterface):
         self.dim_range = self.dim_source
         self.grid = grid
         self.name = name
+        self.lock()
 
     def _assemble(self, mu=None):
         assert mu is None

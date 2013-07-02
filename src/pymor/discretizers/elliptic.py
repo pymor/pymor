@@ -77,8 +77,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
                    for i, df in enumerate(p.diffusion_functions))
 
         if p.diffusion_functionals is None:
-            L = LinearAffinelyDecomposedOperator(Li, L0, name='diffusion')
-            L.rename_parameter({'.coefficients': '.diffusion_coefficients'})
+            L = LinearAffinelyDecomposedOperator(Li, L0, name='diffusion', name_map={'.coefficients': '.diffusion_coefficients'})
         else:
             L = LinearAffinelyDecomposedOperator(Li, L0, p.diffusion_functionals, name='diffusion')
     else:

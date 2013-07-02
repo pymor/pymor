@@ -35,7 +35,7 @@ class LinearAffinelyDecomposedOperator(LinearOperatorInterface):
         Name of the operator.
     '''
 
-    def __init__(self, operators, operator_affine_part=None, functionals=None, name=None):
+    def __init__(self, operators, operator_affine_part=None, functionals=None, name_map=None, name=None):
         assert functionals is None or len(operators) == len(functionals), \
             ValueError('Operators and functionals must have the same length.')
 
@@ -67,12 +67,15 @@ class LinearAffinelyDecomposedOperator(LinearOperatorInterface):
         if functionals is not None:
             self.build_parameter_type(inherits={'operators': operators,
                                                 'operator_affine_part': operator_affine_part,
-                                                'functionals': functionals})
+                                                'functionals': functionals},
+                                      name_map=name_map)
         else:
             self.build_parameter_type([('coefficients', len(operators))],
                                       inherits={'operators': operators,
-                                                'operator_affine_part': operator_affine_part})
+                                                'operator_affine_part': operator_affine_part},
+                                      name_map=name_map)
         self.name = name
+        self.lock()
 
     def _assemble(self, mu):
         if self.functionals is not None:
