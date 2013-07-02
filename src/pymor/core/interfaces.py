@@ -100,12 +100,15 @@ class BasicInterface(object):
         '''
         if not self._locked:
             return object.__setattr__(self, key, value)
+        elif key in _lock_whitelist:
+            return object.__setattr__(self, key, value)
         else:
             raise ConstError('Changing "%s" is not allowed in locked "%s"' % (key, self.__class__))
 
-    def lock(self, doit=True):
+    def lock(self, doit=True, whitelist=set()):
         '''Calling me results in subsequent changes to members throwing errors'''
         object.__setattr__(self, '_locked', doit)
+        object.__setattr__(self, '_lock_whitelist', whitelist)
 
     @classmethod
     def implementors(cls, descend=False):
