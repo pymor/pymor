@@ -94,7 +94,7 @@ class BasicInterface(object):
 
     __metaclass__ = UberMeta
     _locked = False
-    _lock_whitelist = None
+    _lock_whitelist = set()
     _copy_with_arguments = set(('new_attributes',))
 
     def __setattr__(self, key, value):
@@ -103,7 +103,7 @@ class BasicInterface(object):
         '''
         if not self._locked:
             return object.__setattr__(self, key, value)
-        elif key.startswith('_') or key in _lock_whitelist:
+        elif key.startswith('_') or key in self._lock_whitelist:
             return object.__setattr__(self, key, value)
         else:
             raise ConstError('Changing "%s" is not allowed in locked "%s"' % (key, self.__class__))
