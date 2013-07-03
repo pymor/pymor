@@ -34,12 +34,6 @@ class DiscretizationInterface(BasicInterface, Parametric, Cachable, Named):
         Cachable.__init__(self, config=DEFAULT_DISK_CONFIG)
         Parametric.__init__(self)
 
-    def copy(self):
-        c = copy.copy(self)
-        c.operators = c.operators.copy()
-        Cachable.__init__(c)
-        return c
-
     def with_projected_operators(self, operators):
         raise NotImplementedError
 
