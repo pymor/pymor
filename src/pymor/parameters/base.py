@@ -473,7 +473,7 @@ class Parametric(object):
             parameter_type[k] = v
         self.parameter_type = parameter_type
 
-    def copy_with_renamed_parameters(self, name_map):
+    def with_renamed_parameters(self, name_map):
         '''Return a copy with renamed parameters.
 
         This method can be called to rename local parameter components (whose names begin with '.')
