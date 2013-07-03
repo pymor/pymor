@@ -147,16 +147,12 @@ class BasicInterface(object):
 
         c = self.copy() if hasattr(self, 'copy') else copy.copy(self)
 
-        locked = c.locked
-        c.unlock()
-
         new_attributes = kwargs.pop('new_attributes', None)
         if new_attributes:
             c.__dict__.update(new_attributes)
             c._with_arguments = self._with_arguments.union(new_attributes.keys())
         c.__dict__.update(kwargs)
 
-        c.lock(locked)
         return c
 
     @classmethod
