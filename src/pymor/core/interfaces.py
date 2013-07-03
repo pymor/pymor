@@ -95,7 +95,7 @@ class BasicInterface(object):
     __metaclass__ = UberMeta
     _locked = False
     _lock_whitelist = set()
-    _copy_with_arguments = set(('new_attributes',))
+    _with_arguments = set(('new_attributes',))
 
     def __setattr__(self, key, value):
         '''depending on _locked state I delegate the setattr call to object or
@@ -122,28 +122,28 @@ class BasicInterface(object):
         object.__setattr__(self, '_locked', False)
 
     @property
-    def copy_with_arguments(self):
-        return self._copy_with_arguments
+    def with_arguments(self):
+        return self._with_arguments
 
-    def copy_with(self, **kwargs):
+    def with_(self, **kwargs):
         '''Returns a copy with changed attributes.
 
         Parameters
         ----------
         **kwargs
             Names of attributes to change with their new values. Each attribute name
-            has to be contained in `copy_with_arguments`.
+            has to be contained in `with_arguments`.
         new_attributes
             Dictionary of attribute names and values which are to be added to
-            the object. (Only allowed if `new_attributes` is in `copy_with_arguments`.)
+            the object. (Only allowed if `new_attributes` is in `with_arguments`.)
 
         Returns
         -------
         Copy of `self` with changed attributes.
         '''
-        if not set(kwargs.keys()) <= self._copy_with_arguments:
+        if not set(kwargs.keys()) <= self._with_arguments:
             raise ConstError('Changing "{}" using with() is not allowed in {} (only "{}")'.format(
-                kwargs.keys(), self.__class__, self._copy_with_arguments))
+                kwargs.keys(), self.__class__, self._with_arguments))
 
         c = self.copy() if hasattr(self, 'copy') else copy.copy(self)
 
@@ -153,7 +153,7 @@ class BasicInterface(object):
         new_attributes = kwargs.pop('new_attributes', None)
         if new_attributes:
             c.__dict__.update(new_attributes)
-            c._copy_with_arguments = self._copy_with_arguments.union(new_attributes.keys())
+            c._with_arguments = self._with_arguments.union(new_attributes.keys())
         c.__dict__.update(kwargs)
 
         c.lock(locked)

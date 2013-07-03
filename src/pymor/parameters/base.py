@@ -488,7 +488,7 @@ class Parametric(object):
         -------
         Copy of `self` with renamed parameters.
         '''
-        c = self.copy_with()
+        c = self.with_()
         locked = c.locked
         c.unlock()
         c._rename_parameter(name_map)
