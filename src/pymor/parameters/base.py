@@ -77,7 +77,7 @@ class ParameterType(object):
     def __str__(self):
         s = 'ParameterType(('
         for k, v in self.iteritems():
-            s += '({}, {}),'.format(k, v)
+            s += '(\'{}\', {}),'.format(k, v)
         s += '))'
         return s
 
