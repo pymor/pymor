@@ -301,6 +301,7 @@ class Parametric(object):
 
         if provide is not None:
             assert all(provide[k].shape == self.parameter_provided[k] for k in provide)
+            mu = dict(mu)
             mu.update(provide)
 
         if component is None:
