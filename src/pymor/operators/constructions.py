@@ -160,6 +160,9 @@ def project_operator(operator, source_basis, range_basis, product=None, name=Non
         Name of the projected operator.
     '''
 
+    if hasattr(operator, 'projected'):
+        return operator.projected(source_basis=source_basis, range_basis=range_basis, product=product, name=name)
+
     name = name or '{}_projected'.format(operator.name)
 
     if isinstance(operator, LinearAffinelyDecomposedOperator):
