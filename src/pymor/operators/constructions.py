@@ -5,6 +5,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+from collections import OrderedDict
+
 import numpy as np
 
 from pymor.la import NumpyVectorArray
@@ -308,3 +310,25 @@ def add_operators(operators, name=None):
         return LinearLincombOperator(operators, name=name)
     else:
         return LincombOperator(operators, name=name)
+
+
+class Concatenation(OperatorInterface):
+
+    def __init__(self, second, first, name=None):
+        assert isinstance(second, OperatorInterface)
+        assert isinstance(first, OperatorInterface)
+        assert second.dim_source == first.dim_range
+        assert second.type_source == first.type_range
+        super(Concatenation, self).__init__()
+        self.first = first
+        self.second = second
+        self.build_parameter_type(inherits=OrderedDict((('second', second), ('first', first))))
+        self.dim_source = first.dim_source
+        self.dim_range = second.dim_range
+        self.type_source = first.type_source
+        self.type_range = second.type_range
+        self.name = name
+
+    def apply(self, U, ind=None, mu=None):
+        return self.second.apply(self.first.apply(U, ind=ind, mu=self.map_parameter(mu, 'first')),
+                                 mu=self.map_parameter(mu, 'second'))
