@@ -138,7 +138,7 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
         grid_type = grid_type or RectGrid
         if grid_type not in (RectGrid, ):
             raise NotImplementedError('I do not know how to discretize {} with {}'
-                                      .format(type(DomainDescription), grid_type))
+                                      .format(type(domain_description), grid_type))
         if isinstance(domain_description, CylindricalDomain):
             return discretize_CylindricalDomain()
         else:
