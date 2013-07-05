@@ -25,36 +25,45 @@ class SubGrid(AffineGridInterface):
         self.dim_outer = grid.dim_outer
         self.reference_element = grid.reference_element
 
-        global_indices = [np.array(np.unique(entities), dtype=np.int32)]
-        assert len(global_indices[0] == len(entities))
+        parent_indices = [np.array(np.unique(entities), dtype=np.int32)]
+        assert len(parent_indices[0] == len(entities))
 
-        subentities = [np.arange(len(global_indices[0]), dtype=np.int32).reshape((-1,1))]
+        subentities = [np.arange(len(parent_indices[0]), dtype=np.int32).reshape((-1,1))]
 
         for codim in xrange(1, self.dim + 1):
-            SUBE = grid.subentities(0, codim)[global_indices[0]]
+            SUBE = grid.subentities(0, codim)[parent_indices[0]]
             if np.any(SUBE < 0):
                 raise NotImplementedError
             UI, UI_inv = np.unique(SUBE, return_inverse=True)
             subentities.append(np.array(UI_inv.reshape(SUBE.shape), dtype=np.int32))
-            global_indices.append(np.array(UI, dtype=np.int32))
+            parent_indices.append(np.array(UI, dtype=np.int32))
 
         self.__parent_grid = weakref.ref(grid)
-        self.__global_indices = global_indices
+        self.__parent_indices = parent_indices
         self.__subentities = subentities
         embeddings = grid.embeddings(0)
-        self.__embeddings = (embeddings[0][global_indices[0]], embeddings[1][global_indices[0]])
+        self.__embeddings = (embeddings[0][parent_indices[0]], embeddings[1][parent_indices[0]])
 
     @property
     def parent_grid(self):
         return self.__parent_grid()
 
-    def global_indices(self, codim):
+    def parent_indices(self, codim):
         assert 0 <= codim <= self.dim, 'Invalid codimension'
-        return self.__global_indices[codim]
+        return self.__parent_indices[codim]
+
+    def indices_from_parent_indices(self, ind, codim):
+        assert 0 <= codim <= self.dim, 'Invalid codimension'
+        ind = ind.ravel()
+        # TODO Find better implementation of the following
+        R = np.argmax(ind[:, np.newaxis] - self.__parent_indices[codim][np.newaxis, :] == 0, axis=1)
+        if not np.all(self.__parent_indices[codim][R] == ind):
+            raise ValueError('Not all parent indices found')
+        return np.array(R, dtype=np.int32)
 
     def size(self, codim):
         assert 0 <= codim <= self.dim, 'Invalid codimension'
-        return len(self.__global_indices[codim])
+        return len(self.__parent_indices[codim])
 
     def subentities(self, codim, subentity_codim=None):
         if codim == 0:
