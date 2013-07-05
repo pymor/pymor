@@ -55,3 +55,22 @@ class ConstantOperator(OperatorInterface):
 
     def __mul__(self, other):
         return ConstantOperator(self._vector * other)
+
+
+class ComponentProjection(OperatorInterface):
+
+    type_range = NumpyVectorArray
+
+    def __init__(self, components, dim, type_source, name=None):
+        assert all(0 <= c < dim for c in components)
+        self.components = components
+        self.dim_source = dim
+        self.dim_range = len(components)
+        self.type_source = type_source
+        self.name = name
+
+    def apply(self, U, ind=None, mu=None):
+        assert mu is None
+        assert isinstance(U, self.type_source)
+        assert U.dim == self.dim_source
+        return NumpyVectorArray(U.components(self.components, ind), copy=False)
