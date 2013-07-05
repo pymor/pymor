@@ -15,7 +15,7 @@ def iadd_masked(U, V, U_ind):
     assert len(U_ind) == len(V), 'Lengths of U_ind and V must match'
     assert U.shape[1:] == V.shape[1:], 'U.shape[1:] != V.shape[1:]'
 
-    for ind, v in izip(U_ind):
+    for ind, v in izip(U_ind, V):
         if ind < 0:
             continue
         U[ind] += v
@@ -26,7 +26,7 @@ def isub_masked(U, V, U_ind):
     assert len(U_ind) == len(V), 'Lengths of U_ind and V must match'
     assert U.shape[1:] == V.shape[1:], 'U.shape[1:] != V.shape[1:]'
 
-    for ind, v in izip(U_ind):
+    for ind, v in izip(U_ind, V):
         if ind < 0:
             continue
         U[ind] -= v
