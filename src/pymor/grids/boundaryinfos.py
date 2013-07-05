@@ -64,3 +64,37 @@ class AllDirichletBoundaryInfo(BoundaryInfoInterface):
         assert boundary_type == BoundaryType('dirichlet'), ValueError('Has no boundary_type "{}"'.format(boundary_type))
         assert 1 <= codim <= self.grid.dim
         return np.ones(self.grid.size(codim), dtype='bool') * self.grid.boundary_mask(codim)
+
+
+class SubGridBoundaryInfo(BoundaryInfoInterface):
+
+    def __init__(self, subgrid, grid, grid_boundary_info, new_boundary_type=None):
+        assert new_boundary_type is None or isinstance(new_boundaries_type, BoundaryType)
+        boundary_types = grid_boundary_info.boundary_types
+
+        has_new_boundaries = False
+        masks = []
+        for codim in xrange(1, subgrid.dim + 1):
+            parent_indices = subgrid.parent_indices(codim)[subgrid.boundaries(codim)]
+            new_boundaries = np.where(np.logical_not(grid.boundary_mask(codim)[parent_indices]))
+            if len(new_boundaries) > 0:
+                has_new_boundaries = True
+            m = {}
+            for t in boundary_types:
+                m[t] = grid_boundary_info.mask(t, codim)[subgrid.parent_indices(codim)]
+                if t == new_boundary_type:
+                    m[t][new_boundaries] = True
+            if new_boundary_type is not None and new_boundary_type not in boundary_types:
+                m[new_boundary_type] = np.zeros(subgrid.size(codim), dtype=np.bool)
+                m[new_boundary_type][new_boundaries] = True
+            masks.append(m)
+        self.__masks = masks
+
+        self.boundary_types = set(grid_boundary_info.boundary_types)
+        if has_new_boundaries and new_boundary_type is not None:
+            self.boundary_types.add(new_boundary_type)
+
+    def mask(self, boundary_type, codim):
+        assert 1 <= codim < len(self.__masks) + 1, 'Invalid codimension'
+        assert boundary_type in self.boundary_types
+        return self.__masks[codim - 1][boundary_type]
