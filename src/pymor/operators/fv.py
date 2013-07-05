@@ -256,3 +256,45 @@ class L2Product(LinearOperatorInterface):
         A = diags(self.grid.volumes(0), 0)
 
         return NumpyLinearOperator(A)
+
+class L2ProductFunctional(LinearOperatorInterface):
+    '''Scalar product with an L2-function for finite volume functions.
+
+    Parameters
+    ----------
+    grid
+        Grid over which to assemble the functional.
+    function
+        The `Function` with which to take the scalar product.
+    name
+        The name of the functional.
+    '''
+
+    type_source = type_range = NumpyVectorArray
+    sparse = False
+
+    def __init__(self, grid, function, name=None):
+        assert function.dim_range == 1
+        super(L2ProductFunctional, self).__init__()
+        self.dim_source = grid.size(0)
+        self.dim_range = 1
+        self.grid = grid
+        self.function = function
+        self.name = name
+        self.build_parameter_type(inherits={'function': function})
+
+    def _assemble(self, mu=None):
+        g = self.grid
+
+        # evaluate function at all quadrature points -> shape = (g.size(0), number of quadrature points, 1)
+        # the singleton dimension correspoints to the dimension of the range of the function
+        F = self.function(g.quadrature_points(0, order=2), mu=self.map_parameter(mu, 'function'))
+
+        _, w = g.reference_element.quadrature(order=2)
+
+        # integrate the products of the function with the shape functions on each element
+        # -> shape = (g.size(0), number of shape functions)
+        F_INTS = np.einsum('eix,e,i->e', F, g.integration_elements(0), w).ravel()
+        F_INTS /= g.volumes(0)
+
+        return NumpyLinearOperator(F_INTS.reshape((1, -1)))
