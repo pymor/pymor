@@ -4,9 +4,11 @@
 
 from __future__ import absolute_import, division, print_function
 
+import math as m
+
 import numpy as np
 from PySide.QtOpenGL import QGLWidget
-from PySide.QtGui import QSizePolicy
+from PySide.QtGui import QSizePolicy, QPainter, QFontMetrics
 from glumpy.graphics.vertex_buffer import VertexBuffer
 import OpenGL.GL as gl
 import OpenGL.GLUT as glut
@@ -159,10 +161,21 @@ class ColorBarWidget(QGLWidget):
 
     def __init__(self, parent, vmin=None, vmax=None):
         super(ColorBarWidget, self).__init__(parent)
-        self.setMinimumSize(90, 300)
-        self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
+        fm = QFontMetrics(self.font())
         self.vmin = vmin or 0
         self.vmax = vmax or 1
+        precision = m.log(max(abs(self.vmin), abs(self.vmax) / abs(self.vmin - self.vmax)) , 10) + 1
+        precision = int(min(max(precision, 3), 8))
+        self.vmin_str = format(('{:.' + str(precision) + '}').format(self.vmin))
+        self.vmax_str = format(('{:.' + str(precision) + '}').format(self.vmax))
+        self.vmin_width = fm.width(self.vmin_str)
+        self.vmax_width = fm.width(self.vmax_str)
+        self.text_height = fm.height() * 1.5
+        self.text_ascent = fm.ascent() * 1.5
+        self.text_descent = fm.descent() * 1.5
+        self.setMinimumSize(max(self.vmin_width, self.vmax_width) + 20, 300)
+        self.setSizePolicy(QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding))
+        self.setAutoFillBackground(False)
 
     def resizeGL(self, w, h):
         gl.glViewport(0, 0, w, h)
@@ -170,7 +183,6 @@ class ColorBarWidget(QGLWidget):
         self.update()
 
     def initializeGL(self):
-        glut.glutInit()
         gl.glClearColor(1.0, 1.0, 1.0, 1.0)
         self.shaders_program = link_shader_program(compile_vertex_shader(VS))
         gl.glUseProgram(self.shaders_program)
@@ -183,35 +195,19 @@ class ColorBarWidget(QGLWidget):
 
     def paintGL(self):
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+        gl.glUseProgram(self.shaders_program)
 
         gl.glBegin(gl.GL_QUAD_STRIP)
+        bar_start = -1 + self.text_height / self.height() * 2
+        bar_height = (1 - 2 * self.text_height / self.height()) * 2
         steps = 40
-        for i in xrange(steps):
+        for i in xrange(steps + 1):
             y = i * (1 / steps)
             gl.glColor(y, 0, 0)
-            gl.glVertex(-1.0, (1.9*y-0.9), 0.0)
-            gl.glVertex(-0.5, (1.9*y-0.9), 0.0)
+            gl.glVertex(-0.5, (bar_height*y + bar_start), 0.0)
+            gl.glVertex(0.5, (bar_height*y + bar_start), 0.0)
         gl.glEnd()
-        self.drawText()
-
-    def drawText(self):
-        gl.glUseProgram(0)
-        gl.glPushMatrix()
-        gl.glLoadIdentity()
-        gl.glLineWidth(2)
-
-        def print_chars(string):
-            scale = 0.002
-            gl.glScale(scale, 0.5 * scale, scale)
-            gl.glColor3f(0, 0, 0)
-            glut.glutStrokeString(glut.GLUT_STROKE_MONO_ROMAN, string)
-            gl.glLoadIdentity()
-
-        gl.glTranslate(-0.45, -0.95, 0)
-        print_chars(str(self.vmin))
-
-        gl.glTranslate(-0.45, 0.8, 0)
-        print_chars(str(self.vmax))
-
-        gl.glPopMatrix()
-        gl.glUseProgram(self.shaders_program)
+        p = QPainter(self)
+        p.drawText((self.width() - self.vmax_width)/2, self.text_ascent, self.vmax_str)
+        p.drawText((self.width() - self.vmin_width)/2, self.height() - self.text_height + self.text_ascent, self.vmin_str)
+        p.end()
