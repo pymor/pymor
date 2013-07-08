@@ -162,8 +162,8 @@ class ColorBarWidget(QGLWidget):
     def __init__(self, parent, vmin=None, vmax=None):
         super(ColorBarWidget, self).__init__(parent)
         fm = QFontMetrics(self.font())
-        self.vmin = vmin or 0
-        self.vmax = vmax or 1
+        self.vmin = float(vmin or 0)
+        self.vmax = float(vmax or 1)
         precision = m.log(max(abs(self.vmin), abs(self.vmax) / abs(self.vmin - self.vmax)) , 10) + 1
         precision = int(min(max(precision, 3), 8))
         self.vmin_str = format(('{:.' + str(precision) + '}').format(self.vmin))
