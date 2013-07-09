@@ -21,7 +21,7 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
     rhs = dict_property('operators', 'rhs')
     initial_data = dict_property('operators', 'initial_data')
 
-    def __init__(self, operator, rhs, initial_data, T, nt, visualizer=None, name=None):
+    def __init__(self, operator, rhs, initial_data, T, nt, parameter_space=None, visualizer=None, name=None):
         assert isinstance(operator, OperatorInterface)
         assert isinstance(rhs, LinearOperatorInterface)
         assert isinstance(initial_data, (VectorArrayInterface, OperatorInterface))
@@ -37,18 +37,28 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
                                   provides={'_t': 0})
         self.T = T
         self.nt = nt
+        self.parameter_space = parameter_space
 
         if visualizer is not None:
             self.visualize = visualizer
 
         self.solution_dim = operator.dim_range
         self.name = name
+        self.lock(whitelist=set(('cache_region', 'namespace', 'expiration_time', 'disable_logging')))
 
-    def with_projected_operators(self, operators, name=None):
-        assert set(operators.keys()) == {'operator', 'rhs', 'initial_data'}
-        return InstationaryNonlinearDiscretization(T=self.T, nt=self.nt, name=name, **operators)
+    _with_arguments = set(('operators', 'operator', 'rhs', 'initial_data', 'T', 'nt', 'parameter_space',
+                           'visualizer', 'name'))
 
-    with_operators = with_projected_operators
+    def with_(self, **kwargs):
+        assert 'operators' not in kwargs or 'rhs' not in kwargs and 'operator' not in kwargs
+        assert 'operators' not in kwargs or set(kwargs['operators'].keys()) <= set(('operator', 'rhs'))
+
+        if not 'visualizer' in kwargs:
+            kwargs['visualizer'] = self.visualize if hasattr(self, 'visualize') else None
+        if 'operators' in kwargs:
+            kwargs.update(kwargs.pop('operators'))
+
+        return self._with_via_init(kwargs)
 
     def _solve(self, mu=None):
         if not self.disable_logging:

@@ -52,13 +52,11 @@ def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=
     def visualize(U):
         visualize_glumpy_patch(grid, U, bounding_box=grid.domain, codim=0)
 
-    discretization = InstationaryNonlinearDiscretization(L, F, I, p.T, nt, visualizer=visualize,
-                                                         name='{}_FV'.format(p.name))
+    parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
+    discretization = InstationaryNonlinearDiscretization(L, F, I, p.T, nt, parameter_space=parameter_space,
+                                                         visualizer=visualize, name='{}_FV'.format(p.name))
 
-    discretization.l2_product = L2Product(grid)
-    discretization.l2_norm = induced_norm(discretization.l2_product)
-
-    if hasattr(p, 'parameter_space'):
-        discretization.parameter_space = p.parameter_space
+    discretization.add_attributes(l2_product=L2Product(grid))
+    discretization.add_attributes(l2_norm=induced_norm(discretization.l2_product))
 
     return discretization, {'grid': grid, 'boundary_info': boundary_info}
