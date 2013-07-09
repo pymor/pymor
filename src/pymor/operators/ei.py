@@ -86,7 +86,7 @@ class EmpiricalInterpolatedOperator(OperatorInterface):
                 return self.projected_collateral_basis.lincomb(interpolation_coefficients)
 
         if product is None:
-            projected_collateral_basis = NumpyVectorArray(self.collateral_basis.prod(range_basis, pairwise=False))
+            projected_collateral_basis = NumpyVectorArray(self.collateral_basis.dot(range_basis, pairwise=False))
         else:
             projected_collateral_basis = NumpyVectorArray(product.apply2(self.collateral_basis, range_basis,
                                                                          pairwise=False))

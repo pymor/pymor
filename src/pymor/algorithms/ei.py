@@ -53,7 +53,7 @@ def generate_interpolation_data(evaluations, error_norm=None, target_error=None,
             logger.info('Target error reached! Stopping extension loop.')
             break
 
-        new_dof = new_vec.argmax_abs()[0]
+        new_dof = new_vec.amax()[0]
 
         if new_dof in interpolation_dofs:
             logger.info('DOF {} selected twice for interplation! Stopping extension loop.'.format(new_dof))

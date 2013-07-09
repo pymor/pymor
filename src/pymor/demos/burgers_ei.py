@@ -54,7 +54,7 @@ from docopt import docopt
 import pymor.core as core
 core.logger.MAX_HIERACHY_LEVEL = 2
 from pymor.analyticalproblems.burgers import BurgersProblem
-from pymor.discretizers.advection import discretize_instationary_advection_fv
+from pymor.discretizers.advection import discretize_nonlinear_instationary_advection_fv
 from pymor.reductors import reduce_generic_rb
 from pymor.algorithms import greedy
 from pymor.algorithms.basisextension import pod_basis_extension
@@ -82,8 +82,8 @@ def burgers_demo(args):
     problem = BurgersProblem(parameter_range=(args['EXP_MIN'], args['EXP_MAX']))
 
     print('Discretize ...')
-    discretization, _ = discretize_instationary_advection_fv(problem, diameter=m.sqrt(2) / args['--grid'],
-                                                             nt=args['--nt'])
+    discretization, _ = discretize_nonlinear_instationary_advection_fv(problem, diameter=m.sqrt(2) / args['--grid'],
+                                                                       nt=args['--nt'])
     print(discretization.operator.grid)
 
     print(discretization.parameter_info())
