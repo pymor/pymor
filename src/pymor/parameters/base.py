@@ -244,7 +244,7 @@ class Parametric(object):
 
     @parameter_space.setter
     def parameter_space(self, ps):
-        assert self.parameter_type == ps.parameter_type
+        assert ps is None or self.parameter_type == ps.parameter_type
         self._parameter_space = ps
 
     @property
