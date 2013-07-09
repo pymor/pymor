@@ -174,7 +174,7 @@ class ColorBarWidget(QGLWidget):
         self.text_ascent = fm.ascent() * 1.5
         self.text_descent = fm.descent() * 1.5
         self.setMinimumSize(max(self.vmin_width, self.vmax_width) + 20, 300)
-        self.setSizePolicy(QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding))
+        self.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding))
         self.setAutoFillBackground(False)
 
     def resizeGL(self, w, h):
