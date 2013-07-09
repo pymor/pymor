@@ -141,8 +141,12 @@ class BasicInterface(object):
         if not set(kwargs.keys()) <= self._with_arguments:
             raise ConstError('Changing "{}" using with() is not allowed in {} (only "{}")'.format(
                 kwargs.keys(), self.__class__, self._with_arguments))
-        c = self.copy() if hasattr(self, 'copy') else copy.copy(self)
-        c.__dict__.update(kwargs)
+        c = copy.copy(self)
+        locked = c._locked
+        self._locked = False
+        for k, v in kwargs.iteritems():
+            setattr(c, k, v)
+        c._locked = locked
         return c
 
     def add_attributes(self, **kwargs):
