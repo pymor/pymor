@@ -9,6 +9,7 @@ import types
 import itertools
 import contracts
 import copy
+import inspect
 
 from pymor.core import decorators, backports, logger
 from pymor.core.exceptions import ConstError
@@ -148,6 +149,16 @@ class BasicInterface(object):
             setattr(c, k, v)
         c._locked = locked
         return c
+
+    def _with_via_init(self, **kwargs):
+        '''Default implementation for with_ by calling __init__.'''
+        my_type = type(self)
+        argnames = inspect.getargspec(my_type.__init__)[0]
+        init_args = kwargs
+        for arg in argnames:
+            if arg not in init_args:
+                init_args[arg] = getattr(obj, arg)
+        return my_type(**args)
 
     def add_attributes(self, **kwargs):
         assert not any(hasattr(self, k) for k in kwargs)
