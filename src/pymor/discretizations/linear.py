@@ -82,9 +82,16 @@ class StationaryLinearDiscretization(DiscretizationInterface):
 
     _with_arguments = set(('operators', 'operator', 'rhs', 'solver', 'visualizer', 'parameter_space', 'name'))
 
-    def with_projected_operators(self, operators):
-        assert set(operators.keys()) == {'operator', 'rhs'}
-        return StationaryLinearDiscretization(operator=operators['operator'], rhs=operators['rhs'])
+    def with_(self, **kwargs):
+        assert 'operators' not in kwargs or 'rhs' not in kwargs and 'operator' not in kwargs
+        assert 'operators' not in kwargs or set(kwargs['operators'].keys()) <= set(('operator', 'rhs'))
+
+        if not 'visualizer' in kwargs:
+            kwargs['visualizer'] = self.visualize if hasattr(self, 'visualize') else None
+        if 'operators' in kwargs:
+            kwargs.update(kwargs.pop('operators'))
+
+        return self._with_via_init(kwargs)
 
     def _solve(self, mu=None):
         A = self.operator.assemble(self.map_parameter(mu, 'operator'))
