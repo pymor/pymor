@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from pymor import defaults
+from pymor.core import getLogger
 from pymor.core.exceptions import AccuracyError
 from pymor.tools import float_cmp_all
 from pymor.operators import OperatorInterface
@@ -41,6 +42,7 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=True,
     The orthonormalized matrix.
     '''
 
+    logger = getLogger('pymor.la.gram_schmidt.gram_schmidt')
     tol = defaults.gram_schmidt_tol if tol is None else tol
     check = defaults.gram_schmidt_tol if check is None else check
     check_tol = check_tol or defaults.gram_schmidt_check_tol
@@ -54,29 +56,52 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=True,
                 A.remove(np.where(duplicates))
 
     # main loop
-    i = 0
+    i = offset
     remove = []
     while i < len(A):
+        # first calculate norm
+        if product is None:
+            oldnorm = A.l2_norm(ind=i)[0]
+        else:
+            oldnorm = np.sqrt(product.apply2(A, A, V_ind=i, U_ind=i, pairwise=True))[0]
 
-        if i >= offset:
-            if product is None:
-                norm = A.l2_norm(ind=i)[0]
+        # loop is controlled by norms, setting old norm so that we can enter at first
+        norm = 0
+        removethis = False
+
+        while norm / oldnorm < 0.25 and (not removethis):
+            # this loop assumes that oldnorm is the norm of the ith vector when entering
+
+            # the following if/else is important for performance.
+            # otherwise, when orthogonalizing one single vector,
+            # its norm will be calculated twice
+            if i > 0:
+                # orthogonalize to all vectors left
+                for j in xrange(i):
+                    if product is None:
+                        p = A.dot(A, ind=i, o_ind=j, pairwise=True)[0]
+                    else:
+                        p = product.apply2(A, A, V_ind=i, U_ind=j, pairwise=True)[0]
+                    A.axpy(-p, A, ind=i, x_ind=j)
+
+                # calculate new norm
+                if product is None:
+                    norm = A.l2_norm(ind=i)[0]
+                else:
+                    norm = np.sqrt(product.apply2(A, A, V_ind=i, U_ind=i, pairwise=True))[0]
             else:
-                norm = np.sqrt(product.apply2(A, A, V_ind=i, U_ind=i, pairwise=True))[0]
+                norm = oldnorm
 
-            if norm < tol:
-                remove.append(i)
-                i += 1
-                continue
+            # remove vector if it got too small:
+            if norm/oldnorm < tol:
+                removethis = True
             else:
                 A.scal(1/norm, ind=i)
+                oldnorm = 1.
 
-        for j in xrange(max(offset, i + 1), len(A)):
-            if product is None:
-                p = A.dot(A, ind=j, o_ind=i, pairwise=True)[0]
-            else:
-                p = product.apply2(A, A, V_ind=j, U_ind=i, pairwise=True)[0]
-            A.axpy(-p, A, ind=j, x_ind=i)
+        if removethis:
+            logger.info("gram schmidt is removing a vector")
+            remove.append(i)
 
         i += 1
 
@@ -126,6 +151,7 @@ def numpy_gram_schmidt(A, product=None, tol=None, row_offset=0, find_row_duplica
     The orthonormalized matrix.
     '''
 
+    logger = getLogger('pymor.la.gram_schmidt.numpy_gram_schmidt')
     A = A.copy()
     tol = defaults.gram_schmidt_tol if tol is None else tol
     check = defaults.gram_schmidt_tol if check is None else check
