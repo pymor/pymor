@@ -236,6 +236,7 @@ class LincombOperator(OperatorInterface):
         self.type_source = operators[0].type_source
         self.type_range = operators[0].type_range
         self.name = name or '+'.join(op.name for op in operators)
+        self.lock()
 
     def apply(self, U, ind=None, mu=None):
         return sum(op.apply(U, ind=ind, mu=self.map_parameter(mu, 'operators', i)) * self.factors[i]
@@ -272,6 +273,7 @@ class LinearLincombOperator(LinearOperatorInterface):
         self.type_source = operators[0].type_source
         self.type_range = operators[0].type_range
         self.name = name or '+'.join(op.name for op in operators)
+        self.lock()
 
     def apply(self, U, ind=None, mu=None):
         if self.assembled:
@@ -330,6 +332,7 @@ class Concatenation(OperatorInterface):
         self.type_source = first.type_source
         self.type_range = second.type_range
         self.name = name
+        self.lock()
 
     def apply(self, U, ind=None, mu=None):
         return self.second.apply(self.first.apply(U, ind=ind, mu=self.map_parameter(mu, 'first')),

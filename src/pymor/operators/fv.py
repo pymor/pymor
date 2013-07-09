@@ -152,6 +152,7 @@ class NonlinearAdvectionEngquistOsher(OperatorInterface):
         else:
             self.build_parameter_type(inherits={'flux': flux, 'flux_derivative': flux_derivative})
         self.dim_source = self.dim_range = grid.size(0)
+        self.lock()
 
     def restricted(self, components):
         source_dofs = np.setdiff1d(np.union1d(self.grid.neighbours(0, 0)[components].ravel(), components),
@@ -284,6 +285,7 @@ class L2ProductFunctional(LinearOperatorInterface):
         self.function = function
         self.name = name
         self.build_parameter_type(inherits={'function': function})
+        self.lock()
 
     def _assemble(self, mu=None):
         g = self.grid

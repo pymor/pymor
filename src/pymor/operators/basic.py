@@ -69,6 +69,7 @@ class ComponentProjection(OperatorInterface):
         self.dim_range = len(components)
         self.type_source = type_source
         self.name = name
+        self.lock()
 
     def apply(self, U, ind=None, mu=None):
         assert mu is None
