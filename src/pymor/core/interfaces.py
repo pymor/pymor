@@ -95,7 +95,7 @@ class BasicInterface(object):
     __metaclass__ = UberMeta
     _locked = False
     _lock_whitelist = set()
-    _with_arguments = set(('new_attributes',))
+    _with_arguments = set()
 
     def __setattr__(self, key, value):
         '''depending on _locked state I delegate the setattr call to object or
@@ -133,9 +133,6 @@ class BasicInterface(object):
         **kwargs
             Names of attributes to change with their new values. Each attribute name
             has to be contained in `with_arguments`.
-        new_attributes
-            Dictionary of attribute names and values which are to be added to
-            the object. (Only allowed if `new_attributes` is in `with_arguments`.)
 
         Returns
         -------
@@ -144,15 +141,8 @@ class BasicInterface(object):
         if not set(kwargs.keys()) <= self._with_arguments:
             raise ConstError('Changing "{}" using with() is not allowed in {} (only "{}")'.format(
                 kwargs.keys(), self.__class__, self._with_arguments))
-
         c = self.copy() if hasattr(self, 'copy') else copy.copy(self)
-
-        new_attributes = kwargs.pop('new_attributes', None)
-        if new_attributes:
-            c.__dict__.update(new_attributes)
-            c._with_arguments = self._with_arguments.union(new_attributes.keys())
         c.__dict__.update(kwargs)
-
         return c
 
     def add_attributes(self, **kwargs):
