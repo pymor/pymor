@@ -155,6 +155,10 @@ class BasicInterface(object):
 
         return c
 
+    def add_attributes(self, **kwargs):
+        assert not any(hasattr(self, k) for k in kwargs)
+        self.__dict__.update(kwargs)
+
     @classmethod
     def implementors(cls, descend=False):
         '''I return a, potentially empty, list of my subclass-objects.
