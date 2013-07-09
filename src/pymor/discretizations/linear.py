@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*j- coding: utf-8 -*-
 # This file is part of the pyMor project (http://www.pymor.org).
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
@@ -60,7 +60,7 @@ class StationaryLinearDiscretization(DiscretizationInterface):
     operator = dict_property('operators', 'operator')
     rhs = dict_property('operators', 'rhs')
 
-    def __init__(self, operator, rhs, solver=None, visualizer=None, name=None):
+    def __init__(self, operator, rhs, solver=None, visualizer=None, parameter_space=None, name=None):
         assert isinstance(operator, LinearOperatorInterface)
         assert isinstance(rhs, LinearOperatorInterface)
         assert operator.dim_source == operator.dim_range == rhs.dim_source
@@ -69,6 +69,7 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         super(StationaryLinearDiscretization, self).__init__()
         self.operators = {'operator': operator, 'rhs': rhs}
         self.build_parameter_type(inherits={'operator': operator, 'rhs': rhs})
+        self.parameter_space = parameter_space
 
         self.solver = solver or solve_linear
 
