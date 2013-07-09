@@ -29,13 +29,11 @@ class DiscretizationInterface(BasicInterface, Parametric, Cachable, Named):
     '''
 
     operators = dict()
+    _with_arguments = set(('operators',))
 
     def __init__(self):
         Cachable.__init__(self, config=DEFAULT_DISK_CONFIG)
         Parametric.__init__(self)
-
-    def with_projected_operators(self, operators):
-        raise NotImplementedError
 
     @abstractmethod
     def _solve(self, mu=None):
