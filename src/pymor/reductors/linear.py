@@ -130,7 +130,6 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
     estimator_matrix[:len(R_RR), len(R_RR):] = R_RO
     estimator_matrix[len(R_RR):, :len(R_RR)] = R_RO.T
 
-    rd.estimator_matrix = NumpyLinearOperator(estimator_matrix)
 
     # this is our estimator
     def estimate(self, U, mu=None):
@@ -161,7 +160,8 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
 
         return induced_norm(self.estimator_matrix)(NumpyVectorArray(C))
 
-    rd.estimate = types.MethodType(estimate, rd)
+    rd.add_attributes(estimator_matrix = NumpyLinearOperator(estimator_matrix),
+                      estimate=types.MethodType(estimate, rd))
 
     return rd, rc
 

@@ -59,7 +59,7 @@ def reduce_generic_rb(discretization, RB, product=None, disable_caching=True):
 
     if disable_caching and isinstance(rd, Cachable):
         Cachable.__init__(rd, config=NO_CACHE_CONFIG)
-    rd.name += '_reduced'
+    # rd.name += '_reduced'
     rd.disable_logging = True
     rc = GenericRBReconstructor(RB)
     return rd, rc

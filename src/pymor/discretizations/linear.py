@@ -1,4 +1,4 @@
-# -*j- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # This file is part of the pyMor project (http://www.pymor.org).
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
@@ -78,6 +78,9 @@ class StationaryLinearDiscretization(DiscretizationInterface):
 
         self.solution_dim = operator.dim_range
         self.name = name
+        self.lock(whitelist=set(('cache_region', 'namespace', 'expiration_time', 'disable_logging')))
+
+    _with_arguments = set(('operators', 'operator', 'rhs', 'solver', 'visualizer', 'parameter_space', 'name'))
 
     def with_projected_operators(self, operators):
         assert set(operators.keys()) == {'operator', 'rhs'}
