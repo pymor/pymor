@@ -96,7 +96,6 @@ class BasicInterface(object):
     __metaclass__ = UberMeta
     _locked = False
     _lock_whitelist = set()
-    _with_arguments = set()
 
     def __setattr__(self, key, value):
         '''depending on _locked state I delegate the setattr call to object or
@@ -122,9 +121,7 @@ class BasicInterface(object):
     def unlock(self):
         object.__setattr__(self, '_locked', False)
 
-    @property
-    def with_arguments(self):
-        return self._with_arguments
+    with_arguments = set()
 
     def with_(self, **kwargs):
         '''Returns a copy with changed attributes.
@@ -139,9 +136,9 @@ class BasicInterface(object):
         -------
         Copy of `self` with changed attributes.
         '''
-        if not set(kwargs.keys()) <= self._with_arguments:
+        if not set(kwargs.keys()) <= self.with_arguments:
             raise ConstError('Changing "{}" using with() is not allowed in {} (only "{}")'.format(
-                kwargs.keys(), self.__class__, self._with_arguments))
+                kwargs.keys(), self.__class__, self.with_arguments))
         c = copy.copy(self)
         locked = c._locked
         self._locked = False

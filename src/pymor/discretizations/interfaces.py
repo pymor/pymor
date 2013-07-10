@@ -29,7 +29,7 @@ class DiscretizationInterface(BasicInterface, Parametric, Cachable, Named):
     '''
 
     operators = dict()
-    _with_arguments = set(('operators',))
+    with_arguments = set(('operators',))
 
     def __init__(self):
         Cachable.__init__(self, config=DEFAULT_DISK_CONFIG)

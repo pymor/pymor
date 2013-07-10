@@ -84,7 +84,7 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         self.name = name
         self.lock()
 
-    _with_arguments = set(selfless_arguments(__init__)).union(['operators'])
+    with_arguments = set(selfless_arguments(__init__)).union(['operators'])
 
     def with_(self, **kwargs):
         assert 'operators' not in kwargs or 'rhs' not in kwargs and 'operator' not in kwargs
