@@ -89,8 +89,6 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         assert 'operators' not in kwargs or 'rhs' not in kwargs and 'operator' not in kwargs
         assert 'operators' not in kwargs or set(kwargs['operators'].keys()) <= set(('operator', 'rhs'))
 
-        if not 'visualizer' in kwargs:
-            kwargs['visualizer'] = self.visualize if hasattr(self, 'visualize') else None
         if 'operators' in kwargs:
             kwargs.update(kwargs.pop('operators'))
 
