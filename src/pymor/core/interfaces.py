@@ -148,7 +148,11 @@ class BasicInterface(object):
         return c
 
     def _with_via_init(self, kwargs):
-        '''Default implementation for with_ by calling __init__.'''
+        '''Default implementation for with_ by calling __init__.
+
+        Parameters which are missing in `kwargs` and for which there is no attribute in `self` are set
+        to None.
+        '''
         my_type = type(self)
         argnames = inspect.getargspec(my_type.__init__)[0]
         init_args = kwargs
@@ -156,7 +160,7 @@ class BasicInterface(object):
             if arg == 'self':
                 continue
             if arg not in init_args:
-                init_args[arg] = getattr(self, arg)
+                init_args[arg] = getattr(self, arg, None)
         return my_type(**init_args)
 
     def add_attributes(self, **kwargs):
