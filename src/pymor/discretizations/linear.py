@@ -56,9 +56,13 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         The functional f_h. A synonym for operators['rhs'].
     '''
 
-    disable_logging = False
     operator = dict_property('operators', 'operator')
     rhs = dict_property('operators', 'rhs')
+
+    _logging_disabled = False
+    @property
+    def logging_disabled(self):
+        return self._logging_disabled
 
     def __init__(self, operator, rhs, solver=None, visualizer=None, parameter_space=None, name=None):
         assert isinstance(operator, LinearOperatorInterface)
@@ -78,7 +82,7 @@ class StationaryLinearDiscretization(DiscretizationInterface):
 
         self.solution_dim = operator.dim_range
         self.name = name
-        self.lock(whitelist=set(('disable_logging',)))
+        self.lock()
 
     _with_arguments = set(('operators', 'operator', 'rhs', 'solver', 'visualizer', 'parameter_space', 'name'))
 
@@ -97,8 +101,14 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         A = self.operator.assemble(self.map_parameter(mu, 'operator'))
         RHS = self.rhs.assemble(self.map_parameter(mu, 'rhs')).as_vector_array()
 
-        if not self.disable_logging:
+        if not self.logging_disabled:
             sparse = 'sparsity unknown' if A.sparse is None else ('sparse' if A.sparse else 'dense')
             self.logger.info('Solving {} ({}) for {} ...'.format(self.name, sparse, mu))
 
         return self.solver(A, RHS)
+
+    def disable_logging(self, doit=True):
+        self._logging_disabled = doit
+
+    def enable_logging(self, doit=True):
+        self._logging_disabled = not doit

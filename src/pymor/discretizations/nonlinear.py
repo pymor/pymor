@@ -16,10 +16,14 @@ from pymor.discretizations.interfaces import DiscretizationInterface
 
 class InstationaryNonlinearDiscretization(DiscretizationInterface):
 
-    disable_logging = False
     operator = dict_property('operators', 'operator')
     rhs = dict_property('operators', 'rhs')
     initial_data = dict_property('operators', 'initial_data')
+
+    _logging_disabled = False
+    @property
+    def logging_disabled(self):
+        return self._logging_disabled
 
     def __init__(self, operator, rhs, initial_data, T, nt, parameter_space=None, visualizer=None, name=None):
         assert isinstance(operator, OperatorInterface)
@@ -44,7 +48,7 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
 
         self.solution_dim = operator.dim_range
         self.name = name
-        self.lock(whitelist=set(('disable_logging',)))
+        self.lock()
 
     _with_arguments = set(('operators', 'operator', 'rhs', 'initial_data', 'T', 'nt', 'parameter_space',
                            'visualizer', 'name'))
@@ -61,9 +65,15 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
         return self._with_via_init(kwargs)
 
     def _solve(self, mu=None):
-        if not self.disable_logging:
+        if not self._logging_disabled:
             self.logger.info('Solving {} for {} ...'.format(self.name, mu))
         mu_A = self.map_parameter(mu, 'operator', provide={'_t': np.array(0)})
         mu_F = self.map_parameter(mu, 'rhs', provide={'_t': np.array(0)})
         U0 = self.initial_data.apply(0, self.map_parameter(mu, 'initial_data'))
         return explicit_euler(self.operator, self.rhs, U0, 0, self.T, self.nt, mu_A, mu_F)
+
+    def disable_logging(self, doit=True):
+        self._logging_disabled = doit
+
+    def enable_logging(self, doit=True):
+        self._logging_disabled = not doit
