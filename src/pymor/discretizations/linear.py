@@ -9,7 +9,7 @@ import numpy as np
 
 from pymor.core import defaults
 from pymor.la import NumpyVectorArray
-from pymor.tools import dict_property, selfless_arguments
+from pymor.tools import selfless_arguments
 from pymor.operators import LinearOperatorInterface
 from pymor.operators.solvers import solve_linear
 from pymor.discretizations.interfaces import DiscretizationInterface
@@ -56,9 +56,6 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         The functional f_h. A synonym for operators['rhs'].
     '''
 
-    operator = dict_property('operators', 'operator')
-    rhs = dict_property('operators', 'rhs')
-
     _logging_disabled = False
     @property
     def logging_disabled(self):
@@ -71,6 +68,8 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         assert rhs.dim_range == 1
 
         super(StationaryLinearDiscretization, self).__init__()
+        self.operator = operator
+        self.rhs = rhs
         self.operators = {'operator': operator, 'rhs': rhs}
         self.build_parameter_type(inherits={'operator': operator, 'rhs': rhs})
         self.parameter_space = parameter_space

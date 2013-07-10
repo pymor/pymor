@@ -9,16 +9,12 @@ import numpy as np
 
 from pymor.algorithms.timestepping import explicit_euler
 from pymor.la.interfaces import VectorArrayInterface
-from pymor.tools import dict_property, selfless_arguments
+from pymor.tools import selfless_arguments
 from pymor.operators import OperatorInterface, LinearOperatorInterface, ConstantOperator
 from pymor.discretizations.interfaces import DiscretizationInterface
 
 
 class InstationaryNonlinearDiscretization(DiscretizationInterface):
-
-    operator = dict_property('operators', 'operator')
-    rhs = dict_property('operators', 'rhs')
-    initial_data = dict_property('operators', 'initial_data')
 
     _logging_disabled = False
     @property
@@ -36,6 +32,9 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
         assert rhs.dim_range == 1
 
         super(InstationaryNonlinearDiscretization, self).__init__()
+        self.operator = operator
+        self.rhs = rhs
+        self.initial_data = initial_data
         self.operators = {'operator': operator, 'rhs': rhs, 'initial_data': initial_data}
         self.build_parameter_type(inherits={'operator': operator, 'rhs': rhs, 'initial_data': initial_data},
                                   provides={'_t': 0})
