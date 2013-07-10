@@ -44,7 +44,7 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
 
         self.solution_dim = operator.dim_range
         self.name = name
-        self.lock(whitelist=set(('cache_region', 'namespace', 'expiration_time', 'disable_logging')))
+        self.lock(whitelist=set(('disable_logging',)))
 
     _with_arguments = set(('operators', 'operator', 'rhs', 'initial_data', 'T', 'nt', 'parameter_space',
                            'visualizer', 'name'))
