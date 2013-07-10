@@ -9,7 +9,7 @@ import numpy as np
 
 from pymor.algorithms.timestepping import explicit_euler
 from pymor.la.interfaces import VectorArrayInterface
-from pymor.tools import dict_property
+from pymor.tools import dict_property, selfless_arguments
 from pymor.operators import OperatorInterface, LinearOperatorInterface, ConstantOperator
 from pymor.discretizations.interfaces import DiscretizationInterface
 
@@ -50,8 +50,7 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
         self.name = name
         self.lock()
 
-    _with_arguments = set(('operators', 'operator', 'rhs', 'initial_data', 'T', 'nt', 'parameter_space',
-                           'visualizer', 'name'))
+    _with_arguments = set(selfless_arguments(__init__)).union(['operators'])
 
     def with_(self, **kwargs):
         assert 'operators' not in kwargs or 'rhs' not in kwargs and 'operator' not in kwargs

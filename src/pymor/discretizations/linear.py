@@ -9,7 +9,7 @@ import numpy as np
 
 from pymor.core import defaults
 from pymor.la import NumpyVectorArray
-from pymor.tools import dict_property
+from pymor.tools import dict_property, selfless_arguments
 from pymor.operators import LinearOperatorInterface
 from pymor.operators.solvers import solve_linear
 from pymor.discretizations.interfaces import DiscretizationInterface
@@ -84,7 +84,7 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         self.name = name
         self.lock()
 
-    _with_arguments = set(('operators', 'operator', 'rhs', 'solver', 'visualizer', 'parameter_space', 'name'))
+    _with_arguments = set(selfless_arguments(__init__)).union(['operators'])
 
     def with_(self, **kwargs):
         assert 'operators' not in kwargs or 'rhs' not in kwargs and 'operator' not in kwargs
