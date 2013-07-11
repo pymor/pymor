@@ -83,8 +83,9 @@ def dune_thermalblock_demo(args):
 
     error_product = discretization.h1_product if args['--estimator-norm'] == 'h1' else None
     reductor = partial(reduce_stationary_affine_linear, error_product=error_product)
-    extension_algorithm = (gram_schmidt_basis_extension if args['--extension-alg'] == 'gram_schmidt'
-                           else trivial_basis_extension)
+    extension_algorithms = {'trivial': trivial_basis_extension,
+                            'gram_schmidt': partial(gram_schmidt_basis_extension, product=discretization.h1_product)}
+    extension_algorithm = extension_algorithms[args['--extension-alg']]
     greedy_data = greedy(discretization, reductor, discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
                          initial_data = DuneVectorArray.empty(dim=discretization.solution_dim),
                          use_estimator=args['--with-estimator'], error_norm=discretization.h1_norm,

@@ -26,6 +26,7 @@ class DuneLinearOperator(LinearOperatorInterface):
         self.dim_range = dim
         self.name = name
         self.dune_op = dune_op
+        self.lock()
 
     def _assemble(self, mu=None):
         assert mu is None
@@ -54,6 +55,7 @@ class DuneLinearFunctional(LinearOperatorInterface):
         self.dim_range = 1
         self.name = name
         self.dune_vec = dune_vec
+        self.lock()
 
     def _assemble(self, mu=None):
         assert mu is None

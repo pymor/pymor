@@ -18,7 +18,7 @@ from pymor.discretizations import StationaryLinearDiscretization
 from pymor.playground.operators.dune import DuneLinearOperator, DuneLinearFunctional
 from pymor.playground.la.dunevectorarray import DuneVectorArray, WrappedDuneVector
 from pymor.parameters.spaces import CubicParameterSpace
-from pymor.la import induced_norm
+from pymor.la import induced_norm, NumpyVectorArray
 
 import dunelinearellipticcg2dsgrid as dune
 
@@ -30,27 +30,22 @@ class DuneLinearEllipticCGDiscretization(DiscretizationInterface):
     rhs = dict_property('operators', 'rhs')
 
     def __init__(self, parameter_range=(0.1, 1.), name=None):
-        super(DuneLinearEllipticCGDiscretization, self).__init__()
-        Cachable.__init__(self, config=NO_CACHE_CONFIG)
-
         self.example = dune.LinearEllipticExampleCG()
-        ops = list(self.example.operators())
         f = self.example.functional()
+        functional = DuneLinearFunctional(f)
         self.solution_dim = f.len()
-
+        ops = list(self.example.operators())
         ops = [DuneLinearOperator(op, dim=self.solution_dim) for op in ops]
         operator = LinearAffinelyDecomposedOperator(ops[:-1], ops[-1], name_map={'.coefficients': 'diffusion'}, name='diffusion')
-        functional = DuneLinearFunctional(f)
 
-        self.operators = {'operator': operator, 'rhs': functional}
+        operators = {'operator': operator, 'rhs': functional}
+        products = {'h1': operator.assemble(mu={'diffusion': np.ones(self.example.paramSize())})}
+        super(DuneLinearEllipticCGDiscretization, self).__init__(operators=operators, products=products,
+                                                                 caching=False, name=name)
+
         self.build_parameter_type(inherits={'operator': operator})
-
-        self.h1_product = operator.assemble(mu={'diffusion': np.ones(self.example.paramSize())})
-        self.h1_norm = induced_norm(self.h1_product)
-
         self.parameter_space = CubicParameterSpace({'diffusion': self.example.paramSize()}, *parameter_range)
-
-        self.name = name
+        self.lock()
 
     def _solve(self, mu=None):
         mu = self.map_parameter(mu, 'operator')
@@ -60,9 +55,16 @@ class DuneLinearEllipticCGDiscretization(DiscretizationInterface):
 
         return DuneVectorArray([WrappedDuneVector(self.example.solve(list(mu['diffusion'])))])
 
-    def with_projected_operators(self, operators):
+    with_arguments = StationaryLinearDiscretization.with_arguments
+
+    def with_(self, **kwargs):
+        assert 'operators' in kwargs
+        operators = kwargs.pop('operators')
         assert set(operators.keys()) == {'operator', 'rhs'}
-        return StationaryLinearDiscretization(operator=operators['operator'], rhs=operators['rhs'])
+        assert all(op.type_source == NumpyVectorArray for op in operators.itervalues())
+        assert all(op.type_range == NumpyVectorArray for op in operators.itervalues())
+        d = StationaryLinearDiscretization(operator=operators['operator'], rhs=operators['rhs'])
+        return d.with_(**kwargs)
 
     def visualize(self, U):
         import os
