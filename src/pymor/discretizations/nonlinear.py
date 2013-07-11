@@ -53,7 +53,11 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
         return self._with_via_init(kwargs)
 
     def _solve(self, mu=None):
-        self.logger.info('Solving {} for {} ...'.format(self.name, mu))
+
+        # explicitly checking if logging is disabled saves the expensive str(mu) call
+        if not self.logging_disabled:
+            self.logger.info('Solving {} for {} ...'.format(self.name, mu))
+
         mu_A = self.map_parameter(mu, 'operator', provide={'_t': np.array(0)})
         mu_F = self.map_parameter(mu, 'rhs', provide={'_t': np.array(0)})
         U0 = self.initial_data.apply(0, self.map_parameter(mu, 'initial_data'))

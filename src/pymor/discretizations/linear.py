@@ -86,7 +86,9 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         A = self.operator.assemble(self.map_parameter(mu, 'operator'))
         RHS = self.rhs.assemble(self.map_parameter(mu, 'rhs')).as_vector_array()
 
-        sparse = 'sparsity unknown' if A.sparse is None else ('sparse' if A.sparse else 'dense')
-        self.logger.info('Solving {} ({}) for {} ...'.format(self.name, sparse, mu))
+        # explicitly checking if logging is disabled saves the expensive str(mu) call
+        if not self.logging_disabled:
+            sparse = 'sparsity unknown' if A.sparse is None else ('sparse' if A.sparse else 'dense')
+            self.logger.info('Solving {} ({}) for {} ...'.format(self.name, sparse, mu))
 
         return self.solver(A, RHS)
