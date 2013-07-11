@@ -167,6 +167,18 @@ class BasicInterface(object):
         assert not any(hasattr(self, k) for k in kwargs)
         self.__dict__.update(kwargs)
 
+    def disable_logging(self, doit=True):
+        locked = self._locked
+        self.unlock()
+        if doit:
+            self.logger = logger.dummy_logger
+        else:
+            self.logger = type(self).logger
+        self.lock(locked)
+
+    def enable_logging(self, doit=True):
+        self.disable_logging(not doit)
+
     @classmethod
     def implementors(cls, descend=False):
         '''I return a, potentially empty, list of my subclass-objects.

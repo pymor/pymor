@@ -84,3 +84,5 @@ def getLogger(module, level=None, filename=None):
     if level:
         logger.setLevel(LOGLEVEL_MAPPING[level])
     return logger
+
+dummy_logger = getLogger('pymor.dummylogger', level='fatal')
