@@ -31,23 +31,17 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
         assert operator.dim_source == operator.dim_range == rhs.dim_source == initial_data.dim_range
         assert rhs.dim_range == 1
 
-        super(InstationaryNonlinearDiscretization, self).__init__()
+        operators = {'operator': operator, 'rhs': rhs, 'initial_data': initial_data}
+        super(InstationaryNonlinearDiscretization, self).__init__(operators=operators, visualizer=visualizer, name=name)
         self.operator = operator
         self.rhs = rhs
         self.initial_data = initial_data
-        self.operators = {'operator': operator, 'rhs': rhs, 'initial_data': initial_data}
-        self.build_parameter_type(inherits={'operator': operator, 'rhs': rhs, 'initial_data': initial_data},
-                                  provides={'_t': 0})
         self.T = T
         self.nt = nt
-        self.parameter_space = parameter_space
-        self.visualizer = visualizer
-
-        if visualizer is not None:
-            self.visualize = self.__visualize
-
         self.solution_dim = operator.dim_range
-        self.name = name
+        self.build_parameter_type(inherits={'operator': operator, 'rhs': rhs, 'initial_data': initial_data},
+                                  provides={'_t': 0})
+        self.parameter_space = parameter_space
         self.lock()
 
     with_arguments = set(selfless_arguments(__init__)).union(['operators'])
@@ -75,5 +69,3 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
     def enable_logging(self, doit=True):
         self._logging_disabled = not doit
 
-    def __visualize(self, U):
-        self.visualizer.visualize(U, self)

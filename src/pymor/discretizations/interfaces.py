@@ -31,9 +31,15 @@ class DiscretizationInterface(BasicInterface, Parametric, Cachable, Named):
     operators = dict()
     with_arguments = set(('operators',))
 
-    def __init__(self):
+    def __init__(self, operators, visualizer=None, name=None):
         Cachable.__init__(self, config=DEFAULT_DISK_CONFIG)
         Parametric.__init__(self)
+        self.operators = operators
+        self.visualizer = visualizer
+        self.name = name
+
+        if visualizer is not None:
+            self.visualize = self.__visualize
 
     @abstractmethod
     def _solve(self, mu=None):
@@ -47,3 +53,6 @@ class DiscretizationInterface(BasicInterface, Parametric, Cachable, Named):
         The result is cached by default.
         '''
         return self._solve(mu)
+
+    def __visualize(self, U):
+        self.visualizer.visualize(U, self)

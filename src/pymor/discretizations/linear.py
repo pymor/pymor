@@ -67,21 +67,15 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         assert operator.dim_source == operator.dim_range == rhs.dim_source
         assert rhs.dim_range == 1
 
-        super(StationaryLinearDiscretization, self).__init__()
+        operators = {'operator': operator, 'rhs': rhs}
+        super(StationaryLinearDiscretization, self).__init__(operators=operators, visualizer=visualizer, name=name)
         self.operator = operator
         self.rhs = rhs
-        self.operators = {'operator': operator, 'rhs': rhs}
+        self.operators = operators
+        self.solution_dim = operator.dim_range
+        self.solver = solver or solve_linear
         self.build_parameter_type(inherits={'operator': operator, 'rhs': rhs})
         self.parameter_space = parameter_space
-        self.visualizer = visualizer
-
-        self.solver = solver or solve_linear
-
-        if visualizer is not None:
-            self.visualize = self.__visualize
-
-        self.solution_dim = operator.dim_range
-        self.name = name
         self.lock()
 
     with_arguments = set(selfless_arguments(__init__)).union(['operators'])
@@ -110,6 +104,3 @@ class StationaryLinearDiscretization(DiscretizationInterface):
 
     def enable_logging(self, doit=True):
         self._logging_disabled = not doit
-
-    def __visualize(self, U):
-        self.visualizer.visualize(U, self)
