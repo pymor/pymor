@@ -61,7 +61,7 @@ def _load_all():
                                                    lambda n: fails.append((n, ''))):
         try:
             __import__(module_name, level=0)
-        except TypeError, t:
+        except (TypeError, ImportError) as t:
             fails.append((module_name, t))
     if len(fails) > 0:
         logger.getLogger(__name__).fatal('Failed imports: {}'.format(pprint.pformat(fails)))
@@ -72,13 +72,17 @@ def SubclassForImplemetorsOf(InterfaceType):
     '''A decorator that dynamically creates subclasses of the decorated base test class
     for all implementors of a given Interface
     '''
-    _load_all()
+    try:
+        _load_all()
+    except ImportError:
+        pass
 
     def decorate(TestCase):
         '''saves a new type called cname with correct bases and class dict in globals'''
         import pymor.core.dynamic
-        for Type in set([T for T in InterfaceType.implementors(True) if (not T.has_interface_name()
-                                                                         and not issubclass(T, TestBase))]):
+        test_types = set([T for T in InterfaceType.implementors(True) if (not T.has_interface_name()
+                                                                          and not issubclass(T, TestBase))])
+        for Type in test_types:
             cname = '{}_{}'.format(Type.__name__, TestCase.__name__.replace('Interface', ''))
             pymor.core.dynamic.__dict__[cname] = type(cname, (TestCase,), {'__test__': True, 'Type': Type})
         return TestCase
@@ -93,12 +97,27 @@ def GridSubclassForImplemetorsOf(InterfaceType):
     '''A decorator that dynamically creates subclasses of the decorated base test class
     for all implementors of a given Interface
     '''
-    _load_all()
+    try:
+        _load_all()
+    except ImportError:
+        pass
+
+    def getType(name):
+        import sys
+        module = name[0:name.rfind('.')]
+        blah = name[name.rfind('.') + 1:]
+        print([f for f in sys.modules.keys() if f.startswith('pymor.gr')])
+        print(blah + ' ' + module)
+        return sys.modules[module].__dict__[blah]
 
     def decorate(TestCase):
         '''saves a new type called cname with correct bases and class dict in globals'''
         import pymor.core.dynamic
-        for GridType in set([T for T in InterfaceType.implementors(True) if not T.has_interface_name()]):
+        if 'PYMOR_GRID_TYPE' in os.environ:
+            test_types = [getType(os.environ['PYMOR_GRID_TYPE'])]
+        else:
+            test_types = set([T for T in InterfaceType.implementors(True) if not T.has_interface_name()])
+        for GridType in test_types:
             cname = '{}_{}'.format(GridType.__name__, TestCase.__name__.replace('Interface', ''))
             pymor.core.dynamic.__dict__[cname] = type(cname, (TestCase,), {'grids': GridType.test_instances(),
                                                       '__test__': True})
