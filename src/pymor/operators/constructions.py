@@ -258,6 +258,11 @@ class LinearLincombOperator(LinearOperatorInterface):
         Name of the operator.
     '''
 
+    _assembled = False
+    @property
+    def assembled(self):
+        return self._assembled
+
     def __init__(self, operators, factors=None, name_map=None, name=None):
         assert all(isinstance(op, LinearOperatorInterface) for op in operators)
         assert all(op.dim_source == operators[0].dim_source for op in operators)
@@ -289,7 +294,7 @@ class LinearLincombOperator(LinearOperatorInterface):
         M = self.operators[0].assemble(self.map_parameter(mu, 'operators', 0)) * self.factors[0]
         for i, op in enumerate(self.operators[1:]):
             M = M + op.assemble(self.map_parameter(mu, 'operators', i + 1)) * self.factors[i + 1]
-        M.assembled = True
+        M._assembled = True
         return M
 
 
