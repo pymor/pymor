@@ -36,12 +36,14 @@ class BurgersProblem(InstationaryAdvectionProblem):
             return R
 
         flux_function = GenericFunction(burgers_flux, dim_domain=0, dim_range=2,
-                                        parameter_type={'exponent': 0}, name='burgers_flux')
-        flux_function.rename_parameter({'.exponent': 'exponent'})
+                                        parameter_type={'exponent': 0},
+                                        name_map={'.exponent': 'exponent'},
+                                        name='burgers_flux')
 
         flux_function_derivative = GenericFunction(burgers_flux_derivative, dim_domain=0, dim_range=2,
-                                                   parameter_type={'exponent': 0}, name='burgers_flux')
-        flux_function_derivative.rename_parameter({'.exponent': 'exponent'})
+                                                   parameter_type={'exponent': 0},
+                                                   name_map={'.exponent': 'exponent'},
+                                                   name='burgers_flux')
 
         if initial_data == 'sin':
             def initial_data(x):

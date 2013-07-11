@@ -39,8 +39,7 @@ class DuneLinearEllipticCGDiscretization(DiscretizationInterface):
         self.solution_dim = f.len()
 
         ops = [DuneLinearOperator(op, dim=self.solution_dim) for op in ops]
-        operator = LinearAffinelyDecomposedOperator(ops[:-1], ops[-1], name='diffusion')
-        operator.rename_parameter({'.coefficients': 'diffusion'})
+        operator = LinearAffinelyDecomposedOperator(ops[:-1], ops[-1], name_map={'.coefficients': 'diffusion'}, name='diffusion')
         functional = DuneLinearFunctional(f)
 
         self.operators = {'operator': operator, 'rhs': functional}

@@ -37,6 +37,7 @@ class OnedGrid(AffineGridInterface):
                                         np.arange(self._num_intervals, dtype=np.int32) + 1))
         self.__A = np.ones(self._num_intervals, dtype=np.int32)[:, np.newaxis, np.newaxis] * self._width
         self.__B = (self._domain[0] + self._width * (np.arange(self._num_intervals, dtype=np.int32)))[:, np.newaxis]
+        self.lock()
 
     def __str__(self):
         return ('OnedGrid, domain [{xmin},{xmax}]'

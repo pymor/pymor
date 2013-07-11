@@ -244,7 +244,7 @@ class Parametric(object):
 
     @parameter_space.setter
     def parameter_space(self, ps):
-        assert self.parameter_type == ps.parameter_type
+        assert ps is None or self.parameter_type == ps.parameter_type
         self._parameter_space = ps
 
     @property
@@ -313,7 +313,7 @@ class Parametric(object):
 
         return Parameter(parameter_type, mu_mapped)
 
-    def build_parameter_type(self, local_type=None, inherits=None, local_global=False, provides=None):
+    def build_parameter_type(self, local_type=None, inherits=None, local_global=False, provides=None, name_map=None):
         '''Builds the parameter type of the object. To be called by __init__.
 
         Parameters
@@ -329,6 +329,9 @@ class Parametric(object):
             Dict where the keys specify parameter names and the values are corresponding shapes. The
             parameters listed in `provides` will not become part of the parameter type. Instead they
             have to be provided using the `provides` parameter of the `map_parameter` method.
+        name_map
+            A dict of the form `{'.oldname1': 'newname1', ...}` defining a name mapping which is finally
+            applied to the built parameter type.
 
         Returns
         -------
@@ -338,6 +341,8 @@ class Parametric(object):
                     If a key of `inherits['obj']` begins with a '.', '.obj' is prepended to the key.
             3. The parameter type is built by concatenating `local_type` with the values of `inherits`
                ignoring duplicate keys. (The values of duplicate keys must be equal.)
+            4. Finally, the name mapping defined by name_map is applied to the parameter names in the
+               constructed parameter type. Only local names (starting with '.') may be mapped.
         '''
         local_type = parse_parameter_type(local_type)
         self.local_parameter_type = local_type
@@ -434,18 +439,10 @@ class Parametric(object):
         self.parameter_maps_renamed = parameter_maps
         self.parameter_name_map = {}
 
-    def rename_parameter(self, name_map):
-        '''Rename a parameter component of the object's parameter type.
+        if name_map is not None:
+            self._rename_parameter(name_map)
 
-        This method can be called by the object's owner to rename local parameter components
-        (whose name begins with '.') to global parameter components. This should be called
-        directly after instantiation.
-
-        Parameters
-        ----------
-        name_map
-            A dict of the form `{'.oldname1': 'newname1', ...}` defining the name mapping.
-        '''
+    def _rename_parameter(self, name_map):
         assert self.parametric
         for k, v in name_map.iteritems():
             if not k.startswith('.'):
@@ -475,6 +472,28 @@ class Parametric(object):
                 raise ValueError('Mismatching shapes for parameter {}: {} and {}'.format(k, parameter_type[k], v))
             parameter_type[k] = v
         self.parameter_type = parameter_type
+
+    def with_renamed_parameters(self, name_map):
+        '''Return a copy with renamed parameters.
+
+        This method can be called to rename local parameter components (whose names begin with '.')
+        to global parameter components.
+
+        Parameters
+        ----------
+        name_map
+            A dict of the form `{'.oldname1': 'newname1', ...}` defining the name mapping.
+
+        Returns
+        -------
+        Copy of `self` with renamed parameters.
+        '''
+        c = self.with_()
+        locked = c.locked
+        c.unlock()
+        c._rename_parameter(name_map)
+        c.lock(locked)
+        return c
 
     def parameter_info(self):
         '''Return an info string about the object's parameter type and how it is built.'''

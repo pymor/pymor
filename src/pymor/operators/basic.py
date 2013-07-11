@@ -26,6 +26,7 @@ class ConstantOperator(OperatorInterface):
         self.type_range = type(value)
         self.name = name
         self._value = value.copy()
+        self.lock()
 
     def apply(self, U, ind=None, mu=None):
         assert mu is None
@@ -68,6 +69,7 @@ class ComponentProjection(OperatorInterface):
         self.dim_range = len(components)
         self.type_source = type_source
         self.name = name
+        self.lock()
 
     def apply(self, U, ind=None, mu=None):
         assert mu is None

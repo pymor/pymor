@@ -33,6 +33,7 @@ class ConstantFunction(FunctionInterface):
         self.name = name
         value = np.array(value, copy=False)
         self._value = value.reshape((self.dim_range,))
+        self.lock()
 
     def __str__(self):
         return ('{name}: x -> {value}').format(name=self.name, value=self._value)
@@ -67,17 +68,18 @@ class GenericFunction(FunctionInterface):
         The name of the function.
     '''
 
-    def __init__(self, mapping, dim_domain=1, dim_range=1, parameter_type=None, name=None):
+    def __init__(self, mapping, dim_domain=1, dim_range=1, parameter_type=None, name_map=None, name=None):
         super(GenericFunction, self).__init__()
         self.dim_domain = dim_domain
         self.dim_range = dim_range
         self.name = name
         self._mapping = mapping
         if parameter_type is not None:
-            self.build_parameter_type(parameter_type)
+            self.build_parameter_type(parameter_type, name_map=name_map)
             self._with_mu = True
         else:
             self._with_mu = False
+        self.lock()
 
     def __str__(self):
         return ('{name}: x -> {mapping}').format(name=self.name, mapping=self._mapping)
