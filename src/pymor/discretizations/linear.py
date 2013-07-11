@@ -73,11 +73,12 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         self.operators = {'operator': operator, 'rhs': rhs}
         self.build_parameter_type(inherits={'operator': operator, 'rhs': rhs})
         self.parameter_space = parameter_space
+        self.visualizer = visualizer
 
         self.solver = solver or solve_linear
 
         if visualizer is not None:
-            self.visualize = visualizer
+            self.visualize = self.__visualize
 
         self.solution_dim = operator.dim_range
         self.name = name
@@ -109,3 +110,6 @@ class StationaryLinearDiscretization(DiscretizationInterface):
 
     def enable_logging(self, doit=True):
         self._logging_disabled = not doit
+
+    def __visualize(self, U):
+        self.visualizer.visualize(U, self)

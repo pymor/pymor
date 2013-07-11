@@ -11,8 +11,9 @@ import numpy as np
 from PySide.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QSlider, QApplication, QLCDNumber,
                           QSizePolicy, QAction, QStyle, QToolBar, QLabel)
 from PySide.QtCore import Qt, QCoreApplication, QTimer
-
+from pymor.core import BasicInterface
 from pymor.la.interfaces import Communicable
+from pymor.grids import RectGrid, TriaGrid
 from pymor.gui.glumpy import GlumpyPatchWidget, ColorBarWidget
 
 
@@ -155,3 +156,16 @@ def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2):
     win = MainWindow(grid, U)
     win.show()
     app.exec_()
+
+
+class GlumpyPatchVisualizer(BasicInterface):
+
+    def __init__(self, grid, bounding_box=[[0, 0], [1, 1]], codim=2):
+        assert isinstance(grid, (RectGrid, TriaGrid))
+        assert codim in (0, 2)
+        self.grid = grid
+        self.bounding_box = bounding_box
+        self.codim = codim
+
+    def visualize(self, U, discretization):
+        visualize_glumpy_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim)

@@ -11,6 +11,7 @@ from pymor.operators.cg import DiffusionOperatorP1, L2ProductFunctionalP1, L2Pro
 from pymor.operators.affine import LinearAffinelyDecomposedOperator
 from pymor.operators import add_operators
 from pymor.discretizations import StationaryLinearDiscretization
+from pymor.gui.qt import GlumpyPatchVisualizer
 from pymor.grids import TriaGrid, OnedGrid, EmptyBoundaryInfo
 from pymor.la import induced_norm
 
@@ -86,23 +87,29 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
 
     F = Functional(grid, p.rhs, boundary_info, dirichlet_data=p.dirichlet_data)
 
-    import matplotlib.pyplot as pl
     if isinstance(grid, TriaGrid):
-        def visualize(U):
-            assert len(U) == 1
-            pl.tripcolor(grid.centers(2)[:, 0], grid.centers(2)[:, 1], grid.subentities(0, 2), U.data.ravel())
-            pl.colorbar()
-            pl.show()
+        visualizer = GlumpyPatchVisualizer(grid=grid, bounding_box=grid.domain, codim=2)
+        # def visualize(U):
+        #     assert len(U) == 1
+        #     pl.tripcolor(grid.centers(2)[:, 0], grid.centers(2)[:, 1], grid.subentities(0, 2), U.data.ravel())
+        #     pl.colorbar()
+        #     pl.show()
     else:
-        def visualize(U):
-            assert len(U) == 1
-            pl.plot(grid.centers(1), U.data.ravel())
-            pl.show()
-            pass
+        class Visualizer(object):
+            def __init__(self, grid):
+                self.grid = grid
+
+            def visualize(self, U, discretization):
+                assert len(U) == 1
+                import matplotlib.pyplot as pl
+                pl.plot(self.grid.centers(1), U.data.ravel())
+                pl.show()
+                pass
+        visualizer = Visualizer(grid)
 
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
 
-    discretization = StationaryLinearDiscretization(L, F, visualizer=visualize, parameter_space=parameter_space,
+    discretization = StationaryLinearDiscretization(L, F, visualizer=visualizer, parameter_space=parameter_space,
                                                     name='{}_CG'.format(p.name))
 
     discretization.add_attributes(h1_product=Operator(grid, boundary_info),

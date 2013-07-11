@@ -41,9 +41,10 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
         self.T = T
         self.nt = nt
         self.parameter_space = parameter_space
+        self.visualizer = visualizer
 
         if visualizer is not None:
-            self.visualize = visualizer
+            self.visualize = self.__visualize
 
         self.solution_dim = operator.dim_range
         self.name = name
@@ -73,3 +74,6 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
 
     def enable_logging(self, doit=True):
         self._logging_disabled = not doit
+
+    def __visualize(self, U):
+        self.visualizer.visualize(U, self)
