@@ -107,13 +107,12 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
                 pass
         visualizer = Visualizer(grid)
 
+    products = {'h1': Operator(grid, boundary_info),
+                'l2': L2ProductP1(grid, boundary_info)}
+
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
 
-    discretization = StationaryLinearDiscretization(L, F, visualizer=visualizer, parameter_space=parameter_space,
-                                                    name='{}_CG'.format(p.name))
-
-    discretization.add_attributes(h1_product=Operator(grid, boundary_info),
-                                  l2_product=L2ProductP1(grid, boundary_info))
-    discretization.add_attributes(h1_norm=induced_norm(discretization.h1_product))
+    discretization = StationaryLinearDiscretization(L, F, products=products, visualizer=visualizer,
+                                                    parameter_space=parameter_space, name='{}_CG'.format(p.name))
 
     return discretization, {'grid': grid, 'boundary_info': boundary_info}

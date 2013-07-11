@@ -9,6 +9,7 @@ import copy
 from pymor.core import BasicInterface
 from pymor.core.interfaces import abstractmethod
 from pymor.core.cache import Cachable, cached, DEFAULT_DISK_CONFIG, NO_CACHE_CONFIG
+from pymor.la import induced_norm
 from pymor.tools import Named
 from pymor.parameters import Parametric
 
@@ -31,7 +32,7 @@ class DiscretizationInterface(BasicInterface, Parametric, Cachable, Named):
     operators = dict()
     with_arguments = set(('operators',))
 
-    def __init__(self, operators, estimator=None, visualizer=None, caching='disk', name=None):
+    def __init__(self, operators, products=None, estimator=None, visualizer=None, caching='disk', name=None):
         if caching == 'disk':
             Cachable.__init__(self, config=DEFAULT_DISK_CONFIG)
         elif caching == 'none' or not caching:
@@ -40,11 +41,16 @@ class DiscretizationInterface(BasicInterface, Parametric, Cachable, Named):
             raise NotImplementedError
         Parametric.__init__(self)
         self.operators = operators
+        self.products = products
         self.estimator = estimator
         self.visualizer = visualizer
         self.caching = caching
         self.name = name
 
+        if products:
+            for k, v in products.iteritems():
+                setattr(self, '{}_product'.format(k), v)
+                setattr(self, '{}_norm'.format(k), induced_norm(v))
         if estimator is not None:
             self.estimate = self.__estimate
         if visualizer is not None:
