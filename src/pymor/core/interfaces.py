@@ -161,19 +161,25 @@ class BasicInterface(object):
                 continue
             if arg not in init_args:
                 init_args[arg] = getattr(self, arg, None)
-        return my_type(**init_args)
+        c = my_type(**init_args)
+        if self.logging_disabled:
+            c.disable_logging()
+        return c
 
     def add_attributes(self, **kwargs):
         assert not any(hasattr(self, k) for k in kwargs)
         self.__dict__.update(kwargs)
 
+    logging_disabled = False
     def disable_logging(self, doit=True):
         locked = self._locked
         self.unlock()
         if doit:
             self.logger = logger.dummy_logger
+            self.logging_disabled = True
         else:
             self.logger = type(self).logger
+            self.logging_disabled = False
         self.lock(locked)
 
     def enable_logging(self, doit=True):
