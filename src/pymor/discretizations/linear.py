@@ -41,10 +41,6 @@ class StationaryLinearDiscretization(DiscretizationInterface):
 
     Attributes
     ----------
-    disable_logging
-        If True, no log message is displayed when calling solve. This is useful if
-        we want to log solves of detailed discretization but not of reduced ones.
-        In the future, this should be a feature of BasicInterface.
     operator
         The operator L_h. A synonym for operators['operator'].
     operators
@@ -55,11 +51,6 @@ class StationaryLinearDiscretization(DiscretizationInterface):
     rhs
         The functional f_h. A synonym for operators['rhs'].
     '''
-
-    _logging_disabled = False
-    @property
-    def logging_disabled(self):
-        return self._logging_disabled
 
     def __init__(self, operator, rhs, solver=None, visualizer=None, parameter_space=None, name=None):
         assert isinstance(operator, LinearOperatorInterface)
@@ -93,14 +84,7 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         A = self.operator.assemble(self.map_parameter(mu, 'operator'))
         RHS = self.rhs.assemble(self.map_parameter(mu, 'rhs')).as_vector_array()
 
-        if not self.logging_disabled:
-            sparse = 'sparsity unknown' if A.sparse is None else ('sparse' if A.sparse else 'dense')
-            self.logger.info('Solving {} ({}) for {} ...'.format(self.name, sparse, mu))
+        sparse = 'sparsity unknown' if A.sparse is None else ('sparse' if A.sparse else 'dense')
+        self.logger.info('Solving {} ({}) for {} ...'.format(self.name, sparse, mu))
 
         return self.solver(A, RHS)
-
-    def disable_logging(self, doit=True):
-        self._logging_disabled = doit
-
-    def enable_logging(self, doit=True):
-        self._logging_disabled = not doit
