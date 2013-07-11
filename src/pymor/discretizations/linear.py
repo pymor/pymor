@@ -52,14 +52,15 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         The functional f_h. A synonym for operators['rhs'].
     '''
 
-    def __init__(self, operator, rhs, solver=None, visualizer=None, parameter_space=None, name=None):
+    def __init__(self, operator, rhs, solver=None, estimator=None, visualizer=None, parameter_space=None, name=None):
         assert isinstance(operator, LinearOperatorInterface)
         assert isinstance(rhs, LinearOperatorInterface)
         assert operator.dim_source == operator.dim_range == rhs.dim_source
         assert rhs.dim_range == 1
 
         operators = {'operator': operator, 'rhs': rhs}
-        super(StationaryLinearDiscretization, self).__init__(operators=operators, visualizer=visualizer, name=name)
+        super(StationaryLinearDiscretization, self).__init__(operators=operators, estimator=estimator,
+                                                             visualizer=visualizer, name=name)
         self.operator = operator
         self.rhs = rhs
         self.operators = operators

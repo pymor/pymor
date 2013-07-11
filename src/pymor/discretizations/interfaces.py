@@ -31,13 +31,16 @@ class DiscretizationInterface(BasicInterface, Parametric, Cachable, Named):
     operators = dict()
     with_arguments = set(('operators',))
 
-    def __init__(self, operators, visualizer=None, name=None):
+    def __init__(self, operators, estimator=None, visualizer=None, name=None):
         Cachable.__init__(self, config=DEFAULT_DISK_CONFIG)
         Parametric.__init__(self)
         self.operators = operators
+        self.estimator = estimator
         self.visualizer = visualizer
         self.name = name
 
+        if estimator is not None:
+            self.estimate = self.__estimate
         if visualizer is not None:
             self.visualize = self.__visualize
 
@@ -56,3 +59,6 @@ class DiscretizationInterface(BasicInterface, Parametric, Cachable, Named):
 
     def __visualize(self, U):
         self.visualizer.visualize(U, self)
+
+    def __estimate(self, U, mu=None):
+        return self.estimator.estimate(U, mu=mu, discretization=self)

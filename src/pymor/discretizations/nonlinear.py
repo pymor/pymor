@@ -16,7 +16,8 @@ from pymor.discretizations.interfaces import DiscretizationInterface
 
 class InstationaryNonlinearDiscretization(DiscretizationInterface):
 
-    def __init__(self, operator, rhs, initial_data, T, nt, parameter_space=None, visualizer=None, name=None):
+    def __init__(self, operator, rhs, initial_data, T, nt, parameter_space=None, estimator=None, visualizer=None,
+                 name=None):
         assert isinstance(operator, OperatorInterface)
         assert isinstance(rhs, LinearOperatorInterface)
         assert isinstance(initial_data, (VectorArrayInterface, OperatorInterface))
@@ -27,7 +28,8 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
         assert rhs.dim_range == 1
 
         operators = {'operator': operator, 'rhs': rhs, 'initial_data': initial_data}
-        super(InstationaryNonlinearDiscretization, self).__init__(operators=operators, visualizer=visualizer, name=name)
+        super(InstationaryNonlinearDiscretization, self).__init__(operators=operators, estimator=estimator,
+                                                                  visualizer=visualizer, name=name)
         self.operator = operator
         self.rhs = rhs
         self.initial_data = initial_data

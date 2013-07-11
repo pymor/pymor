@@ -10,6 +10,7 @@ import numpy as np
 
 from pymor.operators import LinearAffinelyDecomposedOperator, NumpyLinearOperator
 from pymor.operators.solvers import solve_linear
+from pymor.core import BasicInterface
 from pymor.discretizations import StationaryLinearDiscretization
 from pymor.la import NumpyVectorArray, induced_norm
 from pymor.reductors.basic import reduce_generic_rb
@@ -130,38 +131,10 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
     estimator_matrix[:len(R_RR), len(R_RR):] = R_RO
     estimator_matrix[len(R_RR):, :len(R_RR)] = R_RO.T
 
+    estimator_matrix = NumpyLinearOperator(estimator_matrix)
 
-    # this is our estimator
-    def estimate(self, U, mu=None):
-        assert len(U) == 1, 'Can estimate only one solution vector'
-        if not self.rhs.parametric or self.rhs.operator_affine_part is not None:
-            CRA = np.ones(1)
-        else:
-            CRA = np.ones(0)
-
-        if self.rhs.parametric:
-            CRL = self.rhs.evaluate_coefficients(self.map_parameter(mu, 'rhs'))
-        else:
-            CRL = np.ones(0)
-
-        CR = np.hstack((CRA, CRL))
-
-        if not self.operator.parametric or self.operator.operator_affine_part is not None:
-            COA = np.ones(1)
-        else:
-            COA = np.ones(0)
-
-        if self.operator.parametric:
-            COL = self.operator.evaluate_coefficients(self.map_parameter(mu, 'operator'))
-        else:
-            COL = np.ones(0)
-
-        C = np.hstack((CR, np.dot(np.hstack((COA, COL))[..., np.newaxis], U.data).ravel()))
-
-        return induced_norm(self.estimator_matrix)(NumpyVectorArray(C))
-
-    rd.add_attributes(estimator_matrix = NumpyLinearOperator(estimator_matrix),
-                      estimate=types.MethodType(estimate, rd))
+    estimator = StationaryAffineLinearReducedEstimator(estimator_matrix)
+    rd = rd.with_(estimator=estimator)
 
     return rd, rc
 
@@ -271,37 +244,45 @@ def numpy_reduce_stationary_affine_linear(discretization, RB, error_product=None
     estimator_matrix[:len(R_RR), len(R_RR):] = R_RO
     estimator_matrix[len(R_RR):, :len(R_RR)] = R_RO.T
 
-    rd.estimator_matrix = NumpyLinearOperator(estimator_matrix)
+    estimator_matrix = NumpyLinearOperator(estimator_matrix)
 
-    # this is our estimator
-    def estimate(self, U, mu=None):
+    estimator = StationaryAffineLinearReducedEstimator(estimator_matrix)
+    rd = rd.with_(estimator=estimator)
+
+    return rd, rc
+
+
+class StationaryAffineLinearReducedEstimator(BasicInterface):
+
+    def __init__(self, estimator_matrix):
+        self.estimator_matrix = estimator_matrix
+        self.lock()
+
+    def estimate(self, U, mu, discretization):
+        d = discretization
         assert len(U) == 1, 'Can estimate only one solution vector'
-        if not self.rhs.parametric or self.rhs.operator_affine_part is not None:
+        if not d.rhs.parametric or d.rhs.operator_affine_part is not None:
             CRA = np.ones(1)
         else:
             CRA = np.ones(0)
 
-        if self.rhs.parametric:
-            CRL = self.rhs.evaluate_coefficients(self.map_parameter(mu, 'rhs'))
+        if d.rhs.parametric:
+            CRL = d.rhs.evaluate_coefficients(d.map_parameter(mu, 'rhs'))
         else:
             CRL = np.ones(0)
 
         CR = np.hstack((CRA, CRL))
 
-        if not self.operator.parametric or self.operator.operator_affine_part is not None:
+        if not d.operator.parametric or d.operator.operator_affine_part is not None:
             COA = np.ones(1)
         else:
             COA = np.ones(0)
 
-        if self.operator.parametric:
-            COL = self.operator.evaluate_coefficients(self.map_parameter(mu, 'operator'))
+        if d.operator.parametric:
+            COL = d.operator.evaluate_coefficients(d.map_parameter(mu, 'operator'))
         else:
             COL = np.ones(0)
 
         C = np.hstack((CR, np.dot(np.hstack((COA, COL))[..., np.newaxis], U.data).ravel()))
 
         return induced_norm(self.estimator_matrix)(NumpyVectorArray(C))
-
-    rd.estimate = types.MethodType(estimate, rd)
-
-    return rd, rc
