@@ -132,6 +132,6 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
     ei_operator = EmpiricalInterpolatedOperator(operator, dofs, basis)
     ei_operators = discretization.operators.copy()
     ei_operators['operator'] = ei_operator
-    ei_discretization = discretization.with_operators(ei_operators, name='{}_interpolated'.format(discretization.name))
+    ei_discretization = discretization.with_(operators=ei_operators, name='{}_interpolated'.format(discretization.name))
 
     return ei_discretization, data

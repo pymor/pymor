@@ -55,7 +55,8 @@ class NonlinearAdvectionLaxFriedrichs(OperatorInterface):
         sub_grid = SubGrid(self.grid, entities=source_dofs)
         sub_boundary_info = SubGridBoundaryInfo(sub_grid, self.grid, self.boundary_info)
         op = NonlinearAdvectionLaxFriedrichs(sub_grid, sub_boundary_info, self.flux, self.lxf_lambda,
-                                             self.dirichlet_data, '{}_restricted'.format(self.name))
+                                             self.dirichlet_data, self.parameter_name_map,
+                                             '{}_restricted'.format(self.name))
         sub_grid_indices = sub_grid.indices_from_parent_indices(components, codim=0)
         proj = ComponentProjection(sub_grid_indices, op.dim_range, op.type_range)
         return Concatenation(proj, op), sub_grid.parent_indices(0)
@@ -161,7 +162,8 @@ class NonlinearAdvectionEngquistOsher(OperatorInterface):
         sub_grid = SubGrid(self.grid, entities=source_dofs)
         sub_boundary_info = SubGridBoundaryInfo(sub_grid, self.grid, self.boundary_info)
         op = NonlinearAdvectionEngquistOsher(sub_grid, sub_boundary_info, self.flux, self.flux_derivative,
-                                             self.dirichlet_data, '{}_restricted'.format(self.name))
+                                             self.dirichlet_data, self.parameter_name_map,
+                                             '{}_restricted'.format(self.name))
         sub_grid_indices = sub_grid.indices_from_parent_indices(components, codim=0)
         proj = ComponentProjection(sub_grid_indices, op.dim_range, op.type_range)
         return Concatenation(proj, op), sub_grid.parent_indices(0)
