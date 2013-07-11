@@ -29,17 +29,17 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
     def zeros(cls, dim, count=1):
         return cls(np.zeros((count, dim)))
 
-    def __init__(self, object, dtype=None, copy=False, order=None, subok=False):
-        if isinstance(object, np.ndarray) and not copy:
-            self._array = object
-        elif isinstance(object, Communicable):
-            self._array = object.data
+    def __init__(self, instance, dtype=None, copy=False, order=None, subok=False):
+        if isinstance(instance, np.ndarray) and not copy:
+            self._array = instance
+        elif isinstance(instance, Communicable):
+            self._array = instance.data
             if copy:
                 self._array = self._array.copy()
-        elif issparse(object):
-            self._array = np.array(object.todense(), copy=False)
+        elif issparse(instance):
+            self._array = np.array(instance.todense(), copy=False)
         else:
-            self._array = np.array(object, dtype=dtype, copy=copy, order=order, subok=subok, ndmin=2)
+            self._array = np.array(instance, dtype=dtype, copy=copy, order=order, subok=subok, ndmin=2)
         if self._array.ndim != 2:
             assert self._array.ndim == 1
             self._array = np.reshape(self._array, (1,-1))

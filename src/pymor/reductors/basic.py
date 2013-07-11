@@ -55,11 +55,18 @@ def reduce_generic_rb(discretization, RB, product=None, disable_caching=True):
 
     projected_operators = {k: rb_project_operator(op, RB, product=product)
                            for k, op in discretization.operators.iteritems()}
-    rd = discretization.with_projected_operators(projected_operators)
 
-    if disable_caching and isinstance(rd, Cachable):
-        Cachable.__init__(rd, config=NO_CACHE_CONFIG)
-    rd.name += '_reduced'
-    rd.disable_logging = True
+    if discretization.products is not None:
+        projected_products = {k: rb_project_operator(op, RB, product=product)
+                              for k, op in discretization.products.iteritems()}
+    else:
+        projected_products = None
+
+    caching = None if disable_caching else discretization.caching
+
+    rd = discretization.with_(operators=projected_operators, products=projected_products, visualizer=None,
+                              caching=caching, name=discretization.name + '_reduced')
+    rd.disable_logging()
     rc = GenericRBReconstructor(RB)
+
     return rd, rc

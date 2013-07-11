@@ -14,7 +14,7 @@ from pymor.operators.fv import (NonlinearAdvectionLaxFriedrichs, NonlinearAdvect
                                 L2ProductFunctional)
 from pymor.operators import NumpyLinearOperator
 from pymor.grids import RectGrid
-from pymor.gui.qt import visualize_glumpy_patch
+from pymor.gui.qt import GlumpyPatchVisualizer
 from pymor.discretizations import InstationaryNonlinearDiscretization
 from pymor.la import induced_norm
 from pymor.la import NumpyVectorArray
@@ -49,16 +49,12 @@ def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=
     I = np.sum(I * grid.reference_element.quadrature(order=2)[1], axis=1) * (1. / grid.reference_element.volume)
     I = NumpyVectorArray(I)
 
-    def visualize(U):
-        visualize_glumpy_patch(grid, U, bounding_box=grid.domain, codim=0)
+    products = {'l2': L2Product(grid, boundary_info)}
+    visualizer = GlumpyPatchVisualizer(grid=grid, bounding_box=grid.domain, codim=0)
+    parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
 
-    discretization = InstationaryNonlinearDiscretization(L, F, I, p.T, nt, visualizer=visualize,
+    discretization = InstationaryNonlinearDiscretization(L, F, I, p.T, nt, products=products,
+                                                         parameter_space=parameter_space, visualizer=visualizer,
                                                          name='{}_FV'.format(p.name))
-
-    discretization.l2_product = L2Product(grid)
-    discretization.l2_norm = induced_norm(discretization.l2_product)
-
-    if hasattr(p, 'parameter_space'):
-        discretization.parameter_space = p.parameter_space
 
     return discretization, {'grid': grid, 'boundary_info': boundary_info}

@@ -58,7 +58,6 @@ from pymor.grids import RectGrid, TriaGrid
 from pymor.reductors import reduce_generic_rb
 from pymor.algorithms import greedy
 from pymor.algorithms.basisextension import pod_basis_extension
-from pymor.algorithms.ei import interpolate_operators
 from pymor.la import NumpyVectorArray
 
 

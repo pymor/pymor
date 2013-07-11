@@ -15,6 +15,10 @@ class Point(ReferenceElementInterface):
     dim = 0
     volume = 1
 
+    def __init__(self):
+        super(Point, self).__init__()
+        self.lock()
+
     def size(self, codim=1):
         assert codim == 0, CodimError('Invalid codimension (must be 0 but was {})'.format(codim))
         return 1
@@ -60,6 +64,10 @@ class Line(ReferenceElementInterface):
 
     dim = 1
     volume = 1
+
+    def __init__(self):
+        super(Line, self).__init__()
+        self.lock()
 
     def size(self, codim=1):
         assert 0 <= codim <= 1, CodimError('Invalid codimension (must be 0 or 1 but was {})'.format(codim))
@@ -124,6 +132,7 @@ class Square(ReferenceElementInterface):
         def tensor_points(P):
             PP0, PP1 = np.array(np.meshgrid(P, P))
             return np.array((PP0.ravel(), PP1.ravel())).T
+        self.lock()
 
         def tensor_weights(W):
             return np.dot(W[:, np.newaxis], W[np.newaxis, :]).ravel()
@@ -223,7 +232,7 @@ class Triangle(ReferenceElementInterface):
 
     def __init__(self):
         super(Triangle, self).__init__()
-        pass
+        self.lock()
         # def tensor_points(P):
             # PP0, PP1 = np.array(np.meshgrid(P, P))
             # return np.array((PP0.ravel(), PP1.ravel())).T

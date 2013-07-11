@@ -11,6 +11,7 @@ from pymor.operators.cg import DiffusionOperatorP1, L2ProductFunctionalP1, L2Pro
 from pymor.operators.affine import LinearAffinelyDecomposedOperator
 from pymor.operators import add_operators
 from pymor.discretizations import StationaryLinearDiscretization
+from pymor.gui.qt import GlumpyPatchVisualizer
 from pymor.grids import TriaGrid, OnedGrid, EmptyBoundaryInfo
 from pymor.la import induced_norm
 
@@ -77,8 +78,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
                    for i, df in enumerate(p.diffusion_functions))
 
         if p.diffusion_functionals is None:
-            L = LinearAffinelyDecomposedOperator(Li, L0, name='diffusion')
-            L.rename_parameter({'.coefficients': '.diffusion_coefficients'})
+            L = LinearAffinelyDecomposedOperator(Li, L0, name='diffusion', name_map={'.coefficients': '.diffusion_coefficients'})
         else:
             L = LinearAffinelyDecomposedOperator(Li, L0, p.diffusion_functionals, name='diffusion')
     else:
@@ -87,27 +87,32 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
 
     F = Functional(grid, p.rhs, boundary_info, dirichlet_data=p.dirichlet_data)
 
-    import matplotlib.pyplot as pl
     if isinstance(grid, TriaGrid):
-        def visualize(U):
-            assert len(U) == 1
-            pl.tripcolor(grid.centers(2)[:, 0], grid.centers(2)[:, 1], grid.subentities(0, 2), U.data.ravel())
-            pl.colorbar()
-            pl.show()
+        visualizer = GlumpyPatchVisualizer(grid=grid, bounding_box=grid.domain, codim=2)
+        # def visualize(U):
+        #     assert len(U) == 1
+        #     pl.tripcolor(grid.centers(2)[:, 0], grid.centers(2)[:, 1], grid.subentities(0, 2), U.data.ravel())
+        #     pl.colorbar()
+        #     pl.show()
     else:
-        def visualize(U):
-            assert len(U) == 1
-            pl.plot(grid.centers(1), U.data.ravel())
-            pl.show()
-            pass
+        class Visualizer(object):
+            def __init__(self, grid):
+                self.grid = grid
 
-    discretization = StationaryLinearDiscretization(L, F, visualizer=visualize, name='{}_CG'.format(p.name))
+            def visualize(self, U, discretization):
+                assert len(U) == 1
+                import matplotlib.pyplot as pl
+                pl.plot(self.grid.centers(1), U.data.ravel())
+                pl.show()
+                pass
+        visualizer = Visualizer(grid)
 
-    discretization.h1_product = Operator(grid, boundary_info)
-    discretization.h1_norm = induced_norm(discretization.h1_product)
-    discretization.l2_product = L2ProductP1(grid, boundary_info)
+    products = {'h1': Operator(grid, boundary_info),
+                'l2': L2ProductP1(grid, boundary_info)}
 
-    if hasattr(p, 'parameter_space'):
-        discretization.parameter_space = p.parameter_space
+    parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
+
+    discretization = StationaryLinearDiscretization(L, F, products=products, visualizer=visualizer,
+                                                    parameter_space=parameter_space, name='{}_CG'.format(p.name))
 
     return discretization, {'grid': grid, 'boundary_info': boundary_info}

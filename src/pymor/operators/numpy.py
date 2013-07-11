@@ -45,6 +45,7 @@ class NumpyGenericOperator(OperatorInterface):
             self._with_mu = True
         else:
             self._with_mu = False
+        self.lock()
 
     def apply(self, U, ind=None, mu=None):
         assert isinstance(U, NumpyVectorArray)
@@ -84,6 +85,7 @@ class NumpyLinearOperator(LinearOperatorInterface):
         self.name = name
         self._matrix = matrix
         self.sparse = issparse(matrix)
+        self.lock()
 
     def as_vector_array(self):
         return NumpyVectorArray(self._matrix, copy=True)

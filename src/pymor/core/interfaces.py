@@ -8,6 +8,8 @@ import abc
 import types
 import itertools
 import contracts
+import copy
+import inspect
 
 from pymor.core import decorators, backports, logger
 from pymor.core.exceptions import ConstError
@@ -93,29 +95,102 @@ class BasicInterface(object):
 
     __metaclass__ = UberMeta
     _locked = False
-    _frozen = False
+    _lock_whitelist = set()
 
     def __setattr__(self, key, value):
-        '''depending on _locked nad _frozen state I delegate the setattr call to object or
+        '''depending on _locked state I delegate the setattr call to object or
         raise an Exception
         '''
         if not self._locked:
             return object.__setattr__(self, key, value)
-
-        if hasattr(self, key):
-            if self._frozen:
-                raise ConstError('Changing "%s" is not allowed in "%s"' % (key, self.__class__))
+        elif key.startswith('_') or key in self._lock_whitelist:
             return object.__setattr__(self, key, value)
         else:
-            raise ConstError('Won\'t add "%s" to locked "%s"' % (key, self.__class__))
+            raise ConstError('Changing "%s" is not allowed in locked "%s"' % (key, self.__class__))
 
-    def lock(self, doit=True):
-        '''Calling me results in subsequent adding of members throwing errors'''
-        object.__setattr__(self, '_locked', doit)
+    @property
+    def locked(self):
+        return self._locked
 
-    def freeze(self, doit=True):
+    def lock(self, doit=True, whitelist=None):
         '''Calling me results in subsequent changes to members throwing errors'''
-        object.__setattr__(self, '_frozen', doit)
+        object.__setattr__(self, '_locked', doit)
+        if whitelist is not None:
+            object.__setattr__(self, '_lock_whitelist', whitelist)
+
+    def unlock(self):
+        object.__setattr__(self, '_locked', False)
+
+    with_arguments = set()
+
+    def with_(self, **kwargs):
+        '''Returns a copy with changed attributes.
+
+        Parameters
+        ----------
+        **kwargs
+            Names of attributes to change with their new values. Each attribute name
+            has to be contained in `with_arguments`.
+
+        Returns
+        -------
+        Copy of `self` with changed attributes.
+        '''
+        if not set(kwargs.keys()) <= self.with_arguments:
+            raise ConstError('Changing "{}" using with() is not allowed in {} (only "{}")'.format(
+                kwargs.keys(), self.__class__, self.with_arguments))
+        c = copy.copy(self)
+        locked = c._locked
+        self._locked = False
+        for k, v in kwargs.iteritems():
+            setattr(c, k, v)
+        if c._added_attributes is not None:
+            c._added_attributes = list(c._added_attributes)
+        c._locked = locked
+        return c
+
+    def _with_via_init(self, kwargs):
+        '''Default implementation for with_ by calling __init__.
+
+        Parameters which are missing in `kwargs` and for which there is no attribute in `self` are set
+        to None.
+        '''
+        my_type = type(self)
+        argnames = inspect.getargspec(my_type.__init__)[0]
+        init_args = kwargs
+        for arg in argnames:
+            if arg == 'self':
+                continue
+            if arg not in init_args:
+                init_args[arg] = getattr(self, arg, None)
+        c = my_type(**init_args)
+        if self.logging_disabled:
+            c.disable_logging()
+        return c
+
+    _added_attributes = None
+    def add_attributes(self, **kwargs):
+        assert not any(hasattr(self, k) for k in kwargs)
+        self.__dict__.update(kwargs)
+        if self._added_attributes is None:
+            self._added_attributes = kwargs.keys()
+        else:
+            self._added_attributes.extend(kwargs.keys())
+
+    logging_disabled = False
+    def disable_logging(self, doit=True):
+        locked = self._locked
+        self.unlock()
+        if doit:
+            self.logger = logger.dummy_logger
+            self.logging_disabled = True
+        else:
+            self.logger = type(self).logger
+            self.logging_disabled = False
+        self.lock(locked)
+
+    def enable_logging(self, doit=True):
+        self.disable_logging(not doit)
 
     @classmethod
     def implementors(cls, descend=False):

@@ -4,9 +4,11 @@
 
 from __future__ import absolute_import, division, print_function
 
+import math as m
+
 import numpy as np
 from PySide.QtOpenGL import QGLWidget
-from PySide.QtGui import QSizePolicy
+from PySide.QtGui import QSizePolicy, QPainter, QFontMetrics
 from glumpy.graphics.vertex_buffer import VertexBuffer
 import OpenGL.GL as gl
 import OpenGL.GLUT as glut
@@ -64,8 +66,6 @@ class GlumpyPatchWidget(QGLWidget):
     def __init__(self, parent, grid, vmin=None, vmax=None, bounding_box=[[0,0], [1,1]], codim=2):
         assert grid.reference_element in (triangle, square)
         assert codim in (0, 2)
-        if grid.reference_element == square:
-            assert codim == 0
         super(GlumpyPatchWidget, self).__init__(parent)
         self.setMinimumSize(300, 300)
         self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
@@ -83,9 +83,7 @@ class GlumpyPatchWidget(QGLWidget):
 
     def upload_buffer(self):
         if self.codim == 2:
-            self.vbo.vertices['color'] = np.hstack((self.U[..., np.newaxis].astype('f4'),
-                                                    np.zeros((self.U.size, 2), dtype='f4'),
-                                                    np.ones((self.U.size, 1), dtype='f4')))
+            self.vbo.vertices['color'][:, 0] = self.U
         elif self.grid.reference_element == triangle:
             self.vbo.vertices['color'][:, 0] = np.repeat(self.U, 3)
         else:
@@ -100,40 +98,50 @@ class GlumpyPatchWidget(QGLWidget):
         size = np.array([bb[1][0] - bb[0][0], bb[1][1] - bb[0][1]])
         scale = 1 / size
         shift = - np.array(bb[0]) - size / 2
-        if self.codim == 2:
-            x, y = (g.centers(2)[:, 0] + shift[0]) * scale[0], (g.centers(2)[:, 1] + shift[1]) * scale[1]
-            lpos = np.array([(x[i], y[i], 0, 0.5) for i in xrange(g.size(2))],
-                            dtype='f')
-            vertex_data = np.array([(lpos[i], (1, 1, 1, 1)) for i in xrange(g.size(2))],
-                                   dtype=[('position', 'f4', 4), ('color', 'f4', 4)])
-            self.vbo = VertexBuffer(vertex_data, indices=g.subentities(0, 2))
-        elif g.reference_element == triangle:
-            vertex_data = np.empty((g.size(0) * 3,),
-                                   dtype=[('position', 'f4', 4), ('color', 'f4', 4)])
-            A, B = g.embeddings(0)
-            REF_VTX = g.reference_element.subentity_embedding(2)[1]
-            VERTEX_POS = np.einsum('eij,vj->evi', A, REF_VTX) + B[:, np.newaxis, :]
-            VERTEX_POS += shift
-            VERTEX_POS *= scale
-            vertex_data['position'][:, 0:2] = VERTEX_POS.reshape((-1, 2))
-            vertex_data['position'][:, 2] = 0
-            vertex_data['position'][:, 3] = 0.5
-            vertex_data['color'] = 1
-            self.vbo = VertexBuffer(vertex_data, indices=np.arange(g.size(0) * 3, dtype=np.uint32))
+        if g.reference_element == triangle:
+            if self.codim == 2:
+                x, y = (g.centers(2)[:, 0] + shift[0]) * scale[0], (g.centers(2)[:, 1] + shift[1]) * scale[1]
+                lpos = np.array([(x[i], y[i], 0, 0.5) for i in xrange(g.size(2))],
+                                dtype='f')
+                vertex_data = np.array([(lpos[i], (1, 1, 1, 1)) for i in xrange(g.size(2))],
+                                       dtype=[('position', 'f4', 4), ('color', 'f4', 4)])
+                self.vbo = VertexBuffer(vertex_data, indices=g.subentities(0, 2))
+            else:
+                vertex_data = np.empty((g.size(0) * 3,),
+                                       dtype=[('position', 'f4', 4), ('color', 'f4', 4)])
+                A, B = g.embeddings(0)
+                REF_VTX = g.reference_element.subentity_embedding(2)[1]
+                VERTEX_POS = np.einsum('eij,vj->evi', A, REF_VTX) + B[:, np.newaxis, :]
+                VERTEX_POS += shift
+                VERTEX_POS *= scale
+                vertex_data['position'][:, 0:2] = VERTEX_POS.reshape((-1, 2))
+                vertex_data['position'][:, 2] = 0
+                vertex_data['position'][:, 3] = 0.5
+                vertex_data['color'] = 1
+                self.vbo = VertexBuffer(vertex_data, indices=np.arange(g.size(0) * 3, dtype=np.uint32))
         else:
-            vertex_data = np.empty((g.size(0) * 6,),
-                                   dtype=[('position', 'f4', 4), ('color', 'f4', 4)])
-            A, B = g.embeddings(0)
-            REF_VTX = g.reference_element.subentity_embedding(2)[1]
-            VERTEX_POS = np.einsum('eij,vj->evi', A, REF_VTX) + B[:, np.newaxis, :]
-            VERTEX_POS += shift
-            VERTEX_POS *= scale
-            vertex_data['position'][0:g.size(0) * 3, 0:2] = VERTEX_POS[:, 0:3, :].reshape((-1, 2))
-            vertex_data['position'][g.size(0) * 3:, 0:2] = VERTEX_POS[:, [0, 2, 3], :].reshape((-1, 2))
-            vertex_data['position'][:, 2] = 0
-            vertex_data['position'][:, 3] = 0.5
-            vertex_data['color'] = 1
-            self.vbo = VertexBuffer(vertex_data, indices=np.arange(g.size(0) * 6, dtype=np.uint32))
+            if self.codim == 0:
+                vertex_data = np.empty((g.size(0) * 6,),
+                                       dtype=[('position', 'f4', 4), ('color', 'f4', 4)])
+                A, B = g.embeddings(0)
+                REF_VTX = g.reference_element.subentity_embedding(2)[1]
+                VERTEX_POS = np.einsum('eij,vj->evi', A, REF_VTX) + B[:, np.newaxis, :]
+                VERTEX_POS += shift
+                VERTEX_POS *= scale
+                vertex_data['position'][0:g.size(0) * 3, 0:2] = VERTEX_POS[:, 0:3, :].reshape((-1, 2))
+                vertex_data['position'][g.size(0) * 3:, 0:2] = VERTEX_POS[:, [0, 2, 3], :].reshape((-1, 2))
+                vertex_data['position'][:, 2] = 0
+                vertex_data['position'][:, 3] = 0.5
+                vertex_data['color'] = 1
+                self.vbo = VertexBuffer(vertex_data, indices=np.arange(g.size(0) * 6, dtype=np.uint32))
+            else:
+                x, y = (g.centers(2)[:, 0] + shift[0]) * scale[0], (g.centers(2)[:, 1] + shift[1]) * scale[1]
+                lpos = np.array([(x[i], y[i], 0, 0.5) for i in xrange(g.size(2))],
+                                dtype='f')
+                vertex_data = np.array([(lpos[i], (1, 1, 1, 1)) for i in xrange(g.size(2))],
+                                       dtype=[('position', 'f4', 4), ('color', 'f4', 4)])
+                self.vbo = VertexBuffer(vertex_data, indices=np.vstack((g.subentities(0, 2)[:, 0:3],
+                                                                        g.subentities(0, 2)[:, [0, 2, 3]])))
 
         gl.glUseProgram(self.shaders_program)
         self.upload_buffer()
@@ -159,10 +167,21 @@ class ColorBarWidget(QGLWidget):
 
     def __init__(self, parent, vmin=None, vmax=None):
         super(ColorBarWidget, self).__init__(parent)
-        self.setMinimumSize(90, 300)
-        self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
-        self.vmin = vmin or 0
-        self.vmax = vmax or 1
+        fm = QFontMetrics(self.font())
+        self.vmin = float(vmin or 0)
+        self.vmax = float(vmax or 1)
+        precision = m.log(max(abs(self.vmin), abs(self.vmax) / abs(self.vmin - self.vmax)) , 10) + 1
+        precision = int(min(max(precision, 3), 8))
+        self.vmin_str = format(('{:.' + str(precision) + '}').format(self.vmin))
+        self.vmax_str = format(('{:.' + str(precision) + '}').format(self.vmax))
+        self.vmin_width = fm.width(self.vmin_str)
+        self.vmax_width = fm.width(self.vmax_str)
+        self.text_height = fm.height() * 1.5
+        self.text_ascent = fm.ascent() * 1.5
+        self.text_descent = fm.descent() * 1.5
+        self.setMinimumSize(max(self.vmin_width, self.vmax_width) + 20, 300)
+        self.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding))
+        self.setAutoFillBackground(False)
 
     def resizeGL(self, w, h):
         gl.glViewport(0, 0, w, h)
@@ -170,7 +189,6 @@ class ColorBarWidget(QGLWidget):
         self.update()
 
     def initializeGL(self):
-        glut.glutInit()
         gl.glClearColor(1.0, 1.0, 1.0, 1.0)
         self.shaders_program = link_shader_program(compile_vertex_shader(VS))
         gl.glUseProgram(self.shaders_program)
@@ -183,35 +201,19 @@ class ColorBarWidget(QGLWidget):
 
     def paintGL(self):
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+        gl.glUseProgram(self.shaders_program)
 
         gl.glBegin(gl.GL_QUAD_STRIP)
+        bar_start = -1 + self.text_height / self.height() * 2
+        bar_height = (1 - 2 * self.text_height / self.height()) * 2
         steps = 40
-        for i in xrange(steps):
+        for i in xrange(steps + 1):
             y = i * (1 / steps)
             gl.glColor(y, 0, 0)
-            gl.glVertex(-1.0, (1.9*y-0.9), 0.0)
-            gl.glVertex(-0.5, (1.9*y-0.9), 0.0)
+            gl.glVertex(-0.5, (bar_height*y + bar_start), 0.0)
+            gl.glVertex(0.5, (bar_height*y + bar_start), 0.0)
         gl.glEnd()
-        self.drawText()
-
-    def drawText(self):
-        gl.glUseProgram(0)
-        gl.glPushMatrix()
-        gl.glLoadIdentity()
-        gl.glLineWidth(2)
-
-        def print_chars(string):
-            scale = 0.002
-            gl.glScale(scale, 0.5 * scale, scale)
-            gl.glColor3f(0, 0, 0)
-            glut.glutStrokeString(glut.GLUT_STROKE_MONO_ROMAN, string)
-            gl.glLoadIdentity()
-
-        gl.glTranslate(-0.45, -0.95, 0)
-        print_chars(str(self.vmin))
-
-        gl.glTranslate(-0.45, 0.8, 0)
-        print_chars(str(self.vmax))
-
-        gl.glPopMatrix()
-        gl.glUseProgram(self.shaders_program)
+        p = QPainter(self)
+        p.drawText((self.width() - self.vmax_width)/2, self.text_ascent, self.vmax_str)
+        p.drawText((self.width() - self.vmin_width)/2, self.height() - self.text_height + self.text_ascent, self.vmin_str)
+        p.end()

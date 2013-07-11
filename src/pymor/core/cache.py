@@ -158,15 +158,15 @@ class cached(BasicInterface):
     def __call__(self, im_self, *args, **kwargs):
         '''Via the magic that is partial functions returned from __get__, im_self is the instance object of the class
         we're decorating a method of and [kw]args are the actual parameters to the decorated method'''
-        cache = im_self.cache_region
-        keygen = im_self.keygen_generator(im_self.namespace, self.decorated_function)
+        cache = im_self._cache_region
+        keygen = im_self.keygen_generator(im_self._namespace, self.decorated_function)
         key = keygen(*args, **kwargs)
 
         def creator_function():
             self.logger.debug('creating new cache entry for {}.{}'
                               .format(im_self.__class__.__name__, self.decorated_function.__name__))
             return self.decorated_function(im_self, *args, **kwargs)
-        return cache.get_or_create(key, creator_function, im_self.expiration_time)
+        return cache.get_or_create(key, creator_function, im_self._expiration_time)
 
     def __get__(self, instance, instancetype):
         '''Implement the descriptor protocol to make decorating instance method possible.
@@ -186,12 +186,12 @@ class Cachable(object):
     def __init__(self, config=DEFAULT_MEMORY_CONFIG):
         self._cache_config = config
         self._init_cache()
-        self.namespace = '{}_{}'.format(self.__class__.__name__, hash(self))
-        self.expiration_time = None
+        self._namespace = '{}_{}'.format(self.__class__.__name__, hash(self))
+        self._expiration_time = None
 
     def _init_cache(self):
-        self.cache_region = dc.make_region(function_key_generator=self.keygen_generator)
-        self.cache_region.configure_from_config(self._cache_config, '')
+        self._cache_region = dc.make_region(function_key_generator=self.keygen_generator)
+        self._cache_region.configure_from_config(self._cache_config, '')
 
     def keygen_generator(self, namespace, function):
         '''I am the default generator function for (potentially) function specific keygens.
@@ -210,7 +210,7 @@ class Cachable(object):
         '''cache regions contain lock objects that cannot be pickled.
         Therefore we don't include them in the state that the pickle protocol gets to see.
         '''
-        return {name: getattr(self, name) for name in self.__dict__.keys() if name != 'cache_region'}
+        return {name: getattr(self, name) for name in self.__dict__.keys() if name != '_cache_region'}
 
     def __setstate__(self, d):
         '''Since we cannot pickle the cache region, we have to re-init
