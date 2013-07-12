@@ -203,13 +203,13 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
             assert len(ind) == coefficients.shape[1]
         return NumpyVectorArray(coefficients.dot(self._array[:self._len]), copy=False)
 
-    def l1_norm(self, p, ind=None):
+    def l1_norm(self, ind=None):
         assert self.check_ind(ind)
 
         A = self._array[:self._len] if ind is None else self._array[ind]
         return np.sum(np.abs(A), axis=1)
 
-    def l2_norm(self, p, ind=None):
+    def l2_norm(self, ind=None):
         assert self.check_ind(ind)
 
         A = self._array[:self._len] if ind is None else self._array[ind]
