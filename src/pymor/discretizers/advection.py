@@ -8,6 +8,7 @@ from functools import partial
 
 import numpy as np
 
+from pymor.algorithms.timestepping import ExplicitEulerTimeStepper
 from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
 from pymor.domaindiscretizers import discretize_domain_default
 from pymor.operators.fv import (NonlinearAdvectionLaxFriedrichs, NonlinearAdvectionEngquistOsher, L2Product,
@@ -52,8 +53,10 @@ def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=
     products = {'l2': L2Product(grid, boundary_info)}
     visualizer = GlumpyPatchVisualizer(grid=grid, bounding_box=grid.domain, codim=0)
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
+    time_stepper = ExplicitEulerTimeStepper(nt=nt)
 
-    discretization = InstationaryNonlinearDiscretization(L, F, I, p.T, nt, products=products,
+    discretization = InstationaryNonlinearDiscretization(operator=L, rhs=F, initial_data=I, T=p.T, products=products,
+                                                         time_stepper=time_stepper,
                                                          parameter_space=parameter_space, visualizer=visualizer,
                                                          name='{}_FV'.format(p.name))
 

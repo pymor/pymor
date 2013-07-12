@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor.algorithms.timestepping import explicit_euler
+from pymor.algorithms.timestepping import TimeStepperInterface
 from pymor.la.interfaces import VectorArrayInterface
 from pymor.tools import selfless_arguments
 from pymor.operators import OperatorInterface, LinearOperatorInterface, ConstantOperator
@@ -16,14 +16,15 @@ from pymor.discretizations.interfaces import DiscretizationInterface
 
 class InstationaryNonlinearDiscretization(DiscretizationInterface):
 
-    def __init__(self, operator, rhs, initial_data, T, nt, products=None, parameter_space=None, estimator=None,
-                 visualizer=None, caching='disk', name=None):
+    def __init__(self, operator, rhs, initial_data, T, time_stepper=None, products=None, parameter_space=None,
+                 estimator=None, visualizer=None, caching='disk', name=None):
         assert isinstance(operator, OperatorInterface)
         assert isinstance(rhs, LinearOperatorInterface)
         assert isinstance(initial_data, (VectorArrayInterface, OperatorInterface))
         assert not isinstance(initial_data, OperatorInterface) or initial_data.dim_source == 0
         if isinstance(initial_data, VectorArrayInterface):
             initial_data = ConstantOperator(initial_data, name='initial_data')
+        assert isinstance(time_stepper, TimeStepperInterface)
         assert operator.dim_source == operator.dim_range == rhs.dim_source == initial_data.dim_range
         assert rhs.dim_range == 1
 
@@ -35,11 +36,14 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
         self.rhs = rhs
         self.initial_data = initial_data
         self.T = T
-        self.nt = nt
+        self.time_stepper = time_stepper
         self.solution_dim = operator.dim_range
         self.build_parameter_type(inherits={'operator': operator, 'rhs': rhs, 'initial_data': initial_data},
                                   provides={'_t': 0})
         self.parameter_space = parameter_space
+
+        if hasattr(time_stepper, 'nt'):
+            self.with_arguments.add('time_stepper_nt')
         self.lock()
 
     with_arguments = set(selfless_arguments(__init__)).union(['operators'])
@@ -48,6 +52,10 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
         assert set(kwargs.keys()) <= self.with_arguments
         assert 'operators' not in kwargs or not ('rhs' in kwargs or 'operator' in kwargs or 'initial_data' in kwargs)
         assert 'operators' not in kwargs or set(kwargs['operators'].keys()) <= set(('operator', 'rhs', 'initial_data'))
+        assert 'time_stepper_nt' not in kwargs or 'time_stepper' not in kwargs
+
+        if 'time_stepper_nt' in kwargs:
+            kwargs['time_stepper'] = self.time_stepper.with_(nt=kwargs.pop('time_stepper_nt'))
 
         if 'operators' in kwargs:
             kwargs.update(kwargs.pop('operators'))
@@ -63,4 +71,5 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
         mu_A = self.map_parameter(mu, 'operator', provide={'_t': np.array(0)})
         mu_F = self.map_parameter(mu, 'rhs', provide={'_t': np.array(0)})
         U0 = self.initial_data.apply(0, self.map_parameter(mu, 'initial_data'))
-        return explicit_euler(self.operator, self.rhs, U0, 0, self.T, self.nt, mu_A, mu_F)
+        return self.time_stepper.solve(operator=self.operator, rhs=self.rhs, initial_data=U0, initial_time=0,
+                                       end_time=self.T, mu_operator=mu_A, mu_rhs=mu_F)
