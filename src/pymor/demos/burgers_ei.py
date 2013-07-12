@@ -127,11 +127,13 @@ def burgers_demo(args):
     print('RB generation ...')
     import cProfile, pstats, io
 
-    reductor = reduce_generic_rb
+    def reductor(discretization, rb):
+        return reduce_generic_rb(ei_discretization, rb)
+    # reductor = reduce_generic_rb
     extension_algorithm = partial(pod_basis_extension)
     # pr = cProfile.Profile()
     # pr.enable()
-    greedy_data = greedy(ei_discretization, reductor, discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
+    greedy_data = greedy(discretization, reductor, discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
                          use_estimator=False, error_norm=lambda U: np.max(discretization.l2_norm(U)),
                          extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'])
     # pr.disable()
