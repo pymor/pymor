@@ -45,6 +45,7 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
     with_arguments = set(selfless_arguments(__init__)).union(['operators'])
 
     def with_(self, **kwargs):
+        assert set(kwargs.keys()) <= self.with_arguments
         assert 'operators' not in kwargs or not ('rhs' in kwargs or 'operator' in kwargs or 'initial_data' in kwargs)
         assert 'operators' not in kwargs or set(kwargs['operators'].keys()) <= set(('operator', 'rhs', 'initial_data'))
 
