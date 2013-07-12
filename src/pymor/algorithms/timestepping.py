@@ -4,9 +4,39 @@
 
 from __future__ import absolute_import, division, print_function
 
+from pymor.core import BasicInterface, abstractmethod
 from pymor.la import VectorArrayInterface
 from pymor.operators import OperatorInterface, LinearOperatorInterface
 from pymor.operators.solvers import solve_linear
+
+
+class TimeStepperInterface(BasicInterface):
+
+    @abstractmethod
+    def solve(initial_time, end_time, initial_data, operator, rhs=None, mass=None,
+              mu_operator=None, mu_rhs=None):
+        pass
+
+
+class ExplicitEulerTimeStepper(TimeStepperInterface):
+
+    def __init__(self, nt):
+        self.nt = nt
+        self.lock()
+
+    with_arguments = set(('nt',))
+    def with_(self, **kwargs):
+        return self._with_via_init(kwargs)
+
+    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None,
+              mu_operator=None, mu_rhs=None):
+        if mass is not None:
+            raise NotImplementedError
+        if rhs is None:
+            raise NotImplementedError
+        return explicit_euler(operator, rhs, initial_data, initial_time, end_time, self.nt, mu_operator, mu_rhs)
+
+
 
 
 def implicit_euler(A, F, M, U0, t0, t1, nt, mu_A=None, mu_F=None, solver=None):
