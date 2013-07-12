@@ -16,8 +16,8 @@ from pymor.la import VectorArrayInterface
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 
 
-def generate_interpolation_data(evaluations, error_norm=None, target_error=None, max_interpolation_dofs=None,
-                                projection='orthogonal', product=None):
+def generate_ei_data(evaluations, error_norm=None, target_error=None, max_interpolation_dofs=None,
+                     projection='orthogonal', product=None):
 
     assert projection in ('orthogonal', 'ei')
     assert projection != 'orthogonal' or product is not None
@@ -25,7 +25,7 @@ def generate_interpolation_data(evaluations, error_norm=None, target_error=None,
     if isinstance(evaluations, VectorArrayInterface):
         evaluations = (evaluations,)
 
-    logger = getLogger('pymor.algorithms.ei.generate_interpolation_data')
+    logger = getLogger('pymor.algorithms.ei.generate_ei_data')
     logger.info('Generating Interpolation Data ...')
 
     interpolation_dofs = np.zeros((0,), dtype=np.int32)
@@ -155,9 +155,8 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
     operator = discretization.operators[operator_names[0]]
 
     evaluations = EvaluationProvider(discretization, operator, sample, operator_sample)
-    dofs, basis, data = generate_interpolation_data(evaluations, error_norm, target_error,
-                                                    max_interpolation_dofs, projection=projection,
-                                                    product=product)
+    dofs, basis, data = generate_ei_data(evaluations, error_norm, target_error, max_interpolation_dofs,
+                                         projection=projection, product=product)
 
     ei_operator = EmpiricalInterpolatedOperator(operator, dofs, basis)
     ei_operators = discretization.operators.copy()
