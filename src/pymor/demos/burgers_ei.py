@@ -101,7 +101,9 @@ def burgers_demo(args):
                                                        discretization.parameter_space.sample_uniformly(args['EI_SNAPSHOTS']),
                                                        error_norm=discretization.l2_norm,
                                                        target_error=1e-10,
-                                                       max_interpolation_dofs=args['EISIZE'])
+                                                       max_interpolation_dofs=args['EISIZE'],
+                                                       projection='orthogonal',
+                                                       product=discretization.l2_product)
 
     if args['--plot-ei-err']:
         print('Showing some EI errors')

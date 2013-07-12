@@ -16,8 +16,11 @@ from pymor.la import VectorArrayInterface
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 
 
-def generate_interpolation_data(evaluations, error_norm=None, target_error=None, max_interpolation_dofs=None):
+def generate_interpolation_data(evaluations, error_norm=None, target_error=None, max_interpolation_dofs=None,
+                                projection='orthogonal', product=None):
 
+    assert projection in ('orthogonal', 'ei')
+    assert projection != 'orthogonal' or product is not None
     assert isinstance(evaluations, VectorArrayInterface) or all(isinstance(ev, VectorArrayInterface) for ev in evaluations)
     if isinstance(evaluations, VectorArrayInterface):
         evaluations = (evaluations,)
@@ -29,15 +32,34 @@ def generate_interpolation_data(evaluations, error_norm=None, target_error=None,
     collateral_basis = type(next(iter(evaluations))).empty(dim=next(iter(evaluations)).dim)
     max_errs = []
 
+    def interpolate(U, collateral_basis, interpolation_dofs, interpolation_matrix, ind=None):
+        coefficients = solve_triangular(interpolation_matrix, U.components(interpolation_dofs, ind=ind).T,
+                                        lower=True, unit_diagonal=True).T
+        # coefficients = np.linalg.solve(interpolation_matrix, U.components(interpolation_dofs, ind=ind).T).T
+        return collateral_basis.lincomb(coefficients)
+
     while True:
         max_err = -1.
+        if projection == 'orthogonal' and len(interpolation_dofs) > 0:
+            if product is None:
+                gramian = collateral_basis.gramian()
+            else:
+                gramian = product.apply2(collateral_basis, collateral_basis, pairwise=False)
+            gramian_inverse = np.linalg.inv(gramian)
+
         for AU in evaluations:
             if len(interpolation_dofs) > 0:
-                interpolation_coefficients = solve_triangular(interpolation_matrix, AU.components(interpolation_dofs).T,
-                                                              lower=True, unit_diagonal=True).T
-                # interpolation_coefficients = np.linalg.solve(interpolation_matrix, AU.components(interpolation_dofs).T).T
-                AU_interpolated = collateral_basis.lincomb(interpolation_coefficients)
-                ERR = AU - AU_interpolated
+                if projection == 'ei':
+                    AU_interpolated = interpolate(AU, collateral_basis, interpolation_dofs, interpolation_matrix)
+                    ERR = AU - AU_interpolated
+                else:
+                    if product is None:
+                        coefficients = gramian_inverse.dot(collateral_basis.dot(AU, pairwise=False)).T
+                    else:
+                        gramian = product
+                        coefficients = gramian_inverse.dot(product.apply2(collateral_basis, AU, pairwise=False)).T
+                    AU_projected = collateral_basis.lincomb(coefficients)
+                    ERR = AU - AU_projected
             else:
                 ERR = AU
             errs = discretization.l2_norm(ERR) if error_norm is None else error_norm(ERR)
@@ -45,7 +67,12 @@ def generate_interpolation_data(evaluations, error_norm=None, target_error=None,
             local_max_err = errs[local_max_err_ind]
             if local_max_err > max_err:
                 max_err = local_max_err
-                new_vec = ERR.copy(ind=local_max_err_ind)
+                if len(interpolation_dofs) == 0 or projection == 'ei':
+                    new_vec = ERR.copy(ind=local_max_err_ind)
+                else:
+                    new_vec = AU.copy(ind=local_max_err_ind)
+                    new_vec -= interpolate(AU, collateral_basis, interpolation_dofs, interpolation_matrix,
+                                           ind=local_max_err_ind)
 
         logger.info('Maximum interpolation error with {} interpolation DOFs: {}'.format(len(interpolation_dofs),
                                                                                         max_err))
@@ -81,7 +108,8 @@ def generate_interpolation_data(evaluations, error_norm=None, target_error=None,
 
 
 def interpolate_operators(discretization, operator_names, parameter_sample, error_norm=None,
-                          target_error=None, max_interpolation_dofs=None, separately=False):
+                          target_error=None, max_interpolation_dofs=None,
+                          projection='orthogonal', product=None, separately=False):
 
 
     class EvaluationProvider(BasicInterface, Cachable):
@@ -103,6 +131,7 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
 
         @cached
         def data(self, k):
+            from scipy.io import loadmat
             mu = self.sample[k]
             mu_op = self.operator_sample[k]
             return self.operator.apply(self.discretization.solve(mu=mu), mu=mu_op)
@@ -127,7 +156,8 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
 
     evaluations = EvaluationProvider(discretization, operator, sample, operator_sample)
     dofs, basis, data = generate_interpolation_data(evaluations, error_norm, target_error,
-                                                    max_interpolation_dofs)
+                                                    max_interpolation_dofs, projection=projection,
+                                                    product=product)
 
     ei_operator = EmpiricalInterpolatedOperator(operator, dofs, basis)
     ei_operators = discretization.operators.copy()
