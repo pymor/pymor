@@ -123,9 +123,12 @@ class Parameter(dict):
 
     def __str__(self):
         s = '{'
-        for k, v in self.iteritems():
+        for k in self.parameter_type:
+            v = self[k]
+            if v.ndim > 1:
+                v = v.ravel()
             if s == '{':
-                s += '{}: {}'.format(k, v.ravel())
+                s += '{}: {}'.format(k, v)
             else:
                 s += ', {}: {}'.format(k, v)
         s += '}'
