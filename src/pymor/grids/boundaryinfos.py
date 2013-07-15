@@ -73,8 +73,9 @@ class SubGridBoundaryInfo(BoundaryInfoInterface):
 
     def __init__(self, subgrid, grid, grid_boundary_info, new_boundary_type=None):
         assert new_boundary_type is None or isinstance(new_boundaries_type, BoundaryType)
-        boundary_types = grid_boundary_info.boundary_types
 
+        super(SubGridBoundaryInfo, self).__init__()
+        boundary_types = grid_boundary_info.boundary_types
         has_new_boundaries = False
         masks = []
         for codim in xrange(1, subgrid.dim + 1):
