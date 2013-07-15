@@ -6,8 +6,7 @@
 '''Thermalblock demo.
 
 Usage:
-  burgers.py [-hp] [--grid=NI] [--nt=COUNT] [--plot-solutions] [--plot-ei-err] [--test=COUNT]
-             EXP_MIN EXP_MAX EI_SNAPSHOTS EISIZE SNAPSHOTS RBSIZE
+  burgers.py [options] EXP_MIN EXP_MAX EI_SNAPSHOTS EISIZE SNAPSHOTS RBSIZE
 
 
 Arguments:
@@ -27,7 +26,19 @@ Arguments:
 Options:
   --grid=NI              Use grid with (2*NI)*NI elements [default: 60].
 
+  --grid-type=TYPE       Type of grid to use (rect, tria) [default: rect].
+
+  --initial-data=TYPE    Select the initial data (sin, bump) [default: sin]
+
+  --lxf-lambda=VALUE     Parameter lambda in Lax-Friedrichs flux [default: 1].
+
+  --not-periodic         Solve with dirichlet boundary conditions on left
+                         and bottom boundary.
+
   --nt=COUNT             Number of time steps [default: 100].
+
+  --num-flux=FLUX        Numerical flux to use (lax_friedrichs, engquist_osher)
+                         [default: lax_friedrichs].
 
   -h, --help             Show this message.
 
@@ -39,6 +50,10 @@ Options:
 
   --test=COUNT           Use COUNT snapshots for stochastic error estimation
                          [default: 10].
+
+  --vx=XSPEED            Speed in x-direction [default: 1].
+
+  --vy=YSPEED            Speed in y-direction [default: 1].
 '''
 
 from __future__ import absolute_import, division, print_function
@@ -55,6 +70,8 @@ import pymor.core as core
 core.logger.MAX_HIERACHY_LEVEL = 2
 from pymor.analyticalproblems.burgers import BurgersProblem
 from pymor.discretizers.advection import discretize_nonlinear_instationary_advection_fv
+from pymor.domaindiscretizers import discretize_domain_default
+from pymor.grids import RectGrid, TriaGrid
 from pymor.reductors import reduce_generic_rb
 from pymor.algorithms import greedy
 from pymor.algorithms.basisextension import pod_basis_extension
@@ -67,23 +84,38 @@ core.getLogger('pymor.discretizations').setLevel('INFO')
 
 
 def burgers_demo(args):
-    args['--nt'] = int(args['--nt'])
     args['--grid'] = int(args['--grid'])
+    args['--grid-type'] = args['--grid-type'].lower()
+    assert args['--grid-type'] in ('rect', 'tria')
+    args['--initial-data'] = args['--initial-data'].lower()
+    assert args['--initial-data'] in ('sin', 'bump')
+    args['--lxf-lambda'] = float(args['--lxf-lambda'])
+    args['--nt'] = int(args['--nt'])
+    args['--not-periodic'] = bool(args['--not-periodic'])
+    args['--num-flux'] = args['--num-flux'].lower()
+    assert args['--num-flux'] in ('lax_friedrichs', 'engquist_osher')
+    args['--test'] = int(args['--test'])
+    args['--vx'] = float(args['--vx'])
+    args['--vy'] = float(args['--vy'])
     args['EXP_MIN'] = int(args['EXP_MIN'])
     args['EXP_MAX'] = int(args['EXP_MAX'])
     args['EI_SNAPSHOTS'] = int(args['EI_SNAPSHOTS'])
     args['EISIZE'] = int(args['EISIZE'])
     args['SNAPSHOTS'] = int(args['SNAPSHOTS'])
     args['RBSIZE'] = int(args['RBSIZE'])
-    args['--test'] = int(args['--test'])
-
 
     print('Setup Problem ...')
-    problem = BurgersProblem(parameter_range=(args['EXP_MIN'], args['EXP_MAX']))
+    grid_type_map = {'rect': RectGrid, 'tria': TriaGrid}
+    domain_discretizer = partial(discretize_domain_default, grid_type=grid_type_map[args['--grid-type']])
+    problem = BurgersProblem(vx=args['--vx'], vy=args['--vy'], initial_data=args['--initial-data'],
+                             parameter_range=(args['EXP_MIN'], args['EXP_MAX']), torus=not args['--not-periodic'])
 
     print('Discretize ...')
-    discretization, _ = discretize_nonlinear_instationary_advection_fv(problem, diameter=m.sqrt(2) / args['--grid'],
-                                                                       nt=args['--nt'])
+    discretizer = discretize_nonlinear_instationary_advection_fv
+    discretization, _ = discretizer(problem, diameter=m.sqrt(2) / args['--grid'],
+                                    num_flux=args['--num-flux'], lxf_lambda=args['--lxf-lambda'],
+                                    nt=args['--nt'], domain_discretizer=domain_discretizer)
+
     print(discretization.operator.grid)
 
     print(discretization.parameter_info())
@@ -125,19 +157,16 @@ def burgers_demo(args):
 
 
     print('RB generation ...')
-    import cProfile, pstats, io
 
     def reductor(discretization, rb):
         return reduce_generic_rb(ei_discretization, rb)
-    # reductor = reduce_generic_rb
+
     extension_algorithm = partial(pod_basis_extension)
-    # pr = cProfile.Profile()
-    # pr.enable()
+
     greedy_data = greedy(discretization, reductor, discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
                          use_estimator=False, error_norm=lambda U: np.max(discretization.l2_norm(U)),
                          extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'])
-    # pr.disable()
-    # pr.dump_stats('greedy.profile')
+
     rb_discretization, reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
 
 
@@ -160,6 +189,7 @@ def burgers_demo(args):
     toc = time.time()
     t_est = toc - tic
     real_rb_size = len(greedy_data['data'])
+    real_cb_size = len(ei_data['basis'])
 
     print('''
     *** RESULTS ***
@@ -167,9 +197,18 @@ def burgers_demo(args):
     Problem:
        parameter range:                    ({args[EXP_MIN]}, {args[EXP_MAX]})
        h:                                  sqrt(2)/{args[--grid]}
+       grid-type:                          {args[--grid-type]}
+       initial-data:                       {args[--initial-data]}
+       lxf-lambda:                         {args[--lxf-lambda]}
        nt:                                 {args[--nt]}
+       not-periodic:                       {args[--not-periodic]}
+       num-flux:                           {args[--num-flux]}
+       (vx, vy):                           ({args[--vx]}, {args[--vy]})
 
     Greedy basis generation:
+       number of ei-snapshots:             {args[EI_SNAPSHOTS]}
+       prescribed collateral basis size:   {args[EISIZE]}
+       actual collateral basis size:       {real_cb_size}
        number of snapshots:                {args[SNAPSHOTS]}
        prescribed basis size:              {args[RBSIZE]}
        actual basis size:                  {real_rb_size}
