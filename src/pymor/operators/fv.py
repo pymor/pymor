@@ -132,7 +132,7 @@ class NonlinearAdvectionEngquistOsher(OperatorInterface):
 
     type_source = type_range = NumpyVectorArray
 
-    def __init__(self, grid, boundary_info, flux, flux_derivative, dirichlet_data=None, name=None):
+    def __init__(self, grid, boundary_info, flux, flux_derivative, dirichlet_data=None, name_map=None, name=None):
         assert dirichlet_data is None or isinstance(dirichlet_data, FunctionInterface)
 
         super(NonlinearAdvectionEngquistOsher, self).__init__()
@@ -145,13 +145,14 @@ class NonlinearAdvectionEngquistOsher(OperatorInterface):
         if isinstance(dirichlet_data, FunctionInterface) and boundary_info.has_dirichlet:
             if dirichlet_data.parametric:
                 self.build_parameter_type(inherits={'flux': flux, 'flux_derivative': flux_derivative,
-                                                    'dirichlet_data': dirichlet_data})
+                                                    'dirichlet_data': dirichlet_data}, name_map=name_map)
             else:
                 self._dirichlet_values = self.dirichlet_data(grid.centers(1)[boundary_info.dirichlet_boundaries(1)])
                 self._dirichlet_values = self._dirichlet_values.ravel()
-                self.build_parameter_type(inherits={'flux': flux, 'flux_derivative': flux_derivative})
+                self.build_parameter_type(inherits={'flux': flux, 'flux_derivative': flux_derivative},
+                                          name_map=name_map)
         else:
-            self.build_parameter_type(inherits={'flux': flux, 'flux_derivative': flux_derivative})
+            self.build_parameter_type(inherits={'flux': flux, 'flux_derivative': flux_derivative}, name_map=name_map)
         self.dim_source = self.dim_range = grid.size(0)
         self.lock()
 
