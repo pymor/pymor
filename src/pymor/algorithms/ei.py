@@ -168,4 +168,5 @@ def interpolate_operators(discretization, operator_name, parameter_sample, error
     ei_operators[operator_name] = ei_operator
     ei_discretization = discretization.with_(operators=ei_operators, name='{}_ei'.format(discretization.name))
 
+    data.update({'dofs': dofs, 'basis': basis})
     return ei_discretization, data
