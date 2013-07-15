@@ -16,30 +16,34 @@ from pymor.la import VectorArrayInterface
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 
 
-def generate_ei_data(evaluations, error_norm=None, target_error=None, max_interpolation_dofs=None,
-                     projection='orthogonal', product=None):
+def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation_dofs=None,
+              projection='orthogonal', product=None):
 
     assert projection in ('orthogonal', 'ei')
-    assert projection != 'orthogonal' or product is not None
     assert isinstance(evaluations, VectorArrayInterface) or all(isinstance(ev, VectorArrayInterface) for ev in evaluations)
     if isinstance(evaluations, VectorArrayInterface):
         evaluations = (evaluations,)
 
-    logger = getLogger('pymor.algorithms.ei.generate_ei_data')
+    logger = getLogger('pymor.algorithms.ei.ei_greedy')
     logger.info('Generating Interpolation Data ...')
 
     interpolation_dofs = np.zeros((0,), dtype=np.int32)
+    interpolation_matrix = np.zeros((0,0))
     collateral_basis = type(next(iter(evaluations))).empty(dim=next(iter(evaluations)).dim)
+    gramian_inverse = None
     max_errs = []
 
-    def interpolate(U, collateral_basis, interpolation_dofs, interpolation_matrix, ind=None):
+    def interpolate(U, ind=None):
         coefficients = solve_triangular(interpolation_matrix, U.components(interpolation_dofs, ind=ind).T,
                                         lower=True, unit_diagonal=True).T
         # coefficients = np.linalg.solve(interpolation_matrix, U.components(interpolation_dofs, ind=ind).T).T
         return collateral_basis.lincomb(coefficients)
 
-    while True:
+    # compute the maximum projection error and error vector for the current interpolation data
+    def projection_error():
         max_err = -1.
+
+        # precompute gramian_inverse if needed
         if projection == 'orthogonal' and len(interpolation_dofs) > 0:
             if product is None:
                 gramian = collateral_basis.gramian()
@@ -50,8 +54,8 @@ def generate_ei_data(evaluations, error_norm=None, target_error=None, max_interp
         for AU in evaluations:
             if len(interpolation_dofs) > 0:
                 if projection == 'ei':
-                    AU_interpolated = interpolate(AU, collateral_basis, interpolation_dofs, interpolation_matrix)
-                    ERR = AU - AU_interpolated
+                    AU_interpolated = interpolate(AU)
+                    ERR =  AU - AU_interpolated
                 else:
                     if product is None:
                         coefficients = gramian_inverse.dot(collateral_basis.dot(AU, pairwise=False)).T
@@ -62,7 +66,7 @@ def generate_ei_data(evaluations, error_norm=None, target_error=None, max_interp
                     ERR = AU - AU_projected
             else:
                 ERR = AU
-            errs = discretization.l2_norm(ERR) if error_norm is None else error_norm(ERR)
+            errs = ERR.l2_norm() if error_norm is None else error_norm(ERR)
             local_max_err_ind = np.argmax(errs)
             local_max_err = errs[local_max_err_ind]
             if local_max_err > max_err:
@@ -71,8 +75,13 @@ def generate_ei_data(evaluations, error_norm=None, target_error=None, max_interp
                     new_vec = ERR.copy(ind=local_max_err_ind)
                 else:
                     new_vec = AU.copy(ind=local_max_err_ind)
-                    new_vec -= interpolate(AU, collateral_basis, interpolation_dofs, interpolation_matrix,
-                                           ind=local_max_err_ind)
+                    new_vec -= interpolate(AU, ind=local_max_err_ind)
+
+        return max_err, new_vec
+
+    # main loop
+    while True:
+        max_err, new_vec = projection_error()
 
         logger.info('Maximum interpolation error with {} interpolation DOFs: {}'.format(len(interpolation_dofs),
                                                                                         max_err))
@@ -80,12 +89,11 @@ def generate_ei_data(evaluations, error_norm=None, target_error=None, max_interp
             logger.info('Target error reached! Stopping extension loop.')
             break
 
+        # compute new interpolation dof and collateral basis vector
         new_dof = new_vec.amax()[0]
-
         if new_dof in interpolation_dofs:
             logger.info('DOF {} selected twice for interplation! Stopping extension loop.'.format(new_dof))
             break
-
         new_vec *= 1 / new_vec.components([new_dof])[0]
         interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
         collateral_basis.append(new_vec, remove_from_other=True)
@@ -98,6 +106,9 @@ def generate_ei_data(evaluations, error_norm=None, target_error=None, max_interp
 
         if len(interpolation_dofs) >= max_interpolation_dofs:
             logger.info('Maximum number of interpolation DOFs reached. Stopping extension loop.')
+            max_err, _ = projection_error()
+            logger.info('Final maximum interpolation error with {} interpolation DOFs: {}'.format(
+                len(interpolation_dofs), max_err))
             break
 
         logger.info('')
@@ -107,14 +118,15 @@ def generate_ei_data(evaluations, error_norm=None, target_error=None, max_interp
     return interpolation_dofs, collateral_basis, data
 
 
-def interpolate_operators(discretization, operator_names, parameter_sample, error_norm=None,
+def interpolate_operators(discretization, operator_name, parameter_sample, error_norm=None,
                           target_error=None, max_interpolation_dofs=None,
-                          projection='orthogonal', product=None, separately=False):
+                          projection='orthogonal', product=None):
 
-
+    # This class provides cached evaulations of the operator on the solutions.
+    # Should be replaced by something simpler in the future.
     class EvaluationProvider(BasicInterface, Cachable):
 
-        # evil hack to prevent deadlock ...
+        # the following hack is currently necessary to prevent a deadlock in the cache backend ...
         from tempfile import gettempdir
         from os.path import join
         DEFAULT_MEMORY_CONFIG = {"backend": 'LimitedMemory', 'arguments.max_kbytes': 20000}
@@ -131,10 +143,9 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
 
         @cached
         def data(self, k):
-            from scipy.io import loadmat
             mu = self.sample[k]
             mu_op = self.operator_sample[k]
-            return self.operator.apply(self.discretization.solve(mu=mu), mu=mu_op)
+            return self.operator.apply(self.discretization.solve(mu), mu=mu_op)
 
         def __len__(self):
             return len(self.sample)
@@ -144,23 +155,17 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
                 raise IndexError
             return self.data(ind)
 
-    if isinstance(operator_names, str):
-        operator_names = (operator_names,)
-
-    if len(operator_names) > 1:
-        raise NotImplementedError
-
     sample = tuple(parameter_sample)
-    operator_sample = tuple(discretization.map_parameter(mu, operator_names[0]) for mu in sample)
-    operator = discretization.operators[operator_names[0]]
+    operator_sample = tuple(discretization.map_parameter(mu, operator_name) for mu in sample)
+    operator = discretization.operators[operator_name]
 
     evaluations = EvaluationProvider(discretization, operator, sample, operator_sample)
-    dofs, basis, data = generate_ei_data(evaluations, error_norm, target_error, max_interpolation_dofs,
-                                         projection=projection, product=product)
+    dofs, basis, data = ei_greedy(evaluations, error_norm, target_error, max_interpolation_dofs,
+                                  projection=projection, product=product)
 
     ei_operator = EmpiricalInterpolatedOperator(operator, dofs, basis)
     ei_operators = discretization.operators.copy()
-    ei_operators['operator'] = ei_operator
-    ei_discretization = discretization.with_(operators=ei_operators, name='{}_interpolated'.format(discretization.name))
+    ei_operators[operator_name] = ei_operator
+    ei_discretization = discretization.with_(operators=ei_operators, name='{}_ei'.format(discretization.name))
 
     return ei_discretization, data
