@@ -111,7 +111,7 @@ class Parameter(dict):
     '''
 
     def __init__(self, parameter_type, *args, **kwargs):
-        super(Parameter, self).__init__(*args, **kwargs)
+        dict.__init__(self, *args, **kwargs) # evil
         self.parameter_type = parameter_type
 
     def allclose(self, mu):
@@ -272,16 +272,16 @@ class Parametric(object):
         if mu.__class__ is not Parameter:
             mu = parse_parameter(mu, self.parameter_type)
         assert mu.parameter_type >= self.parameter_type
+        return mu
 
-        if self.parameter_local_type is None:
-            return mu
-        else:
-            return mu, Parameter(self.parameter_local_type,
-                                 {k: mu[v] for k, v in self.parameter_global_names.iteritems()})
+    def local_parameter(self, mu):
+        assert mu.__class__ is Parameter
+        return None if self.parameter_local_type is None else \
+            Parameter(self.parameter_local_type, {k: mu[v] for k, v in self.parameter_global_names.iteritems()})
 
     def strip_parameter(self, mu):
         if not isinstance(mu, Parameter):
-            mu = parse_parameter(mu, self.parameter_type)
+            mu_ = parse_parameter(mu, self.parameter_type)
         assert mu.parameter_type >= self.parameter_type
 
         return None if self.parameter_type is None else Parameter(self.parameter_type,
