@@ -269,7 +269,7 @@ class Parametric(object):
         if mu is None:
             assert self.parameter_type is None
             return None
-        if not isinstance(mu, Parameter):
+        if mu.__class__ is not Parameter:
             mu = parse_parameter(mu, self.parameter_type)
         assert mu.parameter_type >= self.parameter_type
 
