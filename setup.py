@@ -14,14 +14,14 @@ import multiprocessing
 import subprocess
 from setuptools import find_packages
 from distutils.extension import Extension
+import dependencies
 
 _orig_generate_a_pyrex_source = None
 
-tests_require = ['mock', 'nose-cov', 'nose', 'nosehtmloutput', 'nose-progressive', 'tissue']
-install_requires = ['distribute', 'scipy', 'numpy', 'PyContracts',
-                    'docopt', 'dogpile.cache' , 'numpydoc']
-setup_requires = ['cython', 'numpy', 'nose', 'sympy']
-install_suggests = ['matplotlib', 'sympy'] + tests_require
+tests_require = dependencies.tests_require
+install_requires = dependencies.install_requires
+setup_requires = dependencies.setup_requires
+install_suggests = dependencies.install_suggests
 
 class DependencyMissing(Exception):
 
@@ -87,15 +87,6 @@ def write_version():
     return revstring
 
 def _setup(**kwargs):
-    '''we'll make use of Distribution's __init__ downloading setup_requires packages right away here'''
-    from setuptools.dist import Distribution
-    dist = Distribution(kwargs)
-
-    # now that we supposedly have at least numpy + cython installed, use them
-    # they're dropped in cwd as egg-dirs however. let's discover those first
-    from pkg_resources import require
-    require("Cython")
-    require("numpy")
     _numpy_monkey()
     import Cython.Distutils
     cmdclass = {'build_ext': Cython.Distutils.build_ext}
@@ -118,13 +109,19 @@ def _missing(names):
         try:
             __import__(name)
         except ImportError:
-            yield name
+            if name in dependencies.import_names:
+                try:
+                    __import__(dependencies.import_names[name])
+                except ImportError:
+                    yield name
+            else:
+                yield name
 
 def check_pre_require():
     '''these are packages that need to be present before we start out setup, because
     distribute/distutil/numpy.distutils makes automatic installation too unreliable
     '''
-    missing = list(_missing(['numpy', 'scipy']))
+    missing = list(_missing(dependencies.pre_setup_requires))
     if len(missing):
         raise DependencyMissing(missing)
 
