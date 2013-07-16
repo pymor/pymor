@@ -74,11 +74,11 @@ class LinearAffinelyDecomposedOperator(LinearOperatorInterface):
         self.lock()
 
     def _assemble(self, mu):
+        mu = self.parse_parameter(mu)
         if self.functionals is not None:
-            mu = self.parse_parameter(mu)
             A = sum(op.assemble(mu) * f(mu) for op, f in izip(self.operators, self.functionals))
         else:
-            mu, my_mu = self.parse_parameter(mu)
+            my_mu = self.local_parameter(mu)
             A = sum(op.assemble(mu) * m for op, m in izip(self.operators, my_mu['coefficients']))
 
         if self.operator_affine_part is not None:
@@ -88,9 +88,9 @@ class LinearAffinelyDecomposedOperator(LinearOperatorInterface):
 
     def evaluate_coefficients(self, mu):
         '''Returns [θ_1(mu), ..., θ_K(mu)].'''
+        mu = self.parse_parameter(mu)
         if self.functionals is not None:
-            mu = self.parse_parameter(mu)
             return np.array(tuple(f(mu) for f in self.functionals))
         else:
-            mu, my_mu = self.parse_parameter(mu)
+            my_mu = self.local_parameter(mu)
             return my_mu['coefficients']

@@ -85,14 +85,14 @@ class GenericFunction(FunctionInterface):
         return ('{name}: x -> {mapping}').format(name=self.name, mapping=self._mapping)
 
     def evaluate(self, x, mu=None):
+        mu = self.parse_parameter(mu)
         x = np.array(x, copy=False, ndmin=1)
         if self.dim_domain > 0:
             assert x.shape[-1] == self.dim_domain
         if self._with_mu:
-            _, my_mu = self.parse_parameter(mu)
+            my_mu = self.local_parameter(mu)
             v = self._mapping(x, mu)
         else:
-            mu= self.parse_parameter(mu)
             v = self._mapping(x)
         if len(v.shape) < len(x.shape) and self.dim_range > 0:
             v = v[..., np.newaxis]
