@@ -68,6 +68,9 @@ class ParameterType(object):
     def copy(self):
         return ParameterType(self)
 
+    def get(self, k, d):
+        return self._dict.get(k, d)
+
     def keys(self):
         return iter(self._keys)
 
@@ -244,6 +247,9 @@ class Parametric(object):
     '''
 
     parameter_type = None
+    parameter_local_type = None
+    parameter_global_names = None
+    parameter_provided = None
     _parameter_space = None
 
     @property
@@ -273,13 +279,13 @@ class Parametric(object):
             return mu, Parameter(self.parameter_local_type,
                                  {k: mu[v] for k, v in self.parameter_global_names.iteritems()})
 
-    def strip_parameters(self, mu):
+    def strip_parameter(self, mu):
         if not isinstance(mu, Parameter):
             mu = parse_parameter(mu, self.parameter_type)
         assert mu.parameter_type >= self.parameter_type
 
         return None if self.parameter_type is None else Parameter(self.parameter_type,
-                                                                  {k: mu[k] for k in self.parameter_type.iterkeys()})
+                                                                  {k: mu[k] for k in self.parameter_type})
 
     def build_parameter_type(self, local_type=None, global_names=None, inherits=None, provides=None):
         '''Builds the parameter type of the object. To be called by __init__.
@@ -304,11 +310,11 @@ class Parametric(object):
         The parameter type of the object.
         '''
         local_type = parse_parameter_type(local_type)
-        if local_type and not (global_names and all(k in global_names for k local_type.iterkeys())):
+        if local_type and not (global_names and all(k in global_names for k in local_type)):
             if not global_names:
                 raise ValueError('Must specify a global name for each key of local_type')
             else:
-                for k in local_type.iterkeys():
+                for k in local_type:
                     if not k in global_names:
                         raise ValueError('Must specify a global name for {}'.format(k))
 
@@ -327,7 +333,8 @@ class Parametric(object):
             for op in (o for o in inherits if o.parametric):
                 for name, shape in op.parameter_type.iteritems():
                     if name in global_type and global_type[name] != shape:
-                        raise ValueError('Component dimensions of global name {} do not match'.format(name))
+                        raise ValueError('Component dimensions of global name {} do not match ({} and {})'.format(name,
+                            global_type[name], shape))
                     if name in provides:
                         if provides[global_name] != shape:
                             raise ValueError('Component dimensions of provided name {} do not match'.format(name))
