@@ -314,6 +314,8 @@ class Parametric(object):
         '''
         assert not local_global or global_names is None
         local_type = parse_parameter_type(local_type)
+        if local_global and local_type is not None:
+            global_names = {k: k for k in local_type}
         if local_type and not (global_names and all(k in global_names for k in local_type)):
             if not global_names:
                 raise ValueError('Must specify a global name for each key of local_type')
@@ -321,8 +323,6 @@ class Parametric(object):
                 for k in local_type:
                     if not k in global_names:
                         raise ValueError('Must specify a global name for {}'.format(k))
-        if local_global and local_type is not None:
-            global_names = {k: k for k in local_type}
 
         parameter_maps = {}
         parameter_types = {}
