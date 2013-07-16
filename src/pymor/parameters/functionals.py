@@ -26,10 +26,10 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
     def __init__(self, parameter_name, parameter_shape, coordinates=None, name=None):
         super(ProjectionParameterFunctional, self).__init__()
         self.name = name
-        self.build_parameter_type({parameter_name: parameter_shape}, global_names={parameter_name: parameter_name})
+        self.build_parameter_type({parameter_name: parameter_shape}, local_global=True)
         self.parameter_name = parameter_name
-        # if sum(parameter_shape) > 1:
-        #     assert coordinates is not None and coordinates < paramter_shape
+        if sum(parameter_shape) > 1:
+            assert coordinates is not None and coordinates < parameter_shape
         self.coordinates = coordinates
 
     def evaluate(self, mu=None):
@@ -57,7 +57,7 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
         super(ParameterFunctionalInterface, self).__init__()
         self.name = name
         self._mapping = mapping
-        self.build_parameter_type(parameter_type)
+        self.build_parameter_type(parameter_type, local_global=True)
 
     def evaluate(self, mu=None):
         _, my_mu = self.map_parameter(mu)
