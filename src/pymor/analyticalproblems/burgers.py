@@ -37,12 +37,10 @@ class BurgersProblem(InstationaryAdvectionProblem):
 
         flux_function = GenericFunction(burgers_flux, dim_domain=0, dim_range=2,
                                         parameter_type={'exponent': 0},
-                                        name_map={'.exponent': 'exponent'},
                                         name='burgers_flux')
 
         flux_function_derivative = GenericFunction(burgers_flux_derivative, dim_domain=0, dim_range=2,
                                                    parameter_type={'exponent': 0},
-                                                   name_map={'.exponent': 'exponent'},
                                                    name='burgers_flux')
 
         if initial_data == 'sin':

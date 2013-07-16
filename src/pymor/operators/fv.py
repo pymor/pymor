@@ -26,7 +26,7 @@ class NonlinearAdvectionLaxFriedrichs(OperatorInterface):
 
     type_source = type_range = NumpyVectorArray
 
-    def __init__(self, grid, boundary_info, flux, lxf_lambda=1.0, dirichlet_data=None, name_map=None, name=None):
+    def __init__(self, grid, boundary_info, flux, lxf_lambda=1.0, dirichlet_data=None, name=None):
         assert dirichlet_data is None or isinstance(dirichlet_data, FunctionInterface)
 
         super(NonlinearAdvectionLaxFriedrichs, self).__init__()
@@ -38,13 +38,13 @@ class NonlinearAdvectionLaxFriedrichs(OperatorInterface):
         self.name = name
         if isinstance(dirichlet_data, FunctionInterface) and boundary_info.has_dirichlet:
             if dirichlet_data.parametric:
-                self.build_parameter_type(inherits={'flux': flux, 'dirichlet_data': dirichlet_data}, name_map=name_map)
+                self.build_parameter_type(inherits=(flux, dirichlet_data))
             else:
                 self._dirichlet_values = self.dirichlet_data(grid.centers(1)[boundary_info.dirichlet_boundaries(1)])
                 self._dirichlet_values = self._dirichlet_values.ravel()
-                self.build_parameter_type(inherits={'flux': flux}, name_map=name_map)
+                self.build_parameter_type(inherits=(flux,))
         else:
-            self.build_parameter_type(inherits={'flux': flux}, name_map=name_map)
+            self.build_parameter_type(inherits=(flux,))
         self.dim_source = self.dim_range = grid.size(0)
         self.lock()
 
@@ -55,8 +55,7 @@ class NonlinearAdvectionLaxFriedrichs(OperatorInterface):
         sub_grid = SubGrid(self.grid, entities=source_dofs)
         sub_boundary_info = SubGridBoundaryInfo(sub_grid, self.grid, self.boundary_info)
         op = NonlinearAdvectionLaxFriedrichs(sub_grid, sub_boundary_info, self.flux, self.lxf_lambda,
-                                             self.dirichlet_data, self.parameter_name_map,
-                                             '{}_restricted'.format(self.name))
+                                             self.dirichlet_data, '{}_restricted'.format(self.name))
         sub_grid_indices = sub_grid.indices_from_parent_indices(components, codim=0)
         proj = ComponentProjection(sub_grid_indices, op.dim_range, op.type_range)
         return Concatenation(proj, op), sub_grid.parent_indices(0)
@@ -64,6 +63,7 @@ class NonlinearAdvectionLaxFriedrichs(OperatorInterface):
     def apply(self, U, ind=None, mu=None):
         assert isinstance(U, NumpyVectorArray)
         assert U.dim == self.dim_source
+        mu = self.parse_parameter(mu)
 
         ind = xrange(len(U)) if ind is None else ind
         U = U._array
@@ -83,7 +83,7 @@ class NonlinearAdvectionLaxFriedrichs(OperatorInterface):
             Ui = U[j]
             Ri = R[i]
 
-            F = self.flux(Ui, self.map_parameter(mu, 'flux'))
+            F = self.flux(Ui, mu=mu)
             F_edge = F[SUPE]
             U_edge = Ui[SUPE]
 
@@ -95,12 +95,12 @@ class NonlinearAdvectionLaxFriedrichs(OperatorInterface):
             if bi.has_dirichlet:
                 dirichlet_boundaries = bi.dirichlet_boundaries(1)
                 if hasattr(self, '_dirichlet_values'):
-                    F_edge[dirichlet_boundaries, 1] = self.flux(self._dirichlet_values, self.map_parameter(mu, 'flux'))
+                    F_edge[dirichlet_boundaries, 1] = self.flux(self._dirichlet_values, mu=mu)
                     U_edge[dirichlet_boundaries, 1] = self._dirichlet_values
                 elif self.dirichlet_data is not None:
                     dirichlet_values = self.dirichlet_data(g.centers(1)[dirichlet_boundaries],
-                                                           mu=self.map_parameter(mu, 'dirichlet_data'))
-                    F_edge[dirichlet_boundaries, 1] = self.flux(dirichlet_values, self.map_parameter(mu, 'flux'))
+                                                           mu=mu)
+                    F_edge[dirichlet_boundaries, 1] = self.flux(dirichlet_values, mu=mu)
                     U_edge[dirichlet_boundaries, 1] = dirichlet_values
                 else:
                     F_edge[dirichlet_boundaries, 1] = 0
@@ -132,7 +132,7 @@ class NonlinearAdvectionEngquistOsher(OperatorInterface):
 
     type_source = type_range = NumpyVectorArray
 
-    def __init__(self, grid, boundary_info, flux, flux_derivative, dirichlet_data=None, name_map=None, name=None):
+    def __init__(self, grid, boundary_info, flux, flux_derivative, dirichlet_data=None, name=None):
         assert dirichlet_data is None or isinstance(dirichlet_data, FunctionInterface)
 
         super(NonlinearAdvectionEngquistOsher, self).__init__()
@@ -144,15 +144,13 @@ class NonlinearAdvectionEngquistOsher(OperatorInterface):
         self.name = name
         if isinstance(dirichlet_data, FunctionInterface) and boundary_info.has_dirichlet:
             if dirichlet_data.parametric:
-                self.build_parameter_type(inherits={'flux': flux, 'flux_derivative': flux_derivative,
-                                                    'dirichlet_data': dirichlet_data}, name_map=name_map)
+                self.build_parameter_type(inherits=(flux, flux_derivative, dirichlet_data))
             else:
                 self._dirichlet_values = self.dirichlet_data(grid.centers(1)[boundary_info.dirichlet_boundaries(1)])
                 self._dirichlet_values = self._dirichlet_values.ravel()
-                self.build_parameter_type(inherits={'flux': flux, 'flux_derivative': flux_derivative},
-                                          name_map=name_map)
+                self.build_parameter_type(inherits=(flux, flux_derivative))
         else:
-            self.build_parameter_type(inherits={'flux': flux, 'flux_derivative': flux_derivative}, name_map=name_map)
+            self.build_parameter_type(inherits=(flux, flux_derivative))
         self.dim_source = self.dim_range = grid.size(0)
         self.lock()
 
@@ -163,8 +161,7 @@ class NonlinearAdvectionEngquistOsher(OperatorInterface):
         sub_grid = SubGrid(self.grid, entities=source_dofs)
         sub_boundary_info = SubGridBoundaryInfo(sub_grid, self.grid, self.boundary_info)
         op = NonlinearAdvectionEngquistOsher(sub_grid, sub_boundary_info, self.flux, self.flux_derivative,
-                                             self.dirichlet_data, self.parameter_name_map,
-                                             '{}_restricted'.format(self.name))
+                                             self.dirichlet_data, '{}_restricted'.format(self.name))
         sub_grid_indices = sub_grid.indices_from_parent_indices(components, codim=0)
         proj = ComponentProjection(sub_grid_indices, op.dim_range, op.type_range)
         return Concatenation(proj, op), sub_grid.parent_indices(0)
@@ -172,6 +169,7 @@ class NonlinearAdvectionEngquistOsher(OperatorInterface):
     def apply(self, U, ind=None, mu=None):
         assert isinstance(U, NumpyVectorArray)
         assert U.dim == self.dim_source
+        mu = self.parse_parameter(mu)
 
         ind = xrange(len(U)) if ind is None else ind
         U = U._array
@@ -191,8 +189,8 @@ class NonlinearAdvectionEngquistOsher(OperatorInterface):
             Ui = U[j]
             Ri = R[i]
 
-            F = self.flux(Ui, self.map_parameter(mu, 'flux'))
-            F_d = self.flux_derivative(Ui, self.map_parameter(mu, 'flux_derivative'))
+            F = self.flux(Ui, mu=mu)
+            F_d = self.flux_derivative(Ui, mu=mu)
             F_edge = F[SUPE]
             F_d_edge = F_d[SUPE]
 
@@ -204,15 +202,12 @@ class NonlinearAdvectionEngquistOsher(OperatorInterface):
             if bi.has_dirichlet and self.dirichlet_data is not None:
                 dirichlet_boundaries = bi.dirichlet_boundaries(1)
                 if hasattr(self, '_dirichlet_values'):
-                    F_d_edge[dirichlet_boundaries, 1] = self.flux_derivative(self._dirichlet_values,
-                                                                             self.map_parameter(mu, 'flux_derivative'))
-                    F_edge[dirichlet_boundaries, 1] = self.flux(self._dirichlet_values, self.map_parameter(mu, 'flux'))
+                    F_d_edge[dirichlet_boundaries, 1] = self.flux_derivative(self._dirichlet_values, mu=mu)
+                    F_edge[dirichlet_boundaries, 1] = self.flux(self._dirichlet_values, mu=mu)
                 else:
-                    dirichlet_values = self.dirichlet_data(g.centers(1)[dirichlet_boundaries],
-                                                           mu=self.map_parameter(mu, 'dirichlet_data'))
-                    F_d_edge[dirichlet_boundaries, 1] = self.flux_derivative(dirichlet_values,
-                                                                             self.map_parameter(mu, 'flux_derivative'))
-                    F_edge[dirichlet_boundaries, 1] = self.flux(dirichlet_values, self.map_parameter(mu, 'flux'))
+                    dirichlet_values = self.dirichlet_data(g.centers(1)[dirichlet_boundaries], mu=mu)
+                    F_d_edge[dirichlet_boundaries, 1] = self.flux_derivative(dirichlet_values, mu=mu)
+                    F_edge[dirichlet_boundaries, 1] = self.flux(dirichlet_values, mu=mu)
 
             F_d_edge = np.sum(F_d_edge * unit_outer_normals, axis=2)
             F_edge = np.sum(F_edge * unit_outer_normals, axis=2)
@@ -257,7 +252,7 @@ class L2Product(LinearOperatorInterface):
         self.lock()
 
     def _assemble(self, mu=None):
-        assert mu is None
+        mu = self.parse_parameter(mu)
 
         A = diags(self.grid.volumes(0), 0)
 
@@ -287,15 +282,16 @@ class L2ProductFunctional(LinearOperatorInterface):
         self.grid = grid
         self.function = function
         self.name = name
-        self.build_parameter_type(inherits={'function': function})
+        self.build_parameter_type(inherits=(function,))
         self.lock()
 
     def _assemble(self, mu=None):
+        mu = self.parse_parameter(mu)
         g = self.grid
 
         # evaluate function at all quadrature points -> shape = (g.size(0), number of quadrature points, 1)
         # the singleton dimension correspoints to the dimension of the range of the function
-        F = self.function(g.quadrature_points(0, order=2), mu=self.map_parameter(mu, 'function'))
+        F = self.function(g.quadrature_points(0, order=2), mu=mu)
 
         _, w = g.reference_element.quadrature(order=2)
 

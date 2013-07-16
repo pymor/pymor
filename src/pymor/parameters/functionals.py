@@ -34,11 +34,10 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
 
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)
-        my_mu = self.local_parameter(mu)
         if self.coordinates is None:
-            return my_mu[self.parameter_name]
+            return mu[self.parameter_name]
         else:
-            return my_mu[self.parameter_name][self.coordinates]
+            return mu[self.parameter_name][self.coordinates]
 
 
 class GenericParameterFunctional(ParameterFunctionalInterface):
@@ -62,5 +61,4 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
 
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)
-        my_mu = self.local_parameter(mu)
-        return self._mapping(my_mu)
+        return self._mapping(mu)

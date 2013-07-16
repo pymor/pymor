@@ -68,14 +68,14 @@ class GenericFunction(FunctionInterface):
         The name of the function.
     '''
 
-    def __init__(self, mapping, dim_domain=1, dim_range=1, parameter_type=None, global_names=None, name=None):
+    def __init__(self, mapping, dim_domain=1, dim_range=1, parameter_type=None, name=None):
         super(GenericFunction, self).__init__()
         self.dim_domain = dim_domain
         self.dim_range = dim_range
         self.name = name
         self._mapping = mapping
         if parameter_type is not None:
-            self.build_parameter_type(parameter_type, global_names=global_names)
+            self.build_parameter_type(parameter_type, local_global=True)
             self._with_mu = True
         else:
             self._with_mu = False

@@ -43,12 +43,12 @@ class DuneLinearEllipticCGDiscretization(DiscretizationInterface):
         super(DuneLinearEllipticCGDiscretization, self).__init__(operators=operators, products=products,
                                                                  caching=False, name=name)
 
-        self.build_parameter_type(inherits={'operator': operator})
+        self.build_parameter_type(inherits=(operator,))
         self.parameter_space = CubicParameterSpace({'diffusion': self.example.paramSize()}, *parameter_range)
         self.lock()
 
     def _solve(self, mu=None):
-        mu = self.map_parameter(mu, 'operator')
+        mu = self.parse_parameter(mu)
 
         if not self.disable_logging:
             self.logger.info('Solving {} (sparse) for {} ...'.format(self.name, mu))

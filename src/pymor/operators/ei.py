@@ -23,7 +23,7 @@ class EmpiricalInterpolatedOperator(OperatorInterface):
         assert operator.type_range == type(collateral_basis)
         assert hasattr(operator, 'restricted')
 
-        self.build_parameter_type(inherits={'operator': operator})
+        self.build_parameter_type(inherits=(operator,))
         self.dim_source = operator.dim_source
         self.dim_range = operator.dim_range
         self.type_source = operator.type_source
@@ -42,12 +42,13 @@ class EmpiricalInterpolatedOperator(OperatorInterface):
             self.collateral_basis = collateral_basis.copy()
 
     def apply(self, U, ind=None, mu=None):
+        mu = self.parse_parameter(mu)
         if len(self.interpolation_dofs) == 0:
             count = len(ind) if ind is not None else len(U)
             return self.type_range.zeros(dim=self.dim_range, count=count)
 
         U_components = NumpyVectorArray(U.components(self.source_dofs, ind=ind), copy=False)
-        AU = self.restricted_operator.apply(U_components, mu=self.map_parameter(mu, 'operator'))
+        AU = self.restricted_operator.apply(U_components, mu=mu)
         interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU._array.T,
                                                       lower=True, unit_diagonal=True).T
         # interpolation_coefficients = np.linalg.solve(self.interpolation_matrix, AU._array.T).T
@@ -80,7 +81,7 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorInterface):
         self.dim_source = len(source_basis_dofs)
         self.dim_range = projected_collateral_basis.dim
         self.type_source = self.type_range = NumpyVectorArray
-        self.build_parameter_type(inherits={'operator':restricted_operator})
+        self.build_parameter_type(inherits=(restricted_operator,))
         self.restricted_operator = restricted_operator
         self.interpolation_matrix = interpolation_matrix
         self.source_basis_dofs = source_basis_dofs
@@ -88,8 +89,9 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorInterface):
         self.name = name or '{}_projected'.format(restricted_operator.name)
 
     def apply(self, U, ind=None, mu=None):
+        mu = self.parse_parameter(mu)
         U_components = self.source_basis_dofs.lincomb(U._array, ind=ind)
-        AU = self.restricted_operator.apply(U_components, mu=self.map_parameter(mu, 'operator'))
+        AU = self.restricted_operator.apply(U_components, mu=mu)
         interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU._array.T,
                                                       lower=True, unit_diagonal=True).T
         return self.projected_collateral_basis.lincomb(interpolation_coefficients)
