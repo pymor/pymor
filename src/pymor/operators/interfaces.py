@@ -101,6 +101,7 @@ class OperatorInterface(BasicInterface, Parametric, Named):
         -------
         A numpy array of all operator evaluations.
         '''
+        mu = self.parse_parameter(mu)
         assert isinstance(V, VectorArrayInterface)
         assert isinstance(U, VectorArrayInterface)
         U_ind = None if U_ind is None else np.array(U_ind, copy=False, dtype=np.int, ndmin=1)
@@ -156,21 +157,21 @@ class LinearOperatorInterface(OperatorInterface):
         Returns an assembled parameter independent linear operator.
         '''
         if self.assembled:
-            assert mu is None
+            mu = self.parse_parameter(mu)
             return self
         elif self.parameter_type is None:
-            assert mu is None
+            mu = self.parse_parameter(mu)
             if force or not self._last_mat:
                 self._last_mat = self._assemble(mu)
                 return self._last_mat
             else:
                 return self._last_mat
         else:
-            mu = self.parse_parameter(mu)
-            if not force and self._last_mu is not None and self._last_mu.allclose(mu):
+            mu_s = self.strip_parameter(mu)
+            if not force and self._last_mu is not None and self._last_mu.allclose(mu_s):
                 return self._last_mat
             else:
-                self._last_mu = mu.copy()  # TODO: add some kind of log message here
+                self._last_mu = mu_s.copy()  # TODO: add some kind of log message here
                 self._last_mat = self._assemble(mu)
                 return self._last_mat
 

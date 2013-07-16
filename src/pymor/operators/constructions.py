@@ -59,7 +59,7 @@ class ProjectedOperator(OperatorInterface):
         assert source_basis is None or operator.dim_source == source_basis.dim
         assert operator.dim_range == range_basis.dim
         super(ProjectedOperator, self).__init__()
-        self.build_parameter_type(operator.parameter_type, local_global=True)
+        self.build_parameter_type(inherits=(operator,))
         self.dim_source = len(source_basis) if operator.dim_source > 0 else 0
         self.dim_range = len(range_basis)
         self.name = name
@@ -70,17 +70,17 @@ class ProjectedOperator(OperatorInterface):
         self.lock()
 
     def apply(self, U, ind=None, mu=None):
+        mu = self.parse_parameter(mu)
         if self.source_basis is not None:
             U_array = U._array if ind is None else U._array[ind]
             V = self.source_basis.lincomb(U_array)
             if self.product is None:
-                return NumpyVectorArray(self.operator.apply2(self.range_basis, V, mu=self.map_parameter(mu),
-                                                             pairwise=False).T)
+                return NumpyVectorArray(self.operator.apply2(self.range_basis, V, mu=mu, pairwise=False).T)
             else:
-                V = self.operator.apply(V, mu=self.map_parameter(mu))
+                V = self.operator.apply(V, mu=mu)
                 return NumpyVectorArray(self.product.apply2(V, self.range_basis, pairwise=False))
         else:
-            V = self.operator.apply(U, ind=ind, mu=self.map_parameter(mu))
+            V = self.operator.apply(U, ind=ind, mu=mu)
             if self.product is None:
                 return NumpyVectorArray(V.dot(self.range_basis, pairwise=False))
             else:
@@ -118,7 +118,7 @@ class ProjectedLinearOperator(LinearOperatorInterface):
         assert operator.dim_source == source_basis.dim
         assert operator.dim_range == range_basis.dim
         super(ProjectedLinearOperator, self).__init__()
-        self.build_parameter_type(operator.parameter_type, local_global=True)
+        self.build_parameter_type(inherits=(operator,))
         self.dim_source = len(source_basis)
         self.dim_range = len(range_basis)
         self.name = name
@@ -130,11 +130,10 @@ class ProjectedLinearOperator(LinearOperatorInterface):
 
     def _assemble(self, mu=None):
         if self.product is None:
-            return NumpyLinearOperator(self.operator.apply2(self.range_basis, self.source_basis,
-                                                            mu=self.map_parameter(mu), pairwise=False),
+            return NumpyLinearOperator(self.operator.apply2(self.range_basis, self.source_basis, mu=mu, pairwise=False),
                                        name='{}_assembled'.format(self.name))
         else:
-            AU = self.operator.apply(self.source_basis, mu=self.map_parameter(mu))
+            AU = self.operator.apply(self.source_basis, mu=mu)
             return NumpyLinearOperator(self.product.apply2(self.range_basis, AU, pairwise=False),
                                        name='{}_assembled'.format(self.name))
 
@@ -179,7 +178,7 @@ def project_operator(operator, source_basis, range_basis, product=None, name=Non
         else:
             proj_operator_ap = None
         proj_operator = LinearAffinelyDecomposedOperator(proj_operators, proj_operator_ap, operator.functionals,
-                                                         name_map=operator.parameter_name_map, name=name)
+                                                         name=name)
         return proj_operator
 
     elif isinstance(operator, LinearOperatorInterface):
@@ -221,14 +220,14 @@ class LincombOperator(OperatorInterface):
         Name of the operator.
     '''
 
-    def __init__(self, operators, factors=None, name_map=None, name=None):
+    def __init__(self, operators, factors=None, name=None):
         assert all(isinstance(op, OperatorInterface) for op in operators)
         assert all(op.dim_source == operators[0].dim_source for op in operators)
         assert all(op.dim_range == operators[0].dim_range for op in operators)
         assert all(op.type_source == operators[0].type_source for op in operators)
         assert all(op.type_range == operators[0].type_range for op in operators)
         super(LincombOperator, self).__init__()
-        self.build_parameter_type(inherits={'operators': operators}, name_map=name_map)
+        self.build_parameter_type(inherits=(operators,))
         self.operators = operators
         self.factors = np.ones(len(operators)) if factors is None else factors
         self.dim_source = operators[0].dim_source
@@ -239,8 +238,8 @@ class LincombOperator(OperatorInterface):
         self.lock()
 
     def apply(self, U, ind=None, mu=None):
-        return sum(op.apply(U, ind=ind, mu=self.map_parameter(mu, 'operators', i)) * self.factors[i]
-                   for i, op in enumerate(self.operators))
+        mu = self.parse_parameter(mu)
+        return sum(op.apply(U, ind=ind, mu=mu) * self.factors[i] for i, op in enumerate(self.operators))
 
 
 class LinearLincombOperator(LinearOperatorInterface):
@@ -263,14 +262,14 @@ class LinearLincombOperator(LinearOperatorInterface):
     def assembled(self):
         return self._assembled
 
-    def __init__(self, operators, factors=None, name_map=None, name=None):
+    def __init__(self, operators, factors=None, name=None):
         assert all(isinstance(op, LinearOperatorInterface) for op in operators)
         assert all(op.dim_source == operators[0].dim_source for op in operators)
         assert all(op.dim_range == operators[0].dim_range for op in operators)
         assert all(op.type_source == operators[0].type_source for op in operators)
         assert all(op.type_range == operators[0].type_range for op in operators)
         super(LinearLincombOperator, self).__init__()
-        self.build_parameter_type(inherits={'operators': operators}, name_map=name_map)
+        self.build_parameter_type(inherits=(operators,))
         self.operators = operators
         self.factors = np.ones(len(operators)) if factors is None else factors
         self.dim_source = operators[0].dim_source
@@ -281,19 +280,19 @@ class LinearLincombOperator(LinearOperatorInterface):
         self.lock()
 
     def apply(self, U, ind=None, mu=None):
+        mu = self.parse_parameter(mu)
         if self.assembled:
-            assert mu == None
-            return sum(op.apply(U, ind=ind, mu=None) * self.factors[i]
-                       for i, op in enumerate(self.operators))
+            return sum(op.apply(U, ind=ind, mu=None) * self.factors[i] for i, op in enumerate(self.operators))
         else:
             return self.assemble(mu).apply(U, ind=ind)
 
     def _assemble(self, mu=None):
+        mu = self.parse_parameter(mu)
         if self.assembled:
             return self
-        M = self.operators[0].assemble(self.map_parameter(mu, 'operators', 0)) * self.factors[0]
+        M = self.operators[0].assemble(mu=mu) * self.factors[0]
         for i, op in enumerate(self.operators[1:]):
-            M = M + op.assemble(self.map_parameter(mu, 'operators', i + 1)) * self.factors[i + 1]
+            M = M + op.assemble(mu=mu) * self.factors[i + 1]
         M._assembled = True
         return M
 
@@ -331,7 +330,7 @@ class Concatenation(OperatorInterface):
         super(Concatenation, self).__init__()
         self.first = first
         self.second = second
-        self.build_parameter_type(inherits=OrderedDict((('second', second), ('first', first))))
+        self.build_parameter_type(inherits=(second, first))
         self.dim_source = first.dim_source
         self.dim_range = second.dim_range
         self.type_source = first.type_source
@@ -340,5 +339,5 @@ class Concatenation(OperatorInterface):
         self.lock()
 
     def apply(self, U, ind=None, mu=None):
-        return self.second.apply(self.first.apply(U, ind=ind, mu=self.map_parameter(mu, 'first')),
-                                 mu=self.map_parameter(mu, 'second'))
+        mu = self.parse_parameter(mu)
+        return self.second.apply(self.first.apply(U, ind=ind, mu=mu), mu=mu)

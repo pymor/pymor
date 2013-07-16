@@ -68,7 +68,7 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         self.operators = operators
         self.solution_dim = operator.dim_range
         self.solver = solver or solve_linear
-        self.build_parameter_type(inherits={'operator': operator, 'rhs': rhs})
+        self.build_parameter_type(inherits=(operator, rhs))
         self.parameter_space = parameter_space
         self.lock()
 
@@ -85,8 +85,9 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         return self._with_via_init(kwargs)
 
     def _solve(self, mu=None):
-        A = self.operator.assemble(self.map_parameter(mu, 'operator'))
-        RHS = self.rhs.assemble(self.map_parameter(mu, 'rhs')).as_vector_array()
+        mu = self.parse_parameter(mu)
+        A = self.operator.assemble(mu)
+        RHS = self.rhs.assemble(mu).as_vector_array()
 
         # explicitly checking if logging is disabled saves the expensive str(mu) call
         if not self.logging_disabled:

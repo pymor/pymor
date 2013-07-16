@@ -29,7 +29,7 @@ class ConstantOperator(OperatorInterface):
         self.lock()
 
     def apply(self, U, ind=None, mu=None):
-        assert mu is None
+        mu = self.parse_parameter(mu)
         assert isinstance(U, (NumpyVectorArray, Number))
         if isinstance(U, Number):
             assert U == 0.
@@ -72,7 +72,7 @@ class ComponentProjection(OperatorInterface):
         self.lock()
 
     def apply(self, U, ind=None, mu=None):
-        assert mu is None
+        mu = self.parse_parameter(mu)
         assert isinstance(U, self.type_source)
         assert U.dim == self.dim_source
         return NumpyVectorArray(U.components(self.components, ind), copy=False)
