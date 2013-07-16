@@ -287,7 +287,7 @@ class Parametric(object):
         return None if self.parameter_type is None else Parameter(self.parameter_type,
                                                                   {k: mu[k] for k in self.parameter_type})
 
-    def build_parameter_type(self, local_type=None, global_names=None, inherits=None, provides=None):
+    def build_parameter_type(self, local_type=None, global_names=None, local_global=False, inherits=None, provides=None):
         '''Builds the parameter type of the object. To be called by __init__.
 
         Parameters
@@ -297,6 +297,9 @@ class Parametric(object):
         global_names
             A dict of the form `{'localname': 'globalname', ...}` defining a name mapping specifying global
             parameter names for the keys of local_type
+        local_global
+            If True, use the identity mapping `{'localname': 'localname', ...}` as global_names, i.e. each local
+            parameter name should be treated as a global parameter name.
         inherits
             List where each entry is a Parametric object whose parameter type shall become part of the
             built parameter type.
@@ -309,6 +312,7 @@ class Parametric(object):
         -------
         The parameter type of the object.
         '''
+        assert not local_global or global_names is None
         local_type = parse_parameter_type(local_type)
         if local_type and not (global_names and all(k in global_names for k in local_type)):
             if not global_names:
@@ -317,6 +321,8 @@ class Parametric(object):
                 for k in local_type:
                     if not k in global_names:
                         raise ValueError('Must specify a global name for {}'.format(k))
+        if local_global and local_type is not None:
+            global_names = {k: k for k in local_type}
 
         parameter_maps = {}
         parameter_types = {}
