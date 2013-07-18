@@ -4,6 +4,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+from numbers import Number
 from itertools import izip
 
 import numpy as np
@@ -11,105 +12,77 @@ import numpy as np
 from pymor.tools import float_cmp_all
 
 
-class ParameterType(object):
+class ParameterType(dict):
+
+    __keys = None
 
     def __init__(self, *args, **kwargs):
-        if len(args) > 1:
-            raise ValueError('ParameterType accepts at most one positional argument')
-        self._dict = {}
-        self._keys = []
-        self.update(*args, **kwargs)
+        # calling dict.__init__ breaks multiple inheritance but is faster than
+        # the super() call
+        dict.__init__(self, *args, **kwargs)
+        assert all(isinstance(v, tuple) for v in self.itervalues())
+        assert all(all(isinstance(v, Number) for v in t) for t in self.itervalues())
 
-    def __setitem__(self, key, value):
-        if not key in self._dict:
-            self._keys.append(key)
-        self._dict[key] = value
-
-    def __getitem__(self, key):
-        return self._dict[key]
-
-    def __eq__(self, other):
-        if other.__class__ != ParameterType:
-            return False
-        else:
-            return self._dict == other._dict
-
-    def __ne__(self, other):
-        if other.__class__ != ParameterType:
-            return True
-        else:
-            return self._dict != other._dict
-
-    def __ge__(self, other):
-        if other is None:
-            return True
-        return all(shape == other.get(name, None) for name, shape in self._dict.iteritems())
-
-    def __nonzero__(self):
-        return bool(self._keys)
-
-    def __len__(self):
-        return len(self._keys)
-
-    def __iter__(self):
-        return iter(self._keys)
-
-    def update(self, *args, **kwargs):
-        if len(args) > 1:
-            raise ValueError('update accepts at most one positional argument')
-        if len(args) > 0:
-            if hasattr(args[0], 'keys'):
-                for k in args[0]:
-                    self[k] = args[0][k]
-            else:
-                for k, v in args[0]:
-                    self[k] = v
-        for k in kwargs:
-            self[k] = kwargs[k]
+    def clear(self):
+        dict.clear(self)
+        self.__keys = None
 
     def copy(self):
-        return ParameterType(self)
+        c = ParameterType(self)
+        if self.__keys is not None:
+            c.__keys = list(self.__keys)
+        return c
 
-    def get(self, k, d):
-        return self._dict.get(k, d)
+    def __setitem__(self, key, value):
+        assert isinstance(value, tuple)
+        assert all(isinstance(v, Number) for v in value)
+        if key not in self:
+            self.__keys = None
+        dict.__setitem__(self, key, value)
+
+    def __delitem__(self, key):
+        dict.__delitem__(self, key)
+        self.__keys.remove(key)
+
+    def __iter__(self):
+        if self.__keys is None:
+            self.__keys = sorted(dict.keys(self))
+        return iter(self.__keys)
 
     def keys(self):
-        return list(self._keys)
+        if self.__keys is None:
+            self.__keys = sorted(dict.keys(self))
+        return list(self.__keys)
 
-    def values(self):
-        for k in self._keys:
-            yield self._dict[k]
+    def iterkeys(self):
+        return iter(self)
 
-    def iteritems(self):
-        for k in self._keys:
-            yield (k, self._dict[k])
+    def fromkeys(self, S, v=None):
+        raise NotImplementedError
+
+    def pop(self, k, d=None):
+        raise NotImplementedError
+
+    def popitem(self):
+        raise NotImplementedError
+
+    def update(self, *args, **kwargs):
+        raise NotImplementedError
 
     def __str__(self):
-        s = 'ParameterType(('
-        for k, v in self.iteritems():
-            s += '(\'{}\', {}),'.format(k, v)
-        s += '))'
-        return s
-
-    def __repr__(self):
-        s = 'ParameterType(('
-        for k, v in self.iteritems():
-            s += '({}, {}),'.format(repr(k), repr(v))
-        s += '))'
-        return s
+        if self.__keys is None:
+            self.__keys = sorted(self.keys())
+        return '{' +  ', '.join('{}: {}'.format(k, self[k]) for k in self.__keys) + '}'
 
 
 class Parameter(dict):
     '''Class representing a parameter.
 
-    A parameter is simply a dict of numpy arrays together with
-    a `ParameterType`. We overwrite copy() to ensure that not only
-    the dict but also the arrays are copied. Moreover an
-    allclose() method is provided to compare parameters for equality.
-
-    Note that for performance reasons we do not check if the provided
-    `ParameterType` actually fits the parameter, so be very careful
-    when modifying `Parameter` objects.
+    A parameter is simply a dict of numpy arrays. We overwrite copy() to
+    ensure that not only the dict but also the arrays are copied. Moreover
+    an allclose() method is provided to compare parameters for equality.
+    Finally __str__() ensures an alphanumerical ordering of the keys. This
+    is not true, however, for keys() or iteritems().
     '''
 
     __keys = None
@@ -141,7 +114,9 @@ class Parameter(dict):
 
     def __setitem__(self, key, value):
         if key not in self:
-            self._keys = None
+            self.__keys = None
+        if not isinstance(value, np.ndarray):
+            value = np.array(value)
         dict.__setitem__(self, key, value)
 
     def __delitem__(self, key):
@@ -163,7 +138,7 @@ class Parameter(dict):
 
     @property
     def parameter_type(self):
-        return ParameterType((k, v.shape) for k in self._keys)
+        return ParameterType({k: v.shape for k in self._keys})
 
     def __str__(self):
         if self.__keys is None:
@@ -218,7 +193,7 @@ def parse_parameter(mu, parameter_type=None):
             mu = (mu,)
         if len(mu) != len(parameter_type):
             raise ValueError('Parameter length does not match.')
-        mu = dict(izip(parameter_type._keys, mu))
+        mu = dict(izip(parameter_type, mu))
     elif set(mu.keys()) != set(parameter_type.keys()):
         raise ValueError('Components do not match')
     for k, v in mu.iteritems():
@@ -249,17 +224,18 @@ def parse_parameter_type(parameter_type):
 
     from pymor.parameters.interfaces import ParameterSpaceInterface
     if parameter_type is None:
-        return None
+        return ParameterType()
     if isinstance(parameter_type, ParameterSpaceInterface):
         return ParameterType(parameter_type.parameter_type)
-    parameter_type = ParameterType(parameter_type)
+    parameter_type = dict(parameter_type)
     for k, v in parameter_type.iteritems():
         if not isinstance(v, tuple):
+            assert isinstance(v, Number)
             if v == 0 or v == 1:
                 parameter_type[k] = tuple()
             else:
                 parameter_type[k] = tuple((v,))
-    return parameter_type
+    return ParameterType(parameter_type)
 
 
 class Parametric(object):
@@ -357,14 +333,10 @@ class Parametric(object):
                         raise ValueError('Must specify a global name for {}'.format(k))
 
         parameter_maps = {}
-        parameter_types = {}
 
-        global_type = ParameterType()
-        if local_type:
-            for n in global_names:
-                global_type[n] = local_type[n]
+        global_type = local_type.copy()
 
-        provides = parse_parameter_type(provides)
+        provides = parse_parameter_type(provides) or {}
         provides = provides or {}
 
         if inherits:
@@ -380,9 +352,9 @@ class Parametric(object):
                         global_type[name] = shape
 
         self.parameter_type = global_type or None
-        self.parameter_local_type = local_type
-        self.parameter_global_names = global_names
+        self.parameter_local_type = local_type or None
         self.parameter_provided = provides or None
+        self.parameter_global_names = global_names
 
     def parameter_info(self):
         '''Return an info string about the object's parameter type and how it is built.'''
