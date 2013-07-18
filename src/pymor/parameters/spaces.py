@@ -39,9 +39,7 @@ class CubicParameterSpace(ParameterSpaceInterface):
         assert minimum is None or minimum < maximum
         parameter_type = parse_parameter_type(parameter_type)
         self.parameter_type = parameter_type
-        if ranges is None:
-            ranges = OrderedDict((k, (minimum, maximum)) for k in parameter_type)
-        self.ranges = ranges
+        self.ranges = {k: (minimum, maximum) for k in parameter_type} if ranges is None else ranges
 
     def parse_parameter(self, mu):
         return parse_parameter(mu, self.parameter_type)
