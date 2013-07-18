@@ -5,10 +5,10 @@ import subprocess
 
 import dependencies as deps
 
-DEFAULT_RECIPE = {'system': ['echo make sure you have BLABLA installed'], 
+DEFAULT_RECIPE = {'system': ['echo make sure you have BLABLA installed'],
                   'local': deps.install_requires,
                   'venv_cmd': 'virtualenv'}
-UBUNTU_RECIPE = {'system': ['sudo apt-get build-dep numpy',
+UBUNTU_RECIPE = {'system': ['sudo apt-get build-dep python-numpy',
                             'sudo apt-get install python-virtualenv'],
                   'local': deps.install_requires + deps.install_suggests,
                   'venv_cmd': '/usr/bin/virtualenv'}
@@ -24,12 +24,12 @@ if __name__ == '__main__':
     recipe = get_recipe()
     for cmd in recipe['system']:
         print('EXECUTING {}'.format(cmd))
-        subprocess.check_call(cmd)
+        subprocess.check_call(cmd, shell=True)
     venvdir = DEFAULT_VENV_DIR
     print('VENCN ' + venvdir)
     subprocess.check_call([recipe['venv_cmd'], venvdir])
-    activate = os.path.join(venvdir, 'bin', 'activate')
+    activate = '. ' + os.path.join(venvdir, 'bin', 'activate')
     for cmd in ['pip install {}'.format(i) for i in recipe['local']] + ['python setup.py install']:
         print('EXECUTING {}'.format(cmd))
-        subprocess.check_call('{} && {}'.format(activate, cmd))
+        subprocess.check_call('{} && {}'.format(activate, cmd), shell=True)
 
