@@ -112,18 +112,13 @@ class Parameter(dict):
     when modifying `Parameter` objects.
     '''
 
-    def __init__(self, v, order=None):
+    __keys = None
+
+    def __init__(self, v):
         # calling dict.__init__ breaks multiple inheritance but is faster than
         # the super() call
         dict.__init__(self, v)
-        if order is not None:
-            self._keys = list(order)
-            assert set(dict.keys(self)) == set(self._keys)
-        elif hasattr(v, 'keys'):
-            self._keys = v.keys()
-        else:
-            self._keys = [k for k, v in v]
-            assert set(dict.keys(self)) == set(self._keys)
+        assert all(isinstance(v, np.ndarray) for v in self.itervalues())
 
     def allclose(self, mu):
         assert isinstance(mu, Parameter)
@@ -136,35 +131,22 @@ class Parameter(dict):
 
     def clear(self):
         dict.clear(self)
-        self._keys = []
+        self.__keys = None
 
     def copy(self):
-        c = Parameter({},order =[])
-        for k in self._keys:
-            c[k] = self[k].copy()
+        c = Parameter({k: v.copy() for k, v in self.iteritems()})
+        if self.__keys is not None:
+            c.__keys = list(self.__keys)
         return c
-
-    def iterkeys(self):
-        return iter(self._keys)
-
-    def itervalues(self):
-        for k in self._keys:
-            yield self[k]
-
-    def values(self):
-        return list(self.itervalues())
 
     def __setitem__(self, key, value):
         if key not in self:
-            self._keys.append(key)
+            self._keys = None
         dict.__setitem__(self, key, value)
 
     def __delitem__(self, key):
         dict.__delitem__(self, key)
-        self._keys.remove(key)
-
-    def __iter__(self):
-        return self._keys.__iter__()
+        self.__keys.remove(key)
 
     def fromkeys(self, S, v=None):
         raise NotImplementedError
@@ -176,15 +158,18 @@ class Parameter(dict):
         raise NotImplementedError
 
     def update(self, *args, **kwargs):
-        raise NotImplementedError
+        dict.update(self, *args, **kwargs)
+        self.__keys = None
 
     @property
     def parameter_type(self):
         return ParameterType((k, v.shape) for k in self._keys)
 
     def __str__(self):
+        if self.__keys is None:
+            self.__keys = sorted(self.keys())
         s = '{'
-        for k in self._keys:
+        for k in self.__keys:
             v = self[k]
             if v.ndim > 1:
                 v = v.ravel()
@@ -241,7 +226,7 @@ def parse_parameter(mu, parameter_type=None):
             mu[k] = np.array(v)
     if not all(mu[k].shape == parameter_type[k] for k in mu):
         raise ValueError('Component dimensions do not match')
-    return Parameter(mu, order=parameter_type._keys)
+    return Parameter(mu)
 
 
 def parse_parameter_type(parameter_type):
@@ -332,8 +317,7 @@ class Parametric(object):
         if not isinstance(mu, Parameter):
             mu_ = parse_parameter(mu, self.parameter_type)
         assert self.parameter_type is None or all(getattr(mu.get(k, None), 'shape', None) == v for k, v in self.parameter_type.iteritems())
-        return None if self.parameter_type is None else Parameter({k: mu[k] for k in self.parameter_type},
-                                                                  order=self.parameter_type._keys)
+        return None if self.parameter_type is None else Parameter({k: mu[k] for k in self.parameter_type})
 
     def build_parameter_type(self, local_type=None, global_names=None, local_global=False, inherits=None, provides=None):
         '''Builds the parameter type of the object. To be called by __init__.
