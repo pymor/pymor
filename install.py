@@ -34,3 +34,14 @@ if __name__ == '__main__':
         print('EXECUTING {}'.format(cmd))
         subprocess.check_call('{} && {}'.format(activate, cmd), shell=True)
 
+    print('''
+
+Installation complete!
+
+To use matplotlib with the Qt backend, create a file ~/.matplotlib/matplotlibrc
+containing the lines
+
+    backend      :  Qt4Agg
+    backend.qt4  :  PySide
+
+''')
