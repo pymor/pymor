@@ -8,7 +8,9 @@ import dependencies as deps
 DEFAULT_RECIPE = {'system': ['echo make sure you have BLABLA installed'],
                   'local': deps.install_requires,
                   'venv_cmd': 'virtualenv'}
-UBUNTU_RECIPE = {'system': ['sudo apt-get install build-essential gfortran libsuitesparse-dev libatlas-base-dev swig python-virtualenv python-pip'],
+UBUNTU_RECIPE = {'system': [  'sudo apt-get install build-essential cmake gfortran libqt4-dev libsuitesparse-dev '
+                            + 'libatlas-base-dev libfreetype6-dev libpng12-dev python-dev python-virtualenv '
+                            + 'python-pip python-tk tk-dev swig' ],
                   'local': deps.install_requires + deps.install_suggests,
                   'venv_cmd': '/usr/bin/virtualenv'}
 DEFAULT_VENV_DIR = os.path.join(os.path.expandvars('$HOME'), 'virtualenv', 'pyMor')
