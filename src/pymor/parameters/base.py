@@ -57,6 +57,20 @@ class ParameterType(dict):
     def iterkeys(self):
         return iter(self)
 
+    def items(self):
+        return list(self.iteritems())
+
+    def iteritems(self):
+        for k in self:
+            yield k, self[k]
+
+    def values(self):
+        return list(self.itervalues())
+
+    def itervalues(self):
+        for k in self:
+            yield self[k]
+
     def fromkeys(self, S, v=None):
         raise NotImplementedError
 
