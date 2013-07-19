@@ -88,7 +88,7 @@ def thermalblock_demo(args):
     print('Discretize ...')
     discretization, _ = discretize_elliptic_cg(problem, diameter=m.sqrt(2) / args['--grid'])
 
-    print(discretization.parameter_info())
+    print('The parameter type is {}'.format(discretization.parameter_type))
 
     if args['--plot-solutions']:
         print('Showing some solutions')

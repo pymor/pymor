@@ -368,11 +368,3 @@ class Parametric(object):
         self.parameter_local_type = local_type or None
         self.parameter_provided = provides or None
         self.parameter_global_names = global_names
-
-    def parameter_info(self):
-        '''Return an info string about the object's parameter type and how it is built.'''
-
-        if not self.parametric:
-            return 'The parameter_type is None\n'
-        else:
-            return 'The parameter_type is: {}\n\n'.format(self.parameter_type)

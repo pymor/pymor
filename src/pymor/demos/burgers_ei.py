@@ -118,7 +118,7 @@ def burgers_demo(args):
 
     print(discretization.operator.grid)
 
-    print(discretization.parameter_info())
+    print('The parameter type is {}'.format(discretization.parameter_type))
 
     if args['--plot-solutions']:
         print('Showing some solutions')

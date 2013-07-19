@@ -43,7 +43,7 @@ def cg2_demo(nrhs, n, plot):
     print('Discretize ...')
     discretization, _ = discretize_elliptic_cg(problem, diameter=m.sqrt(2) / n)
 
-    print(discretization.parameter_info())
+    print('The parameter type is {}'.format(discretization.parameter_type))
 
     for mu in parameter_space.sample_uniformly(4):
         print('Solving for mu = {} ...'.format(mu))

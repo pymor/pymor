@@ -68,7 +68,7 @@ def dune_thermalblock_demo(args):
     print('Discretize ...')
     discretization = DuneLinearEllipticCGDiscretization()
 
-    print(discretization.parameter_info())
+    print('The parameter type is {}'.format(discretization.parameter_type))
 
     if args['--plot-solutions']:
         print('Showing some solutions')
