@@ -109,9 +109,9 @@ class Parameter(dict):
 
     def allclose(self, mu):
         assert isinstance(mu, Parameter)
-        if set(self.keys()) != set(mu.keys()):
+        if self.viewkeys() != mu.viewkeys():
             return False
-        if not all(float_cmp_all(v, mu[k]) for k, v in self.iteritems()):
+        elif not all(float_cmp_all(v, mu[k]) for k, v in self.iteritems()):
             return False
         else:
             return True
