@@ -42,7 +42,7 @@ class ParameterType(dict):
 
     def __delitem__(self, key):
         dict.__delitem__(self, key)
-        self.__keys.remove(key)
+        self.__keys = None
 
     def __iter__(self):
         if self.__keys is None:
@@ -121,7 +121,7 @@ class Parameter(dict):
 
     def __delitem__(self, key):
         dict.__delitem__(self, key)
-        self.__keys.remove(key)
+        self.__keys = None
 
     def fromkeys(self, S, v=None):
         raise NotImplementedError
@@ -133,8 +133,7 @@ class Parameter(dict):
         raise NotImplementedError
 
     def update(self, *args, **kwargs):
-        dict.update(self, *args, **kwargs)
-        self.__keys = None
+        raise NotImplementedError
 
     @property
     def parameter_type(self):
