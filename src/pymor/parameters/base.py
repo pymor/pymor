@@ -16,12 +16,26 @@ class ParameterType(dict):
 
     __keys = None
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, t):
+        if t is None:
+            t = {}
+        elif isinstance(t, ParameterType):
+            pass
+        elif hasattr(t, 'parameter_type'):
+            assert isinstance(t.parameter_type, ParameterType)
+            t = parameter_type.parameter_type
+        else:
+            t = dict(t)
+            for k, v in t.iteritems():
+                if not isinstance(v, tuple):
+                    assert isinstance(v, Number)
+                    if v == 0:
+                        t[k] = tuple()
+                    else:
+                        t[k] = tuple((v,))
         # calling dict.__init__ breaks multiple inheritance but is faster than
         # the super() call
-        dict.__init__(self, *args, **kwargs)
-        assert all(isinstance(v, tuple) for v in self.itervalues())
-        assert all(all(isinstance(v, Number) for v in t) for t in self.itervalues())
+        dict.__init__(self, t)
 
     def clear(self):
         dict.clear(self)
@@ -217,40 +231,6 @@ def parse_parameter(mu, parameter_type=None):
     return Parameter(mu)
 
 
-def parse_parameter_type(parameter_type):
-    '''Takes a parameter type specification and makes it a `ParameterType`.
-
-    A `ParameterType` is an ordered dict whose values are tuples of natural numbers
-    defining the shape of the corresponding parameter component.
-
-    Parameters
-    ----------
-    parameter_type
-        The parameter type specification. Can be a dict or OrderedDict, in which case
-        scalar values are made tuples of length 1, or a `ParameterSpace` whose
-        parameter_type is taken.
-
-    Returns
-    -------
-    The corresponding parameter type.
-    '''
-
-    from pymor.parameters.interfaces import ParameterSpaceInterface
-    if parameter_type is None:
-        return ParameterType()
-    if isinstance(parameter_type, ParameterSpaceInterface):
-        return ParameterType(parameter_type.parameter_type)
-    parameter_type = dict(parameter_type)
-    for k, v in parameter_type.iteritems():
-        if not isinstance(v, tuple):
-            assert isinstance(v, Number)
-            if v == 0 or v == 1:
-                parameter_type[k] = tuple()
-            else:
-                parameter_type[k] = tuple((v,))
-    return ParameterType(parameter_type)
-
-
 class Parametric(object):
     '''Mixin class for objects whose evaluations depend on a parameter.
 
@@ -334,7 +314,7 @@ class Parametric(object):
         The parameter type of the object.
         '''
         assert not local_global or global_names is None
-        local_type = parse_parameter_type(local_type)
+        local_type = ParameterType(local_type)
         if local_global and local_type is not None:
             global_names = {k: k for k in local_type}
         if local_type and not (global_names and all(k in global_names for k in local_type)):
@@ -349,7 +329,7 @@ class Parametric(object):
 
         global_type = local_type.copy()
 
-        provides = parse_parameter_type(provides) or {}
+        provides = ParameterType(provides) or {}
         provides = provides or {}
 
         if inherits:

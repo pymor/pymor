@@ -9,7 +9,7 @@ from itertools import izip, product
 import numpy as np
 
 from .interfaces import ParameterSpaceInterface
-from .base import parse_parameter, parse_parameter_type, Parameter
+from .base import parse_parameter, Parameter, ParameterType
 
 
 class CubicParameterSpace(ParameterSpaceInterface):
@@ -37,7 +37,7 @@ class CubicParameterSpace(ParameterSpaceInterface):
         assert ranges is not None or (minimum is not None and maximum is not None),\
             'Must specify minimum, maximum or ranges'
         assert minimum is None or minimum < maximum
-        parameter_type = parse_parameter_type(parameter_type)
+        parameter_type = ParameterType(parameter_type)
         self.parameter_type = parameter_type
         self.ranges = {k: (minimum, maximum) for k in parameter_type} if ranges is None else ranges
 
