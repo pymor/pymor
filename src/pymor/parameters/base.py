@@ -243,9 +243,7 @@ class Parametric(object):
     ----------
     parameter_type
         The parameter type of the parameters the object takes.
-    global_parameter_type
-        The parameter type without any renamings by the user.
-    local_parameter_type
+    parameter_local_type
         The parameter type of the parameter components which are introduced
         by the object itself and are not inherited by other objects it
         depends on.
@@ -257,10 +255,10 @@ class Parametric(object):
 
     parameter_type = None
     parameter_local_type = None
-    parameter_global_names = None
     parameter_provided = None
-    _parameter_space = None
+    parameter_global_names = None
 
+    _parameter_space = None
     @property
     def parameter_space(self):
         return self._parameter_space
@@ -319,35 +317,35 @@ class Parametric(object):
         The parameter type of the object.
         '''
         assert not local_global or global_names is None
+
         local_type = ParameterType(local_type)
         if local_global and local_type is not None:
             global_names = {k: k for k in local_type}
-        if local_type and not (global_names and all(k in global_names for k in local_type)):
-            if not global_names:
-                raise ValueError('Must specify a global name for each key of local_type')
-            else:
-                for k in local_type:
-                    if not k in global_names:
-                        raise ValueError('Must specify a global name for {}'.format(k))
 
-        parameter_maps = {}
+        def check_local_type(local_type, global_names):
+            assert not local_type or global_names, 'Must specify a global name for each key of local_type'
+            for k in local_type:
+                assert k in global_names, 'Must specify a global name for {}'.format(k)
+            return True
 
-        global_type = local_type.copy()
+        assert check_local_type(local_type, global_names)
 
-        provides = ParameterType(provides) or {}
-        provides = provides or {}
+        global_type = local_type.copy() if local_global else ParameterType({global_names[k]: v for k, v in local_type.iteritems()})
+        provides = ParameterType(provides)
+
+        def check_op(op, global_type, provides):
+            for name, shape in op.parameter_type.iteritems():
+                assert name not in global_type or global_type[name] == shape,\
+                    'Component dimensions of global name {} do not match ({} and {})'.format(
+                    name, global_type[name], shape)
+                assert name not in provides or provides[name] == shape,\
+                    'Component dimensions of provided name {} do not match'.format(name)
+            return True
 
         if inherits:
             for op in (o for o in inherits if o.parametric):
-                for name, shape in op.parameter_type.iteritems():
-                    if name in global_type and global_type[name] != shape:
-                        raise ValueError('Component dimensions of global name {} do not match ({} and {})'.format(name,
-                            global_type[name], shape))
-                    if name in provides:
-                        if provides[global_name] != shape:
-                            raise ValueError('Component dimensions of provided name {} do not match'.format(name))
-                    else:
-                        global_type[name] = shape
+                assert check_op(op, global_type, provides)
+                global_type.update(op.parameter_type)
 
         self.parameter_type = global_type or None
         self.parameter_local_type = local_type or None
