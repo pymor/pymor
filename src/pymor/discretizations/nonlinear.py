@@ -38,8 +38,7 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
         self.T = T
         self.time_stepper = time_stepper
         self.solution_dim = operator.dim_range
-        self.build_parameter_type(inherits={'operator': operator, 'rhs': rhs, 'initial_data': initial_data},
-                                  provides={'_t': 0})
+        self.build_parameter_type(inherits=(operator, rhs, initial_data), provides={'_t': 0})
         self.parameter_space = parameter_space
 
         if hasattr(time_stepper, 'nt'):
@@ -63,13 +62,13 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
         return self._with_via_init(kwargs)
 
     def _solve(self, mu=None):
+        mu = self.parse_parameter(mu).copy()
 
         # explicitly checking if logging is disabled saves the expensive str(mu) call
         if not self.logging_disabled:
             self.logger.info('Solving {} for {} ...'.format(self.name, mu))
 
-        mu_A = self.map_parameter(mu, 'operator', provide={'_t': np.array(0)})
-        mu_F = self.map_parameter(mu, 'rhs', provide={'_t': np.array(0)})
-        U0 = self.initial_data.apply(0, self.map_parameter(mu, 'initial_data'))
+        mu['_t'] = 0
+        U0 = self.initial_data.apply(0, mu=mu)
         return self.time_stepper.solve(operator=self.operator, rhs=self.rhs, initial_data=U0, initial_time=0,
-                                       end_time=self.T, mu_operator=mu_A, mu_rhs=mu_F)
+                                       end_time=self.T, mu=mu)

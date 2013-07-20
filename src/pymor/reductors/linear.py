@@ -267,7 +267,7 @@ class StationaryAffineLinearReducedEstimator(BasicInterface):
             CRA = np.ones(0)
 
         if d.rhs.parametric:
-            CRL = d.rhs.evaluate_coefficients(d.map_parameter(mu, 'rhs'))
+            CRL = d.rhs.evaluate_coefficients(mu)
         else:
             CRL = np.ones(0)
 
@@ -279,7 +279,7 @@ class StationaryAffineLinearReducedEstimator(BasicInterface):
             COA = np.ones(0)
 
         if d.operator.parametric:
-            COL = d.operator.evaluate_coefficients(d.map_parameter(mu, 'operator'))
+            COL = d.operator.evaluate_coefficients(mu)
         else:
             COL = np.ones(0)
 

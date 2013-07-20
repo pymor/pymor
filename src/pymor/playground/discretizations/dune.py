@@ -36,19 +36,19 @@ class DuneLinearEllipticCGDiscretization(DiscretizationInterface):
         self.solution_dim = f.len()
         ops = list(self.example.operators())
         ops = [DuneLinearOperator(op, dim=self.solution_dim) for op in ops]
-        operator = LinearAffinelyDecomposedOperator(ops[:-1], ops[-1], name_map={'.coefficients': 'diffusion'}, name='diffusion')
+        operator = LinearAffinelyDecomposedOperator(ops[:-1], ops[-1], global_names={'coefficients': 'diffusion'}, name='diffusion')
 
         operators = {'operator': operator, 'rhs': functional}
         products = {'h1': operator.assemble(mu={'diffusion': np.ones(self.example.paramSize())})}
         super(DuneLinearEllipticCGDiscretization, self).__init__(operators=operators, products=products,
                                                                  caching=False, name=name)
 
-        self.build_parameter_type(inherits={'operator': operator})
+        self.build_parameter_type(inherits=(operator,))
         self.parameter_space = CubicParameterSpace({'diffusion': self.example.paramSize()}, *parameter_range)
         self.lock()
 
     def _solve(self, mu=None):
-        mu = self.map_parameter(mu, 'operator')
+        mu = self.parse_parameter(mu)
 
         if not self.disable_logging:
             self.logger.info('Solving {} (sparse) for {} ...'.format(self.name, mu))

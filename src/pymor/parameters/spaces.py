@@ -9,7 +9,7 @@ from itertools import izip, product
 import numpy as np
 
 from .interfaces import ParameterSpaceInterface
-from .base import parse_parameter, parse_parameter_type, Parameter
+from .base import Parameter, ParameterType
 
 
 class CubicParameterSpace(ParameterSpaceInterface):
@@ -37,14 +37,12 @@ class CubicParameterSpace(ParameterSpaceInterface):
         assert ranges is not None or (minimum is not None and maximum is not None),\
             'Must specify minimum, maximum or ranges'
         assert minimum is None or minimum < maximum
-        parameter_type = parse_parameter_type(parameter_type)
+        parameter_type = ParameterType(parameter_type)
         self.parameter_type = parameter_type
-        if ranges is None:
-            ranges = OrderedDict((k, (minimum, maximum)) for k in parameter_type)
-        self.ranges = ranges
+        self.ranges = {k: (minimum, maximum) for k in parameter_type} if ranges is None else ranges
 
     def parse_parameter(self, mu):
-        return parse_parameter(mu, self.parameter_type)
+        return Parameter.from_parameter_type(mu, self.parameter_type)
 
     def contains(self, mu):
         mu = self.parse_parameter(mu)
@@ -63,16 +61,14 @@ class CubicParameterSpace(ParameterSpaceInterface):
         iters = tuple(product(ls, repeat=max(1, np.zeros(sps).size))
                       for ls, sps in izip(linspaces, self.parameter_type.values()))
         for i in product(*iters):
-            yield Parameter(self.parameter_type,
-                            ((k, np.array(v).reshape(shp))
+            yield Parameter(((k, np.array(v).reshape(shp))
                              for k, v, shp in izip(self.parameter_type, i, self.parameter_type.values())))
 
     def sample_randomly(self, count=None):
         '''Iterator sampling random parameter values from the space.'''
         c = 0
         while count is None or c < count:
-            yield Parameter(self.parameter_type,
-                            ((k, np.random.uniform(r[0], r[1], shp))
+            yield Parameter(((k, np.random.uniform(r[0], r[1], shp))
                              for k, r, shp in izip(self.parameter_type, self.ranges.values(),
                                                     self.parameter_type.values())))
             c += 1

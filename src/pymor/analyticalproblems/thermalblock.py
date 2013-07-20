@@ -68,8 +68,9 @@ class ThermalBlockProblem(EllipticProblem, Unpicklable):
                                    dim_domain=2, name='diffusion_function_{}_{}'.format(x, y))
 
         def parameter_functional_factory(x, y):
-            return ProjectionParameterFunctional(parameter_space, 'diffusion',
-                                                 (num_blocks[1] - y - 1, x),
+            return ProjectionParameterFunctional(parameter_name='diffusion',
+                                                 parameter_shape=(num_blocks[1], num_blocks[0]),
+                                                 coordinates=(num_blocks[1] - y - 1, x),
                                                  name='diffusion_{}_{}'.format(x, y))
 
         diffusion_functions = tuple(diffusion_function_factory(x, y)

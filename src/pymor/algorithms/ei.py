@@ -134,18 +134,16 @@ def interpolate_operators(discretization, operator_name, parameter_sample, error
                        "arguments.filename": join(gettempdir(), 'pymor.ei_cache.dbm'),
                        'arguments.max_keys': 2000}
 
-        def __init__(self, discretization, operator, sample, operator_sample):
+        def __init__(self, discretization, operator, sample):
             Cachable.__init__(self, config=self.DEFAULT_MEMORY_CONFIG)
             self.discretization = discretization
             self.sample = sample
             self.operator = operator
-            self.operator_sample = operator_sample
 
         @cached
         def data(self, k):
             mu = self.sample[k]
-            mu_op = self.operator_sample[k]
-            return self.operator.apply(self.discretization.solve(mu), mu=mu_op)
+            return self.operator.apply(self.discretization.solve(mu), mu=mu)
 
         def __len__(self):
             return len(self.sample)
@@ -156,10 +154,9 @@ def interpolate_operators(discretization, operator_name, parameter_sample, error
             return self.data(ind)
 
     sample = tuple(parameter_sample)
-    operator_sample = tuple(discretization.map_parameter(mu, operator_name) for mu in sample)
     operator = discretization.operators[operator_name]
 
-    evaluations = EvaluationProvider(discretization, operator, sample, operator_sample)
+    evaluations = EvaluationProvider(discretization, operator, sample)
     dofs, basis, data = ei_greedy(evaluations, error_norm, target_error, max_interpolation_dofs,
                                   projection=projection, product=product)
 

@@ -31,9 +31,9 @@ def cg2_demo(nrhs, n, plot):
     d0 = GenericFunction(lambda X: 1 - X[..., 0], dim_domain=2)
     d1 = GenericFunction(lambda X: X[..., 0], dim_domain=2)
 
-    parameter_space = CubicParameterSpace({'diffusionl': 1}, 0.1, 1)
-    f0 = ProjectionParameterFunctional(parameter_space, 'diffusionl')
-    f1 = GenericParameterFunctional(parameter_space, lambda mu: 1)
+    parameter_space = CubicParameterSpace({'diffusionl': 0}, 0.1, 1)
+    f0 = ProjectionParameterFunctional('diffusionl', 0)
+    f1 = GenericParameterFunctional(lambda mu: 1, {})
 
     print('Solving on TriaGrid(({0},{0}))'.format(n))
 
@@ -43,7 +43,7 @@ def cg2_demo(nrhs, n, plot):
     print('Discretize ...')
     discretization, _ = discretize_elliptic_cg(problem, diameter=m.sqrt(2) / n)
 
-    print(discretization.parameter_info())
+    print('The parameter type is {}'.format(discretization.parameter_type))
 
     for mu in parameter_space.sample_uniformly(4):
         print('Solving for mu = {} ...'.format(mu))

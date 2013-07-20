@@ -39,7 +39,7 @@ class ConstantFunction(FunctionInterface):
         return ('{name}: x -> {value}').format(name=self.name, value=self._value)
 
     def evaluate(self, x, mu=None):
-        assert mu is None
+        mu = self.parse_parameter(mu)
         x = np.array(x, copy=False, ndmin=1)
         if x.ndim == 1:
             assert x.shape[0] == self.dim_domain
@@ -68,14 +68,14 @@ class GenericFunction(FunctionInterface):
         The name of the function.
     '''
 
-    def __init__(self, mapping, dim_domain=1, dim_range=1, parameter_type=None, name_map=None, name=None):
+    def __init__(self, mapping, dim_domain=1, dim_range=1, parameter_type=None, name=None):
         super(GenericFunction, self).__init__()
         self.dim_domain = dim_domain
         self.dim_range = dim_range
         self.name = name
         self._mapping = mapping
         if parameter_type is not None:
-            self.build_parameter_type(parameter_type, name_map=name_map)
+            self.build_parameter_type(parameter_type, local_global=True)
             self._with_mu = True
         else:
             self._with_mu = False
@@ -85,11 +85,12 @@ class GenericFunction(FunctionInterface):
         return ('{name}: x -> {mapping}').format(name=self.name, mapping=self._mapping)
 
     def evaluate(self, x, mu=None):
-        mu = self.map_parameter(mu)
+        mu = self.parse_parameter(mu)
         x = np.array(x, copy=False, ndmin=1)
         if self.dim_domain > 0:
             assert x.shape[-1] == self.dim_domain
         if self._with_mu:
+            my_mu = self.local_parameter(mu)
             v = self._mapping(x, mu)
         else:
             v = self._mapping(x)

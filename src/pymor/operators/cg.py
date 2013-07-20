@@ -43,7 +43,7 @@ class L2ProductFunctionalP1(LinearOperatorInterface):
     type_source = type_range = NumpyVectorArray
     sparse = False
 
-    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, name_map=None, name=None):
+    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, name=None):
         assert grid.reference_element(0) in {line, triangle}
         assert function.dim_range == 1
         super(L2ProductFunctionalP1, self).__init__()
@@ -54,16 +54,17 @@ class L2ProductFunctionalP1(LinearOperatorInterface):
         self.function = function
         self.dirichlet_data = dirichlet_data
         self.name = name
-        self.build_parameter_type(inherits={'function': function, 'dirichlet_data': dirichlet_data}, name_map=name_map)
+        self.build_parameter_type(inherits=(function, dirichlet_data))
         self.lock()
 
     def _assemble(self, mu=None):
+        mu = self.parse_parameter(mu)
         g = self.grid
         bi = self.boundary_info
 
         # evaluate function at all quadrature points -> shape = (g.size(0), number of quadrature points, 1)
         # the singleton dimension correspoints to the dimension of the range of the function
-        F = self.function(g.quadrature_points(0, order=2), mu=self.map_parameter(mu, 'function'))
+        F = self.function(g.quadrature_points(0, order=2), mu=mu)
 
         # evaluate the shape functions at the quadrature points on the reference
         # element -> shape = (number of shape functions, number of quadrature points)
@@ -90,7 +91,7 @@ class L2ProductFunctionalP1(LinearOperatorInterface):
         if bi is not None and bi.has_dirichlet:
             DI = bi.dirichlet_boundaries(g.dim)
             if self.dirichlet_data is not None:
-                I[DI] = self.dirichlet_data(g.centers(g.dim)[DI], self.map_parameter(mu, 'dirichlet_data'))
+                I[DI] = self.dirichlet_data(g.centers(g.dim)[DI], mu=mu)
             else:
                 I[DI] = 0
 
@@ -143,7 +144,7 @@ class L2ProductP1(LinearOperatorInterface):
         self.lock()
 
     def _assemble(self, mu=None):
-        assert mu is None
+        mu = self.parse_parameter(mu)
         g = self.grid
         bi = self.boundary_info
 
@@ -224,7 +225,7 @@ class DiffusionOperatorP1(LinearOperatorInterface):
     sparse = True
 
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
-                 dirichlet_clear_columns=False, dirichlet_clear_diag=False, name_map=None, name=None):
+                 dirichlet_clear_columns=False, dirichlet_clear_diag=False, name=None):
         assert grid.reference_element(0) in {triangle, line}, ValueError('A simplicial grid is expected!')
         super(DiffusionOperatorP1, self).__init__()
         self.dim_source = self.dim_range = grid.size(grid.dim)
@@ -236,7 +237,7 @@ class DiffusionOperatorP1(LinearOperatorInterface):
         self.dirichlet_clear_diag = dirichlet_clear_diag
         self.name = name
         if diffusion_function is not None:
-            self.build_parameter_type(inherits={'diffusion': diffusion_function}, name_map=name_map)
+            self.build_parameter_type(inherits=(diffusion_function,))
         self.lock()
 
     def _assemble(self, mu=None):
@@ -260,7 +261,7 @@ class DiffusionOperatorP1(LinearOperatorInterface):
 
         self.logger.info('Calculate all local scalar products beween gradients ...')
         if self.diffusion_function is not None:
-            D = self.diffusion_function(self.grid.centers(0), mu=self.map_parameter(mu, 'diffusion')).ravel()
+            D = self.diffusion_function(self.grid.centers(0), mu=mu).ravel()
             SF_INTS = np.einsum('epi,eqi,e,e->epq', SF_GRADS, SF_GRADS, g.volumes(0), D).ravel()
         else:
             SF_INTS = np.einsum('epi,eqi,e->epq', SF_GRADS, SF_GRADS, g.volumes(0)).ravel()

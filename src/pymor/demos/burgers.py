@@ -94,7 +94,7 @@ def burgers_demo(args):
                                     nt=args['--nt'], domain_discretizer=domain_discretizer)
     print(discretization.operator.grid)
 
-    print(discretization.parameter_info())
+    print('The parameter type is {}'.format(discretization.parameter_type))
 
     mu = args['EXP']
     # U = discretization.solve(0)
