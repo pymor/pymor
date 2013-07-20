@@ -9,7 +9,7 @@ from itertools import izip, product
 import numpy as np
 
 from .interfaces import ParameterSpaceInterface
-from .base import parse_parameter, Parameter, ParameterType
+from .base import Parameter, ParameterType
 
 
 class CubicParameterSpace(ParameterSpaceInterface):
@@ -42,7 +42,7 @@ class CubicParameterSpace(ParameterSpaceInterface):
         self.ranges = {k: (minimum, maximum) for k in parameter_type} if ranges is None else ranges
 
     def parse_parameter(self, mu):
-        return parse_parameter(mu, self.parameter_type)
+        return Parameter.from_parameter_type(mu, self.parameter_type)
 
     def contains(self, mu):
         mu = self.parse_parameter(mu)

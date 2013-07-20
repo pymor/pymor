@@ -125,6 +125,55 @@ class Parameter(dict):
         dict.__init__(self, v)
         assert all(isinstance(v, np.ndarray) for v in self.itervalues())
 
+    @classmethod
+    def from_parameter_type(cls, mu, parameter_type=None):
+        '''Takes a parameter specification `mu` and makes it a `Parameter` according to `parameter_type`.
+
+        Depending on the `parameter_type`, `mu` can be given as a `Parameter`, dict, tuple,
+        list, array or scalar.
+
+        Parameters
+        ----------
+        mu
+            The parameter specification.
+        parameter_type
+            The parameter type w.r.t. which `mu` is to be interpreted.
+
+        Returns
+        -------
+        The corresponding `Parameter`.
+
+        Raises
+        ------
+        ValueError
+            Is raised if `mu` cannot be interpreted as a `Paramter` of `parameter_type`.
+        '''
+        if not parameter_type:
+            assert mu is None
+            return None
+
+        if isinstance(mu, Parameter):
+            assert mu.parameter_type == parameter_type
+            return mu
+
+        if not isinstance(mu, dict):
+            if isinstance(mu, (tuple, list)):
+                if len(parameter_type) == 1 and len(mu) != 1:
+                    mu = (mu,)
+            else:
+                mu = (mu,)
+            if len(mu) != len(parameter_type):
+                raise ValueError('Parameter length does not match.')
+            mu = dict(izip(parameter_type, mu))
+        elif set(mu.keys()) != set(parameter_type.keys()):
+            raise ValueError('Components do not match')
+        for k, v in mu.iteritems():
+            if not isinstance(v, np.ndarray):
+                mu[k] = np.array(v)
+        if not all(mu[k].shape == parameter_type[k] for k in mu):
+            raise ValueError('Component dimensions do not match')
+        return cls(mu)
+
     def allclose(self, mu):
         assert isinstance(mu, Parameter)
         if self.viewkeys() != mu.viewkeys():
@@ -186,54 +235,6 @@ class Parameter(dict):
         s += '}'
         return s
 
-def parse_parameter(mu, parameter_type=None):
-    '''Takes a parameter specification `mu` and makes it a `Parameter` according to `parameter_type`.
-
-    Depending on the `parameter_type`, `mu` can be given as a `Parameter`, dict, tuple,
-    list, array or scalar.
-
-    Parameters
-    ----------
-    mu
-        The parameter specification.
-    parameter_type
-        The parameter type w.r.t. which `mu` is to be interpreted.
-
-    Returns
-    -------
-    The corresponding `Parameter`.
-
-    Raises
-    ------
-    ValueError
-        Is raised if `mu` cannot be interpreted as a `Paramter` of `parameter_type`.
-    '''
-    if not parameter_type:
-        assert mu is None
-        return None
-
-    if isinstance(mu, Parameter):
-        assert mu.parameter_type == parameter_type
-        return mu
-
-    if not isinstance(mu, dict):
-        if isinstance(mu, (tuple, list)):
-            if len(parameter_type) == 1 and len(mu) != 1:
-                mu = (mu,)
-        else:
-            mu = (mu,)
-        if len(mu) != len(parameter_type):
-            raise ValueError('Parameter length does not match.')
-        mu = dict(izip(parameter_type, mu))
-    elif set(mu.keys()) != set(parameter_type.keys()):
-        raise ValueError('Components do not match')
-    for k, v in mu.iteritems():
-        if not isinstance(v, np.ndarray):
-            mu[k] = np.array(v)
-    if not all(mu[k].shape == parameter_type[k] for k in mu):
-        raise ValueError('Component dimensions do not match')
-    return Parameter(mu)
-
 
 class Parametric(object):
     '''Mixin class for objects whose evaluations depend on a parameter.
@@ -278,7 +279,7 @@ class Parametric(object):
             assert self.parameter_type is None
             return None
         if mu.__class__ is not Parameter:
-            mu = parse_parameter(mu, self.parameter_type)
+            mu = Parameter.from_parameter_type(mu, self.parameter_type)
         assert self.parameter_type is None or all(getattr(mu.get(k, None), 'shape', None) == v for k, v in self.parameter_type.iteritems())
         return mu
 
@@ -288,7 +289,7 @@ class Parametric(object):
 
     def strip_parameter(self, mu):
         if not isinstance(mu, Parameter):
-            mu_ = parse_parameter(mu, self.parameter_type)
+            mu_ = Parameter.from_parameter_type(mu, self.parameter_type)
         assert self.parameter_type is None or all(getattr(mu.get(k, None), 'shape', None) == v for k, v in self.parameter_type.iteritems())
         return None if self.parameter_type is None else Parameter({k: mu[k] for k in self.parameter_type})
 
