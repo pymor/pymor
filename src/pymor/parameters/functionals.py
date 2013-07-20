@@ -4,6 +4,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+from numbers import Number
+
 from .interfaces import ParameterFunctionalInterface
 
 
@@ -26,6 +28,8 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
     def __init__(self, parameter_name, parameter_shape, coordinates=None, name=None):
         super(ProjectionParameterFunctional, self).__init__()
         self.name = name
+        if isinstance(parameter_shape, Number):
+            parameter_shape = tuple() if parameter_shape == 0 else (parameter_shape,)
         self.build_parameter_type({parameter_name: parameter_shape}, local_global=True)
         self.parameter_name = parameter_name
         if sum(parameter_shape) > 1:
@@ -53,7 +57,7 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
         The name of the functional.
     '''
 
-    def __init__(self, parameter_type, mapping, name=None):
+    def __init__(self, mapping, parameter_type, name=None):
         super(ParameterFunctionalInterface, self).__init__()
         self.name = name
         self._mapping = mapping

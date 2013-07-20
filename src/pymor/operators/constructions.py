@@ -178,7 +178,7 @@ def project_operator(operator, source_basis, range_basis, product=None, name=Non
         else:
             proj_operator_ap = None
         proj_operator = LinearAffinelyDecomposedOperator(proj_operators, proj_operator_ap, operator.functionals,
-                                                         name=name)
+                                                         global_names=operator.parameter_global_names, name=name)
         return proj_operator
 
     elif isinstance(operator, LinearOperatorInterface):
@@ -227,7 +227,7 @@ class LincombOperator(OperatorInterface):
         assert all(op.type_source == operators[0].type_source for op in operators)
         assert all(op.type_range == operators[0].type_range for op in operators)
         super(LincombOperator, self).__init__()
-        self.build_parameter_type(inherits=(operators,))
+        self.build_parameter_type(inherits=operators)
         self.operators = operators
         self.factors = np.ones(len(operators)) if factors is None else factors
         self.dim_source = operators[0].dim_source
@@ -269,7 +269,7 @@ class LinearLincombOperator(LinearOperatorInterface):
         assert all(op.type_source == operators[0].type_source for op in operators)
         assert all(op.type_range == operators[0].type_range for op in operators)
         super(LinearLincombOperator, self).__init__()
-        self.build_parameter_type(inherits=(operators,))
+        self.build_parameter_type(inherits=operators)
         self.operators = operators
         self.factors = np.ones(len(operators)) if factors is None else factors
         self.dim_source = operators[0].dim_source
