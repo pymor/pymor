@@ -4,8 +4,8 @@
 
 from __future__ import absolute_import, division, print_function
 
-from numbers import Number
 from itertools import izip
+from numbers import Number
 
 import numpy as np
 
@@ -29,10 +29,7 @@ class ParameterType(dict):
             for k, v in t.iteritems():
                 if not isinstance(v, tuple):
                     assert isinstance(v, Number)
-                    if v == 0:
-                        t[k] = tuple()
-                    else:
-                        t[k] = tuple((v,))
+                    t[k] = tuple() if v == 0 else (v,)
         # calling dict.__init__ breaks multiple inheritance but is faster than
         # the super() call
         dict.__init__(self, t)
@@ -48,7 +45,9 @@ class ParameterType(dict):
         return c
 
     def __setitem__(self, key, value):
-        assert isinstance(value, tuple)
+        if not isinstance(value, tuple):
+            assert isinstance(value, Number)
+            value = tuple() if value == 0 else (value,)
         assert all(isinstance(v, Number) for v in value)
         if key not in self:
             self.__keys = None
@@ -94,8 +93,13 @@ class ParameterType(dict):
     def popitem(self):
         raise NotImplementedError
 
-    def update(self, *args, **kwargs):
-        raise NotImplementedError
+    def update(self, d):
+        self.__keys = None
+        if isinstance(d, ParameterType):
+            dict.update(self, d)
+        else:
+            for k, v in d.iteritems():
+                self[k] = v
 
     def __str__(self):
         if self.__keys is None:
