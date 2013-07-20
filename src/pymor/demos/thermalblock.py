@@ -61,6 +61,9 @@ from pymor.discretizers import discretize_elliptic_cg
 from pymor.reductors.linear import reduce_stationary_affine_linear, numpy_reduce_stationary_affine_linear
 from pymor.algorithms import greedy, trivial_basis_extension, gram_schmidt_basis_extension
 from pymor.algorithms.basisextension import numpy_trivial_basis_extension, numpy_gram_schmidt_basis_extension
+from pymor.grids import RectGrid, TriaGrid, OnedGrid
+from pymor.grids import AllDirichletBoundaryInfo
+
 core.getLogger('pymor.algorithms').setLevel('INFO')
 core.getLogger('pymor.discretizations').setLevel('INFO')
 
@@ -86,7 +89,8 @@ def thermalblock_demo(args):
     problem = ThermalBlockProblem(num_blocks=(args['XBLOCKS'], args['YBLOCKS']))
 
     print('Discretize ...')
-    discretization, _ = discretize_elliptic_cg(problem, diameter=m.sqrt(2) / args['--grid'])
+    gitter = TriaGrid((42,42))
+    discretization, _ = discretize_elliptic_cg(problem, diameter=m.sqrt(2) / args['--grid'], grid = gitter, boundary_info=AllDirichletBoundaryInfo(gitter))
 
     print(discretization.parameter_info())
 
