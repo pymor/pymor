@@ -6,7 +6,7 @@
 '''Thermalblock demo.
 
 Usage:
-  thermalblock.py [-ehp] [--estimator-norm=NORM] [--extension-alg=ALG] [--grid=NI] [--help]
+  thermalblock.py [-ehp] [--estimator-norm=NORM] [--extension-alg=ALG] [--grid=NI] [--help] [--gridform=FORM]
                   [--plot-solutions] [--reductor=RED] [--test=COUNT] XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
 
 
@@ -29,8 +29,10 @@ Options:
 
   --extension-alg=ALG    Basis extension algorithm (trivial, gram_schmidt, h1_gram_schmidt,
                          numpy_trivial, numpy_gram_schmidt) to be used [default: h1_gram_schmidt].
-
+  
   --grid=NI              Use grid with 2*NI*NI elements [default: 100].
+
+  --gridform=FORM        Grid (TriaGrid, RectGrid) [default: TriaGrid].
 
   -h, --help             Show this message.
 
@@ -83,15 +85,21 @@ def thermalblock_demo(args):
     args['--reductor'] = args['--reductor'].lower()
     assert args['--reductor'] in {'default', 'numpy_default'}
 
-    print('Solving on TriaGrid(({0},{0}))'.format(args['--grid']))
+    #args['--gridform'] = args['--gridform'].lower()
+    assert args['--gridform'] in {'TriaGrid', 'RectGrid'} 
+
+    #print('Solving on TriaGrid(({0},{0}))'.format(args['--grid']))
+    print('Solving on {0}'.format(args['--gridform']))
+    print('with grid mesh {0} x {0}'.format(args['--grid']))
 
     print('Setup Problem ...')
     problem = ThermalBlockProblem(num_blocks=(args['XBLOCKS'], args['YBLOCKS']))
 
     print('Discretize ...')
-    gitter = TriaGrid((42,42))
+    gitter2 = {'TriaGrid': TriaGrid((args['--grid'], args['--grid'])), 'RectGrid': RectGrid((args['--grid'], args['--grid']))}
+    gitter = gitter2[args['--gridform']]
     discretization, _ = discretize_elliptic_cg(problem, diameter=m.sqrt(2) / args['--grid'], grid = gitter, boundary_info=AllDirichletBoundaryInfo(gitter))
-
+ 
     print(discretization.parameter_info())
 
     if args['--plot-solutions']:
