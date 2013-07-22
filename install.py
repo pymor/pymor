@@ -11,8 +11,8 @@ DEFAULT_RECIPE = {'name': 'default',
                   'venv_cmd': 'virtualenv'}
 UBUNTU_12_04_RECIPE = {'name': 'Ubuntu 12.04',
                        'system': [  'sudo apt-get install build-essential cmake gfortran libqt4-dev libsuitesparse-dev '
-                                  + 'libatlas-base-dev libfreetype6-dev libpng12-dev python-dev python-virtualenv '
-                                  + 'python-pip python-tk tk-dev swig' ],
+                                  + 'libatlas-base-dev libfreetype6-dev libpng12-dev python2.7 python2.7-dev '
+                                  +  'python2.7-tk python-pip python-virtualenv tk-dev swig' ],
                        'local': deps.install_requires + deps.install_suggests,
                        'venv_cmd': '/usr/bin/virtualenv'}
 DEFAULT_VENV_DIR = os.path.join(os.path.expandvars('$HOME'), 'virtualenv', 'pyMor')
@@ -35,7 +35,7 @@ if __name__ == '__main__':
         print('EXECUTING {}'.format(cmd))
         subprocess.check_call(cmd, shell=True)
     venvdir = DEFAULT_VENV_DIR
-    print('VENCN ' + venvdir)
+    print('VENCN --python=python2.7' + venvdir)
     subprocess.check_call([recipe['venv_cmd'], venvdir])
     activate = '. ' + os.path.join(venvdir, 'bin', 'activate')
     for cmd in ['pip install {}'.format(i) for i in recipe['local']] + ['python setup.py install']:
