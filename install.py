@@ -43,9 +43,18 @@ if __name__ == '__main__':
     parser.add_argument('--only-deps', action='store_true', help='install only dependencies')
     parser.add_argument('--recipe', choices=['default', 'ubuntu_12_04'],
                         help='installation recipe to use (otherwise auto-detected)')
+    parser.add_argument('--without-python-path', action='store_true',
+                        help='do not add pyMor to PYTHONPATH when --only-deps is used')
     args = parser.parse_args()
     recipe = RECIPES[args.recipe] if args.recipe is not None else get_recipe()
     venvdir = DEFAULT_VENV_DIR
+    if args.without_python_path and not args.only_deps:
+        print('ERROR: --without-python-path can only be set when --only-deps is used')
+        sys.exit(-1)
+    if args.only_deps:
+        pp = 'no' if args.without_python_path else 'yes'
+    else:
+        pp = 'n.a.'
 
     print('''
 --------------------------------------------------------------------------------
@@ -55,17 +64,19 @@ About to install pyMor with the following configuration into a virtualenv:
     installation recipe:        {recipe}
     path of virtualenv:         {venvdir}
     install only dependencies:  {deps}
+    add pyMor to PYTHONPATH:    {pp}
 
 --------------------------------------------------------------------------------
 
-'''.format(recipe=recipe['name'], venvdir=venvdir, deps='yes' if args.only_deps else 'no'))
+'''.format(recipe=recipe['name'], venvdir=venvdir, deps='yes' if args.only_deps else 'no',
+           pp=pp))
 
     print('Staring installation in 5 seconds ', end='')
     sys.stdout.flush()
     for i in xrange(5):
-        time.sleep(1)
         print('.', end='')
         sys.stdout.flush()
+        time.sleep(1)
     print('\n\n')
 
     for cmd in recipe['system']:
@@ -81,6 +92,10 @@ About to install pyMor with the following configuration into a virtualenv:
     if args.only_deps:
         print('Building pyMor C-extensions')
         subprocess.check_call('{} && python setup.py build_ext --inplace'.format(activate), shell=True)
+        if not args.without_python_path:
+            print('Adding pyMor to PYTHONPATH')
+            with open(os.path.join(venvdir, 'lib/python2.7/site-packages/pymor.pth'), 'w') as f:
+                    f.write(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src'))
     else:
         print('INSTALLING pyMor')
         subprocess.check_call('{} && python setup.py install'.format(activate), shell=True)
