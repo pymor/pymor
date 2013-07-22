@@ -43,13 +43,14 @@ if __name__ == '__main__':
     parser.add_argument('--only-deps', action='store_true', help='install only dependencies')
     parser.add_argument('--recipe', choices=['default', 'ubuntu_12_04'],
                         help='installation recipe to use (otherwise auto-detected)')
+    parser.add_argument('--virtualenv-dir', default=DEFAULT_VENV_DIR,
+                        help='path of the virtualenv to be created')
     parser.add_argument('--without-python-path', action='store_true',
                         help='do not add pyMor to PYTHONPATH when --only-deps is used')
     parser.add_argument('--without-system-packages', action='store_true',
                         help='do not try to install required system packages')
     args = parser.parse_args()
     recipe = RECIPES[args.recipe] if args.recipe is not None else get_recipe()
-    venvdir = DEFAULT_VENV_DIR
     if args.without_python_path and not args.only_deps:
         print('ERROR: --without-python-path can only be set when --only-deps is used')
         sys.exit(-1)
@@ -71,7 +72,7 @@ About to install pyMor with the following configuration into a virtualenv:
 
 --------------------------------------------------------------------------------
 
-'''.format(recipe=recipe['name'], venvdir=venvdir, deps='yes' if args.only_deps else 'no',
+'''.format(recipe=recipe['name'], venvdir=args.virtualenv_dir, deps='yes' if args.only_deps else 'no',
            pp=pp, sys='no' if args.without_system_packages else 'yes'))
 
     print('Staring installation in 5 seconds ', end='')
@@ -87,6 +88,7 @@ About to install pyMor with the following configuration into a virtualenv:
             print('EXECUTING {}'.format(cmd))
             subprocess.check_call(cmd, shell=True)
 
+    venvdir = args.virtualenv_dir
     print('VENCN --python=python2.7' + venvdir)
     subprocess.check_call([recipe['venv_cmd'], venvdir])
     activate = '. ' + os.path.join(venvdir, 'bin', 'activate')
