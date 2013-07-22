@@ -1,8 +1,12 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import argparse
 import os
 import subprocess
+import time
+import sys
 
 import dependencies as deps
 
@@ -40,12 +44,33 @@ if __name__ == '__main__':
     parser.add_argument('--recipe', choices=['default', 'ubuntu_12_04'],
                         help='installation recipe to use (otherwise auto-detected)')
     args = parser.parse_args()
-
     recipe = RECIPES[args.recipe] if args.recipe is not None else get_recipe()
+    venvdir = DEFAULT_VENV_DIR
+
+    print('''
+--------------------------------------------------------------------------------
+
+About to install pyMor with the following configuration into a virtualenv:
+
+    installation recipe:        {recipe}
+    path of virtualenv:         {venvdir}
+    install only dependencies:  {deps}
+
+--------------------------------------------------------------------------------
+
+'''.format(recipe=recipe['name'], venvdir=venvdir, deps='yes' if args.only_deps else 'no'))
+
+    print('Staring installation in 5 seconds ', end='')
+    sys.stdout.flush()
+    for i in xrange(5):
+        time.sleep(1)
+        print('.', end='')
+        sys.stdout.flush()
+    print('\n\n')
+
     for cmd in recipe['system']:
         print('EXECUTING {}'.format(cmd))
         subprocess.check_call(cmd, shell=True)
-    venvdir = DEFAULT_VENV_DIR
     print('VENCN --python=python2.7' + venvdir)
     subprocess.check_call([recipe['venv_cmd'], venvdir])
     activate = '. ' + os.path.join(venvdir, 'bin', 'activate')
