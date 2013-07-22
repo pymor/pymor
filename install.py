@@ -45,6 +45,8 @@ if __name__ == '__main__':
                         help='installation recipe to use (otherwise auto-detected)')
     parser.add_argument('--without-python-path', action='store_true',
                         help='do not add pyMor to PYTHONPATH when --only-deps is used')
+    parser.add_argument('--without-system-packages', action='store_true',
+                        help='do not try to install required system packages')
     args = parser.parse_args()
     recipe = RECIPES[args.recipe] if args.recipe is not None else get_recipe()
     venvdir = DEFAULT_VENV_DIR
@@ -64,12 +66,13 @@ About to install pyMor with the following configuration into a virtualenv:
     installation recipe:        {recipe}
     path of virtualenv:         {venvdir}
     install only dependencies:  {deps}
+    install system packages:    {sys}
     add pyMor to PYTHONPATH:    {pp}
 
 --------------------------------------------------------------------------------
 
 '''.format(recipe=recipe['name'], venvdir=venvdir, deps='yes' if args.only_deps else 'no',
-           pp=pp))
+           pp=pp, sys='no' if args.without_system_packages else 'yes'))
 
     print('Staring installation in 5 seconds ', end='')
     sys.stdout.flush()
@@ -79,9 +82,11 @@ About to install pyMor with the following configuration into a virtualenv:
         time.sleep(1)
     print('\n\n')
 
-    for cmd in recipe['system']:
-        print('EXECUTING {}'.format(cmd))
-        subprocess.check_call(cmd, shell=True)
+    if not args.without_system_packages:
+        for cmd in recipe['system']:
+            print('EXECUTING {}'.format(cmd))
+            subprocess.check_call(cmd, shell=True)
+
     print('VENCN --python=python2.7' + venvdir)
     subprocess.check_call([recipe['venv_cmd'], venvdir])
     activate = '. ' + os.path.join(venvdir, 'bin', 'activate')
