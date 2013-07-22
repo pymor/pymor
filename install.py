@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import argparse
 import os
 import subprocess
 
@@ -15,6 +16,10 @@ UBUNTU_12_04_RECIPE = {'name': 'Ubuntu 12.04',
                                   +  'python2.7-tk python-pip python-virtualenv tk-dev swig' ],
                        'local': deps.install_requires + deps.install_suggests,
                        'venv_cmd': '/usr/bin/virtualenv'}
+
+RECIPES = {'default': DEFAULT_RECIPE,
+           'ubuntu_12_04': UBUNTU_12_04_RECIPE}
+
 DEFAULT_VENV_DIR = os.path.join(os.path.expandvars('$HOME'), 'virtualenv', 'pyMor')
 
 def get_recipe():
@@ -30,7 +35,11 @@ def get_recipe():
     return DEFAULT_RECIPE
 
 if __name__ == '__main__':
-    recipe = get_recipe()
+    parser = argparse.ArgumentParser(description='Installs pyMor with all its dependencies')
+    parser.add_argument('--recipe', choices=['default', 'ubuntu_12_04'],
+                        help='installation recipe to use (otherwise auto-detected)')
+    args = parser.parse_args()
+    recipe = RECIPES[args.recipe] if args.recipe is not None else get_recipe()
     for cmd in recipe['system']:
         print('EXECUTING {}'.format(cmd))
         subprocess.check_call(cmd, shell=True)
