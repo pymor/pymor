@@ -36,9 +36,11 @@ def get_recipe():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Installs pyMor with all its dependencies')
+    parser.add_argument('--only-deps', action='store_true', help='install only dependencies')
     parser.add_argument('--recipe', choices=['default', 'ubuntu_12_04'],
                         help='installation recipe to use (otherwise auto-detected)')
     args = parser.parse_args()
+
     recipe = RECIPES[args.recipe] if args.recipe is not None else get_recipe()
     for cmd in recipe['system']:
         print('EXECUTING {}'.format(cmd))
@@ -47,9 +49,16 @@ if __name__ == '__main__':
     print('VENCN --python=python2.7' + venvdir)
     subprocess.check_call([recipe['venv_cmd'], venvdir])
     activate = '. ' + os.path.join(venvdir, 'bin', 'activate')
-    for cmd in ['pip install {}'.format(i) for i in recipe['local']] + ['python setup.py install']:
+    for cmd in ['pip install {}'.format(i) for i in recipe['local']]:
         print('EXECUTING {}'.format(cmd))
         subprocess.check_call('{} && {}'.format(activate, cmd), shell=True)
+
+    if args.only_deps:
+        print('Building pyMor C-extensions')
+        subprocess.check_call('{} && python setup.py build_ext --inplace'.format(activate), shell=True)
+    else:
+        print('INSTALLING pyMor')
+        subprocess.check_call('{} && python setup.py install'.format(activate), shell=True)
 
     print('''
 
