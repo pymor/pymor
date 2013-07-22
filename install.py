@@ -5,20 +5,28 @@ import subprocess
 
 import dependencies as deps
 
-DEFAULT_RECIPE = {'system': ['echo make sure you have BLABLA installed'],
+DEFAULT_RECIPE = {'name': 'default',
+                  'system': ['echo make sure you have BLABLA installed'],
                   'local': deps.install_requires,
                   'venv_cmd': 'virtualenv'}
-UBUNTU_RECIPE = {'system': [  'sudo apt-get install build-essential cmake gfortran libqt4-dev libsuitesparse-dev '
-                            + 'libatlas-base-dev libfreetype6-dev libpng12-dev python-dev python-virtualenv '
-                            + 'python-pip python-tk tk-dev swig' ],
-                  'local': deps.install_requires + deps.install_suggests,
-                  'venv_cmd': '/usr/bin/virtualenv'}
+UBUNTU_12_04_RECIPE = {'name': 'Ubuntu 12.04',
+                       'system': [  'sudo apt-get install build-essential cmake gfortran libqt4-dev libsuitesparse-dev '
+                                  + 'libatlas-base-dev libfreetype6-dev libpng12-dev python-dev python-virtualenv '
+                                  + 'python-pip python-tk tk-dev swig' ],
+                       'local': deps.install_requires + deps.install_suggests,
+                       'venv_cmd': '/usr/bin/virtualenv'}
 DEFAULT_VENV_DIR = os.path.join(os.path.expandvars('$HOME'), 'virtualenv', 'pyMor')
 
 def get_recipe():
     lsb_release = '/etc/lsb-release'
-    if os.path.exists(lsb_release) and 'Ubuntu' in open(lsb_release).read():
-        return UBUNTU_RECIPE
+    if os.path.exists(lsb_release):
+        release_description = open(lsb_release).read()
+        if "Ubuntu 12.04" in release_description:
+            return UBUNTU_12_04_RECIPE
+        elif "Ubuntu" in release_description:
+            warn('Unknown Ubuntu release, trying Ubuntu 12.04 recipe ...')
+            return UBUNTU_12_04_RECIPE
+    print('WARNING: Unknown platform, trying default recipe ...')
     return DEFAULT_RECIPE
 
 if __name__ == '__main__':
