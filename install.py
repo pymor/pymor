@@ -126,10 +126,18 @@ About to install pyMor with the following configuration into a virtualenv:
 
 Installation complete!
 
-To use matplotlib with the Qt backend, create a file ~/.matplotlib/matplotlibrc
-containing the lines
+To activate the pyMor virtualenv call
+
+    source {}
+
+To deactivate the virtualenv call
+
+    deactivate
+
+Matplotlib uses by default its Tk backend. To use the Qt backend, create a
+file ~/.matplotlib/matplotlibrc containing the lines
 
     backend      :  Qt4Agg
     backend.qt4  :  PySide
 
-''')
+'''.format(os.path.join(venvdir, 'bin/activate')))
