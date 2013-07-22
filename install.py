@@ -26,6 +26,11 @@ RECIPES = {'default': DEFAULT_RECIPE,
 
 DEFAULT_VENV_DIR = os.path.join(os.path.expandvars('$HOME'), 'virtualenv', 'pyMor')
 
+def print_separator():
+    print('')
+    print('-' * 80)
+    print('')
+
 def get_recipe():
     lsb_release = '/etc/lsb-release'
     if os.path.exists(lsb_release):
@@ -58,6 +63,7 @@ if __name__ == '__main__':
         pp = 'no' if args.without_python_path else 'yes'
     else:
         pp = 'n.a.'
+    venvdir = os.path.realpath(os.path.expanduser(args.virtualenv_dir))
 
     print('''
 --------------------------------------------------------------------------------
@@ -72,7 +78,7 @@ About to install pyMor with the following configuration into a virtualenv:
 
 --------------------------------------------------------------------------------
 
-'''.format(recipe=recipe['name'], venvdir=args.virtualenv_dir, deps='yes' if args.only_deps else 'no',
+'''.format(recipe=recipe['name'], venvdir=venvdir, deps='yes' if args.only_deps else 'no',
            pp=pp, sys='no' if args.without_system_packages else 'yes'))
 
     print('Staring installation in 5 seconds ', end='')
@@ -84,27 +90,36 @@ About to install pyMor with the following configuration into a virtualenv:
     print('\n\n')
 
     if not args.without_system_packages:
+        print_separator()
+        print('Installing system packages\n')
         for cmd in recipe['system']:
-            print('EXECUTING {}'.format(cmd))
+            print('***** EXECUTING {}'.format(cmd))
             subprocess.check_call(cmd, shell=True)
 
-    venvdir = args.virtualenv_dir
-    print('VENCN --python=python2.7' + venvdir)
-    subprocess.check_call([recipe['venv_cmd'], venvdir])
+    print_separator()
+    print('***** CREATING VIRTUALENV\n')
+    print('***** EXECUTING ' + recipe['venv_cmd'] + ' --python=python2.7 ' + venvdir)
+    subprocess.check_call([recipe['venv_cmd'], '--python=python2.7', venvdir])
     activate = '. ' + os.path.join(venvdir, 'bin', 'activate')
+
+    print_separator()
+    print('***** Installing dependencies\n')
     for cmd in ['pip install {}'.format(i) for i in recipe['local']]:
-        print('EXECUTING {}'.format(cmd))
+        print('\n***** EXECUTING {}\n'.format(cmd))
         subprocess.check_call('{} && {}'.format(activate, cmd), shell=True)
 
     if args.only_deps:
-        print('Building pyMor C-extensions')
+        print_separator()
+        print('***** BUILDING PYMOR C-EXTENSIONS\n')
         subprocess.check_call('{} && python setup.py build_ext --inplace'.format(activate), shell=True)
         if not args.without_python_path:
-            print('Adding pyMor to PYTHONPATH')
+            print_separator()
+            print('***** ADDING PYMOR TO PYTHONPATH\n')
             with open(os.path.join(venvdir, 'lib/python2.7/site-packages/pymor.pth'), 'w') as f:
                     f.write(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src'))
     else:
-        print('INSTALLING pyMor')
+        print_separator()
+        print('***** INSTALLING PYMOR\n')
         subprocess.check_call('{} && python setup.py install'.format(activate), shell=True)
 
     print('''
