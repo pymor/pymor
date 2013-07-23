@@ -103,7 +103,7 @@ class OperatorInterface(BasicInterface, Parametric, Named):
         pass
 
     @abstractstaticmethod
-    def lincomb(operators, coefficients=None, name=None):
+    def lincomb(operators, coefficients=None, global_names=None, name=None):
         pass
 
     @abstractmethod
