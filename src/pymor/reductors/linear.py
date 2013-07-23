@@ -8,7 +8,7 @@ import types
 
 import numpy as np
 
-from pymor.operators import LinearAffinelyDecomposedOperator, NumpyLinearOperator
+from pymor.operators import LincombOperatorInterface, NumpyMatrixOperator
 from pymor.operators.solvers import solve_linear
 from pymor.core import BasicInterface
 from pymor.discretizations import StationaryLinearDiscretization
@@ -49,14 +49,11 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
     '''
 
     #assert isinstance(discretization, StationaryLinearDiscretization)
-    assert isinstance(discretization.operator, LinearAffinelyDecomposedOperator)
+    assert isinstance(discretization.operator, LincombOperatorInterface)
     assert all(not op.parametric for op in discretization.operator.operators)
-    assert discretization.operator.operator_affine_part is None\
-        or not discretization.operator.operator_affine_part.parametric
     if discretization.rhs.parametric:
-        assert isinstance(discretization.rhs, LinearAffinelyDecomposedOperator)
+        assert isinstance(discretization.rhs, LincombOperatorInterface)
         assert all(not op.parametric for op in discretization.rhs.operators)
-        assert discretization.rhs.operator_affine_part is None or not discretization.rhs.operator_affine_part.parametric
 
     d = discretization
     rd, rc = reduce_generic_rb(d, RB, product=None, disable_caching=disable_caching)
@@ -83,39 +80,33 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
 
 
     # compute all components of the residual
-    ra = 1 if not d.rhs.parametric or d.rhs.operator_affine_part is not None else 0
-    rl = 0 if not d.rhs.parametric else len(d.rhs.operators)
-    oa = 1 if not d.operator.parametric or d.operator.operator_affine_part is not None else 0
-    ol = 0 if not d.operator.parametric else len(d.operator.operators)
+    rl = 1 if not d.rhs.parametric else len(d.rhs.operators)
+    ol = 1 if not d.operator.parametric else len(d.operator.operators)
 
-    # if RB is None: RB = np.zeros((0, d.operator.dim_source))
     if RB is None:
         RB = NumpyVectorArray(np.zeros((0, next(d.operators.itervalues()).dim_source)))
 
-    R_R = space_type.empty(space_dim, reserve=ra + rl)
-    R_O = space_type.empty(space_dim, reserve=(oa + ol) * len(RB))
-    RR_R = space_type.empty(space_dim, reserve=ra + rl)
-    RR_O = space_type.empty(space_dim, reserve=(oa + ol) * len(RB))
-
     if not d.rhs.parametric:
+        R_R = space_type.empty(space_dim, reserve=1)
+        RR_R = space_type.empty(space_dim, reserve=1)
         append_vector(d.rhs.assemble().as_vector_array(), R_R, RR_R)
-
-    if d.rhs.parametric and d.rhs.operator_affine_part is not None:
-        append_vector(d.rhs.operator_affine_part.assemble().as_vector_array(), R_R, RR_R)
-
-    if d.rhs.parametric:
+    else:
+        R_R = space_type.empty(space_dim, reserve=len(d.rhs.operators))
+        RR_R = space_type.empty(space_dim, reserve=len(d.rhs.operator))
         for op in d.rhs.operators:
             append_vector(op.assemble().as_vector_array(), R_R, RR_R)
 
-    if len(RB) > 0 and not d.operator.parametric:
+    if len(RB) == 0:
+        R_O = space_type.empty(space_dim)
+        RR_O = space_type.empty(space_dim)
+    elif not d.operator.parametric:
         for i in xrange(len(RB)):
             append_vector(d.operator.apply(RB, ind=[i]), R_O, RR_O)
-
-    if len(RB) > 0 and d.operator.parametric and d.operator.operator_affine_part is not None:
-        for i in xrange(len(RB)):
-            append_vector(d.operator.operator_affine_part.apply(RB, ind=[i]), R_O, RR_O)
-
-    if len(RB) > 0 and d.operator.parametric:
+        R_O = space_type.empty(space_dim, reserve=len(RB))
+        RR_O = space_type.empty(space_dim, reserve=len(RB))
+    else:
+        R_O = space_type.empty(space_dim, reserve=len(d.operator.operators) * len(RB))
+        RR_O = space_type.empty(space_dim, reserve=len(d.operator.operators) * len(RB))
         for op in d.operator.operators:
             for i in xrange(len(RB)):
                 append_vector(-op.apply(RB, [i]), R_O, RR_O)
@@ -131,7 +122,7 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
     estimator_matrix[:len(R_RR), len(R_RR):] = R_RO
     estimator_matrix[len(R_RR):, :len(R_RR)] = R_RO.T
 
-    estimator_matrix = NumpyLinearOperator(estimator_matrix)
+    estimator_matrix = NumpyMatrixOperator(estimator_matrix)
 
     estimator = StationaryAffineLinearReducedEstimator(estimator_matrix)
     rd = rd.with_(estimator=estimator)
@@ -172,7 +163,7 @@ def numpy_reduce_stationary_affine_linear(discretization, RB, error_product=None
     '''
 
     assert isinstance(discretization, StationaryLinearDiscretization)
-    assert isinstance(discretization.operator, LinearAffinelyDecomposedOperator)
+    assert isinstance(discretization.operator, LincombOperatorInterface)
     assert all(not op.parametric for op in discretization.operator.operators)
     assert discretization.operator.operator_affine_part is None\
         or not discretization.operator.operator_affine_part.parametric
@@ -191,7 +182,7 @@ def numpy_reduce_stationary_affine_linear(discretization, RB, error_product=None
     def riesz_representative(U):
         if error_product is None:
             return U
-        return d.solver(error_product.assemble(), NumpyLinearOperator(U)).data.ravel()
+        return d.solver(error_product.assemble(), NumpyMatrixOperator(U)).data.ravel()
 
     # compute all components of the residual
     ra = 1 if not d.rhs.parametric or d.rhs.operator_affine_part is not None else 0
@@ -244,7 +235,7 @@ def numpy_reduce_stationary_affine_linear(discretization, RB, error_product=None
     estimator_matrix[:len(R_RR), len(R_RR):] = R_RO
     estimator_matrix[len(R_RR):, :len(R_RR)] = R_RO.T
 
-    estimator_matrix = NumpyLinearOperator(estimator_matrix)
+    estimator_matrix = NumpyMatrixOperator(estimator_matrix)
 
     estimator = StationaryAffineLinearReducedEstimator(estimator_matrix)
     rd = rd.with_(estimator=estimator)
@@ -261,28 +252,16 @@ class StationaryAffineLinearReducedEstimator(BasicInterface):
     def estimate(self, U, mu, discretization):
         d = discretization
         assert len(U) == 1, 'Can estimate only one solution vector'
-        if not d.rhs.parametric or d.rhs.operator_affine_part is not None:
-            CRA = np.ones(1)
+        if not d.rhs.parametric:
+            CR = np.ones(1)
         else:
-            CRA = np.ones(0)
+            CR = d.rhs.evaluate_coefficients(mu)
 
-        if d.rhs.parametric:
-            CRL = d.rhs.evaluate_coefficients(mu)
+        if not d.operator.parametric:
+            CO = np.ones(1)
         else:
-            CRL = np.ones(0)
+            CO = d.operator.evaluate_coefficients(mu)
 
-        CR = np.hstack((CRA, CRL))
-
-        if not d.operator.parametric or d.operator.operator_affine_part is not None:
-            COA = np.ones(1)
-        else:
-            COA = np.ones(0)
-
-        if d.operator.parametric:
-            COL = d.operator.evaluate_coefficients(mu)
-        else:
-            COL = np.ones(0)
-
-        C = np.hstack((CR, np.dot(np.hstack((COA, COL))[..., np.newaxis], U.data).ravel()))
+        C = np.hstack((CR, np.dot(CO[..., np.newaxis], U.data).ravel()))
 
         return induced_norm(self.estimator_matrix)(NumpyVectorArray(C))

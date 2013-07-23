@@ -4,16 +4,29 @@
 
 from __future__ import absolute_import, division, print_function
 
+from itertools import izip
 from numbers import Number
 
 import numpy as np
 from scipy.sparse import issparse
 
 from pymor.la import NumpyVectorArray
-from pymor.operators.interfaces import OperatorInterface, LinearOperatorInterface
+from pymor.operators import DefaultOperator, DefaultMatrixBasedOperator, DefaultLincombOperator, LincombOperator
 
 
-class NumpyGenericOperator(OperatorInterface):
+class NumpyMatrixBasedOperator(DefaultMatrixBasedOperator):
+
+    type_source = type_range = NumpyVectorArray
+
+    @staticmethod
+    def lincomb(operators, coefficients=None, name=None):
+        if not all(isinstance(op, NumpyMatrixBasedOperator) for op in operators):
+            return LincombOperator(operators, coefficients, name=name)
+        else:
+            return NumpyLincombMatrixOperator(operators, coefficients, name=name)
+
+
+class NumpyGenericOperator(DefaultOperator):
     '''Wraps an apply function as a proper discrete operator.
 
     Parameters
@@ -55,7 +68,7 @@ class NumpyGenericOperator(OperatorInterface):
             return NumpyVectorArray(self._mapping(U_array), copy=False)
 
 
-class NumpyLinearOperator(LinearOperatorInterface):
+class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     '''Wraps a matrix as a proper linear discrete operator.
 
     The resulting operator will be parameter independent.
@@ -68,11 +81,10 @@ class NumpyLinearOperator(LinearOperatorInterface):
         Name of the operator.
     '''
 
-    type_source = type_range = NumpyVectorArray
     assembled = True
 
     def __init__(self, matrix, name=None):
-        super(NumpyLinearOperator, self).__init__()
+        super(NumpyMatrixOperator, self).__init__()
         assert matrix.ndim <= 2
         if matrix.ndim == 1:
             matrix = np.reshape(matrix, (1, -1))
@@ -100,15 +112,25 @@ class NumpyLinearOperator(LinearOperatorInterface):
         U_array = U._array[:U._len] if ind is None else U._array[ind]
         return NumpyVectorArray(self._matrix.dot(U_array.T).T, copy=False)
 
-    def __add__(self, other):
-        if isinstance(other, NumpyLinearOperator):
-            return NumpyLinearOperator(self._matrix + other._matrix)
-        elif isinstance(other, Number):
-            return NumpyLinearOperator(self._matrix + other)
+
+class NumpyLincombMatrixOperator(NumpyMatrixBasedOperator, DefaultLincombOperator):
+
+    def __init__(self, operators, coefficients=None, global_names=None, name=None):
+        assert all(isinstance(op, NumpyMatrixBasedOperator) for op in operators)
+        DefaultLincombOperator.__init__(self, operators, coefficients, global_names, name)
+        self.sparse = all(op.sparse for op in operators)
+        self.lock()
+
+    def _assemble(self, mu=None):
+        mu = self.parse_parameter(mu)
+        ops = [op.assemble(mu) for op in self.operators]
+        coeffs = self.evaluate_coefficients(mu)
+        if self.sparse:
+            matrix = sum(op._matrix * c for op, c in izip(ops, coeffs))
         else:
-            return NotImplemented
-
-    __radd__ = __add__
-
-    def __mul__(self, other):
-        return NumpyLinearOperator(self._matrix * other)
+            matrix = ops[0]._matrix.copy()
+            if coeffs[0] != 1:
+                matrix *= coeffs[0]
+            for op, c in izip(ops[1:], coeffs[1:]):
+                matrix += (op._matrix * c)
+        return NumpyMatrixOperator(matrix)

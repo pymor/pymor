@@ -10,11 +10,11 @@ from scipy.sparse import issparse
 
 from pymor.core import defaults
 from pymor.la.numpyvectorarray import NumpyVectorArray
-from pymor.operators.numpy import NumpyLinearOperator
+from pymor.operators import MatrixBasedOperatorInterface, NumpyMatrixOperator
 
 
 def solve_linear_numpy_bicgstab(A, U, ind=None, tol=None, maxiter=None):
-    assert isinstance(A, NumpyLinearOperator)
+    assert isinstance(A, NumpyMatrixOperator)
     assert isinstance(U, NumpyVectorArray)
     assert A.dim_range == U.dim
 
@@ -36,12 +36,13 @@ def solve_linear_numpy_bicgstab(A, U, ind=None, tol=None, maxiter=None):
 
 
 def solve_linear(A, U, ind=None, mu=None, **kwargs):
+    assert isinstance(A, MatrixBasedOperatorInterface)
     assert A.dim_range == U.dim
     if not A.assembled:
         A = A.assemble(mu)
     else:
         assert mu is None
-    if isinstance(A, NumpyLinearOperator):
+    if isinstance(A, NumpyMatrixOperator):
         return solve_linear_numpy_bicgstab(A, U, ind, **kwargs)
     else:
         raise NotImplementedError

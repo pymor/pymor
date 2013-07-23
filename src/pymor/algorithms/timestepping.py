@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 from pymor.core import BasicInterface, abstractmethod
 from pymor.la import VectorArrayInterface
-from pymor.operators import OperatorInterface, LinearOperatorInterface
+from pymor.operators import OperatorInterface, MatrixBasedOperatorInterface
 from pymor.operators.solvers import solve_linear
 
 
@@ -36,14 +36,14 @@ class ExplicitEulerTimeStepper(TimeStepperInterface):
 
 
 def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, solver=None):
-    assert isinstance(A, LinearOperatorInterface)
+    assert isinstance(A, MatrixBasedOperatorInterface)
     assert A.dim_source == A.dim_range
     A_time_dep = A.parameter_type and '_t' in A.parameter_type
     if not A_time_dep:
         A = A.assemble(mu)
 
-    assert isinstance(F, (LinearOperatorInterface, VectorArrayInterface))
-    if isinstance(F, LinearOperatorInterface):
+    assert isinstance(F, (MatrixBasedOperatorInterface, VectorArrayInterface))
+    if isinstance(F, MatrixBasedOperatorInterface):
         assert F.dim_range == 1
         assert F.dim_source == A.dim_source
         F_time_dep = F.parameter_type and '_t' in F.parameter_type
@@ -55,7 +55,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, solver=None):
         F_time_dep = False
 
     if M:
-        assert isinstance(M, LinearOperatorInterface)
+        assert isinstance(M, MatrixBasedOperatorInterface)
         assert M.dim_source == M.dim_range == A.dim_source
         M = M.assemble()
 
@@ -95,8 +95,8 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None):
     assert A.dim_source == A.dim_range
     A_time_dep = A.parameter_type and '_t' in A.parameter_type
 
-    assert isinstance(F, (LinearOperatorInterface, VectorArrayInterface))
-    if isinstance(F, LinearOperatorInterface):
+    assert isinstance(F, (MatrixBasedOperatorInterface, VectorArrayInterface))
+    if isinstance(F, MatrixBasedOperatorInterface):
         assert F.dim_range == 1
         assert F.dim_source == A.dim_source
         F_time_dep = F.parameter_type and '_t' in F.parameter_type

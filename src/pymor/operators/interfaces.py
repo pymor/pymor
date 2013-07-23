@@ -9,8 +9,7 @@ import numpy as np
 
 from numbers import Number
 
-from pymor.core.interfaces import BasicInterface, abstractmethod, abstractproperty
-from pymor.la import VectorArrayInterface
+from pymor.core.interfaces import BasicInterface, abstractmethod, abstractproperty, abstractstaticmethod
 from pymor.tools import Named
 from pymor.parameters import Parametric
 
@@ -40,8 +39,7 @@ class OperatorInterface(BasicInterface, Parametric, Named):
     type_source = None
     type_range = None
 
-    def __init__(self):
-        Parametric.__init__(self)
+    linear = False
 
     @abstractmethod
     def apply(self, U, ind=None, mu=None):
@@ -62,6 +60,7 @@ class OperatorInterface(BasicInterface, Parametric, Named):
         '''
         pass
 
+    @abstractmethod
     def apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None, pairwise=True):
         ''' Treat the operator as a 2-form by calculating (V, A(U)).
 
@@ -101,98 +100,51 @@ class OperatorInterface(BasicInterface, Parametric, Named):
         -------
         A numpy array of all operator evaluations.
         '''
-        mu = self.parse_parameter(mu)
-        assert isinstance(V, VectorArrayInterface)
-        assert isinstance(U, VectorArrayInterface)
-        U_ind = None if U_ind is None else np.array(U_ind, copy=False, dtype=np.int, ndmin=1)
-        V_ind = None if V_ind is None else np.array(V_ind, copy=False, dtype=np.int, ndmin=1)
-        if pairwise:
-            lu = len(U_ind) if U_ind is not None else len(U)
-            lv = len(V_ind) if V_ind is not None else len(V)
-            assert lu == lv
-        AU = self.apply(U, ind=U_ind, mu=mu)
-        if product is not None:
-            AU = product.apply(AU)
-        return V.dot(AU, ind=V_ind, pairwise=pairwise)
+        pass
 
+    @abstractstaticmethod
+    def lincomb(operators, coefficients=None, name=None):
+        pass
+
+    @abstractmethod
     def __add__(self, other):
-        if isinstance(other, Number):
-            assert other == 0.
-            return self
-        from pymor.operators.constructions import LincombOperator
-        return LincombOperator([self, other])
+        pass
 
-    __radd__ = __add__
+    @abstractmethod
+    def __radd__(self, other):
+        pass
 
+    @abstractmethod
     def __mul__(self, other):
-        from pymor.operators.constructions import LincombOperator
-        return LincombOperator([self], factors=[other])
-
-    def __str__(self):
-        return '{}: R^{} --> R^{}  (parameter type: {}, class: {})'.format(
-            self.name, self.dim_source, self.dim_range, self.parameter_type,
-            self.__class__.__name__)
+        pass
 
 
-class LinearOperatorInterface(OperatorInterface):
-    '''Interface for linear parameter dependent discrete operators.
+class MatrixBasedOperatorInterface(OperatorInterface):
+    '''Base class for operators which assemble to a matrix.
     '''
 
+    linear = True
     assembled = False
     sparse = None
 
-    def as_vector_array(self, mu=None):
-        if not self.assembled:
-            return self.assemble(mu).as_vector_array()
-        else:
-            raise NotImplementedError
-
     @abstractmethod
-    def _assemble(self, mu=None):
+    def as_vector_array(self, mu=None):
         pass
 
+    @abstractmethod
     def assemble(self, mu=None, force=False):
         '''Assembles the matrix of the operator for given parameter mu.
 
-        Returns an assembled parameter independent linear operator.
+        Returns an assembled parameter independent MatrixOperator operator.
         '''
-        if self.assembled:
-            mu = self.parse_parameter(mu)
-            return self
-        elif self.parameter_type is None:
-            mu = self.parse_parameter(mu)
-            if force or not self._last_mat:
-                self._last_mat = self._assemble(mu)
-                return self._last_mat
-            else:
-                return self._last_mat
-        else:
-            mu_s = self.strip_parameter(mu)
-            if not force and self._last_mu is not None and self._last_mu.allclose(mu_s):
-                return self._last_mat
-            else:
-                self._last_mu = mu_s.copy()  # TODO: add some kind of log message here
-                self._last_mat = self._assemble(mu)
-                return self._last_mat
+        pass
 
-    def apply(self, U, ind=None, mu=None):
-        if not self.assembled:
-            return self.assemble(mu).apply(U, ind=ind)
-        else:
-            raise NotImplementedError
 
-    def __add__(self, other):
-        if isinstance(other, Number):
-            assert other == 0.
-            return self
-        from pymor.operators.constructions import LinearLincombOperator
-        return LinearLincombOperator([self, other])
+class LincombOperatorInterface(OperatorInterface):
 
-    __radd__ = __add__
+    operators = None
+    coefficients = None
 
-    def __mul__(self, other):
-        from pymor.operators.constructions import LinearLincombOperator
-        return LinearLincombOperator([self], factors=[other])
-
-    _last_mu = None
-    _last_mat = None
+    @abstractmethod
+    def evaluate_coefficients(self, mu):
+        pass

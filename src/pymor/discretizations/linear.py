@@ -10,7 +10,7 @@ import numpy as np
 from pymor.core import defaults
 from pymor.la import NumpyVectorArray
 from pymor.tools import selfless_arguments
-from pymor.operators import LinearOperatorInterface
+from pymor.operators import OperatorInterface
 from pymor.operators.solvers import solve_linear
 from pymor.discretizations.interfaces import DiscretizationInterface
 
@@ -54,8 +54,8 @@ class StationaryLinearDiscretization(DiscretizationInterface):
 
     def __init__(self, operator, rhs, solver=None, products=None, parameter_space=None, estimator=None, visualizer=None,
                  caching='disk', name=None):
-        assert isinstance(operator, LinearOperatorInterface)
-        assert isinstance(rhs, LinearOperatorInterface)
+        assert isinstance(operator, OperatorInterface) and operator.linear
+        assert isinstance(rhs, OperatorInterface) and rhs.linear
         assert operator.dim_source == operator.dim_range == rhs.dim_source
         assert rhs.dim_range == 1
 

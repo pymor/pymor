@@ -13,7 +13,7 @@ from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
 from pymor.domaindiscretizers import discretize_domain_default
 from pymor.operators.fv import (NonlinearAdvectionLaxFriedrichs, NonlinearAdvectionEngquistOsher, L2Product,
                                 L2ProductFunctional)
-from pymor.operators import NumpyLinearOperator
+from pymor.operators import NumpyMatrixOperator
 from pymor.grids import RectGrid
 from pymor.gui.qt import GlumpyPatchVisualizer
 from pymor.discretizations import InstationaryNonlinearDiscretization

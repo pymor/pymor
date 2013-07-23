@@ -10,7 +10,7 @@ import numpy as np
 from pymor.algorithms.timestepping import TimeStepperInterface
 from pymor.la.interfaces import VectorArrayInterface
 from pymor.tools import selfless_arguments
-from pymor.operators import OperatorInterface, LinearOperatorInterface, ConstantOperator
+from pymor.operators import OperatorInterface, ConstantOperator
 from pymor.discretizations.interfaces import DiscretizationInterface
 
 
@@ -19,7 +19,7 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
     def __init__(self, operator, rhs, initial_data, T, time_stepper=None, products=None, parameter_space=None,
                  estimator=None, visualizer=None, caching='disk', name=None):
         assert isinstance(operator, OperatorInterface)
-        assert isinstance(rhs, LinearOperatorInterface)
+        assert isinstance(rhs, OperatorInterface) and rhs.linear
         assert isinstance(initial_data, (VectorArrayInterface, OperatorInterface))
         assert not isinstance(initial_data, OperatorInterface) or initial_data.dim_source == 0
         if isinstance(initial_data, VectorArrayInterface):
