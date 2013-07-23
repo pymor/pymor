@@ -4,12 +4,15 @@
 
 from __future__ import absolute_import, division, print_function
 
+from collections import OrderedDict
 from itertools import izip
 from numbers import Number
 
 import numpy as np
 from scipy.sparse import issparse
+from scipy.sparse.linalg import bicgstab
 
+from pymor.core import defaults
 from pymor.la import NumpyVectorArray
 from pymor.operators import DefaultOperator, DefaultMatrixBasedOperator, DefaultLincombOperator, LincombOperator
 
@@ -19,11 +22,25 @@ class NumpyMatrixBasedOperator(DefaultMatrixBasedOperator):
     type_source = type_range = NumpyVectorArray
 
     @staticmethod
-    def lincomb(operators, coefficients=None, name=None):
+    def lincomb(operators, coefficients=None, global_names=None, name=None):
         if not all(isinstance(op, NumpyMatrixBasedOperator) for op in operators):
-            return LincombOperator(operators, coefficients, name=name)
+            return LincombOperator(operators, coefficients, global_names=None, name=name)
         else:
-            return NumpyLincombMatrixOperator(operators, coefficients, name=name)
+            return NumpyLincombMatrixOperator(operators, coefficients, global_names=None, name=name)
+
+    @property
+    def invert_options(self):
+        if self.sparse is None:
+            raise ValueError('Sparsity unkown, assemble first.')
+        elif self.sparse:
+            return OrderedDict((('bicgstab', {'type': 'bicgstab',
+                                              'tol': defaults.bicgstab_tol,
+                                              'maxiter': defaults.bicgstab_maxiter}),))
+        else:
+            return OrderedDict((('linsolve', {'type': 'linsolve'}),))
+
+    def apply_inverse(self, U, ind=None, mu=None, options=None):
+        return self.assemble(mu).apply_inverse(U, ind=ind, options=options)
 
 
 class NumpyGenericOperator(DefaultOperator):
@@ -111,6 +128,45 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         mu = self.parse_parameter(mu)
         U_array = U._array[:U._len] if ind is None else U._array[ind]
         return NumpyVectorArray(self._matrix.dot(U_array.T).T, copy=False)
+
+    def apply_inverse(self, U, ind=None, mu=None, options=None):
+
+        def check_options(options, sparse):
+            if not options:
+                return True
+            assert 'type' in options
+            if sparse:
+                assert options['type'] == 'bicgstab'
+                assert options.viewkeys() <= set(('type', 'tol', 'maxiter'))
+            else:
+                assert options['type'] == 'solve'
+                assert options.viewkeys() <= set(('type',))
+            return True
+
+        if options is None:
+            options = {}
+        elif isinstance(options, str):
+            options = {'type': options}
+
+        assert isinstance(U, NumpyVectorArray)
+        assert self.dim_range == U.dim
+        assert check_options(options, self.sparse)
+
+        U = U._array[:U._len] if ind is None else U._array[ind]
+        if U.shape[1] == 0:
+            return NumpyVectorArray(U)
+        R = np.empty((len(U), self.dim_source))
+
+        if self.sparse:
+            tol =  options.get('tol', defaults.bicgstab_tol)
+            maxiter = options.get('maxiter', defaults.bicgstab_maxiter)
+            for i, UU in enumerate(U):
+                R[i], _ = bicgstab(self._matrix, UU, tol=tol, maxiter=maxiter)
+        else:
+            for i, UU in enumerate(U):
+                R[i] = np.linalg.solve(self._matrix, UU)
+
+        return NumpyVectorArray(R)
 
 
 class NumpyLincombMatrixOperator(NumpyMatrixBasedOperator, DefaultLincombOperator):
