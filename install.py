@@ -38,7 +38,7 @@ def get_recipe():
         if "Ubuntu 12.04" in release_description:
             return UBUNTU_12_04_RECIPE
         elif "Ubuntu" in release_description:
-            warn('Unknown Ubuntu release, trying Ubuntu 12.04 recipe ...')
+            print('Unknown Ubuntu release, trying Ubuntu 12.04 recipe ...')
             return UBUNTU_12_04_RECIPE
     print('WARNING: Unknown platform, trying default recipe ...')
     return DEFAULT_RECIPE
