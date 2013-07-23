@@ -6,4 +6,4 @@ setup_requires = pre_setup_requires + ['nose']
 install_suggests = ['ipython', 'ipdb', 'matplotlib', 'sympy'] + tests_require
 
 import_names = {'nose-progressive': 'noseprogressive', 'nose-cov': 'nose_cov',
-                'nosehtmloutput': 'htmloutput'}
+                'nosehtmloutput': 'htmloutput', 'ipython': 'IPython'}
