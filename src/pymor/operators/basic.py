@@ -53,6 +53,9 @@ class DefaultOperator(OperatorInterface):
             self.name, self.dim_source, self.dim_range, self.parameter_type,
             self.__class__.__name__)
 
+    def apply_inverse(self, U, ind=None, mu=None, options=None):
+        raise NotImplementedError
+
 
 class DefaultMatrixBasedOperator(MatrixBasedOperatorInterface, DefaultOperator):
 

@@ -41,6 +41,8 @@ class OperatorInterface(BasicInterface, Parametric, Named):
 
     linear = False
 
+    invert_options = None
+
     @abstractmethod
     def apply(self, U, ind=None, mu=None):
         '''Evaluate L(U, mu).
@@ -116,6 +118,10 @@ class OperatorInterface(BasicInterface, Parametric, Named):
 
     @abstractmethod
     def __mul__(self, other):
+        pass
+
+    @abstractmethod
+    def apply_inverse(self, U, ind=None, mu=None, options=None):
         pass
 
 
