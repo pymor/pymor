@@ -40,13 +40,13 @@ class DefaultOperator(OperatorInterface):
         if isinstance(other, Number):
             assert other == 0.
             return self
-        return self.lincomb([self, other])
+        return self.lincomb([self, other], [1, 1])
 
     __radd__ = __add__
 
     def __mul__(self, other):
         assert isinstance(other, Number)
-        return self.lincomb([self], factors=[other])
+        return self.lincomb([self], [other])
 
     def __str__(self):
         return '{}: R^{} --> R^{}  (parameter type: {}, class: {})'.format(
@@ -121,7 +121,7 @@ class DefaultLincombOperator(DefaultOperator, LincombOperatorInterface):
         self.linear = all(op.linear for op in operators)
         self.name = name
         if coefficients is None:
-            self.build_parameter_type({'coefficients': len(coefficients)}, inherits=list(operators),
+            self.build_parameter_type({'coefficients': len(operators)}, inherits=list(operators),
                                       global_names=global_names)
         else:
             self.build_parameter_type(inherits=list(operators) +
