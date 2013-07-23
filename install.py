@@ -20,9 +20,16 @@ UBUNTU_12_04_RECIPE = {'name': 'Ubuntu 12.04',
                                   +  'python2.7-tk python-pip python-virtualenv tk-dev swig' ],
                        'local': deps.install_requires + deps.install_suggests,
                        'venv_cmd': '/usr/bin/virtualenv'}
+UBUNTU_13_04_RECIPE = {'name': 'Ubuntu 13.04',
+                       'system': [  'sudo apt-get install build-essential cmake gfortran libqt4-dev libsuitesparse-dev '
+                                  + 'libatlas-base-dev libfreetype6-dev libpng12-dev python2.7 python2.7-dev '
+                                  +  'python2.7-tk python-pip python-virtualenv tk-dev swig' ],
+                       'local': deps.install_requires + deps.install_suggests,
+                       'venv_cmd': '/usr/bin/virtualenv'}
 
 RECIPES = {'default': DEFAULT_RECIPE,
-           'ubuntu_12_04': UBUNTU_12_04_RECIPE}
+           'ubuntu_12_04': UBUNTU_12_04_RECIPE,
+           'ubuntu_13_04': UBUNTU_13_04_RECIPE}
 
 DEFAULT_VENV_DIR = os.path.join(os.path.expandvars('$HOME'), 'virtualenv', 'pyMor')
 
@@ -37,6 +44,8 @@ def get_recipe():
         release_description = open(lsb_release).read()
         if "Ubuntu 12.04" in release_description:
             return UBUNTU_12_04_RECIPE
+        elif "Ubuntu 13.04" in release_description:
+            return UBUNTU_13_04_RECIPE
         elif "Ubuntu" in release_description:
             print('Unknown Ubuntu release, trying Ubuntu 12.04 recipe ...')
             return UBUNTU_12_04_RECIPE
@@ -46,7 +55,7 @@ def get_recipe():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Installs pyMor with all its dependencies')
     parser.add_argument('--only-deps', action='store_true', help='install only dependencies')
-    parser.add_argument('--recipe', choices=['default', 'ubuntu_12_04'],
+    parser.add_argument('--recipe', choices=[rec for rec in RECIPES],
                         help='installation recipe to use (otherwise auto-detected)')
     parser.add_argument('--virtualenv-dir', default=DEFAULT_VENV_DIR,
                         help='path of the virtualenv to be created')
