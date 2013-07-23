@@ -11,8 +11,9 @@ import sys
 import dependencies as deps
 
 DEFAULT_RECIPE = {'name': 'default',
-                  'system': ['echo make sure you have BLABLA installed'],
-                  'local': deps.install_requires,
+                  'system': [  'echo make sure you have all build dependencies for numpy/scipy and Qt4 headers '
+                             + 'installed' ],
+                  'local': deps.install_requires + deps.install_suggests,
                   'venv_cmd': 'virtualenv'}
 UBUNTU_12_04_RECIPE = {'name': 'Ubuntu 12.04',
                        'system': [  'sudo apt-get install build-essential cmake gfortran libqt4-dev libsuitesparse-dev '
@@ -23,7 +24,7 @@ UBUNTU_12_04_RECIPE = {'name': 'Ubuntu 12.04',
 UBUNTU_13_04_RECIPE = {'name': 'Ubuntu 13.04',
                        'system': [  'sudo apt-get install build-essential cmake gfortran libqt4-dev libsuitesparse-dev '
                                   + 'libatlas-base-dev libfreetype6-dev libpng12-dev python2.7 python2.7-dev '
-                                  +  'python2.7-tk python-pip python-virtualenv tk-dev swig' ],
+                                  + 'python2.7-tk python-pip python-virtualenv tk-dev swig' ],
                        'local': deps.install_requires + deps.install_suggests,
                        'venv_cmd': '/usr/bin/virtualenv'}
 
@@ -55,7 +56,7 @@ def get_recipe():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Installs pyMor with all its dependencies')
     parser.add_argument('--only-deps', action='store_true', help='install only dependencies')
-    parser.add_argument('--recipe', choices=[rec for rec in RECIPES],
+    parser.add_argument('--recipe', choices=RECIPES.keys(),
                         help='installation recipe to use (otherwise auto-detected)')
     parser.add_argument('--virtualenv-dir', default=DEFAULT_VENV_DIR,
                         help='path of the virtualenv to be created')
