@@ -10,15 +10,16 @@ import numpy as np
 
 from pymor.la import NumpyVectorArray
 from pymor.playground.la.dunevectorarray import DuneVectorArray, WrappedDuneVector
-from pymor.operators.interfaces import LinearOperatorInterface
+from pymor.operators import MatrixBasedOperatorInterface, OperatorBase
 
 from dunelinearellipticcg2dsgrid import DuneVector
 
 
-class DuneLinearOperator(LinearOperatorInterface):
+class DuneLinearOperator(OperatorBase, MatrixBasedOperatorInterface):
 
     type_source = type_range = DuneVectorArray
     assembled = True
+    sparse = True
 
     def __init__(self, dune_op, dim, name=None):
         super(DuneLinearOperator, self).__init__()
@@ -28,13 +29,12 @@ class DuneLinearOperator(LinearOperatorInterface):
         self.dune_op = dune_op
         self.lock()
 
-    def _assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
-        return self
-
     def assemble(self, mu=None, force=False):
         mu = self.parse_parameter(mu)
         return self
+
+    def as_vector_array(self, mu=None):
+        raise NotImplementedError
 
     def apply(self, U, ind=None, mu=None):
         assert isinstance(U, DuneVectorArray)
@@ -43,11 +43,12 @@ class DuneLinearOperator(LinearOperatorInterface):
         return DuneVectorArray([WrappedDuneVector(self.dune_op.apply(v._vector)) for v in vectors], dim=self.dim_source)
 
 
-class DuneLinearFunctional(LinearOperatorInterface):
+class DuneLinearFunctional(OperatorBase, MatrixBasedOperatorInterface):
 
     type_source = DuneVectorArray
     type_range = NumpyVectorArray
     assembled = True
+    sparse = False
 
     def __init__(self, dune_vec, name=None):
         super(DuneLinearFunctional, self).__init__()
@@ -56,10 +57,6 @@ class DuneLinearFunctional(LinearOperatorInterface):
         self.name = name
         self.dune_vec = dune_vec
         self.lock()
-
-    def _assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
-        return self
 
     def assemble(self, mu=None, force=False):
         mu = self.parse_parameter(mu)
