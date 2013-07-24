@@ -124,6 +124,7 @@ class LincombOperatorBase(OperatorBase, LincombOperatorInterface):
         self.type_range = operators[0].type_range
         self.operators = operators
         self.coefficients = coefficients
+        self.coefficients_name = coefficients_name
         self.linear = all(op.linear for op in operators)
         self.name = name
         if coefficients is None:
@@ -151,11 +152,10 @@ class LincombOperatorBase(OperatorBase, LincombOperatorInterface):
         proj_operators = [project_operator(op, source_basis, range_basis, product, name='{}_projected'.format(op.name))
                           for op in self.operators]
         name = name or '{}_projected'.format(self.name)
-        coefficients_name = None if self.parameter_global_names is None else self.parameter_global_names['coefficients']
         num_coefficients = getattr(self, 'num_coefficients', None)
         return type(proj_operators[0]).lincomb(operators=proj_operators, coefficients=self.coefficients,
                                                num_coefficients=num_coefficients,
-                                               coefficients_name=coefficients_name, name=name)
+                                               coefficients_name=self.coefficients_name, name=name)
 
 
 class LincombOperator(LincombOperatorBase):

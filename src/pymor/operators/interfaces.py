@@ -150,6 +150,8 @@ class LincombOperatorInterface(OperatorInterface):
 
     operators = None
     coefficients = None
+    num_coefficients = None
+    coefficients_name = None
 
     @abstractmethod
     def evaluate_coefficients(self, mu):
