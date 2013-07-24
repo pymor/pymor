@@ -22,11 +22,13 @@ class NumpyMatrixBasedOperator(MatrixBasedOperatorBase):
     type_source = type_range = NumpyVectorArray
 
     @staticmethod
-    def lincomb(operators, coefficients=None, global_names=None, name=None):
+    def lincomb(operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
         if not all(isinstance(op, NumpyMatrixBasedOperator) for op in operators):
-            return LincombOperator(operators, coefficients, global_names=None, name=name)
+            return LincombOperator(operators, coefficients, num_coefficients=num_coefficients,
+                                   coefficients_name=coefficients_name, name=name)
         else:
-            return NumpyLincombMatrixOperator(operators, coefficients, global_names=None, name=name)
+            return NumpyLincombMatrixOperator(operators, coefficients, num_coefficients=num_coefficients,
+                                              coefficients_name=coefficients_name, name=name)
 
     @property
     def invert_options(self):
@@ -171,9 +173,11 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
 class NumpyLincombMatrixOperator(NumpyMatrixBasedOperator, LincombOperatorBase):
 
-    def __init__(self, operators, coefficients=None, global_names=None, name=None):
+    def __init__(self, operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
         assert all(isinstance(op, NumpyMatrixBasedOperator) for op in operators)
-        LincombOperatorBase.__init__(self, operators, coefficients, global_names, name)
+        LincombOperatorBase.__init__(self, operators=operators, coefficients=coefficients,
+                                     num_coefficients=num_coefficients,
+                                     coefficients_name=coefficients_name, name=name)
         self.sparse = all(op.sparse for op in operators)
         self.lock()
 

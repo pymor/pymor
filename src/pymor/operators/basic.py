@@ -33,8 +33,8 @@ class OperatorBase(OperatorInterface):
             AU = product.apply(AU)
         return V.dot(AU, ind=V_ind, pairwise=pairwise)
 
-    def lincomb(operators, coefficients=None, name=None):
-        return LincombOperator(operators, coefficients, name=None)
+    def lincomb(operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
+        return LincombOperator(operators, coefficients, num_coefficients, coefficients_name, name=None)
 
     def __add__(self, other):
         if isinstance(other, Number):
@@ -105,7 +105,7 @@ class MatrixBasedOperatorBase(MatrixBasedOperatorInterface, OperatorBase):
 
 class LincombOperatorBase(OperatorBase, LincombOperatorInterface):
 
-    def __init__(self, operators, coefficients=None, global_names=None, name=None):
+    def __init__(self, operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
         assert coefficients is None or len(operators) == len(coefficients)
         assert len(operators) > 0
         assert all(isinstance(op, OperatorInterface) for op in operators)
@@ -114,7 +114,10 @@ class LincombOperatorBase(OperatorBase, LincombOperatorInterface):
         assert all(op.dim_range == operators[0].dim_range for op in operators[1:])
         assert all(op.type_source == operators[0].type_source for op in operators[1:])
         assert all(op.type_range == operators[0].type_range for op in operators[1:])
-        assert coefficients is None or global_names is None
+        assert coefficients is None or num_coefficients is None
+        assert coefficients is None or coefficients_name is None
+        assert coefficients is not None or coefficients_name is not None
+        assert coefficients_name is None or isinstance(coefficients_name, str)
         self.dim_source = operators[0].dim_source
         self.dim_range = operators[0].dim_range
         self.type_source = operators[0].type_source
@@ -124,8 +127,10 @@ class LincombOperatorBase(OperatorBase, LincombOperatorInterface):
         self.linear = all(op.linear for op in operators)
         self.name = name
         if coefficients is None:
-            self.build_parameter_type({'coefficients': len(operators)}, inherits=list(operators),
-                                      global_names=global_names)
+            self.num_coefficients = num_coefficients if num_coefficients is not None else len(operators)
+            self.pad_coefficients = len(operators) - self.num_coefficients
+            self.build_parameter_type({'coefficients': self.num_coefficients}, inherits=list(operators),
+                                      global_names={'coefficients': coefficients_name})
         else:
             self.build_parameter_type(inherits=list(operators) +
                                       [f for f in coefficients if isinstance(f, ParameterFunctionalInterface)])
@@ -133,7 +138,11 @@ class LincombOperatorBase(OperatorBase, LincombOperatorInterface):
     def evaluate_coefficients(self, mu):
         mu = self.parse_parameter(mu)
         if self.coefficients is None:
-            return self.local_parameter(mu)['coefficients']
+            if self.pad_coefficients:
+                return np.concatenate((self.local_parameter(mu)['coefficients'], np.ones(self.pad_coefficients)))
+            else:
+                return self.local_parameter(mu)['coefficients']
+
         else:
             return np.array([c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients])
 
@@ -142,15 +151,19 @@ class LincombOperatorBase(OperatorBase, LincombOperatorInterface):
         proj_operators = [project_operator(op, source_basis, range_basis, product, name='{}_projected'.format(op.name))
                           for op in self.operators]
         name = name or '{}_projected'.format(self.name)
-        return type(self)(operators=proj_operators, coefficients=self.coefficients,
-                          global_names=self.parameter_global_names, name=name)
+        coefficients_name = None if self.parameter_global_names is None else self.parameter_global_names['coefficients']
+        num_coefficients = getattr(self, 'num_coefficients', None)
+        return type(proj_operators[0]).lincomb(operators=proj_operators, coefficients=self.coefficients,
+                                               num_coefficients=num_coefficients,
+                                               coefficients_name=coefficients_name, name=name)
 
 
 class LincombOperator(LincombOperatorBase):
 
-    def __init__(self, operators, coefficients=None, global_names=None, name=None):
-        super(LincombOperator, self).__init__(operators=operators, coefficients=coefficients, global_names=global_names,
-                                              name=name)
+    def __init__(self, operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
+        super(LincombOperator, self).__init__(operators=operators, coefficients=coefficients,
+                                              num_coefficients=num_coefficients,
+                                              coefficients_name=coefficients_name, name=name)
         self.lock()
 
     def apply(self, U, ind=None, mu=None):
