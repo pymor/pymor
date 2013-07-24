@@ -107,7 +107,7 @@ def thermalblock_demo(args):
         for mu in discretization.parameter_space.sample_randomly(2):
             print('Solving for diffusion = \n{} ... '.format(mu['diffusion']))
             sys.stdout.flush()
-            U = discretization.solve(mu)
+            U = discretization.solve([[1,1],[1,1]])
             discretization.visualize(U)
 
 

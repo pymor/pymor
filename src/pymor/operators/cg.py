@@ -145,11 +145,11 @@ class L2ProductFunctionalQ1(LinearOperatorInterface):
 
         # evaluate function at all quadrature points -> shape = (g.size(0), number of quadrature points, 1)
         # the singleton dimension correspoints to the dimension of the range of the function
-        F = self.function(g.quadrature_points(0, order=2), mu=self.map_parameter(mu, 'function'))
+        F = self.function(g.quadrature_points(0, order=4), mu=self.map_parameter(mu, 'function'))
 
         # evaluate the shape functions at the quadrature points on the reference
         # element -> shape = (number of shape functions, number of quadrature points)
-        q, w = g.reference_element.quadrature(order=2)
+        q, w = g.reference_element.quadrature(order=4)
         if g.dim == 2:
             SF = np.array(((1-q[..., 0])*(1-q[..., 1]),
                           (1-q[..., 1])*(q[..., 0]),
@@ -328,7 +328,7 @@ class L2ProductQ1(LinearOperatorInterface):
         else:
             raise NotImplementedError
 
-        q, w = square.quadrature(order=2)
+        q, w = square.quadrature(order=4)
 
         # evaluate the shape functions on the quadrature points
         SFQ = np.array(tuple(f(q) for f in SF))
@@ -525,23 +525,24 @@ class DiffusionOperatorQ1(LinearOperatorInterface):
         # gradients of shape functions
         if g.dim == 2:
             self.logger.info('Calulate gradients of shape functions transformed by reference map ...')
-            q, w = g.reference_element.quadrature(order=2)
+            q, w = g.reference_element.quadrature(order=4)
 
+            import ipdb; #ipdb.set_trace()
             SF_GRAD = np.array(([q[...,1]-1.,q[...,0]-1.],
-                      [1-q[..., 1],-q[..., 0]],
+                      [1.-q[..., 1],-q[..., 0]],
                       [-q[..., 1],1.-q[..., 0]],
                       [q[..., 1],q[..., 0]]))
         else:
             raise NotImplementedError
-
+        #ipdb.set_trace()
         SF_GRADS = np.einsum('eij,pjc->epic', g.jacobian_inverse_transposed(0), SF_GRAD)
 
-        self.logger.info('Calculate all local scalar products beween gradients ...')
+        self.logger.info('Calculate all local scalar products between gradients ...')
         if self.diffusion_function is not None:
             D = self.diffusion_function(self.grid.centers(0), mu=self.map_parameter(mu, 'diffusion')).ravel()
-            SF_INTS = np.einsum('epic,eqic,e,e->epq', SF_GRADS, SF_GRADS, g.volumes(0), D).ravel()
+            SF_INTS = np.einsum('epic,eqic,c,e,e->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0), D).ravel()
         else:
-            SF_INTS = np.einsum('epic,eqic,e->epq', SF_GRADS, SF_GRADS, g.volumes(0)).ravel()
+            SF_INTS = np.einsum('epic,eqic,c,e->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0)).ravel()
 
         if self.diffusion_constant is not None:
             SF_INTS *= self.diffusion_constant
