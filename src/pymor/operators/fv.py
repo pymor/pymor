@@ -83,7 +83,7 @@ class NonlinearAdvectionLaxFriedrichs(OperatorInterface):
             Ui = U[j]
             Ri = R[i]
 
-            F = self.flux(Ui, mu=mu)
+            F = self.flux(Ui[..., np.newaxis], mu=mu)
             F_edge = F[SUPE]
             U_edge = Ui[SUPE]
 
@@ -189,8 +189,8 @@ class NonlinearAdvectionEngquistOsher(OperatorInterface):
             Ui = U[j]
             Ri = R[i]
 
-            F = self.flux(Ui, mu=mu)
-            F_d = self.flux_derivative(Ui, mu=mu)
+            F = self.flux(Ui[..., np.newaxis], mu=mu)
+            F_d = self.flux_derivative(Ui[..., np.newaxis], mu=mu)
             F_edge = F[SUPE]
             F_d_edge = F_d[SUPE]
 
@@ -275,7 +275,7 @@ class L2ProductFunctional(LinearOperatorInterface):
     sparse = False
 
     def __init__(self, grid, function, name=None):
-        assert function.dim_range == 1
+        assert function.shape_range == tuple()
         super(L2ProductFunctional, self).__init__()
         self.dim_source = grid.size(0)
         self.dim_range = 1
@@ -290,14 +290,13 @@ class L2ProductFunctional(LinearOperatorInterface):
         g = self.grid
 
         # evaluate function at all quadrature points -> shape = (g.size(0), number of quadrature points, 1)
-        # the singleton dimension correspoints to the dimension of the range of the function
         F = self.function(g.quadrature_points(0, order=2), mu=mu)
 
         _, w = g.reference_element.quadrature(order=2)
 
         # integrate the products of the function with the shape functions on each element
         # -> shape = (g.size(0), number of shape functions)
-        F_INTS = np.einsum('eix,e,i->e', F, g.integration_elements(0), w).ravel()
+        F_INTS = np.einsum('ei,e,i->e', F, g.integration_elements(0), w).ravel()
         F_INTS /= g.volumes(0)
 
         return NumpyLinearOperator(F_INTS.reshape((1, -1)))

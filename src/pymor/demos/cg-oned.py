@@ -21,7 +21,7 @@ from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional,
 
 
 def cg_oned_demo(nrhs, n, plot):
-    rhs0 = GenericFunction(lambda X: np.ones(X.shape) * 10, dim_domain=1)
+    rhs0 = GenericFunction(lambda X: np.ones(X.shape[:-1]) * 10, dim_domain=1)
     rhs1 = GenericFunction(lambda X: (X[..., 0] - 0.5) ** 2 * 1000, dim_domain=1)
 
     assert 0 <= nrhs <= 1, ValueError('Invalid rhs number.')

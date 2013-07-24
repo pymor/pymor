@@ -4,6 +4,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+from numbers import Number
+
 import numpy as np
 
 from .interfaces import FunctionInterface
@@ -12,7 +14,7 @@ from .interfaces import FunctionInterface
 class ConstantFunction(FunctionInterface):
     '''A constant function ::
 
-        f: R^d -> R^r, f(x) = c
+        f: R^d -> R^shape(c), f(x) = c
 
     Parameters
     ----------
@@ -20,19 +22,20 @@ class ConstantFunction(FunctionInterface):
         The constant c.
     dim_domain
         The dimension d.
-    dim_range
-        The dimension r.
     name
         The name of the function.
     '''
 
-    def __init__(self, value=1.0, dim_domain=1, dim_range=1, name=None):
+    def __init__(self, value=np.array(1.0), dim_domain=1, name=None):
+        assert dim_domain > 0
+        assert isinstance(value, (Number, np.ndarray))
         super(ConstantFunction, self).__init__()
+        if not isinstance(value, np.ndarray):
+            value = np.array(value)
+        self._value = value
         self.dim_domain = dim_domain
-        self.dim_range = dim_range
+        self.shape_range = value.shape
         self.name = name
-        value = np.array(value, copy=False)
-        self._value = value.reshape((self.dim_range,))
         self.lock()
 
     def __str__(self):
@@ -41,12 +44,11 @@ class ConstantFunction(FunctionInterface):
     def evaluate(self, x, mu=None):
         mu = self.parse_parameter(mu)
         x = np.array(x, copy=False, ndmin=1)
+        assert x.shape[-1] == self.dim_domain
         if x.ndim == 1:
-            assert x.shape[0] == self.dim_domain
-            return np.array(self._value, ndmin=min(1, self.dim_range))
+            return np.array(self._value)
         else:
-            assert x.shape[-1] == self.dim_domain
-            return np.tile(self._value, x.shape[:-1] + (1,))
+            return np.tile(self._value, x.shape[:-1] + self.shape_range)
 
 
 class GenericFunction(FunctionInterface):
@@ -56,29 +58,32 @@ class GenericFunction(FunctionInterface):
     ----------
     mapping
         The function to wrap. If parameter_type is None, the function is of
-        the form `mapping(x)` and is expected to vectorized. If parameter_type
-        is not None, the function has to have the form `mapping(x, mu)`.
+        the form `mapping(x)` and is expected to vectorized. In particular::
+
+            mapping(x).shape == x.shape[:-1] + shape_range
+
+        If parameter_type is not None, the function has to have the signature
+        `mapping(x, mu)`.
     dim_domain
         The dimension of the domain.
-    dim_range
-        The dimension of the range.
+    shape_range
+        The of the values returned by the mapping.
     parameter_type
         The type of the `Parameter` that mapping accepts.
     name
         The name of the function.
     '''
 
-    def __init__(self, mapping, dim_domain=1, dim_range=1, parameter_type=None, name=None):
+    def __init__(self, mapping, dim_domain=1, shape_range=tuple(), parameter_type=None, name=None):
+        assert dim_domain > 0
+        assert isinstance(shape_range, (Number, tuple))
         super(GenericFunction, self).__init__()
         self.dim_domain = dim_domain
-        self.dim_range = dim_range
+        self.shape_range = shape_range if isinstance(shape_range, tuple) else (shape_range,)
         self.name = name
         self._mapping = mapping
         if parameter_type is not None:
             self.build_parameter_type(parameter_type, local_global=True)
-            self._with_mu = True
-        else:
-            self._with_mu = False
         self.lock()
 
     def __str__(self):
@@ -87,13 +92,11 @@ class GenericFunction(FunctionInterface):
     def evaluate(self, x, mu=None):
         mu = self.parse_parameter(mu)
         x = np.array(x, copy=False, ndmin=1)
-        if self.dim_domain > 0:
-            assert x.shape[-1] == self.dim_domain
-        if self._with_mu:
-            my_mu = self.local_parameter(mu)
+        assert x.shape[-1] == self.dim_domain
+        if self.parametric:
             v = self._mapping(x, mu)
         else:
             v = self._mapping(x)
-        if len(v.shape) < len(x.shape) and self.dim_range > 0:
-            v = v[..., np.newaxis]
+        assert v.shape == x.shape[:-1] + self.shape_range
+
         return v

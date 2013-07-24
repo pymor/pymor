@@ -45,7 +45,7 @@ class L2ProductFunctionalP1(LinearOperatorInterface):
 
     def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, name=None):
         assert grid.reference_element(0) in {line, triangle}
-        assert function.dim_range == 1
+        assert function.shape_range == tuple()
         super(L2ProductFunctionalP1, self).__init__()
         self.dim_source = grid.size(grid.dim)
         self.dim_range = 1
@@ -62,8 +62,7 @@ class L2ProductFunctionalP1(LinearOperatorInterface):
         g = self.grid
         bi = self.boundary_info
 
-        # evaluate function at all quadrature points -> shape = (g.size(0), number of quadrature points, 1)
-        # the singleton dimension correspoints to the dimension of the range of the function
+        # evaluate function at all quadrature points -> shape = (g.size(0), number of quadrature points)
         F = self.function(g.quadrature_points(0, order=2), mu=mu)
 
         # evaluate the shape functions at the quadrature points on the reference
@@ -80,7 +79,7 @@ class L2ProductFunctionalP1(LinearOperatorInterface):
 
         # integrate the products of the function with the shape functions on each element
         # -> shape = (g.size(0), number of shape functions)
-        SF_INTS = np.einsum('eix,pi,e,i->ep', F, SF, g.integration_elements(0), w).ravel()
+        SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(0), w).ravel()
 
         # map local DOFs to global DOFS
         # FIXME This implementation is horrible, find a better way!
@@ -261,7 +260,7 @@ class DiffusionOperatorP1(LinearOperatorInterface):
 
         self.logger.info('Calculate all local scalar products beween gradients ...')
         if self.diffusion_function is not None:
-            D = self.diffusion_function(self.grid.centers(0), mu=mu).ravel()
+            D = self.diffusion_function(self.grid.centers(0), mu=mu)
             SF_INTS = np.einsum('epi,eqi,e,e->epq', SF_GRADS, SF_GRADS, g.volumes(0), D).ravel()
         else:
             SF_INTS = np.einsum('epi,eqi,e->epq', SF_GRADS, SF_GRADS, g.volumes(0)).ravel()
