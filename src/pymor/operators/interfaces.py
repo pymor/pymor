@@ -27,6 +27,15 @@ class OperatorInterface(BasicInterface, Parametric, Named):
         The dimension s of the source space.
     dim_range
         The dimension r of the range space.
+    invert_options
+        `OrderedDict` of possible options for `apply_inverse()`. Each key
+        is a type of inversion algorithm which can be used to invert the
+        operator. `invert_options[k]` is a dict containing all options
+        along with their default values which can be set for algorithm `k`.
+        We always have `invert_options[k]['type'] == k` such that
+        `invert_options[k]` can be passed directly to `apply_inverse()`.
+    linear
+        True if the operator is (known to be) linear.
     type_source
         The `VectorArray` class representing vectors of the source space.
     type_range
@@ -55,6 +64,8 @@ class OperatorInterface(BasicInterface, Parametric, Named):
             If None, the operator is applied to all elements of U.
             Otherwise an iterable of the indices of the vectors to
             which the operator is to be applied.
+        mu
+            The parameter for which to evaluate the operator.
 
         Returns
         -------
@@ -64,7 +75,7 @@ class OperatorInterface(BasicInterface, Parametric, Named):
 
     @abstractmethod
     def apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None, pairwise=True):
-        ''' Treat the operator as a 2-form by calculating (V, A(U)).
+        '''Treat the operator as a 2-form by calculating (V, A(U)).
 
         If ( , ) is the euclidean scalar product and A is given by
         multiplication with a matrix B, then ::
@@ -85,6 +96,8 @@ class OperatorInterface(BasicInterface, Parametric, Named):
             If None, the operator is applied to all elements of U.
             Otherwise an iterable of the indices of the vectors to
             which the operator is to be applied.
+        mu
+            The parameter for which to evaluate the operator.
         product
             `Operator` representing the scalar product.
             If None, the euclidean product is chosen.
@@ -104,8 +117,72 @@ class OperatorInterface(BasicInterface, Parametric, Named):
         '''
         pass
 
+    @abstractmethod
+    def apply_inverse(self, U, ind=None, mu=None, options=None):
+        '''Apply the inverse operator to U.
+
+        Parameters
+        ----------
+        U : VectorArray
+            `VectorArray` of vectors to which the inverse operator is applied.
+        ind
+            If None, the inverse operator is applied to all elements of U.
+            Otherwise an iterable of the indices of the vectors to
+            which the operator is to be applied.
+        mu
+            The parameter for which to evaluate the inverse operator.
+        options
+            Dictionary of options for the inversion algorithm which has to
+            contain the key `type`. `options['type']` determines which
+            inversion algorithm is to be used. All other key-value pairs
+            represent options specific to this algorithm.
+            If `options` can also be given as a string, which is then
+            interpreted as the type of inversion algorithm.
+            If `options` is `None`, a default algorithm with default
+            options is chosen.
+            Available algorithms and their default options are provided
+            by the `inverse_options` attribute.
+
+        Returns
+        -------
+        `VectorArray` of shape `(len(ind), self.dim_source)`
+
+        Raises
+        ------
+        InversionError
+           Is raised, if the operator cannot be inverted.
+        '''
+        pass
+
     @abstractstaticmethod
     def lincomb(operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
+        '''Return a linear combination of the given operators.
+
+        Parameters
+        ----------
+        operators
+            List of operators whose linear combination is taken.
+        coefficients
+            List of coefficients of the linear combination or `None`.
+            Coefficients can be either `Number`s or `ParameterFunctional`s.
+            If coefficients is `None` a new parameter with shape
+            `(num_coefficients,)` is introduced, whose components will
+            be taken as the first linear coefficients. The missing coefficients
+            are set to 1.
+        num_coefficients
+            In case of `coefficients == None`, the number of linear coefficients
+            which should be treated as a parameter. If `None`, `num_coefficients`
+            is set to `len(operators)`.
+        coefficients_name
+            If coefficients is None, the name of the new parameter which
+            holds the linear coefficients.
+        name
+            Name of the operator.
+
+        Returns
+        -------
+        Operator representing the linear combination.
+        '''
         pass
 
     @abstractmethod
@@ -120,13 +197,16 @@ class OperatorInterface(BasicInterface, Parametric, Named):
     def __mul__(self, other):
         pass
 
-    @abstractmethod
-    def apply_inverse(self, U, ind=None, mu=None, options=None):
-        pass
-
 
 class MatrixBasedOperatorInterface(OperatorInterface):
     '''Base class for operators which assemble to a matrix.
+
+    Attributes
+    ----------
+    assembled
+        `True` if the operator is already assembled.
+    sparse
+        `True` if the operator is based on a sparse matrix.
     '''
 
     linear = True
@@ -135,18 +215,58 @@ class MatrixBasedOperatorInterface(OperatorInterface):
 
     @abstractmethod
     def as_vector_array(self, mu=None):
+        '''Returns a VectorArray containing the matrix of the operator.
+
+        This is mainly useful for representing a linear functional as
+        a vector. (In which case, the length of the returned `VectorArray`
+        is 1.) In general, if dim_range is large, this method will not
+        be useful an possbibly raise a `NotImplementedError`.
+
+        Parameters
+        ----------
+        mu
+            The parameter for which to return the matrix.
+
+        Returns
+        -------
+        VectorArray containing the rows of the operator's matrix.
+        '''
         pass
 
     @abstractmethod
     def assemble(self, mu=None, force=False):
-        '''Assembles the matrix of the operator for given parameter mu.
+        '''Assembles the matrix of the operator for given parameter.
 
-        Returns an assembled parameter independent MatrixOperator operator.
+        Parameters
+        ----------
+        mu
+            The parameter for which to assemble the operator.
+
+        Returns
+        -------
+        The assembled parameter independent `MatrixBasedOperator`.
         '''
         pass
 
 
 class LincombOperatorInterface(OperatorInterface):
+    '''An operator representing a linear combination.
+
+    Attributes
+    ----------
+    operators
+        List of operators whose linear combination is taken.
+    coefficients
+        `None` or list of linear coefficients.
+    num_coefficients
+        If `coefficients` is `None`, the number of linear
+        coefficients which are given by the parameter with
+        name `coefficients_name`. The missing coefficients
+        are set to 1.
+    coefficients_name
+        If `coefficients` is `None`, the name of the parameter
+        providing the linear coefficients.
+    '''
 
     operators = None
     coefficients = None
@@ -155,4 +275,5 @@ class LincombOperatorInterface(OperatorInterface):
 
     @abstractmethod
     def evaluate_coefficients(self, mu):
+        '''Evaluate the linear coefficients for a given parameter.'''
         pass
