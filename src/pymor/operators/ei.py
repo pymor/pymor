@@ -10,11 +10,11 @@ from scipy.linalg import solve_triangular
 
 from pymor.la.interfaces import VectorArrayInterface
 from pymor.la import NumpyVectorArray
-from pymor.operators import OperatorInterface, DefaultOperator
+from pymor.operators import OperatorInterface, OperatorBase
 from pymor.tools import float_cmp_all
 
 
-class EmpiricalInterpolatedOperator(DefaultOperator):
+class EmpiricalInterpolatedOperator(OperatorBase):
 
     def __init__(self, operator, interpolation_dofs, collateral_basis, name=None):
         assert isinstance(operator, OperatorInterface)
@@ -75,7 +75,7 @@ class EmpiricalInterpolatedOperator(DefaultOperator):
                                                       projected_collateral_basis, name)
 
 
-class ProjectedEmpiciralInterpolatedOperator(DefaultOperator):
+class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
 
     def __init__(self, restricted_operator, interpolation_matrix, source_basis_dofs,
                  projected_collateral_basis, name=None):

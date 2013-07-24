@@ -16,7 +16,7 @@ from pymor.operators.interfaces import OperatorInterface, MatrixBasedOperatorInt
 from pymor.parameters import ParameterFunctionalInterface
 
 
-class DefaultOperator(OperatorInterface):
+class OperatorBase(OperatorInterface):
 
     def apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None, pairwise=True):
         mu = self.parse_parameter(mu)
@@ -57,7 +57,7 @@ class DefaultOperator(OperatorInterface):
         raise NotImplementedError
 
 
-class DefaultMatrixBasedOperator(MatrixBasedOperatorInterface, DefaultOperator):
+class MatrixBasedOperatorBase(MatrixBasedOperatorInterface, OperatorBase):
 
     linear = True
     assembled = False
@@ -103,7 +103,7 @@ class DefaultMatrixBasedOperator(MatrixBasedOperatorInterface, DefaultOperator):
     _last_mat = None
 
 
-class DefaultLincombOperator(DefaultOperator, LincombOperatorInterface):
+class LincombOperatorBase(OperatorBase, LincombOperatorInterface):
 
     def __init__(self, operators, coefficients=None, global_names=None, name=None):
         assert coefficients is None or len(operators) == len(coefficients)
@@ -146,7 +146,7 @@ class DefaultLincombOperator(DefaultOperator, LincombOperatorInterface):
                           global_names=self.parameter_global_names, name=name)
 
 
-class LincombOperator(DefaultLincombOperator):
+class LincombOperator(LincombOperatorBase):
 
     def __init__(self, operators, coefficients=None, global_names=None, name=None):
         super(LincombOperator, self).__init__(operators=operators, coefficients=coefficients, global_names=global_names,
@@ -164,7 +164,7 @@ class LincombOperator(DefaultLincombOperator):
         return R
 
 
-class ConstantOperator(DefaultOperator):
+class ConstantOperator(OperatorBase):
 
     type_source = NumpyVectorArray
 
@@ -211,7 +211,7 @@ class ConstantOperator(DefaultOperator):
         return ConstantOperator(self._vector * other)
 
 
-class ComponentProjection(DefaultOperator):
+class ComponentProjection(OperatorBase):
 
     type_range = NumpyVectorArray
 

@@ -13,13 +13,13 @@ from pymor.functions import FunctionInterface
 from pymor.grids.referenceelements import triangle, line
 from pymor.grids.subgrid import SubGrid
 from pymor.grids.boundaryinfos import SubGridBoundaryInfo
-from pymor.operators import DefaultOperator, NumpyMatrixBasedOperator, NumpyMatrixOperator
+from pymor.operators import OperatorBase, NumpyMatrixBasedOperator, NumpyMatrixOperator
 from pymor.operators.constructions import Concatenation
 from pymor.operators.basic import ComponentProjection
 from pymor.tools.inplace import iadd_masked, isub_masked
 
 
-class NonlinearAdvectionLaxFriedrichs(DefaultOperator):
+class NonlinearAdvectionLaxFriedrichs(OperatorBase):
     '''Nonlinear Finite Volume Advection operator using Lax-Friedrichs-Flux.
     '''
 
@@ -123,7 +123,7 @@ class NonlinearAdvectionLaxFriedrichs(DefaultOperator):
         return NumpyVectorArray(R)
 
 
-class NonlinearAdvectionEngquistOsher(DefaultOperator):
+class NonlinearAdvectionEngquistOsher(OperatorBase):
     '''Nonlinear Finite Volume Advection operator using EngquistOsher-Flux.
 
     It is assumed that the flux is zero at 0 and its derivative only changes sign at 0.

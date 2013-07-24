@@ -10,11 +10,11 @@ from collections import OrderedDict
 import numpy as np
 
 from pymor.la import NumpyVectorArray
-from pymor.operators import OperatorInterface, DefaultOperator
+from pymor.operators import OperatorInterface, OperatorBase
 from pymor.operators.numpy import NumpyMatrixBasedOperator, NumpyMatrixOperator
 
 
-class ProjectedOperator(DefaultOperator):
+class ProjectedOperator(OperatorBase):
     '''Projection of an operator to a subspace.
 
     Given an operator L, a scalar product ( ⋅, ⋅), and vectors b_1, ..., b_N,
@@ -189,7 +189,7 @@ def rb_project_operator(operator, rb, product=None, name=None):
     return project_operator(operator, source_basis, range_basis, product=product, name=name)
 
 
-class Concatenation(DefaultOperator):
+class Concatenation(OperatorBase):
 
     def __init__(self, second, first, name=None):
         assert isinstance(second, OperatorInterface)

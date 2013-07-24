@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.operators.interfaces import OperatorInterface, MatrixBasedOperatorInterface, LincombOperatorInterface
-from pymor.operators.basic import (DefaultOperator, DefaultMatrixBasedOperator, DefaultLincombOperator, LincombOperator,
+from pymor.operators.basic import (OperatorBase, MatrixBasedOperatorBase, LincombOperatorBase, LincombOperator,
                                    ConstantOperator)
 from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixBasedOperator, NumpyMatrixOperator
 from pymor.operators.constructions import (ProjectedOperator, ProjectedLinearOperator, project_operator,

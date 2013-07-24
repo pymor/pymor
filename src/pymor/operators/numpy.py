@@ -14,10 +14,10 @@ from scipy.sparse.linalg import bicgstab
 
 from pymor.core import defaults
 from pymor.la import NumpyVectorArray
-from pymor.operators import DefaultOperator, DefaultMatrixBasedOperator, DefaultLincombOperator, LincombOperator
+from pymor.operators import OperatorBase, MatrixBasedOperatorBase, LincombOperatorBase, LincombOperator
 
 
-class NumpyMatrixBasedOperator(DefaultMatrixBasedOperator):
+class NumpyMatrixBasedOperator(MatrixBasedOperatorBase):
 
     type_source = type_range = NumpyVectorArray
 
@@ -43,7 +43,7 @@ class NumpyMatrixBasedOperator(DefaultMatrixBasedOperator):
         return self.assemble(mu).apply_inverse(U, ind=ind, options=options)
 
 
-class NumpyGenericOperator(DefaultOperator):
+class NumpyGenericOperator(OperatorBase):
     '''Wraps an apply function as a proper discrete operator.
 
     Parameters
@@ -169,11 +169,11 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         return NumpyVectorArray(R)
 
 
-class NumpyLincombMatrixOperator(NumpyMatrixBasedOperator, DefaultLincombOperator):
+class NumpyLincombMatrixOperator(NumpyMatrixBasedOperator, LincombOperatorBase):
 
     def __init__(self, operators, coefficients=None, global_names=None, name=None):
         assert all(isinstance(op, NumpyMatrixBasedOperator) for op in operators)
-        DefaultLincombOperator.__init__(self, operators, coefficients, global_names, name)
+        LincombOperatorBase.__init__(self, operators, coefficients, global_names, name)
         self.sparse = all(op.sparse for op in operators)
         self.lock()
 
