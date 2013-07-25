@@ -58,7 +58,7 @@ import pymor.core as core
 core.logger.MAX_HIERACHY_LEVEL = 2
 from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import discretize_elliptic_cg
-from pymor.reductors.linear import reduce_stationary_affine_linear, numpy_reduce_stationary_affine_linear
+from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor.algorithms import greedy, trivial_basis_extension, gram_schmidt_basis_extension
 from pymor.algorithms.basisextension import numpy_trivial_basis_extension, numpy_gram_schmidt_basis_extension
 core.getLogger('pymor.algorithms').setLevel('INFO')
@@ -102,8 +102,7 @@ def thermalblock_demo(args):
     print('RB generation ...')
 
     error_product = discretization.h1_product if args['--estimator-norm'] == 'h1' else None
-    reductors = {'default': partial(reduce_stationary_affine_linear, error_product=error_product),
-                 'numpy_default': partial(numpy_reduce_stationary_affine_linear, error_product=error_product)}
+    reductors = {'default': partial(reduce_stationary_affine_linear, error_product=error_product)}
     reductor = reductors[args['--reductor']]
     extension_algorithms = {'trivial': trivial_basis_extension,
                             'gram_schmidt': gram_schmidt_basis_extension,
