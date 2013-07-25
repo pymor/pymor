@@ -94,7 +94,6 @@ class NumpyGenericOperator(OperatorBase):
     type_source = type_range = NumpyVectorArray
 
     def __init__(self, mapping, dim_source=1, dim_range=1, parameter_type=None, name=None):
-        super(NumpyGenericOperator, self).__init__()
         self.dim_source = dim_source
         self.dim_range = dim_range
         self.name = name
@@ -130,7 +129,6 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     assembled = True
 
     def __init__(self, matrix, name=None):
-        super(NumpyMatrixOperator, self).__init__()
         assert matrix.ndim <= 2
         if matrix.ndim == 1:
             matrix = np.reshape(matrix, (1, -1))
