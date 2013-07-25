@@ -119,7 +119,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None):
         t += dt
         mu['_t'] = t
         if F_time_dep:
-            F_ass = F.assemble(mu).as_vector()
+            F_ass = F.as_vector(mu)
         U += (F_ass - A.apply(U, mu=mu)) * dt
         R.append(U)
 
