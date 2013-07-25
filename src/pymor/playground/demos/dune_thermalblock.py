@@ -167,7 +167,7 @@ def dune_thermalblock_demo(args):
         # #err = uu.add(discretization.operator.apply(U, mu=mu)._vectors[0])
         # discretization.example.visualize(err, 'blubb', 'error')
 
-        #err = discretization.operator.apply(U, mu=mu) - discretization.rhs.as_vector_array()
+        #err = discretization.operator.apply(U, mu=mu) - discretization.rhs.as_vector()
         #discretization.visualize(err)
 
 

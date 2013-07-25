@@ -10,16 +10,17 @@ import numpy as np
 
 from pymor.la import NumpyVectorArray
 from pymor.playground.la.dunevectorarray import DuneVectorArray, WrappedDuneVector
-from pymor.operators import MatrixBasedOperatorInterface, OperatorBase
+from pymor.operators import OperatorBase
 
 from dunelinearellipticcg2dsgrid import DuneVector
 
 
-class DuneLinearOperator(OperatorBase, MatrixBasedOperatorInterface):
+class DuneLinearOperator(OperatorBase):
 
     type_source = type_range = DuneVectorArray
     assembled = True
     sparse = True
+    linear = True
 
     def __init__(self, dune_op, dim, name=None):
         super(DuneLinearOperator, self).__init__()
@@ -33,9 +34,6 @@ class DuneLinearOperator(OperatorBase, MatrixBasedOperatorInterface):
         mu = self.parse_parameter(mu)
         return self
 
-    def as_vector_array(self, mu=None):
-        raise NotImplementedError
-
     def apply(self, U, ind=None, mu=None):
         assert isinstance(U, DuneVectorArray)
         mu = self.parse_parameter(mu)
@@ -43,10 +41,11 @@ class DuneLinearOperator(OperatorBase, MatrixBasedOperatorInterface):
         return DuneVectorArray([WrappedDuneVector(self.dune_op.apply(v._vector)) for v in vectors], dim=self.dim_source)
 
 
-class DuneLinearFunctional(OperatorBase, MatrixBasedOperatorInterface):
+class DuneLinearFunctional(OperatorBase):
 
     type_source = DuneVectorArray
     type_range = NumpyVectorArray
+    linear = True
     assembled = True
     sparse = False
 
@@ -71,5 +70,5 @@ class DuneLinearFunctional(OperatorBase, MatrixBasedOperatorInterface):
         else:
             return NumpyVectorArray([[self.dune_vec.dot(v._vector)] for v in vectors])
 
-    def as_vector_array(self):
+    def as_vector(self):
         return DuneVectorArray([WrappedDuneVector(DuneVector(self.dune_vec))])

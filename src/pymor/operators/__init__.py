@@ -2,7 +2,7 @@
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.operators.interfaces import OperatorInterface, MatrixBasedOperatorInterface, LincombOperatorInterface
+from pymor.operators.interfaces import OperatorInterface, LincombOperatorInterface
 from pymor.operators.basic import (OperatorBase, MatrixBasedOperatorBase, LincombOperatorBase, LincombOperator,
                                    ConstantOperator)
 from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixBasedOperator, NumpyMatrixOperator

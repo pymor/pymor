@@ -44,6 +44,14 @@ class NumpyMatrixBasedOperator(MatrixBasedOperatorBase):
     def apply_inverse(self, U, ind=None, mu=None, options=None):
         return self.assemble(mu).apply_inverse(U, ind=ind, options=options)
 
+    def as_vector(self, mu=None):
+        assert self.dim_range == 1
+        if self.assembled:
+            mu = self.parse_parameter(mu)
+            return self._last_op.as_vector()
+        else:
+            return self.assemble(mu).as_vector()
+
 
 class NumpyGenericOperator(OperatorBase):
     '''Wraps an apply function as a proper discrete operator.
@@ -114,9 +122,6 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         self.sparse = issparse(matrix)
         self.lock()
 
-    def as_vector_array(self):
-        return NumpyVectorArray(self._matrix, copy=True)
-
     def _assemble(self, mu=None):
         mu = self.parse_parameter(mu)
         return self
@@ -124,6 +129,11 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     def assemble(self, mu=None, force=False):
         mu = self.parse_parameter(mu)
         return self
+
+    def as_vector(self, mu=None):
+        assert self.dim_range == 1
+        mu = self.parse_parameter(mu)
+        return NumpyVectorArray(self._matrix, copy=True)
 
     def apply(self, U, ind=None, mu=None):
         assert isinstance(U, NumpyVectorArray)

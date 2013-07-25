@@ -12,7 +12,7 @@ import numpy as np
 from pymor.core import abstractmethod
 from pymor.la.interfaces import VectorArrayInterface
 from pymor.la.numpyvectorarray import NumpyVectorArray
-from pymor.operators.interfaces import OperatorInterface, MatrixBasedOperatorInterface, LincombOperatorInterface
+from pymor.operators.interfaces import OperatorInterface, LincombOperatorInterface
 from pymor.parameters import ParameterFunctionalInterface
 
 
@@ -57,41 +57,46 @@ class OperatorBase(OperatorInterface):
         raise NotImplementedError
 
 
-class MatrixBasedOperatorBase(MatrixBasedOperatorInterface, OperatorBase):
+class MatrixBasedOperatorBase(OperatorBase):
 
     linear = True
     assembled = False
     sparse = None
-
-    def as_vector_array(self, mu=None):
-        if not self.assembled:
-            return self.assemble(mu).as_vector_array()
-        else:
-            raise NotImplementedError
 
     @abstractmethod
     def _assemble(self, mu=None):
         pass
 
     def assemble(self, mu=None, force=False):
+        '''Assembles the matrix of the operator for given parameter.
+
+        Parameters
+        ----------
+        mu
+            The parameter for which to assemble the operator.
+
+        Returns
+        -------
+        The assembled parameter independent `MatrixBasedOperator`.
+        '''
         if self.assembled:
             mu = self.parse_parameter(mu)
             return self
         elif self.parameter_type is None:
             mu = self.parse_parameter(mu)
-            if force or not self._last_mat:
-                self._last_mat = self._assemble(mu)
-                return self._last_mat
+            if force or not self._last_op:
+                self._last_op = self._assemble(mu)
+                return self._last_op
             else:
-                return self._last_mat
+                return self._last_op
         else:
             mu_s = self.strip_parameter(mu)
             if not force and self._last_mu is not None and self._last_mu.allclose(mu_s):
-                return self._last_mat
+                return self._last_op
             else:
                 self._last_mu = mu_s.copy()  # TODO: add some kind of log message here
-                self._last_mat = self._assemble(mu)
-                return self._last_mat
+                self._last_op = self._assemble(mu)
+                return self._last_op
 
     def apply(self, U, ind=None, mu=None):
         if not self.assembled:
@@ -100,7 +105,7 @@ class MatrixBasedOperatorBase(MatrixBasedOperatorInterface, OperatorBase):
             raise NotImplementedError
 
     _last_mu = None
-    _last_mat = None
+    _last_op = None
 
 
 class LincombOperatorBase(OperatorBase, LincombOperatorInterface):
@@ -207,7 +212,7 @@ class ConstantOperator(OperatorBase):
                 raise NotImplementedError
             return self._value.copy()
 
-    def as_vector_array(self):
+    def as_vector(self):
         return self._value.copy()
 
     def __add__(self, other):

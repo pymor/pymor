@@ -88,4 +88,4 @@ class StationaryLinearDiscretization(DiscretizationInterface):
                 else ('sparse' if self.operator.sparse else 'dense')
             self.logger.info('Solving {} ({}) for {} ...'.format(self.name, sparse, mu))
 
-        return self.operator.apply_inverse(self.rhs.as_vector_array(mu), mu=mu)
+        return self.operator.apply_inverse(self.rhs.as_vector(mu), mu=mu)

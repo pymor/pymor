@@ -198,57 +198,6 @@ class OperatorInterface(BasicInterface, Parametric, Named):
         pass
 
 
-class MatrixBasedOperatorInterface(OperatorInterface):
-    '''Base class for operators which assemble to a matrix.
-
-    Attributes
-    ----------
-    assembled
-        `True` if the operator is already assembled.
-    sparse
-        `True` if the operator is based on a sparse matrix.
-    '''
-
-    linear = True
-    assembled = False
-    sparse = None
-
-    @abstractmethod
-    def as_vector_array(self, mu=None):
-        '''Returns a VectorArray containing the matrix of the operator.
-
-        This is mainly useful for representing a linear functional as
-        a vector. (In which case, the length of the returned `VectorArray`
-        is 1.) In general, if dim_range is large, this method will not
-        be useful an possbibly raise a `NotImplementedError`.
-
-        Parameters
-        ----------
-        mu
-            The parameter for which to return the matrix.
-
-        Returns
-        -------
-        VectorArray containing the rows of the operator's matrix.
-        '''
-        pass
-
-    @abstractmethod
-    def assemble(self, mu=None, force=False):
-        '''Assembles the matrix of the operator for given parameter.
-
-        Parameters
-        ----------
-        mu
-            The parameter for which to assemble the operator.
-
-        Returns
-        -------
-        The assembled parameter independent `MatrixBasedOperator`.
-        '''
-        pass
-
-
 class LincombOperatorInterface(OperatorInterface):
     '''An operator representing a linear combination.
 

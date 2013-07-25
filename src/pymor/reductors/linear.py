@@ -86,12 +86,12 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
     if not d.rhs.parametric:
         R_R = space_type.empty(space_dim, reserve=1)
         RR_R = space_type.empty(space_dim, reserve=1)
-        append_vector(d.rhs.assemble().as_vector_array(), R_R, RR_R)
+        append_vector(d.rhs.assemble().as_vector(), R_R, RR_R)
     else:
         R_R = space_type.empty(space_dim, reserve=len(d.rhs.operators))
         RR_R = space_type.empty(space_dim, reserve=len(d.rhs.operator))
         for op in d.rhs.operators:
-            append_vector(op.assemble().as_vector_array(), R_R, RR_R)
+            append_vector(op.assemble().as_vector(), R_R, RR_R)
 
     if len(RB) == 0:
         R_O = space_type.empty(space_dim)

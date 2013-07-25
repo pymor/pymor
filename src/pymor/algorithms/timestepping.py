@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 from pymor.core import BasicInterface, abstractmethod
 from pymor.la import VectorArrayInterface
-from pymor.operators import OperatorInterface, MatrixBasedOperatorInterface
+from pymor.operators import OperatorInterface
 
 
 class TimeStepperInterface(BasicInterface):
@@ -36,7 +36,7 @@ class ExplicitEulerTimeStepper(TimeStepperInterface):
 
 def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None):
     assert isinstance(A, OperatorInterface)
-    assert isinstance(F, (MatrixBasedOperatorInterface, VectorArrayInterface))
+    assert isinstance(F, (OperatorInterface, VectorArrayInterface))
     assert isinstance(M, OperatorInterface)
     assert not M.parametric
     assert A.dim_source == A.dim_range
@@ -44,12 +44,12 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None):
 
     dt = (t1 - t0) / nt
 
-    if isinstance(F, MatrixBasedOperatorInterface):
+    if isinstance(F, OperatorInterface):
         assert F.dim_range == 1
         assert F.dim_source == A.dim_source
         F_time_dep = F.parametric and '_t' in F.parameter_type
         if not F_time_dep:
-            dt_F = F.as_vector_array(mu) * dt
+            dt_F = F.as_vector(mu) * dt
     else:
         assert len(F) == 1
         assert F.dim == A.dim_source
@@ -66,7 +66,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None):
     R.append(U0)
 
     M_dt_A = M + A * dt
-    if isinstance(M_dt_A, MatrixBasedOperatorInterface) and not A_time_dep:
+    if hasattr(M_dt_A, 'assemble') and not A_time_dep:
         M_dt_A = M_dt_A.assemble(mu)
 
     t = t0
@@ -76,7 +76,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None):
         t += dt
         mu['_t'] = t
         if F_time_dep:
-            dt_F = F.as_vector_array(mu) * dt
+            dt_F = F.as_vector(mu) * dt
         U = M_dt_A.apply_inverse(M.apply(U) + dt_F, mu=mu, options=invert_options)
         R.append(U)
 
@@ -85,15 +85,15 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None):
 
 def explicit_euler(A, F, U0, t0, t1, nt, mu=None):
     assert isinstance(A, OperatorInterface)
-    assert isinstance(F, (MatrixBasedOperatorInterface, VectorArrayInterface))
+    assert isinstance(F, (OperatorInterface, VectorArrayInterface))
     assert A.dim_source == A.dim_range
 
-    if isinstance(F, MatrixBasedOperatorInterface):
+    if isinstance(F, OperatorInterface):
         assert F.dim_range == 1
         assert F.dim_source == A.dim_source
         F_time_dep = F.parametric and '_t' in F.parameter_type
         if not F_time_dep:
-            F_ass = F.as_vector_array(mu)
+            F_ass = F.as_vector(mu)
     else:
         assert len(F) == 1
         assert F.dim == A.dim_source
@@ -105,7 +105,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None):
     assert U0.dim == A.dim_source
 
     A_time_dep = A.parametric and '_t' in A.parameter_type
-    if isinstance(A, MatrixBasedOperatorInterface) and not A_time_dep:
+    if hasattr(A, 'assemble') and not A_time_dep:
         A = A.assemble(mu)
 
     dt = (t1 - t0) / nt
@@ -119,7 +119,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None):
         t += dt
         mu['_t'] = t
         if F_time_dep:
-            F_ass = F.assemble(mu).as_vector_array()
+            F_ass = F.assemble(mu).as_vector()
         U += (F_ass - A.apply(U, mu=mu)) * dt
         R.append(U)
 
