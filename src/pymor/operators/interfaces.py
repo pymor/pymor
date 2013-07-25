@@ -69,7 +69,7 @@ class OperatorInterface(BasicInterface, Parametric, Named):
 
         Returns
         -------
-        `VectorArray` of shape `(len(ind), self.dim_range)`
+        `VectorArray` of length `len(ind)` and dimension `self.dim_range`
         '''
         pass
 
@@ -119,7 +119,7 @@ class OperatorInterface(BasicInterface, Parametric, Named):
 
     @abstractmethod
     def apply_inverse(self, U, ind=None, mu=None, options=None):
-        '''Apply the inverse operator to U.
+        '''Apply the inverse operator.
 
         Parameters
         ----------
@@ -132,25 +132,25 @@ class OperatorInterface(BasicInterface, Parametric, Named):
         mu
             The parameter for which to evaluate the inverse operator.
         options
-            Dictionary of options for the inversion algorithm which has to
-            contain the key `type`. `options['type']` determines which
-            inversion algorithm is to be used. All other key-value pairs
-            represent options specific to this algorithm.
-            If `options` can also be given as a string, which is then
+            Dictionary of options for the inversion algorithm. The
+            dictionary has to contain the key `type` whose value determines
+            which inversion algorithm is to be used. All other key-value
+            pairs represent options specific to this algorithm.
+            `options` can also be given as a string, which is then
             interpreted as the type of inversion algorithm.
             If `options` is `None`, a default algorithm with default
             options is chosen.
             Available algorithms and their default options are provided
-            by the `inverse_options` attribute.
+            by the `invert_options` attribute.
 
         Returns
         -------
-        `VectorArray` of shape `(len(ind), self.dim_source)`
+        `VectorArray` of length `len(ind)` and dimension `self.dim_source`
 
         Raises
         ------
         InversionError
-           Is raised, if the operator cannot be inverted.
+            Is raised, if the operator cannot be inverted.
         '''
         pass
 
@@ -161,7 +161,7 @@ class OperatorInterface(BasicInterface, Parametric, Named):
         Parameters
         ----------
         operators
-            List of operators whose linear combination is taken.
+            List of operators whose linear combination is formed.
         coefficients
             List of coefficients of the linear combination or `None`.
             Coefficients can be either `Number`s or `ParameterFunctional`s.
@@ -204,7 +204,7 @@ class LincombOperatorInterface(OperatorInterface):
     Attributes
     ----------
     operators
-        List of operators whose linear combination is taken.
+        List of operators whose linear combination is formed.
     coefficients
         `None` or list of linear coefficients.
     num_coefficients
