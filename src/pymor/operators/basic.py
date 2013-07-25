@@ -54,7 +54,7 @@ class OperatorBase(OperatorInterface):
             self.__class__.__name__)
 
     def apply_inverse(self, U, ind=None, mu=None, options=None):
-        raise NotImplementedError
+        raise InversionError('No inversion algorithm available.')
 
 
 class MatrixBasedOperatorBase(OperatorBase):

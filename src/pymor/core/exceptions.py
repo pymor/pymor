@@ -44,3 +44,6 @@ class ExtensionError(Exception):
     This will mostly happen during a basis extension when the new snapshot is already
     in the span of the basis.
     '''
+
+class InversionError(Exception):
+    '''Is raised if an operator inversion algorithm fails.'''

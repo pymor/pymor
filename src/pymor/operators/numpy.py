@@ -13,6 +13,7 @@ from scipy.sparse import issparse
 from scipy.sparse.linalg import bicgstab
 
 from pymor.core import defaults
+from pymor.core.exceptions import InversionError
 from pymor.la import NumpyVectorArray
 from pymor.operators import OperatorBase, MatrixBasedOperatorBase, LincombOperatorBase, LincombOperator
 
@@ -39,7 +40,7 @@ class NumpyMatrixBasedOperator(MatrixBasedOperatorBase):
                                               'tol': defaults.bicgstab_tol,
                                               'maxiter': defaults.bicgstab_maxiter}),))
         else:
-            return OrderedDict((('linsolve', {'type': 'linsolve'}),))
+            return OrderedDict((('solve', {'type': 'solve'}),))
 
     def apply(self, U, ind=None, mu=None):
         if self.assembled:
@@ -182,10 +183,19 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             tol =  options.get('tol', defaults.bicgstab_tol)
             maxiter = options.get('maxiter', defaults.bicgstab_maxiter)
             for i, UU in enumerate(U):
-                R[i], _ = bicgstab(self._matrix, UU, tol=tol, maxiter=maxiter)
+                R[i], info = bicgstab(self._matrix, UU, tol=tol, maxiter=maxiter)
+                if info != 0:
+                    if info > 0:
+                        raise InversionError('bicgstab failed to converge after {} iterations'.format(info))
+                    else:
+                        raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
+                                             format(info))
         else:
             for i, UU in enumerate(U):
-                R[i] = np.linalg.solve(self._matrix, UU)
+                try:
+                    R[i] = np.linalg.solve(self._matrix, UU)
+                except np.linalg.LinAlgError as e:
+                    raise InversionError('{}: {}'.format(str(type(e)), str(e)))
 
         return NumpyVectorArray(R)
 
