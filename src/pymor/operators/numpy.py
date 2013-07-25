@@ -43,7 +43,7 @@ class NumpyMatrixBasedOperator(MatrixBasedOperatorBase):
             return OrderedDict((('solve', {'type': 'solve'}),))
 
     def apply(self, U, ind=None, mu=None):
-        if self.assembled:
+        if self._assembled:
             assert isinstance(U, NumpyVectorArray)
             mu = self.parse_parameter(mu)
             U_array = U._array[:U._len] if ind is None else U._array[ind]
@@ -52,13 +52,16 @@ class NumpyMatrixBasedOperator(MatrixBasedOperatorBase):
             return self.assemble(mu).apply(U, ind=ind)
 
     def apply_inverse(self, U, ind=None, mu=None, options=None):
-        return self.assemble(mu).apply_inverse(U, ind=ind, options=options)
+        if self._assembled:
+            return self._last_op.apply_inverse(U, ind=ind, options=options)
+        else:
+            return self.assemble(mu).apply_inverse(U, ind=ind, options=options)
 
     def as_vector(self, mu=None):
         assert self.dim_range == 1
-        if self.assembled:
+        if self._assembled:
             mu = self.parse_parameter(mu)
-            return self._last_op.as_vector()
+            return NumpyVectorArray(self._last_op._matrix, copy=True)
         else:
             return self.assemble(mu).as_vector()
 
@@ -136,7 +139,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         mu = self.parse_parameter(mu)
         return self
 
-    def assemble(self, mu=None, force=False):
+    def assemble(self, mu=None):
         mu = self.parse_parameter(mu)
         return self
 

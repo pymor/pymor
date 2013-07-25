@@ -30,7 +30,7 @@ class DuneLinearOperator(OperatorBase):
         self.dune_op = dune_op
         self.lock()
 
-    def assemble(self, mu=None, force=False):
+    def assemble(self, mu=None):
         mu = self.parse_parameter(mu)
         return self
 
@@ -57,7 +57,7 @@ class DuneLinearFunctional(OperatorBase):
         self.dune_vec = dune_vec
         self.lock()
 
-    def assemble(self, mu=None, force=False):
+    def assemble(self, mu=None):
         mu = self.parse_parameter(mu)
         return self
 

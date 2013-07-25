@@ -60,14 +60,18 @@ class OperatorBase(OperatorInterface):
 class MatrixBasedOperatorBase(OperatorBase):
 
     linear = True
-    assembled = False
     sparse = None
+
+    _assembled = False
+    @property
+    def assembled(self):
+        return self._assembled
 
     @abstractmethod
     def _assemble(self, mu=None):
         pass
 
-    def assemble(self, mu=None, force=False):
+    def assemble(self, mu=None):
         '''Assembles the matrix of the operator for given parameter.
 
         Parameters
@@ -79,27 +83,25 @@ class MatrixBasedOperatorBase(OperatorBase):
         -------
         The assembled parameter independent `MatrixBasedOperator`.
         '''
-        if self.assembled:
+        if self._assembled:
             mu = self.parse_parameter(mu)
-            return self
+            return self._last_op
         elif self.parameter_type is None:
             mu = self.parse_parameter(mu)
-            if force or not self._last_op:
-                self._last_op = self._assemble(mu)
-                return self._last_op
-            else:
-                return self._last_op
+            self._last_op = self._assemble(mu)
+            self._assembled = True
+            return self._last_op
         else:
             mu_s = self.strip_parameter(mu)
-            if not force and self._last_mu is not None and self._last_mu.allclose(mu_s):
+            if mu_s == self._last_mu:
                 return self._last_op
             else:
-                self._last_mu = mu_s.copy()  # TODO: add some kind of log message here
+                self._last_mu = mu_s.copy()
                 self._last_op = self._assemble(mu)
                 return self._last_op
 
     def apply(self, U, ind=None, mu=None):
-        if not self.assembled:
+        if not self._assembled:
             return self.assemble(mu).apply(U, ind=ind)
         else:
             raise NotImplementedError
