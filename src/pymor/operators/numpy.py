@@ -41,6 +41,15 @@ class NumpyMatrixBasedOperator(MatrixBasedOperatorBase):
         else:
             return OrderedDict((('linsolve', {'type': 'linsolve'}),))
 
+    def apply(self, U, ind=None, mu=None):
+        if self.assembled:
+            assert isinstance(U, NumpyVectorArray)
+            mu = self.parse_parameter(mu)
+            U_array = U._array[:U._len] if ind is None else U._array[ind]
+            return NumpyVectorArray(self._last_op._matrix.dot(U_array.T).T, copy=False)
+        else:
+            return self.assemble(mu).apply(U, ind=ind)
+
     def apply_inverse(self, U, ind=None, mu=None, options=None):
         return self.assemble(mu).apply_inverse(U, ind=ind, options=options)
 
