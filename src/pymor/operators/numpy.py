@@ -58,6 +58,12 @@ class NumpyMatrixBasedOperator(MatrixBasedOperatorBase):
             return self.assemble(mu).apply_inverse(U, ind=ind, options=options)
 
     def as_vector(self, mu=None):
+        '''Return vector representation of linear functional.
+
+        In case the operator is a linear functional (`dim_range == 1`), this
+        methods returns a `VectorArray` of length 1 containing the vector
+        representing the functional.
+        '''
         assert self.dim_range == 1
         if self._assembled:
             mu = self.parse_parameter(mu)

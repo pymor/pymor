@@ -236,6 +236,7 @@ class ConstantOperator(OperatorBase):
             return self._value.copy()
 
     def as_vector(self):
+        '''Returns the image of the operator as a VectorArray of length 1.'''
         return self._value.copy()
 
     def __add__(self, other):
