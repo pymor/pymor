@@ -251,7 +251,7 @@ class L2Product(NumpyMatrixBasedOperator):
         self.lock()
 
     def _assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.check_parameter(mu)
 
         A = diags(self.grid.volumes(0), 0)
 

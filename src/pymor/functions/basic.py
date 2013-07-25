@@ -42,7 +42,7 @@ class ConstantFunction(FunctionInterface):
         return ('{name}: x -> {value}').format(name=self.name, value=self._value)
 
     def evaluate(self, x, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.check_parameter(mu)
         x = np.array(x, copy=False, ndmin=1)
         assert x.shape[-1] == self.dim_domain
         if x.ndim == 1:
@@ -90,12 +90,13 @@ class GenericFunction(FunctionInterface):
         return ('{name}: x -> {mapping}').format(name=self.name, mapping=self._mapping)
 
     def evaluate(self, x, mu=None):
-        mu = self.parse_parameter(mu)
         x = np.array(x, copy=False, ndmin=1)
         assert x.shape[-1] == self.dim_domain
         if self.parametric:
+            mu = self.parse_parameter(mu)
             v = self._mapping(x, mu)
         else:
+            assert self.check_parameter(mu)
             v = self._mapping(x)
         assert v.shape == x.shape[:-1] + self.shape_range
 

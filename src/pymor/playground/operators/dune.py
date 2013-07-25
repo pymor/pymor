@@ -31,12 +31,12 @@ class DuneLinearOperator(OperatorBase):
         self.lock()
 
     def assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.check_parameter(mu)
         return self
 
     def apply(self, U, ind=None, mu=None):
         assert isinstance(U, DuneVectorArray)
-        mu = self.parse_parameter(mu)
+        assert self.check_parameter(mu)
         vectors = U._list if ind is None else [U._list[i] for i in ind]
         return DuneVectorArray([WrappedDuneVector(self.dune_op.apply(v._vector)) for v in vectors], dim=self.dim_source)
 
@@ -58,12 +58,12 @@ class DuneLinearFunctional(OperatorBase):
         self.lock()
 
     def assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.check_parameter(mu)
         return self
 
     def apply(self, U, ind=None, mu=None):
         assert isinstance(U, DuneVectorArray)
-        mu = self.parse_parameter(mu)
+        assert self.check_parameter(mu)
         vectors = U._list if ind is None else [U._list[i] for i in ind]
         if len(vectors) == 0:
             return NumpyVectorArray.empty(dim=1)

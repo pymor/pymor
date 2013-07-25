@@ -292,6 +292,10 @@ class Parametric(object):
         assert self.parameter_type is None or all(getattr(mu.get(k, None), 'shape', None) == v for k, v in self.parameter_type.iteritems())
         return mu
 
+    def check_parameter(self, mu):
+        self.parse_parameter(mu)
+        return True
+
     def local_parameter(self, mu):
         assert mu.__class__ is Parameter
         return None if self.parameter_local_type is None else {k: mu[v] for k, v in self.parameter_global_names.iteritems()}

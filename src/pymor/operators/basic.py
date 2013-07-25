@@ -84,11 +84,11 @@ class MatrixBasedOperatorBase(OperatorBase):
         The assembled parameter independent `MatrixBasedOperator`.
         '''
         if self._assembled:
-            mu = self.parse_parameter(mu)
+            assert self.check_parameter(mu)
             return self._last_op
         elif self.parameter_type is None:
-            mu = self.parse_parameter(mu)
-            self._last_op = self._assemble(mu)
+            assert self.check_parameter(mu)
+            self._last_op = self._assemble()
             self._assembled = True
             return self._last_op
         else:
@@ -188,13 +188,13 @@ class FixedParameterOperator(OperatorBase):
 
     def __init__(self, operator, mu=None):
         assert isinstance(operator, OperatorInterface)
-        operator.parse_parameter(mu)
+        assert operator.check_parameter(mu)
         self.operator = operator
         self.mu = mu.copy()
         self.lock()
 
     def apply(self, U, ind=None, mu=None):
-        self.parse_parameter(mu)
+        assert self.check_parameter(mu)
         return self.operator.apply(U, self.mu)
 
     @property
@@ -223,7 +223,7 @@ class ConstantOperator(OperatorBase):
         self.lock()
 
     def apply(self, U, ind=None, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.check_parameter(mu)
         assert isinstance(U, (NumpyVectorArray, Number))
         if isinstance(U, Number):
             assert U == 0.
@@ -267,7 +267,7 @@ class ComponentProjection(OperatorBase):
         self.lock()
 
     def apply(self, U, ind=None, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.check_parameter(mu)
         assert isinstance(U, self.type_source)
         assert U.dim == self.dim_source
         return NumpyVectorArray(U.components(self.components, ind), copy=False)

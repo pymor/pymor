@@ -45,7 +45,7 @@ class NumpyMatrixBasedOperator(MatrixBasedOperatorBase):
     def apply(self, U, ind=None, mu=None):
         if self._assembled:
             assert isinstance(U, NumpyVectorArray)
-            mu = self.parse_parameter(mu)
+            assert self.check_parameter(mu)
             U_array = U._array[:U._len] if ind is None else U._array[ind]
             return NumpyVectorArray(self._last_op._matrix.dot(U_array.T).T, copy=False)
         else:
@@ -66,7 +66,7 @@ class NumpyMatrixBasedOperator(MatrixBasedOperatorBase):
         '''
         assert self.dim_range == 1
         if self._assembled:
-            mu = self.parse_parameter(mu)
+            assert self.check_parameter(mu)
             return NumpyVectorArray(self._last_op._matrix, copy=True)
         else:
             return self.assemble(mu).as_vector()
@@ -105,11 +105,12 @@ class NumpyGenericOperator(OperatorBase):
     def apply(self, U, ind=None, mu=None):
         assert isinstance(U, NumpyVectorArray)
         assert U.dim == self.dim_source
-        mu = self.parse_parameter(mu)
         U_array = U._array[:U._len] if ind is None else U._array[ind]
         if self.parametric:
+            mu = self.parse_parameter(mu)
             return NumpyVectorArray(self._mapping(U_array, mu=mu), copy=False)
         else:
+            assert self.check_parameter(mu)
             return NumpyVectorArray(self._mapping(U_array), copy=False)
 
 
@@ -140,21 +141,21 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         self.lock()
 
     def _assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.check_parameter(mu)
         return self
 
     def assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.check_parameter(mu)
         return self
 
     def as_vector(self, mu=None):
         assert self.dim_range == 1
-        mu = self.parse_parameter(mu)
+        assert self.check_parameter(mu)
         return NumpyVectorArray(self._matrix, copy=True)
 
     def apply(self, U, ind=None, mu=None):
         assert isinstance(U, NumpyVectorArray)
-        mu = self.parse_parameter(mu)
+        assert self.check_parameter(mu)
         U_array = U._array[:U._len] if ind is None else U._array[ind]
         return NumpyVectorArray(self._matrix.dot(U_array.T).T, copy=False)
 

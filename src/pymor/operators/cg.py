@@ -140,7 +140,7 @@ class L2ProductP1(NumpyMatrixBasedOperator):
         self.lock()
 
     def _assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
+        assert self.check_parameter(mu)
         g = self.grid
         bi = self.boundary_info
 
