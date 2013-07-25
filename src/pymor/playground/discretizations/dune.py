@@ -12,7 +12,6 @@ from scipy.sparse import issparse
 from pymor.core import defaults
 from pymor.core.cache import Cachable, NO_CACHE_CONFIG
 from pymor.tools import dict_property
-from pymor.operators import LinearAffinelyDecomposedOperator
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.discretizations import StationaryLinearDiscretization
 from pymor.playground.operators.dune import DuneLinearOperator, DuneLinearFunctional
@@ -36,10 +35,10 @@ class DuneLinearEllipticCGDiscretization(DiscretizationInterface):
         self.solution_dim = f.len()
         ops = list(self.example.operators())
         ops = [DuneLinearOperator(op, dim=self.solution_dim) for op in ops]
-        operator = LinearAffinelyDecomposedOperator(ops[:-1], ops[-1], global_names={'coefficients': 'diffusion'}, name='diffusion')
+        operator = ops[0].lincomb(ops, num_coefficients=len(ops) - 1, coefficients_name='diffusion', name='diffusion')
 
         operators = {'operator': operator, 'rhs': functional}
-        products = {'h1': operator.assemble(mu={'diffusion': np.ones(self.example.paramSize())})}
+        products = {'h1': ops[0].lincomb(ops, coefficients=np.ones(self.example.paramSize() + 1))}
         super(DuneLinearEllipticCGDiscretization, self).__init__(operators=operators, products=products,
                                                                  caching=False, name=name)
 

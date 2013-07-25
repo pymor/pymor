@@ -8,8 +8,6 @@ from __future__ import absolute_import, division, print_function
 from pymor.analyticalproblems import EllipticProblem
 from pymor.domaindiscretizers import discretize_domain_default
 from pymor.operators.cg import DiffusionOperatorP1, L2ProductFunctionalP1, L2ProductP1
-from pymor.operators.affine import LinearAffinelyDecomposedOperator
-from pymor.operators import add_operators
 from pymor.discretizations import StationaryLinearDiscretization
 from pymor.gui.qt import GlumpyPatchVisualizer
 from pymor.grids import TriaGrid, OnedGrid, EmptyBoundaryInfo
@@ -73,14 +71,16 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
     if p.diffusion_functionals is not None or len(p.diffusion_functions) > 1:
         L0 = Operator(grid, boundary_info, diffusion_constant=0, name='diffusion_boundary_part')
 
-        Li = tuple(Operator(grid, boundary_info, diffusion_function=df, dirichlet_clear_diag=True,
-                            name='diffusion_{}'.format(i))
-                   for i, df in enumerate(p.diffusion_functions))
+        Li = [Operator(grid, boundary_info, diffusion_function=df, dirichlet_clear_diag=True,
+                       name='diffusion_{}'.format(i))
+                   for i, df in enumerate(p.diffusion_functions)]
 
         if p.diffusion_functionals is None:
-            L = LinearAffinelyDecomposedOperator(Li, L0, name='diffusion', name_map={'.coefficients': '.diffusion_coefficients'})
+            L = type(L0).lincomb(operators=[L0] + Li, name='diffusion',
+                                 global_names={'coefficients': 'diffusion_coefficients'})
         else:
-            L = LinearAffinelyDecomposedOperator(Li, L0, p.diffusion_functionals, name='diffusion')
+            L = type(L0).lincomb(operators=[L0] + Li, coefficients=[1.] + list(p.diffusion_functionals),
+                                 name='diffusion')
     else:
         L = Operator(grid, boundary_info, diffusion_function=p.diffusion_functions[0],
                      name='diffusion')

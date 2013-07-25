@@ -10,15 +10,17 @@ import numpy as np
 
 from pymor.la import NumpyVectorArray
 from pymor.playground.la.dunevectorarray import DuneVectorArray, WrappedDuneVector
-from pymor.operators.interfaces import LinearOperatorInterface
+from pymor.operators import OperatorBase
 
 from dunelinearellipticcg2dsgrid import DuneVector
 
 
-class DuneLinearOperator(LinearOperatorInterface):
+class DuneLinearOperator(OperatorBase):
 
     type_source = type_range = DuneVectorArray
     assembled = True
+    sparse = True
+    linear = True
 
     def __init__(self, dune_op, dim, name=None):
         super(DuneLinearOperator, self).__init__()
@@ -28,11 +30,7 @@ class DuneLinearOperator(LinearOperatorInterface):
         self.dune_op = dune_op
         self.lock()
 
-    def _assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
-        return self
-
-    def assemble(self, mu=None, force=False):
+    def assemble(self, mu=None):
         mu = self.parse_parameter(mu)
         return self
 
@@ -43,11 +41,13 @@ class DuneLinearOperator(LinearOperatorInterface):
         return DuneVectorArray([WrappedDuneVector(self.dune_op.apply(v._vector)) for v in vectors], dim=self.dim_source)
 
 
-class DuneLinearFunctional(LinearOperatorInterface):
+class DuneLinearFunctional(OperatorBase):
 
     type_source = DuneVectorArray
     type_range = NumpyVectorArray
+    linear = True
     assembled = True
+    sparse = False
 
     def __init__(self, dune_vec, name=None):
         super(DuneLinearFunctional, self).__init__()
@@ -57,11 +57,7 @@ class DuneLinearFunctional(LinearOperatorInterface):
         self.dune_vec = dune_vec
         self.lock()
 
-    def _assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
-        return self
-
-    def assemble(self, mu=None, force=False):
+    def assemble(self, mu=None):
         mu = self.parse_parameter(mu)
         return self
 
@@ -74,5 +70,5 @@ class DuneLinearFunctional(LinearOperatorInterface):
         else:
             return NumpyVectorArray([[self.dune_vec.dot(v._vector)] for v in vectors])
 
-    def as_vector_array(self):
+    def as_vector(self):
         return DuneVectorArray([WrappedDuneVector(DuneVector(self.dune_vec))])

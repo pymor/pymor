@@ -10,11 +10,10 @@ from scipy.sparse import coo_matrix, csr_matrix
 
 from pymor.la import NumpyVectorArray
 from pymor.grids.referenceelements import triangle, line
-from pymor.operators.interfaces import LinearOperatorInterface
-from pymor.operators.numpy import NumpyLinearOperator
+from pymor.operators.numpy import NumpyMatrixBasedOperator, NumpyMatrixOperator
 
 
-class L2ProductFunctionalP1(LinearOperatorInterface):
+class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     '''Scalar product with an L2-function for linear finite elements.
 
     It is moreover possible to specify a `BoundaryInfo` and a Dirichlet data function
@@ -40,7 +39,6 @@ class L2ProductFunctionalP1(LinearOperatorInterface):
         The name of the functional.
     '''
 
-    type_source = type_range = NumpyVectorArray
     sparse = False
 
     def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, name=None):
@@ -94,10 +92,10 @@ class L2ProductFunctionalP1(LinearOperatorInterface):
             else:
                 I[DI] = 0
 
-        return NumpyLinearOperator(I.reshape((1, -1)))
+        return NumpyMatrixOperator(I.reshape((1, -1)))
 
 
-class L2ProductP1(LinearOperatorInterface):
+class L2ProductP1(NumpyMatrixBasedOperator):
     '''Operator representing the L2-product for linear finite functions.
 
     To evaluate the product use the apply2 method.
@@ -125,7 +123,6 @@ class L2ProductP1(LinearOperatorInterface):
         The name of the product.
     '''
 
-    type_source = type_range = NumpyVectorArray
     sparse = True
 
     def __init__(self, grid, boundary_info, dirichlet_clear_rows=True, dirichlet_clear_columns=False,
@@ -186,10 +183,10 @@ class L2ProductP1(LinearOperatorInterface):
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
         A = csr_matrix(A).copy()   # See DiffusionOperatorP1 for why copy() is necessary
 
-        return NumpyLinearOperator(A)
+        return NumpyMatrixOperator(A)
 
 
-class DiffusionOperatorP1(LinearOperatorInterface):
+class DiffusionOperatorP1(NumpyMatrixBasedOperator):
     '''Diffusion operator for linear finite elements.
 
     The operator is of the form ::
@@ -220,7 +217,6 @@ class DiffusionOperatorP1(LinearOperatorInterface):
         Name of the operator.
     '''
 
-    type_source = type_range = NumpyVectorArray
     sparse = True
 
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
@@ -296,4 +292,4 @@ class DiffusionOperatorP1(LinearOperatorInterface):
         # from pymor.tools.memory import print_memory_usage
         # print_memory_usage('matrix: {0:5.1f}'.format((A.data.nbytes + A.indptr.nbytes + A.indices.nbytes)/1024**2))
 
-        return NumpyLinearOperator(A)
+        return NumpyMatrixOperator(A)

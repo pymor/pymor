@@ -166,7 +166,7 @@ def numpy_gram_schmidt_basis_extension(basis, U, product=None):
     assert isinstance(basis, NumpyVectorArray)
     assert isinstance(U, NumpyVectorArray)
     if product is not None:
-        assert isinstance(product, NumpyLinearOperator)
+        assert isinstance(product, NumpyMatrixOperator)
         product = product._matrix
 
     new_basis = np.empty((len(basis) + 1, basis.dim))

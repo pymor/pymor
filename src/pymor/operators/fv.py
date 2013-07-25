@@ -13,14 +13,13 @@ from pymor.functions import FunctionInterface
 from pymor.grids.referenceelements import triangle, line
 from pymor.grids.subgrid import SubGrid
 from pymor.grids.boundaryinfos import SubGridBoundaryInfo
-from pymor.operators.interfaces import OperatorInterface, LinearOperatorInterface
-from pymor.operators.numpy import NumpyLinearOperator
+from pymor.operators import OperatorBase, NumpyMatrixBasedOperator, NumpyMatrixOperator
 from pymor.operators.constructions import Concatenation
 from pymor.operators.basic import ComponentProjection
 from pymor.tools.inplace import iadd_masked, isub_masked
 
 
-class NonlinearAdvectionLaxFriedrichs(OperatorInterface):
+class NonlinearAdvectionLaxFriedrichs(OperatorBase):
     '''Nonlinear Finite Volume Advection operator using Lax-Friedrichs-Flux.
     '''
 
@@ -124,7 +123,7 @@ class NonlinearAdvectionLaxFriedrichs(OperatorInterface):
         return NumpyVectorArray(R)
 
 
-class NonlinearAdvectionEngquistOsher(OperatorInterface):
+class NonlinearAdvectionEngquistOsher(OperatorBase):
     '''Nonlinear Finite Volume Advection operator using EngquistOsher-Flux.
 
     It is assumed that the flux is zero at 0 and its derivative only changes sign at 0.
@@ -227,7 +226,7 @@ class NonlinearAdvectionEngquistOsher(OperatorInterface):
         return NumpyVectorArray(R)
 
 
-class L2Product(LinearOperatorInterface):
+class L2Product(NumpyMatrixBasedOperator):
     '''Operator representing the L2-product for finite volume functions.
 
     To evaluate the product use the apply2 method.
@@ -256,9 +255,9 @@ class L2Product(LinearOperatorInterface):
 
         A = diags(self.grid.volumes(0), 0)
 
-        return NumpyLinearOperator(A)
+        return NumpyMatrixOperator(A)
 
-class L2ProductFunctional(LinearOperatorInterface):
+class L2ProductFunctional(NumpyMatrixBasedOperator):
     '''Scalar product with an L2-function for finite volume functions.
 
     Parameters
@@ -299,4 +298,4 @@ class L2ProductFunctional(LinearOperatorInterface):
         F_INTS = np.einsum('ei,e,i->e', F, g.integration_elements(0), w).ravel()
         F_INTS /= g.volumes(0)
 
-        return NumpyLinearOperator(F_INTS.reshape((1, -1)))
+        return NumpyMatrixOperator(F_INTS.reshape((1, -1)))

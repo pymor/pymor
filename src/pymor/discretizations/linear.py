@@ -10,8 +10,7 @@ import numpy as np
 from pymor.core import defaults
 from pymor.la import NumpyVectorArray
 from pymor.tools import selfless_arguments
-from pymor.operators import LinearOperatorInterface
-from pymor.operators.solvers import solve_linear
+from pymor.operators import OperatorInterface
 from pymor.discretizations.interfaces import DiscretizationInterface
 
 
@@ -30,9 +29,6 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         The operator L_h given as a `LinearOperator`.
     rhs
         The functional f_h given as a `LinearOperator` with `dim_range == 1`.
-    solver
-        A function solver(A, RHS), which solves the matrix equation A*x = RHS.
-        If None, `pymor.operators.solvers.solve_linear()` is chosen.
     visualizer
         A function visualize(U) which visualizes the solution vectors. Can be None,
         in which case no visualization is availabe.
@@ -52,10 +48,10 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         The functional f_h. A synonym for operators['rhs'].
     '''
 
-    def __init__(self, operator, rhs, solver=None, products=None, parameter_space=None, estimator=None, visualizer=None,
+    def __init__(self, operator, rhs, products=None, parameter_space=None, estimator=None, visualizer=None,
                  caching='disk', name=None):
-        assert isinstance(operator, LinearOperatorInterface)
-        assert isinstance(rhs, LinearOperatorInterface)
+        assert isinstance(operator, OperatorInterface) and operator.linear
+        assert isinstance(rhs, OperatorInterface) and rhs.linear
         assert operator.dim_source == operator.dim_range == rhs.dim_source
         assert rhs.dim_range == 1
 
@@ -67,7 +63,6 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         self.rhs = rhs
         self.operators = operators
         self.solution_dim = operator.dim_range
-        self.solver = solver or solve_linear
         self.build_parameter_type(inherits=(operator, rhs))
         self.parameter_space = parameter_space
         self.lock()
@@ -86,12 +81,11 @@ class StationaryLinearDiscretization(DiscretizationInterface):
 
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu)
-        A = self.operator.assemble(mu)
-        RHS = self.rhs.assemble(mu).as_vector_array()
 
         # explicitly checking if logging is disabled saves the expensive str(mu) call
         if not self.logging_disabled:
-            sparse = 'sparsity unknown' if A.sparse is None else ('sparse' if A.sparse else 'dense')
+            sparse = 'sparsity unknown' if getattr(self.operator, 'sparse', None) is None \
+                else ('sparse' if self.operator.sparse else 'dense')
             self.logger.info('Solving {} ({}) for {} ...'.format(self.name, sparse, mu))
 
-        return self.solver(A, RHS)
+        return self.operator.apply_inverse(self.rhs.as_vector(mu), mu=mu)

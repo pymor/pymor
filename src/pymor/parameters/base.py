@@ -204,6 +204,17 @@ class Parameter(dict):
         dict.__delitem__(self, key)
         self.__keys = None
 
+    def __eq__(self, mu):
+        if mu is None:
+            return False
+        assert mu.__class__ == Parameter
+        if self.viewkeys() != mu.viewkeys():
+            return False
+        elif not all(np.array_equal(v, mu[k]) for k, v in self.iteritems()):
+            return False
+        else:
+            return True
+
     def fromkeys(self, S, v=None):
         raise NotImplementedError
 
@@ -286,7 +297,7 @@ class Parametric(object):
         return None if self.parameter_local_type is None else {k: mu[v] for k, v in self.parameter_global_names.iteritems()}
 
     def strip_parameter(self, mu):
-        if not isinstance(mu, Parameter):
+        if mu.__class__ is not Parameter:
             mu_ = Parameter.from_parameter_type(mu, self.parameter_type)
         assert self.parameter_type is None or all(getattr(mu.get(k, None), 'shape', None) == v for k, v in self.parameter_type.iteritems())
         return None if self.parameter_type is None else Parameter({k: mu[k] for k in self.parameter_type})
