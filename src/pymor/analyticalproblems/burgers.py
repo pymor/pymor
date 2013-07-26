@@ -60,7 +60,7 @@ class BurgersProblem(InstationaryAdvectionProblem):
                 top=None)
 
         super(BurgersProblem, self).__init__(domain=domain,
-                                             rhs=ConstantFunction(value=0, dim_domain=2),
+                                             rhs=None,
                                              flux_function=flux_function,
                                              flux_function_derivative=flux_function_derivative,
                                              initial_data=initial_data,
