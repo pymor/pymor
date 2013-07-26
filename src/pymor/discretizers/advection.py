@@ -16,7 +16,7 @@ from pymor.operators.fv import (NonlinearAdvectionLaxFriedrichs, NonlinearAdvect
 from pymor.operators import NumpyMatrixOperator
 from pymor.grids import RectGrid
 from pymor.gui.qt import GlumpyPatchVisualizer
-from pymor.discretizations import InstationaryNonlinearDiscretization
+from pymor.discretizations import InstationaryDiscretization
 from pymor.la import induced_norm
 from pymor.la import NumpyVectorArray
 
@@ -55,9 +55,9 @@ def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
     time_stepper = ExplicitEulerTimeStepper(nt=nt)
 
-    discretization = InstationaryNonlinearDiscretization(operator=L, rhs=F, initial_data=I, T=p.T, products=products,
-                                                         time_stepper=time_stepper,
-                                                         parameter_space=parameter_space, visualizer=visualizer,
-                                                         name='{}_FV'.format(p.name))
+    discretization = InstationaryDiscretization(operator=L, rhs=F, initial_data=I, T=p.T, products=products,
+                                                time_stepper=time_stepper,
+                                                parameter_space=parameter_space, visualizer=visualizer,
+                                                name='{}_FV'.format(p.name))
 
     return discretization, {'grid': grid, 'boundary_info': boundary_info}

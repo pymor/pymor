@@ -93,7 +93,7 @@ class StationaryDiscretization(DiscretizationInterface):
         return self.operator.apply_inverse(self.rhs.as_vector(mu), mu=mu)
 
 
-class InstationaryNonlinearDiscretization(DiscretizationInterface):
+class InstationaryDiscretization(DiscretizationInterface):
 
     def __init__(self, T, initial_data, operator, rhs=None, mass=None, time_stepper=None, products=None,
                  parameter_space=None, estimator=None, visualizer=None, caching='disk', name=None):
@@ -110,9 +110,9 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
         assert mass is None or mass.dim_source == mass.dim_range == operator.dim_source
 
         operators = {'initial_data': initial_data, 'operator': operator, 'rhs': rhs, 'mass': mass}
-        super(InstationaryNonlinearDiscretization, self).__init__(operators=operators, products=products,
-                                                                  estimator=estimator, visualizer=visualizer,
-                                                                  caching=caching, name=name)
+        super(InstationaryDiscretization, self).__init__(operators=operators, products=products,
+                                                         estimator=estimator, visualizer=visualizer,
+                                                         caching=caching, name=name)
         self.T = T
         self.initial_data = initial_data
         self.operator = operator
