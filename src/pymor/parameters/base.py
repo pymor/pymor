@@ -332,6 +332,7 @@ class Parametric(object):
         The parameter type of the object.
         '''
         assert not local_global or global_names is None
+        assert inherits is None or all(op is None or isinstance(op, Parametric) for op in inherits)
 
         local_type = ParameterType(local_type)
         if local_global and local_type is not None:
@@ -358,7 +359,7 @@ class Parametric(object):
             return True
 
         if inherits:
-            for op in (o for o in inherits if o.parametric):
+            for op in (o for o in inherits if getattr(o, 'parametric', False)):
                 assert check_op(op, global_type, provides)
                 global_type.update(op.parameter_type)
 
