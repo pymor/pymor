@@ -16,7 +16,7 @@ from pymor.operators import OperatorInterface, ConstantOperator
 from pymor.tools import selfless_arguments
 
 
-class StationaryLinearDiscretization(DiscretizationInterface):
+class StationaryDiscretization(DiscretizationInterface):
     '''Generic class for discretizations of stationary linear problems.
 
     This class describes discrete problems given by the equation ::
@@ -58,9 +58,9 @@ class StationaryLinearDiscretization(DiscretizationInterface):
         assert rhs.dim_range == 1
 
         operators = {'operator': operator, 'rhs': rhs}
-        super(StationaryLinearDiscretization, self).__init__(operators=operators, products=products,
-                                                             estimator=estimator, visualizer=visualizer,
-                                                             caching=caching, name=name)
+        super(StationaryDiscretization, self).__init__(operators=operators, products=products,
+                                                       estimator=estimator, visualizer=visualizer,
+                                                       caching=caching, name=name)
         self.operator = operator
         self.rhs = rhs
         self.operators = operators

@@ -13,7 +13,7 @@ from pymor.core import defaults
 from pymor.core.cache import Cachable, NO_CACHE_CONFIG
 from pymor.tools import dict_property
 from pymor.discretizations.interfaces import DiscretizationInterface
-from pymor.discretizations import StationaryLinearDiscretization
+from pymor.discretizations import StationaryDiscretization
 from pymor.playground.operators.dune import DuneLinearOperator, DuneLinearFunctional
 from pymor.playground.la.dunevectorarray import DuneVectorArray, WrappedDuneVector
 from pymor.parameters.spaces import CubicParameterSpace
@@ -54,7 +54,7 @@ class DuneLinearEllipticCGDiscretization(DiscretizationInterface):
 
         return DuneVectorArray([WrappedDuneVector(self.example.solve(list(mu['diffusion'])))])
 
-    with_arguments = StationaryLinearDiscretization.with_arguments
+    with_arguments = StationaryDiscretization.with_arguments
 
     def with_(self, **kwargs):
         assert 'operators' in kwargs
@@ -62,7 +62,7 @@ class DuneLinearEllipticCGDiscretization(DiscretizationInterface):
         assert set(operators.keys()) == {'operator', 'rhs'}
         assert all(op.type_source == NumpyVectorArray for op in operators.itervalues())
         assert all(op.type_range == NumpyVectorArray for op in operators.itervalues())
-        d = StationaryLinearDiscretization(operator=operators['operator'], rhs=operators['rhs'])
+        d = StationaryDiscretization(operator=operators['operator'], rhs=operators['rhs'])
         return d.with_(**kwargs)
 
     def visualize(self, U):

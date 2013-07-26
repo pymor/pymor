@@ -10,7 +10,7 @@ import numpy as np
 
 from pymor.operators import LincombOperatorInterface, NumpyMatrixOperator
 from pymor.core import BasicInterface
-from pymor.discretizations import StationaryLinearDiscretization
+from pymor.discretizations import StationaryDiscretization
 from pymor.la import NumpyVectorArray, induced_norm
 from pymor.reductors.basic import reduce_generic_rb
 
@@ -47,7 +47,7 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
         high-dimensional solutions from solutions U of the reduced discretization.
     '''
 
-    #assert isinstance(discretization, StationaryLinearDiscretization)
+    #assert isinstance(discretization, StationaryDiscretization)
     assert isinstance(discretization.operator, LincombOperatorInterface)
     assert all(not op.parametric for op in discretization.operator.operators)
     if discretization.rhs.parametric:

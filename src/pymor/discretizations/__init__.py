@@ -3,4 +3,4 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.discretizations.interfaces import DiscretizationInterface
-from pymor.discretizations.basic import StationaryLinearDiscretization, InstationaryNonlinearDiscretization
+from pymor.discretizations.basic import StationaryDiscretization, InstationaryNonlinearDiscretization
