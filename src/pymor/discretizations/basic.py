@@ -8,15 +8,63 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from pymor.algorithms.timestepping import TimeStepperInterface
-from pymor.core import defaults
+from pymor.core import defaults, abstractmethod
+from pymor.core.cache import Cachable, cached, DEFAULT_DISK_CONFIG, NO_CACHE_CONFIG
 from pymor.discretizations.interfaces import DiscretizationInterface
-from pymor.la.interfaces import VectorArrayInterface
+from pymor.la import induced_norm, VectorArrayInterface
 from pymor.tools import selfless_arguments
 from pymor.operators import OperatorInterface, ConstantOperator
+from pymor.parameters import Parametric
 from pymor.tools import selfless_arguments
 
 
-class StationaryDiscretization(DiscretizationInterface):
+class DiscretizationBase(DiscretizationInterface):
+
+    def __init__(self, operators, products=None, estimator=None, visualizer=None, caching='disk', name=None):
+        if caching == 'disk':
+            Cachable.__init__(self, config=DEFAULT_DISK_CONFIG)
+        elif caching == 'none' or not caching:
+            Cachable.__init__(self, config=NO_CACHE_CONFIG)
+        else:
+            raise NotImplementedError
+        Parametric.__init__(self)
+        self.operators = operators
+        self.products = products
+        self.estimator = estimator
+        self.visualizer = visualizer
+        self.caching = caching
+        self.name = name
+
+        if products:
+            for k, v in products.iteritems():
+                setattr(self, '{}_product'.format(k), v)
+                setattr(self, '{}_norm'.format(k), induced_norm(v))
+        if estimator is not None:
+            self.estimate = self.__estimate
+        if visualizer is not None:
+            self.visualize = self.__visualize
+
+    @abstractmethod
+    def _solve(self, mu=None):
+        '''Perform the actual solving.'''
+        pass
+
+    @cached
+    def solve(self, mu=None):
+        '''Solve for a parameter `mu`.
+
+        The result is cached by default.
+        '''
+        return self._solve(mu)
+
+    def __visualize(self, U):
+        self.visualizer.visualize(U, self)
+
+    def __estimate(self, U, mu=None):
+        return self.estimator.estimate(U, mu=mu, discretization=self)
+
+
+class StationaryDiscretization(DiscretizationBase):
     '''Generic class for discretizations of stationary linear problems.
 
     This class describes discrete problems given by the equation ::
@@ -93,7 +141,7 @@ class StationaryDiscretization(DiscretizationInterface):
         return self.operator.apply_inverse(self.rhs.as_vector(mu), mu=mu)
 
 
-class InstationaryDiscretization(DiscretizationInterface):
+class InstationaryDiscretization(DiscretizationBase):
 
     def __init__(self, T, initial_data, operator, rhs=None, mass=None, time_stepper=None, products=None,
                  parameter_space=None, estimator=None, visualizer=None, caching='disk', name=None):

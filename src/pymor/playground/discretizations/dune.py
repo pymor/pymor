@@ -12,8 +12,7 @@ from scipy.sparse import issparse
 from pymor.core import defaults
 from pymor.core.cache import Cachable, NO_CACHE_CONFIG
 from pymor.tools import dict_property
-from pymor.discretizations.interfaces import DiscretizationInterface
-from pymor.discretizations import StationaryDiscretization
+from pymor.discretizations.basic import StationaryDiscretization, DiscretizationBase
 from pymor.playground.operators.dune import DuneLinearOperator, DuneLinearFunctional
 from pymor.playground.la.dunevectorarray import DuneVectorArray, WrappedDuneVector
 from pymor.parameters.spaces import CubicParameterSpace
@@ -22,7 +21,7 @@ from pymor.la import induced_norm, NumpyVectorArray
 import dunelinearellipticcg2dsgrid as dune
 
 
-class DuneLinearEllipticCGDiscretization(DiscretizationInterface):
+class DuneLinearEllipticCGDiscretization(DiscretizationBase):
 
     disable_logging = False
     operator = dict_property('operators', 'operator')
