@@ -48,6 +48,7 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
     '''
 
     #assert isinstance(discretization, StationaryDiscretization)
+    assert discretization.linear
     assert isinstance(discretization.operator, LincombOperatorInterface)
     assert all(not op.parametric for op in discretization.operator.operators)
     if discretization.rhs.parametric:
