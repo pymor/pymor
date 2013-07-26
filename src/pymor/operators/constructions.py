@@ -160,10 +160,13 @@ def project_operator(operator, source_basis, range_basis, product=None, name=Non
     name
         Name of the projected operator.
     '''
+    assert operator is None or isinstance(operator, OperatorInterface)
 
     name = name or '{}_projected'.format(operator.name)
 
-    if hasattr(operator, 'projected'):
+    if operator is None:
+        return None
+    elif hasattr(operator, 'projected'):
         return operator.projected(source_basis=source_basis, range_basis=range_basis, product=product, name=name)
     elif operator.linear:
         return ProjectedLinearOperator(operator, source_basis, range_basis, product, name)
@@ -172,6 +175,10 @@ def project_operator(operator, source_basis, range_basis, product=None, name=Non
 
 
 def rb_project_operator(operator, rb, product=None, name=None):
+    assert operator is None or isinstance(operator, OperatorInterface)
+
+    if operator is None:
+        return None
     if operator.dim_source > 0:
         assert operator.dim_source == rb.dim
         source_basis = rb
