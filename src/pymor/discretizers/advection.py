@@ -45,7 +45,7 @@ def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=
     else:
         L = NonlinearAdvectionEngquistOsher(grid, boundary_info, p.flux_function, p.flux_function_derivative,
                                             dirichlet_data=p.dirichlet_data)
-    F = L2ProductFunctional(grid, p.rhs)
+    F = None if p.rhs is None else L2ProductFunctional(grid, p.rhs)
     I = p.initial_data.evaluate(grid.quadrature_points(0, order=2)).squeeze()
     I = np.sum(I * grid.reference_element.quadrature(order=2)[1], axis=1) * (1. / grid.reference_element.volume)
     I = NumpyVectorArray(I)
