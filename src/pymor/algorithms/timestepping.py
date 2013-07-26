@@ -29,8 +29,6 @@ class ExplicitEulerTimeStepper(TimeStepperInterface):
     def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None):
         if mass is not None:
             raise NotImplementedError
-        if rhs is None:
-            raise NotImplementedError
         return explicit_euler(operator, rhs, initial_data, initial_time, end_time, self.nt, mu)
 
 
@@ -85,7 +83,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None):
 
 def explicit_euler(A, F, U0, t0, t1, nt, mu=None):
     assert isinstance(A, OperatorInterface)
-    assert isinstance(F, (OperatorInterface, VectorArrayInterface))
+    assert F is None or isinstance(F, (OperatorInterface, VectorArrayInterface))
     assert A.dim_source == A.dim_range
 
     if isinstance(F, OperatorInterface):
@@ -94,7 +92,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None):
         F_time_dep = F.parametric and '_t' in F.parameter_type
         if not F_time_dep:
             F_ass = F.as_vector(mu)
-    else:
+    elif isinstance(F, VectorArrayInterface):
         assert len(F) == 1
         assert F.dim == A.dim_source
         F_time_dep = False
@@ -115,12 +113,19 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None):
     t = t0
     U = U0.copy()
 
-    for n in xrange(nt):
-        t += dt
-        mu['_t'] = t
-        if F_time_dep:
-            F_ass = F.as_vector(mu)
-        U += (F_ass - A.apply(U, mu=mu)) * dt
-        R.append(U)
+    if F is None:
+        for n in xrange(nt):
+            t += dt
+            mu['_t'] = t
+            U.axpy(-dt, A.apply(U, mu=mu))
+            R.append(U)
+    else:
+        for n in xrange(nt):
+            t += dt
+            mu['_t'] = t
+            if F_time_dep:
+                F_ass = F.as_vector(mu)
+            U.axpy(dt, F_ass - A.apply(U, mu=mu))
+            R.append(U)
 
     return R
