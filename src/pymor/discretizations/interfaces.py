@@ -21,6 +21,8 @@ class DiscretizationInterface(BasicInterface, Parametric, Cachable, Named):
 
     Attributes
     ----------
+    linear
+        True if the discretization describes a linear Problem.
     operators
         Dictionary of all operators contained in this discretization. The idea is
         that this attribute will be common to all discretizations such that it can
@@ -38,6 +40,7 @@ class DiscretizationInterface(BasicInterface, Parametric, Cachable, Named):
         Visualize a solution given by the VectorArray U.
     '''
 
+    linear = False
     operators = dict()
     with_arguments = set(('operators',))
 

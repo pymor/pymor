@@ -29,6 +29,7 @@ class DiscretizationBase(DiscretizationInterface):
             raise NotImplementedError
         Parametric.__init__(self)
         self.operators = operators
+        self.linear = all(op is None or isinstance(op, ConstantOperator) or op.linear for op in operators.itervalues())
         self.products = products
         self.estimator = estimator
         self.visualizer = visualizer
