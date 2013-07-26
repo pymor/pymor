@@ -19,14 +19,14 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
     def __init__(self, operator, rhs, initial_data, T, time_stepper=None, products=None, parameter_space=None,
                  estimator=None, visualizer=None, caching='disk', name=None):
         assert isinstance(operator, OperatorInterface)
-        assert isinstance(rhs, OperatorInterface) and rhs.linear
+        assert rhs is None or isinstance(rhs, OperatorInterface) and rhs.linear
         assert isinstance(initial_data, (VectorArrayInterface, OperatorInterface))
         assert not isinstance(initial_data, OperatorInterface) or initial_data.dim_source == 0
         if isinstance(initial_data, VectorArrayInterface):
             initial_data = ConstantOperator(initial_data, name='initial_data')
         assert isinstance(time_stepper, TimeStepperInterface)
-        assert operator.dim_source == operator.dim_range == rhs.dim_source == initial_data.dim_range
-        assert rhs.dim_range == 1
+        assert operator.dim_source == operator.dim_range == initial_data.dim_range
+        assert rhs is None or rhs.dim_source == operator.dim_source and rhs.dim_range == 1
 
         operators = {'operator': operator, 'rhs': rhs, 'initial_data': initial_data}
         super(InstationaryNonlinearDiscretization, self).__init__(operators=operators, products=products,
