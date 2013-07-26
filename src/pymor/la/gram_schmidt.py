@@ -60,7 +60,7 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=True,
 
         if i >= offset:
             if product is None:
-                norm = A.l2_norm(ind=i)[0]
+                norm = A.l2_norm(ind=[i])[0]
             else:
                 norm = np.sqrt(product.apply2(A, A, V_ind=i, U_ind=i, pairwise=True))[0]
 
