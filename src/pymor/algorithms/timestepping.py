@@ -16,6 +16,22 @@ class TimeStepperInterface(BasicInterface):
         pass
 
 
+class ImplicitEulerTimeStepper(TimeStepperInterface):
+
+    def __init__(self, nt, invert_options=None):
+        self.nt = nt
+        self.invert_options = invert_options
+        self.lock()
+
+    with_arguments = set(('nt',))
+    def with_(self, **kwargs):
+        return self._with_via_init(kwargs)
+
+    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None):
+        return implicit_euler(operator, rhs, mass, initial_data, initial_time, end_time, self.nt, mu,
+                              self.invert_options)
+
+
 class ExplicitEulerTimeStepper(TimeStepperInterface):
 
     def __init__(self, nt):
