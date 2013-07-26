@@ -10,22 +10,24 @@ import numpy as np
 from pymor.gui.qt import visualize_glumpy_patch
 from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import discretize_elliptic_cg
+from pymor.discretizations import InstationaryDiscretization
 from pymor.la.numpyvectorarray import NumpyVectorArray
-from pymor.algorithms.timestepping import implicit_euler
+from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 
 def parabolic_demo():
     p = ThermalBlockProblem(parameter_range=(0.01, 1))
-    d, d_data = discretize_elliptic_cg(p, diameter=1./100)
+    d_stat, d_data = discretize_elliptic_cg(p, diameter=1./100)
+    U0 = NumpyVectorArray(np.zeros(d_stat.operator.dim_source))
+    time_stepper = ImplicitEulerTimeStepper(50)
+
+    d = InstationaryDiscretization(operator=d_stat.operator, rhs=d_stat.rhs, mass=d_stat.l2_product,
+                                   initial_data=U0, T=1, products=d_stat.products, time_stepper=time_stepper,
+                                   parameter_space=d_stat.parameter_space, visualizer=d_stat.visualizer)
 
     mu = next(d.parameter_space.sample_randomly(1))
-    U0 = NumpyVectorArray(np.zeros(d.operator.dim_source))
-    R = implicit_euler(d.operator, d.rhs, d.l2_product, U0, 0, 1, 10, mu)
+    R = d.solve(mu)
+    d.visualize(R)
 
-    visualize_glumpy_patch(d.rhs.grid, R)
-
-    # mu = next(d.parameter_space.sample_randomly(1))
-    # U = d.solve(mu)
-    # visualize_glumpy_patch(d.rhs.grid, U)
 
 if __name__ == '__main__':
     parabolic_demo()
