@@ -16,29 +16,32 @@ from pymor.discretizations.interfaces import DiscretizationInterface
 
 class InstationaryNonlinearDiscretization(DiscretizationInterface):
 
-    def __init__(self, operator, rhs, initial_data, T, time_stepper=None, products=None, parameter_space=None,
-                 estimator=None, visualizer=None, caching='disk', name=None):
-        assert isinstance(operator, OperatorInterface)
-        assert rhs is None or isinstance(rhs, OperatorInterface) and rhs.linear
+    def __init__(self, T, initial_data, operator, rhs=None, mass=None, time_stepper=None, products=None,
+                 parameter_space=None, estimator=None, visualizer=None, caching='disk', name=None):
         assert isinstance(initial_data, (VectorArrayInterface, OperatorInterface))
         assert not isinstance(initial_data, OperatorInterface) or initial_data.dim_source == 0
+        assert isinstance(operator, OperatorInterface)
+        assert rhs is None or isinstance(rhs, OperatorInterface) and rhs.linear
+        assert mass is None or isinstance(mass, OperatorInterface) and mass.linear
         if isinstance(initial_data, VectorArrayInterface):
             initial_data = ConstantOperator(initial_data, name='initial_data')
         assert isinstance(time_stepper, TimeStepperInterface)
         assert operator.dim_source == operator.dim_range == initial_data.dim_range
         assert rhs is None or rhs.dim_source == operator.dim_source and rhs.dim_range == 1
+        assert mass is None or mass.dim_source == mass.dim_range == operator.dim_source
 
-        operators = {'operator': operator, 'rhs': rhs, 'initial_data': initial_data}
+        operators = {'initial_data': initial_data, 'operator': operator, 'rhs': rhs, 'mass': mass}
         super(InstationaryNonlinearDiscretization, self).__init__(operators=operators, products=products,
                                                                   estimator=estimator, visualizer=visualizer,
                                                                   caching=caching, name=name)
+        self.T = T
+        self.initial_data = initial_data
         self.operator = operator
         self.rhs = rhs
-        self.initial_data = initial_data
-        self.T = T
+        self.mass = mass
         self.time_stepper = time_stepper
         self.solution_dim = operator.dim_range
-        self.build_parameter_type(inherits=(operator, rhs, initial_data), provides={'_t': 0})
+        self.build_parameter_type(inherits=(initial_data, operator, rhs, mass), provides={'_t': 0})
         self.parameter_space = parameter_space
 
         if hasattr(time_stepper, 'nt'):
@@ -49,8 +52,10 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
 
     def with_(self, **kwargs):
         assert set(kwargs.keys()) <= self.with_arguments
-        assert 'operators' not in kwargs or not ('rhs' in kwargs or 'operator' in kwargs or 'initial_data' in kwargs)
-        assert 'operators' not in kwargs or set(kwargs['operators'].keys()) <= set(('operator', 'rhs', 'initial_data'))
+        assert 'operators' not in kwargs or not ('rhs' in kwargs or 'operator' in kwargs or 'initial_data' in kwargs or
+                                                 'mass' in kwargs)
+        assert 'operators' not in kwargs or kwargs['operators'].viewkeys() <= set(('operator', 'rhs', 'initial_data',
+                                                                                   'mass'))
         assert 'time_stepper_nt' not in kwargs or 'time_stepper' not in kwargs
 
         if 'time_stepper_nt' in kwargs:
@@ -70,5 +75,5 @@ class InstationaryNonlinearDiscretization(DiscretizationInterface):
 
         mu['_t'] = 0
         U0 = self.initial_data.apply(0, mu=mu)
-        return self.time_stepper.solve(operator=self.operator, rhs=self.rhs, initial_data=U0, initial_time=0,
-                                       end_time=self.T, mu=mu)
+        return self.time_stepper.solve(operator=self.operator, rhs=self.rhs, initial_data=U0, mass=self.mass,
+                                       initial_time=0, end_time=self.T, mu=mu)
