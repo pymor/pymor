@@ -15,7 +15,7 @@ from pymor.la import VectorArrayInterface
 from pymor.la.gram_schmidt import gram_schmidt
 
 
-def pod(A, modes=None, product=None, tol=None, symmetrize=None, orthonormalize=False,
+def pod(A, modes=None, product=None, tol=None, symmetrize=None, orthonormalize=None,
         check=None, check_tol=None):
 
     assert isinstance(A, VectorArrayInterface)
@@ -40,14 +40,15 @@ def pod(A, modes=None, product=None, tol=None, symmetrize=None, orthonormalize=F
 
     EVALS, EVECS = eigh(B, overwrite_a=True, turbo=True, eigvals=eigvals)
     EVALS = EVALS[::-1]
-    EVECS = EVECS.T[::-1, :] # is this a view?
+    EVECS = EVECS.T[::-1, :] # is this a view? yes it is!
 
-    last_above_tol = np.where(EVALS >= tol)[0][-1]
+    above_tol = np.where(EVALS >= tol)[0]
+    if len(above_tol) == 0:
+        return type(A).empty(A.dim)
+    last_above_tol = above_tol[-1]
+
     EVALS = EVALS[:last_above_tol + 1]
     EVECS = EVECS[:last_above_tol + 1]
-
-    if len(EVALS) == 0:
-        return type(A).empty(A.dim)
 
     POD = A.lincomb(EVECS / np.sqrt(EVALS[:, np.newaxis]))
 

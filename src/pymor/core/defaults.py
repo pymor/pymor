@@ -42,9 +42,9 @@ class Defaults(BasicInterface):
     gram_schmidt_check          = True
     gram_schmidt_check_tol      = 1e-3
 
-    pod_tol                     = 2e-12
+    pod_tol                     = 1e-15
     pod_symmetrize              = False
-    pod_orthonormalize          = False
+    pod_orthonormalize          = True
     pod_check                   = True
     pod_check_tol               = 1e-10
 
