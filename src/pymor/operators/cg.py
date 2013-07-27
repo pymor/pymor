@@ -93,7 +93,6 @@ class L2ProductFunctionalP1(LinearOperatorInterface):
                 I[DI] = self.dirichlet_data(g.centers(g.dim)[DI], self.map_parameter(mu, 'dirichlet_data'))
             else:
                 I[DI] = 0
-
         return NumpyLinearOperator(I.reshape((1, -1)))
 
 class L2ProductFunctionalQ1(LinearOperatorInterface):
@@ -321,10 +320,10 @@ class L2ProductQ1(LinearOperatorInterface):
 
         # our shape functions
         if g.dim == 2:
-            SF = SF = [lambda X: (1-X[..., 0]) * (1-X[..., 1]),
+            SF = [lambda X: (1-X[..., 0]) * (1-X[..., 1]),
                   lambda X: X[..., 0]*(1-X[..., 1]),
-                  lambda X: X[..., 1]*(1-X[..., 0]),
-                  lambda X: X[..., 1]*X[..., 0]]
+                  lambda X: X[..., 1]*X[..., 0],
+                  lambda X: X[..., 1]*(1-X[..., 0])]
         else:
             raise NotImplementedError
 
@@ -526,11 +525,10 @@ class DiffusionOperatorQ1(LinearOperatorInterface):
         if g.dim == 2:
             self.logger.info('Calulate gradients of shape functions transformed by reference map ...')
             q, w = g.reference_element.quadrature(order=2)
-
             SF_GRAD = np.array(([q[...,1]-1.,q[...,0]-1.],
                       [1-q[..., 1],-q[..., 0]],
-                      [-q[..., 1],1.-q[..., 0]],
-                      [q[..., 1],q[..., 0]]))
+                      [q[..., 1],q[..., 0]],
+                      [-q[..., 1],1.-q[..., 0]]))
         else:
             raise NotImplementedError
 
@@ -539,9 +537,9 @@ class DiffusionOperatorQ1(LinearOperatorInterface):
         self.logger.info('Calculate all local scalar products beween gradients ...')
         if self.diffusion_function is not None:
             D = self.diffusion_function(self.grid.centers(0), mu=self.map_parameter(mu, 'diffusion')).ravel()
-            SF_INTS = np.einsum('epic,eqic,e,e->epq', SF_GRADS, SF_GRADS, g.volumes(0), D).ravel()
+            SF_INTS = np.einsum('epic,eqic,c,e,e->epq', SF_GRADS, SF_GRADS, w, g.volumes(0), D).ravel()
         else:
-            SF_INTS = np.einsum('epic,eqic,e->epq', SF_GRADS, SF_GRADS, g.volumes(0)).ravel()
+            SF_INTS = np.einsum('epic,eqic,c,e->epq', SF_GRADS, SF_GRADS, w, g.volumes(0)).ravel()
 
         if self.diffusion_constant is not None:
             SF_INTS *= self.diffusion_constant
