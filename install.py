@@ -27,10 +27,17 @@ UBUNTU_13_04_RECIPE = {'name': 'Ubuntu 13.04',
                                   + 'python2.7-tk python-pip python-virtualenv tk-dev swig' ],
                        'local': deps.install_requires + deps.install_suggests,
                        'venv_cmd': '/usr/bin/virtualenv'}
+ARCH_RECIPE = {'name': 'Arch Linux',
+                       'system': [  'sudo pacman -S base-devel tk qt4 suitesparse lapack python2 python2-pip '
+                                  + 'python2-virtualenv swig gcc-fortran' ],
+                       'local': deps.install_requires + deps.install_suggests,
+                       'venv_cmd': '/usr/bin/virtualenv2'}
+
 
 RECIPES = {'default': DEFAULT_RECIPE,
            'ubuntu_12_04': UBUNTU_12_04_RECIPE,
-           'ubuntu_13_04': UBUNTU_13_04_RECIPE}
+           'ubuntu_13_04': UBUNTU_13_04_RECIPE,
+           'arch' : ARCH_RECIPE}
 
 DEFAULT_VENV_DIR = os.path.join(os.path.expandvars('$HOME'), 'virtualenv', 'pyMor')
 
@@ -50,6 +57,8 @@ def get_recipe():
         elif "Ubuntu" in release_description:
             print('Unknown Ubuntu release, trying Ubuntu 12.04 recipe ...')
             return UBUNTU_12_04_RECIPE
+    elif os.path.exists('/etc/arch-release'):
+        return ARCH_RECIPE
     print('WARNING: Unknown platform, trying default recipe ...')
     return DEFAULT_RECIPE
 
