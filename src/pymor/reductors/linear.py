@@ -96,7 +96,7 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
         RR_O = space_type.empty(space_dim)
     elif not d.operator.parametric:
         for i in xrange(len(RB)):
-            append_vector(d.operator.apply(RB, ind=[i]), R_O, RR_O)
+            append_vector(d.operator.apply(RB, ind=i), R_O, RR_O)
         R_O = space_type.empty(space_dim, reserve=len(RB))
         RR_O = space_type.empty(space_dim, reserve=len(RB))
     else:
