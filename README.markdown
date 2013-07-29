@@ -2,7 +2,7 @@ pyMor - Model order reduction in Python
 =======================================
 
 **NOTE** pyMor is still alpha quality software and under heavy development.
-Should you have any questions regard pyMor or wish to contribute, do not
+Should you have any questions regarding pyMor or wish to contribute, do not
 hesitate to directly contact one of the developers.
 
 
