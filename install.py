@@ -22,7 +22,7 @@ UBUNTU_12_04_RECIPE = {'name': 'Ubuntu 12.04',
                        'local': deps.install_requires + deps.install_suggests,
                        'venv_cmd': ['/usr/bin/virtualenv']}
 TRAVIS_RECIPE = {'name': 'travis',
-                       'system': [  'sudo apt-get python-virtualenv install python-numpy python-scipy python-sympy '
+                       'system': [  'sudo apt-get install python-virtualenv python-numpy python-scipy python-sympy '
                                   + 'python3-numpy python3-scipy python3-pyside python-pyside' ],
                        'local': deps.install_requires + deps.install_suggests,
                        'venv_cmd': ['/usr/bin/python', '/usr/bin/virtualenv']}
