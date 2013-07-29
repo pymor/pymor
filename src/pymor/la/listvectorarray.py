@@ -132,7 +132,7 @@ class ListVectorArray(VectorArrayInterface):
 
     @classmethod
     def zeros(cls, dim, count=1):
-        return cls([vector_type.zeros(dim) for c in xrange(count)], dim=dim, copy=False)
+        return cls([cls.vector_type.zeros(dim) for c in xrange(count)], dim=dim, copy=False)
 
     def __len__(self):
         return len(self._list)
