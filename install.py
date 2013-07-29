@@ -14,28 +14,28 @@ DEFAULT_RECIPE = {'name': 'default',
                   'system': [  'echo make sure you have all build dependencies for numpy/scipy and Qt4 headers '
                              + 'installed' ],
                   'local': deps.install_requires + deps.install_suggests,
-                  'venv_cmd': 'virtualenv'}
+                  'venv_cmd': ['virtualenv']}
 UBUNTU_12_04_RECIPE = {'name': 'Ubuntu 12.04',
                        'system': [  'sudo apt-get install build-essential cmake gfortran libqt4-dev libsuitesparse-dev '
                                   + 'libatlas-base-dev libfreetype6-dev libpng12-dev python2.7 python2.7-dev '
                                   +  'python2.7-tk python-pip python-virtualenv tk-dev swig' ],
                        'local': deps.install_requires + deps.install_suggests,
-                       'venv_cmd': '/usr/bin/virtualenv'}
+                       'venv_cmd': ['/usr/bin/virtualenv']}
 TRAVIS_RECIPE = {'name': 'travis',
                        'system': [  'sudo apt-get install python-numpy python-scipy python-sympy python3-numpy python3-scipy python3-pyside python-pyside' ],
                        'local': deps.install_requires + deps.install_suggests,
-                       'venv_cmd': '/usr/bin/python /usr/bin/virtualenv'}
+                       'venv_cmd': ['/usr/bin/python', '/usr/bin/virtualenv']}
 UBUNTU_13_04_RECIPE = {'name': 'Ubuntu 13.04',
                        'system': [  'sudo apt-get install build-essential cmake gfortran libqt4-dev libsuitesparse-dev '
                                   + 'libatlas-base-dev libfreetype6-dev libpng12-dev python2.7 python2.7-dev '
                                   + 'python2.7-tk python-pip python-virtualenv tk-dev swig' ],
                        'local': deps.install_requires + deps.install_suggests,
-                       'venv_cmd': '/usr/bin/virtualenv'}
+                       'venv_cmd': ['/usr/bin/virtualenv']}
 ARCH_RECIPE = {'name': 'Arch Linux',
                        'system': [  'sudo pacman -S base-devel tk qt4 suitesparse lapack python2 python2-pip '
                                   + 'python2-virtualenv swig gcc-fortran' ],
                        'local': deps.install_requires + deps.install_suggests,
-                       'venv_cmd': '/usr/bin/virtualenv2'}
+                       'venv_cmd': ['/usr/bin/virtualenv2']}
 
 
 RECIPES = {'default': DEFAULT_RECIPE,
@@ -125,8 +125,8 @@ About to install pyMor with the following configuration into a virtualenv:
     print_separator()
     print('***** CREATING VIRTUALENV\n')
     python_arg = '--python={}'.format(args.python)
-    print('***** EXECUTING {} {} {}'.format(recipe['venv_cmd'], python_arg, venvdir))
-    subprocess.check_call([recipe['venv_cmd'], python_arg, venvdir])
+    print('***** EXECUTING {} {} {}'.format(' '.join(recipe['venv_cmd']), python_arg, venvdir))
+    subprocess.check_call(recipe['venv_cmd'] + [python_arg, venvdir])
     activate = '. ' + os.path.join(venvdir, 'bin', 'activate')
 
     print_separator()
