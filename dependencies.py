@@ -7,3 +7,6 @@ install_suggests = ['ipython', 'ipdb', 'matplotlib', 'sympy'] + tests_require
 
 import_names = {'nose-progressive': 'noseprogressive', 'nose-cov': 'nose_cov',
                 'nosehtmloutput': 'htmloutput', 'ipython': 'IPython'}
+
+if __name__ == '__main__':
+    print(' '.join([i for i in install_requires + install_suggests]))
