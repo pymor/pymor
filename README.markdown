@@ -55,7 +55,7 @@ This procedure has been tested on the following platforms:
    
    to prevent the installation of pyMor itself into the `site-packages` directory
    of the virtualenv. In this case, the installation script will add the pyMor
-   source tree to the PYTHONPATH of the virtualenv, so pyMor will always be
+   source tree to the `PYTHONPATH` of the virtualenv, so pyMor will always be
    importable inside the virtualenv. (This can be prevented by adding the
    `--without-python-path` option.) Moreover
    
@@ -83,11 +83,11 @@ This procedure has been tested on the following platforms:
 Debugging
 ---------
 
- * You can globally disable caching by having PYMOR_CACHE_DISABLE=1 in the process' environment
+ * You can globally disable caching by having `PYMOR_CACHE_DISABLE=1` in the process' environment
 
 
 Tests
 -----
 
-You'll need mock, nose-cov, nose, nosehtmloutput, nose-progressive and tissue installed to run 'make test'.
-Having PYMOR_NO_GRIDTESTS=1 in the process' environment disables all, expensive grid testing.
+You'll need mock, nose-cov, nose, nosehtmloutput, nose-progressive and tissue installed to run `make test`.
+Having `PYMOR_NO_GRIDTESTS=1` in the process' environment disables all, expensive grid testing.
