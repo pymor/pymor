@@ -123,11 +123,12 @@ About to install pyMor with the following configuration into a virtualenv:
             print('***** EXECUTING {}'.format(cmd))
             subprocess.check_call(cmd, shell=True)
 
-    print_separator()
-    print('***** CREATING VIRTUALENV\n')
-    python_arg = '--python={}'.format(args.python)
-    print('***** EXECUTING {} {} {}'.format(' '.join(recipe['venv_cmd']), python_arg, venvdir))
-    subprocess.check_call(recipe['venv_cmd'] + [python_arg, venvdir])
+    if len(recipe['venv_cmd']) > 0:
+        print_separator()
+        print('***** CREATING VIRTUALENV\n')
+        python_arg = '--python={}'.format(args.python)
+        print('***** EXECUTING {} {} {}'.format(' '.join(recipe['venv_cmd']), python_arg, venvdir))
+        subprocess.check_call(recipe['venv_cmd'] + [python_arg, venvdir])
     activate = '. ' + os.path.join(venvdir, 'bin', 'activate')
 
     print_separator()
