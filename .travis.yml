@@ -6,8 +6,7 @@ virtualenv:
   system_site_packages: true
 before_install:
  - rm -f $VIRTUAL_ENV/lib/python$TRAVIS_PYTHON_VERSION/no-global-site-packages.txt
- - sudo apt-get install -y python-numpy python-scipy python-sympy
 # command to install dependencies
-install: python ./install.py --recipe ubuntu_12_04 --virtualenv-dir $VIRTUAL_ENV --without-python-path --python python$TRAVIS_PYTHON_VERSION --only-deps
+install: python ./install.py --recipe travis --virtualenv-dir $VIRTUAL_ENV --without-python-path --python python$TRAVIS_PYTHON_VERSION --only-deps
 # # command to run tests
 script: python setup.py test
