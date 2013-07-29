@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 
 from __future__ import print_function
 
@@ -69,6 +69,8 @@ if __name__ == '__main__':
                         help='installation recipe to use (otherwise auto-detected)')
     parser.add_argument('--virtualenv-dir', default=DEFAULT_VENV_DIR,
                         help='path of the virtualenv to be created')
+    parser.add_argument('--python', default='python2.7',
+                        help='name of the python interpreter to be passed to virtualenv')
     parser.add_argument('--without-python-path', action='store_true',
                         help='do not add pyMor to PYTHONPATH when --only-deps is used')
     parser.add_argument('--without-system-packages', action='store_true',
@@ -102,7 +104,7 @@ About to install pyMor with the following configuration into a virtualenv:
 
     print('Staring installation in 5 seconds ', end='')
     sys.stdout.flush()
-    for i in xrange(5):
+    for i in range(5):
         print('.', end='')
         sys.stdout.flush()
         time.sleep(1)
@@ -117,8 +119,9 @@ About to install pyMor with the following configuration into a virtualenv:
 
     print_separator()
     print('***** CREATING VIRTUALENV\n')
-    print('***** EXECUTING ' + recipe['venv_cmd'] + ' --python=python2.7 ' + venvdir)
-    subprocess.check_call([recipe['venv_cmd'], '--python=python2.7', venvdir])
+    python_arg = '--python={}'.format(args.python)
+    print('***** EXECUTING {} {} {}'.format(recipe['venv_cmd'], python_arg, venvdir))
+    subprocess.check_call([recipe['venv_cmd'], python_arg, venvdir])
     activate = '. ' + os.path.join(venvdir, 'bin', 'activate')
 
     print_separator()
@@ -134,7 +137,7 @@ About to install pyMor with the following configuration into a virtualenv:
         if not args.without_python_path:
             print_separator()
             print('***** ADDING PYMOR TO PYTHONPATH\n')
-            with open(os.path.join(venvdir, 'lib/python2.7/site-packages/pymor.pth'), 'w') as f:
+            with open(os.path.join(venvdir, 'lib/{}/site-packages/pymor.pth'.format(args.python)), 'w') as f:
                     f.write(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'src'))
     else:
         print_separator()
