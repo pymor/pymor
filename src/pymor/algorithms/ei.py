@@ -8,7 +8,7 @@ from numbers import Number
 import math as m
 
 import numpy as np
-from scipy.linalg import solve_triangular
+from scipy.linalg import solve_triangular, cho_factor, cho_solve
 
 from pymor.core import getLogger, BasicInterface
 from pymor.core.cache import Cachable, cached, DEFAULT_DISK_CONFIG
@@ -49,7 +49,7 @@ def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation
                 gramian = collateral_basis.gramian()
             else:
                 gramian = product.apply2(collateral_basis, collateral_basis, pairwise=False)
-            gramian_inverse = np.linalg.inv(gramian)
+            gramian_cholesky = cho_factor(gramian, overwrite_a=True)
 
         for AU in evaluations:
             if len(interpolation_dofs) > 0:
@@ -58,10 +58,10 @@ def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation
                     ERR =  AU - AU_interpolated
                 else:
                     if product is None:
-                        coefficients = gramian_inverse.dot(collateral_basis.dot(AU, pairwise=False)).T
+                        coefficients = cho_solve(gramian_cholesky, collateral_basis.dot(AU, pairwise=False)).T
                     else:
                         gramian = product
-                        coefficients = gramian_inverse.dot(product.apply2(collateral_basis, AU, pairwise=False)).T
+                        coefficients = cho_solve(gramian_cholesky, product.apply2(collateral_basis, AU, pairwise=False)).T
                     AU_projected = collateral_basis.lincomb(coefficients)
                     ERR = AU - AU_projected
             else:
