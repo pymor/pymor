@@ -18,12 +18,11 @@ DEFAULT_RECIPE = {'name': 'default',
 UBUNTU_12_04_RECIPE = {'name': 'Ubuntu 12.04',
                        'system': [  'sudo apt-get install build-essential cmake gfortran libqt4-dev libsuitesparse-dev '
                                   + 'libatlas-base-dev libfreetype6-dev libpng12-dev python2.7 python2.7-dev '
-                                  +  'python2.7-tk python-pip python-virtualenv tk-dev swig' ],
+                                  + 'python2.7-tk python-pip python-virtualenv tk-dev swig' ],
                        'local': deps.install_requires + deps.install_suggests,
                        'venv_cmd': ['/usr/bin/virtualenv']}
-_travis_local = deps.install_requires + deps.install_suggests
-del _travis_local[_travis_local.index('PySide')]
-del _travis_local[_travis_local.index('matplotlib')]
+
+_travis_local = [i for i in deps.install_requires + deps.tests_require if i not in ['PySide', 'matplotlib']]
 TRAVIS_RECIPE = {'name': 'travis',
                        'system': [  'sudo apt-get install python-virtualenv python-numpy python-scipy python-sympy '
                                   + 'python3-numpy python3-scipy python3-pyside python-pyside' ],
