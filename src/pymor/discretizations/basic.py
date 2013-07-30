@@ -13,7 +13,7 @@ from pymor.core import abstractmethod
 from pymor.core.cache import Cachable, cached, DEFAULT_DISK_CONFIG, NO_CACHE_CONFIG
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.la import induced_norm, VectorArrayInterface
-from pymor.tools import selfless_arguments
+from pymor.tools import selfless_arguments, FrozenDict
 from pymor.operators import OperatorInterface, ConstantOperator
 from pymor.parameters import Parametric
 from pymor.tools import selfless_arguments
@@ -29,7 +29,7 @@ class DiscretizationBase(DiscretizationInterface):
         else:
             raise NotImplementedError
         Parametric.__init__(self)
-        self.operators = operators
+        self.operators = FrozenDict(operators)
         self.linear = all(op is None or isinstance(op, ConstantOperator) or op.linear for op in operators.itervalues())
         self.products = products
         self.estimator = estimator
