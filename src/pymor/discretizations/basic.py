@@ -8,7 +8,8 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from pymor.algorithms.timestepping import TimeStepperInterface
-from pymor.core import defaults, abstractmethod
+from pymor import defaults
+from pymor.core import abstractmethod
 from pymor.core.cache import Cachable, cached, DEFAULT_DISK_CONFIG, NO_CACHE_CONFIG
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.la import induced_norm, VectorArrayInterface

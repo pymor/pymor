@@ -5,7 +5,7 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from pymor.core import defaults
+from pymor import defaults
 
 
 def float_cmp(x, y, rtol=None, atol=None):

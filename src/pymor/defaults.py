@@ -5,13 +5,13 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from .interfaces import BasicInterface
-from .logger import getLogger
+from pymor.core.interfaces import BasicInterface
+from pymor.core.logger import getLogger
 
 
 class Defaults(BasicInterface):
     '''Class defining application-wide defaults. Do not instantiate but use
-    `pymor.core.defaults`.
+    `pymor.defaults`.
 
     float_cmp_tol:                  tolerance for pymor.tools.float_cmp
 

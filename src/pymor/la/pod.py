@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from scipy.linalg import eigh
 
-from pymor.core import defaults
+from pymor import defaults
 from pymor.core.exceptions import AccuracyError
 from pymor.tools import float_cmp_all
 from pymor.operators import OperatorInterface

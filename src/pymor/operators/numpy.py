@@ -12,7 +12,7 @@ import numpy as np
 from scipy.sparse import issparse
 from scipy.sparse.linalg import bicgstab
 
-from pymor.core import defaults
+from pymor import defaults
 from pymor.core.exceptions import InversionError
 from pymor.la import NumpyVectorArray
 from pymor.operators import OperatorBase, MatrixBasedOperatorBase, LincombOperatorBase, LincombOperator

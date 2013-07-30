@@ -5,7 +5,6 @@
 from pymor.core.interfaces import (BasicInterface, abstractmethod, abstractclassmethod,
                                    abstractstaticmethod, abstractproperty)
 from pymor.core.logger import getLogger
-from pymor.core.defaults import defaults
 
 try:
     import cPickle as pickle

@@ -11,7 +11,7 @@ import math as m
 
 import numpy as np
 
-from pymor.core import defaults
+from pymor import defaults
 from pymor.la.listvectorarray import VectorInterface, ListVectorArray
 from dunelinearellipticcg2dsgrid import DuneVector
 

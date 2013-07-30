@@ -9,7 +9,7 @@ import numpy as np
 from scipy.sparse.linalg import bicgstab
 from scipy.sparse import issparse
 
-from pymor.core import defaults
+from pymor import defaults
 from pymor.core.cache import Cachable, NO_CACHE_CONFIG
 from pymor.tools import dict_property
 from pymor.discretizations.basic import StationaryDiscretization, DiscretizationBase
