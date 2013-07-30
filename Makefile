@@ -5,7 +5,7 @@ all:
 
 # PyPI wants ReStructured text
 README.txt: README.markdown
-	pandoc -f markdown -t rst $< > $@
+	pandoc -f markdown -t plain $< > $@
 
 # I want HTML (to preview the formatting :))
 README.html: README.markdown
