@@ -13,6 +13,7 @@ import os
 import multiprocessing
 import subprocess
 from setuptools import find_packages
+from setuptools.command.test import test as TestCommand
 from distutils.extension import Extension
 import dependencies
 
@@ -22,6 +23,19 @@ tests_require = dependencies.tests_require
 install_requires = dependencies.install_requires
 setup_requires = dependencies.setup_requires
 install_suggests = dependencies.install_suggests
+
+
+class PyTest(TestCommand):
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+    def run_tests(self):
+        #import here, cause outside the eggs aren't loaded
+        import pytest
+        errno = pytest.main(self.test_args)
+        sys.exit(errno)
+
 
 class DependencyMissing(Exception):
 
@@ -97,7 +111,8 @@ def write_version():
 def _setup(**kwargs):
     _numpy_monkey()
     import Cython.Distutils
-    cmdclass = {'build_ext': Cython.Distutils.build_ext}
+    cmdclass = {'build_ext': Cython.Distutils.build_ext,
+                'test': PyTest}
     from numpy import get_include
     ext_modules = [Extension("pymor.tools.relations", ["src/pymor/tools/relations.pyx"], include_dirs=[get_include()]),
                    Extension("pymor.tools.inplace", ["src/pymor/tools/inplace.pyx"], include_dirs=[get_include()])]
@@ -163,7 +178,6 @@ def setup_package():
             'Topic :: Scientific/Engineering :: Visualization'],
         license='LICENSE.txt',
         zip_safe=False,
-        test_suite='pymortests.base.suite',
     )
 
     missing = list(_missing(install_suggests))
