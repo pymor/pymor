@@ -12,7 +12,7 @@ from pymor.operators import OperatorInterface
 class TimeStepperInterface(BasicInterface):
 
     @abstractmethod
-    def solve(initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None):
+    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None):
         pass
 
 
