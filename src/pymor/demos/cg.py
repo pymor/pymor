@@ -42,7 +42,7 @@ def cg_demo(nrhs, ndirichlet, nneumann):
     domain = eval('domain{}'.format(nneumann))
 
 
-    for n in [32, 128]:
+    for n in [32, 128]
         print('Solving on TriaGrid(({0},{0}))'.format(n))
 
         print('Setup problem ...')
@@ -53,7 +53,7 @@ def cg_demo(nrhs, ndirichlet, nneumann):
 
         print('Solve ...')
         U = discretization.solve()
-
+        
         print('Plot ...')
         discretization.visualize(U)
 
