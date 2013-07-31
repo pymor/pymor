@@ -641,5 +641,8 @@ class AffineGridTestInterface(GridClassTestInterface):
 # this needs to go into every module that wants to use dynamically generated types, ie. testcases, below the test code
 from pymor.core.dynamic import *
 
+del ConformalTopologicalGridTestInterface
+del AffineGridTestInterface
+
 if __name__ == "__main__":
     runmodule(name='pymortests.grid')
