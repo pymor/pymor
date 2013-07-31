@@ -131,13 +131,14 @@ def _setup(name='pymor'):
     test_logger = logger.getLogger(name)
     test_logger.setLevel(logging.DEBUG)  # config_files.append(os.path.join(os.path.dirname(pymor.__file__), '../../setup.cfg'))
     # config defaults to no plugins -> specify defaults...
+    import nose.plugins
     manager = nose.plugins.manager.DefaultPluginManager()
     config_files = nose.config.all_config_files()
     config = nose.config.Config(files=config_files, plugins=manager)
     config.exclude = []
     selector = PymorTestSelector(config=config)
     loader = nose.loader.defaultTestLoader(config=config, selector=selector)
-    cli = [__file__, '-vv', '-d']
+    cli = [__file__, '--logging-filter=pymor', '--logging-clear-handlers', '-d']
     return cli, loader, config
 
 def suite():

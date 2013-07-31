@@ -24,7 +24,7 @@ UBUNTU_12_04_RECIPE = {'name': 'Ubuntu 12.04',
 
 _travis_local = [i for i in deps.install_requires + deps.tests_require if i not in ['PySide', 'matplotlib']]
 TRAVIS_RECIPE = {'name': 'travis',
-                       'system': [  'sudo apt-get install python-virtualenv python-numpy python-scipy python-sympy '
+                       'system': [  'sudo apt-get install -qq python-virtualenv python-numpy python-scipy python-sympy '
                                   + 'python3-numpy python3-scipy python3-pyside python-pyside' ],
                        'local': _travis_local,
                        'venv_cmd': []}
@@ -135,7 +135,7 @@ About to install pyMor with the following configuration into a virtualenv:
 
     print_separator()
     print('***** Installing dependencies\n')
-    for cmd in ['pip install {}'.format(i) for i in recipe['local']]:
+    for cmd in ['pip install {} --use-mirrors'.format(i) for i in recipe['local']]:
         print('\n***** EXECUTING {}\n'.format(cmd))
         subprocess.check_call('{} && {}'.format(activate, cmd), shell=True)
 

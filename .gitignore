@@ -43,3 +43,4 @@ README.txt
 .settings/
 src/pymor/version.py
 .kateproject*
+venvs
