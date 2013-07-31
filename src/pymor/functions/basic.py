@@ -48,7 +48,7 @@ class ConstantFunction(FunctionInterface):
         if x.ndim == 1:
             return np.array(self._value)
         else:
-            return np.tile(self._value, x.shape[:-1] + self.shape_range)
+            return np.tile(self._value, x.shape[:-1] + (1,) * len(self.shape_range))
 
 
 class GenericFunction(FunctionInterface):
