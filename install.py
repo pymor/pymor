@@ -131,6 +131,10 @@ About to install pyMor with the following configuration into a virtualenv:
         python_arg = '--python={}'.format(args.python)
         print('***** EXECUTING {} {} {}'.format(' '.join(recipe['venv_cmd']), python_arg, venvdir))
         subprocess.check_call(recipe['venv_cmd'] + [python_arg, venvdir])
+        cmd = 'pip install --upgrade --use-mirrors distribute'
+        print('\n***** EXECUTING {}\n'.format(cmd))
+        activate = '. ' + os.path.join(venvdir, 'bin', 'activate')
+        subprocess.check_call('{} && {}'.format(activate, cmd), shell=True)
     activate = '. ' + os.path.join(venvdir, 'bin', 'activate')
 
     print_separator()
