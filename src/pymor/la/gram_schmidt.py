@@ -54,6 +54,7 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=True,
             duplicates = A.almost_equal(A, ind=i, o_ind=np.arange(max(offset, i + 1), len(A)))
             if np.any(duplicates):
                 A.remove(np.where(duplicates))
+                logger.info("removing duplicate vectors")
 
     # main loop
     i = offset
@@ -68,6 +69,7 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=True,
         # loop is controlled by norms, setting old norm so that we can enter at first
         norm = 0
         removethis = False
+        first_iteration = True
 
         while norm / oldnorm < 0.25 and (not removethis):
             # this loop assumes that oldnorm is the norm of the ith vector when entering
@@ -76,6 +78,8 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=True,
             # otherwise, when orthogonalizing one single vector,
             # its norm will be calculated twice
             if i > 0:
+                if not first_iteration:
+                    logger.info('orthonormalizing vector {} again'.format(i))
                 # orthogonalize to all vectors left
                 for j in xrange(i):
                     if product is None:
@@ -99,8 +103,10 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=True,
                 A.scal(1/norm, ind=i)
                 oldnorm = 1.
 
+            first_iteration = False
+
         if removethis:
-            logger.info("gram schmidt is removing a vector")
+            logger.info("removing linear dependent vector {}".format(i))
             remove.append(i)
 
         i += 1
