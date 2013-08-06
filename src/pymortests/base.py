@@ -9,6 +9,8 @@ import logging
 import os
 import pprint
 import pkgutil
+import sys
+import importlib
 
 from pymor.core.interfaces import BasicInterface
 from pymor.core import logger
@@ -56,9 +58,12 @@ class TestBase(unittest.TestCase, BasicInterface):
 
 def _load_all():
     import pymor
+    ignore_playground = True
     fails = []
     for _, module_name, _ in pkgutil.walk_packages(pymor.__path__, pymor.__name__ + '.',
                                                    lambda n: fails.append((n, ''))):
+        if ignore_playground and 'playground' in module_name:
+            continue
         try:
             __import__(module_name, level=0)
         except (TypeError, ImportError) as t:
@@ -102,19 +107,17 @@ def GridSubclassForImplemetorsOf(InterfaceType):
     except ImportError:
         pass
 
-    def getType(name):
-        import sys
+    def _getType(name):
         module = name[0:name.rfind('.')]
-        blah = name[name.rfind('.') + 1:]
-        print([f for f in sys.modules.keys() if f.startswith('pymor.gr')])
-        print(blah + ' ' + module)
-        return sys.modules[module].__dict__[blah]
+        classname = name[name.rfind('.') + 1:]
+        importlib.import_module(module)
+        return sys.modules[module].__dict__[classname]
 
     def decorate(TestCase):
         '''saves a new type called cname with correct bases and class dict in globals'''
         import pymor.core.dynamic
         if 'PYMOR_GRID_TYPE' in os.environ:
-            test_types = [getType(os.environ['PYMOR_GRID_TYPE'])]
+            test_types = [_getType(os.environ['PYMOR_GRID_TYPE'])]
         else:
             test_types = set([T for T in InterfaceType.implementors(True) if not T.has_interface_name()])
         for GridType in test_types:
