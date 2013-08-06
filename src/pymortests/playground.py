@@ -26,4 +26,4 @@ class TestExpressionFunction(TestBase):
 
 if __name__ == "__main__":
     random.seed()
-    runmodule(name='pymortests.playground')
+    runmodule(filename=__file__)

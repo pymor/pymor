@@ -645,4 +645,4 @@ del ConformalTopologicalGridTestInterface
 del AffineGridTestInterface
 
 if __name__ == "__main__":
-    runmodule(name='pymortests.grid')
+    runmodule(filename=__file__)

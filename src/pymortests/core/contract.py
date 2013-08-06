@@ -5,7 +5,6 @@
 from __future__ import absolute_import, division, print_function
 import contracts
 import mock
-from nose.tools import raises
 
 from pymortests.base import TestBase, runmodule
 from pymortests.core.dummies import (AllDirichletBoundaryInfo, AverageImplementer, BoringTestClass)
@@ -76,4 +75,4 @@ class ContractTest(TestBase):
             enabled(int(8))
 
 if __name__ == "__main__":
-    runmodule(name='pymortests.core.contract')
+    runmodule(filename=__file__)

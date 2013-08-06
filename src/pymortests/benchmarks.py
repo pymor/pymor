@@ -8,4 +8,4 @@ from pymortests.base import runmodule
 
 
 if __name__ == "__main__":
-    runmodule(name='pymortests.benchmarks')
+    runmodule(filename=__file__)

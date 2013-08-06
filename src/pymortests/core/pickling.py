@@ -37,4 +37,4 @@ class PickleMeInterface(TestBase):
 from pymor.core.dynamic import *
 
 if __name__ == "__main__":
-    runmodule(name='pymortests.core.pickling')
+    runmodule(filename=__file__)

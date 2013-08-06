@@ -27,4 +27,4 @@ class TestBasicParameterspace(TestBase):
 
 
 if __name__ == "__main__":
-    runmodule(name='pymortests.la')
+    runmodule(filename=__file__)

@@ -41,4 +41,4 @@ def logclass(cls):
 
 
 if __name__ == "__main__":
-    runmodule(name='pymortests.core.logger')
+    runmodule(filename=__file__)

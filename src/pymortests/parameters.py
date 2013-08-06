@@ -30,4 +30,4 @@ class TestCubicParameterspace(TestBase):
 
 
 if __name__ == "__main__":
-    runmodule(name='pymortests.parameters')
+    runmodule(filename=__file__)

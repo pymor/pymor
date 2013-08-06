@@ -89,4 +89,4 @@ class CacheTest(TestBase):
 
 
 if __name__ == "__main__":
-    runmodule(name='pymortests.core.cache')
+    runmodule(filename=__file__)

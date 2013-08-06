@@ -119,4 +119,4 @@ class CmpTest(TestBase):
 
 
 if __name__ == "__main__":
-    runmodule(name='pymortests.tools')
+    runmodule(filename=__file__)

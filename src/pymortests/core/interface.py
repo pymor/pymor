@@ -124,4 +124,4 @@ class InterfaceTest(TestBase):
         self.assertIsInstance(pymor.version, tuple)
 
 if __name__ == "__main__":
-    runmodule(name='pymortests.core.interface')
+    runmodule(filename=__file__)
