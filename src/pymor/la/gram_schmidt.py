@@ -66,7 +66,7 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=None,
             duplicates = A.almost_equal(A, ind=i, o_ind=np.arange(max(offset, i + 1), len(A)))
             if np.any(duplicates):
                 A.remove(np.where(duplicates))
-                logger.info("removing duplicate vectors")
+                logger.info("Removing duplicate vectors")
 
     # main loop
     i = offset
@@ -92,7 +92,7 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=None,
                 if first_iteration:
                     first_iteration = False
                 else:
-                    logger.info('orthonormalizing vector {} again'.format(i))
+                    logger.info('Orthonormalizing vector {} again'.format(i))
 
                 # orthogonalize to all vectors left
                 for j in xrange(i):
@@ -112,7 +112,7 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=None,
 
                 # remove vector if it got too small:
                 if norm/oldnorm < tol:
-                    logger.info("removing linear dependent vector {}".format(i))
+                    logger.info("Removing linear dependent vector {}".format(i))
                     remove.append(i)
                     break
 
