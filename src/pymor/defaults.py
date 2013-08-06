@@ -16,6 +16,7 @@ class Defaults(BasicInterface):
     float_cmp_tol:                      tolerance for pymor.tools.float_cmp
 
     gram_schmidt_tol:                   tolerance for pymor.la.algroithms.gram_schmidt
+    gram_schmidt_find_duplicates:       remove duplicate vectors before orthonormalizing
     gram_schmidt_reiterate:             orthonormalize again if norm of vector decreases strongly during
                                         orthogonalization
     gram_schmidt_reiteration_threshold: reorthonormalize if newnorm/oldnorm is smaller than this value
@@ -42,6 +43,7 @@ class Defaults(BasicInterface):
     gram_schmidt_tol                    = 1e-14
     # gram_schmidt_tol                  = 1e-7  # according to comments in the rbmatlab source, such a high tolerance is
     #                                           # needed for treating nonlinear problems
+    gram_schmidt_find_duplicates        = True
     gram_schmidt_reiterate              = True
     gram_schmidt_reiteration_threshold  = 1e-1
     gram_schmidt_check                  = True
@@ -78,6 +80,7 @@ class Defaults(BasicInterface):
             float_cmp_tol                       = {0.float_cmp_tol}
 
             gram_schmidt_tol                    = {0.gram_schmidt_tol}
+            gram_schmidt_find_duplicates        = {0.gram_schmidt_find_duplicates}
             gram_schmidt_reiterate              = {0.gram_schmidt_reiterate}
             gram_schmidt_reiteration_threshold  = {0.gram_schmidt_reiteration_threshold}
             gram_schmidt_check                  = {0.gram_schmidt_check}

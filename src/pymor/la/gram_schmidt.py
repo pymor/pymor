@@ -13,7 +13,7 @@ from pymor.tools import float_cmp_all
 from pymor.operators import OperatorInterface
 
 
-def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=True,
+def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=None,
                  reiterate=None, reiteration_threshold=None, check=None, check_tol=None):
     '''Orthonormnalize a matrix using the Gram-Schmidt algorithm.
 
@@ -50,6 +50,7 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=True,
 
     logger = getLogger('pymor.la.gram_schmidt.gram_schmidt')
     tol = defaults.gram_schmidt_tol if tol is None else tol
+    find_duplicates = defaults.gram_schmidt_find_duplicates if find_duplicates is None else find_duplicates
     reiterate = defaults.gram_schmidt_reiterate if reiterate is None else reiterate
     reiteration_threshold = defaults.gram_schmidt_reiteration_threshold if reiteration_threshold is None \
         else reiteration_threshold
