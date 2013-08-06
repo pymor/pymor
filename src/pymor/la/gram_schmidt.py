@@ -1,6 +1,8 @@
 # This file is part of the pyMor project (http://www.pymor.org).
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+#
+# Contributors: Andreas Buhr
 
 from __future__ import absolute_import, division, print_function
 
@@ -82,6 +84,8 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=None,
         else:
             first_iteration = True
 
+            # If reiterate is True, reiterate as long as the norm of the vector decreases
+            # strongly during orthogonalization (due to Andreas Buhr).
             while first_iteration or reiterate and norm / oldnorm < reiteration_threshold:
                 # this loop assumes that oldnorm is the norm of the ith vector when entering
 
