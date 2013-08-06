@@ -63,6 +63,7 @@ from pymor.algorithms import greedy, trivial_basis_extension, gram_schmidt_basis
 from pymor.algorithms.basisextension import numpy_trivial_basis_extension
 core.getLogger('pymor.algorithms').setLevel('INFO')
 core.getLogger('pymor.discretizations').setLevel('INFO')
+core.getLogger('pymor.la').setLevel('INFO')
 
 
 def thermalblock_demo(args):
