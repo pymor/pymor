@@ -36,7 +36,7 @@ class Defaults(BasicInterface):
 
     float_cmp_tol               = 2**4 * np.finfo(np.zeros(1).dtype).eps
 
-    gram_schmidt_tol            = 1e-10
+    gram_schmidt_tol            = 1e-14
     # gram_schmidt_tol          = 1e-7  # according to comments in the rbmatlab source, such a high tolerance is
     #                                   # needed for treating nonlinear problems
     gram_schmidt_check          = True
@@ -48,7 +48,7 @@ class Defaults(BasicInterface):
     pod_check                   = True
     pod_check_tol               = 1e-10
 
-    bicgstab_tol                = 1e-12
+    bicgstab_tol                = 1e-15
     bicgstab_maxiter            = None
 
     induced_norm_raise_negative = True
