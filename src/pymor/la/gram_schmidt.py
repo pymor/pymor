@@ -82,6 +82,8 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=True,
 
                 # orthogonalize to all vectors left
                 for j in xrange(i):
+                    if j in remove:
+                        continue
                     if product is None:
                         p = A.dot(A, ind=i, o_ind=j, pairwise=True)[0]
                     else:
