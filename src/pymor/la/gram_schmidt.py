@@ -66,20 +66,20 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=True,
         else:
             oldnorm = np.sqrt(product.apply2(A, A, V_ind=i, U_ind=i, pairwise=True))[0]
 
-        # loop is controlled by norms, setting old norm so that we can enter at first
-        norm = 0
-        removethis = False
-        first_iteration = True
+        if i == 0:
+            A.scal(1/oldnorm, ind=0)
 
-        while norm / oldnorm < 0.25 and (not removethis):
-            # this loop assumes that oldnorm is the norm of the ith vector when entering
+        else:
+            first_iteration = True
 
-            # the following if/else is important for performance.
-            # otherwise, when orthogonalizing one single vector,
-            # its norm will be calculated twice
-            if i > 0:
-                if not first_iteration:
+            while first_iteration or norm / oldnorm < 0.25:
+                # this loop assumes that oldnorm is the norm of the ith vector when entering
+
+                if first_iteration:
+                    first_iteration = False
+                else:
                     logger.info('orthonormalizing vector {} again'.format(i))
+
                 # orthogonalize to all vectors left
                 for j in xrange(i):
                     if product is None:
@@ -93,21 +93,15 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=True,
                     norm = A.l2_norm(ind=i)[0]
                 else:
                     norm = np.sqrt(product.apply2(A, A, V_ind=i, U_ind=i, pairwise=True))[0]
-            else:
-                norm = oldnorm
 
-            # remove vector if it got too small:
-            if norm/oldnorm < tol:
-                removethis = True
-            else:
+                # remove vector if it got too small:
+                if norm/oldnorm < tol:
+                    logger.info("removing linear dependent vector {}".format(i))
+                    remove.append(i)
+                    break
+
                 A.scal(1/norm, ind=i)
                 oldnorm = 1.
-
-            first_iteration = False
-
-        if removethis:
-            logger.info("removing linear dependent vector {}".format(i))
-            remove.append(i)
 
         i += 1
 
