@@ -13,48 +13,53 @@ class Defaults(BasicInterface):
     '''Class defining application-wide defaults. Do not instantiate but use
     `pymor.defaults`.
 
-    float_cmp_tol:                  tolerance for pymor.tools.float_cmp
+    float_cmp_tol:                      tolerance for pymor.tools.float_cmp
 
-    gram_schmidt_tol:               tolerance for pymor.la.algroithms.gram_schmidt
-    gram_schmidt_check:             check orthogonality of result
-    gram_schmidt_check_tol:         tolerance for orthogonality check
+    gram_schmidt_tol:                   tolerance for pymor.la.algroithms.gram_schmidt
+    gram_schmidt_reiterate:             orthonormalize again if norm of vector decreases strongly during
+                                        orthogonalization
+    gram_schmidt_reiteration_threshold: reorthonormalize if newnorm/oldnorm is smaller than this value
+    gram_schmidt_check:                 check orthogonality of result
+    gram_schmidt_check_tol:             tolerance for orthogonality check
 
-    pod_tol:                        tolerance below which eigenvalues are treated as zero
-    pod_symmetrize                  symmetrize the Gram matrix
-    pod_orthonormalize              orthonormalize the result again
-    pod_check                       check orthogonality of result
-    pod_check_tol                   tolerance for orthogonality check
+    pod_tol:                            tolerance below which eigenvalues are treated as zero
+    pod_symmetrize                      symmetrize the Gram matrix
+    pod_orthonormalize                  orthonormalize the result again
+    pod_check                           check orthogonality of result
+    pod_check_tol                       tolerance for orthogonality check
 
-    bicgstab_tol:                   tolerance for scipy.sparse.linalg.bicg
-    bicgstab_maxiter:               maximal number of iterations
+    bicgstab_tol:                       tolerance for scipy.sparse.linalg.bicg
+    bicgstab_maxiter:                   maximal number of iterations
 
-    induced_norm_raise_negative:    raise error in la.induced_norm if the squared norm is negative
-    induced_norm_tol:               tolerance for clipping negative norm squares to zero
+    induced_norm_raise_negative:        raise error in la.induced_norm if the squared norm is negative
+    induced_norm_tol:                   tolerance for clipping negative norm squares to zero
 
-    random_seed:                    seed for numpy's random generator; if None, use /dev/urandom as source for seed
+    random_seed:                        seed for numpy's random generator; if None, use /dev/urandom as source for seed
     '''
 
-    float_cmp_tol               = 2**4 * np.finfo(np.zeros(1).dtype).eps
+    float_cmp_tol                       = 2**4 * np.finfo(np.zeros(1).dtype).eps
 
-    gram_schmidt_tol            = 1e-14
-    # gram_schmidt_tol          = 1e-7  # according to comments in the rbmatlab source, such a high tolerance is
-    #                                   # needed for treating nonlinear problems
-    gram_schmidt_check          = True
-    gram_schmidt_check_tol      = 1e-3
+    gram_schmidt_tol                    = 1e-14
+    # gram_schmidt_tol                  = 1e-7  # according to comments in the rbmatlab source, such a high tolerance is
+    #                                           # needed for treating nonlinear problems
+    gram_schmidt_reiterate              = True
+    gram_schmidt_reiteration_threshold  = 1e-1
+    gram_schmidt_check                  = True
+    gram_schmidt_check_tol              = 1e-3
 
-    pod_tol                     = 1e-15
-    pod_symmetrize              = False
-    pod_orthonormalize          = True
-    pod_check                   = True
-    pod_check_tol               = 1e-10
+    pod_tol                             = 1e-15
+    pod_symmetrize                      = False
+    pod_orthonormalize                  = True
+    pod_check                           = True
+    pod_check_tol                       = 1e-10
 
-    bicgstab_tol                = 1e-15
-    bicgstab_maxiter            = None
+    bicgstab_tol                        = 1e-15
+    bicgstab_maxiter                    = None
 
-    induced_norm_raise_negative = True
-    induced_norm_tol            = 10e-10
+    induced_norm_raise_negative         = True
+    induced_norm_tol                    = 10e-10
 
-    _random_seed                = 123456
+    _random_seed                        = 123456
 
     @property
     def random_seed(self):
@@ -70,25 +75,27 @@ class Defaults(BasicInterface):
 
     def __str__(self):
         return '''
-            float_cmp_tol                 = {0.float_cmp_tol}
+            float_cmp_tol                       = {0.float_cmp_tol}
 
-            gram_schmidt_tol              = {0.gram_schmidt_tol}
-            gram_schmidt_check            = {0.gram_schmidt_check}
-            gram_schmidt_check_tol        = {0.gram_schmidt_check_tol}
+            gram_schmidt_tol                    = {0.gram_schmidt_tol}
+            gram_schmidt_reiterate              = {0.gram_schmidt_reiterate}
+            gram_schmidt_reiteration_threshold  = {0.gram_schmidt_reiteration_threshold}
+            gram_schmidt_check                  = {0.gram_schmidt_check}
+            gram_schmidt_check_tol              = {0.gram_schmidt_check_tol}
 
-            pod_tol                       = {0.pod_tol}
-            pod_symmetrize                = {0.pod_symmetrize}
-            pod_orthonormalize            = {0.pod_orthonormalize}
-            pod_check                     = {0.pod_check}
-            pod_check_tol                 = {0.pod_check_tol}
+            pod_tol                             = {0.pod_tol}
+            pod_symmetrize                      = {0.pod_symmetrize}
+            pod_orthonormalize                  = {0.pod_orthonormalize}
+            pod_check                           = {0.pod_check}
+            pod_check_tol                       = {0.pod_check_tol}
 
-            bicgstab_tol                  = {0.bicgstab_tol}
-            bicgstab_maxiter              = {0.bicgstab_maxiter}
+            bicgstab_tol                        = {0.bicgstab_tol}
+            bicgstab_maxiter                    = {0.bicgstab_maxiter}
 
-            induced_norm_raise_negative   = {0.induced_norm_raise_negative}
-            induced_norm_tol              = {0.induced_norm_tol}
+            induced_norm_raise_negative         = {0.induced_norm_raise_negative}
+            induced_norm_tol                    = {0.induced_norm_tol}
 
-            random_seed                   = {0.random_seed}
+            random_seed                         = {0.random_seed}
             '''.format(self)
 
 
