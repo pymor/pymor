@@ -9,9 +9,10 @@ import numpy as np
 from pymor.core.exceptions import ExtensionError
 from pymor.tools import float_cmp_all
 from pymor.la import VectorArrayInterface, NumpyVectorArray
-from pymor.la.gram_schmidt import gram_schmidt, numpy_gram_schmidt
+from pymor.la.gram_schmidt import gram_schmidt
 from pymor.la.pod import pod
 from pymor.operators.numpy import NumpyMatrixOperator
+
 
 def trivial_basis_extension(basis, U, U_ind=None, copy_basis=True, copy_U=True):
     '''Trivially extend basis by just adding the new vector.
@@ -135,49 +136,6 @@ def gram_schmidt_basis_extension(basis, U, U_ind=None, product=None, copy_basis=
         raise ExtensionError
 
     return new_basis
-
-
-def numpy_gram_schmidt_basis_extension(basis, U, product=None):
-    '''Extend basis using Gram-Schmidt orthonormalization.
-
-    Parameters
-    ----------
-    basis
-        The basis to extend.
-    U
-        The new basis vector.
-    product
-        The scalar product w.r.t. which to orthonormalize; if None, the l2-scalar
-        product on the coefficient vector is used.
-
-    Returns
-    -------
-    The new basis.
-
-    Raises
-    ------
-    ExtensionError
-        Gram-Schmidt orthonormalization fails. Usually this is the case when U
-        is not linearily independent from the basis. However this can also happen
-        due to rounding errors ...
-    '''
-    if basis is None:
-        basis = NumpyVectorArray(np.zeros((0, U.dim)))
-    assert isinstance(basis, NumpyVectorArray)
-    assert isinstance(U, NumpyVectorArray)
-    if product is not None:
-        assert isinstance(product, NumpyMatrixOperator)
-        product = product._matrix
-
-    new_basis = np.empty((len(basis) + 1, basis.dim))
-    new_basis[:-1, :] = basis.data
-    new_basis[-1, :] = U.data
-    new_basis = numpy_gram_schmidt(new_basis, row_offset=len(basis), product=product)
-
-    if len(new_basis) <= len(basis):
-        raise ExtensionError
-
-    return NumpyVectorArray(new_basis)
 
 
 def pod_basis_extension(basis, U, count=1, copy_basis=True, product=None):
