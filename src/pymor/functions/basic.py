@@ -87,8 +87,8 @@ class GenericFunction(FunctionInterface):
     def evaluate(self, x, mu=None):
         mu = self.map_parameter(mu)
         x = np.array(x, copy=False, ndmin=1)
-        if self.dim_domain > 0:
-            assert x.shape[-1] == self.dim_domain
+        #if self.dim_domain > 0:
+            #assert x.shape[-1] == self.dim_domain
         if self._with_mu:
             v = self._mapping(x, mu)
         else:

@@ -63,6 +63,7 @@ class L2ProductFunctionalP1(LinearOperatorInterface):
 
         # evaluate function at all quadrature points -> shape = (g.size(0), number of quadrature points, 1)
         # the singleton dimension correspoints to the dimension of the range of the function
+        print(g.quadrature_points(0, order=2))
         F = self.function(g.quadrature_points(0, order=2), mu=self.map_parameter(mu, 'function'))
 
         # evaluate the shape functions at the quadrature points on the reference

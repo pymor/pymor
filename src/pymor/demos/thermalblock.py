@@ -58,7 +58,7 @@ from docopt import docopt
 
 import pymor.core as core
 core.logger.MAX_HIERACHY_LEVEL = 2
-from pymor.analyticalproblems import ThermalBlockProblem
+from pymor.analyticalproblems import ThermalBlockProblem, BlobProblem
 from pymor.discretizers import discretize_elliptic_cg
 from pymor.reductors.linear import reduce_stationary_affine_linear, numpy_reduce_stationary_affine_linear
 from pymor.algorithms import greedy, trivial_basis_extension, gram_schmidt_basis_extension
@@ -93,8 +93,9 @@ def thermalblock_demo(args):
     print('with grid mesh {0} x {0}'.format(args['--grid']))
 
     print('Setup Problem ...')
-    problem = ThermalBlockProblem(num_blocks=(args['XBLOCKS'], args['YBLOCKS']))
-
+    #problem = ThermalBlockProblem(num_blocks=(args['XBLOCKS'], args['YBLOCKS']))
+    problem = BlobProblem()
+    
     print('Discretize ...')
     gitter2 = {'TriaGrid': TriaGrid((args['--grid'], args['--grid'])), 'RectGrid': RectGrid((args['--grid'], args['--grid']))}
     gitter = gitter2[args['--gridform']]
@@ -107,7 +108,7 @@ def thermalblock_demo(args):
         for mu in discretization.parameter_space.sample_randomly(2):
             print('Solving for diffusion = \n{} ... '.format(mu['diffusion']))
             sys.stdout.flush()
-            U = discretization.solve([[1,1],[1,1]])
+            U = discretization.solve(mu)
             discretization.visualize(U)
 
 
