@@ -1,4 +1,5 @@
-tests_require = ['pytest', 'pytest-cache', 'pytest-capturelog', 'pytest-instafail']
+tests_require = ['pytest', 'pytest-cache', 'pytest-capturelog', 'pytest-instafail',
+                 'pytest-xdist', 'pytest-cov', 'pytest-flakes', 'pytest-pep8']
 install_requires = ['Cython', 'numpy', 'scipy', 'PyContracts', 'PyOpenGL', 'PySide', 'Sphinx',
                     'docopt', 'dogpile.cache' , 'glumpy', 'numpydoc']
 pre_setup_requires = ['cython', 'numpy']

@@ -5,6 +5,7 @@
 from __future__ import absolute_import, division, print_function
 import contracts
 import mock
+import pytest
 
 from pymortests.base import TestBase, runmodule
 from pymortests.core.dummies import (AllDirichletBoundaryInfo, AverageImplementer, BoringTestClass)
@@ -12,15 +13,14 @@ from pymor.core.exceptions import ContractNotRespected
 import pymor.grids.boundaryinfos
 from pymor.core import exceptions
 from pymor.core.interfaces import (contract,)
-
 from pymor.grids import AllDirichletBoundaryInfo as ADIA
 
 
 class ContractTest(TestBase):
 
-    @raises(ContractNotRespected)
     def testContractFail(self):
-        AverageImplementer().whisper('Wheee\n', -2)
+        with pytest.raises(ContractNotRespected):
+            AverageImplementer().whisper('Wheee\n', -2)
 
     def testContractSuccess(self):
         AverageImplementer().shout('Wheee\n', 6)

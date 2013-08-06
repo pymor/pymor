@@ -9,7 +9,6 @@ import pprint
 import pkgutil
 import sys
 import importlib
-import pytest
 
 from pymor.core.interfaces import BasicInterface
 from pymor.core import logger
@@ -99,4 +98,5 @@ def GridSubclassForImplemetorsOf(InterfaceType):
 
 
 def runmodule(filename):
-    return pytest.main(filename)
+    import pytest
+    sys.exit(pytest.main(sys.argv[1:] + [filename]))
