@@ -7,7 +7,7 @@ import contracts
 import mock
 import pytest
 
-from pymortests.base import TestBase, runmodule
+from pymortests.base import TestInterface, runmodule
 from pymortests.core.dummies import (AllDirichletBoundaryInfo, AverageImplementer, BoringTestClass)
 from pymor.core.exceptions import ContractNotRespected
 import pymor.grids.boundaryinfos
@@ -16,7 +16,7 @@ from pymor.core.interfaces import (contract,)
 from pymor.grids import AllDirichletBoundaryInfo as ADIA
 
 
-class ContractTest(TestBase):
+class TestContract(TestInterface):
 
     def testContractFail(self):
         with pytest.raises(ContractNotRespected):
@@ -30,11 +30,11 @@ class ContractTest(TestBase):
 
         def _combo(dirichletA, dirichletB):
             self.assertTrue(imp.dirichletTest(dirichletA, dirichletB))
-            with self.assertRaises(ContractNotRespected):
+            with pytest.raises(ContractNotRespected):
                 imp.dirichletTest(dirichletA, dirichletA)
-            with self.assertRaises(ContractNotRespected):
+            with pytest.raises(ContractNotRespected):
                 imp.dirichletTest(dirichletB, dirichletA)
-            with self.assertRaises(ContractNotRespected):
+            with pytest.raises(ContractNotRespected):
                 imp.dirichletTest(dirichletA, 1)
         grid = mock.Mock()
         dirichletB = AllDirichletBoundaryInfo()
@@ -45,7 +45,7 @@ class ContractTest(TestBase):
 
     def test_custom_contract_types(self):
         inst = BoringTestClass()
-        with self.assertRaises(exceptions.ContractNotRespected):
+        with pytest.raises(exceptions.ContractNotRespected):
             grid = mock.Mock()
             inst.validate_interface(object(), pymor.grids.boundaryinfos.AllDirichletBoundaryInfo(grid))
 
@@ -71,7 +71,7 @@ class ContractTest(TestBase):
             '''
             return phrase
         # a newly decorated function will throw
-        with self.assertRaises(exceptions.ContractNotRespected):
+        with pytest.raises(exceptions.ContractNotRespected):
             enabled(int(8))
 
 if __name__ == "__main__":

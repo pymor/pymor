@@ -5,10 +5,10 @@
 from __future__ import absolute_import, division, print_function
 
 from pymor import defaults
-from pymortests.base import TestBase, runmodule
+from pymortests.base import TestInterface, runmodule
 
 
-class DefaultsTest(TestBase):
+class TestDefaults(TestInterface):
 
     def testStr(self):
         rep = str(defaults)

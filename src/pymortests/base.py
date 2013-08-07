@@ -3,26 +3,53 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
-import unittest
 import os
 import pprint
 import pkgutil
 import sys
 import importlib
+import pytest
+import numpy.testing as npt
 
 from pymor.core.interfaces import BasicInterface
 from pymor.core import logger
 
+class TestInterface(BasicInterface):
 
-class TestBase(unittest.TestCase, BasicInterface):
+    def assertIsInstance(self, arg, cls, msg=None):
+        assert isinstance(arg, cls)
 
-    @classmethod
-    def _is_actual_testclass(cls):
-        return cls.__name__ != 'TestBase' and not cls.has_interface_name()
+    def assertTrue(self, arg, msg=None):
+        assert arg
 
-    '''only my subclasses will set this to True, maybe prevents pytest from thinking I'm an actual test'''
-    __test__ = _is_actual_testclass
+    def assertFalse(self, arg, msg=None):
+        assert not arg
 
+    def assertIs(self, arg, other, msg=None):
+        assert arg is other
+
+    def assertEqual(self, arg, other, msg=None):
+        assert arg == other
+
+    def assertNotEqual(self, arg, other, msg=None):
+        assert arg != other
+
+    def assertAlmostEqual(self, arg, other, msg=None):
+        npt.assert_almost_equal(arg, other)
+
+    def assertGreaterEqual(self, arg, other, msg=None):
+        assert arg >= other
+
+    def assertGreater(self, arg, other, msg=None):
+        assert arg > other
+
+    def assertLessEqual(self, arg, other, msg=None):
+        assert arg <= other
+
+    def assertLess(self, arg, other, msg=None):
+            assert arg < other
+
+TestInterface = TestInterface
 
 def _load_all():
     import pymor
@@ -53,17 +80,13 @@ def SubclassForImplemetorsOf(InterfaceType):
     def decorate(TestCase):
         '''saves a new type called cname with correct bases and class dict in globals'''
         import pymor.core.dynamic
-        test_types = set([T for T in InterfaceType.implementors(True) if (not T.has_interface_name()
-                                                                          and not issubclass(T, TestBase))])
+        test_types = set([T for T in InterfaceType.implementors(True) if not(T.has_interface_name()
+                                                                             or issubclass(T, TestInterface))])
         for Type in test_types:
-            cname = '{}_{}'.format(Type.__name__, TestCase.__name__.replace('Interface', ''))
-            pymor.core.dynamic.__dict__[cname] = type(cname, (TestCase,), {'__test__': True, 'Type': Type})
+            cname = 'Test_{}_{}'.format(Type.__name__, TestCase.__name__.replace('Interface', ''))
+            pymor.core.dynamic.__dict__[cname] = type(cname, (TestCase,), {'Type': Type})
         return TestCase
     return decorate
-
-
-class GridClassTestInterface(TestBase):
-    pass
 
 
 def GridSubclassForImplemetorsOf(InterfaceType):
@@ -87,15 +110,15 @@ def GridSubclassForImplemetorsOf(InterfaceType):
         if 'PYMOR_GRID_TYPE' in os.environ:
             test_types = [_getType(os.environ['PYMOR_GRID_TYPE'])]
         else:
-            test_types = set([T for T in InterfaceType.implementors(True) if not T.has_interface_name()])
+            test_types = set([T for T in InterfaceType.implementors(True) if not (T.has_interface_name() or
+                                                                                  issubclass(T, TestInterface))])
         for GridType in test_types:
-            cname = '{}_{}'.format(GridType.__name__, TestCase.__name__.replace('Interface', ''))
-            pymor.core.dynamic.__dict__[cname] = type(cname, (TestCase,), {'grids': GridType.test_instances(),
-                                                      '__test__': True})
+            cname = 'Test_{}_{}'.format(GridType.__name__, TestCase.__name__.replace('Interface', ''))
+            pymor.core.dynamic.__dict__[cname] = type(cname, (TestCase,),
+                                                      {'grids': GridType.test_instances(), })
             assert len(pymor.core.dynamic.__dict__[cname].grids) > 0
         return TestCase
     return decorate
-
 
 def runmodule(filename):
     import pytest

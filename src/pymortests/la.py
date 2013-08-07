@@ -10,12 +10,12 @@ from mock import Mock
 from pymor import la
 from pymor import discretizations
 from pymor.operators.cg import L2ProductP1
-from pymortests.base import TestBase, runmodule
+from pymortests.base import TestInterface, runmodule
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
 
 
-class TestBasicParameterspace(TestBase):
+class TestBasicParameterspace(TestInterface):
 
     def test_induced(self):
         grid = TriaGrid(num_intervals=(10, 10))

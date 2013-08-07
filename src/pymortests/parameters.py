@@ -5,13 +5,13 @@
 from __future__ import absolute_import, division, print_function
 
 from pymor import parameters
-from pymortests.base import TestBase, runmodule
+from pymortests.base import TestInterface, runmodule
 
 
-class TestCubicParameterspace(TestBase):
+class TestCubicParameterspace(TestInterface):
 
     def setUp(self):
-        TestBase.setUp(self)
+        TestInterface.setUp(self)
         self.space = parameters.CubicParameterSpace({'diffusionl': 1}, 0.1, 1)
         self.samples = 100
 

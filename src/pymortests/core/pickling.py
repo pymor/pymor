@@ -6,15 +6,17 @@ from __future__ import absolute_import, division, print_function
 
 import tempfile
 import os
+import pytest
 
 from pymor.core.interfaces import (BasicInterface,)
-from pymortests.base import (TestBase, runmodule, SubclassForImplemetorsOf)
+from pymortests.base import (TestInterface, runmodule, SubclassForImplemetorsOf)
 from pymor import core
 
 
 @SubclassForImplemetorsOf(BasicInterface)
-class PickleMeInterface(TestBase):
+class PickleMeInterface(TestInterface):
 
+    @pytest.mark.skipif('__name__ != "__main__"')
     def testDump(self):
         try:
             obj = self.Type()

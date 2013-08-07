@@ -7,7 +7,7 @@ import time
 from datetime import datetime
 
 from pymor.core import cache
-from pymortests.base import TestBase, runmodule
+from pymortests.base import TestInterface, runmodule
 
 SLEEP_SECONDS = 0.2
 
@@ -51,7 +51,7 @@ class IWillBeCopied(cache.Cachable):
         return id(self)
 
 
-class CacheTest(TestBase):
+class TestCache(TestInterface):
 
     def test_runtime(self):
         for Class in [IamMemoryCached, IamDiskCached]:

@@ -8,7 +8,7 @@ import numpy as np
 import random
 from math import sin, exp
 
-from pymortests.base import TestBase, runmodule
+from pymortests.base import TestInterface, runmodule
 from pymor.playground.expression_function import ExpressionFunction
 
 FUNCTIONS = [(ExpressionFunction(['x**2'], 'x'), lambda x: np.array([x ** 2])),
@@ -16,7 +16,7 @@ FUNCTIONS = [(ExpressionFunction(['x**2'], 'x'), lambda x: np.array([x ** 2])),
              (ExpressionFunction(['exp(xp)'], 'xp'), lambda x: np.array([exp(x)]))]
 
 
-class TestExpressionFunction(TestBase):
+class TestExpressionFunction(TestInterface):
 
     def test_eval(self):
         for (fn, fe) in FUNCTIONS:

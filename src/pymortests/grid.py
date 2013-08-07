@@ -6,12 +6,12 @@ from __future__ import absolute_import, division, print_function
 
 from itertools import izip, product
 import numpy as np
+import pytest
 
 from pymor.grids.interfaces import (ConformalTopologicalGridInterface, AffineGridInterface, ReferenceElementInterface)
 # mandatory so all Grid classes are created
 from pymor.grids import *
-
-from pymortests.base import (runmodule, GridClassTestInterface, GridSubclassForImplemetorsOf)
+from pymortests.base import (TestInterface, runmodule, GridSubclassForImplemetorsOf)
 
 # monkey np.testing.assert_allclose to behave the same as np.allclose
 # for some reason, the default atol of np.testing.assert_allclose is 0
@@ -23,7 +23,7 @@ def monkey_allclose(a, b, rtol=1.e-5, atol=1.e-8):
 np.testing.assert_allclose = monkey_allclose
 
 @GridSubclassForImplemetorsOf(ConformalTopologicalGridInterface)
-class ConformalTopologicalGridTestInterface(GridClassTestInterface):
+class ConformalTopologicalGridTestInterface(TestInterface):
 
     def test_dim(self):
         for g in self.grids:
@@ -35,21 +35,21 @@ class ConformalTopologicalGridTestInterface(GridClassTestInterface):
             for d in xrange(g.dim + 1):
                 self.assertIsInstance(g.size(d), int)
                 self.assertGreaterEqual(g.size(d), 0)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.size(-1)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.size(g.dim + 1)
 
     def test_subentities_wrong_arguments(self):
         for g in self.grids:
             for e in xrange(g.dim + 1):
-                with self.assertRaises(AssertionError):
+                with pytest.raises(AssertionError):
                     g.subentities(e, g.dim + 1)
-                with self.assertRaises(AssertionError):
+                with pytest.raises(AssertionError):
                     g.subentities(e, e - 1)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.subentities(g.dim + 1, 0)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.subentities(-1, 0)
 
     def test_subentities_shape(self):
@@ -104,15 +104,15 @@ class ConformalTopologicalGridTestInterface(GridClassTestInterface):
     def test_superentities_wrong_arguments(self):
         for g in self.grids:
             for e in xrange(g.dim + 1):
-                with self.assertRaises(AssertionError):
+                with pytest.raises(AssertionError):
                     g.superentities(e, -1)
-                with self.assertRaises(AssertionError):
+                with pytest.raises(AssertionError):
                     g.superentities(e, e + 1)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.superentities(g.dim + 1, 0)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.superentities(-1, 0)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.superentities(-1, -2)
 
     def test_superentities_shape(self):
@@ -188,15 +188,15 @@ class ConformalTopologicalGridTestInterface(GridClassTestInterface):
     def test_superentity_indices_wrong_arguments(self):
         for g in self.grids:
             for e in xrange(g.dim + 1):
-                with self.assertRaises(AssertionError):
+                with pytest.raises(AssertionError):
                     g.superentity_indices(e, -1)
-                with self.assertRaises(AssertionError):
+                with pytest.raises(AssertionError):
                     g.superentity_indices(e, e + 1)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.superentity_indices(g.dim + 1, 0)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.superentity_indices(-1, 0)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.superentity_indices(-1, -2)
 
     def test_superentity_indices_shape(self):
@@ -226,21 +226,21 @@ class ConformalTopologicalGridTestInterface(GridClassTestInterface):
         for g in self.grids:
             for e in xrange(g.dim + 1):
                 for n in xrange(g.dim + 1):
-                    with self.assertRaises(AssertionError):
+                    with pytest.raises(AssertionError):
                         g.neighbours(e, n, -1)
-                    with self.assertRaises(AssertionError):
+                    with pytest.raises(AssertionError):
                         g.neighbours(e, n, g.dim + 1)
-                    with self.assertRaises(AssertionError):
+                    with pytest.raises(AssertionError):
                         g.neighbours(e, n, e - 1)
-                    with self.assertRaises(AssertionError):
+                    with pytest.raises(AssertionError):
                         g.neighbours(e, n, n - 1)
-                with self.assertRaises(AssertionError):
+                with pytest.raises(AssertionError):
                     g.neighbours(e, g.dim + 1, g.dim)
-                with self.assertRaises(AssertionError):
+                with pytest.raises(AssertionError):
                     g.neighbours(e, -1, g.dim)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.neighbours(g.dim + 1, g.dim, g.dim)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.neighbours(-1, 0, g.dim)
 
     def test_neighbours_shape(self):
@@ -319,9 +319,9 @@ class ConformalTopologicalGridTestInterface(GridClassTestInterface):
 
     def test_boundary_mask_wrong_arguments(self):
         for g in self.grids:
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.boundary_mask(-1)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.boundary_mask(g.dim + 1)
 
     def test_boundary_mask_shape(self):
@@ -364,9 +364,9 @@ class ConformalTopologicalGridTestInterface(GridClassTestInterface):
 
     def test_boundaries_wrong_arguments(self):
         for g in self.grids:
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.boundaries(-1)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.boundaries(g.dim + 1)
 
     def test_boundaries_shape(self):
@@ -393,7 +393,7 @@ class ConformalTopologicalGridTestInterface(GridClassTestInterface):
 
 
 @GridSubclassForImplemetorsOf(AffineGridInterface)
-class AffineGridTestInterface(GridClassTestInterface):
+class AffineGridTestInterface(TestInterface):
 
     def setUp(self):
         self.assertTrue(hasattr(self, 'grids'))
@@ -406,9 +406,9 @@ class AffineGridTestInterface(GridClassTestInterface):
 
     def test_reference_element_wrong_arguments(self):
         for g in self.grids:
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.reference_element(-1)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.reference_element(g.dim + 1)
 
     def test_reference_element_type(self):
@@ -423,9 +423,9 @@ class AffineGridTestInterface(GridClassTestInterface):
 
     def test_embeddings_wrong_arguments(self):
         for g in self.grids:
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.embeddings(-1)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.embeddings(g.dim + 1)
 
     def test_embeddings_shape(self):
@@ -451,11 +451,11 @@ class AffineGridTestInterface(GridClassTestInterface):
 
     def test_jacobian_inverse_transposed_wrong_arguments(self):
         for g in self.grids:
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.jacobian_inverse_transposed(-1)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.jacobian_inverse_transposed(g.dim + 1)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.jacobian_inverse_transposed(g.dim)
 
     def test_jacobian_inverse_transposed_shape(self):
@@ -473,9 +473,9 @@ class AffineGridTestInterface(GridClassTestInterface):
 
     def test_integration_elements_wrong_arguments(self):
         for g in self.grids:
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.integration_elements(-1)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.integration_elements(g.dim + 1)
 
     def test_integration_elements_shape(self):
@@ -494,9 +494,9 @@ class AffineGridTestInterface(GridClassTestInterface):
 
     def test_volumes_wrong_arguments(self):
         for g in self.grids:
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.volumes(-1)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.volumes(g.dim + 1)
 
     def test_volumes_shape(self):
@@ -513,9 +513,9 @@ class AffineGridTestInterface(GridClassTestInterface):
 
     def test_volumes_inverse_wrong_arguments(self):
         for g in self.grids:
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.volumes_inverse(-1)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.volumes_inverse(g.dim + 1)
 
     def test_volumes_inverse_shape(self):
@@ -562,9 +562,9 @@ class AffineGridTestInterface(GridClassTestInterface):
 
     def test_centers_wrong_arguments(self):
         for g in self.grids:
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.centers(-1)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.centers(g.dim + 1)
 
     def test_centers_shape(self):
@@ -580,9 +580,9 @@ class AffineGridTestInterface(GridClassTestInterface):
 
     def test_diameters_wrong_arguments(self):
         for g in self.grids:
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.diameters(-1)
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 g.diameters(g.dim + 1)
 
     def test_diameters_shape(self):
@@ -604,15 +604,15 @@ class AffineGridTestInterface(GridClassTestInterface):
     def test_quadrature_points_wrong_arguments(self):
         for g in self.grids:
             for d in xrange(g.dim):
-                with self.assertRaises(Exception):
+                with pytest.raises(Exception):
                     g.quadrature_points(d, order=1, npoints=1)
-                with self.assertRaises(Exception):
+                with pytest.raises(Exception):
                     g.quadrature_points(d)
                 os, ps = g.reference_element(d).quadrature_info()
                 for t in os.keys():
-                    with self.assertRaises(Exception):
+                    with pytest.raises(Exception):
                         g.quadrature_points(d, order=max(os[t]) + 1, quadrature_type=t)
-                    with self.assertRaises(Exception):
+                    with pytest.raises(Exception):
                         g.quadrature_points(d, npoints=max(ps[t]) + 1, quadrature_type=t)
 
     def test_quadrature_points_shape(self):
@@ -640,9 +640,6 @@ class AffineGridTestInterface(GridClassTestInterface):
 
 # this needs to go into every module that wants to use dynamically generated types, ie. testcases, below the test code
 from pymor.core.dynamic import *
-
-del ConformalTopologicalGridTestInterface
-del AffineGridTestInterface
 
 if __name__ == "__main__":
     runmodule(filename=__file__)
