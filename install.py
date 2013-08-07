@@ -140,7 +140,7 @@ About to install pyMor with the following configuration into a virtualenv:
 
     if len(recipe['venv_cmd']) > 0:
         if args.system_site_packages:
-            recipe['venv_cmd'] = recipe['venv_cmd'] + ' --system-site-packages'
+            recipe['venv_cmd'].append('--system-site-packages')
         print_separator()
         print('***** CREATING VIRTUALENV\n')
         python_arg = '--python={}'.format(args.python)
