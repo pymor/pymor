@@ -1,7 +1,6 @@
 language: python
 python:
   - "2.7"
-  - "3.3"
 virtualenv:
   system_site_packages: true
 before_install:
@@ -11,7 +10,7 @@ before_install:
 # command to install dependencies
 install: python ./install.py --recipe travis --virtualenv-dir $VIRTUAL_ENV --without-python-path --python python$TRAVIS_PYTHON_VERSION --only-deps
 # # command to run tests
-script: python setup.py test
+script: tox -e py27
 notifications:
   irc: "chat.freenode.net#dune_ms"
    - on_success: change
