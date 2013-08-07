@@ -1,2 +1,3 @@
 include *.txt
 include *.html
+include src/pymor/tools/*.pyx

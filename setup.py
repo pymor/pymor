@@ -15,6 +15,8 @@ import subprocess
 from setuptools import find_packages
 from setuptools.command.test import test as TestCommand
 from distutils.extension import Extension
+import itertools
+
 import dependencies
 
 _orig_generate_a_pyrex_source = None
@@ -116,6 +118,10 @@ def _setup(**kwargs):
     from numpy import get_include
     ext_modules = [Extension("pymor.tools.relations", ["src/pymor/tools/relations.pyx"], include_dirs=[get_include()]),
                    Extension("pymor.tools.inplace", ["src/pymor/tools/inplace.pyx"], include_dirs=[get_include()])]
+    # for some reason the *pyx files don't end up in sdist tarballs -> manually add them as package data
+    # this _still_ doesn't make them end up in the tarball however -> manually add them in MANIFEST.in
+    kwargs['package_data'] = {'pymor': list(itertools.chain(*[i.sources for i in ext_modules])) }
+
     kwargs['cmdclass'] = cmdclass
     kwargs['ext_modules'] = ext_modules
 
@@ -162,7 +168,8 @@ def setup_package():
         maintainer_email='rene.milk@wwu.de',
         package_dir={'': 'src'},
         packages=find_packages('src'),
-        scripts=['bin/%s' % n for n in [] ] + ['run_tests.py', 'distribute_setup.py'],
+        include_package_data=True,
+        scripts=['run_tests.py', 'distribute_setup.py', 'dependencies.py', 'install.py'],
         url='http://pymor.org',
         description=' ' ,
         long_description=open('README.txt').read(),
