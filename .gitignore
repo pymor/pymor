@@ -44,3 +44,9 @@ README.txt
 src/pymor/version.py
 .kateproject*
 venvs
+
+# coverage.py output
+*,cover
+htmlcov/
+coverage.xml
+libpeerconnection.log
