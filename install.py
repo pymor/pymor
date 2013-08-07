@@ -84,6 +84,8 @@ if __name__ == '__main__':
                         help='path of the virtualenv to be created')
     parser.add_argument('--python', default='python2.7',
                         help='name of the python interpreter to be passed to virtualenv')
+    parser.add_argument('--without-pyside', action='store_true',
+                        help='do not install PySide')
     parser.add_argument('--without-python-path', action='store_true',
                         help='do not add pyMor to PYTHONPATH when --only-deps is used')
     parser.add_argument('--without-system-packages', action='store_true',
@@ -108,12 +110,14 @@ About to install pyMor with the following configuration into a virtualenv:
     path of virtualenv:         {venvdir}
     install only dependencies:  {deps}
     install system packages:    {sys}
+    install PySide:             {pyside}
     add pyMor to PYTHONPATH:    {pp}
 
 --------------------------------------------------------------------------------
 
 '''.format(recipe=recipe['name'], venvdir=venvdir, deps='yes' if args.only_deps else 'no',
-           pp=pp, sys='no' if args.without_system_packages else 'yes'))
+           pp=pp, sys='no' if args.without_system_packages else 'yes',
+           pyside='no' if args.without_pyside else 'yes'))
 
     print('Staring installation in 5 seconds ', end='')
     sys.stdout.flush()
@@ -144,6 +148,11 @@ About to install pyMor with the following configuration into a virtualenv:
 
     print_separator()
     print('***** Installing dependencies\n')
+    if args.without_pyside:
+        try:
+            recipe['local'].remove('PySide')
+        except ValueError:
+            pass
     for cmd in ['pip install {} --use-mirrors'.format(i) for i in recipe['local']]:
         print('\n***** EXECUTING {}\n'.format(cmd))
         subprocess.check_call('{} && {}'.format(activate, cmd), shell=True)
