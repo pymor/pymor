@@ -84,6 +84,8 @@ if __name__ == '__main__':
                         help='path of the virtualenv to be created')
     parser.add_argument('--python', default='python2.7',
                         help='name of the python interpreter to be passed to virtualenv')
+    parser.add_argument('--system-site-packages', action='store_true',
+                        help='make system site-packages available to the virtualenv')
     parser.add_argument('--without-pyside', action='store_true',
                         help='do not install PySide')
     parser.add_argument('--without-python-path', action='store_true',
@@ -107,9 +109,10 @@ if __name__ == '__main__':
 About to install pyMor with the following configuration into a virtualenv:
 
     installation recipe:        {recipe}
-    path of virtualenv:         {venvdir}
-    install only dependencies:  {deps}
     install system packages:    {sys}
+    path of virtualenv:         {venvdir}
+    use system site-packages:   {site}
+    install only dependencies:  {deps}
     install PySide:             {pyside}
     add pyMor to PYTHONPATH:    {pp}
 
@@ -117,7 +120,8 @@ About to install pyMor with the following configuration into a virtualenv:
 
 '''.format(recipe=recipe['name'], venvdir=venvdir, deps='yes' if args.only_deps else 'no',
            pp=pp, sys='no' if args.without_system_packages else 'yes',
-           pyside='no' if args.without_pyside else 'yes'))
+           pyside='no' if args.without_pyside else 'yes',
+           site='yes' if args.system_site_packages else 'no'))
 
     print('Staring installation in 5 seconds ', end='')
     sys.stdout.flush()
@@ -135,6 +139,8 @@ About to install pyMor with the following configuration into a virtualenv:
             subprocess.check_call(cmd, shell=True)
 
     if len(recipe['venv_cmd']) > 0:
+        if args.system_site_packages:
+            recipe['venv_cmd'] = recipe['venv_cmd'] + ' --system-site-packages'
         print_separator()
         print('***** CREATING VIRTUALENV\n')
         python_arg = '--python={}'.format(args.python)
