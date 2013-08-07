@@ -12,3 +12,11 @@ before_install:
 install: python ./install.py --recipe travis --virtualenv-dir $VIRTUAL_ENV --without-python-path --python python$TRAVIS_PYTHON_VERSION --only-deps
 # # command to run tests
 script: python setup.py test
+notifications:
+  irc: "chat.freenode.net#dune_ms"
+   - on_success: change
+   - on_failure: change
+  email: 
+   - on_success: change
+   - on_failure: change
+
