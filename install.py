@@ -32,6 +32,10 @@ TOX_RECIPE = {'name': 'tox',
                        'system': [],
                        'local': deps.install_requires + deps.install_suggests,
                        'venv_cmd': []}
+TOX_RECIPE = {'name': 'tox',
+                       'system': [],
+                       'local': deps.install_requires + deps.install_suggests,
+                       'venv_cmd': []}
 UBUNTU_13_04_RECIPE = {'name': 'Ubuntu 13.04',
                        'system': [  'sudo apt-get install build-essential cmake gfortran libqt4-dev libsuitesparse-dev '
                                   + 'libatlas-base-dev libfreetype6-dev libpng12-dev python2.7 python2.7-dev '
