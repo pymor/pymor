@@ -28,6 +28,10 @@ TRAVIS_RECIPE = {'name': 'travis',
                                   + 'python3-numpy python3-scipy python3-pyside python-pyside' ],
                        'local': _travis_local,
                        'venv_cmd': []}
+TOX_RECIPE = {'name': 'tox',
+                       'system': [],
+                       'local': deps.install_requires + deps.install_suggests,
+                       'venv_cmd': []}
 UBUNTU_13_04_RECIPE = {'name': 'Ubuntu 13.04',
                        'system': [  'sudo apt-get install build-essential cmake gfortran libqt4-dev libsuitesparse-dev '
                                   + 'libatlas-base-dev libfreetype6-dev libpng12-dev python2.7 python2.7-dev '
@@ -45,6 +49,7 @@ RECIPES = {'default': DEFAULT_RECIPE,
            'ubuntu_12_04': UBUNTU_12_04_RECIPE,
            'ubuntu_13_04': UBUNTU_13_04_RECIPE,
            'travis': TRAVIS_RECIPE,
+           'tox': TOX_RECIPE,
            'arch' : ARCH_RECIPE}
 
 DEFAULT_VENV_DIR = os.path.join(os.path.expandvars('$HOME'), 'virtualenv', 'pyMor')

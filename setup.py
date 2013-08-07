@@ -113,6 +113,9 @@ def write_version():
 def _setup(**kwargs):
     _numpy_monkey()
     import Cython.Distutils
+    # numpy sometimes expects this attribute, sometimes not. all seems ok if it's set to none
+    if not hasattr(Cython.Distutils.build_ext, 'fcompiler'):
+        Cython.Distutils.build_ext.fcompiler = None
     cmdclass = {'build_ext': Cython.Distutils.build_ext,
                 'test': PyTest}
     from numpy import get_include
