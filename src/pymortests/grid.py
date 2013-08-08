@@ -13,14 +13,18 @@ from pymor.grids.interfaces import (ConformalTopologicalGridInterface, AffineGri
 from pymor.grids import *
 from pymortests.base import (TestInterface, runmodule, GridSubclassForImplemetorsOf)
 
+
 # monkey np.testing.assert_allclose to behave the same as np.allclose
 # for some reason, the default atol of np.testing.assert_allclose is 0
 # while it is 1e-8 for np.allclose
 
 real_assert_allclose = np.testing.assert_allclose
+
+
 def monkey_allclose(a, b, rtol=1.e-5, atol=1.e-8):
     real_assert_allclose(a, b, rtol=rtol, atol=atol)
 np.testing.assert_allclose = monkey_allclose
+
 
 @GridSubclassForImplemetorsOf(ConformalTopologicalGridInterface)
 class ConformalTopologicalGridTestInterface(TestInterface):

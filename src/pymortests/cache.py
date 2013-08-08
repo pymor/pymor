@@ -66,9 +66,9 @@ class TestCache(TestInterface):
         for c in [IamLimitedCached(cache.SMALL_MEMORY_CONFIG),
                   IamLimitedCached(cache.SMALL_DISK_CONFIG)]:
             for i in range(25):
-                c.cache_region.backend.print_limit()
-                _ = c.me_takey_no_time(i)
-                c.cache_region.backend.print_limit()
+                c._cache_region.backend.print_limit()
+                c.me_takey_no_time(i)
+                c._cache_region.backend.print_limit()
 
     def test_copy(self):
         from copy import copy

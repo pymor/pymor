@@ -40,7 +40,7 @@ class TestTiming(TestInterface):
 
 class Test_Interface(TestInterface):
 
-    def testFreeze(self):
+    def testLock(self):
         b = AverageImplementer()
         b.level = 43
         b.lock()
@@ -83,11 +83,11 @@ class Test_Interface(TestInterface):
                 return 0
 
         with pytest.raises(TypeError):
-            _ = FailImplementer()
+            FailImplementer()
         with pytest.raises(TypeError):
-            _ = ClassImplementer()
+            ClassImplementer()
         with pytest.raises(TypeError):
-            _ = StaticImplementer()
+            StaticImplementer()
         inst = CompleteImplementer()
         self.assertEqual(inst.abstract_class_method(), 'CompleteImplementer')
         self.assertEqual(inst.abstract_static_method(), 0)
