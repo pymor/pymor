@@ -11,7 +11,7 @@ from scipy.sparse import issparse
 
 from pymor import defaults
 from pymor.core.cache import Cachable, NO_CACHE_CONFIG
-from pymor.tools import dict_property
+from pymor.playground.tools.dictproperty import dict_property
 from pymor.discretizations.basic import StationaryDiscretization, DiscretizationBase
 from pymor.playground.operators.dune import DuneLinearOperator, DuneLinearFunctional
 from pymor.playground.la.dunevectorarray import DuneVectorArray, WrappedDuneVector
