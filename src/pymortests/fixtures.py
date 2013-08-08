@@ -8,8 +8,9 @@ from pymor.core.interfaces import BasicInterface
 from pymortests.base import (TestInterface, _load_all)
 
 import pytest
+import itertools
 
-def _type_list(interface_type):
+def implementors(interface_type):
     try:
         _load_all()
     except ImportError:
@@ -17,7 +18,14 @@ def _type_list(interface_type):
     return [T for T in interface_type.implementors(True) if not (T.has_interface_name() or 
                                                                  issubclass(T, TestInterface))] 
 
-@pytest.fixture(params=_type_list(BasicInterface))
+def subclasses_of(interface_type,**kwargs):
+    return pytest.fixture(params=implementors(interface_type), **kwargs)
+
+def grid_instances(interface_type, **kwargs):
+    return pytest.fixture(params=list(itertools.chain(*(i.test_instances() for i in implementors(interface_type)))),
+                           **kwargs)
+
+@subclasses_of(BasicInterface)
 def basicinterface_subclasses(request):
     return request.param
     

@@ -89,37 +89,6 @@ def SubclassForImplemetorsOf(InterfaceType):
     return decorate
 
 
-def GridSubclassForImplemetorsOf(InterfaceType):
-    '''A decorator that dynamically creates subclasses of the decorated base test class
-    for all implementors of a given Interface
-    '''
-    try:
-        _load_all()
-    except ImportError:
-        pass
-
-    def _getType(name):
-        module = name[0:name.rfind('.')]
-        classname = name[name.rfind('.') + 1:]
-        importlib.import_module(module)
-        return sys.modules[module].__dict__[classname]
-
-    def decorate(TestCase):
-        '''saves a new type called cname with correct bases and class dict in globals'''
-        import pymor.core.dynamic
-        if 'PYMOR_GRID_TYPE' in os.environ:
-            test_types = [_getType(os.environ['PYMOR_GRID_TYPE'])]
-        else:
-            test_types = set([T for T in InterfaceType.implementors(True) if not (T.has_interface_name() or
-                                                                                  issubclass(T, TestInterface))])
-        for GridType in test_types:
-            cname = 'Test_{}_{}'.format(GridType.__name__, TestCase.__name__.replace('Interface', ''))
-            pymor.core.dynamic.__dict__[cname] = type(cname, (TestCase,),
-                                                      {'grids': GridType.test_instances(), })
-            assert len(pymor.core.dynamic.__dict__[cname].grids) > 0
-        return TestCase
-    return decorate
-
 def runmodule(filename):
     import pytest
     sys.exit(pytest.main(sys.argv[1:] + [filename]))
