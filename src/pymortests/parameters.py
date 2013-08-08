@@ -7,26 +7,29 @@ from __future__ import absolute_import, division, print_function
 from pymor import parameters
 from pymortests.base import TestInterface, runmodule
 
+import pytest
 
-class TestCubicParameterspace(TestInterface):
 
-    def setUp(self):
-        TestInterface.setUp(self)
-        self.space = parameters.CubicParameterSpace({'diffusionl': 1}, 0.1, 1)
-        self.samples = 100
+num_samples = 100
 
-    def _check_values(self, values):
-        self.assertEqual(len(values), self.samples)
-        for value in values:
-            self.assertTrue(self.space.contains(value))
 
-    def test_uniform(self):
-        values = list(self.space.sample_uniformly(self.samples))
-        self._check_values(values)
+@pytest.fixture(scope='module')
+def space():
+    return parameters.CubicParameterSpace({'diffusionl': 1}, 0.1, 1)
 
-    def test_randomly(self):
-        values = list(self.space.sample_randomly(self.samples))
-        self._check_values(values)
+
+def test_uniform(space):
+    values = list(space.sample_uniformly(num_samples))
+    assert len(values) == num_samples
+    for value in values:
+        assert space.contains(value)
+
+
+def test_randomly(space):
+    values = list(space.sample_randomly(num_samples))
+    assert len(values) == num_samples
+    for value in values:
+        assert space.contains(value)
 
 
 if __name__ == "__main__":
