@@ -25,5 +25,8 @@ flake8:
 test:
 	python setup.py test
 
+full-test:
+	python setup.py test --flakes --pep8
+	
 doc:
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html

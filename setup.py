@@ -28,10 +28,23 @@ install_suggests = dependencies.install_suggests
 
 
 class PyTest(TestCommand):
+
+    user_options = [('flakes', 'F', 'run pyflakes checks'), ('pep8', 'p', 'run pep8 checks'),
+                    ('ff', 'f', 're-run all (cached) tests')]
+    boolean_options = ['flakes' , 'pep8', 'ff']
+
+    def initialize_options(self):
+        TestCommand.initialize_options(self)
+        self.flakes = False
+        self.pep8 = False
+        self.ff = False
+        
     def finalize_options(self):
         TestCommand.finalize_options(self)
-        self.test_args = ['src/pymortests']
+        print(sys.argv[3:])
+        self.test_args = sys.argv[3:] + ['src/pymortests']
         self.test_suite = True
+
     def run_tests(self):
         #import here, cause outside the eggs aren't loaded
         import pytest

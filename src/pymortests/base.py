@@ -14,6 +14,7 @@ import numpy.testing as npt
 from pymor.core.interfaces import BasicInterface
 from pymor.core import logger
 
+
 class TestInterface(BasicInterface):
 
     def assertIsInstance(self, arg, cls, msg=None):
@@ -49,7 +50,9 @@ class TestInterface(BasicInterface):
     def assertLess(self, arg, other, msg=None):
             assert arg < other
 
+
 TestInterface = TestInterface
+
 
 def _load_all():
     import pymor
