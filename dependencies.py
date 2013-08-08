@@ -10,7 +10,7 @@ import_names = {'ipython': 'IPython',
                 'pytest-cache': 'pytest_cache',
                 'pytest-capturelog': 'pytest_capturelog',
                 'pytest-instafail': 'pytest_instafail',
-                'pytest-xdist': 'pytest_xdist',
+                'pytest-xdist': 'xdist',
                 'pytest-cov': 'pytest_cov',
                 'pytest-flakes': 'pytest_flakes',
                 'pytest-pep8': 'pytest_pep8'}
