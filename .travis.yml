@@ -12,10 +12,12 @@ install: python ./install.py --recipe travis --virtualenv-dir $VIRTUAL_ENV --wit
 # # command to run tests
 script: tox -e py27
 notifications:
-  irc: "chat.freenode.net#dune_ms"
-   - on_success: change
-   - on_failure: change
+  irc: 
+    channels:
+      - "chat.freenode.net#dune_ms"
+    on_success: change
+    on_failure: change
   email: 
-   - on_success: change
-   - on_failure: change
+    on_success: change
+    on_failure: change
 
