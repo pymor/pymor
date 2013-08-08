@@ -87,12 +87,6 @@ class TestGaussQuadrature(TestInterface):
             self.assertLess(P[-1], 1.0)
 
 
-class TestDictPropery(TestInterface):
-
-    def test_props(self):
-        self.assertFalse(True, "test is missing")
-
-
 class TestCmp(TestInterface):
 
     def test_props(self):
