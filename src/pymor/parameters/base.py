@@ -229,7 +229,7 @@ class Parameter(dict):
 
     @property
     def parameter_type(self):
-        return ParameterType({k: v.shape for k in self._keys})
+        return ParameterType({k: v.shape for k, v in self.iteritems()})
 
     def __str__(self):
         if self.__keys is None:
