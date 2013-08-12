@@ -33,7 +33,7 @@ This procedure has been tested on the following platforms:
 
 3.  Excecute the provided installation script
     
-        ./install.sh
+        ./install.py
     
     The installation script will ensure that all necessary system libraries and
     development headers are installed, create a new python virtual environment
@@ -41,11 +41,11 @@ This procedure has been tested on the following platforms:
     this virtualenv, and finally install pyMor itself.
     
     The installation process can be customized using various command-line arguments.
-    (See `./install.sh --help`.) Most notable, the path of the virtualenv can be
+    (See `./install.py --help`.) Most notable, the path of the virtualenv can be
     configured using the `--virtualenv-dir` option.  Moreover, if you intend to work
     directly inside the pyMor source tree, use
     
-        ./install.sh --only-deps
+        ./install.py --only-deps
     
     to prevent the installation of pyMor itself into the `site-packages` directory
     of the virtualenv. In this case, the installation script will add the pyMor

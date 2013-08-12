@@ -5,6 +5,8 @@ NOTE pyMor is still alpha quality software and under heavy development.
 Should you have any questions regarding pyMor or wish to contribute, do
 not hesitate to directly contact one of the developers.
 
+[Build Status]
+
 Installation
 ------------
 
@@ -31,7 +33,7 @@ This procedure has been tested on the following platforms:
 
 3.  Excecute the provided installation script
 
-        ./install.sh
+        ./install.py
 
     The installation script will ensure that all necessary system
     libraries and development headers are installed, create a new python
@@ -40,12 +42,12 @@ This procedure has been tested on the following platforms:
     install pyMor itself.
 
     The installation process can be customized using various
-    command-line arguments. (See ./install.sh --help.) Most notable, the
+    command-line arguments. (See ./install.py --help.) Most notable, the
     path of the virtualenv can be configured using the --virtualenv-dir
     option. Moreover, if you intend to work directly inside the pyMor
     source tree, use
 
-        ./install.sh --only-deps
+        ./install.py --only-deps
 
     to prevent the installation of pyMor itself into the site-packages
     directory of the virtualenv. In this case, the installation script
@@ -67,6 +69,28 @@ This procedure has been tested on the following platforms:
 
         cd src/pymor/demos
         ./thermalblock.py -ep --plot-solutions 2 2 3 16
+
+Cython extension modules
+------------------------
+
+pyMor uses Cython extension modules to speed up numerical algorithms
+which cannot be efficiently expressed using NumPy idioms. To benefit
+from these optimizations, the modules' source files (currently
+pymor/tools/inplace.pyx and pymor/tools/realations.pyx) have to be
+processed by Cython into a .c-file which then must be compiled into a
+shared object. These .so-files then take precedence over the
+non-optimized pure python modules. This whole build process is handeled
+automatically by setup.py which is internally called by the install.py
+script.
+
+If you want to develop Cython extensions modules for pyMor yourself, you
+should add your module to the ext_modules list defined in the _setup
+method of setup.py. Calling
+
+    python setup.py build_ext --inplace
+
+will then build the extension module and place it into your pyMor source
+tree.
 
 Debugging
 ---------
