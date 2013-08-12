@@ -22,12 +22,11 @@ UBUNTU_12_04_RECIPE = {'name': 'Ubuntu 12.04',
                        'local': deps.install_requires + deps.install_suggests,
                        'venv_cmd': ['/usr/bin/virtualenv']}
 
-_travis_local = [i for i in deps.install_requires + deps.tests_require if i not in ['PySide', 'matplotlib']]
 TRAVIS_RECIPE = {'name': 'travis',
                        'system': [  'sudo apt-get update',
                                     'sudo apt-get install -qq python-virtualenv python-numpy python-scipy python-sympy '
                                   + 'python3-numpy python3-scipy python3-pyside python-pyside' ],
-                       'local': _travis_local,
+                       'local': deps.install_requires + deps.tests_require,
                        'venv_cmd': []}
 TOX_RECIPE = {'name': 'tox',
                        'system': [],
