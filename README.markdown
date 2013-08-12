@@ -5,6 +5,8 @@ pyMor - Model order reduction in Python
 Should you have any questions regarding pyMor or wish to contribute, do not
 hesitate to directly contact one of the developers.
 
+[![Build Status](https://travis-ci.org/pyMor/pyMor.png)](https://travis-ci.org/pyMor/pyMor)
+
 
 Installation
 ------------
