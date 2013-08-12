@@ -31,7 +31,16 @@ except ImportError:
     try:
         revstring = subprocess.check_output(['git', 'describe', '--tags', '--candidates', '20', '--match', '*.*.*'],
                                             cwd=os.path.dirname(__file__))
-    except:
+    except subprocess.CalledProcessError as e:
+        import sys
+        sys.stderr.write('''Warning: Could not determine current pyMor version.
+Failed to import pymor.version and 'git describe --tags --candidates 20 --match *.*.*'
+returned
+
+{}
+
+(return code: {})
+'''.format(e.output, e.returncode))
         revstring = NO_VERSIONSTRING
 finally:
     version = _make_version(revstring)
