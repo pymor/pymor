@@ -98,5 +98,12 @@ Debugging
 Tests
 -----
 
-You'll need mock, nose-cov, nose, nosehtmloutput, nose-progressive and tissue installed to run `make test`.
-Having `PYMOR_NO_GRIDTESTS=1` in the process' environment disables all, expensive grid testing.
+pyMor uses [pytest](http://pytest.org/) for unit testing. To run the test suite,
+simply execute `make test` in the base directory of the pyMor repository. This
+will also create a test coverage report which can be found in the `htmlcov`
+directory. Alternatively, you can run `make full-test` which will also enable
+[pyflakes](https://pypi.python.org/pypi/pyflakes) and
+[pep8](http://www.python.org/dev/peps/pep-0008/) checks.
+
+All tests are contained within the `src/pymortests` directory and can be run
+individually by executing `py.test src/pymortests/the_module.py`.
