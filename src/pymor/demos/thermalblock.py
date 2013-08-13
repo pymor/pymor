@@ -28,7 +28,7 @@ Options:
                          [default: trivial].
 
   --extension-alg=ALG    Basis extension algorithm (trivial, gram_schmidt, h1_gram_schmidt,
-                         numpy_trivial, numpy_gram_schmidt) to be used [default: h1_gram_schmidt].
+                         numpy_trivial) to be used [default: h1_gram_schmidt].
 
   --grid=NI              Use grid with 2*NI*NI elements [default: 100].
 
@@ -60,9 +60,10 @@ from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import discretize_elliptic_cg
 from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor.algorithms import greedy, trivial_basis_extension, gram_schmidt_basis_extension
-from pymor.algorithms.basisextension import numpy_trivial_basis_extension, numpy_gram_schmidt_basis_extension
+from pymor.algorithms.basisextension import numpy_trivial_basis_extension
 core.getLogger('pymor.algorithms').setLevel('INFO')
 core.getLogger('pymor.discretizations').setLevel('INFO')
+core.getLogger('pymor.la').setLevel('INFO')
 
 
 def thermalblock_demo(args):
@@ -75,8 +76,7 @@ def thermalblock_demo(args):
     args['--estimator-norm'] = args['--estimator-norm'].lower()
     assert args['--estimator-norm'] in {'trivial', 'h1'}
     args['--extension-alg'] = args['--extension-alg'].lower()
-    assert args['--extension-alg'] in {'trivial', 'gram_schmidt', 'h1_gram_schmidt', 'numpy_trivial',
-                                       'numpy_gram_schmidt'}
+    assert args['--extension-alg'] in {'trivial', 'gram_schmidt', 'h1_gram_schmidt', 'numpy_trivial'}
     args['--reductor'] = args['--reductor'].lower()
     assert args['--reductor'] in {'default', 'numpy_default'}
 
@@ -107,8 +107,7 @@ def thermalblock_demo(args):
     extension_algorithms = {'trivial': trivial_basis_extension,
                             'gram_schmidt': gram_schmidt_basis_extension,
                             'h1_gram_schmidt': partial(gram_schmidt_basis_extension, product=discretization.h1_product),
-                            'numpy_trivial': numpy_trivial_basis_extension,
-                            'numpy_gram_schmidt': numpy_gram_schmidt_basis_extension}
+                            'numpy_trivial': numpy_trivial_basis_extension}
     extension_algorithm = extension_algorithms[args['--extension-alg']]
     greedy_data = greedy(discretization, reductor, discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
                          use_estimator=args['--with-estimator'], error_norm=discretization.h1_norm,
