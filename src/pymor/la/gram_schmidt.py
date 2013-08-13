@@ -12,7 +12,6 @@ from pymor import defaults
 from pymor.core import getLogger
 from pymor.core.exceptions import AccuracyError
 from pymor.tools import float_cmp_all
-from pymor.operators import OperatorInterface
 
 
 def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=None,
@@ -69,9 +68,8 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=None,
                 logger.info("Removing duplicate vectors")
 
     # main loop
-    i = offset
     remove = []
-    while i < len(A):
+    for i in xrange(offset, len(A)):
         # first calculate norm
         if product is None:
             oldnorm = A.l2_norm(ind=i)[0]
@@ -111,15 +109,13 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=None,
                     norm = np.sqrt(product.apply2(A, A, V_ind=i, U_ind=i, pairwise=True))[0]
 
                 # remove vector if it got too small:
-                if norm/oldnorm < tol:
+                if norm / oldnorm < tol:
                     logger.info("Removing linear dependent vector {}".format(i))
                     remove.append(i)
                     break
 
-                A.scal(1/norm, ind=i)
+                A.scal(1 / norm, ind=i)
                 oldnorm = 1.
-
-        i += 1
 
     if remove:
         A.remove(remove)
