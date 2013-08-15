@@ -76,7 +76,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
                    for i, df in enumerate(p.diffusion_functions)]
 
         if p.diffusion_functionals is None:
-            L = type(L0).lincomb(operators=[L0] + Li, name='diffusion',
+            L = type(L0).lincomb(operators=Li + [L0], name='diffusion', num_coefficients=len(Li),
                                  global_names={'coefficients': 'diffusion_coefficients'})
         else:
             L = type(L0).lincomb(operators=[L0] + Li, coefficients=[1.] + list(p.diffusion_functionals),
