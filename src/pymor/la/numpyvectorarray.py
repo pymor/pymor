@@ -156,14 +156,12 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
         assert self.check_ind(x_ind)
         assert self.dim == x.dim
 
+        if alpha == 0:
+            return
+
         B = x._array[:x._len] if x_ind is None else x._array[x_ind]
 
-        if alpha == 0:
-            if ind is None:
-                self._array[:self._len] = 0
-            else:
-                self._array[ind] = 0
-        elif alpha == 1:
+        if alpha == 1:
             if ind is None:
                 self._array[:self._len] += B
             else:
