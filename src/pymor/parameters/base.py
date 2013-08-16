@@ -302,7 +302,7 @@ class Parametric(object):
 
     def strip_parameter(self, mu):
         if mu.__class__ is not Parameter:
-            mu_ = Parameter.from_parameter_type(mu, self.parameter_type)
+            mu = Parameter.from_parameter_type(mu, self.parameter_type)
         assert self.parameter_type is None or all(getattr(mu.get(k, None), 'shape', None) == v for k, v in self.parameter_type.iteritems())
         return None if self.parameter_type is None else Parameter({k: mu[k] for k in self.parameter_type})
 
