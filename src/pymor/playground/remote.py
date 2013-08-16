@@ -5,14 +5,34 @@
 
 from __future__ import absolute_import, division, print_function
 
-import numpy as np
+from numbers import Number
 
-from pymor.la import VectorArrayInterface
-from pymor.operators import OperatorInterface
+import IPython.parallel as p
+
+from pymor.discretizations import StationaryDiscretization
+from pymor.la import VectorArrayInterface, NumpyVectorArray
+from pymor.operators import OperatorInterface, LincombOperatorInterface
+from pymor.operators.basic import LincombOperatorBase
+from pymor.parameters.base import Parameter
+
+
+def setup_remote(remote_view, discretization=None):
+    remote_view.block = True
+    remote_view.execute('''
+import pymor.playground.remote
+from pymor.operators import LincombOperatorInterface
+pymor.playground.remote.RR = {}
+''')
+    if discretization:
+        remote_view.execute('pymor.playground.remote.RR[id({0})] = {0}'.format(discretization))
+        rd = p.Reference(discretization)
+        return remote_view.apply(lambda d: id(d), rd)
+
 
 wrapped_vector_arrays = {}
 
-def wrap_remote_vector_array(remote_view, remote_id):
+
+def wrap_remote_vector_array_class(remote_view, remote_id):
 
     global wrapped_vector_arrays
 
@@ -125,7 +145,7 @@ class RemoteVectorArray(VectorArrayInterface):
     @staticmethod
     def _almost_equal(rid, other, ind=None, o_ind=None, rtol=None, atol=None):
         global RR
-        return RR[rid].almost_equal(other, ind=ind, o_ind=o_ind, rtol=rtol, atol=atol)
+        return RR[rid].almost_equal(RR[other], ind=ind, o_ind=o_ind, rtol=rtol, atol=atol)
 
     def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
         return self.rv.apply(self._almost_equal, self.rid, other.rid, ind=ind, o_ind=o_ind, rtol=rtol, atol=atol)
@@ -199,17 +219,16 @@ class RemoteVectorArray(VectorArrayInterface):
         return self.rv.apply(self._amax, self.rid, ind=ind)
 
 
+def wrap_remote_operator(remote_view, remote_id):
+
+    remote_view.execute('RRES = isinstance(pymor.playground.remote.RR[{}], LincombOperatorInterface)'.format(remote_id))
+    if remote_view['RRES']:
+        return RemoteLincombOperator(remote_view, remote_id)
+    else:
+        return RemoteOperator(remote_view, remote_id)
+
+
 class RemoteOperator(OperatorInterface):
-
-    dim_source = 0
-    dim_range = 0
-
-    type_source = None
-    type_range = None
-
-    linear = False
-
-    invert_options = None
 
     def __init__(self, remote_view, remote_id):
         self.rv = remote_view
@@ -228,13 +247,25 @@ class RemoteOperator(OperatorInterface):
                     'dim_range': RR[rid].dim_range,
                     'linear': RR[rid].linear,
                     'invert_options': RR[rid].invert_options,
-                    'parameter_type': RR[rid].parameter_type}
+                    'parameter_type': RR[rid].parameter_type,
+                    'assemble': hasattr(RR[rid], 'assemble'),
+                    'as_vector': hasattr(RR[rid], 'as_vector'),
+                    'name': RR[rid].name}
 
         static_data = get_static_data(self.rid)
         pt = static_data.pop('parameter_type')
-        self.__dict__.update(get_static_data(self.rid))
-        self.type_source = wrap_remote_vector_array(self.rv, self.type_source)
-        self.type_range = wrap_remote_vector_array(self.rv, self.type_range)
+        assemble = static_data.pop('assemble')
+        as_vector = static_data.pop('as_vector')
+        name = static_data.pop('name')
+        if assemble:
+            self.assemble = self._assemble
+        if as_vector:
+            self.as_vector = self._as_vector
+        self.name = 'Remote_{}'.format(name)
+        self.__dict__.update(static_data)
+        self.type_source = wrap_remote_vector_array_class(self.rv, self.type_source)
+        self.real_type_range = wrap_remote_vector_array_class(self.rv, self.type_range)
+        self.type_range = self.real_type_range if self.dim_range > 1 else NumpyVectorArray
         self.build_parameter_type(pt, local_global=True)
         self.lock()
 
@@ -248,7 +279,10 @@ class RemoteOperator(OperatorInterface):
 
     def apply(self, U, ind=None, mu=None):
         U_id = self.rv.apply(self._apply, self.rid, U.rid, ind=ind, mu=mu)
-        return self.type_range(U_id)
+        if self.dim_range > 1:
+            return self.type_range(U_id)
+        else:
+            return NumpyVectorArray(self.real_type_range(U_id).components([0]))
 
     @staticmethod
     def _apply2(rid, V, U, U_ind=None, V_ind=None, mu=None, product=None, pairwise=True):
@@ -256,8 +290,12 @@ class RemoteOperator(OperatorInterface):
         return RR[rid].apply2(RR[V], RR[U], U_ind=U_ind, V_ind=V_ind, mu=mu, product=product, pairwise=pairwise)
 
     def apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None, pairwise=True):
-        return self.rv.apply(self._apply2, self.rid, V.rid, U.rid, U_ind=U_ind, V_ind=V_ind, mu=mu, product=product,
-                             pairwise=pairwise)
+        if self.dim_range > 1:
+            return self.rv.apply(self._apply2, self.rid, V.rid, U.rid, U_ind=U_ind, V_ind=V_ind, mu=mu, product=product,
+                                 pairwise=pairwise)
+        else:
+            assert product is None
+            return V.dot(self.apply(U, U_ind, mu=mu), ind=V_ind, pairwise=pairwise)
 
     @staticmethod
     def _apply_inverse(rid, U, ind=None, mu=None, options=None):
@@ -271,8 +309,44 @@ class RemoteOperator(OperatorInterface):
         U_id = self.rv.apply(self._apply_inverse, self.rid, U.rid, ind=ind, mu=mu, options=options)
         return self.type_source(U_id)
 
+    @staticmethod
+    def _lincomb(operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
+        global RR
+        op = RR[operators[0]].lincomb([RR[o] for o in operators], coefficients, num_coefficients, coefficients_name, name)
+        op_id = id(op)
+        RR[op_id] = op
+        return op_id
+
+    @staticmethod
     def lincomb(operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
-        raise NotImplementedError
+        assert all(isinstance(op, RemoteOperator) for op in operators)
+        op_id = operators[0].rv.apply(operators[0]._lincomb, [o.rid for o in operators], coefficients, num_coefficients,
+                                      coefficients_name, name)
+        return wrap_remote_operator(operators[0].rv, op_id)
+
+    @staticmethod
+    def _s_assemble(rid, mu=None):
+        global RR
+        op = RR[rid].assemble(mu)
+        op_id = id(op)
+        RR[op_id] = op
+        return op_id
+
+    def _assemble(self, mu=None):
+        op_id = self.rv.apply(self._s_assemble, self.rid, mu=mu)
+        return wrap_remote_operator(self.rv, op_id)
+
+    @staticmethod
+    def _s_as_vector(rid, mu=None):
+        global RR
+        U = RR[rid].as_vector(mu)
+        U_id = id(U)
+        RR[U_id] = U
+        return U_id
+
+    def _as_vector(self, mu=None):
+        U_id = self.rv.apply(self._s_as_vector, self.rid, mu=mu)
+        return self.type_source(U_id)
 
     def __add__(self, other):
         if isinstance(other, Number):
@@ -290,3 +364,94 @@ class RemoteOperator(OperatorInterface):
         return '{}: R^{} --> R^{}  (parameter type: {}, class: {})'.format(
             self.name, self.dim_source, self.dim_range, self.parameter_type,
             self.__class__.__name__)
+
+
+class RemoteLincombOperator(RemoteOperator, LincombOperatorBase):
+
+    def __init__(self, remote_view, remote_id):
+        RemoteOperator.__init__(self, remote_view, remote_id)
+        self.unlock()
+
+        @self.rv.remote()
+        def get_static_data(rid):
+            global RR
+            for op in RR[rid].operators:
+                RR[id(op)] = op
+            return {'operators': [id(op) for op in RR[rid].operators],
+                    'coefficients': RR[rid].coefficients,
+                    'num_coefficients': RR[rid].num_coefficients,
+                    'coefficients_name': RR[rid].coefficients_name}
+
+        static_data = get_static_data(self.rid)
+        operators = static_data.pop('operators')
+        self.__dict__.update(static_data)
+        self.operators = [wrap_remote_operator(self.rv, o) for o in operators]
+        self.lock()
+
+
+class RemoteStationaryDiscretization(StationaryDiscretization):
+
+    def __init__(self, remote_view, remote_id):
+
+        self.rv = remote_view
+        self.rid = remote_id
+
+        @self.rv.remote()
+        def get_static_data(rid):
+            global RR
+            self = RR[rid]
+            RR[id(self.operator)] = self.operator
+            RR[id(self.rhs)] = self.rhs
+            for p in self.products.values():
+                RR[id(p)] = p
+            return {'operator': id(self.operator),
+                    'rhs': id(self.rhs),
+                    'products': {k: id(v) for k, v in self.products.iteritems()},
+                    'parameter_space': self.parameter_space,
+                    'estimator': hasattr(self, 'estimate'),
+                    'name': self.name}
+
+        static_data = get_static_data(self.rid)
+        StationaryDiscretization.__init__(self, operator=wrap_remote_operator(self.rv, static_data['operator']),
+                                          rhs=wrap_remote_operator(self.rv, static_data['rhs']),
+                                          products={k: wrap_remote_operator(self.rv, v)
+                                                    for k,v in static_data['products'].iteritems()},
+                                          parameter_space=static_data['parameter_space'],
+                                          estimator=None, visualizer=None, caching=None,
+                                          name='Remote_{}'.format(static_data['name']))
+
+        if static_data['estimator']:
+            self.unlock()
+            self.estimate = self.__estimate
+            self.lock()
+
+
+    def with_(self, **kwargs):
+        assert set(kwargs.keys()) <= self.with_arguments
+        assert 'operators' not in kwargs or 'rhs' not in kwargs and 'operator' not in kwargs
+        assert 'operators' not in kwargs or set(kwargs['operators'].keys()) <= set(('operator', 'rhs'))
+
+        if 'operators' in kwargs:
+            kwargs.update(kwargs.pop('operators'))
+
+        return self._with_via_init(kwargs, new_class=StationaryDiscretization)
+
+    @staticmethod
+    def _solve(rid, mu=None):
+        global RR
+        U = RR[rid].solve(mu)
+        U_id = id(U)
+        RR[U_id] = U
+        return U_id
+
+    def solve(self, mu=None):
+        U_id = self.rv.apply(self._solve, self.rid, mu)
+        return self.operator.type_source(U_id)
+
+    @staticmethod
+    def _estimate(rid, U, mu=None):
+        global RR
+        return RR[rid].estimate(RR[U], mu=mu)
+
+    def __estimate(self, U, mu=None):
+        return self.rv.apply(self._estimate, self.rid, U.rid, mu=mu)
