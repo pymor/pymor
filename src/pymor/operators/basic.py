@@ -33,6 +33,7 @@ class OperatorBase(OperatorInterface):
             AU = product.apply(AU)
         return V.dot(AU, ind=V_ind, pairwise=pairwise)
 
+    @staticmethod
     def lincomb(operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
         return LincombOperator(operators, coefficients, num_coefficients, coefficients_name, name=None)
 
