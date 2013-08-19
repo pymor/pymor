@@ -39,9 +39,12 @@ class ProjectedOperator(OperatorBase):
     operator
         The `Operator` to project.
     source_basis
-        The b_1, ..., b_N as a `VectorArray`.
+        The b_1, ..., b_N as a `VectorArray` or `None`. If `None`, `operator.type_source`
+        has to be a subclass of `NumpyVectorArray`.
     range_basis
-        The c_1, ..., c_M as a `VectorArray`. If None, `range_basis=source_basis`.
+        The c_1, ..., c_M as a `VectorArray`. If `None`, `operator.type_source`
+        has to be a subclass of `NumpyVectorArray`.
+
     product
         An `Operator` representing the scalar product.
         If None, the euclidean product is chosen.
@@ -52,15 +55,21 @@ class ProjectedOperator(OperatorBase):
     type_source = type_range = NumpyVectorArray
 
     def __init__(self, operator, source_basis, range_basis, product=None, name=None):
-        assert source_basis is not None or operator.dim_source == 0
-        assert range_basis is not None
         assert isinstance(operator, OperatorInterface)
-        assert source_basis is None or operator.dim_source == source_basis.dim
-        assert operator.dim_range == range_basis.dim
+        assert isinstance(source_basis, operator.type_source) or issubclass(operator.type_source, NumpyVectorArray)
+        assert issubclass(operator.type_range, type(range_basis)) or issubclass(operator.type_range, NumpyVectorArray)
+        assert source_basis is None or source_basis.dim == operator.dim_source
+        assert range_basis is None or range_basis.dim == operator.dim_range
+        assert product is None \
+            or (isinstance(product, OperatorInterface)
+                and range_basis is not None
+                and issubclass(operator.type_range, product.type_source)
+                and issubclass(product.type_range, type(product))
+                and product.dim_range == product.dim_source == operator.dim_range)
         super(ProjectedOperator, self).__init__()
         self.build_parameter_type(inherits=(operator,))
         self.dim_source = len(source_basis) if operator.dim_source > 0 else 0
-        self.dim_range = len(range_basis)
+        self.dim_range = len(range_basis) if range_basis is not None else operator.dim_range
         self.name = name
         self.operator = operator
         self.source_basis = source_basis
@@ -70,19 +79,23 @@ class ProjectedOperator(OperatorBase):
 
     def apply(self, U, ind=None, mu=None):
         mu = self.parse_parameter(mu)
-        if self.source_basis is not None:
-            U_array = U._array if ind is None else U._array[ind]
-            V = self.source_basis.lincomb(U_array)
-            if self.product is None:
-                return NumpyVectorArray(self.operator.apply2(self.range_basis, V, mu=mu, pairwise=False).T)
+        if self.source_basis is None:
+            if self.range_basis is None:
+                return self.operator.apply(U, ind=ind, mu=mu)
+            elif self.product is None:
+                return NumpyVectorArray(self.operator.apply2(self.range_basis, U, U_ind=ind, mu=mu, pairwise=False).T)
             else:
-                V = self.operator.apply(V, mu=mu)
+                V = self.operator.apply(U, ind=ind, mu=mu)
                 return NumpyVectorArray(self.product.apply2(V, self.range_basis, pairwise=False))
         else:
-            V = self.operator.apply(U, ind=ind, mu=mu)
-            if self.product is None:
-                return NumpyVectorArray(V.dot(self.range_basis, pairwise=False))
+            U_array = U._array if ind is None else U._array[ind]
+            UU = self.source_basis.lincomb(U_array)
+            if self.range_basis is None:
+                return self.operator.apply(UU, mu=mu)
+            elif self.product is None:
+                return NumpyVectorArray(self.operator.apply2(self.range_basis, UU, mu=mu, pairwise=False).T)
             else:
+                V = self.operator.apply(UU, mu=mu)
                 return NumpyVectorArray(self.product.apply2(V, self.range_basis, pairwise=False))
 
 
@@ -112,13 +125,22 @@ class ProjectedLinearOperator(NumpyMatrixBasedOperator):
     sparse = False
 
     def __init__(self, operator, source_basis, range_basis, product=None, name=None):
+        assert isinstance(operator, OperatorInterface)
+        assert isinstance(source_basis, operator.type_source) or issubclass(operator.type_source, NumpyVectorArray)
+        assert issubclass(operator.type_range, type(range_basis)) or issubclass(operator.type_range, NumpyVectorArray)
+        assert source_basis is None or source_basis.dim == operator.dim_source
+        assert range_basis is None or range_basis.dim == operator.dim_range
+        assert product is None \
+            or (isinstance(product, OperatorInterface)
+                and range_basis is not None
+                and issubclass(operator.type_range, product.type_source)
+                and issubclass(product.type_range, type(product))
+                and product.dim_range == product.dim_source == operator.dim_range)
         assert operator.linear
-        assert operator.dim_source == source_basis.dim
-        assert operator.dim_range == range_basis.dim
         super(ProjectedLinearOperator, self).__init__()
         self.build_parameter_type(inherits=(operator,))
-        self.dim_source = len(source_basis)
-        self.dim_range = len(range_basis)
+        self.dim_source = len(source_basis) if operator.dim_source > 0 else 0
+        self.dim_range = len(range_basis) if range_basis is not None else operator.dim_range
         self.name = name
         self.operator = operator
         self.source_basis = source_basis
@@ -127,13 +149,29 @@ class ProjectedLinearOperator(NumpyMatrixBasedOperator):
         self.lock()
 
     def _assemble(self, mu=None):
-        if self.product is None:
-            return NumpyMatrixOperator(self.operator.apply2(self.range_basis, self.source_basis, mu=mu, pairwise=False),
-                                       name='{}_assembled'.format(self.name))
+        mu = self.parse_parameter(mu)
+        if self.source_basis is None:
+            if self.range_basis is None:
+                return self.operator.assemble(mu=mu)
+            elif product is None:
+                return NumpyMatrixOperator(self.operator.apply2(self.range_basis,
+                                                                NumpyVectorArray(np.eye(self.operator.dim_source)),
+                                                                mu=mu), name='{}_assembled'.format(self.name))
+            else:
+                V = self.operator.apply(NumpyVectorArray(np.eye(self.operator.dim_source)), mu=mu)
+                return NumpyMatrixOperator(self.product.apply2(self.range_basis, V, pairwise=False),
+                                           name='{}_assembled'.format(self.name))
         else:
-            AU = self.operator.apply(self.source_basis, mu=mu)
-            return NumpyMatrixOperator(self.product.apply2(self.range_basis, AU, pairwise=False),
-                                       name='{}_assembled'.format(self.name))
+            if self.range_basis is None:
+                M = self.operator.apply(self.source_basis, mu=mu).data.T
+                return NumpyMatrixOperator(M, name='{}_assembled'.format(self.name))
+            elif self.product is None:
+                return NumpyMatrixOperator(self.operator.apply2(self.range_basis, self.source_basis, mu=mu, pairwise=False),
+                                           name='{}_assembled'.format(self.name))
+            else:
+                V = self.operator.apply(self.source_basis, mu=mu)
+                return NumpyMatrixOperator(self.product.apply2(self.range_basis, V, pairwise=False),
+                                           name='{}_assembled'.format(self.name))
 
 
 def project_operator(operator, source_basis, range_basis, product=None, name=None):
@@ -187,12 +225,9 @@ def rb_project_operator(operator, rb, product=None, name=None):
     if operator.dim_range > 1:
         assert operator.dim_range == rb.dim
         range_basis = rb
-    elif operator.dim_range == 1:
-        if operator.type_range is not NumpyVectorArray:
-            raise NotImplementedError
-        range_basis = NumpyVectorArray(np.ones((1,1)))
     else:
-        raise NotImplementedError
+        range_basis = None
+
     return project_operator(operator, source_basis, range_basis, product=product, name=name)
 
 
