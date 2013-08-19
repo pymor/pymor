@@ -149,13 +149,13 @@ class BasicInterface(object):
         c._locked = locked
         return c
 
-    def _with_via_init(self, kwargs):
+    def _with_via_init(self, kwargs, new_class=None):
         '''Default implementation for with_ by calling __init__.
 
         Parameters which are missing in `kwargs` and for which there is no attribute in `self` are set
         to None.
         '''
-        my_type = type(self)
+        my_type = type(self) if new_class is None else new_class
         argnames = inspect.getargspec(my_type.__init__)[0]
         init_args = kwargs
         for arg in argnames:
