@@ -16,12 +16,35 @@ from pymor.operators.basic import LincombOperatorBase
 from pymor.parameters.base import Parameter
 
 
+class RemoteRessourceManger(object):
+
+    def __init__(self):
+        self.refs = {}
+
+    def __setitem__(self, k, v):
+        if k in self.refs:
+            ref_count, v = self.refs[k]
+            self.refs[k] = (ref_count + 1, v)
+        else:
+            self.refs[k] = (0, v)
+
+    def __getitem__(self, k):
+        return self.refs[k][1]
+
+    def __delitem__(self, k):
+        ref_count, v = self.refs[k]
+        if ref_count == 0:
+            del self.refs[k]
+        else:
+            self.refs[k] = (ref_count - 1, v)
+
+
 def setup_remote(remote_view, discretization=None):
     remote_view.block = True
     remote_view.execute('''
 import pymor.playground.remote
 from pymor.operators import LincombOperatorInterface
-pymor.playground.remote.RR = {}
+pymor.playground.remote.RR = pymor.playground.remote.RemoteRessourceManger()
 ''')
     if discretization:
         remote_view.execute('pymor.playground.remote.RR[id({0})] = {0}'.format(discretization))
