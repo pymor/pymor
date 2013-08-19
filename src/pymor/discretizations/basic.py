@@ -211,6 +211,6 @@ class InstationaryDiscretization(DiscretizationBase):
             self.logger.info('Solving {} ({}) for {} ...'.format(self.name, pt, mu))
 
         mu['_t'] = 0
-        U0 = self.initial_data.apply(0, mu=mu)
+        U0 = self.initial_data.apply(self.initial_data.type_source.zeros(0), mu=mu)
         return self.time_stepper.solve(operator=self.operator, rhs=self.rhs, initial_data=U0, mass=self.mass,
                                        initial_time=0, end_time=self.T, mu=mu)
