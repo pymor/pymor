@@ -130,7 +130,7 @@ def gram_schmidt_basis_extension(basis, U, U_ind=None, product=None, copy_basis=
 
     new_basis = basis.copy() if copy_basis else basis
     new_basis.append(U, o_ind=U_ind, remove_from_other=(not copy_U))
-    gram_schmidt(new_basis, offset=len(basis), product=product)
+    gram_schmidt(new_basis, offset=len(basis), product=product, copy=False)
 
     if len(new_basis) <= basis_length:
         raise ExtensionError

@@ -15,7 +15,8 @@ from pymor.tools import float_cmp_all
 
 
 def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=None,
-                 reiterate=None, reiteration_threshold=None, check=None, check_tol=None):
+                 reiterate=None, reiteration_threshold=None, check=None, check_tol=None,
+                 copy=False):
     '''Orthonormnalize a matrix using the Gram-Schmidt algorithm.
 
     Parameters
@@ -42,6 +43,8 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=None,
         `defaults.gram_schmidt_check`.
     check_tol
         Tolerance for the check. If `None`, `defaults.gram_schmidt_check_tol` is used.
+    copy
+        If `True`, create a copy of A instead of working directly on A.
 
 
     Returns
@@ -57,6 +60,9 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=None,
         else reiteration_threshold
     check = defaults.gram_schmidt_tol if check is None else check
     check_tol = check_tol or defaults.gram_schmidt_check_tol
+
+    if copy:
+        A = A.copy()
 
     # find duplicate vectors since in some circumstances these cannot be detected in the main loop
     # (is this really needed or is in this cases the tolerance poorly chosen anyhow)
