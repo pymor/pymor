@@ -172,7 +172,7 @@ class cached(BasicInterface):
         '''Implement the descriptor protocol to make decorating instance method possible.
         Return a partial function where the first argument is the instance of the decorated instance object.
         '''
-        if self._cache_disabled:
+        if self._cache_disabled or instance._cache_disabled_for_instance:
             return partial(self.decorated_function, instance)
         return partial(self.__call__, instance)
 
@@ -183,11 +183,15 @@ class Cachable(object):
     classes with the pickle module
     '''
 
-    def __init__(self, config=DEFAULT_MEMORY_CONFIG):
-        self._cache_config = config
-        self._init_cache()
-        self._namespace = '{}_{}'.format(self.__class__.__name__, hash(self))
-        self._expiration_time = None
+    def __init__(self, config=DEFAULT_MEMORY_CONFIG, disable=False):
+        if disable:
+            self._cache_disabled_for_instance = True
+        else:
+            self._cache_disabled_for_instance = False
+            self._cache_config = config
+            self._init_cache()
+            self._namespace = '{}_{}'.format(self.__class__.__name__, hash(self))
+            self._expiration_time = None
 
     def _init_cache(self):
         self._cache_region = dc.make_region(function_key_generator=self.keygen_generator)
