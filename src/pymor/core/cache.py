@@ -202,8 +202,8 @@ class Cachable(object):
         namespace = str(namespace)
 
         def keygen(*arg, **kwargs):
-            return (namespace + "_" + fname + "_".join(str(s) for s in arg)
-                    + '__'.join(str(x) for x in kwargs.iteritems()))
+            return (namespace + "_" + fname + "_".join(s.sid if hasattr(s, 'sid') else str(s) for s in arg)
+                    + '__'.join(x.sid if hasattr(x, 'sid') else str(x) for x in kwargs.iteritems()))
         return keygen
 
     def __getstate__(self):
