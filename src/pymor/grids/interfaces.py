@@ -292,7 +292,6 @@ class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopological
         return self._quadrature_points(codim, order, npoints, quadrature_type)
 
 
-# Is one entity allowed to have mor than one boundary type?
 class BoundaryInfoInterface(core.BasicInterface, Cachable):
     '''Describes boundary types associated to a grid.
 
@@ -312,6 +311,20 @@ class BoundaryInfoInterface(core.BasicInterface, Cachable):
         associated to the boundary type `boundary_type`.
         '''
         raise ValueError('Has no boundary_type "{}"'.format(boundary_type))
+
+    def unique_boundary_type_mask(self, codim):
+        return np.less_equal(sum(self.mask(bt, codim=codim).astype(np.int) for bt in self.boundary_types), 1)
+
+    def no_boundary_type_mask(self, codim):
+        return np.equal(sum(self.mask(bt, codim=codim).astype(np.int) for bt in self.boundary_types), 0)
+
+    def check_boundary_types(self, assert_unique_type=[1], assert_some_type=[]):
+        if assert_unique_type:
+            for codim in assert_unique_type:
+                assert np.all(self.unique_boundary_type_mask(codim))
+        if assert_some_type:
+            for codim in assert_some_type:
+                assert not np.any(self.no_boundary_type_mask(codim))
 
     @property
     def has_dirichlet(self):
