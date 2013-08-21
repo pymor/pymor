@@ -231,6 +231,12 @@ class Parameter(dict):
     def parameter_type(self):
         return ParameterType({k: v.shape for k, v in self.iteritems()})
 
+    @property
+    def sid(self):
+        if self.__keys is None:
+            self.__keys = sorted(self.keys())
+        return 'Parameter_' + '_'.join('{}-{}-{}'.format(k, self[k].shape, self[k].tostring()) for k in self.__keys)
+
     def __str__(self):
         if self.__keys is None:
             self.__keys = sorted(self.keys())
