@@ -37,7 +37,7 @@ class BoundaryInfoFromIndicators(BoundaryInfoInterface):
         of the `BoundaryType`. (The indicator functions must be vectorized.)
     '''
 
-    def __init__(self, grid, indicators):
+    def __init__(self, grid, indicators, assert_unique_type=[1], assert_some_type=[]):
         super(BoundaryInfoFromIndicators, self).__init__()
         self.grid = grid
         self.boundary_types = indicators.keys()
@@ -46,6 +46,7 @@ class BoundaryInfoFromIndicators(BoundaryInfoInterface):
         for boundary_type, codims in self._masks.iteritems():
             for c, mask in enumerate(codims):
                 mask[grid.boundaries(c + 1)] = indicators[boundary_type](grid.centers(c + 1)[grid.boundaries(c + 1)])
+        self.check_boundary_types(assert_unique_type=assert_unique_type, assert_some_type=assert_some_type)
         self.lock()
 
     def mask(self, boundary_type, codim):
@@ -71,7 +72,7 @@ class AllDirichletBoundaryInfo(BoundaryInfoInterface):
 
 class SubGridBoundaryInfo(BoundaryInfoInterface):
 
-    def __init__(self, subgrid, grid, grid_boundary_info, new_boundary_type=None):
+    def __init__(self, subgrid, grid, grid_boundary_info, new_boundary_type=None, assert_unique_type=False):
         assert new_boundary_type is None or isinstance(new_boundaries_type, BoundaryType)
 
         super(SubGridBoundaryInfo, self).__init__()
@@ -97,6 +98,8 @@ class SubGridBoundaryInfo(BoundaryInfoInterface):
         self.boundary_types = set(grid_boundary_info.boundary_types)
         if has_new_boundaries and new_boundary_type is not None:
             self.boundary_types.add(new_boundary_type)
+
+        self.check_boundary_types(assert_unique_type=assert_unique_type)
 
     def mask(self, boundary_type, codim):
         assert 1 <= codim < len(self.__masks) + 1, 'Invalid codimension'
