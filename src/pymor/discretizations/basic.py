@@ -25,7 +25,7 @@ class DiscretizationBase(DiscretizationInterface):
         if caching == 'disk':
             Cachable.__init__(self, config=DEFAULT_DISK_CONFIG)
         elif caching == 'none' or not caching:
-            Cachable.__init__(self, config=NO_CACHE_CONFIG)
+            Cachable.__init__(self, disable=True)
         else:
             raise NotImplementedError
         Parametric.__init__(self)
