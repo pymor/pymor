@@ -129,7 +129,7 @@ class Test_Interface(TestInterface):
 
 
 @SubclassForImplemetorsOf(BasicInterface)
-class WithcopyInterface(BasicInterface):
+class WithcopyInterface(TestInterface):
 
     def test_with_(self):
         self_type = self.Type

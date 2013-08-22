@@ -15,7 +15,9 @@ from pymor.core.interfaces import BasicInterface
 from pymor.core import logger
 
 
-class TestInterface(BasicInterface):
+class TestInterface(object):
+
+    logger = logger.getLogger(__name__)
 
     def assertIsInstance(self, arg, cls, msg=None):
         assert isinstance(arg, cls)
