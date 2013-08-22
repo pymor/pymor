@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 import pymor.core as core
 from pymortests.base import (runmodule,)
 
-from pymortests.fixtures import basicinterface_subclasses
+from pymortests.fixtures import basicinterface_subclass
 
 
 def exercise_logger(logger):
@@ -14,8 +14,8 @@ def exercise_logger(logger):
         getattr(logger, verb)('{} -- logger {}'.format(verb, str(logger)))
 
 
-def test_logclass(basicinterface_subclasses):
-    logger = basicinterface_subclasses.logger
+def test_logclass(basicinterface_subclass):
+    logger = basicinterface_subclass.logger
     exercise_logger(logger)
 
 

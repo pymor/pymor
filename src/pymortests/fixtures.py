@@ -30,7 +30,7 @@ def grid_instances(interface_type, **kwargs):
 
 
 @subclasses_of(BasicInterface)
-def basicinterface_subclasses(request):
+def basicinterface_subclass(request):
     return request.param
 
 

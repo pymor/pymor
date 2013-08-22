@@ -12,19 +12,19 @@ from pymor import core
 from pymor.core.interfaces import BasicInterface
 from pymor.core.logger import getLogger
 from pymortests.base import runmodule
-from pymortests.fixtures import basicinterface_subclasses
+from pymortests.fixtures import basicinterface_subclass
 
 
 # @pytest.mark.skipif('__name__ != "__main__"')
-def testDump(basicinterface_subclasses):
+def testDump(basicinterface_subclass):
     try:
-        obj = basicinterface_subclasses()
-        assert isinstance(obj, basicinterface_subclasses)
-        if issubclass(basicinterface_subclasses, core.Unpicklable):
+        obj = basicinterface_subclass()
+        assert isinstance(obj, basicinterface_subclass)
+        if issubclass(basicinterface_subclass, core.Unpicklable):
             return
     except TypeError as e:
         logger = getLogger('pymortests.core.pickling')
-        logger.debug('PicklingError: Not testing {} because its init failed: {}'.format(basicinterface_subclasses,
+        logger.debug('PicklingError: Not testing {} because its init failed: {}'.format(basicinterface_subclass,
                                                                                         str(e)))
         return
 
