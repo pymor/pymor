@@ -7,7 +7,8 @@
 
 Usage:
   thermalblock.py [-ehp] [--estimator-norm=NORM] [--extension-alg=ALG] [--grid=NI] [--help]
-                  [--plot-solutions] [--reductor=RED] [--test=COUNT] XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
+                  [--plot-solutions] [--plot-error-sequence] [--reductor=RED] [--test=COUNT]
+                  XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
 
 
 Arguments:
@@ -52,6 +53,7 @@ import time
 from functools import partial
 
 import numpy as np
+import matplotlib.pyplot as plt
 from docopt import docopt
 
 import pymor.core as core
@@ -59,6 +61,7 @@ core.logger.MAX_HIERACHY_LEVEL = 2
 from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import discretize_elliptic_cg
 from pymor.reductors.linear import reduce_stationary_affine_linear
+from pymor.reductors import reduce_to_subbasis
 from pymor.algorithms import greedy, trivial_basis_extension, gram_schmidt_basis_extension
 from pymor.algorithms.basisextension import numpy_trivial_basis_extension
 core.getLogger('pymor.algorithms').setLevel('INFO')
@@ -117,27 +120,49 @@ def thermalblock_demo(args):
 
     print('\nSearching for maximum error on random snapshots ...')
 
+    def error_analysis(d, rd, rc, mus):
+        print('N = {}: '.format(rd.operator.dim_source), end='')
+        h1_err_max = -1
+        h1_est_max = -1
+        cond_max = -1
+        for mu in mus:
+            print('.', end='')
+            u = rd.solve(mu)
+            URB = rc.reconstruct(u)
+            U = d.solve(mu)
+            h1_err = d.h1_norm(U - URB)[0]
+            h1_est = rd.estimate(u, mu=mu)
+            cond = np.linalg.cond(rd.operator.assemble(mu)._matrix)
+            if h1_err > h1_err_max:
+                h1_err_max = h1_err
+                mumax = mu
+            if h1_est > h1_est_max:
+                h1_est_max = h1_est
+                mu_est_max = mu
+            if cond > cond_max:
+                cond_max = cond
+                cond_max_mu = mu
+        print()
+        return h1_err_max, mumax, h1_est_max, mu_est_max, cond_max, cond_max_mu
+
     tic = time.time()
-    h1_err_max = -1
-    cond_max = -1
-    for mu in discretization.parameter_space.sample_randomly(args['--test']):
-        print('Solving RB-Scheme for mu = {} ... '.format(mu), end='')
-        URB = reconstructor.reconstruct(rb_discretization.solve(mu))
-        U = discretization.solve(mu)
-        h1_err = discretization.h1_norm(U - URB)[0]
-        cond = np.linalg.cond(rb_discretization.operator.assemble(mu)._matrix)
-        if h1_err > h1_err_max:
-            h1_err_max = h1_err
-            Umax = U
-            URBmax = URB
-            mumax = mu
-        if cond > cond_max:
-            cond_max = cond
-            cond_max_mu = mu
-        print('H1-error = {}, condition = {}'.format(h1_err, cond))
+
+    real_rb_size = len(greedy_data['data'])
+    if args['--plot-error-sequence']:
+        N_count = min(real_rb_size - 1, 25)
+        Ns = np.linspace(1, real_rb_size, N_count).astype(np.int)
+    else:
+        Ns = np.array([real_rb_size])
+    rd_rcs = [reduce_to_subbasis(rb_discretization, N, reconstructor) for N in Ns]
+    mus = list(discretization.parameter_space.sample_randomly(args['--test']))
+
+    errs, err_mus, ests, est_mus, conds, cond_mus = zip(*(error_analysis(discretization, rd, rc, mus) for rd, rc in rd_rcs))
+    h1_err_max = errs[-1]
+    mumax = err_mus[-1]
+    cond_max = conds[-1]
+    cond_max_mu = cond_mus[-1]
     toc = time.time()
     t_est = toc - tic
-    real_rb_size = len(greedy_data['data'])
 
     print('''
     *** RESULTS ***
@@ -163,7 +188,14 @@ def thermalblock_demo(args):
     '''.format(**locals()))
 
     sys.stdout.flush()
+
+    if args['--plot-error-sequence']:
+        plt.semilogy(Ns, errs, Ns, ests)
+        plt.legend(('error', 'estimator'))
+        plt.show()
     if args['--plot-err']:
+        U = discretization.solve(mumax)
+        URB = reconstructor.reconstruct(rb_discretization.solve(mumax))
         discretization.visualize(U - URB)
 
 
