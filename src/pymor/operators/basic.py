@@ -562,24 +562,3 @@ class LincombOperator(LincombOperatorBase):
         for V, c in izip(Vs[1:], coeffs[1:]):
             R.axpy(c, V)
         return R
-
-
-class FixedParameterOperator(OperatorBase):
-
-    def __init__(self, operator, mu=None):
-        assert isinstance(operator, OperatorInterface)
-        assert operator.check_parameter(mu)
-        self.operator = operator
-        self.mu = mu.copy()
-        self.lock()
-
-    def apply(self, U, ind=None, mu=None):
-        assert self.check_parameter(mu)
-        return self.operator.apply(U, self.mu)
-
-    @property
-    def invert_options(self):
-        return self.operator.invert_options
-
-    def apply_inverse(self, U, ind=None, mu=None, options=None):
-        self.operator.apply_inverse(U, ind=ind, mu=self.mu, options=options)
