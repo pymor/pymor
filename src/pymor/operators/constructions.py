@@ -11,7 +11,7 @@ import numpy as np
 
 from pymor.la import NumpyVectorArray
 from pymor.operators import OperatorInterface, OperatorBase
-from pymor.operators.numpy import NumpyMatrixBasedOperator, NumpyMatrixOperator
+from pymor.operators import NumpyMatrixBasedOperator, NumpyMatrixOperator
 
 
 class ProjectedOperator(OperatorBase):

@@ -10,7 +10,7 @@ from scipy.sparse import coo_matrix, csr_matrix
 
 from pymor.la import NumpyVectorArray
 from pymor.grids.referenceelements import triangle, line
-from pymor.operators.numpy import NumpyMatrixBasedOperator, NumpyMatrixOperator
+from pymor.operators import NumpyMatrixBasedOperator, NumpyMatrixOperator
 
 
 class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
