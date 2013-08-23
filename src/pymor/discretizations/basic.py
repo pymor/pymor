@@ -14,7 +14,8 @@ from pymor.core.cache import Cachable, cached, DEFAULT_DISK_CONFIG, NO_CACHE_CON
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.la import induced_norm, VectorArrayInterface
 from pymor.tools import selfless_arguments, FrozenDict
-from pymor.operators import OperatorInterface, ConstantOperator
+from pymor.operators import OperatorInterface
+from pymor.operators.constructions import ConstantOperator
 from pymor.parameters import Parametric
 from pymor.tools import selfless_arguments
 

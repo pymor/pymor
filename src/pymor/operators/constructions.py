@@ -6,10 +6,11 @@
 from __future__ import absolute_import, division, print_function
 
 from collections import OrderedDict
+from numbers import Number
 
 import numpy as np
 
-from pymor.la import NumpyVectorArray
+from pymor.la import VectorArrayInterface, NumpyVectorArray
 from pymor.operators import OperatorInterface, OperatorBase
 from pymor.operators import NumpyMatrixBasedOperator, NumpyMatrixOperator
 
@@ -273,3 +274,53 @@ class ComponentProjection(OperatorBase):
         assert isinstance(U, self.type_source)
         assert U.dim == self.dim_source
         return NumpyVectorArray(U.components(self.components, ind), copy=False)
+
+
+class ConstantOperator(OperatorBase):
+
+    type_source = NumpyVectorArray
+
+    dim_source = 0
+
+    def __init__(self, value, name=None):
+        assert isinstance(value, VectorArrayInterface)
+        assert len(value) == 1
+
+        super(ConstantOperator, self).__init__()
+        self.dim_range = value.dim
+        self.type_range = type(value)
+        self.name = name
+        self._value = value.copy()
+        self.lock()
+
+    def apply(self, U, ind=None, mu=None):
+        assert self.check_parameter(mu)
+        assert isinstance(U, (NumpyVectorArray, Number))
+        if isinstance(U, Number):
+            assert U == 0.
+            assert ind == None
+            return self._value.copy()
+        else:
+            assert U.dim == 0
+            if ind is not None:
+                raise NotImplementedError
+            return self._value.copy()
+
+    def as_vector(self):
+        '''Returns the image of the operator as a VectorArray of length 1.'''
+        return self._value.copy()
+
+    def __add__(self, other):
+        if isinstance(other, ConstantOperator):
+            return ConstantOperator(self._vector + other._vector)
+        elif isinstance(other, Number):
+            return ConstantOperator(self._vector + other)
+        else:
+            return NotImplemented
+
+    __radd__ = __add__
+
+    def __mul__(self, other):
+        return ConstantOperator(self._vector * other)
+
+
