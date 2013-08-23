@@ -66,7 +66,11 @@ class OperatorBase(OperatorInterface):
     def projected(self, source_basis, range_basis, product=None, name=None):
         name = name or '{}_projected'.format(self.name)
         if self.linear:
-            return ProjectedLinearOperator(self, source_basis, range_basis, product, name)
+            projected_operator = ProjectedLinearOperator(self, source_basis, range_basis, product, name)
+            if self.parametric:
+                return projected_operator
+            else:
+                return projected_operator.assemble()
         else:
             return ProjectedOperator(self, source_basis, range_basis, product, name)
 
