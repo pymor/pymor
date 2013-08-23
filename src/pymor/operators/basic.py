@@ -169,8 +169,7 @@ class LincombOperatorBase(OperatorBase, LincombOperatorInterface):
             return np.array([c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients])
 
     def projected(self, source_basis, range_basis, product=None, name=None):
-        from pymor.operators.constructions import project_operator
-        proj_operators = [project_operator(op, source_basis, range_basis, product, name='{}_projected'.format(op.name))
+        proj_operators = [op.projected(source_basis=source_basis, range_basis=range_basis, product=product)
                           for op in self.operators]
         name = name or '{}_projected'.format(self.name)
         num_coefficients = getattr(self, 'num_coefficients', None)

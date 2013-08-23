@@ -15,44 +15,6 @@ from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.basic import OperatorBase, ProjectedOperator, ProjectedLinearOperator
 
 
-def project_operator(operator, source_basis, range_basis, product=None, name=None):
-    '''Project operators to subspaces.
-
-    Replaces `Operators` by `ProjectedOperators` and `LinearOperators`
-    by `ProjectedLinearOperators`.
-    Moreover, `LinearAffinelyDecomposedOperators` are projected by recursively
-    projecting each of its components.
-
-    See also `ProjectedOperator`.
-
-    Parameters
-    ----------
-    operator
-        The `Operator` to project.
-    source_basis
-        The b_1, ..., b_N as a 2d-array.
-    range_basis
-        The c_1, ..., c_M as a 2d-array.
-    product
-        Either an 2d-array or a `Operator` representing the scalar product.
-        If None, the euclidean product is chosen.
-    name
-        Name of the projected operator.
-    '''
-    assert operator is None or isinstance(operator, OperatorInterface)
-
-    name = name or '{}_projected'.format(operator.name)
-
-    if operator is None:
-        return None
-    elif hasattr(operator, 'projected'):
-        return operator.projected(source_basis=source_basis, range_basis=range_basis, product=product, name=name)
-    elif operator.linear:
-        return ProjectedLinearOperator(operator, source_basis, range_basis, product, name)
-    else:
-        return ProjectedOperator(operator, source_basis, range_basis, product, name)
-
-
 def rb_project_operator(operator, rb, product=None, name=None):
     assert operator is None or isinstance(operator, OperatorInterface)
 
@@ -69,7 +31,7 @@ def rb_project_operator(operator, rb, product=None, name=None):
     else:
         range_basis = None
 
-    return project_operator(operator, source_basis, range_basis, product=product, name=name)
+    return operator.projected(source_basis, range_basis, product=product, name=name)
 
 
 class Concatenation(OperatorBase):
