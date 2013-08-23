@@ -368,7 +368,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         return NumpyVectorArray(R)
 
 
-class NumpyLincombMatrixOperator(NumpyMatrixBasedOperator, LincombOperatorBase):
+class NumpyLincombMatrixOperator(LincombOperatorBase, NumpyMatrixBasedOperator):
 
     def __init__(self, operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
         assert all(isinstance(op, NumpyMatrixBasedOperator) for op in operators)
