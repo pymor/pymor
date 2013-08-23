@@ -63,6 +63,13 @@ class OperatorBase(OperatorInterface):
     def apply_inverse(self, U, ind=None, mu=None, options=None):
         raise InversionError('No inversion algorithm available.')
 
+    def projected(self, source_basis, range_basis, product=None, name=None):
+        name = name or '{}_projected'.format(self.name)
+        if self.linear:
+            return ProjectedLinearOperator(self, source_basis, range_basis, product, name)
+        else:
+            return ProjectedOperator(self, source_basis, range_basis, product, name)
+
 
 class MatrixBasedOperatorBase(OperatorBase):
 
@@ -170,6 +177,7 @@ class LincombOperatorBase(OperatorBase, LincombOperatorInterface):
         return type(proj_operators[0]).lincomb(operators=proj_operators, coefficients=self.coefficients,
                                                num_coefficients=num_coefficients,
                                                coefficients_name=self.coefficients_name, name=name)
+
 
 class NumpyGenericOperator(OperatorBase):
     '''Wraps an apply function as a proper discrete operator.
@@ -384,6 +392,7 @@ class NumpyLincombMatrixOperator(NumpyMatrixBasedOperator, LincombOperatorBase):
             for op, c in izip(ops[1:], coeffs[1:]):
                 matrix += (op._matrix * c)
         return NumpyMatrixOperator(matrix)
+
 
 class ProjectedOperator(OperatorBase):
     '''Projection of an operator to a subspace.
