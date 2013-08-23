@@ -25,7 +25,7 @@ class GenericRBReconstructor(core.BasicInterface):
 def reduce_generic_rb(discretization, RB, product=None, disable_caching=True):
     '''Generic reduced basis reductor.
 
-    Reduces a discretization by applying `operators.project_operator` to
+    Reduces a discretization by applying `operators.rb_project_operator` to
     each of its `operators`.
 
     Parameters
