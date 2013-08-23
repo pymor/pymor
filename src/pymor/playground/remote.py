@@ -12,7 +12,7 @@ import IPython.parallel as p
 from pymor.discretizations import StationaryDiscretization
 from pymor.la import VectorArrayInterface, NumpyVectorArray
 from pymor.operators import OperatorInterface, LincombOperatorInterface
-from pymor.operators.basic import LincombOperatorBase
+from pymor.operators.basic import LincombOperatorBase, ProjectedOperator, ProjectedLinearOperator
 from pymor.parameters.base import Parameter
 
 
@@ -387,6 +387,13 @@ class RemoteOperator(OperatorInterface):
         return '{}: R^{} --> R^{}  (parameter type: {}, class: {})'.format(
             self.name, self.dim_source, self.dim_range, self.parameter_type,
             self.__class__.__name__)
+
+    def projected(self, source_basis, range_basis, product=None, name=None):
+        name = name or '{}_projected'.format(self.name)
+        if self.linear:
+            return ProjectedLinearOperator(self, source_basis, range_basis, product, name)
+        else:
+            return ProjectedOperator(self, source_basis, range_basis, product, name)
 
 
 class RemoteLincombOperator(RemoteOperator, LincombOperatorBase):
