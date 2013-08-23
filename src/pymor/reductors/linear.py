@@ -147,3 +147,15 @@ class StationaryAffineLinearReducedEstimator(BasicInterface):
         C = np.hstack((CR, np.dot(CO[..., np.newaxis], U.data).ravel()))
 
         return induced_norm(self.estimator_matrix)(NumpyVectorArray(C))
+
+    def restricted_to_subbasis(self, dim, discretization):
+        d = discretization
+        cr = 1 if not d.rhs.parametric else len(d.rhs.operators)
+        co = 1 if not d.operator.parametric else len(d.operator.operators)
+        old_dim = d.operator.dim_source
+
+        indices = np.concatenate((np.arange(cr),
+                                 ((np.arange(co)*old_dim)[..., np.newaxis] + np.arange(dim)).ravel() + cr))
+        matrix = self.estimator_matrix._matrix[indices, :][:, indices]
+
+        return StationaryAffineLinearReducedEstimator(NumpyMatrixOperator(matrix))
