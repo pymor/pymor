@@ -6,5 +6,4 @@ from pymor.operators.interfaces import OperatorInterface, LincombOperatorInterfa
 from pymor.operators.basic import (OperatorBase, MatrixBasedOperatorBase, LincombOperatorBase, LincombOperator,
                                    FixedParameterOperator,
                                    NumpyGenericOperator, NumpyMatrixBasedOperator, NumpyMatrixOperator)
-from pymor.operators.constructions import (ProjectedOperator, ProjectedLinearOperator, project_operator,
-                                           rb_project_operator, ConstantOperator)
+from pymor.operators.constructions import (project_operator, rb_project_operator, ConstantOperator)
