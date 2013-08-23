@@ -181,6 +181,17 @@ class LincombOperatorBase(OperatorBase, LincombOperatorInterface):
                                                num_coefficients=num_coefficients,
                                                coefficients_name=self.coefficients_name, name=name)
 
+    def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
+        assert dim_source is None or dim_source <= self.dim_source
+        assert dim_range is None or dim_range <= self.dim_range
+        proj_operators = [op.projected_to_subbasis(dim_source=dim_source, dim_range=dim_range)
+                          for op in self.operators]
+        name = name or '{}_projected_to_subbasis'.format(self.name)
+        num_coefficients = getattr(self, 'num_coefficients', None)
+        return type(proj_operators[0]).lincomb(operators=proj_operators, coefficients=self.coefficients,
+                                               num_coefficients=num_coefficients,
+                                               coefficients_name=self.coefficients_name, name=name)
+
 
 class NumpyGenericOperator(OperatorBase):
     '''Wraps an apply function as a proper discrete operator.
@@ -370,6 +381,12 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                     raise InversionError('{}: {}'.format(str(type(e)), str(e)))
 
         return NumpyVectorArray(R)
+
+    def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
+        assert dim_source is None or dim_source <= self.dim_source
+        assert dim_range is None or dim_range <= self.dim_range
+        name = name or '{}_projected_to_subbasis'.format(self.name)
+        return NumpyMatrixOperator(self._matrix[:dim_range, :dim_source], name=name)
 
 
 class NumpyLincombMatrixOperator(LincombOperatorBase, NumpyMatrixBasedOperator):
