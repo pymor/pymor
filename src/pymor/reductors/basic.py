@@ -106,8 +106,20 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
     else:
         projected_products = None
 
+    if hasattr(discretization, 'estimator') and hasattr(discretization.estimator, 'restricted_to_subbasis'):
+        estimator = discretization.estimator.restricted_to_subbasis(dim, discretization=discretization)
+    elif hasattr(discretization, 'estimate'):
+        class FakeEstimator(object):
+            rd = discretization
+            rc = SubbasisReconstructor(next(discretization.operators.itervalues()).dim_source, dim)
+            def estimate(self, U, mu=None, discretization=None):
+                return self.rd.estimate(self.rc.reconstruct(U), mu=mu)
+        estimator = FakeEstimator()
+    else:
+        estimator = None
+
     rd = discretization.with_(operators=projected_operators, products=projected_products, visualizer=None,
-                              estimator=None, name=discretization.name + '_reduced_to_subbasis')
+                              estimator=estimator, name=discretization.name + '_reduced_to_subbasis')
     rd.disable_logging()
 
     if reconstructor is not None and hasattr(reconstructor, 'restricted_to_subbasis'):
