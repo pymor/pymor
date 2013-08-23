@@ -14,8 +14,7 @@ from pymor.grids.referenceelements import triangle, line
 from pymor.grids.subgrid import SubGrid
 from pymor.grids.boundaryinfos import SubGridBoundaryInfo
 from pymor.operators import OperatorBase, NumpyMatrixBasedOperator, NumpyMatrixOperator
-from pymor.operators.constructions import Concatenation
-from pymor.operators.basic import ComponentProjection
+from pymor.operators.constructions import Concatenation, ComponentProjection
 from pymor.tools.inplace import iadd_masked, isub_masked
 
 

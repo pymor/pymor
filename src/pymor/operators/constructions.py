@@ -253,3 +253,23 @@ class Concatenation(OperatorBase):
     def apply(self, U, ind=None, mu=None):
         mu = self.parse_parameter(mu)
         return self.second.apply(self.first.apply(U, ind=ind, mu=mu), mu=mu)
+
+
+class ComponentProjection(OperatorBase):
+
+    type_range = NumpyVectorArray
+
+    def __init__(self, components, dim, type_source, name=None):
+        assert all(0 <= c < dim for c in components)
+        self.components = components
+        self.dim_source = dim
+        self.dim_range = len(components)
+        self.type_source = type_source
+        self.name = name
+        self.lock()
+
+    def apply(self, U, ind=None, mu=None):
+        assert self.check_parameter(mu)
+        assert isinstance(U, self.type_source)
+        assert U.dim == self.dim_source
+        return NumpyVectorArray(U.components(self.components, ind), copy=False)

@@ -252,23 +252,3 @@ class ConstantOperator(OperatorBase):
 
     def __mul__(self, other):
         return ConstantOperator(self._vector * other)
-
-
-class ComponentProjection(OperatorBase):
-
-    type_range = NumpyVectorArray
-
-    def __init__(self, components, dim, type_source, name=None):
-        assert all(0 <= c < dim for c in components)
-        self.components = components
-        self.dim_source = dim
-        self.dim_range = len(components)
-        self.type_source = type_source
-        self.name = name
-        self.lock()
-
-    def apply(self, U, ind=None, mu=None):
-        assert self.check_parameter(mu)
-        assert isinstance(U, self.type_source)
-        assert U.dim == self.dim_source
-        return NumpyVectorArray(U.components(self.components, ind), copy=False)
