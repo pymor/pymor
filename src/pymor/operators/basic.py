@@ -66,15 +66,18 @@ class OperatorBase(OperatorInterface):
     def projected(self, source_basis, range_basis, product=None, name=None):
         name = name or '{}_projected'.format(self.name)
         if self.linear:
-            projected_operator = ProjectedLinearOperator(self, source_basis, range_basis, product, name)
             if self.parametric:
                 self.logger.warn('Using inefficient generic linear projection operator')
-                return projected_operator
+                # Since the bases are not immutable and we do not own them, 
+                # the ProjectedLinearOperator will have to create copies of them.
+                return ProjectedLinearOperator(self, source_basis, range_basis, product, copy=True, name=name)
             else:
-                return projected_operator.assemble()
+                # Here we do not need copies since the operator is immediately thrown away.
+                return (ProjectedLinearOperator(self, source_basis, range_basis, product, copy=False, name=name)
+                        .assemble())
         else:
             self.logger.warn('Using inefficient generic projection operator')
-            return ProjectedOperator(self, source_basis, range_basis, product, name)
+            return ProjectedOperator(self, source_basis, range_basis, product, copy=True, name=name)
 
 
 class MatrixBasedOperatorBase(OperatorBase):
