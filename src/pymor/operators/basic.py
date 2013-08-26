@@ -68,10 +68,12 @@ class OperatorBase(OperatorInterface):
         if self.linear:
             projected_operator = ProjectedLinearOperator(self, source_basis, range_basis, product, name)
             if self.parametric:
+                self.logger.warn('Using inefficient generic linear projection operator')
                 return projected_operator
             else:
                 return projected_operator.assemble()
         else:
+            self.logger.warn('Using inefficient generic projection operator')
             return ProjectedOperator(self, source_basis, range_basis, product, name)
 
 
