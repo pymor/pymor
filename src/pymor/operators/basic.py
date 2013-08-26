@@ -454,7 +454,7 @@ class ProjectedOperator(OperatorBase):
 
     type_source = type_range = NumpyVectorArray
 
-    def __init__(self, operator, source_basis, range_basis, product=None, name=None):
+    def __init__(self, operator, source_basis, range_basis, product=None, copy=True, name=None):
         assert isinstance(operator, OperatorInterface)
         assert isinstance(source_basis, operator.type_source) or issubclass(operator.type_source, NumpyVectorArray)
         assert issubclass(operator.type_range, type(range_basis)) or issubclass(operator.type_range, NumpyVectorArray)
@@ -472,8 +472,8 @@ class ProjectedOperator(OperatorBase):
         self.dim_range = len(range_basis) if range_basis is not None else operator.dim_range
         self.name = name
         self.operator = operator
-        self.source_basis = source_basis
-        self.range_basis = range_basis
+        self.source_basis = source_basis.copy() if source_basis is not None and copy else source_basis
+        self.range_basis = range_basis.copy() if range_basis is not None and copy else range_basis
         self.product = product
         self.lock()
 
@@ -524,7 +524,7 @@ class ProjectedLinearOperator(NumpyMatrixBasedOperator):
 
     sparse = False
 
-    def __init__(self, operator, source_basis, range_basis, product=None, name=None):
+    def __init__(self, operator, source_basis, range_basis, product=None, name=None, copy=True):
         assert isinstance(operator, OperatorInterface)
         assert isinstance(source_basis, operator.type_source) or issubclass(operator.type_source, NumpyVectorArray)
         assert issubclass(operator.type_range, type(range_basis)) or issubclass(operator.type_range, NumpyVectorArray)
@@ -543,8 +543,8 @@ class ProjectedLinearOperator(NumpyMatrixBasedOperator):
         self.dim_range = len(range_basis) if range_basis is not None else operator.dim_range
         self.name = name
         self.operator = operator
-        self.source_basis = source_basis
-        self.range_basis = range_basis
+        self.source_basis = source_basis.copy() if source_basis is not None and copy else source_basis
+        self.range_basis = range_basis.copy() if range_basis is not None and copy else range_basis
         self.product = product
         self.lock()
 
