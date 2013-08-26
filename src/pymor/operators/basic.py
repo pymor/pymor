@@ -573,6 +573,16 @@ class ProjectedLinearOperator(NumpyMatrixBasedOperator):
                 return NumpyMatrixOperator(self.product.apply2(self.range_basis, V, pairwise=False),
                                            name='{}_assembled'.format(self.name))
 
+    def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
+        assert dim_source is None or dim_source <= self.dim_source
+        assert dim_range is None or dim_range <= self.dim_range
+        assert dim_source is None or self.source_basis is not None, 'not implemented'
+        assert dim_range is None or self.range_basis is not None, 'not implemented'
+        name = name or '{}_projected_to_subbasis'.format(self.name)
+        source_basis = None if dim_source is None else self.source_basis.copy(ind=range(dim_source))
+        range_basis = None if dim_range is None else self.range_basis.copy(ind=range(dim_range))
+        return ProjectedLinearOperator(self.operator, source_basis, range_basis, product=None, name=name)
+
 
 class LincombOperator(LincombOperatorBase):
 
