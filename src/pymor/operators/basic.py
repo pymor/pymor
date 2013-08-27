@@ -509,9 +509,11 @@ class ProjectedOperator(OperatorBase):
         assert dim_source is None or self.source_basis is not None, 'not implemented'
         assert dim_range is None or self.range_basis is not None, 'not implemented'
         name = name or '{}_projected_to_subbasis'.format(self.name)
-        source_basis = None if dim_source is None else self.source_basis.copy(ind=range(dim_source))
-        range_basis = None if dim_range is None else self.range_basis.copy(ind=range(dim_range))
-        return ProjectedOperator(self.operator, source_basis, range_basis, product=None, name=name)
+        source_basis = self.source_basis if dim_source is None \
+            else self.source_basis.copy(ind=range(dim_source))
+        range_basis = self.range_basis if dim_range is None \
+            else self.range_basis.copy(ind=range(dim_range))
+        return ProjectedOperator(self.operator, source_basis, range_basis, product=None, copy=False, name=name)
 
 
 class ProjectedLinearOperator(NumpyMatrixBasedOperator):
@@ -594,9 +596,11 @@ class ProjectedLinearOperator(NumpyMatrixBasedOperator):
         assert dim_source is None or self.source_basis is not None, 'not implemented'
         assert dim_range is None or self.range_basis is not None, 'not implemented'
         name = name or '{}_projected_to_subbasis'.format(self.name)
-        source_basis = None if dim_source is None else self.source_basis.copy(ind=range(dim_source))
-        range_basis = None if dim_range is None else self.range_basis.copy(ind=range(dim_range))
-        return ProjectedLinearOperator(self.operator, source_basis, range_basis, product=None, name=name)
+        source_basis = self.source_basis if dim_source is None \
+            else self.source_basis.copy(ind=range(dim_source))
+        range_basis = self.range_basis if dim_range is None \
+            else self.range_basis.copy(ind=range(dim_range))
+        return ProjectedLinearOperator(self.operator, source_basis, range_basis, product=None, copy=False, name=name)
 
 
 class LincombOperator(LincombOperatorBase):
