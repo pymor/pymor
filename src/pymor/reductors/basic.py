@@ -96,8 +96,11 @@ class SubbasisReconstructor(core.BasicInterface):
 
 def reduce_to_subbasis(discretization, dim, reconstructor=None):
 
-    projected_operators = {k: op.projected_to_subbasis(dim_source=dim,
-                                                       dim_range=dim if op.dim_source == op.dim_range else None)
+    dim_solution = discretization.dim_solution
+
+    projected_operators = {k: op.projected_to_subbasis(dim_source=dim if op.dim_source == dim_solution else None,
+                                                       dim_range=dim if op.dim_range == dim_solution else None)
+                               if op is not None else None
                            for k, op in discretization.operators.iteritems()}
 
     if discretization.products is not None:
