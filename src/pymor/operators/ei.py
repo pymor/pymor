@@ -97,3 +97,26 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
         interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU._array.T,
                                                       lower=True, unit_diagonal=True).T
         return self.projected_collateral_basis.lincomb(interpolation_coefficients)
+
+    def projected_to_subbasis(self, dim_source=None, dim_range=None, dim_collateral=None, name=None):
+        assert dim_source is None or dim_source <= self.dim_source
+        assert dim_range is None or dim_range <= self.dim_range
+        assert dim_collateral is None or dim_collateral <= self.restricted_operator.dim_range
+        name = name or '{}_projected_to_subbasis'.format(self.name)
+
+        interpolation_matrix = self.interpolation_matrix[:dim_collateral, :dim_collateral]
+
+        if dim_collateral is not None:
+            restricted_operator, source_dofs = self.restricted_operator.restricted(np.arange(dim_collateral))
+        else:
+            restricted_operator = self.restricted_operator
+
+        old_pcb = self.projected_collateral_basis
+        projected_collateral_basis = NumpyVectorArray(old_pcb.data[:dim_collateral, :dim_range], copy=False)
+
+        old_sbd = self.source_basis_dofs
+        source_basis_dofs = NumpyVectorArray(old_sbd.data[:dim_source], copy=False) if dim_collateral is None \
+            else NumpyVectorArray(old_sbd.data[:dim_source, source_dofs], copy=False)
+
+        return ProjectedEmpiciralInterpolatedOperator(restricted_operator, interpolation_matrix,
+                                                      source_basis_dofs, projected_collateral_basis, name=name)
