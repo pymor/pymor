@@ -50,12 +50,24 @@ class Concatenation(OperatorBase):
         self.type_source = first.type_source
         self.type_range = second.type_range
         self.linear = second.linear and first.linear
+        if hasattr(first, 'restricted') and hasattr(second, 'restricted'):
+            self.restricted = self._restricted
         self.name = name
         self.lock()
 
     def apply(self, U, ind=None, mu=None):
         mu = self.parse_parameter(mu)
         return self.second.apply(self.first.apply(U, ind=ind, mu=mu), mu=mu)
+
+    def _restricted(self, components):
+        restricted_second, second_source_components = self.second.restricted(components)
+        restricted_first, first_source_components = self.first.restricted(second_source_components)
+        if isinstance(restricted_second, IdentityOperator):
+            return restricted_first, first_source_components
+        elif isinstance(restricted_first, IdentityOperator):
+            return restricted_second, first_source_components
+        else:
+            return Concatenation(restricted_second, restricted_first), first_source_components
 
 
 class ComponentProjection(OperatorBase):
