@@ -112,6 +112,7 @@ class StationaryDiscretization(DiscretizationBase):
         super(StationaryDiscretization, self).__init__(operators=operators, products=products,
                                                        estimator=estimator, visualizer=visualizer,
                                                        caching=caching, name=name)
+        self.dim_solution = operator.dim_source
         self.operator = operator
         self.rhs = rhs
         self.operators = operators
@@ -168,6 +169,7 @@ class InstationaryDiscretization(DiscretizationBase):
                                                          estimator=estimator, visualizer=visualizer,
                                                          caching=caching, name=name)
         self.T = T
+        self.dim_solution = operator.dim_source
         self.initial_data = initial_data
         self.operator = operator
         self.rhs = rhs

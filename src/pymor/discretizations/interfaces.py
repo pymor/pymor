@@ -21,6 +21,8 @@ class DiscretizationInterface(BasicInterface, Parametric, Cachable, Named):
 
     Attributes
     ----------
+    dim_solution
+        Dimension of the `VectorArrays` returned by solve.
     linear
         True if the discretization describes a linear Problem.
     operators
@@ -40,6 +42,7 @@ class DiscretizationInterface(BasicInterface, Parametric, Cachable, Named):
         Visualize a solution given by the VectorArray U.
     '''
 
+    dim_solution = None
     linear = False
     operators = dict()
     with_arguments = set(('operators',))
