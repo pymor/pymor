@@ -78,6 +78,24 @@ class ComponentProjection(OperatorBase):
         return NumpyVectorArray(U.components(self.components, ind), copy=False)
 
 
+class IdentityOperator(OperatorBase):
+
+    def __init__(self, dim, type_source, name=None):
+        assert issubclass(type_source, VectorArrayInterface)
+
+        super(IdentityOperator, self).__init__()
+        self.dim_range = self.dim_source = dim
+        self.type_range = self.type_source = type_source
+        self.name = name
+        self.lock()
+
+    def apply(self, U, ind=None, mu=None):
+        assert self.check_parameter(mu)
+        assert isinstance(U, self.type_source)
+        assert U.dim == self.dim_source
+        return U.copy(ind=ind)
+
+
 class ConstantOperator(OperatorBase):
 
     type_source = NumpyVectorArray
