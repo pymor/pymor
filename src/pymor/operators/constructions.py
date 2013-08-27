@@ -64,7 +64,7 @@ class ComponentProjection(OperatorBase):
 
     def __init__(self, components, dim, type_source, name=None):
         assert all(0 <= c < dim for c in components)
-        self.components = components
+        self.components = np.array(components)
         self.dim_source = dim
         self.dim_range = len(components)
         self.type_source = type_source
@@ -76,6 +76,11 @@ class ComponentProjection(OperatorBase):
         assert isinstance(U, self.type_source)
         assert U.dim == self.dim_source
         return NumpyVectorArray(U.components(self.components, ind), copy=False)
+
+    def restricted(self, components):
+        assert all(0 <= c < self.dim_range for c in components)
+        source_components = self.components[components]
+        return IdentityOperator(dim=len(source_components), type_source=self.type_source), source_components
 
 
 class IdentityOperator(OperatorBase):
