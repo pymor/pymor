@@ -50,8 +50,11 @@ class EmpiricalInterpolatedOperator(OperatorBase):
 
         U_components = NumpyVectorArray(U.components(self.source_dofs, ind=ind), copy=False)
         AU = self.restricted_operator.apply(U_components, mu=mu)
-        interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU._array.T,
-                                                      lower=True, unit_diagonal=True).T
+        try:
+            interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU.data.T,
+                                                          lower=True, unit_diagonal=True).T
+        except ValueError:  # this exception occurs when AU contains NaNs ...
+            interpolation_coefficients = np.empty((len(AU), len(self.collateral_basis))) + np.nan
         # interpolation_coefficients = np.linalg.solve(self.interpolation_matrix, AU._array.T).T
         return self.collateral_basis.lincomb(interpolation_coefficients)
 
@@ -94,8 +97,11 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
         mu = self.parse_parameter(mu)
         U_components = self.source_basis_dofs.lincomb(U._array, ind=ind)
         AU = self.restricted_operator.apply(U_components, mu=mu)
-        interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU._array.T,
-                                                      lower=True, unit_diagonal=True).T
+        try:
+            interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU._array.T,
+                                                          lower=True, unit_diagonal=True).T
+        except ValueError:  # this exception occurs when AU contains NaNs ...
+            interpolation_coefficients = np.empty((len(AU), len(self.projected_collateral_basis))) + np.nan
         return self.projected_collateral_basis.lincomb(interpolation_coefficients)
 
     def projected_to_subbasis(self, dim_source=None, dim_range=None, dim_collateral=None, name=None):
