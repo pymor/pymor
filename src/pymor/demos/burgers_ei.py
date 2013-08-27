@@ -24,36 +24,42 @@ Arguments:
 
 
 Options:
-  --grid=NI              Use grid with (2*NI)*NI elements [default: 60].
+  --grid=NI                       Use grid with (2*NI)*NI elements [default: 60].
 
-  --grid-type=TYPE       Type of grid to use (rect, tria) [default: rect].
+  --grid-type=TYPE                Type of grid to use (rect, tria) [default: rect].
 
-  --initial-data=TYPE    Select the initial data (sin, bump) [default: sin]
+  --initial-data=TYPE             Select the initial data (sin, bump) [default: sin]
 
-  --lxf-lambda=VALUE     Parameter lambda in Lax-Friedrichs flux [default: 1].
+  --lxf-lambda=VALUE              Parameter lambda in Lax-Friedrichs flux [default: 1].
 
-  --not-periodic         Solve with dirichlet boundary conditions on left
-                         and bottom boundary.
+  --not-periodic                  Solve with dirichlet boundary conditions on left
+                                  and bottom boundary.
 
-  --nt=COUNT             Number of time steps [default: 100].
+  --nt=COUNT                      Number of time steps [default: 100].
 
-  --num-flux=FLUX        Numerical flux to use (lax_friedrichs, engquist_osher)
-                         [default: lax_friedrichs].
+  --num-flux=FLUX                 Numerical flux to use (lax_friedrichs, engquist_osher)
+                                  [default: lax_friedrichs].
 
-  -h, --help             Show this message.
+  -h, --help                      Show this message.
 
-  -p, --plot-err         Plot error.
+  -p, --plot-err                  Plot error.
 
-  --plot-ei-err          Plot empirical interpolation error.
+  --plot-ei-err                   Plot empirical interpolation error.
 
-  --plot-solutions       Plot some example solutions.
+  --plot-error-landscape          Calculate and show plot of reduction error vs. basis sizes.
 
-  --test=COUNT           Use COUNT snapshots for stochastic error estimation
-                         [default: 10].
+  --plot-error-landscape-N=COUNT  Number of basis sizes to test [default: 10]
 
-  --vx=XSPEED            Speed in x-direction [default: 1].
+  --plot-error-landscape-M=COUNT  Number of collateral basis sizes to test [default: 10]
 
-  --vy=YSPEED            Speed in y-direction [default: 1].
+  --plot-solutions                Plot some example solutions.
+
+  --test=COUNT                    Use COUNT snapshots for stochastic error estimation
+                                  [default: 10].
+
+  --vx=XSPEED                     Speed in x-direction [default: 1].
+
+  --vy=YSPEED                     Speed in y-direction [default: 1].
 '''
 
 from __future__ import absolute_import, division, print_function
@@ -63,6 +69,7 @@ import math as m
 import time
 from functools import partial
 
+import matplotlib.pyplot as plt
 import numpy as np
 from docopt import docopt
 
@@ -72,7 +79,7 @@ from pymor.analyticalproblems.burgers import BurgersProblem
 from pymor.discretizers.advection import discretize_nonlinear_instationary_advection_fv
 from pymor.domaindiscretizers import discretize_domain_default
 from pymor.grids import RectGrid, TriaGrid
-from pymor.reductors import reduce_generic_rb
+from pymor.reductors import reduce_generic_rb, reduce_to_subbasis
 from pymor.algorithms import greedy
 from pymor.algorithms.basisextension import pod_basis_extension
 from pymor.algorithms.ei import interpolate_operators
@@ -94,6 +101,8 @@ def burgers_demo(args):
     args['--not-periodic'] = bool(args['--not-periodic'])
     args['--num-flux'] = args['--num-flux'].lower()
     assert args['--num-flux'] in ('lax_friedrichs', 'engquist_osher')
+    args['--plot-error-landscape-N'] = int(args['--plot-error-landscape-N'])
+    args['--plot-error-landscape-M'] = int(args['--plot-error-landscape-M'])
     args['--test'] = int(args['--test'])
     args['--vx'] = float(args['--vx'])
     args['--vy'] = float(args['--vy'])
@@ -173,23 +182,55 @@ def burgers_demo(args):
     print('\nSearching for maximum error on random snapshots ...')
 
     tic = time.time()
-    l2_err_max = -1
-    cond_max = -1
-    for mu in discretization.parameter_space.sample_randomly(args['--test']):
-        print('Solving RB-Scheme for mu = {} ... '.format(mu), end='')
-        URB = reconstructor.reconstruct(rb_discretization.solve(mu))
-        U = discretization.solve(mu)
-        l2_err = np.max(discretization.l2_norm(U - URB))
-        if l2_err > l2_err_max:
-            l2_err_max = l2_err
-            Umax = U
-            URBmax = URB
-            mumax = mu
-        print('L2-error = {}'.format(l2_err))
-    toc = time.time()
-    t_est = toc - tic
+
+    mus = list(discretization.parameter_space.sample_randomly(args['--test']))
+
+    def error_analysis(rd, rc, N, M):
+        print('N = {}, M = {}: '.format(N, M), end='')
+        l2_err_max = -1
+        mumax = None
+        for mu in mus:
+            print('.', end='')
+            sys.stdout.flush()
+            u = rd.solve(mu)
+            URB = rc.reconstruct(u)
+            U = discretization.solve(mu)
+            l2_err = np.max(discretization.l2_norm(U - URB))
+            l2_err = np.inf if not np.isfinite(l2_err) else l2_err
+            if l2_err > l2_err_max:
+                l2_err_max = l2_err
+                mumax = mu
+        print()
+        return l2_err_max, mumax
+    error_analysis = np.frompyfunc(error_analysis, 4, 2)
+
+    def red_func(N, M):
+        rd, rc = reduce_to_subbasis(rb_discretization, N, reconstructor)
+        rd = rd.with_(operator=rd.operator.projected_to_subbasis(dim_collateral=M))
+        return rd, rc
+    red_func = np.frompyfunc(red_func, 2, 2)
+
     real_rb_size = len(greedy_data['data'])
     real_cb_size = len(ei_data['basis'])
+    if args['--plot-error-landscape']:
+        N_count = min(real_rb_size - 1, args['--plot-error-landscape-N'])
+        M_count = min(real_cb_size - 1, args['--plot-error-landscape-M'])
+        Ns = np.linspace(1, real_rb_size, N_count).astype(np.int)
+        Ms = np.linspace(1, real_cb_size, M_count).astype(np.int)
+    else:
+        Ns = np.array([real_rb_size])
+        Ms = np.array([real_cb_size])
+
+    N_grid, M_grid = np.meshgrid(Ns, Ms)
+
+    rds, rcs = red_func(N_grid, M_grid)
+    errs, err_mus = error_analysis(rds, rcs, N_grid, M_grid)
+    errs = errs.astype(np.float)
+
+    l2_err_max = errs[-1, -1]
+    mumax = err_mus[-1, -1]
+    toc = time.time()
+    t_est = toc - tic
 
     print('''
     *** RESULTS ***
@@ -221,6 +262,16 @@ def burgers_demo(args):
     '''.format(**locals()))
 
     sys.stdout.flush()
+    if args['--plot-error-landscape']:
+        import matplotlib.pyplot as plt
+        import mpl_toolkits.mplot3d
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        # we have to rescale the errors since matplotlib does not support logarithmic scales on 3d plots
+        # https://github.com/matplotlib/matplotlib/issues/209
+        surf = ax.plot_surface(M_grid, N_grid, np.log(np.minimum(errs, 1)) / np.log(10),
+                               rstride=1, cstride=1, cmap='jet')
+        plt.show()
     if args['--plot-err']:
         discretization.visualize(U - URB)
 
