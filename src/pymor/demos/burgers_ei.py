@@ -185,8 +185,10 @@ def burgers_demo(args):
 
     mus = list(discretization.parameter_space.sample_randomly(args['--test']))
 
-    def error_analysis(rd, rc, N, M):
+    def error_analysis(N, M):
         print('N = {}, M = {}: '.format(N, M), end='')
+        rd, rc = reduce_to_subbasis(rb_discretization, N, reconstructor)
+        rd = rd.with_(operator=rd.operator.projected_to_subbasis(dim_collateral=M))
         l2_err_max = -1
         mumax = None
         for mu in mus:
@@ -202,13 +204,7 @@ def burgers_demo(args):
                 mumax = mu
         print()
         return l2_err_max, mumax
-    error_analysis = np.frompyfunc(error_analysis, 4, 2)
-
-    def red_func(N, M):
-        rd, rc = reduce_to_subbasis(rb_discretization, N, reconstructor)
-        rd = rd.with_(operator=rd.operator.projected_to_subbasis(dim_collateral=M))
-        return rd, rc
-    red_func = np.frompyfunc(red_func, 2, 2)
+    error_analysis = np.frompyfunc(error_analysis, 2, 2)
 
     real_rb_size = len(greedy_data['data'])
     real_cb_size = len(ei_data['basis'])
@@ -223,8 +219,7 @@ def burgers_demo(args):
 
     N_grid, M_grid = np.meshgrid(Ns, Ms)
 
-    rds, rcs = red_func(N_grid, M_grid)
-    errs, err_mus = error_analysis(rds, rcs, N_grid, M_grid)
+    errs, err_mus = error_analysis(N_grid, M_grid)
     errs = errs.astype(np.float)
 
     l2_err_max = errs[-1, -1]
