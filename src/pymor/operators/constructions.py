@@ -160,6 +160,28 @@ class ConstantOperator(OperatorBase):
     def __mul__(self, other):
         return ConstantOperator(self._vector * other)
 
+    def projected(self, source_basis, range_basis, product=None, name=None):
+        assert issubclass(type(self._value), type(range_basis)) or issubclass(type(self._value), NumpyVectorArray)
+        assert source_basis is None or source_basis.dim == 0 and len(source_basis == 0)
+        assert range_basis is None or range_basis.dim == self._value.dim
+        assert product is None \
+            or (isinstance(product, OperatorInterface)
+                and range_basis is not None
+                and issubclass(type_range, product.type_source)
+                and issubclass(product.type_range, type(product))
+                and product.dim_range == product.dim_source == self._value.dim)
+
+        name = name or '{}_projected'.format(self.name)
+
+        if range_basis is None:
+            return self
+        elif product is None:
+            return ConstantOperator(NumpyVectorArray(range_basis.dot(self._value, pairwise=False).T, copy=False),
+                                    copy=False, name=name)
+        else:
+            return ConstantOperator(NumpyVectorArray(product.apply2(range_basis, self._value, pairwise=False).T,
+                                                     copy=False),
+                                    copy=False, name=name)
 
 class FixedParameterOperator(OperatorBase):
 
