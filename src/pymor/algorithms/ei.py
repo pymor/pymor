@@ -60,7 +60,6 @@ def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation
                     if product is None:
                         coefficients = cho_solve(gramian_cholesky, collateral_basis.dot(AU, pairwise=False)).T
                     else:
-                        gramian = product
                         coefficients = cho_solve(gramian_cholesky, product.apply2(collateral_basis, AU, pairwise=False)).T
                     AU_projected = collateral_basis.lincomb(coefficients)
                     ERR = AU - AU_projected
