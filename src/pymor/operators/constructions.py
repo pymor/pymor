@@ -119,7 +119,7 @@ class ConstantOperator(OperatorBase):
 
     dim_source = 0
 
-    def __init__(self, value, name=None):
+    def __init__(self, value, copy=True, name=None):
         assert isinstance(value, VectorArrayInterface)
         assert len(value) == 1
 
@@ -127,7 +127,7 @@ class ConstantOperator(OperatorBase):
         self.dim_range = value.dim
         self.type_range = type(value)
         self.name = name
-        self._value = value.copy()
+        self._value = value.copy() if copy else value
         self.lock()
 
     def apply(self, U, ind=None, mu=None):
