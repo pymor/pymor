@@ -183,6 +183,14 @@ class ConstantOperator(OperatorBase):
                                                      copy=False),
                                     copy=False, name=name)
 
+    def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
+        assert dim_source is None or dim_source == 0
+        assert dim_range is None or dim_range <= self.dim_range
+        assert issubclass(self.type_range, NumpyVectorArray), 'not implemented'
+        name = name or '{}_projected_to_subbasis'.format(self.name)
+        return ConstantOperator(NumpyVectorArray(self._value.data[:, :dim_range], copy=False), copy=False, name=name)
+
+
 class FixedParameterOperator(OperatorBase):
 
     def __init__(self, operator, mu=None):
