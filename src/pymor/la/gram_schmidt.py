@@ -82,6 +82,11 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=None,
         else:
             oldnorm = np.sqrt(product.apply2(A, A, V_ind=i, U_ind=i, pairwise=True))[0]
 
+        if float_cmp_all(oldnorm, 0):
+            logger.info("Removing null vector {}".format(i))
+            remove.append(i)
+            continue
+
         if i == 0:
             A.scal(1/oldnorm, ind=0)
 
