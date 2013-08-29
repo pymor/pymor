@@ -93,9 +93,9 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=None,
         else:
             first_iteration = True
 
-            # If reiterate is True, reiterate as long as the norm of the vector decreases
-            # strongly during orthogonalization (due to Andreas Buhr).
-            while first_iteration or reiterate and norm / oldnorm < reiteration_threshold:
+            # If reiterate is True, reiterate as long as the norm of the vector changes
+            # strongly during orthonormalization (due to Andreas Buhr).
+            while first_iteration or reiterate and norm < reiteration_threshold:
                 # this loop assumes that oldnorm is the norm of the ith vector when entering
 
                 if first_iteration:
