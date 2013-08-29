@@ -122,9 +122,7 @@ class ListVectorArray(VectorArrayInterface):
             assert len(self._list) > 0
             dim = self._list[0].dim
         self._dim = dim
-        if not all(v.dim == dim for v in self._list):
-            import ipdb; ipdb.set_trace()
-
+        assert all(v.dim == dim for v in self._list)
 
     @classmethod
     def empty(cls, dim, reserve=0):
@@ -290,10 +288,7 @@ class ListVectorArray(VectorArrayInterface):
             X = (x._list[i] for i in x_ind)
             len_X = len(x_ind)
 
-        if alpha == 0:
-            for y in Y:
-                y.set_zero()
-        elif alpha == 1:
+        if alpha == 1:
             if len_X == 1:
                 x = next(X)
                 for y in Y:
