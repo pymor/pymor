@@ -475,6 +475,8 @@ class RemoteStationaryDiscretization(StationaryDiscretization):
         return U_id
 
     def solve(self, mu=None):
+        if not self.logging_disabled:
+            self.logger.info('Solving {} for {} ...'.format(self.name, mu))
         U_id = self.rv.apply(self._solve, self.rid, mu)
         return self.operator.type_source(U_id)
 
