@@ -88,3 +88,9 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
 
     def __repr__(self):
         return 'ExpressionParameterFunctional({}, {})'.format(self.expression, repr(self.parameter_type))
+
+    def __getstate__(self):
+        return (self.expression, self.parameter_type, self.name)
+
+    def __setstate__(self, state):
+        self.__init__(*state)
