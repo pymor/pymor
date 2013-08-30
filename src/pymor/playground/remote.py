@@ -223,7 +223,7 @@ class RemoteVectorArray(VectorArrayInterface):
         return RR[rid].l2_norm(ind=ind)
 
     def l2_norm(self, ind=None):
-        return self.rv.apply(self._l1_norm, self.rid, ind=ind)
+        return self.rv.apply(self._l2_norm, self.rid, ind=ind)
 
     @staticmethod
     def _components(rid, component_indices, ind=None):
