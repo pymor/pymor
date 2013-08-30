@@ -418,6 +418,8 @@ class RemoteLincombOperator(RemoteOperator, LincombOperatorBase):
         self.operators = [wrap_remote_operator(self.rv, o) for o in operators]
         self.lock()
 
+    projected = LincombOperatorBase.projected
+
 
 class RemoteStationaryDiscretization(StationaryDiscretization):
 
