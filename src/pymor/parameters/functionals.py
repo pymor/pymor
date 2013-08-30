@@ -6,6 +6,8 @@ from __future__ import absolute_import, division, print_function
 
 from numbers import Number
 
+import numpy as np
+
 from .interfaces import ParameterFunctionalInterface
 
 
@@ -35,6 +37,7 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
         if sum(parameter_shape) > 1:
             assert coordinates is not None and coordinates < parameter_shape
         self.coordinates = coordinates
+        self.lock()
 
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)
@@ -62,7 +65,26 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
         self.name = name
         self._mapping = mapping
         self.build_parameter_type(parameter_type, local_global=True)
+        self.lock()
 
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)
         return self._mapping(mu)
+
+
+class ExpressionParameterFunctional(GenericParameterFunctional):
+
+    functions = {k: np.__dict__[k] for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',
+                                             'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
+                                             'exp', 'exp2', 'log', 'log2', 'log10',
+                                             'min', 'minimum', 'max', 'maximum',
+                                            }}
+
+    def __init__(self, expression, parameter_type, name=None):
+        self.expression = expression
+        code = compile(expression, '<dune expression>', 'eval')
+        mapping = lambda mu: eval(code, self.functions, mu)
+        GenericParameterFunctional.__init__(self, mapping, parameter_type, name)
+
+    def __repr__(self):
+        return 'ExpressionParameterFunctional({}, {})'.format(self.expression, repr(self.parameter_type))
