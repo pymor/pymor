@@ -79,7 +79,7 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
     ol = 1 if not d.operator.parametric else len(d.operator.operators)
 
     if RB is None:
-        RB = NumpyVectorArray(np.zeros((0, next(d.operators.itervalues()).dim_source)))
+        RB = discretization.type_solution.empty(discretization.dim_solution)
 
     if not d.rhs.parametric:
         R_R = space_type.empty(space_dim, reserve=1)

@@ -55,7 +55,7 @@ def reduce_generic_rb(discretization, RB, product=None, disable_caching=True):
     '''
 
     if RB is None:
-        RB = NumpyVectorArray.empty(max(op.dim_source for op in discretization.operators.itervalues() if op))
+        RB = discretization.type_solution.empty(discretization.dim_solution)
 
     projected_operators = {k: rb_project_operator(op, RB, product=product)
                            for k, op in discretization.operators.iteritems()}
