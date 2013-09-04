@@ -43,7 +43,7 @@ def trivial_basis_extension(basis, U, U_ind=None, copy_basis=True, copy_U=True):
         Is raised if U is already contained in basis.
     '''
     if basis is None:
-        basis = NumpyVectorArray(np.zeros((0, U.dim)))
+        basis = type(U).empty(U.dim, reserve=len(U))
 
     if np.any(U.almost_equal(basis, ind=U_ind)):
         raise ExtensionError
@@ -124,7 +124,7 @@ def gram_schmidt_basis_extension(basis, U, U_ind=None, product=None, copy_basis=
         due to rounding errors ...
     '''
     if basis is None:
-        basis = NumpyVectorArray(np.zeros((0, U.dim)))
+        basis = type(U).empty(U.dim, reserve=len(U))
 
     basis_length = len(basis)
 
