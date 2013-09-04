@@ -37,7 +37,6 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
         if sum(parameter_shape) > 1:
             assert coordinates is not None and coordinates < parameter_shape
         self.coordinates = coordinates
-        self.lock()
 
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)
@@ -65,7 +64,6 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
         self.name = name
         self._mapping = mapping
         self.build_parameter_type(parameter_type, local_global=True)
-        self.lock()
 
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)

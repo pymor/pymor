@@ -44,7 +44,6 @@ class NonlinearAdvectionLaxFriedrichs(OperatorBase):
         else:
             self.build_parameter_type(inherits=(flux,))
         self.dim_source = self.dim_range = grid.size(0)
-        self.lock()
 
     def restricted(self, components):
         source_dofs = np.setdiff1d(np.union1d(self.grid.neighbours(0, 0)[components].ravel(), components),
@@ -150,7 +149,6 @@ class NonlinearAdvectionEngquistOsher(OperatorBase):
         else:
             self.build_parameter_type(inherits=(flux, flux_derivative))
         self.dim_source = self.dim_range = grid.size(0)
-        self.lock()
 
     def restricted(self, components):
         source_dofs = np.setdiff1d(np.union1d(self.grid.neighbours(0, 0)[components].ravel(), components),
@@ -247,7 +245,6 @@ class L2Product(NumpyMatrixBasedOperator):
         self.dim_range = self.dim_source
         self.grid = grid
         self.name = name
-        self.lock()
 
     def _assemble(self, mu=None):
         assert self.check_parameter(mu)
@@ -281,7 +278,6 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
         self.function = function
         self.name = name
         self.build_parameter_type(inherits=(function,))
-        self.lock()
 
     def _assemble(self, mu=None):
         mu = self.parse_parameter(mu)

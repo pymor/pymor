@@ -290,7 +290,6 @@ class RemoteOperator(OperatorInterface):
         self.real_type_range = wrap_remote_vector_array_class(self.rv, self.type_range)
         self.type_range = self.real_type_range if self.dim_range > 1 else NumpyVectorArray
         self.build_parameter_type(pt, local_global=True)
-        self.lock()
 
     @staticmethod
     def _apply(rid, U, ind=None, mu=None):
@@ -416,7 +415,6 @@ class RemoteLincombOperator(RemoteOperator, LincombOperatorBase):
         operators = static_data.pop('operators')
         self.__dict__.update(static_data)
         self.operators = [wrap_remote_operator(self.rv, o) for o in operators]
-        self.lock()
 
     projected = LincombOperatorBase.projected
 
@@ -455,7 +453,6 @@ class RemoteStationaryDiscretization(StationaryDiscretization):
         if static_data['estimator']:
             self.unlock()
             self.estimate = self.__estimate
-            self.lock()
 
 
     def with_(self, **kwargs):

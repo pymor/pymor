@@ -9,7 +9,7 @@ import types
 import numpy as np
 
 from pymor.operators import LincombOperatorInterface, NumpyMatrixOperator
-from pymor.core import BasicInterface
+from pymor.core import ImmutableInterface
 from pymor.discretizations import StationaryDiscretization
 from pymor.la import NumpyVectorArray, induced_norm
 from pymor.reductors.basic import reduce_generic_rb
@@ -125,11 +125,10 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
     return rd, rc
 
 
-class StationaryAffineLinearReducedEstimator(BasicInterface):
+class StationaryAffineLinearReducedEstimator(ImmutableInterface):
 
     def __init__(self, estimator_matrix):
         self.estimator_matrix = estimator_matrix
-        self.lock()
 
     def estimate(self, U, mu, discretization):
         d = discretization

@@ -4,12 +4,12 @@
 
 from __future__ import absolute_import, division, print_function
 
-import pymor.core as core
+from pymor.core import ImmutableInterface, abstractmethod
 from pymor.tools import Named
 from pymor.parameters.base import Parametric
 
 
-class ParameterSpaceInterface(core.BasicInterface):
+class ParameterSpaceInterface(ImmutableInterface):
     '''Represents a parameter space.
 
     Attributes
@@ -20,20 +20,20 @@ class ParameterSpaceInterface(core.BasicInterface):
 
     parameter_type = None
 
-    @core.interfaces.abstractmethod
+    @abstractmethod
     def contains(self, mu):
         '''True if `mu` is contained in the space.'''
         pass
 
 
-class ParameterFunctionalInterface(core.BasicInterface, Parametric, Named):
+class ParameterFunctionalInterface(ImmutableInterface, Parametric, Named):
     '''Represents a functional on a parameter space.
     '''
 
     def __init__(self):
         Parametric.__init__(self)
 
-    @core.interfaces.abstractmethod
+    @abstractmethod
     def evaluate(self, mu=None):
         pass
 

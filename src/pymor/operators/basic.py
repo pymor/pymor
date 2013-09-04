@@ -11,7 +11,7 @@ from numbers import Number
 
 import numpy as np
 from scipy.sparse import issparse
-from scipy.sparse.linalg import bicgstab
+from scipy.sparse.linalg import bicgstab, gmres
 
 from pymor import defaults
 from pymor.core import abstractmethod
@@ -226,7 +226,6 @@ class NumpyGenericOperator(OperatorBase):
         self._mapping = mapping
         if parameter_type is not None:
             self.build_parameter_type(parameter_type, local_global=True)
-        self.lock()
 
     def apply(self, U, ind=None, mu=None):
         assert isinstance(U, NumpyVectorArray)
@@ -318,7 +317,6 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         self.name = name
         self._matrix = matrix
         self.sparse = issparse(matrix)
-        self.lock()
 
     def _assemble(self, mu=None):
         assert self.check_parameter(mu)
@@ -371,7 +369,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             tol =  options.get('tol', defaults.bicgstab_tol)
             maxiter = options.get('maxiter', defaults.bicgstab_maxiter)
             for i, UU in enumerate(U):
-                R[i], info = bicgstab(self._matrix, UU, tol=tol, maxiter=maxiter)
+                R[i], info = gmres(self._matrix, UU, tol=tol, maxiter=maxiter)
                 if info != 0:
                     if info > 0:
                         raise InversionError('bicgstab failed to converge after {} iterations'.format(info))
@@ -402,7 +400,6 @@ class NumpyLincombMatrixOperator(LincombOperatorBase, NumpyMatrixBasedOperator):
                                      num_coefficients=num_coefficients,
                                      coefficients_name=coefficients_name, name=name)
         self.sparse = all(op.sparse for op in operators)
-        self.lock()
 
     def _assemble(self, mu=None):
         mu = self.parse_parameter(mu)
@@ -480,7 +477,6 @@ class ProjectedOperator(OperatorBase):
         self.source_basis = source_basis.copy() if source_basis is not None and copy else source_basis
         self.range_basis = range_basis.copy() if range_basis is not None and copy else range_basis
         self.product = product
-        self.lock()
 
     def apply(self, U, ind=None, mu=None):
         mu = self.parse_parameter(mu)
@@ -563,7 +559,6 @@ class ProjectedLinearOperator(NumpyMatrixBasedOperator):
         self.source_basis = source_basis.copy() if source_basis is not None and copy else source_basis
         self.range_basis = range_basis.copy() if range_basis is not None and copy else range_basis
         self.product = product
-        self.lock()
 
     def _assemble(self, mu=None):
         mu = self.parse_parameter(mu)
@@ -609,7 +604,6 @@ class LincombOperator(LincombOperatorBase):
         super(LincombOperator, self).__init__(operators=operators, coefficients=coefficients,
                                               num_coefficients=num_coefficients,
                                               coefficients_name=coefficients_name, name=name)
-        self.lock()
 
     def apply(self, U, ind=None, mu=None):
         mu = self.parse_parameter(mu)

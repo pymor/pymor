@@ -5,11 +5,11 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from pymor.core.interfaces import BasicInterface
+from pymor.core.interfaces import ImmutableInterface
 from pymor.core.logger import getLogger
 
 
-class Defaults(BasicInterface):
+class Defaults(ImmutableInterface):
     '''Class defining application-wide defaults. Do not instantiate but use
     `pymor.defaults`.
 
@@ -103,7 +103,6 @@ class Defaults(BasicInterface):
 
 
 defaults = Defaults()
-defaults.lock()
 
 
 # Set default log levels

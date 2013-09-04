@@ -28,7 +28,6 @@ class DuneLinearOperator(OperatorBase):
         self.dim_range = dim
         self.name = name
         self.dune_op = dune_op
-        self.lock()
 
     def assemble(self, mu=None):
         assert self.check_parameter(mu)
@@ -55,7 +54,6 @@ class DuneLinearFunctional(OperatorBase):
         self.dim_range = 1
         self.name = name
         self.dune_vec = dune_vec
-        self.lock()
 
     def assemble(self, mu=None):
         assert self.check_parameter(mu)

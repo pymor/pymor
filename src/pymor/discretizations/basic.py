@@ -119,7 +119,6 @@ class StationaryDiscretization(DiscretizationBase):
         self.operators = operators
         self.build_parameter_type(inherits=(operator, rhs))
         self.parameter_space = parameter_space
-        self.lock()
 
     with_arguments = set(selfless_arguments(__init__)).union(['operators'])
 
@@ -181,7 +180,6 @@ class InstationaryDiscretization(DiscretizationBase):
 
         if hasattr(time_stepper, 'nt'):
             self.with_arguments.add('time_stepper_nt')
-        self.lock()
 
     with_arguments = set(selfless_arguments(__init__)).union(['operators'])
 

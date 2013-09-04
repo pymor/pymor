@@ -6,14 +6,14 @@ from __future__ import absolute_import, division, print_function
 
 import copy
 
-from pymor.core import BasicInterface
+from pymor.core import ImmutableInterface
 from pymor.core.interfaces import abstractmethod
 from pymor.core.cache import Cachable, cached
 from pymor.tools import Named
 from pymor.parameters import Parametric
 
 
-class DiscretizationInterface(BasicInterface, Parametric, Cachable, Named):
+class DiscretizationInterface(ImmutableInterface, Parametric, Cachable, Named):
     '''Describes a discretization.
 
     Note that we do not make any distinction between detailed and reduced

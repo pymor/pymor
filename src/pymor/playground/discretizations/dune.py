@@ -43,7 +43,6 @@ class DuneLinearEllipticCGDiscretization(DiscretizationBase):
 
         self.build_parameter_type(inherits=(operator,))
         self.parameter_space = CubicParameterSpace({'diffusion': self.example.paramSize()}, *parameter_range)
-        self.lock()
 
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu)

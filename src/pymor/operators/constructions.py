@@ -53,7 +53,6 @@ class Concatenation(OperatorBase):
         if hasattr(first, 'restricted') and hasattr(second, 'restricted'):
             self.restricted = self._restricted
         self.name = name
-        self.lock()
 
     def apply(self, U, ind=None, mu=None):
         mu = self.parse_parameter(mu)
@@ -81,7 +80,6 @@ class ComponentProjection(OperatorBase):
         self.dim_range = len(components)
         self.type_source = type_source
         self.name = name
-        self.lock()
 
     def apply(self, U, ind=None, mu=None):
         assert self.check_parameter(mu)
@@ -104,7 +102,6 @@ class IdentityOperator(OperatorBase):
         self.dim_range = self.dim_source = dim
         self.type_range = self.type_source = type_source
         self.name = name
-        self.lock()
 
     def apply(self, U, ind=None, mu=None):
         assert self.check_parameter(mu)
@@ -128,7 +125,6 @@ class ConstantOperator(OperatorBase):
         self.type_range = type(value)
         self.name = name
         self._value = value.copy() if copy else value
-        self.lock()
 
     def apply(self, U, ind=None, mu=None):
         assert self.check_parameter(mu)
@@ -198,7 +194,6 @@ class FixedParameterOperator(OperatorBase):
         assert operator.check_parameter(mu)
         self.operator = operator
         self.mu = mu.copy()
-        self.lock()
 
     def apply(self, U, ind=None, mu=None):
         assert self.check_parameter(mu)

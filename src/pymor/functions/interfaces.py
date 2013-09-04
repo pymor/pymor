@@ -5,12 +5,12 @@
 
 from __future__ import absolute_import, division, print_function
 
-import pymor.core as core
+from pymor.core import ImmutableInterface, abstractmethod
 from pymor.tools import Named
 from pymor.parameters import Parametric
 
 
-class FunctionInterface(core.BasicInterface, Parametric, Named):
+class FunctionInterface(ImmutableInterface, Parametric, Named):
     '''Interface for parameter dependent analytical functions.
 
     Every function is a map of the form ::
@@ -41,7 +41,7 @@ class FunctionInterface(core.BasicInterface, Parametric, Named):
     def __init__(self):
         Parametric.__init__(self)
 
-    @core.interfaces.abstractmethod
+    @abstractmethod
     def evaluate(self, x, mu=None):
         pass
 

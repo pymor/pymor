@@ -18,7 +18,6 @@ class EmptyBoundaryInfo(BoundaryInfoInterface):
         super(EmptyBoundaryInfo, self).__init__()
         self.grid = grid
         self.boundary_types = set()
-        self.lock()
 
     def mask(self, boundary_type, codim):
         assert False, ValueError('Has no boundary_type "{}"'.format(boundary_type))
@@ -47,7 +46,6 @@ class BoundaryInfoFromIndicators(BoundaryInfoInterface):
             for c, mask in enumerate(codims):
                 mask[grid.boundaries(c + 1)] = indicators[boundary_type](grid.centers(c + 1)[grid.boundaries(c + 1)])
         self.check_boundary_types(assert_unique_type=assert_unique_type, assert_some_type=assert_some_type)
-        self.lock()
 
     def mask(self, boundary_type, codim):
         assert 1 <= codim <= self.grid.dim
@@ -62,7 +60,6 @@ class AllDirichletBoundaryInfo(BoundaryInfoInterface):
         super(AllDirichletBoundaryInfo, self).__init__()
         self.grid = grid
         self.boundary_types = set((BoundaryType('dirichlet'),))
-        self.lock()
 
     def mask(self, boundary_type, codim):
         assert boundary_type == BoundaryType('dirichlet'), ValueError('Has no boundary_type "{}"'.format(boundary_type))

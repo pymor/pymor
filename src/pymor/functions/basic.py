@@ -84,7 +84,6 @@ class GenericFunction(FunctionInterface):
         self._mapping = mapping
         if parameter_type is not None:
             self.build_parameter_type(parameter_type, local_global=True)
-        self.lock()
 
     def __str__(self):
         return ('{name}: x -> {mapping}').format(name=self.name, mapping=self._mapping)
