@@ -166,12 +166,19 @@ class Parameter(dict):
                 raise ValueError('Parameter length does not match.')
             mu = dict(izip(parameter_type, mu))
         elif set(mu.keys()) != set(parameter_type.keys()):
-            raise ValueError('Components do not match')
+            raise ValueError('Parameter components do not match')
         for k, v in mu.iteritems():
             if not isinstance(v, np.ndarray):
-                mu[k] = np.array(v)
-        if not all(mu[k].shape == parameter_type[k] for k in mu):
-            raise ValueError('Component dimensions do not match')
+                v = np.array(v)
+                try:
+                    v = v.reshape(parameter_type[k])
+                except ValueError:
+                    raise ValueError('Shape mismatch for parameter component {}: got {}, expected {}'
+                                     .format(k, v.shape, parameter_type[k]))
+                mu[k] = v
+            if v.shape != parameter_type[k]:
+                raise ValueError('Shape mismatch for parameter component {}: got {}, expected {}'
+                                 .format(k, v.shape, parameter_type[k]))
         return cls(mu)
 
     def allclose(self, mu):
