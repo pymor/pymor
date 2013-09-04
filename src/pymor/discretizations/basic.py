@@ -113,6 +113,7 @@ class StationaryDiscretization(DiscretizationBase):
                                                        estimator=estimator, visualizer=visualizer,
                                                        caching=caching, name=name)
         self.dim_solution = operator.dim_source
+        self.type_solution = operator.type_source
         self.operator = operator
         self.rhs = rhs
         self.operators = operators
@@ -169,6 +170,7 @@ class InstationaryDiscretization(DiscretizationBase):
                                                          caching=caching, name=name)
         self.T = T
         self.dim_solution = operator.dim_source
+        self.type_solution = operator.type_source
         self.initial_data = initial_data
         self.operator = operator
         self.rhs = rhs
