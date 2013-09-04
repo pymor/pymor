@@ -249,3 +249,14 @@ class abstractstaticmethod(abstractstaticmethod_base):
     def __init__(self, callable_method):
         callable_method.__isabstractstaticmethod__ = True
         super(abstractstaticmethod, self).__init__(callable_method)
+
+class ImmutableMeta(UberMeta):
+
+    def __call__(self, *args, **kwargs):
+        instance = super(ImmutableMeta, self).__call__(*args, **kwargs)
+        instance.lock()
+        return instance
+
+class ImmutableInterface(BasicInterface):
+    __metaclass__ = ImmutableMeta
+

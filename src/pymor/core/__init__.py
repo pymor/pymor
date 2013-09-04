@@ -2,7 +2,7 @@
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.core.interfaces import (BasicInterface, abstractmethod, abstractclassmethod,
+from pymor.core.interfaces import (BasicInterface, ImmutableInterface, abstractmethod, abstractclassmethod,
                                    abstractstaticmethod, abstractproperty)
 from pymor.core.logger import getLogger
 
