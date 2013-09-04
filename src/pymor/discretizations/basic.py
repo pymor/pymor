@@ -116,7 +116,6 @@ class StationaryDiscretization(DiscretizationBase):
         self.operator = operator
         self.rhs = rhs
         self.operators = operators
-        self.solution_dim = operator.dim_range
         self.build_parameter_type(inherits=(operator, rhs))
         self.parameter_space = parameter_space
         self.lock()
@@ -175,7 +174,6 @@ class InstationaryDiscretization(DiscretizationBase):
         self.rhs = rhs
         self.mass = mass
         self.time_stepper = time_stepper
-        self.solution_dim = operator.dim_range
         self.build_parameter_type(inherits=(initial_data, operator, rhs, mass), provides={'_t': 0})
         self.parameter_space = parameter_space
 
