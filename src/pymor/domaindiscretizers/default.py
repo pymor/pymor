@@ -70,6 +70,7 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
                 LR = np.logical_or(L, R)
                 TB = np.logical_or(T, B)
                 return np.logical_or(LR, TB)
+            indicator.sid = '<discretize_domain_default_discretize_RectDomain_indicator,{},{}>'.format(dd.sid, bt)
             return indicator
 
         indicators = {bt: indicator_factory(domain_description, bt)

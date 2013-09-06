@@ -63,9 +63,10 @@ class ThermalBlockProblem(EllipticProblem, Unpicklable):
         dy = 1 / num_blocks[1]
 
         def diffusion_function_factory(x, y):
-            return GenericFunction(lambda X: (1. * (X[..., 0] >= x * dx) * (X[..., 0] < (x + 1) * dx)
-                                                 * (X[..., 1] >= y * dy) * (X[..., 1] < (y + 1) * dy)),
-                                   dim_domain=2, name='diffusion_function_{}_{}'.format(x, y))
+            func = lambda X: (1. * (X[..., 0] >= x * dx) * (X[..., 0] < (x + 1) * dx)
+                                 * (X[..., 1] >= y * dy) * (X[..., 1] < (y + 1) * dy))
+            func.sid = '<ThermalblockProblem_diffusion_function,{},{},{},{}>'.format(x,y,dx,dy)
+            return GenericFunction(func, dim_domain=2, name='diffusion_function_{}_{}'.format(x, y))
 
         def parameter_functional_factory(x, y):
             return ProjectionParameterFunctional(parameter_name='diffusion',
