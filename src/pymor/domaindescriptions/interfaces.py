@@ -4,11 +4,11 @@
 
 from __future__ import absolute_import, division, print_function
 
-import pymor.core as core
+from pymor.core import ImmutableInterface
 from .boundarytypes import BoundaryType
 
 
-class DomainDescriptionInterface(core.BasicInterface):
+class DomainDescriptionInterface(ImmutableInterface):
     '''Analytically describes a domain and its boundary (types).
 
     Attributes
