@@ -94,7 +94,7 @@ class LimitedFileBackend(BasicInterface, DBMBackend):
         internal cache file, otherwise its set to sys.maxlen.
         If necessary values are deleted from the cache in FIFO order.
         '''
-        argument_dict['filename'] = argument_dict.get('filename', os.path.join(gettempdir(), str(uuid.uuid4())))
+        argument_dict['filename'] = argument_dict.get('filename', os.path.join(gettempdir(), 'pymor'))
         DBMBackend.__init__(self, argument_dict)
         self.logger.debug('LimitedFileBackend args {}'.format(pformat(argument_dict)))
         self._max_keys = argument_dict.get('max_keys', sys.maxsize)
@@ -190,7 +190,7 @@ class Cachable(object):
             self._cache_disabled_for_instance = False
             self._cache_config = config
             self._init_cache()
-            self._namespace = '{}_{}'.format(self.__class__.__name__, hash(self))
+            self._namespace = self.__class__.__name__
             self._expiration_time = None
 
     def _init_cache(self):
@@ -206,7 +206,8 @@ class Cachable(object):
         namespace = str(namespace)
 
         def keygen(*arg, **kwargs):
-            return (namespace + "_" + fname + "_".join(s.sid if hasattr(s, 'sid') else str(s) for s in arg)
+            return (namespace + "_" + fname + '_' + str(getattr(self, 'sid', id(self))) + '_' +
+                    "_".join(s.sid if hasattr(s, 'sid') else str(s) for s in arg)
                     + '__'.join(x.sid if hasattr(x, 'sid') else str(x) for x in kwargs.iteritems()))
         return keygen
 
