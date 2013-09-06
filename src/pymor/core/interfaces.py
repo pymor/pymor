@@ -328,3 +328,20 @@ class ImmutableInterface(BasicInterface):
     __metaclass__ = ImmutableMeta
     calculate_sid = True
     sid_ignore = ('name', 'caching')
+
+    # Unlocking an immutable object will result in the deletion of its sid.
+    # However, this will not delete the sids of objects referencing it.
+    # You really should not unlock an object unless you really know what
+    # you are doing. (One exception might be the modification of a newly
+    # created copy of an immutable object.)
+    def lock(self, doit=True, whitelist=None):
+        super(ImmutableInterface, self).lock(doit, whitelist)
+        if not self.locked and hasattr(self, 'sid'):
+            del self.sid
+            self.sid_failure = 'unlocked'
+
+    def unlock(self):
+        super(ImmutableInterface, self).unlock()
+        if hasattr(self, 'sid'):
+            del self.sid
+            self.sid_failure = 'unlocked'
