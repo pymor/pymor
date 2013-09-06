@@ -296,6 +296,15 @@ def inject_sid(obj, context, *args):
         obj.flags.writable = False
 
 
+def disable_sid_generation():
+    if hasattr(ImmutableMeta, '__call__'):
+        del ImmutableMeta.__call__
+
+
+def enable_sid_generation():
+    ImmutableMeta.__call__ = ImmutableMeta._call
+
+
 class ImmutableMeta(UberMeta):
 
     def __new__(cls, classname, bases, classdict):
@@ -309,8 +318,7 @@ class ImmutableMeta(UberMeta):
             c.logger.warn('sid_ignore contains "{}" which is not an __init__ argument!'.format(e))
         return c
 
-
-    def __call__(self, *args, **kwargs):
+    def _call(self, *args, **kwargs):
         instance = super(ImmutableMeta, self).__call__(*args, **kwargs)
         if instance.calculate_sid:
             sid_ignore = instance.sid_ignore
@@ -330,6 +338,8 @@ class ImmutableMeta(UberMeta):
 
         instance.lock()
         return instance
+
+    __call__ = _call
 
 
 class ImmutableInterface(BasicInterface):
