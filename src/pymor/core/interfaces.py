@@ -10,6 +10,7 @@ import itertools
 import contracts
 import copy
 import inspect
+from types import NoneType
 
 import numpy as np
 
@@ -53,6 +54,9 @@ class UberMeta(abc.ABCMeta):
         I also forward "abstract{class|static}method" decorations in the base class to "{class|static}method"
         decorations in the new subclass.
         '''
+        if 'init_arguments' in classdict:
+            raise ValueError('init_arguments is a reserved class attribute for subclasses of BasicInterface')
+
         for attr, item in classdict.items():
             if isinstance(item, types.FunctionType):
                 # first copy/fixup docs
@@ -88,7 +92,16 @@ class UberMeta(abc.ABCMeta):
                             getattr(base_func, "__isabstractclassmethod__")):
                         classdict[attr] = classmethod(classdict[attr])
 
-        return abc.ABCMeta.__new__(cls, classname, bases, classdict)
+        c = abc.ABCMeta.__new__(cls, classname, bases, classdict)
+
+        # Beware! The following will probably break in python 3 if there are
+        # keyword-only arguemnts
+        args, varargs, keywords, defaults = inspect.getargspec(c.__init__)
+        if varargs:
+            raise NotImplementedError
+        assert args[0] == 'self'
+        c.init_arguments = tuple(args)
+        return c
 
 
 class BasicInterface(object):
@@ -98,6 +111,9 @@ class BasicInterface(object):
     __metaclass__ = UberMeta
     _locked = False
     _lock_whitelist = set()
+
+    def __init__(self):
+        pass
 
     def __setattr__(self, key, value):
         '''depending on _locked state I delegate the setattr call to object or
@@ -252,39 +268,55 @@ class abstractstaticmethod(abstractstaticmethod_base):
         callable_method.__isabstractstaticmethod__ = True
         super(abstractstaticmethod, self).__init__(callable_method)
 
+def calculate_sid(obj, name):
+    if hasattr(obj, 'sid'):
+        return obj.sid
+    else:
+        t_obj = type(obj)
+        if t_obj in (tuple, list):
+            return tuple(calculate_sid(o, '{}[{}]'.format(name, i)) for i, o in enumerate(obj))
+        elif t_obj is dict:
+            return tuple((k, calculate_sid(v, '{}[{}]'.format(name, k))) for k, v in sorted(obj.iteritems()))
+        elif t_obj in (NoneType, str, int, float, bool):
+            return str(obj)
+        elif t_obj is np.ndarray:
+            if obj.size < 64:
+                return ('array', obj.shape,obj.dtype.str, obj.tostring())
+            else:
+                raise ValueError('sid calculation faild at large numpy array {}'.format(name))
+        else:
+            raise ValueError('sid calculation failed at {}={}'.format(name,obj))
+
 
 class ImmutableMeta(UberMeta):
 
-    generic_sid_ignore = ('name', 'caching')
+    def __new__(cls, classname, bases, classdict):
+        c = UberMeta.__new__(cls, classname, bases, classdict)
+        init_arguments = c.init_arguments
+        try:
+            for a in c.sid_ignore:
+                if a not in init_arguments and a not in ('name', 'caching'):
+                    raise ValueError(a)
+        except ValueError as e:
+            c.logger.warn('sid_ignore contains "{}" which is not an __init__ argument!'.format(e))
+        return c
+
 
     def __call__(self, *args, **kwargs):
         instance = super(ImmutableMeta, self).__call__(*args, **kwargs)
-        sid_ignore = getattr(instance, 'sid_ignore', tuple()) + self.generic_sid_ignore
+        if instance.calculate_sid:
+            sid_ignore = instance.sid_ignore
 
-        def calc_sid(obj):
-            if hasattr(obj, 'sid'):
-                return obj.sid
-            elif type(obj) in (tuple, list):
-                return '[' + ','.join(calc_sid(o) for o in obj) + ']'
-            elif type(obj) is dict:
-                return '{' + ','.join('{}:{}'.format(k, calc_sid(v)) for k, v in sorted(obj.iteritems())) + '}'
-            elif type(obj) in (str, int, float, bool):
-                return str(obj)
-            if obj is None:
-                return 'None'
-            elif type(obj) is np.ndarray:
-                return 'array' + str((obj.shape, obj.dtype.str, obj.tostring()))
-            else:
-                raise ValueError('sid calculation failed at {}'.format(obj))
-
-        try:
-            instance.sid = ('<'
-                            + ','.join(itertools.chain((str(type(instance)),),
-                                                       (calc_sid(o) for o in args),
-                                                       (calc_sid(kwargs[k]) for k in sorted(kwargs) if k not in sid_ignore)))
-                            + '>')
-        except ValueError as e:
-            instance.sid_failure = str(e)
+            try:
+                arg_sids = tuple(calculate_sid(o, name)
+                                 for o, name in itertools.izip(args, instance.init_arguments)
+                                 if not name in sid_ignore)
+                kwarg_sids = tuple(calculate_sid(o, k)
+                                   for k, o in sorted(kwargs.iteritems())
+                                   if k not in sid_ignore)
+                instance.sid = (str(type(instance)), arg_sids, kwarg_sids)
+            except ValueError as e:
+                instance.sid_failure = str(e)
 
         instance.lock()
         return instance
@@ -292,3 +324,5 @@ class ImmutableMeta(UberMeta):
 
 class ImmutableInterface(BasicInterface):
     __metaclass__ = ImmutableMeta
+    calculate_sid = True
+    sid_ignore = ('name', 'caching')

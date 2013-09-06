@@ -307,6 +307,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     '''
 
     assembled = True
+    calculate_sid = False
 
     def __init__(self, matrix, name=None):
         assert matrix.ndim <= 2
@@ -317,6 +318,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         self.name = name
         self._matrix = matrix
         self.sparse = issparse(matrix)
+        self.calculate_sid = hasattr(matrix, 'sid')
 
     def _assemble(self, mu=None):
         assert self.check_parameter(mu)
