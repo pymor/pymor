@@ -49,6 +49,7 @@ def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=
     I = p.initial_data.evaluate(grid.quadrature_points(0, order=2)).squeeze()
     I = np.sum(I * grid.reference_element.quadrature(order=2)[1], axis=1) * (1. / grid.reference_element.volume)
     I = NumpyVectorArray(I)
+    I.sid = '<discretize_nonlinear_instationary_advection_fv,{},{}>'.format(p.initial_data.sid, grid.sid)
 
     products = {'l2': L2Product(grid, boundary_info)}
     visualizer = GlumpyPatchVisualizer(grid=grid, bounding_box=grid.domain, codim=0)
