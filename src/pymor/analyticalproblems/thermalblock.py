@@ -62,10 +62,13 @@ class ThermalBlockProblem(EllipticProblem, Unpicklable):
         dx = 1 / num_blocks[0]
         dy = 1 / num_blocks[1]
 
+        # creating the id-string once for every diffusion function reduces the size of the pickled sid
+        diffusion_function_id = str(ThermalBlockProblem) + '.diffusion_function'
+
         def diffusion_function_factory(x, y):
             func = lambda X: (1. * (X[..., 0] >= x * dx) * (X[..., 0] < (x + 1) * dx)
                                  * (X[..., 1] >= y * dy) * (X[..., 1] < (y + 1) * dy))
-            inject_sid(func, str(ThermalBlockProblem) + '.diffusion_function', x, y, dx, dy)
+            inject_sid(func, diffusion_function_id, x, y, dx, dy)
             return GenericFunction(func, dim_domain=2, name='diffusion_function_{}_{}'.format(x, y))
 
         def parameter_functional_factory(x, y):
