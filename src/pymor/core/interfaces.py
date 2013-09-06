@@ -11,6 +11,8 @@ import contracts
 import copy
 import inspect
 
+import numpy as np
+
 from pymor.core import decorators, backports, logger
 from pymor.core.exceptions import ConstError
 
@@ -250,13 +252,43 @@ class abstractstaticmethod(abstractstaticmethod_base):
         callable_method.__isabstractstaticmethod__ = True
         super(abstractstaticmethod, self).__init__(callable_method)
 
+
 class ImmutableMeta(UberMeta):
+
+    generic_sid_ignore = ('name', 'caching')
 
     def __call__(self, *args, **kwargs):
         instance = super(ImmutableMeta, self).__call__(*args, **kwargs)
+        sid_ignore = getattr(instance, 'sid_ignore', tuple()) + self.generic_sid_ignore
+
+        def calc_sid(obj):
+            if hasattr(obj, 'sid'):
+                return obj.sid
+            elif type(obj) in (tuple, list):
+                return '[' + ','.join(calc_sid(o) for o in obj) + ']'
+            elif type(obj) is dict:
+                return '{' + ','.join('{}:{}'.format(k, calc_sid(v)) for k, v in sorted(obj.iteritems())) + '}'
+            elif type(obj) in (str, int, float, bool):
+                return str(obj)
+            if obj is None:
+                return 'None'
+            elif type(obj) is np.ndarray:
+                return 'array' + str((obj.shape, obj.dtype.str, obj.tostring()))
+            else:
+                raise ValueError('sid calculation failed at {}'.format(obj))
+
+        try:
+            instance.sid = ('<'
+                            + ','.join(itertools.chain((str(type(instance)),),
+                                                       (calc_sid(o) for o in args),
+                                                       (calc_sid(kwargs[k]) for k in sorted(kwargs) if k not in sid_ignore)))
+                            + '>')
+        except ValueError as e:
+            instance.sid_failure = str(e)
+
         instance.lock()
         return instance
 
+
 class ImmutableInterface(BasicInterface):
     __metaclass__ = ImmutableMeta
-
