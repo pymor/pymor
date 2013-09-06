@@ -268,6 +268,7 @@ class abstractstaticmethod(abstractstaticmethod_base):
         callable_method.__isabstractstaticmethod__ = True
         super(abstractstaticmethod, self).__init__(callable_method)
 
+
 def _calculate_sid(obj, name):
     if hasattr(obj, 'sid'):
         return obj.sid
@@ -286,6 +287,13 @@ def _calculate_sid(obj, name):
                 raise ValueError('sid calculation faild at large numpy array {}'.format(name))
         else:
             raise ValueError('sid calculation failed at {}={}'.format(name,type(obj)))
+
+
+def inject_sid(obj, context, *args):
+    sid = tuple((context, tuple(_calculate_sid(o, i) for o, i in enumerate(args))))
+    obj.sid = sid
+    if isinstance(obj, np.ndarray):
+        obj.flags.writable = False
 
 
 class ImmutableMeta(UberMeta):

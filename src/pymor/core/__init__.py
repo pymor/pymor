@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.interfaces import (BasicInterface, ImmutableInterface, abstractmethod, abstractclassmethod,
-                                   abstractstaticmethod, abstractproperty)
+                                   abstractstaticmethod, abstractproperty, inject_sid)
 from pymor.core.logger import getLogger
 
 try:
