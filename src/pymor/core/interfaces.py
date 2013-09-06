@@ -100,7 +100,7 @@ class UberMeta(abc.ABCMeta):
         if varargs:
             raise NotImplementedError
         assert args[0] == 'self'
-        c.init_arguments = tuple(args)
+        c.init_arguments = tuple(args[1:])
         return c
 
 
@@ -268,24 +268,24 @@ class abstractstaticmethod(abstractstaticmethod_base):
         callable_method.__isabstractstaticmethod__ = True
         super(abstractstaticmethod, self).__init__(callable_method)
 
-def calculate_sid(obj, name):
+def _calculate_sid(obj, name):
     if hasattr(obj, 'sid'):
         return obj.sid
     else:
         t_obj = type(obj)
         if t_obj in (tuple, list):
-            return tuple(calculate_sid(o, '{}[{}]'.format(name, i)) for i, o in enumerate(obj))
+            return tuple(_calculate_sid(o, '{}[{}]'.format(name, i)) for i, o in enumerate(obj))
         elif t_obj is dict:
-            return tuple((k, calculate_sid(v, '{}[{}]'.format(name, k))) for k, v in sorted(obj.iteritems()))
+            return tuple((k, _calculate_sid(v, '{}[{}]'.format(name, k))) for k, v in sorted(obj.iteritems()))
         elif t_obj in (NoneType, str, int, float, bool):
-            return str(obj)
+            return obj
         elif t_obj is np.ndarray:
             if obj.size < 64:
                 return ('array', obj.shape,obj.dtype.str, obj.tostring())
             else:
                 raise ValueError('sid calculation faild at large numpy array {}'.format(name))
         else:
-            raise ValueError('sid calculation failed at {}={}'.format(name,obj))
+            raise ValueError('sid calculation failed at {}={}'.format(name,type(obj)))
 
 
 class ImmutableMeta(UberMeta):
@@ -308,15 +308,17 @@ class ImmutableMeta(UberMeta):
             sid_ignore = instance.sid_ignore
 
             try:
-                arg_sids = tuple(calculate_sid(o, name)
+                arg_sids = tuple(_calculate_sid(o, name)
                                  for o, name in itertools.izip(args, instance.init_arguments)
                                  if not name in sid_ignore)
-                kwarg_sids = tuple(calculate_sid(o, k)
+                kwarg_sids = tuple(_calculate_sid(o, k)
                                    for k, o in sorted(kwargs.iteritems())
                                    if k not in sid_ignore)
-                instance.sid = (str(type(instance)), arg_sids, kwarg_sids)
+                instance.sid = (type(instance), arg_sids, kwarg_sids)
             except ValueError as e:
                 instance.sid_failure = str(e)
+        else:
+            instance.sid_failure = 'disabled'
 
         instance.lock()
         return instance
