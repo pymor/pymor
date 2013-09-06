@@ -101,6 +101,8 @@ class StationaryDiscretization(DiscretizationBase):
         The functional f_h. A synonym for operators['rhs'].
     '''
 
+    sid_ignore = ('estimator', 'visualizer', 'caching')
+
     def __init__(self, operator, rhs, products=None, parameter_space=None, estimator=None, visualizer=None,
                  caching='disk', name=None):
         assert isinstance(operator, OperatorInterface) and operator.linear
@@ -148,6 +150,8 @@ class StationaryDiscretization(DiscretizationBase):
 
 
 class InstationaryDiscretization(DiscretizationBase):
+
+    sid_ignore = ('estimator', 'visualizer', 'caching')
 
     def __init__(self, T, initial_data, operator, rhs=None, mass=None, time_stepper=None, products=None,
                  parameter_space=None, estimator=None, visualizer=None, caching='disk', name=None):
