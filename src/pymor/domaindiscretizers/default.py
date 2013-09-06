@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function
 import math as m
 import numpy as np
 
+from pymor.core import inject_sid
 from pymor.domaindescriptions import RectDomain, CylindricalDomain, TorusDomain, LineDomain
 from pymor.grids import RectGrid, TriaGrid, OnedGrid, BoundaryInfoFromIndicators, EmptyBoundaryInfo
 from pymor.tools import float_cmp
@@ -70,7 +71,7 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
                 LR = np.logical_or(L, R)
                 TB = np.logical_or(T, B)
                 return np.logical_or(LR, TB)
-            indicator.sid = '<discretize_domain_default_discretize_RectDomain_indicator,{},{}>'.format(dd.sid, bt)
+            inject_sid(indicator, __name__ + '.discretize_domain_default.discretize_RectDomain', dd, bt)
             return indicator
 
         indicators = {bt: indicator_factory(domain_description, bt)

@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-import pymor.core as core
+from pymor.core import Unpicklable, inject_sid
 from pymor.tools import Named
 from pymor.domaindescriptions import RectDomain, TorusDomain, BoundaryType
 from pymor.functions import ConstantFunction, GenericFunction
@@ -28,7 +28,7 @@ class BurgersProblem(InstationaryAdvectionProblem, core.Unpicklable):
             R[...,0] = U_exp * vx
             R[...,1] = U_exp * vy
             return R
-        burgers_flux.sid = '<BurgersProblem_burgers_flux>'
+        inject_sid(burgers_flux, str(BurgersProblem) + '.burgers_flux')
 
         def burgers_flux_derivative(U, mu):
             U = U.reshape(U.shape[:-1])
@@ -37,7 +37,7 @@ class BurgersProblem(InstationaryAdvectionProblem, core.Unpicklable):
             R[...,0] = U_exp * vx
             R[...,1] = U_exp * vy
             return R
-        burgers_flux_derivative.sid = '<BurgersProblem_burgers_flux_derivative>'
+        inject_sid(burgers_flux_derivative, str(BurgersProblem) + '.burgers_flux_derivative')
 
         flux_function = GenericFunction(burgers_flux, dim_domain=1, shape_range=(2,),
                                         parameter_type={'exponent': 0},
@@ -50,12 +50,12 @@ class BurgersProblem(InstationaryAdvectionProblem, core.Unpicklable):
         if initial_data == 'sin':
             def initial_data(x):
                 return 0.5 * (np.sin(2 * np.pi * x[..., 0]) * np.sin(2 * np.pi * x[..., 1]) + 1.)
-            initial_data.sid = '<BurgersProblem_intial_data_sin>'
+            inject_sid(initial_data, str(BurgersProblem) + '.initial_data_sin')
             dirichlet_data=ConstantFunction(dim_domain=2, value=0.5)
         else:
             def initial_data(x):
                 return (x[..., 0] >= 0.5) * (x[..., 0] <= 1) * 1
-            initial_data.sid = '<BurgersProblem_intial_data_riemann>'
+            inject_sid(initial_data, str(BurgersProblem) + '.initial_data_riemann')
             dirichlet_data=ConstantFunction(dim_domain=2, value=0)
 
         initial_data = GenericFunction(initial_data, dim_domain=2)
