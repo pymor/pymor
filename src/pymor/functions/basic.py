@@ -36,7 +36,6 @@ class ConstantFunction(FunctionInterface):
         self.dim_domain = dim_domain
         self.shape_range = value.shape
         self.name = name
-        self.lock()
 
     def __str__(self):
         return ('{name}: x -> {value}').format(name=self.name, value=self._value)
