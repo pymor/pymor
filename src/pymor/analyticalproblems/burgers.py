@@ -15,7 +15,7 @@ from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
 from pymor.parameters.spaces import CubicParameterSpace
 
 
-class BurgersProblem(InstationaryAdvectionProblem, core.Unpicklable):
+class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
 
     def __init__(self, vx = 1., vy = 1., torus=True, initial_data='sin', parameter_range=(1., 2.)):
 
