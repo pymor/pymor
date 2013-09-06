@@ -292,7 +292,7 @@ class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopological
         return self._quadrature_points(codim, order, npoints, quadrature_type)
 
 
-class BoundaryInfoInterface(ImmutableInterface, Cachable):
+class BoundaryInfoInterface(Cachable, ImmutableInterface):
     '''Describes boundary types associated to a grid.
 
     For every boundary type and codimension a mask is provided, marking grid entities
