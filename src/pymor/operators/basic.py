@@ -11,7 +11,7 @@ from numbers import Number
 
 import numpy as np
 from scipy.sparse import issparse
-from scipy.sparse.linalg import bicgstab, gmres
+from scipy.sparse.linalg import bicgstab
 
 from pymor import defaults
 from pymor.core import abstractmethod
@@ -371,7 +371,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             tol =  options.get('tol', defaults.bicgstab_tol)
             maxiter = options.get('maxiter', defaults.bicgstab_maxiter)
             for i, UU in enumerate(U):
-                R[i], info = gmres(self._matrix, UU, tol=tol, maxiter=maxiter)
+                R[i], info = bicgstab(self._matrix, UU, tol=tol, maxiter=maxiter)
                 if info != 0:
                     if info > 0:
                         raise InversionError('bicgstab failed to converge after {} iterations'.format(info))
