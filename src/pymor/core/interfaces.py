@@ -307,12 +307,14 @@ def enable_sid_generation():
 
 class ImmutableMeta(UberMeta):
 
+    init_arguments_never_warn = ('name', 'caching')
+
     def __new__(cls, classname, bases, classdict):
         c = UberMeta.__new__(cls, classname, bases, classdict)
         init_arguments = c.init_arguments
         try:
             for a in c.sid_ignore:
-                if a not in init_arguments and a not in ('name', 'caching'):
+                if a not in init_arguments and a not in ImmutableMeta.init_arguments_never_warn:
                     raise ValueError(a)
         except ValueError as e:
             c.logger.warn('sid_ignore contains "{}" which is not an __init__ argument!'.format(e))
@@ -324,13 +326,11 @@ class ImmutableMeta(UberMeta):
             sid_ignore = instance.sid_ignore
 
             try:
-                arg_sids = tuple(_calculate_sid(o, name)
-                                 for o, name in itertools.izip(args, instance.init_arguments)
-                                 if not name in sid_ignore)
-                kwarg_sids = tuple(_calculate_sid(o, k)
+                kwargs.update((k, o) for k, o in itertools.izip(instance.init_arguments, args))
+                kwarg_sids = tuple((k, _calculate_sid(o, k))
                                    for k, o in sorted(kwargs.iteritems())
                                    if k not in sid_ignore)
-                instance.sid = (type(instance), arg_sids, kwarg_sids)
+                instance.sid = (type(instance), kwarg_sids)
             except ValueError as e:
                 instance.sid_failure = str(e)
         else:
