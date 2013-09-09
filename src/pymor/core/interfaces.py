@@ -154,7 +154,18 @@ class BasicInterface(object):
         -------
         Copy of `self` with changed attributes.
         '''
-        return self._with_via_init(kwargs)
+        if not set(kwargs.keys()) <= self.with_arguments:
+            raise ConstError('Changing "{}" using with() is not allowed in {} (only "{}")'.format(
+                kwargs.keys(), self.__class__, self.with_arguments))
+        c = copy.copy(self)
+        locked = c._locked
+        self._locked = False
+        for k, v in kwargs.iteritems():
+            setattr(c, k, v)
+        if c._added_attributes is not None:
+            c._added_attributes = list(c._added_attributes)
+        c._locked = locked
+        return c
 
     def _with_via_init(self, kwargs, new_class=None):
         '''Default implementation for with_ by calling __init__.
