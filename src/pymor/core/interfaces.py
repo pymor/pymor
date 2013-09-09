@@ -292,7 +292,9 @@ def _calculate_sid(obj, name):
 def inject_sid(obj, context, *args):
     sid = tuple((context, tuple(_calculate_sid(o, i) for o, i in enumerate(args))))
     obj.sid = sid
-    if isinstance(obj, np.ndarray):
+    if isinstance(obj, BasicInterface):
+        obj.lock()
+    elif isinstance(obj, np.ndarray):
         obj.flags.writable = False
 
 
