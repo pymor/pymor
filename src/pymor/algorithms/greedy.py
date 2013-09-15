@@ -65,7 +65,7 @@ def greedy(discretization, reductor, samples, initial_data=None, use_estimator=T
         'max_errs'
             Sequence of maximum errors during the greedy run.
         'max_errs_mu'
-            The parameters corresponding to `max_err`.
+            The parameters corresponding to `max_errs`.
     '''
 
     logger = getLogger('pymor.algorithms.greedy.greedy')
@@ -95,10 +95,10 @@ def greedy(discretization, reductor, samples, initial_data=None, use_estimator=T
         max_err, max_err_mu = max(((err, mu) for err, mu in izip(errors, samples)), key=lambda t: t[0])
         max_errs.append(max_err)
         max_err_mus.append(max_err_mu)
-        logger.info('Maximum error after {} extensions: {} (mu = {})'.format(extensions, max_err, max_err_mu))
+        logger.info('Maximum error after {} extensions: {} (mu = {})'.format(extensions, max_err[0], max_err_mu))
 
         if target_error is not None and max_err <= target_error:
-            logger.info('Reached maximal error on snapshots of {} <= {}'.format(max_err, target_error))
+            logger.info('Reached maximal error on snapshots of {} <= {}'.format(max_err[0], target_error))
             break
 
         logger.info('Extending with snapshot for mu = {}'.format(max_err_mu))
