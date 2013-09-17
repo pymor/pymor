@@ -35,7 +35,7 @@ TOX_RECIPE = {'name': 'tox',
 UBUNTU_13_04_RECIPE = {'name': 'Ubuntu 13.04',
                        'system': [  'sudo apt-get install build-essential cmake gfortran libqt4-dev libsuitesparse-dev '
                                   + 'libatlas-base-dev libfreetype6-dev libpng12-dev python2.7 python2.7-dev '
-                                  + 'python2.7-tk python-pip python-virtualenv tk-dev swig' ],
+                                  + 'python2.7-tk python-pip python-virtualenv tk-dev swig python-pyvtk' ],
                        'local': deps.install_requires + deps.install_suggests,
                        'venv_cmd': ['/usr/bin/virtualenv']}
 ARCH_RECIPE = {'name': 'Arch Linux',
