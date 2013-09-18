@@ -16,6 +16,7 @@ import os
 from collections import deque
 import uuid
 
+from pymor import defaults
 import pymor.core
 from pymor.core.interfaces import BasicInterface
 from pymor.tools import memory
@@ -208,7 +209,8 @@ class Cachable(object):
         def keygen(*arg, **kwargs):
             return (namespace + "_" + fname + '_' + str(getattr(self, 'sid', id(self))) + '_' +
                     "_".join(s.sid if hasattr(s, 'sid') else str(s) for s in arg)
-                    + '__'.join(x.sid if hasattr(x, 'sid') else str(x) for x in kwargs.iteritems()))
+                    + '__'.join(x.sid if hasattr(x, 'sid') else str(x) for x in kwargs.iteritems())
+                    + '_' + defaults.sid)
         return keygen
 
     def __getstate__(self):
