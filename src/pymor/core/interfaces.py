@@ -293,6 +293,7 @@ def _calculate_sid(obj, name):
 def inject_sid(obj, context, *args):
     sid = tuple((context, tuple(_calculate_sid(o, i) for o, i in enumerate(args))))
     obj.sid = sid
+    ImmutableMeta.sids_created += 1
     if isinstance(obj, BasicInterface):
         obj.lock()
     elif isinstance(obj, np.ndarray):
@@ -340,6 +341,7 @@ class generate_sid(object):
                                        for k, o in sorted(kwargs.iteritems())
                                        if k not in self.ignore)
                     r.sid = (type(r), args[0].sid, self.__name__,  kwarg_sids)
+                    ImmutableMeta.sids_created += 1
                 except (ValueError, AttributeError) as e:
                     instance.sid_failure = str(e)
                 r.lock()
@@ -361,6 +363,7 @@ def enable_sid_generation():
 
 class ImmutableMeta(UberMeta):
 
+    sids_created = 0
     init_arguments_never_warn = ('name', 'caching')
 
     def __new__(cls, classname, bases, classdict):
@@ -383,6 +386,7 @@ class ImmutableMeta(UberMeta):
                                    for k, o in sorted(kwargs.iteritems())
                                    if k not in instance.sid_ignore)
                 instance.sid = (type(instance), kwarg_sids)
+                ImmutableMeta.sids_created += 1
             except ValueError as e:
                 instance.sid_failure = str(e)
         else:
