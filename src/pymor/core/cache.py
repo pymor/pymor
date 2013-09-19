@@ -66,9 +66,9 @@ class cached(object):
         we're decorating a method of and [kw]args are the actual parameters to the decorated method'''
         region = cache_regions[im_self._cache_region]
         key = (self.decorated_function.__name__, getattr(im_self, 'sid', im_self.uid),
-                tuple(x.sid if hasattr(x, 'sid') else x for x in args),
-                tuple((k, v.sid if hasattr(v, 'sid') else v) for k, v in kwargs.iteritems()),
-                defaults.sid)
+               tuple(getattr(x, 'sid', x) for x in args),
+               tuple((k, getattr(v, 'sid', v)) for k, v in sorted(kwargs.iteritems())),
+               defaults.sid)
         key = dumps(key)
         found, value = region.get(key)
         if found:
