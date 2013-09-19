@@ -121,8 +121,8 @@ def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation
 # Should be replaced by something simpler in the future.
 class EvaluationProvider(CacheableInterface):
 
-    def __init__(self, discretization, operator, sample):
-        CacheableInterface.__init__(self, region='memory')
+    def __init__(self, discretization, operator, sample, caching='memory'):
+        CacheableInterface.__init__(self, region=caching)
         self.discretization = discretization
         self.sample = sample
         self.operator = operator
