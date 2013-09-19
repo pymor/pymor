@@ -13,6 +13,16 @@ import pymor.core
 from pymor.core import BasicInterface
 from pymor.tools import memory
 
+
+# patch dogpile.cache.compat module to use
+# latest pickle protocol
+import dogpile.cache.compat
+import types
+patched_pickle = types.ModuleType('pickle')
+patched_pickle.dumps = pymor.core.dumps
+patched_pickle.loads = pymor.core.loads
+dogpile.cache.compat.pickle = patched_pickle
+
 NO_CACHE_CONFIG = {"backend": 'Dummy'}
 DEFAULT_MEMORY_CONFIG = {"backend": 'LimitedMemory', 'arguments.max_kbytes': 20000}
 SMALL_MEMORY_CONFIG = {"backend": 'LimitedMemory', 'arguments.max_keys': 20,
