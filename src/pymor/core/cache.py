@@ -14,7 +14,7 @@ from pymor.core import dumps, ImmutableInterface
 import pymor.core.dogpile_backends
 
 
-class CacheBackend(object):
+class CacheRegion(object):
 
     def get(self, key):
         raise NotImplementedError
@@ -23,7 +23,7 @@ class CacheBackend(object):
         raise NotImplementedError
 
 
-class DogpileCacheBackend(CacheBackend):
+class DogpileCacheRegion(CacheRegion):
 
     def get(self, key):
         value = self._cache_region.get(key)
@@ -36,7 +36,7 @@ class DogpileCacheBackend(CacheBackend):
         self._cache_region.set(key, value)
 
 
-class DogpileMemoryCacheBackend(DogpileCacheBackend):
+class DogpileMemoryCacheRegion(DogpileCacheRegion):
 
     def __init__(self):
         from dogpile import cache as dc
@@ -44,7 +44,7 @@ class DogpileMemoryCacheBackend(DogpileCacheBackend):
         self._cache_region.configure_from_config(pymor.core.dogpile_backends.DEFAULT_MEMORY_CONFIG, '')
 
 
-class DogpileDiskCacheBackend(DogpileCacheBackend):
+class DogpileDiskCacheRegion(DogpileCacheRegion):
 
     def __init__(self):
         from dogpile import cache as dc
@@ -52,8 +52,8 @@ class DogpileDiskCacheBackend(DogpileCacheBackend):
         self._cache_region.configure_from_config(pymor.core.dogpile_backends.DEFAULT_DISK_CONFIG, '')
 
 
-cache_regions = {'memory': DogpileMemoryCacheBackend(),
-                 'disk': DogpileDiskCacheBackend()}
+cache_regions = {'memory': DogpileMemoryCacheRegion(),
+                 'disk': DogpileDiskCacheRegion()}
 
 
 class cached(object):
