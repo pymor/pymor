@@ -9,7 +9,6 @@ import weakref
 import numpy as np
 
 import pymor.core as core
-from pymor.core.cache import Cachable, cached
 from pymor.domaindescriptions import BoundaryType
 from pymor.grids.interfaces import AffineGridInterface
 

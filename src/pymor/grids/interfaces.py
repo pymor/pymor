@@ -6,15 +6,15 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor.core import ImmutableInterface, abstractmethod, abstractstaticmethod
-from pymor.core.cache import Cachable, cached
+from pymor.core import abstractmethod, abstractstaticmethod
+from pymor.core.cache import CacheableInterface, cached
 from pymor.domaindescriptions import BoundaryType
 from pymor.grids.defaultimpl import (ConformalTopologicalGridDefaultImplementations,
                                      SimpleReferenceElementDefaultImplementations,
                                      AffineGridDefaultImplementations,)
 
 
-class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplementations, ImmutableInterface):
+class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplementations, CacheableInterface):
     '''Desribes a conformal topological grid.
 
     The grid is determined via the subentity relation given by `subentities(codim, subentity_codim)`.
@@ -104,7 +104,7 @@ class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplement
         pass
 
 
-class ReferenceElementInterface(SimpleReferenceElementDefaultImplementations, ImmutableInterface):
+class ReferenceElementInterface(SimpleReferenceElementDefaultImplementations, CacheableInterface):
     '''Defines a reference element with the property that each of its subentities is of the same type.
 
     I.e. a three-dimensional reference element cannot have triangles and rectangles as faces at the
@@ -292,7 +292,7 @@ class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopological
         return self._quadrature_points(codim, order, npoints, quadrature_type)
 
 
-class BoundaryInfoInterface(Cachable, ImmutableInterface):
+class BoundaryInfoInterface(CacheableInterface):
     '''Describes boundary types associated to a grid.
 
     For every boundary type and codimension a mask is provided, marking grid entities

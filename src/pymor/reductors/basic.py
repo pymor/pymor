@@ -8,7 +8,6 @@ import numpy as np
 
 import pymor.core as core
 from pymor.la import NumpyVectorArray
-from pymor.core.cache import Cachable, NO_CACHE_CONFIG
 from pymor.operators import rb_project_operator
 
 

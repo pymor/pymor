@@ -10,7 +10,7 @@ from scipy.sparse.linalg import bicgstab
 from scipy.sparse import issparse
 
 from pymor import defaults
-from pymor.core.cache import Cachable, NO_CACHE_CONFIG
+from pymor.core.cache import CacheableInterface, NO_CACHE_CONFIG
 from pymor.playground.tools.dictproperty import dict_property
 from pymor.discretizations.basic import StationaryDiscretization, DiscretizationBase
 from pymor.playground.operators.dune import DuneLinearOperator, DuneLinearFunctional
