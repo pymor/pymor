@@ -19,6 +19,20 @@ from pymor.core import decorators, backports, logger
 from pymor.core.exceptions import ConstError
 
 
+class UIDProvider(object):
+    def __init__(self):
+        self.counter = 0
+        import uuid
+        self.prefix = '{}_'.format(uuid.uuid4())
+
+    def __call__(self):
+        uid = self.prefix + str(self.counter)
+        self.counter += 1
+        return uid
+
+uid_provider = UIDProvider()
+
+
 class UberMeta(abc.ABCMeta):
 
     def __init__(cls, name, bases, namespace):
@@ -234,6 +248,13 @@ class BasicInterface(object):
     def has_interface_name(cls):
         name = cls.__name__
         return name.endswith('Interface')
+
+    _uid = None
+    @property
+    def uid(self):
+        if self._uid is None:
+            self._uid = uid_provider()
+        return self._uid
 
 
 contract = decorators.contract
