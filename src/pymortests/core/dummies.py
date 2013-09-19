@@ -5,7 +5,7 @@
 from __future__ import absolute_import, division, print_function
 
 from pymor.core.interfaces import (BasicInterface, contract, abstractmethod)
-from pymor.core.cache import Cachable, cached
+from pymor.core.cache import CacheableInterface, cached
 import pymor.grids.boundaryinfos
 from pymor.core import interfaces
 
@@ -73,7 +73,7 @@ class AverageImplementer(StupidInterface, BrilliantInterface):
     some_attribute = 2
 
 
-class CacheImplementer(Cachable):
+class CacheImplementer(CacheableInterface):
 
     some_attribute = 2
 
