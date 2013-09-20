@@ -78,6 +78,20 @@ class DogpileDiskCacheRegion(DogpileCacheRegion):
 
 cache_regions = {'memory': DogpileMemoryCacheRegion(),
                  'disk': DogpileDiskCacheRegion()}
+_caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
+if _caching_disabled:
+    from pymor.core import getLogger
+    getLogger('pymor.core.cache').warn('caching globally disabled by environment')
+
+
+def enable_caching():
+    global caching_disabled
+    caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
+
+
+def disable_caching():
+    global caching_enabled
+    caching_disabled = True
 
 
 def clear_caches():
@@ -113,7 +127,7 @@ class cached(object):
         '''Implement the descriptor protocol to make decorating instance method possible.
         Return a partial function where the first argument is the instance of the decorated instance object.
         '''
-        if instance._cache_region is None:
+        if _caching_disabled or instance._cache_region is None:
             return partial(self.decorated_function, instance)
         else:
             return partial(self.__call__, instance)
@@ -130,11 +144,7 @@ class CacheableInterface(ImmutableInterface):
         self._cache_region = None
 
     def enable_caching(self, region):
-        self._cache_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
-        if self._cache_disabled:
-            self.logger.warn('caching globally disabled')
-            self._cache_region = None
-        elif region in (None, 'none'):
+        if region in (None, 'none'):
             self._cache_region = None
         else:
             assert region in cache_regions
