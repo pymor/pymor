@@ -312,7 +312,7 @@ def _calculate_sid(obj, name):
 
 
 def inject_sid(obj, context, *args):
-    sid = tuple((context, tuple(_calculate_sid(o, i) for o, i in enumerate(args))))
+    sid = tuple((context, tuple(_calculate_sid(o, i) for i, o in enumerate(args))))
     obj.sid = sid
     ImmutableMeta.sids_created += 1
     if isinstance(obj, BasicInterface):
