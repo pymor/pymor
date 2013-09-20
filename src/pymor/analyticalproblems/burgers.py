@@ -28,7 +28,7 @@ class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
             R[...,0] = U_exp * vx
             R[...,1] = U_exp * vy
             return R
-        inject_sid(burgers_flux, str(BurgersProblem) + '.burgers_flux')
+        inject_sid(burgers_flux, str(BurgersProblem) + '.burgers_flux', vx, vy)
 
         def burgers_flux_derivative(U, mu):
             U = U.reshape(U.shape[:-1])
@@ -37,7 +37,7 @@ class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
             R[...,0] = U_exp * vx
             R[...,1] = U_exp * vy
             return R
-        inject_sid(burgers_flux_derivative, str(BurgersProblem) + '.burgers_flux_derivative')
+        inject_sid(burgers_flux_derivative, str(BurgersProblem) + '.burgers_flux_derivative', vx, vy)
 
         flux_function = GenericFunction(burgers_flux, dim_domain=1, shape_range=(2,),
                                         parameter_type={'exponent': 0},
