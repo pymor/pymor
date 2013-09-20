@@ -16,6 +16,8 @@ import pymor.core.dogpile_backends
 
 class CacheRegion(object):
 
+    enabled = True
+
     def get(self, key):
         raise NotImplementedError
 
@@ -108,6 +110,9 @@ class cached(object):
         '''Via the magic that is partial functions returned from __get__, im_self is the instance object of the class
         we're decorating a method of and [kw]args are the actual parameters to the decorated method'''
         region = cache_regions[im_self._cache_region]
+        if not region.enabled:
+            return self.decorated_function(im_self, *args, **kwargs)
+
         key = (self.decorated_function.__name__, getattr(im_self, 'sid', im_self.uid),
                tuple(getattr(x, 'sid', x) for x in args),
                tuple((k, getattr(v, 'sid', v)) for k, v in sorted(kwargs.iteritems())),
