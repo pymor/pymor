@@ -22,6 +22,9 @@ class CacheRegion(object):
     def set(self, key, value):
         raise NotImplementedError
 
+    def clear(self):
+        raise NotImplementedError
+
 
 class DogpileCacheRegion(CacheRegion):
 
@@ -39,17 +42,34 @@ class DogpileCacheRegion(CacheRegion):
 class DogpileMemoryCacheRegion(DogpileCacheRegion):
 
     def __init__(self):
+        self._new_region()
+
+    def _new_region(self):
         from dogpile import cache as dc
         self._cache_region = dc.make_region()
         self._cache_region.configure_from_config(pymor.core.dogpile_backends.DEFAULT_MEMORY_CONFIG, '')
+
+    def clear(self):
+        self._new_region()
 
 
 class DogpileDiskCacheRegion(DogpileCacheRegion):
 
     def __init__(self):
+        self._new_region()
+
+    def _new_region(self):
         from dogpile import cache as dc
         self._cache_region = dc.make_region()
         self._cache_region.configure_from_config(pymor.core.dogpile_backends.DEFAULT_DISK_CONFIG, '')
+
+    def clear(self):
+        import glob
+        filename = self._cache_region.backend.filename
+        del self._cache_region
+        files = glob.glob(filename + '*')
+        map(os.unlink, files)
+        self._new_region()
 
 
 cache_regions = {'memory': DogpileMemoryCacheRegion(),
