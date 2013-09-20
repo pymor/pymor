@@ -55,13 +55,17 @@ class DogpileMemoryCacheRegion(DogpileCacheRegion):
 
 class DogpileDiskCacheRegion(DogpileCacheRegion):
 
-    def __init__(self):
+    def __init__(self, filename=None):
+        self.filename = filename
         self._new_region()
 
     def _new_region(self):
         from dogpile import cache as dc
         self._cache_region = dc.make_region()
-        self._cache_region.configure_from_config(pymor.core.dogpile_backends.DEFAULT_DISK_CONFIG, '')
+        config = dict(pymor.core.dogpile_backends.DEFAULT_DISK_CONFIG)
+        if self.filename:
+            config['arguments.filename'] = os.path.expanduser(self.filename)
+        self._cache_region.configure_from_config(config, '')
 
     def clear(self):
         import glob
