@@ -5,13 +5,13 @@
 
 from __future__ import absolute_import, division, print_function
 
-import pymor.core as core
+from pymor.core import ImmutableInterface
 from pymor.tools import Named
 from pymor.domaindescriptions import RectDomain
 from pymor.functions import ConstantFunction
 
 
-class EllipticProblem(core.BasicInterface, Named):
+class EllipticProblem(ImmutableInterface, Named):
     '''Standard elliptic analytical problem.
 
     The problem consists in solving ::
