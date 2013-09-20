@@ -76,6 +76,11 @@ cache_regions = {'memory': DogpileMemoryCacheRegion(),
                  'disk': DogpileDiskCacheRegion()}
 
 
+def clear_caches():
+    for r in cache_regions.itervalues():
+        r.clear()
+
+
 class cached(object):
 
     def __init__(self, function):
