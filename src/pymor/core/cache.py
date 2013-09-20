@@ -4,222 +4,153 @@
 
 from __future__ import absolute_import, division, print_function
 #cannot use unicode_literals here, or else dbm backend fails
+
 from functools import partial
-from dogpile import cache as dc
-from dogpile.cache.backends.file import DBMBackend
-from os.path import join
-from tempfile import gettempdir
-from collections import OrderedDict
-from pprint import pformat
-import sys
 import os
-from collections import deque
-import uuid
-
-import pymor.core
-from pymor.core.interfaces import BasicInterface
-from pymor.tools import memory
 
 
-NO_CACHE_CONFIG = {"backend": 'Dummy'}
-DEFAULT_MEMORY_CONFIG = {"backend": 'LimitedMemory', 'arguments.max_kbytes': 20000}
-SMALL_MEMORY_CONFIG = {"backend": 'LimitedMemory', 'arguments.max_keys': 20,
-                       'arguments.max_kbytes': 20}
-DEFAULT_DISK_CONFIG = {"backend": 'LimitedFile',
-                       "arguments.filename": join(gettempdir(), 'pymor.cache.dbm'),
-                       'arguments.max_keys': 2000}
-SMALL_DISK_CONFIG = {"backend": 'LimitedFile',
-                     "arguments.filename": join(gettempdir(), 'pymor.small_cache.dbm'),
-                     'arguments.max_keys': 20}
-
-NO_VALUE = dc.api.NO_VALUE
+from pymor import defaults
+from pymor.core import dumps, ImmutableInterface
+import pymor.core.dogpile_backends
 
 
-class DummyBackend(BasicInterface, dc.api.CacheBackend):
+class CacheRegion(object):
 
-    def __init__(self, argument_dict):
-        self.logger.debug('DummyBackend args {}'.format(pformat(argument_dict)))
+    enabled = True
 
     def get(self, key):
-        return dc.api.NO_VALUE
+        raise NotImplementedError
 
     def set(self, key, value):
-        pass
+        raise NotImplementedError
 
-    def delete(self, key):
-        pass
+    def clear(self):
+        raise NotImplementedError
 
 
-class LimitedMemoryBackend(BasicInterface, dc.api.CacheBackend):
-
-    def __init__(self, argument_dict):
-        '''If argument_dict contains a value for max_kbytes this the total memory limit in kByte that is enforced on the
-        internal cache dictionary, otherwise it's set to sys.maxint.
-        If argument_dict contains a value for max_keys this maximum amount of cache values kept in the
-        internal cache dictionary, otherwise it's set to sys.maxlen.
-        If necessary values are deleted from the cache in FIFO order.
-        '''
-        self.logger.debug('LimitedMemoryBackend args {}'.format(pformat(argument_dict)))
-        self._max_keys = argument_dict.get('max_keys', sys.maxsize)
-        self._max_bytes = argument_dict.get('max_kbytes', sys.maxint / 1024) * 1024
-        self._cache = OrderedDict()
+class DogpileCacheRegion(CacheRegion):
 
     def get(self, key):
-        return self._cache.get(key, dc.api.NO_VALUE)
-
-    def print_limit(self, additional_size=0):
-        self.logger.info('LimitedMemoryBackend at {}({}) keys -- {}({}) Byte'
-                         .format(len(self._cache), self._max_keys,
-                                 memory.getsizeof(self._cache) / 8, self._max_bytes))
-
-    def _enforce_limits(self, new_value):
-        additional_size = memory.getsizeof(new_value) / 8
-        while len(self._cache) > 0 and not (len(self._cache) <= self._max_keys and
-                                            (memory.getsizeof(self._cache) + additional_size) / 8 <= self._max_bytes):
-            self.logger.debug('shrinking limited memory cache')
-            self._cache.popitem(last=False)
+        value = self._cache_region.get(key)
+        if value is pymor.core.dogpile_backends.NO_VALUE:
+            return False, None
+        else:
+            return True, value
 
     def set(self, key, value):
-        self._enforce_limits(value)
-        self._cache[key] = value
-
-    def delete(self, key):
-        self._cache.pop(key)
+        self._cache_region.set(key, value)
 
 
-class LimitedFileBackend(BasicInterface, DBMBackend):
+class DogpileMemoryCacheRegion(DogpileCacheRegion):
 
-    def __init__(self, argument_dict):
-        '''If argument_dict contains a value for max_keys this maximum amount of cache values kept in the
-        internal cache file, otherwise its set to sys.maxlen.
-        If necessary values are deleted from the cache in FIFO order.
-        '''
-        argument_dict['filename'] = argument_dict.get('filename', os.path.join(gettempdir(), str(uuid.uuid4())))
-        DBMBackend.__init__(self, argument_dict)
-        self.logger.debug('LimitedFileBackend args {}'.format(pformat(argument_dict)))
-        self._max_keys = argument_dict.get('max_keys', sys.maxsize)
-        self._keylist_fn = self.filename + '.keys'
-        try:
-            self._keylist = pymor.core.load(self._keylist_fn)
-        except:
-            self._keylist = deque()
-        self._enforce_limits(None)
-        self.print_limit()
+    def __init__(self):
+        self._new_region()
 
-    def _dump_keylist(self):
-        pymor.core.dump(self._keylist, open(self._keylist_fn, 'wb'))
+    def _new_region(self):
+        from dogpile import cache as dc
+        self._cache_region = dc.make_region()
+        self._cache_region.configure_from_config(pymor.core.dogpile_backends.DEFAULT_MEMORY_CONFIG, '')
 
-    def _new_key(self, key):
-        self._keylist.append(key)
-        self._dump_keylist()
-
-    def get(self, key):
-        return super(LimitedFileBackend, self).get(key)
-
-    def print_limit(self, additional_size=0):
-        self.logger.info('LimitedFileBackend at {}({}) keys'
-                         .format(len(self._keylist), self._max_keys))
-
-    def _enforce_limits(self, new_value):
-        while len(self._keylist) > 0 and not (len(self._keylist) <= self._max_keys):
-            self.logger.debug('shrinking limited memory cache')
-            key = self._keylist.popleft()
-            self.delete(key)
-
-    def set(self, key, value):
-        self._enforce_limits(value)
-        if not key in self._keylist:
-            self._new_key(key)
-        super(LimitedFileBackend, self).set(key, value)
-
-    def delete(self, key):
-        super(LimitedFileBackend, self).delete(key)
-        try:
-            #api says this method is supposed to be idempotent
-            self._keylist.remove(key)
-        except ValueError:
-            pass
-        self._dump_keylist()
-
-dc.register_backend("LimitedMemory", "pymor.core.cache", "LimitedMemoryBackend")
-dc.register_backend("LimitedFile", "pymor.core.cache", "LimitedFileBackend")
-dc.register_backend("Dummy", "pymor.core.cache", "DummyBackend")
+    def clear(self):
+        self._new_region()
 
 
-class cached(BasicInterface):
+class DogpileDiskCacheRegion(DogpileCacheRegion):
+
+    def __init__(self, filename=None):
+        self.filename = filename
+        self._new_region()
+
+    def _new_region(self):
+        from dogpile import cache as dc
+        self._cache_region = dc.make_region()
+        config = dict(pymor.core.dogpile_backends.DEFAULT_DISK_CONFIG)
+        if self.filename:
+            config['arguments.filename'] = os.path.expanduser(self.filename)
+        self._cache_region.configure_from_config(config, '')
+
+    def clear(self):
+        import glob
+        filename = self._cache_region.backend.filename
+        del self._cache_region
+        files = glob.glob(filename + '*')
+        map(os.unlink, files)
+        self._new_region()
+
+
+cache_regions = {'memory': DogpileMemoryCacheRegion(),
+                 'disk': DogpileDiskCacheRegion()}
+_caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
+if _caching_disabled:
+    from pymor.core import getLogger
+    getLogger('pymor.core.cache').warn('caching globally disabled by environment')
+
+
+def enable_caching():
+    global caching_disabled
+    caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
+
+
+def disable_caching():
+    global caching_enabled
+    caching_disabled = True
+
+
+def clear_caches():
+    for r in cache_regions.itervalues():
+        r.clear()
+
+
+class cached(object):
 
     def __init__(self, function):
-        super(cached, self).__init__()
         self.decorated_function = function
-        self._cache_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
-        if self._cache_disabled:
-            self.logger.warn('caching globally disabled')
 
     def __call__(self, im_self, *args, **kwargs):
         '''Via the magic that is partial functions returned from __get__, im_self is the instance object of the class
         we're decorating a method of and [kw]args are the actual parameters to the decorated method'''
-        cache = im_self._cache_region
-        keygen = im_self.keygen_generator(im_self._namespace, self.decorated_function)
-        key = keygen(*args, **kwargs)
-
-        def creator_function():
-            self.logger.debug('creating new cache entry for {}.{}'
-                              .format(im_self.__class__.__name__, self.decorated_function.__name__))
+        region = cache_regions[im_self._cache_region]
+        if not region.enabled:
             return self.decorated_function(im_self, *args, **kwargs)
-        return cache.get_or_create(key, creator_function, im_self._expiration_time)
+
+        key = (self.decorated_function.__name__, getattr(im_self, 'sid', im_self.uid),
+               tuple(getattr(x, 'sid', x) for x in args),
+               tuple((k, getattr(v, 'sid', v)) for k, v in sorted(kwargs.iteritems())),
+               defaults.sid)
+        key = dumps(key)
+        found, value = region.get(key)
+        if found:
+            return value
+        else:
+            im_self.logger.debug('creating new cache entry for {}.{}'
+                                 .format(im_self.__class__.__name__, self.decorated_function.__name__))
+            value = self.decorated_function(im_self, *args, **kwargs)
+            region.set(key, value)
+            return value
 
     def __get__(self, instance, instancetype):
         '''Implement the descriptor protocol to make decorating instance method possible.
         Return a partial function where the first argument is the instance of the decorated instance object.
         '''
-        if self._cache_disabled or instance._cache_disabled_for_instance:
+        if _caching_disabled or instance._cache_region is None:
             return partial(self.decorated_function, instance)
-        return partial(self.__call__, instance)
+        else:
+            return partial(self.__call__, instance)
 
 
-class Cachable(object):
+class CacheableInterface(ImmutableInterface):
     '''Base class for anything that wants to use our built-in caching.
-    provides custom __{g,s}etstate__ functions to allow using derived
-    classes with the pickle module
     '''
 
-    def __init__(self, config=DEFAULT_MEMORY_CONFIG, disable=False):
-        if disable:
-            self._cache_disabled_for_instance = True
+    def __init__(self, region='memory'):
+        self.enable_caching(region)
+
+    def disable_caching(self):
+        self._cache_region = None
+
+    def enable_caching(self, region):
+        if region in (None, 'none'):
+            self._cache_region = None
         else:
-            self._cache_disabled_for_instance = False
-            self._cache_config = config
-            self._init_cache()
-            self._namespace = '{}_{}'.format(self.__class__.__name__, hash(self))
-            self._expiration_time = None
-
-    def _init_cache(self):
-        self._cache_region = dc.make_region(function_key_generator=self.keygen_generator)
-        self._cache_region.configure_from_config(self._cache_config, '')
-
-    def keygen_generator(self, namespace, function):
-        '''I am the default generator function for (potentially) function specific keygens.
-        I construct a key from the function name and given namespace
-        plus string representations of all positional and keyword args.
-        '''
-        fname = function.__name__
-        namespace = str(namespace)
-
-        def keygen(*arg, **kwargs):
-            return (namespace + "_" + fname + "_".join(s.sid if hasattr(s, 'sid') else str(s) for s in arg)
-                    + '__'.join(x.sid if hasattr(x, 'sid') else str(x) for x in kwargs.iteritems()))
-        return keygen
-
-    def __getstate__(self):
-        '''cache regions contain lock objects that cannot be pickled.
-        Therefore we don't include them in the state that the pickle protocol gets to see.
-        '''
-        return {name: getattr(self, name) for name in self.__dict__.keys() if name != '_cache_region'}
-
-    def __setstate__(self, d):
-        '''Since we cannot pickle the cache region, we have to re-init
-        the region from the pickled config when the pickle module
-        calls this function.
-        '''
-        self.__dict__.update(d)
-        self._init_cache()
+            assert region in cache_regions
+            self._cache_region = region

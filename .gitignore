@@ -1,4 +1,7 @@
 *.py[cod]
+*.pstats
+*.svg
+*.vtu
 
 # C extensions
 *.so

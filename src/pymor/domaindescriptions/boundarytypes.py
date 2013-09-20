@@ -4,10 +4,10 @@
 
 from __future__ import absolute_import, division, print_function
 
-import pymor.core as core
+from pymor.core import ImmutableInterface
 
 
-class BoundaryType(core.BasicInterface):
+class BoundaryType(ImmutableInterface):
     '''Represents a boundary type, i.e. Dirichlet, Neumann, etc.
 
     By defining a global register of possible boundary types, we prevent hard

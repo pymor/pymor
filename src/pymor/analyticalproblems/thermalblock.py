@@ -11,7 +11,7 @@ from pymor.domaindescriptions import RectDomain
 from pymor.functions import GenericFunction, ConstantFunction
 from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional
 from pymor.analyticalproblems.elliptic import EllipticProblem
-from pymor.core import Unpicklable
+from pymor.core import Unpicklable, inject_sid
 
 
 class ThermalBlockProblem(EllipticProblem, Unpicklable):
@@ -62,10 +62,14 @@ class ThermalBlockProblem(EllipticProblem, Unpicklable):
         dx = 1 / num_blocks[0]
         dy = 1 / num_blocks[1]
 
+        # creating the id-string once for every diffusion function reduces the size of the pickled sid
+        diffusion_function_id = str(ThermalBlockProblem) + '.diffusion_function'
+
         def diffusion_function_factory(x, y):
-            return GenericFunction(lambda X: (1. * (X[..., 0] >= x * dx) * (X[..., 0] < (x + 1) * dx)
-                                                 * (X[..., 1] >= y * dy) * (X[..., 1] < (y + 1) * dy)),
-                                   dim_domain=2, name='diffusion_function_{}_{}'.format(x, y))
+            func = lambda X: (1. * (X[..., 0] >= x * dx) * (X[..., 0] < (x + 1) * dx)
+                                 * (X[..., 1] >= y * dy) * (X[..., 1] < (y + 1) * dy))
+            inject_sid(func, diffusion_function_id, x, y, dx, dy)
+            return GenericFunction(func, dim_domain=2, name='diffusion_function_{}_{}'.format(x, y))
 
         def parameter_functional_factory(x, y):
             return ProjectionParameterFunctional(parameter_name='diffusion',

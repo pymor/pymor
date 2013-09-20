@@ -9,12 +9,12 @@ import numpy as np
 
 from numbers import Number
 
-from pymor.core.interfaces import BasicInterface, abstractmethod, abstractproperty, abstractstaticmethod
+from pymor.core import ImmutableInterface, abstractmethod, abstractproperty, abstractstaticmethod
 from pymor.tools import Named
 from pymor.parameters import Parametric
 
 
-class OperatorInterface(BasicInterface, Parametric, Named):
+class OperatorInterface(ImmutableInterface, Parametric, Named):
     '''Interface for parameter dependent discrete operators.
 
     Every discrete operator is viewed as a map ::

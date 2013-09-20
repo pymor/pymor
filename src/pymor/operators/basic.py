@@ -226,7 +226,6 @@ class NumpyGenericOperator(OperatorBase):
         self._mapping = mapping
         if parameter_type is not None:
             self.build_parameter_type(parameter_type, local_global=True)
-        self.lock()
 
     def apply(self, U, ind=None, mu=None):
         assert isinstance(U, NumpyVectorArray)
@@ -308,6 +307,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     '''
 
     assembled = True
+    calculate_sid = False
 
     def __init__(self, matrix, name=None):
         assert matrix.ndim <= 2
@@ -318,7 +318,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         self.name = name
         self._matrix = matrix
         self.sparse = issparse(matrix)
-        self.lock()
+        self.calculate_sid = hasattr(matrix, 'sid')
 
     def _assemble(self, mu=None):
         assert self.check_parameter(mu)
@@ -402,7 +402,6 @@ class NumpyLincombMatrixOperator(LincombOperatorBase, NumpyMatrixBasedOperator):
                                      num_coefficients=num_coefficients,
                                      coefficients_name=coefficients_name, name=name)
         self.sparse = all(op.sparse for op in operators)
-        self.lock()
 
     def _assemble(self, mu=None):
         mu = self.parse_parameter(mu)
@@ -480,7 +479,6 @@ class ProjectedOperator(OperatorBase):
         self.source_basis = source_basis.copy() if source_basis is not None and copy else source_basis
         self.range_basis = range_basis.copy() if range_basis is not None and copy else range_basis
         self.product = product
-        self.lock()
 
     def apply(self, U, ind=None, mu=None):
         mu = self.parse_parameter(mu)
@@ -563,7 +561,6 @@ class ProjectedLinearOperator(NumpyMatrixBasedOperator):
         self.source_basis = source_basis.copy() if source_basis is not None and copy else source_basis
         self.range_basis = range_basis.copy() if range_basis is not None and copy else range_basis
         self.product = product
-        self.lock()
 
     def _assemble(self, mu=None):
         mu = self.parse_parameter(mu)
@@ -609,7 +606,6 @@ class LincombOperator(LincombOperatorBase):
         super(LincombOperator, self).__init__(operators=operators, coefficients=coefficients,
                                               num_coefficients=num_coefficients,
                                               coefficients_name=coefficients_name, name=name)
-        self.lock()
 
     def apply(self, U, ind=None, mu=None):
         mu = self.parse_parameter(mu)

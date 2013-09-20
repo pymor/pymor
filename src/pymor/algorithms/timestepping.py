@@ -4,12 +4,12 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymor.core import BasicInterface, abstractmethod
+from pymor.core import ImmutableInterface, abstractmethod
 from pymor.la import VectorArrayInterface
 from pymor.operators import OperatorInterface
 
 
-class TimeStepperInterface(BasicInterface):
+class TimeStepperInterface(ImmutableInterface):
 
     @abstractmethod
     def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None):
@@ -21,7 +21,6 @@ class ImplicitEulerTimeStepper(TimeStepperInterface):
     def __init__(self, nt, invert_options=None):
         self.nt = nt
         self.invert_options = invert_options
-        self.lock()
 
     with_arguments = set(('nt',))
     def with_(self, **kwargs):
@@ -36,7 +35,6 @@ class ExplicitEulerTimeStepper(TimeStepperInterface):
 
     def __init__(self, nt):
         self.nt = nt
-        self.lock()
 
     with_arguments = set(('nt',))
     def with_(self, **kwargs):

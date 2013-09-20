@@ -53,7 +53,6 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         self.dirichlet_data = dirichlet_data
         self.name = name
         self.build_parameter_type(inherits=(function, dirichlet_data))
-        self.lock()
 
     def _assemble(self, mu=None):
         mu = self.parse_parameter(mu)
@@ -137,7 +136,6 @@ class L2ProductP1(NumpyMatrixBasedOperator):
         self.dirichlet_clear_columns = dirichlet_clear_columns
         self.dirichlet_clear_diag = dirichlet_clear_diag
         self.name = name
-        self.lock()
 
     def _assemble(self, mu=None):
         assert self.check_parameter(mu)
@@ -233,7 +231,6 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
         self.name = name
         if diffusion_function is not None:
             self.build_parameter_type(inherits=(diffusion_function,))
-        self.lock()
 
     def _assemble(self, mu=None):
         mu = self.parse_parameter(mu)

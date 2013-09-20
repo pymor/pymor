@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-import pymor.core as core
+from pymor.core import Unpicklable, inject_sid
 from pymor.tools import Named
 from pymor.domaindescriptions import RectDomain, TorusDomain, BoundaryType
 from pymor.functions import ConstantFunction, GenericFunction
@@ -15,7 +15,7 @@ from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
 from pymor.parameters.spaces import CubicParameterSpace
 
 
-class BurgersProblem(InstationaryAdvectionProblem, core.Unpicklable):
+class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
 
     def __init__(self, vx = 1., vy = 1., torus=True, initial_data='sin', parameter_range=(1., 2.)):
 
@@ -28,6 +28,7 @@ class BurgersProblem(InstationaryAdvectionProblem, core.Unpicklable):
             R[...,0] = U_exp * vx
             R[...,1] = U_exp * vy
             return R
+        inject_sid(burgers_flux, str(BurgersProblem) + '.burgers_flux', vx, vy)
 
         def burgers_flux_derivative(U, mu):
             U = U.reshape(U.shape[:-1])
@@ -36,6 +37,7 @@ class BurgersProblem(InstationaryAdvectionProblem, core.Unpicklable):
             R[...,0] = U_exp * vx
             R[...,1] = U_exp * vy
             return R
+        inject_sid(burgers_flux_derivative, str(BurgersProblem) + '.burgers_flux_derivative', vx, vy)
 
         flux_function = GenericFunction(burgers_flux, dim_domain=1, shape_range=(2,),
                                         parameter_type={'exponent': 0},
@@ -48,10 +50,12 @@ class BurgersProblem(InstationaryAdvectionProblem, core.Unpicklable):
         if initial_data == 'sin':
             def initial_data(x):
                 return 0.5 * (np.sin(2 * np.pi * x[..., 0]) * np.sin(2 * np.pi * x[..., 1]) + 1.)
+            inject_sid(initial_data, str(BurgersProblem) + '.initial_data_sin')
             dirichlet_data=ConstantFunction(dim_domain=2, value=0.5)
         else:
             def initial_data(x):
                 return (x[..., 0] >= 0.5) * (x[..., 0] <= 1) * 1
+            inject_sid(initial_data, str(BurgersProblem) + '.initial_data_riemann')
             dirichlet_data=ConstantFunction(dim_domain=2, value=0)
 
         initial_data = GenericFunction(initial_data, dim_domain=2)

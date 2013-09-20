@@ -10,7 +10,7 @@ from scipy.sparse.linalg import bicgstab
 from scipy.sparse import issparse
 
 from pymor import defaults
-from pymor.core.cache import Cachable, NO_CACHE_CONFIG
+from pymor.core.cache import CacheableInterface, NO_CACHE_CONFIG
 from pymor.playground.tools.dictproperty import dict_property
 from pymor.discretizations.basic import StationaryDiscretization, DiscretizationBase
 from pymor.playground.operators.dune import DuneLinearOperator, DuneLinearFunctional
@@ -43,7 +43,6 @@ class DuneLinearEllipticCGDiscretization(DiscretizationBase):
 
         self.build_parameter_type(inherits=(operator,))
         self.parameter_space = CubicParameterSpace({'diffusion': self.example.paramSize()}, *parameter_range)
-        self.lock()
 
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu)

@@ -10,9 +10,27 @@ import itertools
 import contracts
 import copy
 import inspect
+import functools
+from types import NoneType
+
+import numpy as np
 
 from pymor.core import decorators, backports, logger
 from pymor.core.exceptions import ConstError
+
+
+class UIDProvider(object):
+    def __init__(self):
+        self.counter = 0
+        import uuid
+        self.prefix = '{}_'.format(uuid.uuid4())
+
+    def __call__(self):
+        uid = self.prefix + str(self.counter)
+        self.counter += 1
+        return uid
+
+uid_provider = UIDProvider()
 
 
 class UberMeta(abc.ABCMeta):
@@ -51,6 +69,9 @@ class UberMeta(abc.ABCMeta):
         I also forward "abstract{class|static}method" decorations in the base class to "{class|static}method"
         decorations in the new subclass.
         '''
+        if 'init_arguments' in classdict:
+            raise ValueError('init_arguments is a reserved class attribute for subclasses of BasicInterface')
+
         for attr, item in classdict.items():
             if isinstance(item, types.FunctionType):
                 # first copy/fixup docs
@@ -86,7 +107,16 @@ class UberMeta(abc.ABCMeta):
                             getattr(base_func, "__isabstractclassmethod__")):
                         classdict[attr] = classmethod(classdict[attr])
 
-        return abc.ABCMeta.__new__(cls, classname, bases, classdict)
+        c = abc.ABCMeta.__new__(cls, classname, bases, classdict)
+
+        # Beware! The following will probably break in python 3 if there are
+        # keyword-only arguemnts
+        args, varargs, keywords, defaults = inspect.getargspec(c.__init__)
+        if varargs:
+            raise NotImplementedError
+        assert args[0] == 'self'
+        c.init_arguments = tuple(args[1:])
+        return c
 
 
 class BasicInterface(object):
@@ -96,6 +126,9 @@ class BasicInterface(object):
     __metaclass__ = UberMeta
     _locked = False
     _lock_whitelist = set()
+
+    def __init__(self):
+        pass
 
     def __setattr__(self, key, value):
         '''depending on _locked state I delegate the setattr call to object or
@@ -216,6 +249,13 @@ class BasicInterface(object):
         name = cls.__name__
         return name.endswith('Interface')
 
+    _uid = None
+    @property
+    def uid(self):
+        if self._uid is None:
+            self._uid = uid_provider()
+        return self._uid
+
 
 contract = decorators.contract
 abstractmethod = abc.abstractmethod
@@ -249,3 +289,158 @@ class abstractstaticmethod(abstractstaticmethod_base):
     def __init__(self, callable_method):
         callable_method.__isabstractstaticmethod__ = True
         super(abstractstaticmethod, self).__init__(callable_method)
+
+
+def _calculate_sid(obj, name):
+    if hasattr(obj, 'sid'):
+        return obj.sid
+    else:
+        t_obj = type(obj)
+        if t_obj in (tuple, list):
+            return tuple(_calculate_sid(o, '{}[{}]'.format(name, i)) for i, o in enumerate(obj))
+        elif t_obj is dict:
+            return tuple((k, _calculate_sid(v, '{}[{}]'.format(name, k))) for k, v in sorted(obj.iteritems()))
+        elif t_obj in (NoneType, str, int, float, bool):
+            return obj
+        elif t_obj is np.ndarray:
+            if obj.size < 64:
+                return ('array', obj.shape,obj.dtype.str, obj.tostring())
+            else:
+                raise ValueError('sid calculation faild at large numpy array {}'.format(name))
+        else:
+            raise ValueError('sid calculation failed at {}={}'.format(name,type(obj)))
+
+
+def inject_sid(obj, context, *args):
+    try:
+        sid = tuple((context, tuple(_calculate_sid(o, i) for i, o in enumerate(args))))
+        obj.sid = sid
+        ImmutableMeta.sids_created += 1
+    except ValueError as e:
+        obj.sid_failure = str(e)
+
+    if isinstance(obj, BasicInterface):
+        obj.lock()
+    elif isinstance(obj, np.ndarray):
+        obj.flags.writable = False
+
+
+class generate_sid(object):
+
+    def __init__(self, func=None, ignore=None):
+        if func is not None and not hasattr(func, '__call__'):
+            assert ignore is None
+            ignore = func
+            func = None
+        if isinstance(ignore, str):
+            ignore = (ignore,)
+        self.ignore = ignore if ignore is not None else tuple()
+        self.set_func(func)
+
+    def set_func(self, func):
+        self.func = func
+        if func is not None:
+            # Beware! The following will probably break in python 3 if there are
+            # keyword-only arguemnts
+            args, varargs, keywords, defaults  = inspect.getargspec(func)
+            if varargs:
+                raise NotImplementedError
+            assert args[0] == 'self'
+            self.func_arguments = tuple(args[1:])
+            functools.update_wrapper(self, func)
+
+    def __call__(self, *args, **kwargs):
+        if self.func is None:
+            assert len(kwargs) == 0 and len(args) == 1
+            self.set_func(args[0])
+            return self
+        else:
+            r = self.func(*args, **kwargs)
+            assert isinstance(r, BasicInterface)
+
+            if not hasattr(r, 'sid'):
+                r.unlock()
+                try:
+                    kwargs.update((k, o) for k, o in itertools.izip(self.func_arguments, args[1:]))
+                    kwarg_sids = tuple((k, _calculate_sid(o, k))
+                                       for k, o in sorted(kwargs.iteritems())
+                                       if k not in self.ignore)
+                    r.sid = (type(r), args[0].sid, self.__name__,  kwarg_sids)
+                    ImmutableMeta.sids_created += 1
+                except (ValueError, AttributeError) as e:
+                    instance.sid_failure = str(e)
+                r.lock()
+
+            return r
+
+    def __get__(self, obj, obj_type):
+        return functools.partial(self.__call__, obj)
+
+
+def disable_sid_generation():
+    if hasattr(ImmutableMeta, '__call__'):
+        del ImmutableMeta.__call__
+
+
+def enable_sid_generation():
+    ImmutableMeta.__call__ = ImmutableMeta._call
+
+
+class ImmutableMeta(UberMeta):
+
+    sids_created = 0
+    init_arguments_never_warn = ('name', 'caching')
+
+    def __new__(cls, classname, bases, classdict):
+        c = UberMeta.__new__(cls, classname, bases, classdict)
+        init_arguments = c.init_arguments
+        try:
+            for a in c.sid_ignore:
+                if a not in init_arguments and a not in ImmutableMeta.init_arguments_never_warn:
+                    raise ValueError(a)
+        except ValueError as e:
+            c.logger.warn('sid_ignore contains "{}" which is not an __init__ argument!'.format(e))
+        return c
+
+    def _call(self, *args, **kwargs):
+        instance = super(ImmutableMeta, self).__call__(*args, **kwargs)
+        if instance.calculate_sid:
+            try:
+                kwargs.update((k, o) for k, o in itertools.izip(instance.init_arguments, args))
+                kwarg_sids = tuple((k, _calculate_sid(o, k))
+                                   for k, o in sorted(kwargs.iteritems())
+                                   if k not in instance.sid_ignore)
+                instance.sid = (type(instance), kwarg_sids)
+                ImmutableMeta.sids_created += 1
+            except ValueError as e:
+                instance.sid_failure = str(e)
+        else:
+            instance.sid_failure = 'disabled'
+
+        instance.lock()
+        return instance
+
+    __call__ = _call
+
+
+class ImmutableInterface(BasicInterface):
+    __metaclass__ = ImmutableMeta
+    calculate_sid = True
+    sid_ignore = ('name', 'caching')
+
+    # Unlocking an immutable object will result in the deletion of its sid.
+    # However, this will not delete the sids of objects referencing it.
+    # You really should not unlock an object unless you really know what
+    # you are doing. (One exception might be the modification of a newly
+    # created copy of an immutable object.)
+    def lock(self, doit=True, whitelist=None):
+        super(ImmutableInterface, self).lock(doit, whitelist)
+        if not self.locked and hasattr(self, 'sid'):
+            del self.sid
+            self.sid_failure = 'unlocked'
+
+    def unlock(self):
+        super(ImmutableInterface, self).unlock()
+        if hasattr(self, 'sid'):
+            del self.sid
+            self.sid_failure = 'unlocked'

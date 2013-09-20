@@ -4,12 +4,17 @@
 
 from __future__ import absolute_import, division, print_function
 
+import hashlib
+
 import numpy as np
-from pymor.core.interfaces import BasicInterface
+from pymor.core import dumps
 from pymor.core.logger import getLogger
 
 
-class Defaults(BasicInterface):
+_file_sha = hashlib.sha1(open(__file__).read()).digest()
+
+
+class Defaults(object):
     '''Class defining application-wide defaults. Do not instantiate but use
     `pymor.defaults`.
 
@@ -74,6 +79,7 @@ class Defaults(BasicInterface):
 
     def __init__(self):
         np.random.seed(self.random_seed)
+        self._calc_sid()
 
     def __str__(self):
         return '''
@@ -101,9 +107,26 @@ class Defaults(BasicInterface):
             random_seed                         = {0.random_seed}
             '''.format(self)
 
+    def _calc_sid(self):
+        object.__setattr__(self, 'sid', dumps((_file_sha, tuple((k, v) for k,v in sorted(self.__dict__.iteritems())))))
+
+    def _state_changed(self):
+        self._calc_sid()
+        import pymor.core.interfaces
+        if pymor.core.interfaces.ImmutableMeta.sids_created:
+            logger = getLogger('pymor')
+            logger.warn('Changing state of pymor.defaults after sids have been calcuated. This might break caching!')
+
+    def __setattr__(self, k, v):
+        object.__setattr__(self, k, v)
+        self._state_changed()
+
+    def __delattr__(self, k):
+        object.__delattr__(self, k)
+        self._state_changed()
+
 
 defaults = Defaults()
-defaults.lock()
 
 
 # Set default log levels

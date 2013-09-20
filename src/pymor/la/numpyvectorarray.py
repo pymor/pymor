@@ -100,7 +100,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
             if hasattr(ind, '__len__'):
                 self._array = self._array[list(x for x in xrange(len(self)) if x not in ind)]
             else:
-                self._array = self._array[range(ind) + range(ind + 1, self._len + 1)]
+                self._array = self._array[range(ind) + range(ind + 1, self._len)]
             self._len = self._array.shape[0]
         if not self._array.flags['OWNDATA']:
             self._array = self._array.copy()

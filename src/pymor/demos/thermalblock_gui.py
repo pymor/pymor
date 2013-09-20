@@ -51,7 +51,6 @@ from pymor.discretizers import discretize_elliptic_cg
 from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor.algorithms import greedy, gram_schmidt_basis_extension
 from pymor.parameters.base import Parameter
-from pymor.core.cache import Cachable, NO_CACHE_CONFIG
 from pymor.gui.glumpy import ColorBarWidget, GlumpyPatchWidget
 
 core.getLogger('pymor.algorithms').setLevel('DEBUG')
@@ -177,7 +176,7 @@ class DetailedSim(SimBase):
 
     def __init__(self, args):
         super(DetailedSim, self).__init__(args)
-        Cachable.__init__(self.discretization, config=NO_CACHE_CONFIG)
+        self.discretization.disable_caching()
 
     def solve(self, mu):
         return self.discretization.solve(mu)

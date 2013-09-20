@@ -10,7 +10,7 @@ import numpy as np
 from pymor.algorithms.timestepping import TimeStepperInterface
 from pymor import defaults
 from pymor.core import abstractmethod
-from pymor.core.cache import Cachable, cached, DEFAULT_DISK_CONFIG, NO_CACHE_CONFIG
+from pymor.core.cache import CacheableInterface, cached
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.la import induced_norm, VectorArrayInterface
 from pymor.tools import selfless_arguments, FrozenDict
@@ -23,12 +23,7 @@ from pymor.tools import selfless_arguments
 class DiscretizationBase(DiscretizationInterface):
 
     def __init__(self, operators, products=None, estimator=None, visualizer=None, caching='disk', name=None):
-        if caching == 'disk':
-            Cachable.__init__(self, config=DEFAULT_DISK_CONFIG)
-        elif caching == 'none' or not caching:
-            Cachable.__init__(self, disable=True)
-        else:
-            raise NotImplementedError
+        CacheableInterface.__init__(self, region=caching)
         Parametric.__init__(self)
         self.operators = FrozenDict(operators)
         self.linear = all(op is None or isinstance(op, ConstantOperator) or op.linear for op in operators.itervalues())
@@ -101,6 +96,8 @@ class StationaryDiscretization(DiscretizationBase):
         The functional f_h. A synonym for operators['rhs'].
     '''
 
+    sid_ignore = ('visualizer', 'caching', 'name')
+
     def __init__(self, operator, rhs, products=None, parameter_space=None, estimator=None, visualizer=None,
                  caching='disk', name=None):
         assert isinstance(operator, OperatorInterface) and operator.linear
@@ -119,7 +116,6 @@ class StationaryDiscretization(DiscretizationBase):
         self.operators = operators
         self.build_parameter_type(inherits=(operator, rhs))
         self.parameter_space = parameter_space
-        self.lock()
 
     with_arguments = set(selfless_arguments(__init__)).union(['operators'])
 
@@ -149,6 +145,8 @@ class StationaryDiscretization(DiscretizationBase):
 
 
 class InstationaryDiscretization(DiscretizationBase):
+
+    sid_ignore = ('visualizer', 'caching', 'name')
 
     def __init__(self, T, initial_data, operator, rhs=None, mass=None, time_stepper=None, products=None,
                  parameter_space=None, estimator=None, visualizer=None, caching='disk', name=None):
@@ -181,7 +179,6 @@ class InstationaryDiscretization(DiscretizationBase):
 
         if hasattr(time_stepper, 'nt'):
             self.with_arguments.add('time_stepper_nt')
-        self.lock()
 
     with_arguments = set(selfless_arguments(__init__)).union(['operators'])
 

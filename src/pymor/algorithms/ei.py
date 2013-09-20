@@ -11,7 +11,7 @@ import numpy as np
 from scipy.linalg import solve_triangular, cho_factor, cho_solve
 
 from pymor.core import getLogger, BasicInterface
-from pymor.core.cache import Cachable, cached, DEFAULT_DISK_CONFIG
+from pymor.core.cache import CacheableInterface, cached
 from pymor.la import VectorArrayInterface
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 
@@ -117,40 +117,34 @@ def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation
     return interpolation_dofs, collateral_basis, data
 
 
+# This class provides cached evaulations of the operator on the solutions.
+# Should be replaced by something simpler in the future.
+class EvaluationProvider(CacheableInterface):
+
+    def __init__(self, discretization, operator, sample, caching='memory'):
+        CacheableInterface.__init__(self, region=caching)
+        self.discretization = discretization
+        self.sample = sample
+        self.operator = operator
+
+    @cached
+    def data(self, k):
+        mu = self.sample[k]
+        return self.operator.apply(self.discretization.solve(mu), mu=mu)
+
+    def __len__(self):
+        return len(self.sample)
+
+    def __getitem__(self, ind):
+        if not 0 <= ind < len(self.sample):
+            raise IndexError
+        return self.data(ind)
+
+
 def interpolate_operators(discretization, operator_name, parameter_sample, error_norm=None,
                           target_error=None, max_interpolation_dofs=None,
                           projection='orthogonal', product=None):
 
-    # This class provides cached evaulations of the operator on the solutions.
-    # Should be replaced by something simpler in the future.
-    class EvaluationProvider(BasicInterface, Cachable):
-
-        # the following hack is currently necessary to prevent a deadlock in the cache backend ...
-        from tempfile import gettempdir
-        from os.path import join
-        DEFAULT_MEMORY_CONFIG = {"backend": 'LimitedMemory', 'arguments.max_kbytes': 20000}
-        DISK_CONFIG = {"backend": 'LimitedFile',
-                       "arguments.filename": join(gettempdir(), 'pymor.ei_cache.dbm'),
-                       'arguments.max_keys': 2000}
-
-        def __init__(self, discretization, operator, sample):
-            Cachable.__init__(self, config=self.DEFAULT_MEMORY_CONFIG)
-            self.discretization = discretization
-            self.sample = sample
-            self.operator = operator
-
-        @cached
-        def data(self, k):
-            mu = self.sample[k]
-            return self.operator.apply(self.discretization.solve(mu), mu=mu)
-
-        def __len__(self):
-            return len(self.sample)
-
-        def __getitem__(self, ind):
-            if not 0 <= ind < len(self.sample):
-                raise IndexError
-            return self.data(ind)
 
     sample = tuple(parameter_sample)
     operator = discretization.operators[operator_name]
