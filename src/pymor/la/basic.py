@@ -37,7 +37,7 @@ def induced_norm(product):
             norm_squared = np.where(np.logical_and(0 > norm_squared, norm_squared > - defaults.induced_norm_tol),
                                     0, norm_squared)
         if defaults.induced_norm_raise_negative and np.any(norm_squared < 0):
-            raise ValueError('norm is not negative (square = {})'.format(norm_squared))
+            raise ValueError('norm is negative (square = {})'.format(norm_squared))
         return np.sqrt(norm_squared)
 
     return norm
