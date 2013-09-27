@@ -102,11 +102,16 @@ def greedy(discretization, reductor, samples, initial_data=None, use_estimator=T
         logger.info('Extending with snapshot for mu = {}'.format(max_err_mu))
         U = discretization.solve(max_err_mu)
         try:
-            data = extension_algorithm(data, U)
+            data, extension_data = extension_algorithm(data, U)
         except ExtensionError:
             logger.info('Extension failed. Stopping now.')
             break
         extensions += 1
+        if not 'hierarchic' in extension_data:
+            logger.warn('Extension algorithm does not report if extension was hierarchic. Assuming it was\'nt ..')
+            hierarchic = False
+        else:
+            hierarchic = extension_data['hierarchic']
 
         logger.info('')
 

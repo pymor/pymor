@@ -51,7 +51,7 @@ def trivial_basis_extension(basis, U, U_ind=None, copy_basis=True, copy_U=True):
     new_basis = basis.copy() if copy_basis else basis
     new_basis.append(U, o_ind=U_ind, remove_from_other=(not copy_U))
 
-    return new_basis
+    return new_basis, {'hierarchic': True}
 
 
 def numpy_trivial_basis_extension(basis, U):
@@ -90,7 +90,7 @@ def numpy_trivial_basis_extension(basis, U):
     new_basis[:-1, :] = basis
     new_basis[-1, :] = U
 
-    return NumpyVectorArray(new_basis)
+    return NumpyVectorArray(new_basis), {'hierarchic': True}
 
 
 def gram_schmidt_basis_extension(basis, U, U_ind=None, product=None, copy_basis=True, copy_U=True):
@@ -135,7 +135,7 @@ def gram_schmidt_basis_extension(basis, U, U_ind=None, product=None, copy_basis=
     if len(new_basis) <= basis_length:
         raise ExtensionError
 
-    return new_basis
+    return new_basis, {'hierarchic': True}
 
 
 def pod_basis_extension(basis, U, count=1, copy_basis=True, product=None):
@@ -183,4 +183,4 @@ def pod_basis_extension(basis, U, count=1, copy_basis=True, product=None):
     if len(new_basis) <= basis_length:
         raise ExtensionError
 
-    return new_basis
+    return new_basis, {'hierarchic': True}
