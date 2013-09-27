@@ -15,7 +15,7 @@ from pymor.la import NumpyVectorArray, induced_norm
 from pymor.reductors.basic import reduce_generic_rb
 
 
-def reduce_stationary_affine_linear(discretization, RB, error_product=None, disable_caching=True
+def reduce_stationary_affine_linear(discretization, RB, error_product=None, disable_caching=True,
                                     subbasis_reduction=None):
     '''Reductor for stationary linear problems whose `operator` and `rhs` are affinely decomposed.
 
