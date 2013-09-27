@@ -25,7 +25,8 @@ class GenericRBReconstructor(core.BasicInterface):
         return GenericRBReconstructor(self.RB.copy(ind=range(dim)))
 
 
-def reduce_generic_rb(discretization, RB, product=None, disable_caching=True):
+def reduce_generic_rb(discretization, RB, product=None, disable_caching=True,
+                      subbasis_reduction=None):
     '''Generic reduced basis reductor.
 
     Reduces a discretization by applying `operators.rb_project_operator` to
@@ -52,6 +53,7 @@ def reduce_generic_rb(discretization, RB, product=None, disable_caching=True):
         The reconstructor providing a `reconstruct(U)` method which reconstructs
         high-dimensional solutions from solutions U of the reduced discretization.
     '''
+    assert subbasis_reduction is None or len(subbasis_reduction) == 2
 
     if RB is None:
         RB = discretization.type_solution.empty(discretization.dim_solution)
