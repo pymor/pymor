@@ -9,7 +9,7 @@ from pymor.analyticalproblems import EllipticProblem
 from pymor.domaindiscretizers import discretize_domain_default
 from pymor.operators.cg import DiffusionOperatorP1, L2ProductFunctionalP1, L2ProductP1
 from pymor.discretizations import StationaryDiscretization
-from pymor.gui.qt import GlumpyPatchVisualizer
+from pymor.gui.qt import GlumpyPatchVisualizer, Matplotlib1DVisualizer
 from pymor.grids import TriaGrid, OnedGrid, EmptyBoundaryInfo
 from pymor.la import induced_norm
 
@@ -95,17 +95,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
         #     pl.colorbar()
         #     pl.show()
     else:
-        class Visualizer(object):
-            def __init__(self, grid):
-                self.grid = grid
-
-            def visualize(self, U, discretization):
-                assert len(U) == 1
-                import matplotlib.pyplot as pl
-                pl.plot(self.grid.centers(1), U.data.ravel())
-                pl.show()
-                pass
-        visualizer = Visualizer(grid)
+        visualizer = Matplotlib1DVisualizer(grid=grid, codim=1)
 
     products = {'h1': Operator(grid, boundary_info),
                 'l2': L2ProductP1(grid, boundary_info)}
