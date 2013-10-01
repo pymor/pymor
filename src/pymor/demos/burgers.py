@@ -51,7 +51,7 @@ from docopt import docopt
 
 import pymor.core as core
 core.logger.MAX_HIERACHY_LEVEL = 2
-from pymor.analyticalproblems.burgers import BurgersProblem
+from pymor.analyticalproblems.burgers import Burgers2DProblem
 from pymor.discretizers.advection import discretize_nonlinear_instationary_advection_fv
 from pymor.domaindiscretizers import discretize_domain_default
 from pymor.grids import RectGrid, TriaGrid
@@ -84,7 +84,7 @@ def burgers_demo(args):
     print('Setup Problem ...')
     grid_type_map = {'rect': RectGrid, 'tria': TriaGrid}
     domain_discretizer = partial(discretize_domain_default, grid_type=grid_type_map[args['--grid-type']])
-    problem = BurgersProblem(vx=args['--vx'], vy=args['--vy'], initial_data=args['--initial-data'],
+    problem = Burgers2DProblem(vx=args['--vx'], vy=args['--vy'], initial_data=args['--initial-data'],
                              parameter_range=(0, 1e42), torus=not args['--not-periodic'])
 
     print('Discretize ...')

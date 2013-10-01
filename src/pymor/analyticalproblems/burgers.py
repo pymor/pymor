@@ -15,7 +15,7 @@ from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
 from pymor.parameters.spaces import CubicParameterSpace
 
 
-class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
+class Burgers2DProblem(InstationaryAdvectionProblem, Unpicklable):
 
     def __init__(self, vx = 1., vy = 1., torus=True, initial_data='sin', parameter_range=(1., 2.)):
 
@@ -28,7 +28,7 @@ class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
             R[...,0] = U_exp * vx
             R[...,1] = U_exp * vy
             return R
-        inject_sid(burgers_flux, str(BurgersProblem) + '.burgers_flux', vx, vy)
+        inject_sid(burgers_flux, str(Burgers2DProblem) + '.burgers_flux', vx, vy)
 
         def burgers_flux_derivative(U, mu):
             U = U.reshape(U.shape[:-1])
@@ -37,7 +37,7 @@ class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
             R[...,0] = U_exp * vx
             R[...,1] = U_exp * vy
             return R
-        inject_sid(burgers_flux_derivative, str(BurgersProblem) + '.burgers_flux_derivative', vx, vy)
+        inject_sid(burgers_flux_derivative, str(Burgers2DProblem) + '.burgers_flux_derivative', vx, vy)
 
         flux_function = GenericFunction(burgers_flux, dim_domain=1, shape_range=(2,),
                                         parameter_type={'exponent': 0},
@@ -50,12 +50,12 @@ class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
         if initial_data == 'sin':
             def initial_data(x):
                 return 0.5 * (np.sin(2 * np.pi * x[..., 0]) * np.sin(2 * np.pi * x[..., 1]) + 1.)
-            inject_sid(initial_data, str(BurgersProblem) + '.initial_data_sin')
+            inject_sid(initial_data, str(Burgers2DProblem) + '.initial_data_sin')
             dirichlet_data=ConstantFunction(dim_domain=2, value=0.5)
         else:
             def initial_data(x):
                 return (x[..., 0] >= 0.5) * (x[..., 0] <= 1) * 1
-            inject_sid(initial_data, str(BurgersProblem) + '.initial_data_riemann')
+            inject_sid(initial_data, str(Burgers2DProblem) + '.initial_data_riemann')
             dirichlet_data=ConstantFunction(dim_domain=2, value=0)
 
         initial_data = GenericFunction(initial_data, dim_domain=2)
@@ -63,12 +63,12 @@ class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
         domain = TorusDomain([[0, 0], [2, 1]]) if torus else RectDomain([[0, 0], [2, 1]], right=None,
                 top=None)
 
-        super(BurgersProblem, self).__init__(domain=domain,
+        super(Burgers2DProblem, self).__init__(domain=domain,
                                              rhs=None,
                                              flux_function=flux_function,
                                              flux_function_derivative=flux_function_derivative,
                                              initial_data=initial_data,
                                              dirichlet_data=dirichlet_data,
-                                             T=0.3, name='Burgers Problem')
+                                             T=0.3, name='Burgers2DProblem')
 
         self.parameter_space = CubicParameterSpace({'exponent': 0}, *parameter_range)
