@@ -206,3 +206,26 @@ class LineDomain(DomainDescriptionInterface):
     @property
     def width(self):
         return self.domain[1] - self.domain[0]
+
+
+class CircleDomain(DomainDescriptionInterface):
+    '''Describes a domain with the topology of a circle, i.e. a line with
+    identified end points.
+
+    Parameters
+    ----------
+    domain
+        List [x_l, x_r] providing the left and right endpoint.
+
+    Attributes
+    ----------
+    domain
+    '''
+
+    def __init__(self, domain=[0, 1]):
+        assert domain[0] <= domain[1]
+        self.domain = np.array(domain)
+
+    @property
+    def width(self):
+        return self.domain[1] - self.domain[0]

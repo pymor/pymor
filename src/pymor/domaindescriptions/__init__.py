@@ -4,4 +4,4 @@
 
 from .interfaces import DomainDescriptionInterface
 from .boundarytypes import BoundaryType
-from .basic import RectDomain, CylindricalDomain, TorusDomain, LineDomain
+from .basic import RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain
