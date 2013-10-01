@@ -8,7 +8,7 @@ import math as m
 import numpy as np
 
 from pymor.core import inject_sid
-from pymor.domaindescriptions import RectDomain, CylindricalDomain, TorusDomain, LineDomain
+from pymor.domaindescriptions import RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain
 from pymor.grids import RectGrid, TriaGrid, OnedGrid, BoundaryInfoFromIndicators, EmptyBoundaryInfo
 from pymor.tools import float_cmp
 
@@ -34,6 +34,8 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
         |                    | RectGrid  |    X    |
         +--------------------+-----------+---------+
         | LineDomain         | OnedGrid  |    X    |
+        +--------------------+-----------+---------+
+        | CircleDomain       | OnedGrid  |    X    |
         +--------------------+-----------+---------+
 
     Parameters
@@ -137,7 +139,14 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
 
         return grid, bi
 
-    if not isinstance(domain_description, (RectDomain, CylindricalDomain, TorusDomain, LineDomain)):
+    def discretize_CircleDomain():
+        ni = int(m.ceil(domain_description.width / diameter))
+        grid = OnedGrid(domain=domain_description.domain, num_intervals=ni, identify_left_right=True)
+        bi = EmptyBoundaryInfo(grid)
+
+        return grid, bi
+
+    if not isinstance(domain_description, (RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain)):
         raise NotImplementedError('I do not know how to discretize {}'.format(domain_description))
     if isinstance(domain_description, RectDomain):
         grid_type = grid_type or TriaGrid
@@ -156,5 +165,5 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
     else:
         grid_type = grid_type or OnedGrid
         if grid_type is not OnedGrid:
-            raise NotImplementedError('I do not know hot to discretize {} with {}'.format('LineDomain', grid_type))
-        return discretize_LineDomain()
+            raise NotImplementedError('I do not know hot to discretize {} with {}'.format(str(type(domain_description)), grid_type))
+        return discretize_LineDomain() if isinstance(domain_description, LineDomain) else discretize_CircleDomain()
