@@ -13,8 +13,9 @@ from PySide.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QSlider, QApplicati
 from PySide.QtCore import Qt, QCoreApplication, QTimer
 from pymor.core import BasicInterface
 from pymor.la.interfaces import Communicable
-from pymor.grids import RectGrid, TriaGrid
+from pymor.grids import RectGrid, TriaGrid, OnedGrid
 from pymor.gui.glumpy import GlumpyPatchWidget, ColorBarWidget
+from pymor.gui.matplotlib import Matplotlib1DWidget
 
 
 class PlotMainWindow(QWidget):
@@ -170,6 +171,26 @@ def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2):
     app.exec_()
 
 
+def visualize_matplotlib_1d(grid, U, codim=1):
+
+    class MainWindow(PlotMainWindow):
+        def __init__(self, grid, U, codim):
+            assert isinstance(U, Communicable)
+            U = U.data
+
+            plot_widget = Matplotlib1DWidget(None, grid, vmin=np.min(U), vmax=np.max(U), codim=codim)
+            super(MainWindow, self).__init__(U, plot_widget)
+
+    try:
+        app = QApplication([])
+    except RuntimeError:
+        app = QCoreApplication.instance()
+
+    win = MainWindow(grid, U, codim)
+    win.show()
+    app.exec_()
+
+
 class GlumpyPatchVisualizer(BasicInterface):
 
     def __init__(self, grid, bounding_box=[[0, 0], [1, 1]], codim=2):
@@ -181,3 +202,15 @@ class GlumpyPatchVisualizer(BasicInterface):
 
     def visualize(self, U, discretization):
         visualize_glumpy_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim)
+
+
+class Matplotlib1DVisualizer(BasicInterface):
+
+    def __init__(self, grid, codim=1):
+        assert isinstance(grid, OnedGrid)
+        assert codim in (0, 1)
+        self.grid = grid
+        self.codim = codim
+
+    def visualize(self, U, discretization):
+        visualize_matplotlib_1d(self.grid, U, codim=self.codim)
