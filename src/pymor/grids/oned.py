@@ -27,7 +27,7 @@ class OnedGrid(AffineGridInterface):
     dim_outer = 1
     reference_element = line
 
-    def __init__(self, domain=(0, 1), num_intervals=4):
+    def __init__(self, domain=(0, 1), num_intervals=4, identify_left_right=False):
         super(OnedGrid, self).__init__()
         self.reference_element = line
         self._domain = np.array(domain)
@@ -35,6 +35,8 @@ class OnedGrid(AffineGridInterface):
         self._width = np.abs(self._domain[1] - self._domain[0]) / self._num_intervals
         self.__subentities = np.vstack((np.arange(self._num_intervals, dtype=np.int32),
                                         np.arange(self._num_intervals, dtype=np.int32) + 1))
+        if identify_left_right:
+            self.__subentities[-1, -1] = 0
         self.__A = np.ones(self._num_intervals, dtype=np.int32)[:, np.newaxis, np.newaxis] * self._width
         self.__B = (self._domain[0] + self._width * (np.arange(self._num_intervals, dtype=np.int32)))[:, np.newaxis]
 
