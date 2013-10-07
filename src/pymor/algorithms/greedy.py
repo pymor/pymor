@@ -77,10 +77,12 @@ def greedy(discretization, reductor, samples, initial_data=None, use_estimator=T
     extensions = 0
     max_errs = []
     max_err_mus = []
+    hierarchic = False
 
     while True:
         logger.info('Reducing ...')
-        rd, rc = reductor(discretization, data)
+        rd, rc, reduction_data = reductor(discretization, data) if not hierarchic \
+            else reductor(discretization, data, extends=(rd, rc, reduction_data))
 
         logger.info('Estimating errors ...')
         if use_estimator:
@@ -102,22 +104,28 @@ def greedy(discretization, reductor, samples, initial_data=None, use_estimator=T
         logger.info('Extending with snapshot for mu = {}'.format(max_err_mu))
         U = discretization.solve(max_err_mu)
         try:
-            data = extension_algorithm(data, U)
+            data, extension_data = extension_algorithm(data, U)
         except ExtensionError:
             logger.info('Extension failed. Stopping now.')
             break
         extensions += 1
+        if not 'hierarchic' in extension_data:
+            logger.warn('Extension algorithm does not report if extension was hierarchic. Assuming it was\'nt ..')
+            hierarchic = False
+        else:
+            hierarchic = extension_data['hierarchic']
 
         logger.info('')
 
         if max_extensions is not None and extensions >= max_extensions:
             logger.info('Maximal number of {} extensions reached.'.format(max_extensions))
             logger.info('Reducing once more ...')
-            rd, rc = reductor(discretization, data)
+            rd, rc, reduction_data = reductor(discretization, data) if not hierarchic \
+                else reductor(discretization, data, extends=(rd, rc, reduction_data))
             break
 
     tictoc = time.time() - tic
     logger.info('Greedy search took {} seconds'.format(tictoc))
     return {'data': data, 'reduced_discretization': rd, 'reconstructor': rc, 'max_err': max_err,
             'max_err_mu': max_err_mu, 'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
-            'time': tictoc}
+            'time': tictoc, 'reduction_data': reduction_data}

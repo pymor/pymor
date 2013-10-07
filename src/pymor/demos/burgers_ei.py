@@ -167,8 +167,8 @@ def burgers_demo(args):
 
     print('RB generation ...')
 
-    def reductor(discretization, rb):
-        return reduce_generic_rb(ei_discretization, rb)
+    def reductor(discretization, rb, extends=None):
+        return reduce_generic_rb(ei_discretization, rb, extends=extends)
 
     extension_algorithm = partial(pod_basis_extension)
 
@@ -187,7 +187,7 @@ def burgers_demo(args):
 
     def error_analysis(N, M):
         print('N = {}, M = {}: '.format(N, M), end='')
-        rd, rc = reduce_to_subbasis(rb_discretization, N, reconstructor)
+        rd, rc, _ = reduce_to_subbasis(rb_discretization, N, reconstructor)
         rd = rd.with_(operator=rd.operator.projected_to_subbasis(dim_collateral=M))
         l2_err_max = -1
         mumax = None

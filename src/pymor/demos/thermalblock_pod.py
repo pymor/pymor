@@ -101,7 +101,7 @@ def thermalblock_demo(args):
 
     print('Reducing ...')
     reductor = reduce_generic_rb
-    rb_discretization, reconstructor = reductor(discretization, rb)
+    rb_discretization, reconstructor, _ = reductor(discretization, rb)
 
     toc = time.time()
     t_offline = toc - tic
