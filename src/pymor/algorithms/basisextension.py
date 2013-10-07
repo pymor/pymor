@@ -167,7 +167,7 @@ def pod_basis_extension(basis, U, count=1, copy_basis=True, product=None):
         due to rounding errors ...
     '''
     if basis is None:
-        return pod(U, modes=count, product=product)
+        return pod(U, modes=count, product=product), {'hierarchic': True}
 
     basis_length = len(basis)
 
