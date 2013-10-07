@@ -16,7 +16,7 @@ from pymor.reductors.basic import reduce_generic_rb
 
 
 def reduce_stationary_affine_linear(discretization, RB, error_product=None, disable_caching=True,
-                                    subbasis_reduction=None):
+                                    extends=None):
     '''Reductor for stationary linear problems whose `operator` and `rhs` are affinely decomposed.
 
     We simply use reduce_generic_rb for the actual RB-projection. The only addition
@@ -55,11 +55,11 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
     if discretization.rhs.parametric:
         assert isinstance(discretization.rhs, LincombOperatorInterface)
         assert all(not op.parametric for op in discretization.rhs.operators)
-    assert subbasis_reduction is None or len(subbasis_reduction) == 2
+    assert extends is None or len(extends) == 2
 
     d = discretization
     rd, rc = reduce_generic_rb(d, RB, product=None, disable_caching=disable_caching,
-                               subbasis_reduction=subbasis_reduction)
+                               extends=extends)
 
     # compute data for estimator
     space_dim = d.operator.dim_source

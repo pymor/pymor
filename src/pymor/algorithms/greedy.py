@@ -82,7 +82,7 @@ def greedy(discretization, reductor, samples, initial_data=None, use_estimator=T
     while True:
         logger.info('Reducing ...')
         rd, rc = reductor(discretization, data) if not hierarchic \
-            else reductor(discretization, data, subbasis_reduction=(rd, rc))
+            else reductor(discretization, data, extends=(rd, rc))
 
         logger.info('Estimating errors ...')
         if use_estimator:
