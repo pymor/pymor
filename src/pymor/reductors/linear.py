@@ -55,11 +55,11 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
     if discretization.rhs.parametric:
         assert isinstance(discretization.rhs, LincombOperatorInterface)
         assert all(not op.parametric for op in discretization.rhs.operators)
-    assert extends is None or len(extends) == 2
+    assert extends is None or len(extends) == 3
 
     d = discretization
-    rd, rc = reduce_generic_rb(d, RB, product=None, disable_caching=disable_caching,
-                               extends=extends)
+    rd, rc, data = reduce_generic_rb(d, RB, product=None, disable_caching=disable_caching,
+                                     extends=extends)
 
     # compute data for estimator
     space_dim = d.operator.dim_source
@@ -125,7 +125,7 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
     estimator = StationaryAffineLinearReducedEstimator(estimator_matrix)
     rd = rd.with_(estimator=estimator)
 
-    return rd, rc
+    return rd, rc, data
 
 
 class StationaryAffineLinearReducedEstimator(ImmutableInterface):

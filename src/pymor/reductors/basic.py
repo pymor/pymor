@@ -53,7 +53,7 @@ def reduce_generic_rb(discretization, RB, product=None, disable_caching=True,
         The reconstructor providing a `reconstruct(U)` method which reconstructs
         high-dimensional solutions from solutions U of the reduced discretization.
     '''
-    assert extends is None or len(extends) == 2
+    assert extends is None or len(extends) == 3
 
     if RB is None:
         RB = discretization.type_solution.empty(discretization.dim_solution)
@@ -74,7 +74,7 @@ def reduce_generic_rb(discretization, RB, product=None, disable_caching=True,
     rd.disable_logging()
     rc = GenericRBReconstructor(RB)
 
-    return rd, rc
+    return rd, rc, {}
 
 
 class SubbasisReconstructor(core.BasicInterface):
@@ -132,4 +132,4 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
         rc = SubbasisReconstructor(next(discretization.operators.itervalues()).dim_source, dim,
                                    old_recontructor=reconstructor)
 
-    return rd, rc
+    return rd, rc, {}
