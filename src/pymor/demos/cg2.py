@@ -14,11 +14,14 @@ import math as m
 
 import numpy as np
 
+from pymor.core import getLogger
 from pymor.domaindescriptions import RectDomain
 from pymor.analyticalproblems import EllipticProblem
 from pymor.discretizers import discretize_elliptic_cg
 from pymor.functions import GenericFunction
 from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional, GenericParameterFunctional
+
+getLogger('pymor.discretizations').setLevel('INFO')
 
 
 def cg2_demo(nrhs, n, plot):
@@ -38,23 +41,21 @@ def cg2_demo(nrhs, n, plot):
     print('Solving on TriaGrid(({0},{0}))'.format(n))
 
     print('Setup Problem ...')
-    problem = EllipticProblem(domain=RectDomain(), rhs=rhs, diffusion_functions=(d0, d1), diffusion_functionals=(f0, f1))
+    problem = EllipticProblem(domain=RectDomain(), rhs=rhs, diffusion_functions=(d0, d1),
+                              diffusion_functionals=(f0, f1), name='2DProblem')
 
     print('Discretize ...')
     discretization, _ = discretize_elliptic_cg(problem, diameter=m.sqrt(2) / n)
 
     print('The parameter type is {}'.format(discretization.parameter_type))
 
-    for mu in parameter_space.sample_uniformly(4):
-        print('Solving for mu = {} ...'.format(mu))
-        U = discretization.solve(mu)
+    U = discretization.type_solution.empty(discretization.dim_solution)
+    for mu in parameter_space.sample_uniformly(10):
+        U.append(discretization.solve(mu))
 
-        if plot:
-            print('Plot ...')
-            discretization.visualize(U)
-
-        print('')
-
+    if plot:
+        print('Plot ...')
+        discretization.visualize(U)
 
 if __name__ == '__main__':
     if len(sys.argv) < 4:
