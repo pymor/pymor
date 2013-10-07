@@ -78,7 +78,7 @@ def numpy_trivial_basis_extension(basis, U):
     '''
     assert isinstance(U, NumpyVectorArray)
     if basis is None:
-        return U
+        return U, {'hierarchic': True}
     assert isinstance(basis, NumpyVectorArray)
     basis = basis.data
     U = U.data
