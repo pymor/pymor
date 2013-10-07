@@ -13,11 +13,14 @@ import sys
 
 import numpy as np
 
+from pymor.core import getLogger
 from pymor.domaindescriptions import LineDomain
 from pymor.analyticalproblems import EllipticProblem
 from pymor.discretizers import discretize_elliptic_cg
 from pymor.functions import GenericFunction, ConstantFunction
 from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional, GenericParameterFunctional
+
+getLogger('pymor.discretizations').setLevel('INFO')
 
 
 def cg_oned_demo(nrhs, n, plot):
@@ -38,22 +41,20 @@ def cg_oned_demo(nrhs, n, plot):
 
     print('Setup Problem ...')
     problem = EllipticProblem(domain=LineDomain(), rhs=rhs, diffusion_functions=(d0, d1), diffusion_functionals=(f0, f1),
-                              dirichlet_data=ConstantFunction(value=0, dim_domain=1))
+                              dirichlet_data=ConstantFunction(value=0, dim_domain=1), name='1DProblem')
 
     print('Discretize ...')
     discretization, _ = discretize_elliptic_cg(problem, diameter=1 / n)
 
     print('The parameter type is {}'.format(discretization.parameter_type))
 
-    for mu in parameter_space.sample_uniformly(4):
-        print('Solving for mu = {} ...'.format(mu))
-        U = discretization.solve(mu)
+    U = discretization.type_solution.empty(discretization.dim_solution)
+    for mu in parameter_space.sample_uniformly(10):
+        U.append(discretization.solve(mu))
 
-        if plot:
-            print('Plot ...')
-            discretization.visualize(U)
-
-        print('')
+    if plot:
+        print('Plot ...')
+        discretization.visualize(U)
 
 
 if __name__ == '__main__':
