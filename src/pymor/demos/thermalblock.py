@@ -153,7 +153,7 @@ def thermalblock_demo(args):
         Ns = np.linspace(1, real_rb_size, N_count).astype(np.int)
     else:
         Ns = np.array([real_rb_size])
-    rd_rcs = [reduce_to_subbasis(rb_discretization, N, reconstructor) for N in Ns]
+    rd_rcs = [reduce_to_subbasis(rb_discretization, N, reconstructor)[:2] for N in Ns]
     mus = list(discretization.parameter_space.sample_randomly(args['--test']))
 
     errs, err_mus, ests, est_mus, conds, cond_mus = zip(*(error_analysis(discretization, rd, rc, mus) for rd, rc in rd_rcs))
