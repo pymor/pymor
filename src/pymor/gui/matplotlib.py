@@ -4,6 +4,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+from itertools import izip
 import math as m
 
 import numpy as np
@@ -19,21 +20,28 @@ from pymor.grids.referenceelements import line
 
 class Matplotlib1DWidget(FigureCanvas):
 
-    def __init__(self, parent, grid, vmin=None, vmax=None, codim=1, dpi=100):
+    def __init__(self, parent, grid, count, vmin=None, vmax=None, legend=None, codim=1, dpi=100):
         assert grid.reference_element is line
         assert codim in (0, 1)
 
         self.figure = Figure(dpi=dpi)
         self.axes = self.figure.gca()
-        self.axes.hold(False)
-        self.line, = self.axes.plot(grid.centers(codim), np.zeros_like(grid.centers(codim)),  'b')
+        self.axes.hold(True)
+        lines = tuple()
+        for _ in xrange(count):
+            l, = self.axes.plot(grid.centers(codim), np.zeros_like(grid.centers(codim)))
+            lines = lines + (l,)
         self.axes.set_ylim(vmin, vmax)
+        if legend:
+            self.axes.legend(legend)
+        self.lines = lines
 
         super(Matplotlib1DWidget, self).__init__(self.figure)
         self.setParent(parent)
         self.setMinimumSize(300, 300)
         self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
 
-    def set(self, U):
-        self.line.set_ydata(U)
+    def set(self, U, ind):
+        for line, u in izip(self.lines, U):
+            line.set_ydata(u[ind])
         self.draw()

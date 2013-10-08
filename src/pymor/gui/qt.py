@@ -4,11 +4,12 @@
 
 from __future__ import absolute_import, division, print_function
 
+from itertools import izip
 import math as m
 
 import numpy as np
 
-from PySide.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QSlider, QApplication, QLCDNumber,
+from PySide.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QApplication, QLCDNumber,
                           QSizePolicy, QAction, QStyle, QToolBar, QLabel)
 from PySide.QtCore import Qt, QCoreApplication, QTimer
 from pymor.core import BasicInterface
@@ -19,7 +20,7 @@ from pymor.gui.matplotlib import Matplotlib1DWidget
 
 
 class PlotMainWindow(QWidget):
-    def __init__(self, U, plot, title=None):
+    def __init__(self, U, plot, length=1, title=None):
         super(PlotMainWindow, self).__init__()
 
         layout = QVBoxLayout()
@@ -30,20 +31,18 @@ class PlotMainWindow(QWidget):
             layout.addWidget(title)
         layout.addWidget(plot)
 
-        if len(U) == 1:
-            plot.set(U.ravel())
-        else:
-            plot.set(U[0])
+        plot.set(U, 0)
 
+        if length > 1:
             hlayout = QHBoxLayout()
 
             self.slider = QSlider(Qt.Horizontal)
             self.slider.setMinimum(0)
-            self.slider.setMaximum(len(U) - 1)
+            self.slider.setMaximum(length - 1)
             self.slider.setTickPosition(QSlider.TicksBelow)
             hlayout.addWidget(self.slider)
 
-            lcd = QLCDNumber(m.ceil(m.log10(len(U))))
+            lcd = QLCDNumber(m.ceil(m.log10(length)))
             lcd.setDecMode()
             lcd.setSegmentStyle(QLCDNumber.Flat)
             hlayout.addWidget(lcd)
@@ -94,16 +93,17 @@ class PlotMainWindow(QWidget):
         self.setLayout(layout)
         self.plot = plot
         self.U = U
+        self.length = length
 
     def slider_changed(self, ind):
-        self.plot.set(self.U[ind])
+        self.plot.set(self.U, ind)
 
     def speed_changed(self, val):
         self.timer.setInterval(val * 20)
 
     def update_solution(self):
         ind = self.slider.value() + 1
-        if ind >= len(self.U):
+        if ind >= self.length:
             if self.a_loop.isChecked():
                 ind = 0
             else:
@@ -113,7 +113,7 @@ class PlotMainWindow(QWidget):
 
     def toggle_play(self, checked):
         if checked:
-            if self.slider.value() + 1 == len(self.U):
+            if self.slider.value() + 1 == self.length:
                 self.slider.setValue(0)
             self.timer.start()
         else:
@@ -124,21 +124,21 @@ class PlotMainWindow(QWidget):
 
     def to_end(self):
         self.a_play.setChecked(False)
-        self.slider.setValue(len(self.U) - 1)
+        self.slider.setValue(self.length - 1)
 
     def step_forward(self):
         self.a_play.setChecked(False)
         ind = self.slider.value() + 1
-        if ind == len(self.U) and self.a_loop.isChecked():
+        if ind == self.length and self.a_loop.isChecked():
             ind = 0
-        if ind < len(self.U):
+        if ind < self.length:
             self.slider.setValue(ind)
 
     def step_backward(self):
         self.a_play.setChecked(False)
         ind = self.slider.value() - 1
         if ind == -1 and self.a_loop.isChecked():
-            ind = len(self.U) - 1
+            ind = self.length - 1
         if ind >= 0:
             self.slider.setValue(ind)
 
@@ -162,44 +162,68 @@ def launch_qt_app(main_window_factory, fork):
         doit()
 
 
-def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, title=None, block=False):
+def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, title=None, legend=None, block=False):
 
     class MainWindow(PlotMainWindow):
-        def __init__(self, grid, U, bounding_box, codim, title):
-            assert isinstance(U, Communicable)
-            U = U.data
+        def __init__(self, grid, U, bounding_box, codim, title, legend):
+            assert isinstance(U, Communicable) or isinstance(U, tuple) and all(isinstance(u, Communicable) for u in U) \
+                and all(len(u) == len(U[0]) for u in U)
+            U = (U.data,) if isinstance(U, Communicable) else tuple(u.data for u in U)
+            if isinstance(legend, str):
+                legend = (legend,)
+            assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
 
             class PlotWidget(QWidget):
                 def __init__(self):
                     super(PlotWidget, self).__init__()
+                    vmin = min(np.min(u) for u in U)
+                    vmax = max(np.max(u) for u in U)
                     layout = QHBoxLayout()
-                    plot = GlumpyPatchWidget(self, grid, vmin=np.min(U), vmax=np.max(U), bounding_box=bounding_box, codim=codim)
-                    bar = ColorBarWidget(self, vmin=np.min(U), vmax=np.max(U))
-                    layout.addWidget(plot)
+                    plot_layout = QGridLayout()
+                    plots = [GlumpyPatchWidget(self, grid, vmin=vmin, vmax=vmax, bounding_box=bounding_box, codim=codim)
+                             for _ in xrange(len(U))]
+                    bar = ColorBarWidget(self, vmin=vmin, vmax=vmax)
+                    if legend:
+                        for i, plot, l in izip(xrange(len(plots)), plots, legend):
+                            subplot_layout = QVBoxLayout()
+                            caption = QLabel(l)
+                            caption.setAlignment(Qt.AlignHCenter)
+                            subplot_layout.addWidget(caption)
+                            subplot_layout.addWidget(plot)
+                            plot_layout.addLayout(subplot_layout, int(i/2), (i % 2), 1, 1)
+                    else:
+                        for i, plot in enumerate(plots):
+                            plot_layout.addWidget(plot, int(i/2), (i % 2), 1, 1)
+                    layout.addLayout(plot_layout)
                     layout.addWidget(bar)
                     self.setLayout(layout)
-                    self.plot = plot
+                    self.plots = plots
 
-                def set(self, U):
-                    self.plot.set(U)
+                def set(self, U, ind):
+                    for u, plot in izip(U, self.plots):
+                        plot.set(u[ind])
 
-            super(MainWindow, self).__init__(U, PlotWidget(), title=title)
+            super(MainWindow, self).__init__(U, PlotWidget(), title=title, length=len(U[0]))
 
-    launch_qt_app(lambda: MainWindow(grid, U, bounding_box, codim, title=title), not block)
+    launch_qt_app(lambda: MainWindow(grid, U, bounding_box, codim, title=title, legend=legend), not block)
 
 
 
-def visualize_matplotlib_1d(grid, U, codim=1, title=None, block=False):
+def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, block=False):
 
     class MainWindow(PlotMainWindow):
-        def __init__(self, grid, U, codim, title):
-            assert isinstance(U, Communicable)
-            U = U.data
+        def __init__(self, grid, U, codim, title, legend):
+            assert isinstance(U, Communicable) or isinstance(U, tuple) and all(isinstance(u, Communicable) for u in U) \
+                and all((len(u) == len(U[0]) and u.dim == U[0].dim) for u in U)
+            U = (U.data,) if isinstance(U, Communicable) else tuple(u.data for u in U)
+            if isinstance(legend, str):
+                legend = (legend,)
+            assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
 
-            plot_widget = Matplotlib1DWidget(None, grid, vmin=np.min(U), vmax=np.max(U), codim=codim)
-            super(MainWindow, self).__init__(U, plot_widget, title=title)
+            plot_widget = Matplotlib1DWidget(None, grid, count=len(U), vmin=np.min(U), vmax=np.max(U), legend=legend, codim=codim)
+            super(MainWindow, self).__init__(U, plot_widget, title=title, length=len(U[0]))
 
-    launch_qt_app(lambda: MainWindow(grid, U, codim, title=title), not block)
+    launch_qt_app(lambda: MainWindow(grid, U, codim, title=title, legend=legend), not block)
 
 
 class GlumpyPatchVisualizer(BasicInterface):
@@ -212,9 +236,10 @@ class GlumpyPatchVisualizer(BasicInterface):
         self.codim = codim
         self.block = block
 
-    def visualize(self, U, discretization, title=None, block=None):
+    def visualize(self, U, discretization, title=None, legend=None, block=None):
         block = self.block if block is None else block
-        visualize_glumpy_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title, block=block)
+        visualize_glumpy_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
+                               legend=legend, block=block)
 
 
 class Matplotlib1DVisualizer(BasicInterface):
@@ -226,6 +251,6 @@ class Matplotlib1DVisualizer(BasicInterface):
         self.codim = codim
         self.block = block
 
-    def visualize(self, U, discretization, title=None, block=None):
+    def visualize(self, U, discretization, title=None, legend=None, block=None):
         block = self.block if block is None else block
-        visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, block=block)
+        visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend, block=block)
