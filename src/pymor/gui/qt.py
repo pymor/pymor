@@ -143,7 +143,7 @@ class PlotMainWindow(QWidget):
             self.slider.setValue(ind)
 
 
-def launch_qt_app(main_window_factory, fork):
+def launch_qt_app(main_window_factory, block):
 
     def doit():
         try:
@@ -154,12 +154,11 @@ def launch_qt_app(main_window_factory, fork):
         main_window.show()
         app.exec_()
 
-    if fork:
-        from multiprocessing import Process
-        p = Process(target=doit)
-        p.start()
-    else:
-        doit()
+    from multiprocessing import Process
+    p = Process(target=doit)
+    p.start()
+    if block:
+        p.join()
 
 
 def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, title=None, legend=None, block=False):
@@ -205,7 +204,7 @@ def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, titl
 
             super(MainWindow, self).__init__(U, PlotWidget(), title=title, length=len(U[0]))
 
-    launch_qt_app(lambda: MainWindow(grid, U, bounding_box, codim, title=title, legend=legend), not block)
+    launch_qt_app(lambda: MainWindow(grid, U, bounding_box, codim, title=title, legend=legend), block)
 
 
 
@@ -223,7 +222,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, block=Fal
             plot_widget = Matplotlib1DWidget(None, grid, count=len(U), vmin=np.min(U), vmax=np.max(U), legend=legend, codim=codim)
             super(MainWindow, self).__init__(U, plot_widget, title=title, length=len(U[0]))
 
-    launch_qt_app(lambda: MainWindow(grid, U, codim, title=title, legend=legend), not block)
+    launch_qt_app(lambda: MainWindow(grid, U, codim, title=title, legend=legend), block)
 
 
 class GlumpyPatchVisualizer(BasicInterface):
