@@ -161,10 +161,11 @@ def launch_qt_app(main_window_factory, block):
         p.join()
 
 
-def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, title=None, legend=None, block=False):
+def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, title=None, legend=None,
+                           separate_colorbars=False, block=False):
 
     class MainWindow(PlotMainWindow):
-        def __init__(self, grid, U, bounding_box, codim, title, legend):
+        def __init__(self, grid, U, bounding_box, codim, title, legend, separate_colorbars):
             assert isinstance(U, Communicable) or isinstance(U, tuple) and all(isinstance(u, Communicable) for u in U) \
                 and all(len(u) == len(U[0]) for u in U)
             U = (U.data,) if isinstance(U, Communicable) else tuple(u.data for u in U)
@@ -175,26 +176,42 @@ def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, titl
             class PlotWidget(QWidget):
                 def __init__(self):
                     super(PlotWidget, self).__init__()
-                    vmin = min(np.min(u) for u in U)
-                    vmax = max(np.max(u) for u in U)
+                    if separate_colorbars:
+                        vmins = tuple(np.min(u) for u in U)
+                        vmaxs = tuple(np.max(u) for u in U)
+                    else:
+                        vmins = (min(np.min(u) for u in U),) * len(U)
+                        vmaxs = (max(np.max(u) for u in U),) * len(U)
                     layout = QHBoxLayout()
                     plot_layout = QGridLayout()
                     plots = [GlumpyPatchWidget(self, grid, vmin=vmin, vmax=vmax, bounding_box=bounding_box, codim=codim)
-                             for _ in xrange(len(U))]
-                    bar = ColorBarWidget(self, vmin=vmin, vmax=vmax)
+                             for vmin, vmax in izip(vmins, vmaxs)]
                     if legend:
                         for i, plot, l in izip(xrange(len(plots)), plots, legend):
                             subplot_layout = QVBoxLayout()
                             caption = QLabel(l)
                             caption.setAlignment(Qt.AlignHCenter)
                             subplot_layout.addWidget(caption)
-                            subplot_layout.addWidget(plot)
+                            if not separate_colorbars:
+                                subplot_layout.addWidget(plot)
+                            else:
+                                hlayout = QHBoxLayout()
+                                hlayout.addWidget(plot)
+                                hlayout.addWidget(ColorBarWidget(self, vmin=vmins[i], vmax=vmaxs[i]))
+                                subplot_layout.addLayout(hlayout)
                             plot_layout.addLayout(subplot_layout, int(i/2), (i % 2), 1, 1)
                     else:
                         for i, plot in enumerate(plots):
-                            plot_layout.addWidget(plot, int(i/2), (i % 2), 1, 1)
+                            if not separate_colorbars:
+                                plot_layout.addWidget(plot, int(i/2), (i % 2), 1, 1)
+                            else:
+                                hlayout = QHBoxLayout()
+                                hlayout.addWidget(plot)
+                                hlayout.addWidget(ColorBarWidget(self, vmin=vmins[i], vmax=vmaxs[i]))
+                                plot_layout.addLayout(plot, int(i/2), (i % 2), 1, 1)
                     layout.addLayout(plot_layout)
-                    layout.addWidget(bar)
+                    if not separate_colorbars:
+                        layout.addWidget(ColorBarWidget(self, vmin=vmin, vmax=vmax))
                     self.setLayout(layout)
                     self.plots = plots
 
@@ -204,7 +221,8 @@ def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, titl
 
             super(MainWindow, self).__init__(U, PlotWidget(), title=title, length=len(U[0]))
 
-    launch_qt_app(lambda: MainWindow(grid, U, bounding_box, codim, title=title, legend=legend), block)
+    launch_qt_app(lambda: MainWindow(grid, U, bounding_box, codim, title=title, legend=legend,
+                                     separate_colorbars=separate_colorbars), block)
 
 
 
@@ -235,10 +253,10 @@ class GlumpyPatchVisualizer(BasicInterface):
         self.codim = codim
         self.block = block
 
-    def visualize(self, U, discretization, title=None, legend=None, block=None):
+    def visualize(self, U, discretization, title=None, legend=None, separate_colorbars=False, block=None):
         block = self.block if block is None else block
         visualize_glumpy_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
-                               legend=legend, block=block)
+                               legend=legend, separate_colorbars=separate_colorbars, block=block)
 
 
 class Matplotlib1DVisualizer(BasicInterface):
