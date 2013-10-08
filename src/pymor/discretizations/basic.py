@@ -55,8 +55,8 @@ class DiscretizationBase(DiscretizationInterface):
         '''
         return self._solve(mu)
 
-    def __visualize(self, U):
-        self.visualizer.visualize(U, self)
+    def __visualize(self, U, *args, **kwargs):
+        self.visualizer.visualize(U, self, *args, **kwargs)
 
     def __estimate(self, U, mu=None):
         return self.estimator.estimate(U, mu=mu, discretization=self)
