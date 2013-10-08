@@ -75,6 +75,7 @@ class GlumpyPatchWidget(QGLWidget):
         self.vmax = vmax
         self.bounding_box = bounding_box
         self.codim = codim
+        self.update_vbo = False
 
     def resizeGL(self, w, h):
         gl.glViewport(0, 0, w, h)
@@ -89,6 +90,7 @@ class GlumpyPatchWidget(QGLWidget):
         else:
             self.vbo.vertices['color'][:, 0] = np.tile(np.repeat(self.U, 3), 2)
         self.vbo.upload()
+        self.update_vbo = False
 
     def initializeGL(self):
         gl.glClearColor(1.0, 1.0, 1.0, 1.0)
@@ -147,6 +149,8 @@ class GlumpyPatchWidget(QGLWidget):
         self.upload_buffer()
 
     def paintGL(self):
+        if self.update_vbo:
+            self.upload_buffer()
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
         self.vbo.draw(gl.GL_TRIANGLES, 'pc')
 
@@ -158,8 +162,7 @@ class GlumpyPatchWidget(QGLWidget):
         U -= vmin
         U /= float(vmax - vmin)
         self.U = U
-        if hasattr(self, 'vbo'):
-            self.upload_buffer()
+        self.update_vbo = True
         self.update()
 
 
@@ -195,7 +198,6 @@ class ColorBarWidget(QGLWidget):
 
     def set(self, U):
         # normalize U
-        U = np.array(U)
         self.vmin = np.min(U) if self.vmin is None else self.vmin
         self.vmax = np.max(U) if self.vmax is None else self.vmax
 
