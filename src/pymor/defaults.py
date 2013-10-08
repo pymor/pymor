@@ -5,6 +5,7 @@
 from __future__ import absolute_import, division, print_function
 
 import hashlib
+import random
 
 import numpy as np
 from pymor.core import dumps
@@ -75,9 +76,11 @@ class Defaults(object):
     @random_seed.setter
     def random_seed(self, s):
         self._random_seed = s
+        random.seed(s)
         np.random.seed(s)
 
     def __init__(self):
+        random.seed(self.random_seed)
         np.random.seed(self.random_seed)
         self._calc_sid()
 
