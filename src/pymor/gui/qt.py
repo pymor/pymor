@@ -19,10 +19,15 @@ from pymor.gui.matplotlib import Matplotlib1DWidget
 
 
 class PlotMainWindow(QWidget):
-    def __init__(self, U, plot):
+    def __init__(self, U, plot, title=None):
         super(PlotMainWindow, self).__init__()
 
         layout = QVBoxLayout()
+
+        if title:
+            title = QLabel('<b>' + title + '</b>')
+            title.setAlignment(Qt.AlignHCenter)
+            layout.addWidget(title)
         layout.addWidget(plot)
 
         if len(U) == 1:
@@ -138,10 +143,29 @@ class PlotMainWindow(QWidget):
             self.slider.setValue(ind)
 
 
-def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2):
+def launch_qt_app(main_window_factory, fork):
+
+    def doit():
+        try:
+            app = QApplication([])
+        except RuntimeError:
+            app = QCoreApplication.instance()
+        main_window = main_window_factory()
+        main_window.show()
+        app.exec_()
+
+    if fork:
+        from multiprocessing import Process
+        p = Process(target=doit)
+        p.start()
+    else:
+        doit()
+
+
+def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, title=None, block=False):
 
     class MainWindow(PlotMainWindow):
-        def __init__(self, grid, U, bounding_box, codim):
+        def __init__(self, grid, U, bounding_box, codim, title):
             assert isinstance(U, Communicable)
             U = U.data
 
@@ -159,58 +183,49 @@ def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2):
                 def set(self, U):
                     self.plot.set(U)
 
-            super(MainWindow, self).__init__(U, PlotWidget())
+            super(MainWindow, self).__init__(U, PlotWidget(), title=title)
 
-    try:
-        app = QApplication([])
-    except RuntimeError:
-        app = QCoreApplication.instance()
-
-    win = MainWindow(grid, U, bounding_box, codim)
-    win.show()
-    app.exec_()
+    launch_qt_app(lambda: MainWindow(grid, U, bounding_box, codim, title=title), not block)
 
 
-def visualize_matplotlib_1d(grid, U, codim=1):
+
+def visualize_matplotlib_1d(grid, U, codim=1, title=None, block=False):
 
     class MainWindow(PlotMainWindow):
-        def __init__(self, grid, U, codim):
+        def __init__(self, grid, U, codim, title):
             assert isinstance(U, Communicable)
             U = U.data
 
             plot_widget = Matplotlib1DWidget(None, grid, vmin=np.min(U), vmax=np.max(U), codim=codim)
-            super(MainWindow, self).__init__(U, plot_widget)
+            super(MainWindow, self).__init__(U, plot_widget, title=title)
 
-    try:
-        app = QApplication([])
-    except RuntimeError:
-        app = QCoreApplication.instance()
-
-    win = MainWindow(grid, U, codim)
-    win.show()
-    app.exec_()
+    launch_qt_app(lambda: MainWindow(grid, U, codim, title=title), not block)
 
 
 class GlumpyPatchVisualizer(BasicInterface):
 
-    def __init__(self, grid, bounding_box=[[0, 0], [1, 1]], codim=2):
+    def __init__(self, grid, bounding_box=[[0, 0], [1, 1]], codim=2, block=False):
         assert isinstance(grid, (RectGrid, TriaGrid))
         assert codim in (0, 2)
         self.grid = grid
         self.bounding_box = bounding_box
         self.codim = codim
+        self.block = block
 
-    def visualize(self, U, discretization):
-        visualize_glumpy_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim)
+    def visualize(self, U, discretization, title=None, block=None):
+        block = self.block if block is None else block
+        visualize_glumpy_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title, block=block)
 
 
 class Matplotlib1DVisualizer(BasicInterface):
 
-    def __init__(self, grid, codim=1):
+    def __init__(self, grid, codim=1, block=False):
         assert isinstance(grid, OnedGrid)
         assert codim in (0, 1)
         self.grid = grid
         self.codim = codim
+        self.block = block
 
-    def visualize(self, U, discretization):
-        visualize_matplotlib_1d(self.grid, U, codim=self.codim)
+    def visualize(self, U, discretization, title=None, block=None):
+        block = self.block if block is None else block
+        visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, block=block)
