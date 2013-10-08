@@ -55,7 +55,7 @@ def cg_demo(nrhs, ndirichlet, nneumann):
         U = discretization.solve()
 
         print('Plot ...')
-        discretization.visualize(U)
+        discretization.visualize(U, title='Triagrid(({0},{0}))'.format(n))
 
         print('')
 

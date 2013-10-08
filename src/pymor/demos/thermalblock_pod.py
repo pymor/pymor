@@ -78,11 +78,14 @@ def thermalblock_demo(args):
 
     if args['--plot-solutions']:
         print('Showing some solutions')
+        Us = tuple()
+        legend = tuple()
         for mu in discretization.parameter_space.sample_randomly(2):
             print('Solving for diffusion = \n{} ... '.format(mu['diffusion']))
             sys.stdout.flush()
-            U = discretization.solve(mu)
-            discretization.visualize(U)
+            Us = Us + (discretization.solve(mu),)
+            legend = legend + (str(mu['diffusion']),)
+        discretization.visualize(Us, legend=legend, title='Detailed Solutions for different parameters', block=True)
 
 
     print('RB generation ...')
@@ -153,7 +156,8 @@ def thermalblock_demo(args):
 
     sys.stdout.flush()
     if args['--plot-err']:
-        discretization.visualize(U - URB)
+        discretization.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
+                                 title='Maximum Error Solution', separate_colorbars=True, block=True)
 
 
 if __name__ == '__main__':

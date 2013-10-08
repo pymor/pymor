@@ -55,7 +55,7 @@ def cg2_demo(nrhs, n, plot):
 
     if plot:
         print('Plot ...')
-        discretization.visualize(U)
+        discretization.visualize(U, title='Solution for diffusionl in [0.1, 1]')
 
 if __name__ == '__main__':
     if len(sys.argv) < 4:
