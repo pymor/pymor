@@ -190,7 +190,7 @@ To deactivate the virtualenv call
     deactivate
 
 Matplotlib uses by default its Tk backend. To use the Qt backend, create a
-file ~/.matplotlib/matplotlibrc containing the lines
+file ~/.config/matplotlib/matplotlibrc containing the lines
 
     backend      :  Qt4Agg
     backend.qt4  :  PySide
