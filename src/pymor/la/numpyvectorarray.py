@@ -68,6 +68,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
 
     def append(self, other, o_ind=None, remove_from_other=False):
         assert self.check_ind(o_ind)
+        assert other is not self or not remove_from_other
 
         if o_ind is None:
             len_other = other._len
@@ -90,7 +91,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
         if remove_from_other:
             other.remove(o_ind)
 
-    def remove(self, ind):
+    def remove(self, ind=None):
         assert self.check_ind(ind)
 
         if ind is None:
@@ -109,6 +110,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
         assert self.check_ind(ind)
         assert self.check_ind(o_ind)
         assert self.dim == other.dim
+        assert other is not self or not remove_from_other
 
         if ind is None:
             if o_ind is None:

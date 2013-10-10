@@ -162,7 +162,7 @@ class VectorArrayInterface(BasicInterface):
         pass
 
     @abstractmethod
-    def remove(self, ind):
+    def remove(self, ind=None):
         '''Remove vectors from the array.
 
         Parameters
