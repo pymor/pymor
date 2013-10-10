@@ -111,6 +111,7 @@ class ListVectorArray(VectorArrayInterface):
     vector_type = None
 
     def __init__(self, vectors, dim=None, copy=True):
+        assert dim is None or dim >= 0
         if not copy:
             if isinstance(vectors, list):
                 self._list = vectors
@@ -126,10 +127,12 @@ class ListVectorArray(VectorArrayInterface):
 
     @classmethod
     def empty(cls, dim, reserve=0):
+        assert reserve >= 0
         return cls([], dim, copy=False)
 
     @classmethod
     def zeros(cls, dim, count=1):
+        assert count >= 0
         return cls([cls.vector_type.zeros(dim) for c in xrange(count)], dim=dim, copy=False)
 
     def __len__(self):
