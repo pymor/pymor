@@ -40,6 +40,23 @@ def _write_data(us_grid, data, filename_base, binary_vtk, last_step, is_cell_dat
 
 
 def write_vtk(grid, data, filename_base, binary_vtk=True, last_step=None):
+    '''Output grid-associated data in (legacy) vtk format
+    
+    Parameters
+    ---------
+    grid
+        a pymor grid with triangular or rectilinear reference element
+        
+    data
+        VectorArrayInterface instance with either cell (ie one datapoint per codim 0 entity) 
+        or vertex (ie one datapoint per codim 2 entity) data in each array element
+        
+    filename_base
+        common component for output files in timeseries
+        
+    last_step
+        if set must be <= len(data) to restrict output of timeseries
+    '''
     x, y = grid.centers(2)[:, 0], grid.centers(2)[:, 1]
     z = np.zeros(len(x))
     coords = (x, y, z)
