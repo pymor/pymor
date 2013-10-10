@@ -106,6 +106,65 @@ class VectorInterface(BasicInterface):
         return result
 
 
+class NumpyVector(VectorInterface):
+
+    def __init__(self, instance, dtype=None, copy=False, order=None, subok=False):
+        if isinstance(instance, np.ndarray) and not copy:
+            self._array = instance
+        else:
+            self._array = np.array(instance, dtype=dtype, copy=copy, order=order, subok=subok, ndmin=1)
+        assert self._array.ndim == 1
+
+    def zeros(cls, dim):
+        return NumpyVector(np.zeros(dim))
+
+    @property
+    def dim(self):
+        return len(self._array)
+
+    def copy(self):
+        return NumpyVector(self._array)
+
+    def almost_equal(self, other, rtol=None, atol=None):
+        assert self.dim == other.dim
+        return np.all(float_cmp(self._array, other._array, rtol=rtol, atol=atol))
+
+    def scal(self, alpha):
+        self._array *= alpha
+
+    def axpy(self, alpha, x):
+        assert self.dim == x.dim
+        if alpha == 0:
+            return
+        if alpha == 1:
+            self._array += x._array
+        elif alpha == -1:
+            self._array -= x._array
+        else:
+            self._array += x._array * alpha
+
+    def dot(self, other):
+        assert self.dim == other.dim
+        return np.sum(self._array * other._array)
+
+    def l1_norm(self):
+        return np.sum(np.abs(self._array))
+
+    def l2_norm(self):
+        return np.sum(np.power(self._array, 2))**(1/2)
+
+    def components(self, component_indices):
+        assert isinstance(component_indices, list) \
+            or isinstance(component_indices, np.ndarray) and component_indices.ndim == 1
+        return self._array[component_indices]
+
+    def amax(self):
+        A = np.abs(self._array)
+        max_ind = np.argmax(A)
+        max_val = A[max_ind]
+        return (max_ind, max_val)
+
+
 class ListVectorArray(VectorArrayInterface):
 
     vector_type = None
@@ -460,3 +519,7 @@ class ListVectorArray(VectorArrayInterface):
 
     def __str__(self):
         return 'ListVectorArray of {} {}s of dimension {}'.format(len(self._list), str(self.vector_type), self._dim)
+
+
+class NumpyListVectorArray(ListVectorArray):
+    vector_type = NumpyVector
