@@ -248,7 +248,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
 
         A = np.abs(A)
         max_ind = np.argmax(A, axis=1)
-        max_val = np.max(A, axis=1)
+        max_val = A[np.arange(len(A)), max_ind]
         return (max_ind, max_val)
 
     def __str__(self):
