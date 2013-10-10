@@ -5,6 +5,7 @@ import pytest
 import numpy as np
 
 from pymor.la import NumpyVectorArray
+from pymor.la.listvectorarray import NumpyListVectorArray
 
 
 def random_integers(count, seed):
@@ -17,7 +18,17 @@ def numpy_vector_array_factory(length, dim, seed):
     return NumpyVectorArray(np.random.random((length, dim)), copy=False)
 
 
+def numpy_list_vector_array_factory(length, dim, seed):
+    np.random.seed(seed)
+    return NumpyListVectorArray(list(np.random.random((length, dim))), copy=False)
+
+
 numpy_vector_array_generators = \
+    [lambda: numpy_vector_array_factory(l, d, s) for l, d, s in zip([0, 0, 1, 43, 1024],
+                                                                    [0, 10, 34, 32, 0],
+                                                                    random_integers(4, 123))]
+
+numpy_list_vector_array_generators = \
     [lambda: numpy_vector_array_factory(l, d, s) for l, d, s in zip([0, 0, 1, 43, 1024],
                                                                     [0, 10, 34, 32, 0],
                                                                     random_integers(4, 123))]
@@ -30,18 +41,27 @@ numpy_vector_array_pair_with_same_dim_generators = \
                                  random_integers(4, 1234),
                                  random_integers(4, 1235))]
 
+numpy_list_vector_array_pair_with_same_dim_generators = \
+    [lambda: (numpy_vector_array_factory(l, d, s1), numpy_vector_array_factory(l2, d, s2))
+     for l, l2, d, s1, s2 in zip([0, 0, 1, 43, 1024],
+                                 [0, 1, 37, 9, 104],
+                                 [0, 10, 34, 32, 3],
+                                 random_integers(4, 1234),
+                                 random_integers(4, 1235))]
 
-@pytest.fixture(params = numpy_vector_array_generators)
+
+@pytest.fixture(params = numpy_vector_array_generators + numpy_list_vector_array_generators)
 def vector_array(request):
     return request.param()
 
 
-@pytest.fixture(params = numpy_vector_array_pair_with_same_dim_generators)
+@pytest.fixture(params = numpy_vector_array_pair_with_same_dim_generators +
+                         numpy_list_vector_array_pair_with_same_dim_generators)
 def vector_array_pair_with_same_dim(request):
     return request.param()
 
 
-@pytest.fixture(params = [NumpyVectorArray])
+@pytest.fixture(params = [NumpyVectorArray, NumpyListVectorArray])
 def VectorArray(request):
     return request.param
 
