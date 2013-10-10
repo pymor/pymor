@@ -4,11 +4,32 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pyvtk import (VtkData, UnstructuredGrid, Vectors, PointData, CellData, Scalars)
+from pyvtk import (VtkData, UnstructuredGrid, PointData, CellData, Scalars)
 import numpy as np
 
 from pymor.grids import referenceelements
-from pyvtk.PolyData import PolyData
+
+def _write_pvd_meta_file(filename_base, steps, fn_tpl):
+    '''Outputs a collection file for a series of vtu files
+    
+    This DOES NOT WORK for the currently used legacy vtk format below
+    '''
+
+    pvd_header = '''<?xml version="1.0"?>
+<VTKFile type="Collection" version="0.1" byte_order="LittleEndian">
+    <Collection>
+'''
+    pvd_footer = '''
+    </Collection>
+</VTKFile>'''
+
+    fn_tpl += '.vtu'
+    with open('{}.pvd'.format(filename_base), 'wb') as pvd:
+        pvd.write( pvd_header )
+        for step in xrange(steps):
+            fn = fn_tpl.format(filename_base, step)
+            pvd.write('\t\t<DataSet timestep="{}" group="" part="0" file="{}" />\n'.format(step, fn))
+        pvd.write( pvd_footer )
 
 def _vtk_grid(grid, coords):
     subentity_ordering = grid.subentities(0, 2).tolist()
@@ -27,10 +48,12 @@ def _data_item(is_cell_data, data, step):
     return PointData(Scalars(sd, 'vertex_data'))
 
 
-def _write_data(us_grid, data, filename_base, binary_vtk, last_step, is_cell_data):
+def _write_vtu_series(us_grid, data, filename_base, binary_vtk, last_step, is_cell_data):
     steps = last_step + 1 if last_step is not None else len(data)
+    fn_tpl = "{}_{:08d}"
+    _write_meta_file(filename_base, steps, fn_tpl)
     for i in xrange(steps):
-        fn = "{}_{:08d}".format(filename_base, i)
+        fn = fn_tpl.format(filename_base, i)
         pd = _data_item(is_cell_data, data, i)
         vtk = VtkData(us_grid, pd, 'Unstructured Grid Example')
         if binary_vtk:
@@ -63,8 +86,8 @@ def write_vtk(grid, data, filename_base, binary_vtk=True, last_step=None):
     us_grid = _vtk_grid(grid, coords)
     shape = data.data[0, :].shape
     if shape[0] == grid.size(0):
-        _write_data(us_grid, data, filename_base, binary_vtk, last_step, True)
+        _write_vtu_series(us_grid, data, filename_base, binary_vtk, last_step, True)
     elif shape[0] == grid.size(2):
-        _write_data(us_grid, data, filename_base, binary_vtk, last_step, False)
+        _write_vtu_series(us_grid, data, filename_base, binary_vtk, last_step, False)
     else:
         raise Exception()
