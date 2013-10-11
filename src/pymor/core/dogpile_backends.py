@@ -101,7 +101,7 @@ class LimitedFileBackend(BasicInterface, DBMBackend):
         self._max_keys = argument_dict.get('max_keys', sys.maxsize)
         self._keylist_fn = self.filename + '.keys'
         try:
-            self._keylist = pymor.core.load(self._keylist_fn)
+            self._keylist = pymor.core.load(open(self._keylist_fn, 'rb'))
         except:
             self._keylist = deque()
         self._enforce_limits(None)
