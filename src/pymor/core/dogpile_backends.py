@@ -29,7 +29,8 @@ SMALL_MEMORY_CONFIG = {"backend": 'LimitedMemory', 'arguments.max_keys': 20,
                        'arguments.max_kbytes': 20}
 DEFAULT_DISK_CONFIG = {"backend": 'LimitedFile',
                        "arguments.filename": join(gettempdir(), 'pymor.cache.dbm'),
-                       'arguments.max_keys': 2000}
+                       'arguments.max_keys': 2000,
+                       'arguments.max_size': 1024 ** 3}
 SMALL_DISK_CONFIG = {"backend": 'LimitedFile',
                      "arguments.filename": join(gettempdir(), 'pymor.small_cache.dbm'),
                      'arguments.max_keys': 20}
@@ -100,38 +101,45 @@ class LimitedFileBackend(BasicInterface, DBMBackend):
         self.logger.debug('LimitedFileBackend args {}'.format(pformat(argument_dict)))
         self._max_keys = argument_dict.get('max_keys', sys.maxsize)
         self._keylist_fn = self.filename + '.keys'
+        self._max_size = argument_dict.get('max_size', None)
         try:
-            self._keylist = pymor.core.load(open(self._keylist_fn, 'rb'))
+            self._keylist, self._size = pymor.core.load(open(self._keylist_fn, 'rb'))
         except:
             self._keylist = deque()
+            self._size = 0
         self._enforce_limits(None)
         self.print_limit()
 
     def _dump_keylist(self):
-        pymor.core.dump(self._keylist, open(self._keylist_fn, 'wb'))
+        pymor.core.dump((self._keylist, self._size), open(self._keylist_fn, 'wb'))
 
-    def _new_key(self, key):
-        self._keylist.append(key)
+    def _new_key(self, key, size):
+        self._keylist.append((key, size))
+        self._size += size
         self._dump_keylist()
 
     def get(self, key):
         return super(LimitedFileBackend, self).get(key)
 
     def print_limit(self, additional_size=0):
-        self.logger.info('LimitedFileBackend at {}({}) keys'
-                         .format(len(self._keylist), self._max_keys))
+        self.logger.info('LimitedFileBackend at {}({}) keys, total size: {}({})'
+                         .format(len(self._keylist), self._max_keys, self._size, self._max_size))
 
     def _enforce_limits(self, new_value):
-        while len(self._keylist) > 0 and not (len(self._keylist) <= self._max_keys):
-            self.logger.debug('shrinking limited memory cache')
-            key = self._keylist.popleft()
+        while len(self._keylist) > 0 and (not (len(self._keylist) <= self._max_keys)
+                                          or self._max_size and self._size > self._max_size):
+            self.logger.debug('shrinking limited file cache')
+            key, size = self._keylist.popleft()
             self.delete(key)
+            self._size -= size
 
     def set(self, key, value):
         self._enforce_limits(value)
+        value = pymor.core.dumps(value)
         if not key in self._keylist:
-            self._new_key(key)
-        super(LimitedFileBackend, self).set(key, value)
+            self._new_key(key, len(value))
+        with self._dbm_file(True) as dbm:
+            dbm[key] = value
 
     def delete(self, key):
         super(LimitedFileBackend, self).delete(key)
