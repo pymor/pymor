@@ -13,6 +13,7 @@ import numpy as np
 from pymor.core.interfaces import BasicInterface, abstractmethod, abstractclassmethod, abstractproperty
 from pymor.core.exceptions import CommunicationError
 from pymor.la.interfaces import VectorArrayInterface
+from pymor.tools import float_cmp_all
 
 
 class VectorInterface(BasicInterface):
@@ -123,11 +124,11 @@ class NumpyVector(VectorInterface):
         return len(self._array)
 
     def copy(self):
-        return NumpyVector(self._array)
+        return NumpyVector(self._array, copy=True)
 
     def almost_equal(self, other, rtol=None, atol=None):
         assert self.dim == other.dim
-        return np.all(float_cmp(self._array, other._array, rtol=rtol, atol=atol))
+        return float_cmp_all(self._array, other._array, rtol=rtol, atol=atol)
 
     def scal(self, alpha):
         self._array *= alpha
@@ -214,6 +215,7 @@ class ListVectorArray(VectorArrayInterface):
     def append(self, other, o_ind=None, remove_from_other=False):
         assert self.check_ind(o_ind)
         assert other.dim == self.dim
+        assert other is not self or not remove_from_other
 
         other_list = other._list
         if not remove_from_other:
@@ -231,21 +233,29 @@ class ListVectorArray(VectorArrayInterface):
                 self._list.append(other_list.pop(o_ind))
             else:
                 self._list.extend([other_list[i] for i in o_ind])
-                other._list = [v for i, v in enumerate(other._vectors) if i not in o_ind]
+                l = len(other_list)
+                remaining = sorted(set(xrange(l)) - set(i % l for i in o_ind))
+                other._list = [other_list[i] for i in remaining]
 
-    def remove(self, ind):
+    def remove(self, ind=None):
         assert self.check_ind(ind)
         if ind is None:
             self._list = []
         elif isinstance(ind, Number):
             del self._list[ind]
         else:
-            self._list = [v for i, v in enumerate(self._list) if i not in ind]
+            thelist = self._list
+            l = len(thelist)
+            assert -l <= min(ind)
+            assert max(ind) < l
+            remaining = sorted(set(xrange(len(self))) - set(i % l for i in ind))
+            self._list = [thelist[i] for i in remaining]
 
     def replace(self, other, ind=None, o_ind=None, remove_from_other=False):
         assert self.check_ind(ind)
         assert self.check_ind(o_ind)
         assert other.dim == self.dim
+        assert other is not self or not remove_from_other
 
         if ind == None:
             c = type(self).empty(self.dim)
