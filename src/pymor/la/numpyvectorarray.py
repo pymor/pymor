@@ -99,8 +99,13 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
             self._len = 0
         else:
             if hasattr(ind, '__len__'):
-                self._array = self._array[list(x for x in xrange(len(self)) if x not in ind)]
+                l = self._len
+                assert -l <= min(ind)
+                assert max(ind) < l
+                remaining = sorted(set(xrange(len(self))) - set(i % l for i in ind))
+                self._array = self._array[remaining]
             else:
+                assert -self._len < ind < self._len
                 self._array = self._array[range(ind) + range(ind + 1, self._len)]
             self._len = self._array.shape[0]
         if not self._array.flags['OWNDATA']:
