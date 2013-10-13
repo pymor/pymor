@@ -69,16 +69,16 @@ numpy_list_vector_array_pair_with_different_dim_generators = \
 def invalid_inds(v):
     yield len(v)
     yield [len(v)]
-    yield -len(v) - 1
-    yield [-len(v) - 1]
+    yield -1
+    yield [-1]
     yield [0, len(v)]
 
 
 def valid_inds(v):
-    for ind in [None, range(len(v)), range(int(len(v)/2)), range(len(v)) * 2]:
+    for ind in [None, [], range(len(v)), range(int(len(v)/2)), range(len(v)) * 2]:
         yield ind
     if len(v) > 0:
-        for ind in [0, len(v) - 1, -len(v), range(-len(v) + 1, 0)]:
+        for ind in [0, len(v) - 1]:
             yield ind
 
 
