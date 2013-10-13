@@ -67,7 +67,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
             return C
 
     def append(self, other, o_ind=None, remove_from_other=False):
-        assert self.check_ind(o_ind)
+        assert other.check_ind(o_ind)
         assert other is not self or not remove_from_other
 
         if o_ind is None:
@@ -113,7 +113,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
 
     def replace(self, other, ind=None, o_ind=None, remove_from_other=False):
         assert self.check_ind(ind)
-        assert self.check_ind(o_ind)
+        assert other.check_ind(o_ind)
         assert self.dim == other.dim
         assert other is not self or not remove_from_other
 
@@ -137,7 +137,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
 
     def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
         assert self.check_ind(ind)
-        assert self.check_ind(o_ind)
+        assert other.check_ind(o_ind)
         assert self.dim == other.dim
 
         A = self._array[:self._len] if ind is None else \
@@ -160,7 +160,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
 
     def axpy(self, alpha, x, ind=None, x_ind=None):
         assert self.check_ind(ind)
-        assert self.check_ind(x_ind)
+        assert x.check_ind(x_ind)
         assert self.dim == x.dim
 
         if alpha == 0:
@@ -186,7 +186,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
 
     def dot(self, other, pairwise, ind=None, o_ind=None):
         assert self.check_ind(ind)
-        assert self.check_ind(o_ind)
+        assert other.check_ind(o_ind)
         assert self.dim == other.dim
 
         A = self._array[:self._len] if ind is None else \

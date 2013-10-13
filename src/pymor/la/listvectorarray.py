@@ -213,7 +213,7 @@ class ListVectorArray(VectorArrayInterface):
             return type(self)([self._list[i] for i in ind], dim=self._dim, copy=True)
 
     def append(self, other, o_ind=None, remove_from_other=False):
-        assert self.check_ind(o_ind)
+        assert other.check_ind(o_ind)
         assert other.dim == self.dim
         assert other is not self or not remove_from_other
 
@@ -253,7 +253,7 @@ class ListVectorArray(VectorArrayInterface):
 
     def replace(self, other, ind=None, o_ind=None, remove_from_other=False):
         assert self.check_ind(ind)
-        assert self.check_ind(o_ind)
+        assert other.check_ind(o_ind)
         assert other.dim == self.dim
         assert other is not self or not remove_from_other
 
@@ -297,7 +297,7 @@ class ListVectorArray(VectorArrayInterface):
 
     def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
         assert self.check_ind(ind)
-        assert self.check_ind(o_ind)
+        assert other.check_ind(o_ind)
         assert other.dim == self.dim
 
         if ind is None:
@@ -338,7 +338,7 @@ class ListVectorArray(VectorArrayInterface):
 
     def axpy(self, alpha, x, ind=None, x_ind=None):
         assert self.check_ind(ind)
-        assert self.check_ind(x_ind)
+        assert x.check_ind(x_ind)
 
         if ind is None:
             Y = iter(self._list)
@@ -390,7 +390,7 @@ class ListVectorArray(VectorArrayInterface):
 
     def dot(self, other, pairwise, ind=None, o_ind=None):
         assert self.check_ind(ind)
-        assert self.check_ind(o_ind)
+        assert other.check_ind(o_ind)
         assert self.dim == other.dim
 
         if ind is None:
