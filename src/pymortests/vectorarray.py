@@ -1,5 +1,5 @@
 from functools import partial
-from itertools import product
+from itertools import product, chain
 from numbers import Number
 
 import pytest
@@ -80,6 +80,40 @@ def valid_inds(v):
     if len(v) > 0:
         for ind in [0, len(v) - 1]:
             yield ind
+
+
+def valid_inds_of_same_length(v1, v2):
+    if len(v1) == len(v2):
+        yield None, None
+        yield range(len(v1)), range(len(v1))
+    yield [], []
+    if len(v1) > 0 and len(v2) > 0:
+        yield 0, 0
+        yield len(v1) - 1 , len(v2) - 1
+        yield [0], 0
+        yield (range(int(min(len(v1), len(v2))/2)),) * 2
+        np.random.seed(len(v1) * len(v2))
+        for count in np.linspace(0, min(len(v1), len(v2)), 3):
+            yield (list(np.random.randint(0, len(v1), size=count)),
+                   list(np.random.randint(0, len(v2), size=count)))
+
+
+def valid_inds_of_different_length(v1, v2):
+    if len(v1) != len(v2):
+        yield None, None
+        yield range(len(v1)), range(len(v2))
+    if len(v1) > 0 and len(v2) > 0:
+        if len(v1) > 1:
+            yield [0, 1], 0
+            yield [0, 1], [0]
+        if len(v2) > 1:
+            yield 0, [0, 1]
+            yield [0], [0, 1]
+        np.random.seed(len(v1) * len(v2))
+        for count1 in np.linspace(0, len(v1), 3):
+            count2 = np.random.randint(-count1, len(v2) - count1) + count1
+            yield (list(np.random.randint(0, len(v1), size=count1)),
+                   list(np.random.randint(0, len(v2), size=count2)))
 
 
 @pytest.fixture(params = numpy_vector_array_generators + numpy_list_vector_array_generators)
@@ -220,3 +254,32 @@ def test_remove(vector_array):
     assert np.all(c.almost_equal(v, ind=range(len(ind)/2, len(c))))
     v.remove()
     assert len(v) == 0
+
+
+def test_replace_self(vector_array):
+    v = vector_array
+    for ind1, ind2 in valid_inds_of_same_length(v, v):
+        c = v.copy()
+        with pytest.raises(Exception):
+            c.replace(c, ind=ind1, o_ind=ind2, remove_from_other=True)
+        c.replace(c, ind=ind1, o_ind=ind2, remove_from_other=False)
+        assert len(c) == len(v)
+        assert c.dim == v.dim
+        # if the same index is repeated in ind1, the corresponding vector
+        # will be the last one assigned to it
+        if hasattr(ind1, '__len__'):
+            ind2 = ind2 if hasattr(ind2, '__len__') else [ind2] if isinstance(ind2, Number) else range(len(c))
+            last_inds = {}
+            for i1, i2 in zip(ind1, ind2):
+                last_inds[i1] = i2
+            ind2 = [last_inds[i] for i in ind1]
+        assert np.all(c.almost_equal(v, ind=ind1, o_ind=ind2))
+
+
+def test_replace_wrong_dim(vector_array_pair_with_different_dim):
+    v1, v2 = vector_array_pair_with_different_dim
+    for ind1, ind2 in chain(valid_inds_of_same_length(v1, v2), valid_inds_of_different_length(v1, v2)):
+        with pytest.raises(Exception):
+            v1.replace(v2, ind=ind1, o_ind=ind2, remove_from_other=False)
+        with pytest.raises(Exception):
+            v1.replace(v2, ind=ind1, o_ind=ind2, remove_from_other=True)
