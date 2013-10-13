@@ -118,6 +118,8 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
 
         if ind is None:
             if o_ind is None:
+                if other is self:
+                    return
                 self._array = other._array[:other._len]
             else:
                 if not hasattr(o_ind, '__len__'):
