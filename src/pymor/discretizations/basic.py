@@ -134,12 +134,7 @@ class StationaryDiscretization(DiscretizationBase):
 
         # explicitly checking if logging is disabled saves the expensive str(mu) call
         if not self.logging_disabled:
-            if self.linear:
-                pt = 'sparsity unknown' if getattr(self.operator, 'sparse', None) is None \
-                    else ('sparse' if self.operator.sparse else 'dense')
-            else:
-                pt = 'nonlinear'
-            self.logger.info('Solving {} ({}) for {} ...'.format(self.name, pt, mu))
+            self.logger.info('Solving {} for {} ...'.format(self.name, mu))
 
         return self.operator.apply_inverse(self.rhs.as_vector(mu), mu=mu)
 
@@ -203,12 +198,7 @@ class InstationaryDiscretization(DiscretizationBase):
 
         # explicitly checking if logging is disabled saves the expensive str(mu) call
         if not self.logging_disabled:
-            if self.linear:
-                pt = 'sparsity unknown' if getattr(self.operator, 'sparse', None) is None \
-                    else ('sparse' if self.operator.sparse else 'dense')
-            else:
-                pt = 'nonlinear'
-            self.logger.info('Solving {} ({}) for {} ...'.format(self.name, pt, mu))
+            self.logger.info('Solving {} for {} ...'.format(self.name, mu))
 
         mu['_t'] = 0
         U0 = self.initial_data.apply(self.initial_data.type_source.zeros(0), mu=mu)
