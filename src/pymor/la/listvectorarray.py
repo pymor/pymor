@@ -233,8 +233,7 @@ class ListVectorArray(VectorArrayInterface):
                 self._list.append(other_list.pop(o_ind))
             else:
                 self._list.extend([other_list[i] for i in o_ind])
-                l = len(other_list)
-                remaining = sorted(set(xrange(l)) - set(i % l for i in o_ind))
+                remaining = sorted(set(xrange(len(other_list))) - set(o_ind))
                 other._list = [other_list[i] for i in remaining]
 
     def remove(self, ind=None):
@@ -245,10 +244,7 @@ class ListVectorArray(VectorArrayInterface):
             del self._list[ind]
         else:
             thelist = self._list
-            l = len(thelist)
-            assert -l <= min(ind)
-            assert max(ind) < l
-            remaining = sorted(set(xrange(len(self))) - set(i % l for i in ind))
+            remaining = sorted(set(xrange(len(self))) - set(ind))
             self._list = [thelist[i] for i in remaining]
 
     def replace(self, other, ind=None, o_ind=None, remove_from_other=False):
