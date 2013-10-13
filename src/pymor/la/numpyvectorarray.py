@@ -99,10 +99,9 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
             self._len = 0
         else:
             if hasattr(ind, '__len__'):
-                l = self._len
-                assert -l <= min(ind)
-                assert max(ind) < l
-                remaining = sorted(set(xrange(len(self))) - set(i % l for i in ind))
+                if len(ind) == 0:
+                    return
+                remaining = sorted(set(xrange(len(self))) - set(ind))
                 self._array = self._array[remaining]
             else:
                 assert -self._len < ind < self._len
