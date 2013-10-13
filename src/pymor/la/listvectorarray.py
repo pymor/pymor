@@ -284,12 +284,18 @@ class ListVectorArray(VectorArrayInterface):
                 o_ind = xrange(len(other)) if o_ind is None else o_ind
                 assert len(ind) == len(o_ind)
                 if not remove_from_other:
+                    l = self._list
+                    # if other is self, we have to make a copy of our list, to prevent
+                    # messing things up, e.g. when swapping vectors
+                    other_list = list(l) if other is self else other._list
                     for i, oi in izip(ind, o_ind):
-                        self._list[i] = other._list[oi].copy()
+                        l[i] = other_list[oi].copy()
                 else:
                     for i, oi in izip(ind, o_ind):
                         self._list[i] = other._list[oi]
-                    other._list = [v for i, v in enumerate(other._list) if i not in o_ind]
+                    other_list = other._list
+                    remaining = sorted(set(xrange(len(other_list))) - set(o_ind))
+                    other._list = [other_list[i] for i in remaining]
 
     def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
         assert self.check_ind(ind)
