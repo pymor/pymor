@@ -455,4 +455,5 @@ class VectorArrayInterface(BasicInterface):
         return (ind is None or
                 isinstance(ind, Number) and 0 <= ind < len(self) or
                 isinstance(ind, list) and (len(ind) == 0 or 0 <= min(ind) and max(ind) < len(self)) or
-                isinstance(ind, np.ndarray) and ind.ndim == 1 and 0 <= np.min(ind) and np.max(ind) < len(self))
+                isinstance(ind, np.ndarray) and ind.ndim == 1
+                                            and (len(ind) == 0 or 0 <= np.min(ind) and np.max(ind) < len(self)))
