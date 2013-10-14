@@ -120,17 +120,24 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
             if o_ind is None:
                 if other is self:
                     return
+                assert other._len == self._len
                 self._array = other._array[:other._len]
             else:
                 if not hasattr(o_ind, '__len__'):
                     o_ind = [o_ind]
+                assert self._len == len(o_ind)
                 self._array = other._array[o_ind]
             self._len = self._array.shape[0]
         else:
+            len_ind = self.len_ind(ind)
+            other_array = np.array(self._array) if other is self else other._array
             if o_ind is None:
-                self._array[ind] = other._array[:other._len]
+                assert len_ind == other._len
+                self._array[ind] = other_array[:other._len]
             else:
-                self._array[ind] = other._array[o_ind]
+                len_oind = other.len_ind(o_ind)
+                assert len_ind == len_oind
+                self._array[ind] = other_array[o_ind]
         assert self._array.flags['OWNDATA']
 
         if remove_from_other:
