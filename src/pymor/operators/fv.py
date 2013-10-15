@@ -197,16 +197,13 @@ class NonlinearAdvectionEngquistOsher(OperatorBase):
         self.flux_derivative = flux_derivative
         self.dirichlet_data = dirichlet_data
         self.name = name
-        if isinstance(dirichlet_data, FunctionInterface) and boundary_info.has_dirichlet:
-            if dirichlet_data.parametric:
-                self.build_parameter_type(inherits=(flux, flux_derivative, dirichlet_data))
-            else:
-                self._dirichlet_values = self.dirichlet_data(grid.centers(1)[boundary_info.dirichlet_boundaries(1)])
-                self._dirichlet_values = self._dirichlet_values.ravel()
-                self._dirichlet_values_flux_shaped = self._dirichlet_values.reshape((-1,1))
-                self.build_parameter_type(inherits=(flux, flux_derivative))
-        else:
+        if (isinstance(dirichlet_data, FunctionInterface) and boundary_info.has_dirichlet
+            and not dirichlet_data.parametric):
+            self._dirichlet_values = self.dirichlet_data(grid.centers(1)[boundary_info.dirichlet_boundaries(1)])
+            self._dirichlet_values = self._dirichlet_values.ravel()
+            self._dirichlet_values_flux_shaped = self._dirichlet_values.reshape((-1,1))
             self.build_parameter_type(inherits=(flux, flux_derivative))
+        self.build_parameter_type(inherits=(flux, flux_derivative, dirichlet_data))
         self.dim_source = self.dim_range = grid.size(0)
 
     def restricted(self, components):
