@@ -87,13 +87,13 @@ if _caching_disabled:
 
 
 def enable_caching():
-    global caching_disabled
-    caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
+    global _caching_disabled
+    _caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
 
 
 def disable_caching():
-    global caching_enabled
-    caching_disabled = True
+    global _caching_disabled
+    _caching_disabled = True
 
 
 def clear_caches():
