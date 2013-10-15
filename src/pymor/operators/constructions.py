@@ -15,25 +15,6 @@ from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.basic import OperatorBase, ProjectedOperator, ProjectedLinearOperator
 
 
-def rb_project_operator(operator, rb, product=None, name=None):
-    assert operator is None or isinstance(operator, OperatorInterface)
-
-    if operator is None:
-        return None
-    if operator.dim_source > 0:
-        assert operator.dim_source == rb.dim
-        source_basis = rb
-    else:
-        source_basis = None
-    if operator.dim_range > 1:
-        assert operator.dim_range == rb.dim
-        range_basis = rb
-    else:
-        range_basis = None
-
-    return operator.projected(source_basis, range_basis, product=product, name=name)
-
-
 class Concatenation(OperatorBase):
 
     def __init__(self, second, first, name=None):

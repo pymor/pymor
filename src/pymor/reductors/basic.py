@@ -8,7 +8,6 @@ import numpy as np
 
 import pymor.core as core
 from pymor.la import NumpyVectorArray
-from pymor.operators import rb_project_operator
 
 
 class GenericRBReconstructor(core.BasicInterface):
@@ -58,12 +57,25 @@ def reduce_generic_rb(discretization, RB, product=None, disable_caching=True,
     if RB is None:
         RB = discretization.type_solution.empty(discretization.dim_solution)
 
-    projected_operators = {k: rb_project_operator(op, RB, product=product)
-                           for k, op in discretization.operators.iteritems()}
+    def project_operator(operator):
+        if operator is None:
+            return None
+        if operator.dim_source > 0:
+            assert operator.dim_source == RB.dim
+            source_basis = RB
+        else:
+            source_basis = None
+        if operator.dim_range > 1:
+            assert operator.dim_range == RB.dim
+            range_basis = RB
+        else:
+            range_basis = None
+        return operator.projected(source_basis, range_basis, product=product)
+
+    projected_operators = {k: project_operator(op) for k, op in discretization.operators.iteritems()}
 
     if discretization.products is not None:
-        projected_products = {k: rb_project_operator(op, RB, product=product)
-                              for k, op in discretization.products.iteritems()}
+        projected_products = {k: project_operator(op) for k, op in discretization.products.iteritems()}
     else:
         projected_products = None
 
