@@ -59,8 +59,7 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
     assert extends is None or len(extends) == 3
 
     d = discretization
-    rd, rc, data = reduce_generic_rb(d, RB, product=None, disable_caching=disable_caching,
-                                     extends=extends)
+    rd, rc, data = reduce_generic_rb(d, RB, disable_caching=disable_caching, extends=extends)
     if extends:
         old_data = extends[2]
         old_RB_size = len(extends[1].RB)

@@ -24,12 +24,9 @@ class GenericRBReconstructor(core.BasicInterface):
         return GenericRBReconstructor(self.RB.copy(ind=range(dim)))
 
 
-def reduce_generic_rb(discretization, RB, product=None, disable_caching=True,
-                      extends=None):
+def reduce_generic_rb(discretization, RB, operator_product=None, vector_product=None,
+                      disable_caching=True, extends=None):
     '''Generic reduced basis reductor.
-
-    Reduces a discretization by applying `operators.rb_project_operator` to
-    each of its `operators`.
 
     Parameters
     ----------
@@ -37,9 +34,14 @@ def reduce_generic_rb(discretization, RB, product=None, disable_caching=True,
         The discretization which is to be reduced.
     RB
         The reduced basis (i.e. an array of vectors) on which to project.
-    product
-        Scalar product for the projection. (See
+    operator_product
+        Scalar product for the projection of operators. (See
         `operators.constructions.ProjectedOperator`)
+    vector_product
+        Scalar product for the projection of vector-alike operators, i.e.
+        ConstantOperators with dim_source == 0. (A typical case would be
+        the `initial_data` operator holding the initial data of a Cauchy
+        problem.)
     disable_caching
         If `True`, caching of the solutions of the reduced discretization
         is disabled.
@@ -63,8 +65,10 @@ def reduce_generic_rb(discretization, RB, product=None, disable_caching=True,
         if operator.dim_source > 0:
             assert operator.dim_source == RB.dim
             source_basis = RB
+            product = operator_product
         else:
             source_basis = None
+            product = vector_product
         if operator.dim_range > 1:
             assert operator.dim_range == RB.dim
             range_basis = RB
