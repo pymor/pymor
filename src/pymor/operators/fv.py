@@ -122,6 +122,66 @@ class NonlinearAdvectionLaxFriedrichs(OperatorBase):
         return NumpyVectorArray(R)
 
 
+class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
+    '''Linear Finite Volume Advection operator using Lax-Friedrichs-Flux.
+    '''
+
+    type_source = type_range = NumpyVectorArray
+
+    def __init__(self, grid, boundary_info, velocity_field, lxf_lambda=1.0, name=None):
+        super(LinearAdvectionLaxFriedrichs, self).__init__()
+        self.grid = grid
+        self.boundary_info = boundary_info
+        self.velocity_field = velocity_field
+        self.lxf_lambda = lxf_lambda
+        self.name = name
+        self.build_parameter_type(inherits=(velocity_field,))
+        self.dim_source = self.dim_range = grid.size(0)
+
+    def _assemble(self, mu=None):
+        mu = self.parse_parameter(mu)
+
+        g = self.grid
+        bi = self.boundary_info
+        SUPE = g.superentities(1, 0)
+        SUPI = g.superentity_indices(1, 0)
+        assert SUPE.ndim == 2
+        edge_volumes = g.volumes(1)
+        boundary_edges = g.boundaries(1)
+        inner_edges = np.setdiff1d(np.arange(g.size(1)), boundary_edges)
+        dirichlet_edges = bi.dirichlet_boundaries(1) if bi.has_dirichlet else np.array([], ndmin=1, dtype=np.int)
+        neumann_edges = bi.neumann_boundaries(1) if bi.has_neumann else np.array([], ndmin=1, dtype=np.int)
+        outflow_edges = np.setdiff1d(boundary_edges, np.hstack([dirichlet_edges, neumann_edges]))
+        normal_velocities = np.einsum('ei,ei->e',
+                                      self.velocity_field(g.centers(1), mu=mu),
+                                      g.unit_outer_normals()[SUPE[:,0], SUPI[:,0]])
+
+
+        nv_inner = normal_velocities[inner_edges]
+        l_inner = np.ones_like(nv_inner) * (1. / self.lxf_lambda)
+        I0_inner = np.hstack([SUPE[inner_edges, 0], SUPE[inner_edges, 0], SUPE[inner_edges, 1], SUPE[inner_edges, 1]])
+        I1_inner = np.hstack([SUPE[inner_edges, 0], SUPE[inner_edges, 1], SUPE[inner_edges, 0], SUPE[inner_edges, 1]])
+        V_inner =  np.hstack([nv_inner, nv_inner, -nv_inner, -nv_inner])
+        V_inner += np.hstack([l_inner, -l_inner, -l_inner, l_inner])
+        V_inner *= np.tile(0.5 * edge_volumes[inner_edges], 4)
+
+        I_out = SUPE[outflow_edges, 0]
+        V_out = edge_volumes[outflow_edges] * normal_velocities[outflow_edges]
+
+        I_dir = SUPE[dirichlet_edges, 0]
+        V_dir = edge_volumes[outflow_edges] * (0.5 * normal_velocities[dirichlet_edges] + 0.5 / self.lxf_lambda)
+
+        I0 = np.hstack([I0_inner, I_out, I_dir])
+        I1 = np.hstack([I1_inner, I_out, I_dir])
+        V = np.hstack([V_inner, V_out, V_dir])
+
+        A = coo_matrix((V, (I0, I1)), shape=(g.size(0), g.size(0)))
+        A = csr_matrix(A).copy()   # See cg.DiffusionOperatorP1 for why copy() is necessary
+        A = diags([1. / g.volumes(0)], [0]) * A
+
+        return NumpyMatrixOperator(A)
+
+
 class NonlinearAdvectionEngquistOsher(OperatorBase):
     '''Nonlinear Finite Volume Advection operator using EngquistOsher-Flux.
 
