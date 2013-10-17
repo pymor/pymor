@@ -95,10 +95,11 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
 
     def apply(self, U, ind=None, mu=None):
         mu = self.parse_parameter(mu)
-        U_components = self.source_basis_dofs.lincomb(U._array, ind=ind)
+        U_array = U._array if ind is None else U._array[ind]
+        U_components = self.source_basis_dofs.lincomb(U_array)
         AU = self.restricted_operator.apply(U_components, mu=mu)
         try:
-            interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU._array.T,
+            interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU.data.T,
                                                           lower=True, unit_diagonal=True).T
         except ValueError:  # this exception occurs when AU contains NaNs ...
             interpolation_coefficients = np.empty((len(AU), len(self.projected_collateral_basis))) + np.nan
