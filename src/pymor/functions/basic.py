@@ -6,12 +6,45 @@ from __future__ import absolute_import, division, print_function
 
 from numbers import Number
 
+from itertools import izip
 import numpy as np
 
-from .interfaces import FunctionInterface
+from pymor.functions.interfaces import FunctionInterface
+from pymor.parameters import ParameterFunctionalInterface
 
 
-class ConstantFunction(FunctionInterface):
+class FunctionBase(FunctionInterface):
+
+    def __add__(self, other):
+        if isinstance(other, Number) and other == 0:
+            return self
+        elif not isinstance(other, FunctionInterface):
+            other = np.array(other)
+            assert other.shape == self.shape_range
+            if np.all(other == 0.):
+                return self
+            other = ConstantFunction(other, dim_domain=self.dim_domain)
+        return LincombFunction([self, other], [1., 1.])
+
+    __radd__ = __add__
+
+    def __sub__(self, other):
+        if isinstance(other, FunctionInterface):
+            return LincombFunction([self, other], [1., -1.])
+        else:
+            return self + (- np.array(other))
+
+    def __mul__(self, other):
+        assert isinstance(other, Number)
+        return LincombFunction([self], [other])
+
+    __rmul__ = __mul__
+
+    def __neg__(self):
+        return LincombFunction([self], [-1.])
+
+
+class ConstantFunction(FunctionBase):
     '''A constant function ::
 
         f: R^d -> R^shape(c), f(x) = c
@@ -30,8 +63,7 @@ class ConstantFunction(FunctionInterface):
         assert dim_domain > 0
         assert isinstance(value, (Number, np.ndarray))
         super(ConstantFunction, self).__init__()
-        if not isinstance(value, np.ndarray):
-            value = np.array(value)
+        value = np.array(value)
         self._value = value
         self.dim_domain = dim_domain
         self.shape_range = value.shape
@@ -50,7 +82,7 @@ class ConstantFunction(FunctionInterface):
             return np.tile(self._value, x.shape[:-1] + (1,) * len(self.shape_range))
 
 
-class GenericFunction(FunctionInterface):
+class GenericFunction(FunctionBase):
     '''A wrapper making an arbitrary python function a `Function`
 
     Parameters
@@ -101,7 +133,7 @@ class GenericFunction(FunctionInterface):
         return v
 
 
-class LincombFunction(FunctionInterface):
+class LincombFunction(FunctionBase):
 
     def __init__(self, functions, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
         assert coefficients is None or len(functions) == len(coefficients)
