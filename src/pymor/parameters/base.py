@@ -166,7 +166,8 @@ class Parameter(dict):
                 raise ValueError('Parameter length does not match.')
             mu = dict(izip(parameter_type, mu))
         elif set(mu.keys()) != set(parameter_type.keys()):
-            raise ValueError('Parameter components do not match')
+            raise ValueError('Provided parameter with keys {} does not match parameter type {}.'
+                             .format(mu.keys(), parameter_type))
         for k, v in mu.iteritems():
             if not isinstance(v, np.ndarray):
                 v = np.array(v)
@@ -298,11 +299,15 @@ class Parametric(object):
 
     def parse_parameter(self, mu):
         if mu is None:
-            assert self.parameter_type is None
+            assert self.parameter_type is None, \
+                'Given parameter is None but expected parameter of type {}'.format(self.parameter_type)
             return None
         if mu.__class__ is not Parameter:
             mu = Parameter.from_parameter_type(mu, self.parameter_type)
-        assert self.parameter_type is None or all(getattr(mu.get(k, None), 'shape', None) == v for k, v in self.parameter_type.iteritems())
+        assert self.parameter_type is None or all(getattr(mu.get(k, None), 'shape', None) == v
+                                                  for k, v in self.parameter_type.iteritems()), \
+            ('Given parameter of type {} does not match expected parameter type {}'
+             .format(mu.parameter_type, self.parameter_type))
         return mu
 
     def check_parameter(self, mu):
