@@ -61,7 +61,7 @@ class NonlinearAdvectionLaxFriedrichs(OperatorBase):
         mu = self.parse_parameter(mu)
 
         ind = xrange(len(U)) if ind is None else ind
-        U = U._array
+        U = U.data
         R = np.zeros((len(ind), self.dim_source))
 
         g = self.grid
@@ -224,7 +224,7 @@ class NonlinearAdvectionEngquistOsher(OperatorBase):
         mu = self.parse_parameter(mu)
 
         ind = xrange(len(U)) if ind is None else ind
-        U = U._array
+        U = U.data
         R = np.zeros((len(ind), self.dim_source))
 
         g = self.grid
