@@ -3,4 +3,4 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from .interfaces import FunctionInterface
-from .basic import ConstantFunction, GenericFunction
+from .basic import ConstantFunction, GenericFunction, LincombFunction
