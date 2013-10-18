@@ -173,6 +173,7 @@ class InstationaryDiscretization(DiscretizationBase):
         self.parameter_space = parameter_space
 
         if hasattr(time_stepper, 'nt'):
+            self.with_arguments = set(self.with_arguments)
             self.with_arguments.add('time_stepper_nt')
 
     with_arguments = set(selfless_arguments(__init__)).union(['operators'])
