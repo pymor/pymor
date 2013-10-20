@@ -12,7 +12,7 @@ from pymor.algorithms.timestepping import ExplicitEulerTimeStepper
 from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
 from pymor.domaindiscretizers import discretize_domain_default
 from pymor.operators.fv import (nonlinear_advection_lax_friedrichs_operator,
-                                nonlinear_advection_engquist_osher_operator,
+                                nonlinear_advection_simplified_engquist_osher_operator,
                                 L2Product)
 from pymor.operators import NumpyMatrixOperator
 from pymor.grids import RectGrid
@@ -45,7 +45,7 @@ def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=
         L = nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, p.flux_function,
                                                         dirichlet_data=p.dirichlet_data, lxf_lambda=lxf_lambda)
     else:
-        L = nonlinear_advection_engquist_osher_operator(grid, boundary_info, p.flux_function,
+        L = nonlinear_advection_simplified_engquist_osher_operator(grid, boundary_info, p.flux_function,
                                                         p.flux_function_derivative, dirichlet_data=p.dirichlet_data)
     F = None if p.rhs is None else L2ProductFunctional(grid, p.rhs)
     I = p.initial_data.evaluate(grid.quadrature_points(0, order=2)).squeeze()

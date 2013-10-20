@@ -220,7 +220,7 @@ def nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, flux, lxf_l
     return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, name)
 
 
-def nonlinear_advection_engquist_osher_operator(grid, boundary_info, flux, flux_derivative, dirichlet_data=None, name=None):
+def nonlinear_advection_simplified_engquist_osher_operator(grid, boundary_info, flux, flux_derivative,
     num_flux = SimplifiedEngquistOsherFlux(flux, flux_derivative)
     return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, name)
 
