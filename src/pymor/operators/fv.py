@@ -20,6 +20,7 @@ from pymor.operators import OperatorBase, NumpyMatrixBasedOperator, NumpyMatrixO
 from pymor.operators.constructions import Concatenation, ComponentProjection
 from pymor.tools.inplace import iadd_masked, isub_masked
 from pymor.tools import selfless_arguments
+from pymor.tools.quadratures import GaussQuadratures
 
 
 class NumericalConvectiveFlux(ImmutableInterface, Parametric):
@@ -77,6 +78,40 @@ class SimplifiedEngquistOsherFlux(NumericalConvectiveFlux):
         F_edge = np.sum(F_edge, axis=1)
         F_edge *= volumes
         return F_edge
+
+
+class EngquistOsherFlux(NumericalConvectiveFlux):
+
+    def __init__(self, flux, flux_derivative, gausspoints=5, intervals=1):
+        self.flux = flux
+        self.flux_derivative = flux_derivative
+        self.gausspoints = gausspoints
+        self.intervals = intervals
+        self.build_parameter_type(inherits=(flux, flux_derivative))
+        points, weights = GaussQuadratures.quadrature(npoints=self.gausspoints)
+        points = points / intervals
+        points = ((np.arange(self.intervals, dtype=np.float)[:, np.newaxis] * (1 / intervals)) + points[np.newaxis, :]).ravel()
+        weights = np.tile(weights, intervals) * (1 / intervals)
+        self.points = points
+        self.weights = weights
+
+    with_arguments = selfless_arguments(__init__)
+    def with_(self, **kwargs):
+        return self._with_via_init(kwargs)
+
+    def evaluate_stage1(self, U, mu=None):
+        int_els = np.abs(U)[:, np.newaxis, np.newaxis]
+        return [np.concatenate([self.flux_derivative(U[:, np.newaxis] * p, mu)[:, np.newaxis, :] * int_els * w
+                               for p, w in izip(self.points, self.weights)], axis=1)]
+
+    def evaluate_stage2(self, stage1_data, unit_outer_normals, volumes, mu=None):
+        F0 = np.sum(self.flux.evaluate(np.array([[0.]]), mu=mu) * unit_outer_normals, axis=1)
+        Fs = np.sum(stage1_data[0] * unit_outer_normals[:, np.newaxis, np.newaxis, :], axis=3)
+        Fs[:, 0, :] = np.maximum(Fs[:, 0, :], 0)
+        Fs[:, 1, :] = np.minimum(Fs[:, 1, :], 0)
+        Fs = np.sum(np.sum(Fs, axis=2), axis=1) + F0
+        Fs *= volumes
+        return Fs
 
 
 class NonlinearAdvectionOperator(OperatorBase):
