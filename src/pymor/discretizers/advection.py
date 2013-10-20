@@ -12,6 +12,7 @@ from pymor.algorithms.timestepping import ExplicitEulerTimeStepper
 from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
 from pymor.domaindiscretizers import discretize_domain_default
 from pymor.operators.fv import (nonlinear_advection_lax_friedrichs_operator,
+                                nonlinear_advection_engquist_osher_operator,
                                 nonlinear_advection_simplified_engquist_osher_operator,
                                 L2Product)
 from pymor.operators import NumpyMatrixOperator
@@ -24,13 +25,14 @@ from pymor.core import inject_sid
 
 
 def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=None, nt=100, num_flux='lax_friedrichs',
-                                                   lxf_lambda=1., domain_discretizer=None, grid=None, boundary_info=None):
+                                                   lxf_lambda=1., eo_gausspoints=5, eo_intervals=1,
+                                                   domain_discretizer=None, grid=None, boundary_info=None):
 
     assert isinstance(analytical_problem, InstationaryAdvectionProblem)
     assert grid is None or boundary_info is not None
     assert boundary_info is None or grid is not None
     assert grid is None or domain_discretizer is None
-    assert num_flux in ('lax_friedrichs', 'engquist_osher')
+    assert num_flux in ('lax_friedrichs', 'engquist_osher', 'simplified_engquist_osher')
 
     if grid is None:
         domain_discretizer = domain_discretizer or discretize_domain_default
@@ -44,9 +46,15 @@ def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=
     if num_flux == 'lax_friedrichs':
         L = nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, p.flux_function,
                                                         dirichlet_data=p.dirichlet_data, lxf_lambda=lxf_lambda)
+    elif num_flux == 'engquist_osher':
+        L = nonlinear_advection_engquist_osher_operator(grid, boundary_info, p.flux_function,
+                                                        p.flux_function_derivative,
+                                                        gausspoints=eo_gausspoints, intervals=eo_intervals,
+                                                        dirichlet_data=p.dirichlet_data)
     else:
         L = nonlinear_advection_simplified_engquist_osher_operator(grid, boundary_info, p.flux_function,
-                                                        p.flux_function_derivative, dirichlet_data=p.dirichlet_data)
+                                                                   p.flux_function_derivative,
+                                                                   dirichlet_data=p.dirichlet_data)
     F = None if p.rhs is None else L2ProductFunctional(grid, p.rhs)
     I = p.initial_data.evaluate(grid.quadrature_points(0, order=2)).squeeze()
     I = np.sum(I * grid.reference_element.quadrature(order=2)[1], axis=1) * (1. / grid.reference_element.volume)
