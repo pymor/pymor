@@ -53,7 +53,7 @@ class LaxFriedrichsFlux(NumericalConvectiveFlux):
                 + (U[..., 0] - U[..., 1]) * (0.5 / self.lxf_lambda)) * volumes
 
 
-class EngquistOsherFlux(NumericalConvectiveFlux):
+class SimplifiedEngquistOsherFlux(NumericalConvectiveFlux):
 
     def __init__(self, flux, flux_derivative):
         self.flux = flux
@@ -186,7 +186,7 @@ def nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, flux, lxf_l
 
 
 def nonlinear_advection_engquist_osher_operator(grid, boundary_info, flux, flux_derivative, dirichlet_data=None, name=None):
-    num_flux = EngquistOsherFlux(flux, flux_derivative)
+    num_flux = SimplifiedEngquistOsherFlux(flux, flux_derivative)
     return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, name)
 
 
