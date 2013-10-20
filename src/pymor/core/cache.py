@@ -8,6 +8,7 @@ from __future__ import absolute_import, division, print_function
 from functools import partial
 import os
 
+import numpy as np
 
 from pymor import defaults
 from pymor.core import dumps, ImmutableInterface
@@ -53,6 +54,11 @@ class DogpileMemoryCacheRegion(DogpileCacheRegion):
 
     def clear(self):
         self._new_region()
+
+    def set(self, key, value):
+        if isinstance(value, np.ndarray):
+            value.setflags(write=False)
+        self._cache_region.set(key, value)
 
 
 class DogpileDiskCacheRegion(DogpileCacheRegion):
