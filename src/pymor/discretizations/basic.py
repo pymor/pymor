@@ -143,8 +143,9 @@ class InstationaryDiscretization(DiscretizationBase):
 
     sid_ignore = ('visualizer', 'caching', 'name')
 
-    def __init__(self, T, initial_data, operator, rhs=None, mass=None, time_stepper=None, products=None,
-                 parameter_space=None, estimator=None, visualizer=None, caching='disk', name=None):
+    def __init__(self, T, initial_data, operator, rhs=None, mass=None, time_stepper=None, num_values=None,
+                 products=None, parameter_space=None, estimator=None, visualizer=None, caching='disk',
+                 name=None):
         assert isinstance(initial_data, (VectorArrayInterface, OperatorInterface))
         assert not isinstance(initial_data, OperatorInterface) or initial_data.dim_source == 0
         assert isinstance(operator, OperatorInterface)
@@ -169,6 +170,7 @@ class InstationaryDiscretization(DiscretizationBase):
         self.rhs = rhs
         self.mass = mass
         self.time_stepper = time_stepper
+        self.num_values = num_values
         self.build_parameter_type(inherits=(initial_data, operator, rhs, mass), provides={'_t': 0})
         self.parameter_space = parameter_space
 
@@ -204,4 +206,4 @@ class InstationaryDiscretization(DiscretizationBase):
         mu['_t'] = 0
         U0 = self.initial_data.apply(self.initial_data.type_source.zeros(0), mu=mu)
         return self.time_stepper.solve(operator=self.operator, rhs=self.rhs, initial_data=U0, mass=self.mass,
-                                       initial_time=0, end_time=self.T, mu=mu)
+                                       initial_time=0, end_time=self.T, mu=mu, num_values=self.num_values)

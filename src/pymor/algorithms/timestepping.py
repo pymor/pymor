@@ -26,9 +26,9 @@ class ImplicitEulerTimeStepper(TimeStepperInterface):
     def with_(self, **kwargs):
         return self._with_via_init(kwargs)
 
-    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None):
+    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         return implicit_euler(operator, rhs, mass, initial_data, initial_time, end_time, self.nt, mu,
-                              self.invert_options)
+                              self.invert_options, num_values)
 
 
 class ExplicitEulerTimeStepper(TimeStepperInterface):
@@ -40,13 +40,13 @@ class ExplicitEulerTimeStepper(TimeStepperInterface):
     def with_(self, **kwargs):
         return self._with_via_init(kwargs)
 
-    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None):
+    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         if mass is not None:
             raise NotImplementedError
-        return explicit_euler(operator, rhs, initial_data, initial_time, end_time, self.nt, mu)
+        return explicit_euler(operator, rhs, initial_data, initial_time, end_time, self.nt, mu, num_values)
 
 
-def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None):
+def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None, num_values=None):
     assert isinstance(A, OperatorInterface)
     assert isinstance(F, (OperatorInterface, VectorArrayInterface))
     assert isinstance(M, OperatorInterface)
@@ -90,15 +90,17 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None):
         if F_time_dep:
             dt_F = F.as_vector(mu) * dt
         U = M_dt_A.apply_inverse(M.apply(U) + dt_F, mu=mu, options=invert_options)
-        R.append(U)
+        if n * (num_values / nt) > len(R):
+            R.append(U)
 
     return R
 
 
-def explicit_euler(A, F, U0, t0, t1, nt, mu=None):
+def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
     assert isinstance(A, OperatorInterface)
     assert F is None or isinstance(F, (OperatorInterface, VectorArrayInterface))
     assert A.dim_source == A.dim_range
+    num_values = num_values or nt + 1
 
     if isinstance(F, OperatorInterface):
         assert F.dim_range == 1
@@ -121,7 +123,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None):
         A = A.assemble(mu)
 
     dt = (t1 - t0) / nt
-    R = A.type_source.empty(A.dim_source, reserve=nt+1)
+    R = A.type_source.empty(A.dim_source, reserve=num_values)
     R.append(U0)
 
     t = t0
@@ -132,7 +134,8 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None):
             t += dt
             mu['_t'] = t
             U.axpy(-dt, A.apply(U, mu=mu))
-            R.append(U)
+            if n * (num_values / nt) > len(R):
+                R.append(U)
     else:
         for n in xrange(nt):
             t += dt
@@ -140,6 +143,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None):
             if F_time_dep:
                 F_ass = F.as_vector(mu)
             U.axpy(dt, F_ass - A.apply(U, mu=mu))
-            R.append(U)
+            if n * (num_values / nt) > len(R):
+                R.append(U)
 
     return R

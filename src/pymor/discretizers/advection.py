@@ -25,7 +25,7 @@ from pymor.core import inject_sid
 
 
 def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=None, nt=100, num_flux='lax_friedrichs',
-                                                   lxf_lambda=1., eo_gausspoints=5, eo_intervals=1,
+                                                   lxf_lambda=1., eo_gausspoints=5, eo_intervals=1, num_values=None,
                                                    domain_discretizer=None, grid=None, boundary_info=None):
 
     assert isinstance(analytical_problem, InstationaryAdvectionProblem)
@@ -74,6 +74,6 @@ def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=
     discretization = InstationaryDiscretization(operator=L, rhs=F, initial_data=I, T=p.T, products=products,
                                                 time_stepper=time_stepper,
                                                 parameter_space=parameter_space, visualizer=visualizer,
-                                                name='{}_FV'.format(p.name))
+                                                num_values=num_values, name='{}_FV'.format(p.name))
 
     return discretization, {'grid': grid, 'boundary_info': boundary_info}
