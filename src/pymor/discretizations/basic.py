@@ -22,10 +22,11 @@ from pymor.tools import selfless_arguments
 
 class DiscretizationBase(DiscretizationInterface):
 
-    def __init__(self, operators, products=None, estimator=None, visualizer=None, caching='disk', name=None):
+    def __init__(self, operators, functionals, products=None, estimator=None, visualizer=None, caching='disk', name=None):
         CacheableInterface.__init__(self, region=caching)
         Parametric.__init__(self)
         self.operators = FrozenDict(operators)
+        self.functionals = FrozenDict(functionals)
         self.linear = all(op is None or isinstance(op, ConstantOperator) or op.linear for op in operators.itervalues())
         self.products = products
         self.estimator = estimator
@@ -105,10 +106,11 @@ class StationaryDiscretization(DiscretizationBase):
         assert operator.dim_source == operator.dim_range == rhs.dim_source
         assert rhs.dim_range == 1
 
-        operators = {'operator': operator, 'rhs': rhs}
-        super(StationaryDiscretization, self).__init__(operators=operators, products=products,
-                                                       estimator=estimator, visualizer=visualizer,
-                                                       caching=caching, name=name)
+        operators = {'operator': operator}
+        functionals= {'rhs': rhs}
+        super(StationaryDiscretization, self).__init__(operators=operators, functionals=functionals,
+                                                       products=products, estimator=estimator,
+                                                       visualizer=visualizer, caching=caching, name=name)
         self.dim_solution = operator.dim_source
         self.type_solution = operator.type_source
         self.operator = operator
@@ -117,15 +119,19 @@ class StationaryDiscretization(DiscretizationBase):
         self.build_parameter_type(inherits=(operator, rhs))
         self.parameter_space = parameter_space
 
-    with_arguments = set(selfless_arguments(__init__)).union(['operators'])
+    with_arguments = set(selfless_arguments(__init__)).union(['operators', 'functionals'])
 
     def with_(self, **kwargs):
         assert set(kwargs.keys()) <= self.with_arguments
-        assert 'operators' not in kwargs or 'rhs' not in kwargs and 'operator' not in kwargs
-        assert 'operators' not in kwargs or set(kwargs['operators'].keys()) <= set(('operator', 'rhs'))
+        assert 'operators' not in kwargs or 'operator' not in kwargs
+        assert 'operators' not in kwargs or 'rhs' not in kwargs
+        assert 'operators' not in kwargs or kwargs['operators'].keys() == ['operator']
+        assert 'functionals' not in kwargs or kwargs['functionals'].keys() == ['rhs']
 
         if 'operators' in kwargs:
             kwargs.update(kwargs.pop('operators'))
+        if 'functionals' in kwargs:
+            kwargs.update(kwargs.pop('functionals'))
 
         return self._with_via_init(kwargs)
 
@@ -158,10 +164,11 @@ class InstationaryDiscretization(DiscretizationBase):
         assert rhs is None or rhs.dim_source == operator.dim_source and rhs.dim_range == 1
         assert mass is None or mass.dim_source == mass.dim_range == operator.dim_source
 
-        operators = {'initial_data': initial_data, 'operator': operator, 'rhs': rhs, 'mass': mass}
-        super(InstationaryDiscretization, self).__init__(operators=operators, products=products,
-                                                         estimator=estimator, visualizer=visualizer,
-                                                         caching=caching, name=name)
+        operators = {'initial_data': initial_data, 'operator': operator, 'mass': mass}
+        functionals= {'rhs': rhs}
+        super(InstationaryDiscretization, self).__init__(operators=operators, functionals=functionals,
+                                                         products=products, estimator=estimator,
+                                                         visualizer=visualizer, caching=caching, name=name)
         self.T = T
         self.dim_solution = operator.dim_source
         self.type_solution = operator.type_source
@@ -178,21 +185,23 @@ class InstationaryDiscretization(DiscretizationBase):
             self.with_arguments = set(self.with_arguments)
             self.with_arguments.add('time_stepper_nt')
 
-    with_arguments = set(selfless_arguments(__init__)).union(['operators'])
+    with_arguments = set(selfless_arguments(__init__)).union(['operators', 'functionals'])
 
     def with_(self, **kwargs):
         assert set(kwargs.keys()) <= self.with_arguments
-        assert 'operators' not in kwargs or not ('rhs' in kwargs or 'operator' in kwargs or 'initial_data' in kwargs or
-                                                 'mass' in kwargs)
-        assert 'operators' not in kwargs or kwargs['operators'].viewkeys() <= set(('operator', 'rhs', 'initial_data',
-                                                                                   'mass'))
+        assert 'operators' not in kwargs or kwargs['operators'].viewkeys() <= set(('operator', 'initial_data', 'mass'))
+        assert 'functionals' not in kwargs or kwargs['functionals'].viewkeys() <= set(('rhs',))
+        assert 'operators' not in kwargs or not set(kwargs['operators']).intersection(kwargs.viewkeys())
+        assert 'functionals' not in kwargs or not set(kwargs['functionals']).intersection(kwargs.viewkeys())
         assert 'time_stepper_nt' not in kwargs or 'time_stepper' not in kwargs
+        if 'operators' in kwargs:
+            kwargs.update(kwargs.pop('operators'))
+        if 'functionals' in kwargs:
+            kwargs.update(kwargs.pop('functionals'))
 
         if 'time_stepper_nt' in kwargs:
             kwargs['time_stepper'] = self.time_stepper.with_(nt=kwargs.pop('time_stepper_nt'))
 
-        if 'operators' in kwargs:
-            kwargs.update(kwargs.pop('operators'))
 
         return self._with_via_init(kwargs)
 

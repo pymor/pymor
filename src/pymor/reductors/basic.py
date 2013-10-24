@@ -69,14 +69,11 @@ def reduce_generic_rb(discretization, RB, operator_product=None, vector_product=
         else:
             source_basis = None
             product = vector_product
-        if operator.dim_range > 1:
-            assert operator.dim_range == RB.dim
-            range_basis = RB
-        else:
-            range_basis = None
-        return operator.projected(source_basis, range_basis, product=product)
+        return operator.projected(source_basis, RB, product=product)
 
     projected_operators = {k: project_operator(op) for k, op in discretization.operators.iteritems()}
+    projected_functionals = {k: f.projected(source_basis=RB, range_basis=None, product=operator_product) if f else None
+                             for k, f in discretization.functionals.iteritems()}
 
     if discretization.products is not None:
         projected_products = {k: project_operator(op) for k, op in discretization.products.iteritems()}
@@ -85,8 +82,9 @@ def reduce_generic_rb(discretization, RB, operator_product=None, vector_product=
 
     caching = None if disable_caching else discretization.caching
 
-    rd = discretization.with_(operators=projected_operators, products=projected_products, visualizer=None,
-                              estimator=None, caching=caching, name=discretization.name + '_reduced')
+    rd = discretization.with_(operators=projected_operators, functionals=projected_functionals,
+                              products=projected_products, visualizer=None, estimator=None,
+                              caching=caching, name=discretization.name + '_reduced')
     rd.disable_logging()
     rc = GenericRBReconstructor(RB)
 
@@ -116,9 +114,10 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
     dim_solution = discretization.dim_solution
 
     projected_operators = {k: op.projected_to_subbasis(dim_source=dim if op.dim_source == dim_solution else None,
-                                                       dim_range=dim if op.dim_range == dim_solution else None)
-                               if op is not None else None
+                                                       dim_range=dim) if op is not None else None
                            for k, op in discretization.operators.iteritems()}
+    projected_functionals = {k: f.projected_to_subbasis(dim_source=dim, dim_range=None) if f is not None else None
+                            for k, f in discretization.functionals.iteritems()}
 
     if discretization.products is not None:
         projected_products = {k: op.projected_to_subbasis(dim_source=dim, dim_range=dim)
@@ -138,8 +137,9 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
     else:
         estimator = None
 
-    rd = discretization.with_(operators=projected_operators, products=projected_products, visualizer=None,
-                              estimator=estimator, name=discretization.name + '_reduced_to_subbasis')
+    rd = discretization.with_(operators=projected_operators, functionals=projected_functionals,
+                              products=projected_products, visualizer=None, estimator=estimator,
+                              name=discretization.name + '_reduced_to_subbasis')
     rd.disable_logging()
 
     if reconstructor is not None and hasattr(reconstructor, 'restricted_to_subbasis'):

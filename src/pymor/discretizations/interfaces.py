@@ -30,7 +30,8 @@ class DiscretizationInterface(CacheableInterface, Parametric, Named):
         Dictionary of all operators contained in this discretization. The idea is
         that this attribute will be common to all discretizations such that it can
         be used for introspection. Compare the implementation of `reduce_generic_rb`.
-        For this class, operators has the keys 'operator' and 'rhs'.
+    functionals
+        Same as operators but for functionals.
 
     Optional Methods
     ----------------
@@ -47,6 +48,7 @@ class DiscretizationInterface(CacheableInterface, Parametric, Named):
     type_solution = None
     linear = False
     operators = dict()
+    functional= dict()
     with_arguments = set(('operators',))
 
     @abstractmethod
