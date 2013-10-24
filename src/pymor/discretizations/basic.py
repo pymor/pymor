@@ -12,7 +12,7 @@ from pymor import defaults
 from pymor.core import abstractmethod
 from pymor.core.cache import CacheableInterface, cached
 from pymor.discretizations.interfaces import DiscretizationInterface
-from pymor.la import induced_norm, VectorArrayInterface, NumpyVectorArray
+from pymor.la import induced_norm, VectorArrayInterface
 from pymor.tools import selfless_arguments, FrozenDict
 from pymor.operators import OperatorInterface
 from pymor.operators.constructions import VectorOperator
@@ -222,6 +222,6 @@ class InstationaryDiscretization(DiscretizationBase):
             self.logger.info('Solving {} for {} ...'.format(self.name, mu))
 
         mu['_t'] = 0
-        U0 = self.initial_data.apply(NumpyVectorArray(1), mu=mu)
+        U0 = self.initial_data.as_vector(mu)
         return self.time_stepper.solve(operator=self.operator, rhs=self.rhs, initial_data=U0, mass=self.mass,
                                        initial_time=0, end_time=self.T, mu=mu, num_values=self.num_values)
