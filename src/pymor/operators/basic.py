@@ -24,7 +24,7 @@ from pymor.parameters import ParameterFunctionalInterface
 
 class OperatorBase(OperatorInterface):
 
-    def apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None, pairwise=True):
+    def apply2(self, V, U, pairwise, U_ind=None, V_ind=None, mu=None, product=None):
         mu = self.parse_parameter(mu)
         assert isinstance(V, VectorArrayInterface)
         assert isinstance(U, VectorArrayInterface)
@@ -554,7 +554,7 @@ class ProjectedLinearOperator(NumpyMatrixBasedOperator):
         assert operator.linear
         super(ProjectedLinearOperator, self).__init__()
         self.build_parameter_type(inherits=(operator,))
-        self.dim_source = len(source_basis) if operator.dim_source > 0 else 0
+        self.dim_source = len(source_basis) if source_basis is not None else operator.dim_source
         self.dim_range = len(range_basis) if range_basis is not None else operator.dim_range
         self.name = name
         self.operator = operator
@@ -567,10 +567,11 @@ class ProjectedLinearOperator(NumpyMatrixBasedOperator):
         if self.source_basis is None:
             if self.range_basis is None:
                 return self.operator.assemble(mu=mu)
-            elif product is None:
+            elif self.product is None:
                 return NumpyMatrixOperator(self.operator.apply2(self.range_basis,
                                                                 NumpyVectorArray(np.eye(self.operator.dim_source)),
-                                                                mu=mu), name='{}_assembled'.format(self.name))
+                                                                pairwise=False, mu=mu),
+                                           name='{}_assembled'.format(self.name))
             else:
                 V = self.operator.apply(NumpyVectorArray(np.eye(self.operator.dim_source)), mu=mu)
                 return NumpyMatrixOperator(self.product.apply2(self.range_basis, V, pairwise=False),
