@@ -154,6 +154,22 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         '''
         pass
 
+    @abstractmethod
+    def as_vector(self, mu=None):
+        '''Return vector representation of linear functional or vector operator.
+
+        This method may only be called on linear operators with
+        `dim_range == 1` and `type_source == NumpyVectorArray`
+        (functionals) or `dim_source == 1` and `type_source ==NumpyVectorArray`
+        (vector like operators).
+
+        In the case of a functional, the identity
+            operator.as_vector(mu).dot(U) == operator.apply(U, mu)
+        holds. In the case of a vector like operator we have
+            operator.as_vector(mu) == operator.apply(NumpyVectorArray(1), mu).
+        '''
+        pass
+
     @abstractstaticmethod
     def lincomb(operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
         '''Return a linear combination of the given operators.

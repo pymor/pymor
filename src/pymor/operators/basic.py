@@ -63,6 +63,16 @@ class OperatorBase(OperatorInterface):
     def apply_inverse(self, U, ind=None, mu=None, options=None):
         raise InversionError('No inversion algorithm available.')
 
+    def as_vector(self, mu=None):
+        if not self.linear:
+            raise TypeError('This is nonlinear operator does not represent a vector or linear functional.')
+        elif self.dim_source == 1 and self.type_source is NumpyVectorArray:
+            return self.apply(NumpyVectorArray(1), mu)
+        elif self.dim_range == 1 and self.type_range is NumpyVectorArray:
+            raise NotImplementedError
+        else:
+            raise TypeError('This is operator does not represent a vector or linear functional.')
+
     def projected(self, source_basis, range_basis, product=None, name=None):
         name = name or '{}_projected'.format(self.name)
         if self.linear:
@@ -126,8 +136,18 @@ class MatrixBasedOperatorBase(OperatorBase):
     def apply(self, U, ind=None, mu=None):
         if not self._assembled:
             return self.assemble(mu).apply(U, ind=ind)
+        elif self._last_op is not self:
+            return self._last_op.apply(U, ind=ind)
         else:
             raise NotImplementedError
+
+    def as_vector(self, mu=None):
+        if not self._assembled:
+            return self.assemble(mu).as_vector()
+        elif self._last_op is not self:
+            return self._last_op.as_vector()
+        else:
+            return super(MatrixBasedOperatorBase, self).as_vector(self, mu)
 
     _last_mu = None
     _last_op = None
@@ -177,6 +197,15 @@ class LincombOperatorBase(OperatorBase, LincombOperatorInterface):
         else:
             return np.array([c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients])
 
+    def as_vector(self, mu=None):
+        coefficients = self.evaluate_coefficients(mu)
+        vectors = [op.as_vector(mu) for op in self.operators]
+        R = vectors[0]
+        R.scal(coefficients[0])
+        for c, v in izip(coefficients[1:], vectors[1:]):
+            R.axpy(c, v)
+        return R
+
     def projected(self, source_basis, range_basis, product=None, name=None):
         proj_operators = [op.projected(source_basis=source_basis, range_basis=range_basis, product=product)
                           for op in self.operators]
@@ -218,6 +247,7 @@ class NumpyGenericOperator(OperatorBase):
     '''
 
     type_source = type_range = NumpyVectorArray
+    linear = False
 
     def __init__(self, mapping, dim_source=1, dim_range=1, parameter_type=None, name=None):
         self.dim_source = dim_source
@@ -278,20 +308,6 @@ class NumpyMatrixBasedOperator(MatrixBasedOperatorBase):
         else:
             return self.assemble(mu).apply_inverse(U, ind=ind, options=options)
 
-    def as_vector(self, mu=None):
-        '''Return vector representation of linear functional.
-
-        In case the operator is a linear functional (`dim_range == 1`), this
-        methods returns a `VectorArray` of length 1 containing the vector
-        representing the functional.
-        '''
-        assert self.dim_range == 1
-        if self._assembled:
-            assert self.check_parameter(mu)
-            return NumpyVectorArray(self._last_op._matrix, copy=True)
-        else:
-            return self.assemble(mu).as_vector()
-
 
 class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     '''Wraps a matrix as a proper linear discrete operator.
@@ -329,9 +345,10 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         return self
 
     def as_vector(self, mu=None):
-        assert self.dim_range == 1
+        if self.dim_source != 1 and self.dim_range != 1:
+            raise TypeError('This is operator does not represent a vector or linear functional.')
         assert self.check_parameter(mu)
-        return NumpyVectorArray(self._matrix, copy=True)
+        return NumpyVectorArray(self._matrix.ravel(), copy=True)
 
     def apply(self, U, ind=None, mu=None):
         assert isinstance(U, NumpyVectorArray)
