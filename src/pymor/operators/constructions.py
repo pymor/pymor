@@ -113,6 +113,35 @@ class ConstantOperator(OperatorBase):
         return self._value.copy(ind=([0] * count))
 
 
+class VectorOperator(OperatorBase):
+
+    linear = True
+    type_source = NumpyVectorArray
+    dim_source = 1
+
+    def __init__(self, vector, copy=True, name=None):
+        assert isinstance(vector, VectorArrayInterface)
+        assert len(vector) == 1
+        super(VectorOperator, self).__init__()
+        self.dim_range = vector.dim
+        self.type_range = type(vector)
+        self.name = name
+        self._vector = vector.copy() if copy else vector
+
+    def as_vector(self):
+        '''Returns the image of the operator as a VectorArray of length 1.'''
+        return self._vector.copy()
+
+    def apply(self, U, ind=None, mu=None):
+        assert self.check_parameter(mu)
+        assert isinstance(U, NumpyVectorArray) and U.dim == 1
+        count = len(U) if ind is None else 1 if isinstance(ind, Number) else len(ind)
+        R = self._vector.copy(ind=([0] * count))
+        for i, c in enumerate(U.data):
+            R.scal(c, ind=i)
+        return R
+
+
 class FixedParameterOperator(OperatorBase):
 
     def __init__(self, operator, mu=None):
