@@ -32,6 +32,9 @@ class DiscretizationInterface(CacheableInterface, Parametric, Named):
         be used for introspection. Compare the implementation of `reduce_generic_rb`.
     functionals
         Same as operators but for functionals.
+    vector_operators
+        Same as operators but for operators representing vectors, linear operators
+        with `dim_source == 1`.
 
     Optional Methods
     ----------------
@@ -48,8 +51,9 @@ class DiscretizationInterface(CacheableInterface, Parametric, Named):
     type_solution = None
     linear = False
     operators = dict()
-    functional= dict()
-    with_arguments = set(('operators',))
+    functionals = dict()
+    vector_operators = dict()
+    with_arguments = set(('operators', 'functionals', 'vector_operators'))
 
     @abstractmethod
     def _solve(self, mu=None):

@@ -12,22 +12,24 @@ from pymor import defaults
 from pymor.core import abstractmethod
 from pymor.core.cache import CacheableInterface, cached
 from pymor.discretizations.interfaces import DiscretizationInterface
-from pymor.la import induced_norm, VectorArrayInterface
+from pymor.la import induced_norm, VectorArrayInterface, NumpyVectorArray
 from pymor.tools import selfless_arguments, FrozenDict
 from pymor.operators import OperatorInterface
-from pymor.operators.constructions import ConstantOperator
+from pymor.operators.constructions import VectorOperator
 from pymor.parameters import Parametric, Parameter
 from pymor.tools import selfless_arguments
 
 
 class DiscretizationBase(DiscretizationInterface):
 
-    def __init__(self, operators, functionals, products=None, estimator=None, visualizer=None, caching='disk', name=None):
+    def __init__(self, operators, functionals, vector_operators, products=None, estimator=None, visualizer=None,
+                 caching='disk', name=None):
         CacheableInterface.__init__(self, region=caching)
         Parametric.__init__(self)
         self.operators = FrozenDict(operators)
         self.functionals = FrozenDict(functionals)
-        self.linear = all(op is None or isinstance(op, ConstantOperator) or op.linear for op in operators.itervalues())
+        self.vector_operators = FrozenDict(vector_operators)
+        self.linear = all(op is None or op.linear for op in operators.itervalues())
         self.products = products
         self.estimator = estimator
         self.visualizer = visualizer
@@ -109,7 +111,7 @@ class StationaryDiscretization(DiscretizationBase):
         operators = {'operator': operator}
         functionals= {'rhs': rhs}
         super(StationaryDiscretization, self).__init__(operators=operators, functionals=functionals,
-                                                       products=products, estimator=estimator,
+                                                       vector_operators={}, products=products, estimator=estimator,
                                                        visualizer=visualizer, caching=caching, name=name)
         self.dim_solution = operator.dim_source
         self.type_solution = operator.type_source
@@ -119,7 +121,7 @@ class StationaryDiscretization(DiscretizationBase):
         self.build_parameter_type(inherits=(operator, rhs))
         self.parameter_space = parameter_space
 
-    with_arguments = set(selfless_arguments(__init__)).union(['operators', 'functionals'])
+    with_arguments = set(selfless_arguments(__init__)).union(['operators', 'functionals', 'vector_operators'])
 
     def with_(self, **kwargs):
         assert set(kwargs.keys()) <= self.with_arguments
@@ -127,11 +129,14 @@ class StationaryDiscretization(DiscretizationBase):
         assert 'operators' not in kwargs or 'rhs' not in kwargs
         assert 'operators' not in kwargs or kwargs['operators'].keys() == ['operator']
         assert 'functionals' not in kwargs or kwargs['functionals'].keys() == ['rhs']
+        assert 'vector_operators' not in kwargs or not kwargs['vector_operators'].keys()
 
         if 'operators' in kwargs:
             kwargs.update(kwargs.pop('operators'))
         if 'functionals' in kwargs:
             kwargs.update(kwargs.pop('functionals'))
+        if 'vector_operators' in kwargs:
+            del kwargs['vector_operators']
 
         return self._with_via_init(kwargs)
 
@@ -153,20 +158,22 @@ class InstationaryDiscretization(DiscretizationBase):
                  products=None, parameter_space=None, estimator=None, visualizer=None, caching='disk',
                  name=None):
         assert isinstance(initial_data, (VectorArrayInterface, OperatorInterface))
-        assert not isinstance(initial_data, OperatorInterface) or initial_data.dim_source == 0
+        assert not isinstance(initial_data, OperatorInterface) or initial_data.dim_source == 1
         assert isinstance(operator, OperatorInterface)
         assert rhs is None or isinstance(rhs, OperatorInterface) and rhs.linear
         assert mass is None or isinstance(mass, OperatorInterface) and mass.linear
         if isinstance(initial_data, VectorArrayInterface):
-            initial_data = ConstantOperator(initial_data, name='initial_data')
+            initial_data = VectorOperator(initial_data, name='initial_data')
         assert isinstance(time_stepper, TimeStepperInterface)
         assert operator.dim_source == operator.dim_range == initial_data.dim_range
         assert rhs is None or rhs.dim_source == operator.dim_source and rhs.dim_range == 1
         assert mass is None or mass.dim_source == mass.dim_range == operator.dim_source
 
-        operators = {'initial_data': initial_data, 'operator': operator, 'mass': mass}
+        operators = {'operator': operator, 'mass': mass}
         functionals= {'rhs': rhs}
+        vector_operators = {'initial_data': initial_data}
         super(InstationaryDiscretization, self).__init__(operators=operators, functionals=functionals,
+                                                         vector_operators=vector_operators,
                                                          products=products, estimator=estimator,
                                                          visualizer=visualizer, caching=caching, name=name)
         self.T = T
@@ -185,23 +192,25 @@ class InstationaryDiscretization(DiscretizationBase):
             self.with_arguments = set(self.with_arguments)
             self.with_arguments.add('time_stepper_nt')
 
-    with_arguments = set(selfless_arguments(__init__)).union(['operators', 'functionals'])
+    with_arguments = set(selfless_arguments(__init__)).union(['operators', 'functionals', 'vector_operators'])
 
     def with_(self, **kwargs):
         assert set(kwargs.keys()) <= self.with_arguments
-        assert 'operators' not in kwargs or kwargs['operators'].viewkeys() <= set(('operator', 'initial_data', 'mass'))
+        assert 'operators' not in kwargs or kwargs['operators'].viewkeys() <= set(('operator', 'mass'))
         assert 'functionals' not in kwargs or kwargs['functionals'].viewkeys() <= set(('rhs',))
+        assert 'vector_operators' not in kwargs or kwargs['vector_operators'].viewkeys() <= set(('initial_data',))
         assert 'operators' not in kwargs or not set(kwargs['operators']).intersection(kwargs.viewkeys())
         assert 'functionals' not in kwargs or not set(kwargs['functionals']).intersection(kwargs.viewkeys())
+        assert 'vector_operators' not in kwargs or not set(kwargs['vector_operators']).intersection(kwargs.viewkeys())
         assert 'time_stepper_nt' not in kwargs or 'time_stepper' not in kwargs
         if 'operators' in kwargs:
             kwargs.update(kwargs.pop('operators'))
         if 'functionals' in kwargs:
             kwargs.update(kwargs.pop('functionals'))
-
+        if 'vector_operators' in kwargs:
+            kwargs.update(kwargs.pop('vector_operators'))
         if 'time_stepper_nt' in kwargs:
             kwargs['time_stepper'] = self.time_stepper.with_(nt=kwargs.pop('time_stepper_nt'))
-
 
         return self._with_via_init(kwargs)
 
@@ -213,6 +222,6 @@ class InstationaryDiscretization(DiscretizationBase):
             self.logger.info('Solving {} for {} ...'.format(self.name, mu))
 
         mu['_t'] = 0
-        U0 = self.initial_data.apply(self.initial_data.type_source.zeros(0), mu=mu)
+        U0 = self.initial_data.apply(NumpyVectorArray(1), mu=mu)
         return self.time_stepper.solve(operator=self.operator, rhs=self.rhs, initial_data=U0, mass=self.mass,
                                        initial_time=0, end_time=self.T, mu=mu, num_values=self.num_values)
