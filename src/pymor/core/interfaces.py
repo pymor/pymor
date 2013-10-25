@@ -163,7 +163,7 @@ class BasicInterface(object):
                 return set()
         return argnames
 
-    def _with(self, **kwargs):
+    def with_(self, **kwargs):
         '''Returns a copy with changed attributes.
 
         Parameters
