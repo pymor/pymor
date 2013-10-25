@@ -17,9 +17,9 @@ from pymor.parameters.spaces import CubicParameterSpace
 
 class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
 
-    def __init__(self, v = 1., circle=True, initial_data='sin', parameter_range=(1., 2.)):
+    def __init__(self, v = 1., circle=True, initial_data_type='sin', parameter_range=(1., 2.)):
 
-        assert initial_data in ('sin', 'bump')
+        assert initial_data_type in ('sin', 'bump')
 
         def burgers_flux(U, mu):
             U_exp = np.sign(U) * np.power(np.abs(U), mu['exponent'])
@@ -41,7 +41,7 @@ class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
                                                    parameter_type={'exponent': 0},
                                                    name='burgers_flux')
 
-        if initial_data == 'sin':
+        if initial_data_type == 'sin':
             def initial_data(x):
                 return 0.5 * (np.sin(2 * np.pi * x[..., 0]) + 1.)
             inject_sid(initial_data, str(BurgersProblem) + '.initial_data_sin')
@@ -68,13 +68,17 @@ class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
                                              T=0.3, name='BurgersProblem')
 
         self.parameter_space = CubicParameterSpace({'exponent': 0}, *parameter_range)
+        self.parameter_range = parameter_range
+        self.initial_data_type = initial_data_type
+        self.circle = circle
+        self.v = v
 
 
 class Burgers2DProblem(InstationaryAdvectionProblem, Unpicklable):
 
-    def __init__(self, vx = 1., vy = 1., torus=True, initial_data='sin', parameter_range=(1., 2.)):
+    def __init__(self, vx = 1., vy = 1., torus=True, initial_data_type='sin', parameter_range=(1., 2.)):
 
-        assert initial_data in ('sin', 'bump')
+        assert initial_data_type in ('sin', 'bump')
 
         def burgers_flux(U, mu):
             U = U.reshape(U.shape[:-1])
@@ -102,7 +106,7 @@ class Burgers2DProblem(InstationaryAdvectionProblem, Unpicklable):
                                                    parameter_type={'exponent': 0},
                                                    name='burgers_flux')
 
-        if initial_data == 'sin':
+        if initial_data_type == 'sin':
             def initial_data(x):
                 return 0.5 * (np.sin(2 * np.pi * x[..., 0]) * np.sin(2 * np.pi * x[..., 1]) + 1.)
             inject_sid(initial_data, str(Burgers2DProblem) + '.initial_data_sin')
@@ -127,3 +131,8 @@ class Burgers2DProblem(InstationaryAdvectionProblem, Unpicklable):
                                              T=0.3, name='Burgers2DProblem')
 
         self.parameter_space = CubicParameterSpace({'exponent': 0}, *parameter_range)
+        self.parameter_range = parameter_range
+        self.initial_data_type = initial_data_type
+        self.torus = torus
+        self.vx = vx
+        self.vy = vy

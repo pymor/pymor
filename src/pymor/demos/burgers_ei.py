@@ -116,7 +116,7 @@ def burgers_demo(args):
     print('Setup Problem ...')
     grid_type_map = {'rect': RectGrid, 'tria': TriaGrid}
     domain_discretizer = partial(discretize_domain_default, grid_type=grid_type_map[args['--grid-type']])
-    problem = Burgers2DProblem(vx=args['--vx'], vy=args['--vy'], initial_data=args['--initial-data'],
+    problem = Burgers2DProblem(vx=args['--vx'], vy=args['--vy'], initial_data_type=args['--initial-data'],
                                parameter_range=(args['EXP_MIN'], args['EXP_MAX']), torus=not args['--not-periodic'])
 
     print('Discretize ...')

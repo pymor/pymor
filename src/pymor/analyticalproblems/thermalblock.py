@@ -85,3 +85,5 @@ class ThermalBlockProblem(EllipticProblem, Unpicklable):
         super(ThermalBlockProblem, self).__init__(domain, rhs, diffusion_functions, parameter_functionals,
                                                   name='ThermalBlock')
         self.parameter_space = parameter_space
+        self.parameter_range = parameter_range
+        self.num_blocks = num_blocks
