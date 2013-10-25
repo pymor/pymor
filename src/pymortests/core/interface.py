@@ -139,8 +139,11 @@ class WithcopyInterface(TestInterface):
             self.logger.debug('WithcopyInterface: Not testing {} because its init failed: {}'.format(self_type, str(e)))
             return
 
-        new = obj.with_()
-        assert isinstance(new, self_type)
+        try:
+            new = obj.with_()
+            assert isinstance(new, self_type)
+        except exceptions.ConstError:
+            pass
 
 # this needs to go into every module that wants to use dynamically generated types, ie. testcases, below the test code
 from pymor.core.dynamic import *
