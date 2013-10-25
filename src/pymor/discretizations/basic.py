@@ -13,11 +13,10 @@ from pymor.core import abstractmethod
 from pymor.core.cache import CacheableInterface, cached
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.la import induced_norm, VectorArrayInterface
-from pymor.tools import selfless_arguments, FrozenDict
+from pymor.tools import method_arguments, FrozenDict
 from pymor.operators import OperatorInterface
 from pymor.operators.constructions import VectorOperator
 from pymor.parameters import Parametric, Parameter
-from pymor.tools import selfless_arguments
 
 
 class DiscretizationBase(DiscretizationInterface):
@@ -121,7 +120,7 @@ class StationaryDiscretization(DiscretizationBase):
         self.build_parameter_type(inherits=(operator, rhs))
         self.parameter_space = parameter_space
 
-    with_arguments = set(selfless_arguments(__init__)).union(['operators', 'functionals', 'vector_operators'])
+    with_arguments = set(method_arguments(__init__)).union(['operators', 'functionals', 'vector_operators'])
 
     def with_(self, **kwargs):
         assert set(kwargs.keys()) <= self.with_arguments
@@ -192,7 +191,7 @@ class InstationaryDiscretization(DiscretizationBase):
             self.with_arguments = set(self.with_arguments)
             self.with_arguments.add('time_stepper_nt')
 
-    with_arguments = set(selfless_arguments(__init__)).union(['operators', 'functionals', 'vector_operators'])
+    with_arguments = set(method_arguments(__init__)).union(['operators', 'functionals', 'vector_operators'])
 
     def with_(self, **kwargs):
         assert set(kwargs.keys()) <= self.with_arguments

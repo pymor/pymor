@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 import inspect
 
-def selfless_arguments(func):
+def method_arguments(func):
     args = inspect.getargspec(func)[0]
     try:
         args.remove('self')

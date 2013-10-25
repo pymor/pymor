@@ -20,7 +20,7 @@ from pymor.operators import OperatorBase, NumpyMatrixBasedOperator, NumpyMatrixO
 from pymor.operators.constructions import Concatenation, ComponentProjection
 from pymor.tools.inplace import iadd_masked, isub_masked
 from pymor.tools.quadratures import GaussQuadratures
-from pymor.tools import selfless_arguments
+from pymor.tools import method_arguments
 
 
 class NumericalConvectiveFlux(ImmutableInterface, Parametric):
@@ -127,7 +127,7 @@ class NonlinearAdvectionOperator(OperatorBase):
         self.with_arguments = set(self.with_arguments).union('numerical_flux_{}'.format(arg)
                                                              for arg in numerical_flux.with_arguments)
 
-    with_arguments = set(selfless_arguments(__init__))
+    with_arguments = set(method_arguments(__init__))
 
     def with_(self, **kwargs):
         assert 'numerical_flux' not in kwargs or not any(arg.startswith('numerical_flux_') for arg in kwargs)
