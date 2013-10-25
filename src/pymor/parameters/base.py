@@ -120,10 +120,10 @@ class Parameter(dict):
     __keys = None
 
     def __init__(self, v):
-        # calling dict.__init__ breaks multiple inheritance but is faster than
-        # the super() call
-        dict.__init__(self, v)
-        assert all(isinstance(v, np.ndarray) for v in self.itervalues())
+        if v is None:
+            v = {}
+        i = v.iteritems() if hasattr(v, 'iteritems') else v
+        dict.__init__(self, {k: np.array(v) if not isinstance(v, np.ndarray) else v for k, v in i})
 
     @classmethod
     def from_parameter_type(cls, mu, parameter_type=None):
@@ -149,7 +149,7 @@ class Parameter(dict):
             Is raised if `mu` cannot be interpreted as a `Paramter` of `parameter_type`.
         '''
         if not parameter_type:
-            assert mu is None
+            assert mu is None or mu == {}
             return None
 
         if isinstance(mu, Parameter):
@@ -213,9 +213,8 @@ class Parameter(dict):
         self.__keys = None
 
     def __eq__(self, mu):
-        if mu is None:
-            return False
-        assert mu.__class__ == Parameter
+        if not isinstance(mu, Parameter):
+            mu = Parameter(mu)
         if self.viewkeys() != mu.viewkeys():
             return False
         elif not all(np.array_equal(v, mu[k]) for k, v in self.iteritems()):
