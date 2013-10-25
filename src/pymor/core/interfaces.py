@@ -160,6 +160,7 @@ class BasicInterface(object):
         argnames.remove('self')
         for arg in argnames:
             if not hasattr(self, arg):
+                self._with_arguments_error = "Instance does not have attribute for __init__ argument '{}'".format(arg)
                 return set()
         return argnames
 
@@ -176,7 +177,11 @@ class BasicInterface(object):
         -------
         Copy of `self` with changed attributes.
         '''
-        if not set(kwargs.keys()) <= self.with_arguments:
+        with_arguments = self.with_arguments      # ensure that property is called first
+        if hasattr(self, '_with_arguments_error'):
+            raise ConstError('Using with_ is not possible because of the following Error: '
+                             + self._with_arguments_error)
+        if not set(kwargs.keys()) <= with_arguments:
             raise ConstError('Changing "{}" using with() is not allowed in {} (only "{}")'.format(
                 kwargs.keys(), self.__class__, self.with_arguments))
         return self._with_via_init(kwargs)
