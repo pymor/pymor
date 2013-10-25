@@ -154,9 +154,16 @@ class BasicInterface(object):
     def unlock(self):
         object.__setattr__(self, '_locked', False)
 
-    with_arguments = set()
+    @property
+    def with_arguments(self):
+        argnames = set(inspect.getargspec(self.__init__)[0])
+        argnames.remove('self')
+        for arg in argnames:
+            if not hasattr(self, arg):
+                return set()
+        return argnames
 
-    def with_(self, **kwargs):
+    def _with(self, **kwargs):
         '''Returns a copy with changed attributes.
 
         Parameters
@@ -172,15 +179,7 @@ class BasicInterface(object):
         if not set(kwargs.keys()) <= self.with_arguments:
             raise ConstError('Changing "{}" using with() is not allowed in {} (only "{}")'.format(
                 kwargs.keys(), self.__class__, self.with_arguments))
-        c = copy.copy(self)
-        locked = c._locked
-        self._locked = False
-        for k, v in kwargs.iteritems():
-            setattr(c, k, v)
-        if c._added_attributes is not None:
-            c._added_attributes = list(c._added_attributes)
-        c._locked = locked
-        return c
+        return self._with_via_init(kwargs)
 
     def _with_via_init(self, kwargs, new_class=None):
         '''Default implementation for with_ by calling __init__.
