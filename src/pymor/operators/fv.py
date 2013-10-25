@@ -19,8 +19,8 @@ from pymor.grids.boundaryinfos import SubGridBoundaryInfo
 from pymor.operators import OperatorBase, NumpyMatrixBasedOperator, NumpyMatrixOperator
 from pymor.operators.constructions import Concatenation, ComponentProjection
 from pymor.tools.inplace import iadd_masked, isub_masked
-from pymor.tools import selfless_arguments
 from pymor.tools.quadratures import GaussQuadratures
+from pymor.tools import selfless_arguments
 
 
 class NumericalConvectiveFlux(ImmutableInterface, Parametric):
@@ -41,10 +41,6 @@ class LaxFriedrichsFlux(NumericalConvectiveFlux):
         self.lxf_lambda = lxf_lambda
         self.build_parameter_type(inherits=(flux,))
 
-    with_arguments = selfless_arguments(__init__)
-    def with_(self, **kwargs):
-        return self._with_via_init(kwargs)
-
     def evaluate_stage1(self, U, mu=None):
         return U, self.flux(U[..., np.newaxis], mu)
 
@@ -60,10 +56,6 @@ class SimplifiedEngquistOsherFlux(NumericalConvectiveFlux):
         self.flux = flux
         self.flux_derivative = flux_derivative
         self.build_parameter_type(inherits=(flux, flux_derivative))
-
-    with_arguments = selfless_arguments(__init__)
-    def with_(self, **kwargs):
-        return self._with_via_init(kwargs)
 
     def evaluate_stage1(self, U, mu=None):
         return self.flux(U[..., np.newaxis], mu), self.flux_derivative(U[..., np.newaxis], mu)
@@ -94,10 +86,6 @@ class EngquistOsherFlux(NumericalConvectiveFlux):
         weights = np.tile(weights, intervals) * (1 / intervals)
         self.points = points
         self.weights = weights
-
-    with_arguments = selfless_arguments(__init__)
-    def with_(self, **kwargs):
-        return self._with_via_init(kwargs)
 
     def evaluate_stage1(self, U, mu=None):
         int_els = np.abs(U)[:, np.newaxis, np.newaxis]

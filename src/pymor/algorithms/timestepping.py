@@ -22,10 +22,6 @@ class ImplicitEulerTimeStepper(TimeStepperInterface):
         self.nt = nt
         self.invert_options = invert_options
 
-    with_arguments = set(('nt',))
-    def with_(self, **kwargs):
-        return self._with_via_init(kwargs)
-
     def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         return implicit_euler(operator, rhs, mass, initial_data, initial_time, end_time, self.nt, mu,
                               self.invert_options, num_values)
@@ -35,10 +31,6 @@ class ExplicitEulerTimeStepper(TimeStepperInterface):
 
     def __init__(self, nt):
         self.nt = nt
-
-    with_arguments = set(('nt',))
-    def with_(self, **kwargs):
-        return self._with_via_init(kwargs)
 
     def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         if mass is not None:
