@@ -129,7 +129,6 @@ class VectorOperator(OperatorBase):
         self._vector = vector.copy() if copy else vector
 
     def as_vector(self, mu=None):
-        '''Returns the image of the operator as a VectorArray of length 1.'''
         return self._vector.copy()
 
     def apply(self, U, ind=None, mu=None):
@@ -140,6 +139,34 @@ class VectorOperator(OperatorBase):
         for i, c in enumerate(U.data):
             R.scal(c, ind=i)
         return R
+
+
+class VectorFunctional(OperatorBase):
+
+    linear = True
+    type_range = NumpyVectorArray
+    dim_range = 1
+
+    def __init__(self, vector, product=None, copy=True, name=None):
+        assert isinstance(vector, VectorArrayInterface)
+        assert len(vector) == 1
+        assert product is None or isinstance(product, OperatorInterface)
+        super(VectorFunctional, self).__init__()
+        self.dim_source = vector.dim
+        self.type_source = type(vector)
+        self.name = name
+        if product is None:
+            self._vector = vector.copy() if copy else vector
+        else:
+            self._vector = product.apply(vector)
+
+    def as_vector(self, mu=None):
+        return self._vector.copy()
+
+    def apply(self, U, ind=None, mu=None):
+        assert self.check_parameter(mu)
+        assert isinstance(U, NumpyVectorArray) and U.dim == 1
+        return NumpyVectorArray(U.dot(self._vector, ind=ind), copy=False)
 
 
 class FixedParameterOperator(OperatorBase):
