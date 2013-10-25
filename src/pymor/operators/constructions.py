@@ -128,7 +128,7 @@ class VectorOperator(OperatorBase):
         self.name = name
         self._vector = vector.copy() if copy else vector
 
-    def as_vector(self):
+    def as_vector(self, mu=None):
         '''Returns the image of the operator as a VectorArray of length 1.'''
         return self._vector.copy()
 
