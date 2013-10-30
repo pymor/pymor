@@ -9,7 +9,7 @@ import numpy as np
 
 from pymor.grids import referenceelements
 
-def _write_pvd_meta_file(filename_base, steps, fn_tpl):
+def _write_meta_file(filename_base, steps, fn_tpl):
     '''Outputs a collection file for a series of vtu files
     
     This DOES NOT WORK for the currently used legacy vtk format below
