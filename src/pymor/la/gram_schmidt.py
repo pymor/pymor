@@ -58,7 +58,7 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=None,
     reiterate = defaults.gram_schmidt_reiterate if reiterate is None else reiterate
     reiteration_threshold = defaults.gram_schmidt_reiteration_threshold if reiteration_threshold is None \
         else reiteration_threshold
-    check = defaults.gram_schmidt_tol if check is None else check
+    check = defaults.gram_schmidt_check if check is None else check
     check_tol = check_tol or defaults.gram_schmidt_check_tol
 
     if copy:
