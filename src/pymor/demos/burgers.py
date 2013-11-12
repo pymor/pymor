@@ -59,7 +59,6 @@ from pymor.reductors import reduce_generic_rb
 from pymor.algorithms import greedy
 from pymor.algorithms.basisextension import pod_basis_extension
 from pymor.la import NumpyVectorArray
-from pymor.tools.vtkio import write_vtk
 
 core.getLogger('pymor.algorithms').setLevel('INFO')
 core.getLogger('pymor.discretizations').setLevel('INFO')
@@ -108,7 +107,6 @@ def burgers_demo(args):
     print('Solving took {}s'.format(time.time() - tic))
     # pr.dump_stats('bla')
     discretization.visualize(U)
-    write_vtk(data['grid'], U, 'burger')
 
 if __name__ == '__main__':
     # parse arguments
