@@ -9,6 +9,7 @@ Cannot not be moved because it's needed to be imported in the root __init__.py O
 from __future__ import absolute_import, division, print_function
 import logging
 import curses
+import time
 
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 
@@ -35,7 +36,7 @@ LOGLEVEL_MAPPING = {
     'fatal':     logging.FATAL,
 }
 
-FORMAT = '%(asctime)s - $BOLD%(name)s$RESET $BOLD%(levelname)s: %(message)s'
+FORMAT = '%(asctime)s$BOLD%(levelname)s|$BOLD%(name)s$RESET: %(message)s'
 MAX_HIERACHY_LEVEL = 3
 
 
@@ -52,13 +53,27 @@ class ColoredFormatter(logging.Formatter):
     loglevel keyword output
     """
 
-    def __init__(self, datefmt='%H:%M:%S'):
+    def __init__(self):
         try:
             curses.setupterm()
             self.use_color = curses.tigetnum("colors") > 1
         except Exception, _:
             self.use_color = False
-        logging.Formatter.__init__(self, formatter_message(FORMAT, self.use_color), datefmt=datefmt)
+        self._start_time = time.time()
+        def relative_time(secs=None):
+            if secs is not None:
+                elapsed = time.time() - self._start_time
+                if elapsed > 604800:
+                    self.datefmt='%Ww %dd %H:%M:%S'
+                elif elapsed > 86400:
+                    self.datefmt='%dd %H:%M:%S'
+                elif elapsed > 3600:
+                    self.datefmt='%H:%M:%S'
+                return time.gmtime(elapsed)
+            else:
+                return time.gmtime()
+        self.converter = relative_time
+        logging.Formatter.__init__(self, formatter_message(FORMAT, self.use_color), datefmt='%M:%S')
 
     def format(self, record):
         tokens = record.name.split('.')
@@ -67,7 +82,10 @@ class ColoredFormatter(logging.Formatter):
             record.name += '.' + tokens[-1]
         levelname = record.levelname
         if self.use_color and levelname in COLORS.keys():
-            levelname_color = COLOR_SEQ % (30 + COLORS[levelname]) + levelname + RESET_SEQ
+            if levelname is 'INFO':
+                levelname_color = RESET_SEQ
+            else:
+                levelname_color = RESET_SEQ + '|' + COLOR_SEQ % (30 + COLORS[levelname]) + levelname + RESET_SEQ
             record.levelname = levelname_color
         return logging.Formatter.format(self, record)
 
