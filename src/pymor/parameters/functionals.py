@@ -8,7 +8,7 @@ from numbers import Number
 
 import numpy as np
 
-from .interfaces import ParameterFunctionalInterface
+from pymor.parameters.interfaces import ParameterFunctionalInterface
 
 
 class ProjectionParameterFunctional(ParameterFunctionalInterface):

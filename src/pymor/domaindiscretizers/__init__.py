@@ -2,4 +2,4 @@
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from .default import discretize_domain_default
+from pymor.domaindiscretizers.default import discretize_domain_default

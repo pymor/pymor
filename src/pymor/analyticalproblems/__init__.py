@@ -2,5 +2,5 @@
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from .elliptic import EllipticProblem
-from .thermalblock import ThermalBlockProblem
+from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.analyticalproblems.thermalblock import ThermalBlockProblem

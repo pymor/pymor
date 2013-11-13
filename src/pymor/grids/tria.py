@@ -7,8 +7,8 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from pymor.core.exceptions import CodimError
-from .interfaces import AffineGridInterface
-from .referenceelements import triangle
+from pymor.grids.interfaces import AffineGridInterface
+from pymor.grids.referenceelements import triangle
 
 
 class TriaGrid(AffineGridInterface):

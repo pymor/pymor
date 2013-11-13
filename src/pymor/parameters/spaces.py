@@ -8,8 +8,8 @@ from collections import OrderedDict
 from itertools import izip, product
 import numpy as np
 
-from .interfaces import ParameterSpaceInterface
-from .base import Parameter, ParameterType
+from pymor.parameters.interfaces import ParameterSpaceInterface
+from pymor.parameters.base import Parameter, ParameterType
 
 
 class CubicParameterSpace(ParameterSpaceInterface):

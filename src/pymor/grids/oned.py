@@ -9,7 +9,7 @@ import numpy as np
 
 from pymor.core.exceptions import CodimError
 from pymor.grids.interfaces import AffineGridInterface
-from .referenceelements import line
+from pymor.grids.referenceelements import line
 
 
 class OnedGrid(AffineGridInterface):

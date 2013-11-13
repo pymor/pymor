@@ -5,7 +5,7 @@
 from __future__ import absolute_import, division, print_function
 
 from pymor.core import ImmutableInterface
-from .boundarytypes import BoundaryType
+from pymor.domaindescriptions.boundarytypes import BoundaryType
 
 
 class DomainDescriptionInterface(ImmutableInterface):
