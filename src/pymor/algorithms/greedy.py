@@ -88,17 +88,17 @@ def greedy(discretization, reductor, samples, initial_data=None, use_estimator=T
         if use_estimator:
             errors = [rd.estimate(rd.solve(mu), mu) for mu in samples]
         elif error_norm is not None:
-            errors = [error_norm(discretization.solve(mu) - rc.reconstruct(rd.solve(mu))) for mu in samples]
+            errors = [error_norm(discretization.solve(mu) - rc.reconstruct(rd.solve(mu)))[0] for mu in samples]
         else:
-            errors = [(discretization.solve(mu) - rc.reconstruct(rd.solve(mu))).l2_norm() for mu in samples]
+            errors = [(discretization.solve(mu) - rc.reconstruct(rd.solve(mu))).l2_norm()[0] for mu in samples]
 
         max_err, max_err_mu = max(((err, mu) for err, mu in izip(errors, samples)), key=lambda t: t[0])
         max_errs.append(max_err)
         max_err_mus.append(max_err_mu)
-        logger.info('Maximum error after {} extensions: {} (mu = {})'.format(extensions, max_err[0], max_err_mu))
+        logger.info('Maximum error after {} extensions: {} (mu = {})'.format(extensions, max_err, max_err_mu))
 
         if target_error is not None and max_err <= target_error:
-            logger.info('Reached maximal error on snapshots of {} <= {}'.format(max_err[0], target_error))
+            logger.info('Reached maximal error on snapshots of {} <= {}'.format(max_err, target_error))
             break
 
         logger.info('Extending with snapshot for mu = {}'.format(max_err_mu))
