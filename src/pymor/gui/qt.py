@@ -62,14 +62,16 @@ class PlotMainWindow(QWidget):
             self.a_step_forward = QAction(self.style().standardIcon(QStyle.SP_MediaSkipForward), 'Step', self)
             self.a_loop = QAction(self.style().standardIcon(QStyle.SP_BrowserReload), 'Loop', self)
             self.a_loop.setCheckable(True)
-            self.a_save = QAction(self.style().standardIcon(QStyle.SP_DialogSaveButton), 'Save', self)
             toolbar.addAction(self.a_play)
             toolbar.addAction(self.a_rewind)
             toolbar.addAction(self.a_toend)
             toolbar.addAction(self.a_step_backward)
             toolbar.addAction(self.a_step_forward)
             toolbar.addAction(self.a_loop)
-            toolbar.addAction(self.a_save)
+            if hasattr(self, 'save'):
+                self.a_save = QAction(self.style().standardIcon(QStyle.SP_DialogSaveButton), 'Save', self)
+                toolbar.addAction(self.a_save)
+                self.a_save.triggered.connect(self.save)
             hlayout.addWidget(toolbar)
 
             self.speed = QSlider(Qt.Horizontal)
@@ -91,11 +93,10 @@ class PlotMainWindow(QWidget):
             self.a_toend.triggered.connect(self.to_end)
             self.a_step_forward.triggered.connect(self.step_forward)
             self.a_step_backward.triggered.connect(self.step_backward)
-            self.a_save.triggered.connect(self.save)
 
             self.speed.setValue(50)
 
-        else:
+        elif hasattr(self, 'save'):
             hlayout = QHBoxLayout()
             toolbar = QToolBar()
             self.a_save = QAction(self.style().standardIcon(QStyle.SP_DialogSaveButton), 'Save', self)
@@ -156,8 +157,6 @@ class PlotMainWindow(QWidget):
         if ind >= 0:
             self.slider.setValue(ind)
 
-    def save(self):
-        raise NotImplementedError
 
 def launch_qt_app(main_window_factory, block):
 
