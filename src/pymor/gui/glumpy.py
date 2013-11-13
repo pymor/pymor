@@ -13,9 +13,9 @@ from glumpy.graphics.vertex_buffer import VertexBuffer
 import OpenGL.GL as gl
 import OpenGL.GLUT as glut
 
-from pymor.la.numpyvectorarray import NumpyVectorArray
-from pymor.grids.referenceelements import triangle, square
 from pymor.grids.constructions import flatten_grid
+from pymor.grids.referenceelements import triangle, square
+from pymor.la.numpyvectorarray import NumpyVectorArray
 
 
 def compile_vertex_shader(source):

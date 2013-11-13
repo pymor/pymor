@@ -8,8 +8,8 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
 
-from pymor.la import NumpyVectorArray
 from pymor.grids.referenceelements import triangle, line
+from pymor.la import NumpyVectorArray
 from pymor.operators import NumpyMatrixBasedOperator, NumpyMatrixOperator
 
 

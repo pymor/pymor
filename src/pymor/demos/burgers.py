@@ -51,14 +51,14 @@ from docopt import docopt
 
 import pymor.core as core
 core.logger.MAX_HIERACHY_LEVEL = 2
+from pymor.algorithms import greedy
+from pymor.algorithms.basisextension import pod_basis_extension
 from pymor.analyticalproblems.burgers import Burgers2DProblem
 from pymor.discretizers.advection import discretize_nonlinear_instationary_advection_fv
 from pymor.domaindiscretizers import discretize_domain_default
 from pymor.grids import RectGrid, TriaGrid
-from pymor.reductors import reduce_generic_rb
-from pymor.algorithms import greedy
-from pymor.algorithms.basisextension import pod_basis_extension
 from pymor.la import NumpyVectorArray
+from pymor.reductors import reduce_generic_rb
 
 core.getLogger('pymor.algorithms').setLevel('INFO')
 core.getLogger('pymor.discretizations').setLevel('INFO')

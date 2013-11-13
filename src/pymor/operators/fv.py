@@ -10,17 +10,17 @@ import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix, diags
 
 from pymor.core import ImmutableInterface, abstractmethod
-from pymor.parameters import Parametric
-from pymor.la import NumpyVectorArray
 from pymor.functions import FunctionInterface
+from pymor.grids.boundaryinfos import SubGridBoundaryInfo
 from pymor.grids.referenceelements import triangle, line
 from pymor.grids.subgrid import SubGrid
-from pymor.grids.boundaryinfos import SubGridBoundaryInfo
+from pymor.la import NumpyVectorArray
 from pymor.operators import OperatorBase, NumpyMatrixBasedOperator, NumpyMatrixOperator
 from pymor.operators.constructions import Concatenation, ComponentProjection
+from pymor.parameters import Parametric
+from pymor.tools import method_arguments
 from pymor.tools.inplace import iadd_masked, isub_masked
 from pymor.tools.quadratures import GaussQuadratures
-from pymor.tools import method_arguments
 
 
 class NumericalConvectiveFlux(ImmutableInterface, Parametric):

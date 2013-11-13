@@ -12,12 +12,13 @@ import numpy as np
 from PySide.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QApplication, QLCDNumber,
                           QSizePolicy, QAction, QStyle, QToolBar, QLabel, QFileDialog)
 from PySide.QtCore import Qt, QCoreApplication, QTimer
+
 from pymor.core import BasicInterface
-from pymor.la.interfaces import Communicable
-from pymor.la import NumpyVectorArray
 from pymor.grids import RectGrid, TriaGrid, OnedGrid
 from pymor.gui.glumpy import GlumpyPatchWidget, ColorBarWidget
 from pymor.gui.matplotlib import Matplotlib1DWidget
+from pymor.la import NumpyVectorArray
+from pymor.la.interfaces import Communicable
 from pymor.tools.vtkio import write_vtk
 
 

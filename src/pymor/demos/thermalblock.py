@@ -58,12 +58,12 @@ from docopt import docopt
 
 import pymor.core as core
 core.logger.MAX_HIERACHY_LEVEL = 2
-from pymor.analyticalproblems import ThermalBlockProblem
-from pymor.discretizers import discretize_elliptic_cg
-from pymor.reductors.linear import reduce_stationary_affine_linear
-from pymor.reductors import reduce_to_subbasis
 from pymor.algorithms import greedy, trivial_basis_extension, gram_schmidt_basis_extension
 from pymor.algorithms.basisextension import numpy_trivial_basis_extension
+from pymor.analyticalproblems import ThermalBlockProblem
+from pymor.discretizers import discretize_elliptic_cg
+from pymor.reductors import reduce_to_subbasis
+from pymor.reductors.linear import reduce_stationary_affine_linear
 core.getLogger('pymor.algorithms').setLevel('INFO')
 core.getLogger('pymor.discretizations').setLevel('INFO')
 core.getLogger('pymor.la').setLevel('INFO')

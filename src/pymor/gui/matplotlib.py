@@ -14,8 +14,8 @@ from PySide.QtGui import QSizePolicy, QPainter, QFontMetrics
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
-from pymor.la.numpyvectorarray import NumpyVectorArray
 from pymor.grids.referenceelements import line
+from pymor.la.numpyvectorarray import NumpyVectorArray
 
 
 class Matplotlib1DWidget(FigureCanvas):

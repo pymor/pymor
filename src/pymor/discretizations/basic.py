@@ -7,16 +7,16 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor.algorithms.timestepping import TimeStepperInterface
 from pymor import defaults
+from pymor.algorithms.timestepping import TimeStepperInterface
 from pymor.core import abstractmethod
 from pymor.core.cache import CacheableInterface, cached
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.la import induced_norm, VectorArrayInterface
-from pymor.tools import method_arguments, FrozenDict
 from pymor.operators import OperatorInterface
 from pymor.operators.constructions import VectorOperator
 from pymor.parameters import Parametric, Parameter
+from pymor.tools import method_arguments, FrozenDict
 
 
 class DiscretizationBase(DiscretizationInterface):

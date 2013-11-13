@@ -6,12 +6,12 @@ from __future__ import absolute_import, division, print_function
 
 
 from pymor.analyticalproblems import EllipticProblem
-from pymor.domaindiscretizers import discretize_domain_default
-from pymor.operators.cg import DiffusionOperatorP1, L2ProductFunctionalP1, L2ProductP1
 from pymor.discretizations import StationaryDiscretization
-from pymor.gui.qt import GlumpyPatchVisualizer, Matplotlib1DVisualizer
+from pymor.domaindiscretizers import discretize_domain_default
 from pymor.grids import TriaGrid, OnedGrid, EmptyBoundaryInfo
+from pymor.gui.qt import GlumpyPatchVisualizer, Matplotlib1DVisualizer
 from pymor.la import induced_norm
+from pymor.operators.cg import DiffusionOperatorP1, L2ProductFunctionalP1, L2ProductP1
 
 
 def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer=None,

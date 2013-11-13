@@ -10,8 +10,8 @@ from numbers import Number
 import numpy as np
 from scipy.sparse import issparse
 
-from pymor.core.interfaces import BasicInterface, abstractmethod, abstractproperty, abstractclassmethod
 from pymor.core.exceptions import CommunicationError
+from pymor.core.interfaces import BasicInterface, abstractmethod, abstractproperty, abstractclassmethod
 
 
 class Communicable(BasicInterface):

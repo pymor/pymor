@@ -10,8 +10,8 @@ import numpy as np
 from numbers import Number
 
 from pymor.core import ImmutableInterface, abstractmethod, abstractproperty, abstractstaticmethod
-from pymor.tools import Named
 from pymor.parameters import Parametric
+from pymor.tools import Named
 
 
 class OperatorInterface(ImmutableInterface, Parametric, Named):

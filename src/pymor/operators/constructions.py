@@ -11,8 +11,8 @@ from numbers import Number
 import numpy as np
 
 from pymor.la import VectorArrayInterface, NumpyVectorArray
-from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.basic import OperatorBase, ProjectedOperator, ProjectedLinearOperator
+from pymor.operators.interfaces import OperatorInterface
 
 
 class Concatenation(OperatorBase):

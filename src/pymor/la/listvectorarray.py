@@ -10,8 +10,8 @@ from numbers import Number
 
 import numpy as np
 
-from pymor.core.interfaces import BasicInterface, abstractmethod, abstractclassmethod, abstractproperty
 from pymor.core.exceptions import CommunicationError
+from pymor.core.interfaces import BasicInterface, abstractmethod, abstractclassmethod, abstractproperty
 from pymor.la.interfaces import VectorArrayInterface
 from pymor.tools import float_cmp_all
 

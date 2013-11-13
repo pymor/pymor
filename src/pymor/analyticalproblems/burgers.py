@@ -7,12 +7,12 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
+from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
 from pymor.core import Unpicklable, inject_sid
-from pymor.tools import Named
 from pymor.domaindescriptions import LineDomain, RectDomain, TorusDomain, CircleDomain, BoundaryType
 from pymor.functions import ConstantFunction, GenericFunction
-from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
 from pymor.parameters.spaces import CubicParameterSpace
+from pymor.tools import Named
 
 
 class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):

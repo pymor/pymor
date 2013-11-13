@@ -51,8 +51,8 @@ import pymor.core as core
 core.logger.MAX_HIERACHY_LEVEL = 2
 from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import discretize_elliptic_cg
-from pymor.reductors import reduce_generic_rb
 from pymor.la.pod import pod
+from pymor.reductors import reduce_generic_rb
 core.getLogger('pymor.discretizations').setLevel('INFO')
 
 

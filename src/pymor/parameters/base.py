@@ -9,8 +9,8 @@ from numbers import Number
 
 import numpy as np
 
-from pymor.tools import float_cmp_all
 from pymor import defaults
+from pymor.tools import float_cmp_all
 
 
 class ParameterType(dict):

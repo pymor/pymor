@@ -9,10 +9,10 @@ from itertools import izip
 
 import numpy as np
 
-from pymor.operators import LincombOperatorInterface, NumpyMatrixOperator
 from pymor.core import ImmutableInterface
 from pymor.discretizations import StationaryDiscretization
 from pymor.la import NumpyVectorArray, induced_norm
+from pymor.operators import LincombOperatorInterface, NumpyMatrixOperator
 from pymor.reductors.basic import reduce_generic_rb
 
 

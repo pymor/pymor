@@ -6,9 +6,9 @@
 from __future__ import absolute_import, division, print_function
 
 from pymor.core import ImmutableInterface
-from pymor.tools import Named
 from pymor.domaindescriptions import RectDomain
 from pymor.functions import ConstantFunction
+from pymor.tools import Named
 
 
 class EllipticProblem(ImmutableInterface, Named):

@@ -7,11 +7,11 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from pymor.core.exceptions import ExtensionError
-from pymor.tools import float_cmp_all
 from pymor.la import VectorArrayInterface, NumpyVectorArray
 from pymor.la.gram_schmidt import gram_schmidt
 from pymor.la.pod import pod
 from pymor.operators import NumpyMatrixOperator
+from pymor.tools import float_cmp_all
 
 
 def trivial_basis_extension(basis, U, U_ind=None, copy_basis=True, copy_U=True):

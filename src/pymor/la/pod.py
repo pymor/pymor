@@ -9,10 +9,10 @@ from scipy.linalg import eigh
 
 from pymor import defaults
 from pymor.core.exceptions import AccuracyError
-from pymor.tools import float_cmp_all
-from pymor.operators import OperatorInterface
 from pymor.la import VectorArrayInterface
 from pymor.la.gram_schmidt import gram_schmidt
+from pymor.operators import OperatorInterface
+from pymor.tools import float_cmp_all
 
 
 def pod(A, modes=None, product=None, tol=None, symmetrize=None, orthonormalize=None,

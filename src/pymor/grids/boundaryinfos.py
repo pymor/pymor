@@ -6,8 +6,8 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor.grids.interfaces import BoundaryInfoInterface
 from pymor.domaindescriptions import BoundaryType
+from pymor.grids.interfaces import BoundaryInfoInterface
 
 
 class EmptyBoundaryInfo(BoundaryInfoInterface):

@@ -7,9 +7,9 @@ from __future__ import absolute_import, division, print_function
 import time
 from itertools import izip
 
+from pymor.algorithms.basisextension import trivial_basis_extension
 from pymor.core import getLogger
 from pymor.core.exceptions import ExtensionError
-from pymor.algorithms.basisextension import trivial_basis_extension
 
 
 def greedy(discretization, reductor, samples, initial_data=None, use_estimator=True, error_norm=None,

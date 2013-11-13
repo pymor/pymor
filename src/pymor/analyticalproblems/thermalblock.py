@@ -7,11 +7,11 @@ from __future__ import absolute_import, division, print_function
 
 from itertools import product
 
+from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.core import Unpicklable, inject_sid
 from pymor.domaindescriptions import RectDomain
 from pymor.functions import GenericFunction, ConstantFunction
 from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional
-from pymor.analyticalproblems.elliptic import EllipticProblem
-from pymor.core import Unpicklable, inject_sid
 
 
 class ThermalBlockProblem(EllipticProblem, Unpicklable):

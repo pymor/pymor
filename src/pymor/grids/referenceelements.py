@@ -5,9 +5,10 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
+
 from pymor.core.exceptions import CodimError
-from pymor.tools.quadratures import GaussQuadratures
 from pymor.grids.interfaces import ReferenceElementInterface
+from pymor.tools.quadratures import GaussQuadratures
 
 
 class Point(ReferenceElementInterface):

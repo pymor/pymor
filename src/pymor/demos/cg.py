@@ -14,10 +14,10 @@ import math as m
 
 import numpy as np
 
-from pymor.domaindescriptions import BoundaryType
-from pymor.domaindescriptions import RectDomain
 from pymor.analyticalproblems import EllipticProblem
 from pymor.discretizers import discretize_elliptic_cg
+from pymor.domaindescriptions import BoundaryType
+from pymor.domaindescriptions import RectDomain
 from pymor.functions import GenericFunction
 
 

@@ -6,10 +6,10 @@ from __future__ import absolute_import, division, print_function
 
 import copy
 
-from pymor.core.interfaces import abstractmethod
 from pymor.core.cache import CacheableInterface, cached
-from pymor.tools import Named
+from pymor.core.interfaces import abstractmethod
 from pymor.parameters import Parametric
+from pymor.tools import Named
 
 
 class DiscretizationInterface(CacheableInterface, Parametric, Named):
