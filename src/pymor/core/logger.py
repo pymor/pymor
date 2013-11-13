@@ -39,6 +39,7 @@ LOGLEVEL_MAPPING = {
 FORMAT = '%(asctime)s$BOLD%(levelname)s|$BOLD%(name)s$RESET: %(message)s'
 MAX_HIERACHY_LEVEL = 3
 
+start_time = time.time()
 
 def formatter_message(message, use_color):
     if use_color:
@@ -59,10 +60,9 @@ class ColoredFormatter(logging.Formatter):
             self.use_color = curses.tigetnum("colors") > 1
         except Exception, _:
             self.use_color = False
-        self._start_time = time.time()
         def relative_time(secs=None):
             if secs is not None:
-                elapsed = time.time() - self._start_time
+                elapsed = time.time() - start_time
                 if elapsed > 604800:
                     self.datefmt='%Ww %dd %H:%M:%S'
                 elif elapsed > 86400:
