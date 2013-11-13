@@ -236,16 +236,18 @@ def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, titl
 
             super(MainWindow, self).__init__(U, PlotWidget(), title=title, length=len(U[0]))
             self.grid = grid
+            self.codim = codim
 
         def save(self):
             filename = QFileDialog.getSaveFileName(self, 'Save as vtk file')[0]
             base_name = filename.split('.vtu')[0].split('.vtk')[0].split('.pvd')[0]
             if base_name:
                 if len(self.U) == 1:
-                    write_vtk(self.grid, NumpyVectorArray(self.U[0], copy=False), base_name)
+                    write_vtk(self.grid, NumpyVectorArray(self.U[0], copy=False), base_name, codim=self.codim)
                 else:
                     for i, u in enumerate(self.U):
-                        write_vtk(self.grid, NumpyVectorArray(u, copy=False), '{}-{}'.format(base_name, i))
+                        write_vtk(self.grid, NumpyVectorArray(u, copy=False), '{}-{}'.format(base_name, i),
+                                  codim=self.codim)
 
     launch_qt_app(lambda: MainWindow(grid, U, bounding_box, codim, title=title, legend=legend,
                                      separate_colorbars=separate_colorbars), block)

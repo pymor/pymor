@@ -8,6 +8,7 @@ from pyvtk import (VtkData, UnstructuredGrid, PointData, CellData, Scalars)
 import numpy as np
 
 from pymor.grids import referenceelements
+from pymor.grids.constructions import flatten_grid
 
 def _write_meta_file(filename_base, steps, fn_tpl):
     '''Outputs a collection file for a series of vtu files
@@ -31,18 +32,20 @@ def _write_meta_file(filename_base, steps, fn_tpl):
             pvd.write('\t\t<DataSet timestep="{}" group="" part="0" file="{}" />\n'.format(step, fn))
         pvd.write( pvd_footer )
 
-def _vtk_grid(grid, coords):
-    subentity_ordering = grid.subentities(0, 2).tolist()
+def _vtk_grid(reference_element, subentities, coords):
+    if reference_element not in (referenceelements.triangle, referenceelements.square):
+        raise NotImplementedError
+    subentity_ordering = subentities.tolist()
     num_points = len(coords[0])
     points = [[coords[0][i], coords[1][i], coords[2][i]] for i in xrange(num_points)]
-    if grid.reference_element == referenceelements.triangle:
+    if reference_element == referenceelements.triangle:
         return UnstructuredGrid(points, triangle=subentity_ordering)
     else:
         return UnstructuredGrid(points=points, quad=subentity_ordering)
 
 
 def _data_item(is_cell_data, data, step):
-    sd = data.data[step, :]
+    sd = data[step, :]
     if is_cell_data:
         return CellData(Scalars(sd, 'cell_data', lookup_table='default'))
     return PointData(Scalars(sd, 'vertex_data'))
@@ -62,7 +65,7 @@ def _write_vtu_series(us_grid, data, filename_base, binary_vtk, last_step, is_ce
             vtk.tofile(fn)
 
 
-def write_vtk(grid, data, filename_base, binary_vtk=True, last_step=None):
+def write_vtk(grid, data, filename_base, codim=2, binary_vtk=True, last_step=None):
     '''Output grid-associated data in (legacy) vtk format
     
     Parameters
@@ -80,14 +83,19 @@ def write_vtk(grid, data, filename_base, binary_vtk=True, last_step=None):
     last_step
         if set must be <= len(data) to restrict output of timeseries
     '''
-    x, y = grid.centers(2)[:, 0], grid.centers(2)[:, 1]
+    if grid.dim != 2 or grid.dim_outer != 2:
+        raise NotImplementedError
+    if codim not in (0, 2):
+        raise NotImplementedError
+
+    subentities, coordinates, entity_map = flatten_grid(grid)
+
+    x, y = coordinates[:, 0], coordinates[:, 1]
     z = np.zeros(len(x))
     coords = (x, y, z)
-    us_grid = _vtk_grid(grid, coords)
+    us_grid = _vtk_grid(grid.reference_element, subentities, coords)
     shape = data.data[0, :].shape
-    if shape[0] == grid.size(0):
-        _write_vtu_series(us_grid, data, filename_base, binary_vtk, last_step, True)
-    elif shape[0] == grid.size(2):
-        _write_vtu_series(us_grid, data, filename_base, binary_vtk, last_step, False)
+    if codim == 0:
+        _write_vtu_series(us_grid, data.data, filename_base, binary_vtk, last_step, True)
     else:
-        raise Exception()
+        _write_vtu_series(us_grid, data.data[:, entity_map], filename_base, binary_vtk, last_step, False)
