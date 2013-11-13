@@ -282,10 +282,18 @@ class GlumpyPatchVisualizer(BasicInterface):
         self.codim = codim
         self.block = block
 
-    def visualize(self, U, discretization, title=None, legend=None, separate_colorbars=False, block=None):
-        block = self.block if block is None else block
-        visualize_glumpy_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
-                               legend=legend, separate_colorbars=separate_colorbars, block=block)
+    def visualize(self, U, discretization, title=None, legend=None, separate_colorbars=False, block=None, filename=None):
+        assert isinstance(U, (Communicable, tuple))
+        if filename:
+            if isinstance(U, Communicable):
+                write_vtk(self.grid, U, filename, codim=self.codim)
+            else:
+                for i, u in enumerate(self.U):
+                    write_vtk(self.grid, u, '{}-{}'.format(filename, i), codim=self.codim)
+        else:
+            block = self.block if block is None else block
+            visualize_glumpy_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
+                                   legend=legend, separate_colorbars=separate_colorbars, block=block)
 
 
 class Matplotlib1DVisualizer(BasicInterface):
