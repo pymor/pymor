@@ -10,7 +10,7 @@
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
-    <title>pyMor by pyMor</title>
+    <title>pyMOR by pymor</title>
   </head>
 
   <body>
@@ -18,32 +18,32 @@
       <div class="inner">
 
         <header>
-          <h1>pyMor</h1>
-          <h2>Model order reduction in Python</h2>
+          <h1>pyMOR</h1>
+          <h2>Model Order Reduction with python</h2>
         </header>
 
         <section id="downloads" class="clearfix">
-          <a href="https://github.com/pyMor/pyMor/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
-          <a href="https://github.com/pyMor/pyMor/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
-          <a href="https://github.com/pyMor/pyMor" id="view-on-github" class="button"><span>View on GitHub</span></a>
+          <a href="https://github.com/pymor/pymor/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
+          <a href="https://github.com/pymor/pymor/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+          <a href="https://github.com/pymor/pymor" id="view-on-github" class="button"><span>View on GitHub</span></a>
         </section>
 
         <hr>
 
         <section id="main_content">
           <h1>
-<a name="pymor---model-order-reduction-in-python" class="anchor" href="#pymor---model-order-reduction-in-python"><span class="octicon octicon-link"></span></a>pyMor - Model order reduction in Python</h1>
+<a name="pymor---model-order-reduction-with-python" class="anchor" href="#pymor---model-order-reduction-with-python"><span class="octicon octicon-link"></span></a>pyMOR - Model Order Reduction with python</h1>
 
-<p><strong>NOTE</strong> pyMor is still alpha quality software and under heavy development.
-Should you have any questions regarding pyMor or wish to contribute, do not
+<p><strong>NOTE</strong> pyMOR is still alpha quality software and under heavy development.
+Should you have any questions regarding pyMOR or wish to contribute, do not
 hesitate to directly contact one of the developers.</p>
 
-<p><a href="https://travis-ci.org/pyMor/pyMor"><img src="https://travis-ci.org/pyMor/pyMor.png?branch=master" alt="Build Status"></a></p>
+<p><a href="https://travis-ci.org/pymor/pymor"><img src="https://travis-ci.org/pymor/pymor.png?branch=master" alt="Build Status"></a></p>
 
 <h2>
 <a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
 
-<p>We recommend the following way to install pyMor with all its dependencies.</p>
+<p>We recommend the following way to install pyMOR with all its dependencies.</p>
 
 <p>This procedure has been tested on the following platforms:</p>
 
@@ -55,15 +55,15 @@ hesitate to directly contact one of the developers.</p>
 computer. (On Debian based linux distributions (e.g. Ubunutu) use <code>sudo
 apt-get install git python2.7</code> to install both git and python.)</p></li>
 <li>
-<p>Clone the pyMor main repository using</p>
+<p>Clone the pyMOR main repository using</p>
 
-<pre><code>git clone https://github.com/pyMor/pyMor.git
+<pre><code>git clone https://github.com/pymor/pymor.git
 </code></pre>
 
-<p>This will create a directory named <code>pyMor</code> in your current working directory.
+<p>This will create a directory named <code>pymor</code> in your current working directory.
 Change into this directory using</p>
 
-<pre><code>cd pyMor
+<pre><code>cd pymor
 </code></pre>
 </li>
 <li>
@@ -75,32 +75,32 @@ Change into this directory using</p>
 <p>The installation script will ensure that all necessary system libraries and
 development headers are installed, create a new python virtual environment
 (virtualenv, see <a href="http://www.virtualenv.org">www.virtualenv.org</a>), install all necessary python packages into
-this virtualenv, and finally install pyMor itself.</p>
+this virtualenv, and finally install pyMOR itself.</p>
 
 <p>The installation process can be customized using various command-line arguments.
 (See <code>./install.py --help</code>.) Most notable, the path of the virtualenv can be
 configured using the <code>--virtualenv-dir</code> option.  Moreover, if you intend to work
-directly inside the pyMor source tree, use</p>
+directly inside the pyMOR source tree, use</p>
 
 <pre><code>./install.py --only-deps
 </code></pre>
 
-<p>to prevent the installation of pyMor itself into the <code>site-packages</code> directory
-of the virtualenv. In this case, the installation script will add the pyMor
-source tree to the <code>PYTHONPATH</code> of the virtualenv, so pyMor will always be
+<p>to prevent the installation of pyMOR itself into the <code>site-packages</code> directory
+of the virtualenv. In this case, the installation script will add the pyMOR
+source tree to the <code>PYTHONPATH</code> of the virtualenv, so pyMOR will always be
 importable inside the virtualenv. (This can be prevented by adding the
 <code>--without-python-path</code> option.) Moreover</p>
 
 <pre><code>python setup.py build_ext --inplace
 </code></pre>
 
-<p>will be automatically called, to build pyMor's Cython extensions modules.</p>
+<p>will be automatically called, to build pyMOR's Cython extensions modules.</p>
 </li>
 <li>
 <p>Activate the new virtualenv. If you did not change the default path of the
 virtualenv, this can be done by executing</p>
 
-<pre><code>source $HOME/virtualenv/pyMor/bin/activate
+<pre><code>source $HOME/virtualenv/pymor/bin/activate
 </code></pre>
 </li>
 <li>
@@ -113,7 +113,7 @@ virtualenv, this can be done by executing</p>
 </ol><h2>
 <a name="cython-extension-modules" class="anchor" href="#cython-extension-modules"><span class="octicon octicon-link"></span></a>Cython extension modules</h2>
 
-<p>pyMor uses <a href="http://www.cython.org/">Cython</a> extension modules to speed up
+<p>pyMOR uses <a href="http://www.cython.org/">Cython</a> extension modules to speed up
 numerical algorithms which cannot be efficiently expressed using NumPy idioms.
 To benefit from these optimizations, the modules' source files (currently
 <code>pymor/tools/inplace.pyx</code> and <code>pymor/tools/realations.pyx</code>) have to be processed
@@ -122,14 +122,14 @@ These <code>.so</code>-files then take precedence over the non-optimized pure py
 modules.  This whole build process is handeled automatically by <code>setup.py</code>
 which is internally called by the <code>install.py</code> script.  </p>
 
-<p>If you want to develop Cython extensions modules for pyMor yourself, you should
+<p>If you want to develop Cython extensions modules for pyMOR yourself, you should
 add your module to the <code>ext_modules</code> list defined in the <code>_setup</code> method of
 <code>setup.py</code>. Calling</p>
 
 <pre><code>python setup.py build_ext --inplace
 </code></pre>
 
-<p>will then build the extension module and place it into your pyMor source tree.</p>
+<p>will then build the extension module and place it into your pyMOR source tree.</p>
 
 <h2>
 <a name="debugging" class="anchor" href="#debugging"><span class="octicon octicon-link"></span></a>Debugging</h2>
@@ -139,8 +139,8 @@ add your module to the <code>ext_modules</code> list defined in the <code>_setup
 </ul><h2>
 <a name="tests" class="anchor" href="#tests"><span class="octicon octicon-link"></span></a>Tests</h2>
 
-<p>pyMor uses <a href="http://pytest.org/">pytest</a> for unit testing. To run the test suite,
-simply execute <code>make test</code> in the base directory of the pyMor repository. This
+<p>pyMOR uses <a href="http://pytest.org/">pytest</a> for unit testing. To run the test suite,
+simply execute <code>make test</code> in the base directory of the pyMOR repository. This
 will also create a test coverage report which can be found in the <code>htmlcov</code>
 directory. Alternatively, you can run <code>make full-test</code> which will also enable
 <a href="https://pypi.python.org/pypi/pyflakes">pyflakes</a> and
@@ -151,7 +151,7 @@ individually by executing <code>py.test src/pymortests/the_module.py</code>.</p>
         </section>
 
         <footer>
-          pyMor is maintained by <a href="https://github.com/pyMor">pyMor</a><br>
+          pyMOR is maintained by <a href="https://github.com/pymor">pymor</a><br>
           This page was generated by <a href="http://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.
         </footer>
 
