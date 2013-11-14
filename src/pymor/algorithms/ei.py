@@ -121,16 +121,21 @@ def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation
 # Should be replaced by something simpler in the future.
 class EvaluationProvider(CacheableInterface):
 
-    def __init__(self, discretization, operator, sample, caching='memory'):
+    def __init__(self, discretization, operators, sample, caching='memory'):
         CacheableInterface.__init__(self, region=caching)
         self.discretization = discretization
         self.sample = sample
-        self.operator = operator
+        self.operators = operators
 
     @cached
     def data(self, k):
         mu = self.sample[k]
-        return self.operator.apply(self.discretization.solve(mu), mu=mu)
+        U = self.discretization.solve(mu)
+        AU = self.operators[0].type_range.empty(self.operators[0].dim_range,
+                                                reserve=len(self.operators))
+        for op in self.operators:
+            AU.append(op.apply(U, mu=mu))
+        return AU
 
     def __len__(self):
         return len(self.sample)
@@ -141,22 +146,23 @@ class EvaluationProvider(CacheableInterface):
         return self.data(ind)
 
 
-def interpolate_operators(discretization, operator_name, parameter_sample, error_norm=None,
+def interpolate_operators(discretization, operator_names, parameter_sample, error_norm=None,
                           target_error=None, max_interpolation_dofs=None,
-                          projection='orthogonal', product=None):
+                          projection='orthogonal', product=None, caching='memory'):
 
 
     sample = tuple(parameter_sample)
-    operator = discretization.operators[operator_name]
+    operators = [discretization.operators[operator_name] for operator_name in operator_names]
 
-    evaluations = EvaluationProvider(discretization, operator, sample)
+    evaluations = EvaluationProvider(discretization, operators, sample, caching=caching)
     dofs, basis, data = ei_greedy(evaluations, error_norm, target_error, max_interpolation_dofs,
                                   projection=projection, product=product)
 
-    ei_operator = EmpiricalInterpolatedOperator(operator, dofs, basis)
-    ei_operators = discretization.operators.copy()
-    ei_operators[operator_name] = ei_operator
-    ei_discretization = discretization.with_(operators=ei_operators, name='{}_ei'.format(discretization.name))
+    ei_operators = {name:EmpiricalInterpolatedOperator(operator, dofs, basis)
+                    for name, operator in zip(operator_names, operators)}
+    operators_dict = discretization.operators.copy()
+    operators_dict.update(ei_operators)
+    ei_discretization = discretization.with_(operators=operators_dict, name='{}_ei'.format(discretization.name))
 
     data.update({'dofs': dofs, 'basis': basis})
     return ei_discretization, data

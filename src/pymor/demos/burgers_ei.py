@@ -141,7 +141,7 @@ def burgers_demo(args):
         discretization.visualize(Us, legend=legend, title='Detailed Solutions', block=True)
 
 
-    ei_discretization, ei_data = interpolate_operators(discretization, 'operator',
+    ei_discretization, ei_data = interpolate_operators(discretization, ['operator'],
                                                        discretization.parameter_space.sample_uniformly(args['EI_SNAPSHOTS']),
                                                        error_norm=discretization.l2_norm,
                                                        target_error=1e-10,
