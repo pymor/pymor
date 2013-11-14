@@ -9,8 +9,9 @@ The methods are mainly designed to be used in conjunction with
 
     extension_algorithm(basis, U, ...)
 
-and returns a tuple `new_basis, data` where new_basis holds the extened basis
-and data is a dict contaning additional information about the extension
+where basis and U are `VectorArrays` containing the old basis and new vectors
+to add. The methods return a tuple `new_basis, data` where new_basis holds the
+extend basis and data is a dict contaning additional information about the extension
 process. The `data` dict at least has the key `hierarchic` whose value signifies
 if the new basis contains the old basis as its first vectors.
 
@@ -32,17 +33,17 @@ from pymor.tools import float_cmp_all
 
 
 def trivial_basis_extension(basis, U, copy_basis=True, copy_U=True):
-    '''Trivially extend basis by simply appending the new vector.
+    '''Trivially extend basis by simply appending the new vectors.
 
-    We check if the new vector is already contained in the basis, but we do
+    We check if the new vectors are already contained in the basis, but we do
     not check for linear independence.
 
     Parameters
     ----------
     basis
-        The basis to extend.
+        `VectorArray` containing the basis to extend.
     U
-        The new basis vector.
+        `VectorArray` containing the new basis vectors.
     copy_basis
         If copy_basis is False, the old basis is extended in-place.
     copy_U
@@ -55,7 +56,7 @@ def trivial_basis_extension(basis, U, copy_basis=True, copy_U=True):
     Raises
     ------
     ExtensionError
-        Is raised if U is already contained in basis.
+        Is raised if all vectors in U are already contained in the basis.
     '''
     if basis is None:
         basis = type(U).empty(U.dim, reserve=len(U))
@@ -82,12 +83,12 @@ def gram_schmidt_basis_extension(basis, U, product=None, copy_basis=True, copy_U
     Parameters
     ----------
     basis
-        The basis to extend.
+        `VectorArray` containing the basis to extend.
     U
-        The new basis vectors.
+        `VectorArray` containign the new basis vectors.
     product
-        The scalar product w.r.t. which to orthonormalize; if None, the l2-scalar
-        product on the coefficient vector is used.
+        The scalar product w.r.t. which to orthonormalize; if None, the Euclidean
+        product is used.
     copy_basis
         If copy_basis is False, the old basis is extended in-place.
     copy_U
@@ -100,9 +101,8 @@ def gram_schmidt_basis_extension(basis, U, product=None, copy_basis=True, copy_U
     Raises
     ------
     ExtensionError
-        Gram-Schmidt orthonormalization fails. Usually this is the case when U
-        is not linearily independent from the basis. However this can also happen
-        due to rounding errors ...
+        Gram-Schmidt orthonormalization fails. This is the case when no
+        vector in U is linearly independent from the basis.
     '''
     if basis is None:
         basis = type(U).empty(U.dim, reserve=len(U))
@@ -120,19 +120,24 @@ def gram_schmidt_basis_extension(basis, U, product=None, copy_basis=True, copy_U
 
 
 def pod_basis_extension(basis, U, count=1, copy_basis=True, product=None):
-    '''Extend basis with the first `count` POD modes of the projection error of U
+    '''Extend basis with the first `count` POD modes of the projection of U onto the
+    orthogonal compolement of the basis.
+
+    Note that the provided basis is assumed to be orthonormal w.r.t. the provided
+    scalar product!
 
     Parameters
     ----------
     basis
-        The basis to extend. The basis is expected to be orthonormal w.r.t. `product`.
+        `VectorArray` containing the basis to extend. The basis is expected to be
+        orthonormal w.r.t. `product`.
     U
-        The vectors to which the POD is applied.
+        `VectorArray` containing the vectors to which the POD is applied.
     count
         Number of POD modes that are to be appended to the basis.
     product
-        The scalar product w.r.t. which to orthonormalize; if None, the l2-scalar
-        product on the coefficient vector is used.
+        The scalar product w.r.t. which to orthonormalize; if None, the Euclidean
+        product is used.
     copy_basis
         If copy_basis is False, the old basis is extended in-place.
 
@@ -143,9 +148,8 @@ def pod_basis_extension(basis, U, count=1, copy_basis=True, product=None):
     Raises
     ------
     ExtensionError
-        POD produces new vectors. Usually this is the case when U
-        is not linearily independent from the basis. However this can also happen
-        due to rounding errors ...
+        POD produces no new vectors. This is the case when no vector in U
+        is linearily independent from the basis.
     '''
     if basis is None:
         return pod(U, modes=count, product=product), {'hierarchic': True}
