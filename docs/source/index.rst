@@ -1,5 +1,5 @@
 ###############
-pyMor - Model order reduction in Python
+pyMOR - Model Order Reduction with python
 ###############
 
 Demos
@@ -8,7 +8,7 @@ Demos
 see src/pymor/demos/*py
 
 
-The pyMor packages
+The pyMOR packages
 ****************
 
 .. toctree::
