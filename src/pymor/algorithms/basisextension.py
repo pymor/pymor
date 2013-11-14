@@ -71,45 +71,6 @@ def trivial_basis_extension(basis, U, U_ind=None, copy_basis=True, copy_U=True):
     return new_basis, {'hierarchic': True}
 
 
-def numpy_trivial_basis_extension(basis, U):
-    '''Trivially extend basis by just adding the new vector.
-
-    We check that the new vector is not already contained in the basis, but we do
-    not check for linear independence.
-
-    Parameters
-    ----------
-    basis
-        The basis to extend.
-    U
-        The new basis vector.
-
-    Returns
-    -------
-    The new basis.
-
-    Raises
-    ------
-    ExtensionError
-        Is raised if U is already contained in basis.
-    '''
-    assert isinstance(U, NumpyVectorArray)
-    if basis is None:
-        return U, {'hierarchic': True}
-    assert isinstance(basis, NumpyVectorArray)
-    basis = basis.data
-    U = U.data
-
-    if not all(not float_cmp_all(B, U) for B in basis):
-        raise ExtensionError
-
-    new_basis = np.empty((basis.shape[0] + 1, basis.shape[1]))
-    new_basis[:-1, :] = basis
-    new_basis[-1, :] = U
-
-    return NumpyVectorArray(new_basis), {'hierarchic': True}
-
-
 def gram_schmidt_basis_extension(basis, U, U_ind=None, product=None, copy_basis=True, copy_U=True):
     '''Extend basis using Gram-Schmidt orthonormalization.
 
