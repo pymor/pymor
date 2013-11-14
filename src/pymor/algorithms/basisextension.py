@@ -60,12 +60,18 @@ def trivial_basis_extension(basis, U, copy_basis=True, copy_U=True):
     if basis is None:
         basis = type(U).empty(U.dim, reserve=len(U))
 
+    old_basis_length = len(basis)
+    remove = set()
     for i in xrange(len(U)):
         if np.any(U.almost_equal(basis, ind=i)):
-            raise ExtensionError
+            remove.add(i)
 
     new_basis = basis.copy() if copy_basis else basis
-    new_basis.append(U, remove_from_other=(not copy_U))
+    new_basis.append(U, o_ind=[i for i in range(len(U)) if i not in remove],
+                     remove_from_other=(not copy_U))
+
+    if len(new_basis) == old_basis_length:
+        raise ExtensionError
 
     return new_basis, {'hierarchic': True}
 
