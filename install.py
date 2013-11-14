@@ -56,7 +56,7 @@ RECIPES = {'default': DEFAULT_RECIPE,
            'tox': TOX_RECIPE,
            'arch' : ARCH_RECIPE}
 
-DEFAULT_VENV_DIR = os.path.join(os.path.expandvars('$HOME'), 'virtualenv', 'pyMor')
+DEFAULT_VENV_DIR = os.path.join(os.path.expandvars('$HOME'), 'virtualenv', 'pymor')
 
 def print_separator():
     print('')
@@ -80,7 +80,7 @@ def get_recipe():
     return DEFAULT_RECIPE
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Installs pyMor with all its dependencies')
+    parser = argparse.ArgumentParser(description='Installs pyMOR with all its dependencies')
     parser.add_argument('--only-deps', action='store_true', help='install only dependencies')
     parser.add_argument('--recipe', choices=RECIPES.keys(),
                         help='installation recipe to use (otherwise auto-detected)')
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     parser.add_argument('--without-pyside', action='store_true',
                         help='do not install PySide')
     parser.add_argument('--without-python-path', action='store_true',
-                        help='do not add pyMor to PYTHONPATH when --only-deps is used')
+                        help='do not add pyMOR to PYTHONPATH when --only-deps is used')
     parser.add_argument('--without-system-packages', action='store_true',
                         help='do not try to install required system packages')
     args = parser.parse_args()
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     print('''
 --------------------------------------------------------------------------------
 
-About to install pyMor with the following configuration into a virtualenv:
+About to install pyMOR with the following configuration into a virtualenv:
 
     installation recipe:        {recipe}
     install system packages:    {sys}
@@ -118,7 +118,7 @@ About to install pyMor with the following configuration into a virtualenv:
     use system site-packages:   {site}
     install only dependencies:  {deps}
     install PySide:             {pyside}
-    add pyMor to PYTHONPATH:    {pp}
+    add pyMOR to PYTHONPATH:    {pp}
 
 --------------------------------------------------------------------------------
 
@@ -185,7 +185,7 @@ About to install pyMor with the following configuration into a virtualenv:
 
 Installation complete!
 
-To activate the pyMor virtualenv call
+To activate the pyMOR virtualenv call
 
     source {}
 
