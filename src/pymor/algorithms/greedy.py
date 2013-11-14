@@ -88,9 +88,13 @@ def greedy(discretization, reductor, samples, initial_data=None, use_estimator=T
         if use_estimator:
             errors = [rd.estimate(rd.solve(mu), mu) for mu in samples]
         elif error_norm is not None:
-            errors = [error_norm(discretization.solve(mu) - rc.reconstruct(rd.solve(mu)))[0] for mu in samples]
+            errors = [error_norm(discretization.solve(mu) - rc.reconstruct(rd.solve(mu))) for mu in samples]
         else:
-            errors = [(discretization.solve(mu) - rc.reconstruct(rd.solve(mu))).l2_norm()[0] for mu in samples]
+            errors = [(discretization.solve(mu) - rc.reconstruct(rd.solve(mu))).l2_norm() for mu in samples]
+
+        # most error_norms will return an array of length 1 instead of a number, so we extract the numbers
+        # if necessary
+        errors = map(lambda x: x[0] if hasattr(x, '__len__') else x, errors)
 
         max_err, max_err_mu = max(((err, mu) for err, mu in izip(errors, samples)), key=lambda t: t[0])
         max_errs.append(max_err)
