@@ -341,6 +341,8 @@ class ListVectorArray(VectorArrayInterface):
     def axpy(self, alpha, x, ind=None, x_ind=None):
         assert self.check_ind(ind)
         assert x.check_ind(x_ind)
+        assert self.dim == x.dim
+        assert self.len_ind(ind) == x.len_ind(x_ind)
 
         if ind is None:
             Y = iter(self._list)
