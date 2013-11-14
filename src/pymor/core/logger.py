@@ -76,6 +76,8 @@ class ColoredFormatter(logging.Formatter):
         logging.Formatter.__init__(self, formatter_message(FORMAT, self.use_color), datefmt='%M:%S')
 
     def format(self, record):
+        if not record.msg:
+            return ''
         tokens = record.name.split('.')
         record.name = '.'.join(tokens[1:MAX_HIERACHY_LEVEL])
         if len(tokens) > MAX_HIERACHY_LEVEL - 1:
