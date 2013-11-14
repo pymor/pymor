@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# This file is part of the pyMor project (http://www.pymor.org).
+# This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
@@ -20,7 +20,7 @@ class VectorInterface(BasicInterface):
     '''Interface for vectors.
 
     This Interface is mainly inteded to be used in conjunction with ListVectorArray. In general, all
-    pyMor ojects operate on VectorArrays instead of single vectors! All methods of the interface have
+    pyMOR ojects operate on VectorArrays instead of single vectors! All methods of the interface have
     a direct counterpart in VectorArrayInterface.
     '''
 

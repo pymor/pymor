@@ -1,4 +1,4 @@
-# This file is part of the pyMor project (http://www.pymor.org).
+# This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
@@ -33,7 +33,7 @@ except ImportError:
                                             cwd=os.path.dirname(__file__))
     except subprocess.CalledProcessError as e:
         import sys
-        sys.stderr.write('''Warning: Could not determine current pyMor version.
+        sys.stderr.write('''Warning: Could not determine current pyMOR version.
 Failed to import pymor.version and 'git describe --tags --candidates 20 --match *.*.*'
 returned
 
