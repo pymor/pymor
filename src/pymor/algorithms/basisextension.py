@@ -2,6 +2,23 @@
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+'''This module contains algorithms for extending a given basis by a new vector.
+
+The methods are mainly designed to be used in conjunction with
+:func:`pymor.algorithms.greedy.greedy`. Each method is of the form ::
+
+    extension_algorithm(basis, U, ...)
+
+and returns a tuple `new_basis, data` where new_basis holds the extened basis
+and data is a dict contaning additional information about the extension
+process. The `data` dict at least has the key `hierarchic` whose value signifies
+if the new basis contains the old basis as its first vectors.
+
+If the basis extension fails, e.g. because the new vector is not linearly
+independent from the basis, a :class:`pymor.core.exceptions.ExtensionError` exception
+is raised.
+'''
+
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
