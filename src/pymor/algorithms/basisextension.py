@@ -31,10 +31,10 @@ from pymor.operators import NumpyMatrixOperator
 from pymor.tools import float_cmp_all
 
 
-def trivial_basis_extension(basis, U, U_ind=None, copy_basis=True, copy_U=True):
-    '''Trivially extend basis by just adding the new vector.
+def trivial_basis_extension(basis, U, copy_basis=True, copy_U=True):
+    '''Trivially extend basis by simply appending the new vector.
 
-    We check that the new vector is not already contained in the basis, but we do
+    We check if the new vector is already contained in the basis, but we do
     not check for linear independence.
 
     Parameters
@@ -43,8 +43,6 @@ def trivial_basis_extension(basis, U, U_ind=None, copy_basis=True, copy_U=True):
         The basis to extend.
     U
         The new basis vector.
-    U_ind
-        Indices of the new basis vectors in U.
     copy_basis
         If copy_basis is False, the old basis is extended in-place.
     copy_U
@@ -62,16 +60,17 @@ def trivial_basis_extension(basis, U, U_ind=None, copy_basis=True, copy_U=True):
     if basis is None:
         basis = type(U).empty(U.dim, reserve=len(U))
 
-    if np.any(U.almost_equal(basis, ind=U_ind)):
-        raise ExtensionError
+    for i in xrange(len(U)):
+        if np.any(U.almost_equal(basis, ind=i)):
+            raise ExtensionError
 
     new_basis = basis.copy() if copy_basis else basis
-    new_basis.append(U, o_ind=U_ind, remove_from_other=(not copy_U))
+    new_basis.append(U, remove_from_other=(not copy_U))
 
     return new_basis, {'hierarchic': True}
 
 
-def gram_schmidt_basis_extension(basis, U, U_ind=None, product=None, copy_basis=True, copy_U=True):
+def gram_schmidt_basis_extension(basis, U, product=None, copy_basis=True, copy_U=True):
     '''Extend basis using Gram-Schmidt orthonormalization.
 
     Parameters
@@ -80,8 +79,6 @@ def gram_schmidt_basis_extension(basis, U, U_ind=None, product=None, copy_basis=
         The basis to extend.
     U
         The new basis vectors.
-    U_ind
-        Indices of the new basis vectors in U.
     product
         The scalar product w.r.t. which to orthonormalize; if None, the l2-scalar
         product on the coefficient vector is used.
@@ -107,7 +104,7 @@ def gram_schmidt_basis_extension(basis, U, U_ind=None, product=None, copy_basis=
     basis_length = len(basis)
 
     new_basis = basis.copy() if copy_basis else basis
-    new_basis.append(U, o_ind=U_ind, remove_from_other=(not copy_U))
+    new_basis.append(U, remove_from_other=(not copy_U))
     gram_schmidt(new_basis, offset=len(basis), product=product, copy=False)
 
     if len(new_basis) <= basis_length:
