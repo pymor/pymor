@@ -1,17 +1,17 @@
-pyMor - Model order reduction in Python
+pyMOR - Model Order Reduction with python
 =======================================
 
-**NOTE** pyMor is still alpha quality software and under heavy development.
-Should you have any questions regarding pyMor or wish to contribute, do not
+**NOTE** pyMOR is still alpha quality software and under heavy development.
+Should you have any questions regarding pyMOR or wish to contribute, do not
 hesitate to directly contact one of the developers.
 
-[![Build Status](https://travis-ci.org/pyMor/pyMor.png?branch=master)](https://travis-ci.org/pyMor/pyMor)
+[![Build Status](https://travis-ci.org/pymor/pymor.png?branch=master)](https://travis-ci.org/pymor/pymor)
 
 
 Installation
 ------------
 
-We recommend the following way to install pyMor with all its dependencies.
+We recommend the following way to install pyMOR with all its dependencies.
 
 This procedure has been tested on the following platforms:
 
@@ -22,14 +22,14 @@ This procedure has been tested on the following platforms:
     computer. (On Debian based linux distributions (e.g. Ubunutu) use `sudo
     apt-get install git python2.7` to install both git and python.)
 
-2.  Clone the pyMor main repository using
+2.  Clone the pyMOR main repository using
     
-        git clone https://github.com/pyMor/pyMor.git
+        git clone https://github.com/pymor/pymor.git
     
-    This will create a directory named `pyMor` in your current working directory.
+    This will create a directory named `pymor` in your current working directory.
     Change into this directory using
     
-        cd pyMor
+        cd pymor
 
 3.  Excecute the provided installation script
     
@@ -38,29 +38,29 @@ This procedure has been tested on the following platforms:
     The installation script will ensure that all necessary system libraries and
     development headers are installed, create a new python virtual environment
     (virtualenv, see www.virtualenv.org), install all necessary python packages into
-    this virtualenv, and finally install pyMor itself.
+    this virtualenv, and finally install pyMOR itself.
     
     The installation process can be customized using various command-line arguments.
     (See `./install.py --help`.) Most notable, the path of the virtualenv can be
     configured using the `--virtualenv-dir` option.  Moreover, if you intend to work
-    directly inside the pyMor source tree, use
+    directly inside the pyMOR source tree, use
     
         ./install.py --only-deps
     
-    to prevent the installation of pyMor itself into the `site-packages` directory
-    of the virtualenv. In this case, the installation script will add the pyMor
-    source tree to the `PYTHONPATH` of the virtualenv, so pyMor will always be
+    to prevent the installation of pyMOR itself into the `site-packages` directory
+    of the virtualenv. In this case, the installation script will add the pyMOR
+    source tree to the `PYTHONPATH` of the virtualenv, so pyMOR will always be
     importable inside the virtualenv. (This can be prevented by adding the
     `--without-python-path` option.) Moreover
     
         python setup.py build_ext --inplace
     
-    will be automatically called, to build pyMor's Cython extensions modules.
+    will be automatically called, to build pyMOR's Cython extensions modules.
    
 4.  Activate the new virtualenv. If you did not change the default path of the
     virtualenv, this can be done by executing
     
-        source $HOME/virtualenv/pyMor/bin/activate
+        source $HOME/virtualenv/pymor/bin/activate
     
 5.  Try out one of the provided demos, e.g. call
     
@@ -71,7 +71,7 @@ This procedure has been tested on the following platforms:
 Cython extension modules
 ------------------------
 
-pyMor uses [Cython](http://www.cython.org/) extension modules to speed up
+pyMOR uses [Cython](http://www.cython.org/) extension modules to speed up
 numerical algorithms which cannot be efficiently expressed using NumPy idioms.
 To benefit from these optimizations, the modules' source files (currently
 `pymor/tools/inplace.pyx` and `pymor/tools/realations.pyx`) have to be processed
@@ -80,13 +80,13 @@ These `.so`-files then take precedence over the non-optimized pure python
 modules.  This whole build process is handeled automatically by `setup.py`
 which is internally called by the `install.py` script.  
 
-If you want to develop Cython extensions modules for pyMor yourself, you should
+If you want to develop Cython extensions modules for pyMOR yourself, you should
 add your module to the `ext_modules` list defined in the `_setup` method of
 `setup.py`. Calling
 
     python setup.py build_ext --inplace
 
-will then build the extension module and place it into your pyMor source tree.
+will then build the extension module and place it into your pyMOR source tree.
 
 
 Debugging
@@ -98,8 +98,8 @@ Debugging
 Tests
 -----
 
-pyMor uses [pytest](http://pytest.org/) for unit testing. To run the test suite,
-simply execute `make test` in the base directory of the pyMor repository. This
+pyMOR uses [pytest](http://pytest.org/) for unit testing. To run the test suite,
+simply execute `make test` in the base directory of the pyMOR repository. This
 will also create a test coverage report which can be found in the `htmlcov`
 directory. Alternatively, you can run `make full-test` which will also enable
 [pyflakes](https://pypi.python.org/pypi/pyflakes) and
