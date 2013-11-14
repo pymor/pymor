@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# This file is part of the pyMor project (http://www.pymor.org).
+# This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
@@ -176,9 +176,9 @@ def setup_package():
     revstring = write_version()
 
     _setup(
-        name='pyMor',
+        name='pymor',
         version=revstring,
-        author='pyMor developers',
+        author='pyMOR developers',
         author_email='pymor-dev@listserv.uni-muenster.de',
         maintainer='Rene Milk',
         maintainer_email='rene.milk@wwu.de',
