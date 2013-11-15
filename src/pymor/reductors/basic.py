@@ -39,8 +39,8 @@ def reduce_generic_rb(discretization, RB, operator_product=None, vector_product=
         `operators.constructions.ProjectedOperator`)
     vector_product
         Scalar product for the projection of vector_operators
-        (A typical case would be the `initial_data` operator holding the
-        initial data of a Cauchy problem.)
+        (A typical case for a vector_operator would be the `initial_data`
+        operator holding the initial data of a Cauchy problem.)
     disable_caching
         If `True`, caching of the solutions of the reduced discretization
         is disabled.
