@@ -7,8 +7,9 @@ via http://stackoverflow.com/questions/384076/how-can-i-make-the-python-logging-
 Cannot not be moved because it's needed to be imported in the root __init__.py OR ELSE
 """
 from __future__ import absolute_import, division, print_function
-import logging
 import curses
+import logging
+import os
 import time
 
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
@@ -55,11 +56,15 @@ class ColoredFormatter(logging.Formatter):
     """
 
     def __init__(self):
-        try:
-            curses.setupterm()
-            self.use_color = curses.tigetnum("colors") > 1
-        except Exception, _:
+        disable_colors = int(os.environ.get('PYMOR_COLORS_DISABLE', 0)) == 1
+        if disable_colors:
             self.use_color = False
+        else:
+            try:
+                curses.setupterm()
+                self.use_color = curses.tigetnum("colors") > 1
+            except Exception, _:
+                self.use_color = False
         def relative_time(secs=None):
             if secs is not None:
                 elapsed = time.time() - start_time
@@ -89,6 +94,8 @@ class ColoredFormatter(logging.Formatter):
             else:
                 levelname_color = RESET_SEQ + '|' + COLOR_SEQ % (30 + COLORS[levelname]) + levelname + RESET_SEQ
             record.levelname = levelname_color
+        elif levelname is 'INFO':
+            record.levelname = ''
         return logging.Formatter.format(self, record)
 
 
