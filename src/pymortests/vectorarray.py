@@ -186,7 +186,6 @@ def invalid_ind_pairs(v1, v2):
             yield ind1, ind2
 
 
-
 @pytest.fixture(params = numpy_vector_array_generators + numpy_list_vector_array_generators)
 def vector_array_without_reserve(request):
     return request.param()
@@ -533,6 +532,7 @@ def test_axpy(vector_array_pair_with_same_dim):
             assert np.all(c2.almost_equal(v2))
             assert np.all(c1.sup_norm(ind1) <= v1.sup_norm(ind1) + abs(a) * v2.sup_norm(ind2) * (1. + 1e-10))
             assert np.all(c1.l1_norm(ind1) <= (v1.l1_norm(ind1) + abs(a) * v2.l1_norm(ind2)) * (1. + 1e-10))
+            assert np.all(c1.l2_norm(ind1) <= (v1.l2_norm(ind1) + abs(a) * v2.l2_norm(ind2)) * (1. + 1e-10))
             if isinstance(v1, Communicable):
                 x = dv1.copy()
                 if isinstance(ind1, Number):
@@ -696,6 +696,98 @@ def test_lincomb_2d(vector_array):
             for coeffs_1d in coeffs:
                 lc2.append(c.lincomb(coeffs_1d, ind=ind))
             assert np.all(lc.almost_equal(lc2))
+
+
+def test_lincomb_wrong_coefficients(vector_array):
+    v = vector_array
+    np.random.seed(len(v) + 42 + v.dim)
+    for ind in valid_inds(v):
+        c = v.copy()
+        coeffs = np.random.random(v.len_ind(ind) + 1)
+        with pytest.raises(Exception):
+            c.lincomb(coeffs, ind=ind)
+
+        c = v.copy()
+        coeffs = np.random.random(v.len_ind(ind)).reshape((1, 1, -1))
+        with pytest.raises(Exception):
+            c.lincomb(coeffs, ind=ind)
+
+        if v.len_ind(ind) > 0:
+            c = v.copy()
+            coeffs = np.random.random(v.len_ind(ind) - 1)
+            with pytest.raises(Exception):
+                c.lincomb(coeffs, ind=ind)
+
+            c = v.copy()
+            coeffs = np.array([])
+            with pytest.raises(Exception):
+                c.lincomb(coeffs, ind=ind)
+
+
+def test_l1_norm(vector_array):
+    v = vector_array
+    if isinstance(v, Communicable):
+        dv = v.data
+    for ind in valid_inds(v):
+        c = v.copy()
+        norm = c.l1_norm(ind)
+        assert isinstance(norm, np.ndarray)
+        assert norm.shape == (v.len_ind(ind),)
+        assert np.all(norm >= 0)
+        if v.dim == 0:
+            assert np.all(norm == 0)
+        if isinstance(v, Communicable):
+            assert np.allclose(norm, np.sum(np.abs(indexed(dv, ind)), axis=1))
+        c.scal(4.)
+        assert np.allclose(c.l1_norm(ind), norm * 4)
+        c.scal(-4.)
+        assert np.allclose(c.l1_norm(ind), norm * 16)
+        c.scal(0.)
+        assert np.allclose(c.l1_norm(ind), 0)
+
+
+def test_l2_norm(vector_array):
+    v = vector_array
+    if isinstance(v, Communicable):
+        dv = v.data
+    for ind in valid_inds(v):
+        c = v.copy()
+        norm = c.l2_norm(ind)
+        assert isinstance(norm, np.ndarray)
+        assert norm.shape == (v.len_ind(ind),)
+        assert np.all(norm >= 0)
+        if v.dim == 0:
+            assert np.all(norm == 0)
+        if isinstance(v, Communicable):
+            assert np.allclose(norm, np.sqrt(np.sum(np.power(indexed(dv, ind), 2), axis=1)))
+        c.scal(4.)
+        assert np.allclose(c.l2_norm(ind), norm * 4)
+        c.scal(-4.)
+        assert np.allclose(c.l2_norm(ind), norm * 16)
+        c.scal(0.)
+        assert np.allclose(c.l2_norm(ind), 0)
+
+
+def test_sup_norm(vector_array):
+    v = vector_array
+    if isinstance(v, Communicable):
+        dv = v.data
+    for ind in valid_inds(v):
+        c = v.copy()
+        norm = c.sup_norm(ind)
+        assert isinstance(norm, np.ndarray)
+        assert norm.shape == (v.len_ind(ind),)
+        assert np.all(norm >= 0)
+        if v.dim == 0:
+            assert np.all(norm == 0)
+        if isinstance(v, Communicable) and v.dim > 0:
+            assert np.allclose(norm, np.max(np.abs(indexed(dv, ind)), axis=1))
+        c.scal(4.)
+        assert np.allclose(c.sup_norm(ind), norm * 4)
+        c.scal(-4.)
+        assert np.allclose(c.sup_norm(ind), norm * 16)
+        c.scal(0.)
+        assert np.allclose(c.sup_norm(ind), 0)
 
 
 ########################################################################################################################
