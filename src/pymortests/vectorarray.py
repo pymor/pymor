@@ -21,7 +21,8 @@ def numpy_vector_array_factory(length, dim, seed):
 
 def numpy_list_vector_array_factory(length, dim, seed):
     np.random.seed(seed)
-    return NumpyListVectorArray([NumpyVector(v, copy=False) for v in np.random.random((length, dim))], copy=False)
+    return NumpyListVectorArray([NumpyVector(v, copy=False) for v in np.random.random((length, dim))],
+                                dim=dim, copy=False)
 
 
 def vector_array_from_empty_reserve(v, reserve):
@@ -44,12 +45,11 @@ numpy_vector_array_factory_arguments = \
         random_integers(5, 123))   # seed
 
 numpy_vector_array_factory_arguments_pairs_with_same_dim = \
-    [[2, 2, 13, 3, 3]] + \
-    zip([0,  0,  1, 43, 102],      # len1
-        [0,  1, 37,  9, 104],      # len2
-        [0, 10, 34, 32,   3],      # dim
-        random_integers(5, 1234),  # seed1
-        random_integers(5, 1235))  # seed2
+    zip([0,  0,  1, 43, 102,  2],         # len1
+        [0,  1, 37,  9, 104,  2],         # len2
+        [0, 10, 34, 32,   3, 13],         # dim
+        random_integers(5, 1234) + [42],  # seed1
+        random_integers(5, 1235) + [42])  # seed2
 
 numpy_vector_array_factory_arguments_pairs_with_different_dim = \
     zip([0,  0,  1, 43, 102],      # len1
@@ -60,25 +60,29 @@ numpy_vector_array_factory_arguments_pairs_with_different_dim = \
         random_integers(5, 1235))  # seed2
 
 numpy_vector_array_generators = \
-    [lambda: numpy_vector_array_factory(*args) for args in numpy_vector_array_factory_arguments]
+    [lambda args=args: numpy_vector_array_factory(*args) for args in numpy_vector_array_factory_arguments]
 
 numpy_list_vector_array_generators = \
-    [lambda: numpy_list_vector_array_factory(*args) for args in numpy_vector_array_factory_arguments]
+    [lambda args=args: numpy_list_vector_array_factory(*args) for args in numpy_vector_array_factory_arguments]
 
 numpy_vector_array_pair_with_same_dim_generators = \
-    [lambda: (numpy_vector_array_factory(l, d, s1), numpy_vector_array_factory(l2, d, s2))
+    [lambda l=l,l2=l2,d=d,s1=s1,s2=s2: (numpy_vector_array_factory(l, d, s1),
+                                        numpy_vector_array_factory(l2, d, s2))
      for l, l2, d, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_same_dim]
 
 numpy_list_vector_array_pair_with_same_dim_generators = \
-    [lambda: (numpy_list_vector_array_factory(l, d, s1), numpy_list_vector_array_factory(l2, d, s2))
+    [lambda l=l,l2=l2,d=d,s1=s1,s2=s2: (numpy_list_vector_array_factory(l, d, s1),
+                                        numpy_list_vector_array_factory(l2, d, s2))
      for l, l2, d, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_same_dim]
 
 numpy_vector_array_pair_with_different_dim_generators = \
-    [lambda: (numpy_vector_array_factory(l, d1, s1), numpy_vector_array_factory(l2, d2, s2))
+    [lambda l=l,l2=l2,d1=d1,d2=d2,s1=s1,s2=s2: (numpy_vector_array_factory(l, d1, s1),
+                                                numpy_vector_array_factory(l2, d2, s2))
      for l, l2, d1, d2, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_different_dim]
 
 numpy_list_vector_array_pair_with_different_dim_generators = \
-    [lambda: (numpy_list_vector_array_factory(l, d1, s1), numpy_list_vector_array_factory(l2, d2, s2))
+    [lambda l=l,l2=l2,d1=d1,d2=d2,s1=s1,s2=s2: (numpy_list_vector_array_factory(l, d1, s1),
+                                                numpy_list_vector_array_factory(l2, d2, s2))
      for l, l2, d1, d2, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_different_dim]
 
 
@@ -161,9 +165,14 @@ def valid_inds_of_different_length(v1, v2):
             yield [0], [0, 1]
         np.random.seed(len(v1) * len(v2))
         for count1 in np.linspace(0, len(v1), 3):
-            count2 = np.random.randint(-count1, len(v2) - count1) + count1
-            yield (list(np.random.randint(0, len(v1), size=count1)),
-                   list(np.random.randint(0, len(v2), size=count2)))
+            count2 = np.random.randint(0, len(v2))
+            if count2 == count1:
+                count2 += 1
+                if count2 == len(v2):
+                    count2 -= 2
+            if count2 >= 0:
+                yield (list(np.random.randint(0, len(v1), size=count1)),
+                       list(np.random.randint(0, len(v2), size=count2)))
 
 
 def invalid_ind_pairs(v1, v2):
