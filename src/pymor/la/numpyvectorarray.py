@@ -122,7 +122,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
                 if other is self:
                     return
                 assert other._len == self._len
-                self._array = other._array[:other._len]
+                self._array = other._array[:other._len].copy()
             else:
                 if not hasattr(o_ind, '__len__'):
                     o_ind = [o_ind]
