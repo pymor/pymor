@@ -436,7 +436,7 @@ def test_almost_equal(vector_array_pair_with_same_dim):
                                           <= atol + rtol * np.abs(indexed(dv2, ind2)), axis=1))
 
 
-def test_almost_equal2(vector_array):
+def test_almost_equal_self(vector_array):
     v = vector_array
     for ind in valid_inds(v):
         for rtol, atol in ((1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8)):
@@ -547,11 +547,43 @@ def test_axpy(vector_array_pair_with_same_dim):
 
 def test_axpy_self(vector_array):
     v = vector_array
+    if isinstance(v, Communicable):
+        dv = v.data
+
+    for ind1, ind2 in valid_inds_of_same_length(v, v):
+        if v.len_ind(ind1) != v.len_ind_unique(ind1):
+            with pytest.raises(Exception):
+                c, = v.copy()
+                c.axpy(0., c, ind=ind1, x_ind=ind2)
+            continue
+
+        ind1_complement = ind_complement(v, ind1)
+        c = v.copy()
+        c.axpy(0., c, ind=ind1, x_ind=ind2)
+        assert len(c) == len(v)
+        assert np.all(c.almost_equal(v))
+        assert np.all(c.almost_equal(v))
+
+        for a in (1., 1.4, -42):
+            c = v.copy()
+            c.axpy(a, c, ind=ind1, x_ind=ind2)
+            assert len(c) == len(v)
+            assert np.all(c.almost_equal(v, ind=ind1_complement, o_ind=ind1_complement))
+            assert np.all(c.sup_norm(ind1) <= v.sup_norm(ind1) + abs(a) * v.sup_norm(ind2) * (1. + 1e-10))
+            assert np.all(c.l1_norm(ind1) <= (v.l1_norm(ind1) + abs(a) * v.l1_norm(ind2)) * (1. + 1e-10))
+            if isinstance(v, Communicable):
+                x = dv.copy()
+                if isinstance(ind1, Number):
+                    x[[ind1]] += indexed(dv, ind2) * a
+                else:
+                    x[ind1] += indexed(dv, ind2) * a
+                assert np.allclose(c.data, x)
+            c.axpy(-a, v, ind=ind1, x_ind=ind2)
+            assert len(c) == len(v)
+            assert np.all(c.almost_equal(v))
+
     for ind in valid_inds(v):
         if v.len_ind(ind) != v.len_ind_unique(ind):
-            with pytest.raises(Exception):
-                c = v.copy()
-                c.axpy(0., c, ind=ind, x_ind=ind)
             continue
 
         for x in (1., 23., -4):
