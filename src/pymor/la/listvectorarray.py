@@ -10,9 +10,8 @@ from numbers import Number
 
 import numpy as np
 
-from pymor.core.exceptions import CommunicationError
 from pymor.core.interfaces import BasicInterface, abstractmethod, abstractclassmethod, abstractproperty
-from pymor.la.interfaces import VectorArrayInterface
+from pymor.la.interfaces import VectorArrayInterface, Communicable
 from pymor.tools import float_cmp_all
 
 
@@ -115,6 +114,10 @@ class NumpyVector(VectorInterface):
         else:
             self._array = np.array(instance, dtype=dtype, copy=copy, order=order, subok=subok, ndmin=1)
         assert self._array.ndim == 1
+
+    @property
+    def data(self):
+        return self._array
 
     def zeros(cls, dim):
         return NumpyVector(np.zeros(dim))
@@ -530,5 +533,14 @@ class ListVectorArray(VectorArrayInterface):
         return 'ListVectorArray of {} {}s of dimension {}'.format(len(self._list), str(self.vector_type), self._dim)
 
 
-class NumpyListVectorArray(ListVectorArray):
+class CommunicableListVectorArray(ListVectorArray, Communicable):
+
+    def _data(self):
+        if len(self._list) > 0:
+            return np.array([v.data for v in self._list])
+        else:
+            return np.empty((0, self._dim))
+
+
+class NumpyListVectorArray(CommunicableListVectorArray):
     vector_type = NumpyVector
