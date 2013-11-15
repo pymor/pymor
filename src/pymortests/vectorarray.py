@@ -666,6 +666,37 @@ def test_dot_self(vector_array):
         assert np.all(r == r.T)
 
 
+def test_lincomb_1d(vector_array):
+    v = vector_array
+    np.random.seed(len(v) + 42 + v.dim)
+    for ind in valid_inds(v):
+        c = v.copy()
+        coeffs = np.random.random(v.len_ind(ind))
+        lc = c.lincomb(coeffs, ind=ind)
+        assert lc.dim == v.dim
+        assert len(lc) == 1
+        lc2 = v.zeros(v.dim)
+        ind = range(len(v)) if ind is None else [ind] if isinstance(ind, Number) else ind
+        for coeff, i in zip(coeffs, ind):
+            lc2.axpy(coeff, c, x_ind=i)
+        assert np.all(lc.almost_equal(lc2))
+
+
+def test_lincomb_2d(vector_array):
+    v = vector_array
+    np.random.seed(len(v) + 42 + v.dim)
+    for ind in valid_inds(v):
+        for count in (0, 1, 5):
+            c = v.copy()
+            coeffs = np.random.random((count, v.len_ind(ind)))
+            lc = c.lincomb(coeffs, ind=ind)
+            assert lc.dim == v.dim
+            assert len(lc) == count
+            lc2 = v.empty(v.dim, reserve=count)
+            for coeffs_1d in coeffs:
+                lc2.append(c.lincomb(coeffs_1d, ind=ind))
+            assert np.all(lc.almost_equal(lc2))
+
 
 ########################################################################################################################
 
