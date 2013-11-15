@@ -68,6 +68,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
 
     def append(self, other, o_ind=None, remove_from_other=False):
         assert other.check_ind(o_ind)
+        assert self.dim == other.dim
         assert other is not self or not remove_from_other
 
         if o_ind is None:
