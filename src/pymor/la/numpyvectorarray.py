@@ -258,6 +258,9 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
 
     def amax(self, ind=None):
         assert self.check_ind(ind)
+        if self._array.shape[1] == 0:
+            l = self.len_ind(ind)
+            return (np.ones(l) * -1, np.zeros(l))
 
         A = self._array[:self._len] if ind is None else \
                 self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
