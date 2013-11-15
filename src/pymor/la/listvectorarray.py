@@ -346,6 +346,16 @@ class ListVectorArray(VectorArrayInterface):
         assert self.dim == x.dim
         assert self.len_ind(ind) == x.len_ind(x_ind)
 
+        if self is x:
+            if ind is None or x_ind is None:
+                self.axpy(alpha, x.copy(), ind, x_ind)
+                return
+            ind_set = {ind} if isinstance(ind, Number) else set(ind)
+            x_ind_set = {x_ind} if isinstance(x_ind, Number) else set(x_ind)
+            if ind_set.intersection(x_ind_set):
+                self.axpy(alpha, x.copy(x_ind), ind)
+                return
+
         if ind is None:
             Y = iter(self._list)
             len_Y = len(self._list)
