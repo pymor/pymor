@@ -364,33 +364,35 @@ class ListVectorArray(VectorArrayInterface):
             X = (x._list[i] for i in x_ind)
             len_X = len(x_ind)
 
-        if alpha == 1:
+        if alpha == 0:
+            return
+        elif alpha == 1:
             if len_X == 1:
-                x = next(X)
+                xx = next(X)
                 for y in Y:
-                    y += x
+                    y += xx
             else:
                 assert len_X == len_Y
-                for x, y in izip(X, Y):
-                    y += x
+                for xx, y in izip(X, Y):
+                    y += xx
         elif alpha == -1:
             if len_X == 1:
-                x = next(X)
+                xx = next(X)
                 for y in Y:
-                    y -= x
+                    y -= xx
             else:
                 assert len_X == len_Y
-                for x, y in izip(X, Y):
-                    y -= x
+                for xx, y in izip(X, Y):
+                    y -= xx
         else:
             if len_X == 1:
-                x = next(X) * alpha
+                xx = next(X) * alpha
                 for y in Y:
-                    y += x
+                    y += xx
             else:
                 assert len_X == len_Y
-                for x, y in izip(X, Y):
-                    y += x * alpha
+                for xx, y in izip(X, Y):
+                    y += xx * alpha
 
     def dot(self, other, pairwise, ind=None, o_ind=None):
         assert self.check_ind(ind)
