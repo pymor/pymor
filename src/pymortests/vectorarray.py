@@ -358,18 +358,18 @@ def test_replace(vector_array_pair_with_same_dim):
         dv1 = v1.data
         dv2 = v2.data
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
+        if v1.len_ind(ind1) != v1.len_ind_unique(ind1):
+            with pytest.raises(Exception):
+                c1, c2 = v1.copy(), v2.copy()
+                c1.replace(c2, ind=ind1, o_ind=ind2, remove_from_other=False)
+            with pytest.raises(Exception):
+                c1, c2 = v1.copy(), v2.copy()
+                c1.replace(c2, ind=ind1, o_ind=ind2, remove_from_other=True)
+            continue
         c1, c2 = v1.copy(), v2.copy()
         c1.replace(c2, ind=ind1, o_ind=ind2, remove_from_other=False)
         assert len(c1) == len(v1)
         assert c1.dim == v1.dim
-        # if the same index is repeated in ind1, the corresponding vector
-        # will be the last one assigned to it
-        if hasattr(ind1, '__len__'):
-            ind2 = ind2 if hasattr(ind2, '__len__') else [ind2] if isinstance(ind2, Number) else range(len(v2))
-            last_inds = {}
-            for i1, i2 in zip(ind1, ind2):
-                last_inds[i1] = i2
-            ind2 = [last_inds[i] for i in ind1]
         assert np.all(c1.almost_equal(v2, ind=ind1, o_ind=ind2))
         assert np.all(c2.almost_equal(v2))
         if isinstance(v1, Communicable):
@@ -382,14 +382,6 @@ def test_replace(vector_array_pair_with_same_dim):
         assert len(c1) == len(v1)
         assert c1.dim == v1.dim
         ind2_complement = ind_complement(v2, ind2)
-        # if the same index is repeated in ind1, the corresponding vector
-        # will be the last one assigned to it
-        if hasattr(ind1, '__len__'):
-            ind2 = ind2 if hasattr(ind2, '__len__') else [ind2] if isinstance(ind2, Number) else range(len(v2))
-            last_inds = {}
-            for i1, i2 in zip(ind1, ind2):
-                last_inds[i1] = i2
-            ind2 = [last_inds[i] for i in ind1]
         assert np.all(c1.almost_equal(v2, ind=ind1, o_ind=ind2))
         assert len(c2) == len(ind2_complement)
         assert np.all(c2.almost_equal(v2, o_ind=ind2_complement))
@@ -405,25 +397,24 @@ def test_replace_self(vector_array):
     if isinstance(v, Communicable):
         dv = v.data
     for ind1, ind2 in valid_inds_of_same_length(v, v):
+        if v.len_ind(ind1) != v.len_ind_unique(ind1):
+            c = v.copy()
+            with pytest.raises(Exception):
+                c.replace(c, ind=ind1, o_ind=ind2, remove_from_other=False)
+            c = v.copy()
+            with pytest.raises(Exception):
+                c.replace(c, ind=ind1, o_ind=ind2, remove_from_other=True)
+            continue
+
         c = v.copy()
         with pytest.raises(Exception):
             c.replace(c, ind=ind1, o_ind=ind2, remove_from_other=True)
-    for ind1, ind2 in valid_inds_of_same_length(v, v):
+
         c = v.copy()
         c.replace(c, ind=ind1, o_ind=ind2, remove_from_other=False)
         assert len(c) == len(v)
         assert c.dim == v.dim
-        # if the same index is repeated in ind1, the corresponding vector
-        # will be the last one assigned to it
-        if hasattr(ind1, '__len__'):
-            last_ind2 = ind2 if hasattr(ind2, '__len__') else [ind2] if isinstance(ind2, Number) else range(len(v))
-            last_inds = {}
-            for i1, i2 in zip(ind1, last_ind2):
-                last_inds[i1] = i2
-            last_ind2 = [last_inds[i] for i in ind1]
-        else:
-            last_ind2 = ind2
-        assert np.all(c.almost_equal(v, ind=ind1, o_ind=last_ind2))
+        assert np.all(c.almost_equal(v, ind=ind1, o_ind=ind2))
         if isinstance(v, Communicable):
             x = dv.copy()
             x[ind1] = indexed(dv, ind2)
@@ -453,32 +444,139 @@ def test_almost_equal2(vector_array):
             assert isinstance(r, np.ndarray)
             assert r.shape == (v.len_ind(ind),)
             assert np.all(r)
-            if v.dim == 0:
+            if v.len_ind(ind) == 0 or np.max(v.sup_norm(ind) == 0):
                 continue
 
             c = v.copy()
-            c.scal(1. / (np.max(v.sup_norm(ind)) * atol))
-            assert np.all(c.almost_equal(c.zeros(v.dim, v.len_ind(ind)), ind=ind))
+            c.scal(atol / (np.max(v.sup_norm(ind))))
+            assert np.all(c.almost_equal(c.zeros(v.dim, v.len_ind(ind)), ind=ind, atol=atol, rtol=rtol))
 
             c = v.copy()
-            c.scal(2. / (np.max(v.sup_norm(ind)) * atol))
-            assert not np.all(c.almost_equal(c.zeros(v.dim, v.len_ind(ind)), ind=ind))
+            c.scal(2. * atol / (np.max(v.sup_norm(ind))))
+            assert not np.all(c.almost_equal(c.zeros(v.dim, v.len_ind(ind)), ind=ind, atol=atol, rtol=rtol))
 
             c = v.copy()
             c.scal(1. + atol / np.max(v.sup_norm(ind)))
-            assert np.all(c.almost_equal(v, ind=ind, o_ind=ind))
+            assert np.all(c.almost_equal(v, ind=ind, o_ind=ind, atol=atol, rtol=rtol))
 
             c = v.copy()
             c.scal(2. + atol / np.max(v.sup_norm(ind)))
-            assert not np.all(c.almost_equal(v, ind=ind, o_ind=ind))
+            assert not np.all(c.almost_equal(v, ind=ind, o_ind=ind, atol=atol, rtol=rtol))
 
             c = v.copy()
             c.scal(1. + rtol)
-            assert np.all(c.almost_equal(v, ind=ind, o_ind=ind))
+            assert np.all(c.almost_equal(v, ind=ind, o_ind=ind, atol=atol, rtol=rtol))
 
             c = v.copy()
             c.scal(2. + rtol)
-            assert not np.all(c.almost_equal(v, ind=ind, o_ind=ind))
+            assert not np.all(c.almost_equal(v, ind=ind, o_ind=ind, atol=atol, rtol=rtol))
+
+
+def test_scal(vector_array):
+    v = vector_array
+    if isinstance(v, Communicable):
+        dv = v.data
+    for ind in valid_inds(v):
+        if v.len_ind(ind) != v.len_ind_unique(ind):
+            with pytest.raises(Exception):
+                c = v.copy()
+                c.scal(1., ind=ind)
+            continue
+        ind_complement_ = ind_complement(v, ind)
+        c = v.copy()
+        c.scal(1., ind=ind)
+        assert len(c) == len(v)
+        assert np.all(c.almost_equal(v))
+
+        c = v.copy()
+        c.scal(0., ind=ind)
+        assert np.all(c.almost_equal(v.zeros(v.dim, v.len_ind(ind)), ind=ind))
+        assert np.all(c.almost_equal(v, ind=ind_complement_, o_ind=ind_complement_))
+
+        for x in (-1., 3., 4):
+            c = v.copy()
+            c.scal(x, ind=ind)
+            assert np.all(c.almost_equal(v, ind=ind_complement_, o_ind=ind_complement_))
+            assert np.allclose(c.sup_norm(ind), v.sup_norm(ind) * abs(x))
+            assert np.allclose(c.l2_norm(ind), v.l2_norm(ind) * abs(x))
+            if isinstance(v, Communicable):
+                y = dv.copy()
+                y[ind] *= x
+                assert np.allclose(c.data, y)
+
+
+def test_axpy(vector_array_pair_with_same_dim):
+    v1, v2 = vector_array_pair_with_same_dim
+    if isinstance(v1, Communicable):
+        dv1 = v1.data
+        dv2 = v2.data
+
+    for ind1, ind2 in valid_inds_of_same_length(v1, v2):
+        if v1.len_ind(ind1) != v1.len_ind_unique(ind1):
+            with pytest.raises(Exception):
+                c1, c2 = v1.copy(), v2.copy()
+                c1.axpy(0., c2, ind=ind1, x_ind=ind2)
+            continue
+
+        ind1_complement = ind_complement(v1, ind1)
+        c1, c2 = v1.copy(), v2.copy()
+        c1.axpy(0., c2, ind=ind1, x_ind=ind2)
+        assert len(c1) == len(v1)
+        assert np.all(c1.almost_equal(v1))
+        assert np.all(c2.almost_equal(v2))
+
+        for a in (1., 1.4, -42):
+            c1, c2 = v1.copy(), v2.copy()
+            c1.axpy(a, c2, ind=ind1, x_ind=ind2)
+            assert len(c1) == len(v1)
+            assert np.all(c1.almost_equal(v1, ind=ind1_complement, o_ind=ind1_complement))
+            assert np.all(c2.almost_equal(v2))
+            assert np.all(c1.sup_norm(ind1) <= v1.sup_norm(ind1) + abs(a) * v2.sup_norm(ind2) * (1. + 1e-10))
+            assert np.all(c1.l1_norm(ind1) <= (v1.l1_norm(ind1) + abs(a) * v2.l1_norm(ind2)) * (1. + 1e-10))
+            if isinstance(v1, Communicable):
+                x = dv1.copy()
+                if isinstance(ind1, Number):
+                    x[[ind1]] += indexed(dv2, ind2) * a
+                else:
+                    x[ind1] += indexed(dv2, ind2) * a
+                assert np.allclose(c1.data, x)
+            c1.axpy(-a, c2, ind=ind1, x_ind=ind2)
+            assert len(c1) == len(v1)
+            assert np.all(c1.almost_equal(v1))
+
+
+def test_axpy_self(vector_array):
+    v = vector_array
+    for ind in valid_inds(v):
+        if v.len_ind(ind) != v.len_ind_unique(ind):
+            with pytest.raises(Exception):
+                c = v.copy()
+                c.axpy(0., c, ind=ind, x_ind=ind)
+            continue
+
+        for x in (1., 23., -4):
+            c = v.copy()
+            cc = v.copy()
+            c.axpy(x, c, ind=ind, x_ind=ind)
+            cc.scal(1 + x, ind=ind)
+            assert np.all(c.almost_equal(cc))
+
+
+def test_dot_pairwise(vector_array_pair_with_same_dim):
+    v1, v2 = vector_array_pair_with_same_dim
+    if isinstance(v1, Communicable):
+        dv1, dv2 = v1.data, v2.data
+    for ind1, ind2 in valid_inds_of_same_length(v1, v2):
+        c1, c2 = v1.copy(), v2.copy()
+        r = c1.dot(c2, pairwise=True, ind=ind1, o_ind=ind2)
+        assert isinstance(r, np.ndarray)
+        assert r.shape == (v1.len_ind(ind1),)
+        r2 = c2.dot(c1, pairwise=True, ind=ind2, o_ind=ind1)
+        assert np.all(r == r2)
+        assert np.all(r <= c1.l2_norm(ind1) * c2.l2_norm(ind2) * (1. + 1e-10))
+        if isinstance(v1, Communicable):
+            assert np.allclose(r, np.sum(indexed(dv1, ind1) * indexed(dv2, ind2), axis=1))
+
 
 
 
