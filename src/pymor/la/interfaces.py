@@ -182,9 +182,11 @@ class VectorArrayInterface(BasicInterface):
             A `VectorArray` containing the replacement vectors.
         ind
             Indices of the vectors that are to be replaced (see class documentation).
+            Repeated indices are forbidden.
         o_ind
             Indices of the replacement vectors (see class documentation).
             `len(ind)` has to agree with `len(o_ind)`.
+            Repeated indices are allowed.
         remove_from_other
             If `True`, the new vectors are removed from `other?.
             For list-like implementations of `VectorArray` this can be
@@ -236,6 +238,7 @@ class VectorArrayInterface(BasicInterface):
             The scalar coefficient with which the vectors in `self` are multiplied
         ind
             Indices of the vectors of `self` that are to be scaled (see class documentation).
+            Repeated indices are forbidden.
         '''
         pass
 
@@ -258,8 +261,10 @@ class VectorArrayInterface(BasicInterface):
             A `VectorArray` containing the x-summands.
         ind
             Indices of the vectors of `self` that are to be added (see class documentation).
+            Repeated indices are forbidden.
         x_ind
             Indices of the vectors in `x` that are to be added (see class documentation).
+            Repeated indices are allowed.
         '''
         pass
 

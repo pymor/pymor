@@ -111,7 +111,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
             self._array = self._array.copy()
 
     def replace(self, other, ind=None, o_ind=None, remove_from_other=False):
-        assert self.check_ind(ind)
+        assert self.check_ind_unique(ind)
         assert other.check_ind(o_ind)
         assert self.dim == other.dim
         assert other is not self or not remove_from_other
@@ -159,7 +159,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
         return R
 
     def scal(self, alpha, ind=None):
-        assert self.check_ind(ind)
+        assert self.check_ind_unique(ind)
 
         if ind is None:
             self._array[:self._len] *= alpha
@@ -167,7 +167,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
             self._array[ind] *= alpha
 
     def axpy(self, alpha, x, ind=None, x_ind=None):
-        assert self.check_ind(ind)
+        assert self.check_ind_unique(ind)
         assert x.check_ind(x_ind)
         assert self.dim == x.dim
         assert self.len_ind(ind) == x.len_ind(x_ind)

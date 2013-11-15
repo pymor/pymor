@@ -248,7 +248,7 @@ class ListVectorArray(VectorArrayInterface):
             self._list = [thelist[i] for i in remaining]
 
     def replace(self, other, ind=None, o_ind=None, remove_from_other=False):
-        assert self.check_ind(ind)
+        assert self.check_ind_unique(ind)
         assert other.check_ind(o_ind)
         assert other.dim == self.dim
         assert other is not self or not remove_from_other
@@ -326,7 +326,7 @@ class ListVectorArray(VectorArrayInterface):
             return np.array([l[i].almost_equal(ol[oi], rtol=rtol, atol=atol) for i, oi in izip(ind, o_ind)])
 
     def scal(self, alpha, ind=None):
-        assert self.check_ind(ind)
+        assert self.check_ind_unique(ind)
 
         if ind is None:
             for v in self._list:
@@ -339,7 +339,7 @@ class ListVectorArray(VectorArrayInterface):
                 l[i].scal(alpha)
 
     def axpy(self, alpha, x, ind=None, x_ind=None):
-        assert self.check_ind(ind)
+        assert self.check_ind_unique(ind)
         assert x.check_ind(x_ind)
         assert self.dim == x.dim
         assert self.len_ind(ind) == x.len_ind(x_ind)
