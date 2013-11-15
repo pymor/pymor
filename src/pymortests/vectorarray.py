@@ -610,6 +610,61 @@ def test_dot_pairwise(vector_array_pair_with_same_dim):
             assert np.allclose(r, np.sum(indexed(dv1, ind1) * indexed(dv2, ind2), axis=1))
 
 
+def test_dot_pairwise_self(vector_array):
+    v = vector_array
+    if isinstance(v, Communicable):
+        dv = v.data
+    for ind1, ind2 in valid_inds_of_same_length(v, v):
+        c = v.copy()
+        r = c.dot(c, pairwise=True, ind=ind1, o_ind=ind2)
+        assert isinstance(r, np.ndarray)
+        assert r.shape == (v.len_ind(ind1),)
+        r2 = c.dot(c, pairwise=True, ind=ind2, o_ind=ind1)
+        assert np.all(r == r2)
+        assert np.all(r <= c.l2_norm(ind1) * c.l2_norm(ind2) * (1. + 1e-10))
+        if isinstance(v, Communicable):
+            assert np.allclose(r, np.sum(indexed(dv, ind1) * indexed(dv, ind2), axis=1))
+    for ind in valid_inds(v):
+        c = v.copy()
+        r = c.dot(c, pairwise=True, ind=ind, o_ind=ind)
+        assert np.allclose(r, v.l2_norm(ind) ** 2)
+
+
+def test_dot(vector_array_pair_with_same_dim):
+    v1, v2 = vector_array_pair_with_same_dim
+    if isinstance(v1, Communicable):
+        dv1, dv2 = v1.data, v2.data
+    for ind1, ind2 in chain(valid_inds_of_different_length(v1, v2), valid_inds_of_same_length(v1, v2)):
+        c1, c2 = v1.copy(), v2.copy()
+        r = c1.dot(c2, pairwise=False, ind=ind1, o_ind=ind2)
+        assert isinstance(r, np.ndarray)
+        assert r.shape == (v1.len_ind(ind1), v2.len_ind(ind2))
+        r2 = c2.dot(c1, pairwise=False, ind=ind2, o_ind=ind1)
+        assert np.all(r == r2.T)
+        assert np.all(r <= c1.l2_norm(ind1)[:, np.newaxis] * c2.l2_norm(ind2)[np.newaxis, :] * (1. + 1e-10))
+        if isinstance(v1, Communicable):
+            assert np.allclose(r, indexed(dv1, ind1).dot(indexed(dv2, ind2).T))
+
+
+def test_dot_self(vector_array):
+    v = vector_array
+    if isinstance(v, Communicable):
+        dv = v.data
+    for ind1, ind2 in chain(valid_inds_of_different_length(v, v), valid_inds_of_same_length(v, v)):
+        c = v.copy()
+        r = c.dot(c, pairwise=False, ind=ind1, o_ind=ind2)
+        assert isinstance(r, np.ndarray)
+        assert r.shape == (v.len_ind(ind1), v.len_ind(ind2))
+        r2 = c.dot(c, pairwise=False, ind=ind2, o_ind=ind1)
+        assert np.all(r == r2.T)
+        assert np.all(r <= c.l2_norm(ind1)[:, np.newaxis] * c.l2_norm(ind2)[np.newaxis, :] * (1. + 1e-10))
+        if isinstance(v, Communicable):
+            assert np.allclose(r, indexed(dv, ind1).dot(indexed(dv, ind2).T))
+    for ind in valid_inds(v):
+        c = v.copy()
+        r = c.dot(c, pairwise=False, ind=ind, o_ind=ind)
+        assert np.all(r == r.T)
+
 
 
 ########################################################################################################################
