@@ -160,6 +160,8 @@ class NumpyVector(VectorInterface):
         return self._array[component_indices]
 
     def amax(self):
+        if len(self._array) == 0:
+            return (-1, 0.)
         A = np.abs(self._array)
         max_ind = np.argmax(A)
         max_val = A[max_ind]
