@@ -458,7 +458,7 @@ class ListVectorArray(VectorArrayInterface):
         else:
             V = [self._list[i] for i in ind]
 
-        assert coefficients.shape[1] == len(self._list)
+        assert coefficients.shape[1] == self.len_ind(ind)
 
         RL = []
         for coeffs in coefficients:
