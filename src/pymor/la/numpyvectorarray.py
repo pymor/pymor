@@ -161,6 +161,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
 
     def scal(self, alpha, ind=None):
         assert self.check_ind_unique(ind)
+        assert isinstance(alpha, Number)
 
         if ind is None:
             self._array[:self._len] *= alpha
