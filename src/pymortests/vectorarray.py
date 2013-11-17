@@ -706,18 +706,15 @@ def test_lincomb_wrong_coefficients(vector_array):
         coeffs = np.random.random(v.len_ind(ind) + 1)
         with pytest.raises(Exception):
             c.lincomb(coeffs, ind=ind)
-
         c = v.copy()
         coeffs = np.random.random(v.len_ind(ind)).reshape((1, 1, -1))
         with pytest.raises(Exception):
             c.lincomb(coeffs, ind=ind)
-
         if v.len_ind(ind) > 0:
             c = v.copy()
             coeffs = np.random.random(v.len_ind(ind) - 1)
             with pytest.raises(Exception):
                 c.lincomb(coeffs, ind=ind)
-
             c = v.copy()
             coeffs = np.array([])
             with pytest.raises(Exception):
@@ -788,6 +785,58 @@ def test_sup_norm(vector_array):
         assert np.allclose(c.sup_norm(ind), norm * 16)
         c.scal(0.)
         assert np.allclose(c.sup_norm(ind), 0)
+
+
+def test_components(vector_array):
+    v = vector_array
+    np.random.seed(len(v) + 24 + v.dim)
+    if isinstance(v, Communicable):
+        dv = v.data
+    for ind in valid_inds(v):
+        c = v.copy()
+        comp = c.components(np.array([], dtype=np.int), ind=ind)
+        assert isinstance(comp, np.ndarray)
+        assert comp.shape == (v.len_ind(ind), 0)
+
+        c = v.copy()
+        comp = c.components([], ind=ind)
+        assert isinstance(comp, np.ndarray)
+        assert comp.shape == (v.len_ind(ind), 0)
+
+        if v.dim > 0:
+            for count in (1, 5, 10):
+                c_ind = np.random.randint(0, v.dim, count)
+                c = v.copy()
+                comp = c.components(c_ind, ind=ind)
+                assert comp.shape == (v.len_ind(ind), count)
+                c = v.copy()
+                comp2 = c.components(list(c_ind), ind=ind)
+                assert np.all(comp == comp2)
+                c = v.copy()
+                c.scal(3.)
+                comp2 = c.components(c_ind, ind=ind)
+                assert np.allclose(comp * 3, comp2)
+                c = v.copy()
+                comp2 = c.components(np.hstack((c_ind, c_ind)), ind=ind)
+                assert np.all(comp2 == np.hstack((comp, comp)))
+                if isinstance(v, Communicable):
+                    assert np.all(comp == indexed(dv, ind)[:, c_ind])
+
+
+def test_components_wrong_component_indices(vector_array):
+    v = vector_array
+    np.random.seed(len(v) + 24 + v.dim)
+    if isinstance(v, Communicable):
+        dv = v.data
+    for ind in valid_inds(v):
+        with pytest.raises(Exception):
+            comp = v.components(None, ind=ind)
+        with pytest.raises(Exception):
+            comp = v.components(1, ind=ind)
+        with pytest.raises(Exception):
+            comp = v.components(np.array([-1]), ind=ind)
+        with pytest.raises(Exception):
+            comp = v.components(np.array([v.dim]), ind=ind)
 
 
 ########################################################################################################################
