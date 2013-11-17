@@ -331,6 +331,7 @@ class ListVectorArray(VectorArrayInterface):
 
     def scal(self, alpha, ind=None):
         assert self.check_ind_unique(ind)
+        assert isinstance(alpha, Number)
 
         if ind is None:
             for v in self._list:
