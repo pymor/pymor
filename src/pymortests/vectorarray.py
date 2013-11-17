@@ -98,6 +98,8 @@ def indexed(v, ind):
         return v
     elif isinstance(ind, Number):
         return v[[ind]]
+    elif len(ind) == 0:
+        return np.empty((0, v.shape[1]), dtype=v.dtype)
     else:
         return v[ind]
 
