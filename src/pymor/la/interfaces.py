@@ -370,8 +370,12 @@ class VectorArrayInterface(BasicInterface):
         A numpy array `result` such that `result[i]` contains the norm
         of `self[ind][i]`.
         '''
-        _, max_val = self.amax(ind)
-        return max_val
+        if self.dim == 0:
+            assert self.check_ind(ind)
+            return np.zeros(self.len_ind(ind))
+        else:
+            _, max_val = self.amax(ind)
+            return max_val
 
     @abstractmethod
     def components(self, component_indices, ind=None):
