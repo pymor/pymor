@@ -60,8 +60,11 @@ class VectorInterface(BasicInterface):
         pass
 
     def sup_norm(self):
-        _, max_val = self.amax()
-        return max_val
+        if self.dim == 0:
+            return 0.
+        else:
+            _, max_val = self.amax()
+            return max_val
 
     @abstractmethod
     def components(self, component_indices):
