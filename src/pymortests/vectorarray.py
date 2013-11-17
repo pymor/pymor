@@ -986,7 +986,7 @@ def test_append_wrong_dim(vector_array_pair_with_different_dim):
 
 def test_replace_wrong_dim(vector_array_pair_with_different_dim):
     v1, v2 = vector_array_pair_with_different_dim
-    for ind1, ind2 in chain(valid_inds_of_same_length(v1, v2), invalid_ind_pairs(v1, v2)):
+    for ind1, ind2 in valid_inds_of_same_length(v1, v2):
         c1, c2 = v1.copy(), v2.copy()
         with pytest.raises(Exception):
             c1.replace(c2, ind=ind1, o_ind=ind2, remove_from_other=False)
@@ -997,7 +997,7 @@ def test_replace_wrong_dim(vector_array_pair_with_different_dim):
 
 def test_almost_equal_wrong_dim(vector_array_pair_with_different_dim):
     v1, v2 = vector_array_pair_with_different_dim
-    for ind1, ind2 in chain(valid_inds_of_same_length(v1, v2), invalid_ind_pairs(v1, v2)):
+    for ind1, ind2 in valid_inds_of_same_length(v1, v2):
         c1, c2 = v1.copy(), v2.copy()
         with pytest.raises(Exception):
             c1.almost_equal(c2, ind=ind1, o_ind=ind2)
@@ -1005,7 +1005,7 @@ def test_almost_equal_wrong_dim(vector_array_pair_with_different_dim):
 
 def test_axpy_wrong_dim(vector_array_pair_with_different_dim):
     v1, v2 = vector_array_pair_with_different_dim
-    for ind1, ind2 in chain(valid_inds_of_same_length(v1, v2), invalid_ind_pairs(v1, v2)):
+    for ind1, ind2 in valid_inds_of_same_length(v1, v2):
         c1, c2 = v1.copy(), v2.copy()
         with pytest.raises(Exception):
             c1.axpy(0., c2, ind=ind1, x_ind=ind2)
@@ -1022,7 +1022,7 @@ def test_axpy_wrong_dim(vector_array_pair_with_different_dim):
 
 def test_dot_wrong_dim(vector_array_pair_with_different_dim):
     v1, v2 = vector_array_pair_with_different_dim
-    for ind1, ind2 in chain(valid_inds_of_same_length(v1, v2), invalid_ind_pairs(v1, v2)):
+    for ind1, ind2 in valid_inds_of_same_length(v1, v2):
         c1, c2 = v1.copy(), v2.copy()
         with pytest.raises(Exception):
             c1.dot(c2, pairwise=True, ind=ind1, o_ind=ind2)
