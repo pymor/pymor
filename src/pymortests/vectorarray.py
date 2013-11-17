@@ -504,6 +504,17 @@ def test_scal(vector_array):
                 assert np.allclose(c.data, y)
 
 
+def test_mul_wrong_factor(vector_array):
+    v = vector_array
+    for ind in valid_inds(v):
+        with pytest.raises(Exception):
+            v.scal(v, ind=ind)
+        with pytest.raises(Exception):
+            v.scal(np.ones(v.dim), ind=ind)
+        with pytest.raises(Exception):
+            v.scal([], ind=ind)
+
+
 def test_axpy(vector_array_pair_with_same_dim):
     v1, v2 = vector_array_pair_with_same_dim
     if isinstance(v1, Communicable):
@@ -839,6 +850,134 @@ def test_components_wrong_component_indices(vector_array):
             comp = v.components(np.array([v.dim]), ind=ind)
 
 
+def test_amax(vector_array):
+    v = vector_array
+    if v.dim == 0:
+        return
+    for ind in valid_inds(v):
+        max_inds, max_vals = v.amax(ind)
+        assert np.allclose(np.abs(max_vals), v.sup_norm(ind))
+        if ind is None:
+            ind = xrange(len(v))
+        elif isinstance(ind, Number):
+            ind = [ind]
+        for i, max_ind, max_val in zip(ind, max_inds, max_vals):
+            assert np.allclose(max_val, v.components([max_ind], ind=[i]))
+
+
+def test_amax_zero_dim(VectorArray):
+    for count in (0, 10):
+        v = VectorArray.zeros(0, count=count)
+        for ind in valid_inds(v):
+            with pytest.raises(Exception):
+                v.amax(ind)
+
+
+def test_gramian(vector_array):
+    v = vector_array
+    for ind in valid_inds(v):
+        assert np.allclose(v.gramian(ind), v.dot(v, pairwise=False, ind=ind, o_ind=ind))
+
+
+def test_add(vector_array_pair_with_same_dim):
+    v1, v2 = vector_array_pair_with_same_dim
+    if len(v2) < len(v1):
+        v2.append(v2, o_ind=np.zeros(len(v1) - len(v2), dtype=np.int))
+    elif len(v2) > len(v1):
+        v2.remove(range(len(v2)-len(v1)))
+    c1 = v1.copy()
+    cc1 = v1.copy()
+    c1.axpy(1, v2)
+    assert np.all((v1 + v2).almost_equal(c1))
+    assert np.all(v1.almost_equal(cc1))
+
+
+def test_iadd(vector_array_pair_with_same_dim):
+    v1, v2 = vector_array_pair_with_same_dim
+    if len(v2) < len(v1):
+        v2.append(v2, o_ind=np.zeros(len(v1) - len(v2), dtype=np.int))
+    elif len(v2) > len(v1):
+        v2.remove(range(len(v2)-len(v1)))
+    c1 = v1.copy()
+    c1.axpy(1, v2)
+    v1 += v2
+    assert np.all(v1.almost_equal(c1))
+
+
+def test_sub(vector_array_pair_with_same_dim):
+    v1, v2 = vector_array_pair_with_same_dim
+    if len(v2) < len(v1):
+        v2.append(v2, o_ind=np.zeros(len(v1) - len(v2), dtype=np.int))
+    elif len(v2) > len(v1):
+        v2.remove(range(len(v2)-len(v1)))
+    c1 = v1.copy()
+    cc1 = v1.copy()
+    c1.axpy(-1, v2)
+    assert np.all((v1 - v2).almost_equal(c1))
+    assert np.all(v1.almost_equal(cc1))
+
+
+def test_isub(vector_array_pair_with_same_dim):
+    v1, v2 = vector_array_pair_with_same_dim
+    if len(v2) < len(v1):
+        v2.append(v2, o_ind=np.zeros(len(v1) - len(v2), dtype=np.int))
+    elif len(v2) > len(v1):
+        v2.remove(range(len(v2)-len(v1)))
+    c1 = v1.copy()
+    c1.axpy(-1, v2)
+    v1 -= v2
+    assert np.all(v1.almost_equal(c1))
+
+
+def test_neg(vector_array):
+    v = vector_array
+    c = v.copy()
+    cc = v.copy()
+    c.scal(-1)
+    assert np.all(c.almost_equal(-v))
+    assert np.all(v.almost_equal(cc))
+
+
+def test_mul(vector_array):
+    v = vector_array
+    c = v.copy()
+    for a in (-1, -3, 0, 1, 23):
+        cc = v.copy()
+        cc.scal(a)
+        assert np.all((v * a).almost_equal(cc))
+        assert np.all(v.almost_equal(c))
+
+
+def test_mul_wrong_factor(vector_array):
+    v = vector_array
+    with pytest.raises(Exception):
+        v * v
+    with pytest.raises(Exception):
+        v * np.ones(v.dim)
+    with pytest.raises(Exception):
+        v * []
+
+
+def test_imul(vector_array):
+    v = vector_array
+    for a in (-1, -3, 0, 1, 23):
+        c = v.copy()
+        cc = v.copy()
+        c.scal(a)
+        cc *= a
+        assert np.all(c.almost_equal(cc))
+
+
+def test_imul_wrong_factor(vector_array):
+    v = vector_array
+    with pytest.raises(Exception):
+        v *= v
+    with pytest.raises(Exception):
+        v *= np.ones(v.dim)
+    with pytest.raises(Exception):
+        v *= []
+
+
 ########################################################################################################################
 
 
@@ -899,6 +1038,27 @@ def test_dot_wrong_dim(vector_array_pair_with_different_dim):
         c1, c2 = v1.copy(), v2.copy()
         with pytest.raises(Exception):
             c1.dot(c2, pairwise=False, ind=ind1, o_ind=ind2)
+
+
+def test_add_wrong_dim(vector_array_pair_with_different_dim):
+    v1, v2 = vector_array_pair_with_different_dim
+    with pytest.raises(Exception):
+        v1 + v2
+
+
+def test_iadd_wrong_dim(vector_array_pair_with_different_dim):
+    with pytest.raises(Exception):
+        v1 += v2
+
+
+def test_sub_wrong_dim(vector_array_pair_with_different_dim):
+    with pytest.raises(Exception):
+        v1 - v2
+
+
+def test_isub_wrong_dim(vector_array_pair_with_different_dim):
+    with pytest.raises(Exception):
+        v1 -= v2
 
 
 ########################################################################################################################
@@ -1062,3 +1222,10 @@ def test_amax_wrong_ind(vector_array):
         c = v.copy()
         with pytest.raises(Exception):
             c.amax(ind)
+
+
+def test_gramian_wrong_ind(vector_array):
+    v = vector_array
+    for ind in invalid_inds(v):
+        with pytest.raises(Exception):
+            v.gramian(ind)
