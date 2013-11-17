@@ -1049,16 +1049,19 @@ def test_add_wrong_dim(vector_array_pair_with_different_dim):
 
 
 def test_iadd_wrong_dim(vector_array_pair_with_different_dim):
+    v1, v2 = vector_array_pair_with_different_dim
     with pytest.raises(Exception):
         v1 += v2
 
 
 def test_sub_wrong_dim(vector_array_pair_with_different_dim):
+    v1, v2 = vector_array_pair_with_different_dim
     with pytest.raises(Exception):
         v1 - v2
 
 
 def test_isub_wrong_dim(vector_array_pair_with_different_dim):
+    v1, v2 = vector_array_pair_with_different_dim
     with pytest.raises(Exception):
         v1 -= v2
 
