@@ -161,8 +161,6 @@ class NumpyVector(VectorInterface):
         return self._array[component_indices]
 
     def amax(self):
-        if len(self._array) == 0:
-            return (-1, 0.)
         A = np.abs(self._array)
         max_ind = np.argmax(A)
         max_val = A[max_ind]
@@ -512,6 +510,7 @@ class ListVectorArray(VectorArrayInterface):
 
     def amax(self, ind=None):
         assert self.check_ind(ind)
+        assert self.dim > 0
 
         if ind is None:
             ind = xrange(len(self._list))
