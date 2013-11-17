@@ -158,8 +158,6 @@ class NumpyVector(VectorInterface):
         return np.sum(np.power(self._array, 2))**(1/2)
 
     def components(self, component_indices):
-        assert isinstance(component_indices, list) \
-            or isinstance(component_indices, np.ndarray) and component_indices.ndim == 1
         return self._array[component_indices]
 
     def amax(self):
@@ -501,11 +499,20 @@ class ListVectorArray(VectorArrayInterface):
 
     def components(self, component_indices, ind=None):
         assert self.check_ind(ind)
+        assert isinstance(component_indices, list) and (len(component_indices) == 0 or min(component_indices) >= 0) \
+            or (isinstance(component_indices, np.ndarray) and component_indices.ndim == 1
+                and (len(component_indices) == 0 or np.min(component_indices) >= 0))
 
         if ind is None:
             ind = xrange(len(self._list))
         elif isinstance(ind, Number):
             ind = [ind]
+
+        if len(ind) == 0:
+            assert len(component_indices) == 0 \
+                or isinstance(component_indices, list) and max(component_indices) < self.dim \
+                or isinstance(component_indices, np.ndarray) and np.max(component_indices) < self.dim
+            return np.empty((0, len(component_indices)))
 
         R = np.empty((len(ind), len(component_indices)))
         for k, i in enumerate(ind):
