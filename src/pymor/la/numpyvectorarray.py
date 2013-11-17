@@ -246,15 +246,16 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
 
     def components(self, component_indices, ind=None):
         assert self.check_ind(ind)
-        assert isinstance(component_indices, list) \
-            or isinstance(component_indices, np.ndarray) and component_indices.ndim == 1
+        assert isinstance(component_indices, list) and (len(component_indices) == 0 or min(component_indices) >= 0) \
+            or (isinstance(component_indices, np.ndarray) and component_indices.ndim == 1
+                and (len(component_indices) == 0 or np.min(component_indices) >= 0))
 
         if ind is None:
             return self._array[:self._len, component_indices]
         else:
             if not hasattr(ind, '__len__'):
                 ind = [ind]
-            return self._array[ind, component_indices]
+            return self._array[:, component_indices][ind, :]
 
     def amax(self, ind=None):
         assert self.check_ind(ind)
