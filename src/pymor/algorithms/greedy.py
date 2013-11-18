@@ -51,9 +51,8 @@ def greedy(discretization, reductor, samples, initial_data=None, use_estimator=T
     Returns
     -------
     Dict with the following fields:
-        'data'
-            The reduced basis. (More generally the data which needs to be
-            fed into reduced_discretization.reduce().
+        'basis'
+            The reduced basis.
         'reduced_discretization'
             The last reduced discretization which has been computed.
         'reconstructor'
@@ -130,6 +129,6 @@ def greedy(discretization, reductor, samples, initial_data=None, use_estimator=T
 
     tictoc = time.time() - tic
     logger.info('Greedy search took {} seconds'.format(tictoc))
-    return {'data': data, 'reduced_discretization': rd, 'reconstructor': rc, 'max_err': max_err,
+    return {'basis': data, 'reduced_discretization': rd, 'reconstructor': rc, 'max_err': max_err,
             'max_err_mu': max_err_mu, 'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
             'time': tictoc, 'reduction_data': reduction_data}

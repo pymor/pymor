@@ -213,7 +213,7 @@ def burgers_demo(args):
         return l2_err_max, mumax
     error_analysis = np.frompyfunc(error_analysis, 2, 2)
 
-    real_rb_size = len(greedy_data['data'])
+    real_rb_size = len(greedy_data['basis'])
     real_cb_size = len(ei_data['basis'])
     if args['--plot-error-landscape']:
         N_count = min(real_rb_size - 1, args['--plot-error-landscape-N'])

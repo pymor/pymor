@@ -147,7 +147,7 @@ def thermalblock_demo(args):
 
     tic = time.time()
 
-    real_rb_size = len(greedy_data['data'])
+    real_rb_size = len(greedy_data['basis'])
     if args['--plot-error-sequence']:
         N_count = min(real_rb_size - 1, 25)
         Ns = np.linspace(1, real_rb_size, N_count).astype(np.int)

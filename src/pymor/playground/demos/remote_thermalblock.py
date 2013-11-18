@@ -143,7 +143,7 @@ discretization, _ = discretize_elliptic_cg(problem, diameter=m.sqrt(2) / {grid})
         print('H1-error = {}, condition = {}'.format(h1_err, cond))
     toc = time.time()
     t_est = toc - tic
-    real_rb_size = len(greedy_data['data'])
+    real_rb_size = len(greedy_data['basis'])
 
     print('''
     *** RESULTS ***
