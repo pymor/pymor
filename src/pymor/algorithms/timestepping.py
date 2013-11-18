@@ -2,6 +2,24 @@
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+''' This module provides generic time-stepping algorithms for the solution of
+instationary problems.
+
+The algorithms are generic in the sense each algorithms operates exclusively on
+instances of :class:`pymor.operators.OperatorInterface` and
+:class:`pymor.la.VectorArrayInterface`. In particluar, the algorithms
+can also be used to turn an arbitrary stationary discretization provided
+by an external library into an instationary discretization.
+
+Currently, implementations of :func:`explicit_euler` and :func:`implicit_euler`
+time-stepping are provided. The :class:`TimeStepperInterface` defines a
+common interface that has to be fulfilled by the time-steppers that are used
+by :class:`pymor.discretizations.InstationaryDiscretization`. The classes
+:class:`ExplicitEulerTimeStepper` and :class:`ImplicitEulerTimeStepper`
+encapsulate :func:`explicit_euler` and :func:`implicit_euler` to provide
+this interface.
+'''
+
 from __future__ import absolute_import, division, print_function
 
 from pymor.core import ImmutableInterface, abstractmethod
@@ -10,13 +28,62 @@ from pymor.operators import OperatorInterface
 
 
 class TimeStepperInterface(ImmutableInterface):
+    '''Interface for time-stepping algorithms.
+
+    Algorithms implementing this interface solve time-dependent problems
+    of the form ::
+
+        M * d_t u + A(u, t) = F(t).
+
+    Time-steppers used by :class:`pymor.discretizations.InstationaryDiscretization`
+    have to fulfill this interface.
+    '''
 
     @abstractmethod
-    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None):
+    def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
+        '''Apply time-stepper to the equation ::
+
+            M * d_t u + A(u, t) = F(t).
+
+        Parameters
+        ----------
+        initial_time
+            The time at which to begin time-stepping.
+        end_time
+            The time until which to perform time-stepping.
+        initial_data
+            The solution vector at `initial_time`.
+        operator
+            The operator A.
+        rhs
+            The right hand side F (either `VectorArray` of length 1 or `Operator` with
+            `dim_range == 1`). If `None`, zero right hand side is assumed.
+        mass
+            The operator M. If `None`, the identity operator is assumed.
+        mu
+            Parameter provided to `operator` (and `rhs`). The current time is added
+            to `mu` with key `_t`.
+        num_values
+            The number of returned vectors of the solution trajectory. If `None`, each
+            intermediate vector that is calculated is returned.
+        '''
         pass
 
 
 class ImplicitEulerTimeStepper(TimeStepperInterface):
+    '''Implict-Euler time-stepper.
+
+    Solves equations of the form ::
+
+        M * d_t u + A(u, t) = F(t).
+
+    Parameters
+    ----------
+    nt
+        The number of time-steps the time-stepper will perform.
+    invert_options
+        The `invert_options` used to invert `M + dt*A`.
+    '''
 
     def __init__(self, nt, invert_options=None):
         self.nt = nt
@@ -28,6 +95,17 @@ class ImplicitEulerTimeStepper(TimeStepperInterface):
 
 
 class ExplicitEulerTimeStepper(TimeStepperInterface):
+    '''Implict-Euler time-stepper.
+
+    Solves equations of the form ::
+
+        M * d_t u + A(u, t) = F(t).
+
+    Parameters
+    ----------
+    nt
+        The number of time-steps the time-stepper will perform.
+    '''
 
     def __init__(self, nt):
         self.nt = nt
