@@ -22,9 +22,8 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
         The discretization to reduce.
     reductor
         Reductor for reducing the given discretization. This has to be a
-        function of the form `reduce(discretization, data)` where data is
-        the detailed data required by the reductor. If your reductor takes
-        more arguments, use functools.partial.
+        function of the form `reduce(discretization, basis)`.
+        If your reductor takes more arguments, use functools.partial.
     samples
         The set of parameter samples on which to perform the greedy search.
         Currently this set is fixed for the whole process.
