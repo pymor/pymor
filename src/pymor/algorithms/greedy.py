@@ -14,7 +14,15 @@ from pymor.core.exceptions import ExtensionError
 
 def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=True, error_norm=None,
            extension_algorithm=trivial_basis_extension, target_error=None, max_extensions=None):
-    '''Greedy extension algorithm.
+    '''Greedy basis generation algorithm.
+
+    This algorithm generates a reduced basis by iteratively adding the worst
+    worst approximated solution snapshot for a given training set to the
+    reduced basis. The approximation error is computed either by directly
+    comparing the reduced solution to the detailed solution or by using
+    an error estimator (`use_estimator == True`). The reduction and basis
+    extension steps are performed by calling the methods provided by the
+    `reductor` and `extension_algorithm` arguments.
 
     Parameters
     ----------
@@ -22,28 +30,42 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
         The discretization to reduce.
     reductor
         Reductor for reducing the given discretization. This has to be a
-        function of the form `reduce(discretization, basis)`.
-        If your reductor takes more arguments, use functools.partial.
+        function of the form `reductor(discretization, basis, extends=None)`.
+        If your reductor takes more arguments, use, e.g., functools.partial.
+        The method has to return a tuple
+        `(reduced_discretization, reconstructor, reduction_data)`.
+        In case the last basis extension was `hierarchic` (see
+        `extension_algorithm`), the extends argument is set to
+        `(last_reduced_discretization, last_reconstructor, last_reduction_data)`
+        which can be used by the reductor to speed up the reduction
+        process. For an example see
+        :func:`pymor.reductors.linear.reduce_stationary_affine_linear`.
     samples
         The set of parameter samples on which to perform the greedy search.
-        Currently this set is fixed for the whole process.
     initial_basis
-        The initial reduced basis with which the algorithm starts.
+        The initial reduced basis with which the algorithm starts. If `None`,
+        an empty basis is used as initial_basis.
     use_estimator
-        If True, use reduced_discretization.estimate() to estimate the errors
-        on the sample set. Otherwise a detailed simulation is used to calculate
-        the error.
+        If `True`, use `reduced_discretization.estimate()` to estimate the
+        errors on the sample set. Otherwise a detailed simulation is
+        performed to calculate the error.
     error_norm
-        If use_estimator == Flase, use this function to calculate the norm of
-        the error. [Default l2_norm]
+        If `use_estimator == False`, use this function to calculate the
+        norm of the error. If `None`, the Euclidean norm is used.
     extension_algorithm
-        The extension algorithm to use to extend the current reduced basis with
-        the maximum error snapshot.
+        The extension algorithm to be used to extend the current reduced
+        basis with the maximum error snapshot. This has to be a function
+        of the form `extension_algorithm(old_basis, new_vector)`, which
+        returns a tuple `(new_basis, extension_data)`, where
+        `extension_data` is a dict at least containing the key
+        `hierarchic`. `hierarchic` is set to `True` if `new_basis`
+        contains `old_basis` as its first vectors.
     target_error
-        If not None, stop the search if the maximum error on the sample set
-        drops below this value.
+        If not `None`, stop the algorithm if the maximum (estimated) error
+        on the sample set drops below this value.
     max_extensions
-        If not None, stop algorithm after `max_extensions` extension steps.
+        If not `None`, stop the algorithm after `max_extensions` extension
+        steps.
 
     Returns
     -------
@@ -51,7 +73,7 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
         'basis'
             The reduced basis.
         'reduced_discretization'
-            The last reduced discretization which has been computed.
+            The reduced discretization obtained for the computed basis.
         'reconstructor'
             Reconstructor for `reduced_discretization`.
         'max_err'
