@@ -16,7 +16,7 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
            extension_algorithm=trivial_basis_extension, target_error=None, max_extensions=None):
     '''Greedy basis generation algorithm.
 
-    This algorithm generates a reduced basis by iteratively adding the worst
+    This algorithm generates a reduced basis by iteratively adding the
     worst approximated solution snapshot for a given training set to the
     reduced basis. The approximation error is computed either by directly
     comparing the reduced solution to the detailed solution or by using
