@@ -12,7 +12,7 @@ from pymor.tools import Named
 
 
 class EllipticProblem(ImmutableInterface, Named):
-    '''Standard elliptic analytical problem.
+    '''Elliptic analytical problem.
 
     The problem consists in solving ::
 
@@ -25,7 +25,7 @@ class EllipticProblem(ImmutableInterface, Named):
     Parameters
     ----------
     domain
-        A domain description of the domain the problem is posed on.
+        A `DomainDescription` of the domain the problem is posed on.
     rhs
         The function f(x, mu).
     diffusion_functions

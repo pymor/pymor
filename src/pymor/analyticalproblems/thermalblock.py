@@ -48,11 +48,6 @@ class ThermalBlockProblem(EllipticProblem, Unpicklable):
         to lie in the interval [mu_min, mu_max].
     rhs
         The function f(x, mu).
-
-    Attributes
-    ----------
-    parameter_space
-        The `ParameterSpace` defined by `parameter_range`.
     '''
 
     def __init__(self, num_blocks=(3, 3), parameter_range=(0.1, 1), rhs=ConstantFunction(dim_domain=2)):

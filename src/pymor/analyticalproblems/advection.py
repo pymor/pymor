@@ -14,6 +14,44 @@ from pymor.tools import Named
 
 
 class InstationaryAdvectionProblem(ImmutableInterface, Named):
+    '''Instationary advection problem.
+
+    The problem is to solve ::
+
+        ∂_t u(x, t, μ)  +  ∇ ⋅ f(u(x, t, μ), t, μ) = s(x, t, μ)
+                                        u(x, 0, μ) = u_0(x, μ)
+
+    for u with t in [0, T], x in Ω.
+
+    Parameters
+    ----------
+    domain
+        A `DomainDescription` of the domain Ω the problem is posed on.
+    flux_function
+        The function f. The current time is provided by adding the key `'_t'`
+        the the parameter `mu`.
+    flux_function_derivative
+        The derivative of f with respect to u.
+    rhs
+        The function s. The current time is provided by adding the key `'_t'`
+        the the parameter `mu`.
+    dirichlet_data
+        Function providing the Dirichlet boundary values in global coordinates.
+    T
+        The end time T.
+    name
+        Name of the problem.
+
+    Attributes
+    ----------
+    domain
+    rhs
+    flux_function
+    flux_function_derivative
+    initial_data
+    dirichlet_data
+    T
+    '''
 
     def __init__(self, domain=RectDomain(), rhs=ConstantFunction(dim_domain=2),
                  flux_function=ConstantFunction(value=np.array([0, 0]), dim_domain=2),

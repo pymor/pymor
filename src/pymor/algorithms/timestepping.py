@@ -6,15 +6,15 @@
 instationary problems.
 
 The algorithms are generic in the sense each algorithms operates exclusively on
-instances of :class:`pymor.operators.OperatorInterface` and
-:class:`pymor.la.VectorArrayInterface`. In particluar, the algorithms
+instances of :class:`pymor.operators.interfaces.OperatorInterface` and
+:class:`pymor.la.interfaces.VectorArrayInterface`. In particluar, the algorithms
 can also be used to turn an arbitrary stationary discretization provided
 by an external library into an instationary discretization.
 
 Currently, implementations of :func:`explicit_euler` and :func:`implicit_euler`
 time-stepping are provided. The :class:`TimeStepperInterface` defines a
 common interface that has to be fulfilled by the time-steppers that are used
-by :class:`pymor.discretizations.InstationaryDiscretization`. The classes
+by :class:`pymor.discretizations.basic.InstationaryDiscretization`. The classes
 :class:`ExplicitEulerTimeStepper` and :class:`ImplicitEulerTimeStepper`
 encapsulate :func:`explicit_euler` and :func:`implicit_euler` to provide
 this interface.

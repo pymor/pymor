@@ -16,6 +16,27 @@ from pymor.tools import Named
 
 
 class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
+    '''One-dimensional Burgers-type problem.
+
+    The problem is to solve ::
+
+        ∂_t u(x, t, μ)  +  ∂_x (v * u(x, t, μ)^μ) = 0
+                                       u(x, 0, μ) = u_0(x)
+
+    for u with t in [0, 0.3], x in [0, 2].
+
+    Parameters
+    ----------
+    v
+        The velocity v.
+    circle
+        If `True` impose periodic boundary conditions. Otherwise Dirichlet left,
+        outflow right.
+    initial_data_type
+        Type of initial data (`'sin'` or `'bump'`).
+    parameter_range
+        The interval in which μ is allowed to vary.
+    '''
 
     def __init__(self, v = 1., circle=True, initial_data_type='sin', parameter_range=(1., 2.)):
 
@@ -49,7 +70,7 @@ class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
         else:
             def initial_data(x):
                 return (x[..., 0] >= 0.5) * (x[..., 0] <= 1) * 1
-            inject_sid(initial_data, str(BurgersProblem) + '.initial_data_riemann')
+            inject_sid(initial_data, str(BurgersProblem) + '.initial_data_bump')
             dirichlet_data=ConstantFunction(dim_domain=1, value=0)
 
         initial_data = GenericFunction(initial_data, dim_domain=1)
@@ -75,7 +96,29 @@ class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
 
 
 class Burgers2DProblem(InstationaryAdvectionProblem, Unpicklable):
+    '''Two-dimensional Burgers-type problem.
 
+    The problem is to solve ::
+
+        ∂_t u(x, t, μ)  +  ∇ ⋅ (v * u(x, t, μ)^μ) = 0
+                                       u(x, 0, μ) = u_0(x)
+
+    for u with t in [0, 0.3], x in [0, 2] x [0, 1].
+
+    Parameters
+    ----------
+    vx
+        The the x component of the velocity vector v.
+    vy
+        The the y component of the velocity vector v.
+    torus
+        If `True` impose periodic boundary conditions. Otherwise Dirichlet left and bottom,
+        outflow top and right.
+    initial_data_type
+        Type of initial data (`'sin'` or `'bump'`).
+    parameter_range
+        The interval in which μ is allowed to vary.
+    '''
     def __init__(self, vx = 1., vy = 1., torus=True, initial_data_type='sin', parameter_range=(1., 2.)):
 
         assert initial_data_type in ('sin', 'bump')
@@ -114,7 +157,7 @@ class Burgers2DProblem(InstationaryAdvectionProblem, Unpicklable):
         else:
             def initial_data(x):
                 return (x[..., 0] >= 0.5) * (x[..., 0] <= 1) * 1
-            inject_sid(initial_data, str(Burgers2DProblem) + '.initial_data_riemann')
+            inject_sid(initial_data, str(Burgers2DProblem) + '.initial_data_bump')
             dirichlet_data=ConstantFunction(dim_domain=2, value=0)
 
         initial_data = GenericFunction(initial_data, dim_domain=2)
