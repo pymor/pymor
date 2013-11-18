@@ -68,7 +68,7 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
     logger = getLogger('pymor.algorithms.greedy.greedy')
     samples = list(samples)
     logger.info('Started greedy search on {} samples'.format(len(samples)))
-    data = initial_basis
+    basis = initial_basis
 
     tic = time.time()
     extensions = 0
@@ -78,8 +78,8 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
 
     while True:
         logger.info('Reducing ...')
-        rd, rc, reduction_data = reductor(discretization, data) if not hierarchic \
-            else reductor(discretization, data, extends=(rd, rc, reduction_data))
+        rd, rc, reduction_data = reductor(discretization, basis) if not hierarchic \
+            else reductor(discretization, basis, extends=(rd, rc, reduction_data))
 
         logger.info('Estimating errors ...')
         if use_estimator:
@@ -105,7 +105,7 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
         logger.info('Extending with snapshot for mu = {}'.format(max_err_mu))
         U = discretization.solve(max_err_mu)
         try:
-            data, extension_data = extension_algorithm(data, U)
+            basis, extension_data = extension_algorithm(basis, U)
         except ExtensionError:
             logger.info('Extension failed. Stopping now.')
             break
@@ -121,12 +121,12 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
         if max_extensions is not None and extensions >= max_extensions:
             logger.info('Maximal number of {} extensions reached.'.format(max_extensions))
             logger.info('Reducing once more ...')
-            rd, rc, reduction_data = reductor(discretization, data) if not hierarchic \
-                else reductor(discretization, data, extends=(rd, rc, reduction_data))
+            rd, rc, reduction_data = reductor(discretization, basis) if not hierarchic \
+                else reductor(discretization, basis, extends=(rd, rc, reduction_data))
             break
 
     tictoc = time.time() - tic
     logger.info('Greedy search took {} seconds'.format(tictoc))
-    return {'basis': data, 'reduced_discretization': rd, 'reconstructor': rc, 'max_err': max_err,
+    return {'basis': basis, 'reduced_discretization': rd, 'reconstructor': rc, 'max_err': max_err,
             'max_err_mu': max_err_mu, 'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
             'time': tictoc, 'reduction_data': reduction_data}
