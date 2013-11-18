@@ -51,7 +51,11 @@ def trivial_basis_extension(basis, U, copy_basis=True, copy_U=True):
 
     Returns
     -------
-    The new basis.
+    new_basis
+        The extended basis.
+    extension_data
+        Dict containing the following fields:
+            hierarchic: `True` if `new_basis` contains `basis` as its first vectors.
 
     Raises
     ------
@@ -96,7 +100,11 @@ def gram_schmidt_basis_extension(basis, U, product=None, copy_basis=True, copy_U
 
     Returns
     -------
-    The new basis.
+    new_basis
+        The extended basis.
+    extension_data
+        Dict containing the following fields:
+            hierarchic: `True` if `new_basis` contains `basis` as its first vectors.
 
     Raises
     ------
@@ -143,7 +151,11 @@ def pod_basis_extension(basis, U, count=1, copy_basis=True, product=None):
 
     Returns
     -------
-    The new basis.
+    new_basis
+        The extended basis.
+    extension_data
+        Dict containing the following fields:
+            hierarchic: `True` if `new_basis` contains `basis` as its first vectors.
 
     Raises
     ------
