@@ -9,7 +9,9 @@ before_install:
  - "sh -e /etc/init.d/xvfb start"
  - "git fetch --depth=1000 --tags origin master"
 # command to install dependencies
-install: python ./install.py --recipe travis --virtualenv-dir $VIRTUAL_ENV --without-python-path --python python$TRAVIS_PYTHON_VERSION --only-deps
+install:
+ - python ./install.py --recipe travis --virtualenv-dir $VIRTUAL_ENV --without-python-path --python python$TRAVIS_PYTHON_VERSION --only-deps
+ - pip install --upgrade numpy
 # # command to run tests
 script: make test
 notifications:
