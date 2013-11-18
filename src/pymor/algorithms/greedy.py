@@ -12,7 +12,7 @@ from pymor.core import getLogger
 from pymor.core.exceptions import ExtensionError
 
 
-def greedy(discretization, reductor, samples, initial_data=None, use_estimator=True, error_norm=None,
+def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=True, error_norm=None,
            extension_algorithm=trivial_basis_extension, target_error=None, max_extensions=None):
     '''Greedy extension algorithm.
 
@@ -28,10 +28,8 @@ def greedy(discretization, reductor, samples, initial_data=None, use_estimator=T
     samples
         The set of parameter samples on which to perform the greedy search.
         Currently this set is fixed for the whole process.
-    initial_data
-        This is fed into reductor.reduce() for the initial projection.
-        Typically this will be the reduced basis with which the algorithm
-        starts.
+    initial_basis
+        The initial reduced basis with which the algorithm starts.
     use_estimator
         If True, use reduced_discretization.estimate() to estimate the errors
         on the sample set. Otherwise a detailed simulation is used to calculate
@@ -70,7 +68,7 @@ def greedy(discretization, reductor, samples, initial_data=None, use_estimator=T
     logger = getLogger('pymor.algorithms.greedy.greedy')
     samples = list(samples)
     logger.info('Started greedy search on {} samples'.format(len(samples)))
-    data = initial_data
+    data = initial_basis
 
     tic = time.time()
     extensions = 0
