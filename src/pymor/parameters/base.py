@@ -24,7 +24,7 @@ class ParameterType(dict):
             pass
         elif hasattr(t, 'parameter_type'):
             assert isinstance(t.parameter_type, ParameterType)
-            t = parameter_type.parameter_type
+            t = t.parameter_type
         else:
             t = dict(t)
             for k, v in t.iteritems():
