@@ -372,7 +372,7 @@ class generate_sid(object):
                     r.sid = (type(r), args[0].sid, self.__name__,  kwarg_sids)
                     ImmutableMeta.sids_created += 1
                 except (ValueError, AttributeError) as e:
-                    instance.sid_failure = str(e)
+                    r.sid_failure = str(e)
                 r.lock()
 
             return r
