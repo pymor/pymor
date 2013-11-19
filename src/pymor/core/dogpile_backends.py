@@ -5,7 +5,6 @@ import sys
 import os
 from os.path import join
 from collections import deque
-import uuid
 from dogpile import cache as dc
 from dogpile.cache.backends.file import DBMBackend
 
@@ -36,6 +35,7 @@ SMALL_DISK_CONFIG = {"backend": 'LimitedFile',
                      'arguments.max_keys': 20}
 
 NO_VALUE = dc.api.NO_VALUE
+
 
 class DummyBackend(BasicInterface, dc.api.CacheBackend):
 

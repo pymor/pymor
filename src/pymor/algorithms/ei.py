@@ -22,13 +22,10 @@ a single function call.
 
 from __future__ import absolute_import, division, print_function
 
-from numbers import Number
-import math as m
-
 import numpy as np
 from scipy.linalg import solve_triangular, cho_factor, cho_solve
 
-from pymor.core import getLogger, BasicInterface
+from pymor.core import getLogger
 from pymor.core.cache import CacheableInterface, cached
 from pymor.la import VectorArrayInterface
 from pymor.operators.ei import EmpiricalInterpolatedOperator
@@ -78,7 +75,8 @@ def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation
     '''
 
     assert projection in ('orthogonal', 'ei')
-    assert isinstance(evaluations, VectorArrayInterface) or all(isinstance(ev, VectorArrayInterface) for ev in evaluations)
+    assert isinstance(evaluations, VectorArrayInterface)\
+        or all(isinstance(ev, VectorArrayInterface) for ev in evaluations)
     if isinstance(evaluations, VectorArrayInterface):
         evaluations = (evaluations,)
 
@@ -86,9 +84,8 @@ def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation
     logger.info('Generating Interpolation Data ...')
 
     interpolation_dofs = np.zeros((0,), dtype=np.int32)
-    interpolation_matrix = np.zeros((0,0))
+    interpolation_matrix = np.zeros((0, 0))
     collateral_basis = type(next(iter(evaluations))).empty(dim=next(iter(evaluations)).dim)
-    gramian_inverse = None
     max_errs = []
 
     def interpolate(U, ind=None):
@@ -113,12 +110,14 @@ def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation
             if len(interpolation_dofs) > 0:
                 if projection == 'ei':
                     AU_interpolated = interpolate(AU)
-                    ERR =  AU - AU_interpolated
+                    ERR = AU - AU_interpolated
                 else:
                     if product is None:
-                        coefficients = cho_solve(gramian_cholesky, collateral_basis.dot(AU, pairwise=False)).T
+                        coefficients = cho_solve(gramian_cholesky,
+                                                 collateral_basis.dot(AU, pairwise=False)).T
                     else:
-                        coefficients = cho_solve(gramian_cholesky, product.apply2(collateral_basis, AU, pairwise=False)).T
+                        coefficients = cho_solve(gramian_cholesky,
+                                                 product.apply2(collateral_basis, AU, pairwise=False)).T
                     AU_projected = collateral_basis.lincomb(coefficients)
                     ERR = AU - AU_projected
             else:
@@ -267,7 +266,6 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
             errors: sequence of maximum approximation errors during greedy search.
     '''
 
-
     sample = tuple(parameter_sample)
     operators = [discretization.operators[operator_name] for operator_name in operator_names]
 
@@ -275,7 +273,7 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
     dofs, basis, data = ei_greedy(evaluations, error_norm, target_error, max_interpolation_dofs,
                                   projection=projection, product=product)
 
-    ei_operators = {name:EmpiricalInterpolatedOperator(operator, dofs, basis)
+    ei_operators = {name: EmpiricalInterpolatedOperator(operator, dofs, basis)
                     for name, operator in zip(operator_names, operators)}
     operators_dict = discretization.operators.copy()
     operators_dict.update(ei_operators)

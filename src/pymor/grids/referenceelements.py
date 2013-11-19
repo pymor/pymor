@@ -128,6 +128,7 @@ class Square(ReferenceElementInterface):
 
     def __init__(self):
         super(Square, self).__init__()
+
         def tensor_points(P):
             PP0, PP1 = np.array(np.meshgrid(P, P))
             return np.array((PP0.ravel(), PP1.ravel())).T

@@ -12,7 +12,6 @@ from scipy.sparse import coo_matrix, csr_matrix, diags
 from pymor.core import ImmutableInterface, abstractmethod
 from pymor.functions import FunctionInterface
 from pymor.grids.boundaryinfos import SubGridBoundaryInfo
-from pymor.grids.referenceelements import triangle, line
 from pymor.grids.subgrid import SubGrid
 from pymor.la import NumpyVectorArray
 from pymor.operators import OperatorBase, NumpyMatrixBasedOperator, NumpyMatrixOperator
@@ -82,7 +81,8 @@ class EngquistOsherFlux(NumericalConvectiveFlux):
         self.build_parameter_type(inherits=(flux, flux_derivative))
         points, weights = GaussQuadratures.quadrature(npoints=self.gausspoints)
         points = points / intervals
-        points = ((np.arange(self.intervals, dtype=np.float)[:, np.newaxis] * (1 / intervals)) + points[np.newaxis, :]).ravel()
+        points = ((np.arange(self.intervals, dtype=np.float)[:, np.newaxis] * (1 / intervals))
+                  + points[np.newaxis, :]).ravel()
         weights = np.tile(weights, intervals) * (1 / intervals)
         self.points = points
         self.weights = weights
@@ -118,10 +118,10 @@ class NonlinearAdvectionOperator(OperatorBase):
         self.dirichlet_data = dirichlet_data
         self.name = name
         if (isinstance(dirichlet_data, FunctionInterface) and boundary_info.has_dirichlet
-            and not dirichlet_data.parametric):
+                and not dirichlet_data.parametric):
             self._dirichlet_values = self.dirichlet_data(grid.centers(1)[boundary_info.dirichlet_boundaries(1)])
             self._dirichlet_values = self._dirichlet_values.ravel()
-            self._dirichlet_values_flux_shaped = self._dirichlet_values.reshape((-1,1))
+            self._dirichlet_values_flux_shaped = self._dirichlet_values.reshape((-1, 1))
         self.build_parameter_type(inherits=(numerical_flux, dirichlet_data))
         self.dim_source = self.dim_range = grid.size(0)
         self.with_arguments = set(self.with_arguments).union('numerical_flux_{}'.format(arg)
@@ -159,13 +159,12 @@ class NonlinearAdvectionOperator(OperatorBase):
 
         g = self.grid
         bi = self.boundary_info
-        N = g.neighbours(0, 0)
         SUPE = g.superentities(1, 0)
         SUPI = g.superentity_indices(1, 0)
         assert SUPE.ndim == 2
         VOLS = g.volumes(1)
         boundaries = g.boundaries(1)
-        unit_outer_normals = g.unit_outer_normals()[SUPE[:,0], SUPI[:,0]]
+        unit_outer_normals = g.unit_outer_normals()[SUPE[:, 0], SUPI[:, 0]]
 
         if bi.has_dirichlet:
             dirichlet_boundaries = bi.dirichlet_boundaries(1)
@@ -195,15 +194,16 @@ class NonlinearAdvectionOperator(OperatorBase):
             if bi.has_neumann:
                 NUM_FLUX[bi.neumann_boundaries(1)] = 0
 
-            iadd_masked(Ri, NUM_FLUX, SUPE[:,0])
-            isub_masked(Ri, NUM_FLUX, SUPE[:,1])
+            iadd_masked(Ri, NUM_FLUX, SUPE[:, 0])
+            isub_masked(Ri, NUM_FLUX, SUPE[:, 1])
 
         R /= g.volumes(0)
 
         return NumpyVectorArray(R)
 
 
-def nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, flux, lxf_lambda=1.0, dirichlet_data=None, name=None):
+def nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, flux, lxf_lambda=1.0,
+                                                dirichlet_data=None, name=None):
     num_flux = LaxFriedrichsFlux(flux, lxf_lambda)
     return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, name)
 
@@ -252,14 +252,13 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
         outflow_edges = np.setdiff1d(boundary_edges, np.hstack([dirichlet_edges, neumann_edges]))
         normal_velocities = np.einsum('ei,ei->e',
                                       self.velocity_field(g.centers(1), mu=mu),
-                                      g.unit_outer_normals()[SUPE[:,0], SUPI[:,0]])
-
+                                      g.unit_outer_normals()[SUPE[:, 0], SUPI[:, 0]])
 
         nv_inner = normal_velocities[inner_edges]
         l_inner = np.ones_like(nv_inner) * (1. / self.lxf_lambda)
         I0_inner = np.hstack([SUPE[inner_edges, 0], SUPE[inner_edges, 0], SUPE[inner_edges, 1], SUPE[inner_edges, 1]])
         I1_inner = np.hstack([SUPE[inner_edges, 0], SUPE[inner_edges, 1], SUPE[inner_edges, 0], SUPE[inner_edges, 1]])
-        V_inner =  np.hstack([nv_inner, nv_inner, -nv_inner, -nv_inner])
+        V_inner = np.hstack([nv_inner, nv_inner, -nv_inner, -nv_inner])
         V_inner += np.hstack([l_inner, -l_inner, -l_inner, l_inner])
         V_inner *= np.tile(0.5 * edge_volumes[inner_edges], 4)
 

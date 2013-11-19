@@ -4,8 +4,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-from functools import partial
-
 import numpy as np
 
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper
@@ -13,15 +11,12 @@ from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
 from pymor.core import inject_sid
 from pymor.discretizations import InstationaryDiscretization
 from pymor.domaindiscretizers import discretize_domain_default
-from pymor.grids import RectGrid
 from pymor.gui.qt import GlumpyPatchVisualizer, Matplotlib1DVisualizer
 from pymor.la import NumpyVectorArray
-from pymor.la import induced_norm
-from pymor.operators import NumpyMatrixOperator
 from pymor.operators.fv import (nonlinear_advection_lax_friedrichs_operator,
                                 nonlinear_advection_engquist_osher_operator,
                                 nonlinear_advection_simplified_engquist_osher_operator,
-                                L2Product)
+                                L2Product, L2ProductFunctional)
 
 
 def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=None, nt=100, num_flux='lax_friedrichs',

@@ -42,6 +42,7 @@ MAX_HIERACHY_LEVEL = 3
 
 start_time = time.time()
 
+
 def formatter_message(message, use_color):
     if use_color:
         message = message.replace("$RESET", RESET_SEQ).replace("$BOLD", BOLD_SEQ)
@@ -63,17 +64,18 @@ class ColoredFormatter(logging.Formatter):
             try:
                 curses.setupterm()
                 self.use_color = curses.tigetnum("colors") > 1
-            except Exception, _:
+            except Exception:
                 self.use_color = False
+
         def relative_time(secs=None):
             if secs is not None:
                 elapsed = time.time() - start_time
                 if elapsed > 604800:
-                    self.datefmt='%Ww %dd %H:%M:%S'
+                    self.datefmt = '%Ww %dd %H:%M:%S'
                 elif elapsed > 86400:
-                    self.datefmt='%dd %H:%M:%S'
+                    self.datefmt = '%dd %H:%M:%S'
                 elif elapsed > 3600:
-                    self.datefmt='%H:%M:%S'
+                    self.datefmt = '%H:%M:%S'
                 return time.gmtime(elapsed)
             else:
                 return time.gmtime()
@@ -101,7 +103,6 @@ class ColoredFormatter(logging.Formatter):
 
 def getLogger(module, level=None, filename=None, handler_cls=logging.StreamHandler):
     module = 'pymor' if module == '__main__' else module
-    logger_name = module
     logger = logging.getLogger(module)
     streamhandler = handler_cls()
     streamformatter = ColoredFormatter()

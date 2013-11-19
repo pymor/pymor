@@ -3,15 +3,11 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
-import os
 import pprint
 import pkgutil
 import sys
-import importlib
-import pytest
 import numpy.testing as npt
 
-from pymor.core.interfaces import BasicInterface
 from pymor.core import logger
 
 

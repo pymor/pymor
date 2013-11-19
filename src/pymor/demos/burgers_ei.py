@@ -69,7 +69,6 @@ import math as m
 import time
 from functools import partial
 
-import matplotlib.pyplot as plt
 import numpy as np
 from docopt import docopt
 
@@ -140,9 +139,8 @@ def burgers_demo(args):
             legend = legend + ('exponent: {}'.format(mu['exponent']),)
         discretization.visualize(Us, legend=legend, title='Detailed Solutions', block=True)
 
-
     ei_discretization, ei_data = interpolate_operators(discretization, ['operator'],
-                                                       discretization.parameter_space.sample_uniformly(args['EI_SNAPSHOTS']),
+                                                       discretization.parameter_space.sample_uniformly(args['EI_SNAPSHOTS']),  # NOQA
                                                        error_norm=discretization.l2_norm,
                                                        target_error=1e-10,
                                                        max_interpolation_dofs=args['EISIZE'],
@@ -171,7 +169,6 @@ def burgers_demo(args):
         U[ei_discretization.operator.source_dofs] += int(len(dofs)/2)
         discretization.visualize(NumpyVectorArray(U), title='Interpolation DOFs')
 
-
     print('RB generation ...')
 
     def reductor(discretization, rb, extends=None):
@@ -184,7 +181,6 @@ def burgers_demo(args):
                          extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'])
 
     rb_discretization, reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
-
 
     print('\nSearching for maximum error on random snapshots ...')
 
@@ -266,7 +262,7 @@ def burgers_demo(args):
     sys.stdout.flush()
     if args['--plot-error-landscape']:
         import matplotlib.pyplot as plt
-        import mpl_toolkits.mplot3d
+        import mpl_toolkits.mplot3d             # NOQA
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
         # we have to rescale the errors since matplotlib does not support logarithmic scales on 3d plots

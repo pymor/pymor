@@ -9,7 +9,6 @@ import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
 
 from pymor.grids.referenceelements import triangle, line
-from pymor.la import NumpyVectorArray
 from pymor.operators import NumpyMatrixBasedOperator, NumpyMatrixOperator
 
 

@@ -8,7 +8,6 @@ import abc
 import types
 import itertools
 import contracts
-import copy
 import inspect
 import functools
 from types import NoneType
@@ -206,6 +205,7 @@ class BasicInterface(object):
         return c
 
     _added_attributes = None
+
     def add_attributes(self, **kwargs):
         assert not any(hasattr(self, k) for k in kwargs)
         self.__dict__.update(kwargs)
@@ -215,6 +215,7 @@ class BasicInterface(object):
             self._added_attributes.extend(kwargs.keys())
 
     logging_disabled = False
+
     def disable_logging(self, doit=True):
         locked = self._locked
         self.unlock()
@@ -254,6 +255,7 @@ class BasicInterface(object):
         return name.endswith('Interface')
 
     _uid = None
+
     @property
     def uid(self):
         if self._uid is None:
@@ -308,11 +310,11 @@ def _calculate_sid(obj, name):
             return obj
         elif t_obj is np.ndarray:
             if obj.size < 64:
-                return ('array', obj.shape,obj.dtype.str, obj.tostring())
+                return ('array', obj.shape, obj.dtype.str, obj.tostring())
             else:
                 raise ValueError('sid calculation faild at large numpy array {}'.format(name))
         else:
-            raise ValueError('sid calculation failed at {}={}'.format(name,type(obj)))
+            raise ValueError('sid calculation failed at {}={}'.format(name, type(obj)))
 
 
 def inject_sid(obj, context, *args):

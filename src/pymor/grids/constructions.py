@@ -19,8 +19,9 @@ def flatten_grid(grid):
     superentity_indices = grid.superentity_indices(dim, 0)
     A, B = grid.embeddings(0)
     ref_el_coordinates  = grid.reference_element.subentity_embedding(dim)[1]
-    local_coordinates =  np.einsum('eij,vj->evi', A, ref_el_coordinates) + B[:, np.newaxis, :]
-    critical_verticies = np.unique(subentities[np.logical_not(np.all(np.isclose(global_coordinates[subentities], local_coordinates), axis=2))])
+    local_coordinates = np.einsum('eij,vj->evi', A, ref_el_coordinates) + B[:, np.newaxis, :]
+    critical_verticies = np.unique(subentities[np.logical_not(np.all(np.isclose(global_coordinates[subentities],
+                                                                                local_coordinates), axis=2))])
     del A
     del B
 
@@ -63,7 +64,7 @@ def flatten_grid(grid):
             new_points[supe == -1] = subentities[-1, -1]
         subentities[supe, supi] = new_points
         super_entities, superentity_indices = inverse_relation(subentities, size_rhs=num_points, with_indices=True)
-        coordinates =  local_coordinates[super_entities[:,0], superentity_indices[:,0]]
+        coordinates = local_coordinates[super_entities[:, 0], superentity_indices[:, 0]]
     else:
         coordinates = global_coordinates
         entity_map = np.arange(grid.size(dim), dtype=np.int32)

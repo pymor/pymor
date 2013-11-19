@@ -67,7 +67,8 @@ def reduce_generic_rb(discretization, RB, operator_product=None, vector_product=
                                   for k, op in discretization.vector_operators.iteritems()}
 
     if discretization.products is not None:
-        projected_products = {k: p.projected(source_basis=RB, range_basis=RB) for k, p in discretization.products.iteritems()}
+        projected_products = {k: p.projected(source_basis=RB, range_basis=RB)
+                              for k, p in discretization.products.iteritems()}
     else:
         projected_products = None
 
@@ -103,12 +104,10 @@ class SubbasisReconstructor(core.BasicInterface):
 
 def reduce_to_subbasis(discretization, dim, reconstructor=None):
 
-    dim_solution = discretization.dim_solution
-
     projected_operators = {k: op.projected_to_subbasis(dim_source=dim, dim_range=dim) if op is not None else None
                            for k, op in discretization.operators.iteritems()}
     projected_functionals = {k: f.projected_to_subbasis(dim_source=dim, dim_range=None) if f is not None else None
-                            for k, f in discretization.functionals.iteritems()}
+                             for k, f in discretization.functionals.iteritems()}
     projected_vector_operators = {k: op.projected_to_subbasis(dim_source=None, dim_range=dim) if op else None
                                   for k, op in discretization.vector_operators.iteritems()}
 
@@ -124,6 +123,7 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
         class FakeEstimator(object):
             rd = discretization
             rc = SubbasisReconstructor(next(discretization.operators.itervalues()).dim_source, dim)
+
             def estimate(self, U, mu=None, discretization=None):
                 return self.rd.estimate(self.rc.reconstruct(U), mu=mu)
         estimator = FakeEstimator()
@@ -131,7 +131,7 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
         estimator = None
 
     rd = discretization.with_(operators=projected_operators, functionals=projected_functionals,
-                              vector_operators = projected_vector_operators,
+                              vector_operators=projected_vector_operators,
                               products=projected_products, visualizer=None, estimator=estimator,
                               name=discretization.name + '_reduced_to_subbasis')
     rd.disable_logging()

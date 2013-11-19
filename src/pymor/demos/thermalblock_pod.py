@@ -42,7 +42,6 @@ from __future__ import absolute_import, division, print_function
 import sys
 import math as m
 import time
-from functools import partial
 
 import numpy as np
 from docopt import docopt
@@ -86,7 +85,6 @@ def thermalblock_demo(args):
             Us = Us + (discretization.solve(mu),)
             legend = legend + (str(mu['diffusion']),)
         discretization.visualize(Us, legend=legend, title='Detailed Solutions for different parameters', block=True)
-
 
     print('RB generation ...')
 

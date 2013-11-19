@@ -105,7 +105,7 @@ class ParameterType(dict):
     def __str__(self):
         if self.__keys is None:
             self.__keys = sorted(self.keys())
-        return '{' +  ', '.join('{}: {}'.format(k, self[k]) for k in self.__keys) + '}'
+        return '{' + ', '.join('{}: {}'.format(k, self[k]) for k in self.__keys) + '}'
 
 
 class Parameter(dict):
@@ -279,7 +279,6 @@ class Parameter(dict):
                 s += '{}]'.format(array[-1])
             return s
 
-
         np.set_string_function(format_array, repr=False)
         if self.__keys is None:
             self.__keys = sorted(self.keys())
@@ -320,6 +319,7 @@ class Parametric(object):
     parameter_global_names = None
 
     _parameter_space = None
+
     @property
     def parameter_space(self):
         return self._parameter_space
@@ -352,15 +352,18 @@ class Parametric(object):
 
     def local_parameter(self, mu):
         assert mu.__class__ is Parameter
-        return None if self.parameter_local_type is None else {k: mu[v] for k, v in self.parameter_global_names.iteritems()}
+        return (None if self.parameter_local_type is None
+                else {k: mu[v] for k, v in self.parameter_global_names.iteritems()})
 
     def strip_parameter(self, mu):
         if mu.__class__ is not Parameter:
             mu = Parameter.from_parameter_type(mu, self.parameter_type)
-        assert self.parameter_type is None or all(getattr(mu.get(k, None), 'shape', None) == v for k, v in self.parameter_type.iteritems())
+        assert self.parameter_type is None \
+            or all(getattr(mu.get(k, None), 'shape', None) == v for k, v in self.parameter_type.iteritems())
         return None if self.parameter_type is None else Parameter({k: mu[k] for k in self.parameter_type})
 
-    def build_parameter_type(self, local_type=None, global_names=None, local_global=False, inherits=None, provides=None):
+    def build_parameter_type(self, local_type=None, global_names=None, local_global=False,
+                             inherits=None, provides=None):
         '''Builds the parameter type of the object. To be called by __init__.
 
         Parameters
@@ -400,14 +403,15 @@ class Parametric(object):
 
         assert check_local_type(local_type, global_names)
 
-        global_type = local_type.copy() if local_global else ParameterType({global_names[k]: v for k, v in local_type.iteritems()})
+        global_type = (local_type.copy() if local_global
+                       else ParameterType({global_names[k]: v for k, v in local_type.iteritems()}))
         provides = ParameterType(provides)
 
         def check_op(op, global_type, provides):
             for name, shape in op.parameter_type.iteritems():
                 assert name not in global_type or global_type[name] == shape,\
-                    'Component dimensions of global name {} do not match ({} and {})'.format(
-                    name, global_type[name], shape)
+                    ('Component dimensions of global name {} do not match ({} and {})'
+                     .format(name, global_type[name], shape))
                 assert name not in provides or provides[name] == shape,\
                     'Component dimensions of provided name {} do not match'.format(name)
             return True

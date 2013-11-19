@@ -97,6 +97,7 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
     max_err_mus = []
     hierarchic = False
 
+    rd, rc, reduction_data = None, None, None
     while True:
         logger.info('Reducing ...')
         rd, rc, reduction_data = reductor(discretization, basis) if not hierarchic \

@@ -10,7 +10,7 @@ import pytest
 
 from pymor.grids.interfaces import (AffineGridInterface, ReferenceElementInterface)
 # mandatory so all Grid classes are created
-from pymor.grids import *
+from pymor.grids import *         # NOQA
 from pymortests.base import (TestInterface, runmodule,)
 from pymortests.fixtures import grid_instances
 # monkey np.testing.assert_allclose to behave the same as np.allclose
@@ -18,9 +18,12 @@ from pymortests.fixtures import grid_instances
 # while it is 1e-8 for np.allclose
 
 real_assert_allclose = np.testing.assert_allclose
+
+
 def monkey_allclose(a, b, rtol=1.e-5, atol=1.e-8):
     real_assert_allclose(a, b, rtol=rtol, atol=atol)
 np.testing.assert_allclose = monkey_allclose
+
 
 @grid_instances(AffineGridInterface, scope='module')
 def grid(request):

@@ -165,5 +165,6 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
     else:
         grid_type = grid_type or OnedGrid
         if grid_type is not OnedGrid:
-            raise NotImplementedError('I do not know hot to discretize {} with {}'.format(str(type(domain_description)), grid_type))
+            raise NotImplementedError('I do not know hot to discretize {} with {}'
+                                      .format(str(type(domain_description)), grid_type))
         return discretize_LineDomain() if isinstance(domain_description, LineDomain) else discretize_CircleDomain()

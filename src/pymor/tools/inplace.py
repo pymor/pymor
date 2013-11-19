@@ -10,6 +10,7 @@ from itertools import izip
 from pymor.core import getLogger
 logger = getLogger(__name__)
 
+
 def iadd_masked(U, V, U_ind):
     logger.warn('Call to unoptimized function iadd_masked')
     assert len(U_ind) == len(V), 'Lengths of U_ind and V must match'

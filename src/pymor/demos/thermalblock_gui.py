@@ -29,6 +29,7 @@ Options:
 
   -h, --help             Show this message.
 '''
+
 from __future__ import absolute_import, division, print_function
 import sys
 from docopt import docopt
@@ -39,10 +40,6 @@ import numpy as np
 from PySide import QtGui
 import OpenGL
 OpenGL.ERROR_ON_COPY = True
-from OpenGL.GL import *
-import OpenGL.GL as gl
-from OpenGL.arrays import vbo
-from PySide import QtOpenGL
 
 import pymor.core as core
 core.logger.MAX_HIERACHY_LEVEL = 2
@@ -50,7 +47,6 @@ from pymor.algorithms import greedy, gram_schmidt_basis_extension
 from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import discretize_elliptic_cg
 from pymor.gui.glumpy import ColorBarWidget, GlumpyPatchWidget
-from pymor.parameters.base import Parameter
 from pymor.reductors.linear import reduce_stationary_affine_linear
 
 core.getLogger('pymor.algorithms').setLevel('DEBUG')

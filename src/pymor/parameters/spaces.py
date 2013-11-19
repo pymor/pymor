@@ -4,7 +4,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-from collections import OrderedDict
 from itertools import izip, product
 import numpy as np
 
@@ -70,5 +69,5 @@ class CubicParameterSpace(ParameterSpaceInterface):
         while count is None or c < count:
             yield Parameter(((k, np.random.uniform(r[0], r[1], shp))
                              for k, r, shp in izip(self.parameter_type, self.ranges.values(),
-                                                    self.parameter_type.values())))
+                                                   self.parameter_type.values())))
             c += 1

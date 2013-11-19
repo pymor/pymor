@@ -1,4 +1,3 @@
-from functools import partial
 from itertools import product, chain, izip
 from numbers import Number
 
@@ -66,23 +65,23 @@ numpy_list_vector_array_generators = \
     [lambda args=args: numpy_list_vector_array_factory(*args) for args in numpy_vector_array_factory_arguments]
 
 numpy_vector_array_pair_with_same_dim_generators = \
-    [lambda l=l,l2=l2,d=d,s1=s1,s2=s2: (numpy_vector_array_factory(l, d, s1),
-                                        numpy_vector_array_factory(l2, d, s2))
+    [lambda l=l, l2=l2, d=d, s1=s1, s2=s2: (numpy_vector_array_factory(l, d, s1),
+                                            numpy_vector_array_factory(l2, d, s2))
      for l, l2, d, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_same_dim]
 
 numpy_list_vector_array_pair_with_same_dim_generators = \
-    [lambda l=l,l2=l2,d=d,s1=s1,s2=s2: (numpy_list_vector_array_factory(l, d, s1),
-                                        numpy_list_vector_array_factory(l2, d, s2))
+    [lambda l=l, l2=l2, d=d, s1=s1, s2=s2: (numpy_list_vector_array_factory(l, d, s1),
+                                            numpy_list_vector_array_factory(l2, d, s2))
      for l, l2, d, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_same_dim]
 
 numpy_vector_array_pair_with_different_dim_generators = \
-    [lambda l=l,l2=l2,d1=d1,d2=d2,s1=s1,s2=s2: (numpy_vector_array_factory(l, d1, s1),
-                                                numpy_vector_array_factory(l2, d2, s2))
+    [lambda l=l, l2=l2, d1=d1, d2=d2, s1=s1, s2=s2: (numpy_vector_array_factory(l, d1, s1),
+                                                     numpy_vector_array_factory(l2, d2, s2))
      for l, l2, d1, d2, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_different_dim]
 
 numpy_list_vector_array_pair_with_different_dim_generators = \
-    [lambda l=l,l2=l2,d1=d1,d2=d2,s1=s1,s2=s2: (numpy_list_vector_array_factory(l, d1, s1),
-                                                numpy_list_vector_array_factory(l2, d2, s2))
+    [lambda l=l, l2=l2, d1=d1, d2=d2, s1=s1, s2=s2: (numpy_list_vector_array_factory(l, d1, s1),
+                                                     numpy_list_vector_array_factory(l2, d2, s2))
      for l, l2, d1, d2, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_different_dim]
 
 
@@ -92,6 +91,7 @@ def ind_complement(v, ind):
     if isinstance(ind, Number):
         ind = [ind]
     return sorted(set(xrange(len(v))) - set(ind))
+
 
 def indexed(v, ind):
     if ind is None:
@@ -113,7 +113,7 @@ def invalid_inds(v, length=None):
         yield [0, len(v)]
         length = 42
     if length > 0:
-        yield [-1] + [0,] * (length - 1)
+        yield [-1] + [0, ] * (length - 1)
         yield range(length - 1) + [len(v)]
 
 
@@ -143,7 +143,7 @@ def valid_inds_of_same_length(v1, v2):
     yield [], []
     if len(v1) > 0 and len(v2) > 0:
         yield 0, 0
-        yield len(v1) - 1 , len(v2) - 1
+        yield len(v1) - 1, len(v2) - 1
         yield [0], 0
         yield (range(int(min(len(v1), len(v2))/2)),) * 2
         np.random.seed(len(v1) * len(v2))
@@ -188,35 +188,35 @@ def invalid_ind_pairs(v1, v2):
             yield ind1, ind2
 
 
-@pytest.fixture(params = numpy_vector_array_generators + numpy_list_vector_array_generators)
+@pytest.fixture(params=numpy_vector_array_generators + numpy_list_vector_array_generators)
 def vector_array_without_reserve(request):
     return request.param()
 
 
-@pytest.fixture(params = range(3))
+@pytest.fixture(params=range(3))
 def vector_array(vector_array_without_reserve, request):
     return vector_array_from_empty_reserve(vector_array_without_reserve, request.param)
 
 
-@pytest.fixture(params = numpy_vector_array_pair_with_same_dim_generators +
-                         numpy_list_vector_array_pair_with_same_dim_generators)
+@pytest.fixture(params=(numpy_vector_array_pair_with_same_dim_generators +
+                        numpy_list_vector_array_pair_with_same_dim_generators))
 def vector_array_pair_with_same_dim_without_reserve(request):
     return request.param()
 
 
-@pytest.fixture(params = list(product(range(3), range(3))))
+@pytest.fixture(params=list(product(range(3), range(3))))
 def vector_array_pair_with_same_dim(vector_array_pair_with_same_dim_without_reserve, request):
     v1, v2 = vector_array_pair_with_same_dim_without_reserve
     return vector_array_from_empty_reserve(v1, request.param[0]), vector_array_from_empty_reserve(v2, request.param[1])
 
 
-@pytest.fixture(params = numpy_vector_array_pair_with_different_dim_generators +
-                         numpy_list_vector_array_pair_with_different_dim_generators)
+@pytest.fixture(params=(numpy_vector_array_pair_with_different_dim_generators +
+                        numpy_list_vector_array_pair_with_different_dim_generators))
 def vector_array_pair_with_different_dim(request):
     return request.param()
 
 
-@pytest.fixture(params = [NumpyVectorArray, NumpyListVectorArray])
+@pytest.fixture(params=[NumpyVectorArray, NumpyListVectorArray])
 def VectorArray(request):
     return request.param
 
@@ -506,7 +506,7 @@ def test_scal(vector_array):
                 assert np.allclose(c.data, y)
 
 
-def test_mul_wrong_factor(vector_array):
+def test_scal_wrong_factor(vector_array):
     v = vector_array
     for ind in valid_inds(v):
         with pytest.raises(Exception):
@@ -827,17 +827,15 @@ def test_components(vector_array):
 def test_components_wrong_component_indices(vector_array):
     v = vector_array
     np.random.seed(len(v) + 24 + v.dim)
-    if isinstance(v, Communicable):
-        dv = v.data
     for ind in valid_inds(v):
         with pytest.raises(Exception):
-            comp = v.components(None, ind=ind)
+            v.components(None, ind=ind)
         with pytest.raises(Exception):
-            comp = v.components(1, ind=ind)
+            v.components(1, ind=ind)
         with pytest.raises(Exception):
-            comp = v.components(np.array([-1]), ind=ind)
+            v.components(np.array([-1]), ind=ind)
         with pytest.raises(Exception):
-            comp = v.components(np.array([v.dim]), ind=ind)
+            v.components(np.array([v.dim]), ind=ind)
 
 
 def test_amax(vector_array):
@@ -1096,7 +1094,7 @@ def test_almost_equal_wrong_ind(vector_array_pair_with_same_dim):
     v1, v2 = vector_array_pair_with_same_dim
     for ind1, ind2 in invalid_ind_pairs(v1, v2):
         if (ind1 is None and len(v1) == 1 or isinstance(ind1, Number) or hasattr(ind1, '__len__') and len(ind1) == 1 or
-            ind2 is None and len(v2) == 1 or isinstance(ind2, Number) or hasattr(ind2, '__len__') and len(ind2) == 1) :
+            ind2 is None and len(v2) == 1 or isinstance(ind2, Number) or hasattr(ind2, '__len__') and len(ind2) == 1):  # NOQA
             continue
         c1, c2 = v1.copy(), v2.copy()
         with pytest.raises(Exception):

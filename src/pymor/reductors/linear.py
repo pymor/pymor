@@ -4,13 +4,11 @@
 
 from __future__ import absolute_import, division, print_function
 
-import types
 from itertools import izip
 
 import numpy as np
 
 from pymor.core import ImmutableInterface
-from pymor.discretizations import StationaryDiscretization
 from pymor.la import NumpyVectorArray, induced_norm
 from pymor.operators import LincombOperatorInterface, NumpyMatrixOperator
 from pymor.reductors.basic import reduce_generic_rb
@@ -81,11 +79,7 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
         RR.append(riesz_representative(U), remove_from_other=True)
         R.append(U, remove_from_other=True)
 
-
     # compute all components of the residual
-    rl = 1 if not d.rhs.parametric else len(d.rhs.operators)
-    ol = 1 if not d.operator.parametric else len(d.operator.operators)
-
     if RB is None:
         RB = discretization.type_solution.empty(discretization.dim_solution)
 

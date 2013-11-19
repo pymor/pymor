@@ -6,13 +6,12 @@ from __future__ import absolute_import, division, print_function
 
 import tempfile
 import os
-import pytest
+# import pytest
 
 from pymor import core
-from pymor.core.interfaces import BasicInterface
 from pymor.core.logger import getLogger
 from pymortests.base import runmodule
-from pymortests.fixtures import basicinterface_subclass
+from pymortests.fixtures import basicinterface_subclass    # NOQA
 
 
 # @pytest.mark.skipif('__name__ != "__main__"')

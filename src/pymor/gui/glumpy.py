@@ -11,11 +11,9 @@ from PySide.QtOpenGL import QGLWidget
 from PySide.QtGui import QSizePolicy, QPainter, QFontMetrics
 from glumpy.graphics.vertex_buffer import VertexBuffer
 import OpenGL.GL as gl
-import OpenGL.GLUT as glut
 
 from pymor.grids.constructions import flatten_grid
 from pymor.grids.referenceelements import triangle, square
-from pymor.la.numpyvectorarray import NumpyVectorArray
 
 
 def compile_vertex_shader(source):
@@ -64,7 +62,7 @@ void main()
 
 class GlumpyPatchWidget(QGLWidget):
 
-    def __init__(self, parent, grid, vmin=None, vmax=None, bounding_box=[[0,0], [1,1]], codim=2):
+    def __init__(self, parent, grid, vmin=None, vmax=None, bounding_box=[[0, 0], [1, 1]], codim=2):
         assert grid.reference_element in (triangle, square)
         assert codim in (0, 2)
         super(GlumpyPatchWidget, self).__init__(parent)
@@ -176,7 +174,7 @@ class ColorBarWidget(QGLWidget):
         fm = QFontMetrics(self.font())
         self.vmin = float(vmin or 0)
         self.vmax = float(vmax or 1)
-        precision = m.log(max(abs(self.vmin), abs(self.vmax) / abs(self.vmin - self.vmax)) , 10) + 1
+        precision = m.log(max(abs(self.vmin), abs(self.vmax) / abs(self.vmin - self.vmax)), 10) + 1
         precision = int(min(max(precision, 3), 8))
         self.vmin_str = format(('{:.' + str(precision) + '}').format(self.vmin))
         self.vmax_str = format(('{:.' + str(precision) + '}').format(self.vmax))
@@ -220,5 +218,6 @@ class ColorBarWidget(QGLWidget):
         gl.glEnd()
         p = QPainter(self)
         p.drawText((self.width() - self.vmax_width)/2, self.text_ascent, self.vmax_str)
-        p.drawText((self.width() - self.vmin_width)/2, self.height() - self.text_height + self.text_ascent, self.vmin_str)
+        p.drawText((self.width() - self.vmin_width)/2, self.height() - self.text_height + self.text_ascent,
+                   self.vmin_str)
         p.end()

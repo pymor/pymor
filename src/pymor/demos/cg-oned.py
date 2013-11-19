@@ -24,8 +24,8 @@ getLogger('pymor.discretizations').setLevel('INFO')
 
 
 def cg_oned_demo(nrhs, n, plot):
-    rhs0 = GenericFunction(lambda X: np.ones(X.shape[:-1]) * 10, dim_domain=1)
-    rhs1 = GenericFunction(lambda X: (X[..., 0] - 0.5) ** 2 * 1000, dim_domain=1)
+    rhs0 = GenericFunction(lambda X: np.ones(X.shape[:-1]) * 10, dim_domain=1)          # NOQA
+    rhs1 = GenericFunction(lambda X: (X[..., 0] - 0.5) ** 2 * 1000, dim_domain=1)       # NOQA
 
     assert 0 <= nrhs <= 1, ValueError('Invalid rhs number.')
     rhs = eval('rhs{}'.format(nrhs))
@@ -40,8 +40,9 @@ def cg_oned_demo(nrhs, n, plot):
     print('Solving on OnedGrid(({0},{0}))'.format(n))
 
     print('Setup Problem ...')
-    problem = EllipticProblem(domain=LineDomain(), rhs=rhs, diffusion_functions=(d0, d1), diffusion_functionals=(f0, f1),
-                              dirichlet_data=ConstantFunction(value=0, dim_domain=1), name='1DProblem')
+    problem = EllipticProblem(domain=LineDomain(), rhs=rhs, diffusion_functions=(d0, d1),
+                              diffusion_functionals=(f0, f1), dirichlet_data=ConstantFunction(value=0, dim_domain=1),
+                              name='1DProblem')
 
     print('Discretize ...')
     discretization, _ = discretize_elliptic_cg(problem, diameter=1 / n)
@@ -64,4 +65,3 @@ if __name__ == '__main__':
     n = int(sys.argv[2])
     plot = bool(int(sys.argv[3]))
     cg_oned_demo(nrhs, n, plot)
-

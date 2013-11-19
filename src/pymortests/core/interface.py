@@ -11,7 +11,7 @@ from pymor.core.interfaces import (abstractstaticmethod, abstractclassmethod)
 from pymor.core import exceptions
 from pymor.core import decorators
 from pymortests.base import TestInterface, runmodule, SubclassForImplemetorsOf
-from pymortests.core.dummies import *
+from pymortests.core.dummies import *   # NOQA
 from pymor.grids import RectGrid
 from pymor.tools import timing
 import pymor.core
@@ -146,7 +146,7 @@ class WithcopyInterface(TestInterface):
             pass
 
 # this needs to go into every module that wants to use dynamically generated types, ie. testcases, below the test code
-from pymor.core.dynamic import *
+from pymor.core.dynamic import *   # NOQA
 
 if __name__ == "__main__":
     runmodule(filename=__file__)

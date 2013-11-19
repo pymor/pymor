@@ -10,7 +10,7 @@ import math as m
 import numpy as np
 
 from PySide.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QApplication, QLCDNumber,
-                          QSizePolicy, QAction, QStyle, QToolBar, QLabel, QFileDialog)
+                          QAction, QStyle, QToolBar, QLabel, QFileDialog)
 from PySide.QtCore import Qt, QCoreApplication, QTimer
 
 from pymor.core import BasicInterface
@@ -254,7 +254,6 @@ def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, titl
                                      separate_colorbars=separate_colorbars), block)
 
 
-
 def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, block=False):
 
     class MainWindow(PlotMainWindow):
@@ -266,7 +265,8 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, block=Fal
                 legend = (legend,)
             assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
 
-            plot_widget = Matplotlib1DWidget(None, grid, count=len(U), vmin=np.min(U), vmax=np.max(U), legend=legend, codim=codim)
+            plot_widget = Matplotlib1DWidget(None, grid, count=len(U), vmin=np.min(U), vmax=np.max(U),
+                                             legend=legend, codim=codim)
             super(MainWindow, self).__init__(U, plot_widget, title=title, length=len(U[0]))
             self.grid = grid
 
@@ -283,7 +283,8 @@ class GlumpyPatchVisualizer(BasicInterface):
         self.codim = codim
         self.block = block
 
-    def visualize(self, U, discretization, title=None, legend=None, separate_colorbars=False, block=None, filename=None):
+    def visualize(self, U, discretization, title=None, legend=None, separate_colorbars=False,
+                  block=None, filename=None):
         assert isinstance(U, (Communicable, tuple))
         if filename:
             if isinstance(U, Communicable):

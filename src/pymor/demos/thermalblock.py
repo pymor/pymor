@@ -28,7 +28,8 @@ Options:
   --estimator-norm=NORM  Norm (trivial, h1) in which to calculate the residual
                          [default: trivial].
 
-  --extension-alg=ALG    Basis extension algorithm (trivial, gram_schmidt, h1_gram_schmidt) to be used [default: h1_gram_schmidt].
+  --extension-alg=ALG    Basis extension algorithm (trivial, gram_schmidt, h1_gram_schmidt)
+                         to be used [default: h1_gram_schmidt].
 
   --grid=NI              Use grid with 2*NI*NI elements [default: 100].
 
@@ -102,7 +103,6 @@ def thermalblock_demo(args):
             legend = legend + (str(mu['diffusion']),)
         discretization.visualize(Us, legend=legend, title='Detailed Solutions for different parameters', block=True)
 
-
     print('RB generation ...')
 
     error_product = discretization.h1_product if args['--estimator-norm'] == 'h1' else None
@@ -116,7 +116,6 @@ def thermalblock_demo(args):
                          use_estimator=args['--with-estimator'], error_norm=discretization.h1_norm,
                          extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'])
     rb_discretization, reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
-
 
     print('\nSearching for maximum error on random snapshots ...')
 
@@ -156,7 +155,8 @@ def thermalblock_demo(args):
     rd_rcs = [reduce_to_subbasis(rb_discretization, N, reconstructor)[:2] for N in Ns]
     mus = list(discretization.parameter_space.sample_randomly(args['--test']))
 
-    errs, err_mus, ests, est_mus, conds, cond_mus = zip(*(error_analysis(discretization, rd, rc, mus) for rd, rc in rd_rcs))
+    errs, err_mus, ests, est_mus, conds, cond_mus = zip(*(error_analysis(discretization, rd, rc, mus)
+                                                        for rd, rc in rd_rcs))
     h1_err_max = errs[-1]
     mumax = err_mus[-1]
     cond_max = conds[-1]

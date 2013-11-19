@@ -118,7 +118,7 @@ class Defaults(object):
             '''.format(self)
 
     def _calc_sid(self):
-        object.__setattr__(self, 'sid', dumps((_file_sha, tuple((k, v) for k,v in sorted(self.__dict__.iteritems())))))
+        object.__setattr__(self, 'sid', dumps((_file_sha, tuple((k, v) for k, v in sorted(self.__dict__.iteritems())))))
 
     def _state_changed(self):
         self._calc_sid()

@@ -78,7 +78,7 @@ class OperatorBase(OperatorInterface):
         if self.linear:
             if self.parametric:
                 self.logger.warn('Using inefficient generic linear projection operator')
-                # Since the bases are not immutable and we do not own them, 
+                # Since the bases are not immutable and we do not own them,
                 # the ProjectedLinearOperator will have to create copies of them.
                 return ProjectedLinearOperator(self, source_basis, range_basis, product, copy=True, name=name)
             else:
@@ -96,6 +96,7 @@ class MatrixBasedOperatorBase(OperatorBase):
     sparse = None
 
     _assembled = False
+
     @property
     def assembled(self):
         return self._assembled
@@ -385,7 +386,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         R = np.empty((len(U), self.dim_source))
 
         if self.sparse:
-            tol =  options.get('tol', defaults.bicgstab_tol)
+            tol = options.get('tol', defaults.bicgstab_tol)
             maxiter = options.get('maxiter', defaults.bicgstab_maxiter)
             for i, UU in enumerate(U):
                 R[i], info = bicgstab(self._matrix, UU, tol=tol, maxiter=maxiter)
@@ -598,7 +599,8 @@ class ProjectedLinearOperator(NumpyMatrixBasedOperator):
                 M = self.operator.apply(self.source_basis, mu=mu).data.T
                 return NumpyMatrixOperator(M, name='{}_assembled'.format(self.name))
             elif self.product is None:
-                return NumpyMatrixOperator(self.operator.apply2(self.range_basis, self.source_basis, mu=mu, pairwise=False),
+                return NumpyMatrixOperator(self.operator.apply2(self.range_basis, self.source_basis, mu=mu,
+                                                                pairwise=False),
                                            name='{}_assembled'.format(self.name))
             else:
                 V = self.operator.apply(self.source_basis, mu=mu)

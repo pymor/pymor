@@ -5,9 +5,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-import numpy as np
-
-from pymor import defaults
 from pymor.algorithms.timestepping import TimeStepperInterface
 from pymor.core import abstractmethod
 from pymor.core.cache import CacheableInterface, cached
@@ -108,7 +105,7 @@ class StationaryDiscretization(DiscretizationBase):
         assert rhs.dim_range == 1
 
         operators = {'operator': operator}
-        functionals= {'rhs': rhs}
+        functionals = {'rhs': rhs}
         super(StationaryDiscretization, self).__init__(operators=operators, functionals=functionals,
                                                        vector_operators={}, products=products, estimator=estimator,
                                                        visualizer=visualizer, caching=caching, name=name)
@@ -169,7 +166,7 @@ class InstationaryDiscretization(DiscretizationBase):
         assert mass is None or mass.dim_source == mass.dim_range == operator.dim_source
 
         operators = {'operator': operator, 'mass': mass}
-        functionals= {'rhs': rhs}
+        functionals = {'rhs': rhs}
         vector_operators = {'initial_data': initial_data}
         super(InstationaryDiscretization, self).__init__(operators=operators, functionals=functionals,
                                                          vector_operators=vector_operators,

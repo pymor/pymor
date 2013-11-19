@@ -29,7 +29,6 @@ def pod(A, modes=None, product=None, tol=None, symmetrize=None, orthonormalize=N
     check = defaults.pod_check if check is None else check
     check_tol = defaults.pod_check_tol if check_tol is None else check_tol
 
-
     B = A.gramian() if product is None else product.apply2(A, A, pairwise=False)
 
     if symmetrize:     # according to rbmatlab this is necessary due to rounding
@@ -40,7 +39,7 @@ def pod(A, modes=None, product=None, tol=None, symmetrize=None, orthonormalize=N
 
     EVALS, EVECS = eigh(B, overwrite_a=True, turbo=True, eigvals=eigvals)
     EVALS = EVALS[::-1]
-    EVECS = EVECS.T[::-1, :] # is this a view? yes it is!
+    EVECS = EVECS.T[::-1, :]  # is this a view? yes it is!
 
     above_tol = np.where(EVALS >= tol)[0]
     if len(above_tol) == 0:

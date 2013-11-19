@@ -11,6 +11,7 @@ from math import sin, exp
 
 from pymortests.base import runmodule
 
+
 @pytest.mark.xfail
 def test_eval():
     from pymor.playground.expression_function import ExpressionFunction

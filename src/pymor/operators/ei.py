@@ -11,7 +11,6 @@ from scipy.linalg import solve_triangular
 from pymor.la import NumpyVectorArray
 from pymor.la.interfaces import VectorArrayInterface
 from pymor.operators import OperatorInterface, OperatorBase
-from pymor.tools import float_cmp_all
 
 
 class EmpiricalInterpolatedOperator(OperatorBase):

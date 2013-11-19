@@ -10,9 +10,10 @@ import numpy as np
 from pymor.grids import referenceelements
 from pymor.grids.constructions import flatten_grid
 
+
 def _write_meta_file(filename_base, steps, fn_tpl):
     '''Outputs a collection file for a series of vtu files
-    
+
     This DOES NOT WORK for the currently used legacy vtk format below
     '''
 
@@ -26,11 +27,12 @@ def _write_meta_file(filename_base, steps, fn_tpl):
 
     fn_tpl += '.vtu'
     with open('{}.pvd'.format(filename_base), 'wb') as pvd:
-        pvd.write( pvd_header )
+        pvd.write(pvd_header)
         for step in xrange(steps):
             fn = fn_tpl.format(filename_base, step)
             pvd.write('\t\t<DataSet timestep="{}" group="" part="0" file="{}" />\n'.format(step, fn))
-        pvd.write( pvd_footer )
+        pvd.write(pvd_footer)
+
 
 def _vtk_grid(reference_element, subentities, coords):
     if reference_element not in (referenceelements.triangle, referenceelements.square):
@@ -67,19 +69,19 @@ def _write_vtu_series(us_grid, data, filename_base, binary_vtk, last_step, is_ce
 
 def write_vtk(grid, data, filename_base, codim=2, binary_vtk=True, last_step=None):
     '''Output grid-associated data in (legacy) vtk format
-    
+
     Parameters
     ---------
     grid
         a pymor grid with triangular or rectilinear reference element
-        
+
     data
-        VectorArrayInterface instance with either cell (ie one datapoint per codim 0 entity) 
+        VectorArrayInterface instance with either cell (ie one datapoint per codim 0 entity)
         or vertex (ie one datapoint per codim 2 entity) data in each array element
-        
+
     filename_base
         common component for output files in timeseries
-        
+
     last_step
         if set must be <= len(data) to restrict output of timeseries
     '''
@@ -94,7 +96,6 @@ def write_vtk(grid, data, filename_base, codim=2, binary_vtk=True, last_step=Non
     z = np.zeros(len(x))
     coords = (x, y, z)
     us_grid = _vtk_grid(grid.reference_element, subentities, coords)
-    shape = data.data[0, :].shape
     if codim == 0:
         _write_vtu_series(us_grid, data.data, filename_base, binary_vtk, last_step, True)
     else:

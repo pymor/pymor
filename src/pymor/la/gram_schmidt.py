@@ -75,6 +75,7 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=None,
 
     # main loop
     remove = []
+    norm = None
     for i in xrange(offset, len(A)):
         # first calculate norm
         if product is None:

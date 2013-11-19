@@ -8,9 +8,8 @@ from __future__ import absolute_import, division, print_function
 from pymor.analyticalproblems import EllipticProblem
 from pymor.discretizations import StationaryDiscretization
 from pymor.domaindiscretizers import discretize_domain_default
-from pymor.grids import TriaGrid, OnedGrid, EmptyBoundaryInfo
+from pymor.grids import TriaGrid, OnedGrid
 from pymor.gui.qt import GlumpyPatchVisualizer, Matplotlib1DVisualizer
-from pymor.la import induced_norm
 from pymor.operators.cg import DiffusionOperatorP1, L2ProductFunctionalP1, L2ProductP1
 
 
@@ -73,7 +72,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
 
         Li = [Operator(grid, boundary_info, diffusion_function=df, dirichlet_clear_diag=True,
                        name='diffusion_{}'.format(i))
-                   for i, df in enumerate(p.diffusion_functions)]
+              for i, df in enumerate(p.diffusion_functions)]
 
         if p.diffusion_functionals is None:
             L = type(L0).lincomb(operators=Li + [L0], name='diffusion', num_coefficients=len(Li),

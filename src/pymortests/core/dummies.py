@@ -6,7 +6,6 @@ from __future__ import absolute_import, division, print_function
 
 from pymor.core.interfaces import (BasicInterface, contract, abstractmethod)
 from pymor.core.cache import CacheableInterface, cached
-import pymor.grids.boundaryinfos
 from pymor.core import interfaces
 
 

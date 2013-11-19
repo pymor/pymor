@@ -8,8 +8,6 @@ import weakref
 
 import numpy as np
 
-import pymor.core as core
-from pymor.domaindescriptions import BoundaryType
 from pymor.grids.interfaces import AffineGridInterface
 
 
@@ -27,7 +25,7 @@ class SubGrid(AffineGridInterface):
         parent_indices = [np.array(np.unique(entities), dtype=np.int32)]
         assert len(parent_indices[0] == len(entities))
 
-        subentities = [np.arange(len(parent_indices[0]), dtype=np.int32).reshape((-1,1))]
+        subentities = [np.arange(len(parent_indices[0]), dtype=np.int32).reshape((-1, 1))]
 
         for codim in xrange(1, self.dim + 1):
             SUBE = grid.subentities(0, codim)[parent_indices[0]]
@@ -84,8 +82,7 @@ class SubGrid(AffineGridInterface):
         from pymor.grids.tria import TriaGrid
         import random
         import math as m
-        grids = [RectGrid((1,1))] #, TriaGrid((1,1)), RectGrid((8,8)), TriaGrid((24,24))]
-        rstate = random.getstate()
+        grids = [RectGrid((1, 1)), TriaGrid((1, 1)), RectGrid((8, 8)), TriaGrid((24, 24))]
         subgrids = []
         for g in grids:
             size = g.size(0)

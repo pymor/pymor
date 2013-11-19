@@ -5,13 +5,12 @@
 
 from __future__ import absolute_import, division, print_function
 
-from collections import OrderedDict
 from numbers import Number
 
 import numpy as np
 
 from pymor.la import VectorArrayInterface, NumpyVectorArray
-from pymor.operators.basic import OperatorBase, ProjectedOperator, ProjectedLinearOperator
+from pymor.operators.basic import OperatorBase
 from pymor.operators.interfaces import OperatorInterface
 
 

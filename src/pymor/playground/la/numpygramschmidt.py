@@ -7,8 +7,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from pymor import defaults
-from pymor.core import getLogger
-from pymor.core.exceptions import AccuracyError
+from pymor.core.exceptions import AccuracyError, ExtensionError
 from pymor.la import NumpyVectorArray
 from pymor.operators import NumpyMatrixOperator
 from pymor.tools import float_cmp_all
@@ -89,7 +88,6 @@ def numpy_gram_schmidt(A, product=None, tol=None, row_offset=0, find_row_duplica
     The orthonormalized matrix.
     '''
 
-    logger = getLogger('pymor.la.gram_schmidt.numpy_gram_schmidt')
     A = A.copy()
     tol = defaults.gram_schmidt_tol if tol is None else tol
     check = defaults.gram_schmidt_tol if check is None else check

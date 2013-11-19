@@ -10,8 +10,6 @@ from numbers import Number
 import numpy as np
 from scipy.sparse import issparse
 
-from pymor.core.exceptions import CommunicationError
-from pymor.core.interfaces import BasicInterface, abstractmethod, abstractproperty
 from pymor.la.interfaces import VectorArrayInterface, Communicable
 from pymor.tools import float_cmp
 
@@ -42,7 +40,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
             self._array = np.array(instance, dtype=dtype, copy=copy, order=order, subok=subok, ndmin=2)
         if self._array.ndim != 2:
             assert self._array.ndim == 1
-            self._array = np.reshape(self._array, (1,-1))
+            self._array = np.reshape(self._array, (1, -1))
         self._len = len(self._array)
 
     def _data(self):
@@ -150,9 +148,9 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
         assert self.dim == other.dim
 
         A = self._array[:self._len] if ind is None else \
-                self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
+            self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
         B = other._array[:other._len] if o_ind is None else \
-                other._array[o_ind] if hasattr(o_ind, '__len__') else other._array[o_ind:o_ind + 1]
+            other._array[o_ind] if hasattr(o_ind, '__len__') else other._array[o_ind:o_ind + 1]
 
         R = np.all(float_cmp(A, B, rtol=rtol, atol=atol), axis=1).squeeze()
         if R.ndim == 0:
@@ -201,9 +199,9 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
         assert self.dim == other.dim
 
         A = self._array[:self._len] if ind is None else \
-                self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
+            self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
         B = other._array[:other._len] if o_ind is None else \
-                other._array[o_ind] if hasattr(o_ind, '__len__') else other._array[o_ind:o_ind + 1]
+            other._array[o_ind] if hasattr(o_ind, '__len__') else other._array[o_ind:o_ind + 1]
 
         if pairwise:
             assert self.len_ind(ind) == other.len_ind(o_ind)
@@ -233,7 +231,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
         assert self.check_ind(ind)
 
         A = self._array[:self._len] if ind is None else \
-                self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
+            self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
 
         return np.sum(np.abs(A), axis=1)
 
@@ -241,7 +239,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
         assert self.check_ind(ind)
 
         A = self._array[:self._len] if ind is None else \
-                self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
+            self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
 
         return np.sum(np.power(A, 2), axis=1)**(1/2)
 
@@ -266,7 +264,7 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
             return (np.ones(l) * -1, np.zeros(l))
 
         A = self._array[:self._len] if ind is None else \
-                self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
+            self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
 
         A = np.abs(A)
         max_ind = np.argmax(A, axis=1)

@@ -5,13 +5,10 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from mock import Mock
 
 from pymor import la
-from pymor import discretizations
 from pymor.operators.cg import L2ProductP1
-from pymortests.base import TestInterface, runmodule
-from pymor.grids.rect import RectGrid
+from pymortests.base import runmodule
 from pymor.grids.tria import TriaGrid
 from pymor.grids.boundaryinfos import AllDirichletBoundaryInfo
 

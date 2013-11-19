@@ -5,17 +5,14 @@
 from __future__ import absolute_import, division, print_function
 
 from itertools import izip
-import math as m
 
 import numpy as np
-from PySide.QtOpenGL import QGLWidget
-from PySide.QtGui import QSizePolicy, QPainter, QFontMetrics
+from PySide.QtGui import QSizePolicy
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 from pymor.grids.referenceelements import line
-from pymor.la.numpyvectorarray import NumpyVectorArray
 
 
 class Matplotlib1DWidget(FigureCanvas):

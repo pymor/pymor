@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 import inspect
 
+
 def method_arguments(func):
     args = inspect.getargspec(func)[0]
     try:

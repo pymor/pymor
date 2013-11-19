@@ -5,11 +5,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-import numpy as np
-
-from numbers import Number
-
-from pymor.core import ImmutableInterface, abstractmethod, abstractproperty, abstractstaticmethod
+from pymor.core import ImmutableInterface, abstractmethod, abstractstaticmethod
 from pymor.parameters import Parametric
 from pymor.tools import Named
 

@@ -10,7 +10,7 @@ import pytest
 
 from pymor.grids.interfaces import ConformalTopologicalGridInterface
 # mandatory so all Grid classes are created
-from pymor.grids import *
+from pymor.grids import *    # NOQA
 from pymortests.base import (TestInterface, runmodule,)
 from pymortests.fixtures import grid_instances
 
@@ -32,7 +32,8 @@ def grid(request):
 
 # remove this after transitioning to plain assert statements
 check = TestInterface()
-        
+
+
 def test_dim(grid):
     g = grid
     check.assertIsInstance(g.dim, int)
@@ -76,7 +77,7 @@ def test_subentities_dtype(grid):
     for e in xrange(g.dim + 1):
         for s in xrange(e, g.dim + 1):
             check.assertEqual(g.subentities(e, s).dtype, np.dtype('int32'),
-                             'Failed for\n{g}\ne={e}, s={s}'.format(**locals()))
+                              'Failed for\n{g}\ne={e}, s={s}'.format(**locals()))
 
 
 def test_subentities_entry_value_range(grid):
@@ -334,15 +335,15 @@ def test_neighbours_each_neighbour_has_entry(grid):
                     for ei, ni in product(SUE[si], SUN[si]):
                         if ei != -1 and ni != -1:
                             check.assertTrue(ni in N[ei],
-                                            'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'
-                                            .format(**locals()))
+                                             'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'
+                                             .format(**locals()))
             else:
                 for si in xrange(SUE.shape[0]):
                     for ei, ni in product(SUE[si], SUN[si]):
                         if ei != ni and ei != -1 and ni != -1:
                             check.assertTrue(ni in N[ei],
-                                            'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'
-                                            .format(**locals()))
+                                             'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'
+                                             .format(**locals()))
 
 
 def test_neighbours_not_neighbour_of_itself(grid):
@@ -352,7 +353,7 @@ def test_neighbours_not_neighbour_of_itself(grid):
             N = g.neighbours(e, e, s)
             for ei, E in enumerate(N):
                 check.assertTrue(ei not in E,
-                                'Failed for\n{g}\ne={e}, s={s}, ei={ei}, E={E}'.format(**locals()))
+                                 'Failed for\n{g}\ne={e}, s={s}, ei={ei}, E={E}'.format(**locals()))
 
 
 def test_boundary_mask_wrong_arguments(grid):
@@ -368,11 +369,12 @@ def test_boundary_mask_shape(grid):
     for d in xrange(g.dim + 1):
         check.assertEqual(g.boundary_mask(d).shape, (g.size(d),))
 
+
 def test_boundary_mask_dtype(grid):
     g = grid
     for d in xrange(g.dim + 1):
         check.assertEqual(g.boundary_mask(d).dtype, np.dtype('bool'),
-                         'Failed for\n{g}\nd={d}'.format(**locals()))
+                          'Failed for\n{g}\nd={d}'.format(**locals()))
 
 
 def test_boundary_mask_entries_codim1(grid):
@@ -423,7 +425,7 @@ def test_boundaries_dtype(grid):
     g = grid
     for d in xrange(g.dim + 1):
         check.assertEqual(g.boundaries(d).dtype, np.dtype('int32'),
-                         'Failed for\n{g}\nd={d}'.format(**locals()))
+                          'Failed for\n{g}\nd={d}'.format(**locals()))
 
 
 def test_boundaries_entry_value_range(grid):

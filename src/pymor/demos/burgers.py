@@ -44,21 +44,15 @@ import sys
 import math as m
 import time
 from functools import partial
-import cProfile, pstats, io
 
-import numpy as np
 from docopt import docopt
 
 import pymor.core as core
 core.logger.MAX_HIERACHY_LEVEL = 2
-from pymor.algorithms import greedy
-from pymor.algorithms.basisextension import pod_basis_extension
 from pymor.analyticalproblems.burgers import Burgers2DProblem
 from pymor.discretizers.advection import discretize_nonlinear_instationary_advection_fv
 from pymor.domaindiscretizers import discretize_domain_default
 from pymor.grids import RectGrid, TriaGrid
-from pymor.la import NumpyVectorArray
-from pymor.reductors import reduce_generic_rb
 
 core.getLogger('pymor.algorithms').setLevel('INFO')
 core.getLogger('pymor.discretizations').setLevel('INFO')
@@ -79,18 +73,17 @@ def burgers_demo(args):
     args['--vy'] = float(args['--vy'])
     args['EXP'] = float(args['EXP'])
 
-
     print('Setup Problem ...')
     grid_type_map = {'rect': RectGrid, 'tria': TriaGrid}
     domain_discretizer = partial(discretize_domain_default, grid_type=grid_type_map[args['--grid-type']])
     problem = Burgers2DProblem(vx=args['--vx'], vy=args['--vy'], initial_data_type=args['--initial-data'],
-                             parameter_range=(0, 1e42), torus=not args['--not-periodic'])
+                               parameter_range=(0, 1e42), torus=not args['--not-periodic'])
 
     print('Discretize ...')
     discretizer = discretize_nonlinear_instationary_advection_fv
     discretization, data = discretizer(problem, diameter=m.sqrt(2) / args['--grid'],
-                                    num_flux=args['--num-flux'], lxf_lambda=args['--lxf-lambda'],
-                                    nt=args['--nt'], domain_discretizer=domain_discretizer)
+                                       num_flux=args['--num-flux'], lxf_lambda=args['--lxf-lambda'],
+                                       nt=args['--nt'], domain_discretizer=domain_discretizer)
     print(discretization.operator.grid)
 
     print('The parameter type is {}'.format(discretization.parameter_type))

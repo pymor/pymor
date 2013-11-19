@@ -5,7 +5,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from itertools import izip, repeat
+from itertools import izip
 from numbers import Number
 
 import numpy as np
@@ -257,7 +257,7 @@ class ListVectorArray(VectorArrayInterface):
         assert other.dim == self.dim
         assert other is not self or not remove_from_other
 
-        if ind == None:
+        if ind is None:
             c = type(self).empty(self.dim)
             c.append(other, o_ind=o_ind, remove_from_other=remove_from_other)
             assert len(c) == len(self)

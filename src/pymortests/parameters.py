@@ -5,7 +5,7 @@
 from __future__ import absolute_import, division, print_function
 
 from pymor import parameters
-from pymortests.base import TestInterface, runmodule
+from pymortests.base import runmodule
 
 import pytest
 

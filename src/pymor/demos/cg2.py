@@ -25,8 +25,8 @@ getLogger('pymor.discretizations').setLevel('INFO')
 
 
 def cg2_demo(nrhs, n, plot):
-    rhs0 = GenericFunction(lambda X: np.ones(X.shape[:-1]) * 10, dim_domain=2)
-    rhs1 = GenericFunction(lambda X: (X[..., 0] - 0.5) ** 2 * 1000, dim_domain=2)
+    rhs0 = GenericFunction(lambda X: np.ones(X.shape[:-1]) * 10, dim_domain=2)        # NOQA
+    rhs1 = GenericFunction(lambda X: (X[..., 0] - 0.5) ** 2 * 1000, dim_domain=2)     # NOQA
 
     assert 0 <= nrhs <= 1, ValueError('Invalid rhs number.')
     rhs = eval('rhs{}'.format(nrhs))

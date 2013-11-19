@@ -8,8 +8,8 @@ from __future__ import absolute_import, division, print_function
 from numbers import Number
 
 import numpy as np
-from scipy.sparse import issparse
 
+from pymor.core import getLogger
 from pymor.core.exceptions import CommunicationError
 from pymor.core.interfaces import BasicInterface, abstractmethod, abstractproperty, abstractclassmethod
 
@@ -21,6 +21,7 @@ class Communicable(BasicInterface):
         pass
 
     _communication = 'enable'
+
     @property
     def communication(self):
         return self._communication
@@ -464,8 +465,8 @@ class VectorArrayInterface(BasicInterface):
         return (ind is None or
                 isinstance(ind, Number) and 0 <= ind < len(self) or
                 isinstance(ind, list) and (len(ind) == 0 or 0 <= min(ind) and max(ind) < len(self)) or
-                isinstance(ind, np.ndarray) and ind.ndim == 1
-                                            and (len(ind) == 0 or 0 <= np.min(ind) and np.max(ind) < len(self)))
+                (isinstance(ind, np.ndarray) and ind.ndim == 1
+                 and (len(ind) == 0 or 0 <= np.min(ind) and np.max(ind) < len(self))))
 
     def check_ind_unique(self, ind):
         '''Check if `ind` is an admissable list of unique indices in the sense of the class documentation.'''

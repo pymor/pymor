@@ -17,16 +17,16 @@ def implementors(interface_type):
     except ImportError:
         pass
     return [T for T in interface_type.implementors(True) if not (T.has_interface_name() or
-                                                                 issubclass(T, TestInterface))] 
+                                                                 issubclass(T, TestInterface))]
 
 
-def subclasses_of(interface_type,**kwargs):
+def subclasses_of(interface_type, **kwargs):
     return pytest.fixture(params=implementors(interface_type), **kwargs)
 
 
 def grid_instances(interface_type, **kwargs):
     return pytest.fixture(params=list(itertools.chain(*(i.test_instances() for i in implementors(interface_type)))),
-                           **kwargs)
+                          **kwargs)
 
 
 @subclasses_of(BasicInterface)
