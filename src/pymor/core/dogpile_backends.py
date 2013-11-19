@@ -1,3 +1,15 @@
+# -*- coding: utf-8 -*-
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+
+'''
+This module contains backend implementations of pyMOR cache regions using
+the `dogpile <https://pypi.python.org/pypi/dogpile.cache>`_ package.
+
+Not to be used directly.
+'''
+
 from tempfile import gettempdir
 from collections import OrderedDict
 from pprint import pformat
