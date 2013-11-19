@@ -13,9 +13,6 @@ README.html: README.markdown
 
 README: README.txt README.html
 
-pylint:
-	cd src ; pylint --rcfile pylint.cfg pymor
-
 pep8:
 	pep8 ./src
 
