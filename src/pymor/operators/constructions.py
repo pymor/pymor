@@ -137,7 +137,7 @@ class VectorOperator(OperatorBase):
         count = len(U) if ind is None else 1 if isinstance(ind, Number) else len(ind)
         R = self._vector.copy(ind=([0] * count))
         for i, c in enumerate(U.data):
-            R.scal(c, ind=i)
+            R.scal(c[0], ind=i)
         return R
 
 
