@@ -70,7 +70,7 @@ class AllDirichletBoundaryInfo(BoundaryInfoInterface):
 class SubGridBoundaryInfo(BoundaryInfoInterface):
 
     def __init__(self, subgrid, grid, grid_boundary_info, new_boundary_type=None, assert_unique_type=False):
-        assert new_boundary_type is None or isinstance(new_boundaries_type, BoundaryType)
+        assert new_boundary_type is None or isinstance(new_boundary_type, BoundaryType)
 
         super(SubGridBoundaryInfo, self).__init__()
         boundary_types = grid_boundary_info.boundary_types
