@@ -123,8 +123,9 @@ class DogpileMemoryCacheRegion(DogpileCacheRegion):
 
 class DogpileDiskCacheRegion(DogpileCacheRegion):
 
-    def __init__(self, filename=None):
+    def __init__(self, filename=None, max_size=1024 ** 3):
         self.filename = filename
+        self.max_size = max_size
         self._new_region()
 
     def _new_region(self):
@@ -133,6 +134,8 @@ class DogpileDiskCacheRegion(DogpileCacheRegion):
         config = dict(pymor.core.dogpile_backends.DEFAULT_DISK_CONFIG)
         if self.filename:
             config['arguments.filename'] = os.path.expanduser(self.filename)
+        if self.max_size:
+            config['arguments.max_size'] = self.max_size
         self._cache_region.configure_from_config(config, '')
 
     def clear(self):
