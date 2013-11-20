@@ -35,17 +35,9 @@ uid_provider = UIDProvider()
 class UberMeta(abc.ABCMeta):
 
     def __init__(cls, name, bases, namespace):
-        '''I copy my class docstring if deriving class has none. I tell base classes when I derive
-        a new class from them. I publish a new contract type for each new class I create.
+        '''I tell base classes when I derive a new class from them. I publish
+        a new contract type for each new class I create.
         '''
-        doc = namespace.get("__doc__", None)
-        if not doc:
-            for base in cls.__mro__[1:]:
-                if base.__doc__:
-                    doc = base.__doc__
-                    break
-        cls.__doc__ = doc
-
         # monkey a new contract into the decorator module so checking for that type at runtime can work
         dname = (cls.__module__ + '.' + name).replace('__main__.', 'main.').replace('.', '_')
         if not dname in decorators.__dict__:
