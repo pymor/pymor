@@ -124,7 +124,7 @@ class BasicInterface(object):
         '''depending on _locked state I delegate the setattr call to object or
         raise an Exception
         '''
-        if not self._locked or key.startswith('_'):
+        if not self._locked or key[0] == '_':
             return object.__setattr__(self, key, value)
         else:
             raise ConstError('Changing "%s" is not allowed in locked "%s"' % (key, self.__class__))
