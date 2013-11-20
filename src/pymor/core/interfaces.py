@@ -410,7 +410,7 @@ class ImmutableMeta(UberMeta):
         else:
             instance.sid_failure = 'disabled'
 
-        instance.lock()
+        instance._locked = True
         return instance
 
     __call__ = _call
