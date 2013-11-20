@@ -142,13 +142,12 @@ class BasicInterface(object):
 
     @property
     def with_arguments(self):
-        argnames = set(inspect.getargspec(self.__init__)[0])
-        argnames.remove('self')
-        for arg in argnames:
+        init_arguments = self.init_arguments
+        for arg in init_arguments:
             if not hasattr(self, arg):
                 self._with_arguments_error = "Instance does not have attribute for __init__ argument '{}'".format(arg)
                 return set()
-        return argnames
+        return init_arguments
 
     def with_(self, **kwargs):
         '''Returns a copy with changed attributes.
@@ -179,11 +178,8 @@ class BasicInterface(object):
         to None.
         '''
         my_type = type(self) if new_class is None else new_class
-        argnames = inspect.getargspec(my_type.__init__)[0]
         init_args = kwargs
-        for arg in argnames:
-            if arg == 'self':
-                continue
+        for arg in self.init_arguments:
             if arg not in init_args:
                 init_args[arg] = getattr(self, arg, None)
         c = my_type(**init_args)
