@@ -116,7 +116,6 @@ class BasicInterface(object):
 
     __metaclass__ = UberMeta
     _locked = False
-    _lock_whitelist = set()
 
     def __init__(self):
         pass
@@ -125,9 +124,7 @@ class BasicInterface(object):
         '''depending on _locked state I delegate the setattr call to object or
         raise an Exception
         '''
-        if not self._locked:
-            return object.__setattr__(self, key, value)
-        elif key.startswith('_') or key in self._lock_whitelist:
+        if not self._locked or key.startswith('_'):
             return object.__setattr__(self, key, value)
         else:
             raise ConstError('Changing "%s" is not allowed in locked "%s"' % (key, self.__class__))
@@ -136,11 +133,9 @@ class BasicInterface(object):
     def locked(self):
         return self._locked
 
-    def lock(self, doit=True, whitelist=None):
+    def lock(self, doit=True):
         '''Calling me results in subsequent changes to members throwing errors'''
         object.__setattr__(self, '_locked', doit)
-        if whitelist is not None:
-            object.__setattr__(self, '_lock_whitelist', whitelist)
 
     def unlock(self):
         object.__setattr__(self, '_locked', False)
@@ -431,8 +426,8 @@ class ImmutableInterface(BasicInterface):
     # You really should not unlock an object unless you really know what
     # you are doing. (One exception might be the modification of a newly
     # created copy of an immutable object.)
-    def lock(self, doit=True, whitelist=None):
-        super(ImmutableInterface, self).lock(doit, whitelist)
+    def lock(self, doit=True):
+        super(ImmutableInterface, self).lock(doit)
         if not self.locked and hasattr(self, 'sid'):
             del self.sid
             self.sid_failure = 'unlocked'
