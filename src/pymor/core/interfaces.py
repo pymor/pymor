@@ -259,14 +259,15 @@ class BasicInterface(object):
     def _with_via_init(self, kwargs, new_class=None):
         '''Default implementation for with_ by calling __init__.
 
-        Parameters which are missing in `kwargs` and for which there is no attribute in `self` are set
-        to None.
+        Parameters which are missing in `kwargs` are taken from the dictionary of the
+        instance. If `new_class` is provided, the copy is created as an instance of
+        `new_class`.
         '''
         my_type = type(self) if new_class is None else new_class
         init_args = kwargs
         for arg in my_type.init_arguments:
             if arg not in init_args:
-                init_args[arg] = getattr(self, arg, None)
+                init_args[arg] = getattr(self, arg)
         c = my_type(**init_args)
         if self.logging_disabled:
             c.disable_logging()
