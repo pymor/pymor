@@ -71,7 +71,8 @@ def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation
         `VectorArray` containing the generated collateral basis.
     data
         Dict containing the following fields:
-            errors: sequence of maximum approximation errors during greedy search.
+
+            :errors: sequence of maximum approximation errors during greedy search.
     '''
 
     assert projection in ('orthogonal', 'ei')
@@ -261,9 +262,10 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
         empirical interpolated operators.
     data
         Dict containing the following fields:
-            dofs:   Numpy array of the DOFs at which the operators have to be evaluated.
-            basis:  `VectorArray` containing the generated collateral basis.
-            errors: sequence of maximum approximation errors during greedy search.
+
+            :dofs:   Numpy array of the DOFs at which the operators have to be evaluated.
+            :basis:  `VectorArray` containing the generated collateral basis.
+            :errors: sequence of maximum approximation errors during greedy search.
     '''
 
     sample = tuple(parameter_sample)

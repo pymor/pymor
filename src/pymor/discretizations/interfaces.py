@@ -35,7 +35,7 @@ class DiscretizationInterface(CacheableInterface, Parametric, Named):
         with `dim_source == 1`.
 
     Optional Methods
-    ----------------
+
     def estimate(self, U, mu=None):
         Estimate the error of the discrete solution U to the parameter mu against
         the real solution. (For a reduced discretization, the 'real' solution will

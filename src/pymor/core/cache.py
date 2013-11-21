@@ -16,14 +16,14 @@ the immutable state of the class instance.
 Making this assumption, the keys for cache lookup are created from
 the following data:
 
-    1. the instance's state id (see :class:`pymor.core.ImmutableInterface`)
+    1. the instance's state id (see :class:`pymor.core.interfaces.ImmutableInterface`)
        if available, else the instance's unique id
-       (see :class:`pymor.core.BasicInterface`),
+       (see :class:`pymor.core.interfaces.BasicInterface`),
     2. the method's `__name__`,
     3. the state id of each argument if available, else its pickled
        state.
 
-Note, however, that instances of :class:`pymor.core.ImmutableInterface`
+Note, however, that instances of :class:`pymor.core.interfaces.ImmutableInterface`
 are allowed to have mutable private attributes. It is the implmentors
 responsibility not to break things.
 

@@ -70,20 +70,15 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
     Returns
     -------
     Dict with the following fields:
-        'basis'
-            The reduced basis.
-        'reduced_discretization'
-            The reduced discretization obtained for the computed basis.
-        'reconstructor'
-            Reconstructor for `reduced_discretization`.
-        'max_err'
-            Last estimated maximum error on the sample set.
-        'max_err_mu'
-            The parameter that corresponds to `max_err`.
-        'max_errs'
-            Sequence of maximum errors during the greedy run.
-        'max_errs_mu'
-            The parameters corresponding to `max_errs`.
+
+        :basis:                  The reduced basis.
+        :reduced_discretization: The reduced discretization obtained for the
+                                 computed basis.
+        :reconstructor:          Reconstructor for `reduced_discretization`.
+        :max_err:                Last estimated maximum error on the sample set.
+        :max_err_mu:             The parameter that corresponds to `max_err`.
+        :max_errs:               Sequence of maximum errors during the greedy run.
+        :max_errs_mu:            The parameters corresponding to `max_errs`.
     '''
 
     logger = getLogger('pymor.algorithms.greedy.greedy')

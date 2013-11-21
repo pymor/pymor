@@ -71,7 +71,7 @@ def write_vtk(grid, data, filename_base, codim=2, binary_vtk=True, last_step=Non
     '''Output grid-associated data in (legacy) vtk format
 
     Parameters
-    ---------
+    ----------
     grid
         a pymor grid with triangular or rectilinear reference element
 

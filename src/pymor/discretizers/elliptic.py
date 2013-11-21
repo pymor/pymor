@@ -43,10 +43,9 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
         The discretization that has been generated.
     data
         Dict with the following entries:
-            grid
-                The generated grid.
-            boundary_info
-                The generated `BoundaryInfo`.
+
+            :grid:           The generated grid.
+            :boundary_info:  The generated `BoundaryInfo`.
     '''
 
     assert isinstance(analytical_problem, EllipticProblem)

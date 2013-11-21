@@ -186,9 +186,11 @@ class RectGrid(AffineGridInterface):
         return self._global_to_structured[codim]
 
     def vertex_coordinates(self, dim):
-        '''Returns an array of the x_dim koordinates of the grid verticies. I.e. ::
+        '''Returns an array of the x_dim koordinates of the grid verticies.
 
-            centers(2)[structured_to_global(2)[i, j]] == np.array([vertex_coordinates(0)[i], vertex_coordinates(1)[j]])
+        I.e. ::
+
+           centers(2)[structured_to_global(2)[i, j]] == np.array([vertex_coordinates(0)[i], vertex_coordinates(1)[j]])
         '''
         assert 0 <= dim < 2
         return np.linspace(self.domain[0, dim], self.domain[1, dim], self.num_intervals[dim] + 1)

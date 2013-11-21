@@ -87,10 +87,10 @@ class StationaryDiscretization(DiscretizationBase):
     operator
         The operator L_h. A synonym for operators['operator'].
     operators
-        Dictionary of all operators contained in this discretization. The idea is
-        that this attribute will be common to all discretizations such that it can
-        be used for introspection. Compare the implementation of `reduce_generic_rb`.
-        For this class, operators has the keys 'operator' and 'rhs'.
+        Dictionary of all operators contained in this discretization.
+        The idea is that this attribute will be common to all discretizations such
+        that it can be used for introspection. Compare the implementation of
+        `reduce_generic_rb`.  For this class, operators has the keys 'operator' and 'rhs'.
     rhs
         The functional f_h. A synonym for operators['rhs'].
     '''
