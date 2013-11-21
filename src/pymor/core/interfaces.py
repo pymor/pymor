@@ -3,6 +3,92 @@
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+'''This module provides base classes from which most classes in pyMOR inherit.
+
+The purpose of these classes is to provide some common functionality for
+all objects in pyMOR. The most notable features provided by :class:`BasicInterface`
+are the following:
+
+    1. :class:`BasicInterface` sets class :class:`UberMeta` as metaclass
+       which itself inherits from :class:`abc.ABCMeta`, so it is possible
+       to define interface classes with abstract methods using the
+       :func:`abstractmethod` decorator. There are also decorators for
+       abstract class methods, static methods, and properties.
+    2. Using metaclass magic, each _class_ deriving from :class:`BasicInterface`
+       comes with its own logger instance accessible through its `logger`
+       attribute. The logger prefix is automatically set to the class name.
+    3. Logging can be disabled and reenabled for each _instance_ using the
+       :meth:`BasicInterface.disable_logging` and :meth:`BasicInterface.enable_logging`
+       methods.
+    4. An instance can be made immutable using :meth:`BasicInterface.lock`.
+       If an instance is locked, each attempt to change one of its attributes
+       raises an exception. Private attributes (of the form `_name`) are exempted
+       from this rule. Locked instances can be unlocked again using
+       :meth:`BasicInterface.unlock`.
+    5. :meth:`BasicInterface.with_` can be used to create a copy of an instance with
+       some changed attributes. E.g. ::
+
+           obj.with_(a=x, b=y)
+
+       creates a copy with the `a` and `b` attributes of `obj` set to `x` and `y`.
+       Note that in general `a` and `b` do not necessarily have to corresond to
+       class attributes of `obj`; it is up to the implementor to interpret the
+       provided arguments. :attr:`BasicInterface.with_arguments` holds the
+       set of allowed arguments.
+       :class:`BasicInterface` provides a default implementation of `with_` which
+       works as follows:
+
+           - The argument names of the classes  `__init__` method are looked up.
+             If the instance has an attribute of the same name for each `__init__`
+             argument, `with_arguments` returns the argument names of `__init__`,
+             otherwise an empty set is returned and the `with_` functionality is
+             disabled.
+           - If the above condition is satisfied, a call to `with_` results in
+             the creation of a new instance where the arguments of `with_` are
+             passed through to `__init__`. The missing `__init__` arguments
+             are taken from the corresponding instance attributes.
+
+    6. :meth:`BasicInterface.uid` provides a unique id for each instance. While
+       `id(obj)` is only guaranteed to be unique among all living python objects,
+       :meth:`BasicInterface.uid` will be (almost) unique among all pyMOR objects
+       that have ever existed. This is achieved by building the id from a uuid4
+       which is newly created for each pyMOR run and a counter which is increased
+       for any object that requests an uid.
+       This functionality is implemented using :class:`UIDProvider`.
+
+
+:class:`ImmutableMeta` derives from :class:`BasicInterface` and adds the following
+functionality:
+
+    1. Using more metaclass magic, each instance which derives from
+       :class:`ImmutableInterface` is locked after its `__init__` method has returned.
+    2. If possible, a unique state id for the instance is calculated and stored as
+       `sid` attribute. If sid calculation fails, `sid_failure` is set to a string
+       giving a reason for the failure.
+       The sid is constructed as a tuple containing:
+
+           - the class of the instance
+           - for each `__init__` argument its name and
+
+               - its `sid` if it has one
+               - its value if it is an instance of `NoneType`, `str`, `int`, `float` or `bool`
+               - its value if it is a numpy array of short size
+
+             For `tuple`, `list` or `dict` instance, the calculation is done by recursion.
+             If none of these cases apply, sid calculation fails.
+
+       Note that a sid contains only object references to the sids of the provided `__init__`
+       arguments. This structure is preserved by pickling resulting in relatively short
+       string represenations of the sid.
+    3. sid generation (with all its overhead) can be disabled by setting
+       :attr:`ImmutableInterface.calculate_sid` to `False`.
+    4. :attr:`ImmutableInterface.sid_ignore` can be set to a tuple of `__init__`
+       argument names, which should be excluded from sid calculation.
+    5. sid generation can be disabled completely in pyMOR by calling
+       :func:`disable_sid_generation`. It can be activated again by calling
+       :func:`enable_sid_generation`.
+'''
+
 from __future__ import absolute_import, division, print_function
 import abc
 import types
