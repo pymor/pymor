@@ -225,4 +225,4 @@ coverage_c_path = []
 coverage_c_regexes = {}
 coverage_ignore_c_items = {}
 
-autodoc_default_flags = ['members', 'undoc-members', 'inherited-members', 'show-inheritance']
+autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance']
