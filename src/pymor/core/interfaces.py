@@ -232,7 +232,7 @@ class BasicInterface(object):
             if not hasattr(self, arg):
                 self._with_arguments_error = "Instance does not have attribute for __init__ argument '{}'".format(arg)
                 return set()
-        return init_arguments
+        return set(init_arguments)
 
     def with_(self, **kwargs):
         '''Returns a copy with changed attributes.
