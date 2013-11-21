@@ -22,8 +22,16 @@ needs_sphinx = '1.0'
 sys.path.insert(0, os.path.abspath('../../src'))
 
 #generate autodoc
-from sphinx.apidoc import main as apidoc
-apidoc(argv=[sys.argv[0], '-o', 'generated/', '../../src/'])
+import sphinx.apidoc as apidoc
+
+# monkey apidoc to prevent generation of documentation for .pyx files
+# which leads to prolems with equally named .py files
+# this should become obosolete in the future
+# https://bitbucket.org/birkenfeld/sphinx/issue/944/sphinx-apidoc-add-ability-to-exclude
+# https://bitbucket.org/birkenfeld/sphinx/pull-request/110/allow-apidoc-to-exclude-individual-files/diff
+apidoc.PY_SUFFIXES = {'.py'}
+
+apidoc.main(argv=[sys.argv[0], '-o', 'generated/', '../../src/'])
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath',
               'sphinx.ext.coverage',
