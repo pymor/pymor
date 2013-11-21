@@ -28,7 +28,7 @@ class Communicable(BasicInterface):
 
     @communication.setter
     def communication(self, v):
-        assert v in set('raise', 'warn', 'enable')
+        assert v in {'raise', 'warn', 'enable'}
         self._communication = v
 
     def enable_communication(self):

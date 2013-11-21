@@ -160,8 +160,8 @@ class GmshGrid(AffineGridInterface):
         sections = parse_gmsh_file(gmsh_file)
 
         self.logger.info('Checking is grid is a 2d triangular grid ...')
-        assert set(('Nodes', 'Elements')) <= set(sections.keys())
-        assert set(sections['Elements'].keys()) <= set(('line', 'triangle'))
+        assert {'Nodes', 'Elements'} <= set(sections.keys())
+        assert set(sections['Elements'].keys()) <= {'line', 'triangle'}
         assert 'triangle' in sections['Elements']
         assert all(n[1][2] == 0 for n in sections['Nodes'])
 

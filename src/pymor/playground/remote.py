@@ -458,7 +458,7 @@ class RemoteStationaryDiscretization(StationaryDiscretization):
     def with_(self, **kwargs):
         assert set(kwargs.keys()) <= self.with_arguments
         assert 'operators' not in kwargs or 'rhs' not in kwargs and 'operator' not in kwargs
-        assert 'operators' not in kwargs or set(kwargs['operators'].keys()) <= set(('operator', 'rhs'))
+        assert 'operators' not in kwargs or set(kwargs['operators'].keys()) <= {'operator', 'rhs'}
 
         if 'operators' in kwargs:
             kwargs.update(kwargs.pop('operators'))

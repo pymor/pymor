@@ -29,12 +29,12 @@ class DomainDescriptionInterface(ImmutableInterface):
 
     @property
     def has_only_dirichlet(self):
-        return self.boundary_types == set((BoundaryType('dirichlet'),))
+        return self.boundary_types == {BoundaryType('dirichlet')}
 
     @property
     def has_only_neumann(self):
-        return self.boundary_types == set((BoundaryType('neumann'),))
+        return self.boundary_types == {BoundaryType('neumann')}
 
     @property
     def has_only_dirichletneumann(self):
-        return self.boundary_types <= set((BoundaryType('dirichlet'), BoundaryType('neumann')))
+        return self.boundary_types <= {BoundaryType('dirichlet'), BoundaryType('neumann')}

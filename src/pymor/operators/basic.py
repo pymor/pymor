@@ -365,10 +365,10 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             assert 'type' in options
             if sparse:
                 assert options['type'] == 'bicgstab'
-                assert options.viewkeys() <= set(('type', 'tol', 'maxiter'))
+                assert options.viewkeys() <= {'type', 'tol', 'maxiter'}
             else:
                 assert options['type'] == 'solve'
-                assert options.viewkeys() <= set(('type',))
+                assert options.viewkeys() <= {'type'}
             return True
 
         if options is None:

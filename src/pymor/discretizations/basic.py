@@ -191,9 +191,9 @@ class InstationaryDiscretization(DiscretizationBase):
 
     def with_(self, **kwargs):
         assert set(kwargs.keys()) <= self.with_arguments
-        assert 'operators' not in kwargs or kwargs['operators'].viewkeys() <= set(('operator', 'mass'))
-        assert 'functionals' not in kwargs or kwargs['functionals'].viewkeys() <= set(('rhs',))
-        assert 'vector_operators' not in kwargs or kwargs['vector_operators'].viewkeys() <= set(('initial_data',))
+        assert 'operators' not in kwargs or kwargs['operators'].viewkeys() <= {'operator', 'mass'}
+        assert 'functionals' not in kwargs or kwargs['functionals'].viewkeys() <= {'rhs'}
+        assert 'vector_operators' not in kwargs or kwargs['vector_operators'].viewkeys() <= {'initial_data'}
         assert 'operators' not in kwargs or not set(kwargs['operators']).intersection(kwargs.viewkeys())
         assert 'functionals' not in kwargs or not set(kwargs['functionals']).intersection(kwargs.viewkeys())
         assert 'vector_operators' not in kwargs or not set(kwargs['vector_operators']).intersection(kwargs.viewkeys())
