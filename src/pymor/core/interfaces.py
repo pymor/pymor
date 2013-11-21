@@ -264,7 +264,7 @@ class BasicInterface(object):
         '''
         my_type = type(self) if new_class is None else new_class
         init_args = kwargs
-        for arg in self.init_arguments:
+        for arg in my_type.init_arguments:
             if arg not in init_args:
                 init_args[arg] = getattr(self, arg, None)
         c = my_type(**init_args)
