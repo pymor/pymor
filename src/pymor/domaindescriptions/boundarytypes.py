@@ -36,9 +36,9 @@ class BoundaryType(ImmutableInterface):
         assert isinstance(name, str)
         cls.types.add(name)
 
-    def __init__(self, name):
-        assert name in self.types, '{} is not a known boundary type. Use BoundaryType.register to add it'.format(name)
-        self.name = name
+    def __init__(self, type_):
+        assert type_ in self.types, '{} is not a known boundary type. Use BoundaryType.register to add it'.format(type_)
+        self.name = type_
 
     def __str__(self):
         return self.name
