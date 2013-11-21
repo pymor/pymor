@@ -192,7 +192,7 @@ class ReferenceElementInterface(SimpleReferenceElementDefaultImplementations, Ca
 
     def quadrature_types(self):
         o, _ = self.quadrature_info()
-        return set(o.keys())
+        return frozenset(o.keys())
 
 
 class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopologicalGridInterface):
@@ -304,7 +304,7 @@ class BoundaryInfoInterface(CacheableInterface):
         set of all `BoundaryTypes` the grid has.
     '''
 
-    boundary_types = set()
+    boundary_types = frozenset()
 
     def mask(self, boundary_type, codim):
         '''retval[i] is True iff the codim-`codim` entity of global index `i` is

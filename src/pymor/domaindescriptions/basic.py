@@ -42,7 +42,7 @@ class RectDomain(DomainDescriptionInterface):
                  top=BoundaryType('dirichlet'), bottom=BoundaryType('dirichlet')):
         assert domain[0][0] <= domain[1][0]
         assert domain[0][1] <= domain[1][1]
-        self.boundary_types = set((left, right, top, bottom))
+        self.boundary_types = frozenset({left, right, top, bottom})
         self.left = left
         self.right = right
         self.top = top
@@ -99,7 +99,7 @@ class CylindricalDomain(DomainDescriptionInterface):
     def __init__(self, domain=[[0, 0], [1, 1]], top=BoundaryType('dirichlet'), bottom=BoundaryType('dirichlet')):
         assert domain[0][0] <= domain[1][0]
         assert domain[0][1] <= domain[1][1]
-        self.boundary_types = set((top, bottom))
+        self.boundary_types = frozenset({top, bottom})
         self.top = top
         self.bottom = bottom
         self.domain = np.array(domain)
@@ -147,7 +147,7 @@ class TorusDomain(DomainDescriptionInterface):
     def __init__(self, domain=[[0, 0], [1, 1]]):
         assert domain[0][0] <= domain[1][0]
         assert domain[0][1] <= domain[1][1]
-        self.boundary_types = set()
+        self.boundary_types = frozenset()
         self.domain = np.array(domain)
 
     @property
@@ -198,7 +198,7 @@ class LineDomain(DomainDescriptionInterface):
 
     def __init__(self, domain=[0, 1], left=BoundaryType('dirichlet'), right=BoundaryType('dirichlet')):
         assert domain[0] <= domain[1]
-        self.boundary_types = set((left, right))
+        self.boundary_types = frozenset({left, right})
         self.left = left
         self.right = right
         self.domain = np.array(domain)

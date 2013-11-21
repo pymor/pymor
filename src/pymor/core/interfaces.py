@@ -449,7 +449,7 @@ class ImmutableMeta(UberMeta):
 class ImmutableInterface(BasicInterface):
     __metaclass__ = ImmutableMeta
     calculate_sid = True
-    sid_ignore = ('name', 'caching')
+    sid_ignore = frozenset({'name', 'caching'})
 
     # Unlocking an immutable object will result in the deletion of its sid.
     # However, this will not delete the sids of objects referencing it.

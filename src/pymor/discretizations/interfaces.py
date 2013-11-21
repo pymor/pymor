@@ -51,7 +51,7 @@ class DiscretizationInterface(CacheableInterface, Parametric, Named):
     operators = dict()
     functionals = dict()
     vector_operators = dict()
-    with_arguments = set(('operators', 'functionals', 'vector_operators'))
+    with_arguments = frozenset({'operators', 'functionals', 'vector_operators'})
 
     @abstractmethod
     def _solve(self, mu=None):

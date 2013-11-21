@@ -117,7 +117,7 @@ class StationaryDiscretization(DiscretizationBase):
         self.build_parameter_type(inherits=(operator, rhs))
         self.parameter_space = parameter_space
 
-    with_arguments = set(method_arguments(__init__)).union(['operators', 'functionals', 'vector_operators'])
+    with_arguments = frozenset(method_arguments(__init__)).union({'operators', 'functionals', 'vector_operators'})
 
     def with_(self, **kwargs):
         assert set(kwargs.keys()) <= self.with_arguments
@@ -185,10 +185,9 @@ class InstationaryDiscretization(DiscretizationBase):
         self.parameter_space = parameter_space
 
         if hasattr(time_stepper, 'nt'):
-            self.with_arguments = set(self.with_arguments)
-            self.with_arguments.add('time_stepper_nt')
+            self.with_arguments = self.with_arguments.union({'time_stepper_nt'})
 
-    with_arguments = set(method_arguments(__init__)).union(['operators', 'functionals', 'vector_operators'])
+    with_arguments = frozenset(method_arguments(__init__)).union({'operators', 'functionals', 'vector_operators'})
 
     def with_(self, **kwargs):
         assert set(kwargs.keys()) <= self.with_arguments

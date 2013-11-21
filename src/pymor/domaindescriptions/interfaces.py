@@ -17,7 +17,7 @@ class DomainDescriptionInterface(ImmutableInterface):
         Set of `BoundaryTypes` the domain has.
     '''
 
-    boundary_types = set()
+    boundary_types = frozenset()
 
     @property
     def has_dirichlet(self):
