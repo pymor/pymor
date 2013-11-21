@@ -14,10 +14,10 @@ are the following:
        to define interface classes with abstract methods using the
        :func:`abstractmethod` decorator. There are also decorators for
        abstract class methods, static methods, and properties.
-    2. Using metaclass magic, each _class_ deriving from :class:`BasicInterface`
+    2. Using metaclass magic, each *class* deriving from :class:`BasicInterface`
        comes with its own logger instance accessible through its `logger`
        attribute. The logger prefix is automatically set to the class name.
-    3. Logging can be disabled and reenabled for each _instance_ using the
+    3. Logging can be disabled and reenabled for each *instance* using the
        :meth:`BasicInterface.disable_logging` and :meth:`BasicInterface.enable_logging`
        methods.
     4. An instance can be made immutable using :meth:`BasicInterface.lock`.
@@ -31,10 +31,11 @@ are the following:
            obj.with_(a=x, b=y)
 
        creates a copy with the `a` and `b` attributes of `obj` set to `x` and `y`.
-       Note that in general `a` and `b` do not necessarily have to corresond to
+       (Note that in general `a` and `b` do not necessarily have to corresond to
        class attributes of `obj`; it is up to the implementor to interpret the
-       provided arguments. :attr:`BasicInterface.with_arguments` holds the
+       provided arguments.) :attr:`BasicInterface.with_arguments` holds the
        set of allowed arguments.
+
        :class:`BasicInterface` provides a default implementation of `with_` which
        works as follows:
 
@@ -51,10 +52,11 @@ are the following:
     6. :meth:`BasicInterface.uid` provides a unique id for each instance. While
        `id(obj)` is only guaranteed to be unique among all living python objects,
        :meth:`BasicInterface.uid` will be (almost) unique among all pyMOR objects
-       that have ever existed. This is achieved by building the id from a uuid4
-       which is newly created for each pyMOR run and a counter which is increased
-       for any object that requests an uid.
-       This functionality is implemented using :class:`UIDProvider`.
+       that have ever existed, including previous runs of the application. This
+       is achieved by building the id from a uuid4 which is newly created for
+       each pyMOR run and a counter which is increased for any object that requests
+       an uid. This functionality is implemented using the :class:`UIDProvider`
+       instance :attr:`uid_provider`.
 
 
 :class:`ImmutableMeta` derives from :class:`BasicInterface` and adds the following
@@ -65,6 +67,7 @@ functionality:
     2. If possible, a unique state id for the instance is calculated and stored as
        `sid` attribute. If sid calculation fails, `sid_failure` is set to a string
        giving a reason for the failure.
+
        The sid is constructed as a tuple containing:
 
            - the class of the instance
@@ -80,10 +83,10 @@ functionality:
        Note that a sid contains only object references to the sids of the provided `__init__`
        arguments. This structure is preserved by pickling resulting in relatively short
        string represenations of the sid.
-    3. sid generation (with all its overhead) can be disabled by setting
-       :attr:`ImmutableInterface.calculate_sid` to `False`.
-    4. :attr:`ImmutableInterface.sid_ignore` can be set to a tuple of `__init__`
+    3. :attr:`ImmutableInterface.sid_ignore` can be set to a tuple of `__init__`
        argument names, which should be excluded from sid calculation.
+    4. sid generation (with all its overhead) can be disabled by setting
+       :attr:`ImmutableInterface.calculate_sid` to `False`.
     5. sid generation can be disabled completely in pyMOR by calling
        :func:`disable_sid_generation`. It can be activated again by calling
        :func:`enable_sid_generation`.
@@ -104,6 +107,7 @@ from pymor.core.exceptions import ConstError
 
 
 class UIDProvider(object):
+    '''Provides unique, quickly computed ids by combinding a session UUID4 with a counter.'''
     def __init__(self):
         self.counter = 0
         import uuid
@@ -120,8 +124,11 @@ uid_provider = UIDProvider()
 class UberMeta(abc.ABCMeta):
 
     def __init__(cls, name, bases, namespace):
-        '''I tell base classes when I derive a new class from them. I publish
-        a new contract type for each new class I create.
+        '''Metaclass of :class:`BasicInterface`.
+
+        I tell base classes when I derive a new class from them. I publish
+        a new contract type for each new class I create. I create a logger
+        for each class I create. I add an `init_args` attribute to the class.
         '''
         # monkey a new contract into the decorator module so checking for that type at runtime can work
         dname = (cls.__module__ + '.' + name).replace('__main__.', 'main.').replace('.', '_')
@@ -196,7 +203,26 @@ class UberMeta(abc.ABCMeta):
 
 
 class BasicInterface(object):
-    ''' All other interface classes should be a subclass of mine.
+    '''Base class for most classes in pyMOR.
+
+    Attributes
+    ----------
+    init_arguments
+        The list of arguments accepted by `__init__` in their specified
+        order.
+    locked
+        True if the instance is made immutable using `lock`.
+    logger
+        A per-class instance of :class:`logging.Logger` with the class
+        name as prefix.
+    logging_disabled
+        `True` if logging has been disabled.
+    uid
+        A unique id for each instance. The uid is obtained by using
+        :class:`UIDProvider` and should be unique for all pyMOR objects
+        ever created.
+    with_arguments
+        Set of allowed keyword arguments for `with_`.
     '''
 
     __metaclass__ = UberMeta
@@ -219,10 +245,16 @@ class BasicInterface(object):
         return self._locked
 
     def lock(self, doit=True):
-        '''Calling me results in subsequent changes to members throwing errors'''
+        '''Make the instance immutable.
+
+        Trying to change an attribute after locking raises a `ConstError`.
+        Private attributes (of the form `_attribute`) are exempted from
+        this rule.
+        '''
         object.__setattr__(self, '_locked', doit)
 
     def unlock(self):
+        '''Make the instance mutable again, after it has been locked using `lock`.'''
         object.__setattr__(self, '_locked', False)
 
     @property
@@ -236,6 +268,8 @@ class BasicInterface(object):
 
     def with_(self, **kwargs):
         '''Returns a copy with changed attributes.
+
+        The default implementation is to call `_with_via_init(**kwargs)`.
 
         Parameters
         ----------
@@ -276,6 +310,7 @@ class BasicInterface(object):
     _added_attributes = None
 
     def add_attributes(self, **kwargs):
+        '''Add attributes to a locked instance.'''
         assert not any(hasattr(self, k) for k in kwargs)
         self.__dict__.update(kwargs)
         if self._added_attributes is None:
@@ -286,6 +321,7 @@ class BasicInterface(object):
     logging_disabled = False
 
     def disable_logging(self, doit=True):
+        '''Disable logging output for this instance.'''
         locked = self._locked
         self.unlock()
         if doit:
@@ -297,6 +333,7 @@ class BasicInterface(object):
         self.lock(locked)
 
     def enable_logging(self, doit=True):
+        '''Enable logging output for this instance.'''
         self.disable_logging(not doit)
 
     @classmethod
@@ -387,6 +424,29 @@ def _calculate_sid(obj, name):
 
 
 def inject_sid(obj, context, *args):
+    '''Add a state id sid to an object.
+
+    The purpose of this methods is to inject state ids into objects which do not
+    derive from :class:`ImmutableInterface`. If `obj` is an instance of
+    :class:`BasicInterface`, it is locked, if it is an :class:`numpy.ndarray`,
+    its `writable` flag is set to `False`.
+
+    It is the callers responsibility to ensure that the given parameters uniquely
+    describe the state of `obj`, and that `obj` does not change its state after
+    the call of `inject_sid`. For an example see
+    :class:`pymor.analyticalproblems.EllipticProblem`.
+
+    Parameters
+    ----------
+    obj
+        The object which shall obtain a sid.
+    context
+        A hashable, picklable, immutable object, describing the context in
+        which `obj` was created.
+    *args
+        List of parameters which in the given context led to the creation of
+        `obj`.
+    '''
     try:
         sid = tuple((context, tuple(_calculate_sid(o, i) for i, o in enumerate(args))))
         obj.sid = sid
@@ -401,15 +461,18 @@ def inject_sid(obj, context, *args):
 
 
 def disable_sid_generation():
+    '''Globally disable the generation of state ids.'''
     if hasattr(ImmutableMeta, '__call__'):
         del ImmutableMeta.__call__
 
 
 def enable_sid_generation():
+    '''Globally enable the generation of state ids.'''
     ImmutableMeta.__call__ = ImmutableMeta._call
 
 
 class ImmutableMeta(UberMeta):
+    '''Metaclass for :class:`ImmutableInterface`.'''
 
     sids_created = 0
     init_arguments_never_warn = ('name', 'caching')
@@ -447,6 +510,28 @@ class ImmutableMeta(UberMeta):
 
 
 class ImmutableInterface(BasicInterface):
+    '''Base class for immutable objects in pyMOR.
+
+    Instancees of `ImmutableInterface` are immutable in the sense, that
+    they are :meth:`BasicInterface.lock`ed after `__init__` returns.
+
+    Attributes
+    ----------
+    calculate_sid
+        If `True`, a unique id describing the state of the instance is
+        calculated after __init__ returns, based on the states of the
+        provided arguments. For further details see
+        :mod:`pymor.core.interfaces`.
+    sid
+        The objects state id. If sid generation is disabled or fails,
+        this attribute is not set.
+    sid_failure
+        If sid generation fails, a string describing the reason for
+        the failure.
+    sid_ignore
+        Tuple of `__init__` arguments not to include in sid caluation.
+        The default it `{'name', 'caching'}`
+    '''
     __metaclass__ = ImmutableMeta
     calculate_sid = True
     sid_ignore = frozenset({'name', 'caching'})
@@ -463,6 +548,15 @@ class ImmutableInterface(BasicInterface):
             self.sid_failure = 'unlocked'
 
     def unlock(self):
+        '''Make the instance mutable.
+
+        .. warning::
+            Unlocking an instance of `ImmutableInterface` will result in the
+            deletion of its sid. However, this will not delete the sids of
+            objects referencing it. You really should not unlock an object
+            unless you really know what you are doing. (One exception might
+            be the modification of a newly created copy of an immutable object.)
+        '''
         super(ImmutableInterface, self).unlock()
         if hasattr(self, 'sid'):
             del self.sid
