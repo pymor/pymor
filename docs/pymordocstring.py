@@ -18,6 +18,12 @@ INCLUDE_PRIVATE_WITH_DOC = False
 MEMBER_BLACKLIST = tuple()
 
 
+def table(rows):
+    r = ['.. csv-table::', '    :delim: @', '    :widths: 20, 80', '']
+    r.extend('    ' + ' @ '.join(r) for r in rows)
+    r.append('')
+    return r
+
 class peek_iter(object):
     def __init__(self, *args):
         self._iterable = iter(*args)
@@ -95,9 +101,7 @@ class Docstring(object):
                 ('examples', self._parse_generic_section),
                 ('see also', self._parse_see_also_section),
                 ('_methods', None),
-                ('_inherited_methods', None),
                 ('_attributes', None),
-                ('_inherited_attributes', None),
                 ('attributes', self._parse_attributes_section),
             ))
         self._parse()
@@ -308,11 +312,8 @@ class Docstring(object):
             self._parsed_lines.extend(sections.get(section, []))
 
     def _inspect_class(self, sections):
-        own_methods = []
-        own_attributes = []
-        inherited_methods = defaultdict(list)
-        inherited_attributes = defaultdict(list)
-        class_name = self._obj.__name__
+        methods = defaultdict(list)
+        attributes = defaultdict(list)
         mro = self._obj.__mro__
 
         def get_full_class_name(c):
@@ -330,61 +331,36 @@ class Docstring(object):
                 is_method = isinstance(o, (MethodType, FunctionType))
                 if k[0] == '_' and not is_method:
                     continue
-
-                if k in self._obj.__dict__:
-                    if k.startswith('_' + class_name + '__'):
-                        k = k.split('_' + class_name)[-1]
-                    if k in MEMBER_BLACKLIST:
-                        continue
-                    if is_method:
-                        own_methods.append(':meth:`~{}.{}`'.format(self._name, k))
-                    else:
-                        own_attributes.append(':attr:`~{}.{}`'.format(self._name, k))
+                class_ = get_class(k)
+                assert class_ is not None
+                class_name = getattr(class_, '__name__', '')
+                full_class_name = get_full_class_name(class_)
+                if k.startswith('_' + class_name + '__'):
+                    k = k.split('_' + class_name)[-1]
+                if k in MEMBER_BLACKLIST:
+                    continue
+                if is_method:
+                    methods[class_].append(':meth:`~{}.{}`'.format(full_class_name, k))
                 else:
-                    super_class = get_class(k)
-                    assert super_class is not None
-                    super_class_name = getattr(super_class, '__name__', '')
-                    full_class_name = get_full_class_name(super_class)
-                    if k.startswith('_' + super_class_name + '__'):
-                        k = k.split('_' + super_class_name)[-1]
-                    if k in MEMBER_BLACKLIST:
-                        continue
-                    if is_method:
-                        inherited_methods[super_class].append(':meth:`~{}.{}`'.format(full_class_name, k))
-                    else:
-                        inherited_attributes[super_class].append(':attr:`~{}.{}`'.format(full_class_name, k))
+                    attributes[class_].append(':attr:`~{}.{}`'.format(full_class_name, k))
             except AttributeError:
                 pass
-        im = ['Inherited Methods:', '']
-        ia = ['Inherited Attributes:', '']
 
-        def format_inherited_methods(c, methods):
-            im.extend(['    :class:`~{}`'.format(get_full_class_name(c)), ''])
-            im.append('        ' + ', '.join(methods))
+        rows = [(':class:`~{}`'.format(get_full_class_name(c)), ', '.join(methods[c]))
+                for c in mro if c is not object and methods[c]]
+        if rows:
+            im = ['.. admonition:: Methods', '']
+            im.extend(self._indent(table(rows)))
             im.append('')
+            sections['_methods'] = im
 
-        def format_inherited_attributes(c, attributes):
-            ia.extend(['    :class:`~{}`'.format(get_full_class_name(c)), ''])
-            ia.append('        ' + ', '.join(attributes))
+        rows = [(':attr:`~{}`'.format(get_full_class_name(c)), ', '.join(attributes[c]))
+                for c in mro if c is not object and attributes[c]]
+        if rows:
+            ia = ['.. admonition:: Attributes', '']
+            ia.extend(self._indent(table(rows)))
             ia.append('')
-
-        for c in mro:
-            methods = inherited_methods.pop(c, None)
-            attributes = inherited_attributes.pop(c, None)
-            if c is object:
-                continue
-            if methods:
-                format_inherited_methods(c, methods)
-            if attributes:
-                format_inherited_attributes(c, attributes)
-        for c in sorted(inherited_methods):
-            print(c)
-            format_inherited_methods(c, inherited_methods[c])
-        im.append('')
-        sections['_methods'] = ['Methods:', '', '    ' + ', '.join(own_methods), '']
-        sections['_attributes'] = ['Attributes:', '', '    ' + ', '.join(own_attributes), '']
-        sections['_inherited_methods'] = im
-        sections['_inherited_attributes'] = ia
+            sections['_attributes'] = ia
 
     def _parse_attributes_section(self, section):
         lines = []
@@ -412,7 +388,14 @@ class Docstring(object):
 
     def _parse_parameters_section(self, section):
         fields = self._consume_fields()
-        return self._format_fields('Parameters', fields)
+        l = ['.. admonition:: Parameters', '']
+
+        def format_name_type(name, type_):
+            return name + ' : ' + type_ if type_ else name
+
+        l.extend(self._indent(table([(format_name_type(name, type_), ' '.join(descr))
+                                     for name, type_, descr in fields])))
+        return l
 
     def _parse_raises_section(self, section):
         fields = self._consume_fields()
