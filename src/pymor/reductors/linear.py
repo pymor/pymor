@@ -142,7 +142,8 @@ class StationaryAffineLinearReducedEstimator(ImmutableInterface):
 
     def estimate(self, U, mu, discretization):
         d = discretization
-        assert len(U) == 1, 'Can estimate only one solution vector'
+        if len(U) > 1:
+            raise NotImplementedError
         if not d.rhs.parametric:
             CR = np.ones(1)
         else:
