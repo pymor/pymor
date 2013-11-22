@@ -62,7 +62,7 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath',
               'sphinx.ext.coverage',
               'sphinx.ext.autosummary',
               'sphinx.ext.viewcode',
-              'sphinxcontrib.napoleon'
+              'pymordocstring'
               ]
 
 # Add any paths that contain templates here, relative to this directory.
