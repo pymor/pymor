@@ -22,16 +22,13 @@ needs_sphinx = '1.0'
 sys.path.insert(0, os.path.abspath('../../src'))
 
 #generate autodoc
-import sphinx.apidoc as apidoc
-
-# monkey apidoc to prevent generation of documentation for .pyx files
-# which leads to prolems with equally named .py files
-# this should become obosolete in the future
-# https://bitbucket.org/birkenfeld/sphinx/issue/944/sphinx-apidoc-add-ability-to-exclude
-# https://bitbucket.org/birkenfeld/sphinx/pull-request/110/allow-apidoc-to-exclude-individual-files/diff
-apidoc.PY_SUFFIXES = {'.py'}
-
-apidoc.main(argv=[sys.argv[0], '-o', 'generated/', '../../src/'])
+import gen_apidoc
+import pymor
+import pymortests
+import pymordemos
+gen_apidoc.walk(pymor)
+gen_apidoc.walk(pymortests)
+gen_apidoc.walk(pymordemos)
 
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath',
@@ -226,4 +223,4 @@ coverage_c_path = []
 coverage_c_regexes = {}
 coverage_ignore_c_items = {}
 
-autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance']
+# autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance']
