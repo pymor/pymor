@@ -34,30 +34,6 @@ apidoc.PY_SUFFIXES = {'.py'}
 apidoc.main(argv=[sys.argv[0], '-o', 'generated/', '../../src/'])
 
 
-# monkey sphix.util.inspect.safe_getattr to work with our @cached decorator
-# https://bitbucket.org/birkenfeld/sphinx/issue/994/autodoc-for-balky-descriptors
-def safe_getattr( obj, name, *defargs ):
-    """A getattr() that turns all exceptions into AttributeErrors."""
-    try:
-        return getattr( obj, name, *defargs )
-    except Exception, e:
-        # perhaps is descriptor being awkward?
-        if hasattr( obj, '__dict__' ):
-            try:
-                return obj.__dict__[ name ]
-            except Exception, e:
-                pass
-
-        # this is a catch-all for all the weird things that some modules do
-        # with attribute access
-        if defargs:
-            return defargs[0]
-        raise AttributeError( name )
-
-import sphinx.util.inspect
-sphinx.util.inspect.safe_getattr = safe_getattr
-
-
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath',
               'sphinx.ext.coverage',
               'sphinx.ext.autosummary',
