@@ -59,6 +59,7 @@ from __future__ import absolute_import, division, print_function
 
 from functools import partial
 import os
+from types import MethodType
 
 import numpy as np
 
@@ -205,7 +206,9 @@ class cached(object):
         '''Implement the descriptor protocol to make decorating instance method possible.
         Return a partial function where the first argument is the instance of the decorated instance object.
         '''
-        if _caching_disabled or instance._cache_region is None:
+        if instance is None:
+            return MethodType(self.decorated_function, None, instancetype)
+        elif _caching_disabled or instance._cache_region is None:
             return partial(self.decorated_function, instance)
         else:
             return partial(self.__call__, instance)
