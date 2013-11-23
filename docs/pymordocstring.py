@@ -24,6 +24,7 @@ def table(rows):
     r.append('')
     return r
 
+
 class peek_iter(object):
     def __init__(self, *args):
         self._iterable = iter(*args)
@@ -158,7 +159,8 @@ class Docstring(object):
         return fields
 
     def _consume_returns_section(self):
-        return self._consume_fields(prefer_type=True)
+        return self._consume_fields()
+        # return self._consume_fields(prefer_type=True)
 
     def _consume_section_header(self):
         section = self._line_iter.next()
@@ -325,11 +327,17 @@ class Docstring(object):
                     return c
             return None
 
-        for k in dir(self._obj):
+        for k in sorted(dir(self._obj), key=lambda x: '|' + x if x.startswith('_') else x):
             try:
                 o = safe_getattr(self._obj, k)
                 is_method = isinstance(o, (MethodType, FunctionType))
-                if k[0] == '_' and not is_method:
+                if k.startswith('_') and not is_method:
+                    continue
+                if k == '__init__':
+                    continue
+                if k.startswith('_') and not k.endswith('__'):
+                    continue
+                if k.startswith('__') and k.endswith('__') and not o.__doc__:
                     continue
                 class_ = get_class(k)
                 assert class_ is not None
@@ -388,61 +396,15 @@ class Docstring(object):
 
     def _parse_parameters_section(self, section):
         fields = self._consume_fields()
-        l = ['.. admonition:: Parameters', '']
-
-        def format_name_type(name, type_):
-            return name + ' : ' + type_ if type_ else name
-
-        l.extend(self._indent(table([(format_name_type(name, type_), ' '.join(descr))
-                                     for name, type_, descr in fields])))
-        return l
+        return self._definition_list_from_fields('Parameters', fields)
 
     def _parse_raises_section(self, section):
         fields = self._consume_fields()
-        field_type = ':raises:'
-        padding = ' ' * len(field_type)
-        multi = len(fields) > 1
-        lines = []
-        for _name, _type, _desc in fields:
-            sep = _desc and ' -- ' or ''
-            if _name:
-                if ' ' in _name:
-                    _name = '**%s**' % _name
-                else:
-                    _name = ':exc:`%s`' % _name
-                if _type:
-                    field = ['%s (*%s*)%s' % (_name, _type, sep)]
-                else:
-                    field = ['%s%s' % (_name, sep)]
-            elif _type:
-                field = ['*%s*%s' % (_type, sep)]
-            else:
-                field = []
-            field = field + _desc
-            if multi:
-                if lines:
-                    lines.extend(self._format_block(padding + ' * ', field))
-                else:
-                    lines.extend(self._format_block(field_type + ' * ', field))
-            else:
-                lines.extend(self._format_block(field_type + ' ', field))
-        return lines
+        return self._definition_list_from_fields('Raises', fields)
 
     def _parse_returns_section(self, section):
         fields = self._consume_returns_section()
-        multi = len(fields) > 1
-
-        lines = []
-        for _name, _type, _desc in fields:
-            field = self._format_field(_name, _type, _desc)
-            if multi:
-                if lines:
-                    lines.extend(self._format_block('          * ', field))
-                else:
-                    lines.extend(self._format_block(':returns: * ', field))
-            else:
-                lines.extend(self._format_block(':returns: ', field))
-        return lines
+        return self._definition_list_from_fields('Returns', fields)
 
     def _parse_see_also_section(self, section):
         lines = self._consume_to_next_section()
@@ -470,6 +432,27 @@ class Docstring(object):
             if start > 0 or end + 1 < len(lines):
                 lines = lines[start:end + 1]
         return lines
+
+    def _table_from_fields(self, name, fields):
+        l = ['.. admonition:: ' + name, '']
+
+        def format_name_type(name, type_):
+            return name + ' : ' + type_ if type_ else name
+
+        l.extend(self._indent(table([(format_name_type(n, type_), ' '.join(descr))
+                                     for n, type_, descr in fields])))
+        return l
+
+    def _definition_list_from_fields(self, name, fields):
+        l = ['.. admonition:: ' + name, '']
+
+        def format_name_type(name, type_):
+            return name + ' : ' + type_ if type_ else name
+
+        for n, t, d in fields:
+            l.extend(self._indent([format_name_type(n, t)]))
+            l.extend(self._indent(d, 8))
+        return l
 
 
 def _process_docstring(app, what, name, obj, options, lines):
