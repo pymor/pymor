@@ -11,7 +11,7 @@ FUNCTION_OPTIONS = []
 MODULE_OPTIONS = [':show-inheritance:']
 
 
-def section(name, level=0, section_levels='=-'):
+def section(name, level=0, section_levels='*=-'):
     return name + '\n' + section_levels[level] * len(name) + '\n'
 
 
@@ -43,7 +43,7 @@ def walk(module):
         if modules:
             print(section('Submodules', level=1), file=f)
             for m in modules:
-                print(section('{} module'.format(m), level=1), file=f)
+                print(section('{} module'.format(m.split('.')[-1]), level=2), file=f)
                 print('.. automodule:: ' + m, file=f)
                 for option in MODULE_OPTIONS:
                     print('    ' + option, file=f)
