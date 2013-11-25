@@ -34,15 +34,15 @@ class DiscretizationInterface(CacheableInterface, Parametric, Named):
         Same as operators but for operators representing vectors, linear operators
         with `dim_source == 1`.
 
-    Optional Methods
+    Optional Methods:
 
-    def estimate(self, U, mu=None):
-        Estimate the error of the discrete solution U to the parameter mu against
-        the real solution. (For a reduced discretization, the 'real' solution will
-        in genereal be the solution of a detailed discretization.)
+        def estimate(self, U, mu=None):
+            Estimate the error of the discrete solution U to the parameter mu against
+            the real solution. (For a reduced discretization, the 'real' solution will
+            in genereal be the solution of a detailed discretization.)
 
-    def visualize(self, U):
-        Visualize a solution given by the VectorArray U.
+        def visualize(self, U):
+            Visualize a solution given by the VectorArray U.
     '''
 
     dim_solution = None

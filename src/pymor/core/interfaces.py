@@ -447,7 +447,7 @@ def inject_sid(obj, context, *args):
     context
         A hashable, picklable, immutable object, describing the context in
         which `obj` was created.
-    *args
+    `*args`
         List of parameters which in the given context led to the creation of
         `obj`.
     '''

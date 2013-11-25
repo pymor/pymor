@@ -155,8 +155,12 @@ def contract(*arg, **kwargs):
                   :type b: ``list(tuple(str,*))``
               """
 
-        :raise: ContractException, if arguments are not coherent
-        :raise: ContractSyntaxError
+        Raises
+        ------
+        ContractException
+            Arguments are not coherent.
+        ContractSyntaxError
+            Contract syntac is incorrect.
     '''
 
     # this bit tags function as decorated
