@@ -321,9 +321,29 @@ def inspect_class(obj):
             if k in MEMBER_BLACKLIST:
                 continue
             if is_method:
-                methods[class_].append(':meth:`~{}.{}`'.format(full_class_name, k))
+                documenting_class = full_class_name
+                if not o.__doc__:
+                    for c in mro:
+                        if k in c.__dict__:
+                            try:
+                                supero = safe_getattr(c, k)
+                                if supero.__doc__:
+                                    documenting_class = get_full_class_name(c)
+                                    break
+                            except AttributeError:
+                                pass
+                methods[class_].append(':meth:`~{}.{}`'.format(documenting_class, k))
             else:
-                attributes[class_].append(':attr:`~{}.{}`'.format(full_class_name, k))
+                documenting_class = full_class_name
+                if k not in obj._sphinx_documented_attributes:
+                    for c in mro:
+                        if k in c.__dict__:
+                            if not hasattr(c, '_sphinx_documented_attributes'):
+                                format_docstring(c)  # this is pretty lame, should do better
+                            if k in getattr(c, '_sphinx_documented_attributes', []):
+                                documenting_class = get_full_class_name(c)
+                                break
+                attributes[class_].append(':attr:`~{}.{}`'.format(documenting_class, k))
         except AttributeError:
             pass
 
@@ -339,7 +359,7 @@ def inspect_class(obj):
     rows = [(':attr:`~{}`'.format(get_full_class_name(c)), ', '.join(attributes[c]))
             for c in mro if c is not object and attributes[c]]
     if rows:
-        ia = ['.. admonition:: Attributes', '']
+        ia = ['.. admonition:: Class Attributes', '']
         ia.extend(indent(table(rows)))
         ia.append('')
     else:
@@ -348,9 +368,11 @@ def inspect_class(obj):
     return im, ia
 
 
-def format_docstring(docstring, name, obj):
+def format_docstring(obj, lines=None):
 
-    non_section_lines, fields = parse_sections(parse_docstring(docstring))
+    if lines is None:
+        lines = obj.__doc__ if obj.__doc__ is not None else ''
+    non_section_lines, fields = parse_sections(parse_docstring(lines))
     section_formatters = OrderedDict((
         ('parameters', format_fields_section),
         ('yields', format_fields_section),
@@ -368,6 +390,13 @@ def format_docstring(docstring, name, obj):
     for section, lines in fields.iteritems():
         sections[section] = section_formatters[section](section.capitalize(), lines)
     if isinstance(obj, type):
+        if 'attributes' in fields:
+            obj._sphinx_documented_attributes = [n for n, _, _ in fields['attributes']]
+        else:
+            try:
+                obj._sphinx_documented_attributes = []
+            except TypeError:
+                pass
         sections['_methods'], sections['_attributes'] = inspect_class(obj)
 
     parsed_lines = non_section_lines
@@ -378,7 +407,7 @@ def format_docstring(docstring, name, obj):
 
 
 def _process_docstring(app, what, name, obj, options, lines):
-    lines[:] = format_docstring(lines, name, obj)
+    lines[:] = format_docstring(obj, lines)
 
 
 def setup(app):
