@@ -4,3 +4,11 @@
   white-space: nowrap;
   background-color: #F2F2F2;
 }
+
+.admonition-methods table {
+    width: 85%;
+}
+
+.admonition-attributes table {
+    width: 85%;
+}
