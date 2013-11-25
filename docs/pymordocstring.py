@@ -251,15 +251,15 @@ def parse_sections(sections):
 
 
 def format_attributes_section(section, lines):
-    lines = []
+    formatted_lines = []
     for _name, _type, _desc in lines:
-        lines.append('.. attribute:: ' + _name)
+        formatted_lines.append('.. attribute:: ' + _name)
         if _type:
-            lines.append('   :annotation: ' + _type)
+            formatted_lines.append('   :annotation: ' + _type)
         if _desc:
-            lines.extend([''] + indent(_desc, 3))
-        lines.append('')
-    return lines
+            formatted_lines.extend([''] + indent(_desc, 3))
+        formatted_lines.append('')
+    return formatted_lines
 
 
 def format_generic_section(section, lines, use_admonition=False):
