@@ -33,6 +33,9 @@ class DiscretizationInterface(CacheableInterface, Parametric, Named):
     vector_operators
         Same as operators but for operators representing vectors, linear operators
         with `dim_source == 1`.
+    products
+        Same as operators but for scalar product operators associated to the
+        discretization.
 
     Optional Methods:
 
@@ -51,7 +54,8 @@ class DiscretizationInterface(CacheableInterface, Parametric, Named):
     operators = dict()
     functionals = dict()
     vector_operators = dict()
-    with_arguments = frozenset({'operators', 'functionals', 'vector_operators'})
+    products = dict()
+    with_arguments = frozenset({'operators', 'functionals', 'vector_operators, products'})
 
     @abstractmethod
     def _solve(self, mu=None):
