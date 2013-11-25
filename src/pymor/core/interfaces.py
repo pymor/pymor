@@ -94,16 +94,19 @@ functionality:
 
 from __future__ import absolute_import, division, print_function
 import abc
-import types
-import itertools
-import contracts
 import inspect
+import itertools
+import os
+import types
 from types import NoneType
 
+import contracts
 import numpy as np
 
 from pymor.core import decorators, backports, logger
 from pymor.core.exceptions import ConstError
+
+DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_DONT_COPY_DOCSTRINGS', 0)) == 1
 
 
 class UIDProvider(object):
@@ -162,27 +165,28 @@ class UberMeta(abc.ABCMeta):
                 base_doc = None
                 contract_kwargs = dict()
                 for base in bases:
-                    has_contract = False
                     base_func = getattr(base, item.__name__, None)
-                    if base_func:
-                        base_doc = getattr(base_func, '__doc__', None)
-                        has_contract = getattr(base_func, 'decorated', None) == 'contract'
-                        contract_kwargs = getattr(base_func, 'contract_kwargs', contract_kwargs)
-                    if base_doc:
-                        doc = decorators.fixup_docstring(getattr(item, '__doc__', ''))
-                        has_base_contract_docs = decorators.contains_contract(base_doc)
-                        has_contract_docs = decorators.contains_contract(doc)
-                        if has_base_contract_docs and not has_contract_docs:
-                            base_doc += doc
-                        elif not has_base_contract_docs and doc is not None:
-                            base_doc = doc
-                        item.__doc__ = base_doc
-                    if has_contract:
-                        # TODO why is the rebind necessary?
-                        classdict['_H_%s' % attr] = item
-                        contract_kwargs = contract_kwargs or dict()
-                        p = decorators.contracts_decorate(item, modify_docstring=True, **contract_kwargs)
-                        classdict[attr] = p
+                    if not DONT_COPY_DOCSTRINGS:
+                        has_contract = False
+                        if base_func:
+                            base_doc = getattr(base_func, '__doc__', None)
+                            has_contract = getattr(base_func, 'decorated', None) == 'contract'
+                            contract_kwargs = getattr(base_func, 'contract_kwargs', contract_kwargs)
+                        if base_doc:
+                            doc = decorators.fixup_docstring(getattr(item, '__doc__', ''))
+                            has_base_contract_docs = decorators.contains_contract(base_doc)
+                            has_contract_docs = decorators.contains_contract(doc)
+                            if has_base_contract_docs and not has_contract_docs:
+                                base_doc += doc
+                            elif not has_base_contract_docs and doc is not None:
+                                base_doc = doc
+                            item.__doc__ = base_doc
+                        if has_contract:
+                            # TODO why is the rebind necessary?
+                            classdict['_H_%s' % attr] = item
+                            contract_kwargs = contract_kwargs or dict()
+                            p = decorators.contracts_decorate(item, modify_docstring=True, **contract_kwargs)
+                            classdict[attr] = p
                     if (hasattr(base_func, "__isabstractstaticmethod__") and
                             getattr(base_func, "__isabstractstaticmethod__")):
                         classdict[attr] = staticmethod(classdict[attr])
@@ -273,7 +277,7 @@ class BasicInterface(object):
 
         Parameters
         ----------
-        **kwargs
+        `**kwargs`
             Names of attributes to change with their new values. Each attribute name
             has to be contained in `with_arguments`.
 

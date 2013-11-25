@@ -3,7 +3,7 @@
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
-SPHINXBUILD   = sphinx-build
+SPHINXBUILD   = PYMOR_DONT_COPY_DOCSTRINGS=1 sphinx-build
 PAPER         =
 BUILDDIR      = _build
 
