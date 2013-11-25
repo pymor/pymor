@@ -7,8 +7,27 @@
 
 .admonition-methods table {
     width: 85%;
+    margin-left: 20px;
+    margin-top: 5px;
 }
 
-.admonition-attributes table {
+.admonition-class-attributes table {
     width: 85%;
+    margin-left: 20px;
+    margin-top: 5px;
+}
+
+.admonition-parameters dl {
+    margin-left: 20px;
+    margin-top: 5px;
+}
+
+.admonition-returns dl {
+    margin-left: 20px;
+    margin-top: 5px;
+}
+
+.admonition-raises dl {
+    margin-left: 20px;
+    margin-top: 5px;
 }
