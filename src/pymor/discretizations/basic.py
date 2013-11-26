@@ -41,19 +41,6 @@ class DiscretizationBase(DiscretizationInterface):
         if visualizer is not None:
             self.visualize = self.__visualize
 
-    @abstractmethod
-    def _solve(self, mu=None):
-        '''Perform the actual solving.'''
-        pass
-
-    @cached
-    def solve(self, mu=None):
-        '''Solve for a parameter `mu`.
-
-        The result is cached by default.
-        '''
-        return self._solve(mu)
-
     def __visualize(self, U, *args, **kwargs):
         self.visualizer.visualize(U, self, *args, **kwargs)
 
