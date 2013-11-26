@@ -20,6 +20,7 @@ needs_sphinx = '1.0'
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 
 sys.path.insert(0, os.path.abspath('../../src'))
+sys.path.insert(0, os.path.abspath('.'))
 
 #generate autodoc
 import gen_apidoc
@@ -224,3 +225,5 @@ coverage_c_regexes = {}
 coverage_ignore_c_items = {}
 
 # autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance']
+import substitutions
+rst_epilog = substitutions.substitutions
