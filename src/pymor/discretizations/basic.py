@@ -86,7 +86,7 @@ class StationaryDiscretization(DiscretizationBase):
 
     def __init__(self, operator, rhs, products=None, parameter_space=None, estimator=None, visualizer=None,
                  caching='disk', name=None):
-        assert isinstance(operator, OperatorInterface) and operator.linear
+        assert isinstance(operator, OperatorInterface)
         assert isinstance(rhs, OperatorInterface) and rhs.linear
         assert operator.dim_source == operator.dim_range == rhs.dim_source
         assert rhs.dim_range == 1
