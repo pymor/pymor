@@ -14,38 +14,37 @@ class DiscretizationInterface(CacheableInterface, Parametric, Named):
     '''Describes a discretization.
 
     Note that we do not make any distinction between detailed and reduced
-    discretizations at this point.
+    discretizations.
 
     Attributes
     ----------
     dim_solution
-        Dimension of the `VectorArrays` returned by solve.
+        Dimension of the |VectorArrays| returned by solve.
     type_solution
-        Type of the `VectorArrays` returned by solve.
+        Type of the |VectorArrays| returned by solve.
     linear
-        True if the discretization describes a linear Problem.
+        `True` if the discretization describes a linear Problem.
     operators
-        Dictionary of all operators contained in this discretization. The idea is
-        that this attribute will be common to all discretizations such that it can
-        be used for introspection. Compare the implementation of `reduce_generic_rb`.
+        Dictionary of all |Operators| contained in the discretization.
+        (Compare the implementation of :func:`pymor.reductors.basic.reduce_generic_rb`.)
     functionals
-        Same as operators but for functionals.
+        Same as operators but for |Functionals|.
     vector_operators
-        Same as operators but for operators representing vectors, linear operators
-        with `dim_source == 1`.
+        Same as operators but for |Operators| representing vectors, i.e.
+        linear |Operators| with `dim_source == 1`.
     products
-        Same as operators but for scalar product operators associated to the
+        Same as |Operators| but for inner product operators associated to the
         discretization.
 
     Optional Methods:
 
         def estimate(self, U, mu=None):
-            Estimate the error of the discrete solution U to the parameter mu against
+            Estimate the error of the discrete solution `U` to the |Parameter| `mu` against
             the real solution. (For a reduced discretization, the 'real' solution will
-            in genereal be the solution of a detailed discretization.)
+            be the solution of a detailed discretization, in general.)
 
         def visualize(self, U):
-            Visualize a solution given by the VectorArray U.
+            Visualize a solution given by the |VectorArray| U.
     '''
 
     dim_solution = None
@@ -64,8 +63,17 @@ class DiscretizationInterface(CacheableInterface, Parametric, Named):
 
     @cached
     def solve(self, mu=None):
-        '''Solve for a parameter `mu`.
+        '''Solve for the |Parameter| `mu`.
 
         The result is cached by default.
+
+        Parameters
+        ----------
+        mu
+            |Parameter| for which to solve.
+
+        Returns
+        -------
+        The solution given by a |VectorArray|.
         '''
         return self._solve(mu)

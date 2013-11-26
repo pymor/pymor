@@ -5,9 +5,10 @@
 
 from __future__ import absolute_import, division, print_function
 
+from itertools import chain
+
 from pymor.algorithms.timestepping import TimeStepperInterface
-from pymor.core import abstractmethod
-from pymor.core.cache import CacheableInterface, cached
+from pymor.core.cache import CacheableInterface
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.la import induced_norm, VectorArrayInterface
 from pymor.operators import OperatorInterface
@@ -17,6 +18,7 @@ from pymor.tools import method_arguments, FrozenDict
 
 
 class DiscretizationBase(DiscretizationInterface):
+    '''Base class for |Discretizations| providing some common functionality.'''
 
     def __init__(self, operators, functionals, vector_operators, products=None, estimator=None, visualizer=None,
                  caching='disk', name=None):
@@ -49,37 +51,49 @@ class DiscretizationBase(DiscretizationInterface):
 
 
 class StationaryDiscretization(DiscretizationBase):
-    '''Generic class for discretizations of stationary linear problems.
+    '''Generic class for discretizations of stationary problems.
 
-    This class describes discrete problems given by the equation ::
+    This class describes discrete problems given by the equation::
 
-        L_h(μ) ⋅ u_h(μ) = f_h(μ)
+        L(u(μ), μ) = F(μ)
 
-    which is to be solved for u_h.
+    with a linear functional F and a (possibly) non-linear operator L.
 
     Parameters
     ----------
     operator
-        The operator L_h given as a `LinearOperator`.
+        The |Operator| L.
     rhs
-        The functional f_h given as a `LinearOperator` with `dim_range == 1`.
+        The |Functional| F.
+    products
+        A dict of inner product |Operators| defined on the discrete space the
+        problem is posed on. For each product a corresponding norm
+        is added as a method of the discretization.
+    parameter_space
+        The |ParameterSpace| for which the discrete problem is posed.
+    estimator
+        An error estimator for the problem. This can be any object with
+        an `estimate(U, mu, discretization)` method. If `estimator` is
+        not `None` an `estimate(U, mu)` method is added to the
+        discretization.
     visualizer
-        A function visualize(U) which visualizes the solution vectors. Can be None,
-        in which case no visualization is availabe.
+        A visualizer for the problem. This can be any object with
+        a `visualize(U, discretization, ...)` method. If `visualizer`
+        is not `None` a `visualize(U, *args, **kwargs)` method is added
+        to the discretization, which forwards its arguments to the
+        visualizer's `visualize` method.
+    caching
+        `None` or name of the cache region to use. See
+        :mod:`pymor.core.cache`.
     name
         Name of the discretization.
 
     Attributes
     ----------
     operator
-        The operator L_h. A synonym for operators['operator'].
-    operators
-        Dictionary of all operators contained in this discretization.
-        The idea is that this attribute will be common to all discretizations such
-        that it can be used for introspection. Compare the implementation of
-        `reduce_generic_rb`.  For this class, operators has the keys 'operator' and 'rhs'.
+        The |Operator| L. Synonymous for `operators['operator']`.
     rhs
-        The functional f_h. A synonym for operators['rhs'].
+        The |Functional| F. Synonymous for `functionals['rhs']`.
     '''
 
     sid_ignore = ('visualizer', 'caching', 'name')
@@ -126,7 +140,7 @@ class StationaryDiscretization(DiscretizationBase):
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu)
 
-        # explicitly checking if logging is disabled saves the expensive str(mu) call
+        # explicitly checking if logging is disabled saves the str(mu) call
         if not self.logging_disabled:
             self.logger.info('Solving {} for {} ...'.format(self.name, mu))
 
@@ -134,6 +148,77 @@ class StationaryDiscretization(DiscretizationBase):
 
 
 class InstationaryDiscretization(DiscretizationBase):
+    '''Generic class for discretizations of stationary problems.
+
+    This class describes instationary problems given by the equations::
+
+        M * ∂_t u(t, μ) + L(u(μ), t, μ) = F(t, μ)
+                                u(0, μ) = u_0(μ)
+
+    for t in [0,T], where L is a (possibly) non-linear time-dependent
+    |Operator|, F is a time-dependent linear |Functional|, and u_0 the
+    initial data. The mass operator is assumed to be linear,
+    time-independent and |Parameter|-independent.
+
+    Parameters
+    ----------
+    T
+        The end-time T.
+    initial_data
+        The initial data u_0. Either a |VectorArray| of length 1 or
+        (for the |Parameter|-dependent case) a vector-like |Operator|
+        (i.e. a linear |Operator| with `dim_source == 1`).
+    operator
+        The |Operator| L.
+    rhs
+        The |Functional| F.
+    mass
+        The mass |Operator| `M`. If `None` the identity is assumed.
+    time_stepper
+        T time-stepper to be used by :meth:`solve`. Has to satisfy
+        the :class:`~pymor.algorithms.timestepping.TimeStepperInterface`.
+    num_values
+        The number of returned vectors of the solution trajectory. If `None`, each
+        intermediate vector that is calculated is returned.
+    products
+        A dict of product |Operators| defined on the discrete space the
+        problem is posed on. For each product a corresponding norm
+        is added as a method of the discretization.
+    parameter_space
+        The |ParameterSpace| for which the discrete problem is posed.
+    estimator
+        An error estimator for the problem. This can be any object with
+        an `estimate(U, mu, discretization)` method. If `estimator` is
+        not `None` an `estimate(U, mu)` method is added to the
+        discretization.
+    visualizer
+        A visualizer for the problem. This can be any object with
+        a `visualize(U, discretization, ...)` method. If `visualizer`
+        is not `None` a `visualize(U, *args, **kwargs)` method is added
+        to the discretization, which forwards its arguments to the
+        visualizer's `visualize` method.
+    caching
+        `None` or name of the cache region to use. See
+        :mod:`pymor.core.cache`.
+    name
+        Name of the discretization.
+
+    Attributes
+    ----------
+    T
+        The end-time.
+    initial_data
+        The intial data u_0 given by a vector-like |Operator|. Synonymous
+        for `vector_operators['initial_data']`.
+    operator
+        The |Operator| L. Synonymous for `operators['operator']`.
+    rhs
+        The |Functional| F. Synonymous for `functionals['rhs']`.
+    mass
+        The mass operator M. Synonymous for `operators['mass']`.
+    time_stepper
+        The provided time-stepper.
+    '''
 
     sid_ignore = ('visualizer', 'caching', 'name')
 

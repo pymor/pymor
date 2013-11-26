@@ -22,6 +22,38 @@ from pymor.operators.fv import (nonlinear_advection_lax_friedrichs_operator,
 def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=None, nt=100, num_flux='lax_friedrichs',
                                                    lxf_lambda=1., eo_gausspoints=5, eo_intervals=1, num_values=None,
                                                    domain_discretizer=None, grid=None, boundary_info=None):
+    '''Discretizes an |InstationaryAdvectionProblem| using finite elements.
+
+    Parameters
+    ----------
+    analytical_problem
+        The |InstationaryAdvectionProblem| to discretize.
+    diameter
+        If not None, is passed to the domain_discretizer.
+    domain_discretizer
+        Discretizer to be used for discretizing the analytical domain. This has
+        to be a function `domain_discretizer(domain_description, diameter, ...)`.
+        If further arguments should be passed to the discretizer, use
+        :func:`functools.partial`. If `None`, |discretize_domain_default| is used.
+    grid
+        Instead of using a domain discretizer, the grid can also be passed directly
+        using this parameter.
+    boundary_info
+        A |BoundaryInfo| specifying the boundary types of the grid boundary entities.
+        Must be provided if `grid` is provided.
+
+    Returns
+    -------
+    discretization
+        The discretization that has been generated.
+    data
+        Dictionary with the following entries:
+
+            :grid:           The generated grid.
+            :boundary_info:  The generated |BoundaryInfo|.
+
+
+    '''
 
     assert isinstance(analytical_problem, InstationaryAdvectionProblem)
     assert grid is None or boundary_info is not None

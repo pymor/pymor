@@ -2,6 +2,11 @@
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+'''
+
+'''
+
+
 from __future__ import absolute_import, division, print_function
 
 
@@ -15,37 +20,35 @@ from pymor.operators.cg import DiffusionOperatorP1, L2ProductFunctionalP1, L2Pro
 
 def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer=None,
                            grid=None, boundary_info=None):
-    '''Discretize an `EllipticProblem` using finite elements.
-
-    Since operators are not assembled during instatiation, calling this function is
-    cheap if the domain discretization proceeds quickly.
+    '''Discretizes an |EllipticProblem| using finite elements.
 
     Parameters
     ----------
     analytical_problem
-        The `EllipticProblem` to discretize.
+        The |EllipticProblem| to discretize.
     diameter
         If not None, is passed to the domain_discretizer.
     domain_discretizer
         Discretizer to be used for discretizing the analytical domain. This has
-        to be function `domain_discretizer(domain_description, diameter=...)`.
+        to be a function `domain_discretizer(domain_description, diameter, ...)`.
         If further arguments should be passed to the discretizer, use
-        functools.partial. If None, `discretize_domain_default` is used.
+        :func:`functools.partial`. If `None`, |discretize_domain_default| is used.
     grid
-        Instead of using a domain discretizer, the grid can be passed directly.
+        Instead of using a domain discretizer, the grid can also be passed directly
+        using this parameter.
     boundary_info
-        A `BoundaryInfo` specifying the boundary types of the grid boundary
-        entities. Must be provided is `grid` is provided.
+        A |BoundaryInfo| specifying the boundary types of the grid boundary entities.
+        Must be provided if `grid` is provided.
 
     Returns
     -------
     discretization
         The discretization that has been generated.
     data
-        Dict with the following entries:
+        Dictionary with the following entries:
 
             :grid:           The generated grid.
-            :boundary_info:  The generated `BoundaryInfo`.
+            :boundary_info:  The generated |BoundaryInfo|.
     '''
 
     assert isinstance(analytical_problem, EllipticProblem)
