@@ -36,6 +36,7 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath',
               'sphinx.ext.coverage',
               'sphinx.ext.autosummary',
               'sphinx.ext.viewcode',
+              'sphinx.ext.intersphinx',
               'pymordocstring'
               ]
 
@@ -225,5 +226,9 @@ coverage_c_regexes = {}
 coverage_ignore_c_items = {}
 
 # autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance']
+
+intersphinx_mapping = {'python': ('http://docs.python.org/2.7', None),
+                       'numpy': ('http://docs.scipy.org/doc/numpy', None)}
+
 import substitutions
 rst_epilog = substitutions.substitutions
