@@ -3,7 +3,7 @@
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-# This file is based upon sphinxcontrib-napoleon
+# This file was originally based upon sphinxcontrib-napoleon
 # Copyright 2013 Rob Ruana
 
 from collections import deque, defaultdict, OrderedDict
@@ -300,7 +300,13 @@ def inspect_class(obj):
                 return c
         return None
 
-    for k in sorted(dir(obj), key=lambda x: '|' + x if x.startswith('_') else x):
+    # this is pretty lame, should do better
+    for c in mro:
+        if not hasattr(c, '_sphinx_documented_attributes'):
+            format_docstring(c, dont_recurse=True)
+
+    # sorted(dir(obj), key=lambda x: '|' + x if x.startswith('_') else x):
+    for k in dir(obj):
         try:
             o = safe_getattr(obj, k)
             is_method = isinstance(o, (MethodType, FunctionType))
@@ -315,40 +321,40 @@ def inspect_class(obj):
             class_ = get_class(k)
             assert class_ is not None
             class_name = getattr(class_, '__name__', '')
-            full_class_name = get_full_class_name(class_)
             if k.startswith('_' + class_name + '__'):
                 k = k.split('_' + class_name)[-1]
             if k in MEMBER_BLACKLIST:
                 continue
             if is_method:
-                documenting_class = full_class_name
+                documenting_class = class_
                 if not o.__doc__:
                     for c in mro:
                         if k in c.__dict__:
                             try:
                                 supero = safe_getattr(c, k)
                                 if supero.__doc__:
-                                    documenting_class = get_full_class_name(c)
+                                    documenting_class = c
                                     break
                             except AttributeError:
                                 pass
-                methods[class_].append(':meth:`~{}.{}`'.format(documenting_class, k))
+                methods[class_].append((k, documenting_class))
             else:
-                documenting_class = full_class_name
+                documenting_class = class_
                 if k not in obj._sphinx_documented_attributes:
                     for c in mro:
                         if k in c.__dict__:
-                            if not hasattr(c, '_sphinx_documented_attributes'):
-                                format_docstring(c)  # this is pretty lame, should do better
                             if k in getattr(c, '_sphinx_documented_attributes', []):
-                                documenting_class = get_full_class_name(c)
+                                documenting_class = c
                                 break
-                attributes[class_].append(':attr:`~{}.{}`'.format(documenting_class, k))
+                attributes[class_].append((k, documenting_class))
         except AttributeError:
             pass
 
+    key_func = lambda x: '|' + x[0].lower() if x[0].startswith('_') else x[0].lower()
+    methods = {k: [':meth:`~{}.{}`'.format(get_full_class_name(c), n) for n, c in sorted(v, key=key_func)]
+               for k, v in methods.iteritems()}
     rows = [(':class:`~{}`'.format(get_full_class_name(c)), ', '.join(methods[c]))
-            for c in mro if c is not object and methods[c]]
+            for c in mro if c is not object and c in methods]
     if rows:
         im = ['.. admonition:: Methods', '']
         im.extend(indent(table(rows)))
@@ -356,10 +362,17 @@ def inspect_class(obj):
     else:
         im = []
 
+    all_attributes = {x[0] for v in attributes.itervalues() for x in v}
+    for c in mro:
+        for a in getattr(c, '_sphinx_documented_attributes', []):
+            if not a in all_attributes:
+                attributes[c].append((a, c))
+    attributes = {k: [':attr:`~{}.{}`'.format(get_full_class_name(c), n) for n, c in sorted(v, key=key_func)]
+                  for k, v in attributes.iteritems()}
     rows = [(':attr:`~{}`'.format(get_full_class_name(c)), ', '.join(attributes[c]))
-            for c in mro if c is not object and attributes[c]]
+            for c in mro if c is not object and c in attributes]
     if rows:
-        ia = ['.. admonition:: Class Attributes', '']
+        ia = ['.. admonition:: Attributes', '']
         ia.extend(indent(table(rows)))
         ia.append('')
     else:
@@ -368,7 +381,7 @@ def inspect_class(obj):
     return im, ia
 
 
-def format_docstring(obj, lines=None):
+def format_docstring(obj, lines=None, dont_recurse=False):
 
     if lines is None:
         lines = obj.__doc__ if obj.__doc__ is not None else ''
@@ -397,7 +410,8 @@ def format_docstring(obj, lines=None):
                 obj._sphinx_documented_attributes = []
             except TypeError:
                 pass
-        sections['_methods'], sections['_attributes'] = inspect_class(obj)
+        if not dont_recurse:
+            sections['_methods'], sections['_attributes'] = inspect_class(obj)
 
     parsed_lines = non_section_lines
     for section in section_formatters:
