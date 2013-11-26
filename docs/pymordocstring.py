@@ -302,7 +302,7 @@ def inspect_class(obj):
 
     # this is pretty lame, should do better
     for c in mro:
-        if not hasattr(c, '_sphinx_documented_attributes'):
+        if not '_sphinx_documented_attributes' in c.__dict__:
             format_docstring(c, dont_recurse=True)
 
     # sorted(dir(obj), key=lambda x: '|' + x if x.startswith('_') else x):
@@ -343,7 +343,7 @@ def inspect_class(obj):
                 if k not in obj._sphinx_documented_attributes:
                     for c in mro:
                         if k in c.__dict__:
-                            if k in getattr(c, '_sphinx_documented_attributes', []):
+                            if k in c.__dict__.get('_sphinx_documented_attributes', []):
                                 documenting_class = c
                                 break
                 attributes[class_].append((k, documenting_class))
@@ -364,7 +364,7 @@ def inspect_class(obj):
 
     all_attributes = {x[0] for v in attributes.itervalues() for x in v}
     for c in mro:
-        for a in getattr(c, '_sphinx_documented_attributes', []):
+        for a in c.__dict__.get('_sphinx_documented_attributes', []):
             if not a in all_attributes:
                 attributes[c].append((a, c))
     attributes = {k: [':attr:`~{}.{}`'.format(get_full_class_name(c), n) for n, c in sorted(v, key=key_func)]
@@ -402,6 +402,7 @@ def format_docstring(obj, lines=None, dont_recurse=False):
     sections = {}
     for section, lines in fields.iteritems():
         sections[section] = section_formatters[section](section.capitalize(), lines)
+
     if isinstance(obj, type):
         if 'attributes' in fields:
             obj._sphinx_documented_attributes = [n for n, _, _ in fields['attributes']]
