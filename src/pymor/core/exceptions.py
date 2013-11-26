@@ -13,8 +13,8 @@ ContractException = contracts.ContractException
 
 
 class CommunicationError(Exception):
-    '''Is raised when the `data` field of a `Communicable`
-    is accessed, but communication is disabled.
+    '''Is raised when the `data` field of an :class:`pymor.la.interfaces.Communicable`
+    instance is accessed, but communication is disabled.
     '''
 
 
@@ -31,7 +31,6 @@ class CodimError(Exception):
 
 class CallOrderWarning(UserWarning):
     '''I am raised when there's a preferred call order, but the user didn't follow it.
-    For an Example see pymor.discretizers.stationary.elliptic.cg
     '''
     pass
 

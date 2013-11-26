@@ -27,11 +27,11 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
     Parameters
     ----------
     discretization
-        The discretization to reduce.
+        The |Discretization| to reduce.
     reductor
-        Reductor for reducing the given discretization. This has to be a
+        Reductor for reducing the given |Discretization|. This has to be a
         function of the form `reductor(discretization, basis, extends=None)`.
-        If your reductor takes more arguments, use, e.g., functools.partial.
+        If your reductor takes more arguments, use, e.g., :func:`functools.partial`.
         The method has to return a tuple
         `(reduced_discretization, reconstructor, reduction_data)`.
         In case the last basis extension was `hierarchic` (see
@@ -39,9 +39,9 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
         `(last_reduced_discretization, last_reconstructor, last_reduction_data)`
         which can be used by the reductor to speed up the reduction
         process. For an example see
-        :func:`pymor.reductors.linear.reduce_stationary_affine_linear`.
+        :func:`~pymor.reductors.linear.reduce_stationary_affine_linear`.
     samples
-        The set of parameter samples on which to perform the greedy search.
+        The set of |Parameter| samples on which to perform the greedy search.
     initial_basis
         The initial reduced basis with which the algorithm starts. If `None`,
         an empty basis is used as initial_basis.
@@ -72,7 +72,7 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
     Dict with the following fields:
 
         :basis:                  The reduced basis.
-        :reduced_discretization: The reduced discretization obtained for the
+        :reduced_discretization: The reduced |Discretization| obtained for the
                                  computed basis.
         :reconstructor:          Reconstructor for `reduced_discretization`.
         :max_err:                Last estimated maximum error on the sample set.

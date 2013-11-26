@@ -9,21 +9,21 @@ Any class that wishes to provide cached method calls should derive from
 be marked using the :class:`cached` decorator.
 
 To ensure consistency, :class:`CacheableInterface` derives from
-:class:`pymor.core.ImmutableInterface`: The return value of a
+:class:`~pymor.core.interfaces.ImmutableInterface`: The return value of a
 cached method should only depend on its arguments as well as the
 the immutable state of the class instance.
 
 Making this assumption, the keys for cache lookup are created from
 the following data:
 
-    1. the instance's state id (see :class:`pymor.core.interfaces.ImmutableInterface`)
+    1. the instance's state id (see :class:`~pymor.core.interfaces.ImmutableInterface`)
        if available, else the instance's unique id
-       (see :class:`pymor.core.interfaces.BasicInterface`),
+       (see :class:`~pymor.core.interfaces.BasicInterface`),
     2. the method's `__name__`,
     3. the state id of each argument if available, else its pickled
        state.
 
-Note, however, that instances of :class:`pymor.core.interfaces.ImmutableInterface`
+Note, however, that instances of :class:`~pymor.core.interfaces.ImmutableInterface`
 are allowed to have mutable private attributes. It is the implmentors
 responsibility not to break things.
 
@@ -32,7 +32,7 @@ Currently two backends are provided for memory-based and disk-based caching
 (:class:`DogpileMemoryCacheRegion` and :class:`DogpileDiskCacheRegion`). The
 available regions are stored in the module level `cache_regions` dict. The
 user can add additional regions (e.g. multiple disk cache regions) as
-required. :meth:`CacheableInterface.__init__` takes a `region` argument
+required. :class:`CacheableInterface` takes a `region` argument
 through which a key of the `cache_regions` dict can provided to select
 a cache region which should be used by the instance. (Setting `region` to
 `None` or `'none'` disables caching.)

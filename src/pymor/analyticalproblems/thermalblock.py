@@ -35,19 +35,18 @@ class ThermalBlockProblem(EllipticProblem, Unpicklable):
            |        |        |        |
            ----------------------------
 
-    The Problem is implemented as a special EllipticProblem with the
+    The Problem is implemented as an |EllipticProblem| with the
     characteristic functions of the blocks as `diffusion_functions`.
-    The problem cannot be pickled, because it gets lambdas as attributes.
 
     Parameters
     ----------
     num_blocks
         The tuple (nx, ny)
     parameter_range
-        A tuple (mu_min, mu_max). Each parameter component mu_ij is allowed
+        A tuple (mu_min, mu_max). Each |Parameter| component mu_ij is allowed
         to lie in the interval [mu_min, mu_max].
     rhs
-        The function f(x, mu).
+        The |Function| f(x, mu).
     '''
 
     def __init__(self, num_blocks=(3, 3), parameter_range=(0.1, 1), rhs=ConstantFunction(dim_domain=2)):

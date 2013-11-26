@@ -6,18 +6,16 @@
 instationary problems.
 
 The algorithms are generic in the sense each algorithms operates exclusively on
-instances of :class:`pymor.operators.interfaces.OperatorInterface` and
-:class:`pymor.la.interfaces.VectorArrayInterface`. In particluar, the algorithms
-can also be used to turn an arbitrary stationary discretization provided
-by an external library into an instationary discretization.
+|Operators| and |VectorArrays|. In particluar, the algorithms
+can also be used to turn an arbitrary stationary |Discretization| provided
+by an external library into an instationary |Discretization|.
 
 Currently, implementations of :func:`explicit_euler` and :func:`implicit_euler`
 time-stepping are provided. The :class:`TimeStepperInterface` defines a
 common interface that has to be fulfilled by the time-steppers that are used
-by :class:`pymor.discretizations.basic.InstationaryDiscretization`. The classes
-:class:`ExplicitEulerTimeStepper` and :class:`ImplicitEulerTimeStepper`
-encapsulate :func:`explicit_euler` and :func:`implicit_euler` to provide
-this interface.
+by |InstationaryDiscretization|. The classes :class:`ExplicitEulerTimeStepper`
+and :class:`ImplicitEulerTimeStepper` encapsulate :func:`explicit_euler` and
+:func:`implicit_euler` to provide this interface.
 '''
 
 from __future__ import absolute_import, division, print_function
@@ -35,8 +33,8 @@ class TimeStepperInterface(ImmutableInterface):
 
         M * d_t u + A(u, t) = F(t).
 
-    Time-steppers used by :class:`pymor.discretizations.InstationaryDiscretization`
-    have to fulfill this interface.
+    Time-steppers used by |InstationaryDiscretization| have to fulfill
+    this interface.
     '''
 
     @abstractmethod
@@ -54,18 +52,22 @@ class TimeStepperInterface(ImmutableInterface):
         initial_data
             The solution vector at `initial_time`.
         operator
-            The operator A.
+            The |Operator| A.
         rhs
-            The right hand side F (either `VectorArray` of length 1 or `Operator` with
+            The right hand side F (either |VectorArray| of length 1 or |Operator| with
             `dim_range == 1`). If `None`, zero right hand side is assumed.
         mass
-            The operator M. If `None`, the identity operator is assumed.
+            The |Operator| M. If `None`, the identity operator is assumed.
         mu
-            Parameter provided to `operator` (and `rhs`). The current time is added
+            |Parameter| provided to `operator` (and `rhs`). The current time is added
             to `mu` with key `_t`.
         num_values
             The number of returned vectors of the solution trajectory. If `None`, each
             intermediate vector that is calculated is returned.
+
+        Returns
+        -------
+        |VectorArray| containing the solution trajectory.
         '''
         pass
 
@@ -82,7 +84,8 @@ class ImplicitEulerTimeStepper(TimeStepperInterface):
     nt
         The number of time-steps the time-stepper will perform.
     invert_options
-        The `invert_options` used to invert `M + dt*A`.
+        The :attr:`~pymor.operators.interfaces.OperatorInterface.invert_options` used
+        to invert `M + dt*A`.
     '''
 
     def __init__(self, nt, invert_options=None):

@@ -555,7 +555,7 @@ class ImmutableInterface(BasicInterface):
         '''Make the instance mutable.
 
         .. warning::
-            Unlocking an instance of `ImmutableInterface` will result in the
+            Unlocking an instance of :class:`ImmutableInterface` will result in the
             deletion of its sid. However, this will not delete the sids of
             objects referencing it. You really should not unlock an object
             unless you really know what you are doing. (One exception might

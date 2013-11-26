@@ -1,3 +1,7 @@
+#################
+Table of Contents
+#################
+
 .. toctree::
     :maxdepth: 3
     

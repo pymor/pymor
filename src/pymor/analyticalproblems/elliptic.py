@@ -12,7 +12,7 @@ from pymor.tools import Named
 
 
 class EllipticProblem(ImmutableInterface, Named):
-    '''Elliptic analytical problem.
+    '''Linear elliptic analytical problem.
 
     The problem consists in solving ::
 
@@ -25,18 +25,18 @@ class EllipticProblem(ImmutableInterface, Named):
     Parameters
     ----------
     domain
-        A `DomainDescription` of the domain the problem is posed on.
+        A |DomainDescription| of the domain the problem is posed on.
     rhs
-        The function f(x, mu).
+        The |Function| f(x, mu).
     diffusion_functions
-        List of the functions d_k(x).
+        List of the |functions| d_k(x).
     diffusion_functionals
-        List of the functionals theta_k(mu). If None, and `len(diffusion_functions) > 1`
-        let theta_k be the kth projection of the coefficient part of mu.
-        If None and `len(diffusion_functions) == 1`, no parameter dependence is
-        assumed.
+        List of the |ParameterFunctionals| theta_k(mu). If None, and
+        `len(diffusion_functions) > 1` let theta_k be the kth projection of the
+        coefficient part of mu.  If None and `len(diffusion_functions) == 1`,
+        no parameter dependence is assumed.
     dirichlet_data
-        Function providing the Dirichlet boundary values in global coordinates.
+        |Function| providing the Dirichlet boundary values in global coordinates.
     name
         Name of the problem.
 

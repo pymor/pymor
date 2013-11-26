@@ -9,15 +9,15 @@ The methods are mainly designed to be used in conjunction with
 
     extension_algorithm(basis, U, ...)
 
-where basis and U are `VectorArrays` containing the old basis and new vectors
+where basis and U are |VectorArrays| containing the old basis and new vectors
 to add. The methods return a tuple `new_basis, data` where new_basis holds the
 extend basis and data is a dict contaning additional information about the extension
 process. The `data` dict at least has the key `hierarchic` whose value signifies
 if the new basis contains the old basis as its first vectors.
 
 If the basis extension fails, e.g. because the new vector is not linearly
-independent from the basis, a :class:`pymor.core.exceptions.ExtensionError` exception
-is raised.
+independent from the basis, an :class:`~pymor.core.exceptions.ExtensionError`
+exception is raised.
 '''
 
 from __future__ import absolute_import, division, print_function
@@ -38,9 +38,9 @@ def trivial_basis_extension(basis, U, copy_basis=True, copy_U=True):
     Parameters
     ----------
     basis
-        `VectorArray` containing the basis to extend.
+        |VectorArray| containing the basis to extend.
     U
-        `VectorArray` containing the new basis vectors.
+        |VectorArray| containing the new basis vectors.
     copy_basis
         If copy_basis is False, the old basis is extended in-place.
     copy_U
@@ -85,9 +85,9 @@ def gram_schmidt_basis_extension(basis, U, product=None, copy_basis=True, copy_U
     Parameters
     ----------
     basis
-        `VectorArray` containing the basis to extend.
+        |VectorArray| containing the basis to extend.
     U
-        `VectorArray` containign the new basis vectors.
+        |VectorArray| containign the new basis vectors.
     product
         The scalar product w.r.t. which to orthonormalize; if None, the Euclidean
         product is used.
@@ -136,10 +136,10 @@ def pod_basis_extension(basis, U, count=1, copy_basis=True, product=None):
     Parameters
     ----------
     basis
-        `VectorArray` containing the basis to extend. The basis is expected to be
+        |VectorArray| containing the basis to extend. The basis is expected to be
         orthonormal w.r.t. `product`.
     U
-        `VectorArray` containing the vectors to which the POD is applied.
+        |VectorArray| containing the vectors to which the POD is applied.
     count
         Number of POD modes that are to be appended to the basis.
     product
