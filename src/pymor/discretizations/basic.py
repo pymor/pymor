@@ -25,7 +25,7 @@ class DiscretizationBase(DiscretizationInterface):
         self.operators = FrozenDict(operators)
         self.functionals = FrozenDict(functionals)
         self.vector_operators = FrozenDict(vector_operators)
-        self.linear = all(op is None or op.linear for op in operators.itervalues())
+        self.linear = all(op is None or op.linear for op in chain(operators.itervalues(), functionals.itervalues()))
         self.products = products
         self.estimator = estimator
         self.visualizer = visualizer
