@@ -14,36 +14,36 @@ from pymor.tools import float_cmp
 
 
 def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=None):
-    '''Discretize a `DomainDescription` using a sensible default implementation.
+    '''Discretize a |DomainDescription| using a sensible default implementation.
 
-    This method can discretize the following `DomainDescriptions`:
+    This method can discretize the following |DomainDescriptions|:
 
-        +--------------------+-----------+---------+
-        | DomainDescription  | grid_type | default |
-        +====================+===========+=========+
-        | RectDomain         | TriaGrid  |    X    |
-        |                    +-----------+---------+
-        |                    | RectGrid  |         |
-        +--------------------+-----------+---------+
-        | CylindricalDomain  | TriaGrid  |   n.a.  |
-        |                    +-----------+---------+
-        |                    | RectGrid  |    X    |
-        +--------------------+-----------+---------+
-        | TorusDomain        | TriaGrid  |   n.a.  |
-        |                    +-----------+---------+
-        |                    | RectGrid  |    X    |
-        +--------------------+-----------+---------+
-        | LineDomain         | OnedGrid  |    X    |
-        +--------------------+-----------+---------+
-        | CircleDomain       | OnedGrid  |    X    |
-        +--------------------+-----------+---------+
+        +----------------------+-------------+---------+
+        | DomainDescription    | grid_type   | default |
+        +======================+=============+=========+
+        | |RectDomain|         | |TriaGrid|  |    X    |
+        |                      +-------------+---------+
+        |                      | |RectGrid|  |         |
+        +----------------------+-------------+---------+
+        | |CylindricalDomain|  | |TriaGrid|  |   n.a.  |
+        |                      +-------------+---------+
+        |                      | |RectGrid|  |    X    |
+        +----------------------+-------------+---------+
+        | |TorusDomain|        | |TriaGrid|  |   n.a.  |
+        |                      +-------------+---------+
+        |                      | |RectGrid|  |    X    |
+        +----------------------+-------------+---------+
+        | |LineDomain|         | |OnedGrid|  |    X    |
+        +----------------------+-------------+---------+
+        | |CircleDomain|       | |OnedGrid|  |    X    |
+        +----------------------+-------------+---------+
 
     Parameters
     ----------
     domain_description
-        A `DomainDescription` of the domain to discretize.
+        A |DomainDescription| of the domain to discretize.
     diameter
-        Maximal diameter of the codim-0 entities of the generated grid.
+        Maximal diameter of the codim-0 entities of the generated |AffineGrid|.
     grid_type
         The class of the grid which is to be constructed. If `None`, a default choice
         is made according to the table above.
@@ -51,9 +51,9 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
     Returns
     -------
     grid
-        The generated grid.
+        The generated |AffineGrid|.
     boundary_info
-        The generated `BoundaryInfo`.
+        The generated |BoundaryInfo|.
     '''
 
     def discretize_RectDomain():

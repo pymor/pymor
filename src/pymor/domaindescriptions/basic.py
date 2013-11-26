@@ -13,7 +13,7 @@ from pymor.domaindescriptions.interfaces import DomainDescriptionInterface
 class RectDomain(DomainDescriptionInterface):
     '''Describes a rectangular domain.
 
-    Boundary types can be associated edgewise.
+    |BoundaryTypes| can be associated edgewise.
 
     Parameters
     ----------
@@ -21,13 +21,13 @@ class RectDomain(DomainDescriptionInterface):
         List of two points defining the lower-left and upper-right corner
         of the domain.
     left
-        The `BoundaryType` of the left edge.
+        The |BoundaryType| of the left edge.
     right
-        The `BoundaryType` of the right edge.
+        The |BoundaryType| of the right edge.
     top
-        The `BoundaryType` of the top edge.
+        The |BoundaryType| of the top edge.
     bottom
-        The `BoundaryType` of the bottom edge.
+        The |BoundaryType| of the bottom edge.
 
     Attributes
     ----------
@@ -77,7 +77,7 @@ class RectDomain(DomainDescriptionInterface):
 class CylindricalDomain(DomainDescriptionInterface):
     '''Describes a cylindrical domain.
 
-    Boundary types can be associated edgewise.
+    |BoundaryTypes| can be associated edgewise.
 
     Parameters
     ----------
@@ -85,9 +85,9 @@ class CylindricalDomain(DomainDescriptionInterface):
         List of two points defining the lower-left and upper-right corner
         of the domain. The left and right edge are identified.
     top
-        The `BoundaryType` of the top edge.
+        The |BoundaryType| of the top edge.
     bottom
-        The `BoundaryType` of the bottom edge.
+        The |BoundaryType| of the bottom edge.
 
     Attributes
     ----------
@@ -178,16 +178,16 @@ class TorusDomain(DomainDescriptionInterface):
 class LineDomain(DomainDescriptionInterface):
     '''Describes an interval domain.
 
-    Boundary types can be associated edgewise.
+    |BoundaryTypes| can be associated edgewise.
 
     Parameters
     ----------
     domain
         List [x_l, x_r] providing the left and right endpoint.
     left
-        The `BoundaryType` of the left endpoint.
+        The |BoundaryType| of the left endpoint.
     right
-        The `BoundaryType` of the right endpoint.
+        The |BoundaryType| of the right endpoint.
 
     Attributes
     ----------

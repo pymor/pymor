@@ -22,7 +22,9 @@ from pymor.operators.fv import (nonlinear_advection_lax_friedrichs_operator,
 def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=None, nt=100, num_flux='lax_friedrichs',
                                                    lxf_lambda=1., eo_gausspoints=5, eo_intervals=1, num_values=None,
                                                    domain_discretizer=None, grid=None, boundary_info=None):
-    '''Discretizes an |InstationaryAdvectionProblem| using finite elements.
+    '''Discretizes an |InstationaryAdvectionProblem| using the finite volume method.
+
+    Simple explicit Euler time-stepping is used for time-discretization.
 
     Parameters
     ----------
@@ -30,6 +32,24 @@ def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=
         The |InstationaryAdvectionProblem| to discretize.
     diameter
         If not None, is passed to the domain_discretizer.
+    nt
+        The number of time-steps.
+    num_flux
+        The numerical flux to use in the finite volume formulation. Allowed
+        values are `'lax_friedrichs'`, `'engquist_osher'`, `'simplified_engquist_osher'`.
+        (See :mod:`pymor.operators.fv`.)
+    lxf_lambda
+        The stabilization parameter for the Lax-Friedrichs numerical flux.
+        (Ignored, if different flux is chosen.)
+    eo_gausspoints
+        Number of Gauss points for the Engquist-Osher numerical flux.
+        (Ignored, if different flux is chosen.)
+    eo_intervals
+        Number of sub-intervals to use for integration when using Engquist-Osher
+        numerical flux. (Ignored, if different flux is chosen.)
+    num_values
+        The number of returned vectors of the solution trajectory. If `None`, each
+        intermediate vector that is calculated is returned.
     domain_discretizer
         Discretizer to be used for discretizing the analytical domain. This has
         to be a function `domain_discretizer(domain_description, diameter, ...)`.

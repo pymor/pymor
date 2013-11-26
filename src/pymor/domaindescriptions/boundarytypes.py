@@ -10,7 +10,7 @@ from pymor.core import ImmutableInterface
 class BoundaryType(ImmutableInterface):
     '''Represents a boundary type, i.e. Dirichlet, Neumann, etc.
 
-    By defining a global register of possible boundary types, we prevent hard
+    By defining a global registry of possible boundary types, we prevent hard
     to track down errors due to typos. Only boundary types that have been
     registered before using `register_type` can be instantiated.
 
@@ -19,7 +19,7 @@ class BoundaryType(ImmutableInterface):
 
     Parameters
     ----------
-    name
+    `type_`
         Name of the boundary type as a string.
 
     Attributes
@@ -32,7 +32,7 @@ class BoundaryType(ImmutableInterface):
 
     @classmethod
     def register_type(cls, name):
-        '''Register a new boundary type with name `name`.'''
+        '''Register a new |BoundaryType| with name `name`.'''
         assert isinstance(name, str)
         cls.types.add(name)
 
@@ -49,8 +49,6 @@ class BoundaryType(ImmutableInterface):
     def __eq__(self, other):
         if isinstance(other, BoundaryType):
             return self.name == other.name
-        # elif isinstance(other, str):       better not ...
-        #    return self.name == other
         else:
             return NotImplemented
 

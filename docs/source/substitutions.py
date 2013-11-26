@@ -14,6 +14,7 @@ interfaces = '''
 .. |Discretization| replace:: :class:`Discretization <pymor.discretizations.interfaces.DiscretizationInterface>`
 .. |Discretizations| replace:: :class:`Discretizations <pymor.discretizations.interfaces.DiscretizationInterface>`
 .. |DomainDescription| replace:: :class:`DomainDescription <pymor.domaindescriptions.interfaces.DomainDescriptionInterface>`
+.. |DomainDescriptions| replace:: :class:`DomainDescriptions <pymor.domaindescriptions.interfaces.DomainDescriptionInterface>`
 .. |Function| replace:: :class:`Function <pymor.functions.interfaces.FunctionInterface>`
 .. |Functions| replace:: :class:`Functions <pymor.functions.interfaces.FunctionInterface>`
 .. |LincombOperator| replace:: :class:`LincombOperator <pymor.operators.interfaces.LincombOperatorInterface>`
@@ -41,6 +42,12 @@ common = '''
 .. |InstationaryAdvectionProblem| replace:: :class:`~pymor.analyticalproblems.advection.InstationaryAdvectionProblem`
 
 .. |BoundaryType| replace:: :class:`~pymor.domaindescriptions.boundarytypes.BoundaryType`
+.. |BoundaryTypes| replace:: :class:`BoundaryTypes <pymor.domaindescriptions.boundarytypes.BoundaryType>`
+.. |RectDomain| replace:: :class:`~pymor.domaindescriptions.basic.RectDomain`
+.. |CylindricalDomain| replace:: :class:`~pymor.domaindescriptions.basic.CylindricalDomain`
+.. |TorusDomain| replace:: :class:`~pymor.domaindescriptions.basic.TorusDomain`
+.. |LineDomain| replace:: :class:`~pymor.domaindescriptions.basic.LineDomain`
+.. |CircleDomain| replace:: :class:`~pymor.domaindescriptions.basic.CircleDomain`
 .. |discretize_domain_default| replace:: :func:`~pymor.domaindiscretizers.default.discretize_domain_default`
 
 .. |OnedGrid| replace:: :class:`~pymor.grids.oned.OnedGrid`
@@ -66,7 +73,9 @@ common = '''
 .. |reduce_generic_rb| replace:: :func:`~pymor.reductors.basic.reduce_generic_rb`
 
 .. |NumPy array| replace:: :class:`NumPy array <numpy.ndarray>`
+.. |NumPy arrays| replace:: :class:`NumPy arrays <numpy.ndarray>`
 .. |Numpy array| replace:: :class:`NumPy array <numpy.ndarray>`
+.. |Numpy arrays| replace:: :class:`NumPy arrays <numpy.ndarray>`
 .. |array| replace:: :class:`NumPy array <numpy.ndarray>`
 .. |Array| replace:: :class:`NumPy array <numpy.ndarray>`
 

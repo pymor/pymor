@@ -14,7 +14,7 @@ class DomainDescriptionInterface(ImmutableInterface):
     Attributes
     ----------
     boundary_types
-        Set of `BoundaryTypes` the domain has.
+        Set of |BoundaryTypes| the domain has.
     '''
 
     boundary_types = frozenset()
