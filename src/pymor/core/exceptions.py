@@ -24,11 +24,6 @@ class ConstError(Exception):
     pass
 
 
-class CodimError(Exception):
-    '''Is raised if an invalid codimension index is used.'''
-    pass
-
-
 class CallOrderWarning(UserWarning):
     '''I am raised when there's a preferred call order, but the user didn't follow it.
     '''
