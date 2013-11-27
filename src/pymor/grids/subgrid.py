@@ -12,6 +12,27 @@ from pymor.grids.interfaces import AffineGridInterface
 
 
 class SubGrid(AffineGridInterface):
+    '''A subgrid of a |Grid|.
+
+    Given a list of a |Grid| and a list of codim-0 entities
+    we construct the minimal subgrid of the grid, containing
+    all the given entities.
+
+    Parameters
+    ----------
+    grid
+        |Grid| of which a subgrid is to be created.
+    entites
+        |Array| of global indicies of the codim-0 entities which
+        are to be contained in the subgrid.
+
+    Attributes
+    ----------
+    parent_grid
+        The |Grid| from which the subgrid was constructed. :class:`Subgrid`
+        only stores a :mod:`weakref` to the grid, so accessing this property
+        might return `None` if the original grid has been destroyed.
+    '''
 
     reference_element = None
 
@@ -46,10 +67,18 @@ class SubGrid(AffineGridInterface):
         return self.__parent_grid()
 
     def parent_indices(self, codim):
+        '''`retval[e]` is the index of the `e`-th codim-`codim` entity in the parent grid.'''
         assert 0 <= codim <= self.dim, 'Invalid codimension'
         return self.__parent_indices[codim]
 
     def indices_from_parent_indices(self, ind, codim):
+        '''Maps an |Array| of indicies of codim-`codim` entites of the parent grid to indicies of the subgrid.
+
+        Raises
+        ------
+        ValueError
+            Not all provided indices correspond to entities contained in the subgrid.
+        '''
         assert 0 <= codim <= self.dim, 'Invalid codimension'
         ind = ind.ravel()
         # TODO Find better implementation of the following

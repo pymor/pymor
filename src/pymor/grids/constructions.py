@@ -10,6 +10,25 @@ from pymor.tools.relations import inverse_relation
 
 
 def flatten_grid(grid):
+    '''This method is used by our visualizers to render n-dimensional grids which cannot
+    be embedded into R^n by duplicating verticies which would have to be mapped to multiple
+    points at once. (Think of grids on rectangular domains with identified edges.)
+
+    Parameters
+    ----------
+    grid
+        The |Grid| to flatten.
+
+    Returns
+    -------
+    subentities
+        The `subentities(0, grid.dim)` relation for the flattened grid.
+    coordinates
+        The coordinates of the codim-`grid.dim` entities.
+    entity_map
+        Maps the indicies of the codim-`grid.dim` entities of the flattened
+        grid to the indicies of the corresponding entities in the original grid.
+    '''
     # first we determine which verticies are mapped to different coordinates when using the
     # embeddings of their codim-0 superentities
     dim = grid.dim

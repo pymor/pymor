@@ -43,7 +43,7 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
     domain_description
         A |DomainDescription| of the domain to discretize.
     diameter
-        Maximal diameter of the codim-0 entities of the generated |AffineGrid|.
+        Maximal diameter of the codim-0 entities of the generated |Grid|.
     grid_type
         The class of the grid which is to be constructed. If `None`, a default choice
         is made according to the table above.
@@ -51,7 +51,7 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
     Returns
     -------
     grid
-        The generated |AffineGrid|.
+        The generated |Grid|.
     boundary_info
         The generated |BoundaryInfo|.
     '''

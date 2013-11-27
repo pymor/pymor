@@ -12,9 +12,9 @@ from pymor.grids.referenceelements import square
 
 
 class RectGrid(AffineGridInterface):
-    '''Ad-hoc implementation of a rectangular grid.
+    '''Basic implementation of a rectangular |Grid| on a rectangular domain.
 
-    The global face, edge and vertex indices are given as follows
+    The global face, edge and vertex indices are given as follows ::
 
                  x1
                  ^
@@ -33,9 +33,9 @@ class RectGrid(AffineGridInterface):
     Parameters
     ----------
     num_intervals
-        Tuple (n0, n1) determining a grid with n0 x n1 codim-0 entities.
+        Tuple `(n0, n1)` determining a grid with `n0` x `n1` codim-0 entities.
     domain
-        Tuple (ll, ur) where ll defines the lower left and ur the upper right
+        Tuple `(ll, ur)` where `ll` defines the lower left and `ur` the upper right
         corner of the domain.
     '''
 
@@ -210,7 +210,6 @@ class RectGrid(AffineGridInterface):
 
     @staticmethod
     def test_instances():
-        '''Used for unit testing.'''
         return [RectGrid((2, 4)),  RectGrid((1, 1)), RectGrid((42, 42)),
                 RectGrid((2, 4), identify_left_right=True),
                 RectGrid((2, 4), identify_bottom_top=True),

@@ -13,12 +13,12 @@ from pymor.grids.referenceelements import line
 
 
 class OnedGrid(AffineGridInterface):
-    '''One-dimensional grid on an interval.
+    '''One-dimensional |Grid| on an interval.
 
     Parameters
     ----------
     domain
-        Tuple (left, right) containing the left and right boundary of the domain.
+        Tuple `(left, right)` containing the left and right boundary of the domain.
     num_intervals
         The number of codim-0 entities.
     '''

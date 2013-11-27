@@ -56,7 +56,7 @@ def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=
         If further arguments should be passed to the discretizer, use
         :func:`functools.partial`. If `None`, |discretize_domain_default| is used.
     grid
-        Instead of using a domain discretizer, the grid can also be passed directly
+        Instead of using a domain discretizer, the |Grid| can also be passed directly
         using this parameter.
     boundary_info
         A |BoundaryInfo| specifying the boundary types of the grid boundary entities.
@@ -69,7 +69,7 @@ def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=
     data
         Dictionary with the following entries:
 
-            :grid:           The generated grid.
+            :grid:           The generated |Grid|.
             :boundary_info:  The generated |BoundaryInfo|.
 
 
