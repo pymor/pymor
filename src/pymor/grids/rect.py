@@ -192,21 +192,6 @@ class RectGrid(AffineGridInterface):
         assert 0 <= dim < 2
         return np.linspace(self.domain[0, dim], self.domain[1, dim], self.num_intervals[dim] + 1)
 
-    def visualize(self, dofs):
-        import matplotlib.pyplot as plt
-        import matplotlib.cm as cm
-        assert dofs.size == self.size(0), 'DOF-vector has the wrong size'
-        im = plt.imshow(dofs.reshape((self.x1_num_intervals, self.x0_num_intervals)), cmap=cm.jet,
-                        aspect=self.x1_diameter / self.x0_diameter, extent=self.domain.T.ravel(),
-                        interpolation='none')
-
-        # make sure, the colorbar has the right height: (from mpl documentation)
-        from mpl_toolkits.axes_grid1 import make_axes_locatable
-        divider = make_axes_locatable(plt.gca())
-        cax = divider.append_axes("right", "5%", pad="3%")
-        plt.colorbar(im, cax=cax)
-        plt.show()
-
     @staticmethod
     def test_instances():
         return [RectGrid((2, 4)),  RectGrid((1, 1)), RectGrid((42, 42)),
