@@ -12,12 +12,6 @@ ContractNotRespected = contracts.ContractNotRespected
 ContractException = contracts.ContractException
 
 
-class CommunicationError(Exception):
-    '''Is raised when the `data` field of an :class:`pymor.la.interfaces.Communicable`
-    instance is accessed, but communication is disabled.
-    '''
-
-
 class ConstError(Exception):
     '''I get thrown when you try to add a new member to
     a locked class instance'''

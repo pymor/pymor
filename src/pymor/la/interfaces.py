@@ -9,59 +9,7 @@ from numbers import Number
 
 import numpy as np
 
-from pymor.core import getLogger
-from pymor.core.exceptions import CommunicationError
 from pymor.core.interfaces import BasicInterface, abstractmethod, abstractproperty, abstractclassmethod
-
-
-class Communicable(BasicInterface):
-    '''Mixin for classes which provide a data attribute to communicate internal data.
-
-    A typical application is for remote |VectorArrays| to offer
-    a way to communicate its content in form of a |NumPy array|.
-
-    Attributes
-    ----------
-    communication
-        Takes the values `'raise'`, `'warn'` and `'enable'`.
-        If `communication` is set to `'raise'`, accessing `data`
-        will raise a :exc:`pymor.core.exceptions.CommunicationError`,
-        if it is set to warn, a warning is logged. The default is
-        `'enable'`.
-
-    data
-        Accessing this property returns the object's internal data,
-        usually in form of a |NumPy array|. If possible, a direct
-        view of the object's internal state is returned, so
-        changing it might have unwanted side effects.
-    '''
-
-    @abstractmethod
-    def _data(self):
-        '''This has to be implemented!'''
-        pass
-
-    _communication = 'enable'
-
-    @property
-    def communication(self):
-        return self._communication
-
-    @communication.setter
-    def communication(self, v):
-        assert v in {'raise', 'warn', 'enable'}
-        self._communication = v
-
-    @property
-    def data(self):
-        if self._communication == 'enable':
-            return self._data()
-        elif self._communication == 'warn':
-            logger = getLogger('pymor.la.vectorarray')
-            logger.warn('Communication required for {}'.format(self))
-            return self._data()
-        else:
-            raise CommunicationError
 
 
 class VectorArrayInterface(BasicInterface):

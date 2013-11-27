@@ -22,8 +22,7 @@ from pymor.core import BasicInterface
 from pymor.grids import RectGrid, TriaGrid, OnedGrid
 from pymor.gui.glumpy import GlumpyPatchWidget, ColorBarWidget
 from pymor.gui.matplotlib import Matplotlib1DWidget
-from pymor.la import NumpyVectorArray
-from pymor.la.interfaces import Communicable
+from pymor.la import VectorArrayInterface, NumpyVectorArray
 from pymor.tools.vtkio import write_vtk
 
 
@@ -218,9 +217,10 @@ def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, titl
 
     class MainWindow(PlotMainWindow):
         def __init__(self, grid, U, bounding_box, codim, title, legend, separate_colorbars):
-            assert isinstance(U, Communicable) or isinstance(U, tuple) and all(isinstance(u, Communicable) for u in U) \
-                and all(len(u) == len(U[0]) for u in U)
-            U = (U.data,) if isinstance(U, Communicable) else tuple(u.data for u in U)
+            assert isinstance(U, VectorArrayInterface) and hasattr(U, 'data') \
+                or (isinstance(U, tuple) and all(isinstance(u, VectorArrayInterface) and hasattr(u, 'data') for u in U)
+                    and all(len(u) == len(U[0]) for u in U))
+            U = (U.data,) if hasattr(U, 'data') else tuple(u.data for u in U)
             if isinstance(legend, str):
                 legend = (legend,)
             assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
@@ -318,9 +318,10 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, block=Fal
 
     class MainWindow(PlotMainWindow):
         def __init__(self, grid, U, codim, title, legend):
-            assert isinstance(U, Communicable) or isinstance(U, tuple) and all(isinstance(u, Communicable) for u in U) \
-                and all((len(u) == len(U[0]) and u.dim == U[0].dim) for u in U)
-            U = (U.data,) if isinstance(U, Communicable) else tuple(u.data for u in U)
+            assert isinstance(U, VectorArrayInterface) and hasattr(U, 'data') \
+                or (isinstance(U, tuple) and all(isinstance(u, VectorArrayInterface) and hasattr(u, 'data') for u in U)
+                    and all(len(u) == len(U[0]) for u in U))
+            U = (U.data,) if hasattr(U, 'data') else tuple(u.data for u in U)
             if isinstance(legend, str):
                 legend = (legend,)
             assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
@@ -386,9 +387,11 @@ class GlumpyPatchVisualizer(BasicInterface):
             If specified, write the data to a VTK-file using
             :func:`pymor.tools.vtkio.write_vtk` instead of displaying it.
         '''
-        assert isinstance(U, (Communicable, tuple))
+        assert isinstance(U, VectorArrayInterface) and hasattr(U, 'data') \
+            or (isinstance(U, tuple) and all(isinstance(u, VectorArrayInterface) and hasattr(u, 'data') for u in U)
+                and all(len(u) == len(U[0]) for u in U))
         if filename:
-            if isinstance(U, Communicable):
+            if not isinstance(U, tuple):
                 write_vtk(self.grid, U, filename, codim=self.codim)
             else:
                 for i, u in enumerate(self.U):

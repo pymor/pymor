@@ -10,11 +10,11 @@ from numbers import Number
 import numpy as np
 from scipy.sparse import issparse
 
-from pymor.la.interfaces import VectorArrayInterface, Communicable
+from pymor.la.interfaces import VectorArrayInterface
 from pymor.tools import float_cmp
 
 
-class NumpyVectorArray(VectorArrayInterface, Communicable):
+class NumpyVectorArray(VectorArrayInterface):
 
     @classmethod
     def empty(cls, dim, reserve=0):
@@ -28,9 +28,12 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
         return cls(np.zeros((count, dim)))
 
     def __init__(self, instance, dtype=None, copy=False, order=None, subok=False):
-        if isinstance(instance, np.ndarray) and not copy:
-            self._array = instance
-        elif isinstance(instance, Communicable):
+        if isinstance(instance, np.ndarray):
+            if copy:
+                self._array = instance.copy()
+            else:
+                self._array = instance
+        elif hasattr(instance, 'data'):
             self._array = instance.data
             if copy:
                 self._array = self._array.copy()
@@ -43,7 +46,8 @@ class NumpyVectorArray(VectorArrayInterface, Communicable):
             self._array = np.reshape(self._array, (1, -1))
         self._len = len(self._array)
 
-    def _data(self):
+    @property
+    def data(self):
         return self._array[:self._len]
 
     def __len__(self):
