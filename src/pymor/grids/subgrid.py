@@ -62,10 +62,8 @@ class SubGrid(AffineGridInterface):
         assert 0 <= codim <= self.dim, 'Invalid codimension'
         return len(self.__parent_indices[codim])
 
-    def subentities(self, codim, subentity_codim=None):
+    def subentities(self, codim, subentity_codim):
         if codim == 0:
-            if subentity_codim is None:
-                subentity_codim = codim + 1
             assert codim <= subentity_codim <= self.dim, 'Invalid subentity codimension'
             return self.__subentities[subentity_codim]
         else:

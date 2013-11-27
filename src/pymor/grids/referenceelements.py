@@ -19,7 +19,7 @@ class Point(ReferenceElementInterface):
     def __init__(self):
         super(Point, self).__init__()
 
-    def size(self, codim=1):
+    def size(self, codim):
         assert codim == 0, CodimError('Invalid codimension (must be 0 but was {})'.format(codim))
         return 1
 
@@ -33,7 +33,7 @@ class Point(ReferenceElementInterface):
         assert subentity_codim == 0, CodimError('Invalid codimension (must be 0 but was {})'.format(subentity_codim))
         return np.zeros((0, 0), dtype='int32'), np.zeros((0), dtype='int32')
 
-    def sub_reference_element(self, codim=1):
+    def sub_reference_element(self, codim):
         assert codim == 0, CodimError('Invalid codimension (must be 0 but was {})'.format(codim))
         return self
 
@@ -68,7 +68,7 @@ class Line(ReferenceElementInterface):
     def __init__(self):
         super(Line, self).__init__()
 
-    def size(self, codim=1):
+    def size(self, codim):
         assert 0 <= codim <= 1, CodimError('Invalid codimension (must be 0 or 1 but was {})'.format(codim))
         if codim == 0:
             return 1
@@ -92,7 +92,7 @@ class Line(ReferenceElementInterface):
         else:
             return np.array((np.zeros((1, 0)), np.zeros((1, 0)))), np.array(([0.], [1.]))
 
-    def sub_reference_element(self, codim=1):
+    def sub_reference_element(self, codim):
         assert 0 <= codim <= 1, CodimError('Invalid codimension (must be 0 or 1 but was {})'.format(codim))
         if codim == 0:
             return self
@@ -143,7 +143,7 @@ class Square(ReferenceElementInterface):
         self._quadrature_orders = GaussQuadratures.orders
         self._quadrature_order_map = GaussQuadratures.order_map
 
-    def size(self, codim=1):
+    def size(self, codim):
         assert 0 <= codim <= 2, CodimError('Invalid codimension (must be between 0 and 2 but was {})'.format(codim))
         if codim == 0:
             return 1
@@ -180,7 +180,7 @@ class Square(ReferenceElementInterface):
         else:
             return super(Square, self).subentity_embedding(subentity_codim)
 
-    def sub_reference_element(self, codim=1):
+    def sub_reference_element(self, codim):
         assert 0 <= codim <= 2, CodimError('Invalid codimension (must be between 0 and 2 but was {})'.format(codim))
         if codim == 0:
             return self
@@ -231,21 +231,8 @@ class Triangle(ReferenceElementInterface):
 
     def __init__(self):
         super(Triangle, self).__init__()
-        # def tensor_points(P):
-            # PP0, PP1 = np.array(np.meshgrid(P, P))
-            # return np.array((PP0.ravel(), PP1.ravel())).T
 
-        # def tensor_weights(W):
-            # return np.dot(W[:,np.newaxis], W[np.newaxis, :]).ravel()
-        # self._quadrature_points  = [tensor_points(Gauss.quadrature(npoints=p+1)[0])
-                                      # for p in xrange(Gauss.maxpoints())]
-        # self._quadrature_weights = [tensor_weights(Gauss.quadrature(npoints=p+1)[1])
-                                      # for p in xrange(Gauss.maxpoints())]
-        # self._quadrature_npoints = np.arange(1, Gauss.maxpoints() + 1) ** 2
-        # self._quadrature_orders  = Gauss.orders
-        # self._quadrature_order_map = Gauss.order_map
-
-    def size(self, codim=1):
+    def size(self, codim):
         assert 0 <= codim <= 2, CodimError('Invalid codimension (must be between 0 and 2 but was {})'.format(codim))
         if codim == 0:
             return 1
@@ -282,7 +269,7 @@ class Triangle(ReferenceElementInterface):
         else:
             return super(Triangle, self).subentity_embedding(subentity_codim)
 
-    def sub_reference_element(self, codim=1):
+    def sub_reference_element(self, codim):
         assert 0 <= codim <= 2, CodimError('Invalid codimension (must be between 0 and 2 but was {})'.format(codim))
         if codim == 0:
             return self

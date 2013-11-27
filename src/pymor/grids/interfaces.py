@@ -34,32 +34,29 @@ class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplement
         pass
 
     @abstractmethod
-    def subentities(self, codim, subentity_codim=None):
+    def subentities(self, codim, subentity_codim):
         '''`retval[e,s]` is the global index of the `s`-th codim-`subentity_codim`
         subentity of the codim-`codim` entity with global index `e`.
 
-        If `subentity_codim == None`, it is set to `codim + 1`.
-
-        Only `subentities(codim, None)` has to be implemented; by default,
-        `subentities(codim, subentity_codim)` is computed by calculating the
-        transitive closure of `subentities(codim, None)`
+        Only `subentities(codim, codim+1)` has to be implemented; a default
+        implementation is provided which evaluates
+        `subentities(codim, subentity_codim)` by computing the
+        transitive closure of `subentities(codim, codim+1)`.
         '''
         return self._subentities(codim, subentity_codim)
 
-    def superentities(self, codim, superentity_codim=None):
+    def superentities(self, codim, superentity_codim):
         '''`retval[e,s]` is the global index of the `s`-th codim-`superentity_codim`
         superentity of the codim-`codim` entity with global index `e`.
 
         `retval[e]` is sorted by global index.
-
-        If `superentity_codim == None`, it is set to `codim - 1`.
 
         The default implementation is to compute the result from
         `subentities(superentity_codim, codim)`.
         '''
         return self._superentities(codim, superentity_codim)
 
-    def superentity_indices(self, codim, superentity_codim=None):
+    def superentity_indices(self, codim, superentity_codim):
         '''`retval[e,s]` is the local index of the codim-`codim` entity `e`
         in the codim-`superentity_codim` superentity `superentities(codim, superentity_codim)[e,s].`
         '''
@@ -214,14 +211,12 @@ class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopological
         pass
 
     @abstractmethod
-    def subentities(self, codim, subentity_codim=None):
+    def subentities(self, codim, subentity_codim):
         '''`retval[e,s]` is the global index of the `s`-th codim-`subentity_codim`
         subentity of the codim-`codim` entity with global index `e`.
 
         The ordering of subentities(0, subentity_codim)[e] has to correspond under
         the embedding of `e` with the local ordering inside the reference element.
-
-        If `subentity_codim == None`, it is set to `codim + 1`.
 
         For `codim > 0`, we provide a default implementation by calculating the
         subentites of `e` as follows:

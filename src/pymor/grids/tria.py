@@ -109,10 +109,8 @@ class TriaGrid(AffineGridInterface):
         assert 0 <= codim <= 2, CodimError('Invalid codimension')
         return self.__sizes[codim]
 
-    def subentities(self, codim=0, subentity_codim=None):
+    def subentities(self, codim, subentity_codim):
         assert 0 <= codim <= 2, CodimError('Invalid codimension')
-        if subentity_codim is None:
-            subentity_codim = codim + 1
         assert codim <= subentity_codim <= 2, CodimError('Invalid subentity codimension')
         if codim == 0:
             if subentity_codim == 0:

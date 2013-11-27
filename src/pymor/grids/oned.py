@@ -54,10 +54,8 @@ class OnedGrid(AffineGridInterface):
         assert 0 <= codim <= 1, 'codim has to be between 0 and {}!'.format(self.dim)
         return self._sizes[codim]
 
-    def subentities(self, codim=0, subentity_codim=None):
+    def subentities(self, codim, subentity_codim):
         assert 0 <= codim <= 1, CodimError('Invalid codimension')
-        if subentity_codim is None:
-            subentity_codim = codim + 1
         assert codim <= subentity_codim <= self.dim, CodimError('Invalid subentity codimensoin')
         if codim == 0:
             if subentity_codim == 0:
@@ -67,7 +65,7 @@ class OnedGrid(AffineGridInterface):
         else:
             return super(OnedGrid, self).subentities(codim, subentity_codim)
 
-    def embeddings(self, codim=0):
+    def embeddings(self, codim):
         if codim == 0:
             return self.__A, self.__B
         else:

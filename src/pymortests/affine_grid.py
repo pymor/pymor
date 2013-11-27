@@ -208,8 +208,8 @@ def test_unit_outer_normals_normal(grid):
 def test_unit_outer_normals_neighbours(grid):
     g = grid
     UON = g.unit_outer_normals()
-    SE = g.superentities(1)
-    SEI = g.superentity_indices(1)
+    SE = g.superentities(1, 0)
+    SEI = g.superentity_indices(1, 0)
     if SE.shape[1] < 2:
         return
     for se, sei in izip(SE, SEI):

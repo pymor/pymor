@@ -15,7 +15,7 @@ from pymor.tools.relations import inverse_relation
 class ConformalTopologicalGridDefaultImplementations(object):
 
     @cached
-    def _subentities(self, codim, subentity_codim=None):
+    def _subentities(self, codim, subentity_codim):
         assert 0 <= codim < self.dim, CodimError('Invalid codimension')
         if subentity_codim > codim + 1:
             SE = self.subentities(codim, subentity_codim - 1)
@@ -36,20 +36,18 @@ class ConformalTopologicalGridDefaultImplementations(object):
             raise NotImplementedError
 
     @cached
-    def _superentities_with_indices(self, codim, superentity_codim=None):
+    def _superentities_with_indices(self, codim, superentity_codim):
         assert 0 <= codim <= self.dim, CodimError('Invalid codimension (was {})'.format(codim))
-        if superentity_codim is None:
-            superentity_codim = codim - 1 if codim > 0 else 0
         assert 0 <= superentity_codim <= codim, CodimError('Invalid codimension (was {})'.format(superentity_codim))
         SE = self.subentities(superentity_codim, codim)
         return inverse_relation(SE, size_rhs=self.size(codim), with_indices=True)
 
     @cached
-    def _superentities(self, codim, superentity_codim=None):
+    def _superentities(self, codim, superentity_codim):
         return self._superentities_with_indices(codim, superentity_codim)[0]
 
     @cached
-    def _superentity_indices(self, codim, superentity_codim=None):
+    def _superentity_indices(self, codim, superentity_codim):
         return self._superentities_with_indices(codim, superentity_codim)[1]
 
     @cached
@@ -179,7 +177,7 @@ class AffineGridDefaultImplementations(object):
         return SSE
 
     @cached
-    def _embeddings(self, codim=0):
+    def _embeddings(self, codim):
         assert codim > 0, NotImplemented
         E = self.superentities(codim, codim - 1)[:, 0]
         I = self.superentity_indices(codim, codim - 1)[:, 0]
