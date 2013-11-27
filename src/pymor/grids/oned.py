@@ -7,7 +7,6 @@ from __future__ import print_function
 from __future__ import division
 import numpy as np
 
-from pymor.core.exceptions import CodimError
 from pymor.grids.interfaces import AffineGridInterface
 from pymor.grids.referenceelements import line
 
@@ -55,8 +54,8 @@ class OnedGrid(AffineGridInterface):
         return self._sizes[codim]
 
     def subentities(self, codim, subentity_codim):
-        assert 0 <= codim <= 1, CodimError('Invalid codimension')
-        assert codim <= subentity_codim <= self.dim, CodimError('Invalid subentity codimensoin')
+        assert 0 <= codim <= 1, 'Invalid codimension'
+        assert codim <= subentity_codim <= self.dim, 'Invalid subentity codimension'
         if codim == 0:
             if subentity_codim == 0:
                 return np.arange(self.size(0), dtype='int32')[:, np.newaxis]

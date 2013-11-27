@@ -18,13 +18,13 @@ class GaussQuadratures(object):
 
     @classmethod
     def _determine_order(cls, order=None, npoints=None):
-        assert order is not None or npoints is not None, ValueError('must specify "order" or "npoints"')
-        assert order is None or npoints is None, ValueError('cannot specify "order" and "npoints"')
+        assert order is not None or npoints is not None, 'must specify "order" or "npoints"'
+        assert order is None or npoints is None, 'cannot specify "order" and "npoints"'
         if order is not None:
-            assert 0 <= order <= cls.order_map.size - 1, ValueError('order {} not implmented'.format(order))
+            assert 0 <= order <= cls.order_map.size - 1, 'order {} not implmented'.format(order)
             p = cls.order_map[order]
         else:
-            assert 1 <= npoints <= cls.orders.size, ValueError('not implemented with {} points'.format(npoints))
+            assert 1 <= npoints <= cls.orders.size, 'not implemented with {} points'.format(npoints)
             p = npoints - 1
         return p
 

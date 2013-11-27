@@ -6,7 +6,6 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor.core.exceptions import CodimError
 from pymor.grids.interfaces import AffineGridInterface
 from pymor.grids.referenceelements import square
 
@@ -143,12 +142,12 @@ class RectGrid(AffineGridInterface):
                         faces=self.size(0), edges=self.size(1), verticies=self.size(2)))
 
     def size(self, codim=0):
-        assert 0 <= codim <= 2, CodimError('Invalid codimension')
+        assert 0 <= codim <= 2, 'Invalid codimension'
         return self.__sizes[codim]
 
     def subentities(self, codim, subentity_codim):
-        assert 0 <= codim <= 2, CodimError('Invalid codimension')
-        assert codim <= subentity_codim <= self.dim, CodimError('Invalid subentity codimensoin')
+        assert 0 <= codim <= 2, 'Invalid codimension'
+        assert codim <= subentity_codim <= self.dim, 'Invalid subentity codimensoin'
         if codim == 0:
             if subentity_codim == 0:
                 return np.arange(self.size(0), dtype='int32')[:, np.newaxis]
@@ -196,7 +195,7 @@ class RectGrid(AffineGridInterface):
     def visualize(self, dofs):
         import matplotlib.pyplot as plt
         import matplotlib.cm as cm
-        assert dofs.size == self.size(0), ValueError('DOF-vector has the wrong size')
+        assert dofs.size == self.size(0), 'DOF-vector has the wrong size'
         im = plt.imshow(dofs.reshape((self.x1_num_intervals, self.x0_num_intervals)), cmap=cm.jet,
                         aspect=self.x1_diameter / self.x0_diameter, extent=self.domain.T.ravel(),
                         interpolation='none')

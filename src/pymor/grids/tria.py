@@ -6,7 +6,6 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor.core.exceptions import CodimError
 from pymor.grids.interfaces import AffineGridInterface
 from pymor.grids.referenceelements import triangle
 
@@ -106,12 +105,12 @@ class TriaGrid(AffineGridInterface):
                         faces=self.size(0), edges=self.size(1), verticies=self.size(2)))
 
     def size(self, codim=0):
-        assert 0 <= codim <= 2, CodimError('Invalid codimension')
+        assert 0 <= codim <= 2, 'Invalid codimension'
         return self.__sizes[codim]
 
     def subentities(self, codim, subentity_codim):
-        assert 0 <= codim <= 2, CodimError('Invalid codimension')
-        assert codim <= subentity_codim <= 2, CodimError('Invalid subentity codimension')
+        assert 0 <= codim <= 2, 'Invalid codimension'
+        assert codim <= subentity_codim <= 2, 'Invalid subentity codimension'
         if codim == 0:
             if subentity_codim == 0:
                 return np.arange(self.size(0), dtype='int32')[:, np.newaxis]

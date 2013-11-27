@@ -20,7 +20,7 @@ class EmptyBoundaryInfo(BoundaryInfoInterface):
         self.boundary_types = frozenset()
 
     def mask(self, boundary_type, codim):
-        assert False, ValueError('Has no boundary_type "{}"'.format(boundary_type))
+        assert False, 'Has no boundary_type "{}"'.format(boundary_type)
 
 
 class BoundaryInfoFromIndicators(BoundaryInfoInterface):
@@ -61,7 +61,7 @@ class AllDirichletBoundaryInfo(BoundaryInfoInterface):
         self.boundary_types = frozenset({BoundaryType('dirichlet')})
 
     def mask(self, boundary_type, codim):
-        assert boundary_type == BoundaryType('dirichlet'), ValueError('Has no boundary_type "{}"'.format(boundary_type))
+        assert boundary_type == BoundaryType('dirichlet'), 'Has no boundary_type "{}"'.format(boundary_type)
         assert 1 <= codim <= self.grid.dim
         return np.ones(self.grid.size(codim), dtype='bool') * self.grid.boundary_mask(codim)
 

@@ -218,7 +218,7 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
 
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
                  dirichlet_clear_columns=False, dirichlet_clear_diag=False, name=None):
-        assert grid.reference_element(0) in {triangle, line}, ValueError('A simplicial grid is expected!')
+        assert grid.reference_element(0) in {triangle, line}, 'A simplicial grid is expected!'
         super(DiffusionOperatorP1, self).__init__()
         self.dim_source = self.dim_range = grid.size(grid.dim)
         self.grid = grid
