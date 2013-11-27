@@ -59,6 +59,7 @@ common = '''
 .. |TriaGrid| replace:: :class:`~pymor.grids.tria.TriaGrid`
 
 .. |NumpyVectorArray| replace:: :class:`~pymor.la.numpyvectorarray.NumpyVectorArray`
+.. |NumpyVectorArrays| replace:: :class:`NumpyVectorArrays <pymor.la.numpyvectorarray.NumpyVectorArray>`
 .. |ListVectorArray| replace:: :class:`~pymor.la.listvectorarray.ListVectorArray`
 
 .. |NumpyMatrixOperator| replace:: :class:`~pymor.operators.basic.NumpyMatrixOperator`

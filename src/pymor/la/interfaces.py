@@ -20,28 +20,43 @@ class VectorArrayInterface(BasicInterface):
     managed by external code on large systems), operations on the vectors like addition can
     be performed via the interface.
 
-    It is moreover assumed that the count of vectors is small enough such that scalar data
-    associated to each vector can be handled on the python side. I.e. methods like `l2_norm()`
-    or `gramian()` will always return numpy arrays.
+    It is moreover assumed that the number of vectors is small enough such that scalar data
+    associated to each vector can be handled on the python side. I.e. methods like
+    :meth:`~VectorArrayInterface.l2_norm` or :meth:`~VectorArrayInterface.gramian` will
+    always return |NumPy arrays|.
 
-    An implementation of the interface via numpy arrays is given by `NumpyVectorArray`.
+    An implementation of the interface via |NumPy arrays| is given by |NumpyVectorArray|.
     In general, it is the implementors decision how memory is allocated internally (e.g.
     continuous block of memory vs. list of pointers to the individual vectors.) Thus no
     general assumptions can be made on the costs of operations like appending or removing
     vectors from the array. As a hint for 'continuous block of memory' implementations,
-    `VectorArray` constructors should provide a `reserve` keyword argument which allows
+    |VectorArray| constructors should provide a `reserve` keyword argument which allows
     to specify to what sizes the array is assumed to grow.
 
     Most methods provide `ind` and/or `o_ind` arguments which are used to specify on which
     vectors the method is supposed to operate. If `ind` (`o_ind`) is `None` the whole array
     is selected. Otherwise, `ind` can be a single index in `range(len(self))`, a `list`
-    of indices or a one-dimensional numpy array of indices. One index can be repeated
+    of indices or a one-dimensional |NumPy array| of indices. One index can be repeated
     in which case the corresponding vector is selected several times.
+
+    Attributes
+    ----------
+    data
+        Implementors can provide a `data` property which returns a |NumPy array| of
+        shape `(len(v), v.dim)` containing the data stored in the array. Access should
+        be assumed to be slow and is mainly intended for debugging / visualization
+        purposes or to once transfer data to pyMOR and further process it using NumPy.
+        In the case of |NumpyVectorArray|, an actual view of the interally used
+        |NumPy array| is returned, so changing it, will alter the |VectorArray|.
+        Thus you cannot assume to own the data returned to you, in general.
+
+    dim
+        The dimension of the vectors in the array.
     '''
 
     @abstractclassmethod
     def empty(cls, dim, reserve=0):
-        '''Create an empty VectorArray
+        '''Create an empty |VectorArray|
 
         Parameters
         ----------
@@ -52,13 +67,13 @@ class VectorArrayInterface(BasicInterface):
 
         Returns
         -------
-        An empty `VectorArray`.
+        An empty |VectorArray|.
         '''
         pass
 
     @abstractclassmethod
     def zeros(cls, dim, count=1):
-        '''Create an VectorArray of null vectors
+        '''Create a |VectorArray| of null vectors
 
         Parameters
         ----------
@@ -69,7 +84,7 @@ class VectorArrayInterface(BasicInterface):
 
         Returns
         -------
-        An `VectorArray` containing `count` vectors of dimension `dim`
+        A |VectorArray| containing `count` vectors of dimension `dim`
         whith each component zero.
         '''
         pass
@@ -81,10 +96,6 @@ class VectorArrayInterface(BasicInterface):
 
     @abstractproperty
     def dim(self):
-        '''The dimension of the vectors in the `VectorArray`.
-
-        Each vector must have the same dimension.
-        '''
         pass
 
     @abstractmethod
@@ -98,7 +109,7 @@ class VectorArrayInterface(BasicInterface):
 
         Returns
         -------
-        A copy of the `VectorArray`.
+        A copy of the |VectorArray|.
         '''
         pass
 
@@ -109,13 +120,13 @@ class VectorArrayInterface(BasicInterface):
         Parameters
         ----------
         other
-            A `VectorArray` containing the vectors to be appended.
+            A |VectorArray| containing the vectors to be appended.
         o_ind
             Indices of the vectors that are to be appended (see class documentation).
         remove_from_other
             If `True`, the appended vectors are removed from `other`.
-            For list-like implementations of `VectorArray` this can be
-            used to prevent unnecessary copies of the involved vectors.
+            For list-like implementations this can be used to prevent
+            unnecessary copies of the involved vectors.
         '''
         pass
 
@@ -137,7 +148,7 @@ class VectorArrayInterface(BasicInterface):
         Parameters
         ----------
         other
-            A `VectorArray` containing the replacement vectors.
+            A |VectorArray| containing the replacement vectors.
         ind
             Indices of the vectors that are to be replaced (see class documentation).
             Repeated indices are forbidden.
@@ -146,9 +157,9 @@ class VectorArrayInterface(BasicInterface):
             `len(ind)` has to agree with `len(o_ind)`.
             Repeated indices are allowed.
         remove_from_other
-            If `True`, the new vectors are removed from `other?.
-            For list-like implementations of `VectorArray` this can be
-            used to prevent unnecessary copies of the involved vectors.
+            If `True`, the new vectors are removed from `other`.
+            For list-like implementations this can be used to prevent
+            unnecessary copies of the involved vectors.
         '''
         pass
 
@@ -156,29 +167,30 @@ class VectorArrayInterface(BasicInterface):
     def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
         '''Check vectors for equality.
 
-        Equality of two vectors should be defined as in `pymor.tools.float_cmp_all`.
+        Equality of two vectors should be defined as in
+        :func:`pymor.tools.float_cmp_all`.
 
         The dimensions of `self` and `other` have to agree. If the length
         of `self` (`ind`) resp. `other` (`o_ind`) is 1, the one specified
         vector is compared to all vectors of the other summand. Otherwise
-        the length of ind and o_ind have to agree.
+        the length of `ind` and `o_ind` have to agree.
 
         Parameters
         ----------
         other
-            A `VectorArray` containing the vectors to compare with.
+            A |VectorArray| containing the vectors to compare with.
         ind
             Indices of the vectors that are to be compared (see class documentation).
         o_ind
             Indices of the vectors in `other` that are to be compared (see class documentation).
         rtol
-            See `pymor.tools.float_cmp_all`
+            See :func:`pymor.tools.float_cmp_all`
         atol
-            See `pymor.tools.float_cmp_all`
+            See :func:`pymor.tools.float_cmp_all`
 
         Returns
         -------
-        Numpy array of the truth values of the comparison.
+        |NumPy array| of the truth values of the comparison.
         '''
         pass
 
@@ -216,7 +228,7 @@ class VectorArrayInterface(BasicInterface):
         alpha
             The scalar coefficient with which the vectors in `x` are multiplied
         x
-            A `VectorArray` containing the x-summands.
+            A |VectorArray| containing the x-summands.
         ind
             Indices of the vectors of `self` that are to be added (see class documentation).
             Repeated indices are forbidden.
@@ -228,12 +240,12 @@ class VectorArrayInterface(BasicInterface):
 
     @abstractmethod
     def dot(self, other, pairwise, ind=None, o_ind=None):
-        '''Returns the scalar products between `VectorArray` elements.
+        '''Returns the scalar products between |VectorArray| elements.
 
         Parameters
         ----------
         other
-            A `VectorArray` containing the second factors.
+            A |VectorArray| containing the second factors.
         pairwise
             See return value documentation.
         ind
@@ -245,12 +257,12 @@ class VectorArrayInterface(BasicInterface):
 
         Returns
         -------
-        If pairwise is True, returns a numpy array `result` such
+        If pairwise is `True`, returns a |NumPy array| `result` such
         that ::
 
             result[i] = ( self[ind][i], other[o_ind][i] ).
 
-        If pairwise is False, returns a numpy array `result` such
+        If pairwise is `False`, returns a |NumPy array| `result` such
         that ::
 
             result[i, j] = ( self[ind][i], other[o_ind][j] ).
@@ -264,7 +276,7 @@ class VectorArrayInterface(BasicInterface):
         Parameters
         ----------
         coefficients
-            A numpy array of dimension 1 or 2 containing the linear
+            A |NumPy array| of dimension 1 or 2 containing the linear
             coeffcients. `coefficients.shape[-1]` has to agree with
             `len(self)`.
         ind
@@ -272,7 +284,7 @@ class VectorArrayInterface(BasicInterface):
 
         Returns
         -------
-        A `VectorArray` `result` such that ::
+        A |VectorArray| `result` such that ::
 
             result[i] = ∑ self[j] * coefficients[i,j]
 
@@ -294,7 +306,7 @@ class VectorArrayInterface(BasicInterface):
 
         Returns
         -------
-        A numpy array `result` such that `result[i]` contains the norm
+        A |NumPy array| `result` such that `result[i]` contains the norm
         of `self[ind][i]`.
         '''
         pass
@@ -310,7 +322,7 @@ class VectorArrayInterface(BasicInterface):
 
         Returns
         -------
-        A numpy array `result` such that `result[i]` contains the norm
+        A |NumPy array| `result` such that `result[i]` contains the norm
         of `self[ind][i]`.
         '''
         pass
@@ -325,7 +337,7 @@ class VectorArrayInterface(BasicInterface):
 
         Returns
         -------
-        A numpy array `result` such that `result[i]` contains the norm
+        A |NumPy array| `result` such that `result[i]` contains the norm
         of `self[ind][i]`.
         '''
         if self.dim == 0:
@@ -349,7 +361,7 @@ class VectorArrayInterface(BasicInterface):
 
         Returns
         -------
-        A numpy array `result` such that `result[i, j]` is the `component_indices[j]`-th
+        A |NumPy array| `result` such that `result[i, j]` is the `component_indices[j]`-th
         component of the `ind[i]`-th vector of the array.
         '''
         pass
@@ -367,10 +379,10 @@ class VectorArrayInterface(BasicInterface):
         Returns
         -------
         max_ind
-            Numpy array containing for each vector an index at which the maximum is
+            |NumPy array| containing for each vector an index at which the maximum is
             attained.
         max_val
-            Numpy array containing for each vector the maximum absolute value of its
+            |NumPy array| containing for each vector the maximum absolute value of its
             components.
         '''
         pass
@@ -380,6 +392,7 @@ class VectorArrayInterface(BasicInterface):
         return self.dot(self, pairwise=False, ind=ind, o_ind=ind)
 
     def __add__(self, other):
+        '''The pairwise sum of two |VectorArrays|.'''
         if isinstance(other, Number):
             assert other == 0
             return self.copy()
@@ -389,30 +402,36 @@ class VectorArrayInterface(BasicInterface):
         return result
 
     def __iadd__(self, other):
+        '''In-place pairwise addition of |VectorArrays|.'''
         self.axpy(1, other)
         return self
 
     __radd__ = __add__
 
     def __sub__(self, other):
+        '''The pairwise difference of two |VectorArrays|.'''
         result = self.copy()
         result.axpy(-1, other)
         return result
 
     def __isub__(self, other):
+        '''In-place pairwise difference of |VectorArrays|.'''
         self.axpy(-1, other)
         return self
 
     def __mul__(self, other):
+        '''Product by a scalar.'''
         result = self.copy()
         result.scal(other)
         return result
 
     def __imul__(self, other):
+        '''In-place product by a scalar.'''
         self.scal(other)
         return self
 
     def __neg__(self):
+        '''Product by -1.'''
         result = self.copy()
         result.scal(-1)
         return result
@@ -443,7 +462,9 @@ class VectorArrayInterface(BasicInterface):
             return False
 
     def len_ind(self, ind):
+        '''Return the number of specified indices.'''
         return len(self) if ind is None else 1 if isinstance(ind, Number) else len(ind)
 
     def len_ind_unique(self, ind):
+        '''Return the number of specified unique indices.'''
         return len(self) if ind is None else 1 if isinstance(ind, Number) else len(set(ind))

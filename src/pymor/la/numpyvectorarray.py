@@ -15,6 +15,18 @@ from pymor.tools import float_cmp
 
 
 class NumpyVectorArray(VectorArrayInterface):
+    '''|VectorArray| implementation via |NumPy arrays|.
+
+    This is the default |VectorArray| type used by all |Operators|
+    implemented directly in pyMOR. Reduced |Operators| will also
+    expect |NumpyVectorArrays|.
+
+    Note that this class is just thin wrapper around the underlying
+    |NumPy array|. Thus, while operations like
+    :meth:`~VectorArrayInterface.axpy` or :meth:`VectorArrayInterface.dot`
+    will be quite efficient, removing or appending vectors will
+    be costly.
+    '''
 
     @classmethod
     def empty(cls, dim, reserve=0):
