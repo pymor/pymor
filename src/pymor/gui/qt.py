@@ -2,6 +2,11 @@
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+''' This module provides a few methods and classes for visualizing data
+associated to grids. We use the `PySide <http://www.pyside.org>`_ bindings
+for the `Qt <http://www.qt-project.org>`_ widget toolkit for the GUI.
+'''
+
 from __future__ import absolute_import, division, print_function
 
 from itertools import izip
@@ -23,6 +28,8 @@ from pymor.tools.vtkio import write_vtk
 
 
 class PlotMainWindow(QWidget):
+    '''Base class for plot main windows.'''
+
     def __init__(self, U, plot, length=1, title=None):
         super(PlotMainWindow, self).__init__()
 
@@ -160,6 +167,7 @@ class PlotMainWindow(QWidget):
 
 
 def launch_qt_app(main_window_factory, block):
+    '''Wrapper to display plot in a separate process.'''
 
     def doit():
         try:
@@ -179,6 +187,34 @@ def launch_qt_app(main_window_factory, block):
 
 def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, title=None, legend=None,
                            separate_colorbars=False, block=False):
+    '''Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
+
+    The grid's |ReferenceElement| must be the triangle or square. The data can either
+    be attached to the faces or verticies of the grid.
+
+    Parameters
+    ----------
+    grid
+        The underlying |Grid|.
+    U
+        |VectorArray| of the data to visualize. If `len(U) > 1`, the data is visualized
+        as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
+        provided, in which case a subplot is created for each entry of the tuple. The
+        lenghts of all arrays have to agree.
+    bounding_box
+        A bounding box in which the grid is contained.
+    codim
+        The codimension of the entities the data in `U` is attached to (either 0 or 2).
+    title
+        Title of the plot.
+    legend
+        Description of the data that is plotted. Most useful if `U` is a tuple in which
+        case `legend` has to be a tuple of strings of the same length.
+    separate_colorbars
+        If `True` use separate colorbars for each subplot.
+    block
+        If `True` block excecution until the plot window is closed.
+    '''
 
     class MainWindow(PlotMainWindow):
         def __init__(self, grid, U, bounding_box, codim, title, legend, separate_colorbars):
@@ -255,6 +291,30 @@ def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, titl
 
 
 def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, block=False):
+    '''Visualize scalar data associated to a one-dimensional |Grid| as a plot.
+
+    The grid's |ReferenceElement| must be the line. The data can either
+    be attached to the subintervals or verticies of the grid.
+
+    Parameters
+    ----------
+    grid
+        The underlying |Grid|.
+    U
+        |VectorArray| of the data to visualize. If `len(U) > 1`, the data is visualized
+        as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
+        provided, in which case several plots are made into the same axes. The
+        lenghts of all arrays have to agree.
+    codim
+        The codimension of the entities the data in `U` is attached to (either 0 or 1).
+    title
+        Title of the plot.
+    legend
+        Description of the data that is plotted. Most useful if `U` is a tuple in which
+        case `legend` has to be a tuple of strings of the same length.
+    block
+        If `True` block excecution until the plot window is closed.
+    '''
 
     class MainWindow(PlotMainWindow):
         def __init__(self, grid, U, codim, title, legend):
@@ -274,6 +334,22 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, block=Fal
 
 
 class GlumpyPatchVisualizer(BasicInterface):
+    '''Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
+
+    The grid's |ReferenceElement| must be the triangle or square. The data can either
+    be attached to the faces or verticies of the grid.
+
+    Parameters
+    ----------
+    grid
+        The underlying |Grid|.
+    bounding_box
+        A bounding box in which the grid is contained.
+    codim
+        The codimension of the entities the data in `U` is attached to (either 0 or 2).
+    block
+        If `True` block excecution until the plot window is closed.
+    '''
 
     def __init__(self, grid, bounding_box=[[0, 0], [1, 1]], codim=2, block=False):
         assert isinstance(grid, (RectGrid, TriaGrid))
@@ -285,6 +361,31 @@ class GlumpyPatchVisualizer(BasicInterface):
 
     def visualize(self, U, discretization, title=None, legend=None, separate_colorbars=False,
                   block=None, filename=None):
+        '''Visualize the provided data.
+
+        Parameters
+        ----------
+        U
+            |VectorArray| of the data to visualize. If `len(U) > 1`, the data is visualized
+            as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
+            provided, in which case a subplot is created for each entry of the tuple. The
+            lenghts of all arrays have to agree.
+        discretization
+            Filled in :meth:`pymor.discretizations.DiscretizationBase.visualize` (ignored).
+        title
+            Title of the plot.
+        legend
+            Description of the data that is plotted. Most useful if `U` is a tuple in which
+            case `legend` has to be a tuple of strings of the same length.
+        separate_colorbars
+            If `True` use separate colorbars for each subplot.
+        block
+            If `True` block excecution until the plot window is closed. If `None`, use the
+            default provided during instantiation.
+        filename
+            If specified, write the data to a VTK-file using
+            :func:`pymor.tools.vtkio.write_vtk` instead of displaying it.
+        '''
         assert isinstance(U, (Communicable, tuple))
         if filename:
             if isinstance(U, Communicable):
@@ -299,6 +400,20 @@ class GlumpyPatchVisualizer(BasicInterface):
 
 
 class Matplotlib1DVisualizer(BasicInterface):
+    '''Visualize scalar data associated to a one-dimensional |Grid| as a plot.
+
+    The grid's |ReferenceElement| must be the line. The data can either
+    be attached to the subintervals or verticies of the grid.
+
+    Parameters
+    ----------
+    grid
+        The underlying |Grid|.
+    codim
+        The codimension of the entities the data in `U` is attached to (either 0 or 1).
+    block
+        If `True` block excecution until the plot window is closed.
+    '''
 
     def __init__(self, grid, codim=1, block=False):
         assert isinstance(grid, OnedGrid)
@@ -308,5 +423,25 @@ class Matplotlib1DVisualizer(BasicInterface):
         self.block = block
 
     def visualize(self, U, discretization, title=None, legend=None, block=None):
+        '''Visualize the provided data.
+
+        Parameters
+        ----------
+        U
+            |VectorArray| of the data to visualize. If `len(U) > 1`, the data is visualized
+            as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
+            provided, in which case several plots are made into the same axes. The
+            lenghts of all arrays have to agree.
+        discretization
+            Filled in :meth:`pymor.discretizations.DiscretizationBase.visualize` (ignored).
+        title
+            Title of the plot.
+        legend
+            Description of the data that is plotted. Most useful if `U` is a tuple in which
+            case `legend` has to be a tuple of strings of the same length.
+        block
+            If `True` block excecution until the plot window is closed. If `None`, use the
+            default provided during instantiation.
+        '''
         block = self.block if block is None else block
         visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend, block=block)

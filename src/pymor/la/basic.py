@@ -17,17 +17,23 @@ def induced_norm(product):
 
         product.apply2(U, U, mu=mu, pairwise=True)
 
+    In addition, negative norm squares of absolute value smaller
+    than the `induced_norm_tol` |default| value are clipped to `0`.
+    If the `induced_norm_raise_negative` |default| value is `True`,
+    a :exc:`ValueError` exception is raised if there are still
+    negative norm squares afterwards.
+
     Parameters
     ----------
     product
-        The scalar product for which the norm is to be calculated.
-        Either a `DiscreteLinearOperator` or a square matrix.
+        The scalar product for which the norm is to be calculated,
+        given as a linear |Operator|.
 
     Returns
     -------
     norm
-        A function `norm(U, mu=None)` taking a vector or an array of
-        vectors as input together with the parameter `mu` which is
+        A function `norm(U, mu=None)` taking a |VectorArray| `U`
+        as input together with the |Parameter| `mu` which is
         passed to the product.
     '''
 

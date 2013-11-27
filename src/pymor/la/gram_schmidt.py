@@ -17,39 +17,45 @@ from pymor.tools import float_cmp_all
 def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=None,
                  reiterate=None, reiteration_threshold=None, check=None, check_tol=None,
                  copy=False):
-    '''Orthonormnalize a matrix using the Gram-Schmidt algorithm.
+    '''Orthonormnalize a |VectorArray| using the Gram-Schmidt algorithm.
 
     Parameters
     ----------
     A
-        The VectorArray which is to be orthonormalized.
+        The |VectorArray| which is to be orthonormalized.
     product
-        The scalar product w.r.t. which to orthonormalize.
+        The scalar product w.r.t. which to orthonormalize, given as a linear
+        |Operator|. If `None` the Euclidean product is used.
     tol
-        Tolerance to determine a linear dependent row.
+        Tolerance to determine a linear dependent row. If `None`, the
+        `gram_schmidt_tol` |default| value is used.
     offset
         Assume that the first `offset` vectors are already orthogonal and start the
         algorithm at the `offset + 1`-th vector.
     find_duplicates
-        If `True`, eliminate duplicate vectors before the main loop.
-    reiterate:
+        If `True`, eliminate duplicate vectors before the main loop. If `None` the
+        `gram_schmidt_find_duplicates` |default| value is used.
+    reiterate
         If `True`, orthonormalize again if the norm of the orthogonalized vector is
-        much smaller than the norm of the original vector.
-    reiteration_threshold:
+        much smaller than the norm of the original vector. If `None` the
+        `gram_schmidt_reiterate` |default| value is used.
+    reiteration_threshold
         If `reiterate` is `True`, reorthonormalize if the ratio between the norms of
         the orthogonalized vector and the original vector is smaller than this value.
+        If `None`, the `gram_schmidt_reiteration_threshold` |default| value is used.
     check
-        If `True`, check if the resulting VectorArray is really orthonormal. If `None`, use
-        `defaults.gram_schmidt_check`.
+        If `True`, check if the resulting VectorArray is really orthonormal. If `None`,
+        the `gram_schmidt_check` |default| value is used.
     check_tol
-        Tolerance for the check. If `None`, `defaults.gram_schmidt_check_tol` is used.
+        Tolerance for the check. If `None`, the `gram_schmidt_check_tol` |default|
+        value is used.
     copy
-        If `True`, create a copy of A instead of working directly on A.
+        If `True`, create a copy of `A` instead of working directly on `A`.
 
 
     Returns
     -------
-    The orthonormalized matrix.
+    The orthonormalized |VectorArray|.
     '''
 
     logger = getLogger('pymor.la.gram_schmidt.gram_schmidt')

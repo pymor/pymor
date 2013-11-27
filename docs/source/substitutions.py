@@ -37,8 +37,8 @@ interfaces = '''
 
 # substitutions for the most important classes and methods in pyMOR
 common = '''
-.. |defaults| replace:: :attr:`~pymor.defaults.defaults`
-.. |default| replace:: :attr:`default <pymor.defaults.defaults>`
+.. |defaults| replace:: :class:`defaults <pymor.defaults.Defaults>`
+.. |default| replace:: :class:`default <pymor.defaults.Defaults>`
 
 .. |CacheRegion| replace:: :class:`~pymor.core.cache.CacheRegion`
 
