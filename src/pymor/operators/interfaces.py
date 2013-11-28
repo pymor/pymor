@@ -208,6 +208,60 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         pass
 
     @abstractmethod
+    def projected(self, source_basis, range_basis, product=None, name=None):
+        '''Project operator to subspaces of the source and range space.
+
+        Denote `self` by A. Given a scalar product ( ⋅, ⋅), and vectors b_1, ..., b_N,
+        c_1, ..., c_M, the projected operator A_P is defined by ::
+
+            [ A_P(e_j) ]_i = ( c_i, A(b_j) )
+
+        for all i,j, where e_j denotes the j-th canonical basis vector of R^N.
+
+        In particular, if the c_i are orthonormal w.r.t. the given product,
+        then A_P is the coordinate representation w.r.t. the b_i/c_i bases
+        of the restriction of A to span(b_i) concatenated with the orthogonal
+        projection onto span(c_i).
+
+        From another point of view, if A is viewed as a biliniear form
+        (see :meth:`~OperatorInterface.apply2`) and ( ⋅, ⋅ ) is the Euclidean
+        product, then A_P represents the matrix of the bilinear form restricted
+        span(b_i) / spanc(c_i) (w.r.t. the b_i/c_i bases).
+
+        How the projected operator is realized will depend on the implementation
+        of the operator to project.  While a projected |NumpyMatrixOperator| will
+        again be a |NumpyMatrixOperator|, only a
+        :class:`pymor.operators.basic.ProjectedOperator` will be returned
+        in general. (Note that the latter will not be suitable to obtain an
+        efficient offline/online-decomposition for redcued basis schemes.)
+
+        A default implementation is provided in |OperatorBase|.
+
+        .. warning::
+            No check is performed whether the b_i and c_j are orthonormal or linear
+            independent.
+
+        Parameters
+        ----------
+        source_basis
+            The b_1, ..., b_N as a |VectorArray| or `None`. If `None`, no restriction of
+            the source space is performed.
+        range_basis
+            The c_1, ..., c_M as a |VectorArray|. If `None`, no projection in the range
+            space is performed.
+        product
+            An |Operator| representing the scalar product.  If `None`, the
+            Euclidean product is chosen.
+        name
+            Name of the projected operator.
+
+        Returns
+        -------
+        The projected |Operator|.
+        '''
+        pass
+
+    @abstractmethod
     def __add__(self, other):
         '''Sum of two operators'''
         pass
