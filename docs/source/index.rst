@@ -19,14 +19,3 @@ Demo Applications
     :glob:
     
     generated/pymordemos
-
-
-  
-Automated tests with pytest
-***************************
-
-.. toctree::
-    :maxdepth: 3
-    :glob:
-    
-    generated/pymortests    
