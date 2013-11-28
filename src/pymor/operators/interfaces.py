@@ -38,16 +38,6 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         The `VectorArray` class representing vectors of the range space.
     '''
 
-    dim_source = 0
-    dim_range = 0
-
-    type_source = None
-    type_range = None
-
-    linear = False
-
-    invert_options = None
-
     @abstractmethod
     def apply(self, U, ind=None, mu=None):
         '''Evaluate L(U, mu).
@@ -228,11 +218,6 @@ class LincombOperatorInterface(OperatorInterface):
         If `coefficients` is `None`, the name of the parameter
         providing the linear coefficients.
     '''
-
-    operators = None
-    coefficients = None
-    num_coefficients = None
-    coefficients_name = None
 
     @abstractmethod
     def evaluate_coefficients(self, mu):

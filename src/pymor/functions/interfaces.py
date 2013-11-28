@@ -35,9 +35,6 @@ class FunctionInterface(ImmutableInterface, Parametric, Named):
         The shape of the function values.
     '''
 
-    dim_domain = None
-    shape_range = None
-
     def __init__(self):
         Parametric.__init__(self)
 
