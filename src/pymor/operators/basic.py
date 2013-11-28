@@ -93,7 +93,6 @@ class OperatorBase(OperatorInterface):
 class MatrixBasedOperatorBase(OperatorBase):
 
     linear = True
-    sparse = None
 
     _assembled = False
 
