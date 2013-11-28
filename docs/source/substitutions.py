@@ -63,6 +63,7 @@ common = '''
 .. |ListVectorArray| replace:: :class:`~pymor.la.listvectorarray.ListVectorArray`
 
 .. |NumpyMatrixOperator| replace:: :class:`~pymor.operators.basic.NumpyMatrixOperator`
+.. |NumpyMatrixBasedOperator| replace:: :class:`~pymor.operators.basic.NumpyMatrixBasedOperator`
 .. |EmpiricalInterpolatedOperator| replace:: :class:`~pymor.operators.ei.EmpiricalInterpolatedOperator`
 .. |EmpiricalInterpolatedOperators| replace:: :class:`EmpiricalInterpolatedOperators <pymor.operators.ei.EmpiricalInterpolatedOperator>`
 .. |Concatenation| replace:: :class:`~pymor.operators.constructions.Concatenation`
@@ -83,6 +84,8 @@ common = '''
 .. |Numpy arrays| replace:: :class:`NumPy arrays <numpy.ndarray>`
 .. |array| replace:: :class:`NumPy array <numpy.ndarray>`
 .. |Array| replace:: :class:`NumPy array <numpy.ndarray>`
+
+.. |OrderedDict| replace:: :class:`~collections.OrderedDict`
 
 '''
 

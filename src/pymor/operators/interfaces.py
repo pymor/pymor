@@ -11,11 +11,15 @@ from pymor.tools import Named
 
 
 class OperatorInterface(ImmutableInterface, Parametric, Named):
-    '''Interface for parameter dependent discrete operators.
+    '''Interface for |Parameter| dependent discrete operators.
 
-    Every discrete operator is viewed as a map ::
+    Every operator is viewed as a map ::
 
-        L(μ): R^s -> R^r
+        A(μ): R^s -> R^r
+
+    Note that there is no special distinction between functionals
+    and operator in pyMOR. A functional is simply an operator with
+    range dimension 1 and |NumpyVectorArray| as `type_range`.
 
     Attributes
     ----------
@@ -24,38 +28,37 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
     dim_range
         The dimension r of the range space.
     invert_options
-        `OrderedDict` of possible options for `apply_inverse()`. Each key
-        is a type of inversion algorithm which can be used to invert the
-        operator. `invert_options[k]` is a dict containing all options
-        along with their default values which can be set for algorithm `k`.
-        We always have `invert_options[k]['type'] == k` such
-        that `invert_options[k]` can be passed directly to `apply_inverse()`.
+        |OrderedDict| of possible options for :meth`~OperatorInterface.apply_inverse`.
+        Each key is a type of inversion algorithm which can be used to invert the
+        operator. `invert_options[k]` is a dict containing all options along with
+        their default values which can be set for algorithm `k`. We always have
+        `invert_options[k]['type'] == k` such that `invert_options[k]` can be passed
+        directly to :meth:`~OperatorInterface.apply_inverse()`.
     linear
-        True if the operator is (known to be) linear.
+        `True` if the operator is linear.
     type_source
-        The `VectorArray` class representing vectors of the source space.
+        The |VectorArray| class representing vectors of the source space.
     type_range
-        The `VectorArray` class representing vectors of the range space.
+        The |VectorArray| class representing vectors of the range space.
     '''
 
     @abstractmethod
     def apply(self, U, ind=None, mu=None):
-        '''Evaluate L(U, mu).
+        '''Apply the operator.
 
         Parameters
         ----------
-        U : VectorArray
-            `VectorArray` of vectors to which the operator is applied.
+        U
+            |VectorArray| of vectors to which the operator is applied.
         ind
-            If None, the operator is applied to all elements of U.
-            Otherwise an iterable of the indices of the vectors to
-            which the operator is to be applied.
+            The indices of the vectors in `U` to which the operator shall be
+            applied. (See the |VectorArray| documentation for further details.)
         mu
-            The parameter for which to evaluate the operator.
+            The |Parameter| for which to evaluate the operator.
 
         Returns
         -------
-        `VectorArray` of length `len(ind)` and dimension `self.dim_range`
+        |VectorArray| of the operator evaluations.
         '''
         pass
 
@@ -63,43 +66,42 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
     def apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None, pairwise=True):
         '''Treat the operator as a 2-form by calculating (V, A(U)).
 
-        If ( , ) is the euclidean scalar product and A is given by
-        multiplication with a matrix B, then ::
+        In particular, if ( , ) is the Euclidean product and A is a linear operator
+        given by multiplication with a matrix M, then ::
 
-            L.apply2(V, U) = V^T*B*U
+            A.apply2(V, U) = V^T*M*U
 
         Parameters
         ----------
-        V : VectorArray
-            Left arguments.
-        U : VectorArray
-            Right arguments.
+        V
+            |VectorArray| of the left arguments V.
+        U
+            |VectorArray| of the right right arguments U.
         V_ind
-            If None, the operator is applied to all elements of V.
-            Otherwise an iterable of the indices of the vectors to
-            which the operator is to be applied.
+            The indices of the vectors in `V` to which the operator shall be
+            applied. (See the |VectorArray| documentation for further details.)
         U_ind
-            If None, the operator is applied to all elements of U.
-            Otherwise an iterable of the indices of the vectors to
-            which the operator is to be applied.
+            The indices of the vectors in `U` to which the operator shall be
+            applied. (See the |VectorArray| documentation for further details.)
         mu
-            The parameter for which to evaluate the operator.
+            The |Parameter| for which to evaluate the operator.
         product
-            `Operator` representing the scalar product.
-            If None, the euclidean product is chosen.
+            The scalar product used in the expresseion `(V, A(U))` given as
+            an |Operator|.  If `None`, the euclidean product is chosen.
         pairwise
-            If False and V and U are multi-dimensional, then form is applied
-            to all combinations of vectors in V and U, i.e. ::
+            If `False`, the 2-form is applied to all combinations of vectors
+            in `V` and `U`, i.e. ::
 
                 L.apply2(V, U).shape = (len(V_ind), len(U_ind)).
 
-            If True, the vectors in V and U are applied in pairs, i.e. ::
+            If `True`, the vectors in `V` and `U` are applied in pairs, i.e.
+            `V` and `U` must be of the same length and we have ::
 
                 L.apply2(V, U).shape = (len(V_ind),) = (len(U_ind),).
 
         Returns
         -------
-        A numpy array of all operator evaluations.
+        A |NumPy array| of all 2-form evaluations.
         '''
         pass
 
@@ -109,34 +111,31 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
 
         Parameters
         ----------
-        U : VectorArray
-            `VectorArray` of vectors to which the inverse operator is applied.
+        U
+            |VectorArray| of vectors to which the inverse operator is applied.
         ind
-            If None, the inverse operator is applied to all elements of U.
-            Otherwise an iterable of the indices of the vectors to
-            which the operator is to be applied.
+            The indices of the vectors in `U` to which the operator shall be
+            applied. (See the |VectorArray| documentation for further details.)
         mu
-            The parameter for which to evaluate the inverse operator.
+            The |Parameter| for which to evaluate the inverse operator.
         options
-            Dictionary of options for the inversion algorithm. The
-            dictionary has to contain the key `type` whose value determines
-            which inversion algorithm is to be used. All other key-value
-            pairs represent options specific to this algorithm.
-            `options` can also be given as a string, which is then
-            interpreted as the type of inversion algorithm.
-            If `options` is `None`, a default algorithm with default
-            options is chosen.
-            Available algorithms and their default options are provided
-            by the `invert_options` attribute.
+            Dictionary of options for the inversion algorithm. The dictionary
+            has to contain the key `'type'` whose value determines which inversion
+            algorithm is to be used. All other items represent options specific to
+            this algorithm.  `options` can also be given as a string, which is then
+            interpreted as the type of inversion algorithm. If `options` is `None`,
+            a default algorithm with default options is chosen.  Available algorithms
+            and their default options are provided by
+            :attr:`~OperatorInterface.invert_options`.
 
         Returns
         -------
-        `VectorArray` of length `len(ind)` and dimension `self.dim_source`
+        |VectorArray| of the inverse operator evaluations.
 
         Raises
         ------
         InversionError
-            Is raised, if the operator cannot be inverted.
+            The operator could not be inverted.
         '''
         pass
 
@@ -144,79 +143,106 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
     def as_vector(self, mu=None):
         '''Return vector representation of linear functional or vector operator.
 
-        This method may only be called on linear operators with
-        `dim_range == 1` and `type_source == NumpyVectorArray`
-        (functionals) or `dim_source == 1` and `type_source ==NumpyVectorArray`
-        (vector like operators).
+        This method may only be called on linear functionals, i.e. linear operators
+        with `dim_range == 1` and |NumpyVectorArray| as :attr:`~OperatorInterface.type_range`,
+        or on operators discribing vectors, i.e. linear operators with
+        `dim_source == 1` |NumpyVectorArray| as :attr:`~OperatorInterface.type_source`.
 
-        In the case of a functional, the identity
-            operator.as_vector(mu).dot(U) == operator.apply(U, mu)
-        holds. In the case of a vector like operator we have
+        In the case of a functional, the identity ::
+
+            self.as_vector(mu).dot(U) == operator.apply(U, mu)
+
+        holds, whereas in the case of a vector like operator we have ::
+
             operator.as_vector(mu) == operator.apply(NumpyVectorArray(1), mu).
+
+        Parameters
+        ----------
+        mu
+            The |Parameter| for which to return a vector representation.
+
+        Returns
+        -------
+        V
+            |VectorArray| of length 1 containing the vector representation. We have
+            `V.dim == self.dim_source`, `type(V) == self.type_source` for functionals
+            and `V.dim = self.dim_range`, `type(V) == self.dim_range` for vector-like
+            operators.
         '''
         pass
 
     @abstractstaticmethod
     def lincomb(operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
-        '''Return a linear combination of the given operators.
+        '''Form a linear combination of the given operators.
+
+        How this linear combiniation is realized will depend on the operators involved.
+        E.g. calling `lincomb` on a |NumpyMatrixBasedOperator| and only providing
+        such operators will result in a new |NumpyMatrixBasedOperator| that will assemble
+        to a |NumpyMatrixOperator|, whereas for arbitrary operator,
+        :class:`pymor.operators.basic.LincombOperator` will be returned.
+
+        The linear coefficients can be provided as scalars or |ParameterFunctionals|.
+        Alternatively, if no linear coefficients are given, the missing coefficients become
+        part of the |Parameter| the combinded |Operator| expects.
 
         Parameters
         ----------
         operators
-            List of operators whose linear combination is formed.
+            List of |Operators| whose linear combination is formed.
         coefficients
-            List of coefficients of the linear combination or `None`.
-            Coefficients can be either `Number`s or `ParameterFunctional`s.
-            If coefficients is `None` a new parameter with shape
-            `(num_coefficients,)` is introduced, whose components will
-            be taken as the first linear coefficients. The missing coefficients
-            are set to 1.
+            `None` or a list of linear coefficients.
         num_coefficients
-            In case of `coefficients == None`, the number of linear coefficients
-            which should be treated as a parameter. If `None`, `num_coefficients`
-            is set to `len(operators)`.
+            If `coefficients` is `None`, the number of linear coefficients (starting
+            at index 0) which are given by the |Parameter| component with name
+            `'coefficients_name'`. The missing coefficients are set to `1`.
         coefficients_name
-            If coefficients is None, the name of the new parameter which
-            holds the linear coefficients.
+            If `coefficients` is `None`, the name of the |Parameter| component providing
+            the linear coefficients.
         name
-            Name of the operator.
+            Name of the new operator.
 
         Returns
         -------
-        Operator representing the linear combination.
+        |LincombOperator| representing the linear combination.
         '''
         pass
 
     @abstractmethod
     def __add__(self, other):
+        '''Sum of two operators'''
         pass
 
     @abstractmethod
     def __radd__(self, other):
+        '''Sum of two operators'''
         pass
 
     @abstractmethod
     def __mul__(self, other):
+        '''Product of operator by a scalar'''
         pass
 
 
 class LincombOperatorInterface(OperatorInterface):
-    '''An operator representing a linear combination.
+    '''|Operator| representing a linear combination.
+
+    The linear coefficients can be scalars or |ParameterFunctionals|.  Alternatively,
+    if no linear coefficients are given, the missing coefficients become
+    part of the |Parameter| the combinded |Operator| expects.
 
     Attributes
     ----------
     operators
-        List of operators whose linear combination is formed.
+        List of |Operators| whose linear combination is formed.
     coefficients
-        `None` or list of linear coefficients.
+        `None` or a list of linear coefficients.
     num_coefficients
-        If `coefficients` is `None`, the number of linear
-        coefficients which are given by the parameter with
-        name `coefficients_name`. The missing coefficients
-        are set to 1.
+        If `coefficients` is `None`, the number of linear coefficients (starting
+        at index 0) which are given by the |Parameter| component with name
+        `'coefficients_name'`. The missing coefficients are set to `1`.
     coefficients_name
-        If `coefficients` is `None`, the name of the parameter
-        providing the linear coefficients.
+        If `coefficients` is `None`, the name of the |Parameter| component providing
+        the linear coefficients.
     '''
 
     @abstractmethod
