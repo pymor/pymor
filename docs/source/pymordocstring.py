@@ -342,10 +342,9 @@ def inspect_class(obj):
                 documenting_class = class_
                 if k not in obj._sphinx_documented_attributes:
                     for c in mro:
-                        if k in c.__dict__:
-                            if k in c.__dict__.get('_sphinx_documented_attributes', []):
-                                documenting_class = c
-                                break
+                        if k in c.__dict__.get('_sphinx_documented_attributes', []):
+                            documenting_class = c
+                            break
                 attributes[class_].append((k, documenting_class))
         except AttributeError:
             pass
