@@ -107,6 +107,7 @@ class NonlinearAdvectionOperator(OperatorBase):
     '''
 
     type_source = type_range = NumpyVectorArray
+    linear = False
 
     def __init__(self, grid, boundary_info, numerical_flux, dirichlet_data=None, name=None):
         assert dirichlet_data is None or isinstance(dirichlet_data, FunctionInterface)

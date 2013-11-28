@@ -52,6 +52,7 @@ class Concatenation(OperatorBase):
 class ComponentProjection(OperatorBase):
 
     type_range = NumpyVectorArray
+    linear = True
 
     def __init__(self, components, dim, type_source, name=None):
         assert all(0 <= c < dim for c in components)
@@ -74,6 +75,8 @@ class ComponentProjection(OperatorBase):
 
 
 class IdentityOperator(OperatorBase):
+
+    linear = True
 
     def __init__(self, dim, type_source, name=None):
         assert issubclass(type_source, VectorArrayInterface)
@@ -175,6 +178,7 @@ class FixedParameterOperator(OperatorBase):
         assert operator.check_parameter(mu)
         self.operator = operator
         self.mu = mu.copy()
+        self.linear = operator.linear
 
     def apply(self, U, ind=None, mu=None):
         assert self.check_parameter(mu)
