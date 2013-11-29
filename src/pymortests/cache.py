@@ -22,8 +22,8 @@ class IamMemoryCached(cache.CacheableInterface):
 
 class IamDiskCached(cache.CacheableInterface):
 
-    def __init__(self, ):
-        super(IamDiskCached, self).__init__(region='disk')
+    def __init__(self):
+        self.cache_region = 'disk'
 
     @cache.cached
     def me_takey_long_time(self, arg):
@@ -34,7 +34,7 @@ class IamDiskCached(cache.CacheableInterface):
 class IamLimitedCached(cache.CacheableInterface):
 
     def __init__(self, region='disk'):
-        super(IamLimitedCached, self).__init__(region=region)
+        self.cache_region = region
 
     @cache.cached
     def me_takey_no_time(self, arg):
