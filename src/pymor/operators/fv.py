@@ -112,7 +112,6 @@ class NonlinearAdvectionOperator(OperatorBase):
     def __init__(self, grid, boundary_info, numerical_flux, dirichlet_data=None, name=None):
         assert dirichlet_data is None or isinstance(dirichlet_data, FunctionInterface)
 
-        super(NonlinearAdvectionOperator, self).__init__()
         self.grid = grid
         self.boundary_info = boundary_info
         self.numerical_flux = numerical_flux
@@ -228,7 +227,6 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
     type_source = type_range = NumpyVectorArray
 
     def __init__(self, grid, boundary_info, velocity_field, lxf_lambda=1.0, name=None):
-        super(LinearAdvectionLaxFriedrichs, self).__init__()
         self.grid = grid
         self.boundary_info = boundary_info
         self.velocity_field = velocity_field
@@ -297,7 +295,6 @@ class L2Product(NumpyMatrixBasedOperator):
     sparse = True
 
     def __init__(self, grid, name=None):
-        super(L2Product, self).__init__()
         self.dim_source = grid.size(0)
         self.dim_range = self.dim_source
         self.grid = grid
@@ -329,7 +326,6 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
 
     def __init__(self, grid, function, name=None):
         assert function.shape_range == tuple()
-        super(L2ProductFunctional, self).__init__()
         self.dim_source = grid.size(0)
         self.dim_range = 1
         self.grid = grid

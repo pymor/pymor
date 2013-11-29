@@ -15,7 +15,6 @@ class EmptyBoundaryInfo(BoundaryInfoInterface):
     '''
 
     def __init__(self, grid):
-        super(EmptyBoundaryInfo, self).__init__()
         self.grid = grid
         self.boundary_types = frozenset()
 
@@ -37,7 +36,6 @@ class BoundaryInfoFromIndicators(BoundaryInfoInterface):
     '''
 
     def __init__(self, grid, indicators, assert_unique_type=[1], assert_some_type=[]):
-        super(BoundaryInfoFromIndicators, self).__init__()
         self.grid = grid
         self.boundary_types = indicators.keys()
         self._masks = {boundary_type: [np.zeros(grid.size(codim), dtype='bool') for codim in xrange(1, grid.dim + 1)]
@@ -56,7 +54,6 @@ class AllDirichletBoundaryInfo(BoundaryInfoInterface):
     '''|BoundaryInfo| where `BoundaryType('dirichlet')` is attached to each boundary entity.'''
 
     def __init__(self, grid):
-        super(AllDirichletBoundaryInfo, self).__init__()
         self.grid = grid
         self.boundary_types = frozenset({BoundaryType('dirichlet')})
 
@@ -85,7 +82,6 @@ class SubGridBoundaryInfo(BoundaryInfoInterface):
     def __init__(self, subgrid, grid, grid_boundary_info, new_boundary_type=None):
         assert new_boundary_type is None or isinstance(new_boundary_type, BoundaryType)
 
-        super(SubGridBoundaryInfo, self).__init__()
         boundary_types = grid_boundary_info.boundary_types
         has_new_boundaries = False
         masks = []

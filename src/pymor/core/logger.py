@@ -80,7 +80,7 @@ class ColoredFormatter(logging.Formatter):
             else:
                 return time.gmtime()
         self.converter = relative_time
-        logging.Formatter.__init__(self, formatter_message(FORMAT, self.use_color), datefmt='%M:%S')
+        super(ColoredFormatter, self).__init__(formatter_message(FORMAT, self.use_color), datefmt='%M:%S')
 
     def format(self, record):
         if not record.msg:

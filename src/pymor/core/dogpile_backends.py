@@ -101,7 +101,7 @@ class LimitedMemoryBackend(BasicInterface, dc.api.CacheBackend):
         self._cache.pop(key)
 
 
-class LimitedFileBackend(BasicInterface, DBMBackend):
+class LimitedFileBackend(DBMBackend, BasicInterface):
 
     def __init__(self, argument_dict):
         '''If argument_dict contains a value for max_keys this maximum amount of cache values kept in the
@@ -109,7 +109,7 @@ class LimitedFileBackend(BasicInterface, DBMBackend):
         If necessary values are deleted from the cache in FIFO order.
         '''
         argument_dict['filename'] = argument_dict.get('filename', os.path.join(gettempdir(), 'pymor'))
-        DBMBackend.__init__(self, argument_dict)
+        super(LimitedFileBackend, self).__init__(argument_dict)
         self.logger.debug('LimitedFileBackend args {}'.format(pformat(argument_dict)))
         self._max_keys = argument_dict.get('max_keys', sys.maxsize)
         self._keylist_fn = self.filename + '.keys'

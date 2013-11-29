@@ -38,7 +38,6 @@ class SubGrid(AffineGridInterface):
 
     def __init__(self, grid, entities):
         assert isinstance(grid, AffineGridInterface)
-        super(SubGrid, self).__init__()
         self.dim = grid.dim
         self.dim_outer = grid.dim_outer
         self.reference_element = grid.reference_element

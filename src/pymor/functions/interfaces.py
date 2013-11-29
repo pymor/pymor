@@ -35,9 +35,6 @@ class FunctionInterface(ImmutableInterface, Parametric, Named):
         The shape of the function values.
     '''
 
-    def __init__(self):
-        Parametric.__init__(self)
-
     @abstractmethod
     def evaluate(self, x, mu=None):
         '''Evaluate the function for given argument and |Parameter|.'''

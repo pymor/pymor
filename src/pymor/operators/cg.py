@@ -43,7 +43,6 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, name=None):
         assert grid.reference_element(0) in {line, triangle}
         assert function.shape_range == tuple()
-        super(L2ProductFunctionalP1, self).__init__()
         self.dim_source = grid.size(grid.dim)
         self.dim_range = 1
         self.grid = grid
@@ -126,7 +125,6 @@ class L2ProductP1(NumpyMatrixBasedOperator):
     def __init__(self, grid, boundary_info, dirichlet_clear_rows=True, dirichlet_clear_columns=False,
                  dirichlet_clear_diag=False, name=None):
         assert grid.reference_element in (line, triangle)
-        super(L2ProductP1, self).__init__()
         self.dim_source = grid.size(grid.dim)
         self.dim_range = self.dim_source
         self.grid = grid
@@ -219,7 +217,6 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
                  dirichlet_clear_columns=False, dirichlet_clear_diag=False, name=None):
         assert grid.reference_element(0) in {triangle, line}, 'A simplicial grid is expected!'
-        super(DiffusionOperatorP1, self).__init__()
         self.dim_source = self.dim_range = grid.size(grid.dim)
         self.grid = grid
         self.boundary_info = boundary_info

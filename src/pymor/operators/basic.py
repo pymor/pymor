@@ -411,13 +411,13 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         return NumpyMatrixOperator(self._matrix[:dim_range, :dim_source], name=name)
 
 
-class NumpyLincombMatrixOperator(LincombOperatorBase, NumpyMatrixBasedOperator):
+class NumpyLincombMatrixOperator(NumpyMatrixBasedOperator, LincombOperatorBase):
 
     def __init__(self, operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
         assert all(isinstance(op, NumpyMatrixBasedOperator) for op in operators)
-        LincombOperatorBase.__init__(self, operators=operators, coefficients=coefficients,
-                                     num_coefficients=num_coefficients,
-                                     coefficients_name=coefficients_name, name=name)
+        super(NumpyLincombMatrixOperator, self).__init__(operators=operators, coefficients=coefficients,
+                                                         num_coefficients=num_coefficients,
+                                                         coefficients_name=coefficients_name, name=name)
         self.sparse = all(op.sparse for op in operators)
 
     def _assemble(self, mu=None):
@@ -487,7 +487,6 @@ class ProjectedOperator(OperatorBase):
                 and issubclass(operator.type_range, product.type_source)
                 and issubclass(product.type_range, type(product))
                 and product.dim_range == product.dim_source == operator.dim_range)
-        super(ProjectedOperator, self).__init__()
         self.build_parameter_type(inherits=(operator,))
         self.dim_source = len(source_basis) if operator.dim_source > 0 else 0
         self.dim_range = len(range_basis) if range_basis is not None else operator.dim_range
@@ -569,7 +568,6 @@ class ProjectedLinearOperator(NumpyMatrixBasedOperator):
                 and issubclass(product.type_range, type(product))
                 and product.dim_range == product.dim_source == operator.dim_range)
         assert operator.linear
-        super(ProjectedLinearOperator, self).__init__()
         self.build_parameter_type(inherits=(operator,))
         self.dim_source = len(source_basis) if source_basis is not None else operator.dim_source
         self.dim_range = len(range_basis) if range_basis is not None else operator.dim_range

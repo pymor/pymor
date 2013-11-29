@@ -27,7 +27,6 @@ class OnedGrid(AffineGridInterface):
     reference_element = line
 
     def __init__(self, domain=(0, 1), num_intervals=4, identify_left_right=False):
-        super(OnedGrid, self).__init__()
         self.reference_element = line
         self._domain = np.array(domain)
         self._num_intervals = num_intervals

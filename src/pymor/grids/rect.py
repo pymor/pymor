@@ -48,7 +48,6 @@ class RectGrid(AffineGridInterface):
             assert num_intervals[0] > 1
         if identify_bottom_top:
             assert num_intervals[1] > 1
-        super(RectGrid, self).__init__()
         self.num_intervals = num_intervals
         self.domain = np.array(domain)
 

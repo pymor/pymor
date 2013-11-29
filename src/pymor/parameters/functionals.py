@@ -28,7 +28,6 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
     '''
 
     def __init__(self, parameter_name, parameter_shape, coordinates=None, name=None):
-        super(ProjectionParameterFunctional, self).__init__()
         self.name = name
         if isinstance(parameter_shape, Number):
             parameter_shape = tuple() if parameter_shape == 0 else (parameter_shape,)
@@ -60,7 +59,6 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
     '''
 
     def __init__(self, mapping, parameter_type, name=None):
-        super(ParameterFunctionalInterface, self).__init__()
         self.name = name
         self._mapping = mapping
         self.build_parameter_type(parameter_type, local_global=True)
@@ -81,7 +79,7 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
         self.expression = expression
         code = compile(expression, '<dune expression>', 'eval')
         mapping = lambda mu: eval(code, self.functions, mu)
-        GenericParameterFunctional.__init__(self, mapping, parameter_type, name)
+        super(ExpressionParameterFunctional, self).__init__(mapping, parameter_type, name)
 
     def __repr__(self):
         return 'ExpressionParameterFunctional({}, {})'.format(self.expression, repr(self.parameter_type))

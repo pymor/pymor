@@ -72,7 +72,6 @@ class ConstantFunction(FunctionBase):
     def __init__(self, value=np.array(1.0), dim_domain=1, name=None):
         assert dim_domain > 0
         assert isinstance(value, (Number, np.ndarray))
-        super(ConstantFunction, self).__init__()
         value = np.array(value)
         self._value = value
         self.dim_domain = dim_domain
@@ -118,7 +117,6 @@ class GenericFunction(FunctionBase):
     def __init__(self, mapping, dim_domain=1, shape_range=tuple(), parameter_type=None, name=None):
         assert dim_domain > 0
         assert isinstance(shape_range, (Number, tuple))
-        super(GenericFunction, self).__init__()
         self.dim_domain = dim_domain
         self.shape_range = shape_range if isinstance(shape_range, tuple) else (shape_range,)
         self.name = name

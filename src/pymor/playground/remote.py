@@ -442,13 +442,13 @@ class RemoteStationaryDiscretization(StationaryDiscretization):
                     'name': self.name}
 
         static_data = get_static_data(self.rid)
-        StationaryDiscretization.__init__(self, operator=wrap_remote_operator(self.rv, static_data['operator']),
-                                          rhs=wrap_remote_operator(self.rv, static_data['rhs']),
-                                          products={k: wrap_remote_operator(self.rv, v)
-                                                    for k,v in static_data['products'].iteritems()},
-                                          parameter_space=static_data['parameter_space'],
-                                          estimator=None, visualizer=None, caching=None,
-                                          name='Remote_{}'.format(static_data['name']))
+        super(RemoteStationaryDiscretization, self).__init__(self, operator=wrap_remote_operator(self.rv, static_data['operator']),
+                                                             rhs=wrap_remote_operator(self.rv, static_data['rhs']),
+                                                             products={k: wrap_remote_operator(self.rv, v)
+                                                                       for k,v in static_data['products'].iteritems()},
+                                                             parameter_space=static_data['parameter_space'],
+                                                             estimator=None, visualizer=None, cache_region=None,
+                                                             name='Remote_{}'.format(static_data['name']))
 
         if static_data['estimator']:
             self.unlock()

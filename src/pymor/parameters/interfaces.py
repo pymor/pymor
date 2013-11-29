@@ -30,9 +30,6 @@ class ParameterFunctionalInterface(ImmutableInterface, Parametric, Named):
     '''Represents a functional on a parameter space.
     '''
 
-    def __init__(self):
-        Parametric.__init__(self)
-
     @abstractmethod
     def evaluate(self, mu=None):
         pass

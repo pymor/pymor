@@ -12,7 +12,7 @@ from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.la import induced_norm, VectorArrayInterface
 from pymor.operators import OperatorInterface
 from pymor.operators.constructions import VectorOperator
-from pymor.parameters import Parametric, Parameter
+from pymor.parameters import Parameter
 from pymor.tools import method_arguments, FrozenDict
 
 
@@ -21,7 +21,6 @@ class DiscretizationBase(DiscretizationInterface):
 
     def __init__(self, operators, functionals, vector_operators, products=None, estimator=None, visualizer=None,
                  cache_region='disk', name=None):
-        Parametric.__init__(self)
         self.operators = FrozenDict(operators)
         self.functionals = FrozenDict(functionals)
         self.vector_operators = FrozenDict(vector_operators)

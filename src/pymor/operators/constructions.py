@@ -21,7 +21,6 @@ class Concatenation(OperatorBase):
         assert isinstance(first, OperatorInterface)
         assert second.dim_source == first.dim_range
         assert second.type_source == first.type_range
-        super(Concatenation, self).__init__()
         self.first = first
         self.second = second
         self.build_parameter_type(inherits=(second, first))
@@ -81,7 +80,6 @@ class IdentityOperator(OperatorBase):
     def __init__(self, dim, type_source, name=None):
         assert issubclass(type_source, VectorArrayInterface)
 
-        super(IdentityOperator, self).__init__()
         self.dim_range = self.dim_source = dim
         self.type_range = self.type_source = type_source
         self.name = name
@@ -100,7 +98,6 @@ class ConstantOperator(OperatorBase):
     def __init__(self, value, dim_source, type_source=NumpyVectorArray, copy=True, name=None):
         assert isinstance(value, VectorArrayInterface)
         assert len(value) == 1
-        super(ConstantOperator, self).__init__()
         self.dim_source = dim_source
         self.dim_range = value.dim
         self.type_source = type_source
@@ -124,7 +121,6 @@ class VectorOperator(OperatorBase):
     def __init__(self, vector, copy=True, name=None):
         assert isinstance(vector, VectorArrayInterface)
         assert len(vector) == 1
-        super(VectorOperator, self).__init__()
         self.dim_range = vector.dim
         self.type_range = type(vector)
         self.name = name
@@ -153,7 +149,6 @@ class VectorFunctional(OperatorBase):
         assert isinstance(vector, VectorArrayInterface)
         assert len(vector) == 1
         assert product is None or isinstance(product, OperatorInterface)
-        super(VectorFunctional, self).__init__()
         self.dim_source = vector.dim
         self.type_source = type(vector)
         self.name = name

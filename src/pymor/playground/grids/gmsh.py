@@ -155,7 +155,6 @@ class GmshGrid(AffineGridInterface):
     reference_element = triangle
 
     def __init__(self, gmsh_file):
-        super(GmshGrid, self).__init__()
         self.logger.info('Parsing gmsh file ...')
         sections = parse_gmsh_file(gmsh_file)
 
