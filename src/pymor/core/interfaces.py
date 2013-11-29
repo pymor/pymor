@@ -198,11 +198,14 @@ class UberMeta(abc.ABCMeta):
 
         # Beware! The following will probably break in python 3 if there are
         # keyword-only arguemnts
-        args, varargs, keywords, defaults = inspect.getargspec(c.__init__)
-        if varargs:
-            raise NotImplementedError
-        assert args[0] == 'self'
-        c.init_arguments = tuple(args[1:])
+        try:
+            args, varargs, keywords, defaults = inspect.getargspec(c.__init__)
+            if varargs:
+                raise NotImplementedError
+            assert args[0] == 'self'
+            c.init_arguments = tuple(args[1:])
+        except TypeError:       # happens when no one declares an __init__ method and object is reached
+            c.init_arguments = tuple()
         return c
 
 
@@ -231,9 +234,6 @@ class BasicInterface(object):
 
     __metaclass__ = UberMeta
     _locked = False
-
-    def __init__(self):
-        pass
 
     def __setattr__(self, key, value):
         '''depending on _locked state I delegate the setattr call to object or
