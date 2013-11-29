@@ -189,12 +189,12 @@ class EvaluationProvider(CacheableInterface):
         A list of |Operators| which are evaluated on the solution snapshots.
     sample
         A list of |Parameters| for which `discretization.solve()` is called.
-    caching
+    cache_region
         Name of the |CacheRegion| to use.
     '''
 
-    def __init__(self, discretization, operators, sample, caching='memory'):
-        self.cache_region = caching
+    def __init__(self, discretization, operators, sample, cache_region='memory'):
+        self.cache_region = cache_region
         self.discretization = discretization
         self.sample = sample
         self.operators = operators
@@ -220,7 +220,7 @@ class EvaluationProvider(CacheableInterface):
 
 def interpolate_operators(discretization, operator_names, parameter_sample, error_norm=None,
                           target_error=None, max_interpolation_dofs=None,
-                          projection='orthogonal', product=None, caching='memory'):
+                          projection='orthogonal', product=None, cache_region='memory'):
     '''Empirical operator interpolation using the EI-Greedy algorithm.
 
     This is a convenience method for facilitating the use of :func:`ei_greedy`. Given
@@ -252,7 +252,7 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
         See :func:`ei_greedy`.
     product
         See :func:`ei_greedy`.
-    caching
+    cache_region
         Name of the |CacheRegion| in which the operator evaluations will be stored.
 
     Returns
@@ -271,7 +271,7 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
     sample = tuple(parameter_sample)
     operators = [discretization.operators[operator_name] for operator_name in operator_names]
 
-    evaluations = EvaluationProvider(discretization, operators, sample, caching=caching)
+    evaluations = EvaluationProvider(discretization, operators, sample, cache_region=cache_region)
     dofs, basis, data = ei_greedy(evaluations, error_norm, target_error, max_interpolation_dofs,
                                   projection=projection, product=product)
 

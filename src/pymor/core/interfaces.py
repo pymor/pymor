@@ -479,7 +479,7 @@ class ImmutableMeta(UberMeta):
     '''Metaclass for :class:`ImmutableInterface`.'''
 
     sids_created = 0
-    init_arguments_never_warn = ('name', 'caching')
+    init_arguments_never_warn = ('name', 'cache_region')
 
     def __new__(cls, classname, bases, classdict):
         c = UberMeta.__new__(cls, classname, bases, classdict)
@@ -534,11 +534,11 @@ class ImmutableInterface(BasicInterface):
         the failure.
     sid_ignore
         Tuple of `__init__` arguments not to include in sid caluation.
-        The default it `{'name', 'caching'}`
+        The default it `{'name', 'cache_region'}`
     '''
     __metaclass__ = ImmutableMeta
     calculate_sid = True
-    sid_ignore = frozenset({'name', 'caching'})
+    sid_ignore = frozenset({'name', 'cache_region'})
 
     # Unlocking an immutable object will result in the deletion of its sid.
     # However, this will not delete the sids of objects referencing it.

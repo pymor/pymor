@@ -20,7 +20,7 @@ class DiscretizationBase(DiscretizationInterface):
     '''Base class for |Discretizations| providing some common functionality.'''
 
     def __init__(self, operators, functionals, vector_operators, products=None, estimator=None, visualizer=None,
-                 caching='disk', name=None):
+                 cache_region='disk', name=None):
         Parametric.__init__(self)
         self.operators = FrozenDict(operators)
         self.functionals = FrozenDict(functionals)
@@ -29,8 +29,7 @@ class DiscretizationBase(DiscretizationInterface):
         self.products = products
         self.estimator = estimator
         self.visualizer = visualizer
-        self.cache_region = caching
-        self.caching = caching
+        self.cache_region = cache_region
         self.name = name
 
         if products:
@@ -81,7 +80,7 @@ class StationaryDiscretization(DiscretizationBase):
         is not `None` a `visualize(U, *args, **kwargs)` method is added
         to the discretization, which forwards its arguments to the
         visualizer's `visualize` method.
-    caching
+    cache_region
         `None` or name of the cache region to use. See
         :mod:`pymor.core.cache`.
     name
@@ -95,10 +94,10 @@ class StationaryDiscretization(DiscretizationBase):
         The |Functional| F. Synonymous for `functionals['rhs']`.
     '''
 
-    sid_ignore = ('visualizer', 'caching', 'name')
+    sid_ignore = ('visualizer', 'cache_region', 'name')
 
     def __init__(self, operator, rhs, products=None, parameter_space=None, estimator=None, visualizer=None,
-                 caching='disk', name=None):
+                 cache_region='disk', name=None):
         assert isinstance(operator, OperatorInterface)
         assert isinstance(rhs, OperatorInterface) and rhs.linear
         assert operator.dim_source == operator.dim_range == rhs.dim_source
@@ -108,7 +107,7 @@ class StationaryDiscretization(DiscretizationBase):
         functionals = {'rhs': rhs}
         super(StationaryDiscretization, self).__init__(operators=operators, functionals=functionals,
                                                        vector_operators={}, products=products, estimator=estimator,
-                                                       visualizer=visualizer, caching=caching, name=name)
+                                                       visualizer=visualizer, cache_region=cache_region, name=name)
         self.dim_solution = operator.dim_source
         self.type_solution = operator.type_source
         self.operator = operator
@@ -196,7 +195,7 @@ class InstationaryDiscretization(DiscretizationBase):
         is not `None` a `visualize(U, *args, **kwargs)` method is added
         to the discretization, which forwards its arguments to the
         visualizer's `visualize` method.
-    caching
+    cache_region
         `None` or name of the cache region to use. See
         :mod:`pymor.core.cache`.
     name
@@ -219,10 +218,10 @@ class InstationaryDiscretization(DiscretizationBase):
         The provided time-stepper.
     '''
 
-    sid_ignore = ('visualizer', 'caching', 'name')
+    sid_ignore = ('visualizer', 'cache_region', 'name')
 
     def __init__(self, T, initial_data, operator, rhs=None, mass=None, time_stepper=None, num_values=None,
-                 products=None, parameter_space=None, estimator=None, visualizer=None, caching='disk',
+                 products=None, parameter_space=None, estimator=None, visualizer=None, cache_region='disk',
                  name=None):
         assert isinstance(initial_data, (VectorArrayInterface, OperatorInterface))
         assert not isinstance(initial_data, OperatorInterface) or initial_data.dim_source == 1
@@ -242,7 +241,7 @@ class InstationaryDiscretization(DiscretizationBase):
         super(InstationaryDiscretization, self).__init__(operators=operators, functionals=functionals,
                                                          vector_operators=vector_operators,
                                                          products=products, estimator=estimator,
-                                                         visualizer=visualizer, caching=caching, name=name)
+                                                         visualizer=visualizer, cache_region=cache_region, name=name)
         self.T = T
         self.dim_solution = operator.dim_source
         self.type_solution = operator.type_source
