@@ -194,7 +194,7 @@ class EvaluationProvider(CacheableInterface):
     '''
 
     def __init__(self, discretization, operators, sample, caching='memory'):
-        CacheableInterface.__init__(self, region=caching)
+        self.cache_region = caching
         self.discretization = discretization
         self.sample = sample
         self.operators = operators

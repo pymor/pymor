@@ -8,7 +8,6 @@ from __future__ import absolute_import, division, print_function
 from itertools import chain
 
 from pymor.algorithms.timestepping import TimeStepperInterface
-from pymor.core.cache import CacheableInterface
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.la import induced_norm, VectorArrayInterface
 from pymor.operators import OperatorInterface
@@ -22,7 +21,6 @@ class DiscretizationBase(DiscretizationInterface):
 
     def __init__(self, operators, functionals, vector_operators, products=None, estimator=None, visualizer=None,
                  caching='disk', name=None):
-        CacheableInterface.__init__(self, region=caching)
         Parametric.__init__(self)
         self.operators = FrozenDict(operators)
         self.functionals = FrozenDict(functionals)
@@ -31,6 +29,7 @@ class DiscretizationBase(DiscretizationInterface):
         self.products = products
         self.estimator = estimator
         self.visualizer = visualizer
+        self.cache_region = caching
         self.caching = caching
         self.name = name
 

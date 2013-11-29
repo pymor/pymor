@@ -183,7 +183,7 @@ class cached(object):
     def __call__(self, im_self, *args, **kwargs):
         '''Via the magic that is partial functions returned from __get__, im_self is the instance object of the class
         we're decorating a method of and [kw]args are the actual parameters to the decorated method'''
-        region = cache_regions[im_self._cache_region]
+        region = cache_regions[im_self.cache_region]
         if not region.enabled:
             return self.decorated_function(im_self, *args, **kwargs)
 
@@ -208,7 +208,7 @@ class cached(object):
         '''
         if instance is None:
             return MethodType(self.decorated_function, None, instancetype)
-        elif _caching_disabled or instance._cache_region is None:
+        elif _caching_disabled or instance.cache_region is None:
             return partial(self.decorated_function, instance)
         else:
             return partial(self.__call__, instance)
@@ -225,12 +225,25 @@ class CacheableInterface(ImmutableInterface):
         is disabled.
     '''
 
-    def __init__(self, region='memory'):
-        self.enable_caching(region)
+    @property
+    def cache_region(self):
+        try:
+            return self.__cache_region
+        except AttributeError:
+            self.__cache_region = 'memory' if 'memory' in cache_regions else None
+
+    @cache_region.setter
+    def cache_region(self, region):
+        if region in (None, 'none'):
+            self.__cache_region = None
+        elif region not in cache_regions:
+            raise ValueError('Unkown cache region.')
+        else:
+            self.__cache_region = region
 
     def disable_caching(self):
         '''Disable caching for this instance.'''
-        self._cache_region = None
+        self.__cache_region = None
 
     def enable_caching(self, region):
         '''Enable caching for this instance.
@@ -242,8 +255,4 @@ class CacheableInterface(ImmutableInterface):
             `pymor.core.cache.cache_regions`. If `None` or `'none'`, caching
             is disabled.
         '''
-        if region in (None, 'none'):
-            self._cache_region = None
-        else:
-            assert region in cache_regions
-            self._cache_region = region
+        self.cache_region = region
