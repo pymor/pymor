@@ -162,8 +162,8 @@ class VectorFunctional(OperatorBase):
 
     def apply(self, U, ind=None, mu=None):
         assert self.check_parameter(mu)
-        assert isinstance(U, NumpyVectorArray) and U.dim == 1
-        return NumpyVectorArray(U.dot(self._vector, ind=ind), copy=False)
+        assert isinstance(U, self.type_source) and U.dim == self.dim_source
+        return NumpyVectorArray(U.dot(self._vector, ind=ind, pairwise=False), copy=False)
 
 
 class FixedParameterOperator(OperatorBase):
