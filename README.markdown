@@ -68,6 +68,18 @@ This procedure has been tested on the following platforms:
         ./thermalblock.py -ep --plot-solutions 2 2 3 16
 
 
+Documentation
+-------------
+
+To build the documentation execute
+
+    make doc
+    
+inside root directory of the pyMOR source tree. This will generate HTML
+documentation in 'docs/_build/html'. The documentation is also available
+online on [Read the Docs](http://pymor.readthedocs.org/).
+
+
 Cython extension modules
 ------------------------
 
