@@ -23,6 +23,7 @@ from pymor.parameters import ParameterFunctionalInterface
 
 
 class OperatorBase(OperatorInterface):
+    '''Base class for operators providing some default implementations.'''
 
     def apply2(self, V, U, pairwise, U_ind=None, V_ind=None, mu=None, product=None):
         mu = self.parse_parameter(mu)
@@ -91,6 +92,23 @@ class OperatorBase(OperatorInterface):
 
 
 class MatrixBasedOperatorBase(OperatorBase):
+    '''Base class for operators which assemble into a matrix.
+
+    This class provides a thin wrapper around the
+    :meth:`~pymor.operators.interfaces.OperatorInterface.apply`
+    and :meth:`~pymor.operators.interfaces.OperatorInterface.as_vector` methods by
+    calling these methods on the |Operator| which is returned
+    by the :meth:`MatrixBasedOperatorBase._assemble` method the implementor has
+    supplied. The last assembled operator is remembered, so subsequent
+    :meth:`~pymor.operators.interfaces.OperatorInterface.apply` calls
+    for the same |Parameter| no not lead to a re-assembly of the operator.
+
+    Attributes
+    ----------
+    assembled
+        In case the operator is not |Parameter|-dependent, `True` if the
+        operator has already been assembled.
+    '''
 
     linear = True
 

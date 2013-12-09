@@ -217,11 +217,11 @@ class cached(object):
 class CacheableInterface(ImmutableInterface):
     '''Base class for anything that wants to use our built-in caching.
 
-    Parameters
+    Attributes
     ----------
-    region
+    cache_region
         Name of the `CacheRegion` to use. Must correspond to a key in
-        `pymor.core.cache.cache_regions`. If `None` or `'none'`, caching
+        :attr:`pymor.core.cache.cache_regions`. If `None` or `'none'`, caching
         is disabled.
     '''
 

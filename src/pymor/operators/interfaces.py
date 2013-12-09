@@ -28,7 +28,7 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
     dim_range
         The dimension r of the range space.
     invert_options
-        |OrderedDict| of possible options for :meth`~OperatorInterface.apply_inverse`.
+        |OrderedDict| of possible options for :meth:`~OperatorInterface.apply_inverse`.
         Each key is a type of inversion algorithm which can be used to invert the
         operator. `invert_options[k]` is a dict containing all options along with
         their default values which can be set for algorithm `k`. We always have
@@ -184,6 +184,8 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         The linear coefficients can be provided as scalars or |ParameterFunctionals|.
         Alternatively, if no linear coefficients are given, the missing coefficients become
         part of the |Parameter| the combinded |Operator| expects.
+
+        A default implementation is provided in |OperatorBase|.
 
         Parameters
         ----------
