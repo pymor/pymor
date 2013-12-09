@@ -18,10 +18,11 @@ from PySide.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlide
                           QAction, QStyle, QToolBar, QLabel, QFileDialog)
 from PySide.QtCore import Qt, QCoreApplication, QTimer
 
-from pymor.core import BasicInterface
+from pymor import defaults
+from pymor.core import BasicInterface, getLogger
 from pymor.grids import RectGrid, TriaGrid, OnedGrid
 from pymor.gui.glumpy import GlumpyPatchWidget, ColorBarWidget
-from pymor.gui.matplotlib import Matplotlib1DWidget
+from pymor.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget
 from pymor.la import VectorArrayInterface, NumpyVectorArray
 from pymor.tools.vtkio import write_vtk
 
@@ -184,8 +185,8 @@ def launch_qt_app(main_window_factory, block):
         p.join()
 
 
-def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, title=None, legend=None,
-                           separate_colorbars=False, block=False):
+def visualize_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, title=None, legend=None,
+                    separate_colorbars=False, backend=None, block=False):
     '''Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
@@ -211,12 +212,15 @@ def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, titl
         case `legend` has to be a tuple of strings of the same length.
     separate_colorbars
         If `True` use separate colorbars for each subplot.
+    backend
+        Plot backend to use ('gl' or 'matplotlib'). If `None`, the
+        `qt_visualize_patch_backend` |default| is used.
     block
         If `True` block excecution until the plot window is closed.
     '''
 
     class MainWindow(PlotMainWindow):
-        def __init__(self, grid, U, bounding_box, codim, title, legend, separate_colorbars):
+        def __init__(self, grid, U, bounding_box, codim, title, legend, separate_colorbars, backend):
             assert isinstance(U, VectorArrayInterface) and hasattr(U, 'data') \
                 or (isinstance(U, tuple) and all(isinstance(u, VectorArrayInterface) and hasattr(u, 'data') for u in U)
                     and all(len(u) == len(U[0]) for u in U))
@@ -224,6 +228,17 @@ def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, titl
             if isinstance(legend, str):
                 legend = (legend,)
             assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
+            if backend is None:
+                backend = defaults.qt_visualize_patch_backend
+            assert backend in {'gl', 'matplotlib'}
+            if backend == 'gl':
+                widget = GlumpyPatchWidget
+            else:
+                widget = MatplotlibPatchWidget
+                if not separate_colorbars and len(U) > 1:
+                    l = getLogger('pymor.gui.qt.visualize_patch')
+                    l.warn('separate_colorbars=False not supported for matplotlib backend')
+                separate_colorbars = True
 
             class PlotWidget(QWidget):
                 def __init__(self):
@@ -236,7 +251,7 @@ def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, titl
                         vmaxs = (max(np.max(u) for u in U),) * len(U)
                     layout = QHBoxLayout()
                     plot_layout = QGridLayout()
-                    plots = [GlumpyPatchWidget(self, grid, vmin=vmin, vmax=vmax, bounding_box=bounding_box, codim=codim)
+                    plots = [widget(self, grid, vmin=vmin, vmax=vmax, bounding_box=bounding_box, codim=codim)
                              for vmin, vmax in izip(vmins, vmaxs)]
                     if legend:
                         for i, plot, l in izip(xrange(len(plots)), plots, legend):
@@ -244,7 +259,7 @@ def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, titl
                             caption = QLabel(l)
                             caption.setAlignment(Qt.AlignHCenter)
                             subplot_layout.addWidget(caption)
-                            if not separate_colorbars:
+                            if not separate_colorbars or backend == 'matplotlib':
                                 subplot_layout.addWidget(plot)
                             else:
                                 hlayout = QHBoxLayout()
@@ -254,7 +269,7 @@ def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, titl
                             plot_layout.addLayout(subplot_layout, int(i/2), (i % 2), 1, 1)
                     else:
                         for i, plot in enumerate(plots):
-                            if not separate_colorbars:
+                            if not separate_colorbars or backend == 'matplotlib':
                                 plot_layout.addWidget(plot, int(i/2), (i % 2), 1, 1)
                             else:
                                 hlayout = QHBoxLayout()
@@ -287,7 +302,7 @@ def visualize_glumpy_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, titl
                                   codim=self.codim)
 
     launch_qt_app(lambda: MainWindow(grid, U, bounding_box, codim, title=title, legend=legend,
-                                     separate_colorbars=separate_colorbars), block)
+                                     separate_colorbars=separate_colorbars, backend=backend), block)
 
 
 def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, block=False):
@@ -334,7 +349,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, block=Fal
     launch_qt_app(lambda: MainWindow(grid, U, codim, title=title, legend=legend), block)
 
 
-class GlumpyPatchVisualizer(BasicInterface):
+class PatchVisualizer(BasicInterface):
     '''Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
@@ -348,16 +363,20 @@ class GlumpyPatchVisualizer(BasicInterface):
         A bounding box in which the grid is contained.
     codim
         The codimension of the entities the data in `U` is attached to (either 0 or 2).
+    backend
+        Plot backend to use ('gl' or 'matplotlib'). If `None`, the
+        `qt_visualize_patch_backend` |default| is used.
     block
         If `True` block excecution until the plot window is closed.
     '''
 
-    def __init__(self, grid, bounding_box=[[0, 0], [1, 1]], codim=2, block=False):
+    def __init__(self, grid, bounding_box=[[0, 0], [1, 1]], codim=2, backend=None, block=False):
         assert isinstance(grid, (RectGrid, TriaGrid))
         assert codim in (0, 2)
         self.grid = grid
         self.bounding_box = bounding_box
         self.codim = codim
+        self.backend = backend
         self.block = block
 
     def visualize(self, U, discretization, title=None, legend=None, separate_colorbars=False,
@@ -398,8 +417,9 @@ class GlumpyPatchVisualizer(BasicInterface):
                     write_vtk(self.grid, u, '{}-{}'.format(filename, i), codim=self.codim)
         else:
             block = self.block if block is None else block
-            visualize_glumpy_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
-                                   legend=legend, separate_colorbars=separate_colorbars, block=block)
+            visualize_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
+                            legend=legend, separate_colorbars=separate_colorbars, backend=self.backend,
+                            block=block)
 
 
 class Matplotlib1DVisualizer(BasicInterface):

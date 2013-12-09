@@ -14,7 +14,7 @@ from pymor.analyticalproblems import EllipticProblem
 from pymor.discretizations import StationaryDiscretization
 from pymor.domaindiscretizers import discretize_domain_default
 from pymor.grids import TriaGrid, OnedGrid
-from pymor.gui.qt import GlumpyPatchVisualizer, Matplotlib1DVisualizer
+from pymor.gui.qt import PatchVisualizer, Matplotlib1DVisualizer
 from pymor.operators.cg import DiffusionOperatorP1, L2ProductFunctionalP1, L2ProductP1
 
 
@@ -89,12 +89,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
     F = Functional(grid, p.rhs, boundary_info, dirichlet_data=p.dirichlet_data)
 
     if isinstance(grid, TriaGrid):
-        visualizer = GlumpyPatchVisualizer(grid=grid, bounding_box=grid.domain, codim=2)
-        # def visualize(U):
-        #     assert len(U) == 1
-        #     pl.tripcolor(grid.centers(2)[:, 0], grid.centers(2)[:, 1], grid.subentities(0, 2), U.data.ravel())
-        #     pl.colorbar()
-        #     pl.show()
+        visualizer = PatchVisualizer(grid=grid, bounding_box=grid.domain, codim=2)
     else:
         visualizer = Matplotlib1DVisualizer(grid=grid, codim=1)
 

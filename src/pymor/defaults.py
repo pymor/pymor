@@ -45,6 +45,8 @@ class Defaults(object):
     :random_seed:                        seed for numpy's random generator; if None, use /dev/urandom as source for seed
 
     :compact_print:                      print (arrays) in a compact but possibly not accurate way
+    :qt_visualize_patch_backend:         backend to use for plotting in pymor.gui.qt.visualize_patch
+                                         ('gl' or 'matplotlib')
     '''
 
     float_cmp_tol                       = 2**4 * np.finfo(np.zeros(1).dtype).eps
@@ -73,6 +75,7 @@ class Defaults(object):
     _random_seed                        = 123456
 
     compact_print                       = False
+    qt_visualize_patch_backend          = 'gl'
 
     @property
     def random_seed(self):
@@ -115,6 +118,7 @@ class Defaults(object):
             random_seed                         = {0.random_seed}
 
             compact_print                       = {0.compact_print}
+            qt_visualize_patch_backend          = {0.qt_visualize_patch_backend}
             '''.format(self)
 
     def _calc_sid(self):
