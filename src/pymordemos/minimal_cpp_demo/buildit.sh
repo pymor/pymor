@@ -1,4 +1,4 @@
 #!/bin/bash
 
 python bindings.py
-g++ -shared -fPIC -o discretization.so -I/usr/include/python2.7 discretization.cc bindings_generated.cpp
+g++ -shared -fPIC -o discretization.so $(pkg-config python-2.7 --cflags) discretization.cc bindings_generated.cpp
