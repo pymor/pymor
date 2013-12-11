@@ -18,7 +18,7 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         A(μ): R^s -> R^r
 
     Note that there is no special distinction between functionals
-    and operator in pyMOR. A functional is simply an operator with
+    and operators in pyMOR. A functional is simply an operator with
     range dimension 1 and |NumpyVectorArray| as `type_range`.
 
     Attributes
@@ -178,10 +178,10 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         How this linear combiniation is realized will depend on the operators involved.
         E.g. calling `lincomb` on a |NumpyMatrixBasedOperator| and only providing
         such operators will result in a new |NumpyMatrixBasedOperator| that will assemble
-        to a |NumpyMatrixOperator|, whereas for arbitrary operator,
+        to a |NumpyMatrixOperator|, whereas for arbitrary operators,
         :class:`pymor.operators.basic.LincombOperator` will be returned.
 
-        The linear coefficients can be provided as scalars or |ParameterFunctionals|.
+        The linear coefficients may be provided as scalars or |ParameterFunctionals|.
         Alternatively, if no linear coefficients are given, the missing coefficients become
         part of the |Parameter| the combinded |Operator| expects.
 

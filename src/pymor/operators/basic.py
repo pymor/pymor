@@ -101,7 +101,7 @@ class MatrixBasedOperatorBase(OperatorBase):
     by the :meth:`MatrixBasedOperatorBase._assemble` method the implementor has
     supplied. The last assembled operator is remembered, so subsequent
     :meth:`~pymor.operators.interfaces.OperatorInterface.apply` calls
-    for the same |Parameter| no not lead to a re-assembly of the operator.
+    for the same |Parameter| do not lead to a re-assembly of the operator.
 
     Attributes
     ----------
