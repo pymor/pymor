@@ -67,6 +67,7 @@ common = '''
 .. |NumpyMatrixOperator| replace:: :class:`~pymor.operators.basic.NumpyMatrixOperator`
 .. |NumpyMatrixBasedOperator| replace:: :class:`~pymor.operators.basic.NumpyMatrixBasedOperator`
 .. |NumpyMatrixBasedOperators| replace:: :class:`NumpyMatrixBasedOperators <pymor.operators.basic.NumpyMatrixBasedOperator>`
+.. |NumpyGenericOperator| replace:: :class:`~pymor.operators.basic.NumpyGenericOperator`
 .. |EmpiricalInterpolatedOperator| replace:: :class:`~pymor.operators.ei.EmpiricalInterpolatedOperator`
 .. |EmpiricalInterpolatedOperators| replace:: :class:`EmpiricalInterpolatedOperators <pymor.operators.ei.EmpiricalInterpolatedOperator>`
 .. |Concatenation| replace:: :class:`~pymor.operators.constructions.Concatenation`
@@ -81,6 +82,7 @@ common = '''
 
 .. |reduce_generic_rb| replace:: :func:`~pymor.reductors.basic.reduce_generic_rb`
 
+.. |NumPy| replace:: :mod:`NumPy <numpy>`
 .. |NumPy array| replace:: :class:`NumPy array <numpy.ndarray>`
 .. |NumPy arrays| replace:: :class:`NumPy arrays <numpy.ndarray>`
 .. |Numpy array| replace:: :class:`NumPy array <numpy.ndarray>`

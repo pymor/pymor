@@ -3,6 +3,22 @@
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+'''This module provides some |NumPy| bases |Operators| as well as base classes
+providing some common functionality for the implementation of new |Operators|.
+
+There are three |NumPy|-based |Operators| of interest:
+
+  - |NumpyMatrixOperator| wraps a 2D |NumPy array| as a proper |Operator|.
+  - |NumpyMatrixBasedOperator| should be used as base class for all |Operators|
+    which assemble into a |NumpyMatrixOperator|.
+  - |NumpyGenericOperator| wraps an arbitrary Python function between
+    |NumPy arrays| as an |Operator|.
+
+If you are developing new |Operators| not based on |NumPy arrays|, you should
+consider deriving from :class:`OperatorBase`, :class:`AssemblableOperatorBase` or
+:class:`LincombOperatorBase`.
+'''
+
 from __future__ import absolute_import, division, print_function
 
 from collections import OrderedDict
