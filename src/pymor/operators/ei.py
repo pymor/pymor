@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
@@ -14,6 +15,48 @@ from pymor.operators import OperatorInterface, OperatorBase
 
 
 class EmpiricalInterpolatedOperator(OperatorBase):
+    '''Interpolate an |Operator| using Empirical Operator Interpolation.
+
+    Let `L` be an |Operator|, `0 <= c_1, ..., c_M <= L.dim_range` indices
+    of interpolation DOFs and `b_1, ..., b_M in R^(L.dim_range)` collateral
+    basis vectors. If moreover `ψ_j(U)` denotes the j-th component of `U`, the
+    empricial interpolation `L_EI` of `L` w.r.t. the given data is given by ::
+
+      |                M
+      |   L_EI(U, μ) = ∑ b_i⋅λ_i     such that
+      |               i=1
+      |
+      |   ψ_(c_i)(L_EI(U, μ)) = ψ_(c_i)(L(U, μ))   for i=0,...,M
+
+    It is assumed that ::
+
+          ψ_(c_i)(b_j) = 0  for i < j
+
+    which means that the matrix of the interpolation problem is triangular.
+
+    Since the original operator only has to be evaluated at the given interpolation
+    DOFs, |EmpiricalInterpolatedOperator| calls `operator.restricted(interpolation_dofs)`
+    to obtain a restricted version of the operator which is stored and later used
+    to quickly obtain the required evaluations. (The second return value of the `restricted`
+    method has to be an array of source DOFs -- determined by the operator's stencil --
+    required to evaluate the restricted operator.)
+
+    The interpolation DOFs and the collateral basis can be generated using
+    the algorithms provided in the :mod:`pymor.algorithms.ei` module.
+
+
+    Parameters
+    ----------
+    operator
+        The |Operator| to interpolate. The operator must implement a `restricted`
+        method as described above.
+    interpolation_dofs
+        List or 1D |NumPy array| of the interpolation DOFs `c_1, ..., c_M`.
+    collateral_basis
+        |VectorArray| containing the collateral basis `b_1, ..., b_M`.
+    name
+        Name of the operator.
+    '''
 
     def __init__(self, operator, interpolation_dofs, collateral_basis, name=None):
         assert isinstance(operator, OperatorInterface)
@@ -78,6 +121,10 @@ class EmpiricalInterpolatedOperator(OperatorBase):
 
 
 class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
+    '''Project an |EmpiricalInterpolatedOperator|.
+
+    Not intended to be used directly. Instead use :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
+    '''
 
     def __init__(self, restricted_operator, interpolation_matrix, source_basis_dofs,
                  projected_collateral_basis, name=None):
