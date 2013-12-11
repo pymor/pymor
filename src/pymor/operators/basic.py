@@ -23,7 +23,7 @@ from pymor.parameters import ParameterFunctionalInterface
 
 
 class OperatorBase(OperatorInterface):
-    '''Base class for operators providing some default implementations.'''
+    '''Base class for |Operators| providing some default implementations.'''
 
     def apply2(self, V, U, pairwise, U_ind=None, V_ind=None, mu=None, product=None):
         mu = self.parse_parameter(mu)
@@ -92,7 +92,7 @@ class OperatorBase(OperatorInterface):
 
 
 class AssemblableOperatorBase(OperatorBase):
-    '''Base class for operators which assemble into a matrix.
+    '''Base class for operators which have to be assembled.
 
     This class provides a thin wrapper around the
     :meth:`~pymor.operators.interfaces.OperatorInterface.apply`
@@ -102,6 +102,7 @@ class AssemblableOperatorBase(OperatorBase):
     supplied. The last assembled operator is remembered, so subsequent
     :meth:`~pymor.operators.interfaces.OperatorInterface.apply` calls
     for the same |Parameter| do not lead to a re-assembly of the operator.
+    It is assumed that the assembled operator is no longer |Parameter|-dependent.
 
     Attributes
     ----------
@@ -109,8 +110,6 @@ class AssemblableOperatorBase(OperatorBase):
         In case the operator is not |Parameter|-dependent, `True` if the
         operator has already been assembled.
     '''
-
-    linear = True
 
     _assembled = False
 
@@ -123,16 +122,16 @@ class AssemblableOperatorBase(OperatorBase):
         pass
 
     def assemble(self, mu=None):
-        '''Assembles the matrix of the operator for given parameter.
+        '''Assembles the operator for a given |Parameter|.
 
         Parameters
         ----------
         mu
-            The parameter for which to assemble the operator.
+            The |Parameter| for which to assemble the operator.
 
         Returns
         -------
-        The assembled parameter independent `MatrixBasedOperator`.
+        The assembled **parameter independent** |Operator|.
         '''
         if self._assembled:
             assert self.check_parameter(mu)
@@ -172,6 +171,24 @@ class AssemblableOperatorBase(OperatorBase):
 
 
 class LincombOperatorBase(OperatorBase, LincombOperatorInterface):
+    '''Base class for |LincombOperators| providing some default implementations.
+
+    Parameters
+    ----------
+    operators
+        List of |Operators| whose linear combination is formed.
+    coefficients
+        `None` or a list of linear coefficients.
+    num_coefficients
+        If `coefficients` is `None`, the number of linear coefficients (starting
+        at index 0) which are given by the |Parameter| component with name
+        `'coefficients_name'`. The missing coefficients are set to `1`.
+    coefficients_name
+        If `coefficients` is `None`, the name of the |Parameter| component providing
+        the linear coefficients.
+    name
+        Name of the operator.
+    '''
 
     def __init__(self, operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
         assert coefficients is None or len(operators) == len(coefficients)
@@ -234,6 +251,7 @@ class LincombOperatorBase(OperatorBase, LincombOperatorInterface):
                                                coefficients_name=self.coefficients_name, name=name)
 
     def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
+        '''See :meth:`NumpyMatrixOperator.projected_to_subbasis`.'''
         assert dim_source is None or dim_source <= self.dim_source
         assert dim_range is None or dim_range <= self.dim_range
         proj_operators = [op.projected_to_subbasis(dim_source=dim_source, dim_range=dim_range)
@@ -246,20 +264,25 @@ class LincombOperatorBase(OperatorBase, LincombOperatorInterface):
 
 
 class NumpyGenericOperator(OperatorBase):
-    '''Wraps an apply function as a proper discrete operator.
+    '''Wraps an arbitrary Python function between |NumPy arrays| as a proper
+    |Operator|.
 
     Parameters
     ----------
     mapping
-        The function to wrap. If parameter_type is None, mapping is called with
-        the DOF-vector U as only argument. If parameter_type is not None, mapping
-        is called with the arguments U and mu.
+        The function to wrap. If `parameter_type` is `None`, the function is of
+        the form `mapping(U)` and is expected to be vectorized. In particular::
+
+            mapping(U).shape == U.shape[:-1] + (dim_range,).
+
+        If `parameter_type` is not `None`, the function has to have the signature
+        `mapping(U, mu)`.
     dim_source
         Dimension of the operator's source.
     dim_range
         Dimension of the operator's range.
     parameter_type
-        Type of the parameter that mapping expects or None.
+        The |ParameterType| the mapping accepts.
     name
         Name of the operator.
     '''
@@ -288,8 +311,18 @@ class NumpyGenericOperator(OperatorBase):
 
 
 class NumpyMatrixBasedOperator(AssemblableOperatorBase):
+    '''Base class for operators which assemble into a |NumpyMatrixOperator|.
 
+    Attributes
+    ----------
+    sparse
+        `True` if the operator assembles into a sparse matrix, `False` if the
+        operator assembles into a dense matrix, `None` if unknown.
+    '''
+
+    linear = True
     type_source = type_range = NumpyVectorArray
+    sparse = None
 
     @staticmethod
     def lincomb(operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
@@ -328,14 +361,12 @@ class NumpyMatrixBasedOperator(AssemblableOperatorBase):
 
 
 class NumpyMatrixOperator(NumpyMatrixBasedOperator):
-    '''Wraps a matrix as a proper linear discrete operator.
-
-    The resulting operator will be parameter independent.
+    '''Wraps a 2D |NumPy Array| as a proper |Operator|.
 
     Parameters
     ----------
     matrix
-        The Matrix which is to be wrapped.
+        The |NumPy array| which is to be wrapped.
     name
         Name of the operator.
     '''
@@ -423,6 +454,32 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         return NumpyVectorArray(R)
 
     def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
+        '''Project the operator to a subbasis.
+
+        The purpose of this method is to further project an operator that has been
+        obtained through :meth:`~pymor.operator.interfaces.OperatorInterface.projected`
+        to subbases of the original projection bases, i.e. ::
+
+            op.projected(s_basis, r_basis, prod).projected_to_subbasis(dim_source, dim_range)
+
+        should be the same as ::
+
+            op.projected(s_basis.copy(range(dim_source)), r_basis.copy(range(dim_range)), prod)
+
+        For a |NumpyMatrixOperator| this amounts to extracting the upper-left
+        (dim_range, dim_source) corner of the matrix it wraps.
+
+        Parameters
+        ----------
+        dim_source
+            Dimension of the source subbasis.
+        dim_range
+            Dimension of the range subbasis.
+
+        Returns
+        -------
+        The projected |Operator|.
+        '''
         assert dim_source is None or dim_source <= self.dim_source
         assert dim_range is None or dim_range <= self.dim_range
         name = name or '{}_projected_to_subbasis'.format(self.name)
@@ -430,6 +487,25 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
 
 class NumpyLincombMatrixOperator(NumpyMatrixBasedOperator, LincombOperatorBase):
+    '''A |LincombOperator| representing a linear combination of |NumpyMatrixBasedOperators|.
+
+    This class is not intented to be instatiated directly. Instead, you should use
+    the :meth:`~pymor.operators.interfaces.OperatorInterface.lincomb` method of the given
+    |Operators|.
+
+    Parameters
+    ----------
+    operators
+        See :meth:`pymor.operator.interfaces.OperatorInterface.lincomb`.
+    coefficients
+        See :meth:`pymor.operator.interfaces.OperatorInterface.lincomb`.
+    num_coefficients
+        See :meth:`pymor.operator.interfaces.OperatorInterface.lincomb`.
+    coefficients_name
+        See :meth:`pymor.operator.interfaces.OperatorInterface.lincomb`.
+    name
+        Name of the operator.
+    '''
 
     def __init__(self, operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
         assert all(isinstance(op, NumpyMatrixBasedOperator) for op in operators)
@@ -454,39 +530,25 @@ class NumpyLincombMatrixOperator(NumpyMatrixBasedOperator, LincombOperatorBase):
 
 
 class ProjectedOperator(OperatorBase):
-    '''Projection of an operator to a subspace.
+    '''Genric |Operator| for representing the projection of an |Operator| to a subspace.
 
-    Given an operator L, a scalar product ( ⋅, ⋅), and vectors b_1, ..., b_N,
-    c_1, ..., c_M, the projected operator is defined by ::
-
-        [ L_P(b_j) ]_i = ( c_i, L(b_j) )
-
-    for all i,j.
-
-    In particular, if b_i = c_i are orthonormal w.r.t. the product, then
-    L_P is the coordinate representation of the orthogonal projection
-    of L onto the subspace spanned by the b_i (with b_i as basis).
-
-    From another point of view, if L represents the matrix of a bilinear form and
-    ( ⋅, ⋅ ) is the euclidean scalar product, then L_P represents the matrix of
-    the bilinear form restricted to the span of the b_i.
-
-    It is not checked whether the b_i and c_j are linear independent.
+    This class is not intented to be instatiated directly. Instead, you should use
+    the :meth:`~pymor.operators.interfaces.OperatorInterface.projected` method of the given
+    |Operator|.
 
     Parameters
     ----------
     operator
-        The `Operator` to project.
+        The |Operator| to project.
     source_basis
-        The b_1, ..., b_N as a `VectorArray` or `None`. If `None`, `operator.type_source`
-        has to be a subclass of `NumpyVectorArray`.
+        See :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
     range_basis
-        The c_1, ..., c_M as a `VectorArray`. If `None`, `operator.type_source`
-        has to be a subclass of `NumpyVectorArray`.
-
+        See :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
     product
-        An `Operator` representing the scalar product.
-        If None, the euclidean product is chosen.
+        See :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
+    copy
+        If `True`, make a copy of the provided `source_basis` and `range_basis`. This is
+        usually necessary, as |VectorArrays| are not immutable.
     name
         Name of the projected operator.
     '''
@@ -536,6 +598,7 @@ class ProjectedOperator(OperatorBase):
                 return NumpyVectorArray(self.product.apply2(V, self.range_basis, pairwise=False))
 
     def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
+        '''See :meth:`NumpyMatrixOperator.projected_to_subbasis`.'''
         assert dim_source is None or dim_source <= self.dim_source
         assert dim_range is None or dim_range <= self.dim_range
         assert dim_source is None or self.source_basis is not None, 'not implemented'
@@ -549,24 +612,25 @@ class ProjectedOperator(OperatorBase):
 
 
 class ProjectedLinearOperator(NumpyMatrixBasedOperator):
-    '''Projection of an linear operator to a subspace.
+    '''Genric |Operator| for representing the projection of a linear |Operator| to a subspace.
 
-    The same as ProjectedOperator, but the resulting operator is again a
-    `LinearOperator`.
-
-    See also `ProjectedOperator`.
+    This class is not intented to be instatiated directly. Instead, you should use
+    the :meth:`~pymor.operators.interfaces.OperatorInterface.projected` method of the given
+    |Operator|.
 
     Parameters
     ----------
     operator
-        The `DiscreteLinearOperator` to project.
+        The |Operator| to project.
     source_basis
-        The b_1, ..., b_N as a 2d-array.
+        See :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
     range_basis
-        The c_1, ..., c_M as a 2d-array. If None, `range_basis=source_basis`.
+        See :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
     product
-        Either an 2d-array or a `Operator` representing the scalar product.
-        If None, the euclidean product is chosen.
+        See :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
+    copy
+        If `True`, make a copy of the provided `source_basis` and `range_basis`. This is
+        usually necessary, as |VectorArrays| are not immutable.
     name
         Name of the projected operator.
     '''
@@ -623,6 +687,7 @@ class ProjectedLinearOperator(NumpyMatrixBasedOperator):
                                            name='{}_assembled'.format(self.name))
 
     def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
+        '''See :meth:`NumpyMatrixOperator.projected_to_subbasis`.'''
         assert dim_source is None or dim_source <= self.dim_source
         assert dim_range is None or dim_range <= self.dim_range
         assert dim_source is None or self.source_basis is not None, 'not implemented'
@@ -636,6 +701,25 @@ class ProjectedLinearOperator(NumpyMatrixBasedOperator):
 
 
 class LincombOperator(LincombOperatorBase):
+    '''A generic |LincombOperator| representing a linear combination of arbitrary |Operators|.
+
+    This class is not intented to be instatiated directly. Instead, you should use
+    the :meth:`~pymor.operators.interfaces.OperatorInterface.lincomb` method of the given
+    |Operators|.
+
+    Parameters
+    ----------
+    operators
+        See :meth:`pymor.operator.interfaces.OperatorInterface.lincomb`.
+    coefficients
+        See :meth:`pymor.operator.interfaces.OperatorInterface.lincomb`.
+    num_coefficients
+        See :meth:`pymor.operator.interfaces.OperatorInterface.lincomb`.
+    coefficients_name
+        See :meth:`pymor.operator.interfaces.OperatorInterface.lincomb`.
+    name
+        Name of the operator.
+    '''
 
     def __init__(self, operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
         super(LincombOperator, self).__init__(operators=operators, coefficients=coefficients,

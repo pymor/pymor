@@ -21,6 +21,7 @@ interfaces = '''
 .. |Function| replace:: :class:`Function <pymor.functions.interfaces.FunctionInterface>`
 .. |Functions| replace:: :class:`Functions <pymor.functions.interfaces.FunctionInterface>`
 .. |LincombOperator| replace:: :class:`LincombOperator <pymor.operators.interfaces.LincombOperatorInterface>`
+.. |LincombOperators| replace:: :class:`LincombOperators <pymor.operators.interfaces.LincombOperatorInterface>`
 .. |Operator| replace:: :class:`Operator <pymor.operators.interfaces.OperatorInterface>`
 .. |Operators| replace:: :class:`Operators <pymor.operators.interfaces.OperatorInterface>`
 .. |Functional| replace:: :class:`Functional <pymor.operators.interfaces.OperatorInterface>`
@@ -65,6 +66,7 @@ common = '''
 .. |OperatorBase| replace:: :class:`~pymor.operators.basic.OperatorBase`
 .. |NumpyMatrixOperator| replace:: :class:`~pymor.operators.basic.NumpyMatrixOperator`
 .. |NumpyMatrixBasedOperator| replace:: :class:`~pymor.operators.basic.NumpyMatrixBasedOperator`
+.. |NumpyMatrixBasedOperators| replace:: :class:`NumpyMatrixBasedOperators <pymor.operators.basic.NumpyMatrixBasedOperator>`
 .. |EmpiricalInterpolatedOperator| replace:: :class:`~pymor.operators.ei.EmpiricalInterpolatedOperator`
 .. |EmpiricalInterpolatedOperators| replace:: :class:`EmpiricalInterpolatedOperators <pymor.operators.ei.EmpiricalInterpolatedOperator>`
 .. |Concatenation| replace:: :class:`~pymor.operators.constructions.Concatenation`

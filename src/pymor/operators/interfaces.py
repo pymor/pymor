@@ -303,5 +303,5 @@ class LincombOperatorInterface(OperatorInterface):
 
     @abstractmethod
     def evaluate_coefficients(self, mu):
-        '''Evaluate the linear coefficients for a given parameter.'''
+        '''Evaluate the linear coefficients for a given |Parameter|.'''
         pass

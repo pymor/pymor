@@ -92,7 +92,8 @@ class ConstantFunction(FunctionBase):
 
 
 class GenericFunction(FunctionBase):
-    '''Wrapper making an arbitrary python function a |Function|
+    '''Wrapper making an arbitrary Python function between |NumPy arrays| a
+    proper |Function|
 
     Parameters
     ----------
