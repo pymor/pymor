@@ -3,6 +3,8 @@
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+'''Module containing some constructions to obtain new operators from old ones.'''
+
 from __future__ import absolute_import, division, print_function
 
 from numbers import Number
@@ -15,6 +17,17 @@ from pymor.operators.interfaces import OperatorInterface
 
 
 class Concatenation(OperatorBase):
+    '''|Operator| representing the concatenation of two |Operators|.
+
+    Parameters
+    ----------
+    second
+        The |Operator| which is applied as second operator.
+    first
+        The |Operator| which is applied as first operator.
+    name
+        Name of the operator.
+    '''
 
     def __init__(self, second, first, name=None):
         assert isinstance(second, OperatorInterface)
@@ -49,14 +62,28 @@ class Concatenation(OperatorBase):
 
 
 class ComponentProjection(OperatorBase):
+    '''|Operator| representing the projection of a Vector on some of its components.
+
+    Parameters
+    ----------
+    components
+        List or 1D |NumPy array| of the indices of the vector components that are to
+        be extracted by the operator.
+    dim_source
+        Source dimension of the operator.
+    type_source
+        The type of |VectorArray| the operator accepts.
+    name
+        Name of the operator.
+    '''
 
     type_range = NumpyVectorArray
     linear = True
 
-    def __init__(self, components, dim, type_source, name=None):
-        assert all(0 <= c < dim for c in components)
+    def __init__(self, components, dim_source, type_source, name=None):
+        assert all(0 <= c < dim_source for c in components)
         self.components = np.array(components)
-        self.dim_source = dim
+        self.dim_source = dim_source
         self.dim_range = len(components)
         self.type_source = type_source
         self.name = name
@@ -74,6 +101,21 @@ class ComponentProjection(OperatorBase):
 
 
 class IdentityOperator(OperatorBase):
+    '''The identity |Operator|.
+
+    In other word ::
+
+        op.apply(U) == U
+
+    Parameters
+    ----------
+    dim
+        Source dimension (= range dimension) of the operator.
+    type_source
+        The type of |VectorArray| the operator accepts.
+    name
+        Name of the operator.
+    '''
 
     linear = True
 
@@ -92,6 +134,23 @@ class IdentityOperator(OperatorBase):
 
 
 class ConstantOperator(OperatorBase):
+    '''A constant |Operator| always returning the same vector.
+
+    Parameters
+    ----------
+    value
+        A |VectorArray| of lenght 1 containing the vector which is
+        returned by the operator.
+    dim_source
+        Source dimension of the operator.
+    type_source
+        The type of |VectorArray| the operator accepts.
+    copy
+        If `True`, store a copy of `vector` instead of `vector`
+        itself.
+    name
+        Name of the operator.
+    '''
 
     linear = False
 
@@ -113,6 +172,28 @@ class ConstantOperator(OperatorBase):
 
 
 class VectorOperator(OperatorBase):
+    '''Wrap a vector as a vector-like |Operator|.
+
+    Given a vector `v` of dimension `d`, this class represents
+    the operator ::
+
+        op: R^1 ----> R^d
+             x  |---> x⋅v
+
+    In particular ::
+
+        VectorOperator(vector).as_vector() == vector
+
+    Parameters
+    ----------
+    vector
+        |VectorArray| of length 1 containing the vector `v`.
+    copy
+        If `True`, store a copy of `vector` instead of `vector`
+        itself.
+    name
+        Name of the operator.
+    '''
 
     linear = True
     type_source = NumpyVectorArray
@@ -140,6 +221,36 @@ class VectorOperator(OperatorBase):
 
 
 class VectorFunctional(OperatorBase):
+    '''Wrap a vector as a linear |Functional|.
+
+    Given a vector `v` of dimension `d`, this class represents
+    the functional ::
+
+        f: R^d ----> R^1
+            u  |---> (u, v)
+
+    where `( , )` denotes the scalar product given by `product`.
+
+    In particular, if `product` is `None` ::
+
+        VectorFunctional(vector).as_vector() == vector.
+
+    If `product` is not none, we obtain ::
+
+        VectorFunctional(vector).as_vector() == product.apply(vector).
+
+    Parameters
+    ----------
+    vector
+        |VectorArray| of length 1 containing the vector `v`.
+    product
+        |Operator| representing the scalar product to use.
+    copy
+        If `True`, store a copy of `vector` instead of `vector`
+        itself.
+    name
+        Name of the operator.
+    '''
 
     linear = True
     type_range = NumpyVectorArray
@@ -167,6 +278,17 @@ class VectorFunctional(OperatorBase):
 
 
 class FixedParameterOperator(OperatorBase):
+    '''Makes an |Operator| |Parameter|-independent by providing it a fixed |Parameter|.
+
+    Parameters
+    ----------
+    operator
+        The |Operator| to wrap.
+    mu
+        The fixed |Parameter| that will be fed to the
+        :meth:`~pymor.operators.interfaces.OperatorInterface.apply` method
+        of `operator`.
+    '''
 
     def __init__(self, operator, mu=None):
         assert isinstance(operator, OperatorInterface)

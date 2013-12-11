@@ -354,7 +354,7 @@ class VectorArrayInterface(BasicInterface):
         Parameters
         ----------
         component_indices
-            List or Numpy 1d-array of indices of the vector components that are to
+            List or 1D |NumPy array| of indices of the vector components that are to
             be returned.
         ind
             Indices of the vectors whose components to be calculated (see class documentation).
