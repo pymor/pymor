@@ -34,13 +34,15 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     dirichlet_data
         The `Function` providing the Dirichlet boundary values. If None, zero boundary
         is assumed.
+    order
+        Order of the Gauss quadrature to use for numerical integration.
     name
         The name of the functional.
     '''
 
     sparse = False
 
-    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, name=None):
+    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, order=2, name=None):
         assert grid.reference_element(0) in {line, triangle}
         assert function.shape_range == tuple()
         self.dim_source = grid.size(grid.dim)
@@ -49,6 +51,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         self.boundary_info = boundary_info
         self.function = function
         self.dirichlet_data = dirichlet_data
+        self.order = order
         self.name = name
         self.build_parameter_type(inherits=(function, dirichlet_data))
 
@@ -58,11 +61,11 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         bi = self.boundary_info
 
         # evaluate function at all quadrature points -> shape = (g.size(0), number of quadrature points)
-        F = self.function(g.quadrature_points(0, order=2), mu=mu)
+        F = self.function(g.quadrature_points(0, order=self.order), mu=mu)
 
         # evaluate the shape functions at the quadrature points on the reference
         # element -> shape = (number of shape functions, number of quadrature points)
-        q, w = g.reference_element.quadrature(order=2)
+        q, w = g.reference_element.quadrature(order=self.order)
         if g.dim == 1:
             SF = np.squeeze(np.array((1 - q, q)))
         elif g.dim == 2:
