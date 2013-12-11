@@ -91,14 +91,14 @@ class OperatorBase(OperatorInterface):
             return ProjectedOperator(self, source_basis, range_basis, product, copy=True, name=name)
 
 
-class MatrixBasedOperatorBase(OperatorBase):
+class AssemblableOperatorBase(OperatorBase):
     '''Base class for operators which assemble into a matrix.
 
     This class provides a thin wrapper around the
     :meth:`~pymor.operators.interfaces.OperatorInterface.apply`
     and :meth:`~pymor.operators.interfaces.OperatorInterface.as_vector` methods by
     calling these methods on the |Operator| which is returned
-    by the :meth:`MatrixBasedOperatorBase._assemble` method the implementor has
+    by the :meth:`AssemblableOperatorBase._assemble` method the implementor has
     supplied. The last assembled operator is remembered, so subsequent
     :meth:`~pymor.operators.interfaces.OperatorInterface.apply` calls
     for the same |Parameter| do not lead to a re-assembly of the operator.
@@ -165,7 +165,7 @@ class MatrixBasedOperatorBase(OperatorBase):
         elif self._last_op is not self:
             return self._last_op.as_vector()
         else:
-            return super(MatrixBasedOperatorBase, self).as_vector(self, mu)
+            return super(AssemblableOperatorBase, self).as_vector(self, mu)
 
     _last_mu = None
     _last_op = None
@@ -287,7 +287,7 @@ class NumpyGenericOperator(OperatorBase):
             return NumpyVectorArray(self._mapping(U_array), copy=False)
 
 
-class NumpyMatrixBasedOperator(MatrixBasedOperatorBase):
+class NumpyMatrixBasedOperator(AssemblableOperatorBase):
 
     type_source = type_range = NumpyVectorArray
 
