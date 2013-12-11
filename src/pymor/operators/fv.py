@@ -3,6 +3,8 @@
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+''' This module provides some operators for finite volume discretizations.'''
+
 from __future__ import absolute_import, division, print_function
 
 from itertools import izip
@@ -22,7 +24,7 @@ from pymor.tools.inplace import iadd_masked, isub_masked
 from pymor.tools.quadratures import GaussQuadratures
 
 
-class NumericalConvectiveFlux(ImmutableInterface, Parametric):
+class NumericalConvectiveFluxInterface(ImmutableInterface, Parametric):
 
     @abstractmethod
     def evaluate_stage1(self, U, mu=None):
@@ -33,7 +35,7 @@ class NumericalConvectiveFlux(ImmutableInterface, Parametric):
         pass
 
 
-class LaxFriedrichsFlux(NumericalConvectiveFlux):
+class LaxFriedrichsFlux(NumericalConvectiveFluxInterface):
 
     def __init__(self, flux, lxf_lambda=1.0):
         self.flux = flux
@@ -49,7 +51,7 @@ class LaxFriedrichsFlux(NumericalConvectiveFlux):
                 + (U[..., 0] - U[..., 1]) * (0.5 / self.lxf_lambda)) * volumes
 
 
-class SimplifiedEngquistOsherFlux(NumericalConvectiveFlux):
+class SimplifiedEngquistOsherFlux(NumericalConvectiveFluxInterface):
 
     def __init__(self, flux, flux_derivative):
         self.flux = flux
@@ -71,7 +73,7 @@ class SimplifiedEngquistOsherFlux(NumericalConvectiveFlux):
         return F_edge
 
 
-class EngquistOsherFlux(NumericalConvectiveFlux):
+class EngquistOsherFlux(NumericalConvectiveFluxInterface):
 
     def __init__(self, flux, flux_derivative, gausspoints=5, intervals=1):
         self.flux = flux
