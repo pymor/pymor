@@ -8,7 +8,7 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from scipy.sparse import coo_matrix, csr_matrix
+from scipy.sparse import coo_matrix, csc_matrix
 
 from pymor.grids.referenceelements import triangle, line
 from pymor.operators import NumpyMatrixBasedOperator, NumpyMatrixOperator
@@ -182,7 +182,7 @@ class L2ProductP1(NumpyMatrixBasedOperator):
 
         self.logger.info('Assemble system matrix ...')
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
-        A = csr_matrix(A).copy()   # See DiffusionOperatorP1 for why copy() is necessary
+        A = csc_matrix(A).copy()   # See DiffusionOperatorP1 for why copy() is necessary
 
         return NumpyMatrixOperator(A)
 
@@ -280,7 +280,7 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
 
         self.logger.info('Assemble system matrix ...')
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
-        A = csr_matrix(A).copy()
+        A = csc_matrix(A).copy()
 
         # The call to copy() is necessary to resize the data arrays of the sparse matrix:
         # During the conversion to crs_matrix, entries corresponding with the same
