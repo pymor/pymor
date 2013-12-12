@@ -315,9 +315,8 @@ class Parametric(object):
 
     parameter_type = None
     parameter_local_type = None
-    parameter_provided = None
-    parameter_global_names = None
 
+    _parameter_global_names = None
     _parameter_space = None
 
     @property
@@ -353,7 +352,7 @@ class Parametric(object):
     def local_parameter(self, mu):
         assert mu.__class__ is Parameter
         return (None if self.parameter_local_type is None
-                else {k: mu[v] for k, v in self.parameter_global_names.iteritems()})
+                else {k: mu[v] for k, v in self._parameter_global_names.iteritems()})
 
     def strip_parameter(self, mu):
         if mu.__class__ is not Parameter:
@@ -423,5 +422,4 @@ class Parametric(object):
 
         self.parameter_type = global_type or None
         self.parameter_local_type = local_type or None
-        self.parameter_provided = provides or None
-        self.parameter_global_names = global_names
+        self._parameter_global_names = global_names
