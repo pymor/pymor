@@ -10,28 +10,32 @@ from pymor.tools import Named
 
 
 class ParameterSpaceInterface(ImmutableInterface):
-    '''Represents a parameter space.
+    '''Interface for parameter spaces.
 
     Attributes
     ----------
     parameter_type
-        Parameter type of the space.
+        |ParameterType| of the space.
     '''
 
     parameter_type = None
 
     @abstractmethod
     def contains(self, mu):
-        '''True if `mu` is contained in the space.'''
+        '''`True` if `mu` is contained in the space.'''
         pass
 
 
 class ParameterFunctionalInterface(ImmutableInterface, Parametric, Named):
-    '''Represents a functional on a parameter space.
+    '''Interface for parameter functionals.
+
+    A parameter functional is simply a function mapping a |Parameter| to
+    a number.
     '''
 
     @abstractmethod
     def evaluate(self, mu=None):
+        '''Evaluate the functional for the given |Parameter| `mu`.'''
         pass
 
     def __call__(self, mu=None):

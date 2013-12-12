@@ -12,14 +12,14 @@ from pymor.parameters.interfaces import ParameterFunctionalInterface
 
 
 class ProjectionParameterFunctional(ParameterFunctionalInterface):
-    '''`ParameterFunctional` which returns a component of the parameter.
+    '''|ParameterFunctional| which returns a component of the parameter.
 
     Parameters
     ----------
     parameter_type
-        The parameter type of the parameters the functional takes.
+        The |ParameterType| of the |Parameters| the functional takes.
     component
-        The component to return.
+        The name of the component to return.
     coordinates
         If not `None` return `mu[component][coordinates]` instead of
         `mu[component]`.
@@ -46,12 +46,12 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
 
 
 class GenericParameterFunctional(ParameterFunctionalInterface):
-    '''A wrapper making an arbitrary python function a `ParameterFunctional`
+    '''A wrapper making an arbitrary Python function a |ParameterFunctional|
 
     Parameters
     ----------
     parameter_type
-        The parameter type of the parameters the functional takes.
+        The |ParameterType| of the |Parameters| the functional takes.
     mapping
         The function to wrap. The function is of the form `mapping(mu)`.
     name
@@ -69,6 +69,23 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
 
 
 class ExpressionParameterFunctional(GenericParameterFunctional):
+    '''Turns a Python expression given as a string into a |ParameterFunctional|.
+
+    Some |NumPy| arithmetic functions like 'sin', 'log', 'min' are supported.
+    For a full list see the `functions` class attribute.
+
+    .. warning::
+       :meth:`eval` is used to evaluate the given expression. As a consequence,
+       using this class with expression strings from untrusted sources will cause
+       mayhem and destruction!
+
+    Parameters
+    ----------
+    expression
+        The Python expression for the functional as a string.
+    parameter_type
+        The |ParameterType| of the |Parameters| the functional takes.
+    '''
 
     functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',
                                              'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
