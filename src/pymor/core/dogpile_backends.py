@@ -10,13 +10,15 @@ the `dogpile <https://pypi.python.org/pypi/dogpile.cache>`_ package.
 Not to be used directly.
 '''
 
-from tempfile import gettempdir
 from collections import OrderedDict
-from pprint import pformat
-import sys
-import os
-from os.path import join
 from collections import deque
+import getpass
+from os.path import join
+from pprint import pformat
+from tempfile import gettempdir
+import os
+import sys
+
 from dogpile import cache as dc
 from dogpile.cache.backends.file import DBMBackend
 
@@ -39,11 +41,11 @@ DEFAULT_MEMORY_CONFIG = {"backend": 'LimitedMemory', 'arguments.max_kbytes': 200
 SMALL_MEMORY_CONFIG = {"backend": 'LimitedMemory', 'arguments.max_keys': 20,
                        'arguments.max_kbytes': 20}
 DEFAULT_DISK_CONFIG = {"backend": 'LimitedFile',
-                       "arguments.filename": join(gettempdir(), 'pymor.cache.dbm'),
+                       "arguments.filename": join(gettempdir(), 'pymor.cache.{}.dbm'.format(getpass.getuser())),
                        'arguments.max_keys': 2000,
                        'arguments.max_size': 1024 ** 3}
 SMALL_DISK_CONFIG = {"backend": 'LimitedFile',
-                     "arguments.filename": join(gettempdir(), 'pymor.small_cache.dbm'),
+                     "arguments.filename": join(gettempdir(), 'pymor.small_cache.{}.dbm'.format(getpass.getuser())),
                      'arguments.max_keys': 20}
 
 NO_VALUE = dc.api.NO_VALUE
