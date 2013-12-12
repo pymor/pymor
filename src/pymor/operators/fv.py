@@ -319,6 +319,8 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
         Grid over which to assemble the functional.
     function
         The `Function` with which to take the scalar product.
+    order
+        Order of the Gauss quadrature to use for numerical integration.
     name
         The name of the functional.
     '''
@@ -326,12 +328,13 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
     type_source = type_range = NumpyVectorArray
     sparse = False
 
-    def __init__(self, grid, function, name=None):
+    def __init__(self, grid, function, order=2, name=None):
         assert function.shape_range == tuple()
         self.dim_source = grid.size(0)
         self.dim_range = 1
         self.grid = grid
         self.function = function
+        self.order = order
         self.name = name
         self.build_parameter_type(inherits=(function,))
 
@@ -340,9 +343,9 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
         g = self.grid
 
         # evaluate function at all quadrature points -> shape = (g.size(0), number of quadrature points, 1)
-        F = self.function(g.quadrature_points(0, order=2), mu=mu)
+        F = self.function(g.quadrature_points(0, order=self.order), mu=mu)
 
-        _, w = g.reference_element.quadrature(order=2)
+        _, w = g.reference_element.quadrature(order=self.order)
 
         # integrate the products of the function with the shape functions on each element
         # -> shape = (g.size(0), number of shape functions)
