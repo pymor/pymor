@@ -36,8 +36,14 @@ class Defaults(object):
     :pod_check:                          check orthogonality of result
     :pod_check_tol:                      tolerance for orthogonality check
 
-    :bicgstab_tol:                       tolerance for scipy.sparse.linalg.bicg
-    :bicgstab_maxiter:                   maximal number of iterations
+    :default_sparse_solver:              default sparse solver to use (bicgstab, bicgstab-spilu, spsolve)
+    :bicgstab_tol:                       see :meth:`scipy.sparse.linalg.bicgstab`
+    :bicgstab_maxiter:                   see :meth:`scipy.sparse.linalg.bicgstab`
+    :spilu_drop_tol:                     see :meth:`scipy.sparse.linalg.spilu`
+    :spilu_fill_factor:                  see :meth:`scipy.sparse.linalg.spilu`
+    :spilu_drop_rule:                    see :meth:`scipy.sparse.linalg.spilu`
+    :spilu_permc_spec:                   see :meth:`scipy.sparse.linalg.spilu`
+    :spsolve_permc_spec:                 see :meth:`scipy.sparse.linalg.spsolve`
 
     :induced_norm_raise_negative:        raise error in la.induced_norm if the squared norm is negative
     :induced_norm_tol:                   tolerance for clipping negative norm squares to zero
@@ -66,8 +72,14 @@ class Defaults(object):
     pod_check                           = True
     pod_check_tol                       = 1e-10
 
+    default_sparse_solver               = 'bicgstab-spilu'
     bicgstab_tol                        = 1e-15
     bicgstab_maxiter                    = None
+    spilu_drop_tol                      = 1e-4
+    spilu_fill_factor                   = 10
+    spilu_drop_rule                     = 'basic,area'
+    spilu_permc_spec                    = 'COLAMD'
+    spsolve_permc_spec                  = 'COLAMD'
 
     induced_norm_raise_negative         = True
     induced_norm_tol                    = 10e-10
@@ -109,8 +121,14 @@ class Defaults(object):
             pod_check                           = {0.pod_check}
             pod_check_tol                       = {0.pod_check_tol}
 
+            default_sparse_solver               = 'bicgstab-spilu'
             bicgstab_tol                        = {0.bicgstab_tol}
             bicgstab_maxiter                    = {0.bicgstab_maxiter}
+            spilu_drop_tol                      = {0.spilu_drop_tol}
+            spilu_fill_factor                   = {0.spilu_fill_factor}
+            spilu_drop_rule                     = {0.spilu_drop_rule}
+            spilu_permc_spec                    = {0.spilu_permc_spec}
+            spsolve_permc_spec                  = {0.spsolve_permc_spec}
 
             induced_norm_raise_negative         = {0.induced_norm_raise_negative}
             induced_norm_tol                    = {0.induced_norm_tol}

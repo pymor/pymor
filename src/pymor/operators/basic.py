@@ -27,7 +27,7 @@ from numbers import Number
 
 import numpy as np
 from scipy.sparse import issparse
-from scipy.sparse.linalg import bicgstab
+from scipy.sparse.linalg import bicgstab, spsolve, spilu, LinearOperator
 
 from pymor import defaults
 from pymor.core import abstractmethod
@@ -354,9 +354,22 @@ class NumpyMatrixBasedOperator(AssemblableOperatorBase):
         if self.sparse is None:
             raise ValueError('Sparsity unkown, assemble first.')
         elif self.sparse:
-            return OrderedDict((('bicgstab', {'type': 'bicgstab',
-                                              'tol': defaults.bicgstab_tol,
-                                              'maxiter': defaults.bicgstab_maxiter}),))
+            opts = OrderedDict((('bicgstab-spilu', {'type': 'bicgstab-spilu',
+                                                    'tol': defaults.bicgstab_tol,
+                                                    'maxiter': defaults.bicgstab_maxiter,
+                                                    'spilu_drop_tol': defaults.spilu_drop_tol,
+                                                    'spilu_fill_factor': defaults.spilu_fill_factor,
+                                                    'spilu_drop_rule': defaults.spilu_drop_rule,
+                                                    'spilu_permc_spec': defaults.spilu_permc_spec}),
+                                ('bicgstab',       {'type': 'bicgstab',
+                                                    'tol': defaults.bicgstab_tol,
+                                                    'maxiter': defaults.bicgstab_maxiter}),
+                                ('spsolve',        {'type': 'spsolve',
+                                                    'permc_spec': defaults.spsolve_permc_spec})))
+            def_opt = opts.pop(defaults.default_sparse_solver)
+            ordered_opts = OrderedDict(((defaults.default_sparse_solver, def_opt),))
+            ordered_opts.update(opts)
+            return ordered_opts
         else:
             return OrderedDict((('solve', {'type': 'solve'}),))
 
@@ -423,26 +436,21 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
     def apply_inverse(self, U, ind=None, mu=None, options=None):
 
-        def check_options(options, sparse):
-            if not options:
-                return True
-            assert 'type' in options
-            if sparse:
-                assert options['type'] == 'bicgstab'
-                assert options.viewkeys() <= {'type', 'tol', 'maxiter'}
-            else:
-                assert options['type'] == 'solve'
-                assert options.viewkeys() <= {'type'}
-            return True
+        default_options = self.invert_options
 
         if options is None:
-            options = {}
+            options = default_options.values()[0]
         elif isinstance(options, str):
-            options = {'type': options}
+            options = default_options[options]
+        else:
+            assert 'type' in options and options['type'] in default_options \
+                and options.viewkeys() <= default_options[options['type']].viewkeys()
+            user_options = options
+            options = default_options[user_options['type']]
+            options.update(user_options)
 
         assert isinstance(U, NumpyVectorArray)
         assert self.dim_range == U.dim
-        assert check_options(options, self.sparse)
 
         U = U._array[:U._len] if ind is None else U._array[ind]
         if U.shape[1] == 0:
@@ -450,16 +458,30 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         R = np.empty((len(U), self.dim_source))
 
         if self.sparse:
-            tol = options.get('tol', defaults.bicgstab_tol)
-            maxiter = options.get('maxiter', defaults.bicgstab_maxiter)
-            for i, UU in enumerate(U):
-                R[i], info = bicgstab(self._matrix, UU, tol=tol, maxiter=maxiter)
-                if info != 0:
-                    if info > 0:
-                        raise InversionError('bicgstab failed to converge after {} iterations'.format(info))
-                    else:
-                        raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
-                                             format(info))
+            if options['type'] == 'bicgstab':
+                for i, UU in enumerate(U):
+                    R[i], info = bicgstab(self._matrix, UU, tol=options['tol'], maxiter=options['maxiter'])
+                    if info != 0:
+                        if info > 0:
+                            raise InversionError('bicgstab failed to converge after {} iterations'.format(info))
+                        else:
+                            raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
+                                                 format(info))
+            elif options['type'] == 'bicgstab-spilu':
+                ilu = spilu(self._matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
+                            drop_rule=options['spilu_drop_rule'], permc_spec=options['spilu_permc_spec'])
+                precond = LinearOperator(self._matrix.shape, ilu.solve)
+                for i, UU in enumerate(U):
+                    R[i], info = bicgstab(self._matrix, UU, tol=options['tol'], maxiter=options['maxiter'], M=precond)
+                    if info != 0:
+                        if info > 0:
+                            raise InversionError('bicgstab failed to converge after {} iterations'.format(info))
+                        else:
+                            raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
+                                                 format(info))
+            else:
+                for i, UU in enumerate(U):
+                    R[i] = spsolve(self._matrix, UU, permc_spec=options['permc_spec'])
         else:
             for i, UU in enumerate(U):
                 try:
