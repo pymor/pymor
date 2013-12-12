@@ -16,7 +16,12 @@ from itertools import izip
 import numpy as np
 from PySide.QtGui import QSizePolicy
 
+# matplotlib's default is to use PyQt for Qt4 bindings. However, we use PySide ..
+import matplotlib
+matplotlib.rcParams['backend.qt4'] = 'PySide'
+
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+
 from matplotlib.figure import Figure
 
 from pymor.grids.constructions import flatten_grid
