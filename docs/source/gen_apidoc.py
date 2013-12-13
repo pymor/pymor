@@ -51,6 +51,8 @@ def walk(module):
                 module = __import__(m, fromlist='none')
                 for k, v in sorted(module.__dict__.iteritems()):
                     if isinstance(v, (type, FunctionType)) and v.__module__ == m:
+                        if v.__name__.startswith('_') and not v.__doc__:
+                            continue
                         print('---------\n\n', file=f)
                         if isinstance(v, type):
                             print('.. autoclass:: ' + m + '.' + k, file=f)
