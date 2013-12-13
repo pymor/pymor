@@ -2,6 +2,8 @@
 pyMOR - Model Order Reduction with python
 #########################################
 
+:ref:`getting_started`
+
 The pyMOR package
 ******************
 
