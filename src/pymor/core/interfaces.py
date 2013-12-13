@@ -361,6 +361,7 @@ class BasicInterface(object):
 
     @classmethod
     def has_interface_name(cls):
+        '''`True` if the class name ends with `Interface`. Used for introspection.'''
         name = cls.__name__
         return name.endswith('Interface')
 

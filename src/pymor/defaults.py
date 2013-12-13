@@ -20,39 +20,40 @@ class Defaults(object):
     '''Class defining application-wide defaults. Do not instantiate but use
     `pymor.defaults`.
 
-    :float_cmp_tol:                      tolerance for pymor.tools.float_cmp
+      :float_cmp_tol:                      tolerance for :func:`~pymor.tools.floatcmp.float_cmp`
 
-    :gram_schmidt_tol:                   tolerance for pymor.la.algroithms.gram_schmidt
-    :gram_schmidt_find_duplicates:       remove duplicate vectors before orthonormalizing
-    :gram_schmidt_reiterate:             orthonormalize again if norm of vector decreases strongly during
-                                         orthogonalization
-    :gram_schmidt_reiteration_threshold: reorthonormalize if newnorm/oldnorm is smaller than this value
-    :gram_schmidt_check:                 check orthogonality of result
-    :gram_schmidt_check_tol:             tolerance for orthogonality check
+      :gram_schmidt_tol:                   tolerance for :func:`~pymor.la.gram_schmidt.gram_schmidt`
+      :gram_schmidt_find_duplicates:       remove duplicate vectors before orthonormalizing
+      :gram_schmidt_reiterate:             orthonormalize again if norm of vector decreases strongly during
+                                           orthogonalization
+      :gram_schmidt_reiteration_threshold: reorthonormalize if newnorm/oldnorm is smaller than this value
+      :gram_schmidt_check:                 check orthogonality of result
+      :gram_schmidt_check_tol:             tolerance for orthogonality check
 
-    :pod_tol:                            tolerance below which eigenvalues are treated as zero
-    :pod_symmetrize:                     symmetrize the Gram matrix
-    :pod_orthonormalie:                  orthonormalize the result again
-    :pod_check:                          check orthogonality of result
-    :pod_check_tol:                      tolerance for orthogonality check
+      :pod_tol:                            tolerance below which eigenvalues are treated as zero
+      :pod_symmetrize:                     symmetrize the Gram matrix
+      :pod_orthonormalie:                  orthonormalize the result again
+      :pod_check:                          check orthogonality of result
+      :pod_check_tol:                      tolerance for orthogonality check
 
-    :default_sparse_solver:              default sparse solver to use (bicgstab, bicgstab-spilu, spsolve)
-    :bicgstab_tol:                       see :meth:`scipy.sparse.linalg.bicgstab`
-    :bicgstab_maxiter:                   see :meth:`scipy.sparse.linalg.bicgstab`
-    :spilu_drop_tol:                     see :meth:`scipy.sparse.linalg.spilu`
-    :spilu_fill_factor:                  see :meth:`scipy.sparse.linalg.spilu`
-    :spilu_drop_rule:                    see :meth:`scipy.sparse.linalg.spilu`
-    :spilu_permc_spec:                   see :meth:`scipy.sparse.linalg.spilu`
-    :spsolve_permc_spec:                 see :meth:`scipy.sparse.linalg.spsolve`
+      :default_sparse_solver:              default sparse solver to use (bicgstab, bicgstab-spilu, spsolve)
+      :bicgstab_tol:                       see :func:`scipy.sparse.linalg.bicgstab`
+      :bicgstab_maxiter:                   see :func:`scipy.sparse.linalg.bicgstab`
+      :spilu_drop_tol:                     see :func:`scipy.sparse.linalg.spilu`
+      :spilu_fill_factor:                  see :func:`scipy.sparse.linalg.spilu`
+      :spilu_drop_rule:                    see :func:`scipy.sparse.linalg.spilu`
+      :spilu_permc_spec:                   see :func:`scipy.sparse.linalg.spilu`
+      :spsolve_permc_spec:                 see :func:`scipy.sparse.linalg.spsolve`
 
-    :induced_norm_raise_negative:        raise error in la.induced_norm if the squared norm is negative
-    :induced_norm_tol:                   tolerance for clipping negative norm squares to zero
+      :induced_norm_raise_negative:        raise error in la.induced_norm if the squared norm is negative
+      :induced_norm_tol:                   tolerance for clipping negative norm squares to zero
 
-    :random_seed:                        seed for numpy's random generator; if None, use /dev/urandom as source for seed
+      :random_seed:                        seed for numpy's random generator; if None, use /dev/urandom as
+                                           source for seed
 
-    :compact_print:                      print (arrays) in a compact but possibly not accurate way
-    :qt_visualize_patch_backend:         backend to use for plotting in pymor.gui.qt.visualize_patch
-                                         ('gl' or 'matplotlib')
+      :compact_print:                      print (arrays) in a compact but possibly not accurate way
+      :qt_visualize_patch_backend:         backend to use for plotting in :func:`pymor.gui.qt.visualize_patch`
+                                             ('gl' or 'matplotlib')
     '''
 
     float_cmp_tol                       = 2**4 * np.finfo(np.zeros(1).dtype).eps
