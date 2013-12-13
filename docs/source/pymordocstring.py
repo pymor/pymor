@@ -21,6 +21,9 @@ FIELD_SECTIONS = ('parameters', 'yields', 'returns', 'raises', 'attributes')
 GENERIC_SECTIONS = ('example', 'examples', 'see also')
 KNOWN_SECTIONS = FIELD_SECTIONS + GENERIC_SECTIONS
 
+builtin_function_or_method = type(dict.fromkeys)
+method_descriptor = type(dict.get)
+
 
 def table(rows):
     r = ['.. csv-table::', '    :delim: @', '    :widths: 20, 80', '']
@@ -292,7 +295,10 @@ def inspect_class(obj):
     mro = obj.__mro__
 
     def get_full_class_name(c):
-        return c.__module__ + '.' + c.__name__
+        if c.__module__ == '__builtin__':
+            return c.__name__
+        else:
+            return c.__module__ + '.' + c.__name__
 
     def get_class(m):
         for c in mro:
@@ -309,7 +315,7 @@ def inspect_class(obj):
     for k in dir(obj):
         try:
             o = safe_getattr(obj, k)
-            is_method = isinstance(o, (MethodType, FunctionType))
+            is_method = isinstance(o, (MethodType, FunctionType, builtin_function_or_method, method_descriptor))
             if k.startswith('_') and not is_method:
                 continue
             if k == '__init__':
