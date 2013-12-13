@@ -368,7 +368,7 @@ def inspect_class(obj):
                 attributes[c].append((a, c))
     attributes = {k: [':attr:`~{}.{}`'.format(get_full_class_name(c), n) for n, c in sorted(v, key=key_func)]
                   for k, v in attributes.iteritems()}
-    rows = [(':attr:`~{}`'.format(get_full_class_name(c)), ', '.join(attributes[c]))
+    rows = [(':class:`~{}`'.format(get_full_class_name(c)), ', '.join(attributes[c]))
             for c in mro if c is not object and c in attributes]
     if rows:
         ia = ['.. admonition:: Attributes', '']
