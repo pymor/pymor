@@ -13,6 +13,9 @@ if os.environ.get('READTHEDOCS', None) == 'True':
         def __init__(self, *args, **kwargs):
             pass
 
+        def __setitem__(self, k, v):
+            pass
+
         def __call__(self, *args, **kwargs):
             return Mock()
 
