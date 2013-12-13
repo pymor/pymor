@@ -6,7 +6,7 @@ import pkgutil
 
 BUILD_DIR = 'generated'
 
-CLASS_OPTIONS = [':show-inheritance:', ':members:', ':special-members:']
+CLASS_OPTIONS = [':show-inheritance:', ':members:', ':special-members:', ':exclude-members: __weakref__']
 FUNCTION_OPTIONS = []
 MODULE_OPTIONS = [':show-inheritance:']
 
