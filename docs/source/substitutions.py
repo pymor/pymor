@@ -73,6 +73,7 @@ common = '''
 .. |Concatenation| replace:: :class:`~pymor.operators.constructions.Concatenation`
 
 .. |StationaryDiscretization| replace:: :class:`~pymor.discretizations.basic.StationaryDiscretization`
+.. |StationaryDiscretizations| replace:: :class:`StationaryDiscretizations <pymor.discretizations.basic.StationaryDiscretization>`
 .. |InstationaryDiscretization| replace:: :class:`~pymor.discretizations.basic.InstationaryDiscretization`
 
 .. |ParameterType| replace:: :class:`~pymor.parameters.base.ParameterType`

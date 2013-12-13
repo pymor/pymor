@@ -495,7 +495,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         '''Project the operator to a subbasis.
 
         The purpose of this method is to further project an operator that has been
-        obtained through :meth:`~pymor.operator.interfaces.OperatorInterface.projected`
+        obtained through :meth:`~pymor.operators.interfaces.OperatorInterface.projected`
         to subbases of the original projection bases, i.e. ::
 
             op.projected(s_basis, r_basis, prod).projected_to_subbasis(dim_source, dim_range)

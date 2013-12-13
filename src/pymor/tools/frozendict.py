@@ -10,6 +10,7 @@ from __future__ import absolute_import, division, print_function
 
 
 class FrozenDict(dict):
+    '''An immutable dictionary.'''
 
     @property
     def _blocked_attribute(obj):

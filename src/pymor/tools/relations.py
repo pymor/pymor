@@ -20,23 +20,23 @@ def inverse_relation(R, size_rhs=None, with_indices=False):
     Parameters
     ----------
     R
-        Matrix of integers representing a relation r on the natural numbers
-        by ::
+        2D |NumPy array| of integers representing a relation r on the
+        natural numbers via ::
 
             x r y <=> (x < R.size[0] and y in R[x]).
 
         Rows of `R` which are to short are padded with -1.
     size_rhs
-        Can be provided for speedup. Has to be greater than R.max().
+        Can be provided for speedup. Has to be greater than `R.max()`.
     with_indices
-        If `True`, also return the matrix RINVI.
+        If `True`, also return the matrix `RINVI`.
 
     Returns
     -------
     RINV
-        The matrix representation of the inverse relation.
+        2D |NumPy array| representation of the inverse relation.
     RINVI
-        Matrix such that for `RINV[i, j] != -1`::
+        |NumPy array| such that for `RINV[i, j] != -1`::
 
             R[RINV[i, j], RINVI[i, j]] = i.
 

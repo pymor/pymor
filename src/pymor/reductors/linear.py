@@ -16,35 +16,41 @@ from pymor.reductors.basic import reduce_generic_rb
 
 def reduce_stationary_affine_linear(discretization, RB, error_product=None, disable_caching=True,
                                     extends=None):
-    '''Reductor for stationary linear problems whose `operator` and `rhs` are affinely decomposed.
+    '''Reductor for linear |StationaryDiscretizations| whose with affinely decomposed operator and rhs.
 
-    We simply use reduce_generic_rb for the actual RB-projection. The only addition
-    is an error estimator. The estimator evaluates the norm of the residual with
-    respect to a given inner product. We do not estimate the norm or the coercivity
-    constant of the operator, therefore the estimated error can be lower than the
-    actual error.
+    This reductor uses :meth:`~pymor.reductors.basic.reduce_generic_rb` for the actual
+    RB-projection. The only addition is an error estimator. The estimator evaluates the
+    norm of the residual with respect to a given inner product. Currently, we do not
+    estimate coercivity constant of the operator, therefore the estimated error
+    can be smaller than the actual error.
 
     Parameters
     ----------
     discretization
-        The discretization which is to be reduced.
+        The |Discretization| which is to be reduced.
     RB
-        The reduced basis (i.e. an array of vectors) on which to project.
+        |VectorArray| containing the reduced basis on which to project.
     error_product
-        Scalar product corresponding to the norm of the error. Used to calculate
-        Riesz respresentatives of the components of the residual. If `None`, the
-        standard L2-product is used.
+        Scalar product given as an |Operator| used to calculate Riesz
+        respresentative of the residual. If `None`, the Euclidean product is used.
     disable_caching
-        If `True`, caching of the solutions of the reduced discretization
-        is disabled.
+        If `True`, caching of solutions is diabled for the reduced |Discretization|.
+    extends
+        Set by :meth:`~pymor.algorithms.greedy.greedy` to the result of the
+        last reduction in case the basis extension was `hierarchic`. Used to prevent
+        recomputation of Riesz representatives already obtained from previous
+        reductions.
 
     Returns
     -------
     rd
-        The reduced discretization.
+        The reduced |Discretization|.
     rc
         The reconstructor providing a `reconstruct(U)` method which reconstructs
-        high-dimensional solutions from solutions U of the reduced discretization.
+        high-dimensional solutions from solutions `U` of the reduced |Discretization|.
+    reduction_data
+        Additional data produced by the reduction process. In this case the computed
+        Riesz representatives. (Compare the `extends` parameter.)
     '''
 
     #assert isinstance(discretization, StationaryDiscretization)
@@ -136,6 +142,10 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
 
 
 class StationaryAffineLinearReducedEstimator(ImmutableInterface):
+    '''Instatiated by :meth:`reduce_stationary_affine_linear`.
+
+    Not to be used directly.
+    '''
 
     def __init__(self, estimator_matrix):
         self.estimator_matrix = estimator_matrix

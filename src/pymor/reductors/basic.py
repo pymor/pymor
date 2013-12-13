@@ -11,15 +11,18 @@ from pymor.la import NumpyVectorArray
 
 
 class GenericRBReconstructor(core.BasicInterface):
+    '''Simple reconstructor forming linear combinations with the reduced basis.'''
 
     def __init__(self, RB):
         self.RB = RB
 
     def reconstruct(self, U):
+        '''Reconstruct high-dimensional vector from reduced vector `U`.'''
         assert isinstance(U, NumpyVectorArray)
         return self.RB.lincomb(U.data)
 
     def restricted_to_subbasis(self, dim):
+        '''Analog of :meth:`~pymor.operators.basic.NumpyMatrixOperator.projected_to_subbasis`.'''
         assert dim <= len(self.RB)
         return GenericRBReconstructor(self.RB.copy(ind=range(dim)))
 
@@ -28,30 +31,39 @@ def reduce_generic_rb(discretization, RB, operator_product=None, vector_product=
                       disable_caching=True, extends=None):
     '''Generic reduced basis reductor.
 
+    Replaces each |Operator| of the given |Discretization| with the projection
+    onto the span of the given reduced basis.
+
     Parameters
     ----------
     discretization
-        The discretization which is to be reduced.
+        The |Discretization| which is to be reduced.
     RB
-        The reduced basis (i.e. an array of vectors) on which to project.
+        |VectorArray| containing the reduced basis on which to project.
     operator_product
-        Scalar product for the projection of operators. (See
-        `operators.constructions.ProjectedOperator`)
+        Scalar product for the projection of the |Operators|. (See
+        :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.)
     vector_product
-        Scalar product for the projection of vector_operators
-        (A typical case for a vector_operator would be the `initial_data`
-        operator holding the initial data of a Cauchy problem.)
+        Scalar product for the projection of vector-like |Operators|.
+        (A typical case for a vector-like operator would be the
+        `initial_data` |Operator| of an |InstationaryDiscretization| holding
+        the initial data of a Cauchy problem.)
     disable_caching
-        If `True`, caching of the solutions of the reduced discretization
-        is disabled.
+        If `True`, caching of solutions is diabled for the reduced |Discretization|.
+    extends
+        Set by :meth:`~pymor.algorithms.greedy.greedy` to the result of the
+        last reduction in case the basis extension was `hierarchic`. Currently
+        ignored by this reductor.
 
     Returns
     -------
     rd
-        The reduced discretization.
+        The reduced |Discretization|.
     rc
         The reconstructor providing a `reconstruct(U)` method which reconstructs
-        high-dimensional solutions from solutions U of the reduced discretization.
+        high-dimensional solutions from solutions `U` of the reduced |Discretization|.
+    reduction_data
+        Additional data produced by the reduction process. Currently empty.
     '''
     assert extends is None or len(extends) == 3
 
@@ -85,6 +97,7 @@ def reduce_generic_rb(discretization, RB, operator_product=None, vector_product=
 
 
 class SubbasisReconstructor(core.BasicInterface):
+    '''Returned by :meth:`reduce_to_subbasis`.'''
 
     def __init__(self, dim, dim_subbasis, old_recontructor=None):
         self.dim = dim
@@ -92,6 +105,7 @@ class SubbasisReconstructor(core.BasicInterface):
         self.old_recontructor = old_recontructor
 
     def reconstruct(self, U):
+        '''Reconstruct high-dimensional vector from reduced vector `U`.'''
         assert isinstance(U, NumpyVectorArray)
         UU = np.zeros((len(U), self.dim))
         UU[:, :self.dim_subbasis] = U.data
@@ -103,6 +117,30 @@ class SubbasisReconstructor(core.BasicInterface):
 
 
 def reduce_to_subbasis(discretization, dim, reconstructor=None):
+    '''Further reduce a |Discretization| to the subbasis formed by the first `dim` basis vectors.
+
+    This is achieved by calling :meth:`~pymor.operators.basic.NumpyMatrixOperator.projected_to_subbasis`
+    for each operator of the given |Discretization|. Additionaly, if a reconstructor
+    for the |Discretization| is provided, its :meth:`restricted_to_subbasis` method is also
+    called to obtain a reconstructor for the further reduced |Discretization|. Otherwise
+    :class:`SubbasisReconstructor` is used (which will be less efficient).
+
+    Parameters
+    ----------
+    discretization
+        The |Discretization| to further reduce.
+    dim
+        The dimension of the subbasis.
+    reconstructor
+        Reconstructor for `discretization` or `None`.
+
+    Returns
+    -------
+    rd
+        The further reduced |Discretization|.
+    rc
+        Reconstructor for `rd`.
+    '''
 
     projected_operators = {k: op.projected_to_subbasis(dim_source=dim, dim_range=dim) if op is not None else None
                            for k, op in discretization.operators.iteritems()}
