@@ -120,7 +120,7 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
     '''Further reduce a |Discretization| to the subbasis formed by the first `dim` basis vectors.
 
     This is achieved by calling :meth:`~pymor.operators.basic.NumpyMatrixOperator.projected_to_subbasis`
-    for each operator of the given |Discretization|. Additionaly, if a reconstructor
+    for each operator of the given |Discretization|. Additionally, if a reconstructor
     for the |Discretization| is provided, its :meth:`restricted_to_subbasis` method is also
     called to obtain a reconstructor for the further reduced |Discretization|. Otherwise
     :class:`SubbasisReconstructor` is used (which will be less efficient).

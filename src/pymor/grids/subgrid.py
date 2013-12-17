@@ -22,8 +22,8 @@ class SubGrid(AffineGridInterface):
     ----------
     grid
         |Grid| of which a subgrid is to be created.
-    entites
-        |Array| of global indicies of the codim-0 entities which
+    entities
+        |Array| of global indices of the codim-0 entities which
         are to be contained in the subgrid.
 
     Attributes

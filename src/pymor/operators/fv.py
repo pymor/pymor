@@ -31,11 +31,11 @@ class NumericalConvectiveFluxInterface(ImmutableInterface, Parametric):
     the form `F(U_inner, U_outer, unit_outer_normal, edge_volume, mu)`.
 
     The flux evaluation is vectorized and happens in two stages:
-      1. `evaluate_stage1` recieves a |NumPy array| `U` of all values which
-         appear as `U_inner` or `U_outer` for one of the the edges the
+      1. `evaluate_stage1` receives a |NumPy array| `U` of all values which
+         appear as `U_inner` or `U_outer` for one of the edges the
          flux shall be evaluated at and returns a `tuple` of |NumPy arrays|
          each of the same length as `U`.
-      2. `evaluate_stage2` recieves the reordered `stage1_data` for each
+      2. `evaluate_stage2` receives the reordered `stage1_data` for each
          edge as well as the unit outer normal and the volume of the edges.
 
          `stage1_data` is given as follows: If `R_l` is `l`-th entry of the
@@ -191,7 +191,7 @@ class NonlinearAdvectionOperator(OperatorBase):
         L(u, mu)(x) = ∇ ⋅ f(u(x), mu)
 
     .. note ::
-        For Neumann boundaries, currently only zero boundary values are impelemented.
+        For Neumann boundaries, currently only zero boundary values are implemented.
 
     Parameters
     ----------

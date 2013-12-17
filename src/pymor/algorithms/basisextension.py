@@ -11,7 +11,7 @@ The methods are mainly designed to be used in conjunction with
 
 where basis and U are |VectorArrays| containing the old basis and new vectors
 to add. The methods return a tuple `new_basis, data` where new_basis holds the
-extend basis and data is a dict contaning additional information about the extension
+extend basis and data is a dict containing additional information about the extension
 process. The `data` dict at least has the key `hierarchic` whose value signifies
 if the new basis contains the old basis as its first vectors.
 
@@ -87,7 +87,7 @@ def gram_schmidt_basis_extension(basis, U, product=None, copy_basis=True, copy_U
     basis
         |VectorArray| containing the basis to extend.
     U
-        |VectorArray| containign the new basis vectors.
+        |VectorArray| containing the new basis vectors.
     product
         The scalar product w.r.t. which to orthonormalize; if None, the Euclidean
         product is used.
@@ -128,7 +128,7 @@ def gram_schmidt_basis_extension(basis, U, product=None, copy_basis=True, copy_U
 
 def pod_basis_extension(basis, U, count=1, copy_basis=True, product=None):
     '''Extend basis with the first `count` POD modes of the projection of U onto the
-    orthogonal compolement of the basis.
+    orthogonal complement of the basis.
 
     Note that the provided basis is assumed to be orthonormal w.r.t. the provided
     scalar product!
@@ -161,7 +161,7 @@ def pod_basis_extension(basis, U, count=1, copy_basis=True, product=None):
     ------
     ExtensionError
         POD produces no new vectors. This is the case when no vector in U
-        is linearily independent from the basis.
+        is linearly independent from the basis.
     '''
     if basis is None:
         return pod(U, modes=count, product=product), {'hierarchic': True}

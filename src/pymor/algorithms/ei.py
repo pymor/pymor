@@ -2,7 +2,7 @@
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-'''This module contains algorithms for the emprirical interpolation of operators.
+'''This module contains algorithms for the empirical interpolation of operators.
 
 The main work for generating the necessary interpolation data is handled by
 the :func:`ei_greedy` method. The objects returned by this method can be used
@@ -13,7 +13,7 @@ interpolated. These evaluation can be provided by an instance of
 :class:`EvaluationProvider` which, given a discretization, names of |Operators|
 and a set of parameters, provides evaluations of the |Operators| on the solution
 snapshots for the given parameters. Caching of the evaluations is also
-handeled by :class:`EvaluationProvider`.
+handled by :class:`EvaluationProvider`.
 
 As a convenience, the :func:`interpolate_operators` method allows to perform
 the empirical interpolation of the |Operators| of a given discretization with
@@ -46,22 +46,22 @@ def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation
     ----------
     evaluations
         An iterable of operator evaluations. Each element must be a |VectorArray|
-        of the same type and dimension, but it can hold an arbitrary number of evalutations.
+        of the same type and dimension, but it can hold an arbitrary number of evaluations.
     error_norm
         Norm w.r.t. which to calculate the interpolation error. If `None`, the Euclidean norm
         is used.
     target_error
         Stop the greedy search if the largest approximation error is below this threshold.
     max_interpolation_dofs
-        Stop the greedy search if the numer of interpolation DOF (= dimension of the collateral
+        Stop the greedy search if the number of interpolation DOF (= dimension of the collateral
         basis) reaches this value.
     projection
-        If `ei`, compute the approximation error by comparing the given evalution by the
-        evalution of the interpolated operator. If `orthogonal`, compute the error by
+        If `ei`, compute the approximation error by comparing the given evaluation by the
+        evaluation of the interpolated operator. If `orthogonal`, compute the error by
         comparing with the orthogonal projection onto the span of the collateral basis.
     product
         If `projection == 'orthogonal'`, the product which is used to perform the projection.
-        If `None`, the Eucledian product is used.
+        If `None`, the Euclidean product is used.
 
     Returns
     -------
@@ -241,7 +241,7 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
         List of keys in the `operators` dict of the discretization. The corresponding
         |Operators| will be interpolated.
     sample
-        A list of |Parameters| for which solution snapshots are caluclated.
+        A list of |Parameters| for which solution snapshots are calculated.
     error_norm
         See :func:`ei_greedy`.
     target_error

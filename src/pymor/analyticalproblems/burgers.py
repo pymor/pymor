@@ -107,9 +107,9 @@ class Burgers2DProblem(InstationaryAdvectionProblem, Unpicklable):
     Parameters
     ----------
     vx
-        The the x component of the velocity vector v.
+        The x component of the velocity vector v.
     vy
-        The the y component of the velocity vector v.
+        The y component of the velocity vector v.
     torus
         If `True` impose periodic boundary conditions. Otherwise Dirichlet left and bottom,
         outflow top and right.

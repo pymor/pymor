@@ -527,7 +527,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 class NumpyLincombMatrixOperator(NumpyMatrixBasedOperator, LincombOperatorBase):
     '''A |LincombOperator| representing a linear combination of |NumpyMatrixBasedOperators|.
 
-    This class is not intented to be instatiated directly. Instead, you should use
+    This class is not intended to be instantiated directly. Instead, you should use
     the :meth:`~pymor.operators.interfaces.OperatorInterface.lincomb` method of the given
     |Operators|.
 
@@ -570,7 +570,7 @@ class NumpyLincombMatrixOperator(NumpyMatrixBasedOperator, LincombOperatorBase):
 class ProjectedOperator(OperatorBase):
     '''Genric |Operator| for representing the projection of an |Operator| to a subspace.
 
-    This class is not intented to be instatiated directly. Instead, you should use
+    This class is not intended to be instantiated directly. Instead, you should use
     the :meth:`~pymor.operators.interfaces.OperatorInterface.projected` method of the given
     |Operator|.
 
@@ -652,7 +652,7 @@ class ProjectedOperator(OperatorBase):
 class ProjectedLinearOperator(NumpyMatrixBasedOperator):
     '''Genric |Operator| for representing the projection of a linear |Operator| to a subspace.
 
-    This class is not intented to be instatiated directly. Instead, you should use
+    This class is not intended to be instantiated directly. Instead, you should use
     the :meth:`~pymor.operators.interfaces.OperatorInterface.projected` method of the given
     |Operator|.
 
@@ -741,7 +741,7 @@ class ProjectedLinearOperator(NumpyMatrixBasedOperator):
 class LincombOperator(LincombOperatorBase):
     '''A generic |LincombOperator| representing a linear combination of arbitrary |Operators|.
 
-    This class is not intented to be instatiated directly. Instead, you should use
+    This class is not intended to be instantiated directly. Instead, you should use
     the :meth:`~pymor.operators.interfaces.OperatorInterface.lincomb` method of the given
     |Operators|.
 

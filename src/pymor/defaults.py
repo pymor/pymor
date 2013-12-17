@@ -48,7 +48,7 @@ class Defaults(object):
       :induced_norm_raise_negative:        raise error in la.induced_norm if the squared norm is negative
       :induced_norm_tol:                   tolerance for clipping negative norm squares to zero
 
-      :random_seed:                        seed for numpy's random generator; if None, use /dev/urandom as
+      :random_seed:                        seed for NumPy's random generator; if None, use /dev/urandom as
                                            source for seed
 
       :compact_print:                      print (arrays) in a compact but possibly not accurate way
@@ -163,7 +163,7 @@ defaults = Defaults()
 
 
 # Set default log levels
-# Log levels propagte downwards, i.e. if the level of "getLogger('a.b.c')" is not set
+# Log levels propagate downwards, i.e. if the level of "getLogger('a.b.c')" is not set
 # the log level of "getLogger('a.b')" is assumed
 
 getLogger('pymor').setLevel('WARN')

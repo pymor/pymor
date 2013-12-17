@@ -190,7 +190,7 @@ def visualize_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, title=None,
     '''Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
-    be attached to the faces or verticies of the grid.
+    be attached to the faces or vertices of the grid.
 
     Parameters
     ----------
@@ -200,7 +200,7 @@ def visualize_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, title=None,
         |VectorArray| of the data to visualize. If `len(U) > 1`, the data is visualized
         as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
         provided, in which case a subplot is created for each entry of the tuple. The
-        lenghts of all arrays have to agree.
+        lengths of all arrays have to agree.
     bounding_box
         A bounding box in which the grid is contained.
     codim
@@ -216,7 +216,7 @@ def visualize_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, title=None,
         Plot backend to use ('gl' or 'matplotlib'). If `None`, the
         `qt_visualize_patch_backend` |default| is used.
     block
-        If `True` block excecution until the plot window is closed.
+        If `True` block execution until the plot window is closed.
     '''
 
     class MainWindow(PlotMainWindow):
@@ -319,7 +319,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, block=Fal
         |VectorArray| of the data to visualize. If `len(U) > 1`, the data is visualized
         as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
         provided, in which case several plots are made into the same axes. The
-        lenghts of all arrays have to agree.
+        lengths of all arrays have to agree.
     codim
         The codimension of the entities the data in `U` is attached to (either 0 or 1).
     title
@@ -328,7 +328,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, block=Fal
         Description of the data that is plotted. Most useful if `U` is a tuple in which
         case `legend` has to be a tuple of strings of the same length.
     block
-        If `True` block excecution until the plot window is closed.
+        If `True` block execution until the plot window is closed.
     '''
 
     class MainWindow(PlotMainWindow):
@@ -353,7 +353,7 @@ class PatchVisualizer(BasicInterface):
     '''Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
-    be attached to the faces or verticies of the grid.
+    be attached to the faces or vertices of the grid.
 
     Parameters
     ----------
@@ -367,7 +367,7 @@ class PatchVisualizer(BasicInterface):
         Plot backend to use ('gl' or 'matplotlib'). If `None`, the
         `qt_visualize_patch_backend` |default| is used.
     block
-        If `True` block excecution until the plot window is closed.
+        If `True` block execution until the plot window is closed.
     '''
 
     def __init__(self, grid, bounding_box=[[0, 0], [1, 1]], codim=2, backend=None, block=False):
@@ -389,7 +389,7 @@ class PatchVisualizer(BasicInterface):
             |VectorArray| of the data to visualize. If `len(U) > 1`, the data is visualized
             as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
             provided, in which case a subplot is created for each entry of the tuple. The
-            lenghts of all arrays have to agree.
+            lengths of all arrays have to agree.
         discretization
             Filled in :meth:`pymor.discretizations.DiscretizationBase.visualize` (ignored).
         title
@@ -400,7 +400,7 @@ class PatchVisualizer(BasicInterface):
         separate_colorbars
             If `True` use separate colorbars for each subplot.
         block
-            If `True` block excecution until the plot window is closed. If `None`, use the
+            If `True` block execution until the plot window is closed. If `None`, use the
             default provided during instantiation.
         filename
             If specified, write the data to a VTK-file using
@@ -426,7 +426,7 @@ class Matplotlib1DVisualizer(BasicInterface):
     '''Visualize scalar data associated to a one-dimensional |Grid| as a plot.
 
     The grid's |ReferenceElement| must be the line. The data can either
-    be attached to the subintervals or verticies of the grid.
+    be attached to the subintervals or vertices of the grid.
 
     Parameters
     ----------
@@ -435,7 +435,7 @@ class Matplotlib1DVisualizer(BasicInterface):
     codim
         The codimension of the entities the data in `U` is attached to (either 0 or 1).
     block
-        If `True` block excecution until the plot window is closed.
+        If `True` block execution until the plot window is closed.
     '''
 
     def __init__(self, grid, codim=1, block=False):
@@ -454,7 +454,7 @@ class Matplotlib1DVisualizer(BasicInterface):
             |VectorArray| of the data to visualize. If `len(U) > 1`, the data is visualized
             as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
             provided, in which case several plots are made into the same axes. The
-            lenghts of all arrays have to agree.
+            lengths of all arrays have to agree.
         discretization
             Filled in :meth:`pymor.discretizations.DiscretizationBase.visualize` (ignored).
         title
@@ -463,7 +463,7 @@ class Matplotlib1DVisualizer(BasicInterface):
             Description of the data that is plotted. Most useful if `U` is a tuple in which
             case `legend` has to be a tuple of strings of the same length.
         block
-            If `True` block excecution until the plot window is closed. If `None`, use the
+            If `True` block execution until the plot window is closed. If `None`, use the
             default provided during instantiation.
         '''
         block = self.block if block is None else block

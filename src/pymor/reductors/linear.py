@@ -32,13 +32,13 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
         |VectorArray| containing the reduced basis on which to project.
     error_product
         Scalar product given as an |Operator| used to calculate Riesz
-        respresentative of the residual. If `None`, the Euclidean product is used.
+        representative of the residual. If `None`, the Euclidean product is used.
     disable_caching
-        If `True`, caching of solutions is diabled for the reduced |Discretization|.
+        If `True`, caching of solutions is disabled for the reduced |Discretization|.
     extends
         Set by :meth:`~pymor.algorithms.greedy.greedy` to the result of the
         last reduction in case the basis extension was `hierarchic`. Used to prevent
-        recomputation of Riesz representatives already obtained from previous
+        re-computation of Riesz representatives already obtained from previous
         reductions.
 
     Returns

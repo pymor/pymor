@@ -17,7 +17,7 @@ are the following:
     2. Using metaclass magic, each *class* deriving from :class:`BasicInterface`
        comes with its own logger instance accessible through its `logger`
        attribute. The logger prefix is automatically set to the class name.
-    3. Logging can be disabled and reenabled for each *instance* using the
+    3. Logging can be disabled and re-enabled for each *instance* using the
        :meth:`BasicInterface.disable_logging` and :meth:`BasicInterface.enable_logging`
        methods.
     4. An instance can be made immutable using :meth:`BasicInterface.lock`.
@@ -31,7 +31,7 @@ are the following:
            obj.with_(a=x, b=y)
 
        creates a copy with the `a` and `b` attributes of `obj` set to `x` and `y`.
-       (Note that in general `a` and `b` do not necessarily have to corresond to
+       (Note that in general `a` and `b` do not necessarily have to correspond to
        class attributes of `obj`; it is up to the implementor to interpret the
        provided arguments.) :attr:`BasicInterface.with_arguments` holds the
        set of allowed arguments.
@@ -517,7 +517,7 @@ class ImmutableMeta(UberMeta):
 class ImmutableInterface(BasicInterface):
     '''Base class for immutable objects in pyMOR.
 
-    Instancees of `ImmutableInterface` are immutable in the sense, that
+    Instances of `ImmutableInterface` are immutable in the sense, that
     they are :meth:`BasicInterface.lock`ed after `__init__` returns.
 
     Attributes
@@ -534,7 +534,7 @@ class ImmutableInterface(BasicInterface):
         If sid generation fails, a string describing the reason for
         the failure.
     sid_ignore
-        Tuple of `__init__` arguments not to include in sid caluation.
+        Tuple of `__init__` arguments not to include in sid calculation.
         The default it `{'name', 'cache_region'}`
     '''
     __metaclass__ = ImmutableMeta

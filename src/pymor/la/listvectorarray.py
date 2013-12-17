@@ -18,8 +18,8 @@ from pymor.tools import float_cmp_all
 class VectorInterface(BasicInterface):
     '''Interface for vectors.
 
-    This Interface is mainly inteded to be used in conjunction with |ListVectorArray|. In general, all
-    pyMOR ojects operate on |VectorArrays| instead of single vectors! All methods of the interface have
+    This Interface is mainly intended to be used in conjunction with |ListVectorArray|. In general, all
+    pyMOR objects operate on |VectorArrays| instead of single vectors! All methods of the interface have
     a direct counterpart in the |VectorArray| interface.
     '''
 

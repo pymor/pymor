@@ -392,7 +392,7 @@ class Parametric(object):
     Each such object has a |ParameterType| stored in the :attr:`parameter_type` attribute,
     which should be calculated by the implementor during :meth:`__init__` using the
     :meth:`build_parameter_type` method. Methods expecting the |Parameter| (typically
-    `evaluate`, `apply`, `solve`, etc ..) should accept an optional argument `mu` defaulting
+    `evaluate`, `apply`, `solve`, etc. ..) should accept an optional argument `mu` defaulting
     to `None`. This `mu` should then be fed into :meth:`parse_parameter` to obtain a
     |Parameter| of correct |ParameterType| from the (user supplied) input `mu`. The local
     parameter components (see :meth:`build_parameter_type`) can be extracted using
@@ -539,7 +539,7 @@ class Parametric(object):
         .. note::
            As parameter components of the |ParameterTypes| of different objects are
            treated as equal if they have the same name, renaming a local parameter
-           component is not mereley a convenience feature but can also have a semantic
+           component is not merely a convenience feature but can also have a semantic
            meaning by identifying local parameter components with inherited ones.
 
 

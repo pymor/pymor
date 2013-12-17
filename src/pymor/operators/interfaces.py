@@ -86,7 +86,7 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         mu
             The |Parameter| for which to evaluate the operator.
         product
-            The scalar product used in the expresseion `(V, A(U))` given as
+            The scalar product used in the expression `(V, A(U))` given as
             an |Operator|.  If `None`, the euclidean product is chosen.
         pairwise
             If `False`, the 2-form is applied to all combinations of vectors
@@ -145,7 +145,7 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
 
         This method may only be called on linear functionals, i.e. linear operators
         with `dim_range == 1` and |NumpyVectorArray| as :attr:`~OperatorInterface.type_range`,
-        or on operators discribing vectors, i.e. linear operators with
+        or on operators describing vectors, i.e. linear operators with
         `dim_source == 1` |NumpyVectorArray| as :attr:`~OperatorInterface.type_source`.
 
         In the case of a functional, the identity ::
@@ -225,7 +225,7 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         of the restriction of A to span(b_i) concatenated with the orthogonal
         projection onto span(c_i).
 
-        From another point of view, if A is viewed as a biliniear form
+        From another point of view, if A is viewed as a bilinear form
         (see :meth:`~OperatorInterface.apply2`) and ( ⋅, ⋅ ) is the Euclidean
         product, then A_P represents the matrix of the bilinear form restricted
         span(b_i) / spanc(c_i) (w.r.t. the b_i/c_i bases).
@@ -235,7 +235,7 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         again be a |NumpyMatrixOperator|, only a
         :class:`pymor.operators.basic.ProjectedOperator` will be returned
         in general. (Note that the latter will not be suitable to obtain an
-        efficient offline/online-decomposition for redcued basis schemes.)
+        efficient offline/online-decomposition for reduced basis schemes.)
 
         A default implementation is provided in |OperatorBase|.
 
@@ -284,7 +284,7 @@ class LincombOperatorInterface(OperatorInterface):
 
     The linear coefficients can be scalars or |ParameterFunctionals|.  Alternatively,
     if no linear coefficients are given, the missing coefficients become
-    part of the |Parameter| the combinded |Operator| expects.
+    part of the |Parameter| the combined |Operator| expects.
 
     Attributes
     ----------

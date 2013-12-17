@@ -17,7 +17,7 @@ from pymor.operators import NumpyMatrixBasedOperator, NumpyMatrixOperator
 class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     '''|Functional| representing the scalar product with an L2-|Function| for linear finite elements.
 
-    Boundary treatment can be performed by providng `boundary_info` and `dirichlet_data`,
+    Boundary treatment can be performed by providing `boundary_info` and `dirichlet_data`,
     in which case the DOFs corresponding to Dirichlet boundaries are set to the values
     provided by `dirichlet_data`.
 

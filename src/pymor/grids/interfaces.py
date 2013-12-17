@@ -17,7 +17,7 @@ from pymor.grids.defaultimpl import (ConformalTopologicalGridDefaultImplementati
 class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplementations, CacheableInterface):
     '''A conformal topological grid.
 
-    The grid is completley determined via the subentity relation given by
+    The grid is completely determined via the subentity relation given by
     :meth:`~ConformalTopologicalGridInterface.subentities`. In addition,
     only :meth:`~ConformalTopologicalGridInterface.size` has to be
     implemented, cached default implementations for all other methods are
@@ -195,7 +195,7 @@ class ReferenceElementInterface(SimpleReferenceElementDefaultImplementations, Ca
 class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopologicalGridInterface):
     '''Topological grid with geometry where each codim-0 entity is affinely mapped to the same |ReferenceElement|.
 
-    The grid is completley determined via the subentity relation given by
+    The grid is completely determined via the subentity relation given by
     :meth:`~AffineGridInterface.subentities` and the embeddings given by
     :meth:`~AffineGridInterface.embeddings`.  In addition,
     only :meth:`~ConformalTopologicalGridInterface.size` and :meth:`~AffineGridInterface.reference_element`

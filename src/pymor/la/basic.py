@@ -12,7 +12,7 @@ from pymor import defaults
 def induced_norm(product):
     '''The induced norm of a scalar product.
 
-    The norm of a vector (an array of vectors) U is calcuated by
+    The norm of a vector (an array of vectors) U is calculated by
     calling ::
 
         product.apply2(U, U, mu=mu, pairwise=True)

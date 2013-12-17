@@ -6,7 +6,7 @@
 instationary problems.
 
 The algorithms are generic in the sense each algorithms operates exclusively on
-|Operators| and |VectorArrays|. In particluar, the algorithms
+|Operators| and |VectorArrays|. In particular, the algorithms
 can also be used to turn an arbitrary stationary |Discretization| provided
 by an external library into an instationary |Discretization|.
 

@@ -297,7 +297,7 @@ the detailed solution and the error:
 Learning more
 -------------
 
-As a next step, you should read our technical overview which discusses the
+As a next step, you should read our :ref:`technical_overview` which discusses the
 most important concepts and design decisions behind pyMOR. After that
 you should be fit to delve into the reference documentation. Should you
 have any problems, questions or feature requests, do not hestitate to contact

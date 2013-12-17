@@ -10,7 +10,7 @@ be marked using the :class:`cached` decorator.
 
 To ensure consistency, :class:`CacheableInterface` derives from
 :class:`~pymor.core.interfaces.ImmutableInterface`: The return value of a
-cached method should only depend on its arguments as well as the
+cached method should only depend on its arguments as well as
 the immutable state of the class instance.
 
 Making this assumption, the keys for cache lookup are created from
@@ -24,7 +24,7 @@ the following data:
        state.
 
 Note, however, that instances of :class:`~pymor.core.interfaces.ImmutableInterface`
-are allowed to have mutable private attributes. It is the implmentors
+are allowed to have mutable private attributes. It is the implementors
 responsibility not to break things.
 
 Backends for storage of cached return values derive from :class:`CacheRegion`.

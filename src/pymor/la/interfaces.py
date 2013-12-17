@@ -46,7 +46,7 @@ class VectorArrayInterface(BasicInterface):
         shape `(len(v), v.dim)` containing the data stored in the array. Access should
         be assumed to be slow and is mainly intended for debugging / visualization
         purposes or to once transfer data to pyMOR and further process it using NumPy.
-        In the case of |NumpyVectorArray|, an actual view of the interally used
+        In the case of |NumpyVectorArray|, an actual view of the internally used
         |NumPy array| is returned, so changing it, will alter the |VectorArray|.
         Thus you cannot assume to own the data returned to you, in general.
 
@@ -196,7 +196,7 @@ class VectorArrayInterface(BasicInterface):
 
     @abstractmethod
     def scal(self, alpha, ind=None):
-        '''BLAS SCAL operation (in-place sclar multiplication).
+        '''BLAS SCAL operation (in-place scalar multiplication).
 
         This method calculates ::
 
@@ -277,7 +277,7 @@ class VectorArrayInterface(BasicInterface):
         ----------
         coefficients
             A |NumPy array| of dimension 1 or 2 containing the linear
-            coeffcients. `coefficients.shape[-1]` has to agree with
+            coefficients. `coefficients.shape[-1]` has to agree with
             `len(self)`.
         ind
             Indices of the vectors which are linear combined (see class documentation).
@@ -328,7 +328,7 @@ class VectorArrayInterface(BasicInterface):
         pass
 
     def sup_norm(self, ind=None):
-        '''The l-infintiy--norms of the vectors contained in the array.
+        '''The l-infinity--norms of the vectors contained in the array.
 
         Parameters
         ----------

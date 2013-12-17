@@ -139,7 +139,7 @@ class ConstantOperator(OperatorBase):
     Parameters
     ----------
     value
-        A |VectorArray| of lenght 1 containing the vector which is
+        A |VectorArray| of length 1 containing the vector which is
         returned by the operator.
     dim_source
         Source dimension of the operator.

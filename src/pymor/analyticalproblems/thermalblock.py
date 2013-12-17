@@ -23,7 +23,7 @@ class ThermalBlockProblem(EllipticProblem, Unpicklable):
 
     on the domain [0,1]^2 with Dirichlet zero boundary values. The domain is
     partitioned into nx x ny blocks and the diffusion function d(x, μ) is
-    constant on each such block (i,j) with value d(x, μ_ij). ::
+    constant on each such block (i,j) with value μ_ij. ::
 
            ----------------------------
            |        |        |        |

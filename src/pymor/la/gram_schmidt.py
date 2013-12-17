@@ -17,7 +17,7 @@ from pymor.tools import float_cmp_all
 def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=None,
                  reiterate=None, reiteration_threshold=None, check=None, check_tol=None,
                  copy=False):
-    '''Orthonormnalize a |VectorArray| using the Gram-Schmidt algorithm.
+    '''Orthonormalize a |VectorArray| using the Gram-Schmidt algorithm.
 
     Parameters
     ----------
@@ -40,7 +40,7 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=None,
         much smaller than the norm of the original vector. If `None` the
         `gram_schmidt_reiterate` |default| value is used.
     reiteration_threshold
-        If `reiterate` is `True`, reorthonormalize if the ratio between the norms of
+        If `reiterate` is `True`, re-orthonormalize if the ratio between the norms of
         the orthogonalized vector and the original vector is smaller than this value.
         If `None`, the `gram_schmidt_reiteration_threshold` |default| value is used.
     check

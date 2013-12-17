@@ -34,7 +34,7 @@ class InstationaryAdvectionProblem(ImmutableInterface, Named):
         The derivative of f with respect to u.
     rhs
         The |Function| s. The current time is provided by adding the key `'_t'`
-        the the |Parameter| `mu`.
+        to the |Parameter| `mu`.
     dirichlet_data
         |Function| providing the Dirichlet boundary values in global coordinates.
     T

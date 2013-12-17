@@ -73,7 +73,7 @@ def write_vtk(grid, data, filename_base, codim=2, binary_vtk=True, last_step=Non
     Parameters
     ----------
     grid
-        a pymor grid with triangular or rectilinear reference element
+        a |Grid| with triangular or rectilinear reference element
 
     data
         VectorArrayInterface instance with either cell (ie one datapoint per codim 0 entity)

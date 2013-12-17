@@ -20,7 +20,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
     Let `L` be an |Operator|, `0 <= c_1, ..., c_M <= L.dim_range` indices
     of interpolation DOFs and `b_1, ..., b_M in R^(L.dim_range)` collateral
     basis vectors. If moreover `ψ_j(U)` denotes the j-th component of `U`, the
-    empricial interpolation `L_EI` of `L` w.r.t. the given data is given by ::
+    empirical interpolation `L_EI` of `L` w.r.t. the given data is given by ::
 
       |                M
       |   L_EI(U, μ) = ∑ b_i⋅λ_i     such that
