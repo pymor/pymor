@@ -106,7 +106,7 @@ import numpy as np
 from pymor.core import decorators, backports, logger
 from pymor.core.exceptions import ConstError
 
-DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_DONT_COPY_DOCSTRINGS', 0)) == 1
+DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_COPY_DOCSTRINGS_DISABLE', 0)) == 1
 
 
 class UIDProvider(object):
