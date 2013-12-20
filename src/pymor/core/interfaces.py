@@ -154,6 +154,9 @@ class UberMeta(abc.ABCMeta):
         '''I copy contract decorations and docstrings from base class methods to deriving classes.
         I also forward "abstract{class|static}method" decorations in the base class to "{class|static}method"
         decorations in the new subclass.
+
+        Copying of docstrings can be prevented by setting the `PYMOR_COPY_DOCSTRINGS_DISABLE` environment
+        variable to `1`.
         '''
         if 'init_arguments' in classdict:
             raise ValueError('init_arguments is a reserved class attribute for subclasses of BasicInterface')

@@ -53,7 +53,8 @@ def formatter_message(message, use_color):
 
 class ColoredFormatter(logging.Formatter):
     """A logging.Formatter that inserts tty control characters to color
-    loglevel keyword output
+    loglevel keyword output. Coloring can be disabled by setting the
+    `PYMOR_COLORS_DISABLE` environment variable to `1`.
     """
 
     def __init__(self):
