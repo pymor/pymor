@@ -19,7 +19,7 @@
 
         <header>
           <h1>pyMOR</h1>
-          <h2>Model Order Reduction with python</h2>
+          <h2>Model Order Reduction with Python</h2>
         </header>
 
         <section id="downloads" class="clearfix">
@@ -34,11 +34,45 @@
           <h1>
 <a name="pymor---model-order-reduction-with-python" class="anchor" href="#pymor---model-order-reduction-with-python"><span class="octicon octicon-link"></span></a>pyMOR - Model Order Reduction with python</h1>
 
-<p><strong>NOTE</strong> pyMOR is still alpha quality software and under heavy development.
-Should you have any questions regarding pyMOR or wish to contribute, do not
-hesitate to directly contact one of the developers.</p>
+<p>pyMOR is a software library developed at the University of Münster for building
+model order reduction applications with the Python programming language.  Its
+main focus lies on the reduction of parameterized partial differential
+equations using the reduced basis method.  All algorithms in pyMOR are
+formulated in terms of abstract interfaces for seamless integration with
+external high-dimensional PDE-solver. Moreover, pure Python implementations of
+finite element and finite volume discretizations using the NumPy/SciPy
+scientific computing stack are provided for getting started quickly.</p>
+
+<p><strong>NOTE</strong> pyMOR is still in early development.  Should you have any questions
+regarding pyMOR or wish to contribute, do not hesitate to contact us!</p>
 
 <p><a href="https://travis-ci.org/pymor/pymor"><img src="https://travis-ci.org/pymor/pymor.png?branch=master" alt="Build Status"></a></p>
+
+<h2>
+<a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h2>
+
+<p>Copyright (c) 2013, Felix Albrecht, Rene Milk, Stephan Rave<br>
+All rights reserved.</p>
+
+<p>Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:</p>
+
+<ul>
+<li>Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.</li>
+<li>Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.</li>
+</ul><p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
 
 <h2>
 <a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
@@ -111,6 +145,18 @@ virtualenv, this can be done by executing</p>
 </code></pre>
 </li>
 </ol><h2>
+<a name="documentation" class="anchor" href="#documentation"><span class="octicon octicon-link"></span></a>Documentation</h2>
+
+<p>To build the documentation execute</p>
+
+<pre><code>make doc
+</code></pre>
+
+<p>inside root directory of the pyMOR source tree. This will generate HTML
+documentation in 'docs/_build/html'. The documentation is also available
+online on <a href="http://pymor.readthedocs.org/">Read the Docs</a>.</p>
+
+<h2>
 <a name="cython-extension-modules" class="anchor" href="#cython-extension-modules"><span class="octicon octicon-link"></span></a>Cython extension modules</h2>
 
 <p>pyMOR uses <a href="http://www.cython.org/">Cython</a> extension modules to speed up
@@ -132,11 +178,6 @@ add your module to the <code>ext_modules</code> list defined in the <code>_setup
 <p>will then build the extension module and place it into your pyMOR source tree.</p>
 
 <h2>
-<a name="debugging" class="anchor" href="#debugging"><span class="octicon octicon-link"></span></a>Debugging</h2>
-
-<ul>
-<li>You can globally disable caching by having <code>PYMOR_CACHE_DISABLE=1</code> in the process' environment</li>
-</ul><h2>
 <a name="tests" class="anchor" href="#tests"><span class="octicon octicon-link"></span></a>Tests</h2>
 
 <p>pyMOR uses <a href="http://pytest.org/">pytest</a> for unit testing. To run the test suite,
@@ -148,6 +189,14 @@ directory. Alternatively, you can run <code>make full-test</code> which will als
 
 <p>All tests are contained within the <code>src/pymortests</code> directory and can be run
 individually by executing <code>py.test src/pymortests/the_module.py</code>.</p>
+
+<h2>
+<a name="contact" class="anchor" href="#contact"><span class="octicon octicon-link"></span></a>Contact</h2>
+
+<p>Should you have any questions regarding pyMOR or wish to contribute, 
+do not hestitate to contact us via our development mailing list:</p>
+
+<p><a href="http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev">http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev</a></p>
         </section>
 
         <footer>
