@@ -2,10 +2,13 @@
 pyMOR - Model Order Reduction with python
 #########################################
 
-:ref:`getting_started`
+.. toctree::
+    getting_started
+    technical_overview
+    environment
 
-The pyMOR package
-******************
+API Documentation
+*****************
 
 .. toctree::
     :maxdepth: 3
