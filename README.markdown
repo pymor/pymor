@@ -1,11 +1,46 @@
 pyMOR - Model Order Reduction with python
-=======================================
+=========================================
 
-**NOTE** pyMOR is still alpha quality software and under heavy development.
-Should you have any questions regarding pyMOR or wish to contribute, do not
-hesitate to directly contact one of the developers.
+pyMOR is a software library developed at the University of Münster for building
+model order reduction applications with the Python programming language.  Its
+main focus lies on the reduction of parameterized partial differential
+equations using the reduced basis method.  All algorithms in pyMOR are
+formulated in terms of abstract interfaces for seamless integration with
+external high-dimensional PDE-solver. Moreover, pure Python implementations of
+finite element and finite volume discretizations using the NumPy/SciPy
+scientific computing stack are provided for getting started quickly.
+
+**NOTE** pyMOR is still in early development.  Should you have any questions
+regarding pyMOR or wish to contribute, do not hesitate to contact us!
 
 [![Build Status](https://travis-ci.org/pymor/pymor.png?branch=master)](https://travis-ci.org/pymor/pymor)
+
+
+License
+-------
+
+Copyright (c) 2013, Felix Albrecht, Rene Milk, Stephan Rave
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 Installation
@@ -101,12 +136,6 @@ add your module to the `ext_modules` list defined in the `_setup` method of
 will then build the extension module and place it into your pyMOR source tree.
 
 
-Debugging
----------
-
- * You can globally disable caching by having `PYMOR_CACHE_DISABLE=1` in the process' environment
-
-
 Tests
 -----
 
@@ -119,3 +148,12 @@ directory. Alternatively, you can run `make full-test` which will also enable
 
 All tests are contained within the `src/pymortests` directory and can be run
 individually by executing `py.test src/pymortests/the_module.py`.
+
+
+Contact
+-------
+
+Should you have any questions regarding pyMOR or wish to contribute, 
+do not hestitate to contact us via our development mailing list:
+
+	http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev
