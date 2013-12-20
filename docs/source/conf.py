@@ -285,3 +285,5 @@ intersphinx_mapping = {'python': ('http://docs.python.org/2.7', None),
 
 import substitutions
 rst_epilog = substitutions.substitutions
+
+modindex_common_prefix = ['pymor.']
