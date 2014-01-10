@@ -45,6 +45,10 @@ class Defaults(object):
       :spilu_permc_spec:                   see :func:`scipy.sparse.linalg.spilu`
       :spsolve_permc_spec:                 see :func:`scipy.sparse.linalg.spsolve`
 
+      :newton_maxiter:                     maximum number of iterations
+      :newton_reduction:                   reduction of initial residual to achieve
+      :newton_abs_limit:                   stop if absolute norm of residual falls below this limit
+
       :induced_norm_raise_negative:        raise error in la.induced_norm if the squared norm is negative
       :induced_norm_tol:                   tolerance for clipping negative norm squares to zero
 
@@ -81,6 +85,10 @@ class Defaults(object):
     spilu_drop_rule                     = 'basic,area'
     spilu_permc_spec                    = 'COLAMD'
     spsolve_permc_spec                  = 'COLAMD'
+
+    newton_maxiter                      = 10
+    newton_reduction                    = 1e-10
+    newton_abs_limit                    = 1e-15
 
     induced_norm_raise_negative         = True
     induced_norm_tol                    = 10e-10
@@ -133,6 +141,10 @@ class Defaults(object):
 
             induced_norm_raise_negative         = {0.induced_norm_raise_negative}
             induced_norm_tol                    = {0.induced_norm_tol}
+
+            newton_maxiter                      = {0.newton_maxiter}
+            newton_reduction                    = {0.newton_reduction}
+            newton_abs_limit                    = {0.newton_abs_limit}
 
             random_seed                         = {0.random_seed}
 

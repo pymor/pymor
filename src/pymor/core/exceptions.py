@@ -43,3 +43,7 @@ class ConfigError(Exception):
 
 class InversionError(Exception):
     '''Is raised if an operator inversion algorithm fails.'''
+
+
+class NewtonError(Exception):
+    '''Is raised if the Newton algorithm fails to converge.'''
