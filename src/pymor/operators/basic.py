@@ -189,6 +189,12 @@ class AssemblableOperatorBase(OperatorBase):
         else:
             return super(AssemblableOperatorBase, self).as_vector(self, mu)
 
+    def apply_inverse(self, U, ind=None, mu=None, options=None):
+        if self._assembled:
+            return self._last_op.apply_inverse(U, ind=ind, options=options)
+        else:
+            return self.assemble(mu).apply_inverse(U, ind=ind, options=options)
+
     _last_mu = None
     _last_op = None
 
@@ -396,12 +402,6 @@ class NumpyMatrixBasedOperator(AssemblableOperatorBase):
             return NumpyVectorArray(self._last_op._matrix.dot(U_array.T).T, copy=False)
         else:
             return self.assemble(mu).apply(U, ind=ind)
-
-    def apply_inverse(self, U, ind=None, mu=None, options=None):
-        if self._assembled:
-            return self._last_op.apply_inverse(U, ind=ind, options=options)
-        else:
-            return self.assemble(mu).apply_inverse(U, ind=ind, options=options)
 
 
 class NumpyMatrixOperator(NumpyMatrixBasedOperator):
