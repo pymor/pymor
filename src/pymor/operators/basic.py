@@ -56,6 +56,13 @@ class OperatorBase(OperatorInterface):
             AU = product.apply(AU)
         return V.dot(AU, ind=V_ind, pairwise=pairwise)
 
+    def jacobian(self, U, mu=None):
+        if self.linear:
+            assert self.check_parameter(mu)
+            return self
+        else:
+            raise NotImplementedError
+
     @staticmethod
     def lincomb(operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
         return LincombOperator(operators, coefficients, num_coefficients, coefficients_name, name=None)
@@ -247,6 +254,14 @@ class LincombOperatorBase(OperatorBase, LincombOperatorInterface):
 
         else:
             return np.array([c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients])
+
+    def jacobian(self, U, mu=None):
+        jacobians = [op.jacobian(U, mu) for op in self.operators]
+        name = '{}_jacobian'.format(self.name)
+        num_coefficients = getattr(self, 'num_coefficients', None)
+        return type(jacobians[0]).lincomb(operators=jacobians, coefficients=self.coefficients,
+                                          num_coefficients=num_coefficients,
+                                          coefficients_name=self.coefficients_name, name=name)
 
     def as_vector(self, mu=None):
         coefficients = self.evaluate_coefficients(mu)
@@ -647,6 +662,16 @@ class ProjectedOperator(OperatorBase):
         range_basis = self.range_basis if dim_range is None \
             else self.range_basis.copy(ind=range(dim_range))
         return ProjectedOperator(self.operator, source_basis, range_basis, product=None, copy=False, name=name)
+
+    def jacobian(self, U, mu=None):
+        assert len(U) == 1
+        mu = self.parse_parameter(mu)
+        if self.source_basis is None:
+            J = self.operator.jacobian(U, mu=mu)
+        else:
+            J = self.operator.jacobian(self.source_basis.lincomb(U.data), mu=mu)
+        return ProjectedLinearOperator(J, source_basis=self.source_basis, range_basis=self.range_basis,
+                                       product=self.product, copy=False, name=self.name + '_jacobian').assemble()
 
 
 class ProjectedLinearOperator(NumpyMatrixBasedOperator):

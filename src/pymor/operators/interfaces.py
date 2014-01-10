@@ -140,6 +140,24 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         pass
 
     @abstractmethod
+    def jacobian(self, U, mu=None):
+        '''Return the operator's Jacobian.
+
+        Parameters
+        ----------
+        U
+            Length 1 |VectorArray| containing the vector for which to compute
+            the jacobian.
+        mu
+            The |Parameter| for which to compute the Jacobian.
+
+        Returns
+        -------
+        |Operator| representing the Jacobian.
+        '''
+        pass
+
+    @abstractmethod
     def as_vector(self, mu=None):
         '''Return vector representation of linear functional or vector operator.
 
