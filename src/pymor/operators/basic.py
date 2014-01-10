@@ -607,6 +607,7 @@ class ProjectedOperator(OperatorBase):
     '''
 
     type_source = type_range = NumpyVectorArray
+    linear = False
 
     def __init__(self, operator, source_basis, range_basis, product=None, copy=True, name=None):
         assert isinstance(operator, OperatorInterface)
@@ -640,7 +641,7 @@ class ProjectedOperator(OperatorBase):
                 V = self.operator.apply(U, ind=ind, mu=mu)
                 return NumpyVectorArray(self.product.apply2(V, self.range_basis, pairwise=False))
         else:
-            U_array = U._array if ind is None else U._array[ind]
+            U_array = U._array[:U._len] if ind is None else U._array[ind]
             UU = self.source_basis.lincomb(U_array)
             if self.range_basis is None:
                 return self.operator.apply(UU, mu=mu)
