@@ -66,8 +66,8 @@ class CubicParameterSpace(ParameterSpaceInterface):
     def sample_randomly(self, count=None):
         '''Iterator sampling random |Parameters| from the space.'''
         c = 0
+        ranges = self.ranges
         while count is None or c < count:
-            yield Parameter(((k, np.random.uniform(r[0], r[1], shp))
-                             for k, r, shp in izip(self.parameter_type, self.ranges.values(),
-                                                   self.parameter_type.values())))
+            yield Parameter(((k, np.random.uniform(ranges[k][0], ranges[k][1], shp))
+                             for k, shp in self.parameter_type.iteritems()))
             c += 1
