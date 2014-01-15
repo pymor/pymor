@@ -32,7 +32,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None,
     residual = rhs - operator.apply(U, mu=mu)
 
     err = first_err = residual.l2_norm()[0] if error_norm is None else error_norm(residual)[0]
-    logger.info('      Initial Resiudal: {:5e}'.format(err))
+    logger.info('      Initial Residual: {:5e}'.format(err))
 
     iteration = 0
     while iteration < maxiter and err > abs_limit and err/first_err > reduction:  # or iteration == 0:
