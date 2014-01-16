@@ -39,7 +39,9 @@ class EmpiricalInterpolatedOperator(OperatorBase):
     to obtain a restricted version of the operator which is stored and later used
     to quickly obtain the required evaluations. (The second return value of the `restricted`
     method has to be an array of source DOFs -- determined by the operator's stencil --
-    required to evaluate the restricted operator.)
+    required to evaluate the restricted operator.) If the operator fails to have
+    a `restricted` method, the full operator will be evaluated (which will lead to
+    the same result, but without any speedup).
 
     The interpolation DOFs and the collateral basis can be generated using
     the algorithms provided in the :mod:`pymor.algorithms.ei` module.
@@ -63,7 +65,6 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         assert isinstance(collateral_basis, VectorArrayInterface)
         assert operator.dim_source == operator.dim_range == collateral_basis.dim
         assert operator.type_range == type(collateral_basis)
-        assert hasattr(operator, 'restricted')
 
         self.build_parameter_type(inherits=(operator,))
         self.dim_source = operator.dim_source
@@ -77,10 +78,12 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         self.interpolation_dofs = interpolation_dofs
 
         if len(interpolation_dofs) > 0:
-            restricted_operator, source_dofs  = operator.restricted(interpolation_dofs)
+            if hasattr(operator, 'restricted'):
+                self.restricted_operator, self.source_dofs  = operator.restricted(interpolation_dofs)
+            else:
+                self.logger.warn('Operator has no "restricted" method. The full operator will be evaluated.')
+                self.operator = operator
             interpolation_matrix = collateral_basis.components(interpolation_dofs).T
-            self.restricted_operator = restricted_operator
-            self.source_dofs = source_dofs
             self.interpolation_matrix = interpolation_matrix
             self.collateral_basis = collateral_basis.copy()
 
@@ -90,8 +93,11 @@ class EmpiricalInterpolatedOperator(OperatorBase):
             count = len(ind) if ind is not None else len(U)
             return self.type_range.zeros(dim=self.dim_range, count=count)
 
-        U_components = NumpyVectorArray(U.components(self.source_dofs, ind=ind), copy=False)
-        AU = self.restricted_operator.apply(U_components, mu=mu)
+        if hasattr(self, 'restricted_operator'):
+            U_components = NumpyVectorArray(U.components(self.source_dofs, ind=ind), copy=False)
+            AU = self.restricted_operator.apply(U_components, mu=mu)
+        else:
+            AU = NumpyVectorArray(self.operator.apply(U, mu=mu).components(self.interpolation_dofs), copy=False)
         try:
             interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU.data.T,
                                                           lower=True, unit_diagonal=True).T
@@ -107,6 +113,9 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         assert self.dim_range == range_basis.dim
         assert source_basis is None or self.type_source == type(source_basis)
         assert self.type_range == type(range_basis)
+
+        if not hasattr(self, 'restricted_operator'):
+            return super(EmpiricalInterpolatedOperator, self).projected(source_basis, range_basis, product, name)
 
         if product is None:
             projected_collateral_basis = NumpyVectorArray(self.collateral_basis.dot(range_basis, pairwise=False))
