@@ -58,8 +58,15 @@ class OperatorBase(OperatorInterface):
 
     def jacobian(self, U, mu=None):
         if self.linear:
-            assert self.check_parameter(mu)
-            return self
+            if self.parametric:
+                if hasattr(self, 'assemble'):
+                    return self.assemble(mu)
+                else:
+                    from pymor.operators.constructions import FixedParameterOperator
+                    return FixedParameterOperator(self, mu)
+            else:
+                assert self.check_parameter(mu)
+                return self
         else:
             raise NotImplementedError
 
