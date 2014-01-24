@@ -540,7 +540,7 @@ class ListVectorArray(VectorArrayInterface):
         elif isinstance(ind, Number):
             ind = [ind]
 
-        MI = np.empty(len(ind))
+        MI = np.empty(len(ind), dtype=np.int)
         MV = np.empty(len(ind))
 
         for k, i in enumerate(ind):
