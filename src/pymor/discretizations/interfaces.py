@@ -62,7 +62,7 @@ class DiscretizationInterface(CacheableInterface, Parametric, Named):
         pass
 
     @cached
-    def solve(self, mu=None):
+    def solve(self, mu=None, **kwargs):
         '''Solve for the |Parameter| `mu`.
 
         The result is cached by default.
@@ -76,4 +76,4 @@ class DiscretizationInterface(CacheableInterface, Parametric, Named):
         -------
         The solution given by a |VectorArray|.
         '''
-        return self._solve(mu)
+        return self._solve(mu, **kwargs)
