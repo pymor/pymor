@@ -88,6 +88,7 @@ def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation
     interpolation_matrix = np.zeros((0, 0))
     collateral_basis = type(next(iter(evaluations))).empty(dim=next(iter(evaluations)).dim)
     max_errs = []
+    triangularity_errs = []
 
     def interpolate(U, ind=None):
         coefficients = solve_triangular(interpolation_matrix, U.components(interpolation_dofs, ind=ind).T,
@@ -158,6 +159,7 @@ def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation
         max_errs.append(max_err)
 
         triangularity_error = np.max(np.abs(interpolation_matrix - np.tril(interpolation_matrix)))
+        triangularity_errs.append(triangularity_error)
         logger.info('Interpolation matrix is not lower triangular with maximum error of {}'
                     .format(triangularity_error))
 
@@ -170,7 +172,7 @@ def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation
 
         logger.info('')
 
-    data = {'errors': max_errs}
+    data = {'errors': max_errs, 'triangularity_errors': triangularity_errs}
 
     return interpolation_dofs, collateral_basis, data
 
