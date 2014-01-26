@@ -63,7 +63,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
     def __init__(self, operator, interpolation_dofs, collateral_basis, name=None):
         assert isinstance(operator, OperatorInterface)
         assert isinstance(collateral_basis, VectorArrayInterface)
-        assert operator.dim_source == operator.dim_range == collateral_basis.dim
+        assert operator.dim_range == collateral_basis.dim
         assert operator.type_range == type(collateral_basis)
 
         self.build_parameter_type(inherits=(operator,))
