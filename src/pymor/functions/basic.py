@@ -81,6 +81,9 @@ class ConstantFunction(FunctionBase):
     def __str__(self):
         return ('{name}: x -> {value}').format(name=self.name, value=self._value)
 
+    def __repr__(self):
+        return 'ConstantFunction({}, {})'.format(repr(self._value), self.dim_domain)
+
     def evaluate(self, x, mu=None):
         assert self.check_parameter(mu)
         x = np.array(x, copy=False, ndmin=1)
