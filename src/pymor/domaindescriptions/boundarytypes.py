@@ -52,5 +52,11 @@ class BoundaryType(ImmutableInterface):
         else:
             return NotImplemented
 
+    def __ne__(self, other):
+        if isinstance(other, BoundaryType):
+            return self.name != other.name
+        else:
+            return NotImplemented
+
     def __hash__(self):
         return hash(self.name)
