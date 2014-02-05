@@ -10,8 +10,9 @@ from pymor.core.exceptions import InversionError, NewtonError
 
 
 def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None,
-           maxiter=None, reduction=None, abs_limit=None,
+           miniter=None, maxiter=None, reduction=None, abs_limit=None,
            return_stages=False, return_residuals=False):
+    miniter = defaults.newton_miniter if miniter is None else miniter
     maxiter = defaults.newton_maxiter if maxiter is None else maxiter
     reduction = defaults.newton_reduction if reduction is None else reduction
     abs_limit = defaults.newton_abs_limit if abs_limit is None else abs_limit
@@ -35,7 +36,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None,
     logger.info('      Initial Residual: {:5e}'.format(err))
 
     iteration = 0
-    while iteration < maxiter and err > abs_limit and err/first_err > reduction:  # or iteration == 0:
+    while iteration < miniter or iteration < maxiter and err > abs_limit and err/first_err > reduction:
         if iteration > 0 and return_stages:
             data['stages'].append(U)
         if return_residuals:

@@ -45,6 +45,7 @@ class Defaults(object):
       :spilu_permc_spec:                   see :func:`scipy.sparse.linalg.spilu`
       :spsolve_permc_spec:                 see :func:`scipy.sparse.linalg.spsolve`
 
+      :newton_miniter:                     minimum number of iterations
       :newton_maxiter:                     maximum number of iterations
       :newton_reduction:                   reduction of initial residual to achieve
       :newton_abs_limit:                   stop if absolute norm of residual falls below this limit
@@ -86,6 +87,7 @@ class Defaults(object):
     spilu_permc_spec                    = 'COLAMD'
     spsolve_permc_spec                  = 'COLAMD'
 
+    newton_miniter                      = 0
     newton_maxiter                      = 10
     newton_reduction                    = 1e-10
     newton_abs_limit                    = 1e-15
@@ -142,6 +144,7 @@ class Defaults(object):
             induced_norm_raise_negative         = {0.induced_norm_raise_negative}
             induced_norm_tol                    = {0.induced_norm_tol}
 
+            newton_miniter                      = {0.newton_miniter}
             newton_maxiter                      = {0.newton_maxiter}
             newton_reduction                    = {0.newton_reduction}
             newton_abs_limit                    = {0.newton_abs_limit}
