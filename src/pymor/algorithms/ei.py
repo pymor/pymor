@@ -177,6 +177,89 @@ def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation
     return interpolation_dofs, collateral_basis, data
 
 
+def deim(evaluations, modes=None, error_norm=None, product=None):
+    '''Generate data for empirical operator interpolation using DEIM algorithm.
+
+    Given evaluations of |Operators|, this method generates a collateral_basis and
+    interpolation DOFs for empirical operator interpolation. The returned objects
+    can be used to instantiate an |EmpiricalInterpolatedOperator|.
+
+    The collateral basis is determined by the first POD modes of the operator
+    evaluations.
+
+    Parameters
+    ----------
+    evaluations
+        A |VectorArray| of operator evaluations.
+    modes
+        Dimension of the collateral basis i.e. number of POD modes of the operator evaluations.
+    error_norm
+        Norm w.r.t. which to calculate the interpolation error. If `None`, the Euclidean norm
+        is used.
+    product
+        Product |Operator| used for POD.
+
+    Returns
+    -------
+    interpolation_dofs
+        |NumPy array| of the DOFs at which the operators have to be evaluated.
+    collateral_basis
+        |VectorArray| containing the generated collateral basis.
+    data
+        Dict containing the following fields:
+
+            :errors: sequence of maximum approximation errors during greedy search.
+    '''
+
+    assert isinstance(evaluations, VectorArrayInterface)
+
+    logger = getLogger('pymor.algorithms.ei.deim')
+    logger.info('Generating Interpolation Data ...')
+
+    collateral_basis = pod(evaluations, modes, product=product)
+
+    interpolation_dofs = np.zeros((0,), dtype=np.int32)
+    interpolation_matrix = np.zeros((0, 0))
+    errs = []
+
+    for i in xrange(len(collateral_basis)):
+
+        if len(interpolation_dofs) > 0:
+            coefficients = np.linalg.solve(interpolation_matrix,
+                                           collateral_basis.components(interpolation_dofs, ind=i).T).T
+            U_interpolated = collateral_basis.lincomb(coefficients, ind=range(len(interpolation_dofs)))
+            ERR = collateral_basis.copy(ind=i)
+            ERR -= U_interpolated
+        else:
+            ERR = collateral_basis.copy(ind=i)
+
+        err = ERR.l2_norm() if error_norm is None else error_norm(ERR)
+
+        logger.info('Interpolation error for basis vector {}: {}'.format(i, err))
+
+        # compute new interpolation dof and collateral basis vector
+        new_dof = ERR.amax()[0][0]
+
+        if new_dof in interpolation_dofs:
+            logger.info('DOF {} selected twice for interplation! Stopping extension loop.'.format(new_dof))
+            break
+
+        interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
+        interpolation_matrix = collateral_basis.components(interpolation_dofs, ind=range(len(interpolation_dofs))).T
+        errs.append(err)
+
+        logger.info('')
+
+    if len(interpolation_dofs) < len(collateral_basis):
+        collateral_basis.remove(ind=range(len(interpolation_dofs), len(collateral_basis)))
+
+    logger.info('Finished.'.format(new_dof))
+
+    data = {'errors': errs}
+
+    return interpolation_dofs, collateral_basis, data
+
+
 class EvaluationProvider(CacheableInterface):
     '''Helper class for providing cached operator evaluations that can be fed into :func:`ei_greedy`.
 
