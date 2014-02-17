@@ -13,6 +13,7 @@ from pymor.discretizations import InstationaryDiscretization
 from pymor.domaindiscretizers import discretize_domain_default
 from pymor.gui.qt import PatchVisualizer, Matplotlib1DVisualizer
 from pymor.la import NumpyVectorArray
+from pymor.operators import NumpyGenericOperator
 from pymor.operators.fv import (nonlinear_advection_lax_friedrichs_operator,
                                 nonlinear_advection_engquist_osher_operator,
                                 nonlinear_advection_simplified_engquist_osher_operator,
@@ -103,9 +104,21 @@ def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=
                                                                    p.flux_function_derivative,
                                                                    dirichlet_data=p.dirichlet_data)
     F = None if p.rhs is None else L2ProductFunctional(grid, p.rhs)
-    I = p.initial_data.evaluate(grid.quadrature_points(0, order=2)).squeeze()
-    I = np.sum(I * grid.reference_element.quadrature(order=2)[1], axis=1) * (1. / grid.reference_element.volume)
-    I = NumpyVectorArray(I)
+
+    if p.initial_data.parametric:
+        def initial_projection(U, mu):
+            I = p.initial_data.evaluate(grid.quadrature_points(0, order=2), mu).squeeze()
+            I = np.sum(I * grid.reference_element.quadrature(order=2)[1], axis=1) * (1. / grid.reference_element.volume)
+            I = NumpyVectorArray(I, copy=False)
+            return I.lincomb(U).data
+
+        I = NumpyGenericOperator(initial_projection, dim_range=grid.size(0), linear=True,
+                                 parameter_type=p.initial_data.parameter_type)
+    else:
+        I = p.initial_data.evaluate(grid.quadrature_points(0, order=2)).squeeze()
+        I = np.sum(I * grid.reference_element.quadrature(order=2)[1], axis=1) * (1. / grid.reference_element.volume)
+        I = NumpyVectorArray(I, copy=False)
+
     inject_sid(I, __name__ + '.discretize_nonlinear_instationary_advection_fv.initial_data', p.initial_data, grid)
 
     products = {'l2': L2Product(grid, boundary_info)}
