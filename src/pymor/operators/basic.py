@@ -84,7 +84,7 @@ class OperatorBase(OperatorInterface):
         if not self.linear:
             raise TypeError('This nonlinear operator does not represent a vector or linear functional.')
         elif self.dim_source == 1 and self.type_source is NumpyVectorArray:
-            return self.apply(NumpyVectorArray(1), mu)
+            return self.apply(NumpyVectorArray(1), mu=mu)
         elif self.dim_range == 1 and self.type_range is NumpyVectorArray:
             raise NotImplementedError
         else:
