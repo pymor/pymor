@@ -96,13 +96,13 @@ class OperatorBase(OperatorInterface):
 
     def as_vector(self, mu=None):
         if not self.linear:
-            raise TypeError('This is nonlinear operator does not represent a vector or linear functional.')
+            raise TypeError('This nonlinear operator does not represent a vector or linear functional.')
         elif self.dim_source == 1 and self.type_source is NumpyVectorArray:
             return self.apply(NumpyVectorArray(1), mu)
         elif self.dim_range == 1 and self.type_range is NumpyVectorArray:
             raise NotImplementedError
         else:
-            raise TypeError('This is operator does not represent a vector or linear functional.')
+            raise TypeError('This operator does not represent a vector or linear functional.')
 
     def projected(self, source_basis, range_basis, product=None, name=None):
         name = name or '{}_projected'.format(self.name)
@@ -446,7 +446,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
     def as_vector(self, mu=None):
         if self.dim_source != 1 and self.dim_range != 1:
-            raise TypeError('This is operator does not represent a vector or linear functional.')
+            raise TypeError('This operator does not represent a vector or linear functional.')
         assert self.check_parameter(mu)
         return NumpyVectorArray(self._matrix.ravel(), copy=True)
 
