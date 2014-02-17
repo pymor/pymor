@@ -297,6 +297,8 @@ class NumpyGenericOperator(OperatorBase):
         Dimension of the operator's source.
     dim_range
         Dimension of the operator's range.
+    linear
+        Set to `True` if the provided `mapping` is linear.
     parameter_type
         The |ParameterType| the mapping accepts.
     name
@@ -304,13 +306,13 @@ class NumpyGenericOperator(OperatorBase):
     '''
 
     type_source = type_range = NumpyVectorArray
-    linear = False
 
-    def __init__(self, mapping, dim_source=1, dim_range=1, parameter_type=None, name=None):
+    def __init__(self, mapping, dim_source=1, dim_range=1, linear=False, parameter_type=None, name=None):
         self.dim_source = dim_source
         self.dim_range = dim_range
         self.name = name
         self._mapping = mapping
+        self.linear = linear
         if parameter_type is not None:
             self.build_parameter_type(parameter_type, local_global=True)
 
