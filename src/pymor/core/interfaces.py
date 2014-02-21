@@ -64,7 +64,7 @@ functionality:
 
     1. Using more metaclass magic, each instance which derives from
        :class:`ImmutableInterface` is locked after its `__init__` method has returned.
-    2. If possible, a unique state id for the instance is calculated and stored as
+    2. If possible, a unique _`state id` for the instance is calculated and stored as
        `sid` attribute. If sid calculation fails, `sid_failure` is set to a string
        giving a reason for the failure.
 
@@ -147,7 +147,7 @@ class UberMeta(abc.ABCMeta):
                 getattr(base, attribute).append(derived)
             else:
                 setattr(base, attribute, [derived])
-        cls.logger = logger.getLogger('{}.{}'.format(cls.__module__.replace('__main__', 'pymor'), name))
+        cls._logger = logger.getLogger('{}.{}'.format(cls.__module__.replace('__main__', 'pymor'), name))
         abc.ABCMeta.__init__(cls, name, bases, namespace)
 
     def __new__(cls, classname, bases, classdict):
@@ -325,19 +325,20 @@ class BasicInterface(object):
         else:
             self._added_attributes.extend(kwargs.keys())
 
-    logging_disabled = False
+    @property
+    def logging_disabled(self):
+        return self._logger is logger.dummy_logger
+
+    @property
+    def logger(self):
+        return self._logger
 
     def disable_logging(self, doit=True):
         '''Disable logging output for this instance.'''
-        locked = self._locked
-        self.unlock()
         if doit:
-            self.logger = logger.dummy_logger
-            self.logging_disabled = True
+            self._logger = logger.dummy_logger
         else:
-            self.logger = type(self).logger
-            self.logging_disabled = False
-        self.lock(locked)
+            self._logger = type(self)._logger
 
     def enable_logging(self, doit=True):
         '''Enable logging output for this instance.'''
@@ -493,7 +494,7 @@ class ImmutableMeta(UberMeta):
                 if a not in init_arguments and a not in ImmutableMeta.init_arguments_never_warn:
                     raise ValueError(a)
         except ValueError as e:
-            c.logger.warn('sid_ignore contains "{}" which is not an __init__ argument!'.format(e))
+            c._logger.warn('sid_ignore contains "{}" which is not an __init__ argument!'.format(e))
         return c
 
     def _call(self, *args, **kwargs):
