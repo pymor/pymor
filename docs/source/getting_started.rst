@@ -8,7 +8,7 @@ Installation
 ------------
 
 Before trying out pyMOR, you need to install it. At this point we do
-not provide release tarballs via PyPi, instead you should simply
+not provide release tarballs via PyPI, instead you should simply
 clone out git repository via ::
 
     git clone https://github.com/pymor/pymor
@@ -19,18 +19,18 @@ and then chekout the version of pyMOR you want to work with, e.g. ::
 
 which is the current stable version.
 
-While pyMOR itself is written in pure Python (with the exception of
-few Cython extension modules), and does not really require installation,
-it depends on several Python packages in recent versions (most notably
-`NumPy <http://www.numpy.org>`_, `SciPy <http://www.scipy.org>`_,
+While pyMOR itself is written in pure Python (with the exception of few `Cython
+<http://cython.org>`_ extension modules) and does not really require
+installation, it depends on several Python packages in recent versions (most
+notably `NumPy <http://www.numpy.org>`_, `SciPy <http://www.scipy.org>`_,
 `matplotlib <http://matplotlib.org>`_ and `PySide <http//www.pyside.org>`_)
-which are not so easy to install. For this reason we provide an
-installation script which will install all dependencies into a dedicated
-`virtualenv <http://virtualenv.org>`_. It will also install pyMOR itself
-into the virtualenv or add the repository to its ``PYTHONPATH``. For
-further details please refer to the 
-`README <https://github.com/pymor/pymor/blob/master/README.markdown>`_
-file in the pyMOR repository.
+which are not so easy to install. For this reason we provide an installation
+script which will install all dependencies into a dedicated `virtualenv
+<http://virtualenv.org>`_. It will also install pyMOR itself into the
+virtualenv or add the repository to its ``PYTHONPATH``. For further details
+please refer to the `README
+<https://github.com/pymor/pymor/blob/master/README.markdown>`_ file in the
+pyMOR repository.
 
 
 Trying it out
