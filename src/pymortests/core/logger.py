@@ -15,7 +15,7 @@ def exercise_logger(logger):
 
 
 def test_logclass(basicinterface_subclass):
-    logger = basicinterface_subclass.logger
+    logger = basicinterface_subclass._logger
     exercise_logger(logger)
 
 
