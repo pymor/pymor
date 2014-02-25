@@ -1,0 +1,5 @@
+pymor-base (0.1.1-1) unstable; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- Rene Milk <koshi@springlobby.info>  Wed, 26 Feb 2014 00:16:17 +0100
