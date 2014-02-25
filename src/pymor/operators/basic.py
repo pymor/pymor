@@ -558,14 +558,26 @@ class NumpyLincombMatrixOperator(NumpyMatrixBasedOperator, LincombOperatorBase):
         mu = self.parse_parameter(mu)
         ops = [op.assemble(mu) for op in self.operators]
         coeffs = self.evaluate_coefficients(mu)
-        if self.sparse:
-            matrix = sum(op._matrix * c for op, c in izip(ops, coeffs))
-        else:
+        if coeffs[0] == 1:
             matrix = ops[0]._matrix.copy()
-            if coeffs[0] != 1:
-                matrix *= coeffs[0]
-            for op, c in izip(ops[1:], coeffs[1:]):
-                matrix += (op._matrix * c)
+        else:
+            matrix = ops[0]._matrix * coeffs[0]
+        for op, c in izip(ops[1:], coeffs[1:]):
+            if c == 1:
+                try:
+                    matrix += op._matrix
+                except NotImplementedError:
+                    matrix = matrix + op._matrix
+            elif c == -1:
+                try:
+                    matrix -= op._matrix
+                except NotImplementedError:
+                    matrix = matrix - op._matrix
+            else:
+                try:
+                    matrix += (op._matrix * c)
+                except NotImplementedError:
+                    matrix = matrix + (op._matrix * c)
         return NumpyMatrixOperator(matrix)
 
 
