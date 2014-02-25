@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 
 from itertools import izip
 import numpy as np
-from scipy.sparse import coo_matrix, csc_matrix, diags
+from scipy.sparse import coo_matrix, csc_matrix, dia_matrix
 
 from pymor.core import ImmutableInterface, abstractmethod
 from pymor.functions import FunctionInterface
@@ -397,7 +397,7 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
 
         A = coo_matrix((V, (I0, I1)), shape=(g.size(0), g.size(0)))
         A = csc_matrix(A).copy()   # See pymor.operators.cg.DiffusionOperatorP1 for why copy() is necessary
-        A = diags([1. / g.volumes(0)], [0]) * A
+        A = dia_matrix(([1. / g.volumes(0)], [0]), shape=(g.size(0),) * 2) * A
 
         return NumpyMatrixOperator(A)
 
@@ -428,7 +428,7 @@ class L2Product(NumpyMatrixBasedOperator):
     def _assemble(self, mu=None):
         assert self.check_parameter(mu)
 
-        A = diags(self.grid.volumes(0), 0)
+        A = dia_matrix((self.grid.volumes(0), [0]), shape=(self.grid.size(0),) * 2)
 
         return NumpyMatrixOperator(A)
 
