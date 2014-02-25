@@ -19,8 +19,8 @@ regarding pyMOR or wish to contribute, do not hesitate to contact us!
 License
 -------
 
-Copyright (c) 2013, Felix Albrecht, Rene Milk, Stephan Rave All rights
-reserved.
+Copyright (c) 2013, Felix Albrecht, Rene Milk, Stephan Rave
+All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -104,7 +104,7 @@ This procedure has been tested on the following platforms:
 
 5.  Try out one of the provided demos, e.g. call
 
-        cd src/pymor/demos
+        cd src/pymordemos
         ./thermalblock.py -ep --plot-solutions 2 2 3 16
 
 Documentation
@@ -114,9 +114,9 @@ To build the documentation execute
 
     make doc
 
-inside root directory of the pyMOR source tree. This will generate HTML
-documentation in 'docs/_build/html'. The documentation is also available
-online on Read the Docs.
+inside the root directory of the pyMOR source tree. This will generate
+HTML documentation in 'docs/_build/html'. The documentation is also
+available online on Read the Docs.
 
 Cython extension modules
 ------------------------
