@@ -9,7 +9,7 @@ Installation
 
 Before trying out pyMOR, you need to install it. At this point we do
 not provide release tarballs via PyPI, instead you should simply
-clone out git repository via ::
+clone our git repository via ::
 
     git clone https://github.com/pymor/pymor
 
@@ -45,13 +45,13 @@ the thermalblock demo application in this directory by executing ::
 
 This will solve and reduce the so called thermalblock problem using
 the reduced basis method with a greedy basis generation algorithm.
-The thermalblock problem consists in solving the stationary diffusion
+The thermalblock problem consists of solving the stationary diffusion
 problem ::
 
     - ∇ ⋅ [ d(x, μ) ∇ u(x, μ) ] = 1     for x in Ω
                       u(x, μ)   = 0     for x in ∂Ω
 
-on the domain Ω = [0,1]^2. The domain is partitioned into
+on the domain Ω = [0,1]^2 for the unknown u. The domain is partitioned into
 ``XBLOCKS x YBLOCKS`` blocks (``XBLOCKS`` and ``YBLOCKS`` are the first 
 two arguments to ``thermalblock.py``). The thermal conductivity d(x, μ)
 is constant on each block (i,j) with value μ_ij: ::
@@ -66,8 +66,8 @@ is constant on each block (i,j) with value μ_ij: ::
     |        |        |        |
     (0,0)------------------(1,0)
 
-The μ_ij form the ``XBLOCKS x YBLOCKS`` - dimensional parameter on which the
-solution depends.
+The real numbers μ_ij form the ``XBLOCKS x YBLOCKS`` - dimensional parameter
+on which the solution depends.
 
 Running ``thermalblock.py`` will first produce plots of two detailed
 solutions of the problem for different randomly chosen parameters
@@ -121,7 +121,7 @@ pyMOR's logging facility:
 >>> getLogger('pymor.discretizations').setLevel('INFO')
 Loading pymor version (0, 1, 0, 861, 'g79027f4')
 
-Now, first we will instatiate a class describing the analytical problem
+First we will instatiate a class describing the analytical problem
 we want so solve. In this case, a 
 :class:`~pymor.analyticalproblems.thermalblock.ThermalBlockProblem`:
 
@@ -135,7 +135,7 @@ operators for each subblock of the domain, forming a |LincombOperator|
 by using :meth:`pymor.operators.interfaces.OperatorInterface.lincomb`
 to represent the affine decomposition, instatiating a
 :class:`~pymor.operators.cg.L2ProductFunctionalP1` as right hand side, and
-putting all together into a |StationaryDiscretization|. However, since
+putting it all together into a |StationaryDiscretization|. However, since
 :class:`~pymor.analyticalproblems.thermalblock.ThermalBlockProblem` derives
 form :class:`~pymor.analyticalproblems.elliptic.EllipticProblem`, we can use
 a predifined *discretizer* to do the work for us. In this case, we use
@@ -167,7 +167,7 @@ Let's solve the thermal block problem and visualize the solution:
 
 Each class in pyMOR that describes a |Parameter| dependent mathematical
 object, like the |StationaryDiscretization| in our case, derives from
-|Parametric| and determines the |Parameters| expects during :meth:`__init__`
+|Parametric| and determines the |Parameters| it expects during :meth:`__init__`
 by calling :meth:`~pymor.parameters.base.Parametric.build_parameter_type`.
 The resulting |ParameterType| is stored in the object's :attr:`parameter_type`
 attribute. Let us have a look:
@@ -184,7 +184,7 @@ the problem. However, by using the
 smart enough to correctly parse the input ``[1.0, 0.1, 0.3, 0.1, 0.2, 1.0]``.
 
 Next we want to use the :func:`~pymor.algorithms.greedy.greedy` algorithm
-to reduce the problem. For this we need to choose an basis extension algorithm
+to reduce the problem. For this we need to choose a basis extension algorithm
 as well as a reductor which will perform the actual RB-projection. We will
 use :func:`~pymor.algorithms.basisextension.gram_schmidt_basis_extension` and
 :func:`~pymor.reductors.linear.reduce_stationary_affine_linear`. The latter
@@ -203,10 +203,10 @@ extension algorithm with the :attr:`h1_product` attribute of the discretization.
 >>> extension_algorithm = partial(gram_schmidt_basis_extension, product=d.h1_product)
 
 Moreover, we need to select a
-|Parameter| training set. ``d`` already comes with a |ParameterSpace| it
-has obtained from the analytical problem. We can sample our parameters from
-this space, which is a :class:`~pymor.parameters.spaces.CubicParameterSpace`.
-E.g.:
+|Parameter| training set. The discretization ``d`` already comes with a
+|ParameterSpace| it has obtained from the analytical problem. We can sample
+our parameters from this space, which is a
+:class:`~pymor.parameters.spaces.CubicParameterSpace`. E.g.:
 
 >>> samples = list(d.parameter_space.sample_uniformly(2))
 >>> print(samples[0])
@@ -236,8 +236,8 @@ been generated during the run of the algorithm:
 >>> print(greedy_data.keys())
 ['time', 'reduction_data', 'reconstructor', 'max_err', 'max_err_mus', 'basis', 'extensions', 'reduced_discretization', 'max_err_mu', 'max_errs']
 
-Most important are the ``'reduced_discretization'`` as well as the
-``'reconstructor'`` items, which hold the reduced |Discretization| obtained
+The most important items are ``'reduced_discretization'`` and
+``'reconstructor'``, which hold the reduced |Discretization| obtained
 from applying our reductor with the final reduced basis, as well as a
 reconstructor to reconstruct detailed solutions from the reduced solution
 vectors. The reduced basis is stored in the ``'basis'`` item.
@@ -266,9 +266,10 @@ method:
 >>> print(np.max(np.abs(gram_matrix - np.eye(32))))
 4.93285967629e-14
 
-Looks good! Next we solve the reduced model for the same parameter as above.
-The result is a vector of coefficients w.r.t. the reduced basis. To form
-the linear combination, we use the reconstructor:
+Looks good! We can now solve the reduced model for the same parameter as above.
+The result is a vector of coefficients w.r.t. the reduced basis, which is
+currently stored in ``rb``. To form the linear combination, we use the
+reconstructor:
 
 >>> u = rd.solve([1.0, 0.1, 0.3, 0.1, 0.2, 1.0])
 >>> print(u)
@@ -284,7 +285,7 @@ the linear combination, we use the reconstructor:
 >>> print(U_red.dim)
 10201
 
-Finally we compute the reuction error and display the reduced solution along with
+Finally we compute the reduction error and display the reduced solution along with
 the detailed solution and the error:
 
 >>> ERR = U - U_red
@@ -293,6 +294,8 @@ the detailed solution and the error:
 >>> d.visualize((U, U_red, ERR), legend=('Detailed', 'Reduced', 'Error'),
 ...             separate_colorbars=True)
 
+We can nicely observe how the error is maximized along the jumps of the
+diffusion coeffient, which is expected.
 
 Learning more
 -------------
@@ -301,6 +304,7 @@ As a next step, you should read our :ref:`technical_overview` which discusses th
 most important concepts and design decisions behind pyMOR. After that
 you should be fit to delve into the reference documentation.
 
-Should you have any problems regarding pyMOR, questions or feature requests, do not hestitate
+Should you have any problems regarding pyMOR, questions or
+`feature requests <https://github.com/pymor/pymor/issues>`_, do not hestitate
 to contact us at our
 `mailing list <http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev>`_!
