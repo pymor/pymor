@@ -39,8 +39,6 @@ Options:
 
   --plot-solutions       Plot some example solutions.
 
-  --reductor=RED         Reduction algorithm (default, numpy_default) [default: default].
-
   --test=COUNT           Use COUNT snapshots for stochastic error estimation
                          [default: 10].
 '''
@@ -79,8 +77,6 @@ def thermalblock_demo(args):
     assert args['--estimator-norm'] in {'trivial', 'h1'}
     args['--extension-alg'] = args['--extension-alg'].lower()
     assert args['--extension-alg'] in {'trivial', 'gram_schmidt', 'h1_gram_schmidt'}
-    args['--reductor'] = args['--reductor'].lower()
-    assert args['--reductor'] in {'default', 'numpy_default'}
 
     print('Solving on TriaGrid(({0},{0}))'.format(args['--grid']))
 
@@ -106,8 +102,7 @@ def thermalblock_demo(args):
     print('RB generation ...')
 
     error_product = discretization.h1_product if args['--estimator-norm'] == 'h1' else None
-    reductors = {'default': partial(reduce_stationary_affine_linear, error_product=error_product)}
-    reductor = reductors[args['--reductor']]
+    reductor = partial(reduce_stationary_affine_linear, error_product=error_product)
     extension_algorithms = {'trivial': trivial_basis_extension,
                             'gram_schmidt': gram_schmidt_basis_extension,
                             'h1_gram_schmidt': partial(gram_schmidt_basis_extension, product=discretization.h1_product)}
