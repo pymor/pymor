@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from pymor.tools.relations import inverse_relation
+from pymor.tools import float_cmp
 
 
 def flatten_grid(grid):
@@ -39,8 +40,8 @@ def flatten_grid(grid):
     A, B = grid.embeddings(0)
     ref_el_coordinates  = grid.reference_element.subentity_embedding(dim)[1]
     local_coordinates = np.einsum('eij,vj->evi', A, ref_el_coordinates) + B[:, np.newaxis, :]
-    critical_verticies = np.unique(subentities[np.logical_not(np.all(np.isclose(global_coordinates[subentities],
-                                                                                local_coordinates), axis=2))])
+    critical_verticies = np.unique(subentities[np.logical_not(np.all(float_cmp(global_coordinates[subentities],
+                                                                               local_coordinates), axis=2))])
     del A
     del B
 
@@ -58,7 +59,7 @@ def flatten_grid(grid):
         for i in xrange(new_points.shape[1]):
             for j in xrange(i):
                 new_points[:, i] = np.where(supe[:, i] == -1, new_points[:, i],
-                                            np.where(np.all(np.isclose(coord[:, i], coord[:, j]), axis=1),
+                                            np.where(np.all(float_cmp(coord[:, i], coord[:, j]), axis=1),
                                                      new_points[:, j], new_points[:, i]))
             new_point_inds = np.where(np.logical_and(new_points[:, i] == -1, supe[:, i] != -1))[0]
             new_points[new_point_inds, i] = np.arange(num_points, num_points + len(new_point_inds))
