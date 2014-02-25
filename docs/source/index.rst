@@ -10,7 +10,7 @@ in pyMOR are formulated in terms of abstract interfaces for seamless
 integration with external high-dimensional PDE-solver. Moreover, pure Python
 implementations of finite element and finite volume discretizations using the
 `NumPy/SciPy <http://scipy.org>`_ scientific computing stack are provided for
-getting started quickly.
+quick and easy prototyping.
 
 .. toctree::
     getting_started
