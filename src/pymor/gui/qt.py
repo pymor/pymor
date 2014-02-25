@@ -309,7 +309,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, block=Fal
     '''Visualize scalar data associated to a one-dimensional |Grid| as a plot.
 
     The grid's |ReferenceElement| must be the line. The data can either
-    be attached to the subintervals or verticies of the grid.
+    be attached to the subintervals or vertices of the grid.
 
     Parameters
     ----------
