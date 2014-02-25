@@ -99,7 +99,7 @@ This procedure has been tested on the following platforms:
     
 5.  Try out one of the provided demos, e.g. call
     
-        cd src/pymor/demos
+        cd src/pymordemos
         ./thermalblock.py -ep --plot-solutions 2 2 3 16
 
 
@@ -110,7 +110,7 @@ To build the documentation execute
 
     make doc
     
-inside root directory of the pyMOR source tree. This will generate HTML
+inside the root directory of the pyMOR source tree. This will generate HTML
 documentation in 'docs/_build/html'. The documentation is also available
 online on [Read the Docs](http://pymor.readthedocs.org/).
 
