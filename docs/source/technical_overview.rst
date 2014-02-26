@@ -73,7 +73,7 @@ operating on objects of the following types:
     |NumpyVectorArray| as |type_source|. Such vector-like operators are used in
     pyMOR to represent |Parameter| dependent vectors such as the initial data of
     an |InstationaryDiscretization|. For linear functionals and vector-like
-    operators, the |as_vector| method can called to obtain a vector
+    operators, the |as_vector| method can be called to obtain a vector
     representation of the operator as a |VectorArray| of length 1.
 
     Linear combinations of operators can be formed using the |op.lincomb| method.
@@ -128,7 +128,7 @@ operating on objects of the following types:
     This has been done for the simple stationary and instationary
     discretizations found in :mod:`pymor.discretizations.basic`.
 
-    Discretization can also implement |estimate| and |visualize| methods to
+    Discretizations can also implement |estimate| and |visualize| methods to
     estimate the discretization error of a computed solution and create graphic
     representations of |VectorArrays| of |type_solution|.
 
@@ -159,7 +159,7 @@ main benefits:
    referenced object changes without their knowledge.
 2. The state of an immutable object is determined by the states of the objects
    that lead to the creation of the object. This property is used in pyMOR to
-   create |state ids| for immutable objects which are used as keys pyMOR's
+   create |state ids| for immutable objects which are used as keys in pyMOR's
    |caching| backends.
 
 A class can be made immutable in pyMOR by deriving from |ImmutableInterface|,
@@ -174,10 +174,10 @@ subsequent |solve| call, but not its result.
 
 Of course, in many situations one may wish to change properties of an immutable
 object, e.g. the number of timesteps for a given discretization. This can be
-easily achieved using the `~pymor.core.interfaces.BasicInterface.with_` every
-immutable object has: a call of the form `o.with_(a=x, b=y)` will return a
-copy of `o` in which the attribute `a` now has the value `x` and the attribute
-`b` the value `y`. It can be generally assumed that calls to
+easily achieved using the `~pymor.core.interfaces.BasicInterface.with_` method
+every immutable object has: a call of the form `o.with_(a=x, b=y)` will return
+a copy of `o` in which the attribute `a` now has the value `x` and the
+attribute `b` the value `y`. It can be generally assumed that calls to
 `~pymor.core.interfaces.BasicInterface.with_` are inexpensive. The set of
 allowed arguments can be found in the
 :attr:`~pymor.core.interfaces.BasicInterface.with_arguments` attribute.
@@ -203,7 +203,7 @@ element or finite volume discretizations based on the `NumPy/Scipy
 describes the problem we want to discretize. |analytical problems| contain
 |Functions| which define the analytical data functions associated with the
 problem and a |DomainDescription| that provides a geometrical definition of the
-domain the problem is posed on an associates a |BoundaryType| to each part of
+domain the problem is posed on and associates a |BoundaryType| to each part of
 its boundary.
 
 To obtain a |Discretization| from an |analytical problem| we use a
@@ -229,8 +229,8 @@ to be done is to provide |VectorArrays|, |Operators| and |Discretizations| which
 interact appropriately with the solver. pyMOR makes no assumption on how the
 communication with the solver is managed. For instance, communication could take
 place via a network protocol or job files.  In particular it should be stressed,
-that no communication of high-dimensional data between the solver and pyMOR is
-necessary in general: |VectorArrays| can merely hold handles to data in the
+that in general no communication of high-dimensional data between the solver
+and pyMOR is necessary: |VectorArrays| can merely hold handles to data in the
 solver's memory or some on-disk database. Where possible, we favour, however, a
 deep integration of the solver with pyMOR by linking the solver code as a Python
 extension module. This allows Python to directly access the solvers data
@@ -261,7 +261,7 @@ The |ParameterType| of a |Parametric| object is determined by the class
 implementor during `__init__` via a call to
 :meth:`~pymor.parameters.base.Parametric.build_parameter_type`, which can be
 used, to infer the |ParameterType| from the |ParameterTypes| of objects the
-given objects depends upon. I.e. an |Operator| implementing the L2-product with
+given object depends upon. I.e. an |Operator| implementing the L2-product with
 some |Function| will inherit the |ParameterType| of the |Function|.
 
 Reading the :mod:`reference documentation <pymor.parameters.base>` on pyMOR's
@@ -288,8 +288,8 @@ This observation comes particularly apparent in the case of the classical
 reduced basis method: the operators and functionals of a given discrete problem
 are projected onto the reduced basis space whereas the structure of the problem
 (i.e. the type of |Discretization| containing the operators) stays the same.
-pyMOR reflects this fact by offering with
-:func:`~pymor.reductors.basic.reduce_generic_rb` a generic algorithm which can
+pyMOR reflects this fact by offering a generic algorithm with
+:func:`~pymor.reductors.basic.reduce_generic_rb`, which can
 be used to RB-project any discretization available to pyMOR. It should be noted
 however, that this reductor is only able to efficiently offline/online-decompose
 affinely |Parameter|-dependent linear problems. Non-linear problems or such with no
@@ -298,6 +298,6 @@ affine |Parameter| dependence require additional techniques such as
 
 If you want to further dive into the inner workings of pyMOR, we highly
 recommend to study the source code of
-:func:`~pymor.reductors.basic.reduce_generic_rb` and to step through call of
+:func:`~pymor.reductors.basic.reduce_generic_rb` and to step through calls of
 this method with a Python debugger, such as `ipdb
 <https://pypi.python.org/pypi/ipdb>`_.
