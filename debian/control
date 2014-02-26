@@ -2,12 +2,13 @@ Source: pymor-base
 Section: math
 Priority: extra
 Maintainer: Rene Milk <koshi@springlobby.info>
-# missing deps: PyContracts pytest-flakes pytest-pep8pytest-cov 
-#   pytest-capturelog pytest-cache glumpy pytest-pep8
+# missing deps: pytest-flakes pytest-pep8pytest-cov 
+#   pytest-capturelog pytest-cache pytest-pep8
 Build-Depends: debhelper (>= 8.0.0), python-pip, python-virtualenv, python-numpy,
   python-scipy, python-pytest, python-pyside, python-pytest-instafail, 
   python-pytest-xdist, python-dogpile.cache, python-dogpile.core, cython, 
-  python-sphinx, python-tox, python-sympy, python-matplotlib, python-opengl
+  python-sphinx, python-tox, python-sympy, python-matplotlib, python-opengl,
+  python-docopt, python-contracts, python-glumpy
   
 Standards-Version: 3.9.4
 Homepage: http://pymor.org
