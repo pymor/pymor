@@ -1,10 +1,16 @@
 Source: pymor-base
-Section: unknown
+Section: math
 Priority: extra
 Maintainer: Rene Milk <koshi@springlobby.info>
-Build-Depends: debhelper (>= 8.0.0)
+# missing deps: PyContracts pytest-flakes pytest-pep8pytest-cov 
+#   pytest-capturelog pytest-cache glumpy pytest-pep8
+Build-Depends: debhelper (>= 8.0.0), python-pip python-virtualenv, python-numpy,
+  python-scipy, python-pytest, python-pyside, python-pytest-instafail, 
+  python-pytest-xdist, python-dogpile.cache, python-dogpile.core, cython, 
+  python-sphinx, python-tox, python-sympy, python-matplotlib, python-opengl
+  
 Standards-Version: 3.9.4
-Homepage: <insert the upstream URL, if relevant>
+Homepage: http://pymor.org
 #Vcs-Git: git://git.debian.org/collab-maint/pymor-base.git
 #Vcs-Browser: http://git.debian.org/?p=collab-maint/pymor-base.git;a=summary
 
