@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor.core import abstractmethod, abstractstaticmethod
+from pymor.core import abstractmethod
 from pymor.core.cache import CacheableInterface, cached
 from pymor.domaindescriptions import BoundaryType
 from pymor.grids.defaultimpl import (ConformalTopologicalGridDefaultImplementations,
@@ -94,11 +94,6 @@ class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplement
         boundary entity if it has a codim-1 sub/super-entity.
         '''
         return self._boundaries(codim)
-
-    @abstractstaticmethod
-    def test_instances():
-        '''Returns a list of Grid instances suitable to be run through our test cases.'''
-        pass
 
 
 class ReferenceElementInterface(SimpleReferenceElementDefaultImplementations, CacheableInterface):

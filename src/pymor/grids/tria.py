@@ -123,8 +123,3 @@ class TriaGrid(AffineGridInterface):
             return self.__embeddings
         else:
             return super(TriaGrid, self).embeddings(codim)
-
-    @staticmethod
-    def test_instances():
-        '''Used for unit testing.'''
-        return [TriaGrid((2, 4)), TriaGrid((1, 1)), TriaGrid((42, 42))]

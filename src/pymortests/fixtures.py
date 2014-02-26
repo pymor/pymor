@@ -8,7 +8,6 @@ from pymor.core.interfaces import BasicInterface
 from pymortests.base import (TestInterface, _load_all)
 
 import pytest
-import itertools
 
 
 def implementors(interface_type):
@@ -22,11 +21,6 @@ def implementors(interface_type):
 
 def subclasses_of(interface_type, **kwargs):
     return pytest.fixture(params=implementors(interface_type), **kwargs)
-
-
-def grid_instances(interface_type, **kwargs):
-    return pytest.fixture(params=list(itertools.chain(*(i.test_instances() for i in implementors(interface_type)))),
-                          **kwargs)
 
 
 @subclasses_of(BasicInterface)

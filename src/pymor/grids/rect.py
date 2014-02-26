@@ -190,13 +190,3 @@ class RectGrid(AffineGridInterface):
         '''
         assert 0 <= dim < 2
         return np.linspace(self.domain[0, dim], self.domain[1, dim], self.num_intervals[dim] + 1)
-
-    @staticmethod
-    def test_instances():
-        return [RectGrid((2, 4)),  RectGrid((1, 1)), RectGrid((42, 42)),
-                RectGrid((2, 4), identify_left_right=True),
-                RectGrid((2, 4), identify_bottom_top=True),
-                RectGrid((2, 4), identify_left_right=True, identify_bottom_top=True),
-                RectGrid((2, 1), identify_left_right=True),
-                RectGrid((1, 2), identify_bottom_top=True),
-                RectGrid((2, 2), identify_left_right=True, identify_bottom_top=True)]

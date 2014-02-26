@@ -68,13 +68,3 @@ class OnedGrid(AffineGridInterface):
             return self.__A, self.__B
         else:
             return super(OnedGrid, self).embeddings(codim)
-
-    @staticmethod
-    def test_instances():
-        '''Used for unit testing.'''
-        return [OnedGrid(domain=np.array((-2, 2)), num_intervals=10),
-                OnedGrid(domain=np.array((-2, -4)), num_intervals=100),
-                OnedGrid(domain=np.array((-2, -4)), num_intervals=100, identify_left_right=True),
-                OnedGrid(domain=np.array((3, 2)), num_intervals=10),
-                OnedGrid(domain=np.array((3, 2)), num_intervals=10, identify_left_right=True),
-                OnedGrid(domain=np.array((1, 2)), num_intervals=10000)]

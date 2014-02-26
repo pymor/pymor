@@ -102,19 +102,3 @@ class SubGrid(AffineGridInterface):
             return self.__embeddings
         else:
             return super(SubGrid, self).embeddings(codim)
-
-    def test_instances():
-        from pymor.grids.rect import RectGrid
-        from pymor.grids.tria import TriaGrid
-        import random
-        import math as m
-        grids = [RectGrid((1, 1)), TriaGrid((1, 1)), RectGrid((8, 8)), TriaGrid((24, 24))]
-        subgrids = []
-        for g in grids:
-            size = g.size(0)
-            subgrids.append(SubGrid(g, np.arange(size, dtype=np.int32)))
-            if size >= 4:
-                subgrids.append(SubGrid(g, np.array(random.sample(xrange(size), int(m.floor(size / 4))))))
-            if size >= 2:
-                subgrids.append(SubGrid(g, np.array(random.sample(xrange(size), int(m.floor(size / 2))))))
-        return subgrids
