@@ -5,14 +5,13 @@
 from __future__ import absolute_import, division, print_function
 
 from itertools import izip
+
 import numpy as np
 import pytest
 
-from pymor.grids.interfaces import (AffineGridInterface, ReferenceElementInterface)
-# mandatory so all Grid classes are created
-from pymor.grids import *         # NOQA
-from pymortests.base import (TestInterface, runmodule,)
-from pymortests.fixtures import grid_instances
+from pymor.grids.interfaces import ReferenceElementInterface
+from pymortests.fixtures.grid import grid
+
 # monkey np.testing.assert_allclose to behave the same as np.allclose
 # for some reason, the default atol of np.testing.assert_allclose is 0
 # while it is 1e-8 for np.allclose
@@ -25,19 +24,10 @@ def monkey_allclose(a, b, rtol=1.e-5, atol=1.e-8):
 np.testing.assert_allclose = monkey_allclose
 
 
-@grid_instances(AffineGridInterface, scope='module')
-def grid(request):
-    return request.param
-
-
-# remove this after transitioning to plain assert statements
-check = TestInterface()
-
-
 def test_dim_outer(grid):
     g = grid
-    check.assertIsInstance(g.dim_outer, int)
-    check.assertGreaterEqual(g.dim_outer, g.dim)
+    assert isinstance(g.dim_outer, int)
+    assert g.dim_outer >= g.dim
 
 
 def test_reference_element_wrong_arguments(grid):
@@ -51,13 +41,13 @@ def test_reference_element_wrong_arguments(grid):
 def test_reference_element_type(grid):
     g = grid
     for d in xrange(g.dim + 1):
-        check.assertIsInstance(g.reference_element(d), ReferenceElementInterface)
+        assert isinstance(g.reference_element(d), ReferenceElementInterface)
 
 
 def test_reference_element_transitivity(grid):
     g = grid
     for d in xrange(1, g.dim + 1):
-        check.assertIs(g.reference_element(d), g.reference_element(0).sub_reference_element(d))
+        assert g.reference_element(d) is g.reference_element(0).sub_reference_element(d)
 
 
 def test_embeddings_wrong_arguments(grid):
@@ -72,10 +62,10 @@ def test_embeddings_shape(grid):
     g = grid
     for d in xrange(g.dim + 1):
         RES = g.embeddings(d)
-        check.assertEqual(len(RES), 2)
+        assert len(RES) == 2
         A, B = RES
-        check.assertEqual(A.shape, (g.size(d), g.dim_outer, g.dim - d))
-        check.assertEqual(B.shape, (g.size(d), g.dim_outer))
+        assert A.shape == (g.size(d), g.dim_outer, g.dim - d)
+        assert B.shape == (g.size(d), g.dim_outer)
 
 
 def test_embeddings_transitivity(grid):
@@ -104,7 +94,7 @@ def test_jacobian_inverse_transposed_wrong_arguments(grid):
 def test_jacobian_inverse_transposed_shape(grid):
     g = grid
     for d in xrange(g.dim):
-        check.assertEqual(g.jacobian_inverse_transposed(d).shape, (g.size(d), g.dim_outer, g.dim - d))
+        assert g.jacobian_inverse_transposed(d).shape == (g.size(d), g.dim_outer, g.dim - d)
 
 
 def test_jacobian_inverse_transposed_values(grid):
@@ -127,7 +117,7 @@ def test_integration_elements_wrong_arguments(grid):
 def test_integration_elements_shape(grid):
     g = grid
     for d in xrange(g.dim):
-        check.assertEqual(g.integration_elements(d).shape, (g.size(d),))
+        assert g.integration_elements(d).shape == (g.size(d),)
 
 
 def test_integration_elements_values(grid):
@@ -151,7 +141,7 @@ def test_volumes_wrong_arguments(grid):
 def test_volumes_shape(grid):
     g = grid
     for d in xrange(g.dim):
-        check.assertEqual(g.volumes(d).shape, (g.size(d),))
+        assert g.volumes(d).shape == (g.size(d),)
 
 
 def test_volumes_values(grid):
@@ -173,7 +163,7 @@ def test_volumes_inverse_wrong_arguments(grid):
 def test_volumes_inverse_shape(grid):
     g = grid
     for d in xrange(g.dim):
-        check.assertEqual(g.volumes_inverse(d).shape, (g.size(d),))
+        assert g.volumes_inverse(d).shape == (g.size(d),)
 
 
 def test_volumes_inverse_values(grid):
@@ -187,7 +177,7 @@ def test_volumes_inverse_values(grid):
 def test_unit_outer_normals_shape(grid):
     g = grid
     SE = g.subentities(0, 1)
-    check.assertEqual(g.unit_outer_normals().shape, SE.shape + (g.dim_outer,))
+    assert g.unit_outer_normals().shape == SE.shape + (g.dim_outer,)
 
 
 def test_unit_outer_normals_normed(grid):
@@ -229,7 +219,7 @@ def test_centers_wrong_arguments(grid):
 def test_centers_shape(grid):
     g = grid
     for d in xrange(g.dim):
-        check.assertEqual(g.centers(d).shape, (g.size(d), g.dim_outer))
+        assert g.centers(d).shape == (g.size(d), g.dim_outer)
 
 
 def test_centers_values(grid):
@@ -250,13 +240,13 @@ def test_diameters_wrong_arguments(grid):
 def test_diameters_shape(grid):
     g = grid
     for d in xrange(g.dim):
-        check.assertEqual(g.diameters(d).shape, (g.size(d),))
+        assert g.diameters(d).shape == (g.size(d),)
 
 
 def test_diameters_non_negative(grid):
     g = grid
     for d in xrange(g.dim - 1):
-        check.assertGreaterEqual(np.min(g.diameters(d)), 0)
+        assert np.min(g.diameters(d)) >= 0
 
 
 def test_diameters_values(grid):
@@ -287,10 +277,8 @@ def test_quadrature_points_shape(grid):
         os, ps = g.reference_element(d).quadrature_info()
         for t in os.keys():
             for o, p in izip(os[t], ps[t]):
-                check.assertEqual(g.quadrature_points(d, order=o, quadrature_type=t).shape,
-                                 (g.size(d), p, g.dim_outer))
-                check.assertEqual(g.quadrature_points(d, npoints=p, quadrature_type=t).shape,
-                                 (g.size(d), p, g.dim_outer))
+                assert g.quadrature_points(d, order=o, quadrature_type=t).shape == (g.size(d), p, g.dim_outer)
+                assert g.quadrature_points(d, npoints=p, quadrature_type=t).shape == (g.size(d), p, g.dim_outer)
 
 
 def test_quadrature_points_values(grid):
@@ -304,7 +292,3 @@ def test_quadrature_points_values(grid):
                 q, _ = g.reference_element(d).quadrature(order=o, quadrature_type=t)
                 np.testing.assert_allclose(Q, g.quadrature_points(d, npoints=p, quadrature_type=t))
                 np.testing.assert_allclose(Q, B[:, np.newaxis, :] + np.einsum('eij,qj->eqi', A, q))
-
-
-if __name__ == "__main__":
-    runmodule(filename=__file__)
