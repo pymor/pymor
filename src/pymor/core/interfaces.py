@@ -55,8 +55,7 @@ are the following:
        that have ever existed, including previous runs of the application. This
        is achieved by building the id from a uuid4 which is newly created for
        each pyMOR run and a counter which is increased for any object that requests
-       an uid. This functionality is implemented using the :class:`UIDProvider`
-       instance :attr:`uid_provider`.
+       an uid.
 
 
 :class:`ImmutableInterface` derives from :class:`BasicInterface` and adds the following
@@ -110,6 +109,7 @@ import inspect
 import itertools
 import os
 import types
+import uuid
 from types import NoneType
 
 try:
@@ -127,19 +127,24 @@ from pymor.core.defaults import defaults_sid
 DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_COPY_DOCSTRINGS_DISABLE', 0)) == 1
 
 
-class UIDProvider(object):
-    """Provides unique, quickly computed ids by combinding a session UUID4 with a counter."""
+class UID(object):
+    '''Provides unique, quickly computed ids by combinding a session UUID4 with a counter.'''
+
+    __slots__ = ['uid']
+
+    prefix = '{}_'.format(uuid.uuid4())
+    counter = [0]
+
     def __init__(self):
-        self.counter = 0
-        import uuid
-        self.prefix = '{}_'.format(uuid.uuid4())
+        self.uid = self.prefix + str(self.counter[0])
+        self.counter[0] += 1
 
-    def __call__(self):
-        uid = self.prefix + str(self.counter)
-        self.counter += 1
-        return uid
+    def __getstate__(self):
+        return 1
 
-uid_provider = UIDProvider()
+    def __setstate__(self, v):
+        self.uid = self.prefix + str(self.counter[0])
+        self.counter[0] += 1
 
 
 class UberMeta(abc.ABCMeta):
@@ -397,8 +402,8 @@ class BasicInterface(object):
     @property
     def uid(self):
         if self._uid is None:
-            self._uid = uid_provider()
-        return self._uid
+            self._uid = UID()
+        return self._uid.uid
 
 
 contract = decorators.contract
