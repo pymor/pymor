@@ -5,71 +5,12 @@
 from __future__ import absolute_import, division, print_function
 
 from itertools import product
+
 import numpy as np
 import pytest
-import random
-import math as m
 
-#from pymor.grids.interfaces import ConformalTopologicalGridInterface
-# mandatory so all Grid classes are created
-#from pymor.grids import *    # NOQA
-from pymor.grids import RectGrid, TriaGrid, OnedGrid, SubGrid
-from pymortests.base import (TestInterface, runmodule,)
-#from pymortests.fixtures import grid_instances
+from pymortests.fixtures.grid import grid
 
-
-rect_grid_generators = [lambda arg=arg, kwargs=kwargs: RectGrid(arg, **kwargs) for arg, kwargs in
-                        [((2, 4), {}),
-                         ((1, 1), {}),
-                         ((42, 42), {}),
-                         ((2, 4), dict(identify_left_right=True)),
-                         ((2, 4), dict(identify_bottom_top=True)),
-                         ((2, 4), dict(identify_left_right=True, identify_bottom_top=True)),
-                         ((2, 1), dict(identify_left_right=True)),
-                         ((1, 2), dict(identify_bottom_top=True)),
-                         ((2, 2), dict(identify_left_right=True, identify_bottom_top=True))]]
-
-
-tria_grid_generators = [lambda arg=arg: TriaGrid(arg) for arg in
-                        [(2, 4), (1, 1), (42, 42)]]
-
-
-oned_grid_generators = [lambda kwargs=kwargs: OnedGrid(**kwargs) for kwargs in
-                        [dict(domain=np.array((-2, 2)), num_intervals=10),
-                         dict(domain=np.array((-2, -4)), num_intervals=100),
-                         dict(domain=np.array((-2, -4)), num_intervals=100, identify_left_right=True),
-                         dict(domain=np.array((3, 2)), num_intervals=10),
-                         dict(domain=np.array((3, 2)), num_intervals=10, identify_left_right=True),
-                         dict(domain=np.array((1, 2)), num_intervals=10000)]]
-
-
-def subgrid_factory(grid_generator, neq, seed):
-    np.random.seed(seed)
-    g = grid_generator()
-    if neq == 0:
-        return SubGrid(g, np.arange(g.size(0), dtype=np.int32))
-    else:
-        return SubGrid(g, np.array(random.sample(xrange(g.size(0)), max(int(m.floor(g.size(0) / neq)), 1))))
-
-
-subgrid_generators = [lambda args=args: subgrid_factory(*args) for args in
-                      [(lambda: RectGrid((1, 1)), 0, 123),
-                       (lambda: RectGrid((1, 1)), 2, 123),
-                       (lambda: RectGrid((1, 1)), 4, 123),
-                       (lambda: TriaGrid((1, 1)), 0, 123),
-                       (lambda: TriaGrid((1, 1)), 2, 123),
-                       (lambda: TriaGrid((1, 1)), 4, 123),
-                       (lambda: RectGrid((8, 8)), 0, 123),
-                       (lambda: RectGrid((8, 8)), 2, 123),
-                       (lambda: RectGrid((8, 8)), 4, 123),
-                       (lambda: TriaGrid((24, 24)), 0, 123),
-                       (lambda: TriaGrid((24, 24)), 2, 123),
-                       (lambda: TriaGrid((24, 24)), 4, 123)]]
-
-
-@pytest.fixture(params=(rect_grid_generators + tria_grid_generators + oned_grid_generators + subgrid_generators))
-def grid(request):
-    return request.param()
 
 # monkey np.testing.assert_allclose to behave the same as np.allclose
 # for some reason, the default atol of np.testing.assert_allclose is 0
@@ -82,10 +23,6 @@ def monkey_allclose(a, b, rtol=1.e-5, atol=1.e-8):
     real_assert_allclose(a, b, rtol=rtol, atol=atol)
 np.testing.assert_allclose = monkey_allclose
 
-
-# @grid_instances(ConformalTopologicalGridInterface, scope='module')
-# def grid(request):
-#     return request.param
 
 # remove this after transitioning to plain assert statements
 check = TestInterface()
