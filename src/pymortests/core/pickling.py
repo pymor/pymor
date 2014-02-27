@@ -11,7 +11,7 @@ import os
 from pymor import core
 from pymor.core.logger import getLogger
 from pymortests.base import runmodule
-from pymortests.fixtures import basicinterface_subclass    # NOQA
+from pymortests.fixtures.generic import basicinterface_subclass
 
 
 # @pytest.mark.skipif('__name__ != "__main__"')

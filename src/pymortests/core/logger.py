@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 import pymor.core as core
 from pymortests.base import (runmodule,)
 
-from pymortests.fixtures import basicinterface_subclass   # NOQA
+from pymortests.fixtures.generic import basicinterface_subclass
 
 
 def exercise_logger(logger):
