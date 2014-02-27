@@ -4,6 +4,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+from cPickle import loads, dumps
 from itertools import product, chain, izip
 from numbers import Number
 
@@ -1146,3 +1147,9 @@ def test_gramian_wrong_ind(vector_array):
     for ind in invalid_inds(v):
         with pytest.raises(Exception):
             v.gramian(ind)
+
+
+def test_pickle(vector_array):
+    v = vector_array
+    v2 = loads(dumps(v, -1))
+    assert np.all(v.almost_equal(v2))

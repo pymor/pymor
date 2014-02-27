@@ -4,6 +4,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+from cPickle import dumps, loads
 from itertools import product
 
 import numpy as np
@@ -423,3 +424,14 @@ def test_boundaries_entries(grid):
     g = grid
     for d in xrange(g.dim + 1):
         np.testing.assert_array_equal(np.where(g.boundary_mask(d))[0], g.boundaries(d))
+
+
+def test_pickle(grid):
+    g = grid
+    g2 = loads(dumps(g, -1))
+    assert getattr(g, 'sid', None) == getattr(g2, 'sid', None)
+    for d in xrange(g.dim + 1):
+        assert g.size(d) == g2.size(d)
+        for s in xrange(d, g.dim+ 1):
+            np.testing.assert_array_equal(g.subentities(d, s), g2.subentities(d, s))
+            np.testing.assert_array_equal(g.superentities(s, d), g2.superentities(s, d))
