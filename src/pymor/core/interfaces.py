@@ -366,7 +366,7 @@ class BasicInterface(object):
         if doit:
             self._logger = logger.dummy_logger
         else:
-            self._logger = type(self)._logger
+            del self._logger
 
     def enable_logging(self, doit=True):
         """Enable logging output for this instance."""
