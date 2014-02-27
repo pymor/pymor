@@ -116,7 +116,34 @@ def getLogger(module, level=None, filename=None, handler_cls=logging.StreamHandl
         logger.setLevel(LOGLEVEL_MAPPING[level])
     return logger
 
-dummy_logger = getLogger('pymor.dummylogger', level='fatal')
+
+class DummyLogger(object):
+
+    __slots__ = []
+
+    def nop(self, *args, **kwargs):
+        return None
+
+    propagate = False
+    debug = nop
+    info = nop
+    warning = nop
+    error = nop
+    critical = nop
+    log = nop
+    exception = nop
+
+    def isEnabledFor(sefl, lvl):
+        return False
+
+    def getEffectiveLevel(self):
+        return None
+
+    def getChild(self):
+        return self
+
+
+dummy_logger = DummyLogger()
 
 
 @defaults('levels')
