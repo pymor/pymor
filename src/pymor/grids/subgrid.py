@@ -102,3 +102,8 @@ class SubGrid(AffineGridInterface):
             return self.__embeddings
         else:
             return super(SubGrid, self).embeddings(codim)
+
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        del d['_SubGrid__parent_grid']
+        return d
