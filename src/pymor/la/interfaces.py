@@ -218,7 +218,7 @@ class VectorArrayInterface(BasicInterface):
 
         This method forms the sum ::
 
-            self[ind] = alpha*x[o_ind] + self[ind]
+            self[ind] = alpha*x[x_ind] + self[ind]
 
         The dimensions of `self` and `x` as well as the lengths of `self` (`ind`) and
         `x` (`x_ind`) have to agree.
