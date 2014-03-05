@@ -6,7 +6,7 @@
 '''Thermalblock with POD demo.
 
 Usage:
-  thermalblock.py [-hp] [--grid=NI] [--help] [--plot-solutions] [--pod-norm=NORM]
+  thermalblock_pod.py [-hp] [--grid=NI] [--help] [--plot-solutions] [--pod-norm=NORM]
                   [--test=COUNT] XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
 
 
