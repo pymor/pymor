@@ -37,6 +37,8 @@ class InstationaryAdvectionProblem(ImmutableInterface, Named):
         to the |Parameter| `mu`.
     dirichlet_data
         |Function| providing the Dirichlet boundary values in global coordinates.
+    initial_data
+        |Function| providing the initial values in global coordinates.
     T
         The end time T.
     name
