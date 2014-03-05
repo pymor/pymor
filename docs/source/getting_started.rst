@@ -73,13 +73,13 @@ Running ``thermalblock.py`` will first produce plots of two detailed
 solutions of the problem for different randomly chosen parameters
 using linear finite elements. (The size of the grid can be controlled
 via the ``--grid`` parameter. The randomly chosen parameters will
-acutally always be the same for each run, since a fixed seed for
+actually always be the same for each run, since a fixed seed for
 the random generator is chosen in :mod:`pymor.defaults`.)
 
 After closing the window, the reduced basis for model order reduction
 is generated using a greedy search algorithm with error estimator.
 The third parameter ``SNAPSHOTS`` of ``thermalblock.py`` determines how many
-different vales per parameter component μ_ij should be considered.
+different values per parameter component μ_ij should be considered.
 I.e. the parameter training set for basis generation will have the
 size ``(XBLOCKS x YBLOCKS)^SNAPSHOTS``. After the basis of size 32 (the
 last parameter) has been computed, the obtained reduced model (on the
@@ -111,7 +111,7 @@ them to the system clipboard and then executing ::
 
     %paste
 
-Inside the IPython shell.
+inside the IPython shell.
 
 To see what is going on, we will first adjust a few log levels of
 pyMOR's logging facility:
@@ -121,7 +121,7 @@ pyMOR's logging facility:
 >>> getLogger('pymor.discretizations').setLevel('INFO')
 Loading pymor version (0, 1, 0, 861, 'g79027f4')
 
-First we will instatiate a class describing the analytical problem
+First we will instantiate a class describing the analytical problem
 we want so solve. In this case, a 
 :class:`~pymor.analyticalproblems.thermalblock.ThermalBlockProblem`:
 
@@ -133,7 +133,7 @@ We could do this by hand, creating a |Grid|, instatiating
 :class:`~pymor.operators.cg.DiffusionOperatorP1` finite element diffusion
 operators for each subblock of the domain, forming a |LincombOperator|
 by using :meth:`pymor.operators.interfaces.OperatorInterface.lincomb`
-to represent the affine decomposition, instatiating a
+to represent the affine decomposition, instantiating a
 :class:`~pymor.operators.cg.L2ProductFunctionalP1` as right hand side, and
 putting it all together into a |StationaryDiscretization|. However, since
 :class:`~pymor.analyticalproblems.thermalblock.ThermalBlockProblem` derives
