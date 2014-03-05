@@ -3,10 +3,10 @@
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-'''Thermalblock demo.
+'''Thermalblock with GUI demo
 
 Usage:
-  thermalblock.py [-h] [--estimator-norm=NORM] [--grid=NI]
+  thermalblock_gui.py [-h] [--estimator-norm=NORM] [--grid=NI]
                   [--help] XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
 
 
