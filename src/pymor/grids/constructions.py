@@ -27,8 +27,8 @@ def flatten_grid(grid):
     coordinates
         The coordinates of the codim-`grid.dim` entities.
     entity_map
-        Maps the indicies of the codim-`grid.dim` entities of the flattened
-        grid to the indicies of the corresponding entities in the original grid.
+        Maps the indices of the codim-`grid.dim` entities of the flattened
+        grid to the indices of the corresponding entities in the original grid.
     '''
     # first we determine which vertices are mapped to different coordinates when using the
     # embeddings of their codim-0 superentities
