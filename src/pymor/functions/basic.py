@@ -14,7 +14,7 @@ from pymor.parameters import ParameterFunctionalInterface
 
 
 class FunctionBase(FunctionInterface):
-    '''Base class for |Functions| providing some commun functionality.'''
+    '''Base class for |Functions| providing some common functionality.'''
 
     def __add__(self, other):
         '''Returns a new :class:`LincombFunction` representing the sum of two functions, or

@@ -307,19 +307,19 @@ class BoundaryInfoInterface(CacheableInterface):
     boundary_types = frozenset()
 
     def mask(self, boundary_type, codim):
-        '''retval[i] is `True` iff the codim-`codim` entity of global index `i` is
+        '''retval[i] is `True` if the codim-`codim` entity of global index `i` is
         associated to the |BoundaryType| `boundary_type`.
         '''
         raise ValueError('Has no boundary_type "{}"'.format(boundary_type))
 
     def unique_boundary_type_mask(self, codim):
-        '''retval[i] is `True` iff the codim-`codim` entity of global index `i` is
+        '''retval[i] is `True` if the codim-`codim` entity of global index `i` is
         associated to one and only one |BoundaryType|.
         '''
         return np.less_equal(sum(self.mask(bt, codim=codim).astype(np.int) for bt in self.boundary_types), 1)
 
     def no_boundary_type_mask(self, codim):
-        '''retval[i] is `True` iff the codim-`codim` entity of global index `i` is
+        '''retval[i] is `True` if the codim-`codim` entity of global index `i` is
         associated to no |BoundaryType|.
         '''
         return np.equal(sum(self.mask(bt, codim=codim).astype(np.int) for bt in self.boundary_types), 0)

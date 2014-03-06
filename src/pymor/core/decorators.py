@@ -131,7 +131,7 @@ def contract(*arg, **kwargs):
 
         **Contracts evaluation**: Note that all contracts for the arguments
         and the return values
-        are evaluated in the same context. This make it possible to use
+        are evaluated in the same context. This makes it possible to use
         common variables in the contract expression. For example, in the
         example above, the return value is constrained to be a list of the same
         length (``N``) as the parameter ``b``.

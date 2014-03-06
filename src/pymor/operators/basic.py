@@ -3,7 +3,7 @@
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-'''This module provides some |NumPy| bases |Operators| as well as base classes
+'''This module provides some |NumPy| based |Operators| as well as base classes
 providing some common functionality for the implementation of new |Operators|.
 
 There are three |NumPy|-based |Operators| of interest:

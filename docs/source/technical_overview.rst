@@ -249,7 +249,7 @@ Parameters
 pyMOR classes implement dependence of a parameter by deriving from the
 |Parametric| mix-in class. This class gives each instance a
 :attr:`~pymor.parameters.base.Parametric.parameter_type` attribute describing the
-for of |Parameters| the relevant methods of the object (`apply`, `solve`,
+form of |Parameters| the relevant methods of the object (`apply`, `solve`,
 `evaluate`, etc.) expect. A |Parameter| in pyMOR is basically a Python
 :class:`dict` with strings as keys and |NumPy arrays| as values. Each such value
 is called a |Parameter| component. The |ParameterType| of a |Parameter| is
