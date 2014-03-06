@@ -29,7 +29,7 @@ class InstationaryAdvectionProblem(ImmutableInterface, Named):
         A |DomainDescription| of the domain Ω the problem is posed on.
     flux_function
         The |Function| f. The current time is provided by adding the key `'_t'`
-        the the |Parameter| `mu`.
+        to the |Parameter| `mu`.
     flux_function_derivative
         The derivative of f with respect to u.
     rhs
