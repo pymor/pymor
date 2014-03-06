@@ -36,7 +36,7 @@ def pod(A, modes=None, product=None, tol=None, symmetrize=None, orthonormalize=N
         If not `None` only the first `modes` POD modes (singular vectors) are
         returned.
     products
-        Scalar product given as a linear |Operator| w.r.t. to compute the POD.
+        Scalar product given as a linear |Operator| w.r.t. compute the POD.
     tol
         Squared singular values smaller than this value are ignored. If `None`,
         the `pod_tol` |default| value is used.
