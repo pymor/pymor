@@ -43,10 +43,10 @@ class ThermalBlockProblem(EllipticProblem, Unpicklable):
     num_blocks
         The tuple (nx, ny)
     parameter_range
-        A tuple (mu_min, mu_max). Each |Parameter| component mu_ij is allowed
-        to lie in the interval [mu_min, mu_max].
+        A tuple (μ_min, μ_max). Each |Parameter| component μ_ij is allowed
+        to lie in the interval [μ_min, μ_max].
     rhs
-        The |Function| f(x, mu).
+        The |Function| f(x, μ).
     '''
 
     def __init__(self, num_blocks=(3, 3), parameter_range=(0.1, 1), rhs=ConstantFunction(dim_domain=2)):

@@ -27,13 +27,13 @@ class EllipticProblem(ImmutableInterface, Named):
     domain
         A |DomainDescription| of the domain the problem is posed on.
     rhs
-        The |Function| f(x, mu).
+        The |Function| f(x, μ).
     diffusion_functions
         List of the |functions| d_k(x).
     diffusion_functionals
-        List of the |ParameterFunctionals| theta_k(mu). If None, and
-        `len(diffusion_functions) > 1` let theta_k be the kth projection of the
-        coefficient part of mu.  If None and `len(diffusion_functions) == 1`,
+        List of the |ParameterFunctionals| θ_k(μ). If None, and
+        `len(diffusion_functions) > 1` let θ_k be the kth projection of the
+        coefficient part of μ.  If None and `len(diffusion_functions) == 1`,
         no parameter dependence is assumed.
     dirichlet_data
         |Function| providing the Dirichlet boundary values in global coordinates.
