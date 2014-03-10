@@ -122,7 +122,7 @@ class Defaults(object):
             pod_check                           = {0.pod_check}
             pod_check_tol                       = {0.pod_check_tol}
 
-            default_sparse_solver               = 'bicgstab-spilu'
+            default_sparse_solver               = {0.default_sparse_solver}
             bicgstab_tol                        = {0.bicgstab_tol}
             bicgstab_maxiter                    = {0.bicgstab_maxiter}
             spilu_drop_tol                      = {0.spilu_drop_tol}
