@@ -125,7 +125,7 @@ class Test_Interface(TestInterface):
 
     def testVersion(self):
         self.assertGreater(pymor.version, pymor.NO_VERSION)
-        self.assertIsInstance(pymor.version, tuple)
+        self.assertIsInstance(pymor.version, pymor.Version)
 
 
 @SubclassForImplemetorsOf(BasicInterface)
