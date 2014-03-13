@@ -39,6 +39,16 @@ class Version(object):
             other = Version(other)
         return self.version == other.version and self.rc_number == other.rc_number and self.distance == other.distance
 
+    def __lt__(self, other):
+        if not isinstance(other, Version):
+            other = Version(other)
+        return self.full_version < other.full_version
+
+    def __gt__(self, other):
+        if not isinstance(other, Version):
+            other = Version(other)
+        return self.full_version > other.full_version
+
     def __str__(self):
         git_part = '-{}-{}'.format(self.distance, self.shorthash) if self.distance else ''
         version_part = '.'.join(map(str, self.version))
