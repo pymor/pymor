@@ -109,10 +109,10 @@ copyright = '2012-2013, the pyMOR AUTHORS'
 #
 import pymor
 
-version = '.'.join([str(v) for v in pymor.version])
+version = str(pymor.version)
 
 # The full version, including alpha/beta/rc tags.
-release = '.'.join([str(v) for v in pymor.version][:2])
+release = version.split('-')[0]
 print version, release
 
 # There are two options for replacing |today|: either, you set today to some
