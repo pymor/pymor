@@ -2,25 +2,53 @@
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+
 from pymor.defaults import defaults
 
 NO_VERSIONSTRING = '0.0.0-0-0'
 
 
-def _make_version(string):
-    pos = string.find('-')
-    if pos == -1:
-        string += '-0-0'
-        pos = -4
-    version = tuple(int(x) for x in string[:pos].split('.'))
-    if pos > -1:
-        git = string.strip().split('-')
-        distance = int(git[1])
-        shorthash = git[2]
-        version = version + (distance, shorthash)
-    return version
+class Version(object):
 
-NO_VERSION = _make_version(NO_VERSIONSTRING)
+    def __init__(self, revstring):
+
+        revstringparts = revstring.strip().split('-')
+        if len(revstringparts) not in (1, 3):
+            raise ValueError('Invalid revstring')
+        if len(revstringparts) == 3:
+            self.distance = int(revstringparts[1])
+            self.shorthash = revstringparts[2]
+        else:
+            self.distance = 0
+            self.shorthash = ''
+
+        version_parts = revstringparts[0].split('.')
+        if version_parts[-1].find('rc') >= 0:
+            s = version_parts[-1].split('rc')
+            if len(s) != 2:
+                raise ValueError('Invalid revstring')
+            version_parts[-1] = s[0]
+            self.rc_number = int(s[1])
+        else:
+            self.rc_number = 0
+
+        self.version = tuple(int(x) for x in version_parts)
+        self.full_version = self.version + (self.rc_number,)
+
+    def __eq__(self, other):
+        if not isinstance(other, Version):
+            other = Version(other)
+        return self.version == other.version and self.rc_number == other.rc_number and self.distance == other.distance
+
+    def __str__(self):
+        git_part = '-{}-{}'.format(self.distance, self.shorthash) if self.distance else ''
+        version_part = '.'.join(map(str, self.version))
+        rc_part = 'rc{}'.format(self.rc_number) if self.rc_number else ''
+        return version_part + rc_part + git_part
+
+    def __repr__(self):
+        return 'Version({})'.format(str(self))
+
 
 try:
     import pymor.version
@@ -43,7 +71,7 @@ returned
 '''.format(e.output, e.returncode))
         revstring = NO_VERSIONSTRING
 finally:
-    version = _make_version(revstring)
+    version = Version(revstring)
 
 VERSION = version
 print('Loading pymor version {}'.format(VERSION))
