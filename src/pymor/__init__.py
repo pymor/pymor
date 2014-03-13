@@ -5,7 +5,6 @@
 
 from pymor.defaults import defaults
 
-NO_VERSIONSTRING = '0.0.0-0-0'
 
 
 class Version(object):
@@ -49,6 +48,9 @@ class Version(object):
     def __repr__(self):
         return 'Version({})'.format(str(self))
 
+
+NO_VERSIONSTRING = '0.0.0-0-0'
+NO_VERSION = Version(NO_VERSIONSTRING)
 
 try:
     import pymor.version
