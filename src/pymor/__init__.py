@@ -63,8 +63,8 @@ NO_VERSIONSTRING = '0.0.0-0-0'
 NO_VERSION = Version(NO_VERSIONSTRING)
 
 try:
-    import pymor.version
-    revstring = pymor.version.revstring
+    import pymor.version as _version
+    revstring = _version.revstring
 except ImportError:
     import os.path
     import subprocess
