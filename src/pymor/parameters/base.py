@@ -593,7 +593,7 @@ class Parametric(object):
         if inherits:
             for op in (o for o in inherits if getattr(o, 'parametric', False)):
                 assert check_op(op, global_type, provides)
-                global_type.update(op.parameter_type)
+                global_type.update({k: v for k, v in op.parameter_type.iteritems() if k not in provides})
 
         self.parameter_type = global_type or None
         self.parameter_local_type = local_type or None
