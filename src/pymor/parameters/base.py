@@ -463,7 +463,7 @@ class Parametric(object):
     def check_parameter(self, mu):
         '''Wrapper around :meth:`parse_parameter` returning `True`.
 
-        This is method intended to be used in `assert` statements, if one is, for
+        This method is intended to be used in `assert` statements, if one is, for
         some reason, not interested in the |Parameter| itself, e.g. if the object
         is known to not be :attr:`parametric`. This way one can check if the
         provided `mu` can be parsed correctly (if not an exception will be raised),
