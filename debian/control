@@ -8,7 +8,7 @@ Build-Depends: debhelper (>= 8.0.0), python-pip, python-virtualenv, python-numpy
   python-scipy, python-pytest, python-pyside, python-pytest-instafail, 
   python-pytest-xdist, python-dogpile.cache, python-dogpile.core, cython, 
   python-sphinx, python-tox, python-sympy, python-matplotlib, python-opengl,
-  python-docopt, python-contracts, python-glumpy
+  python-docopt, python-contracts, python-glumpy, python-pyvtk
   
 Standards-Version: 3.9.4
 Homepage: http://pymor.org

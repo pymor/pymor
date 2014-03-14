@@ -12,4 +12,10 @@ export DH_OPTIONS=-v
 
 %:
 	dh $@ 
-
+override_dh_clean:
+	dh_clean
+	rm -f *egg
+	rm -f distribute*.tar.gz
+	rm -f docs/docutils.conf
+	rm -rf build/ dist/
+	find . -name "*.pyc" -exec rm {} \;
