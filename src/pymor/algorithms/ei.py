@@ -361,7 +361,7 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
     dofs, basis, data = ei_greedy(evaluations, error_norm, target_error, max_interpolation_dofs,
                                   projection=projection, product=product)
 
-    ei_operators = {name: EmpiricalInterpolatedOperator(operator, dofs, basis)
+    ei_operators = {name: EmpiricalInterpolatedOperator(operator, dofs, basis, triangular=True)
                     for name, operator in zip(operator_names, operators)}
     operators_dict = discretization.operators.copy()
     operators_dict.update(ei_operators)

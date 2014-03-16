@@ -28,12 +28,6 @@ class EmpiricalInterpolatedOperator(OperatorBase):
       |
       |   ψ_(c_i)(L_EI(U, μ)) = ψ_(c_i)(L(U, μ))   for i=0,...,M
 
-    It is assumed that ::
-
-          ψ_(c_i)(b_j) = 0  for i < j
-
-    which means that the matrix of the interpolation problem is triangular.
-
     Since the original operator only has to be evaluated at the given interpolation
     DOFs, |EmpiricalInterpolatedOperator| calls `operator.restricted(interpolation_dofs)`
     to obtain a restricted version of the operator which is stored and later used
@@ -56,11 +50,14 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         List or 1D |NumPy array| of the interpolation DOFs `c_1, ..., c_M`.
     collateral_basis
         |VectorArray| containing the collateral basis `b_1, ..., b_M`.
+    triangular
+        If `True`, assume that ψ_(c_i)(b_j) = 0  for i < j, which means
+        that the interpolation matrix is triangular.
     name
         Name of the operator.
     '''
 
-    def __init__(self, operator, interpolation_dofs, collateral_basis, name=None):
+    def __init__(self, operator, interpolation_dofs, collateral_basis, triangular, name=None):
         assert isinstance(operator, OperatorInterface)
         assert isinstance(collateral_basis, VectorArrayInterface)
         assert operator.dim_range == collateral_basis.dim
@@ -76,6 +73,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
 
         interpolation_dofs = np.array(interpolation_dofs, dtype=np.int32)
         self.interpolation_dofs = interpolation_dofs
+        self.triangular = triangular
 
         if len(interpolation_dofs) > 0:
             if hasattr(operator, 'restricted'):
@@ -99,11 +97,13 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         else:
             AU = NumpyVectorArray(self.operator.apply(U, mu=mu).components(self.interpolation_dofs), copy=False)
         try:
-            interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU.data.T,
-                                                          lower=True, unit_diagonal=True).T
+            if self.triangular:
+                interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU.data.T,
+                                                              lower=True, unit_diagonal=True).T
+            else:
+                interpolation_coefficients = np.linalg.solve(self.interpolation_matrix, AU._array.T).T
         except ValueError:  # this exception occurs when AU contains NaNs ...
             interpolation_coefficients = np.empty((len(AU), len(self.collateral_basis))) + np.nan
-        # interpolation_coefficients = np.linalg.solve(self.interpolation_matrix, AU._array.T).T
         return self.collateral_basis.lincomb(interpolation_coefficients)
 
     def projected(self, source_basis, range_basis, product=None, name=None):
@@ -126,13 +126,13 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         return ProjectedEmpiciralInterpolatedOperator(self.restricted_operator, self.interpolation_matrix,
                                                       NumpyVectorArray(source_basis.components(self.source_dofs),
                                                                        copy=False),
-                                                      projected_collateral_basis, name)
+                                                      projected_collateral_basis, self.triangular, name)
 
     def jacobian(self, U, mu=None):
         mu = self.parse_parameter(mu)
         if hasattr(self, 'operator'):
             return EmpiricalInterpolatedOperator(self.operator.jacobian(U, mu=mu), self.interpolation_dofs,
-                                                 self.collateral_basis, self.name + '_jacobian')
+                                                 self.collateral_basis, self.triangular, self.name + '_jacobian')
         else:
             raise NotImplementedError
 
@@ -144,7 +144,7 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
     '''
 
     def __init__(self, restricted_operator, interpolation_matrix, source_basis_dofs,
-                 projected_collateral_basis, name=None):
+                 projected_collateral_basis, triangular, name=None):
         self.dim_source = len(source_basis_dofs)
         self.dim_range = projected_collateral_basis.dim
         self.type_source = self.type_range = NumpyVectorArray
@@ -154,6 +154,7 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
         self.interpolation_matrix = interpolation_matrix
         self.source_basis_dofs = source_basis_dofs
         self.projected_collateral_basis = projected_collateral_basis
+        self.triangular = triangular
         self.name = name or '{}_projected'.format(restricted_operator.name)
 
     def apply(self, U, ind=None, mu=None):
@@ -162,8 +163,11 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
         U_components = self.source_basis_dofs.lincomb(U_array)
         AU = self.restricted_operator.apply(U_components, mu=mu)
         try:
-            interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU.data.T,
-                                                          lower=True, unit_diagonal=True).T
+            if self.triangular:
+                interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU.data.T,
+                                                              lower=True, unit_diagonal=True).T
+            else:
+                interpolation_coefficients = np.linalg.solve(self.interpolation_matrix, AU._array.T).T
         except ValueError:  # this exception occurs when AU contains NaNs ...
             interpolation_coefficients = np.empty((len(AU), len(self.projected_collateral_basis))) + np.nan
         return self.projected_collateral_basis.lincomb(interpolation_coefficients)
@@ -189,4 +193,5 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
             else NumpyVectorArray(old_sbd.data[:dim_source, source_dofs], copy=False)
 
         return ProjectedEmpiciralInterpolatedOperator(restricted_operator, interpolation_matrix,
-                                                      source_basis_dofs, projected_collateral_basis, name=name)
+                                                      source_basis_dofs, projected_collateral_basis, self.triangular,
+                                                      name=name)
