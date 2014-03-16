@@ -128,6 +128,14 @@ class EmpiricalInterpolatedOperator(OperatorBase):
                                                                        copy=False),
                                                       projected_collateral_basis, name)
 
+    def jacobian(self, U, mu=None):
+        mu = self.parse_parameter(mu)
+        if hasattr(self, 'operator'):
+            return EmpiricalInterpolatedOperator(self.operator.jacobian(U, mu=mu), self.interpolation_dofs,
+                                                 self.collateral_basis, self.name + '_jacobian')
+        else:
+            raise NotImplementedError
+
 
 class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
     '''Project an |EmpiricalInterpolatedOperator|.
