@@ -22,7 +22,7 @@ import sys
 from dogpile import cache as dc
 from dogpile.cache.backends.file import DBMBackend
 
-import pymor.core
+from pymor.core.pickle import dump, load, dumps, loads
 from pymor.core import BasicInterface
 from pymor.tools import memory
 
@@ -32,8 +32,8 @@ from pymor.tools import memory
 import dogpile.cache.compat
 import types
 patched_pickle = types.ModuleType('pickle')
-patched_pickle.dumps = pymor.core.dumps
-patched_pickle.loads = pymor.core.loads
+patched_pickle.dumps = dumps
+patched_pickle.loads = loads
 dogpile.cache.compat.pickle = patched_pickle
 
 NO_CACHE_CONFIG = {"backend": 'Dummy'}
@@ -117,7 +117,7 @@ class LimitedFileBackend(DBMBackend, BasicInterface):
         self._keylist_fn = self.filename + '.keys'
         self._max_size = argument_dict.get('max_size', None)
         try:
-            self._keylist, self._size = pymor.core.load(open(self._keylist_fn, 'rb'))
+            self._keylist, self._size = load(open(self._keylist_fn, 'rb'))
         except Exception:
             self._keylist = deque()
             self._size = 0
@@ -125,7 +125,7 @@ class LimitedFileBackend(DBMBackend, BasicInterface):
         self.print_limit()
 
     def _dump_keylist(self):
-        pymor.core.dump((self._keylist, self._size), open(self._keylist_fn, 'wb'))
+        dump((self._keylist, self._size), open(self._keylist_fn, 'wb'))
 
     def _new_key(self, key, size):
         self._keylist.append((key, size))
@@ -149,7 +149,7 @@ class LimitedFileBackend(DBMBackend, BasicInterface):
 
     def set(self, key, value):
         self._enforce_limits(value)
-        value = pymor.core.dumps(value)
+        value = dumps(value)
         if not key in self._keylist:
             self._new_key(key, len(value))
         with self._dbm_file(True) as dbm:
