@@ -218,10 +218,15 @@ def visualize_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, title=None,
     block
         If `True` block execution until the plot window is closed.
     '''
-    if not HAVE_GL:
-        raise ImportError('cannot visualize: import of PyOpenGL failed')
-    if not HAVE_GLUMPY:
-        raise ImportError('cannot visualize: import of glumpy failed')
+    if backend is None:
+        backend = defaults.qt_visualize_patch_backend
+    assert backend in {'gl', 'matplotlib'}
+
+    if backend == 'gl':
+        if not HAVE_GL:
+            raise ImportError('cannot visualize: import of PyOpenGL failed')
+        if not HAVE_GLUMPY:
+            raise ImportError('cannot visualize: import of glumpy failed')
 
     class MainWindow(PlotMainWindow):
         def __init__(self, grid, U, bounding_box, codim, title, legend, separate_colorbars, backend):
@@ -232,9 +237,6 @@ def visualize_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, title=None,
             if isinstance(legend, str):
                 legend = (legend,)
             assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
-            if backend is None:
-                backend = defaults.qt_visualize_patch_backend
-            assert backend in {'gl', 'matplotlib'}
             if backend == 'gl':
                 widget = GlumpyPatchWidget
             else:
