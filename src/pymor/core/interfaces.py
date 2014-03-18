@@ -100,7 +100,12 @@ import os
 import types
 from types import NoneType
 
-import contracts
+try:
+    import contracts
+    HAVE_CONTRACTS = True
+except ImportError:
+    HAVE_CONTRACTS = False
+
 import numpy as np
 
 from pymor.core import decorators, backports, logger
@@ -134,9 +139,10 @@ class UberMeta(abc.ABCMeta):
         for each class I create. I add an `init_args` attribute to the class.
         '''
         # monkey a new contract into the decorator module so checking for that type at runtime can work
-        dname = (cls.__module__ + '.' + name).replace('__main__.', 'main.').replace('.', '_')
-        if not dname in decorators.__dict__:
-            decorators.__dict__[dname] = contracts.new_contract(dname, lambda x: isinstance(x, cls))
+        if HAVE_CONTRACTS:
+            dname = (cls.__module__ + '.' + name).replace('__main__.', 'main.').replace('.', '_')
+            if not dname in decorators.__dict__:
+                decorators.__dict__[dname] = contracts.new_contract(dname, lambda x: isinstance(x, cls))
 
         # all bases except object get the derived class' name appended
         for base in [b for b in bases if b != object]:
@@ -173,15 +179,19 @@ class UberMeta(abc.ABCMeta):
                         has_contract = False
                         if base_func:
                             base_doc = getattr(base_func, '__doc__', None)
-                            has_contract = getattr(base_func, 'decorated', None) == 'contract'
-                            contract_kwargs = getattr(base_func, 'contract_kwargs', contract_kwargs)
+                            if HAVE_CONTRACTS:
+                                has_contract = getattr(base_func, 'decorated', None) == 'contract'
+                                contract_kwargs = getattr(base_func, 'contract_kwargs', contract_kwargs)
                         if base_doc:
                             doc = decorators.fixup_docstring(getattr(item, '__doc__', ''))
-                            has_base_contract_docs = decorators.contains_contract(base_doc)
-                            has_contract_docs = decorators.contains_contract(doc)
-                            if has_base_contract_docs and not has_contract_docs:
-                                base_doc += doc
-                            elif not has_base_contract_docs and doc is not None:
+                            if HAVE_CONTRACTS:
+                                has_base_contract_docs = decorators.contains_contract(base_doc)
+                                has_contract_docs = decorators.contains_contract(doc)
+                                if has_base_contract_docs and not has_contract_docs:
+                                    base_doc += doc
+                                elif not has_base_contract_docs and doc is not None:
+                                    base_doc = doc
+                            elif doc is not None:
                                 base_doc = doc
                             item.__doc__ = base_doc
                         if has_contract:
