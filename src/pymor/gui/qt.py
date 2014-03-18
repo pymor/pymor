@@ -22,7 +22,7 @@ from pymor import defaults
 from pymor.core import BasicInterface, getLogger
 from pymor.grids import RectGrid, TriaGrid, OnedGrid
 from pymor.gui.glumpy import GlumpyPatchWidget, ColorBarWidget, HAVE_GLUMPY, HAVE_GL
-from pymor.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget
+from pymor.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget, HAVE_MATPLOTLIB
 from pymor.la import VectorArrayInterface, NumpyVectorArray
 from pymor.tools.vtkio import HAVE_PYVTK, write_vtk
 
@@ -227,6 +227,9 @@ def visualize_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, title=None,
             raise ImportError('cannot visualize: import of PyOpenGL failed')
         if not HAVE_GLUMPY:
             raise ImportError('cannot visualize: import of glumpy failed')
+    else:
+        if not HAVE_MATPLOTLIB:
+            raise ImportError('cannot visualize: import of matplotlib failed')
 
     class MainWindow(PlotMainWindow):
         def __init__(self, grid, U, bounding_box, codim, title, legend, separate_colorbars, backend):
@@ -340,6 +343,8 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, block=Fal
     block
         If `True` block execution until the plot window is closed.
     '''
+    if not HAVE_MATPLOTLIB:
+        raise ImportError('cannot visualize: import of matplotlib failed')
 
     class MainWindow(PlotMainWindow):
         def __init__(self, grid, U, codim, title, legend):
