@@ -1,6 +1,6 @@
 tests_require = ['tox', 'pytest', 'pytest-cache', 'pytest-capturelog', 'pytest-instafail',
                  'pytest-xdist', 'pytest-cov', 'pytest-flakes', 'pytest-pep8']
-install_requires = ['Cython', 'numpy', 'scipy', 'PyContracts', 'Sphinx',
+install_requires = ['Cython', 'numpy', 'scipy', 'Sphinx',
                     'docopt', 'dogpile.cache']
 pre_setup_requires = ['cython', 'numpy']
 setup_requires = pre_setup_requires

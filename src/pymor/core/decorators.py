@@ -12,9 +12,14 @@ from __future__ import absolute_import, division, print_function
 import functools
 import types
 import inspect
-import contracts
 import copy
 import warnings
+
+try:
+    import contracts
+    HAVE_CONTRACTS = True
+except ImportError:
+    HAVE_CONTRACTS = False
 
 
 def fixup_docstring(doc):
@@ -163,6 +168,12 @@ def contract(*arg, **kwargs):
             Contract syntac is incorrect.
     '''
 
+    if not HAVE_CONTRACTS:
+        if isinstance(arg[0], types.FunctionType):
+            return arg[0]
+        else:
+            return lambda f: f
+
     # this bit tags function as decorated
     def tag_and_decorate(function, **kwargs):
         @functools.wraps(function)
@@ -207,10 +218,13 @@ def contract(*arg, **kwargs):
         return tmp_wrap
 
 # alias this so we need no contracts import outside this module
-contracts_decorate = contracts.main.contracts_decorate
+if HAVE_CONTRACTS:
+    contracts_decorate = contracts.main.contracts_decorate
 
 
 def contains_contract(string):
+    if not HAVE_CONTRACTS:
+        return False
     try:
         contracts.parse_contract_string(string)
         return True
