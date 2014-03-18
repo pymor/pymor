@@ -4,7 +4,12 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pyvtk import (VtkData, UnstructuredGrid, PointData, CellData, Scalars)
+try:
+    from pyvtk import (VtkData, UnstructuredGrid, PointData, CellData, Scalars)
+    HAVE_PYVTK = True
+except ImportError:
+    HAVE_PYVTK = False
+
 import numpy as np
 
 from pymor.grids import referenceelements
@@ -85,6 +90,8 @@ def write_vtk(grid, data, filename_base, codim=2, binary_vtk=True, last_step=Non
     last_step
         if set must be <= len(data) to restrict output of timeseries
     '''
+    if not HAVE_PYVTK:
+        raise ImportError('could not import pyvtk')
     if grid.dim != 2 or grid.dim_outer != 2:
         raise NotImplementedError
     if codim not in (0, 2):

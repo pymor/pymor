@@ -15,7 +15,7 @@ import math as m
 import numpy as np
 
 from PySide.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QApplication, QLCDNumber,
-                          QAction, QStyle, QToolBar, QLabel, QFileDialog)
+                          QAction, QStyle, QToolBar, QLabel, QFileDialog, QMessageBox)
 from PySide.QtCore import Qt, QCoreApplication, QTimer
 
 from pymor import defaults
@@ -24,7 +24,7 @@ from pymor.grids import RectGrid, TriaGrid, OnedGrid
 from pymor.gui.glumpy import GlumpyPatchWidget, ColorBarWidget
 from pymor.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget
 from pymor.la import VectorArrayInterface, NumpyVectorArray
-from pymor.tools.vtkio import write_vtk
+from pymor.tools.vtkio import HAVE_PYVTK, write_vtk
 
 
 class PlotMainWindow(QWidget):
@@ -291,6 +291,10 @@ def visualize_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, title=None,
             self.codim = codim
 
         def save(self):
+            if not HAVE_PYVTK:
+                msg = QMessageBox(QMessageBox.Critical, 'Error', 'VTK output disabled. Pleas install pyvtk.')
+                msg.exec_()
+                return
             filename = QFileDialog.getSaveFileName(self, 'Save as vtk file')[0]
             base_name = filename.split('.vtu')[0].split('.vtk')[0].split('.pvd')[0]
             if base_name:
