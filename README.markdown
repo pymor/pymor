@@ -1,4 +1,4 @@
-pyMOR - Model Order Reduction with python
+pyMOR - Model Order Reduction with Python
 =========================================
 
 pyMOR is a software library developed at the University of Münster for building
