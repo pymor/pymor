@@ -29,16 +29,6 @@ install_suggests = dependencies.install_suggests
 
 class PyTest(TestCommand):
 
-    user_options = [('flakes', 'F', 'run pyflakes checks'), ('pep8', 'p', 'run pep8 checks'),
-                    ('ff', 'f', 're-run all (cached) tests')]
-    boolean_options = ['flakes' , 'pep8', 'ff']
-
-    def initialize_options(self):
-        TestCommand.initialize_options(self)
-        self.flakes = False
-        self.pep8 = False
-        self.ff = False
-        
     def finalize_options(self):
         TestCommand.finalize_options(self)
         print(sys.argv[3:])

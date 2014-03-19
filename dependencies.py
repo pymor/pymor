@@ -1,4 +1,4 @@
-tests_require = ['pytest', 'pytest-cache', 'pytest-capturelog', 'pytest-cov', 'pytest-flakes', 'pytest-pep8']
+tests_require = ['pytest', 'pytest-cache', 'pytest-capturelog']
 install_requires = ['Cython', 'numpy', 'scipy', 'Sphinx', 'docopt', 'dogpile.cache']
 pre_setup_requires = ['cython', 'numpy']
 setup_requires = pre_setup_requires
