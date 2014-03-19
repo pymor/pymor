@@ -23,7 +23,17 @@ test:
 	python setup.py test
 
 full-test:
-	python setup.py test --flakes --pep8
+	@echo
+	@echo "Ensuring that all required pytest plugins are installed ..."
+	@echo "--------------------------------------------------------------------------------"
+	@echo
+	pip install pytest-flakes
+	pip install pytest-pep8
+	pip install pytest-cov
+	@echo
+	@echo "--------------------------------------------------------------------------------"
+	@echo
+	py.test --flakes --pep8 --cov=pymor --cov-report=html --cov-report=xml src/pymortests
 	
 doc:
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html
