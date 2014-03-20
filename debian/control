@@ -28,3 +28,9 @@ Depends: ${misc:Depends}, ${python:Depends},
   python-dev, python-execnet (>=1.1)
 Description: <insert up to 60 chars description>
  <insert long description, indented with spaces>
+
+Package: pymor-demos
+Architecture: all
+Depends: pymor-base
+Description: <insert up to 60 chars description>
+ <insert long description, indented with spaces>
