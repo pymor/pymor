@@ -3,7 +3,6 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
-import mock
 import pytest
 
 from pymortests.base import TestInterface, runmodule
@@ -16,6 +15,7 @@ from pymor.grids import AllDirichletBoundaryInfo as ADIA
 
 try:
     import contracts
+    import mock
 
     from pymor.core.exceptions import ContractNotRespected
 
