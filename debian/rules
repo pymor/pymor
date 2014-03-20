@@ -11,10 +11,10 @@ export DH_VERBOSE=1
 export DH_OPTIONS=-v
 
 %:
-	dh $@ 
+	dh $@ --with python2
 override_dh_clean:
 	dh_clean
-	rm -f *egg
+	rm -rf *egg
 	rm -f distribute*.tar.gz
 	rm -f docs/docutils.conf
 	rm -rf build/ dist/
