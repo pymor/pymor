@@ -26,3 +26,13 @@ dump = partial(pickle.dump, protocol=-1)
 dumps = partial(pickle.dumps, protocol=-1)
 load = pickle.load
 loads = pickle.loads
+
+
+try:
+    import numpy as np
+    A = np.zeros((0, 1))
+    A[[]]
+    NUMPY_INDEX_QUIRK = False
+except IndexError:
+    NUMPY_INDEX_QUIRK = True
+

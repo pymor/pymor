@@ -4,6 +4,8 @@ from numbers import Number
 import pytest
 import numpy as np
 
+from pymor.core import NUMPY_INDEX_QUIRK
+
 from pymortests.fixtures.vectorarray import \
     (vector_array_without_reserve, vector_array, vector_array_pair_with_same_dim_without_reserve,
      vector_array_pair_with_same_dim, vector_array_pair_with_different_dim, VectorArray)
@@ -266,7 +268,10 @@ def test_replace(vector_array_pair_with_same_dim):
         assert np.all(c2.almost_equal(v2))
         if hasattr(v1, 'data'):
             x = dv1.copy()
-            x[ind1] = indexed(dv2, ind2)
+            if NUMPY_INDEX_QUIRK and len(x) == 0 and hasattr(ind1, '__len__') and len(ind1) == 0:
+                pass
+            else:
+                x[ind1] = indexed(dv2, ind2)
             assert np.allclose(c1.data, x)
 
         c1, c2 = v1.copy(), v2.copy()
@@ -279,7 +284,10 @@ def test_replace(vector_array_pair_with_same_dim):
         assert np.all(c2.almost_equal(v2, o_ind=ind2_complement))
         if hasattr(v1, 'data'):
             x = dv1.copy()
-            x[ind1] = indexed(dv2, ind2)
+            if NUMPY_INDEX_QUIRK and len(x) == 0 and hasattr(ind1, '__len__') and len(ind1) == 0:
+                pass
+            else:
+                x[ind1] = indexed(dv2, ind2)
             assert np.allclose(c1.data, x)
             assert np.allclose(c2.data, indexed(dv2, ind2_complement))
 
@@ -309,7 +317,10 @@ def test_replace_self(vector_array):
         assert np.all(c.almost_equal(v, ind=ind1, o_ind=ind2))
         if hasattr(v, 'data'):
             x = dv.copy()
-            x[ind1] = indexed(dv, ind2)
+            if NUMPY_INDEX_QUIRK and len(x) == 0 and hasattr(ind1, '__len__') and len(ind1) == 0:
+                pass
+            else:
+                x[ind1] = indexed(dv, ind2)
             assert np.allclose(c.data, x)
 
 
@@ -393,7 +404,10 @@ def test_scal(vector_array):
             assert np.allclose(c.l2_norm(ind), v.l2_norm(ind) * abs(x))
             if hasattr(v, 'data'):
                 y = dv.copy()
-                y[ind] *= x
+                if NUMPY_INDEX_QUIRK and len(y) == 0:
+                    pass
+                else:
+                    y[ind] *= x
                 assert np.allclose(c.data, y)
 
 
@@ -442,7 +456,10 @@ def test_axpy(vector_array_pair_with_same_dim):
                 if isinstance(ind1, Number):
                     x[[ind1]] += indexed(dv2, ind2) * a
                 else:
-                    x[ind1] += indexed(dv2, ind2) * a
+                    if NUMPY_INDEX_QUIRK and len(x) == 0:
+                        pass
+                    else:
+                        x[ind1] += indexed(dv2, ind2) * a
                 assert np.allclose(c1.data, x)
             c1.axpy(-a, c2, ind=ind1, x_ind=ind2)
             assert len(c1) == len(v1)
@@ -480,7 +497,10 @@ def test_axpy_self(vector_array):
                 if isinstance(ind1, Number):
                     x[[ind1]] += indexed(dv, ind2) * a
                 else:
-                    x[ind1] += indexed(dv, ind2) * a
+                    if NUMPY_INDEX_QUIRK and len(x) == 0:
+                        pass
+                    else:
+                        x[ind1] += indexed(dv, ind2) * a
                 assert np.allclose(c.data, x)
             c.axpy(-a, v, ind=ind1, x_ind=ind2)
             assert len(c) == len(v)
