@@ -4,7 +4,6 @@ from numbers import Number
 import pytest
 import numpy as np
 
-<<<<<<< HEAD
 from pymor.la import NumpyVectorArray
 from pymor.la.listvectorarray import NumpyListVectorArray, NumpyVector
 
