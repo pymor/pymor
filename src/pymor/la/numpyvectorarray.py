@@ -10,6 +10,7 @@ from numbers import Number
 import numpy as np
 from scipy.sparse import issparse
 
+from pymor.core import NUMPY_INDEX_QUIRK
 from pymor.la.interfaces import VectorArrayInterface
 from pymor.tools import float_cmp
 
@@ -72,6 +73,9 @@ class NumpyVectorArray(VectorArrayInterface):
     def copy(self, ind=None):
         assert self.check_ind(ind)
 
+        if NUMPY_INDEX_QUIRK and self._len == 0:
+            return NumpyVectorArray(self._array[:0], copy=True)
+
         if ind is None:
             return NumpyVectorArray(self._array[:self._len], copy=True)
         else:
@@ -84,6 +88,9 @@ class NumpyVectorArray(VectorArrayInterface):
         assert other.check_ind(o_ind)
         assert self.dim == other.dim
         assert other is not self or not remove_from_other
+
+        if NUMPY_INDEX_QUIRK and other._len == 0:
+            o_ind = None
 
         if o_ind is None:
             len_other = other._len
@@ -131,6 +138,12 @@ class NumpyVectorArray(VectorArrayInterface):
         assert self.dim == other.dim
         assert other is not self or not remove_from_other
 
+        if NUMPY_INDEX_QUIRK:
+            if self._len == 0 and hasattr(ind, '__len__'):
+                ind = None
+            if other._len == 0 and hasattr(o_ind, '__len__'):
+                o_ind = None
+
         if ind is None:
             if o_ind is None:
                 if other is self:
@@ -163,6 +176,12 @@ class NumpyVectorArray(VectorArrayInterface):
         assert other.check_ind(o_ind)
         assert self.dim == other.dim
 
+        if NUMPY_INDEX_QUIRK:
+            if self._len == 0 and hasattr(ind, '__len__'):
+                ind = None
+            if other._len == 0 and hasattr(o_ind, '__len__'):
+                o_ind = None
+
         A = self._array[:self._len] if ind is None else \
             self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
         B = other._array[:other._len] if o_ind is None else \
@@ -177,6 +196,9 @@ class NumpyVectorArray(VectorArrayInterface):
         assert self.check_ind_unique(ind)
         assert isinstance(alpha, Number)
 
+        if NUMPY_INDEX_QUIRK and self._len == 0:
+            return
+
         if ind is None:
             self._array[:self._len] *= alpha
         else:
@@ -187,6 +209,12 @@ class NumpyVectorArray(VectorArrayInterface):
         assert x.check_ind(x_ind)
         assert self.dim == x.dim
         assert self.len_ind(ind) == x.len_ind(x_ind)
+
+        if NUMPY_INDEX_QUIRK:
+            if self._len == 0 and hasattr(ind, '__len__'):
+                ind = None
+            if x._len == 0 and hasattr(x_ind, '__len__'):
+                x_ind = None
 
         if alpha == 0:
             return
@@ -214,6 +242,12 @@ class NumpyVectorArray(VectorArrayInterface):
         assert other.check_ind(o_ind)
         assert self.dim == other.dim
 
+        if NUMPY_INDEX_QUIRK:
+            if self._len == 0 and hasattr(ind, '__len__'):
+                ind = None
+            if other._len == 0 and hasattr(o_ind, '__len__'):
+                o_ind = None
+
         A = self._array[:self._len] if ind is None else \
             self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
         B = other._array[:other._len] if o_ind is None else \
@@ -228,6 +262,9 @@ class NumpyVectorArray(VectorArrayInterface):
     def lincomb(self, coefficients, ind=None):
         assert self.check_ind(ind)
         assert 1 <= coefficients.ndim <= 2
+
+        if NUMPY_INDEX_QUIRK and self._len == 0:
+            ind = None
 
         if coefficients.ndim == 1:
             coefficients = coefficients[np.newaxis, ...]
@@ -246,6 +283,9 @@ class NumpyVectorArray(VectorArrayInterface):
     def l1_norm(self, ind=None):
         assert self.check_ind(ind)
 
+        if NUMPY_INDEX_QUIRK and self._len == 0:
+            ind = None
+
         A = self._array[:self._len] if ind is None else \
             self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
 
@@ -253,6 +293,9 @@ class NumpyVectorArray(VectorArrayInterface):
 
     def l2_norm(self, ind=None):
         assert self.check_ind(ind)
+
+        if NUMPY_INDEX_QUIRK and self._len == 0:
+            ind = None
 
         A = self._array[:self._len] if ind is None else \
             self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
@@ -265,6 +308,14 @@ class NumpyVectorArray(VectorArrayInterface):
             or (isinstance(component_indices, np.ndarray) and component_indices.ndim == 1
                 and (len(component_indices) == 0 or np.min(component_indices) >= 0))
 
+        if NUMPY_INDEX_QUIRK and (self._len == 0 or self.dim == 0):
+            assert isinstance(component_indices, list) \
+                and (len(component_indices) == 0 or max(component_indices) < self.dim) \
+                or isinstance(component_indices, np.ndarray) \
+                and component_indices.ndim == 1 \
+                and (len(component_indices) == 0 or np.max(component_indices) < self.dim)
+            return np.zeros((self.len_ind(ind), len(component_indices)))
+
         if ind is None:
             return self._array[:self._len, component_indices]
         else:
@@ -275,6 +326,10 @@ class NumpyVectorArray(VectorArrayInterface):
     def amax(self, ind=None):
         assert self.dim > 0
         assert self.check_ind(ind)
+
+        if NUMPY_INDEX_QUIRK and self._len == 0:
+            ind = None
+
         if self._array.shape[1] == 0:
             l = self.len_ind(ind)
             return (np.ones(l) * -1, np.zeros(l))
