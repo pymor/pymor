@@ -53,3 +53,5 @@ venvs
 htmlcov/
 coverage.xml
 libpeerconnection.log
+debian/pymor/
+.cache

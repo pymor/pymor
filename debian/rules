@@ -1,17 +1,29 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
-# Sample debian/rules that uses debhelper.
-# This file was originally written by Joey Hess and Craig Small.
-# As a special exception, when this file is copied by dh-make into a
-# dh-make output file, you may use that output file without restriction.
-# This special exception was added by Craig Small in version 0.37 of dh-make.
+
+PY2VERS=$(shell pyversions -vr debian/control)
+PY3VERS=$(shell py3versions -vr)
+PYDEF=$(shell pyversions -dv)
+PY3DEF=$(shell py3versions -dv)
+PYLIBPATH := $(shell python -c "from distutils.command.build import build ; from distutils.core import Distribution ; b = build(Distribution()) ; b.finalize_options() ; print b.build_platlib")
 
 # Uncomment this to turn on verbose mode.
 export DH_VERBOSE=1
 export DH_OPTIONS=-v
 
+# dh $@ --with sphinxdoc,python2
+
 %:
 	dh $@ --with python2
+
+override_dh_auto_install:
+	python setup.py install --root=debian/pymor --install-layout=deb --install-lib=/usr/share/pymor-base/lib --install-scripts=/usr/share/pymor-base/bin
+
+override_dh_auto_build:
+
+# re-add test
+override_dh_test:
+
 override_dh_clean:
 	dh_clean
 	rm -rf *egg

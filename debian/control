@@ -1,9 +1,7 @@
-Source: pymor-base
+Source: pymor
 Section: math
 Priority: extra
-Maintainer: Rene Milk <koshi@springlobby.info>
-# missing deps: pytest-flakes pytest-cov 
-#   
+Maintainer: Rene Milk <koshi@springlobby.info>  
 Build-Depends: debhelper (>= 8.0.0), python-pip, python-virtualenv, python-numpy,
   python-scipy, python-pytest, python-pyside, 
   python-dogpile.cache, python-dogpile.core, cython, 
@@ -16,8 +14,8 @@ Homepage: http://pymor.org
 #Vcs-Git: git://git.debian.org/collab-maint/pymor-base.git
 #Vcs-Browser: http://git.debian.org/?p=collab-maint/pymor-base.git;a=summary
 
-Package: pymor-base
-Architecture: all
+Package: python-pymor-base
+Architecture: any
 Depends: ${misc:Depends}, ${python:Depends},
   python-pip, python-virtualenv, python-numpy,
   python-scipy, python-pytest, python-pyside,
@@ -29,8 +27,21 @@ Depends: ${misc:Depends}, ${python:Depends},
 Description: <insert up to 60 chars description>
  <insert long description, indented with spaces>
 
-Package: pymor-demos
+Package: python-pymor
 Architecture: all
-Depends: pymor-base
+Depends: ${misc:Depends}, python-pymor-base
 Description: <insert up to 60 chars description>
  <insert long description, indented with spaces>
+
+Package: python-pymor-demos
+Architecture: all
+Depends: ${misc:Depends}, python-pymor
+Description: <insert up to 60 chars description>
+ <insert long description, indented with spaces>
+ 
+Package: python-pymor-doc
+Architecture: all
+Depends: ${misc:Depends}, python-pymor-base, python-sphinx, ${sphinxdoc:Depends} 
+Description: <insert up to 60 chars description>
+ <insert long description, indented with spaces>
+ 
