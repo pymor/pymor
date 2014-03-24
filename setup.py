@@ -166,7 +166,7 @@ def setup_package():
     revstring = write_version()
 
     _setup(
-        name='pymor',
+        name='pyMOR',
         version=revstring,
         author='pyMOR developers',
         author_email='pymor-dev@listserv.uni-muenster.de',
