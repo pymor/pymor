@@ -8,7 +8,7 @@ Build-Depends: debhelper (>= 8.0.0), python-pip, python-virtualenv, python-numpy
   python-sphinx, python-sympy, python-matplotlib, python-opengl,
   python-docopt, python-glumpy, python-pyvtk, 
   python-pytest-capturelog, python-pytest-cache, 
-  python-dev, python-execnet (>=1.1)
+  python-dev, python-execnet (>=1.1), dh-python
 Standards-Version: 3.9.4
 Homepage: http://pymor.org
 #Vcs-Git: git://git.debian.org/collab-maint/pymor-base.git
@@ -28,14 +28,14 @@ Description: <insert up to 60 chars description>
  <insert long description, indented with spaces>
 
 Package: python-pymor
-Architecture: all
-Depends: ${misc:Depends}, python-pymor-base
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}, python-pymor-base
 Description: <insert up to 60 chars description>
  <insert long description, indented with spaces>
 
 Package: python-pymor-demos
-Architecture: all
-Depends: ${misc:Depends}, python-pymor
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}, python-pymor, ipython, python-tk, python-zmq, python-matplotlib, python-opengl
 Description: <insert up to 60 chars description>
  <insert long description, indented with spaces>
  

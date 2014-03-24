@@ -11,18 +11,21 @@ PYLIBPATH := $(shell python -c "from distutils.command.build import build ; from
 export DH_VERBOSE=1
 export DH_OPTIONS=-v
 
-# dh $@ --with sphinxdoc,python2
-
 %:
-	dh $@ --with python2
+	dh $@ --with sphinxdoc,python2
 
 override_dh_auto_install:
-	python setup.py install --root=debian/pymor --install-layout=deb --install-lib=/usr/share/pymor-base/lib --install-scripts=/usr/share/pymor-base/bin
+	python setup.py install --root=debian/pymor --install-layout=deb --install-lib=/usr/share/pymor-base/lib --install-scripts=/usr/share/pymor-base/bin --install-data=/usr/share/pymor-base/share
+	dh_auto_install
 
 override_dh_auto_build:
+	# pretend we're on RTD to mock missing deps on import
+	READTHEDOCS=True python setup.py build_sphinx -b html
+	dh_auto_build
 
-# re-add test
-override_dh_test:
+override_dh_sphinxdoc-arch:
+	READTHEDOCS=True python setup.py build_sphinx -b html
+	# dh_sphinxdoc doesn't fail silently when there are no docs
 
 override_dh_clean:
 	dh_clean
