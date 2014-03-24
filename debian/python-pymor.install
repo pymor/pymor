@@ -1,0 +1,3 @@
+debian/pymor.pth usr/share/pyshared/
+debian/pymor/usr/share/pymor-base/lib/pymor usr/share/pymor-base/lib/
+debian/pymor/usr/share/pymor-base/bin usr/share/pymor-base/

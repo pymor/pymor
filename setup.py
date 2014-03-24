@@ -4,8 +4,8 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 # make sure we got distribute in place
-from distribute_setup import use_setuptools
-use_setuptools()
+#from distribute_setup import use_setuptools
+#use_setuptools()
 
 import sys
 import os
