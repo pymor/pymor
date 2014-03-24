@@ -2,4 +2,4 @@ src/pymordemos/ usr/share/pymor-demos/src
 testdata/ usr/share/pymor-demos/data
 debian/pymordemos.pth usr/share/pyshared/
 debian/pymor/usr/share/pymor-base/lib/pymordemos usr/share/pymor-demos/lib/
-debian/pymor-demo usr/bin
+src/pymor-demo usr/bin
