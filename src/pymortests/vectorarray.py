@@ -11,6 +11,9 @@ from pymortests.fixtures.vectorarray import \
      vector_array_pair_with_same_dim, vector_array_pair_with_different_dim, VectorArray)
 
 
+from pymor.core import NUMPY_INDEX_QUIRK
+
+
 def ind_complement(v, ind):
     if ind is None:
         return []

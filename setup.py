@@ -4,8 +4,8 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 # make sure we got distribute in place
-from distribute_setup import use_setuptools
-use_setuptools()
+#from distribute_setup import use_setuptools
+#use_setuptools()
 
 import sys
 import os
@@ -182,10 +182,9 @@ def setup_package():
         setup_requires=setup_requires,
         tests_require=tests_require,
         install_requires=install_requires,
-        classifiers=['Development Status :: 3 - Alpha',
+        classifiers=['Development Status :: 4 - Beta',
             'License :: OSI Approved :: BSD License',
             'Programming Language :: Python :: 2.7',
-            'Programming Language :: Python :: 3',
             'Intended Audience :: Science/Research',
             'Topic :: Scientific/Engineering :: Mathematics',
             'Topic :: Scientific/Engineering :: Visualization'],

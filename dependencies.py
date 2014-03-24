@@ -2,7 +2,8 @@ tests_require = ['pytest', 'pytest-cache', 'pytest-capturelog']
 install_requires = ['Cython', 'numpy', 'scipy', 'Sphinx', 'docopt', 'dogpile.cache']
 pre_setup_requires = ['cython', 'numpy']
 setup_requires = pre_setup_requires
-install_suggests = ['ipython', 'ipdb', 'matplotlib', 'PyOpenGL', 'PySide', 'glumpy', 'pyvtk'] + tests_require
+install_suggests = ['ipython', 'ipdb', 'matplotlib', 'PyOpenGL', 'PySide', 'glumpy'] + tests_require
+#install_suggests = ['ipython', 'ipdb', 'matplotlib', 'pyvtk', 'sympy', 'PyOpenGL', 'PySide', 'glumpy'] + tests_require
 
 import_names = {'ipython': 'IPython',
                 'pytest-cache': 'pytest_cache',
