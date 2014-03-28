@@ -64,7 +64,7 @@ NO_VERSION = Version(NO_VERSIONSTRING)
 
 try:
     import pymor.version as _version
-    revstring = _version.revstring
+    revstring = getattr(_version, 'revstring', NO_VERSIONSTRING)
 except ImportError:
     import os.path
     import subprocess
