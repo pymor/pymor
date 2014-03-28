@@ -101,7 +101,10 @@ def _numpy_monkey():
 def write_version():
     filename = os.path.join(os.path.dirname(__file__), 'src', 'pymor', 'version.py')
     try:
-        revstring = subprocess.check_output(['git', 'describe', '--tags', '--candidates', '20', '--match', '*.*.*']).strip()
+        if 'PYMOR_DEB_VERSION' in os.environ:
+            revstring = os.environ['PYMOR_DEB_VERSION']
+        else:
+            revstring = subprocess.check_output(['git', 'describe', '--tags', '--candidates', '20', '--match', '*.*.*']).strip()
         with open(filename, 'w') as out:
             out.write('revstring = \'{}\''.format(revstring))
     except:
