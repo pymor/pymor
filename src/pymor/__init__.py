@@ -2,6 +2,7 @@
 # Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+import os
 
 from pymor.defaults import defaults
 
@@ -11,6 +12,9 @@ class Version(object):
 
     def __init__(self, revstring):
 
+        # special casing for debian versions like '0.1.3~precise~ppa9'
+        if '~' in revstring:
+            revstring = revstring[:revstring.index('~')]
         revstringparts = revstring.strip().split('-')
         if len(revstringparts) not in (1, 3):
             raise ValueError('Invalid revstring')
@@ -63,8 +67,11 @@ NO_VERSIONSTRING = '0.0.0-0-0'
 NO_VERSION = Version(NO_VERSIONSTRING)
 
 try:
-    import pymor.version as _version
-    revstring = getattr(_version, 'revstring', NO_VERSIONSTRING)
+    if 'PYMOR_DEB_VERSION' in os.environ:
+        revstring = os.environ['PYMOR_DEB_VERSION']
+    else:
+        import pymor.version as _version
+        revstring = getattr(_version, 'revstring', NO_VERSIONSTRING)
 except ImportError:
     import os.path
     import subprocess
