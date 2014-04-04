@@ -185,7 +185,8 @@ if HAVE_ALL:
             vmin = np.min(U) if self.vmin is None else self.vmin
             vmax = np.max(U) if self.vmax is None else self.vmax
             U -= vmin
-            U /= float(vmax - vmin)
+            if (vmax - vmin) > 0:
+                U /= float(vmax - vmin)
             if self.codim == 2:
                 self.U = U[self.entity_map]
             else:
