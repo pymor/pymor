@@ -93,104 +93,103 @@ if HAVE_ALL:
             super(GlumpyPatchWidget, self).__init__(parent)
             self.setMinimumSize(300, 300)
             self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
+
             subentities, coordinates, entity_map = flatten_grid(grid)
+
             self.subentities = subentities
-            self.coordinates = coordinates
             self.entity_map = entity_map
             self.reference_element = grid.reference_element
-            self.U = np.zeros(len(entity_map))
             self.vmin = vmin
             self.vmax = vmax
             self.bounding_box = bounding_box
             self.codim = codim
             self.update_vbo = False
+            bb = self.bounding_box
+            self.size = np.array([bb[1][0] - bb[0][0], bb[1][1] - bb[0][1]])
+            self.scale = 1 / self.size
+            self.shift = - np.array(bb[0]) - self.size / 2
+
+            # setup buffers
+            if self.reference_element == triangle:
+                if codim == 2:
+                    self.vertex_data = np.empty(len(coordinates),
+                                                dtype=[('position', 'f4', 4), ('color', 'f4', 4)])
+                    self.indices = subentities
+                else:
+                    self.vertex_data = np.empty(len(subentities) * 3,
+                                                dtype=[('position', 'f4', 4), ('color', 'f4', 4)])
+                    self.indices = np.arange(len(subentities) * 3, dtype=np.uint32)
+            else:
+                if codim == 2:
+                    self.vertex_data = np.empty(len(coordinates),
+                                                dtype=[('position', 'f4', 4), ('color', 'f4', 4)])
+                    self.indices = np.vstack((subentities[:, 0:3], subentities[:, [0, 2, 3]]))
+                else:
+                    self.vertex_data = np.empty(len(subentities) * 6,
+                                                dtype=[('position', 'f4', 4), ('color', 'f4', 4)])
+                    self.indices = np.arange(len(subentities) * 6, dtype=np.uint32)
+
+            self.vertex_data['position'][:, 2] = 0
+            self.vertex_data['position'][:, 3] = 0.5
+            self.vertex_data['color'] = 1
+
+            self.set_coordinates(coordinates)
+            self.set(np.zeros(grid.size(codim)))
 
         def resizeGL(self, w, h):
             gl.glViewport(0, 0, w, h)
             gl.glLoadIdentity()
             self.update()
 
-        def upload_buffer(self):
-            if self.codim == 2:
-                self.vbo.vertices['color'][:, 0] = self.U
-            elif self.reference_element == triangle:
-                self.vbo.vertices['color'][:, 0] = np.repeat(self.U, 3)
-            else:
-                self.vbo.vertices['color'][:, 0] = np.tile(np.repeat(self.U, 3), 2)
-            self.vbo.upload()
-            self.update_vbo = False
-
         def initializeGL(self):
             gl.glClearColor(1.0, 1.0, 1.0, 1.0)
             self.shaders_program = link_shader_program(compile_vertex_shader(VS))
-            bb = self.bounding_box
-            size = np.array([bb[1][0] - bb[0][0], bb[1][1] - bb[0][1]])
-            scale = 1 / size
-            shift = - np.array(bb[0]) - size / 2
-            if self.reference_element == triangle:
-                if self.codim == 2:
-                    x, y = (self.coordinates[:, 0] + shift[0]) * scale[0],\
-                        (self.coordinates[:, 1] + shift[1]) * scale[1]
-                    lpos = np.array([(x[i], y[i], 0, 0.5) for i in xrange(len(self.entity_map))],
-                                    dtype='f')
-                    vertex_data = np.array([(lpos[i], (1, 1, 1, 1)) for i in xrange(len(self.entity_map))],
-                                           dtype=[('position', 'f4', 4), ('color', 'f4', 4)])
-                    self.vbo = VertexBuffer(vertex_data, indices=self.subentities)
-                else:
-                    num_entities = len(self.subentities)
-                    vertex_data = np.empty(num_entities * 3, dtype=[('position', 'f4', 4), ('color', 'f4', 4)])
-                    VERTEX_POS = self.coordinates[self.subentities]
-                    VERTEX_POS += shift
-                    VERTEX_POS *= scale
-                    vertex_data['position'][:, 0:2] = VERTEX_POS.reshape((-1, 2))
-                    vertex_data['position'][:, 2] = 0
-                    vertex_data['position'][:, 3] = 0.5
-                    vertex_data['color'] = 1
-                    self.vbo = VertexBuffer(vertex_data, indices=np.arange(num_entities * 3, dtype=np.uint32))
-            else:
-                if self.codim == 0:
-                    num_entities = len(self.subentities)
-                    vertex_data = np.empty(num_entities * 6, dtype=[('position', 'f4', 4), ('color', 'f4', 4)])
-                    VERTEX_POS = self.coordinates[self.subentities]
-                    VERTEX_POS += shift
-                    VERTEX_POS *= scale
-                    vertex_data['position'][0:num_entities * 3, 0:2] = VERTEX_POS[:, 0:3, :].reshape((-1, 2))
-                    vertex_data['position'][num_entities * 3:, 0:2] = VERTEX_POS[:, [0, 2, 3], :].reshape((-1, 2))
-                    vertex_data['position'][:, 2] = 0
-                    vertex_data['position'][:, 3] = 0.5
-                    vertex_data['color'] = 1
-                    self.vbo = VertexBuffer(vertex_data, indices=np.arange(num_entities * 6, dtype=np.uint32))
-                else:
-                    x, y = (self.coordinates[:, 0] + shift[0]) * scale[0],\
-                        (self.coordinates[:, 1] + shift[1]) * scale[1]
-                    lpos = np.array([(x[i], y[i], 0, 0.5) for i in xrange(len(self.entity_map))],
-                                    dtype='f')
-                    vertex_data = np.array([(lpos[i], (1, 1, 1, 1)) for i in xrange(len(self.entity_map))],
-                                           dtype=[('position', 'f4', 4), ('color', 'f4', 4)])
-                    self.vbo = VertexBuffer(vertex_data, indices=np.vstack((self.subentities[:, 0:3],
-                                                                            self.subentities[:, [0, 2, 3]])))
-
             gl.glUseProgram(self.shaders_program)
-            self.upload_buffer()
+            self.vbo = VertexBuffer(self.vertex_data, indices=self.indices)
 
         def paintGL(self):
             if self.update_vbo:
-                self.upload_buffer()
+                self.vbo.upload()
+                self.update_vbo = False
             gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
             self.vbo.draw(gl.GL_TRIANGLES, 'pc')
 
+        def set_coordinates(self, coordinates):
+            if self.codim == 2:
+                self.vertex_data['position'][:, 0:2] = coordinates
+                self.vertex_data['position'][:, 0:2] += self.shift
+                self.vertex_data['position'][:, 0:2] *= self.scale
+            elif self.reference_element == triangle:
+                VERTEX_POS = coordinates[self.subentities]
+                VERTEX_POS += self.shift
+                VERTEX_POS *= self.scale
+                self.vertex_data['position'][:, 0:2] = VERTEX_POS.reshape((-1, 2))
+            else:
+                num_entities = len(self.subentities)
+                VERTEX_POS = coordinates[self.subentities]
+                VERTEX_POS += self.shift
+                VERTEX_POS *= self.scale
+                self.vertex_data['position'][0:num_entities * 3, 0:2] = VERTEX_POS[:, 0:3, :].reshape((-1, 2))
+                self.vertex_data['position'][num_entities * 3:, 0:2] = VERTEX_POS[:, [0, 2, 3], :].reshape((-1, 2))
+            self.update_vbo = True
+            self.update()
+
         def set(self, U):
-            # normalize U
-            U = np.array(U)
+            U_buffer = self.vertex_data['color'][:, 0]
+            if self.codim == 2:
+                U_buffer[:] = U[self.entity_map]
+            elif self.reference_element == triangle:
+                U_buffer[:] = np.repeat(U, 3)
+            else:
+                U_buffer[:] = np.tile(np.repeat(U, 3), 2)
+
+            # normalize
             vmin = np.min(U) if self.vmin is None else self.vmin
             vmax = np.max(U) if self.vmax is None else self.vmax
-            U -= vmin
+            U_buffer -= vmin
             if (vmax - vmin) > 0:
-                U /= float(vmax - vmin)
-            if self.codim == 2:
-                self.U = U[self.entity_map]
-            else:
-                self.U = U
+                U_buffer /= float(vmax - vmin)
+
             self.update_vbo = True
             self.update()
 
