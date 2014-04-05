@@ -124,8 +124,8 @@ class Test_Interface(TestInterface):
             self.assertTrue("DeprecationWarning" in str(w[-1].message))
 
     def testVersion(self):
-        self.assertGreater(pymor.version, pymor.NO_VERSION)
-        self.assertIsInstance(pymor.version, pymor.Version)
+        self.assertGreater(pymor.VERSION, pymor.NO_VERSION)
+        self.assertIsInstance(pymor.VERSION, pymor.Version)
 
 
 @SubclassForImplemetorsOf(BasicInterface)
