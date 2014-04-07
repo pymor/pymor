@@ -37,3 +37,4 @@ override_dh_clean:
 	rm -f docs/docutils.conf
 	rm -rf build/ dist/
 	find . -name "*.pyc" -exec rm {} \;
+	rm -f src/pymor/version.py
