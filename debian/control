@@ -1,18 +1,18 @@
 Source: pymor
 Section: math
 Priority: extra
-Maintainer: Rene Milk <koshi@springlobby.info>  
+Maintainer: Rene Milk <rene.milk@uni-muenster.de>  
 Build-Depends: debhelper (>= 8.0.0), python-pip, python-virtualenv, python-numpy,
   python-scipy, python-pytest, python-pyside, 
   python-dogpile.cache, python-dogpile.core, cython, 
   python-sphinx, python-sympy, python-matplotlib, python-opengl,
   python-docopt, python-glumpy, python-pyvtk, 
   python-pytest-capturelog, python-pytest-cache, 
-  python-dev, python-execnet (>=1.1), dh-python, dh-make
+  python-dev, python-execnet (>=1.1), python3, dh-make
 Standards-Version: 3.9.4
 Homepage: http://pymor.org
 #Vcs-Git: git://git.debian.org/collab-maint/pymor-base.git
-#Vcs-Browser: http://git.debian.org/?p=collab-maint/pymor-base.git;a=summary
+Vcs-Browser: https://github.com/pymor/pymor/tree/0.2.x
 
 Package: python-pymor-base
 Architecture: any
@@ -20,28 +20,27 @@ Depends: ${misc:Depends}, ${python:Depends},
   python-pip, python-virtualenv, python-numpy,
   python-scipy, python-pytest, python-pyside,
   python-dogpile.cache, python-dogpile.core, cython, 
-  python-sphinx, python-sympy, python-matplotlib, python-opengl,
+  python-matplotlib, python-opengl,
   python-docopt, python-glumpy, python-pyvtk,
-  python-pytest-capturelog, python-pytest-cache, 
-  python-dev, python-execnet (>=1.1)
-Description: <insert up to 60 chars description>
+  python-dev 
+Description: basic dependency tracking for all other pyMOR packages
  <insert long description, indented with spaces>
 
 Package: python-pymor
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}, python-pymor-base
-Description: <insert up to 60 chars description>
+Description: makes pyMOR importable system-wide
  <insert long description, indented with spaces>
 
 Package: python-pymor-demos
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}, python-pymor, ipython, python-tk, python-zmq, python-matplotlib, python-opengl
-Description: <insert up to 60 chars description>
+Description: makes all included demos launchable via "pymor-demo" script
  <insert long description, indented with spaces>
  
 Package: python-pymor-doc
 Architecture: all
 Depends: ${misc:Depends}, python-pymor-base, python-sphinx, ${sphinxdoc:Depends} 
-Description: <insert up to 60 chars description>
+Description: auto-generated sphinx-html documenttaion for python-pymor
  <insert long description, indented with spaces>
  
