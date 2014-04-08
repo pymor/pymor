@@ -3,15 +3,26 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-'''
-Proof of concept for solving the poisson equation in 1D using linear finite elements and our grid interface
+'''Proof of concept for solving the poisson equation in 2D using linear finite elements and our grid interface
+
+Usage:
+    cg2.py PROBLEM-NUMBER N PLOT
+
+Arguments:
+    PROBLEM-NUMBER    {0,1}, selects the problem to solve
+
+    N                 Triangle count per direction
+
+    PLOT              plot solution after solve?
+
+Options:
+    -h, --help    this message
 '''
 
 from __future__ import absolute_import, division, print_function
 
-import sys
 import math as m
-
+from docopt import docopt
 import numpy as np
 
 from pymor.analyticalproblems import EllipticProblem
@@ -58,9 +69,8 @@ def cg2_demo(nrhs, n, plot):
         discretization.visualize(U, title='Solution for diffusionl in [0.1, 1]')
 
 if __name__ == '__main__':
-    if len(sys.argv) < 4:
-        sys.exit('Usage: {} PROBLEM-NUMBER N PLOT'.format(sys.argv[0]))
-    nrhs = int(sys.argv[1])
-    n = int(sys.argv[2])
-    plot = bool(int(sys.argv[3]))
+    args = docopt(__doc__)
+    nrhs = int(args['PROBLEM-NUMBER'])
+    n = int(args['N'])
+    plot = bool(args['PLOT'])
     cg2_demo(nrhs, n, plot)
