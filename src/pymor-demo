@@ -4,59 +4,48 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-'''Launcher script for all available pyMOR demos. 
-
-Usage:
-  pymor-demo.py ( (--help | --list )  | DEMO_NAME [DEMO_OPTIONS]... ) 
-
-
-Arguments:
-  DEMO_NAME     name of the demo you want to run. Use '-l' to list available demos.
-
-  DEMO_OPTIONS  Most of pyMOR's demos require their own arguments, pass them here.
-
-  
-Options:
-  -h, --help                  Show this message.
-
-  -l, --list                  List available demo names.
-'''
-
 from __future__ import absolute_import, division, print_function
 
 import pkgutil
 import pprint
 import pymordemos
-from docopt import docopt
 import sys
 import runpy 
+import argparse
+import functools
+import docopt
 
-
-if __name__ == '__main__':          
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Launcher script for all available pyMOR demos.',
+                                     epilog='Example: {} burgers 1'.format(sys.argv[0]))
+    def _run(module):
+        # only need to remove the modname from args, rest is automatic
+        del sys.argv[1]
+        runpy.run_module(module, init_globals=None, run_name='__main__', alter_sys=True)
+        
+    subparsers = parser.add_subparsers(description="selects the name of the demo you want to run. Available:")
     modules = []
+    shorts = []
     for _, module_name, _ in pkgutil.walk_packages(pymordemos.__path__, pymordemos.__name__ + '.'):
         try:
-            foo = __import__(module_name, level=0)
+            foo = __import__(module_name)
+            short = module_name[len('pymordemos.'):]
+            usage = None
+            try:
+                doc = getattr(foo, short).__doc__
+                lop = docopt.docopt(doc, argv=[])
+            except docopt.DocoptExit as e:
+                usage = e.usage[e.usage.index('.py')+3:]
+            except Exception as ep:
+                continue
+            
             modules.append(module_name)
+            shorts.append(short)
+            sub = subparsers.add_parser(short)
+            sub.add_argument('DEMO_OPTIONS', nargs='+', help=usage)
+            sub.set_defaults(func=functools.partial(_run, module=module_name))
         except (TypeError, ImportError):
             pass
 
-    args = docopt(__doc__)
-
-    def print_available():
-        print('Available pyMOR demo names:')
-        pprint.pprint([m[len('pymordemos.'):] for m in modules])
-    
-    if args['--list']:
-        print_available()
-        sys.exit(0)
-    
-    mod_name = 'pymordemos.' + args['DEMO_NAME']
-    if mod_name not in modules:
-        print('{} is not a valid demo name'.format(args['DEMO_NAME']))
-        print_available()
-        sys.exit(255)
-        
-    # only need to remove the modname from args, rest is automatic
-    del sys.argv[1]
-    runpy.run_module(mod_name, init_globals=None, run_name='__main__', alter_sys=True)
+    args = parser.parse_args() 
+    args.func()

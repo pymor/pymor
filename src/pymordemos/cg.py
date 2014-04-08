@@ -3,15 +3,30 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-'''
-Proof of concept for solving the poisson equation in 1D using linear finite elements and our grid interface
+'''Proof of concept for solving the poisson equation in 2D using linear finite elements and our grid interface
+
+Usage:
+    cg.py PROBLEM-NUMBER DIRICHLET-NUMBER NEUMANN-COUNT
+
+Arguments:
+    PROBLEM-NUMBER    {0,1}, selects the problem to solve
+
+    DIRICHLET-NUMBER  {0,1,2}, selects the dirichlet data function
+
+    NEUMANN-COUNT  0: no neumann boundary
+                   1: right edge is neumann boundary
+                   2: right+top edges are neumann boundary
+                   3: right+top+bottom edges are neumann boundary
+
+Options:
+    -h, --help    this message
 '''
 
 from __future__ import absolute_import, division, print_function
 
 import sys
 import math as m
-
+from docopt import docopt
 import numpy as np
 
 from pymor.analyticalproblems import EllipticProblem
@@ -60,9 +75,8 @@ def cg_demo(nrhs, ndirichlet, nneumann):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 4:
-        sys.exit('Usage: {} RHS-NUMBER BOUNDARY-DATA-NUMBER NEUMANN-COUNT'.format(sys.argv[0]))
-    nrhs = int(sys.argv[1])
-    ndirichlet = int(sys.argv[2])
-    nneumann = int(sys.argv[3])
+    args = docopt(__doc__)
+    nrhs = int(args['PROBLEM-NUMBER'])
+    ndirichlet = int(args['DIRICHLET-NUMBER'])
+    nneumann = int(args['NEUMANN-COUNT'])
     cg_demo(nrhs, ndirichlet, nneumann)
