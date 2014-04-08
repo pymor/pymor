@@ -85,8 +85,8 @@ class SimPanel(QtGui.QWidget):
         super(SimPanel, self).__init__(parent)
         self.sim = sim
         box = QtGui.QHBoxLayout()
-        self.solution = GlumpyPatchWidget(self, self.sim.grid)
-        self.bar = ColorBarWidget(self)
+        self.solution = GlumpyPatchWidget(self, self.sim.grid, vmin=0., vmax=0.8)
+        self.bar = ColorBarWidget(self, vmin=0., vmax=0.8)
         box.addWidget(self.solution, 2)
         box.addWidget(self.bar, 2)
         self.param_panel = ParamRuler(self, sim)
@@ -103,7 +103,6 @@ class SimPanel(QtGui.QWidget):
         print('Simtime {}'.format(time.time() - tic))
         tic = time.time()
         self.solution.set(U.data.ravel())
-        self.bar.set(U.data.ravel())
         self.param_panel.enable(True)
         print('Drawtime {}'.format(time.time() - tic))
 
