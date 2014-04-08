@@ -195,23 +195,11 @@ if HAVE_ALL:
 
     class ColorBarWidget(QGLWidget):
 
-        def __init__(self, parent, vmin=None, vmax=None):
+        def __init__(self, parent, U=None, vmin=None, vmax=None):
             super(ColorBarWidget, self).__init__(parent)
-            fm = QFontMetrics(self.font())
-            self.vmin = float(vmin or 0)
-            self.vmax = float(vmax or 1)
-            precision = m.log(max(abs(self.vmin), abs(self.vmax) / abs(self.vmin - self.vmax)), 10) + 1
-            precision = int(min(max(precision, 3), 8))
-            self.vmin_str = format(('{:.' + str(precision) + '}').format(self.vmin))
-            self.vmax_str = format(('{:.' + str(precision) + '}').format(self.vmax))
-            self.vmin_width = fm.width(self.vmin_str)
-            self.vmax_width = fm.width(self.vmax_str)
-            self.text_height = fm.height() * 1.5
-            self.text_ascent = fm.ascent() * 1.5
-            self.text_descent = fm.descent() * 1.5
-            self.setMinimumSize(max(self.vmin_width, self.vmax_width) + 20, 300)
             self.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding))
             self.setAutoFillBackground(False)
+            self.set(U, vmin, vmax)
 
         def resizeGL(self, w, h):
             gl.glViewport(0, 0, w, h)
@@ -223,10 +211,22 @@ if HAVE_ALL:
             self.shaders_program = link_shader_program(compile_vertex_shader(VS))
             gl.glUseProgram(self.shaders_program)
 
-        def set(self, U):
+        def set(self, U=None, vmin=None, vmax=None):
             # normalize U
-            self.vmin = np.min(U) if self.vmin is None else self.vmin
-            self.vmax = np.max(U) if self.vmax is None else self.vmax
+            fm = QFontMetrics(self.font())
+            self.vmin = vmin if vmin is not None else (np.min(U) if U is not None else 0.)
+            self.vmax = vmax if vmax is not None else (np.max(U) if U is not None else 1.)
+            precision = m.log(max(abs(self.vmin), abs(self.vmax) / abs(self.vmin - self.vmax)), 10) + 1
+            precision = int(min(max(precision, 3), 8))
+            self.vmin_str = format(('{:.' + str(precision) + '}').format(self.vmin))
+            self.vmax_str = format(('{:.' + str(precision) + '}').format(self.vmax))
+            self.vmin_width = fm.width(self.vmin_str)
+            self.vmax_width = fm.width(self.vmax_str)
+            self.text_height = fm.height() * 1.5
+            self.text_ascent = fm.ascent() * 1.5
+            self.text_descent = fm.descent() * 1.5
+            self.setMinimumSize(max(self.vmin_width, self.vmax_width) + 20, 300)
+            self.update()
 
         def paintGL(self):
             gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
