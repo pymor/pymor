@@ -16,13 +16,13 @@ Vcs-Browser: https://github.com/pymor/pymor/tree/0.2.x
 
 Package: python-pymor-base
 Architecture: any
-Depends: ${misc:Depends}, ${python:Depends},
+Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends},
   python-pip, python-virtualenv, python-numpy,
   python-scipy, python-pytest, python-pyside,
   python-dogpile.cache, python-dogpile.core, cython, 
   python-matplotlib, python-opengl,
   python-docopt, python-glumpy, python-pyvtk,
-  python-dev 
+  python-dev, python
 Description: basic dependency tracking for all other pyMOR packages
  <insert long description, indented with spaces>
 
@@ -34,7 +34,7 @@ Description: makes pyMOR importable system-wide
 
 Package: python-pymor-demos
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, python-pymor, ipython, python-tk, python-zmq, python-matplotlib, python-opengl
+Depends: ${misc:Depends}, ${shlibs:Depends}, python, python-pymor, ipython, python-tk, python-matplotlib, python-opengl
 Description: makes all included demos launchable via "pymor-demo" script
  <insert long description, indented with spaces>
  
