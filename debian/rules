@@ -17,18 +17,17 @@ export PYMOR_DEB_VERSION=$(shell dpkg-parsechangelog | sed -n -e 's/^Version: //
 	dh $@ --with sphinxdoc,python2
 
 override_dh_auto_install:
-	python setup.py install --root=debian/pymor --install-layout=deb --install-lib=/usr/share/pymor-base/lib --install-scripts=/usr/share/pymor-base/bin --install-data=/usr/share/pymor-base/share
+	python setup.py install --root=debian/pymor --install-layout=deb
 	dh_auto_install
 
 override_dh_auto_build:
 	# pretend we're on RTD to mock missing deps on import
-	python setup.py build
 	READTHEDOCS=True python setup.py build_sphinx -b html
 	dh_auto_build
 
 override_dh_sphinxdoc-arch:
-	READTHEDOCS=True python setup.py build_sphinx -b html
-	# dh_sphinxdoc doesn't fail silently when there are no docs
+
+override_dh_auto_test:
 
 override_dh_clean:
 	dh_clean
