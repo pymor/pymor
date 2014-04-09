@@ -32,18 +32,18 @@
 
         <section id="main_content">
           <h1>
-<a name="pymor---model-order-reduction-with-python" class="anchor" href="#pymor---model-order-reduction-with-python"><span class="octicon octicon-link"></span></a>pyMOR - Model Order Reduction with python</h1>
+<a name="pymor---model-order-reduction-with-python" class="anchor" href="#pymor---model-order-reduction-with-python"><span class="octicon octicon-link"></span></a>pyMOR - Model Order Reduction with Python</h1>
 
 <p>pyMOR is a software library developed at the University of Münster for building
-model order reduction applications with the Python programming language.  Its
+model order reduction applications with the Python programming language. Its
 main focus lies on the reduction of parameterized partial differential
-equations using the reduced basis method.  All algorithms in pyMOR are
+equations using the reduced basis method. All algorithms in pyMOR are
 formulated in terms of abstract interfaces for seamless integration with
 external high-dimensional PDE-solver. Moreover, pure Python implementations of
 finite element and finite volume discretizations using the NumPy/SciPy
 scientific computing stack are provided for getting started quickly.</p>
 
-<p><strong>NOTE</strong> pyMOR is still in early development.  Should you have any questions
+<p><strong>NOTE</strong> pyMOR is still in early development. Should you have any questions
 regarding pyMOR or wish to contribute, do not hesitate to contact us!</p>
 
 <p><a href="https://travis-ci.org/pymor/pymor"><img src="https://travis-ci.org/pymor/pymor.png?branch=master" alt="Build Status"></a></p>
@@ -51,7 +51,7 @@ regarding pyMOR or wish to contribute, do not hesitate to contact us!</p>
 <h2>
 <a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h2>
 
-<p>Copyright (c) 2013, Felix Albrecht, Rene Milk, Stephan Rave<br>
+<p>Copyright (c) 2013, Rene Milk, Stephan Rave, Felix Schindler
 All rights reserved.</p>
 
 <p>Redistribution and use in source and binary forms, with or without
@@ -113,7 +113,7 @@ this virtualenv, and finally install pyMOR itself.</p>
 
 <p>The installation process can be customized using various command-line arguments.
 (See <code>./install.py --help</code>.) Most notable, the path of the virtualenv can be
-configured using the <code>--virtualenv-dir</code> option.  Moreover, if you intend to work
+configured using the <code>--virtualenv-dir</code> option. Moreover, if you intend to work
 directly inside the pyMOR source tree, use</p>
 
 <pre><code>./install.py --only-deps
@@ -140,7 +140,7 @@ virtualenv, this can be done by executing</p>
 <li>
 <p>Try out one of the provided demos, e.g. call</p>
 
-<pre><code>cd src/pymor/demos
+<pre><code>cd src/pymordemos
 ./thermalblock.py -ep --plot-solutions 2 2 3 16
 </code></pre>
 </li>
@@ -152,7 +152,7 @@ virtualenv, this can be done by executing</p>
 <pre><code>make doc
 </code></pre>
 
-<p>inside root directory of the pyMOR source tree. This will generate HTML
+<p>inside the root directory of the pyMOR source tree. This will generate HTML
 documentation in 'docs/_build/html'. The documentation is also available
 online on <a href="http://pymor.readthedocs.org/">Read the Docs</a>.</p>
 
