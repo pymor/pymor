@@ -14,7 +14,7 @@ Homepage: http://pymor.org
 #Vcs-Git: git://git.debian.org/collab-maint/pymor-base.git
 Vcs-Browser: https://github.com/pymor/pymor/tree/0.2.x
 
-Package: python-pymor-base
+Package: python-pymor
 Architecture: any
 Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends},
   python-pip, python-virtualenv, python-numpy,
@@ -23,13 +23,7 @@ Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends},
   python-matplotlib, python-opengl,
   python-docopt, python-glumpy, python-pyvtk,
   python-dev, python
-Description: basic dependency tracking for all other pyMOR packages
- <insert long description, indented with spaces>
-
-Package: python-pymor
-Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, python-pymor-base
-Description: makes pyMOR importable system-wide
+Description: makes pyMOR importable system-wide + dependency tracking
  <insert long description, indented with spaces>
 
 Package: python-pymor-demos
@@ -40,7 +34,7 @@ Description: makes all included demos launchable via "pymor-demo" script
  
 Package: python-pymor-doc
 Architecture: all
-Depends: ${misc:Depends}, python-pymor-base, python-sphinx, ${sphinxdoc:Depends} 
+Depends: ${misc:Depends}, python-pymor, python-sphinx, ${sphinxdoc:Depends} 
 Description: auto-generated sphinx-html documenttaion for python-pymor
  <insert long description, indented with spaces>
  
