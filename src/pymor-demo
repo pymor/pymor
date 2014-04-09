@@ -13,7 +13,7 @@ import sys
 import runpy 
 import argparse
 import functools
-import docopt
+import sys
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Launcher script for all available pyMOR demos.',
@@ -22,30 +22,33 @@ if __name__ == '__main__':
         # only need to remove the modname from args, rest is automatic
         del sys.argv[1]
         runpy.run_module(module, init_globals=None, run_name='__main__', alter_sys=True)
-        
-    subparsers = parser.add_subparsers(description="selects the name of the demo you want to run. Available:")
+        sys.exit(0)
+    
     modules = []
     shorts = []
     for _, module_name, _ in pkgutil.walk_packages(pymordemos.__path__, pymordemos.__name__ + '.'):
         try:
             foo = __import__(module_name)
-            short = module_name[len('pymordemos.'):]
-            usage = None
-            try:
-                doc = getattr(foo, short).__doc__
-                lop = docopt.docopt(doc, argv=[])
-            except docopt.DocoptExit as e:
-                usage = e.usage[e.usage.index('.py')+3:]
-            except Exception as ep:
-                continue
-            
+            short = module_name[len('pymordemos.'):] 
             modules.append(module_name)
             shorts.append(short)
-            sub = subparsers.add_parser(short)
-            sub.add_argument('DEMO_OPTIONS', nargs='+', help=usage)
-            sub.set_defaults(func=functools.partial(_run, module=module_name))
         except (TypeError, ImportError):
             pass
+        
+    def usage():
+        msg = '''Usage:
+    {} DEMO_NAME | -h [DEMO_OPTIONS]
+    
+Arguments:
+    -h           this message
+    DEMO_NAME    select one from these: {}
+    DEMO_OPTIONS any arguments for the demo, including -h for detailed help
+'''.format(sys.argv[0], ','.join(shorts))
+        print(msg)
+        sys.exit(0)
 
-    args = parser.parse_args() 
-    args.func()
+    if len(sys.argv) < 2:
+        usage()
+    if sys.argv[1] in shorts:
+        _run(modules[shorts.index(sys.argv[1])])
+    usage()
