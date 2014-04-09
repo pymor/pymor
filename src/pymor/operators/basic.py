@@ -28,6 +28,7 @@ from numbers import Number
 import numpy as np
 from scipy.sparse import issparse
 from scipy.sparse.linalg import bicgstab, spsolve, spilu, LinearOperator
+from scipy.io import mmwrite, savemat
 
 from pymor import defaults
 from pymor.core import abstractmethod
@@ -411,6 +412,28 @@ class NumpyMatrixBasedOperator(AssemblableOperatorBase):
             return NumpyVectorArray(self._last_op._matrix.dot(U_array.T).T, copy=False)
         else:
             return self.assemble(mu).apply(U, ind=ind)
+
+    def save_matrix(self, filename, matrix_name=None, format='matlab', mu=None):
+        '''Save matrix of operator to a file.
+
+        Parameters
+        ----------
+        filename
+            Name of output file.
+        matrix_name
+            The name, the output matrix is given. (Comment field is used in
+            case of Matrix Market format.) If `None`, the |Operator|'s `name`
+            is used.
+        format
+            Output file format. Either `matlab` or `matrixmarket`.
+        '''
+        assert format in {'matlab', 'matrixmarket'}
+        matrix = self.assemble(mu)._matrix
+        matrix_name = matrix_name or self.name
+        if format is 'matlab':
+            savemat(filename, {matrix_name: matrix})
+        else:
+            mmwrite(filename, matrix, comment=matrix_name)
 
 
 class NumpyMatrixOperator(NumpyMatrixBasedOperator):
