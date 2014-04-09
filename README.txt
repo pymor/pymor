@@ -124,7 +124,7 @@ To build the documentation yourself, execute
     make doc
 
 inside the root directory of the pyMOR source tree. This will generate
-HTML documentation in 'docs/_build/html'.
+HTML documentation in docs/_build/html.
 
 Setting up an Environment for pyMOR Development
 -----------------------------------------------
@@ -150,7 +150,7 @@ and, optionally, switch to the branch you are interested in, e.g.
 
 Finally add pyMOR to the path of your virtualenv:
 
-    echo "$PYMOR_SOURCE_DIR" > $VIRTUAL_ENV/lib/python2.7/site-packages/pymor
+    echo "$PYMOR_SOURCE_DIR" > $VIRTUAL_ENV/lib/python2.7/site-packages/pymor.pth
 
 This will make pyMOR importable inside the virtualenv and will override
 any other pyMOR versions installed on the system.
