@@ -12,37 +12,37 @@ from pymor.parameters.interfaces import ParameterFunctionalInterface
 
 
 class ProjectionParameterFunctional(ParameterFunctionalInterface):
-    '''|ParameterFunctional| which returns a component of the parameter.
+    '''|ParameterFunctional| returning a component of the given parameter.
 
     Parameters
     ----------
-    parameter_type
-        The |ParameterType| of the |Parameters| the functional takes.
-    component
+    component_name
         The name of the component to return.
+    component_shape
+        The shape of the component.
     coordinates
-        If not `None` return `mu[component][coordinates]` instead of
-        `mu[component]`.
+        If not `None` return `mu[component_name][coordinates]` instead of
+        `mu[component_name]`.
     name
         Name of the functional.
     '''
 
-    def __init__(self, parameter_name, parameter_shape, coordinates=None, name=None):
+    def __init__(self, component_name, component_shape, coordinates=None, name=None):
         self.name = name
-        if isinstance(parameter_shape, Number):
-            parameter_shape = tuple() if parameter_shape == 0 else (parameter_shape,)
-        self.build_parameter_type({parameter_name: parameter_shape}, local_global=True)
-        self.parameter_name = parameter_name
-        if sum(parameter_shape) > 1:
-            assert coordinates is not None and coordinates < parameter_shape
+        if isinstance(component_shape, Number):
+            component_shape = tuple() if component_shape == 0 else (component_shape,)
+        self.build_parameter_type({component_name: component_shape}, local_global=True)
+        self.component_name = component_name
+        if sum(component_shape) > 1:
+            assert coordinates is not None and coordinates < component_shape
         self.coordinates = coordinates
 
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)
         if self.coordinates is None:
-            return mu[self.parameter_name]
+            return mu[self.component_name]
         else:
-            return mu[self.parameter_name][self.coordinates]
+            return mu[self.component_name][self.coordinates]
 
 
 class GenericParameterFunctional(ParameterFunctionalInterface):
