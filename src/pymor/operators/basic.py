@@ -413,7 +413,7 @@ class NumpyMatrixBasedOperator(AssemblableOperatorBase):
         else:
             return self.assemble(mu).apply(U, ind=ind)
 
-    def save_matrix(self, filename, matrix_name=None, format='matlab', mu=None):
+    def export_matrix(self, filename, matrix_name=None, format='matlab', mu=None):
         '''Save matrix of operator to a file.
 
         Parameters
