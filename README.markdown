@@ -62,7 +62,7 @@ The latter makes a `pymor-demo` script available, which can be used to run
 all installed demos.
 
 
-Installation into a Virtualenv
+Installation into a virtualenv
 ------------------------------
 
 When installing pyMOR manually, we recommend installation into a dedicated
@@ -109,7 +109,7 @@ log!) You will most likely want to install [IPython](http://www.ipython.org)
 and, in particular, [matplotlib](http://matplotlib.org),
 [PyOpenGL](http://pyopengl.sourceforge.net/),
 [glumpy](https://code.google.com/p/glumpy/),
-as well as [PySide](http://qt-project.org/wiki/PySide). The latter
+and [PySide](http://qt-project.org/wiki/PySide). The latter
 packages are required for pyMOR's visualization routines. At the time
 of writing, PySide fails to install with current Sphinx versions, so we
 have to install an old one:
