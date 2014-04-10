@@ -35,15 +35,15 @@
 <a name="pymor---model-order-reduction-with-python" class="anchor" href="#pymor---model-order-reduction-with-python"><span class="octicon octicon-link"></span></a>pyMOR - Model Order Reduction with Python</h1>
 
 <p>pyMOR is a software library developed at the University of Münster for building
-model order reduction applications with the Python programming language. Its
+model order reduction applications with the Python programming language.  Its
 main focus lies on the reduction of parameterized partial differential
-equations using the reduced basis method. All algorithms in pyMOR are
+equations using the reduced basis method.  All algorithms in pyMOR are
 formulated in terms of abstract interfaces for seamless integration with
 external high-dimensional PDE-solver. Moreover, pure Python implementations of
 finite element and finite volume discretizations using the NumPy/SciPy
 scientific computing stack are provided for getting started quickly.</p>
 
-<p><strong>NOTE</strong> pyMOR is still in early development. Should you have any questions
+<p><strong>NOTE</strong> pyMOR is still in early development.  Should you have any questions
 regarding pyMOR or wish to contribute, do not hesitate to contact us!</p>
 
 <p><a href="https://travis-ci.org/pymor/pymor"><img src="https://travis-ci.org/pymor/pymor.png?branch=master" alt="Build Status"></a></p>
@@ -51,7 +51,7 @@ regarding pyMOR or wish to contribute, do not hesitate to contact us!</p>
 <h2>
 <a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h2>
 
-<p>Copyright (c) 2013, Rene Milk, Stephan Rave, Felix Schindler
+<p>Copyright (c) 2013, 2014, Rene Milk, Stephan Rave, Felix Schindler
 All rights reserved.</p>
 
 <p>Redistribution and use in source and binary forms, with or without
@@ -75,86 +75,132 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
 
 <h2>
-<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
+<a name="distribution-packages" class="anchor" href="#distribution-packages"><span class="octicon octicon-link"></span></a>Distribution Packages</h2>
 
-<p>We recommend the following way to install pyMOR with all its dependencies.</p>
+<p>Packages for Ubuntu 12.04 and 13.10 are available via our
+<a href="https://launchpad.net/%7Epymor/+archive/stable">PPA</a>:</p>
 
-<p>This procedure has been tested on the following platforms:</p>
-
-<pre><code>Ubuntu 12.04, Ubuntu 13.04, Arch Linux
+<pre><code>sudo apt-add-repository ppa:pymor/stable
+sudo apt-get update
+sudo apt-get install python-pymor
 </code></pre>
 
-<ol>
-<li><p>Open a terminal and make sure you have git and python installed on your
-computer. (On Debian based linux distributions (e.g. Ubunutu) use <code>sudo
-apt-get install git python2.7</code> to install both git and python.)</p></li>
-<li>
-<p>Clone the pyMOR main repository using</p>
+<p>Demo applications and documentation are packaged separately:</p>
 
-<pre><code>git clone https://github.com/pymor/pymor.git
+<pre><code>sudo apt-get install python-pymor-demos
+sudo apt-get install python-pymor-doc
 </code></pre>
 
-<p>This will create a directory named <code>pymor</code> in your current working directory.
-Change into this directory using</p>
+<p>The latter makes a <code>pymor-demo</code> script available, which can be used to run
+all installed demos.</p>
 
-<pre><code>cd pymor
-</code></pre>
-</li>
-<li>
-<p>Excecute the provided installation script</p>
+<h2>
+<a name="installation-into-a-virtualenv" class="anchor" href="#installation-into-a-virtualenv"><span class="octicon octicon-link"></span></a>Installation into a virtualenv</h2>
 
-<pre><code>./install.py
-</code></pre>
+<p>When installing pyMOR manually, we recommend installation into a dedicated
+Python <a href="http://www.virtualenv.org/">virtualenv</a>. On Debian based systems,
+install virtualenv using</p>
 
-<p>The installation script will ensure that all necessary system libraries and
-development headers are installed, create a new python virtual environment
-(virtualenv, see <a href="http://www.virtualenv.org">www.virtualenv.org</a>), install all necessary python packages into
-this virtualenv, and finally install pyMOR itself.</p>
-
-<p>The installation process can be customized using various command-line arguments.
-(See <code>./install.py --help</code>.) Most notable, the path of the virtualenv can be
-configured using the <code>--virtualenv-dir</code> option. Moreover, if you intend to work
-directly inside the pyMOR source tree, use</p>
-
-<pre><code>./install.py --only-deps
+<pre><code>sudo apt-get install python-virtualenv
 </code></pre>
 
-<p>to prevent the installation of pyMOR itself into the <code>site-packages</code> directory
-of the virtualenv. In this case, the installation script will add the pyMOR
-source tree to the <code>PYTHONPATH</code> of the virtualenv, so pyMOR will always be
-importable inside the virtualenv. (This can be prevented by adding the
-<code>--without-python-path</code> option.) Moreover</p>
+<p>On Ubuntu systems, you may also wish to install pyMOR's dependencies 
+system-wide using</p>
 
-<pre><code>python setup.py build_ext --inplace
+<pre><code>sudo apt-add-repository ppa:pymor/stable
+sudo apt-get update
+sudo apt-get build-dep python-pymor
 </code></pre>
 
-<p>will be automatically called, to build pyMOR's Cython extensions modules.</p>
-</li>
-<li>
-<p>Activate the new virtualenv. If you did not change the default path of the
-virtualenv, this can be done by executing</p>
+<p>Then create a new virtualenv and activate it:</p>
 
-<pre><code>source $HOME/virtualenv/pymor/bin/activate
+<pre><code>virtualenv --system-site-packages $PATH_TO_VIRTUALENV
+source $PATH_TO_VIRTUALENV/bin/activate
 </code></pre>
-</li>
-<li>
-<p>Try out one of the provided demos, e.g. call</p>
 
-<pre><code>cd src/pymordemos
-./thermalblock.py -ep --plot-solutions 2 2 3 16
+<p>The <code>--system-site-packages</code> flag makes Python packages installed
+by your distribution available inside the virtualenv. If you do not wish
+this behaviour, simply remove the flag.</p>
+
+<p>On older distributions you will have to upgrade the distribute package.
+Moreover, if NumPy and Cython are not already available in the virtualenv,
+we will have to install them manually. (Automatic dependency resolution
+via pip fails for these packages. To build NumPy and, later, SciPy, you
+will need to have Fortran as well as BLAS and LAPACK headers installed
+on your system.)</p>
+
+<pre><code>pip install --upgrade distribute
+pip install cython
+pip install numpy
 </code></pre>
-</li>
-</ol><h2>
+
+<p>Finally install pyMOR itself with all missing dependencies:</p>
+
+<pre><code>pip install pymor
+</code></pre>
+
+<p>The installation script might recommend the installation of additional
+packages. (This is easy to miss, as pip will install dependencies after
+pyMOR itself has been installed, so search at the top of your console
+log!) You will most likely want to install <a href="http://www.ipython.org">IPython</a>
+and, in particular, <a href="http://matplotlib.org">matplotlib</a>,
+<a href="http://pyopengl.sourceforge.net/">PyOpenGL</a>,
+<a href="https://code.google.com/p/glumpy/">glumpy</a>,
+and <a href="http://qt-project.org/wiki/PySide">PySide</a>. The latter
+packages are required for pyMOR's visualization routines. At the time
+of writing, PySide fails to install with current Sphinx versions, so we
+have to install an old one:</p>
+
+<pre><code>pip install "sphinx==1.1.3"
+pip install ipython pyside matplotlib pyopengl glumpy 
+</code></pre>
+
+<h2>
 <a name="documentation" class="anchor" href="#documentation"><span class="octicon octicon-link"></span></a>Documentation</h2>
 
-<p>To build the documentation execute</p>
+<p>Documentation is available online at <a href="http://pymor.readthedocs.org/">Read the Docs</a>
+or offline in the <code>python-pymor-doc</code> package.</p>
+
+<p>To build the documentation yourself, execute</p>
 
 <pre><code>make doc
 </code></pre>
 
 <p>inside the root directory of the pyMOR source tree. This will generate HTML
-documentation in 'docs/_build/html'. The documentation is also available
-online on <a href="http://pymor.readthedocs.org/">Read the Docs</a>.</p>
+documentation in <code>docs/_build/html</code>.</p>
+
+<h2>
+<a name="setting-up-an-environment-for-pymor-development" class="anchor" href="#setting-up-an-environment-for-pymor-development"><span class="octicon octicon-link"></span></a>Setting up an Environment for pyMOR Development</h2>
+
+<p>If you want to modify (or extend!) pyMOR itself, we recommend to setup a
+virtualenv for development (see above). The virtualenv should have all
+dependencies of pyMOR available. On Ubuntu machines, you can simply install
+pyMOR from our PPA and then create an empty virtualenv with system
+site-packages enabled. Otherwise, follow the above instructions for installing
+pyMOR inside a virtualenv. However, pyMOR itself should not be installed inside
+the virtualenv. If it is, use</p>
+
+<pre><code>pip uninstall pymor
+</code></pre>
+
+<p>to remove it. Then, clone the pyMOR git repository using</p>
+
+<pre><code>git clone https://github.com/pymor/pymor $PYMOR_SOURCE_DIR
+cd $PYMOR_SOURCE_DIR
+</code></pre>
+
+<p>and, optionally, switch to the branch you are interested in, e.g.</p>
+
+<pre><code>git checkout 0.2.x
+</code></pre>
+
+<p>Finally add pyMOR to the path of your virtualenv:</p>
+
+<pre><code>echo "$PYMOR_SOURCE_DIR" &gt; $VIRTUAL_ENV/lib/python2.7/site-packages/pymor.pth
+</code></pre>
+
+<p>This will make pyMOR importable inside the virtualenv and will override any
+other pyMOR versions installed on the system.</p>
 
 <h2>
 <a name="cython-extension-modules" class="anchor" href="#cython-extension-modules"><span class="octicon octicon-link"></span></a>Cython extension modules</h2>
@@ -165,8 +211,7 @@ To benefit from these optimizations, the modules' source files (currently
 <code>pymor/tools/inplace.pyx</code> and <code>pymor/tools/realations.pyx</code>) have to be processed
 by Cython into a <code>.c</code>-file which then must be compiled into a shared object.
 These <code>.so</code>-files then take precedence over the non-optimized pure python
-modules.  This whole build process is handeled automatically by <code>setup.py</code>
-which is internally called by the <code>install.py</code> script.  </p>
+modules. The whole build process is handeled automatically by <code>setup.py</code>.</p>
 
 <p>If you want to develop Cython extensions modules for pyMOR yourself, you should
 add your module to the <code>ext_modules</code> list defined in the <code>_setup</code> method of
