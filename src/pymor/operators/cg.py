@@ -127,7 +127,7 @@ The name of the functional.
 
     sparse = False
 
-    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, order=2, name=None):
+    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, order=4, name=None):
         assert grid.reference_element(0) in {square}
         assert function.shape_range == tuple()
         self.dim_source = grid.size(grid.dim)
@@ -154,8 +154,8 @@ The name of the functional.
         if g.dim == 2:
             SF = np.array(((1-q[..., 0])*(1-q[..., 1]),
                            (1-q[..., 1])*(q[..., 0]),
-                           (1-q[..., 0])*(q[..., 1]),
-                           (q[..., 0])*(q[..., 1])))
+                           (q[..., 0])*(q[..., 1]),
+                           (q[..., 1])*(1-q[..., 0])))
         else:
             raise NotImplementedError
 
@@ -302,7 +302,7 @@ The name of the product.
 
     def __init__(self, grid, boundary_info, dirichlet_clear_rows=True, dirichlet_clear_columns=False,
                  dirichlet_clear_diag=False, name=None):
-        assert grid.reference_element in (square)
+        assert grid.reference_element in {square}
         self.dim_source = grid.size(grid.dim)
         self.dim_range = self.dim_source
         self.grid = grid
@@ -321,8 +321,8 @@ The name of the product.
         if g.dim == 2:
             SF = [lambda X: (1-X[..., 0])*(1-X[..., 1]),
                   lambda X: (1-X[..., 1])*(X[..., 0]),
-                  lambda X: (1-X[..., 0])*(X[..., 1]),
-                  lambda X: (X[..., 0])*(X[..., 1])]
+                  lambda X: (X[..., 0])*(X[..., 1]),
+                  lambda X: (1-X[..., 0])*(X[..., 1])]
         else:
             raise NotImplementedError
 
@@ -498,7 +498,7 @@ Name of the operator.
     sparse = True
 
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
-                 dirichlet_clear_columns=False, dirichlet_clear_diag=False, name=None, order=4):
+                 dirichlet_clear_columns=False, dirichlet_clear_diag=False, name=None, order=2):
         assert grid.reference_element(0) in {square}, 'A square grid is expected!'
         self.dim_source = self.dim_range = grid.size(grid.dim)
         self.grid = grid
@@ -522,8 +522,8 @@ Name of the operator.
             q, w = g.reference_element.quadrature(order=self.order)
             SF_GRAD = np.array(([q[..., 1] - 1., q[..., 0] - 1.],
                                 [1. - q[..., 1], -q[..., 0]],
-                                [-q[..., 1], 1. - q[..., 0]],
-                                [q[..., 1], q[..., 0]]))
+                                [q[..., 1], q[..., 0]],
+                                [-q[..., 1], 1. - q[..., 0]]))
         else:
             raise NotImplementedError
 
@@ -541,6 +541,7 @@ Name of the operator.
             SF_INTS *= self.diffusion_constant
 
         self.logger.info('Determine global dofs ...')
+
         SF_I0 = np.repeat(g.subentities(0, g.dim), 4, axis=1).ravel()
         SF_I1 = np.tile(g.subentities(0, g.dim), [1, 4]).ravel()
 

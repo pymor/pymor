@@ -8,9 +8,10 @@ from __future__ import absolute_import, division, print_function
 from pymor.analyticalproblems import EllipticProblem
 from pymor.discretizations import StationaryDiscretization
 from pymor.domaindiscretizers import discretize_domain_default
-from pymor.grids import TriaGrid, OnedGrid
+from pymor.grids import OnedGrid, RectGrid, TriaGrid
 from pymor.gui.qt import PatchVisualizer, Matplotlib1DVisualizer
-from pymor.operators.cg import DiffusionOperatorP1, L2ProductFunctionalP1, L2ProductP1
+from pymor.operators.cg import DiffusionOperatorP1, L2ProductFunctionalP1, L2ProductP1,\
+    DiffusionOperatorQ1, L2ProductFunctionalQ1, L2ProductQ1
 
 
 def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer=None,
@@ -58,10 +59,15 @@ Dictionary with the following entries:
         else:
             grid, boundary_info = domain_discretizer(analytical_problem.domain, diameter=diameter)
 
-    assert isinstance(grid, (OnedGrid, TriaGrid))
+    assert isinstance(grid, (OnedGrid, TriaGrid, RectGrid))
 
-    Operator = DiffusionOperatorP1
-    Functional = L2ProductFunctionalP1
+    if isinstance(grid, RectGrid):
+        Operator = DiffusionOperatorQ1
+        Functional = L2ProductFunctionalQ1
+    else:
+        Operator = DiffusionOperatorP1
+        Functional = L2ProductFunctionalP1
+
     p = analytical_problem
 
     if p.diffusion_functionals is not None or len(p.diffusion_functions) > 1:
@@ -83,13 +89,17 @@ Dictionary with the following entries:
 
     F = Functional(grid, p.rhs, boundary_info, dirichlet_data=p.dirichlet_data)
 
-    if isinstance(grid, TriaGrid):
+    if isinstance(grid, (RectGrid, TriaGrid)):
         visualizer = PatchVisualizer(grid=grid, bounding_box=grid.domain, codim=2)
     else:
         visualizer = Matplotlib1DVisualizer(grid=grid, codim=1)
 
-    products = {'h1': Operator(grid, boundary_info),
-                'l2': L2ProductP1(grid, boundary_info)}
+    if isinstance(grid, RectGrid):
+        products = {'h1': Operator(grid, boundary_info),
+                    'l2': L2ProductQ1(grid, boundary_info)}
+    else:
+        products = {'h1': Operator(grid, boundary_info),
+                    'l2': L2ProductP1(grid, boundary_info)}
 
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
 
