@@ -17,34 +17,34 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
                            grid=None, boundary_info=None):
     '''Discretizes an |EllipticProblem| using finite elements.
 
-    Parameters
-    ----------
-    analytical_problem
-        The |EllipticProblem| to discretize.
-    diameter
-        If not None, is passed to the domain_discretizer.
-    domain_discretizer
-        Discretizer to be used for discretizing the analytical domain. This has
-        to be a function `domain_discretizer(domain_description, diameter, ...)`.
-        If further arguments should be passed to the discretizer, use
-        :func:`functools.partial`. If `None`, |discretize_domain_default| is used.
-    grid
-        Instead of using a domain discretizer, the |Grid| can also be passed directly
-        using this parameter.
-    boundary_info
-        A |BoundaryInfo| specifying the boundary types of the grid boundary entities.
-        Must be provided if `grid` is provided.
+Parameters
+----------
+analytical_problem
+The |EllipticProblem| to discretize.
+diameter
+If not None, is passed to the domain_discretizer.
+domain_discretizer
+Discretizer to be used for discretizing the analytical domain. This has
+to be a function `domain_discretizer(domain_description, diameter, ...)`.
+If further arguments should be passed to the discretizer, use
+:func:`functools.partial`. If `None`, |discretize_domain_default| is used.
+grid
+Instead of using a domain discretizer, the |Grid| can also be passed directly
+using this parameter.
+boundary_info
+A |BoundaryInfo| specifying the boundary types of the grid boundary entities.
+Must be provided if `grid` is provided.
 
-    Returns
-    -------
-    discretization
-        The discretization that has been generated.
-    data
-        Dictionary with the following entries:
+Returns
+-------
+discretization
+The discretization that has been generated.
+data
+Dictionary with the following entries:
 
-            :grid:           The generated |Grid|.
-            :boundary_info:  The generated |BoundaryInfo|.
-    '''
+:grid: The generated |Grid|.
+:boundary_info: The generated |BoundaryInfo|.
+'''
 
     assert isinstance(analytical_problem, EllipticProblem)
     assert grid is None or boundary_info is not None
@@ -58,15 +58,10 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
         else:
             grid, boundary_info = domain_discretizer(analytical_problem.domain, diameter=diameter)
 
-    assert isinstance(grid, (OnedGrid, TriaGrid, RectGrid))
+    assert isinstance(grid, (OnedGrid, TriaGrid))
 
-    if isinstance(grid, RectGrid):
-        Operator = DiffusionOperatorQ1
-        Functional = L2ProductFunctionalQ1
-    else:
-        Operator = DiffusionOperatorP1
-        Functional = L2ProductFunctionalP1
-
+    Operator = DiffusionOperatorP1
+    Functional = L2ProductFunctionalP1
     p = analytical_problem
 
     if p.diffusion_functionals is not None or len(p.diffusion_functions) > 1:

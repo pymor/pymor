@@ -10,37 +10,37 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from scipy.sparse import coo_matrix, csc_matrix
 
-from pymor.grids.referenceelements import triangle, line
+from pymor.grids.referenceelements import line, square, triangle
 from pymor.operators import NumpyMatrixBasedOperator, NumpyMatrixOperator
 
 
 class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     '''|Functional| representing the scalar product with an L2-|Function| for linear finite elements.
 
-    Boundary treatment can be performed by providing `boundary_info` and `dirichlet_data`,
-    in which case the DOFs corresponding to Dirichlet boundaries are set to the values
-    provided by `dirichlet_data`.
+Boundary treatment can be performed by providing `boundary_info` and `dirichlet_data`,
+in which case the DOFs corresponding to Dirichlet boundaries are set to the values
+provided by `dirichlet_data`.
 
-    The current implementation works in one and two dimensions, but can be trivially
-    extended to arbitrary dimensions.
+The current implementation works in one and two dimensions, but can be trivially
+extended to arbitrary dimensions.
 
-    Parameters
-    ----------
-    grid
-        |Grid| over which to assemble the functional.
-    function
-        The |Function| with which to take the scalar product.
-    boundary_info
-        |BoundaryInfo| determining the Dirichlet boundaries or `None`.
-        If `None`, no boundary treatment is performed.
-    dirichlet_data
-        |Function| providing the Dirichlet boundary values. If `None`,
-        constant-zero boundary is assumed.
-    order
-        Order of the Gauss quadrature to use for numerical integration.
-    name
-        The name of the functional.
-    '''
+Parameters
+----------
+grid
+|Grid| over which to assemble the functional.
+function
+The |Function| with which to take the scalar product.
+boundary_info
+|BoundaryInfo| determining the Dirichlet boundaries or `None`.
+If `None`, no boundary treatment is performed.
+dirichlet_data
+|Function| providing the Dirichlet boundary values. If `None`,
+constant-zero boundary is assumed.
+order
+Order of the Gauss quadrature to use for numerical integration.
+name
+The name of the functional.
+'''
 
     sparse = False
 
@@ -93,73 +93,75 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
                 I[DI] = self.dirichlet_data(g.centers(g.dim)[DI], mu=mu)
             else:
                 I[DI] = 0
-        return NumpyLinearOperator(I.reshape((1, -1)))
 
-class L2ProductFunctionalQ1(LinearOperatorInterface):
-    '''Scalar product with an L2-function for bilinear finite elements.
+        return NumpyMatrixOperator(I.reshape((1, -1)))
 
-    It is moreover possible to specify a `BoundaryInfo` and a Dirichlet data function
-    such that boundary DOFs are evaluated to the corresponding dirichlet values.
-    This is useful for imposing boundary conditions on the solution.
-    The integral is caculated by an order two Gauss quadrature.
 
-    The current implementation works in one and two dimensions, but can be trivially
-    extended to arbitrary dimensions.
+class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
+    '''|Functional| representing the scalar product with an L2-|Function| for bilinear finite elements.
 
-    Parameters
-    ----------
-    grid
-        Grid over which to assemble the functional.
-    function
-        The `Function` with which to take the scalar product.
-    boundary_info
-        `BoundaryInfo` determining the Dirichlet boundaries or None.
-    dirichlet_data
-        The `Function` providing the Dirichlet boundary values. If None, zero boundary
-        is assumed.
-    name
-        The name of the functional.
-    '''
+Boundary treatment can be performed by providing `boundary_info` and `dirichlet_data`,
+in which case the DOFs corresponding to Dirichlet boundaries are set to the values
+provided by `dirichlet_data`.
 
-    type_source = type_range = NumpyVectorArray
+The current implementation works in two dimensions, but can be trivially
+extended to arbitrary dimensions.
+
+Parameters
+----------
+grid
+|Grid| over which to assemble the functional.
+function
+The |Function| with which to take the scalar product.
+boundary_info
+|BoundaryInfo| determining the Dirichlet boundaries or `None`.
+If `None`, no boundary treatment is performed.
+dirichlet_data
+|Function| providing the Dirichlet boundary values. If `None`,
+constant-zero boundary is assumed.
+order
+Order of the Gauss quadrature to use for numerical integration.
+name
+The name of the functional.
+'''
+
     sparse = False
 
-    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, name_map=None, name=None):
+    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, order=2, name=None):
         assert grid.reference_element(0) in {square}
-        assert function.dim_range == 1
-        super(L2ProductFunctionalQ1, self).__init__()
+        assert function.shape_range == tuple()
         self.dim_source = grid.size(grid.dim)
         self.dim_range = 1
         self.grid = grid
         self.boundary_info = boundary_info
         self.function = function
         self.dirichlet_data = dirichlet_data
+        self.order = order
         self.name = name
-        self.build_parameter_type(inherits={'function': function, 'dirichlet_data': dirichlet_data}, name_map=name_map)
-        self.lock()
+        self.build_parameter_type(inherits=(function, dirichlet_data))
 
     def _assemble(self, mu=None):
+        mu = self.parse_parameter(mu)
         g = self.grid
         bi = self.boundary_info
 
-        # evaluate function at all quadrature points -> shape = (g.size(0), number of quadrature points, 1)
-        # the singleton dimension correspoints to the dimension of the range of the function
-        F = self.function(g.quadrature_points(0, order=4), mu=self.map_parameter(mu, 'function'))
+        # evaluate function at all quadrature points -> shape = (g.size(0), number of quadrature points)
+        F = self.function(g.quadrature_points(0, order=self.order), mu=mu)
 
         # evaluate the shape functions at the quadrature points on the reference
         # element -> shape = (number of shape functions, number of quadrature points)
-        q, w = g.reference_element.quadrature(order=4)
+        q, w = g.reference_element.quadrature(order=self.order)
         if g.dim == 2:
             SF = np.array(((1-q[..., 0])*(1-q[..., 1]),
-                          (1-q[..., 1])*(q[..., 0]),
-                          (1-q[..., 0])*(q[..., 1]),
-                          (q[..., 0])*(q[..., 1])))
+                           (1-q[..., 1])*(q[..., 0]),
+                           (1-q[..., 0])*(q[..., 1]),
+                           (q[..., 0])*(q[..., 1])))
         else:
             raise NotImplementedError
 
         # integrate the products of the function with the shape functions on each element
         # -> shape = (g.size(0), number of shape functions)
-        SF_INTS = np.einsum('eix,pi,e,i->ep', F, SF, g.integration_elements(0), w).ravel()
+        SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(0), w).ravel()
 
         # map local DOFs to global DOFS
         # FIXME This implementation is horrible, find a better way!
@@ -170,7 +172,7 @@ class L2ProductFunctionalQ1(LinearOperatorInterface):
         if bi is not None and bi.has_dirichlet:
             DI = bi.dirichlet_boundaries(g.dim)
             if self.dirichlet_data is not None:
-                I[DI] = self.dirichlet_data(g.centers(g.dim)[DI], self.map_parameter(mu, 'dirichlet_data'))
+                I[DI] = self.dirichlet_data(g.centers(g.dim)[DI], mu=mu)
             else:
                 I[DI] = 0
 
@@ -180,31 +182,31 @@ class L2ProductFunctionalQ1(LinearOperatorInterface):
 class L2ProductP1(NumpyMatrixBasedOperator):
     '''|Operator| representing the L2-product between linear finite element functions.
 
-    To evaluate the product use the :meth:`~pymor.operators.interfaces module.OperatorInterface.apply2`
-    method.
+To evaluate the product use the :meth:`~pymor.operators.interfaces module.OperatorInterface.apply2`
+method.
 
-    The current implementation works in one and two dimensions, but can be trivially
-    extended to arbitrary dimensions.
+The current implementation works in one and two dimensions, but can be trivially
+extended to arbitrary dimensions.
 
-    Parameters
-    ----------
-    grid
-        The |Grid| over which to assemble the product.
-    boundary_info
-        |BoundaryInfo| for the treatment of Dirichlet boundary conditions.
-    dirichlet_clear_rows
-        If `True`, set the rows of the system matrix corresponding to Dirichlet boundary
-        DOFs to zero. (Useful when used as mass matrix in time-stepping schemes.)
-    dirichlet_clear_columns
-        If `True`, set columns of the system matrix corresponding to Dirichlet boundary
-        DOFs to zero (to obtain a symmetric matrix).
-    dirichlet_clear_diag
-        If `True`, also set diagonal entries corresponding to Dirichlet boundary DOFs to
-        zero (e.g. for affine decomposition). Otherwise, if either `dirichlet_clear_rows` or
-        `dirichlet_clear_columns` is `True`, the diagonal entries are set to one.
-    name
-        The name of the product.
-    '''
+Parameters
+----------
+grid
+The |Grid| over which to assemble the product.
+boundary_info
+|BoundaryInfo| for the treatment of Dirichlet boundary conditions.
+dirichlet_clear_rows
+If `True`, set the rows of the system matrix corresponding to Dirichlet boundary
+DOFs to zero. (Useful when used as mass matrix in time-stepping schemes.)
+dirichlet_clear_columns
+If `True`, set columns of the system matrix corresponding to Dirichlet boundary
+DOFs to zero (to obtain a symmetric matrix).
+dirichlet_clear_diag
+If `True`, also set diagonal entries corresponding to Dirichlet boundary DOFs to
+zero (e.g. for affine decomposition). Otherwise, if either `dirichlet_clear_rows` or
+`dirichlet_clear_columns` is `True`, the diagonal entries are set to one.
+name
+The name of the product.
+'''
 
     sparse = True
 
@@ -262,45 +264,45 @@ class L2ProductP1(NumpyMatrixBasedOperator):
 
         self.logger.info('Assemble system matrix ...')
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
-        A = csc_matrix(A).copy()   # See DiffusionOperatorP1 for why copy() is necessary
+        A = csc_matrix(A).copy() # See DiffusionOperatorP1 for why copy() is necessary
 
         return NumpyMatrixOperator(A)
 
-class L2ProductQ1(LinearOperatorInterface):
-    '''Operator representing the L2-product for linear finite functions.
 
-    To evaluate the product use the apply2 method.
+class L2ProductQ1(NumpyMatrixBasedOperator):
+    '''|Operator| representing the L2-product between bilinear finite element functions.
 
-    The current implementation works in one and two dimensions, but can be trivially
-    extended to arbitrary dimensions.
+To evaluate the product use the :meth:`~pymor.operators.interfaces module.OperatorInterface.apply2`
+method.
 
-    Parameters
-    ----------
-    grid
-        The grid on which to assemble the product.
-    boundary_info
-        BoundaryInfo associating boundary types to boundary entities.
-    dirichlet_clear_rows
-        If True, set rows of the system matrix corresponding to Dirichlet boundary
-        DOFs to zero. (Useful when used as mass matrix in time-stepping schemes.)
-    dirichlet_clear_columns
-        If True, set columns of the system matrix corresponding to Dirichlet boundary
-        DOFs to zero (to obtain a symmetric matrix).
-    dirichlet_clear_diag
-        If True, also set diagonal entries corresponding to Dirichlet boundary DOFs to
-        zero (e.g. for affine decomposition). Otherwise, if either dirichlet_clear_rows or
-        dirichlet_clear_columns is true, they are set to one.
-    name
-        The name of the product.
-    '''
+The current implementation works in two dimensions, but can be trivially
+extended to arbitrary dimensions.
 
-    type_source = type_range = NumpyVectorArray
+Parameters
+----------
+grid
+The |Grid| over which to assemble the product.
+boundary_info
+|BoundaryInfo| for the treatment of Dirichlet boundary conditions.
+dirichlet_clear_rows
+If `True`, set the rows of the system matrix corresponding to Dirichlet boundary
+DOFs to zero. (Useful when used as mass matrix in time-stepping schemes.)
+dirichlet_clear_columns
+If `True`, set columns of the system matrix corresponding to Dirichlet boundary
+DOFs to zero (to obtain a symmetric matrix).
+dirichlet_clear_diag
+If `True`, also set diagonal entries corresponding to Dirichlet boundary DOFs to
+zero (e.g. for affine decomposition). Otherwise, if either `dirichlet_clear_rows` or
+`dirichlet_clear_columns` is `True`, the diagonal entries are set to one.
+name
+The name of the product.
+'''
+
     sparse = True
 
     def __init__(self, grid, boundary_info, dirichlet_clear_rows=True, dirichlet_clear_columns=False,
                  dirichlet_clear_diag=False, name=None):
-        assert grid.reference_element is square
-        super(L2ProductQ1, self).__init__()
+        assert grid.reference_element in (square)
         self.dim_source = grid.size(grid.dim)
         self.dim_range = self.dim_source
         self.grid = grid
@@ -309,23 +311,22 @@ class L2ProductQ1(LinearOperatorInterface):
         self.dirichlet_clear_columns = dirichlet_clear_columns
         self.dirichlet_clear_diag = dirichlet_clear_diag
         self.name = name
-        self.lock()
 
     def _assemble(self, mu=None):
-        assert mu is None
+        assert self.check_parameter(mu)
         g = self.grid
         bi = self.boundary_info
 
         # our shape functions
         if g.dim == 2:
-            SF = [lambda X: (1-X[..., 0]) * (1-X[..., 1]),
-                  lambda X: X[..., 0]*(1-X[..., 1]),
-                  lambda X: X[..., 1]*X[..., 0],
-                  lambda X: X[..., 1]*(1-X[..., 0])]
+            SF = [lambda X: (1-X[..., 0])*(1-X[..., 1]),
+                  lambda X: (1-X[..., 1])*(X[..., 0]),
+                  lambda X: (1-X[..., 0])*(X[..., 1]),
+                  lambda X: (X[..., 0])*(X[..., 1])]
         else:
             raise NotImplementedError
 
-        q, w = square.quadrature(order=4)
+        q, w = triangle.quadrature(order=2)
 
         # evaluate the shape functions on the quadrature points
         SFQ = np.array(tuple(f(q) for f in SF))
@@ -351,40 +352,41 @@ class L2ProductQ1(LinearOperatorInterface):
 
         self.logger.info('Assemble system matrix ...')
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
-        A = csr_matrix(A).copy()   # See DiffusionOperatorP1 for why copy() is necessary
+        A = csc_matrix(A).copy() # See DiffusionOperatorP1 for why copy() is necessary
 
-        return NumpyLinearOperator(A)
+        return NumpyMatrixOperator(A)
+
 
 class DiffusionOperatorP1(NumpyMatrixBasedOperator):
     '''Diffusion |Operator| for linear finite elements.
 
-    The operator is of the form ::
+The operator is of the form ::
 
-        (Lu)(x) = c ∇ ⋅ [ d(x) ∇ u(x) ]
+(Lu)(x) = c ∇ ⋅ [ d(x) ∇ u(x) ]
 
-    The current implementation works in one and two dimensions, but can be trivially
-    extended to arbitrary dimensions.
+The current implementation works in one and two dimensions, but can be trivially
+extended to arbitrary dimensions.
 
-    Parameters
-    ----------
-    grid
-        The |Grid| over which to assemble the operator.
-    boundary_info
-        |BoundaryInfo| for the treatment of Dirichlet boundary conditions.
-    diffusion_function
-        The |Function| `d(x)`. If `None`, constant one is assumed.
-    diffusion_constant
-        The constant `c`. If `None`, `c` is set to one.
-    dirichlet_clear_columns
-        If `True`, set columns of the system matrix corresponding to Dirichlet boundary
-        DOFs to zero to obtain a symmetric system matrix. Otherwise, only the rows will
-        be set to zero.
-    dirichlet_clear_diag
-        If `True`, also set diagonal entries corresponding to Dirichlet boundary DOFs to
-        zero (e.g. for affine decomposition). Otherwise they are set to one.
-    name
-        Name of the operator.
-    '''
+Parameters
+----------
+grid
+The |Grid| over which to assemble the operator.
+boundary_info
+|BoundaryInfo| for the treatment of Dirichlet boundary conditions.
+diffusion_function
+The |Function| `d(x)`. If `None`, constant one is assumed.
+diffusion_constant
+The constant `c`. If `None`, `c` is set to one.
+dirichlet_clear_columns
+If `True`, set columns of the system matrix corresponding to Dirichlet boundary
+DOFs to zero to obtain a symmetric system matrix. Otherwise, only the rows will
+be set to zero.
+dirichlet_clear_diag
+If `True`, also set diagonal entries corresponding to Dirichlet boundary DOFs to
+zero (e.g. for affine decomposition). Otherwise they are set to one.
+name
+Name of the operator.
+'''
 
     sparse = True
 
@@ -434,6 +436,113 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
         self.logger.info('Determine global dofs ...')
         SF_I0 = np.repeat(g.subentities(0, g.dim), g.dim + 1, axis=1).ravel()
         SF_I1 = np.tile(g.subentities(0, g.dim), [1, g.dim + 1]).ravel()
+
+        self.logger.info('Boundary treatment ...')
+        if bi.has_dirichlet:
+            SF_INTS = np.where(bi.dirichlet_mask(g.dim)[SF_I0], 0, SF_INTS)
+            if self.dirichlet_clear_columns:
+                SF_INTS = np.where(bi.dirichlet_mask(g.dim)[SF_I1], 0, SF_INTS)
+
+            if not self.dirichlet_clear_diag:
+                SF_INTS = np.hstack((SF_INTS, np.ones(bi.dirichlet_boundaries(g.dim).size)))
+                SF_I0 = np.hstack((SF_I0, bi.dirichlet_boundaries(g.dim)))
+                SF_I1 = np.hstack((SF_I1, bi.dirichlet_boundaries(g.dim)))
+
+        self.logger.info('Assemble system matrix ...')
+        A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
+        A = csc_matrix(A).copy()
+
+        # The call to copy() is necessary to resize the data arrays of the sparse matrix:
+        # During the conversion to crs_matrix, entries corresponding with the same
+        # coordinates are summed up, resulting in shorter data arrays. The shortening
+        # is implemented by calling self.prune() which creates the view self.data[:self.nnz].
+        # Thus, the original data array is not deleted and all memory stays allocated.
+
+        # from pymor.tools.memory import print_memory_usage
+        # print_memory_usage('matrix: {0:5.1f}'.format((A.data.nbytes + A.indptr.nbytes + A.indices.nbytes)/1024**2))
+
+        return NumpyMatrixOperator(A)
+
+
+class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
+    '''Diffusion |Operator| for bilinear finite elements.
+
+The operator is of the form ::
+
+(Lu)(x) = c ∇ ⋅ [ d(x) ∇ u(x) ]
+
+The current implementation works in two dimensions, but can be trivially
+extended to arbitrary dimensions.
+
+Parameters
+----------
+grid
+The |Grid| over which to assemble the operator.
+boundary_info
+|BoundaryInfo| for the treatment of Dirichlet boundary conditions.
+diffusion_function
+The |Function| `d(x)`. If `None`, constant one is assumed.
+diffusion_constant
+The constant `c`. If `None`, `c` is set to one.
+dirichlet_clear_columns
+If `True`, set columns of the system matrix corresponding to Dirichlet boundary
+DOFs to zero to obtain a symmetric system matrix. Otherwise, only the rows will
+be set to zero.
+dirichlet_clear_diag
+If `True`, also set diagonal entries corresponding to Dirichlet boundary DOFs to
+zero (e.g. for affine decomposition). Otherwise they are set to one.
+name
+Name of the operator.
+'''
+
+    sparse = True
+
+    def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
+                 dirichlet_clear_columns=False, dirichlet_clear_diag=False, name=None, order=4):
+        assert grid.reference_element(0) in {square}, 'A square grid is expected!'
+        self.dim_source = self.dim_range = grid.size(grid.dim)
+        self.grid = grid
+        self.boundary_info = boundary_info
+        self.diffusion_constant = diffusion_constant
+        self.diffusion_function = diffusion_function
+        self.dirichlet_clear_columns = dirichlet_clear_columns
+        self.dirichlet_clear_diag = dirichlet_clear_diag
+        self.name = name
+        self.order = order
+        if diffusion_function is not None:
+            self.build_parameter_type(inherits=(diffusion_function,))
+
+    def _assemble(self, mu=None):
+        mu = self.parse_parameter(mu)
+        g = self.grid
+        bi = self.boundary_info
+
+        # gradients of shape functions
+        if g.dim == 2:
+            q, w = g.reference_element.quadrature(order=self.order)
+            SF_GRAD = np.array(([q[..., 1] - 1., q[..., 0] - 1.],
+                                [1. - q[..., 1], -q[..., 0]],
+                                [-q[..., 1], 1. - q[..., 0]],
+                                [q[..., 1], q[..., 0]]))
+        else:
+            raise NotImplementedError
+
+        self.logger.info('Calulate gradients of shape functions transformed by reference map ...')
+        SF_GRADS = np.einsum('eij,pjc->epic', g.jacobian_inverse_transposed(0), SF_GRAD)
+
+        self.logger.info('Calculate all local scalar products beween gradients ...')
+        if self.diffusion_function is not None:
+            D = self.diffusion_function(self.grid.centers(0), mu=mu)
+            SF_INTS = np.einsum('epic,eqic,c,e,e->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0), D).ravel()
+        else:
+            SF_INTS = np.einsum('epic,eqic,c,e->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0)).ravel()
+
+        if self.diffusion_constant is not None:
+            SF_INTS *= self.diffusion_constant
+
+        self.logger.info('Determine global dofs ...')
+        SF_I0 = np.repeat(g.subentities(0, g.dim), 4, axis=1).ravel()
+        SF_I1 = np.tile(g.subentities(0, g.dim), [1, 4]).ravel()
 
         self.logger.info('Boundary treatment ...')
         if bi.has_dirichlet:
