@@ -1,20 +1,19 @@
-# This file is part of the pyMor project (http://www.pymor.org).
-# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor.core.exceptions import CodimError
-from .interfaces import AffineGridInterface
-from .referenceelements import triangle
+from pymor.grids.interfaces import AffineGridInterface
+from pymor.grids.referenceelements import triangle
 
 
 class TriaGrid(AffineGridInterface):
-    '''Ad-hoc implementation of a rectangular grid.
+    '''Basic implementation of a triangular grid on a rectangular domain.
 
-    The global face, edge and vertex indices are given as follows
+    The global face, edge and vertex indices are given as follows ::
 
                  6---10----7---11----8
                  | \     6 | \     7 |
@@ -29,9 +28,9 @@ class TriaGrid(AffineGridInterface):
     Parameters
     ----------
     num_intervals
-        Tuple (n0, n1) determining a grid with n0 x n1 codim-0 entities.
+        Tuple `(n0, n1)` determining a grid with `n0` x `n1` codim-0 entities.
     domain
-        Tuple (ll, ur) where ll defines the lower left and ur the upper right
+        Tuple `(ll, ur)` where `ll` defines the lower left and `ur` the upper right
         corner of the domain.
     '''
 
@@ -40,7 +39,6 @@ class TriaGrid(AffineGridInterface):
     reference_element = triangle
 
     def __init__(self, num_intervals=(2, 2), domain=[[0, 0], [1, 1]]):
-        super(TriaGrid, self).__init__()
         self.num_intervals = num_intervals
         self.domain = np.array(domain)
 
@@ -95,26 +93,23 @@ class TriaGrid(AffineGridInterface):
         A1 = - A0
         A = np.vstack((A0, A1))
         self.__embeddings = (A, B)
-        self.lock()
 
     def __str__(self):
-        return ('Tria-Grid on domain [{xmin},{xmax}] x [{ymin},{ymax}]\n' +
-                'x0-intervals: {x0ni}, x1-intervals: {x1ni}\n' +
-                'faces: {faces}, edges: {edges}, verticies: {verticies}').format(
-                    xmin=self.x0_range[0], xmax=self.x0_range[1],
-                    ymin=self.x1_range[0], ymax=self.x1_range[1],
-                    x0ni=self.x0_num_intervals, x1ni=self.x1_num_intervals,
-                    faces=self.size(0), edges=self.size(1), verticies=self.size(2))
+        return (('Tria-Grid on domain [{xmin},{xmax}] x [{ymin},{ymax}]\n' +
+                 'x0-intervals: {x0ni}, x1-intervals: {x1ni}\n' +
+                 'faces: {faces}, edges: {edges}, vertices: {vertices}')
+                .format(xmin=self.x0_range[0], xmax=self.x0_range[1],
+                        ymin=self.x1_range[0], ymax=self.x1_range[1],
+                        x0ni=self.x0_num_intervals, x1ni=self.x1_num_intervals,
+                        faces=self.size(0), edges=self.size(1), vertices=self.size(2)))
 
     def size(self, codim=0):
-        assert 0 <= codim <= 2, CodimError('Invalid codimension')
+        assert 0 <= codim <= 2, 'Invalid codimension'
         return self.__sizes[codim]
 
-    def subentities(self, codim=0, subentity_codim=None):
-        assert 0 <= codim <= 2, CodimError('Invalid codimension')
-        if subentity_codim is None:
-            subentity_codim = codim + 1
-        assert codim <= subentity_codim <= 2, CodimError('Invalid subentity codimension')
+    def subentities(self, codim, subentity_codim):
+        assert 0 <= codim <= 2, 'Invalid codimension'
+        assert codim <= subentity_codim <= 2, 'Invalid subentity codimension'
         if codim == 0:
             if subentity_codim == 0:
                 return np.arange(self.size(0), dtype='int32')[:, np.newaxis]
@@ -128,8 +123,3 @@ class TriaGrid(AffineGridInterface):
             return self.__embeddings
         else:
             return super(TriaGrid, self).embeddings(codim)
-
-    @staticmethod
-    def test_instances():
-        '''Used for unit testing.'''
-        return [TriaGrid((2, 4)), TriaGrid((1, 1)), TriaGrid((42, 42))]

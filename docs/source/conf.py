@@ -1,9 +1,60 @@
 # -*- coding: utf-8 -*-
-# This file is part of the pyMor project (http://www.pymor.org).
-# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import sys, os, re
+
+# Fix documentation generation for readthedocs.org
+
+if os.environ.get('READTHEDOCS', None) == 'True':
+
+    class Mock(object):
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __setitem__(self, k, v):
+            pass
+
+        def __call__(self, *args, **kwargs):
+            return Mock()
+
+        @classmethod
+        def __getattr__(cls, name):
+            if name in ('__file__', '__path__'):
+                return '/dev/null'
+            elif name in cls.__dict__:
+                return cls.__dict.get(name)
+            elif name == 'QtGui':
+                return Mock()
+            elif name[0] == name[0].upper():
+                mockType = type(name, (), {})
+                mockType.__module__ = __name__
+                return mockType
+            else:
+                return Mock()
+
+        QWidget = object
+
+    MOCK_MODULES = ['scipy', 'scipy.sparse', 'scipy.linalg', 'scipy.sparse.linalg',
+                    'contracts',
+                    'docopt',
+                    'dogpile', 'dogpile.cache', 'dogpile.cache.backends', 'dogpile.cache.backends.file',
+                    'dogpile.cache.compat',
+                    'PySide', 'PySide.QtGui', 'PySide.QtCore', 'PySide.QtOpenGL',
+                    'glumpy', 'glumpy.graphics', 'glumpy.graphics.vertex_buffer',
+                    'OpenGL', 'OpenGL.GL',
+                    'matplotlib', 'matplotlib.backends', 'matplotlib.backends.backend_qt4agg', 'matplotlib.figure',
+                    'matplotlib.pyplot',
+                    'pyvtk',
+                    'IPython',
+                    'IPython.parallel',
+                    'sympy',
+                    'pytest']
+
+    for mod_name in MOCK_MODULES:
+        sys.modules[mod_name] = Mock()
+
 
 # Check Sphinx version
 import sphinx
@@ -20,20 +71,25 @@ needs_sphinx = '1.0'
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 
 sys.path.insert(0, os.path.abspath('../../src'))
+sys.path.insert(0, os.path.abspath('.'))
 
 #generate autodoc
-from sphinx.apidoc import main as apidoc
-apidoc(argv=[sys.argv[0], '-o', 'generated/', '../../src/'])
+import gen_apidoc
+import pymor
+#import pymortests
+import pymordemos
+gen_apidoc.walk(pymor)
+# gen_apidoc.walk(pymortests)
+gen_apidoc.walk(pymordemos)
+
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath',
               'sphinx.ext.coverage',
               'sphinx.ext.autosummary',
               'sphinx.ext.viewcode',
-              'numpydoc'
+              'sphinx.ext.intersphinx',
+              'pymordocstring'
               ]
-
-# disables autosummary output
-numpydoc_show_class_members = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -42,21 +98,21 @@ templates_path = ['_templates']
 source_suffix = '.rst'
 
 # The master toctree document.
-#master_doc = 'index'
+master_doc = 'index'
 
 # General substitutions.
-project = 'pyMor'
-copyright = '2012-2013, the pyMor AUTHORS'
+project = 'pyMOR'
+copyright = '2012-2013, the pyMOR AUTHORS'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 #
 import pymor
 
-version = '.'.join([str(v) for v in pymor.version])
+version = str(pymor.version)
 
 # The full version, including alpha/beta/rc tags.
-release = '.'.join([str(v) for v in pymor.version][:2])
+release = version.split('-')[0]
 print version, release
 
 # There are two options for replacing |today|: either, you set today to some
@@ -98,6 +154,7 @@ pygments_style = 'sphinx'
 # must exist either in Sphinx' static/ path, or in one of the custom paths
 # given in html_static_path.
 html_style = 'pymor.css'
+html_theme = 'default'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -220,4 +277,13 @@ coverage_c_path = []
 coverage_c_regexes = {}
 coverage_ignore_c_items = {}
 
-autodoc_default_flags = ['members', 'undoc-members', 'inherited-members', 'show-inheritance']
+# autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance']
+
+intersphinx_mapping = {'python': ('http://docs.python.org/2.7', None),
+                       'numpy': ('http://docs.scipy.org/doc/numpy', None),
+                       'scipy': ('http://docs.scipy.org/doc/scipy/reference', None)}
+
+import substitutions
+rst_epilog = substitutions.substitutions
+
+modindex_common_prefix = ['pymor.']

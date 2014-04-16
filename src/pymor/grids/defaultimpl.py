@@ -1,22 +1,22 @@
-# This file is part of the pyMor project (http://www.pymor.org).
-# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor.core.cache import Cachable, cached
-from pymor.core.exceptions import CodimError
+from pymor.core.cache import cached
 from pymor.la.inverse import inv_transposed_two_by_two
 from pymor.tools.relations import inverse_relation
 
 
-class ConformalTopologicalGridDefaultImplementations(Cachable):
+class ConformalTopologicalGridDefaultImplementations(object):
+    '''Provides default informations for |ConformalTopologicalGrids|.'''
 
     @cached
-    def _subentities(self, codim, subentity_codim=None):
-        assert 0 <= codim < self.dim, CodimError('Invalid codimension')
+    def _subentities(self, codim, subentity_codim):
+        assert 0 <= codim < self.dim, 'Invalid codimension'
         if subentity_codim > codim + 1:
             SE = self.subentities(codim, subentity_codim - 1)
             SESE = self.subentities(subentity_codim - 1, subentity_codim)
@@ -36,32 +36,30 @@ class ConformalTopologicalGridDefaultImplementations(Cachable):
             raise NotImplementedError
 
     @cached
-    def _superentities_with_indices(self, codim, superentity_codim=None):
-        assert 0 <= codim <= self.dim, CodimError('Invalid codimension (was {})'.format(codim))
-        if superentity_codim is None:
-            superentity_codim = codim - 1 if codim > 0 else 0
-        assert 0 <= superentity_codim <= codim, CodimError('Invalid codimension (was {})'.format(superentity_codim))
+    def _superentities_with_indices(self, codim, superentity_codim):
+        assert 0 <= codim <= self.dim, 'Invalid codimension (was {})'.format(codim)
+        assert 0 <= superentity_codim <= codim, 'Invalid codimension (was {})'.format(superentity_codim)
         SE = self.subentities(superentity_codim, codim)
         return inverse_relation(SE, size_rhs=self.size(codim), with_indices=True)
 
     @cached
-    def _superentities(self, codim, superentity_codim=None):
+    def _superentities(self, codim, superentity_codim):
         return self._superentities_with_indices(codim, superentity_codim)[0]
 
     @cached
-    def _superentity_indices(self, codim, superentity_codim=None):
+    def _superentity_indices(self, codim, superentity_codim):
         return self._superentities_with_indices(codim, superentity_codim)[1]
 
     @cached
     def _neighbours(self, codim, neighbour_codim, intersection_codim):
-        assert 0 <= codim <= self.dim, CodimError('Invalid codimension')
-        assert 0 <= neighbour_codim <= self.dim, CodimError('Invalid codimension')
+        assert 0 <= codim <= self.dim, 'Invalid codimension'
+        assert 0 <= neighbour_codim <= self.dim, 'Invalid codimension'
         if intersection_codim is None:
             if codim == neighbour_codim:
                 intersection_codim = codim + 1
             else:
                 intersection_codim = min(codim, neighbour_codim)
-        assert max(codim, neighbour_codim) <= intersection_codim <= self.dim, CodimError('Invalid codimension')
+        assert max(codim, neighbour_codim) <= intersection_codim <= self.dim, 'Invalid codimension'
 
         if intersection_codim == min(codim, neighbour_codim):
             if codim < neighbour_codim:
@@ -131,7 +129,8 @@ class ConformalTopologicalGridDefaultImplementations(Cachable):
         return M
 
 
-class SimpleReferenceElementDefaultImplementations(Cachable):
+class SimpleReferenceElementDefaultImplementations(object):
+    '''Provides default implementations for |ReferenceElements|.'''
 
     @cached
     def _subentity_embedding(self, subentity_codim):
@@ -162,11 +161,12 @@ class SimpleReferenceElementDefaultImplementations(Cachable):
 
 
 class AffineGridDefaultImplementations(object):
+    '''Provides default implementations for |AffineGrids|.'''
 
     @cached
     def _subentities(self, codim, subentity_codim):
-        assert 0 <= codim <= self.dim, CodimError('Invalid codimension')
-        assert 0 < codim, NotImplementedError
+        assert 0 <= codim <= self.dim, 'Invalid codimension'
+        assert 0 < codim, 'Not implemented'
         P = self.superentities(codim, codim - 1)[:, 0]  # we assume here that superentites() is sorted by global index
         I = self.superentity_indices(codim, codim - 1)[:, 0]
         SE = self.subentities(codim - 1, subentity_codim)[P]
@@ -179,7 +179,7 @@ class AffineGridDefaultImplementations(object):
         return SSE
 
     @cached
-    def _embeddings(self, codim=0):
+    def _embeddings(self, codim):
         assert codim > 0, NotImplemented
         E = self.superentities(codim, codim - 1)[:, 0]
         I = self.superentity_indices(codim, codim - 1)[:, 0]
@@ -198,7 +198,7 @@ class AffineGridDefaultImplementations(object):
     @cached
     def _jacobian_inverse_transposed(self, codim):
         assert 0 <= codim < self.dim,\
-            CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
+            'Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim)
         J = self.embeddings(codim)[0]
         if J.shape[-1] == J.shape[-2] == 2:
             JIT = inv_transposed_two_by_two(J)
@@ -209,7 +209,7 @@ class AffineGridDefaultImplementations(object):
     @cached
     def _integration_elements(self, codim):
         assert 0 <= codim <= self.dim,\
-            CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
+            'Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim)
 
         if codim == self.dim:
             return np.ones(self.size(codim))
@@ -231,7 +231,7 @@ class AffineGridDefaultImplementations(object):
     @cached
     def _volumes(self, codim):
         assert 0 <= codim <= self.dim,\
-            CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
+            'Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim)
         if codim == self.dim:
             return np.ones(self.size(self.dim))
         return self.reference_element(codim).volume * self.integration_elements(codim)
@@ -249,7 +249,7 @@ class AffineGridDefaultImplementations(object):
     @cached
     def _centers(self, codim):
         assert 0 <= codim <= self.dim,\
-            CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
+            'Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim)
         A, B = self.embeddings(codim)
         C = self.reference_element(codim).center()
         return np.dot(A, C) + B
@@ -257,7 +257,7 @@ class AffineGridDefaultImplementations(object):
     @cached
     def _diameters(self, codim):
         assert 0 <= codim <= self.dim,\
-            CodimError('Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim))
+            'Invalid Codimension (must be between 0 and {} but was {})'.format(self.dim, codim)
         return np.reshape(self.reference_element(codim).mapped_diameter(self.embeddings(codim)[0]), (-1,))
 
     @cached

@@ -1,5 +1,5 @@
-# This file is part of the pyMor project (http://www.pymor.org).
-# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
@@ -7,13 +7,13 @@ from math import pow, factorial, sin, pi, exp
 import numpy as np
 import itertools
 
-from pymortests.base import TestBase, runmodule
+from pymortests.base import TestInterface, runmodule
 from pymor.tools.memory import total_size
 from pymor.tools.quadratures import GaussQuadratures
 from pymor.tools.floatcmp import float_cmp
 
 
-class MemoryTest(TestBase):
+class TestMemory(TestInterface):
 
     def test_positivity(self):
         for Class in [int, float, long, complex, str, unicode, list, tuple, bytearray, ]:
@@ -51,7 +51,7 @@ FUNCTIONS = (('sin(2x pi)', lambda x: sin(2 * x * pi), 0),
              ('e^x', lambda x: exp(x), exp(1) - exp(0)))
 
 
-class GaussQuadratureTest(TestBase):
+class TestGaussQuadrature(TestInterface):
 
     def test_polynomials(self):
         for n, function, _, integral in polynomials(GaussQuadratures.orders[-1]):
@@ -87,13 +87,7 @@ class GaussQuadratureTest(TestBase):
             self.assertLess(P[-1], 1.0)
 
 
-class DictProperyTest(TestBase):
-
-    def test_props(self):
-        self.assertFalse(True, "test is missing")
-
-
-class CmpTest(TestBase):
+class TestCmp(TestInterface):
 
     def test_props(self):
         tol_range = [None, 0.0, 1]
@@ -119,4 +113,4 @@ class CmpTest(TestBase):
 
 
 if __name__ == "__main__":
-    runmodule(name='pymortests.tools')
+    runmodule(filename=__file__)

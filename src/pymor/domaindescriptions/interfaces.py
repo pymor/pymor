@@ -1,23 +1,23 @@
-# This file is part of the pyMor project (http://www.pymor.org).
-# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
 
-import pymor.core as core
-from .boundarytypes import BoundaryType
+from pymor.core import ImmutableInterface
+from pymor.domaindescriptions.boundarytypes import BoundaryType
 
 
-class DomainDescriptionInterface(core.BasicInterface):
+class DomainDescriptionInterface(ImmutableInterface):
     '''Analytically describes a domain and its boundary (types).
 
     Attributes
     ----------
     boundary_types
-        Set of `BoundaryTypes` the domain has.
+        Set of |BoundaryTypes| the domain has.
     '''
 
-    boundary_types = set()
+    boundary_types = frozenset()
 
     @property
     def has_dirichlet(self):
@@ -29,12 +29,12 @@ class DomainDescriptionInterface(core.BasicInterface):
 
     @property
     def has_only_dirichlet(self):
-        return self.boundary_types == set((BoundaryType('dirichlet'),))
+        return self.boundary_types == {BoundaryType('dirichlet')}
 
     @property
     def has_only_neumann(self):
-        return self.boundary_types == set((BoundaryType('neumann'),))
+        return self.boundary_types == {BoundaryType('neumann')}
 
     @property
     def has_only_dirichletneumann(self):
-        return self.boundary_types <= set((BoundaryType('dirichlet'), BoundaryType('neumann')))
+        return self.boundary_types <= {BoundaryType('dirichlet'), BoundaryType('neumann')}

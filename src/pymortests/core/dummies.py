@@ -1,12 +1,11 @@
-# This file is part of the pyMor project (http://www.pymor.org).
-# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
 
 from pymor.core.interfaces import (BasicInterface, contract, abstractmethod)
-from pymor.core.cache import Cachable, cached
-import pymor.grids.boundaryinfos
+from pymor.core.cache import CacheableInterface, cached
 from pymor.core import interfaces
 
 
@@ -73,7 +72,7 @@ class AverageImplementer(StupidInterface, BrilliantInterface):
     some_attribute = 2
 
 
-class CacheImplementer(Cachable):
+class CacheImplementer(CacheableInterface):
 
     some_attribute = 2
 

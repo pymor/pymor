@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-# This file is part of the pyMor project (http://www.pymor.org).
-# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 # make sure we got distribute in place
-from distribute_setup import use_setuptools
-use_setuptools()
+#from distribute_setup import use_setuptools
+#use_setuptools()
 
 import sys
 import os
@@ -13,15 +13,34 @@ import os
 import multiprocessing
 import subprocess
 from setuptools import find_packages
+from setuptools.command.test import test as TestCommand
 from distutils.extension import Extension
+import itertools
+
+import dependencies
 
 _orig_generate_a_pyrex_source = None
 
-tests_require = ['mock', 'nose-cov', 'nose', 'nosehtmloutput', 'nose-progressive', 'tissue']
-install_requires = ['distribute', 'scipy', 'numpy', 'PyContracts',
-                    'docopt', 'dogpile.cache' , 'numpydoc']
-setup_requires = ['cython', 'numpy', 'nose', 'sympy']
-install_suggests = ['matplotlib', 'sympy'] + tests_require
+tests_require = dependencies.tests_require
+install_requires = dependencies.install_requires
+setup_requires = dependencies.setup_requires
+install_suggests = dependencies.install_suggests
+
+
+class PyTest(TestCommand):
+
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        print(sys.argv[3:])
+        self.test_args = sys.argv[3:] + ['src/pymortests']
+        self.test_suite = True
+
+    def run_tests(self):
+        #import here, cause outside the eggs aren't loaded
+        import pytest
+        errno = pytest.main(self.test_args)
+        sys.exit(errno)
+
 
 class DependencyMissing(Exception):
 
@@ -80,28 +99,38 @@ def _numpy_monkey():
     build_src.build_src.generate_a_pyrex_source = generate_a_pyrex_source
 
 def write_version():
-    revstring = subprocess.check_output(['git', 'describe', '--tags', '--candidates', '20', '--match', '*.*.*']).strip()
     filename = os.path.join(os.path.dirname(__file__), 'src', 'pymor', 'version.py')
-    with open(filename, 'w') as out:
-        out.write('revstring = \'{}\''.format(revstring))
+    try:
+        if 'PYMOR_DEB_VERSION' in os.environ:
+            revstring = os.environ['PYMOR_DEB_VERSION']
+        else:
+            revstring = subprocess.check_output(['git', 'describe', '--tags', '--candidates', '20', '--match', '*.*.*']).strip()
+        with open(filename, 'w') as out:
+            out.write('revstring = \'{}\''.format(revstring))
+    except:
+        if os.path.exists(filename):
+            loc = {}
+            execfile(filename, loc, loc)
+            revstring = loc['revstring']
+        else:
+            revstring = '0.0.0-0-0'
     return revstring
 
 def _setup(**kwargs):
-    '''we'll make use of Distribution's __init__ downloading setup_requires packages right away here'''
-    from setuptools.dist import Distribution
-    dist = Distribution(kwargs)
-
-    # now that we supposedly have at least numpy + cython installed, use them
-    # they're dropped in cwd as egg-dirs however. let's discover those first
-    from pkg_resources import require
-    require("Cython")
-    require("numpy")
     _numpy_monkey()
     import Cython.Distutils
-    cmdclass = {'build_ext': Cython.Distutils.build_ext}
+    # numpy sometimes expects this attribute, sometimes not. all seems ok if it's set to none
+    if not hasattr(Cython.Distutils.build_ext, 'fcompiler'):
+        Cython.Distutils.build_ext.fcompiler = None
+    cmdclass = {'build_ext': Cython.Distutils.build_ext,
+                'test': PyTest}
     from numpy import get_include
     ext_modules = [Extension("pymor.tools.relations", ["src/pymor/tools/relations.pyx"], include_dirs=[get_include()]),
                    Extension("pymor.tools.inplace", ["src/pymor/tools/inplace.pyx"], include_dirs=[get_include()])]
+    # for some reason the *pyx files don't end up in sdist tarballs -> manually add them as package data
+    # this _still_ doesn't make them end up in the tarball however -> manually add them in MANIFEST.in
+    kwargs['package_data'] = {'pymor': list(itertools.chain(*[i.sources for i in ext_modules])) }
+
     kwargs['cmdclass'] = cmdclass
     kwargs['ext_modules'] = ext_modules
 
@@ -118,13 +147,19 @@ def _missing(names):
         try:
             __import__(name)
         except ImportError:
-            yield name
+            if name in dependencies.import_names:
+                try:
+                    __import__(dependencies.import_names[name])
+                except ImportError:
+                    yield name
+            else:
+                yield name
 
 def check_pre_require():
     '''these are packages that need to be present before we start out setup, because
     distribute/distutil/numpy.distutils makes automatic installation too unreliable
     '''
-    missing = list(_missing(['numpy', 'scipy']))
+    missing = list(_missing(dependencies.pre_setup_requires))
     if len(missing):
         raise DependencyMissing(missing)
 
@@ -134,31 +169,30 @@ def setup_package():
     revstring = write_version()
 
     _setup(
-        name='pyMor',
+        name='pymor',
         version=revstring,
-        author='pyMor developers',
+        author='pyMOR developers',
         author_email='pymor-dev@listserv.uni-muenster.de',
         maintainer='Rene Milk',
         maintainer_email='rene.milk@wwu.de',
         package_dir={'': 'src'},
         packages=find_packages('src'),
-        scripts=['bin/%s' % n for n in [] ] + ['run_tests.py', 'distribute_setup.py'],
+        include_package_data=True,
+        scripts=['src/pymor-demo', 'distribute_setup.py', 'dependencies.py', 'install.py'],
         url='http://pymor.org',
         description=' ' ,
         long_description=open('README.txt').read(),
         setup_requires=setup_requires,
         tests_require=tests_require,
         install_requires=install_requires,
-        classifiers=['Development Status :: 3 - Alpha',
+        classifiers=['Development Status :: 4 - Beta',
             'License :: OSI Approved :: BSD License',
             'Programming Language :: Python :: 2.7',
-            'Programming Language :: Python :: 3',
             'Intended Audience :: Science/Research',
             'Topic :: Scientific/Engineering :: Mathematics',
             'Topic :: Scientific/Engineering :: Visualization'],
         license='LICENSE.txt',
         zip_safe=False,
-        test_suite='pymortests.base.suite',
     )
 
     missing = list(_missing(install_suggests))

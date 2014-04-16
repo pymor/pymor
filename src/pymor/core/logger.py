@@ -1,5 +1,5 @@
-# This file is part of the pyMor project (http://www.pymor.org).
-# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """Utilities for colorized log output.
@@ -7,8 +7,10 @@ via http://stackoverflow.com/questions/384076/how-can-i-make-the-python-logging-
 Cannot not be moved because it's needed to be imported in the root __init__.py OR ELSE
 """
 from __future__ import absolute_import, division, print_function
-import logging
 import curses
+import logging
+import os
+import time
 
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 
@@ -35,8 +37,10 @@ LOGLEVEL_MAPPING = {
     'fatal':     logging.FATAL,
 }
 
-FORMAT = '%(asctime)s - $BOLD%(name)s$RESET $BOLD%(levelname)s: %(message)s'
+FORMAT = '%(asctime)s$BOLD%(levelname)s|$BOLD%(name)s$RESET: %(message)s'
 MAX_HIERACHY_LEVEL = 3
+
+start_time = time.time()
 
 
 def formatter_message(message, use_color):
@@ -49,34 +53,59 @@ def formatter_message(message, use_color):
 
 class ColoredFormatter(logging.Formatter):
     """A logging.Formatter that inserts tty control characters to color
-    loglevel keyword output
+    loglevel keyword output. Coloring can be disabled by setting the
+    `PYMOR_COLORS_DISABLE` environment variable to `1`.
     """
 
-    def __init__(self, datefmt='%H:%M:%S'):
-        try:
-            curses.setupterm()
-            self.use_color = curses.tigetnum("colors") > 1
-        except Exception, _:
+    def __init__(self):
+        disable_colors = int(os.environ.get('PYMOR_COLORS_DISABLE', 0)) == 1
+        if disable_colors:
             self.use_color = False
-        logging.Formatter.__init__(self, formatter_message(FORMAT, self.use_color), datefmt=datefmt)
+        else:
+            try:
+                curses.setupterm()
+                self.use_color = curses.tigetnum("colors") > 1
+            except Exception:
+                self.use_color = False
+
+        def relative_time(secs=None):
+            if secs is not None:
+                elapsed = time.time() - start_time
+                if elapsed > 604800:
+                    self.datefmt = '%Ww %dd %H:%M:%S'
+                elif elapsed > 86400:
+                    self.datefmt = '%dd %H:%M:%S'
+                elif elapsed > 3600:
+                    self.datefmt = '%H:%M:%S'
+                return time.gmtime(elapsed)
+            else:
+                return time.gmtime()
+        self.converter = relative_time
+        super(ColoredFormatter, self).__init__(formatter_message(FORMAT, self.use_color), datefmt='%M:%S')
 
     def format(self, record):
+        if not record.msg:
+            return ''
         tokens = record.name.split('.')
         record.name = '.'.join(tokens[1:MAX_HIERACHY_LEVEL])
         if len(tokens) > MAX_HIERACHY_LEVEL - 1:
             record.name += '.' + tokens[-1]
         levelname = record.levelname
         if self.use_color and levelname in COLORS.keys():
-            levelname_color = COLOR_SEQ % (30 + COLORS[levelname]) + levelname + RESET_SEQ
+            if levelname is 'INFO':
+                levelname_color = RESET_SEQ
+            else:
+                levelname_color = RESET_SEQ + '|' + COLOR_SEQ % (30 + COLORS[levelname]) + levelname + RESET_SEQ
             record.levelname = levelname_color
+        elif levelname is 'INFO':
+            record.levelname = ''
         return logging.Formatter.format(self, record)
 
 
-def getLogger(module, level=None, filename=None):
+def getLogger(module, level=None, filename=None, handler_cls=logging.StreamHandler):
     module = 'pymor' if module == '__main__' else module
-    logger_name = module
     logger = logging.getLogger(module)
-    streamhandler = logging.StreamHandler()
+    streamhandler = handler_cls()
     streamformatter = ColoredFormatter()
     streamhandler.setFormatter(streamformatter)
     logger.handlers = [streamhandler]

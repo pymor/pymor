@@ -1,0 +1,40 @@
+Source: pymor
+Section: math
+Priority: extra
+Maintainer: Rene Milk <rene.milk@uni-muenster.de>  
+Build-Depends: debhelper (>= 8.0.0), python-pip, python-virtualenv, python-numpy,
+  python-scipy, python-pytest, python-pyside, 
+  python-dogpile.cache, python-dogpile.core, cython, 
+  python-sphinx, python-sympy, python-matplotlib, python-opengl,
+  python-docopt, python-glumpy, python-pyvtk, 
+  python-pytest-capturelog, python-pytest-cache, 
+  python-dev, python-execnet (>=1.1), python3, dh-make
+Standards-Version: 3.9.4
+Homepage: http://pymor.org
+#Vcs-Git: git://git.debian.org/collab-maint/pymor-base.git
+Vcs-Browser: https://github.com/pymor/pymor/tree/0.2.x
+
+Package: python-pymor
+Architecture: any
+Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends},
+  python-pip, python-virtualenv, python-numpy,
+  python-scipy, python-pytest, python-pyside,
+  python-dogpile.cache, python-dogpile.core, cython, 
+  python-matplotlib, python-opengl,
+  python-docopt, python-glumpy, python-pyvtk,
+  python-dev, python
+Description: makes pyMOR importable system-wide + dependency tracking
+ <insert long description, indented with spaces>
+
+Package: python-pymor-demos
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}, python, python-pymor, ipython, python-tk, python-matplotlib, python-opengl
+Description: makes all included demos launchable via "pymor-demo" script
+ <insert long description, indented with spaces>
+ 
+Package: python-pymor-doc
+Architecture: all
+Depends: ${misc:Depends}, python-pymor, python-sphinx, ${sphinxdoc:Depends} 
+Description: auto-generated sphinx-html documenttaion for python-pymor
+ <insert long description, indented with spaces>
+ 

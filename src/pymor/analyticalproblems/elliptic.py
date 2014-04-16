@@ -1,42 +1,42 @@
 # -*- coding: utf-8 -*-
-# This file is part of the pyMor project (http://www.pymor.org).
-# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
 
-import pymor.core as core
-from pymor.tools import Named
+from pymor.core import ImmutableInterface
 from pymor.domaindescriptions import RectDomain
 from pymor.functions import ConstantFunction
+from pymor.tools import Named
 
 
-class EllipticProblem(core.BasicInterface, Named):
-    '''Standard elliptic analytical problem.
+class EllipticProblem(ImmutableInterface, Named):
+    '''Linear elliptic analytical problem.
 
     The problem consists in solving ::
 
-      |       K
-      | - ∇ ⋅ ∑  θ_k(μ) ⋅ d_k(x) ∇ u(x, μ) = f(x, μ)
-      |      k=0
+    |        K
+    |  - ∇ ⋅ ∑  θ_k(μ) ⋅ d_k(x) ∇ u(x, μ) = f(x, μ)
+    |       k=0
 
     for u.
 
     Parameters
     ----------
     domain
-        A domain description of the domain the problem is posed on.
+        A |DomainDescription| of the domain the problem is posed on.
     rhs
-        The function f(x, mu).
+        The |Function| f(x, μ).
     diffusion_functions
-        List of the functions d_k(x).
+        List of the |functions| d_k(x).
     diffusion_functionals
-        List of the functionals theta_k(mu). If None, and `len(diffusion_functions) > 1`
-        let theta_k be the kth projection of the coefficient part of mu.
-        If None and `len(diffusion_functions) == 1`, no parameter dependence is
-        assumed.
+        List of the |ParameterFunctionals| θ_k(μ). If None, and
+        `len(diffusion_functions) > 1` let θ_k be the kth projection of the
+        coefficient part of μ.  If None and `len(diffusion_functions) == 1`,
+        no parameter dependence is assumed.
     dirichlet_data
-        Function providing the Dirichlet boundary values in global coordinates.
+        |Function| providing the Dirichlet boundary values in global coordinates.
     name
         Name of the problem.
 

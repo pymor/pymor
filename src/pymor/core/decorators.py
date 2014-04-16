@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# This file is part of the pyMor project (http://www.pymor.org).
-# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 '''
@@ -12,9 +12,14 @@ from __future__ import absolute_import, division, print_function
 import functools
 import types
 import inspect
-import contracts
 import copy
 import warnings
+
+try:
+    import contracts
+    HAVE_CONTRACTS = True
+except ImportError:
+    HAVE_CONTRACTS = False
 
 
 def fixup_docstring(doc):
@@ -131,7 +136,7 @@ def contract(*arg, **kwargs):
 
         **Contracts evaluation**: Note that all contracts for the arguments
         and the return values
-        are evaluated in the same context. This make it possible to use
+        are evaluated in the same context. This makes it possible to use
         common variables in the contract expression. For example, in the
         example above, the return value is constrained to be a list of the same
         length (``N``) as the parameter ``b``.
@@ -155,9 +160,19 @@ def contract(*arg, **kwargs):
                   :type b: ``list(tuple(str,*))``
               """
 
-        :raise: ContractException, if arguments are not coherent
-        :raise: ContractSyntaxError
+        Raises
+        ------
+        ContractException
+            Arguments are not coherent.
+        ContractSyntaxError
+            Contract syntac is incorrect.
     '''
+
+    if not HAVE_CONTRACTS:
+        if isinstance(arg[0], types.FunctionType):
+            return arg[0]
+        else:
+            return lambda f: f
 
     # this bit tags function as decorated
     def tag_and_decorate(function, **kwargs):
@@ -203,10 +218,13 @@ def contract(*arg, **kwargs):
         return tmp_wrap
 
 # alias this so we need no contracts import outside this module
-contracts_decorate = contracts.main.contracts_decorate
+if HAVE_CONTRACTS:
+    contracts_decorate = contracts.main.contracts_decorate
 
 
 def contains_contract(string):
+    if not HAVE_CONTRACTS:
+        return False
     try:
         contracts.parse_contract_string(string)
         return True

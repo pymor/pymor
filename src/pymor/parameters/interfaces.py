@@ -1,40 +1,41 @@
-# This file is part of the pyMor project (http://www.pymor.org).
-# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
 
-import pymor.core as core
-from pymor.tools import Named
+from pymor.core import ImmutableInterface, abstractmethod
 from pymor.parameters.base import Parametric
+from pymor.tools import Named
 
 
-class ParameterSpaceInterface(core.BasicInterface):
-    '''Represents a parameter space.
+class ParameterSpaceInterface(ImmutableInterface):
+    '''Interface for parameter spaces.
 
     Attributes
     ----------
     parameter_type
-        Parameter type of the space.
+        |ParameterType| of the space.
     '''
 
     parameter_type = None
 
-    @core.interfaces.abstractmethod
+    @abstractmethod
     def contains(self, mu):
-        '''True if `mu` is contained in the space.'''
+        '''`True` if `mu` is contained in the space.'''
         pass
 
 
-class ParameterFunctionalInterface(core.BasicInterface, Parametric, Named):
-    '''Represents a functional on a parameter space.
+class ParameterFunctionalInterface(ImmutableInterface, Parametric, Named):
+    '''Interface for parameter functionals.
+
+    A parameter functional is simply a function mapping a |Parameter| to
+    a number.
     '''
 
-    def __init__(self):
-        Parametric.__init__(self)
-
-    @core.interfaces.abstractmethod
+    @abstractmethod
     def evaluate(self, mu=None):
+        '''Evaluate the functional for the given |Parameter| `mu`.'''
         pass
 
     def __call__(self, mu=None):

@@ -1,28 +1,29 @@
-# This file is part of the pyMor project (http://www.pymor.org).
-# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
 import os
 import tempfile
+import pytest
 
 from pymor.core.interfaces import (abstractstaticmethod, abstractclassmethod)
 from pymor.core import exceptions
-from pymor.core import timing
 from pymor.core import decorators
-from pymortests.base import TestBase, runmodule
-from pymortests.core.dummies import *
+from pymortests.base import TestInterface, runmodule, SubclassForImplemetorsOf
+from pymortests.core.dummies import *   # NOQA
 from pymor.grids import RectGrid
+from pymor.tools import timing
 import pymor.core
 
 
-class TimingTest(TestBase):
+class TestTiming(TestInterface):
 
     def testTimingContext(self):
         with timing.Timer('busywait', self.logger.info):
             timing.busywait(1000)
 
-    @timing.Timer('busywait_decorator', TestBase.logger.info)
+    @timing.Timer('busywait_decorator', TestInterface.logger.info)
     def wait(self):
         timing.busywait(1000)
 
@@ -37,22 +38,23 @@ class TimingTest(TestBase):
         self.logger.info('plain timing took %s seconds', timer.dt)
 
 
-class InterfaceTest(TestBase):
+class Test_Interface(TestInterface):
 
-    def testFreeze(self):
+    def testLock(self):
         b = AverageImplementer()
         b.level = 43
         b.lock()
-        b.level = 41
-        with self.assertRaises(exceptions.ConstError):
+        assert b.locked
+        with pytest.raises(exceptions.ConstError):
             b.new = 42
-        b.freeze()
-        with self.assertRaises(exceptions.ConstError):
+        with pytest.raises(exceptions.ConstError):
             b.level = 0
-        b.freeze(False)
-        b.level = 0
         b.lock(False)
-        b.level = 0
+        b.level = 1
+        b.new = 43
+        assert hasattr(b, 'new')
+        assert b.level == 1
+        assert b.new == 43
 
     def testImplementorlist(self):
         imps = ['StupidImplementer', 'AverageImplementer', 'FailImplementer']
@@ -80,12 +82,12 @@ class InterfaceTest(TestBase):
             def abstract_static_method():
                 return 0
 
-        with self.assertRaisesRegexp(TypeError, "Can't instantiate abstract class.*"):
-            _ = FailImplementer()
-        with self.assertRaisesRegexp(TypeError, "Can't instantiate abstract class.*"):
-            _ = ClassImplementer()
-        with self.assertRaisesRegexp(TypeError, "Can't instantiate abstract class.*"):
-            _ = StaticImplementer()
+        with pytest.raises(TypeError):
+            FailImplementer()
+        with pytest.raises(TypeError):
+            ClassImplementer()
+        with pytest.raises(TypeError):
+            StaticImplementer()
         inst = CompleteImplementer()
         self.assertEqual(inst.abstract_class_method(), 'CompleteImplementer')
         self.assertEqual(inst.abstract_static_method(), 0)
@@ -93,12 +95,14 @@ class InterfaceTest(TestBase):
     def testPickling(self):
         def picklme(obj, attribute_name):
             with tempfile.NamedTemporaryFile(mode='wb', delete=False) as dump_file:
+                if hasattr(obj, 'lock'):
+                    obj.lock(False)
                 obj.some_attribute = 4
                 pymor.core.dump(obj, dump_file)
                 dump_file.close()
                 f = open(dump_file.name, 'rb')
                 unpickled = pymor.core.load(f)
-                self.assert_(getattr(obj, attribute_name) == getattr(unpickled, attribute_name))
+                assert getattr(obj, attribute_name) == getattr(unpickled, attribute_name)
                 os.unlink(dump_file.name)
         picklme(AverageImplementer(), 'some_attribute')
         picklme(CacheImplementer(), 'some_attribute')
@@ -120,8 +124,29 @@ class InterfaceTest(TestBase):
             self.assertTrue("DeprecationWarning" in str(w[-1].message))
 
     def testVersion(self):
-        self.assertGreater(pymor.version, pymor.NO_VERSION)
-        self.assertIsInstance(pymor.version, tuple)
+        self.assertGreater(pymor.VERSION, pymor.NO_VERSION)
+        self.assertIsInstance(pymor.VERSION, pymor.Version)
+
+
+@SubclassForImplemetorsOf(BasicInterface)
+class WithcopyInterface(TestInterface):
+
+    def test_with_(self):
+        self_type = self.Type
+        try:
+            obj = self_type()
+        except TypeError as e:
+            self.logger.debug('WithcopyInterface: Not testing {} because its init failed: {}'.format(self_type, str(e)))
+            return
+
+        try:
+            new = obj.with_()
+            assert isinstance(new, self_type)
+        except exceptions.ConstError:
+            pass
+
+# this needs to go into every module that wants to use dynamically generated types, ie. testcases, below the test code
+from pymor.core.dynamic import *   # NOQA
 
 if __name__ == "__main__":
-    runmodule(name='pymortests.core.interface')
+    runmodule(filename=__file__)

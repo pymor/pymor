@@ -1,8 +1,10 @@
-# This file is part of the pyMor project (http://www.pymor.org).
-# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
+
+from itertools import chain
 
 import numpy as np
 
@@ -16,13 +18,13 @@ class GaussQuadratures(object):
 
     @classmethod
     def _determine_order(cls, order=None, npoints=None):
-        assert order is not None or npoints is not None, ValueError('must specify "order" or "npoints"')
-        assert order is None or npoints is None, ValueError('cannot specify "order" and "npoints"')
+        assert order is not None or npoints is not None, 'must specify "order" or "npoints"'
+        assert order is None or npoints is None, 'cannot specify "order" and "npoints"'
         if order is not None:
-            assert 0 <= order <= cls.order_map.size - 1, ValueError('order {} not implmented'.format(order))
+            assert 0 <= order <= cls.order_map.size - 1, 'order {} not implmented'.format(order)
             p = cls.order_map[order]
         else:
-            assert 1 <= npoints <= cls.orders.size, ValueError('not implemented with {} points'.format(npoints))
+            assert 1 <= npoints <= cls.orders.size, 'not implemented with {} points'.format(npoints)
             p = npoints - 1
         return p
 
@@ -229,4 +231,8 @@ class GaussQuadratures(object):
                   .8003916427167311316732626477167953593600586524543208895494977207897711258664557534082827631852886530e-1,    # noqa
                   .5346966299765921548012735909699811210728508673516244000256302105140949681374878827026865904815822885e-1,    # noqa
                   .2358766819325591359730798074250853015851453699742354478025267350190486057601935533541295353770726794e-1])   # noqa
+
     )
+
+    for a in chain(points, weights):
+            a.setflags(write=False)

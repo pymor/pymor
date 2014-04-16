@@ -1,7 +1,14 @@
 *.py[cod]
+*.pstats
+*.svg
+*.vtu
+*.tar.gz
 
 # C extensions
 *.so
+src/pymor/tools/inplace.c
+src/pymor/tools/relations.c
+src/pymordemos/minimal_cpp_demo/bindings_generated.cpp
 
 # Packages
 *.egg
@@ -41,5 +48,15 @@ nosetests.xml
 README.html
 README.txt
 .settings/
+.cache/
 src/pymor/version.py
 .kateproject*
+venvs
+
+# coverage.py output
+*,cover
+htmlcov/
+coverage.xml
+libpeerconnection.log
+debian/pymor/
+.cache

@@ -1,16 +1,16 @@
-# This file is part of the pyMor project (http://www.pymor.org).
-# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
 
-import pymor.core as core
+from pymor.core import ImmutableInterface
 
 
-class BoundaryType(core.BasicInterface):
+class BoundaryType(ImmutableInterface):
     '''Represents a boundary type, i.e. Dirichlet, Neumann, etc.
 
-    By defining a global register of possible boundary types, we prevent hard
+    By defining a global registry of possible boundary types, we prevent hard
     to track down errors due to typos. Only boundary types that have been
     registered before using `register_type` can be instantiated.
 
@@ -19,7 +19,7 @@ class BoundaryType(core.BasicInterface):
 
     Parameters
     ----------
-    name
+    `type_`
         Name of the boundary type as a string.
 
     Attributes
@@ -32,13 +32,13 @@ class BoundaryType(core.BasicInterface):
 
     @classmethod
     def register_type(cls, name):
-        '''Register a new boundary type with name `name`.'''
+        '''Register a new |BoundaryType| with name `name`.'''
         assert isinstance(name, str)
         cls.types.add(name)
 
-    def __init__(self, name):
-        assert name in self.types, '{} is not a known boundary type. Use BoundaryType.register to add it'.format(name)
-        self.name = name
+    def __init__(self, type_):
+        assert type_ in self.types, '{} is not a known boundary type. Use BoundaryType.register to add it'.format(type_)
+        self.name = type_
 
     def __str__(self):
         return self.name
@@ -49,8 +49,12 @@ class BoundaryType(core.BasicInterface):
     def __eq__(self, other):
         if isinstance(other, BoundaryType):
             return self.name == other.name
-        # elif isinstance(other, str):       better not ...
-        #    return self.name == other
+        else:
+            return NotImplemented
+
+    def __ne__(self, other):
+        if isinstance(other, BoundaryType):
+            return self.name != other.name
         else:
             return NotImplemented
 

@@ -1,0 +1,5 @@
+pymor (0.2.0rc2~13.10~ppa12) saucy; urgency=low
+
+  * Initial debianisation
+
+ -- Rene Milk <rene.milk@uni-muenster.de>  Wed, 26 Feb 2014 00:16:17 +0100

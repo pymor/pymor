@@ -1,60 +1,60 @@
-# This file is part of the pyMor project (http://www.pymor.org).
-# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
 
-import copy
-
-from pymor.core import BasicInterface
+from pymor.core.cache import CacheableInterface, cached
 from pymor.core.interfaces import abstractmethod
-from pymor.core.cache import Cachable, cached, DEFAULT_DISK_CONFIG, NO_CACHE_CONFIG
-from pymor.la import induced_norm
-from pymor.tools import Named
 from pymor.parameters import Parametric
+from pymor.tools import Named
 
 
-class DiscretizationInterface(BasicInterface, Parametric, Cachable, Named):
+class DiscretizationInterface(CacheableInterface, Parametric, Named):
     '''Describes a discretization.
 
     Note that we do not make any distinction between detailed and reduced
-    discretizations at this point.
+    discretizations.
 
     Attributes
     ----------
+    dim_solution
+        Dimension of the |VectorArrays| returned by solve.
+    type_solution
+        Type of the |VectorArrays| returned by solve.
+    linear
+        `True` if the discretization describes a linear Problem.
     operators
-        Dictionary of all operators contained in this discretization. The idea is
-        that this attribute will be common to all discretizations such that it can
-        be used for introspection. Compare the implementation of `reduce_generic_rb`.
-        For this class, operators has the keys 'operator' and 'rhs'.
+        Dictionary of all |Operators| contained in the discretization.
+        (Compare the implementation of :func:`pymor.reductors.basic.reduce_generic_rb`.)
+    functionals
+        Same as operators but for |Functionals|.
+    vector_operators
+        Same as operators but for |Operators| representing vectors, i.e.
+        linear |Operators| with `dim_source == 1`.
+    products
+        Same as |Operators| but for inner product operators associated to the
+        discretization.
+
+    Optional Methods:
+
+        def estimate(self, U, mu=None):
+            Estimate the error of the discrete solution `U` to the |Parameter| `mu` against
+            the real solution. (For a reduced discretization, the 'real' solution will
+            be the solution of a detailed discretization, in general.)
+
+        def visualize(self, U):
+            Visualize a solution given by the |VectorArray| U.
     '''
 
+    dim_solution = None
+    type_solution = None
+    linear = False
     operators = dict()
-    with_arguments = set(('operators',))
-
-    def __init__(self, operators, products=None, estimator=None, visualizer=None, caching='disk', name=None):
-        if caching == 'disk':
-            Cachable.__init__(self, config=DEFAULT_DISK_CONFIG)
-        elif caching == 'none' or not caching:
-            Cachable.__init__(self, config=NO_CACHE_CONFIG)
-        else:
-            raise NotImplementedError
-        Parametric.__init__(self)
-        self.operators = operators
-        self.products = products
-        self.estimator = estimator
-        self.visualizer = visualizer
-        self.caching = caching
-        self.name = name
-
-        if products:
-            for k, v in products.iteritems():
-                setattr(self, '{}_product'.format(k), v)
-                setattr(self, '{}_norm'.format(k), induced_norm(v))
-        if estimator is not None:
-            self.estimate = self.__estimate
-        if visualizer is not None:
-            self.visualize = self.__visualize
+    functionals = dict()
+    vector_operators = dict()
+    products = dict()
+    with_arguments = frozenset({'operators', 'functionals', 'vector_operators, products'})
 
     @abstractmethod
     def _solve(self, mu=None):
@@ -62,15 +62,18 @@ class DiscretizationInterface(BasicInterface, Parametric, Cachable, Named):
         pass
 
     @cached
-    def solve(self, mu=None):
-        '''Solve for a parameter `mu`.
+    def solve(self, mu=None, **kwargs):
+        '''Solve for the |Parameter| `mu`.
 
         The result is cached by default.
+
+        Parameters
+        ----------
+        mu
+            |Parameter| for which to solve.
+
+        Returns
+        -------
+        The solution given by a |VectorArray|.
         '''
-        return self._solve(mu)
-
-    def __visualize(self, U):
-        self.visualizer.visualize(U, self)
-
-    def __estimate(self, U, mu=None):
-        return self.estimator.estimate(U, mu=mu, discretization=self)
+        return self._solve(mu, **kwargs)

@@ -1,344 +1,309 @@
 # -*- coding: utf-8 -*-
-# This file is part of the pyMor project (http://www.pymor.org).
-# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+
+'''Module containing some constructions to obtain new operators from old ones.'''
 
 from __future__ import absolute_import, division, print_function
 
-from collections import OrderedDict
+from numbers import Number
 
 import numpy as np
 
-from pymor.la import NumpyVectorArray
-from pymor.operators.interfaces import OperatorInterface, LinearOperatorInterface
-from pymor.operators.affine import LinearAffinelyDecomposedOperator
-from pymor.operators.numpy import NumpyLinearOperator
+from pymor.la import VectorArrayInterface, NumpyVectorArray
+from pymor.operators.basic import OperatorBase
+from pymor.operators.interfaces import OperatorInterface
 
 
-class ProjectedOperator(OperatorInterface):
-    '''Projection of an operator to a subspace.
-
-    Given an operator L, a scalar product ( ⋅, ⋅), and vectors b_1, ..., b_N,
-    c_1, ..., c_M, the projected operator is defined by ::
-
-        [ L_P(b_j) ]_i = ( c_i, L(b_j) )
-
-    for all i,j.
-
-    In particular, if b_i = c_i are orthonormal w.r.t. the product, then
-    L_P is the coordinate representation of the orthogonal projection
-    of L onto the subspace spanned by the b_i (with b_i as basis).
-
-    From another point of view, if L represents the matrix of a bilinear form and
-    ( ⋅, ⋅ ) is the euclidean scalar product, then L_P represents the matrix of
-    the bilinear form restricted to the span of the b_i.
-
-    It is not checked whether the b_i and c_j are linear independent.
+class Concatenation(OperatorBase):
+    '''|Operator| representing the concatenation of two |Operators|.
 
     Parameters
     ----------
-    operator
-        The `Operator` to project.
-    source_basis
-        The b_1, ..., b_N as a `VectorArray`.
-    range_basis
-        The c_1, ..., c_M as a `VectorArray`. If None, `range_basis=source_basis`.
-    product
-        An `Operator` representing the scalar product.
-        If None, the euclidean product is chosen.
-    name
-        Name of the projected operator.
-    '''
-
-    type_source = type_range = NumpyVectorArray
-
-    def __init__(self, operator, source_basis, range_basis, product=None, name=None):
-        assert source_basis is not None or operator.dim_source == 0
-        assert range_basis is not None
-        assert isinstance(operator, OperatorInterface)
-        assert source_basis is None or operator.dim_source == source_basis.dim
-        assert operator.dim_range == range_basis.dim
-        super(ProjectedOperator, self).__init__()
-        self.build_parameter_type(operator.parameter_type, local_global=True)
-        self.dim_source = len(source_basis) if operator.dim_source > 0 else 0
-        self.dim_range = len(range_basis)
-        self.name = name
-        self.operator = operator
-        self.source_basis = source_basis
-        self.range_basis = range_basis
-        self.product = product
-        self.lock()
-
-    def apply(self, U, ind=None, mu=None):
-        if self.source_basis is not None:
-            U_array = U._array if ind is None else U._array[ind]
-            V = self.source_basis.lincomb(U_array)
-            if self.product is None:
-                return NumpyVectorArray(self.operator.apply2(self.range_basis, V, mu=self.map_parameter(mu),
-                                                             pairwise=False).T)
-            else:
-                V = self.operator.apply(V, mu=self.map_parameter(mu))
-                return NumpyVectorArray(self.product.apply2(V, self.range_basis, pairwise=False))
-        else:
-            V = self.operator.apply(U, ind=ind, mu=self.map_parameter(mu))
-            if self.product is None:
-                return NumpyVectorArray(V.dot(self.range_basis, pairwise=False))
-            else:
-                return NumpyVectorArray(self.product.apply2(V, self.range_basis, pairwise=False))
-
-
-class ProjectedLinearOperator(LinearOperatorInterface):
-    '''Projection of an linear operator to a subspace.
-
-    The same as ProjectedOperator, but the resulting operator is again a
-    `LinearOperator`.
-
-    See also `ProjectedOperator`.
-
-    Parameters
-    ----------
-    operator
-        The `DiscreteLinearOperator` to project.
-    source_basis
-        The b_1, ..., b_N as a 2d-array.
-    range_basis
-        The c_1, ..., c_M as a 2d-array. If None, `range_basis=source_basis`.
-    product
-        Either an 2d-array or a `Operator` representing the scalar product.
-        If None, the euclidean product is chosen.
-    name
-        Name of the projected operator.
-    '''
-
-    type_source = type_range = NumpyVectorArray
-    sparse = False
-
-    def __init__(self, operator, source_basis, range_basis, product=None, name=None):
-        assert isinstance(operator, LinearOperatorInterface)
-        assert operator.dim_source == source_basis.dim
-        assert operator.dim_range == range_basis.dim
-        super(ProjectedLinearOperator, self).__init__()
-        self.build_parameter_type(operator.parameter_type, local_global=True)
-        self.dim_source = len(source_basis)
-        self.dim_range = len(range_basis)
-        self.name = name
-        self.operator = operator
-        self.source_basis = source_basis
-        self.range_basis = range_basis
-        self.product = product
-        self.lock()
-
-    def _assemble(self, mu=None):
-        if self.product is None:
-            return NumpyLinearOperator(self.operator.apply2(self.range_basis, self.source_basis,
-                                                            mu=self.map_parameter(mu), pairwise=False),
-                                       name='{}_assembled'.format(self.name))
-        else:
-            AU = self.operator.apply(self.source_basis, mu=self.map_parameter(mu))
-            return NumpyLinearOperator(self.product.apply2(self.range_basis, AU, pairwise=False),
-                                       name='{}_assembled'.format(self.name))
-
-
-def project_operator(operator, source_basis, range_basis, product=None, name=None):
-    '''Project operators to subspaces.
-
-    Replaces `Operators` by `ProjectedOperators` and `LinearOperators`
-    by `ProjectedLinearOperators`.
-    Moreover, `LinearAffinelyDecomposedOperators` are projected by recursively
-    projecting each of its components.
-
-    See also `ProjectedOperator`.
-
-    Parameters
-    ----------
-    operator
-        The `Operator` to project.
-    source_basis
-        The b_1, ..., b_N as a 2d-array.
-    range_basis
-        The c_1, ..., c_M as a 2d-array.
-    product
-        Either an 2d-array or a `Operator` representing the scalar product.
-        If None, the euclidean product is chosen.
-    name
-        Name of the projected operator.
-    '''
-
-    if hasattr(operator, 'projected'):
-        return operator.projected(source_basis=source_basis, range_basis=range_basis, product=product, name=name)
-
-    name = name or '{}_projected'.format(operator.name)
-
-    if isinstance(operator, LinearAffinelyDecomposedOperator):
-        proj_operators = tuple(project_operator(op, source_basis, range_basis, product,
-                                                name='{}_projected'.format(op.name))
-                               for op in operator.operators)
-        if operator.operator_affine_part is not None:
-            proj_operator_ap = project_operator(operator.operator_affine_part, source_basis, range_basis, product,
-                                                name='{}_projected'.format(operator.operator_affine_part.name))
-        else:
-            proj_operator_ap = None
-        proj_operator = LinearAffinelyDecomposedOperator(proj_operators, proj_operator_ap, operator.functionals,
-                                                         name_map=operator.parameter_name_map, name=name)
-        return proj_operator
-
-    elif isinstance(operator, LinearOperatorInterface):
-        return ProjectedLinearOperator(operator, source_basis, range_basis, product, name)
-    else:
-        return ProjectedOperator(operator, source_basis, range_basis, product, name)
-
-
-def rb_project_operator(operator, rb, product=None, name=None):
-    if operator.dim_source > 0:
-        assert operator.dim_source == rb.dim
-        source_basis = rb
-    else:
-        source_basis = None
-    if operator.dim_range > 1:
-        assert operator.dim_range == rb.dim
-        range_basis = rb
-    elif operator.dim_range == 1:
-        if operator.type_range is not NumpyVectorArray:
-            raise NotImplementedError
-        range_basis = NumpyVectorArray(np.ones((1,1)))
-    else:
-        raise NotImplementedError
-    return project_operator(operator, source_basis, range_basis, product=product, name=name)
-
-
-class LincombOperator(OperatorInterface):
-    '''Operator representing the sum operators.
-
-    Given operators L_1, ..., L_K, this defines the operator given by ::
-
-        L(u) = L_1(u) + ... + L_K(u)
-
-    Parameters
-    ----------
-    operators
-        List of the `Operators` L_1, ..., L_K.
+    second
+        The |Operator| which is applied as second operator.
+    first
+        The |Operator| which is applied as first operator.
     name
         Name of the operator.
     '''
-
-    def __init__(self, operators, factors=None, name_map=None, name=None):
-        assert all(isinstance(op, OperatorInterface) for op in operators)
-        assert all(op.dim_source == operators[0].dim_source for op in operators)
-        assert all(op.dim_range == operators[0].dim_range for op in operators)
-        assert all(op.type_source == operators[0].type_source for op in operators)
-        assert all(op.type_range == operators[0].type_range for op in operators)
-        super(LincombOperator, self).__init__()
-        self.build_parameter_type(inherits={'operators': operators}, name_map=name_map)
-        self.operators = operators
-        self.factors = np.ones(len(operators)) if factors is None else factors
-        self.dim_source = operators[0].dim_source
-        self.dim_range = operators[0].dim_range
-        self.type_source = operators[0].type_source
-        self.type_range = operators[0].type_range
-        self.name = name or '+'.join(op.name for op in operators)
-        self.lock()
-
-    def apply(self, U, ind=None, mu=None):
-        return sum(op.apply(U, ind=ind, mu=self.map_parameter(mu, 'operators', i)) * self.factors[i]
-                   for i, op in enumerate(self.operators))
-
-
-class LinearLincombOperator(LinearOperatorInterface):
-    '''Linear operator representing the sum linear operators.
-
-    Given linear operators L_1, ..., L_K, this defines the linear operator given by ::
-
-        L(u) = L_1(u) + ... + L_K(u)
-
-    Parameters
-    ----------
-    operators
-        List of the `LinearOperators` L_1, ..., L_K.
-    name
-        Name of the operator.
-    '''
-
-    _assembled = False
-    @property
-    def assembled(self):
-        return self._assembled
-
-    def __init__(self, operators, factors=None, name_map=None, name=None):
-        assert all(isinstance(op, LinearOperatorInterface) for op in operators)
-        assert all(op.dim_source == operators[0].dim_source for op in operators)
-        assert all(op.dim_range == operators[0].dim_range for op in operators)
-        assert all(op.type_source == operators[0].type_source for op in operators)
-        assert all(op.type_range == operators[0].type_range for op in operators)
-        super(LinearLincombOperator, self).__init__()
-        self.build_parameter_type(inherits={'operators': operators}, name_map=name_map)
-        self.operators = operators
-        self.factors = np.ones(len(operators)) if factors is None else factors
-        self.dim_source = operators[0].dim_source
-        self.dim_range = operators[0].dim_range
-        self.type_source = operators[0].type_source
-        self.type_range = operators[0].type_range
-        self.name = name or '+'.join(op.name for op in operators)
-        self.lock()
-
-    def apply(self, U, ind=None, mu=None):
-        if self.assembled:
-            assert mu == None
-            return sum(op.apply(U, ind=ind, mu=None) * self.factors[i]
-                       for i, op in enumerate(self.operators))
-        else:
-            return self.assemble(mu).apply(U, ind=ind)
-
-    def _assemble(self, mu=None):
-        if self.assembled:
-            return self
-        M = self.operators[0].assemble(self.map_parameter(mu, 'operators', 0)) * self.factors[0]
-        for i, op in enumerate(self.operators[1:]):
-            M = M + op.assemble(self.map_parameter(mu, 'operators', i + 1)) * self.factors[i + 1]
-        M._assembled = True
-        return M
-
-
-def add_operators(operators, name=None):
-    '''Operator representing the sum operators.
-
-    Given operators L_1, ..., L_K, this defines the operator given by ::
-
-        L(u) = L_1(u) + ... + L_K(u)
-
-    If all L_k are linear, a LinearSumOperator is returned, otherwise a
-    SumOperator.
-
-    Parameters
-    ----------
-    operators
-        List of the `Operators` L_1, ..., L_k.
-    name
-        Name of the operator.
-    '''
-    if all(isinstance(op, LinearOperatorInterface) for op in operators):
-        return LinearLincombOperator(operators, name=name)
-    else:
-        return LincombOperator(operators, name=name)
-
-
-class Concatenation(OperatorInterface):
 
     def __init__(self, second, first, name=None):
         assert isinstance(second, OperatorInterface)
         assert isinstance(first, OperatorInterface)
         assert second.dim_source == first.dim_range
         assert second.type_source == first.type_range
-        super(Concatenation, self).__init__()
         self.first = first
         self.second = second
-        self.build_parameter_type(inherits=OrderedDict((('second', second), ('first', first))))
+        self.build_parameter_type(inherits=(second, first))
         self.dim_source = first.dim_source
         self.dim_range = second.dim_range
         self.type_source = first.type_source
         self.type_range = second.type_range
+        self.linear = second.linear and first.linear
+        if hasattr(first, 'restricted') and hasattr(second, 'restricted'):
+            self.restricted = self._restricted
         self.name = name
-        self.lock()
 
     def apply(self, U, ind=None, mu=None):
-        return self.second.apply(self.first.apply(U, ind=ind, mu=self.map_parameter(mu, 'first')),
-                                 mu=self.map_parameter(mu, 'second'))
+        mu = self.parse_parameter(mu)
+        return self.second.apply(self.first.apply(U, ind=ind, mu=mu), mu=mu)
+
+    def _restricted(self, components):
+        restricted_second, second_source_components = self.second.restricted(components)
+        restricted_first, first_source_components = self.first.restricted(second_source_components)
+        if isinstance(restricted_second, IdentityOperator):
+            return restricted_first, first_source_components
+        elif isinstance(restricted_first, IdentityOperator):
+            return restricted_second, first_source_components
+        else:
+            return Concatenation(restricted_second, restricted_first), first_source_components
+
+
+class ComponentProjection(OperatorBase):
+    '''|Operator| representing the projection of a Vector on some of its components.
+
+    Parameters
+    ----------
+    components
+        List or 1D |NumPy array| of the indices of the vector components that are to
+        be extracted by the operator.
+    dim_source
+        Source dimension of the operator.
+    type_source
+        The type of |VectorArray| the operator accepts.
+    name
+        Name of the operator.
+    '''
+
+    type_range = NumpyVectorArray
+    linear = True
+
+    def __init__(self, components, dim_source, type_source, name=None):
+        assert all(0 <= c < dim_source for c in components)
+        self.components = np.array(components)
+        self.dim_source = dim_source
+        self.dim_range = len(components)
+        self.type_source = type_source
+        self.name = name
+
+    def apply(self, U, ind=None, mu=None):
+        assert self.check_parameter(mu)
+        assert isinstance(U, self.type_source)
+        assert U.dim == self.dim_source
+        return NumpyVectorArray(U.components(self.components, ind), copy=False)
+
+    def restricted(self, components):
+        assert all(0 <= c < self.dim_range for c in components)
+        source_components = self.components[components]
+        return IdentityOperator(dim=len(source_components), type_source=self.type_source), source_components
+
+
+class IdentityOperator(OperatorBase):
+    '''The identity |Operator|.
+
+    In other word ::
+
+        op.apply(U) == U
+
+    Parameters
+    ----------
+    dim
+        Source dimension (= range dimension) of the operator.
+    type_source
+        The type of |VectorArray| the operator accepts.
+    name
+        Name of the operator.
+    '''
+
+    linear = True
+
+    def __init__(self, dim, type_source, name=None):
+        assert issubclass(type_source, VectorArrayInterface)
+
+        self.dim_range = self.dim_source = dim
+        self.type_range = self.type_source = type_source
+        self.name = name
+
+    def apply(self, U, ind=None, mu=None):
+        assert self.check_parameter(mu)
+        assert isinstance(U, self.type_source)
+        assert U.dim == self.dim_source
+        return U.copy(ind=ind)
+
+
+class ConstantOperator(OperatorBase):
+    '''A constant |Operator| always returning the same vector.
+
+    Parameters
+    ----------
+    value
+        A |VectorArray| of length 1 containing the vector which is
+        returned by the operator.
+    dim_source
+        Source dimension of the operator.
+    type_source
+        The type of |VectorArray| the operator accepts.
+    copy
+        If `True`, store a copy of `vector` instead of `vector`
+        itself.
+    name
+        Name of the operator.
+    '''
+
+    linear = False
+
+    def __init__(self, value, dim_source, type_source=NumpyVectorArray, copy=True, name=None):
+        assert isinstance(value, VectorArrayInterface)
+        assert len(value) == 1
+        self.dim_source = dim_source
+        self.dim_range = value.dim
+        self.type_source = type_source
+        self.type_range = type(value)
+        self.name = name
+        self._value = value.copy() if copy else value
+
+    def apply(self, U, ind=None, mu=None):
+        assert self.check_parameter(mu)
+        assert isinstance(U, self.type_source) and U.dim == self.dim_source
+        count = len(U) if ind is None else 1 if isinstance(ind, Number) else len(ind)
+        return self._value.copy(ind=([0] * count))
+
+
+class VectorOperator(OperatorBase):
+    '''Wrap a vector as a vector-like |Operator|.
+
+    Given a vector `v` of dimension `d`, this class represents
+    the operator ::
+
+        op: R^1 ----> R^d
+             x  |---> x⋅v
+
+    In particular ::
+
+        VectorOperator(vector).as_vector() == vector
+
+    Parameters
+    ----------
+    vector
+        |VectorArray| of length 1 containing the vector `v`.
+    copy
+        If `True`, store a copy of `vector` instead of `vector`
+        itself.
+    name
+        Name of the operator.
+    '''
+
+    linear = True
+    type_source = NumpyVectorArray
+    dim_source = 1
+
+    def __init__(self, vector, copy=True, name=None):
+        assert isinstance(vector, VectorArrayInterface)
+        assert len(vector) == 1
+        self.dim_range = vector.dim
+        self.type_range = type(vector)
+        self.name = name
+        self._vector = vector.copy() if copy else vector
+
+    def as_vector(self, mu=None):
+        return self._vector.copy()
+
+    def apply(self, U, ind=None, mu=None):
+        assert self.check_parameter(mu)
+        assert isinstance(U, NumpyVectorArray) and U.dim == 1
+        count = len(U) if ind is None else 1 if isinstance(ind, Number) else len(ind)
+        R = self._vector.copy(ind=([0] * count))
+        for i, c in enumerate(U.data):
+            R.scal(c[0], ind=i)
+        return R
+
+
+class VectorFunctional(OperatorBase):
+    '''Wrap a vector as a linear |Functional|.
+
+    Given a vector `v` of dimension `d`, this class represents
+    the functional ::
+
+        f: R^d ----> R^1
+            u  |---> (u, v)
+
+    where `( , )` denotes the scalar product given by `product`.
+
+    In particular, if `product` is `None` ::
+
+        VectorFunctional(vector).as_vector() == vector.
+
+    If `product` is not none, we obtain ::
+
+        VectorFunctional(vector).as_vector() == product.apply(vector).
+
+    Parameters
+    ----------
+    vector
+        |VectorArray| of length 1 containing the vector `v`.
+    product
+        |Operator| representing the scalar product to use.
+    copy
+        If `True`, store a copy of `vector` instead of `vector`
+        itself.
+    name
+        Name of the operator.
+    '''
+
+    linear = True
+    type_range = NumpyVectorArray
+    dim_range = 1
+
+    def __init__(self, vector, product=None, copy=True, name=None):
+        assert isinstance(vector, VectorArrayInterface)
+        assert len(vector) == 1
+        assert product is None or isinstance(product, OperatorInterface)
+        self.dim_source = vector.dim
+        self.type_source = type(vector)
+        self.name = name
+        if product is None:
+            self._vector = vector.copy() if copy else vector
+        else:
+            self._vector = product.apply(vector)
+
+    def as_vector(self, mu=None):
+        return self._vector.copy()
+
+    def apply(self, U, ind=None, mu=None):
+        assert self.check_parameter(mu)
+        assert isinstance(U, self.type_source) and U.dim == self.dim_source
+        return NumpyVectorArray(U.dot(self._vector, ind=ind, pairwise=False), copy=False)
+
+
+class FixedParameterOperator(OperatorBase):
+    '''Makes an |Operator| |Parameter|-independent by providing it a fixed |Parameter|.
+
+    Parameters
+    ----------
+    operator
+        The |Operator| to wrap.
+    mu
+        The fixed |Parameter| that will be fed to the
+        :meth:`~pymor.operators.interfaces.OperatorInterface.apply` method
+        of `operator`.
+    '''
+
+    def __init__(self, operator, mu=None):
+        assert isinstance(operator, OperatorInterface)
+        assert operator.check_parameter(mu)
+        self.operator = operator
+        self.mu = mu.copy()
+        self.linear = operator.linear
+
+    def apply(self, U, ind=None, mu=None):
+        assert self.check_parameter(mu)
+        return self.operator.apply(U, self.mu)
+
+    @property
+    def invert_options(self):
+        return self.operator.invert_options
+
+    def apply_inverse(self, U, ind=None, mu=None, options=None):
+        self.operator.apply_inverse(U, ind=ind, mu=self.mu, options=options)

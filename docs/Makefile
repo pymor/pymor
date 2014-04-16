@@ -3,7 +3,7 @@
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
-SPHINXBUILD   = sphinx-build
+SPHINXBUILD   = PYMOR_COPY_DOCSTRINGS_DISABLE=1 sphinx-build
 PAPER         =
 BUILDDIR      = _build
 
@@ -77,17 +77,17 @@ qthelp:
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
 	      ".qhcp project file in $(BUILDDIR)/qthelp, like this:"
-	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/pyMor.qhcp"
+	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/pymor.qhcp"
 	@echo "To view the help file:"
-	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/pyMor.qhc"
+	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/pymor.qhc"
 
 devhelp:
 	$(SPHINXBUILD) -b devhelp $(ALLSPHINXOPTS) $(BUILDDIR)/devhelp
 	@echo
 	@echo "Build finished."
 	@echo "To view the help file:"
-	@echo "# mkdir -p $$HOME/.local/share/devhelp/pyMor"
-	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/pyMor"
+	@echo "# mkdir -p $$HOME/.local/share/devhelp/pymor"
+	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/pymor"
 	@echo "# devhelp"
 
 epub:

@@ -1,0 +1,54 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+
+from __future__ import absolute_import, division, print_function
+
+import pkgutil
+import pprint
+import pymordemos
+import sys
+import runpy
+import argparse
+import functools
+import sys
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Launcher script for all available pyMOR demos.',
+                                     epilog='Example: {} burgers 1'.format(sys.argv[0]))
+    def _run(module):
+        # only need to remove the modname from args, rest is automatic
+        del sys.argv[1]
+        runpy.run_module(module, init_globals=None, run_name='__main__', alter_sys=True)
+        sys.exit(0)
+
+    modules = []
+    shorts = []
+    for _, module_name, _ in pkgutil.walk_packages(pymordemos.__path__, pymordemos.__name__ + '.'):
+        try:
+            foo = __import__(module_name)
+            short = module_name[len('pymordemos.'):]
+            modules.append(module_name)
+            shorts.append(short)
+        except (TypeError, ImportError):
+            pass
+
+    def usage():
+        msg = '''Usage:
+    {} DEMO_NAME | -h [DEMO_OPTIONS]
+
+Arguments:
+    -h           this message
+    DEMO_NAME    select one from these: {}
+    DEMO_OPTIONS any arguments for the demo, including -h for detailed help
+'''.format(sys.argv[0], ','.join(shorts))
+        print(msg)
+        sys.exit(0)
+
+    if len(sys.argv) < 2:
+        usage()
+    if sys.argv[1] in shorts:
+        _run(modules[shorts.index(sys.argv[1])])
+    usage()

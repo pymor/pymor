@@ -1,11 +1,20 @@
-# This file is part of the pyMor project (http://www.pymor.org).
-# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
 
 
 class Named(object):
+    '''Mixin for objects with a name.
+
+    Attributes
+    ----------
+    name
+        Property returning the object's name. If no name has
+        been set, a random name is created from the class name
+        and a uuid4.
+    '''
 
     __name = None
 

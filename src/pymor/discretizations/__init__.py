@@ -1,7 +1,6 @@
-# This file is part of the pyMor project (http://www.pymor.org).
-# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from pymor.discretizations.basic import StationaryDiscretization, InstationaryDiscretization
 from pymor.discretizations.interfaces import DiscretizationInterface
-from pymor.discretizations.linear import StationaryLinearDiscretization
-from pymor.discretizations.nonlinear import InstationaryNonlinearDiscretization

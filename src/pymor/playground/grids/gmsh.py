@@ -1,5 +1,5 @@
-# This file is part of the pyMor project (http://www.pymor.org).
-# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
@@ -11,8 +11,10 @@ import numpy as np
 from pymor.grids.interfaces import AffineGridInterface
 from pymor.grids.referenceelements import triangle
 
+
 class GmshParseError(Exception):
     pass
+
 
 def parse_gmsh_file(f):
 
@@ -44,7 +46,7 @@ def parse_gmsh_file(f):
             raise GmshParseError('wrong file type: only ASCII gmsh files are supported')
 
         try:
-            data_size = int(header[2])
+            data_size = int(header[2])    # NOQA
         except ValueError:
             raise GmshParseError('malformed header: expected integer, got {}'.format(header[2]))
 
@@ -54,7 +56,6 @@ def parse_gmsh_file(f):
 
     except StopIteration:
         raise GmshParseError('unexcpected end of file')
-
 
     in_section = False
     sections = defaultdict(list)
@@ -109,7 +110,7 @@ def parse_gmsh_file(f):
         try:
             num_elements = int(elements[0])
         except ValueError:
-            raise GmshParseError('first line of elements sections is not a number: {}'.format(nodes[0]))
+            raise GmshParseError('first line of elements sections is not a number: {}'.format(elements[0]))
         if len(elements) != num_elements + 1:
             raise GmshParseError('number-of-elements field does not match number of lines in elements section')
 
@@ -139,15 +140,12 @@ def parse_gmsh_file(f):
 
         return elements_by_type
 
-
     parser_map = {'Nodes': parse_nodes, 'Elements': parse_elements}
 
     for k, v in sections.iteritems():
         sections[k] = parser_map[k](v)
 
     return sections
-
-
 
 
 class GmshGrid(AffineGridInterface):
@@ -157,13 +155,12 @@ class GmshGrid(AffineGridInterface):
     reference_element = triangle
 
     def __init__(self, gmsh_file):
-        super(GmshGrid, self).__init__()
         self.logger.info('Parsing gmsh file ...')
         sections = parse_gmsh_file(gmsh_file)
 
         self.logger.info('Checking is grid is a 2d triangular grid ...')
-        assert set(('Nodes', 'Elements')) <= set(sections.keys())
-        assert set(sections['Elements'].keys()) <= set(('line', 'triangle'))
+        assert {'Nodes', 'Elements'} <= set(sections.keys())
+        assert set(sections['Elements'].keys()) <= {'line', 'triangle'}
         assert 'triangle' in sections['Elements']
         assert all(n[1][2] == 0 for n in sections['Nodes'])
 
@@ -207,7 +204,7 @@ class GmshGrid(AffineGridInterface):
         TRANS = TRANS.swapaxes(1, 2)
 
         self.__embeddings = (TRANS, SHIFTS)
-        self.__subentities = (np.arange(len(codim1_subentities), dtype=np.int32).reshape(-1,1),
+        self.__subentities = (np.arange(len(codim1_subentities), dtype=np.int32).reshape(-1, 1),
                               codim1_subentities, codim2_subentities)
         self.__sizes = (len(codim1_subentities), len(lines), len(codim2_centers))
 

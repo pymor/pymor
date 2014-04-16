@@ -1,64 +1,65 @@
-# This file is part of the pyMor project (http://www.pymor.org).
-# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
-import unittest
-import nose
-import logging
-import os
 import pprint
 import pkgutil
+import sys
+import numpy.testing as npt
 
-from pymor.core.interfaces import BasicInterface
 from pymor.core import logger
 
 
-class PymorTestProgram(nose.core.TestProgram):
-    pass
+class TestInterface(object):
+
+    logger = logger.getLogger(__name__)
+
+    def assertIsInstance(self, arg, cls, msg=None):
+        assert isinstance(arg, cls)
+
+    def assertTrue(self, arg, msg=None):
+        assert arg
+
+    def assertFalse(self, arg, msg=None):
+        assert not arg
+
+    def assertIs(self, arg, other, msg=None):
+        assert arg is other
+
+    def assertEqual(self, arg, other, msg=None):
+        assert arg == other
+
+    def assertNotEqual(self, arg, other, msg=None):
+        assert arg != other
+
+    def assertAlmostEqual(self, arg, other, msg=None):
+        npt.assert_almost_equal(arg, other)
+
+    def assertGreaterEqual(self, arg, other, msg=None):
+        assert arg >= other
+
+    def assertGreater(self, arg, other, msg=None):
+        assert arg > other
+
+    def assertLessEqual(self, arg, other, msg=None):
+        assert arg <= other
+
+    def assertLess(self, arg, other, msg=None):
+            assert arg < other
 
 
-class PymorTestSelector(nose.selector.Selector):
-
-    def __init__(self, *args, **kwargs):
-        super(PymorTestSelector, self).__init__(*args, **kwargs)
-        self._skip_grid = 'PYMOR_NO_GRIDTESTS' in os.environ
-
-    def wantDirectory(self, dirname):
-        return 'src' in dirname
-
-    def wantFile(self, filename):
-        if self._skip_grid and 'grid' in filename:
-            return False
-        return filename.endswith('.py') and ('pymortests' in filename or
-                                             'dynamic' in filename)
-
-    def wantModule(self, module):
-        parts = module.__name__.split('.')
-        return 'pymortests' in parts or 'pymor' in parts
-
-    def wantClass(self, cls):
-        ret = super(PymorTestSelector, self).wantClass(cls)
-        if hasattr(cls, 'has_interface_name'):
-            return ret and not cls.has_interface_name()
-        return ret
-
-
-class TestBase(unittest.TestCase, BasicInterface):
-
-    @classmethod
-    def _is_actual_testclass(cls):
-        return cls.__name__ != 'TestBase' and not cls.has_interface_name()
-
-    '''only my subclasses will set this to True, prevents nose from thinking I'm an actual test'''
-    __test__ = _is_actual_testclass
+TestInterface = TestInterface
 
 
 def _load_all():
     import pymor
+    ignore_playground = True
     fails = []
     for _, module_name, _ in pkgutil.walk_packages(pymor.__path__, pymor.__name__ + '.',
                                                    lambda n: fails.append((n, ''))):
+        if ignore_playground and 'playground' in module_name:
+            continue
         try:
             __import__(module_name, level=0)
         except (TypeError, ImportError) as t:
@@ -80,72 +81,15 @@ def SubclassForImplemetorsOf(InterfaceType):
     def decorate(TestCase):
         '''saves a new type called cname with correct bases and class dict in globals'''
         import pymor.core.dynamic
-        test_types = set([T for T in InterfaceType.implementors(True) if (not T.has_interface_name()
-                                                                          and not issubclass(T, TestBase))])
+        test_types = set([T for T in InterfaceType.implementors(True) if not(T.has_interface_name()
+                                                                             or issubclass(T, TestInterface))])
         for Type in test_types:
-            cname = '{}_{}'.format(Type.__name__, TestCase.__name__.replace('Interface', ''))
-            pymor.core.dynamic.__dict__[cname] = type(cname, (TestCase,), {'__test__': True, 'Type': Type})
+            cname = 'Test_{}_{}'.format(Type.__name__, TestCase.__name__.replace('Interface', ''))
+            pymor.core.dynamic.__dict__[cname] = type(cname, (TestCase,), {'Type': Type})
         return TestCase
     return decorate
 
 
-class GridClassTestInterface(TestBase):
-    pass
-
-
-def GridSubclassForImplemetorsOf(InterfaceType):
-    '''A decorator that dynamically creates subclasses of the decorated base test class
-    for all implementors of a given Interface
-    '''
-    try:
-        _load_all()
-    except ImportError:
-        pass
-
-    def getType(name):
-        import sys
-        module = name[0:name.rfind('.')]
-        blah = name[name.rfind('.') + 1:]
-        print([f for f in sys.modules.keys() if f.startswith('pymor.gr')])
-        print(blah + ' ' + module)
-        return sys.modules[module].__dict__[blah]
-
-    def decorate(TestCase):
-        '''saves a new type called cname with correct bases and class dict in globals'''
-        import pymor.core.dynamic
-        if 'PYMOR_GRID_TYPE' in os.environ:
-            test_types = [getType(os.environ['PYMOR_GRID_TYPE'])]
-        else:
-            test_types = set([T for T in InterfaceType.implementors(True) if not T.has_interface_name()])
-        for GridType in test_types:
-            cname = '{}_{}'.format(GridType.__name__, TestCase.__name__.replace('Interface', ''))
-            pymor.core.dynamic.__dict__[cname] = type(cname, (TestCase,), {'grids': GridType.test_instances(),
-                                                      '__test__': True})
-            assert len(pymor.core.dynamic.__dict__[cname].grids) > 0
-        return TestCase
-    return decorate
-
-def _setup(name='pymor'):
-    root_logger = logger.getLogger(name)
-    root_logger.setLevel(logging.ERROR)
-    test_logger = logger.getLogger(name)
-    test_logger.setLevel(logging.DEBUG)  # config_files.append(os.path.join(os.path.dirname(pymor.__file__), '../../setup.cfg'))
-    # config defaults to no plugins -> specify defaults...
-    manager = nose.plugins.manager.DefaultPluginManager()
-    config_files = nose.config.all_config_files()
-    config = nose.config.Config(files=config_files, plugins=manager)
-    config.exclude = []
-    selector = PymorTestSelector(config=config)
-    loader = nose.loader.defaultTestLoader(config=config, selector=selector)
-    cli = [__file__, '-vv', '-d']
-    return cli, loader, config
-
-def suite():
-    cli, loader, cfg = _setup()
-    prog = nose.core.TestProgram(argv=cli, testLoader=loader, config=cfg, module='pymortests')
-    prog.createTests()
-    return prog.suite
-
-def runmodule(name):
-    cli, loader, cfg = _setup(name)
-    return nose.core.runmodule(name=name, config=cfg, testLoader=loader, argv=cli)
+def runmodule(filename):
+    import pytest
+    sys.exit(pytest.main(sys.argv[1:] + [filename]))

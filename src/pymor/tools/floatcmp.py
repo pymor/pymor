@@ -1,11 +1,12 @@
-# This file is part of the pyMor project (http://www.pymor.org).
-# Copyright Holders: Felix Albrecht, Rene Milk, Stephan Rave
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from pymor.core import defaults
+
+from pymor import defaults
 
 
 def float_cmp(x, y, rtol=None, atol=None):
@@ -15,20 +16,22 @@ def float_cmp(x, y, rtol=None, atol=None):
 
        float_cmp(x,y) <=> |x - y| <= atol + |y|*rtol
 
-    NB. Numpy's allclose uses the same definition but treats arrays
-    containing infinities as close if the infinities are at the same
-    places and all other entries are close.
-    In our definition, arrays containing infinities can never be close
-    which seems more appropriate in most cases.
+    .. note::
+       Numpy's :meth:`~numpy.allclose` method uses the same definition but
+       treats arrays containing infinities as close if the infinities are
+       at the same places and all other entries are close.
+       In our definition, arrays containing infinities can never be close
+       which seems more appropriate in most cases.
 
     Parameters
     ----------
     x, y
-        Arrays to be compared. Have to be broadcastable to the same shape.
+        |NumPy arrays| to be compared. Have to be broadcastable to the same shape.
     rtol
-        The relative tolerance. If None, it is set to `defaults.float_cmp_tol`.
+        The relative tolerance. If `None`, it is set to `float_cmp_tol`
+        |default| value.
     atol
-        The absolute tolerance. If None, it is set to rtol.
+        The absolute tolerance. If `None`, it is set to `rtol`.
     '''
 
     rtol = rtol or defaults.float_cmp_tol
@@ -42,6 +45,6 @@ def float_cmp_all(x, y, rtol=None, atol=None):
     Returns `True` if all components of `x` are almost equal to the corresponding
     components of `y`.
 
-    See `float_cmp`.
+    See :meth:`float_cmp`.
     '''
     return np.all(float_cmp(x, y, rtol, atol))
