@@ -10,7 +10,7 @@ import pkgutil
 import pprint
 import pymordemos
 import sys
-import runpy 
+import runpy
 import argparse
 import functools
 import sys
@@ -23,22 +23,22 @@ if __name__ == '__main__':
         del sys.argv[1]
         runpy.run_module(module, init_globals=None, run_name='__main__', alter_sys=True)
         sys.exit(0)
-    
+
     modules = []
     shorts = []
     for _, module_name, _ in pkgutil.walk_packages(pymordemos.__path__, pymordemos.__name__ + '.'):
         try:
             foo = __import__(module_name)
-            short = module_name[len('pymordemos.'):] 
+            short = module_name[len('pymordemos.'):]
             modules.append(module_name)
             shorts.append(short)
         except (TypeError, ImportError):
             pass
-        
+
     def usage():
         msg = '''Usage:
     {} DEMO_NAME | -h [DEMO_OPTIONS]
-    
+
 Arguments:
     -h           this message
     DEMO_NAME    select one from these: {}
