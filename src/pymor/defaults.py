@@ -37,13 +37,47 @@ class Defaults(object):
       :pod_check_tol:                      tolerance for orthogonality check
 
       :default_sparse_solver:              default sparse solver to use (bicgstab, bicgstab-spilu, spsolve)
+
       :bicgstab_tol:                       see :func:`scipy.sparse.linalg.bicgstab`
       :bicgstab_maxiter:                   see :func:`scipy.sparse.linalg.bicgstab`
       :spilu_drop_tol:                     see :func:`scipy.sparse.linalg.spilu`
       :spilu_fill_factor:                  see :func:`scipy.sparse.linalg.spilu`
       :spilu_drop_rule:                    see :func:`scipy.sparse.linalg.spilu`
       :spilu_permc_spec:                   see :func:`scipy.sparse.linalg.spilu`
+
       :spsolve_permc_spec:                 see :func:`scipy.sparse.linalg.spsolve`
+
+      :pyamg_tol:                          tolerance for `pyamg <http://pyamg.github.io/>` blackbox solver
+      :pyamg_maxiter:                      maximum iterations for `pyamg <http://pyamg.github.io/>` blackbox solver
+      :pyamg_verb:                         verbosity flag for `pyamg <http://pyamg.github.io/>` blackbox solver
+
+      :pyamg_rs_strength:                  parameter for `pyamg <http://pyamg.github.io/>` Ruge-Stuben solver
+      :pyamg_rs_CF:                        parameter for `pyamg <http://pyamg.github.io/>` Ruge-Stuben solver
+      :pyamg_rs_presmoother:               parameter for `pyamg <http://pyamg.github.io/>` Ruge-Stuben solver
+      :pyamg_rs_postsmoother:              parameter for `pyamg <http://pyamg.github.io/>` Ruge-Stuben solver
+      :pyamg_rs_max_levels:                parameter for `pyamg <http://pyamg.github.io/>` Ruge-Stuben solver
+      :pyamg_rs_max_coarse:                parameter for `pyamg <http://pyamg.github.io/>` Ruge-Stuben solver
+      :pyamg_rs_coarse_solver:             parameter for `pyamg <http://pyamg.github.io/>` Ruge-Stuben solver
+      :pyamg_rs_cycle:                     parameter for `pyamg <http://pyamg.github.io/>` Ruge-Stuben solver
+      :pyamg_rs_accel:                     parameter for `pyamg <http://pyamg.github.io/>` Ruge-Stuben solver
+      :pyamg_rs_tol:                       parameter for `pyamg <http://pyamg.github.io/>` Ruge-Stuben solver
+      :pyamg_rs_maxiter:                   parameter for `pyamg <http://pyamg.github.io/>` Ruge-Stuben solver
+
+      :pyamg_sa_symmetry:                  parameter for `pyamg <http://pyamg.github.io/>` Smoothed-Aggregation solver
+      :pyamg_sa_strength:                  parameter for `pyamg <http://pyamg.github.io/>` Smoothed-Aggregation solver
+      :pyamg_sa_aggregate:                 parameter for `pyamg <http://pyamg.github.io/>` Smoothed-Aggregation solver
+      :pyamg_sa_smooth:                    parameter for `pyamg <http://pyamg.github.io/>` Smoothed-Aggregation solver
+      :pyamg_sa_presmoother:               parameter for `pyamg <http://pyamg.github.io/>` Smoothed-Aggregation solver
+      :pyamg_sa_postsmoother:              parameter for `pyamg <http://pyamg.github.io/>` Smoothed-Aggregation solver
+      :pyamg_sa_improve_candidates:        parameter for `pyamg <http://pyamg.github.io/>` Smoothed-Aggregation solver
+      :pyamg_sa_max_levels:                parameter for `pyamg <http://pyamg.github.io/>` Smoothed-Aggregation solver
+      :pyamg_sa_max_coarse:                parameter for `pyamg <http://pyamg.github.io/>` Smoothed-Aggregation solver
+      :pyamg_sa_diagonal_dominance:        parameter for `pyamg <http://pyamg.github.io/>` Smoothed-Aggregation solver
+      :pyamg_sa_coarse_solver:             parameter for `pyamg <http://pyamg.github.io/>` Smoothed-Aggregation solver
+      :pyamg_sa_cycle:                     parameter for `pyamg <http://pyamg.github.io/>` Smoothed-Aggregation solver
+      :pyamg_sa_accel:                     parameter for `pyamg <http://pyamg.github.io/>` Smoothed-Aggregation solver
+      :pyamg_sa_tol:                       parameter for `pyamg <http://pyamg.github.io/>` Smoothed-Aggregation solver
+      :pyamg_sa_maxiter:                   parameter for `pyamg <http://pyamg.github.io/>` Smoothed-Aggregation solver
 
       :newton_miniter:                     minimum number of iterations
       :newton_maxiter:                     maximum number of iterations
@@ -79,13 +113,47 @@ class Defaults(object):
     pod_check_tol                       = 1e-10
 
     default_sparse_solver               = 'bicgstab-spilu'
+
     bicgstab_tol                        = 1e-15
     bicgstab_maxiter                    = None
     spilu_drop_tol                      = 1e-4
     spilu_fill_factor                   = 10
     spilu_drop_rule                     = 'basic,area'
     spilu_permc_spec                    = 'COLAMD'
+
     spsolve_permc_spec                  = 'COLAMD'
+
+    pyamg_tol                           = 1e-5
+    pyamg_maxiter                       = 400
+    pyamg_verb                          = False
+
+    pyamg_rs_strength                   = ('classical', {'theta': 0.25})
+    pyamg_rs_CF                         = 'RS'
+    pyamg_rs_presmoother                = ('gauss_seidel', {'sweep': 'symmetric'})
+    pyamg_rs_postsmoother               = ('gauss_seidel', {'sweep': 'symmetric'})
+    pyamg_rs_max_levels                 = 10
+    pyamg_rs_max_coarse                 = 500
+    pyamg_rs_coarse_solver              = 'pinv2'
+    pyamg_rs_cycle                      = 'V'
+    pyamg_rs_accel                      = None
+    pyamg_rs_tol                        = 1e-5
+    pyamg_rs_maxiter                    = 100
+
+    pyamg_sa_symmetry                   = 'hermitian'
+    pyamg_sa_strength                   = 'symmetric'
+    pyamg_sa_aggregate                  = 'standard'
+    pyamg_sa_smooth                     = ('jacobi', {'omega': 4.0/3.0})
+    pyamg_sa_presmoother                = ('block_gauss_seidel', {'sweep': 'symmetric'})
+    pyamg_sa_postsmoother               = ('block_gauss_seidel', {'sweep': 'symmetric'})
+    pyamg_sa_improve_candidates         = [('block_gauss_seidel', {'sweep': 'symmetric', 'iterations': 4}), None]
+    pyamg_sa_max_levels                 = 10
+    pyamg_sa_max_coarse                 = 500
+    pyamg_sa_diagonal_dominance         = False
+    pyamg_sa_coarse_solver              = 'pinv2'
+    pyamg_sa_cycle                      = 'V'
+    pyamg_sa_accel                      = None
+    pyamg_sa_tol                        = 1e-5
+    pyamg_sa_maxiter                    = 100
 
     newton_miniter                      = 0
     newton_maxiter                      = 10
@@ -139,7 +207,40 @@ class Defaults(object):
             spilu_fill_factor                   = {0.spilu_fill_factor}
             spilu_drop_rule                     = {0.spilu_drop_rule}
             spilu_permc_spec                    = {0.spilu_permc_spec}
+
             spsolve_permc_spec                  = {0.spsolve_permc_spec}
+
+            pyamg_tol                           = {0.pyamg_tol}
+            pyamg_maxiter                       = {0.pyamg_maxiter}
+            pyamg_verb                          = {0.pyamg_verb}
+
+            pyamg_rs_strength                   = {0.pyamg_rs_strength}
+            pyamg_rs_CF                         = {0.pyamg_rs_CF}
+            pyamg_rs_presmoother                = {0.pyamg_rs_presmoother}
+            pyamg_rs_postsmoother               = {0.pyamg_rs_postsmoother}
+            pyamg_rs_max_levels                 = {0.pyamg_rs_max_levels}
+            pyamg_rs_max_coarse                 = {0.pyamg_rs_max_coarse}
+            pyamg_rs_coarse_solver              = {0.pyamg_rs_coarse_solver}
+            pyamg_rs_cycle                      = {0.pyamg_rs_cycle}
+            pyamg_rs_accel                      = {0.pyamg_rs_accel}
+            pyamg_rs_tol                        = {0.pyamg_rs_tol}
+            pyamg_rs_maxiter                    = {0.pyamg_rs_maxiter}
+
+            pyamg_sa_symmetry                   = {0.pyamg_sa_symmetry}
+            pyamg_sa_strength                   = {0.pyamg_sa_strength}
+            pyamg_sa_aggregate                  = {0.pyamg_sa_aggregate}
+            pyamg_sa_smooth                     = {0.pyamg_sa_smooth}
+            pyamg_sa_presmoother                = {0.pyamg_sa_presmoother}
+            pyamg_sa_postsmoother               = {0.pyamg_sa_postsmoother}
+            pyamg_sa_improve_candidates         = {0.pyamg_sa_improve_candidates}
+            pyamg_sa_max_levels                 = {0.pyamg_sa_max_levels}
+            pyamg_sa_max_coarse                 = {0.pyamg_sa_max_coarse}
+            pyamg_sa_diagonal_dominance         = {0.pyamg_sa_diagonal_dominance}
+            pyamg_sa_coarse_solver              = {0.pyamg_sa_coarse_solver}
+            pyamg_sa_cycle                      = {0.pyamg_sa_cycle}
+            pyamg_sa_accel                      = {0.pyamg_sa_accel}
+            pyamg_sa_tol                        = {0.pyamg_sa_tol}
+            pyamg_sa_maxiter                    = {0.pyamg_sa_maxiter}
 
             induced_norm_raise_negative         = {0.induced_norm_raise_negative}
             induced_norm_tol                    = {0.induced_norm_tol}

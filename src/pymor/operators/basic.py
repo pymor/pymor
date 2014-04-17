@@ -38,6 +38,12 @@ from pymor.la.numpyvectorarray import NumpyVectorArray
 from pymor.operators.interfaces import OperatorInterface, LincombOperatorInterface
 from pymor.parameters import ParameterFunctionalInterface
 
+try:
+    import pyamg
+    HAVE_PYAMG = True
+except ImportError:
+    HAVE_PYAMG = False
+
 
 class OperatorBase(OperatorInterface):
     '''Base class for |Operators| providing some default implementations.'''
@@ -385,18 +391,51 @@ class NumpyMatrixBasedOperator(AssemblableOperatorBase):
         if self.sparse is None:
             raise ValueError('Sparsity unkown, assemble first.')
         elif self.sparse:
-            opts = OrderedDict((('bicgstab-spilu', {'type': 'bicgstab-spilu',
-                                                    'tol': defaults.bicgstab_tol,
-                                                    'maxiter': defaults.bicgstab_maxiter,
-                                                    'spilu_drop_tol': defaults.spilu_drop_tol,
-                                                    'spilu_fill_factor': defaults.spilu_fill_factor,
-                                                    'spilu_drop_rule': defaults.spilu_drop_rule,
-                                                    'spilu_permc_spec': defaults.spilu_permc_spec}),
-                                ('bicgstab',       {'type': 'bicgstab',
-                                                    'tol': defaults.bicgstab_tol,
-                                                    'maxiter': defaults.bicgstab_maxiter}),
-                                ('spsolve',        {'type': 'spsolve',
-                                                    'permc_spec': defaults.spsolve_permc_spec})))
+            opts = (('bicgstab-spilu', {'type': 'bicgstab-spilu',
+                                        'tol': defaults.bicgstab_tol,
+                                        'maxiter': defaults.bicgstab_maxiter,
+                                        'spilu_drop_tol': defaults.spilu_drop_tol,
+                                        'spilu_fill_factor': defaults.spilu_fill_factor,
+                                        'spilu_drop_rule': defaults.spilu_drop_rule,
+                                        'spilu_permc_spec': defaults.spilu_permc_spec}),
+                    ('bicgstab',       {'type': 'bicgstab',
+                                        'tol': defaults.bicgstab_tol,
+                                        'maxiter': defaults.bicgstab_maxiter}),
+                    ('spsolve',        {'type': 'spsolve',
+                                        'permc_spec': defaults.spsolve_permc_spec}))
+            if HAVE_PYAMG:
+                opts += (('pyamg',    {'type': 'pyamg',
+                                       'tol': defaults.pyamg_tol,
+                                       'maxiter': defaults.pyamg_maxiter}),
+                         ('pyamg-rs', {'type': 'pyamg-rs',
+                                       'strength': defaults.pyamg_rs_strength,
+                                       'CF': defaults.pyamg_rs_CF,
+                                       'presmoother': defaults.pyamg_rs_presmoother,
+                                       'postsmoother': defaults.pyamg_rs_postsmoother,
+                                       'max_levels': defaults.pyamg_rs_max_levels,
+                                       'max_coarse': defaults.pyamg_rs_max_coarse,
+                                       'coarse_solver': defaults.pyamg_rs_coarse_solver,
+                                       'cycle': defaults.pyamg_rs_cycle,
+                                       'accel': defaults.pyamg_rs_accel,
+                                       'tol': defaults.pyamg_rs_tol,
+                                       'maxiter': defaults.pyamg_rs_maxiter}),
+                         ('pyamg-sa', {'type': 'pyamg-sa',
+                                       'symmetry': defaults.pyamg_sa_symmetry,
+                                       'strength': defaults.pyamg_sa_strength,
+                                       'aggregate': defaults.pyamg_sa_aggregate,
+                                       'smooth': defaults.pyamg_sa_smooth,
+                                       'presmoother': defaults.pyamg_sa_presmoother,
+                                       'postsmoother': defaults.pyamg_sa_postsmoother,
+                                       'improve_candidates': defaults.pyamg_sa_improve_candidates,
+                                       'max_levels': defaults.pyamg_sa_max_levels,
+                                       'max_coarse': defaults.pyamg_sa_max_coarse,
+                                       'diagonal_dominance': defaults.pyamg_sa_diagonal_dominance,
+                                       'coarse_solver': defaults.pyamg_sa_coarse_solver,
+                                       'cycle': defaults.pyamg_sa_cycle,
+                                       'accel': defaults.pyamg_sa_accel,
+                                       'tol': defaults.pyamg_sa_tol,
+                                       'maxiter': defaults.pyamg_sa_maxiter}))
+            opts = OrderedDict(opts)
             def_opt = opts.pop(defaults.default_sparse_solver)
             ordered_opts = OrderedDict(((defaults.default_sparse_solver, def_opt),))
             ordered_opts.update(opts)
@@ -526,9 +565,56 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                         else:
                             raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
                                                  format(info))
-            else:
+            elif options['type'] == 'spsolve':
                 for i, UU in enumerate(U):
                     R[i] = spsolve(self._matrix, UU, permc_spec=options['permc_spec'])
+            elif options['type'] == 'pyamg':
+                if len(U) > 0:
+                    U_iter = iter(enumerate(U))
+                    R[0], ml = pyamg.solve(self._matrix, next(U_iter)[1],
+                                           tol=options['tol'],
+                                           maxiter=options['maxiter'],
+                                           return_solver=True)
+                    for i, UU in U_iter:
+                        R[i] = pyamg.solve(self._matrix, UU,
+                                           tol=options['tol'],
+                                           maxiter=options['maxiter'],
+                                           existing_solver=ml)
+            elif options['type'] == 'pyamg-rs':
+                ml = pyamg.ruge_stuben_solver(self._matrix,
+                                              strength=options['strength'],
+                                              CF=options['CF'],
+                                              presmoother=options['presmoother'],
+                                              postsmoother=options['postsmoother'],
+                                              max_levels=options['max_levels'],
+                                              max_coarse=options['max_coarse'],
+                                              coarse_solver=options['coarse_solver'])
+                for i, UU in enumerate(U):
+                    R[i] = ml.solve(UU,
+                                    tol=options['tol'],
+                                    maxiter=options['maxiter'],
+                                    cycle=options['cycle'],
+                                    accel=options['accel'])
+            elif options['type'] == 'pyamg-sa':
+                ml = pyamg.smoothed_aggregation_solver(self._matrix,
+                                                       symmetry=options['symmetry'],
+                                                       strength=options['strength'],
+                                                       aggregate=options['aggregate'],
+                                                       smooth=options['smooth'],
+                                                       presmoother=options['presmoother'],
+                                                       postsmoother=options['postsmoother'],
+                                                       improve_candidates=options['improve_candidates'],
+                                                       max_levels=options['max_levels'],
+                                                       max_coarse=options['max_coarse'],
+                                                       diagonal_dominance=options['diagonal_dominance'])
+                for i, UU in enumerate(U):
+                    R[i] = ml.solve(UU,
+                                    tol=options['tol'],
+                                    maxiter=options['maxiter'],
+                                    cycle=options['cycle'],
+                                    accel=options['accel'])
+            else:
+                raise ValueError('Unknown solver type')
         else:
             for i, UU in enumerate(U):
                 try:
