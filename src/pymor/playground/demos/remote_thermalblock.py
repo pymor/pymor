@@ -32,6 +32,8 @@ Options:
 
   --grid=NI              Use grid with 2*NI*NI elements [default: 100].
 
+  --gridform=FORM        Grid (TriaGrid, RectGrid) [default: TriaGrid].
+
   -h, --help             Show this message.
 
   --reductor=RED         Reduction algorithm (default, numpy_default) [default: default].
@@ -78,6 +80,10 @@ def thermalblock_demo(args):
     rc = p.Client()
     rv = rc[0]
 
+    print('Setup Problem ...')
+    #problem = ThermalBlockProblem(num_blocks=(args['XBLOCKS'], args['YBLOCKS']))
+    problem = BlobProblem()
+    
     print('Discretize ...')
     rv.execute('''
 import numpy as np
