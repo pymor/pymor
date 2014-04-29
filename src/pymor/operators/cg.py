@@ -326,7 +326,7 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
         else:
             raise NotImplementedError
 
-        q, w = triangle.quadrature(order=2)
+        q, w = square.quadrature(order=2)
 
         # evaluate the shape functions on the quadrature points
         SFQ = np.array(tuple(f(q) for f in SF))
