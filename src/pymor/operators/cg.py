@@ -498,7 +498,7 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
     sparse = True
 
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
-                 dirichlet_clear_columns=False, dirichlet_clear_diag=False, name=None, order=2):
+                 dirichlet_clear_columns=False, dirichlet_clear_diag=False, name=None):
         assert grid.reference_element(0) in {square}, 'A square grid is expected!'
         self.dim_source = self.dim_range = grid.size(grid.dim)
         self.grid = grid
@@ -508,7 +508,6 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         self.dirichlet_clear_columns = dirichlet_clear_columns
         self.dirichlet_clear_diag = dirichlet_clear_diag
         self.name = name
-        self.order = order
         if diffusion_function is not None:
             self.build_parameter_type(inherits=(diffusion_function,))
 
@@ -519,7 +518,7 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
 
         # gradients of shape functions
         if g.dim == 2:
-            q, w = g.reference_element.quadrature(order=self.order)
+            q, w = g.reference_element.quadrature(order=2)
             SF_GRAD = np.array(([q[..., 1] - 1., q[..., 0] - 1.],
                                 [1. - q[..., 1], -q[..., 0]],
                                 [q[..., 1], q[..., 0]],
