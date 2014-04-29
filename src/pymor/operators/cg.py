@@ -127,7 +127,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
 
     sparse = False
 
-    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, order=4, name=None):
+    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, order=2, name=None):
         assert grid.reference_element(0) in {square}
         assert function.shape_range == tuple()
         self.dim_source = grid.size(grid.dim)
