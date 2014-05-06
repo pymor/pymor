@@ -328,7 +328,7 @@ def visualize_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, title=None,
                                      separate_colorbars=separate_colorbars, backend=backend), block)
 
 
-def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, block=False):
+def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_plots=False, block=False):
     '''Visualize scalar data associated to a one-dimensional |Grid| as a plot.
 
     The grid's |ReferenceElement| must be the line. The data can either
@@ -350,8 +350,10 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, block=Fal
     legend
         Description of the data that is plotted. Most useful if `U` is a tuple in which
         case `legend` has to be a tuple of strings of the same length.
+    separate_plots
+        If `True`, use subplots to visualize multiple |VectorArrays|.
     block
-        If `True` block execution until the plot window is closed.
+        If `True`, block execution until the plot window is closed.
     '''
     if not HAVE_PYSIDE:
         raise ImportError('cannot visualize: import of PySide failed')
@@ -359,7 +361,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, block=Fal
         raise ImportError('cannot visualize: import of matplotlib failed')
 
     class MainWindow(PlotMainWindow):
-        def __init__(self, grid, U, codim, title, legend):
+        def __init__(self, grid, U, codim, title, legend, separate_plots):
             assert isinstance(U, VectorArrayInterface) and hasattr(U, 'data') \
                 or (isinstance(U, tuple) and all(isinstance(u, VectorArrayInterface) and hasattr(u, 'data') for u in U)
                     and all(len(u) == len(U[0]) for u in U))
@@ -368,12 +370,13 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, block=Fal
                 legend = (legend,)
             assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
 
-            plot_widget = Matplotlib1DWidget(None, grid, count=len(U), vmin=np.min(U), vmax=np.max(U),
-                                             legend=legend, codim=codim)
+            plot_widget = Matplotlib1DWidget(None, grid, count=len(U), vmin=[np.min(u) for u in U],
+                                             vmax=[np.max(u) for u in U], legend=legend, codim=codim,
+                                             separate_plots=separate_plots)
             super(MainWindow, self).__init__(U, plot_widget, title=title, length=len(U[0]))
             self.grid = grid
 
-    launch_qt_app(lambda: MainWindow(grid, U, codim, title=title, legend=legend), block)
+    launch_qt_app(lambda: MainWindow(grid, U, codim, title=title, legend=legend, separate_plots=separate_plots), block)
 
 
 class PatchVisualizer(BasicInterface):
