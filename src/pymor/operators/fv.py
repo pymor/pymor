@@ -13,6 +13,7 @@ from scipy.sparse import coo_matrix, csc_matrix, dia_matrix
 
 from pymor.core.interfaces import ImmutableInterface, abstractmethod
 from pymor.functions.interfaces import FunctionInterface
+from pymor.grids.rect import RectGrid
 from pymor.grids.boundaryinfos import SubGridBoundaryInfo
 from pymor.grids.subgrid import SubGrid
 from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
@@ -465,5 +466,161 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
         # -> shape = (g.size(0), number of shape functions)
         F_INTS = np.einsum('ei,e,i->e', F, g.integration_elements(0), w).ravel()
         F_INTS /= g.volumes(0)
+
+        return F_INTS.reshape((1, -1))
+
+
+class DiffusionOperator(NumpyMatrixBasedOperator):
+    '''Linear finite volume diffusion |Operator| using finite differences.
+
+    The operator is of the form ::
+
+    L(u, mu)(x) = ∇ ⋅ (mu ∇ u(x))
+
+    Parameters
+    ----------
+    grid
+        |Grid| over which to assemble the operator.
+    boundary_info
+        |BoundaryInfo| determining the Dirichlet and Neumann boundaries.
+    diffusion
+        Diffusion scalar 'mu'.
+    name
+        The name of the operator.
+    '''
+
+    type_source = type_range = NumpyVectorArray
+    sparse = True
+
+    def __init__(self, grid, boundary_info, diffusion=1.0, name=None):
+        super(DiffusionOperator, self).__init__()
+        self.grid = grid
+        self.boundary_info = boundary_info
+        self.diffusion = diffusion
+        self.name = name
+        self.dim_source = self.dim_range = grid.size(0)
+
+    def _assemble(self, mu=None):
+        diffusion = self.diffusion
+        grid = self.grid
+        assert isinstance(grid, RectGrid)
+        boundary_mask = grid.boundary_mask(1)
+        VOLS = grid.volumes(1)
+        DVOLS = np.zeros(VOLS.size)
+        DVOLS[~boundary_mask] = VOLS[~boundary_mask]
+        DVOLS[boundary_mask] = 0.5 * VOLS[boundary_mask]
+
+        SE_I0 = grid.superentities(1,0)[:,0]
+        SE_I1 = grid.superentities(1,0)[:,1]
+
+        SE_I0_I = SE_I0[~boundary_mask]
+        SE_I1_I = SE_I1[~boundary_mask]
+
+        SE_INTS = diffusion * VOLS[~boundary_mask] / DVOLS[~boundary_mask]
+
+        A1 = coo_matrix((- SE_INTS, (SE_I0_I, SE_I1_I)), shape=(self.dim_source, self.dim_source))
+        A2 = coo_matrix((- SE_INTS, (SE_I1_I, SE_I0_I)), shape=(self.dim_source, self.dim_source))
+        A3 = coo_matrix((SE_INTS, (SE_I0_I, SE_I0_I)), shape=(self.dim_source, self.dim_source))
+        A4 = coo_matrix((SE_INTS, (SE_I1_I, SE_I1_I)), shape=(self.dim_source, self.dim_source))
+
+        if self.boundary_info.has_dirichlet:
+            dirichlet_mask = self.boundary_info.dirichlet_mask(1)
+            SE_I0_D = SE_I0[dirichlet_mask]
+            SE_INTS = diffusion * VOLS[dirichlet_mask] / DVOLS[dirichlet_mask]
+
+            A5 = coo_matrix((SE_INTS, (SE_I0_D, SE_I0_D)), shape=(self.dim_source, self.dim_source))
+
+            A = csc_matrix(A1 + A2 + A3 + A4 + A5).copy()
+        else:
+            A = csc_matrix(A1 + A2 + A3 + A4).copy()
+
+        A = dia_matrix(([1. / grid.volumes(0)], [0]), shape=(grid.size(0),) * 2) * A
+
+        return A
+
+
+class DiffusionRHSOperatorFunctional(NumpyMatrixBasedOperator):
+    '''Finite volume |Functional| representing the rhs of the DiffusionOperator
+       + the scalar product with an L2-|Function|.
+
+    Parameters
+    ----------
+    grid
+        |Grid| over which to assemble the functional.
+    boundary_info
+        |BoundaryInfo| determining the Dirichlet and Neumann boundaries.
+    function
+        The |Function| with which to take the scalar product.
+    neumann_data
+        |Function| providing the Neumann boundary values.
+    dirichlet_data
+        |Function| providing the Dirichlet boundary values.
+    diffusion
+        Diffusion scalar.
+    order
+        Order of the Gauss quadrature to use for numerical integration.
+    name
+        The name of the functional.
+    '''
+
+    type_source = type_range = NumpyVectorArray
+    sparse = False
+
+    def __init__(self, grid, boundary_info, function, neumann_data, dirichlet_data, diffusion, order=2, name=None):
+        assert function.shape_range == tuple()
+        super(DiffusionRHSOperatorFunctional, self).__init__()
+        self.dim_source = grid.size(0)
+        self.dim_range = 1
+        self.grid = grid
+        self.boundary_info = boundary_info
+        self.g_neumann = neumann_data
+        self.g_dirichlet = dirichlet_data
+        self.function = function
+        self.diffusion = diffusion
+        self.order = order
+        self.name = name
+        self.build_parameter_type(inherits=(function,))
+
+    def _assemble(self, mu=None):
+        mu = self.parse_parameter(mu)
+        grid = self.grid
+        assert isinstance(grid, RectGrid)
+        boundary_info = self.boundary_info
+        g_neumann = self.g_neumann
+        g_dirichlet = self.g_dirichlet
+        diffusion = self.diffusion
+        centers = grid.centers(1)
+        boundary_mask = grid.boundary_mask(1)
+        VOLS = grid.volumes(1)
+        DVOLS = np.zeros(VOLS.size)
+        DVOLS[~boundary_mask] = VOLS[~boundary_mask]
+        DVOLS[boundary_mask] = 0.5 * VOLS[boundary_mask]
+
+        # evaluate function at all quadrature points -> shape = (g.size(0), number of quadrature points, 1)
+        F = self.function(grid.quadrature_points(0, order=self.order), mu=mu)
+
+        _, w = grid.reference_element.quadrature(order=self.order)
+
+        # integrate the products of the function with the shape functions on each element
+        # -> shape = (g.size(0), number of shape functions)
+        F_INTS = np.einsum('ei,e,i->e', F, grid.integration_elements(0), w).ravel()
+        F_INTS /= grid.volumes(0)
+        F_INTS = F_INTS.reshape((1, -1))
+
+        if boundary_info.has_dirichlet or boundary_info.has_neumann:
+            SE_I0 = grid.superentities(1,0)[:,0]
+            SE_INTS = np.zeros(grid.size(1))
+
+            if boundary_info.has_dirichlet:
+                dirichlet_mask = boundary_info.dirichlet_mask(1)
+                SE_INTS[dirichlet_mask] = diffusion * VOLS[dirichlet_mask] * g_dirichlet(centers[dirichlet_mask]).ravel() / DVOLS[dirichlet_mask]
+
+            if boundary_info.has_neumann:
+                neumann_mask = boundary_info.neumann_mask(1)
+                SE_INTS[neumann_mask] += g_neumann(centers[neumann_mask]).ravel()
+
+            BV = np.bincount(SE_I0, weights=SE_INTS)
+            BV /= grid.volumes(0)
+            F_INTS += BV
 
         return F_INTS.reshape((1, -1))
