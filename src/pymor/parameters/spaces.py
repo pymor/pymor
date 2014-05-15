@@ -71,3 +71,11 @@ class CubicParameterSpace(ParameterSpaceInterface):
             yield Parameter(((k, np.random.uniform(ranges[k][0], ranges[k][1], shp))
                              for k, shp in self.parameter_type.iteritems()))
             c += 1
+
+    def __str__(self):
+        return '''CubicParameterSpace
+parameter type: {}
+ranges: {}'''.format(str(self.parameter_type), str(self.ranges))
+
+    def __repr__(self):
+        return 'CubicParameterSpace({}, ranges={})'.format(repr(self.parameter_type), repr(self.ranges))
