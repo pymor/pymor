@@ -73,9 +73,12 @@ class CubicParameterSpace(ParameterSpaceInterface):
             c += 1
 
     def __str__(self):
-        return '''CubicParameterSpace
-parameter type: {}
-ranges: {}'''.format(str(self.parameter_type), str(self.ranges))
+        rows = [(k, str(v), str(self.ranges[k])) for k, v in self.parameter_type.iteritems()]
+        column_widths = [max(map(len, c)) for c in zip(*rows)]
+        return ('CubicParameterSpace\n' +
+                '\n'.join(('key: {:' + str(column_widths[0] + 2)
+                           +'} shape: {:' + str(column_widths[1] + 2)
+                           + '} range: {}').format(c1 + ',', c2 + ',', c3) for (c1, c2, c3) in rows))
 
     def __repr__(self):
         return 'CubicParameterSpace({}, ranges={})'.format(repr(self.parameter_type), repr(self.ranges))
