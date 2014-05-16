@@ -158,6 +158,9 @@ class ParameterType(dict):
             self.__keys = sorted(self.keys())
         return '{' + ', '.join('{}: {}'.format(k, self[k]) for k in self.__keys) + '}'
 
+    def __repr__(self):
+        return 'ParameterType(' + str(self) + ')'
+
 
 class Parameter(dict):
     '''Class representing a parameter.
