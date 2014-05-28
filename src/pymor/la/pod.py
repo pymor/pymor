@@ -38,7 +38,7 @@ def pod(A, modes=None, product=None, tol=None, symmetrize=None, orthonormalize=N
     products
         Scalar product given as a linear |Operator| w.r.t. compute the POD.
     tol
-        Squared singular values smaller than this value are ignored. If `None`,
+        Singular values smaller than this value are ignored. If `None`,
         the `pod_tol` |default| value is used.
     symmetrize
         If `True` symmetrize the gramian again before proceeding. If `None`,
@@ -83,7 +83,7 @@ def pod(A, modes=None, product=None, tol=None, symmetrize=None, orthonormalize=N
     EVALS = EVALS[::-1]
     EVECS = EVECS.T[::-1, :]  # is this a view? yes it is!
 
-    above_tol = np.where(EVALS >= tol)[0]
+    above_tol = np.where(EVALS >= tol ** 2)[0]
     if len(above_tol) == 0:
         return type(A).empty(A.dim)
     last_above_tol = above_tol[-1]
