@@ -4,6 +4,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+import numpy as np
+
 from pymor import defaults
 from pymor.core import getLogger
 from pymor.core.exceptions import InversionError, NewtonError
@@ -11,6 +13,7 @@ from pymor.core.exceptions import InversionError, NewtonError
 
 def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None,
            miniter=None, maxiter=None, reduction=None, abs_limit=None,
+           stagnation_window=None, stagnation_threshold=None,
            return_stages=False, return_residuals=False):
     miniter = defaults.newton_miniter if miniter is None else miniter
     maxiter = defaults.newton_maxiter if maxiter is None else maxiter
@@ -32,11 +35,16 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None,
     U = initial_guess.copy()
     residual = rhs - operator.apply(U, mu=mu)
 
-    err = first_err = residual.l2_norm()[0] if error_norm is None else error_norm(residual)[0]
+    err = residual.l2_norm()[0] if error_norm is None else error_norm(residual)[0]
     logger.info('      Initial Residual: {:5e}'.format(err))
 
     iteration = 0
-    while iteration < miniter or iteration < maxiter and err > abs_limit and err/first_err > reduction:
+    error_sequence = [err]
+    while (iteration < miniter
+           or (iteration < maxiter
+               and err > abs_limit and err/error_sequence[0] > reduction
+               and (len(error_sequence) < stagnation_window + 1
+                    or err/max(error_sequence[-stagnation_window - 1:]) < stagnation_threshold))):
         if iteration > 0 and return_stages:
             data['stages'].append(U)
         if return_residuals:
@@ -50,12 +58,22 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None,
         U += correction
         residual = rhs - operator.apply(U, mu=mu)
 
-        old_err = err
         err = residual.l2_norm()[0] if error_norm is None else error_norm(residual)[0]
         logger.info('Iteration {:2}: Residual: {:5e},  Reduction: {:5e}, Total Reduction: {:5e}'
-                    .format(iteration, err, err / old_err, err / first_err))
+                    .format(iteration, err, err / error_sequence[-1], err / error_sequence[0]))
+        error_sequence.append(err)
 
-    if err > abs_limit and err/first_err > reduction:
+    if (err <= abs_limit):
+        logger.info('Absolute limit of {} reached. Stopping.'.format(abs_limit))
+    elif (err/error_sequence[0] <= reduction):
+        logger.info('Prescribed total reduction of {} reached. Stopping.'.format(reduction))
+    elif (len(error_sequence) >= stagnation_window + 1
+          and err/max(error_sequence[-stagnation_window - 1:]) >= stagnation_threshold):
+        logger.info('Error is stagnating (threshold: {:5e}, window: {}). Stopping.'.format(stagnation_threshold,
+                                                                                           stagnation_window))
+    else:
         raise NewtonError('Failed to converge')
+
+    data['error_sequence'] = np.array(error_sequence)
 
     return U, data
