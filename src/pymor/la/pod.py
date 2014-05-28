@@ -38,8 +38,8 @@ def pod(A, modes=None, product=None, tol=None, symmetrize=None, orthonormalize=N
     products
         Scalar product given as a linear |Operator| w.r.t. compute the POD.
     tol
-        Singular values smaller than this value are ignored. If `None`,
-        the `pod_tol` |default| value is used.
+        Singular values smaller than this value multiplied by the largest singular
+        value are ignored. If `None`, the `pod_tol` |default| value is used.
     symmetrize
         If `True` symmetrize the gramian again before proceeding. If `None`,
         the `pod_symmetrize` |default| value is chosen.
@@ -56,7 +56,10 @@ def pod(A, modes=None, product=None, tol=None, symmetrize=None, orthonormalize=N
 
     Returns
     -------
-    |VectorArray| of POD modes.
+    POD
+        |VectorArray| of POD modes.
+    SVALS
+        Sequence of singular values.
 
     '''
 
@@ -83,15 +86,15 @@ def pod(A, modes=None, product=None, tol=None, symmetrize=None, orthonormalize=N
     EVALS = EVALS[::-1]
     EVECS = EVECS.T[::-1, :]  # is this a view? yes it is!
 
-    above_tol = np.where(EVALS >= tol ** 2)[0]
+    above_tol = np.where(EVALS >= tol ** 2 * EVALS[0])[0]
     if len(above_tol) == 0:
         return type(A).empty(A.dim)
     last_above_tol = above_tol[-1]
 
-    EVALS = EVALS[:last_above_tol + 1]
+    SVALS = np.sqrt(EVALS[:last_above_tol + 1])
     EVECS = EVECS[:last_above_tol + 1]
 
-    POD = A.lincomb(EVECS / np.sqrt(EVALS[:, np.newaxis]))
+    POD = A.lincomb(EVECS / SVALS[:, np.newaxis])
 
     if orthonormalize:
         POD = gram_schmidt(POD, product=product, copy=False)
@@ -103,5 +106,7 @@ def pod(A, modes=None, product=None, tol=None, symmetrize=None, orthonormalize=N
         elif product and not float_cmp_all(product.apply2(POD, POD, pairwise=False), np.eye(len(POD)), check_tol):
             err = np.max(np.abs(product.apply2(POD, POD, pairwise=False) - np.eye(len(POD))))
             raise AccuracyError('result not orthogonal (max err={})'.format(err))
+        if len(POD) < len(EVECS):
+            raise AccuracyError('additional orthonormalization removed basis vectors')
 
-    return POD
+    return POD, SVALS

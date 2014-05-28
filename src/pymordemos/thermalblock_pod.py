@@ -98,7 +98,7 @@ def thermalblock_demo(args):
 
     print('Performing POD ...')
     pod_product = discretization.h1_product if args['--pod-norm'] == 'h1' else None
-    rb = pod(snapshots, modes=args['RBSIZE'], product=pod_product)
+    rb = pod(snapshots, modes=args['RBSIZE'], product=pod_product)[0]
 
     print('Reducing ...')
     reductor = reduce_generic_rb

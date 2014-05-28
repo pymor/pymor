@@ -164,7 +164,7 @@ def pod_basis_extension(basis, U, count=1, copy_basis=True, product=None):
         is linearly independent from the basis.
     '''
     if basis is None:
-        return pod(U, modes=count, product=product), {'hierarchic': True}
+        return pod(U, modes=count, product=product)[0], {'hierarchic': True}
 
     basis_length = len(basis)
 
@@ -175,7 +175,7 @@ def pod_basis_extension(basis, U, count=1, copy_basis=True, product=None):
     else:
         U_proj_err = U - basis.lincomb(product.apply2(U, basis, pairwise=False))
 
-    new_basis.append(pod(U_proj_err, modes=count, product=product))
+    new_basis.append(pod(U_proj_err, modes=count, product=product)[0])
 
     if len(new_basis) <= basis_length:
         raise ExtensionError

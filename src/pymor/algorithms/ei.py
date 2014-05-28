@@ -217,7 +217,7 @@ def deim(evaluations, modes=None, error_norm=None, product=None):
     logger = getLogger('pymor.algorithms.ei.deim')
     logger.info('Generating Interpolation Data ...')
 
-    collateral_basis = pod(evaluations, modes, product=product)
+    collateral_basis = pod(evaluations, modes, product=product)[0]
 
     interpolation_dofs = np.zeros((0,), dtype=np.int32)
     interpolation_matrix = np.zeros((0, 0))

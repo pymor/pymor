@@ -30,7 +30,7 @@ class Defaults(object):
       :gram_schmidt_check:                 check orthogonality of result
       :gram_schmidt_check_tol:             tolerance for orthogonality check
 
-      :pod_tol:                            tolerance below which eigenvalues are treated as zero
+      :pod_tol:                            relative tolerance below which singular values are treated as zero
       :pod_symmetrize:                     symmetrize the Gram matrix
       :pod_orthonormalize:                 orthonormalize the result again
       :pod_check:                          check orthogonality of result
@@ -83,6 +83,10 @@ class Defaults(object):
       :newton_maxiter:                     maximum number of iterations
       :newton_reduction:                   reduction of initial residual to achieve
       :newton_abs_limit:                   stop if absolute norm of residual falls below this limit
+      :newton_stagnation_window:           see `newton_stagnation_threshold`
+      :newton_stagnation_threshold:        stop if norm of residual is not reduced by this factor during the last
+                                           `newton_stagnation_window` iterations
+      :newton_abs_limit:                   stop if absolute norm of residual falls below this limit
 
       :induced_norm_raise_negative:        raise error in la.induced_norm if the squared norm is negative
       :induced_norm_tol:                   tolerance for clipping negative norm squares to zero
@@ -106,7 +110,7 @@ class Defaults(object):
     gram_schmidt_check                  = True
     gram_schmidt_check_tol              = 1e-3
 
-    pod_tol                             = 1e-15
+    pod_tol                             = 4e-8
     pod_symmetrize                      = False
     pod_orthonormalize                  = True
     pod_check                           = True
@@ -159,6 +163,8 @@ class Defaults(object):
     newton_maxiter                      = 10
     newton_reduction                    = 1e-10
     newton_abs_limit                    = 1e-15
+    newton_stagnation_window            = 0
+    newton_stagnation_threshold         = np.inf
 
     induced_norm_raise_negative         = True
     induced_norm_tol                    = 10e-10

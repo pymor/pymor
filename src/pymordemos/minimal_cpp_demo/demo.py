@@ -59,7 +59,7 @@ for mu in d.parameter_space.sample_uniformly(2):
     snapshots.append(d.solve(mu))
 
 # apply POD
-reduced_basis = pod(snapshots, 4)
+reduced_basis = pod(snapshots, 4)[0]
 
 # reduce the model
 rd, rc, _ = reduce_generic_rb(d, reduced_basis)

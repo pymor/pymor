@@ -47,3 +47,12 @@ def induced_norm(product):
         return np.sqrt(norm_squared)
 
     return norm
+
+
+def cat_arrays(vector_arrays):
+    vector_arrays = list(vector_arrays)
+    total_length = sum(map(len, vector_arrays))
+    cated_arrays = vector_arrays[0].empty(vector_arrays[0].dim, reserve=total_length)
+    for a in vector_arrays:
+        cated_arrays.append(a)
+    return cated_arrays
