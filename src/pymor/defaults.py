@@ -32,7 +32,7 @@ class Defaults(object):
 
       :pod_tol:                            tolerance below which eigenvalues are treated as zero
       :pod_symmetrize:                     symmetrize the Gram matrix
-      :pod_orthonormalie:                  orthonormalize the result again
+      :pod_orthonormalize:                 orthonormalize the result again
       :pod_check:                          check orthogonality of result
       :pod_check_tol:                      tolerance for orthogonality check
 
