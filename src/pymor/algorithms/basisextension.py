@@ -126,7 +126,7 @@ def gram_schmidt_basis_extension(basis, U, product=None, copy_basis=True, copy_U
     return new_basis, {'hierarchic': True}
 
 
-def pod_basis_extension(basis, U, count=1, copy_basis=True, product=None):
+def pod_basis_extension(basis, U, count=1, copy_basis=True, product=None, orthonormalize=True):
     '''Extend basis with the first `count` POD modes of the projection of U onto the
     orthogonal complement of the basis.
 
@@ -147,6 +147,9 @@ def pod_basis_extension(basis, U, count=1, copy_basis=True, product=None):
         product is used.
     copy_basis
         If copy_basis is False, the old basis is extended in-place.
+    orthonormalize
+        If `True`, re-orthonormalize the new basis vectors obtained by the POD
+        in order to improve numerical accuracy.
 
     Returns
     -------
@@ -175,7 +178,10 @@ def pod_basis_extension(basis, U, count=1, copy_basis=True, product=None):
     else:
         U_proj_err = U - basis.lincomb(product.apply2(U, basis, pairwise=False))
 
-    new_basis.append(pod(U_proj_err, modes=count, product=product)[0])
+    new_basis.append(pod(U_proj_err, modes=count, product=product, orthonormalize=False)[0])
+
+    if orthonormalize:
+        gram_schmidt(new_basis, offset=len(basis), product=product, copy=False)
 
     if len(new_basis) <= basis_length:
         raise ExtensionError
