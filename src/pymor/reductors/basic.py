@@ -68,7 +68,7 @@ def reduce_generic_rb(discretization, RB, operator_product=None, vector_product=
     assert extends is None or len(extends) == 3
 
     if RB is None:
-        RB = discretization.type_solution.empty(discretization.dim_solution)
+        RB = discretization.solution_space.empty()
 
     projected_operators = {k: op.projected(source_basis=RB, range_basis=RB, product=operator_product) if op else None
                            for k, op in discretization.operators.iteritems()}
@@ -160,7 +160,7 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
     elif hasattr(discretization, 'estimate'):
         class FakeEstimator(object):
             rd = discretization
-            rc = SubbasisReconstructor(next(discretization.operators.itervalues()).dim_source, dim)
+            rc = SubbasisReconstructor(next(discretization.operators.itervalues()).source.dim, dim)
 
             def estimate(self, U, mu=None, discretization=None):
                 return self.rd.estimate(self.rc.reconstruct(U), mu=mu)
@@ -177,7 +177,7 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
     if reconstructor is not None and hasattr(reconstructor, 'restricted_to_subbasis'):
         rc = reconstructor.restricted_to_subbasis(dim)
     else:
-        rc = SubbasisReconstructor(next(discretization.operators.itervalues()).dim_source, dim,
+        rc = SubbasisReconstructor(next(discretization.operators.itervalues()).source.dim, dim,
                                    old_recontructor=reconstructor)
 
     return rd, rc, {}

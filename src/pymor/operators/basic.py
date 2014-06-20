@@ -34,7 +34,7 @@ from pymor import defaults
 from pymor.core import abstractmethod
 from pymor.core.exceptions import InversionError
 from pymor.la.interfaces import VectorArrayInterface
-from pymor.la.numpyvectorarray import NumpyVectorArray
+from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
 from pymor.operators.interfaces import OperatorInterface, LincombOperatorInterface
 from pymor.parameters import ParameterFunctionalInterface
 
@@ -95,7 +95,7 @@ class OperatorBase(OperatorInterface):
 
     def __str__(self):
         return '{}: R^{} --> R^{}  (parameter type: {}, class: {})'.format(
-            self.name, self.dim_source, self.dim_range, self.parameter_type,
+            self.name, self.source.dim, self.range.dim, self.parameter_type,
             self.__class__.__name__)
 
     def apply_inverse(self, U, ind=None, mu=None, options=None):
@@ -104,9 +104,9 @@ class OperatorBase(OperatorInterface):
     def as_vector(self, mu=None):
         if not self.linear:
             raise TypeError('This nonlinear operator does not represent a vector or linear functional.')
-        elif self.dim_source == 1 and self.type_source is NumpyVectorArray:
+        elif self.source.dim == 1 and self.source.type is NumpyVectorArray:
             return self.apply(NumpyVectorArray(1), mu=mu)
-        elif self.dim_range == 1 and self.type_range is NumpyVectorArray:
+        elif self.range.dim == 1 and self.range.type is NumpyVectorArray:
             raise NotImplementedError
         else:
             raise TypeError('This operator does not represent a vector or linear functional.')
@@ -238,18 +238,14 @@ class LincombOperatorBase(OperatorBase, LincombOperatorInterface):
         assert len(operators) > 0
         assert all(isinstance(op, OperatorInterface) for op in operators)
         assert coefficients is None or all(isinstance(c, (ParameterFunctionalInterface, Number)) for c in coefficients)
-        assert all(op.dim_source == operators[0].dim_source for op in operators[1:])
-        assert all(op.dim_range == operators[0].dim_range for op in operators[1:])
-        assert all(op.type_source == operators[0].type_source for op in operators[1:])
-        assert all(op.type_range == operators[0].type_range for op in operators[1:])
+        assert all(op.source == operators[0].source for op in operators[1:])
+        assert all(op.range == operators[0].range for op in operators[1:])
         assert coefficients is None or num_coefficients is None
         assert coefficients is None or coefficients_name is None
         assert coefficients is not None or coefficients_name is not None
         assert coefficients_name is None or isinstance(coefficients_name, str)
-        self.dim_source = operators[0].dim_source
-        self.dim_range = operators[0].dim_range
-        self.type_source = operators[0].type_source
-        self.type_range = operators[0].type_range
+        self.source = operators[0].source
+        self.range = operators[0].range
         self.operators = operators
         self.coefficients = coefficients
         self.coefficients_name = coefficients_name
@@ -303,8 +299,8 @@ class LincombOperatorBase(OperatorBase, LincombOperatorInterface):
 
     def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
         '''See :meth:`NumpyMatrixOperator.projected_to_subbasis`.'''
-        assert dim_source is None or dim_source <= self.dim_source
-        assert dim_range is None or dim_range <= self.dim_range
+        assert dim_source is None or dim_source <= self.source.dim
+        assert dim_range is None or dim_range <= self.range.dim
         proj_operators = [op.projected_to_subbasis(dim_source=dim_source, dim_range=dim_range)
                           for op in self.operators]
         name = name or '{}_projected_to_subbasis'.format(self.name)
@@ -340,11 +336,9 @@ class NumpyGenericOperator(OperatorBase):
         Name of the operator.
     '''
 
-    type_source = type_range = NumpyVectorArray
-
     def __init__(self, mapping, dim_source=1, dim_range=1, linear=False, parameter_type=None, name=None):
-        self.dim_source = dim_source
-        self.dim_range = dim_range
+        self.source = NumpyVectorSpace(dim_source)
+        self.range = NumpyVectorSpace(dim_range)
         self.name = name
         self._mapping = mapping
         self.linear = linear
@@ -352,8 +346,7 @@ class NumpyGenericOperator(OperatorBase):
             self.build_parameter_type(parameter_type, local_global=True)
 
     def apply(self, U, ind=None, mu=None):
-        assert isinstance(U, NumpyVectorArray)
-        assert U.dim == self.dim_source
+        assert U in self.source
         U_array = U._array[:U._len] if ind is None else U._array[ind]
         if self.parametric:
             mu = self.parse_parameter(mu)
@@ -374,7 +367,6 @@ class NumpyMatrixBasedOperator(AssemblableOperatorBase):
     '''
 
     linear = True
-    type_source = type_range = NumpyVectorArray
     sparse = None
 
     @staticmethod
@@ -493,8 +485,8 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         assert matrix.ndim <= 2
         if matrix.ndim == 1:
             matrix = np.reshape(matrix, (1, -1))
-        self.dim_source = matrix.shape[1]
-        self.dim_range = matrix.shape[0]
+        self.source = NumpyVectorSpace(matrix.shape[1])
+        self.range = NumpyVectorSpace(matrix.shape[0])
         self.name = name
         self._matrix = matrix
         self.sparse = issparse(matrix)
@@ -509,7 +501,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         return self
 
     def as_vector(self, mu=None):
-        if self.dim_source != 1 and self.dim_range != 1:
+        if self.source.dim != 1 and self.range.dim != 1:
             raise TypeError('This operator does not represent a vector or linear functional.')
         assert self.check_parameter(mu)
         return NumpyVectorArray(self._matrix.ravel(), copy=True)
@@ -535,13 +527,12 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             options = default_options[user_options['type']]
             options.update(user_options)
 
-        assert isinstance(U, NumpyVectorArray)
-        assert self.dim_range == U.dim
+        assert U in self.range
 
         U = U._array[:U._len] if ind is None else U._array[ind]
         if U.shape[1] == 0:
             return NumpyVectorArray(U)
-        R = np.empty((len(U), self.dim_source))
+        R = np.empty((len(U), self.source.dim))
 
         if self.sparse:
             if options['type'] == 'bicgstab':
@@ -651,8 +642,8 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         -------
         The projected |Operator|.
         '''
-        assert dim_source is None or dim_source <= self.dim_source
-        assert dim_range is None or dim_range <= self.dim_range
+        assert dim_source is None or dim_source <= self.source.dim
+        assert dim_range is None or dim_range <= self.range.dim
         name = name or '{}_projected_to_subbasis'.format(self.name)
         return NumpyMatrixOperator(self._matrix[:dim_range, :dim_source], name=name)
 
@@ -736,24 +727,22 @@ class ProjectedOperator(OperatorBase):
         Name of the projected operator.
     '''
 
-    type_source = type_range = NumpyVectorArray
     linear = False
 
     def __init__(self, operator, source_basis, range_basis, product=None, copy=True, name=None):
         assert isinstance(operator, OperatorInterface)
-        assert isinstance(source_basis, operator.type_source) or issubclass(operator.type_source, NumpyVectorArray)
-        assert issubclass(operator.type_range, type(range_basis)) or issubclass(operator.type_range, NumpyVectorArray)
-        assert source_basis is None or source_basis.dim == operator.dim_source
-        assert range_basis is None or range_basis.dim == operator.dim_range
+        assert source_basis is None and issubclass(operator.source.type, NumpyVectorArray) \
+            or source_basis in operator.source
+        assert range_basis is None and issubclass(operator.range.type, NumpyVectorArray) \
+            or range_basis in operator.range
         assert product is None \
             or (isinstance(product, OperatorInterface)
                 and range_basis is not None
-                and issubclass(operator.type_range, product.type_source)
-                and issubclass(product.type_range, type(product))
-                and product.dim_range == product.dim_source == operator.dim_range)
+                and operator.range == product.source
+                and product.range == product.source)
         self.build_parameter_type(inherits=(operator,))
-        self.dim_source = len(source_basis) if operator.dim_source > 0 else 0
-        self.dim_range = len(range_basis) if range_basis is not None else operator.dim_range
+        self.source = NumpyVectorSpace(len(source_basis) if operator.source.dim > 0 else 0)
+        self.range = NumpyVectorSpace(len(range_basis) if range_basis is not None else operator.range.dim)
         self.name = name
         self.operator = operator
         self.source_basis = source_basis.copy() if source_basis is not None and copy else source_basis
@@ -783,8 +772,8 @@ class ProjectedOperator(OperatorBase):
 
     def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
         '''See :meth:`NumpyMatrixOperator.projected_to_subbasis`.'''
-        assert dim_source is None or dim_source <= self.dim_source
-        assert dim_range is None or dim_range <= self.dim_range
+        assert dim_source is None or dim_source <= self.source.dim
+        assert dim_range is None or dim_range <= self.range.dim
         assert dim_source is None or self.source_basis is not None, 'not implemented'
         assert dim_range is None or self.range_basis is not None, 'not implemented'
         name = name or '{}_projected_to_subbasis'.format(self.name)
@@ -833,20 +822,19 @@ class ProjectedLinearOperator(NumpyMatrixBasedOperator):
 
     def __init__(self, operator, source_basis, range_basis, product=None, name=None, copy=True):
         assert isinstance(operator, OperatorInterface)
-        assert isinstance(source_basis, operator.type_source) or issubclass(operator.type_source, NumpyVectorArray)
-        assert issubclass(operator.type_range, type(range_basis)) or issubclass(operator.type_range, NumpyVectorArray)
-        assert source_basis is None or source_basis.dim == operator.dim_source
-        assert range_basis is None or range_basis.dim == operator.dim_range
+        assert source_basis is None and issubclass(operator.source.type, NumpyVectorArray) \
+            or source_basis in operator.source
+        assert range_basis is None and issubclass(operator.range.type, NumpyVectorArray) \
+            or range_basis in operator.range
         assert product is None \
             or (isinstance(product, OperatorInterface)
                 and range_basis is not None
-                and issubclass(operator.type_range, product.type_source)
-                and issubclass(product.type_range, type(product))
-                and product.dim_range == product.dim_source == operator.dim_range)
+                and operator.range == product.source
+                and product.range == product.source)
         assert operator.linear
         self.build_parameter_type(inherits=(operator,))
-        self.dim_source = len(source_basis) if source_basis is not None else operator.dim_source
-        self.dim_range = len(range_basis) if range_basis is not None else operator.dim_range
+        self.source = NumpyVectorSpace(len(source_basis) if source_basis is not None else operator.source.dim)
+        self.range = NumpyVectorSpace(len(range_basis) if range_basis is not None else operator.range.dim)
         self.name = name
         self.operator = operator
         self.source_basis = source_basis.copy() if source_basis is not None and copy else source_basis
@@ -860,11 +848,11 @@ class ProjectedLinearOperator(NumpyMatrixBasedOperator):
                 return self.operator.assemble(mu=mu)
             elif self.product is None:
                 return NumpyMatrixOperator(self.operator.apply2(self.range_basis,
-                                                                NumpyVectorArray(np.eye(self.operator.dim_source)),
+                                                                NumpyVectorArray(np.eye(self.operator.source.dim)),
                                                                 pairwise=False, mu=mu),
                                            name='{}_assembled'.format(self.name))
             else:
-                V = self.operator.apply(NumpyVectorArray(np.eye(self.operator.dim_source)), mu=mu)
+                V = self.operator.apply(NumpyVectorArray(np.eye(self.operator.source.dim)), mu=mu)
                 return NumpyMatrixOperator(self.product.apply2(self.range_basis, V, pairwise=False),
                                            name='{}_assembled'.format(self.name))
         else:
@@ -882,7 +870,7 @@ class ProjectedLinearOperator(NumpyMatrixBasedOperator):
 
     def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
         '''See :meth:`NumpyMatrixOperator.projected_to_subbasis`.'''
-        assert dim_source is None or dim_source <= self.dim_source
+        assert dim_source is None or dim_source <= self.source.dim
         assert dim_range is None or dim_range <= self.dim_range
         assert dim_source is None or self.source_basis is not None, 'not implemented'
         assert dim_range is None or self.range_basis is not None, 'not implemented'

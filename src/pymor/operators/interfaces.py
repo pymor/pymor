@@ -19,14 +19,10 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
 
     Note that there is no special distinction between functionals
     and operators in pyMOR. A functional is simply an operator with
-    range dimension 1 and |NumpyVectorArray| as `type_range`.
+    range dimension 1 and |NumpyVectorArray| as `range.type`.
 
     Attributes
     ----------
-    dim_source
-        The dimension s of the source space.
-    dim_range
-        The dimension r of the range space.
     invert_options
         |OrderedDict| of possible options for :meth:`~OperatorInterface.apply_inverse`.
         Each key is a type of inversion algorithm which can be used to invert the
@@ -36,10 +32,10 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         directly to :meth:`~OperatorInterface.apply_inverse()`.
     linear
         `True` if the operator is linear.
-    type_source
-        The |VectorArray| class representing vectors of the source space.
-    type_range
-        The |VectorArray| class representing vectors of the range space.
+    source
+        The source |VectorSpace|.
+    range
+        The range |VectorSpace|.
     '''
 
     @abstractmethod
@@ -162,9 +158,9 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         '''Return vector representation of linear functional or vector operator.
 
         This method may only be called on linear functionals, i.e. linear operators
-        with `dim_range == 1` and |NumpyVectorArray| as :attr:`~OperatorInterface.type_range`,
+        with `range.dim == 1` and |NumpyVectorArray| as :attr:`~OperatorInterface.range.type`,
         or on operators describing vectors, i.e. linear operators with
-        `dim_source == 1` |NumpyVectorArray| as :attr:`~OperatorInterface.type_source`.
+        `source.dim == 1` |NumpyVectorArray| as :attr:`~OperatorInterface.source.type`.
 
         In the case of a functional, the identity ::
 
@@ -183,8 +179,8 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         -------
         V
             |VectorArray| of length 1 containing the vector representation. We have
-            `V.dim == self.dim_source`, `type(V) == self.type_source` for functionals
-            and `V.dim = self.dim_range`, `type(V) == self.dim_range` for vector-like
+            `V.dim == self.source.dim`, `type(V) == self.source.type` for functionals
+            and `V.dim = self.range.dim`, `type(V) == self.range.type` for vector-like
             operators.
         '''
         pass

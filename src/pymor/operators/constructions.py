@@ -11,7 +11,7 @@ from numbers import Number
 
 import numpy as np
 
-from pymor.la import VectorArrayInterface, NumpyVectorArray
+from pymor.la import VectorArrayInterface, NumpyVectorArray, NumpyVectorSpace
 from pymor.operators.basic import OperatorBase
 from pymor.operators.interfaces import OperatorInterface
 
@@ -32,15 +32,12 @@ class Concatenation(OperatorBase):
     def __init__(self, second, first, name=None):
         assert isinstance(second, OperatorInterface)
         assert isinstance(first, OperatorInterface)
-        assert second.dim_source == first.dim_range
-        assert second.type_source == first.type_range
+        assert first.range == second.source
         self.first = first
         self.second = second
         self.build_parameter_type(inherits=(second, first))
-        self.dim_source = first.dim_source
-        self.dim_range = second.dim_range
-        self.type_source = first.type_source
-        self.type_range = second.type_range
+        self.source = first.source
+        self.range = second.range
         self.linear = second.linear and first.linear
         if hasattr(first, 'restricted') and hasattr(second, 'restricted'):
             self.restricted = self._restricted
@@ -69,35 +66,30 @@ class ComponentProjection(OperatorBase):
     components
         List or 1D |NumPy array| of the indices of the vector components that are to
         be extracted by the operator.
-    dim_source
-        Source dimension of the operator.
-    type_source
-        The type of |VectorArray| the operator accepts.
+    source
+        Source |VectorSpace| of the operator.
     name
         Name of the operator.
     '''
 
-    type_range = NumpyVectorArray
     linear = True
 
-    def __init__(self, components, dim_source, type_source, name=None):
-        assert all(0 <= c < dim_source for c in components)
+    def __init__(self, components, source, name=None):
+        assert all(0 <= c < source.dim for c in components)
         self.components = np.array(components)
-        self.dim_source = dim_source
-        self.dim_range = len(components)
-        self.type_source = type_source
+        self.range = NumpyVectorSpace(len(components))
+        self.source = source
         self.name = name
 
     def apply(self, U, ind=None, mu=None):
         assert self.check_parameter(mu)
-        assert isinstance(U, self.type_source)
-        assert U.dim == self.dim_source
+        assert U in self.source
         return NumpyVectorArray(U.components(self.components, ind), copy=False)
 
     def restricted(self, components):
-        assert all(0 <= c < self.dim_range for c in components)
+        assert all(0 <= c < self.range.dim for c in components)
         source_components = self.components[components]
-        return IdentityOperator(dim=len(source_components), type_source=self.type_source), source_components
+        return IdentityOperator(NumpyVectorSpace(len(source_components))), source_components
 
 
 class IdentityOperator(OperatorBase):
@@ -109,27 +101,21 @@ class IdentityOperator(OperatorBase):
 
     Parameters
     ----------
-    dim
-        Source dimension (= range dimension) of the operator.
-    type_source
-        The type of |VectorArray| the operator accepts.
+    space
+        The |VectorSpace| the operator acts on.
     name
         Name of the operator.
     '''
 
     linear = True
 
-    def __init__(self, dim, type_source, name=None):
-        assert issubclass(type_source, VectorArrayInterface)
-
-        self.dim_range = self.dim_source = dim
-        self.type_range = self.type_source = type_source
+    def __init__(self, space, name=None):
+        self.source = self.range = space
         self.name = name
 
     def apply(self, U, ind=None, mu=None):
         assert self.check_parameter(mu)
-        assert isinstance(U, self.type_source)
-        assert U.dim == self.dim_source
+        assert U in self.source
         return U.copy(ind=ind)
 
 
@@ -141,10 +127,8 @@ class ConstantOperator(OperatorBase):
     value
         A |VectorArray| of length 1 containing the vector which is
         returned by the operator.
-    dim_source
-        Source dimension of the operator.
-    type_source
-        The type of |VectorArray| the operator accepts.
+    source
+        Source |VectorSpace| of the operator.
     copy
         If `True`, store a copy of `vector` instead of `vector`
         itself.
@@ -154,19 +138,17 @@ class ConstantOperator(OperatorBase):
 
     linear = False
 
-    def __init__(self, value, dim_source, type_source=NumpyVectorArray, copy=True, name=None):
+    def __init__(self, value, source, copy=True, name=None):
         assert isinstance(value, VectorArrayInterface)
         assert len(value) == 1
-        self.dim_source = dim_source
-        self.dim_range = value.dim
-        self.type_source = type_source
-        self.type_range = type(value)
+        self.source = source
+        self.range = value.space
         self.name = name
         self._value = value.copy() if copy else value
 
     def apply(self, U, ind=None, mu=None):
         assert self.check_parameter(mu)
-        assert isinstance(U, self.type_source) and U.dim == self.dim_source
+        assert U in self.source
         count = len(U) if ind is None else 1 if isinstance(ind, Number) else len(ind)
         return self._value.copy(ind=([0] * count))
 
@@ -196,14 +178,12 @@ class VectorOperator(OperatorBase):
     '''
 
     linear = True
-    type_source = NumpyVectorArray
-    dim_source = 1
+    source = NumpyVectorSpace(1)
 
     def __init__(self, vector, copy=True, name=None):
         assert isinstance(vector, VectorArrayInterface)
         assert len(vector) == 1
-        self.dim_range = vector.dim
-        self.type_range = type(vector)
+        self.range = vector.space
         self.name = name
         self._vector = vector.copy() if copy else vector
 
@@ -212,7 +192,7 @@ class VectorOperator(OperatorBase):
 
     def apply(self, U, ind=None, mu=None):
         assert self.check_parameter(mu)
-        assert isinstance(U, NumpyVectorArray) and U.dim == 1
+        assert U in self.source
         count = len(U) if ind is None else 1 if isinstance(ind, Number) else len(ind)
         R = self._vector.copy(ind=([0] * count))
         for i, c in enumerate(U.data):
@@ -253,15 +233,13 @@ class VectorFunctional(OperatorBase):
     '''
 
     linear = True
-    type_range = NumpyVectorArray
-    dim_range = 1
+    range = NumpyVectorSpace(1)
 
     def __init__(self, vector, product=None, copy=True, name=None):
         assert isinstance(vector, VectorArrayInterface)
         assert len(vector) == 1
         assert product is None or isinstance(product, OperatorInterface)
-        self.dim_source = vector.dim
-        self.type_source = type(vector)
+        self.source = vector.space
         self.name = name
         if product is None:
             self._vector = vector.copy() if copy else vector
@@ -273,7 +251,7 @@ class VectorFunctional(OperatorBase):
 
     def apply(self, U, ind=None, mu=None):
         assert self.check_parameter(mu)
-        assert isinstance(U, self.type_source) and U.dim == self.dim_source
+        assert U in self.source
         return NumpyVectorArray(U.dot(self._vector, ind=ind, pairwise=False), copy=False)
 
 

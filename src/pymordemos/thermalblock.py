@@ -115,7 +115,7 @@ def thermalblock_demo(args):
     print('\nSearching for maximum error on random snapshots ...')
 
     def error_analysis(d, rd, rc, mus):
-        print('N = {}: '.format(rd.operator.dim_source), end='')
+        print('N = {}: '.format(rd.operator.source.dim), end='')
         h1_err_max = -1
         h1_est_max = -1
         cond_max = -1

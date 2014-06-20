@@ -91,7 +91,7 @@ def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation
 
     interpolation_dofs = np.zeros((0,), dtype=np.int32)
     interpolation_matrix = np.zeros((0, 0))
-    collateral_basis = type(next(iter(evaluations))).empty(dim=next(iter(evaluations)).dim)
+    collateral_basis = next(iter(evaluations)).empty()
     max_errs = []
     triangularity_errs = []
 
@@ -293,8 +293,7 @@ class EvaluationProvider(CacheableInterface):
     def data(self, k):
         mu = self.sample[k]
         U = self.discretization.solve(mu)
-        AU = self.operators[0].type_range.empty(self.operators[0].dim_range,
-                                                reserve=len(self.operators))
+        AU = self.operators[0].range.empty(reserve=len(self.operators))
         for op in self.operators:
             AU.append(op.apply(U, mu=mu))
         return AU

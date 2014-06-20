@@ -11,7 +11,7 @@ import numpy as np
 from scipy.sparse import issparse
 
 from pymor.core import NUMPY_INDEX_QUIRK
-from pymor.la.interfaces import VectorArrayInterface
+from pymor.la.interfaces import VectorArrayInterface, VectorSpace
 from pymor.tools import float_cmp
 
 
@@ -28,17 +28,6 @@ class NumpyVectorArray(VectorArrayInterface):
     will be quite efficient, removing or appending vectors will
     be costly.
     '''
-
-    @classmethod
-    def empty(cls, dim, reserve=0):
-        va = cls(np.empty((0, 0)))
-        va._array = np.empty((reserve, dim))
-        va._len = 0
-        return va
-
-    @classmethod
-    def zeros(cls, dim, count=1):
-        return cls(np.zeros((count, dim)))
 
     def __init__(self, instance, dtype=None, copy=False, order=None, subok=False):
         if isinstance(instance, np.ndarray):
@@ -59,12 +48,26 @@ class NumpyVectorArray(VectorArrayInterface):
             self._array = np.reshape(self._array, (1, -1))
         self._len = len(self._array)
 
+    @classmethod
+    def make_array(cls, subtype=None, count=0, reserve=0):
+        assert isinstance(subtype, Number)
+        assert count >= 0
+        assert reserve >= 0
+        va = NumpyVectorArray(np.empty((0, 0)))
+        va._array = np.zeros((max(count, reserve), subtype))
+        va._len = count
+        return va
+
     @property
     def data(self):
         return self._array[:self._len]
 
     def __len__(self):
         return self._len
+
+    @property
+    def subtype(self):
+        return self._array.shape[1]
 
     @property
     def dim(self):
@@ -347,3 +350,7 @@ class NumpyVectorArray(VectorArrayInterface):
 
     def __repr__(self):
         return 'NumpyVectorArray({})'.format(self._array[:self._len].__str__())
+
+
+def NumpyVectorSpace(dim):
+    return VectorSpace(NumpyVectorArray, dim)

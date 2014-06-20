@@ -61,7 +61,7 @@ def trivial_basis_extension(basis, U, copy_basis=True, copy_U=True):
         Is raised if all vectors in U are already contained in the basis.
     '''
     if basis is None:
-        basis = type(U).empty(U.dim, reserve=len(U))
+        basis = U.empty(reserve=len(U))
 
     old_basis_length = len(basis)
     remove = set()
@@ -112,7 +112,7 @@ def gram_schmidt_basis_extension(basis, U, product=None, copy_basis=True, copy_U
         vector in U is linearly independent from the basis.
     '''
     if basis is None:
-        basis = type(U).empty(U.dim, reserve=len(U))
+        basis = U.empty(reserve=len(U))
 
     basis_length = len(basis)
 

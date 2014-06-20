@@ -11,6 +11,7 @@ import numpy as np
 from scipy.sparse import coo_matrix, csc_matrix
 
 from pymor.grids.referenceelements import triangle, line, square
+from pymor.la import NumpyVectorSpace
 from pymor.operators import NumpyMatrixBasedOperator, NumpyMatrixOperator
 
 
@@ -43,12 +44,12 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     '''
 
     sparse = False
+    range = NumpyVectorSpace(1)
 
     def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, order=2, name=None):
         assert grid.reference_element(0) in {line, triangle}
         assert function.shape_range == tuple()
-        self.dim_source = grid.size(grid.dim)
-        self.dim_range = 1
+        self.source = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
         self.function = function
@@ -126,12 +127,12 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
     '''
 
     sparse = False
+    range = NumpyVectorSpace(1)
 
     def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, order=2, name=None):
         assert grid.reference_element(0) in {square}
         assert function.shape_range == tuple()
-        self.dim_source = grid.size(grid.dim)
-        self.dim_range = 1
+        self.source = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
         self.function = function
@@ -213,8 +214,7 @@ class L2ProductP1(NumpyMatrixBasedOperator):
     def __init__(self, grid, boundary_info, dirichlet_clear_rows=True, dirichlet_clear_columns=False,
                  dirichlet_clear_diag=False, name=None):
         assert grid.reference_element in (line, triangle)
-        self.dim_source = grid.size(grid.dim)
-        self.dim_range = self.dim_source
+        self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
         self.dirichlet_clear_rows = dirichlet_clear_rows
@@ -303,8 +303,7 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
     def __init__(self, grid, boundary_info, dirichlet_clear_rows=True, dirichlet_clear_columns=False,
                  dirichlet_clear_diag=False, name=None):
         assert grid.reference_element in {square}
-        self.dim_source = grid.size(grid.dim)
-        self.dim_range = self.dim_source
+        self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
         self.dirichlet_clear_rows = dirichlet_clear_rows
@@ -393,7 +392,7 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
                  dirichlet_clear_columns=False, dirichlet_clear_diag=False, name=None):
         assert grid.reference_element(0) in {triangle, line}, 'A simplicial grid is expected!'
-        self.dim_source = self.dim_range = grid.size(grid.dim)
+        self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
         self.diffusion_constant = diffusion_constant
@@ -500,7 +499,7 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
                  dirichlet_clear_columns=False, dirichlet_clear_diag=False, name=None):
         assert grid.reference_element(0) in {square}, 'A square grid is expected!'
-        self.dim_source = self.dim_range = grid.size(grid.dim)
+        self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
         self.diffusion_constant = diffusion_constant

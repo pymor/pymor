@@ -2,6 +2,11 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+############################################################################################
+#                                                                                          #
+# FIXME This code has not been adapted to the new VectorArray interface and will not work! #
+#                                                                                          #
+############################################################################################
 
 # flake8: noqa
 from __future__ import absolute_import, division, print_function
