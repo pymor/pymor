@@ -73,7 +73,11 @@ def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation
     data
         Dict containing the following fields:
 
-            :errors: sequence of maximum approximation errors during greedy search.
+            :errors:                sequence of maximum approximation errors during
+                                    greedy search.
+            :triangularity_errors:  sequence of maximum absolute values of interoplation
+                                    matrix coefficients in the upper triangle (should
+                                    be near zero).
     '''
 
     assert projection in ('orthogonal', 'ei')
