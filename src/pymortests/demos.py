@@ -9,14 +9,18 @@ import pymordemos
 import runpy
 import sys
 import pytest
+import multiprocessing
 
 from pymortests.base import TestInterface, runmodule
+from pymor.gui.glumpy import HAVE_PYSIDE, HAVE_GL, HAVE_GLUMPY
 
 DEMO_ARGS = (('cg', [0, 0, 0]), ('cg', [1, 2, 3]),
-             ('burgers', ['0.1']), ('burgers_ei', [0.9, 1.1, 2, 5, 3]),
+            ('burgers', ['0.1']),
+            ('burgers_ei', [1, 2, 2, 5, 2, 5]),
              ('cg2', [1, 20, 0]), ('cg_oned', [1, 20, 0]),
              ('thermalblock', ['-e',2, 2, 3, 5]), ('thermalblock', [2, 2, 3, 5]),
-             ('thermalblock_gui', [2, 2, 3, 5]), ('thermalblock_pod', [2, 2, 3, 5]))
+             # ('thermalblock_gui', [2, 2, 3, 5]), this one is currently blocking -> unusable
+             ('thermalblock_pod', [2, 2, 3, 5]))
 
 def _run(module, args):
     sys.argv = [module] + [str(a) for a in args]
@@ -27,13 +31,22 @@ def _run(module, args):
 def demo_args(request):
     return request.param
 
+def _is_failed_import_ok(error):
+    if error.message == 'cannot visualize: import of PySide failed':
+        return not HAVE_PYSIDE
+    return False
 
 def test_demos(demo_args):
-    for short, args in DEMO_ARGS:
-        module = 'pymordemos.{}'.format(short)
+    short, args = demo_args
+    module = 'pymordemos.{}'.format(short)
+    try:
         ret = _run(module, args)
-        #TODO find a better/tighter assert
+        #TODO find a better/tighter assert/way to run the code
         assert ret is not None
+    except ImportError as ie:
+        assert _is_failed_import_ok(ie)
+    for child in multiprocessing.active_children():
+        child.terminate()
 
 
 def test_demos_tested():
@@ -45,9 +58,8 @@ def test_demos_tested():
             shorts.append(short)
         except (TypeError, ImportError):
             pass
-    tested = [f[0] for f in DEMO_ARGS]
-    for short in shorts:
-        assert short in tested
+    tested = set([f[0] for f in DEMO_ARGS])
+    assert set(shorts) == tested
 
 
 if __name__ == "__main__":
