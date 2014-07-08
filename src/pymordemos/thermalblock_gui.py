@@ -6,7 +6,7 @@
 '''Thermalblock with GUI demo
 
 Usage:
-  thermalblock_gui.py [-h] [--estimator-norm=NORM] [--grid=NI]
+  thermalblock_gui.py [-h] [--estimator-norm=NORM] [--grid=NI] [--testing]
                   [--help] XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
 
 
@@ -26,6 +26,8 @@ Options:
                          [default: trivial].
 
   --grid=NI              Use grid with 2*NI*NI elements [default: 60].
+
+  --testing              load the gui and exit right away (for functional testing)
 
   -h, --help             Show this message.
 '''
@@ -112,8 +114,10 @@ class AllPanel(QtGui.QWidget):
         super(AllPanel, self).__init__(parent)
 
         box = QtGui.QVBoxLayout()
-        box.addWidget(SimPanel(self, reduced_sim))
-        box.addWidget(SimPanel(self, detailed_sim))
+        self.reduced_panel = SimPanel(self, reduced_sim)
+        self.detailed_panel = SimPanel(self, detailed_sim)
+        box.addWidget(self.reduced_panel)
+        box.addWidget(self.detailed_panel)
         self.setLayout(box)
 
 
@@ -129,8 +133,8 @@ class RBGui(QtGui.QMainWindow):
         assert args['--estimator-norm'] in {'trivial', 'h1'}
         reduced = ReducedSim(args)
         detailed = DetailedSim(args)
-        panel = AllPanel(self, reduced, detailed)
-        self.setCentralWidget(panel)
+        self.panel = AllPanel(self, reduced, detailed)
+        self.setCentralWidget(self.panel)
 
 
 class SimBase(object):
@@ -182,4 +186,11 @@ if __name__ == '__main__':
     args = docopt(__doc__)
     win = RBGui(args)
     win.show()
-    sys.exit(app.exec_())
+    testing = args['--testing']
+    if not testing:
+        sys.exit(app.exec_())
+
+    win.panel.detailed_panel.solve_update()
+    win.panel.reduced_panel.solve_update()
+    app.exit(0)
+

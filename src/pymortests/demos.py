@@ -11,15 +11,15 @@ import sys
 import pytest
 import multiprocessing
 
-from pymortests.base import TestInterface, runmodule
-from pymor.gui.glumpy import HAVE_PYSIDE, HAVE_GL, HAVE_GLUMPY
+from pymortests.base import runmodule
+from pymor.gui.glumpy import HAVE_PYSIDE
 
 DEMO_ARGS = (('cg', [0, 0, 0]), ('cg', [1, 2, 3]),
-            ('burgers', ['0.1']),
-            ('burgers_ei', [1, 2, 2, 5, 2, 5]),
+             ('burgers', ['0.1']),
+             ('burgers_ei', [1, 2, 2, 5, 2, 5]),
              ('cg2', [1, 20, 0]), ('cg_oned', [1, 20, 0]),
              ('thermalblock', ['-e',2, 2, 3, 5]), ('thermalblock', [2, 2, 3, 5]),
-             # ('thermalblock_gui', [2, 2, 3, 5]), this one is currently blocking -> unusable
+             ('thermalblock_gui', ['--testing', 2, 2, 3, 5]),
              ('thermalblock_pod', [2, 2, 3, 5]))
 
 def _run(module, args):
