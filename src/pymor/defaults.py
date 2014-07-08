@@ -255,6 +255,7 @@ class Defaults(object):
             newton_maxiter                      = {0.newton_maxiter}
             newton_reduction                    = {0.newton_reduction}
             newton_abs_limit                    = {0.newton_abs_limit}
+            newton_stagnation_window            = {0.newton_stagnation_window}
 
             random_seed                         = {0.random_seed}
 
