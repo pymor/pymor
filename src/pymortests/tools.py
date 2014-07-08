@@ -3,14 +3,20 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
-from math import pow, factorial, sin, pi, exp
+from math import sin, pi, exp
 import numpy as np
+import pytest
 import itertools
+from tempfile import NamedTemporaryFile
 
 from pymortests.base import TestInterface, runmodule
+from pymortests.fixtures.grid import rect_or_tria_grid
+from pymortests.base import polynomials
 from pymor.tools.memory import total_size
 from pymor.tools.quadratures import GaussQuadratures
 from pymor.tools.floatcmp import float_cmp
+from pymor.tools.vtkio import write_vtk
+from pymor.la import NumpyVectorArray
 
 
 class TestMemory(TestInterface):
@@ -35,17 +41,6 @@ class TestMemory(TestInterface):
         container = MyContainer()
         self.assertGreater(total_size(container, {MyContainer: MyContainer.items}), 0)
 
-
-def polynomials(max_order):
-    for n in xrange(max_order + 1):
-        f = lambda x: pow(x, n)
-
-        def deri(k):
-            if k > n:
-                return lambda _: 0
-            return lambda x: (factorial(n) / factorial(n - k)) * pow(x, n - k)
-        integral = (1 / (n + 1))
-        yield (n, f, deri, integral)
 
 FUNCTIONS = (('sin(2x pi)', lambda x: sin(2 * x * pi), 0),
              ('e^x', lambda x: exp(x), exp(1) - exp(0)))
@@ -111,6 +106,18 @@ class TestCmp(TestInterface):
             self.assertTrue(inf == inf)
             self.assertTrue(float_cmp(-inf, inf, rtol, atol), msg)
 
+
+def test_vtkio(rect_or_tria_grid):
+    grid = rect_or_tria_grid
+    steps = 4
+    for dim in range(1, 2):
+        for codim, data in enumerate((NumpyVectorArray(np.zeros((steps, grid.size(c)))) for c in range(grid.dim+1))):
+            with NamedTemporaryFile('wb') as out:
+                if codim == 1:
+                    with pytest.raises(NotImplementedError):
+                        write_vtk(grid, data, out.name, codim=codim)
+                else:
+                    write_vtk(grid, data, out.name, codim=codim)
 
 if __name__ == "__main__":
     runmodule(filename=__file__)

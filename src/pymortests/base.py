@@ -6,7 +6,9 @@ from __future__ import absolute_import, division, print_function
 import pprint
 import pkgutil
 import sys
+import numpy as np
 import numpy.testing as npt
+from math import factorial
 
 from pymor.core import logger
 
@@ -93,3 +95,14 @@ def SubclassForImplemetorsOf(InterfaceType):
 def runmodule(filename):
     import pytest
     sys.exit(pytest.main(sys.argv[1:] + [filename]))
+
+def polynomials(max_order):
+    for n in xrange(max_order + 1):
+        f = lambda x: np.power(x, n)
+
+        def deri(k):
+            if k > n:
+                return lambda _: 0
+            return lambda x: (factorial(n) / factorial(n - k)) * np.power(x, n - k)
+        integral = (1 / (n + 1))
+        yield (n, f, deri, integral)
