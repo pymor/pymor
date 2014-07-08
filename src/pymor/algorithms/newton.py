@@ -19,6 +19,8 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None,
     maxiter = defaults.newton_maxiter if maxiter is None else maxiter
     reduction = defaults.newton_reduction if reduction is None else reduction
     abs_limit = defaults.newton_abs_limit if abs_limit is None else abs_limit
+    stagnation_window = defaults.newton_stagnation_window if stagnation_window is None else stagnation_window
+    stagnation_threshold = defaults.newton_stagnation_threshold if stagnation_threshold is None else stagnation_threshold
     logger = getLogger('pymor.algorithms.newton')
 
     data = {}
