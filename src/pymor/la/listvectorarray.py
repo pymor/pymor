@@ -35,10 +35,6 @@ class VectorInterface(BasicInterface):
     def subtype(self):
         return None
 
-    @property
-    def space(self):
-        return VectorSpace(ListVectorArray, self.dim, self.subtype)
-
     @abstractmethod
     def copy(self):
         pass
@@ -191,7 +187,7 @@ class ListVectorArray(VectorArrayInterface):
     __NONE = {}
     vector_type = None
 
-    def __init__(self, vectors, subtype=None, copy=True):
+    def __init__(self, vectors, subtype=__NONE, copy=True):
         if not copy:
             if isinstance(vectors, list):
                 self._list = vectors
@@ -199,9 +195,9 @@ class ListVectorArray(VectorArrayInterface):
                 self._list = list(vectors)
         else:
             self._list = [v.copy() for v in vectors]
-        if subtype is None:
+        if subtype is self.__NONE:
             assert len(self._list) > 0
-            subtype = self._list[0].space
+            subtype = self._list[0].subtype
         self._subtype = subtype
         assert all(v.subtype == subtype for v in self._list)
 
