@@ -4,6 +4,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+import multiprocessing
 import numpy as np
 import pytest
 import random
@@ -22,6 +23,12 @@ def test_eval():
     for (fn, fe) in FUNCTIONS:
         for x in (random.uniform(0, 1) for _ in xrange(9000)):
             np.testing.assert_array_almost_equal(fn([x]), fe(x))
+
+def test_parabolic():
+    from pymor.playground.demos.parabolic import parabolic_demo
+    parabolic_demo()
+    for child in multiprocessing.active_children():
+        child.terminate()
 
 
 if __name__ == "__main__":
