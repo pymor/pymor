@@ -81,6 +81,13 @@ class OperatorBase(OperatorInterface):
     def lincomb(operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
         return LincombOperator(operators, coefficients, num_coefficients, coefficients_name, name=None)
 
+
+    def __sub__(self, other):
+        if isinstance(other, Number):
+            assert other == 0.
+            return self
+        return self.lincomb([self, other], [1, -1])
+
     def __add__(self, other):
         if isinstance(other, Number):
             assert other == 0.
