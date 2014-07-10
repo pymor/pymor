@@ -109,15 +109,18 @@ def polynomials(max_order):
         integral = (1 / (n + 1))
         yield (n, f, deri, integral)
 
+
 class MonomOperator(OperatorBase):
 
     dim_source = dim_range = 1
+    type_source = type_range = NumpyVectorArray
 
     def __init__(self, order, monom=None):
         self.monom = monom if monom else Polynomial(np.identity(order+1)[order])
         assert isinstance(self.monom, Polynomial)
         self.order = order
         self.derivative = self.monom.deriv()
+        self.linear = order == 1
 
     def apply(self, U, ind=None, mu=None):
         return NumpyVectorArray(self.monom(U.data))
