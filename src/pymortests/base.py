@@ -8,10 +8,12 @@ import pkgutil
 import sys
 import numpy as np
 import numpy.testing as npt
+from numpy.polynomial.polynomial import Polynomial
 from math import factorial
 
 from pymor.core import logger
-
+from pymor.la import NumpyVectorArray
+from pymor.operators.basic import OperatorBase
 
 class TestInterface(object):
 
@@ -106,3 +108,22 @@ def polynomials(max_order):
             return lambda x: (factorial(n) / factorial(n - k)) * np.power(x, n - k)
         integral = (1 / (n + 1))
         yield (n, f, deri, integral)
+
+class MonomOperator(OperatorBase):
+
+    dim_source = dim_range = 1
+
+    def __init__(self, order, monom=None):
+        self.monom = monom if monom else Polynomial(np.identity(order+1)[order])
+        assert isinstance(self.monom, Polynomial)
+        self.order = order
+        self.derivative = self.monom.deriv()
+
+    def apply(self, U, ind=None, mu=None):
+        return NumpyVectorArray(self.monom(U.data))
+
+    def jacobian(self, U, mu=None):
+        return MonomOperator(self.order-1, self.derivative)
+
+    def apply_inverse(self, U, ind=None, mu=None, options=None):
+        return NumpyVectorArray(1. / U.data)
