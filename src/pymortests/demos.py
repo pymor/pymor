@@ -21,6 +21,8 @@ DEMO_ARGS = (('cg', [0, 0, 0]), ('cg', [1, 2, 3]), ('cg', ['--rect', 1, 2, 3]),
              ('thermalblock', ['-e',2, 2, 3, 5]), ('thermalblock', [2, 2, 3, 5]),
              ('thermalblock_gui', ['--testing', 2, 2, 3, 5]),
              ('thermalblock_pod', [2, 2, 3, 5]))
+DEMO_ARGS = [('pymordemos.{}'.format(a), b) for (a,b) in DEMO_ARGS]
+DEMO_ARGS += [('pymor.playground.demos.remote_thermalblock', ['-e',2, 2, 3, 5])]
 
 def _run(module, args):
     sys.argv = [module] + [str(a) for a in args]
@@ -37,8 +39,7 @@ def _is_failed_import_ok(error):
     return False
 
 def test_demos(demo_args):
-    short, args = demo_args
-    module = 'pymordemos.{}'.format(short)
+    module, args = demo_args
     try:
         ret = _run(module, args)
         #TODO find a better/tighter assert/way to run the code
@@ -50,16 +51,15 @@ def test_demos(demo_args):
 
 
 def test_demos_tested():
-    shorts = []
+    modules = []
     for _, module_name, _ in pkgutil.walk_packages(pymordemos.__path__, pymordemos.__name__ + '.'):
         try:
             foo = __import__(module_name)
-            short = module_name[len('pymordemos.'):]
-            shorts.append(short)
+            modules.append(module_name)
         except (TypeError, ImportError):
             pass
     tested = set([f[0] for f in DEMO_ARGS])
-    assert set(shorts) == tested
+    assert set(modules) == tested
 
 
 if __name__ == "__main__":
