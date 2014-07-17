@@ -12,7 +12,7 @@ from numpy.polynomial.polynomial import Polynomial
 from math import factorial
 
 from pymor.core import logger
-from pymor.la import NumpyVectorArray
+from pymor.la import NumpyVectorArray, NumpyVectorSpace
 from pymor.operators.basic import OperatorBase
 
 class TestInterface(object):
@@ -112,7 +112,7 @@ def polynomials(max_order):
 
 class MonomOperator(OperatorBase):
 
-    dim_source = dim_range = 1
+    source = range = NumpyVectorSpace(1)
     type_source = type_range = NumpyVectorArray
 
     def __init__(self, order, monom=None):
