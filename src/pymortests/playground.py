@@ -32,7 +32,7 @@ def test_gmsh():
     fn = os.path.join(os.path.dirname(__file__), '../../', 'testdata', 'gmsh_1.msh')
     with open(fn) as msh_file:
         msh = gmsh.GmshGrid(msh_file)
-        
+
         msh.unlock()
         msh.param = lambda : msh
         msh.lock(True)

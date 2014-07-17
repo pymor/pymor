@@ -53,6 +53,7 @@ class EllipticProblem(ImmutableInterface, Named):
                  diffusion_functions=(ConstantFunction(dim_domain=2),),
                  diffusion_functionals=None,
                  dirichlet_data=ConstantFunction(value=0, dim_domain=2), name=None):
+        assert rhs.dim_domain == dirichlet_data.dim_domain == diffusion_functions[0].dim_domain
         self.domain = domain
         self.rhs = rhs
         self.diffusion_functions = diffusion_functions
