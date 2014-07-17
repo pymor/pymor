@@ -13,7 +13,7 @@ install:
  - python ./install.py --recipe travis --virtualenv-dir $VIRTUAL_ENV --without-python-path --python python$TRAVIS_PYTHON_VERSION --only-deps
  - pip install --upgrade numpy
 # # command to run tests
-script: make test
+script: DISPLAY=:99.0 make test
 notifications:
   irc: 
     channels:
