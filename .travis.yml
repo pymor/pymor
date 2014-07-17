@@ -21,12 +21,11 @@ before_install:
 
 # command to install dependencies
 install:
- - python setup.py install
+ - python setup.py build_ext -i
 
 # # command to run tests
 script: 
- - python setup.py build_ext -i
- - DISPLAY=:99.0 make test
+ - DISPLAY=:99.0 python setup.py test
 
 notifications:
   irc: 
@@ -40,3 +39,7 @@ notifications:
 
 after_success:
  - coveralls
+
+branches:
+  except:
+    - gh-pages
