@@ -16,7 +16,7 @@ from pymor.gui.glumpy import HAVE_PYSIDE
 
 DEMO_ARGS = (('cg', [0, 0, 0]), ('cg', [1, 2, 3]), ('cg', ['--rect', 1, 2, 3]),
              ('burgers', ['--num-flux=lax_friedrichs', '0.1']), ('burgers', ['--num-flux=engquist_osher', '0.1']),
-             ('burgers_ei', [1, 2, 2, 5, 2, 5]),
+             ('burgers_ei', [1, 2, 2, 5, 2, 5]), ('burgers', ['--num-flux=simplified_engquist_osher', '0.1']),
              ('cg2', [1, 20, 0]), ('cg_oned', [1, 20, 0]),
              ('thermalblock', ['-e',2, 2, 3, 5]), ('thermalblock', [2, 2, 3, 5]),
              ('thermalblock_gui', ['--testing', 2, 2, 3, 5]),
