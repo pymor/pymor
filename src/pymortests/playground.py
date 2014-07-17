@@ -6,12 +6,14 @@ from __future__ import absolute_import, division, print_function
 
 import multiprocessing
 import numpy as np
+import os
+import tempfile
 import pytest
 import random
 from math import sin, exp
 
 from pymortests.base import runmodule
-
+from pymor.playground.grids import gmsh
 
 @pytest.mark.xfail
 def test_eval():
@@ -24,11 +26,6 @@ def test_eval():
         for x in (random.uniform(0, 1) for _ in xrange(9000)):
             np.testing.assert_array_almost_equal(fn([x]), fe(x))
 
-def test_parabolic():
-    from pymor.playground.demos.parabolic import parabolic_demo
-    parabolic_demo()
-    for child in multiprocessing.active_children():
-        child.terminate()
 
 
 if __name__ == "__main__":
