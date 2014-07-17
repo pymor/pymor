@@ -8,6 +8,7 @@ before_install:
  - "export DISPLAY=:99.0"
  - "sh -e /etc/init.d/xvfb start"
  - "git fetch --depth=1000 --tags origin master"
+ - "pip install python-coveralls"
 # command to install dependencies
 install:
  - python ./install.py --recipe travis --virtualenv-dir $VIRTUAL_ENV --without-python-path --python python$TRAVIS_PYTHON_VERSION --only-deps
@@ -24,3 +25,5 @@ notifications:
     on_success: change
     on_failure: change
 
+after_success:
+ - coveralls
