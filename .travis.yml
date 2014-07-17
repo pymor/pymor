@@ -7,6 +7,7 @@ virtualenv:
   system_site_packages: true
 
 before_install:
+ - git fetch --depth=1000 --tags origin master
  - sudo add-apt-repository -y ppa:pymor/stable
  - sudo apt-get update -q
  - sudo apt-get install -yq python-pymor-demos
