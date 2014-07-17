@@ -55,7 +55,7 @@ class TimeStepperInterface(ImmutableInterface):
             The |Operator| A.
         rhs
             The right hand side F (either |VectorArray| of length 1 or |Operator| with
-            `dim_range == 1`). If `None`, zero right hand side is assumed.
+            `range.dim == 1`). If `None`, zero right hand side is assumed.
         mass
             The |Operator| M. If `None`, the identity operator is assumed.
         mu
@@ -124,30 +124,28 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None, num_va
     assert isinstance(F, (OperatorInterface, VectorArrayInterface))
     assert isinstance(M, OperatorInterface)
     assert not M.parametric
-    assert A.dim_source == A.dim_range
-    assert M.dim_source == M.dim_range == A.dim_source
+    assert A.source == A.range == M.source == M.range
     num_values = num_values or nt + 1
     dt = (t1 - t0) / nt
 
     if isinstance(F, OperatorInterface):
-        assert F.dim_range == 1
-        assert F.dim_source == A.dim_source
+        assert F.range.dim == 1
+        assert F.source == A.range
         F_time_dep = F.parametric and '_t' in F.parameter_type
         if not F_time_dep:
             dt_F = F.as_vector(mu) * dt
     else:
         assert len(F) == 1
-        assert F.dim == A.dim_source
+        assert F in A.range
         F_time_dep = False
         dt_F = F * dt
 
-    assert isinstance(U0, VectorArrayInterface)
+    assert U0 in A.source
     assert len(U0) == 1
-    assert U0.dim == A.dim_source
 
     A_time_dep = A.parametric and '_t' in A.parameter_type
 
-    R = A.type_source.empty(A.dim_source, reserve=nt+1)
+    R = A.source.empty(reserve=nt+1)
     R.append(U0)
 
     M_dt_A = M + A * dt
@@ -172,31 +170,30 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None, num_va
 def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
     assert isinstance(A, OperatorInterface)
     assert F is None or isinstance(F, (OperatorInterface, VectorArrayInterface))
-    assert A.dim_source == A.dim_range
+    assert A.source == A.range
     num_values = num_values or nt + 1
 
     if isinstance(F, OperatorInterface):
-        assert F.dim_range == 1
-        assert F.dim_source == A.dim_source
+        assert F.range.dim == 1
+        assert F.source == A.source
         F_time_dep = F.parametric and '_t' in F.parameter_type
         if not F_time_dep:
             F_ass = F.as_vector(mu)
     elif isinstance(F, VectorArrayInterface):
         assert len(F) == 1
-        assert F.dim == A.dim_source
+        assert F in A.source
         F_time_dep = False
         F_ass = F
 
-    assert isinstance(U0, VectorArrayInterface)
     assert len(U0) == 1
-    assert U0.dim == A.dim_source
+    assert U0 in A.source
 
     A_time_dep = A.parametric and '_t' in A.parameter_type
     if hasattr(A, 'assemble') and not A_time_dep:
         A = A.assemble(mu)
 
     dt = (t1 - t0) / nt
-    R = A.type_source.empty(A.dim_source, reserve=num_values)
+    R = A.source.empty(reserve=num_values)
     R.append(U0)
 
     t = t0

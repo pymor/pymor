@@ -15,7 +15,7 @@ from pymor.core import ImmutableInterface, abstractmethod
 from pymor.functions import FunctionInterface
 from pymor.grids.boundaryinfos import SubGridBoundaryInfo
 from pymor.grids.subgrid import SubGrid
-from pymor.la import NumpyVectorArray
+from pymor.la import NumpyVectorArray, NumpyVectorSpace
 from pymor.operators import OperatorBase, NumpyMatrixBasedOperator, NumpyMatrixOperator
 from pymor.operators.constructions import Concatenation, ComponentProjection
 from pymor.parameters import Parametric
@@ -208,7 +208,6 @@ class NonlinearAdvectionOperator(OperatorBase):
         The name of the operator.
     '''
 
-    type_source = type_range = NumpyVectorArray
     linear = False
 
     def __init__(self, grid, boundary_info, numerical_flux, dirichlet_data=None, name=None):
@@ -225,7 +224,7 @@ class NonlinearAdvectionOperator(OperatorBase):
             self._dirichlet_values = self._dirichlet_values.ravel()
             self._dirichlet_values_flux_shaped = self._dirichlet_values.reshape((-1, 1))
         self.build_parameter_type(inherits=(numerical_flux, dirichlet_data))
-        self.dim_source = self.dim_range = grid.size(0)
+        self.source = self.range = NumpyVectorSpace(grid.size(0))
         self.with_arguments = self.with_arguments.union('numerical_flux_{}'.format(arg)
                                                         for arg in numerical_flux.with_arguments)
 
@@ -247,17 +246,17 @@ class NonlinearAdvectionOperator(OperatorBase):
         sub_boundary_info = SubGridBoundaryInfo(sub_grid, self.grid, self.boundary_info)
         op = self.with_(grid=sub_grid, boundary_info=sub_boundary_info, name='{}_restricted'.format(self.name))
         sub_grid_indices = sub_grid.indices_from_parent_indices(components, codim=0)
-        proj = ComponentProjection(sub_grid_indices, op.dim_range, op.type_range)
+        proj = ComponentProjection(sub_grid_indices, op.range)
         return Concatenation(proj, op), sub_grid.parent_indices(0)
 
     def apply(self, U, ind=None, mu=None):
         assert isinstance(U, NumpyVectorArray)
-        assert U.dim == self.dim_source
+        assert U in self.source
         mu = self.parse_parameter(mu)
 
         ind = xrange(len(U)) if ind is None else ind
         U = U.data
-        R = np.zeros((len(ind), self.dim_source))
+        R = np.zeros((len(ind), self.source.dim))
 
         g = self.grid
         bi = self.boundary_info
@@ -348,8 +347,6 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
         The name of the operator.
     '''
 
-    type_source = type_range = NumpyVectorArray
-
     def __init__(self, grid, boundary_info, velocity_field, lxf_lambda=1.0, name=None):
         self.grid = grid
         self.boundary_info = boundary_info
@@ -357,7 +354,7 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
         self.lxf_lambda = lxf_lambda
         self.name = name
         self.build_parameter_type(inherits=(velocity_field,))
-        self.dim_source = self.dim_range = grid.size(0)
+        self.source = self.range = NumpyVectorSpace(grid.size(0))
 
     def _assemble(self, mu=None):
         mu = self.parse_parameter(mu)
@@ -416,12 +413,10 @@ class L2Product(NumpyMatrixBasedOperator):
         The name of the product.
     '''
 
-    type_source = type_range = NumpyVectorArray
     sparse = True
 
     def __init__(self, grid, name=None):
-        self.dim_source = grid.size(0)
-        self.dim_range = self.dim_source
+        self.source = self.range = NumpyVectorSpace(grid.size(0))
         self.grid = grid
         self.name = name
 
@@ -448,13 +443,12 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
         The name of the functional.
     '''
 
-    type_source = type_range = NumpyVectorArray
+    range = NumpyVectorSpace(1)
     sparse = False
 
     def __init__(self, grid, function, order=2, name=None):
         assert function.shape_range == tuple()
-        self.dim_source = grid.size(0)
-        self.dim_range = 1
+        self.source = NumpyVectorSpace(grid.size(0))
         self.grid = grid
         self.function = function
         self.order = order

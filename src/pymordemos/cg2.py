@@ -60,7 +60,7 @@ def cg2_demo(nrhs, n, plot):
 
     print('The parameter type is {}'.format(discretization.parameter_type))
 
-    U = discretization.type_solution.empty(discretization.dim_solution)
+    U = discretization.solution_space.empty()
     for mu in parameter_space.sample_uniformly(10):
         U.append(discretization.solve(mu))
 

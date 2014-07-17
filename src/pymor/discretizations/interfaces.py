@@ -18,10 +18,8 @@ class DiscretizationInterface(CacheableInterface, Parametric, Named):
 
     Attributes
     ----------
-    dim_solution
-        Dimension of the |VectorArrays| returned by solve.
-    type_solution
-        Type of the |VectorArrays| returned by solve.
+    solution_space
+        |VectorSpace| of the |VectorArrays| returned by solve.
     linear
         `True` if the discretization describes a linear Problem.
     operators
@@ -31,7 +29,7 @@ class DiscretizationInterface(CacheableInterface, Parametric, Named):
         Same as operators but for |Functionals|.
     vector_operators
         Same as operators but for |Operators| representing vectors, i.e.
-        linear |Operators| with `dim_source == 1`.
+        linear |Operators| with `source.dim == 1`.
     products
         Same as |Operators| but for inner product operators associated to the
         discretization.
@@ -47,8 +45,7 @@ class DiscretizationInterface(CacheableInterface, Parametric, Named):
             Visualize a solution given by the |VectorArray| U.
     '''
 
-    dim_solution = None
-    type_solution = None
+    solution_space = None
     linear = False
     operators = dict()
     functionals = dict()

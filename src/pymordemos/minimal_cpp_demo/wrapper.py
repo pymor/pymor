@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
+from pymor.la import VectorSpace
 from pymor.la.listvectorarray import VectorInterface, ListVectorArray
 from pymor import defaults
 from pymor.operators.basic import OperatorBase
@@ -16,13 +17,12 @@ class WrappedVector(VectorInterface):
         self._impl = vector
 
     @classmethod
-    def zeros(cls, dim):
-        return cls(Vector(dim, 0))
+    def make_zeros(cls, subtype):
+        return cls(Vector(subtype, 0))
 
-    # naming is consistent with numpy.full in numpy >= 1.8.0
-    @classmethod
-    def full(cls, dim, value):
-        return cls(Vector(dim, value))
+    @property
+    def subtype(self):
+        return self._impl.dim
 
     @property
     def dim(self):
@@ -73,9 +73,8 @@ class WrappedDiffusionOperator(OperatorBase):
     def __init__(self, op):
         assert isinstance(op, DiffusionOperator)
         self._impl = op
-        self.dim_source = op.dim_source
-        self.dim_range = op.dim_range
-        self.type_range = self.type_source = WrappedVectorArray
+        self.source = VectorSpace(WrappedVectorArray, op.dim_source)
+        self.range = VectorSpace(WrappedVectorArray, op.dim_range)
         self.linear = True
 
     @classmethod
@@ -84,13 +83,14 @@ class WrappedDiffusionOperator(OperatorBase):
 
     def apply(self, U, ind=None, mu=None):
         assert self.check_parameter(mu)
+        assert U in self.source
 
         if ind is None:
             ind = xrange(len(U))
 
         def apply_one_vector(u):
-            v = Vector(self.dim_range, 0)
+            v = Vector(self.range.dim, 0)
             self._impl.apply(u._impl, v)
             return WrappedVector(v)
 
-        return WrappedVectorArray([apply_one_vector(U._list[i]) for i in ind], dim=self.dim_range)
+        return WrappedVectorArray([apply_one_vector(U._list[i]) for i in ind], subtype=self.range.subtype)

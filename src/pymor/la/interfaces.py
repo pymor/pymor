@@ -21,7 +21,7 @@ class VectorArrayInterface(BasicInterface):
     be performed via the interface.
 
     It is moreover assumed that the number of vectors is small enough such that scalar data
-    associated to each vector can be handled on the python side. I.e. methods like
+    associated to each vector can be handled on the Python side. I.e. methods like
     :meth:`~VectorArrayInterface.l2_norm` or :meth:`~VectorArrayInterface.gramian` will
     always return |NumPy arrays|.
 
@@ -52,16 +52,41 @@ class VectorArrayInterface(BasicInterface):
 
     dim
         The dimension of the vectors in the array.
+    space
+        |VectorSpace| array the array belongs to.
+    subtype
+        Can be any Python object with a sensible implementation of `__eq__`. Two
+        arrays are compatible (e.g. can be added) if they are instances of the same class
+        and share the same subtype. A valid subtype has to be provided
+        to :meth:`~VectorArrayInterface.make_array` and the resulting array will be
+        of that subtype. By default, the subtype of an array is simply `None`. For
+        |NumpyVectorArray|, the subtype is a single integer denoting the dimension of
+        the array. Subtypes for other array classes could, e.g., include a socket for
+        communication with a specific PDE solver instance.
     '''
 
     @abstractclassmethod
-    def empty(cls, dim, reserve=0):
-        '''Create an empty |VectorArray|
+    def make_array(cls, subtype=None, count=0, reserve=0):
+        '''Create a |VectorArray| of null vectors.
 
         Parameters
         ----------
-        dim
-            The dimension of the array.
+        subtype
+            The :attr:`~VectorArrayInterface.subtype`, the created array should have.
+            What a valid subtype is, is determined by the respective array implementation.
+        count
+            The number of null vectors to create. For `count == 0`, an empty array is
+            returned.
+        reserve
+            A hint for the backend to which length the array will grow.
+        '''
+        pass
+
+    def empty(self, reserve=0):
+        '''Create an empty |VectorArray| of same :attr:`~VectorArrayInterface.subtype`.
+
+        Parameters
+        ----------
         reserve
             Hint for the backend to which length the array will grow.
 
@@ -69,25 +94,22 @@ class VectorArrayInterface(BasicInterface):
         -------
         An empty |VectorArray|.
         '''
-        pass
+        return self.make_array(subtype=self.subtype, reserve=reserve)
 
-    @abstractclassmethod
-    def zeros(cls, dim, count=1):
-        '''Create a |VectorArray| of null vectors
+    def zeros(self, count=1):
+        '''Create a |VectorArray| of null vectors of same :attr:`~VectorArrayInterface.subtype`.
 
         Parameters
         ----------
-        dim
-            The dimension of the array.
         count
             The number of vectors.
 
         Returns
         -------
-        A |VectorArray| containing `count` vectors of dimension `dim`
-        whith each component zero.
+        A |VectorArray| containing `count` vectors whith each component
+        zero.
         '''
-        pass
+        return self.make_array(subtype=self.subtype, count=count)
 
     @abstractmethod
     def __len__(self):
@@ -97,6 +119,14 @@ class VectorArrayInterface(BasicInterface):
     @abstractproperty
     def dim(self):
         pass
+
+    @property
+    def subtype(self):
+        return None
+
+    @property
+    def space(self):
+        return VectorSpace(type(self), self.subtype)
 
     @abstractmethod
     def copy(self, ind=None):
@@ -170,7 +200,7 @@ class VectorArrayInterface(BasicInterface):
         Equality of two vectors should be defined as in
         :func:`pymor.tools.float_cmp_all`.
 
-        The dimensions of `self` and `other` have to agree. If the length
+        The subtypes of `self` and `other` have to agree. If the length
         of `self` (`ind`) resp. `other` (`o_ind`) is 1, the one specified
         vector is compared to all vectors of the other summand. Otherwise
         the length of `ind` and `o_ind` have to agree.
@@ -220,7 +250,7 @@ class VectorArrayInterface(BasicInterface):
 
             self[ind] = alpha*x[x_ind] + self[ind]
 
-        The dimensions of `self` and `x` as well as the lengths of `self` (`ind`) and
+        The subtypes of `self` and `x` as well as the lengths of `self` (`ind`) and
         `x` (`x_ind`) have to agree.
 
         Parameters
@@ -468,3 +498,66 @@ class VectorArrayInterface(BasicInterface):
     def len_ind_unique(self, ind):
         '''Return the number of specified unique indices.'''
         return len(self) if ind is None else 1 if isinstance(ind, Number) else len(set(ind))
+
+
+class VectorSpace(BasicInterface):
+    '''Class describing a vector space.
+
+    A vector space is simply the combination of a |VectorArray| class and a
+    :attr:`~VectorArrayInterface.subtype`. This data is exactly sufficient to construct
+    new arrays using the :meth:`~VectorArrayInterface.make_array` method.
+
+    A |VectorArray| is contained in a vector space, iff it is an instance of the subclass
+    and has the same subtype.
+
+    Attributes
+    ----------
+    type
+        The type of |VectorArrays| in the space.
+    subtype
+        The subtype used to construct arrays of the given space.
+    '''
+
+    def __init__(self, type, subtype=None):
+        self.type = type
+        self.subtype = subtype
+
+    def empty(self, reserve=0):
+        '''Create an empty |VectorArray|
+
+        Parameters
+        ----------
+        reserve
+            Hint for the backend to which length the array will grow.
+
+        Returns
+        -------
+        An empty |VectorArray|.
+        '''
+        return self.type.make_array(subtype=self.subtype, reserve=reserve)
+
+    def zeros(self, count=1):
+        '''Create a |VectorArray| of null vectors
+
+        Parameters
+        ----------
+        count
+            The number of vectors.
+
+        Returns
+        -------
+        A |VectorArray| containing `count` vectors whith each component zero.
+        '''
+        return self.type.make_array(subtype=self.subtype, count=count)
+
+    @property
+    def dim(self):
+        return self.empty().dim
+
+    def __eq__(self, other):
+        '''Two spaces are equal iff their types and subtypes agree.'''
+        return other.type == self.type and self.subtype == other.subtype
+
+    def __contains__(self, other):
+        '''A |VectorArray| is contained in the space, iff it is an instance of its type and has the same subtype.'''
+        return isinstance(other, self.type) and self.subtype == other.subtype

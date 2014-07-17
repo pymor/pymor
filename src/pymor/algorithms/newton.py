@@ -26,13 +26,13 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None,
     data = {}
 
     if initial_guess is None:
-        initial_guess = operator.type_source.zeros(operator.dim_source)
+        initial_guess = operator.source.zeros()
 
     if return_stages:
-        data['stages'] = operator.type_source.empty(operator.dim_source)
+        data['stages'] = operator.source.empty()
 
     if return_residuals:
-        data['residuals'] = operator.type_range.empty(operator.dim_range)
+        data['residuals'] = operator.range.empty()
 
     U = initial_guess.copy()
     residual = rhs - operator.apply(U, mu=mu)
