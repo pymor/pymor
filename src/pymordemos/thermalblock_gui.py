@@ -41,6 +41,7 @@ import math as m
 import numpy as np
 from PySide import QtGui, QtCore
 import OpenGL
+
 OpenGL.ERROR_ON_COPY = True
 
 import pymor.core as core
@@ -50,6 +51,7 @@ from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import discretize_elliptic_cg
 from pymor.gui.glumpy import ColorBarWidget, GlumpyPatchWidget
 from pymor.reductors.linear import reduce_stationary_affine_linear
+from pymor import gui
 
 core.getLogger('pymor.algorithms').setLevel('DEBUG')
 core.getLogger('pymor.discretizations').setLevel('DEBUG')
@@ -182,17 +184,12 @@ class DetailedSim(SimBase):
 
 
 if __name__ == '__main__':
-    app = QtGui.QApplication(sys.argv)
     args = docopt(__doc__)
-    win = RBGui(args)
-    win.show()
     testing = args['--testing']
     if not testing:
+        app = QtGui.QApplication(sys.argv)
+        win = RBGui(args)
+        win.show()
         sys.exit(app.exec_())
 
-    win.panel.detailed_panel.solve_update()
-    win.panel.reduced_panel.solve_update()
-    stopTimer = QtCore.QTimer(timeout=app.quit,singleShot=True)
-    stopTimer.start(2000)
-    app.exec_()
-
+    gui.qt.launch_qt_app(lambda _: RBGui(args), block=False)
