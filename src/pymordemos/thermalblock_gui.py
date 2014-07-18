@@ -192,5 +192,6 @@ if __name__ == '__main__':
 
     win.panel.detailed_panel.solve_update()
     win.panel.reduced_panel.solve_update()
+    app.processEvents()
     app.exit(0)
 
