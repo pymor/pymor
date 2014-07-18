@@ -39,7 +39,7 @@ import time
 from functools import partial
 import math as m
 import numpy as np
-from PySide import QtGui
+from PySide import QtGui, QtCore
 import OpenGL
 OpenGL.ERROR_ON_COPY = True
 
@@ -192,6 +192,7 @@ if __name__ == '__main__':
 
     win.panel.detailed_panel.solve_update()
     win.panel.reduced_panel.solve_update()
-    app.processEvents()
-    app.exit(0)
+    stopTimer = QtCore.QTimer(timeout=app.quit,singleShot=True)
+    stopTimer.start(2000)
+    app.exec_()
 
