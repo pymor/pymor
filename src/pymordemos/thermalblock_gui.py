@@ -6,7 +6,7 @@
 '''Thermalblock with GUI demo
 
 Usage:
-  thermalblock_gui.py [-h] [--estimator-norm=NORM] [--grid=NI]
+  thermalblock_gui.py [-h] [--estimator-norm=NORM] [--grid=NI] [--testing]
                   [--help] XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
 
 
@@ -27,6 +27,8 @@ Options:
 
   --grid=NI              Use grid with 2*NI*NI elements [default: 60].
 
+  --testing              load the gui and exit right away (for functional testing)
+
   -h, --help             Show this message.
 '''
 
@@ -37,8 +39,9 @@ import time
 from functools import partial
 import math as m
 import numpy as np
-from PySide import QtGui
+from PySide import QtGui, QtCore
 import OpenGL
+
 OpenGL.ERROR_ON_COPY = True
 
 import pymor.core as core
@@ -48,6 +51,7 @@ from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import discretize_elliptic_cg
 from pymor.gui.glumpy import ColorBarWidget, GlumpyPatchWidget
 from pymor.reductors.linear import reduce_stationary_affine_linear
+from pymor import gui
 
 core.getLogger('pymor.algorithms').setLevel('DEBUG')
 core.getLogger('pymor.discretizations').setLevel('DEBUG')
@@ -112,8 +116,10 @@ class AllPanel(QtGui.QWidget):
         super(AllPanel, self).__init__(parent)
 
         box = QtGui.QVBoxLayout()
-        box.addWidget(SimPanel(self, reduced_sim))
-        box.addWidget(SimPanel(self, detailed_sim))
+        self.reduced_panel = SimPanel(self, reduced_sim)
+        self.detailed_panel = SimPanel(self, detailed_sim)
+        box.addWidget(self.reduced_panel)
+        box.addWidget(self.detailed_panel)
         self.setLayout(box)
 
 
@@ -129,8 +135,8 @@ class RBGui(QtGui.QMainWindow):
         assert args['--estimator-norm'] in {'trivial', 'h1'}
         reduced = ReducedSim(args)
         detailed = DetailedSim(args)
-        panel = AllPanel(self, reduced, detailed)
-        self.setCentralWidget(panel)
+        self.panel = AllPanel(self, reduced, detailed)
+        self.setCentralWidget(self.panel)
 
 
 class SimBase(object):
@@ -178,8 +184,12 @@ class DetailedSim(SimBase):
 
 
 if __name__ == '__main__':
-    app = QtGui.QApplication(sys.argv)
     args = docopt(__doc__)
-    win = RBGui(args)
-    win.show()
-    sys.exit(app.exec_())
+    testing = args['--testing']
+    if not testing:
+        app = QtGui.QApplication(sys.argv)
+        win = RBGui(args)
+        win.show()
+        sys.exit(app.exec_())
+
+    gui.qt.launch_qt_app(lambda _: RBGui(args), block=False)

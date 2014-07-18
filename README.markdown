@@ -14,7 +14,7 @@ computing stack are provided for getting started quickly.
 regarding pyMOR or wish to contribute, do not hesitate to contact us!
 
 [![Build Status](https://travis-ci.org/pymor/pymor.png?branch=master)](https://travis-ci.org/pymor/pymor)
-
+[![Coverage Status](https://coveralls.io/repos/pymor/pymor/badge.png)](https://coveralls.io/r/pymor/pymor)
 
 License
 -------

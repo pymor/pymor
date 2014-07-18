@@ -68,7 +68,7 @@ def burgers_demo(args):
     args['--nt'] = int(args['--nt'])
     args['--not-periodic'] = bool(args['--not-periodic'])
     args['--num-flux'] = args['--num-flux'].lower()
-    assert args['--num-flux'] in ('lax_friedrichs', 'engquist_osher')
+    assert args['--num-flux'] in ('lax_friedrichs', 'engquist_osher', 'simplified_engquist_osher')
     args['--vx'] = float(args['--vx'])
     args['--vy'] = float(args['--vy'])
     args['EXP'] = float(args['EXP'])

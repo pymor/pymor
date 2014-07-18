@@ -6,10 +6,14 @@ from __future__ import absolute_import, division, print_function
 import pprint
 import pkgutil
 import sys
+import numpy as np
 import numpy.testing as npt
+from numpy.polynomial.polynomial import Polynomial
+from math import factorial
 
 from pymor.core import logger
-
+from pymor.la import NumpyVectorArray, NumpyVectorSpace
+from pymor.operators.basic import OperatorBase
 
 class TestInterface(object):
 
@@ -93,3 +97,36 @@ def SubclassForImplemetorsOf(InterfaceType):
 def runmodule(filename):
     import pytest
     sys.exit(pytest.main(sys.argv[1:] + [filename]))
+
+def polynomials(max_order):
+    for n in xrange(max_order + 1):
+        f = lambda x: np.power(x, n)
+
+        def deri(k):
+            if k > n:
+                return lambda _: 0
+            return lambda x: (factorial(n) / factorial(n - k)) * np.power(x, n - k)
+        integral = (1 / (n + 1))
+        yield (n, f, deri, integral)
+
+
+class MonomOperator(OperatorBase):
+
+    source = range = NumpyVectorSpace(1)
+    type_source = type_range = NumpyVectorArray
+
+    def __init__(self, order, monom=None):
+        self.monom = monom if monom else Polynomial(np.identity(order+1)[order])
+        assert isinstance(self.monom, Polynomial)
+        self.order = order
+        self.derivative = self.monom.deriv()
+        self.linear = order == 1
+
+    def apply(self, U, ind=None, mu=None):
+        return NumpyVectorArray(self.monom(U.data))
+
+    def jacobian(self, U, mu=None):
+        return MonomOperator(self.order-1, self.derivative)
+
+    def apply_inverse(self, U, ind=None, mu=None, options=None):
+        return NumpyVectorArray(1. / U.data)

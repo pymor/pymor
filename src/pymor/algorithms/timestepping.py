@@ -125,7 +125,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None, num_va
     assert isinstance(M, OperatorInterface)
     assert not M.parametric
     assert A.source == A.range == M.source == M.range
-
+    num_values = num_values or nt + 1
     dt = (t1 - t0) / nt
 
     if isinstance(F, OperatorInterface):
