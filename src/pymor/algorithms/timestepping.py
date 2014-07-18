@@ -149,7 +149,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None, num_va
     R.append(U0)
 
     M_dt_A = M + A * dt
-    if hasattr(M_dt_A, 'assemble') and not A_time_dep:
+    if not A_time_dep:
         M_dt_A = M_dt_A.assemble(mu)
 
     t = t0
@@ -189,7 +189,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
     assert U0 in A.source
 
     A_time_dep = A.parametric and '_t' in A.parameter_type
-    if hasattr(A, 'assemble') and not A_time_dep:
+    if not A_time_dep:
         A = A.assemble(mu)
 
     dt = (t1 - t0) / nt

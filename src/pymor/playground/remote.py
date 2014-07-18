@@ -17,8 +17,8 @@ import IPython.parallel as p
 
 from pymor.discretizations import StationaryDiscretization
 from pymor.la import VectorArrayInterface, NumpyVectorArray
-from pymor.operators import OperatorInterface
-from pymor.operators.basic import LincombOperatorBase, ProjectedOperator, ProjectedLinearOperator
+from pymor.operators import OperatorInterface, OperatorBase
+from pymor.operators.basic import LincombOperator, ProjectedOperator, ProjectedLinearOperator
 
 
 class RemoteRessourceManger(object):
@@ -400,7 +400,7 @@ class RemoteOperator(OperatorInterface):
             return ProjectedOperator(self, source_basis, range_basis, product, name)
 
 
-class RemoteLincombOperator(RemoteOperator, LincombOperatorBase):
+class RemoteLincombOperator(RemoteOperator):
 
     def __init__(self, remote_view, remote_id):
         RemoteOperator.__init__(self, remote_view, remote_id)
@@ -421,7 +421,7 @@ class RemoteLincombOperator(RemoteOperator, LincombOperatorBase):
         self.__dict__.update(static_data)
         self.operators = [wrap_remote_operator(self.rv, o) for o in operators]
 
-    projected = LincombOperatorBase.projected
+    projected = OperatorBase.projected
 
 
 class RemoteStationaryDiscretization(StationaryDiscretization):

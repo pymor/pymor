@@ -16,7 +16,7 @@ from pymor.functions import FunctionInterface
 from pymor.grids.boundaryinfos import SubGridBoundaryInfo
 from pymor.grids.subgrid import SubGrid
 from pymor.la import NumpyVectorArray, NumpyVectorSpace
-from pymor.operators import OperatorBase, NumpyMatrixBasedOperator, NumpyMatrixOperator
+from pymor.operators import OperatorBase, NumpyMatrixBasedOperator
 from pymor.operators.constructions import Concatenation, ComponentProjection
 from pymor.parameters import Parametric
 from pymor.tools import method_arguments
@@ -357,8 +357,6 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
         self.source = self.range = NumpyVectorSpace(grid.size(0))
 
     def _assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
-
         g = self.grid
         bi = self.boundary_info
         SUPE = g.superentities(1, 0)
@@ -396,7 +394,7 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
         A = csc_matrix(A).copy()   # See pymor.operators.cg.DiffusionOperatorP1 for why copy() is necessary
         A = dia_matrix(([1. / g.volumes(0)], [0]), shape=(g.size(0),) * 2) * A
 
-        return NumpyMatrixOperator(A)
+        return A
 
 
 class L2Product(NumpyMatrixBasedOperator):
@@ -421,11 +419,10 @@ class L2Product(NumpyMatrixBasedOperator):
         self.name = name
 
     def _assemble(self, mu=None):
-        assert self.check_parameter(mu)
 
         A = dia_matrix((self.grid.volumes(0), [0]), shape=(self.grid.size(0),) * 2)
 
-        return NumpyMatrixOperator(A)
+        return A
 
 
 class L2ProductFunctional(NumpyMatrixBasedOperator):
@@ -456,7 +453,6 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
         self.build_parameter_type(inherits=(function,))
 
     def _assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
         g = self.grid
 
         # evaluate function at all quadrature points -> shape = (g.size(0), number of quadrature points, 1)
@@ -469,4 +465,4 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
         F_INTS = np.einsum('ei,e,i->e', F, g.integration_elements(0), w).ravel()
         F_INTS /= g.volumes(0)
 
-        return NumpyMatrixOperator(F_INTS.reshape((1, -1)))
+        return F_INTS.reshape((1, -1))

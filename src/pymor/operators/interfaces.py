@@ -185,15 +185,31 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         '''
         pass
 
+    @abstractmethod
+    def assemble(self, mu=None):
+        '''Assemble the operator for a given parameter.
+
+        What the result of the assembly is strongly depends on the given operator.
+        For instance, a matrix-based operator will assemble its matrix, a |LincombOperator|
+        will try to form the linear combination of its operators, whereas an arbitrary
+        operator might simply return a :class:`~pymor.operators.constructions.FixedParameterOperator`.
+        The only assured property of the assembled operator is that it is no longer
+        parametric.
+
+        Parameters
+        ----------
+        mu
+            The |Parameter| for which to assemble the operator.
+
+        Returns
+        -------
+        Parameter-independent, assembled |Operator|.
+        '''
+        pass
+
     @abstractstaticmethod
     def lincomb(operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
         '''Form a linear combination of the given operators.
-
-        How this linear combiniation is realized will depend on the operators involved.
-        E.g. calling `lincomb` on a |NumpyMatrixBasedOperator| and only providing
-        such operators will result in a new |NumpyMatrixBasedOperator| that will assemble
-        to a |NumpyMatrixOperator|, whereas for arbitrary operators,
-        :class:`pymor.operators.basic.LincombOperator` will be returned.
 
         The linear coefficients may be provided as scalars or |ParameterFunctionals|.
         Alternatively, if no linear coefficients are given, the missing coefficients become
@@ -222,6 +238,32 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         |LincombOperator| representing the linear combination.
         '''
         pass
+
+    def _assemble_lincomb(self, operators, coefficients, name=None):
+        '''Try to assemble a linear combination of the given operators.
+
+        This method is called in the `assemble` method of |LincombOperator|. If an
+        assembly of the given linear combination is possible, e.g. the linear
+        combination of the system matrices of the operators can be formed, then
+        the assembled operator is returned. Otherwise, the method returns
+        `None` to indicate that assembly is not possible.
+
+        Parameters
+        ----------
+        operators
+            List of |Operators| whose linear combination is formed.
+        coefficients
+            List of the corresponding linear coefficients. (In contrast to
+            :meth:`~OperatorInterface.lincomb`, these coefficients are always
+            numbers, not |ParameterFunctionals|.)
+        name
+            Name of the assembled operator.
+
+        Returns
+        -------
+        The assembled |Operator| if assembly is possible, otherwise `None`.
+        '''
+        return None
 
     @abstractmethod
     def projected(self, source_basis, range_basis, product=None, name=None):
@@ -290,32 +332,4 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
     @abstractmethod
     def __mul__(self, other):
         '''Product of operator by a scalar'''
-        pass
-
-
-class LincombOperatorInterface(OperatorInterface):
-    '''|Operator| representing a linear combination.
-
-    The linear coefficients can be scalars or |ParameterFunctionals|.  Alternatively,
-    if no linear coefficients are given, the missing coefficients become
-    part of the |Parameter| the combined |Operator| expects.
-
-    Attributes
-    ----------
-    operators
-        List of |Operators| whose linear combination is formed.
-    coefficients
-        `None` or a list of linear coefficients.
-    num_coefficients
-        If `coefficients` is `None`, the number of linear coefficients (starting
-        at index 0) which are given by the |Parameter| component with name
-        `'coefficients_name'`. The missing coefficients are set to `1`.
-    coefficients_name
-        If `coefficients` is `None`, the name of the |Parameter| component providing
-        the linear coefficients.
-    '''
-
-    @abstractmethod
-    def evaluate_coefficients(self, mu):
-        '''Evaluate the linear coefficients for a given |Parameter|.'''
         pass

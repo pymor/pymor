@@ -26,8 +26,8 @@ interfaces = '''
 .. |Grid| replace:: :class:`Grid <pymor.grids.interfaces.AffineGridInterface>`
 .. |Grids| replace:: :class:`Grids <pymor.grids.interfaces.AffineGridInterface>`
 .. |ImmutableInterface| replace:: :class:`~pymor.core.interfaces.ImmutableInterface`
-.. |LincombOperators| replace:: :class:`LincombOperators <pymor.operators.interfaces.LincombOperatorInterface>`
-.. |LincombOperator| replace:: :class:`LincombOperator <pymor.operators.interfaces.LincombOperatorInterface>`
+.. |LincombOperators| replace:: :class:`LincombOperators <pymor.operators.interfaces.LincombOperator>`
+.. |LincombOperator| replace:: :class:`LincombOperator <pymor.operators.basic.LincombOperator>`
 .. |Operators| replace:: :class:`Operators <pymor.operators.interfaces.OperatorInterface>`
 .. |Operator| replace:: :class:`Operator <pymor.operators.interfaces.OperatorInterface>`
 .. |ParameterFunctionals| replace:: :class:`ParameterFunctionals <pymor.parameters.interfaces.ParameterFunctionalInterface>`

@@ -12,7 +12,7 @@ from scipy.sparse import coo_matrix, csc_matrix
 
 from pymor.grids.referenceelements import triangle, line, square
 from pymor.la import NumpyVectorSpace
-from pymor.operators import NumpyMatrixBasedOperator, NumpyMatrixOperator
+from pymor.operators import NumpyMatrixBasedOperator
 
 
 class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
@@ -59,7 +59,6 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         self.build_parameter_type(inherits=(function, dirichlet_data))
 
     def _assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
         g = self.grid
         bi = self.boundary_info
 
@@ -95,7 +94,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
             else:
                 I[DI] = 0
 
-        return NumpyMatrixOperator(I.reshape((1, -1)))
+        return I.reshape((1, -1))
 
 
 class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
@@ -142,7 +141,6 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         self.build_parameter_type(inherits=(function, dirichlet_data))
 
     def _assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
         g = self.grid
         bi = self.boundary_info
 
@@ -177,7 +175,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
             else:
                 I[DI] = 0
 
-        return NumpyMatrixOperator(I.reshape((1, -1)))
+        return I.reshape((1, -1))
 
 
 class L2ProductP1(NumpyMatrixBasedOperator):
@@ -223,7 +221,6 @@ class L2ProductP1(NumpyMatrixBasedOperator):
         self.name = name
 
     def _assemble(self, mu=None):
-        assert self.check_parameter(mu)
         g = self.grid
         bi = self.boundary_info
 
@@ -266,7 +263,7 @@ class L2ProductP1(NumpyMatrixBasedOperator):
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
         A = csc_matrix(A).copy()   # See DiffusionOperatorP1 for why copy() is necessary
 
-        return NumpyMatrixOperator(A)
+        return A
 
 
 class L2ProductQ1(NumpyMatrixBasedOperator):
@@ -312,7 +309,6 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
         self.name = name
 
     def _assemble(self, mu=None):
-        assert self.check_parameter(mu)
         g = self.grid
         bi = self.boundary_info
 
@@ -353,7 +349,7 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
         A = csc_matrix(A).copy() # See DiffusionOperatorP1 for why copy() is necessary
 
-        return NumpyMatrixOperator(A)
+        return A
 
 
 class DiffusionOperatorP1(NumpyMatrixBasedOperator):
@@ -404,7 +400,6 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
             self.build_parameter_type(inherits=(diffusion_function,))
 
     def _assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
         g = self.grid
         bi = self.boundary_info
 
@@ -460,7 +455,7 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
         # from pymor.tools.memory import print_memory_usage
         # print_memory_usage('matrix: {0:5.1f}'.format((A.data.nbytes + A.indptr.nbytes + A.indices.nbytes)/1024**2))
 
-        return NumpyMatrixOperator(A)
+        return A
 
 
 class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
@@ -511,7 +506,6 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
             self.build_parameter_type(inherits=(diffusion_function,))
 
     def _assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
         g = self.grid
         bi = self.boundary_info
 
@@ -567,4 +561,4 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         # from pymor.tools.memory import print_memory_usagef
         # print_memory_usage('matrix: {0:5.1f}'.format((A.data.nbytes + A.indptr.nbytes + A.indices.nbytes)/1024**2))
 
-        return NumpyMatrixOperator(A)
+        return A

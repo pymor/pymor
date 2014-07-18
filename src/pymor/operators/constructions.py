@@ -268,16 +268,19 @@ class FixedParameterOperator(OperatorBase):
         of `operator`.
     '''
 
-    def __init__(self, operator, mu=None):
+    def __init__(self, operator, mu=None, name=None):
         assert isinstance(operator, OperatorInterface)
         assert operator.check_parameter(mu)
+        self.source = operator.source
+        self.range = operator.range
         self.operator = operator
         self.mu = mu.copy()
         self.linear = operator.linear
+        self.name = name
 
     def apply(self, U, ind=None, mu=None):
         assert self.check_parameter(mu)
-        return self.operator.apply(U, self.mu)
+        return self.operator.apply(U, mu=self.mu)
 
     @property
     def invert_options(self):

@@ -10,7 +10,7 @@ import numpy as np
 
 from pymor.core import ImmutableInterface
 from pymor.la import NumpyVectorArray, induced_norm
-from pymor.operators import LincombOperatorInterface, NumpyMatrixOperator
+from pymor.operators import NumpyMatrixOperator, LincombOperator
 from pymor.reductors.basic import reduce_generic_rb
 
 
@@ -55,10 +55,10 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
 
     #assert isinstance(discretization, StationaryDiscretization)
     assert discretization.linear
-    assert isinstance(discretization.operator, LincombOperatorInterface)
+    assert isinstance(discretization.operator, LincombOperator)
     assert all(not op.parametric for op in discretization.operator.operators)
     if discretization.rhs.parametric:
-        assert isinstance(discretization.rhs, LincombOperatorInterface)
+        assert isinstance(discretization.rhs, LincombOperator)
         assert all(not op.parametric for op in discretization.rhs.operators)
     assert extends is None or len(extends) == 3
 
