@@ -6,11 +6,11 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor.grids.interfaces import AffineGridInterface
+from pymor.grids.interfaces import AffineGridWithOrthogonalCentersInterface
 from pymor.grids.referenceelements import square
 
 
-class RectGrid(AffineGridInterface):
+class RectGrid(AffineGridWithOrthogonalCentersInterface):
     '''Basic implementation of a rectangular |Grid| on a rectangular domain.
 
     The global face, edge and vertex indices are given as follows ::
@@ -190,3 +190,6 @@ class RectGrid(AffineGridInterface):
         '''
         assert 0 <= dim < 2
         return np.linspace(self.domain[0, dim], self.domain[1, dim], self.num_intervals[dim] + 1)
+
+    def orthogonal_centers(self):
+        return self.centers(0)

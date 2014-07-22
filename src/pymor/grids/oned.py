@@ -7,11 +7,11 @@ from __future__ import print_function
 from __future__ import division
 import numpy as np
 
-from pymor.grids.interfaces import AffineGridInterface
+from pymor.grids.interfaces import AffineGridWithOrthogonalCentersInterface
 from pymor.grids.referenceelements import line
 
 
-class OnedGrid(AffineGridInterface):
+class OnedGrid(AffineGridWithOrthogonalCentersInterface):
     '''One-dimensional |Grid| on an interval.
 
     Parameters
@@ -68,3 +68,6 @@ class OnedGrid(AffineGridInterface):
             return self.__A, self.__B
         else:
             return super(OnedGrid, self).embeddings(codim)
+
+    def orthogonal_centers(self):
+        return self.centers(0)

@@ -69,3 +69,7 @@ def grid(request):
 @pytest.fixture(params=(rect_grid_generators + tria_grid_generators))
 def rect_or_tria_grid(request):
     return request.param()
+
+@pytest.fixture(params=(rect_grid_generators + oned_grid_generators))
+def grid_with_orthogonal_centers(request):
+    return request.param()

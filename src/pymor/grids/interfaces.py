@@ -287,6 +287,21 @@ class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopological
         return self._quadrature_points(codim, order, npoints, quadrature_type)
 
 
+class AffineGridWithOrthogonalCentersInterface(AffineGridInterface):
+    '''|AffineGrid| with an additional `orthogonal_centers` method.'''
+
+    @abstractmethod
+    def orthogonal_centers(self):
+        '''`retval[e]` is a point inside the codim-0 entity with global index `e`
+        such that the line segment from `retval[e]` to `retval[e2]` is always
+        orthogonal to the codim-1 entity shared by the codim-0 entites with global
+        index `e` and `e2`.
+
+        (This is mainly useful for gradient approximation in finite volume schemes.)
+        '''
+        pass
+
+
 class BoundaryInfoInterface(CacheableInterface):
     '''Provides |BoundaryTypes| for the boundaries of a given |ConformalTopologicalGrid|.
 
