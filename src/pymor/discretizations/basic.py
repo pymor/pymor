@@ -279,7 +279,7 @@ class InstationaryDiscretization(DiscretizationBase):
         return self._with_via_init(kwargs)
 
     def _solve(self, mu=None):
-        mu = self.parse_parameter(mu).copy() if mu is not None else Parameter({})
+        mu = self.parse_parameter(mu).copy() if self.parametric else Parameter({})
 
         # explicitly checking if logging is disabled saves the expensive str(mu) call
         if not self.logging_disabled:
