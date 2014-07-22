@@ -111,15 +111,15 @@ def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=
             I = np.sum(I * grid.reference_element.quadrature(order=2)[1], axis=1) * (1. / grid.reference_element.volume)
             I = NumpyVectorArray(I, copy=False)
             return I.lincomb(U).data
-
+        inject_sid(initial_projection, __name__ + '.discretize_nonlinear_instationary_advection_fv.initial_data',
+                   p.initial_data, grid)
         I = NumpyGenericOperator(initial_projection, dim_range=grid.size(0), linear=True,
                                  parameter_type=p.initial_data.parameter_type)
     else:
         I = p.initial_data.evaluate(grid.quadrature_points(0, order=2)).squeeze()
         I = np.sum(I * grid.reference_element.quadrature(order=2)[1], axis=1) * (1. / grid.reference_element.volume)
         I = NumpyVectorArray(I, copy=False)
-
-    inject_sid(I, __name__ + '.discretize_nonlinear_instationary_advection_fv.initial_data', p.initial_data, grid)
+        inject_sid(I, __name__ + '.discretize_nonlinear_instationary_advection_fv.initial_data', p.initial_data, grid)
 
     products = {'l2': L2Product(grid, boundary_info)}
     if grid.dim == 2:
