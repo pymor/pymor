@@ -85,7 +85,6 @@ class ConstantFunction(FunctionBase):
         return 'ConstantFunction({}, {})'.format(repr(self._value), self.dim_domain)
 
     def evaluate(self, x, mu=None):
-        assert self.check_parameter(mu)
         x = np.array(x, copy=False, ndmin=1)
         assert x.shape[-1] == self.dim_domain
         if x.ndim == 1:
@@ -138,7 +137,6 @@ class GenericFunction(FunctionBase):
             mu = self.parse_parameter(mu)
             v = self._mapping(x, mu)
         else:
-            assert self.check_parameter(mu)
             v = self._mapping(x)
         assert v.shape == x.shape[:-1] + self.shape_range
 

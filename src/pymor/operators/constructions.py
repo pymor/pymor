@@ -82,7 +82,6 @@ class ComponentProjection(OperatorBase):
         self.name = name
 
     def apply(self, U, ind=None, mu=None):
-        assert self.check_parameter(mu)
         assert U in self.source
         return NumpyVectorArray(U.components(self.components, ind), copy=False)
 
@@ -114,7 +113,6 @@ class IdentityOperator(OperatorBase):
         self.name = name
 
     def apply(self, U, ind=None, mu=None):
-        assert self.check_parameter(mu)
         assert U in self.source
         return U.copy(ind=ind)
 
@@ -147,7 +145,6 @@ class ConstantOperator(OperatorBase):
         self._value = value.copy() if copy else value
 
     def apply(self, U, ind=None, mu=None):
-        assert self.check_parameter(mu)
         assert U in self.source
         count = len(U) if ind is None else 1 if isinstance(ind, Number) else len(ind)
         return self._value.copy(ind=([0] * count))
@@ -191,7 +188,6 @@ class VectorOperator(OperatorBase):
         return self._vector.copy()
 
     def apply(self, U, ind=None, mu=None):
-        assert self.check_parameter(mu)
         assert U in self.source
         count = len(U) if ind is None else 1 if isinstance(ind, Number) else len(ind)
         R = self._vector.copy(ind=([0] * count))
@@ -250,7 +246,6 @@ class VectorFunctional(OperatorBase):
         return self._vector.copy()
 
     def apply(self, U, ind=None, mu=None):
-        assert self.check_parameter(mu)
         assert U in self.source
         return NumpyVectorArray(U.dot(self._vector, ind=ind, pairwise=False), copy=False)
 
@@ -270,7 +265,7 @@ class FixedParameterOperator(OperatorBase):
 
     def __init__(self, operator, mu=None, name=None):
         assert isinstance(operator, OperatorInterface)
-        assert operator.check_parameter(mu)
+        assert operator.parse_parameter(mu) or True
         self.source = operator.source
         self.range = operator.range
         self.operator = operator
@@ -279,7 +274,6 @@ class FixedParameterOperator(OperatorBase):
         self.name = name
 
     def apply(self, U, ind=None, mu=None):
-        assert self.check_parameter(mu)
         return self.operator.apply(U, mu=self.mu)
 
     @property

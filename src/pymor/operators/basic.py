@@ -67,7 +67,6 @@ class OperatorBase(OperatorInterface):
             if self.parametric:
                 return self.assemble(mu)
             else:
-                assert self.check_parameter(mu)
                 return self
         else:
             raise NotImplementedError
@@ -185,7 +184,6 @@ class NumpyGenericOperator(OperatorBase):
             mu = self.parse_parameter(mu)
             return NumpyVectorArray(self._mapping(U_array, mu=mu), copy=False)
         else:
-            assert self.check_parameter(mu)
             return NumpyVectorArray(self._mapping(U_array), copy=False)
 
 
@@ -219,10 +217,8 @@ class NumpyMatrixBasedOperator(OperatorBase):
         The assembled **parameter independent** |Operator|.
         '''
         if hasattr(self, '_assembled_operator'):
-            assert self.check_parameter(mu)
             return self._assembled_operator
         elif self.parameter_type is None:
-            assert self.check_parameter(mu)
             op = self._assembled_operator = NumpyMatrixOperator(self._assemble())
             return op
         else:
@@ -345,18 +341,15 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         pass
 
     def assemble(self, mu=None):
-        assert self.check_parameter(mu)
         return self
 
     def as_vector(self, mu=None):
         if self.source.dim != 1 and self.range.dim != 1:
             raise TypeError('This operator does not represent a vector or linear functional.')
-        assert self.check_parameter(mu)
         return NumpyVectorArray(self._matrix.ravel(), copy=True)
 
     def apply(self, U, ind=None, mu=None):
         assert isinstance(U, NumpyVectorArray)
-        assert self.check_parameter(mu)
         U_array = U._array[:U._len] if ind is None else U._array[ind]
         return NumpyVectorArray(self._matrix.dot(U_array.T).T, copy=False)
 

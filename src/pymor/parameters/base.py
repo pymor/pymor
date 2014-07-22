@@ -463,24 +463,6 @@ class Parametric(object):
              .format(mu.parameter_type, self.parameter_type))
         return mu
 
-    def check_parameter(self, mu):
-        '''Wrapper around :meth:`parse_parameter` returning `True`.
-
-        This method is intended to be used in `assert` statements, if one is, for
-        some reason, not interested in the |Parameter| itself, e.g. if the object
-        is known to not be :attr:`parametric`. This way one can check if the
-        provided `mu` can be parsed correctly (if not an exception will be raised),
-        and the check can be disabled for speedup using Python's `-O` command line
-        argument.
-
-        Parameters
-        ----------
-        mu
-            The input to be checked.
-        '''
-        self.parse_parameter(mu)
-        return True
-
     def local_parameter(self, mu):
         '''Extract the local parameter components with their local names from a given |Parameter|.
 
