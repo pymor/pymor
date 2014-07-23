@@ -59,7 +59,7 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         pass
 
     @abstractmethod
-    def apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None, pairwise=True):
+    def apply2(self, V, U, pairwise, U_ind=None, V_ind=None, mu=None, product=None):
         '''Treat the operator as a 2-form by calculating (V, A(U)).
 
         In particular, if ( , ) is the Euclidean product and A is a linear operator
@@ -73,6 +73,16 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
             |VectorArray| of the left arguments V.
         U
             |VectorArray| of the right right arguments U.
+        pairwise
+            If `False`, the 2-form is applied to all combinations of vectors
+            in `V` and `U`, i.e. ::
+
+                L.apply2(V, U).shape = (len(V_ind), len(U_ind)).
+
+            If `True`, the vectors in `V` and `U` are applied in pairs, i.e.
+            `V` and `U` must be of the same length and we have ::
+
+                L.apply2(V, U).shape = (len(V_ind),) = (len(U_ind),).
         V_ind
             The indices of the vectors in `V` to which the operator shall be
             applied. (See the |VectorArray| documentation for further details.)
@@ -84,16 +94,6 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         product
             The scalar product used in the expression `(V, A(U))` given as
             an |Operator|.  If `None`, the euclidean product is chosen.
-        pairwise
-            If `False`, the 2-form is applied to all combinations of vectors
-            in `V` and `U`, i.e. ::
-
-                L.apply2(V, U).shape = (len(V_ind), len(U_ind)).
-
-            If `True`, the vectors in `V` and `U` are applied in pairs, i.e.
-            `V` and `U` must be of the same length and we have ::
-
-                L.apply2(V, U).shape = (len(V_ind),) = (len(U_ind),).
 
         Returns
         -------
