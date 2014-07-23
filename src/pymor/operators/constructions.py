@@ -8,6 +8,7 @@
 from __future__ import absolute_import, division, print_function
 
 from numbers import Number
+from itertools import izip
 
 import numpy as np
 
@@ -150,7 +151,73 @@ class ConstantOperator(OperatorBase):
         return self._value.copy(ind=([0] * count))
 
 
-class VectorOperator(OperatorBase):
+class VectorArrayOperator(OperatorBase):
+    '''Wraps a |VectorArray| as an |Operator|.
+
+    If `transposed == False`, the operator maps from `NumpyVectorSpace(len(array))`
+    to `array.space` by forming linear combinations of the vectors in the array
+    with given coefficient arrays.
+
+    If `transposed == True`, the operator maps from `array.space` to
+    `NumpyVectorSpace(len(array))` by forming the scalar products of the arument
+    with the vectors in the given array.
+
+    Parameters
+    ----------
+    array
+        The |VectorArray| which is to be treated as an operator.
+    transposed
+        See description above.
+    copy
+        If `True`, store a copy of `array` instead of `array` itself.
+    name
+        The name of the operator.
+    '''
+
+    linear = True
+
+    def __init__(self, array, transposed=False, copy=True, name=None):
+        self._array = array.copy() if copy else array
+        if transposed:
+           self.source = array.space
+           self.range = NumpyVectorSpace(len(array))
+        else:
+           self.source = NumpyVectorSpace(len(array))
+           self.range = array.space
+        self.transposed = transposed
+        self.name = name
+
+    def apply(self, U, ind=None, mu=None):
+        assert U in self.source
+        if not self.transposed:
+            if ind is not None:
+                U = U.copy(ind)
+            return self._array.lincomb(U.data)
+        else:
+            return NumpyVectorArray(U.dot(self._array, ind=ind, pairwise=False), copy=False)
+
+    def _assemble_lincomb(self, operators, coefficients, name=None):
+
+        transposed = operators[0].transposed
+        if not all(isinstance(op, VectorArrayOperator) and op.transposed == transposed for op in operators):
+            return None
+
+        if coefficients[0] == 1:
+            array = operators[0]._array.copy()
+        else:
+            array = operators[0]._array * coefficients[0]
+        for op, c in izip(operators[1:], coefficients[1:]):
+            array.axpy(c, op._array)
+        return VectorArrayOperator(array, transposed=transposed, copy=False, name=name)
+
+    def as_vector(self, mu=None):
+        if len(self._array) != 1:
+            raise TypeError('This operator does not represent a vector or linear functional.')
+        else:
+            return self._array.copy()
+
+
+class VectorOperator(VectorArrayOperator):
     '''Wrap a vector as a vector-like |Operator|.
 
     Given a vector `v` of dimension `d`, this class represents
@@ -180,23 +247,18 @@ class VectorOperator(OperatorBase):
     def __init__(self, vector, copy=True, name=None):
         assert isinstance(vector, VectorArrayInterface)
         assert len(vector) == 1
-        self.range = vector.space
-        self.name = name
-        self._vector = vector.copy() if copy else vector
-
-    def as_vector(self, mu=None):
-        return self._vector.copy()
+        super (VectorOperator, self).__init__(vector, transposed=False, copy=copy, name=name)
 
     def apply(self, U, ind=None, mu=None):
         assert U in self.source
         count = len(U) if ind is None else 1 if isinstance(ind, Number) else len(ind)
-        R = self._vector.copy(ind=([0] * count))
+        R = self._array.copy(ind=([0] * count))
         for i, c in enumerate(U.data):
             R.scal(c[0], ind=i)
         return R
 
 
-class VectorFunctional(OperatorBase):
+class VectorFunctional(VectorArrayOperator):
     '''Wrap a vector as a linear |Functional|.
 
     Given a vector `v` of dimension `d`, this class represents
@@ -234,20 +296,11 @@ class VectorFunctional(OperatorBase):
     def __init__(self, vector, product=None, copy=True, name=None):
         assert isinstance(vector, VectorArrayInterface)
         assert len(vector) == 1
-        assert product is None or isinstance(product, OperatorInterface)
-        self.source = vector.space
-        self.name = name
+        assert product is None or isinstance(product, OperatorInterface) and vector in product.source
         if product is None:
-            self._vector = vector.copy() if copy else vector
+            super(VectorFunctional, self).__init__(vector, transposed=True, copy=copy, name=name)
         else:
-            self._vector = product.apply(vector)
-
-    def as_vector(self, mu=None):
-        return self._vector.copy()
-
-    def apply(self, U, ind=None, mu=None):
-        assert U in self.source
-        return NumpyVectorArray(U.dot(self._vector, ind=ind, pairwise=False), copy=False)
+            super(VectorFunctional, self).__init__(product.apply(vector), transposed=True, copy=False, name=name)
 
 
 class FixedParameterOperator(OperatorBase):

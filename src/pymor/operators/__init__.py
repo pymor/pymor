@@ -4,5 +4,6 @@
 
 from pymor.operators.basic import (OperatorBase, LincombOperator,
                                    NumpyGenericOperator, NumpyMatrixBasedOperator, NumpyMatrixOperator)
-from pymor.operators.constructions import ConstantOperator, FixedParameterOperator, VectorOperator, VectorFunctional
+from pymor.operators.constructions import (ConstantOperator, FixedParameterOperator, VectorArrayOperator,
+                                           VectorOperator, VectorFunctional)
 from pymor.operators.interfaces import OperatorInterface
