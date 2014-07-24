@@ -83,9 +83,9 @@ class TestCache(TestInterface):
         for backend_cls in [cache.DogpileMemoryCacheRegion, cache.DogpileDiskCacheRegion]:
             backend = backend_cls()
             if backend_cls is not cache.DogpileDiskCacheRegion:
-                self.assertEqual(backend.get('mykey')[0], False)
+                assert not backend.get('mykey')[0]
             backend.set('mykey', 1)
-            self.assertEqual(backend.get('mykey'), (True, 1))
+            assert backend.get('mykey') == (True, 1)
 
 
 if __name__ == "__main__":

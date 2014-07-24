@@ -19,40 +19,6 @@ class TestInterface(object):
 
     logger = logger.getLogger(__name__)
 
-    def assertIsInstance(self, arg, cls, msg=None):
-        assert isinstance(arg, cls)
-
-    def assertTrue(self, arg, msg=None):
-        assert arg
-
-    def assertFalse(self, arg, msg=None):
-        assert not arg
-
-    def assertIs(self, arg, other, msg=None):
-        assert arg is other
-
-    def assertEqual(self, arg, other, msg=None):
-        assert arg == other
-
-    def assertNotEqual(self, arg, other, msg=None):
-        assert arg != other
-
-    def assertAlmostEqual(self, arg, other, msg=None):
-        npt.assert_almost_equal(arg, other)
-
-    def assertGreaterEqual(self, arg, other, msg=None):
-        assert arg >= other
-
-    def assertGreater(self, arg, other, msg=None):
-        assert arg > other
-
-    def assertLessEqual(self, arg, other, msg=None):
-        assert arg <= other
-
-    def assertLess(self, arg, other, msg=None):
-            assert arg < other
-
-
 TestInterface = TestInterface
 
 

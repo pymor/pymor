@@ -14,7 +14,7 @@ from pymortests.fixtures.grid import rect_or_tria_grid
 from pymortests.base import polynomials
 from pymor.tools.memory import total_size
 from pymor.tools.quadratures import GaussQuadratures
-from pymor.tools.floatcmp import float_cmp
+from pymor.tools.floatcmp import float_cmp, float_cmp_all
 from pymor.tools.vtkio import write_vtk
 from pymor.la import NumpyVectorArray
 
@@ -24,14 +24,14 @@ class TestMemory(TestInterface):
     def test_positivity(self):
         for Class in [int, float, long, complex, str, unicode, list, tuple, bytearray, ]:
             r = Class()
-            self.assertGreater(total_size(r), 0)
+            assert total_size(r) > 0
 
     def test_mem_growing(self):
         string = ''
         size = total_size(string)
         string = '*' * int(1e6)
         new_size = total_size(string)
-        self.assertGreater(new_size, size)
+        assert new_size > size
 
     def test_custom_handler(self):
         class MyContainer(object):
@@ -39,7 +39,7 @@ class TestMemory(TestInterface):
                 for i in xrange(3):
                     yield i
         container = MyContainer()
-        self.assertGreater(total_size(container, {MyContainer: MyContainer.items}), 0)
+        assert total_size(container, {MyContainer: MyContainer.items}) > 0
 
 
 FUNCTIONS = (('sin(2x pi)', lambda x: sin(2 * x * pi), 0),
@@ -56,30 +56,28 @@ class TestGaussQuadrature(TestInterface):
                     continue
                 Q = GaussQuadratures.iter_quadrature(order)
                 ret = sum([function(p) * w for (p, w) in Q])
-                self.assertAlmostEqual(ret, integral,
-                                       msg='{} integral wrong: {} vs {} (quadrature order {})'
-                                       .format(name, integral, ret, order))
+                assert float_cmp(ret, integral), '{} integral wrong: {} vs {} (quadrature order {})'.format(
+                    name, integral, ret, order)
 
     def test_other_functions(self):
         order = GaussQuadratures.orders[-1]
         for name, function, integral in FUNCTIONS:
             Q = GaussQuadratures.iter_quadrature(order)
             ret = sum([function(p) * w for (p, w) in Q])
-            self.assertAlmostEqual(ret, integral,
-                                   msg='{} integral wrong: {} vs {} (quadrature order {})'
-                                   .format(name, integral, ret, order))
+            assert float_cmp(ret, integral), '{} integral wrong: {} vs {} (quadrature order {})'.format(
+                name, integral, ret, order)
 
     def test_weights(self):
         for order in GaussQuadratures.orders:
             _, W = GaussQuadratures.quadrature(order)
-            self.assertAlmostEqual(sum(W), 1)
+            assert float_cmp(sum(W), 1)
 
     def test_points(self):
         for order in GaussQuadratures.orders:
             P, _ = GaussQuadratures.quadrature(order)
-            np.testing.assert_array_equal(P, np.sort(P))
-            self.assertLess(0.0, P[0])
-            self.assertLess(P[-1], 1.0)
+            assert float_cmp_all(P, np.sort(P))
+            assert 0.0 < P[0]
+            assert P[-1] < 1.0
 
 
 class TestCmp(TestInterface):
@@ -90,21 +88,21 @@ class TestCmp(TestInterface):
         inf = float('inf')
         for (rtol, atol) in itertools.product(tol_range, tol_range):
             msg = 'rtol: {} | atol {}'.format(rtol, atol)
-            self.assertTrue(float_cmp(0, 0, rtol, atol), msg)
-            self.assertTrue(float_cmp(-0, -0, rtol, atol), msg)
-            self.assertTrue(float_cmp(-1, -1, rtol, atol), msg)
-            self.assertTrue(float_cmp(0, -0, rtol, atol), msg)
-            self.assertFalse(float_cmp(2, -2, rtol, atol), msg)
+            assert float_cmp(0., 0., rtol, atol), msg
+            assert float_cmp(-0., -0., rtol, atol), msg
+            assert float_cmp(-1., -1., rtol, atol), msg
+            assert float_cmp(0., -0., rtol, atol), msg
+            assert not float_cmp(2., -2., rtol, atol), msg
 
-            self.assertFalse(float_cmp(nan, nan, rtol, atol), msg)
-            self.assertTrue(nan != nan)
-            self.assertFalse(nan == nan)
-            self.assertFalse(float_cmp(-nan, nan, rtol, atol), msg)
+            assert not float_cmp(nan, nan, rtol, atol), msg
+            assert nan != nan
+            assert not (nan == nan)
+            assert not float_cmp(-nan, nan, rtol, atol), msg
 
-            self.assertFalse(float_cmp(inf, inf, rtol, atol), msg)
-            self.assertFalse(inf != inf)
-            self.assertTrue(inf == inf)
-            self.assertTrue(float_cmp(-inf, inf, rtol, atol), msg)
+            assert not float_cmp(inf, inf, rtol, atol), msg
+            assert not (inf != inf)
+            assert inf == inf
+            assert float_cmp(-inf, inf, rtol, atol), msg
 
 
 def test_vtkio(rect_or_tria_grid):

@@ -14,17 +14,18 @@ from pymor.operators.basic import OperatorBase
 from pymortests.base import polynomials,runmodule, MonomOperator
 from pymor.algorithms.newton import newton, NewtonError
 import pymor.algorithms.basisextension as bxt
+from pymor.tools.floatcmp import float_cmp
 
-def test_newton():
-    def _newton(order):
-        mop = MonomOperator(1)
-        rhs = NumpyVectorArray([0.0])
-        guess = NumpyVectorArray([1.0])
-        return newton(mop, rhs, initial_guess=guess)
+def _newton(order):
+    mop = MonomOperator(order)
+    rhs = NumpyVectorArray([0.0])
+    guess = NumpyVectorArray([1.0])
+    return newton(mop, rhs, initial_guess=guess)
 
-    for order in range(0, 8):
+@pytest.mark.parametrize("order", range(1, 8, 2))
+def test_newton(order):
         U, _ = _newton(order)
-        assert np.allclose(U.data, 0.0)
+        assert float_cmp(U.data, 0.0)
 
 
 @pytest.fixture(params=('pod_basis_extension', 'gram_schmidt_basis_extension', 'trivial_basis_extension'))

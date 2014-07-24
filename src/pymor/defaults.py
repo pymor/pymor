@@ -99,7 +99,7 @@ class Defaults(object):
                                              ('gl' or 'matplotlib')
     """
 
-    float_cmp_tol                       = 2**4 * np.finfo(np.zeros(1).dtype).eps
+    float_cmp_tol                       = 2**4 * np.finfo(np.zeros(1.).dtype).eps
 
     gram_schmidt_tol                    = 1e-14
     # gram_schmidt_tol                  = 1e-7  # according to comments in the rbmatlab source, such a high tolerance is
