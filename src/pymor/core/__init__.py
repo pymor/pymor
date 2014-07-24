@@ -31,7 +31,7 @@ loads = pickle.loads
 try:
     import numpy as np
     A = np.zeros((0, 1))
-    A[[]]
+    _ = A[[]]
     NUMPY_INDEX_QUIRK = False
 except IndexError:
     NUMPY_INDEX_QUIRK = True

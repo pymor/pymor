@@ -129,7 +129,7 @@ def test_superentities_shape(grid):
             assert g.superentities(e, s).ndim == 2
             assert g.superentities(e, s).shape[0] == g.size(e)
             assert g.superentities(e, s).shape[1] > 0
-    g.superentities(1, 0).shape[1] <= 2
+    assert g.superentities(1, 0).shape[1] <= 2
 
 
 def test_superentities_dtype(grid):

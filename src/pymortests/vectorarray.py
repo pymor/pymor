@@ -871,11 +871,11 @@ def test_mul(vector_array):
 def test_mul_wrong_factor(vector_array):
     v = vector_array
     with pytest.raises(Exception):
-        v * v
+        _ = v * v
     with pytest.raises(Exception):
-        v * np.ones(v.dim)
+        _ = v * np.ones(v.dim)
     with pytest.raises(Exception):
-        v * []
+        _ = v * []
 
 
 def test_imul(vector_array):
@@ -964,7 +964,7 @@ def test_dot_incompatible(incompatible_vector_array_pair):
 def test_add_incompatible(incompatible_vector_array_pair):
     v1, v2 = incompatible_vector_array_pair
     with pytest.raises(Exception):
-        v1 + v2
+        _ = v1 + v2
 
 
 def test_iadd_incompatible(incompatible_vector_array_pair):
@@ -976,7 +976,7 @@ def test_iadd_incompatible(incompatible_vector_array_pair):
 def test_sub_incompatible(incompatible_vector_array_pair):
     v1, v2 = incompatible_vector_array_pair
     with pytest.raises(Exception):
-        v1 - v2
+        _ = v1 - v2
 
 
 def test_isub_incompatible(incompatible_vector_array_pair):
