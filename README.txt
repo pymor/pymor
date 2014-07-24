@@ -14,7 +14,7 @@ provided for getting started quickly.
 NOTE pyMOR is still in early development. Should you have any questions
 regarding pyMOR or wish to contribute, do not hesitate to contact us!
 
-[Build Status] [Coverage Status]
+[Build Status] [Coverage Status] [Code Health]
 
 License
 -------

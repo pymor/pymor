@@ -15,6 +15,7 @@ regarding pyMOR or wish to contribute, do not hesitate to contact us!
 
 [![Build Status](https://travis-ci.org/pymor/pymor.png?branch=master)](https://travis-ci.org/pymor/pymor)
 [![Coverage Status](https://coveralls.io/repos/pymor/pymor/badge.png)](https://coveralls.io/r/pymor/pymor)
+[![Code Health](https://landscape.io/github/pymor/pymor/master/landscape.png)](https://landscape.io/github/pymor/pymor/master)
 
 License
 -------
