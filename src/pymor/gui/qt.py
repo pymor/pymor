@@ -192,7 +192,7 @@ def launch_qt_app(main_window_factory, block):
         p.join()
 
 
-def visualize_patch(grid, U, bounding_box=[[0, 0], [1, 1]], codim=2, title=None, legend=None,
+def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
                     separate_colorbars=False, backend=None, block=False):
     '''Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
 
@@ -400,7 +400,7 @@ class PatchVisualizer(BasicInterface):
         If `True` block execution until the plot window is closed.
     '''
 
-    def __init__(self, grid, bounding_box=[[0, 0], [1, 1]], codim=2, backend=None, block=False):
+    def __init__(self, grid, bounding_box=([0, 0], [1, 1]), codim=2, backend=None, block=False):
         assert isinstance(grid, (RectGrid, TriaGrid))
         assert codim in (0, 2)
         self.grid = grid

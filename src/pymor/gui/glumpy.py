@@ -86,7 +86,7 @@ if HAVE_ALL:
 
     class GlumpyPatchWidget(QGLWidget):
 
-        def __init__(self, parent, grid, vmin=None, vmax=None, bounding_box=[[0, 0], [1, 1]], codim=2):
+        def __init__(self, parent, grid, vmin=None, vmax=None, bounding_box=([0, 0], [1, 1]), codim=2):
             assert grid.reference_element in (triangle, square)
             assert grid.dim == 2
             assert codim in (0, 2)

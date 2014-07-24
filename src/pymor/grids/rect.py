@@ -42,7 +42,7 @@ class RectGrid(AffineGridWithOrthogonalCentersInterface):
     dim_outer = 2
     reference_element = square
 
-    def __init__(self, num_intervals=(2, 2), domain=[[0, 0], [1, 1]],
+    def __init__(self, num_intervals=(2, 2), domain=([0, 0], [1, 1]),
                  identify_left_right=False, identify_bottom_top=False):
         if identify_left_right:
             assert num_intervals[0] > 1

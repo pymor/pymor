@@ -38,7 +38,7 @@ class TriaGrid(AffineGridInterface):
     dim_outer = 2
     reference_element = triangle
 
-    def __init__(self, num_intervals=(2, 2), domain=[[0, 0], [1, 1]]):
+    def __init__(self, num_intervals=(2, 2), domain=([0, 0], [1, 1])):
         self.num_intervals = num_intervals
         self.domain = np.array(domain)
 
