@@ -14,7 +14,7 @@ from pymor.tools import float_cmp_all
 
 
 def numpy_gram_schmidt_basis_extension(basis, U, product=None):
-    '''Extend basis using Gram-Schmidt orthonormalization.
+    """Extend basis using Gram-Schmidt orthonormalization.
 
     Parameters
     ----------
@@ -36,7 +36,7 @@ def numpy_gram_schmidt_basis_extension(basis, U, product=None):
         Gram-Schmidt orthonormalization fails. Usually this is the case when U
         is not linearily independent from the basis. However this can also happen
         due to rounding errors ...
-    '''
+    """
     if basis is None:
         basis = NumpyVectorArray(np.zeros((0, U.dim)))
     assert isinstance(basis, NumpyVectorArray)
@@ -58,7 +58,7 @@ def numpy_gram_schmidt_basis_extension(basis, U, product=None):
 
 def numpy_gram_schmidt(A, product=None, tol=None, row_offset=0, find_row_duplicates=True, find_col_duplicates=False,
                        check=None, check_tol=None):
-    '''Orthonormnalize a matrix using the Gram-Schmidt algorithm.
+    """Orthonormnalize a matrix using the Gram-Schmidt algorithm.
 
     Parameters
     ----------
@@ -86,7 +86,7 @@ def numpy_gram_schmidt(A, product=None, tol=None, row_offset=0, find_row_duplica
     Returns
     -------
     The orthonormalized matrix.
-    '''
+    """
 
     A = A.copy()
     tol = defaults.gram_schmidt_tol if tol is None else tol

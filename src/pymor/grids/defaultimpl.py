@@ -12,7 +12,7 @@ from pymor.tools.relations import inverse_relation
 
 
 class ConformalTopologicalGridDefaultImplementations(object):
-    '''Provides default informations for |ConformalTopologicalGrids|.'''
+    """Provides default informations for |ConformalTopologicalGrids|."""
 
     @cached
     def _subentities(self, codim, subentity_codim):
@@ -130,7 +130,7 @@ class ConformalTopologicalGridDefaultImplementations(object):
 
 
 class SimpleReferenceElementDefaultImplementations(object):
-    '''Provides default implementations for |ReferenceElements|.'''
+    """Provides default implementations for |ReferenceElements|."""
 
     @cached
     def _subentity_embedding(self, subentity_codim):
@@ -161,7 +161,7 @@ class SimpleReferenceElementDefaultImplementations(object):
 
 
 class AffineGridDefaultImplementations(object):
-    '''Provides default implementations for |AffineGrids|.'''
+    """Provides default implementations for |AffineGrids|."""
 
     @cached
     def _subentities(self, codim, subentity_codim):

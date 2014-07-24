@@ -10,7 +10,7 @@
 ############################################################################################
 
 
-'''Remote Thermalblock demo.
+"""Remote Thermalblock demo.
 
 Usage:
   thermalblock.py [-eh] [--estimator-norm=NORM] [--extension-alg=ALG] [--grid=NI] [--help]
@@ -45,7 +45,7 @@ Options:
 
   --test=COUNT           Use COUNT snapshots for stochastic error estimation
                          [default: 10].
-'''
+"""
 
 from __future__ import absolute_import, division, print_function
 

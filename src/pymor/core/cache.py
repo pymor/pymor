@@ -2,7 +2,7 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-'''This module provides the caching facilities of pyMOR.
+"""This module provides the caching facilities of pyMOR.
 
 Any class that wishes to provide cached method calls should derive from
 :class:`CacheableInterface`. Methods which are to be cached can then
@@ -51,7 +51,7 @@ any call to :func:`enable_caching`.
 
 A cache region can be emptied using :meth:`CacheRegion.clear`. The function
 :func:`clear_caches` clears each cache region registered in `cache_regions`.
-'''
+"""
 
 
 from __future__ import absolute_import, division, print_function
@@ -69,13 +69,13 @@ import pymor.core.dogpile_backends
 
 
 class CacheRegion(object):
-    '''Base class for all pyMOR cache regions.
+    """Base class for all pyMOR cache regions.
 
     Attributes
     ----------
     enabled
         If `False` caching is disabled for this region.
-    '''
+    """
 
     enabled = True
 
@@ -86,7 +86,7 @@ class CacheRegion(object):
         raise NotImplementedError
 
     def clear(self):
-        '''Clear the entire cache region.'''
+        """Clear the entire cache region."""
         raise NotImplementedError
 
 
@@ -157,32 +157,32 @@ if _caching_disabled:
 
 
 def enable_caching():
-    '''Globally enable caching.'''
+    """Globally enable caching."""
     global _caching_disabled
     _caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
 
 
 def disable_caching():
-    '''Globally disable caching.'''
+    """Globally disable caching."""
     global _caching_disabled
     _caching_disabled = True
 
 
 def clear_caches():
-    '''Clear all cache regions.'''
+    """Clear all cache regions."""
     for r in cache_regions.itervalues():
         r.clear()
 
 
 class cached(object):
-    '''Decorator to make a method of `CacheableInterface` actually cached.'''
+    """Decorator to make a method of `CacheableInterface` actually cached."""
 
     def __init__(self, function):
         self.decorated_function = function
 
     def __call__(self, im_self, *args, **kwargs):
-        '''Via the magic that is partial functions returned from __get__, im_self is the instance object of the class
-        we're decorating a method of and [kw]args are the actual parameters to the decorated method'''
+        """Via the magic that is partial functions returned from __get__, im_self is the instance object of the class
+        we're decorating a method of and [kw]args are the actual parameters to the decorated method"""
         region = cache_regions[im_self.cache_region]
         if not region.enabled:
             return self.decorated_function(im_self, *args, **kwargs)
@@ -203,9 +203,9 @@ class cached(object):
             return value
 
     def __get__(self, instance, instancetype):
-        '''Implement the descriptor protocol to make decorating instance method possible.
+        """Implement the descriptor protocol to make decorating instance method possible.
         Return a partial function where the first argument is the instance of the decorated instance object.
-        '''
+        """
         if instance is None:
             return MethodType(self.decorated_function, None, instancetype)
         elif _caching_disabled or instance.cache_region is None:
@@ -215,7 +215,7 @@ class cached(object):
 
 
 class CacheableInterface(ImmutableInterface):
-    '''Base class for anything that wants to use our built-in caching.
+    """Base class for anything that wants to use our built-in caching.
 
     Attributes
     ----------
@@ -223,7 +223,7 @@ class CacheableInterface(ImmutableInterface):
         Name of the `CacheRegion` to use. Must correspond to a key in
         :attr:`pymor.core.cache.cache_regions`. If `None` or `'none'`, caching
         is disabled.
-    '''
+    """
 
     @property
     def cache_region(self):
@@ -242,11 +242,11 @@ class CacheableInterface(ImmutableInterface):
             self.__cache_region = region
 
     def disable_caching(self):
-        '''Disable caching for this instance.'''
+        """Disable caching for this instance."""
         self.__cache_region = None
 
     def enable_caching(self, region):
-        '''Enable caching for this instance.
+        """Enable caching for this instance.
 
         Parameters
         ----------
@@ -254,5 +254,5 @@ class CacheableInterface(ImmutableInterface):
             Name of the `CacheRegion` to use. Must correspond to a key in
             `pymor.core.cache.cache_regions`. If `None` or `'none'`, caching
             is disabled.
-        '''
+        """
         self.cache_region = region

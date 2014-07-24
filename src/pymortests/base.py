@@ -74,16 +74,16 @@ def _load_all():
 
 
 def SubclassForImplemetorsOf(InterfaceType):
-    '''A decorator that dynamically creates subclasses of the decorated base test class
+    """A decorator that dynamically creates subclasses of the decorated base test class
     for all implementors of a given Interface
-    '''
+    """
     try:
         _load_all()
     except ImportError:
         pass
 
     def decorate(TestCase):
-        '''saves a new type called cname with correct bases and class dict in globals'''
+        """saves a new type called cname with correct bases and class dict in globals"""
         import pymor.core.dynamic
         test_types = set([T for T in InterfaceType.implementors(True) if not(T.has_interface_name()
                                                                              or issubclass(T, TestInterface))])

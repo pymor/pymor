@@ -2,7 +2,7 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-'''This module contains algorithms for extending a given basis by a new vector.
+"""This module contains algorithms for extending a given basis by a new vector.
 
 The methods are mainly designed to be used in conjunction with
 :func:`pymor.algorithms.greedy.greedy`. Each method is of the form ::
@@ -18,7 +18,7 @@ if the new basis contains the old basis as its first vectors.
 If the basis extension fails, e.g. because the new vector is not linearly
 independent from the basis, an :class:`~pymor.core.exceptions.ExtensionError`
 exception is raised.
-'''
+"""
 
 from __future__ import absolute_import, division, print_function
 
@@ -30,7 +30,7 @@ from pymor.la.pod import pod
 
 
 def trivial_basis_extension(basis, U, copy_basis=True, copy_U=True):
-    '''Trivially extend basis by simply appending the new vectors.
+    """Trivially extend basis by simply appending the new vectors.
 
     We check if the new vectors are already contained in the basis, but we do
     not check for linear independence.
@@ -59,7 +59,7 @@ def trivial_basis_extension(basis, U, copy_basis=True, copy_U=True):
     ------
     ExtensionError
         Is raised if all vectors in U are already contained in the basis.
-    '''
+    """
     if basis is None:
         basis = U.empty(reserve=len(U))
 
@@ -80,7 +80,7 @@ def trivial_basis_extension(basis, U, copy_basis=True, copy_U=True):
 
 
 def gram_schmidt_basis_extension(basis, U, product=None, copy_basis=True, copy_U=True):
-    '''Extend basis using Gram-Schmidt orthonormalization.
+    """Extend basis using Gram-Schmidt orthonormalization.
 
     Parameters
     ----------
@@ -110,7 +110,7 @@ def gram_schmidt_basis_extension(basis, U, product=None, copy_basis=True, copy_U
     ExtensionError
         Gram-Schmidt orthonormalization fails. This is the case when no
         vector in U is linearly independent from the basis.
-    '''
+    """
     if basis is None:
         basis = U.empty(reserve=len(U))
 
@@ -127,7 +127,7 @@ def gram_schmidt_basis_extension(basis, U, product=None, copy_basis=True, copy_U
 
 
 def pod_basis_extension(basis, U, count=1, copy_basis=True, product=None, orthonormalize=True):
-    '''Extend basis with the first `count` POD modes of the projection of U onto the
+    """Extend basis with the first `count` POD modes of the projection of U onto the
     orthogonal complement of the basis.
 
     Note that the provided basis is assumed to be orthonormal w.r.t. the provided
@@ -165,7 +165,7 @@ def pod_basis_extension(basis, U, count=1, copy_basis=True, product=None, orthon
     ExtensionError
         POD produces no new vectors. This is the case when no vector in U
         is linearly independent from the basis.
-    '''
+    """
     if basis is None:
         return pod(U, modes=count, product=product)[0], {'hierarchic': True}
 

@@ -424,6 +424,7 @@ class RemoteLincombOperator(RemoteOperator):
     projected = OperatorBase.projected
 
 
+# noinspection PyShadowingNames,PyShadowingNames
 class RemoteStationaryDiscretization(StationaryDiscretization):
 
     def __init__(self, remote_view, remote_id):

@@ -3,7 +3,7 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-'''Module containing some constructions to obtain new operators from old ones.'''
+"""Module containing some constructions to obtain new operators from old ones."""
 
 from __future__ import absolute_import, division, print_function
 
@@ -18,7 +18,7 @@ from pymor.operators.interfaces import OperatorInterface
 
 
 class Concatenation(OperatorBase):
-    '''|Operator| representing the concatenation of two |Operators|.
+    """|Operator| representing the concatenation of two |Operators|.
 
     Parameters
     ----------
@@ -28,7 +28,7 @@ class Concatenation(OperatorBase):
         The |Operator| which is applied as first operator.
     name
         Name of the operator.
-    '''
+    """
 
     def __init__(self, second, first, name=None):
         assert isinstance(second, OperatorInterface)
@@ -60,7 +60,7 @@ class Concatenation(OperatorBase):
 
 
 class ComponentProjection(OperatorBase):
-    '''|Operator| representing the projection of a Vector on some of its components.
+    """|Operator| representing the projection of a Vector on some of its components.
 
     Parameters
     ----------
@@ -71,7 +71,7 @@ class ComponentProjection(OperatorBase):
         Source |VectorSpace| of the operator.
     name
         Name of the operator.
-    '''
+    """
 
     linear = True
 
@@ -93,7 +93,7 @@ class ComponentProjection(OperatorBase):
 
 
 class IdentityOperator(OperatorBase):
-    '''The identity |Operator|.
+    """The identity |Operator|.
 
     In other word ::
 
@@ -105,7 +105,7 @@ class IdentityOperator(OperatorBase):
         The |VectorSpace| the operator acts on.
     name
         Name of the operator.
-    '''
+    """
 
     linear = True
 
@@ -119,7 +119,7 @@ class IdentityOperator(OperatorBase):
 
 
 class ConstantOperator(OperatorBase):
-    '''A constant |Operator| always returning the same vector.
+    """A constant |Operator| always returning the same vector.
 
     Parameters
     ----------
@@ -133,7 +133,7 @@ class ConstantOperator(OperatorBase):
         itself.
     name
         Name of the operator.
-    '''
+    """
 
     linear = False
 
@@ -152,7 +152,7 @@ class ConstantOperator(OperatorBase):
 
 
 class VectorArrayOperator(OperatorBase):
-    '''Wraps a |VectorArray| as an |Operator|.
+    """Wraps a |VectorArray| as an |Operator|.
 
     If `transposed == False`, the operator maps from `NumpyVectorSpace(len(array))`
     to `array.space` by forming linear combinations of the vectors in the array
@@ -172,7 +172,7 @@ class VectorArrayOperator(OperatorBase):
         If `True`, store a copy of `array` instead of `array` itself.
     name
         The name of the operator.
-    '''
+    """
 
     linear = True
 
@@ -218,7 +218,7 @@ class VectorArrayOperator(OperatorBase):
 
 
 class VectorOperator(VectorArrayOperator):
-    '''Wrap a vector as a vector-like |Operator|.
+    """Wrap a vector as a vector-like |Operator|.
 
     Given a vector `v` of dimension `d`, this class represents
     the operator ::
@@ -239,7 +239,7 @@ class VectorOperator(VectorArrayOperator):
         itself.
     name
         Name of the operator.
-    '''
+    """
 
     linear = True
     source = NumpyVectorSpace(1)
@@ -259,7 +259,7 @@ class VectorOperator(VectorArrayOperator):
 
 
 class VectorFunctional(VectorArrayOperator):
-    '''Wrap a vector as a linear |Functional|.
+    """Wrap a vector as a linear |Functional|.
 
     Given a vector `v` of dimension `d`, this class represents
     the functional ::
@@ -288,7 +288,7 @@ class VectorFunctional(VectorArrayOperator):
         itself.
     name
         Name of the operator.
-    '''
+    """
 
     linear = True
     range = NumpyVectorSpace(1)
@@ -304,7 +304,7 @@ class VectorFunctional(VectorArrayOperator):
 
 
 class FixedParameterOperator(OperatorBase):
-    '''Makes an |Operator| |Parameter|-independent by providing it a fixed |Parameter|.
+    """Makes an |Operator| |Parameter|-independent by providing it a fixed |Parameter|.
 
     Parameters
     ----------
@@ -314,7 +314,7 @@ class FixedParameterOperator(OperatorBase):
         The fixed |Parameter| that will be fed to the
         :meth:`~pymor.operators.interfaces.OperatorInterface.apply` method
         of `operator`.
-    '''
+    """
 
     def __init__(self, operator, mu=None, name=None):
         assert isinstance(operator, OperatorInterface)

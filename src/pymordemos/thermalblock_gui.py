@@ -3,7 +3,7 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-'''Thermalblock with GUI demo
+"""Thermalblock with GUI demo
 
 Usage:
   thermalblock_gui.py [-h] [--estimator-norm=NORM] [--grid=NI] [--testing]
@@ -30,7 +30,7 @@ Options:
   --testing              load the gui and exit right away (for functional testing)
 
   -h, --help             Show this message.
-'''
+"""
 
 from __future__ import absolute_import, division, print_function
 import sys
@@ -84,6 +84,7 @@ class ParamRuler(QtGui.QWidget):
             spin.isEnabled = enable
 
 
+# noinspection PyShadowingNames
 class SimPanel(QtGui.QWidget):
     def __init__(self, parent, sim):
         super(SimPanel, self).__init__(parent)
@@ -123,6 +124,7 @@ class AllPanel(QtGui.QWidget):
         self.setLayout(box)
 
 
+# noinspection PyShadowingNames
 class RBGui(QtGui.QMainWindow):
     def __init__(self, args):
         super(RBGui, self).__init__()
@@ -139,6 +141,7 @@ class RBGui(QtGui.QMainWindow):
         self.setCentralWidget(self.panel)
 
 
+# noinspection PyShadowingNames
 class SimBase(object):
     def __init__(self, args):
         self.args = args
@@ -149,6 +152,7 @@ class SimBase(object):
         self.grid = pack['grid']
 
 
+# noinspection PyShadowingNames,PyShadowingNames
 class ReducedSim(SimBase):
 
     def __init__(self, args):
@@ -173,6 +177,7 @@ class ReducedSim(SimBase):
         return self.reconstructor.reconstruct(self.rb_discretization.solve(mu))
 
 
+# noinspection PyShadowingNames
 class DetailedSim(SimBase):
 
     def __init__(self, args):

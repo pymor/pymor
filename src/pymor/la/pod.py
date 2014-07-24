@@ -17,7 +17,7 @@ from pymor.tools import float_cmp_all
 
 def pod(A, modes=None, product=None, tol=None, symmetrize=None, orthonormalize=None,
         check=None, check_tol=None):
-    '''Proper orthogonal decomposition of `A`.
+    """Proper orthogonal decomposition of `A`.
 
     If the |VectorArray| `A` is viewed as a map ::
 
@@ -61,7 +61,7 @@ def pod(A, modes=None, product=None, tol=None, symmetrize=None, orthonormalize=N
     SVALS
         Sequence of singular values.
 
-    '''
+    """
 
     assert isinstance(A, VectorArrayInterface)
     assert len(A) > 0

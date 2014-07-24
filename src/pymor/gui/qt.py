@@ -2,10 +2,10 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-''' This module provides a few methods and classes for visualizing data
+""" This module provides a few methods and classes for visualizing data
 associated to grids. We use the `PySide <http://www.pyside.org>`_ bindings
 for the `Qt <http://www.qt-project.org>`_ widget toolkit for the GUI.
-'''
+"""
 
 from __future__ import absolute_import, division, print_function
 
@@ -34,7 +34,7 @@ from pymor.tools.vtkio import HAVE_PYVTK, write_vtk
 if HAVE_PYSIDE:
 
     class PlotMainWindow(QWidget):
-        '''Base class for plot main windows.'''
+        """Base class for plot main windows."""
 
         def __init__(self, U, plot, length=1, title=None):
             super(PlotMainWindow, self).__init__()
@@ -174,7 +174,7 @@ if HAVE_PYSIDE:
 
 
 def launch_qt_app(main_window_factory, block):
-    '''Wrapper to display plot in a separate process.'''
+    """Wrapper to display plot in a separate process."""
 
     def doit():
         try:
@@ -194,7 +194,7 @@ def launch_qt_app(main_window_factory, block):
 
 def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
                     separate_colorbars=False, backend=None, block=False):
-    '''Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
+    """Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
     be attached to the faces or vertices of the grid.
@@ -224,7 +224,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         `qt_visualize_patch_backend` |default| is used.
     block
         If `True` block execution until the plot window is closed.
-    '''
+    """
     if not HAVE_PYSIDE:
         raise ImportError('cannot visualize: import of PySide failed')
 
@@ -329,7 +329,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
 
 
 def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_plots=False, block=False):
-    '''Visualize scalar data associated to a one-dimensional |Grid| as a plot.
+    """Visualize scalar data associated to a one-dimensional |Grid| as a plot.
 
     The grid's |ReferenceElement| must be the line. The data can either
     be attached to the subintervals or vertices of the grid.
@@ -354,7 +354,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
         If `True`, use subplots to visualize multiple |VectorArrays|.
     block
         If `True`, block execution until the plot window is closed.
-    '''
+    """
     if not HAVE_PYSIDE:
         raise ImportError('cannot visualize: import of PySide failed')
     if not HAVE_MATPLOTLIB:
@@ -380,7 +380,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
 
 
 class PatchVisualizer(BasicInterface):
-    '''Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
+    """Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
     be attached to the faces or vertices of the grid.
@@ -398,7 +398,7 @@ class PatchVisualizer(BasicInterface):
         `qt_visualize_patch_backend` |default| is used.
     block
         If `True` block execution until the plot window is closed.
-    '''
+    """
 
     def __init__(self, grid, bounding_box=([0, 0], [1, 1]), codim=2, backend=None, block=False):
         assert isinstance(grid, (RectGrid, TriaGrid))
@@ -411,7 +411,7 @@ class PatchVisualizer(BasicInterface):
 
     def visualize(self, U, discretization, title=None, legend=None, separate_colorbars=False,
                   block=None, filename=None):
-        '''Visualize the provided data.
+        """Visualize the provided data.
 
         Parameters
         ----------
@@ -435,7 +435,7 @@ class PatchVisualizer(BasicInterface):
         filename
             If specified, write the data to a VTK-file using
             :func:`pymor.tools.vtkio.write_vtk` instead of displaying it.
-        '''
+        """
         assert isinstance(U, VectorArrayInterface) and hasattr(U, 'data') \
             or (isinstance(U, tuple) and all(isinstance(u, VectorArrayInterface) and hasattr(u, 'data') for u in U)
                 and all(len(u) == len(U[0]) for u in U))
@@ -453,7 +453,7 @@ class PatchVisualizer(BasicInterface):
 
 
 class Matplotlib1DVisualizer(BasicInterface):
-    '''Visualize scalar data associated to a one-dimensional |Grid| as a plot.
+    """Visualize scalar data associated to a one-dimensional |Grid| as a plot.
 
     The grid's |ReferenceElement| must be the line. The data can either
     be attached to the subintervals or vertices of the grid.
@@ -466,7 +466,7 @@ class Matplotlib1DVisualizer(BasicInterface):
         The codimension of the entities the data in `U` is attached to (either 0 or 1).
     block
         If `True` block execution until the plot window is closed.
-    '''
+    """
 
     def __init__(self, grid, codim=1, block=False):
         assert isinstance(grid, OnedGrid)
@@ -476,7 +476,7 @@ class Matplotlib1DVisualizer(BasicInterface):
         self.block = block
 
     def visualize(self, U, discretization, title=None, legend=None, block=None):
-        '''Visualize the provided data.
+        """Visualize the provided data.
 
         Parameters
         ----------
@@ -495,6 +495,6 @@ class Matplotlib1DVisualizer(BasicInterface):
         block
             If `True` block execution until the plot window is closed. If `None`, use the
             default provided during instantiation.
-        '''
+        """
         block = self.block if block is None else block
         visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend, block=block)

@@ -11,7 +11,7 @@ from pymor.tools import float_cmp
 
 
 def flatten_grid(grid):
-    '''This method is used by our visualizers to render n-dimensional grids which cannot
+    """This method is used by our visualizers to render n-dimensional grids which cannot
     be embedded into R^n by duplicating vertices which would have to be mapped to multiple
     points at once. (Think of grids on rectangular domains with identified edges.)
 
@@ -29,7 +29,7 @@ def flatten_grid(grid):
     entity_map
         Maps the indices of the codim-`grid.dim` entities of the flattened
         grid to the indices of the corresponding entities in the original grid.
-    '''
+    """
     # first we determine which vertices are mapped to different coordinates when using the
     # embeddings of their codim-0 superentities
     dim = grid.dim

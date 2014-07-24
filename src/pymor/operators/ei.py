@@ -15,7 +15,7 @@ from pymor.operators import OperatorInterface, OperatorBase
 
 
 class EmpiricalInterpolatedOperator(OperatorBase):
-    '''Interpolate an |Operator| using Empirical Operator Interpolation.
+    """Interpolate an |Operator| using Empirical Operator Interpolation.
 
     Let `L` be an |Operator|, `0 <= c_1, ..., c_M <= L.range.dim` indices
     of interpolation DOFs and `b_1, ..., b_M in R^(L.range.dim)` collateral
@@ -55,7 +55,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         that the interpolation matrix is triangular.
     name
         Name of the operator.
-    '''
+    """
 
     def __init__(self, operator, interpolation_dofs, collateral_basis, triangular, name=None):
         assert isinstance(operator, OperatorInterface)
@@ -132,10 +132,10 @@ class EmpiricalInterpolatedOperator(OperatorBase):
 
 
 class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
-    '''Project an |EmpiricalInterpolatedOperator|.
+    """Project an |EmpiricalInterpolatedOperator|.
 
     Not intended to be used directly. Instead use :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
-    '''
+    """
 
     def __init__(self, restricted_operator, interpolation_matrix, source_basis_dofs,
                  projected_collateral_basis, triangular, name=None):

@@ -2,12 +2,12 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-''' This module provides a widget for displaying plots of
+""" This module provides a widget for displaying plots of
 scalar data assigned to a 1D-Grid using :mod:`matplotlib`. This widget is not
 intended to be used directly. Instead, use
 :meth:`~pymor.gui.qt.visualize_matplotlib_1d` or
 :class:`~pymor.gui.qt.Matplotlib1DVisualizer`.
-'''
+"""
 
 from __future__ import absolute_import, division, print_function
 
@@ -40,6 +40,7 @@ if HAVE_ALL:
     from pymor.grids.constructions import flatten_grid
     from pymor.grids.referenceelements import line, triangle, square
 
+    # noinspection PyShadowingNames
     class Matplotlib1DWidget(FigureCanvas):
 
         def __init__(self, parent, grid, count, vmin=None, vmax=None, legend=None, codim=1,

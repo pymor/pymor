@@ -14,7 +14,7 @@ last_memory_usage = 0
 
 
 def memory_usage(unit='mb'):
-    '''Returns the memory usage of the current process in bytes
+    """Returns the memory usage of the current process in bytes
 
     Returns
     -------
@@ -22,7 +22,7 @@ def memory_usage(unit='mb'):
         Current memory usage.
     change
         Change of memory usage since last call.
-    '''
+    """
     unit = unit.lower()
     assert unit in ('b', 'kb', 'mb', 'gb')
     factors = {'b': 1,

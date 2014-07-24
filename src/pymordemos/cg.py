@@ -3,7 +3,7 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-'''Proof of concept for solving the poisson equation in 2D using linear finite elements and our grid interface
+"""Proof of concept for solving the poisson equation in 2D using linear finite elements and our grid interface
 
 Usage:
     cg.py [--rect] PROBLEM-NUMBER DIRICHLET-NUMBER NEUMANN-COUNT
@@ -22,7 +22,7 @@ Arguments:
 
 Options:
     -h, --help    this message
-'''
+"""
 
 from __future__ import absolute_import, division, print_function
 

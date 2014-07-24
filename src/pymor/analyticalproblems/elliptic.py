@@ -12,7 +12,7 @@ from pymor.tools import Named
 
 
 class EllipticProblem(ImmutableInterface, Named):
-    '''Linear elliptic analytical problem.
+    """Linear elliptic analytical problem.
 
     The problem consists in solving ::
 
@@ -47,7 +47,7 @@ class EllipticProblem(ImmutableInterface, Named):
     diffusion_functions
     diffusion_functionals
     dirichlet_data
-    '''
+    """
 
     def __init__(self, domain=RectDomain(), rhs=ConstantFunction(dim_domain=2),
                  diffusion_functions=(ConstantFunction(dim_domain=2),),

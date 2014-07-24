@@ -2,7 +2,7 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-''' This module provides generic time-stepping algorithms for the solution of
+""" This module provides generic time-stepping algorithms for the solution of
 instationary problems.
 
 The algorithms are generic in the sense each algorithms operates exclusively on
@@ -16,7 +16,7 @@ common interface that has to be fulfilled by the time-steppers that are used
 by |InstationaryDiscretization|. The classes :class:`ExplicitEulerTimeStepper`
 and :class:`ImplicitEulerTimeStepper` encapsulate :func:`explicit_euler` and
 :func:`implicit_euler` to provide this interface.
-'''
+"""
 
 from __future__ import absolute_import, division, print_function
 
@@ -26,7 +26,7 @@ from pymor.operators import OperatorInterface
 
 
 class TimeStepperInterface(ImmutableInterface):
-    '''Interface for time-stepping algorithms.
+    """Interface for time-stepping algorithms.
 
     Algorithms implementing this interface solve time-dependent problems
     of the form ::
@@ -35,11 +35,11 @@ class TimeStepperInterface(ImmutableInterface):
 
     Time-steppers used by |InstationaryDiscretization| have to fulfill
     this interface.
-    '''
+    """
 
     @abstractmethod
     def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
-        '''Apply time-stepper to the equation ::
+        """Apply time-stepper to the equation ::
 
             M * d_t u + A(u, t) = F(t).
 
@@ -68,12 +68,12 @@ class TimeStepperInterface(ImmutableInterface):
         Returns
         -------
         |VectorArray| containing the solution trajectory.
-        '''
+        """
         pass
 
 
 class ImplicitEulerTimeStepper(TimeStepperInterface):
-    '''Implict-Euler time-stepper.
+    """Implict-Euler time-stepper.
 
     Solves equations of the form ::
 
@@ -86,7 +86,7 @@ class ImplicitEulerTimeStepper(TimeStepperInterface):
     invert_options
         The :attr:`~pymor.operators.interfaces.OperatorInterface.invert_options` used
         to invert `M + dt*A`.
-    '''
+    """
 
     def __init__(self, nt, invert_options=None):
         self.nt = nt
@@ -98,7 +98,7 @@ class ImplicitEulerTimeStepper(TimeStepperInterface):
 
 
 class ExplicitEulerTimeStepper(TimeStepperInterface):
-    '''Implict-Euler time-stepper.
+    """Implict-Euler time-stepper.
 
     Solves equations of the form ::
 
@@ -108,7 +108,7 @@ class ExplicitEulerTimeStepper(TimeStepperInterface):
     ----------
     nt
         The number of time-steps the time-stepper will perform.
-    '''
+    """
 
     def __init__(self, nt):
         self.nt = nt

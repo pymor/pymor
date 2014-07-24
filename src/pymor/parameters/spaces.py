@@ -12,7 +12,7 @@ from pymor.parameters.interfaces import ParameterSpaceInterface
 
 
 class CubicParameterSpace(ParameterSpaceInterface):
-    '''Simple |ParameterSpace| where each summand is an n-cube.
+    """Simple |ParameterSpace| where each summand is an n-cube.
 
     Parameters
     ----------
@@ -29,7 +29,7 @@ class CubicParameterSpace(ParameterSpaceInterface):
         are tuples (min, max) specifying the minimum and maximum of each
         matrix entry of corresponding |Parameter| component.
         Must be `None` if `minimum` and `maximum` are specified.
-    '''
+    """
 
     def __init__(self, parameter_type, minimum=None, maximum=None, ranges=None):
         assert ranges is None or (minimum is None and maximum is None), 'Must specify minimum, maximum or ranges'
@@ -49,7 +49,7 @@ class CubicParameterSpace(ParameterSpaceInterface):
                    for k in self.parameter_type)
 
     def sample_uniformly(self, counts):
-        '''Iterator sampling uniformly |Parameters| from the space.'''
+        """Iterator sampling uniformly |Parameters| from the space."""
         if isinstance(counts, dict):
             pass
         elif isinstance(counts, (tuple, list, np.ndarray)):
@@ -64,7 +64,7 @@ class CubicParameterSpace(ParameterSpaceInterface):
                              for k, v, shp in izip(self.parameter_type, i, self.parameter_type.values())))
 
     def sample_randomly(self, count=None):
-        '''Iterator sampling random |Parameters| from the space.'''
+        """Iterator sampling random |Parameters| from the space."""
         c = 0
         ranges = self.ranges
         while count is None or c < count:

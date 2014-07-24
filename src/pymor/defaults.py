@@ -17,7 +17,7 @@ _file_sha = hashlib.sha1(open(__file__).read()).digest()
 
 
 class Defaults(object):
-    '''Class defining application-wide defaults. Do not instantiate but use
+    """Class defining application-wide defaults. Do not instantiate but use
     `pymor.defaults`.
 
       :float_cmp_tol:                      tolerance for :func:`~pymor.tools.floatcmp.float_cmp`
@@ -97,7 +97,7 @@ class Defaults(object):
       :compact_print:                      print (arrays) in a compact but possibly not accurate way
       :qt_visualize_patch_backend:         backend to use for plotting in :func:`pymor.gui.qt.visualize_patch`
                                              ('gl' or 'matplotlib')
-    '''
+    """
 
     float_cmp_tol                       = 2**4 * np.finfo(np.zeros(1).dtype).eps
 

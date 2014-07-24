@@ -3,7 +3,7 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-''' This module provides some operators for continuous finite elements discretizations.'''
+""" This module provides some operators for continuous finite elements discretizations."""
 
 from __future__ import absolute_import, division, print_function
 
@@ -16,7 +16,7 @@ from pymor.operators import NumpyMatrixBasedOperator
 
 
 class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
-    '''|Functional| representing the scalar product with an L2-|Function| for linear finite elements.
+    """|Functional| representing the scalar product with an L2-|Function| for linear finite elements.
 
     Boundary treatment can be performed by providing `boundary_info` and `dirichlet_data`,
     in which case the DOFs corresponding to Dirichlet boundaries are set to the values
@@ -41,7 +41,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         Order of the Gauss quadrature to use for numerical integration.
     name
         The name of the functional.
-    '''
+    """
 
     sparse = False
     range = NumpyVectorSpace(1)
@@ -98,7 +98,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
 
 
 class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
-    '''|Functional| representing the scalar product with an L2-|Function| for bilinear finite elements.
+    """|Functional| representing the scalar product with an L2-|Function| for bilinear finite elements.
 
     Boundary treatment can be performed by providing `boundary_info` and `dirichlet_data`,
     in which case the DOFs corresponding to Dirichlet boundaries are set to the values
@@ -123,7 +123,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         Order of the Gauss quadrature to use for numerical integration.
     name
         The name of the functional.
-    '''
+    """
 
     sparse = False
     range = NumpyVectorSpace(1)
@@ -179,7 +179,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
 
 
 class L2ProductP1(NumpyMatrixBasedOperator):
-    '''|Operator| representing the L2-product between linear finite element functions.
+    """|Operator| representing the L2-product between linear finite element functions.
 
     To evaluate the product use the :meth:`~pymor.operators.interfaces module.OperatorInterface.apply2`
     method.
@@ -205,7 +205,7 @@ class L2ProductP1(NumpyMatrixBasedOperator):
         `dirichlet_clear_columns` is `True`, the diagonal entries are set to one.
     name
         The name of the product.
-    '''
+    """
 
     sparse = True
 
@@ -267,7 +267,7 @@ class L2ProductP1(NumpyMatrixBasedOperator):
 
 
 class L2ProductQ1(NumpyMatrixBasedOperator):
-    '''|Operator| representing the L2-product between bilinear finite element functions.
+    """|Operator| representing the L2-product between bilinear finite element functions.
 
     To evaluate the product use the :meth:`~pymor.operators.interfaces module.OperatorInterface.apply2`
     method.
@@ -293,7 +293,7 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
     `dirichlet_clear_columns` is `True`, the diagonal entries are set to one.
     name
         The name of the product.
-    '''
+    """
 
     sparse = True
 
@@ -353,7 +353,7 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
 
 
 class DiffusionOperatorP1(NumpyMatrixBasedOperator):
-    '''Diffusion |Operator| for linear finite elements.
+    """Diffusion |Operator| for linear finite elements.
 
     The operator is of the form ::
 
@@ -381,7 +381,7 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
         zero (e.g. for affine decomposition). Otherwise they are set to one.
     name
         Name of the operator.
-    '''
+    """
 
     sparse = True
 
@@ -459,7 +459,7 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
 
 
 class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
-    '''Diffusion |Operator| for bilinear finite elements.
+    """Diffusion |Operator| for bilinear finite elements.
 
     The operator is of the form ::
 
@@ -487,7 +487,7 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         zero (e.g. for affine decomposition). Otherwise they are set to one.
     name
         Name of the operator.
-    '''
+    """
 
     sparse = True
 

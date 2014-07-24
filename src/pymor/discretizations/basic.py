@@ -17,7 +17,7 @@ from pymor.tools import method_arguments, FrozenDict
 
 
 class DiscretizationBase(DiscretizationInterface):
-    '''Base class for |Discretizations| providing some common functionality.'''
+    """Base class for |Discretizations| providing some common functionality."""
 
     def __init__(self, operators, functionals, vector_operators, products=None, estimator=None, visualizer=None,
                  cache_region='disk', name=None):
@@ -48,7 +48,7 @@ class DiscretizationBase(DiscretizationInterface):
 
 
 class StationaryDiscretization(DiscretizationBase):
-    '''Generic class for discretizations of stationary problems.
+    """Generic class for discretizations of stationary problems.
 
     This class describes discrete problems given by the equation::
 
@@ -91,7 +91,7 @@ class StationaryDiscretization(DiscretizationBase):
         The |Operator| L. Synonymous for `operators['operator']`.
     rhs
         The |Functional| F. Synonymous for `functionals['rhs']`.
-    '''
+    """
 
     sid_ignore = ('visualizer', 'cache_region', 'name')
 
@@ -144,7 +144,7 @@ class StationaryDiscretization(DiscretizationBase):
 
 
 class InstationaryDiscretization(DiscretizationBase):
-    '''Generic class for discretizations of stationary problems.
+    """Generic class for discretizations of stationary problems.
 
     This class describes instationary problems given by the equations::
 
@@ -214,7 +214,7 @@ class InstationaryDiscretization(DiscretizationBase):
         The mass operator M. Synonymous for `operators['mass']`.
     time_stepper
         The provided time-stepper.
-    '''
+    """
 
     sid_ignore = ('visualizer', 'cache_region', 'name')
 

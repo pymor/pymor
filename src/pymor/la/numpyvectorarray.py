@@ -16,7 +16,7 @@ from pymor.tools import float_cmp
 
 
 class NumpyVectorArray(VectorArrayInterface):
-    '''|VectorArray| implementation via |NumPy arrays|.
+    """|VectorArray| implementation via |NumPy arrays|.
 
     This is the default |VectorArray| type used by all |Operators|
     implemented directly in pyMOR. Reduced |Operators| will also
@@ -27,7 +27,7 @@ class NumpyVectorArray(VectorArrayInterface):
     :meth:`~VectorArrayInterface.axpy` or :meth:`VectorArrayInterface.dot`
     will be quite efficient, removing or appending vectors will
     be costly.
-    '''
+    """
 
     def __init__(self, instance, dtype=None, copy=False, order=None, subok=False):
         if isinstance(instance, np.ndarray):

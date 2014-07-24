@@ -11,7 +11,7 @@ from pymor.grids.referenceelements import triangle
 
 
 class TriaGrid(AffineGridInterface):
-    '''Basic implementation of a triangular grid on a rectangular domain.
+    """Basic implementation of a triangular grid on a rectangular domain.
 
     The global face, edge and vertex indices are given as follows ::
 
@@ -32,7 +32,7 @@ class TriaGrid(AffineGridInterface):
     domain
         Tuple `(ll, ur)` where `ll` defines the lower left and `ur` the upper right
         corner of the domain.
-    '''
+    """
 
     dim = 2
     dim_outer = 2

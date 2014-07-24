@@ -12,7 +12,7 @@ from pymor.parameters.interfaces import ParameterFunctionalInterface
 
 
 class ProjectionParameterFunctional(ParameterFunctionalInterface):
-    '''|ParameterFunctional| returning a component of the given parameter.
+    """|ParameterFunctional| returning a component of the given parameter.
 
     Parameters
     ----------
@@ -25,7 +25,7 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
         `mu[component_name]`.
     name
         Name of the functional.
-    '''
+    """
 
     def __init__(self, component_name, component_shape, coordinates=None, name=None):
         self.name = name
@@ -46,7 +46,7 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
 
 
 class GenericParameterFunctional(ParameterFunctionalInterface):
-    '''A wrapper making an arbitrary Python function a |ParameterFunctional|
+    """A wrapper making an arbitrary Python function a |ParameterFunctional|
 
     Parameters
     ----------
@@ -56,7 +56,7 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
         The function to wrap. The function is of the form `mapping(mu)`.
     name
         The name of the functional.
-    '''
+    """
 
     def __init__(self, mapping, parameter_type, name=None):
         self.name = name
@@ -69,7 +69,7 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
 
 
 class ExpressionParameterFunctional(GenericParameterFunctional):
-    '''Turns a Python expression given as a string into a |ParameterFunctional|.
+    """Turns a Python expression given as a string into a |ParameterFunctional|.
 
     Some |NumPy| arithmetic functions like 'sin', 'log', 'min' are supported.
     For a full list see the `functions` class attribute.
@@ -85,7 +85,7 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
         The Python expression for the functional as a string.
     parameter_type
         The |ParameterType| of the |Parameters| the functional takes.
-    '''
+    """
 
     functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',
                                              'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',

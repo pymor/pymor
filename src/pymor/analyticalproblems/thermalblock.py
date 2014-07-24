@@ -15,7 +15,7 @@ from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional
 
 
 class ThermalBlockProblem(EllipticProblem, Unpicklable):
-    '''Analytical description of a 2D thermal block diffusion problem.
+    """Analytical description of a 2D thermal block diffusion problem.
 
     This problem is to solve the elliptic equation ::
 
@@ -47,7 +47,7 @@ class ThermalBlockProblem(EllipticProblem, Unpicklable):
         to lie in the interval [μ_min, μ_max].
     rhs
         The |Function| f(x, μ).
-    '''
+    """
 
     def __init__(self, num_blocks=(3, 3), parameter_range=(0.1, 1), rhs=ConstantFunction(dim_domain=2)):
 

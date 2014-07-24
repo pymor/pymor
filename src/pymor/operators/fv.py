@@ -3,7 +3,7 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-''' This module provides some operators for finite volume discretizations.'''
+""" This module provides some operators for finite volume discretizations."""
 
 from __future__ import absolute_import, division, print_function
 
@@ -25,7 +25,7 @@ from pymor.tools.quadratures import GaussQuadratures
 
 
 class NumericalConvectiveFluxInterface(ImmutableInterface, Parametric):
-    '''Interface for numerical convective fluxes for finite volume schemes.
+    """Interface for numerical convective fluxes for finite volume schemes.
 
     Numerical fluxes defined by this interfaces are functions of
     the form `F(U_inner, U_outer, unit_outer_normal, edge_volume, mu)`.
@@ -49,7 +49,7 @@ class NumericalConvectiveFluxInterface(ImmutableInterface, Parametric):
 
          `evaluate_stage2` returns a |NumPy array| of the flux evaluations
          for each edge.
-    '''
+    """
 
     @abstractmethod
     def evaluate_stage1(self, U, mu=None):
@@ -61,7 +61,7 @@ class NumericalConvectiveFluxInterface(ImmutableInterface, Parametric):
 
 
 class LaxFriedrichsFlux(NumericalConvectiveFluxInterface):
-    '''Lax-Friedrichs numerical flux.
+    """Lax-Friedrichs numerical flux.
 
     If `f` is the analytical flux, the Lax-Friedrichs flux is given
     by ::
@@ -74,7 +74,7 @@ class LaxFriedrichsFlux(NumericalConvectiveFluxInterface):
         |Function| defining the analytical flux `f`.
     lxf_lambda
         The stabilization parameter `λ`.
-    '''
+    """
 
     def __init__(self, flux, lxf_lambda=1.0):
         self.flux = flux
@@ -91,7 +91,7 @@ class LaxFriedrichsFlux(NumericalConvectiveFluxInterface):
 
 
 class SimplifiedEngquistOsherFlux(NumericalConvectiveFluxInterface):
-    '''Engquist-Osher numerical flux. Simplified Implementation for special case.
+    """Engquist-Osher numerical flux. Simplified Implementation for special case.
 
     For the definition of the Enquist-Osher flux see :class:`EngquistOsherFlux`.
     This class provides a faster and more accurate implementation for the special
@@ -103,7 +103,7 @@ class SimplifiedEngquistOsherFlux(NumericalConvectiveFluxInterface):
         |Function| defining the analytical flux `f`.
     flux_derivative
         |Function| defining the analytical flux derivative `f'`.
-    '''
+    """
 
     def __init__(self, flux, flux_derivative):
         self.flux = flux
@@ -126,7 +126,7 @@ class SimplifiedEngquistOsherFlux(NumericalConvectiveFluxInterface):
 
 
 class EngquistOsherFlux(NumericalConvectiveFluxInterface):
-    '''Engquist-Osher numerical flux.
+    """Engquist-Osher numerical flux.
 
     If `f` is the analytical flux, and `f'` its derivative, the Engquist-Osher flux is
     given by ::
@@ -152,7 +152,7 @@ class EngquistOsherFlux(NumericalConvectiveFluxInterface):
         Number of Gauss quadrature points to be used for integration.
     intervals
         Number of subintervals to be used for integration.
-    '''
+    """
 
     def __init__(self, flux, flux_derivative, gausspoints=5, intervals=1):
         self.flux = flux
@@ -184,7 +184,7 @@ class EngquistOsherFlux(NumericalConvectiveFluxInterface):
 
 
 class NonlinearAdvectionOperator(OperatorBase):
-    '''Nonlinear finite volume advection |Operator|.
+    """Nonlinear finite volume advection |Operator|.
 
     The operator is of the form ::
 
@@ -206,7 +206,7 @@ class NonlinearAdvectionOperator(OperatorBase):
         boundary is assumed.
     name
         The name of the operator.
-    '''
+    """
 
     linear = False
 
@@ -305,27 +305,27 @@ class NonlinearAdvectionOperator(OperatorBase):
 
 def nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, flux, lxf_lambda=1.0,
                                                 dirichlet_data=None, name=None):
-    '''Instantiate a :class:`NonlinearAdvectionOperator` using :class:`LaxFriedrichsFlux`.'''
+    """Instantiate a :class:`NonlinearAdvectionOperator` using :class:`LaxFriedrichsFlux`."""
     num_flux = LaxFriedrichsFlux(flux, lxf_lambda)
     return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, name)
 
 
 def nonlinear_advection_simplified_engquist_osher_operator(grid, boundary_info, flux, flux_derivative,
                                                            dirichlet_data=None, name=None):
-    '''Instantiate a :class:`NonlinearAdvectionOperator` using :class:`SimplifiedEngquistOsherFlux`.'''
+    """Instantiate a :class:`NonlinearAdvectionOperator` using :class:`SimplifiedEngquistOsherFlux`."""
     num_flux = SimplifiedEngquistOsherFlux(flux, flux_derivative)
     return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, name)
 
 
 def nonlinear_advection_engquist_osher_operator(grid, boundary_info, flux, flux_derivative, gausspoints=5, intervals=1,
                                                 dirichlet_data=None, name=None):
-    '''Instantiate a :class:`NonlinearAdvectionOperator` using :class:`EngquistOsherFlux`.'''
+    """Instantiate a :class:`NonlinearAdvectionOperator` using :class:`EngquistOsherFlux`."""
     num_flux = EngquistOsherFlux(flux, flux_derivative, gausspoints=gausspoints, intervals=intervals)
     return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, name)
 
 
 class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
-    '''Linear advection finite Volume |Operator| using Lax-Friedrichs flux.
+    """Linear advection finite Volume |Operator| using Lax-Friedrichs flux.
 
     The operator is of the form ::
 
@@ -345,7 +345,7 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
         The stabilization parameter `λ`.
     name
         The name of the operator.
-    '''
+    """
 
     def __init__(self, grid, boundary_info, velocity_field, lxf_lambda=1.0, name=None):
         self.grid = grid
@@ -398,7 +398,7 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
 
 
 class L2Product(NumpyMatrixBasedOperator):
-    '''|Operator| representing the L2-product for finite volume functions.
+    """|Operator| representing the L2-product for finite volume functions.
 
     To evaluate the product use the :meth:`~pymor.operators.interfaces module.OperatorInterface.apply2`
     method.
@@ -409,7 +409,7 @@ class L2Product(NumpyMatrixBasedOperator):
         The |Grid| over which to assemble the product.
     name
         The name of the product.
-    '''
+    """
 
     sparse = True
 
@@ -426,7 +426,7 @@ class L2Product(NumpyMatrixBasedOperator):
 
 
 class L2ProductFunctional(NumpyMatrixBasedOperator):
-    '''Finite volume |Functional| representing the scalar product with an L2-|Function|.
+    """Finite volume |Functional| representing the scalar product with an L2-|Function|.
 
     Parameters
     ----------
@@ -438,7 +438,7 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
         Order of the Gauss quadrature to use for numerical integration.
     name
         The name of the functional.
-    '''
+    """
 
     range = NumpyVectorSpace(1)
     sparse = False

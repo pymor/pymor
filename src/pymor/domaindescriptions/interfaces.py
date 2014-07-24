@@ -9,13 +9,13 @@ from pymor.domaindescriptions.boundarytypes import BoundaryType
 
 
 class DomainDescriptionInterface(ImmutableInterface):
-    '''Analytically describes a domain and its boundary (types).
+    """Analytically describes a domain and its boundary (types).
 
     Attributes
     ----------
     boundary_types
         Set of |BoundaryTypes| the domain has.
-    '''
+    """
 
     boundary_types = frozenset()
 

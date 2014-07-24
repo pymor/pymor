@@ -16,9 +16,9 @@ from functools import partial
 
 
 class Unpicklable(object):
-    '''Mix me into classes you know cannot be pickled.
+    """Mix me into classes you know cannot be pickled.
     Our test system won't try to pickle me then
-    '''
+    """
     pass
 
 

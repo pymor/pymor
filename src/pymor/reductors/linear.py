@@ -16,7 +16,7 @@ from pymor.reductors.basic import reduce_generic_rb
 
 def reduce_stationary_affine_linear(discretization, RB, error_product=None, disable_caching=True,
                                     extends=None):
-    '''Reductor for linear |StationaryDiscretizations| whose with affinely decomposed operator and rhs.
+    """Reductor for linear |StationaryDiscretizations| whose with affinely decomposed operator and rhs.
 
     This reductor uses :meth:`~pymor.reductors.basic.reduce_generic_rb` for the actual
     RB-projection. The only addition is an error estimator. The estimator evaluates the
@@ -51,7 +51,7 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
     reduction_data
         Additional data produced by the reduction process. In this case the computed
         Riesz representatives. (Compare the `extends` parameter.)
-    '''
+    """
 
     #assert isinstance(discretization, StationaryDiscretization)
     assert discretization.linear
@@ -141,10 +141,10 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
 
 
 class StationaryAffineLinearReducedEstimator(ImmutableInterface):
-    '''Instatiated by :meth:`reduce_stationary_affine_linear`.
+    """Instatiated by :meth:`reduce_stationary_affine_linear`.
 
     Not to be used directly.
-    '''
+    """
 
     def __init__(self, estimator_matrix):
         self.estimator_matrix = estimator_matrix

@@ -23,7 +23,7 @@ from pymor.operators.fv import (nonlinear_advection_lax_friedrichs_operator,
 def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=None, nt=100, num_flux='lax_friedrichs',
                                                    lxf_lambda=1., eo_gausspoints=5, eo_intervals=1, num_values=None,
                                                    domain_discretizer=None, grid=None, boundary_info=None):
-    '''Discretizes an |InstationaryAdvectionProblem| using the finite volume method.
+    """Discretizes an |InstationaryAdvectionProblem| using the finite volume method.
 
     Simple explicit Euler time-stepping is used for time-discretization.
 
@@ -74,7 +74,7 @@ def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=
             :boundary_info:  The generated |BoundaryInfo|.
 
 
-    '''
+    """
 
     assert isinstance(analytical_problem, InstationaryAdvectionProblem)
     assert grid is None or boundary_info is not None

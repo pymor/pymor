@@ -19,6 +19,7 @@ try:
 
     from pymor.core.exceptions import ContractNotRespected
 
+    # noinspection PyShadowingNames,PyShadowingNames
     class TestContract(TestInterface):
 
         def testContractFail(self):
@@ -57,9 +58,9 @@ try:
 
             @contract
             def disabled(phrase):
-                '''
+                """
                 :type phrase: str
-                '''
+                """
                 return phrase
             # this should not throw w/ contracts disabled
             disabled(int(8))
@@ -69,9 +70,9 @@ try:
 
             @contract
             def enabled(phrase):
-                '''
+                """
                 :type phrase: str
-                '''
+                """
                 return phrase
             # a newly decorated function will throw
             with pytest.raises(exceptions.ContractNotRespected):

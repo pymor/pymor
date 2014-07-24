@@ -3,7 +3,7 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-'''Thermalblock with POD demo.
+"""Thermalblock with POD demo.
 
 Usage:
   thermalblock_pod.py [-hp] [--grid=NI] [--help] [--plot-solutions] [--pod-norm=NORM]
@@ -35,7 +35,7 @@ Options:
 
   --test=COUNT           Use COUNT snapshots for stochastic error estimation
                          [default: 10].
-'''
+"""
 
 from __future__ import absolute_import, division, print_function
 

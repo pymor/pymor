@@ -16,12 +16,12 @@ from pymor.tools import float_cmp_all
 
 
 class VectorInterface(BasicInterface):
-    '''Interface for vectors.
+    """Interface for vectors.
 
     This Interface is mainly intended to be used in conjunction with |ListVectorArray|. In general, all
     pyMOR objects operate on |VectorArrays| instead of single vectors! All methods of the interface have
     a direct counterpart in the |VectorArray| interface.
-    '''
+    """
 
     @abstractclassmethod
     def make_zeros(cls, subtype=None):
@@ -114,7 +114,7 @@ class VectorInterface(BasicInterface):
 
 
 class NumpyVector(VectorInterface):
-    '''Vector stored in a NumPy 1D-array.'''
+    """Vector stored in a NumPy 1D-array."""
 
     def __init__(self, instance, dtype=None, copy=False, order=None, subok=False):
         if isinstance(instance, np.ndarray) and not copy:
@@ -182,7 +182,7 @@ class NumpyVector(VectorInterface):
 
 
 class ListVectorArray(VectorArrayInterface):
-    '''|VectorArray| implementation via a python list of vectors.'''
+    """|VectorArray| implementation via a python list of vectors."""
 
     __NONE = {}
     vector_type = None

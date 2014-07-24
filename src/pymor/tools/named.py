@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 
 class Named(object):
-    '''Mixin for objects with a name.
+    """Mixin for objects with a name.
 
     Attributes
     ----------
@@ -14,7 +14,7 @@ class Named(object):
         Property returning the object's name. If no name has
         been set, a random name is created from the class name
         and a uuid4.
-    '''
+    """
 
     __name = None
 

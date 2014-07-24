@@ -2,12 +2,12 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-''' This module provides a widget for displaying patch plots of
+""" This module provides a widget for displaying patch plots of
 scalar data assigned to a 2D-Grid using OpenGL. This widget is not
 intended to be used directly. Instead, use
 :meth:`~pymor.gui.qt.visualize_glumpy_patch` or
 :class:`~pymor.gui.qt.GlumpyPatchVisualizer`.
-'''
+"""
 
 from __future__ import absolute_import, division, print_function
 

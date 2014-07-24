@@ -12,7 +12,7 @@ logger = getLogger(__name__)
 
 
 def iadd_masked(U, V, U_ind):
-    '''Indexed, masked in-place addition.
+    """Indexed, masked in-place addition.
 
     This is the same as ::
 
@@ -22,7 +22,7 @@ def iadd_masked(U, V, U_ind):
         1. Negative indices are skipped.
         2. If the same index is repeated, all additions are performed,
            not only the last one.
-    '''
+    """
     logger.warn('Call to unoptimized function iadd_masked')
     assert len(U_ind) == len(V), 'Lengths of U_ind and V must match'
     assert U.shape[1:] == V.shape[1:], 'U.shape[1:] != V.shape[1:]'
@@ -34,7 +34,7 @@ def iadd_masked(U, V, U_ind):
 
 
 def isub_masked(U, V, U_ind):
-    '''Indexed, masked in-place subtraction.
+    """Indexed, masked in-place subtraction.
 
     This is the same as ::
 
@@ -44,7 +44,7 @@ def isub_masked(U, V, U_ind):
         1. Negative indices are skipped.
         2. If the same index is repeated, all subtractions are performed,
            not only the last one.
-    '''
+    """
     logger.warn('Call to unoptimized function iadd_masked')
     assert len(U_ind) == len(V), 'Lengths of U_ind and V must match'
     assert U.shape[1:] == V.shape[1:], 'U.shape[1:] != V.shape[1:]'

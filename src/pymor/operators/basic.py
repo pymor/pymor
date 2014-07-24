@@ -3,7 +3,7 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-'''This module provides some |NumPy| based |Operators| as well as base classes
+"""This module provides some |NumPy| based |Operators| as well as base classes
 providing some common functionality for the implementation of new |Operators|.
 
 There are three |NumPy|-based |Operators| of interest:
@@ -16,7 +16,7 @@ There are three |NumPy|-based |Operators| of interest:
 
 If you are developing new |Operators| not based on |NumPy arrays|, you should
 consider deriving from :class:`OperatorBase`.
-'''
+"""
 
 from __future__ import absolute_import, division, print_function
 
@@ -45,7 +45,7 @@ except ImportError:
 
 
 class OperatorBase(OperatorInterface):
-    '''Base class for |Operators| providing some default implementations.'''
+    """Base class for |Operators| providing some default implementations."""
 
     def apply2(self, V, U, pairwise, U_ind=None, V_ind=None, mu=None, product=None):
         mu = self.parse_parameter(mu)
@@ -143,7 +143,7 @@ class OperatorBase(OperatorInterface):
 
 
 class NumpyGenericOperator(OperatorBase):
-    '''Wraps an arbitrary Python function between |NumPy arrays| as a proper
+    """Wraps an arbitrary Python function between |NumPy arrays| as a proper
     |Operator|.
 
     Parameters
@@ -166,7 +166,7 @@ class NumpyGenericOperator(OperatorBase):
         The |ParameterType| the mapping accepts.
     name
         Name of the operator.
-    '''
+    """
 
     def __init__(self, mapping, dim_source=1, dim_range=1, linear=False, parameter_type=None, name=None):
         self.source = NumpyVectorSpace(dim_source)
@@ -188,14 +188,14 @@ class NumpyGenericOperator(OperatorBase):
 
 
 class NumpyMatrixBasedOperator(OperatorBase):
-    '''Base class for operators which assemble into a |NumpyMatrixOperator|.
+    """Base class for operators which assemble into a |NumpyMatrixOperator|.
 
     Attributes
     ----------
     sparse
         `True` if the operator assembles into a sparse matrix, `False` if the
         operator assembles into a dense matrix, `None` if unknown.
-    '''
+    """
 
     linear = True
     sparse = None
@@ -205,7 +205,7 @@ class NumpyMatrixBasedOperator(OperatorBase):
         pass
 
     def assemble(self, mu=None):
-        '''Assembles the operator for a given |Parameter|.
+        """Assembles the operator for a given |Parameter|.
 
         Parameters
         ----------
@@ -215,7 +215,7 @@ class NumpyMatrixBasedOperator(OperatorBase):
         Returns
         -------
         The assembled **parameter independent** |Operator|.
-        '''
+        """
         if hasattr(self, '_assembled_operator'):
             return self._assembled_operator
         elif self.parameter_type is None:
@@ -291,7 +291,7 @@ class NumpyMatrixBasedOperator(OperatorBase):
             return OrderedDict((('solve', {'type': 'solve'}),))
 
     def export_matrix(self, filename, matrix_name=None, output_format='matlab', mu=None):
-        '''Save matrix of operator to a file.
+        """Save matrix of operator to a file.
 
         Parameters
         ----------
@@ -303,7 +303,7 @@ class NumpyMatrixBasedOperator(OperatorBase):
             is used.
         output_format
             Output file format. Either `matlab` or `matrixmarket`.
-        '''
+        """
         assert output_format in {'matlab', 'matrixmarket'}
         matrix = self.assemble(mu)._matrix
         matrix_name = matrix_name or self.name
@@ -314,7 +314,7 @@ class NumpyMatrixBasedOperator(OperatorBase):
 
 
 class NumpyMatrixOperator(NumpyMatrixBasedOperator):
-    '''Wraps a 2D |NumPy Array| as a proper |Operator|.
+    """Wraps a 2D |NumPy Array| as a proper |Operator|.
 
     Parameters
     ----------
@@ -322,7 +322,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         The |NumPy array| which is to be wrapped.
     name
         Name of the operator.
-    '''
+    """
 
     calculate_sid = False
 
@@ -457,7 +457,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         return NumpyVectorArray(R)
 
     def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
-        '''Project the operator to a subbasis.
+        """Project the operator to a subbasis.
 
         The purpose of this method is to further project an operator that has been
         obtained through :meth:`~pymor.operators.interfaces.OperatorInterface.projected`
@@ -482,7 +482,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         Returns
         -------
         The projected |Operator|.
-        '''
+        """
         assert dim_source is None or dim_source <= self.source.dim
         assert dim_range is None or dim_range <= self.range.dim
         name = name or '{}_projected_to_subbasis'.format(self.name)
@@ -516,7 +516,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
 
 class ProjectedOperator(OperatorBase):
-    '''Genric |Operator| for representing the projection of an |Operator| to a subspace.
+    """Genric |Operator| for representing the projection of an |Operator| to a subspace.
 
     This class is not intended to be instantiated directly. Instead, you should use
     the :meth:`~pymor.operators.interfaces.OperatorInterface.projected` method of the given
@@ -537,7 +537,7 @@ class ProjectedOperator(OperatorBase):
         usually necessary, as |VectorArrays| are not immutable.
     name
         Name of the projected operator.
-    '''
+    """
 
     linear = False
 
@@ -583,7 +583,7 @@ class ProjectedOperator(OperatorBase):
                 return NumpyVectorArray(self.product.apply2(V, self.range_basis, pairwise=False))
 
     def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
-        '''See :meth:`NumpyMatrixOperator.projected_to_subbasis`.'''
+        """See :meth:`NumpyMatrixOperator.projected_to_subbasis`."""
         assert dim_source is None or dim_source <= self.source.dim
         assert dim_range is None or dim_range <= self.range.dim
         assert dim_source is None or self.source_basis is not None, 'not implemented'
@@ -607,7 +607,7 @@ class ProjectedOperator(OperatorBase):
 
 
 class ProjectedLinearOperator(NumpyMatrixBasedOperator):
-    '''Genric |Operator| for representing the projection of a linear |Operator| to a subspace.
+    """Genric |Operator| for representing the projection of a linear |Operator| to a subspace.
 
     This class is not intended to be instantiated directly. Instead, you should use
     the :meth:`~pymor.operators.interfaces.OperatorInterface.projected` method of the given
@@ -628,7 +628,7 @@ class ProjectedLinearOperator(NumpyMatrixBasedOperator):
         usually necessary, as |VectorArrays| are not immutable.
     name
         Name of the projected operator.
-    '''
+    """
 
     sparse = False
 
@@ -674,7 +674,7 @@ class ProjectedLinearOperator(NumpyMatrixBasedOperator):
                 return self.product.apply2(self.range_basis, V, pairwise=False)
 
     def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
-        '''See :meth:`NumpyMatrixOperator.projected_to_subbasis`.'''
+        """See :meth:`NumpyMatrixOperator.projected_to_subbasis`."""
         assert dim_source is None or dim_source <= self.source.dim
         assert dim_range is None or dim_range <= self.dim_range
         assert dim_source is None or self.source_basis is not None, 'not implemented'
@@ -688,7 +688,7 @@ class ProjectedLinearOperator(NumpyMatrixBasedOperator):
 
 
 class LincombOperator(OperatorBase):
-    '''A generic |LincombOperator| representing a linear combination of arbitrary |Operators|.
+    """A generic |LincombOperator| representing a linear combination of arbitrary |Operators|.
 
     Parameters
     ----------
@@ -705,7 +705,7 @@ class LincombOperator(OperatorBase):
         the linear coefficients.
     name
         Name of the operator.
-    '''
+    """
 
     def __init__(self, operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
         assert coefficients is None or len(operators) == len(coefficients)
@@ -735,7 +735,7 @@ class LincombOperator(OperatorBase):
                                       [f for f in coefficients if isinstance(f, ParameterFunctionalInterface)])
 
     def evaluate_coefficients(self, mu):
-        '''Compute the linear coefficients of the linear combination for a given parameter.
+        """Compute the linear coefficients of the linear combination for a given parameter.
 
         Parameters
         ----------
@@ -745,7 +745,7 @@ class LincombOperator(OperatorBase):
         Returns
         -------
         List of linear coefficients.
-        '''
+        """
         mu = self.parse_parameter(mu)
         if self.coefficients is None:
             if self.pad_coefficients:
@@ -803,7 +803,7 @@ class LincombOperator(OperatorBase):
                                coefficients_name=self.coefficients_name, name=name)
 
     def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
-        '''See :meth:`NumpyMatrixOperator.projected_to_subbasis`.'''
+        """See :meth:`NumpyMatrixOperator.projected_to_subbasis`."""
         assert dim_source is None or dim_source <= self.source.dim
         assert dim_range is None or dim_range <= self.range.dim
         proj_operators = [op.projected_to_subbasis(dim_source=dim_source, dim_range=dim_range)

@@ -17,7 +17,7 @@ from pymor.tools import float_cmp_all
 def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=None,
                  reiterate=None, reiteration_threshold=None, check=None, check_tol=None,
                  copy=False):
-    '''Orthonormalize a |VectorArray| using the Gram-Schmidt algorithm.
+    """Orthonormalize a |VectorArray| using the Gram-Schmidt algorithm.
 
     Parameters
     ----------
@@ -56,7 +56,7 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=None,
     Returns
     -------
     The orthonormalized |VectorArray|.
-    '''
+    """
 
     logger = getLogger('pymor.la.gram_schmidt.gram_schmidt')
     tol = defaults.gram_schmidt_tol if tol is None else tol
