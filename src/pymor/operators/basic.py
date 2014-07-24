@@ -290,7 +290,7 @@ class NumpyMatrixBasedOperator(OperatorBase):
         else:
             return OrderedDict((('solve', {'type': 'solve'}),))
 
-    def export_matrix(self, filename, matrix_name=None, format='matlab', mu=None):
+    def export_matrix(self, filename, matrix_name=None, output_format='matlab', mu=None):
         '''Save matrix of operator to a file.
 
         Parameters
@@ -299,15 +299,15 @@ class NumpyMatrixBasedOperator(OperatorBase):
             Name of output file.
         matrix_name
             The name, the output matrix is given. (Comment field is used in
-            case of Matrix Market format.) If `None`, the |Operator|'s `name`
+            case of Matrix Market output_format.) If `None`, the |Operator|'s `name`
             is used.
-        format
+        output_format
             Output file format. Either `matlab` or `matrixmarket`.
         '''
-        assert format in {'matlab', 'matrixmarket'}
+        assert output_format in {'matlab', 'matrixmarket'}
         matrix = self.assemble(mu)._matrix
         matrix_name = matrix_name or self.name
-        if format is 'matlab':
+        if output_format is 'matlab':
             savemat(filename, {matrix_name: matrix})
         else:
             mmwrite(filename, matrix, comment=matrix_name)

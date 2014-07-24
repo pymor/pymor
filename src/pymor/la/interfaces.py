@@ -518,8 +518,8 @@ class VectorSpace(BasicInterface):
         The subtype used to construct arrays of the given space.
     '''
 
-    def __init__(self, type, subtype=None):
-        self.type = type
+    def __init__(self, space_type, subtype=None):
+        self.type = space_type
         self.subtype = subtype
 
     def empty(self, reserve=0):
