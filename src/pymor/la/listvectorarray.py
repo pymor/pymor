@@ -178,7 +178,7 @@ class NumpyVector(VectorInterface):
         A = np.abs(self._array)
         max_ind = np.argmax(A)
         max_val = A[max_ind]
-        return (max_ind, max_val)
+        return max_ind, max_val
 
 
 class ListVectorArray(VectorArrayInterface):

@@ -234,4 +234,4 @@ class GmshGrid(AffineGridInterface):
     @staticmethod
     def test_instances():
         import os.path
-        return (GmshGrid(open(os.path.join(os.path.dirname(__file__), '../../../../testdata/gmsh_1.msh'))),)
+        return GmshGrid(open(os.path.join(os.path.dirname(__file__), '../../../../testdata/gmsh_1.msh'))),

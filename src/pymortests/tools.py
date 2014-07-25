@@ -52,7 +52,7 @@ class TestGaussQuadrature(TestInterface):
         for n, function, _, integral in polynomials(GaussQuadratures.orders[-1]):
             name = 'x^{}'.format(n)
             for order in GaussQuadratures.orders:
-                if n > (order) / 2:
+                if n > order / 2:
                     continue
                 Q = GaussQuadratures.iter_quadrature(order)
                 ret = sum([function(p) * w for (p, w) in Q])

@@ -435,7 +435,7 @@ def _calculate_sid(obj, name):
             return obj
         elif t_obj is np.ndarray:
             if obj.size < 64:
-                return ('array', obj.shape, obj.dtype.str, obj.tostring())
+                return 'array', obj.shape, obj.dtype.str, obj.tostring()
             else:
                 raise ValueError('sid calculation faild at large numpy array {}'.format(name))
         else:

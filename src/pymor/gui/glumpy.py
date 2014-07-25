@@ -49,7 +49,7 @@ if HAVE_ALL:
         gl.glCompileShader(vertex_shader)
         # check compilation error
         result = gl.glGetShaderiv(vertex_shader, gl.GL_COMPILE_STATUS)
-        if not(result):
+        if not result:
             raise RuntimeError(gl.glGetShaderInfoLog(vertex_shader))
         return vertex_shader
 
@@ -60,7 +60,7 @@ if HAVE_ALL:
         gl.glLinkProgram(program)
         # check linking error
         result = gl.glGetProgramiv(program, gl.GL_LINK_STATUS)
-        if not(result):
+        if not result:
             raise RuntimeError(gl.glGetProgramInfoLog(program))
         return program
 

@@ -79,7 +79,7 @@ class ConstantFunction(FunctionBase):
         self.name = name
 
     def __str__(self):
-        return ('{name}: x -> {value}').format(name=self.name, value=self._value)
+        return '{name}: x -> {value}'.format(name=self.name, value=self._value)
 
     def __repr__(self):
         return 'ConstantFunction({}, {})'.format(repr(self._value), self.dim_domain)
@@ -128,7 +128,7 @@ class GenericFunction(FunctionBase):
             self.build_parameter_type(parameter_type, local_global=True)
 
     def __str__(self):
-        return ('{name}: x -> {mapping}').format(name=self.name, mapping=self._mapping)
+        return '{name}: x -> {mapping}'.format(name=self.name, mapping=self._mapping)
 
     def evaluate(self, x, mu=None):
         x = np.array(x, copy=False, ndmin=1)

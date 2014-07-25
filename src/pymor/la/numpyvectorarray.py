@@ -335,7 +335,7 @@ class NumpyVectorArray(VectorArrayInterface):
 
         if self._array.shape[1] == 0:
             l = self.len_ind(ind)
-            return (np.ones(l) * -1, np.zeros(l))
+            return np.ones(l) * -1, np.zeros(l)
 
         A = self._array[:self._len] if ind is None else \
             self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
@@ -343,7 +343,7 @@ class NumpyVectorArray(VectorArrayInterface):
         A = np.abs(A)
         max_ind = np.argmax(A, axis=1)
         max_val = A[np.arange(len(A)), max_ind]
-        return (max_ind, max_val)
+        return max_ind, max_val
 
     def __str__(self):
         return self._array[:self._len].__str__()

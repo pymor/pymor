@@ -65,9 +65,9 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None,
                     .format(iteration, err, err / error_sequence[-1], err / error_sequence[0]))
         error_sequence.append(err)
 
-    if (err <= abs_limit):
+    if err <= abs_limit:
         logger.info('Absolute limit of {} reached. Stopping.'.format(abs_limit))
-    elif (err/error_sequence[0] <= reduction):
+    elif err/error_sequence[0] <= reduction:
         logger.info('Prescribed total reduction of {} reached. Stopping.'.format(reduction))
     elif (len(error_sequence) >= stagnation_window + 1
           and err/max(error_sequence[-stagnation_window - 1:]) >= stagnation_threshold):

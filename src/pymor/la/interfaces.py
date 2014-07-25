@@ -476,7 +476,7 @@ class VectorArrayInterface(BasicInterface):
 
     def check_ind_unique(self, ind):
         """Check if `ind` is an admissable list of unique indices in the sense of the class documentation."""
-        if (ind is None or isinstance(ind, Number) and 0 <= ind < len(self)):
+        if ind is None or isinstance(ind, Number) and 0 <= ind < len(self):
             return True
         elif isinstance(ind, list):
             if len(ind) == 0:
