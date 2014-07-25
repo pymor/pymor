@@ -5,9 +5,6 @@
 from __future__ import absolute_import, division, print_function
 
 from itertools import product
-import math as m
-import random
-
 import numpy as np
 import pytest
 

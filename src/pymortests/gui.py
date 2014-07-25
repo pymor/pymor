@@ -3,10 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
-import itertools
-import math
 import multiprocessing
-import os
 from pymor.grids.oned import OnedGrid
 from time import sleep
 from pymor.gui.qt import visualize_patch
