@@ -3,11 +3,11 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
+
 import pprint
 import pkgutil
 import sys
 import numpy as np
-import numpy.testing as npt
 from numpy.polynomial.polynomial import Polynomial
 from math import factorial
 

@@ -16,16 +16,23 @@ from pymor.algorithms.newton import newton, NewtonError
 import pymor.algorithms.basisextension as bxt
 from pymor.tools.floatcmp import float_cmp
 
+
 def _newton(order):
     mop = MonomOperator(order)
     rhs = NumpyVectorArray([0.0])
     guess = NumpyVectorArray([1.0])
     return newton(mop, rhs, initial_guess=guess)
 
-@pytest.mark.parametrize("order", range(1, 8, 2))
+
+@pytest.mark.parametrize("order", range(1, 8))
 def test_newton(order):
-        U, _ = _newton(order)
-        assert float_cmp(U.data, 0.0)
+    U, _ = _newton(order)
+    assert float_cmp(U.data, 0.0)
+
+
+def test_newton_fail():
+    with pytest.raises(NewtonError):
+        _ = _newton(0)
 
 
 @pytest.fixture(params=('pod_basis_extension', 'gram_schmidt_basis_extension', 'trivial_basis_extension'))

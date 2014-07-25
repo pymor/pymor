@@ -96,7 +96,7 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
         append_vector(d.rhs.as_vector(), R_R, RR_R)
     else:
         R_R = space.empty(reserve=len(d.rhs.operators))
-        RR_R = spacee.empty(reserve=len(d.rhs.operators))
+        RR_R = space.empty(reserve=len(d.rhs.operators))
         for op in d.rhs.operators:
             append_vector(op.as_vector(), R_R, RR_R)
 

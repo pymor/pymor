@@ -43,7 +43,7 @@ def print_memory_usage(msg=None, unit='mb'):
         print('Memory usage {0:5.1f} {1} - delta: {2:5.1f} {1} - {3}'.format(u[0], unit.upper(), u[1], msg))
 
 
-def total_size(o, handlers=[], verbose=False):
+def total_size(o, handlers=None, verbose=False):
     """ Returns the approximate memory footprint of an object and all of its contents.
 
     Automatically finds the contents of the following builtin containers and

@@ -107,8 +107,6 @@ copyright = '2012-2013, the pyMOR AUTHORS'
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 #
-import pymor
-
 version = str(pymor.version)
 
 # The full version, including alpha/beta/rc tags.
