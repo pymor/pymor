@@ -28,7 +28,7 @@ class BoundaryType(ImmutableInterface):
         Set of the names of registered boundary types.
     """
 
-    types = set(['dirichlet', 'neumann', 'robin'])
+    types = {'dirichlet', 'neumann', 'robin'}
 
     @classmethod
     def register_type(cls, name):

@@ -29,20 +29,20 @@ class TestContract(TestInterface):
     def test_naming(self):
         imp = BoringTestClass()
 
-        def _combo(dirichletA, dirichletB):
-            assert imp.dirichletTest(dirichletA, dirichletB)
+        def _combo(dirichlet_a, dirichlet_b):
+            assert imp.dirichletTest(dirichlet_a, dirichlet_b)
             with pytest.raises(ContractNotRespected):
-                imp.dirichletTest(dirichletA, dirichletA)
+                imp.dirichletTest(dirichlet_a, dirichlet_a)
             with pytest.raises(ContractNotRespected):
-                imp.dirichletTest(dirichletB, dirichletA)
+                imp.dirichletTest(dirichlet_b, dirichlet_a)
             with pytest.raises(ContractNotRespected):
-                imp.dirichletTest(dirichletA, 1)
+                imp.dirichletTest(dirichlet_a, 1)
         grid = mock.Mock()
-        dirichletB = AllDirichletBoundaryInfo()
-        dirichletA = pymor.grids.boundaryinfos.AllDirichletBoundaryInfo(grid)
-        _combo(dirichletA, dirichletB)
-        dirichletA = ADIA(grid)
-        _combo(dirichletA, dirichletB)
+        dirichlet_b = AllDirichletBoundaryInfo()
+        dirichlet_a = pymor.grids.boundaryinfos.AllDirichletBoundaryInfo(grid)
+        _combo(dirichlet_a, dirichlet_b)
+        dirichlet_a = ADIA(grid)
+        _combo(dirichlet_a, dirichlet_b)
 
     def test_custom_contract_types(self):
         inst = BoringTestClass()

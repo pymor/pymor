@@ -334,7 +334,7 @@ class BoundaryInfoInterface(CacheableInterface):
         '''
         return np.equal(sum(self.mask(bt, codim=codim).astype(np.int) for bt in self.boundary_types), 0)
 
-    def check_boundary_types(self, assert_unique_type=[1], assert_some_type=[]):
+    def check_boundary_types(self, assert_unique_type=(1), assert_some_type=()):
         if assert_unique_type:
             for codim in assert_unique_type:
                 assert np.all(self.unique_boundary_type_mask(codim))
