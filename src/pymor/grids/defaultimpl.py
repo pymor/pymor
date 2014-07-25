@@ -167,7 +167,7 @@ class AffineGridDefaultImplementations(object):
     def _subentities(self, codim, subentity_codim):
         assert 0 <= codim <= self.dim, 'Invalid codimension'
         assert 0 < codim, 'Not implemented'
-        P = self.superentities(codim, codim - 1)[:, 0]  # we assume here that superentites() is sorted by global index
+        P = self.superentities(codim, codim - 1)[:, 0]  # we assume here that superentities() is sorted by global index
         I = self.superentity_indices(codim, codim - 1)[:, 0]
         SE = self.subentities(codim - 1, subentity_codim)[P]
         RSE = self.reference_element(codim - 1).subentities(1, subentity_codim - (codim - 1))[I]

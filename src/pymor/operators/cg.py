@@ -81,7 +81,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         # -> shape = (g.size(0), number of shape functions)
         SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(0), w).ravel()
 
-        # map local DOFs to global DOFS
+        # map local DOFs to global DOFs
         # FIXME This implementation is horrible, find a better way!
         SF_I = g.subentities(0, g.dim).ravel()
         I = np.array(coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).todense()).ravel()
@@ -162,7 +162,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         # -> shape = (g.size(0), number of shape functions)
         SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(0), w).ravel()
 
-        # map local DOFs to global DOFS
+        # map local DOFs to global DOFs
         # FIXME This implementation is horrible, find a better way!
         SF_I = g.subentities(0, g.dim).ravel()
         I = np.array(coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).todense()).ravel()
@@ -558,7 +558,7 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         # is implemented by calling self.prune() which creates the view self.data[:self.nnz].
         # Thus, the original data array is not deleted and all memory stays allocated.
 
-        # from pymor.tools.memory import print_memory_usagef
+        # from pymor.tools.memory import print_memory_usage
         # print_memory_usage('matrix: {0:5.1f}'.format((A.data.nbytes + A.indptr.nbytes + A.indices.nbytes)/1024**2))
 
         return A
