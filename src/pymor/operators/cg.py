@@ -72,8 +72,8 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
             SF = np.squeeze(np.array((1 - q, q)))
         elif g.dim == 2:
             SF = np.array(((1 - np.sum(q, axis=-1)),
-                          q[..., 0],
-                          q[..., 1]))
+                           q[..., 0],
+                           q[..., 1]))
         else:
             raise NotImplementedError
 
@@ -151,10 +151,10 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         # element -> shape = (number of shape functions, number of quadrature points)
         q, w = g.reference_element.quadrature(order=self.order)
         if g.dim == 2:
-            SF = np.array(((1-q[..., 0])*(1-q[..., 1]),
-                           (1-q[..., 1])*(q[..., 0]),
-                           (q[..., 0])*(q[..., 1]),
-                           (q[..., 1])*(1-q[..., 0])))
+            SF = np.array(((1 - q[..., 0]) * (1 - q[..., 1]),
+                           (1 - q[..., 1]) * (q[..., 0]),
+                           (q[..., 0]) * (q[..., 1]),
+                           (q[..., 1]) * (1 - q[..., 0])))
         else:
             raise NotImplementedError
 
@@ -261,7 +261,7 @@ class L2ProductP1(NumpyMatrixBasedOperator):
 
         self.logger.info('Assemble system matrix ...')
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
-        A = csc_matrix(A).copy()   # See DiffusionOperatorP1 for why copy() is necessary
+        A = csc_matrix(A).copy()  # See DiffusionOperatorP1 for why copy() is necessary
 
         return A
 
@@ -314,10 +314,10 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
 
         # our shape functions
         if g.dim == 2:
-            SF = [lambda X: (1-X[..., 0])*(1-X[..., 1]),
-                  lambda X: (1-X[..., 1])*(X[..., 0]),
-                  lambda X: (X[..., 0])*(X[..., 1]),
-                  lambda X: (1-X[..., 0])*(X[..., 1])]
+            SF = [lambda X: (1 - X[..., 0]) * (1 - X[..., 1]),
+                  lambda X: (1 - X[..., 1]) * (X[..., 0]),
+                  lambda X: (X[..., 0]) * (X[..., 1]),
+                  lambda X: (1 - X[..., 0]) * (X[..., 1])]
         else:
             raise NotImplementedError
 
@@ -347,7 +347,7 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
 
         self.logger.info('Assemble system matrix ...')
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
-        A = csc_matrix(A).copy() # See DiffusionOperatorP1 for why copy() is necessary
+        A = csc_matrix(A).copy()  # See DiffusionOperatorP1 for why copy() is necessary
 
         return A
 

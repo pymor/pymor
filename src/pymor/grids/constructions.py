@@ -38,10 +38,10 @@ def flatten_grid(grid):
     super_entities = grid.superentities(dim, 0)
     superentity_indices = grid.superentity_indices(dim, 0)
     A, B = grid.embeddings(0)
-    ref_el_coordinates  = grid.reference_element.subentity_embedding(dim)[1]
+    ref_el_coordinates = grid.reference_element.subentity_embedding(dim)[1]
     local_coordinates = np.einsum('eij,vj->evi', A, ref_el_coordinates) + B[:, np.newaxis, :]
     critical_vertices = np.unique(subentities[np.logical_not(np.all(float_cmp(global_coordinates[subentities],
-                                                                               local_coordinates), axis=2))])
+                                                                              local_coordinates), axis=2))])
     del A
     del B
 

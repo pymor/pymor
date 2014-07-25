@@ -82,7 +82,8 @@ class OperatorBase(OperatorInterface):
     def assemble(self, mu=None):
         if self.parametric:
             from pymor.operators.constructions import FixedParameterOperator
-            return FixedParameterOperator(self, mu=mu, name = self.name + '_assembled')
+
+            return FixedParameterOperator(self, mu=mu, name=self.name + '_assembled')
         else:
             return self
 

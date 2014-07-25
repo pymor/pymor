@@ -179,11 +179,11 @@ class VectorArrayOperator(OperatorBase):
     def __init__(self, array, transposed=False, copy=True, name=None):
         self._array = array.copy() if copy else array
         if transposed:
-           self.source = array.space
-           self.range = NumpyVectorSpace(len(array))
+            self.source = array.space
+            self.range = NumpyVectorSpace(len(array))
         else:
-           self.source = NumpyVectorSpace(len(array))
-           self.range = array.space
+            self.source = NumpyVectorSpace(len(array))
+            self.range = array.space
         self.transposed = transposed
         self.name = name
 
@@ -247,7 +247,7 @@ class VectorOperator(VectorArrayOperator):
     def __init__(self, vector, copy=True, name=None):
         assert isinstance(vector, VectorArrayInterface)
         assert len(vector) == 1
-        super (VectorOperator, self).__init__(vector, transposed=False, copy=copy, name=name)
+        super(VectorOperator, self).__init__(vector, transposed=False, copy=copy, name=name)
 
     def apply(self, U, ind=None, mu=None):
         assert U in self.source

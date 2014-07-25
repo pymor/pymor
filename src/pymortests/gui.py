@@ -22,6 +22,7 @@ from pymortests.base import runmodule
 from pymor.domaindescriptions import RectDomain, LineDomain
 from pymor.functions.basic import GenericFunction
 
+
 @pytest.fixture(params=(('matplotlib', RectGrid), ('gl', RectGrid), ('matplotlib', OnedGrid)))
 def backend_gridtype(request):
     return request.param
@@ -31,17 +32,18 @@ def test_visualize_patch(backend_gridtype):
     backend, gridtype = backend_gridtype
     domain = LineDomain() if gridtype is OnedGrid else RectDomain()
     dim = 1 if gridtype is OnedGrid else 2
-    rhs = GenericFunction(lambda X: np.ones(X.shape[:-1]) * 10, dim)                      # NOQA
-    dirichlet = GenericFunction(lambda X: np.zeros(X.shape[:-1]), dim)                    # NOQA
-    diffusion = GenericFunction(lambda X: np.ones(X.shape[:-1]), dim)                    # NOQA
+    rhs = GenericFunction(lambda X: np.ones(X.shape[:-1]) * 10, dim)  # NOQA
+    dirichlet = GenericFunction(lambda X: np.zeros(X.shape[:-1]), dim)  # NOQA
+    diffusion = GenericFunction(lambda X: np.ones(X.shape[:-1]), dim)  # NOQA
     problem = EllipticProblem(domain=domain, rhs=rhs, dirichlet_data=dirichlet, diffusion_functions=(diffusion,))
     grid, bi = discretize_domain_default(problem.domain, grid_type=gridtype)
     discretization, data = discretize_elliptic_cg(analytical_problem=problem, grid=grid, boundary_info=bi)
     U = discretization.solve()
     visualize_patch(data['grid'], U=U, backend=backend)
-    sleep(2) # so gui has a chance to popup
+    sleep(2)  # so gui has a chance to popup
     for child in multiprocessing.active_children():
         child.terminate()
+
 
 if __name__ == "__main__":
     runmodule(filename=__file__)

@@ -15,15 +15,17 @@ from pymor.core import logger
 from pymor.la import NumpyVectorArray, NumpyVectorSpace
 from pymor.operators.basic import OperatorBase
 
-class TestInterface(object):
 
+class TestInterface(object):
     logger = logger.getLogger(__name__)
+
 
 TestInterface = TestInterface
 
 
 def _load_all():
     import pymor
+
     ignore_playground = True
     fails = []
     for _, module_name, _ in pkgutil.walk_packages(pymor.__path__, pymor.__name__ + '.',
@@ -51,18 +53,22 @@ def SubclassForImplemetorsOf(InterfaceType):
     def decorate(TestCase):
         """saves a new type called cname with correct bases and class dict in globals"""
         import pymor.core.dynamic
-        test_types = set([T for T in InterfaceType.implementors(True) if not(T.has_interface_name()
-                                                                             or issubclass(T, TestInterface))])
+
+        test_types = set([T for T in InterfaceType.implementors(True) if not (T.has_interface_name()
+                                                                              or issubclass(T, TestInterface))])
         for Type in test_types:
             cname = 'Test_{}_{}'.format(Type.__name__, TestCase.__name__.replace('Interface', ''))
             pymor.core.dynamic.__dict__[cname] = type(cname, (TestCase,), {'Type': Type})
         return TestCase
+
     return decorate
 
 
 def runmodule(filename):
     import pytest
+
     sys.exit(pytest.main(sys.argv[1:] + [filename]))
+
 
 def polynomials(max_order):
     for n in xrange(max_order + 1):
@@ -72,17 +78,17 @@ def polynomials(max_order):
             if k > n:
                 return lambda _: 0
             return lambda x: (factorial(n) / factorial(n - k)) * np.power(x, n - k)
+
         integral = (1 / (n + 1))
         yield (n, f, deri, integral)
 
 
 class MonomOperator(OperatorBase):
-
     source = range = NumpyVectorSpace(1)
     type_source = type_range = NumpyVectorArray
 
     def __init__(self, order, monom=None):
-        self.monom = monom if monom else Polynomial(np.identity(order+1)[order])
+        self.monom = monom if monom else Polynomial(np.identity(order + 1)[order])
         assert isinstance(self.monom, Polynomial)
         self.order = order
         self.derivative = self.monom.deriv()
@@ -92,7 +98,7 @@ class MonomOperator(OperatorBase):
         return NumpyVectorArray(self.monom(U.data))
 
     def jacobian(self, U, mu=None):
-        return MonomOperator(self.order-1, self.derivative)
+        return MonomOperator(self.order - 1, self.derivative)
 
     def apply_inverse(self, U, ind=None, mu=None, options=None):
         return NumpyVectorArray(1. / U.data)

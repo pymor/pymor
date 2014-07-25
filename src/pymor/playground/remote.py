@@ -2,11 +2,11 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-############################################################################################
-#                                                                                          #
+# ###########################################################################################
+# #
 # FIXME This code has not been adapted to the new VectorArray interface and will not work! #
-#                                                                                          #
-############################################################################################
+# #
+# ###########################################################################################
 
 # flake8: noqa
 from __future__ import absolute_import, division, print_function
@@ -22,7 +22,6 @@ from pymor.operators.basic import LincombOperator, ProjectedOperator, ProjectedL
 
 
 class RemoteRessourceManger(object):
-
     def __init__(self):
         self.refs = {}
 
@@ -61,7 +60,6 @@ wrapped_vector_arrays = {}
 
 
 def wrap_remote_vector_array_class(remote_view, remote_id):
-
     global wrapped_vector_arrays
 
     if (id(remote_view), remote_id) in wrapped_vector_arrays:
@@ -77,7 +75,6 @@ def wrap_remote_vector_array_class(remote_view, remote_id):
 
 
 class RemoteVectorArray(VectorArrayInterface):
-
     class_rid = None
 
     @staticmethod
@@ -248,7 +245,6 @@ class RemoteVectorArray(VectorArrayInterface):
 
 
 def wrap_remote_operator(remote_view, remote_id):
-
     remote_view.execute('RRES = isinstance(pymor.playground.remote.RR[{}], LincombOperatorInterface)'.format(remote_id))
     if remote_view['RRES']:
         return RemoteLincombOperator(remote_view, remote_id)
@@ -257,7 +253,6 @@ def wrap_remote_operator(remote_view, remote_id):
 
 
 class RemoteOperator(OperatorInterface):
-
     def __init__(self, remote_view, remote_id):
         self.rv = remote_view
         self.rid = remote_id
@@ -339,7 +334,8 @@ class RemoteOperator(OperatorInterface):
     @staticmethod
     def _lincomb(operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
         global RR
-        op = RR[operators[0]].lincomb([RR[o] for o in operators], coefficients, num_coefficients, coefficients_name, name)
+        op = RR[operators[0]].lincomb([RR[o] for o in operators], coefficients, num_coefficients, coefficients_name,
+                                      name)
         op_id = id(op)
         RR[op_id] = op
         return op_id
@@ -401,7 +397,6 @@ class RemoteOperator(OperatorInterface):
 
 
 class RemoteLincombOperator(RemoteOperator):
-
     def __init__(self, remote_view, remote_id):
         RemoteOperator.__init__(self, remote_view, remote_id)
         self.unlock()
@@ -426,7 +421,6 @@ class RemoteLincombOperator(RemoteOperator):
 
 # noinspection PyShadowingNames,PyShadowingNames
 class RemoteStationaryDiscretization(StationaryDiscretization):
-
     def __init__(self, remote_view, remote_id):
 
         self.rv = remote_view
@@ -448,10 +442,11 @@ class RemoteStationaryDiscretization(StationaryDiscretization):
                     'name': self.name}
 
         static_data = get_static_data(self.rid)
-        super(RemoteStationaryDiscretization, self).__init__(self, operator=wrap_remote_operator(self.rv, static_data['operator']),
+        super(RemoteStationaryDiscretization, self).__init__(self, operator=wrap_remote_operator(self.rv, static_data[
+            'operator']),
                                                              rhs=wrap_remote_operator(self.rv, static_data['rhs']),
                                                              products={k: wrap_remote_operator(self.rv, v)
-                                                                       for k,v in static_data['products'].iteritems()},
+                                                                       for k, v in static_data['products'].iteritems()},
                                                              parameter_space=static_data['parameter_space'],
                                                              estimator=None, visualizer=None, cache_region=None,
                                                              name='Remote_{}'.format(static_data['name']))

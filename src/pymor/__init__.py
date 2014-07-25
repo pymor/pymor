@@ -7,9 +7,7 @@ import os
 from pymor.defaults import defaults
 
 
-
 class Version(object):
-
     def __init__(self, revstring):
 
         # special casing for debian versions like '0.1.3~precise~ppa9'
@@ -71,15 +69,18 @@ try:
         revstring = os.environ['PYMOR_DEB_VERSION']
     else:
         import pymor.version as _version
+
         revstring = getattr(_version, 'revstring', NO_VERSIONSTRING)
 except ImportError:
     import os.path
     import subprocess
+
     try:
         revstring = subprocess.check_output(['git', 'describe', '--tags', '--candidates', '20', '--match', '*.*.*'],
                                             cwd=os.path.dirname(__file__))
     except subprocess.CalledProcessError as e:
         import sys
+
         sys.stderr.write('''Warning: Could not determine current pyMOR version.
 Failed to import pymor.version and 'git describe --tags --candidates 20 --match *.*.*'
 returned

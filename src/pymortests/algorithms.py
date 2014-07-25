@@ -11,7 +11,7 @@ from numpy.polynomial.polynomial import Polynomial
 
 from pymor.la import NumpyVectorArray
 from pymor.operators.basic import OperatorBase
-from pymortests.base import polynomials,runmodule, MonomOperator
+from pymortests.base import polynomials, runmodule, MonomOperator
 from pymor.algorithms.newton import newton, NewtonError
 import pymor.algorithms.basisextension as bxt
 from pymor.tools.floatcmp import float_cmp
