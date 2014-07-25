@@ -163,7 +163,7 @@ class ParameterType(dict):
 
 
 class Parameter(dict):
-    '''Class representing a parameter.
+    """Class representing a parameter.
 
     A |Parameter| is simply a `dict` where each key is a string and each value
     is a |NumPy array|. We call an item of the dictionary a *parameter component*.
@@ -195,7 +195,7 @@ class Parameter(dict):
         The |ParameterType| of the |Parameter|.
     sid
         The state id of the |Parameter|. (See :mod:`pymor.core.interfaces`.)
-    '''
+    """
 
     __keys = None
 
@@ -207,7 +207,7 @@ class Parameter(dict):
 
     @classmethod
     def from_parameter_type(cls, mu, parameter_type=None):
-        '''Takes a user input `mu` and interprets it as a |Parameter| according to the given
+        """Takes a user input `mu` and interprets it as a |Parameter| according to the given
         |ParameterType|.
 
         Depending on the |ParameterType|, `mu` can be given as a |Parameter|, dict, tuple,
@@ -229,7 +229,7 @@ class Parameter(dict):
         ValueError
             Is raised if `mu` cannot be interpreted as a |Parameter| of |ParameterType|
             `parameter_type`.
-        '''
+        """
         if not parameter_type:
             assert mu is None or mu == {}
             return None
@@ -265,7 +265,7 @@ class Parameter(dict):
         return cls(mu)
 
     def allclose(self, mu):
-        '''Compare to |Parameters| using :meth:`~pymor.tools.floatcmp.float_cmp_all`.
+        """Compare to |Parameters| using :meth:`~pymor.tools.floatcmp.float_cmp_all`.
 
         Parameters
         ----------
@@ -276,7 +276,7 @@ class Parameter(dict):
         -------
         `True` if both |Parameters| have the same |ParameterType| and all parameter
         components are almost equal, else `False`.
-        '''
+        """
         assert isinstance(mu, Parameter)
         if self.viewkeys() != mu.viewkeys():
             return False
