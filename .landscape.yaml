@@ -6,3 +6,4 @@ ignore-paths:
     - distribute_setup.py
     - graveyard
     - src/pymor/playground/
+    - src/pymortests/
