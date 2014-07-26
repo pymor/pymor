@@ -25,7 +25,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from scipy.linalg import solve_triangular, cho_factor, cho_solve
 
-from pymor.core import getLogger
+from pymor.core import get_logger
 from pymor.core.cache import CacheableInterface, cached
 from pymor.la import VectorArrayInterface
 from pymor.la.pod import pod
@@ -86,7 +86,7 @@ def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation
     if isinstance(evaluations, VectorArrayInterface):
         evaluations = (evaluations,)
 
-    logger = getLogger('pymor.algorithms.ei.ei_greedy')
+    logger = get_logger('pymor.algorithms.ei.ei_greedy')
     logger.info('Generating Interpolation Data ...')
 
     interpolation_dofs = np.zeros((0,), dtype=np.int32)
@@ -218,7 +218,7 @@ def deim(evaluations, modes=None, error_norm=None, product=None):
 
     assert isinstance(evaluations, VectorArrayInterface)
 
-    logger = getLogger('pymor.algorithms.ei.deim')
+    logger = get_logger('pymor.algorithms.ei.deim')
     logger.info('Generating Interpolation Data ...')
 
     collateral_basis = pod(evaluations, modes, product=product)[0]

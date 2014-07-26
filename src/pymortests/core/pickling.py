@@ -9,7 +9,7 @@ import os
 # import pytest
 
 from pymor import core
-from pymor.core.logger import getLogger
+from pymor.core.logger import get_logger
 from pymortests.base import runmodule
 from pymortests.fixtures.generic import basicinterface_subclass
 
@@ -22,7 +22,7 @@ def testDump(basicinterface_subclass):
         if issubclass(basicinterface_subclass, core.Unpicklable):
             return
     except TypeError as e:
-        logger = getLogger('pymortests.core.pickling')
+        logger = get_logger('pymortests.core.pickling')
         logger.debug('PicklingError: Not testing {} because its init failed: {}'.format(basicinterface_subclass,
                                                                                         str(e)))
         return

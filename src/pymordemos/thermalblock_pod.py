@@ -52,7 +52,7 @@ from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import discretize_elliptic_cg
 from pymor.la.pod import pod
 from pymor.reductors import reduce_generic_rb
-core.getLogger('pymor.discretizations').setLevel('INFO')
+core.get_logger('pymor.discretizations').setLevel('INFO')
 
 
 def thermalblock_demo(args):

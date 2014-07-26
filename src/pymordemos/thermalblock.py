@@ -61,9 +61,9 @@ from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import discretize_elliptic_cg
 from pymor.reductors import reduce_to_subbasis
 from pymor.reductors.linear import reduce_stationary_affine_linear
-core.getLogger('pymor.algorithms').setLevel('INFO')
-core.getLogger('pymor.discretizations').setLevel('INFO')
-core.getLogger('pymor.la').setLevel('INFO')
+core.get_logger('pymor.algorithms').setLevel('INFO')
+core.get_logger('pymor.discretizations').setLevel('INFO')
+core.get_logger('pymor.la').setLevel('INFO')
 
 
 def thermalblock_demo(args):

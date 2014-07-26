@@ -15,8 +15,8 @@ from pymor.reductors.basic import reduce_generic_rb
 from wrapper import WrappedDiffusionOperator, WrappedVectorArray, WrappedVector
 
 # configure logging
-from pymor.core import getLogger
-getLogger('pymor.discretizations').setLevel('INFO')
+from pymor.core import get_logger
+get_logger('pymor.discretizations').setLevel('INFO')
 
 
 def discretize(n, nt, blocks):

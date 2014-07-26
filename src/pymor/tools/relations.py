@@ -6,8 +6,8 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor.core import getLogger
-logger = getLogger(__name__)
+from pymor.core import get_logger
+logger = get_logger(__name__)
 
 
 def inverse_relation(R, size_rhs=None, with_indices=False):

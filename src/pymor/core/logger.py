@@ -102,7 +102,7 @@ class ColoredFormatter(logging.Formatter):
         return logging.Formatter.format(self, record)
 
 
-def getLogger(module, level=None, filename=None, handler_cls=logging.StreamHandler):
+def get_logger(module, level=None, filename=None, handler_cls=logging.StreamHandler):
     module = 'pymor' if module == '__main__' else module
     logger = logging.getLogger(module)
     streamhandler = handler_cls()
@@ -114,4 +114,4 @@ def getLogger(module, level=None, filename=None, handler_cls=logging.StreamHandl
         logger.setLevel(LOGLEVEL_MAPPING[level])
     return logger
 
-dummy_logger = getLogger('pymor.dummylogger', level='fatal')
+dummy_logger = get_logger('pymor.dummylogger', level='fatal')

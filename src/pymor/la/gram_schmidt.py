@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from pymor import defaults
-from pymor.core import getLogger
+from pymor.core import get_logger
 from pymor.core.exceptions import AccuracyError
 from pymor.tools import float_cmp_all
 
@@ -58,7 +58,7 @@ def gram_schmidt(A, product=None, tol=None, offset=0, find_duplicates=None,
     The orthonormalized |VectorArray|.
     """
 
-    logger = getLogger('pymor.la.gram_schmidt.gram_schmidt')
+    logger = get_logger('pymor.la.gram_schmidt.gram_schmidt')
     tol = defaults.gram_schmidt_tol if tol is None else tol
     find_duplicates = defaults.gram_schmidt_find_duplicates if find_duplicates is None else find_duplicates
     reiterate = defaults.gram_schmidt_reiterate if reiterate is None else reiterate

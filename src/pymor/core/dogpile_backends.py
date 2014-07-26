@@ -158,7 +158,7 @@ class LimitedFileBackend(DBMBackend, BasicInterface):
     def delete(self, key):
         super(LimitedFileBackend, self).delete(key)
         try:
-            #api says this method is supposed to be idempotent
+            # api says this method is supposed to be idempotent
             self._keylist.remove(key)
         except ValueError:
             pass

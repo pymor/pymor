@@ -52,8 +52,8 @@ from pymor.playground.discretizations.dune import DuneLinearEllipticCGDiscretiza
 from pymor.playground.la.dunevectorarray import DuneVectorArray
 from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor.algorithms import greedy, trivial_basis_extension, gram_schmidt_basis_extension
-core.getLogger('pymor.algorithms').setLevel('INFO')
-core.getLogger('pymor.discretizations').setLevel('INFO')
+core.get_logger('pymor.algorithms').setLevel('INFO')
+core.get_logger('pymor.discretizations').setLevel('INFO')
 
 
 def dune_thermalblock_demo(args):

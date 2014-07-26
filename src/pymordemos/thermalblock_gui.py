@@ -53,8 +53,8 @@ from pymor.gui.glumpy import ColorBarWidget, GlumpyPatchWidget
 from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor import gui
 
-core.getLogger('pymor.algorithms').setLevel('DEBUG')
-core.getLogger('pymor.discretizations').setLevel('DEBUG')
+core.get_logger('pymor.algorithms').setLevel('DEBUG')
+core.get_logger('pymor.discretizations').setLevel('DEBUG')
 
 PARAM_STEPS = 10
 PARAM_MIN = 0.1
