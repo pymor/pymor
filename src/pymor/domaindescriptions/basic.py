@@ -223,8 +223,8 @@ class LineDomain(DomainDescriptionInterface):
         return self.domain[1] - self.domain[0]
 
     def __repr__(self):
-        left = ', left=' + repr(self.top) if self.top != BoundaryType('dirichlet') else ''
-        right = ', right=' + repr(self.bottom) if self.bottom != BoundaryType('dirichlet') else ''
+        left = ', left=' + repr(self.left) if self.left != BoundaryType('dirichlet') else ''
+        right = ', right=' + repr(self.right) if self.right != BoundaryType('dirichlet') else ''
         return 'LineDomain({}{})'.format(self.domain, left + right)
 
 
