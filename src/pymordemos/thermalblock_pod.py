@@ -120,8 +120,6 @@ def thermalblock_demo(args):
         cond = np.linalg.cond(rb_discretization.operator.assemble(mu)._matrix)
         if h1_err > h1_err_max:
             h1_err_max = h1_err
-            Umax = U
-            URBmax = URB
             mumax = mu
         if cond > cond_max:
             cond_max = cond

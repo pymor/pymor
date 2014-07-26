@@ -11,7 +11,7 @@ from numbers import Number
 import numpy as np
 
 from pymor.core.interfaces import BasicInterface, abstractmethod, abstractclassmethod, abstractproperty
-from pymor.la.interfaces import VectorArrayInterface, VectorSpace
+from pymor.la.interfaces import VectorArrayInterface
 from pymor.tools import float_cmp_all
 
 
@@ -188,6 +188,7 @@ class ListVectorArray(VectorArrayInterface):
     vector_type = None
 
     def __init__(self, vectors, subtype=__NONE, copy=True):
+        # FIXME proper functioning of this class depends on mutability of subtype default
         if not copy:
             if isinstance(vectors, list):
                 self._list = vectors

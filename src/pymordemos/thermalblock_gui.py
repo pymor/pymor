@@ -39,7 +39,7 @@ import time
 from functools import partial
 import math as m
 import numpy as np
-from PySide import QtGui, QtCore
+from PySide import QtGui
 import OpenGL
 
 OpenGL.ERROR_ON_COPY = True

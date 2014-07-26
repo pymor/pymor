@@ -118,7 +118,7 @@ class LimitedFileBackend(DBMBackend, BasicInterface):
         self._max_size = argument_dict.get('max_size', None)
         try:
             self._keylist, self._size = pymor.core.load(open(self._keylist_fn, 'rb'))
-        except:
+        except Exception:
             self._keylist = deque()
             self._size = 0
         self._enforce_limits(None)

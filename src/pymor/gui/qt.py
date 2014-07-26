@@ -241,6 +241,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         if not HAVE_MATPLOTLIB:
             raise ImportError('cannot visualize: import of matplotlib failed')
 
+    # TODO extract class
     class MainWindow(PlotMainWindow):
         def __init__(self, grid, U, bounding_box, codim, title, legend, separate_colorbars, backend):
             assert isinstance(U, VectorArrayInterface) and hasattr(U, 'data') \
@@ -297,7 +298,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                                 plot_layout.addLayout(plot, int(i/2), (i % 2), 1, 1)
                     layout.addLayout(plot_layout)
                     if not separate_colorbars:
-                        layout.addWidget(ColorBarWidget(self, vmin=vmin, vmax=vmax))
+                        layout.addWidget(ColorBarWidget(self, vmin=vmins[0], vmax=vmaxs[0]))
                     self.setLayout(layout)
                     self.plots = plots
 
