@@ -1,3 +1,3 @@
 src/pymordemos/ usr/share/pymor-demos/src
 debian/pymor/usr/lib/python2.7/dist-packages/pymordemos usr/lib/python2.7/dist-packages/
-src/pymor-demo usr/bin
+debian/pymor/usr/bin/pymor-demo usr/bin
