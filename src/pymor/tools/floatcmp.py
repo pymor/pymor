@@ -36,10 +36,7 @@ def float_cmp(x, y, rtol=None, atol=None):
 
     rtol = rtol or defaults.float_cmp_tol
     atol = atol or rtol
-    a = np.abs(x - y)
-    b = atol + np.abs(y) * rtol
-    c = a <= b
-    return  c
+    return np.abs(x - y) <= atol + np.abs(y) * rtol
 
 
 def float_cmp_all(x, y, rtol=None, atol=None):
