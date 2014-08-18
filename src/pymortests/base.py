@@ -17,7 +17,7 @@ from pymor.operators.basic import OperatorBase
 
 
 class TestInterface(object):
-    logger = logger.get_logger(__name__)
+    logger = logger.getLogger(__name__)
 
 
 TestInterface = TestInterface
@@ -37,7 +37,7 @@ def _load_all():
         except (TypeError, ImportError) as t:
             fails.append((module_name, t))
     if len(fails) > 0:
-        logger.get_logger(__name__).fatal('Failed imports: {}'.format(pprint.pformat(fails)))
+        logger.getLogger(__name__).fatal('Failed imports: {}'.format(pprint.pformat(fails)))
         raise ImportError(__name__)
 
 

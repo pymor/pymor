@@ -23,7 +23,7 @@ except ImportError:
     HAVE_PYSIDE = False
 
 from pymor import defaults
-from pymor.core import BasicInterface, get_logger
+from pymor.core import BasicInterface, getLogger
 from pymor.grids import RectGrid, TriaGrid, OnedGrid
 from pymor.gui.glumpy import GlumpyPatchWidget, ColorBarWidget, HAVE_GLUMPY, HAVE_GL
 from pymor.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget, HAVE_MATPLOTLIB
@@ -256,7 +256,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             else:
                 widget = MatplotlibPatchWidget
                 if not separate_colorbars and len(U) > 1:
-                    l = get_logger('pymor.gui.qt.visualize_patch')
+                    l = getLogger('pymor.gui.qt.visualize_patch')
                     l.warn('separate_colorbars=False not supported for matplotlib backend')
                 separate_colorbars = True
 

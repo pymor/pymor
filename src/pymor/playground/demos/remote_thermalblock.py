@@ -60,9 +60,9 @@ import pymor.core as core
 core.logger.MAX_HIERACHY_LEVEL = 2
 from pymor.algorithms import greedy, trivial_basis_extension, gram_schmidt_basis_extension
 from pymor.reductors.linear import reduce_stationary_affine_linear
-core.get_logger('pymor.algorithms').setLevel('INFO')
-core.get_logger('pymor.discretizations').setLevel('INFO')
-core.get_logger('pymor.la').setLevel('INFO')
+core.getLogger('pymor.algorithms').setLevel('INFO')
+core.getLogger('pymor.discretizations').setLevel('INFO')
+core.getLogger('pymor.la').setLevel('INFO')
 
 
 def thermalblock_demo(args):

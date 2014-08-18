@@ -33,7 +33,7 @@ def fixup_docstring(doc):
     for line in doc.split('\n'):
         stripped_line = line.lstrip()
         if stripped_line.startswith(':type'):
-            # line's like: :type ParamName: Some.Module.Classname
+            #line's like: :type ParamName: Some.Module.Classname
             tokens = stripped_line.split()
             idx = 2
             if len(tokens) > idx and tokens[idx].startswith('pymor'):
@@ -54,7 +54,7 @@ class DecoratorBase(object):
         self.func = func
         assert _is_decorated(func)
 
-    def __get__(self, obj, owner_class=None):
+    def __get__(self, obj, ownerClass=None):
         """Return a wrapper that binds self as a method of obj (!)"""
         self.obj = obj
         return types.MethodType(self, obj)

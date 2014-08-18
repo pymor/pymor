@@ -8,7 +8,7 @@ import time
 from itertools import izip
 
 from pymor.algorithms.basisextension import trivial_basis_extension
-from pymor.core import get_logger
+from pymor.core import getLogger
 from pymor.core.exceptions import ExtensionError
 
 
@@ -81,7 +81,7 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
         :max_err_mus:            The parameters corresponding to `max_errs`.
     """
 
-    logger = get_logger('pymor.algorithms.greedy.greedy')
+    logger = getLogger('pymor.algorithms.greedy.greedy')
     samples = list(samples)
     logger.info('Started greedy search on {} samples'.format(len(samples)))
     basis = initial_basis

@@ -7,8 +7,8 @@ from __future__ import absolute_import, division, print_function
 
 from itertools import izip
 
-from pymor.core import get_logger
-logger = get_logger(__name__)
+from pymor.core import getLogger
+logger = getLogger(__name__)
 
 
 def iadd_masked(U, V, U_ind):

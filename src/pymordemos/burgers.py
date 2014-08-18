@@ -54,8 +54,8 @@ from pymor.discretizers.advection import discretize_nonlinear_instationary_advec
 from pymor.domaindiscretizers import discretize_domain_default
 from pymor.grids import RectGrid, TriaGrid
 
-core.get_logger('pymor.algorithms').setLevel('INFO')
-core.get_logger('pymor.discretizations').setLevel('INFO')
+core.getLogger('pymor.algorithms').setLevel('INFO')
+core.getLogger('pymor.discretizations').setLevel('INFO')
 
 
 def burgers_demo(args):

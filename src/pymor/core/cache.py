@@ -152,8 +152,8 @@ cache_regions = {'memory': DogpileMemoryCacheRegion(),
                  'disk': DogpileDiskCacheRegion()}
 _caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
 if _caching_disabled:
-    from pymor.core import get_logger
-    get_logger('pymor.core.cache').warn('caching globally disabled by environment')
+    from pymor.core import getLogger
+    getLogger('pymor.core.cache').warn('caching globally disabled by environment')
 
 
 def enable_caching():

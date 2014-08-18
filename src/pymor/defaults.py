@@ -10,7 +10,7 @@ import random
 import numpy as np
 
 from pymor.core import dumps
-from pymor.core.logger import get_logger
+from pymor.core.logger import getLogger
 
 
 _file_sha = hashlib.sha1(open(__file__).read()).digest()
@@ -270,7 +270,7 @@ class Defaults(object):
         self._calc_sid()
         import pymor.core.interfaces
         if pymor.core.interfaces.ImmutableMeta.sids_created:
-            logger = get_logger('pymor')
+            logger = getLogger('pymor')
             logger.warn('Changing state of pymor.defaults after sids have been calcuated. This might break caching!')
 
     def __setattr__(self, k, v):
@@ -286,8 +286,8 @@ defaults = Defaults()
 
 
 # Set default log levels
-# Log levels propagate downwards, i.e. if the level of "get_logger('a.b.c')" is not set
-# the log level of "get_logger('a.b')" is assumed
+# Log levels propagate downwards, i.e. if the level of "getLogger('a.b.c')" is not set
+# the log level of "getLogger('a.b')" is assumed
 
-get_logger('pymor').setLevel('WARN')
-get_logger('pymor.core').setLevel('WARN')
+getLogger('pymor').setLevel('WARN')
+getLogger('pymor.core').setLevel('WARN')

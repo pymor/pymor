@@ -25,13 +25,13 @@ from docopt import docopt
 import numpy as np
 
 from pymor.analyticalproblems import EllipticProblem
-from pymor.core import get_logger
+from pymor.core import getLogger
 from pymor.discretizers import discretize_elliptic_cg
 from pymor.domaindescriptions import LineDomain
 from pymor.functions import GenericFunction, ConstantFunction
 from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional, GenericParameterFunctional
 
-get_logger('pymor.discretizations').setLevel('INFO')
+getLogger('pymor.discretizations').setLevel('INFO')
 
 
 def cg_oned_demo(nrhs, n, plot):

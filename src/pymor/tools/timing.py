@@ -7,7 +7,7 @@ import time
 import numpy as np
 import functools
 
-from pymor.core.logger import get_logger
+from pymor.core.logger import getLogger
 
 
 class Timer(object):
@@ -37,7 +37,7 @@ class Timer(object):
         print(timer.dt)
     """
 
-    def __init__(self, section, log=get_logger(__name__)):
+    def __init__(self, section, log=getLogger(__name__)):
         self._section = section
         self._log = log
         self._start = 0
