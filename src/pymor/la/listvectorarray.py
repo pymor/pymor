@@ -184,11 +184,10 @@ class NumpyVector(VectorInterface):
 class ListVectorArray(VectorArrayInterface):
     """|VectorArray| implementation via a python list of vectors."""
 
-    __NONE = {}
+    __NONE = tuple()
     vector_type = None
 
     def __init__(self, vectors, subtype=__NONE, copy=True):
-        # FIXME proper functioning of this class depends on mutability of subtype default
         if not copy:
             if isinstance(vectors, list):
                 self._list = vectors
