@@ -5,6 +5,7 @@
 import os
 
 from pymor.defaults import defaults
+from pymor.core.defaults import load_defaults_from_file
 
 
 class Version(object):
@@ -95,3 +96,24 @@ finally:
 
 VERSION = version
 print('Loading pymor version {}'.format(VERSION))
+
+
+import os
+if 'PYMOR_DEFAULTS' in os.environ:
+    filename = os.environ['PYMOR_DEFAULTS']
+    print('Loading defaults from file ' + filename + ' (set by PYMOR_DEFAULTS)')
+    load_defaults_from_file(filename)
+else:
+    d = os.path.abspath(os.getcwd())
+    while True:
+        filename = os.path.join(d, 'pymor_defaults.py')
+        if os.path.exists(filename):
+            print('Loading defaults from file ' + filename)
+            load_defaults_from_file(filename)
+            break
+        elif os.path.dirname(d) == d:
+            # finished traversing to filesystem root without finding
+            # config file
+            break
+        else:
+            d = os.path.dirname(d)
