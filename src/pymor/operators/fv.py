@@ -471,7 +471,7 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
 
 
 class DiffusionOperator(NumpyMatrixBasedOperator):
-    '''Linear finite volume diffusion |Operator| using finite differences.
+    """Linear finite volume diffusion |Operator| using finite differences.
 
     The operator is of the form ::
 
@@ -487,7 +487,7 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
         Diffusion scalar 'mu'.
     name
         The name of the operator.
-    '''
+    """
 
     type_source = type_range = NumpyVectorArray
     sparse = True
@@ -540,7 +540,7 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
 
 
 class DiffusionRHSOperatorFunctional(NumpyMatrixBasedOperator):
-    '''Finite volume |Functional| representing the rhs of the DiffusionOperator
+    """Finite volume |Functional| representing the rhs of the DiffusionOperator
        + the scalar product with an L2-|Function|.
 
     Parameters
@@ -561,7 +561,7 @@ class DiffusionRHSOperatorFunctional(NumpyMatrixBasedOperator):
         Order of the Gauss quadrature to use for numerical integration.
     name
         The name of the functional.
-    '''
+    """
 
     type_source = type_range = NumpyVectorArray
     sparse = False
