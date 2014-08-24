@@ -535,7 +535,7 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
 
         A = dia_matrix(([1. / grid.volumes(0)], [0]), shape=(grid.size(0),) * 2) * A
 
-        return NumpyMatrixOperator(A)
+        return A
 
 
 class DiffusionRHSOperatorFunctional(NumpyMatrixBasedOperator):
@@ -622,4 +622,4 @@ class DiffusionRHSOperatorFunctional(NumpyMatrixBasedOperator):
             BV /= grid.volumes(0)
             F_INTS += BV
 
-        return NumpyMatrixOperator(F_INTS.reshape((1, -1)))
+        return F_INTS.reshape((1, -1))
