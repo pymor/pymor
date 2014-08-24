@@ -3,7 +3,7 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-''' This module provides some operators for continuous finite elements discretizations.'''
+""" This module provides some operators for continuous finite elements discretizations."""
 
 from __future__ import absolute_import, division, print_function
 
@@ -11,11 +11,12 @@ import numpy as np
 from scipy.sparse import coo_matrix, csc_matrix
 
 from pymor.grids.referenceelements import triangle, line, square
-from pymor.operators import NumpyMatrixBasedOperator, NumpyMatrixOperator
+from pymor.la import NumpyVectorSpace
+from pymor.operators import NumpyMatrixBasedOperator
 
 
 class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
-    '''|Functional| representing the scalar product with an L2-|Function| for linear finite elements.
+    """|Functional| representing the scalar product with an L2-|Function| for linear finite elements.
 
     Boundary treatment can be performed by providing `boundary_info` and `dirichlet_data`,
     in which case the DOFs corresponding to Dirichlet boundaries are set to the values
@@ -40,15 +41,15 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         Order of the Gauss quadrature to use for numerical integration.
     name
         The name of the functional.
-    '''
+    """
 
     sparse = False
+    range = NumpyVectorSpace(1)
 
     def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, order=2, name=None):
         assert grid.reference_element(0) in {line, triangle}
         assert function.shape_range == tuple()
-        self.dim_source = grid.size(grid.dim)
-        self.dim_range = 1
+        self.source = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
         self.function = function
@@ -58,7 +59,6 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         self.build_parameter_type(inherits=(function, dirichlet_data))
 
     def _assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
         g = self.grid
         bi = self.boundary_info
 
@@ -72,8 +72,8 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
             SF = np.squeeze(np.array((1 - q, q)))
         elif g.dim == 2:
             SF = np.array(((1 - np.sum(q, axis=-1)),
-                          q[..., 0],
-                          q[..., 1]))
+                           q[..., 0],
+                           q[..., 1]))
         else:
             raise NotImplementedError
 
@@ -81,7 +81,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         # -> shape = (g.size(0), number of shape functions)
         SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(0), w).ravel()
 
-        # map local DOFs to global DOFS
+        # map local DOFs to global DOFs
         # FIXME This implementation is horrible, find a better way!
         SF_I = g.subentities(0, g.dim).ravel()
         I = np.array(coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).todense()).ravel()
@@ -94,11 +94,11 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
             else:
                 I[DI] = 0
 
-        return NumpyMatrixOperator(I.reshape((1, -1)))
+        return I.reshape((1, -1))
 
 
 class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
-    '''|Functional| representing the scalar product with an L2-|Function| for bilinear finite elements.
+    """|Functional| representing the scalar product with an L2-|Function| for bilinear finite elements.
 
     Boundary treatment can be performed by providing `boundary_info` and `dirichlet_data`,
     in which case the DOFs corresponding to Dirichlet boundaries are set to the values
@@ -123,15 +123,15 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         Order of the Gauss quadrature to use for numerical integration.
     name
         The name of the functional.
-    '''
+    """
 
     sparse = False
+    range = NumpyVectorSpace(1)
 
     def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, order=2, name=None):
         assert grid.reference_element(0) in {square}
         assert function.shape_range == tuple()
-        self.dim_source = grid.size(grid.dim)
-        self.dim_range = 1
+        self.source = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
         self.function = function
@@ -141,7 +141,6 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         self.build_parameter_type(inherits=(function, dirichlet_data))
 
     def _assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
         g = self.grid
         bi = self.boundary_info
 
@@ -152,10 +151,10 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         # element -> shape = (number of shape functions, number of quadrature points)
         q, w = g.reference_element.quadrature(order=self.order)
         if g.dim == 2:
-            SF = np.array(((1-q[..., 0])*(1-q[..., 1]),
-                           (1-q[..., 1])*(q[..., 0]),
-                           (q[..., 0])*(q[..., 1]),
-                           (q[..., 1])*(1-q[..., 0])))
+            SF = np.array(((1 - q[..., 0]) * (1 - q[..., 1]),
+                           (1 - q[..., 1]) * (q[..., 0]),
+                           (q[..., 0]) * (q[..., 1]),
+                           (q[..., 1]) * (1 - q[..., 0])))
         else:
             raise NotImplementedError
 
@@ -163,7 +162,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         # -> shape = (g.size(0), number of shape functions)
         SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(0), w).ravel()
 
-        # map local DOFs to global DOFS
+        # map local DOFs to global DOFs
         # FIXME This implementation is horrible, find a better way!
         SF_I = g.subentities(0, g.dim).ravel()
         I = np.array(coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).todense()).ravel()
@@ -176,11 +175,11 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
             else:
                 I[DI] = 0
 
-        return NumpyMatrixOperator(I.reshape((1, -1)))
+        return I.reshape((1, -1))
 
 
 class L2ProductP1(NumpyMatrixBasedOperator):
-    '''|Operator| representing the L2-product between linear finite element functions.
+    """|Operator| representing the L2-product between linear finite element functions.
 
     To evaluate the product use the :meth:`~pymor.operators.interfaces module.OperatorInterface.apply2`
     method.
@@ -206,15 +205,14 @@ class L2ProductP1(NumpyMatrixBasedOperator):
         `dirichlet_clear_columns` is `True`, the diagonal entries are set to one.
     name
         The name of the product.
-    '''
+    """
 
     sparse = True
 
     def __init__(self, grid, boundary_info, dirichlet_clear_rows=True, dirichlet_clear_columns=False,
                  dirichlet_clear_diag=False, name=None):
         assert grid.reference_element in (line, triangle)
-        self.dim_source = grid.size(grid.dim)
-        self.dim_range = self.dim_source
+        self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
         self.dirichlet_clear_rows = dirichlet_clear_rows
@@ -223,7 +221,6 @@ class L2ProductP1(NumpyMatrixBasedOperator):
         self.name = name
 
     def _assemble(self, mu=None):
-        assert self.check_parameter(mu)
         g = self.grid
         bi = self.boundary_info
 
@@ -264,13 +261,13 @@ class L2ProductP1(NumpyMatrixBasedOperator):
 
         self.logger.info('Assemble system matrix ...')
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
-        A = csc_matrix(A).copy()   # See DiffusionOperatorP1 for why copy() is necessary
+        A = csc_matrix(A).copy()  # See DiffusionOperatorP1 for why copy() is necessary
 
-        return NumpyMatrixOperator(A)
+        return A
 
 
 class L2ProductQ1(NumpyMatrixBasedOperator):
-    '''|Operator| representing the L2-product between bilinear finite element functions.
+    """|Operator| representing the L2-product between bilinear finite element functions.
 
     To evaluate the product use the :meth:`~pymor.operators.interfaces module.OperatorInterface.apply2`
     method.
@@ -296,15 +293,14 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
     `dirichlet_clear_columns` is `True`, the diagonal entries are set to one.
     name
         The name of the product.
-    '''
+    """
 
     sparse = True
 
     def __init__(self, grid, boundary_info, dirichlet_clear_rows=True, dirichlet_clear_columns=False,
                  dirichlet_clear_diag=False, name=None):
         assert grid.reference_element in {square}
-        self.dim_source = grid.size(grid.dim)
-        self.dim_range = self.dim_source
+        self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
         self.dirichlet_clear_rows = dirichlet_clear_rows
@@ -313,16 +309,15 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
         self.name = name
 
     def _assemble(self, mu=None):
-        assert self.check_parameter(mu)
         g = self.grid
         bi = self.boundary_info
 
         # our shape functions
         if g.dim == 2:
-            SF = [lambda X: (1-X[..., 0])*(1-X[..., 1]),
-                  lambda X: (1-X[..., 1])*(X[..., 0]),
-                  lambda X: (X[..., 0])*(X[..., 1]),
-                  lambda X: (1-X[..., 0])*(X[..., 1])]
+            SF = [lambda X: (1 - X[..., 0]) * (1 - X[..., 1]),
+                  lambda X: (1 - X[..., 1]) * (X[..., 0]),
+                  lambda X: (X[..., 0]) * (X[..., 1]),
+                  lambda X: (1 - X[..., 0]) * (X[..., 1])]
         else:
             raise NotImplementedError
 
@@ -352,13 +347,13 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
 
         self.logger.info('Assemble system matrix ...')
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
-        A = csc_matrix(A).copy() # See DiffusionOperatorP1 for why copy() is necessary
+        A = csc_matrix(A).copy()  # See DiffusionOperatorP1 for why copy() is necessary
 
-        return NumpyMatrixOperator(A)
+        return A
 
 
 class DiffusionOperatorP1(NumpyMatrixBasedOperator):
-    '''Diffusion |Operator| for linear finite elements.
+    """Diffusion |Operator| for linear finite elements.
 
     The operator is of the form ::
 
@@ -386,14 +381,14 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
         zero (e.g. for affine decomposition). Otherwise they are set to one.
     name
         Name of the operator.
-    '''
+    """
 
     sparse = True
 
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
                  dirichlet_clear_columns=False, dirichlet_clear_diag=False, name=None):
         assert grid.reference_element(0) in {triangle, line}, 'A simplicial grid is expected!'
-        self.dim_source = self.dim_range = grid.size(grid.dim)
+        self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
         self.diffusion_constant = diffusion_constant
@@ -405,7 +400,6 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
             self.build_parameter_type(inherits=(diffusion_function,))
 
     def _assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
         g = self.grid
         bi = self.boundary_info
 
@@ -461,11 +455,11 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
         # from pymor.tools.memory import print_memory_usage
         # print_memory_usage('matrix: {0:5.1f}'.format((A.data.nbytes + A.indptr.nbytes + A.indices.nbytes)/1024**2))
 
-        return NumpyMatrixOperator(A)
+        return A
 
 
 class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
-    '''Diffusion |Operator| for bilinear finite elements.
+    """Diffusion |Operator| for bilinear finite elements.
 
     The operator is of the form ::
 
@@ -493,14 +487,14 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         zero (e.g. for affine decomposition). Otherwise they are set to one.
     name
         Name of the operator.
-    '''
+    """
 
     sparse = True
 
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
                  dirichlet_clear_columns=False, dirichlet_clear_diag=False, name=None):
         assert grid.reference_element(0) in {square}, 'A square grid is expected!'
-        self.dim_source = self.dim_range = grid.size(grid.dim)
+        self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
         self.diffusion_constant = diffusion_constant
@@ -512,7 +506,6 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
             self.build_parameter_type(inherits=(diffusion_function,))
 
     def _assemble(self, mu=None):
-        mu = self.parse_parameter(mu)
         g = self.grid
         bi = self.boundary_info
 
@@ -565,7 +558,7 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         # is implemented by calling self.prune() which creates the view self.data[:self.nnz].
         # Thus, the original data array is not deleted and all memory stays allocated.
 
-        # from pymor.tools.memory import print_memory_usagef
+        # from pymor.tools.memory import print_memory_usage
         # print_memory_usage('matrix: {0:5.1f}'.format((A.data.nbytes + A.indptr.nbytes + A.indices.nbytes)/1024**2))
 
-        return NumpyMatrixOperator(A)
+        return A

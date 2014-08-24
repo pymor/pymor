@@ -2,7 +2,7 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-''' This module provides generic time-stepping algorithms for the solution of
+""" This module provides generic time-stepping algorithms for the solution of
 instationary problems.
 
 The algorithms are generic in the sense each algorithms operates exclusively on
@@ -16,7 +16,7 @@ common interface that has to be fulfilled by the time-steppers that are used
 by |InstationaryDiscretization|. The classes :class:`ExplicitEulerTimeStepper`
 and :class:`ImplicitEulerTimeStepper` encapsulate :func:`explicit_euler` and
 :func:`implicit_euler` to provide this interface.
-'''
+"""
 
 from __future__ import absolute_import, division, print_function
 
@@ -26,7 +26,7 @@ from pymor.operators import OperatorInterface
 
 
 class TimeStepperInterface(ImmutableInterface):
-    '''Interface for time-stepping algorithms.
+    """Interface for time-stepping algorithms.
 
     Algorithms implementing this interface solve time-dependent problems
     of the form ::
@@ -35,11 +35,11 @@ class TimeStepperInterface(ImmutableInterface):
 
     Time-steppers used by |InstationaryDiscretization| have to fulfill
     this interface.
-    '''
+    """
 
     @abstractmethod
     def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
-        '''Apply time-stepper to the equation ::
+        """Apply time-stepper to the equation ::
 
             M * d_t u + A(u, t) = F(t).
 
@@ -55,7 +55,7 @@ class TimeStepperInterface(ImmutableInterface):
             The |Operator| A.
         rhs
             The right hand side F (either |VectorArray| of length 1 or |Operator| with
-            `dim_range == 1`). If `None`, zero right hand side is assumed.
+            `range.dim == 1`). If `None`, zero right hand side is assumed.
         mass
             The |Operator| M. If `None`, the identity operator is assumed.
         mu
@@ -68,12 +68,12 @@ class TimeStepperInterface(ImmutableInterface):
         Returns
         -------
         |VectorArray| containing the solution trajectory.
-        '''
+        """
         pass
 
 
 class ImplicitEulerTimeStepper(TimeStepperInterface):
-    '''Implict-Euler time-stepper.
+    """Implict-Euler time-stepper.
 
     Solves equations of the form ::
 
@@ -86,7 +86,7 @@ class ImplicitEulerTimeStepper(TimeStepperInterface):
     invert_options
         The :attr:`~pymor.operators.interfaces.OperatorInterface.invert_options` used
         to invert `M + dt*A`.
-    '''
+    """
 
     def __init__(self, nt, invert_options=None):
         self.nt = nt
@@ -98,7 +98,7 @@ class ImplicitEulerTimeStepper(TimeStepperInterface):
 
 
 class ExplicitEulerTimeStepper(TimeStepperInterface):
-    '''Implict-Euler time-stepper.
+    """Implict-Euler time-stepper.
 
     Solves equations of the form ::
 
@@ -108,7 +108,7 @@ class ExplicitEulerTimeStepper(TimeStepperInterface):
     ----------
     nt
         The number of time-steps the time-stepper will perform.
-    '''
+    """
 
     def __init__(self, nt):
         self.nt = nt
@@ -124,34 +124,32 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None, num_va
     assert isinstance(F, (OperatorInterface, VectorArrayInterface))
     assert isinstance(M, OperatorInterface)
     assert not M.parametric
-    assert A.dim_source == A.dim_range
-    assert M.dim_source == M.dim_range == A.dim_source
-
+    assert A.source == A.range == M.source == M.range
+    num_values = num_values or nt + 1
     dt = (t1 - t0) / nt
 
     if isinstance(F, OperatorInterface):
-        assert F.dim_range == 1
-        assert F.dim_source == A.dim_source
+        assert F.range.dim == 1
+        assert F.source == A.range
         F_time_dep = F.parametric and '_t' in F.parameter_type
         if not F_time_dep:
             dt_F = F.as_vector(mu) * dt
     else:
         assert len(F) == 1
-        assert F.dim == A.dim_source
+        assert F in A.range
         F_time_dep = False
         dt_F = F * dt
 
-    assert isinstance(U0, VectorArrayInterface)
+    assert U0 in A.source
     assert len(U0) == 1
-    assert U0.dim == A.dim_source
 
     A_time_dep = A.parametric and '_t' in A.parameter_type
 
-    R = A.type_source.empty(A.dim_source, reserve=nt+1)
+    R = A.source.empty(reserve=nt+1)
     R.append(U0)
 
     M_dt_A = M + A * dt
-    if hasattr(M_dt_A, 'assemble') and not A_time_dep:
+    if not A_time_dep:
         M_dt_A = M_dt_A.assemble(mu)
 
     t = t0
@@ -172,31 +170,30 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None, num_va
 def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
     assert isinstance(A, OperatorInterface)
     assert F is None or isinstance(F, (OperatorInterface, VectorArrayInterface))
-    assert A.dim_source == A.dim_range
+    assert A.source == A.range
     num_values = num_values or nt + 1
 
     if isinstance(F, OperatorInterface):
-        assert F.dim_range == 1
-        assert F.dim_source == A.dim_source
+        assert F.range.dim == 1
+        assert F.source == A.source
         F_time_dep = F.parametric and '_t' in F.parameter_type
         if not F_time_dep:
             F_ass = F.as_vector(mu)
     elif isinstance(F, VectorArrayInterface):
         assert len(F) == 1
-        assert F.dim == A.dim_source
+        assert F in A.source
         F_time_dep = False
         F_ass = F
 
-    assert isinstance(U0, VectorArrayInterface)
     assert len(U0) == 1
-    assert U0.dim == A.dim_source
+    assert U0 in A.source
 
     A_time_dep = A.parametric and '_t' in A.parameter_type
-    if hasattr(A, 'assemble') and not A_time_dep:
+    if not A_time_dep:
         A = A.assemble(mu)
 
     dt = (t1 - t0) / nt
-    R = A.type_source.empty(A.dim_source, reserve=num_values)
+    R = A.source.empty(reserve=num_values)
     R.append(U0)
 
     t = t0

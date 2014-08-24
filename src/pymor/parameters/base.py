@@ -2,7 +2,7 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-'''This module contains the implementation of pyMOR's parameter handling facilities.
+"""This module contains the implementation of pyMOR's parameter handling facilities.
 
 A |Parameter| in pyMOR is basically a `dict` of |NumPy Arrays|. Each item of the
 dict is called a parameter component. The |ParameterType| of a |Parameter| is a dict
@@ -34,7 +34,7 @@ should always be called by the implementor for any given parameter argument. The
 :meth:`~Parametric.local_parameter` method is used to extract the local parameter
 components of the given |Parameter| and performs some name mapping. (See the
 documentation of :meth:`~Parametric.build_parameter_type` for details.)
-'''
+"""
 
 from __future__ import absolute_import, division, print_function
 
@@ -48,7 +48,7 @@ from pymor.tools import float_cmp_all
 
 
 class ParameterType(dict):
-    '''Class representing a parameter type.
+    """Class representing a parameter type.
 
     A parameter type is simply a dictionary with strings as keys and tuples of
     natural numbers as values. The keys are the names of the parameter components
@@ -64,7 +64,7 @@ class ParameterType(dict):
         If `t` is an object with a `parameter_type` attribute, a copy of this
         |ParameterType| is created. Otherwise, `t` can be anything from which
         a `dict` can be constructed.
-    '''
+    """
 
     __keys = None
 
@@ -158,9 +158,12 @@ class ParameterType(dict):
             self.__keys = sorted(self.keys())
         return '{' + ', '.join('{}: {}'.format(k, self[k]) for k in self.__keys) + '}'
 
+    def __repr__(self):
+        return 'ParameterType(' + str(self) + ')'
+
 
 class Parameter(dict):
-    '''Class representing a parameter.
+    """Class representing a parameter.
 
     A |Parameter| is simply a `dict` where each key is a string and each value
     is a |NumPy array|. We call an item of the dictionary a *parameter component*.
@@ -192,7 +195,7 @@ class Parameter(dict):
         The |ParameterType| of the |Parameter|.
     sid
         The state id of the |Parameter|. (See :mod:`pymor.core.interfaces`.)
-    '''
+    """
 
     __keys = None
 
@@ -204,7 +207,7 @@ class Parameter(dict):
 
     @classmethod
     def from_parameter_type(cls, mu, parameter_type=None):
-        '''Takes a user input `mu` and interprets it as a |Parameter| according to the given
+        """Takes a user input `mu` and interprets it as a |Parameter| according to the given
         |ParameterType|.
 
         Depending on the |ParameterType|, `mu` can be given as a |Parameter|, dict, tuple,
@@ -226,7 +229,7 @@ class Parameter(dict):
         ValueError
             Is raised if `mu` cannot be interpreted as a |Parameter| of |ParameterType|
             `parameter_type`.
-        '''
+        """
         if not parameter_type:
             assert mu is None or mu == {}
             return None
@@ -262,7 +265,7 @@ class Parameter(dict):
         return cls(mu)
 
     def allclose(self, mu):
-        '''Compare to |Parameters| using :meth:`~pymor.tools.floatcmp.float_cmp_all`.
+        """Compare to |Parameters| using :meth:`~pymor.tools.floatcmp.float_cmp_all`.
 
         Parameters
         ----------
@@ -273,7 +276,7 @@ class Parameter(dict):
         -------
         `True` if both |Parameters| have the same |ParameterType| and all parameter
         components are almost equal, else `False`.
-        '''
+        """
         assert isinstance(mu, Parameter)
         if self.viewkeys() != mu.viewkeys():
             return False
@@ -387,7 +390,7 @@ class Parameter(dict):
 
 
 class Parametric(object):
-    '''Mixin class for objects representing mathematical entities depending on a |Parameter|.
+    """Mixin class for objects representing mathematical entities depending on a |Parameter|.
 
     Each such object has a |ParameterType| stored in the :attr:`parameter_type` attribute,
     which should be calculated by the implementor during :meth:`__init__` using the
@@ -413,7 +416,7 @@ class Parametric(object):
     parametric:
         `True` if the object really depends on a parameter, i.e. :attr:`parameter_type`
         is not `None`.
-    '''
+    """
 
     parameter_type = None
     parameter_local_type = None
@@ -435,7 +438,7 @@ class Parametric(object):
         return self.parameter_type is not None
 
     def parse_parameter(self, mu):
-        '''Interpret a user supplied parameter `mu` as a |Parameter|.
+        """Interpret a user supplied parameter `mu` as a |Parameter|.
 
         If `mu` is not already a |Parameter|, :meth:`Parameter.from_parameter_type`
         is used, to make `mu` a parameter of the correct |ParameterType|. If `mu`
@@ -447,7 +450,7 @@ class Parametric(object):
         ----------
         mu
             The input to parse as a |Parameter|.
-        '''
+        """
         if mu is None:
             assert self.parameter_type is None, \
                 'Given parameter is None but expected parameter of type {}'.format(self.parameter_type)
@@ -460,41 +463,23 @@ class Parametric(object):
              .format(mu.parameter_type, self.parameter_type))
         return mu
 
-    def check_parameter(self, mu):
-        '''Wrapper around :meth:`parse_parameter` returning `True`.
-
-        This method is intended to be used in `assert` statements, if one is, for
-        some reason, not interested in the |Parameter| itself, e.g. if the object
-        is known to not be :attr:`parametric`. This way one can check if the
-        provided `mu` can be parsed correctly (if not an exception will be raised),
-        and the check can be disabled for speedup using Python's `-O` command line
-        argument.
-
-        Parameters
-        ----------
-        mu
-            The input to be checked.
-        '''
-        self.parse_parameter(mu)
-        return True
-
     def local_parameter(self, mu):
-        '''Extract the local parameter components with their local names from a given |Parameter|.
+        """Extract the local parameter components with their local names from a given |Parameter|.
 
         See :meth:`build_parameter_type` for details.
-        '''
+        """
         assert mu.__class__ is Parameter
         return (None if self.parameter_local_type is None
                 else {k: mu[v] for k, v in self._parameter_global_names.iteritems()})
 
     def strip_parameter(self, mu):
-        '''Remove all components of the |Parameter| `mu` which are not part of the object's |ParameterType|.
+        """Remove all components of the |Parameter| `mu` which are not part of the object's |ParameterType|.
 
         Otherwise :meth:`strip_parameter` behaves like :meth:`parse_parameter`.
 
         This method is mainly useful for caching where the key should only contain the
         relevant parameter components.
-        '''
+        """
         if mu.__class__ is not Parameter:
             mu = Parameter.from_parameter_type(mu, self.parameter_type)
         assert self.parameter_type is None \
@@ -503,7 +488,7 @@ class Parametric(object):
 
     def build_parameter_type(self, local_type=None, global_names=None, local_global=False,
                              inherits=None, provides=None):
-        '''Builds the |ParameterType| of the object. Should be called by :meth:`__init__`.
+        """Builds the |ParameterType| of the object. Should be called by :meth:`__init__`.
 
         The |ParameterType| of a |Parametric| object is determined by the parameter components
         the object by itself requires for evaluation, and by the parameter components
@@ -561,7 +546,7 @@ class Parametric(object):
             `Dict` of parameter component names and their shapes which are provided by the object
             itself to the objects in the `inherited` list. The parameter components listed here
             will thus not become part of the object's |ParameterType|.
-        '''
+        """
         assert not local_global or global_names is None
         assert inherits is None or all(op is None or isinstance(op, Parametric) for op in inherits)
 

@@ -11,7 +11,7 @@ logger = getLogger(__name__)
 
 
 def inverse_relation(R, size_rhs=None, with_indices=False):
-    '''Computes the inverse relation of a relation.
+    """Computes the inverse relation of a relation.
 
     If `r` is a relation, then the inverse relation `ri` is defined by
 
@@ -41,7 +41,7 @@ def inverse_relation(R, size_rhs=None, with_indices=False):
             R[RINV[i, j], RINVI[i, j]] = i.
 
         Only returned if `with_indices` is `True`.
-    '''
+    """
 
     assert R.ndim == 2
     logger.warn('Call to unoptimized function inverse_relation')

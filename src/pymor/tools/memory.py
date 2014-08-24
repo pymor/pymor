@@ -14,7 +14,7 @@ last_memory_usage = 0
 
 
 def memory_usage(unit='mb'):
-    '''Returns the memory usage of the current process in bytes
+    """Returns the memory usage of the current process in bytes
 
     Returns
     -------
@@ -22,7 +22,7 @@ def memory_usage(unit='mb'):
         Current memory usage.
     change
         Change of memory usage since last call.
-    '''
+    """
     unit = unit.lower()
     assert unit in ('b', 'kb', 'mb', 'gb')
     factors = {'b': 1,
@@ -43,7 +43,7 @@ def print_memory_usage(msg=None, unit='mb'):
         print('Memory usage {0:5.1f} {1} - delta: {2:5.1f} {1} - {3}'.format(u[0], unit.upper(), u[1], msg))
 
 
-def total_size(o, handlers={}, verbose=False):
+def total_size(o, handlers=None, verbose=False):
     """ Returns the approximate memory footprint of an object and all of its contents.
 
     Automatically finds the contents of the following builtin containers and
@@ -54,6 +54,7 @@ def total_size(o, handlers={}, verbose=False):
                     OtherContainerClass: OtherContainerClass.get_elements}
 
     """
+    handlers = handlers if handlers else {}
     dict_handler = lambda d: chain.from_iterable(d.items())
     all_handlers = {tuple: iter,
                     list: iter,

@@ -3,7 +3,7 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-'''Burgers with EI demo.
+"""Burgers with EI demo.
 
 Usage:
   burgers_ei.py [options] EXP_MIN EXP_MAX EI_SNAPSHOTS EISIZE SNAPSHOTS RBSIZE
@@ -60,7 +60,7 @@ Options:
   --vx=XSPEED                     Speed in x-direction [default: 1].
 
   --vy=YSPEED                     Speed in y-direction [default: 1].
-'''
+"""
 
 from __future__ import absolute_import, division, print_function
 

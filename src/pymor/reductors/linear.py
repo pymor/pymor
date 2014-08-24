@@ -10,13 +10,13 @@ import numpy as np
 
 from pymor.core import ImmutableInterface
 from pymor.la import NumpyVectorArray, induced_norm
-from pymor.operators import LincombOperatorInterface, NumpyMatrixOperator
+from pymor.operators import NumpyMatrixOperator, LincombOperator
 from pymor.reductors.basic import reduce_generic_rb
 
 
 def reduce_stationary_affine_linear(discretization, RB, error_product=None, disable_caching=True,
                                     extends=None):
-    '''Reductor for linear |StationaryDiscretizations| whose with affinely decomposed operator and rhs.
+    """Reductor for linear |StationaryDiscretizations| whose with affinely decomposed operator and rhs.
 
     This reductor uses :meth:`~pymor.reductors.basic.reduce_generic_rb` for the actual
     RB-projection. The only addition is an error estimator. The estimator evaluates the
@@ -51,14 +51,14 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
     reduction_data
         Additional data produced by the reduction process. In this case the computed
         Riesz representatives. (Compare the `extends` parameter.)
-    '''
+    """
 
     #assert isinstance(discretization, StationaryDiscretization)
     assert discretization.linear
-    assert isinstance(discretization.operator, LincombOperatorInterface)
+    assert isinstance(discretization.operator, LincombOperator)
     assert all(not op.parametric for op in discretization.operator.operators)
     if discretization.rhs.parametric:
-        assert isinstance(discretization.rhs, LincombOperatorInterface)
+        assert isinstance(discretization.rhs, LincombOperator)
         assert all(not op.parametric for op in discretization.rhs.operators)
     assert extends is None or len(extends) == 3
 
@@ -71,8 +71,7 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
         old_RB_size = 0
 
     # compute data for estimator
-    space_dim = d.operator.dim_source
-    space_type = d.operator.type_source
+    space = d.operator.source
 
     # compute the Riesz representative of (U, .)_L2 with respect to error_product
     def riesz_representative(U):
@@ -87,31 +86,31 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
 
     # compute all components of the residual
     if RB is None:
-        RB = discretization.type_solution.empty(discretization.dim_solution)
+        RB = discretization.solution_space.empty()
 
     if extends:
         R_R, RR_R = old_data['R_R'], old_data['RR_R']
     elif not d.rhs.parametric:
-        R_R = space_type.empty(space_dim, reserve=1)
-        RR_R = space_type.empty(space_dim, reserve=1)
+        R_R = space.empty(reserve=1)
+        RR_R = space.empty(reserve=1)
         append_vector(d.rhs.as_vector(), R_R, RR_R)
     else:
-        R_R = space_type.empty(space_dim, reserve=len(d.rhs.operators))
-        RR_R = space_type.empty(space_dim, reserve=len(d.rhs.operators))
+        R_R = space.empty(reserve=len(d.rhs.operators))
+        RR_R = space.empty(reserve=len(d.rhs.operators))
         for op in d.rhs.operators:
             append_vector(op.as_vector(), R_R, RR_R)
 
     if len(RB) == 0:
-        R_Os = [space_type.empty(space_dim)]
-        RR_Os = [space_type.empty(space_dim)]
+        R_Os = [space.empty()]
+        RR_Os = [space.empty()]
     elif not d.operator.parametric:
-        R_Os = [space_type.empty(space_dim, reserve=len(RB))]
-        RR_Os = [space_type.empty(space_dim, reserve=len(RB))]
+        R_Os = [space.empty(reserve=len(RB))]
+        RR_Os = [space.empty(reserve=len(RB))]
         for i in xrange(len(RB)):
             append_vector(-d.operator.apply(RB, ind=i), R_Os[0], RR_Os[0])
     else:
-        R_Os = [space_type.empty(space_dim, reserve=len(RB)) for _ in xrange(len(d.operator.operators))]
-        RR_Os = [space_type.empty(space_dim, reserve=len(RB)) for _ in xrange(len(d.operator.operators))]
+        R_Os = [space.empty(reserve=len(RB)) for _ in xrange(len(d.operator.operators))]
+        RR_Os = [space.empty(reserve=len(RB)) for _ in xrange(len(d.operator.operators))]
         if old_RB_size > 0:
             for op, R_O, RR_O, old_R_O, old_RR_O in izip(d.operator.operators, R_Os, RR_Os,
                                                          old_data['R_Os'], old_data['RR_Os']):
@@ -142,10 +141,10 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
 
 
 class StationaryAffineLinearReducedEstimator(ImmutableInterface):
-    '''Instatiated by :meth:`reduce_stationary_affine_linear`.
+    """Instatiated by :meth:`reduce_stationary_affine_linear`.
 
     Not to be used directly.
-    '''
+    """
 
     def __init__(self, estimator_matrix):
         self.estimator_matrix = estimator_matrix
@@ -172,7 +171,7 @@ class StationaryAffineLinearReducedEstimator(ImmutableInterface):
         d = discretization
         cr = 1 if not d.rhs.parametric else len(d.rhs.operators)
         co = 1 if not d.operator.parametric else len(d.operator.operators)
-        old_dim = d.operator.dim_source
+        old_dim = d.operator.source.dim
 
         indices = np.concatenate((np.arange(cr),
                                  ((np.arange(co)*old_dim)[..., np.newaxis] + np.arange(dim)).ravel() + cr))

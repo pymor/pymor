@@ -3,7 +3,7 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-'''Burgers demo.
+"""Burgers demo.
 
 Usage:
   burgers.py [-hp] [--grid=NI] [--grid-type=TYPE] [--initial-data=TYPE] [--lxf-lambda=VALUE] [--nt=COUNT]
@@ -36,7 +36,7 @@ Options:
   --vx=XSPEED            Speed in x-direction [default: 1].
 
   --vy=YSPEED            Speed in y-direction [default: 1].
-'''
+"""
 
 from __future__ import absolute_import, division, print_function
 
@@ -68,7 +68,7 @@ def burgers_demo(args):
     args['--nt'] = int(args['--nt'])
     args['--not-periodic'] = bool(args['--not-periodic'])
     args['--num-flux'] = args['--num-flux'].lower()
-    assert args['--num-flux'] in ('lax_friedrichs', 'engquist_osher')
+    assert args['--num-flux'] in ('lax_friedrichs', 'engquist_osher', 'simplified_engquist_osher')
     args['--vx'] = float(args['--vx'])
     args['--vy'] = float(args['--vy'])
     args['EXP'] = float(args['EXP'])

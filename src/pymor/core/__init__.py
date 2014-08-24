@@ -16,9 +16,9 @@ from functools import partial
 
 
 class Unpicklable(object):
-    '''Mix me into classes you know cannot be pickled.
+    """Mix me into classes you know cannot be pickled.
     Our test system won't try to pickle me then
-    '''
+    """
     pass
 
 
@@ -31,7 +31,7 @@ loads = pickle.loads
 try:
     import numpy as np
     A = np.zeros((0, 1))
-    A[[]]
+    _ = A[[]]
     NUMPY_INDEX_QUIRK = False
 except IndexError:
     NUMPY_INDEX_QUIRK = True

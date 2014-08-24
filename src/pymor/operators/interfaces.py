@@ -11,7 +11,7 @@ from pymor.tools import Named
 
 
 class OperatorInterface(ImmutableInterface, Parametric, Named):
-    '''Interface for |Parameter| dependent discrete operators.
+    """Interface for |Parameter| dependent discrete operators.
 
     Every operator is viewed as a map ::
 
@@ -19,14 +19,10 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
 
     Note that there is no special distinction between functionals
     and operators in pyMOR. A functional is simply an operator with
-    range dimension 1 and |NumpyVectorArray| as `type_range`.
+    range dimension 1 and |NumpyVectorArray| as `range.type`.
 
     Attributes
     ----------
-    dim_source
-        The dimension s of the source space.
-    dim_range
-        The dimension r of the range space.
     invert_options
         |OrderedDict| of possible options for :meth:`~OperatorInterface.apply_inverse`.
         Each key is a type of inversion algorithm which can be used to invert the
@@ -36,15 +32,15 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         directly to :meth:`~OperatorInterface.apply_inverse()`.
     linear
         `True` if the operator is linear.
-    type_source
-        The |VectorArray| class representing vectors of the source space.
-    type_range
-        The |VectorArray| class representing vectors of the range space.
-    '''
+    source
+        The source |VectorSpace|.
+    range
+        The range |VectorSpace|.
+    """
 
     @abstractmethod
     def apply(self, U, ind=None, mu=None):
-        '''Apply the operator.
+        """Apply the operator.
 
         Parameters
         ----------
@@ -59,12 +55,12 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         Returns
         -------
         |VectorArray| of the operator evaluations.
-        '''
+        """
         pass
 
     @abstractmethod
-    def apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None, pairwise=True):
-        '''Treat the operator as a 2-form by calculating (V, A(U)).
+    def apply2(self, V, U, pairwise, U_ind=None, V_ind=None, mu=None, product=None):
+        """Treat the operator as a 2-form by calculating (V, A(U)).
 
         In particular, if ( , ) is the Euclidean product and A is a linear operator
         given by multiplication with a matrix M, then ::
@@ -77,6 +73,16 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
             |VectorArray| of the left arguments V.
         U
             |VectorArray| of the right right arguments U.
+        pairwise
+            If `False`, the 2-form is applied to all combinations of vectors
+            in `V` and `U`, i.e. ::
+
+                L.apply2(V, U).shape = (len(V_ind), len(U_ind)).
+
+            If `True`, the vectors in `V` and `U` are applied in pairs, i.e.
+            `V` and `U` must be of the same length and we have ::
+
+                L.apply2(V, U).shape = (len(V_ind),) = (len(U_ind),).
         V_ind
             The indices of the vectors in `V` to which the operator shall be
             applied. (See the |VectorArray| documentation for further details.)
@@ -88,26 +94,16 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         product
             The scalar product used in the expression `(V, A(U))` given as
             an |Operator|.  If `None`, the euclidean product is chosen.
-        pairwise
-            If `False`, the 2-form is applied to all combinations of vectors
-            in `V` and `U`, i.e. ::
-
-                L.apply2(V, U).shape = (len(V_ind), len(U_ind)).
-
-            If `True`, the vectors in `V` and `U` are applied in pairs, i.e.
-            `V` and `U` must be of the same length and we have ::
-
-                L.apply2(V, U).shape = (len(V_ind),) = (len(U_ind),).
 
         Returns
         -------
         A |NumPy array| of all 2-form evaluations.
-        '''
+        """
         pass
 
     @abstractmethod
     def apply_inverse(self, U, ind=None, mu=None, options=None):
-        '''Apply the inverse operator.
+        """Apply the inverse operator.
 
         Parameters
         ----------
@@ -136,12 +132,12 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         ------
         InversionError
             The operator could not be inverted.
-        '''
+        """
         pass
 
     @abstractmethod
     def jacobian(self, U, mu=None):
-        '''Return the operator's Jacobian.
+        """Return the operator's Jacobian.
 
         Parameters
         ----------
@@ -154,17 +150,17 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         Returns
         -------
         |Operator| representing the Jacobian.
-        '''
+        """
         pass
 
     @abstractmethod
     def as_vector(self, mu=None):
-        '''Return vector representation of linear functional or vector operator.
+        """Return vector representation of linear functional or vector operator.
 
         This method may only be called on linear functionals, i.e. linear operators
-        with `dim_range == 1` and |NumpyVectorArray| as :attr:`~OperatorInterface.type_range`,
+        with `range.dim == 1` and |NumpyVectorArray| as :attr:`~OperatorInterface.range.type`,
         or on operators describing vectors, i.e. linear operators with
-        `dim_source == 1` |NumpyVectorArray| as :attr:`~OperatorInterface.type_source`.
+        `source.dim == 1` |NumpyVectorArray| as :attr:`~OperatorInterface.source.type`.
 
         In the case of a functional, the identity ::
 
@@ -183,21 +179,37 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         -------
         V
             |VectorArray| of length 1 containing the vector representation. We have
-            `V.dim == self.dim_source`, `type(V) == self.type_source` for functionals
-            and `V.dim = self.dim_range`, `type(V) == self.dim_range` for vector-like
+            `V.dim == self.source.dim`, `type(V) == self.source.type` for functionals
+            and `V.dim = self.range.dim`, `type(V) == self.range.type` for vector-like
             operators.
-        '''
+        """
+        pass
+
+    @abstractmethod
+    def assemble(self, mu=None):
+        """Assemble the operator for a given parameter.
+
+        What the result of the assembly is strongly depends on the given operator.
+        For instance, a matrix-based operator will assemble its matrix, a |LincombOperator|
+        will try to form the linear combination of its operators, whereas an arbitrary
+        operator might simply return a :class:`~pymor.operators.constructions.FixedParameterOperator`.
+        The only assured property of the assembled operator is that it is no longer
+        parametric.
+
+        Parameters
+        ----------
+        mu
+            The |Parameter| for which to assemble the operator.
+
+        Returns
+        -------
+        Parameter-independent, assembled |Operator|.
+        """
         pass
 
     @abstractstaticmethod
     def lincomb(operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
-        '''Form a linear combination of the given operators.
-
-        How this linear combiniation is realized will depend on the operators involved.
-        E.g. calling `lincomb` on a |NumpyMatrixBasedOperator| and only providing
-        such operators will result in a new |NumpyMatrixBasedOperator| that will assemble
-        to a |NumpyMatrixOperator|, whereas for arbitrary operators,
-        :class:`pymor.operators.basic.LincombOperator` will be returned.
+        """Form a linear combination of the given operators.
 
         The linear coefficients may be provided as scalars or |ParameterFunctionals|.
         Alternatively, if no linear coefficients are given, the missing coefficients become
@@ -224,12 +236,38 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         Returns
         -------
         |LincombOperator| representing the linear combination.
-        '''
+        """
         pass
+
+    def _assemble_lincomb(self, operators, coefficients, name=None):
+        """Try to assemble a linear combination of the given operators.
+
+        This method is called in the `assemble` method of |LincombOperator|. If an
+        assembly of the given linear combination is possible, e.g. the linear
+        combination of the system matrices of the operators can be formed, then
+        the assembled operator is returned. Otherwise, the method returns
+        `None` to indicate that assembly is not possible.
+
+        Parameters
+        ----------
+        operators
+            List of |Operators| whose linear combination is formed.
+        coefficients
+            List of the corresponding linear coefficients. (In contrast to
+            :meth:`~OperatorInterface.lincomb`, these coefficients are always
+            numbers, not |ParameterFunctionals|.)
+        name
+            Name of the assembled operator.
+
+        Returns
+        -------
+        The assembled |Operator| if assembly is possible, otherwise `None`.
+        """
+        return None
 
     @abstractmethod
     def projected(self, source_basis, range_basis, product=None, name=None):
-        '''Project operator to subspaces of the source and range space.
+        """Project operator to subspaces of the source and range space.
 
         Denote `self` by A. Given a scalar product ( ⋅, ⋅), and vectors b_1, ..., b_N,
         c_1, ..., c_M, the projected operator A_P is defined by ::
@@ -278,48 +316,20 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         Returns
         -------
         The projected |Operator|.
-        '''
+        """
         pass
 
     @abstractmethod
     def __add__(self, other):
-        '''Sum of two operators'''
+        """Sum of two operators"""
         pass
 
     @abstractmethod
     def __radd__(self, other):
-        '''Sum of two operators'''
+        """Sum of two operators"""
         pass
 
     @abstractmethod
     def __mul__(self, other):
-        '''Product of operator by a scalar'''
-        pass
-
-
-class LincombOperatorInterface(OperatorInterface):
-    '''|Operator| representing a linear combination.
-
-    The linear coefficients can be scalars or |ParameterFunctionals|.  Alternatively,
-    if no linear coefficients are given, the missing coefficients become
-    part of the |Parameter| the combined |Operator| expects.
-
-    Attributes
-    ----------
-    operators
-        List of |Operators| whose linear combination is formed.
-    coefficients
-        `None` or a list of linear coefficients.
-    num_coefficients
-        If `coefficients` is `None`, the number of linear coefficients (starting
-        at index 0) which are given by the |Parameter| component with name
-        `'coefficients_name'`. The missing coefficients are set to `1`.
-    coefficients_name
-        If `coefficients` is `None`, the name of the |Parameter| component providing
-        the linear coefficients.
-    '''
-
-    @abstractmethod
-    def evaluate_coefficients(self, mu):
-        '''Evaluate the linear coefficients for a given |Parameter|.'''
+        """Product of operator by a scalar"""
         pass

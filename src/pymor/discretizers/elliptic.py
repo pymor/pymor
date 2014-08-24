@@ -16,7 +16,7 @@ from pymor.operators.cg import DiffusionOperatorP1, L2ProductFunctionalP1, L2Pro
 
 def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer=None,
                            grid=None, boundary_info=None):
-    '''Discretizes an |EllipticProblem| using finite elements.
+    """Discretizes an |EllipticProblem| using finite elements.
 
     Parameters
     ----------
@@ -45,7 +45,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
 
             :grid:           The generated |Grid|.
             :boundary_info:  The generated |BoundaryInfo|.
-    '''
+    """
 
     assert isinstance(analytical_problem, EllipticProblem)
     assert grid is None or boundary_info is not None

@@ -3,11 +3,11 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-'''
+"""
 Created on Fri Nov  2 10:12:55 2012
 Collection of function/class based decorators.
 
-'''
+"""
 from __future__ import absolute_import, division, print_function
 import functools
 import types
@@ -23,10 +23,10 @@ except ImportError:
 
 
 def fixup_docstring(doc):
-    '''replaces all dots with underscores in contract lines
+    """replaces all dots with underscores in contract lines
     this is necessary to circumvent type identifier checking
     in pycontracts itself
-    '''
+    """
     if doc is None:
         return None
     ret = []
@@ -47,7 +47,7 @@ def _is_decorated(func):
 
 
 class DecoratorBase(object):
-    '''A base for all decorators that does the common automagic'''
+    """A base for all decorators that does the common automagic"""
     def __init__(self, func):
         functools.wraps(func)(self)
         func.decorated = self
@@ -55,13 +55,13 @@ class DecoratorBase(object):
         assert _is_decorated(func)
 
     def __get__(self, obj, ownerClass=None):
-        '''Return a wrapper that binds self as a method of obj (!)'''
+        """Return a wrapper that binds self as a method of obj (!)"""
         self.obj = obj
         return types.MethodType(self, obj)
 
 
 class DecoratorWithArgsBase(object):
-    '''A base for all decorators with args that sadly can do little common automagic'''
+    """A base for all decorators with args that sadly can do little common automagic"""
     def mark(self, func):
         functools.wraps(func)
         func.decorated = self
@@ -73,10 +73,10 @@ class DecoratorWithArgsBase(object):
 
 
 class Deprecated(DecoratorBase):
-    '''This is a decorator which can be used to mark functions
+    """This is a decorator which can be used to mark functions
     as deprecated. It will result in a warning being emitted
     when the function is used.
-    '''
+    """
 
     def __init__(self, alt='no alternative given'):
         self._alt = alt
@@ -95,7 +95,7 @@ class Deprecated(DecoratorBase):
 
 
 def contract(*arg, **kwargs):
-    '''
+    """
         Decorator for adding contracts to functions.
 
         It is smart enough to support functions with variable number of
@@ -121,52 +121,7 @@ def contract(*arg, **kwargs):
 
               @contract
               def my_function(a, b):
-                  """Function description.
-                      :type a: int,>0
-                      :type b: list[N],N>0
-                      :rtype: list[N]
                   """
-                  pass
-
-        **Signature and docstrings**: The signature of the decorated
-        function is conserved. By default, the docstring is modified
-        by adding ``:type:`` and ``:rtype:`` definitions. To avoid that,
-        pass ``modify_docstring=False`` as a parameter.
-
-
-        **Contracts evaluation**: Note that all contracts for the arguments
-        and the return values
-        are evaluated in the same context. This makes it possible to use
-        common variables in the contract expression. For example, in the
-        example above, the return value is constrained to be a list of the same
-        length (``N``) as the parameter ``b``.
-
-        **Using docstrings** Note that, by convention, those annotations must
-        be parseable as RestructuredText. This is relevant if you are using
-        Sphinx.
-        If the contract string has special RST characters in it, like ``*``,
-        you can include it in double ticks. `pycontracts` will remove
-        the double ticks before interpreting the string.
-
-        For example, the two annotations in this docstring are equivalent
-        for `pycontracts`, but the latter is better for Sphinx: ::
-
-              """ My function
-
-                  :param a: First parameter
-                  :type a: list(tuple(str,*))
-
-                  :param b: First parameter
-                  :type b: ``list(tuple(str,*))``
-              """
-
-        Raises
-        ------
-        ContractException
-            Arguments are not coherent.
-        ContractSyntaxError
-            Contract syntac is incorrect.
-    '''
 
     if not HAVE_CONTRACTS:
         if isinstance(arg[0], types.FunctionType):

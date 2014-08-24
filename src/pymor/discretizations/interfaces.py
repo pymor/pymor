@@ -11,17 +11,15 @@ from pymor.tools import Named
 
 
 class DiscretizationInterface(CacheableInterface, Parametric, Named):
-    '''Describes a discretization.
+    """Describes a discretization.
 
     Note that we do not make any distinction between detailed and reduced
     discretizations.
 
     Attributes
     ----------
-    dim_solution
-        Dimension of the |VectorArrays| returned by solve.
-    type_solution
-        Type of the |VectorArrays| returned by solve.
+    solution_space
+        |VectorSpace| of the |VectorArrays| returned by solve.
     linear
         `True` if the discretization describes a linear Problem.
     operators
@@ -31,7 +29,7 @@ class DiscretizationInterface(CacheableInterface, Parametric, Named):
         Same as operators but for |Functionals|.
     vector_operators
         Same as operators but for |Operators| representing vectors, i.e.
-        linear |Operators| with `dim_source == 1`.
+        linear |Operators| with `source.dim == 1`.
     products
         Same as |Operators| but for inner product operators associated to the
         discretization.
@@ -45,10 +43,9 @@ class DiscretizationInterface(CacheableInterface, Parametric, Named):
 
         def visualize(self, U):
             Visualize a solution given by the |VectorArray| U.
-    '''
+    """
 
-    dim_solution = None
-    type_solution = None
+    solution_space = None
     linear = False
     operators = dict()
     functionals = dict()
@@ -58,12 +55,12 @@ class DiscretizationInterface(CacheableInterface, Parametric, Named):
 
     @abstractmethod
     def _solve(self, mu=None):
-        '''Perform the actual solving.'''
+        """Perform the actual solving."""
         pass
 
     @cached
     def solve(self, mu=None, **kwargs):
-        '''Solve for the |Parameter| `mu`.
+        """Solve for the |Parameter| `mu`.
 
         The result is cached by default.
 
@@ -75,5 +72,5 @@ class DiscretizationInterface(CacheableInterface, Parametric, Named):
         Returns
         -------
         The solution given by a |VectorArray|.
-        '''
+        """
         return self._solve(mu, **kwargs)

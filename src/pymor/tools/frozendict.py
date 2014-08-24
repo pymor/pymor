@@ -10,10 +10,10 @@ from __future__ import absolute_import, division, print_function
 
 
 class FrozenDict(dict):
-    '''An immutable dictionary.'''
+    """An immutable dictionary."""
 
     @property
-    def _blocked_attribute(obj):
+    def _blocked_attribute(self):
         raise AttributeError('A frozendict cannot be modified.')
 
     __delitem__ = __setitem__ = clear = _blocked_attribute

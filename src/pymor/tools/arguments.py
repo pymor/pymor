@@ -8,7 +8,7 @@ import inspect
 
 
 def method_arguments(func):
-    '''Returns the names of the arguments of a given method (without `self`).'''
+    """Returns the names of the arguments of a given method (without `self`)."""
     args = inspect.getargspec(func)[0]
     try:
         args.remove('self')

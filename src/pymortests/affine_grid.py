@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 from pymor.grids.interfaces import ReferenceElementInterface
-from pymortests.fixtures.grid import grid
+from pymortests.fixtures.grid import grid, grid_with_orthogonal_centers
 
 # monkey np.testing.assert_allclose to behave the same as np.allclose
 # for some reason, the default atol of np.testing.assert_allclose is 0
@@ -292,3 +292,18 @@ def test_quadrature_points_values(grid):
                 q, _ = g.reference_element(d).quadrature(order=o, quadrature_type=t)
                 np.testing.assert_allclose(Q, g.quadrature_points(d, npoints=p, quadrature_type=t))
                 np.testing.assert_allclose(Q, B[:, np.newaxis, :] + np.einsum('eij,qj->eqi', A, q))
+
+
+def test_orthogonal_centers(grid_with_orthogonal_centers):
+    g = grid_with_orthogonal_centers
+    C = g.orthogonal_centers()
+    SUE = g.superentities(1, 0)
+    if SUE.shape[1] != 2:
+        return
+    EMB = g.embeddings(1)[0].swapaxes(1, 2)
+    for s in xrange(g.size(1)):
+        if -1 in SUE[s]:
+            continue
+        SEGMENT = C[SUE[s, 0]] - C[SUE[s, 1]]
+        SPROD = EMB[s].dot(SEGMENT)
+        np.testing.assert_allclose(SPROD, 0)

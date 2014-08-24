@@ -13,7 +13,7 @@ from pymor.core.interfaces import BasicInterface, abstractmethod, abstractproper
 
 
 class VectorArrayInterface(BasicInterface):
-    '''Interface for vector arrays.
+    """Interface for vector arrays.
 
     A vector array should be thought of as a list of (possibly high-dimensional) vectors.
     While the vectors themselves will be inaccessible in general (e.g. because they are
@@ -21,7 +21,7 @@ class VectorArrayInterface(BasicInterface):
     be performed via the interface.
 
     It is moreover assumed that the number of vectors is small enough such that scalar data
-    associated to each vector can be handled on the python side. I.e. methods like
+    associated to each vector can be handled on the Python side. I.e. methods like
     :meth:`~VectorArrayInterface.l2_norm` or :meth:`~VectorArrayInterface.gramian` will
     always return |NumPy arrays|.
 
@@ -52,55 +52,85 @@ class VectorArrayInterface(BasicInterface):
 
     dim
         The dimension of the vectors in the array.
-    '''
+    space
+        |VectorSpace| array the array belongs to.
+    subtype
+        Can be any Python object with a sensible implementation of `__eq__`. Two
+        arrays are compatible (e.g. can be added) if they are instances of the same class
+        and share the same subtype. A valid subtype has to be provided
+        to :meth:`~VectorArrayInterface.make_array` and the resulting array will be
+        of that subtype. By default, the subtype of an array is simply `None`. For
+        |NumpyVectorArray|, the subtype is a single integer denoting the dimension of
+        the array. Subtypes for other array classes could, e.g., include a socket for
+        communication with a specific PDE solver instance.
+    """
 
     @abstractclassmethod
-    def empty(cls, dim, reserve=0):
-        '''Create an empty |VectorArray|
+    def make_array(cls, subtype=None, count=0, reserve=0):
+        """Create a |VectorArray| of null vectors.
 
         Parameters
         ----------
-        dim
-            The dimension of the array.
+        subtype
+            The :attr:`~VectorArrayInterface.subtype`, the created array should have.
+            What a valid subtype is, is determined by the respective array implementation.
+        count
+            The number of null vectors to create. For `count == 0`, an empty array is
+            returned.
+        reserve
+            A hint for the backend to which length the array will grow.
+        """
+        pass
+
+    def empty(self, reserve=0):
+        """Create an empty |VectorArray| of same :attr:`~VectorArrayInterface.subtype`.
+
+        Parameters
+        ----------
         reserve
             Hint for the backend to which length the array will grow.
 
         Returns
         -------
         An empty |VectorArray|.
-        '''
-        pass
+        """
+        return self.make_array(subtype=self.subtype, reserve=reserve)
 
-    @abstractclassmethod
-    def zeros(cls, dim, count=1):
-        '''Create a |VectorArray| of null vectors
+    def zeros(self, count=1):
+        """Create a |VectorArray| of null vectors of same :attr:`~VectorArrayInterface.subtype`.
 
         Parameters
         ----------
-        dim
-            The dimension of the array.
         count
             The number of vectors.
 
         Returns
         -------
-        A |VectorArray| containing `count` vectors of dimension `dim`
-        whith each component zero.
-        '''
-        pass
+        A |VectorArray| containing `count` vectors whith each component
+        zero.
+        """
+        return self.make_array(subtype=self.subtype, count=count)
 
     @abstractmethod
     def __len__(self):
-        '''The number of vectors in the array.'''
+        """The number of vectors in the array."""
         pass
 
     @abstractproperty
     def dim(self):
         pass
 
+    @property
+    def subtype(self):
+        return None
+
+    @property
+    def space(self):
+        return VectorSpace(type(self), self.subtype)
+
     @abstractmethod
     def copy(self, ind=None):
-        '''Returns a copy of a subarray.
+        """Returns a copy of a subarray.
 
         Parameters
         ----------
@@ -110,12 +140,12 @@ class VectorArrayInterface(BasicInterface):
         Returns
         -------
         A copy of the |VectorArray|.
-        '''
+        """
         pass
 
     @abstractmethod
     def append(self, other, o_ind=None, remove_from_other=False):
-        '''Append vectors to the array.
+        """Append vectors to the array.
 
         Parameters
         ----------
@@ -127,23 +157,23 @@ class VectorArrayInterface(BasicInterface):
             If `True`, the appended vectors are removed from `other`.
             For list-like implementations this can be used to prevent
             unnecessary copies of the involved vectors.
-        '''
+        """
         pass
 
     @abstractmethod
     def remove(self, ind=None):
-        '''Remove vectors from the array.
+        """Remove vectors from the array.
 
         Parameters
         ----------
         ind
             Indices of the vectors that are to be removed (see class documentation).
-        '''
+        """
         pass
 
     @abstractmethod
     def replace(self, other, ind=None, o_ind=None, remove_from_other=False):
-        '''Replace vectors of the array.
+        """Replace vectors of the array.
 
         Parameters
         ----------
@@ -160,17 +190,17 @@ class VectorArrayInterface(BasicInterface):
             If `True`, the new vectors are removed from `other`.
             For list-like implementations this can be used to prevent
             unnecessary copies of the involved vectors.
-        '''
+        """
         pass
 
     @abstractmethod
     def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
-        '''Check vectors for equality.
+        """Check vectors for equality.
 
         Equality of two vectors should be defined as in
         :func:`pymor.tools.float_cmp_all`.
 
-        The dimensions of `self` and `other` have to agree. If the length
+        The subtypes of `self` and `other` have to agree. If the length
         of `self` (`ind`) resp. `other` (`o_ind`) is 1, the one specified
         vector is compared to all vectors of the other summand. Otherwise
         the length of `ind` and `o_ind` have to agree.
@@ -191,12 +221,12 @@ class VectorArrayInterface(BasicInterface):
         Returns
         -------
         |NumPy array| of the truth values of the comparison.
-        '''
+        """
         pass
 
     @abstractmethod
     def scal(self, alpha, ind=None):
-        '''BLAS SCAL operation (in-place scalar multiplication).
+        """BLAS SCAL operation (in-place scalar multiplication).
 
         This method calculates ::
 
@@ -209,18 +239,18 @@ class VectorArrayInterface(BasicInterface):
         ind
             Indices of the vectors of `self` that are to be scaled (see class documentation).
             Repeated indices are forbidden.
-        '''
+        """
         pass
 
     @abstractmethod
     def axpy(self, alpha, x, ind=None, x_ind=None):
-        '''BLAS AXPY operation.
+        """BLAS AXPY operation.
 
         This method forms the sum ::
 
             self[ind] = alpha*x[x_ind] + self[ind]
 
-        The dimensions of `self` and `x` as well as the lengths of `self` (`ind`) and
+        The subtypes of `self` and `x` as well as the lengths of `self` (`ind`) and
         `x` (`x_ind`) have to agree.
 
         Parameters
@@ -235,12 +265,12 @@ class VectorArrayInterface(BasicInterface):
         x_ind
             Indices of the vectors in `x` that are to be added (see class documentation).
             Repeated indices are allowed.
-        '''
+        """
         pass
 
     @abstractmethod
     def dot(self, other, pairwise, ind=None, o_ind=None):
-        '''Returns the scalar products between |VectorArray| elements.
+        """Returns the scalar products between |VectorArray| elements.
 
         Parameters
         ----------
@@ -266,12 +296,12 @@ class VectorArrayInterface(BasicInterface):
         that ::
 
             result[i, j] = ( self[ind][i], other[o_ind][j] ).
-        '''
+        """
         pass
 
     @abstractmethod
     def lincomb(self, coefficients, ind=None):
-        '''Returns linear combinations of the vectors contained in the array.
+        """Returns linear combinations of the vectors contained in the array.
 
         Parameters
         ----------
@@ -292,12 +322,12 @@ class VectorArrayInterface(BasicInterface):
         `len(result) == 1` and
 
             result[1] = ∑ self[j] * coefficients[j].
-        '''
+        """
         pass
 
     @abstractmethod
     def l1_norm(self, ind=None):
-        '''The l1-norms of the vectors contained in the array.
+        """The l1-norms of the vectors contained in the array.
 
         Parameters
         ----------
@@ -308,12 +338,12 @@ class VectorArrayInterface(BasicInterface):
         -------
         A |NumPy array| `result` such that `result[i]` contains the norm
         of `self[ind][i]`.
-        '''
+        """
         pass
 
     @abstractmethod
     def l2_norm(self, ind=None):
-        '''The l2-norms of the vectors contained in the array.
+        """The l2-norms of the vectors contained in the array.
 
         Parameters
         ----------
@@ -324,11 +354,11 @@ class VectorArrayInterface(BasicInterface):
         -------
         A |NumPy array| `result` such that `result[i]` contains the norm
         of `self[ind][i]`.
-        '''
+        """
         pass
 
     def sup_norm(self, ind=None):
-        '''The l-infinity--norms of the vectors contained in the array.
+        """The l-infinity--norms of the vectors contained in the array.
 
         Parameters
         ----------
@@ -339,7 +369,7 @@ class VectorArrayInterface(BasicInterface):
         -------
         A |NumPy array| `result` such that `result[i]` contains the norm
         of `self[ind][i]`.
-        '''
+        """
         if self.dim == 0:
             assert self.check_ind(ind)
             return np.zeros(self.len_ind(ind))
@@ -349,7 +379,7 @@ class VectorArrayInterface(BasicInterface):
 
     @abstractmethod
     def components(self, component_indices, ind=None):
-        '''Extract components of the vectors contained in the array.
+        """Extract components of the vectors contained in the array.
 
         Parameters
         ----------
@@ -363,12 +393,12 @@ class VectorArrayInterface(BasicInterface):
         -------
         A |NumPy array| `result` such that `result[i, j]` is the `component_indices[j]`-th
         component of the `ind[i]`-th vector of the array.
-        '''
+        """
         pass
 
     @abstractmethod
     def amax(self, ind=None):
-        '''The maximum absolute value of the vectors contained in the array.
+        """The maximum absolute value of the vectors contained in the array.
 
         Parameters
         ----------
@@ -384,15 +414,15 @@ class VectorArrayInterface(BasicInterface):
         max_val
             |NumPy array| containing for each vector the maximum absolute value of its
             components.
-        '''
+        """
         pass
 
     def gramian(self, ind=None):
-        '''Shorthand for `dot(self, pairwise=False, ind=ind, o_ind=ind)`.'''
+        """Shorthand for `dot(self, pairwise=False, ind=ind, o_ind=ind)`."""
         return self.dot(self, pairwise=False, ind=ind, o_ind=ind)
 
     def __add__(self, other):
-        '''The pairwise sum of two |VectorArrays|.'''
+        """The pairwise sum of two |VectorArrays|."""
         if isinstance(other, Number):
             assert other == 0
             return self.copy()
@@ -402,42 +432,42 @@ class VectorArrayInterface(BasicInterface):
         return result
 
     def __iadd__(self, other):
-        '''In-place pairwise addition of |VectorArrays|.'''
+        """In-place pairwise addition of |VectorArrays|."""
         self.axpy(1, other)
         return self
 
     __radd__ = __add__
 
     def __sub__(self, other):
-        '''The pairwise difference of two |VectorArrays|.'''
+        """The pairwise difference of two |VectorArrays|."""
         result = self.copy()
         result.axpy(-1, other)
         return result
 
     def __isub__(self, other):
-        '''In-place pairwise difference of |VectorArrays|.'''
+        """In-place pairwise difference of |VectorArrays|."""
         self.axpy(-1, other)
         return self
 
     def __mul__(self, other):
-        '''Product by a scalar.'''
+        """Product by a scalar."""
         result = self.copy()
         result.scal(other)
         return result
 
     def __imul__(self, other):
-        '''In-place product by a scalar.'''
+        """In-place product by a scalar."""
         self.scal(other)
         return self
 
     def __neg__(self):
-        '''Product by -1.'''
+        """Product by -1."""
         result = self.copy()
         result.scal(-1)
         return result
 
     def check_ind(self, ind):
-        '''Check if `ind` is an admissable list of indices in the sense of the class documentation.'''
+        """Check if `ind` is an admissable list of indices in the sense of the class documentation."""
         return (ind is None or
                 isinstance(ind, Number) and 0 <= ind < len(self) or
                 isinstance(ind, list) and (len(ind) == 0 or 0 <= min(ind) and max(ind) < len(self)) or
@@ -445,8 +475,8 @@ class VectorArrayInterface(BasicInterface):
                  and (len(ind) == 0 or 0 <= np.min(ind) and np.max(ind) < len(self))))
 
     def check_ind_unique(self, ind):
-        '''Check if `ind` is an admissable list of unique indices in the sense of the class documentation.'''
-        if (ind is None or isinstance(ind, Number) and 0 <= ind < len(self)):
+        """Check if `ind` is an admissable list of unique indices in the sense of the class documentation."""
+        if ind is None or isinstance(ind, Number) and 0 <= ind < len(self):
             return True
         elif isinstance(ind, list):
             if len(ind) == 0:
@@ -462,9 +492,72 @@ class VectorArrayInterface(BasicInterface):
             return False
 
     def len_ind(self, ind):
-        '''Return the number of specified indices.'''
+        """Return the number of specified indices."""
         return len(self) if ind is None else 1 if isinstance(ind, Number) else len(ind)
 
     def len_ind_unique(self, ind):
-        '''Return the number of specified unique indices.'''
+        """Return the number of specified unique indices."""
         return len(self) if ind is None else 1 if isinstance(ind, Number) else len(set(ind))
+
+
+class VectorSpace(BasicInterface):
+    """Class describing a vector space.
+
+    A vector space is simply the combination of a |VectorArray| class and a
+    :attr:`~VectorArrayInterface.subtype`. This data is exactly sufficient to construct
+    new arrays using the :meth:`~VectorArrayInterface.make_array` method.
+
+    A |VectorArray| is contained in a vector space, iff it is an instance of the subclass
+    and has the same subtype.
+
+    Attributes
+    ----------
+    type
+        The type of |VectorArrays| in the space.
+    subtype
+        The subtype used to construct arrays of the given space.
+    """
+
+    def __init__(self, space_type, subtype=None):
+        self.type = space_type
+        self.subtype = subtype
+
+    def empty(self, reserve=0):
+        """Create an empty |VectorArray|
+
+        Parameters
+        ----------
+        reserve
+            Hint for the backend to which length the array will grow.
+
+        Returns
+        -------
+        An empty |VectorArray|.
+        """
+        return self.type.make_array(subtype=self.subtype, reserve=reserve)
+
+    def zeros(self, count=1):
+        """Create a |VectorArray| of null vectors
+
+        Parameters
+        ----------
+        count
+            The number of vectors.
+
+        Returns
+        -------
+        A |VectorArray| containing `count` vectors whith each component zero.
+        """
+        return self.type.make_array(subtype=self.subtype, count=count)
+
+    @property
+    def dim(self):
+        return self.empty().dim
+
+    def __eq__(self, other):
+        """Two spaces are equal iff their types and subtypes agree."""
+        return other.type == self.type and self.subtype == other.subtype
+
+    def __contains__(self, other):
+        """A |VectorArray| is contained in the space, iff it is an instance of its type and has the same subtype."""
+        return isinstance(other, self.type) and self.subtype == other.subtype

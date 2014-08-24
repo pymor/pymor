@@ -14,7 +14,7 @@ from pymor.tools import float_cmp
 
 
 def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=None):
-    '''Discretize a |DomainDescription| using a sensible default implementation.
+    """Discretize a |DomainDescription| using a sensible default implementation.
 
     This method can discretize the following |DomainDescriptions|:
 
@@ -54,7 +54,7 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
         The generated |Grid|.
     boundary_info
         The generated |BoundaryInfo|.
-    '''
+    """
 
     def discretize_RectDomain():
         x0i = int(m.ceil(domain_description.width * m.sqrt(2) / diameter))

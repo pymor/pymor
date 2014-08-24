@@ -8,7 +8,7 @@ from pymor.core import ImmutableInterface
 
 
 class BoundaryType(ImmutableInterface):
-    '''Represents a boundary type, i.e. Dirichlet, Neumann, etc.
+    """Represents a boundary type, i.e. Dirichlet, Neumann, etc.
 
     By defining a global registry of possible boundary types, we prevent hard
     to track down errors due to typos. Only boundary types that have been
@@ -26,13 +26,13 @@ class BoundaryType(ImmutableInterface):
     ----------
     types
         Set of the names of registered boundary types.
-    '''
+    """
 
-    types = set(('dirichlet', 'neumann', 'robin'))
+    types = {'dirichlet', 'neumann', 'robin'}
 
     @classmethod
     def register_type(cls, name):
-        '''Register a new |BoundaryType| with name `name`.'''
+        """Register a new |BoundaryType| with name `name`."""
         assert isinstance(name, str)
         cls.types.add(name)
 

@@ -11,12 +11,12 @@ import numpy as np
 from scipy.sparse import issparse
 
 from pymor.core import NUMPY_INDEX_QUIRK
-from pymor.la.interfaces import VectorArrayInterface
+from pymor.la.interfaces import VectorArrayInterface, VectorSpace
 from pymor.tools import float_cmp
 
 
 class NumpyVectorArray(VectorArrayInterface):
-    '''|VectorArray| implementation via |NumPy arrays|.
+    """|VectorArray| implementation via |NumPy arrays|.
 
     This is the default |VectorArray| type used by all |Operators|
     implemented directly in pyMOR. Reduced |Operators| will also
@@ -27,18 +27,7 @@ class NumpyVectorArray(VectorArrayInterface):
     :meth:`~VectorArrayInterface.axpy` or :meth:`VectorArrayInterface.dot`
     will be quite efficient, removing or appending vectors will
     be costly.
-    '''
-
-    @classmethod
-    def empty(cls, dim, reserve=0):
-        va = cls(np.empty((0, 0)))
-        va._array = np.empty((reserve, dim))
-        va._len = 0
-        return va
-
-    @classmethod
-    def zeros(cls, dim, count=1):
-        return cls(np.zeros((count, dim)))
+    """
 
     def __init__(self, instance, dtype=None, copy=False, order=None, subok=False):
         if isinstance(instance, np.ndarray):
@@ -59,12 +48,26 @@ class NumpyVectorArray(VectorArrayInterface):
             self._array = np.reshape(self._array, (1, -1))
         self._len = len(self._array)
 
+    @classmethod
+    def make_array(cls, subtype=None, count=0, reserve=0):
+        assert isinstance(subtype, Number)
+        assert count >= 0
+        assert reserve >= 0
+        va = NumpyVectorArray(np.empty((0, 0)))
+        va._array = np.zeros((max(count, reserve), subtype))
+        va._len = count
+        return va
+
     @property
     def data(self):
         return self._array[:self._len]
 
     def __len__(self):
         return self._len
+
+    @property
+    def subtype(self):
+        return self._array.shape[1]
 
     @property
     def dim(self):
@@ -332,7 +335,7 @@ class NumpyVectorArray(VectorArrayInterface):
 
         if self._array.shape[1] == 0:
             l = self.len_ind(ind)
-            return (np.ones(l) * -1, np.zeros(l))
+            return np.ones(l) * -1, np.zeros(l)
 
         A = self._array[:self._len] if ind is None else \
             self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
@@ -340,10 +343,14 @@ class NumpyVectorArray(VectorArrayInterface):
         A = np.abs(A)
         max_ind = np.argmax(A, axis=1)
         max_val = A[np.arange(len(A)), max_ind]
-        return (max_ind, max_val)
+        return max_ind, max_val
 
     def __str__(self):
         return self._array[:self._len].__str__()
 
     def __repr__(self):
         return 'NumpyVectorArray({})'.format(self._array[:self._len].__str__())
+
+
+def NumpyVectorSpace(dim):
+    return VectorSpace(NumpyVectorArray, dim)

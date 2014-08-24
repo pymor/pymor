@@ -16,20 +16,24 @@ from pymor.tools import float_cmp_all
 
 
 class VectorInterface(BasicInterface):
-    '''Interface for vectors.
+    """Interface for vectors.
 
     This Interface is mainly intended to be used in conjunction with |ListVectorArray|. In general, all
     pyMOR objects operate on |VectorArrays| instead of single vectors! All methods of the interface have
     a direct counterpart in the |VectorArray| interface.
-    '''
+    """
 
     @abstractclassmethod
-    def zeros(cls, dim):
+    def make_zeros(cls, subtype=None):
         pass
 
     @abstractproperty
     def dim(self):
         pass
+
+    @property
+    def subtype(self):
+        return None
 
     @abstractmethod
     def copy(self):
@@ -110,7 +114,7 @@ class VectorInterface(BasicInterface):
 
 
 class NumpyVector(VectorInterface):
-    '''Vector stored in a NumPy 1D-array.'''
+    """Vector stored in a NumPy 1D-array."""
 
     def __init__(self, instance, dtype=None, copy=False, order=None, subok=False):
         if isinstance(instance, np.ndarray) and not copy:
@@ -119,15 +123,21 @@ class NumpyVector(VectorInterface):
             self._array = np.array(instance, dtype=dtype, copy=copy, order=order, subok=subok, ndmin=1)
         assert self._array.ndim == 1
 
+    @classmethod
+    def make_zeros(cls, subtype=None):
+        assert isinstance(subtype, Number)
+        return NumpyVector(np.zeros(subtype))
+
     @property
     def data(self):
         return self._array
 
-    def zeros(cls, dim):
-        return NumpyVector(np.zeros(dim))
-
     @property
     def dim(self):
+        return len(self._array)
+
+    @property
+    def subtype(self):
         return len(self._array)
 
     def copy(self):
@@ -168,24 +178,16 @@ class NumpyVector(VectorInterface):
         A = np.abs(self._array)
         max_ind = np.argmax(A)
         max_val = A[max_ind]
-        return (max_ind, max_val)
+        return max_ind, max_val
 
 
 class ListVectorArray(VectorArrayInterface):
-    '''|VectorArray| implementation via a python list of vectors.
+    """|VectorArray| implementation via a python list of vectors."""
 
-    In order to create a |ListVectorArray|, derive from this
-    class and define the `vector_type` class attribute.
+    __NONE = tuple()
+    vector_type = None
 
-    Attributes
-    ----------
-    vector_type
-        The type of of :class:`Vectors <VectorInterface>` to store.
-        Each vector has to be of the same type.
-    '''
-
-    def __init__(self, vectors, dim=None, copy=True):
-        assert dim is None or dim >= 0
+    def __init__(self, vectors, subtype=__NONE, copy=True):
         if not copy:
             if isinstance(vectors, list):
                 self._list = vectors
@@ -193,51 +195,55 @@ class ListVectorArray(VectorArrayInterface):
                 self._list = list(vectors)
         else:
             self._list = [v.copy() for v in vectors]
-        if dim is None:
+        if subtype is self.__NONE:
             assert len(self._list) > 0
-            dim = self._list[0].dim
-        self._dim = dim
-        assert all(v.dim == dim for v in self._list)
+            subtype = self._list[0].subtype
+        self._subtype = subtype
+        assert all(v.subtype == subtype for v in self._list)
 
     @classmethod
-    def empty(cls, dim, reserve=0):
-        assert reserve >= 0
-        return cls([], dim, copy=False)
-
-    @classmethod
-    def zeros(cls, dim, count=1):
+    def make_array(cls, subtype=None, count=0, reserve=0):
         assert count >= 0
-        return cls([cls.vector_type.zeros(dim) for c in xrange(count)], dim=dim, copy=False)
+        assert reserve >= 0
+        vector_type = cls.vector_type
+        return cls([vector_type.make_zeros(subtype) for _ in xrange(count)], subtype=subtype, copy=False)
 
     def __len__(self):
         return len(self._list)
 
     @property
     def data(self):
-        if not hasattr(self.vector_type, 'data'):
-            raise TypeError('{} does not have a data attribute'.format(self.vector_type))
+        if not hasattr(self.space.type, 'data'):
+            raise TypeError('{} does not have a data attribute'.format(self.space.type))
         if len(self._list) > 0:
             return np.array([v.data for v in self._list])
         else:
-            return np.empty((0, self._dim))
+            return np.empty((0, self.dim))
 
     @property
     def dim(self):
-        return self._dim
+        if len(self._list) > 0:
+            return self._list[0].dim
+        else:
+            return self.vector_type.make_zeros(self._subtype).dim
+
+    @property
+    def subtype(self):
+        return self._subtype
 
     def copy(self, ind=None):
         assert self.check_ind(ind)
 
         if ind is None:
-            return type(self)(self._list, dim=self._dim, copy=True)
+            return type(self)(self._list, subtype=self.subtype, copy=True)
         elif isinstance(ind, Number):
-            return type(self)([self._list[ind]], copy=True)
+            return type(self)([self._list[ind]], subtype=self.subtype, copy=True)
         else:
-            return type(self)([self._list[i] for i in ind], dim=self._dim, copy=True)
+            return type(self)([self._list[i] for i in ind], subtype=self.subtype, copy=True)
 
     def append(self, other, o_ind=None, remove_from_other=False):
         assert other.check_ind(o_ind)
-        assert other.dim == self.dim
+        assert other.space == self.space
         assert other is not self or not remove_from_other
 
         other_list = other._list
@@ -273,11 +279,11 @@ class ListVectorArray(VectorArrayInterface):
     def replace(self, other, ind=None, o_ind=None, remove_from_other=False):
         assert self.check_ind_unique(ind)
         assert other.check_ind(o_ind)
-        assert other.dim == self.dim
+        assert other.space == self.space
         assert other is not self or not remove_from_other
 
         if ind is None:
-            c = type(self).empty(self.dim)
+            c = self.empty()
             c.append(other, o_ind=o_ind, remove_from_other=remove_from_other)
             assert len(c) == len(self)
             self._list = c._list
@@ -323,7 +329,7 @@ class ListVectorArray(VectorArrayInterface):
     def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
         assert self.check_ind(ind)
         assert other.check_ind(o_ind)
-        assert other.dim == self.dim
+        assert other.space == self.space
 
         if ind is None:
             ind = xrange(len(self._list))
@@ -365,7 +371,7 @@ class ListVectorArray(VectorArrayInterface):
     def axpy(self, alpha, x, ind=None, x_ind=None):
         assert self.check_ind_unique(ind)
         assert x.check_ind(x_ind)
-        assert self.dim == x.dim
+        assert self.space == x.space
         assert self.len_ind(ind) == x.len_ind(x_ind)
 
         if self is x:
@@ -412,7 +418,7 @@ class ListVectorArray(VectorArrayInterface):
     def dot(self, other, pairwise, ind=None, o_ind=None):
         assert self.check_ind(ind)
         assert other.check_ind(o_ind)
-        assert self.dim == other.dim
+        assert self.space == other.space
 
         if ind is None:
             A = self._list
@@ -481,12 +487,12 @@ class ListVectorArray(VectorArrayInterface):
 
         RL = []
         for coeffs in coefficients:
-            R = self.vector_type.zeros(self.dim)
+            R = self.vector_type.make_zeros(self._subtype)
             for v, c in izip(V, coeffs):
                 R.axpy(c, v)
             RL.append(R)
 
-        return type(self)(RL, dim=self.dim, copy=False)
+        return type(self)(RL, subtype=self._subtype, copy=False)
 
     def l1_norm(self, ind=None):
         assert self.check_ind(ind)
@@ -549,8 +555,9 @@ class ListVectorArray(VectorArrayInterface):
         return MI, MV
 
     def __str__(self):
-        return 'ListVectorArray of {} {}s of dimension {}'.format(len(self._list), str(self.vector_type), self._dim)
+        return 'ListVectorArray of {} {}s of dimension {}'.format(len(self._list), str(self.vector_type), self.dim)
 
 
 class NumpyListVectorArray(ListVectorArray):
+
     vector_type = NumpyVector

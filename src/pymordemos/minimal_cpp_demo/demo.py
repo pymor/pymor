@@ -25,17 +25,17 @@ def discretize(n, nt, blocks):
     # operator = WrappedDiffusionOperator.create(n, 0, 1)
     operator = WrappedDiffusionOperator.lincomb(ops, coefficients_name='diffusion_coefficients')
 
-    initial_data = WrappedVectorArray.zeros(operator.dim_source)
+    initial_data = operator.source.zeros()
 
     # use data property of WrappedVector to setup rhs
     # note that we cannot use the data property of WrappedVectorArray,
     # since ListVectorArray will always return a copy
-    rhs_vec = WrappedVector.zeros(operator.dim_source)
-    rhs_data = rhs_vec.data
+    rhs_vec = operator.range.zeros()
+    rhs_data = rhs_vec._list[0].data
     rhs_data[:] = np.ones(len(rhs_data))
     rhs_data[0] = 0
     rhs_data[len(rhs_data) - 1] = 0
-    rhs = VectorFunctional(WrappedVectorArray([rhs_vec], copy=False), copy=False)
+    rhs = VectorFunctional(rhs_vec, copy=False)
 
     # hack together a visualizer ...
     grid = OnedGrid(domain=(0, 1), num_intervals=n)
@@ -54,12 +54,12 @@ def discretize(n, nt, blocks):
 d = discretize(50, 10000, 4)
 
 # generate solution snapshots
-snapshots = d.type_solution.empty(d.dim_solution)
+snapshots = d.solution_space.empty()
 for mu in d.parameter_space.sample_uniformly(2):
     snapshots.append(d.solve(mu))
 
 # apply POD
-reduced_basis = pod(snapshots, 4)
+reduced_basis = pod(snapshots, 4)[0]
 
 # reduce the model
 rd, rc, _ = reduce_generic_rb(d, reduced_basis)

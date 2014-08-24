@@ -12,7 +12,7 @@ class TestDefaults(TestInterface):
 
     def testStr(self):
         rep = str(defaults)
-        self.assertGreater(len(rep), 0)
+        assert len(rep) > 0
 
 if __name__ == "__main__":
     runmodule(filename=__file__)

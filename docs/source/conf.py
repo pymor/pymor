@@ -24,7 +24,7 @@ if os.environ.get('READTHEDOCS', None) == 'True':
             if name in ('__file__', '__path__'):
                 return '/dev/null'
             elif name in cls.__dict__:
-                return cls.__dict.get(name)
+                return cls.__dict__.get(name)
             elif name == 'QtGui':
                 return Mock()
             elif name[0] == name[0].upper():
@@ -107,8 +107,6 @@ copyright = '2012-2013, the pyMOR AUTHORS'
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 #
-import pymor
-
 version = str(pymor.version)
 
 # The full version, including alpha/beta/rc tags.

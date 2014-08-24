@@ -3,7 +3,7 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-'''This module provides base classes from which most classes in pyMOR inherit.
+"""This module provides base classes from which most classes in pyMOR inherit.
 
 The purpose of these classes is to provide some common functionality for
 all objects in pyMOR. The most notable features provided by :class:`BasicInterface`
@@ -90,7 +90,7 @@ functionality:
     5. sid generation can be disabled completely in pyMOR by calling
        :func:`disable_sid_generation`. It can be activated again by calling
        :func:`enable_sid_generation`.
-'''
+"""
 
 from __future__ import absolute_import, division, print_function
 import abc
@@ -115,7 +115,7 @@ DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_COPY_DOCSTRINGS_DISABLE', 0)) =
 
 
 class UIDProvider(object):
-    '''Provides unique, quickly computed ids by combinding a session UUID4 with a counter.'''
+    """Provides unique, quickly computed ids by combinding a session UUID4 with a counter."""
     def __init__(self):
         self.counter = 0
         import uuid
@@ -132,12 +132,12 @@ uid_provider = UIDProvider()
 class UberMeta(abc.ABCMeta):
 
     def __init__(cls, name, bases, namespace):
-        '''Metaclass of :class:`BasicInterface`.
+        """Metaclass of :class:`BasicInterface`.
 
         I tell base classes when I derive a new class from them. I publish
         a new contract type for each new class I create. I create a logger
         for each class I create. I add an `init_args` attribute to the class.
-        '''
+        """
         # monkey a new contract into the decorator module so checking for that type at runtime can work
         if HAVE_CONTRACTS:
             dname = (cls.__module__ + '.' + name).replace('__main__.', 'main.').replace('.', '_')
@@ -157,13 +157,13 @@ class UberMeta(abc.ABCMeta):
         abc.ABCMeta.__init__(cls, name, bases, namespace)
 
     def __new__(cls, classname, bases, classdict):
-        '''I copy contract decorations and docstrings from base class methods to deriving classes.
+        """I copy contract decorations and docstrings from base class methods to deriving classes.
         I also forward "abstract{class|static}method" decorations in the base class to "{class|static}method"
         decorations in the new subclass.
 
         Copying of docstrings can be prevented by setting the `PYMOR_COPY_DOCSTRINGS_DISABLE` environment
         variable to `1`.
-        '''
+        """
         if 'init_arguments' in classdict:
             raise ValueError('init_arguments is a reserved class attribute for subclasses of BasicInterface')
 
@@ -223,7 +223,7 @@ class UberMeta(abc.ABCMeta):
 
 
 class BasicInterface(object):
-    '''Base class for most classes in pyMOR.
+    """Base class for most classes in pyMOR.
 
     Attributes
     ----------
@@ -243,15 +243,15 @@ class BasicInterface(object):
         ever created.
     with_arguments
         Set of allowed keyword arguments for `with_`.
-    '''
+    """
 
     __metaclass__ = UberMeta
     _locked = False
 
     def __setattr__(self, key, value):
-        '''depending on _locked state I delegate the setattr call to object or
+        """depending on _locked state I delegate the setattr call to object or
         raise an Exception
-        '''
+        """
         if not self._locked or key[0] == '_':
             return object.__setattr__(self, key, value)
         else:
@@ -262,16 +262,16 @@ class BasicInterface(object):
         return self._locked
 
     def lock(self, doit=True):
-        '''Make the instance immutable.
+        """Make the instance immutable.
 
         Trying to change an attribute after locking raises a `ConstError`.
         Private attributes (of the form `_attribute`) are exempted from
         this rule.
-        '''
+        """
         object.__setattr__(self, '_locked', doit)
 
     def unlock(self):
-        '''Make the instance mutable again, after it has been locked using `lock`.'''
+        """Make the instance mutable again, after it has been locked using `lock`."""
         object.__setattr__(self, '_locked', False)
 
     @property
@@ -284,7 +284,7 @@ class BasicInterface(object):
         return set(init_arguments)
 
     def with_(self, **kwargs):
-        '''Returns a copy with changed attributes.
+        """Returns a copy with changed attributes.
 
         The default implementation is to call `_with_via_init(**kwargs)`.
 
@@ -297,7 +297,7 @@ class BasicInterface(object):
         Returns
         -------
         Copy of `self` with changed attributes.
-        '''
+        """
         with_arguments = self.with_arguments      # ensure that property is called first
         if hasattr(self, '_with_arguments_error'):
             raise ConstError('Using with_ is not possible because of the following Error: '
@@ -308,12 +308,12 @@ class BasicInterface(object):
         return self._with_via_init(kwargs)
 
     def _with_via_init(self, kwargs, new_class=None):
-        '''Default implementation for with_ by calling __init__.
+        """Default implementation for with_ by calling __init__.
 
         Parameters which are missing in `kwargs` are taken from the dictionary of the
         instance. If `new_class` is provided, the copy is created as an instance of
         `new_class`.
-        '''
+        """
         my_type = type(self) if new_class is None else new_class
         init_args = kwargs
         for arg in my_type.init_arguments:
@@ -327,7 +327,7 @@ class BasicInterface(object):
     _added_attributes = None
 
     def add_attributes(self, **kwargs):
-        '''Add attributes to a locked instance.'''
+        """Add attributes to a locked instance."""
         assert not any(hasattr(self, k) for k in kwargs)
         self.__dict__.update(kwargs)
         if self._added_attributes is None:
@@ -344,21 +344,21 @@ class BasicInterface(object):
         return self._logger
 
     def disable_logging(self, doit=True):
-        '''Disable logging output for this instance.'''
+        """Disable logging output for this instance."""
         if doit:
             self._logger = logger.dummy_logger
         else:
             self._logger = type(self)._logger
 
     def enable_logging(self, doit=True):
-        '''Enable logging output for this instance.'''
+        """Enable logging output for this instance."""
         self.disable_logging(not doit)
 
     @classmethod
     def implementors(cls, descend=False):
-        '''I return a, potentially empty, list of my subclass-objects.
+        """I return a, potentially empty, list of my subclass-objects.
         If descend is True I traverse my entire subclass hierarchy and return a flattened list.
-        '''
+        """
         if not hasattr(cls, '_%s__implementors' % cls.__name__):
             return []
         level = getattr(cls, '_%s__implementors' % cls.__name__)
@@ -370,12 +370,12 @@ class BasicInterface(object):
 
     @classmethod
     def implementor_names(cls, descend=False):
-        '''For convenience I return a list of my implementor names instead of class objects'''
+        """For convenience I return a list of my implementor names instead of class objects"""
         return [c.__name__ for c in cls.implementors(descend)]
 
     @classmethod
     def has_interface_name(cls):
-        '''`True` if the class name ends with `Interface`. Used for introspection.'''
+        """`True` if the class name ends with `Interface`. Used for introspection."""
         name = cls.__name__
         return name.endswith('Interface')
 
@@ -403,9 +403,9 @@ else:
 
 
 class abstractclassmethod(abstractclassmethod_base):
-    '''I mark my wrapped function with an additional __isabstractclassmethod__ member,
+    """I mark my wrapped function with an additional __isabstractclassmethod__ member,
     where my abstractclassmethod_base sets __isabstractmethod__ = True.
-    '''
+    """
 
     def __init__(self, callable_method):
         callable_method.__isabstractclassmethod__ = True
@@ -413,9 +413,9 @@ class abstractclassmethod(abstractclassmethod_base):
 
 
 class abstractstaticmethod(abstractstaticmethod_base):
-    '''I mark my wrapped function with an additional __isabstractstaticmethod__ member,
+    """I mark my wrapped function with an additional __isabstractstaticmethod__ member,
     where my abstractclassmethod_base sets __isabstractmethod__ = True.
-    '''
+    """
 
     def __init__(self, callable_method):
         callable_method.__isabstractstaticmethod__ = True
@@ -435,7 +435,7 @@ def _calculate_sid(obj, name):
             return obj
         elif t_obj is np.ndarray:
             if obj.size < 64:
-                return ('array', obj.shape, obj.dtype.str, obj.tostring())
+                return 'array', obj.shape, obj.dtype.str, obj.tostring()
             else:
                 raise ValueError('sid calculation faild at large numpy array {}'.format(name))
         else:
@@ -443,7 +443,7 @@ def _calculate_sid(obj, name):
 
 
 def inject_sid(obj, context, *args):
-    '''Add a state id sid to an object.
+    """Add a state id sid to an object.
 
     The purpose of this methods is to inject state ids into objects which do not
     derive from :class:`ImmutableInterface`. If `obj` is an instance of
@@ -465,7 +465,7 @@ def inject_sid(obj, context, *args):
     `*args`
         List of parameters which in the given context led to the creation of
         `obj`.
-    '''
+    """
     try:
         sid = tuple((context, tuple(_calculate_sid(o, i) for i, o in enumerate(args))))
         obj.sid = sid
@@ -480,18 +480,18 @@ def inject_sid(obj, context, *args):
 
 
 def disable_sid_generation():
-    '''Globally disable the generation of state ids.'''
+    """Globally disable the generation of state ids."""
     if hasattr(ImmutableMeta, '__call__'):
         del ImmutableMeta.__call__
 
 
 def enable_sid_generation():
-    '''Globally enable the generation of state ids.'''
+    """Globally enable the generation of state ids."""
     ImmutableMeta.__call__ = ImmutableMeta._call
 
 
 class ImmutableMeta(UberMeta):
-    '''Metaclass for :class:`ImmutableInterface`.'''
+    """Metaclass for :class:`ImmutableInterface`."""
 
     sids_created = 0
     init_arguments_never_warn = ('name', 'cache_region')
@@ -529,7 +529,7 @@ class ImmutableMeta(UberMeta):
 
 
 class ImmutableInterface(BasicInterface):
-    '''Base class for immutable objects in pyMOR.
+    """Base class for immutable objects in pyMOR.
 
     Instances of `ImmutableInterface` are immutable in the sense, that
     they are :meth:`BasicInterface.lock`ed after `__init__` returns.
@@ -550,7 +550,7 @@ class ImmutableInterface(BasicInterface):
     sid_ignore
         Tuple of `__init__` arguments not to include in sid calculation.
         The default it `{'name', 'cache_region'}`
-    '''
+    """
     __metaclass__ = ImmutableMeta
     calculate_sid = True
     sid_ignore = frozenset({'name', 'cache_region'})
@@ -567,7 +567,7 @@ class ImmutableInterface(BasicInterface):
             self.sid_failure = 'unlocked'
 
     def unlock(self):
-        '''Make the instance mutable.
+        """Make the instance mutable.
 
         .. warning::
             Unlocking an instance of :class:`ImmutableInterface` will result in the
@@ -575,7 +575,7 @@ class ImmutableInterface(BasicInterface):
             objects referencing it. You really should not unlock an object
             unless you really know what you are doing. (One exception might
             be the modification of a newly created copy of an immutable object.)
-        '''
+        """
         super(ImmutableInterface, self).unlock()
         if hasattr(self, 'sid'):
             del self.sid

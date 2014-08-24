@@ -58,9 +58,9 @@ class Test_Interface(TestInterface):
 
     def testImplementorlist(self):
         imps = ['StupidImplementer', 'AverageImplementer', 'FailImplementer']
-        self.assertEqual(imps, StupidInterface.implementor_names(), '')
-        self.assertEqual(imps + ['DocImplementer'], StupidInterface.implementor_names(True), '')
-        self.assertEqual(['AverageImplementer'], BrilliantInterface.implementor_names(), '')
+        assert imps == StupidInterface.implementor_names()
+        assert imps + ['DocImplementer'] == StupidInterface.implementor_names(True)
+        assert ['AverageImplementer'] == BrilliantInterface.implementor_names()
 
     def testAbstractMethods(self):
         class ClassImplementer(BasicInterface):
@@ -89,8 +89,8 @@ class Test_Interface(TestInterface):
         with pytest.raises(TypeError):
             StaticImplementer()
         inst = CompleteImplementer()
-        self.assertEqual(inst.abstract_class_method(), 'CompleteImplementer')
-        self.assertEqual(inst.abstract_static_method(), 0)
+        assert inst.abstract_class_method() == 'CompleteImplementer'
+        assert inst.abstract_static_method() == 0
 
     def testPickling(self):
         def picklme(obj, attribute_name):
@@ -119,13 +119,13 @@ class Test_Interface(TestInterface):
             # Trigger a warning.
             deprecated_function()
             # Verify some things
-            self.assertEqual(len(w), 1)
-            self.assertTrue(issubclass(w[-1].category, DeprecationWarning))
-            self.assertTrue("DeprecationWarning" in str(w[-1].message))
+            assert len(w) == 1
+            assert issubclass(w[-1].category, DeprecationWarning)
+            assert "DeprecationWarning" in str(w[-1].message)
 
     def testVersion(self):
-        self.assertGreater(pymor.VERSION, pymor.NO_VERSION)
-        self.assertIsInstance(pymor.VERSION, pymor.Version)
+        assert pymor.VERSION > pymor.NO_VERSION
+        assert isinstance(pymor.VERSION, pymor.Version)
 
 
 @SubclassForImplemetorsOf(BasicInterface)

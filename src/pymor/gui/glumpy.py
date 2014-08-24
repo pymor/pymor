@@ -2,12 +2,12 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-''' This module provides a widget for displaying patch plots of
+""" This module provides a widget for displaying patch plots of
 scalar data assigned to a 2D-Grid using OpenGL. This widget is not
 intended to be used directly. Instead, use
 :meth:`~pymor.gui.qt.visualize_glumpy_patch` or
 :class:`~pymor.gui.qt.GlumpyPatchVisualizer`.
-'''
+"""
 
 from __future__ import absolute_import, division, print_function
 
@@ -49,7 +49,7 @@ if HAVE_ALL:
         gl.glCompileShader(vertex_shader)
         # check compilation error
         result = gl.glGetShaderiv(vertex_shader, gl.GL_COMPILE_STATUS)
-        if not(result):
+        if not result:
             raise RuntimeError(gl.glGetShaderInfoLog(vertex_shader))
         return vertex_shader
 
@@ -60,7 +60,7 @@ if HAVE_ALL:
         gl.glLinkProgram(program)
         # check linking error
         result = gl.glGetProgramiv(program, gl.GL_LINK_STATUS)
-        if not(result):
+        if not result:
             raise RuntimeError(gl.glGetProgramInfoLog(program))
         return program
 
@@ -86,7 +86,7 @@ if HAVE_ALL:
 
     class GlumpyPatchWidget(QGLWidget):
 
-        def __init__(self, parent, grid, vmin=None, vmax=None, bounding_box=[[0, 0], [1, 1]], codim=2):
+        def __init__(self, parent, grid, vmin=None, vmax=None, bounding_box=([0, 0], [1, 1]), codim=2):
             assert grid.reference_element in (triangle, square)
             assert grid.dim == 2
             assert codim in (0, 2)

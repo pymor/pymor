@@ -10,7 +10,7 @@ from pymor import defaults
 
 
 def induced_norm(product):
-    '''The induced norm of a scalar product.
+    """The induced norm of a scalar product.
 
     The norm of a vector (an array of vectors) U is calculated by
     calling ::
@@ -35,7 +35,7 @@ def induced_norm(product):
         A function `norm(U, mu=None)` taking a |VectorArray| `U`
         as input together with the |Parameter| `mu` which is
         passed to the product.
-    '''
+    """
 
     def norm(U, mu=None):
         norm_squared = product.apply2(U, U, mu=mu, pairwise=True)
@@ -47,3 +47,12 @@ def induced_norm(product):
         return np.sqrt(norm_squared)
 
     return norm
+
+
+def cat_arrays(vector_arrays):
+    vector_arrays = list(vector_arrays)
+    total_length = sum(map(len, vector_arrays))
+    cated_arrays = vector_arrays[0].empty(vector_arrays[0].dim, reserve=total_length)
+    for a in vector_arrays:
+        cated_arrays.append(a)
+    return cated_arrays

@@ -11,25 +11,25 @@ from pymor.la import NumpyVectorArray
 
 
 class GenericRBReconstructor(core.BasicInterface):
-    '''Simple reconstructor forming linear combinations with the reduced basis.'''
+    """Simple reconstructor forming linear combinations with the reduced basis."""
 
     def __init__(self, RB):
         self.RB = RB
 
     def reconstruct(self, U):
-        '''Reconstruct high-dimensional vector from reduced vector `U`.'''
+        """Reconstruct high-dimensional vector from reduced vector `U`."""
         assert isinstance(U, NumpyVectorArray)
         return self.RB.lincomb(U.data)
 
     def restricted_to_subbasis(self, dim):
-        '''Analog of :meth:`~pymor.operators.basic.NumpyMatrixOperator.projected_to_subbasis`.'''
+        """Analog of :meth:`~pymor.operators.basic.NumpyMatrixOperator.projected_to_subbasis`."""
         assert dim <= len(self.RB)
         return GenericRBReconstructor(self.RB.copy(ind=range(dim)))
 
 
 def reduce_generic_rb(discretization, RB, operator_product=None, vector_product=None,
                       disable_caching=True, extends=None):
-    '''Generic reduced basis reductor.
+    """Generic reduced basis reductor.
 
     Replaces each |Operator| of the given |Discretization| with the projection
     onto the span of the given reduced basis.
@@ -64,11 +64,11 @@ def reduce_generic_rb(discretization, RB, operator_product=None, vector_product=
         high-dimensional solutions from solutions `U` of the reduced |Discretization|.
     reduction_data
         Additional data produced by the reduction process. Currently empty.
-    '''
+    """
     assert extends is None or len(extends) == 3
 
     if RB is None:
-        RB = discretization.type_solution.empty(discretization.dim_solution)
+        RB = discretization.solution_space.empty()
 
     projected_operators = {k: op.projected(source_basis=RB, range_basis=RB, product=operator_product) if op else None
                            for k, op in discretization.operators.iteritems()}
@@ -97,7 +97,7 @@ def reduce_generic_rb(discretization, RB, operator_product=None, vector_product=
 
 
 class SubbasisReconstructor(core.BasicInterface):
-    '''Returned by :meth:`reduce_to_subbasis`.'''
+    """Returned by :meth:`reduce_to_subbasis`."""
 
     def __init__(self, dim, dim_subbasis, old_recontructor=None):
         self.dim = dim
@@ -105,7 +105,7 @@ class SubbasisReconstructor(core.BasicInterface):
         self.old_recontructor = old_recontructor
 
     def reconstruct(self, U):
-        '''Reconstruct high-dimensional vector from reduced vector `U`.'''
+        """Reconstruct high-dimensional vector from reduced vector `U`."""
         assert isinstance(U, NumpyVectorArray)
         UU = np.zeros((len(U), self.dim))
         UU[:, :self.dim_subbasis] = U.data
@@ -117,7 +117,7 @@ class SubbasisReconstructor(core.BasicInterface):
 
 
 def reduce_to_subbasis(discretization, dim, reconstructor=None):
-    '''Further reduce a |Discretization| to the subbasis formed by the first `dim` basis vectors.
+    """Further reduce a |Discretization| to the subbasis formed by the first `dim` basis vectors.
 
     This is achieved by calling :meth:`~pymor.operators.basic.NumpyMatrixOperator.projected_to_subbasis`
     for each operator of the given |Discretization|. Additionally, if a reconstructor
@@ -140,7 +140,7 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
         The further reduced |Discretization|.
     rc
         Reconstructor for `rd`.
-    '''
+    """
 
     projected_operators = {k: op.projected_to_subbasis(dim_source=dim, dim_range=dim) if op is not None else None
                            for k, op in discretization.operators.iteritems()}
@@ -158,9 +158,10 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
     if hasattr(discretization, 'estimator') and hasattr(discretization.estimator, 'restricted_to_subbasis'):
         estimator = discretization.estimator.restricted_to_subbasis(dim, discretization=discretization)
     elif hasattr(discretization, 'estimate'):
+        # noinspection PyShadowingNames
         class FakeEstimator(object):
             rd = discretization
-            rc = SubbasisReconstructor(next(discretization.operators.itervalues()).dim_source, dim)
+            rc = SubbasisReconstructor(next(discretization.operators.itervalues()).source.dim, dim)
 
             def estimate(self, U, mu=None, discretization=None):
                 return self.rd.estimate(self.rc.reconstruct(U), mu=mu)
@@ -177,7 +178,7 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
     if reconstructor is not None and hasattr(reconstructor, 'restricted_to_subbasis'):
         rc = reconstructor.restricted_to_subbasis(dim)
     else:
-        rc = SubbasisReconstructor(next(discretization.operators.itervalues()).dim_source, dim,
+        rc = SubbasisReconstructor(next(discretization.operators.itervalues()).source.dim, dim,
                                    old_recontructor=reconstructor)
 
     return rd, rc, {}

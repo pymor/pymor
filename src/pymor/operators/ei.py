@@ -9,16 +9,16 @@ import numpy as np
 from scipy.linalg import solve_triangular
 
 
-from pymor.la import NumpyVectorArray
+from pymor.la import NumpyVectorArray, NumpyVectorSpace
 from pymor.la.interfaces import VectorArrayInterface
 from pymor.operators import OperatorInterface, OperatorBase
 
 
 class EmpiricalInterpolatedOperator(OperatorBase):
-    '''Interpolate an |Operator| using Empirical Operator Interpolation.
+    """Interpolate an |Operator| using Empirical Operator Interpolation.
 
-    Let `L` be an |Operator|, `0 <= c_1, ..., c_M <= L.dim_range` indices
-    of interpolation DOFs and `b_1, ..., b_M in R^(L.dim_range)` collateral
+    Let `L` be an |Operator|, `0 <= c_1, ..., c_M <= L.range.dim` indices
+    of interpolation DOFs and `b_1, ..., b_M in R^(L.range.dim)` collateral
     basis vectors. If moreover `ψ_j(U)` denotes the j-th component of `U`, the
     empirical interpolation `L_EI` of `L` w.r.t. the given data is given by ::
 
@@ -55,19 +55,16 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         that the interpolation matrix is triangular.
     name
         Name of the operator.
-    '''
+    """
 
     def __init__(self, operator, interpolation_dofs, collateral_basis, triangular, name=None):
         assert isinstance(operator, OperatorInterface)
         assert isinstance(collateral_basis, VectorArrayInterface)
-        assert operator.dim_range == collateral_basis.dim
-        assert operator.type_range == type(collateral_basis)
+        assert collateral_basis in operator.range
 
         self.build_parameter_type(inherits=(operator,))
-        self.dim_source = operator.dim_source
-        self.dim_range = operator.dim_range
-        self.type_source = operator.type_source
-        self.type_range = operator.type_range
+        self.source = operator.source
+        self.range = operator.range
         self.linear = operator.linear
         self.name = name or '{}_interpolated'.format(operator.name)
 
@@ -89,7 +86,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         mu = self.parse_parameter(mu)
         if len(self.interpolation_dofs) == 0:
             count = len(ind) if ind is not None else len(U)
-            return self.type_range.zeros(dim=self.dim_range, count=count)
+            return self.range.zeros(count=count)
 
         if hasattr(self, 'restricted_operator'):
             U_components = NumpyVectorArray(U.components(self.source_dofs, ind=ind), copy=False)
@@ -107,12 +104,9 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         return self.collateral_basis.lincomb(interpolation_coefficients)
 
     def projected(self, source_basis, range_basis, product=None, name=None):
-        assert source_basis is not None or self.dim_source == 0
-        assert range_basis is not None
-        assert source_basis is None or self.dim_source == source_basis.dim
-        assert self.dim_range == range_basis.dim
-        assert source_basis is None or self.type_source == type(source_basis)
-        assert self.type_range == type(range_basis)
+        assert source_basis is not None or self.source.dim == 0
+        assert source_basis is None or source_basis in self.source
+        assert range_basis in self.range
 
         if not hasattr(self, 'restricted_operator'):
             return super(EmpiricalInterpolatedOperator, self).projected(source_basis, range_basis, product, name)
@@ -138,16 +132,15 @@ class EmpiricalInterpolatedOperator(OperatorBase):
 
 
 class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
-    '''Project an |EmpiricalInterpolatedOperator|.
+    """Project an |EmpiricalInterpolatedOperator|.
 
     Not intended to be used directly. Instead use :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
-    '''
+    """
 
     def __init__(self, restricted_operator, interpolation_matrix, source_basis_dofs,
                  projected_collateral_basis, triangular, name=None):
-        self.dim_source = len(source_basis_dofs)
-        self.dim_range = projected_collateral_basis.dim
-        self.type_source = self.type_range = NumpyVectorArray
+        self.source = NumpyVectorSpace(len(source_basis_dofs))
+        self.range = NumpyVectorSpace(projected_collateral_basis.dim)
         self.linear = restricted_operator.linear
         self.build_parameter_type(inherits=(restricted_operator,))
         self.restricted_operator = restricted_operator
@@ -173,9 +166,9 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
         return self.projected_collateral_basis.lincomb(interpolation_coefficients)
 
     def projected_to_subbasis(self, dim_source=None, dim_range=None, dim_collateral=None, name=None):
-        assert dim_source is None or dim_source <= self.dim_source
-        assert dim_range is None or dim_range <= self.dim_range
-        assert dim_collateral is None or dim_collateral <= self.restricted_operator.dim_range
+        assert dim_source is None or dim_source <= self.source.dim
+        assert dim_range is None or dim_range <= self.range.dim
+        assert dim_collateral is None or dim_collateral <= self.restricted_operator.range.dim
         name = name or '{}_projected_to_subbasis'.format(self.name)
 
         interpolation_matrix = self.interpolation_matrix[:dim_collateral, :dim_collateral]

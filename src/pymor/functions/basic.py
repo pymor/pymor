@@ -14,12 +14,12 @@ from pymor.parameters import ParameterFunctionalInterface
 
 
 class FunctionBase(FunctionInterface):
-    '''Base class for |Functions| providing some common functionality.'''
+    """Base class for |Functions| providing some common functionality."""
 
     def __add__(self, other):
-        '''Returns a new :class:`LincombFunction` representing the sum of two functions, or
+        """Returns a new :class:`LincombFunction` representing the sum of two functions, or
         one function and a constant.
-        '''
+        """
         if isinstance(other, Number) and other == 0:
             return self
         elif not isinstance(other, FunctionInterface):
@@ -33,29 +33,29 @@ class FunctionBase(FunctionInterface):
     __radd__ = __add__
 
     def __sub__(self, other):
-        '''Returns a new :class:`LincombFunction` representing the difference of two functions, or
+        """Returns a new :class:`LincombFunction` representing the difference of two functions, or
         one function and a constant.
-        '''
+        """
         if isinstance(other, FunctionInterface):
             return LincombFunction([self, other], [1., -1.])
         else:
             return self + (- np.array(other))
 
     def __mul__(self, other):
-        '''Returns a new :class:`LincombFunction` representing the product of a function by a scalar.
-        '''
+        """Returns a new :class:`LincombFunction` representing the product of a function by a scalar.
+        """
         assert isinstance(other, Number)
         return LincombFunction([self], [other])
 
     __rmul__ = __mul__
 
     def __neg__(self):
-        '''Returns a new :class:`LincombFunction` representing the function scaled by -1.'''
+        """Returns a new :class:`LincombFunction` representing the function scaled by -1."""
         return LincombFunction([self], [-1.])
 
 
 class ConstantFunction(FunctionBase):
-    '''A constant |Function| ::
+    """A constant |Function| ::
 
         f: R^d -> R^shape(c), f(x) = c
 
@@ -67,7 +67,7 @@ class ConstantFunction(FunctionBase):
         The dimension d.
     name
         The name of the function.
-    '''
+    """
 
     def __init__(self, value=np.array(1.0), dim_domain=1, name=None):
         assert dim_domain > 0
@@ -79,13 +79,12 @@ class ConstantFunction(FunctionBase):
         self.name = name
 
     def __str__(self):
-        return ('{name}: x -> {value}').format(name=self.name, value=self._value)
+        return '{name}: x -> {value}'.format(name=self.name, value=self._value)
 
     def __repr__(self):
         return 'ConstantFunction({}, {})'.format(repr(self._value), self.dim_domain)
 
     def evaluate(self, x, mu=None):
-        assert self.check_parameter(mu)
         x = np.array(x, copy=False, ndmin=1)
         assert x.shape[-1] == self.dim_domain
         if x.ndim == 1:
@@ -95,7 +94,7 @@ class ConstantFunction(FunctionBase):
 
 
 class GenericFunction(FunctionBase):
-    '''Wrapper making an arbitrary Python function between |NumPy arrays| a
+    """Wrapper making an arbitrary Python function between |NumPy arrays| a
     proper |Function|
 
     Parameters
@@ -116,7 +115,7 @@ class GenericFunction(FunctionBase):
         The |ParameterType| the mapping accepts.
     name
         The name of the function.
-    '''
+    """
 
     def __init__(self, mapping, dim_domain=1, shape_range=tuple(), parameter_type=None, name=None):
         assert dim_domain > 0
@@ -129,7 +128,7 @@ class GenericFunction(FunctionBase):
             self.build_parameter_type(parameter_type, local_global=True)
 
     def __str__(self):
-        return ('{name}: x -> {mapping}').format(name=self.name, mapping=self._mapping)
+        return '{name}: x -> {mapping}'.format(name=self.name, mapping=self._mapping)
 
     def evaluate(self, x, mu=None):
         x = np.array(x, copy=False, ndmin=1)
@@ -138,7 +137,6 @@ class GenericFunction(FunctionBase):
             mu = self.parse_parameter(mu)
             v = self._mapping(x, mu)
         else:
-            assert self.check_parameter(mu)
             v = self._mapping(x)
         assert v.shape == x.shape[:-1] + self.shape_range
 
@@ -146,7 +144,7 @@ class GenericFunction(FunctionBase):
 
 
 class LincombFunction(FunctionBase):
-    '''A |Function| representing a linear combination of |Functions|.
+    """A |Function| representing a linear combination of |Functions|.
 
     The linear coefficients can be provided as scalars or
     |ParameterFunctionals|. Alternatively, if no linear coefficients
@@ -176,7 +174,7 @@ class LincombFunction(FunctionBase):
     coefficients
     coefficients_name
     num_coefficients
-    '''
+    """
 
     def __init__(self, functions, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
         assert coefficients is None or len(functions) == len(coefficients)
@@ -205,7 +203,7 @@ class LincombFunction(FunctionBase):
                                       [f for f in coefficients if isinstance(f, ParameterFunctionalInterface)])
 
     def evaluate_coefficients(self, mu):
-        '''Compute the linear coefficients for a given |Parameter| `mu`.'''
+        """Compute the linear coefficients for a given |Parameter| `mu`."""
         mu = self.parse_parameter(mu)
         if self.coefficients is None:
             if self.pad_coefficients:

@@ -3,12 +3,12 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-'''
+"""
 This module contains backend implementations of pyMOR cache regions using
 the `dogpile <https://pypi.python.org/pypi/dogpile.cache>`_ package.
 
 Not to be used directly.
-'''
+"""
 
 from collections import OrderedDict
 from collections import deque
@@ -69,12 +69,12 @@ class DummyBackend(BasicInterface, dc.api.CacheBackend):
 class LimitedMemoryBackend(BasicInterface, dc.api.CacheBackend):
 
     def __init__(self, argument_dict):
-        '''If argument_dict contains a value for max_kbytes this the total memory limit in kByte that is enforced on the
+        """If argument_dict contains a value for max_kbytes this the total memory limit in kByte that is enforced on the
         internal cache dictionary, otherwise it's set to sys.maxint.
         If argument_dict contains a value for max_keys this maximum amount of cache values kept in the
         internal cache dictionary, otherwise it's set to sys.maxlen.
         If necessary values are deleted from the cache in FIFO order.
-        '''
+        """
         self.logger.debug('LimitedMemoryBackend args {}'.format(pformat(argument_dict)))
         self._max_keys = argument_dict.get('max_keys', sys.maxsize)
         self._max_bytes = argument_dict.get('max_kbytes', sys.maxint / 1024) * 1024
@@ -106,10 +106,10 @@ class LimitedMemoryBackend(BasicInterface, dc.api.CacheBackend):
 class LimitedFileBackend(DBMBackend, BasicInterface):
 
     def __init__(self, argument_dict):
-        '''If argument_dict contains a value for max_keys this maximum amount of cache values kept in the
+        """If argument_dict contains a value for max_keys this maximum amount of cache values kept in the
         internal cache file, otherwise its set to sys.maxlen.
         If necessary values are deleted from the cache in FIFO order.
-        '''
+        """
         argument_dict['filename'] = argument_dict.get('filename', os.path.join(gettempdir(), 'pymor'))
         super(LimitedFileBackend, self).__init__(argument_dict)
         self.logger.debug('LimitedFileBackend args {}'.format(pformat(argument_dict)))
@@ -118,7 +118,7 @@ class LimitedFileBackend(DBMBackend, BasicInterface):
         self._max_size = argument_dict.get('max_size', None)
         try:
             self._keylist, self._size = pymor.core.load(open(self._keylist_fn, 'rb'))
-        except:
+        except Exception:
             self._keylist = deque()
             self._size = 0
         self._enforce_limits(None)

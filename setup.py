@@ -32,7 +32,7 @@ class PyTest(TestCommand):
     def finalize_options(self):
         TestCommand.finalize_options(self)
         print(sys.argv[3:])
-        self.test_args = sys.argv[3:] + ['src/pymortests']
+        self.test_args = sys.argv[3:] + ['--cov=pymor', '--cov-report=html', '--cov-report=xml', 'src/pymortests']
         self.test_suite = True
 
     def run_tests(self):

@@ -14,7 +14,7 @@ from pymor.tools import Named
 
 
 class InstationaryAdvectionProblem(ImmutableInterface, Named):
-    '''Instationary advection problem.
+    """Instationary advection problem.
 
     The problem is to solve ::
 
@@ -53,7 +53,7 @@ class InstationaryAdvectionProblem(ImmutableInterface, Named):
     initial_data
     dirichlet_data
     T
-    '''
+    """
 
     def __init__(self, domain=RectDomain(), rhs=ConstantFunction(dim_domain=2),
                  flux_function=ConstantFunction(value=np.array([0, 0]), dim_domain=2),

@@ -2,12 +2,12 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-''' This module provides a widget for displaying plots of
+""" This module provides a widget for displaying plots of
 scalar data assigned to a 1D-Grid using :mod:`matplotlib`. This widget is not
 intended to be used directly. Instead, use
 :meth:`~pymor.gui.qt.visualize_matplotlib_1d` or
 :class:`~pymor.gui.qt.Matplotlib1DVisualizer`.
-'''
+"""
 
 from __future__ import absolute_import, division, print_function
 
@@ -40,32 +40,52 @@ if HAVE_ALL:
     from pymor.grids.constructions import flatten_grid
     from pymor.grids.referenceelements import line, triangle, square
 
+    # noinspection PyShadowingNames
     class Matplotlib1DWidget(FigureCanvas):
 
-        def __init__(self, parent, grid, count, vmin=None, vmax=None, legend=None, codim=1, dpi=100):
+        def __init__(self, parent, grid, count, vmin=None, vmax=None, legend=None, codim=1,
+                     separate_plots=False, dpi=100):
             assert grid.reference_element is line
             assert codim in (0, 1)
 
-            self.figure = Figure(dpi=dpi)
-            self.axes = self.figure.gca()
-            self.axes.hold(True)
+            figure = Figure(dpi=dpi)
+            if not separate_plots:
+                axes = figure.gca()
+                axes.hold(True)
+            self.codim = codim
             lines = tuple()
-            for _ in xrange(count):
-                l, = self.axes.plot(grid.centers(codim), np.zeros_like(grid.centers(codim)))
+            if codim == 1:
+                xs = grid.centers(1)
+            else:
+                xs = np.repeat(grid.centers(1), 2)[1:-1]
+            for i in xrange(count):
+                if separate_plots:
+                    figure.add_subplot(int(count / 2) + count % 2, 2, i + 1)
+                    axes = figure.gca()
+                    pad = (vmax[i] - vmin[i]) * 0.1
+                    axes.set_ylim(vmin[i] - pad, vmax[i] + pad)
+                l, = axes.plot(xs, np.zeros_like(xs))
                 lines = lines + (l,)
-            self.axes.set_ylim(vmin, vmax)
-            if legend:
-                self.axes.legend(legend)
+                if legend and separate_plots:
+                    axes.legend([legend[i]])
+            if not separate_plots:
+                pad = (max(vmax) - min(vmin)) * 0.1
+                axes.set_ylim(min(vmin) - pad, max(vmax) + pad)
+                if legend:
+                    axes.legend(legend)
             self.lines = lines
 
-            super(Matplotlib1DWidget, self).__init__(self.figure)
+            super(Matplotlib1DWidget, self).__init__(figure)
             self.setParent(parent)
             self.setMinimumSize(300, 300)
             self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
 
         def set(self, U, ind):
             for line, u in izip(self.lines, U):
-                line.set_ydata(u[ind])
+                if self.codim == 1:
+                    line.set_ydata(u[ind])
+                else:
+                    line.set_ydata(np.repeat(u[ind], 2))
             self.draw()
 
     class MatplotlibPatchWidget(FigureCanvas):

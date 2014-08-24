@@ -17,7 +17,7 @@ _file_sha = hashlib.sha1(open(__file__).read()).digest()
 
 
 class Defaults(object):
-    '''Class defining application-wide defaults. Do not instantiate but use
+    """Class defining application-wide defaults. Do not instantiate but use
     `pymor.defaults`.
 
       :float_cmp_tol:                      tolerance for :func:`~pymor.tools.floatcmp.float_cmp`
@@ -30,9 +30,9 @@ class Defaults(object):
       :gram_schmidt_check:                 check orthogonality of result
       :gram_schmidt_check_tol:             tolerance for orthogonality check
 
-      :pod_tol:                            tolerance below which eigenvalues are treated as zero
+      :pod_tol:                            relative tolerance below which singular values are treated as zero
       :pod_symmetrize:                     symmetrize the Gram matrix
-      :pod_orthonormalie:                  orthonormalize the result again
+      :pod_orthonormalize:                 orthonormalize the result again
       :pod_check:                          check orthogonality of result
       :pod_check_tol:                      tolerance for orthogonality check
 
@@ -83,6 +83,10 @@ class Defaults(object):
       :newton_maxiter:                     maximum number of iterations
       :newton_reduction:                   reduction of initial residual to achieve
       :newton_abs_limit:                   stop if absolute norm of residual falls below this limit
+      :newton_stagnation_window:           see `newton_stagnation_threshold`
+      :newton_stagnation_threshold:        stop if norm of residual is not reduced by this factor during the last
+                                           `newton_stagnation_window` iterations
+      :newton_abs_limit:                   stop if absolute norm of residual falls below this limit
 
       :induced_norm_raise_negative:        raise error in la.induced_norm if the squared norm is negative
       :induced_norm_tol:                   tolerance for clipping negative norm squares to zero
@@ -93,9 +97,9 @@ class Defaults(object):
       :compact_print:                      print (arrays) in a compact but possibly not accurate way
       :qt_visualize_patch_backend:         backend to use for plotting in :func:`pymor.gui.qt.visualize_patch`
                                              ('gl' or 'matplotlib')
-    '''
+    """
 
-    float_cmp_tol                       = 2**4 * np.finfo(np.zeros(1).dtype).eps
+    float_cmp_tol                       = 2**4 * np.finfo(np.zeros(1.).dtype).eps
 
     gram_schmidt_tol                    = 1e-14
     # gram_schmidt_tol                  = 1e-7  # according to comments in the rbmatlab source, such a high tolerance is
@@ -106,7 +110,7 @@ class Defaults(object):
     gram_schmidt_check                  = True
     gram_schmidt_check_tol              = 1e-3
 
-    pod_tol                             = 1e-15
+    pod_tol                             = 4e-8
     pod_symmetrize                      = False
     pod_orthonormalize                  = True
     pod_check                           = True
@@ -159,6 +163,8 @@ class Defaults(object):
     newton_maxiter                      = 10
     newton_reduction                    = 1e-10
     newton_abs_limit                    = 1e-15
+    newton_stagnation_window            = 0
+    newton_stagnation_threshold         = np.inf
 
     induced_norm_raise_negative         = True
     induced_norm_tol                    = 10e-10
@@ -249,6 +255,7 @@ class Defaults(object):
             newton_maxiter                      = {0.newton_maxiter}
             newton_reduction                    = {0.newton_reduction}
             newton_abs_limit                    = {0.newton_abs_limit}
+            newton_stagnation_window            = {0.newton_stagnation_window}
 
             random_seed                         = {0.random_seed}
 

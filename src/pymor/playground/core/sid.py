@@ -28,7 +28,7 @@ class generate_sid(object):
         self.func = func
         if func is not None:
             # Beware! The following will probably break in python 3 if there are
-            # keyword-only arguemnts
+            # keyword-only arguments
             args, varargs, keywords, defaults  = inspect.getargspec(func)
             if varargs:
                 raise NotImplementedError

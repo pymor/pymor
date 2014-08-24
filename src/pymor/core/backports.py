@@ -2,13 +2,13 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-'''This module contains pure python backports of library features from python >= 3 to 2.7
-'''
+"""This module contains pure python backports of library features from python >= 3 to 2.7
+"""
 from __future__ import absolute_import, division, print_function
 
 
 class abstractclassmethod(classmethod):
-    '''
+    """
     A decorator indicating abstract classmethods.
 
     Similar to abstractmethod.
@@ -22,7 +22,7 @@ class abstractclassmethod(classmethod):
 
     'abstractclassmethod' is deprecated. Use 'classmethod' with
     'abstractmethod' instead.
-    '''
+    """
 
     __isabstractmethod__ = True
 
@@ -32,7 +32,7 @@ class abstractclassmethod(classmethod):
 
 
 class abstractstaticmethod(staticmethod):
-    '''
+    """
     A decorator indicating abstract staticmethods.
 
     Similar to abstractmethod.
@@ -46,7 +46,7 @@ class abstractstaticmethod(staticmethod):
 
     'abstractstaticmethod' is deprecated. Use 'staticmethod' with
     'abstractmethod' instead.
-    '''
+    """
 
     __isabstractmethod__ = True
 

@@ -10,7 +10,7 @@ from pymor import defaults
 
 
 def float_cmp(x, y, rtol=None, atol=None):
-    '''Compare x and y component-wise for almost equality.
+    """Compare x and y component-wise for almost equality.
 
     For scalars we define almost equality as ::
 
@@ -32,7 +32,7 @@ def float_cmp(x, y, rtol=None, atol=None):
         |default| value.
     atol
         The absolute tolerance. If `None`, it is set to `rtol`.
-    '''
+    """
 
     rtol = rtol or defaults.float_cmp_tol
     atol = atol or rtol
@@ -40,11 +40,11 @@ def float_cmp(x, y, rtol=None, atol=None):
 
 
 def float_cmp_all(x, y, rtol=None, atol=None):
-    '''Compare x and y for almost equality.
+    """Compare x and y for almost equality.
 
     Returns `True` if all components of `x` are almost equal to the corresponding
     components of `y`.
 
     See :meth:`float_cmp`.
-    '''
+    """
     return np.all(float_cmp(x, y, rtol, atol))

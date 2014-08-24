@@ -11,8 +11,8 @@ from pymor.grids.interfaces import BoundaryInfoInterface
 
 
 class EmptyBoundaryInfo(BoundaryInfoInterface):
-    '''|BoundaryInfo| with no |BoundaryTypes| attached to any boundary.
-    '''
+    """|BoundaryInfo| with no |BoundaryTypes| attached to any boundary.
+    """
 
     def __init__(self, grid):
         self.grid = grid
@@ -23,7 +23,7 @@ class EmptyBoundaryInfo(BoundaryInfoInterface):
 
 
 class BoundaryInfoFromIndicators(BoundaryInfoInterface):
-    '''|BoundaryInfo| where the |BoundaryTypes| are determined by indicator functions.
+    """|BoundaryInfo| where the |BoundaryTypes| are determined by indicator functions.
 
     Parameters
     ----------
@@ -33,10 +33,12 @@ class BoundaryInfoFromIndicators(BoundaryInfoInterface):
         Dict where each key is a |BoundaryType| and the corresponding value is a boolean
         valued function on the analytical domain indicating if a point belongs to a boundary
         of the |BoundaryType|. (The indicator functions must be vectorized.)
-    '''
+    """
 
-    def __init__(self, grid, indicators, assert_unique_type=[1], assert_some_type=[]):
+    def __init__(self, grid, indicators, assert_unique_type=None, assert_some_type=None):
         self.grid = grid
+        assert_unique_type = assert_unique_type if assert_unique_type else [1]
+        assert_some_type = assert_some_type if assert_some_type else []
         self.boundary_types = indicators.keys()
         self._masks = {boundary_type: [np.zeros(grid.size(codim), dtype='bool') for codim in xrange(1, grid.dim + 1)]
                        for boundary_type in self.boundary_types}
@@ -51,7 +53,7 @@ class BoundaryInfoFromIndicators(BoundaryInfoInterface):
 
 
 class AllDirichletBoundaryInfo(BoundaryInfoInterface):
-    '''|BoundaryInfo| where `BoundaryType('dirichlet')` is attached to each boundary entity.'''
+    """|BoundaryInfo| where `BoundaryType('dirichlet')` is attached to each boundary entity."""
 
     def __init__(self, grid):
         self.grid = grid
@@ -64,7 +66,7 @@ class AllDirichletBoundaryInfo(BoundaryInfoInterface):
 
 
 class SubGridBoundaryInfo(BoundaryInfoInterface):
-    '''Derives a |BoundaryInfo| for a :class:`~pymor.grids.subgrid.SubGrid`.
+    """Derives a |BoundaryInfo| for a :class:`~pymor.grids.subgrid.SubGrid`.
 
     Parameters
     ----------
@@ -77,7 +79,7 @@ class SubGridBoundaryInfo(BoundaryInfoInterface):
     new_boundary_type
         The |BoundaryType| which is assigned to the new boundaries of `subgrid`. If
         `None`, no |BoundaryType| is assigned.
-    '''
+    """
 
     def __init__(self, subgrid, grid, grid_boundary_info, new_boundary_type=None):
         assert new_boundary_type is None or isinstance(new_boundary_type, BoundaryType)

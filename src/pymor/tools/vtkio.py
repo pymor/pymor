@@ -17,10 +17,10 @@ from pymor.grids.constructions import flatten_grid
 
 
 def _write_meta_file(filename_base, steps, fn_tpl):
-    '''Outputs a collection file for a series of vtu files
+    """Outputs a collection file for a series of vtu files
 
     This DOES NOT WORK for the currently used legacy vtk format below
-    '''
+    """
 
     pvd_header = '''<?xml version="1.0"?>
 <VTKFile type="Collection" version="0.1" byte_order="LittleEndian">
@@ -73,7 +73,7 @@ def _write_vtu_series(us_grid, data, filename_base, binary_vtk, last_step, is_ce
 
 
 def write_vtk(grid, data, filename_base, codim=2, binary_vtk=True, last_step=None):
-    '''Output grid-associated data in (legacy) vtk format
+    """Output grid-associated data in (legacy) vtk format
 
     Parameters
     ----------
@@ -89,7 +89,7 @@ def write_vtk(grid, data, filename_base, codim=2, binary_vtk=True, last_step=Non
 
     last_step
         if set must be <= len(data) to restrict output of timeseries
-    '''
+    """
     if not HAVE_PYVTK:
         raise ImportError('could not import pyvtk')
     if grid.dim != 2 or grid.dim_outer != 2:

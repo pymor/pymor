@@ -15,7 +15,7 @@ from pymor.parameters.spaces import CubicParameterSpace
 
 
 class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
-    '''One-dimensional Burgers-type problem.
+    """One-dimensional Burgers-type problem.
 
     The problem is to solve ::
 
@@ -35,7 +35,7 @@ class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
         Type of initial data (`'sin'` or `'bump'`).
     parameter_range
         The interval in which μ is allowed to vary.
-    '''
+    """
 
     def __init__(self, v=1., circle=True, initial_data_type='sin', parameter_range=(1., 2.)):
 
@@ -95,7 +95,7 @@ class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
 
 
 class Burgers2DProblem(InstationaryAdvectionProblem, Unpicklable):
-    '''Two-dimensional Burgers-type problem.
+    """Two-dimensional Burgers-type problem.
 
     The problem is to solve ::
 
@@ -117,7 +117,7 @@ class Burgers2DProblem(InstationaryAdvectionProblem, Unpicklable):
         Type of initial data (`'sin'` or `'bump'`).
     parameter_range
         The interval in which μ is allowed to vary.
-    '''
+    """
     def __init__(self, vx=1., vy=1., torus=True, initial_data_type='sin', parameter_range=(1., 2.)):
 
         assert initial_data_type in ('sin', 'bump')

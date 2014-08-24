@@ -5,14 +5,11 @@
 from __future__ import absolute_import, division, print_function
 
 from itertools import product
-import math as m
-import random
-
 import numpy as np
 import pytest
 
 from pymor.la import NumpyVectorArray
-from pymor.la.listvectorarray import NumpyListVectorArray, NumpyVector
+from pymor.la.listvectorarray import NumpyVector, NumpyListVectorArray
 
 
 def random_integers(count, seed):
@@ -28,7 +25,7 @@ def numpy_vector_array_factory(length, dim, seed):
 def numpy_list_vector_array_factory(length, dim, seed):
     np.random.seed(seed)
     return NumpyListVectorArray([NumpyVector(v, copy=False) for v in np.random.random((length, dim))],
-                                dim=dim, copy=False)
+                                subtype=dim, copy=False)
 
 
 def vector_array_from_empty_reserve(v, reserve):
@@ -40,7 +37,7 @@ def vector_array_from_empty_reserve(v, reserve):
         r = len(v) + 10
     elif reserve == 3:
         r = int(len(v) / 2)
-    c = type(v).empty(v.dim, reserve=r)
+    c = v.empty(reserve=r)
     c.append(v)
     return c
 
@@ -104,22 +101,17 @@ def vector_array(vector_array_without_reserve, request):
 
 @pytest.fixture(params=(numpy_vector_array_pair_with_same_dim_generators +
                         numpy_list_vector_array_pair_with_same_dim_generators))
-def vector_array_pair_with_same_dim_without_reserve(request):
+def compatible_vector_array_pair_without_reserve(request):
     return request.param()
 
 
 @pytest.fixture(params=list(product(range(3), range(3))))
-def vector_array_pair_with_same_dim(vector_array_pair_with_same_dim_without_reserve, request):
-    v1, v2 = vector_array_pair_with_same_dim_without_reserve
+def compatible_vector_array_pair(compatible_vector_array_pair_without_reserve, request):
+    v1, v2 = compatible_vector_array_pair_without_reserve
     return vector_array_from_empty_reserve(v1, request.param[0]), vector_array_from_empty_reserve(v2, request.param[1])
 
 
 @pytest.fixture(params=(numpy_vector_array_pair_with_different_dim_generators +
                         numpy_list_vector_array_pair_with_different_dim_generators))
-def vector_array_pair_with_different_dim(request):
+def incompatible_vector_array_pair(request):
     return request.param()
-
-
-@pytest.fixture(params=[NumpyVectorArray, NumpyListVectorArray])
-def VectorArray(request):
-    return request.param
