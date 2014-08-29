@@ -20,28 +20,21 @@ consider deriving from :class:`OperatorBase`.
 
 from __future__ import absolute_import, division, print_function
 
-from collections import OrderedDict
 from itertools import izip
 from numbers import Number
 
 import numpy as np
 from scipy.sparse import issparse
-from scipy.sparse.linalg import bicgstab, spsolve, spilu, LinearOperator
 from scipy.io import mmwrite, savemat
 
-from pymor import defaults
 from pymor.core import abstractmethod
+from pymor.core.defaults import defaults_sid
 from pymor.core.exceptions import InversionError
 from pymor.la.interfaces import VectorArrayInterface
 from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
+from pymor.la import numpysolvers
 from pymor.operators.interfaces import OperatorInterface
 from pymor.parameters import ParameterFunctionalInterface
-
-try:
-    import pyamg
-    HAVE_PYAMG = True
-except ImportError:
-    HAVE_PYAMG = False
 
 
 class OperatorBase(OperatorInterface):
@@ -218,9 +211,16 @@ class NumpyMatrixBasedOperator(OperatorBase):
         The assembled **parameter independent** |Operator|.
         """
         if hasattr(self, '_assembled_operator'):
-            return self._assembled_operator
+            if self._defaults_sid != defaults_sid():
+                self.logger.warn('Re-assembling since state of global defaults has changed.')
+                op = self._assembled_operator = NumpyMatrixOperator(self._assemble())
+                self._defaults_sid = defaults_sid()
+                return op
+            else:
+                return self._assembled_operator
         elif self.parameter_type is None:
             op = self._assembled_operator = NumpyMatrixOperator(self._assemble())
+            self._defaults_sid = defaults_sid()
             return op
         else:
             return NumpyMatrixOperator(self._assemble(self.parse_parameter(mu)))
@@ -238,58 +238,8 @@ class NumpyMatrixBasedOperator(OperatorBase):
     def invert_options(self):
         if self.sparse is None:
             raise ValueError('Sparsity unkown, assemble first.')
-        elif self.sparse:
-            opts = (('bicgstab-spilu', {'type': 'bicgstab-spilu',
-                                        'tol': defaults.bicgstab_tol,
-                                        'maxiter': defaults.bicgstab_maxiter,
-                                        'spilu_drop_tol': defaults.spilu_drop_tol,
-                                        'spilu_fill_factor': defaults.spilu_fill_factor,
-                                        'spilu_drop_rule': defaults.spilu_drop_rule,
-                                        'spilu_permc_spec': defaults.spilu_permc_spec}),
-                    ('bicgstab',       {'type': 'bicgstab',
-                                        'tol': defaults.bicgstab_tol,
-                                        'maxiter': defaults.bicgstab_maxiter}),
-                    ('spsolve',        {'type': 'spsolve',
-                                        'permc_spec': defaults.spsolve_permc_spec}))
-            if HAVE_PYAMG:
-                opts += (('pyamg',    {'type': 'pyamg',
-                                       'tol': defaults.pyamg_tol,
-                                       'maxiter': defaults.pyamg_maxiter}),
-                         ('pyamg-rs', {'type': 'pyamg-rs',
-                                       'strength': defaults.pyamg_rs_strength,
-                                       'CF': defaults.pyamg_rs_CF,
-                                       'presmoother': defaults.pyamg_rs_presmoother,
-                                       'postsmoother': defaults.pyamg_rs_postsmoother,
-                                       'max_levels': defaults.pyamg_rs_max_levels,
-                                       'max_coarse': defaults.pyamg_rs_max_coarse,
-                                       'coarse_solver': defaults.pyamg_rs_coarse_solver,
-                                       'cycle': defaults.pyamg_rs_cycle,
-                                       'accel': defaults.pyamg_rs_accel,
-                                       'tol': defaults.pyamg_rs_tol,
-                                       'maxiter': defaults.pyamg_rs_maxiter}),
-                         ('pyamg-sa', {'type': 'pyamg-sa',
-                                       'symmetry': defaults.pyamg_sa_symmetry,
-                                       'strength': defaults.pyamg_sa_strength,
-                                       'aggregate': defaults.pyamg_sa_aggregate,
-                                       'smooth': defaults.pyamg_sa_smooth,
-                                       'presmoother': defaults.pyamg_sa_presmoother,
-                                       'postsmoother': defaults.pyamg_sa_postsmoother,
-                                       'improve_candidates': defaults.pyamg_sa_improve_candidates,
-                                       'max_levels': defaults.pyamg_sa_max_levels,
-                                       'max_coarse': defaults.pyamg_sa_max_coarse,
-                                       'diagonal_dominance': defaults.pyamg_sa_diagonal_dominance,
-                                       'coarse_solver': defaults.pyamg_sa_coarse_solver,
-                                       'cycle': defaults.pyamg_sa_cycle,
-                                       'accel': defaults.pyamg_sa_accel,
-                                       'tol': defaults.pyamg_sa_tol,
-                                       'maxiter': defaults.pyamg_sa_maxiter}))
-            opts = OrderedDict(opts)
-            def_opt = opts.pop(defaults.default_sparse_solver)
-            ordered_opts = OrderedDict(((defaults.default_sparse_solver, def_opt),))
-            ordered_opts.update(opts)
-            return ordered_opts
         else:
-            return OrderedDict((('solve', {'type': 'solve'}),))
+            return numpysolvers.invert_options(self.sparse)
 
     def export_matrix(self, filename, matrix_name=None, output_format='matlab', mu=None):
         """Save matrix of operator to a file.
@@ -355,107 +305,11 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         return NumpyVectorArray(self._matrix.dot(U_array.T).T, copy=False)
 
     def apply_inverse(self, U, ind=None, mu=None, options=None):
-
-        default_options = self.invert_options
-
-        if options is None:
-            options = default_options.values()[0]
-        elif isinstance(options, str):
-            options = default_options[options]
-        else:
-            assert 'type' in options and options['type'] in default_options \
-                and options.viewkeys() <= default_options[options['type']].viewkeys()
-            user_options = options
-            options = default_options[user_options['type']]
-            options.update(user_options)
-
         assert U in self.range
-
         U = U._array[:U._len] if ind is None else U._array[ind]
         if U.shape[1] == 0:
             return NumpyVectorArray(U)
-        R = np.empty((len(U), self.source.dim))
-
-        if self.sparse:
-            if options['type'] == 'bicgstab':
-                for i, UU in enumerate(U):
-                    R[i], info = bicgstab(self._matrix, UU, tol=options['tol'], maxiter=options['maxiter'])
-                    if info != 0:
-                        if info > 0:
-                            raise InversionError('bicgstab failed to converge after {} iterations'.format(info))
-                        else:
-                            raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
-                                                 format(info))
-            elif options['type'] == 'bicgstab-spilu':
-                ilu = spilu(self._matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
-                            drop_rule=options['spilu_drop_rule'], permc_spec=options['spilu_permc_spec'])
-                precond = LinearOperator(self._matrix.shape, ilu.solve)
-                for i, UU in enumerate(U):
-                    R[i], info = bicgstab(self._matrix, UU, tol=options['tol'], maxiter=options['maxiter'], M=precond)
-                    if info != 0:
-                        if info > 0:
-                            raise InversionError('bicgstab failed to converge after {} iterations'.format(info))
-                        else:
-                            raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
-                                                 format(info))
-            elif options['type'] == 'spsolve':
-                for i, UU in enumerate(U):
-                    R[i] = spsolve(self._matrix, UU, permc_spec=options['permc_spec'])
-            elif options['type'] == 'pyamg':
-                if len(U) > 0:
-                    U_iter = iter(enumerate(U))
-                    R[0], ml = pyamg.solve(self._matrix, next(U_iter)[1],
-                                           tol=options['tol'],
-                                           maxiter=options['maxiter'],
-                                           return_solver=True)
-                    for i, UU in U_iter:
-                        R[i] = pyamg.solve(self._matrix, UU,
-                                           tol=options['tol'],
-                                           maxiter=options['maxiter'],
-                                           existing_solver=ml)
-            elif options['type'] == 'pyamg-rs':
-                ml = pyamg.ruge_stuben_solver(self._matrix,
-                                              strength=options['strength'],
-                                              CF=options['CF'],
-                                              presmoother=options['presmoother'],
-                                              postsmoother=options['postsmoother'],
-                                              max_levels=options['max_levels'],
-                                              max_coarse=options['max_coarse'],
-                                              coarse_solver=options['coarse_solver'])
-                for i, UU in enumerate(U):
-                    R[i] = ml.solve(UU,
-                                    tol=options['tol'],
-                                    maxiter=options['maxiter'],
-                                    cycle=options['cycle'],
-                                    accel=options['accel'])
-            elif options['type'] == 'pyamg-sa':
-                ml = pyamg.smoothed_aggregation_solver(self._matrix,
-                                                       symmetry=options['symmetry'],
-                                                       strength=options['strength'],
-                                                       aggregate=options['aggregate'],
-                                                       smooth=options['smooth'],
-                                                       presmoother=options['presmoother'],
-                                                       postsmoother=options['postsmoother'],
-                                                       improve_candidates=options['improve_candidates'],
-                                                       max_levels=options['max_levels'],
-                                                       max_coarse=options['max_coarse'],
-                                                       diagonal_dominance=options['diagonal_dominance'])
-                for i, UU in enumerate(U):
-                    R[i] = ml.solve(UU,
-                                    tol=options['tol'],
-                                    maxiter=options['maxiter'],
-                                    cycle=options['cycle'],
-                                    accel=options['accel'])
-            else:
-                raise ValueError('Unknown solver type')
-        else:
-            for i, UU in enumerate(U):
-                try:
-                    R[i] = np.linalg.solve(self._matrix, UU)
-                except np.linalg.LinAlgError as e:
-                    raise InversionError('{}: {}'.format(str(type(e)), str(e)))
-
-        return NumpyVectorArray(R)
+        return NumpyVectorArray(numpysolvers.apply_inverse(self._matrix, U, options=options), copy=False)
 
     def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
         """Project the operator to a subbasis.

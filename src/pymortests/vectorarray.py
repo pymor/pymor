@@ -359,7 +359,7 @@ def test_almost_equal(compatible_vector_array_pair):
 def test_almost_equal_self(vector_array):
     v = vector_array
     for ind in valid_inds(v):
-        for rtol, atol in ((1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8)):
+        for rtol, atol in ((1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8), (1e-12, 0.)):
             r = v.almost_equal(v, ind=ind, o_ind=ind)
             assert isinstance(r, np.ndarray)
             assert r.shape == (v.len_ind(ind),)
@@ -371,25 +371,28 @@ def test_almost_equal_self(vector_array):
             c.scal(atol / (np.max(v.sup_norm(ind))))
             assert np.all(c.almost_equal(c.zeros(v.len_ind(ind)), ind=ind, atol=atol, rtol=rtol))
 
-            c = v.copy()
-            c.scal(2. * atol / (np.max(v.sup_norm(ind))))
-            assert not np.all(c.almost_equal(c.zeros(v.len_ind(ind)), ind=ind, atol=atol, rtol=rtol))
+            if atol > 0:
+                c = v.copy()
+                c.scal(2. * atol / (np.max(v.sup_norm(ind))))
+                assert not np.all(c.almost_equal(c.zeros(v.len_ind(ind)), ind=ind, atol=atol, rtol=rtol))
 
             c = v.copy()
-            c.scal(1. + atol / np.max(v.sup_norm(ind)))
+            c.scal(1. + rtol * 0.9)
             assert np.all(c.almost_equal(v, ind=ind, o_ind=ind, atol=atol, rtol=rtol))
 
-            c = v.copy()
-            c.scal(2. + atol / np.max(v.sup_norm(ind)))
-            assert not np.all(c.almost_equal(v, ind=ind, o_ind=ind, atol=atol, rtol=rtol))
+            if rtol > 0:
+                c = v.copy()
+                c.scal(2. + rtol * 1.1)
+                assert not np.all(c.almost_equal(v, ind=ind, o_ind=ind, atol=atol, rtol=rtol))
 
             c = v.copy()
-            c.scal(1. + rtol)
+            c.scal(1. + atol * 0.9 / np.max(v.sup_norm(ind)))
             assert np.all(c.almost_equal(v, ind=ind, o_ind=ind, atol=atol, rtol=rtol))
 
-            c = v.copy()
-            c.scal(2. + rtol)
-            assert not np.all(c.almost_equal(v, ind=ind, o_ind=ind, atol=atol, rtol=rtol))
+            if atol > 0 or rtol > 0:
+                c = v.copy()
+                c.scal(1 + rtol * 1.1 + atol * 1.1 / np.max(v.sup_norm(ind)))
+                assert not np.all(c.almost_equal(v, ind=ind, o_ind=ind, atol=atol, rtol=rtol))
 
 
 def test_scal(vector_array):

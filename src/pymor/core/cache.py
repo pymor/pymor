@@ -22,10 +22,12 @@ the following data:
     2. the method's `__name__`,
     3. the state id of each argument if available, else its pickled
        state.
+    4. the state of pyMOR's global :mod:`~pymor.core.defaults`.
 
 Note, however, that instances of :class:`~pymor.core.interfaces.ImmutableInterface`
 are allowed to have mutable private attributes. It is the implementors
 responsibility not to break things.
+(See this :ref:`warning <ImmutableInterfaceWarning>`.)
 
 Backends for storage of cached return values derive from :class:`CacheRegion`.
 Currently two backends are provided for memory-based and disk-based caching
@@ -63,7 +65,7 @@ from types import MethodType
 
 import numpy as np
 
-from pymor import defaults
+from pymor.core.defaults import defaults_sid
 from pymor.core import dumps, ImmutableInterface
 import pymor.core.dogpile_backends
 
@@ -190,7 +192,7 @@ class cached(object):
         key = (self.decorated_function.__name__, getattr(im_self, 'sid', im_self.uid),
                tuple(getattr(x, 'sid', x) for x in args),
                tuple((k, getattr(v, 'sid', v)) for k, v in sorted(kwargs.iteritems())),
-               defaults.sid)
+               defaults_sid())
         key = dumps(key)
         found, value = region.get(key)
         if found:

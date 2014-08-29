@@ -83,7 +83,7 @@ class TestGaussQuadrature(TestInterface):
 class TestCmp(TestInterface):
 
     def test_props(self):
-        tol_range = [None, 0.0, 1]
+        tol_range = [0.0, 1e-8, 1]
         nan = float('nan')
         inf = float('inf')
         for (rtol, atol) in itertools.product(tol_range, tol_range):
@@ -102,7 +102,10 @@ class TestCmp(TestInterface):
             assert not float_cmp(inf, inf, rtol, atol), msg
             assert not (inf != inf)
             assert inf == inf
-            assert float_cmp(-inf, inf, rtol, atol), msg
+            if rtol > 0:
+                assert float_cmp(-inf, inf, rtol, atol), msg
+            else:
+                assert not float_cmp(-inf, inf, rtol, atol), msg
 
 
 def test_vtkio(rect_or_tria_grid):

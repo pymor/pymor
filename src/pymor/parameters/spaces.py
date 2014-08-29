@@ -9,6 +9,7 @@ import numpy as np
 
 from pymor.parameters.base import Parameter, ParameterType
 from pymor.parameters.interfaces import ParameterSpaceInterface
+from pymor.tools import new_random_state
 
 
 class CubicParameterSpace(ParameterSpaceInterface):
@@ -63,12 +64,14 @@ class CubicParameterSpace(ParameterSpaceInterface):
             yield Parameter(((k, np.array(v).reshape(shp))
                              for k, v, shp in izip(self.parameter_type, i, self.parameter_type.values())))
 
-    def sample_randomly(self, count=None):
+    def sample_randomly(self, count=None, random_state=None, seed=None):
         """Iterator sampling random |Parameters| from the space."""
+        assert not random_state or seed is None
         c = 0
         ranges = self.ranges
+        random_state = random_state or new_random_state(seed)
         while count is None or c < count:
-            yield Parameter(((k, np.random.uniform(ranges[k][0], ranges[k][1], shp))
+            yield Parameter(((k, random_state.uniform(ranges[k][0], ranges[k][1], shp))
                              for k, shp in self.parameter_type.iteritems()))
             c += 1
 

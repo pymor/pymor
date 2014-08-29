@@ -12,6 +12,8 @@ import logging
 import os
 import time
 
+from pymor.core.defaults import defaults
+
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 
 # The background is set with 40 plus the number of the color, and the foreground with 30
@@ -115,3 +117,10 @@ def getLogger(module, level=None, filename=None, handler_cls=logging.StreamHandl
     return logger
 
 dummy_logger = getLogger('pymor.dummylogger', level='fatal')
+
+
+@defaults('levels')
+def set_log_levels(levels={'pymor': 'WARN',
+                           'pymor.core': 'WARN'}):
+    for k, v in levels.items():
+        getLogger(k).setLevel(v)

@@ -85,8 +85,8 @@ from pymor.la import NumpyVectorArray
 from pymor.reductors import reduce_generic_rb, reduce_to_subbasis
 
 
-core.getLogger('pymor.algorithms').setLevel('INFO')
-core.getLogger('pymor.discretizations').setLevel('INFO')
+core.set_log_levels({'pymor.algorithms': 'INFO',
+                     'pymor.discretizations': 'INFO'})
 
 
 def burgers_demo(args):

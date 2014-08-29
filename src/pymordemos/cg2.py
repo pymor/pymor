@@ -26,13 +26,13 @@ from docopt import docopt
 import numpy as np
 
 from pymor.analyticalproblems import EllipticProblem
-from pymor.core import getLogger
+from pymor.core import set_log_levels
 from pymor.discretizers import discretize_elliptic_cg
 from pymor.domaindescriptions import RectDomain
 from pymor.functions import GenericFunction
 from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional, GenericParameterFunctional
 
-getLogger('pymor.discretizations').setLevel('INFO')
+set_log_levels({'pymor.discretizations': 'INFO'})
 
 
 def cg2_demo(nrhs, n, plot):

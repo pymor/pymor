@@ -6,21 +6,16 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor import defaults
 from pymor.core import getLogger
+from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError, NewtonError
 
 
+@defaults('miniter', 'maxiter', 'reduction', 'abs_limit', 'stagnation_window', 'stagnation_threshold')
 def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None,
-           miniter=None, maxiter=None, reduction=None, abs_limit=None,
-           stagnation_window=None, stagnation_threshold=None,
+           miniter=0, maxiter=10, reduction=1e-10, abs_limit=1e-15,
+           stagnation_window=0, stagnation_threshold=1e99,
            return_stages=False, return_residuals=False):
-    miniter = defaults.newton_miniter if miniter is None else miniter
-    maxiter = defaults.newton_maxiter if maxiter is None else maxiter
-    reduction = defaults.newton_reduction if reduction is None else reduction
-    abs_limit = defaults.newton_abs_limit if abs_limit is None else abs_limit
-    stagnation_window = defaults.newton_stagnation_window if stagnation_window is None else stagnation_window
-    stagnation_threshold = defaults.newton_stagnation_threshold if stagnation_threshold is None else stagnation_threshold
     logger = getLogger('pymor.algorithms.newton')
 
     data = {}
