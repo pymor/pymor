@@ -21,9 +21,23 @@ except ImportError:
     HAVE_PYAMG = False
 
 
+_dense_options = None
+_dense_options_sid = None
 _sparse_options = None
 _sparse_options_sid = None
-_dense_options = OrderedDict((('solve', {'type': 'solve'}),))
+
+
+@defaults('default_solver', 'least_squares_rcond')
+def dense_options(default_solver='solve',
+                  least_squares_rcond=-1.):
+    opts = (('solve',         {'type': 'solve'}),
+            ('least_squares', {'type': 'least_squares',
+                               'rcond': -1.}))
+    opts = OrderedDict(opts)
+    def_opt = opts.pop(default_solver)
+    ordered_opts = OrderedDict(((default_solver, def_opt),))
+    ordered_opts.update(opts)
+    return ordered_opts
 
 
 @defaults('default_solver', 'bicgstab_tol', 'bicgstab_maxiter', 'spilu_drop_tol',
@@ -227,7 +241,7 @@ def invert_options(matrix=None, sparse=None):
     -------
     A tuple of all possible |invert_options|.
     """
-    global _sparse_options, _sparse_options_sid
+    global _dense_options, _dense_options_sid, _sparse_options, _sparse_options_sid
     assert (matrix is None) != (sparse is None)
     sparse = sparse if sparse is not None else issparse(matrix)
     if sparse:
@@ -238,7 +252,12 @@ def invert_options(matrix=None, sparse=None):
         else:
             return _sparse_options
     else:
-        return _dense_options
+        if not _dense_options or _dense_options_sid != defaults_sid():
+            _dense_options = dense_options()
+            _dense_options_sid = defaults_sid()
+            return _dense_options
+        else:
+            return _dense_options
 
 
 def apply_inverse(matrix, U, options=None):
@@ -280,83 +299,87 @@ def apply_inverse(matrix, U, options=None):
 
     R = np.empty((len(U), matrix.shape[1]))
 
-    if issparse(matrix):
-        if options['type'] == 'bicgstab':
-            for i, UU in enumerate(U):
-                R[i], info = bicgstab(matrix, UU, tol=options['tol'], maxiter=options['maxiter'])
-                if info != 0:
-                    if info > 0:
-                        raise InversionError('bicgstab failed to converge after {} iterations'.format(info))
-                    else:
-                        raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
-                                             format(info))
-        elif options['type'] == 'bicgstab-spilu':
-            ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
-                        drop_rule=options['spilu_drop_rule'], permc_spec=options['spilu_permc_spec'])
-            precond = LinearOperator(matrix.shape, ilu.solve)
-            for i, UU in enumerate(U):
-                R[i], info = bicgstab(matrix, UU, tol=options['tol'], maxiter=options['maxiter'], M=precond)
-                if info != 0:
-                    if info > 0:
-                        raise InversionError('bicgstab failed to converge after {} iterations'.format(info))
-                    else:
-                        raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
-                                             format(info))
-        elif options['type'] == 'spsolve':
-            for i, UU in enumerate(U):
-                R[i] = spsolve(matrix, UU, permc_spec=options['permc_spec'])
-        elif options['type'] == 'pyamg':
-            if len(U) > 0:
-                U_iter = iter(enumerate(U))
-                R[0], ml = pyamg.solve(matrix, next(U_iter)[1],
-                                       tol=options['tol'],
-                                       maxiter=options['maxiter'],
-                                       return_solver=True)
-                for i, UU in U_iter:
-                    R[i] = pyamg.solve(matrix, UU,
-                                       tol=options['tol'],
-                                       maxiter=options['maxiter'],
-                                       existing_solver=ml)
-        elif options['type'] == 'pyamg-rs':
-            ml = pyamg.ruge_stuben_solver(matrix,
-                                          strength=options['strength'],
-                                          CF=options['CF'],
-                                          presmoother=options['presmoother'],
-                                          postsmoother=options['postsmoother'],
-                                          max_levels=options['max_levels'],
-                                          max_coarse=options['max_coarse'],
-                                          coarse_solver=options['coarse_solver'])
-            for i, UU in enumerate(U):
-                R[i] = ml.solve(UU,
-                                tol=options['tol'],
-                                maxiter=options['maxiter'],
-                                cycle=options['cycle'],
-                                accel=options['accel'])
-        elif options['type'] == 'pyamg-sa':
-            ml = pyamg.smoothed_aggregation_solver(matrix,
-                                                   symmetry=options['symmetry'],
-                                                   strength=options['strength'],
-                                                   aggregate=options['aggregate'],
-                                                   smooth=options['smooth'],
-                                                   presmoother=options['presmoother'],
-                                                   postsmoother=options['postsmoother'],
-                                                   improve_candidates=options['improve_candidates'],
-                                                   max_levels=options['max_levels'],
-                                                   max_coarse=options['max_coarse'],
-                                                   diagonal_dominance=options['diagonal_dominance'])
-            for i, UU in enumerate(U):
-                R[i] = ml.solve(UU,
-                                tol=options['tol'],
-                                maxiter=options['maxiter'],
-                                cycle=options['cycle'],
-                                accel=options['accel'])
-        else:
-            raise ValueError('Unknown solver type')
-    else:
+    if options['type'] == 'solve':
         for i, UU in enumerate(U):
             try:
                 R[i] = np.linalg.solve(matrix, UU)
             except np.linalg.LinAlgError as e:
                 raise InversionError('{}: {}'.format(str(type(e)), str(e)))
-
+    elif options['type'] == 'least_squares':
+        for i, UU in enumerate(U):
+            try:
+                R[i], _, _, _ = np.linalg.lstsq(matrix, UU, rcond=options['rcond'])
+            except np.linalg.LinAlgError as e:
+                raise InversionError('{}: {}'.format(str(type(e)), str(e)))
+    elif options['type'] == 'bicgstab':
+        for i, UU in enumerate(U):
+            R[i], info = bicgstab(matrix, UU, tol=options['tol'], maxiter=options['maxiter'])
+            if info != 0:
+                if info > 0:
+                    raise InversionError('bicgstab failed to converge after {} iterations'.format(info))
+                else:
+                    raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
+                                         format(info))
+    elif options['type'] == 'bicgstab-spilu':
+        ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
+                    drop_rule=options['spilu_drop_rule'], permc_spec=options['spilu_permc_spec'])
+        precond = LinearOperator(matrix.shape, ilu.solve)
+        for i, UU in enumerate(U):
+            R[i], info = bicgstab(matrix, UU, tol=options['tol'], maxiter=options['maxiter'], M=precond)
+            if info != 0:
+                if info > 0:
+                    raise InversionError('bicgstab failed to converge after {} iterations'.format(info))
+                else:
+                    raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
+                                         format(info))
+    elif options['type'] == 'spsolve':
+        for i, UU in enumerate(U):
+            R[i] = spsolve(matrix, UU, permc_spec=options['permc_spec'])
+    elif options['type'] == 'pyamg':
+        if len(U) > 0:
+            U_iter = iter(enumerate(U))
+            R[0], ml = pyamg.solve(matrix, next(U_iter)[1],
+                                   tol=options['tol'],
+                                   maxiter=options['maxiter'],
+                                   return_solver=True)
+            for i, UU in U_iter:
+                R[i] = pyamg.solve(matrix, UU,
+                                   tol=options['tol'],
+                                   maxiter=options['maxiter'],
+                                   existing_solver=ml)
+    elif options['type'] == 'pyamg-rs':
+        ml = pyamg.ruge_stuben_solver(matrix,
+                                      strength=options['strength'],
+                                      CF=options['CF'],
+                                      presmoother=options['presmoother'],
+                                      postsmoother=options['postsmoother'],
+                                      max_levels=options['max_levels'],
+                                      max_coarse=options['max_coarse'],
+                                      coarse_solver=options['coarse_solver'])
+        for i, UU in enumerate(U):
+            R[i] = ml.solve(UU,
+                            tol=options['tol'],
+                            maxiter=options['maxiter'],
+                            cycle=options['cycle'],
+                            accel=options['accel'])
+    elif options['type'] == 'pyamg-sa':
+        ml = pyamg.smoothed_aggregation_solver(matrix,
+                                               symmetry=options['symmetry'],
+                                               strength=options['strength'],
+                                               aggregate=options['aggregate'],
+                                               smooth=options['smooth'],
+                                               presmoother=options['presmoother'],
+                                               postsmoother=options['postsmoother'],
+                                               improve_candidates=options['improve_candidates'],
+                                               max_levels=options['max_levels'],
+                                               max_coarse=options['max_coarse'],
+                                               diagonal_dominance=options['diagonal_dominance'])
+        for i, UU in enumerate(U):
+            R[i] = ml.solve(UU,
+                            tol=options['tol'],
+                            maxiter=options['maxiter'],
+                            cycle=options['cycle'],
+                            accel=options['accel'])
+    else:
+        raise ValueError('Unknown solver type')
     return R
