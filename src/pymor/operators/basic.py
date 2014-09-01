@@ -228,6 +228,9 @@ class NumpyMatrixBasedOperator(OperatorBase):
     def apply(self, U, ind=None, mu=None):
         return self.assemble(mu).apply(U, ind=ind)
 
+    def apply_transposed(self, U, ind=None, mu=None):
+        return self.assemble(mu).apply_transposed(U, ind=ind)
+
     def as_vector(self, mu=None):
         return self.assemble(mu).as_vector()
 
@@ -303,6 +306,11 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         assert isinstance(U, NumpyVectorArray)
         U_array = U._array[:U._len] if ind is None else U._array[ind]
         return NumpyVectorArray(self._matrix.dot(U_array.T).T, copy=False)
+
+    def apply_transposed(self, U, ind=None, mu=None):
+        assert isinstance(U, NumpyVectorArray)
+        U_array = U._array[:U._len] if ind is None else U._array[ind]
+        return NumpyVectorArray(self._matrix.T.dot(U_array.T).T, copy=False)
 
     def apply_inverse(self, U, ind=None, mu=None, options=None):
         assert U in self.range
