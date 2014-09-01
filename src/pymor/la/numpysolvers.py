@@ -13,6 +13,8 @@ from scipy.sparse.linalg import bicgstab, spsolve, spilu, LinearOperator
 
 from pymor.core.defaults import defaults, defaults_sid
 from pymor.core.exceptions import InversionError
+from pymor.core.logger import getLogger
+from pymor.la import genericsolvers
 
 try:
     import pyamg
@@ -216,6 +218,7 @@ def sparse_options(default_solver='spsolve',
                                'tol': pyamg_sa_tol,
                                'maxiter': pyamg_sa_maxiter}))
     opts = OrderedDict(opts)
+    opts.update(genericsolvers.invert_options())
     def_opt = opts.pop(default_solver)
     ordered_opts = OrderedDict(((default_solver, def_opt),))
     ordered_opts.update(opts)
@@ -380,6 +383,14 @@ def apply_inverse(matrix, U, options=None):
                             maxiter=options['maxiter'],
                             cycle=options['cycle'],
                             accel=options['accel'])
+    elif options['type'].startswith('generic') or options['type'].startswith('least_squares_generic'):
+        logger = getLogger('pymor.la.numpysolvers.apply_inverse')
+        logger.warn('You have selected a (potentially slow) generic solver for a NumPy matrix operator!')
+        from pymor.operators.basic import NumpyMatrixOperator
+        from pymor.la import NumpyVectorArray
+        return genericsolvers.apply_inverse(NumpyMatrixOperator(matrix),
+                                            NumpyVectorArray(U, copy=False),
+                                            options=options).data
     else:
         raise ValueError('Unknown solver type')
     return R

@@ -30,6 +30,7 @@ from scipy.io import mmwrite, savemat
 from pymor.core import abstractmethod
 from pymor.core.defaults import defaults_sid
 from pymor.core.exceptions import InversionError
+from pymor.la import genericsolvers
 from pymor.la.interfaces import VectorArrayInterface
 from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
 from pymor.la import numpysolvers
@@ -103,11 +104,18 @@ class OperatorBase(OperatorInterface):
             self.name, self.source.dim, self.range.dim, self.parameter_type,
             self.__class__.__name__)
 
+    @property
+    def invert_options(self):
+        if self.linear:
+            return genericsolvers.invert_options()
+        else:
+            return None
+
     def apply_inverse(self, U, ind=None, mu=None, options=None):
         if self.parametric:
             return self.assemble(mu).apply_inverse(U, ind=ind, options=options)
         else:
-            raise InversionError('No inversion algorithm available.')
+            return genericsolvers.apply_inverse(self, U.copy(ind), options=options)
 
     def as_vector(self, mu=None):
         if not self.linear:
