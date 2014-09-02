@@ -12,7 +12,7 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-TRAVIS = os.getenv('TRAVIS') == True
+TRAVIS = os.getenv('TRAVIS') == 'true'
 
 if not TRAVIS:
 
