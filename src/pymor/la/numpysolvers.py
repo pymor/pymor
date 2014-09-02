@@ -29,20 +29,47 @@ _sparse_options = None
 _sparse_options_sid = None
 
 
-@defaults('default_solver', 'least_squares_rcond')
+@defaults('default_solver', 'default_least_squares_solver', 'least_squares_lstsq_rcond')
 def dense_options(default_solver='solve',
-                  least_squares_rcond=-1.):
-    opts = (('solve',         {'type': 'solve'}),
-            ('least_squares', {'type': 'least_squares',
-                               'rcond': -1.}))
+                  default_least_squares_solver='least_squares_lstsq',
+                  least_squares_lstsq_rcond=-1.):
+    """Returns |invert_options| (with default values) for dense |NumPy| matricies.
+
+    Parameters
+    ----------
+    default_solver
+        Default sparse solver to use (solve, least_squares_lstsq, generic_lgmres,
+        least_squares_generic_lsmr, least_squares_generic_lsqr).
+    default_least_squares_solver
+        Default solver to use for least squares problems (least_squares_lstsq,
+        least_squares_generic_lsmr, least_squares_generic_lsqr).
+    least_squares_lstsq_rcond
+        See :func:`numpy.linalg.lstsq`.
+
+    Returns
+    -------
+    A tuple of all possible |invert_options|.
+    """
+
+    assert default_least_squares_solver.startswith('least_squares')
+
+    opts = (('solve',               {'type': 'solve'}),
+            ('least_squares_lstsq', {'type': 'least_squares_lstsq',
+                                     'rcond': least_squares_lstsq_rcond}))
     opts = OrderedDict(opts)
+    opts.update(genericsolvers.invert_options())
     def_opt = opts.pop(default_solver)
-    ordered_opts = OrderedDict(((default_solver, def_opt),))
+    if default_least_squares_solver != default_solver:
+        def_ls_opt = opts.pop(default_least_squares_solver)
+        ordered_opts = OrderedDict(((default_solver, def_opt),
+                                    (default_least_squares_solver, def_ls_opt)))
+    else:
+        ordered_opts = OrderedDict(((default_solver, def_opt),))
     ordered_opts.update(opts)
     return ordered_opts
 
 
-@defaults('default_solver', 'bicgstab_tol', 'bicgstab_maxiter', 'spilu_drop_tol',
+@defaults('default_solver', 'default_least_squares_solver', 'bicgstab_tol', 'bicgstab_maxiter', 'spilu_drop_tol',
           'spilu_fill_factor', 'spilu_drop_rule', 'spilu_permc_spec', 'spsolve_permc_spec',
           'pyamg_tol', 'pyamg_maxiter', 'pyamg_verb', 'pyamg_rs_strength', 'pyamg_rs_CF',
           'pyamg_rs_postsmoother', 'pyamg_rs_max_levels', 'pyamg_rs_max_coarse', 'pyamg_rs_coarse_solver',
@@ -52,6 +79,7 @@ def dense_options(default_solver='solve',
           'pyamg_sa_max_coarse', 'pyamg_sa_diagonal_dominance', 'pyamg_sa_coarse_solver', 'pyamg_sa_cycle',
           'pyamg_sa_accel', 'pyamg_sa_tol', 'pyamg_sa_maxiter')
 def sparse_options(default_solver='spsolve',
+                   default_least_squares_solver='least_squares_generic_lsmr',
                    bicgstab_tol=1e-15,
                    bicgstab_maxiter=None,
                    spilu_drop_tol=1e-4,
@@ -94,7 +122,11 @@ def sparse_options(default_solver='spsolve',
     ----------
     default_solver
         Default sparse solver to use (spsolve, bicgstab, bicgstab-spilu, pyamg,
-        pyamg_rs, pyamg_sa).
+        pyamg_rs, pyamg_sa, generic_lgmres, least_squares_generic_lsmr,
+        least_squares_generic_lsqr).
+    default_least_squares_solver
+        Default solver to use for least squares problems (least_squares_generic_lsmr,
+        least_squares_generic_lsqr).
     bicgstab_tol
         See :func:`scipy.sparse.linalg.bicgstab`.
     bicgstab_maxiter
@@ -173,6 +205,8 @@ def sparse_options(default_solver='spsolve',
     A tuple of all possible |invert_options|.
     """
 
+    assert default_least_squares_solver.startswith('least_squares')
+
     opts = (('bicgstab-spilu', {'type': 'bicgstab-spilu',
                                 'tol': bicgstab_tol,
                                 'maxiter': bicgstab_maxiter,
@@ -220,7 +254,12 @@ def sparse_options(default_solver='spsolve',
     opts = OrderedDict(opts)
     opts.update(genericsolvers.invert_options())
     def_opt = opts.pop(default_solver)
-    ordered_opts = OrderedDict(((default_solver, def_opt),))
+    if default_least_squares_solver != default_solver:
+        def_ls_opt = opts.pop(default_least_squares_solver)
+        ordered_opts = OrderedDict(((default_solver, def_opt),
+                                    (default_least_squares_solver, def_ls_opt)))
+    else:
+        ordered_opts = OrderedDict(((default_solver, def_opt),))
     ordered_opts.update(opts)
     return ordered_opts
 
@@ -292,7 +331,14 @@ def apply_inverse(matrix, U, options=None):
     if options is None:
         options = default_options.values()[0]
     elif isinstance(options, str):
-        options = default_options[options]
+        if options == 'least_squares':
+            for k, v in default_options.iteritems():
+                if k.startswith('least_squares'):
+                    options = v
+                    break
+            assert not isinstance(options, str)
+        else:
+            options = default_options[options]
     else:
         assert 'type' in options and options['type'] in default_options \
             and options.viewkeys() <= default_options[options['type']].viewkeys()
@@ -308,7 +354,7 @@ def apply_inverse(matrix, U, options=None):
                 R[i] = np.linalg.solve(matrix, UU)
             except np.linalg.LinAlgError as e:
                 raise InversionError('{}: {}'.format(str(type(e)), str(e)))
-    elif options['type'] == 'least_squares':
+    elif options['type'] == 'least_squares_lstsq':
         for i, UU in enumerate(U):
             try:
                 R[i], _, _, _ = np.linalg.lstsq(matrix, UU, rcond=options['rcond'])

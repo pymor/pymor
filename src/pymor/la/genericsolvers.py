@@ -20,13 +20,14 @@ _options = None
 _options_sid = None
 
 
-@defaults('default_solver', 'generic_lgmres_tol', 'generic_lgmres_maxiter',
+@defaults('default_solver', 'default_least_squares_solver', 'generic_lgmres_tol', 'generic_lgmres_maxiter',
           'generic_lgmres_inner_m', 'generic_lgmres_outer_k', 'least_squares_generic_lsmr_damp',
           'least_squares_generic_lsmr_atol', 'least_squares_generic_lsmr_btol', 'least_squares_generic_lsmr_conlim',
           'least_squares_generic_lsmr_maxiter', 'least_squares_generic_lsmr_show',
           'least_squares_generic_lsqr_atol', 'least_squares_generic_lsqr_btol', 'least_squares_generic_lsqr_conlim',
           'least_squares_generic_lsqr_iter_lim', 'least_squares_generic_lsqr_show')
 def invert_options(default_solver='generic_lgmres',
+                   default_least_squares_solver='least_squares_generic_lsmr',
                    generic_lgmres_tol=1e-5,
                    generic_lgmres_maxiter=1000,
                    generic_lgmres_inner_m=39,
@@ -49,6 +50,9 @@ def invert_options(default_solver='generic_lgmres',
     ----------
     default_solver
         Default solver to use (generic_lgmres, least_squares_generic_lsmr, least_squares_generic_lsqr).
+    default_least_squares_solver
+        Default solver to use for least squares problems (least_squares_generic_lsmr,
+        least_squares_generic_lsqr).
     generic_lgmres_tol
         See :func:`scipy.sparse.linalg.lgmres`.
     generic_lgmres_maxiter
@@ -87,6 +91,8 @@ def invert_options(default_solver='generic_lgmres',
     A tuple of all possible |invert_options|.
     """
 
+    assert default_least_squares_solver.startswith('least_squares')
+
     global _options, _options_sid
     if _options and _options_sid == defaults_sid():
         return _options
@@ -111,7 +117,12 @@ def invert_options(default_solver='generic_lgmres',
                                             'show': least_squares_generic_lsqr_show}))
     opts = OrderedDict(opts)
     def_opt = opts.pop(default_solver)
-    _options = OrderedDict(((default_solver, def_opt),))
+    if default_least_squares_solver != default_solver:
+        def_ls_opt = opts.pop(default_least_squares_solver)
+        _options = OrderedDict(((default_solver, def_opt),
+                                (default_least_squares_solver, def_ls_opt)))
+    else:
+        _options = OrderedDict(((default_solver, def_opt),))
     _options.update(opts)
     _options_sid = defaults_sid()
     return _options
@@ -141,7 +152,14 @@ def apply_inverse(op, rhs, options=None):
     if options is None:
         options = default_options.values()[0]
     elif isinstance(options, str):
-        options = default_options[options]
+        if options == 'least_squares':
+            for k, v in default_options.iteritems():
+                if k.startswith('least_squares'):
+                    options = v
+                    break
+            assert not isinstance(options, str)
+        else:
+            options = default_options[options]
     else:
         assert 'type' in options and options['type'] in default_options \
             and options.viewkeys() <= default_options[options['type']].viewkeys()
