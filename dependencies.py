@@ -1,3 +1,7 @@
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+
 tests_require = ['pytest', 'pytest-cache', 'pytest-capturelog', 'pytest-cov']
 install_requires = ['Cython', 'numpy', 'scipy', 'Sphinx', 'docopt', 'dogpile.cache']
 pre_setup_requires = ['cython', 'numpy']
