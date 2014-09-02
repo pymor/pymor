@@ -20,10 +20,12 @@ _options = None
 _options_sid = None
 
 
-@defaults('default_solver', 'generic_lgmres_tol', 'generic_lgmres_maxiter', 'generic_lgmres_inner_m',
-          'generic_lgmres_outer_k', 'least_squares_generic_lsmr_damp', 'least_squares_generic_lsmr_atol',
-          'least_squares_generic_lsmr_btol', 'least_squares_generic_lsmr_conlim', 'least_squares_generic_lsmr_maxiter',
-          'least_squares_generic_lsmr_show')
+@defaults('default_solver', 'generic_lgmres_tol', 'generic_lgmres_maxiter',
+          'generic_lgmres_inner_m', 'generic_lgmres_outer_k', 'least_squares_generic_lsmr_damp',
+          'least_squares_generic_lsmr_atol', 'least_squares_generic_lsmr_btol', 'least_squares_generic_lsmr_conlim',
+          'least_squares_generic_lsmr_maxiter', 'least_squares_generic_lsmr_show',
+          'least_squares_generic_lsqr_atol', 'least_squares_generic_lsqr_btol', 'least_squares_generic_lsqr_conlim',
+          'least_squares_generic_lsqr_iter_lim', 'least_squares_generic_lsqr_show')
 def invert_options(default_solver='generic_lgmres',
                    generic_lgmres_tol=1e-5,
                    generic_lgmres_maxiter=1000,
@@ -36,17 +38,17 @@ def invert_options(default_solver='generic_lgmres',
                    least_squares_generic_lsmr_maxiter=None,
                    least_squares_generic_lsmr_show=False,
                    least_squares_generic_lsqr_damp=0.0,
-                   least_squares_generic_lsqr_atol=1e-10, #1e-6,
-                   least_squares_generic_lsqr_btol=1e-10, #1e-6,
+                   least_squares_generic_lsqr_atol=1e-6,
+                   least_squares_generic_lsqr_btol=1e-6,
                    least_squares_generic_lsqr_conlim=1e8,
-                   least_squares_generic_lsqr_iter_lim=100000, #None,
-                   least_squares_generic_lsqr_show=True): #, False):
+                   least_squares_generic_lsqr_iter_lim=None,
+                   least_squares_generic_lsqr_show=False):
     """Returns |invert_options| (with default values) for arbitrary linear |Operators|.
 
     Parameters
     ----------
     default_solver
-        Default solver to use (generic_lgmres).
+        Default solver to use (generic_lgmres, least_squares_generic_lsmr, least_squares_generic_lsqr).
     generic_lgmres_tol
         See :func:`scipy.sparse.linalg.lgmres`.
     generic_lgmres_maxiter
