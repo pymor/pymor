@@ -311,7 +311,7 @@ def _import_all(package_name = 'pymor'):
         __import__(p[1])
 
 
-def print_defaults(import_all=True, shorten_paths=3):
+def print_defaults(import_all=True, shorten_paths=2):
     """Print all default values set in pyMOR.
 
     Parameters
