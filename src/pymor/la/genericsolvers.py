@@ -192,6 +192,7 @@ def apply_inverse(op, rhs, options=None):
             assert 0 <= info <= 7
             if info == 7:
                 raise InversionError('lsmr failed to converge after {} iterations'.format(itn))
+            getLogger('pymor.la.genericsolvers.lsmr').info('Converged after {} iterations'.format(itn))
             R.append(r)
     elif options['type'] == 'least_squares_generic_lsqr':
         for i in xrange(len(rhs)):
@@ -205,6 +206,7 @@ def apply_inverse(op, rhs, options=None):
             assert 0 <= info <= 7
             if info == 7:
                 raise InversionError('lsmr failed to converge after {} iterations'.format(itn))
+            getLogger('pymor.la.genericsolvers.lsqr').info('Converged after {} iterations'.format(itn))
             R.append(r)
     else:
         raise ValueError('Unknown solver type')
