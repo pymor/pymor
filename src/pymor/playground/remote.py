@@ -426,6 +426,9 @@ if not TRAVIS:
 
     # noinspection PyShadowingNames,PyShadowingNames
     class RemoteStationaryDiscretization(StationaryDiscretization):
+
+        sid_ignore = ('cache_region', 'name')
+
         def __init__(self, remote_view, remote_id):
 
             self.rv = remote_view
