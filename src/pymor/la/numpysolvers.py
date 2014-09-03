@@ -38,7 +38,7 @@ def dense_options(default_solver='solve',
     Parameters
     ----------
     default_solver
-        Default sparse solver to use (solve, least_squares_lstsq, generic_lgmres,
+        Default dense solver to use (solve, least_squares_lstsq, generic_lgmres,
         least_squares_generic_lsmr, least_squares_generic_lsqr).
     default_least_squares_solver
         Default solver to use for least squares problems (least_squares_lstsq,
