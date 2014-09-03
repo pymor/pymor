@@ -177,7 +177,7 @@ def apply_inverse(op, rhs, options=None):
                              inner_m=options['inner_m'],
                              outer_k=options['outer_k'])
             if info > 0:
-                raise InversionError('gmres failed to converge after {} iterations'.format(info))
+                raise InversionError('lgmres failed to converge after {} iterations'.format(info))
             assert info == 0
             R.append(r)
     elif options['type'] == 'least_squares_generic_lsmr':
