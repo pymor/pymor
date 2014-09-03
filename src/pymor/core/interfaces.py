@@ -517,7 +517,10 @@ class ImmutableMeta(UberMeta):
                 if a not in init_arguments and a not in ImmutableMeta.init_arguments_never_warn:
                     raise ValueError(a)
         except ValueError as e:
-            c._logger.warn('sid_ignore contains "{}" which is not an __init__ argument!'.format(e))
+            # The _logger attribute of our new class has not been initialized yet, so create
+            # our own logger.
+            l = logger.getLogger('{}.{}'.format(c.__module__.replace('__main__', 'pymor'), classname))
+            l.warn('sid_ignore contains "{}" which is not an __init__ argument!'.format(e))
         return c
 
     def _call(self, *args, **kwargs):
