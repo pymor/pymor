@@ -9,7 +9,7 @@ from collections import OrderedDict
 
 import numpy as np
 from scipy.sparse import issparse
-from scipy.sparse.linalg import bicgstab, spsolve, spilu, LinearOperator
+from scipy.sparse.linalg import bicgstab, spsolve, spilu, lgmres, lsmr, lsqr, LinearOperator
 
 from pymor.core.defaults import defaults, defaults_sid
 from pymor.core.exceptions import InversionError
@@ -71,7 +71,11 @@ def dense_options(default_solver='solve',
 
 @defaults('default_solver', 'default_least_squares_solver', 'bicgstab_tol', 'bicgstab_maxiter', 'spilu_drop_tol',
           'spilu_fill_factor', 'spilu_drop_rule', 'spilu_permc_spec', 'spsolve_permc_spec',
-          'pyamg_tol', 'pyamg_maxiter', 'pyamg_verb', 'pyamg_rs_strength', 'pyamg_rs_CF',
+          'lgmres_tol', 'lgmres_maxiter', 'lgmres_inner_m', 'lgmres_outer_k', 'least_squares_lsmr_damp',
+          'least_squares_lsmr_atol', 'least_squares_lsmr_btol', 'least_squares_lsmr_conlim',
+          'least_squares_lsmr_maxiter', 'least_squares_lsmr_show', 'least_squares_lsqr_atol',
+          'least_squares_lsqr_btol', 'least_squares_lsqr_conlim', 'least_squares_lsqr_iter_lim',
+          'least_squares_lsqr_show', 'pyamg_tol', 'pyamg_maxiter', 'pyamg_verb', 'pyamg_rs_strength', 'pyamg_rs_CF',
           'pyamg_rs_postsmoother', 'pyamg_rs_max_levels', 'pyamg_rs_max_coarse', 'pyamg_rs_coarse_solver',
           'pyamg_rs_cycle', 'pyamg_rs_accel', 'pyamg_rs_tol', 'pyamg_rs_maxiter',
           'pyamg_sa_symmetry', 'pyamg_sa_strength', 'pyamg_sa_aggregate', 'pyamg_sa_smooth',
@@ -87,6 +91,22 @@ def sparse_options(default_solver='spsolve',
                    spilu_drop_rule='basic,area',
                    spilu_permc_spec='COLAMD',
                    spsolve_permc_spec='COLAMD',
+                   lgmres_tol=1e-5,
+                   lgmres_maxiter=1000,
+                   lgmres_inner_m=39,
+                   lgmres_outer_k=3,
+                   least_squares_lsmr_damp=0.0,
+                   least_squares_lsmr_atol=1e-6,
+                   least_squares_lsmr_btol=1e-6,
+                   least_squares_lsmr_conlim=1e8,
+                   least_squares_lsmr_maxiter=None,
+                   least_squares_lsmr_show=False,
+                   least_squares_lsqr_damp=0.0,
+                   least_squares_lsqr_atol=1e-6,
+                   least_squares_lsqr_btol=1e-6,
+                   least_squares_lsqr_conlim=1e8,
+                   least_squares_lsqr_iter_lim=None,
+                   least_squares_lsqr_show=False,
                    pyamg_tol=1e-5,
                    pyamg_maxiter=400,
                    pyamg_verb=False,
@@ -141,6 +161,38 @@ def sparse_options(default_solver='spsolve',
         See :func:`scipy.sparse.linalg.spilu`.
     spsolve_permc_spec
         See :func:`scipy.sparse.linalg.spsolve`.
+    lgmres_tol
+        See :func:`scipy.sparse.linalg.lgmres`.
+    lgmres_maxiter
+        See :func:`scipy.sparse.linalg.lgmres`.
+    lgmres_inner_m
+        See :func:`scipy.sparse.linalg.lgmres`.
+    lgmres_outer_k
+        See :func:`scipy.sparse.linalg.lgmres`.
+    least_squares_lsmr_damp
+        See :func:`scipy.sparse.linalg.lsmr`.
+    least_squares_lsmr_atol
+        See :func:`scipy.sparse.linalg.lsmr`.
+    least_squares_lsmr_btol
+        See :func:`scipy.sparse.linalg.lsmr`.
+    least_squares_lsmr_conlim
+        See :func:`scipy.sparse.linalg.lsmr`.
+    least_squares_lsmr_maxiter
+        See :func:`scipy.sparse.linalg.lsmr`.
+    least_squares_lsmr_show
+        See :func:`scipy.sparse.linalg.lsmr`.
+    least_squares_lsqr_damp
+        See :func:`scipy.sparse.linalg.lsqr`.
+    least_squares_lsqr_atol
+        See :func:`scipy.sparse.linalg.lsqr`.
+    least_squares_lsqr_btol
+        See :func:`scipy.sparse.linalg.lsqr`.
+    least_squares_lsqr_conlim
+        See :func:`scipy.sparse.linalg.lsqr`.
+    least_squares_lsqr_iter_lim
+        See :func:`scipy.sparse.linalg.lsqr`.
+    least_squares_lsqr_show
+        See :func:`scipy.sparse.linalg.lsqr`.
     pyamg_tol
         Tolerance for `PyAMG <http://pyamg.github.io/>`_ blackbox solver.
     pyamg_maxiter
@@ -207,18 +259,38 @@ def sparse_options(default_solver='spsolve',
 
     assert default_least_squares_solver.startswith('least_squares')
 
-    opts = (('bicgstab-spilu', {'type': 'bicgstab-spilu',
-                                'tol': bicgstab_tol,
-                                'maxiter': bicgstab_maxiter,
-                                'spilu_drop_tol': spilu_drop_tol,
-                                'spilu_fill_factor': spilu_fill_factor,
-                                'spilu_drop_rule': spilu_drop_rule,
-                                'spilu_permc_spec': spilu_permc_spec}),
-            ('bicgstab',       {'type': 'bicgstab',
-                                'tol': bicgstab_tol,
-                                'maxiter': bicgstab_maxiter}),
-            ('spsolve',        {'type': 'spsolve',
-                                'permc_spec': spsolve_permc_spec}))
+    opts = (('bicgstab-spilu',     {'type': 'bicgstab-spilu',
+                                    'tol': bicgstab_tol,
+                                    'maxiter': bicgstab_maxiter,
+                                    'spilu_drop_tol': spilu_drop_tol,
+                                    'spilu_fill_factor': spilu_fill_factor,
+                                    'spilu_drop_rule': spilu_drop_rule,
+                                    'spilu_permc_spec': spilu_permc_spec}),
+            ('bicgstab',           {'type': 'bicgstab',
+                                    'tol': bicgstab_tol,
+                                    'maxiter': bicgstab_maxiter}),
+            ('spsolve',            {'type': 'spsolve',
+                                    'permc_spec': spsolve_permc_spec}),
+            ('lgmres',             {'type': 'lgmres',
+                                    'tol': lgmres_tol,
+                                    'maxiter': lgmres_maxiter,
+                                    'inner_m': lgmres_inner_m,
+                                    'outer_k': lgmres_outer_k}),
+            ('least_squares_lsmr', {'type': 'least_squares_lsmr',
+                                    'damp': least_squares_lsmr_damp,
+                                    'atol': least_squares_lsmr_atol,
+                                    'btol': least_squares_lsmr_btol,
+                                    'conlim': least_squares_lsmr_conlim,
+                                    'maxiter': least_squares_lsmr_maxiter,
+                                    'show': least_squares_lsmr_show}),
+            ('least_squares_lsqr', {'type': 'least_squares_lsqr',
+                                    'damp': least_squares_lsqr_damp,
+                                    'atol': least_squares_lsqr_atol,
+                                    'btol': least_squares_lsqr_btol,
+                                    'conlim': least_squares_lsqr_conlim,
+                                    'iter_lim': least_squares_lsqr_iter_lim,
+                                    'show': least_squares_lsqr_show}))
+
     if HAVE_PYAMG:
         opts += (('pyamg',    {'type': 'pyamg',
                                'tol': pyamg_tol,
@@ -384,6 +456,40 @@ def apply_inverse(matrix, U, options=None):
     elif options['type'] == 'spsolve':
         for i, UU in enumerate(U):
             R[i] = spsolve(matrix, UU, permc_spec=options['permc_spec'])
+    elif options['type'] == 'lgmres':
+        for i, UU in enumerate(U):
+            R[i], info = lgmres(matrix, UU.copy(i),
+                                tol=options['tol'],
+                                maxiter=options['maxiter'],
+                                inner_m=options['inner_m'],
+                                outer_k=options['outer_k'])
+            if info > 0:
+                raise InversionError('lgmres failed to converge after {} iterations'.format(info))
+            assert info == 0
+    elif options['type'] == 'least_squares_lsmr':
+        for i, UU in enumerate(U):
+            R[i], info, itn, _, _, _, _, _ = lsmr(matrix, UU.copy(i),
+                                                  damp=options['damp'],
+                                                  atol=options['atol'],
+                                                  btol=options['btol'],
+                                                  conlim=options['conlim'],
+                                                  maxiter=options['maxiter'],
+                                                  show=options['show'])
+            assert 0 <= info <= 7
+            if info == 7:
+                raise InversionError('lsmr failed to converge after {} iterations'.format(itn))
+    elif options['type'] == 'least_squares_lsqr':
+        for i, UU in enumerate(U):
+            R[i], info, itn, _, _, _, _, _, _, _ = lsqr(matrix, UU.copy(i),
+                                                        damp=options['damp'],
+                                                        atol=options['atol'],
+                                                        btol=options['btol'],
+                                                        conlim=options['conlim'],
+                                                        iter_lim=options['iter_lim'],
+                                                        show=options['show'])
+            assert 0 <= info <= 7
+            if info == 7:
+                raise InversionError('lsmr failed to converge after {} iterations'.format(itn))
     elif options['type'] == 'pyamg':
         if len(U) > 0:
             U_iter = iter(enumerate(U))
