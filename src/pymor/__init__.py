@@ -15,7 +15,7 @@ class Version(object):
             revstring = revstring[:revstring.index('~')]
         revstringparts = revstring.strip().split('-')
         if len(revstringparts) not in (1, 3):
-            raise ValueError('Invalid revstring')
+            raise ValueError('Invalid revstring: ' + revstring)
         if len(revstringparts) == 3:
             self.distance = int(revstringparts[1])
             self.shorthash = revstringparts[2]
