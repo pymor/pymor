@@ -141,7 +141,7 @@ def sparse_options(default_solver='spsolve',
     Parameters
     ----------
     default_solver
-        Default sparse solver to use (spsolve, bicgstab, bicgstab-spilu, pyamg,
+        Default sparse solver to use (spsolve, bicgstab, bicgstab_spilu, pyamg,
         pyamg_rs, pyamg_sa, generic_lgmres, least_squares_generic_lsmr,
         least_squares_generic_lsqr).
     default_least_squares_solver
@@ -259,7 +259,7 @@ def sparse_options(default_solver='spsolve',
 
     assert default_least_squares_solver.startswith('least_squares')
 
-    opts = (('bicgstab-spilu',     {'type': 'bicgstab-spilu',
+    opts = (('bicgstab_spilu',     {'type': 'bicgstab_spilu',
                                     'tol': bicgstab_tol,
                                     'maxiter': bicgstab_maxiter,
                                     'spilu_drop_tol': spilu_drop_tol,
@@ -441,7 +441,7 @@ def apply_inverse(matrix, U, options=None):
                 else:
                     raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
                                          format(info))
-    elif options['type'] == 'bicgstab-spilu':
+    elif options['type'] == 'bicgstab_spilu':
         ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
                     drop_rule=options['spilu_drop_rule'], permc_spec=options['spilu_permc_spec'])
         precond = LinearOperator(matrix.shape, ilu.solve)
