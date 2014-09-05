@@ -98,6 +98,12 @@ methods of classes!'''.format(path))
         for k, v in defaultsdict.iteritems():
             self._data[path + '.' + k]['code'] = v
 
+        result = {}
+        for k in self._data:
+            if k.startswith(path + '.'):
+                result[k.split('.')[-1]] = self.get(k)[0]
+        return result
+
     def _add_wrapper_function(self, func, qualname=None):
         path = qualname or getattr(func, '__qualname__', func.__module__ + '.' + func.__name__)
         self.registered_functions[path] = func
@@ -139,15 +145,8 @@ methods of classes!'''.format(path))
             raise ValueError('No default value matching the specified criteria')
 
     def __getitem__(self, key):
-        if isinstance(key, str):
-            self.get(key)[0]
-        else:
-            path = key.__module__ + '.' + key.__name__ + '.'
-            result = {}
-            for k in self._data:
-                if k.startswith(path):
-                    result[k.split('.')[-1]] = self.get(k)[0]
-            return result
+        assert isinstance(key, str)
+        self.get(key)[0]
 
     def keys(self):
         return self._data.keys()
@@ -258,8 +257,7 @@ Defaults
                 defaultsdict[n] = v
 
         global _default_container
-        _default_container._add_defaults_for_function(defaultsdict, func, qualname=qualname)
-        defaultsdict = _default_container[func]
+        defaultsdict = _default_container._add_defaults_for_function(defaultsdict, func, qualname=qualname)
 
         new_defaults = tuple(defaultsdict.get(n, v) for n, v in zip(argnames[-len(defaults):], defaults))
 
