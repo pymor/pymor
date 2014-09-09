@@ -69,7 +69,7 @@ import tempfile
 
 import numpy as np
 
-from pymor.core.defaults import defaults_sid
+from pymor.core.defaults import defaults, defaults_sid
 from pymor.core import dump, dumps, load, ImmutableInterface
 import pymor.core.dogpile_backends
 
@@ -207,8 +207,15 @@ class DogpileDiskCacheRegion(DogpileCacheRegion):
         self._new_region()
 
 
-cache_regions = {'memory': DogpileMemoryCacheRegion(),
-                 'disk': SQLiteRegion(os.path.join(tempfile.gettempdir(), 'pymor.cache.' + getpass.getuser()))}
+@defaults('path')
+def set_default_disk_region(path=os.path.join(tempfile.gettempdir(), 'pymor.cache.' + getpass.getuser())):
+    global cache_regions
+    cache_regions['disk'] = SQLiteRegion(path)
+
+cache_regions = {'memory': DogpileMemoryCacheRegion()}
+set_default_disk_region()
+
+
 _caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
 if _caching_disabled:
     from pymor.core import getLogger
