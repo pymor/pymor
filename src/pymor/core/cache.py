@@ -62,11 +62,15 @@ from __future__ import absolute_import, division, print_function
 from functools import partial
 import os
 from types import MethodType
+import base64
+import datetime
+import getpass
+import tempfile
 
 import numpy as np
 
 from pymor.core.defaults import defaults_sid
-from pymor.core import dumps, ImmutableInterface
+from pymor.core import dump, dumps, load, ImmutableInterface
 import pymor.core.dogpile_backends
 
 
@@ -90,6 +94,59 @@ class CacheRegion(object):
     def clear(self):
         """Clear the entire cache region."""
         raise NotImplementedError
+
+
+class SQLiteRegion(object):
+
+    enabled = True
+
+    def __init__(self, path):
+        import sqlite3
+        self.path = path
+        if not os.path.exists(path):
+            os.mkdir(path)
+            self.conn = conn = sqlite3.connect(os.path.join(path, 'pymor_cache.db'))
+            c = conn.cursor()
+            c.execute('''CREATE TABLE entries (key TEXT PRIMARY KEY, filename TEXT)''')
+            conn.commit()
+        else:
+            self.conn = sqlite3.connect(os.path.join(path, 'pymor_cache.db'))
+
+    def get(self, key):
+        conn = self.conn
+        c = self.conn.cursor()
+        t = (base64.b64encode(key),)
+        c.execute('SELECT filename FROM entries WHERE key=?', t)
+        result = c.fetchall()
+        if len(result) == 0:
+            return False, None
+        elif len(result) == 1:
+            file_path = os.path.join(self.path, result[0][0])
+            with open(file_path) as f:
+                value = load(f)
+            return True, value
+        else:
+            raise RuntimeError('Cache is corrupt!')
+
+    def set(self, key, value):
+        conn = self.conn
+        c = self.conn.cursor()
+        key = base64.b64encode(key)
+        now = datetime.datetime.now()
+        filename = now.isoformat() + '.dat'
+        file_path = os.path.join(self.path, filename)
+        while os.path.exists(file_path):
+            now = now + datetime.timedelta(microseconds=1)
+            filename = now().isoformat()
+            file_path = os.path.join(self.path, filename)
+        fd = os.open(file_path, os.O_WRONLY | os.O_EXCL | os.O_CREAT)
+        try:
+            f = os.fdopen(fd, 'w')
+            dump(value, f)
+        finally:
+            f.close()
+        c.execute("INSERT INTO entries VALUES ('{}', '{}')".format(key, filename))
+        conn.commit()
 
 
 class DogpileCacheRegion(CacheRegion):
@@ -151,7 +208,7 @@ class DogpileDiskCacheRegion(DogpileCacheRegion):
 
 
 cache_regions = {'memory': DogpileMemoryCacheRegion(),
-                 'disk': DogpileDiskCacheRegion()}
+                 'disk': SQLiteRegion(os.path.join(tempfile.gettempdir(), 'pymor.cache.' + getpass.getuser()))}
 _caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
 if _caching_disabled:
     from pymor.core import getLogger
