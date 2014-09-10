@@ -4,7 +4,10 @@
 
 from __future__ import absolute_import, division, print_function
 import time
+import os
+from uuid import uuid4
 from datetime import datetime
+from tempfile import gettempdir
 
 from pymor.core import cache
 from pymortests.base import TestInterface, runmodule
@@ -80,10 +83,11 @@ class TestCache(TestInterface):
     #     self.assertNotEqual(x_id, y_id)
 
     def test_region_api(self):
-        for backend_cls in [cache.DogpileMemoryCacheRegion, cache.DogpileDiskCacheRegion]:
-            backend = backend_cls()
-            if backend_cls is not cache.DogpileDiskCacheRegion:
-                assert not backend.get('mykey')[0]
+        tempdir = gettempdir()
+        backends = [cache.MemoryRegion(100), cache.SQLiteRegion(path=os.path.join(tempdir, str(uuid4())),
+                                                                max_size=1024 ** 2)]
+        for backend in backends:
+            assert not backend.get('mykey')[0]
             backend.set('mykey', 1)
             assert backend.get('mykey') == (True, 1)
 
