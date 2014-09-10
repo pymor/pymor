@@ -59,14 +59,16 @@ A cache region can be emptied using :meth:`CacheRegion.clear`. The function
 from __future__ import absolute_import, division, print_function
 #cannot use unicode_literals here, or else dbm backend fails
 
-from functools import partial
-import os
-from types import MethodType
 import base64
+from collections import OrderedDict
 import datetime
+from functools import partial
 import getpass
-import tempfile
+import importlib
+import os
 import sqlite3
+import tempfile
+from types import MethodType
 
 import numpy as np
 
@@ -95,6 +97,30 @@ class CacheRegion(object):
     def clear(self):
         """Clear the entire cache region."""
         raise NotImplementedError
+
+
+class MemoryRegion(CacheRegion):
+
+    NO_VALUE = {}
+
+    def __init__(self, max_keys):
+        self.max_keys = max_keys
+        self._cache = OrderedDict()
+
+    def get(self, key):
+        value = self._cache.get(key, self.NO_VALUE)
+        if value is self.NO_VALUE:
+            return False, None
+        else:
+            return True, value
+
+    def set(self, key, value):
+        if len(self._cache) == self.max_keys:
+            self._cache.popitem(last=False)
+        self._cache[key] = value
+
+    def clear(self):
+        self._cache = OrderedDict()
 
 
 class SQLiteRegion(CacheRegion):
@@ -272,14 +298,15 @@ class DogpileDiskCacheRegion(DogpileCacheRegion):
         self._new_region()
 
 
-@defaults('path', 'max_size')
-def set_default_disk_region(path=os.path.join(tempfile.gettempdir(), 'pymor.cache.' + getpass.getuser()),
-                            max_size=1024 ** 3):
-    global cache_regions
-    cache_regions['disk'] = SQLiteRegion(path, max_size)
+@defaults('disk_path', 'disk_max_size', 'memory_max_keys')
+def setup_default_regions(disk_path=os.path.join(tempfile.gettempdir(), 'pymor.cache.' + getpass.getuser()),
+                          disk_max_size=1024 ** 3,
+                          memory_max_keys=1000):
+    cache_regions['disk'] = SQLiteRegion(path=disk_path, max_size=disk_max_size)
+    cache_regions['memory'] = MemoryRegion(memory_max_keys)
 
-cache_regions = {'memory': DogpileMemoryCacheRegion()}
-set_default_disk_region()
+cache_regions = {}
+setup_default_regions()
 
 
 _caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
