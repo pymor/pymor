@@ -66,6 +66,7 @@ import base64
 import datetime
 import getpass
 import tempfile
+import sqlite3
 
 import numpy as np
 
@@ -101,7 +102,6 @@ class SQLiteRegion(object):
     enabled = True
 
     def __init__(self, path, max_size):
-        import sqlite3
         self.path = path
         self.max_size = max_size
         self.bytes_written = 0
@@ -149,15 +149,14 @@ class SQLiteRegion(object):
             f.close()
         conn = self.conn
         c = conn.cursor()
-        t = (key,)
-        c.execute('SELECT filename FROM entries WHERE key=?', t)
-        if c.fetchone():
+        try:
+            c.execute("INSERT INTO entries(key, filename, size) VALUES ('{}', '{}', {})".format(key, filename, file_size))
+            conn.commit()
+        except sqlite3.IntegrityError:
+            conn.commit()
             from pymor.core.logger import getLogger
             getLogger('pymor.core.cache.SQLiteRegion').warn('Key already present in cache region, ignoring.')
             os.unlink(file_path)
-            return
-        c.execute("INSERT INTO entries(key, filename, size) VALUES ('{}', '{}', {})".format(key, filename, file_size))
-        conn.commit()
         self.bytes_written += file_size
         if self.bytes_written >= 0.1 * self.max_size:
             self.housekeeping()
@@ -167,7 +166,8 @@ class SQLiteRegion(object):
         conn = self.conn
         c = conn.cursor()
         c.execute('SELECT SUM(size) FROM entries')
-        size = c.fetchone()[0]
+        size = c.fetchone()
+        size = size[0] if size is not None else 0
         if size > self.max_size:
             bytes_to_delete = size - self.max_size + 0.75 * self.max_size
             deleted = 0
