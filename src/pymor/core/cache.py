@@ -113,7 +113,6 @@ class SQLiteRegion(object):
             self.conn = sqlite3.connect(os.path.join(path, 'pymor_cache.db'))
 
     def get(self, key):
-        conn = self.conn
         c = self.conn.cursor()
         t = (base64.b64encode(key),)
         c.execute('SELECT filename FROM entries WHERE key=?', t)
@@ -129,8 +128,6 @@ class SQLiteRegion(object):
             raise RuntimeError('Cache is corrupt!')
 
     def set(self, key, value):
-        conn = self.conn
-        c = self.conn.cursor()
         key = base64.b64encode(key)
         now = datetime.datetime.now()
         filename = now.isoformat() + '.dat'
@@ -145,8 +142,17 @@ class SQLiteRegion(object):
             dump(value, f)
         finally:
             f.close()
-        c.execute("INSERT INTO entries VALUES ('{}', '{}')".format(key, filename))
-        conn.commit()
+        conn = self.conn
+        c = conn.cursor()
+        t = (key,)
+        c.execute('SELECT filename FROM entries WHERE key=?', t)
+        if c.fetchone():
+            from pymor.core.logger import getLogger
+            getLogger('core.cache.SQLiteRegion').warn('Key already present in cache region, ignoring.')
+            os.unlink(file_path)
+        else:
+            c.execute("INSERT INTO entries VALUES ('{}', '{}')".format(key, filename))
+            conn.commit()
 
 
 class DogpileCacheRegion(CacheRegion):
