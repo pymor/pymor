@@ -97,7 +97,7 @@ class CacheRegion(object):
         raise NotImplementedError
 
 
-class SQLiteRegion(object):
+class SQLiteRegion(CacheRegion):
 
     enabled = True
 
@@ -160,6 +160,27 @@ class SQLiteRegion(object):
         self.bytes_written += file_size
         if self.bytes_written >= 0.1 * self.max_size:
             self.housekeeping()
+
+    def clear(self):
+        # Try to safely delete all cache entries, even if another process
+        # accesses the same region.
+        self.bytes_written = 0
+        conn = self.conn
+        c = conn.cursor()
+        c.execute('SELECT id, filename FROM entries ORDER BY id ASC')
+        entries = c.fetchall()
+        if entries:
+            ids_to_delete, files_to_delete = zip(*entries)
+        c.execute('DELETE FROM entries WHERE id in ({})'.format(','.join(map(str, ids_to_delete))))
+        conn.commit()
+        path = self.path
+        for filename in files_to_delete:
+            try:
+                os.unlink(os.path.join(path, filename))
+            except OSError:
+                from pymor.core.logger import getLogger
+                getLogger('pymor.core.cache.SQLiteRegion').warn('Cannot delete cache entry ' + filename)
+
 
     def housekeeping(self):
         self.bytes_written = 0
