@@ -100,17 +100,21 @@ class SQLiteRegion(object):
 
     enabled = True
 
-    def __init__(self, path):
+    def __init__(self, path, max_size):
         import sqlite3
         self.path = path
+        self.max_size = max_size
+        self.bytes_written = 0
         if not os.path.exists(path):
             os.mkdir(path)
             self.conn = conn = sqlite3.connect(os.path.join(path, 'pymor_cache.db'))
             c = conn.cursor()
-            c.execute('''CREATE TABLE entries (key TEXT PRIMARY KEY, filename TEXT)''')
+            c.execute('''CREATE TABLE entries
+                         (id INTEGER PRIMARY KEY, key TEXT UNIQUE, filename TEXT, size INT)''')
             conn.commit()
         else:
             self.conn = sqlite3.connect(os.path.join(path, 'pymor_cache.db'))
+            self.housekeeping()
 
     def get(self, key):
         c = self.conn.cursor()
@@ -140,6 +144,7 @@ class SQLiteRegion(object):
         try:
             f = os.fdopen(fd, 'w')
             dump(value, f)
+            file_size = f.tell()
         finally:
             f.close()
         conn = self.conn
@@ -148,11 +153,44 @@ class SQLiteRegion(object):
         c.execute('SELECT filename FROM entries WHERE key=?', t)
         if c.fetchone():
             from pymor.core.logger import getLogger
-            getLogger('core.cache.SQLiteRegion').warn('Key already present in cache region, ignoring.')
+            getLogger('pymor.core.cache.SQLiteRegion').warn('Key already present in cache region, ignoring.')
             os.unlink(file_path)
-        else:
-            c.execute("INSERT INTO entries VALUES ('{}', '{}')".format(key, filename))
+            return
+        c.execute("INSERT INTO entries(key, filename, size) VALUES ('{}', '{}', {})".format(key, filename, file_size))
+        conn.commit()
+        self.bytes_written += file_size
+        if self.bytes_written >= 0.1 * self.max_size:
+            self.housekeeping()
+
+    def housekeeping(self):
+        self.bytes_written = 0
+        conn = self.conn
+        c = conn.cursor()
+        c.execute('SELECT SUM(size) FROM entries')
+        size = c.fetchone()[0]
+        if size > self.max_size:
+            bytes_to_delete = size - self.max_size + 0.75 * self.max_size
+            deleted = 0
+            ids_to_delete = []
+            files_to_delete = []
+            c.execute('SELECT id, filename, size FROM entries ORDER BY id ASC')
+            while deleted < bytes_to_delete:
+                id_, filename, file_size = c.fetchone()
+                ids_to_delete.append(id_)
+                files_to_delete.append(filename)
+                deleted += file_size
+            c.execute('DELETE FROM entries WHERE id in ({})'.format(','.join(map(str, ids_to_delete))))
             conn.commit()
+            path = self.path
+            for filename in files_to_delete:
+                try:
+                    os.unlink(os.path.join(path, filename))
+                except OSError:
+                    from pymor.core.logger import getLogger
+                    getLogger('pymor.core.cache.SQLiteRegion').warn('Cannot delete cache entry ' + filename)
+
+            from pymor.core.logger import getLogger
+            getLogger('pymor.core.cache.SQLiteRegion').info('Removed {} old cache entries'.format(len(ids_to_delete)))
 
 
 class DogpileCacheRegion(CacheRegion):
@@ -213,10 +251,11 @@ class DogpileDiskCacheRegion(DogpileCacheRegion):
         self._new_region()
 
 
-@defaults('path')
-def set_default_disk_region(path=os.path.join(tempfile.gettempdir(), 'pymor.cache.' + getpass.getuser())):
+@defaults('path', 'max_size')
+def set_default_disk_region(path=os.path.join(tempfile.gettempdir(), 'pymor.cache.' + getpass.getuser()),
+                            max_size=1024 ** 3):
     global cache_regions
-    cache_regions['disk'] = SQLiteRegion(path)
+    cache_regions['disk'] = SQLiteRegion(path, max_size)
 
 cache_regions = {'memory': DogpileMemoryCacheRegion()}
 set_default_disk_region()
