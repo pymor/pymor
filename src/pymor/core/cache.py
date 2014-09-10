@@ -31,13 +31,12 @@ responsibility not to break things.
 
 Backends for storage of cached return values derive from :class:`CacheRegion`.
 Currently two backends are provided for memory-based and disk-based caching
-(:class:`DogpileMemoryCacheRegion` and :class:`DogpileDiskCacheRegion`). The
-available regions are stored in the module level `cache_regions` dict. The
-user can add additional regions (e.g. multiple disk cache regions) as
-required. :class:`CacheableInterface` takes a `region` argument
-through which a key of the `cache_regions` dict can provided to select
-a cache region which should be used by the instance. (Setting `region` to
-`None` or `'none'` disables caching.)
+(:class:`MemoryRegion` and :class:`SQLiteRegion`). The available regions
+are stored in the module level `cache_regions` dict. The user can add
+additional regions (e.g. multiple disk cache regions) as required.
+:class:`CacheableInterface` takes a `region` argument through which a key of
+the `cache_regions` dict can provided to select a cache region which should
+be used by the instance. (Setting `region` to `None` or `'none'` disables caching.)
 
 There are multiple ways to disable and enable caching in pyMOR:
 
@@ -74,7 +73,6 @@ import numpy as np
 
 from pymor.core.defaults import defaults, defaults_sid
 from pymor.core import dump, dumps, load, ImmutableInterface
-import pymor.core.dogpile_backends
 
 
 class CacheRegion(object):
@@ -238,64 +236,6 @@ class SQLiteRegion(CacheRegion):
 
             from pymor.core.logger import getLogger
             getLogger('pymor.core.cache.SQLiteRegion').info('Removed {} old cache entries'.format(len(ids_to_delete)))
-
-
-class DogpileCacheRegion(CacheRegion):
-
-    def get(self, key):
-        value = self._cache_region.get(key)
-        if value is pymor.core.dogpile_backends.NO_VALUE:
-            return False, None
-        else:
-            return True, value
-
-    def set(self, key, value):
-        self._cache_region.set(key, value)
-
-
-class DogpileMemoryCacheRegion(DogpileCacheRegion):
-
-    def __init__(self):
-        self._new_region()
-
-    def _new_region(self):
-        from dogpile import cache as dc
-        self._cache_region = dc.make_region()
-        self._cache_region.configure_from_config(pymor.core.dogpile_backends.DEFAULT_MEMORY_CONFIG, '')
-
-    def clear(self):
-        self._new_region()
-
-    def set(self, key, value):
-        if isinstance(value, np.ndarray):
-            value.setflags(write=False)
-        self._cache_region.set(key, value)
-
-
-class DogpileDiskCacheRegion(DogpileCacheRegion):
-
-    def __init__(self, filename=None, max_size=1024 ** 3):
-        self.filename = filename
-        self.max_size = max_size
-        self._new_region()
-
-    def _new_region(self):
-        from dogpile import cache as dc
-        self._cache_region = dc.make_region()
-        config = dict(pymor.core.dogpile_backends.DEFAULT_DISK_CONFIG)
-        if self.filename:
-            config['arguments.filename'] = os.path.expanduser(self.filename)
-        if self.max_size:
-            config['arguments.max_size'] = self.max_size
-        self._cache_region.configure_from_config(config, '')
-
-    def clear(self):
-        import glob
-        filename = self._cache_region.backend.filename
-        del self._cache_region
-        files = glob.glob(filename + '*')
-        map(os.unlink, files)
-        self._new_region()
 
 
 @defaults('disk_path', 'disk_max_size', 'memory_max_keys')
