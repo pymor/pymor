@@ -307,6 +307,13 @@ class NumpyVectorArray(VectorArrayInterface):
         assert isinstance(component_indices, list) and (len(component_indices) == 0 or min(component_indices) >= 0) \
             or (isinstance(component_indices, np.ndarray) and component_indices.ndim == 1
                 and (len(component_indices) == 0 or np.min(component_indices) >= 0))
+        # NumPy 1.9 is quite permissive when indexing arrays of size 0, so we have to add the
+        # following check:
+        assert self._len > 0 \
+            or (isinstance(component_indices, list)
+                and (len(component_indices) == 0 or max(component_indices) < self.dim)) \
+            or (isinstance(component_indices, np.ndarray) and component_indices.ndim == 1
+                and (len(component_indices) == 0 or np.max(component_indices) < self.dim))
 
         if NUMPY_INDEX_QUIRK and (self._len == 0 or self.dim == 0):
             assert isinstance(component_indices, list) \
