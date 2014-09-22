@@ -195,15 +195,15 @@ class SQLiteRegion(CacheRegion):
         entries = c.fetchall()
         if entries:
             ids_to_delete, files_to_delete = zip(*entries)
-        c.execute('DELETE FROM entries WHERE id in ({})'.format(','.join(map(str, ids_to_delete))))
-        conn.commit()
-        path = self.path
-        for filename in files_to_delete:
-            try:
-                os.unlink(os.path.join(path, filename))
-            except OSError:
-                from pymor.core.logger import getLogger
-                getLogger('pymor.core.cache.SQLiteRegion').warn('Cannot delete cache entry ' + filename)
+            c.execute('DELETE FROM entries WHERE id in ({})'.format(','.join(map(str, ids_to_delete))))
+            conn.commit()
+            path = self.path
+            for filename in files_to_delete:
+                try:
+                    os.unlink(os.path.join(path, filename))
+                except OSError:
+                    from pymor.core.logger import getLogger
+                    getLogger('pymor.core.cache.SQLiteRegion').warn('Cannot delete cache entry ' + filename)
 
 
     def housekeeping(self):
