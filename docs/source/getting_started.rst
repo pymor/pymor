@@ -7,45 +7,41 @@ Getting started
 Installation
 ------------
 
-Before trying out pyMOR, you need to install it. At this point we do
-not provide release tarballs via PyPI, instead you should simply
-clone our git repository via ::
+Before trying out pyMOR, you need to install it. We provide packages for Ubuntu
+via our PPA::
 
-    git clone https://github.com/pymor/pymor
+        sudo apt-add-repository ppa:pymor/stable
+        sudo apt-get update
+        sudo apt-get install python-pymor python-pymor-demos python-pymor-doc
 
-and then chekout the version of pyMOR you want to work with, e.g. ::
-
-    git checkout 0.2.0
-
-which is the current stable version.
-
-While pyMOR itself is written in pure Python (with the exception of few `Cython
-<http://cython.org>`_ extension modules) and does not really require
-installation, it depends on several Python packages in recent versions (most
-notably `NumPy <http://www.numpy.org>`_, `SciPy <http://www.scipy.org>`_,
-`matplotlib <http://matplotlib.org>`_ and `PySide <http//www.pyside.org>`_)
-which are not so easy to install. For this reason we provide an installation
-script which will install all dependencies into a dedicated `virtualenv
-<http://virtualenv.org>`_. It will also install pyMOR itself into the
-virtualenv or add the repository to its ``PYTHONPATH``. For further details
-please refer to the `README
-<https://github.com/pymor/pymor/blob/master/README.markdown>`_ file in the
-pyMOR repository.
+Daily snapshots can be installed by using the ``pymor/daily`` PPA instead of
+``pymor/stable``. The current release can also be installed via `pip
+<http://pip-installer.org>`. Please take a look at our `README
+<https://github.com/pyMor/pyMor#installation-into-a-virtualenv>` file for
+further details. The `README
+<https://github.com/pyMor/pyMor#setting-up-an-environment-for-pymor-development>`
+also contains instructions for setting up a development environment for working
+on pyMOR itself.
 
 
 Trying it out
 -------------
 
-While we consider pyMOR itself as a library for building MOR
-applications, we ship a few example scripts with pyMOR itself. These
-can be found in the ``src/pymordemos`` directory. Try launching
-the thermalblock demo application in this directory by executing ::
+While we consider pyMOR itself as a library for building MOR applications, we
+ship a few example scripts with pyMOR itself. These can be found in the
+``src/pymordemos`` directory of the source repository.  Try launching one of
+them using the ``pymor-demo`` script provided by the ``python-pymor-demos``
+package::
+
+    pymor-demo thermalblock --with-estimator --plot-err --plot-solutions 3 2 3 32
+
+The demo scripts can also be directly launched from the source tree::
 
     ./thermalblock.py --with-estimator --plot-err --plot-solutions 3 2 3 32
 
 This will solve and reduce the so called thermalblock problem using
 the reduced basis method with a greedy basis generation algorithm.
-The thermalblock problem consists of solving the stationary diffusion
+The thermalblock problem consists in solving the stationary diffusion
 problem ::
 
     - ∇ ⋅ [ d(x, μ) ∇ u(x, μ) ] = 1     for x in Ω
