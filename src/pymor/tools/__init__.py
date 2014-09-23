@@ -6,3 +6,5 @@ from pymor.tools.arguments import method_arguments
 from pymor.tools.floatcmp import float_cmp, float_cmp_all
 from pymor.tools.frozendict import FrozenDict
 from pymor.tools.named import Named
+from pymor.tools.pprint import format_array
+from pymor.tools.random import new_random_state

@@ -6,10 +6,11 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor import defaults
+from pymor.core.defaults import defaults
 
 
-def induced_norm(product):
+@defaults('raise_negative', 'tol')
+def induced_norm(product, raise_negative=True, tol=1e-10):
     """The induced norm of a scalar product.
 
     The norm of a vector (an array of vectors) U is calculated by
@@ -18,16 +19,19 @@ def induced_norm(product):
         product.apply2(U, U, mu=mu, pairwise=True)
 
     In addition, negative norm squares of absolute value smaller
-    than the `induced_norm_tol` |default| value are clipped to `0`.
-    If the `induced_norm_raise_negative` |default| value is `True`,
-    a :exc:`ValueError` exception is raised if there are still
-    negative norm squares afterwards.
+    than `tol` are clipped to `0`.
+    If the `raise_negative` is `True`, a :exc:`ValueError` exception
+    is raised if there are still negative norm squares afterwards.
 
     Parameters
     ----------
     product
         The scalar product for which the norm is to be calculated,
         given as a linear |Operator|.
+    raise_negative
+        If `True`, raise an exception if calcuated norm is negative.
+    tol
+        See above.
 
     Returns
     -------
@@ -39,10 +43,10 @@ def induced_norm(product):
 
     def norm(U, mu=None):
         norm_squared = product.apply2(U, U, mu=mu, pairwise=True)
-        if defaults.induced_norm_tol > 0:
-            norm_squared = np.where(np.logical_and(0 > norm_squared, norm_squared > - defaults.induced_norm_tol),
+        if tol > 0:
+            norm_squared = np.where(np.logical_and(0 > norm_squared, norm_squared > - tol),
                                     0, norm_squared)
-        if defaults.induced_norm_raise_negative and np.any(norm_squared < 0):
+        if raise_negative and np.any(norm_squared < 0):
             raise ValueError('norm is negative (square = {})'.format(norm_squared))
         return np.sqrt(norm_squared)
 

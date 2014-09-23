@@ -42,9 +42,6 @@ interfaces = '''
 
 # substitutions for the most important classes and methods in pyMOR
 common = '''
-.. |defaults| replace:: :class:`defaults <pymor.defaults.Defaults>`
-.. |default| replace:: :class:`default <pymor.defaults.Defaults>`
-
 .. |analytical problem| replace:: :mod:`analytical problem <pymor.analyticalproblems>`
 .. |analytical problems| replace:: :mod:`analytical problems <pymor.analyticalproblems>`
 
@@ -101,6 +98,8 @@ common = '''
 .. |Array| replace:: :class:`NumPy array <numpy.ndarray>`
 
 .. |OrderedDict| replace:: :class:`~collections.OrderedDict`
+
+.. |invert_options| replace:: :meth:`invert options <pymor.operators.interfaces.OperatorInterface.invert_options>`
 
 '''
 

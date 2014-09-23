@@ -4,7 +4,7 @@
 
 import os
 
-from pymor.defaults import defaults
+from pymor.core.defaults import load_defaults_from_file
 
 
 class Version(object):
@@ -15,7 +15,7 @@ class Version(object):
             revstring = revstring[:revstring.index('~')]
         revstringparts = revstring.strip().split('-')
         if len(revstringparts) not in (1, 3):
-            raise ValueError('Invalid revstring')
+            raise ValueError('Invalid revstring: ' + revstring)
         if len(revstringparts) == 3:
             self.distance = int(revstringparts[1])
             self.shorthash = revstringparts[2]
@@ -95,3 +95,26 @@ finally:
 
 VERSION = version
 print('Loading pymor version {}'.format(VERSION))
+
+
+import os
+if 'PYMOR_DEFAULTS' in os.environ:
+    filename = os.environ['PYMOR_DEFAULTS']
+    if filename in ('', 'NONE'):
+        print('Not loading any defaults from config file')
+    else:
+        if not os.path.exists(filename):
+            raise IOError('Cannot load defaults from file ' + filename)
+        print('Loading defaults from file ' + filename + ' (set by PYMOR_DEFAULTS)')
+        load_defaults_from_file(filename)
+else:
+    filename = os.path.join(os.getcwd(), 'pymor_defaults.py')
+    if os.path.exists(filename):
+        if os.stat(filename).st_uid != os.getuid():
+            raise IOError('Cannot load defaults from config file ' + filename
+                          + ': not owned by user running Python interpreter')
+        print('Loading defaults from file ' + filename)
+        load_defaults_from_file(filename)
+
+from pymor.core.logger import set_log_levels
+set_log_levels()

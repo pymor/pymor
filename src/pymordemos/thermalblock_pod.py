@@ -2,6 +2,8 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+#
+# Contributors: Michael Laier <m_laie01@uni-muenster.de>
 
 """Thermalblock with POD demo.
 
@@ -52,7 +54,7 @@ from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import discretize_elliptic_cg
 from pymor.la.pod import pod
 from pymor.reductors import reduce_generic_rb
-core.getLogger('pymor.discretizations').setLevel('INFO')
+core.set_log_levels({'pymor.discretizations': 'INFO'})
 
 
 def thermalblock_demo(args):

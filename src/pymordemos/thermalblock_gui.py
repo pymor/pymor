@@ -2,6 +2,8 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+#
+# Contributors: Michael Laier <m_laie01@uni-muenster.de>
 
 """Thermalblock with GUI demo
 
@@ -53,8 +55,8 @@ from pymor.gui.glumpy import ColorBarWidget, GlumpyPatchWidget
 from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor import gui
 
-core.getLogger('pymor.algorithms').setLevel('DEBUG')
-core.getLogger('pymor.discretizations').setLevel('DEBUG')
+core.set_log_levels({'pymor.algorithms': 'INFO',
+                     'pymor.discretizations': 'INFO'})
 
 PARAM_STEPS = 10
 PARAM_MIN = 0.1

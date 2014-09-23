@@ -45,6 +45,8 @@ Options:
 
 from __future__ import absolute_import, division, print_function
 
+from pymor.core.defaults import set_defaults
+
 import sys
 import math as m
 import time
@@ -61,9 +63,9 @@ from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.discretizers import discretize_elliptic_cg
 from pymor.reductors import reduce_to_subbasis
 from pymor.reductors.linear import reduce_stationary_affine_linear
-core.getLogger('pymor.algorithms').setLevel('INFO')
-core.getLogger('pymor.discretizations').setLevel('INFO')
-core.getLogger('pymor.la').setLevel('INFO')
+core.set_log_levels({'pymor.algorithms': 'INFO',
+                     'pymor.discretizations': 'INFO',
+                     'pymor.la': 'INFO'})
 
 
 def thermalblock_demo(args):

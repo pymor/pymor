@@ -1,5 +1,9 @@
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+
 tests_require = ['pytest', 'pytest-cache', 'pytest-capturelog', 'pytest-cov']
-install_requires = ['Cython', 'numpy', 'scipy', 'Sphinx', 'docopt', 'dogpile.cache']
+install_requires = ['Cython', 'numpy', 'scipy', 'Sphinx', 'docopt']
 pre_setup_requires = ['cython', 'numpy']
 setup_requires = pre_setup_requires
 install_suggests = ['ipython', 'ipdb', 'matplotlib', 'PyOpenGL', 'PySide', 'glumpy', 'pyamg'] + tests_require

@@ -9,6 +9,7 @@
 from collections import deque, defaultdict, OrderedDict
 from types import MethodType, FunctionType
 import re
+import functools
 
 from sphinx.util.inspect import safe_getattr
 
@@ -18,7 +19,7 @@ INCLUDE_PRIVATE_WITH_DOC = False
 MEMBER_BLACKLIST = tuple()
 
 FIELD_SECTIONS = ('parameters', 'yields', 'returns', 'raises', 'attributes')
-GENERIC_SECTIONS = ('example', 'examples', 'see also')
+GENERIC_SECTIONS = ('example', 'examples', 'see also', 'defaults')
 KNOWN_SECTIONS = FIELD_SECTIONS + GENERIC_SECTIONS
 
 builtin_function_or_method = type(dict.fromkeys)
@@ -402,6 +403,7 @@ def format_docstring(obj, lines=None, dont_recurse=False):
         ('_methods', None),
         ('_attributes', None),
         ('attributes', format_attributes_section),
+        ('defaults', functools.partial(format_generic_section, use_admonition=True))
     ))
 
     sections = {}

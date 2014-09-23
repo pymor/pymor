@@ -59,7 +59,7 @@ are the following:
        instance :attr:`uid_provider`.
 
 
-:class:`ImmutableMeta` derives from :class:`BasicInterface` and adds the following
+:class:`ImmutableInterface` derives from :class:`BasicInterface` and adds the following
 functionality:
 
     1. Using more metaclass magic, each instance which derives from
@@ -67,6 +67,10 @@ functionality:
     2. If possible, a unique _`state id` for the instance is calculated and stored as
        `sid` attribute. If sid calculation fails, `sid_failure` is set to a string
        giving a reason for the failure.
+
+       The basic idea behind state ids is that for an immutable object the result
+       of any member function call is already pre-determined by the objects state id,
+       the function's arguments and the state of pyMOR's global :mod:`~pymor.core.defaults`.
 
        The sid is constructed as a tuple containing:
 
@@ -79,10 +83,18 @@ functionality:
 
              For `tuple`, `list` or `dict` instance, the calculation is done by recursion.
              If none of these cases apply, sid calculation fails.
+           - the state of all :mod:`~pymor.core.defaults` which have been set by the user
+
+       .. warning::
+          Default values defined in the function signature do not enter the sid
+          calculation. Thus, if you change default values in your code, pyMOR will not
+          be aware of these changes! As a consequence, you should always take
+          care to clear your :mod:`~pymor.core.cache` if you change in-code default
+          values.
 
        Note that a sid contains only object references to the sids of the provided `__init__`
        arguments. This structure is preserved by pickling resulting in relatively short
-       string represenations of the sid.
+       string representations of the sid.
     3. :attr:`ImmutableInterface.sid_ignore` can be set to a tuple of `__init__`
        argument names, which should be excluded from sid calculation.
     4. sid generation (with all its overhead) can be disabled by setting
@@ -110,6 +122,7 @@ import numpy as np
 
 from pymor.core import decorators, backports, logger
 from pymor.core.exceptions import ConstError
+from pymor.core.defaults import defaults_sid
 
 DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_COPY_DOCSTRINGS_DISABLE', 0)) == 1
 
@@ -467,7 +480,7 @@ def inject_sid(obj, context, *args):
         `obj`.
     """
     try:
-        sid = tuple((context, tuple(_calculate_sid(o, i) for i, o in enumerate(args))))
+        sid = tuple((context, tuple(_calculate_sid(o, i) for i, o in enumerate(args)), defaults_sid()))
         obj.sid = sid
         ImmutableMeta.sids_created += 1
     except ValueError as e:
@@ -504,7 +517,10 @@ class ImmutableMeta(UberMeta):
                 if a not in init_arguments and a not in ImmutableMeta.init_arguments_never_warn:
                     raise ValueError(a)
         except ValueError as e:
-            c._logger.warn('sid_ignore contains "{}" which is not an __init__ argument!'.format(e))
+            # The _logger attribute of our new class has not been initialized yet, so create
+            # our own logger.
+            l = logger.getLogger('{}.{}'.format(c.__module__.replace('__main__', 'pymor'), classname))
+            l.warn('sid_ignore contains "{}" which is not an __init__ argument!'.format(e))
         return c
 
     def _call(self, *args, **kwargs):
@@ -515,7 +531,7 @@ class ImmutableMeta(UberMeta):
                 kwarg_sids = tuple((k, _calculate_sid(o, k))
                                    for k, o in sorted(kwargs.iteritems())
                                    if k not in instance.sid_ignore)
-                instance.sid = (type(instance), kwarg_sids)
+                instance.sid = (type(instance), kwarg_sids, defaults_sid())
                 ImmutableMeta.sids_created += 1
             except ValueError as e:
                 instance.sid_failure = str(e)
@@ -531,8 +547,24 @@ class ImmutableMeta(UberMeta):
 class ImmutableInterface(BasicInterface):
     """Base class for immutable objects in pyMOR.
 
-    Instances of `ImmutableInterface` are immutable in the sense, that
-    they are :meth:`BasicInterface.lock`ed after `__init__` returns.
+    Instances of `ImmutableInterface` are immutable in the sense that
+    they are :meth:`locked <BasicInterface.lock>` after `__init__` returns.
+
+    .. _ImmutableInterfaceWarning:
+    .. warning::
+       For instances of `ImmutableInterface`, the following should always
+       be true ::
+
+           The result of any member function call is determined by the
+           function's arguments together with the state id of the
+           corresponding instance and the current state of pyMOR's
+           global defaults.
+
+       While, in principle, you are allowed to modify private members after
+       instance initialization, this should never affect the outcome of
+       future method calls. In particular, if you update any internal state
+       after initialization, you have to ensure that this state is not affecteed
+       by possible changes of the global :mod:`~pymor.core.defaults`.
 
     Attributes
     ----------

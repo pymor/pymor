@@ -22,7 +22,7 @@ try:
 except ImportError:
     HAVE_PYSIDE = False
 
-from pymor import defaults
+from pymor.core.defaults import defaults
 from pymor.core import BasicInterface, getLogger
 from pymor.grids import RectGrid, TriaGrid, OnedGrid
 from pymor.gui.glumpy import GlumpyPatchWidget, ColorBarWidget, HAVE_GLUMPY, HAVE_GL
@@ -192,8 +192,9 @@ def launch_qt_app(main_window_factory, block):
         p.join()
 
 
+@defaults('backend')
 def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
-                    separate_colorbars=False, backend=None, block=False):
+                    separate_colorbars=False, backend='gl', block=False):
     """Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
@@ -220,16 +221,13 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     separate_colorbars
         If `True` use separate colorbars for each subplot.
     backend
-        Plot backend to use ('gl' or 'matplotlib'). If `None`, the
-        `qt_visualize_patch_backend` |default| is used.
+        Plot backend to use ('gl' or 'matplotlib').
     block
         If `True` block execution until the plot window is closed.
     """
     if not HAVE_PYSIDE:
         raise ImportError('cannot visualize: import of PySide failed')
 
-    if backend is None:
-        backend = defaults.qt_visualize_patch_backend
     assert backend in {'gl', 'matplotlib'}
 
     if backend == 'gl':
@@ -395,8 +393,7 @@ class PatchVisualizer(BasicInterface):
     codim
         The codimension of the entities the data in `U` is attached to (either 0 or 2).
     backend
-        Plot backend to use ('gl' or 'matplotlib'). If `None`, the
-        `qt_visualize_patch_backend` |default| is used.
+        Plot backend to use ('gl' or 'matplotlib').
     block
         If `True` block execution until the plot window is closed.
     """

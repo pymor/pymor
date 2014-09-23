@@ -5,7 +5,7 @@
 from pymor.core.interfaces import (BasicInterface, ImmutableInterface, abstractmethod, abstractclassmethod,
                                    abstractstaticmethod, abstractproperty, inject_sid, disable_sid_generation,
                                    enable_sid_generation)
-from pymor.core.logger import getLogger
+from pymor.core.logger import getLogger, set_log_levels
 
 try:
     import cPickle as pickle

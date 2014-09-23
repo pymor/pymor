@@ -4,9 +4,8 @@ Priority: extra
 Maintainer: Rene Milk <rene.milk@uni-muenster.de>  
 Build-Depends: debhelper (>= 8.0.0), python-pip, python-virtualenv, python-numpy,
   python-scipy, python-pytest, python-pyside, 
-  python-dogpile.cache, python-dogpile.core, cython, 
-  python-sphinx, python-sympy, python-matplotlib, python-opengl,
-  python-docopt, python-glumpy, python-pyvtk, 
+  cython, python-sphinx, python-sympy, python-matplotlib,
+  python-opengl, python-docopt, python-glumpy, python-pyvtk, 
   python-pytest-capturelog, python-pytest-cache, 
   python-dev, python-execnet (>=1.1), python3, dh-make
 Standards-Version: 3.9.4
@@ -19,8 +18,7 @@ Architecture: any
 Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends},
   python-pip, python-virtualenv, python-numpy,
   python-scipy, python-pytest, python-pyside,
-  python-dogpile.cache, python-dogpile.core, cython, 
-  python-matplotlib, python-opengl,
+  cython, python-matplotlib, python-opengl,
   python-docopt, python-glumpy, python-pyvtk,
   python-dev, python
 Description: makes pyMOR importable system-wide + dependency tracking

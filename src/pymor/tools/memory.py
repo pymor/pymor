@@ -1,4 +1,11 @@
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+#
+# Contributors: Michael Laier <m_laie01@uni-muenster.de>
+
 ## {{{ http://code.activestate.com/recipes/577504/ (r3) MIT licensed
+
 from __future__ import absolute_import, division, print_function
 from sys import getsizeof, stderr
 from itertools import chain
