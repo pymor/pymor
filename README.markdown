@@ -54,12 +54,15 @@ See these files for more information.
 Distribution Packages
 ---------------------
 
-Packages for Ubuntu 12.04 and 13.10 are available via our
+Packages for Ubuntu are available via our
 [PPA](https://launchpad.net/~pymor/+archive/stable):
 
     sudo apt-add-repository ppa:pymor/stable
     sudo apt-get update
     sudo apt-get install python-pymor
+
+Daily snapshots are available via the 
+[pymor/daily PPA](https://launchpad.net/~pymor/+archive/daily).
 
 Demo applications and documentation are packaged separately:
 
@@ -118,12 +121,7 @@ and, in particular, [matplotlib](http://matplotlib.org),
 [PyOpenGL](http://pyopengl.sourceforge.net/),
 [glumpy](https://code.google.com/p/glumpy/),
 and [PySide](http://qt-project.org/wiki/PySide). The latter
-packages are required for pyMOR's visualization routines. At the time
-of writing, PySide fails to install with current Sphinx versions, so we
-have to install an old one:
-
-    pip install "sphinx==1.1.3"
-    pip install ipython pyside matplotlib pyopengl glumpy 
+packages are required for pyMOR's visualization routines.
 
 
 Documentation
