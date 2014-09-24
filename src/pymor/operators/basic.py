@@ -361,7 +361,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         name = name or '{}_projected_to_subbasis'.format(self.name)
         return NumpyMatrixOperator(self._matrix[:dim_range, :dim_source], name=name)
 
-    def _assemble_lincomb(self, operators, coefficients, name=None):
+    def assemble_lincomb(self, operators, coefficients, name=None):
         if not all(isinstance(op, NumpyMatrixOperator) for op in operators):
             return None
 
@@ -642,7 +642,7 @@ class LincombOperator(OperatorBase):
     def assemble(self, mu=None):
         operators = [op.assemble(mu) for op in self.operators]
         coefficients = self.evaluate_coefficients(mu)
-        op = operators[0]._assemble_lincomb(operators, coefficients, name=self.name + '_assembled')
+        op = operators[0].assemble_lincomb(operators, coefficients, name=self.name + '_assembled')
         if op is None:
             return LincombOperator(operators, coefficients, name=self.name + '_assembled')
         else:
@@ -651,7 +651,7 @@ class LincombOperator(OperatorBase):
     def jacobian(self, U, mu=None):
         jacobians = [op.jacobian(U, mu) for op in self.operators]
         coefficients = self.evaluate_coefficients(mu)
-        jac = jacobians[0]._assemble_lincomb(jacobians, coefficients, name=self.name + '_jacobian')
+        jac = jacobians[0].assemble_lincomb(jacobians, coefficients, name=self.name + '_jacobian')
         if jac is None:
             return LincombOperator(jacobians, coefficients, name=self.name + '_jacobian')
         else:

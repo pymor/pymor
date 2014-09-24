@@ -239,7 +239,7 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         """
         pass
 
-    def _assemble_lincomb(self, operators, coefficients, name=None):
+    def assemble_lincomb(self, operators, coefficients, name=None):
         """Try to assemble a linear combination of the given operators.
 
         This method is called in the `assemble` method of |LincombOperator|. If an

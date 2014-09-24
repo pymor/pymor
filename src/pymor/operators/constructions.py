@@ -196,7 +196,7 @@ class VectorArrayOperator(OperatorBase):
         else:
             return NumpyVectorArray(U.dot(self._array, ind=ind, pairwise=False), copy=False)
 
-    def _assemble_lincomb(self, operators, coefficients, name=None):
+    def assemble_lincomb(self, operators, coefficients, name=None):
 
         transposed = operators[0].transposed
         if not all(isinstance(op, VectorArrayOperator) and op.transposed == transposed for op in operators):
