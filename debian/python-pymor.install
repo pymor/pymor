@@ -1,4 +1,3 @@
-debian/pymor/usr/share/pymor/bin usr/share/pymor/
 debian/pymor/usr/lib/python2.7/dist-packages/pymor usr/lib/python2.7/dist-packages/
 src/pymor/ usr/share/pymor-base/src
 
