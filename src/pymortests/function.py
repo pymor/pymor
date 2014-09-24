@@ -9,6 +9,7 @@ from cPickle import dumps, loads
 import numpy as np
 import pytest
 
+from pymor.functions.basic import ConstantFunction, GenericFunction
 from pymortests.fixtures.function import function, function_argument
 from pymortests.fixtures.parameter import parameter_of_type
 from pymortests.pickle import assert_picklable
@@ -32,6 +33,31 @@ def test_evaluate(function):
         arg = function_argument(f, count, 454)
         result = f.evaluate(arg, parameter_of_type(f.parameter_type, 4711))
         assert result.shape == arg.shape[:-1] + f.shape_range
+
+
+def test_lincomb_function():
+    for steps in (1, 10):
+        x = np.linspace(0, 1, num=steps)
+        zero = ConstantFunction(0.0, dim_domain=steps)
+        for zero in (ConstantFunction(0.0, dim_domain=steps),
+                     GenericFunction(lambda X: np.zeros(X.shape[:-1]), dim_domain=steps)):
+            for one in (ConstantFunction(1.0, dim_domain=steps),
+                        GenericFunction(lambda X: np.ones(X.shape[:-1]), dim_domain=steps), 1.0):
+                add = (zero + one) + 0
+                sub = (zero - one) + np.zeros(())
+                neg = - zero
+                assert np.allclose(sub(x), [-1])
+                assert np.allclose(add(x), [1.0])
+                assert np.allclose(neg(x), [0.0])
+                (repr(add), str(add), repr(one), str(one))  # just to cover the respective special funcs too
+                mul = neg * 1.
+                assert np.allclose(mul(x), [0.0])
+        with pytest.raises(AssertionError):
+            zero + ConstantFunction(dim_domain=steps + 1)
+        with pytest.raises(AssertionError):
+            zero * ConstantFunction(dim_domain=steps)
+    with pytest.raises(AssertionError):
+        ConstantFunction(dim_domain=0)
 
 
 def test_pickle(function):
