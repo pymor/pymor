@@ -69,8 +69,9 @@ Running ``thermalblock.py`` will first produce plots of two detailed
 solutions of the problem for different randomly chosen parameters
 using linear finite elements. (The size of the grid can be controlled
 via the ``--grid`` parameter. The randomly chosen parameters will
-actually always be the same for each run, since a fixed seed for
-the random generator is chosen in :mod:`pymor.defaults`.)
+actually always be the same for each run, since a the random generator
+is initialized with a fixed default seed in
+:func:`~pymor.tools.random.new_random_state`.)
 
 After closing the window, the reduced basis for model order reduction
 is generated using a greedy search algorithm with error estimator.
@@ -96,7 +97,7 @@ programming as well as working with |NumPy|. (Note that our code will
 differ a bit from ``thermalblock.py`` as we will hardcode the various
 options the script offers and leave out some features.)
 
-First, start a Pyhton shell, we recommend using
+First, start a Python shell, we recommend using
 `IPython <http://ipython.org>`_, which is also automatically installed
 into the pyMOR virtualenv by the install script ::
 
@@ -112,10 +113,10 @@ inside the IPython shell.
 To see what is going on, we will first adjust a few log levels of
 pyMOR's logging facility:
 
->>> from pymor.core import getLogger
->>> getLogger('pymor.algorithms').setLevel('INFO')
->>> getLogger('pymor.discretizations').setLevel('INFO')
-Loading pymor version (0, 1, 0, 861, 'g79027f4')
+>>> from pymor.core import set_log_levels
+>>> set_log_levels({'pymor.algorithms': 'INFO',
+...                 'pymor.discretizations': 'INFO'})
+Loading pymor version 0.3.0
 
 First we will instantiate a class describing the analytical problem
 we want so solve. In this case, a 
@@ -165,8 +166,9 @@ Each class in pyMOR that describes a |Parameter| dependent mathematical
 object, like the |StationaryDiscretization| in our case, derives from
 |Parametric| and determines the |Parameters| it expects during :meth:`__init__`
 by calling :meth:`~pymor.parameters.base.Parametric.build_parameter_type`.
-The resulting |ParameterType| is stored in the object's :attr:`parameter_type`
-attribute. Let us have a look:
+The resulting |ParameterType| is stored in the object's
+:attr:`~pymor.parameters.base.Parametric.parameter_type` attribute. Let us
+have a look:
 
 >>> print(d.parameter_type)
 {diffusion: (2, 3)}
@@ -186,11 +188,12 @@ use :func:`~pymor.algorithms.basisextension.gram_schmidt_basis_extension` and
 :func:`~pymor.reductors.linear.reduce_stationary_affine_linear`. The latter
 will also assemble an error estimator to estimate the reduction error. This
 will significantly speed up the basis generation, as we will only need to
-solve high-dimensionally for those parameters in the training set which are
-actually selected for basis extension. To control the condition of the
-reduced system matrix, we must ensure that the generated basis is orthonormal
-w.r.t. the H1-product on the solution space. For this we provide the basis
-extension algorithm with the :attr:`h1_product` attribute of the discretization.
+solve the high-dimensional problem for those parameters in the training set
+which are actually selected for basis extension. To control the condition of
+the reduced system matrix, we must ensure that the generated basis is
+orthonormal w.r.t. the H1-product on the solution space. For this we provide
+the basis extension algorithm with the :attr:`h1_product` attribute of the
+discretization.
 
 >>> from functools import partial
 >>> from pymor.algorithms.greedy import greedy
@@ -198,10 +201,9 @@ extension algorithm with the :attr:`h1_product` attribute of the discretization.
 >>> from pymor.reductors.linear import reduce_stationary_affine_linear
 >>> extension_algorithm = partial(gram_schmidt_basis_extension, product=d.h1_product)
 
-Moreover, we need to select a
-|Parameter| training set. The discretization ``d`` already comes with a
-|ParameterSpace| it has obtained from the analytical problem. We can sample
-our parameters from this space, which is a
+Moreover, we need to select a |Parameter| training set. The discretization
+``d`` already comes with a |ParameterSpace| it has obtained from the analytical
+problem. We can sample our parameters from this space, which is a
 :class:`~pymor.parameters.spaces.CubicParameterSpace`. E.g.:
 
 >>> samples = list(d.parameter_space.sample_uniformly(2))
@@ -243,7 +245,7 @@ vectors. The reduced basis is stored in the ``'basis'`` item.
 >>> rb = greedy_data['basis']
 
 All vectors in pyMOR are stored in so called |VectorArrays|. For example
-the solution ``U`` computed above is given as a |VectorArray| of lenght 1.
+the solution ``U`` computed above is given as a |VectorArray| of length 1.
 For the reduced basis we have:
 
 >>> print(type(rb))
@@ -260,7 +262,7 @@ method:
 >>> import numpy as np
 >>> gram_matrix = d.h1_product.apply2(rb, rb, pairwise=False)
 >>> print(np.max(np.abs(gram_matrix - np.eye(32))))
-4.93285967629e-14
+2.17350009518e-15
 
 Looks good! We can now solve the reduced model for the same parameter as above.
 The result is a vector of coefficients w.r.t. the reduced basis, which is
