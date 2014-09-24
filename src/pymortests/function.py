@@ -11,6 +11,7 @@ import pytest
 
 from pymortests.fixtures.function import function, function_argument
 from pymortests.fixtures.parameter import parameter_of_type
+from pymortests.pickle import assert_picklable
 
 
 # monkey np.testing.assert_allclose to behave the same as np.allclose
@@ -34,8 +35,4 @@ def test_evaluate(function):
 
 
 def test_pickle(function):
-    f = function
-    f2 = loads(dumps(f, -1))
-    arg = function_argument(f, 1, 454)
-    mu = parameter_of_type(f.parameter_type, 4711)
-    np.testing.assert_allclose(f.evaluate(arg, mu), f2.evaluate(arg, mu))
+    assert_picklable(function)

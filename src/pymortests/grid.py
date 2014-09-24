@@ -11,6 +11,7 @@ import numpy as np
 import pytest
 
 from pymortests.fixtures.grid import grid
+from pymortests.pickle import assert_picklable
 
 
 # monkey np.testing.assert_allclose to behave the same as np.allclose
@@ -427,11 +428,4 @@ def test_boundaries_entries(grid):
 
 
 def test_pickle(grid):
-    g = grid
-    g2 = loads(dumps(g, -1))
-    assert getattr(g, 'sid', None) == getattr(g2, 'sid', None)
-    for d in xrange(g.dim + 1):
-        assert g.size(d) == g2.size(d)
-        for s in xrange(d, g.dim+ 1):
-            np.testing.assert_array_equal(g.subentities(d, s), g2.subentities(d, s))
-            np.testing.assert_array_equal(g.superentities(s, d), g2.superentities(s, d))
+    assert_picklable(grid)

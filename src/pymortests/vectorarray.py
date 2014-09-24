@@ -16,6 +16,7 @@ from pymor.la import VectorSpace
 from pymortests.fixtures.vectorarray import \
     (vector_array_without_reserve, vector_array, compatible_vector_array_pair_without_reserve,
      compatible_vector_array_pair, incompatible_vector_array_pair)
+from pymortests.pickle import assert_picklable
 
 
 def ind_complement(v, ind):
@@ -1150,6 +1151,4 @@ def test_gramian_wrong_ind(vector_array):
 
 
 def test_pickle(vector_array):
-    v = vector_array
-    v2 = loads(dumps(v, -1))
-    assert np.all(v.almost_equal(v2))
+    assert_picklable(vector_array)
