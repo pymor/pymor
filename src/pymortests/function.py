@@ -4,8 +4,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-from cPickle import dumps, loads
-
 import numpy as np
 import pytest
 
