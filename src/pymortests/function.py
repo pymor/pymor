@@ -9,9 +9,9 @@ import pytest
 
 from pymor.core.pickle import dumps, loads
 from pymor.functions.basic import ConstantFunction, GenericFunction
-from pymortests.fixtures.function import function, function_argument
+from pymortests.fixtures.function import function, picklable_function, function_argument
 from pymortests.fixtures.parameter import parameters_of_type
-from pymortests.pickle import assert_picklable
+from pymortests.pickle import assert_picklable, assert_picklable_without_dumps_function
 
 
 # monkey np.testing.assert_allclose to behave the same as np.allclose
@@ -62,6 +62,10 @@ def test_lincomb_function():
 
 def test_pickle(function):
     assert_picklable(function)
+
+
+def test_pickle_without_dumps_function(picklable_function):
+    assert_picklable_without_dumps_function(picklable_function)
 
 
 def test_pickle_by_evaluation(function):

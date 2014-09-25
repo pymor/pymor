@@ -40,13 +40,20 @@ def get_function_with_closure(y):
 generic_functions = \
     [GenericFunction(lambda x: x, dim_domain=2, shape_range=(2,)),
      GenericFunction(lambda x, mu: mu['c']*x, dim_domain=1, shape_range=(1,), parameter_type={'c': tuple()}),
-     GenericFunction(importable_function, dim_domain=3, shape_range=(1,)),
      GenericFunction(A.unimportable_function, dim_domain=7, shape_range=tuple()),
      GenericFunction(get_function_with_closure(42), dim_domain=1, shape_range=(2,))]
 
 
-@pytest.fixture(params=constant_functions + generic_functions)
+picklable_generic_functions = \
+    [GenericFunction(importable_function, dim_domain=3, shape_range=(1,))]
+
+@pytest.fixture(params=constant_functions + generic_functions + picklable_generic_functions)
 def function(request):
+    return request.param
+
+
+@pytest.fixture(params=constant_functions + picklable_generic_functions)
+def picklable_function(request):
     return request.param
 
 

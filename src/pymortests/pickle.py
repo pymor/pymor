@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from pymor.core import BasicInterface
-from pymor.core.pickle import dumps, loads
+from pymor.core.pickle import dumps, loads, dumps_function, PicklingError
 from pymor.grids.subgrid import SubGrid
 
 
@@ -85,3 +85,18 @@ def assert_picklable(o):
     s = dumps(o)
     o2 = loads(s)
     assert_is_equal(o, o2)
+
+
+def assert_picklable_without_dumps_function(o):
+
+    def dumps_function_raise(function):
+        raise PicklingError('Cannot pickle function {}'.format(function))
+
+    old_code = dumps_function.func_code
+    dumps_function.func_code = dumps_function_raise.func_code
+    try:
+        s = dumps(o)
+        o2 = loads(s)
+        assert_is_equal(o, o2)
+    finally:
+        dumps_function.func_code = old_code

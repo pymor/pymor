@@ -16,12 +16,14 @@ from pymor.functions.basic import GenericFunction, ConstantFunction
 from pymor.parameters.functionals import ExpressionParameterFunctional
 
 
-thermalblock_problems = \
+picklable_thermalblock_problems = \
     [ThermalBlockProblem(),
      ThermalBlockProblem(num_blocks=(3, 2)),
      ThermalBlockProblem(num_blocks=(1, 1)),
-     ThermalBlockProblem(num_blocks=(2, 2), parameter_range=(1., 100.)),
-     ThermalBlockProblem(num_blocks=(1, 3), parameter_range=(0.4, 0.5),
+     ThermalBlockProblem(num_blocks=(2, 2), parameter_range=(1., 100.))]
+
+thermalblock_problems = picklable_thermalblock_problems + \
+    [ThermalBlockProblem(num_blocks=(1, 3), parameter_range=(0.4, 0.5),
                          rhs=GenericFunction(dim_domain=2, mapping=lambda X: X[..., 0] + X[..., 1]))]
 
 
@@ -35,18 +37,23 @@ burgers_problems = \
      Burgers2DProblem(torus=False, initial_data_type='bump', parameter_range=(7., 8.))]
 
 
-elliptic_problems = \
-    [EllipticProblem(),
-     EllipticProblem(rhs=ConstantFunction(dim_domain=2, value=21.),
+picklable_elliptic_problems = \
+    [EllipticProblem()]
+
+elliptic_problems = picklable_thermalblock_problems + \
+    [EllipticProblem(rhs=ConstantFunction(dim_domain=2, value=21.),
                      diffusion_functions=[GenericFunction(dim_domain=2,
                                                           mapping=lambda X,p=p: X[...,0]**p) for p in range(5)],
                      diffusion_functionals=[ExpressionParameterFunctional('max(mu["exp"], {})'.format(m),
                                                                           parameter_type={'exp': tuple()})
                                             for m in range(5)])]
 
-advection_problems = \
-    [InstationaryAdvectionProblem(),
-     InstationaryAdvectionProblem(rhs=ConstantFunction(dim_domain=2, value=42.),
+
+picklable_advection_problems = \
+    [InstationaryAdvectionProblem()]
+
+advection_problems = picklable_advection_problems + \
+    [InstationaryAdvectionProblem(rhs=ConstantFunction(dim_domain=2, value=42.),
                                   flux_function=GenericFunction(dim_domain=1, shape_range=(2,),
                                                                 mapping=lambda X: X**2 + X),
                                   flux_function_derivative=GenericFunction(dim_domain=1, shape_range=(2,),
@@ -55,4 +62,10 @@ advection_problems = \
 
 @pytest.fixture(params=elliptic_problems + advection_problems + thermalblock_problems + burgers_problems)
 def analytical_problem(request):
+    return request.param
+
+
+@pytest.fixture(params=picklable_elliptic_problems + picklable_advection_problems
+                       + picklable_thermalblock_problems + burgers_problems)
+def picklable_analytical_problem(request):
     return request.param
