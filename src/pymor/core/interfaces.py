@@ -182,8 +182,8 @@ class UberMeta(abc.ABCMeta):
         Copying of docstrings can be prevented by setting the `PYMOR_COPY_DOCSTRINGS_DISABLE` environment
         variable to `1`.
         """
-        if 'init_arguments' in classdict:
-            raise ValueError('init_arguments is a reserved class attribute for subclasses of BasicInterface')
+        if '_init_arguments' in classdict:
+            raise ValueError('_init_arguments is a reserved class attribute for subclasses of BasicInterface')
 
         for attr, item in classdict.items():
             if isinstance(item, types.FunctionType):
@@ -234,9 +234,9 @@ class UberMeta(abc.ABCMeta):
             if varargs:
                 raise NotImplementedError
             assert args[0] == 'self'
-            c.init_arguments = tuple(args[1:])
+            c._init_arguments = tuple(args[1:])
         except TypeError:       # happens when no one declares an __init__ method and object is reached
-            c.init_arguments = tuple()
+            c._init_arguments = tuple()
         return c
 
 
@@ -245,9 +245,6 @@ class BasicInterface(object):
 
     Attributes
     ----------
-    init_arguments
-        The list of arguments accepted by `__init__` in their specified
-        order.
     locked
         True if the instance is made immutable using `lock`.
     logger
@@ -294,7 +291,7 @@ class BasicInterface(object):
 
     @property
     def with_arguments(self):
-        init_arguments = self.init_arguments
+        init_arguments = self._init_arguments
         for arg in init_arguments:
             if not hasattr(self, arg):
                 self._with_arguments_error = "Instance does not have attribute for __init__ argument '{}'".format(arg)
@@ -334,7 +331,7 @@ class BasicInterface(object):
         """
         my_type = type(self) if new_class is None else new_class
         init_args = kwargs
-        for arg in my_type.init_arguments:
+        for arg in my_type._init_arguments:
             if arg not in init_args:
                 init_args[arg] = getattr(self, arg)
         c = my_type(**init_args)
@@ -516,7 +513,7 @@ class ImmutableMeta(UberMeta):
 
     def __new__(cls, classname, bases, classdict):
         c = UberMeta.__new__(cls, classname, bases, classdict)
-        init_arguments = c.init_arguments
+        init_arguments = c._init_arguments
         try:
             for a in c.sid_ignore:
                 if a not in init_arguments and a not in ImmutableMeta.init_arguments_never_warn:
@@ -532,7 +529,7 @@ class ImmutableMeta(UberMeta):
         instance = super(ImmutableMeta, self).__call__(*args, **kwargs)
         if instance.calculate_sid:
             try:
-                kwargs.update((k, o) for k, o in itertools.izip(instance.init_arguments, args))
+                kwargs.update((k, o) for k, o in itertools.izip(instance._init_arguments, args))
                 kwarg_sids = tuple((k, _calculate_sid(o, k))
                                    for k, o in sorted(kwargs.iteritems())
                                    if k not in instance.sid_ignore)
