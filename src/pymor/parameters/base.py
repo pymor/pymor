@@ -160,6 +160,10 @@ class ParameterType(dict):
     def __repr__(self):
         return 'ParameterType(' + str(self) + ')'
 
+    @property
+    def sid(self):
+        return tuple((k, v) for k, v in self.iteritems())
+
 
 class Parameter(dict):
     """Class representing a parameter.
