@@ -92,22 +92,6 @@ class Test_Interface(TestInterface):
         assert inst.abstract_class_method() == 'CompleteImplementer'
         assert inst.abstract_static_method() == 0
 
-    def testPickling(self):
-        def picklme(obj, attribute_name):
-            with tempfile.NamedTemporaryFile(mode='wb', delete=False) as dump_file:
-                if hasattr(obj, 'lock'):
-                    obj.lock(False)
-                obj.some_attribute = 4
-                pymor.core.dump(obj, dump_file)
-                dump_file.close()
-                f = open(dump_file.name, 'rb')
-                unpickled = pymor.core.load(f)
-                assert getattr(obj, attribute_name) == getattr(unpickled, attribute_name)
-                os.unlink(dump_file.name)
-        picklme(AverageImplementer(), 'some_attribute')
-        picklme(CacheImplementer(), 'some_attribute')
-        picklme(RectGrid(num_intervals=(4, 4)), 'num_intervals')
-
     def testDeprecated(self):
         @decorators.Deprecated('use other stuff instead')
         def deprecated_function():
