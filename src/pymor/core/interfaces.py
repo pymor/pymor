@@ -234,7 +234,10 @@ class UberMeta(abc.ABCMeta):
             args, varargs, keywords, defaults = inspect.getargspec(c.__init__)
             assert args[0] == 'self'
             c._init_arguments = tuple(args[1:])
-            c._init_defaults = dict(zip(args[-len(defaults):], defaults))
+            if defaults:
+                c._init_defaults = dict(zip(args[-len(defaults):], defaults))
+            else:
+                c._init_defaults = dict()
         except TypeError:       # happens when no one declares an __init__ method and object is reached
             c._init_arguments = tuple()
             c._init_defaults = dict()
