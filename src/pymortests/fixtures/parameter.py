@@ -9,9 +9,10 @@ import numpy as np
 from pymor.parameters import Parameter
 
 
-def parameter_of_type(parameter_type, seed):
+def parameters_of_type(parameter_type, seed):
     np.random.seed(seed)
-    if parameter_type is None:
-        return None
-    else:
-        return Parameter({k: np.random.random(v) for k, v in parameter_type.iteritems()})
+    while True:
+        if parameter_type is None:
+            yield None
+        else:
+            yield Parameter({k: np.random.random(v) for k, v in parameter_type.iteritems()})

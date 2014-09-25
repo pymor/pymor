@@ -7,9 +7,10 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 import pytest
 
+from pymor.core.pickle import dumps, loads
 from pymor.functions.basic import ConstantFunction, GenericFunction
 from pymortests.fixtures.function import function, function_argument
-from pymortests.fixtures.parameter import parameter_of_type
+from pymortests.fixtures.parameter import parameters_of_type
 from pymortests.pickle import assert_picklable
 
 
@@ -27,9 +28,10 @@ np.testing.assert_allclose = monkey_allclose
 
 def test_evaluate(function):
     f = function
+    mus = parameters_of_type(f.parameter_type, 4711)
     for count in [0, 1, 5, (0, 1), (2, 2, 2)]:
         arg = function_argument(f, count, 454)
-        result = f.evaluate(arg, parameter_of_type(f.parameter_type, 4711))
+        result = f.evaluate(arg, next(mus))
         assert result.shape == arg.shape[:-1] + f.shape_range
 
 
@@ -60,3 +62,12 @@ def test_lincomb_function():
 
 def test_pickle(function):
     assert_picklable(function)
+
+
+def test_pickle_by_evaluation(function):
+    f = function
+    f2 = loads(dumps(f))
+    mus = parameters_of_type(f.parameter_type, 47)
+    for arg in function_argument(f, 10, 42):
+        mu = next(mus)
+        assert np.all(f.evaluate(arg, mu) == f2.evaluate(arg, mu))
