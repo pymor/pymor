@@ -33,7 +33,6 @@ def test_gmsh():
         msh = gmsh.GmshGrid(msh_file)
 
         msh.unlock()
-        msh.param = lambda : msh
         msh.lock(True)
         for name, test_func in inspect.getmembers(tg, inspect.isfunction):
             if name.startswith('test_'):
