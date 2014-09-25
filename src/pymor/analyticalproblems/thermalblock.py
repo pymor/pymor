@@ -83,3 +83,6 @@ class ThermalBlockProblem(EllipticProblem, Unpicklable):
         self.parameter_space = parameter_space
         self.parameter_range = parameter_range
         self.num_blocks = num_blocks
+
+    def __reduce__(self):
+        return (ThermalBlockProblem, (self.num_blocks, self.parameter_range, self.rhs))
