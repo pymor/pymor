@@ -530,11 +530,13 @@ class ImmutableMeta(UberMeta):
         instance = super(ImmutableMeta, self).__call__(*args, **kwargs)
         if instance.calculate_sid:
             try:
-                kwargs.update((k, o) for k, o in itertools.izip(instance._init_arguments, args))
-                kwarg_sids = tuple((k, _calculate_sid(o, k))
-                                   for k, o in sorted(kwargs.iteritems())
-                                   if k not in instance.sid_ignore)
-                instance.sid = (type(instance), kwarg_sids, defaults_sid())
+                arguments = instance._init_defaults.copy()
+                arguments.update(kwargs)
+                arguments.update((k, o) for k, o in itertools.izip(instance._init_arguments, args))
+                arguments_sids = tuple((k, _calculate_sid(o, k))
+                                       for k, o in sorted(arguments.iteritems())
+                                       if k not in instance.sid_ignore)
+                instance.sid = (type(instance), arguments_sids, defaults_sid())
                 ImmutableMeta.sids_created += 1
             except ValueError as e:
                 instance.sid_failure = str(e)
