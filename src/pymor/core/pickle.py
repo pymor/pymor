@@ -88,17 +88,18 @@ def dumps_function(function):
     closure = None if function.func_closure is None else [c.cell_contents for c in function.func_closure]
     code = marshal.dumps(function.func_code)
     func_globals = function.func_globals
+    func_dict = function.func_dict
 
     def wrap_modules(x):
         return Module(x) if isinstance(x, ModuleType) else x
 
     globals_ = {k: wrap_modules(func_globals[k]) for k in _global_names(function.func_code)}
-    return dumps((function.func_name, code, globals_, function.func_defaults, closure))
+    return dumps((function.func_name, code, globals_, function.func_defaults, closure, func_dict))
 
 
 def loads_function(s):
     '''Restores a function serialized with :func:`dumps_function`.'''
-    name, code, globals_, defaults, closure = loads(s)
+    name, code, globals_, defaults, closure, func_dict = loads(s)
     code = marshal.loads(code)
     for k, v in globals_.iteritems():
         if isinstance(v, Module):
@@ -108,4 +109,6 @@ def loads_function(s):
         ctypes.pythonapi.PyCell_New.restype = ctypes.py_object
         ctypes.pythonapi.PyCell_New.argtypes = [ctypes.py_object]
         closure = tuple(ctypes.pythonapi.PyCell_New(c) for c in closure)
-    return FunctionType(code, globals_, name, defaults, closure)
+    r = FunctionType(code, globals_, name, defaults, closure)
+    r.func_dict = func_dict
+    return r
