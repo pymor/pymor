@@ -8,6 +8,7 @@ from numbers import Number
 
 import numpy as np
 
+from pymor.core.pickle import dumps, loads, dumps_function, loads_function, PicklingError
 from pymor.parameters.interfaces import ParameterFunctionalInterface
 
 
@@ -66,6 +67,26 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)
         return self._mapping(mu)
+
+    def __getstate__(self):
+        s = self.__dict__.copy()
+        try:
+            pickled_mapping = dumps(self._mapping)
+            picklable = True
+        except PicklingError:
+            self.logger.warn('Mapping not picklable, trying pymor.core.pickle.dumps_function.')
+            pickled_mapping = dumps_function(self._mapping)
+            picklable = False
+        s['_mapping'] = pickled_mapping
+        s['_picklable'] = picklable
+        return s
+
+    def __setstate__(self, state):
+        if state.pop('_picklable'):
+            state['_mapping'] = loads(state['_mapping'])
+        else:
+            state['_mapping'] = loads_function(state['_mapping'])
+        self.__dict__.update(state)
 
 
 class ExpressionParameterFunctional(GenericParameterFunctional):
