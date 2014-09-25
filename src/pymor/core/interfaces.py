@@ -182,8 +182,9 @@ class UberMeta(abc.ABCMeta):
         Copying of docstrings can be prevented by setting the `PYMOR_COPY_DOCSTRINGS_DISABLE` environment
         variable to `1`.
         """
-        if '_init_arguments' in classdict:
-            raise ValueError('_init_arguments is a reserved class attribute for subclasses of BasicInterface')
+        for attr in ('_init_arguments', '_init_defaults'):
+            if attr in classdict:
+                raise ValueError(attr + ' is a reserved class attribute for subclasses of BasicInterface')
 
         for attr, item in classdict.items():
             if isinstance(item, types.FunctionType):
@@ -233,8 +234,10 @@ class UberMeta(abc.ABCMeta):
             args, varargs, keywords, defaults = inspect.getargspec(c.__init__)
             assert args[0] == 'self'
             c._init_arguments = tuple(args[1:])
+            c._init_defaults = dict(zip(args[-len(defaults):], defaults))
         except TypeError:       # happens when no one declares an __init__ method and object is reached
             c._init_arguments = tuple()
+            c._init_defaults = dict()
         return c
 
 
