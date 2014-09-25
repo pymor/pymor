@@ -93,7 +93,8 @@ def dumps_function(function):
     def wrap_modules(x):
         return Module(x) if isinstance(x, ModuleType) else x
 
-    globals_ = {k: wrap_modules(func_globals[k]) for k in _global_names(function.func_code)}
+    # note that global names in function.func_code can also refer to builtins ...
+    globals_ = {k: wrap_modules(func_globals[k]) for k in _global_names(function.func_code) if k in func_globals}
     return dumps((function.func_name, code, globals_, function.func_defaults, closure, func_dict))
 
 
