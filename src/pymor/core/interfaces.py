@@ -231,8 +231,6 @@ class UberMeta(abc.ABCMeta):
         # keyword-only arguemnts
         try:
             args, varargs, keywords, defaults = inspect.getargspec(c.__init__)
-            if varargs:
-                raise NotImplementedError
             assert args[0] == 'self'
             c._init_arguments = tuple(args[1:])
         except TypeError:       # happens when no one declares an __init__ method and object is reached
