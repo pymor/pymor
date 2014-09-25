@@ -11,7 +11,7 @@ import numpy as np
 import pytest
 
 from pymortests.fixtures.grid import grid
-from pymortests.pickle import assert_picklable
+from pymortests.pickle import assert_picklable_without_dumps_function
 
 
 # monkey np.testing.assert_allclose to behave the same as np.allclose
@@ -428,4 +428,4 @@ def test_boundaries_entries(grid):
 
 
 def test_pickle(grid):
-    assert_picklable(grid)
+    assert_picklable_without_dumps_function(grid)
