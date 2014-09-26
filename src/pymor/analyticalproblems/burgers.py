@@ -93,6 +93,9 @@ class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
         self.circle = circle
         self.v = v
 
+    def __reduce__(self):
+        return (BurgersProblem, (self.v, self.circle, self.initial_data_type, self.parameter_range))
+
 
 class Burgers2DProblem(InstationaryAdvectionProblem, Unpicklable):
     """Two-dimensional Burgers-type problem.
@@ -177,3 +180,6 @@ class Burgers2DProblem(InstationaryAdvectionProblem, Unpicklable):
         self.torus = torus
         self.vx = vx
         self.vy = vy
+
+    def __reduce__(self):
+        return (Burgers2DProblem, (self.vx, self.vy, self.torus, self.initial_data_type, self.parameter_range))
