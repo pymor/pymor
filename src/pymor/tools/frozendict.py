@@ -29,3 +29,6 @@ class FrozenDict(dict):
 
     def __repr__(self):
         return 'FrozenDict({})'.format(dict.__repr__(self))
+
+    def __reduce__(self):
+        return (FrozenDict, (dict(self),))
