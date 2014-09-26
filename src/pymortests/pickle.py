@@ -11,10 +11,12 @@ from types import FunctionType, MethodType
 from pymor.core import BasicInterface
 from pymor.core.pickle import dumps, loads, dumps_function, PicklingError
 from pymor.grids.subgrid import SubGrid
+from pymor.operators.basic import NumpyMatrixBasedOperator
 
 
 is_equal_ignored_attributes = \
     ((SubGrid, {'_uid', '_cache_region', '_SubGrid__parent_grid'}),
+     (NumpyMatrixBasedOperator, {'_uid', '_cache_region', '_assembled_operator'}),
      (BasicInterface, {'_uid', '_cache_region'}))
 
 is_equal_dispatch_table = {}

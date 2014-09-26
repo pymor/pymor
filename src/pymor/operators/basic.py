@@ -276,6 +276,12 @@ class NumpyMatrixBasedOperator(OperatorBase):
         else:
             mmwrite(filename, matrix, comment=matrix_name)
 
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        if '_assembled_operator' in d:
+            del d['_assembled_operator']
+        return d
+
 
 class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     """Wraps a 2D |NumPy Array| as a proper |Operator|.
