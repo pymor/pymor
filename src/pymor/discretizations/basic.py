@@ -46,6 +46,21 @@ class DiscretizationBase(DiscretizationInterface):
     def __estimate(self, U, mu=None):
         return self.estimator.estimate(U, mu=mu, discretization=self)
 
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        if 'estimate' in d:
+            del d['estimate']
+        if 'visualize' in d:
+            del d['visualize']
+        return d
+
+    def __setstate__(self, s):
+        if s['estimator']:
+            s['estimate'] = self.__estimate
+        if s['visualizer']:
+            s['visualize'] = self.__visualize
+        self.__dict__.update(s)
+
 
 class StationaryDiscretization(DiscretizationBase):
     """Generic class for discretizations of stationary problems.
