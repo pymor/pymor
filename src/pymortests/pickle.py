@@ -6,6 +6,7 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
+from types import FunctionType, MethodType
 
 from pymor.core import BasicInterface
 from pymor.core.pickle import dumps, loads, dumps_function, PicklingError
@@ -18,8 +19,6 @@ is_equal_ignored_attributes = \
 
 is_equal_dispatch_table = {}
 
-
-function_type = type(lambda:())
 
 def func_with_closure_generator():
     x = 42
@@ -65,9 +64,12 @@ def assert_is_equal(first, second):
             assert set(first.keys()) == set(second.keys())
             for k, u in first.iteritems():
                 _assert_is_equal(u, second.get(k))
-        elif isinstance(first, function_type):
+        elif isinstance(first, FunctionType):
             for k in ['func_closure', 'func_code', 'func_dict', 'func_doc', 'func_name']:
                 _assert_is_equal(getattr(first, k), getattr(second, k))
+        elif isinstance(first, MethodType):
+            _assert_is_equal(first.im_func, second.im_func)
+            _assert_is_equal(first.im_self, second.im_self)
         elif isinstance(first, cell_type):
             _assert_is_equal(first.cell_contents, second.cell_contents)
         elif not isinstance(first, BasicInterface):
