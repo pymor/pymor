@@ -331,6 +331,7 @@ class CacheableInterface(ImmutableInterface):
             return self.__cache_region
         except AttributeError:
             self.__cache_region = 'memory' if 'memory' in cache_regions else None
+            return self.__cache_region
 
     @cache_region.setter
     def cache_region(self, region):
