@@ -252,7 +252,7 @@ class NumpyMatrixBasedOperator(OperatorBase):
         if self.sparse is None:
             raise ValueError('Sparsity unkown, assemble first.')
         else:
-            return numpysolvers.invert_options(self.sparse)
+            return numpysolvers.invert_options(sparse=self.sparse)
 
     def export_matrix(self, filename, matrix_name=None, output_format='matlab', mu=None):
         """Save matrix of operator to a file.
