@@ -88,10 +88,10 @@ def analyze_pickle_demo(args):
 
         print()
 
-    # try:
-    #     plt.style.use('ggplot')
-    # except AttributeError:
-    #     pass  # plt.style is only available in newer matplotlib versions
+    try:
+        plt.style.use('ggplot')
+    except AttributeError:
+        pass  # plt.style is only available in newer matplotlib versions
 
     if hasattr(rb_discretization, 'estimate') and args['--detailed']:
 
