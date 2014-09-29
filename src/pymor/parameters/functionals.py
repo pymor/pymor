@@ -115,7 +115,7 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
 
     def __init__(self, expression, parameter_type, name=None):
         self.expression = expression
-        code = compile(expression, '<dune expression>', 'eval')
+        code = compile(expression, '<expression>', 'eval')
         functions = self.functions
         mapping = lambda mu: eval(code, functions, mu)
         super(ExpressionParameterFunctional, self).__init__(mapping, parameter_type, name)
