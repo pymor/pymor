@@ -94,6 +94,10 @@ class TriaGrid(AffineGridInterface):
         A = np.vstack((A0, A1))
         self.__embeddings = (A, B)
 
+    def __reduce__(self):
+        return (TriaGrid,
+                (self.num_intervals, self.domain))
+
     def __str__(self):
         return (('Tria-Grid on domain [{xmin},{xmax}] x [{ymin},{ymax}]\n' +
                  'x0-intervals: {x0ni}, x1-intervals: {x1ni}\n' +

@@ -50,6 +50,8 @@ class RectGrid(AffineGridWithOrthogonalCentersInterface):
             assert num_intervals[1] > 1
         self.num_intervals = num_intervals
         self.domain = np.array(domain)
+        self.identify_left_right = identify_left_right
+        self.identify_bottom_top = identify_bottom_top
 
         self.x0_num_intervals = num_intervals[0]
         self.x1_num_intervals = num_intervals[1]
@@ -130,6 +132,10 @@ class RectGrid(AffineGridWithOrthogonalCentersInterface):
         A = np.tile(np.diag([self.x0_diameter, self.x1_diameter]), (n_elements, 1, 1))
         B = shifts.T
         self.__embeddings = (A, B)
+
+    def __reduce__(self):
+        return (RectGrid,
+                (self.num_intervals, self.domain, self.identify_left_right, self.identify_bottom_top))
 
     def __str__(self):
         return (('Rect-Grid on domain [{xmin},{xmax}] x [{ymin},{ymax}]\n' +
