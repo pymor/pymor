@@ -7,7 +7,8 @@
 
 Usage:
   thermalblock.py [-ehp] [--estimator-norm=NORM] [--extension-alg=ALG] [--grid=NI] [--help]
-                  [--plot-solutions] [--plot-error-sequence] [--reductor=RED] [--test=COUNT]
+                  [--pickle=PREFIX] [--plot-solutions] [--plot-error-sequence] [--reductor=RED]
+                  [--test=COUNT]
                   XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
 
 
@@ -35,6 +36,9 @@ Options:
 
   -h, --help             Show this message.
 
+  --pickle=PREFIX        Pickle reduced discretizaion, as well as reconstructor and high-dimensional
+                         discretization to files with this prefix.
+
   -p, --plot-err         Plot error.
 
   --plot-solutions       Plot some example solutions.
@@ -60,6 +64,7 @@ import pymor.core as core
 core.logger.MAX_HIERACHY_LEVEL = 2
 from pymor.algorithms import greedy, trivial_basis_extension, gram_schmidt_basis_extension
 from pymor.analyticalproblems import ThermalBlockProblem
+from pymor.core.pickle import dump
 from pymor.discretizers import discretize_elliptic_cg
 from pymor.reductors import reduce_to_subbasis
 from pymor.reductors.linear import reduce_stationary_affine_linear
@@ -113,6 +118,14 @@ def thermalblock_demo(args):
                          use_estimator=args['--with-estimator'], error_norm=discretization.h1_norm,
                          extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'])
     rb_discretization, reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
+
+    if args['--pickle']:
+        print('\nWriting reduced discretization to file {} ...'.format(args['--pickle'] + '_reduced'))
+        with open(args['--pickle'] + '_reduced', 'w') as f:
+            dump(rb_discretization, f)
+        print('Writing detailed discretization and reconstructor to file {} ...'.format(args['--pickle'] + '_detailed'))
+        with open(args['--pickle'] + '_detailed', 'w') as f:
+            dump((discretization, reconstructor), f)
 
     print('\nSearching for maximum error on random snapshots ...')
 

@@ -58,8 +58,8 @@ class InstationaryAdvectionProblem(ImmutableInterface, Named):
     """
 
     def __init__(self, domain=RectDomain(), rhs=ConstantFunction(dim_domain=2),
-                 flux_function=ConstantFunction(value=np.array([0, 0]), dim_domain=2),
-                 flux_function_derivative=ConstantFunction(value=np.array([0, 0]), dim_domain=2),
+                 flux_function=ConstantFunction(value=np.array([0, 0]), dim_domain=1),
+                 flux_function_derivative=ConstantFunction(value=np.array([0, 0]), dim_domain=1),
                  dirichlet_data=ConstantFunction(value=0, dim_domain=2),
                  initial_data=ConstantFunction(value=1, dim_domain=2), T=1, name=None):
         self.domain = domain

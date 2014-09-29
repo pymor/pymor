@@ -55,8 +55,7 @@ are the following:
        that have ever existed, including previous runs of the application. This
        is achieved by building the id from a uuid4 which is newly created for
        each pyMOR run and a counter which is increased for any object that requests
-       an uid. This functionality is implemented using the :class:`UIDProvider`
-       instance :attr:`uid_provider`.
+       an uid.
 
 
 :class:`ImmutableInterface` derives from :class:`BasicInterface` and adds the following
@@ -110,6 +109,7 @@ import inspect
 import itertools
 import os
 import types
+import uuid
 from types import NoneType
 
 try:
@@ -127,19 +127,24 @@ from pymor.core.defaults import defaults_sid
 DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_COPY_DOCSTRINGS_DISABLE', 0)) == 1
 
 
-class UIDProvider(object):
-    """Provides unique, quickly computed ids by combinding a session UUID4 with a counter."""
+class UID(object):
+    '''Provides unique, quickly computed ids by combinding a session UUID4 with a counter.'''
+
+    __slots__ = ['uid']
+
+    prefix = '{}_'.format(uuid.uuid4())
+    counter = [0]
+
     def __init__(self):
-        self.counter = 0
-        import uuid
-        self.prefix = '{}_'.format(uuid.uuid4())
+        self.uid = self.prefix + str(self.counter[0])
+        self.counter[0] += 1
 
-    def __call__(self):
-        uid = self.prefix + str(self.counter)
-        self.counter += 1
-        return uid
+    def __getstate__(self):
+        return 1
 
-uid_provider = UIDProvider()
+    def __setstate__(self, v):
+        self.uid = self.prefix + str(self.counter[0])
+        self.counter[0] += 1
 
 
 class UberMeta(abc.ABCMeta):
@@ -177,8 +182,9 @@ class UberMeta(abc.ABCMeta):
         Copying of docstrings can be prevented by setting the `PYMOR_COPY_DOCSTRINGS_DISABLE` environment
         variable to `1`.
         """
-        if 'init_arguments' in classdict:
-            raise ValueError('init_arguments is a reserved class attribute for subclasses of BasicInterface')
+        for attr in ('_init_arguments', '_init_defaults'):
+            if attr in classdict:
+                raise ValueError(attr + ' is a reserved class attribute for subclasses of BasicInterface')
 
         for attr, item in classdict.items():
             if isinstance(item, types.FunctionType):
@@ -226,12 +232,15 @@ class UberMeta(abc.ABCMeta):
         # keyword-only arguemnts
         try:
             args, varargs, keywords, defaults = inspect.getargspec(c.__init__)
-            if varargs:
-                raise NotImplementedError
             assert args[0] == 'self'
-            c.init_arguments = tuple(args[1:])
+            c._init_arguments = tuple(args[1:])
+            if defaults:
+                c._init_defaults = dict(zip(args[-len(defaults):], defaults))
+            else:
+                c._init_defaults = dict()
         except TypeError:       # happens when no one declares an __init__ method and object is reached
-            c.init_arguments = tuple()
+            c._init_arguments = tuple()
+            c._init_defaults = dict()
         return c
 
 
@@ -240,9 +249,6 @@ class BasicInterface(object):
 
     Attributes
     ----------
-    init_arguments
-        The list of arguments accepted by `__init__` in their specified
-        order.
     locked
         True if the instance is made immutable using `lock`.
     logger
@@ -289,7 +295,7 @@ class BasicInterface(object):
 
     @property
     def with_arguments(self):
-        init_arguments = self.init_arguments
+        init_arguments = self._init_arguments
         for arg in init_arguments:
             if not hasattr(self, arg):
                 self._with_arguments_error = "Instance does not have attribute for __init__ argument '{}'".format(arg)
@@ -329,7 +335,7 @@ class BasicInterface(object):
         """
         my_type = type(self) if new_class is None else new_class
         init_args = kwargs
-        for arg in my_type.init_arguments:
+        for arg in my_type._init_arguments:
             if arg not in init_args:
                 init_args[arg] = getattr(self, arg)
         c = my_type(**init_args)
@@ -361,7 +367,7 @@ class BasicInterface(object):
         if doit:
             self._logger = logger.dummy_logger
         else:
-            self._logger = type(self)._logger
+            del self._logger
 
     def enable_logging(self, doit=True):
         """Enable logging output for this instance."""
@@ -397,8 +403,8 @@ class BasicInterface(object):
     @property
     def uid(self):
         if self._uid is None:
-            self._uid = uid_provider()
-        return self._uid
+            self._uid = UID()
+        return self._uid.uid
 
 
 contract = decorators.contract
@@ -448,7 +454,7 @@ def _calculate_sid(obj, name):
             return obj
         elif t_obj is np.ndarray:
             if obj.size < 64:
-                return 'array', obj.shape, obj.dtype.str, obj.tostring()
+                return _calculate_sid(obj.tolist(), name)
             else:
                 raise ValueError('sid calculation faild at large numpy array {}'.format(name))
         else:
@@ -511,7 +517,7 @@ class ImmutableMeta(UberMeta):
 
     def __new__(cls, classname, bases, classdict):
         c = UberMeta.__new__(cls, classname, bases, classdict)
-        init_arguments = c.init_arguments
+        init_arguments = c._init_arguments
         try:
             for a in c.sid_ignore:
                 if a not in init_arguments and a not in ImmutableMeta.init_arguments_never_warn:
@@ -527,11 +533,13 @@ class ImmutableMeta(UberMeta):
         instance = super(ImmutableMeta, self).__call__(*args, **kwargs)
         if instance.calculate_sid:
             try:
-                kwargs.update((k, o) for k, o in itertools.izip(instance.init_arguments, args))
-                kwarg_sids = tuple((k, _calculate_sid(o, k))
-                                   for k, o in sorted(kwargs.iteritems())
-                                   if k not in instance.sid_ignore)
-                instance.sid = (type(instance), kwarg_sids, defaults_sid())
+                arguments = instance._init_defaults.copy()
+                arguments.update(kwargs)
+                arguments.update((k, o) for k, o in itertools.izip(instance._init_arguments, args))
+                arguments_sids = tuple((k, _calculate_sid(o, k))
+                                       for k, o in sorted(arguments.iteritems())
+                                       if k not in instance.sid_ignore)
+                instance.sid = (type(instance), arguments_sids, defaults_sid())
                 ImmutableMeta.sids_created += 1
             except ValueError as e:
                 instance.sid_failure = str(e)

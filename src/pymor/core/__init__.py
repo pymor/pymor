@@ -7,12 +7,6 @@ from pymor.core.interfaces import (BasicInterface, ImmutableInterface, abstractm
                                    enable_sid_generation)
 from pymor.core.logger import getLogger, set_log_levels
 
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle as pickle
-
-from functools import partial
 
 
 class Unpicklable(object):
@@ -22,12 +16,6 @@ class Unpicklable(object):
     pass
 
 
-dump = partial(pickle.dump, protocol=-1)
-dumps = partial(pickle.dumps, protocol=-1)
-load = pickle.load
-loads = pickle.loads
-
-
 try:
     import numpy as np
     A = np.zeros((0, 1))
@@ -35,4 +23,3 @@ try:
     NUMPY_INDEX_QUIRK = False
 except IndexError:
     NUMPY_INDEX_QUIRK = True
-

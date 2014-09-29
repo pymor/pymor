@@ -4,6 +4,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+from cPickle import loads, dumps
 from itertools import product, chain, izip
 from numbers import Number
 
@@ -15,6 +16,7 @@ from pymor.la import VectorSpace
 from pymortests.fixtures.vectorarray import \
     (vector_array_without_reserve, vector_array, compatible_vector_array_pair_without_reserve,
      compatible_vector_array_pair, incompatible_vector_array_pair)
+from pymortests.pickle import assert_picklable_without_dumps_function
 
 
 def ind_complement(v, ind):
@@ -1146,3 +1148,7 @@ def test_gramian_wrong_ind(vector_array):
     for ind in invalid_inds(v):
         with pytest.raises(Exception):
             v.gramian(ind)
+
+
+def test_pickle(vector_array):
+    assert_picklable_without_dumps_function(vector_array)

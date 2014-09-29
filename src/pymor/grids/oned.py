@@ -30,6 +30,7 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
         self.reference_element = line
         self._domain = np.array(domain)
         self._num_intervals = num_intervals
+        self._identify_left_right = identify_left_right
         self._sizes = [num_intervals, num_intervals] if identify_left_right else [num_intervals, num_intervals + 1]
         self._width = np.abs(self._domain[1] - self._domain[0]) / self._num_intervals
         self.__subentities = np.vstack((np.arange(self._num_intervals, dtype=np.int32),
@@ -38,6 +39,10 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
             self.__subentities[-1, -1] = 0
         self.__A = np.ones(self._num_intervals, dtype=np.int32)[:, np.newaxis, np.newaxis] * self._width
         self.__B = (self._domain[0] + self._width * (np.arange(self._num_intervals, dtype=np.int32)))[:, np.newaxis]
+
+    def __reduce__(self):
+        return (OnedGrid,
+                (self._domain, self._num_intervals, self._identify_left_right))
 
     def __str__(self):
         return ('OnedGrid, domain [{xmin},{xmax}]'

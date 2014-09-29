@@ -71,8 +71,9 @@ from types import MethodType
 
 import numpy as np
 
+from pymor.core import ImmutableInterface
 from pymor.core.defaults import defaults, defaults_sid
-from pymor.core import dump, dumps, load, ImmutableInterface
+from pymor.core.pickle import dump, dumps, load
 
 
 class CacheRegion(object):
@@ -330,6 +331,7 @@ class CacheableInterface(ImmutableInterface):
             return self.__cache_region
         except AttributeError:
             self.__cache_region = 'memory' if 'memory' in cache_regions else None
+            return self.__cache_region
 
     @cache_region.setter
     def cache_region(self, region):
