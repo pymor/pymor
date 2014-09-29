@@ -8,7 +8,7 @@ import numpy as np
 
 import pytest
 
-from pymor.functions.basic import ConstantFunction, GenericFunction
+from pymor.functions.basic import ConstantFunction, GenericFunction, ExpressionFunction
 
 
 constant_functions = \
@@ -47,12 +47,17 @@ generic_functions = \
 picklable_generic_functions = \
     [GenericFunction(importable_function, dim_domain=3, shape_range=(1,))]
 
-@pytest.fixture(params=constant_functions + generic_functions + picklable_generic_functions)
+expression_functions = \
+    [ExpressionFunction('x', dim_domain=2, shape_range=(2,)),
+     ExpressionFunction("mu['c']*x", dim_domain=1, shape_range=(1,), parameter_type={'c': tuple()}),
+     ExpressionFunction("mu['c'][2]*sin(x)", dim_domain=1, shape_range=(1,), parameter_type={'c': (3,)})]
+
+@pytest.fixture(params=constant_functions + generic_functions + picklable_generic_functions + expression_functions)
 def function(request):
     return request.param
 
 
-@pytest.fixture(params=constant_functions + picklable_generic_functions)
+@pytest.fixture(params=constant_functions + picklable_generic_functions + expression_functions)
 def picklable_function(request):
     return request.param
 

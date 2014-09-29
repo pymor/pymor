@@ -166,6 +166,52 @@ class GenericFunction(FunctionBase):
         self.__dict__.update(state)
 
 
+class ExpressionFunction(GenericFunction):
+    """Turns a Python expression given as a string into a |Function|.
+
+    Some |NumPy| arithmetic functions like 'sin', 'log', 'min' are supported.
+    For a full list see the `functions` class attribute.
+
+    .. warning::
+       :meth:`eval` is used to evaluate the given expression. As a consequence,
+       using this class with expression strings from untrusted sources will cause
+       mayhem and destruction!
+
+    Parameters
+    ----------
+    expression
+        The Python expression of one variable `x` as a string.
+    dim_domain
+        The dimension of the domain.
+    shape_range
+        The shape of the values returned by the expression.
+    parameter_type
+        The |ParameterType| the expression accepts.
+    name
+        The name of the function.
+    """
+
+    functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',
+                                             'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
+                                             'exp', 'exp2', 'log', 'log2', 'log10',
+                                             'min', 'minimum', 'max', 'maximum', }}
+
+    def __init__(self, expression, dim_domain=1, shape_range=tuple(), parameter_type=None, name=None):
+        self.expression = expression
+        code = compile(expression, '<expression>', 'eval')
+        functions = self.functions
+        mapping = lambda x, mu=None: eval(code, functions, {'x':x, 'mu':mu})
+        super(ExpressionFunction, self).__init__(mapping, dim_domain, shape_range, parameter_type, name)
+
+    def __repr__(self):
+        return 'ExpressionFunction({}, {}, {}, {})'.format(self.expression, repr(self.parameter_type),
+                                                           self.shape_range, self.parameter_type)
+
+    def __reduce__(self):
+        return (ExpressionFunction,
+                (self.expression, self.dim_domain, self.shape_range, self.parameter_type, self.name))
+
+
 class LincombFunction(FunctionBase):
     """A |Function| representing a linear combination of |Functions|.
 
