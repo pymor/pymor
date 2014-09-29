@@ -9,7 +9,12 @@ from collections import OrderedDict
 
 import numpy as np
 from scipy.sparse import issparse
-from scipy.sparse.linalg import bicgstab, spsolve, spilu, lgmres, lsmr, lsqr, LinearOperator
+from scipy.sparse.linalg import bicgstab, spsolve, spilu, lgmres, lsqr, LinearOperator
+try:
+    from scipy.sparse.linalg import lsmr
+    HAVE_SCIPY_LSMR = True
+except ImportError:
+    HAVE_SCIPY_LSMR = False
 
 from pymor.core.defaults import defaults, defaults_sid
 from pymor.core.exceptions import InversionError
@@ -276,13 +281,6 @@ def sparse_options(default_solver='spsolve',
                                     'maxiter': lgmres_maxiter,
                                     'inner_m': lgmres_inner_m,
                                     'outer_k': lgmres_outer_k}),
-            ('least_squares_lsmr', {'type': 'least_squares_lsmr',
-                                    'damp': least_squares_lsmr_damp,
-                                    'atol': least_squares_lsmr_atol,
-                                    'btol': least_squares_lsmr_btol,
-                                    'conlim': least_squares_lsmr_conlim,
-                                    'maxiter': least_squares_lsmr_maxiter,
-                                    'show': least_squares_lsmr_show}),
             ('least_squares_lsqr', {'type': 'least_squares_lsqr',
                                     'damp': least_squares_lsqr_damp,
                                     'atol': least_squares_lsqr_atol,
@@ -290,6 +288,15 @@ def sparse_options(default_solver='spsolve',
                                     'conlim': least_squares_lsqr_conlim,
                                     'iter_lim': least_squares_lsqr_iter_lim,
                                     'show': least_squares_lsqr_show}))
+
+    if HAVE_SCIPY_LSMR:
+        opts += (('least_squares_lsmr', {'type': 'least_squares_lsmr',
+                                         'damp': least_squares_lsmr_damp,
+                                         'atol': least_squares_lsmr_atol,
+                                         'btol': least_squares_lsmr_btol,
+                                         'conlim': least_squares_lsmr_conlim,
+                                         'maxiter': least_squares_lsmr_maxiter,
+                                         'show': least_squares_lsmr_show}),)
 
     if HAVE_PYAMG:
         opts += (('pyamg',    {'type': 'pyamg',
