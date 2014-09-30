@@ -152,6 +152,7 @@ class StationaryAffineLinearReducedEstimator(ImmutableInterface):
     def __init__(self, estimator_matrix, coercivity_estimator):
         self.estimator_matrix = estimator_matrix
         self.coercivity_estimator = coercivity_estimator
+        self.norm = induced_norm(estimator_matrix)
 
     def estimate(self, U, mu, discretization):
         d = discretization
@@ -169,7 +170,7 @@ class StationaryAffineLinearReducedEstimator(ImmutableInterface):
 
         C = np.hstack((CR, np.dot(CO[..., np.newaxis], U.data).ravel()))
 
-        est = induced_norm(self.estimator_matrix)(NumpyVectorArray(C))
+        est = self.norm(NumpyVectorArray(C))
         if self.coercivity_estimator:
             est /= self.coercivity_estimator(mu)
 
