@@ -292,7 +292,7 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
     dirichlet_clear_diag
         If `True`, also set diagonal entries corresponding to Dirichlet boundary DOFs to
         zero (e.g. for affine decomposition). Otherwise, if either `dirichlet_clear_rows` or
-    `dirichlet_clear_columns` is `True`, the diagonal entries are set to one.
+        `dirichlet_clear_columns` is `True`, the diagonal entries are set to one.
     name
         The name of the product.
     """
