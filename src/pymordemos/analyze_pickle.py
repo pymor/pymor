@@ -6,7 +6,7 @@
 """Analyze pickled data demo.
 
 Usage:
-  analyze_pickly.py [-h] [--detailed=DETAILED_DATA] [--help]
+  analyze_pickly.py [-h] [--detailed=DETAILED_DATA] [--error-norm=NORM] [--help]
                     REDUCED_DATA SAMPLES
 
 This demo loads a pickled reduced discretization, solves for random
@@ -26,6 +26,8 @@ Arguments:
 Options:
   --detailed=DETAILED_DATA  File containing the high-dimensional discretization
                             and the reconstructor.
+
+  --error-norm=NORM         Name of norm in which to compute the errors.
 """
 
 from __future__ import absolute_import, division, print_function
@@ -83,7 +85,11 @@ def analyze_pickle_demo(args):
         for u, mu in zip(us, mus):
             print('Calculating error for {} ... '.format(mu))
             sys.stdout.flush()
-            errs.append(np.max(discretization.h1_norm((discretization.solve(mu) - reconstructor.reconstruct(u)))))
+            err = discretization.solve(mu) - reconstructor.reconstruct(u)
+            if args['--error-norm']:
+                errs.append(np.max(getattr(discretization, args['--error-norm'] + '_norm')(err)))
+            else:
+                errs.append(np.max(err.l2_norm()))
             print('done')
 
         print()
