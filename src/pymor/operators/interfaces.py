@@ -7,10 +7,9 @@ from __future__ import absolute_import, division, print_function
 
 from pymor.core import ImmutableInterface, abstractmethod, abstractstaticmethod
 from pymor.parameters import Parametric
-from pymor.tools import Named
 
 
-class OperatorInterface(ImmutableInterface, Parametric, Named):
+class OperatorInterface(ImmutableInterface, Parametric):
     """Interface for |Parameter| dependent discrete operators.
 
     Every operator is viewed as a map ::

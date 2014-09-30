@@ -56,6 +56,9 @@ are the following:
        is achieved by building the id from a uuid4 which is newly created for
        each pyMOR run and a counter which is increased for any object that requests
        an uid.
+    7. If not set by the user to another value, :attr:`BasicInterface.name` is
+       generated from the class name and the :meth:`~BasicInterface.uid` of the
+       instance.
 
 
 :class:`ImmutableInterface` derives from :class:`BasicInterface` and adds the following
@@ -256,6 +259,9 @@ class BasicInterface(object):
         name as prefix.
     logging_disabled
         `True` if logging has been disabled.
+    name
+        The name of the instance. If not set by the user, the name is
+        generated from the class name and the `uid` of the instance.
     uid
         A unique id for each instance. The uid is obtained by using
         :class:`UIDProvider` and should be unique for all pyMOR objects
@@ -292,6 +298,15 @@ class BasicInterface(object):
     def unlock(self):
         """Make the instance mutable again, after it has been locked using `lock`."""
         object.__setattr__(self, '_locked', False)
+
+    @property
+    def name(self):
+        n = getattr(self, '_name', None)
+        return n or '{}_{}'.format(type(self).__name__, self.uid)
+
+    @name.setter
+    def name(self, n):
+        self._name = n
 
     @property
     def with_arguments(self):

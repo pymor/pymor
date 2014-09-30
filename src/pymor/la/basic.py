@@ -9,10 +9,9 @@ import numpy as np
 from pymor.core.defaults import defaults
 from pymor.core import ImmutableInterface
 from pymor.parameters import Parametric
-from pymor.tools.named import Named
 
 
-class InducedNorm(ImmutableInterface, Parametric, Named):
+class InducedNorm(ImmutableInterface, Parametric):
 
     def __init__(self, product, raise_negative, tol, name):
         self.product = product

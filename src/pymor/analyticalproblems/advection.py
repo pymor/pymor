@@ -12,10 +12,9 @@ import numpy as np
 from pymor.core import ImmutableInterface
 from pymor.domaindescriptions import RectDomain
 from pymor.functions import ConstantFunction
-from pymor.tools import Named
 
 
-class InstationaryAdvectionProblem(ImmutableInterface, Named):
+class InstationaryAdvectionProblem(ImmutableInterface):
     """Instationary advection problem.
 
     The problem is to solve ::

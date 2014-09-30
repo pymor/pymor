@@ -6,7 +6,6 @@ from __future__ import absolute_import, division, print_function
 
 from pymor.core import ImmutableInterface, abstractmethod
 from pymor.parameters.base import Parametric
-from pymor.tools import Named
 
 
 class ParameterSpaceInterface(ImmutableInterface):
@@ -26,7 +25,7 @@ class ParameterSpaceInterface(ImmutableInterface):
         pass
 
 
-class ParameterFunctionalInterface(ImmutableInterface, Parametric, Named):
+class ParameterFunctionalInterface(ImmutableInterface, Parametric):
     """Interface for parameter functionals.
 
     A parameter functional is simply a function mapping a |Parameter| to
