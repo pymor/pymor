@@ -38,7 +38,7 @@ class VectorArrayInterface(BasicInterface):
     Most methods provide `ind` and/or `o_ind` arguments which are used to specify on which
     vectors the method is supposed to operate. If `ind` (`o_ind`) is `None` the whole array
     is selected. Otherwise, `ind` can be a single index in `range(len(self))`, a `list`
-    of indices or a one-dimensional |NumPy array| of indices. One index can be repeated
+    of indices or a one-dimensional |NumPy array| of indices. An index can be repeated
     in which case the corresponding vector is selected several times.
 
     Attributes
