@@ -66,6 +66,7 @@ from pymor.algorithms import greedy, trivial_basis_extension, gram_schmidt_basis
 from pymor.analyticalproblems import ThermalBlockProblem
 from pymor.core.pickle import dump
 from pymor.discretizers import discretize_elliptic_cg
+from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.reductors import reduce_to_subbasis
 from pymor.reductors.linear import reduce_stationary_affine_linear
 core.set_log_levels({'pymor.algorithms': 'INFO',
@@ -109,7 +110,9 @@ def thermalblock_demo(args):
     print('RB generation ...')
 
     error_product = discretization.h1_product if args['--estimator-norm'] == 'h1' else None
-    reductor = partial(reduce_stationary_affine_linear, error_product=error_product)
+    reductor = partial(reduce_stationary_affine_linear, error_product=error_product,
+                       coercivity_estimator=ExpressionParameterFunctional('min(diffusion)',
+                                                                          discretization.parameter_type))
     extension_algorithms = {'trivial': trivial_basis_extension,
                             'gram_schmidt': gram_schmidt_basis_extension,
                             'h1_gram_schmidt': partial(gram_schmidt_basis_extension, product=discretization.h1_product)}

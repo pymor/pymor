@@ -14,8 +14,8 @@ from pymor.operators import NumpyMatrixOperator, LincombOperator
 from pymor.reductors.basic import reduce_generic_rb
 
 
-def reduce_stationary_affine_linear(discretization, RB, error_product=None, disable_caching=True,
-                                    extends=None):
+def reduce_stationary_affine_linear(discretization, RB, error_product=None, coercivity_estimator=None,
+                                    disable_caching=True, extends=None):
     """Reductor for linear |StationaryDiscretizations| whose with affinely decomposed operator and rhs.
 
     This reductor uses :meth:`~pymor.reductors.basic.reduce_generic_rb` for the actual
@@ -33,6 +33,9 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
     error_product
         Scalar product given as an |Operator| used to calculate Riesz
         representative of the residual. If `None`, the Euclidean product is used.
+    coercivity_estimator
+        `None` or a |Parameterfunctional| returning a lower bound for the coercivity
+        constant of the given problem.
     disable_caching
         If `True`, caching of solutions is disabled for the reduced |Discretization|.
     extends
@@ -133,7 +136,7 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, disa
 
     estimator_matrix = NumpyMatrixOperator(estimator_matrix)
 
-    estimator = StationaryAffineLinearReducedEstimator(estimator_matrix)
+    estimator = StationaryAffineLinearReducedEstimator(estimator_matrix, coercivity_estimator)
     rd = rd.with_(estimator=estimator)
     data.update(R_R=R_R, RR_R=RR_R, R_Os=R_Os, RR_Os=RR_Os)
 
@@ -146,8 +149,9 @@ class StationaryAffineLinearReducedEstimator(ImmutableInterface):
     Not to be used directly.
     """
 
-    def __init__(self, estimator_matrix):
+    def __init__(self, estimator_matrix, coercivity_estimator):
         self.estimator_matrix = estimator_matrix
+        self.coercivity_estimator = coercivity_estimator
 
     def estimate(self, U, mu, discretization):
         d = discretization
@@ -165,7 +169,11 @@ class StationaryAffineLinearReducedEstimator(ImmutableInterface):
 
         C = np.hstack((CR, np.dot(CO[..., np.newaxis], U.data).ravel()))
 
-        return induced_norm(self.estimator_matrix)(NumpyVectorArray(C))
+        est = induced_norm(self.estimator_matrix)(NumpyVectorArray(C))
+        if self.coercivity_estimator:
+            est /= self.coercivity_estimator(mu)
+
+        return est
 
     def restricted_to_subbasis(self, dim, discretization):
         d = discretization
@@ -177,4 +185,4 @@ class StationaryAffineLinearReducedEstimator(ImmutableInterface):
                                  ((np.arange(co)*old_dim)[..., np.newaxis] + np.arange(dim)).ravel() + cr))
         matrix = self.estimator_matrix._matrix[indices, :][:, indices]
 
-        return StationaryAffineLinearReducedEstimator(NumpyMatrixOperator(matrix))
+        return StationaryAffineLinearReducedEstimator(NumpyMatrixOperator(matrix), self.coercivity_estimator)
