@@ -64,7 +64,7 @@ class NonProjectedReconstructor(ImmutableInterface):
             return U
 
 
-def reduce_residual(operator, functional=None, RB=None, product=None, disable_caching=True, extends=None):
+def reduce_residual(operator, functional=None, RB=None, product=None, extends=None):
     """Generic reduced basis residual reductor.
     """
     assert functional == None \
@@ -72,10 +72,10 @@ def reduce_residual(operator, functional=None, RB=None, product=None, disable_ca
     assert RB is None or RB in operator.source
     assert product is None or product.source == product.range == operator.range
     assert extends is None or len(extends) == 3
-    if extends is not None:
-        raise NotImplementedError
 
     logger = getLogger('pymor.reductors.reduce_residual')
+    if extends is not None:
+        logger.warn('Using "extends" not implemented yet.')
 
     if RB is None:
         RB = operator.source.empty()
