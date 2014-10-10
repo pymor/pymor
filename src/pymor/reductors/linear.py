@@ -20,9 +20,7 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, coer
 
     This reductor uses :meth:`~pymor.reductors.basic.reduce_generic_rb` for the actual
     RB-projection. The only addition is an error estimator. The estimator evaluates the
-    norm of the residual with respect to a given inner product. Currently, we do not
-    estimate coercivity constant of the operator, therefore the estimated error
-    can be smaller than the actual error.
+    norm of the residual with respect to a given inner product.
 
     Parameters
     ----------
