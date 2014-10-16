@@ -127,6 +127,7 @@ class DummyLogger(object):
     propagate = False
     debug = nop
     info = nop
+    warn = nop
     warning = nop
     error = nop
     critical = nop
