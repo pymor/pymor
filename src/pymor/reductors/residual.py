@@ -74,13 +74,16 @@ def reduce_residual(operator, functional=None, RB=None, product=None, extends=No
     assert extends is None or len(extends) == 3
 
     logger = getLogger('pymor.reductors.reduce_residual')
-    if extends is not None:
-        logger.warn('Using "extends" not implemented yet.')
 
     if RB is None:
         RB = operator.source.empty()
 
-    residual_range = operator.range.empty()
+    if extends and isinstance(extends[0], NonProjectedResiudalOperator):
+        extends = None
+    if extends:
+        RB_ind = range(extends[0].source.dim, len(RB))
+    else:
+        RB_ind = None
 
     class CollectionError(Exception):
         def __init__(self, op):
@@ -88,20 +91,25 @@ def reduce_residual(operator, functional=None, RB=None, product=None, extends=No
             self.op = op
 
     def collect_ranges(op, functional, residual_range):
-        if isinstance(op, LincombOperator):
+        if functional and extends:
+            return  # we have already added all functionals to residual_range
+        elif isinstance(op, LincombOperator):
             for o in op.operators:
                 collect_ranges(o, functional, residual_range)
         elif isinstance(op, EmpiricalInterpolatedOperator):
+            if extends:
+                return  # we have already added the collateral_basis
             if hasattr(op, 'collateral_basis'):
                 residual_range.append(op.collateral_basis)
         elif op.linear and not op.parametric:
             if not functional:
-                residual_range.append(op.apply(RB))
+                residual_range.append(op.apply(RB, ind=RB_ind))
             else:
                 residual_range.append(op.as_vector())
         else:
             raise CollectionError(op)
 
+    residual_range = operator.range.empty()
     try:
         collect_ranges(operator, False, residual_range)
         collect_ranges(functional, True, residual_range)
@@ -116,8 +124,15 @@ def reduce_residual(operator, functional=None, RB=None, product=None, extends=No
         logger.info('Computing Riesz representatives ...')
         residual_range = product.apply_inverse(residual_range)
 
+    if extends:
+        residual_range, new_residual_range = extends[1].RB.copy(), residual_range
+        gram_schmidt_offset = len(residual_range)
+        residual_range.append(new_residual_range)
+    else:
+        gram_schmidt_offset = 0
+
     logger.info('Orthonormalizing ...')
-    gram_schmidt(residual_range, product=product, copy=False)
+    gram_schmidt(residual_range, offset=gram_schmidt_offset, product=product, copy=False)
 
     logger.info('Projecting ...')
     operator = operator.projected(RB, residual_range, product=None)  # the product always cancels out.
