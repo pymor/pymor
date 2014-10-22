@@ -149,6 +149,7 @@ def thermalblock_demo(args):
         cond_max = -1
         for mu in mus:
             print('.', end='')
+            sys.stdout.flush()
             u = rd.solve(mu)
             URB = rc.reconstruct(u)
             U = d.solve(mu)
