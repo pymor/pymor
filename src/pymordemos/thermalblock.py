@@ -43,6 +43,9 @@ Options:
 
   --plot-solutions       Plot some example solutions.
 
+  --reductor=RED         Reductor (error estimator) to choose (traditional, residual_basis)
+                         [default: residual_basis]
+
   --test=COUNT           Use COUNT snapshots for stochastic error estimation
                          [default: 10].
 """
@@ -69,9 +72,11 @@ from pymor.discretizers import discretize_elliptic_cg
 from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.reductors import reduce_to_subbasis
 from pymor.reductors.linear import reduce_stationary_affine_linear
+from pymor.reductors.stationary import reduce_stationary_coercive
 core.set_log_levels({'pymor.algorithms': 'INFO',
                      'pymor.discretizations': 'INFO',
-                     'pymor.la': 'INFO'})
+                     'pymor.la': 'INFO',
+                     'pymor.reductors': 'INFO'})
 
 
 def thermalblock_demo(args):
@@ -85,6 +90,8 @@ def thermalblock_demo(args):
     assert args['--estimator-norm'] in {'trivial', 'h1'}
     args['--extension-alg'] = args['--extension-alg'].lower()
     assert args['--extension-alg'] in {'trivial', 'gram_schmidt', 'h1_gram_schmidt'}
+    args['--reductor'] = args['--reductor'].lower()
+    assert args['--reductor'] in {'traditional', 'residual_basis'}
 
     print('Solving on TriaGrid(({0},{0}))'.format(args['--grid']))
 
@@ -110,9 +117,12 @@ def thermalblock_demo(args):
     print('RB generation ...')
 
     error_product = discretization.h1_product if args['--estimator-norm'] == 'h1' else None
-    reductor = partial(reduce_stationary_affine_linear, error_product=error_product,
-                       coercivity_estimator=ExpressionParameterFunctional('min(diffusion)',
-                                                                          discretization.parameter_type))
+    coercivity_estimator=ExpressionParameterFunctional('min(diffusion)', discretization.parameter_type)
+    reductors = {'residual_basis': partial(reduce_stationary_coercive, error_product=error_product,
+                                   coercivity_estimator=coercivity_estimator),
+                 'traditional': partial(reduce_stationary_affine_linear, error_product=error_product,
+                                        coercivity_estimator=coercivity_estimator)}
+    reductor = reductors[args['--reductor']]
     extension_algorithms = {'trivial': trivial_basis_extension,
                             'gram_schmidt': gram_schmidt_basis_extension,
                             'h1_gram_schmidt': partial(gram_schmidt_basis_extension, product=discretization.h1_product)}
