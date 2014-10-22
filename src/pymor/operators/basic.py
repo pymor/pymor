@@ -365,7 +365,8 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         assert dim_source is None or dim_source <= self.source.dim
         assert dim_range is None or dim_range <= self.range.dim
         name = name or '{}_projected_to_subbasis'.format(self.name)
-        return NumpyMatrixOperator(self._matrix[:dim_range, :dim_source], name=name)
+        # copy instead of just slicing the matrix to ensure contiguous memory
+        return NumpyMatrixOperator(self._matrix[:dim_range, :dim_source].copy(), name=name)
 
     def assemble_lincomb(self, operators, coefficients, name=None):
         if not all(isinstance(op, NumpyMatrixOperator) for op in operators):
