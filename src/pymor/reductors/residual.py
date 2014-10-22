@@ -17,12 +17,13 @@ from pymor.reductors.basic import GenericRBReconstructor
 
 class ResidualOperator(OperatorBase):
 
-    def __init__(self, operator, functional):
+    def __init__(self, operator, functional, name=None):
         self.source = operator.source
         self.range = operator.range
         self.linear = operator.linear
         self.operator = operator
         self.functional = functional
+        self.name = name
 
     def apply(self, U, ind=None, mu=None):
         V = self.operator.apply(U, ind=ind, mu=mu)
@@ -35,6 +36,11 @@ class ResidualOperator(OperatorBase):
         else:
             R = - V
         return R
+
+    def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
+        return ResidualOperator(self.operator.projected_to_subbasis(dim_source, dim_range),
+                                self.functional.projected_to_subbasis(dim_range, None),
+                                name=name)
 
 
 class NonProjectedResiudalOperator(ResidualOperator):
@@ -50,6 +56,13 @@ class NonProjectedResiudalOperator(ResidualOperator):
             return R_riesz * (np.sqrt(R_riesz.dot(R, pairwise=True)) / R_riesz.l2_norm())[0]
         else:
             return R
+
+    def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
+        product = self.product.projected_to_subbasis(dim_range, dim_range) if self.product is not None else None
+        return ResidualOperator(self.operator.projected_to_subbasis(dim_source, dim_range),
+                                self.functional.projected_to_subbasis(dim_range, None),
+                                product,
+                                name=name)
 
 
 class NonProjectedReconstructor(ImmutableInterface):
