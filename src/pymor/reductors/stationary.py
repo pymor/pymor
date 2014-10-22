@@ -64,7 +64,8 @@ def reduce_stationary_coercive(discretization, RB, error_product=None, coercivit
     residual, residual_reconstructor, residual_data = reduce_residual(discretization.operator, discretization.rhs, RB,
                                                                       product=error_product, extends=old_residual_data)
 
-    estimator = StationaryCoerciveEstimator(residual, coercivity_estimator)
+    estimator = StationaryCoerciveEstimator(residual, residual_data.get('residual_range_dims', None),
+                                            coercivity_estimator)
 
     rd = rd.with_(estimator=estimator)
 
@@ -79,8 +80,9 @@ class StationaryCoerciveEstimator(ImmutableInterface):
     Not to be used directly.
     """
 
-    def __init__(self, residual, coercivity_estimator):
+    def __init__(self, residual, residual_range_dims, coercivity_estimator):
         self.residual = residual
+        self.residual_range_dims = residual_range_dims
         self.coercivity_estimator = coercivity_estimator
 
     def estimate(self, U, mu, discretization):
@@ -88,3 +90,13 @@ class StationaryCoerciveEstimator(ImmutableInterface):
         if self.coercivity_estimator:
             est /= self.coercivity_estimator(mu)
         return est
+
+    def restricted_to_subbasis(self, dim, discretization):
+        if self.residual_range_dims:
+            residual_range_dims = self.residual_range_dims[:dim + 1]
+            residual = self.residual.projected_to_subbasis(dim, residual_range_dims[-1])
+            return StationaryCoerciveEstimator(residual, residual_range_dims, self.coercivity_estimator)
+        else:
+            self.logger.warn('Cannot efficiently reduce to subbasis')
+            return StationaryCoerciveEstimator(self.residual.projected_to_subbasis(dim, None), None,
+                                               self.coercivity_estimator)
