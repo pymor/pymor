@@ -6,8 +6,11 @@
 """Analyze pickled data demo.
 
 Usage:
-  analyze_pickly.py [-h] [--detailed=DETAILED_DATA] [--error-norm=NORM] [--help]
+  analyze_pickly.py histogram [--detailed=DETAILED_DATA] [--error-norm=NORM]
                     REDUCED_DATA SAMPLES
+  analyze_pickly.py convergence [--detailed=DETAILED_DATA] [--error-norm=NORM] [--ndim=NDIM]
+                    REDUCED_DATA SAMPLES
+  analyze_pickly.py [-h] [--help]
 
 This demo loads a pickled reduced discretization, solves for random
 parameters, estimates the reduction errors and then visualizes these
@@ -28,6 +31,9 @@ Options:
                             and the reconstructor.
 
   --error-norm=NORM         Name of norm in which to compute the errors.
+
+  --ndim=NDIM               Number of reduced basis dimensions for which to estimate
+                            the error.
 """
 
 from __future__ import absolute_import, division, print_function
@@ -53,7 +59,7 @@ core.set_log_levels({'pymor.algorithms': 'INFO',
                      'pymor.la': 'INFO'})
 
 
-def analyze_pickle_demo(args):
+def analyze_pickle_histogram(args):
     args['SAMPLES'] = int(args['SAMPLES'])
 
     print('Loading reduced discretization ...')
@@ -170,6 +176,101 @@ def analyze_pickle_demo(args):
     else:
         raise ValueError('Nothing to plot!')
 
+
+def analyze_pickle_convergence(args):
+    args['SAMPLES'] = int(args['SAMPLES'])
+
+    print('Loading reduced discretization ...')
+    rb_discretization = load(open(args['REDUCED_DATA']))
+
+    if args['--detailed']:
+        print('Loading high-dimensional data ...')
+        discretization, reconstructor = load(open(args['--detailed']))
+
+    if not hasattr(rb_discretization, 'estimate') and not args['--detailed']:
+        raise ValueError('Nothing to do! (Neither estimates nor true error can be computed.)')
+
+    dim = rb_discretization.solution_space.dim
+    if args['--ndim']:
+        dims = np.linspace(0, dim, args['--ndim'], dtype=np.int)
+    else:
+        dims = np.arange(dim + 1)
+
+    mus = list(rb_discretization.parameter_space.sample_randomly(args['SAMPLES']))
+
+    ESTS = []
+    ERRS = []
+    T_SOLVES = []
+    T_ESTS = []
+    for N in dims:
+        rd, rc, _ = reduce_to_subbasis(rb_discretization, N)
+        print('N = {:3} '.format(N), end='')
+        us = []
+        print('solve ', end='')
+        sys.stdout.flush()
+        start = time.time()
+        for mu in mus:
+            us.append(rd.solve(mu))
+        T_SOLVES.append((time.time() - start) * 1000. / len(mus))
+
+
+        print('estimate ', end='')
+        sys.stdout.flush()
+        if hasattr(rb_discretization, 'estimate'):
+            ests = []
+            start = time.time()
+            for u, mu in zip(us, mus):
+                # print('e', end='')
+                # sys.stdout.flush()
+                ests.append(rd.estimate(u, mu=mu))
+            ESTS.append(max(ests))
+            T_ESTS.append((time.time() - start) * 1000. / len(mus))
+
+        if args['--detailed']:
+            print('errors', end='')
+            sys.stdout.flush()
+            errs = []
+            for u, mu in zip(us, mus):
+                err = discretization.solve(mu) - reconstructor.reconstruct(rc.reconstruct(u))
+                if args['--error-norm']:
+                    errs.append(np.max(getattr(discretization, args['--error-norm'] + '_norm')(err)))
+                else:
+                    errs.append(np.max(err.l2_norm()))
+            ERRS.append(max(errs))
+
+        print()
+
+    print()
+
+    try:
+        plt.style.use('ggplot')
+    except AttributeError:
+        pass  # plt.style is only available in newer matplotlib versions
+
+    plt.subplot(1, 2, 1)
+    if hasattr(rb_discretization, 'estimate'):
+        plt.semilogy(dims, ESTS, label='max. estimate')
+    if args['--detailed']:
+        plt.semilogy(dims, ERRS, label='max. error')
+    plt.xlabel('dimension')
+    plt.legend()
+
+    plt.subplot(1, 2, 2)
+    plt.plot(dims, T_SOLVES, label='avg. solve time')
+    if hasattr(rb_discretization, 'estimate'):
+        plt.plot(dims, T_ESTS, label='avg. estimate time')
+    plt.xlabel('dimension')
+    plt.ylabel('milliseconds')
+    plt.legend()
+
+    plt.show()
+
+
+def analyze_pickle_demo(args):
+    if args['histogram']:
+        analyze_pickle_histogram(args)
+    else:
+        analyze_pickle_convergence(args)
 
 
 if __name__ == '__main__':
