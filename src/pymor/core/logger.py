@@ -41,6 +41,7 @@ LOGLEVEL_MAPPING = {
 
 FORMAT = '%(asctime)s$BOLD%(levelname)s|$BOLD%(name)s$RESET: %(message)s'
 MAX_HIERACHY_LEVEL = 3
+FILENAME=None
 
 start_time = time.time()
 
@@ -110,7 +111,14 @@ def getLogger(module, level=None, filename=None, handler_cls=logging.StreamHandl
     streamhandler = handler_cls()
     streamformatter = ColoredFormatter()
     streamhandler.setFormatter(streamformatter)
-    logger.handlers = [streamhandler]
+    handlers = [streamhandler]
+    filename = filename if filename is not None else FILENAME
+    if filename is not None:
+        filehandler = logging.FileHandler(filename)
+        fileformatter = ColoredFormatter(False)
+        filehandler.setFormatter(fileformatter)
+        handlers.append(filehandler)
+    logger.handlers = handlers
     logger.propagate = False
     if level:
         logger.setLevel(LOGLEVEL_MAPPING[level])
