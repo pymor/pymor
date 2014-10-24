@@ -38,6 +38,7 @@ from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
 from pymor.la import numpysolvers
 from pymor.operators.interfaces import OperatorInterface
 from pymor.parameters import ParameterFunctionalInterface
+from pymor.parameters.functionals import ProjectionParameterFunctional
 
 
 class OperatorBase(OperatorInterface):
@@ -587,6 +588,8 @@ class LincombOperator(OperatorBase):
         Name of the operator.
     """
 
+    with_arguments = frozenset(('operators', 'coefficients', 'name'))
+
     def __init__(self, operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
         assert coefficients is None or len(operators) == len(coefficients)
         assert len(operators) > 0
@@ -601,18 +604,24 @@ class LincombOperator(OperatorBase):
         self.source = operators[0].source
         self.range = operators[0].range
         self.operators = operators
-        self.coefficients = coefficients
-        self.coefficients_name = coefficients_name
         self.linear = all(op.linear for op in operators)
-        self.name = name
         if coefficients is None:
-            self.num_coefficients = num_coefficients if num_coefficients is not None else len(operators)
-            self.pad_coefficients = len(operators) - self.num_coefficients
-            self.build_parameter_type({'coefficients': self.num_coefficients}, inherits=list(operators),
-                                      global_names={'coefficients': coefficients_name})
-        else:
-            self.build_parameter_type(inherits=list(operators) +
-                                      [f for f in coefficients if isinstance(f, ParameterFunctionalInterface)])
+            num_coefficients = num_coefficients if num_coefficients is not None else len(operators)
+            pad_coefficients = len(operators) - num_coefficients
+            coefficients = [ProjectionParameterFunctional(coefficients_name, (num_coefficients,), i)
+                            for i in range(num_coefficients)] + [1.] * pad_coefficients
+        self.coefficients = coefficients
+        self.name = name
+        self.build_parameter_type(inherits=list(operators) +
+                                  [f for f in coefficients if isinstance(f, ParameterFunctionalInterface)])
+
+    def with_(self, **kwargs):
+        assert set(kwargs.keys()) <= self.with_arguments
+        operators = kwargs.get('operators', self.operators)
+        coefficients = kwargs.get('coefficients', self.coefficients)
+        assert len(operators) == len(self.operators)
+        assert len(coefficients) == len(self.coefficients)
+        return LincombOperator(operators, coefficients, name=kwargs.get('name', self.name))
 
     def evaluate_coefficients(self, mu):
         """Compute the linear coefficients of the linear combination for a given parameter.
@@ -627,17 +636,9 @@ class LincombOperator(OperatorBase):
         List of linear coefficients.
         """
         mu = self.parse_parameter(mu)
-        if self.coefficients is None:
-            if self.pad_coefficients:
-                return np.concatenate((self.local_parameter(mu)['coefficients'], np.ones(self.pad_coefficients)))
-            else:
-                return self.local_parameter(mu)['coefficients']
-
-        else:
-            return np.array([c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients])
+        return np.array([c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients])
 
     def apply(self, U, ind=None, mu=None):
-        mu = self.parse_parameter(mu)
         coeffs = self.evaluate_coefficients(mu)
         Vs = [op.apply(U, ind=ind, mu=mu) for op in self.operators]
         R = Vs[0]
@@ -676,11 +677,7 @@ class LincombOperator(OperatorBase):
     def projected(self, source_basis, range_basis, product=None, name=None):
         proj_operators = [op.projected(source_basis=source_basis, range_basis=range_basis, product=product)
                           for op in self.operators]
-        name = name or self.name + '_projected'
-        num_coefficients = getattr(self, 'num_coefficients', None)
-        return LincombOperator(operators=proj_operators, coefficients=self.coefficients,
-                               num_coefficients=num_coefficients,
-                               coefficients_name=self.coefficients_name, name=name)
+        return self.with_(operators=proj_operators, name=name or self.name + '_projected')
 
     def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
         """See :meth:`NumpyMatrixOperator.projected_to_subbasis`."""
@@ -688,8 +685,4 @@ class LincombOperator(OperatorBase):
         assert dim_range is None or dim_range <= self.range.dim
         proj_operators = [op.projected_to_subbasis(dim_source=dim_source, dim_range=dim_range)
                           for op in self.operators]
-        name = name or '{}_projected_to_subbasis'.format(self.name)
-        num_coefficients = getattr(self, 'num_coefficients', None)
-        return LincombOperator(operators=proj_operators, coefficients=self.coefficients,
-                               num_coefficients=num_coefficients,
-                               coefficients_name=self.coefficients_name, name=name)
+        return self.with_(operators=proj_operators, name=name or '{}_projected_to_subbasis'.format(self.name))
