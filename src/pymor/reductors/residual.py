@@ -23,19 +23,18 @@ class ResidualOperator(OperatorBase):
         self.linear = operator.linear
         self.operator = operator
         self.functional = functional
+        self.functional_vector = functional.as_vector() if functional and not functional.parametric else None
         self.name = name
 
     def apply(self, U, ind=None, mu=None):
         V = self.operator.apply(U, ind=ind, mu=mu)
         if self.functional:
-            F = self.functional.as_vector(mu)
+            F = self.functional_vector or self.functional.as_vector(mu)
             if len(V) > 1:
-                R = F.copy(ind=[0]*len(V)) - V
+                V.axpy(-1., F, x_ind=[0]*len(V))
             else:
-                R = F - V
-        else:
-            R = - V
-        return R
+                V.axpy(-1., F)
+        return V
 
     def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
         return ResidualOperator(self.operator.projected_to_subbasis(dim_source, dim_range),
