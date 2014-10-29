@@ -6,11 +6,9 @@
 """Analyze pickled data demo.
 
 Usage:
-  analyze_pickly.py histogram [--detailed=DETAILED_DATA] [--error-norm=NORM]
-                    REDUCED_DATA SAMPLES
-  analyze_pickly.py convergence [--detailed=DETAILED_DATA] [--error-norm=NORM] [--ndim=NDIM]
-                    REDUCED_DATA SAMPLES
-  analyze_pickly.py [-h] [--help]
+  analyze_pickle.py histogram [--detailed=DETAILED_DATA] [--error-norm=NORM] REDUCED_DATA SAMPLES
+  analyze_pickle.py convergence [--detailed=DETAILED_DATA] [--error-norm=NORM] [--ndim=NDIM] REDUCED_DATA SAMPLES
+  analyze_pickle.py (-h | --help)
 
 This demo loads a pickled reduced discretization, solves for random
 parameters, estimates the reduction errors and then visualizes these
