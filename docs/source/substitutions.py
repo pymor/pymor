@@ -45,6 +45,12 @@ common = '''
 .. |analytical problem| replace:: :mod:`analytical problem <pymor.analyticalproblems>`
 .. |analytical problems| replace:: :mod:`analytical problems <pymor.analyticalproblems>`
 
+.. |default| replace:: :mod:`default <pymor.core.defaults>`
+.. |defaults| replace:: :mod:`~pymor.core.defaults`
+
+.. |state id| replace:: :ref:`state id <state id>`
+.. |state ids| replace:: :ref:`state ids <state id>`
+
 .. |CacheRegion| replace:: :class:`~pymor.core.cache.CacheRegion`
 
 .. |EllipticProblem| replace:: :class:`~pymor.analyticalproblems.elliptic.EllipticProblem`

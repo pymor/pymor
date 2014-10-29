@@ -201,8 +201,6 @@ own :attr:`~pymor.core.interfaces.BasicInterface.logger` instance with a class
 specific prefix.
 
 .. |caching|        replace:: :mod:`caching <pymor.core.cache>`
-.. |state id|       replace:: :ref:`state id <state id>`
-.. |state ids|      replace:: :ref:`state ids <state id>`
 
 
 Creating Discretizations
