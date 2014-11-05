@@ -22,7 +22,7 @@ class NumpyVectorArray(VectorArrayInterface):
     implemented directly in pyMOR. Reduced |Operators| will also
     expect |NumpyVectorArrays|.
 
-    Note that this class is just thin wrapper around the underlying
+    Note that this class is just a thin wrapper around the underlying
     |NumPy array|. Thus, while operations like
     :meth:`~VectorArrayInterface.axpy` or :meth:`VectorArrayInterface.dot`
     will be quite efficient, removing or appending vectors will
