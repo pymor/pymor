@@ -61,9 +61,11 @@ class BlockOperator(OperatorBase):
         self.source = VectorSpace(BlockVectorArray, source_types)
         self.range = VectorSpace(BlockVectorArray, range_types)
         # some information
-        self.linear = all([op.linear for op in self._operators()])
+        self._source_dims = [space.dim for space in self.source.subtype]
+        self._range_dims  = [space.dim for space in self.range.subtype]
         self.num_source_blocks = len(source_types)
         self.num_range_blocks  = len(range_types)
+        self.linear = all([op.linear for op in self._operators()])
         self._is_diagonal = (all([block is None if ii != jj else True for ii, jj, block in self._enumerated_operators()])
                              and self.num_source_blocks == self.num_range_blocks)
         # build parameter type
