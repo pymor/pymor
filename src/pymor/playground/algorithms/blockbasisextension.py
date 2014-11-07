@@ -1,0 +1,98 @@
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+
+from __future__ import absolute_import, division, print_function
+
+import numpy as np
+
+from pymor.algorithms import trivial_basis_extension, gram_schmidt_basis_extension
+from pymor.core.exceptions import ExtensionError
+from pymor.playground.la import BlockVectorArray
+from pymor.playground.operators import BlockOperator
+
+
+def trivial_block_basis_extension(basis, U, copy_basis=True, copy_U=True, require_all=False):
+    """Block variant of |trivial_basis_extension|
+    """
+    assert isinstance(U, BlockVectorArray)
+    if not copy_U:
+        raise ValueError('The option copy_U==False is not supported for BlockVectorArrays!')
+    num_blocks = U.num_blocks
+    if basis is None:
+        basis = [None for ii in np.arange(num_blocks)]
+    assert isinstance(basis, list)
+    assert len(basis) == num_blocks
+
+    failure = [True for ii in np.arange(num_blocks)]
+    new_basis = [None for ii in np.arange(num_blocks)]
+    hierarchic = [False for ii in np.arange(num_blocks)]
+
+    for ii in np.arange(num_blocks):
+        try:
+            nb, ed = trivial_basis_extension(basis[ii],
+                                             U._blocks[ii],
+                                             copy_basis=copy_basis,
+                                             copy_U=copy_U)
+            failure[ii] = False
+            new_basis[ii] = nb
+            assert ed.keys() == ['hierarchic']
+            hierarchic[ii] = ed['hierarchic']
+        except ExtensionError:
+            new_basis[ii] = basis[ii]
+            hierarchic[ii] = True
+
+    if require_all and any(failure):
+        raise ExtensionError
+    elif not require_all and all(failure):
+        raise ExtensionError
+
+    return new_basis, {'hierarchic': all(hierarchic)}
+
+
+def gram_schmidt_block_basis_extension(basis, U, product=None, copy_basis=True, copy_U=True, require_all=False):
+    """Block variant of |gram_schmidt_basis_extension|.
+    """
+    if not copy_U:
+        raise ValueError('The option copy_U==False is not supported for BlockVectorArrays!')
+    num_blocks = U.num_blocks
+    if basis is None:
+        basis = [None for ii in np.arange(num_blocks)]
+    assert isinstance(basis, list)
+    assert len(basis) == num_blocks
+    if product is None:
+        product = [None for ii in np.arange(num_blocks)]
+    elif isinstance(product, BlockOperator):
+        assert product.is_diagonal and product.num_source_blocks == num_blocks
+        product = [product._blocks[ii][ii] for ii in num_blocks]
+    elif not isinstance(product, list):
+        product = [product for ii in np.arange(num_blocks)]
+    assert isinstance(product, list)
+    assert len(product) == num_blocks
+
+    failure = [True for ii in np.arange(num_blocks)]
+    new_basis = [None for ii in np.arange(num_blocks)]
+    hierarchic = [False for ii in np.arange(num_blocks)]
+
+    for ii in np.arange(num_blocks):
+        try:
+            nb, ed = gram_schmidt_basis_extension(basis[ii],
+                                                  U._blocks[ii],
+                                                  product=product[ii],
+                                                  copy_basis=copy_basis,
+                                                  copy_U=copy_U)
+            failure[ii] = False
+            new_basis[ii] = nb
+            assert ed.keys() == ['hierarchic']
+            hierarchic[ii] = ed['hierarchic']
+        except ExtensionError:
+            new_basis[ii] = basis[ii]
+            hierarchic[ii] = True
+
+    if require_all and any(failure):
+        raise ExtensionError
+    elif not require_all and all(failure):
+        raise ExtensionError
+
+    return new_basis, {'hierarchic': all(hierarchic)}
+
