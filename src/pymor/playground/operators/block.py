@@ -50,10 +50,11 @@ class BlockOperator(OperatorBase):
         source_types = [None for ii in np.arange(len(self._blocks[0]))]
         range_types  = [None for jj in np.arange(len(self._blocks))]
         for ii, jj, op in self._enumerated_operators():
-            assert source_types[jj] is None or op.source == source_types[jj]
-            source_types[jj] = op.source
-            assert range_types[ii] is None or op.range == range_types[ii]
-            range_types[ii] = op.range
+            if op is not None:
+                assert source_types[jj] is None or op.source == source_types[jj]
+                source_types[jj] = op.source
+                assert range_types[ii] is None or op.range == range_types[ii]
+                range_types[ii] = op.range
         # theere needs to be at least one operator for each combination of row and column
         assert all([ss is not None for ss in source_types])
         assert all([rr is not None for rr in range_types])
