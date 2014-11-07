@@ -327,7 +327,7 @@ class FixedParameterOperator(OperatorBase):
         self.name = name
 
     def apply(self, U, ind=None, mu=None):
-        return self.operator.apply(U, mu=self.mu)
+        return self.operator.apply(U, ind=ind, mu=self.mu)
 
     @property
     def invert_options(self):
