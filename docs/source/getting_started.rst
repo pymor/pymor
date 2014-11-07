@@ -17,9 +17,9 @@ via our PPA::
 Daily snapshots can be installed by using the ``pymor/daily`` PPA instead of
 ``pymor/stable``. The current release can also be installed via `pip
 <http://pip-installer.org>`. Please take a look at our `README
-<https://github.com/pyMor/pyMor#installation-into-a-virtualenv>` file for
+<https://github.com/pymor/pymor#installation-into-a-virtualenv>` file for
 further details. The `README
-<https://github.com/pyMor/pyMor#setting-up-an-environment-for-pymor-development>`
+<https://github.com/pymor/pymor#setting-up-an-environment-for-pymor-development>`
 also contains instructions for setting up a development environment for working
 on pyMOR itself.
 
