@@ -46,10 +46,15 @@ def trivial_block_basis_extension(basis, U, copy_basis=True, copy_U=True, requir
             new_basis[ii] = basis[ii]
             hierarchic[ii] = True
 
+    num_failures = sum(1 if ff else 0 for ff in failure)
     if require_all and any(failure):
         raise ExtensionError
     elif not require_all and all(failure):
         raise ExtensionError
+    elif num_failures > 0:
+        logger.warn('Extension failed for {} out of {} block{}!'.format(num_failures,
+                                                                        num_blocks,
+                                                                        's' if num_blocks > 1 else ''))
 
     return new_basis, {'hierarchic': all(hierarchic)}
 
@@ -96,10 +101,15 @@ def gram_schmidt_block_basis_extension(basis, U, product=None, copy_basis=True, 
             new_basis[ii] = basis[ii]
             hierarchic[ii] = True
 
+    num_failures = sum(1 if ff else 0 for ff in failure)
     if require_all and any(failure):
         raise ExtensionError
     elif not require_all and all(failure):
         raise ExtensionError
+    elif num_failures > 0:
+        logger.warn('Extension failed for {} out of {} block{}!'.format(num_failures,
+                                                                        num_blocks,
+                                                                        's' if num_blocks > 1 else ''))
 
     return new_basis, {'hierarchic': all(hierarchic)}
 
