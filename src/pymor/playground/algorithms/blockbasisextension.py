@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from pymor.algorithms import trivial_basis_extension, gram_schmidt_basis_extension
+from pymor.core import getLogger
 from pymor.core.exceptions import ExtensionError
 from pymor.playground.la import BlockVectorArray
 from pymor.playground.operators import BlockOperator
@@ -15,9 +16,12 @@ from pymor.playground.operators import BlockOperator
 def trivial_block_basis_extension(basis, U, copy_basis=True, copy_U=True, require_all=False):
     """Block variant of |trivial_basis_extension|
     """
+
+    logger = getLogger('pymor.algorithms.blockbasisextension.trivial_block_basis_extension')
+
     assert isinstance(U, BlockVectorArray)
     if not copy_U:
-        raise ValueError('The option copy_U==False is not supported for BlockVectorArrays!')
+        logger.warn('The option copy_U==False is not supported for BlockVectorArrays!')
     num_blocks = U.num_blocks
     if basis is None:
         basis = [None for ii in np.arange(num_blocks)]
@@ -33,7 +37,7 @@ def trivial_block_basis_extension(basis, U, copy_basis=True, copy_U=True, requir
             nb, ed = trivial_basis_extension(basis[ii],
                                              U._blocks[ii],
                                              copy_basis=copy_basis,
-                                             copy_U=copy_U)
+                                             copy_U=True)
             failure[ii] = False
             new_basis[ii] = nb
             assert ed.keys() == ['hierarchic']
@@ -53,8 +57,11 @@ def trivial_block_basis_extension(basis, U, copy_basis=True, copy_U=True, requir
 def gram_schmidt_block_basis_extension(basis, U, product=None, copy_basis=True, copy_U=True, require_all=False):
     """Block variant of |gram_schmidt_basis_extension|.
     """
+
+    logger = getLogger('pymor.algorithms.blockbasisextension.gram_schmidt_block_basis_extension')
+
     if not copy_U:
-        raise ValueError('The option copy_U==False is not supported for BlockVectorArrays!')
+        logger.warn('The option copy_U==False is not supported for BlockVectorArrays!')
     num_blocks = U.num_blocks
     if basis is None:
         basis = [None for ii in np.arange(num_blocks)]
@@ -80,7 +87,7 @@ def gram_schmidt_block_basis_extension(basis, U, product=None, copy_basis=True, 
                                                   U._blocks[ii],
                                                   product=product[ii],
                                                   copy_basis=copy_basis,
-                                                  copy_U=copy_U)
+                                                  copy_U=True)
             failure[ii] = False
             new_basis[ii] = nb
             assert ed.keys() == ['hierarchic']
