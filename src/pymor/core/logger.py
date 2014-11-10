@@ -4,7 +4,7 @@
 
 """Utilities for colorized log output.
 via http://stackoverflow.com/questions/384076/how-can-i-make-the-python-logging-output-to-be-colored
-Cannot not be moved because it's needed to be imported in the root __init__.py OR ELSE
+Can not be moved because it's needed to be imported in the root __init__.py OR ELSE
 """
 from __future__ import absolute_import, division, print_function
 import curses
@@ -17,7 +17,7 @@ from pymor.core.defaults import defaults
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 
 # The background is set with 40 plus the number of the color, and the foreground with 30
-# These are the sequences need to get colored output
+# These are the sequences needed to get colored output
 RESET_SEQ = "\033[0m"
 COLOR_SEQ = "\033[1;%dm"
 BOLD_SEQ = "\033[1m"
