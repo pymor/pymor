@@ -126,6 +126,11 @@ class BlockOperator(OperatorBase):
                               for ii in np.arange(self.num_range_blocks)])
 
     def assemble(self, mu=None):
+        # handle empty case
+        dim_source = np.sum(self._source_dims)
+        dim_range  = np.sum(self._range_dims)
+        if dim_source == 0 or dim_range == 0:
+            return NumpyMatrixOperator(np.zeros((dim_range, dim_source)))
         # TODO: convert mu to correct local mu for each block
         assembled_blocks = [[self._blocks[ii][jj].assemble(mu) if self._blocks[ii][jj] is not None else None
                              for jj in np.arange(self.num_source_blocks)]
