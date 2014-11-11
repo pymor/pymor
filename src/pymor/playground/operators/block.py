@@ -106,6 +106,7 @@ class BlockOperator(OperatorBase):
         assembled = self.assemble(mu=mu)
         if isinstance(assembled, NumpyMatrixOperator):
             solution = assembled.apply_inverse(U, ind=ind, options=options)
+            assert (not np.isnan(np.sum(solution._array))) and (not np.isinf(np.sum(solution._array)))
             return BlockVectorArray(solution, block_sizes=[sp.subtype for sp in self.source.subtype])
         else:
             # TODO: implement use of generic solver
