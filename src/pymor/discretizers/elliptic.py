@@ -89,7 +89,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
         L = Operator(grid, boundary_info, diffusion_function=p.diffusion_functions[0],
                      name='diffusion')
 
-    F = Functional(grid, p.rhs, boundary_info, dirichlet_data=p.dirichlet_data)
+    F = Functional(grid, p.rhs, boundary_info, dirichlet_data=p.dirichlet_data, neumann_data=p.neumann_data)
 
     if isinstance(grid, (TriaGrid, RectGrid)):
         visualizer = PatchVisualizer(grid=grid, bounding_box=grid.domain, codim=2)

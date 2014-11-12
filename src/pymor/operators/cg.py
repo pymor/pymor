@@ -39,6 +39,9 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     dirichlet_data
         |Function| providing the Dirichlet boundary values. If `None`,
         constant-zero boundary is assumed.
+    neumann_data
+        |Function| providing the Neumann boundary values. If `None`,
+        constant-zero is assumed.
     order
         Order of the Gauss quadrature to use for numerical integration.
     name
@@ -48,7 +51,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     sparse = False
     range = NumpyVectorSpace(1)
 
-    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, order=2, name=None):
+    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, neumann_data=None, order=2, name=None):
         assert grid.reference_element(0) in {line, triangle}
         assert function.shape_range == tuple()
         self.source = NumpyVectorSpace(grid.size(grid.dim))
@@ -56,9 +59,10 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         self.boundary_info = boundary_info
         self.function = function
         self.dirichlet_data = dirichlet_data
+        self.neumann_data = neumann_data
         self.order = order
         self.name = name
-        self.build_parameter_type(inherits=(function, dirichlet_data))
+        self.build_parameter_type(inherits=(function, dirichlet_data, neumann_data))
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -89,6 +93,18 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         I = np.array(coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).todense()).ravel()
 
         # boundary treatment
+        if bi is not None and bi.has_neumann and self.neumann_data is not None:
+            NI = bi.neumann_boundaries(1)
+            if g.dim == 1:
+                I[NI] += self.neumann_data(g.centers(1)[NI])
+            else:
+                F = self.neumann_data(g.quadrature_points(1, order=self.order)[NI], mu=mu)
+                q, w = line.quadrature(order=self.order)
+                SF = np.squeeze(np.array([1 - q, q]))
+                SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[NI], w).ravel()
+                SF_I = g.subentities(1, 2)[NI].ravel()
+                I += np.array(coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).todense()).ravel()
+
         if bi is not None and bi.has_dirichlet:
             DI = bi.dirichlet_boundaries(g.dim)
             if self.dirichlet_data is not None:
@@ -121,6 +137,9 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
     dirichlet_data
         |Function| providing the Dirichlet boundary values. If `None`,
         constant-zero boundary is assumed.
+    neumann_data
+        |Function| providing the Neumann boundary values. If `None`,
+        constant-zero is assumed.
     order
         Order of the Gauss quadrature to use for numerical integration.
     name
@@ -130,7 +149,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
     sparse = False
     range = NumpyVectorSpace(1)
 
-    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, order=2, name=None):
+    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, neumann_data=None, order=2, name=None):
         assert grid.reference_element(0) in {square}
         assert function.shape_range == tuple()
         self.source = NumpyVectorSpace(grid.size(grid.dim))
@@ -138,6 +157,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         self.boundary_info = boundary_info
         self.function = function
         self.dirichlet_data = dirichlet_data
+        self.neumann_data = neumann_data
         self.order = order
         self.name = name
         self.build_parameter_type(inherits=(function, dirichlet_data))
@@ -170,6 +190,15 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         I = np.array(coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).todense()).ravel()
 
         # boundary treatment
+        if bi is not None and bi.has_neumann and self.neumann_data is not None:
+            NI = bi.neumann_boundaries(1)
+            F = self.neumann_data(g.quadrature_points(1, order=self.order)[NI], mu=mu)
+            q, w = line.quadrature(order=self.order)
+            SF = np.squeeze(np.array([1 - q, q]))
+            SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[NI], w).ravel()
+            SF_I = g.subentities(1, 2)[NI].ravel()
+            I += np.array(coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).todense()).ravel()
+
         if bi is not None and bi.has_dirichlet:
             DI = bi.dirichlet_boundaries(g.dim)
             if self.dirichlet_data is not None:
