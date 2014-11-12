@@ -42,6 +42,10 @@ class RectDomain(DomainDescriptionInterface):
                  top=BoundaryType('dirichlet'), bottom=BoundaryType('dirichlet')):
         assert domain[0][0] <= domain[1][0]
         assert domain[0][1] <= domain[1][1]
+        assert isinstance(left, BoundaryType)
+        assert isinstance(right, BoundaryType)
+        assert isinstance(top, BoundaryType)
+        assert isinstance(bottom, BoundaryType)
         self.boundary_types = frozenset({left, right, top, bottom})
         self.left = left
         self.right = right
@@ -106,6 +110,8 @@ class CylindricalDomain(DomainDescriptionInterface):
     def __init__(self, domain=([0, 0], [1, 1]), top=BoundaryType('dirichlet'), bottom=BoundaryType('dirichlet')):
         assert domain[0][0] <= domain[1][0]
         assert domain[0][1] <= domain[1][1]
+        assert isinstance(top, BoundaryType)
+        assert isinstance(bottom, BoundaryType)
         self.boundary_types = frozenset({top, bottom})
         self.top = top
         self.bottom = bottom
@@ -213,6 +219,8 @@ class LineDomain(DomainDescriptionInterface):
 
     def __init__(self, domain=(0, 1), left=BoundaryType('dirichlet'), right=BoundaryType('dirichlet')):
         assert domain[0] <= domain[1]
+        assert isinstance(left, BoundaryType)
+        assert isinstance(right, BoundaryType)
         self.boundary_types = frozenset({left, right})
         self.left = left
         self.right = right
