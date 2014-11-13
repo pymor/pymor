@@ -12,13 +12,13 @@ from pymor.reductors.basic import GenericRBReconstructor
 
 
 class GenericBlockRBReconstructor(core.BasicInterface):
+    """Block variant of GenericRBReconstructor"""
 
     def __init__(self, RB):
         assert isinstance(RB, list)
         self.RB = RB
 
     def reconstruct(self, U):
-        """Reconstruct high-dimensional vector from reduced vector `U`."""
         assert isinstance(U, BlockVectorArray)
         assert all(subspace.type == NumpyVectorArray for subspace in U.space.subtype)
         return BlockVectorArray([GenericRBReconstructor(rb).reconstruct(block)
@@ -26,7 +26,6 @@ class GenericBlockRBReconstructor(core.BasicInterface):
 
     def restricted_to_subbasis(self, dim):
         raise NotImplementedError
-        """Analog of :meth:`~pymor.operators.basic.NumpyMatrixOperator.projected_to_subbasis`."""
         assert dim <= len(self.RB)
         return GenericBlockRBReconstructor([rb.copy(ind=range(dim)) for rb in self.RB])
 
