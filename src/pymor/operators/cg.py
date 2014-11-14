@@ -75,7 +75,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         # element -> shape = (number of shape functions, number of quadrature points)
         q, w = g.reference_element.quadrature(order=self.order)
         if g.dim == 1:
-            SF = np.squeeze(np.array((1 - q, q)))
+            SF = np.array((1 - q[..., 0], q[..., 0]))
         elif g.dim == 2:
             SF = np.array(((1 - np.sum(q, axis=-1)),
                            q[..., 0],
