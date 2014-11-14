@@ -22,11 +22,25 @@ rect_grid_generators = [lambda arg=arg, kwargs=kwargs: RectGrid(arg, **kwargs) f
                          ((2, 4), dict(identify_left_right=True, identify_bottom_top=True)),
                          ((2, 1), dict(identify_left_right=True)),
                          ((1, 2), dict(identify_bottom_top=True)),
-                         ((2, 2), dict(identify_left_right=True, identify_bottom_top=True))]]
+                         ((2, 2), dict(identify_left_right=True, identify_bottom_top=True)),
+                         ((42, 30), dict(identify_left_right=True)),
+                         ((42, 30), dict(identify_bottom_top=True)),
+                         ((42, 30), dict(identify_left_right=True, identify_bottom_top=True))]]
 
 
-tria_grid_generators = [lambda arg=arg: TriaGrid(arg) for arg in
-                        [(2, 4), (1, 1), (42, 42)]]
+tria_grid_generators = [lambda arg=arg, kwargs=kwargs: TriaGrid(arg, **kwargs) for arg, kwargs in
+                        [((2, 4), {}),
+                         ((1, 1), {}),
+                         ((42, 42), {}),
+                         ((2, 4), dict(identify_left_right=True)),
+                         ((2, 4), dict(identify_bottom_top=True)),
+                         ((2, 4), dict(identify_left_right=True, identify_bottom_top=True)),
+                         ((2, 1), dict(identify_left_right=True)),
+                         ((1, 2), dict(identify_bottom_top=True)),
+                         ((2, 2), dict(identify_left_right=True, identify_bottom_top=True)),
+                         ((42, 30), dict(identify_left_right=True)),
+                         ((42, 30), dict(identify_bottom_top=True)),
+                         ((42, 30), dict(identify_left_right=True, identify_bottom_top=True))]]
 
 
 oned_grid_generators = [lambda kwargs=kwargs: OnedGrid(**kwargs) for kwargs in
