@@ -297,7 +297,7 @@ class Triangle(ReferenceElementInterface):
         if quadrature_type == 'center':
             assert order is None or order == 1
             assert npoints is None or npoints == 1
-            return np.array((self.center(),)), np.array(self.volume)
+            return np.array([self.center()]), np.array([self.volume])
         elif quadrature_type == 'edge_centers':
             assert order is None or order <= 2
             assert npoints is None or npoints == 3
