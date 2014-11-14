@@ -13,8 +13,42 @@ from itertools import izip
 import numpy as np
 
 from pymor.la import VectorArrayInterface, NumpyVectorArray, NumpyVectorSpace
-from pymor.operators.basic import OperatorBase
+from pymor.operators.basic import OperatorBase, LincombOperator
 from pymor.operators.interfaces import OperatorInterface
+
+
+def lincomb(operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
+    """Form a linear combination of the given operators.
+
+    The linear coefficients may be provided as scalars or |ParameterFunctionals|.
+    Alternatively, if no linear coefficients are given, the missing coefficients become
+    part of the |Parameter| the combinded |Operator| expects.
+
+    Parameters
+    ----------
+    operators
+        List of |Operators| whose linear combination is formed.
+    coefficients
+        `None` or a list of linear coefficients.
+    num_coefficients
+        If `coefficients` is `None`, the number of linear coefficients (starting
+        at index 0) which are given by the |Parameter| component with name
+        `'coefficients_name'`. The missing coefficients are set to `1`.
+    coefficients_name
+        If `coefficients` is `None`, the name of the |Parameter| component providing
+        the linear coefficients.
+    name
+        Name of the new operator.
+
+    Returns
+    -------
+    |LincombOperator| representing the linear combination.
+    """
+    op = LincombOperator(operators, coefficients, num_coefficients, coefficients_name, name=None)
+    if op.parametric:
+        return op
+    else:
+        return op.assemble()
 
 
 class Concatenation(OperatorBase):
