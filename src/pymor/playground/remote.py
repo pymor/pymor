@@ -23,7 +23,8 @@ if not TRAVIS:
     from pymor.discretizations import StationaryDiscretization
     from pymor.la import VectorArrayInterface, NumpyVectorArray
     from pymor.operators import OperatorInterface, OperatorBase
-    from pymor.operators.basic import LincombOperator, ProjectedOperator, ProjectedLinearOperator
+    from pymor.operators.basic import ProjectedOperator, ProjectedLinearOperator
+    from pymor.operators.constructions import LincombOperator
 
 
     class RemoteRessourceManger(object):
