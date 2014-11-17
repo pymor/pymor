@@ -8,12 +8,12 @@ import numpy as np
 
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper
 from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
-from pymor.core import inject_sid
-from pymor.discretizations import InstationaryDiscretization
-from pymor.domaindiscretizers import discretize_domain_default
+from pymor.core.interfaces import inject_sid
+from pymor.discretizations.basic import InstationaryDiscretization
+from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.gui.qt import PatchVisualizer, Matplotlib1DVisualizer
-from pymor.la import NumpyVectorArray
-from pymor.operators import NumpyGenericOperator
+from pymor.la.numpyvectorarray import NumpyVectorArray
+from pymor.operators.basic import NumpyGenericOperator
 from pymor.operators.fv import (nonlinear_advection_lax_friedrichs_operator,
                                 nonlinear_advection_engquist_osher_operator,
                                 nonlinear_advection_simplified_engquist_osher_operator,

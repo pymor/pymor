@@ -7,8 +7,8 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from pymor.core.defaults import defaults
-from pymor.core import ImmutableInterface
-from pymor.parameters import Parametric
+from pymor.core.interfaces import ImmutableInterface
+from pymor.parameters.base import Parametric
 
 
 class InducedNorm(ImmutableInterface, Parametric):

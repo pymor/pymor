@@ -13,8 +13,8 @@ import numpy as np
 from scipy.sparse import coo_matrix, csc_matrix
 
 from pymor.grids.referenceelements import triangle, line, square
-from pymor.la import NumpyVectorSpace
-from pymor.operators import NumpyMatrixBasedOperator
+from pymor.la.numpyvectorarray import NumpyVectorSpace
+from pymor.operators.basic import NumpyMatrixBasedOperator
 
 
 class L2ProductFunctionalP1(NumpyMatrixBasedOperator):

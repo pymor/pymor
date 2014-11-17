@@ -5,8 +5,8 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymor.core import ImmutableInterface, abstractmethod, abstractstaticmethod
-from pymor.parameters import Parametric
+from pymor.core.interfaces import ImmutableInterface, abstractmethod, abstractstaticmethod
+from pymor.parameters.base import Parametric
 
 
 class OperatorInterface(ImmutableInterface, Parametric):

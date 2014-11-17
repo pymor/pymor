@@ -13,7 +13,7 @@ import numpy as np
 
 from pymor.core.pickle import dumps, loads, dumps_function, loads_function, PicklingError
 from pymor.functions.interfaces import FunctionInterface
-from pymor.parameters import ParameterFunctionalInterface
+from pymor.parameters.interfaces import ParameterFunctionalInterface
 
 
 class FunctionBase(FunctionInterface):

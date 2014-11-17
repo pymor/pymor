@@ -9,11 +9,13 @@ from itertools import chain
 
 from pymor.algorithms.timestepping import TimeStepperInterface
 from pymor.discretizations.interfaces import DiscretizationInterface
-from pymor.la import induced_norm, VectorArrayInterface
-from pymor.operators import OperatorInterface
+from pymor.la.basic import induced_norm
+from pymor.la.interfaces import VectorArrayInterface
 from pymor.operators.constructions import VectorOperator
-from pymor.parameters import Parameter
-from pymor.tools import method_arguments, FrozenDict
+from pymor.operators.interfaces import OperatorInterface
+from pymor.parameters.base import Parameter
+from pymor.tools.arguments import method_arguments
+from pymor.tools.frozendict import FrozenDict
 
 
 class DiscretizationBase(DiscretizationInterface):

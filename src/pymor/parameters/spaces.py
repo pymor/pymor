@@ -9,7 +9,7 @@ import numpy as np
 
 from pymor.parameters.base import Parameter, ParameterType
 from pymor.parameters.interfaces import ParameterSpaceInterface
-from pymor.tools import new_random_state
+from pymor.tools.random import new_random_state
 
 
 class CubicParameterSpace(ParameterSpaceInterface):

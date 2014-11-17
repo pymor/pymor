@@ -8,9 +8,12 @@ import math as m
 import numpy as np
 
 from pymor.core import inject_sid
-from pymor.domaindescriptions import RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain
-from pymor.grids import RectGrid, TriaGrid, OnedGrid, BoundaryInfoFromIndicators, EmptyBoundaryInfo
-from pymor.tools import float_cmp
+from pymor.domaindescriptions.basic import RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain
+from pymor.grids.boundaryinfos import BoundaryInfoFromIndicators, EmptyBoundaryInfo
+from pymor.grids.oned import OnedGrid
+from pymor.grids.rect import RectGrid
+from pymor.grids.tria import TriaGrid
+from pymor.tools.floatcmp import float_cmp
 
 
 def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=None):

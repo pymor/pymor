@@ -8,8 +8,8 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
+from pymor.tools.floatcmp import float_cmp
 from pymor.tools.relations import inverse_relation
-from pymor.tools import float_cmp
 
 
 def flatten_grid(grid):

@@ -4,7 +4,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymor.core import ImmutableInterface, abstractmethod
+from pymor.core.interfaces import ImmutableInterface, abstractmethod
 from pymor.parameters.base import Parametric
 
 

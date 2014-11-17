@@ -11,15 +11,15 @@ from itertools import izip
 import numpy as np
 from scipy.sparse import coo_matrix, csc_matrix, dia_matrix
 
-from pymor.core import ImmutableInterface, abstractmethod
-from pymor.functions import FunctionInterface
+from pymor.core.interfaces import ImmutableInterface, abstractmethod
+from pymor.functions.interfaces import FunctionInterface
 from pymor.grids.boundaryinfos import SubGridBoundaryInfo
 from pymor.grids.subgrid import SubGrid
-from pymor.la import NumpyVectorArray, NumpyVectorSpace
-from pymor.operators import OperatorBase, NumpyMatrixBasedOperator
+from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
+from pymor.operators.basic import OperatorBase, NumpyMatrixBasedOperator
 from pymor.operators.constructions import Concatenation, ComponentProjection
-from pymor.parameters import Parametric
-from pymor.tools import method_arguments
+from pymor.parameters.base import Parametric
+from pymor.tools.arguments import method_arguments
 from pymor.tools.inplace import iadd_masked, isub_masked
 from pymor.tools.quadratures import GaussQuadratures
 

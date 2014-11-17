@@ -8,10 +8,10 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor.core import getLogger
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import AccuracyError
-from pymor.tools import float_cmp_all
+from pymor.core.logger import getLogger
+from pymor.tools.floatcmp import float_cmp_all
 
 
 @defaults('tol', 'find_duplicates', 'reiterate', 'reiteration_threshold', 'check', 'check_tol')

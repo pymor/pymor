@@ -11,9 +11,11 @@ from itertools import product
 
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.core import Unpicklable
-from pymor.domaindescriptions import RectDomain
-from pymor.functions import FunctionInterface, ConstantFunction
-from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional
+from pymor.domaindescriptions.basic import RectDomain
+from pymor.functions.basic import ConstantFunction
+from pymor.functions.interfaces import FunctionInterface
+from pymor.parameters.functionals import ProjectionParameterFunctional
+from pymor.parameters.spaces import CubicParameterSpace
 
 
 class ThermalBlockProblem(EllipticProblem, Unpicklable):

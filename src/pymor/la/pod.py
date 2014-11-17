@@ -11,10 +11,10 @@ from scipy.linalg import eigh
 
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import AccuracyError
-from pymor.la import VectorArrayInterface
 from pymor.la.gram_schmidt import gram_schmidt
-from pymor.operators import OperatorInterface
-from pymor.tools import float_cmp_all
+from pymor.la.interfaces import VectorArrayInterface
+from pymor.operators.interfaces import OperatorInterface
+from pymor.tools.floatcmp import float_cmp_all
 
 
 @defaults('tol', 'symmetrize', 'orthonormalize', 'check', 'check_tol')

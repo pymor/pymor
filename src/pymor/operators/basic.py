@@ -29,12 +29,12 @@ import numpy as np
 from scipy.sparse import issparse
 from scipy.io import mmwrite, savemat
 
-from pymor.core import abstractmethod
 from pymor.core.defaults import defaults_sid
+from pymor.core.interfaces import abstractmethod
 from pymor.la import genericsolvers
+from pymor.la import numpysolvers
 from pymor.la.interfaces import VectorArrayInterface
 from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
-from pymor.la import numpysolvers
 from pymor.operators.interfaces import OperatorInterface
 
 

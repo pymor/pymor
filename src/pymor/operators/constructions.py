@@ -12,11 +12,12 @@ from itertools import izip
 
 import numpy as np
 
-from pymor.la import VectorArrayInterface, NumpyVectorArray, NumpyVectorSpace
+from pymor.la.interfaces import VectorArrayInterface
+from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
 from pymor.operators.basic import OperatorBase
 from pymor.operators.interfaces import OperatorInterface
 from pymor.parameters.interfaces import ParameterFunctionalInterface
-from pymor.parameters.functional import ProjectionParameterFunctional
+from pymor.parameters.functionals import ProjectionParameterFunctional
 
 
 def lincomb(operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):

@@ -4,7 +4,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymor.core import ImmutableInterface
+from pymor.core.interfaces import ImmutableInterface
 from pymor.reductors.basic import reduce_generic_rb
 from pymor.reductors.residual import reduce_residual
 

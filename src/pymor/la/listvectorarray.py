@@ -12,7 +12,7 @@ import numpy as np
 
 from pymor.core.interfaces import BasicInterface, abstractmethod, abstractclassmethod, abstractproperty
 from pymor.la.interfaces import VectorArrayInterface
-from pymor.tools import float_cmp_all
+from pymor.tools.floatcmp import float_cmp_all
 
 
 class VectorInterface(BasicInterface):

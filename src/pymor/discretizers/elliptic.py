@@ -7,10 +7,12 @@
 from __future__ import absolute_import, division, print_function
 
 
-from pymor.analyticalproblems import EllipticProblem
-from pymor.discretizations import StationaryDiscretization
-from pymor.domaindiscretizers import discretize_domain_default
-from pymor.grids import TriaGrid, OnedGrid, RectGrid
+from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.discretizations.basic import StationaryDiscretization
+from pymor.domaindiscretizers.default import discretize_domain_default
+from pymor.grids.oned import OnedGrid
+from pymor.grids.rect import RectGrid
+from pymor.grids.tria import TriaGrid
 from pymor.gui.qt import PatchVisualizer, Matplotlib1DVisualizer
 from pymor.operators.cg import DiffusionOperatorP1, L2ProductFunctionalP1, L2ProductP1,\
     DiffusionOperatorQ1, L2ProductFunctionalQ1, L2ProductQ1

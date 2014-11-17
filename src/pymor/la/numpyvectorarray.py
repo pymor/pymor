@@ -12,7 +12,7 @@ from scipy.sparse import issparse
 
 from pymor.core import NUMPY_INDEX_QUIRK
 from pymor.la.interfaces import VectorArrayInterface, VectorSpace
-from pymor.tools import float_cmp
+from pymor.tools.floatcmp import float_cmp
 
 
 class NumpyVectorArray(VectorArrayInterface):

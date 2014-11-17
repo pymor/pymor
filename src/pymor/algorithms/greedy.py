@@ -8,8 +8,8 @@ import time
 from itertools import izip
 
 from pymor.algorithms.basisextension import trivial_basis_extension
-from pymor.core import getLogger
 from pymor.core.exceptions import ExtensionError
+from pymor.core.logger import getLogger
 
 
 def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=True, error_norm=None,

@@ -9,9 +9,10 @@ import numpy as np
 from scipy.linalg import solve_triangular
 
 
-from pymor.la import NumpyVectorArray, NumpyVectorSpace
 from pymor.la.interfaces import VectorArrayInterface
-from pymor.operators import OperatorInterface, OperatorBase
+from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
+from pymor.operators.basic import OperatorBase
+from pymor.operators.interfaces import OperatorInterface
 
 
 class EmpiricalInterpolatedOperator(OperatorBase):

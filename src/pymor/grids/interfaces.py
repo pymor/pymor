@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor.core import abstractmethod
+from pymor.core.interfaces import abstractmethod
 from pymor.core.cache import CacheableInterface, cached
-from pymor.domaindescriptions import BoundaryType
+from pymor.domaindescriptions.boundarytypes import BoundaryType
 from pymor.grids.defaultimpl import (ConformalTopologicalGridDefaultImplementations,
                                      SimpleReferenceElementDefaultImplementations,
                                      AffineGridDefaultImplementations,)

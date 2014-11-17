@@ -9,9 +9,9 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor.core import ImmutableInterface
-from pymor.domaindescriptions import RectDomain
-from pymor.functions import ConstantFunction
+from pymor.core.interfaces import ImmutableInterface
+from pymor.domaindescriptions.basic import RectDomain
+from pymor.functions.basic import ConstantFunction
 
 
 class InstationaryAdvectionProblem(ImmutableInterface):

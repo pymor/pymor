@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 
 from itertools import izip
 
-from pymor.core import getLogger
+from pymor.core.logger import getLogger
 logger = getLogger(__name__)
 
 

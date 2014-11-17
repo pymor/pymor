@@ -82,8 +82,8 @@ import sqlite3
 import tempfile
 from types import MethodType
 
-from pymor.core import ImmutableInterface
 from pymor.core.defaults import defaults, defaults_sid
+from pymor.core.interfaces import ImmutableInterface
 from pymor.core.pickle import dump, dumps, load
 
 

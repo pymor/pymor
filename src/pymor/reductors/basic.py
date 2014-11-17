@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 import pymor.core as core
-from pymor.la import NumpyVectorArray
+from pymor.la.numpyvectorarray import NumpyVectorArray
 
 
 class GenericRBReconstructor(core.BasicInterface):

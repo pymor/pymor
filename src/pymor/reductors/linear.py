@@ -8,8 +8,9 @@ from itertools import izip
 
 import numpy as np
 
-from pymor.core import ImmutableInterface
-from pymor.la import NumpyVectorArray, induced_norm
+from pymor.core.interfaces import ImmutableInterface
+from pymor.la.basic import induced_norm
+from pymor.la.numpyvectorarray import NumpyVectorArray
 from pymor.operators.basic import NumpyMatrixOperator
 from pymor.operators.constructions import LincombOperator
 from pymor.reductors.basic import reduce_generic_rb

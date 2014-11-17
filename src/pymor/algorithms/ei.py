@@ -27,7 +27,7 @@ from scipy.linalg import solve_triangular, cho_factor, cho_solve
 
 from pymor.core import getLogger
 from pymor.core.cache import CacheableInterface, cached
-from pymor.la import VectorArrayInterface
+from pymor.la.interfaces import VectorArrayInterface
 from pymor.la.pod import pod
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 

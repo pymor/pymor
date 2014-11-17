@@ -9,8 +9,9 @@ import numpy as np
 
 from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
 from pymor.core import Unpicklable
-from pymor.domaindescriptions import LineDomain, RectDomain, TorusDomain, CircleDomain
-from pymor.functions import FunctionInterface, ConstantFunction
+from pymor.domaindescriptions.basic import LineDomain, RectDomain, TorusDomain, CircleDomain
+from pymor.functions.basic import ConstantFunction
+from pymor.functions.interfaces import FunctionInterface
 from pymor.parameters.spaces import CubicParameterSpace
 
 
