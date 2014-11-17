@@ -31,7 +31,6 @@ from scipy.io import mmwrite, savemat
 
 from pymor.core import abstractmethod
 from pymor.core.defaults import defaults_sid
-from pymor.core.exceptions import InversionError
 from pymor.la import genericsolvers
 from pymor.la.interfaces import VectorArrayInterface
 from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace

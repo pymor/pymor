@@ -55,7 +55,7 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, coer
         Riesz representatives. (Compare the `extends` parameter.)
     """
 
-    #assert isinstance(discretization, StationaryDiscretization)
+    # assert isinstance(discretization, StationaryDiscretization)
     assert discretization.linear
     assert isinstance(discretization.operator, LincombOperator)
     assert all(not op.parametric for op in discretization.operator.operators)

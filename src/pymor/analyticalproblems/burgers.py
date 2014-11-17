@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
-from pymor.core import Unpicklable, inject_sid
+from pymor.core import Unpicklable
 from pymor.domaindescriptions import LineDomain, RectDomain, TorusDomain, CircleDomain
 from pymor.functions import FunctionInterface, ConstantFunction
 from pymor.parameters.spaces import CubicParameterSpace

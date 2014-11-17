@@ -103,7 +103,8 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
                 SF = np.squeeze(np.array([1 - q, q]))
                 SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[NI], w).ravel()
                 SF_I = g.subentities(1, 2)[NI].ravel()
-                I += np.array(coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).todense()).ravel()
+                I += np.array(coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim)))
+                                        .todense()).ravel()
 
         if bi is not None and bi.has_dirichlet:
             DI = bi.dirichlet_boundaries(g.dim)

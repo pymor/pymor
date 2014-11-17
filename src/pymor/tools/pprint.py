@@ -8,6 +8,7 @@ from pymor.core.defaults import defaults
 
 import numpy as np
 
+
 @defaults('compact_print')
 def format_array(array, compact_print=False):
     '''Creates a formatted string representation of a |NumPy array|.

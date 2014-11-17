@@ -70,20 +70,17 @@ A cache region can be emptied using :meth:`CacheRegion.clear`. The function
 
 
 from __future__ import absolute_import, division, print_function
-#cannot use unicode_literals here, or else dbm backend fails
+# cannot use unicode_literals here, or else dbm backend fails
 
 import base64
 from collections import OrderedDict
 import datetime
 from functools import partial
 import getpass
-import importlib
 import os
 import sqlite3
 import tempfile
 from types import MethodType
-
-import numpy as np
 
 from pymor.core import ImmutableInterface
 from pymor.core.defaults import defaults, defaults_sid
@@ -189,7 +186,8 @@ class SQLiteRegion(CacheRegion):
         conn = self.conn
         c = conn.cursor()
         try:
-            c.execute("INSERT INTO entries(key, filename, size) VALUES ('{}', '{}', {})".format(key, filename, file_size))
+            c.execute("INSERT INTO entries(key, filename, size) VALUES ('{}', '{}', {})"
+                      .format(key, filename, file_size))
             conn.commit()
         except sqlite3.IntegrityError:
             conn.commit()
@@ -219,7 +217,6 @@ class SQLiteRegion(CacheRegion):
                 except OSError:
                     from pymor.core.logger import getLogger
                     getLogger('pymor.core.cache.SQLiteRegion').warn('Cannot delete cache entry ' + filename)
-
 
     def housekeeping(self):
         self.bytes_written = 0
@@ -263,11 +260,11 @@ def _setup_default_regions(disk_path=os.path.join(tempfile.gettempdir(), 'pymor.
 cache_regions = {}
 _setup_default_regions(disk_path=os.environ.get('PYMOR_CACHE_PATH', None),
                        disk_max_size=((lambda size:
-                                         None if not size else
-                                         int(size[:-1]) * 1024 if size[-1] == 'K' else
-                                         int(size[:-1]) * 1024 ** 2 if size[-1] == 'M' else
-                                         int(size[:-1]) * 1024 ** 3 if size[-1] == 'G' else
-                                         int(size))
+                                       None if not size else
+                                       int(size[:-1]) * 1024 if size[-1] == 'K' else
+                                       int(size[:-1]) * 1024 ** 2 if size[-1] == 'M' else
+                                       int(size[:-1]) * 1024 ** 3 if size[-1] == 'G' else
+                                       int(size))
                                       (os.environ.get('PYMOR_CACHE_MAX_SIZE', '').strip().upper())),
                        memory_max_keys=((lambda num: int(num) if num else None)
                                         (os.environ.get('PYMOR_CACHE_MEMORY_MAX_KEYS', None))))

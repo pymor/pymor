@@ -16,6 +16,7 @@ from pymor.la.gram_schmidt import gram_schmidt
 from pymor.operators import OperatorInterface
 from pymor.tools import float_cmp_all
 
+
 @defaults('tol', 'symmetrize', 'orthonormalize', 'check', 'check_tol')
 def pod(A, modes=None, product=None, tol=4e-8, symmetrize=False, orthonormalize=True,
         check=True, check_tol=1e-10):

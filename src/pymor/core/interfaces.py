@@ -162,7 +162,7 @@ class UberMeta(abc.ABCMeta):
         # monkey a new contract into the decorator module so checking for that type at runtime can work
         if HAVE_CONTRACTS:
             dname = (cls.__module__ + '.' + name).replace('__main__.', 'main.').replace('.', '_')
-            if not dname in decorators.__dict__:
+            if dname not in decorators.__dict__:
                 decorators.__dict__[dname] = contracts.new_contract(dname, lambda x: isinstance(x, cls))
 
         # all bases except object get the derived class' name appended

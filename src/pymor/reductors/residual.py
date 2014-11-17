@@ -8,7 +8,7 @@ import numpy as np
 
 from pymor.core import ImmutableInterface
 from pymor.core.logger import getLogger
-from pymor.la import NumpyVectorArray, NumpyVectorSpace, induced_norm
+from pymor.la import NumpyVectorSpace, induced_norm
 from pymor.la.gram_schmidt import gram_schmidt
 from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import LincombOperator
@@ -80,7 +80,7 @@ class NonProjectedReconstructor(ImmutableInterface):
 def reduce_residual(operator, functional=None, RB=None, product=None, extends=None):
     """Generic reduced basis residual reductor.
     """
-    assert functional == None \
+    assert functional is None \
         or functional.range == NumpyVectorSpace(1) and functional.source == operator.source and functional.linear
     assert RB is None or RB in operator.source
     assert product is None or product.source == product.range == operator.range

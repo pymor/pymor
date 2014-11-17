@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, print_function
 from itertools import product
 
 from pymor.analyticalproblems.elliptic import EllipticProblem
-from pymor.core import Unpicklable, inject_sid
+from pymor.core import Unpicklable
 from pymor.domaindescriptions import RectDomain
 from pymor.functions import FunctionInterface, ConstantFunction
 from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional
@@ -57,9 +57,6 @@ class ThermalBlockProblem(EllipticProblem, Unpicklable):
         parameter_space = CubicParameterSpace({'diffusion': (num_blocks[1], num_blocks[0])}, *parameter_range)
         dx = 1 / num_blocks[0]
         dy = 1 / num_blocks[1]
-
-        # creating the id-string once for every diffusion function reduces the size of the pickled sid
-        diffusion_function_id = str(ThermalBlockProblem) + '.diffusion_function'
 
         def parameter_functional_factory(x, y):
             return ProjectionParameterFunctional(component_name='diffusion',

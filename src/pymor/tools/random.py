@@ -8,8 +8,9 @@ from pymor.core.defaults import defaults
 
 import numpy as np
 
+
 @defaults('seed')
-def new_random_state(seed = 42):
+def new_random_state(seed=42):
     '''Returns a new |NumPy| :class:`~numpy.random.RandomState`.
 
     Parameters

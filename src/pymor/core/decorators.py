@@ -35,7 +35,7 @@ def fixup_docstring(doc):
     for line in doc.split('\n'):
         stripped_line = line.lstrip()
         if stripped_line.startswith(':type'):
-            #line's like: :type ParamName: Some.Module.Classname
+            # line's like: :type ParamName: Some.Module.Classname
             tokens = stripped_line.split()
             idx = 2
             if len(tokens) > idx and tokens[idx].startswith('pymor'):

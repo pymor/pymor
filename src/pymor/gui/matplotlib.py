@@ -81,11 +81,11 @@ if HAVE_ALL:
             self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
 
         def set(self, U, ind):
-            for line, u in izip(self.lines, U):
+            for l, u in izip(self.lines, U):
                 if self.codim == 1:
-                    line.set_ydata(u[ind])
+                    l.set_ydata(u[ind])
                 else:
-                    line.set_ydata(np.repeat(u[ind], 2))
+                    l.set_ydata(np.repeat(u[ind], 2))
             self.draw()
 
     class MatplotlibPatchWidget(FigureCanvas):

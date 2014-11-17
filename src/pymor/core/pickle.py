@@ -22,8 +22,6 @@ loads = pickle.loads
 PicklingError = pickle.PicklingError
 
 
-
-
 # The following method is a slightly modified version of
 # a recipe from the "Python Cookbook", 3rd edition.
 

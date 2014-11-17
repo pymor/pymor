@@ -127,7 +127,7 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
             logger.info('Extension failed. Stopping now.')
             break
         extensions += 1
-        if not 'hierarchic' in extension_data:
+        if 'hierarchic' not in extension_data:
             logger.warn('Extension algorithm does not report if extension was hierarchic. Assuming it was\'nt ..')
             hierarchic = False
         else:

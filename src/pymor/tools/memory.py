@@ -4,7 +4,7 @@
 #
 # Contributors: Michael Laier <m_laie01@uni-muenster.de>
 
-## {{{ http://code.activestate.com/recipes/577504/ (r3) MIT licensed
+# {{{ http://code.activestate.com/recipes/577504/ (r3) MIT licensed
 
 from __future__ import absolute_import, division, print_function
 from sys import getsizeof, stderr
@@ -92,9 +92,9 @@ def total_size(o, handlers=None, verbose=False):
     return sizeof(o)
 
 
-##### Example call #####
+# #### Example call #####
 
 if __name__ == '__main__':
     d = dict(a=1, b=2, c=3, d=[4, 5, 6, 7], e='a string of chars')
     print(total_size(d, verbose=True))
-## end of http://code.activestate.com/recipes/577504/ }}}
+# # end of http://code.activestate.com/recipes/577504/ }}}
