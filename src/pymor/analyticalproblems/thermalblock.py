@@ -10,7 +10,6 @@ from __future__ import absolute_import, division, print_function
 from itertools import product
 
 from pymor.analyticalproblems.elliptic import EllipticProblem
-from pymor.core import Unpicklable
 from pymor.domaindescriptions.basic import RectDomain
 from pymor.functions.basic import ConstantFunction
 from pymor.functions.interfaces import FunctionInterface
@@ -18,7 +17,7 @@ from pymor.parameters.functionals import ProjectionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace
 
 
-class ThermalBlockProblem(EllipticProblem, Unpicklable):
+class ThermalBlockProblem(EllipticProblem):
     """Analytical description of a 2D thermal block diffusion problem.
 
     This problem is to solve the elliptic equation ::

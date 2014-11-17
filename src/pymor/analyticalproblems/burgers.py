@@ -8,14 +8,13 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
-from pymor.core import Unpicklable
 from pymor.domaindescriptions.basic import LineDomain, RectDomain, TorusDomain, CircleDomain
 from pymor.functions.basic import ConstantFunction
 from pymor.functions.interfaces import FunctionInterface
 from pymor.parameters.spaces import CubicParameterSpace
 
 
-class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
+class BurgersProblem(InstationaryAdvectionProblem):
     """One-dimensional Burgers-type problem.
 
     The problem is to solve ::
@@ -72,7 +71,7 @@ class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
         self.v = v
 
 
-class Burgers2DProblem(InstationaryAdvectionProblem, Unpicklable):
+class Burgers2DProblem(InstationaryAdvectionProblem):
     """Two-dimensional Burgers-type problem.
 
     The problem is to solve ::

@@ -8,14 +8,6 @@ from pymor.core.interfaces import (BasicInterface, ImmutableInterface, abstractm
 from pymor.core.logger import getLogger, set_log_levels
 
 
-
-class Unpicklable(object):
-    """Mix me into classes you know cannot be pickled.
-    Our test system won't try to pickle me then
-    """
-    pass
-
-
 try:
     import numpy as np
     A = np.zeros((0, 1))
