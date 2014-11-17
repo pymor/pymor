@@ -81,6 +81,9 @@ class StationaryDiscretization(DiscretizationBase):
         A dict of inner product |Operators| defined on the discrete space the
         problem is posed on. For each product a corresponding norm
         is added as a method of the discretization.
+    functionals
+        A dict of (output) |Functionals| which can be evaluated on solution
+        vectors.
     parameter_space
         The |ParameterSpace| for which the discrete problem is posed.
     estimator
@@ -110,16 +113,21 @@ class StationaryDiscretization(DiscretizationBase):
 
     sid_ignore = ('visualizer', 'cache_region', 'name')
 
-    def __init__(self, operator, rhs, products=None, parameter_space=None, estimator=None, visualizer=None,
-                 cache_region='disk', name=None):
+    def __init__(self, operator, rhs, products=None, functionals=None,
+                 parameter_space=None, estimator=None, visualizer=None, cache_region='disk', name=None):
+        functionals = functionals or {}
         assert isinstance(operator, OperatorInterface)
         assert isinstance(rhs, OperatorInterface) and rhs.linear
         assert operator.source == operator.range == rhs.source
         assert rhs.range.dim == 1
+        assert all(f.source == operator.source for f in functionals.values())
+        assert 'rhs' not in functionals or rhs == functionals['rhs']
 
         operators = {'operator': operator}
-        functionals = {'rhs': rhs}
-        super(StationaryDiscretization, self).__init__(operators=operators, functionals=functionals,
+        functionals_with_rhs = {'rhs': rhs}
+        functionals_with_rhs.update(functionals)
+        super(StationaryDiscretization, self).__init__(operators=operators,
+                                                       functionals=functionals_with_rhs,
                                                        vector_operators={}, products=products, estimator=estimator,
                                                        visualizer=visualizer, cache_region=cache_region, name=name)
         self.solution_space = operator.source
@@ -129,20 +137,23 @@ class StationaryDiscretization(DiscretizationBase):
         self.build_parameter_type(inherits=(operator, rhs))
         self.parameter_space = parameter_space
 
-    with_arguments = frozenset(method_arguments(__init__)).union({'operators', 'functionals', 'vector_operators'})
+    with_arguments = frozenset(method_arguments(__init__)).union({'operators', 'vector_operators'})
 
     def with_(self, **kwargs):
         assert set(kwargs.keys()) <= self.with_arguments
-        assert 'operators' not in kwargs or 'operator' not in kwargs
-        assert 'operators' not in kwargs or 'rhs' not in kwargs
-        assert 'operators' not in kwargs or kwargs['operators'].keys() == ['operator']
-        assert 'functionals' not in kwargs or kwargs['functionals'].keys() == ['rhs']
+        assert 'operators' not in kwargs \
+            or 'operator' not in kwargs and kwargs['operators'].keys() == ['operator']
+
         assert 'vector_operators' not in kwargs or not kwargs['vector_operators'].keys()
 
         if 'operators' in kwargs:
             kwargs.update(kwargs.pop('operators'))
-        if 'functionals' in kwargs:
-            kwargs.update(kwargs.pop('functionals'))
+        if 'rhs' not in kwargs and 'functionals' in kwargs and 'rhs' in kwargs['functionals']:
+            kwargs['rhs'] = kwargs['functionals']['rhs']
+        elif 'rhs' in kwargs and 'functionals' not in kwargs:
+            functionals = dict(self.functionals)
+            functionals['rhs'] = kwargs['rhs']
+            kwargs['functionals'] = functionals
         if 'vector_operators' in kwargs:
             del kwargs['vector_operators']
 
@@ -195,6 +206,9 @@ class InstationaryDiscretization(DiscretizationBase):
         A dict of product |Operators| defined on the discrete space the
         problem is posed on. For each product a corresponding norm
         is added as a method of the discretization.
+    functionals
+        A dict of (output) |Functionals| which can be evaluated on solution
+        vectors.
     parameter_space
         The |ParameterSpace| for which the discrete problem is posed.
     estimator
@@ -234,24 +248,30 @@ class InstationaryDiscretization(DiscretizationBase):
     sid_ignore = ('visualizer', 'cache_region', 'name')
 
     def __init__(self, T, initial_data, operator, rhs=None, mass=None, time_stepper=None, num_values=None,
-                 products=None, parameter_space=None, estimator=None, visualizer=None, cache_region='disk',
-                 name=None):
-        assert isinstance(initial_data, (VectorArrayInterface, OperatorInterface))
+                 products=None, functionals=None, parameter_space=None, estimator=None, visualizer=None,
+                 cache_region='disk', name=None):
+        functionals = functionals or {}
+        if rhs is None and 'rhs' in functionals:
+            rhs = functionals['rhs']
+        if isinstance(initial_data, VectorArrayInterface):
+            initial_data = VectorOperator(initial_data, name='initial_data')
+        assert isinstance(initial_data, OperatorInterface)
         assert not isinstance(initial_data, OperatorInterface) or initial_data.source.dim == 1
         assert isinstance(operator, OperatorInterface)
         assert rhs is None or isinstance(rhs, OperatorInterface) and rhs.linear
         assert mass is None or isinstance(mass, OperatorInterface) and mass.linear
-        if isinstance(initial_data, VectorArrayInterface):
-            initial_data = VectorOperator(initial_data, name='initial_data')
         assert isinstance(time_stepper, TimeStepperInterface)
         assert operator.source == operator.range == initial_data.range
         assert rhs is None or rhs.source == operator.source and rhs.range.dim == 1
         assert mass is None or mass.source == mass.range == operator.source
+        assert all(f.source == operator.source for f in functionals.values())
+        assert 'rhs' not in functionals or rhs == functionals['rhs']
 
         operators = {'operator': operator, 'mass': mass}
-        functionals = {'rhs': rhs}
+        functionals_with_rhs = {'rhs': rhs} if rhs else {}
+        functionals_with_rhs.update(functionals)
         vector_operators = {'initial_data': initial_data}
-        super(InstationaryDiscretization, self).__init__(operators=operators, functionals=functionals,
+        super(InstationaryDiscretization, self).__init__(operators=operators, functionals=functionals_with_rhs,
                                                          vector_operators=vector_operators,
                                                          products=products, estimator=estimator,
                                                          visualizer=visualizer, cache_region=cache_region, name=name)
@@ -274,16 +294,18 @@ class InstationaryDiscretization(DiscretizationBase):
     def with_(self, **kwargs):
         assert set(kwargs.keys()) <= self.with_arguments
         assert 'operators' not in kwargs or kwargs['operators'].viewkeys() <= {'operator', 'mass'}
-        assert 'functionals' not in kwargs or kwargs['functionals'].viewkeys() <= {'rhs'}
         assert 'vector_operators' not in kwargs or kwargs['vector_operators'].viewkeys() <= {'initial_data'}
         assert 'operators' not in kwargs or not set(kwargs['operators']).intersection(kwargs.viewkeys())
-        assert 'functionals' not in kwargs or not set(kwargs['functionals']).intersection(kwargs.viewkeys())
         assert 'vector_operators' not in kwargs or not set(kwargs['vector_operators']).intersection(kwargs.viewkeys())
         assert 'time_stepper_nt' not in kwargs or 'time_stepper' not in kwargs
         if 'operators' in kwargs:
             kwargs.update(kwargs.pop('operators'))
-        if 'functionals' in kwargs:
-            kwargs.update(kwargs.pop('functionals'))
+        if 'rhs' not in kwargs and 'functionals' in kwargs and 'rhs' in kwargs['functionals']:
+            kwargs['rhs'] = kwargs['functionals']['rhs']
+        elif 'rhs' in kwargs and 'functionals' not in kwargs:
+            functionals = dict(self.functionals)
+            functionals['rhs'] = kwargs['rhs']
+            kwargs['functionals'] = functionals
         if 'vector_operators' in kwargs:
             kwargs.update(kwargs.pop('vector_operators'))
         if 'time_stepper_nt' in kwargs:
