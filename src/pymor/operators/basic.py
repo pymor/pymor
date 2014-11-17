@@ -70,6 +70,8 @@ class OperatorBase(OperatorInterface):
 
     @staticmethod
     def lincomb(operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
+        import warnings
+        warnings.warn('OperatorInterface.lincomb is deprecated! Use pymor.operators.constructions.lincomb instead.')
         op = LincombOperator(operators, coefficients, num_coefficients, coefficients_name, name=None)
         if op.parametric:
             return op
@@ -88,19 +90,22 @@ class OperatorBase(OperatorInterface):
         if isinstance(other, Number):
             assert other == 0.
             return self
-        return self.lincomb([self, other], [1, -1])
+        from pymor.operators.constructions import lincomb
+        return lincomb([self, other], [1, -1])
 
     def __add__(self, other):
         if isinstance(other, Number):
             assert other == 0.
             return self
-        return self.lincomb([self, other], [1, 1])
+        from pymor.operators.constructions import lincomb
+        return lincomb([self, other], [1, 1])
 
     __radd__ = __add__
 
     def __mul__(self, other):
         assert isinstance(other, Number)
-        return self.lincomb([self], [other])
+        from pymor.operators.constructions import lincomb
+        return lincomb([self], [other])
 
     def __str__(self):
         return '{}: R^{} --> R^{}  (parameter type: {}, class: {})'.format(
