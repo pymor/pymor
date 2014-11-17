@@ -12,6 +12,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from scipy.sparse import coo_matrix, csc_matrix
 
+from pymor.functions.interfaces import FunctionInterface
 from pymor.grids.referenceelements import triangle, line, square
 from pymor.la.numpyvectorarray import NumpyVectorSpace
 from pymor.operators.basic import NumpyMatrixBasedOperator
@@ -198,7 +199,8 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
             SF = np.squeeze(np.array([1 - q, q]))
             SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[NI], w).ravel()
             SF_I = g.subentities(1, 2)[NI].ravel()
-            I += np.array(coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).todense()).ravel()
+            I += np.array(coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim)))
+                                    .todense()).ravel()
 
         if bi is not None and bi.has_dirichlet:
             DI = bi.dirichlet_boundaries(g.dim)
@@ -391,6 +393,7 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
 
         (Lu)(x) = c ∇ ⋅ [ d(x) ∇ u(x) ]
 
+    The function `d` can be scalar- or matrix-valued.
     The current implementation works in one and two dimensions, but can be trivially
     extended to arbitrary dimensions.
 
@@ -401,7 +404,9 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
     boundary_info
         |BoundaryInfo| for the treatment of Dirichlet boundary conditions.
     diffusion_function
-        The |Function| `d(x)`. If `None`, constant one is assumed.
+        The |Function| `d(x)` with ``shape_range == tuple()`` or
+        ``shape_range = (grid.dim_outer, grid.dim_outer)``. If `None`, constant one is
+        assumed.
     diffusion_constant
         The constant `c`. If `None`, `c` is set to one.
     dirichlet_clear_columns
@@ -420,6 +425,10 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
                  dirichlet_clear_columns=False, dirichlet_clear_diag=False, name=None):
         assert grid.reference_element(0) in {triangle, line}, 'A simplicial grid is expected!'
+        assert diffusion_function is None \
+            or (isinstance(diffusion_function, FunctionInterface) and
+                diffusion_function.dim_domain == grid.dim_outer and
+                diffusion_function.shape_range == tuple() or diffusion_function.shape_range == (grid.dim_outer,) * 2)
         self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
@@ -450,9 +459,12 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
         SF_GRADS = np.einsum('eij,pj->epi', g.jacobian_inverse_transposed(0), SF_GRAD)
 
         self.logger.info('Calculate all local scalar products beween gradients ...')
-        if self.diffusion_function is not None:
+        if self.diffusion_function is not None and self.diffusion_function.shape_range == tuple():
             D = self.diffusion_function(self.grid.centers(0), mu=mu)
             SF_INTS = np.einsum('epi,eqi,e,e->epq', SF_GRADS, SF_GRADS, g.volumes(0), D).ravel()
+        elif self.diffusion_function is not None:
+            D = self.diffusion_function(self.grid.centers(0), mu=mu)
+            SF_INTS = np.einsum('epi,eqj,e,eij->epq', SF_GRADS, SF_GRADS, g.volumes(0), D).ravel()
         else:
             SF_INTS = np.einsum('epi,eqi,e->epq', SF_GRADS, SF_GRADS, g.volumes(0)).ravel()
 
@@ -497,6 +509,7 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
 
         (Lu)(x) = c ∇ ⋅ [ d(x) ∇ u(x) ]
 
+    The function `d` can be scalar- or matrix-valued.
     The current implementation works in two dimensions, but can be trivially
     extended to arbitrary dimensions.
 
@@ -507,7 +520,9 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
     boundary_info
         |BoundaryInfo| for the treatment of Dirichlet boundary conditions.
     diffusion_function
-        The |Function| `d(x)`. If `None`, constant one is assumed.
+        The |Function| `d(x)` with ``shape_range == tuple()`` or
+        ``shape_range = (grid.dim_outer, grid.dim_outer)``. If `None`, constant one is
+        assumed.
     diffusion_constant
         The constant `c`. If `None`, `c` is set to one.
     dirichlet_clear_columns
@@ -526,6 +541,10 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
                  dirichlet_clear_columns=False, dirichlet_clear_diag=False, name=None):
         assert grid.reference_element(0) in {square}, 'A square grid is expected!'
+        assert diffusion_function is None \
+            or (isinstance(diffusion_function, FunctionInterface) and
+                diffusion_function.dim_domain == grid.dim_outer and
+                diffusion_function.shape_range == tuple() or diffusion_function.shape_range == (grid.dim_outer,) * 2)
         self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
@@ -555,9 +574,12 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         SF_GRADS = np.einsum('eij,pjc->epic', g.jacobian_inverse_transposed(0), SF_GRAD)
 
         self.logger.info('Calculate all local scalar products beween gradients ...')
-        if self.diffusion_function is not None:
+        if self.diffusion_function is not None and self.diffusion_function.shape_range == tuple():
             D = self.diffusion_function(self.grid.centers(0), mu=mu)
             SF_INTS = np.einsum('epic,eqic,c,e,e->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0), D).ravel()
+        elif self.diffusion_function is not None:
+            D = self.diffusion_function(self.grid.centers(0), mu=mu)
+            SF_INTS = np.einsum('epic,eqjc,c,e,eij->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0), D).ravel()
         else:
             SF_INTS = np.einsum('epic,eqic,c,e->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0)).ravel()
 
