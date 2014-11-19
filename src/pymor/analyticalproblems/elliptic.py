@@ -40,6 +40,8 @@ class EllipticProblem(ImmutableInterface):
         |Function| providing the Dirichlet boundary values in global coordinates.
     neumann_data
         |Function| providing the Neumann boundary values in global coordinates.
+    parameter_space
+        |ParameterSpace| for the problem.
     name
         Name of the problem.
 
@@ -55,7 +57,8 @@ class EllipticProblem(ImmutableInterface):
     def __init__(self, domain=RectDomain(), rhs=ConstantFunction(dim_domain=2),
                  diffusion_functions=(ConstantFunction(dim_domain=2),),
                  diffusion_functionals=None,
-                 dirichlet_data=None, neumann_data=None, name=None):
+                 dirichlet_data=None, neumann_data=None,
+                 parameter_space=None, name=None):
         assert rhs.dim_domain == diffusion_functions[0].dim_domain
         assert dirichlet_data is None or dirichlet_data.dim_domain == diffusion_functions[0].dim_domain
         assert neumann_data is None or neumann_data.dim_domain == diffusion_functions[0].dim_domain
@@ -65,4 +68,5 @@ class EllipticProblem(ImmutableInterface):
         self.diffusion_functionals = diffusion_functionals
         self.dirichlet_data = dirichlet_data
         self.neumann_data = neumann_data
+        self.parameter_space = parameter_space
         self.name = name
