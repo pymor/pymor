@@ -616,3 +616,29 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         # print_memory_usage('matrix: {0:5.1f}'.format((A.data.nbytes + A.indptr.nbytes + A.indices.nbytes)/1024**2))
 
         return A
+
+
+class InterpolationOperator(NumpyMatrixBasedOperator):
+    """Lagrange interpolation operator for continuous finite element spaces.
+
+    Parameters
+    ----------
+    grid
+        The |Grid| on which to interpolate.
+    function
+        The |Function| to interpolate.
+    """
+
+    source = NumpyVectorSpace(1)
+    linear = True
+
+    def __init__(self, grid, function):
+        assert function.dim_domain == grid.dim_outer
+        assert function.shape_range == tuple()
+        self.grid = grid
+        self.function = function
+        self.range = NumpyVectorSpace(grid.size(grid.dim))
+        self.build_parameter_type(inherits=(function,))
+
+    def _assemble(self, mu=None):
+        return self.function.evaluate(self.grid.centers(self.grid.dim), mu=mu).reshape((-1, 1))
