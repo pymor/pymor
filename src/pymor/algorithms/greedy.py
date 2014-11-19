@@ -98,6 +98,11 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
         rd, rc, reduction_data = reductor(discretization, basis) if not hierarchic \
             else reductor(discretization, basis, extends=(rd, rc, reduction_data))
 
+        if len(samples) == 0:
+            return {'basis': basis, 'reduced_discretization': rd, 'reconstructor': rc, 'max_err': None,
+                    'max_err_mu': None, 'max_errs': [], 'max_err_mus': [], 'extensions': 0,
+                    'time': time.time() - tic, 'reduction_data': reduction_data}
+
         logger.info('Estimating errors ...')
         if use_estimator:
             errors = [rd.estimate(rd.solve(mu), mu) for mu in samples]
