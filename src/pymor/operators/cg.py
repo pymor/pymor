@@ -97,9 +97,9 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         if bi is not None and bi.has_neumann and self.neumann_data is not None:
             NI = bi.neumann_boundaries(1)
             if g.dim == 1:
-                I[NI] += self.neumann_data(g.centers(1)[NI])
+                I[NI] -= self.neumann_data(g.centers(1)[NI])
             else:
-                F = self.neumann_data(g.quadrature_points(1, order=self.order)[NI], mu=mu)
+                F = -self.neumann_data(g.quadrature_points(1, order=self.order)[NI], mu=mu)
                 q, w = line.quadrature(order=self.order)
                 SF = np.squeeze(np.array([1 - q, q]))
                 SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[NI], w).ravel()
@@ -194,7 +194,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         # boundary treatment
         if bi is not None and bi.has_neumann and self.neumann_data is not None:
             NI = bi.neumann_boundaries(1)
-            F = self.neumann_data(g.quadrature_points(1, order=self.order)[NI], mu=mu)
+            F = -self.neumann_data(g.quadrature_points(1, order=self.order)[NI], mu=mu)
             q, w = line.quadrature(order=self.order)
             SF = np.squeeze(np.array([1 - q, q]))
             SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[NI], w).ravel()
