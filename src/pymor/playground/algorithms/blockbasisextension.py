@@ -65,9 +65,16 @@ def gram_schmidt_block_basis_extension(basis, U, product=None, copy_basis=True, 
 
     logger = getLogger('pymor.algorithms.blockbasisextension.gram_schmidt_block_basis_extension')
 
-    if not copy_U:
+    if isinstance(U, BlockVectorArray):
+        blocks = U._blocks
+    elif isinstance(U, list):
+        blocks = U
+    else:
+        raise ExtensionError('U of unknown type given: {}'.format(type(U)))
+    if isinstance(U, BlockVectorArray) and not copy_U:
         logger.warn('The option copy_U==False is not supported for BlockVectorArrays!')
-    num_blocks = U.num_blocks
+    num_blocks = len(blocks)
+
     if basis is None:
         basis = [None for ii in np.arange(num_blocks)]
     assert isinstance(basis, list)
@@ -89,7 +96,7 @@ def gram_schmidt_block_basis_extension(basis, U, product=None, copy_basis=True, 
     for ii in np.arange(num_blocks):
         try:
             nb, ed = gram_schmidt_basis_extension(basis[ii],
-                                                  U._blocks[ii],
+                                                  blocks[ii],
                                                   product=product[ii],
                                                   copy_basis=copy_basis,
                                                   copy_U=True)
