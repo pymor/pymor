@@ -14,8 +14,8 @@ from pymor.core.logger import getLogger
 from pymor.tools.floatcmp import float_cmp_all
 
 
-@defaults('tol', 'find_duplicates', 'reiterate', 'reiteration_threshold', 'check', 'check_tol')
-def gram_schmidt(A, product=None, tol=1e-14, offset=0, find_duplicates=True,
+@defaults('atol', 'rtol', 'find_duplicates', 'reiterate', 'reiteration_threshold', 'check', 'check_tol')
+def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplicates=True,
                  reiterate=True, reiteration_threshold=1e-1, check=True, check_tol=1e-3,
                  copy=False):
     """Orthonormalize a |VectorArray| using the Gram-Schmidt algorithm.
@@ -27,8 +27,10 @@ def gram_schmidt(A, product=None, tol=1e-14, offset=0, find_duplicates=True,
     product
         The scalar product w.r.t. which to orthonormalize, given as a linear
         |Operator|. If `None` the Euclidean product is used.
-    tol
-        Tolerance to determine a linear dependent row.
+    atol
+        Vectors of norm smaller than `atol` are removed from the array.
+    rtol
+        Relative tolerance to determine a linear dependent vector.
     offset
         Assume that the first `offset` vectors are already orthogonal and start the
         algorithm at the `offset + 1`-th vector.
@@ -75,17 +77,17 @@ def gram_schmidt(A, product=None, tol=1e-14, offset=0, find_duplicates=True,
     for i in xrange(offset, len(A)):
         # first calculate norm
         if product is None:
-            oldnorm = A.l2_norm(ind=i)[0]
+            initial_norm = A.l2_norm(ind=i)[0]
         else:
-            oldnorm = np.sqrt(product.apply2(A, A, V_ind=i, U_ind=i, pairwise=True))[0]
+            initial_norm = np.sqrt(product.apply2(A, A, V_ind=i, U_ind=i, pairwise=True))[0]
 
-        if float_cmp_all(oldnorm, 0):
-            logger.info("Removing null vector {}".format(i))
+        if initial_norm < atol:
+            logger.info("Removing vector {} of norm {}".format(i, initial_norm))
             remove.append(i)
             continue
 
         if i == 0:
-            A.scal(1/oldnorm, ind=0)
+            A.scal(1/initial_norm, ind=0)
 
         else:
             first_iteration = True
@@ -93,7 +95,6 @@ def gram_schmidt(A, product=None, tol=1e-14, offset=0, find_duplicates=True,
             # If reiterate is True, reiterate as long as the norm of the vector changes
             # strongly during orthonormalization (due to Andreas Buhr).
             while first_iteration or reiterate and norm < reiteration_threshold:
-                # this loop assumes that oldnorm is the norm of the ith vector when entering
 
                 if first_iteration:
                     first_iteration = False
@@ -117,13 +118,12 @@ def gram_schmidt(A, product=None, tol=1e-14, offset=0, find_duplicates=True,
                     norm = np.sqrt(product.apply2(A, A, V_ind=i, U_ind=i, pairwise=True))[0]
 
                 # remove vector if it got too small:
-                if norm / oldnorm < tol:
+                if norm / initial_norm < rtol:
                     logger.info("Removing linear dependent vector {}".format(i))
                     remove.append(i)
                     break
 
                 A.scal(1 / norm, ind=i)
-                oldnorm = 1.
 
     if remove:
         A.remove(remove)
