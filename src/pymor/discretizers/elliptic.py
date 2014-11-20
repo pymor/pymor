@@ -10,6 +10,7 @@ from __future__ import absolute_import, division, print_function
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.discretizations.basic import StationaryDiscretization
 from pymor.domaindiscretizers.default import discretize_domain_default
+from pymor.grids.boundaryinfos import EmptyBoundaryInfo
 from pymor.grids.oned import OnedGrid
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
@@ -99,12 +100,12 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
     else:
         visualizer = Matplotlib1DVisualizer(grid=grid, codim=1)
 
-    if isinstance(grid, RectGrid):
-        products = {'h1': Operator(grid, boundary_info),
-                    'l2': L2ProductQ1(grid, boundary_info)}
-    else:
-        products = {'h1': Operator(grid, boundary_info),
-                    'l2': L2ProductP1(grid, boundary_info)}
+    empty_bi = EmptyBoundaryInfo(grid)
+    l2_product = L2ProductQ1(grid, empty_bi) if isinstance(grid, RectGrid) else L2ProductP1(grid, empty_bi)
+    h1_semi_product = Operator(grid, empty_bi)
+    products = {'h1': l2_product + h1_semi_product,
+                'h1_semi': h1_semi_product,
+                'l2': l2_product}
 
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
 
