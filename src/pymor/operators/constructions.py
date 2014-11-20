@@ -67,6 +67,7 @@ class LincombOperator(OperatorBase):
         self.name = name
         self.build_parameter_type(inherits=list(operators) +
                                   [f for f in coefficients if isinstance(f, ParameterFunctionalInterface)])
+        self._try_assemble = not self.parametric
 
     def with_(self, **kwargs):
         assert set(kwargs.keys()) <= self.with_arguments
@@ -92,6 +93,13 @@ class LincombOperator(OperatorBase):
         return np.array([c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients])
 
     def apply(self, U, ind=None, mu=None):
+        if hasattr(self, '_assembled_operator'):
+            if self._defaults_sid == defaults_sid():
+                return self._assembled_operator.apply(U, ind=ind)
+            else:
+                return self.assemble().apply(U, ind=ind)
+        elif self._try_assemble:
+            return self.assemble().apply(U, ind=ind)
         coeffs = self.evaluate_coefficients(mu)
         Vs = [op.apply(U, ind=ind, mu=mu) for op in self.operators]
         R = Vs[0]
@@ -102,20 +110,34 @@ class LincombOperator(OperatorBase):
 
     def assemble(self, mu=None):
         if hasattr(self, '_assembled_operator'):
-            if self._defaults_sid != defaults_sid():
-                self.logger.warn('Re-assembling since state of global defaults has changed.')
-            else:
+            if self._defaults_sid == defaults_sid():
                 return self._assembled_operator
+            else:
+                self.logger.warn('Re-assembling since state of global defaults has changed.')
         operators = [op.assemble(mu) for op in self.operators]
         coefficients = self.evaluate_coefficients(mu)
-        op = (operators[0].assemble_lincomb(operators, coefficients, name=self.name + '_assembled')
-              or LincombOperator(operators, coefficients, name=self.name + '_assembled'))
-        if self.parameter_type is None:
-            self._assembled_operator = op
-            self._defaults_sid = defaults_sid()
-        return op
+        op = operators[0].assemble_lincomb(operators, coefficients, name=self.name + '_assembled')
+        if not self.parametric:
+            if op:
+                self._assembled_operator = op
+                self._defaults_sid = defaults_sid()
+                return op
+            else:
+                self._try_assemble = False
+                return self
+        elif op:
+            return op
+        else:
+            return LincombOperator(operators, coefficients, name=self.name + '_assembled')
 
     def jacobian(self, U, mu=None):
+        if hasattr(self, '_assembled_operator'):
+            if self._defaults_sid == defaults_sid():
+                return self._assembled_operator.jacobian(U)
+            else:
+                return self.assemble().jacobian(U)
+        elif self._try_assemble:
+            return self.assemble().jacobian(U)
         jacobians = [op.jacobian(U, mu) for op in self.operators]
         coefficients = self.evaluate_coefficients(mu)
         jac = jacobians[0].assemble_lincomb(jacobians, coefficients, name=self.name + '_jacobian')
@@ -125,6 +147,13 @@ class LincombOperator(OperatorBase):
             return jac
 
     def as_vector(self, mu=None):
+        if hasattr(self, '_assembled_operator'):
+            if self._defaults_sid == defaults_sid():
+                return self._assembled_operator.as_vector()
+            else:
+                return self.assemble().as_vector()
+        elif self._try_assemble:
+            return self.assemble().as_vector()
         coefficients = self.evaluate_coefficients(mu)
         vectors = [op.as_vector(mu) for op in self.operators]
         R = vectors[0]
@@ -134,6 +163,13 @@ class LincombOperator(OperatorBase):
         return R
 
     def projected(self, source_basis, range_basis, product=None, name=None):
+        if hasattr(self, '_assembled_operator'):
+            if self._defaults_sid == defaults_sid():
+                return self._assembled_operator.projected(source_basis, range_basis, product, name)
+            else:
+                return self.assemble().projected(source_basis, range_basis, product, name)
+        elif self._try_assemble:
+            return self.assemble().projected(source_basis, range_basis, product, name)
         proj_operators = [op.projected(source_basis=source_basis, range_basis=range_basis, product=product)
                           for op in self.operators]
         return self.with_(operators=proj_operators, name=name or self.name + '_projected')
