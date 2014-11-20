@@ -208,7 +208,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
     @abstractstaticmethod
     def lincomb(operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
-        """DEPRECATED! Use :func:`pymor.operators.constructions.lincomb` instead.
+        """DEPRECATED! Use :func:`pymor.operators.constructions.LincombOperator` instead.
         """
         pass
 

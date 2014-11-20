@@ -17,7 +17,7 @@ from pymor.grids.tria import TriaGrid
 from pymor.gui.qt import PatchVisualizer, Matplotlib1DVisualizer
 from pymor.operators.cg import DiffusionOperatorP1, L2ProductFunctionalP1, L2ProductP1,\
     DiffusionOperatorQ1, L2ProductFunctionalQ1, L2ProductQ1
-from pymor.operators.constructions import lincomb
+from pymor.operators.constructions import LincombOperator
 
 
 def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer=None,
@@ -84,11 +84,11 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
               for i, df in enumerate(p.diffusion_functions)]
 
         if p.diffusion_functionals is None:
-            L = lincomb(operators=Li + [L0], name='diffusion', num_coefficients=len(Li),
-                        coefficients_name='diffusion_coefficients')
+            L = LincombOperator(operators=Li + [L0], name='diffusion', num_coefficients=len(Li),
+                                coefficients_name='diffusion_coefficients')
         else:
-            L = lincomb(operators=[L0] + Li, coefficients=[1.] + list(p.diffusion_functionals),
-                        name='diffusion')
+            L = LincombOperator(operators=[L0] + Li, coefficients=[1.] + list(p.diffusion_functionals),
+                                name='diffusion')
     else:
         L = Operator(grid, boundary_info, diffusion_function=p.diffusion_functions[0],
                      name='diffusion')

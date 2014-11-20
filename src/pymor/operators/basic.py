@@ -88,22 +88,22 @@ class OperatorBase(OperatorInterface):
         if isinstance(other, Number):
             assert other == 0.
             return self
-        from pymor.operators.constructions import lincomb
-        return lincomb([self, other], [1, -1])
+        from pymor.operators.constructions import LincombOperator
+        return LincombOperator([self, other], [1, -1])
 
     def __add__(self, other):
         if isinstance(other, Number):
             assert other == 0.
             return self
-        from pymor.operators.constructions import lincomb
-        return lincomb([self, other], [1, 1])
+        from pymor.operators.constructions import LincombOperator
+        return LincombOperator([self, other], [1, 1])
 
     __radd__ = __add__
 
     def __mul__(self, other):
         assert isinstance(other, Number)
-        from pymor.operators.constructions import lincomb
-        return lincomb([self], [other])
+        from pymor.operators.constructions import LincombOperator
+        return LincombOperator([self], [other])
 
     def __str__(self):
         return '{}: R^{} --> R^{}  (parameter type: {}, class: {})'.format(
@@ -118,8 +118,9 @@ class OperatorBase(OperatorInterface):
             return None
 
     def apply_inverse(self, U, ind=None, mu=None, options=None):
-        if self.parametric:
-            return self.assemble(mu).apply_inverse(U, ind=ind, options=options)
+        assembled_op = self.assemble(mu)
+        if assembled_op != self:
+            return assembled_op.apply_inverse(U, ind=ind, options=options)
         else:
             return genericsolvers.apply_inverse(self, U.copy(ind), options=options)
 
