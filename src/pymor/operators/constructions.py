@@ -12,6 +12,7 @@ from itertools import izip
 
 import numpy as np
 
+from pymor.core.defaults import defaults_sid
 from pymor.la.interfaces import VectorArrayInterface
 from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
 from pymor.operators.basic import OperatorBase
@@ -134,13 +135,19 @@ class LincombOperator(OperatorBase):
         return R
 
     def assemble(self, mu=None):
+        if hasattr(self, '_assembled_operator'):
+            if self._defaults_sid != defaults_sid():
+                self.logger.warn('Re-assembling since state of global defaults has changed.')
+            else:
+                return self._assembled_operator
         operators = [op.assemble(mu) for op in self.operators]
         coefficients = self.evaluate_coefficients(mu)
-        op = operators[0].assemble_lincomb(operators, coefficients, name=self.name + '_assembled')
-        if op is None:
-            return LincombOperator(operators, coefficients, name=self.name + '_assembled')
-        else:
-            return op
+        op = (operators[0].assemble_lincomb(operators, coefficients, name=self.name + '_assembled')
+              or LincombOperator(operators, coefficients, name=self.name + '_assembled'))
+        if self.parameter_type is None:
+            self._assembled_operator = op
+            self._defaults_sid = defaults_sid()
+        return op
 
     def jacobian(self, U, mu=None):
         jacobians = [op.jacobian(U, mu) for op in self.operators]
@@ -172,6 +179,12 @@ class LincombOperator(OperatorBase):
         proj_operators = [op.projected_to_subbasis(dim_source=dim_source, dim_range=dim_range)
                           for op in self.operators]
         return self.with_(operators=proj_operators, name=name or '{}_projected_to_subbasis'.format(self.name))
+
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        if '_assembled_operator' in d:
+            del d['_assembled_operator']
+        return d
 
 
 class Concatenation(OperatorBase):
