@@ -194,7 +194,7 @@ class ExpressionFunction(GenericFunction):
     functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',
                                              'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
                                              'exp', 'exp2', 'log', 'log2', 'log10',
-                                             'min', 'minimum', 'max', 'maximum', }}
+                                             'min', 'minimum', 'max', 'maximum', 'pi', 'e'}}
 
     def __init__(self, expression, dim_domain=1, shape_range=tuple(), parameter_type=None, name=None):
         self.expression = expression
