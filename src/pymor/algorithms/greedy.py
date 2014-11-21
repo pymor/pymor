@@ -99,6 +99,7 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
             else reductor(discretization, basis, extends=(rd, rc, reduction_data))
 
         if len(samples) == 0:
+            logger.info('There is nothing else to do for empty samples.')
             return {'basis': basis, 'reduced_discretization': rd, 'reconstructor': rc, 'max_err': None,
                     'max_err_mu': None, 'max_errs': [], 'max_err_mus': [], 'extensions': 0,
                     'time': time.time() - tic, 'reduction_data': reduction_data}
