@@ -173,7 +173,7 @@ class RectGrid(AffineGridWithOrthogonalCentersInterface):
         In other words `structed_to_global(codim)[i, j]` is the global index of the i-th in
         x0-direction and j-th in x1-direction codim-`codim` entity of the grid.
         """
-        if codim not in (0, 2):
+        if self.identify_left_right or self.identify_bottom_top or codim not in (0, 2):
             raise NotImplementedError
         return self._structured_to_global[codim]
 
@@ -183,7 +183,7 @@ class RectGrid(AffineGridWithOrthogonalCentersInterface):
         I.e. if `GTS = global_to_structured(codim)` and `STG = structured_to_global(codim)`, then
         `STG[GTS[:, 0], GTS[:, 1]] == numpy.arange(size(codim))`.
         """
-        if codim not in (0, 2):
+        if self.identify_left_right or self.identify_bottom_top or codim not in (0, 2):
             raise NotImplementedError
         return self._global_to_structured[codim]
 
