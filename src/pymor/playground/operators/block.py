@@ -55,7 +55,7 @@ class BlockOperator(OperatorBase):
                 source_types[jj] = op.source
                 assert range_types[ii] is None or op.range == range_types[ii]
                 range_types[ii] = op.range
-        # theere needs to be at least one operator for each combination of row and column
+        # there needs to be at least one operator for each combination of row and column
         assert all([ss is not None for ss in source_types])
         assert all([rr is not None for rr in range_types])
         self.source = VectorSpace(BlockVectorArray, source_types)
