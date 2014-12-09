@@ -12,7 +12,7 @@ from numpy.polynomial.polynomial import Polynomial
 from math import factorial
 
 from pymor.core import logger
-from pymor.la import NumpyVectorArray, NumpyVectorSpace
+from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
 from pymor.operators.basic import OperatorBase
 
 

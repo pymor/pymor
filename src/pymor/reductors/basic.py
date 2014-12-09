@@ -6,11 +6,11 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-import pymor.core as core
+from pymor.core.interfaces import BasicInterface
 from pymor.la.numpyvectorarray import NumpyVectorArray
 
 
-class GenericRBReconstructor(core.BasicInterface):
+class GenericRBReconstructor(BasicInterface):
     """Simple reconstructor forming linear combinations with the reduced basis."""
 
     def __init__(self, RB):
@@ -96,7 +96,7 @@ def reduce_generic_rb(discretization, RB, operator_product=None, vector_product=
     return rd, rc, {}
 
 
-class SubbasisReconstructor(core.BasicInterface):
+class SubbasisReconstructor(BasicInterface):
     """Returned by :meth:`reduce_to_subbasis`."""
 
     def __init__(self, dim, dim_subbasis, old_recontructor=None):

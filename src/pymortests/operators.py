@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 import pytest
 
-from pymor.la import NumpyVectorArray
+from pymor.la.numpyvectorarray import NumpyVectorArray
 from pymortests.algorithms import MonomOperator
 from pymortests.base import runmodule
 

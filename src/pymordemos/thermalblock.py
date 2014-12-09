@@ -52,8 +52,6 @@ Options:
 
 from __future__ import absolute_import, division, print_function
 
-from pymor.core.defaults import set_defaults
-
 import sys
 import math as m
 import time
@@ -63,20 +61,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 from docopt import docopt
 
-import pymor.core as core
-core.logger.MAX_HIERACHY_LEVEL = 2
-from pymor.algorithms import greedy, trivial_basis_extension, gram_schmidt_basis_extension
-from pymor.analyticalproblems import ThermalBlockProblem
+from pymor.core import logger
+logger.MAX_HIERACHY_LEVEL = 2
+from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension
+from pymor.algorithms.greedy import greedy
+from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
 from pymor.core.pickle import dump
-from pymor.discretizers import discretize_elliptic_cg
+from pymor.discretizers.elliptic import discretize_elliptic_cg
 from pymor.parameters.functionals import ExpressionParameterFunctional
-from pymor.reductors import reduce_to_subbasis
+from pymor.reductors.basic import reduce_to_subbasis
 from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor.reductors.stationary import reduce_stationary_coercive
-core.set_log_levels({'pymor.algorithms': 'INFO',
-                     'pymor.discretizations': 'INFO',
-                     'pymor.la': 'INFO',
-                     'pymor.reductors': 'INFO'})
+logger.set_log_levels({'pymor.algorithms': 'INFO',
+                       'pymor.discretizations': 'INFO',
+                       'pymor.la': 'INFO',
+                       'pymor.reductors': 'INFO'})
 
 
 def thermalblock_demo(args):

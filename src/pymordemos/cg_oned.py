@@ -24,12 +24,13 @@ from __future__ import absolute_import, division, print_function
 from docopt import docopt
 import numpy as np
 
-from pymor.analyticalproblems import EllipticProblem
-from pymor.core import set_log_levels
-from pymor.discretizers import discretize_elliptic_cg
-from pymor.domaindescriptions import LineDomain
-from pymor.functions import GenericFunction, ConstantFunction
-from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional, GenericParameterFunctional
+from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.core.logger import set_log_levels
+from pymor.discretizers.elliptic import discretize_elliptic_cg
+from pymor.domaindescriptions.basic import LineDomain
+from pymor.functions.basic import GenericFunction, ConstantFunction
+from pymor.parameters.functionals import ProjectionParameterFunctional, GenericParameterFunctional
+from pymor.parameters.spaces import CubicParameterSpace
 
 set_log_levels({'pymor.discretizations': 'INFO'})
 

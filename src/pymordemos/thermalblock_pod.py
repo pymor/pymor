@@ -48,13 +48,13 @@ import time
 import numpy as np
 from docopt import docopt
 
-import pymor.core as core
-core.logger.MAX_HIERACHY_LEVEL = 2
-from pymor.analyticalproblems import ThermalBlockProblem
-from pymor.discretizers import discretize_elliptic_cg
+from pymor.core import logger
+logger.MAX_HIERACHY_LEVEL = 2
+from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
+from pymor.discretizers.elliptic import discretize_elliptic_cg
 from pymor.la.pod import pod
-from pymor.reductors import reduce_generic_rb
-core.set_log_levels({'pymor.discretizations': 'INFO'})
+from pymor.reductors.basic import reduce_generic_rb
+logger.set_log_levels({'pymor.discretizations': 'INFO'})
 
 
 def thermalblock_demo(args):

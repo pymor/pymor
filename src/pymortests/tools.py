@@ -16,7 +16,7 @@ from pymor.tools.memory import total_size
 from pymor.tools.quadratures import GaussQuadratures
 from pymor.tools.floatcmp import float_cmp, float_cmp_all
 from pymor.tools.vtkio import write_vtk
-from pymor.la import NumpyVectorArray
+from pymor.la.numpyvectorarray import NumpyVectorArray
 
 
 class TestMemory(TestInterface):

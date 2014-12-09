@@ -46,17 +46,18 @@ import OpenGL
 
 OpenGL.ERROR_ON_COPY = True
 
-import pymor.core as core
-core.logger.MAX_HIERACHY_LEVEL = 2
-from pymor.algorithms import greedy, gram_schmidt_basis_extension
-from pymor.analyticalproblems import ThermalBlockProblem
-from pymor.discretizers import discretize_elliptic_cg
+from pymor.core import logger
+logger.MAX_HIERACHY_LEVEL = 2
+from pymor.algorithms.basisextension import gram_schmidt_basis_extension
+from pymor.algorithms.greedy import greedy
+from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
+from pymor.discretizers.elliptic import discretize_elliptic_cg
 from pymor.gui.glumpy import ColorBarWidget, GlumpyPatchWidget
 from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor import gui
 
-core.set_log_levels({'pymor.algorithms': 'INFO',
-                     'pymor.discretizations': 'INFO'})
+logger.set_log_levels({'pymor.algorithms': 'INFO',
+                       'pymor.discretizations': 'INFO'})
 
 PARAM_STEPS = 10
 PARAM_MIN = 0.1

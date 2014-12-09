@@ -10,13 +10,13 @@ from pymor.gui.qt import visualize_patch
 
 import pytest
 import numpy as np
-from pymor.analyticalproblems import EllipticProblem
-from pymor.discretizers import discretize_elliptic_cg
-from pymor.domaindiscretizers import discretize_domain_default
-from pymor.grids import RectGrid, TriaGrid
+from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.discretizers.elliptic import discretize_elliptic_cg
+from pymor.domaindiscretizers.default import discretize_domain_default
+from pymor.grids.rect import RectGrid
 
 from pymortests.base import runmodule
-from pymor.domaindescriptions import RectDomain, LineDomain
+from pymor.domaindescriptions.basic import RectDomain, LineDomain
 from pymor.functions.basic import GenericFunction
 
 

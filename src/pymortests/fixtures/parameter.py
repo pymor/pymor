@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor.parameters import Parameter
+from pymor.parameters.base import Parameter
 
 
 def parameters_of_type(parameter_type, seed):

@@ -10,7 +10,10 @@ import random
 import numpy as np
 import pytest
 
-from pymor.grids import RectGrid, TriaGrid, OnedGrid, SubGrid
+from pymor.grids.oned import OnedGrid
+from pymor.grids.rect import RectGrid
+from pymor.grids.subgrid import SubGrid
+from pymor.grids.tria import TriaGrid
 
 
 rect_grid_generators = [lambda arg=arg, kwargs=kwargs: RectGrid(arg, **kwargs) for arg, kwargs in

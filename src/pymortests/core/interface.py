@@ -12,7 +12,7 @@ from pymor.core import exceptions
 from pymor.core import decorators
 from pymortests.base import TestInterface, runmodule, SubclassForImplemetorsOf
 from pymortests.core.dummies import *   # NOQA
-from pymor.grids import RectGrid
+from pymor.grids.rect import RectGrid
 from pymor.tools import timing
 import pymor.core
 

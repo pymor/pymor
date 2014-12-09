@@ -36,25 +36,19 @@ Options:
 
 from __future__ import absolute_import, division, print_function
 
-from pymor.core.defaults import set_defaults
-
 import sys
-import math as m
 import time
-from functools import partial
 
 import numpy as np
 import matplotlib.pyplot as plt
 from docopt import docopt
 
-import pymor.core as core
+from pymor.core.logger import set_log_levels
 from pymor.core.pickle import load
-from pymor.discretizers import discretize_elliptic_cg
-from pymor.reductors import reduce_to_subbasis
-from pymor.reductors.linear import reduce_stationary_affine_linear
-core.set_log_levels({'pymor.algorithms': 'INFO',
-                     'pymor.discretizations': 'INFO',
-                     'pymor.la': 'INFO'})
+from pymor.reductors.basic import reduce_to_subbasis
+set_log_levels({'pymor.algorithms': 'INFO',
+                'pymor.discretizations': 'INFO',
+                'pymor.la': 'INFO'})
 
 
 def analyze_pickle_histogram(args):
@@ -112,7 +106,7 @@ def analyze_pickle_histogram(args):
         rect_scatter = [left, bottom, width, height]
         rect_histx = [left, bottom_h, width, 0.2]
         rect_histy = [left_h, bottom, 0.2, height]
-        plt.figure(1, figsize=(8,8))
+        plt.figure(1, figsize=(8, 8))
         axScatter = plt.axes(rect_scatter)
         axHistx = plt.axes(rect_histx)
         axHisty = plt.axes(rect_histy)
@@ -210,7 +204,6 @@ def analyze_pickle_convergence(args):
         for mu in mus:
             us.append(rd.solve(mu))
         T_SOLVES.append((time.time() - start) * 1000. / len(mus))
-
 
         print('estimate ', end='')
         sys.stdout.flush()

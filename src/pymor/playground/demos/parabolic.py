@@ -8,9 +8,9 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
-from pymor.analyticalproblems import ThermalBlockProblem
-from pymor.discretizations import InstationaryDiscretization
-from pymor.discretizers import discretize_elliptic_cg
+from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
+from pymor.discretizations.basic import InstationaryDiscretization
+from pymor.discretizers.elliptic import discretize_elliptic_cg
 from pymor.la.numpyvectorarray import NumpyVectorArray
 
 

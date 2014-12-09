@@ -25,7 +25,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from scipy.linalg import solve_triangular, cho_factor, cho_solve
 
-from pymor.core import getLogger
+from pymor.core.logger import getLogger
 from pymor.core.cache import CacheableInterface, cached
 from pymor.la.interfaces import VectorArrayInterface
 from pymor.la.pod import pod

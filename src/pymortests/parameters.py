@@ -4,7 +4,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymor import parameters
+from pymor.parameters.spaces import CubicParameterSpace
 from pymortests.base import runmodule
 
 import pytest
@@ -15,7 +15,7 @@ num_samples = 100
 
 @pytest.fixture(scope='module')
 def space():
-    return parameters.CubicParameterSpace({'diffusionl': 1}, 0.1, 1)
+    return CubicParameterSpace({'diffusionl': 1}, 0.1, 1)
 
 
 def test_uniform(space):

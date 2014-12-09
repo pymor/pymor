@@ -28,18 +28,18 @@ Options:
 
 from __future__ import absolute_import, division, print_function
 
-import sys
 import math as m
 from docopt import docopt
 import numpy as np
 
-from pymor.analyticalproblems import EllipticProblem
-from pymor.discretizers import discretize_elliptic_cg
-from pymor.domaindescriptions import BoundaryType
-from pymor.domaindescriptions import RectDomain
-from pymor.domaindiscretizers import discretize_domain_default
-from pymor.functions import GenericFunction, ConstantFunction
-from pymor.grids import RectGrid, TriaGrid
+from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.discretizers.elliptic import discretize_elliptic_cg
+from pymor.domaindescriptions.boundarytypes import BoundaryType
+from pymor.domaindescriptions.basic import RectDomain
+from pymor.domaindiscretizers.default import discretize_domain_default
+from pymor.functions.basic import GenericFunction, ConstantFunction
+from pymor.grids.rect import RectGrid
+from pymor.grids.tria import TriaGrid
 
 
 def cg_demo(nrhs, ndirichlet, nneumann, neumann_count, rect_grid=False):

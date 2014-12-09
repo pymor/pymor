@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 import math as m
 import numpy as np
 
-from pymor.core import inject_sid
+from pymor.core.interfaces import inject_sid
 from pymor.domaindescriptions.basic import RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain
 from pymor.grids.boundaryinfos import BoundaryInfoFromIndicators, EmptyBoundaryInfo
 from pymor.grids.oned import OnedGrid
