@@ -195,3 +195,25 @@ class TriaGrid(AffineGridInterface):
             return self.__embeddings
         else:
             return super(TriaGrid, self).embeddings(codim)
+
+    def visualize(self, U, codim=2, **kwargs):
+        """Visualize scalar data associated to the grid as a patch plot.
+
+        Parameters
+        ----------
+        U
+            |VectorArray| of the data to visualize. If `len(U) > 1`, the data is visualized
+            as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
+            provided, in which case a subplot is created for each entry of the tuple. The
+            lengths of all arrays have to agree.
+        codim
+            The codimension of the entities the data in `U` is attached to (either 0 or 2).
+        **kwargs
+            See :func:`~pymor.gui.qt.visualize_patch`
+        """
+        from pymor.gui.qt import visualize_patch
+        from pymor.la.numpyvectorarray import NumpyVectorArray
+        if not isinstance(U, NumpyVectorArray):
+            U = NumpyVectorArray(U, copy=False)
+        bounding_box = kwargs.pop('bounding_box', self.domain)
+        visualize_patch(self, U, codim=codim, bounding_box=bounding_box, **kwargs)
