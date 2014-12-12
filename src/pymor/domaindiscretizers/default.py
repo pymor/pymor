@@ -60,8 +60,14 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
     """
 
     def discretize_RectDomain():
-        x0i = int(m.ceil(domain_description.width * m.sqrt(2) / diameter))
-        x1i = int(m.ceil(domain_description.height * m.sqrt(2) / diameter))
+        if grid_type == RectGrid:
+            x0i = int(m.ceil(domain_description.width * m.sqrt(2) / diameter))
+            x1i = int(m.ceil(domain_description.height * m.sqrt(2) / diameter))
+        elif grid_type == TriaGrid:
+            x0i = int(m.ceil(domain_description.width / diameter))
+            x1i = int(m.ceil(domain_description.height / diameter))
+        else:
+            raise NotImplementedError
         grid = grid_type(domain=domain_description.domain, num_intervals=(x0i, x1i))
 
         indicator_id = __name__ + '.discretize_domain_default.discretize_RectDomain'
@@ -85,8 +91,14 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
         return grid, bi
 
     def discretize_CylindricalDomain():
-        x0i = int(m.ceil(domain_description.width * m.sqrt(2) / diameter))
-        x1i = int(m.ceil(domain_description.height * m.sqrt(2) / diameter))
+        if grid_type == RectGrid:
+            x0i = int(m.ceil(domain_description.width * m.sqrt(2) / diameter))
+            x1i = int(m.ceil(domain_description.height * m.sqrt(2) / diameter))
+        elif grid_type == TriaGrid:
+            x0i = int(m.ceil(domain_description.width / diameter))
+            x1i = int(m.ceil(domain_description.height / diameter))
+        else:
+            raise NotImplementedError
         grid = grid_type(domain=domain_description.domain, num_intervals=(x0i, x1i),
                          identify_left_right=True)
 
@@ -108,8 +120,14 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
         return grid, bi
 
     def discretize_TorusDomain():
-        x0i = int(m.ceil(domain_description.width * m.sqrt(2) / diameter))
-        x1i = int(m.ceil(domain_description.height * m.sqrt(2) / diameter))
+        if grid_type == RectGrid:
+            x0i = int(m.ceil(domain_description.width * m.sqrt(2) / diameter))
+            x1i = int(m.ceil(domain_description.height * m.sqrt(2) / diameter))
+        elif grid_type == TriaGrid:
+            x0i = int(m.ceil(domain_description.width / diameter))
+            x1i = int(m.ceil(domain_description.height / diameter))
+        else:
+            raise NotImplementedError
         grid = grid_type(domain=domain_description.domain, num_intervals=(x0i, x1i),
                          identify_left_right=True, identify_bottom_top=True)
 
