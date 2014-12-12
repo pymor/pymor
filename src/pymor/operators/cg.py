@@ -278,6 +278,8 @@ class L2ProductP1(NumpyMatrixBasedOperator):
         # -> shape = (g.size(0), number of shape functions ** 2)
         SF_INTS = np.einsum('iq,jq,q,e->eij', SFQ, SFQ, w, g.integration_elements(0)).ravel()
 
+        del SFQ
+
         self.logger.info('Determine global dofs ...')
         SF_I0 = np.repeat(g.subentities(0, g.dim), g.dim + 1, axis=1).ravel()
         SF_I1 = np.tile(g.subentities(0, g.dim), [1, g.dim + 1]).ravel()
@@ -295,6 +297,7 @@ class L2ProductP1(NumpyMatrixBasedOperator):
 
         self.logger.info('Assemble system matrix ...')
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
+        del SF_INTS, SF_I0, SF_I1
         A = csc_matrix(A).copy()  # See DiffusionOperatorP1 for why copy() is necessary
 
         return A
@@ -364,6 +367,8 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
         # -> shape = (g.size(0), number of shape functions ** 2)
         SF_INTS = np.einsum('iq,jq,q,e->eij', SFQ, SFQ, w, g.integration_elements(0)).ravel()
 
+        del SFQ
+
         self.logger.info('Determine global dofs ...')
         SF_I0 = np.repeat(g.subentities(0, g.dim), 4, axis=1).ravel()
         SF_I1 = np.tile(g.subentities(0, g.dim), [1, 4]).ravel()
@@ -381,6 +386,7 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
 
         self.logger.info('Assemble system matrix ...')
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
+        del SF_INTS, SF_I0, SF_I1
         A = csc_matrix(A).copy()  # See DiffusionOperatorP1 for why copy() is necessary
 
         return A
@@ -462,11 +468,15 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
         if self.diffusion_function is not None and self.diffusion_function.shape_range == tuple():
             D = self.diffusion_function(self.grid.centers(0), mu=mu)
             SF_INTS = np.einsum('epi,eqi,e,e->epq', SF_GRADS, SF_GRADS, g.volumes(0), D).ravel()
+            del D
         elif self.diffusion_function is not None:
             D = self.diffusion_function(self.grid.centers(0), mu=mu)
             SF_INTS = np.einsum('epi,eqj,e,eij->epq', SF_GRADS, SF_GRADS, g.volumes(0), D).ravel()
+            del D
         else:
             SF_INTS = np.einsum('epi,eqi,e->epq', SF_GRADS, SF_GRADS, g.volumes(0)).ravel()
+
+        del SF_GRADS
 
         if self.diffusion_constant is not None:
             SF_INTS *= self.diffusion_constant
@@ -488,6 +498,7 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
 
         self.logger.info('Assemble system matrix ...')
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
+        del SF_INTS, SF_I0, SF_I1
         A = csc_matrix(A).copy()
 
         # The call to copy() is necessary to resize the data arrays of the sparse matrix:
@@ -577,11 +588,15 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         if self.diffusion_function is not None and self.diffusion_function.shape_range == tuple():
             D = self.diffusion_function(self.grid.centers(0), mu=mu)
             SF_INTS = np.einsum('epic,eqic,c,e,e->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0), D).ravel()
+            del D
         elif self.diffusion_function is not None:
             D = self.diffusion_function(self.grid.centers(0), mu=mu)
             SF_INTS = np.einsum('epic,eqjc,c,e,eij->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0), D).ravel()
+            del D
         else:
             SF_INTS = np.einsum('epic,eqic,c,e->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0)).ravel()
+
+        del SF_GRADS
 
         if self.diffusion_constant is not None:
             SF_INTS *= self.diffusion_constant
@@ -604,6 +619,7 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
 
         self.logger.info('Assemble system matrix ...')
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
+        del SF_INTS, SF_I0, SF_I1
         A = csc_matrix(A).copy()
 
         # The call to copy() is necessary to resize the data arrays of the sparse matrix:
