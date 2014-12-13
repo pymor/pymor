@@ -15,8 +15,8 @@ class GenericBlockRBReconstructor(core.BasicInterface):
     """Block variant of GenericRBReconstructor"""
 
     def __init__(self, RB):
-        assert isinstance(RB, list)
-        self.RB = RB
+        assert isinstance(RB, (tuple, list))
+        self.RB = tuple(RB)
 
     def reconstruct(self, U):
         assert isinstance(U, BlockVectorArray)
@@ -25,7 +25,7 @@ class GenericBlockRBReconstructor(core.BasicInterface):
                                  for rb, block in izip(self.RB, U._blocks)])
 
     def restricted_to_subbasis(self, dim):
-        if not isinstance(dim, list):
+        if not isinstance(dim, tuple):
             dim = len(self.RB)*[dim]
         assert all([dd <= len(rb) for dd, rb in izip(dim, self.RB)])
         return GenericBlockRBReconstructor([rb.copy(ind=range(dd)) for rb, dd in izip(self.RB, dim)])
