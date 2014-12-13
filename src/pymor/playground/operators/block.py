@@ -58,8 +58,8 @@ class BlockOperator(OperatorBase):
         # there needs to be at least one operator for each combination of row and column
         assert all([ss is not None for ss in source_types])
         assert all([rr is not None for rr in range_types])
-        self.source = VectorSpace(BlockVectorArray, source_types)
-        self.range = VectorSpace(BlockVectorArray, range_types)
+        self.source = VectorSpace(BlockVectorArray, tuple(source_types))
+        self.range = VectorSpace(BlockVectorArray, tuple(range_types))
         # some information
         self._source_dims = tuple(space.dim for space in self.source.subtype)
         self._range_dims  = tuple(space.dim for space in self.range.subtype)
@@ -120,10 +120,12 @@ class BlockOperator(OperatorBase):
         if product is not None:
             raise NotImplementedError
         assert source_basis is not None or range_basis is not None
-        assert isinstance(source_basis, list) or source_basis is None
-        assert isinstance(range_basis, list) or range_basis is None
-        source_basis = [None for ss in np.arange(self.num_source_blocks)] if source_basis is None else source_basis
-        range_basis  = [None for rr in np.arange(self.num_range_blocks)]  if range_basis  is None else range_basis
+        assert isinstance(source_basis, (tuple, list)) or source_basis is None
+        assert isinstance(range_basis, (tuple, list)) or range_basis is None
+        source_basis = tuple([None for ss in np.arange(self.num_source_blocks)]
+                             if source_basis is None else source_basis)
+        range_basis  = tuple([None for rr in np.arange(self.num_range_blocks)]
+                             if range_basis  is None else range_basis)
         return BlockOperator([[self._blocks[ii][jj].projected(source_basis[jj], range_basis[ii], name=name)
                                if self._blocks[ii][jj] is not None else None
                                for jj in np.arange(self.num_source_blocks)]
