@@ -24,7 +24,7 @@ def trivial_block_basis_extension(basis, U, copy_basis=True, copy_U=True, requir
         logger.warn('The option copy_U==False is not supported for BlockVectorArrays!')
     num_blocks = U.num_blocks
     if basis is None:
-        basis = [None for ii in np.arange(num_blocks)]
+        basis = tuple(None for ii in np.arange(num_blocks))
     assert isinstance(basis, list)
     assert len(basis) == num_blocks
 
@@ -56,7 +56,7 @@ def trivial_block_basis_extension(basis, U, copy_basis=True, copy_U=True, requir
                                                                         num_blocks,
                                                                         's' if num_blocks > 1 else ''))
 
-    return new_basis, {'hierarchic': all(hierarchic)}
+    return tuple(new_basis), {'hierarchic': all(hierarchic)}
 
 
 def gram_schmidt_block_basis_extension(basis, U, product=None, copy_basis=True, copy_U=True, require_all=False):
@@ -68,6 +68,8 @@ def gram_schmidt_block_basis_extension(basis, U, product=None, copy_basis=True, 
     if isinstance(U, BlockVectorArray):
         blocks = U._blocks
     elif isinstance(U, list):
+        blocks = tuple(U)
+    elif isinstance(U, tuple):
         blocks = U
     else:
         raise ExtensionError('U of unknown type given: {}'.format(type(U)))
@@ -76,8 +78,10 @@ def gram_schmidt_block_basis_extension(basis, U, product=None, copy_basis=True, 
     num_blocks = len(blocks)
 
     if basis is None:
-        basis = [None for ii in np.arange(num_blocks)]
-    assert isinstance(basis, list)
+        basis = tuple(None for ii in np.arange(num_blocks))
+    elif isinstance(basis, list):
+        basis = tuple(basis)
+    assert isinstance(basis, tuple)
     assert len(basis) == num_blocks
     if product is None:
         product = [None for ii in np.arange(num_blocks)]
@@ -118,5 +122,5 @@ def gram_schmidt_block_basis_extension(basis, U, product=None, copy_basis=True, 
                                                                         num_blocks,
                                                                         's' if num_blocks > 1 else ''))
 
-    return new_basis, {'hierarchic': all(hierarchic)}
+    return tuple(new_basis), {'hierarchic': all(hierarchic)}
 
