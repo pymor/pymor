@@ -42,7 +42,6 @@ if os.environ.get('READTHEDOCS', None) == 'True':
                     'dogpile', 'dogpile.cache', 'dogpile.cache.backends', 'dogpile.cache.backends.file',
                     'dogpile.cache.compat',
                     'PySide', 'PySide.QtGui', 'PySide.QtCore', 'PySide.QtOpenGL',
-                    'glumpy', 'glumpy.graphics', 'glumpy.graphics.vertex_buffer',
                     'OpenGL', 'OpenGL.GL',
                     'matplotlib', 'matplotlib.backends', 'matplotlib.backends.backend_qt4agg', 'matplotlib.figure',
                     'matplotlib.pyplot',

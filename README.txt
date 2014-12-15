@@ -115,7 +115,7 @@ The installation script might recommend the installation of additional
 packages. (This is easy to miss, as pip will install dependencies after
 pyMOR itself has been installed, so search at the top of your console
 log!) You will most likely want to install IPython and, in particular,
-matplotlib, PyOpenGL, glumpy, and PySide. The latter packages are
+matplotlib, PyOpenGL and PySide. The latter packages are
 required for pyMOR's visualization routines.
 
 Documentation

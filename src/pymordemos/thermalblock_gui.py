@@ -52,7 +52,7 @@ from pymor.algorithms.basisextension import gram_schmidt_basis_extension
 from pymor.algorithms.greedy import greedy
 from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
 from pymor.discretizers.elliptic import discretize_elliptic_cg
-from pymor.gui.glumpy import ColorBarWidget, GlumpyPatchWidget
+from pymor.gui.gl import ColorBarWidget, GLPatchWidget
 from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor import gui
 
@@ -93,7 +93,7 @@ class SimPanel(QtGui.QWidget):
         super(SimPanel, self).__init__(parent)
         self.sim = sim
         box = QtGui.QHBoxLayout()
-        self.solution = GlumpyPatchWidget(self, self.sim.grid, vmin=0., vmax=0.8)
+        self.solution = GLPatchWidget(self, self.sim.grid, vmin=0., vmax=0.8)
         self.bar = ColorBarWidget(self, vmin=0., vmax=0.8)
         box.addWidget(self.solution, 2)
         box.addWidget(self.bar, 2)

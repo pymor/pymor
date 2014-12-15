@@ -119,7 +119,6 @@ pyMOR itself has been installed, so search at the top of your console
 log!) You will most likely want to install [IPython](http://www.ipython.org)
 and, in particular, [matplotlib](http://matplotlib.org),
 [PyOpenGL](http://pyopengl.sourceforge.net/),
-[glumpy](https://code.google.com/p/glumpy/),
 and [PySide](http://qt-project.org/wiki/PySide). The latter
 packages are required for pyMOR's visualization routines.
 

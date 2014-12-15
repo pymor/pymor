@@ -5,8 +5,8 @@
 """ This module provides a widget for displaying patch plots of
 scalar data assigned to a 2D-Grid using OpenGL. This widget is not
 intended to be used directly. Instead, use
-:meth:`~pymor.gui.qt.visualize_glumpy_patch` or
-:class:`~pymor.gui.qt.GlumpyPatchVisualizer`.
+:meth:`~pymor.gui.qt.visualize_patch` or
+:class:`~pymor.gui.qt.PatchVisualizer`.
 """
 
 from __future__ import absolute_import, division, print_function
@@ -23,21 +23,16 @@ except ImportError:
     HAVE_PYSIDE = False
 
 try:
-    from glumpy.graphics.vertex_buffer import VertexBuffer
-    HAVE_GLUMPY = True
-except ImportError:
-    HAVE_GLUMPY = False
-
-try:
     import OpenGL.GL as gl
     HAVE_GL = True
 except ImportError:
     HAVE_GL = False
 
-HAVE_ALL = HAVE_PYSIDE and HAVE_GLUMPY and HAVE_GL
+HAVE_ALL = HAVE_PYSIDE and HAVE_GL
 
 
 if HAVE_ALL:
+    from ctypes import c_void_p
 
     from pymor.grids.constructions import flatten_grid
     from pymor.grids.referenceelements import triangle, square
@@ -84,13 +79,13 @@ if HAVE_ALL:
     }
     """
 
-    class GlumpyPatchWidget(QGLWidget):
+    class GLPatchWidget(QGLWidget):
 
         def __init__(self, parent, grid, vmin=None, vmax=None, bounding_box=([0, 0], [1, 1]), codim=2):
             assert grid.reference_element in (triangle, square)
             assert grid.dim == 2
             assert codim in (0, 2)
-            super(GlumpyPatchWidget, self).__init__(parent)
+            super(GLPatchWidget, self).__init__(parent)
             self.setMinimumSize(300, 300)
             self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
 
@@ -143,16 +138,41 @@ if HAVE_ALL:
 
         def initializeGL(self):
             gl.glClearColor(1.0, 1.0, 1.0, 1.0)
+
             self.shaders_program = link_shader_program(compile_vertex_shader(VS))
             gl.glUseProgram(self.shaders_program)
-            self.vbo = VertexBuffer(self.vertex_data, indices=self.indices)
+
+            self.vertices_id = gl.glGenBuffers(1)
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vertices_id)
+            gl.glBufferData(gl.GL_ARRAY_BUFFER, self.vertex_data, gl.GL_DYNAMIC_DRAW)
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0 )
+
+            self.indices_id = gl.glGenBuffers(1)
+            gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.indices_id)
+            gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER, self.indices, gl.GL_STATIC_DRAW)
+            gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0)
 
         def paintGL(self):
             if self.update_vbo:
-                self.vbo.upload()
+                gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vertices_id)
+                gl.glBufferData(gl.GL_ARRAY_BUFFER, self.vertex_data, gl.GL_DYNAMIC_DRAW)
+                gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
                 self.update_vbo = False
+
             gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
-            self.vbo.draw(gl.GL_TRIANGLES, 'pc')
+
+            gl.glPushClientAttrib(gl.GL_CLIENT_VERTEX_ARRAY_BIT)
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vertices_id)
+            gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.indices_id)
+
+            gl.glColorPointer(4, gl.GL_FLOAT, 32, c_void_p(16))
+            gl.glEnableClientState(gl.GL_COLOR_ARRAY)
+            gl.glVertexPointer(4, gl.GL_FLOAT, 32, c_void_p(None))
+            gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
+            gl.glDrawElements(gl.GL_TRIANGLES, self.indices.size, gl.GL_UNSIGNED_INT, None)
+            gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0)
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+            gl.glPopClientAttrib()
 
         def set_coordinates(self, coordinates):
             if self.codim == 2:
@@ -250,7 +270,7 @@ if HAVE_ALL:
 
 else:
 
-    class GlumpyPatchWidget(object):
+    class GLPatchWidget(object):
         pass
 
     class ColorBarWidget(object):

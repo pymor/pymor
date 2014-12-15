@@ -28,7 +28,7 @@ from pymor.core.logger import getLogger
 from pymor.grids.oned import OnedGrid
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
-from pymor.gui.glumpy import GlumpyPatchWidget, ColorBarWidget, HAVE_GLUMPY, HAVE_GL
+from pymor.gui.gl import GLPatchWidget, ColorBarWidget, HAVE_GL
 from pymor.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget, HAVE_MATPLOTLIB
 from pymor.la.interfaces import VectorArrayInterface
 from pymor.la.numpyvectorarray import NumpyVectorArray
@@ -237,8 +237,6 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     if backend == 'gl':
         if not HAVE_GL:
             raise ImportError('cannot visualize: import of PyOpenGL failed')
-        if not HAVE_GLUMPY:
-            raise ImportError('cannot visualize: import of glumpy failed')
     else:
         if not HAVE_MATPLOTLIB:
             raise ImportError('cannot visualize: import of matplotlib failed')
@@ -254,7 +252,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                 legend = (legend,)
             assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
             if backend == 'gl':
-                widget = GlumpyPatchWidget
+                widget = GLPatchWidget
             else:
                 widget = MatplotlibPatchWidget
                 if not separate_colorbars and len(U) > 1:

@@ -12,7 +12,7 @@ import pytest
 import multiprocessing
 
 from pymortests.base import runmodule
-from pymor.gui.glumpy import HAVE_PYSIDE
+from pymor.gui.gl import HAVE_PYSIDE
 
 DEMO_ARGS = (('cg', [0, 0, 0, 0]), ('cg', [1, 2, 0, 3]), ('cg', ['--rect', 1, 2, 0, 3]), ('cg', [0, 0, 2, 1]),
              ('burgers', ['--num-flux=lax_friedrichs', '0.1']), ('burgers', ['--num-flux=engquist_osher', '0.1']),
