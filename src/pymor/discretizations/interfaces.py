@@ -50,7 +50,6 @@ class DiscretizationInterface(CacheableInterface, Parametric):
     functionals = dict()
     vector_operators = dict()
     products = dict()
-    with_arguments = frozenset({'operators', 'functionals', 'vector_operators, products'})
 
     @abstractmethod
     def _solve(self, mu=None):
