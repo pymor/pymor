@@ -126,6 +126,7 @@ import numpy as np
 from pymor.core import decorators, backports, logger
 from pymor.core.exceptions import ConstError
 from pymor.core.defaults import defaults_sid
+from pymor.tools.frozendict import FrozenDict
 
 DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_COPY_DOCSTRINGS_DISABLE', 0)) == 1
 
@@ -463,7 +464,7 @@ def _calculate_sid(obj, name):
         t_obj = type(obj)
         if t_obj in (tuple, list):
             return tuple(_calculate_sid(o, '{}[{}]'.format(name, i)) for i, o in enumerate(obj))
-        elif t_obj is dict:
+        elif t_obj is dict or t_obj is FrozenDict:
             return tuple((k, _calculate_sid(v, '{}[{}]'.format(name, k))) for k, v in sorted(obj.iteritems()))
         elif t_obj in (NoneType, str, int, float, bool):
             return obj
