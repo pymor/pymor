@@ -9,7 +9,7 @@ from collections import OrderedDict
 
 import numpy as np
 from scipy.sparse import issparse
-from scipy.sparse.linalg import bicgstab, spsolve, spilu, lgmres, lsqr, LinearOperator
+from scipy.sparse.linalg import bicgstab, spsolve, splu, spilu, lgmres, lsqr, LinearOperator
 try:
     from scipy.sparse.linalg import lsmr
     HAVE_SCIPY_LSMR = True
@@ -76,6 +76,7 @@ def dense_options(default_solver='solve',
 
 @defaults('default_solver', 'default_least_squares_solver', 'bicgstab_tol', 'bicgstab_maxiter', 'spilu_drop_tol',
           'spilu_fill_factor', 'spilu_drop_rule', 'spilu_permc_spec', 'spsolve_permc_spec',
+          'spsolve_keep_factorization',
           'lgmres_tol', 'lgmres_maxiter', 'lgmres_inner_m', 'lgmres_outer_k', 'least_squares_lsmr_damp',
           'least_squares_lsmr_atol', 'least_squares_lsmr_btol', 'least_squares_lsmr_conlim',
           'least_squares_lsmr_maxiter', 'least_squares_lsmr_show', 'least_squares_lsqr_atol',
@@ -96,6 +97,7 @@ def sparse_options(default_solver='spsolve',
                    spilu_drop_rule='basic,area',
                    spilu_permc_spec='COLAMD',
                    spsolve_permc_spec='COLAMD',
+                   spsolve_keep_factorization=True,
                    lgmres_tol=1e-5,
                    lgmres_maxiter=1000,
                    lgmres_inner_m=39,
@@ -275,7 +277,8 @@ def sparse_options(default_solver='spsolve',
                                     'tol': bicgstab_tol,
                                     'maxiter': bicgstab_maxiter}),
             ('spsolve',            {'type': 'spsolve',
-                                    'permc_spec': spsolve_permc_spec}),
+                                    'permc_spec': spsolve_permc_spec,
+                                    'keep_factorization': spsolve_keep_factorization}),
             ('lgmres',             {'type': 'lgmres',
                                     'tol': lgmres_tol,
                                     'maxiter': lgmres_maxiter,
@@ -461,7 +464,13 @@ def apply_inverse(matrix, U, options=None):
                     raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
                                          format(info))
     elif options['type'] == 'spsolve':
-        R = spsolve(matrix, U.T, permc_spec=options['permc_spec']).T
+        if hasattr(matrix, 'factorization'):
+            R = matrix.factorization.solve(U.T).T
+        elif options['keep_factorization']:
+            matrix.factorization = splu(matrix, permc_spec=options['permc_spec'])
+            R = matrix.factorization.solve(U.T).T
+        else:
+            R = spsolve(matrix, U.T, permc_spec=options['permc_spec']).T
     elif options['type'] == 'lgmres':
         for i, UU in enumerate(U):
             R[i], info = lgmres(matrix, UU.copy(i),

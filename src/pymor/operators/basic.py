@@ -399,6 +399,11 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                     matrix = matrix + (op._matrix * c)
         return NumpyMatrixOperator(matrix)
 
+    def __getstate__(self):
+        if hasattr(self._matrix, 'factorization'):  # remove unplicklable SuperLU factorization
+            del self._matrix.factorization
+        return self.__dict__
+
 
 class ProjectedOperator(OperatorBase):
     """Genric |Operator| for representing the projection of an |Operator| to a subspace.
