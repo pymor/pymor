@@ -62,7 +62,7 @@ if HAVE_ALL:
     VS = """
     #version 120
     // Attribute variable that contains coordinates of the vertices.
-    attribute vec4 position;
+    attribute vec3 position;
 
     vec3 getJetColor(float value) {
          float fourValue = 4 * value;
@@ -74,8 +74,10 @@ if HAVE_ALL:
     }
     void main()
     {
-        gl_Position = position;
-        gl_FrontColor = vec4(getJetColor(gl_Color.x), 1);
+        gl_Position.xy = position.xy;
+        gl_Position.z = 0.;
+        gl_Position.w = 1.;
+        gl_FrontColor = vec4(getJetColor(position.z), 1);
     }
     """
 
@@ -101,31 +103,29 @@ if HAVE_ALL:
             self.update_vbo = False
             bb = self.bounding_box
             self.size = np.array([bb[1][0] - bb[0][0], bb[1][1] - bb[0][1]])
-            self.scale = 1 / self.size
+            self.scale = 2 / self.size
             self.shift = - np.array(bb[0]) - self.size / 2
 
             # setup buffers
             if self.reference_element == triangle:
                 if codim == 2:
                     self.vertex_data = np.empty(len(coordinates),
-                                                dtype=[('position', 'f4', 4), ('color', 'f4', 4)])
+                                                dtype=[('position', 'f4', 2), ('color', 'f4', 1)])
                     self.indices = subentities
                 else:
                     self.vertex_data = np.empty(len(subentities) * 3,
-                                                dtype=[('position', 'f4', 4), ('color', 'f4', 4)])
+                                                dtype=[('position', 'f4', 2), ('color', 'f4', 1)])
                     self.indices = np.arange(len(subentities) * 3, dtype=np.uint32)
             else:
                 if codim == 2:
                     self.vertex_data = np.empty(len(coordinates),
-                                                dtype=[('position', 'f4', 4), ('color', 'f4', 4)])
+                                                dtype=[('position', 'f4', 2), ('color', 'f4', 1)])
                     self.indices = np.vstack((subentities[:, 0:3], subentities[:, [0, 2, 3]]))
                 else:
                     self.vertex_data = np.empty(len(subentities) * 6,
-                                                dtype=[('position', 'f4', 4), ('color', 'f4', 4)])
+                                                dtype=[('position', 'f4', 2), ('color', 'f4', 1)])
                     self.indices = np.arange(len(subentities) * 6, dtype=np.uint32)
 
-            self.vertex_data['position'][:, 2] = 0
-            self.vertex_data['position'][:, 3] = 0.5
             self.vertex_data['color'] = 1
 
             self.set_coordinates(coordinates)
@@ -165,9 +165,7 @@ if HAVE_ALL:
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vertices_id)
             gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.indices_id)
 
-            gl.glColorPointer(4, gl.GL_FLOAT, 32, c_void_p(16))
-            gl.glEnableClientState(gl.GL_COLOR_ARRAY)
-            gl.glVertexPointer(4, gl.GL_FLOAT, 32, c_void_p(None))
+            gl.glVertexPointer(3, gl.GL_FLOAT, 0, c_void_p(None))
             gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
             gl.glDrawElements(gl.GL_TRIANGLES, self.indices.size, gl.GL_UNSIGNED_INT, None)
             gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0)
@@ -195,7 +193,7 @@ if HAVE_ALL:
             self.update()
 
         def set(self, U):
-            U_buffer = self.vertex_data['color'][:, 0]
+            U_buffer = self.vertex_data['color']
             if self.codim == 2:
                 U_buffer[:] = U[self.entity_map]
             elif self.reference_element == triangle:
@@ -258,9 +256,9 @@ if HAVE_ALL:
             steps = 40
             for i in xrange(steps + 1):
                 y = i * (1 / steps)
-                gl.glColor(y, 0, 0)
-                gl.glVertex(-0.5, (bar_height*y + bar_start), 0.0)
-                gl.glVertex(0.5, (bar_height*y + bar_start), 0.0)
+                # gl.glColor(y, 0, 0)
+                gl.glVertex(-0.5, (bar_height*y + bar_start), y)
+                gl.glVertex(0.5, (bar_height*y + bar_start), y)
             gl.glEnd()
             p = QPainter(self)
             p.drawText((self.width() - self.vmax_width)/2, self.text_ascent, self.vmax_str)
