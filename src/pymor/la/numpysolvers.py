@@ -461,8 +461,7 @@ def apply_inverse(matrix, U, options=None):
                     raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
                                          format(info))
     elif options['type'] == 'spsolve':
-        for i, UU in enumerate(U):
-            R[i] = spsolve(matrix, UU, permc_spec=options['permc_spec'])
+        R = spsolve(matrix, U.T, permc_spec=options['permc_spec']).T
     elif options['type'] == 'lgmres':
         for i, UU in enumerate(U):
             R[i], info = lgmres(matrix, UU.copy(i),
