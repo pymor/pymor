@@ -77,7 +77,10 @@ def cg_demo(nrhs, ndirichlet, nneumann, neumann_count, rect_grid=False):
         problem = EllipticProblem(domain=domain, rhs=rhs, dirichlet_data=dirichlet, neumann_data=neumann)
 
         print('Discretize ...')
-        grid, bi = discretize_domain_default(problem.domain, diameter=m.sqrt(2) / n, grid_type=RectGrid if rect_grid else TriaGrid)
+        if rect_grid:
+            grid, bi = discretize_domain_default(problem.domain, diameter=m.sqrt(2) / n, grid_type=RectGrid)
+        else:
+            grid, bi = discretize_domain_default(problem.domain, diameter=1. / n, grid_type=TriaGrid)
         discretization, _ = discretize_elliptic_cg(analytical_problem=problem, grid=grid, boundary_info=bi)
 
         print('Solve ...')

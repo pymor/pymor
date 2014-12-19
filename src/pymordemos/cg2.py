@@ -57,7 +57,7 @@ def cg2_demo(nrhs, n, plot):
                               diffusion_functionals=(f0, f1), name='2DProblem')
 
     print('Discretize ...')
-    discretization, _ = discretize_elliptic_cg(problem, diameter=m.sqrt(2) / n)
+    discretization, _ = discretize_elliptic_cg(problem, diameter=1. / n)
 
     print('The parameter type is {}'.format(discretization.parameter_type))
 

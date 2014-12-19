@@ -42,7 +42,6 @@ Options:
 from __future__ import absolute_import, division, print_function
 
 import sys
-import math as m
 import time
 
 import numpy as np
@@ -73,7 +72,7 @@ def thermalblock_demo(args):
     problem = ThermalBlockProblem(num_blocks=(args['XBLOCKS'], args['YBLOCKS']))
 
     print('Discretize ...')
-    discretization, _ = discretize_elliptic_cg(problem, diameter=m.sqrt(2) / args['--grid'])
+    discretization, _ = discretize_elliptic_cg(problem, diameter=1. / args['--grid'])
 
     print('The parameter type is {}'.format(discretization.parameter_type))
 

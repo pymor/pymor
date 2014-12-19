@@ -123,7 +123,9 @@ def burgers_demo(args):
 
     print('Discretize ...')
     discretizer = discretize_nonlinear_instationary_advection_fv
-    discretization, _ = discretizer(problem, diameter=m.sqrt(2) / args['--grid'],
+    if args['--grid-type'] == 'rect':
+        args['--grid'] *= 1. / m.sqrt(2)
+    discretization, _ = discretizer(problem, diameter=1. / args['--grid'],
                                     num_flux=args['--num-flux'], lxf_lambda=args['--lxf-lambda'],
                                     nt=args['--nt'], domain_discretizer=domain_discretizer)
 

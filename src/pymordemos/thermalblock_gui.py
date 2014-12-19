@@ -39,7 +39,6 @@ import sys
 from docopt import docopt
 import time
 from functools import partial
-import math as m
 import numpy as np
 from PySide import QtGui
 import OpenGL
@@ -151,7 +150,7 @@ class SimBase(object):
         self.first = True
         self.problem = ThermalBlockProblem(num_blocks=(args['XBLOCKS'], args['YBLOCKS']),
                                            parameter_range=(PARAM_MIN, PARAM_MAX))
-        self.discretization, pack = discretize_elliptic_cg(self.problem, diameter=m.sqrt(2) / args['--grid'])
+        self.discretization, pack = discretize_elliptic_cg(self.problem, diameter=1. / args['--grid'])
         self.grid = pack['grid']
 
 
