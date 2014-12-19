@@ -27,7 +27,7 @@ Options:
   -e, --with-estimator   Use error estimator.
 
   --estimator-norm=NORM  Norm (trivial, h1) in which to calculate the residual
-                         [default: trivial].
+                         [default: h1].
 
   --extension-alg=ALG    Basis extension algorithm (trivial, gram_schmidt, h1_gram_schmidt)
                          to be used [default: h1_gram_schmidt].

@@ -25,7 +25,7 @@ Arguments:
 
 Options:
   --estimator-norm=NORM  Norm (trivial, h1) in which to calculate the residual
-                         [default: trivial].
+                         [default: h1].
 
   --grid=NI              Use grid with 2*NI*NI elements [default: 60].
 
