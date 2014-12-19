@@ -70,20 +70,19 @@ class ColoredFormatter(logging.Formatter):
             except Exception:
                 self.use_color = False
 
-        def relative_time(secs=None):
-            if secs is not None:
-                elapsed = time.time() - start_time
-                if elapsed > 604800:
-                    self.datefmt = '%Ww %dd %H:%M:%S'
-                elif elapsed > 86400:
-                    self.datefmt = '%dd %H:%M:%S'
-                elif elapsed > 3600:
-                    self.datefmt = '%H:%M:%S'
-                return time.gmtime(elapsed)
-            else:
-                return time.gmtime()
-        self.converter = relative_time
-        super(ColoredFormatter, self).__init__(formatter_message(FORMAT, self.use_color), datefmt='%M:%S')
+        super(ColoredFormatter, self).__init__(formatter_message(FORMAT, self.use_color))
+
+    def formatTime(self, record, datefmt=None):
+        elapsed = int(time.time() - start_time)
+        days, remainder = divmod(elapsed, 86400)
+        hours, remainder = divmod(remainder, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        if days:
+            return '{}d {:02}:{:02}:{:02}'.format(days, hours, minutes, seconds)
+        elif hours:
+            return '{:02}:{:02}:{:02}'.format(hours, minutes, seconds)
+        else:
+            return '{:02}:{:02}'.format(minutes, seconds)
 
     def format(self, record):
         if not record.msg:
