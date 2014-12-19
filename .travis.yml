@@ -20,17 +20,18 @@ before_install:
  - pip install --upgrade numpy
  - pip install --upgrade pytest
  - pip install pycontracts
+ - pip install --upgrade pytest pytest-cov
 
 # command to install dependencies
 install:
  - python setup.py build_ext -i
 
 # # command to run tests
-script: 
- - DISPLAY=:99.0 python setup.py test
+script:
+ - DISPLAY=:99.0 py.test
 
 notifications:
-  irc: 
+  irc:
     channels:
       - "chat.freenode.net#dune_ms"
     on_success: change
