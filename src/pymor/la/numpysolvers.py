@@ -8,6 +8,7 @@ from __future__ import absolute_import, division, print_function
 from collections import OrderedDict
 
 import numpy as np
+import scipy.version
 from scipy.sparse import issparse
 from scipy.sparse.linalg import bicgstab, spsolve, splu, spilu, lgmres, lsqr, LinearOperator
 try:
@@ -464,13 +465,28 @@ def apply_inverse(matrix, U, options=None):
                     raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
                                          format(info))
     elif options['type'] == 'spsolve':
-        if hasattr(matrix, 'factorization'):
-            R = matrix.factorization.solve(U.T).T
-        elif options['keep_factorization']:
-            matrix.factorization = splu(matrix, permc_spec=options['permc_spec'])
-            R = matrix.factorization.solve(U.T).T
+        if scipy.version.version >= '0.14':
+            if hasattr(matrix, 'factorization'):
+                R = matrix.factorization.solve(U.T).T
+            elif options['keep_factorization']:
+                matrix.factorization = splu(matrix, permc_spec=options['permc_spec'])
+                R = matrix.factorization.solve(U.T).T
+            else:
+                R = spsolve(matrix, U.T, permc_spec=options['permc_spec']).T
         else:
-            R = spsolve(matrix, U.T, permc_spec=options['permc_spec']).T
+            if hasattr(matrix, 'factorization'):
+                for i, UU in enumerate(U):
+                    R[i] = matrix.factorization.solve(UU)
+            elif options['keep_factorization']:
+                matrix.factorization = splu(matrix, permc_spec=options['permc_spec'])
+                for i, UU in enumerate(U):
+                    R[i] = matrix.factorization.solve(UU)
+            elif len(U) > 1:
+                factorization = splu(matrix, permc_spec=options['permc_spec'])
+                for i, UU in enumerate(U):
+                    R[i] = factorization.solve(UU)
+            else:
+                R = spsolve(matrix, U.T, permc_spec=options['permc_spec']).reshape((1, -1))
     elif options['type'] == 'lgmres':
         for i, UU in enumerate(U):
             R[i], info = lgmres(matrix, UU.copy(i),
