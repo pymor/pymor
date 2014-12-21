@@ -338,7 +338,9 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         U = U._array[:U._len] if ind is None else U._array[ind]
         if U.shape[1] == 0:
             return NumpyVectorArray(U)
-        return NumpyVectorArray(numpysolvers.apply_inverse(self._matrix, U, options=options), copy=False)
+        solution = numpysolvers.apply_inverse(self._matrix, U, options=options)
+        assert (not np.isnan(np.sum(solution))) and (not np.isinf(np.sum(solution)))
+        return NumpyVectorArray(solution, copy=False)
 
     def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
         """Project the operator to a subbasis.
