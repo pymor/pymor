@@ -136,18 +136,28 @@ class OperatorBase(OperatorInterface):
 
     def projected(self, source_basis, range_basis, product=None, name=None):
         name = name or '{}_projected'.format(self.name)
-        if self.linear:
-            if self.parametric:
-                self.logger.warn('Using inefficient generic linear projection operator')
-                # Since the bases are not immutable and we do not own them,
-                # the ProjectedLinearOperator will have to create copies of them.
-                return ProjectedLinearOperator(self, source_basis, range_basis, product, copy=True, name=name)
+        if self.linear and not self.parametric:
+            if source_basis is None:
+                if range_basis is None:
+                    return self
+                elif product is None:
+                    return NumpyMatrixOperator(self.apply2(range_basis, NumpyVectorArray(np.eye(self.source.dim)),
+                                                           pairwise=False))
+                else:
+                    V = self.apply(NumpyVectorArray(np.eye(self.source.dim)))
+                    return NumpyMatrixOperator(product.apply2(range_basis, V, pairwise=False))
             else:
-                # Here we do not need copies since the operator is immediately thrown away.
-                return (ProjectedLinearOperator(self, source_basis, range_basis, product, copy=False, name=name)
-                        .assemble())
+                if range_basis is None:
+                    return NumpyMatrixOperator(self.apply(source_basis).data.T)
+                elif product is None:
+                    return NumpyMatrixOperator(self.apply2(range_basis, source_basis, pairwise=False))
+                else:
+                    V = self.apply(source_basis)
+                    return NumpyMatrixOperator(product.apply2(range_basis, V, pairwise=False))
         else:
             self.logger.warn('Using inefficient generic projection operator')
+            # Since the bases are not immutable and we do not own them,
+            # the ProjectedOperator will have to create copies of them.
             return ProjectedOperator(self, source_basis, range_basis, product, copy=True, name=name)
 
 
@@ -443,12 +453,13 @@ class ProjectedOperator(OperatorBase):
                 and operator.range == product.source
                 and product.range == product.source)
         self.build_parameter_type(inherits=(operator,))
-        self.source = NumpyVectorSpace(len(source_basis) if operator.source.dim > 0 else 0)
+        self.source = NumpyVectorSpace(len(source_basis) if source_basis is not None else operator.source.dim)
         self.range = NumpyVectorSpace(len(range_basis) if range_basis is not None else operator.range.dim)
         self.name = name
         self.operator = operator
         self.source_basis = source_basis.copy() if source_basis is not None and copy else source_basis
         self.range_basis = range_basis.copy() if range_basis is not None and copy else range_basis
+        self.linear = operator.linear
         self.product = product
 
     def apply(self, U, ind=None, mu=None):
@@ -492,86 +503,10 @@ class ProjectedOperator(OperatorBase):
             J = self.operator.jacobian(U, mu=mu)
         else:
             J = self.operator.jacobian(self.source_basis.lincomb(U.data), mu=mu)
-        return ProjectedLinearOperator(J, source_basis=self.source_basis, range_basis=self.range_basis,
-                                       product=self.product, copy=False, name=self.name + '_jacobian').assemble()
+        return J.projected(source_basis=self.source_basis, range_basis=self.range_basis,
+                           product=self.product, name=self.name + '_jacobian')
 
-
-class ProjectedLinearOperator(NumpyMatrixBasedOperator):
-    """Genric |Operator| for representing the projection of a linear |Operator| to a subspace.
-
-    This class is not intended to be instantiated directly. Instead, you should use
-    the :meth:`~pymor.operators.interfaces.OperatorInterface.projected` method of the given
-    |Operator|.
-
-    Parameters
-    ----------
-    operator
-        The |Operator| to project.
-    source_basis
-        See :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
-    range_basis
-        See :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
-    product
-        See :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
-    copy
-        If `True`, make a copy of the provided `source_basis` and `range_basis`. This is
-        usually necessary, as |VectorArrays| are not immutable.
-    name
-        Name of the projected operator.
-    """
-
-    sparse = False
-
-    def __init__(self, operator, source_basis, range_basis, product=None, name=None, copy=True):
-        assert isinstance(operator, OperatorInterface)
-        assert source_basis is None and issubclass(operator.source.type, NumpyVectorArray) \
-            or source_basis in operator.source
-        assert range_basis is None and issubclass(operator.range.type, NumpyVectorArray) \
-            or range_basis in operator.range
-        assert product is None \
-            or (isinstance(product, OperatorInterface)
-                and range_basis is not None
-                and operator.range == product.source
-                and product.range == product.source)
-        assert operator.linear
-        self.build_parameter_type(inherits=(operator,))
-        self.source = NumpyVectorSpace(len(source_basis) if source_basis is not None else operator.source.dim)
-        self.range = NumpyVectorSpace(len(range_basis) if range_basis is not None else operator.range.dim)
-        self.name = name
-        self.operator = operator
-        self.source_basis = source_basis.copy() if source_basis is not None and copy else source_basis
-        self.range_basis = range_basis.copy() if range_basis is not None and copy else range_basis
-        self.product = product
-
-    def _assemble(self, mu=None):
-        if self.source_basis is None:
-            if self.range_basis is None:
-                return self.operator.assemble(mu=mu)
-            elif self.product is None:
-                return self.operator.apply2(self.range_basis,
-                                            NumpyVectorArray(np.eye(self.operator.source.dim)),
-                                            pairwise=False, mu=mu)
-            else:
-                V = self.operator.apply(NumpyVectorArray(np.eye(self.operator.source.dim)), mu=mu)
-                return self.product.apply2(self.range_basis, V, pairwise=False)
-        else:
-            if self.range_basis is None:
-                return self.operator.apply(self.source_basis, mu=mu).data.T
-            elif self.product is None:
-                return self.operator.apply2(self.range_basis, self.source_basis, mu=mu, pairwise=False)
-            else:
-                V = self.operator.apply(self.source_basis, mu=mu)
-                return self.product.apply2(self.range_basis, V, pairwise=False)
-
-    def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
-        """See :meth:`NumpyMatrixOperator.projected_to_subbasis`."""
-        assert dim_source is None or dim_source <= self.source.dim
-        assert dim_range is None or dim_range <= self.dim_range
-        assert dim_source is None or self.source_basis is not None, 'not implemented'
-        assert dim_range is None or self.range_basis is not None, 'not implemented'
-        name = name or '{}_projected_to_subbasis'.format(self.name)
-        source_basis = self.source_basis if dim_source is None \
-            else self.source_basis.copy(ind=range(dim_source))
-        range_basis = self.range_basis if dim_range is None \
-            else self.range_basis.copy(ind=range(dim_range))
-        return ProjectedLinearOperator(self.operator, source_basis, range_basis, product=None, copy=False, name=name)
+    def assemble(self, mu=None):
+        op = self.operator.assemble(mu=mu)
+        return op.projected(source_basis=self.source_basis, range_basis=self.range_basis,
+                            product=self.product, name=self.name + '_assembled')
