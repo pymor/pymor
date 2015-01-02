@@ -100,7 +100,7 @@ def valid_inds_of_different_length(v1, v2):
             yield 0, [0, 1]
             yield [0], [0, 1]
         np.random.seed(len(v1) * len(v2))
-        for count1 in np.linspace(0, len(v1), 3, dtype=int):
+        for count1 in np.linspace(0, len(v1), 3).astype(int):
             count2 = np.random.randint(0, len(v2))
             if count2 == count1:
                 count2 += 1
