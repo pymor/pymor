@@ -499,6 +499,6 @@ def defaults_sid():
     generation.
 
     For other uses see the implementation of
-    :meth:`pymor.operators.basic.NumpyMatrixBasedOperator.assemble`.
+    :meth:`pymor.operators.numpy.NumpyMatrixBasedOperator.assemble`.
     """
     return _default_container_sid

@@ -569,7 +569,7 @@ def apply_inverse(matrix, U, options=None):
     elif options['type'].startswith('generic') or options['type'].startswith('least_squares_generic'):
         logger = getLogger('pymor.la.numpysolvers.apply_inverse')
         logger.warn('You have selected a (potentially slow) generic solver for a NumPy matrix operator!')
-        from pymor.operators.basic import NumpyMatrixOperator
+        from pymor.operators.numpy import NumpyMatrixOperator
         from pymor.la.numpyvectorarray import NumpyVectorArray
         return genericsolvers.apply_inverse(NumpyMatrixOperator(matrix),
                                             NumpyVectorArray(U, copy=False),

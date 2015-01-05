@@ -13,7 +13,7 @@ from pymor.discretizations.basic import InstationaryDiscretization
 from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.gui.qt import PatchVisualizer, Matplotlib1DVisualizer
 from pymor.la.numpyvectorarray import NumpyVectorArray
-from pymor.operators.basic import NumpyGenericOperator
+from pymor.operators.numpy import NumpyGenericOperator
 from pymor.operators.fv import (nonlinear_advection_lax_friedrichs_operator,
                                 nonlinear_advection_engquist_osher_operator,
                                 nonlinear_advection_simplified_engquist_osher_operator,

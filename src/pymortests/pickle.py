@@ -11,7 +11,7 @@ from types import FunctionType, MethodType
 from pymor.core.interfaces import BasicInterface
 from pymor.core.pickle import dumps, loads, dumps_function, PicklingError
 from pymor.grids.subgrid import SubGrid
-from pymor.operators.basic import NumpyMatrixBasedOperator
+from pymor.operators.numpy import NumpyMatrixBasedOperator
 
 
 is_equal_ignored_attributes = \

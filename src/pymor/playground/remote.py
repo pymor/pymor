@@ -24,7 +24,7 @@ if not TRAVIS:
     from pymor.la.interfaces import VectorArrayInterface
     from pymor.la.numpyvectorarray import NumpyVectorArray
     from pymor.operators.interfaces import OperatorInterface
-    from pymor.operators.basic import OperatorBase, ProjectedOperator, ProjectedLinearOperator
+    from pymor.operators.basic import OperatorBase, ProjectedOperator
     from pymor.operators.constructions import LincombOperator
 
 

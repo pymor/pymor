@@ -39,7 +39,7 @@ from pymor.la.interfaces import VectorSpace
 from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
 from pymor.la.pod import pod
 
-from pymor.operators.basic import NumpyGenericOperator, NumpyMatrixOperator
+from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixOperator
 from pymor.operators.constructions import (LincombOperator, Concatenation, ComponentProjection, IdentityOperator,
                                            ConstantOperator, VectorArrayOperator, VectorOperator, VectorFunctional,
                                            FixedParameterOperator)

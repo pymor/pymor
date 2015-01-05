@@ -8,7 +8,8 @@ import numpy as np
 from scipy.sparse import diags
 import pytest
 
-from pymor.operators.basic import OperatorBase, NumpyMatrixOperator
+from pymor.operators.basic import OperatorBase
+from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.la.numpyvectorarray import NumpyVectorSpace, NumpyVectorArray
 
 

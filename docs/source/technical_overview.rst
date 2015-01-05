@@ -102,7 +102,7 @@ operating on objects of the following types:
     data.
 
     Default implementations for various types of |Operators| as well as
-    |NumPy|-based operators can be found in :mod:`pymor.operators.basic`.
+    |NumPy|-based operators can be found in :mod:`pymor.operators.numpy`.
     Several methods for constructing new operators from existing ones are
     contained in :mod:`pymor.operators.constructions`.
 
