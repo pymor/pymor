@@ -9,7 +9,9 @@ import pytest
 
 from pymor.la.numpyvectorarray import NumpyVectorArray
 from pymortests.algorithms import MonomOperator
-from pymortests.base import runmodule
+from pymortests.fixtures.operator import operator, operator_with_arrays, operator_with_arrays_and_products
+from pymortests.vectorarray import valid_inds
+from pymortests.pickle import assert_picklable, assert_picklable_without_dumps_function
 
 
 def test_lincomb_op():
@@ -36,5 +38,72 @@ def test_lincomb_op():
         assert pa.almost_equal(p.apply(vx)).all()
 
 
-if __name__ == "__main__":
-    runmodule(filename=__file__)
+def test_pickle(operator):
+    assert_picklable(operator)
+
+
+def test_pickle_without_dumps_function(operator):
+    assert_picklable_without_dumps_function(operator)
+
+
+def test_apply(operator_with_arrays):
+    op, mu, U, _ = operator_with_arrays
+    V = op.apply(U, mu=mu)
+    assert V in op.range
+    assert len(V) == len(U)
+    for ind in list(valid_inds(U, 3)) + [[]]:
+        Vind = op.apply(U, mu=mu, ind=ind)
+        assert np.all(Vind.almost_equal(V, o_ind=ind))
+        assert np.all(Vind.almost_equal(op.apply(U.copy(ind=ind), mu=mu)))
+
+
+def test_projected(operator_with_arrays):
+    op, mu, U, V = operator_with_arrays
+    op_UV = op.projected(U, V)
+    np.random.seed(4711 + U.dim + len(V))
+    coeffs = np.random.random(len(U))
+    X = op_UV.apply(NumpyVectorArray(coeffs, copy=False), mu=mu)
+    Y = NumpyVectorArray(V.dot(op.apply(U.lincomb(coeffs), mu=mu), pairwise=False).T, copy=False)
+    assert np.all(X.almost_equal(Y))
+
+
+def test_projected_2(operator_with_arrays):
+    op, mu, U, V = operator_with_arrays
+    op_U = op.projected(U, None)
+    op_V = op.projected(None, V)
+    op_U_V = op_U.projected(None, V)
+    op_V_U = op_V.projected(U, None)
+    op_UV = op.projected(U, V)
+    np.random.seed(4711 + U.dim + len(V))
+    W = NumpyVectorArray(np.random.random(len(U)), copy=False)
+    Y0 = op_UV.apply(W, mu=mu)
+    Y1 = op_U_V.apply(W, mu=mu)
+    Y2 = op_V_U.apply(W, mu=mu)
+    assert np.all(Y0.almost_equal(Y1))
+    assert np.all(Y0.almost_equal(Y2))
+
+
+def test_projected_with_product(operator_with_arrays_and_products):
+    op, mu, U, V, sp, rp = operator_with_arrays_and_products
+    op_UV = op.projected(U, V, product=rp)
+    np.random.seed(4711 + U.dim + len(V))
+    coeffs = np.random.random(len(U))
+    X = op_UV.apply(NumpyVectorArray(coeffs, copy=False), mu=mu)
+    Y = NumpyVectorArray(rp.apply2(op.apply(U.lincomb(coeffs), mu=mu), V, pairwise=False), copy=False)
+    assert np.all(X.almost_equal(Y))
+
+
+def test_projected_with_product_2(operator_with_arrays_and_products):
+    op, mu, U, V, sp, rp = operator_with_arrays_and_products
+    op_U = op.projected(U, None)
+    op_V = op.projected(None, V, product=rp)
+    op_U_V = op_U.projected(None, V, product=rp)
+    op_V_U = op_V.projected(U, None)
+    op_UV = op.projected(U, V, product=rp)
+    np.random.seed(4711 + U.dim + len(V))
+    W = NumpyVectorArray(np.random.random(len(U)), copy=False)
+    Y0 = op_UV.apply(W, mu=mu)
+    Y1 = op_U_V.apply(W, mu=mu)
+    Y2 = op_V_U.apply(W, mu=mu)
+    assert np.all(Y0.almost_equal(Y1))
+    assert np.all(Y0.almost_equal(Y2))
