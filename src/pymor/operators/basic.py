@@ -122,26 +122,36 @@ class OperatorBase(OperatorInterface):
     def projected(self, source_basis, range_basis, product=None, name=None):
         name = name or '{}_projected'.format(self.name)
         if self.linear and not self.parametric:
+            assert source_basis is None or source_basis in self.source
+            assert range_basis is None or range_basis in self.range
+            assert product is None or product.source == product.range == self.range
             if source_basis is None:
                 if range_basis is None:
                     return self
-                elif product is None:
-                    from pymor.operators.numpy import NumpyMatrixOperator
-                    return NumpyMatrixOperator(self.apply2(range_basis, NumpyVectorArray(np.eye(self.source.dim)),
-                                                           pairwise=False))
                 else:
-                    from pymor.operators.numpy import NumpyMatrixOperator
-                    V = self.apply(NumpyVectorArray(np.eye(self.source.dim)))
-                    return NumpyMatrixOperator(product.apply2(range_basis, V, pairwise=False))
+                    V = self.apply_adjoint(range_basis, range_product=product)
+                    if self.source.type == NumpyVectorArray:
+                        from pymor.operators.numpy import NumpyMatrixOperator
+                        return NumpyMatrixOperator(V.data, name=name)
+                    else:
+                        from pymor.operators.constructions import VectorArrayOperator
+                        return VectorArrayOperator(V, transposed=True, copy=False, name=name)
             else:
-                from pymor.operators.numpy import NumpyMatrixOperator
                 if range_basis is None:
-                    return NumpyMatrixOperator(self.apply(source_basis).data.T)
-                elif product is None:
-                    return NumpyMatrixOperator(self.apply2(range_basis, source_basis, pairwise=False))
-                else:
                     V = self.apply(source_basis)
-                    return NumpyMatrixOperator(product.apply2(range_basis, V, pairwise=False))
+                    if self.range.type == NumpyVectorArray:
+                        from pymor.operators.numpy import NumpyMatrixOperator
+                        return NumpyMatrixOperator(V.data.T, name=name)
+                    else:
+                        from pymor.operators.constructions import VectorArrayOperator
+                        return VectorArrayOperator(V, transposed=False, copy=False, name=name)
+                elif product is None:
+                    from pymor.operators.numpy import NumpyMatrixOperator
+                    return NumpyMatrixOperator(self.apply2(range_basis, source_basis, pairwise=False), name=name)
+                else:
+                    from pymor.operators.numpy import NumpyMatrixOperator
+                    V = self.apply(source_basis)
+                    return NumpyMatrixOperator(product.apply2(range_basis, V, pairwise=False), name=name)
         else:
             self.logger.warn('Using inefficient generic projection operator')
             # Since the bases are not immutable and we do not own them,
