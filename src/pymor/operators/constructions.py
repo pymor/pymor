@@ -322,6 +322,25 @@ class ConstantOperator(OperatorBase):
         count = len(U) if ind is None else 1 if isinstance(ind, Number) else len(ind)
         return self._value.copy(ind=([0] * count))
 
+    def projected(self, source_basis, range_basis, product=None, name=None):
+        assert source_basis is None or source_basis in self.source
+        assert range_basis is None or range_basis in self.range
+        assert product is None or product.source == product.range == self.range
+        if range_basis is not None:
+            if product:
+                projected_value = NumpyVectorArray(product.apply2(range_basis, self._value, pairwise=False).T,
+                                                   copy=False)
+            else:
+                projected_value = NumpyVectorArray(range_basis.dot(self._value, pairwise=False).T, copy=False)
+        else:
+            projected_value = self._value
+        if source_basis is None:
+            return ConstantOperator(projected_value, self.source, copy=False,
+                                    name=self.name + '_projected')
+        else:
+            return ConstantOperator(projected_value, NumpyVectorSpace(len(source_basis)), copy=False,
+                                    name=self.name + '_projected')
+
 
 class VectorArrayOperator(OperatorBase):
     """Wraps a |VectorArray| as an |Operator|.
