@@ -121,8 +121,8 @@ class NumpyMatrixBasedOperator(OperatorBase):
     def apply(self, U, ind=None, mu=None):
         return self.assemble(mu).apply(U, ind=ind)
 
-    def apply_transposed(self, U, ind=None, mu=None):
-        return self.assemble(mu).apply_transposed(U, ind=ind)
+    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+        return self.assemble(mu).apply_adjoint(U, ind=ind, source_product=source_product, range_product=range_product)
 
     def as_vector(self, mu=None):
         return self.assemble(mu).as_vector()
@@ -206,10 +206,19 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         U_array = U._array[:U._len] if ind is None else U._array[ind]
         return NumpyVectorArray(self._matrix.dot(U_array.T).T, copy=False)
 
-    def apply_transposed(self, U, ind=None, mu=None):
-        assert isinstance(U, NumpyVectorArray)
-        U_array = U._array[:U._len] if ind is None else U._array[ind]
-        return NumpyVectorArray(self._matrix.T.dot(U_array.T).T, copy=False)
+    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+        assert U in self.range
+        assert source_product is None or source_product.source == source_product.range == self.source
+        assert range_product is None or range_product.source == range_product.range == self.range
+        if range_product:
+            PrU = range_product.apply(U, ind=ind).data
+        else:
+            PrU = U.data if ind is None else U.data[ind]
+        ATPrU = NumpyVectorArray(self._matrix.T.dot(PrU.T).T, copy=False)
+        if source_product:
+            return source_product.apply_inverse(ATPrU)
+        else:
+            return ATPrU
 
     def apply_inverse(self, U, ind=None, mu=None, options=None):
         assert U in self.range

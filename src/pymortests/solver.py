@@ -22,8 +22,8 @@ class GenericOperator(OperatorBase):
     def apply(self, U, ind=None, mu=None):
         return self.op.apply(U, ind=ind, mu=mu)
 
-    def apply_transposed(self, U, ind=None, mu=None):
-        return self.op.apply_transposed(U, ind=ind, mu=mu)
+    def apply_adjoint(self, U, ind=None, mu=None):
+        return self.op.apply_adjoint(U, ind=ind, mu=mu)
 
 
 @pytest.fixture(params=GenericOperator().invert_options.keys())

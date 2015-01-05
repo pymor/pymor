@@ -519,7 +519,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
 
     if beta > 0:
         u.scal(1/beta)
-        v = A.apply_transposed(u)
+        v = A.apply_adjoint(u)
         alfa = v.l2_norm()[0]
 
     if alfa > 0:
@@ -568,7 +568,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
         if beta > 0:
             u.scal(1/beta)
             anorm = np.sqrt(anorm**2 + alfa**2 + beta**2 + damp**2)
-            v = A.apply_transposed(u) - v * beta
+            v = A.apply_adjoint(u) - v * beta
             alfa = v.l2_norm()[0]
             if alfa > 0:
                 v.scal(1 / alfa)
@@ -774,7 +774,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
 
     if beta > 0:
         u.scal(1 / beta)
-        v = A.apply_transposed(u)
+        v = A.apply_adjoint(u)
         alpha = v.l2_norm()[0]
 
     if alpha > 0:
@@ -853,7 +853,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
 
         if beta > 0:
             u.scal(1 / beta)
-            v = A.apply_transposed(u) - v * beta
+            v = A.apply_adjoint(u) - v * beta
             alpha = v.l2_norm()[0]
             if alpha > 0:
                 v.scal(1 / alpha)

@@ -89,6 +89,12 @@ class OperatorBase(OperatorInterface):
             self.name, self.source.dim, self.range.dim, self.parameter_type,
             self.__class__.__name__)
 
+    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+        if self.linear:
+            raise NotImplementedError
+        else:
+            raise ValueError('Trying to apply adjoint of nonlinear operator.')
+
     @property
     def invert_options(self):
         if self.linear:

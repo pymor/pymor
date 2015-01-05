@@ -101,6 +101,46 @@ class OperatorInterface(ImmutableInterface, Parametric):
         pass
 
     @abstractmethod
+    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+        """Apply the adjoint operator.
+
+        For a linear operator A the adjoint A^* of A is given by ::
+
+            (A^*v, u)_s = (v, Au)_r
+
+        where ( , )_s and ( , )_r denote the scalar products on the source
+        and range space of A. If A and the two products are given by the
+        matrices M, P_s and P_r, then::
+
+            A^*v = P_s^(-1) * M^T * P_r * v
+
+        with M^T denoting the transposed of M. Thus, if ( , )_s and ( , )_r
+        are the euclidean products, A^*v is simply given by multiplication of
+        the matrix of A with v from the left.
+
+        Parameters
+        ----------
+        U
+            |VectorArray| of vectors to which the adjoint operator is applied.
+        ind
+            The indices of the vectors in `U` to which the operator shall be
+            applied. (See the |VectorArray| documentation for further details.)
+        mu
+            The |Parameter| for which to apply the adjoint operator.
+        source_product
+            The scalar product on the source space given as an |Operator|.
+            If `None`, the euclidean product is chosen.
+        range_product
+            The scalar product on the range space given as an |Operator|.
+            If `None`, the euclidean product is chosen.
+
+        Returns
+        -------
+        |VectorArray| of the adjoint operator evaluations.
+        """
+        pass
+
+    @abstractmethod
     def apply_inverse(self, U, ind=None, mu=None, options=None):
         """Apply the inverse operator.
 
