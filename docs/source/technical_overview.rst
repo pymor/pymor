@@ -91,8 +91,8 @@ operating on objects of the following types:
     operators, the |as_vector| method can be called to obtain a vector
     representation of the operator as a |VectorArray| of length 1.
 
-    Linear combinations of operators can be formed using the |op.lincomb|
-    method.  When such a linear combination is |assembled|, |assemble_lincomb|
+    Linear combinations of operators can be formed using a |LincombOperator|
+    When such a linear combination is |assembled|, |assemble_lincomb|
     is called to ensure that, for instance, linear combinations of operators
     represented by a matrix lead to a new operator holding the linear
     combination of the matrices. The |projected| method is used to perform the
@@ -113,7 +113,6 @@ operating on objects of the following types:
     .. |assemble_lincomb| replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.assemble_lincomb`
     .. |as_vector|         replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.as_vector`
     .. |linear|            replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.linear`
-    .. |op.lincomb|        replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.lincomb`
     .. |projected|         replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.projected`
     .. |range|             replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.range`
     .. |source|            replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.source`
