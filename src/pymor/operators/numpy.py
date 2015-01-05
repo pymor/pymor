@@ -27,7 +27,6 @@ from pymor.core.interfaces import abstractmethod
 from pymor.la import numpysolvers
 from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
 from pymor.operators.basic import OperatorBase
-from pymor.operators.interfaces import OperatorInterface
 
 
 class NumpyGenericOperator(OperatorBase):
@@ -282,100 +281,3 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         if hasattr(self._matrix, 'factorization'):  # remove unplicklable SuperLU factorization
             del self._matrix.factorization
         return self.__dict__
-
-
-class ProjectedOperator(OperatorBase):
-    """Genric |Operator| for representing the projection of an |Operator| to a subspace.
-
-    This class is not intended to be instantiated directly. Instead, you should use
-    the :meth:`~pymor.operators.interfaces.OperatorInterface.projected` method of the given
-    |Operator|.
-
-    Parameters
-    ----------
-    operator
-        The |Operator| to project.
-    source_basis
-        See :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
-    range_basis
-        See :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
-    product
-        See :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
-    copy
-        If `True`, make a copy of the provided `source_basis` and `range_basis`. This is
-        usually necessary, as |VectorArrays| are not immutable.
-    name
-        Name of the projected operator.
-    """
-
-    linear = False
-
-    def __init__(self, operator, source_basis, range_basis, product=None, copy=True, name=None):
-        assert isinstance(operator, OperatorInterface)
-        assert source_basis is None and issubclass(operator.source.type, NumpyVectorArray) \
-            or source_basis in operator.source
-        assert range_basis is None and issubclass(operator.range.type, NumpyVectorArray) \
-            or range_basis in operator.range
-        assert product is None \
-            or (isinstance(product, OperatorInterface)
-                and range_basis is not None
-                and operator.range == product.source
-                and product.range == product.source)
-        self.build_parameter_type(inherits=(operator,))
-        self.source = NumpyVectorSpace(len(source_basis) if source_basis is not None else operator.source.dim)
-        self.range = NumpyVectorSpace(len(range_basis) if range_basis is not None else operator.range.dim)
-        self.name = name
-        self.operator = operator
-        self.source_basis = source_basis.copy() if source_basis is not None and copy else source_basis
-        self.range_basis = range_basis.copy() if range_basis is not None and copy else range_basis
-        self.linear = operator.linear
-        self.product = product
-
-    def apply(self, U, ind=None, mu=None):
-        mu = self.parse_parameter(mu)
-        if self.source_basis is None:
-            if self.range_basis is None:
-                return self.operator.apply(U, ind=ind, mu=mu)
-            elif self.product is None:
-                return NumpyVectorArray(self.operator.apply2(self.range_basis, U, U_ind=ind, mu=mu, pairwise=False).T)
-            else:
-                V = self.operator.apply(U, ind=ind, mu=mu)
-                return NumpyVectorArray(self.product.apply2(V, self.range_basis, pairwise=False))
-        else:
-            U_array = U._array[:U._len] if ind is None else U._array[ind]
-            UU = self.source_basis.lincomb(U_array)
-            if self.range_basis is None:
-                return self.operator.apply(UU, mu=mu)
-            elif self.product is None:
-                return NumpyVectorArray(self.operator.apply2(self.range_basis, UU, mu=mu, pairwise=False).T)
-            else:
-                V = self.operator.apply(UU, mu=mu)
-                return NumpyVectorArray(self.product.apply2(V, self.range_basis, pairwise=False))
-
-    def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
-        """See :meth:`NumpyMatrixOperator.projected_to_subbasis`."""
-        assert dim_source is None or dim_source <= self.source.dim
-        assert dim_range is None or dim_range <= self.range.dim
-        assert dim_source is None or self.source_basis is not None, 'not implemented'
-        assert dim_range is None or self.range_basis is not None, 'not implemented'
-        name = name or '{}_projected_to_subbasis'.format(self.name)
-        source_basis = self.source_basis if dim_source is None \
-            else self.source_basis.copy(ind=range(dim_source))
-        range_basis = self.range_basis if dim_range is None \
-            else self.range_basis.copy(ind=range(dim_range))
-        return ProjectedOperator(self.operator, source_basis, range_basis, product=None, copy=False, name=name)
-
-    def jacobian(self, U, mu=None):
-        assert len(U) == 1
-        mu = self.parse_parameter(mu)
-        if self.source_basis is None:
-            J = self.operator.jacobian(U, mu=mu)
-        else:
-            J = self.operator.jacobian(self.source_basis.lincomb(U.data), mu=mu)
-        return J.projected(source_basis=self.source_basis, range_basis=self.range_basis,
-                           product=self.product, name=self.name + '_jacobian')
-
-    def assemble(self, mu=None):
-        op = self.operator.assemble(mu=mu)
-        return op.projected(source_basis=self.source_basis, range_basis=self.range_basis,
-                            product=self.product, name=self.name + '_assembled')
