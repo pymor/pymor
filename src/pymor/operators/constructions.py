@@ -107,6 +107,26 @@ class LincombOperator(OperatorBase):
             R.axpy(c, op.apply(U, ind=ind, mu=mu))
         return R
 
+    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+        if hasattr(self, '_assembled_operator'):
+            if self._defaults_sid == defaults_sid():
+                return self._assembled_operator.apply_adjoint(U, ind=ind, source_product=source_product,
+                                                              range_product=range_product)
+            else:
+                return self.assemble().apply_adjoint(U, ind=ind, source_product=source_product,
+                                                     range_product=range_product)
+        elif self._try_assemble:
+            return self.assemble().apply_adjoint(U, ind=ind, source_product=source_product,
+                                                 range_product=range_product)
+        coeffs = self.evaluate_coefficients(mu)
+        R = self.operators[0].apply_adjoint(U, ind=ind, mu=mu, source_product=source_product,
+                                            range_product=range_product)
+        R.scal(coeffs[0])
+        for op, c in izip(self.operators[1:], coeffs[1:]):
+            R.axpy(c, op.apply_adjoint(U, ind=ind, mu=mu, source_product=source_product,
+                                       range_product=range_product))
+        return R
+
     def assemble(self, mu=None):
         if hasattr(self, '_assembled_operator'):
             if self._defaults_sid == defaults_sid():
