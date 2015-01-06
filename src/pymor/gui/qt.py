@@ -198,7 +198,7 @@ def launch_qt_app(main_window_factory, block):
 
 @defaults('backend')
 def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
-                    separate_colorbars=False, backend='gl', block=False):
+                    separate_colorbars=False, backend='gl', block=False, columns=2):
     """Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either
@@ -228,6 +228,8 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         Plot backend to use ('gl' or 'matplotlib').
     block
         If `True` block execution until the plot window is closed.
+    columns
+        The number of columns in the visualizer GUI. This is only used if `U` is a tuple.
     """
     if not HAVE_PYSIDE:
         raise ImportError('cannot visualize: import of PySide failed')
@@ -286,16 +288,16 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                                 hlayout.addWidget(plot)
                                 hlayout.addWidget(ColorBarWidget(self, vmin=vmins[i], vmax=vmaxs[i]))
                                 subplot_layout.addLayout(hlayout)
-                            plot_layout.addLayout(subplot_layout, int(i/2), (i % 2), 1, 1)
+                            plot_layout.addLayout(subplot_layout, int(i/columns), (i % columns), 1, 1)
                     else:
                         for i, plot in enumerate(plots):
                             if not separate_colorbars or backend == 'matplotlib':
-                                plot_layout.addWidget(plot, int(i/2), (i % 2), 1, 1)
+                                plot_layout.addWidget(plot, int(i/columns), (i % columns), 1, 1)
                             else:
                                 hlayout = QHBoxLayout()
                                 hlayout.addWidget(plot)
                                 hlayout.addWidget(ColorBarWidget(self, vmin=vmins[i], vmax=vmaxs[i]))
-                                plot_layout.addLayout(hlayout, int(i/2), (i % 2), 1, 1)
+                                plot_layout.addLayout(hlayout, int(i/columns), (i % columns), 1, 1)
                     layout.addLayout(plot_layout)
                     if not separate_colorbars:
                         layout.addWidget(ColorBarWidget(self, vmin=vmins[0], vmax=vmaxs[0]))
@@ -410,7 +412,7 @@ class PatchVisualizer(BasicInterface):
         self.block = block
 
     def visualize(self, U, discretization, title=None, legend=None, separate_colorbars=False,
-                  block=None, filename=None):
+                  block=None, filename=None, columns=2):
         """Visualize the provided data.
 
         Parameters
@@ -435,6 +437,8 @@ class PatchVisualizer(BasicInterface):
         filename
             If specified, write the data to a VTK-file using
             :func:`pymor.tools.vtkio.write_vtk` instead of displaying it.
+        columns
+            The number of columns in the visualizer GUI. This is only used if `U` is a tuple.
         """
         assert isinstance(U, VectorArrayInterface) and hasattr(U, 'data') \
             or (isinstance(U, tuple) and all(isinstance(u, VectorArrayInterface) and hasattr(u, 'data') for u in U)
@@ -449,7 +453,7 @@ class PatchVisualizer(BasicInterface):
             block = self.block if block is None else block
             visualize_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
                             legend=legend, separate_colorbars=separate_colorbars, backend=self.backend,
-                            block=block)
+                            block=block, columns=columns)
 
 
 class Matplotlib1DVisualizer(BasicInterface):
