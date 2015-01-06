@@ -501,14 +501,6 @@ class VectorOperator(VectorArrayOperator):
         assert len(vector) == 1
         super(VectorOperator, self).__init__(vector, transposed=False, copy=copy, name=name)
 
-    def apply(self, U, ind=None, mu=None):
-        assert U in self.source
-        count = len(U) if ind is None else 1 if isinstance(ind, Number) else len(ind)
-        R = self._array.copy(ind=([0] * count))
-        for i, c in enumerate(U.data):
-            R.scal(c[0], ind=i)
-        return R
-
 
 class VectorFunctional(VectorArrayOperator):
     """Wrap a vector as a linear |Functional|.
