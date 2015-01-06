@@ -62,6 +62,60 @@ def thermalblock_factory(xblocks, yblocks, diameter, seed):
     return d.operator, next(d.parameter_space.sample_randomly(1, seed=seed)), U, V, d.h1_product, d.l2_product
 
 
+def thermalblock_concatenation_factory(xblocks, yblocks, diameter, seed):
+    from pymor.operators.constructions import Concatenation
+    op, mu, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, seed)
+    op = Concatenation(sp, op)
+    return op, mu, U, V, sp, rp
+
+
+def thermalblock_identity_factory(xblocks, yblocks, diameter, seed):
+    from pymor.operators.constructions import IdentityOperator
+    _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, seed)
+    return IdentityOperator(U.space), None, U, V, sp, rp
+
+
+def thermalblock_vectorarray_factory(transposed, xblocks, yblocks, diameter, seed):
+    from pymor.operators.constructions import VectorArrayOperator
+    _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, seed)
+    op = VectorArrayOperator(U, transposed)
+    if transposed:
+        U = V
+        V = NumpyVectorArray(np.random.random((7, op.range.dim)), copy=False)
+        sp = rp
+        rp = NumpyMatrixOperator(np.eye(op.range.dim) * 2)
+    else:
+        U = NumpyVectorArray(np.random.random((7, op.source.dim)), copy=False)
+        sp = NumpyMatrixOperator(np.eye(op.source.dim) * 2)
+    return op, None, U, V, sp, rp
+
+
+def thermalblock_vector_factory(xblocks, yblocks, diameter, seed):
+    from pymor.operators.constructions import VectorOperator
+    _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, seed)
+    op = VectorOperator(U.copy(ind=0))
+    U = NumpyVectorArray(np.random.random((7, 1)), copy=False)
+    sp = NumpyMatrixOperator(np.eye(1) * 2)
+    return op, None, U, V, sp, rp
+
+
+def thermalblock_vectorfunc_factory(product, xblocks, yblocks, diameter, seed):
+    from pymor.operators.constructions import VectorFunctional
+    _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, seed)
+    op = VectorFunctional(U.copy(ind=0), product=sp if product else None)
+    U = V
+    V = NumpyVectorArray(np.random.random((7, 1)), copy=False)
+    sp = rp
+    rp = NumpyMatrixOperator(np.eye(1) * 2)
+    return op, None, U, V, sp, rp
+
+
+def thermalblock_fixedparam_factory(xblocks, yblocks, diameter, seed):
+    from pymor.operators.constructions import FixedParameterOperator
+    op, mu, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, seed)
+    return FixedParameterOperator(op, mu=mu), None, U, V, sp, rp
+
+
 thermalblock_factory_arguments = \
     [(2, 2, 1./10., 333),
      (1, 1, 1./20., 444)]
@@ -79,18 +133,114 @@ thermalblock_operator_with_arrays_and_products_generators = \
     [lambda args=args: thermalblock_factory(*args) for args in thermalblock_factory_arguments]
 
 
-@pytest.fixture(params=thermalblock_operator_with_arrays_and_products_generators)
+thermalblock_concatenation_operator_generators = \
+    [lambda args=args: thermalblock_concatenation_factory(*args)[0:2] for args in thermalblock_factory_arguments]
+
+
+thermalblock_concatenation_operator_with_arrays_generators = \
+    [lambda args=args: thermalblock_concatenation_factory(*args)[0:4] for args in thermalblock_factory_arguments]
+
+
+thermalblock_concatenation_operator_with_arrays_and_products_generators = \
+    [lambda args=args: thermalblock_concatenation_factory(*args) for args in thermalblock_factory_arguments]
+
+
+thermalblock_identity_operator_generators = \
+    [lambda args=args: thermalblock_identity_factory(*args)[0:2] for args in thermalblock_factory_arguments]
+
+
+thermalblock_identity_operator_with_arrays_generators = \
+    [lambda args=args: thermalblock_identity_factory(*args)[0:4] for args in thermalblock_factory_arguments]
+
+
+thermalblock_identity_operator_with_arrays_and_products_generators = \
+    [lambda args=args: thermalblock_identity_factory(*args) for args in thermalblock_factory_arguments]
+
+
+thermalblock_vectorarray_operator_generators = \
+    [lambda args=args: thermalblock_vectorarray_factory(False, *args)[0:2] for args in thermalblock_factory_arguments] + \
+    [lambda args=args: thermalblock_vectorarray_factory(True, *args)[0:2] for args in thermalblock_factory_arguments]
+
+
+thermalblock_vectorarray_operator_with_arrays_generators = \
+    [lambda args=args: thermalblock_vectorarray_factory(False, *args)[0:4] for args in thermalblock_factory_arguments] + \
+    [lambda args=args: thermalblock_vectorarray_factory(True, *args)[0:4] for args in thermalblock_factory_arguments]
+
+
+thermalblock_vectorarray_operator_with_arrays_and_products_generators = \
+    [lambda args=args: thermalblock_vectorarray_factory(False, *args) for args in thermalblock_factory_arguments] + \
+    [lambda args=args: thermalblock_vectorarray_factory(True, *args) for args in thermalblock_factory_arguments]
+
+
+thermalblock_vector_operator_generators = \
+    [lambda args=args: thermalblock_vector_factory(*args)[0:2] for args in thermalblock_factory_arguments]
+
+
+thermalblock_vector_operator_with_arrays_generators = \
+    [lambda args=args: thermalblock_vector_factory(*args)[0:4] for args in thermalblock_factory_arguments]
+
+
+thermalblock_vector_operator_with_arrays_and_products_generators = \
+    [lambda args=args: thermalblock_vector_factory(*args) for args in thermalblock_factory_arguments]
+
+
+thermalblock_vectorfunc_operator_generators = \
+    [lambda args=args: thermalblock_vectorfunc_factory(False, *args)[0:2] for args in thermalblock_factory_arguments] + \
+    [lambda args=args: thermalblock_vectorfunc_factory(True, *args)[0:2] for args in thermalblock_factory_arguments]
+
+
+thermalblock_vectorfunc_operator_with_arrays_generators = \
+    [lambda args=args: thermalblock_vectorfunc_factory(False, *args)[0:4] for args in thermalblock_factory_arguments] + \
+    [lambda args=args: thermalblock_vectorfunc_factory(True, *args)[0:4] for args in thermalblock_factory_arguments]
+
+
+thermalblock_vectorfunc_operator_with_arrays_and_products_generators = \
+    [lambda args=args: thermalblock_vectorfunc_factory(False, *args) for args in thermalblock_factory_arguments] + \
+    [lambda args=args: thermalblock_vectorfunc_factory(True, *args) for args in thermalblock_factory_arguments]
+
+
+thermalblock_fixedparam_operator_generators = \
+    [lambda args=args: thermalblock_fixedparam_factory(*args)[0:2] for args in thermalblock_factory_arguments]
+
+
+thermalblock_fixedparam_operator_with_arrays_generators = \
+    [lambda args=args: thermalblock_fixedparam_factory(*args)[0:4] for args in thermalblock_factory_arguments]
+
+
+thermalblock_fixedparam_operator_with_arrays_and_products_generators = \
+    [lambda args=args: thermalblock_fixedparam_factory(*args) for args in thermalblock_factory_arguments]
+
+
+@pytest.fixture(params=thermalblock_operator_with_arrays_and_products_generators +
+                       thermalblock_concatenation_operator_with_arrays_and_products_generators +
+                       thermalblock_identity_operator_with_arrays_and_products_generators +
+                       thermalblock_vectorarray_operator_with_arrays_and_products_generators +
+                       thermalblock_vector_operator_with_arrays_and_products_generators +
+                       thermalblock_vectorfunc_operator_with_arrays_and_products_generators +
+                       thermalblock_fixedparam_operator_with_arrays_and_products_generators)
 def operator_with_arrays_and_products(request):
     return request.param()
 
 
 @pytest.fixture(params=numpy_matrix_operator_with_arrays_generators +
-                       thermalblock_operator_with_arrays_generators)
+                       thermalblock_operator_with_arrays_generators +
+                       thermalblock_concatenation_operator_with_arrays_generators +
+                       thermalblock_identity_operator_with_arrays_generators +
+                       thermalblock_vectorarray_operator_with_arrays_generators +
+                       thermalblock_vector_operator_with_arrays_generators +
+                       thermalblock_vectorfunc_operator_with_arrays_generators +
+                       thermalblock_fixedparam_operator_with_arrays_generators)
 def operator_with_arrays(request):
     return request.param()
 
 
 @pytest.fixture(params=numpy_matrix_operator_generators +
-                       thermalblock_operator_generators)
+                       thermalblock_operator_generators +
+                       thermalblock_concatenation_operator_generators +
+                       thermalblock_identity_operator_generators +
+                       thermalblock_vectorarray_operator_generators +
+                       thermalblock_vector_operator_generators +
+                       thermalblock_vectorfunc_operator_generators +
+                       thermalblock_fixedparam_operator_generators)
 def operator(request):
     return request.param()
