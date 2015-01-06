@@ -239,6 +239,11 @@ class Concatenation(OperatorBase):
         mu = self.parse_parameter(mu)
         return self.second.apply(self.first.apply(U, ind=ind, mu=mu), mu=mu)
 
+    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+        mu = self.parse_parameter(mu)
+        return self.first.apply_adjoint(self.second.apply_adjoint(U, ind=ind, mu=mu, range_product=range_product),
+                                        mu=mu, source_product=source_product)
+
     def _restricted(self, components):
         restricted_second, second_source_components = self.second.restricted(components)
         restricted_first, first_source_components = self.first.restricted(second_source_components)
