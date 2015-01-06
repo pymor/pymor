@@ -57,6 +57,39 @@ def test_apply(operator_with_arrays):
         assert np.all(Vind.almost_equal(op.apply(U.copy(ind=ind), mu=mu)))
 
 
+def test_apply_adjoint(operator_with_arrays):
+    op, mu, _, V = operator_with_arrays
+    try:
+        U = op.apply_adjoint(V, mu=mu)
+    except NotImplementedError:
+        return
+    assert U in op.source
+    assert len(V) == len(U)
+    for ind in list(valid_inds(V, 3)) + [[]]:
+        Uind = op.apply_adjoint(V, mu=mu, ind=ind)
+        assert np.all(Uind.almost_equal(U, o_ind=ind))
+        assert np.all(Uind.almost_equal(op.apply_adjoint(V.copy(ind=ind), mu=mu)))
+
+
+def test_apply_adjoint_2(operator_with_arrays):
+    op, mu, U, V = operator_with_arrays
+    try:
+        ATV = op.apply_adjoint(V, mu=mu)
+    except NotImplementedError:
+        return
+    assert np.allclose(V.dot(op.apply(U, mu=mu), pairwise=False), ATV.dot(U, pairwise=False))
+
+
+def test_apply_adjoint_2_with_products(operator_with_arrays_and_products):
+    op, mu, U, V, sp, rp = operator_with_arrays_and_products
+    try:
+        ATV = op.apply_adjoint(V, mu=mu, source_product=sp, range_product=rp)
+    except NotImplementedError:
+        return
+    assert np.allclose(rp.apply2(V, op.apply(U, mu=mu), pairwise=False),
+                       sp.apply2(ATV, U, pairwise=False))
+
+
 def test_projected(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     op_UV = op.projected(U, V)
