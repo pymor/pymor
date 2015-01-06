@@ -101,11 +101,10 @@ class LincombOperator(OperatorBase):
         elif self._try_assemble:
             return self.assemble().apply(U, ind=ind)
         coeffs = self.evaluate_coefficients(mu)
-        Vs = [op.apply(U, ind=ind, mu=mu) for op in self.operators]
-        R = Vs[0]
+        R = self.operators[0].apply(U, ind=ind, mu=mu)
         R.scal(coeffs[0])
-        for V, c in izip(Vs[1:], coeffs[1:]):
-            R.axpy(c, V)
+        for op, c in izip(self.operators[1:], coeffs[1:]):
+            R.axpy(c, op.apply(U, ind=ind, mu=mu))
         return R
 
     def assemble(self, mu=None):
