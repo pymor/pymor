@@ -573,6 +573,10 @@ class FixedParameterOperator(OperatorBase):
     def apply(self, U, ind=None, mu=None):
         return self.operator.apply(U, ind=ind, mu=self.mu)
 
+    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+        return self.operator.apply_adjoint(U, ind=ind, mu=self.mu,
+                                           source_product=source_product, range_product=range_product)
+
     @property
     def invert_options(self):
         return self.operator.invert_options
