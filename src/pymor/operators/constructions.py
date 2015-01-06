@@ -313,6 +313,19 @@ class IdentityOperator(OperatorBase):
         assert U in self.source
         return U.copy(ind=ind)
 
+    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+        assert U in self.range
+        assert source_product is None or source_product.source == source_product.range == self.source
+        assert range_product is None or range_product.source == range_product.range == self.range
+        if range_product:
+            PrU = range_product.apply(U, ind=ind)
+        else:
+            PrU = U.copy(ind=ind)
+        if source_product:
+            return source_product.apply_inverse(PrU)
+        else:
+            return PrU
+
 
 class ConstantOperator(OperatorBase):
     """A constant |Operator| always returning the same vector.
