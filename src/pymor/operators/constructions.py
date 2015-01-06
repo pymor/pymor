@@ -425,19 +425,28 @@ class VectorArrayOperator(OperatorBase):
             return NumpyVectorArray(U.dot(self._array, ind=ind, pairwise=False), copy=False)
 
     def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
-        if self.transposed:
-            raise NotImplementedError
         assert U in self.range
         assert source_product is None or source_product.source == source_product.range == self.source
         assert range_product is None or range_product.source == range_product.range == self.range
-        if range_product:
-            ATPrU = NumpyVectorArray(range_product.apply2(self._array, U, U_ind=ind, pairwise=False).T, copy=False)
+        if not self.transposed:
+            if range_product:
+                ATPrU = NumpyVectorArray(range_product.apply2(self._array, U, U_ind=ind, pairwise=False).T, copy=False)
+            else:
+                ATPrU = NumpyVectorArray(self._array.dot(U, o_ind=ind, pairwise=False).T, copy=False)
+            if source_product:
+                return source_product.apply_inverse(ATPrU)
+            else:
+                return ATPrU
         else:
-            ATPrU = NumpyVectorArray(self._array.dot(U, o_ind=ind, pairwise=False).T, copy=False)
-        if source_product:
-            return source_product.apply_inverse(ATPrU)
-        else:
-            return ATPrU
+            if range_product:
+                PrU = range_product.apply(U, ind=ind)
+            else:
+                PrU = U.copy(ind)
+            ATPrU = self._array.lincomb(PrU.data)
+            if source_product:
+                return source_product.apply_inverse(ATPrU)
+            else:
+                return ATPrU
 
     def assemble_lincomb(self, operators, coefficients, name=None):
 
