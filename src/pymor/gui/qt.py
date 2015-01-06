@@ -295,7 +295,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                                 hlayout = QHBoxLayout()
                                 hlayout.addWidget(plot)
                                 hlayout.addWidget(ColorBarWidget(self, vmin=vmins[i], vmax=vmaxs[i]))
-                                plot_layout.addLayout(plot, int(i/2), (i % 2), 1, 1)
+                                plot_layout.addLayout(hlayout, int(i/2), (i % 2), 1, 1)
                     layout.addLayout(plot_layout)
                     if not separate_colorbars:
                         layout.addWidget(ColorBarWidget(self, vmin=vmins[0], vmax=vmaxs[0]))
