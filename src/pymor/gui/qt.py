@@ -443,7 +443,7 @@ class PatchVisualizer(BasicInterface):
             if not isinstance(U, tuple):
                 write_vtk(self.grid, U, filename, codim=self.codim)
             else:
-                for i, u in enumerate(self.U):
+                for i, u in enumerate(U):
                     write_vtk(self.grid, u, '{}-{}'.format(filename, i), codim=self.codim)
         else:
             block = self.block if block is None else block
