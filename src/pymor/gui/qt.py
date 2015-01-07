@@ -189,11 +189,14 @@ def launch_qt_app(main_window_factory, block):
         main_window.show()
         app.exec_()
 
-    from multiprocessing import Process
-    p = Process(target=doit)
-    p.start()
     if block:
-        p.join()
+        doit()
+    else:
+        from multiprocessing import Process
+        p = Process(target=doit)
+        p.start()
+        if block:
+            p.join()
 
 
 @defaults('backend')
