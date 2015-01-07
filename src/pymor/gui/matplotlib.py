@@ -38,14 +38,15 @@ if HAVE_ALL:
     from matplotlib.figure import Figure
 
     from pymor.grids.constructions import flatten_grid
-    from pymor.grids.referenceelements import line, triangle, square
+    from pymor.grids.oned import OnedGrid
+    from pymor.grids.referenceelements import triangle, square
 
     # noinspection PyShadowingNames
     class Matplotlib1DWidget(FigureCanvas):
 
         def __init__(self, parent, grid, count, vmin=None, vmax=None, legend=None, codim=1,
                      separate_plots=False, dpi=100):
-            assert grid.reference_element is line
+            assert isinstance(grid, OnedGrid)
             assert codim in (0, 1)
 
             figure = Figure(dpi=dpi)
@@ -54,10 +55,16 @@ if HAVE_ALL:
                 axes.hold(True)
             self.codim = codim
             lines = tuple()
-            if codim == 1:
-                xs = grid.centers(1)
+            centers = grid.centers(1)
+            if grid._identify_left_right:
+                centers = np.concatenate((centers, [[grid._domain[1]]]), axis=0)
+                self.periodic = True
             else:
-                xs = np.repeat(grid.centers(1), 2)[1:-1]
+                self.periodic = False
+            if codim == 1:
+                xs = centers
+            else:
+                xs = np.repeat(centers, 2)[1:-1]
             for i in xrange(count):
                 if separate_plots:
                     figure.add_subplot(int(count / 2) + count % 2, 2, i + 1)
@@ -83,7 +90,10 @@ if HAVE_ALL:
         def set(self, U, ind):
             for l, u in izip(self.lines, U):
                 if self.codim == 1:
-                    l.set_ydata(u[ind])
+                    if self.periodic:
+                        l.set_ydata(np.concatenate((u[ind], [u[ind][0]])))
+                    else:
+                        l.set_ydata(u[ind])
                 else:
                     l.set_ydata(np.repeat(u[ind], 2))
             self.draw()
