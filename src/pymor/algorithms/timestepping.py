@@ -127,6 +127,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None, num_va
     assert A.source == A.range == M.source == M.range
     num_values = num_values or nt + 1
     dt = (t1 - t0) / nt
+    DT = (t1 - t0) / (num_values - 1)
 
     if isinstance(F, OperatorInterface):
         assert F.range.dim == 1
@@ -161,7 +162,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None, num_va
         if F_time_dep:
             dt_F = F.as_vector(mu) * dt
         U = M_dt_A.apply_inverse(M.apply(U) + dt_F, mu=mu, options=invert_options)
-        if n * (num_values / nt) > len(R):
+        while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
             R.append(U)
 
     return R
@@ -193,6 +194,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
         A = A.assemble(mu)
 
     dt = (t1 - t0) / nt
+    DT = (t1 - t0) / (num_values - 1)
     R = A.source.empty(reserve=num_values)
     R.append(U0)
 
@@ -204,7 +206,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
             t += dt
             mu['_t'] = t
             U.axpy(-dt, A.apply(U, mu=mu))
-            if n * (num_values / nt) > len(R):
+            while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
                 R.append(U)
     else:
         for n in xrange(nt):
@@ -213,7 +215,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
             if F_time_dep:
                 F_ass = F.as_vector(mu)
             U.axpy(dt, F_ass - A.apply(U, mu=mu))
-            if n * (num_values / nt) > len(R):
+            while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
                 R.append(U)
 
     return R
