@@ -583,4 +583,4 @@ class FixedParameterOperator(OperatorBase):
         return self.operator.invert_options
 
     def apply_inverse(self, U, ind=None, mu=None, options=None):
-        self.operator.apply_inverse(U, ind=ind, mu=self.mu, options=options)
+        return self.operator.apply_inverse(U, ind=ind, mu=self.mu, options=options)
