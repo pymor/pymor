@@ -38,31 +38,28 @@ class DiscretizationBase(DiscretizationInterface):
             for k, v in products.iteritems():
                 setattr(self, '{}_product'.format(k), v)
                 setattr(self, '{}_norm'.format(k), induced_norm(v))
-        if estimator is not None:
-            self.estimate = self.__estimate
-        if visualizer is not None:
-            self.visualize = self.__visualize
 
-    def __visualize(self, U, *args, **kwargs):
-        self.visualizer.visualize(U, self, *args, **kwargs)
+    def visualize(self, U, **kwargs):
+        """Visualize a solution |VectorArray| U.
 
-    def __estimate(self, U, mu=None):
-        return self.estimator.estimate(U, mu=mu, discretization=self)
+        Parameters
+        ----------
+        U
+            The |VectorArray| from :attr:`~DiscretizationInterface.solution_space`
+            that shall be visualized.
+        kwargs
+            See docstring of `self.visualizer.visualize`.
+        """
+        if self.visualizer is not None:
+            self.visualizer.visualize(U, self, **kwargs)
+        else:
+            raise NotImplementedError('Discretization has no visualizer.')
 
-    def __getstate__(self):
-        d = self.__dict__.copy()
-        if 'estimate' in d:
-            del d['estimate']
-        if 'visualize' in d:
-            del d['visualize']
-        return d
-
-    def __setstate__(self, s):
-        if s['estimator']:
-            s['estimate'] = self.__estimate
-        if s['visualizer']:
-            s['visualize'] = self.__visualize
-        self.__dict__.update(s)
+    def estimate(self, U, mu=None):
+        if self.estimator is not None:
+            return self.estimator.estimate(U, mu=mu, discretization=self)
+        else:
+            raise NotImplementedError('Discretization has no estimator.')
 
 
 class StationaryDiscretization(DiscretizationBase):

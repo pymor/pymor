@@ -32,16 +32,6 @@ class DiscretizationInterface(CacheableInterface, Parametric):
     products
         Same as |Operators| but for inner product operators associated to the
         discretization.
-
-    Optional Methods:
-
-        def estimate(self, U, mu=None):
-            Estimate the error of the discrete solution `U` to the |Parameter| `mu` against
-            the real solution. (For a reduced discretization, the 'real' solution will
-            be the solution of a detailed discretization, in general.)
-
-        def visualize(self, U):
-            Visualize a solution given by the |VectorArray| U.
     """
 
     solution_space = None
@@ -72,3 +62,28 @@ class DiscretizationInterface(CacheableInterface, Parametric):
         The solution given by a |VectorArray|.
         """
         return self._solve(mu, **kwargs)
+
+    def estimate(self, U, mu=None):
+        """Estimate the discretization error for a given solution.
+
+        Parameters
+        ----------
+        U
+            The solution obtained by :meth:`~DiscretizationInterface.solve`.
+        mu
+            Parameter for which `U` has been obtained.
+
+        Returns
+        -------
+        The estimated error.
+        """
+
+    def visualize(self, U, **kwargs):
+        """Visualize a solution |VectorArray| U.
+
+        Parameters
+        ----------
+        U
+            The |VectorArray| from :attr:`~DiscretizationInterface.solution_space`
+            that shall be visualized.
+        """
