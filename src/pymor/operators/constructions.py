@@ -29,7 +29,8 @@ class LincombOperator(OperatorBase):
     operators
         List of |Operators| whose linear combination is formed.
     coefficients
-        `None` or a list of linear coefficients.
+        `None` or a list of linear coefficients. A linear coefficient can
+        either be a fixed number or a |ParameterFunctional|.
     num_coefficients
         If `coefficients` is `None`, the number of linear coefficients (starting
         at index 0) which are given by the |Parameter| component with name
