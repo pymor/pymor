@@ -222,7 +222,8 @@ def apply_inverse(op, rhs, options=None):
 
 def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
            inner_m=30, outer_k=3, outer_v=None, store_outer_Av=True):
-    assert A.source == A.range
+    if A.source != A.range:
+        raise InversionError
     from scipy.linalg.basic import lstsq
     x = A.source.zeros() if x0 is None else x0.copy()
 
