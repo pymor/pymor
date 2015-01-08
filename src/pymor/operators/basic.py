@@ -100,7 +100,7 @@ class OperatorBase(OperatorInterface):
         if self.linear:
             return genericsolvers.invert_options()
         else:
-            return None
+            return {}
 
     def apply_inverse(self, U, ind=None, mu=None, options=None):
         from pymor.operators.constructions import FixedParameterOperator
