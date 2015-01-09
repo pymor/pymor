@@ -228,8 +228,9 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         assert U in self.range
         assert U.check_ind(ind)
         if U.dim == 0:
-            if (isinstance(options, str) and options.startswith('least_squares') or
-                    isinstance(options, dict) and options['type'].startswith('least_squares')):
+            if (self.source.dim == 0
+                    or isinstance(options, str) and options.startswith('least_squares')
+                    or isinstance(options, dict) and options['type'].startswith('least_squares')):
                 return NumpyVectorArray(np.zeros((U.len_ind(ind), self.source.dim)))
             else:
                 raise InversionError
