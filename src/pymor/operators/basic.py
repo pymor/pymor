@@ -108,7 +108,7 @@ class OperatorBase(OperatorInterface):
         if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
             return assembled_op.apply_inverse(U, ind=ind, options=options)
         else:
-            return genericsolvers.apply_inverse(self, U.copy(ind), options=options)
+            return genericsolvers.apply_inverse(assembled_op, U.copy(ind), options=options)
 
     def as_vector(self, mu=None):
         if not self.linear:
