@@ -60,7 +60,11 @@ def assert_is_equal(first, second):
         if isinstance(first, np.ndarray):
             assert np.all(first == second)
         elif issparse(first):
-            assert np.all((first == second).data)
+            eq = first == second
+            if isinstance(eq, bool):
+                return eq
+            else:
+                assert np.all(eq.data)
         elif isinstance(first, (list, tuple)):
             assert len(first) == len(second)
             for u, v in zip(first, second):
