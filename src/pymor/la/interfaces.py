@@ -560,6 +560,10 @@ class VectorSpace(BasicInterface):
         """Two spaces are equal iff their types and subtypes agree."""
         return other.type == self.type and self.subtype == other.subtype
 
+    def __ne__(self, other):
+        """Two spaces are equal iff their types and subtypes agree."""
+        return other.type != self.type or self.subtype != other.subtype
+
     def __contains__(self, other):
         """A |VectorArray| is contained in the space, iff it is an instance of its type and has the same subtype."""
         return isinstance(other, self.type) and self.subtype == other.subtype
