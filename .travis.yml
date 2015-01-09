@@ -31,11 +31,6 @@ script:
  - DISPLAY=:99.0 py.test
 
 notifications:
-  irc:
-    channels:
-      - "chat.freenode.net#dune_ms"
-    on_success: change
-    on_failure: change
   email: 
     on_success: change
     on_failure: change
