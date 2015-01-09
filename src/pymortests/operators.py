@@ -10,6 +10,7 @@ import pytest
 
 from pymor.core.exceptions import InversionError
 from pymor.la.numpyvectorarray import NumpyVectorArray
+from pymor.tools.floatcmp import float_cmp_all
 from pymortests.algorithms import MonomOperator
 from pymortests.fixtures.operator import operator, operator_with_arrays, operator_with_arrays_and_products
 from pymortests.vectorarray import valid_inds, valid_inds_of_same_length, invalid_inds
@@ -141,11 +142,10 @@ def test_apply_inverse(operator_with_arrays):
             assert U in op.source
             assert len(U) == V.len_ind(ind)
             VV = op.apply(U, mu=mu)
-            Vind = V.copy(ind)
             if (isinstance(options, str) and options.startswith('least_squares')
                     or not isinstance(options, (str, type(None))) and options['type'].startswith('least_squares')):
                 continue
-            assert np.all((VV - Vind).l2_norm() / Vind.l2_norm() < 0.5)
+            assert float_cmp_all(VV.l2_norm(), V.l2_norm(ind=ind), atol=1e-10, rtol=0.5)
 
 
 def test_projected(operator_with_arrays):
