@@ -122,8 +122,8 @@ def thermalblock_fixedparam_factory(xblocks, yblocks, diameter, seed):
 
 
 thermalblock_factory_arguments = \
-    [(2, 2, 1./10., 333),
-     (1, 1, 1./20., 444)]
+    [(2, 2, 1./2., 333),
+     (1, 1, 1./4., 444)]
 
 
 thermalblock_operator_generators = \
