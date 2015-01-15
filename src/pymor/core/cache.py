@@ -271,7 +271,7 @@ _setup_default_regions(disk_path=os.environ.get('PYMOR_CACHE_PATH', None),
 
 _caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
 if _caching_disabled:
-    from pymor.core import getLogger
+    from pymor.core.getLogger import getLogger
     getLogger('pymor.core.cache').warn('caching globally disabled by environment')
 
 
