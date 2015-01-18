@@ -13,7 +13,7 @@ from scipy.sparse import coo_matrix, csc_matrix, dia_matrix
 
 from pymor.core.interfaces import ImmutableInterface, abstractmethod
 from pymor.functions.interfaces import FunctionInterface
-from pymor.grids.rect import RectGrid
+from pymor.grids.interfaces import AffineGridWithOrthogonalCentersInterface
 from pymor.grids.boundaryinfos import SubGridBoundaryInfo
 from pymor.grids.subgrid import SubGrid
 from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
@@ -489,7 +489,6 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
         The name of the operator.
     """
 
-    type_source = type_range = NumpyVectorArray
     sparse = True
 
     def __init__(self, grid, boundary_info, diffusion=1.0, name=None):
@@ -498,37 +497,59 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
         self.boundary_info = boundary_info
         self.diffusion = diffusion
         self.name = name
-        self.dim_source = self.dim_range = grid.size(0)
+        self.source = self.range = NumpyVectorSpace(grid.size(0))
 
     def _assemble(self, mu=None):
         diffusion = self.diffusion
         grid = self.grid
-        assert isinstance(grid, RectGrid)
+        assert isinstance(grid, AffineGridWithOrthogonalCentersInterface)
+        centers = grid.centers(1)
+        orthogonal_centers = grid.orthogonal_centers()
         boundary_mask = grid.boundary_mask(1)
         VOLS = grid.volumes(1)
         DVOLS = np.zeros(VOLS.size)
-        DVOLS[~boundary_mask] = VOLS[~boundary_mask]
-        DVOLS[boundary_mask] = 0.5 * VOLS[boundary_mask]
 
-        SE_I0 = grid.superentities(1,0)[:,0]
-        SE_I1 = grid.superentities(1,0)[:,1]
+        SE_I0 = grid.superentities(1, 0)[:, 0]
+        SE_I1 = grid.superentities(1, 0)[:, 1]
 
         SE_I0_I = SE_I0[~boundary_mask]
         SE_I1_I = SE_I1[~boundary_mask]
 
+        DVOLS[~boundary_mask] = np.abs(orthogonal_centers[SE_I0_I, 0] - orthogonal_centers[SE_I1_I, 0])
+        DVOLS[~boundary_mask] += np.abs(orthogonal_centers[SE_I0_I, 1] - orthogonal_centers[SE_I1_I, 1])
+
+        # compute shift for periodic boundaries
+        embeddings = grid.embeddings(0)
+        reference_element = grid.reference_element(0)
+        sub_reference_element_centers = reference_element.sub_reference_element(1).center()
+        subentity_embedding = reference_element.subentity_embedding(1)
+        se_w_i = grid._superentities_with_indices(1, 0)
+        x = subentity_embedding[0][se_w_i[1][:, 0], :, 0] * sub_reference_element_centers + subentity_embedding[1][se_w_i[1][:, 0]]
+        y = subentity_embedding[0][se_w_i[1][:, 1], :, 0] * sub_reference_element_centers + subentity_embedding[1][se_w_i[1][:, 1]]
+        for i in xrange(len(x)):
+            x[i] = np.dot(embeddings[0][se_w_i[0][i, 0]],x[i]) + embeddings[1][se_w_i[0][i, 0]]
+            y[i] = np.dot(embeddings[0][se_w_i[0][i, 1]],y[i]) + embeddings[1][se_w_i[0][i, 1]]
+        DVOLS[~boundary_mask] += (x[:, 0]-y[:, 0])[~boundary_mask]
+        DVOLS[~boundary_mask] += (x[:, 1]-y[:, 1])[~boundary_mask]
+        DVOLS = np.abs(DVOLS)
+
+        SE_I0_B = SE_I0[boundary_mask]
+        DVOLS[boundary_mask] = np.abs(centers[boundary_mask, 0] - orthogonal_centers[SE_I0_B, 0])
+        DVOLS[boundary_mask] += np.abs(centers[boundary_mask, 1] - orthogonal_centers[SE_I0_B, 1])
+
         SE_INTS = diffusion * VOLS[~boundary_mask] / DVOLS[~boundary_mask]
 
-        A1 = coo_matrix((- SE_INTS, (SE_I0_I, SE_I1_I)), shape=(self.dim_source, self.dim_source))
-        A2 = coo_matrix((- SE_INTS, (SE_I1_I, SE_I0_I)), shape=(self.dim_source, self.dim_source))
-        A3 = coo_matrix((SE_INTS, (SE_I0_I, SE_I0_I)), shape=(self.dim_source, self.dim_source))
-        A4 = coo_matrix((SE_INTS, (SE_I1_I, SE_I1_I)), shape=(self.dim_source, self.dim_source))
+        A1 = coo_matrix((- SE_INTS, (SE_I0_I, SE_I1_I)), shape=(self.source.dim, self.source.dim))
+        A2 = coo_matrix((- SE_INTS, (SE_I1_I, SE_I0_I)), shape=(self.source.dim, self.source.dim))
+        A3 = coo_matrix((SE_INTS, (SE_I0_I, SE_I0_I)), shape=(self.source.dim, self.source.dim))
+        A4 = coo_matrix((SE_INTS, (SE_I1_I, SE_I1_I)), shape=(self.source.dim, self.source.dim))
 
         if self.boundary_info.has_dirichlet:
             dirichlet_mask = self.boundary_info.dirichlet_mask(1)
             SE_I0_D = SE_I0[dirichlet_mask]
             SE_INTS = diffusion * VOLS[dirichlet_mask] / DVOLS[dirichlet_mask]
 
-            A5 = coo_matrix((SE_INTS, (SE_I0_D, SE_I0_D)), shape=(self.dim_source, self.dim_source))
+            A5 = coo_matrix((SE_INTS, (SE_I0_D, SE_I0_D)), shape=(self.source.dim, self.source.dim))
 
             A = csc_matrix(A1 + A2 + A3 + A4 + A5).copy()
         else:
@@ -563,14 +584,13 @@ class DiffusionRHSOperatorFunctional(NumpyMatrixBasedOperator):
         The name of the functional.
     """
 
-    type_source = type_range = NumpyVectorArray
+    range = NumpyVectorSpace(1)
     sparse = False
 
     def __init__(self, grid, boundary_info, function, neumann_data, dirichlet_data, diffusion, order=2, name=None):
         assert function.shape_range == tuple()
         super(DiffusionRHSOperatorFunctional, self).__init__()
-        self.dim_source = grid.size(0)
-        self.dim_range = 1
+        self.source = NumpyVectorSpace(grid.size(0))
         self.grid = grid
         self.boundary_info = boundary_info
         self.g_neumann = neumann_data
@@ -584,17 +604,44 @@ class DiffusionRHSOperatorFunctional(NumpyMatrixBasedOperator):
     def _assemble(self, mu=None):
         mu = self.parse_parameter(mu)
         grid = self.grid
-        assert isinstance(grid, RectGrid)
+        assert isinstance(grid, AffineGridWithOrthogonalCentersInterface)
         boundary_info = self.boundary_info
         g_neumann = self.g_neumann
         g_dirichlet = self.g_dirichlet
         diffusion = self.diffusion
         centers = grid.centers(1)
+        orthogonal_centers = grid.orthogonal_centers()
         boundary_mask = grid.boundary_mask(1)
         VOLS = grid.volumes(1)
         DVOLS = np.zeros(VOLS.size)
-        DVOLS[~boundary_mask] = VOLS[~boundary_mask]
-        DVOLS[boundary_mask] = 0.5 * VOLS[boundary_mask]
+
+        SE_I0 = grid.superentities(1, 0)[:, 0]
+        SE_I1 = grid.superentities(1, 0)[:, 1]
+
+        SE_I0_I = SE_I0[~boundary_mask]
+        SE_I1_I = SE_I1[~boundary_mask]
+
+        DVOLS[~boundary_mask] = np.abs(orthogonal_centers[SE_I0_I, 0] - orthogonal_centers[SE_I1_I, 0])
+        DVOLS[~boundary_mask] += np.abs(orthogonal_centers[SE_I0_I, 1] - orthogonal_centers[SE_I1_I, 1])
+
+        # compute shift for periodic boundaries
+        embeddings = grid.embeddings(0)
+        reference_element = grid.reference_element(0)
+        sub_reference_element_centers = reference_element.sub_reference_element(1).center()
+        subentity_embedding = reference_element.subentity_embedding(1)
+        se_w_i = grid._superentities_with_indices(1, 0)
+        x = subentity_embedding[0][se_w_i[1][:, 0], :, 0] * sub_reference_element_centers + subentity_embedding[1][se_w_i[1][:, 0]]
+        y = subentity_embedding[0][se_w_i[1][:, 1], :, 0] * sub_reference_element_centers + subentity_embedding[1][se_w_i[1][:, 1]]
+        for i in xrange(len(x)):
+            x[i] = np.dot(embeddings[0][se_w_i[0][i, 0]],x[i]) + embeddings[1][se_w_i[0][i, 0]]
+            y[i] = np.dot(embeddings[0][se_w_i[0][i, 1]],y[i]) + embeddings[1][se_w_i[0][i, 1]]
+        DVOLS[~boundary_mask] += (x[:, 0]-y[:, 0])[~boundary_mask]
+        DVOLS[~boundary_mask] += (x[:, 1]-y[:, 1])[~boundary_mask]
+        DVOLS = np.abs(DVOLS)
+
+        SE_I0_B = SE_I0[boundary_mask]
+        DVOLS[boundary_mask] = np.abs(centers[boundary_mask, 0] - orthogonal_centers[SE_I0_B, 0])
+        DVOLS[boundary_mask] += np.abs(centers[boundary_mask, 1] - orthogonal_centers[SE_I0_B, 1])
 
         # evaluate function at all quadrature points -> shape = (g.size(0), number of quadrature points, 1)
         F = self.function(grid.quadrature_points(0, order=self.order), mu=mu)
@@ -608,7 +655,6 @@ class DiffusionRHSOperatorFunctional(NumpyMatrixBasedOperator):
         F_INTS = F_INTS.reshape((1, -1))
 
         if boundary_info.has_dirichlet or boundary_info.has_neumann:
-            SE_I0 = grid.superentities(1,0)[:,0]
             SE_INTS = np.zeros(grid.size(1))
 
             if boundary_info.has_dirichlet:
