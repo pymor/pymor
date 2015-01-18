@@ -8,8 +8,10 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
+from pymor.tools.floatcmp import float_cmp
 from pymor.tools.relations import inverse_relation
-from pymor.tools import float_cmp
+from pymor.grids.rect import RectGrid
+from pymor.grids.tria import TriaGrid
 
 
 def flatten_grid(grid):
@@ -32,6 +34,13 @@ def flatten_grid(grid):
         Maps the indices of the codim-`grid.dim` entities of the flattened
         grid to the indices of the corresponding entities in the original grid.
     """
+    # special handling of known flat grids
+    if isinstance(grid, (RectGrid, TriaGrid)) and not grid.identify_left_right and not grid.identify_bottom_top:
+        subentities = grid.subentities(0, grid.dim)
+        coordinates = grid.centers(grid.dim)
+        entity_map = np.arange(grid.size(grid.dim), dtype=np.int32)
+        return subentities, coordinates, entity_map
+
     # first we determine which vertices are mapped to different coordinates when using the
     # embeddings of their codim-0 superentities
     dim = grid.dim

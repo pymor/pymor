@@ -30,6 +30,7 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
         self.reference_element = line
         self._domain = np.array(domain)
         self._num_intervals = num_intervals
+        self._identify_left_right = identify_left_right
         self._sizes = [num_intervals, num_intervals] if identify_left_right else [num_intervals, num_intervals + 1]
         self._width = np.abs(self._domain[1] - self._domain[0]) / self._num_intervals
         self.__subentities = np.vstack((np.arange(self._num_intervals, dtype=np.int32),
@@ -38,6 +39,10 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
             self.__subentities[-1, -1] = 0
         self.__A = np.ones(self._num_intervals, dtype=np.int32)[:, np.newaxis, np.newaxis] * self._width
         self.__B = (self._domain[0] + self._width * (np.arange(self._num_intervals, dtype=np.int32)))[:, np.newaxis]
+
+    def __reduce__(self):
+        return (OnedGrid,
+                (self._domain, self._num_intervals, self._identify_left_right))
 
     def __str__(self):
         return ('OnedGrid, domain [{xmin},{xmax}]'
@@ -71,3 +76,24 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
 
     def orthogonal_centers(self):
         return self.centers(0)
+
+    def visualize(self, U, codim=2, **kwargs):
+        """Visualize scalar data associated to the grid as a plot.
+
+        Parameters
+        ----------
+        U
+            |VectorArray| of the data to visualize. If `len(U) > 1`, the data is visualized
+            as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
+            provided, in which case several plots are made into the same axes. The
+            lengths of all arrays have to agree.
+        codim
+            The codimension of the entities the data in `U` is attached to (either 0 or 1).
+        kwargs
+            See :func:`~pymor.gui.qt.visualize_matplotlib_1d`
+        """
+        from pymor.gui.qt import visualize_matplotlib_1d
+        from pymor.la.numpyvectorarray import NumpyVectorArray
+        if not isinstance(U, NumpyVectorArray):
+            U = NumpyVectorArray(U, copy=False)
+        visualize_matplotlib_1d(self, U, codim=codim, **kwargs)

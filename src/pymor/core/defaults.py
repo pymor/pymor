@@ -72,6 +72,7 @@ import textwrap
 _default_container = None
 _default_container_sid = None
 
+
 class DefaultContainer(object):
     """Internal singleton class holding all default values defined in pyMOR.
 
@@ -118,8 +119,8 @@ methods of classes!'''.format(path))
         if pymor.core.interfaces.ImmutableMeta.sids_created:
             from pymor.core.logger import getLogger
             getLogger('pymor.core.defaults').warn(
-                    'Changing defaults after calculation of the first state id. '
-                    + '(see pymor.core.defaults for more information.)')
+                'Changing defaults after calculation of the first state id. '
+                + '(see pymor.core.defaults for more information.)')
         for k, v in defaults.iteritems():
             self._data[k][type] = v
             func = self._data[k].get('func', None)
@@ -159,12 +160,11 @@ methods of classes!'''.format(path))
     def check_consistency(self, delete=False):
         self.import_all()
         from pymor.core.logger import getLogger
-        consistent = True
         logger = getLogger('pymor.core.defaults')
         keys_to_delete = []
 
         for k, v in self._data.iteritems():
-            if ('user' in v or 'file' in v) and not 'code' in v:
+            if ('user' in v or 'file' in v) and 'code' not in v:
                 keys_to_delete.append(k)
 
         if delete:
@@ -215,7 +215,7 @@ def defaults(*args, **kwargs):
         method should be provided, as this name cannot be derived at decoration
         time in Python 2.
     """
-    #FIXME this will have to be adapted for Python 3
+    # FIXME this will have to be adapted for Python 3
 
     assert all(isinstance(arg, str) for arg in args)
     assert set(kwargs.keys()) <= {'qualname'}
@@ -298,22 +298,23 @@ def {0}({1}):
     return the_decorator
 
 
-def _import_all(package_name = 'pymor'):
+def _import_all(package_name='pymor'):
 
     package = __import__(package_name)
 
-    def onerror(name):
-        from pymor.core.logger import getLogger
-        logger = getLogger('pymor.core.defaults._import_all')
-        logger.warn('Failed to import ' + name)
-
-    for p in pkgutil.walk_packages(package.__path__, package_name + '.', onerror=onerror):
-        try:
-            __import__(p[1])
-        except ImportError:
+    if hasattr(package, '__path__'):
+        def onerror(name):
             from pymor.core.logger import getLogger
             logger = getLogger('pymor.core.defaults._import_all')
-            logger.warn('Failed to import ' + p[1])
+            logger.warn('Failed to import ' + name)
+
+        for p in pkgutil.walk_packages(package.__path__, package_name + '.', onerror=onerror):
+            try:
+                __import__(p[1])
+            except ImportError:
+                from pymor.core.logger import getLogger
+                logger = getLogger('pymor.core.defaults._import_all')
+                logger.warn('Failed to import ' + p[1])
 
 
 def print_defaults(import_all=True, shorten_paths=2):
@@ -489,6 +490,7 @@ def set_defaults(defaults, check=True):
     if check:
         _default_container.check_consistency(delete=True)
 
+
 def defaults_sid():
     """Return a state id for pyMOR's global defaults.
 
@@ -497,6 +499,6 @@ def defaults_sid():
     generation.
 
     For other uses see the implementation of
-    :meth:`pymor.operators.basic.NumpyMatrixBasedOperator.assemble`.
+    :meth:`pymor.operators.numpy.NumpyMatrixBasedOperator.assemble`.
     """
     return _default_container_sid

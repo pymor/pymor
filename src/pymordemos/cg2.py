@@ -6,14 +6,12 @@
 """Proof of concept for solving the poisson equation in 2D using linear finite elements and our grid interface
 
 Usage:
-    cg2.py PROBLEM-NUMBER N PLOT
+    cg2.py PROBLEM-NUMBER N
 
 Arguments:
     PROBLEM-NUMBER    {0,1}, selects the problem to solve
 
     N                 Triangle count per direction
-
-    PLOT              plot solution after solve?
 
 Options:
     -h, --help    this message
@@ -21,21 +19,21 @@ Options:
 
 from __future__ import absolute_import, division, print_function
 
-import math as m
 from docopt import docopt
 import numpy as np
 
-from pymor.analyticalproblems import EllipticProblem
-from pymor.core import set_log_levels
-from pymor.discretizers import discretize_elliptic_cg
-from pymor.domaindescriptions import RectDomain
-from pymor.functions import GenericFunction
-from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional, GenericParameterFunctional
+from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.core.logger import set_log_levels
+from pymor.discretizers.elliptic import discretize_elliptic_cg
+from pymor.domaindescriptions.basic import RectDomain
+from pymor.functions.basic import GenericFunction
+from pymor.parameters.functionals import ProjectionParameterFunctional, GenericParameterFunctional
+from pymor.parameters.spaces import CubicParameterSpace
 
 set_log_levels({'pymor.discretizations': 'INFO'})
 
 
-def cg2_demo(nrhs, n, plot):
+def cg2_demo(nrhs, n):
     rhs0 = GenericFunction(lambda X: np.ones(X.shape[:-1]) * 10, dim_domain=2)        # NOQA
     rhs1 = GenericFunction(lambda X: (X[..., 0] - 0.5) ** 2 * 1000, dim_domain=2)     # NOQA
 
@@ -56,7 +54,7 @@ def cg2_demo(nrhs, n, plot):
                               diffusion_functionals=(f0, f1), name='2DProblem')
 
     print('Discretize ...')
-    discretization, _ = discretize_elliptic_cg(problem, diameter=m.sqrt(2) / n)
+    discretization, _ = discretize_elliptic_cg(problem, diameter=1. / n)
 
     print('The parameter type is {}'.format(discretization.parameter_type))
 
@@ -64,13 +62,11 @@ def cg2_demo(nrhs, n, plot):
     for mu in parameter_space.sample_uniformly(10):
         U.append(discretization.solve(mu))
 
-    if plot:
-        print('Plot ...')
-        discretization.visualize(U, title='Solution for diffusionl in [0.1, 1]')
+    print('Plot ...')
+    discretization.visualize(U, title='Solution for diffusionl in [0.1, 1]')
 
 if __name__ == '__main__':
     args = docopt(__doc__)
     nrhs = int(args['PROBLEM-NUMBER'])
     n = int(args['N'])
-    plot = bool(args['PLOT'])
-    cg2_demo(nrhs, n, plot)
+    cg2_demo(nrhs, n)

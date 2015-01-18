@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor.core import getLogger
+from pymor.core.logger import getLogger
 logger = getLogger(__name__)
 
 

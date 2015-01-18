@@ -8,8 +8,14 @@ from __future__ import absolute_import, division, print_function
 from collections import OrderedDict
 
 import numpy as np
+import scipy.version
 from scipy.sparse import issparse
-from scipy.sparse.linalg import bicgstab, spsolve, spilu, lgmres, lsmr, lsqr, LinearOperator
+from scipy.sparse.linalg import bicgstab, spsolve, splu, spilu, lgmres, lsqr, LinearOperator
+try:
+    from scipy.sparse.linalg import lsmr
+    HAVE_SCIPY_LSMR = True
+except ImportError:
+    HAVE_SCIPY_LSMR = False
 
 from pymor.core.defaults import defaults, defaults_sid
 from pymor.core.exceptions import InversionError
@@ -71,6 +77,7 @@ def dense_options(default_solver='solve',
 
 @defaults('default_solver', 'default_least_squares_solver', 'bicgstab_tol', 'bicgstab_maxiter', 'spilu_drop_tol',
           'spilu_fill_factor', 'spilu_drop_rule', 'spilu_permc_spec', 'spsolve_permc_spec',
+          'spsolve_keep_factorization',
           'lgmres_tol', 'lgmres_maxiter', 'lgmres_inner_m', 'lgmres_outer_k', 'least_squares_lsmr_damp',
           'least_squares_lsmr_atol', 'least_squares_lsmr_btol', 'least_squares_lsmr_conlim',
           'least_squares_lsmr_maxiter', 'least_squares_lsmr_show', 'least_squares_lsqr_atol',
@@ -91,6 +98,7 @@ def sparse_options(default_solver='spsolve',
                    spilu_drop_rule='basic,area',
                    spilu_permc_spec='COLAMD',
                    spsolve_permc_spec='COLAMD',
+                   spsolve_keep_factorization=True,
                    lgmres_tol=1e-5,
                    lgmres_maxiter=1000,
                    lgmres_inner_m=39,
@@ -270,19 +278,13 @@ def sparse_options(default_solver='spsolve',
                                     'tol': bicgstab_tol,
                                     'maxiter': bicgstab_maxiter}),
             ('spsolve',            {'type': 'spsolve',
-                                    'permc_spec': spsolve_permc_spec}),
+                                    'permc_spec': spsolve_permc_spec,
+                                    'keep_factorization': spsolve_keep_factorization}),
             ('lgmres',             {'type': 'lgmres',
                                     'tol': lgmres_tol,
                                     'maxiter': lgmres_maxiter,
                                     'inner_m': lgmres_inner_m,
                                     'outer_k': lgmres_outer_k}),
-            ('least_squares_lsmr', {'type': 'least_squares_lsmr',
-                                    'damp': least_squares_lsmr_damp,
-                                    'atol': least_squares_lsmr_atol,
-                                    'btol': least_squares_lsmr_btol,
-                                    'conlim': least_squares_lsmr_conlim,
-                                    'maxiter': least_squares_lsmr_maxiter,
-                                    'show': least_squares_lsmr_show}),
             ('least_squares_lsqr', {'type': 'least_squares_lsqr',
                                     'damp': least_squares_lsqr_damp,
                                     'atol': least_squares_lsqr_atol,
@@ -290,6 +292,15 @@ def sparse_options(default_solver='spsolve',
                                     'conlim': least_squares_lsqr_conlim,
                                     'iter_lim': least_squares_lsqr_iter_lim,
                                     'show': least_squares_lsqr_show}))
+
+    if HAVE_SCIPY_LSMR:
+        opts += (('least_squares_lsmr', {'type': 'least_squares_lsmr',
+                                         'damp': least_squares_lsmr_damp,
+                                         'atol': least_squares_lsmr_atol,
+                                         'btol': least_squares_lsmr_btol,
+                                         'conlim': least_squares_lsmr_conlim,
+                                         'maxiter': least_squares_lsmr_maxiter,
+                                         'show': least_squares_lsmr_show}),)
 
     if HAVE_PYAMG:
         opts += (('pyamg',    {'type': 'pyamg',
@@ -454,8 +465,28 @@ def apply_inverse(matrix, U, options=None):
                     raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
                                          format(info))
     elif options['type'] == 'spsolve':
-        for i, UU in enumerate(U):
-            R[i] = spsolve(matrix, UU, permc_spec=options['permc_spec'])
+        if scipy.version.version >= '0.14':
+            if hasattr(matrix, 'factorization'):
+                R = matrix.factorization.solve(U.T).T
+            elif options['keep_factorization']:
+                matrix.factorization = splu(matrix, permc_spec=options['permc_spec'])
+                R = matrix.factorization.solve(U.T).T
+            else:
+                R = spsolve(matrix, U.T, permc_spec=options['permc_spec']).T
+        else:
+            if hasattr(matrix, 'factorization'):
+                for i, UU in enumerate(U):
+                    R[i] = matrix.factorization.solve(UU)
+            elif options['keep_factorization']:
+                matrix.factorization = splu(matrix, permc_spec=options['permc_spec'])
+                for i, UU in enumerate(U):
+                    R[i] = matrix.factorization.solve(UU)
+            elif len(U) > 1:
+                factorization = splu(matrix, permc_spec=options['permc_spec'])
+                for i, UU in enumerate(U):
+                    R[i] = factorization.solve(UU)
+            else:
+                R = spsolve(matrix, U.T, permc_spec=options['permc_spec']).reshape((1, -1))
     elif options['type'] == 'lgmres':
         for i, UU in enumerate(U):
             R[i], info = lgmres(matrix, UU.copy(i),
@@ -538,8 +569,8 @@ def apply_inverse(matrix, U, options=None):
     elif options['type'].startswith('generic') or options['type'].startswith('least_squares_generic'):
         logger = getLogger('pymor.la.numpysolvers.apply_inverse')
         logger.warn('You have selected a (potentially slow) generic solver for a NumPy matrix operator!')
-        from pymor.operators.basic import NumpyMatrixOperator
-        from pymor.la import NumpyVectorArray
+        from pymor.operators.numpy import NumpyMatrixOperator
+        from pymor.la.numpyvectorarray import NumpyVectorArray
         return genericsolvers.apply_inverse(NumpyMatrixOperator(matrix),
                                             NumpyVectorArray(U, copy=False),
                                             options=options).data

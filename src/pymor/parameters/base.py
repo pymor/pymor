@@ -43,7 +43,8 @@ from numbers import Number
 
 import numpy as np
 
-from pymor.tools import float_cmp_all, format_array
+from pymor.tools.floatcmp import float_cmp_all
+from pymor.tools.pprint import format_array
 
 
 class ParameterType(dict):
@@ -159,6 +160,10 @@ class ParameterType(dict):
 
     def __repr__(self):
         return 'ParameterType(' + str(self) + ')'
+
+    @property
+    def sid(self):
+        return tuple((k, v) for k, v in self.iteritems())
 
 
 class Parameter(dict):

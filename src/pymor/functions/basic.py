@@ -11,8 +11,9 @@ from numbers import Number
 from itertools import izip
 import numpy as np
 
+from pymor.core.pickle import dumps, loads, dumps_function, loads_function, PicklingError
 from pymor.functions.interfaces import FunctionInterface
-from pymor.parameters import ParameterFunctionalInterface
+from pymor.parameters.interfaces import ParameterFunctionalInterface
 
 
 class FunctionBase(FunctionInterface):
@@ -143,6 +144,72 @@ class GenericFunction(FunctionBase):
         assert v.shape == x.shape[:-1] + self.shape_range
 
         return v
+
+    def __getstate__(self):
+        s = self.__dict__.copy()
+        try:
+            pickled_mapping = dumps(self._mapping)
+            picklable = True
+        except PicklingError:
+            self.logger.warn('Mapping not picklable, trying pymor.core.pickle.dumps_function.')
+            pickled_mapping = dumps_function(self._mapping)
+            picklable = False
+        s['_mapping'] = pickled_mapping
+        s['_picklable'] = picklable
+        return s
+
+    def __setstate__(self, state):
+        if state.pop('_picklable'):
+            state['_mapping'] = loads(state['_mapping'])
+        else:
+            state['_mapping'] = loads_function(state['_mapping'])
+        self.__dict__.update(state)
+
+
+class ExpressionFunction(GenericFunction):
+    """Turns a Python expression given as a string into a |Function|.
+
+    Some |NumPy| arithmetic functions like 'sin', 'log', 'min' are supported.
+    For a full list see the `functions` class attribute.
+
+    .. warning::
+       :meth:`eval` is used to evaluate the given expression. As a consequence,
+       using this class with expression strings from untrusted sources will cause
+       mayhem and destruction!
+
+    Parameters
+    ----------
+    expression
+        The Python expression of one variable `x` as a string.
+    dim_domain
+        The dimension of the domain.
+    shape_range
+        The shape of the values returned by the expression.
+    parameter_type
+        The |ParameterType| the expression accepts.
+    name
+        The name of the function.
+    """
+
+    functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',
+                                             'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
+                                             'exp', 'exp2', 'log', 'log2', 'log10',
+                                             'min', 'minimum', 'max', 'maximum', 'pi', 'e'}}
+
+    def __init__(self, expression, dim_domain=1, shape_range=tuple(), parameter_type=None, name=None):
+        self.expression = expression
+        code = compile(expression, '<expression>', 'eval')
+        functions = self.functions
+        mapping = lambda x, mu=None: eval(code, functions, {'x': x, 'mu': mu})
+        super(ExpressionFunction, self).__init__(mapping, dim_domain, shape_range, parameter_type, name)
+
+    def __repr__(self):
+        return 'ExpressionFunction({}, {}, {}, {})'.format(self.expression, repr(self.parameter_type),
+                                                           self.shape_range, self.parameter_type)
+
+    def __reduce__(self):
+        return (ExpressionFunction,
+                (self.expression, self.dim_domain, self.shape_range, self.parameter_type, self.name))
 
 
 class LincombFunction(FunctionBase):

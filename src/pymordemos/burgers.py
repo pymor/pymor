@@ -47,15 +47,16 @@ from functools import partial
 
 from docopt import docopt
 
-import pymor.core as core
-core.logger.MAX_HIERACHY_LEVEL = 2
+from pymor.core import logger
+logger.MAX_HIERACHY_LEVEL = 2
 from pymor.analyticalproblems.burgers import Burgers2DProblem
 from pymor.discretizers.advection import discretize_nonlinear_instationary_advection_fv
-from pymor.domaindiscretizers import discretize_domain_default
-from pymor.grids import RectGrid, TriaGrid
+from pymor.domaindiscretizers.default import discretize_domain_default
+from pymor.grids.rect import RectGrid
+from pymor.grids.tria import TriaGrid
 
-core.set_log_levels({'pymor.algorithms': 'INFO',
-                     'pymor.discretizations': 'INFO'})
+logger.set_log_levels({'pymor.algorithms': 'INFO',
+                       'pymor.discretizations': 'INFO'})
 
 
 def burgers_demo(args):
@@ -81,7 +82,9 @@ def burgers_demo(args):
 
     print('Discretize ...')
     discretizer = discretize_nonlinear_instationary_advection_fv
-    discretization, data = discretizer(problem, diameter=m.sqrt(2) / args['--grid'],
+    if args['--grid-type'] == 'rect':
+        args['--grid'] *= 1. / m.sqrt(2)
+    discretization, data = discretizer(problem, diameter=1. / args['--grid'],
                                        num_flux=args['--num-flux'], lxf_lambda=args['--lxf-lambda'],
                                        nt=args['--nt'], domain_discretizer=domain_discretizer)
     print(discretization.operator.grid)

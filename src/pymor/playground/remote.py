@@ -20,10 +20,12 @@ if not TRAVIS:
 
     import IPython.parallel as p
 
-    from pymor.discretizations import StationaryDiscretization
-    from pymor.la import VectorArrayInterface, NumpyVectorArray
-    from pymor.operators import OperatorInterface, OperatorBase
-    from pymor.operators.basic import LincombOperator, ProjectedOperator, ProjectedLinearOperator
+    from pymor.discretizations.basic import StationaryDiscretization
+    from pymor.la.interfaces import VectorArrayInterface
+    from pymor.la.numpyvectorarray import NumpyVectorArray
+    from pymor.operators.interfaces import OperatorInterface
+    from pymor.operators.basic import OperatorBase, ProjectedOperator
+    from pymor.operators.constructions import LincombOperator
 
 
     class RemoteRessourceManger(object):

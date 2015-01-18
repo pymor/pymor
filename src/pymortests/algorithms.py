@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 import pytest
 
-from pymor.la import NumpyVectorArray
+from pymor.la.numpyvectorarray import NumpyVectorArray
 from pymortests.base import runmodule, MonomOperator
 from pymor.algorithms.newton import newton, NewtonError
 import pymor.algorithms.basisextension as bxt

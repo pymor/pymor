@@ -8,13 +8,13 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
-from pymor.core import Unpicklable, inject_sid
-from pymor.domaindescriptions import LineDomain, RectDomain, TorusDomain, CircleDomain
-from pymor.functions import ConstantFunction, GenericFunction
+from pymor.domaindescriptions.basic import LineDomain, RectDomain, TorusDomain, CircleDomain
+from pymor.functions.basic import ConstantFunction
+from pymor.functions.interfaces import FunctionInterface
 from pymor.parameters.spaces import CubicParameterSpace
 
 
-class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
+class BurgersProblem(InstationaryAdvectionProblem):
     """One-dimensional Burgers-type problem.
 
     The problem is to solve ::
@@ -41,38 +41,15 @@ class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
 
         assert initial_data_type in ('sin', 'bump')
 
-        def burgers_flux(U, mu):
-            U_exp = np.sign(U) * np.power(np.abs(U), mu['exponent'])
-            R = U_exp * v
-            return R
-        inject_sid(burgers_flux, str(BurgersProblem) + '.burgers_flux', v)
-
-        def burgers_flux_derivative(U, mu):
-            U_exp = mu['exponent'] * (np.sign(U) * np.power(np.abs(U), mu['exponent']-1))
-            R = U_exp * v
-            return R
-        inject_sid(burgers_flux_derivative, str(BurgersProblem) + '.burgers_flux_derivative', v)
-
-        flux_function = GenericFunction(burgers_flux, dim_domain=1, shape_range=(1,),
-                                        parameter_type={'exponent': 0},
-                                        name='burgers_flux')
-
-        flux_function_derivative = GenericFunction(burgers_flux_derivative, dim_domain=1, shape_range=(1,),
-                                                   parameter_type={'exponent': 0},
-                                                   name='burgers_flux')
+        flux_function = BurgersFlux(v)
+        flux_function_derivative = BurgersFluxDerivative(v)
 
         if initial_data_type == 'sin':
-            def initial_data(x):
-                return 0.5 * (np.sin(2 * np.pi * x[..., 0]) + 1.)
-            inject_sid(initial_data, str(BurgersProblem) + '.initial_data_sin')
+            initial_data = BurgersSinInitialData()
             dirichlet_data = ConstantFunction(dim_domain=1, value=0.5)
         else:
-            def initial_data(x):
-                return (x[..., 0] >= 0.5) * (x[..., 0] <= 1) * 1
-            inject_sid(initial_data, str(BurgersProblem) + '.initial_data_bump')
+            initial_data = BurgersBumpInitialData()
             dirichlet_data = ConstantFunction(dim_domain=1, value=0)
-
-        initial_data = GenericFunction(initial_data, dim_domain=1)
 
         if circle:
             domain = CircleDomain([0, 2])
@@ -94,7 +71,7 @@ class BurgersProblem(InstationaryAdvectionProblem, Unpicklable):
         self.v = v
 
 
-class Burgers2DProblem(InstationaryAdvectionProblem, Unpicklable):
+class Burgers2DProblem(InstationaryAdvectionProblem):
     """Two-dimensional Burgers-type problem.
 
     The problem is to solve ::
@@ -122,44 +99,15 @@ class Burgers2DProblem(InstationaryAdvectionProblem, Unpicklable):
 
         assert initial_data_type in ('sin', 'bump')
 
-        def burgers_flux(U, mu):
-            U = U.reshape(U.shape[:-1])
-            U_exp = np.sign(U) * np.power(np.abs(U), mu['exponent'])
-            R = np.empty(U.shape + (2,))
-            R[..., 0] = U_exp * vx
-            R[..., 1] = U_exp * vy
-            return R
-        inject_sid(burgers_flux, str(Burgers2DProblem) + '.burgers_flux', vx, vy)
-
-        def burgers_flux_derivative(U, mu):
-            U = U.reshape(U.shape[:-1])
-            U_exp = mu['exponent'] * (np.sign(U) * np.power(np.abs(U), mu['exponent']-1))
-            R = np.empty(U.shape + (2,))
-            R[..., 0] = U_exp * vx
-            R[..., 1] = U_exp * vy
-            return R
-        inject_sid(burgers_flux_derivative, str(Burgers2DProblem) + '.burgers_flux_derivative', vx, vy)
-
-        flux_function = GenericFunction(burgers_flux, dim_domain=1, shape_range=(2,),
-                                        parameter_type={'exponent': 0},
-                                        name='burgers_flux')
-
-        flux_function_derivative = GenericFunction(burgers_flux_derivative, dim_domain=1, shape_range=(2,),
-                                                   parameter_type={'exponent': 0},
-                                                   name='burgers_flux')
+        flux_function = Burgers2DFlux(vx, vy)
+        flux_function_derivative = Burgers2DFluxDerivative(vx, vy)
 
         if initial_data_type == 'sin':
-            def initial_data(x):
-                return 0.5 * (np.sin(2 * np.pi * x[..., 0]) * np.sin(2 * np.pi * x[..., 1]) + 1.)
-            inject_sid(initial_data, str(Burgers2DProblem) + '.initial_data_sin')
+            initial_data = Burgers2DSinInitialData()
             dirichlet_data = ConstantFunction(dim_domain=2, value=0.5)
         else:
-            def initial_data(x):
-                return (x[..., 0] >= 0.5) * (x[..., 0] <= 1) * 1
-            inject_sid(initial_data, str(Burgers2DProblem) + '.initial_data_bump')
+            initial_data = Burgers2DBumpInitialData()
             dirichlet_data = ConstantFunction(dim_domain=2, value=0)
-
-        initial_data = GenericFunction(initial_data, dim_domain=2)
 
         domain = TorusDomain([[0, 0], [2, 1]]) if torus else RectDomain([[0, 0], [2, 1]], right=None, top=None)
 
@@ -177,3 +125,111 @@ class Burgers2DProblem(InstationaryAdvectionProblem, Unpicklable):
         self.torus = torus
         self.vx = vx
         self.vy = vy
+
+
+class BurgersFlux(FunctionInterface):
+
+    dim_domain = 1
+    shape_range = (1,)
+
+    def __init__(self, v):
+        self.v = v
+        self.build_parameter_type({'exponent': tuple()}, local_global=True)
+
+    def evaluate(self, U, mu=None):
+        mu = self.parse_parameter(mu)
+        U_exp = np.sign(U) * np.power(np.abs(U), mu['exponent'])
+        R = U_exp * self.v
+        return R
+
+
+class BurgersFluxDerivative(FunctionInterface):
+
+    dim_domain = 1
+    shape_range = (1,)
+
+    def __init__(self, v):
+        self.v = v
+        self.build_parameter_type({'exponent': tuple()}, local_global=True)
+
+    def evaluate(self, U, mu=None):
+        mu = self.parse_parameter(mu)
+        U_exp = mu['exponent'] * (np.sign(U) * np.power(np.abs(U), mu['exponent']-1))
+        R = U_exp * self.v
+        return R
+
+
+class BurgersSinInitialData(FunctionInterface):
+
+    dim_domain = 1
+    shape_range = tuple()
+
+    def evaluate(self, x, mu=None):
+        return 0.5 * (np.sin(2 * np.pi * x[..., 0]) + 1.)
+
+
+class BurgersBumpInitialData(FunctionInterface):
+
+    dim_domain = 1
+    shape_range = tuple()
+
+    def evaluate(self, x, mu=None):
+        return (x[..., 0] >= 0.5) * (x[..., 0] <= 1) * 1
+
+
+class Burgers2DFlux(FunctionInterface):
+
+    dim_domain = 1
+    shape_range = (2,)
+
+    def __init__(self, vx, vy):
+        self.vx = vx
+        self.vy = vy
+        self.build_parameter_type({'exponent': tuple()}, local_global=True)
+
+    def evaluate(self, U, mu=None):
+        mu = self.parse_parameter(mu)
+        U = U.reshape(U.shape[:-1])
+        U_exp = np.sign(U) * np.power(np.abs(U), mu['exponent'])
+        R = np.empty(U.shape + (2,))
+        R[..., 0] = U_exp * self.vx
+        R[..., 1] = U_exp * self.vy
+        return R
+
+
+class Burgers2DFluxDerivative(FunctionInterface):
+
+    dim_domain = 1
+    shape_range = (2,)
+
+    def __init__(self, vx, vy):
+        self.vx = vx
+        self.vy = vy
+        self.build_parameter_type({'exponent': tuple()}, local_global=True)
+
+    def evaluate(self, U, mu=None):
+        mu = self.parse_parameter(mu)
+        U = U.reshape(U.shape[:-1])
+        U_exp = mu['exponent'] * (np.sign(U) * np.power(np.abs(U), mu['exponent']-1))
+        R = np.empty(U.shape + (2,))
+        R[..., 0] = U_exp * self.vx
+        R[..., 1] = U_exp * self.vy
+        return R
+
+
+class Burgers2DSinInitialData(FunctionInterface):
+
+    dim_domain = 2
+    shape_range = tuple()
+
+    def evaluate(self, x, mu=None):
+        return 0.5 * (np.sin(2 * np.pi * x[..., 0]) * np.sin(2 * np.pi * x[..., 1]) + 1.)
+
+
+class Burgers2DBumpInitialData(FunctionInterface):
+
+    dim_domain = 2
+    shape_range = tuple()
+
+    def evaluate(self, x, mu=None):
+        return (x[..., 0] >= 0.5) * (x[..., 0] <= 1) * 1

@@ -6,11 +6,11 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-import pymor.core as core
-from pymor.la import NumpyVectorArray
+from pymor.core.interfaces import BasicInterface
+from pymor.la.numpyvectorarray import NumpyVectorArray
 
 
-class GenericRBReconstructor(core.BasicInterface):
+class GenericRBReconstructor(BasicInterface):
     """Simple reconstructor forming linear combinations with the reduced basis."""
 
     def __init__(self, RB):
@@ -22,7 +22,7 @@ class GenericRBReconstructor(core.BasicInterface):
         return self.RB.lincomb(U.data)
 
     def restricted_to_subbasis(self, dim):
-        """Analog of :meth:`~pymor.operators.basic.NumpyMatrixOperator.projected_to_subbasis`."""
+        """Analog of :meth:`~pymor.operators.numpy.NumpyMatrixOperator.projected_to_subbasis`."""
         assert dim <= len(self.RB)
         return GenericRBReconstructor(self.RB.copy(ind=range(dim)))
 
@@ -96,7 +96,7 @@ def reduce_generic_rb(discretization, RB, operator_product=None, vector_product=
     return rd, rc, {}
 
 
-class SubbasisReconstructor(core.BasicInterface):
+class SubbasisReconstructor(BasicInterface):
     """Returned by :meth:`reduce_to_subbasis`."""
 
     def __init__(self, dim, dim_subbasis, old_recontructor=None):
@@ -119,7 +119,7 @@ class SubbasisReconstructor(core.BasicInterface):
 def reduce_to_subbasis(discretization, dim, reconstructor=None):
     """Further reduce a |Discretization| to the subbasis formed by the first `dim` basis vectors.
 
-    This is achieved by calling :meth:`~pymor.operators.basic.NumpyMatrixOperator.projected_to_subbasis`
+    This is achieved by calling :meth:`~pymor.operators.numpy.NumpyMatrixOperator.projected_to_subbasis`
     for each operator of the given |Discretization|. Additionally, if a reconstructor
     for the |Discretization| is provided, its :meth:`restricted_to_subbasis` method is also
     called to obtain a reconstructor for the further reduced |Discretization|. Otherwise

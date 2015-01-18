@@ -7,13 +7,12 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymor.core import ImmutableInterface
-from pymor.domaindescriptions import RectDomain
-from pymor.functions import ConstantFunction
-from pymor.tools import Named
+from pymor.core.interfaces import ImmutableInterface
+from pymor.domaindescriptions.basic import RectDomain
+from pymor.functions.basic import ConstantFunction
 
 
-class EllipticProblem(ImmutableInterface, Named):
+class EllipticProblem(ImmutableInterface):
     """Linear elliptic analytical problem.
 
     The problem consists in solving ::
@@ -39,6 +38,10 @@ class EllipticProblem(ImmutableInterface, Named):
         no parameter dependence is assumed.
     dirichlet_data
         |Function| providing the Dirichlet boundary values in global coordinates.
+    neumann_data
+        |Function| providing the Neumann boundary values in global coordinates.
+    parameter_space
+        |ParameterSpace| for the problem.
     name
         Name of the problem.
 
@@ -54,11 +57,16 @@ class EllipticProblem(ImmutableInterface, Named):
     def __init__(self, domain=RectDomain(), rhs=ConstantFunction(dim_domain=2),
                  diffusion_functions=(ConstantFunction(dim_domain=2),),
                  diffusion_functionals=None,
-                 dirichlet_data=ConstantFunction(value=0, dim_domain=2), name=None):
-        assert rhs.dim_domain == dirichlet_data.dim_domain == diffusion_functions[0].dim_domain
+                 dirichlet_data=None, neumann_data=None,
+                 parameter_space=None, name=None):
+        assert rhs.dim_domain == diffusion_functions[0].dim_domain
+        assert dirichlet_data is None or dirichlet_data.dim_domain == diffusion_functions[0].dim_domain
+        assert neumann_data is None or neumann_data.dim_domain == diffusion_functions[0].dim_domain
         self.domain = domain
         self.rhs = rhs
         self.diffusion_functions = diffusion_functions
         self.diffusion_functionals = diffusion_functionals
         self.dirichlet_data = dirichlet_data
+        self.neumann_data = neumann_data
+        self.parameter_space = parameter_space
         self.name = name

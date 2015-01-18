@@ -9,7 +9,7 @@ import numpy as np
 
 from pymor.parameters.base import Parameter, ParameterType
 from pymor.parameters.interfaces import ParameterSpaceInterface
-from pymor.tools import new_random_state
+from pymor.tools.random import new_random_state
 
 
 class CubicParameterSpace(ParameterSpaceInterface):
@@ -80,7 +80,7 @@ class CubicParameterSpace(ParameterSpaceInterface):
         column_widths = [max(map(len, c)) for c in zip(*rows)]
         return ('CubicParameterSpace\n' +
                 '\n'.join(('key: {:' + str(column_widths[0] + 2)
-                           +'} shape: {:' + str(column_widths[1] + 2)
+                           + '} shape: {:' + str(column_widths[1] + 2)
                            + '} range: {}').format(c1 + ',', c2 + ',', c3) for (c1, c2, c3) in rows))
 
     def __repr__(self):

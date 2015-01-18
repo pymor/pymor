@@ -9,9 +9,10 @@ import numpy as np
 from scipy.linalg import solve_triangular
 
 
-from pymor.la import NumpyVectorArray, NumpyVectorSpace
 from pymor.la.interfaces import VectorArrayInterface
-from pymor.operators import OperatorInterface, OperatorBase
+from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
+from pymor.operators.basic import OperatorBase
+from pymor.operators.interfaces import OperatorInterface
 
 
 class EmpiricalInterpolatedOperator(OperatorBase):
@@ -104,18 +105,23 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         return self.collateral_basis.lincomb(interpolation_coefficients)
 
     def projected(self, source_basis, range_basis, product=None, name=None):
-        assert source_basis is not None or self.source.dim == 0
         assert source_basis is None or source_basis in self.source
-        assert range_basis in self.range
+        assert range_basis is None or range_basis in self.range
+        assert product is None or product.source == product.range == self.range
 
-        if not hasattr(self, 'restricted_operator'):
+        if not hasattr(self, 'restricted_operator') or source_basis is None:
             return super(EmpiricalInterpolatedOperator, self).projected(source_basis, range_basis, product, name)
 
-        if product is None:
-            projected_collateral_basis = NumpyVectorArray(self.collateral_basis.dot(range_basis, pairwise=False))
+        name = name or self.name + '_projected'
+
+        if range_basis is not None:
+            if product is None:
+                projected_collateral_basis = NumpyVectorArray(self.collateral_basis.dot(range_basis, pairwise=False))
+            else:
+                projected_collateral_basis = NumpyVectorArray(product.apply2(self.collateral_basis, range_basis,
+                                                                             pairwise=False))
         else:
-            projected_collateral_basis = NumpyVectorArray(product.apply2(self.collateral_basis, range_basis,
-                                                                         pairwise=False))
+            projected_collateral_basis = self.collateral_basis
 
         return ProjectedEmpiciralInterpolatedOperator(self.restricted_operator, self.interpolation_matrix,
                                                       NumpyVectorArray(source_basis.components(self.source_dofs),
@@ -140,7 +146,7 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
     def __init__(self, restricted_operator, interpolation_matrix, source_basis_dofs,
                  projected_collateral_basis, triangular, name=None):
         self.source = NumpyVectorSpace(len(source_basis_dofs))
-        self.range = NumpyVectorSpace(projected_collateral_basis.dim)
+        self.range = projected_collateral_basis.space
         self.linear = restricted_operator.linear
         self.build_parameter_type(inherits=(restricted_operator,))
         self.restricted_operator = restricted_operator
@@ -169,6 +175,8 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
         assert dim_source is None or dim_source <= self.source.dim
         assert dim_range is None or dim_range <= self.range.dim
         assert dim_collateral is None or dim_collateral <= self.restricted_operator.range.dim
+        if not isinstance(self.projected_collateral_basis, NumpyVectorArray):
+            raise NotImplementedError
         name = name or '{}_projected_to_subbasis'.format(self.name)
 
         interpolation_matrix = self.interpolation_matrix[:dim_collateral, :dim_collateral]

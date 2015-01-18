@@ -10,13 +10,14 @@ from __future__ import absolute_import, division, print_function
 from itertools import product
 
 from pymor.analyticalproblems.elliptic import EllipticProblem
-from pymor.core import Unpicklable, inject_sid
-from pymor.domaindescriptions import RectDomain
-from pymor.functions import GenericFunction, ConstantFunction
-from pymor.parameters import CubicParameterSpace, ProjectionParameterFunctional
+from pymor.domaindescriptions.basic import RectDomain
+from pymor.functions.basic import ConstantFunction
+from pymor.functions.interfaces import FunctionInterface
+from pymor.parameters.functionals import ProjectionParameterFunctional
+from pymor.parameters.spaces import CubicParameterSpace
 
 
-class ThermalBlockProblem(EllipticProblem, Unpicklable):
+class ThermalBlockProblem(EllipticProblem):
     """Analytical description of a 2D thermal block diffusion problem.
 
     This problem is to solve the elliptic equation ::
@@ -58,22 +59,13 @@ class ThermalBlockProblem(EllipticProblem, Unpicklable):
         dx = 1 / num_blocks[0]
         dy = 1 / num_blocks[1]
 
-        # creating the id-string once for every diffusion function reduces the size of the pickled sid
-        diffusion_function_id = str(ThermalBlockProblem) + '.diffusion_function'
-
-        def diffusion_function_factory(x, y):
-            func = lambda X: (1. * (X[..., 0] >= x * dx) * (X[..., 0] < (x + 1) * dx)
-                                 * (X[..., 1] >= y * dy) * (X[..., 1] < (y + 1) * dy))
-            inject_sid(func, diffusion_function_id, x, y, dx, dy)
-            return GenericFunction(func, dim_domain=2, name='diffusion_function_{}_{}'.format(x, y))
-
         def parameter_functional_factory(x, y):
             return ProjectionParameterFunctional(component_name='diffusion',
                                                  component_shape=(num_blocks[1], num_blocks[0]),
                                                  coordinates=(num_blocks[1] - y - 1, x),
                                                  name='diffusion_{}_{}'.format(x, y))
 
-        diffusion_functions = tuple(diffusion_function_factory(x, y)
+        diffusion_functions = tuple(ThermalBlockDiffusionFunction(x, y, dx, dy)
                                     for x, y in product(xrange(num_blocks[0]), xrange(num_blocks[1])))
         parameter_functionals = tuple(parameter_functional_factory(x, y)
                                       for x, y in product(xrange(num_blocks[0]), xrange(num_blocks[1])))
@@ -83,3 +75,19 @@ class ThermalBlockProblem(EllipticProblem, Unpicklable):
         self.parameter_space = parameter_space
         self.parameter_range = parameter_range
         self.num_blocks = num_blocks
+
+
+class ThermalBlockDiffusionFunction(FunctionInterface):
+
+    dim_domain = 2
+    shape_range = tuple()
+
+    def __init__(self, x, y, dx, dy):
+        self.x = x
+        self.y = y
+        self.dx = dx
+        self.dy = dy
+
+    def evaluate(self, x, mu=None):
+        return (1. * (x[..., 0] >= self.x * self.dx) * (x[..., 0] < (self.x + 1) * self.dx)
+                   * (x[..., 1] >= self.y * self.dy) * (x[..., 1] < (self.y + 1) * self.dy))

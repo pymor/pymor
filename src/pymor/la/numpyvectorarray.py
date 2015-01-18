@@ -12,7 +12,7 @@ from scipy.sparse import issparse
 
 from pymor.core import NUMPY_INDEX_QUIRK
 from pymor.la.interfaces import VectorArrayInterface, VectorSpace
-from pymor.tools import float_cmp
+from pymor.tools.floatcmp import float_cmp
 
 
 class NumpyVectorArray(VectorArrayInterface):
@@ -22,7 +22,7 @@ class NumpyVectorArray(VectorArrayInterface):
     implemented directly in pyMOR. Reduced |Operators| will also
     expect |NumpyVectorArrays|.
 
-    Note that this class is just thin wrapper around the underlying
+    Note that this class is just a thin wrapper around the underlying
     |NumPy array|. Thus, while operations like
     :meth:`~VectorArrayInterface.axpy` or :meth:`VectorArrayInterface.dot`
     will be quite efficient, removing or appending vectors will

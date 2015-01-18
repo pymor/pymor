@@ -6,9 +6,9 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor.core import getLogger
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError, NewtonError
+from pymor.core.logger import getLogger
 
 
 @defaults('miniter', 'maxiter', 'reduction', 'abs_limit', 'stagnation_window', 'stagnation_threshold')

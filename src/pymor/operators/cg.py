@@ -12,9 +12,10 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from scipy.sparse import coo_matrix, csc_matrix
 
+from pymor.functions.interfaces import FunctionInterface
 from pymor.grids.referenceelements import triangle, line, square
-from pymor.la import NumpyVectorSpace
-from pymor.operators import NumpyMatrixBasedOperator
+from pymor.la.numpyvectorarray import NumpyVectorSpace
+from pymor.operators.numpy import NumpyMatrixBasedOperator
 
 
 class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
@@ -39,6 +40,9 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     dirichlet_data
         |Function| providing the Dirichlet boundary values. If `None`,
         constant-zero boundary is assumed.
+    neumann_data
+        |Function| providing the Neumann boundary values. If `None`,
+        constant-zero is assumed.
     order
         Order of the Gauss quadrature to use for numerical integration.
     name
@@ -48,7 +52,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     sparse = False
     range = NumpyVectorSpace(1)
 
-    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, order=2, name=None):
+    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, neumann_data=None, order=2, name=None):
         assert grid.reference_element(0) in {line, triangle}
         assert function.shape_range == tuple()
         self.source = NumpyVectorSpace(grid.size(grid.dim))
@@ -56,9 +60,10 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         self.boundary_info = boundary_info
         self.function = function
         self.dirichlet_data = dirichlet_data
+        self.neumann_data = neumann_data
         self.order = order
         self.name = name
-        self.build_parameter_type(inherits=(function, dirichlet_data))
+        self.build_parameter_type(inherits=(function, dirichlet_data, neumann_data))
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -71,7 +76,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         # element -> shape = (number of shape functions, number of quadrature points)
         q, w = g.reference_element.quadrature(order=self.order)
         if g.dim == 1:
-            SF = np.squeeze(np.array((1 - q, q)))
+            SF = np.array((1 - q[..., 0], q[..., 0]))
         elif g.dim == 2:
             SF = np.array(((1 - np.sum(q, axis=-1)),
                            q[..., 0],
@@ -89,6 +94,19 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         I = np.array(coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).todense()).ravel()
 
         # boundary treatment
+        if bi is not None and bi.has_neumann and self.neumann_data is not None:
+            NI = bi.neumann_boundaries(1)
+            if g.dim == 1:
+                I[NI] -= self.neumann_data(g.centers(1)[NI])
+            else:
+                F = -self.neumann_data(g.quadrature_points(1, order=self.order)[NI], mu=mu)
+                q, w = line.quadrature(order=self.order)
+                SF = np.squeeze(np.array([1 - q, q]))
+                SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[NI], w).ravel()
+                SF_I = g.subentities(1, 2)[NI].ravel()
+                I += np.array(coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim)))
+                                        .todense()).ravel()
+
         if bi is not None and bi.has_dirichlet:
             DI = bi.dirichlet_boundaries(g.dim)
             if self.dirichlet_data is not None:
@@ -121,6 +139,9 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
     dirichlet_data
         |Function| providing the Dirichlet boundary values. If `None`,
         constant-zero boundary is assumed.
+    neumann_data
+        |Function| providing the Neumann boundary values. If `None`,
+        constant-zero is assumed.
     order
         Order of the Gauss quadrature to use for numerical integration.
     name
@@ -130,7 +151,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
     sparse = False
     range = NumpyVectorSpace(1)
 
-    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, order=2, name=None):
+    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, neumann_data=None, order=2, name=None):
         assert grid.reference_element(0) in {square}
         assert function.shape_range == tuple()
         self.source = NumpyVectorSpace(grid.size(grid.dim))
@@ -138,6 +159,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         self.boundary_info = boundary_info
         self.function = function
         self.dirichlet_data = dirichlet_data
+        self.neumann_data = neumann_data
         self.order = order
         self.name = name
         self.build_parameter_type(inherits=(function, dirichlet_data))
@@ -170,6 +192,16 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         I = np.array(coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).todense()).ravel()
 
         # boundary treatment
+        if bi is not None and bi.has_neumann and self.neumann_data is not None:
+            NI = bi.neumann_boundaries(1)
+            F = -self.neumann_data(g.quadrature_points(1, order=self.order)[NI], mu=mu)
+            q, w = line.quadrature(order=self.order)
+            SF = np.squeeze(np.array([1 - q, q]))
+            SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[NI], w).ravel()
+            SF_I = g.subentities(1, 2)[NI].ravel()
+            I += np.array(coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim)))
+                                    .todense()).ravel()
+
         if bi is not None and bi.has_dirichlet:
             DI = bi.dirichlet_boundaries(g.dim)
             if self.dirichlet_data is not None:
@@ -246,6 +278,8 @@ class L2ProductP1(NumpyMatrixBasedOperator):
         # -> shape = (g.size(0), number of shape functions ** 2)
         SF_INTS = np.einsum('iq,jq,q,e->eij', SFQ, SFQ, w, g.integration_elements(0)).ravel()
 
+        del SFQ
+
         self.logger.info('Determine global dofs ...')
         SF_I0 = np.repeat(g.subentities(0, g.dim), g.dim + 1, axis=1).ravel()
         SF_I1 = np.tile(g.subentities(0, g.dim), [1, g.dim + 1]).ravel()
@@ -263,6 +297,7 @@ class L2ProductP1(NumpyMatrixBasedOperator):
 
         self.logger.info('Assemble system matrix ...')
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
+        del SF_INTS, SF_I0, SF_I1
         A = csc_matrix(A).copy()  # See DiffusionOperatorP1 for why copy() is necessary
 
         return A
@@ -292,7 +327,7 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
     dirichlet_clear_diag
         If `True`, also set diagonal entries corresponding to Dirichlet boundary DOFs to
         zero (e.g. for affine decomposition). Otherwise, if either `dirichlet_clear_rows` or
-    `dirichlet_clear_columns` is `True`, the diagonal entries are set to one.
+        `dirichlet_clear_columns` is `True`, the diagonal entries are set to one.
     name
         The name of the product.
     """
@@ -332,6 +367,8 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
         # -> shape = (g.size(0), number of shape functions ** 2)
         SF_INTS = np.einsum('iq,jq,q,e->eij', SFQ, SFQ, w, g.integration_elements(0)).ravel()
 
+        del SFQ
+
         self.logger.info('Determine global dofs ...')
         SF_I0 = np.repeat(g.subentities(0, g.dim), 4, axis=1).ravel()
         SF_I1 = np.tile(g.subentities(0, g.dim), [1, 4]).ravel()
@@ -349,6 +386,7 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
 
         self.logger.info('Assemble system matrix ...')
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
+        del SF_INTS, SF_I0, SF_I1
         A = csc_matrix(A).copy()  # See DiffusionOperatorP1 for why copy() is necessary
 
         return A
@@ -361,6 +399,7 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
 
         (Lu)(x) = c ∇ ⋅ [ d(x) ∇ u(x) ]
 
+    The function `d` can be scalar- or matrix-valued.
     The current implementation works in one and two dimensions, but can be trivially
     extended to arbitrary dimensions.
 
@@ -371,7 +410,9 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
     boundary_info
         |BoundaryInfo| for the treatment of Dirichlet boundary conditions.
     diffusion_function
-        The |Function| `d(x)`. If `None`, constant one is assumed.
+        The |Function| `d(x)` with ``shape_range == tuple()`` or
+        ``shape_range = (grid.dim_outer, grid.dim_outer)``. If `None`, constant one is
+        assumed.
     diffusion_constant
         The constant `c`. If `None`, `c` is set to one.
     dirichlet_clear_columns
@@ -390,6 +431,10 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
                  dirichlet_clear_columns=False, dirichlet_clear_diag=False, name=None):
         assert grid.reference_element(0) in {triangle, line}, 'A simplicial grid is expected!'
+        assert diffusion_function is None \
+            or (isinstance(diffusion_function, FunctionInterface) and
+                diffusion_function.dim_domain == grid.dim_outer and
+                diffusion_function.shape_range == tuple() or diffusion_function.shape_range == (grid.dim_outer,) * 2)
         self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
@@ -420,11 +465,18 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
         SF_GRADS = np.einsum('eij,pj->epi', g.jacobian_inverse_transposed(0), SF_GRAD)
 
         self.logger.info('Calculate all local scalar products beween gradients ...')
-        if self.diffusion_function is not None:
+        if self.diffusion_function is not None and self.diffusion_function.shape_range == tuple():
             D = self.diffusion_function(self.grid.centers(0), mu=mu)
             SF_INTS = np.einsum('epi,eqi,e,e->epq', SF_GRADS, SF_GRADS, g.volumes(0), D).ravel()
+            del D
+        elif self.diffusion_function is not None:
+            D = self.diffusion_function(self.grid.centers(0), mu=mu)
+            SF_INTS = np.einsum('epi,eqj,e,eij->epq', SF_GRADS, SF_GRADS, g.volumes(0), D).ravel()
+            del D
         else:
             SF_INTS = np.einsum('epi,eqi,e->epq', SF_GRADS, SF_GRADS, g.volumes(0)).ravel()
+
+        del SF_GRADS
 
         if self.diffusion_constant is not None:
             SF_INTS *= self.diffusion_constant
@@ -446,6 +498,7 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
 
         self.logger.info('Assemble system matrix ...')
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
+        del SF_INTS, SF_I0, SF_I1
         A = csc_matrix(A).copy()
 
         # The call to copy() is necessary to resize the data arrays of the sparse matrix:
@@ -467,6 +520,7 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
 
         (Lu)(x) = c ∇ ⋅ [ d(x) ∇ u(x) ]
 
+    The function `d` can be scalar- or matrix-valued.
     The current implementation works in two dimensions, but can be trivially
     extended to arbitrary dimensions.
 
@@ -477,7 +531,9 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
     boundary_info
         |BoundaryInfo| for the treatment of Dirichlet boundary conditions.
     diffusion_function
-        The |Function| `d(x)`. If `None`, constant one is assumed.
+        The |Function| `d(x)` with ``shape_range == tuple()`` or
+        ``shape_range = (grid.dim_outer, grid.dim_outer)``. If `None`, constant one is
+        assumed.
     diffusion_constant
         The constant `c`. If `None`, `c` is set to one.
     dirichlet_clear_columns
@@ -496,6 +552,10 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
                  dirichlet_clear_columns=False, dirichlet_clear_diag=False, name=None):
         assert grid.reference_element(0) in {square}, 'A square grid is expected!'
+        assert diffusion_function is None \
+            or (isinstance(diffusion_function, FunctionInterface) and
+                diffusion_function.dim_domain == grid.dim_outer and
+                diffusion_function.shape_range == tuple() or diffusion_function.shape_range == (grid.dim_outer,) * 2)
         self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
@@ -525,11 +585,18 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         SF_GRADS = np.einsum('eij,pjc->epic', g.jacobian_inverse_transposed(0), SF_GRAD)
 
         self.logger.info('Calculate all local scalar products beween gradients ...')
-        if self.diffusion_function is not None:
+        if self.diffusion_function is not None and self.diffusion_function.shape_range == tuple():
             D = self.diffusion_function(self.grid.centers(0), mu=mu)
             SF_INTS = np.einsum('epic,eqic,c,e,e->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0), D).ravel()
+            del D
+        elif self.diffusion_function is not None:
+            D = self.diffusion_function(self.grid.centers(0), mu=mu)
+            SF_INTS = np.einsum('epic,eqjc,c,e,eij->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0), D).ravel()
+            del D
         else:
             SF_INTS = np.einsum('epic,eqic,c,e->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0)).ravel()
+
+        del SF_GRADS
 
         if self.diffusion_constant is not None:
             SF_INTS *= self.diffusion_constant
@@ -552,6 +619,7 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
 
         self.logger.info('Assemble system matrix ...')
         A = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
+        del SF_INTS, SF_I0, SF_I1
         A = csc_matrix(A).copy()
 
         # The call to copy() is necessary to resize the data arrays of the sparse matrix:
@@ -564,3 +632,29 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         # print_memory_usage('matrix: {0:5.1f}'.format((A.data.nbytes + A.indptr.nbytes + A.indices.nbytes)/1024**2))
 
         return A
+
+
+class InterpolationOperator(NumpyMatrixBasedOperator):
+    """Lagrange interpolation operator for continuous finite element spaces.
+
+    Parameters
+    ----------
+    grid
+        The |Grid| on which to interpolate.
+    function
+        The |Function| to interpolate.
+    """
+
+    source = NumpyVectorSpace(1)
+    linear = True
+
+    def __init__(self, grid, function):
+        assert function.dim_domain == grid.dim_outer
+        assert function.shape_range == tuple()
+        self.grid = grid
+        self.function = function
+        self.range = NumpyVectorSpace(grid.size(grid.dim))
+        self.build_parameter_type(inherits=(function,))
+
+    def _assemble(self, mu=None):
+        return self.function.evaluate(self.grid.centers(self.grid.dim), mu=mu).reshape((-1, 1))

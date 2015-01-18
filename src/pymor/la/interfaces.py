@@ -38,7 +38,7 @@ class VectorArrayInterface(BasicInterface):
     Most methods provide `ind` and/or `o_ind` arguments which are used to specify on which
     vectors the method is supposed to operate. If `ind` (`o_ind`) is `None` the whole array
     is selected. Otherwise, `ind` can be a single index in `range(len(self))`, a `list`
-    of indices or a one-dimensional |NumPy array| of indices. One index can be repeated
+    of indices or a one-dimensional |NumPy array| of indices. An index can be repeated
     in which case the corresponding vector is selected several times.
 
     Attributes
@@ -559,6 +559,10 @@ class VectorSpace(BasicInterface):
     def __eq__(self, other):
         """Two spaces are equal iff their types and subtypes agree."""
         return other.type == self.type and self.subtype == other.subtype
+
+    def __ne__(self, other):
+        """Two spaces are equal iff their types and subtypes agree."""
+        return other.type != self.type or self.subtype != other.subtype
 
     def __contains__(self, other):
         """A |VectorArray| is contained in the space, iff it is an instance of its type and has the same subtype."""

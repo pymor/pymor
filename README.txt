@@ -19,8 +19,8 @@ regarding pyMOR or wish to contribute, do not hesitate to contact us!
 License
 -------
 
-Copyright (c) 2013, 2014, Rene Milk, Stephan Rave, Felix Schindler All
-rights reserved.
+Copyright (c) 2013, 2014, Rene Milk, Stephan Rave, Felix Schindler
+All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -55,11 +55,13 @@ See these files for more information.
 Distribution Packages
 ---------------------
 
-Packages for Ubuntu 12.04 and 13.10 are available via our PPA:
+Packages for Ubuntu are available via our PPA:
 
     sudo apt-add-repository ppa:pymor/stable
     sudo apt-get update
     sudo apt-get install python-pymor
+
+Daily snapshots are available via the pymor/daily PPA.
 
 Demo applications and documentation are packaged separately:
 
@@ -113,13 +115,8 @@ The installation script might recommend the installation of additional
 packages. (This is easy to miss, as pip will install dependencies after
 pyMOR itself has been installed, so search at the top of your console
 log!) You will most likely want to install IPython and, in particular,
-matplotlib, PyOpenGL, glumpy, and PySide. The latter packages are
-required for pyMOR's visualization routines. At the time of writing,
-PySide fails to install with current Sphinx versions, so we have to
-install an old one:
-
-    pip install "sphinx==1.1.3"
-    pip install ipython pyside matplotlib pyopengl glumpy 
+matplotlib, PyOpenGL and PySide. The latter packages are
+required for pyMOR's visualization routines.
 
 Documentation
 -------------

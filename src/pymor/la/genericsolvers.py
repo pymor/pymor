@@ -8,8 +8,6 @@ from __future__ import absolute_import, division, print_function
 from collections import OrderedDict
 
 import numpy as np
-from scipy.sparse import issparse
-from scipy.sparse.linalg import bicgstab, spsolve, spilu, LinearOperator
 
 from pymor.core.defaults import defaults, defaults_sid
 from pymor.core.exceptions import InversionError
@@ -224,6 +222,8 @@ def apply_inverse(op, rhs, options=None):
 
 def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
            inner_m=30, outer_k=3, outer_v=None, store_outer_Av=True):
+    if A.source != A.range:
+        raise InversionError
     from scipy.linalg.basic import lstsq
     x = A.source.zeros() if x0 is None else x0.copy()
 
@@ -349,7 +349,7 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
             e1 = np.zeros((j+1,))
             e1[0] = inner_res_0
             for q in xrange(j):
-                hess[:(q+2),q] = hs[q]
+                hess[:(q+2), q] = hs[q]
 
             y, resids, rank, s = lstsq(hess, e1)
             inner_res = np.linalg.norm(np.dot(hess, y) - e1)
@@ -468,13 +468,13 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
         iter_lim = 2 * n
 
     msg = ('The exact solution is  x = 0                              ',
-         'Ax - b is small enough, given atol, btol                  ',
-         'The least-squares solution is good enough, given atol     ',
-         'The estimate of cond(Abar) has exceeded conlim            ',
-         'Ax - b is small enough for this machine                   ',
-         'The least-squares solution is good enough for this machine',
-         'Cond(Abar) seems to be too large for this machine         ',
-         'The iteration limit has been reached                      ')
+           'Ax - b is small enough, given atol, btol                  ',
+           'The least-squares solution is good enough, given atol     ',
+           'The estimate of cond(Abar) has exceeded conlim            ',
+           'Ax - b is small enough for this machine                   ',
+           'The least-squares solution is good enough for this machine',
+           'Cond(Abar) seems to be too large for this machine         ',
+           'The iteration limit has been reached                      ')
 
     if show:
         print(' ')
@@ -490,7 +490,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
 
     itn = 0
     istop = 0
-    nstop = 0
+    # nstop = 0
     ctol = 0
     if conlim > 0:
         ctol = 1/conlim
@@ -509,8 +509,8 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
     Set up the first vectors u and v for the bidiagonalization.
     These satisfy  beta*u = b,  alfa*v = A'u.
     """
-    __xm = A.range.zeros() # a matrix for temporary holding
-    __xn = A.source.zeros() # a matrix for temporary holding
+    # __xm = A.range.zeros()  # a matrix for temporary holding
+    # __xn = A.source.zeros()  # a matrix for temporary holding
     v = A.source.zeros()
     u = b.copy()
     x = A.source.zeros()
@@ -520,7 +520,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
 
     if beta > 0:
         u.scal(1/beta)
-        v = A.apply_transposed(u)
+        v = A.apply_adjoint(u)
         alfa = v.l2_norm()[0]
 
     if alfa > 0:
@@ -569,7 +569,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
         if beta > 0:
             u.scal(1/beta)
             anorm = np.sqrt(anorm**2 + alfa**2 + beta**2 + damp**2)
-            v = A.apply_transposed(u) - v * beta
+            v = A.apply_adjoint(u) - v * beta
             alfa = v.l2_norm()[0]
             if alfa > 0:
                 v.scal(1 / alfa)
@@ -738,13 +738,13 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
          maxiter=None, show=False):
 
     msg = ('The exact solution is  x = 0                              ',
-         'Ax - b is small enough, given atol, btol                  ',
-         'The least-squares solution is good enough, given atol     ',
-         'The estimate of cond(Abar) has exceeded conlim            ',
-         'Ax - b is small enough for this machine                   ',
-         'The least-squares solution is good enough for this machine',
-         'Cond(Abar) seems to be too large for this machine         ',
-         'The iteration limit has been reached                      ')
+           'Ax - b is small enough, given atol, btol                  ',
+           'The least-squares solution is good enough, given atol     ',
+           'The estimate of cond(Abar) has exceeded conlim            ',
+           'Ax - b is small enough for this machine                   ',
+           'The least-squares solution is good enough for this machine',
+           'Cond(Abar) seems to be too large for this machine         ',
+           'The iteration limit has been reached                      ')
 
     hdg1 = '   itn      x(1)       norm r    norm A''r'
     hdg2 = ' compatible   LS      norm A   cond A'
@@ -775,7 +775,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
 
     if beta > 0:
         u.scal(1 / beta)
-        v = A.apply_transposed(u)
+        v = A.apply_adjoint(u)
         alpha = v.l2_norm()[0]
 
     if alpha > 0:
@@ -854,7 +854,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
 
         if beta > 0:
             u.scal(1 / beta)
-            v = A.apply_transposed(u) - v * beta
+            v = A.apply_adjoint(u) - v * beta
             alpha = v.l2_norm()[0]
             if alpha > 0:
                 v.scal(1 / alpha)

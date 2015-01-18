@@ -4,9 +4,9 @@
 
 from __future__ import absolute_import, division, print_function
 
+from pymor.core.defaults import defaults
 from pymor.la import VectorSpace
 from pymor.la.listvectorarray import VectorInterface, ListVectorArray
-from pymor import defaults
 from pymor.operators.basic import OperatorBase
 
 import numpy as np
@@ -39,9 +39,8 @@ class WrappedVector(VectorInterface):
     def copy(self):
         return type(self)(Vector(self._impl))
 
-    def almost_equal(self, other, rtol=None, atol=None):
-        rtol = rtol if rtol is not None else defaults.float_cmp_tol
-        atol = atol or rtol
+    @defaults('rtol', 'atol', qualname='wrapper.WrappedVector.almost_equal')
+    def almost_equal(self, other, rtol=1e-10, atol=1e-10):
         return self._impl.almost_equal(other._impl, rtol, atol)
 
     def scal(self, alpha):
@@ -86,7 +85,6 @@ class WrappedDiffusionOperator(OperatorBase):
         return cls(DiffusionOperator(n, left, right))
 
     def apply(self, U, ind=None, mu=None):
-        assert self.check_parameter(mu)
         assert U in self.source
 
         if ind is None:

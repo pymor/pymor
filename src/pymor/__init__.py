@@ -30,8 +30,10 @@ class Version(object):
                 raise ValueError('Invalid revstring')
             version_parts[-1] = s[0]
             self.rc_number = int(s[1])
+            self.has_rc_number = True
         else:
             self.rc_number = 0
+            self.has_rc_number = False
 
         self.version = tuple(int(x) for x in version_parts)
         self.full_version = self.version + (self.rc_number,)
@@ -54,7 +56,7 @@ class Version(object):
     def __str__(self):
         git_part = '-{}-{}'.format(self.distance, self.shorthash) if self.distance else ''
         version_part = '.'.join(map(str, self.version))
-        rc_part = 'rc{}'.format(self.rc_number) if self.rc_number else ''
+        rc_part = 'rc{}'.format(self.rc_number) if self.has_rc_number else ''
         return version_part + rc_part + git_part
 
     def __repr__(self):
@@ -103,10 +105,11 @@ if 'PYMOR_DEFAULTS' in os.environ:
     if filename in ('', 'NONE'):
         print('Not loading any defaults from config file')
     else:
-        if not os.path.exists(filename):
-            raise IOError('Cannot load defaults from file ' + filename)
-        print('Loading defaults from file ' + filename + ' (set by PYMOR_DEFAULTS)')
-        load_defaults_from_file(filename)
+        for fn in filename.split(':'):
+            if not os.path.exists(fn):
+                raise IOError('Cannot load defaults from file ' + fn)
+            print('Loading defaults from file ' + fn + ' (set by PYMOR_DEFAULTS)')
+            load_defaults_from_file(fn)
 else:
     filename = os.path.join(os.getcwd(), 'pymor_defaults.py')
     if os.path.exists(filename):

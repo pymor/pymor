@@ -5,12 +5,11 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymor.core import ImmutableInterface, abstractmethod, abstractstaticmethod
-from pymor.parameters import Parametric
-from pymor.tools import Named
+from pymor.core.interfaces import ImmutableInterface, abstractmethod, abstractstaticmethod
+from pymor.parameters.base import Parametric
 
 
-class OperatorInterface(ImmutableInterface, Parametric, Named):
+class OperatorInterface(ImmutableInterface, Parametric):
     """Interface for |Parameter| dependent discrete operators.
 
     Every operator is viewed as a map ::
@@ -98,6 +97,46 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
         Returns
         -------
         A |NumPy array| of all 2-form evaluations.
+        """
+        pass
+
+    @abstractmethod
+    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+        """Apply the adjoint operator.
+
+        For a linear operator A the adjoint A^* of A is given by ::
+
+            (A^*v, u)_s = (v, Au)_r
+
+        where ( , )_s and ( , )_r denote the scalar products on the source
+        and range space of A. If A and the two products are given by the
+        matrices M, P_s and P_r, then::
+
+            A^*v = P_s^(-1) * M^T * P_r * v
+
+        with M^T denoting the transposed of M. Thus, if ( , )_s and ( , )_r
+        are the euclidean products, A^*v is simply given by multiplication of
+        the matrix of A with v from the left.
+
+        Parameters
+        ----------
+        U
+            |VectorArray| of vectors to which the adjoint operator is applied.
+        ind
+            The indices of the vectors in `U` to which the operator shall be
+            applied. (See the |VectorArray| documentation for further details.)
+        mu
+            The |Parameter| for which to apply the adjoint operator.
+        source_product
+            The scalar product on the source space given as an |Operator|.
+            If `None`, the euclidean product is chosen.
+        range_product
+            The scalar product on the range space given as an |Operator|.
+            If `None`, the euclidean product is chosen.
+
+        Returns
+        -------
+        |VectorArray| of the adjoint operator evaluations.
         """
         pass
 
@@ -209,37 +248,11 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
 
     @abstractstaticmethod
     def lincomb(operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
-        """Form a linear combination of the given operators.
-
-        The linear coefficients may be provided as scalars or |ParameterFunctionals|.
-        Alternatively, if no linear coefficients are given, the missing coefficients become
-        part of the |Parameter| the combinded |Operator| expects.
-
-        A default implementation is provided in |OperatorBase|.
-
-        Parameters
-        ----------
-        operators
-            List of |Operators| whose linear combination is formed.
-        coefficients
-            `None` or a list of linear coefficients.
-        num_coefficients
-            If `coefficients` is `None`, the number of linear coefficients (starting
-            at index 0) which are given by the |Parameter| component with name
-            `'coefficients_name'`. The missing coefficients are set to `1`.
-        coefficients_name
-            If `coefficients` is `None`, the name of the |Parameter| component providing
-            the linear coefficients.
-        name
-            Name of the new operator.
-
-        Returns
-        -------
-        |LincombOperator| representing the linear combination.
+        """DEPRECATED! Use :func:`pymor.operators.constructions.LincombOperator` instead.
         """
         pass
 
-    def _assemble_lincomb(self, operators, coefficients, name=None):
+    def assemble_lincomb(self, operators, coefficients, name=None):
         """Try to assemble a linear combination of the given operators.
 
         This method is called in the `assemble` method of |LincombOperator|. If an
@@ -254,8 +267,8 @@ class OperatorInterface(ImmutableInterface, Parametric, Named):
             List of |Operators| whose linear combination is formed.
         coefficients
             List of the corresponding linear coefficients. (In contrast to
-            :meth:`~OperatorInterface.lincomb`, these coefficients are always
-            numbers, not |ParameterFunctionals|.)
+            :meth:`~pymor.operators.constructions.lincomb`, these coefficients are
+            always numbers, not |ParameterFunctionals|.)
         name
             Name of the assembled operator.
 

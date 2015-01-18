@@ -4,12 +4,14 @@
 
 from __future__ import absolute_import, division, print_function
 
+from cPickle import dumps, loads
 from itertools import product
 
 import numpy as np
 import pytest
 
 from pymortests.fixtures.grid import grid
+from pymortests.pickle import assert_picklable_without_dumps_function
 
 
 # monkey np.testing.assert_allclose to behave the same as np.allclose
@@ -423,3 +425,7 @@ def test_boundaries_entries(grid):
     g = grid
     for d in xrange(g.dim + 1):
         np.testing.assert_array_equal(np.where(g.boundary_mask(d))[0], g.boundaries(d))
+
+
+def test_pickle(grid):
+    assert_picklable_without_dumps_function(grid)

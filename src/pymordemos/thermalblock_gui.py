@@ -25,7 +25,7 @@ Arguments:
 
 Options:
   --estimator-norm=NORM  Norm (trivial, h1) in which to calculate the residual
-                         [default: trivial].
+                         [default: h1].
 
   --grid=NI              Use grid with 2*NI*NI elements [default: 60].
 
@@ -39,24 +39,24 @@ import sys
 from docopt import docopt
 import time
 from functools import partial
-import math as m
 import numpy as np
 from PySide import QtGui
 import OpenGL
 
 OpenGL.ERROR_ON_COPY = True
 
-import pymor.core as core
-core.logger.MAX_HIERACHY_LEVEL = 2
-from pymor.algorithms import greedy, gram_schmidt_basis_extension
-from pymor.analyticalproblems import ThermalBlockProblem
-from pymor.discretizers import discretize_elliptic_cg
-from pymor.gui.glumpy import ColorBarWidget, GlumpyPatchWidget
+from pymor.core import logger
+logger.MAX_HIERACHY_LEVEL = 2
+from pymor.algorithms.basisextension import gram_schmidt_basis_extension
+from pymor.algorithms.greedy import greedy
+from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
+from pymor.discretizers.elliptic import discretize_elliptic_cg
+from pymor.gui.gl import ColorBarWidget, GLPatchWidget
 from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor import gui
 
-core.set_log_levels({'pymor.algorithms': 'INFO',
-                     'pymor.discretizations': 'INFO'})
+logger.set_log_levels({'pymor.algorithms': 'INFO',
+                       'pymor.discretizations': 'INFO'})
 
 PARAM_STEPS = 10
 PARAM_MIN = 0.1
@@ -92,7 +92,7 @@ class SimPanel(QtGui.QWidget):
         super(SimPanel, self).__init__(parent)
         self.sim = sim
         box = QtGui.QHBoxLayout()
-        self.solution = GlumpyPatchWidget(self, self.sim.grid, vmin=0., vmax=0.8)
+        self.solution = GLPatchWidget(self, self.sim.grid, vmin=0., vmax=0.8)
         self.bar = ColorBarWidget(self, vmin=0., vmax=0.8)
         box.addWidget(self.solution, 2)
         box.addWidget(self.bar, 2)
@@ -150,7 +150,7 @@ class SimBase(object):
         self.first = True
         self.problem = ThermalBlockProblem(num_blocks=(args['XBLOCKS'], args['YBLOCKS']),
                                            parameter_range=(PARAM_MIN, PARAM_MAX))
-        self.discretization, pack = discretize_elliptic_cg(self.problem, diameter=m.sqrt(2) / args['--grid'])
+        self.discretization, pack = discretize_elliptic_cg(self.problem, diameter=1. / args['--grid'])
         self.grid = pack['grid']
 
 

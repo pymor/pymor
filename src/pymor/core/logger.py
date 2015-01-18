@@ -4,7 +4,7 @@
 
 """Utilities for colorized log output.
 via http://stackoverflow.com/questions/384076/how-can-i-make-the-python-logging-output-to-be-colored
-Cannot not be moved because it's needed to be imported in the root __init__.py OR ELSE
+Can not be moved because it's needed to be imported in the root __init__.py OR ELSE
 """
 from __future__ import absolute_import, division, print_function
 import curses
@@ -17,7 +17,7 @@ from pymor.core.defaults import defaults
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 
 # The background is set with 40 plus the number of the color, and the foreground with 30
-# These are the sequences need to get colored output
+# These are the sequences needed to get colored output
 RESET_SEQ = "\033[0m"
 COLOR_SEQ = "\033[1;%dm"
 BOLD_SEQ = "\033[1m"
@@ -70,20 +70,19 @@ class ColoredFormatter(logging.Formatter):
             except Exception:
                 self.use_color = False
 
-        def relative_time(secs=None):
-            if secs is not None:
-                elapsed = time.time() - start_time
-                if elapsed > 604800:
-                    self.datefmt = '%Ww %dd %H:%M:%S'
-                elif elapsed > 86400:
-                    self.datefmt = '%dd %H:%M:%S'
-                elif elapsed > 3600:
-                    self.datefmt = '%H:%M:%S'
-                return time.gmtime(elapsed)
-            else:
-                return time.gmtime()
-        self.converter = relative_time
-        super(ColoredFormatter, self).__init__(formatter_message(FORMAT, self.use_color), datefmt='%M:%S')
+        super(ColoredFormatter, self).__init__(formatter_message(FORMAT, self.use_color))
+
+    def formatTime(self, record, datefmt=None):
+        elapsed = int(time.time() - start_time)
+        days, remainder = divmod(elapsed, 86400)
+        hours, remainder = divmod(remainder, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        if days:
+            return '{}d {:02}:{:02}:{:02}'.format(days, hours, minutes, seconds)
+        elif hours:
+            return '{:02}:{:02}:{:02}'.format(hours, minutes, seconds)
+        else:
+            return '{:02}:{:02}'.format(minutes, seconds)
 
     def format(self, record):
         if not record.msg:
@@ -116,7 +115,35 @@ def getLogger(module, level=None, filename=None, handler_cls=logging.StreamHandl
         logger.setLevel(LOGLEVEL_MAPPING[level])
     return logger
 
-dummy_logger = getLogger('pymor.dummylogger', level='fatal')
+
+class DummyLogger(object):
+
+    __slots__ = []
+
+    def nop(self, *args, **kwargs):
+        return None
+
+    propagate = False
+    debug = nop
+    info = nop
+    warn = nop
+    warning = nop
+    error = nop
+    critical = nop
+    log = nop
+    exception = nop
+
+    def isEnabledFor(sefl, lvl):
+        return False
+
+    def getEffectiveLevel(self):
+        return None
+
+    def getChild(self):
+        return self
+
+
+dummy_logger = DummyLogger()
 
 
 @defaults('levels')

@@ -42,19 +42,18 @@ Options:
 from __future__ import absolute_import, division, print_function
 
 import sys
-import math as m
 import time
 
 import numpy as np
 from docopt import docopt
 
-import pymor.core as core
-core.logger.MAX_HIERACHY_LEVEL = 2
-from pymor.analyticalproblems import ThermalBlockProblem
-from pymor.discretizers import discretize_elliptic_cg
+from pymor.core import logger
+logger.MAX_HIERACHY_LEVEL = 2
+from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
+from pymor.discretizers.elliptic import discretize_elliptic_cg
 from pymor.la.pod import pod
-from pymor.reductors import reduce_generic_rb
-core.set_log_levels({'pymor.discretizations': 'INFO'})
+from pymor.reductors.basic import reduce_generic_rb
+logger.set_log_levels({'pymor.discretizations': 'INFO'})
 
 
 def thermalblock_demo(args):
@@ -73,7 +72,7 @@ def thermalblock_demo(args):
     problem = ThermalBlockProblem(num_blocks=(args['XBLOCKS'], args['YBLOCKS']))
 
     print('Discretize ...')
-    discretization, _ = discretize_elliptic_cg(problem, diameter=m.sqrt(2) / args['--grid'])
+    discretization, _ = discretize_elliptic_cg(problem, diameter=1. / args['--grid'])
 
     print('The parameter type is {}'.format(discretization.parameter_type))
 

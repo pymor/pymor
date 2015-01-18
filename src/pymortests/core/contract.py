@@ -20,7 +20,7 @@ if HAVE_CONTRACTS:
     from pymortests.core.dummies import (AllDirichletBoundaryInfo, AverageImplementer, BoringTestClass)
     from pymor.core import exceptions
     from pymor.core.interfaces import (contract,)
-    from pymor.grids import AllDirichletBoundaryInfo as ADIA
+    from pymor.grids.boundaryinfos import AllDirichletBoundaryInfo as ADIA
     from pymor.core.exceptions import ContractNotRespected
 
 

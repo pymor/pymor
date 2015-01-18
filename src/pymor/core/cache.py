@@ -38,6 +38,20 @@ additional regions (e.g. multiple disk cache regions) as required.
 the `cache_regions` dict can provided to select a cache region which should
 be used by the instance. (Setting `region` to `None` or `'none'` disables caching.)
 
+By default, a 'memory' and a 'disk' cache region are automatically configured. The
+path and maximum size of the disk region as well as the maximum number of keys of
+the memory cache region can be configured via the
+`pymor.core.cache._setup_default_regions.disk_path`,
+`pymor.core.cache._setup_default_regions.disk_max_size` and
+`pymor.core.cache._setup_default_regions.memory_max_keys` |defaults|.
+(Note that changing these defaults will result in changed |state ids|, so moving
+a disk cache and changing the default path accordingly will result in cache
+misses.) As an alternative, these defaults can be overridden by the
+`PYMOR_CACHE_PATH`, `PYMOR_CACHE_MAX_SIZE` and `PYMOR_CACHE_MEMORY_MAX_KEYS`
+environment variables. (These variables do not enter |state id| calculation
+and are therefore the preferred way to configure caching.)
+
+
 There are multiple ways to disable and enable caching in pyMOR:
 
     1. Calling :func:`disable_caching` (:func:`enable_caching`).
@@ -56,23 +70,21 @@ A cache region can be emptied using :meth:`CacheRegion.clear`. The function
 
 
 from __future__ import absolute_import, division, print_function
-#cannot use unicode_literals here, or else dbm backend fails
+# cannot use unicode_literals here, or else dbm backend fails
 
 import base64
 from collections import OrderedDict
 import datetime
 from functools import partial
 import getpass
-import importlib
 import os
 import sqlite3
 import tempfile
 from types import MethodType
 
-import numpy as np
-
 from pymor.core.defaults import defaults, defaults_sid
-from pymor.core import dump, dumps, load, ImmutableInterface
+from pymor.core.interfaces import ImmutableInterface
+from pymor.core.pickle import dump, dumps, load
 
 
 class CacheRegion(object):
@@ -174,7 +186,8 @@ class SQLiteRegion(CacheRegion):
         conn = self.conn
         c = conn.cursor()
         try:
-            c.execute("INSERT INTO entries(key, filename, size) VALUES ('{}', '{}', {})".format(key, filename, file_size))
+            c.execute("INSERT INTO entries(key, filename, size) VALUES ('{}', '{}', {})"
+                      .format(key, filename, file_size))
             conn.commit()
         except sqlite3.IntegrityError:
             conn.commit()
@@ -204,7 +217,6 @@ class SQLiteRegion(CacheRegion):
                 except OSError:
                     from pymor.core.logger import getLogger
                     getLogger('pymor.core.cache.SQLiteRegion').warn('Cannot delete cache entry ' + filename)
-
 
     def housekeeping(self):
         self.bytes_written = 0
@@ -239,19 +251,27 @@ class SQLiteRegion(CacheRegion):
 
 
 @defaults('disk_path', 'disk_max_size', 'memory_max_keys')
-def setup_default_regions(disk_path=os.path.join(tempfile.gettempdir(), 'pymor.cache.' + getpass.getuser()),
-                          disk_max_size=1024 ** 3,
-                          memory_max_keys=1000):
+def _setup_default_regions(disk_path=os.path.join(tempfile.gettempdir(), 'pymor.cache.' + getpass.getuser()),
+                           disk_max_size=1024 ** 3,
+                           memory_max_keys=1000):
     cache_regions['disk'] = SQLiteRegion(path=disk_path, max_size=disk_max_size)
     cache_regions['memory'] = MemoryRegion(memory_max_keys)
 
 cache_regions = {}
-setup_default_regions()
-
+_setup_default_regions(disk_path=os.environ.get('PYMOR_CACHE_PATH', None),
+                       disk_max_size=((lambda size:
+                                       None if not size else
+                                       int(size[:-1]) * 1024 if size[-1] == 'K' else
+                                       int(size[:-1]) * 1024 ** 2 if size[-1] == 'M' else
+                                       int(size[:-1]) * 1024 ** 3 if size[-1] == 'G' else
+                                       int(size))
+                                      (os.environ.get('PYMOR_CACHE_MAX_SIZE', '').strip().upper())),
+                       memory_max_keys=((lambda num: int(num) if num else None)
+                                        (os.environ.get('PYMOR_CACHE_MEMORY_MAX_KEYS', None))))
 
 _caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
 if _caching_disabled:
-    from pymor.core import getLogger
+    from pymor.core.getLogger import getLogger
     getLogger('pymor.core.cache').warn('caching globally disabled by environment')
 
 
@@ -330,6 +350,7 @@ class CacheableInterface(ImmutableInterface):
             return self.__cache_region
         except AttributeError:
             self.__cache_region = 'memory' if 'memory' in cache_regions else None
+            return self.__cache_region
 
     @cache_region.setter
     def cache_region(self, region):

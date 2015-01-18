@@ -297,13 +297,13 @@ class Triangle(ReferenceElementInterface):
         if quadrature_type == 'center':
             assert order is None or order == 1
             assert npoints is None or npoints == 1
-            return np.array((self.center(),)), np.array(self.volume)
+            return np.array([self.center()]), np.array([self.volume])
         elif quadrature_type == 'edge_centers':
             assert order is None or order <= 2
             assert npoints is None or npoints == 3
-            #this would work for arbitrary reference elements
-            #L, A = self.subentity_embedding(1)
-            #return np.array(L.dot(self.sub_reference_element().center()) + A), np.ones(3) / len(A) * self.volume
+            # this would work for arbitrary reference elements
+            # L, A = self.subentity_embedding(1)
+            # return np.array(L.dot(self.sub_reference_element().center()) + A), np.ones(3) / len(A) * self.volume
             return np.array(([0.5, 0.5], [0, 0.5], [0.5, 0])), np.ones(3) / 3 * self.volume
         else:
             raise NotImplementedError('quadrature_type must be "center" or "edge_centers"')

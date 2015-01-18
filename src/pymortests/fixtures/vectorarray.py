@@ -8,8 +8,9 @@ from itertools import product
 import numpy as np
 import pytest
 
-from pymor.la import NumpyVectorArray
+from pymor.la.numpyvectorarray import NumpyVectorArray
 from pymor.la.listvectorarray import NumpyVector, NumpyListVectorArray
+from pymor.playground.la.blockvectorarray import BlockVectorArray
 
 
 def random_integers(count, seed):
@@ -26,6 +27,11 @@ def numpy_list_vector_array_factory(length, dim, seed):
     np.random.seed(seed)
     return NumpyListVectorArray([NumpyVector(v, copy=False) for v in np.random.random((length, dim))],
                                 subtype=dim, copy=False)
+
+
+def block_vector_array_factory(length, dims, seed):
+    return BlockVectorArray([numpy_vector_array_factory(length, dim, seed + i) for i, dim in enumerate(dims)],
+                            copy=False)
 
 
 def vector_array_from_empty_reserve(v, reserve):
@@ -62,11 +68,35 @@ numpy_vector_array_factory_arguments_pairs_with_different_dim = \
         random_integers(5, 1234),  # seed1
         random_integers(5, 1235))  # seed2
 
+block_vector_array_factory_arguments = \
+    zip([0, 4, 3, 1, 3, 43, 102],      # len
+        [(32, 1), (0, 3), (0, 0), (10,), (34, 1), (32, 3, 1), (1, 1, 1)],      # dim
+        random_integers(7, 123))   # seed
+
+block_vector_array_factory_arguments_pairs_with_same_dim = \
+    zip([0, 0,  3, 1, 43, 102],         # len1
+        [0, 10, 2, 37,  9, 104],         # len2
+        [(3, 2), (4, 0, 2), (4,), (34, 1, 1), (32, 3, 3),  (3, 3, 3)],  # dim
+        random_integers(6, 1234),  # seed1
+        random_integers(6, 1235))  # seed2
+
+
+block_vector_array_factory_arguments_pairs_with_different_dim = \
+    zip([0, 0, 1, 43, 102],      # len1
+        [0, 10, 1,  9,  10],      # len2
+        [(3, 2), (9,), (34, 1, 1), (32, 3, 3),  (3, 3, 3)],      # dim1
+        [(3, 1), (9, 3), (34, 2, 1), (32, 3), (4, 3, 3)],
+        random_integers(5, 1234),  # seed1
+        random_integers(5, 1235))  # seed2
+
 numpy_vector_array_generators = \
     [lambda args=args: numpy_vector_array_factory(*args) for args in numpy_vector_array_factory_arguments]
 
 numpy_list_vector_array_generators = \
     [lambda args=args: numpy_list_vector_array_factory(*args) for args in numpy_vector_array_factory_arguments]
+
+block_vector_array_generators = \
+    [lambda args=args: block_vector_array_factory(*args) for args in block_vector_array_factory_arguments]
 
 numpy_vector_array_pair_with_same_dim_generators = \
     [lambda l=l, l2=l2, d=d, s1=s1, s2=s2: (numpy_vector_array_factory(l, d, s1),
@@ -78,6 +108,11 @@ numpy_list_vector_array_pair_with_same_dim_generators = \
                                             numpy_list_vector_array_factory(l2, d, s2))
      for l, l2, d, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_same_dim]
 
+block_vector_array_pair_with_same_dim_generators = \
+    [lambda l=l, l2=l2, d=d, s1=s1, s2=s2: (block_vector_array_factory(l, d, s1),
+                                            block_vector_array_factory(l2, d, s2))
+     for l, l2, d, s1, s2 in block_vector_array_factory_arguments_pairs_with_same_dim]
+
 numpy_vector_array_pair_with_different_dim_generators = \
     [lambda l=l, l2=l2, d1=d1, d2=d2, s1=s1, s2=s2: (numpy_vector_array_factory(l, d1, s1),
                                                      numpy_vector_array_factory(l2, d2, s2))
@@ -88,8 +123,13 @@ numpy_list_vector_array_pair_with_different_dim_generators = \
                                                      numpy_list_vector_array_factory(l2, d2, s2))
      for l, l2, d1, d2, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_different_dim]
 
+block_vector_array_pair_with_different_dim_generators = \
+    [lambda l=l, l2=l2, d1=d1, d2=d2, s1=s1, s2=s2: (block_vector_array_factory(l, d1, s1),
+                                                     block_vector_array_factory(l2, d2, s2))
+     for l, l2, d1, d2, s1, s2 in block_vector_array_factory_arguments_pairs_with_different_dim]
 
-@pytest.fixture(params=numpy_vector_array_generators + numpy_list_vector_array_generators)
+@pytest.fixture(params=numpy_vector_array_generators + numpy_list_vector_array_generators +
+                       block_vector_array_generators)
 def vector_array_without_reserve(request):
     return request.param()
 
@@ -100,7 +140,8 @@ def vector_array(vector_array_without_reserve, request):
 
 
 @pytest.fixture(params=(numpy_vector_array_pair_with_same_dim_generators +
-                        numpy_list_vector_array_pair_with_same_dim_generators))
+                        numpy_list_vector_array_pair_with_same_dim_generators +
+                        block_vector_array_pair_with_same_dim_generators))
 def compatible_vector_array_pair_without_reserve(request):
     return request.param()
 
@@ -112,6 +153,7 @@ def compatible_vector_array_pair(compatible_vector_array_pair_without_reserve, r
 
 
 @pytest.fixture(params=(numpy_vector_array_pair_with_different_dim_generators +
-                        numpy_list_vector_array_pair_with_different_dim_generators))
+                        numpy_list_vector_array_pair_with_different_dim_generators +
+                        block_vector_array_pair_with_different_dim_generators))
 def incompatible_vector_array_pair(request):
     return request.param()

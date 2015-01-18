@@ -4,6 +4,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+from cPickle import loads, dumps
 from itertools import product, chain, izip
 from numbers import Number
 
@@ -11,10 +12,11 @@ import pytest
 import numpy as np
 
 from pymor.core import NUMPY_INDEX_QUIRK
-from pymor.la import VectorSpace
+from pymor.la.interfaces import VectorSpace
 from pymortests.fixtures.vectorarray import \
     (vector_array_without_reserve, vector_array, compatible_vector_array_pair_without_reserve,
      compatible_vector_array_pair, incompatible_vector_array_pair)
+from pymortests.pickle import assert_picklable_without_dumps_function
 
 
 def ind_complement(v, ind):
@@ -98,7 +100,7 @@ def valid_inds_of_different_length(v1, v2):
             yield 0, [0, 1]
             yield [0], [0, 1]
         np.random.seed(len(v1) * len(v2))
-        for count1 in np.linspace(0, len(v1), 3):
+        for count1 in np.linspace(0, len(v1), 3).astype(int):
             count2 = np.random.randint(0, len(v2))
             if count2 == count1:
                 count2 += 1
@@ -1146,3 +1148,7 @@ def test_gramian_wrong_ind(vector_array):
     for ind in invalid_inds(v):
         with pytest.raises(Exception):
             v.gramian(ind)
+
+
+def test_pickle(vector_array):
+    assert_picklable_without_dumps_function(vector_array)

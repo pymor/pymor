@@ -26,8 +26,8 @@ interfaces = '''
 .. |Grid| replace:: :class:`Grid <pymor.grids.interfaces.AffineGridInterface>`
 .. |Grids| replace:: :class:`Grids <pymor.grids.interfaces.AffineGridInterface>`
 .. |ImmutableInterface| replace:: :class:`~pymor.core.interfaces.ImmutableInterface`
-.. |LincombOperators| replace:: :class:`LincombOperators <pymor.operators.interfaces.LincombOperator>`
-.. |LincombOperator| replace:: :class:`LincombOperator <pymor.operators.basic.LincombOperator>`
+.. |LincombOperators| replace:: :class:`LincombOperators <pymor.operators.constructions.LincombOperator>`
+.. |LincombOperator| replace:: :class:`LincombOperator <pymor.operators.constructions.LincombOperator>`
 .. |Operators| replace:: :class:`Operators <pymor.operators.interfaces.OperatorInterface>`
 .. |Operator| replace:: :class:`Operator <pymor.operators.interfaces.OperatorInterface>`
 .. |ParameterFunctionals| replace:: :class:`ParameterFunctionals <pymor.parameters.interfaces.ParameterFunctionalInterface>`
@@ -44,6 +44,12 @@ interfaces = '''
 common = '''
 .. |analytical problem| replace:: :mod:`analytical problem <pymor.analyticalproblems>`
 .. |analytical problems| replace:: :mod:`analytical problems <pymor.analyticalproblems>`
+
+.. |default| replace:: :mod:`default <pymor.core.defaults>`
+.. |defaults| replace:: :mod:`~pymor.core.defaults`
+
+.. |state id| replace:: :ref:`state id <state id>`
+.. |state ids| replace:: :ref:`state ids <state id>`
 
 .. |CacheRegion| replace:: :class:`~pymor.core.cache.CacheRegion`
 
@@ -68,10 +74,10 @@ common = '''
 .. |ListVectorArray| replace:: :class:`~pymor.la.listvectorarray.ListVectorArray`
 
 .. |OperatorBase| replace:: :class:`~pymor.operators.basic.OperatorBase`
-.. |NumpyMatrixOperator| replace:: :class:`~pymor.operators.basic.NumpyMatrixOperator`
-.. |NumpyMatrixBasedOperator| replace:: :class:`~pymor.operators.basic.NumpyMatrixBasedOperator`
-.. |NumpyMatrixBasedOperators| replace:: :class:`NumpyMatrixBasedOperators <pymor.operators.basic.NumpyMatrixBasedOperator>`
-.. |NumpyGenericOperator| replace:: :class:`~pymor.operators.basic.NumpyGenericOperator`
+.. |NumpyMatrixOperator| replace:: :class:`~pymor.operators.numpy.NumpyMatrixOperator`
+.. |NumpyMatrixBasedOperator| replace:: :class:`~pymor.operators.numpy.NumpyMatrixBasedOperator`
+.. |NumpyMatrixBasedOperators| replace:: :class:`NumpyMatrixBasedOperators <pymor.operators.numpy.NumpyMatrixBasedOperator>`
+.. |NumpyGenericOperator| replace:: :class:`~pymor.operators.numpy.NumpyGenericOperator`
 .. |EmpiricalInterpolatedOperator| replace:: :class:`~pymor.operators.ei.EmpiricalInterpolatedOperator`
 .. |EmpiricalInterpolatedOperators| replace:: :class:`EmpiricalInterpolatedOperators <pymor.operators.ei.EmpiricalInterpolatedOperator>`
 .. |Concatenation| replace:: :class:`~pymor.operators.constructions.Concatenation`
