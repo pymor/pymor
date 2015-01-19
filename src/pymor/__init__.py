@@ -105,10 +105,11 @@ if 'PYMOR_DEFAULTS' in os.environ:
     if filename in ('', 'NONE'):
         print('Not loading any defaults from config file')
     else:
-        if not os.path.exists(filename):
-            raise IOError('Cannot load defaults from file ' + filename)
-        print('Loading defaults from file ' + filename + ' (set by PYMOR_DEFAULTS)')
-        load_defaults_from_file(filename)
+        for fn in filename.split(':'):
+            if not os.path.exists(fn):
+                raise IOError('Cannot load defaults from file ' + fn)
+            print('Loading defaults from file ' + fn + ' (set by PYMOR_DEFAULTS)')
+            load_defaults_from_file(fn)
 else:
     filename = os.path.join(os.getcwd(), 'pymor_defaults.py')
     if os.path.exists(filename):

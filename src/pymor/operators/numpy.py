@@ -23,6 +23,7 @@ from scipy.sparse import issparse
 from scipy.io import mmwrite, savemat
 
 from pymor.core.defaults import defaults_sid
+from pymor.core.exceptions import InversionError
 from pymor.core.interfaces import abstractmethod
 from pymor.la import numpysolvers
 from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
@@ -66,6 +67,7 @@ class NumpyGenericOperator(OperatorBase):
 
     def apply(self, U, ind=None, mu=None):
         assert U in self.source
+        assert U.check_ind(ind)
         U_array = U._array[:U._len] if ind is None else U._array[ind]
         if self.parametric:
             mu = self.parse_parameter(mu)
@@ -202,12 +204,14 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         return NumpyVectorArray(self._matrix.ravel(), copy=True)
 
     def apply(self, U, ind=None, mu=None):
-        assert isinstance(U, NumpyVectorArray)
+        assert U in self.source
+        assert U.check_ind(ind)
         U_array = U._array[:U._len] if ind is None else U._array[ind]
         return NumpyVectorArray(self._matrix.dot(U_array.T).T, copy=False)
 
     def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
         assert U in self.range
+        assert U.check_ind(ind)
         assert source_product is None or source_product.source == source_product.range == self.source
         assert range_product is None or range_product.source == range_product.range == self.range
         if range_product:
@@ -222,9 +226,16 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
     def apply_inverse(self, U, ind=None, mu=None, options=None):
         assert U in self.range
-        U = U._array[:U._len] if ind is None else U._array[ind]
-        if U.shape[1] == 0:
-            return NumpyVectorArray(U)
+        assert U.check_ind(ind)
+        if U.dim == 0:
+            if (self.source.dim == 0
+                    or isinstance(options, str) and options.startswith('least_squares')
+                    or isinstance(options, dict) and options['type'].startswith('least_squares')):
+                return NumpyVectorArray(np.zeros((U.len_ind(ind), self.source.dim)))
+            else:
+                raise InversionError
+        U = U.data if ind is None else \
+            U.data[ind] if hasattr(ind, '__len__') else U.data[ind:ind + 1]
         return NumpyVectorArray(numpysolvers.apply_inverse(self._matrix, U, options=options), copy=False)
 
     def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):

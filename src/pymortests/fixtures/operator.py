@@ -62,6 +62,11 @@ def thermalblock_factory(xblocks, yblocks, diameter, seed):
     return d.operator, next(d.parameter_space.sample_randomly(1, seed=seed)), U, V, d.h1_product, d.l2_product
 
 
+def thermalblock_assemble_factory(xblocks, yblocks, diameter, seed):
+    op, mu, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, seed)
+    return op.assemble(mu), None, U, V, sp, rp
+
+
 def thermalblock_concatenation_factory(xblocks, yblocks, diameter, seed):
     from pymor.operators.constructions import Concatenation
     op, mu, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, seed)
@@ -117,8 +122,8 @@ def thermalblock_fixedparam_factory(xblocks, yblocks, diameter, seed):
 
 
 thermalblock_factory_arguments = \
-    [(2, 2, 1./10., 333),
-     (1, 1, 1./20., 444)]
+    [(2, 2, 1./2., 333),
+     (1, 1, 1./4., 444)]
 
 
 thermalblock_operator_generators = \
@@ -131,6 +136,18 @@ thermalblock_operator_with_arrays_generators = \
 
 thermalblock_operator_with_arrays_and_products_generators = \
     [lambda args=args: thermalblock_factory(*args) for args in thermalblock_factory_arguments]
+
+
+thermalblock_assemble_operator_generators = \
+    [lambda args=args: thermalblock_assemble_factory(*args)[0:2] for args in thermalblock_factory_arguments]
+
+
+thermalblock_assemble_operator_with_arrays_generators = \
+    [lambda args=args: thermalblock_assemble_factory(*args)[0:4] for args in thermalblock_factory_arguments]
+
+
+thermalblock_assemble_operator_with_arrays_and_products_generators = \
+    [lambda args=args: thermalblock_assemble_factory(*args) for args in thermalblock_factory_arguments]
 
 
 thermalblock_concatenation_operator_generators = \
@@ -212,6 +229,7 @@ thermalblock_fixedparam_operator_with_arrays_and_products_generators = \
 
 
 @pytest.fixture(params=thermalblock_operator_with_arrays_and_products_generators +
+                       thermalblock_assemble_operator_with_arrays_and_products_generators +
                        thermalblock_concatenation_operator_with_arrays_and_products_generators +
                        thermalblock_identity_operator_with_arrays_and_products_generators +
                        thermalblock_vectorarray_operator_with_arrays_and_products_generators +
@@ -224,6 +242,7 @@ def operator_with_arrays_and_products(request):
 
 @pytest.fixture(params=numpy_matrix_operator_with_arrays_generators +
                        thermalblock_operator_with_arrays_generators +
+                       thermalblock_assemble_operator_with_arrays_generators +
                        thermalblock_concatenation_operator_with_arrays_generators +
                        thermalblock_identity_operator_with_arrays_generators +
                        thermalblock_vectorarray_operator_with_arrays_generators +
@@ -236,6 +255,7 @@ def operator_with_arrays(request):
 
 @pytest.fixture(params=numpy_matrix_operator_generators +
                        thermalblock_operator_generators +
+                       thermalblock_assemble_operator_generators +
                        thermalblock_concatenation_operator_generators +
                        thermalblock_identity_operator_generators +
                        thermalblock_vectorarray_operator_generators +

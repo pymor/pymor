@@ -212,7 +212,7 @@ class RectGrid(AffineGridWithOrthogonalCentersInterface):
             lengths of all arrays have to agree.
         codim
             The codimension of the entities the data in `U` is attached to (either 0 or 2).
-        **kwargs
+        kwargs
             See :func:`~pymor.gui.qt.visualize_patch`
         """
         from pymor.gui.qt import visualize_patch

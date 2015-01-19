@@ -6,6 +6,7 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
+from scipy.sparse import issparse
 from types import FunctionType, MethodType
 
 from pymor.core.interfaces import BasicInterface
@@ -58,6 +59,12 @@ def assert_is_equal(first, second):
 
         if isinstance(first, np.ndarray):
             assert np.all(first == second)
+        elif issparse(first):
+            ne = first != second
+            if isinstance(ne, bool):
+                return not ne
+            else:
+                assert not np.any(ne.data)
         elif isinstance(first, (list, tuple)):
             assert len(first) == len(second)
             for u, v in zip(first, second):

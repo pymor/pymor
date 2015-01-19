@@ -4,13 +4,16 @@
 
 from __future__ import absolute_import, division, print_function
 
+from itertools import chain
 import numpy as np
 import pytest
 
+from pymor.core.exceptions import InversionError
 from pymor.la.numpyvectorarray import NumpyVectorArray
+from pymor.tools.floatcmp import float_cmp_all
 from pymortests.algorithms import MonomOperator
 from pymortests.fixtures.operator import operator, operator_with_arrays, operator_with_arrays_and_products
-from pymortests.vectorarray import valid_inds
+from pymortests.vectorarray import valid_inds, valid_inds_of_same_length, invalid_inds
 from pymortests.pickle import assert_picklable, assert_picklable_without_dumps_function
 
 
@@ -51,10 +54,48 @@ def test_apply(operator_with_arrays):
     V = op.apply(U, mu=mu)
     assert V in op.range
     assert len(V) == len(U)
-    for ind in list(valid_inds(U, 3)) + [[]]:
+    for ind in valid_inds(U):
         Vind = op.apply(U, mu=mu, ind=ind)
         assert np.all(Vind.almost_equal(V, o_ind=ind))
         assert np.all(Vind.almost_equal(op.apply(U.copy(ind=ind), mu=mu)))
+
+
+def test_apply2(operator_with_arrays):
+    op, mu, U, V = operator_with_arrays
+    for U_ind in valid_inds(U):
+        for V_ind in valid_inds(V):
+            M = op.apply2(V, U, pairwise=False, U_ind=U_ind, V_ind=V_ind, mu=mu)
+            assert M.shape == (V.len_ind(V_ind), U.len_ind(U_ind))
+            M2 = V.dot(op.apply(U, ind=U_ind, mu=mu), pairwise=False, ind=V_ind)
+            assert np.allclose(M, M2)
+
+
+def test_apply2_with_product(operator_with_arrays_and_products):
+    op, mu, U, V, sp, rp = operator_with_arrays_and_products
+    for U_ind in valid_inds(U):
+        for V_ind in valid_inds(V):
+            M = op.apply2(V, U, pairwise=False, U_ind=U_ind, V_ind=V_ind, mu=mu, product=rp)
+            assert M.shape == (V.len_ind(V_ind), U.len_ind(U_ind))
+            M2 = V.dot(rp.apply(op.apply(U, ind=U_ind, mu=mu)), pairwise=False, ind=V_ind)
+            assert np.allclose(M, M2)
+
+
+def test_apply2_pairwise(operator_with_arrays):
+    op, mu, U, V = operator_with_arrays
+    for U_ind, V_ind in valid_inds_of_same_length(U, V):
+        M = op.apply2(V, U, pairwise=True, U_ind=U_ind, V_ind=V_ind, mu=mu)
+        assert M.shape == (V.len_ind(V_ind),)
+        M2 = V.dot(op.apply(U, ind=U_ind, mu=mu), pairwise=True, ind=V_ind)
+        assert np.allclose(M, M2)
+
+
+def test_apply2_pairwise_with_product(operator_with_arrays_and_products):
+    op, mu, U, V, sp, rp = operator_with_arrays_and_products
+    for U_ind, V_ind in valid_inds_of_same_length(U, V):
+        M = op.apply2(V, U, pairwise=True, U_ind=U_ind, V_ind=V_ind, mu=mu, product=rp)
+        assert M.shape == (V.len_ind(V_ind),)
+        M2 = V.dot(rp.apply(op.apply(U, ind=U_ind, mu=mu)), pairwise=True, ind=V_ind)
+        assert np.allclose(M, M2)
 
 
 def test_apply_adjoint(operator_with_arrays):
@@ -88,6 +129,23 @@ def test_apply_adjoint_2_with_products(operator_with_arrays_and_products):
         return
     assert np.allclose(rp.apply2(V, op.apply(U, mu=mu), pairwise=False),
                        sp.apply2(ATV, U, pairwise=False))
+
+
+def test_apply_inverse(operator_with_arrays):
+    op, mu, _, V = operator_with_arrays
+    for options in chain([None], op.invert_options, op.invert_options.itervalues()):
+        for ind in valid_inds(V):
+            try:
+                U = op.apply_inverse(V, mu=mu, ind=ind, options=options)
+            except InversionError:
+                return
+            assert U in op.source
+            assert len(U) == V.len_ind(ind)
+            VV = op.apply(U, mu=mu)
+            if (isinstance(options, str) and options.startswith('least_squares')
+                    or not isinstance(options, (str, type(None))) and options['type'].startswith('least_squares')):
+                continue
+            assert float_cmp_all(VV.l2_norm(), V.l2_norm(ind=ind), atol=1e-10, rtol=0.5)
 
 
 def test_projected(operator_with_arrays):
@@ -140,3 +198,55 @@ def test_projected_with_product_2(operator_with_arrays_and_products):
     Y2 = op_V_U.apply(W, mu=mu)
     assert np.all(Y0.almost_equal(Y1))
     assert np.all(Y0.almost_equal(Y2))
+
+
+def test_jacobian(operator_with_arrays):
+    op, mu, U, _ = operator_with_arrays
+    try:
+        j = op.jacobian(U, mu=mu)
+    except NotImplementedError:
+        return
+    assert j.linear
+    assert op.source == j.source
+    assert op.range == j.range
+
+
+def test_assemble(operator_with_arrays):
+    op, mu, _, _ = operator_with_arrays
+    aop = op.assemble(mu=mu)
+    assert op.source == aop.source
+    assert op.range == aop.range
+
+
+########################################################################################################################
+
+
+def test_apply_wrong_ind(operator_with_arrays):
+    op, mu, U, _ = operator_with_arrays
+    for ind in invalid_inds(U):
+        with pytest.raises(Exception):
+            op.apply(U, mu=mu, ind=ind)
+
+
+def test_apply2_wrong_ind(operator_with_arrays):
+    op, mu, U, V = operator_with_arrays
+    for ind in invalid_inds(U):
+        with pytest.raises(Exception):
+            op.apply2(U, V, pairwise=False, mu=mu, ind=ind)
+    for ind in invalid_inds(V):
+        with pytest.raises(Exception):
+            op.apply2(U, V, pairwise=False, mu=mu, ind=ind)
+
+
+def test_apply_adjoint_wrong_ind(operator_with_arrays):
+    op, mu, _, V = operator_with_arrays
+    for ind in invalid_inds(V):
+        with pytest.raises(Exception):
+            op.apply_adjoint(V, mu=mu, ind=ind)
+
+
+def test_apply_inverse_wrong_ind(operator_with_arrays):
+    op, mu, _, V = operator_with_arrays
+    for ind in invalid_inds(V):
+        with pytest.raises(Exception):
+            op.apply_inverse(V, mu=mu, ind=ind)

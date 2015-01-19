@@ -42,5 +42,5 @@ PYMOR_COPY_DOCSTRINGS_DISABLE
 
 PYMOR_DEFAULTS
     If empty or ``NONE``, do not load any :mod:`~pymor.core.defaults`
-    from file. Otherwise, the path to a Python script containing the
-    defaults.
+    from file. Otherwise, a ``:``-separated list of the paths to a
+    Python scripts containing defaults.
