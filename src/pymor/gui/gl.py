@@ -246,7 +246,8 @@ if HAVE_ALL:
             self.setMinimumSize(max(self.vmin_width, self.vmax_width) + 20, 300)
             self.update()
 
-        def paintGL(self):
+        def paintEvent(self, event):
+            self.makeCurrent()
             gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
             gl.glUseProgram(self.shaders_program)
 
