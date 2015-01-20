@@ -157,7 +157,11 @@ def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation
         if new_dof in interpolation_dofs:
             logger.info('DOF {} selected twice for interplation! Stopping extension loop.'.format(new_dof))
             break
-        new_vec *= 1 / new_vec.components([new_dof])[0, 0]
+        new_dof_value = new_vec.components([new_dof])[0, 0]
+        if new_dof_value == 0.:
+            logger.info('DOF {} selected for interpolation has zero maximum error! Stopping extension loop.'.format(new_dof))
+            break
+        new_vec *= 1 / new_dof_value
         interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
         collateral_basis.append(new_vec, remove_from_other=True)
         interpolation_matrix = collateral_basis.components(interpolation_dofs).T
