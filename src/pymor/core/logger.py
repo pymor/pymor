@@ -137,8 +137,7 @@ dummy_logger = DummyLogger()
 
 
 @defaults('levels')
-def set_log_levels(levels={'pymor': 'WARN',
-                           'pymor.core': 'WARN'}):
+def set_log_levels(levels={'pymor': 'INFO'}):
     """Set log levels for pyMOR's logging facility.
 
     Parameters
