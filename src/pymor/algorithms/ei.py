@@ -97,10 +97,8 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
         # coefficients = np.linalg.solve(interpolation_matrix, U.components(interpolation_dofs, ind=ind).T).T
         return collateral_basis.lincomb(coefficients)
 
-    # compute the maximum projection error and error vector for the current interpolation data
-    def projection_error():
-        max_err = -1.
-
+    # main loop
+    while True:
         # precompute gramian_inverse if needed
         if projection == 'orthogonal' and len(interpolation_dofs) > 0:
             if product is None:
@@ -109,6 +107,7 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
                 gramian = product.apply2(collateral_basis, collateral_basis, pairwise=False)
             gramian_cholesky = cho_factor(gramian, overwrite_a=True)
 
+        # compute interpolation error
         if len(interpolation_dofs) > 0:
             if projection == 'ei':
                 U_interpolated = interpolate(U)
@@ -125,21 +124,20 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
         else:
             ERR = U
         errs = ERR.l2_norm() if error_norm is None else error_norm(ERR)
-        local_max_err_ind = np.argmax(errs)
-        local_max_err = errs[local_max_err_ind]
-        if local_max_err > max_err:
-            max_err = local_max_err
-            if len(interpolation_dofs) == 0 or projection == 'ei':
-                new_vec = ERR.copy(ind=local_max_err_ind)
-            else:
-                new_vec = U.copy(ind=local_max_err_ind)
-                new_vec -= interpolate(U, ind=local_max_err_ind)
+        max_err_ind = np.argmax(errs)
+        max_err = errs[max_err_ind]
 
-        return max_err, new_vec
+        if len(interpolation_dofs) >= max_interpolation_dofs:
+            logger.info('Maximum number of interpolation DOFs reached. Stopping extension loop.')
+            logger.info('Final maximum interpolation error with {} interpolation DOFs: {}'.format(
+                len(interpolation_dofs), max_err))
+            break
 
-    # main loop
-    while True:
-        max_err, new_vec = projection_error()
+        if len(interpolation_dofs) == 0 or projection == 'ei':
+            new_vec = ERR.copy(ind=max_err_ind)
+        else:
+            new_vec = U.copy(ind=max_err_ind)
+            new_vec -= interpolate(U, ind=max_err_ind)
 
         logger.info('Maximum interpolation error with {} interpolation DOFs: {}'.format(len(interpolation_dofs),
                                                                                         max_err))
@@ -166,13 +164,6 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
         triangularity_errs.append(triangularity_error)
         logger.info('Interpolation matrix is not lower triangular with maximum error of {}'
                     .format(triangularity_error))
-
-        if len(interpolation_dofs) >= max_interpolation_dofs:
-            logger.info('Maximum number of interpolation DOFs reached. Stopping extension loop.')
-            max_err, _ = projection_error()
-            logger.info('Final maximum interpolation error with {} interpolation DOFs: {}'.format(
-                len(interpolation_dofs), max_err))
-            break
 
         logger.info('')
 
