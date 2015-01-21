@@ -32,7 +32,7 @@ from pymor.la.pod import pod
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 
 
-def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation_dofs=None,
+def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None,
               projection='orthogonal', product=None):
     """Generate data for empirical operator interpolation by a greedy search (EI-Greedy algorithm).
 
@@ -45,7 +45,7 @@ def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation
 
     Parameters
     ----------
-    evaluations
+    U
         An iterable of operator evaluations. Each element must be a |VectorArray|
         of the same type and dimension, but it can hold an arbitrary number of evaluations.
     error_norm
@@ -81,17 +81,14 @@ def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation
     """
 
     assert projection in ('orthogonal', 'ei')
-    assert isinstance(evaluations, VectorArrayInterface)\
-        or all(isinstance(ev, VectorArrayInterface) for ev in evaluations)
-    if isinstance(evaluations, VectorArrayInterface):
-        evaluations = (evaluations,)
+    assert isinstance(U, VectorArrayInterface)
 
     logger = getLogger('pymor.algorithms.ei.ei_greedy')
     logger.info('Generating Interpolation Data ...')
 
     interpolation_dofs = np.zeros((0,), dtype=np.int32)
     interpolation_matrix = np.zeros((0, 0))
-    collateral_basis = next(iter(evaluations)).empty()
+    collateral_basis = U.empty()
     max_errs = []
     triangularity_errs = []
 
@@ -113,32 +110,31 @@ def ei_greedy(evaluations, error_norm=None, target_error=None, max_interpolation
                 gramian = product.apply2(collateral_basis, collateral_basis, pairwise=False)
             gramian_cholesky = cho_factor(gramian, overwrite_a=True)
 
-        for AU in evaluations:
-            if len(interpolation_dofs) > 0:
-                if projection == 'ei':
-                    AU_interpolated = interpolate(AU)
-                    ERR = AU - AU_interpolated
-                else:
-                    if product is None:
-                        coefficients = cho_solve(gramian_cholesky,
-                                                 collateral_basis.dot(AU, pairwise=False)).T
-                    else:
-                        coefficients = cho_solve(gramian_cholesky,
-                                                 product.apply2(collateral_basis, AU, pairwise=False)).T
-                    AU_projected = collateral_basis.lincomb(coefficients)
-                    ERR = AU - AU_projected
+        if len(interpolation_dofs) > 0:
+            if projection == 'ei':
+                U_interpolated = interpolate(U)
+                ERR = U - U_interpolated
             else:
-                ERR = AU
-            errs = ERR.l2_norm() if error_norm is None else error_norm(ERR)
-            local_max_err_ind = np.argmax(errs)
-            local_max_err = errs[local_max_err_ind]
-            if local_max_err > max_err:
-                max_err = local_max_err
-                if len(interpolation_dofs) == 0 or projection == 'ei':
-                    new_vec = ERR.copy(ind=local_max_err_ind)
+                if product is None:
+                    coefficients = cho_solve(gramian_cholesky,
+                                             collateral_basis.dot(U, pairwise=False)).T
                 else:
-                    new_vec = AU.copy(ind=local_max_err_ind)
-                    new_vec -= interpolate(AU, ind=local_max_err_ind)
+                    coefficients = cho_solve(gramian_cholesky,
+                                             product.apply2(collateral_basis, U, pairwise=False)).T
+                U_projected = collateral_basis.lincomb(coefficients)
+                ERR = U - U_projected
+        else:
+            ERR = U
+        errs = ERR.l2_norm() if error_norm is None else error_norm(ERR)
+        local_max_err_ind = np.argmax(errs)
+        local_max_err = errs[local_max_err_ind]
+        if local_max_err > max_err:
+            max_err = local_max_err
+            if len(interpolation_dofs) == 0 or projection == 'ei':
+                new_vec = ERR.copy(ind=local_max_err_ind)
+            else:
+                new_vec = U.copy(ind=local_max_err_ind)
+                new_vec -= interpolate(U, ind=local_max_err_ind)
 
         return max_err, new_vec
 
