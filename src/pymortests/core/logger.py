@@ -4,6 +4,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+import logging
+
 import pymor.core as core
 from pymortests.base import (runmodule,)
 
@@ -11,7 +13,7 @@ from pymortests.fixtures.generic import basicinterface_subclass
 
 
 def exercise_logger(logger):
-    for lvl in core.logger.LOGLEVEL_MAPPING.values():
+    for lvl in [getattr(logging, lvl) for lvl in ['WARN', 'ERROR', 'DEBUG', 'INFO']]:
         logger.setLevel(lvl)
         assert logger.isEnabledFor(lvl)
     for verb in ['warn', 'error', 'debug', 'info']:
