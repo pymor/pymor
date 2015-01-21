@@ -23,10 +23,9 @@ a single function call.
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-from scipy.linalg import solve_triangular, cho_factor, cho_solve
 
 from pymor.core.logger import getLogger
-from pymor.core.cache import CacheableInterface, cached
+from pymor.la.gram_schmidt import gram_schmidt
 from pymor.la.interfaces import VectorArrayInterface
 from pymor.la.pod import pod
 from pymor.operators.ei import EmpiricalInterpolatedOperator
@@ -91,72 +90,46 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
     max_errs = []
     triangularity_errs = []
 
-    def interpolate(U, ind=None):
-        coefficients = solve_triangular(interpolation_matrix, U.components(interpolation_dofs, ind=ind).T,
-                                        lower=True, unit_diagonal=True).T
-        # coefficients = np.linalg.solve(interpolation_matrix, U.components(interpolation_dofs, ind=ind).T).T
-        return collateral_basis.lincomb(coefficients)
+    if projection == 'orthogonal':
+        ERR = U.copy()
+        onb_collateral_basis = collateral_basis.empty()
+    else:
+        ERR = U
 
     # main loop
     while True:
-        # precompute gramian_inverse if needed
-        if projection == 'orthogonal' and len(interpolation_dofs) > 0:
-            if product is None:
-                gramian = collateral_basis.gramian()
-            else:
-                gramian = product.apply2(collateral_basis, collateral_basis, pairwise=False)
-            gramian_cholesky = cho_factor(gramian, overwrite_a=True)
-
-        # compute interpolation error
-        if len(interpolation_dofs) > 0:
-            if projection == 'ei':
-                U_interpolated = interpolate(U)
-                ERR = U - U_interpolated
-            else:
-                if product is None:
-                    coefficients = cho_solve(gramian_cholesky,
-                                             collateral_basis.dot(U, pairwise=False)).T
-                else:
-                    coefficients = cho_solve(gramian_cholesky,
-                                             product.apply2(collateral_basis, U, pairwise=False)).T
-                U_projected = collateral_basis.lincomb(coefficients)
-                ERR = U - U_projected
-        else:
-            ERR = U
         errs = ERR.l2_norm() if error_norm is None else error_norm(ERR)
         max_err_ind = np.argmax(errs)
         max_err = errs[max_err_ind]
 
         if len(interpolation_dofs) >= max_interpolation_dofs:
             logger.info('Maximum number of interpolation DOFs reached. Stopping extension loop.')
-            logger.info('Final maximum interpolation error with {} interpolation DOFs: {}'.format(
-                len(interpolation_dofs), max_err))
+            logger.info('Final maximum {} error with {} interpolation DOFs: {}'.format(
+                'projection' if projection else 'interpolation', len(interpolation_dofs), max_err))
             break
 
-        if len(interpolation_dofs) == 0 or projection == 'ei':
-            new_vec = ERR.copy(ind=max_err_ind)
-        else:
-            new_vec = U.copy(ind=max_err_ind)
-            new_vec -= interpolate(U, ind=max_err_ind)
+        logger.info('Maximum {} error with {} interpolation DOFs: {}'
+                    .format('projection' if projection else 'interpolation',
+                            len(interpolation_dofs), max_err))
 
-        logger.info('Maximum interpolation error with {} interpolation DOFs: {}'.format(len(interpolation_dofs),
-                                                                                        max_err))
         if target_error is not None and max_err <= target_error:
             logger.info('Target error reached! Stopping extension loop.')
             break
 
         # compute new interpolation dof and collateral basis vector
+        new_vec = U.copy(ind=max_err_ind)
         new_dof = new_vec.amax()[0][0]
         if new_dof in interpolation_dofs:
             logger.info('DOF {} selected twice for interplation! Stopping extension loop.'.format(new_dof))
             break
         new_dof_value = new_vec.components([new_dof])[0, 0]
         if new_dof_value == 0.:
-            logger.info('DOF {} selected for interpolation has zero maximum error! Stopping extension loop.'.format(new_dof))
+            logger.info('DOF {} selected for interpolation has zero maximum error! Stopping extension loop.'
+                        .format(new_dof))
             break
         new_vec *= 1 / new_dof_value
         interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
-        collateral_basis.append(new_vec, remove_from_other=True)
+        collateral_basis.append(new_vec)
         interpolation_matrix = collateral_basis.components(interpolation_dofs).T
         max_errs.append(max_err)
 
@@ -166,6 +139,15 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
                     .format(triangularity_error))
 
         logger.info('')
+
+        # update U and ERR
+        new_dof_values = U.components([new_dof])
+        U -= new_vec.lincomb(new_dof_values)
+        if projection == 'orthogonal':
+            onb_collateral_basis.append(new_vec)
+            gram_schmidt(onb_collateral_basis, offset=len(onb_collateral_basis) - 1, copy=False)
+            coeffs = ERR.dot(onb_collateral_basis, o_ind=len(onb_collateral_basis) - 1, pairwise=False)
+            ERR -= onb_collateral_basis.lincomb(coeffs, ind=len(onb_collateral_basis) - 1)
 
     data = {'errors': max_errs, 'triangularity_errors': triangularity_errs}
 
