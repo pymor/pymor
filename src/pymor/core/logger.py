@@ -116,7 +116,7 @@ def getLogger(module, level=None, filename=''):
     handlers = [streamhandler]
     if filename:
         filehandler = logging.FileHandler(filename)
-        fileformatter = ColoredFormatter(False)
+        fileformatter = ColoredFormatter()
         filehandler.setFormatter(fileformatter)
         handlers.append(filehandler)
     logger.handlers = handlers
