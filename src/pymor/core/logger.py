@@ -31,6 +31,7 @@ COLORS = {
 
 FORMAT = '%(asctime)s$BOLD%(levelname)s|$BOLD%(name)s$RESET: %(message)s'
 MAX_HIERACHY_LEVEL = 3
+FILENAME=None
 
 start_time = time.time()
 
@@ -49,14 +50,14 @@ class ColoredFormatter(logging.Formatter):
     `PYMOR_COLORS_DISABLE` environment variable to `1`.
     """
 
-    def __init__(self):
+    def __init__(self, use_color=True):
         disable_colors = int(os.environ.get('PYMOR_COLORS_DISABLE', 0)) == 1
         if disable_colors:
             self.use_color = False
         else:
             try:
                 curses.setupterm()
-                self.use_color = curses.tigetnum("colors") > 1
+                self.use_color = curses.tigetnum("colors") > 1 and use_color
             except Exception:
                 self.use_color = False
 
@@ -99,7 +100,14 @@ def getLogger(module, level=None, filename=None, handler_cls=logging.StreamHandl
     streamhandler = handler_cls()
     streamformatter = ColoredFormatter()
     streamhandler.setFormatter(streamformatter)
-    logger.handlers = [streamhandler]
+    handlers = [streamhandler]
+    filename = filename if filename is not None else FILENAME
+    if filename is not None:
+        filehandler = logging.FileHandler(filename)
+        fileformatter = ColoredFormatter(False)
+        filehandler.setFormatter(fileformatter)
+        handlers.append(filehandler)
+    logger.handlers = handlers
     logger.propagate = False
     if level:
         logger.setLevel(level)
