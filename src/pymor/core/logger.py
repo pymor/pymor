@@ -93,13 +93,33 @@ class ColoredFormatter(logging.Formatter):
         return logging.Formatter.format(self, record)
 
 
-def getLogger(module, level=None, filename=None, handler_cls=logging.StreamHandler):
+@defaults('filename')
+def getLogger(module, level=None, filename=''):
+    """Get the logger of the respective module for pyMOR's logging facility.
+
+    Parameters
+    ----------
+    module
+        Name of the module.
+    level
+        If set, `logger.setLevel(level)` is called (see
+        :meth:`~logging.Logger.setLevel`).
+    filename
+        If not empty, path of an existing file where everything logged will be
+        written to.
+    """
     module = 'pymor' if module == '__main__' else module
     logger = logging.getLogger(module)
-    streamhandler = handler_cls()
+    streamhandler = logging.StreamHandler()
     streamformatter = ColoredFormatter()
     streamhandler.setFormatter(streamformatter)
-    logger.handlers = [streamhandler]
+    handlers = [streamhandler]
+    if filename:
+        filehandler = logging.FileHandler(filename)
+        fileformatter = ColoredFormatter(False)
+        filehandler.setFormatter(fileformatter)
+        handlers.append(filehandler)
+    logger.handlers = handlers
     logger.propagate = False
     if level:
         logger.setLevel(level)
