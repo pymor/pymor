@@ -162,6 +162,7 @@ def set_log_levels(levels={'pymor': 'INFO'}):
 
     Parameters
     ----------
+    levels
         Dict of log levels. Keys names of loggers (see :func:`logging.getLogger`),
         values are the log levels to set for the loggers of the given names
         (see :meth:`~logging.Logger.setLevel`).
