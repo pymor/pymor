@@ -269,48 +269,6 @@ def deim(evaluations, modes=None, error_norm=None, product=None):
     return interpolation_dofs, collateral_basis, data
 
 
-class EvaluationProvider(CacheableInterface):
-    """Helper class for providing cached operator evaluations that can be fed into :func:`ei_greedy`.
-
-    This class calls `solve()` on a given |Discretization| for a provided sample of |Parameters| and
-    then applies |Operators| to the solutions. The results are cached.
-
-    Parameters
-    ----------
-    discretization
-        The |Discretization| whose `solve()` method will be called.
-    operators
-        A list of |Operators| which are evaluated on the solution snapshots.
-    sample
-        A list of |Parameters| for which `discretization.solve()` is called.
-    cache_region
-        Name of the |CacheRegion| to use.
-    """
-
-    def __init__(self, discretization, operators, sample, cache_region='memory'):
-        self.cache_region = cache_region
-        self.discretization = discretization
-        self.sample = sample
-        self.operators = operators
-
-    @cached
-    def data(self, k):
-        mu = self.sample[k]
-        U = self.discretization.solve(mu)
-        AU = self.operators[0].range.empty(reserve=len(self.operators))
-        for op in self.operators:
-            AU.append(op.apply(U, mu=mu))
-        return AU
-
-    def __len__(self):
-        return len(self.sample)
-
-    def __getitem__(self, ind):
-        if not 0 <= ind < len(self.sample):
-            raise IndexError
-        return self.data(ind)
-
-
 def interpolate_operators(discretization, operator_names, parameter_sample, error_norm=None,
                           target_error=None, max_interpolation_dofs=None,
                           projection='orthogonal', product=None, cache_region='memory'):
@@ -364,7 +322,12 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
     sample = tuple(parameter_sample)
     operators = [discretization.operators[operator_name] for operator_name in operator_names]
 
-    evaluations = EvaluationProvider(discretization, operators, sample, cache_region=cache_region)
+    evaluations = operators[0].range.empty()
+    for mu in sample:
+        U = discretization.solve(mu)
+        for op in operators:
+            evaluations.append(op.apply(U, mu=mu))
+
     dofs, basis, data = ei_greedy(evaluations, error_norm, target_error, max_interpolation_dofs,
                                   projection=projection, product=product)
 
