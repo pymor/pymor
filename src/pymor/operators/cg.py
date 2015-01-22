@@ -507,9 +507,6 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
         # is implemented by calling self.prune() which creates the view self.data[:self.nnz].
         # Thus, the original data array is not deleted and all memory stays allocated.
 
-        # from pymor.tools.memory import print_memory_usage
-        # print_memory_usage('matrix: {0:5.1f}'.format((A.data.nbytes + A.indptr.nbytes + A.indices.nbytes)/1024**2))
-
         return A
 
 
@@ -627,9 +624,6 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         # coordinates are summed up, resulting in shorter data arrays. The shortening
         # is implemented by calling self.prune() which creates the view self.data[:self.nnz].
         # Thus, the original data array is not deleted and all memory stays allocated.
-
-        # from pymor.tools.memory import print_memory_usage
-        # print_memory_usage('matrix: {0:5.1f}'.format((A.data.nbytes + A.indptr.nbytes + A.indices.nbytes)/1024**2))
 
         return A
 
