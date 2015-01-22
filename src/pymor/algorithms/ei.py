@@ -8,13 +8,6 @@ The main work for generating the necessary interpolation data is handled by
 the :func:`ei_greedy` method. The objects returned by this method can be used
 to instantiate an |EmpiricalInterpolatedOperator|.
 
-:func:`ei_greedy` expects an iterable of operator evaluations which are to be
-interpolated. These evaluation can be provided by an instance of
-:class:`EvaluationProvider` which, given a discretization, names of |Operators|
-and a set of parameters, provides evaluations of the |Operators| on the solution
-snapshots for the given parameters. Caching of the evaluations is also
-handled by :class:`EvaluationProvider`.
-
 As a convenience, the :func:`interpolate_operators` method allows to perform
 the empirical interpolation of the |Operators| of a given discretization with
 a single function call.
