@@ -26,7 +26,7 @@ from pymor.operators.ei import EmpiricalInterpolatedOperator
 
 def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None,
               projection='orthogonal', product=None):
-    """Generate data for empirical operator interpolation by a greedy search (EI-Greedy algorithm).
+    """Generate data for empirical interpolation by a greedy search (EI-Greedy algorithm).
 
     Given a |VectorArray| `U`, this method generates a collateral_basis and
     interpolation DOFs for empirical interpolation of the vectors contained in `U`.
@@ -147,22 +147,21 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
     return interpolation_dofs, collateral_basis, data
 
 
-def deim(evaluations, modes=None, error_norm=None, product=None):
-    """Generate data for empirical operator interpolation using DEIM algorithm.
+def deim(U, modes=None, error_norm=None, product=None):
+    """Generate data for empirical interpolation using DEIM algorithm.
 
-    Given evaluations of |Operators|, this method generates a collateral_basis and
-    interpolation DOFs for empirical operator interpolation. The returned objects
-    can be used to instantiate an |EmpiricalInterpolatedOperator|.
+    Given a |VectorArray| `U`, this method generates a collateral_basis and
+    interpolation DOFs for empirical interpolation of the vectors contained in `U`.
+    The returned objects can also be used to instantiate an |EmpiricalInterpolatedOperator|.
 
-    The collateral basis is determined by the first POD modes of the operator
-    evaluations.
+    The collateral basis is determined by the first POD modes of `U`.
 
     Parameters
     ----------
-    evaluations
-        A |VectorArray| of operator evaluations.
+    U
+        A |VectorArray| of vectors to interpolate.
     modes
-        Dimension of the collateral basis i.e. number of POD modes of the operator evaluations.
+        Dimension of the collateral basis i.e. number of POD modes of the vectors in `U`.
     error_norm
         Norm w.r.t. which to calculate the interpolation error. If `None`, the Euclidean norm
         is used.
@@ -172,7 +171,7 @@ def deim(evaluations, modes=None, error_norm=None, product=None):
     Returns
     -------
     interpolation_dofs
-        |NumPy array| of the DOFs at which the operators have to be evaluated.
+        |NumPy array| of the DOFs at which the vectors are interpolated.
     collateral_basis
         |VectorArray| containing the generated collateral basis.
     data
@@ -181,12 +180,12 @@ def deim(evaluations, modes=None, error_norm=None, product=None):
             :errors: sequence of maximum approximation errors during greedy search.
     """
 
-    assert isinstance(evaluations, VectorArrayInterface)
+    assert isinstance(U, VectorArrayInterface)
 
     logger = getLogger('pymor.algorithms.ei.deim')
     logger.info('Generating Interpolation Data ...')
 
-    collateral_basis = pod(evaluations, modes, product=product)[0]
+    collateral_basis = pod(U, modes, product=product)[0]
 
     interpolation_dofs = np.zeros((0,), dtype=np.int32)
     interpolation_matrix = np.zeros((0, 0))
