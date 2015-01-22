@@ -12,34 +12,10 @@ from tempfile import NamedTemporaryFile
 from pymortests.base import TestInterface, runmodule
 from pymortests.fixtures.grid import rect_or_tria_grid
 from pymortests.base import polynomials
-from pymor.tools.memory import total_size
 from pymor.tools.quadratures import GaussQuadratures
 from pymor.tools.floatcmp import float_cmp, float_cmp_all
 from pymor.tools.vtkio import write_vtk
 from pymor.la.numpyvectorarray import NumpyVectorArray
-
-
-class TestMemory(TestInterface):
-
-    def test_positivity(self):
-        for Class in [int, float, long, complex, str, unicode, list, tuple, bytearray, ]:
-            r = Class()
-            assert total_size(r) > 0
-
-    def test_mem_growing(self):
-        string = ''
-        size = total_size(string)
-        string = '*' * int(1e6)
-        new_size = total_size(string)
-        assert new_size > size
-
-    def test_custom_handler(self):
-        class MyContainer(object):
-            def items(self):
-                for i in xrange(3):
-                    yield i
-        container = MyContainer()
-        assert total_size(container, {MyContainer: MyContainer.items}) > 0
 
 
 FUNCTIONS = (('sin(2x pi)', lambda x: sin(2 * x * pi), 0),
