@@ -68,16 +68,12 @@ class WrappedVector(VectorInterface):
         raise NotImplementedError
 
 
-class WrappedVectorArray(ListVectorArray):
-    vector_type = WrappedVector
-
-
 class WrappedDiffusionOperator(OperatorBase):
     def __init__(self, op):
         assert isinstance(op, DiffusionOperator)
         self._impl = op
-        self.source = VectorSpace(WrappedVectorArray, op.dim_source)
-        self.range = VectorSpace(WrappedVectorArray, op.dim_range)
+        self.source = VectorSpace(ListVectorArray, (WrappedVector, op.dim_source))
+        self.range = VectorSpace(ListVectorArray, (WrappedVector, op.dim_range))
         self.linear = True
 
     @classmethod
@@ -95,4 +91,4 @@ class WrappedDiffusionOperator(OperatorBase):
             self._impl.apply(u._impl, v)
             return WrappedVector(v)
 
-        return WrappedVectorArray([apply_one_vector(U._list[i]) for i in ind], subtype=self.range.subtype)
+        return ListVectorArray([apply_one_vector(U._list[i]) for i in ind], subtype=self.range.subtype)

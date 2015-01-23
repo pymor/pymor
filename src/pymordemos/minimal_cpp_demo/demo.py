@@ -28,7 +28,7 @@ def discretize(n, nt, blocks):
     initial_data = operator.source.zeros()
 
     # use data property of WrappedVector to setup rhs
-    # note that we cannot use the data property of WrappedVectorArray,
+    # note that we cannot use the data property of ListVectorArray,
     # since ListVectorArray will always return a copy
     rhs_vec = operator.range.zeros()
     rhs_data = rhs_vec._list[0].data
