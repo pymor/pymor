@@ -5,7 +5,7 @@
 from __future__ import absolute_import, division, print_function
 
 from pymor.core.defaults import defaults
-from pymor.la import VectorSpace
+from pymor.la.interfaces import VectorSpace
 from pymor.la.listvectorarray import VectorInterface, ListVectorArray
 from pymor.operators.basic import OperatorBase
 
