@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from pymor.la.numpyvectorarray import NumpyVectorArray
-from pymor.la.listvectorarray import NumpyVector, NumpyListVectorArray
+from pymor.la.listvectorarray import NumpyVector, ListVectorArray
 from pymor.playground.la.blockvectorarray import BlockVectorArray
 
 
@@ -25,8 +25,8 @@ def numpy_vector_array_factory(length, dim, seed):
 
 def numpy_list_vector_array_factory(length, dim, seed):
     np.random.seed(seed)
-    return NumpyListVectorArray([NumpyVector(v, copy=False) for v in np.random.random((length, dim))],
-                                subtype=dim, copy=False)
+    return ListVectorArray([NumpyVector(v, copy=False) for v in np.random.random((length, dim))],
+                           subtype=(NumpyVector, dim), copy=False)
 
 
 def block_vector_array_factory(length, dims, seed):
