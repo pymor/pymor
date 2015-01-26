@@ -515,8 +515,7 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
         SE_I0_I = SE_I0[~boundary_mask]
         SE_I1_I = SE_I1[~boundary_mask]
 
-        DVOLS[~boundary_mask] = np.abs(orthogonal_centers[SE_I0_I, 0] - orthogonal_centers[SE_I1_I, 0])
-        DVOLS[~boundary_mask] += np.abs(orthogonal_centers[SE_I0_I, 1] - orthogonal_centers[SE_I1_I, 1])
+        DVOLS[~boundary_mask] = np.linalg.norm(orthogonal_centers[SE_I0_I, :] - orthogonal_centers[SE_I1_I, :], axis=1)
 
         # compute shift for periodic boundaries
         embeddings = grid.embeddings(0)
@@ -534,8 +533,7 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
         DVOLS = np.abs(DVOLS)
 
         SE_I0_B = SE_I0[boundary_mask]
-        DVOLS[boundary_mask] = np.abs(centers[boundary_mask, 0] - orthogonal_centers[SE_I0_B, 0])
-        DVOLS[boundary_mask] += np.abs(centers[boundary_mask, 1] - orthogonal_centers[SE_I0_B, 1])
+        DVOLS[boundary_mask] = np.linalg.norm(centers[boundary_mask, :] - orthogonal_centers[SE_I0_B, :], axis=1)
 
         SE_INTS = diffusion * VOLS[~boundary_mask] / DVOLS[~boundary_mask]
 
@@ -621,8 +619,7 @@ class DiffusionRHSOperatorFunctional(NumpyMatrixBasedOperator):
         SE_I0_I = SE_I0[~boundary_mask]
         SE_I1_I = SE_I1[~boundary_mask]
 
-        DVOLS[~boundary_mask] = np.abs(orthogonal_centers[SE_I0_I, 0] - orthogonal_centers[SE_I1_I, 0])
-        DVOLS[~boundary_mask] += np.abs(orthogonal_centers[SE_I0_I, 1] - orthogonal_centers[SE_I1_I, 1])
+        DVOLS[~boundary_mask] = np.linalg.norm(orthogonal_centers[SE_I0_I, :] - orthogonal_centers[SE_I1_I, :], axis=1)
 
         # compute shift for periodic boundaries
         embeddings = grid.embeddings(0)
@@ -640,8 +637,7 @@ class DiffusionRHSOperatorFunctional(NumpyMatrixBasedOperator):
         DVOLS = np.abs(DVOLS)
 
         SE_I0_B = SE_I0[boundary_mask]
-        DVOLS[boundary_mask] = np.abs(centers[boundary_mask, 0] - orthogonal_centers[SE_I0_B, 0])
-        DVOLS[boundary_mask] += np.abs(centers[boundary_mask, 1] - orthogonal_centers[SE_I0_B, 1])
+        DVOLS[boundary_mask] = np.linalg.norm(centers[boundary_mask, :] - orthogonal_centers[SE_I0_B, :], axis=1)
 
         # evaluate function at all quadrature points -> shape = (g.size(0), number of quadrature points, 1)
         F = self.function(grid.quadrature_points(0, order=self.order), mu=mu)
