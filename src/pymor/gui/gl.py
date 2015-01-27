@@ -234,8 +234,12 @@ if HAVE_ALL:
             fm = QFontMetrics(self.font())
             self.vmin = vmin if vmin is not None else (np.min(U) if U is not None else 0.)
             self.vmax = vmax if vmax is not None else (np.max(U) if U is not None else 1.)
-            precision = m.log(max(abs(self.vmin), abs(self.vmax) / abs(self.vmin - self.vmax)), 10) + 1
-            precision = int(min(max(precision, 3), 8))
+            difference = abs(self.vmin - self.vmax)
+            if difference == 0:
+                precision = 3
+            else:
+                precision = m.log(max(abs(self.vmin), abs(self.vmax)) / difference, 10) + 1
+                precision = int(min(max(precision, 3), 8))
             self.vmin_str = format(('{:.' + str(precision) + '}').format(self.vmin))
             self.vmax_str = format(('{:.' + str(precision) + '}').format(self.vmax))
             self.vmin_width = fm.width(self.vmin_str)
