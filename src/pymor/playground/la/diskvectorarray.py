@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function
 
 from itertools import izip
 from numbers import Number
+import atexit
 import tempfile
 import getpass
 import os
@@ -19,10 +20,18 @@ from pymor.la.interfaces import VectorArrayInterface
 from pymor.la.listvectorarray import ListVectorArray
 
 
+_registered_paths = set()
+def cleanup():
+    for path in _registered_paths:
+        shutil.rmtree(path)
+atexit.register(cleanup)
+
+
 @defaults('path')
 def basedir(path=os.path.join(tempfile.gettempdir(), 'pymor.diskarray.' + getpass.getuser())):
     if not os.path.exists(path):
         os.mkdir(path)
+    _registered_paths.add(path)
     return path
 
 
@@ -54,7 +63,10 @@ class DiskVectorArray(VectorArrayInterface):
         self.destroy()
 
     def destroy(self):
-        shutil.rmtree(self.dir)
+        try:
+            shutil.rmtree(self.dir)
+        except OSError:
+            pass
 
     def _store(self, i, v):
         with open(os.path.join(self.dir, str(i)), 'w') as f:
