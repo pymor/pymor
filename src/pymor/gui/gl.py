@@ -192,7 +192,10 @@ if HAVE_ALL:
             self.update_vbo = True
             self.update()
 
-        def set(self, U):
+        def set(self, U, vmin=None, vmax=None):
+            self.vmin = self.vmin if vmin is None else vmin
+            self.vmax = self.vmax if vmax is None else vmax
+
             U_buffer = self.vertex_data['color']
             if self.codim == 2:
                 U_buffer[:] = U[self.entity_map]
