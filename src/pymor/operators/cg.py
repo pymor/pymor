@@ -23,7 +23,8 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
 
     Boundary treatment can be performed by providing `boundary_info` and `dirichlet_data`,
     in which case the DOFs corresponding to Dirichlet boundaries are set to the values
-    provided by `dirichlet_data`.
+    provided by `dirichlet_data`. Neumann boundaries are handled by providing a
+    `neumann_data` function.
 
     The current implementation works in one and two dimensions, but can be trivially
     extended to arbitrary dimensions.
@@ -35,7 +36,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     function
         The |Function| with which to take the scalar product.
     boundary_info
-        |BoundaryInfo| determining the Dirichlet boundaries or `None`.
+        |BoundaryInfo| determining the Dirichlet and Neumann boundaries or `None`.
         If `None`, no boundary treatment is performed.
     dirichlet_data
         |Function| providing the Dirichlet boundary values. If `None`,
