@@ -6,11 +6,12 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor.grids.interfaces import AffineGridInterface
+from pymor.core.cache import cached
+from pymor.grids.interfaces import AffineGridWithOrthogonalCentersInterface
 from pymor.grids.referenceelements import triangle
 
 
-class TriaGrid(AffineGridInterface):
+class TriaGrid(AffineGridWithOrthogonalCentersInterface):
     """Basic implementation of a triangular grid on a rectangular domain.
 
     The global face, edge and vertex indices are given as follows ::
@@ -195,6 +196,22 @@ class TriaGrid(AffineGridInterface):
             return self.__embeddings
         else:
             return super(TriaGrid, self).embeddings(codim)
+
+    @cached
+    def orthogonal_centers(self):
+        embeddings = self.embeddings(0)
+        ne4 = len(embeddings[0]) / 4
+        if self.x0_diameter > self.x1_diameter:
+            x0_fac = (self.x1_diameter / 2) ** 2 / (3 * (self.x0_diameter / 2) ** 2)
+            x1_fac = 1./3.
+        else:
+            x1_fac = (self.x0_diameter / 2) ** 2 / (3 * (self.x1_diameter / 2) ** 2)
+            x0_fac = 1./3.
+        C0 = embeddings[0][:ne4].dot(np.array([x1_fac, x1_fac])) + embeddings[1][:ne4]
+        C1 = embeddings[0][ne4:2*ne4].dot(np.array([x0_fac, x0_fac])) + embeddings[1][ne4:2*ne4]
+        C2 = embeddings[0][2*ne4:3*ne4].dot(np.array([x1_fac, x1_fac])) + embeddings[1][2*ne4:3*ne4]
+        C3 = embeddings[0][3*ne4:4*ne4].dot(np.array([x0_fac, x0_fac])) + embeddings[1][3*ne4:4*ne4]
+        return np.concatenate((C0, C1, C2, C3), axis=0)
 
     def visualize(self, U, codim=2, **kwargs):
         """Visualize scalar data associated to the grid as a patch plot.
