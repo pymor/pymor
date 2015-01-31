@@ -497,14 +497,18 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
         if bi is not None and (bi.has_dirichlet and self.dirichlet_data is not None
                                or bi.has_neumann and self.neumann_data):
             centers = g.centers(1)
-            SE_I0 = g.superentities(1, 0)[:, 0]
+            superentities = g.superentities(1, 0)
+            superentity_indices = g.superentity_indices(1, 0)
+            SE_I0 = superentities[:, 0]
             VOLS = g.volumes(1)
             FLUXES = np.zeros(g.size(1))
 
             if bi.has_dirichlet and self.dirichlet_data is not None:
                 dirichlet_mask = bi.dirichlet_mask(1)
                 SE_I0_D = SE_I0[dirichlet_mask]
-                BOUNDARY_DISTS = np.linalg.norm(centers[dirichlet_mask, :] - g.orthogonal_centers()[SE_I0_D, :], axis=1)
+                boundary_normals = g.unit_outer_normals()[SE_I0_D, superentity_indices[:, 0][dirichlet_mask]]
+                BOUNDARY_DISTS = np.sum((centers[dirichlet_mask, :] - g.orthogonal_centers()[SE_I0_D, :]) * boundary_normals,
+                                        axis=-1)
                 DIRICHLET_FLUXES = VOLS[dirichlet_mask] * self.dirichlet_data(centers[dirichlet_mask]) / BOUNDARY_DISTS
                 if self.diffusion_function is not None:
                     DIRICHLET_FLUXES *= self.diffusion_function(centers[dirichlet_mask], mu=mu)
@@ -516,7 +520,7 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
                 neumann_mask = bi.neumann_mask(1)
                 FLUXES[neumann_mask] -= VOLS[neumann_mask] * self.neumann_data(centers[neumann_mask])
 
-            F_INTS += np.bincount(SE_I0, weights=FLUXES)
+            F_INTS += np.bincount(SE_I0, weights=FLUXES, minlength=len(F_INTS))
 
         F_INTS /= g.volumes(0)
 
@@ -550,6 +554,7 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
 
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None, name=None):
         super(DiffusionOperator, self).__init__()
+        assert isinstance(grid, AffineGridWithOrthogonalCentersInterface)
         assert diffusion_function is None \
             or (isinstance(diffusion_function, FunctionInterface) and
                 diffusion_function.dim_domain == grid.dim_outer and
@@ -565,7 +570,6 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
 
     def _assemble(self, mu=None):
         grid = self.grid
-        assert isinstance(grid, AffineGridWithOrthogonalCentersInterface)
 
         # compute the local coordinates of the codim-1 subentity centers in the reference element
         reference_element = grid.reference_element(0)
@@ -576,7 +580,8 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
 
         # compute shift for periodic boundaries
         embeddings = grid.embeddings(0)
-        superentities, superentity_indices = grid._superentities_with_indices(1, 0)
+        superentities = grid.superentities(1, 0)
+        superentity_indices = grid.superentity_indices(1, 0)
         boundary_mask = grid.boundary_mask(1)
         inner_mask = ~boundary_mask
         SE_I0 = superentities[:, 0]
@@ -617,7 +622,9 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
         if self.boundary_info.has_dirichlet:
             dirichlet_mask = self.boundary_info.dirichlet_mask(1)
             SE_I0_D = SE_I0[dirichlet_mask]
-            BOUNDARY_DISTS = np.linalg.norm(centers[dirichlet_mask, :] - orthogonal_centers[SE_I0_D, :], axis=1)
+            boundary_normals = grid.unit_outer_normals()[SE_I0_D, superentity_indices[:, 0][dirichlet_mask]]
+            BOUNDARY_DISTS = np.sum((centers[dirichlet_mask, :] - orthogonal_centers[SE_I0_D, :]) * boundary_normals,
+                                    axis=-1)
 
             DIRICHLET_FLUXES = VOLS[dirichlet_mask] / BOUNDARY_DISTS
             if self.diffusion_function is not None:
