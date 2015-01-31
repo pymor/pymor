@@ -15,8 +15,7 @@ from pymor.grids.oned import OnedGrid
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
 from pymor.gui.qt import PatchVisualizer, Matplotlib1DVisualizer
-from pymor.operators.cg import DiffusionOperatorP1, L2ProductFunctionalP1, L2ProductP1,\
-    DiffusionOperatorQ1, L2ProductFunctionalQ1, L2ProductQ1
+from pymor.operators import cg, fv
 from pymor.operators.constructions import LincombOperator
 
 
@@ -68,11 +67,11 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
     assert isinstance(grid, (OnedGrid, TriaGrid, RectGrid))
 
     if isinstance(grid, RectGrid):
-        Operator = DiffusionOperatorQ1
-        Functional = L2ProductFunctionalQ1
+        Operator = cg.DiffusionOperatorQ1
+        Functional = cg.L2ProductFunctionalQ1
     else:
-        Operator = DiffusionOperatorP1
-        Functional = L2ProductFunctionalP1
+        Operator = cg.DiffusionOperatorP1
+        Functional = cg.L2ProductFunctionalP1
 
     p = analytical_problem
 
@@ -101,7 +100,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
         visualizer = Matplotlib1DVisualizer(grid=grid, codim=1)
 
     empty_bi = EmptyBoundaryInfo(grid)
-    l2_product = L2ProductQ1(grid, empty_bi) if isinstance(grid, RectGrid) else L2ProductP1(grid, empty_bi)
+    l2_product = cg.L2ProductQ1(grid, empty_bi) if isinstance(grid, RectGrid) else cg.L2ProductP1(grid, empty_bi)
     h1_semi_product = Operator(grid, empty_bi)
     products = {'h1': l2_product + h1_semi_product,
                 'h1_semi': h1_semi_product,
@@ -111,5 +110,103 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
 
     discretization = StationaryDiscretization(L, F, products=products, visualizer=visualizer,
                                               parameter_space=parameter_space, name='{}_CG'.format(p.name))
+
+    return discretization, {'grid': grid, 'boundary_info': boundary_info}
+
+
+def discretize_elliptic_fv(analytical_problem, diameter=None, domain_discretizer=None,
+                           grid=None, boundary_info=None):
+    """Discretizes an |EllipticProblem| using the finite volume method.
+
+    Parameters
+    ----------
+    analytical_problem
+        The |EllipticProblem| to discretize.
+    diameter
+        If not None, is passed to the domain_discretizer.
+    domain_discretizer
+        Discretizer to be used for discretizing the analytical domain. This has
+        to be a function `domain_discretizer(domain_description, diameter, ...)`.
+        If further arguments should be passed to the discretizer, use
+        :func:`functools.partial`. If `None`, |discretize_domain_default| is used.
+    grid
+        Instead of using a domain discretizer, the |Grid| can also be passed directly
+        using this parameter.
+    boundary_info
+        A |BoundaryInfo| specifying the boundary types of the grid boundary entities.
+        Must be provided if `grid` is provided.
+
+    Returns
+    -------
+    discretization
+        The discretization that has been generated.
+    data
+        Dictionary with the following entries:
+
+            :grid:           The generated |Grid|.
+            :boundary_info:  The generated |BoundaryInfo|.
+    """
+
+    assert isinstance(analytical_problem, EllipticProblem)
+    assert grid is None or boundary_info is not None
+    assert boundary_info is None or grid is not None
+    assert grid is None or domain_discretizer is None
+
+    if grid is None:
+        domain_discretizer = domain_discretizer or discretize_domain_default
+        if diameter is None:
+            grid, boundary_info = domain_discretizer(analytical_problem.domain)
+        else:
+            grid, boundary_info = domain_discretizer(analytical_problem.domain, diameter=diameter)
+
+    p = analytical_problem
+
+    if p.diffusion_functionals is not None or len(p.diffusion_functions) > 1:
+        Li = [fv.DiffusionOperator(grid, boundary_info, diffusion_function=df, name='diffusion_{}'.format(i))
+              for i, df in enumerate(p.diffusion_functions)]
+        if p.diffusion_functionals is None:
+            L = LincombOperator(operators=Li, name='diffusion', num_coefficients=len(Li),
+                                coefficients_name='diffusion_coefficients')
+        else:
+            L = LincombOperator(operators=Li, coefficients=list(p.diffusion_functionals),
+                                name='diffusion')
+
+        F0 = fv.L2ProductFunctional(grid, p.rhs, boundary_info=boundary_info, neumann_data=p.neumann_data)
+
+        if p.dirichlet_data is not None:
+            Fi = [fv.L2ProductFunctional(grid, None, boundary_info=boundary_info, dirichlet_data=p.dirichlet_data,
+                                         diffusion_function=df, name='dirichlet_{}'.format(i))
+                  for i, df in enumerate(p.diffusion_functions)]
+
+            if p.diffusion_functionals is None:
+                F = LincombOperator(operators=Fi + [F0], name='rhs', num_coefficients=len(Li),
+                                    coefficients_name='diffusion_coefficients')
+            else:
+                F = LincombOperator(operators=[F0] + Fi, coefficients=[1.] + list(p.diffusion_functionals),
+                                    name='rhs')
+        else:
+            F = F0
+
+    else:
+        L = fv.DiffusionOperator(grid, boundary_info, diffusion_function=p.diffusion_functions[0],
+                                 name='diffusion')
+
+        F = fv.L2ProductFunctional(grid, p.rhs, boundary_info=boundary_info, dirichlet_data=p.dirichlet_data,
+                                   diffusion_function=p.diffusion_functions[0], neumann_data=p.neumann_data)
+
+    if isinstance(grid, (TriaGrid, RectGrid)):
+        visualizer = PatchVisualizer(grid=grid, bounding_box=grid.domain, codim=0)
+    elif isinstance(grid, (OnedGrid)):
+        visualizer = Matplotlib1DVisualizer(grid=grid, codim=0)
+    else:
+        visualizer = None
+
+    l2_product = fv.L2Product(grid)
+    products = {'l2': l2_product}
+
+    parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
+
+    discretization = StationaryDiscretization(L, F, products=products, visualizer=visualizer,
+                                              parameter_space=parameter_space, name='{}_FV'.format(p.name))
 
     return discretization, {'grid': grid, 'boundary_info': boundary_info}
