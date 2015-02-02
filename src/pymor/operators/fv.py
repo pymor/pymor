@@ -636,7 +636,7 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
             FLUXES_I0 = np.concatenate((FLUXES_I0, SE_I0_D))
             FLUXES_I1 = np.concatenate((FLUXES_I1, SE_I0_D))
 
-        A = coo_matrix((FLUXES, (FLUXES_I0, FLUXES_I1)), shape=(self.source.dim, self.source.dim)).tocsc()
-        A = dia_matrix(([1. / grid.volumes(0)], [0]), shape=(grid.size(0),) * 2) * A
+        A = coo_matrix((FLUXES, (FLUXES_I0, FLUXES_I1)), shape=(self.source.dim, self.source.dim))
+        A = (dia_matrix(([1. / grid.volumes(0)], [0]), shape=(grid.size(0),) * 2) * A).tocsc()
 
         return A
