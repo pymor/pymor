@@ -14,16 +14,19 @@ import multiprocessing
 from pymortests.base import runmodule
 from pymor.gui.gl import HAVE_PYSIDE
 
-DEMO_ARGS = (('cg', [0, 0, 0, 0]), ('cg', [1, 2, 0, 3]), ('cg', ['--rect', 1, 2, 0, 3]), ('cg', [0, 0, 2, 1]),
+DEMO_ARGS = (('elliptic', [0, 0, 0, 0]), ('elliptic', [1, 2, 0, 3]), ('elliptic', ['--rect', 1, 2, 0, 3]),
+             ('elliptic', [0, 0, 2, 1]), ('elliptic', ['--fv', 0, 0, 0, 0]), ('elliptic', ['--fv', 1, 2, 0, 3]),
+             ('elliptic', ['--fv', '--rect', 1, 2, 0, 3]), ('elliptic', ['--fv', 0, 0, 2, 1]),
              ('burgers', ['--num-flux=lax_friedrichs', '0.1']), ('burgers', ['--num-flux=engquist_osher', '0.1']),
              ('burgers_ei', [1, 2, 2, 5, 2, 5]), ('burgers', ['--num-flux=simplified_engquist_osher', '0.1']),
              ('cg2', [1, 20]), ('cg_oned', [1, 20]),
-             ('thermalblock', ['-e',2, 2, 3, 5]), ('thermalblock', [2, 2, 3, 5]),
+             ('thermalblock', ['-e', 2, 2, 3, 5]), ('thermalblock', [2, 2, 3, 5]),
              ('thermalblock_gui', ['--testing', 2, 2, 3, 5]),
              ('thermalblock_pod', [2, 2, 3, 5]))
-DEMO_ARGS = [('pymordemos.{}'.format(a), b) for (a,b) in DEMO_ARGS]
+DEMO_ARGS = [('pymordemos.{}'.format(a), b) for (a, b) in DEMO_ARGS]
 # DEMO_ARGS = [('pymor.playground.demos.remote_thermalblock', ['--local', '-e',2, 2, 3, 5])]
 DEMO_ARGS += [('pymor.playground.demos.parabolic', [])]
+
 
 def _run(module, args):
     sys.argv = [module] + [str(a) for a in args]
@@ -34,16 +37,18 @@ def _run(module, args):
 def demo_args(request):
     return request.param
 
+
 def _is_failed_import_ok(error):
     if error.message == 'cannot visualize: import of PySide failed':
         return not HAVE_PYSIDE
     return False
 
+
 def test_demos(demo_args):
     module, args = demo_args
     try:
         ret = _run(module, args)
-        #TODO find a better/tighter assert/way to run the code
+        # TODO find a better/tighter assert/way to run the code
         assert ret is not None
     except ImportError as ie:
         assert _is_failed_import_ok(ie)
@@ -55,7 +60,7 @@ def test_demos_tested():
     modules = []
     for _, module_name, _ in pkgutil.walk_packages(pymordemos.__path__, pymordemos.__name__ + '.'):
         try:
-            foo = __import__(module_name)
+            __import__(module_name)
             modules.append(module_name)
         except (TypeError, ImportError):
             pass
