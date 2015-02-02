@@ -438,7 +438,7 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
     grid
         |Grid| over which to assemble the functional.
     function
-        The |Function| with which to take the scalar product.
+        The |Function| with which to take the scalar product or `None`.
     boundary_info
         |BoundaryInfo| determining the Dirichlet and Neumann boundaries or `None`.
         If `None`, no boundary treatment is performed.
@@ -465,7 +465,7 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
 
     def __init__(self, grid, function=None, boundary_info=None, dirichlet_data=None, diffusion_function=None,
                  diffusion_constant=None, neumann_data=None, order=1, name=None):
-        assert function.shape_range == tuple()
+        assert function is None or function.shape_range == tuple()
         self.source = NumpyVectorSpace(grid.size(0))
         self.grid = grid
         self.boundary_info = boundary_info
