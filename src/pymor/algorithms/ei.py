@@ -78,7 +78,6 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
     logger.info('Generating Interpolation Data ...')
 
     interpolation_dofs = np.zeros((0,), dtype=np.int32)
-    interpolation_matrix = np.zeros((0, 0))
     collateral_basis = U.empty()
     max_errs = []
     triangularity_errs = []
@@ -123,15 +122,7 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
         new_vec *= 1 / new_dof_value
         interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
         collateral_basis.append(new_vec)
-        interpolation_matrix = collateral_basis.components(interpolation_dofs).T
         max_errs.append(max_err)
-
-        triangularity_error = np.max(np.abs(interpolation_matrix - np.tril(interpolation_matrix)))
-        triangularity_errs.append(triangularity_error)
-        logger.info('Interpolation matrix is not lower triangular with maximum error of {}'
-                    .format(triangularity_error))
-
-        logger.info('')
 
         # update U and ERR
         new_dof_values = U.components([new_dof])
@@ -141,6 +132,15 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
             gram_schmidt(onb_collateral_basis, offset=len(onb_collateral_basis) - 1, copy=False)
             coeffs = ERR.dot(onb_collateral_basis, o_ind=len(onb_collateral_basis) - 1, pairwise=False)
             ERR -= onb_collateral_basis.lincomb(coeffs, ind=len(onb_collateral_basis) - 1)
+
+    interpolation_matrix = collateral_basis.components(interpolation_dofs).T
+    triangularity_errors = np.abs(interpolation_matrix - np.tril(interpolation_matrix))
+    for d in range(1, len(interpolation_matrix) + 1):
+        triangularity_errs.append(np.max(triangularity_errors[:d, :d]))
+
+    logger.info('Interpolation matrix is not lower triangular with maximum error of {}'
+                .format(triangularity_errs[-1]))
+    logger.info('')
 
     data = {'errors': max_errs, 'triangularity_errors': triangularity_errs}
 
