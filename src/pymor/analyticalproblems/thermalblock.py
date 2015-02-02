@@ -56,8 +56,6 @@ class ThermalBlockProblem(EllipticProblem):
 
         domain = RectDomain()
         parameter_space = CubicParameterSpace({'diffusion': (num_blocks[1], num_blocks[0])}, *parameter_range)
-        dx = 1 / num_blocks[0]
-        dy = 1 / num_blocks[1]
 
         def parameter_functional_factory(x, y):
             return ProjectionParameterFunctional(component_name='diffusion',
@@ -65,7 +63,7 @@ class ThermalBlockProblem(EllipticProblem):
                                                  coordinates=(num_blocks[1] - y - 1, x),
                                                  name='diffusion_{}_{}'.format(x, y))
 
-        diffusion_functions = tuple(ThermalBlockDiffusionFunction(x, y, dx, dy)
+        diffusion_functions = tuple(ThermalBlockDiffusionFunction(x, y, num_blocks[0], num_blocks[1])
                                     for x, y in product(xrange(num_blocks[0]), xrange(num_blocks[1])))
         parameter_functionals = tuple(parameter_functional_factory(x, y)
                                       for x, y in product(xrange(num_blocks[0]), xrange(num_blocks[1])))
@@ -82,12 +80,21 @@ class ThermalBlockDiffusionFunction(FunctionInterface):
     dim_domain = 2
     shape_range = tuple()
 
-    def __init__(self, x, y, dx, dy):
+    def __init__(self, x, y, nx, ny):
         self.x = x
         self.y = y
-        self.dx = dx
-        self.dy = dy
+        self.nx = nx
+        self.ny = ny
+        self.dx = 1. / nx
+        self.dy = 1. / ny
 
     def evaluate(self, x, mu=None):
-        return (1. * (x[..., 0] >= self.x * self.dx) * (x[..., 0] < (self.x + 1) * self.dx)
-                   * (x[..., 1] >= self.y * self.dy) * (x[..., 1] < (self.y + 1) * self.dy))
+        if self.x + 1 < self.nx:
+            X = (x[..., 0] >= self.x * self.dx) * (x[..., 0] < (self.x + 1) * self.dx)
+        else:
+            X = (x[..., 0] >= self.x * self.dx)
+        if self.y + 1 < self.ny:
+            Y = (x[..., 1] >= self.y * self.dy) * (x[..., 1] < (self.y + 1) * self.dy)
+        else:
+            Y = (x[..., 1] >= self.y * self.dy)
+        return X * Y * 1.
