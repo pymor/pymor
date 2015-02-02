@@ -317,6 +317,8 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                     layout.addLayout(plot_layout)
                     if not separate_colorbars:
                         layout.addWidget(self.colorbarwidgets[0])
+                        for w in self.colorbarwidgets[1:]:
+                            w.setVisible(False)
                     self.setLayout(layout)
                     self.plots = plots
 
