@@ -8,6 +8,7 @@ from __future__ import absolute_import, division, print_function
 from itertools import izip
 from numbers import Number
 import atexit
+from collections import OrderedDict
 import tempfile
 import getpass
 import os
@@ -56,6 +57,8 @@ class DiskVectorArray(VectorArrayInterface):
         self.vector_type, self.vector_subtype = subtype
         self.dir = tempfile.mkdtemp(dir=basedir())
         self._len = len(vectors)
+        self.cache_size = 1
+        self._cache = OrderedDict()
         for i, v in enumerate(vectors):
             self._store(i, v)
 
@@ -71,10 +74,20 @@ class DiskVectorArray(VectorArrayInterface):
     def _store(self, i, v):
         with open(os.path.join(self.dir, str(i)), 'w') as f:
             dump(v, f)
+        self._cache[i] = v
+        if len(self._cache) > self.cache_size:
+            self._cache.popitem(last=False)
 
     def _load(self, i):
-        with open(os.path.join(self.dir, str(i))) as f:
-            return load(f)
+        if i in self._cache:
+            return self._cache[i]
+        else:
+            with open(os.path.join(self.dir, str(i))) as f:
+                v = load(f)
+            self._cache[i] = v
+            if len(self._cache) > self.cache_size:
+                self._cache.popitem(last=False)
+            return v
 
     def get(self, ind=None):
         assert self.check_ind(ind)
@@ -123,12 +136,14 @@ class DiskVectorArray(VectorArrayInterface):
         assert other is not self or not remove_from_other
         o_ind = list(xrange(other._len)) if o_ind is None else [o_ind] if isinstance(o_ind, Number) else o_ind
 
+        self._cache.clear()
         if not remove_from_other:
             for d, s in enumerate(o_ind):
                 shutil.copy(os.path.join(other.dir, str(s)),
                             os.path.join(self.dir, str(d + self._len)))
             self._len += len(o_ind)
         else:
+            other._cache.clear()
             if len(set(o_ind)) < len(o_ind):
                 self.append(other, o_ind=o_ind, remove_from_other=False)
                 other.remove(o_ind)
@@ -146,6 +161,7 @@ class DiskVectorArray(VectorArrayInterface):
 
     def remove(self, ind=None):
         assert self.check_ind(ind)
+        self._cache.clear()
         ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else list(set(ind))
         for i in ind:
             os.remove(os.path.join(self.dir, str(i)))
@@ -157,6 +173,7 @@ class DiskVectorArray(VectorArrayInterface):
 
     def replace(self, other, ind=None, o_ind=None, remove_from_other=False):
         assert self.check_ind_unique(ind)
+        self._cache.clear()
         assert other.check_ind(o_ind)
         assert other.space == self.space
         assert other is not self or not remove_from_other
