@@ -494,7 +494,7 @@ def test_axpy_one_x(compatible_vector_array_pair):
         dv1 = v1.data
         dv2 = v2.data
 
-    for ind1, ind2 in zip(valid_inds(v1), valid_inds(v2, 1)):
+    for ind1, ind2 in product(valid_inds(v1), valid_inds(v2, 1)):
         if v1.len_ind(ind1) != v1.len_ind_unique(ind1):
             with pytest.raises(Exception):
                 c1, c2 = v1.copy(), v2.copy()
