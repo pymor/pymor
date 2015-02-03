@@ -232,20 +232,26 @@ class NumpyVectorArray(VectorArrayInterface):
         if np.all(alpha == 1):
             if ind is None:
                 self._array[:self._len] += B
+            elif isinstance(ind, Number) and B.ndim == 2:
+                self._array[ind] += B.reshape((B.shape[1],))
             else:
                 self._array[ind] += B
         elif np.all(alpha == -1):
             if ind is None:
                 self._array[:self._len] -= B
+            elif isinstance(ind, Number) and B.ndim == 2:
+                self._array[ind] -= B.reshape((B.shape[1],))
             else:
                 self._array[ind] -= B
         else:
-            if isinstance(alpha, np.ndarray) and len(alpha) > 1:
+            if isinstance(alpha, np.ndarray):
                 alpha = alpha[:, np.newaxis]
             if ind is None:
-                self._array[:self._len] += B * alpha
+                self._array[:self._len] += (B * alpha)
+            elif isinstance(ind, Number):
+                self._array[ind] += (B * alpha).reshape((-1,))
             else:
-                self._array[ind] += B * alpha
+                self._array[ind] += (B * alpha)
 
     def dot(self, other, pairwise, ind=None, o_ind=None):
         assert self.check_ind(ind)
