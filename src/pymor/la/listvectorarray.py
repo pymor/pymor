@@ -356,17 +356,28 @@ class ListVectorArray(VectorArrayInterface):
 
     def scal(self, alpha, ind=None):
         assert self.check_ind_unique(ind)
-        assert isinstance(alpha, Number)
+        assert isinstance(alpha, Number) \
+            or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
 
         if ind is None:
-            for v in self._list:
-                v.scal(alpha)
+            if isinstance(alpha, np.ndarray):
+                for a, v in izip(alpha, self._list):
+                    v.scal(a)
+            else:
+                for v in self._list:
+                    v.scal(alpha)
         elif isinstance(ind, Number):
+            if isinstance(alpha, np.ndarray):
+                alpha = alpha[0]
             self._list[ind].scal(alpha)
         else:
             l = self._list
-            for i in ind:
-                l[i].scal(alpha)
+            if isinstance(alpha, np.ndarray):
+                for a, i in zip(alpha, ind):
+                    l[i].scal(a)
+            else:
+                for i in ind:
+                    l[i].scal(alpha)
 
     def axpy(self, alpha, x, ind=None, x_ind=None):
         assert self.check_ind_unique(ind)

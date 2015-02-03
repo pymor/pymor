@@ -234,10 +234,15 @@ class VectorArrayInterface(BasicInterface):
 
             self[ind] = alpha*self[ind]
 
+        If `alpha` is a scalar, each vector is multiplied by this scalar. Otherwise, `alpha`
+        has to be a one-dimensional |NumPy array| of the same length as `self` (`ind`)
+        containing the factors for each vector.
+
         Parameters
         ----------
         alpha
-            The scalar coefficient with which the vectors in `self` are multiplied
+            The scalar coefficient or one-dimensional |NumPy array| of coefficients
+            with which the vectors in `self` are multiplied.
         ind
             Indices of the vectors of `self` that are to be scaled (see class documentation).
             Repeated indices are forbidden.
