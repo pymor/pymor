@@ -126,12 +126,12 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
 
         # update U and ERR
         new_dof_values = U.components([new_dof])
-        U -= new_vec.lincomb(new_dof_values)
+        U.axpy(-new_dof_values[:, 0], new_vec)
         if projection == 'orthogonal':
             onb_collateral_basis.append(new_vec)
             gram_schmidt(onb_collateral_basis, offset=len(onb_collateral_basis) - 1, copy=False)
             coeffs = ERR.dot(onb_collateral_basis, o_ind=len(onb_collateral_basis) - 1, pairwise=False)
-            ERR -= onb_collateral_basis.lincomb(coeffs, ind=len(onb_collateral_basis) - 1)
+            ERR.axpy(-coeffs[:, 0], onb_collateral_basis, x_ind=len(onb_collateral_basis) - 1)
 
     interpolation_matrix = collateral_basis.components(interpolation_dofs).T
     triangularity_errors = np.abs(interpolation_matrix - np.tril(interpolation_matrix))
