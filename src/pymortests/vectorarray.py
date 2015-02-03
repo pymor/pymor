@@ -468,7 +468,8 @@ def test_axpy(compatible_vector_array_pair):
         assert np.all(c1.almost_equal(v1))
         assert np.all(c2.almost_equal(v2))
 
-        for a in (1., 1.4, -42):
+        np.random.seed(len(v1) + 39)
+        for a in (1., 1.4, np.random.random(v1.len_ind(ind1))):
             c1, c2 = v1.copy(), v2.copy()
             c1.axpy(a, c2, ind=ind1, x_ind=ind2)
             assert len(c1) == len(v1)
@@ -485,7 +486,60 @@ def test_axpy(compatible_vector_array_pair):
                     if NUMPY_INDEX_QUIRK and len(x) == 0:
                         pass
                     else:
-                        x[ind1] += indexed(dv2, ind2) * a
+                        if isinstance(a, np.ndarray):
+                            aa = a[:, np.newaxis]
+                        else:
+                            aa = a
+                        x[ind1] += indexed(dv2, ind2) * aa
+                assert np.allclose(c1.data, x)
+            c1.axpy(-a, c2, ind=ind1, x_ind=ind2)
+            assert len(c1) == len(v1)
+            assert np.all(c1.almost_equal(v1))
+
+
+def test_axpy_one_x(compatible_vector_array_pair):
+    v1, v2 = compatible_vector_array_pair
+    if hasattr(v1, 'data'):
+        dv1 = v1.data
+        dv2 = v2.data
+
+    for ind1, ind2 in zip(valid_inds(v1), valid_inds(v2, 1)):
+        if v1.len_ind(ind1) != v1.len_ind_unique(ind1):
+            with pytest.raises(Exception):
+                c1, c2 = v1.copy(), v2.copy()
+                c1.axpy(0., c2, ind=ind1, x_ind=ind2)
+            continue
+
+        ind1_complement = ind_complement(v1, ind1)
+        c1, c2 = v1.copy(), v2.copy()
+        c1.axpy(0., c2, ind=ind1, x_ind=ind2)
+        assert len(c1) == len(v1)
+        assert np.all(c1.almost_equal(v1))
+        assert np.all(c2.almost_equal(v2))
+
+        np.random.seed(len(v1) + 39)
+        for a in (1., 1.4, np.random.random(v1.len_ind(ind1))):
+            c1, c2 = v1.copy(), v2.copy()
+            c1.axpy(a, c2, ind=ind1, x_ind=ind2)
+            assert len(c1) == len(v1)
+            assert np.all(c1.almost_equal(v1, ind=ind1_complement, o_ind=ind1_complement))
+            assert np.all(c2.almost_equal(v2))
+            assert np.all(c1.sup_norm(ind1) <= v1.sup_norm(ind1) + abs(a) * v2.sup_norm(ind2) * (1. + 1e-10))
+            assert np.all(c1.l1_norm(ind1) <= (v1.l1_norm(ind1) + abs(a) * v2.l1_norm(ind2)) * (1. + 1e-10))
+            assert np.all(c1.l2_norm(ind1) <= (v1.l2_norm(ind1) + abs(a) * v2.l2_norm(ind2)) * (1. + 1e-10))
+            if hasattr(v1, 'data'):
+                x = dv1.copy()
+                if isinstance(ind1, Number):
+                    x[[ind1]] += indexed(dv2, ind2) * a
+                else:
+                    if NUMPY_INDEX_QUIRK and len(x) == 0:
+                        pass
+                    else:
+                        if isinstance(a, np.ndarray):
+                            aa = a[:, np.newaxis]
+                        else:
+                            aa = a
+                        x[ind1] += indexed(dv2, ind2) * aa
                 assert np.allclose(c1.data, x)
             c1.axpy(-a, c2, ind=ind1, x_ind=ind2)
             assert len(c1) == len(v1)
@@ -511,7 +565,8 @@ def test_axpy_self(vector_array):
         assert np.all(c.almost_equal(v))
         assert np.all(c.almost_equal(v))
 
-        for a in (1., 1.4, -42):
+        np.random.seed(len(v) + 8)
+        for a in (1., 1.4, np.random.random(v.len_ind(ind1))):
             c = v.copy()
             c.axpy(a, c, ind=ind1, x_ind=ind2)
             assert len(c) == len(v)
@@ -526,7 +581,11 @@ def test_axpy_self(vector_array):
                     if NUMPY_INDEX_QUIRK and len(x) == 0:
                         pass
                     else:
-                        x[ind1] += indexed(dv, ind2) * a
+                        if isinstance(a, np.ndarray):
+                            aa = a[:, np.newaxis]
+                        else:
+                            aa = a
+                        x[ind1] += indexed(dv, ind2) * aa
                 assert np.allclose(c.data, x)
             c.axpy(-a, v, ind=ind1, x_ind=ind2)
             assert len(c) == len(v)
@@ -1060,6 +1119,8 @@ def test_scal_wrong_ind(vector_array):
 def test_axpy_wrong_ind(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
     for ind1, ind2 in invalid_ind_pairs(v1, v2):
+        if v2.len_ind(ind2) == 1:
+            continue
         c1, c2 = v1.copy(), v2.copy()
         with pytest.raises(Exception):
             c1.axpy(0., c2, ind=ind1, x_ind=ind2)
@@ -1072,6 +1133,17 @@ def test_axpy_wrong_ind(compatible_vector_array_pair):
         c1, c2 = v1.copy(), v2.copy()
         with pytest.raises(Exception):
             c1.axpy(1.456, c2, ind=ind1, x_ind=ind2)
+
+
+def test_axpy_wrong_coefficients(compatible_vector_array_pair):
+    v1, v2 = compatible_vector_array_pair
+    for ind1, ind2 in valid_inds_of_same_length(v1, v2):
+        np.random.seed(len(v1) + 99)
+        for alpha in ([np.array([]), np.eye(v1.len_ind(ind1)), np.random.random(v1.len_ind(ind1) + 1)]
+                      if v1.len_ind(ind1) > 0 else
+                      [np.random.random(1)]):
+            with pytest.raises(Exception):
+                v1.axpy(alpha, v2, ind=ind1, x_ind=ind2)
 
 
 def test_dot_wrong_ind(compatible_vector_array_pair):

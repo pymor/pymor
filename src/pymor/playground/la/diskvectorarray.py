@@ -233,7 +233,9 @@ class DiskVectorArray(VectorArrayInterface):
         assert self.check_ind_unique(ind)
         assert x.check_ind(x_ind)
         assert self.space == x.space
-        assert self.len_ind(ind) == x.len_ind(x_ind)
+        assert self.len_ind(ind) == x.len_ind(x_ind) or x.len_ind(x_ind) == 1
+        assert isinstance(alpha, Number) \
+            or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
         ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
         x_ind = list(xrange(x._len)) if x_ind is None else [x_ind] if isinstance(x_ind, Number) else x_ind
 
@@ -242,8 +244,14 @@ class DiskVectorArray(VectorArrayInterface):
                 self.axpy(alpha, x.copy(x_ind), ind)
                 return
 
-        if alpha == 0:
+        if np.all(alpha == 0):
             return
+
+        if isinstance(alpha, np.ndarray):
+            for a, xx, y in izip(alpha, x_ind, ind):
+                new_vec = self._load(y)
+                new_vec.axpy(a, x._load(xx))
+                self._store(y, new_vec)
         else:
             for xx, y in izip(x_ind, ind):
                 new_vec = self._load(y)

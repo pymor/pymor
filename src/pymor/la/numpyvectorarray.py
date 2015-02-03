@@ -211,7 +211,9 @@ class NumpyVectorArray(VectorArrayInterface):
         assert self.check_ind_unique(ind)
         assert x.check_ind(x_ind)
         assert self.dim == x.dim
-        assert self.len_ind(ind) == x.len_ind(x_ind)
+        assert self.len_ind(ind) == x.len_ind(x_ind) or x.len_ind(x_ind) == 1
+        assert isinstance(alpha, Number) \
+            or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
 
         if NUMPY_INDEX_QUIRK:
             if self._len == 0 and hasattr(ind, '__len__'):
@@ -219,22 +221,24 @@ class NumpyVectorArray(VectorArrayInterface):
             if x._len == 0 and hasattr(x_ind, '__len__'):
                 x_ind = None
 
-        if alpha == 0:
+        if np.all(alpha == 0):
             return
 
         B = x._array[:x._len] if x_ind is None else x._array[x_ind]
 
-        if alpha == 1:
+        if np.all(alpha == 1):
             if ind is None:
                 self._array[:self._len] += B
             else:
                 self._array[ind] += B
-        elif alpha == -1:
+        elif np.all(alpha == -1):
             if ind is None:
                 self._array[:self._len] -= B
             else:
                 self._array[ind] -= B
         else:
+            if isinstance(alpha, np.ndarray) and len(alpha) > 1:
+                alpha = alpha[:, np.newaxis]
             if ind is None:
                 self._array[:self._len] += B * alpha
             else:

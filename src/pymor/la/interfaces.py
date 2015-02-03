@@ -252,13 +252,18 @@ class VectorArrayInterface(BasicInterface):
 
             self[ind] = alpha*x[x_ind] + self[ind]
 
-        The subtypes of `self` and `x` as well as the lengths of `self` (`ind`) and
-        `x` (`x_ind`) have to agree.
+        The subtypes of `self` and `x` have to agree. If the length of `x` (`x_ind`) is 1,
+        the same `x` vector is used for all vectors in `self`. Otherwise, the lengths of `self`
+        (`ind`) and `x` (`x_ind`) have to agree.
+        If `alpha` is a scalar, each `x` vector is multiplied with the same factor `alpha`.
+        Otherwise, `alpha` has to be a one-dimensional |NumPy array| of the same length as
+        `self` (`ind`)  containing the coefficients for each `x` vector.
 
         Parameters
         ----------
         alpha
-            The scalar coefficient with which the vectors in `x` are multiplied
+            The scalar coefficient or one-dimensional |NumPy array| of coefficients with which
+            the vectors in `x` are multiplied.
         x
             A |VectorArray| containing the x-summands.
         ind

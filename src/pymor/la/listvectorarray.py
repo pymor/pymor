@@ -369,7 +369,9 @@ class ListVectorArray(VectorArrayInterface):
         assert self.check_ind_unique(ind)
         assert x.check_ind(x_ind)
         assert self.space == x.space
-        assert self.len_ind(ind) == x.len_ind(x_ind)
+        assert self.len_ind(ind) == x.len_ind(x_ind) or x.len_ind(x_ind) == 1
+        assert isinstance(alpha, Number) \
+            or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
 
         if self is x:
             if ind is None or x_ind is None:
@@ -401,16 +403,24 @@ class ListVectorArray(VectorArrayInterface):
             X = (x._list[i] for i in x_ind)
             len_X = len(x_ind)
 
-        if alpha == 0:
+        if np.all(alpha == 0):
             return
         elif len_X == 1:
             xx = next(X)
-            for y in Y:
-                y.axpy(alpha, xx)
+            if isinstance(alpha, np.ndarray):
+                for a, y in izip(alpha, Y):
+                    y.axpy(a, xx)
+            else:
+                for y in Y:
+                    y.axpy(alpha, xx)
         else:
             assert len_X == len_Y
-            for xx, y in izip(X, Y):
-                y.axpy(alpha, xx)
+            if isinstance(alpha, np.ndarray):
+                for a, xx, y in izip(alpha, X, Y):
+                    y.axpy(a, xx)
+            else:
+                for xx, y in izip(X, Y):
+                    y.axpy(alpha, xx)
 
     def dot(self, other, pairwise, ind=None, o_ind=None):
         assert self.check_ind(ind)
