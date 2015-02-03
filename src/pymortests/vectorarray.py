@@ -422,7 +422,7 @@ def test_scal(vector_array):
         assert np.all(c.almost_equal(v.zeros(v.len_ind(ind)), ind=ind))
         assert np.all(c.almost_equal(v, ind=ind_complement_, o_ind=ind_complement_))
 
-        for x in (-1., 3., 4):
+        for x in (1., 1.4, np.random.random(v.len_ind(ind))):
             c = v.copy()
             c.scal(x, ind=ind)
             assert np.all(c.almost_equal(v, ind=ind_complement_, o_ind=ind_complement_))
@@ -433,19 +433,10 @@ def test_scal(vector_array):
                 if NUMPY_INDEX_QUIRK and len(y) == 0:
                     pass
                 else:
+                    if isinstance(x, np.ndarray) and not isinstance(ind, Number):
+                        x = x[:, np.newaxis]
                     y[ind] *= x
                 assert np.allclose(c.data, y)
-
-
-def test_scal_wrong_factor(vector_array):
-    v = vector_array
-    for ind in valid_inds(v):
-        with pytest.raises(Exception):
-            v.scal(v, ind=ind)
-        with pytest.raises(Exception):
-            v.scal(np.ones(v.dim), ind=ind)
-        with pytest.raises(Exception):
-            v.scal([], ind=ind)
 
 
 def test_axpy(compatible_vector_array_pair):
@@ -938,10 +929,6 @@ def test_mul_wrong_factor(vector_array):
     v = vector_array
     with pytest.raises(Exception):
         _ = v * v
-    with pytest.raises(Exception):
-        _ = v * np.ones(v.dim)
-    with pytest.raises(Exception):
-        _ = v * []
 
 
 def test_imul(vector_array):
@@ -958,10 +945,6 @@ def test_imul_wrong_factor(vector_array):
     v = vector_array
     with pytest.raises(Exception):
         v *= v
-    with pytest.raises(Exception):
-        v *= np.ones(v.dim)
-    with pytest.raises(Exception):
-        v *= []
 
 
 ########################################################################################################################
@@ -1114,6 +1097,17 @@ def test_scal_wrong_ind(vector_array):
         c = v.copy()
         with pytest.raises(Exception):
             c.scal(1.2, ind=ind)
+
+
+def test_scal_wrong_coefficients(vector_array):
+    v = vector_array
+    for ind in valid_inds(v):
+        np.random.seed(len(v) + 99)
+        for alpha in ([np.array([]), np.eye(v.len_ind(ind)), np.random.random(v.len_ind(ind) + 1)]
+                      if v.len_ind(ind) > 0 else
+                      [np.random.random(1)]):
+            with pytest.raises(Exception):
+                v.scal(alpha, ind=ind)
 
 
 def test_axpy_wrong_ind(compatible_vector_array_pair):

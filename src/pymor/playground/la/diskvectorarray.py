@@ -222,12 +222,19 @@ class DiskVectorArray(VectorArrayInterface):
 
     def scal(self, alpha, ind=None):
         assert self.check_ind_unique(ind)
-        assert isinstance(alpha, Number)
+        assert isinstance(alpha, Number) \
+            or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
         ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
-        for i in ind:
-            new_vec = self._load(i)
-            new_vec.scal(alpha)
-            self._store(i, new_vec)
+        if isinstance(alpha, np.ndarray):
+            for a, i in izip(alpha, ind):
+                new_vec = self._load(i)
+                new_vec.scal(a)
+                self._store(i, new_vec)
+        else:
+            for i in ind:
+                new_vec = self._load(i)
+                new_vec.scal(alpha)
+                self._store(i, new_vec)
 
     def axpy(self, alpha, x, ind=None, x_ind=None):
         assert self.check_ind_unique(ind)

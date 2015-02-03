@@ -197,11 +197,14 @@ class NumpyVectorArray(VectorArrayInterface):
 
     def scal(self, alpha, ind=None):
         assert self.check_ind_unique(ind)
-        assert isinstance(alpha, Number)
+        assert isinstance(alpha, Number) \
+            or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
 
         if NUMPY_INDEX_QUIRK and self._len == 0:
             return
 
+        if isinstance(alpha, np.ndarray) and not isinstance(ind, Number):
+            alpha = alpha[:, np.newaxis]
         if ind is None:
             self._array[:self._len] *= alpha
         else:
