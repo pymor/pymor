@@ -254,16 +254,29 @@ class DiskVectorArray(VectorArrayInterface):
         if np.all(alpha == 0):
             return
 
-        if isinstance(alpha, np.ndarray):
-            for a, xx, y in izip(alpha, x_ind, ind):
-                new_vec = self._load(y)
-                new_vec.axpy(a, x._load(xx))
-                self._store(y, new_vec)
+        if len(x_ind) == 1:
+            x = x._load(x_ind[0])
+            if isinstance(alpha, np.ndarray):
+                for a, y in izip(alpha, ind):
+                    new_vec = self._load(y)
+                    new_vec.axpy(a, x)
+                    self._store(y, new_vec)
+            else:
+                for y in ind:
+                    new_vec = self._load(y)
+                    new_vec.axpy(alpha, x)
+                    self._store(y, new_vec)
         else:
-            for xx, y in izip(x_ind, ind):
-                new_vec = self._load(y)
-                new_vec.axpy(alpha, x._load(xx))
-                self._store(y, new_vec)
+            if isinstance(alpha, np.ndarray):
+                for a, xx, y in izip(alpha, x_ind, ind):
+                    new_vec = self._load(y)
+                    new_vec.axpy(a, x._load(xx))
+                    self._store(y, new_vec)
+            else:
+                for xx, y in izip(x_ind, ind):
+                    new_vec = self._load(y)
+                    new_vec.axpy(alpha, x._load(xx))
+                    self._store(y, new_vec)
 
     def dot(self, other, pairwise, ind=None, o_ind=None):
         assert self.check_ind(ind)
