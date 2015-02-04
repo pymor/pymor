@@ -231,7 +231,7 @@ def deim(U, modes=None, error_norm=None, product=None):
 
 def interpolate_operators(discretization, operator_names, parameter_sample, error_norm=None,
                           target_error=None, max_interpolation_dofs=None,
-                          projection='orthogonal', product=None, cache_region='memory'):
+                          projection='orthogonal', product=None):
     """Empirical operator interpolation using the EI-Greedy algorithm.
 
     This is a convenience method for facilitating the use of :func:`ei_greedy`. Given
@@ -263,8 +263,6 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
         See :func:`ei_greedy`.
     product
         See :func:`ei_greedy`.
-    cache_region
-        Name of the |CacheRegion| in which the operator evaluations will be stored.
 
     Returns
     -------
