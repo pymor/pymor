@@ -2,6 +2,17 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+"""This module contains methods for object serialization.
+
+Instead of importing serialization functions from Python's
+:mod:`pickle` module directly, you should use the `dump`, `dumps`,
+`load`, `loads` functions defined here.
+
+Moreover, :func:`dumps_function` provides a way to serialize
+function objects which cannot be serialized by `dumps`. Note,
+however, that its use should be avoided since it uses non-portable
+implementation details of CPython to achieve its goals.
+"""
 
 import marshal
 import opcode
