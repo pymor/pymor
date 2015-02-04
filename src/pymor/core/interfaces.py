@@ -50,7 +50,7 @@ are the following:
              are taken from the corresponding instance attributes.
 
     6. :meth:`BasicInterface.uid` provides a unique id for each instance. While
-       `id(obj)` is only guaranteed to be unique among all living python objects,
+       `id(obj)` is only guaranteed to be unique among all living Python objects,
        :meth:`BasicInterface.uid` will be (almost) unique among all pyMOR objects
        that have ever existed, including previous runs of the application. This
        is achieved by building the id from a uuid4 which is newly created for
@@ -83,7 +83,7 @@ functionality:
                - its value if it is an instance of `NoneType`, `str`, `int`, `float` or `bool`
                - its value if it is a numpy array of short size
 
-             For `tuple`, `list` or `dict` instance, the calculation is done by recursion.
+             For `tuple`, `list` or `dict` instances, the calculation is done by recursion.
              If none of these cases apply, sid calculation fails.
            - the state of all :mod:`~pymor.core.defaults` which have been set by the user
 
@@ -254,7 +254,7 @@ class BasicInterface(object):
     Attributes
     ----------
     locked
-        True if the instance is made immutable using `lock`.
+        `True` if the instance is made immutable using `lock`.
     logger
         A per-class instance of :class:`logging.Logger` with the class
         name as prefix.

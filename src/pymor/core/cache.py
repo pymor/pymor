@@ -10,7 +10,7 @@ be marked using the :class:`cached` decorator.
 
 To ensure consistency, :class:`CacheableInterface` derives from
 :class:`~pymor.core.interfaces.ImmutableInterface`: The return value of a
-cached method should only depend on its arguments as well as
+cached method call should only depend on its arguments as well as
 the immutable state of the class instance.
 
 Making this assumption, the keys for cache lookup are created from
@@ -34,7 +34,7 @@ Currently two backends are provided for memory-based and disk-based caching
 (:class:`MemoryRegion` and :class:`SQLiteRegion`). The available regions
 are stored in the module level `cache_regions` dict. The user can add
 additional regions (e.g. multiple disk cache regions) as required.
-:class:`CacheableInterface` takes a `region` argument through which a key of
+:class:`CacheableInterface` has a `region` attribute through which a key of
 the `cache_regions` dict can provided to select a cache region which should
 be used by the instance. (Setting `region` to `None` or `'none'` disables caching.)
 
