@@ -32,7 +32,7 @@ def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=
     analytical_problem
         The |InstationaryAdvectionProblem| to discretize.
     diameter
-        If not None, is passed to the domain_discretizer.
+        If not `None`, `diameter` is passed to the `domain_discretizer`.
     nt
         The number of time-steps.
     num_flux
@@ -61,12 +61,12 @@ def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=
         using this parameter.
     boundary_info
         A |BoundaryInfo| specifying the boundary types of the grid boundary entities.
-        Must be provided if `grid` is provided.
+        Must be provided if `grid` is specified.
 
     Returns
     -------
     discretization
-        The discretization that has been generated.
+        The |Discretization| that has been generated.
     data
         Dictionary with the following entries:
 

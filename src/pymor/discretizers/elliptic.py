@@ -28,7 +28,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
     analytical_problem
         The |EllipticProblem| to discretize.
     diameter
-        If not None, is passed to the domain_discretizer.
+        If not `None`, `diameter` is passed to the `domain_discretizer`.
     domain_discretizer
         Discretizer to be used for discretizing the analytical domain. This has
         to be a function `domain_discretizer(domain_description, diameter, ...)`.
@@ -39,12 +39,12 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
         using this parameter.
     boundary_info
         A |BoundaryInfo| specifying the boundary types of the grid boundary entities.
-        Must be provided if `grid` is provided.
+        Must be provided if `grid` is specified.
 
     Returns
     -------
     discretization
-        The discretization that has been generated.
+        The |Discretization| that has been generated.
     data
         Dictionary with the following entries:
 
@@ -120,7 +120,7 @@ def discretize_elliptic_fv(analytical_problem, diameter=None, domain_discretizer
     analytical_problem
         The |EllipticProblem| to discretize.
     diameter
-        If not None, is passed to the domain_discretizer.
+        If not `None`, `diameter` is passed to the `domain_discretizer`.
     domain_discretizer
         Discretizer to be used for discretizing the analytical domain. This has
         to be a function `domain_discretizer(domain_description, diameter, ...)`.
@@ -131,12 +131,12 @@ def discretize_elliptic_fv(analytical_problem, diameter=None, domain_discretizer
         using this parameter.
     boundary_info
         A |BoundaryInfo| specifying the boundary types of the grid boundary entities.
-        Must be provided if `grid` is provided.
+        Must be provided if `grid` is specified.
 
     Returns
     -------
     discretization
-        The discretization that has been generated.
+        The |Discretization| that has been generated.
     data
         Dictionary with the following entries:
 
