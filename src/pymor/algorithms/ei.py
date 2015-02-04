@@ -28,7 +28,7 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
               projection='orthogonal', product=None):
     """Generate data for empirical interpolation by a greedy search (EI-Greedy algorithm).
 
-    Given a |VectorArray| `U`, this method generates a collateral_basis and
+    Given a |VectorArray| `U`, this method generates a collateral basis and
     interpolation DOFs for empirical interpolation of the vectors contained in `U`.
     The returned objects can also be used to instantiate an |EmpiricalInterpolatedOperator|.
 
@@ -58,15 +58,15 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
     Returns
     -------
     interpolation_dofs
-        |NumPy array| of the DOFs at which the vectors are interpolated.
+        |NumPy array| of the DOFs at which the vectors are evaluated.
     collateral_basis
         |VectorArray| containing the generated collateral basis.
     data
         Dict containing the following fields:
 
-            :errors:                sequence of maximum approximation errors during
+            :errors:                Sequence of maximum approximation errors during
                                     greedy search.
-            :triangularity_errors:  sequence of maximum absolute values of interoplation
+            :triangularity_errors:  Sequence of maximum absolute values of interoplation
                                     matrix coefficients in the upper triangle (should
                                     be near zero).
     """
@@ -150,11 +150,11 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
 def deim(U, modes=None, error_norm=None, product=None):
     """Generate data for empirical interpolation using DEIM algorithm.
 
-    Given a |VectorArray| `U`, this method generates a collateral_basis and
+    Given a |VectorArray| `U`, this method generates a collateral basis and
     interpolation DOFs for empirical interpolation of the vectors contained in `U`.
     The returned objects can also be used to instantiate an |EmpiricalInterpolatedOperator|.
 
-    The collateral basis is determined by the first POD modes of `U`.
+    The collateral basis is determined by the first :func:`~pymor.la.pod.pod` modes of `U`.
 
     Parameters
     ----------
@@ -177,7 +177,7 @@ def deim(U, modes=None, error_norm=None, product=None):
     data
         Dict containing the following fields:
 
-            :errors: sequence of maximum approximation errors during greedy search.
+            :errors: Sequence of maximum approximation errors during greedy search.
     """
 
     assert isinstance(U, VectorArrayInterface)
@@ -241,8 +241,8 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
     interpolation data is used to create |EmpiricalInterpolatedOperators| and a new
     discretization with the interpolated operators is returned.
 
-    Note that this implementation creates ONE common collateral basis for all operators
-    which might not be what you want.
+    Note that this implementation creates ONE common collateral basis for all specified
+    operators which might not be what you want.
 
     Parameters
     ----------
@@ -272,9 +272,9 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
     data
         Dict containing the following fields:
 
-            :dofs:   |NumPy array| of the DOFs at which the |Operators| have to be evaluated.
-            :basis:  |VectorArray| containing the generated collateral basis.
-            :errors: sequence of maximum approximation errors during greedy search.
+            :dofs:    |NumPy array| of the DOFs at which the |Operators| have to be evaluated.
+            :basis:   |VectorArray| containing the generated collateral basis.
+            :errors:  Sequence of maximum approximation errors during greedy search.
     """
 
     sample = tuple(parameter_sample)

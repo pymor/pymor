@@ -44,7 +44,7 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
         The set of |Parameter| samples on which to perform the greedy search.
     initial_basis
         The initial reduced basis with which the algorithm starts. If `None`,
-        an empty basis is used as initial_basis.
+        an empty basis is used as initial basis.
     use_estimator
         If `True`, use `reduced_discretization.estimate()` to estimate the
         errors on the sample set. Otherwise a detailed simulation is
@@ -58,7 +58,7 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
         of the form `extension_algorithm(old_basis, new_vector)`, which
         returns a tuple `(new_basis, extension_data)`, where
         `extension_data` is a dict at least containing the key
-        `hierarchic`. `hierarchic` is set to `True` if `new_basis`
+        `hierarchic`. `hierarchic` should be set to `True` if `new_basis`
         contains `old_basis` as its first vectors.
     target_error
         If not `None`, stop the algorithm if the maximum (estimated) error
