@@ -12,8 +12,10 @@ from pymor.parameters.base import Parametric
 class DiscretizationInterface(CacheableInterface, Parametric):
     """Describes a discretization.
 
-    Note that we do not make any distinction between detailed and reduced
-    discretizations.
+    A discretization is an object describing a discrete problem
+    via its type and the |Operators| it contains and which can
+    :meth:`~DiscretizationInterface.solve`ed for a given |Paramter|
+    resulting in a solution |VectorArray|.
 
     Attributes
     ----------
@@ -25,12 +27,12 @@ class DiscretizationInterface(CacheableInterface, Parametric):
         Dictionary of all |Operators| contained in the discretization.
         (Compare the implementation of :func:`pymor.reductors.basic.reduce_generic_rb`.)
     functionals
-        Same as operators but for |Functionals|.
+        Same as `operators` but for |Functionals|.
     vector_operators
         Same as operators but for |Operators| representing vectors, i.e.
         linear |Operators| with `source.dim == 1`.
     products
-        Same as |Operators| but for inner product operators associated to the
+        Same as |Operators| but for inner product operators associated with the
         discretization.
     """
 
@@ -50,7 +52,7 @@ class DiscretizationInterface(CacheableInterface, Parametric):
     def solve(self, mu=None, **kwargs):
         """Solve for the |Parameter| `mu`.
 
-        The result is cached by default.
+        The result will be :mod:`~pymor.core.cache`d by default.
 
         Parameters
         ----------
@@ -59,7 +61,7 @@ class DiscretizationInterface(CacheableInterface, Parametric):
 
         Returns
         -------
-        The solution given by a |VectorArray|.
+        The solution given as a |VectorArray|.
         """
         return self._solve(mu, **kwargs)
 

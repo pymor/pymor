@@ -69,7 +69,7 @@ class StationaryDiscretization(DiscretizationBase):
 
         L(u(μ), μ) = F(μ)
 
-    with a linear functional F and a (possibly) non-linear operator L.
+    with a linear functional F and a (possibly non-linear) operator L.
 
     Parameters
     ----------
@@ -93,7 +93,7 @@ class StationaryDiscretization(DiscretizationBase):
         An error estimator for the problem. This can be any object with
         an `estimate(U, mu, discretization)` method. If `estimator` is
         not `None` an `estimate(U, mu)` method is added to the
-        discretization.
+        discretization which will call `estimator.estimate(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
         a `visualize(U, discretization, ...)` method. If `visualizer`
@@ -109,9 +109,9 @@ class StationaryDiscretization(DiscretizationBase):
     Attributes
     ----------
     operator
-        The |Operator| L. Synonymous for `operators['operator']`.
+        The |Operator| L. The same as `operators['operator']`.
     rhs
-        The |Functional| F. Synonymous for `functionals['rhs']`.
+        The |Functional| F. The same as `functionals['rhs']`.
     """
 
     sid_ignore = ('visualizer', 'cache_region', 'name')
@@ -174,16 +174,16 @@ class StationaryDiscretization(DiscretizationBase):
 
 
 class InstationaryDiscretization(DiscretizationBase):
-    """Generic class for discretizations of stationary problems.
+    """Generic class for discretizations of instationary problems.
 
     This class describes instationary problems given by the equations::
 
         M * ∂_t u(t, μ) + L(u(μ), t, μ) = F(t, μ)
                                 u(0, μ) = u_0(μ)
 
-    for t in [0,T], where L is a (possibly) non-linear time-dependent
+    for t in [0,T], where L is a (possibly non-linear) time-dependent
     |Operator|, F is a time-dependent linear |Functional|, and u_0 the
-    initial data. The mass operator is assumed to be linear,
+    initial data. The mass |Operator| M is assumed to be linear,
     time-independent and |Parameter|-independent.
 
     Parameters
@@ -193,7 +193,9 @@ class InstationaryDiscretization(DiscretizationBase):
     initial_data
         The initial data u_0. Either a |VectorArray| of length 1 or
         (for the |Parameter|-dependent case) a vector-like |Operator|
-        (i.e. a linear |Operator| with `source.dim == 1`).
+        (i.e. a linear |Operator| with `source.dim == 1`) which
+        applied to `NumpyVectorArray(np.array([1]))` will yield the
+        initial data for a given |Parameter|.
     operator
         The |Operator| L.
     rhs
@@ -222,7 +224,7 @@ class InstationaryDiscretization(DiscretizationBase):
         An error estimator for the problem. This can be any object with
         an `estimate(U, mu, discretization)` method. If `estimator` is
         not `None` an `estimate(U, mu)` method is added to the
-        discretization.
+        discretization which will call `estimator.estimate(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
         a `visualize(U, discretization, ...)` method. If `visualizer`
@@ -240,14 +242,14 @@ class InstationaryDiscretization(DiscretizationBase):
     T
         The end-time.
     initial_data
-        The intial data u_0 given by a vector-like |Operator|. Synonymous
-        for `vector_operators['initial_data']`.
+        The intial data u_0 given by a vector-like |Operator|. The same
+        as `vector_operators['initial_data']`.
     operator
-        The |Operator| L. Synonymous for `operators['operator']`.
+        The |Operator| L. The same as `operators['operator']`.
     rhs
-        The |Functional| F. Synonymous for `functionals['rhs']`.
+        The |Functional| F. The same as `functionals['rhs']`.
     mass
-        The mass operator M. Synonymous for `operators['mass']`.
+        The mass operator M. The same as `operators['mass']`.
     time_stepper
         The provided time-stepper.
     """
