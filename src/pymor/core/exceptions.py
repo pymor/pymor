@@ -22,12 +22,6 @@ class ConstError(Exception):
     pass
 
 
-class CallOrderWarning(UserWarning):
-    """I am raised when there's a preferred call order, but the user didn't follow it.
-    """
-    pass
-
-
 class AccuracyError(Exception):
     """Is raised if the result of a computation is inaccurate"""
 
@@ -37,11 +31,6 @@ class ExtensionError(Exception):
 
     This will mostly happen during a basis extension when the new snapshot is already
     in the span of the basis.
-    """
-
-
-class ConfigError(Exception):
-    """Is raised if a there is any kind of problem with the keys or values in a configuration.
     """
 
 
