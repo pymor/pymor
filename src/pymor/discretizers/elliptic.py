@@ -75,20 +75,17 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
 
     p = analytical_problem
 
-    if p.diffusion_functionals is not None or len(p.diffusion_functions) > 1:
+    if p.diffusion_functionals is not None:
         L0 = Operator(grid, boundary_info, diffusion_constant=0, name='diffusion_boundary_part')
 
         Li = [Operator(grid, boundary_info, diffusion_function=df, dirichlet_clear_diag=True,
                        name='diffusion_{}'.format(i))
               for i, df in enumerate(p.diffusion_functions)]
 
-        if p.diffusion_functionals is None:
-            L = LincombOperator(operators=Li + [L0], name='diffusion', num_coefficients=len(Li),
-                                coefficients_name='diffusion_coefficients')
-        else:
-            L = LincombOperator(operators=[L0] + Li, coefficients=[1.] + list(p.diffusion_functionals),
-                                name='diffusion')
+        L = LincombOperator(operators=[L0] + Li, coefficients=[1.] + list(p.diffusion_functionals),
+                            name='diffusion')
     else:
+        assert len(p.diffusion_functions) == 1
         L = Operator(grid, boundary_info, diffusion_function=p.diffusion_functions[0],
                      name='diffusion')
 
@@ -161,33 +158,24 @@ def discretize_elliptic_fv(analytical_problem, diameter=None, domain_discretizer
 
     p = analytical_problem
 
-    if p.diffusion_functionals is not None or len(p.diffusion_functions) > 1:
+    if p.diffusion_functionals is not None:
         Li = [fv.DiffusionOperator(grid, boundary_info, diffusion_function=df, name='diffusion_{}'.format(i))
               for i, df in enumerate(p.diffusion_functions)]
-        if p.diffusion_functionals is None:
-            L = LincombOperator(operators=Li, name='diffusion', num_coefficients=len(Li),
-                                coefficients_name='diffusion_coefficients')
-        else:
-            L = LincombOperator(operators=Li, coefficients=list(p.diffusion_functionals),
-                                name='diffusion')
+        L = LincombOperator(operators=Li, coefficients=list(p.diffusion_functionals),
+                            name='diffusion')
 
         F0 = fv.L2ProductFunctional(grid, p.rhs, boundary_info=boundary_info, neumann_data=p.neumann_data)
-
         if p.dirichlet_data is not None:
             Fi = [fv.L2ProductFunctional(grid, None, boundary_info=boundary_info, dirichlet_data=p.dirichlet_data,
                                          diffusion_function=df, name='dirichlet_{}'.format(i))
                   for i, df in enumerate(p.diffusion_functions)]
-
-            if p.diffusion_functionals is None:
-                F = LincombOperator(operators=Fi + [F0], name='rhs', num_coefficients=len(Li),
-                                    coefficients_name='diffusion_coefficients')
-            else:
-                F = LincombOperator(operators=[F0] + Fi, coefficients=[1.] + list(p.diffusion_functionals),
-                                    name='rhs')
+            F = LincombOperator(operators=[F0] + Fi, coefficients=[1.] + list(p.diffusion_functionals),
+                                name='rhs')
         else:
             F = F0
 
     else:
+        assert len(p.diffusion_functions) == 1
         L = fv.DiffusionOperator(grid, boundary_info, diffusion_function=p.diffusion_functions[0],
                                  name='diffusion')
 
