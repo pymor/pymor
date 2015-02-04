@@ -32,10 +32,9 @@ class EllipticProblem(ImmutableInterface):
     diffusion_functions
         List of the |functions| d_k(x).
     diffusion_functionals
-        List of the |ParameterFunctionals| θ_k(μ). If None, and
-        `len(diffusion_functions) > 1` let θ_k be the kth projection of the
-        coefficient part of μ.  If None and `len(diffusion_functions) == 1`,
-        no parameter dependence is assumed.
+        List containing the |ParameterFunctionals| θ_k(μ). If
+        `len(diffusion_functions) == 1`, `diffusion_functionals` is allowed
+        to be `None`, in which case no parameter dependence is assumed.
     dirichlet_data
         |Function| providing the Dirichlet boundary values in global coordinates.
     neumann_data
@@ -59,6 +58,9 @@ class EllipticProblem(ImmutableInterface):
                  diffusion_functionals=None,
                  dirichlet_data=None, neumann_data=None,
                  parameter_space=None, name=None):
+        assert isinstance(diffusion_functions, (tuple, list))
+        assert diffusion_functionals is None and len(diffusion_functions) == 1 \
+            or len(diffusion_functionals) == len(diffusion_functions)
         assert rhs.dim_domain == diffusion_functions[0].dim_domain
         assert dirichlet_data is None or dirichlet_data.dim_domain == diffusion_functions[0].dim_domain
         assert neumann_data is None or neumann_data.dim_domain == diffusion_functions[0].dim_domain
