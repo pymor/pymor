@@ -5,8 +5,8 @@
 """ This module provides generic time-stepping algorithms for the solution of
 instationary problems.
 
-The algorithms are generic in the sense each algorithms operates exclusively on
-|Operators| and |VectorArrays|. In particular, the algorithms
+The algorithms are generic in the sense that each algorithms operates exclusively
+on |Operators| and |VectorArrays|. In particular, the algorithms
 can also be used to turn an arbitrary stationary |Discretization| provided
 by an external library into an instationary |Discretization|.
 
@@ -31,7 +31,7 @@ class TimeStepperInterface(ImmutableInterface):
     Algorithms implementing this interface solve time-dependent problems
     of the form ::
 
-        M * d_t u + A(u, t) = F(t).
+        M * d_t u + A(u, mu, t) = F(mu, t).
 
     Time-steppers used by |InstationaryDiscretization| have to fulfill
     this interface.
@@ -41,7 +41,7 @@ class TimeStepperInterface(ImmutableInterface):
     def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
         """Apply time-stepper to the equation ::
 
-            M * d_t u + A(u, t) = F(t).
+            M * d_t u + A(u, mu, t) = F(mu, t).
 
         Parameters
         ----------
@@ -59,7 +59,7 @@ class TimeStepperInterface(ImmutableInterface):
         mass
             The |Operator| M. If `None`, the identity operator is assumed.
         mu
-            |Parameter| provided to `operator` (and `rhs`). The current time is added
+            |Parameter| for which `operator` and `rhs` are evaluated. The current time is added
             to `mu` with key `_t`.
         num_values
             The number of returned vectors of the solution trajectory. If `None`, each
@@ -77,7 +77,7 @@ class ImplicitEulerTimeStepper(TimeStepperInterface):
 
     Solves equations of the form ::
 
-        M * d_t u + A(u, t) = F(t).
+        M * d_t u + A(u, mu, t) = F(mu, t).
 
     Parameters
     ----------
@@ -102,7 +102,7 @@ class ExplicitEulerTimeStepper(TimeStepperInterface):
 
     Solves equations of the form ::
 
-        M * d_t u + A(u, t) = F(t).
+        M * d_t u + A(u, mu, t) = F(mu, t).
 
     Parameters
     ----------
