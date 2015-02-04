@@ -18,7 +18,7 @@ from pymor.parameters.spaces import CubicParameterSpace
 
 
 class ThermalBlockProblem(EllipticProblem):
-    """Analytical description of a 2D thermal block diffusion problem.
+    """Analytical description of a 2D 'thermal block' diffusion problem.
 
     This problem is to solve the elliptic equation ::
 

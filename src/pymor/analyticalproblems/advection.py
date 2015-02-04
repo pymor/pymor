@@ -29,13 +29,17 @@ class InstationaryAdvectionProblem(ImmutableInterface):
     domain
         A |DomainDescription| of the domain Ω the problem is posed on.
     flux_function
-        The |Function| f. The current time is provided by adding the key `'_t'`
-        to the |Parameter| `mu`.
+        The |Function| f. Note that the current time is handled as an
+        additional `'_t'` component of the |Parameter| `mu` which is
+        passed to `flux_function` and is not part of the domain of the
+        function. Moreover, `flux_function.dim_domain` has to be 1,
+        whereas `flux_function.shape_range` has to be `(dim Ω,)`.
     flux_function_derivative
         The derivative of f with respect to u.
     rhs
-        The |Function| s. The current time is provided by adding the key `'_t'`
-        to the |Parameter| `mu`.
+        The |Function| s. Note that the current time is handled as an
+        additional `'_t'` component of the |Parameter| `mu` which is
+        passed to `rhs` and is not part of the domain of the function.
     dirichlet_data
         |Function| providing the Dirichlet boundary values in global coordinates.
     initial_data

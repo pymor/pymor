@@ -13,7 +13,7 @@ from pymor.functions.basic import ConstantFunction
 
 
 class EllipticProblem(ImmutableInterface):
-    """Linear elliptic analytical problem.
+    """Affinely decomposed linear elliptic problem.
 
     The problem consists in solving ::
 
@@ -28,9 +28,11 @@ class EllipticProblem(ImmutableInterface):
     domain
         A |DomainDescription| of the domain the problem is posed on.
     rhs
-        The |Function| f(x, μ).
+        The |Function| f(x, μ). `rhs.dim_domain` has to agree with the
+        dimension of `domain`, whereas `rhs.shape_range` has to be `tuple()`.
     diffusion_functions
-        List of the |functions| d_k(x).
+        List containing the |Functions| d_k(x), each having `shape_range`
+        of either `tuple()` or `(dim domain, dim domain)`.
     diffusion_functionals
         List containing the |ParameterFunctionals| θ_k(μ). If
         `len(diffusion_functions) == 1`, `diffusion_functionals` is allowed
