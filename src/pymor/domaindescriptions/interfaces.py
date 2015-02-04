@@ -9,7 +9,7 @@ from pymor.domaindescriptions.boundarytypes import BoundaryType
 
 
 class DomainDescriptionInterface(ImmutableInterface):
-    """Analytically describes a domain and its boundary (types).
+    """Describes a geometric domain along with its boundary.
 
     Attributes
     ----------
