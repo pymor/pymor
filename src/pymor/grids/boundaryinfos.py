@@ -31,8 +31,8 @@ class BoundaryInfoFromIndicators(BoundaryInfoInterface):
         The grid to which the |BoundaryInfo| is associated.
     indicators
         Dict where each key is a |BoundaryType| and the corresponding value is a boolean
-        valued function on the analytical domain indicating if a point belongs to a boundary
-        of the |BoundaryType|. (The indicator functions must be vectorized.)
+        valued function defined on the analytical domain which indicates if a point belongs
+        to a boundary of the given |BoundaryType|. (The indicator functions must be vectorized.)
     """
 
     def __init__(self, grid, indicators, assert_unique_type=None, assert_some_type=None):

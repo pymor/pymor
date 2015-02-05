@@ -14,16 +14,15 @@ from pymor.grids.interfaces import AffineGridInterface
 class SubGrid(AffineGridInterface):
     """A subgrid of a |Grid|.
 
-    Given a list of a |Grid| and a list of codim-0 entities
-    we construct the minimal subgrid of the grid, containing
-    all the given entities.
+    Given a |Grid| and a list of codim-0 entities we construct the minimal
+    subgrid of the grid, containing all the given entities.
 
     Parameters
     ----------
     grid
         |Grid| of which a subgrid is to be created.
     entities
-        |Array| of global indices of the codim-0 entities which
+        |NumPy array| of global indices of the codim-0 entities which
         are to be contained in the subgrid.
 
     Attributes
@@ -71,7 +70,7 @@ class SubGrid(AffineGridInterface):
         return self.__parent_indices[codim]
 
     def indices_from_parent_indices(self, ind, codim):
-        """Maps an |Array| of indicies of codim-`codim` entites of the parent grid to indicies of the subgrid.
+        """Maps a |NumPy array| of indicies of codim-`codim` entites of the parent grid to indicies of the subgrid.
 
         Raises
         ------
