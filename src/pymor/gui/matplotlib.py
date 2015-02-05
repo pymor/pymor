@@ -2,10 +2,10 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-""" This module provides a widget for displaying plots of
-scalar data assigned to a 1D-Grid using :mod:`matplotlib`. This widget is not
-intended to be used directly. Instead, use
-:meth:`~pymor.gui.qt.visualize_matplotlib_1d` or
+""" This module provides a widgets for displaying plots of
+scalar data assigned to one- and two-dimensional grids using
+:mod:`matplotlib`. This widget is not intended to be used directly.
+Instead, use :meth:`~pymor.gui.qt.visualize_matplotlib_1d` or
 :class:`~pymor.gui.qt.Matplotlib1DVisualizer`.
 """
 

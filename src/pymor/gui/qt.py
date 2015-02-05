@@ -226,13 +226,14 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         Description of the data that is plotted. Most useful if `U` is a tuple in which
         case `legend` has to be a tuple of strings of the same length.
     separate_colorbars
-        If `True` use separate colorbars for each subplot.
+        If `True`, use separate colorbars for each subplot.
     backend
         Plot backend to use ('gl' or 'matplotlib').
     block
-        If `True` block execution until the plot window is closed.
+        If `True`, block execution until the plot window is closed.
     columns
-        The number of columns in the visualizer GUI. This is only used if `U` is a tuple.
+        The number of columns in the visualizer GUI in case multiple plots are displayed
+        at the same time.
     """
     if not HAVE_PYSIDE:
         raise ImportError('cannot visualize: import of PySide failed')
@@ -433,15 +434,16 @@ class PatchVisualizer(BasicInterface):
             Description of the data that is plotted. Most useful if `U` is a tuple in which
             case `legend` has to be a tuple of strings of the same length.
         separate_colorbars
-            If `True` use separate colorbars for each subplot.
+            If `True`, use separate colorbars for each subplot.
         block
-            If `True` block execution until the plot window is closed. If `None`, use the
+            If `True`, block execution until the plot window is closed. If `None`, use the
             default provided during instantiation.
         filename
             If specified, write the data to a VTK-file using
             :func:`pymor.tools.vtkio.write_vtk` instead of displaying it.
         columns
-            The number of columns in the visualizer GUI. This is only used if `U` is a tuple.
+            The number of columns in the visualizer GUI in case multiple plots are displayed
+            at the same time.
         """
         assert isinstance(U, VectorArrayInterface) and hasattr(U, 'data') \
             or (isinstance(U, tuple) and all(isinstance(u, VectorArrayInterface) and hasattr(u, 'data') for u in U)
@@ -472,7 +474,7 @@ class Matplotlib1DVisualizer(BasicInterface):
     codim
         The codimension of the entities the data in `U` is attached to (either 0 or 1).
     block
-        If `True` block execution until the plot window is closed.
+        If `True`, block execution until the plot window is closed.
     """
 
     def __init__(self, grid, codim=1, block=False):
