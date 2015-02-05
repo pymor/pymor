@@ -12,6 +12,7 @@ from pymor.parameters.base import Parametric
 
 
 class InducedNorm(ImmutableInterface, Parametric):
+    """Instantiated by :func:`induced_norm`. Do not use directly."""
 
     def __init__(self, product, raise_negative, tol, name):
         self.product = product
@@ -34,21 +35,21 @@ class InducedNorm(ImmutableInterface, Parametric):
 def induced_norm(product, raise_negative=True, tol=1e-10, name=None):
     """The induced norm of a scalar product.
 
-    The norm of a vector (an array of vectors) U is calculated by
+    The norm of a the vectors in a |VectorArray| U is calculated by
     calling ::
 
         product.apply2(U, U, mu=mu, pairwise=True)
 
     In addition, negative norm squares of absolute value smaller
     than `tol` are clipped to `0`.
-    If the `raise_negative` is `True`, a :exc:`ValueError` exception
+    If `raise_negative` is `True`, a :exc:`ValueError` exception
     is raised if there are still negative norm squares afterwards.
 
     Parameters
     ----------
     product
-        The scalar product for which the norm is to be calculated,
-        given as a linear |Operator|.
+        The scalar product |Operator| for which the norm is to be
+        calculated.
     raise_negative
         If `True`, raise an exception if calcuated norm is negative.
     tol
@@ -65,6 +66,7 @@ def induced_norm(product, raise_negative=True, tol=1e-10, name=None):
 
 
 def cat_arrays(vector_arrays):
+    """Return a new |VectorArray| which a concatenation of the arrays in `vector_arrays`."""
     vector_arrays = list(vector_arrays)
     total_length = sum(map(len, vector_arrays))
     cated_arrays = vector_arrays[0].empty(vector_arrays[0].dim, reserve=total_length)

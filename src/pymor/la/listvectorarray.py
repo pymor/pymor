@@ -182,7 +182,13 @@ class NumpyVector(VectorInterface):
 
 
 class ListVectorArray(VectorArrayInterface):
-    """|VectorArray| implementation via a python list of vectors."""
+    """|VectorArray| implementation via a python list of vectors.
+
+    The subtypes a ListVectorArray can have are tuples
+    `(vector_type, vector_subtype)` where `vector_type` is a
+    subclass of VectorInterface and `vector_subtype` is a valid
+    subtype for `vector_type`.
+    """
 
     _NONE = tuple()
 
