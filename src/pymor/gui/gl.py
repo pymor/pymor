@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """ This module provides a widget for displaying patch plots of
-scalar data assigned to a 2D-Grid using OpenGL. This widget is not
+scalar data assigned to 2D-grids using OpenGL. This widget is not
 intended to be used directly. Instead, use
 :meth:`~pymor.gui.qt.visualize_patch` or
 :class:`~pymor.gui.qt.PatchVisualizer`.
