@@ -22,13 +22,13 @@ def pod(A, modes=None, product=None, tol=4e-8, symmetrize=False, orthonormalize=
         check=True, check_tol=1e-10):
     """Proper orthogonal decomposition of `A`.
 
-    If the |VectorArray| `A` is viewed as a map ::
+    If the |VectorArray| `A` is viewed as a linear map ::
 
         A: R^(len(A)) ---> R^(dim(A))
 
-    then the return value of this method is simply the array of left-singular
-    vectors of the singular value decomposition of `A`, where the scalar product
-    on R^(dim(A) is given by `product` and the scalar product on R^(len(A)) is
+    then the return value of this method is simply the |VectorArray| of left-singular
+    vectors of the singular value decomposition of `A` with the scalar product
+    on R^(dim(A) given by `product` and the scalar product on R^(len(A)) being
     the Euclidean product.
 
     Parameters
@@ -39,12 +39,12 @@ def pod(A, modes=None, product=None, tol=4e-8, symmetrize=False, orthonormalize=
         If not `None` only the first `modes` POD modes (singular vectors) are
         returned.
     products
-        Scalar product given as a linear |Operator| w.r.t. compute the POD.
+        Scalar product |Operator| w.r.t. which the POD is computed.
     tol
         Singular values smaller than this value multiplied by the largest singular
         value are ignored.
     symmetrize
-        If `True` symmetrize the gramian again before proceeding.
+        If `True`, symmetrize the gramian again before proceeding.
     orthonormalize
         If `True`, orthonormalize the computed POD modes again using
         :func:`la.gram_schmidt.gram_schmidt`.
@@ -59,7 +59,6 @@ def pod(A, modes=None, product=None, tol=4e-8, symmetrize=False, orthonormalize=
         |VectorArray| of POD modes.
     SVALS
         Sequence of singular values.
-
     """
 
     assert isinstance(A, VectorArrayInterface)

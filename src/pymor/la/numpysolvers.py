@@ -3,6 +3,8 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+"""This module contains wrappers for linear solvers which operate directly on NumPy matrices."""
+
 from __future__ import absolute_import, division, print_function
 
 from collections import OrderedDict
@@ -392,6 +394,9 @@ def apply_inverse(matrix, U, options=None):
 
     See :func:`sparse_options` for documentation of all possible options for
     sparse matrices.
+
+    This method is called by :meth:`pymor.core.NumpyMatrixOperator.apply_inverse`
+    and usually should not be used directly.
 
     Parameters
     ----------

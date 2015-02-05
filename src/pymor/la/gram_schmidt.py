@@ -18,7 +18,7 @@ from pymor.tools.floatcmp import float_cmp_all
 def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplicates=True,
                  reiterate=True, reiteration_threshold=1e-1, check=True, check_tol=1e-3,
                  copy=False):
-    """Orthonormalize a |VectorArray| using the Gram-Schmidt algorithm.
+    """Orthonormalize a |VectorArray| using the stabilized Gram-Schmidt algorithm.
 
     Parameters
     ----------
@@ -30,7 +30,8 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
     atol
         Vectors of norm smaller than `atol` are removed from the array.
     rtol
-        Relative tolerance to determine a linear dependent vector.
+        Relative tolerance used to detect linear dependent vectors
+        (which are then removed from the array).
     offset
         Assume that the first `offset` vectors are already orthogonal and start the
         algorithm at the `offset + 1`-th vector.
@@ -47,7 +48,7 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
     check_tol
         Tolerance for the check.
     copy
-        If `True`, create a copy of `A` instead of working directly on `A`.
+        If `True`, create a copy of `A` instead of modifying `A` itself.
 
 
     Returns

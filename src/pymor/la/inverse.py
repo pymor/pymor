@@ -8,7 +8,7 @@ import numpy as np
 
 
 def inv_two_by_two(A):
-    """Efficiently compute the inverses of an array of 2x2-matrices ::
+    """Efficiently compute the inverses of a |NumPy array| of 2x2-matrices ::
 
     |  retval[i1,...,ik,m,n] = numpy.linalg.inv(A[i1,...,ik,:,:]).
 
@@ -30,7 +30,7 @@ def inv_two_by_two(A):
 
 
 def inv_transposed_two_by_two(A):
-    """Efficiently compute the tranposed inverses of an array of 2x2-matrices ::
+    """Efficiently compute the tranposed inverses of a |Numpy array| of 2x2-matrices ::
 
     |  retval[i1,...,ik,m,n] = numpy.linalg.inv(A[i1,...,ik,:,:]).
 
