@@ -21,7 +21,7 @@ class FunctionBase(FunctionInterface):
 
     def __add__(self, other):
         """Returns a new :class:`LincombFunction` representing the sum of two functions, or
-        one function and a constant.
+        of one function and a constant.
         """
         if isinstance(other, Number) and other == 0:
             return self
@@ -37,7 +37,7 @@ class FunctionBase(FunctionInterface):
 
     def __sub__(self, other):
         """Returns a new :class:`LincombFunction` representing the difference of two functions, or
-        one function and a constant.
+        of one function and a constant.
         """
         if isinstance(other, FunctionInterface):
             return LincombFunction([self, other], [1., -1.])
@@ -97,19 +97,24 @@ class ConstantFunction(FunctionBase):
 
 
 class GenericFunction(FunctionBase):
-    """Wrapper making an arbitrary Python function between |NumPy arrays| a
-    proper |Function|
+    """Wrapper making an arbitrary Python function between |NumPy arrays| a proper |Function|.
+
+    Note that a GenericFunction can only be :mod:`~pymor.core.pickle`d
+    if the function it is wrapping can be serialized. If normal pickling of the
+    function fails, serialization using :func:`~pymor.core.pickle.dumps_function`
+    will be tried as a last resort. For this reason, it is usually preferable to
+    use ExpressionFunction instead, which always can be serialized.
 
     Parameters
     ----------
     mapping
         The function to wrap. If `parameter_type` is `None`, the function is of
-        the form `mapping(x)` and is expected to vectorized. In particular::
+        the form `mapping(x)`. If `parameter_type` is not `None`, the function has
+        to have the signature `mapping(x, mu)`. Moreover, the function is expected
+        to be vectorized, i.e.::
 
             mapping(x).shape == x.shape[:-1] + shape_range.
 
-        If `parameter_type` is not `None`, the function has to have the signature
-        `mapping(x, mu)`.
     dim_domain
         The dimension of the domain.
     shape_range
@@ -180,7 +185,8 @@ class ExpressionFunction(GenericFunction):
     Parameters
     ----------
     expression
-        The Python expression of one variable `x` as a string.
+        A Python expression of one variable `x` and a parameter `mu` given as
+        a string.
     dim_domain
         The dimension of the domain.
     shape_range
