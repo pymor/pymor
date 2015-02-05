@@ -177,7 +177,7 @@ if HAVE_PYSIDE:
                 self.slider.setValue(ind)
 
 
-def launch_qt_app(main_window_factory, block):
+def _launch_qt_app(main_window_factory, block):
     """Wrapper to display plot in a separate process."""
 
     def doit():
@@ -331,8 +331,8 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                         write_vtk(self.grid, NumpyVectorArray(u, copy=False), '{}-{}'.format(base_name, i),
                                   codim=self.codim)
 
-    launch_qt_app(lambda: MainWindow(grid, U, bounding_box, codim, title=title, legend=legend,
-                                     separate_colorbars=separate_colorbars, backend=backend), block)
+    _launch_qt_app(lambda: MainWindow(grid, U, bounding_box, codim, title=title, legend=legend,
+                                      separate_colorbars=separate_colorbars, backend=backend), block)
 
 
 def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_plots=False, block=False):
@@ -383,7 +383,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
             super(MainWindow, self).__init__(U, plot_widget, title=title, length=len(U[0]))
             self.grid = grid
 
-    launch_qt_app(lambda: MainWindow(grid, U, codim, title=title, legend=legend, separate_plots=separate_plots), block)
+    _launch_qt_app(lambda: MainWindow(grid, U, codim, title=title, legend=legend, separate_plots=separate_plots), block)
 
 
 class PatchVisualizer(BasicInterface):
