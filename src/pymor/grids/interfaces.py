@@ -12,12 +12,12 @@ from pymor.core.interfaces import abstractmethod
 from pymor.core.cache import CacheableInterface, cached
 from pymor.domaindescriptions.boundarytypes import BoundaryType
 from pymor.grids.defaultimpl import (ConformalTopologicalGridDefaultImplementations,
-                                     SimpleReferenceElementDefaultImplementations,
+                                     ReferenceElementDefaultImplementations,
                                      AffineGridDefaultImplementations,)
 
 
 class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplementations, CacheableInterface):
-    """A conformal topological grid.
+    """A topological grid without hanging nodes.
 
     The grid is completely determined via the subentity relation given by
     :meth:`~ConformalTopologicalGridInterface.subentities`. In addition,
@@ -99,10 +99,11 @@ class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplement
 
 
 class ReferenceElementInterface(ReferenceElementDefaultImplementations, CacheableInterface):
-    """Defines a reference element with the property that each of its subentities is of the same type.
+    """Defines a reference element.
 
-    I.e. a three-dimensional reference element cannot have triangles and rectangles as faces at the
-    same time.
+    All reference elements have the property that all subentities of a given codimension are of the
+    same type. I.e. a three-dimensional reference element cannot have triangles and rectangles as
+    faces at the same time.
 
     Attributes
     ----------
