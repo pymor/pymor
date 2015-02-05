@@ -17,8 +17,14 @@ class FunctionInterface(ImmutableInterface, Parametric):
        f(μ): Ω ⊆ R^d -> R^(shape_range)
 
     The returned values are |NumPy arrays| of arbitrary (but fixed)
-    shape. While the function could raise an error if it is evaluated
-    for an argument not in Ω, the exact behavior is left undefined.
+    shape. Note that NumPy distinguished between one-dimensional
+    arrays of length 1 (with shape `(1,)`) and zero-dimensional
+    scalar arrays (with shape `tuple()`). In pyMOR, we usually
+    expect scalar-valued functions to have `shape_range == tuple()`.
+
+    While the function might raise an error if it is evaluated
+    for an argument not in the domain Ω, the exact behavior is left
+    undefined.
 
     Functions are vectorized in the sense, that if `x.ndim = k`, then ::
 
