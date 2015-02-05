@@ -129,7 +129,7 @@ class ConformalTopologicalGridDefaultImplementations(object):
         return M
 
 
-class SimpleReferenceElementDefaultImplementations(object):
+class ReferenceElementDefaultImplementations(object):
     """Provides default implementations for |ReferenceElements|."""
 
     @cached

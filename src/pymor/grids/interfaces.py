@@ -98,7 +98,7 @@ class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplement
         return self._boundaries(codim)
 
 
-class ReferenceElementInterface(SimpleReferenceElementDefaultImplementations, CacheableInterface):
+class ReferenceElementInterface(ReferenceElementDefaultImplementations, CacheableInterface):
     """Defines a reference element with the property that each of its subentities is of the same type.
 
     I.e. a three-dimensional reference element cannot have triangles and rectangles as faces at the
