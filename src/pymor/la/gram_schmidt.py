@@ -11,7 +11,6 @@ import numpy as np
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import AccuracyError
 from pymor.core.logger import getLogger
-from pymor.tools.floatcmp import float_cmp_all
 
 
 @defaults('atol', 'rtol', 'find_duplicates', 'reiterate', 'reiteration_threshold', 'check', 'check_tol')
@@ -130,13 +129,13 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
         A.remove(remove)
 
     if check:
-        if not product and not float_cmp_all(A.dot(A, pairwise=False), np.eye(len(A)),
-                                             atol=check_tol, rtol=0.):
-            err = np.max(np.abs(A.dot(A, pairwise=False) - np.eye(len(A))))
-            raise AccuracyError('result not orthogonal (max err={})'.format(err))
-        elif product and not float_cmp_all(product.apply2(A, A, pairwise=False), np.eye(len(A)),
-                                           atol=check_tol, rtol=0.):
-            err = np.max(np.abs(product.apply2(A, A, pairwise=False) - np.eye(len(A))))
+        if product:
+            error_matrix = product.apply2(A, A, V_ind=range(offset, len(A)), pairwise=False)
+        else:
+            error_matrix = A.dot(A, ind=range(offset, len(A)))
+        error_matrix[:len(A) - offset, offset:len(A)] -= np.eye(len(A) - offset)
+        err = np.max(np.abs(error_matrix))
+        if err >= check_tol:
             raise AccuracyError('result not orthogonal (max err={})'.format(err))
 
     return A
