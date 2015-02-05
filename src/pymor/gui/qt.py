@@ -288,7 +288,8 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
 
                     layout = QHBoxLayout()
                     plot_layout = QGridLayout()
-                    self.colorbarwidgets = [ColorBarWidget(self, vmin=vmin, vmax=vmax) for vmin, vmax in izip(self.vmins, self.vmaxs)]
+                    self.colorbarwidgets = [ColorBarWidget(self, vmin=vmin, vmax=vmax)
+                                            for vmin, vmax in izip(self.vmins, self.vmaxs)]
                     plots = [widget(self, grid, vmin=vmin, vmax=vmax, bounding_box=bounding_box, codim=codim)
                              for vmin, vmax in izip(self.vmins, self.vmaxs)]
                     if legend:
@@ -331,9 +332,10 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                             self.vmins = (min(np.min(u[ind]) for u in U),) * len(U)
                             self.vmaxs = (max(np.max(u[ind]) for u in U),) * len(U)
 
-                    for u, plot, colorbar, vmin, vmax in izip(U, self.plots, self.colorbarwidgets, self.vmins, self.vmaxs):
+                    for u, plot, colorbar, vmin, vmax in izip(U, self.plots, self.colorbarwidgets, self.vmins,
+                                                              self.vmaxs):
                         plot.set(u[ind], vmin=vmin, vmax=vmax)
-                        colorbar.set(vmin=vmin,vmax=vmax)
+                        colorbar.set(vmin=vmin, vmax=vmax)
 
             super(MainWindow, self).__init__(U, PlotWidget(), title=title, length=len(U[0]))
             self.grid = grid
@@ -355,7 +357,9 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                                   codim=self.codim)
 
     launch_qt_app(lambda: MainWindow(grid, U, bounding_box, codim, title=title, legend=legend,
-                                     separate_colorbars=separate_colorbars, rescale_colorbars=rescale_colorbars,backend=backend), block)
+                                      separate_colorbars=separate_colorbars, rescale_colorbars=rescale_colorbars,
+                                      backend=backend),
+                   block)
 
 
 def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_plots=False, block=False):
@@ -439,7 +443,7 @@ class PatchVisualizer(BasicInterface):
         self.block = block
 
     def visualize(self, U, discretization, title=None, legend=None, separate_colorbars=False,
-                  rescale_colorbars=False,block=None, filename=None, columns=2):
+                  rescale_colorbars=False, block=None, filename=None, columns=2):
         """Visualize the provided data.
 
         Parameters
@@ -481,8 +485,8 @@ class PatchVisualizer(BasicInterface):
         else:
             block = self.block if block is None else block
             visualize_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
-                            legend=legend, separate_colorbars=separate_colorbars, rescale_colorbars=rescale_colorbars, backend=self.backend,
-                            block=block, columns=columns)
+                            legend=legend, separate_colorbars=separate_colorbars, rescale_colorbars=rescale_colorbars,
+                            backend=self.backend, block=block, columns=columns)
 
 
 class Matplotlib1DVisualizer(BasicInterface):
