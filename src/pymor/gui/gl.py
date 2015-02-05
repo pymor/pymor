@@ -145,7 +145,7 @@ if HAVE_ALL:
             self.vertices_id = gl.glGenBuffers(1)
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vertices_id)
             gl.glBufferData(gl.GL_ARRAY_BUFFER, self.vertex_data, gl.GL_DYNAMIC_DRAW)
-            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0 )
+            gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
 
             self.indices_id = gl.glGenBuffers(1)
             gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.indices_id)
