@@ -199,4 +199,4 @@ if __name__ == '__main__':
         win.show()
         sys.exit(app.exec_())
 
-    gui.qt.launch_qt_app(lambda _: RBGui(args), block=False)
+    gui.qt._launch_qt_app(lambda _: RBGui(args), block=False)
