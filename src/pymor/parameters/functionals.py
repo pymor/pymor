@@ -22,7 +22,7 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
     component_shape
         The shape of the component.
     coordinates
-        If not `None` return `mu[component_name][coordinates]` instead of
+        If not `None`, return `mu[component_name][coordinates]` instead of
         `mu[component_name]`.
     name
         Name of the functional.
@@ -49,12 +49,18 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
 class GenericParameterFunctional(ParameterFunctionalInterface):
     """A wrapper making an arbitrary Python function a |ParameterFunctional|
 
+    Note that a GenericParameterFunctional can only be :mod:`~pymor.core.pickle`d
+    if the function it is wrapping can be serialized. If normal pickling of the
+    function fails, serialization using :func:`~pymor.core.pickle.dumps_function`
+    will be tried as a last resort. For this reason, it is usually preferable to
+    use ExpressionParameterFunctional instead, which always can be serialized.
+
     Parameters
     ----------
     parameter_type
         The |ParameterType| of the |Parameters| the functional takes.
     mapping
-        The function to wrap. The function is of the form `mapping(mu)`.
+        The function to wrap. The function has signature `mapping(mu)`.
     name
         The name of the functional.
     """
