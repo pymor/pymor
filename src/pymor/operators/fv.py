@@ -34,8 +34,8 @@ class NumericalConvectiveFluxInterface(ImmutableInterface, Parametric):
 
     The flux evaluation is vectorized and happens in two stages:
       1. `evaluate_stage1` receives a |NumPy array| `U` of all values which
-         appear as `U_inner` or `U_outer` for one of the edges the
-         flux shall be evaluated at and returns a `tuple` of |NumPy arrays|
+         appear as `U_inner` or `U_outer` for the edges the flux shall be
+         evaluated at and returns a `tuple` of |NumPy arrays|
          each of the same length as `U`.
       2. `evaluate_stage2` receives the reordered `stage1_data` for each
          edge as well as the unit outer normal and the volume of the edges.
@@ -65,7 +65,7 @@ class NumericalConvectiveFluxInterface(ImmutableInterface, Parametric):
 class LaxFriedrichsFlux(NumericalConvectiveFluxInterface):
     """Lax-Friedrichs numerical flux.
 
-    If `f` is the analytical flux, the Lax-Friedrichs flux is given
+    If `f` is the analytical flux, the Lax-Friedrichs flux `F` is given
     by ::
 
       F(U_in, U_out, normal, vol) = vol * [normal⋅(f(U_in) + f(U_out))/2 + (U_in - U_out)/(2*λ)]
@@ -97,7 +97,7 @@ class SimplifiedEngquistOsherFlux(NumericalConvectiveFluxInterface):
 
     For the definition of the Enquist-Osher flux see :class:`EngquistOsherFlux`.
     This class provides a faster and more accurate implementation for the special
-    case that `f(0) == 0` and `f'` only changes sign at `0`.
+    case that `f(0) == 0` and the derivative of `f` only changes sign at `0`.
 
     Parameters
     ----------
@@ -198,7 +198,7 @@ class NonlinearAdvectionOperator(OperatorBase):
     Parameters
     ----------
     grid
-        |Grid| over which to evaluate the operator.
+        |Grid| for which to evaluate the operator.
     boundary_info
         |BoundaryInfo| determining the Dirichlet and Neumann boundaries.
     numerical_flux
@@ -400,7 +400,7 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
 
 
 class L2Product(NumpyMatrixBasedOperator):
-    """|Operator| representing the L2-product for finite volume functions.
+    """|Operator| representing the L2-product between finite volume functions.
 
     To evaluate the product use the :meth:`~pymor.operators.interfaces module.OperatorInterface.apply2`
     method.
@@ -408,7 +408,7 @@ class L2Product(NumpyMatrixBasedOperator):
     Parameters
     ----------
     grid
-        The |Grid| over which to assemble the product.
+        The |Grid| for which to assemble the product.
     name
         The name of the product.
     """
@@ -436,7 +436,7 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
     Parameters
     ----------
     grid
-        |Grid| over which to assemble the functional.
+        |Grid| for which to assemble the functional.
     function
         The |Function| with which to take the scalar product or `None`.
     boundary_info
@@ -533,8 +533,6 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
     The operator is of the form ::
 
         (Lu)(x) = c ∇ ⋅ [ d(x) ∇ u(x) ]
-
-    The function `d` can be scalar- or matrix-valued.
 
     Parameters
     ----------

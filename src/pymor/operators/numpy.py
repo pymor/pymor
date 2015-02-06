@@ -5,9 +5,9 @@
 #
 # Contributors: Michael Laier <m_laie01@uni-muenster.de>
 
-"""This module provides the following |NumPy| based |Operators|.
+"""This module provides the following |NumPy| based |Operators|:
 
-  - |NumpyMatrixOperator| wraps a 2D |NumPy array| as a proper |Operator|.
+  - |NumpyMatrixOperator| wraps a 2D |NumPy array| as a |Operator|.
   - |NumpyMatrixBasedOperator| should be used as base class for all |Operators|
     which assemble into a |NumpyMatrixOperator|.
   - |NumpyGenericOperator| wraps an arbitrary Python function between
@@ -31,8 +31,7 @@ from pymor.operators.basic import OperatorBase
 
 
 class NumpyGenericOperator(OperatorBase):
-    """Wraps an arbitrary Python function between |NumPy arrays| as a proper
-    |Operator|.
+    """Wraps an arbitrary Python function between |NumPy arrays| as a an |Operator|.
 
     Parameters
     ----------
@@ -51,7 +50,7 @@ class NumpyGenericOperator(OperatorBase):
     linear
         Set to `True` if the provided `mapping` is linear.
     parameter_type
-        The |ParameterType| the mapping accepts.
+        The |ParameterType| of the |Parameters| the mapping accepts.
     name
         Name of the operator.
     """
@@ -140,7 +139,7 @@ class NumpyMatrixBasedOperator(OperatorBase):
             return numpysolvers.invert_options(sparse=self.sparse)
 
     def export_matrix(self, filename, matrix_name=None, output_format='matlab', mu=None):
-        """Save matrix of operator to a file.
+        """Save the matrix of the operator to a file.
 
         Parameters
         ----------
@@ -169,7 +168,7 @@ class NumpyMatrixBasedOperator(OperatorBase):
 
 
 class NumpyMatrixOperator(NumpyMatrixBasedOperator):
-    """Wraps a 2D |NumPy Array| as a proper |Operator|.
+    """Wraps a 2D |NumPy Array| as an |Operator|.
 
     Parameters
     ----------

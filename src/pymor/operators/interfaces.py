@@ -12,13 +12,13 @@ from pymor.parameters.base import Parametric
 class OperatorInterface(ImmutableInterface, Parametric):
     """Interface for |Parameter| dependent discrete operators.
 
-    Every operator is viewed as a map ::
-
-        A(μ): R^s -> R^r
+    An operator in pyMOR is simply a mapping which for any given
+    |Parameter| maps vectors from its source |VectorSpace|
+    to vectors in its range |VectorSpace|.
 
     Note that there is no special distinction between functionals
     and operators in pyMOR. A functional is simply an operator with
-    range dimension 1 and |NumpyVectorArray| as `range.type`.
+    |NumpyVectorSpace| `(1)` as its range |VectorSpace|.
 
     Attributes
     ----------
@@ -128,10 +128,10 @@ class OperatorInterface(ImmutableInterface, Parametric):
         mu
             The |Parameter| for which to apply the adjoint operator.
         source_product
-            The scalar product on the source space given as an |Operator|.
+            The scalar product |Operator| on the source space.
             If `None`, the euclidean product is chosen.
         range_product
-            The scalar product on the range space given as an |Operator|.
+            The scalar product |Operator| on the range space.
             If `None`, the euclidean product is chosen.
 
         Returns
@@ -182,7 +182,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         ----------
         U
             Length 1 |VectorArray| containing the vector for which to compute
-            the jacobian.
+            the Jacobian.
         mu
             The |Parameter| for which to compute the Jacobian.
 
@@ -194,33 +194,32 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
     @abstractmethod
     def as_vector(self, mu=None):
-        """Return vector representation of linear functional or vector operator.
+        """Return a vector representation of a linear functional or vector operator.
 
-        This method may only be called on linear functionals, i.e. linear operators
-        with `range.dim == 1` and |NumpyVectorArray| as :attr:`~OperatorInterface.range.type`,
-        or on operators describing vectors, i.e. linear operators with
-        `source.dim == 1` |NumpyVectorArray| as :attr:`~OperatorInterface.source.type`.
+        This method may only be called on linear functionals, i.e. linear |Operators|
+        with |NumpyVectorSpace| `(1)` as :attr:`~OperatorInterface.range`,
+        or on operators describing vectors, i.e. linear |Operators| with
+        |NumpyVectorSpace| `(1)` as :attr:`~OperatorInterface.source`.
 
         In the case of a functional, the identity ::
 
-            self.as_vector(mu).dot(U) == operator.apply(U, mu)
+            self.as_vector(mu).dot(U) == self.apply(U, mu)
 
-        holds, whereas in the case of a vector like operator we have ::
+        holds, whereas in the case of a vector-like operator we have ::
 
-            operator.as_vector(mu) == operator.apply(NumpyVectorArray(1), mu).
+            self.as_vector(mu) == self.apply(NumpyVectorArray(1), mu).
 
         Parameters
         ----------
         mu
-            The |Parameter| for which to return a vector representation.
+            The |Parameter| for which to return the vector representation.
 
         Returns
         -------
         V
-            |VectorArray| of length 1 containing the vector representation. We have
-            `V.dim == self.source.dim`, `type(V) == self.source.type` for functionals
-            and `V.dim = self.range.dim`, `type(V) == self.range.type` for vector-like
-            operators.
+            |VectorArray| of length 1 containing the vector representation.
+            `V` belongs to `self.source` for functionals and to `self.range` for
+            vector-like operators.
         """
         pass
 
@@ -232,8 +231,8 @@ class OperatorInterface(ImmutableInterface, Parametric):
         For instance, a matrix-based operator will assemble its matrix, a |LincombOperator|
         will try to form the linear combination of its operators, whereas an arbitrary
         operator might simply return a :class:`~pymor.operators.constructions.FixedParameterOperator`.
-        The only assured property of the assembled operator is that it is no longer
-        parametric.
+        The only assured property of the assembled operator is that it no longer
+        depends on a |Parameter|.
 
         Parameters
         ----------
@@ -255,20 +254,18 @@ class OperatorInterface(ImmutableInterface, Parametric):
     def assemble_lincomb(self, operators, coefficients, name=None):
         """Try to assemble a linear combination of the given operators.
 
-        This method is called in the `assemble` method of |LincombOperator|. If an
-        assembly of the given linear combination is possible, e.g. the linear
-        combination of the system matrices of the operators can be formed, then
-        the assembled operator is returned. Otherwise, the method returns
-        `None` to indicate that assembly is not possible.
+        This method is called in the `assemble` method of |LincombOperator| on
+        the first of its operator. If an assembly of the given linear combination
+        is possible, e.g. the linear combination of the system matrices of the
+        operators can be formed, then the assembled operator is returned.
+        Otherwise, the method returns `None` to indicate that assembly is not possible.
 
         Parameters
         ----------
         operators
             List of |Operators| whose linear combination is formed.
         coefficients
-            List of the corresponding linear coefficients. (In contrast to
-            :meth:`~pymor.operators.constructions.lincomb`, these coefficients are
-            always numbers, not |ParameterFunctionals|.)
+            List of the corresponding linear coefficients.
         name
             Name of the assembled operator.
 
@@ -280,7 +277,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
     @abstractmethod
     def projected(self, source_basis, range_basis, product=None, name=None):
-        """Project operator to subspaces of the source and range space.
+        """Project the operator to subspaces of the source and range space.
 
         Denote `self` by A. Given a scalar product ( ⋅, ⋅), and vectors b_1, ..., b_N,
         c_1, ..., c_M, the projected operator A_P is defined by ::
@@ -301,7 +298,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
         How the projected operator is realized will depend on the implementation
         of the operator to project.  While a projected |NumpyMatrixOperator| will
-        again be a |NumpyMatrixOperator|, only a
+        again be a |NumpyMatrixOperator|, only a generic
         :class:`pymor.operators.basic.ProjectedOperator` will be returned
         in general. (Note that the latter will not be suitable to obtain an
         efficient offline/online-decomposition for reduced basis schemes.)

@@ -18,7 +18,11 @@ from pymor.operators.interfaces import OperatorInterface
 
 
 class OperatorBase(OperatorInterface):
-    """Base class for |Operators| providing some default implementations."""
+    """Base class for |Operators| providing some default implementations.
+
+    When implementing a new operator, it is usually advisable to derive
+    from this class.
+    """
 
     def apply2(self, V, U, pairwise, U_ind=None, V_ind=None, mu=None, product=None):
         mu = self.parse_parameter(mu)
@@ -47,7 +51,8 @@ class OperatorBase(OperatorInterface):
     @staticmethod
     def lincomb(operators, coefficients, name=None):
         import warnings
-        warnings.warn('OperatorInterface.lincomb is deprecated! Use pymor.operators.constructions.lincomb instead.')
+        warnings.warn('OperatorInterface.lincomb is deprecated!'
+                      + 'Use pymor.operators.constructions.LincombOperator instead.')
         from pymor.operators.constructions import LincombOperator
         op = LincombOperator(operators, coefficients, name=None)
         if op.parametric:
