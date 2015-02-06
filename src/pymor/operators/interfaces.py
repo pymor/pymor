@@ -332,6 +332,44 @@ class OperatorInterface(ImmutableInterface, Parametric):
         """
         pass
 
+    def restricted(self, dofs):
+        """Restrict the operator range to a given set of degrees of freedom.
+
+        This method returns a restricted version `restricted_op` of the
+        operator along with an array `source_dofs` such that for any
+        |VectorArray| `U` in `self.source` the following is true::
+
+            self.apply(U, mu).components(dofs)
+                == restricted_op.apply(NumpyVectorArray(U.components(source_dofs)), mu))
+
+        Such an operator is mainly useful for
+        :class:`empirical interpolation <pymor.operators.ei.EmpiricalInterpolatedOperator>`
+        where the evaluation of the original operator only needs to be known
+        for few selected degrees of freedom. If the operator has a small
+        stencil, only few `source_dofs` will be needed to evaluate the
+        restricted operator which can make its evaluation very fast
+        compared to evaluating the original operator. Note that the interface
+        does not make any assumptions on the efficiency of evaluating the
+        restricted operator.
+
+        Parameters
+        ----------
+        dofs
+            One-dimensional |NumPy array| of degrees of freedom in the operator
+            :attr:`~OperatorInterface.range` to which to restrict.
+
+        Returns
+        -------
+        restricted_op
+            The restricted operator as defined above. The operator will have
+            |NumpyVectorSpace| `(len(source_dofs))` as :attr:`~OperatorInterface.source`
+            and |NumpyVectorSpace| `(len(dofs))` as :attr:`~OperatorInterface.range`.
+        source_dofs
+            One-dimensional |NumPy array| of source degrees of freedom as
+            defined above.
+        """
+        raise NotImplementedError
+
     @abstractmethod
     def __add__(self, other):
         """Sum of two operators"""

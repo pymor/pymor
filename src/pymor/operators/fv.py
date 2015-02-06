@@ -240,14 +240,14 @@ class NonlinearAdvectionOperator(OperatorBase):
             kwargs['numerical_flux'] = self.numerical_flux.with_(**num_flux_args)
         return self._with_via_init(kwargs)
 
-    def restricted(self, components):
-        source_dofs = np.setdiff1d(np.union1d(self.grid.neighbours(0, 0)[components].ravel(), components),
+    def restricted(self, dofs):
+        source_dofs = np.setdiff1d(np.union1d(self.grid.neighbours(0, 0)[dofs].ravel(), dofs),
                                    np.array([-1], dtype=np.int32),
                                    assume_unique=True)
         sub_grid = SubGrid(self.grid, entities=source_dofs)
         sub_boundary_info = SubGridBoundaryInfo(sub_grid, self.grid, self.boundary_info)
         op = self.with_(grid=sub_grid, boundary_info=sub_boundary_info, name='{}_restricted'.format(self.name))
-        sub_grid_indices = sub_grid.indices_from_parent_indices(components, codim=0)
+        sub_grid_indices = sub_grid.indices_from_parent_indices(dofs, codim=0)
         proj = ComponentProjection(sub_grid_indices, op.range)
         return Concatenation(proj, op), sub_grid.parent_indices(0)
 
