@@ -17,10 +17,11 @@ of the |Parameters| the object's `evaluate`, `apply`, `solve`, etc. methods expe
 Note that the |ParameterType| of the given |Parameter| is allowed to actually be a
 superset (in the obvious sense) of the object's |ParameterType|.
 
-The object's |ParameterType| is determined in its :meth:`__init__` method by calling
-:meth:`~Parametric.build_parameter_type` which computes the |ParameterType| as the
-union of the |ParameterTypes| of the objects given to the method. This way, an, e.g.,
-|Operator| can inherit the |ParameterTypes| of the data functions it depends upon.
+The |ParameterType| of a |Parametric| object is determined in its :meth:`__init__`
+method by calling :meth:`~Parametric.build_parameter_type` which computes the
+|ParameterType| as the union of the |ParameterTypes| of the objects given to the
+method. This way, an, e.g., |Operator| can inherit the |ParameterTypes| of the
+data functions it depends upon.
 
 A |Parametric| object can have a |ParameterSpace| assigned to it by setting the
 :attr:`~Parametric.parameter_space` attribute. (The |ParameterType| of the space
@@ -172,7 +173,7 @@ class Parameter(dict):
     A |Parameter| is simply a `dict` where each key is a string and each value
     is a |NumPy array|. We call an item of the dictionary a *parameter component*.
 
-    |Parameter| differs from an ordinary `dict` in the following ways:
+    A |Parameter| differs from an ordinary `dict` in the following ways:
 
         - It is ensured that each value is a |NumPy array|.
         - We overwrite :meth:`copy` to ensure that not only the `dict`
@@ -191,7 +192,7 @@ class Parameter(dict):
     Parameters
     ----------
     v
-        Anything that `dict` accepts for the construction of a dictionary.
+        Anything that :class:`dict` accepts for the construction of a dictionary.
 
     Attributes
     ----------
@@ -364,7 +365,7 @@ class Parametric(object):
     """Mixin class for objects representing mathematical entities depending on a |Parameter|.
 
     Each such object has a |ParameterType| stored in the :attr:`parameter_type` attribute,
-    which should be calculated by the implementor during :meth:`__init__` using the
+    which should be set by the implementor during :meth:`__init__` using the
     :meth:`build_parameter_type` method. Methods expecting the |Parameter| (typically
     `evaluate`, `apply`, `solve`, etc. ..) should accept an optional argument `mu` defaulting
     to `None`. This `mu` should then be fed into :meth:`parse_parameter` to obtain a
@@ -380,10 +381,10 @@ class Parametric(object):
     parameter_local_type
         The |ParameterType| of the parameter components which are introduced
         by the object itself and are not inherited by other objects it
-        depends on. `None` if there are no such component.
+        depends on. `None` if there are no such components.
         (See :meth:`build_parameter_type`.)
     parameter_space
-        |ParameterSpace| the parameter is expected to lie in or `None`.
+        |ParameterSpace| the parameters are expected to lie in or `None`.
     parametric:
         `True` if the object really depends on a parameter, i.e. :attr:`parameter_type`
         is not `None`.
@@ -462,7 +463,7 @@ class Parametric(object):
         """Builds the |ParameterType| of the object. Should be called by :meth:`__init__`.
 
         The |ParameterType| of a |Parametric| object is determined by the parameter components
-        the object by itself requires for evaluation, and by the parameter components
+        the object itself requires for evaluation, and by the parameter components
         required by the objects the object depends upon for evaluation. We speak of local
         and inherited parameter components. The |ParameterType| of the local parameter
         components are provided via the `local_type` parameter, whereas the |Parametric|
@@ -474,7 +475,7 @@ class Parametric(object):
         global names (from the user perspective) can be provided via the `global_names`
         parameter. This mapping of names will be usually provided by the user when
         instantiating the class. (E.g. a |Function| evaluating x->x^a could depend
-        on a local parameter component named 'exponent', whereas the user wishes to name
+        on a local parameter component named 'base', whereas the user wishes to name
         the component 'decay_rate'.) If such a mapping is not desired, the `local_global`
         parameter must be set to `True`. (To later extract the local parameter components
         with their local names from a given |Parameter| use the :meth:`local_parameter`
@@ -516,7 +517,7 @@ class Parametric(object):
         provides
             `Dict` of parameter component names and their shapes which are provided by the object
             itself to the objects in the `inherited` list. The parameter components listed here
-            will thus not become part of the object's |ParameterType|.
+            will, thus, not become part of the object's |ParameterType|.
         """
         assert not local_global or global_names is None
         assert inherits is None or all(op is None or isinstance(op, Parametric) for op in inherits)
