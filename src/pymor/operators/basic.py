@@ -45,11 +45,11 @@ class OperatorBase(OperatorInterface):
             raise NotImplementedError
 
     @staticmethod
-    def lincomb(operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
+    def lincomb(operators, coefficients, name=None):
         import warnings
         warnings.warn('OperatorInterface.lincomb is deprecated! Use pymor.operators.constructions.lincomb instead.')
         from pymor.operators.constructions import LincombOperator
-        op = LincombOperator(operators, coefficients, num_coefficients, coefficients_name, name=None)
+        op = LincombOperator(operators, coefficients, name=None)
         if op.parametric:
             return op
         else:
