@@ -11,7 +11,7 @@ from pymor.la.numpyvectorarray import NumpyVectorArray
 
 
 class GenericRBReconstructor(BasicInterface):
-    """Simple reconstructor forming linear combinations with the reduced basis."""
+    """Simple reconstructor forming linear combinations with a reduced basis."""
 
     def __init__(self, RB):
         self.RB = RB
@@ -22,7 +22,7 @@ class GenericRBReconstructor(BasicInterface):
         return self.RB.lincomb(U.data)
 
     def restricted_to_subbasis(self, dim):
-        """Analog of :meth:`~pymor.operators.numpy.NumpyMatrixOperator.projected_to_subbasis`."""
+        """See :meth:`~pymor.operators.numpy.NumpyMatrixOperator.projected_to_subbasis`."""
         assert dim <= len(self.RB)
         return GenericRBReconstructor(self.RB.copy(ind=range(dim)))
 
@@ -45,8 +45,8 @@ def reduce_generic_rb(discretization, RB, operator_product=None, vector_product=
         :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.)
     vector_product
         Scalar product for the projection of vector-like |Operators|.
-        (A typical case for a vector-like operator would be the
-        `initial_data` |Operator| of an |InstationaryDiscretization| holding
+        (A typical vector-like operator would be the `initial_data`
+        Operator| of an |InstationaryDiscretization| holding
         the initial data of a Cauchy problem.)
     disable_caching
         If `True`, caching of solutions is diabled for the reduced |Discretization|.

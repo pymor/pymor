@@ -15,7 +15,11 @@ def reduce_stationary_coercive(discretization, RB, error_product=None, coercivit
 
     This reductor uses :meth:`~pymor.reductors.basic.reduce_generic_rb` for the actual
     RB-projection. The only addition is an error estimator. The estimator evaluates the
-    dual norm of the residual with respect to a given inner product.
+    dual norm of the residual with respect to a given inner product. We use
+    :func:`~pymor.reductors.residual.reduce_residual` for improved numerical stability.
+    (See "A. Buhr, C. Engwer, M. Ohlberger, S. Rave, A Numerically Stable A Posteriori
+    Error Estimator for Reduced Basis Approximations of Elliptic Equations,
+    Proceedings of the 11th World Congress on Computational Mechanics, 2014.")
 
     Parameters
     ----------
@@ -24,17 +28,19 @@ def reduce_stationary_coercive(discretization, RB, error_product=None, coercivit
     RB
         |VectorArray| containing the reduced basis on which to project.
     error_product
-        Scalar product given as an |Operator| used to calculate Riesz
-        representative of the residual. If `None`, the Euclidean product is used.
+        Scalar product |Operator| used to calculate Riesz representative of the
+        residual. If `None`, the Euclidean product is used.
     coercivity_estimator
         `None` or a |Parameterfunctional| returning a lower bound for the coercivity
-        constant of the given problem.
+        constant of the given problem. Note that the computed error estimate is only
+        guaranteed to be an upper bound for the error when an appropriate coercivity
+        estimate is specified.
     disable_caching
         If `True`, caching of solutions is disabled for the reduced |Discretization|.
     extends
         Set by :meth:`~pymor.algorithms.greedy.greedy` to the result of the
         last reduction in case the basis extension was `hierarchic`. Used to prevent
-        re-computation of Riesz representatives already obtained from previous
+        re-computation of residual range basis vectors already obtained from previous
         reductions.
 
     Returns
@@ -45,8 +51,8 @@ def reduce_stationary_coercive(discretization, RB, error_product=None, coercivit
         The reconstructor providing a `reconstruct(U)` method which reconstructs
         high-dimensional solutions from solutions `U` of the reduced |Discretization|.
     reduction_data
-        Additional data produced by the reduction process. In this case the computed
-        Riesz representatives. (Compare the `extends` parameter.)
+        Additional data produced by the reduction process. (Compare the `extends`
+        parameter.)
     """
 
     assert extends is None or len(extends) == 3

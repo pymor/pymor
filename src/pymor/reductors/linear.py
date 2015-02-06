@@ -18,7 +18,12 @@ from pymor.operators.numpy import NumpyMatrixOperator
 
 def reduce_stationary_affine_linear(discretization, RB, error_product=None, coercivity_estimator=None,
                                     disable_caching=True, extends=None):
-    """Reductor for linear |StationaryDiscretizations| whose with affinely decomposed operator and rhs.
+    """Reductor for linear |StationaryDiscretizations| with affinely decomposed operator and rhs.
+
+    .. note::
+       The reductor :func:`~pymor.reductors.stationary.reduce_stationary_coercive` can be used
+       for arbitrary coercive |StationaryDiscretizations| and offers an improved error
+       estimator with better numerical stability.
 
     This reductor uses :meth:`~pymor.reductors.basic.reduce_generic_rb` for the actual
     RB-projection. The only addition is an error estimator. The estimator evaluates the
@@ -31,11 +36,13 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, coer
     RB
         |VectorArray| containing the reduced basis on which to project.
     error_product
-        Scalar product given as an |Operator| used to calculate Riesz
-        representative of the residual. If `None`, the Euclidean product is used.
+        Scalar product |Operator| used to calculate Riesz representative of the
+        residual. If `None`, the Euclidean product is used.
     coercivity_estimator
         `None` or a |Parameterfunctional| returning a lower bound for the coercivity
-        constant of the given problem.
+        constant of the given problem. Note that the computed error estimate is only
+        guaranteed to be an upper bound for the error when an appropriate coercivity
+        estimate is specified.
     disable_caching
         If `True`, caching of solutions is disabled for the reduced |Discretization|.
     extends

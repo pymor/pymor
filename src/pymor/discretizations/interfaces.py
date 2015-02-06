@@ -14,7 +14,7 @@ class DiscretizationInterface(CacheableInterface, Parametric):
 
     A discretization is an object describing a discrete problem
     via its type and the |Operators| it contains and which can
-    :meth:`~DiscretizationInterface.solve`ed for a given |Paramter|
+    :meth:`~DiscretizationInterface.solve`ed for a given |Parameter|
     resulting in a solution |VectorArray|.
 
     Attributes
