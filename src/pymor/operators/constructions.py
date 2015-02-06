@@ -205,8 +205,6 @@ class Concatenation(OperatorBase):
         self.source = first.source
         self.range = second.range
         self.linear = second.linear and first.linear
-        if hasattr(first, 'restricted') and hasattr(second, 'restricted'):
-            self.restricted = self._restricted
         self.name = name
 
     def apply(self, U, ind=None, mu=None):
@@ -218,15 +216,15 @@ class Concatenation(OperatorBase):
         return self.first.apply_adjoint(self.second.apply_adjoint(U, ind=ind, mu=mu, range_product=range_product),
                                         mu=mu, source_product=source_product)
 
-    def _restricted(self, components):
-        restricted_second, second_source_components = self.second.restricted(components)
-        restricted_first, first_source_components = self.first.restricted(second_source_components)
+    def restricted(self, dofs):
+        restricted_second, second_source_dofs = self.second.restricted(dofs)
+        restricted_first, first_source_dofs = self.first.restricted(second_source_dofs)
         if isinstance(restricted_second, IdentityOperator):
-            return restricted_first, first_source_components
+            return restricted_first, first_source_dofs
         elif isinstance(restricted_first, IdentityOperator):
-            return restricted_second, first_source_components
+            return restricted_second, first_source_dofs
         else:
-            return Concatenation(restricted_second, restricted_first), first_source_components
+            return Concatenation(restricted_second, restricted_first), first_source_dofs
 
 
 class ComponentProjection(OperatorBase):
@@ -256,10 +254,10 @@ class ComponentProjection(OperatorBase):
         assert U in self.source
         return NumpyVectorArray(U.components(self.components, ind), copy=False)
 
-    def restricted(self, components):
-        assert all(0 <= c < self.range.dim for c in components)
-        source_components = self.components[components]
-        return IdentityOperator(NumpyVectorSpace(len(source_components))), source_components
+    def restricted(self, dofs):
+        assert all(0 <= c < self.range.dim for c in dofs)
+        source_dofs = self.components[dofs]
+        return IdentityOperator(NumpyVectorSpace(len(source_dofs))), source_dofs
 
 
 class IdentityOperator(OperatorBase):

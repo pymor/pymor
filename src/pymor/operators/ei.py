@@ -74,9 +74,9 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         self.triangular = triangular
 
         if len(interpolation_dofs) > 0:
-            if hasattr(operator, 'restricted'):
+            try:
                 self.restricted_operator, self.source_dofs  = operator.restricted(interpolation_dofs)
-            else:
+            except NotImplementedError:
                 self.logger.warn('Operator has no "restricted" method. The full operator will be evaluated.')
                 self.operator = operator
             interpolation_matrix = collateral_basis.components(interpolation_dofs).T
