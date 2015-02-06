@@ -17,69 +17,56 @@ from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.reductors.basic import GenericRBReconstructor
 
 
-class ResidualOperator(OperatorBase):
-
-    def __init__(self, operator, functional, name=None):
-        self.source = operator.source
-        self.range = operator.range
-        self.linear = operator.linear
-        self.operator = operator
-        self.functional = functional
-        self.functional_vector = functional.as_vector() if functional and not functional.parametric else None
-        self.name = name
-
-    def apply(self, U, ind=None, mu=None):
-        V = self.operator.apply(U, ind=ind, mu=mu)
-        if self.functional:
-            F = self.functional_vector or self.functional.as_vector(mu)
-            if len(V) > 1:
-                V.axpy(-1., F, x_ind=[0]*len(V))
-            else:
-                V.axpy(-1., F)
-        return V
-
-    def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
-        return ResidualOperator(self.operator.projected_to_subbasis(dim_source, dim_range),
-                                self.functional.projected_to_subbasis(dim_range, None),
-                                name=name)
-
-
-class NonProjectedResiudalOperator(ResidualOperator):
-
-    def __init__(self, operator, functional, product):
-        super(NonProjectedResiudalOperator, self).__init__(operator, functional)
-        self.product = product
-
-    def apply(self, U, ind=None, mu=None):
-        R = super(NonProjectedResiudalOperator, self).apply(U, ind=ind, mu=mu)
-        if self.product:
-            R_riesz = self.product.apply_inverse(R)
-            return R_riesz * (np.sqrt(R_riesz.dot(R, pairwise=True)) / R_riesz.l2_norm())[0]
-        else:
-            return R
-
-    def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
-        product = self.product.projected_to_subbasis(dim_range, dim_range) if self.product is not None else None
-        return ResidualOperator(self.operator.projected_to_subbasis(dim_source, dim_range),
-                                self.functional.projected_to_subbasis(dim_range, None),
-                                product,
-                                name=name)
-
-
-class NonProjectedReconstructor(ImmutableInterface):
-
-    def __init__(self, product):
-        self.norm = induced_norm(product) if product else None
-
-    def reconstruct(self, U):
-        if self.norm:
-            return U * (U.l2_norm() / self.norm(U))[0]
-        else:
-            return U
-
-
 def reduce_residual(operator, functional=None, RB=None, product=None, extends=None):
     """Generic reduced basis residual reductor.
+
+    Given an operator and a functional, the concatenation of residual operator
+    with the Riesz isomorphism is given by::
+
+        riesz_residual.apply(U, mu)
+            == product.apply_inverse(operator.apply(U, mu) - functional.as_vector(mu))
+
+    This reductor determines a low-dimensional subspace of image of a reduced
+    basis space under `riesz_residual`, computes an orthonormal basis `residual_range`
+    of this range spaces and then returns the Petrov-Galerkin projection ::
+
+        projected_riesz_residual
+            === riesz_residual.projected(source_basis=RB, range_basis=residual_range)
+
+    of the `riesz_residual` operator. Given an reduced basis coefficient vector `u`,
+    the dual norm of the residual can then be computed as ::
+
+        projected_riesz_residual.apply(u, mu).l2_norm()
+
+    Moreover, a `reconstructor` is provided such that ::
+
+        reconstructor.reconstruct(projected_riesz_residual.apply(u, mu))
+            == riesz_residual.apply(RB.lincomb(u), mu)
+
+    Parameters
+    ----------
+    operator
+        See definition of `riesz_residual`.
+    functional
+        See definition of `riesz_residual`. If `None`, zero right-hand side is assumed.
+    RB
+        |VectorArray| containing a basis of the reduced space onto which to project.
+    product
+        Scalar product |Operator| w.r.t. which to compute the Riesz representatives.
+    extends
+        Set by :meth:`~pymor.algorithms.greedy.greedy` to the result of the
+        last reduction in case the basis extension was `hierarchic`. Used to prevent
+        re-computation of `residual_range` basis vectors already obtained from previous
+        reductions.
+
+    Returns
+    -------
+    projected_riesz_residual
+        See above.
+    reconstructor
+        See above.
+    reduction_data
+        Additional data produced by the reduction process. (Compare the `extends` parameter.)
     """
     assert functional is None \
         or functional.range == NumpyVectorSpace(1) and functional.source == operator.source and functional.linear
@@ -161,3 +148,73 @@ def reduce_residual(operator, functional=None, RB=None, product=None, extends=No
     return (ResidualOperator(operator, functional),
             GenericRBReconstructor(residual_range),
             {'residual_range_dims': residual_range_dims})
+
+
+class ResidualOperator(OperatorBase):
+    """Returned by :func:`reduce_residual`."""
+
+    def __init__(self, operator, functional, name=None):
+        self.source = operator.source
+        self.range = operator.range
+        self.linear = operator.linear
+        self.operator = operator
+        self.functional = functional
+        self.functional_vector = functional.as_vector() if functional and not functional.parametric else None
+        self.name = name
+
+    def apply(self, U, ind=None, mu=None):
+        V = self.operator.apply(U, ind=ind, mu=mu)
+        if self.functional:
+            F = self.functional_vector or self.functional.as_vector(mu)
+            if len(V) > 1:
+                V.axpy(-1., F, x_ind=[0]*len(V))
+            else:
+                V.axpy(-1., F)
+        return V
+
+    def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
+        return ResidualOperator(self.operator.projected_to_subbasis(dim_source, dim_range),
+                                self.functional.projected_to_subbasis(dim_range, None),
+                                name=name)
+
+
+class NonProjectedResiudalOperator(ResidualOperator):
+    """Returned by :func:`reduce_residual`.
+
+    Not to be used directly.
+    """
+
+    def __init__(self, operator, functional, product):
+        super(NonProjectedResiudalOperator, self).__init__(operator, functional)
+        self.product = product
+
+    def apply(self, U, ind=None, mu=None):
+        R = super(NonProjectedResiudalOperator, self).apply(U, ind=ind, mu=mu)
+        if self.product:
+            R_riesz = self.product.apply_inverse(R)
+            return R_riesz * (np.sqrt(R_riesz.dot(R, pairwise=True)) / R_riesz.l2_norm())[0]
+        else:
+            return R
+
+    def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
+        product = self.product.projected_to_subbasis(dim_range, dim_range) if self.product is not None else None
+        return ResidualOperator(self.operator.projected_to_subbasis(dim_source, dim_range),
+                                self.functional.projected_to_subbasis(dim_range, None),
+                                product,
+                                name=name)
+
+
+class NonProjectedReconstructor(ImmutableInterface):
+    """Returned by :func:`reduce_residual`.
+
+    Not to be used directly.
+    """
+
+    def __init__(self, product):
+        self.norm = induced_norm(product) if product else None
+
+    def reconstruct(self, U):
+        if self.norm:
+            return U * (U.l2_norm() / self.norm(U))[0]
+        else:
+            return U

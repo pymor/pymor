@@ -373,5 +373,5 @@ class NumpyVectorArray(VectorArrayInterface):
 
 
 def NumpyVectorSpace(dim):
-    """Shorthand for `VectorSpace(NumpyVectorArray, dim)`."""
+    """Shorthand for |VectorSpace| `(NumpyVectorArray, dim)`."""
     return VectorSpace(NumpyVectorArray, dim)
