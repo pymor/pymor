@@ -21,7 +21,7 @@ from pymor.parameters.interfaces import ParameterFunctionalInterface
 
 
 class LincombOperator(OperatorBase):
-    """A generic |LincombOperator| representing a linear combination of arbitrary |Operators|.
+    """An operator representing a linear combination of arbitrary |Operators|.
 
     Parameters
     ----------

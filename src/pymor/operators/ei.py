@@ -30,12 +30,11 @@ class EmpiricalInterpolatedOperator(OperatorBase):
       |   ψ_(c_i)(L_EI(U, μ)) = ψ_(c_i)(L(U, μ))   for i=0,...,M
 
     Since the original operator only has to be evaluated at the given interpolation
-    DOFs, |EmpiricalInterpolatedOperator| calls `operator.restricted(interpolation_dofs)`
+    DOFs, |EmpiricalInterpolatedOperator| calls
+    :meth:`~pymor.operators.interfaces.Operatorinterface.restricted`(interpolation_dofs)`
     to obtain a restricted version of the operator which is stored and later used
-    to quickly obtain the required evaluations. (The second return value of the `restricted`
-    method has to be an array of source DOFs -- determined by the operator's stencil --
-    required to evaluate the restricted operator.) If the operator fails to have
-    a `restricted` method, the full operator will be evaluated (which will lead to
+    to quickly obtain the required evaluations. If the `restricted` method, is not
+    implemented, the full operator will be evaluated (which will lead to
     the same result, but without any speedup).
 
     The interpolation DOFs and the collateral basis can be generated using
@@ -138,7 +137,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
 
 
 class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
-    """Project an |EmpiricalInterpolatedOperator|.
+    """A projected |EmpiricalInterpolatedOperator|.
 
     Not intended to be used directly. Instead use :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
     """
