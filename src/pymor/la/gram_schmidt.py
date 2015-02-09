@@ -73,7 +73,6 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
 
     # main loop
     remove = []
-    norm = None
     for i in xrange(offset, len(A)):
         # first calculate norm
         if product is None:
@@ -91,10 +90,10 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
 
         else:
             first_iteration = True
-
+            norm = initial_norm
             # If reiterate is True, reiterate as long as the norm of the vector changes
             # strongly during orthonormalization (due to Andreas Buhr).
-            while first_iteration or reiterate and norm < reiteration_threshold:
+            while first_iteration or reiterate and norm/old_norm < reiteration_threshold:
 
                 if first_iteration:
                     first_iteration = False
@@ -113,9 +112,9 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
 
                 # calculate new norm
                 if product is None:
-                    norm = A.l2_norm(ind=i)[0]
+                    old_norm, norm = norm, A.l2_norm(ind=i)[0]
                 else:
-                    norm = np.sqrt(product.apply2(A, A, V_ind=i, U_ind=i, pairwise=True))[0]
+                    old_norm, norm = norm, np.sqrt(product.apply2(A, A, V_ind=i, U_ind=i, pairwise=True))[0]
 
                 # remove vector if it got too small:
                 if norm / initial_norm < rtol:
