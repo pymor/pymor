@@ -13,10 +13,11 @@ from itertools import izip
 import numpy as np
 
 from pymor.core.defaults import defaults_sid
-from pymor.la.interfaces import VectorArrayInterface
+from pymor.la.interfaces import VectorArrayInterface, VectorSpace
 from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
 from pymor.operators.basic import OperatorBase
 from pymor.operators.interfaces import OperatorInterface
+from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.interfaces import ParameterFunctionalInterface
 
 
@@ -330,6 +331,11 @@ class ConstantOperator(OperatorBase):
         assert U in self.source
         count = len(U) if ind is None else 1 if isinstance(ind, Number) else len(ind)
         return self._value.copy(ind=([0] * count))
+
+    def jacobian(self, U, mu=None):
+        assert U in self.source
+        assert len(U) == 1
+        return ZeroOperator(self.source, self.range, name=self.name + '_jacobian')
 
     def projected(self, source_basis, range_basis, product=None, name=None):
         assert source_basis is None or source_basis in self.source
