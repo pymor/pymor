@@ -170,6 +170,26 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
             interpolation_coefficients = np.empty((len(AU), len(self.projected_collateral_basis))) + np.nan
         return self.projected_collateral_basis.lincomb(interpolation_coefficients)
 
+    def jacobian(self, U, mu=None):
+        assert len(U) == 1
+        mu = self.parse_parameter(mu)
+        U_components = self.source_basis_dofs.lincomb(U.data[0])
+        J = self.restricted_operator.jacobian(U_components, mu=mu).apply(self.source_basis_dofs)
+        try:
+            if self.triangular:
+                interpolation_coefficients = solve_triangular(self.interpolation_matrix, J.data.T,
+                                                              lower=True, unit_diagonal=True).T
+            else:
+                interpolation_coefficients = np.linalg.solve(self.interpolation_matrix, J.data.T).T
+        except ValueError:  # this exception occurs when J contains NaNs ...
+            interpolation_coefficients = (np.empty((len(self.projected_collateral_basis), len(self.source_basis_dofs)))
+                                          + np.nan)
+        M = self.projected_collateral_basis.lincomb(interpolation_coefficients)
+        if isinstance(M, NumpyVectorArray):
+            return NumpyMatrixOperator(M.data.T)
+        else:
+            return VectorArrayOperator(M)
+
     def projected_to_subbasis(self, dim_source=None, dim_range=None, dim_collateral=None, name=None):
         assert dim_source is None or dim_source <= self.source.dim
         assert dim_range is None or dim_range <= self.range.dim
