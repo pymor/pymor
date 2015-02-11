@@ -351,6 +351,53 @@ class ConstantOperator(OperatorBase):
                                     name=self.name + '_projected')
 
 
+class ZeroOperator(OperatorBase):
+    """The |Operator| which maps every vector to zero.
+
+    Parameters
+    ----------
+    source
+        Source |VectorSpace| of the operator.
+    range
+        Range |VectorSpace| of the operator.
+    name
+        Name of the operator.
+    """
+
+    linear = True
+
+    def __init__(self, source, range, name=None):
+        assert isinstance(source, VectorSpace)
+        assert isinstance(range, VectorSpace)
+        self.source = source
+        self.range = range
+        self.name = name
+
+    def apply(self, U, ind=None, mu=None):
+        assert U in self.source
+        count = len(U) if ind is None else 1 if isinstance(ind, Number) else len(ind)
+        return self.range.zeros(count)
+
+    def projected(self, source_basis, range_basis, product=None, name=None):
+        assert source_basis is None or source_basis in self.source
+        assert range_basis is None or range_basis in self.range
+        assert product is None or product.source == product.range == self.range
+        if source_basis is not None and range_basis is not None:
+            return NumpyMatrixOperator(np.zeros((len(range_basis), len(source_basis))),
+                                       name=self.name + '_projected')
+        else:
+            new_source = NumpyVectorSpace(len(source_basis)) if source_basis is not None else self.source
+            new_range = NumpyVectorSpace(len(range_basis)) if range_basis is not None else self.source
+            return ZeroOperator(new_source, new_range, name=self.name + '_projected')
+
+    def assemble_lincomb(self, operators, coefficients, name=None):
+        assert operators[0] is self
+        if len(operators) > 1:
+            return operators[1].assemble_lincomb(operators[1:], coefficients[1:], name=name)
+        else:
+            return self
+
+
 class VectorArrayOperator(OperatorBase):
     """Wraps a |VectorArray| as an |Operator|.
 
