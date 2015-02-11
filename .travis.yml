@@ -28,7 +28,7 @@ install:
 
 # # command to run tests
 script:
- - DISPLAY=:99.0 py.test
+        - DISPLAY=:99.0 py.test -k "${PYTEST_MARKER}"
 
 notifications:
   email: 
@@ -41,3 +41,8 @@ after_success:
 branches:
   except:
     - gh-pages
+
+env:
+  - PYTEST_MARKER="not extra_slow"
+  - PYTEST_MARKER="extra_slow"
+
