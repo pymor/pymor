@@ -18,6 +18,7 @@ from pymortests.fixtures.vectorarray import \
      compatible_vector_array_pair, incompatible_vector_array_pair)
 from pymortests.pickle import assert_picklable_without_dumps_function
 
+pytestmark = pytest.mark.slow
 
 def ind_complement(v, ind):
     if ind is None:
