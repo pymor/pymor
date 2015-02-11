@@ -16,7 +16,7 @@ operating on objects of the following types:
     |copied| to a new array, |appended| to an existing array, |removed| from the
     array or |replaced| by vectors of a different array.
     Basic linear algebra operations can be performed on the vectors of the
-    array: vectors can be |scaled| inplace, the BLAS |axpy| operation is
+    array: vectors can be |scaled| in-place, the BLAS |axpy| operation is
     supported and |scalar products| between vectors can be formed. Linear
     combinations of vectors can be formed using the |lincomb| method. Moreover,
     various norms can be computed and selected |components| of the vectors can
@@ -31,17 +31,16 @@ operating on objects of the following types:
     of the interface methods.
 
     Note that there is not the notion of a single vector in pyMOR. The main
-    reason for this design choice is to allow vectorization of
-    operations on |NumpyVectorArrays| which internally store the
+    reason for this design choice is to take advantage of vectorized
+    implementations like |NumpyVectorArray| which internally store the
     vectors as two-dimensional |NumPy| arrays. As an example, the application of
     a linear matrix based operator to an array via the |apply| method boils down
-    to a call to |NumPy|'s optimized :meth:`~numpy.ndarray.dot` method. As all
-    reduced computations in pyMOR are based on |NumPy| arrays, this is important
-    for the performance of the reduced schemes. Given vector arrays in pyMOR
-    were lists of vector objects, the above matrix-matrix multiplication would
-    have to be replaced by a loop of matrix-vector multiplications. However,
-    to facilitate implementation of new vector array types, a Python list based
-    array is provided with |ListVectorArray|.
+    to a call to |NumPy|'s optimized :meth:`~numpy.ndarray.dot` method. If there
+    were only lists of vectors in pyMOR, the above matrix-matrix multiplication
+    would have to be expressed by a loop of matrix-vector multiplications. However,
+    when working with external solvers, vector arrays will often be just lists
+    of vectors. For this use-case we provide |ListVectorArray|, a vector array
+    based on a Python list of vectors.
 
     Associated to each vector array is a |VectorSpace|. A Vector space in pyMOR
     is simply the combination of a |VectorArray| class and an appropriate
@@ -77,9 +76,9 @@ operating on objects of the following types:
     The main property of operators in pyMOR is that they can be |applied| to
     |VectorArrays| resulting in a new |VectorArray|. For this operation to be
     allowed, the operator's |source| |VectorSpace| must be identical with the
-    |VectorSpace| of the given array. The result will be a vector array with
-    space |range|. An operator can be |linear| or not.  The |apply_inverse|
-    method provides an interface for (linear) solvers 
+    |VectorSpace| of the given array. The result will be a vector array from
+    the |range| space. An operator can be |linear| or not.  The |apply_inverse|
+    method provides an interface for (linear) solvers.
     
     Operators in pyMOR are also used to represent bilinear forms via the
     |apply2| method. A functional in pyMOR is simply an operator with
@@ -91,7 +90,7 @@ operating on objects of the following types:
     operators, the |as_vector| method can be called to obtain a vector
     representation of the operator as a |VectorArray| of length 1.
 
-    Linear combinations of operators can be formed using a |LincombOperator|
+    Linear combinations of operators can be formed using a |LincombOperator|.
     When such a linear combination is |assembled|, |assemble_lincomb|
     is called to ensure that, for instance, linear combinations of operators
     represented by a matrix lead to a new operator holding the linear
@@ -101,10 +100,11 @@ operating on objects of the following types:
     possible, the projected operator will no longer depend on high-dimensional
     data.
 
-    Default implementations for various types of |Operators| as well as
-    |NumPy|-based operators can be found in :mod:`pymor.operators.numpy`.
-    Several methods for constructing new operators from existing ones are
-    contained in :mod:`pymor.operators.constructions`.
+    Default implementations for many methods of the operator interface can be
+    found in |OperatorBase|. Base classes for |NumPy|-based operators can be
+    found in :mod:`pymor.operators.numpy`. Several methods for constructing
+    new operators from existing ones are contained in
+    :mod:`pymor.operators.constructions`.
 
     .. |applied|           replace:: :meth:`applied <pymor.operators.interfaces.OperatorInterface.apply>`
     .. |apply2|            replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.apply2`
@@ -119,14 +119,14 @@ operating on objects of the following types:
 
 |Discretizations|
     Discretizations in pyMOR encode the mathematical structure of a given
-    discrete problem acting as container classes for operators. Each
+    discrete problem by acting as container classes for operators. Each
     discretization object has |operators|, |functionals|, |vector_operators| and
     |products| dictionaries holding the |Operators| which appear in the
     formulation of the discrete problem. The keys in these dictionaries describe
     the role of the respective operator in the discrete problem.
 
     Apart from describing the discrete problem, discretizations also implement
-    algorithms for |solving| the given problem, returning |VectorArrays| of
+    algorithms for |solving| the given problem, returning |VectorArrays|
     with space |solution_space|. The solution is usually |cached|, s.t.
     subsequent solving of the problem for the same parameters reduces to
     looking up the solution in pyMOR's cache.
@@ -177,7 +177,7 @@ A class can be made immutable in pyMOR by deriving from |ImmutableInterface|,
 which ensures that write access to the object's attributes is prohibited after
 `__init__` has been executed. However, note that changes to private attributes
 (attributes whose name starts with `_`) are still allowed. It lies in the
-implementors responsibility to ensure that changes of these attributes do not
+implementors responsibility to ensure that changes to these attributes do not
 affect the outcome of calls to relevant interface methods. As an example, a call
 to :meth:`~pymor.core.cache.CacheableInterface.enable_caching` will set the
 objects private `__cache_region` attribute, which might affect the speed of a
@@ -208,7 +208,7 @@ Creating Discretizations
 pyMOR ships a small (and still quite incomplete) framework for creating finite
 element or finite volume discretizations based on the `NumPy/Scipy
 <http://scipy.org>`_ software stack. To end up with an appropriate
-|Discretization|, one starts with instantiating an |analytical problem| which
+|Discretization|, one starts by instantiating an |analytical problem| which
 describes the problem we want to discretize. |analytical problems| contain
 |Functions| which define the analytical data functions associated with the
 problem and a |DomainDescription| that provides a geometrical definition of the
@@ -242,7 +242,7 @@ that in general no communication of high-dimensional data between the solver
 and pyMOR is necessary: |VectorArrays| can merely hold handles to data in the
 solver's memory or some on-disk database. Where possible, we favour, however, a
 deep integration of the solver with pyMOR by linking the solver code as a Python
-extension module. This allows Python to directly access the solvers data
+extension module. This allows Python to directly access the solver's data
 structures which can be used to quickly add features to the high-dimensional
 code without any recompilation. A minimal example for such an integration using
 `pybindgen <https://code.google.com/p/pybindgen>`_ can be found in the
@@ -278,6 +278,37 @@ parameter handling facilities is strongly advised for implementors of
 |Parametric| classes.
 
 
+Defaults
+--------
+
+pyMOR offers a convenient mechanism for handling default values such as solver
+tolerances, cache sizes, log levels, etc. Each default in pyMOR is the default
+value of an optional argument of some function. Such an argument is made a
+default by decorating the function with the :func:`~pymor.core.defaults.defaults`
+decorator::
+
+    @defaults('tolerance')
+    def some_algorithm(x, y, tolerance=1e-5)
+        ...
+
+Default values can be changed by calling :func:`~pymor.core.defaults.set_defaults`.
+A configuration file with all defaults defined in pyMOR can be obtained with
+:func:`~pymor.core.defaults.write_defaults_to_file`. This file can then be loaded,
+either programmatically or automatically by setting the ``PYMOR_DEFAULTS`` environment
+variable.
+
+As an additional feature, if ``None`` is passed as value for a function argument
+which is a default, its default value is used instead of ``None``. This allows
+writing code of the following form::
+
+    def method_called_by_user(U, V, tolerance_for_algorithm=None):
+        ...
+        algorithm(U, V, tolerance=tolerance_for_algorithm)
+        ...
+
+See the :mod:`~pymor.core.defaults` module for more information.
+
+
 The Reduction Process
 ---------------------
 
@@ -288,19 +319,19 @@ which allow to transform solution vectors of the reduced |Discretization| back
 to vectors of the solution space of the high-dimensional |Discretization| (e.g.
 by linear combination with the reduced basis). If proper offline/online
 decomposition is achieved by the reductor, the reduced |Discretization| will
-store no high-dimensional data. Note that there is no inherent distinction
+not store any high-dimensional data. Note that there is no inherent distinction
 between low- and high-dimensional |Discretizations| in pyMOR. The only
 difference lies in the different types of operators, the |Discretization|
 contains.
 
-This observation comes particularly apparent in the case of the classical
+This observation is particularly apparent in the case of the classical
 reduced basis method: the operators and functionals of a given discrete problem
 are projected onto the reduced basis space whereas the structure of the problem
 (i.e. the type of |Discretization| containing the operators) stays the same.
 pyMOR reflects this fact by offering with
-:func:`~pymor.reductors.basic.reduce_generic_rb` a generic algorithm, which can
+:func:`~pymor.reductors.basic.reduce_generic_rb` a generic algorithm which can
 be used to RB-project any discretization available to pyMOR. It should be noted
-however, that this reductor is only able to efficiently
+however that this reductor is only able to efficiently
 offline/online-decompose affinely |Parameter|-dependent linear problems.
 Non-linear problems or such with no affine |Parameter| dependence require
 additional techniques such as :mod:`empirical interpolation <pymor.algorithms.ei>`.

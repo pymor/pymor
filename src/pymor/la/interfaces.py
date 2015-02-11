@@ -518,9 +518,12 @@ class VectorSpace(BasicInterface):
     A vector space is simply the combination of a |VectorArray| type and a
     :attr:`~VectorArrayInterface.subtype`. This data is exactly sufficient to construct
     new arrays using the :meth:`~VectorArrayInterface.make_array` method.
+    (See the implementation of :meth:`~VectorSpace.zeros`.)
 
-    A |VectorArray| is contained in a vector space, iff it is an instance of the subclass
-    and has the same subtype.
+    A |VectorArray| `U` is contained in a vector space `space`, if ::
+
+        type(U) == space.type and U.subtype == space.subtype
+
 
     Attributes
     ----------
