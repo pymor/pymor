@@ -43,6 +43,6 @@ branches:
     - gh-pages
 
 env:
-  - PYTEST_MARKER="not extra_slow"
-  - PYTEST_MARKER="extra_slow"
+  - PYTEST_MARKER="not slow"
+  - PYTEST_MARKER="slow"
 
