@@ -12,7 +12,9 @@ from scipy.linalg import solve_triangular
 from pymor.la.interfaces import VectorArrayInterface
 from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
 from pymor.operators.basic import OperatorBase
+from pymor.operators.constructions import VectorArrayOperator, Concatenation, ComponentProjection
 from pymor.operators.interfaces import OperatorInterface
+from pymor.operators.numpy import NumpyMatrixOperator
 
 
 class EmpiricalInterpolatedOperator(OperatorBase):
@@ -133,7 +135,23 @@ class EmpiricalInterpolatedOperator(OperatorBase):
             return EmpiricalInterpolatedOperator(self.operator.jacobian(U, mu=mu), self.interpolation_dofs,
                                                  self.collateral_basis, self.triangular, self.name + '_jacobian')
         else:
-            raise NotImplementedError
+            U_components = NumpyVectorArray(U.components(self.source_dofs), copy=False)
+            JU = self.restricted_operator.jacobian(U_components, mu=mu) \
+                                         .apply(NumpyVectorArray(np.eye(len(self.source_dofs)), copy=False))
+        try:
+            if self.triangular:
+                interpolation_coefficients = solve_triangular(self.interpolation_matrix, JU.data.T,
+                                                              lower=True, unit_diagonal=True).T
+            else:
+                interpolation_coefficients = np.linalg.solve(self.interpolation_matrix, JU._array.T).T
+        except ValueError:  # this exception occurs when AU contains NaNs ...
+            interpolation_coefficients = np.empty((len(JU), len(self.collateral_basis))) + np.nan
+        J = self.collateral_basis.lincomb(interpolation_coefficients)
+        if isinstance(J, NumpyVectorArray):
+            J = NumpyMatrixOperator(J.data.T)
+        else:
+            J = VectorArrayOperator(J, copy=False)
+        return Concatenation(J, ComponentProjection(self.source_dofs, self.source), name=self.name + '_jacobian')
 
 
 class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
