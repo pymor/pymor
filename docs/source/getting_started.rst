@@ -15,11 +15,11 @@ via our PPA::
         sudo apt-get install python-pymor python-pymor-demos python-pymor-doc
 
 Daily snapshots can be installed by using the ``pymor/daily`` PPA instead of
-``pymor/stable``. The current release can also be installed via `pip
-<http://pip-installer.org>`. Please take a look at our `README
-<https://github.com/pymor/pymor#installation-into-a-virtualenv>` file for
-further details. The `README
-<https://github.com/pymor/pymor#setting-up-an-environment-for-pymor-development>`
+``pymor/stable``. The current release can also be installed via
+`pip <http://pip-installer.org>`_. Please take a look at our
+`README <https://github.com/pymor/pymor#installation-into-a-virtualenv>`_ file for
+further details. The
+`README <https://github.com/pymor/pymor#setting-up-an-environment-for-pymor-development>`_
 also contains instructions for setting up a development environment for working
 on pyMOR itself.
 
@@ -27,21 +27,21 @@ on pyMOR itself.
 Trying it out
 -------------
 
-While we consider pyMOR itself as a library for building MOR applications, we
-ship a few example scripts with pyMOR itself. These can be found in the
-``src/pymordemos`` directory of the source repository.  Try launching one of
-them using the ``pymor-demo`` script provided by the ``python-pymor-demos``
+While we consider pyMOR mainly as a library for building MOR applications, we
+ship a few example scripts. These can be found in the ``src/pymordemos``
+directory of the source repository.  Try launching one of
+them using the ``pymor-demo`` script contained in the ``python-pymor-demos``
 package::
 
     pymor-demo thermalblock --with-estimator --plot-err --plot-solutions 3 2 3 32
 
-The demo scripts can also be directly launched from the source tree::
+The demo scripts can also be launched directly from the source tree::
 
     ./thermalblock.py --with-estimator --plot-err --plot-solutions 3 2 3 32
 
-This will solve and reduce the so called thermalblock problem using
+This will solve and reduce the so called thermal block problem using
 the reduced basis method with a greedy basis generation algorithm.
-The thermalblock problem consists in solving the stationary diffusion
+The thermal block problem consists in solving the stationary diffusion
 problem ::
 
     - ∇ ⋅ [ d(x, μ) ∇ u(x, μ) ] = 1     for x in Ω
@@ -69,7 +69,7 @@ Running ``thermalblock.py`` will first produce plots of two detailed
 solutions of the problem for different randomly chosen parameters
 using linear finite elements. (The size of the grid can be controlled
 via the ``--grid`` parameter. The randomly chosen parameters will
-actually always be the same for each run, since a the random generator
+actually be the same for each run, since a the random generator
 is initialized with a fixed default seed in
 :func:`~pymor.tools.random.new_random_state`.)
 
@@ -79,12 +79,12 @@ The third parameter ``SNAPSHOTS`` of ``thermalblock.py`` determines how many
 different values per parameter component μ_ij should be considered.
 I.e. the parameter training set for basis generation will have the
 size ``(XBLOCKS x YBLOCKS)^SNAPSHOTS``. After the basis of size 32 (the
-last parameter) has been computed, the obtained reduced model (on the
-32-dimensional reduced basis space) is evaluated by comparing the
+last parameter) has been computed, the quality obtained reduced model
+(on the 32-dimensional reduced basis space) is evaluated by comparing the
 solutions of the reduced and detailed models for new randomly chosen
 parameters. Finally plots of the detailed and reduced solutions as well
 as the difference between the two are displayed for the random parameter
-for which a maximum reduction error has been measured.
+which maximises reduction error.
 
 
 The thermalblock demo explained
@@ -92,12 +92,13 @@ The thermalblock demo explained
 
 In the following we will walk through the thermal block demo step by
 step in an interactive Python shell. We assume that you are familiar
-with the reduced basis method and that you know the basics of Python
-programming as well as working with |NumPy|. (Note that our code will
-differ a bit from ``thermalblock.py`` as we will hardcode the various
-options the script offers and leave out some features.)
+with the reduced basis method and that you know the basics of
+`Python <http://www.python.org>`_ programming as well as working
+with |NumPy|. (Note that our code will differ a bit from
+``thermalblock.py`` as we will hardcode the various options the script
+offers and leave out some features.)
 
-First, start a Python shell, we recommend using
+First, start a Python shell. We recommend using
 `IPython <http://ipython.org>`_ ::
 
     ipython
@@ -115,19 +116,13 @@ by executing:
 >>> from pymor.basic import *
 Loading pymor version 0.3.0
 
-To see what is going on, we will moreover adjust a few log levels of
-pyMOR's logging facility:
-
->>> set_log_levels({'pymor.algorithms': 'INFO',
-...                 'pymor.discretizations': 'INFO'})
-
-First we will instantiate a class describing the analytical problem
+Next we will instantiate a class describing the analytical problem
 we want so solve. In this case, a 
 :class:`~pymor.analyticalproblems.thermalblock.ThermalBlockProblem`:
 
 >>> p = ThermalBlockProblem(num_blocks=(3, 2))
 
-Next we want to discretize this problem using the finite element method.
+We want to discretize this problem using the finite element method.
 We could do this by hand, creating a |Grid|, instatiating
 :class:`~pymor.operators.cg.DiffusionOperatorP1` finite element diffusion
 operators for each subblock of the domain, forming a |LincombOperator|
@@ -141,7 +136,7 @@ a predifined *discretizer* to do the work for us. In this case, we use
 
 >>> d, d_data = discretize_elliptic_cg(p, diameter=1. / 100.)
 
-``d`` is the |StationaryDiscretization|, which has been created for us,
+``d`` is the |StationaryDiscretization| which has been created for us,
 whereas ``d_data`` contains some additional data, in this case the |Grid|
 and the |BoundaryInfo| which have been created during discretization. We
 can have a look at the grid,
@@ -151,7 +146,7 @@ Tria-Grid on domain [0,1] x [0,1]
 x0-intervals: 100, x1-intervals: 100
 faces: 40000, edges: 60200, vertices: 20201
 
-and as always, we can display its class documentation using
+and, as always, we can display its class documentation using
 ``help(d_data['grid'])``, or in the case of IPython
 ``d_data['grid']?``.
 
@@ -160,6 +155,8 @@ Let's solve the thermal block problem and visualize the solution:
 >>> U = d.solve([1.0, 0.1, 0.3, 0.1, 0.2, 1.0])
 >>> d.visualize(U, title='Solution')
 00:45|discretizations.basic.StationaryDiscretization: Solving ThermalBlock_CG for {diffusion: [1.0, 0.1, 0.3, 0.1, 0.2, 1.0]} ...
+    ...
+    ...
 
 Each class in pyMOR that describes a |Parameter| dependent mathematical
 object, like the |StationaryDiscretization| in our case, derives from
@@ -190,8 +187,8 @@ will significantly speed up the basis generation, as we will only need to
 solve the high-dimensional problem for those parameters in the training set
 which are actually selected for basis extension. To control the condition of
 the reduced system matrix, we must ensure that the generated basis is
-orthonormal w.r.t. the H1-product on the solution space. For this we provide
-the basis extension algorithm with the :attr:`h1_product` attribute of the
+orthonormal w.r.t. the H1-product on the solution space. For this we pass
+the basis extension algorithm the :attr:`h1_product` attribute of the
 discretization. We pass the same product to the reductor for computing the
 Riesz representatives for error estimation. Moreover, we have to provide
 a |ParameterFunctional| which computes a lower bound for the coercivity of
@@ -204,8 +201,8 @@ the problem for a given parameter.
                                                                        d.parameter_type))
 
 Moreover, we need to select a |Parameter| training set. The discretization
-``d`` already comes with a |ParameterSpace| it has obtained from the analytical
-problem. We can sample our parameters from this space, which is a
+``d`` already comes with a |ParameterSpace| which it has inherited from the
+analytical problem. We can sample our parameters from this space, which is a
 :class:`~pymor.parameters.spaces.CubicParameterSpace`. E.g.:
 
 >>> samples = list(d.parameter_space.sample_uniformly(4))
@@ -220,12 +217,13 @@ Now we start the basis generation:
 07:42|algorithms.greedy.greedy: Started greedy search on 4096 samples
 07:42|algorithms.greedy.greedy: Reducing ...
 07:42|algorithms.greedy.greedy: Estimating errors ...
+    ...
 07:44|algorithms.greedy.greedy: Maximum error after 0 extensions: 9.86736953629 (mu = {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]})
 07:44|algorithms.greedy.greedy: Extending with snapshot for mu = {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]}
 07:44|discretizations.basic.StationaryDiscretization: Solving ThermalBlock_CG for {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]} ...
     ...
     ...
-15:26|algorithms.greedy.greedy: Maximal number of 32 extensions reached.
+15:26|algorithms.greedy.greedy: Maximum number of 32 extensions reached.
 15:26|algorithms.greedy.greedy: Reducing once more ...
 15:55|algorithms.greedy.greedy: Greedy search took 492.942929029 seconds
 
@@ -237,10 +235,10 @@ been generated during the run of the algorithm:
 ['reduction_data', 'reconstructor', 'time', 'basis', 'extensions', 'reduced_discretization', 'max_errs', 'max_err_mus']
 
 The most important items are ``'reduced_discretization'`` and
-``'reconstructor'``, which hold the reduced |Discretization| obtained
+``'reconstructor'`` which hold the reduced |Discretization| obtained
 from applying our reductor with the final reduced basis, as well as a
 reconstructor to reconstruct detailed solutions from the reduced solution
-vectors. The reduced basis is stored in the ``'basis'`` item.
+vectors. The reduced basis is stored as ``'basis'`` item.
 
 >>> rd = greedy_data['reduced_discretization']
 >>> rc = greedy_data['reconstructor']
@@ -257,18 +255,18 @@ For the reduced basis we have:
 >>> print(rb.dim)
 20201
 
-Let us check, if the reduced basis really is orthonormal with respect to
+Let us check if the reduced basis really is orthonormal with respect to
 the H1-product. For this we use the :meth:`~pymor.operators.interfaces.OperatorInterface.apply2`
 method:
 
 >>> import numpy as np
 >>> gram_matrix = d.h1_product.apply2(rb, rb, pairwise=False)
 >>> print(np.max(np.abs(gram_matrix - np.eye(32))))
-7.93622818335e-14
+1.24982272795e-13
 
 Looks good! We can now solve the reduced model for the same parameter as above.
 The result is a vector of coefficients w.r.t. the reduced basis, which is
-currently stored in ``rb``. To form the linear combination, we use the
+currently stored in ``rb``. To form the linear combination, we can use the
 reconstructor:
 
 >>> u = rd.solve([1.0, 0.1, 0.3, 0.1, 0.2, 1.0])
@@ -294,8 +292,8 @@ the detailed solution and the error:
 >>> d.visualize((U, U_red, ERR), legend=('Detailed', 'Reduced', 'Error'),
 ...             separate_colorbars=True)
 
-We can nicely observe how the error is maximized along the jumps of the
-diffusion coeffient, which is expected.
+We can nicely observe that, as expected, the error is maximized along the
+jumps of the diffusion coeffient.
 
 Learning more
 -------------

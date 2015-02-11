@@ -140,7 +140,7 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
         logger.info('')
 
         if max_extensions is not None and extensions >= max_extensions:
-            logger.info('Maximal number of {} extensions reached.'.format(max_extensions))
+            logger.info('Maximum number of {} extensions reached.'.format(max_extensions))
             logger.info('Reducing once more ...')
             rd, rc, reduction_data = reductor(discretization, basis) if not hierarchic \
                 else reductor(discretization, basis, extends=(rd, rc, reduction_data))

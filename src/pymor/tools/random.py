@@ -20,6 +20,6 @@ def new_random_state(seed=42):
 
     Returns
     -------
-    New :class:`~numpy.random.RandomState` object.
+    New `~numpy.random.RandomState` object.
     '''
     return np.random.RandomState(seed)

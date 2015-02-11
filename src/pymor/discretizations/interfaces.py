@@ -14,8 +14,8 @@ class DiscretizationInterface(CacheableInterface, Parametric):
 
     A discretization is an object describing a discrete problem
     via its type and the |Operators| it contains and which can
-    :meth:`~DiscretizationInterface.solve`ed for a given |Parameter|
-    resulting in a solution |VectorArray|.
+    :meth:`solved <DiscretizationInterface.solve>` for a given
+    |Parameter| resulting in a solution |VectorArray|.
 
     Attributes
     ----------
@@ -52,7 +52,7 @@ class DiscretizationInterface(CacheableInterface, Parametric):
     def solve(self, mu=None, **kwargs):
         """Solve for the |Parameter| `mu`.
 
-        The result will be :mod:`~pymor.core.cache`d by default.
+        The result will be :mod:`cached <pymor.core.cache>` by default.
 
         Parameters
         ----------
