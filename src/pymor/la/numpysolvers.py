@@ -481,15 +481,15 @@ def apply_inverse(matrix, U, options=None):
         else:
             if hasattr(matrix, 'factorization'):
                 for i, UU in enumerate(U):
-                    R[i] = matrix.factorization.solve(UU)
+                    R[i] = matrix.factorization.solve(np.ravel(UU))
             elif options['keep_factorization']:
                 matrix.factorization = splu(matrix, permc_spec=options['permc_spec'])
                 for i, UU in enumerate(U):
-                    R[i] = matrix.factorization.solve(UU)
+                    R[i] = matrix.factorization.solve(np.ravel(UU))
             elif len(U) > 1:
                 factorization = splu(matrix, permc_spec=options['permc_spec'])
                 for i, UU in enumerate(U):
-                    R[i] = factorization.solve(UU)
+                    R[i] = factorization.solve(np.ravel(UU))
             else:
                 R = spsolve(matrix, U.T, permc_spec=options['permc_spec']).reshape((1, -1))
     elif options['type'] == 'lgmres':
