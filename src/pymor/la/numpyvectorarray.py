@@ -30,17 +30,18 @@ class NumpyVectorArray(VectorArrayInterface):
     """
 
     def __init__(self, instance, dtype=None, copy=False, order=None, subok=False):
+        assert not isinstance(instance, np.matrixlib.defmatrix.matrix)
         if isinstance(instance, np.ndarray):
             if copy:
                 self._array = instance.copy()
             else:
                 self._array = instance
+        elif issparse(instance):
+            self._array = np.array(instance.todense(), copy=False)
         elif hasattr(instance, 'data'):
             self._array = instance.data
             if copy:
                 self._array = self._array.copy()
-        elif issparse(instance):
-            self._array = np.array(instance.todense(), copy=False)
         else:
             self._array = np.array(instance, dtype=dtype, copy=copy, order=order, subok=subok, ndmin=2)
         if self._array.ndim != 2:
