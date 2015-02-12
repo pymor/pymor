@@ -12,7 +12,7 @@ from scipy.linalg import solve_triangular
 from pymor.la.interfaces import VectorArrayInterface
 from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
 from pymor.operators.basic import OperatorBase
-from pymor.operators.constructions import VectorArrayOperator, Concatenation, ComponentProjection
+from pymor.operators.constructions import VectorArrayOperator, Concatenation, ComponentProjection, ZeroOperator
 from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.numpy import NumpyMatrixOperator
 
@@ -110,48 +110,57 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         assert range_basis is None or range_basis in self.range
         assert product is None or product.source == product.range == self.range
 
-        if not hasattr(self, 'restricted_operator') or source_basis is None:
+        if len(self.interpolation_dofs) == 0:
+            return ZeroOperator(self.source, self.range, self.name).projected(source_basis, range_basis, product, name)
+        elif not hasattr(self, 'restricted_operator') or source_basis is None:
             return super(EmpiricalInterpolatedOperator, self).projected(source_basis, range_basis, product, name)
-
-        name = name or self.name + '_projected'
-
-        if range_basis is not None:
-            if product is None:
-                projected_collateral_basis = NumpyVectorArray(self.collateral_basis.dot(range_basis, pairwise=False))
-            else:
-                projected_collateral_basis = NumpyVectorArray(product.apply2(self.collateral_basis, range_basis,
-                                                                             pairwise=False))
         else:
-            projected_collateral_basis = self.collateral_basis
+            name = name or self.name + '_projected'
 
-        return ProjectedEmpiciralInterpolatedOperator(self.restricted_operator, self.interpolation_matrix,
-                                                      NumpyVectorArray(source_basis.components(self.source_dofs),
-                                                                       copy=False),
-                                                      projected_collateral_basis, self.triangular, name)
+            if range_basis is not None:
+                if product is None:
+                    projected_collateral_basis = NumpyVectorArray(self.collateral_basis.dot(range_basis,
+                                                                                            pairwise=False))
+                else:
+                    projected_collateral_basis = NumpyVectorArray(product.apply2(self.collateral_basis, range_basis,
+                                                                                 pairwise=False))
+            else:
+                projected_collateral_basis = self.collateral_basis
+
+            return ProjectedEmpiciralInterpolatedOperator(self.restricted_operator, self.interpolation_matrix,
+                                                          NumpyVectorArray(source_basis.components(self.source_dofs),
+                                                                           copy=False),
+                                                          projected_collateral_basis, self.triangular, name)
 
     def jacobian(self, U, mu=None):
         mu = self.parse_parameter(mu)
-        if hasattr(self, 'operator'):
+
+        if len(self.interpolation_dofs) == 0:
+            if self.source.type == self.range.type == NumpyVectorArray:
+                return NumpyMatrixOperator(np.zeros((0, self.source.dim)), name=self.name + '_jacobian')
+            else:
+                return ZeroOperator(self.source, self.range, name=self.name + '_jacobian')
+        elif hasattr(self, 'operator'):
             return EmpiricalInterpolatedOperator(self.operator.jacobian(U, mu=mu), self.interpolation_dofs,
                                                  self.collateral_basis, self.triangular, self.name + '_jacobian')
         else:
             U_components = NumpyVectorArray(U.components(self.source_dofs), copy=False)
             JU = self.restricted_operator.jacobian(U_components, mu=mu) \
                                          .apply(NumpyVectorArray(np.eye(len(self.source_dofs)), copy=False))
-        try:
-            if self.triangular:
-                interpolation_coefficients = solve_triangular(self.interpolation_matrix, JU.data.T,
-                                                              lower=True, unit_diagonal=True).T
+            try:
+                if self.triangular:
+                    interpolation_coefficients = solve_triangular(self.interpolation_matrix, JU.data.T,
+                                                                  lower=True, unit_diagonal=True).T
+                else:
+                    interpolation_coefficients = np.linalg.solve(self.interpolation_matrix, JU._array.T).T
+            except ValueError:  # this exception occurs when AU contains NaNs ...
+                interpolation_coefficients = np.empty((len(JU), len(self.collateral_basis))) + np.nan
+            J = self.collateral_basis.lincomb(interpolation_coefficients)
+            if isinstance(J, NumpyVectorArray):
+                J = NumpyMatrixOperator(J.data.T)
             else:
-                interpolation_coefficients = np.linalg.solve(self.interpolation_matrix, JU._array.T).T
-        except ValueError:  # this exception occurs when AU contains NaNs ...
-            interpolation_coefficients = np.empty((len(JU), len(self.collateral_basis))) + np.nan
-        J = self.collateral_basis.lincomb(interpolation_coefficients)
-        if isinstance(J, NumpyVectorArray):
-            J = NumpyMatrixOperator(J.data.T)
-        else:
-            J = VectorArrayOperator(J, copy=False)
-        return Concatenation(J, ComponentProjection(self.source_dofs, self.source), name=self.name + '_jacobian')
+                J = VectorArrayOperator(J, copy=False)
+            return Concatenation(J, ComponentProjection(self.source_dofs, self.source), name=self.name + '_jacobian')
 
 
 class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
