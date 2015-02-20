@@ -22,7 +22,7 @@ setting the '--pickle' option.
 Arguments:
   REDUCED_DATA  File containing the pickled reduced discretization.
 
-  SAMPLES       Number of samples to test with.
+  SAMPLES       Number of parameter samples to test with.
 
 Options:
   --detailed=DETAILED_DATA  File containing the high-dimensional discretization
