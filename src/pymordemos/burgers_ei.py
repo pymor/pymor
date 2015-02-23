@@ -5,7 +5,7 @@
 #
 # Contributors: Michael Laier <m_laie01@uni-muenster.de>
 
-"""Burgers with EI demo.
+"""MOR demo of Burgers' equation. This demo makes use of the empirical interpolation method (EI) to resolve non-linearities.
 
 Usage:
   burgers_ei.py [options] EXP_MIN EXP_MAX EI_SNAPSHOTS EISIZE SNAPSHOTS RBSIZE
