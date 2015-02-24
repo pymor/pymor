@@ -193,18 +193,16 @@ class ProjectedOperator(OperatorBase):
 
     def __init__(self, operator, source_basis, range_basis, product=None, copy=True, name=None):
         assert isinstance(operator, OperatorInterface)
-        assert source_basis is None and issubclass(operator.source.type, NumpyVectorArray) \
-            or source_basis in operator.source
-        assert range_basis is None and issubclass(operator.range.type, NumpyVectorArray) \
-            or range_basis in operator.range
+        assert source_basis is None or source_basis in operator.source
+        assert range_basis is None or range_basis in operator.range
         assert product is None \
             or (isinstance(product, OperatorInterface)
                 and range_basis is not None
                 and operator.range == product.source
                 and product.range == product.source)
         self.build_parameter_type(inherits=(operator,))
-        self.source = NumpyVectorSpace(len(source_basis) if source_basis is not None else operator.source.dim)
-        self.range = NumpyVectorSpace(len(range_basis) if range_basis is not None else operator.range.dim)
+        self.source = NumpyVectorSpace(len(source_basis)) if source_basis is not None else operator.source
+        self.range = NumpyVectorSpace(len(range_basis)) if range_basis is not None else operator.range
         self.name = name
         self.operator = operator
         self.source_basis = source_basis.copy() if source_basis is not None and copy else source_basis
