@@ -7,6 +7,10 @@
 
 """Burgers with EI demo.
 
+Model order reduction of a two-dimensional Burgers-type equation
+(see pymor.analyticalproblems.burgers) using the reduced basis method
+with empirical operator interpolation.
+
 Usage:
   burgers_ei.py [options] EXP_MIN EXP_MAX EI_SNAPSHOTS EISIZE SNAPSHOTS RBSIZE
 

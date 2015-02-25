@@ -3,7 +3,7 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""Proof of concept for solving the poisson equation in 1D using linear finite elements and our grid interface
+"""Proof of concept for solving the Poisson equation in 1D using linear finite elements and our grid interface
 
 Usage:
     elliptic_oned.py [--fv] PROBLEM-NUMBER N
