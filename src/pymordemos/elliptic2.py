@@ -3,7 +3,7 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""Simple demonstration of solving the poisson equation in 2D using pyMOR's builtin discretizations.
+"""Simple demonstration of solving the Poisson equation in 2D using pyMOR's builtin discretizations.
 
 Usage:
     elliptic2.py [--fv] PROBLEM-NUMBER N
