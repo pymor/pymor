@@ -19,7 +19,7 @@ regarding pyMOR or wish to contribute, do not hesitate to contact us!
 License
 -------
 
-Copyright (c) 2013, 2014, Rene Milk, Stephan Rave, Felix Schindler
+Copyright (c) 2013, 2014, 2015, Rene Milk, Stephan Rave, Felix Schindler
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -115,8 +115,8 @@ The installation script might recommend the installation of additional
 packages. (This is easy to miss, as pip will install dependencies after
 pyMOR itself has been installed, so search at the top of your console
 log!) You will most likely want to install IPython and, in particular,
-matplotlib, PyOpenGL and PySide. The latter packages are
-required for pyMOR's visualization routines.
+matplotlib, PyOpenGL, and PySide. The latter packages are required for
+pyMOR's visualization routines.
 
 Documentation
 -------------
