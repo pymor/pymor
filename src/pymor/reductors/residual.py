@@ -192,7 +192,7 @@ class NonProjectedResiudalOperator(ResidualOperator):
         R = super(NonProjectedResiudalOperator, self).apply(U, ind=ind, mu=mu)
         if self.product:
             R_riesz = self.product.apply_inverse(R)
-            return R_riesz * (np.sqrt(R_riesz.dot(R, pairwise=True)) / R_riesz.l2_norm())[0]
+            return R_riesz * (np.sqrt(R_riesz.dot(R)) / R_riesz.l2_norm())[0]
         else:
             return R
 

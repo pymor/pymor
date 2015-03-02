@@ -130,7 +130,7 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
         if projection == 'orthogonal':
             onb_collateral_basis.append(new_vec)
             gram_schmidt(onb_collateral_basis, offset=len(onb_collateral_basis) - 1, copy=False)
-            coeffs = ERR.dot(onb_collateral_basis, o_ind=len(onb_collateral_basis) - 1, pairwise=False)
+            coeffs = ERR.dot(onb_collateral_basis, o_ind=len(onb_collateral_basis) - 1)
             ERR.axpy(-coeffs[:, 0], onb_collateral_basis, x_ind=len(onb_collateral_basis) - 1)
 
     interpolation_matrix = collateral_basis.components(interpolation_dofs).T

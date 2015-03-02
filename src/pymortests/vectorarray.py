@@ -595,36 +595,36 @@ def test_axpy_self(vector_array):
             assert np.all(c.almost_equal(cc))
 
 
-def test_dot_pairwise(compatible_vector_array_pair):
+def test_pairwise_dot(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
     if hasattr(v1, 'data'):
         dv1, dv2 = v1.data, v2.data
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
-        r = v1.dot(v2, pairwise=True, ind=ind1, o_ind=ind2)
+        r = v1.pairwise_dot(v2, ind=ind1, o_ind=ind2)
         assert isinstance(r, np.ndarray)
         assert r.shape == (v1.len_ind(ind1),)
-        r2 = v2.dot(v1, pairwise=True, ind=ind2, o_ind=ind1)
+        r2 = v2.pairwise_dot(v1, ind=ind2, o_ind=ind1)
         assert np.all(r == r2)
         assert np.all(r <= v1.l2_norm(ind1) * v2.l2_norm(ind2) * (1. + 1e-10))
         if hasattr(v1, 'data'):
             assert np.allclose(r, np.sum(indexed(dv1, ind1) * indexed(dv2, ind2), axis=1))
 
 
-def test_dot_pairwise_self(vector_array):
+def test_pairwise_dot_self(vector_array):
     v = vector_array
     if hasattr(v, 'data'):
         dv = v.data
     for ind1, ind2 in valid_inds_of_same_length(v, v):
-        r = v.dot(v, pairwise=True, ind=ind1, o_ind=ind2)
+        r = v.pairwise_dot(v, ind=ind1, o_ind=ind2)
         assert isinstance(r, np.ndarray)
         assert r.shape == (v.len_ind(ind1),)
-        r2 = v.dot(v, pairwise=True, ind=ind2, o_ind=ind1)
+        r2 = v.pairwise_dot(v, ind=ind2, o_ind=ind1)
         assert np.all(r == r2)
         assert np.all(r <= v.l2_norm(ind1) * v.l2_norm(ind2) * (1. + 1e-10))
         if hasattr(v, 'data'):
             assert np.allclose(r, np.sum(indexed(dv, ind1) * indexed(dv, ind2), axis=1))
     for ind in valid_inds(v):
-        r = v.dot(v, pairwise=True, ind=ind, o_ind=ind)
+        r = v.pairwise_dot(v, ind=ind, o_ind=ind)
         assert np.allclose(r, v.l2_norm(ind) ** 2)
 
 
@@ -633,10 +633,10 @@ def test_dot(compatible_vector_array_pair):
     if hasattr(v1, 'data'):
         dv1, dv2 = v1.data, v2.data
     for ind1, ind2 in chain(valid_inds_of_different_length(v1, v2), valid_inds_of_same_length(v1, v2)):
-        r = v1.dot(v2, pairwise=False, ind=ind1, o_ind=ind2)
+        r = v1.dot(v2, ind=ind1, o_ind=ind2)
         assert isinstance(r, np.ndarray)
         assert r.shape == (v1.len_ind(ind1), v2.len_ind(ind2))
-        r2 = v2.dot(v1, pairwise=False, ind=ind2, o_ind=ind1)
+        r2 = v2.dot(v1, ind=ind2, o_ind=ind1)
         assert np.all(r == r2.T)
         assert np.all(r <= v1.l2_norm(ind1)[:, np.newaxis] * v2.l2_norm(ind2)[np.newaxis, :] * (1. + 1e-10))
         if hasattr(v1, 'data'):
@@ -648,16 +648,16 @@ def test_dot_self(vector_array):
     if hasattr(v, 'data'):
         dv = v.data
     for ind1, ind2 in chain(valid_inds_of_different_length(v, v), valid_inds_of_same_length(v, v)):
-        r = v.dot(v, pairwise=False, ind=ind1, o_ind=ind2)
+        r = v.dot(v, ind=ind1, o_ind=ind2)
         assert isinstance(r, np.ndarray)
         assert r.shape == (v.len_ind(ind1), v.len_ind(ind2))
-        r2 = v.dot(v, pairwise=False, ind=ind2, o_ind=ind1)
+        r2 = v.dot(v, ind=ind2, o_ind=ind1)
         assert np.all(r == r2.T)
         assert np.all(r <= v.l2_norm(ind1)[:, np.newaxis] * v.l2_norm(ind2)[np.newaxis, :] * (1. + 1e-10))
         if hasattr(v, 'data'):
             assert np.allclose(r, indexed(dv, ind1).dot(indexed(dv, ind2).T))
     for ind in valid_inds(v):
-        r = v.dot(v, pairwise=False, ind=ind, o_ind=ind)
+        r = v.dot(v, ind=ind, o_ind=ind)
         assert np.all(r == r.T)
 
 
@@ -854,7 +854,7 @@ def test_amax(vector_array):
 def test_gramian(vector_array):
     v = vector_array
     for ind in valid_inds(v):
-        assert np.allclose(v.gramian(ind), v.dot(v, pairwise=False, ind=ind, o_ind=ind))
+        assert np.allclose(v.gramian(ind), v.dot(v, ind=ind, o_ind=ind))
 
 
 def test_add(compatible_vector_array_pair):
@@ -1005,10 +1005,15 @@ def test_dot_incompatible(incompatible_vector_array_pair):
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
         c1, c2 = v1.copy(), v2.copy()
         with pytest.raises(Exception):
-            c1.dot(c2, pairwise=True, ind=ind1, o_ind=ind2)
+            c1.dot(c2, ind=ind1, o_ind=ind2)
+
+
+def test_pairwise_dot_incompatible(incompatible_vector_array_pair):
+    v1, v2 = incompatible_vector_array_pair
+    for ind1, ind2 in valid_inds_of_same_length(v1, v2):
         c1, c2 = v1.copy(), v2.copy()
         with pytest.raises(Exception):
-            c1.dot(c2, pairwise=False, ind=ind1, o_ind=ind2)
+            c1.pairwise_dot(c2, ind=ind1, o_ind=ind2)
 
 
 def test_add_incompatible(incompatible_vector_array_pair):
@@ -1143,15 +1148,19 @@ def test_axpy_wrong_coefficients(compatible_vector_array_pair):
 
 def test_dot_wrong_ind(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
-    for ind1, ind2 in invalid_ind_pairs(v1, v2):
-        c1, c2 = v1.copy(), v2.copy()
-        with pytest.raises(Exception):
-            c1.dot(c2, pairwise=True, ind=ind1, x_ind=ind2)
     for ind1, ind2 in chain(izip(valid_inds(v1), invalid_inds(v2)),
                             izip(invalid_inds(v1), valid_inds(v2))):
         c1, c2 = v1.copy(), v2.copy()
         with pytest.raises(Exception):
-            c1.dot(c2, pairwise=False, ind=ind1, x_ind=ind2)
+            c1.dot(c2, ind=ind1, x_ind=ind2)
+
+
+def test_pairwise_dot_wrong_ind(compatible_vector_array_pair):
+    v1, v2 = compatible_vector_array_pair
+    for ind1, ind2 in invalid_ind_pairs(v1, v2):
+        c1, c2 = v1.copy(), v2.copy()
+        with pytest.raises(Exception):
+            c1.pairwise_dot(c2, ind=ind1, x_ind=ind2)
 
 
 def test_lincomb_wrong_ind(vector_array):

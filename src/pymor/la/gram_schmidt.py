@@ -105,7 +105,7 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
                     if j in remove:
                         continue
                     if product is None:
-                        p = A.dot(A, ind=i, o_ind=j, pairwise=True)[0]
+                        p = A.pairwise_dot(A, ind=i, o_ind=j)[0]
                     else:
                         p = product.apply2(A, A, V_ind=i, U_ind=j, pairwise=True)[0]
                     A.axpy(-p, A, ind=i, x_ind=j)
@@ -131,7 +131,7 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
         if product:
             error_matrix = product.apply2(A, A, V_ind=range(offset, len(A)), pairwise=False)
         else:
-            error_matrix = A.dot(A, ind=range(offset, len(A)), pairwise=False)
+            error_matrix = A.dot(A, ind=range(offset, len(A)))
         error_matrix[:len(A) - offset, offset:len(A)] -= np.eye(len(A) - offset)
         if error_matrix.size > 0:
             err = np.max(np.abs(error_matrix))

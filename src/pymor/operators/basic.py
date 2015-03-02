@@ -37,7 +37,7 @@ class OperatorBase(OperatorInterface):
         AU = self.apply(U, ind=U_ind, mu=mu)
         if product is not None:
             AU = product.apply(AU)
-        return V.dot(AU, ind=V_ind, pairwise=pairwise)
+        return V.pairwise_dot(AU, ind=V_ind) if pairwise else V.dot(AU, ind=V_ind)
 
     def jacobian(self, U, mu=None):
         if self.linear:

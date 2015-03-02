@@ -92,9 +92,9 @@ def pod(A, modes=None, product=None, tol=4e-8, symmetrize=False, orthonormalize=
         POD = gram_schmidt(POD, product=product, copy=False)
 
     if check:
-        if not product and not float_cmp_all(POD.dot(POD, pairwise=False), np.eye(len(POD)),
+        if not product and not float_cmp_all(POD.dot(POD), np.eye(len(POD)),
                                              atol=check_tol, rtol=0.):
-            err = np.max(np.abs(POD.dot(POD, pairwise=False) - np.eye(len(POD))))
+            err = np.max(np.abs(POD.dot(POD) - np.eye(len(POD))))
             raise AccuracyError('result not orthogonal (max err={})'.format(err))
         elif product and not float_cmp_all(product.apply2(POD, POD, pairwise=False), np.eye(len(POD)),
                                            atol=check_tol, rtol=0.):

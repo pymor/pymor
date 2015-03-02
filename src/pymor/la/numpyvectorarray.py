@@ -254,7 +254,7 @@ class NumpyVectorArray(VectorArrayInterface):
             else:
                 self._array[ind] += (B * alpha)
 
-    def dot(self, other, pairwise, ind=None, o_ind=None):
+    def dot(self, other, ind=None, o_ind=None):
         assert self.check_ind(ind)
         assert other.check_ind(o_ind)
         assert self.dim == other.dim
@@ -270,11 +270,26 @@ class NumpyVectorArray(VectorArrayInterface):
         B = other._array[:other._len] if o_ind is None else \
             other._array[o_ind] if hasattr(o_ind, '__len__') else other._array[o_ind:o_ind + 1]
 
-        if pairwise:
-            assert self.len_ind(ind) == other.len_ind(o_ind)
-            return np.sum(A * B, axis=1)
-        else:
-            return A.dot(B.T)
+        return A.dot(B.T)
+
+    def pairwise_dot(self, other, ind=None, o_ind=None):
+        assert self.check_ind(ind)
+        assert other.check_ind(o_ind)
+        assert self.dim == other.dim
+        assert self.len_ind(ind) == other.len_ind(o_ind)
+
+        if NUMPY_INDEX_QUIRK:
+            if self._len == 0 and hasattr(ind, '__len__'):
+                ind = None
+            if other._len == 0 and hasattr(o_ind, '__len__'):
+                o_ind = None
+
+        A = self._array[:self._len] if ind is None else \
+            self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
+        B = other._array[:other._len] if o_ind is None else \
+            other._array[o_ind] if hasattr(o_ind, '__len__') else other._array[o_ind:o_ind + 1]
+
+        return np.sum(A * B, axis=1)
 
     def lincomb(self, coefficients, ind=None):
         assert self.check_ind(ind)

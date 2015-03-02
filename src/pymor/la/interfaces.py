@@ -281,15 +281,13 @@ class VectorArrayInterface(BasicInterface):
         pass
 
     @abstractmethod
-    def dot(self, other, pairwise, ind=None, o_ind=None):
+    def dot(self, other, ind=None, o_ind=None):
         """Returns the scalar products between |VectorArray| elements.
 
         Parameters
         ----------
         other
             A |VectorArray| containing the second factors.
-        pairwise
-            See return value documentation.
         ind
             Indices of the vectors whose scalar products are to be taken
             (see class documentation).
@@ -299,15 +297,34 @@ class VectorArrayInterface(BasicInterface):
 
         Returns
         -------
-        If pairwise is `True`, returns a |NumPy array| `result` such
-        that ::
+        A |NumPy array| `result` such that ::
+
+            result[i, j] = ( self[ind][i], other[o_ind][j] ).
+
+        """
+        pass
+
+    @abstractmethod
+    def pairwise_dot(self, other, ind=None, o_ind=None):
+        """Returns the scalar products between |VectorArray| elements.
+
+        Parameters
+        ----------
+        other
+            A |VectorArray| containing the second factors.
+        ind
+            Indices of the vectors whose scalar products are to be taken
+            (see class documentation).
+        o_ind
+            Indices of the vectors in `other` whose scalar products are to be
+            taken (see class documentation).
+
+        Returns
+        -------
+        A |NumPy array| `result` such that ::
 
             result[i] = ( self[ind][i], other[o_ind][i] ).
 
-        If pairwise is `False`, returns a |NumPy array| `result` such
-        that ::
-
-            result[i, j] = ( self[ind][i], other[o_ind][j] ).
         """
         pass
 
@@ -430,8 +447,8 @@ class VectorArrayInterface(BasicInterface):
         pass
 
     def gramian(self, ind=None):
-        """Shorthand for `dot(self, pairwise=False, ind=ind, o_ind=ind)`."""
-        return self.dot(self, pairwise=False, ind=ind, o_ind=ind)
+        """Shorthand for `dot(self, ind=ind, o_ind=ind)`."""
+        return self.dot(self, ind=ind, o_ind=ind)
 
     def __add__(self, other):
         """The pairwise sum of two |VectorArrays|."""

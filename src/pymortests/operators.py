@@ -100,7 +100,7 @@ def test_apply2(operator_with_arrays):
         for V_ind in valid_inds(V):
             M = op.apply2(V, U, pairwise=False, U_ind=U_ind, V_ind=V_ind, mu=mu)
             assert M.shape == (V.len_ind(V_ind), U.len_ind(U_ind))
-            M2 = V.dot(op.apply(U, ind=U_ind, mu=mu), pairwise=False, ind=V_ind)
+            M2 = V.dot(op.apply(U, ind=U_ind, mu=mu), ind=V_ind)
             assert np.allclose(M, M2)
 
 
@@ -110,7 +110,7 @@ def test_apply2_with_product(operator_with_arrays_and_products):
         for V_ind in valid_inds(V):
             M = op.apply2(V, U, pairwise=False, U_ind=U_ind, V_ind=V_ind, mu=mu, product=rp)
             assert M.shape == (V.len_ind(V_ind), U.len_ind(U_ind))
-            M2 = V.dot(rp.apply(op.apply(U, ind=U_ind, mu=mu)), pairwise=False, ind=V_ind)
+            M2 = V.dot(rp.apply(op.apply(U, ind=U_ind, mu=mu)), ind=V_ind)
             assert np.allclose(M, M2)
 
 
@@ -119,7 +119,7 @@ def test_apply2_pairwise(operator_with_arrays):
     for U_ind, V_ind in valid_inds_of_same_length(U, V):
         M = op.apply2(V, U, pairwise=True, U_ind=U_ind, V_ind=V_ind, mu=mu)
         assert M.shape == (V.len_ind(V_ind),)
-        M2 = V.dot(op.apply(U, ind=U_ind, mu=mu), pairwise=True, ind=V_ind)
+        M2 = V.pairwise_dot(op.apply(U, ind=U_ind, mu=mu), ind=V_ind)
         assert np.allclose(M, M2)
 
 
@@ -128,7 +128,7 @@ def test_apply2_pairwise_with_product(operator_with_arrays_and_products):
     for U_ind, V_ind in valid_inds_of_same_length(U, V):
         M = op.apply2(V, U, pairwise=True, U_ind=U_ind, V_ind=V_ind, mu=mu, product=rp)
         assert M.shape == (V.len_ind(V_ind),)
-        M2 = V.dot(rp.apply(op.apply(U, ind=U_ind, mu=mu)), pairwise=True, ind=V_ind)
+        M2 = V.pairwise_dot(rp.apply(op.apply(U, ind=U_ind, mu=mu)), ind=V_ind)
         assert np.allclose(M, M2)
 
 
@@ -152,7 +152,7 @@ def test_apply_adjoint_2(operator_with_arrays):
         ATV = op.apply_adjoint(V, mu=mu)
     except NotImplementedError:
         return
-    assert np.allclose(V.dot(op.apply(U, mu=mu), pairwise=False), ATV.dot(U, pairwise=False))
+    assert np.allclose(V.dot(op.apply(U, mu=mu)), ATV.dot(U))
 
 
 def test_apply_adjoint_2_with_products(operator_with_arrays_and_products):
@@ -188,7 +188,7 @@ def test_projected(operator_with_arrays):
     np.random.seed(4711 + U.dim + len(V))
     coeffs = np.random.random(len(U))
     X = op_UV.apply(NumpyVectorArray(coeffs, copy=False), mu=mu)
-    Y = NumpyVectorArray(V.dot(op.apply(U.lincomb(coeffs), mu=mu), pairwise=False).T, copy=False)
+    Y = NumpyVectorArray(V.dot(op.apply(U.lincomb(coeffs), mu=mu)).T, copy=False)
     assert np.all(X.almost_equal(Y))
 
 

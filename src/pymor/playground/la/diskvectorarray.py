@@ -278,22 +278,27 @@ class DiskVectorArray(VectorArrayInterface):
                     new_vec.axpy(alpha, x._load(xx))
                     self._store(y, new_vec)
 
-    def dot(self, other, pairwise, ind=None, o_ind=None):
+    def dot(self, other, ind=None, o_ind=None):
         assert self.check_ind(ind)
         assert other.check_ind(o_ind)
         assert self.space == other.space
         ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
         o_ind = list(xrange(other._len)) if o_ind is None else [o_ind] if isinstance(o_ind, Number) else o_ind
 
-        if pairwise:
-            assert len(ind) == len(o_ind)
-            return np.array([self._load(i).dot(other._load(oi)) for i, oi in izip(ind, o_ind)])
-        else:
-            R = np.empty((len(ind), len(o_ind)))
-            for i, a in enumerate(ind):
-                for j, b in enumerate(o_ind):
-                    R[i, j] = self._load(a).dot(other._load(b))
-            return R
+        R = np.empty((len(ind), len(o_ind)))
+        for i, a in enumerate(ind):
+            for j, b in enumerate(o_ind):
+                R[i, j] = self._load(a).dot(other._load(b))
+        return R
+
+    def pairwise_dot(self, other, ind=None, o_ind=None):
+        assert self.check_ind(ind)
+        assert other.check_ind(o_ind)
+        assert self.space == other.space
+        ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
+        o_ind = list(xrange(other._len)) if o_ind is None else [o_ind] if isinstance(o_ind, Number) else o_ind
+        assert len(ind) == len(o_ind)
+        return np.array([self._load(i).dot(other._load(oi)) for i, oi in izip(ind, o_ind)])
 
     def gramian(self, ind=None):
         assert self.check_ind(ind)

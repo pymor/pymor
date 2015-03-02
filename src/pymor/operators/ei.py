@@ -119,8 +119,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
 
             if range_basis is not None:
                 if product is None:
-                    projected_collateral_basis = NumpyVectorArray(self.collateral_basis.dot(range_basis,
-                                                                                            pairwise=False))
+                    projected_collateral_basis = NumpyVectorArray(self.collateral_basis.dot(range_basis))
                 else:
                     projected_collateral_basis = NumpyVectorArray(product.apply2(self.collateral_basis, range_basis,
                                                                                  pairwise=False))

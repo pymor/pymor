@@ -109,9 +109,19 @@ class BlockVectorArray(VectorArrayInterface):
             for block, x_block in izip(self._blocks, x._blocks):
                 block.axpy(alpha, x_block, ind, x_ind)
 
-    def dot(self, other, pairwise, ind=None, o_ind=None):
+    def dot(self, other, ind=None, o_ind=None):
         assert other in self.space
-        dots = [block.dot(other_block, pairwise, ind=ind, o_ind=o_ind)
+        dots = [block.dot(other_block, ind=ind, o_ind=o_ind)
+                for block, other_block in izip(self._blocks, other._blocks)]
+        assert all([dot.shape == dots[0].shape for dot in dots])
+        ret = np.zeros(dots[0].shape)
+        for dot in dots:
+            ret += dot
+        return ret
+
+    def pairwise_dot(self, other, ind=None, o_ind=None):
+        assert other in self.space
+        dots = [block.pairwise_dot(other_block, ind=ind, o_ind=o_ind)
                 for block, other_block in izip(self._blocks, other._blocks)]
         assert all([dot.shape == dots[0].shape for dot in dots])
         ret = np.zeros(dots[0].shape)

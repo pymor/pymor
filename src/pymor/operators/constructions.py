@@ -346,7 +346,7 @@ class ConstantOperator(OperatorBase):
                 projected_value = NumpyVectorArray(product.apply2(range_basis, self._value, pairwise=False).T,
                                                    copy=False)
             else:
-                projected_value = NumpyVectorArray(range_basis.dot(self._value, pairwise=False).T, copy=False)
+                projected_value = NumpyVectorArray(range_basis.dot(self._value).T, copy=False)
         else:
             projected_value = self._value
         if source_basis is None:
@@ -447,7 +447,7 @@ class VectorArrayOperator(OperatorBase):
                 U = U.copy(ind)
             return self._array.lincomb(U.data)
         else:
-            return NumpyVectorArray(U.dot(self._array, ind=ind, pairwise=False), copy=False)
+            return NumpyVectorArray(U.dot(self._array, ind=ind), copy=False)
 
     def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
         assert U in self.range
@@ -457,7 +457,7 @@ class VectorArrayOperator(OperatorBase):
             if range_product:
                 ATPrU = NumpyVectorArray(range_product.apply2(self._array, U, U_ind=ind, pairwise=False).T, copy=False)
             else:
-                ATPrU = NumpyVectorArray(self._array.dot(U, o_ind=ind, pairwise=False).T, copy=False)
+                ATPrU = NumpyVectorArray(self._array.dot(U, o_ind=ind).T, copy=False)
             if source_product:
                 return source_product.apply_inverse(ATPrU)
             else:

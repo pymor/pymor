@@ -439,7 +439,7 @@ class ListVectorArray(VectorArrayInterface):
                 for xx, y in izip(X, Y):
                     y.axpy(alpha, xx)
 
-    def dot(self, other, pairwise, ind=None, o_ind=None):
+    def dot(self, other, ind=None, o_ind=None):
         assert self.check_ind(ind)
         assert other.check_ind(o_ind)
         assert self.space == other.space
@@ -464,17 +464,41 @@ class ListVectorArray(VectorArrayInterface):
             B = (other._list[i] for i in o_ind)
             len_B = len(o_ind)
 
-        if pairwise:
-            assert len_A == len_B
-            return np.array([a.dot(b) for a, b in izip(A, B)])
+        A = list(A)
+        B = list(B)
+        R = np.empty((len_A, len_B))
+        for i, a in enumerate(A):
+            for j, b in enumerate(B):
+                R[i, j] = a.dot(b)
+        return R
+
+    def pairwise_dot(self, other, ind=None, o_ind=None):
+        assert self.check_ind(ind)
+        assert other.check_ind(o_ind)
+        assert self.space == other.space
+
+        if ind is None:
+            A = self._list
+            len_A = len(A)
+        elif isinstance(ind, Number):
+            A = [self._list[ind]]
+            len_A = 1
         else:
-            A = list(A)
-            B = list(B)
-            R = np.empty((len_A, len_B))
-            for i, a in enumerate(A):
-                for j, b in enumerate(B):
-                    R[i, j] = a.dot(b)
-            return R
+            A = (self._list[i] for i in ind)
+            len_A = len(ind)
+
+        if o_ind is None:
+            B = other._list
+            len_B = len(B)
+        elif isinstance(o_ind, Number):
+            B = [other._list[o_ind]]
+            len_B = 1
+        else:
+            B = (other._list[i] for i in o_ind)
+            len_B = len(o_ind)
+
+        assert len_A == len_B
+        return np.array([a.dot(b) for a, b in izip(A, B)])
 
     def gramian(self, ind=None):
         assert self.check_ind(ind)

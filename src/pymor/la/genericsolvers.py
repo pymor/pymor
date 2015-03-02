@@ -320,7 +320,7 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
             #     ++ orthogonalize
             hcur = []
             for v in vs:
-                alpha = v.dot(v_new, pairwise=False)[0, 0]
+                alpha = v.dot(v_new)[0, 0]
                 hcur.append(alpha)
                 v_new.axpy(-alpha, v)  # v_new -= alpha*v
             hcur.append(v_new.l2_norm()[0])
