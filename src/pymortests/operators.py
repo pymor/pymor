@@ -98,7 +98,7 @@ def test_apply2(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     for U_ind in valid_inds(U):
         for V_ind in valid_inds(V):
-            M = op.apply2(V, U, pairwise=False, U_ind=U_ind, V_ind=V_ind, mu=mu)
+            M = op.apply2(V, U, U_ind=U_ind, V_ind=V_ind, mu=mu)
             assert M.shape == (V.len_ind(V_ind), U.len_ind(U_ind))
             M2 = V.dot(op.apply(U, ind=U_ind, mu=mu), ind=V_ind)
             assert np.allclose(M, M2)
@@ -108,25 +108,25 @@ def test_apply2_with_product(operator_with_arrays_and_products):
     op, mu, U, V, sp, rp = operator_with_arrays_and_products
     for U_ind in valid_inds(U):
         for V_ind in valid_inds(V):
-            M = op.apply2(V, U, pairwise=False, U_ind=U_ind, V_ind=V_ind, mu=mu, product=rp)
+            M = op.apply2(V, U, U_ind=U_ind, V_ind=V_ind, mu=mu, product=rp)
             assert M.shape == (V.len_ind(V_ind), U.len_ind(U_ind))
             M2 = V.dot(rp.apply(op.apply(U, ind=U_ind, mu=mu)), ind=V_ind)
             assert np.allclose(M, M2)
 
 
-def test_apply2_pairwise(operator_with_arrays):
+def test_pairwise_apply2(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     for U_ind, V_ind in valid_inds_of_same_length(U, V):
-        M = op.apply2(V, U, pairwise=True, U_ind=U_ind, V_ind=V_ind, mu=mu)
+        M = op.pairwise_apply2(V, U, U_ind=U_ind, V_ind=V_ind, mu=mu)
         assert M.shape == (V.len_ind(V_ind),)
         M2 = V.pairwise_dot(op.apply(U, ind=U_ind, mu=mu), ind=V_ind)
         assert np.allclose(M, M2)
 
 
-def test_apply2_pairwise_with_product(operator_with_arrays_and_products):
+def test_pairwise_apply2_with_product(operator_with_arrays_and_products):
     op, mu, U, V, sp, rp = operator_with_arrays_and_products
     for U_ind, V_ind in valid_inds_of_same_length(U, V):
-        M = op.apply2(V, U, pairwise=True, U_ind=U_ind, V_ind=V_ind, mu=mu, product=rp)
+        M = op.pairwise_apply2(V, U, U_ind=U_ind, V_ind=V_ind, mu=mu, product=rp)
         assert M.shape == (V.len_ind(V_ind),)
         M2 = V.pairwise_dot(rp.apply(op.apply(U, ind=U_ind, mu=mu)), ind=V_ind)
         assert np.allclose(M, M2)
@@ -161,8 +161,7 @@ def test_apply_adjoint_2_with_products(operator_with_arrays_and_products):
         ATV = op.apply_adjoint(V, mu=mu, source_product=sp, range_product=rp)
     except NotImplementedError:
         return
-    assert np.allclose(rp.apply2(V, op.apply(U, mu=mu), pairwise=False),
-                       sp.apply2(ATV, U, pairwise=False))
+    assert np.allclose(rp.apply2(V, op.apply(U, mu=mu)), sp.apply2(ATV, U))
 
 
 def test_apply_inverse(operator_with_arrays):
@@ -214,7 +213,7 @@ def test_projected_with_product(operator_with_arrays_and_products):
     np.random.seed(4711 + U.dim + len(V))
     coeffs = np.random.random(len(U))
     X = op_UV.apply(NumpyVectorArray(coeffs, copy=False), mu=mu)
-    Y = NumpyVectorArray(rp.apply2(op.apply(U.lincomb(coeffs), mu=mu), V, pairwise=False), copy=False)
+    Y = NumpyVectorArray(rp.apply2(op.apply(U.lincomb(coeffs), mu=mu), V), copy=False)
     assert np.all(X.almost_equal(Y))
 
 
@@ -266,10 +265,10 @@ def test_apply2_wrong_ind(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     for ind in invalid_inds(U):
         with pytest.raises(Exception):
-            op.apply2(U, V, pairwise=False, mu=mu, ind=ind)
+            op.apply2(U, V, mu=mu, ind=ind)
     for ind in invalid_inds(V):
         with pytest.raises(Exception):
-            op.apply2(U, V, pairwise=False, mu=mu, ind=ind)
+            op.apply2(U, V, mu=mu, ind=ind)
 
 
 def test_apply_adjoint_wrong_ind(operator_with_arrays):

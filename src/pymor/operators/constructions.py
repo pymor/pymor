@@ -343,8 +343,7 @@ class ConstantOperator(OperatorBase):
         assert product is None or product.source == product.range == self.range
         if range_basis is not None:
             if product:
-                projected_value = NumpyVectorArray(product.apply2(range_basis, self._value, pairwise=False).T,
-                                                   copy=False)
+                projected_value = NumpyVectorArray(product.apply2(range_basis, self._value).T, copy=False)
             else:
                 projected_value = NumpyVectorArray(range_basis.dot(self._value).T, copy=False)
         else:
@@ -455,7 +454,7 @@ class VectorArrayOperator(OperatorBase):
         assert range_product is None or range_product.source == range_product.range == self.range
         if not self.transposed:
             if range_product:
-                ATPrU = NumpyVectorArray(range_product.apply2(self._array, U, U_ind=ind, pairwise=False).T, copy=False)
+                ATPrU = NumpyVectorArray(range_product.apply2(self._array, U, U_ind=ind).T, copy=False)
             else:
                 ATPrU = NumpyVectorArray(self._array.dot(U, o_ind=ind).T, copy=False)
             if source_product:

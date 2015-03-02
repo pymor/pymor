@@ -66,7 +66,7 @@ def pod(A, modes=None, product=None, tol=4e-8, symmetrize=False, orthonormalize=
     assert modes is None or modes <= len(A)
     assert product is None or isinstance(product, OperatorInterface)
 
-    B = A.gramian() if product is None else product.apply2(A, A, pairwise=False)
+    B = A.gramian() if product is None else product.apply2(A, A)
 
     if symmetrize:     # according to rbmatlab this is necessary due to rounding
         B = B + B.T
@@ -96,9 +96,9 @@ def pod(A, modes=None, product=None, tol=4e-8, symmetrize=False, orthonormalize=
                                              atol=check_tol, rtol=0.):
             err = np.max(np.abs(POD.dot(POD) - np.eye(len(POD))))
             raise AccuracyError('result not orthogonal (max err={})'.format(err))
-        elif product and not float_cmp_all(product.apply2(POD, POD, pairwise=False), np.eye(len(POD)),
+        elif product and not float_cmp_all(product.apply2(POD, POD), np.eye(len(POD)),
                                            atol=check_tol, rtol=0.):
-            err = np.max(np.abs(product.apply2(POD, POD, pairwise=False) - np.eye(len(POD))))
+            err = np.max(np.abs(product.apply2(POD, POD) - np.eye(len(POD))))
             raise AccuracyError('result not orthogonal (max err={})'.format(err))
         if len(POD) < len(EVECS):
             raise AccuracyError('additional orthonormalization removed basis vectors')

@@ -24,20 +24,30 @@ class OperatorBase(OperatorInterface):
     from this class.
     """
 
-    def apply2(self, V, U, pairwise, U_ind=None, V_ind=None, mu=None, product=None):
+    def apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None):
         mu = self.parse_parameter(mu)
         assert isinstance(V, VectorArrayInterface)
         assert isinstance(U, VectorArrayInterface)
         U_ind = None if U_ind is None else np.array(U_ind, copy=False, dtype=np.int, ndmin=1)
         V_ind = None if V_ind is None else np.array(V_ind, copy=False, dtype=np.int, ndmin=1)
-        if pairwise:
-            lu = len(U_ind) if U_ind is not None else len(U)
-            lv = len(V_ind) if V_ind is not None else len(V)
-            assert lu == lv
         AU = self.apply(U, ind=U_ind, mu=mu)
         if product is not None:
             AU = product.apply(AU)
-        return V.pairwise_dot(AU, ind=V_ind) if pairwise else V.dot(AU, ind=V_ind)
+        return V.dot(AU, ind=V_ind)
+
+    def pairwise_apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None):
+        mu = self.parse_parameter(mu)
+        assert isinstance(V, VectorArrayInterface)
+        assert isinstance(U, VectorArrayInterface)
+        U_ind = None if U_ind is None else np.array(U_ind, copy=False, dtype=np.int, ndmin=1)
+        V_ind = None if V_ind is None else np.array(V_ind, copy=False, dtype=np.int, ndmin=1)
+        lu = len(U_ind) if U_ind is not None else len(U)
+        lv = len(V_ind) if V_ind is not None else len(V)
+        assert lu == lv
+        AU = self.apply(U, ind=U_ind, mu=mu)
+        if product is not None:
+            AU = product.apply(AU)
+        return V.pairwise_dot(AU, ind=V_ind)
 
     def jacobian(self, U, mu=None):
         if self.linear:
@@ -153,11 +163,11 @@ class OperatorBase(OperatorInterface):
                         return VectorArrayOperator(V, transposed=False, copy=False, name=name)
                 elif product is None:
                     from pymor.operators.numpy import NumpyMatrixOperator
-                    return NumpyMatrixOperator(self.apply2(range_basis, source_basis, pairwise=False), name=name)
+                    return NumpyMatrixOperator(self.apply2(range_basis, source_basis), name=name)
                 else:
                     from pymor.operators.numpy import NumpyMatrixOperator
                     V = self.apply(source_basis)
-                    return NumpyMatrixOperator(product.apply2(range_basis, V, pairwise=False), name=name)
+                    return NumpyMatrixOperator(product.apply2(range_basis, V), name=name)
         else:
             self.logger.warn('Using inefficient generic projection operator')
             # Since the bases are not immutable and we do not own them,
@@ -216,20 +226,20 @@ class ProjectedOperator(OperatorBase):
             if self.range_basis is None:
                 return self.operator.apply(U, ind=ind, mu=mu)
             elif self.product is None:
-                return NumpyVectorArray(self.operator.apply2(self.range_basis, U, U_ind=ind, mu=mu, pairwise=False).T)
+                return NumpyVectorArray(self.operator.apply2(self.range_basis, U, U_ind=ind, mu=mu).T)
             else:
                 V = self.operator.apply(U, ind=ind, mu=mu)
-                return NumpyVectorArray(self.product.apply2(V, self.range_basis, pairwise=False))
+                return NumpyVectorArray(self.product.apply2(V, self.range_basis))
         else:
             U_array = U._array[:U._len] if ind is None else U._array[ind]
             UU = self.source_basis.lincomb(U_array)
             if self.range_basis is None:
                 return self.operator.apply(UU, mu=mu)
             elif self.product is None:
-                return NumpyVectorArray(self.operator.apply2(self.range_basis, UU, mu=mu, pairwise=False).T)
+                return NumpyVectorArray(self.operator.apply2(self.range_basis, UU, mu=mu).T)
             else:
                 V = self.operator.apply(UU, mu=mu)
-                return NumpyVectorArray(self.product.apply2(V, self.range_basis, pairwise=False))
+                return NumpyVectorArray(self.product.apply2(V, self.range_basis))
 
     def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
         """See :meth:`NumpyMatrixOperator.projected_to_subbasis`."""

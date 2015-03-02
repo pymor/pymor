@@ -22,7 +22,7 @@ class InducedNorm(ImmutableInterface, Parametric):
         self.build_parameter_type(inherits=(product,))
 
     def __call__(self, U, mu=None):
-        norm_squared = self.product.apply2(U, U, mu=mu, pairwise=True)
+        norm_squared = self.product.pairwise_apply2(U, U, mu=mu)
         if self.tol > 0:
             norm_squared = np.where(np.logical_and(0 > norm_squared, norm_squared > - self.tol),
                                     0, norm_squared)
@@ -38,7 +38,7 @@ def induced_norm(product, raise_negative=True, tol=1e-10, name=None):
     The norm of a the vectors in a |VectorArray| U is calculated by
     calling ::
 
-        product.apply2(U, U, mu=mu, pairwise=True)
+        product.pairwise_apply2(U, U, mu=mu)
 
     In addition, negative norm squares of absolute value smaller
     than `tol` are clipped to `0`.

@@ -260,7 +260,7 @@ the H1-product. For this we use the :meth:`~pymor.operators.interfaces.OperatorI
 method:
 
 >>> import numpy as np
->>> gram_matrix = d.h1_product.apply2(rb, rb, pairwise=False)
+>>> gram_matrix = d.h1_product.apply2(rb, rb)
 >>> print(np.max(np.abs(gram_matrix - np.eye(32))))
 1.24982272795e-13
 
