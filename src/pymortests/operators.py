@@ -29,7 +29,7 @@ def test_selection_op():
     s1 = SelectionOperator(
         operators = [p1], 
         boundaries = [], 
-        parameterfunctional = select_rhs_functional,
+        parameter_functional = select_rhs_functional,
         name = "foo"
     )
     x = np.linspace(-1., 1., num=3)
@@ -39,7 +39,7 @@ def test_selection_op():
     s2 = SelectionOperator(
         operators = [p1,p1,p1,p1],
         boundaries = [-3, 3, 7],
-        parameterfunctional = select_rhs_functional,
+        parameter_functional = select_rhs_functional,
         name = "Bar"
     )
 
