@@ -26,15 +26,3 @@ class DomainDescriptionInterface(ImmutableInterface):
     @property
     def has_neumann(self):
         return BoundaryType('neumann') in self.boundary_types
-
-    @property
-    def has_only_dirichlet(self):
-        return self.boundary_types == {BoundaryType('dirichlet')}
-
-    @property
-    def has_only_neumann(self):
-        return self.boundary_types == {BoundaryType('neumann')}
-
-    @property
-    def has_only_dirichletneumann(self):
-        return self.boundary_types <= {BoundaryType('dirichlet'), BoundaryType('neumann')}
