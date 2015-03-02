@@ -15,7 +15,7 @@ regarding pyMOR or wish to contribute, do not hesitate to contact us!
 
 [![Docs](https://readthedocs.org/projects/pymor/badge/?version=0.3.x)](http://pymor.readthedocs.org/en/0.3.x)
 [![DOI](https://zenodo.org/badge/8838/pymor/pymor.svg)](http://dx.doi.org/10.5281/zenodo.15773)
-[![Build Status](https://travis-ci.org/pymor/pymor.png?branch=master)](https://travis-ci.org/pymor/pymor)
+[![Build Status](https://travis-ci.org/pymor/pymor.png?branch=0.3.x)](https://travis-ci.org/pymor/pymor)
 [![Coverage Status](https://coveralls.io/repos/pymor/pymor/badge.png)](https://coveralls.io/r/pymor/pymor)
 [![Code Health](https://landscape.io/github/pymor/pymor/master/landscape.png)](https://landscape.io/github/pymor/pymor/master)
 
