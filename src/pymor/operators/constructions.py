@@ -608,3 +608,68 @@ class FixedParameterOperator(OperatorBase):
 
     def apply_inverse(self, U, ind=None, mu=None, options=None):
         return self.operator.apply_inverse(U, ind=ind, mu=self.mu, options=options)
+
+
+class SelectionOperator(OperatorBase):
+    """An |Operator| selecting one out of a list of |Operators|.
+
+    operators[i] is used
+    if parameterfunctional(mu) is less or equal than boundaries[i]
+    and greater than boundaries[i-1]::
+
+        -infty ------- boundaries[i] ---------- boundaries[i+1] ------- infty
+                            |                        |
+        --- operators[i] ---|---- operators[i+1] ----|---- operators[i+2]
+                            |                        |
+
+    Parameters
+    ----------
+    operators
+        List of |Operators| from which one |Operator| is
+        selected based on a parameter.
+    parameterfunctional
+        A |ParameterFunctional| used for the selection of one |Operator|..
+    name
+        Name of the operator.
+
+    """
+    def __init__(self, operators, parameterfunctional, boundaries, name=None):
+        assert len(operators) > 0
+
+        assert len(boundaries) == len(operators) - 1
+        # check that boundaries are ascending:
+        for i in range(len(boundaries)-1):
+            assert boundaries[i] <= boundaries[i+1]
+
+        assert all(isinstance(op, OperatorInterface) for op in operators)
+
+        assert all(op.source == operators[0].source for op in operators[1:])
+        assert all(op.range == operators[0].range for op in operators[1:])
+        self.source = operators[0].source
+        self.range = operators[0].range
+        self.operators = operators
+        self.linear = all(op.linear for op in operators)
+
+        self.name = name
+        self.build_parameter_type(inherits=list(operators) + [parameterfunctional])
+        self._try_assemble = not self.parametric
+
+        self.boundaries = boundaries
+        self.parameterfunctional = parameterfunctional
+
+    def _get_operator_number(self, mu):
+        value = self.parameterfunctional.evaluate(mu)
+        for i in range(len(self.boundaries)):
+            if self.boundaries[i] >= value:
+                return i
+        return len(self.boundaries)
+
+    def apply(self, U, ind=None, mu=None):
+        mu = self.parse_parameter(mu)
+        operator_number = self._get_operator_number(mu)
+        return self.operators[operator_number].apply(U,ind=ind, mu=mu)
+
+    def as_vector(self, mu=None):
+        mu = self.parse_parameter(mu)
+        operator_number = self._get_operator_number(mu)
+        return self.operators[operator_number].as_vector(mu=mu)
