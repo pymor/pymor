@@ -268,12 +268,6 @@ class OperatorInterface(ImmutableInterface, Parametric):
         """
         pass
 
-    @abstractstaticmethod
-    def lincomb(operators, coefficients, name=None):
-        """DEPRECATED! Use :func:`pymor.operators.constructions.LincombOperator` instead.
-        """
-        pass
-
     def assemble_lincomb(self, operators, coefficients, name=None):
         """Try to assemble a linear combination of the given operators.
 
