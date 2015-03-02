@@ -628,7 +628,9 @@ class SelectionOperator(OperatorBase):
         List of |Operators| from which one |Operator| is
         selected based on a parameter.
     parameter_functional
-        A |ParameterFunctional| used for the selection of one |Operator|..
+        A |ParameterFunctional| used for the selection of one |Operator|.
+    boundaries
+        The interval boundaries as defined above.
     name
         Name of the operator.
 
