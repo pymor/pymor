@@ -8,6 +8,9 @@ from itertools import chain
 import numpy as np
 import pytest
 
+from pymor.operators.constructions import SelectionOperator
+from pymor.parameters.base import ParameterType
+from pymor.parameters.functionals import GenericParameterFunctional
 from pymor.core.exceptions import InversionError
 from pymor.la.numpyvectorarray import NumpyVectorArray
 from pymor.tools.floatcmp import float_cmp_all
@@ -16,6 +19,37 @@ from pymortests.fixtures.operator import operator, operator_with_arrays, operato
 from pymortests.vectorarray import valid_inds, valid_inds_of_same_length, invalid_inds
 from pymortests.pickle import assert_picklable, assert_picklable_without_dumps_function
 
+
+def test_selection_op():
+    p1 = MonomOperator(1)
+    select_rhs_functional = GenericParameterFunctional(
+        lambda x: round(float(x["nrrhs"])), 
+        ParameterType({"nrrhs" : tuple()})
+    )
+    s1 = SelectionOperator(
+        operators = [p1], 
+        boundaries = [], 
+        parameterfunctional = select_rhs_functional,
+        name = "foo"
+    )
+    x = np.linspace(-1., 1., num=3)
+    vx = NumpyVectorArray(x[:, np.newaxis])
+    assert np.allclose(p1.apply(vx,mu=0).data, s1.apply(vx,mu=0).data)
+
+    s2 = SelectionOperator(
+        operators = [p1,p1,p1,p1],
+        boundaries = [-3, 3, 7],
+        parameterfunctional = select_rhs_functional,
+        name = "Bar"
+    )
+
+    assert s2._get_operator_number({"nrrhs":-4}) == 0
+    assert s2._get_operator_number({"nrrhs":-3}) == 0
+    assert s2._get_operator_number({"nrrhs":-2}) == 1
+    assert s2._get_operator_number({"nrrhs":3}) == 1
+    assert s2._get_operator_number({"nrrhs":4}) == 2
+    assert s2._get_operator_number({"nrrhs":7}) == 2
+    assert s2._get_operator_number({"nrrhs":9}) == 3
 
 def test_lincomb_op():
     p1 = MonomOperator(1)
@@ -250,3 +284,4 @@ def test_apply_inverse_wrong_ind(operator_with_arrays):
     for ind in invalid_inds(V):
         with pytest.raises(Exception):
             op.apply_inverse(V, mu=mu, ind=ind)
+
