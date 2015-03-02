@@ -354,11 +354,18 @@ class BoundaryInfoInterface(CacheableInterface):
     def has_neumann(self):
         return BoundaryType('neumann') in self.boundary_types
 
+    @property
+    def has_robin(self):
+        return BoundaryType('robin') in self.boundary_types
+
     def dirichlet_mask(self, codim):
         return self.mask(BoundaryType('dirichlet'), codim)
 
     def neumann_mask(self, codim):
         return self.mask(BoundaryType('neumann'), codim)
+
+    def robin_mask(self, codim):
+        return self.mask(BoundaryType('robin'), codim)
 
     @cached
     def _dirichlet_boundaries(self, codim):
@@ -373,3 +380,10 @@ class BoundaryInfoInterface(CacheableInterface):
 
     def neumann_boundaries(self, codim):
         return self._neumann_boundaries(codim)
+
+    @cached
+    def _robin_boundaries(self, codim):
+        return np.where(self.robin_mask(codim))[0].astype('int32')
+
+    def robin_boundaries(self, codim):
+        return self._robin_boundaries(codim)
