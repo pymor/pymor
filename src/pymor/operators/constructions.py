@@ -644,14 +644,14 @@ class SelectionOperator(OperatorBase):
         assert all(op.range == operators[0].range for op in operators[1:])
         self.source = operators[0].source
         self.range = operators[0].range
-        self.operators = operators
+        self.operators = tuple(operators)
         self.linear = all(op.linear for op in operators)
 
         self.name = name
         self.build_parameter_type(inherits=list(operators) + [parameter_functional])
         self._try_assemble = not self.parametric
 
-        self.boundaries = boundaries
+        self.boundaries = tuple(boundaries)
         self.parameter_functional = parameter_functional
 
     def _get_operator_number(self, mu):
