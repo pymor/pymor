@@ -6,10 +6,10 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
+from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.interfaces import ImmutableInterface
 from pymor.core.logger import getLogger
 from pymor.la.basic import induced_norm
-from pymor.la.gram_schmidt import gram_schmidt
 from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import LincombOperator
 from pymor.operators.ei import EmpiricalInterpolatedOperator

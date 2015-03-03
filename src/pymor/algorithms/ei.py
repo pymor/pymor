@@ -17,11 +17,11 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
+from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.logger import getLogger
-from pymor.la.gram_schmidt import gram_schmidt
-from pymor.vectorarrays.interfaces import VectorArrayInterface
 from pymor.la.pod import pod
 from pymor.operators.ei import EmpiricalInterpolatedOperator
+from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 
 def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None,

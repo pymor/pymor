@@ -10,6 +10,7 @@ to have the most important parts of pyMOR directly available.
 
 from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension, pod_basis_extension
 from pymor.algorithms.ei import interpolate_operators, ei_greedy, deim
+from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.greedy import greedy
 
 from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
@@ -40,7 +41,6 @@ from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
 
 from pymor.la.basic import induced_norm, cat_arrays
-from pymor.la.gram_schmidt import gram_schmidt
 from pymor.la.pod import pod
 
 from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixOperator

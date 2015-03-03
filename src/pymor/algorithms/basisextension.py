@@ -24,8 +24,8 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
+from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.exceptions import ExtensionError
-from pymor.la.gram_schmidt import gram_schmidt
 from pymor.la.pod import pod
 
 

@@ -9,9 +9,9 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from scipy.linalg import eigh
 
+from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import AccuracyError
-from pymor.la.gram_schmidt import gram_schmidt
 from pymor.operators.interfaces import OperatorInterface
 from pymor.tools.floatcmp import float_cmp_all
 from pymor.vectorarrays.interfaces import VectorArrayInterface
@@ -47,7 +47,7 @@ def pod(A, modes=None, product=None, tol=4e-8, symmetrize=False, orthonormalize=
         If `True`, symmetrize the gramian again before proceeding.
     orthonormalize
         If `True`, orthonormalize the computed POD modes again using
-        :func:`la.gram_schmidt.gram_schmidt`.
+        :func:`algorithms.gram_schmidt.gram_schmidt`.
     check
         If `True`, check the computed POD modes for orthonormality.
     check_tol

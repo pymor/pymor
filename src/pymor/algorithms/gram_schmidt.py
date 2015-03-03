@@ -55,7 +55,7 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
     The orthonormalized |VectorArray|.
     """
 
-    logger = getLogger('pymor.la.gram_schmidt.gram_schmidt')
+    logger = getLogger('pymor.algorithms.gram_schmidt.gram_schmidt')
 
     if copy:
         A = A.copy()

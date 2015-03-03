@@ -6,9 +6,8 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor import la
+from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.la.basic import induced_norm
-from pymor.la.gram_schmidt import gram_schmidt
 from pymor.operators.cg import L2ProductP1
 from pymortests.base import runmodule
 from pymor.grids.tria import TriaGrid
