@@ -8,7 +8,7 @@ from itertools import product
 import numpy as np
 import pytest
 
-from pymor.playground.la.diskvectorarray import DiskVectorArray
+from pymor.playground.vectorarrays.disk import DiskVectorArray
 from pymor.vectorarrays.block import BlockVectorArray
 from pymor.vectorarrays.numpy import NumpyVectorArray
 from pymor.vectorarrays.list import NumpyVector, ListVectorArray
