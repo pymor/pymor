@@ -25,8 +25,8 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.algorithms.pod import pod
 from pymor.core.exceptions import ExtensionError
-from pymor.la.pod import pod
 
 
 def trivial_basis_extension(basis, U, copy_basis=True, copy_U=True):

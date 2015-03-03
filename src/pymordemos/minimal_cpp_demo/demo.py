@@ -6,11 +6,11 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
+from pymor.algorithms.pod import pod
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper
 from pymor.discretizations.basic import InstationaryDiscretization
 from pymor.grids.oned import OnedGrid
 from pymor.gui.qt import Matplotlib1DVisualizer
-from pymor.la.pod import pod
 from pymor.operators.constructions import VectorFunctional, LincombOperator
 from pymor.parameters.spaces import CubicParameterSpace
 from pymor.reductors.basic import reduce_generic_rb

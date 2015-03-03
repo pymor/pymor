@@ -19,7 +19,7 @@ import numpy as np
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.logger import getLogger
-from pymor.la.pod import pod
+from pymor.algorithms.pod import pod
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 
@@ -154,7 +154,7 @@ def deim(U, modes=None, error_norm=None, product=None):
     interpolation DOFs for empirical interpolation of the vectors contained in `U`.
     The returned objects can also be used to instantiate an |EmpiricalInterpolatedOperator|.
 
-    The collateral basis is determined by the first :func:`~pymor.la.pod.pod` modes of `U`.
+    The collateral basis is determined by the first :func:`~pymor.algorithms.pod.pod` modes of `U`.
 
     Parameters
     ----------

@@ -49,9 +49,9 @@ from docopt import docopt
 
 from pymor.core import logger
 logger.MAX_HIERACHY_LEVEL = 2
+from pymor.algorithms.pod import pod
 from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
 from pymor.discretizers.elliptic import discretize_elliptic_cg
-from pymor.la.pod import pod
 from pymor.reductors.basic import reduce_generic_rb
 logger.set_log_levels({'pymor.discretizations': 'INFO'})
 
