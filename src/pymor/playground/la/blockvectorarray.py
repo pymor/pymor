@@ -9,7 +9,7 @@ from itertools import izip
 from numbers import Number
 import numpy as np
 
-from pymor.la.interfaces import VectorArrayInterface, VectorSpace
+from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpace
 
 
 class BlockVectorArray(VectorArrayInterface):

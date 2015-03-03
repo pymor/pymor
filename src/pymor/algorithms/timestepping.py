@@ -21,8 +21,8 @@ and :class:`ImplicitEulerTimeStepper` encapsulate :func:`explicit_euler` and
 from __future__ import absolute_import, division, print_function
 
 from pymor.core.interfaces import ImmutableInterface, abstractmethod
-from pymor.la.interfaces import VectorArrayInterface
 from pymor.operators.interfaces import OperatorInterface
+from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 
 class TimeStepperInterface(ImmutableInterface):

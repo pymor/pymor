@@ -30,9 +30,9 @@ from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
 from pymor.gui.gl import GLPatchWidget, ColorBarWidget, HAVE_GL
 from pymor.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget, HAVE_MATPLOTLIB
-from pymor.la.interfaces import VectorArrayInterface
-from pymor.la.numpyvectorarray import NumpyVectorArray
 from pymor.tools.vtkio import HAVE_PYVTK, write_vtk
+from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
 if HAVE_PYSIDE:

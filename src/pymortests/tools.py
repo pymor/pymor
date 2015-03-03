@@ -15,7 +15,7 @@ from pymortests.base import polynomials
 from pymor.tools.quadratures import GaussQuadratures
 from pymor.tools.floatcmp import float_cmp, float_cmp_all
 from pymor.tools.vtkio import write_vtk
-from pymor.la.numpyvectorarray import NumpyVectorArray
+from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
 FUNCTIONS = (('sin(2x pi)', lambda x: sin(2 * x * pi), 0),

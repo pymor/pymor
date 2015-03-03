@@ -93,7 +93,7 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
             See :func:`~pymor.gui.qt.visualize_matplotlib_1d`
         """
         from pymor.gui.qt import visualize_matplotlib_1d
-        from pymor.la.numpyvectorarray import NumpyVectorArray
+        from pymor.vectorarrays.numpy import NumpyVectorArray
         if not isinstance(U, NumpyVectorArray):
             U = NumpyVectorArray(U, copy=False)
         visualize_matplotlib_1d(self, U, codim=codim, **kwargs)

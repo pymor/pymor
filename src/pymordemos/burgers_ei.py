@@ -88,8 +88,8 @@ from pymor.discretizers.advection import discretize_nonlinear_instationary_advec
 from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
-from pymor.la.numpyvectorarray import NumpyVectorArray
 from pymor.reductors.basic import reduce_generic_rb, reduce_to_subbasis
+from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
 logger.set_log_levels({'pymor.algorithms': 'INFO',

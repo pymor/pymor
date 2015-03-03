@@ -10,7 +10,7 @@ import pytest
 
 from pymor.operators.basic import OperatorBase
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.la.numpyvectorarray import NumpyVectorSpace, NumpyVectorArray
+from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
 
 
 class GenericOperator(OperatorBase):

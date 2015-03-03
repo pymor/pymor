@@ -12,9 +12,9 @@ from numbers import Number
 import numpy as np
 
 from pymor.la import genericsolvers
-from pymor.la.interfaces import VectorArrayInterface
-from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
 from pymor.operators.interfaces import OperatorInterface
+from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
 
 
 class OperatorBase(OperatorInterface):

@@ -12,8 +12,8 @@ from numpy.polynomial.polynomial import Polynomial
 from math import factorial
 
 from pymor.core import logger
-from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
 from pymor.operators.basic import OperatorBase
+from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
 
 
 class TestInterface(object):

@@ -11,8 +11,8 @@ from numbers import Number
 import numpy as np
 
 from pymor.core.interfaces import BasicInterface, abstractmethod, abstractclassmethod, abstractproperty
-from pymor.la.interfaces import VectorArrayInterface
 from pymor.tools.floatcmp import float_cmp_all
+from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 
 class VectorInterface(BasicInterface):

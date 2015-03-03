@@ -11,8 +11,8 @@ import numpy as np
 from scipy.sparse import issparse
 
 from pymor.core import NUMPY_INDEX_QUIRK
-from pymor.la.interfaces import VectorArrayInterface, VectorSpace
 from pymor.tools.floatcmp import float_cmp
+from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpace
 
 
 class NumpyVectorArray(VectorArrayInterface):

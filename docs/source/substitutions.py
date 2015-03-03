@@ -35,8 +35,8 @@ interfaces = '''
 .. |ParameterSpace| replace:: :class:`ParameterSpace <pymor.parameters.interfaces.ParameterSpaceInterface>`
 .. |ReferenceElements| replace:: :class:`ReferenceElements <pymor.grids.interfaces.ReferenceElementInterface>`
 .. |ReferenceElement| replace:: :class:`ReferenceElement <pymor.grids.interfaces.ReferenceElementInterface>`
-.. |VectorArrays| replace:: :class:`VectorArrays <pymor.la.interfaces.VectorArrayInterface>`
-.. |VectorArray| replace:: :class:`VectorArray <pymor.la.interfaces.VectorArrayInterface>`
+.. |VectorArrays| replace:: :class:`VectorArrays <pymor.vectorarrays.interfaces.VectorArrayInterface>`
+.. |VectorArray| replace:: :class:`VectorArray <pymor.vectorarrays.interfaces.VectorArrayInterface>`
 
 '''
 
@@ -69,9 +69,9 @@ common = '''
 .. |RectGrid| replace:: :class:`~pymor.grids.rect.RectGrid`
 .. |TriaGrid| replace:: :class:`~pymor.grids.tria.TriaGrid`
 
-.. |NumpyVectorArray| replace:: :class:`~pymor.la.numpyvectorarray.NumpyVectorArray`
-.. |NumpyVectorArrays| replace:: :class:`NumpyVectorArrays <pymor.la.numpyvectorarray.NumpyVectorArray>`
-.. |ListVectorArray| replace:: :class:`~pymor.la.listvectorarray.ListVectorArray`
+.. |NumpyVectorArray| replace:: :class:`~pymor.vectorarrays.numpy.NumpyVectorArray`
+.. |NumpyVectorArrays| replace:: :class:`NumpyVectorArrays <pymor.vectorarrays.numpy.NumpyVectorArray>`
+.. |ListVectorArray| replace:: :class:`~pymor.vectorarrays.list.ListVectorArray`
 
 .. |OperatorBase| replace:: :class:`~pymor.operators.basic.OperatorBase`
 .. |NumpyMatrixOperator| replace:: :class:`~pymor.operators.numpy.NumpyMatrixOperator`
@@ -81,8 +81,8 @@ common = '''
 .. |EmpiricalInterpolatedOperator| replace:: :class:`~pymor.operators.ei.EmpiricalInterpolatedOperator`
 .. |EmpiricalInterpolatedOperators| replace:: :class:`EmpiricalInterpolatedOperators <pymor.operators.ei.EmpiricalInterpolatedOperator>`
 .. |Concatenation| replace:: :class:`~pymor.operators.constructions.Concatenation`
-.. |VectorSpace| replace:: :class:`~pymor.la.interfaces.VectorSpace`
-.. |NumpyVectorSpace| replace:: :func:`~pymor.la.numpyvectorarray.NumpyVectorSpace`
+.. |VectorSpace| replace:: :class:`~pymor.vectorarrays.interfaces.VectorSpace`
+.. |NumpyVectorSpace| replace:: :func:`~pymor.vectorarrays.numpy.NumpyVectorSpace`
 
 .. |StationaryDiscretization| replace:: :class:`~pymor.discretizations.basic.StationaryDiscretization`
 .. |StationaryDiscretizations| replace:: :class:`StationaryDiscretizations <pymor.discretizations.basic.StationaryDiscretization>`

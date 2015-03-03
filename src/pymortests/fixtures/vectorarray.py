@@ -8,10 +8,10 @@ from itertools import product
 import numpy as np
 import pytest
 
-from pymor.la.numpyvectorarray import NumpyVectorArray
-from pymor.la.listvectorarray import NumpyVector, ListVectorArray
 from pymor.playground.la.blockvectorarray import BlockVectorArray
 from pymor.playground.la.diskvectorarray import DiskVectorArray
+from pymor.vectorarrays.numpy import NumpyVectorArray
+from pymor.vectorarrays.list import NumpyVector, ListVectorArray
 
 
 def random_integers(count, seed):

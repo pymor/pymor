@@ -12,7 +12,7 @@ import pytest
 import numpy as np
 
 from pymor.core import NUMPY_INDEX_QUIRK
-from pymor.la.interfaces import VectorSpace
+from pymor.vectorarrays.interfaces import VectorSpace
 from pymortests.fixtures.vectorarray import \
     (vector_array_without_reserve, vector_array, compatible_vector_array_pair_without_reserve,
      compatible_vector_array_pair, incompatible_vector_array_pair)

@@ -19,7 +19,7 @@ import numpy as np
 
 from pymor.core.logger import getLogger
 from pymor.la.gram_schmidt import gram_schmidt
-from pymor.la.interfaces import VectorArrayInterface
+from pymor.vectorarrays.interfaces import VectorArrayInterface
 from pymor.la.pod import pod
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 

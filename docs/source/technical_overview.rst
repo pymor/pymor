@@ -57,20 +57,20 @@ operating on objects of the following types:
     |subtype| of the |VectorArray| instance for which they have been called.
     
     .. |apply|            replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.apply`
-    .. |appended|         replace:: :meth:`appended <pymor.la.interfaces.VectorArrayInterface.append>`
-    .. |axpy|             replace:: :meth:`~pymor.la.interfaces.VectorArrayInterface.axpy`
-    .. |components|       replace:: :meth:`~pymor.la.interfaces.VectorArrayInterface.components`
-    .. |copied|           replace:: :meth:`copied <pymor.la.interfaces.VectorArrayInterface.copy>`
-    .. |dimension|        replace:: :attr:`dimension <pymor.la.interfaces.VectorArrayInterface.dim>`
-    .. |empty|            replace:: :meth:`~pymor.la.interfaces.VectorArrayInterface.empty`
-    .. |lincomb|          replace:: :meth:`~pymor.la.interfaces.VectorArrayInterface.lincomb`
-    .. |make_array|       replace:: :meth:`~pymor.la.interfaces.VectorArrayInterface.make_array`
-    .. |removed|          replace:: :meth:`deleted <pymor.la.interfaces.VectorArrayInterface.remove>`
-    .. |replaced|         replace:: :meth:`replaced <pymor.la.interfaces.VectorArrayInterface.replace>`
-    .. |scalar products|  replace:: :meth:`scalar products <pymor.la.interfaces.VectorArrayInterface.dot>`
-    .. |scaled|           replace:: :meth:`scaled <pymor.la.interfaces.VectorArrayInterface.scal>`
-    .. |subtype|          replace:: :attr:`~pymor.la.interfaces.VectorSpace.subtype`
-    .. |zeros|            replace:: :meth:`~pymor.la.interfaces.VectorArrayInterface.zeros`
+    .. |appended|         replace:: :meth:`appended <pymor.vectorarrays.interfaces.VectorArrayInterface.append>`
+    .. |axpy|             replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.axpy`
+    .. |components|       replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.components`
+    .. |copied|           replace:: :meth:`copied <pymor.vectorarrays.interfaces.VectorArrayInterface.copy>`
+    .. |dimension|        replace:: :attr:`dimension <pymor.vectorarrays.interfaces.VectorArrayInterface.dim>`
+    .. |empty|            replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.empty`
+    .. |lincomb|          replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.lincomb`
+    .. |make_array|       replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.make_array`
+    .. |removed|          replace:: :meth:`deleted <pymor.vectorarrays.interfaces.VectorArrayInterface.remove>`
+    .. |replaced|         replace:: :meth:`replaced <pymor.vectorarrays.interfaces.VectorArrayInterface.replace>`
+    .. |scalar products|  replace:: :meth:`scalar products <pymor.vectorarrays.interfaces.VectorArrayInterface.dot>`
+    .. |scaled|           replace:: :meth:`scaled <pymor.vectorarrays.interfaces.VectorArrayInterface.scal>`
+    .. |subtype|          replace:: :attr:`~pymor.vectorarrays.interfaces.VectorSpace.subtype`
+    .. |zeros|            replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.zeros`
 
 |Operators|
     The main property of operators in pyMOR is that they can be |applied| to

@@ -13,12 +13,12 @@ from itertools import izip
 import numpy as np
 
 from pymor.core.defaults import defaults_sid
-from pymor.la.interfaces import VectorArrayInterface, VectorSpace
-from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
 from pymor.operators.basic import OperatorBase
 from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.interfaces import ParameterFunctionalInterface
+from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
 
 
 class LincombOperator(OperatorBase):

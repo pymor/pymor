@@ -10,10 +10,10 @@ import numpy as np
 
 from pymor.core.interfaces import ImmutableInterface
 from pymor.la.basic import induced_norm
-from pymor.la.numpyvectorarray import NumpyVectorArray
 from pymor.operators.constructions import LincombOperator
 from pymor.reductors.basic import reduce_generic_rb
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
 def reduce_stationary_affine_linear(discretization, RB, error_product=None, coercivity_estimator=None,

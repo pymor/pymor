@@ -10,13 +10,13 @@ from itertools import chain
 from pymor.algorithms.timestepping import TimeStepperInterface
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.la.basic import induced_norm
-from pymor.la.interfaces import VectorArrayInterface
-from pymor.la.numpyvectorarray import NumpyVectorSpace
 from pymor.operators.constructions import VectorOperator
 from pymor.operators.interfaces import OperatorInterface
 from pymor.parameters.base import Parameter
 from pymor.tools.arguments import method_arguments
 from pymor.tools.frozendict import FrozenDict
+from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class DiscretizationBase(DiscretizationInterface):

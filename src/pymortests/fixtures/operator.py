@@ -7,8 +7,8 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 import pytest
 
-from pymor.la.numpyvectorarray import NumpyVectorArray
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
 def random_integers(count, seed):

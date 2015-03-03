@@ -249,7 +249,7 @@ the solution ``U`` computed above is given as a |VectorArray| of length 1.
 For the reduced basis we have:
 
 >>> print(type(rb))
-<class 'pymor.la.numpyvectorarray.NumpyVectorArray'>
+<class 'pymor.vectorarrays.numpy.NumpyVectorArray'>
 >>> print(len(rb))
 32
 >>> print(rb.dim)

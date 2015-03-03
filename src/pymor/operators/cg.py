@@ -14,8 +14,8 @@ from scipy.sparse import coo_matrix, csc_matrix
 
 from pymor.functions.interfaces import FunctionInterface
 from pymor.grids.referenceelements import triangle, line, square
-from pymor.la.numpyvectorarray import NumpyVectorSpace
 from pymor.operators.numpy import NumpyMatrixBasedOperator
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class L2ProductFunctionalP1(NumpyMatrixBasedOperator):

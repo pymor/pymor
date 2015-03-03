@@ -8,16 +8,16 @@ from itertools import chain
 import numpy as np
 import pytest
 
+from pymor.core.exceptions import InversionError
 from pymor.operators.constructions import SelectionOperator
 from pymor.parameters.base import ParameterType
 from pymor.parameters.functionals import GenericParameterFunctional
-from pymor.core.exceptions import InversionError
-from pymor.la.numpyvectorarray import NumpyVectorArray
 from pymor.tools.floatcmp import float_cmp_all
+from pymor.vectorarrays.numpy import NumpyVectorArray
 from pymortests.algorithms import MonomOperator
 from pymortests.fixtures.operator import operator, operator_with_arrays, operator_with_arrays_and_products
-from pymortests.vectorarray import valid_inds, valid_inds_of_same_length, invalid_inds
 from pymortests.pickle import assert_picklable, assert_picklable_without_dumps_function
+from pymortests.vectorarray import valid_inds, valid_inds_of_same_length, invalid_inds
 
 
 def test_selection_op():

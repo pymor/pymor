@@ -575,7 +575,7 @@ def apply_inverse(matrix, U, options=None):
         logger = getLogger('pymor.la.numpysolvers.apply_inverse')
         logger.warn('You have selected a (potentially slow) generic solver for a NumPy matrix operator!')
         from pymor.operators.numpy import NumpyMatrixOperator
-        from pymor.la.numpyvectorarray import NumpyVectorArray
+        from pymor.vectorarrays.numpy import NumpyVectorArray
         return genericsolvers.apply_inverse(NumpyMatrixOperator(matrix),
                                             NumpyVectorArray(U, copy=False),
                                             options=options).data

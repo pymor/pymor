@@ -11,7 +11,7 @@ from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
 from pymor.discretizations.basic import InstationaryDiscretization
 from pymor.discretizers.elliptic import discretize_elliptic_cg
-from pymor.la.numpyvectorarray import NumpyVectorArray
+from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
 def parabolic_demo():

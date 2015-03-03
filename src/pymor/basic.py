@@ -41,8 +41,6 @@ from pymor.grids.tria import TriaGrid
 
 from pymor.la.basic import induced_norm, cat_arrays
 from pymor.la.gram_schmidt import gram_schmidt
-from pymor.la.interfaces import VectorSpace
-from pymor.la.numpyvectorarray import NumpyVectorArray, NumpyVectorSpace
 from pymor.la.pod import pod
 
 from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixOperator
@@ -61,3 +59,6 @@ from pymor.reductors.stationary import reduce_stationary_coercive
 
 from pymor.tools.floatcmp import float_cmp, float_cmp_all
 from pymor.tools.random import new_random_state
+
+from pymor.vectorarrays.interfaces import VectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace

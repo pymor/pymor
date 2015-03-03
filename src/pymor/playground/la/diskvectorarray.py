@@ -17,8 +17,8 @@ import numpy as np
 
 from pymor.core.defaults import defaults
 from pymor.core.pickle import dump, load
-from pymor.la.interfaces import VectorArrayInterface
-from pymor.la.listvectorarray import ListVectorArray
+from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.vectorarrays.list import ListVectorArray
 
 
 _registered_paths = set()
