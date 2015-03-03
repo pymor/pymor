@@ -67,7 +67,7 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
         while i < len(A):
             duplicates = A.almost_equal(A, ind=i, o_ind=np.arange(max(offset, i + 1), len(A)))
             if np.any(duplicates):
-                A.remove(np.where(duplicates)[0])
+                A.remove(np.where(duplicates)[0] + max(offset, i + 1))
                 logger.info("Removing duplicate vectors")
             i += 1
 
