@@ -132,7 +132,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None, num_va
     if isinstance(F, OperatorInterface):
         assert F.range.dim == 1
         assert F.source == A.range
-        F_time_dep = F.parametric and '_t' in F.parameter_type
+        F_time_dep = '_t' in F.parameter_type
         if not F_time_dep:
             dt_F = F.as_vector(mu) * dt
     else:
@@ -144,7 +144,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None, num_va
     assert U0 in A.source
     assert len(U0) == 1
 
-    A_time_dep = A.parametric and '_t' in A.parameter_type
+    A_time_dep = '_t' in A.parameter_type
 
     R = A.source.empty(reserve=nt+1)
     R.append(U0)
@@ -177,7 +177,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
     if isinstance(F, OperatorInterface):
         assert F.range.dim == 1
         assert F.source == A.source
-        F_time_dep = F.parametric and '_t' in F.parameter_type
+        F_time_dep = '_t' in F.parameter_type
         if not F_time_dep:
             F_ass = F.as_vector(mu)
     elif isinstance(F, VectorArrayInterface):
@@ -189,7 +189,7 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
     assert len(U0) == 1
     assert U0 in A.source
 
-    A_time_dep = A.parametric and '_t' in A.parameter_type
+    A_time_dep = '_t' in A.parameter_type
     if not A_time_dep:
         A = A.assemble(mu)
 

@@ -112,7 +112,7 @@ class NumpyMatrixBasedOperator(OperatorBase):
                 return op
             else:
                 return self._assembled_operator
-        elif self.parameter_type is None:
+        elif not self.parameter_type:
             op = self._assembled_operator = NumpyMatrixOperator(self._assemble())
             self._defaults_sid = defaults_sid()
             return op

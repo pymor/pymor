@@ -12,7 +12,6 @@ from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.la.basic import induced_norm
 from pymor.operators.constructions import VectorOperator
 from pymor.operators.interfaces import OperatorInterface
-from pymor.parameters.base import Parameter
 from pymor.tools.arguments import method_arguments
 from pymor.tools.frozendict import FrozenDict
 from pymor.vectorarrays.interfaces import VectorArrayInterface
@@ -352,7 +351,7 @@ class InstationaryDiscretization(DiscretizationBase):
         return self._with_via_init(kwargs)
 
     def _solve(self, mu=None):
-        mu = self.parse_parameter(mu).copy() if self.parametric else Parameter({})
+        mu = self.parse_parameter(mu).copy()
 
         # explicitly checking if logging is disabled saves the expensive str(mu) call
         if not self.logging_disabled:

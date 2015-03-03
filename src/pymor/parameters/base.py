@@ -376,13 +376,11 @@ class Parametric(object):
     Attributes
     ----------
     parameter_type
-        The |ParameterType| of the |Parameters| the object expects or `None`,
-        if the object actually is parameter independent.
+        The |ParameterType| of the |Parameters| the object expects.
     parameter_local_type
         The |ParameterType| of the parameter components which are introduced
         by the object itself and are not inherited by other objects it
-        depends on. `None` if there are no such components.
-        (See :meth:`build_parameter_type`.)
+        depends on. (See :meth:`build_parameter_type`.)
     parameter_space
         |ParameterSpace| the parameters are expected to lie in or `None`.
     parametric:
@@ -407,7 +405,7 @@ class Parametric(object):
 
     @property
     def parametric(self):
-        return self.parameter_type is not None
+        return bool(self.parameter_type)
 
     def parse_parameter(self, mu):
         """Interpret a user supplied parameter `mu` as a |Parameter|.
@@ -424,13 +422,13 @@ class Parametric(object):
             The input to parse as a |Parameter|.
         """
         if mu is None:
-            assert self.parameter_type is None, \
+            assert not self.parameter_type, \
                 'Given parameter is None but expected parameter of type {}'.format(self.parameter_type)
-            return None
+            return Parameter({})
         if mu.__class__ is not Parameter:
             mu = Parameter.from_parameter_type(mu, self.parameter_type)
-        assert self.parameter_type is None or all(getattr(mu.get(k, None), 'shape', None) == v
-                                                  for k, v in self.parameter_type.iteritems()), \
+        assert not self.parameter_type or all(getattr(mu.get(k, None), 'shape', None) == v
+                                              for k, v in self.parameter_type.iteritems()), \
             ('Given parameter of type {} does not match expected parameter type {}'
              .format(mu.parameter_type, self.parameter_type))
         return mu
@@ -454,9 +452,8 @@ class Parametric(object):
         """
         if mu.__class__ is not Parameter:
             mu = Parameter.from_parameter_type(mu, self.parameter_type)
-        assert self.parameter_type is None \
-            or all(getattr(mu.get(k, None), 'shape', None) == v for k, v in self.parameter_type.iteritems())
-        return None if self.parameter_type is None else Parameter({k: mu[k] for k in self.parameter_type})
+        assert all(getattr(mu.get(k, None), 'shape', None) == v for k, v in self.parameter_type.iteritems())
+        return Parameter({k: mu[k] for k in self.parameter_type})
 
     def build_parameter_type(self, local_type=None, global_names=None, local_global=False,
                              inherits=None, provides=None):
@@ -552,6 +549,6 @@ class Parametric(object):
                 assert check_op(op, global_type, provides)
                 global_type.update({k: v for k, v in op.parameter_type.iteritems() if k not in provides})
 
-        self.parameter_type = global_type or None
-        self.parameter_local_type = local_type or None
+        self.parameter_type = global_type
+        self.parameter_local_type = local_type
         self._parameter_global_names = global_names
