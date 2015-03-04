@@ -24,7 +24,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     Boundary treatment can be performed by providing `boundary_info` and `dirichlet_data`,
     in which case the DOFs corresponding to Dirichlet boundaries are set to the values
     provided by `dirichlet_data`. Neumann boundaries are handled by providing a
-    `neumann_data` function.
+    `neumann_data` function, Robin boundaries by providing a `robin_data` tuple
 
     The current implementation works in one and two dimensions, but can be trivially
     extended to arbitrary dimensions.
@@ -44,6 +44,9 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     neumann_data
         |Function| providing the Neumann boundary values. If `None`,
         constant-zero is assumed.
+    robin_data
+        Tuple of two |Functions| providing the Robin parameter and boundary values, cf. |RobinOperatorP1|.
+         If `None`, constant-zero for both functions is assumed.
     order
         Order of the Gauss quadrature to use for numerical integration.
     name
@@ -53,7 +56,8 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     sparse = False
     range = NumpyVectorSpace(1)
 
-    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, neumann_data=None, order=2, name=None):
+    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, neumann_data=None, robin_data=None,
+                 order=2, name=None):
         assert grid.reference_element(0) in {line, triangle}
         assert function.shape_range == tuple()
         self.source = NumpyVectorSpace(grid.size(grid.dim))
@@ -62,6 +66,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         self.function = function
         self.dirichlet_data = dirichlet_data
         self.neumann_data = neumann_data
+        self.robin_data = robin_data
         self.order = order
         self.name = name
         self.build_parameter_type(inherits=(function, dirichlet_data, neumann_data))
