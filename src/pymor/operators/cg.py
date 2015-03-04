@@ -24,7 +24,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     Boundary treatment can be performed by providing `boundary_info` and `dirichlet_data`,
     in which case the DOFs corresponding to Dirichlet boundaries are set to the values
     provided by `dirichlet_data`. Neumann boundaries are handled by providing a
-    `neumann_data` function, Robin boundaries by providing a `robin_data` tuple
+    `neumann_data` function, Robin boundaries by providing a `robin_data` tuple.
 
     The current implementation works in one and two dimensions, but can be trivially
     extended to arbitrary dimensions.
@@ -145,7 +145,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
     Boundary treatment can be performed by providing `boundary_info` and `dirichlet_data`,
     in which case the DOFs corresponding to Dirichlet boundaries are set to the values
     provided by `dirichlet_data`. Neumann boundaries are handled by providing a
-    `neumann_data` function, Robin boundaries by providing a `robin_data` tuple
+    `neumann_data` function, Robin boundaries by providing a `robin_data` tuple.
 
     The current implementation works in two dimensions, but can be trivially
     extended to arbitrary dimensions.
@@ -674,11 +674,11 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
     stiffness matrix, where the boundary condition is supposed to be given in the
     form ::
 
-        -d(x) ⋅ ∇u(x) = c(x) (u(x) - g(x))
+        -[ d(x) ∇u(x) ] ⋅ n(x) = c(x) (u(x) - g(x))
 
-    The function `d` is the diffusion function (see `DiffusionOperatorP1`), while
-    `c` is the (scalar) Robin parameter function and `g` is the (also scalar)
-    Robin boundary value function.
+    `d` and `n` are the diffusion function (see `DiffusionOperatorP1`) and the
+    unit outer normal in `x`, while `c` is the (scalar) Robin parameter
+    function and `g` is the (also scalar) Robin boundary value function.
 
     Parameters
     ----------
