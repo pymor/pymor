@@ -650,6 +650,69 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         return A
 
 
+class RobinOperatorP1(NumpyMatrixBasedOperator):
+    """Robin |Operator| for linear finite elements.
+
+    The Robin boundary condition is supposed to be of the form ::
+
+        -d(x) ⋅ ∇u(x) = c(x) (u(x) - g(x))
+
+    The function `d` is the diffusion function (cf. |DiffusionOperatorP1|), while
+    `c` is the (scalar) Robin parameter function and `g` is the (also scalar)
+    Robin boundary value function.
+
+    Parameters
+    ----------
+    grid
+        The |Grid| over which to assemble the operator
+    boundary_info
+        |BoundaryInfo| for the treatment of Dirichlet boundary conditions
+    robin_data
+        Tuple providing two |Functions| that represent the Robin parameter and boundary
+        value function. If `None`, the resulting operator is zero.
+    name
+        Name of the operator
+    """
+
+    sparse = True
+
+    def __init__(self, grid, boundary_info, robin_data=None, order=2, name=None):
+        assert grid.reference_element(0) in {triangle, line}, 'Simplicial grid is expected!'
+        assert robin_data is None or (isinstance(robin_data, tuple) and len(robin_data) == 2)
+        assert robin_data is None or all([isinstance(f, FunctionInterface)
+                                          and f.dim_domain == grid.dim_outer
+                                          and f.shape_range == tuple() for f in robin_data])
+        self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
+        self.grid = grid
+        self.boundary_info = boundary_info
+        self.robin_data = robin_data
+        self.name = name
+        self.order = order
+
+    def _assemble(self, mu=None):
+        g = self.grid
+        bi = self.boundary_info
+
+        if bi is None or not bi.has_robin or self.robin_data is None:
+            return coo_matrix((g.size(g.dim), g.size(g.dim))).tocsc()
+
+        RI = bi.robin_boundaries(1)
+        if g.dim == 1:
+            robin_c = self.robin_data[0](g.centers(1)[RI], mu=mu)
+            I = coo_matrix((robin_c, (RI, RI)), shape=(g.size(g.dim), g.size(g.dim)))
+            return csc_matrix(I).copy()
+        else:
+            xref = g.quadrature_points(1, order=self.order)[RI]
+            robin_c = self.robin_data[0](xref, mu=mu)
+            q, w = line.quadrature(order=self.order)
+            SF = np.squeeze(np.array([1 - q, q]))
+            SF_INTS = np.einsum('ep,pi,pj,e,p->eij', robin_c, SF, SF, g.integration_elements(1)[RI], w).ravel()
+            SF_I0 = np.repeat(g.subentities(1, g.dim)[RI], 2).ravel()
+            SF_I1 = np.tile(g.subentities(1, g.dim)[RI], [1, 2]).ravel()
+            I = coo_matrix((SF_INTS, (SF_I0, SF_I1)), shape=(g.size(g.dim), g.size(g.dim)))
+            return csc_matrix(I).copy()
+
+
 class InterpolationOperator(NumpyMatrixBasedOperator):
     """Lagrange interpolation operator for continuous finite element spaces.
 
