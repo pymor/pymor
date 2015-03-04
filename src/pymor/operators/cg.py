@@ -45,7 +45,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         |Function| providing the Neumann boundary values. If `None`,
         constant-zero is assumed.
     robin_data
-        Tuple of two |Functions| providing the Robin parameter and boundary values, see `RobinOperatorP1`.
+        Tuple of two |Functions| providing the Robin parameter and boundary values, see `RobinBoundaryOperator`.
         If `None`, constant-zero for both functions is assumed.
     order
         Order of the Gauss quadrature to use for numerical integration.
@@ -650,10 +650,12 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         return A
 
 
-class RobinOperatorP1(NumpyMatrixBasedOperator):
-    """Robin |Operator| for linear finite elements.
+class RobinBoundaryOperator(NumpyMatrixBasedOperator):
+    """Robin boundary |Operator| for linear finite elements.
 
-    The Robin boundary condition is supposed to be of the form ::
+    The operator represents the contribution of Robin boundary conditions to the
+    stiffness matrix, where the boundary condition is supposed to be given in the
+    form ::
 
         -d(x) ⋅ ∇u(x) = c(x) (u(x) - g(x))
 
@@ -692,6 +694,9 @@ class RobinOperatorP1(NumpyMatrixBasedOperator):
     def _assemble(self, mu=None):
         g = self.grid
         bi = self.boundary_info
+
+        if g.dim > 2:
+            raise NotImplementedError
 
         if bi is None or not bi.has_robin or self.robin_data is None:
             return coo_matrix((g.size(g.dim), g.size(g.dim))).tocsc()
