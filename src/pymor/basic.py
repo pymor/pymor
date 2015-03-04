@@ -41,8 +41,6 @@ from pymor.grids.oned import OnedGrid
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
 
-from pymor.la.basic import cat_arrays
-
 from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixOperator
 from pymor.operators.constructions import (LincombOperator, Concatenation, ComponentProjection, IdentityOperator,
                                            ConstantOperator, VectorArrayOperator, VectorOperator, VectorFunctional,
@@ -60,5 +58,6 @@ from pymor.reductors.stationary import reduce_stationary_coercive
 from pymor.tools.floatcmp import float_cmp, float_cmp_all
 from pymor.tools.random import new_random_state
 
+from pymor.vectorarrays.constructions import cat_arrays
 from pymor.vectorarrays.interfaces import VectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
