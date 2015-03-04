@@ -41,12 +41,12 @@ from pymor.grids.oned import OnedGrid
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
 
-from pymor.la.basic import induced_norm, cat_arrays
+from pymor.la.basic import cat_arrays
 
 from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixOperator
 from pymor.operators.constructions import (LincombOperator, Concatenation, ComponentProjection, IdentityOperator,
                                            ConstantOperator, VectorArrayOperator, VectorOperator, VectorFunctional,
-                                           FixedParameterOperator)
+                                           FixedParameterOperator, induced_norm)
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 
 from pymor.parameters.base import Parameter

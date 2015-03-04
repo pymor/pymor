@@ -9,8 +9,7 @@ from itertools import chain
 
 from pymor.algorithms.timestepping import TimeStepperInterface
 from pymor.discretizations.interfaces import DiscretizationInterface
-from pymor.la.basic import induced_norm
-from pymor.operators.constructions import VectorOperator
+from pymor.operators.constructions import VectorOperator, induced_norm
 from pymor.operators.interfaces import OperatorInterface
 from pymor.tools.arguments import method_arguments
 from pymor.tools.frozendict import FrozenDict

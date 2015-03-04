@@ -9,9 +9,8 @@ import numpy as np
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.interfaces import ImmutableInterface
 from pymor.core.logger import getLogger
-from pymor.la.basic import induced_norm
 from pymor.operators.basic import OperatorBase
-from pymor.operators.constructions import LincombOperator
+from pymor.operators.constructions import LincombOperator, induced_norm
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.reductors.basic import GenericRBReconstructor
 from pymor.vectorarrays.numpy import NumpyVectorSpace
