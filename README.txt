@@ -14,7 +14,7 @@ provided for getting started quickly.
 NOTE pyMOR is still in early development. Should you have any questions
 regarding pyMOR or wish to contribute, do not hesitate to contact us!
 
-[Build Status] [Coverage Status] [Code Health]
+[Docs] [Docs] [DOI] [Build Status] [Coverage Status] [Code Health]
 
 License
 -------
@@ -48,7 +48,7 @@ The following files contain source code originating from other open
 source software projects:
 
 -   docs/source/pymordocstring.py (sphinxcontrib-napoleon)
--   src/pymor/la/genericsolvers.py (SciPy)
+-   src/pymor/algorithms/genericsolvers.py (SciPy)
 
 See these files for more information.
 

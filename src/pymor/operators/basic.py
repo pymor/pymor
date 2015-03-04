@@ -11,7 +11,7 @@ from numbers import Number
 
 import numpy as np
 
-from pymor.la import genericsolvers
+from pymor.algorithms import genericsolvers
 from pymor.operators.interfaces import OperatorInterface
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace

@@ -22,7 +22,7 @@ except ImportError:
 from pymor.core.defaults import defaults, defaults_sid
 from pymor.core.exceptions import InversionError
 from pymor.core.logger import getLogger
-from pymor.la import genericsolvers
+from pymor.algorithms import genericsolvers
 
 try:
     import pyamg

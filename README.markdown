@@ -49,7 +49,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 The following files contain source code originating from other open source software projects:
 
 * docs/source/pymordocstring.py  (sphinxcontrib-napoleon)
-* src/pymor/la/genericsolvers.py (SciPy)
+* src/pymor/algorithms/genericsolvers.py (SciPy)
 
 See these files for more information.
 
