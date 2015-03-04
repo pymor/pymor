@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 from pymor.core.cache import cached
-from pymor.la.inverse import inv_transposed_two_by_two
+from pymor.tools.inverse import inv_transposed_two_by_two
 from pymor.tools.relations import inverse_relation
 
 
