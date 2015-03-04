@@ -45,8 +45,8 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         |Function| providing the Neumann boundary values. If `None`,
         constant-zero is assumed.
     robin_data
-        Tuple of two |Functions| providing the Robin parameter and boundary values, cf. |RobinOperatorP1|.
-         If `None`, constant-zero for both functions is assumed.
+        Tuple of two |Functions| providing the Robin parameter and boundary values, see `RobinOperatorP1`.
+        If `None`, constant-zero for both functions is assumed.
     order
         Order of the Gauss quadrature to use for numerical integration.
     name
@@ -657,7 +657,7 @@ class RobinOperatorP1(NumpyMatrixBasedOperator):
 
         -d(x) ⋅ ∇u(x) = c(x) (u(x) - g(x))
 
-    The function `d` is the diffusion function (cf. |DiffusionOperatorP1|), while
+    The function `d` is the diffusion function (see `DiffusionOperatorP1`), while
     `c` is the (scalar) Robin parameter function and `g` is the (also scalar)
     Robin boundary value function.
 
