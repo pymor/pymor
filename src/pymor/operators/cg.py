@@ -144,7 +144,8 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
 
     Boundary treatment can be performed by providing `boundary_info` and `dirichlet_data`,
     in which case the DOFs corresponding to Dirichlet boundaries are set to the values
-    provided by `dirichlet_data`.
+    provided by `dirichlet_data`. Neumann boundaries are handled by providing a
+    `neumann_data` function, Robin boundaries by providing a `robin_data` tuple
 
     The current implementation works in two dimensions, but can be trivially
     extended to arbitrary dimensions.
@@ -164,6 +165,9 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
     neumann_data
         |Function| providing the Neumann boundary values. If `None`,
         constant-zero is assumed.
+    robin_data
+        Tuple of two |Functions| providing the Robin parameter and boundary values, see `RobinBoundaryOperator`.
+        If `None`, constant-zero for both functions is assumed.
     order
         Order of the Gauss quadrature to use for numerical integration.
     name
@@ -173,7 +177,8 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
     sparse = False
     range = NumpyVectorSpace(1)
 
-    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, neumann_data=None, order=2, name=None):
+    def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, neumann_data=None, robin_data=None,
+                 order=2, name=None):
         assert grid.reference_element(0) in {square}
         assert function.shape_range == tuple()
         self.source = NumpyVectorSpace(grid.size(grid.dim))
@@ -182,6 +187,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         self.function = function
         self.dirichlet_data = dirichlet_data
         self.neumann_data = neumann_data
+        self.robin_data = robin_data
         self.order = order
         self.name = name
         self.build_parameter_type(inherits=(function, dirichlet_data))
@@ -213,7 +219,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         SF_I = g.subentities(0, g.dim).ravel()
         I = np.array(coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).todense()).ravel()
 
-        # boundary treatment
+        # neumann boundary treatment
         if bi is not None and bi.has_neumann and self.neumann_data is not None:
             NI = bi.neumann_boundaries(1)
             F = -self.neumann_data(g.quadrature_points(1, order=self.order)[NI], mu=mu)
@@ -221,6 +227,17 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
             SF = np.squeeze(np.array([1 - q, q]))
             SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[NI], w).ravel()
             SF_I = g.subentities(1, 2)[NI].ravel()
+            I += np.array(coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim)))
+                                    .todense()).ravel()
+
+        if bi is not None and bi.has_robin and self.robin_data is not None:
+            RI = bi.robin_boundaries(1)
+            xref = g.quadrature_points(1, order=self.order)[RI]
+            F = self.robin_data[0](xref, mu=mu) * self.robin_data[1](xref, mu=mu)
+            q, w = line.quadrature(order=self.order)
+            SF = np.squeeze(np.array([1 - q, q]))
+            SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[RI], w).ravel()
+            SF_I = g.subentities(1, 2)[RI].ravel()
             I += np.array(coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim)))
                                     .todense()).ravel()
 
@@ -679,7 +696,6 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
     sparse = True
 
     def __init__(self, grid, boundary_info, robin_data=None, order=2, name=None):
-        assert grid.reference_element(0) in {triangle, line}, 'Simplicial grid is expected!'
         assert robin_data is None or (isinstance(robin_data, tuple) and len(robin_data) == 2)
         assert robin_data is None or all([isinstance(f, FunctionInterface)
                                           and f.dim_domain == grid.dim_outer
