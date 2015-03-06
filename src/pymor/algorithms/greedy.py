@@ -7,13 +7,13 @@ from __future__ import absolute_import, division, print_function
 import time
 from itertools import izip
 
-from pymor.algorithms.basisextension import trivial_basis_extension
+from pymor.algorithms.basisextension import gram_schmidt_basis_extension
 from pymor.core.exceptions import ExtensionError
 from pymor.core.logger import getLogger
 
 
 def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=True, error_norm=None,
-           extension_algorithm=trivial_basis_extension, target_error=None, max_extensions=None):
+           extension_algorithm=gram_schmidt_basis_extension, target_error=None, max_extensions=None):
     """Greedy basis generation algorithm.
 
     This algorithm generates a reduced basis by iteratively adding the
