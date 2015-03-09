@@ -26,3 +26,7 @@ class DomainDescriptionInterface(ImmutableInterface):
     @property
     def has_neumann(self):
         return BoundaryType('neumann') in self.boundary_types
+
+    @property
+    def has_robin(self):
+        return BoundaryType('robin') in self.boundary_types
