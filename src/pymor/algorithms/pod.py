@@ -2,7 +2,8 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 #
-# Contributors: Michael Laier <m_laie01@uni-muenster.de>
+# Contributors: Andreas Buhr <andreas@andreasbuhr.de>
+#               Michael Laier <m_laie01@uni-muenster.de>
 
 from __future__ import absolute_import, division, print_function
 

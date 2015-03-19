@@ -3,7 +3,8 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 #
-# Contributors: lucas-ca <lucascamp@web.de>
+# Contributors: Michael Schaefer <michael.schaefer@uni-muenster.de>
+#               lucas-ca <lucascamp@web.de>
 
 """ This module provides some operators for continuous finite element discretizations."""
 

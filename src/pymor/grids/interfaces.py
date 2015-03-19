@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 #
 # Contributors: Michael Laier <m_laie01@uni-muenster.de>
+#               Michael Schaefer <michael.schaefer@uni-muenster.de>
 
 from __future__ import absolute_import, division, print_function
 
