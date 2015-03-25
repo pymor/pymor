@@ -185,7 +185,7 @@ def test_apply_inverse(operator_with_arrays):
 
 def test_projected(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
-    op_UV = op.projected(U, V)
+    op_UV = op.projected(V, U)
     np.random.seed(4711 + U.dim + len(V))
     coeffs = np.random.random(len(U))
     X = op_UV.apply(NumpyVectorArray(coeffs, copy=False), mu=mu)
@@ -195,11 +195,11 @@ def test_projected(operator_with_arrays):
 
 def test_projected_2(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
-    op_U = op.projected(U, None)
-    op_V = op.projected(None, V)
-    op_U_V = op_U.projected(None, V)
-    op_V_U = op_V.projected(U, None)
-    op_UV = op.projected(U, V)
+    op_U = op.projected(None, U)
+    op_V = op.projected(V, None)
+    op_U_V = op_U.projected(V, None)
+    op_V_U = op_V.projected(None, U)
+    op_UV = op.projected(V, U)
     np.random.seed(4711 + U.dim + len(V))
     W = NumpyVectorArray(np.random.random(len(U)), copy=False)
     Y0 = op_UV.apply(W, mu=mu)
@@ -211,7 +211,7 @@ def test_projected_2(operator_with_arrays):
 
 def test_projected_with_product(operator_with_arrays_and_products):
     op, mu, U, V, sp, rp = operator_with_arrays_and_products
-    op_UV = op.projected(U, V, product=rp)
+    op_UV = op.projected(V, U, product=rp)
     np.random.seed(4711 + U.dim + len(V))
     coeffs = np.random.random(len(U))
     X = op_UV.apply(NumpyVectorArray(coeffs, copy=False), mu=mu)
@@ -221,11 +221,11 @@ def test_projected_with_product(operator_with_arrays_and_products):
 
 def test_projected_with_product_2(operator_with_arrays_and_products):
     op, mu, U, V, sp, rp = operator_with_arrays_and_products
-    op_U = op.projected(U, None)
-    op_V = op.projected(None, V, product=rp)
-    op_U_V = op_U.projected(None, V, product=rp)
-    op_V_U = op_V.projected(U, None)
-    op_UV = op.projected(U, V, product=rp)
+    op_U = op.projected(None, U)
+    op_V = op.projected(V, None, product=rp)
+    op_U_V = op_U.projected(V, None, product=rp)
+    op_V_U = op_V.projected(None, U)
+    op_UV = op.projected(V, U, product=rp)
     np.random.seed(4711 + U.dim + len(V))
     W = NumpyVectorArray(np.random.random(len(U)), copy=False)
     Y0 = op_UV.apply(W, mu=mu)

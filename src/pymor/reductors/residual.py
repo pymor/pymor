@@ -30,7 +30,7 @@ def reduce_residual(operator, functional=None, RB=None, product=None, extends=No
     of this range spaces and then returns the Petrov-Galerkin projection ::
 
         projected_riesz_residual
-            === riesz_residual.projected(source_basis=RB, range_basis=residual_range)
+            === riesz_residual.projected(range_basis=residual_range, source_basis=RB)
 
     of the `riesz_residual` operator. Given an reduced basis coefficient vector `u`,
     the dual norm of the residual can then be computed as ::
@@ -125,7 +125,7 @@ def reduce_residual(operator, functional=None, RB=None, product=None, extends=No
             collect_operator_ranges(operator, i, new_residual_range)
         except CollectionError as e:
             logger.warn('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
-            operator = operator.projected(RB, None)
+            operator = operator.projected(None, RB)
             return (NonProjectedResidualOperator(operator, functional, product),
                     NonProjectedReconstructor(product),
                     {})
@@ -141,8 +141,8 @@ def reduce_residual(operator, functional=None, RB=None, product=None, extends=No
         residual_range_dims.append(len(residual_range))
 
     logger.info('Projecting ...')
-    operator = operator.projected(RB, residual_range, product=None)  # the product always cancels out.
-    functional = functional.projected(residual_range, None, product=None)
+    operator = operator.projected(residual_range, RB, product=None)  # the product always cancels out.
+    functional = functional.projected(None, residual_range, product=None)
 
     return (ResidualOperator(operator, functional),
             GenericRBReconstructor(residual_range),

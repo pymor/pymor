@@ -105,15 +105,15 @@ class EmpiricalInterpolatedOperator(OperatorBase):
             interpolation_coefficients = np.empty((len(AU), len(self.collateral_basis))) + np.nan
         return self.collateral_basis.lincomb(interpolation_coefficients)
 
-    def projected(self, source_basis, range_basis, product=None, name=None):
+    def projected(self, range_basis, source_basis, product=None, name=None):
         assert source_basis is None or source_basis in self.source
         assert range_basis is None or range_basis in self.range
         assert product is None or product.source == product.range == self.range
 
         if len(self.interpolation_dofs) == 0:
-            return ZeroOperator(self.source, self.range, self.name).projected(source_basis, range_basis, product, name)
+            return ZeroOperator(self.source, self.range, self.name).projected(range_basis, source_basis, product, name)
         elif not hasattr(self, 'restricted_operator') or source_basis is None:
-            return super(EmpiricalInterpolatedOperator, self).projected(source_basis, range_basis, product, name)
+            return super(EmpiricalInterpolatedOperator, self).projected(range_basis, source_basis, product, name)
         else:
             name = name or self.name + '_projected'
 

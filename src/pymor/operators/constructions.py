@@ -160,15 +160,15 @@ class LincombOperator(OperatorBase):
             R.axpy(c, v)
         return R
 
-    def projected(self, source_basis, range_basis, product=None, name=None):
+    def projected(self, range_basis, source_basis, product=None, name=None):
         if hasattr(self, '_assembled_operator'):
             if self._defaults_sid == defaults_sid():
-                return self._assembled_operator.projected(source_basis, range_basis, product, name)
+                return self._assembled_operator.projected(range_basis, source_basis, product, name)
             else:
-                return self.assemble().projected(source_basis, range_basis, product, name)
+                return self.assemble().projected(range_basis, source_basis, product, name)
         elif self._try_assemble:
-            return self.assemble().projected(source_basis, range_basis, product, name)
-        proj_operators = [op.projected(source_basis=source_basis, range_basis=range_basis, product=product)
+            return self.assemble().projected(range_basis, source_basis, product, name)
+        proj_operators = [op.projected(range_basis=range_basis, source_basis=source_basis, product=product)
                           for op in self.operators]
         return self.with_(operators=proj_operators, name=name or self.name + '_projected')
 
@@ -341,7 +341,7 @@ class ConstantOperator(OperatorBase):
         assert len(U) == 1
         return ZeroOperator(self.source, self.range, name=self.name + '_jacobian')
 
-    def projected(self, source_basis, range_basis, product=None, name=None):
+    def projected(self, range_basis, source_basis, product=None, name=None):
         assert source_basis is None or source_basis in self.source
         assert range_basis is None or range_basis in self.range
         assert product is None or product.source == product.range == self.range
@@ -387,7 +387,7 @@ class ZeroOperator(OperatorBase):
         count = len(U) if ind is None else 1 if isinstance(ind, Number) else len(ind)
         return self.range.zeros(count)
 
-    def projected(self, source_basis, range_basis, product=None, name=None):
+    def projected(self, range_basis, source_basis, product=None, name=None):
         assert source_basis is None or source_basis in self.source
         assert range_basis is None or range_basis in self.range
         assert product is None or product.source == product.range == self.range

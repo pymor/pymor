@@ -293,7 +293,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         return None
 
     @abstractmethod
-    def projected(self, source_basis, range_basis, product=None, name=None):
+    def projected(self, range_basis, source_basis, product=None, name=None):
         """Project the operator to subspaces of the source and range space.
 
         Denote `self` by A. Given a scalar product ( ⋅, ⋅), and vectors b_1, ..., b_N,
@@ -328,12 +328,12 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
         Parameters
         ----------
-        source_basis
-            The b_1, ..., b_N as a |VectorArray| or `None`. If `None`, no restriction of
-            the source space is performed.
         range_basis
             The c_1, ..., c_M as a |VectorArray|. If `None`, no projection in the range
             space is performed.
+        source_basis
+            The b_1, ..., b_N as a |VectorArray| or `None`. If `None`, no restriction of
+            the source space is performed.
         product
             An |Operator| representing the scalar product.  If `None`, the
             Euclidean product is chosen.

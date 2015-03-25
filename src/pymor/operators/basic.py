@@ -123,7 +123,7 @@ class OperatorBase(OperatorInterface):
         else:
             raise TypeError('This operator does not represent a vector or linear functional.')
 
-    def projected(self, source_basis, range_basis, product=None, name=None):
+    def projected(self, range_basis, source_basis, product=None, name=None):
         name = name or '{}_projected'.format(self.name)
         if self.linear and not self.parametric:
             assert source_basis is None or source_basis in self.source
@@ -249,10 +249,10 @@ class ProjectedOperator(OperatorBase):
             J = self.operator.jacobian(U, mu=mu)
         else:
             J = self.operator.jacobian(self.source_basis.lincomb(U.data), mu=mu)
-        return J.projected(source_basis=self.source_basis, range_basis=self.range_basis,
+        return J.projected(range_basis=self.range_basis, source_basis=self.source_basis,
                            product=self.product, name=self.name + '_jacobian')
 
     def assemble(self, mu=None):
         op = self.operator.assemble(mu=mu)
-        return op.projected(source_basis=self.source_basis, range_basis=self.range_basis,
+        return op.projected(range_basis=self.range_basis, source_basis=self.source_basis,
                             product=self.product, name=self.name + '_assembled')
