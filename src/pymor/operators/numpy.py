@@ -239,28 +239,28 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             U.data[ind] if hasattr(ind, '__len__') else U.data[ind:ind + 1]
         return NumpyVectorArray(_apply_inverse(self._matrix, U, options=options), copy=False)
 
-    def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
+    def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
         """Project the operator to a subbasis.
 
         The purpose of this method is to further project an operator that has been
         obtained through :meth:`~pymor.operators.interfaces.OperatorInterface.projected`
         to subbases of the original projection bases, i.e. ::
 
-            op.projected(s_basis, r_basis, prod).projected_to_subbasis(dim_source, dim_range)
+            op.projected(r_basis, s_basis, prod).projected_to_subbasis(dim_range, dim_source)
 
         should be the same as ::
 
-            op.projected(s_basis.copy(range(dim_source)), r_basis.copy(range(dim_range)), prod)
+            op.projected(r_basis.copy(range(dim_range)), s_basis.copy(range(dim_source)), prod)
 
         For a |NumpyMatrixOperator| this amounts to extracting the upper-left
         (dim_range, dim_source) corner of the matrix it wraps.
 
         Parameters
         ----------
-        dim_source
-            Dimension of the source subbasis.
         dim_range
             Dimension of the range subbasis.
+        dim_source
+            Dimension of the source subbasis.
 
         Returns
         -------

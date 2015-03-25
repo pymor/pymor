@@ -142,15 +142,15 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
         Reconstructor for `rd`.
     """
 
-    projected_operators = {k: op.projected_to_subbasis(dim_source=dim, dim_range=dim) if op is not None else None
+    projected_operators = {k: op.projected_to_subbasis(dim_range=dim, dim_source=dim) if op is not None else None
                            for k, op in discretization.operators.iteritems()}
-    projected_functionals = {k: f.projected_to_subbasis(dim_source=dim, dim_range=None) if f is not None else None
+    projected_functionals = {k: f.projected_to_subbasis(dim_range=None, dim_source=dim) if f is not None else None
                              for k, f in discretization.functionals.iteritems()}
-    projected_vector_operators = {k: op.projected_to_subbasis(dim_source=None, dim_range=dim) if op else None
+    projected_vector_operators = {k: op.projected_to_subbasis(dim_range=dim, dim_source=None) if op else None
                                   for k, op in discretization.vector_operators.iteritems()}
 
     if discretization.products is not None:
-        projected_products = {k: op.projected_to_subbasis(dim_source=dim, dim_range=dim)
+        projected_products = {k: op.projected_to_subbasis(dim_range=dim, dim_source=dim)
                               for k, op in discretization.products.iteritems()}
     else:
         projected_products = None

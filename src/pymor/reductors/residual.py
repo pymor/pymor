@@ -171,9 +171,9 @@ class ResidualOperator(OperatorBase):
                 V.axpy(-1., F)
         return V
 
-    def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
-        return ResidualOperator(self.operator.projected_to_subbasis(dim_source, dim_range),
-                                self.functional.projected_to_subbasis(dim_range, None),
+    def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
+        return ResidualOperator(self.operator.projected_to_subbasis(dim_range, dim_source),
+                                self.functional.projected_to_subbasis(None, dim_range),
                                 name=name)
 
 
@@ -197,8 +197,8 @@ class NonProjectedResidualOperator(ResidualOperator):
 
     def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
         product = self.product.projected_to_subbasis(dim_range, dim_range) if self.product is not None else None
-        return ResidualOperator(self.operator.projected_to_subbasis(dim_source, dim_range),
-                                self.functional.projected_to_subbasis(dim_range, None),
+        return ResidualOperator(self.operator.projected_to_subbasis(dim_range, dim_source),
+                                self.functional.projected_to_subbasis(None, dim_range),
                                 product,
                                 name=name)
 

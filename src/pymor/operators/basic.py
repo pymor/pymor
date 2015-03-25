@@ -229,7 +229,7 @@ class ProjectedOperator(OperatorBase):
                 V = self.operator.apply(UU, mu=mu)
                 return NumpyVectorArray(self.product.apply2(V, self.range_basis))
 
-    def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
+    def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
         """See :meth:`NumpyMatrixOperator.projected_to_subbasis`."""
         assert dim_source is None or dim_source <= self.source.dim
         assert dim_range is None or dim_range <= self.range.dim

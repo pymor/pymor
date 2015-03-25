@@ -172,11 +172,11 @@ class LincombOperator(OperatorBase):
                           for op in self.operators]
         return self.with_(operators=proj_operators, name=name or self.name + '_projected')
 
-    def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
+    def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
         """See :meth:`NumpyMatrixOperator.projected_to_subbasis`."""
         assert dim_source is None or dim_source <= self.source.dim
         assert dim_range is None or dim_range <= self.range.dim
-        proj_operators = [op.projected_to_subbasis(dim_source=dim_source, dim_range=dim_range)
+        proj_operators = [op.projected_to_subbasis(dim_range=dim_range, dim_source=dim_source)
                           for op in self.operators]
         return self.with_(operators=proj_operators, name=name or '{}_projected_to_subbasis'.format(self.name))
 

@@ -215,7 +215,7 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
         else:
             return VectorArrayOperator(M)
 
-    def projected_to_subbasis(self, dim_source=None, dim_range=None, dim_collateral=None, name=None):
+    def projected_to_subbasis(self, dim_range=None, dim_source=None, dim_collateral=None, name=None):
         assert dim_source is None or dim_source <= self.source.dim
         assert dim_range is None or dim_range <= self.range.dim
         assert dim_collateral is None or dim_collateral <= self.restricted_operator.range.dim

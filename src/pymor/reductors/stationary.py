@@ -94,9 +94,9 @@ class StationaryCoerciveEstimator(ImmutableInterface):
     def restricted_to_subbasis(self, dim, discretization):
         if self.residual_range_dims:
             residual_range_dims = self.residual_range_dims[:dim + 1]
-            residual = self.residual.projected_to_subbasis(dim, residual_range_dims[-1])
+            residual = self.residual.projected_to_subbasis(residual_range_dims[-1], dim)
             return StationaryCoerciveEstimator(residual, residual_range_dims, self.coercivity_estimator)
         else:
             self.logger.warn('Cannot efficiently reduce to subbasis')
-            return StationaryCoerciveEstimator(self.residual.projected_to_subbasis(dim, None), None,
+            return StationaryCoerciveEstimator(self.residual.projected_to_subbasis(None, dim), None,
                                                self.coercivity_estimator)
