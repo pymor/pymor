@@ -160,7 +160,7 @@ class OperatorBase(OperatorInterface):
             self.logger.warn('Using inefficient generic projection operator')
             # Since the bases are not immutable and we do not own them,
             # the ProjectedOperator will have to create copies of them.
-            return ProjectedOperator(self, source_basis, range_basis, product, copy=True, name=name)
+            return ProjectedOperator(self, range_basis, source_basis, product, copy=True, name=name)
 
 
 class ProjectedOperator(OperatorBase):
@@ -189,7 +189,7 @@ class ProjectedOperator(OperatorBase):
 
     linear = False
 
-    def __init__(self, operator, source_basis, range_basis, product=None, copy=True, name=None):
+    def __init__(self, operator, range_basis, source_basis, product=None, copy=True, name=None):
         assert isinstance(operator, OperatorInterface)
         assert source_basis is None or source_basis in operator.source
         assert range_basis is None or range_basis in operator.range
@@ -240,7 +240,7 @@ class ProjectedOperator(OperatorBase):
             else self.source_basis.copy(ind=range(dim_source))
         range_basis = self.range_basis if dim_range is None \
             else self.range_basis.copy(ind=range(dim_range))
-        return ProjectedOperator(self.operator, source_basis, range_basis, product=None, copy=False, name=name)
+        return ProjectedOperator(self.operator, range_basis, source_basis, product=None, copy=False, name=name)
 
     def jacobian(self, U, mu=None):
         assert len(U) == 1
