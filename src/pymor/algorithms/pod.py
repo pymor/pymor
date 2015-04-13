@@ -18,8 +18,8 @@ from pymor.tools.floatcmp import float_cmp_all
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 
-@defaults('tol', 'symmetrize', 'orthonormalize', 'check', 'check_tol')
-def pod(A, modes=None, product=None, tol=4e-8, symmetrize=False, orthonormalize=True,
+@defaults('rtol', 'atol', 'symmetrize', 'orthonormalize', 'check', 'check_tol')
+def pod(A, modes=None, product=None, rtol=4e-8, atol=0., symmetrize=False, orthonormalize=True,
         check=True, check_tol=1e-10):
     """Proper orthogonal decomposition of `A`.
 
@@ -41,9 +41,11 @@ def pod(A, modes=None, product=None, tol=4e-8, symmetrize=False, orthonormalize=
         returned.
     products
         Scalar product |Operator| w.r.t. which the POD is computed.
-    tol
+    rtol
         Singular values smaller than this value multiplied by the largest singular
         value are ignored.
+    atol
+        Singular values smaller than this value are ignored.
     symmetrize
         If `True`, symmetrize the gramian again before proceeding.
     orthonormalize
@@ -79,7 +81,8 @@ def pod(A, modes=None, product=None, tol=4e-8, symmetrize=False, orthonormalize=
     EVALS = EVALS[::-1]
     EVECS = EVECS.T[::-1, :]  # is this a view? yes it is!
 
-    above_tol = np.where(EVALS >= tol ** 2 * EVALS[0])[0]
+    tol = max(rtol ** 2 * EVALS[0], atol ** 2)
+    above_tol = np.where(EVALS >= tol)[0]
     if len(above_tol) == 0:
         return A.space.empty(), np.array([])
     last_above_tol = above_tol[-1]
