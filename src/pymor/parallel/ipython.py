@@ -5,6 +5,8 @@
 from __future__ import absolute_import, division, print_function
 
 from itertools import izip, chain
+import os
+import time
 import weakref
 
 from IPython.parallel import Client
@@ -15,10 +17,44 @@ from pymor.parallel.interfaces import WorkerPoolInterface
 from pymor.tools.counter import Counter
 
 
+class new_ipcluster_pool(object):
+
+    def __init__(self, profile=None, cluster_id=None, num_engines=None, ipython_dir=None):
+        self.profile = profile
+        self.cluster_id = cluster_id
+        self.num_engines = num_engines
+        self.ipython_dir = ipython_dir
+
+    def __enter__(self):
+        args = []
+        if self.profile is not None:
+            args.append('--profile=' + self.profile)
+        if self.cluster_id is not None:
+            args.append('--cluster-id=' + self.cluster_id)
+        if self.num_engines is not None:
+            args.append('--n=' + str(self.num_engines))
+        if self.ipython_dir is not None:
+            args.append('--ipython-dir=' + self.ipython_dir)
+        os.system('ipcluster start --daemonize ' + ' '.join(args))
+        time.sleep(5)
+        pool = IPythonPool(profile=self.profile, cluster_id=self.cluster_id)
+        return pool
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        args = []
+        if self.profile is not None:
+            args.append('--profile=' + self.profile)
+        if self.cluster_id is not None:
+            args.append('--cluster-id=' + self.cluster_id)
+        if self.ipython_dir is not None:
+            args.append('--ipython-dir=' + self.ipython_dir)
+        os.system('ipcluster stop ' + ' '.join(args))
+
+
 class IPythonPool(WorkerPoolInterface):
 
-    def __init__(self):
-        self.client = Client()
+    def __init__(self, **kwargs):
+        self.client = Client(**kwargs)
         self.view = self.client[:]
         self.view.apply(_setup_worker, block=True)
         self._distributed_immutable_objects = {}
