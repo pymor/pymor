@@ -15,61 +15,6 @@ from pymor.parallel.interfaces import WorkerPoolInterface
 from pymor.tools.counter import Counter
 
 
-def _worker_call_function(function, loop, args, kwargs):
-    from pymor.core.pickle import loads, loads_function
-    global remote_objects
-    if isinstance(function, tuple):
-        function = loads_function(function[0])
-    else:
-        function = loads(function)
-    kwargs = {k: remote_objects[v.key] if isinstance(v, RemoteObject) else v
-              for k, v in kwargs.iteritems()}
-    if loop:
-        return [function(*a, **kwargs) for a in izip(*args)]
-    else:
-        return function(*args, **kwargs)
-
-
-def _split_into_chunks(count, *args):
-    lens = map(len, args)
-    min_len = min(lens)
-    max_len = max(lens)
-    assert min_len == max_len
-    chunk_size = max_len // count + (1 if max_len % count > 0 else 0)
-
-    def split_arg(arg):
-        while arg:
-            chunk, arg = arg[:chunk_size], arg[chunk_size:]
-            yield chunk
-    chunks = tuple(list(split_arg(arg)) for arg in args)
-    return chunks
-
-
-remote_objects = {}
-
-
-def _setup_worker():
-    global remote_objects
-    remote_objects.clear()
-
-
-def _distribute_objects(objs):
-    global remote_objects
-    remote_objects.update(objs)
-
-
-def _remove_objects(ids):
-    global remote_objects
-    for i in ids:
-        del remote_objects[i]
-
-
-class RemoteObject(object):
-
-    def __init__(self, key):
-        self.key = key
-
-
 class IPythonPool(WorkerPoolInterface):
 
     def __init__(self):
@@ -164,3 +109,58 @@ class IPythonPool(WorkerPoolInterface):
             for uid in self.distributed_immutable_objects_to_remove:
                 del pool._distributed_immutable_objects[uid]
             return False
+
+
+def _worker_call_function(function, loop, args, kwargs):
+    from pymor.core.pickle import loads, loads_function
+    global _remote_objects
+    if isinstance(function, tuple):
+        function = loads_function(function[0])
+    else:
+        function = loads(function)
+    kwargs = {k: _remote_objects[v.key] if isinstance(v, RemoteObject) else v
+              for k, v in kwargs.iteritems()}
+    if loop:
+        return [function(*a, **kwargs) for a in izip(*args)]
+    else:
+        return function(*args, **kwargs)
+
+
+def _split_into_chunks(count, *args):
+    lens = map(len, args)
+    min_len = min(lens)
+    max_len = max(lens)
+    assert min_len == max_len
+    chunk_size = max_len // count + (1 if max_len % count > 0 else 0)
+
+    def split_arg(arg):
+        while arg:
+            chunk, arg = arg[:chunk_size], arg[chunk_size:]
+            yield chunk
+    chunks = tuple(list(split_arg(arg)) for arg in args)
+    return chunks
+
+
+_remote_objects = {}
+
+
+def _setup_worker():
+    global _remote_objects
+    _remote_objects.clear()
+
+
+def _distribute_objects(objs):
+    global _remote_objects
+    _remote_objects.update(objs)
+
+
+def _remove_objects(ids):
+    global _remote_objects
+    for i in ids:
+        del _remote_objects[i]
+
+
+class RemoteObject(object):
+
+    def __init__(self, key):
+        self.key = key
