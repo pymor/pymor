@@ -12,7 +12,7 @@ from pymor.core.logger import getLogger
 
 
 @defaults('miniter', 'maxiter', 'reduction', 'abs_limit', 'stagnation_window', 'stagnation_threshold')
-def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None,
+def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_squares=False,
            miniter=0, maxiter=10, reduction=1e-10, abs_limit=1e-15,
            stagnation_window=0, stagnation_threshold=1e99,
            return_stages=False, return_residuals=False):
@@ -39,6 +39,8 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None,
     error_norm
         The norm with which the norm of the residual is computed. If `None`, the
         Euclidean norm is used.
+    least_squares
+        If `True`, use a least squares linear solver (e.g. for residual minimization).
     miniter
         Minimum amount of iterations to perform.
     maxiter
@@ -109,7 +111,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None,
         iteration += 1
         jacobian = operator.jacobian(U, mu=mu)
         try:
-            correction = jacobian.apply_inverse(residual)
+            correction = jacobian.apply_inverse(residual, options='least_squares' if least_squares else None)
         except InversionError:
             raise NewtonError('Could not invert jacobian')
         U += correction
