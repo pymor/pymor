@@ -8,7 +8,7 @@
 Usage:
   thermalblock.py [-ehp] [--estimator-norm=NORM] [--extension-alg=ALG] [--grid=NI] [--help]
                   [--pickle=PREFIX] [--plot-solutions] [--plot-error-sequence] [--reductor=RED]
-                  [--test=COUNT] [--num-engines=COUNT]
+                  [--test=COUNT] [--num-engines=COUNT] [--profile=PROFILE]
                   XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
 
 
@@ -52,6 +52,8 @@ Options:
   --num-engines=COUNT    If positive, the number of IPython cluster engines to use for
                          parallel greedy search. If zero, no parallelization is performed.
                          [default: 0]
+
+  --profile=PROFILE      IPython profile to use for parallelization.
 """
 
 from __future__ import absolute_import, division, print_function
@@ -128,7 +130,8 @@ def thermalblock_demo(args):
                             'h1_gram_schmidt': partial(gram_schmidt_basis_extension, product=discretization.h1_product)}
     extension_algorithm = extension_algorithms[args['--extension-alg']]
 
-    with new_ipcluster_pool(num_engines=args['--num-engines']) if args['--num-engines'] else no_context as pool:
+    with (new_ipcluster_pool(num_engines=args['--num-engines'], profile=args['--profile'])
+          if args['--num-engines'] else no_context) as pool:
         greedy_data = greedy(discretization, reductor,
                              discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
                              use_estimator=args['--with-estimator'], error_norm=discretization.h1_norm,
