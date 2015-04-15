@@ -9,7 +9,13 @@ import os
 import time
 import weakref
 
-from IPython.parallel import Client, TimeoutError
+
+try:
+    from IPython.parallel import Client, TimeoutError
+    HAVE_IPYTHON = True
+except ImportError:
+    HAVE_IPYTHON = False
+
 
 from pymor.core.interfaces import BasicInterface, ImmutableInterface
 from pymor.core.pickle import dumps, dumps_function, PicklingError
