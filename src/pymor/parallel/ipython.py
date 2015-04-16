@@ -120,7 +120,7 @@ class IPythonPool(WorkerPoolInterface):
         self._remote_objects_created = Counter()
 
     def __len__(self):
-        return len(self.client)
+        return len(self.view)
 
     def distribute(self, *args):
         return IPythonPool.DistributedObjectManager(self, *args)
