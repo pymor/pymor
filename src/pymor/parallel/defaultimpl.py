@@ -61,4 +61,4 @@ def _append_array_slice(s, U=None):
 
 
 def _append_list_slice(s, l=None):
-    l.append(s)
+    l.extend(s)
