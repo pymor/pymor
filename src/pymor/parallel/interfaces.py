@@ -16,6 +16,14 @@ class WorkerPoolInterface(BasicInterface):
         pass
 
     @abstractmethod
+    def distribute_array(self, U, copy=True):
+        pass
+
+    @abstractmethod
+    def distribute_list(self, l):
+        pass
+
+    @abstractmethod
     def apply(self, function, *args, **kwargs):
         pass
 
