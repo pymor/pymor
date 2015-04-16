@@ -191,6 +191,8 @@ class IPythonPool(WorkerPoolInterface):
                     return RemoteObject(remote_id)
 
             remote_objects = tuple(process_obj(o) for o in self.objs)
+            if len(remote_objects) == 1:
+                remote_objects = remote_objects[0]
             pool.view.apply_sync(_distribute_objects, objects_to_distribute)
 
             # release local refecrences to distributed objects
