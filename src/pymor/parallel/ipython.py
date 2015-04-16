@@ -126,7 +126,7 @@ class IPythonPool(WorkerPoolInterface):
         return IPythonPool.DistributedObjectManager(self, *args)
 
     def _pickle_function(self, function):
-        if hasattr(function, '__file__'):
+        if function.__module__ != '__main__':
             try:
                 function = dumps(function)
             except PicklingError:
