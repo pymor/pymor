@@ -19,6 +19,7 @@ except ImportError:
 
 from pymor.core.interfaces import BasicInterface, ImmutableInterface
 from pymor.core.pickle import dumps, dumps_function, PicklingError
+from pymor.parallel.defaultimpl import WorkerPoolDefaultImplementations
 from pymor.parallel.interfaces import WorkerPoolInterface
 from pymor.tools.counter import Counter
 
@@ -106,7 +107,7 @@ class new_ipcluster_pool(BasicInterface):
         os.system(cmd)
 
 
-class IPythonPool(WorkerPoolInterface):
+class IPythonPool(WorkerPoolDefaultImplementations, WorkerPoolInterface):
 
     def __init__(self, num_engines=None, **kwargs):
         self.client = Client(**kwargs)
