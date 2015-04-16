@@ -10,7 +10,6 @@ from itertools import izip
 from pymor.algorithms.basisextension import gram_schmidt_basis_extension
 from pymor.core.exceptions import ExtensionError
 from pymor.core.logger import getLogger
-from pymor.tools.context import no_context
 
 
 def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=True, error_norm=None,
@@ -85,20 +84,17 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
 
     logger = getLogger('pymor.algorithms.greedy.greedy')
     samples = list(samples)
-    logger.info('Started greedy search on {} samples'.format(len(samples)))
-    basis = initial_basis
+    sample_count = len(samples)
+    logger.info('Started greedy search on {} samples'.format(sample_count))
 
-    tic = time.time()
-    extensions = 0
-    max_errs = []
-    max_err_mus = []
-    hierarchic = False
+    def greedy_main():
+        basis = initial_basis
 
-    objects_to_distribute = () if use_estimator else \
-                            (discretization, error_norm) if error_norm else \
-                            (discretization,)
-
-    with pool.distribute(*objects_to_distribute) if pool else no_context:
+        tic = time.time()
+        extensions = 0
+        max_errs = []
+        max_err_mus = []
+        hierarchic = False
 
         rd, rc, reduction_data = None, None, None
         while True:
@@ -106,7 +102,7 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
             rd, rc, reduction_data = reductor(discretization, basis) if not hierarchic \
                 else reductor(discretization, basis, extends=(rd, rc, reduction_data))
 
-            if len(samples) == 0:
+            if sample_count == 0:
                 logger.info('There is nothing else to do for empty samples.')
                 return {'basis': basis, 'reduced_discretization': rd, 'reconstructor': rc,
                         'max_errs': [], 'max_err_mus': [], 'extensions': 0,
@@ -115,23 +111,25 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
             logger.info('Estimating errors ...')
             if pool:
                 if use_estimator:
-                    errors = pool.map(_estimate, samples, rd=rd, d=None, rc=None, error_norm=None)
+                    errors, mus = zip(*pool.apply(_estimate, rd=rd, d=None, rc=None, samples=samples, error_norm=None))
                 else:
                     # FIXME: Always communicating rc may become a bottleneck in some use cases.
                     #        Add special treatment for GenericRBReconstructor?
-                    errors = pool.map(_estimate, samples, rd=rd, d=discretization, rc=rc, error_norm=error_norm)
-            elif use_estimator:
-                errors = [rd.estimate(rd.solve(mu), mu) for mu in samples]
-            elif error_norm is not None:
-                errors = [error_norm(discretization.solve(mu) - rc.reconstruct(rd.solve(mu))) for mu in samples]
+                    errors, mus = zip(*pool.apply(_estimate, rd=rd, d=discretization, rc=rc,
+                                                  samples=samples, error_norm=error_norm))
+                max_err, max_err_mu = max(((err, mu) for err, mu in izip(errors, mus)), key=lambda t: t[0])
             else:
-                errors = [(discretization.solve(mu) - rc.reconstruct(rd.solve(mu))).l2_norm() for mu in samples]
+                if use_estimator:
+                    errors = [rd.estimate(rd.solve(mu), mu) for mu in samples]
+                elif error_norm is not None:
+                    errors = [error_norm(discretization.solve(mu) - rc.reconstruct(rd.solve(mu))) for mu in samples]
+                else:
+                    errors = [(discretization.solve(mu) - rc.reconstruct(rd.solve(mu))).l2_norm() for mu in samples]
+                # most error_norms will return an array of length 1 instead of a number, so we extract the numbers
+                # if necessary
+                errors = map(lambda x: x[0] if hasattr(x, '__len__') else x, errors)
+                max_err, max_err_mu = max(((err, mu) for err, mu in izip(errors, samples)), key=lambda t: t[0])
 
-            # most error_norms will return an array of length 1 instead of a number, so we extract the numbers
-            # if necessary
-            errors = map(lambda x: x[0] if hasattr(x, '__len__') else x, errors)
-
-            max_err, max_err_mu = max(((err, mu) for err, mu in izip(errors, samples)), key=lambda t: t[0])
             max_errs.append(max_err)
             max_err_mus.append(max_err_mu)
             logger.info('Maximum error after {} extensions: {} (mu = {})'.format(extensions, max_err, max_err_mu))
@@ -163,17 +161,32 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
                     else reductor(discretization, basis, extends=(rd, rc, reduction_data))
                 break
 
-    tictoc = time.time() - tic
-    logger.info('Greedy search took {} seconds'.format(tictoc))
-    return {'basis': basis, 'reduced_discretization': rd, 'reconstructor': rc,
-            'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
-            'time': tictoc, 'reduction_data': reduction_data}
+        tictoc = time.time() - tic
+        logger.info('Greedy search took {} seconds'.format(tictoc))
+        return {'basis': basis, 'reduced_discretization': rd, 'reconstructor': rc,
+                'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
+                'time': tictoc, 'reduction_data': reduction_data}
 
-
-def _estimate(mu, rd, d=None, rc=None, error_norm=None):
-    if d is None:
-        return rd.estimate(rd.solve(mu), mu)
-    elif error_norm is not None:
-        return error_norm(d.solve(mu) - rc.reconstruct(rd.solve(mu)))
+    if pool:
+        objects_to_distribute = () if use_estimator else \
+                                (discretization, error_norm) if error_norm else \
+                                (discretization,)
+        with pool.distribute(*objects_to_distribute), pool.distribute_list(samples) as samples:
+            return greedy_main()
     else:
-        return (d.solve(mu) - rc.reconstruct(rd.solve(mu))).l2_norm()
+        return greedy_main()
+
+
+def _estimate(rd=None, d=None, rc=None, samples=None, error_norm=None):
+    if not samples:
+        return -1., None
+
+    if d is None:
+        errors = [rd.estimate(rd.solve(mu), mu) for mu in samples]
+    elif error_norm is not None:
+        errors = [error_norm(d.solve(mu) - rc.reconstruct(rd.solve(mu))) for mu in samples]
+    else:
+        errors = [(d.solve(mu) - rc.reconstruct(rd.solve(mu))).l2_norm() for mu in samples]
+    errors = map(lambda x: x[0] if hasattr(x, '__len__') else x, errors)
+
+    return max(((err, mu) for err, mu in izip(errors, samples)), key=lambda t: t[0])
