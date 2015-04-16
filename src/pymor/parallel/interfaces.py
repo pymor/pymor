@@ -34,3 +34,7 @@ class WorkerPoolInterface(BasicInterface):
     @abstractmethod
     def map(self, function, zip_return_values=True, *args, **kwargs):
         pass
+
+
+class RemoteObjectInterface(object):
+    pass

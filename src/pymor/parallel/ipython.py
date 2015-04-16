@@ -20,7 +20,7 @@ except ImportError:
 from pymor.core.interfaces import BasicInterface, ImmutableInterface
 from pymor.core.pickle import dumps, dumps_function, PicklingError
 from pymor.parallel.defaultimpl import WorkerPoolDefaultImplementations
-from pymor.parallel.interfaces import WorkerPoolInterface
+from pymor.parallel.interfaces import WorkerPoolInterface, RemoteObjectInterface
 from pymor.tools.counter import Counter
 
 
@@ -181,7 +181,7 @@ class IPythonPool(WorkerPoolDefaultImplementations, WorkerPoolInterface):
                     if o.uid not in pool._distributed_immutable_objects:
                         remote_id = pool._remote_objects_created.inc()
                         objects_to_distribute[remote_id] = o
-                        pool._distributed_immutable_objects[o.uid] = RemoteObject(remote_id)
+                        pool._distributed_immutable_objects[o.uid] = IPythonRemoteObject(remote_id)
                         self.remote_objects_to_remove.append(remote_id)
                         self.distributed_immutable_objects_to_remove.append(o.uid)
                     return pool._distributed_immutable_objects[o.uid]
@@ -189,7 +189,7 @@ class IPythonPool(WorkerPoolDefaultImplementations, WorkerPoolInterface):
                     remote_id = pool._remote_objects_created.inc()
                     objects_to_distribute[remote_id] = o
                     self.remote_objects_to_remove.append(remote_id)
-                    return RemoteObject(remote_id)
+                    return IPythonRemoteObject(remote_id)
 
             remote_objects = tuple(process_obj(o) for o in self.objs)
             if len(remote_objects) == 1:
@@ -216,7 +216,7 @@ def _worker_call_function(function, loop, args, kwargs):
         function = loads_function(function[0])
     else:
         function = loads(function)
-    kwargs = {k: _remote_objects[v.key] if isinstance(v, RemoteObject) else v
+    kwargs = {k: _remote_objects[v.key] if isinstance(v, IPythonRemoteObject) else v
               for k, v in kwargs.iteritems()}
     if loop:
         return [function(*a, **kwargs) for a in izip(*args)]
@@ -258,7 +258,7 @@ def _remove_objects(ids):
         del _remote_objects[i]
 
 
-class RemoteObject(object):
+class IPythonRemoteObject(RemoteObjectInterface):
 
     def __init__(self, key):
         self.key = key
