@@ -168,6 +168,7 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
                 'time': tictoc, 'reduction_data': reduction_data}
 
     if pool:
+        logger.info('Using pool of {} workers for parallel greedy search'.format(len(pool)))
         objects_to_distribute = () if use_estimator else \
                                 (discretization, error_norm) if error_norm else \
                                 (discretization,)
