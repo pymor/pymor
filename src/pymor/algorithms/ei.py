@@ -21,11 +21,12 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.logger import getLogger
 from pymor.algorithms.pod import pod
 from pymor.operators.ei import EmpiricalInterpolatedOperator
+from pymor.parallel.interfaces import RemoteObjectInterface
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 
 def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None,
-              projection='orthogonal', product=None):
+              projection='orthogonal', product=None, pool=None):
     """Generate data for empirical interpolation by a greedy search (EI-Greedy algorithm).
 
     Given a |VectorArray| `U`, this method generates a collateral basis and
@@ -72,7 +73,18 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
     """
 
     assert projection in ('orthogonal', 'ei')
-    assert isinstance(U, VectorArrayInterface)
+
+    if pool is not None:
+        assert isinstance(U, (VectorArrayInterface, RemoteObjectInterface))
+        if isinstance(U, VectorArrayInterface):
+            with pool.distribute_array(U) as U_remote:
+                return _parallel_ei_greedy(U_remote, error_norm=error_norm, target_error=target_error,
+                                           max_interpolation_dofs=max_interpolation_dofs, projection=projection,
+                                           product=product, pool=pool)
+        else:
+            return _parallel_ei_greedy(U, error_norm=error_norm, target_error=target_error,
+                                       max_interpolation_dofs=max_interpolation_dofs, projection=projection,
+                                       product=product, pool=pool)
 
     logger = getLogger('pymor.algorithms.ei.ei_greedy')
     logger.info('Generating Interpolation Data ...')
@@ -145,6 +157,125 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
     data = {'errors': max_errs, 'triangularity_errors': triangularity_errs}
 
     return interpolation_dofs, collateral_basis, data
+
+
+def _parallel_ei_greedy(U, pool, error_norm=None, target_error=None, max_interpolation_dofs=None,
+                        projection='orthogonal', product=None):
+
+    assert projection in ('orthogonal', 'ei')
+    assert isinstance(U, RemoteObjectInterface)
+
+    logger = getLogger('pymor.algorithms.ei.ei_greedy')
+    logger.info('Generating Interpolation Data ...')
+    logger.info('Using pool of {} workers for parallel greedy search'.format(len(pool)))
+
+    interpolation_dofs = np.zeros((0,), dtype=np.int32)
+    collateral_basis = pool.apply_only(_parallel_ei_greedy_get_empty, 0, U=U)
+    max_errs = []
+    triangularity_errs = []
+
+    with pool.distribute({}) as distributed_data:
+        errs = pool.apply(_parallel_ei_greedy_initialize,
+                          projection=projection, U=U, error_norm=error_norm, data=distributed_data)
+        max_err_ind = np.argmax(errs)
+        max_err = errs[max_err_ind]
+
+        # main loop
+        while True:
+
+            if len(interpolation_dofs) >= max_interpolation_dofs:
+                logger.info('Maximum number of interpolation DOFs reached. Stopping extension loop.')
+                logger.info('Final maximum {} error with {} interpolation DOFs: {}'.format(
+                    'projection' if projection else 'interpolation', len(interpolation_dofs), max_err))
+                break
+
+            logger.info('Maximum {} error with {} interpolation DOFs: {}'
+                        .format('projection' if projection else 'interpolation',
+                                len(interpolation_dofs), max_err))
+
+            if target_error is not None and max_err <= target_error:
+                logger.info('Target error reached! Stopping extension loop.')
+                break
+
+            # compute new interpolation dof and collateral basis vector
+            new_vec = pool.apply_only(_parallel_ei_greedy_get_vector, max_err_ind, data=distributed_data)
+            new_dof = new_vec.amax()[0][0]
+            if new_dof in interpolation_dofs:
+                logger.info('DOF {} selected twice for interplation! Stopping extension loop.'.format(new_dof))
+                break
+            new_dof_value = new_vec.components([new_dof])[0, 0]
+            if new_dof_value == 0.:
+                logger.info('DOF {} selected for interpolation has zero maximum error! Stopping extension loop.'
+                            .format(new_dof))
+                break
+            new_vec *= 1 / new_dof_value
+            interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
+            collateral_basis.append(new_vec)
+            max_errs.append(max_err)
+
+            errs = pool.apply(_parallel_ei_greedy_update, new_vec=new_vec, new_dof=new_dof, data=distributed_data)
+            max_err_ind = np.argmax(errs)
+            max_err = errs[max_err_ind]
+
+    interpolation_matrix = collateral_basis.components(interpolation_dofs).T
+    triangularity_errors = np.abs(interpolation_matrix - np.tril(interpolation_matrix))
+    for d in range(1, len(interpolation_matrix) + 1):
+        triangularity_errs.append(np.max(triangularity_errors[:d, :d]))
+
+    logger.info('Interpolation matrix is not lower triangular with maximum error of {}'
+                .format(triangularity_errs[-1]))
+    logger.info('')
+
+    data = {'errors': max_errs, 'triangularity_errors': triangularity_errs}
+
+    return interpolation_dofs, collateral_basis, data
+
+
+def _parallel_ei_greedy_get_empty(U=None):
+    return U.empty()
+
+
+def _parallel_ei_greedy_initialize(projection=None, U=None, error_norm=None, data=None):
+    global gram_schmidt
+    import pymor.algorithms.gram_schmidt
+    gram_schmidt = pymor.algorithms.gram_schmidt.gram_schmidt
+    data['U'] = U
+    data['projection'] = projection
+    data['error_norm'] = error_norm
+    if projection == 'orthogonal':
+        data['ERR'] = ERR = U.copy()
+        data['onb_collateral_basis'] = U.empty()
+    else:
+        data['ERR'] = ERR = U
+
+    errs = ERR.l2_norm() if error_norm is None else error_norm(ERR)
+    data['max_err_ind'] = max_err_ind = np.argmax(errs)
+    return errs[max_err_ind]
+
+
+def _parallel_ei_greedy_get_vector(data=None):
+    return data['U'].copy(ind=data['max_err_ind'])
+
+
+def _parallel_ei_greedy_update(new_vec=None, new_dof=None, data=None):
+    U = data['U']
+    ERR = data['ERR']
+    error_norm = data['error_norm']
+    projection = data['projection']
+
+    new_dof_values = U.components([new_dof])
+    U.axpy(-new_dof_values[:, 0], new_vec)
+
+    if projection == 'orthogonal':
+        onb_collateral_basis = data['onb_collateral_basis']
+        onb_collateral_basis.append(new_vec)
+        gram_schmidt(onb_collateral_basis, offset=len(onb_collateral_basis) - 1, copy=False)
+        coeffs = ERR.dot(onb_collateral_basis, o_ind=len(onb_collateral_basis) - 1)
+        ERR.axpy(-coeffs[:, 0], onb_collateral_basis, x_ind=len(onb_collateral_basis) - 1)
+
+    errs = ERR.l2_norm() if error_norm is None else error_norm(ERR)
+    data['max_err_ind'] = max_err_ind = np.argmax(errs)
+    return errs[max_err_ind]
 
 
 def deim(U, modes=None, error_norm=None, product=None):
@@ -231,7 +362,7 @@ def deim(U, modes=None, error_norm=None, product=None):
 
 def interpolate_operators(discretization, operator_names, parameter_sample, error_norm=None,
                           target_error=None, max_interpolation_dofs=None,
-                          projection='orthogonal', product=None):
+                          projection='orthogonal', product=None, pool=None):
     """Empirical operator interpolation using the EI-Greedy algorithm.
 
     This is a convenience method for facilitating the use of :func:`ei_greedy`. Given
@@ -277,17 +408,29 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
             :errors:  Sequence of maximum approximation errors during greedy search.
     """
 
-    sample = tuple(parameter_sample)
+    logger = getLogger('pymor.algorithms.ei.interpolate_operators')
+    logger.info('Computing operator evaluations on solution snapshots ...')
+    sample = list(parameter_sample)
     operators = [discretization.operators[operator_name] for operator_name in operator_names]
 
-    evaluations = operators[0].range.empty()
-    for mu in sample:
-        U = discretization.solve(mu)
-        for op in operators:
-            evaluations.append(op.apply(U, mu=mu))
+    if pool:
+        logger.info('Using pool of {} workers for parallel evaluation'.format(len(pool)))
+        with pool.distribute(discretization.solution_space.empty()) as remote_evaluations:
 
-    dofs, basis, data = ei_greedy(evaluations, error_norm, target_error, max_interpolation_dofs,
-                                  projection=projection, product=product)
+            pool.map(_interpolate_operators_build_evaluations, sample,
+                     d=discretization, operators=operators, evaluations=remote_evaluations)
+            dofs, basis, data = ei_greedy(remote_evaluations, error_norm, target_error, max_interpolation_dofs,
+                                          projection=projection, product=product, pool=pool)
+
+    else:
+        evaluations = operators[0].range.empty()
+        for mu in sample:
+            U = discretization.solve(mu)
+            for op in operators:
+                evaluations.append(op.apply(U, mu=mu))
+
+        dofs, basis, data = ei_greedy(evaluations, error_norm, target_error, max_interpolation_dofs,
+                                      projection=projection, product=product, pool=pool)
 
     ei_operators = {name: EmpiricalInterpolatedOperator(operator, dofs, basis, triangular=True)
                     for name, operator in zip(operator_names, operators)}
@@ -297,3 +440,9 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
 
     data.update({'dofs': dofs, 'basis': basis})
     return ei_discretization, data
+
+
+def _interpolate_operators_build_evaluations(mu, d=None, operators=None, evaluations=None):
+    U = d.solve(mu)
+    for op in operators:
+        evaluations.append(op.apply(U, mu=mu))
