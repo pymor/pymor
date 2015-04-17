@@ -18,10 +18,13 @@ except ImportError:
 
 
 from pymor.core.interfaces import BasicInterface, ImmutableInterface
-from pymor.core.pickle import dumps, dumps_function, PicklingError
+from pymor.core.pickle import FunctionPicklingWrapper
 from pymor.parallel.defaultimpl import WorkerPoolDefaultImplementations
 from pymor.parallel.interfaces import WorkerPoolInterface, RemoteObjectInterface
 from pymor.tools.counter import Counter
+
+
+FunctionType = type(lambda x: x)
 
 
 class new_ipcluster_pool(BasicInterface):
@@ -126,34 +129,25 @@ class IPythonPool(WorkerPoolDefaultImplementations, WorkerPoolInterface):
     def distribute(self, *args):
         return IPythonPool.DistributedObjectManager(self, *args)
 
-    def _pickle_function(self, function):
-        if function.__module__ != '__main__':
-            try:
-                function = dumps(function)
-            except PicklingError:
-                function = (dumps_function(function),)
-        else:
-            function = (dumps_function(function),)
-        return function
-
     def _map_kwargs(self, kwargs):
         distributed_immutable_objects = self._distributed_immutable_objects
-        return {k: distributed_immutable_objects.get(v.uid, v) if isinstance(v, ImmutableInterface) else v
+        return {k: (distributed_immutable_objects.get(v.uid, v) if isinstance(v, ImmutableInterface) else
+                    FunctionPicklingWrapper(v) if isinstance(v, FunctionType) else v)
                 for k, v in kwargs.iteritems()}
 
     def apply(self, function, *args, **kwargs):
-        function = self._pickle_function(function)
+        function = FunctionPicklingWrapper(function)
         kwargs = self._map_kwargs(kwargs)
         return self.view.apply_sync(_worker_call_function, function, False, args, kwargs)
 
     def apply_only(self, function, worker, *args, **kwargs):
         view = self.client[worker]
-        function = self._pickle_function(function)
+        function = FunctionPicklingWrapper(function)
         kwargs = self._map_kwargs(kwargs)
         return view.apply_sync(_worker_call_function, function, False, args, kwargs)
 
     def map(self, function, *args, **kwargs):
-        function = self._pickle_function(function)
+        function = FunctionPicklingWrapper(function)
         kwargs = self._map_kwargs(kwargs)
         num_workers = len(self.view)
         chunks = _split_into_chunks(num_workers, *args)
@@ -210,13 +204,11 @@ class IPythonPool(WorkerPoolDefaultImplementations, WorkerPoolInterface):
 
 
 def _worker_call_function(function, loop, args, kwargs):
-    from pymor.core.pickle import loads, loads_function
+    from pymor.core.pickle import FunctionPicklingWrapper
     global _remote_objects
-    if isinstance(function, tuple):
-        function = loads_function(function[0])
-    else:
-        function = loads(function)
-    kwargs = {k: _remote_objects[v.key] if isinstance(v, IPythonRemoteObject) else v
+    function = function.function
+    kwargs = {k: (_remote_objects[v.key] if isinstance(v, IPythonRemoteObject) else
+                  v.function if isinstance(v, FunctionPicklingWrapper) else v)
               for k, v in kwargs.iteritems()}
     if loop:
         return [function(*a, **kwargs) for a in izip(*args)]
