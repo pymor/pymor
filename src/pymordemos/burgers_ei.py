@@ -66,6 +66,12 @@ Options:
   --vx=XSPEED                     Speed in x-direction [default: 1].
 
   --vy=YSPEED                     Speed in y-direction [default: 1].
+
+  --num-engines=COUNT             If positive, the number of IPython cluster engines to use
+                                  for parallel greedy search. If zero, no parallelization
+                                  is performed. [default: 0]
+
+  --profile=PROFILE               IPython profile to use for parallelization.
 """
 
 from __future__ import absolute_import, division, print_function
@@ -88,7 +94,9 @@ from pymor.discretizers.advection import discretize_nonlinear_instationary_advec
 from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
+from pymor.parallel.ipython import new_ipcluster_pool
 from pymor.reductors.basic import reduce_generic_rb, reduce_to_subbasis
+from pymor.tools.context import no_context
 from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
@@ -112,6 +120,7 @@ def burgers_demo(args):
     args['--test'] = int(args['--test'])
     args['--vx'] = float(args['--vx'])
     args['--vy'] = float(args['--vy'])
+    args['--num-engines'] = int(args['--num-engines'])
     args['EXP_MIN'] = int(args['EXP_MIN'])
     args['EXP_MAX'] = int(args['EXP_MAX'])
     args['EI_SNAPSHOTS'] = int(args['EI_SNAPSHOTS'])
@@ -148,48 +157,53 @@ def burgers_demo(args):
             legend = legend + ('exponent: {}'.format(mu['exponent']),)
         discretization.visualize(Us, legend=legend, title='Detailed Solutions', block=True)
 
-    ei_discretization, ei_data = interpolate_operators(discretization, ['operator'],
-                                                       discretization.parameter_space.sample_uniformly(args['EI_SNAPSHOTS']),  # NOQA
-                                                       error_norm=discretization.l2_norm,
-                                                       target_error=1e-10,
-                                                       max_interpolation_dofs=args['EISIZE'],
-                                                       projection='orthogonal',
-                                                       product=discretization.l2_product)
+    with (new_ipcluster_pool(num_engines=args['--num-engines'], profile=args['--profile'])
+          if args['--num-engines'] else no_context) as pool:
+        ei_discretization, ei_data = interpolate_operators(discretization, ['operator'],
+                                                           discretization.parameter_space.sample_uniformly(args['EI_SNAPSHOTS']),  # NOQA
+                                                           error_norm=discretization.l2_norm,
+                                                           target_error=1e-10,
+                                                           max_interpolation_dofs=args['EISIZE'],
+                                                           projection='orthogonal',
+                                                           product=discretization.l2_product,
+                                                           pool=pool)
 
-    if args['--plot-ei-err']:
-        print('Showing some EI errors')
-        ERRs = tuple()
-        legend = tuple()
-        for mu in discretization.parameter_space.sample_randomly(2):
-            print('Solving for exponent = \n{} ... '.format(mu['exponent']))
-            sys.stdout.flush()
-            U = discretization.solve(mu)
-            U_EI = ei_discretization.solve(mu)
-            ERR = U - U_EI
-            ERRs = ERRs + (ERR,)
-            legend = legend + ('exponent: {}'.format(mu['exponent']),)
-            print('Error: {}'.format(np.max(discretization.l2_norm(ERR))))
-        discretization.visualize(ERRs, legend=legend, title='EI Errors', separate_colorbars=True)
+        if args['--plot-ei-err']:
+            print('Showing some EI errors')
+            ERRs = tuple()
+            legend = tuple()
+            for mu in discretization.parameter_space.sample_randomly(2):
+                print('Solving for exponent = \n{} ... '.format(mu['exponent']))
+                sys.stdout.flush()
+                U = discretization.solve(mu)
+                U_EI = ei_discretization.solve(mu)
+                ERR = U - U_EI
+                ERRs = ERRs + (ERR,)
+                legend = legend + ('exponent: {}'.format(mu['exponent']),)
+                print('Error: {}'.format(np.max(discretization.l2_norm(ERR))))
+            discretization.visualize(ERRs, legend=legend, title='EI Errors', separate_colorbars=True)
 
-        print('Showing interpolation DOFs ...')
-        U = np.zeros(U.dim)
-        dofs = ei_discretization.operator.interpolation_dofs
-        U[dofs] = np.arange(1, len(dofs) + 1)
-        U[ei_discretization.operator.source_dofs] += int(len(dofs)/2)
-        discretization.visualize(NumpyVectorArray(U), title='Interpolation DOFs')
+            print('Showing interpolation DOFs ...')
+            U = np.zeros(U.dim)
+            dofs = ei_discretization.operator.interpolation_dofs
+            U[dofs] = np.arange(1, len(dofs) + 1)
+            U[ei_discretization.operator.source_dofs] += int(len(dofs)/2)
+            discretization.visualize(NumpyVectorArray(U), title='Interpolation DOFs')
 
-    print('RB generation ...')
+        print('RB generation ...')
 
-    def reductor(discretization, rb, extends=None):
-        return reduce_generic_rb(ei_discretization, rb, extends=extends)
+        def reductor(discretization, rb, extends=None):
+            return reduce_generic_rb(ei_discretization, rb, extends=extends)
 
-    extension_algorithm = partial(pod_basis_extension)
+        extension_algorithm = partial(pod_basis_extension)
 
-    greedy_data = greedy(discretization, reductor, discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
-                         use_estimator=False, error_norm=lambda U: np.max(discretization.l2_norm(U)),
-                         extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'])
+        greedy_data = greedy(discretization, reductor,
+                             discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
+                             use_estimator=False, error_norm=lambda U: np.max(discretization.l2_norm(U)),
+                             extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'],
+                             pool=pool)
 
-    rb_discretization, reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
+        rb_discretization, reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
 
     print('\nSearching for maximum error on random snapshots ...')
 
