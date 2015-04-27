@@ -20,6 +20,8 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 class DiscretizationBase(DiscretizationInterface):
     """Base class for |Discretizations| providing some common functionality."""
 
+    sid_ignore = DiscretizationInterface.sid_ignore | {'visualizer'}
+
     def __init__(self, operators, functionals, vector_operators, products=None, estimator=None, visualizer=None,
                  cache_region='disk', name=None):
         self.operators = FrozenDict(operators)
@@ -111,8 +113,6 @@ class StationaryDiscretization(DiscretizationBase):
     rhs
         The |Functional| F. The same as `functionals['rhs']`.
     """
-
-    sid_ignore = ('visualizer', 'cache_region', 'name')
 
     def __init__(self, operator, rhs, products=None, operators=None, functionals=None, vector_operators=None,
                  parameter_space=None, estimator=None, visualizer=None, cache_region='disk', name=None):
@@ -251,8 +251,6 @@ class InstationaryDiscretization(DiscretizationBase):
     time_stepper
         The provided time-stepper.
     """
-
-    sid_ignore = ('visualizer', 'cache_region', 'name')
 
     def __init__(self, T, initial_data, operator, rhs=None, mass=None, time_stepper=None, num_values=None,
                  products=None, operators=None, functionals=None, vector_operators=None, parameter_space=None,

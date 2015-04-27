@@ -115,12 +115,6 @@ methods of classes!'''.format(path))
 
     def update(self, defaults, type='user'):
         assert type in ('user', 'file')
-        import pymor.core.interfaces
-        if pymor.core.interfaces.ImmutableMeta.sids_created:
-            from pymor.core.logger import getLogger
-            getLogger('pymor.core.defaults').warn(
-                'Changing defaults after calculation of the first state id. '
-                + '(see pymor.core.defaults for more information.)')
         for k, v in defaults.iteritems():
             self._data[k][type] = v
             func = self._data[k].get('func', None)

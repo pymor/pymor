@@ -346,6 +346,8 @@ class CacheableInterface(ImmutableInterface):
         is disabled.
     """
 
+    sid_ignore = ImmutableInterface.sid_ignore | {'_CacheableInterface__cache_region'}
+
     @property
     def cache_region(self):
         try:
