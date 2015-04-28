@@ -428,6 +428,13 @@ class ImmutableMeta(UberMeta):
     """Metaclass for :class:`ImmutableInterface`."""
 
     def __new__(cls, classname, bases, classdict):
+
+        # Ensure that '_sid_contains_cycles' and 'sid' are contained in sid_ignore.
+        # Otherwise sids of objects in reference cycles may depend on the order in which
+        # generate_sid is called upon these objects.
+        if 'sid_ignore' in classdict:
+            classdict['sid_ignore'] = classdict['sid_ignore'] | {'_sid_contains_cycles', 'sid'}
+
         c = UberMeta.__new__(cls, classname, bases, classdict)
 
         c._implements_reduce = ('__reduce__' in classdict
@@ -473,7 +480,8 @@ class ImmutableInterface(BasicInterface):
         Set of attributes not to include in sid calculation.
     """
     __metaclass__ = ImmutableMeta
-    sid_ignore = frozenset({'_locked', '_logger', '_name', '_uid', '_with_arguments_error'})
+    sid_ignore = frozenset({'_locked', '_logger', '_name', '_uid', '_sid_contains_cycles',
+                            '_with_arguments_error', 'sid'})
 
     # Unlocking an immutable object will result in the deletion of its sid.
     # However, this will not delete the sids of objects referencing it.
@@ -496,9 +504,15 @@ class ImmutableInterface(BasicInterface):
 
     def generate_sid(self):
         if hasattr(self, 'sid'):
-            return
+            return self.sid
+        else:
+            return self._generate_sid()
+
+    def _generate_sid(self, seen_immutables=tuple()):
         sid_generator = _SIDGenerator()
-        self.__dict__['sid'] = sid = sid_generator.generate(self)
+        sid, has_cycles = sid_generator.generate(self, seen_immutables)
+        self.__dict__['sid'] = sid
+        self.__dict__['_sid_contains_cycles'] = has_cycles
         return sid
 
 
@@ -509,24 +523,18 @@ class _SIDGenerator(object):
 
     def __init__(self):
         self.memo = {}
+        self.logger = logger.getLogger('pymor.core.interfaces')
 
-    def generate(self, obj):
+    def generate(self, obj, seen_immutables=tuple()):
         start = time.time()
-        log = logger.getLogger('pymor.core.interfaces')
-        if obj._implements_reduce:
-            log.debug('{}: __reduce__ is implemented, not using sid_ignore'.format(obj.name))
-            state = self.deterministic_state(obj, call_generate_sid=False)
-        else:
-            try:
-                state = obj.__getstate__()
-            except AttributeError:
-                state = obj.__dict__
-            state = {k: v for k, v in state.iteritems() if k not in obj.sid_ignore}
-            state = self.deterministic_state(state)
+
+        self.has_cycles = False
+        self.seen_immutables = seen_immutables + (id(obj),)
+        state = self.deterministic_state(obj, call_generate_sid=False)
 
         sid = hashlib.sha256(dumps(state, protocol=-1)).hexdigest()
-        log.debug('{}: SID generation took {} seconds'.format(obj.name, time.time() - start))
-        return sid
+        self.logger.debug('{}: SID generation took {} seconds'.format(obj.name, time.time() - start))
+        return sid, self.has_cycles
 
     def deterministic_state(self, obj, call_generate_sid=True):
         v = self.memo.get(id(obj))
@@ -554,10 +562,31 @@ class _SIDGenerator(object):
         if t is dict:
             return (_Type(dict),) + tuple((k, self.deterministic_state(v)) for k, v in sorted(obj.iteritems()))
 
-        if call_generate_sid and issubclass(t, ImmutableInterface):
-            if not hasattr(obj, 'sid'):
-                obj.generate_sid()
-            return _SID(obj.sid)
+        if issubclass(t, ImmutableInterface):
+            if hasattr(obj, 'sid') and not obj._sid_contains_cycles:
+                return _SID(obj.sid)
+
+            if call_generate_sid:
+                if id(obj) in self.seen_immutables:
+                    raise _SIDGenerationRecursionError
+                try:
+                    obj._generate_sid(self.seen_immutables)
+                    return _SID(obj.sid)
+                except _SIDGenerationRecursionError:
+                    self.has_cycles = True
+                    self.logger.debug('{}: contains cycles of immutable objects, consider refactoring'.format(obj.name))
+
+            if obj._implements_reduce:
+                self.logger.debug('{}: __reduce__ is implemented, not using sid_ignore'.format(obj.name))
+                state = obj.__reduce__()
+            else:
+                try:
+                    state = obj.__getstate__()
+                except AttributeError:
+                    state = obj.__dict__
+                state = {k: v for k, v in state.iteritems() if k not in obj.sid_ignore}
+
+            return (_Type(t), self.deterministic_state(state))
 
         reduce = dispatch_table.get(t)
         if reduce:
@@ -606,3 +635,10 @@ class _SID(str):
 class _Type(object):
     def __init__(self, t):
         self.t = t
+
+    def __repr__(self):
+        return '_Type({})'.format(repr(self.t))
+
+
+class _SIDGenerationRecursionError(Exception):
+    pass
