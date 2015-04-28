@@ -550,6 +550,9 @@ class _SIDGenerator(object):
         if t in (str, unicode):
             return obj
 
+        if t is np.ndarray and t.dtype != object:
+            return obj
+
         if t is tuple:
             return tuple(self.deterministic_state(x) for x in obj)
 
