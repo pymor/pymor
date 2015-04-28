@@ -166,6 +166,9 @@ class ParameterType(dict):
     def sid(self):
         return tuple((k, v) for k, v in self.iteritems())
 
+    def __getstate__(self):
+        return dict(self)
+
 
 class Parameter(dict):
     """Class representing a parameter.
@@ -359,6 +362,9 @@ class Parameter(dict):
         s += '}'
         np.set_string_function(None, repr=False)
         return s
+
+    def __getstate__(self):
+        return dict(self)
 
 
 class Parametric(object):
