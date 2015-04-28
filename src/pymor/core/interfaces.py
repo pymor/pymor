@@ -81,10 +81,10 @@ import inspect
 import itertools
 import os
 import time
-from types import FunctionType, BuiltinFunctionType
+from types import FunctionType, BuiltinFunctionType, NoneType
 import uuid
 
-from types import NoneType
+import numpy as np
 
 try:
     import contracts
@@ -502,15 +502,15 @@ class ImmutableInterface(BasicInterface):
         if hasattr(self, 'sid'):
             del self.sid
 
-    def generate_sid(self):
+    def generate_sid(self, debug=False):
         if hasattr(self, 'sid'):
             return self.sid
         else:
-            return self._generate_sid()
+            return self._generate_sid(debug, tuple())
 
-    def _generate_sid(self, seen_immutables=tuple()):
+    def _generate_sid(self, debug, seen_immutables):
         sid_generator = _SIDGenerator()
-        sid, has_cycles = sid_generator.generate(self, seen_immutables)
+        sid, has_cycles = sid_generator.generate(self, debug, seen_immutables)
         self.__dict__['sid'] = sid
         self.__dict__['_sid_contains_cycles'] = has_cycles
         return sid
@@ -525,27 +525,43 @@ class _SIDGenerator(object):
         self.memo = {}
         self.logger = logger.getLogger('pymor.core.interfaces')
 
-    def generate(self, obj, seen_immutables=tuple()):
+    def generate(self, obj, debug, seen_immutables):
         start = time.time()
 
         self.has_cycles = False
         self.seen_immutables = seen_immutables + (id(obj),)
+        self.debug = debug
         state = self.deterministic_state(obj, call_generate_sid=False)
 
+        if debug:
+            print('-' * 100)
+            print('Deterministic state for ' + obj.name)
+            print('-' * 100)
+            print()
+            import pprint
+            pprint.pprint(state, indent=4)
+            print()
+
         sid = hashlib.sha256(dumps(state, protocol=-1)).hexdigest()
+
+        if debug:
+            print('SID: {}, reference cycles: {}'.format(sid, self.has_cycles))
+            print()
+            print()
+
         self.logger.debug('{}: SID generation took {} seconds'.format(obj.name, time.time() - start))
         return sid, self.has_cycles
 
     def deterministic_state(self, obj, call_generate_sid=True):
         v = self.memo.get(id(obj))
         if v:
-            return(v[0])
+            return(v)
 
         t = type(obj)
         if t in (NoneType, bool, int, long, float, FunctionType, BuiltinFunctionType, type):
             return obj
 
-        self.memo[id(obj)] = _MemoKey(len(self.memo)), obj
+        self.memo[id(obj)] = _MemoKey(len(self.memo), obj)
 
         if t in (str, unicode):
             return obj
@@ -573,7 +589,7 @@ class _SIDGenerator(object):
                 if id(obj) in self.seen_immutables:
                     raise _SIDGenerationRecursionError
                 try:
-                    obj._generate_sid(self.seen_immutables)
+                    obj._generate_sid(self.debug, self.seen_immutables)
                     return _SID(obj.sid)
                 except _SIDGenerationRecursionError:
                     self.has_cycles = True
@@ -627,12 +643,21 @@ class _SIDGenerator(object):
                 self.deterministic_state(sorted(dictitems)) if dictitems is not None else None)
 
 
-class _MemoKey(int):
-    pass
+class _MemoKey(object):
+    def __init__(self, key, obj):
+        self.key = key
+        self.obj = obj
+
+    def __repr__(self):
+        return '_MemoKey({}, {})'.format(self.key, repr(self.obj))
+
+    def __getstate__(self):
+        return self.key
 
 
 class _SID(str):
-    pass
+    def __repr__(self):
+        return '_SID({})'.format(repr(str(self)))
 
 
 class _Type(object):
