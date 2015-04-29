@@ -376,7 +376,7 @@ def print_defaults(import_all=True, shorten_paths=2):
                                                               value_width=value_width))
 
 
-def write_defaults_to_file(filename='./pymor_defaults.py', packages=('pymor',), code=True, file=True, user=True):
+def write_defaults_to_file(filename='./pymor_defaults.py', packages=('pymor',)):
     """Write the currently set default values in pyMOR to a configuration file.
 
     The resulting file is an ordinary Python script and can be modified
@@ -393,34 +393,20 @@ def write_defaults_to_file(filename='./pymor_defaults.py', packages=('pymor',), 
         :func:`defaults` decorator, `write_defaults_to_file` will
         recursively import all sub-modules of the named packages before
         creating the configuration file.
-    code
-        If `False`, ignore default values, defined in function signatures.
-    file
-        If `False`, ignore default values loaded from a configuration file.
-    user
-        If `False`, ignore default values provided via :func:`set_defaults`.
     """
 
     for package in packages:
         _import_all(package)
 
-    comments_map = {'code': 'from source code',
-                    'file': 'from config file',
-                    'user': 'defined by user'}
-
     keys = []
     values = []
-    comments = []
+    as_comment = []
     for k in sorted(_default_container.keys()):
+        v, c = _default_container.get(k)
+        as_comment.append(c == 'code')
         keys.append("'" + k + "'")
-        try:
-            v, c = _default_container.get(k, code=code, file=file, user=user)
-        except ValueError:
-            continue
         values.append(repr(v))
-        comments.append(comments_map[c])
     key_width = max(map(len, keys))
-    value_width = max(map(len, values))
 
     with open(filename, 'w') as f:
         print('''
@@ -431,17 +417,18 @@ d = {}
 '''[1:], file=f)
 
         lks = keys[0].split('.')[:-1]
-        for k, v, c in zip(keys, values, comments):
+        for c, k, v in zip(as_comment, keys, values):
 
             ks = k.split('.')[:-1]
             if lks != ks:
                 print('', file=f)
             lks = ks
 
-            print('d[{:{key_width}}] = {:{value_width}}  # {}'.format(k, v, c,
-                                                                      key_width=key_width,
-                                                                      value_width=value_width),
+            print('{}d[{:{key_width}}] = {}'.format('# ' if c else '', k, v,
+                                                    key_width=key_width),
                   file=f)
+
+    print('Written defaults to file ' + filename)
 
 
 def load_defaults_from_file(filename='./pymor_defaults.py'):
