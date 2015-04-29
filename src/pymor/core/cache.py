@@ -46,13 +46,6 @@ the memory cache region can be configured via the
 `pymor.core.cache._setup_default_regions.disk_path`,
 `pymor.core.cache._setup_default_regions.disk_max_size` and
 `pymor.core.cache._setup_default_regions.memory_max_keys` |defaults|.
-(Note that changing these defaults will result in changed |state ids|, so moving
-a disk cache and changing the default path accordingly will result in cache
-misses.) As an alternative, these defaults can be overridden by the
-`PYMOR_CACHE_PATH`, `PYMOR_CACHE_MAX_SIZE` and `PYMOR_CACHE_MEMORY_MAX_KEYS`
-environment variables. (These variables do not enter |state id| calculation
-and are therefore the preferred way to configure caching.)
-
 
 There are multiple ways to disable and enable caching in pyMOR:
 
@@ -256,20 +249,21 @@ class SQLiteRegion(CacheRegion):
 def _setup_default_regions(disk_path=os.path.join(tempfile.gettempdir(), 'pymor.cache.' + getpass.getuser()),
                            disk_max_size=1024 ** 3,
                            memory_max_keys=1000):
+
+    parse_size_string = lambda size: \
+        int(size[:-1]) * 1024 if size[-1] == 'K' else \
+        int(size[:-1]) * 1024 ** 2 if size[-1] == 'M' else \
+        int(size[:-1]) * 1024 ** 3 if size[-1] == 'G' else \
+        int(size)
+
+    if isinstance(disk_max_size, str):
+        disk_max_size = parse_size_string(disk_max_size)
+
     cache_regions['disk'] = SQLiteRegion(path=disk_path, max_size=disk_max_size)
     cache_regions['memory'] = MemoryRegion(memory_max_keys)
 
 cache_regions = {}
-_setup_default_regions(disk_path=os.environ.get('PYMOR_CACHE_PATH', None),
-                       disk_max_size=((lambda size:
-                                       None if not size else
-                                       int(size[:-1]) * 1024 if size[-1] == 'K' else
-                                       int(size[:-1]) * 1024 ** 2 if size[-1] == 'M' else
-                                       int(size[:-1]) * 1024 ** 3 if size[-1] == 'G' else
-                                       int(size))
-                                      (os.environ.get('PYMOR_CACHE_MAX_SIZE', '').strip().upper())),
-                       memory_max_keys=((lambda num: int(num) if num else None)
-                                        (os.environ.get('PYMOR_CACHE_MEMORY_MAX_KEYS', None))))
+_setup_default_regions()
 
 _caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
 if _caching_disabled:
