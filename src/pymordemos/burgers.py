@@ -49,16 +49,11 @@ from functools import partial
 
 from docopt import docopt
 
-from pymor.core import logger
-logger.MAX_HIERACHY_LEVEL = 2
 from pymor.analyticalproblems.burgers import Burgers2DProblem
 from pymor.discretizers.advection import discretize_nonlinear_instationary_advection_fv
 from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
-
-logger.set_log_levels({'pymor.algorithms': 'INFO',
-                       'pymor.discretizations': 'INFO'})
 
 
 def burgers_demo(args):
