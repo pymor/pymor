@@ -263,7 +263,6 @@ def _setup_default_regions(disk_path=os.path.join(tempfile.gettempdir(), 'pymor.
     cache_regions['memory'] = MemoryRegion(memory_max_keys)
 
 cache_regions = {}
-_setup_default_regions()
 
 _caching_disabled = int(os.environ.get('PYMOR_CACHE_DISABLE', 0)) == 1
 if _caching_disabled:
@@ -298,7 +297,12 @@ class cached(object):
     def __call__(self, im_self, *args, **kwargs):
         """Via the magic that is partial functions returned from __get__, im_self is the instance object of the class
         we're decorating a method of and [kw]args are the actual parameters to the decorated method"""
-        region = cache_regions[im_self.cache_region]
+        if not cache_regions:
+            _setup_default_regions()
+        try:
+            region = cache_regions[im_self.cache_region]
+        except KeyError:
+            raise KeyError('No cache region "{}" found'.format(im_self.cache_region))
         if not region.enabled:
             return self.decorated_function(im_self, *args, **kwargs)
 
@@ -340,20 +344,16 @@ class CacheableInterface(ImmutableInterface):
         is disabled.
     """
 
+    __cache_region = 'memory'
+
     @property
     def cache_region(self):
-        try:
-            return self.__cache_region
-        except AttributeError:
-            self.__cache_region = 'memory' if 'memory' in cache_regions else None
-            return self.__cache_region
+        return self.__cache_region
 
     @cache_region.setter
     def cache_region(self, region):
         if region in (None, 'none'):
             self.__cache_region = None
-        elif region not in cache_regions:
-            raise ValueError('Unkown cache region.')
         else:
             self.__cache_region = region
 
