@@ -30,7 +30,7 @@ COLORS = {
 }
 
 FORMAT = '%(asctime)s$BOLD%(levelname)s|$BOLD%(name)s$RESET: %(message)s'
-MAX_HIERARCHY_LEVEL = 3
+MAX_HIERARCHY_LEVEL = 1
 
 start_time = time.time()
 
@@ -173,7 +173,7 @@ def set_log_levels(levels={'pymor': 'INFO'}):
 
 
 @defaults('max_hierarchy_level', sid_ignore=('max_hierarchy_level'))
-def set_log_format(max_hierarchy_level=3):
+def set_log_format(max_hierarchy_level=1):
     """Set log levels for pyMOR's logging facility.
 
     Parameters

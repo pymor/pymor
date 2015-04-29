@@ -90,6 +90,8 @@ class DefaultContainer(object):
     def __init__(self):
         self._data = defaultdict(dict)
         self.registered_functions = {}
+        # ensure that setting no defaults is the same as setting empty defaults
+        self._calc_sid()
 
     def _add_defaults_for_function(self, defaultsdict, func, sid_ignore, qualname):
         path = qualname or getattr(func, '__qualname__', func.__module__ + '.' + func.__name__)
