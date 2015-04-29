@@ -64,6 +64,7 @@ from __future__ import absolute_import, division, print_function
 
 from collections import defaultdict
 import functools
+import importlib
 import inspect
 import pkgutil
 import hashlib
@@ -122,25 +123,39 @@ methods of classes!'''.format(path))
                 'Changing defaults after calculation of the first state id. '
                 + '(see pymor.core.defaults for more information.)')
         for k, v in defaults.iteritems():
-            self._data[k][type] = v
+            k_parts = k.split('.')
+
             func = self._data[k].get('func', None)
-            if func:
-                argname = k.split('.')[-1]
-                func._defaultsdict[argname] = v
-                argspec = inspect.getargspec(func)
-                argind = argspec.args.index(argname) - len(argspec.args)
-                defaults = list(argspec.defaults)
-                defaults[argind] = v
-                func.__defaults__ = tuple(defaults)
+            if not func:
+                head = k_parts[:-2]
+                while head:
+                    try:
+                        importlib.import_module('.'.join(head))
+                        break
+                    except ImportError:
+                        head = head[:-1]
+            func = self._data[k].get('func', None)
+            if not func:
+                raise KeyError(k)
+
+            self._data[k][type] = v
+            argname = k_parts[-1]
+            func._defaultsdict[argname] = v
+            argspec = inspect.getargspec(func)
+            argind = argspec.args.index(argname) - len(argspec.args)
+            defaults = list(argspec.defaults)
+            defaults[argind] = v
+            func.__defaults__ = tuple(defaults)
+
         self._calc_sid()
 
-    def get(self, key, code=True, file=True, user=True):
+    def get(self, key):
         values = self._data[key]
-        if user and 'user' in values:
+        if 'user' in values:
             return values['user'], 'user'
-        elif file and 'file' in values:
+        elif 'file' in values:
             return values['file'], 'file'
-        elif code and 'code' in values:
+        elif 'code' in values:
             return values['code'], 'code'
         else:
             raise ValueError('No default value matching the specified criteria')
@@ -156,25 +171,6 @@ methods of classes!'''.format(path))
         packages = set(k.split('.')[0] for k in self._data.keys()).union({'pymor'})
         for package in packages:
             _import_all(package)
-
-    def check_consistency(self, delete=False):
-        self.import_all()
-        from pymor.core.logger import getLogger
-        logger = getLogger('pymor.core.defaults')
-        keys_to_delete = []
-
-        for k, v in self._data.iteritems():
-            if ('user' in v or 'file' in v) and 'code' not in v:
-                keys_to_delete.append(k)
-
-        if delete:
-            for k in keys_to_delete:
-                del self._data[k]
-
-        for k in keys_to_delete:
-            logger.warn('Undefined default value: ' + k + (' (deleted)' if delete else ''))
-
-        return len(keys_to_delete) > 0
 
     def _calc_sid(self):
         global _default_container_sid
@@ -342,7 +338,7 @@ def print_defaults(import_all=True, shorten_paths=2):
     comments = []
     for k in sorted(_default_container.keys()):
         try:
-            v, c = _default_container.get(k, code=True, file=True, user=True)
+            v, c = _default_container.get(k)
         except ValueError:
             continue
         ks = k.split('.')
@@ -449,10 +445,13 @@ def load_defaults_from_file(filename='./pymor_defaults.py'):
     """
     env = {}
     exec open(filename).read() in env
-    _default_container.update(env['d'], type='file')
+    try:
+        _default_container.update(env['d'], type='file')
+    except KeyError as e:
+        raise KeyError('Error loading defaults from file. Key {} does not correspond to a default'.format(e))
 
 
-def set_defaults(defaults, check=True):
+def set_defaults(defaults):
     """Set default values.
 
     This method sets the default value of function arguments marked via the
@@ -468,14 +467,11 @@ def set_defaults(defaults, check=True):
     defaults
         Dictionary of default values. Keys are the full paths of the default
         values. (See :func:`defaults`.)
-    check
-        If `True`, recursively import all pacakges associated to the paths
-        of the set default values. Then check if defaults with the provided
-        paths have actually been defined using the :func:`defaults` decorator.
     """
-    _default_container.update(defaults, type='user')
-    if check:
-        _default_container.check_consistency(delete=True)
+    try:
+        _default_container.update(defaults, type='user')
+    except KeyError as e:
+        raise KeyError('Error setting defaults. Key {} does not correspond to a default'.format(e))
 
 
 def defaults_sid():
