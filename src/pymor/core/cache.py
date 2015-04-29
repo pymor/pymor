@@ -43,9 +43,9 @@ be used by the instance. (Setting `region` to `None` or `'none'` disables cachin
 By default, a 'memory' and a 'disk' cache region are automatically configured. The
 path and maximum size of the disk region as well as the maximum number of keys of
 the memory cache region can be configured via the
-`pymor.core.cache._setup_default_regions.disk_path`,
-`pymor.core.cache._setup_default_regions.disk_max_size` and
-`pymor.core.cache._setup_default_regions.memory_max_keys` |defaults|.
+`pymor.core.cache.default_regions.disk_path`,
+`pymor.core.cache.default_regions.disk_max_size` and
+`pymor.core.cache.default_regions.memory_max_keys` |defaults|.
 
 There are multiple ways to disable and enable caching in pyMOR:
 
@@ -246,9 +246,9 @@ class SQLiteRegion(CacheRegion):
 
 
 @defaults('disk_path', 'disk_max_size', 'memory_max_keys', sid_ignore=('disk_path', 'disk_max_size', 'memory_max_keys'))
-def _setup_default_regions(disk_path=os.path.join(tempfile.gettempdir(), 'pymor.cache.' + getpass.getuser()),
-                           disk_max_size=1024 ** 3,
-                           memory_max_keys=1000):
+def default_regions(disk_path=os.path.join(tempfile.gettempdir(), 'pymor.cache.' + getpass.getuser()),
+                    disk_max_size=1024 ** 3,
+                    memory_max_keys=1000):
 
     parse_size_string = lambda size: \
         int(size[:-1]) * 1024 if size[-1] == 'K' else \
@@ -298,7 +298,7 @@ class cached(object):
         """Via the magic that is partial functions returned from __get__, im_self is the instance object of the class
         we're decorating a method of and [kw]args are the actual parameters to the decorated method"""
         if not cache_regions:
-            _setup_default_regions()
+            default_regions()
         try:
             region = cache_regions[im_self.cache_region]
         except KeyError:
