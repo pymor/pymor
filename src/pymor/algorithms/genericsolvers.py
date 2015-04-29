@@ -25,7 +25,8 @@ _options_sid = None
           'least_squares_generic_lsmr_atol', 'least_squares_generic_lsmr_btol', 'least_squares_generic_lsmr_conlim',
           'least_squares_generic_lsmr_maxiter', 'least_squares_generic_lsmr_show',
           'least_squares_generic_lsqr_atol', 'least_squares_generic_lsqr_btol', 'least_squares_generic_lsqr_conlim',
-          'least_squares_generic_lsqr_iter_lim', 'least_squares_generic_lsqr_show')
+          'least_squares_generic_lsqr_iter_lim', 'least_squares_generic_lsqr_show',
+          sid_ignore=('least_squares_generic_lsmr_show', 'least_squares_generic_lsqr_show'))
 def invert_options(default_solver='generic_lgmres',
                    default_least_squares_solver='least_squares_generic_lsmr',
                    generic_lgmres_tol=1e-5,

@@ -252,7 +252,7 @@ class SQLiteRegion(CacheRegion):
             getLogger('pymor.core.cache.SQLiteRegion').info('Removed {} old cache entries'.format(len(ids_to_delete)))
 
 
-@defaults('disk_path', 'disk_max_size', 'memory_max_keys')
+@defaults('disk_path', 'disk_max_size', 'memory_max_keys', sid_ignore=('disk_path', 'disk_max_size', 'memory_max_keys'))
 def _setup_default_regions(disk_path=os.path.join(tempfile.gettempdir(), 'pymor.cache.' + getpass.getuser()),
                            disk_max_size=1024 ** 3,
                            memory_max_keys=1000):

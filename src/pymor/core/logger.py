@@ -93,7 +93,7 @@ class ColoredFormatter(logging.Formatter):
         return logging.Formatter.format(self, record)
 
 
-@defaults('filename')
+@defaults('filename', sid_ignore='filename')
 def getLogger(module, level=None, filename=''):
     """Get the logger of the respective module for pyMOR's logging facility.
 
@@ -156,7 +156,7 @@ class DummyLogger(object):
 dummy_logger = DummyLogger()
 
 
-@defaults('levels')
+@defaults('levels', sid_ignore=('levels',))
 def set_log_levels(levels={'pymor': 'INFO'}):
     """Set log levels for pyMOR's logging facility.
 
