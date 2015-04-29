@@ -503,6 +503,19 @@ class ImmutableInterface(BasicInterface):
             del self.sid
 
     def generate_sid(self, debug=False):
+        """Generate a unique |state id| for the given object.
+
+        The generated sid is stored in the object's `sid` attribute.
+
+        Parameters
+        ----------
+        debug
+            If `True`, produce some debug output.
+
+        Returns
+        -------
+        The generated sid.
+        """
         if hasattr(self, 'sid'):
             return self.sid
         else:
@@ -514,6 +527,24 @@ class ImmutableInterface(BasicInterface):
         self.__dict__['sid'] = sid
         self.__dict__['_sid_contains_cycles'] = has_cycles
         return sid
+
+
+def generate_sid(obj, debug=False):
+    """Generate a unique |state id| for the current state of the given object.
+
+    Parameters
+    ----------
+    obj
+        The object for which to compute the state sid.
+    debug
+        If `True`, produce some debug output.
+
+    Returns
+    -------
+    The generated state id.
+    """
+    sid_generator = _SIDGenerator()
+    return sid_generator.generate(obj, debug, tuple())[0]
 
 
 # Helper classes for generate_sid
