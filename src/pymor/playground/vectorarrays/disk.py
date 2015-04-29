@@ -28,7 +28,7 @@ def cleanup():
 atexit.register(cleanup)
 
 
-@defaults('path')
+@defaults('path', sid_ignore=('path',))
 def basedir(path=os.path.join(tempfile.gettempdir(), 'pymor.diskarray.' + getpass.getuser())):
     if not os.path.exists(path):
         os.mkdir(path)

@@ -43,12 +43,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from docopt import docopt
 
-from pymor.core.logger import set_log_levels
 from pymor.core.pickle import load
 from pymor.reductors.basic import reduce_to_subbasis
-set_log_levels({'pymor.algorithms': 'INFO',
-                'pymor.discretizations': 'INFO',
-                'pymor.la': 'INFO'})
 
 
 def analyze_pickle_histogram(args):
