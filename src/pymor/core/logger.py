@@ -78,9 +78,10 @@ class ColoredFormatter(logging.Formatter):
         if not record.msg:
             return ''
         tokens = record.name.split('.')
-        record.name = '.'.join(tokens[1:MAX_HIERARCHY_LEVEL])
         if len(tokens) > MAX_HIERARCHY_LEVEL - 1:
-            record.name += '.' + tokens[-1]
+            record.name = '.'.join(tokens[1:MAX_HIERARCHY_LEVEL] + [tokens[-1]])
+        else:
+            record.name = '.'.join(tokens[1:MAX_HIERARCHY_LEVEL])
         levelname = record.levelname
         if self.use_color and levelname in COLORS.keys():
             if levelname is 'INFO':
