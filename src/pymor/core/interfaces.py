@@ -580,7 +580,11 @@ class _SIDGenerator(object):
             print()
             print()
 
-        self.logger.debug('{}: SID generation took {} seconds'.format(obj.name, time.time() - start))
+        name = getattr(obj, 'name', None)
+        if name:
+            self.logger.debug('{}: SID generation took {} seconds'.format(name, time.time() - start))
+        else:
+            self.logger.debug('SID generation took {} seconds'.format(time.time() - start))
         return sid, self.has_cycles
 
     def deterministic_state(self, obj, call_generate_sid=True):
