@@ -642,6 +642,10 @@ class _SIDGenerator(object):
 
             return (_Type(t), self.deterministic_state(state))
 
+        sid = getattr(obj, 'sid', None)
+        if sid:
+            return _SID(sid)
+
         reduce = dispatch_table.get(t)
         if reduce:
             rv = reduce(obj)
