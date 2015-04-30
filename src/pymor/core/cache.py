@@ -67,7 +67,6 @@ A cache region can be emptied using :meth:`CacheRegion.clear`. The function
 from __future__ import absolute_import, division, print_function
 # cannot use unicode_literals here, or else dbm backend fails
 
-import base64
 from collections import OrderedDict
 import datetime
 from functools import partial
@@ -150,7 +149,7 @@ class SQLiteRegion(CacheRegion):
 
     def get(self, key):
         c = self.conn.cursor()
-        t = (base64.b64encode(key),)
+        t = (key,)
         c.execute('SELECT filename FROM entries WHERE key=?', t)
         result = c.fetchall()
         if len(result) == 0:
@@ -164,7 +163,6 @@ class SQLiteRegion(CacheRegion):
             raise RuntimeError('Cache is corrupt!')
 
     def set(self, key, value):
-        key = base64.b64encode(key)
         now = datetime.datetime.now()
         filename = now.isoformat() + '.dat'
         file_path = os.path.join(self.path, filename)
