@@ -68,6 +68,8 @@ functionality:
        :class:`ImmutableInterface` is locked after its `__init__` method has returned.
     2. A unique _`state id` for the instance can be calculated by calling
        :meth:`~ImmutableInterface.generate_sid` and is then stored as `sid` attribute.
+       The state id is obtained by deterministically serializing the object's state
+       and then computing a checksum of the resulting byte stream.
     3. :attr:`ImmutableInterface.sid_ignore` can be set to a set of attribute names
        which should be excluded from sid calculation.
 """
@@ -471,6 +473,11 @@ class ImmutableInterface(BasicInterface):
        after initialization, you have to ensure that this state is not affecteed
        by possible changes of the global :mod:`~pymor.core.defaults`.
 
+       Also note that mutable private attributes will cause false cache
+       misses when these attributes enter |state id| calculation. If your
+       implementation uses such attributes, you should therefore add their
+       names to the :attr:`~ImmutableInterface.sid_ignore` set.
+
     Attributes
     ----------
     sid
@@ -530,7 +537,7 @@ class ImmutableInterface(BasicInterface):
 
 
 def generate_sid(obj, debug=False):
-    """Generate a unique |state id| for the current state of the given object.
+    """Generate a unique |state id| (sid) for the current state of the given object.
 
     Parameters
     ----------

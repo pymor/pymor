@@ -168,10 +168,10 @@ main benefits:
 1. If multiple objects/algorithms hold references to the same
    |Operator| or |Discretization|, none of the objects has to worry that the
    referenced object changes without their knowledge.
-2. The state of an immutable object is determined by the states of the objects
-   that lead to the creation of the object. This property is used in pyMOR to
-   create |state ids| for immutable objects which are used as keys in pyMOR's
-   |caching| backends.
+2. It becomes affordable to generate persisten keys for |caching| of computation
+   results by generating |state ids| which uniquely identify the object's state.
+   Since the state cannot change, these ids have to be computed only once for the
+   lifetime of the object.
 
 A class can be made immutable in pyMOR by deriving from |ImmutableInterface|,
 which ensures that write access to the object's attributes is prohibited after
@@ -227,9 +227,9 @@ Finally these operators are used to instatiate one of the provided
 |Discretization| classes.
 
 In pyMOR, |analytical problems|, |Functions|, |DomainDescriptions|,
-|BoundaryInfos| and |Grids| are all immutable, ensuring that the resulting
-|Discretization| receives a proper |state id| to enable persistent disk
-|caching| over various runs of the applications written with pyMOR.
+|BoundaryInfos| and |Grids| are all immutable, enabling efficient 
+disk |caching| for the resulting |Discretizations|, persistent over various
+runs of the applications written with pyMOR.
 
 While pyMOR's internal discretizations are useful for getting started quickly
 with model reduction experiments, pyMOR's main goal is to allow the reduction of
