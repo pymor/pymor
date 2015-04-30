@@ -562,7 +562,7 @@ class _SIDGenerator(object):
         self.has_cycles = False
         self.seen_immutables = seen_immutables + (id(obj),)
         self.debug = debug
-        state = self.deterministic_state(obj, call_generate_sid=False)
+        state = self.deterministic_state(obj, first_obj=True)
 
         if debug:
             print('-' * 100)
@@ -587,7 +587,7 @@ class _SIDGenerator(object):
             self.logger.debug('SID generation took {} seconds'.format(time.time() - start))
         return sid, self.has_cycles
 
-    def deterministic_state(self, obj, call_generate_sid=True):
+    def deterministic_state(self, obj, first_obj=False):
         v = self.memo.get(id(obj))
         if v:
             return(v)
@@ -605,46 +605,45 @@ class _SIDGenerator(object):
             return obj
 
         if t is tuple:
-            return tuple(self.deterministic_state(x) for x in obj)
+            return (tuple,) + tuple(self.deterministic_state(x) for x in obj)
 
         if t is list:
             return [self.deterministic_state(x) for x in obj]
 
         if t in (set, frozenset):
-            return (_Type(t),) + tuple(self.deterministic_state(x) for x in sorted(obj))
+            return (t,) + tuple(self.deterministic_state(x) for x in sorted(obj))
 
         if t is dict:
-            return (_Type(dict),) + tuple((k, self.deterministic_state(v)) for k, v in sorted(obj.iteritems()))
+            return (dict,) + tuple((k, self.deterministic_state(v)) for k, v in sorted(obj.iteritems()))
 
         if issubclass(t, ImmutableInterface):
             if hasattr(obj, 'sid') and not obj._sid_contains_cycles:
-                return _SID(obj.sid)
+                return (t, obj.sid)
 
-            if call_generate_sid:
+            if not first_obj:
                 if id(obj) in self.seen_immutables:
                     raise _SIDGenerationRecursionError
                 try:
                     obj._generate_sid(self.debug, self.seen_immutables)
-                    return _SID(obj.sid)
+                    return (t, obj.sid)
                 except _SIDGenerationRecursionError:
                     self.has_cycles = True
                     self.logger.debug('{}: contains cycles of immutable objects, consider refactoring'.format(obj.name))
 
             if obj._implements_reduce:
                 self.logger.debug('{}: __reduce__ is implemented, not using sid_ignore'.format(obj.name))
-                state = obj.__reduce__()
+                return self.handle_reduce_value(obj, t, obj.__reduce__(), first_obj)
             else:
                 try:
                     state = obj.__getstate__()
                 except AttributeError:
                     state = obj.__dict__
                 state = {k: v for k, v in state.iteritems() if k not in obj.sid_ignore}
-
-            return (_Type(t), self.deterministic_state(state))
+                return self.deterministic_state(state) if first_obj else (t, self.deterministic_state(state))
 
         sid = getattr(obj, 'sid', None)
         if sid:
-            return _SID(sid)
+            return sid if first_obj else (t, sid)
 
         reduce = dispatch_table.get(t)
         if reduce:
@@ -663,6 +662,9 @@ class _SIDGenerator(object):
                 else:
                     raise SIDGenerationError('Cannot handle {} of type {}'.format(obj, t.__name__))
 
+        return self.handle_reduce_value(obj, t, rv, first_obj)
+
+    def handle_reduce_value(self, obj, t, rv, first_obj):
         if type(rv) is str:
             raise SIDGenerationError('__reduce__ methods returning a string are currently not handled '
                                      + '(object {} of type {})'.format(obj, t.__name__))
@@ -674,12 +676,13 @@ class _SIDGenerator(object):
         rv = rv + (None,) * (5 - len(rv))
         func, args, state, listitems, dictitems = rv
 
-        return (_Type("__reduce__"),
-                func,
-                tuple(self.deterministic_state(x) for x in args),
-                self.deterministic_state(state),
-                self.deterministic_state(tuple(listitems)) if listitems is not None else None,
-                self.deterministic_state(sorted(dictitems)) if dictitems is not None else None)
+        state = (func,
+                 tuple(self.deterministic_state(x) for x in args),
+                 self.deterministic_state(state),
+                 self.deterministic_state(tuple(listitems)) if listitems is not None else None,
+                 self.deterministic_state(sorted(dictitems)) if dictitems is not None else None)
+
+        return state if first_obj else (t,) + state
 
 
 class _MemoKey(object):
@@ -692,19 +695,6 @@ class _MemoKey(object):
 
     def __getstate__(self):
         return self.key
-
-
-class _SID(str):
-    def __repr__(self):
-        return '_SID({})'.format(repr(str(self)))
-
-
-class _Type(object):
-    def __init__(self, t):
-        self.t = t
-
-    def __repr__(self):
-        return '_Type({})'.format(repr(self.t))
 
 
 class _SIDGenerationRecursionError(Exception):
