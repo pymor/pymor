@@ -143,8 +143,8 @@ class ParameterType(dict):
             self.__sid = sid = generate_sid(dict(self))
             return sid
 
-    def __getstate__(self):
-        return dict(self)
+    def __reduce__(self):
+        return (ParameterType, (dict(self),))
 
 
 class Parameter(dict):
