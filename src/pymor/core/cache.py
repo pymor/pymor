@@ -72,14 +72,15 @@ from collections import OrderedDict
 import datetime
 from functools import partial
 import getpass
+import inspect
 import os
 import sqlite3
 import tempfile
 from types import MethodType
 
 from pymor.core.defaults import defaults, defaults_sid
-from pymor.core.interfaces import ImmutableInterface
-from pymor.core.pickle import dump, dumps, load
+from pymor.core.interfaces import ImmutableInterface, generate_sid
+from pymor.core.pickle import dump, load
 
 
 class CacheRegion(object):
@@ -293,6 +294,13 @@ class cached(object):
 
     def __init__(self, function):
         self.decorated_function = function
+        argspec = inspect.getargspec(function)
+        self.argnames = argnames = argspec.args[1:]  # first argument is self
+        defaults = function.__defaults__
+        if defaults:
+            self.defaults = {k: v for k, v in zip(argnames[-len(defaults):], defaults)}
+        else:
+            self.defaults = None
 
     def __call__(self, im_self, *args, **kwargs):
         """Via the magic that is partial functions returned from __get__, im_self is the instance object of the class
@@ -306,18 +314,24 @@ class cached(object):
         if not region.enabled:
             return self.decorated_function(im_self, *args, **kwargs)
 
-        key = (self.decorated_function.__name__, getattr(im_self, 'sid', im_self.uid),
-               tuple(getattr(x, 'sid', x) for x in args),
-               tuple((k, getattr(v, 'sid', v)) for k, v in sorted(kwargs.iteritems())),
-               defaults_sid())
-        key = dumps(key)
+        # ensure that passing a value as positional or keyword argument does not matter
+        kwargs.update(zip(self.argnames, args))
+
+        # ensure the values of optional parameters enter the cache key
+        defaults = self.defaults
+        if defaults:
+            kwargs = dict(defaults, **kwargs)
+
+        key = generate_sid((self.decorated_function.__name__, getattr(im_self, 'sid', im_self.uid),
+                            kwargs,
+                            defaults_sid()))
         found, value = region.get(key)
         if found:
             return value
         else:
             im_self.logger.debug('creating new cache entry for {}.{}'
                                  .format(im_self.__class__.__name__, self.decorated_function.__name__))
-            value = self.decorated_function(im_self, *args, **kwargs)
+            value = self.decorated_function(im_self, **kwargs)
             region.set(key, value)
             return value
 
