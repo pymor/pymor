@@ -18,7 +18,7 @@ from pymor.operators.numpy import NumpyMatrixBasedOperator
 is_equal_ignored_attributes = \
     ((SubGrid, {'_uid', '_CacheableInterface__cache_region', '_SubGrid__parent_grid'}),
      (NumpyMatrixBasedOperator, {'_uid', '_CacheableInterface__cache_region', '_assembled_operator'}),
-     (BasicInterface, {'_uid', '_CacheableInterface__cache_region'}))
+     (BasicInterface, {'_name', '_uid', '_CacheableInterface__cache_region'}))
 
 is_equal_dispatch_table = {}
 
