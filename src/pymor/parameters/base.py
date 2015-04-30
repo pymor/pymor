@@ -44,6 +44,7 @@ from numbers import Number
 
 import numpy as np
 
+from pymor.core.interfaces import generate_sid
 from pymor.tools.floatcmp import float_cmp_all
 from pymor.tools.pprint import format_array
 
@@ -135,7 +136,12 @@ class ParameterType(dict):
 
     @property
     def sid(self):
-        return tuple((k, v) for k, v in self.iteritems())
+        sid = getattr(self, '__sid', None)
+        if sid:
+            return sid
+        else:
+            self.__sid = sid = generate_sid(dict(self))
+            return sid
 
     def __getstate__(self):
         return dict(self)
@@ -267,6 +273,7 @@ class Parameter(dict):
     def clear(self):
         dict.clear(self)
         self.__keys = None
+        self.__sid = None
 
     def copy(self):
         c = Parameter({k: v.copy() for k, v in self.iteritems()})
@@ -280,10 +287,12 @@ class Parameter(dict):
         if not isinstance(value, np.ndarray):
             value = np.array(value)
         dict.__setitem__(self, key, value)
+        self.__sid = None
 
     def __delitem__(self, key):
         dict.__delitem__(self, key)
         self.__keys = None
+        self.__sid = None
 
     def __eq__(self, mu):
         if not isinstance(mu, Parameter):
@@ -313,9 +322,12 @@ class Parameter(dict):
 
     @property
     def sid(self):
-        if self.__keys is None:
-            self.__keys = sorted(self.keys())
-        return 'Parameter_' + '_'.join('{}-{}-{}'.format(k, self[k].shape, self[k].tostring()) for k in self.__keys)
+        sid = self.__sid
+        if sid:
+            return sid
+        else:
+            self.__sid = sid = generate_sid(dict(self))
+            return sid
 
     def __str__(self):
         np.set_string_function(format_array, repr=False)
