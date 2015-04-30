@@ -92,6 +92,7 @@ def thermalblock_demo(args):
 
     print('Discretize ...')
     discretization, _ = discretize_elliptic_cg(problem, diameter=1. / args['--grid'])
+    discretization.generate_sid()
 
     print('The parameter type is {}'.format(discretization.parameter_type))
 

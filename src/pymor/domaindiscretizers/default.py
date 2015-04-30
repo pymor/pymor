@@ -7,7 +7,6 @@ from __future__ import absolute_import, division, print_function
 import math as m
 import numpy as np
 
-from pymor.core.interfaces import inject_sid
 from pymor.domaindescriptions.basic import RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain
 from pymor.grids.boundaryinfos import BoundaryInfoFromIndicators, EmptyBoundaryInfo
 from pymor.grids.oned import OnedGrid
@@ -70,8 +69,6 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
             raise NotImplementedError
         grid = grid_type(domain=domain_description.domain, num_intervals=(x0i, x1i))
 
-        indicator_id = __name__ + '.discretize_domain_default.discretize_RectDomain'
-
         def indicator_factory(dd, bt):
             def indicator(X):
                 L = np.logical_and(float_cmp(X[:, 0], dd.domain[0, 0]), dd.left == bt)
@@ -81,7 +78,6 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
                 LR = np.logical_or(L, R)
                 TB = np.logical_or(T, B)
                 return np.logical_or(LR, TB)
-            inject_sid(indicator, indicator_id, dd, bt)
             return indicator
 
         indicators = {bt: indicator_factory(domain_description, bt)
@@ -102,15 +98,12 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
         grid = grid_type(domain=domain_description.domain, num_intervals=(x0i, x1i),
                          identify_left_right=True)
 
-        indicator_id = __name__ + '.discretize_domain_default.discretize_CylindricalDomain'
-
         def indicator_factory(dd, bt):
             def indicator(X):
                 T = np.logical_and(float_cmp(X[:, 1], dd.domain[1, 1]), dd.top == bt)
                 B = np.logical_and(float_cmp(X[:, 1], dd.domain[0, 1]), dd.bottom == bt)
                 TB = np.logical_or(T, B)
                 return TB
-            inject_sid(indicator, indicator_id, dd, bt)
             return indicator
 
         indicators = {bt: indicator_factory(domain_description, bt)
@@ -139,14 +132,11 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
         ni = int(m.ceil(domain_description.width / diameter))
         grid = OnedGrid(domain=domain_description.domain, num_intervals=ni)
 
-        indicator_id = __name__ + '.discretize_domain_default.discretize_LineDomain'
-
         def indicator_factory(dd, bt):
             def indicator(X):
                 L = np.logical_and(float_cmp(X[:, 0], dd.domain[0]), dd.left == bt)
                 R = np.logical_and(float_cmp(X[:, 0], dd.domain[1]), dd.right == bt)
                 return np.logical_or(L, R)
-            inject_sid(indicator, indicator_id, dd, bt)
             return indicator
 
         indicators = {bt: indicator_factory(domain_description, bt)

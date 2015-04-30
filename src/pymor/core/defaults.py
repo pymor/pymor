@@ -67,11 +67,10 @@ import functools
 import importlib
 import inspect
 import pkgutil
-import hashlib
 import textwrap
 
+
 _default_container = None
-_default_container_sid = None
 
 
 class DefaultContainer(object):
@@ -91,7 +90,6 @@ class DefaultContainer(object):
         self._data = defaultdict(dict)
         self.registered_functions = {}
         # ensure that setting no defaults is the same as setting empty defaults
-        self._calc_sid()
 
     def _add_defaults_for_function(self, defaultsdict, func, sid_ignore, qualname):
         path = qualname or getattr(func, '__qualname__', func.__module__ + '.' + func.__name__)
@@ -118,13 +116,9 @@ methods of classes!'''.format(path))
                 v['func'] = func
 
     def update(self, defaults, type='user'):
+        if hasattr(self, '_sid'):
+            del self._sid
         assert type in ('user', 'file')
-        import pymor.core.interfaces
-        if pymor.core.interfaces.ImmutableMeta.sids_created:
-            from pymor.core.logger import getLogger
-            getLogger('pymor.core.defaults').warn(
-                'Changing defaults after calculation of the first state id. '
-                + '(see pymor.core.defaults for more information.)')
         for k, v in defaults.iteritems():
             k_parts = k.split('.')
 
@@ -150,8 +144,6 @@ methods of classes!'''.format(path))
             defaults[argind] = v
             func.__defaults__ = tuple(defaults)
 
-        self._calc_sid()
-
     def get(self, key):
         values = self._data[key]
         if 'user' in values:
@@ -175,11 +167,15 @@ methods of classes!'''.format(path))
         for package in packages:
             _import_all(package)
 
-    def _calc_sid(self):
-        global _default_container_sid
-        user_dict = {k: v['user'] if 'user' in v else v['file']
-                     for k, v in self._data.items() if 'user' in v or 'file' in v and not v['sid_ignore']}
-        _default_container_sid = hashlib.sha256(repr(sorted(user_dict.items()))).digest()
+    @property
+    def sid(self):
+        sid = getattr(self, '_sid', None)
+        if not sid:
+            from pymor.core.interfaces import generate_sid
+            user_dict = {k: v['user'] if 'user' in v else v['file']
+                         for k, v in self._data.items() if 'user' in v or 'file' in v and not v['sid_ignore']}
+            self._sid = sid = generate_sid(user_dict)
+        return sid
 
 
 _default_container = DefaultContainer()
@@ -523,4 +519,4 @@ def defaults_sid():
     For other uses see the implementation of
     :meth:`pymor.operators.numpy.NumpyMatrixBasedOperator.assemble`.
     """
-    return _default_container_sid
+    return _default_container.sid
