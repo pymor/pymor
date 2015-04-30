@@ -87,28 +87,13 @@ class ParameterType(dict):
         # the super() call
         dict.__init__(self, t)
 
-    def clear(self):
-        dict.clear(self)
-        self.__keys = None
+    def _is_immutable(*args, **kwargs):
+        raise ValueError('ParameterTypes cannot be modified')
+
+    clear = __setitem__ = __delitem__ = pop = popitem = update = _is_immutable
 
     def copy(self):
-        c = ParameterType(self)
-        if self.__keys is not None:
-            c.__keys = list(self.__keys)
-        return c
-
-    def __setitem__(self, key, value):
-        if not isinstance(value, tuple):
-            assert isinstance(value, Number)
-            value = tuple() if value == 0 else (value,)
-        assert all(isinstance(v, Number) for v in value)
-        if key not in self:
-            self.__keys = None
-        dict.__setitem__(self, key, value)
-
-    def __delitem__(self, key):
-        dict.__delitem__(self, key)
-        self.__keys = None
+        return ParameterType(self)
 
     def __iter__(self):
         if self.__keys is None:
@@ -139,20 +124,6 @@ class ParameterType(dict):
 
     def fromkeys(self, S, v=None):
         raise NotImplementedError
-
-    def pop(self, k, d=None):
-        raise NotImplementedError
-
-    def popitem(self):
-        raise NotImplementedError
-
-    def update(self, d):
-        self.__keys = None
-        if isinstance(d, ParameterType):
-            dict.update(self, d)
-        else:
-            for k, v in d.iteritems():
-                self[k] = v
 
     def __str__(self):
         if self.__keys is None:
@@ -537,24 +508,28 @@ class Parametric(object):
 
         assert check_local_type(local_type, global_names)
 
-        global_type = (local_type.copy() if local_global
-                       else ParameterType({global_names[k]: v for k, v in local_type.iteritems()}))
         provides = ParameterType(provides)
 
-        def check_op(op, global_type, provides):
-            for name, shape in op.parameter_type.iteritems():
-                assert name not in global_type or global_type[name] == shape,\
-                    ('Component dimensions of global name {} do not match ({} and {})'
-                     .format(name, global_type[name], shape))
-                assert name not in provides or provides[name] == shape,\
-                    'Component dimensions of provided name {} do not match'.format(name)
-            return True
-
         if inherits:
+            def check_op(op, global_type, provides):
+                for name, shape in op.parameter_type.iteritems():
+                    assert name not in global_type or global_type[name] == shape,\
+                        ('Component dimensions of global name {} do not match ({} and {})'
+                         .format(name, global_type[name], shape))
+                    assert name not in provides or provides[name] == shape,\
+                        'Component dimensions of provided name {} do not match'.format(name)
+                return True
+
+            global_type = (dict(local_type) if local_global
+                           else {global_names[k]: v for k, v in local_type.iteritems()})
             for op in (o for o in inherits if getattr(o, 'parametric', False)):
                 assert check_op(op, global_type, provides)
                 global_type.update({k: v for k, v in op.parameter_type.iteritems() if k not in provides})
 
-        self.parameter_type = global_type
+            self.parameter_type = ParameterType(global_type)
+        else:
+            self.parameter_type = (ParameterType(local_type) if local_global
+                                   else ParameterType({global_names[k]: v for k, v in local_type.iteritems()}))
+
         self.parameter_local_type = local_type
         self._parameter_global_names = global_names
