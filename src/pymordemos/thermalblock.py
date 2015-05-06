@@ -66,8 +66,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from docopt import docopt
 
-from pymor.core import logger
-logger.MAX_HIERACHY_LEVEL = 2
 from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension
 from pymor.algorithms.greedy import greedy
 from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
@@ -79,10 +77,6 @@ from pymor.reductors.basic import reduce_to_subbasis
 from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor.reductors.stationary import reduce_stationary_coercive
 from pymor.tools.context import no_context
-logger.set_log_levels({'pymor.algorithms': 'INFO',
-                       'pymor.discretizations': 'INFO',
-                       'pymor.la': 'INFO',
-                       'pymor.reductors': 'INFO'})
 
 
 def thermalblock_demo(args):
@@ -107,6 +101,7 @@ def thermalblock_demo(args):
 
     print('Discretize ...')
     discretization, _ = discretize_elliptic_cg(problem, diameter=1. / args['--grid'])
+    discretization.generate_sid()
 
     print('The parameter type is {}'.format(discretization.parameter_type))
 

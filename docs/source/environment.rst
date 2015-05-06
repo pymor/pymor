@@ -12,24 +12,6 @@ PYMOR_CACHE_DISABLE
     useful for debugging. See :mod:`pymor.core.cache` for more
     details. 
 
-PYMOR_CACHE_MAX_SIZE
-    Maximum size of pyMOR's default disk |CacheRegion|. If not set,
-    the `pymor.core.cache._setup_default_regions.disk_max_size`
-    |default| is used. The suffixes 'k' or 'K', 'm' or 'M' and
-    'g' or 'G' can be used to specify the amount as a number of
-    kilobytes, megabytes or gigabytes.
-
-PYMOR_CACHE_MEMORY_MAX_KEYS
-    Maximum number of keys stored in pyMOR's default memory
-    |CacheRegion|. If not set, the
-    `pymor.core.cache._setup_default_regions.memory_max_keys`
-    |default| is used.
-
-PYMOR_CACHE_PATH
-    Location of pyMOR's default disk |CacheRegion|. If not
-    set, the `pymor.core.cache._setup_default_regions.disk_path`
-    |default| is used.
-
 PYMOR_COLORS_DISABLE
     If ``1``, disable coloring of logging output.
 

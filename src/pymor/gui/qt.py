@@ -202,7 +202,7 @@ def _launch_qt_app(main_window_factory, block):
             p.join()
 
 
-@defaults('backend')
+@defaults('backend', sid_ignore=('backend',))
 def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
                     separate_colorbars=False, rescale_colorbars=False, backend='gl', block=False, columns=2):
     """Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.

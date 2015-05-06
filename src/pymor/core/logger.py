@@ -30,7 +30,7 @@ COLORS = {
 }
 
 FORMAT = '%(asctime)s$BOLD%(levelname)s|$BOLD%(name)s$RESET: %(message)s'
-MAX_HIERACHY_LEVEL = 3
+MAX_HIERARCHY_LEVEL = 1
 
 start_time = time.time()
 
@@ -78,9 +78,10 @@ class ColoredFormatter(logging.Formatter):
         if not record.msg:
             return ''
         tokens = record.name.split('.')
-        record.name = '.'.join(tokens[1:MAX_HIERACHY_LEVEL])
-        if len(tokens) > MAX_HIERACHY_LEVEL - 1:
-            record.name += '.' + tokens[-1]
+        if len(tokens) > MAX_HIERARCHY_LEVEL - 1:
+            record.name = '.'.join(tokens[1:MAX_HIERARCHY_LEVEL] + [tokens[-1]])
+        else:
+            record.name = '.'.join(tokens[1:MAX_HIERARCHY_LEVEL])
         levelname = record.levelname
         if self.use_color and levelname in COLORS.keys():
             if levelname is 'INFO':
@@ -93,7 +94,7 @@ class ColoredFormatter(logging.Formatter):
         return logging.Formatter.format(self, record)
 
 
-@defaults('filename')
+@defaults('filename', sid_ignore='filename')
 def getLogger(module, level=None, filename=''):
     """Get the logger of the respective module for pyMOR's logging facility.
 
@@ -156,7 +157,7 @@ class DummyLogger(object):
 dummy_logger = DummyLogger()
 
 
-@defaults('levels')
+@defaults('levels', sid_ignore=('levels',))
 def set_log_levels(levels={'pymor': 'INFO'}):
     """Set log levels for pyMOR's logging facility.
 
@@ -169,3 +170,18 @@ def set_log_levels(levels={'pymor': 'INFO'}):
     """
     for k, v in levels.items():
         getLogger(k).setLevel(v)
+
+
+@defaults('max_hierarchy_level', sid_ignore=('max_hierarchy_level'))
+def set_log_format(max_hierarchy_level=1):
+    """Set log levels for pyMOR's logging facility.
+
+    Parameters
+    ----------
+    max_hierarchy_level
+        The number of components of the loggers name which are printed.
+        (The first component is always stripped, the last component always
+        preserved.)
+    """
+    global MAX_HIERARCHY_LEVEL
+    MAX_HIERARCHY_LEVEL = max_hierarchy_level

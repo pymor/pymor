@@ -381,7 +381,8 @@ def dense_options(default_solver='solve',
           'pyamg_sa_symmetry', 'pyamg_sa_strength', 'pyamg_sa_aggregate', 'pyamg_sa_smooth',
           'pyamg_sa_presmoother', 'pyamg_sa_postsmoother', 'pyamg_sa_improve_candidates', 'pyamg_sa_max_levels',
           'pyamg_sa_max_coarse', 'pyamg_sa_diagonal_dominance', 'pyamg_sa_coarse_solver', 'pyamg_sa_cycle',
-          'pyamg_sa_accel', 'pyamg_sa_tol', 'pyamg_sa_maxiter')
+          'pyamg_sa_accel', 'pyamg_sa_tol', 'pyamg_sa_maxiter',
+          sid_ignore=('least_squares_lsmr_show', 'least_squares_lsqr_show', 'pyamg_verb'))
 def sparse_options(default_solver='spsolve',
                    default_least_squares_solver='least_squares_generic_lsmr',
                    bicgstab_tol=1e-15,

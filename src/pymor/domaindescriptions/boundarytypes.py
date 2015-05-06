@@ -38,25 +38,25 @@ class BoundaryType(ImmutableInterface):
 
     def __init__(self, type_):
         assert type_ in self.types, '{} is not a known boundary type. Use BoundaryType.register to add it'.format(type_)
-        self.name = type_
+        self.name = self.type = type_
 
     def __str__(self):
-        return self.name
+        return self.type
 
     def __repr__(self):
-        return "BoundaryType('{}')".format(self.name)
+        return "BoundaryType('{}')".format(self.type)
 
     def __eq__(self, other):
         if isinstance(other, BoundaryType):
-            return self.name == other.name
+            return self.type == other.type
         else:
             return NotImplemented
 
     def __ne__(self, other):
         if isinstance(other, BoundaryType):
-            return self.name != other.name
+            return self.type != other.type
         else:
             return NotImplemented
 
     def __hash__(self):
-        return hash(self.name)
+        return hash(self.type)

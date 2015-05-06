@@ -64,13 +64,13 @@ from __future__ import absolute_import, division, print_function
 
 from collections import defaultdict
 import functools
+import importlib
 import inspect
 import pkgutil
-import hashlib
 import textwrap
 
+
 _default_container = None
-_default_container_sid = None
 
 
 class DefaultContainer(object):
@@ -89,8 +89,9 @@ class DefaultContainer(object):
     def __init__(self):
         self._data = defaultdict(dict)
         self.registered_functions = {}
+        # ensure that setting no defaults is the same as setting empty defaults
 
-    def _add_defaults_for_function(self, defaultsdict, func, qualname=None):
+    def _add_defaults_for_function(self, defaultsdict, func, sid_ignore, qualname):
         path = qualname or getattr(func, '__qualname__', func.__module__ + '.' + func.__name__)
         if path in self.registered_functions:
             raise ValueError('''Function with name {} already registered for default values!
@@ -98,6 +99,7 @@ For Python 2 compatibility, please supply the '_qualname' parameter when decorat
 methods of classes!'''.format(path))
         for k, v in defaultsdict.iteritems():
             self._data[path + '.' + k]['code'] = v
+            self._data[path + '.' + k]['sid_ignore'] = k in sid_ignore
 
         result = {}
         for k in self._data:
@@ -114,34 +116,42 @@ methods of classes!'''.format(path))
                 v['func'] = func
 
     def update(self, defaults, type='user'):
+        if hasattr(self, '_sid'):
+            del self._sid
         assert type in ('user', 'file')
-        import pymor.core.interfaces
-        if pymor.core.interfaces.ImmutableMeta.sids_created:
-            from pymor.core.logger import getLogger
-            getLogger('pymor.core.defaults').warn(
-                'Changing defaults after calculation of the first state id. '
-                + '(see pymor.core.defaults for more information.)')
         for k, v in defaults.iteritems():
-            self._data[k][type] = v
-            func = self._data[k].get('func', None)
-            if func:
-                argname = k.split('.')[-1]
-                func._defaultsdict[argname] = v
-                argspec = inspect.getargspec(func)
-                argind = argspec.args.index(argname) - len(argspec.args)
-                defaults = list(argspec.defaults)
-                defaults[argind] = v
-                func.__defaults__ = tuple(defaults)
-        self._calc_sid()
+            k_parts = k.split('.')
 
-    def get(self, key, code=True, file=True, user=True):
+            func = self._data[k].get('func', None)
+            if not func:
+                head = k_parts[:-2]
+                while head:
+                    try:
+                        importlib.import_module('.'.join(head))
+                        break
+                    except ImportError:
+                        head = head[:-1]
+            func = self._data[k].get('func', None)
+            if not func:
+                raise KeyError(k)
+
+            self._data[k][type] = v
+            argname = k_parts[-1]
+            func._defaultsdict[argname] = v
+            argspec = inspect.getargspec(func)
+            argind = argspec.args.index(argname) - len(argspec.args)
+            defaults = list(argspec.defaults)
+            defaults[argind] = v
+            func.__defaults__ = tuple(defaults)
+
+    def get(self, key):
         values = self._data[key]
-        if user and 'user' in values:
-            return values['user'], 'user'
-        elif file and 'file' in values:
-            return values['file'], 'file'
-        elif code and 'code' in values:
-            return values['code'], 'code'
+        if 'user' in values:
+            return values['user'], 'user', values['sid_ignore']
+        elif 'file' in values:
+            return values['file'], 'file', values['sid_ignore']
+        elif 'code' in values:
+            return values['code'], 'code', values['sid_ignore']
         else:
             raise ValueError('No default value matching the specified criteria')
 
@@ -157,30 +167,15 @@ methods of classes!'''.format(path))
         for package in packages:
             _import_all(package)
 
-    def check_consistency(self, delete=False):
-        self.import_all()
-        from pymor.core.logger import getLogger
-        logger = getLogger('pymor.core.defaults')
-        keys_to_delete = []
-
-        for k, v in self._data.iteritems():
-            if ('user' in v or 'file' in v) and 'code' not in v:
-                keys_to_delete.append(k)
-
-        if delete:
-            for k in keys_to_delete:
-                del self._data[k]
-
-        for k in keys_to_delete:
-            logger.warn('Undefined default value: ' + k + (' (deleted)' if delete else ''))
-
-        return len(keys_to_delete) > 0
-
-    def _calc_sid(self):
-        global _default_container_sid
-        user_dict = {k: v['user'] if 'user' in v else v['file']
-                     for k, v in self._data.items() if 'user' in v or 'file' in v}
-        _default_container_sid = hashlib.sha256(repr(sorted(user_dict.items()))).digest()
+    @property
+    def sid(self):
+        sid = getattr(self, '_sid', None)
+        if not sid:
+            from pymor.core.interfaces import generate_sid
+            user_dict = {k: v['user'] if 'user' in v else v['file']
+                         for k, v in self._data.items() if 'user' in v or 'file' in v and not v['sid_ignore']}
+            self._sid = sid = generate_sid(user_dict)
+        return sid
 
 
 _default_container = DefaultContainer()
@@ -210,15 +205,21 @@ def defaults(*args, **kwargs):
         List of strings containing the names of the arguments of the decorated
         function to mark as pyMOR defaults. Each of these arguments has to be
         a keyword argument (with a default value).
+    sid_ignore
+        List of strings naming the defaults in `args` which should not enter
+        |state id| calculation (because they do not affect the outcome of any
+        computation). Such defaults will typically be IO related. Use with
+        extreme caution!
     qualname
         If a method of a class is decorated, the fully qualified name of the
-        method should be provided, as this name cannot be derived at decoration
+        method has to be provided, as this name cannot be derived at decoration
         time in Python 2.
     """
     # FIXME this will have to be adapted for Python 3
 
     assert all(isinstance(arg, str) for arg in args)
-    assert set(kwargs.keys()) <= {'qualname'}
+    assert set(kwargs.keys()) <= {'sid_ignore', 'qualname'}
+    sid_ignore = kwargs.get('sid_ignore', tuple())
     qualname = kwargs.get('qualname', None)
 
     def the_decorator(func):
@@ -257,7 +258,8 @@ Defaults
                 defaultsdict[n] = v
 
         global _default_container
-        defaultsdict = _default_container._add_defaults_for_function(defaultsdict, func, qualname=qualname)
+        defaultsdict = _default_container._add_defaults_for_function(defaultsdict, func,
+                                                                     sid_ignore=sid_ignore, qualname=qualname)
 
         new_defaults = tuple(defaultsdict.get(n, v) for n, v in zip(argnames[-len(defaults):], defaults))
 
@@ -337,46 +339,53 @@ def print_defaults(import_all=True, shorten_paths=2):
     if import_all:
         _default_container.import_all()
 
-    keys = []
-    values = []
-    comments = []
-    for k in sorted(_default_container.keys()):
-        try:
-            v, c = _default_container.get(k, code=True, file=True, user=True)
-        except ValueError:
-            continue
-        ks = k.split('.')
-        if len(ks) >= shorten_paths + 2:
-            keys.append('.'.join(ks[shorten_paths:]))
-        else:
-            keys.append('.'.join(ks))
-        values.append(repr(v))
-        comments.append(c)
-    key_width = max(map(len, keys))
-    value_width = max(map(len, values))
+    keys = ([], [])
+    values = ([], [])
+    comments = ([], [])
 
+    for k in sorted(_default_container.keys()):
+        v, c, i = _default_container.get(k)
+        k_parts = k.split('.')
+        if len(k_parts) >= shorten_paths + 2:
+            keys[int(i)].append('.'.join(k_parts[shorten_paths:]))
+        else:
+            keys[int(i)].append('.'.join(k_parts))
+        values[int(i)].append(repr(v))
+        comments[int(i)].append(c)
+    key_width = max(max([0] + map(len, ks)) for ks in keys)
+    value_width = max(max([0] + map(len, vls)) for vls in values)
     key_string = 'path (shortened)' if shorten_paths else 'path'
     header = '''
 {:{key_width}}   {:{value_width}}   source'''[1:].format(key_string, 'value',
                                                          key_width=key_width, value_width=value_width)
+    header_width = len(header)
 
-    print(header)
-    print('=' * len(header))
+    for i, (ks, vls, cs) in enumerate(zip(keys, values, comments)):
 
-    lks = keys[0].split('.')[:-1]
-    for k, v, c in zip(keys, values, comments):
+        description = 'defaults not affecting state id calculation' if i else 'defaults affecting state id calcuation'
+        print('=' * header_width)
+        print('{:^{width}}'.format(description, width=header_width))
+        print()
+        print(header)
+        print('=' * header_width)
 
-        ks = k.split('.')[:-1]
-        if lks != ks:
-            print('')
-        lks = ks
+        lks = ks[0].split('.')[:-1] if ks else ''
+        for k, v, c in zip(ks, vls, cs):
 
-        print('{:{key_width}}   {:{value_width}}   {}'.format(k, v, c,
-                                                              key_width=key_width,
-                                                              value_width=value_width))
+            ks = k.split('.')[:-1]
+            if lks != ks:
+                print('')
+            lks = ks
+
+            print('{:{key_width}}   {:{value_width}}   {}'.format(k, v, c,
+                                                                  key_width=key_width,
+                                                                  value_width=value_width))
+
+        print()
+        print()
 
 
-def write_defaults_to_file(filename='./pymor_defaults.py', packages=('pymor',), code=True, file=True, user=True):
+def write_defaults_to_file(filename='./pymor_defaults.py', packages=('pymor',)):
     """Write the currently set default values in pyMOR to a configuration file.
 
     The resulting file is an ordinary Python script and can be modified
@@ -393,34 +402,21 @@ def write_defaults_to_file(filename='./pymor_defaults.py', packages=('pymor',), 
         :func:`defaults` decorator, `write_defaults_to_file` will
         recursively import all sub-modules of the named packages before
         creating the configuration file.
-    code
-        If `False`, ignore default values, defined in function signatures.
-    file
-        If `False`, ignore default values loaded from a configuration file.
-    user
-        If `False`, ignore default values provided via :func:`set_defaults`.
     """
 
     for package in packages:
         _import_all(package)
 
-    comments_map = {'code': 'from source code',
-                    'file': 'from config file',
-                    'user': 'defined by user'}
+    keys = ([], [])
+    values = ([], [])
+    as_comment = ([], [])
 
-    keys = []
-    values = []
-    comments = []
     for k in sorted(_default_container.keys()):
-        keys.append("'" + k + "'")
-        try:
-            v, c = _default_container.get(k, code=code, file=file, user=user)
-        except ValueError:
-            continue
-        values.append(repr(v))
-        comments.append(comments_map[c])
-    key_width = max(map(len, keys))
-    value_width = max(map(len, values))
+        v, c, i = _default_container.get(k)
+        keys[int(i)].append("'" + k + "'")
+        values[int(i)].append(repr(v))
+        as_comment[int(i)].append(c == 'code')
+    key_width = max(max([0] + map(len, ks)) for ks in keys)
 
     with open(filename, 'w') as f:
         print('''
@@ -430,18 +426,40 @@ def write_defaults_to_file(filename='./pymor_defaults.py', packages=('pymor',), 
 d = {}
 '''[1:], file=f)
 
-        lks = keys[0].split('.')[:-1]
-        for k, v, c in zip(keys, values, comments):
+        for i, (ks, vls, cs) in enumerate(zip(keys, values, as_comment)):
 
-            ks = k.split('.')[:-1]
-            if lks != ks:
-                print('', file=f)
-            lks = ks
+            if i:
+                print('''
+########################################################################
+#                                                                      #
+# SETTING THE FOLLOWING DEFAULTS WILL NOT AFFECT STATE ID CALCULATION. #
+#                                                                      #
+########################################################################
+'''[1:], file=f)
+            else:
+                print('''
+########################################################################
+#                                                                      #
+# SETTING THE FOLLOWING DEFAULTS WILL AFFECT STATE ID CALCULATION.     #
+#                                                                      #
+########################################################################
+'''[1:], file=f)
 
-            print('d[{:{key_width}}] = {:{value_width}}  # {}'.format(k, v, c,
-                                                                      key_width=key_width,
-                                                                      value_width=value_width),
-                  file=f)
+            lks = ks[0].split('.')[:-1] if ks else ''
+            for c, k, v in zip(cs, ks, vls):
+                ks = k.split('.')[:-1]
+                if lks != ks:
+                    print('', file=f)
+                lks = ks
+
+                print('{}d[{:{key_width}}] = {}'.format('# ' if c else '', k, v,
+                                                        key_width=key_width),
+                      file=f)
+
+            print(file=f)
+            print(file=f)
+
+    print('Written defaults to file ' + filename)
 
 
 def load_defaults_from_file(filename='./pymor_defaults.py'):
@@ -462,10 +480,13 @@ def load_defaults_from_file(filename='./pymor_defaults.py'):
     """
     env = {}
     exec open(filename).read() in env
-    _default_container.update(env['d'], type='file')
+    try:
+        _default_container.update(env['d'], type='file')
+    except KeyError as e:
+        raise KeyError('Error loading defaults from file. Key {} does not correspond to a default'.format(e))
 
 
-def set_defaults(defaults, check=True):
+def set_defaults(defaults):
     """Set default values.
 
     This method sets the default value of function arguments marked via the
@@ -481,14 +502,11 @@ def set_defaults(defaults, check=True):
     defaults
         Dictionary of default values. Keys are the full paths of the default
         values. (See :func:`defaults`.)
-    check
-        If `True`, recursively import all pacakges associated to the paths
-        of the set default values. Then check if defaults with the provided
-        paths have actually been defined using the :func:`defaults` decorator.
     """
-    _default_container.update(defaults, type='user')
-    if check:
-        _default_container.check_consistency(delete=True)
+    try:
+        _default_container.update(defaults, type='user')
+    except KeyError as e:
+        raise KeyError('Error setting defaults. Key {} does not correspond to a default'.format(e))
 
 
 def defaults_sid():
@@ -501,4 +519,4 @@ def defaults_sid():
     For other uses see the implementation of
     :meth:`pymor.operators.numpy.NumpyMatrixBasedOperator.assemble`.
     """
-    return _default_container_sid
+    return _default_container.sid

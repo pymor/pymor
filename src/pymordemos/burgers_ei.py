@@ -84,8 +84,6 @@ from functools import partial
 import numpy as np
 from docopt import docopt
 
-from pymor.core import logger
-logger.MAX_HIERACHY_LEVEL = 2
 from pymor.algorithms.greedy import greedy
 from pymor.algorithms.basisextension import pod_basis_extension
 from pymor.algorithms.ei import interpolate_operators
@@ -98,10 +96,6 @@ from pymor.parallel.ipython import new_ipcluster_pool
 from pymor.reductors.basic import reduce_generic_rb, reduce_to_subbasis
 from pymor.tools.context import no_context
 from pymor.vectorarrays.numpy import NumpyVectorArray
-
-
-logger.set_log_levels({'pymor.algorithms': 'INFO',
-                       'pymor.discretizations': 'INFO'})
 
 
 def burgers_demo(args):

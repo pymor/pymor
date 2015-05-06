@@ -119,5 +119,6 @@ else:
         print('Loading defaults from file ' + filename)
         load_defaults_from_file(filename)
 
-from pymor.core.logger import set_log_levels
+from pymor.core.logger import set_log_levels, set_log_format
 set_log_levels()
+set_log_format()
