@@ -54,7 +54,7 @@ class NumpyVectorArray(VectorArrayInterface):
         assert isinstance(subtype, Number)
         assert count >= 0
         assert reserve >= 0
-        va = NumpyVectorArray(np.empty((0, 0)))
+        va = cls(np.empty((0, 0)))
         va._array = np.zeros((max(count, reserve), subtype))
         va._len = count
         return va
