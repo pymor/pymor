@@ -13,7 +13,7 @@ from pymor.core.exceptions import AccuracyError
 from pymor.core.logger import getLogger
 
 
-@defaults('atol', 'rtol', 'find_duplicates', 'reiterate', 'reiteration_threshold', 'check', 'check_tol')
+@defaults('atol', 'rtol', 'reiterate', 'reiteration_threshold', 'check', 'check_tol')
 def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplicates=True,
                  reiterate=True, reiteration_threshold=1e-1, check=True, check_tol=1e-3,
                  copy=False):
@@ -34,8 +34,6 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
     offset
         Assume that the first `offset` vectors are already orthogonal and start the
         algorithm at the `offset + 1`-th vector.
-    find_duplicates
-        If `True`, eliminate duplicate vectors before the main loop.
     reiterate
         If `True`, orthonormalize again if the norm of the orthogonalized vector is
         much smaller than the norm of the original vector.
@@ -59,17 +57,6 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
 
     if copy:
         A = A.copy()
-
-    # find duplicate vectors since in some circumstances these cannot be detected in the main loop
-    # (is this really needed or is in this cases the tolerance poorly chosen anyhow)
-    if find_duplicates:
-        i = 0
-        while i < len(A):
-            duplicates = A.almost_equal(A, ind=i, o_ind=np.arange(max(offset, i + 1), len(A)))
-            if np.any(duplicates):
-                A.remove(np.where(duplicates)[0] + max(offset, i + 1))
-                logger.info("Removing duplicate vectors")
-            i += 1
 
     # main loop
     remove = []
