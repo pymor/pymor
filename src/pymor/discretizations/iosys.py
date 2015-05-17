@@ -83,4 +83,18 @@ class LTISystem(IOSystem):
         self.cont_time = cont_time
 
     def _solve(self):
-        raise NotImplemented('Discretization has no solver.')
+        raise NotImplementedError('Discretization has no solver.')
+
+    def norm(self):
+        if self.cont_time:
+            import pycmess
+            import numpy as np
+            from pymor.vectorarrays.numpy import NumpyVectorArray
+            import numpy.linalg as npla
+
+            Z = pycmess.lyap(self.A._matrix, self.E._matrix, self.B._matrix)
+            Z = np.array(Z)
+            Z = NumpyVectorArray(Z)
+            return npla.norm(self.C.apply(Z).data)
+        else:
+            raise NotImplementedError
