@@ -161,14 +161,8 @@ class SQLiteRegion(CacheRegion):
             raise RuntimeError('Cache is corrupt!')
 
     def set(self, key, value):
-        now = datetime.datetime.now()
-        filename = now.isoformat() + '.dat'
-        file_path = os.path.join(self.path, filename)
-        while os.path.exists(file_path):
-            now = now + datetime.timedelta(microseconds=1)
-            filename = now().isoformat()
-            file_path = os.path.join(self.path, filename)
-        fd = os.open(file_path, os.O_WRONLY | os.O_EXCL | os.O_CREAT)
+        fd, file_path = tempfile.mkstemp('.dat', datetime.datetime.now().isoformat()[:-7] + '-', self.path)
+        filename = os.path.basename(file_path)
         try:
             f = os.fdopen(fd, 'w')
             dump(value, f)
