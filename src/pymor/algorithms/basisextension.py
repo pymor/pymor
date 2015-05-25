@@ -79,7 +79,7 @@ def trivial_basis_extension(basis, U, copy_basis=True, copy_U=True):
     return new_basis, {'hierarchic': True}
 
 
-def gram_schmidt_basis_extension(basis, U, product=None, copy_basis=True, copy_U=True):
+def gram_schmidt_basis_extension(basis, U, product=None, copy_basis=True, copy_U=True, check=True, reiterate=True):
     """Extend basis using Gram-Schmidt orthonormalization.
 
     Parameters
@@ -95,6 +95,10 @@ def gram_schmidt_basis_extension(basis, U, product=None, copy_basis=True, copy_U
         If `copy_basis` is `False`, the old basis is extended in-place.
     copy_U
         If `copy_U` is `False`, the new basis vectors are removed from `U`.
+    check
+        Is passed on to Gram-Schmidt algorithm.
+    reiterate
+        Is passed on to Gram-Schmidt algorithm.
 
     Returns
     -------
@@ -118,7 +122,7 @@ def gram_schmidt_basis_extension(basis, U, product=None, copy_basis=True, copy_U
 
     new_basis = basis.copy() if copy_basis else basis
     new_basis.append(U, remove_from_other=(not copy_U))
-    gram_schmidt(new_basis, offset=basis_length, product=product, copy=False)
+    gram_schmidt(new_basis, offset=basis_length, product=product, copy=False, reiterate=reiterate, check=check)
 
     if len(new_basis) <= basis_length:
         raise ExtensionError
