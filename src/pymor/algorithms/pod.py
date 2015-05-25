@@ -10,6 +10,12 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from scipy.linalg import eigh
 
+try:
+    from simdb.run import add_start_times, add_stop_times
+    HAVE_SIMDB=True
+except:
+    HAVE_SIMDB=False
+
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import AccuracyError
@@ -64,6 +70,9 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., symmetrize=False, ortho
         Sequence of singular values.
     """
 
+    if HAVE_SIMDB:
+        add_start_times('pymor_algorithms_pod__all')
+
     assert isinstance(A, VectorArrayInterface)
     assert len(A) > 0
     assert modes is None or modes <= len(A)
@@ -77,6 +86,9 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., symmetrize=False, ortho
 
     eigvals = None if modes is None else (len(B) - modes, len(B) - 1)
 
+    if HAVE_SIMDB:
+        add_start_times('pymor_algorithms_pod__scipy')
+
     EVALS, EVECS = eigh(B, overwrite_a=True, turbo=True, eigvals=eigvals)
     EVALS = EVALS[::-1]
     EVECS = EVECS.T[::-1, :]  # is this a view? yes it is!
@@ -89,6 +101,9 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., symmetrize=False, ortho
 
     SVALS = np.sqrt(EVALS[:last_above_tol + 1])
     EVECS = EVECS[:last_above_tol + 1]
+
+    if HAVE_SIMDB:
+        add_stop_times('pymor_algorithms_pod__scipy')
 
     POD = A.lincomb(EVECS / SVALS[:, np.newaxis])
 
@@ -106,5 +121,8 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., symmetrize=False, ortho
             raise AccuracyError('result not orthogonal (max err={})'.format(err))
         if len(POD) < len(EVECS):
             raise AccuracyError('additional orthonormalization removed basis vectors')
+
+    if HAVE_SIMDB:
+        add_stop_times('pymor_algorithms_pod__all')
 
     return POD, SVALS
