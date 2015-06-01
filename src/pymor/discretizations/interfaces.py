@@ -79,6 +79,7 @@ class DiscretizationInterface(CacheableInterface, Parametric):
         -------
         The estimated error.
         """
+        raise NotImplementedError
 
     def visualize(self, U, **kwargs):
         """Visualize a solution |VectorArray| U.
@@ -89,3 +90,4 @@ class DiscretizationInterface(CacheableInterface, Parametric):
             The |VectorArray| from :attr:`~DiscretizationInterface.solution_space`
             that shall be visualized.
         """
+        raise NotImplementedError
