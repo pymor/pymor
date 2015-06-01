@@ -72,6 +72,7 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., symmetrize=False, ortho
 
     if HAVE_SIMDB:
         add_start_times('pymor_algorithms_pod__all')
+        add_start_times('pymor_algorithms_pod__gramian')
 
     assert isinstance(A, VectorArrayInterface)
     assert len(A) > 0
@@ -79,6 +80,9 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., symmetrize=False, ortho
     assert product is None or isinstance(product, OperatorInterface)
 
     B = A.gramian() if product is None else product.apply2(A, A)
+
+    if HAVE_SIMDB:
+        add_stop_times('pymor_algorithms_pod__gramian')
 
     if symmetrize:     # according to rbmatlab this is necessary due to rounding
         B = B + B.T
@@ -104,8 +108,12 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., symmetrize=False, ortho
 
     if HAVE_SIMDB:
         add_stop_times('pymor_algorithms_pod__scipy')
+        add_start_times('pymor_algorithms_pod__lincomb')
 
     POD = A.lincomb(EVECS / SVALS[:, np.newaxis])
+
+    if HAVE_SIMDB:
+        add_stop_times('pymor_algorithms_pod__lincomb')
 
     if orthonormalize:
         POD = gram_schmidt(POD, product=product, copy=False)
