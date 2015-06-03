@@ -167,20 +167,8 @@ class MPIForbidCommunication(object):
         raise NotImplementedError
 
 
-class MPILocalSubtypes(object):
-
-    @property
-    def subtype(self):
-        subtypes = mpi.comm.gather(super(MPILocalSubtypes, self).subtype, root=0)
-        if mpi.rank0:
-            return tuple(subtypes)
-
-    @classmethod
-    def make_array(cls, subtype, count=0, reserve=0):
-        return super(MPILocalSubtypes, cls).make_array(subtype[mpi.rank], count=count, reserve=reserve)
-
-
 def _make_array(cls, subtype=None, count=0, reserve=0):
+    subtype = subtype[mpi.rank] if len(subtype) > 0 else subtype[0]
     obj = cls.make_array(subtype=subtype, count=count, reserve=reserve)
     return mpi.manage_object(obj)
 
