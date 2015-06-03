@@ -4,6 +4,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+import sys
+
 try:
     from mpi4py import MPI
     HAVE_MPI = True
@@ -25,11 +27,14 @@ _object_counter = 0
 def event_loop():
     assert not rank0
     while True:
-        method, args, kwargs = comm.bcast(None)
-        if method == 'QUIT':
-            break
-        else:
-            method(*args, **kwargs)
+        try:
+            method, args, kwargs = comm.bcast(None)
+            if method == 'QUIT':
+                break
+            else:
+                method(*args, **kwargs)
+        except:
+            print("Caught exception on MPI rank {}:".format(rank), sys.exc_info()[0])
 
 
 def quit():
