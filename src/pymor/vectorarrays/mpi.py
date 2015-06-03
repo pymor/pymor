@@ -4,6 +4,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+import numpy as np
+
 from pymor.tools import mpi
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 
@@ -80,6 +82,110 @@ class MPIVectorArray(VectorArrayInterface):
 
     def __del__(self):
         mpi.call(mpi.remove_object, self.obj_id)
+
+
+class MPIDistributed(object):
+
+    @property
+    def dim(self):
+        dims = mpi.comm.gather(super(MPIDistributed, self).dim, root=0)
+        if mpi.rank0:
+            return sum(dims)
+
+    def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
+        local_results = super(MPIDistributed, self).almost_equal(other, ind=ind, o_ind=o_ind,
+                                                                 rtol=rtol, atol=atol).astype(np.int8)
+        results = np.empty((mpi.size, len(local_results)), dtype=np.int8) if mpi.rank0 else None
+        mpi.comm.Gather(local_results, results, root=0)
+        if mpi.rank0:
+            return np.all(results, axis=0)
+
+    def dot(self, other, ind=None, o_ind=None):
+        local_results = super(MPIDistributed, self).dot(other, ind=ind, o_ind=o_ind)
+        assert local_results.dtype == np.float64
+        results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
+        mpi.comm.Gather(local_results, results, root=0)
+        if mpi.rank0:
+            return np.sum(results, axis=0)
+
+    def pairwise_dot(self, other, ind=None, o_ind=None):
+        local_results = super(MPIDistributed, self).pairwise_dot(other, ind=ind, o_ind=o_ind)
+        assert local_results.dtype == np.float64
+        results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
+        mpi.comm.Gather(local_results, results, root=0)
+        if mpi.rank0:
+            return np.sum(results, axis=0)
+
+    def l1_norm(self, ind=None):
+        local_results = super(MPIDistributed, self).l1_norm(ind=ind)
+        assert local_results.dtype == np.float64
+        results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
+        mpi.comm.Gather(local_results, results, root=0)
+        if mpi.rank0:
+            return np.sum(results, axis=0)
+
+    def l2_norm(self, ind=None):
+        local_results = super(MPIDistributed, self).l2_norm(ind=ind)
+        assert local_results.dtype == np.float64
+        results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
+        mpi.comm.Gather(local_results, results, root=0)
+        if mpi.rank0:
+            return np.sqrt(np.sum(results ** 2, axis=0))
+
+    def components(self, component_indices, ind=None):
+        raise NotImplementedError
+
+    def amax(self, ind=None):
+        raise NotImplementedError
+
+
+class MPIForbidCommunication(object):
+
+    @property
+    def dim(self):
+        raise NotImplementedError
+
+    def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
+        raise NotImplementedError
+
+    def dot(self, other, ind=None, o_ind=None):
+        raise NotImplementedError
+
+    def pairwise_dot(self, other, ind=None, o_ind=None):
+        raise NotImplementedError
+
+    def l1_norm(self, ind=None):
+        raise NotImplementedError
+
+    def l2_norm(self, ind=None):
+        raise NotImplementedError
+
+    def components(self, component_indices, ind=None):
+        raise NotImplementedError
+
+    def amax(self, ind=None):
+        raise NotImplementedError
+
+
+class MPILocalSubtypes(object):
+
+    @property
+    def subtype(self):
+        subtypes = mpi.comm.gather(super(MPILocalSubtypes, self).subtype, root=0)
+        if mpi.rank0:
+            return tuple(subtypes)
+
+    def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
+        local_results = super(MPIDistributed, self).almost_equal(other, ind=ind, o_ind=o_ind,
+                                                                 rtol=rtol, atol=atol).astype(np.int8)
+        results = np.empty((mpi.size, len(local_results)), dtype=np.int8) if mpi.rank0 else None
+        mpi.comm.Gather(local_results, results, root=0)
+        if mpi.rank0:
+            return np.all(results, axis=0)
+
+    @classmethod
+    def make_array(cls, subtype, count=0, reserve=0):
+        return super(MPILocalSubtypes, cls).make_array(subtype[mpi.rank], count=count, reserve=reserve)
 
 
 def _make_array(cls, subtype=None, count=0, reserve=0):
