@@ -20,23 +20,24 @@ class MPIVectorArray(VectorArrayInterface):
 
     @classmethod
     def make_array(cls, subtype, count=0, reserve=0):
-        return MPIVectorArray(subtype[0], subtype[1],
-                              mpi.call(_make_array, subtype[0], subtype=subtype[1], count=count, reserve=reserve))
+        return cls(subtype[0], subtype[1],
+                   mpi.call(_MPIVectorArray_make_array,
+                            subtype[0], subtype=subtype[1], count=count, reserve=reserve))
 
     def __len__(self):
         return mpi.call(mpi.method_call, self.obj_id, '__len__')
 
     @property
     def dim(self):
-        return mpi.call(_dim, self.obj_id)
+        return mpi.call(_MPIVectorArray_dim, self.obj_id)
 
     @property
     def subtype(self):
         return (self.cls, self.array_subtype)
 
     def copy(self, ind=None):
-        return MPIVectorArray(self.cls, self.array_subtype,
-                              mpi.call(mpi.method_call_manage, self.obj_id, 'copy', ind=ind))
+        return type(self)(self.cls, self.array_subtype,
+                          mpi.call(mpi.method_call_manage, self.obj_id, 'copy', ind=ind))
 
     def append(self, other, o_ind=None, remove_from_other=False):
         mpi.call(mpi.method_call1, self.obj_id, 'append', other.obj_id,
@@ -57,7 +58,7 @@ class MPIVectorArray(VectorArrayInterface):
         mpi.call(mpi.method_call, self.obj_id, 'scal', alpha, ind=ind)
 
     def axpy(self, alpha, x, ind=None, x_ind=None):
-        mpi.call(_axpy, self.obj_id, alpha, x.obj_id, ind=ind, x_ind=x_ind)
+        mpi.call(_MPIVectorArray_axpy, self.obj_id, alpha, x.obj_id, ind=ind, x_ind=x_ind)
 
     def dot(self, other, ind=None, o_ind=None):
         return mpi.call(mpi.method_call1, self.obj_id, 'dot', other.obj_id, ind=ind, o_ind=o_ind)
@@ -66,8 +67,8 @@ class MPIVectorArray(VectorArrayInterface):
         return mpi.call(mpi.method_call1, self.obj_id, 'pairwise_dot', other.obj_id, ind=ind, o_ind=o_ind)
 
     def lincomb(self, coefficients, ind=None):
-        return MPIVectorArray(self.cls, self.array_subtype,
-                              mpi.call(mpi.method_call_manage, self.obj_id, 'lincomb', coefficients, ind=ind))
+        return type(self)(self.cls, self.array_subtype,
+                          mpi.call(mpi.method_call_manage, self.obj_id, 'lincomb', coefficients, ind=ind))
 
     def l1_norm(self, ind=None):
         return mpi.call(mpi.method_call, self.obj_id, 'l1_norm', ind=ind)
@@ -85,62 +86,24 @@ class MPIVectorArray(VectorArrayInterface):
         mpi.call(mpi.remove_object, self.obj_id)
 
 
-class MPIDistributed(object):
-
-    @property
-    def dim(self):
-        dims = mpi.comm.gather(super(MPIDistributed, self).dim, root=0)
-        if mpi.rank0:
-            return sum(dims)
-
-    def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
-        local_results = super(MPIDistributed, self).almost_equal(other, ind=ind, o_ind=o_ind,
-                                                                 rtol=rtol, atol=atol).astype(np.int8)
-        results = np.empty((mpi.size, len(local_results)), dtype=np.int8) if mpi.rank0 else None
-        mpi.comm.Gather(local_results, results, root=0)
-        if mpi.rank0:
-            return np.all(results, axis=0)
-
-    def dot(self, other, ind=None, o_ind=None):
-        local_results = super(MPIDistributed, self).dot(other, ind=ind, o_ind=o_ind)
-        assert local_results.dtype == np.float64
-        results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
-        mpi.comm.Gather(local_results, results, root=0)
-        if mpi.rank0:
-            return np.sum(results, axis=0)
-
-    def pairwise_dot(self, other, ind=None, o_ind=None):
-        local_results = super(MPIDistributed, self).pairwise_dot(other, ind=ind, o_ind=o_ind)
-        assert local_results.dtype == np.float64
-        results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
-        mpi.comm.Gather(local_results, results, root=0)
-        if mpi.rank0:
-            return np.sum(results, axis=0)
-
-    def l1_norm(self, ind=None):
-        local_results = super(MPIDistributed, self).l1_norm(ind=ind)
-        assert local_results.dtype == np.float64
-        results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
-        mpi.comm.Gather(local_results, results, root=0)
-        if mpi.rank0:
-            return np.sum(results, axis=0)
-
-    def l2_norm(self, ind=None):
-        local_results = super(MPIDistributed, self).l2_norm(ind=ind)
-        assert local_results.dtype == np.float64
-        results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
-        mpi.comm.Gather(local_results, results, root=0)
-        if mpi.rank0:
-            return np.sqrt(np.sum(results ** 2, axis=0))
-
-    def components(self, component_indices, ind=None):
-        raise NotImplementedError
-
-    def amax(self, ind=None):
-        raise NotImplementedError
+def _MPIVectorArray_make_array(cls, subtype=(None,), count=0, reserve=0):
+    subtype = subtype[mpi.rank] if len(subtype) > 0 else subtype[0]
+    obj = cls.make_array(subtype=subtype, count=count, reserve=reserve)
+    return mpi.manage_object(obj)
 
 
-class MPIForbidCommunication(object):
+def _MPIVectorArray_dim(obj_id):
+    obj = mpi.get_object(obj_id)
+    return obj.dim
+
+
+def _MPIVectorArray_axpy(obj_id, alpha, x_obj_id, ind=None, x_ind=None):
+    obj = mpi.get_object(obj_id)
+    x = mpi.get_object(x_obj_id)
+    obj.axpy(alpha, x, ind=ind, x_ind=x_ind)
+
+
+class MPIVectorArrayNoComm(MPIVectorArray):
 
     @property
     def dim(self):
@@ -166,6 +129,94 @@ class MPIForbidCommunication(object):
 
     def amax(self, ind=None):
         raise NotImplementedError
+
+
+class MPIVectorArrayAutoComm(MPIVectorArray):
+
+    @property
+    def dim(self):
+        return mpi.call(_MPIVectorArrayAutoComm_dim, self.obj_id)
+
+    def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
+        return mpi.call(_MPIVectorArrayAutoComm_almost_equal, self.obj_id, other.obj_id,
+                        ind=ind, o_ind=o_ind, rtol=rtol, atol=atol)
+
+    def dot(self, other, ind=None, o_ind=None):
+        return mpi.call(_MPIVectorArrayAutoComm_dot, self.obj_id, other.obj_id, ind=ind, o_ind=o_ind)
+
+    def pairwise_dot(self, other, ind=None, o_ind=None):
+        return mpi.call(_MPIVectorArrayAutoComm_pairwise_dot, self.obj_id, other.obj_id, ind=ind, o_ind=o_ind)
+
+    def l1_norm(self, ind=None):
+        return mpi.call(_MPIVectorArrayAutoComm_l1_norm, self.obj_id, ind=ind)
+
+    def l2_norm(self, ind=None):
+        return mpi.call(_MPIVectorArrayAutoComm_l2_norm, self.obj_id, ind=ind)
+
+    def components(self, component_indices, ind=None):
+        raise NotImplementedError
+
+    def amax(self, ind=None):
+        raise NotImplementedError
+
+
+def _MPIVectorArrayAutoComm_dim(self):
+    self = mpi.get_object(self)
+    dims = mpi.comm.gather(self.dim, root=0)
+    if mpi.rank0:
+        return sum(dims)
+
+
+def _MPIVectorArrayAutoComm_almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
+    self = mpi.get_object(self)
+    other = mpi.get_object(other)
+    local_results = self.almost_equal(other, ind=ind, o_ind=o_ind, rtol=rtol, atol=atol).astype(np.int8)
+    results = np.empty((mpi.size, len(local_results)), dtype=np.int8) if mpi.rank0 else None
+    mpi.comm.Gather(local_results, results, root=0)
+    if mpi.rank0:
+        return np.all(results, axis=0)
+
+
+def _MPIVectorArrayAutoComm_dot(self, other, ind=None, o_ind=None):
+    self = mpi.get_object(self)
+    other = mpi.get_object(other)
+    local_results = self.dot(other, ind=ind, o_ind=o_ind)
+    assert local_results.dtype == np.float64
+    results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
+    mpi.comm.Gather(local_results, results, root=0)
+    if mpi.rank0:
+        return np.sum(results, axis=0)
+
+
+def _MPIVectorArrayAutoComm_pairwise_dot(self, other, ind=None, o_ind=None):
+    self = mpi.get_object(self)
+    other = mpi.get_object(other)
+    local_results = self.pairwise_dot(other, ind=ind, o_ind=o_ind)
+    assert local_results.dtype == np.float64
+    results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
+    mpi.comm.Gather(local_results, results, root=0)
+    if mpi.rank0:
+        return np.sum(results, axis=0)
+
+
+def _MPIVectorArrayAutoComm_l1_norm(self, ind=None):
+    self = mpi.get_object(self)
+    local_results = self.l1_norm(ind=ind)
+    assert local_results.dtype == np.float64
+    results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
+    mpi.comm.Gather(local_results, results, root=0)
+    if mpi.rank0:
+        return np.sum(results, axis=0)
+
+
+def _MPIVectorArrayAutoComm_l2_norm(self, ind=None):
+    self = mpi.get_object(self)
+    local_results = self.l2_norm(ind=ind)
+    assert local_results.dtype == np.float64
+    results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
+    mpi.comm.Gather(local_results, results, root=0)
+    if mpi.rank0:
+        return np.sqrt(np.sum(results ** 2, axis=0))
 
 
 class MPIVector(VectorInterface):
@@ -177,20 +228,20 @@ class MPIVector(VectorInterface):
 
     @classmethod
     def make_zeros(cls, subtype=None):
-        return MPIVector(subtype[0], subtype[1],
-                         mpi.call(_make_zeros, subtype[0], subtype=subtype[1]))
+        return cls(subtype[0], subtype[1],
+                   mpi.call(_MPIVector_make_zeros, subtype[0], subtype=subtype[1]))
 
     @property
     def dim(self):
-        return mpi.call(_dim, self.obj_id)
+        return mpi.call(_MPIVectorArray_dim, self.obj_id)
 
     @property
     def subtype(self):
         return (self.cls, self.vector_subtype)
 
     def copy(self):
-        return MPIVectorArray(self.cls, self.vector_subtype,
-                              mpi.call(mpi.method_call_manage, self.obj_id, 'copy'))
+        return type(self)(self.cls, self.vector_subtype,
+                          mpi.call(mpi.method_call_manage, self.obj_id, 'copy'))
 
     def almost_equal(self, other, rtol=None, atol=None):
         return mpi.call(mpi.method_call1, self.obj_id, 'almost_equal', other.obj_id,
@@ -200,7 +251,7 @@ class MPIVector(VectorInterface):
         mpi.call(mpi.method_call, self.obj_id, 'scal', alpha)
 
     def axpy(self, alpha, x):
-        mpi.call(_vector_axpy, self.obj_id, alpha, x.obj_id)
+        mpi.call(_MPIVector_axpy, self.obj_id, alpha, x.obj_id)
 
     def dot(self, other):
         return mpi.call(mpi.method_call1, self.obj_id, 'dot', other.obj_id)
@@ -221,53 +272,19 @@ class MPIVector(VectorInterface):
         mpi.call(mpi.remove_object, self.obj_id)
 
 
-class MPIDistributedVector(object):
-
-    @property
-    def dim(self):
-        dims = mpi.comm.gather(super(MPIDistributedVector, self).dim, root=0)
-        if mpi.rank0:
-            return sum(dims)
-
-    def almost_equal(self, other, rtol=None, atol=None):
-        local_result = super(MPIDistributedVector, self).almost_equal(other, rtol=rtol, atol=atol).astype(np.int8)
-        results = np.empty((mpi.size,), dtype=np.int8) if mpi.rank0 else None
-        mpi.comm.Gather(local_result, results, root=0)
-        if mpi.rank0:
-            return np.all(results)
-
-    def dot(self, other):
-        local_result = super(MPIDistributedVector, self).dot(other)
-        assert local_result.dtype == np.float64
-        results = np.empty((mpi.size,), dtype=np.float64) if mpi.rank0 else None
-        mpi.comm.Gather(local_result, results, root=0)
-        if mpi.rank0:
-            return np.sum(results)
-
-    def l1_norm(self):
-        local_result = super(MPIDistributedVector, self).l1_norm()
-        assert local_result.dtype == np.float64
-        results = np.empty((mpi.size,), dtype=np.float64) if mpi.rank0 else None
-        mpi.comm.Gather(local_result, results, root=0)
-        if mpi.rank0:
-            return np.sum(results)
-
-    def l2_norm(self):
-        local_result = super(MPIDistributedVector, self).l2_norm()
-        assert local_result.dtype == np.float64
-        results = np.empty((mpi.size,), dtype=np.float64) if mpi.rank0 else None
-        mpi.comm.Gather(local_result, results, root=0)
-        if mpi.rank0:
-            return np.sqrt(np.sum(results ** 2))
-
-    def components(self, component_indices):
-        raise NotImplementedError
-
-    def amax(self):
-        raise NotImplementedError
+def _MPIVector_axpy(obj_id, alpha, x_obj_id):
+    obj = mpi.get_object(obj_id)
+    x = mpi.get_object(x_obj_id)
+    obj.axpy(alpha, x)
 
 
-class MPIVectorForbidCommunication(object):
+def _MPIVector_make_zeros(cls, subtype=(None,)):
+    subtype = subtype[mpi.rank] if len(subtype) > 0 else subtype[0]
+    obj = cls.make_zeros(subtype)
+    return mpi.manage_object(obj)
+
+
+class MPIVectorNoComm(object):
 
     @property
     def dim(self):
@@ -295,30 +312,74 @@ class MPIVectorForbidCommunication(object):
         raise NotImplementedError
 
 
-def _make_array(cls, subtype=(None,), count=0, reserve=0):
-    subtype = subtype[mpi.rank] if len(subtype) > 0 else subtype[0]
-    obj = cls.make_array(subtype=subtype, count=count, reserve=reserve)
-    return mpi.manage_object(obj)
+class MPIVectorAutoComm(MPIVector):
+
+    @property
+    def dim(self):
+        return mpi.call(_MPIVectorAutoComm_dim, self.obj_id)
+
+    def almost_equal(self, other, rtol=None, atol=None):
+        return mpi.call(_MPIVectorAutoComm_almost_equal, self.obj_id, other.obj_id, rtol=rtol, atol=atol)
+
+    def dot(self, other):
+        return mpi.call(_MPIVectorAutoComm_dot, self.obj_id, other.obj_id)
+
+    def l1_norm(self):
+        return mpi.call(_MPIVectorAutoComm_l1_norm, self.obj_id)
+
+    def l2_norm(self):
+        return mpi.call(_MPIVectorAutoComm_l2_norm, self.obj_id)
+
+    def components(self, component_indices):
+        raise NotImplementedError
+
+    def amax(self):
+        raise NotImplementedError
 
 
-def _dim(obj_id):
-    obj = mpi.get_object(obj_id)
-    return obj.dim
+def _MPIVectorAutoComm_dim(self):
+    self = mpi.get_object(self)
+    dims = mpi.comm.gather(self.dim, root=0)
+    if mpi.rank0:
+        return sum(dims)
 
 
-def _axpy(obj_id, alpha, x_obj_id, ind=None, x_ind=None):
-    obj = mpi.get_object(obj_id)
-    x = mpi.get_object(x_obj_id)
-    obj.axpy(alpha, x, ind=ind, x_ind=x_ind)
+def _MPIVectorAutoComm_almost_equal(self, other, rtol=None, atol=None):
+    self = mpi.get_object(self)
+    other = mpi.get_object(other)
+    local_result = self.almost_equal(other, rtol=rtol, atol=atol).astype(np.int8)
+    results = np.empty((mpi.size,), dtype=np.int8) if mpi.rank0 else None
+    mpi.comm.Gather(local_result, results, root=0)
+    if mpi.rank0:
+        return np.all(results)
 
 
-def _vector_axpy(obj_id, alpha, x_obj_id):
-    obj = mpi.get_object(obj_id)
-    x = mpi.get_object(x_obj_id)
-    obj.axpy(alpha, x)
+def _MPIVectorAutoComm_dot(self, other):
+    self = mpi.get_object(self)
+    other = mpi.get_object(other)
+    local_result = self.dot(other)
+    assert local_result.dtype == np.float64
+    results = np.empty((mpi.size,), dtype=np.float64) if mpi.rank0 else None
+    mpi.comm.Gather(local_result, results, root=0)
+    if mpi.rank0:
+        return np.sum(results)
 
 
-def _make_zeros(cls, subtype=(None,)):
-    subtype = subtype[mpi.rank] if len(subtype) > 0 else subtype[0]
-    obj = cls.make_zeros(subtype)
-    return mpi.manage_object(obj)
+def _MPIVectorAutoComm_l1_norm(self):
+    self = mpi.get_object(self)
+    local_result = self.l1_norm()
+    assert local_result.dtype == np.float64
+    results = np.empty((mpi.size,), dtype=np.float64) if mpi.rank0 else None
+    mpi.comm.Gather(local_result, results, root=0)
+    if mpi.rank0:
+        return np.sum(results)
+
+
+def _MPIVectorAutoComm_l2_norm(self):
+    self = mpi.get_object(self)
+    local_result = self.l2_norm()
+    assert local_result.dtype == np.float64
+    results = np.empty((mpi.size,), dtype=np.float64) if mpi.rank0 else None
+    mpi.comm.Gather(local_result, results, root=0)
+    if mpi.rank0:
+        return np.sqrt(np.sum(results ** 2))
