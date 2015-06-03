@@ -8,6 +8,7 @@ import numpy as np
 
 from pymor.tools import mpi
 from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.vectorarrays.list import VectorInterface
 
 
 class MPIVectorArray(VectorArrayInterface):
@@ -167,7 +168,134 @@ class MPIForbidCommunication(object):
         raise NotImplementedError
 
 
-def _make_array(cls, subtype=None, count=0, reserve=0):
+class MPIVector(VectorInterface):
+
+    def __init__(self, cls, subtype, obj_id):
+        self.cls = cls
+        self.vector_subtype = subtype
+        self.obj_id = obj_id
+
+    @classmethod
+    def make_zeros(cls, subtype=None):
+        return MPIVector(subtype[0], subtype[1],
+                         mpi.call(_make_zeros, subtype[0], subtype=subtype[1]))
+
+    @property
+    def dim(self):
+        return mpi.call(_dim, self.obj_id)
+
+    @property
+    def subtype(self):
+        return (self.cls, self.vector_subtype)
+
+    def copy(self):
+        return MPIVectorArray(self.cls, self.vector_subtype,
+                              mpi.call(mpi.method_call_manage, self.obj_id, 'copy'))
+
+    def almost_equal(self, other, rtol=None, atol=None):
+        return mpi.call(mpi.method_call1, self.obj_id, 'almost_equal', other.obj_id,
+                        rtol=rtol, atol=atol)
+
+    def scal(self, alpha):
+        mpi.call(mpi.method_call, self.obj_id, 'scal', alpha)
+
+    def axpy(self, alpha, x):
+        mpi.call(_vector_axpy, self.obj_id, alpha, x.obj_id)
+
+    def dot(self, other):
+        return mpi.call(mpi.method_call1, self.obj_id, 'dot', other.obj_id)
+
+    def l1_norm(self):
+        return mpi.call(mpi.method_call, self.obj_id, 'l1_norm')
+
+    def l2_norm(self):
+        return mpi.call(mpi.method_call, self.obj_id, 'l2_norm')
+
+    def components(self, component_indices):
+        return mpi.call(mpi.method_call, self.obj_id, 'components', component_indices)
+
+    def amax(self):
+        return mpi.call(mpi.method_call, self.obj_id, 'amax')
+
+    def __del__(self):
+        mpi.call(mpi.remove_object, self.obj_id)
+
+
+class MPIDistributedVector(object):
+
+    @property
+    def dim(self):
+        dims = mpi.comm.gather(super(MPIDistributedVector, self).dim, root=0)
+        if mpi.rank0:
+            return sum(dims)
+
+    def almost_equal(self, other, rtol=None, atol=None):
+        local_result = super(MPIDistributedVector, self).almost_equal(other, rtol=rtol, atol=atol).astype(np.int8)
+        results = np.empty((mpi.size,), dtype=np.int8) if mpi.rank0 else None
+        mpi.comm.Gather(local_result, results, root=0)
+        if mpi.rank0:
+            return np.all(results)
+
+    def dot(self, other):
+        local_result = super(MPIDistributedVector, self).dot(other)
+        assert local_result.dtype == np.float64
+        results = np.empty((mpi.size,), dtype=np.float64) if mpi.rank0 else None
+        mpi.comm.Gather(local_result, results, root=0)
+        if mpi.rank0:
+            return np.sum(results)
+
+    def l1_norm(self):
+        local_result = super(MPIDistributedVector, self).l1_norm()
+        assert local_result.dtype == np.float64
+        results = np.empty((mpi.size,), dtype=np.float64) if mpi.rank0 else None
+        mpi.comm.Gather(local_result, results, root=0)
+        if mpi.rank0:
+            return np.sum(results)
+
+    def l2_norm(self):
+        local_result = super(MPIDistributedVector, self).l2_norm()
+        assert local_result.dtype == np.float64
+        results = np.empty((mpi.size,), dtype=np.float64) if mpi.rank0 else None
+        mpi.comm.Gather(local_result, results, root=0)
+        if mpi.rank0:
+            return np.sqrt(np.sum(results ** 2))
+
+    def components(self, component_indices):
+        raise NotImplementedError
+
+    def amax(self):
+        raise NotImplementedError
+
+
+class MPIVectorForbidCommunication(object):
+
+    @property
+    def dim(self):
+        raise NotImplementedError
+
+    def almost_equal(self, other, rtol=None, atol=None):
+        raise NotImplementedError
+
+    def dot(self, other):
+        raise NotImplementedError
+
+    def pairwise_dot(self, other):
+        raise NotImplementedError
+
+    def l1_norm(self):
+        raise NotImplementedError
+
+    def l2_norm(self):
+        raise NotImplementedError
+
+    def components(self, component_indices):
+        raise NotImplementedError
+
+    def amax(self):
+        raise NotImplementedError
+
+
+def _make_array(cls, subtype=(None,), count=0, reserve=0):
     subtype = subtype[mpi.rank] if len(subtype) > 0 else subtype[0]
     obj = cls.make_array(subtype=subtype, count=count, reserve=reserve)
     return mpi.manage_object(obj)
@@ -182,3 +310,15 @@ def _axpy(obj_id, alpha, x_obj_id, ind=None, x_ind=None):
     obj = mpi.get_object(obj_id)
     x = mpi.get_object(x_obj_id)
     obj.axpy(alpha, x, ind=ind, x_ind=x_ind)
+
+
+def _vector_axpy(obj_id, alpha, x_obj_id):
+    obj = mpi.get_object(obj_id)
+    x = mpi.get_object(x_obj_id)
+    obj.axpy(alpha, x)
+
+
+def _make_zeros(cls, subtype=(None,)):
+    subtype = subtype[mpi.rank] if len(subtype) > 0 else subtype[0]
+    obj = cls.make_zeros(subtype)
+    return mpi.manage_object(obj)
