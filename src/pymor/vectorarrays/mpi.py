@@ -175,14 +175,6 @@ class MPILocalSubtypes(object):
         if mpi.rank0:
             return tuple(subtypes)
 
-    def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
-        local_results = super(MPIDistributed, self).almost_equal(other, ind=ind, o_ind=o_ind,
-                                                                 rtol=rtol, atol=atol).astype(np.int8)
-        results = np.empty((mpi.size, len(local_results)), dtype=np.int8) if mpi.rank0 else None
-        mpi.comm.Gather(local_results, results, root=0)
-        if mpi.rank0:
-            return np.all(results, axis=0)
-
     @classmethod
     def make_array(cls, subtype, count=0, reserve=0):
         return super(MPILocalSubtypes, cls).make_array(subtype[mpi.rank], count=count, reserve=reserve)
