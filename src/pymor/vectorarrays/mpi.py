@@ -87,7 +87,7 @@ class MPIVectorArray(VectorArrayInterface):
 
 
 def _MPIVectorArray_make_array(cls, subtype=(None,), count=0, reserve=0):
-    subtype = subtype[mpi.rank] if len(subtype) > 0 else subtype[0]
+    subtype = subtype[mpi.rank] if len(subtype) > 1 else subtype[0]
     obj = cls.make_array(subtype=subtype, count=count, reserve=reserve)
     return mpi.manage_object(obj)
 
@@ -279,7 +279,7 @@ def _MPIVector_axpy(obj_id, alpha, x_obj_id):
 
 
 def _MPIVector_make_zeros(cls, subtype=(None,)):
-    subtype = subtype[mpi.rank] if len(subtype) > 0 else subtype[0]
+    subtype = subtype[mpi.rank] if len(subtype) > 1 else subtype[0]
     obj = cls.make_zeros(subtype)
     return mpi.manage_object(obj)
 
