@@ -52,9 +52,13 @@ def call(method, *args, **kwargs):
     return method(*args, **kwargs)
 
 
+class ObjectId(int):
+    pass
+
+
 def manage_object(obj):
     global _object_counter
-    obj_id = _object_counter
+    obj_id = ObjectId(_object_counter)
     _managed_objects[obj_id] = obj
     _object_counter += 1
     return obj_id
@@ -74,12 +78,30 @@ def mpi_info():
         print('\n'.join('{}: {}'.format(rank, processor) for rank, processor in data))
 
 
+def function_call_manage(f, *args, **kwargs):
+    return manage_object(f(*((get_object(arg) if type(arg) is ObjectId else arg) for arg in args),
+                           **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.iteritems()}))
+
+
 def method_call(obj_id, name, *args, **kwargs):
+    obj = get_object(obj_id)
+    return getattr(obj, name)(*((get_object(arg) if type(arg) is ObjectId else arg) for arg in args),
+                              **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.iteritems()})
+
+
+def method_call_manage(obj_id, name, *args, **kwargs):
+    obj = get_object(obj_id)
+    result = getattr(obj, name)(*((get_object(arg) if type(arg) is ObjectId else arg) for arg in args),
+                                **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.iteritems()})
+    return manage_object(result)
+
+
+def method_call0(obj_id, name, *args, **kwargs):
     obj = get_object(obj_id)
     return getattr(obj, name)(*args, **kwargs)
 
 
-def method_call_manage(obj_id, name, *args, **kwargs):
+def method_call0_manage(obj_id, name, *args, **kwargs):
     obj = get_object(obj_id)
     return manage_object(getattr(obj, name)(*args, **kwargs))
 
@@ -121,7 +143,6 @@ def import_module(path):
 if __name__ == '__main__':
     assert HAVE_MPI
     if rank0:
-        import sys
         assert 1 <= len(sys.argv) <= 2
         if len(sys.argv) == 2:
             execfile(sys.argv[1])
