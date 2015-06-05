@@ -166,7 +166,7 @@ def mpi_wrap_operator(obj_id, functional=False, vector=False, with_apply2=False,
 def _mpi_wrap_operator_LincombOperator_manage_operators(obj_id):
     op = mpi.get_object(obj_id)
     obj_ids = [mpi.manage_object(o) for o in op.operators]
-    mpi.remove_object(op)
+    mpi.remove_object(obj_id)
     if mpi.rank0:
         return obj_ids
 
