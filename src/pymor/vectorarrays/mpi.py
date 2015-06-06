@@ -135,7 +135,10 @@ class MPIVectorArrayAutoComm(MPIVectorArray):
 
     @property
     def dim(self):
-        return mpi.call(_MPIVectorArrayAutoComm_dim, self.obj_id)
+        dim = getattr(self, '_dim', None)
+        if dim is None:
+            dim = self._get_dims()[0]
+        return dim
 
     def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
         return mpi.call(_MPIVectorArrayAutoComm_almost_equal, self.obj_id, other.obj_id,
@@ -154,17 +157,33 @@ class MPIVectorArrayAutoComm(MPIVectorArray):
         return mpi.call(_MPIVectorArrayAutoComm_l2_norm, self.obj_id, ind=ind)
 
     def components(self, component_indices, ind=None):
-        raise NotImplementedError
+        offsets = getattr(self, '_offsets', None)
+        if offsets is None:
+            offsets = self._get_dims()[1]
+        component_indices = np.array(component_indices)
+        return mpi.call(_MPIVectorArrayAutoComm_components, self.obj_id, offsets, component_indices, ind=ind)
 
     def amax(self, ind=None):
-        raise NotImplementedError
+        offsets = getattr(self, '_offsets', None)
+        if offsets is None:
+            offsets = self._get_dims()[1]
+        inds, vals = mpi.call(_MPIVectorArrayAutoComm_amax, self.obj_id, ind=ind)
+        inds += offsets[:, np.newaxis]
+        max_inds = np.argmax(vals, axis=0)
+        return np.choose(max_inds, inds), np.choose(max_inds, vals)
+
+    def _get_dims(self):
+        dims = mpi.call(_MPIVectorArrayAutoComm_dim, self.obj_id)
+        self._offsets = offsets = np.cumsum(np.concatenate(([0], dims)))[:-1]
+        self._dim = dim = sum(dims)
+        return dim, offsets
 
 
 def _MPIVectorArrayAutoComm_dim(self):
     self = mpi.get_object(self)
     dims = mpi.comm.gather(self.dim, root=0)
     if mpi.rank0:
-        return sum(dims)
+        return dims
 
 
 def _MPIVectorArrayAutoComm_almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
@@ -217,6 +236,33 @@ def _MPIVectorArrayAutoComm_l2_norm(self, ind=None):
     mpi.comm.Gather(local_results, results, root=0)
     if mpi.rank0:
         return np.sqrt(np.sum(results ** 2, axis=0))
+
+
+def _MPIVectorArrayAutoComm_components(self, offsets, component_indices, ind=None):
+    self = mpi.get_object(self)
+    offset = offsets[mpi.rank]
+    dim = self.dim
+    my_indices = np.logical_and(component_indices >= offset, component_indices < offset + dim)
+    local_results = np.zeros((self.len_ind(ind), len(component_indices)))
+    local_results[:, my_indices] = self.components(component_indices[my_indices] - offset, ind=ind)
+    assert local_results.dtype == np.float64
+    results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
+    mpi.comm.Gather(local_results, results, root=0)
+    if mpi.rank0:
+        return np.sum(results, axis=0)
+
+
+def _MPIVectorArrayAutoComm_amax(self, ind=None):
+    self = mpi.get_object(self)
+    local_inds, local_vals = self.amax(ind=ind)
+    assert local_inds.dtype == np.int64
+    assert local_vals.dtype == np.float64
+    inds = np.empty((mpi.size,) + local_inds.shape, dtype=np.int64) if mpi.rank0 else None
+    vals = np.empty((mpi.size,) + local_inds.shape, dtype=np.float64) if mpi.rank0 else None
+    mpi.comm.Gather(local_inds, inds, root=0)
+    mpi.comm.Gather(local_vals, vals, root=0)
+    if mpi.rank0:
+        return inds, vals
 
 
 class MPIVector(VectorInterface):
