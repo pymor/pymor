@@ -143,9 +143,10 @@ def import_module(path):
 if __name__ == '__main__':
     assert HAVE_MPI
     if rank0:
-        assert 1 <= len(sys.argv) <= 2
-        if len(sys.argv) == 2:
-            execfile(sys.argv[1])
+        if len(sys.argv) >= 2:
+            filename = sys.argv[1]
+            sys.argv = sys.argv[:1] + sys.argv[2:]
+            execfile(filename)
         else:
             try:
                 import IPython
