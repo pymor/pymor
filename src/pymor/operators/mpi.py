@@ -53,6 +53,16 @@ class MPIOperator(OperatorBase):
             return space.type(space.subtype[0], space.subtype[1],
                               mpi.call(mpi.method_call_manage, self.obj_id, 'apply', U, ind=ind, mu=mu))
 
+    def as_vector(self, mu=None):
+        mu = self.parse_parameter(mu)
+        if self.functional:
+            space = self.source
+            return space.type(space.subtype[0], space.subtype[1],
+                              mpi.call(mpi.method_call_manage, self.obj_id, 'as_vector', mu=mu))
+        else:
+            raise NotImplementedError
+
+
     def apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None):
         if not self.with_apply2:
             return super(MPIOperator, self).apply2(V, U, U_ind=U_ind, V_ind=V_ind, mu=mu, product=product)
