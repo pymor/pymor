@@ -707,6 +707,74 @@ class SelectionOperator(OperatorBase):
         return self.operators[operator_number].as_vector(mu=mu)
 
 
+class ProxyOperator(OperatorInterface):
+
+    def __init__(self, wrapped_operator):
+        self.wrapped_operator = wrapped_operator
+        self.source = wrapped_operator.source
+        self.range = wrapped_operator.range
+        self.linear = wrapped_operator.linear
+        self.build_parameter_type(inherits=(wrapped_operator,))
+
+    @property
+    def invert_options(self):
+        return self.wrapped_operator.invert_options
+
+    def apply(self, U, ind=None, mu=None):
+        return self.wrapped_operator.apply(U, ind=ind, mu=mu)
+
+    def apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None):
+        return self.wrapped_operator.apply2(V, U, U_ind=U_ind, V_ind=V_ind, mu=mu, product=product)
+
+    def pairwise_apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None):
+        return self.wrapped_operator.pairwise_apply2(V, U, U_ind=U_ind, V_ind=V_ind, mu=mu, product=product)
+
+    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+        return self.wrapped_operator.apply_adjoint(U, ind=ind, mu=mu,
+                                                   source_product=source_product, range_product=range_product)
+
+    def apply_inverse(self, U, ind=None, mu=None, options=None):
+        return self.wrapped_operator.apply_inverse(U, ind=ind, mu=mu, options=options)
+
+    def jacobian(self, U, mu=None):
+        return self.wrapped_operator.jacobian(U, mu=mu)
+
+    def as_vector(self, mu=None):
+        return self.wrapped_operator.as_vector(mu=mu)
+
+    def assemble(self, mu=None):
+        return self.wrapped_operator.assemble(mu=mu)
+
+    def assemble_lincomb(self, operators, coefficients, name=None):
+        return self.wrapped_operator.assemble_lincomb(operators, coefficients, name=name)
+
+    def projected(self, range_basis, source_basis, product=None, name=None):
+        return self.wrapped_operator.projected(range_basis, source_basis, product=product, name=name)
+
+    def restricted(self, dofs):
+        return self.wrapped_operator.restricted(dofs)
+
+    def __add__(self, other):
+        return self.wrapped_operator.__add__(other)
+
+    def __radd__(self, other):
+        return self.wrapped_operator.__radd__(other)
+
+    def __mul__(self, other):
+        return self.wrapped_operator.__mul__(other)
+
+
+class NewDefaultInvertOptionsOperator(ProxyOperator):
+
+    def __init__(self, wrapped_operator, default_invert_options):
+        super(NewDefaultInvertOptionsOperator, self).__init__(wrapped_operator)
+        self.default_invert_options = default_invert_options
+
+    def apply_inverse(self, U, ind=None, mu=None, options=None):
+        options = self.default_invert_options if options is None else options
+        return self.wrapped_operator.apply_inverse(U, ind=ind, mu=mu, options=options)
+
+
 @defaults('raise_negative', 'tol')
 def induced_norm(product, raise_negative=True, tol=1e-10, name=None):
     """The induced norm of a scalar product.
