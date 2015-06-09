@@ -149,6 +149,7 @@ if __name__ == '__main__':
             filename = sys.argv[1]
             sys.argv = sys.argv[:1] + sys.argv[2:]
             execfile(filename)
+            quit()
         else:
             try:
                 import IPython
