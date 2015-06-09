@@ -35,7 +35,9 @@ def event_loop():
             else:
                 method(*args, **kwargs)
         except:
-            print("Caught exception on MPI rank {}:".format(rank), sys.exc_info()[0])
+            import traceback
+            print("Caught exception on MPI rank {}:".format(rank))
+            traceback.print_exception(*sys.exc_info())
 
 
 def quit():
