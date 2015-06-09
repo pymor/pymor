@@ -102,13 +102,43 @@ class LTISystem(IOSystem):
 
     def norm(self):
         if self.cont_time:
-            import pycmess
-            from pymor.vectorarrays.numpy import NumpyVectorArray
             import numpy.linalg as npla
 
-            Z = pycmess.lyap(self.A._matrix, self.E._matrix, self.B._matrix)
-            Z = np.array(Z)
-            Z = NumpyVectorArray(Z)
-            return npla.norm(self.C.apply(Z).data)
+            Z = solve_lyap(self.A, self.E, self.B)
+
+            return npla.norm(self.C.apply(Z).l2_norm())
         else:
             raise NotImplementedError
+
+
+def solve_lyap(A, E, B):
+    """Find a factor of the solution of a Lyapunov equation
+
+    Returns factor Z such that Z * Z^T is approximately the solution X of a Lyapunov equation::
+
+        A * X + X * A^T + B * B^T = 0
+
+    if E is None, otherwise a generalized Lyapunov equation::
+
+        A * X * E^T + E * X * A^T + B * B^T = 0.
+
+    Parameters
+    ----------
+    A
+        The |Operator| A.
+    E
+        The |Operator| E or None.
+    B
+        The |Operator| B.
+    """
+    import pymess
+    from pymor.vectorarrays.numpy import NumpyVectorArray
+
+    if E is None:
+        Z = pymess.lyap(A._matrix, None, B._matrix)
+    else:
+        Z = pymess.lyap(A._matrix, E._matrix, B._matrix)
+    Z = np.array(Z)
+    Z = NumpyVectorArray(Z)
+
+    return Z
