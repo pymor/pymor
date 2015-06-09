@@ -76,6 +76,8 @@ class MPIOperator(OperatorBase):
                         V, U, U_ind=U_ind, V_ind=V_ind, mu=mu, product=product)
 
     def pairwise_apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None):
+        if not self.with_apply2:
+            return super(MPIOperator, self).pairwise_apply2(V, U, U_ind=U_ind, V_ind=V_ind, mu=mu, product=product)
         assert V in self.range
         assert U in self.source
         mu = self.parse_parameter(mu)
@@ -137,7 +139,7 @@ class MPIOperator(OperatorBase):
                               with_apply2=self.with_apply2, array_type=self.source.type)
 
     def restricted(self, dofs):
-        return mpi.call(mpi.method_call, self.obj_id, dofs)
+        return mpi.call(mpi.method_call, self.obj_id, 'restricted', dofs)
 
     def __del__(self):
         mpi.call(mpi.remove_object, self.obj_id)
@@ -186,4 +188,5 @@ def _mpi_wrap_operator_VectorArrayOperator_manage_array(obj_id):
     array_obj_id = mpi.manage_object(op._array)
     subtypes = mpi.comm.gather(op._array.subtype, root=0)
     mpi.remove_object(obj_id)
-    return array_obj_id, subtypes
+    if mpi.rank0:
+        return array_obj_id, tuple(subtypes)
