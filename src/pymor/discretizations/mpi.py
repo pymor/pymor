@@ -25,6 +25,7 @@ class MPIDiscretization(DiscretizationBase):
             subtypes = (subtypes[0],)
         self.solution_space = VectorSpace(array_type, (d.solution_space.type, subtypes))
         self.build_parameter_type(inherits=(d,))
+        self.parameter_space = d.parameter_space
 
     def _solve(self, mu=None):
         space = self.solution_space
