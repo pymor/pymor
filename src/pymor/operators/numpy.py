@@ -180,8 +180,6 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         Name of the operator.
     """
 
-    calculate_sid = False
-
     def __init__(self, matrix, name=None):
         assert matrix.ndim <= 2
         if matrix.ndim == 1:
@@ -191,7 +189,6 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         self.name = name
         self._matrix = matrix
         self.sparse = issparse(matrix)
-        self.calculate_sid = hasattr(matrix, 'sid')
 
     def _assemble(self, mu=None):
         pass
