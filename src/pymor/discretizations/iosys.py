@@ -4,8 +4,12 @@
 
 from __future__ import absolute_import, division, print_function
 
+import numpy as np
+import scipy.sparse as sps
+
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.operators.interfaces import OperatorInterface
+from pymor.operators.numpy import NumpyMatrixOperator
 
 
 class IOSystem(DiscretizationInterface):
@@ -43,15 +47,15 @@ class LTISystem(IOSystem):
     Parameters
     ----------
     A
-        The |Operator| A.
+        The |NumPy array|, |SciPy spmatrix| or |Operator| A.
     B
-        The |Operator| B.
+        The |NumPy array|, |SciPy spmatrix| or |Operator| B.
     C
-        The |Operator| C.
+        The |NumPy array|, |SciPy spmatrix| or |Operator| C.
     D
-        The |Operator| D or None (then D is assumed to be zero).
+        The |NumPy array|, |SciPy spmatrix| or |Operator| D or None (then D is assumed to be zero).
     E
-        The |Operator| E or None (then E is assumed to be the identity).
+        The |NumPy array|, |SciPy spmatrix| or |Operator| E or None (then E is assumed to be the identity).
     cont_time
         `True` if the system is continuous-time, otherwise discrete-time.
 
@@ -63,6 +67,17 @@ class LTISystem(IOSystem):
     linear = True
 
     def __init__(self, A, B, C, D=None, E=None, cont_time=True):
+        if isinstance(A, (np.ndarray, sps.spmatrix)):
+            A = NumpyMatrixOperator(A)
+        if isinstance(B, (np.ndarray, sps.spmatrix)):
+            B = NumpyMatrixOperator(B)
+        if isinstance(C, (np.ndarray, sps.spmatrix)):
+            C = NumpyMatrixOperator(C)
+        if isinstance(D, (np.ndarray, sps.spmatrix)):
+            D = NumpyMatrixOperator(D)
+        if isinstance(E, (np.ndarray, sps.spmatrix)):
+            E = NumpyMatrixOperator(E)
+
         assert isinstance(A, OperatorInterface) and A.linear
         assert isinstance(B, OperatorInterface) and B.linear
         assert isinstance(C, OperatorInterface) and C.linear
@@ -88,7 +103,6 @@ class LTISystem(IOSystem):
     def norm(self):
         if self.cont_time:
             import pycmess
-            import numpy as np
             from pymor.vectorarrays.numpy import NumpyVectorArray
             import numpy.linalg as npla
 
