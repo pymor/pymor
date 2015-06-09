@@ -597,3 +597,6 @@ class VectorSpace(BasicInterface):
     def __contains__(self, other):
         """A |VectorArray| is contained in the space, iff it is an instance of its type and has the same subtype."""
         return isinstance(other, self.type) and self.subtype == other.subtype
+
+    def __repr__(self):
+        return 'VectorSpace({}, {})'.format(self.type.__name__, repr(self.subtype))
