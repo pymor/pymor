@@ -149,7 +149,8 @@ if __name__ == '__main__':
             filename = sys.argv[1]
             sys.argv = sys.argv[:1] + sys.argv[2:]
             execfile(filename)
-            quit()
+            import pymor.tools.mpi  # this is different from __main__
+            pymor.tools.mpi.quit()  # change global state in the right module
         else:
             try:
                 import IPython
