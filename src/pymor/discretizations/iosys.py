@@ -10,6 +10,9 @@ import scipy.sparse as sps
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.vectorarrays.numpy import NumpyVectorArray
+
+import pymess
 
 
 class IOSystem(DiscretizationInterface):
@@ -111,6 +114,101 @@ class LTISystem(IOSystem):
             raise NotImplementedError
 
 
+class eqn_lyap(pymess.equation):
+    """docstring for my_equation"""
+    def __init__(self, opt, A, E, RHS):
+        dim = A.source.dim
+
+        super(eqn_lyap, self).__init__(name="eqn_lyap", opt=opt, dim=dim)
+
+        self.RHS = RHS
+        self.A = A
+        self.E = E
+        self.p = []
+
+    def A_apply(self, op, y):
+        """docstring for A_apply"""
+        print("A_apply")
+
+        y = NumpyVectorArray(y)
+        if op == pymess.MESS_OP_NONE:
+            x = self.A.apply(y)
+        else:
+            x = self.A.apply_adjoint(y)
+        return x.data
+
+    def E_apply(self, op, y):
+        print("E_apply")
+
+        if self.E is None:
+            return y
+
+        y = NumpyVectorArray(y)
+        if op == pymess.MESS_OP_NONE:
+            x = self.E.apply(y)
+        else:
+            x = self.E.apply_adjoint(y)
+        return x.data
+
+    def As_apply(self, op, y):
+        print("As_apply")
+
+        y = NumpyVectorArray(y)
+        if op == pymess.MESS_OP_NONE:
+            x = self.A.apply_inverse(y)
+        else:
+            x = self.A.apply_adjoint_inverse(y)
+        return x.data
+
+    def Es_apply(self, op, y):
+        print("Es_apply")
+
+        if self.E is None:
+            return y
+
+        y = NumpyVectorArray(y)
+        if op == pymess.MESS_OP_NONE:
+            x = self.E.apply_inverse(y)
+        else:
+            x = self.E.apply_adjoint_inverse(y)
+        return x.data
+
+    def ApE_apply(self, op, p, idx_p, y):
+        print("Apply ApE p = %f (idx = %d)" % (p, idx_p))
+
+        y = NumpyVectorArray(y)
+        if op == pymess.MESS_OP_NONE:
+            x = self.A.apply(y)
+            if self.E is None:
+                x += p * y
+            else:
+                x += p * self.E.apply(y)
+        else:
+            x = self.A.apply_adjoint(y)
+            if self.E is None:
+                x += p.conjugate() * y
+            else:
+                x += p.conjugate() * self.E.apply_adjoint(y)
+        return x.data
+
+    def ApEs_apply(self, op, p, idx_p, y):
+        print("ApEs_apply - op = %s" % (op))
+        if self.E is None:
+            E = NumpyMatrixOperator(sps.eye(self.A.source.dim))
+        else:
+            E = self.E
+
+        if p.imag == 0.0:
+            ApE = self.A.assemble_lincomb((self.A, E), (1, p.real))
+        else:
+            ApE = self.A.assemble_lincomb((self.A, E), (1, p))
+
+        if op == pymess.MESS_OP_NONE:
+            return ApE.apply_inverse(y)
+        else:
+            return ApE.apply_adjoint_inverse(y)
+
+
 def solve_lyap(A, E, B):
     """Find a factor of the solution of a Lyapunov equation
 
@@ -131,13 +229,10 @@ def solve_lyap(A, E, B):
     B
         The |Operator| B.
     """
-    import pymess
-    from pymor.vectorarrays.numpy import NumpyVectorArray
-
-    if E is None:
-        Z = pymess.lyap(A._matrix, None, B._matrix)
-    else:
-        Z = pymess.lyap(A._matrix, E._matrix, B._matrix)
+    opts = pymess.options()
+    opts.type = pymess.MESS_OP_NONE
+    eqn = eqn_lyap(opts, A, E, B)
+    Z, status = pymess.lradi(eqn, opts)
     Z = np.array(Z)
     Z = NumpyVectorArray(Z)
 
