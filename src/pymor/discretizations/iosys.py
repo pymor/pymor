@@ -123,6 +123,8 @@ class eqn_lyap(pymess.equation):
 
         A * X * E^T + E * X * A^T + RHS * RHS^T = 0.
 
+    For the dual Lyapunov equation, opt.type needs to be pymess.MESS_OP_TRANSPOSE.
+
     Parameters
     ----------
     opt
@@ -217,7 +219,7 @@ class eqn_lyap(pymess.equation):
         return np.matrix(x.data).T
 
 
-def solve_lyap(A, E, B):
+def solve_lyap(A, E, B, trans=True):
     """Find a factor of the solution of a Lyapunov equation
 
     Returns factor Z such that Z * Z^T is approximately the solution X of a Lyapunov equation::
@@ -227,6 +229,14 @@ def solve_lyap(A, E, B):
     if E is None, otherwise a generalized Lyapunov equation::
 
         A * X * E^T + E * X * A^T + B * B^T = 0.
+
+    If trans is True, then solve::
+
+        A^T * X + X * A + B^T * B = 0
+
+    if E is None, otherwise::
+
+        A^T * X * E + E^T * X * A + B^T * B = 0.
 
     Parameters
     ----------
@@ -238,7 +248,8 @@ def solve_lyap(A, E, B):
         The |Operator| B.
     """
     opts = pymess.options()
-    opts.type = pymess.MESS_OP_NONE
+    if trans:
+        opts.type = pymess.MESS_OP_TRANSPOSE
     eqn = eqn_lyap(opts, A, E, B)
     Z, status = pymess.lradi(eqn, opts)
     Z = NumpyVectorArray(np.array(Z).T)
