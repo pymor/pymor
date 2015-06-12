@@ -170,7 +170,10 @@ class MPIVectorArrayAutoComm(MPIVectorArray):
         inds, vals = mpi.call(_MPIVectorArrayAutoComm_amax, self.obj_id, ind=ind)
         inds += offsets[:, np.newaxis]
         max_inds = np.argmax(vals, axis=0)
-        return np.choose(max_inds, inds), np.choose(max_inds, vals)
+        # np.choose does not work due to
+        # https://github.com/numpy/numpy/issues/3259
+        return (np.array([inds[max_inds[i], i] for i in range(len(max_inds))]),
+                np.array([vals[max_inds[i], i] for i in range(len(max_inds))]))
 
     def _get_dims(self):
         dims = mpi.call(_MPIVectorArrayAutoComm_dim, self.obj_id)
