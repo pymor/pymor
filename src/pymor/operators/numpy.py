@@ -236,6 +236,20 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             U.data[ind] if hasattr(ind, '__len__') else U.data[ind:ind + 1]
         return NumpyVectorArray(_apply_inverse(self._matrix, U, options=options), copy=False)
 
+    def apply_adjoint_inverse(self, U, ind=None, mu=None, options=None):
+        assert U in self.source
+        assert U.check_ind(ind)
+        if U.dim == 0:
+            if (self.range.dim == 0
+                    or isinstance(options, str) and options.startswith('least_squares')
+                    or isinstance(options, dict) and options['type'].startswith('least_squares')):
+                return NumpyVectorArray(np.zeros((U.len_ind(ind), self.range.dim)))
+            else:
+                raise InversionError
+        U = U.data if ind is None else \
+            U.data[ind] if hasattr(ind, '__len__') else U.data[ind:ind + 1]
+        return NumpyVectorArray(_apply_inverse(self._matrix.T, U, options=options), copy=False)
+
     def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
         """Project the operator to a subbasis.
 
