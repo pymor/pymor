@@ -106,77 +106,84 @@ class LTISystem(IOSystem):
     def norm(self):
         if self.cont_time:
             import numpy.linalg as npla
-
             Z = solve_lyap(self.A, self.E, self.B)
-
             return npla.norm(self.C.apply(Z).l2_norm())
         else:
             raise NotImplementedError
 
 
 class eqn_lyap(pymess.equation):
-    """docstring for my_equation"""
+    """Lyapunov equation class for pymess
+
+    Represents a Lyapunov equation::
+
+        A * X + X * A^T + RHS * RHS^T = 0
+
+    if E is None, otherwise a generalized Lyapunov equation::
+
+        A * X * E^T + E * X * A^T + RHS * RHS^T = 0.
+
+    Parameters
+    ----------
+    opt
+        pymess options structure
+    A
+        The |Operator| A.
+    E
+        The |Operator| E or None.
+    RHS
+        The |Operator| RHS.
+    """
     def __init__(self, opt, A, E, RHS):
         dim = A.source.dim
 
         super(eqn_lyap, self).__init__(name="eqn_lyap", opt=opt, dim=dim)
 
-        self.RHS = RHS
         self.A = A
         self.E = E
+        self.RHS = np.array(RHS._matrix)
         self.p = []
 
     def A_apply(self, op, y):
-        """docstring for A_apply"""
-        print("A_apply")
-
-        y = NumpyVectorArray(y)
+        y = NumpyVectorArray(np.array(y).T)
         if op == pymess.MESS_OP_NONE:
             x = self.A.apply(y)
         else:
             x = self.A.apply_adjoint(y)
-        return x.data
+        return np.matrix(x.data).T
 
     def E_apply(self, op, y):
-        print("E_apply")
-
         if self.E is None:
             return y
 
-        y = NumpyVectorArray(y)
+        y = NumpyVectorArray(np.array(y).T)
         if op == pymess.MESS_OP_NONE:
             x = self.E.apply(y)
         else:
             x = self.E.apply_adjoint(y)
-        return x.data
+        return np.matrix(x.data).T
 
     def As_apply(self, op, y):
-        print("As_apply")
-
-        y = NumpyVectorArray(y)
+        y = NumpyVectorArray(np.array(y).T)
         if op == pymess.MESS_OP_NONE:
             x = self.A.apply_inverse(y)
         else:
             x = self.A.apply_adjoint_inverse(y)
-        return x.data
+        return np.matrix(x.data).T
 
     def Es_apply(self, op, y):
-        print("Es_apply")
-
         if self.E is None:
             return y
 
-        y = NumpyVectorArray(y)
+        y = NumpyVectorArray(np.array(y).T)
         if op == pymess.MESS_OP_NONE:
             x = self.E.apply_inverse(y)
         else:
             x = self.E.apply_adjoint_inverse(y)
-        return x.data
+        return np.matrix(x.data).T
 
     def ApE_apply(self, op, p, idx_p, y):
-        print("Apply ApE p = %f (idx = %d)" % (p, idx_p))
-
-        y = NumpyVectorArray(y)
+        y = NumpyVectorArray(np.array(y).T)
         if op == pymess.MESS_OP_NONE:
             x = self.A.apply(y)
             if self.E is None:
@@ -189,12 +196,12 @@ class eqn_lyap(pymess.equation):
                 x += p.conjugate() * y
             else:
                 x += p.conjugate() * self.E.apply_adjoint(y)
-        return x.data
+        return np.matrix(x.data).T
 
     def ApEs_apply(self, op, p, idx_p, y):
-        print("ApEs_apply - op = %s" % (op))
+        y = NumpyVectorArray(np.array(y).T)
         if self.E is None:
-            E = NumpyMatrixOperator(sps.eye(self.A.source.dim))
+            E = NumpyMatrixOperator(sps.eye(self.dim))
         else:
             E = self.E
 
@@ -204,9 +211,10 @@ class eqn_lyap(pymess.equation):
             ApE = self.A.assemble_lincomb((self.A, E), (1, p))
 
         if op == pymess.MESS_OP_NONE:
-            return ApE.apply_inverse(y)
+            x = ApE.apply_inverse(y)
         else:
-            return ApE.apply_adjoint_inverse(y)
+            x = ApE.apply_adjoint_inverse(y)
+        return np.matrix(x.data).T
 
 
 def solve_lyap(A, E, B):
@@ -233,7 +241,6 @@ def solve_lyap(A, E, B):
     opts.type = pymess.MESS_OP_NONE
     eqn = eqn_lyap(opts, A, E, B)
     Z, status = pymess.lradi(eqn, opts)
-    Z = np.array(Z)
-    Z = NumpyVectorArray(Z)
+    Z = NumpyVectorArray(np.array(Z).T)
 
-    return Z
+    return Z.copy()
