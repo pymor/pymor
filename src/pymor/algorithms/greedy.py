@@ -5,7 +5,8 @@
 from __future__ import absolute_import, division, print_function
 
 import time
-from itertools import izip
+
+import numpy as np
 
 try:
     from simdb.run import add_start_times, add_stop_times
@@ -132,7 +133,8 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
                     #        Add special treatment for GenericRBReconstructor?
                     errors, mus = zip(*pool.apply(_estimate, rd=rd, d=discretization, rc=rc,
                                                   samples=samples, error_norm=error_norm))
-                max_err, max_err_mu = max(((err, mu) for err, mu in izip(errors, mus)), key=lambda t: t[0])
+                max_err_ind = np.argmax(errors)
+                max_err, max_err_mu = errors[max_err_ind], mus[max_err_ind]
             else:
                 if use_estimator:
                     errors = [rd.estimate(rd.solve(mu), mu) for mu in samples]
@@ -143,7 +145,8 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
                 # most error_norms will return an array of length 1 instead of a number, so we extract the numbers
                 # if necessary
                 errors = map(lambda x: x[0] if hasattr(x, '__len__') else x, errors)
-                max_err, max_err_mu = max(((err, mu) for err, mu in izip(errors, samples)), key=lambda t: t[0])
+                max_err_ind = np.argmax(errors)
+                max_err, max_err_mu = errors[max_err_ind], samples[max_err_ind]
             if HAVE_SIMDB:
                 add_stop_times('pymor_algorithms_greedy__estimate')
 
@@ -218,5 +221,6 @@ def _estimate(rd=None, d=None, rc=None, samples=None, error_norm=None):
     else:
         errors = [(d.solve(mu) - rc.reconstruct(rd.solve(mu))).l2_norm() for mu in samples]
     errors = map(lambda x: x[0] if hasattr(x, '__len__') else x, errors)
+    max_err_ind = np.argmax(errors)
 
-    return max(((err, mu) for err, mu in izip(errors, samples)), key=lambda t: t[0])
+    return errors[max_err_ind], samples[max_err_ind]
