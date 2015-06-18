@@ -82,6 +82,7 @@ class LTISystem(DiscretizationInterface):
         self.D = D
         self.E = E
         self.cont_time = cont_time
+        self.build_parameter_type(inherits=(A, B, C, D, E))
 
     def _solve(self):
         raise NotImplementedError('Discretization has no solver.')
