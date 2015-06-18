@@ -48,7 +48,11 @@ class LTISystem(DiscretizationInterface):
     Attributes
     ----------
     n
-        Size of x.
+        Order of the system.
+    m
+        Number of inputs.
+    p
+        Number of outputs.
     """
     linear = True
 
