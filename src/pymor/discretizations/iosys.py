@@ -33,15 +33,15 @@ class LTISystem(DiscretizationInterface):
     Parameters
     ----------
     A
-        The |NumPy array|, |SciPy spmatrix| or |Operator| A.
+        The |Operator| A.
     B
-        The |NumPy array|, |SciPy spmatrix| or |Operator| B.
+        The |Operator| B.
     C
-        The |NumPy array|, |SciPy spmatrix| or |Operator| C.
+        The |Operator| C.
     D
-        The |NumPy array|, |SciPy spmatrix| or |Operator| D or None (then D is assumed to be zero).
+        The |Operator| D or None (then D is assumed to be zero).
     E
-        The |NumPy array|, |SciPy spmatrix| or |Operator| E or None (then E is assumed to be the identity).
+        The |Operator| E or None (then E is assumed to be the identity).
     cont_time
         `True` if the system is continuous-time, otherwise discrete-time.
 
@@ -57,17 +57,6 @@ class LTISystem(DiscretizationInterface):
     linear = True
 
     def __init__(self, A, B, C, D=None, E=None, cont_time=True):
-        if isinstance(A, (np.ndarray, sps.spmatrix)):
-            A = NumpyMatrixOperator(A)
-        if isinstance(B, (np.ndarray, sps.spmatrix)):
-            B = NumpyMatrixOperator(B)
-        if isinstance(C, (np.ndarray, sps.spmatrix)):
-            C = NumpyMatrixOperator(C)
-        if isinstance(D, (np.ndarray, sps.spmatrix)):
-            D = NumpyMatrixOperator(D)
-        if isinstance(E, (np.ndarray, sps.spmatrix)):
-            E = NumpyMatrixOperator(E)
-
         assert isinstance(A, OperatorInterface) and A.linear
         assert isinstance(B, OperatorInterface) and B.linear
         assert isinstance(C, OperatorInterface) and C.linear
@@ -87,6 +76,41 @@ class LTISystem(DiscretizationInterface):
         self.E = E
         self.cont_time = cont_time
         self.build_parameter_type(inherits=(A, B, C, D, E))
+
+    @classmethod
+    def from_matrices(cls, A, B, C, D=None, E=None, cont_time=True):
+        """Creates LTISystem from matrices
+
+        Parameters
+        ----------
+        A
+            The |NumPy array|, |SciPy spmatrix| A.
+        B
+            The |NumPy array|, |SciPy spmatrix| B.
+        C
+            The |NumPy array|, |SciPy spmatrix| C.
+        D
+            The |NumPy array|, |SciPy spmatrix| D or None (then D is assumed to be zero).
+        E
+            The |NumPy array|, |SciPy spmatrix| E or None (then E is assumed to be the identity).
+        cont_time
+            `True` if the system is continuous-time, otherwise discrete-time.
+        """
+        assert isinstance(A, (np.ndarray, sps.spmatrix))
+        assert isinstance(B, (np.ndarray, sps.spmatrix))
+        assert isinstance(C, (np.ndarray, sps.spmatrix))
+        assert D is None or isinstance(D, (np.ndarray, sps.spmatrix))
+        assert E is None or isinstance(E, (np.ndarray, sps.spmatrix))
+
+        A = NumpyMatrixOperator(A)
+        B = NumpyMatrixOperator(B)
+        C = NumpyMatrixOperator(C)
+        if D is not None:
+            D = NumpyMatrixOperator(D)
+        if E is not None:
+            E = NumpyMatrixOperator(E)
+
+        return cls(A, B, C, D, E, cont_time)
 
     def _solve(self):
         raise NotImplementedError('Discretization has no solver.')
