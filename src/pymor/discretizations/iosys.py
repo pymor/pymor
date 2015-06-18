@@ -75,6 +75,8 @@ class LTISystem(DiscretizationInterface):
         self.D = D
         self.E = E
         self.cont_time = cont_time
+        self._cgf = None
+        self._ogf = None
         self.build_parameter_type(inherits=(A, B, C, D, E))
 
     @classmethod
@@ -115,6 +117,16 @@ class LTISystem(DiscretizationInterface):
     def _solve(self):
         raise NotImplementedError('Discretization has no solver.')
 
+    def compute_cgf(self):
+        """Computes the controllability gramian factor"""
+        if self._cgf is None:
+            self._cgf = solve_lyap(self.A, self.E, self.B)
+
+    def compute_ogf(self):
+        """Computes the observability gramian factor"""
+        if self._ogf is None:
+            self._ogf = solve_lyap(self.A, self.E, self.C, trans=True)
+
     def norm(self, name='H2'):
         """Computes a norm of the LTI system
 
@@ -126,8 +138,17 @@ class LTISystem(DiscretizationInterface):
         if name == 'H2':
             if self.cont_time:
                 import numpy.linalg as npla
-                Z = solve_lyap(self.A, self.E, self.B)
-                return npla.norm(self.C.apply(Z).l2_norm())
+
+                if self._cgf is not None:
+                    return npla.norm(self.C.apply(self._cgf).l2_norm())
+                if self._ogf is not None:
+                    return npla.norm(self.B.apply_adjoint(self._ogf).l2_norm())
+                if self.m <= self.p:
+                    self.compute_cgf()
+                    return npla.norm(self.C.apply(self._cgf).l2_norm())
+                else:
+                    self.compute_ogf()
+                    return npla.norm(self.B.apply_adjoint(self._ogf).l2_norm())
             else:
                 raise NotImplementedError
         else:
