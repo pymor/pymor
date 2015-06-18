@@ -115,13 +115,23 @@ class LTISystem(DiscretizationInterface):
     def _solve(self):
         raise NotImplementedError('Discretization has no solver.')
 
-    def norm(self):
-        if self.cont_time:
-            import numpy.linalg as npla
-            Z = solve_lyap(self.A, self.E, self.B)
-            return npla.norm(self.C.apply(Z).l2_norm())
+    def norm(self, name='H2'):
+        """Computes a norm of the LTI system
+
+        Parameters
+        ----------
+        name
+            Name of the norm ('H2')
+        """
+        if name == 'H2':
+            if self.cont_time:
+                import numpy.linalg as npla
+                Z = solve_lyap(self.A, self.E, self.B)
+                return npla.norm(self.C.apply(Z).l2_norm())
+            else:
+                raise NotImplementedError
         else:
-            raise NotImplementedError
+            raise NotImplementedError('Only H2 norm is implemented.')
 
 
 class eqn_lyap(pymess.equation):
