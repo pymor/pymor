@@ -15,24 +15,7 @@ from pymor.vectorarrays.numpy import NumpyVectorArray
 import pymess
 
 
-class IOSystem(DiscretizationInterface):
-    """Base class for input-output systems
-
-    Attributes
-    ----------
-    cont_time
-        `True` if the system is continuous-time, otherwise discrete-time.
-    m
-        Number of inputs.
-    p
-        Number of outputs.
-    """
-    cont_time = None
-    m = None
-    p = None
-
-
-class LTISystem(IOSystem):
+class LTISystem(DiscretizationInterface):
     """Class for linear time-invariant systems
 
     This class describes input-state-output systems given by::
