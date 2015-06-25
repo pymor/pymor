@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
@@ -10,6 +11,7 @@ import scipy.sparse as sps
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.vectorarrays.interfaces import VectorArrayInterface
 from pymor.vectorarrays.numpy import NumpyVectorArray
 
 import pymess
@@ -35,9 +37,9 @@ class LTISystem(DiscretizationInterface):
     A
         The |Operator| A.
     B
-        The |Operator| B.
+        The |VectorArray| B.
     C
-        The |Operator| C.
+        The |VectorArray| C^T.
     D
         The |Operator| D or None (then D is assumed to be zero).
     E
@@ -58,17 +60,17 @@ class LTISystem(DiscretizationInterface):
 
     def __init__(self, A, B, C, D=None, E=None, cont_time=True):
         assert isinstance(A, OperatorInterface) and A.linear
-        assert isinstance(B, OperatorInterface) and B.linear
-        assert isinstance(C, OperatorInterface) and C.linear
-        assert A.source == A.range == B.range == C.source
-        assert (D is None or isinstance(D, OperatorInterface) and D.linear and D.source == B.source and
-                D.range == C.range)
+        assert isinstance(B, VectorArrayInterface)
+        assert isinstance(C, VectorArrayInterface)
+        assert A.source == A.range and B in A.source and C in A.range
+        assert (D is None or isinstance(D, OperatorInterface) and D.linear and D.source.dim == len(B) and
+                D.range.dim == len(C))
         assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source
         assert cont_time in {True, False}
 
         self.n = A.source.dim
-        self.m = B.source.dim
-        self.p = C.range.dim
+        self.m = len(B)
+        self.p = len(C)
         self.A = A
         self.B = B
         self.C = C
@@ -77,7 +79,7 @@ class LTISystem(DiscretizationInterface):
         self.cont_time = cont_time
         self._cgf = None
         self._ogf = None
-        self.build_parameter_type(inherits=(A, B, C, D, E))
+        self.build_parameter_type(inherits=(A, D, E))
 
     @classmethod
     def from_matrices(cls, A, B, C, D=None, E=None, cont_time=True):
@@ -105,8 +107,8 @@ class LTISystem(DiscretizationInterface):
         assert E is None or isinstance(E, (np.ndarray, sps.spmatrix))
 
         A = NumpyMatrixOperator(A)
-        B = NumpyMatrixOperator(B)
-        C = NumpyMatrixOperator(C)
+        B = NumpyVectorArray(B.T)
+        C = NumpyVectorArray(C)
         if D is not None:
             D = NumpyMatrixOperator(D)
         if E is not None:
@@ -114,7 +116,7 @@ class LTISystem(DiscretizationInterface):
 
         return cls(A, B, C, D, E, cont_time)
 
-    def _solve(self):
+    def _solve(self, mu=None):
         raise NotImplementedError('Discretization has no solver.')
 
     def compute_cgf(self):
@@ -140,22 +142,22 @@ class LTISystem(DiscretizationInterface):
                 import numpy.linalg as npla
 
                 if self._cgf is not None:
-                    return npla.norm(self.C.apply(self._cgf).l2_norm())
+                    return npla.norm(self.C.dot(self._cgf))
                 if self._ogf is not None:
-                    return npla.norm(self.B.apply_adjoint(self._ogf).l2_norm())
+                    return npla.norm(self.B.dot(self._ogf))
                 if self.m <= self.p:
                     self.compute_cgf()
-                    return npla.norm(self.C.apply(self._cgf).l2_norm())
+                    return npla.norm(self.C.dot(self._cgf))
                 else:
                     self.compute_ogf()
-                    return npla.norm(self.B.apply_adjoint(self._ogf).l2_norm())
+                    return npla.norm(self.B.dot(self._ogf))
             else:
                 raise NotImplementedError
         else:
             raise NotImplementedError('Only H2 norm is implemented.')
 
 
-class eqn_lyap(pymess.equation):
+class LyapunovEquation(pymess.equation):
     """Lyapunov equation class for pymess
 
     Represents a Lyapunov equation::
@@ -177,16 +179,16 @@ class eqn_lyap(pymess.equation):
     E
         The |Operator| E or None.
     RHS
-        The |Operator| RHS.
+        The |VectorArray| RHS.
     """
     def __init__(self, opt, A, E, RHS):
         dim = A.source.dim
 
-        super(eqn_lyap, self).__init__(name="eqn_lyap", opt=opt, dim=dim)
+        super(LyapunovEquation, self).__init__(name='lyap_eqn', opt=opt, dim=dim)
 
         self.A = A
         self.E = E
-        self.RHS = np.array(RHS._matrix)
+        self.RHS = np.array(RHS.data.T)
         self.p = []
 
     def A_apply(self, op, y):
@@ -288,12 +290,12 @@ def solve_lyap(A, E, B, trans=True):
     E
         The |Operator| E or None.
     B
-        The |Operator| B.
+        The |VectorArray| B.
     """
     opts = pymess.options()
     if trans:
         opts.type = pymess.MESS_OP_TRANSPOSE
-    eqn = eqn_lyap(opts, A, E, B)
+    eqn = LyapunovEquation(opts, A, E, B)
     Z, status = pymess.lradi(eqn, opts)
     Z = NumpyVectorArray(np.array(Z).T)
 
