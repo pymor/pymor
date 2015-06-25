@@ -77,6 +77,8 @@ class LTISystem(DiscretizationInterface):
         self.D = D
         self.E = E
         self.cont_time = cont_time
+        self._w = None
+        self._tfw = None
         self._cgf = None
         self._ogf = None
         self.build_parameter_type(inherits=(A, D, E))
@@ -118,6 +120,44 @@ class LTISystem(DiscretizationInterface):
 
     def _solve(self, mu=None):
         raise NotImplementedError('Discretization has no solver.')
+
+    def bode(self, w):
+        """Computes the Bode plot
+
+        Parameters
+        ----------
+        w
+            Frequencies at which to compute the transfer function.
+
+        Returns
+        -------
+        tfw
+            Transfer function values at frequencies in w, returned as a 3D |NumPy array| of shape (p, m, len(w)).
+        """
+        self._w = w
+        self._tfw = np.zeros((self.p, self.m, len(w)), dtype=complex)
+
+        A = self.A
+        B = self.B
+        C = self.C
+        D = self.D
+        E = self.E
+        if E is None:
+            if not A.sparse:
+                import scipy as sp
+                E = NumpyMatrixOperator(sp.eye(self.n))
+            else:
+                import scipy.sparse as sps
+                E = NumpyMatrixOperator(sps.eye(self.n))
+
+        for i in xrange(len(w)):
+            iwEmA = A.assemble_lincomb((E, A), (1j * w[i], -1))
+            G = C.dot(iwEmA.apply_inverse(B))
+            if D is not None:
+                G += D._matrix
+            self._tfw[:, :, i] = G
+
+        return self._tfw.copy()
 
     def compute_cgf(self):
         """Computes the controllability gramian factor"""
