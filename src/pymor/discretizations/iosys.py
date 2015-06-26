@@ -6,6 +6,8 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
+import scipy as sp
+import scipy.linalg as spla
 import scipy.sparse as sps
 
 from pymor.discretizations.interfaces import DiscretizationInterface
@@ -120,6 +122,76 @@ class LTISystem(DiscretizationInterface):
 
     def _solve(self, mu=None):
         raise NotImplementedError('Discretization has no solver.')
+
+    def __add__(self, other):
+        """Add two LTI systems"""
+        assert isinstance(other, LTISystem)
+        assert self.m == other.m and self.p == other.p
+        assert self.cont_time == other.cont_time
+
+        # form A
+        if not self.A.sparse and not other.A.sparse:
+            A = spla.block_diag(self.A._matrix, other.A._matrix)
+        else:
+            A = sps.block_diag((self.A._matrix, other.A._matrix))
+            A = A.tocsr()
+
+        # form B
+        if not sps.issparse(self.B.data) and not sps.issparse(other.B.data):
+            B = sp.vstack((self.B.data.T, other.B.data.T))
+        else:
+            B = sps.vstack((sps.coo_matrix(self.B.data.T), sps.coo_matrix(other.B.data.T)))
+            B = B.tocsr()
+
+        # form C
+        if not sps.issparse(self.C.data) and not sps.issparse(other.C.data):
+            C = sp.hstack((self.C.data, other.C.data))
+        else:
+            C = sps.hstack((sps.coo_matrix(self.C.data), sps.coo_matrix(other.C.data)))
+            self.C = self.C.tocsr()
+
+        # form D
+        if self.D is None and other.D is None:
+            D = None
+        elif self.D is not None and other.D is None:
+            D = self.D
+        elif self.D is None and other.D is not None:
+            D = other.D
+        else:
+            D = self.D + other.D
+
+        # form E
+        if self.E is None and other.E is None:
+            E = None
+        elif self.E is None and other.E is not None:
+            E = sps.block_diag((sps.eye(self.n), other.E._matrix))
+            E = E.tocsr()
+        elif self.E is not None and other.E is None:
+            E = sps.block_diag((self.E._matrix, sps.eye(other.n)))
+            E = E.tocsr()
+        elif not self.E.sparse and not other.E.sparse:
+            E = spla.block_diag(self.E._matrix, other.E._matrix)
+        else:
+            E = sps.block_diag((self.E._matrix, other.E._matrix))
+            E = E.tocsr()
+
+        return LTISystem.from_matrices(A, B, C, D, E, self.cont_time)
+
+    def __neg__(self):
+        """Negate LTI system"""
+        A = self.A
+        B = self.B
+        C = NumpyVectorArray(-self.C.data)
+        D = self.D
+        if D is not None:
+            D = NumpyMatrixOperator(-D._matrix)
+        E = self.E
+
+        return LTISystem(A, B, C, D, E, self.cont_time)
+
+    def __sub__(self, other):
+        """Subtract two LTI systems"""
+        return self + (-other)
 
     def bode(self, w):
         """Computes the Bode plot
