@@ -178,21 +178,21 @@ class LTISystem(DiscretizationInterface):
             A = spla.block_diag(self.A._matrix, other.A._matrix)
         else:
             A = sps.block_diag((self.A._matrix, other.A._matrix))
-            A = A.tocsr()
+            A = A.tocsc()
 
         # form B
         if not sps.issparse(self.B.data) and not sps.issparse(other.B.data):
             B = sp.vstack((self.B.data.T, other.B.data.T))
         else:
             B = sps.vstack((sps.coo_matrix(self.B.data.T), sps.coo_matrix(other.B.data.T)))
-            B = B.tocsr()
+            B = B.tocsc()
 
         # form C
         if not sps.issparse(self.C.data) and not sps.issparse(other.C.data):
             C = sp.hstack((self.C.data, other.C.data))
         else:
             C = sps.hstack((sps.coo_matrix(self.C.data), sps.coo_matrix(other.C.data)))
-            self.C = self.C.tocsr()
+            C = C.tocsc()
 
         # form D
         if self.D is None and other.D is None:
@@ -209,15 +209,15 @@ class LTISystem(DiscretizationInterface):
             E = None
         elif self.E is None and other.E is not None:
             E = sps.block_diag((sps.eye(self.n), other.E._matrix))
-            E = E.tocsr()
+            E = E.tocsc()
         elif self.E is not None and other.E is None:
             E = sps.block_diag((self.E._matrix, sps.eye(other.n)))
-            E = E.tocsr()
+            E = E.tocsc()
         elif not self.E.sparse and not other.E.sparse:
             E = spla.block_diag(self.E._matrix, other.E._matrix)
         else:
             E = sps.block_diag((self.E._matrix, other.E._matrix))
-            E = E.tocsr()
+            E = E.tocsc()
 
         return LTISystem.from_matrices(A, B, C, D, E, self.cont_time)
 
@@ -267,7 +267,7 @@ class LTISystem(DiscretizationInterface):
                 E = NumpyMatrixOperator(sp.eye(self.n))
             else:
                 import scipy.sparse as sps
-                E = NumpyMatrixOperator(sps.eye(self.n))
+                E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
 
         for i in xrange(len(w)):
             iwEmA = A.assemble_lincomb((E, A), (1j * w[i], -1))
