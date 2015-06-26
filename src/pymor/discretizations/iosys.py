@@ -134,6 +134,9 @@ class LTISystem(DiscretizationInterface):
         tfw
             Transfer function values at frequencies in w, returned as a 3D |NumPy array| of shape (p, m, len(w)).
         """
+        if not self.cont_time:
+            raise NotImplementedError
+
         self._w = w
         self._tfw = np.zeros((self.p, self.m, len(w)), dtype=complex)
 
@@ -161,11 +164,17 @@ class LTISystem(DiscretizationInterface):
 
     def compute_cgf(self):
         """Computes the controllability gramian factor"""
+        if not self.cont_time:
+            raise NotImplementedError
+
         if self._cgf is None:
             self._cgf = solve_lyap(self.A, self.E, self.B)
 
     def compute_ogf(self):
         """Computes the observability gramian factor"""
+        if not self.cont_time:
+            raise NotImplementedError
+
         if self._ogf is None:
             self._ogf = solve_lyap(self.A, self.E, self.C, trans=True)
 
@@ -178,21 +187,18 @@ class LTISystem(DiscretizationInterface):
             Name of the norm ('H2')
         """
         if name == 'H2':
-            if self.cont_time:
-                import numpy.linalg as npla
+            import numpy.linalg as npla
 
-                if self._cgf is not None:
-                    return npla.norm(self.C.dot(self._cgf))
-                if self._ogf is not None:
-                    return npla.norm(self.B.dot(self._ogf))
-                if self.m <= self.p:
-                    self.compute_cgf()
-                    return npla.norm(self.C.dot(self._cgf))
-                else:
-                    self.compute_ogf()
-                    return npla.norm(self.B.dot(self._ogf))
+            if self._cgf is not None:
+                return npla.norm(self.C.dot(self._cgf))
+            if self._ogf is not None:
+                return npla.norm(self.B.dot(self._ogf))
+            if self.m <= self.p:
+                self.compute_cgf()
+                return npla.norm(self.C.dot(self._cgf))
             else:
-                raise NotImplementedError
+                self.compute_ogf()
+                return npla.norm(self.B.dot(self._ogf))
         else:
             raise NotImplementedError('Only H2 norm is implemented.')
 
