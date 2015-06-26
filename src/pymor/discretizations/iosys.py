@@ -106,6 +106,11 @@ class LTISystem(DiscretizationInterface):
             The |NumPy array|, |SciPy spmatrix| E or None (then E is assumed to be the identity).
         cont_time
             `True` if the system is continuous-time, otherwise discrete-time.
+
+        Returns
+        -------
+        lti
+            LTISystem with operators A, B, C, D, and E.
         """
         assert isinstance(A, (np.ndarray, sps.spmatrix))
         assert isinstance(B, (np.ndarray, sps.spmatrix))
@@ -122,6 +127,42 @@ class LTISystem(DiscretizationInterface):
             E = NumpyMatrixOperator(E)
 
         return cls(A, B, C, D, E, cont_time)
+
+    @classmethod
+    def from_mat_file(cls, file_name, cont_time=True):
+        """Creates LTISystem from matrices
+
+        Parameters
+        ----------
+        file_name
+            Name of the mat file (extension .mat does not need to be included)
+            containing A, B, C, and optionally D and E.
+        cont_time
+            `True` if the system is continuous-time, otherwise discrete-time.
+
+        Returns
+        -------
+        lti
+            LTISystem with operators A, B, C, D, and E.
+        """
+        import scipy.io as spio
+        mat_dict = spio.loadmat(file_name)
+
+        assert 'A' in mat_dict and 'B' in mat_dict and 'C' in mat_dict
+
+        A = mat_dict['A']
+        B = mat_dict['B']
+        C = mat_dict['C']
+        if 'D' in mat_dict:
+            D = mat_dict['D']
+        else:
+            D = None
+        if 'E' in mat_dict:
+            E = mat_dict['E']
+        else:
+            E = None
+
+        return cls.from_matrices(A, B, C, D, E, cont_time)
 
     def _solve(self, mu=None):
         raise NotImplementedError('Discretization has no solver.')
