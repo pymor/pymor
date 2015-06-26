@@ -83,6 +83,9 @@ class LTISystem(DiscretizationInterface):
         self._tfw = None
         self._cgf = None
         self._ogf = None
+        self._hsv = None
+        self._U = None
+        self._V = None
         self.build_parameter_type(inherits=(A, D, E))
 
     @classmethod
@@ -249,6 +252,18 @@ class LTISystem(DiscretizationInterface):
 
         if self._ogf is None:
             self._ogf = solve_lyap(self.A, self.E, self.C, trans=True)
+
+    def compute_hsv_U_V(self):
+        """Compute Hankel singular values and vectors"""
+        if self._hsv is None or self._U is None or self._V is None:
+            self.compute_cgf()
+            self.compute_ogf()
+
+            if self.E is None:
+                self._U, self._hsv, Vh = spla.svd(self._cgf.dot(self._ogf))
+            else:
+                self._U, self._hsv, Vh = spla.svd(self.E.apply2(self._cgf, self._ogf))
+            self._V = Vh.T
 
     def norm(self, name='H2'):
         """Computes a norm of the LTI system
