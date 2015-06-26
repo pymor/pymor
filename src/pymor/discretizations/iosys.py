@@ -438,7 +438,7 @@ class LyapunovEquation(pymess.equation):
         return np.matrix(x.data).T
 
 
-def solve_lyap(A, E, B, trans=True):
+def solve_lyap(A, E, B, trans=False):
     """Find a factor of the solution of a Lyapunov equation
 
     Returns factor Z such that Z * Z^T is approximately the solution X of a Lyapunov equation::
