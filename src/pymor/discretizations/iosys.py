@@ -10,9 +10,12 @@ import scipy as sp
 import scipy.linalg as spla
 import scipy.sparse as sps
 
+from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.discretizations.interfaces import DiscretizationInterface
+from pymor.operators.constructions import VectorArrayOperator
 from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.numpy import NumpyMatrixOperator
+from pymor.reductors.basic import GenericRBReconstructor
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 from pymor.vectorarrays.numpy import NumpyVectorArray
 
@@ -301,10 +304,12 @@ class LTISystem(DiscretizationInterface):
             self.compute_ogf()
 
             if self.E is None:
-                self._U, self._hsv, Vh = spla.svd(self._cgf.dot(self._ogf))
+                self._U, self._hsv, Vh = spla.svd(self._ogf.dot(self._cgf))
             else:
-                self._U, self._hsv, Vh = spla.svd(self.E.apply2(self._cgf, self._ogf))
-            self._V = Vh.T
+                self._U, self._hsv, Vh = spla.svd(self.E.apply2(self._ogf, self._cgf))
+
+            self._U = NumpyVectorArray(self._U.T)
+            self._V = NumpyVectorArray(Vh)
 
     def norm(self, name='H2'):
         """Computes a norm of the LTI system
@@ -327,6 +332,53 @@ class LTISystem(DiscretizationInterface):
                 return spla.norm(self.B.dot(self._ogf))
         else:
             raise NotImplementedError('Only H2 norm is implemented.')
+
+    def bt(self, r):
+        """Reduce using balanced truncation to order r
+
+        Parameters
+        ----------
+        r
+            Order of the reduced model.
+
+        Returns
+        -------
+        rom
+            Reduced |LTISystem|.
+        rc
+            The reconstructor providing a `reconstruct(U)` method which reconstructs
+            high-dimensional solutions from solutions `U` of the reduced |LTISystem|.
+        reduction_data
+            Additional data produced by the reduction process. Contains projection matrices Vr and Wr.
+        """
+        assert 0 < r < self.n
+
+        self.compute_hsv_U_V()
+
+        print(self._V.dim)
+        print(len(self._V))
+        print(self._cgf.dim)
+        print(len(self._cgf))
+
+        Vr = VectorArrayOperator(self._cgf).apply(self._V, ind=range(r))
+        Wr = VectorArrayOperator(self._ogf).apply(self._U, ind=range(r))
+        Vr = gram_schmidt(Vr, atol=0, rtol=0)
+        Wr = gram_schmidt(Wr, atol=0, rtol=0)
+
+        Ar = NumpyMatrixOperator(self.A.apply2(Vr, Wr))
+        Br = NumpyVectorArray(Wr.dot(self.B).T)
+        Cr = NumpyVectorArray(self.C.dot(Vr))
+        Dr = self.D
+        if self.E is None:
+            Er = NumpyMatrixOperator(Wr.dot(Vr))
+        else:
+            Er = NumpyMatrixOperator(self.E.apply2(Vr, Wr))
+
+        rom = LTISystem(Ar, Br, Cr, Dr, Er)
+        rc = GenericRBReconstructor(Vr)
+        reduction_data = {'Vr': Vr, 'Wr': Wr}
+
+        return rom, rc, reduction_data
 
 
 class LyapunovEquation(pymess.equation):
