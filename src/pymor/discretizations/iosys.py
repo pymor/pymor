@@ -422,7 +422,7 @@ class LyapunovEquation(pymess.equation):
     def ApEs_apply(self, op, p, idx_p, y):
         y = NumpyVectorArray(np.array(y).T)
         if self.E is None:
-            E = NumpyMatrixOperator(sps.eye(self.dim))
+            E = NumpyMatrixOperator(sps.eye(self.dim, format='csc'))
         else:
             E = self.E
 
