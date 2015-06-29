@@ -315,18 +315,16 @@ class LTISystem(DiscretizationInterface):
             Name of the norm ('H2')
         """
         if name == 'H2':
-            import numpy.linalg as npla
-
             if self._cgf is not None:
-                return npla.norm(self.C.dot(self._cgf))
+                return spla.norm(self.C.dot(self._cgf))
             if self._ogf is not None:
-                return npla.norm(self.B.dot(self._ogf))
+                return spla.norm(self.B.dot(self._ogf))
             if self.m <= self.p:
                 self.compute_cgf()
-                return npla.norm(self.C.dot(self._cgf))
+                return spla.norm(self.C.dot(self._cgf))
             else:
                 self.compute_ogf()
-                return npla.norm(self.B.dot(self._ogf))
+                return spla.norm(self.B.dot(self._ogf))
         else:
             raise NotImplementedError('Only H2 norm is implemented.')
 
