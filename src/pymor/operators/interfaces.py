@@ -164,12 +164,12 @@ class OperatorInterface(ImmutableInterface, Parametric):
         pass
 
     @abstractmethod
-    def apply_inverse(self, U, ind=None, mu=None, options=None):
+    def apply_inverse(self, V, ind=None, mu=None, options=None):
         """Apply the inverse operator.
 
         Parameters
         ----------
-        U
+        V
             |VectorArray| of vectors to which the inverse operator is applied.
         ind
             The indices of the vectors in `U` to which the operator shall be
