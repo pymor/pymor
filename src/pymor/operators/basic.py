@@ -105,13 +105,13 @@ class OperatorBase(OperatorInterface):
         else:
             return {}
 
-    def apply_inverse(self, U, ind=None, mu=None, options=None):
+    def apply_inverse(self, V, ind=None, mu=None, options=None):
         from pymor.operators.constructions import FixedParameterOperator
         assembled_op = self.assemble(mu)
         if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
-            return assembled_op.apply_inverse(U, ind=ind, options=options)
+            return assembled_op.apply_inverse(V, ind=ind, options=options)
         else:
-            return genericsolvers.apply_inverse(assembled_op, U.copy(ind), options=options)
+            return genericsolvers.apply_inverse(assembled_op, V.copy(ind), options=options)
 
     def as_vector(self, mu=None):
         if not self.linear:

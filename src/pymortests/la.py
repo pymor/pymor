@@ -28,7 +28,7 @@ def test_gram_schmidt():
     for i in (1, 32):
         b = NumpyVectorArray(np.identity(i, dtype=np.float))
         a = gram_schmidt(b)
-        assert b == a
+        assert np.all(b.almost_equal(a))
     c = NumpyVectorArray([[1.0, 0], [0., 0]])
     a = gram_schmidt(c)
     assert (a.data == np.array([[1.0, 0]])).all()
