@@ -88,12 +88,6 @@ import uuid
 
 import numpy as np
 
-try:
-    import contracts
-    HAVE_CONTRACTS = True
-except ImportError:
-    HAVE_CONTRACTS = False
-
 from pymor.core import decorators, backports, logger
 from pymor.core.exceptions import ConstError, SIDGenerationError
 
@@ -125,15 +119,9 @@ class UberMeta(abc.ABCMeta):
     def __init__(cls, name, bases, namespace):
         """Metaclass of :class:`BasicInterface`.
 
-        I tell base classes when I derive a new class from them. I publish
-        a new contract type for each new class I create. I create a logger
+        I tell base classes when I derive a new class from them. I create a logger
         for each class I create. I add an `init_args` attribute to the class.
         """
-        # monkey a new contract into the decorator module so checking for that type at runtime can work
-        if HAVE_CONTRACTS:
-            dname = (cls.__module__ + '.' + name).replace('__main__.', 'main.').replace('.', '_')
-            if dname not in decorators.__dict__:
-                decorators.__dict__[dname] = contracts.new_contract(dname, lambda x: isinstance(x, cls))
 
         # all bases except object get the derived class' name appended
         for base in [b for b in bases if b != object]:
@@ -148,7 +136,7 @@ class UberMeta(abc.ABCMeta):
         abc.ABCMeta.__init__(cls, name, bases, namespace)
 
     def __new__(cls, classname, bases, classdict):
-        """I copy contract decorations and docstrings from base class methods to deriving classes.
+        """I copy docstrings from base class methods to deriving classes.
         I also forward "abstract{class|static}method" decorations in the base class to "{class|static}method"
         decorations in the new subclass.
 
@@ -164,34 +152,16 @@ class UberMeta(abc.ABCMeta):
                 # first copy/fixup docs
                 item.__doc__ = decorators.fixup_docstring(item.__doc__)
                 base_doc = None
-                contract_kwargs = dict()
                 for base in bases:
                     base_func = getattr(base, item.__name__, None)
                     if not DONT_COPY_DOCSTRINGS:
-                        has_contract = False
                         if base_func:
                             base_doc = getattr(base_func, '__doc__', None)
-                            if HAVE_CONTRACTS:
-                                has_contract = getattr(base_func, 'decorated', None) == 'contract'
-                                contract_kwargs = getattr(base_func, 'contract_kwargs', contract_kwargs)
                         if base_doc:
                             doc = decorators.fixup_docstring(getattr(item, '__doc__', ''))
-                            if HAVE_CONTRACTS:
-                                has_base_contract_docs = decorators.contains_contract(base_doc)
-                                has_contract_docs = decorators.contains_contract(doc)
-                                if has_base_contract_docs and not has_contract_docs:
-                                    base_doc += doc
-                                elif not has_base_contract_docs and doc is not None:
-                                    base_doc = doc
-                            elif doc is not None:
+                            if doc is not None:
                                 base_doc = doc
                             item.__doc__ = base_doc
-                        if has_contract:
-                            # TODO why is the rebind necessary?
-                            classdict['_H_%s' % attr] = item
-                            contract_kwargs = contract_kwargs or dict()
-                            p = decorators.contracts_decorate(item, modify_docstring=True, **contract_kwargs)
-                            classdict[attr] = p
                     if (hasattr(base_func, "__isabstractstaticmethod__") and
                             getattr(base_func, "__isabstractstaticmethod__")):
                         classdict[attr] = staticmethod(classdict[attr])
@@ -392,7 +362,6 @@ class BasicInterface(object):
         return self._uid.uid
 
 
-contract = decorators.contract
 abstractmethod = abc.abstractmethod
 abstractproperty = abc.abstractproperty
 

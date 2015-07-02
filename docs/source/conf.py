@@ -37,7 +37,6 @@ if os.environ.get('READTHEDOCS', None) == 'True':
         QWidget = object
 
     MOCK_MODULES = ['scipy', 'scipy.sparse', 'scipy.linalg', 'scipy.sparse.linalg', 'scipy.io', 'scipy.version',
-                    'contracts',
                     'docopt',
                     'dogpile', 'dogpile.cache', 'dogpile.cache.backends', 'dogpile.cache.backends.file',
                     'dogpile.cache.compat',
