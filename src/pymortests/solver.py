@@ -22,6 +22,7 @@ class GenericOperator(OperatorBase):
     def apply(self, U, ind=None, mu=None):
         return self.op.apply(U, ind=ind, mu=mu)
 
+    # TODO this signature differs from OperatorBase.apply_adjoint
     def apply_adjoint(self, U, ind=None, mu=None):
         return self.op.apply_adjoint(U, ind=ind, mu=mu)
 
