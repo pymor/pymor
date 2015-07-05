@@ -119,7 +119,7 @@ class OperatorBase(OperatorInterface):
         elif self.source.dim == 1 and self.source.type is NumpyVectorArray:
             return self.apply(NumpyVectorArray(1), mu=mu)
         elif self.range.dim == 1 and self.range.type is NumpyVectorArray:
-            raise NotImplementedError
+            return self.apply_adjoint(NumpyVectorArray(1), mu=mu)
         else:
             raise TypeError('This operator does not represent a vector or linear functional.')
 
