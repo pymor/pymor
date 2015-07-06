@@ -10,7 +10,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.interfaces import ImmutableInterface
 from pymor.core.logger import getLogger
 from pymor.operators.basic import OperatorBase
-from pymor.operators.constructions import LincombOperator, SelectionOperator, induced_norm
+from pymor.operators.constructions import LincombOperator, SelectionOperator, Concatenation, induced_norm
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.reductors.basic import GenericRBReconstructor
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -94,16 +94,21 @@ def reduce_residual(operator, functional=None, RB=None, product=None, extends=No
             super(CollectionError, self).__init__()
             self.op = op
 
-    def collect_operator_ranges(op, ind, residual_range):
+    def collect_operator_ranges(op, source, ind, residual_range):
         if isinstance(op, (LincombOperator, SelectionOperator)):
             for o in op.operators:
-                collect_operator_ranges(o, ind, residual_range)
+                collect_operator_ranges(o, source, ind, residual_range)
         elif isinstance(op, EmpiricalInterpolatedOperator):
             if hasattr(op, 'collateral_basis') and ind == -1:
                 residual_range.append(op.collateral_basis)
+        elif isinstance(op, Concatenation):
+            firstrange = op.first.range.empty()
+            collect_operator_ranges(op.first, source, ind, firstrange)
+            for j in range(len(firstrange)):
+                collect_operator_ranges(op.second, firstrange, j, residual_range)
         elif op.linear and not op.parametric:
             if ind >= 0:
-                residual_range.append(op.apply(RB, ind=ind))
+                residual_range.append(op.apply(source, ind=ind))
         else:
             raise CollectionError(op)
 
@@ -122,7 +127,7 @@ def reduce_residual(operator, functional=None, RB=None, product=None, extends=No
         try:
             if i == -1:
                 collect_functional_ranges(functional, new_residual_range)
-            collect_operator_ranges(operator, i, new_residual_range)
+            collect_operator_ranges(operator, RB, i, new_residual_range)
         except CollectionError as e:
             logger.warn('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
             operator = operator.projected(None, RB)
