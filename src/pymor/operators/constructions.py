@@ -231,6 +231,14 @@ class Concatenation(OperatorBase):
         else:
             return Concatenation(restricted_second, restricted_first), first_source_dofs
 
+    def projected(self, range_basis, source_basis, product=None, name=None):
+        projected_first = self.first.projected(None, source_basis, product=None)
+        if isinstance(projected_first, VectorArrayOperator) and not projected_first.transposed:
+            return self.second.projected(range_basis, projected_first._array, product=product, name=name)
+        else:
+            projected_second = self.second.projected(range_basis, None, product=product)
+            return Concatenation(projected_second, projected_first, name=name or self.name + '_projected')
+
 
 class ComponentProjection(OperatorBase):
     """|Operator| representing the projection of a Vector on some of its components.
