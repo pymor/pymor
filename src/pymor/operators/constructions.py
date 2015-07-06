@@ -756,6 +756,12 @@ class SelectionOperator(OperatorBase):
         operator_number = self._get_operator_number(mu)
         return self.operators[operator_number].as_vector(mu=mu)
 
+    def projected(self, range_basis, source_basis, product=None, name=None):
+        projected_operators = [op.projected(range_basis, source_basis, product=product, name=name)
+                               for op in self.operators]
+        return SelectionOperator(projected_operators, self.parameter_functional, self.boundaries,
+                                 name or self.name + '_projected')
+
 
 @defaults('raise_negative', 'tol')
 def induced_norm(product, raise_negative=True, tol=1e-10, name=None):
