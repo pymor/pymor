@@ -10,7 +10,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.interfaces import ImmutableInterface
 from pymor.core.logger import getLogger
 from pymor.operators.basic import OperatorBase
-from pymor.operators.constructions import LincombOperator, induced_norm
+from pymor.operators.constructions import LincombOperator, SelectionOperator, induced_norm
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.reductors.basic import GenericRBReconstructor
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -95,7 +95,7 @@ def reduce_residual(operator, functional=None, RB=None, product=None, extends=No
             self.op = op
 
     def collect_operator_ranges(op, ind, residual_range):
-        if isinstance(op, LincombOperator):
+        if isinstance(op, (LincombOperator, SelectionOperator)):
             for o in op.operators:
                 collect_operator_ranges(o, ind, residual_range)
         elif isinstance(op, EmpiricalInterpolatedOperator):
@@ -108,7 +108,7 @@ def reduce_residual(operator, functional=None, RB=None, product=None, extends=No
             raise CollectionError(op)
 
     def collect_functional_ranges(op, residual_range):
-        if isinstance(op, LincombOperator):
+        if isinstance(op, (LincombOperator, SelectionOperator)):
             for o in op.operators:
                 collect_functional_ranges(o, residual_range)
         elif op.linear and not op.parametric:
