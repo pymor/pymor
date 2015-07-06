@@ -197,9 +197,10 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         return self
 
     def as_vector(self, mu=None):
-        if self.source.dim != 1 and self.range.dim != 1:
+        matrix = self._matrix
+        if matrix.shape[0] != 1 and matrix.shape[1] != 1:
             raise TypeError('This operator does not represent a vector or linear functional.')
-        return NumpyVectorArray(self._matrix.ravel(), copy=True)
+        return NumpyVectorArray(matrix.ravel(), copy=True)
 
     def apply(self, U, ind=None, mu=None):
         assert U in self.source
