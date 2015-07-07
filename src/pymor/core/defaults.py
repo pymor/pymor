@@ -34,7 +34,7 @@ If pyMOR is imported, it will automatically search for configuration
 files named `pymor_defaults.py` in the current working directory.
 The first file found will be loaded via :func:`load_defaults_from_file`.
 However, for your security, this file will only be loaded, if it is
-owned by the user running the Python iterpreter.
+owned by the user running the Python interpreter.
 (:func:`load_defaults_from_file` uses `exec` to load the configuration.)
 As an alternative, the environment variable `PYMOR_DEFAULTS` can be
 used to specify the path of a configuration file. If empty or set to
@@ -282,7 +282,7 @@ def {0}({1}):
         if func.__name__ in ('wrapped_func', 'argname', 'defaultsdict'):
             raise ValueError('Functions decorated with @default may not have the name ' + func.__name__)
         wrapper_globals = {'wrapped_func': func, 'argnames': argnames, 'defaultsdict': defaultsdict}
-        exec wrapper_code in wrapper_globals
+        exec(wrapper_code, wrapper_globals)
         wrapper = functools.wraps(func)(wrapper_globals[func.__name__])
 
         # On Python 2 we have to add the __wrapped__ attribute to the wrapper
@@ -479,7 +479,7 @@ def load_defaults_from_file(filename='./pymor_defaults.py'):
         Path of the configuration file.
     """
     env = {}
-    exec open(filename).read() in env
+    exec(open(filename).read(), env)
     try:
         _default_container.update(env['d'], type='file')
     except KeyError as e:
