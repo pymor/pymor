@@ -21,7 +21,7 @@ from types import FunctionType, ModuleType
 
 
 try:
-    import cPickle as pickle
+    import pickle as pickle
 except ImportError:
     import pickle as pickle
 

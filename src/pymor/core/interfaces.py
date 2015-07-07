@@ -76,8 +76,8 @@ functionality:
 
 from __future__ import absolute_import, division, print_function
 import abc
-from cPickle import dumps
-from copy_reg import dispatch_table
+from pickle import dumps
+from copyreg import dispatch_table
 import hashlib
 import inspect
 import itertools

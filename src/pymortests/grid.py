@@ -4,7 +4,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from cPickle import dumps, loads
+from pickle import dumps, loads
 from itertools import product
 
 import numpy as np
