@@ -163,12 +163,9 @@ class SQLiteRegion(CacheRegion):
     def set(self, key, value):
         fd, file_path = tempfile.mkstemp('.dat', datetime.datetime.now().isoformat()[:-7] + '-', self.path)
         filename = os.path.basename(file_path)
-        try:
-            f = os.fdopen(fd, 'w')
+        with os.fdopen(fd, 'w') as f:
             dump(value, f)
             file_size = f.tell()
-        finally:
-            f.close()
         conn = self.conn
         c = conn.cursor()
         try:
