@@ -191,7 +191,7 @@ def deim(U, modes=None, error_norm=None, product=None):
     interpolation_matrix = np.zeros((0, 0))
     errs = []
 
-    for i in xrange(len(collateral_basis)):
+    for i in range(len(collateral_basis)):
 
         if len(interpolation_dofs) > 0:
             coefficients = np.linalg.solve(interpolation_matrix,

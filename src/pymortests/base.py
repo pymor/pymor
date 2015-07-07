@@ -71,7 +71,7 @@ def runmodule(filename):
 
 
 def polynomials(max_order):
-    for n in xrange(max_order + 1):
+    for n in range(max_order + 1):
         f = lambda x: np.power(x, n)
 
         def deri(k):

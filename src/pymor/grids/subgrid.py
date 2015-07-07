@@ -46,7 +46,7 @@ class SubGrid(AffineGridInterface):
 
         subentities = [np.arange(len(parent_indices[0]), dtype=np.int32).reshape((-1, 1))]
 
-        for codim in xrange(1, self.dim + 1):
+        for codim in range(1, self.dim + 1):
             SUBE = grid.subentities(0, codim)[parent_indices[0]]
             if np.any(SUBE < 0):
                 raise NotImplementedError

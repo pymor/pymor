@@ -65,7 +65,7 @@ if HAVE_ALL:
                 xs = centers
             else:
                 xs = np.repeat(centers, 2)[1:-1]
-            for i in xrange(count):
+            for i in range(count):
                 if separate_plots:
                     figure.add_subplot(int(count / 2) + count % 2, 2, i + 1)
                     axes = figure.gca()

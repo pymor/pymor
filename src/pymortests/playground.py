@@ -24,7 +24,7 @@ def test_eval():
                  (ExpressionFunction(['x**2', 'sin(x)'], 'x'), lambda x: np.array([x ** 2, sin(x)])),
                  (ExpressionFunction(['exp(xp)'], 'xp'), lambda x: np.array([exp(x)]))]
     for (fn, fe) in FUNCTIONS:
-        for x in (random.uniform(0, 1) for _ in xrange(9000)):
+        for x in (random.uniform(0, 1) for _ in range(9000)):
             np.testing.assert_array_almost_equal(fn([x]), fe(x))
 
 def test_gmsh():

@@ -127,7 +127,7 @@ class NumpyVectorArray(VectorArrayInterface):
             if hasattr(ind, '__len__'):
                 if len(ind) == 0:
                     return
-                remaining = sorted(set(xrange(len(self))) - set(ind))
+                remaining = sorted(set(range(len(self))) - set(ind))
                 self._array = self._array[remaining]
             else:
                 assert -self._len < ind < self._len

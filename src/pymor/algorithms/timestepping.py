@@ -156,7 +156,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None, num_va
     t = t0
     U = U0.copy()
 
-    for n in xrange(nt):
+    for n in range(nt):
         t += dt
         mu['_t'] = t
         if F_time_dep:
@@ -202,14 +202,14 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
     U = U0.copy()
 
     if F is None:
-        for n in xrange(nt):
+        for n in range(nt):
             t += dt
             mu['_t'] = t
             U.axpy(-dt, A.apply(U, mu=mu))
             while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
                 R.append(U)
     else:
-        for n in xrange(nt):
+        for n in range(nt):
             t += dt
             mu['_t'] = t
             if F_time_dep:

@@ -115,18 +115,18 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, coer
     elif not d.operator.parametric:
         R_Os = [space.empty(reserve=len(RB))]
         RR_Os = [space.empty(reserve=len(RB))]
-        for i in xrange(len(RB)):
+        for i in range(len(RB)):
             append_vector(-d.operator.apply(RB, ind=i), R_Os[0], RR_Os[0])
     else:
-        R_Os = [space.empty(reserve=len(RB)) for _ in xrange(len(d.operator.operators))]
-        RR_Os = [space.empty(reserve=len(RB)) for _ in xrange(len(d.operator.operators))]
+        R_Os = [space.empty(reserve=len(RB)) for _ in range(len(d.operator.operators))]
+        RR_Os = [space.empty(reserve=len(RB)) for _ in range(len(d.operator.operators))]
         if old_RB_size > 0:
             for op, R_O, RR_O, old_R_O, old_RR_O in izip(d.operator.operators, R_Os, RR_Os,
                                                          old_data['R_Os'], old_data['RR_Os']):
                 R_O.append(old_R_O)
                 RR_O.append(old_RR_O)
         for op, R_O, RR_O in izip(d.operator.operators, R_Os, RR_Os):
-            for i in xrange(old_RB_size, len(RB)):
+            for i in range(old_RB_size, len(RB)):
                 append_vector(-op.apply(RB, [i]), R_O, RR_O)
 
     # compute Gram matrix of the residuals

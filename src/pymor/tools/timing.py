@@ -68,5 +68,5 @@ class Timer(object):
 
 def busywait(amount):
     arr = np.arange(1000)
-    for _ in xrange(amount):
+    for _ in range(amount):
         np.random.shuffle(arr)

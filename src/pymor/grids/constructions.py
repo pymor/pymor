@@ -67,8 +67,8 @@ def flatten_grid(grid):
         new_points[:, 0] = critical_vertices
         num_points = grid.size(dim)
         entity_map = np.empty((0,), dtype=np.int32)
-        for i in xrange(new_points.shape[1]):
-            for j in xrange(i):
+        for i in range(new_points.shape[1]):
+            for j in range(i):
                 new_points[:, i] = np.where(supe[:, i] == -1, new_points[:, i],
                                             np.where(np.all(float_cmp(coord[:, i], coord[:, j]), axis=1),
                                                      new_points[:, j], new_points[:, i]))

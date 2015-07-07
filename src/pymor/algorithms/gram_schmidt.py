@@ -60,7 +60,7 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
 
     # main loop
     remove = []
-    for i in xrange(offset, len(A)):
+    for i in range(offset, len(A)):
         # first calculate norm
         if product is None:
             initial_norm = A.l2_norm(ind=i)[0]
@@ -88,7 +88,7 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
                     logger.info('Orthonormalizing vector {} again'.format(i))
 
                 # orthogonalize to all vectors left
-                for j in xrange(i):
+                for j in range(i):
                     if j in remove:
                         continue
                     if product is None:

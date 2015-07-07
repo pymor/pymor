@@ -25,7 +25,7 @@ def ind_complement(v, ind):
         return []
     if isinstance(ind, Number):
         ind = [ind]
-    return sorted(set(xrange(len(v))) - set(ind))
+    return sorted(set(range(len(v))) - set(ind))
 
 
 def indexed(v, ind):
@@ -836,7 +836,7 @@ def test_amax(vector_array):
         max_inds, max_vals = v.amax(ind)
         assert np.allclose(np.abs(max_vals), v.sup_norm(ind))
         if ind is None:
-            ind = xrange(len(v))
+            ind = range(len(v))
         elif isinstance(ind, Number):
             ind = [ind]
         for i, max_ind, max_val in zip(ind, max_inds, max_vals):

@@ -278,7 +278,7 @@ class NonlinearAdvectionOperator(OperatorBase):
         if not hasattr(self, '_grid_data'):
             self._fetch_grid_data()
 
-        ind = xrange(len(U)) if ind is None else ind
+        ind = range(len(U)) if ind is None else ind
         U = U.data
         R = np.zeros((len(ind), self.source.dim))
 

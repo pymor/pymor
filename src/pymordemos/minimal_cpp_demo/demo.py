@@ -21,7 +21,7 @@ from wrapper import WrappedDiffusionOperator
 
 def discretize(n, nt, blocks):
     h = 1. / blocks
-    ops = [WrappedDiffusionOperator.create(n, h * i, h * (i + 1)) for i in xrange(blocks)]
+    ops = [WrappedDiffusionOperator.create(n, h * i, h * (i + 1)) for i in range(blocks)]
     # operator = WrappedDiffusionOperator.create(n, 0, 1)
     operator = LincombOperator(ops, coefficients_name='diffusion_coefficients')
 
