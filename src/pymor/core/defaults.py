@@ -97,7 +97,7 @@ class DefaultContainer(object):
             raise ValueError('''Function with name {} already registered for default values!
 For Python 2 compatibility, please supply the '_qualname' parameter when decorating
 methods of classes!'''.format(path))
-        for k, v in defaultsdict.iteritems():
+        for k, v in defaultsdict.items():
             self._data[path + '.' + k]['code'] = v
             self._data[path + '.' + k]['sid_ignore'] = k in sid_ignore
 
@@ -111,7 +111,7 @@ methods of classes!'''.format(path))
         path = qualname or getattr(func, '__qualname__', func.__module__ + '.' + func.__name__)
         self.registered_functions[path] = func
         split_path = path.split('.')
-        for k, v in self._data.iteritems():
+        for k, v in self._data.items():
             if k.split('.')[:-1] == split_path:
                 v['func'] = func
 
@@ -119,7 +119,7 @@ methods of classes!'''.format(path))
         if hasattr(self, '_sid'):
             del self._sid
         assert type in ('user', 'file')
-        for k, v in defaults.iteritems():
+        for k, v in defaults.items():
             k_parts = k.split('.')
 
             func = self._data[k].get('func', None)

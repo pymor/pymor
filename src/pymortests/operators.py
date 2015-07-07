@@ -168,7 +168,7 @@ def test_apply_adjoint_2_with_products(operator_with_arrays_and_products):
 
 def test_apply_inverse(operator_with_arrays):
     op, mu, _, V = operator_with_arrays
-    for options in chain([None], op.invert_options, op.invert_options.itervalues()):
+    for options in chain([None], op.invert_options, op.invert_options.values()):
         for ind in valid_inds(V):
             try:
                 U = op.apply_inverse(V, mu=mu, ind=ind, options=options)

@@ -710,7 +710,7 @@ def _apply_inverse(matrix, V, options=None):
         options = default_options.values()[0]
     elif isinstance(options, str):
         if options == 'least_squares':
-            for k, v in default_options.iteritems():
+            for k, v in default_options.items():
                 if k.startswith('least_squares'):
                     options = v
                     break

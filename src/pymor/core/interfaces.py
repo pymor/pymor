@@ -590,7 +590,7 @@ class _SIDGenerator(object):
             return (t,) + tuple(self.deterministic_state(x) for x in sorted(obj))
 
         if t is dict:
-            return (dict,) + tuple((k, self.deterministic_state(v)) for k, v in sorted(obj.iteritems()))
+            return (dict,) + tuple((k, self.deterministic_state(v)) for k, v in sorted(obj.items()))
 
         if issubclass(t, ImmutableInterface):
             if hasattr(obj, 'sid') and not obj._sid_contains_cycles:
@@ -614,7 +614,7 @@ class _SIDGenerator(object):
                     state = obj.__getstate__()
                 except AttributeError:
                     state = obj.__dict__
-                state = {k: v for k, v in state.iteritems() if k not in obj.sid_ignore}
+                state = {k: v for k, v in state.items() if k not in obj.sid_ignore}
                 return self.deterministic_state(state) if first_obj else (t, self.deterministic_state(state))
 
         sid = getattr(obj, 'sid', None)

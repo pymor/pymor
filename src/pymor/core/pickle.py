@@ -111,7 +111,7 @@ def loads_function(s):
     '''Restores a function serialized with :func:`dumps_function`.'''
     name, code, globals_, defaults, closure, func_dict = loads(s)
     code = marshal.loads(code)
-    for k, v in globals_.iteritems():
+    for k, v in globals_.items():
         if isinstance(v, Module):
             globals_[k] = v.mod
     if closure is not None:

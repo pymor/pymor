@@ -44,7 +44,7 @@ def assert_is_equal(first, second):
 
         seen.append(first)
 
-        for c, m in is_equal_dispatch_table.iteritems():
+        for c, m in is_equal_dispatch_table.items():
             if type(first) == c:
                 assert m(first, second)
                 return
@@ -71,7 +71,7 @@ def assert_is_equal(first, second):
                 _assert_is_equal(u, v)
         elif isinstance(first, dict):
             assert set(first.keys()) == set(second.keys())
-            for k, u in first.iteritems():
+            for k, u in first.items():
                 _assert_is_equal(u, second.get(k))
         elif isinstance(first, FunctionType):
             for k in ['func_closure', 'func_code', 'func_dict', 'func_doc', 'func_name']:
@@ -85,7 +85,7 @@ def assert_is_equal(first, second):
             assert first == second
         else:
             assert (set(first.__dict__.keys()) - ignored_attributes) == (set(second.__dict__.keys()) - ignored_attributes)
-            for k, v in first.__dict__.iteritems():
+            for k, v in first.__dict__.items():
                 if not k in ignored_attributes:
                     _assert_is_equal(v, second.__dict__.get(k))
 

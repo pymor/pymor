@@ -15,4 +15,4 @@ def parameters_of_type(parameter_type, seed):
         if parameter_type is None:
             yield None
         else:
-            yield Parameter({k: np.random.random(v) for k, v in parameter_type.iteritems()})
+            yield Parameter({k: np.random.random(v) for k, v in parameter_type.items()})

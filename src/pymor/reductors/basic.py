@@ -71,16 +71,16 @@ def reduce_generic_rb(discretization, RB, operator_product=None, vector_product=
         RB = discretization.solution_space.empty()
 
     projected_operators = {k: op.projected(range_basis=RB, source_basis=RB, product=operator_product) if op else None
-                           for k, op in discretization.operators.iteritems()}
+                           for k, op in discretization.operators.items()}
     projected_functionals = {k: f.projected(range_basis=None, source_basis=RB, product=operator_product) if f else None
-                             for k, f in discretization.functionals.iteritems()}
+                             for k, f in discretization.functionals.items()}
     projected_vector_operators = {k: (op.projected(range_basis=RB, source_basis=None, product=vector_product) if op
                                       else None)
-                                  for k, op in discretization.vector_operators.iteritems()}
+                                  for k, op in discretization.vector_operators.items()}
 
     if discretization.products is not None:
         projected_products = {k: p.projected(range_basis=RB, source_basis=RB)
-                              for k, p in discretization.products.iteritems()}
+                              for k, p in discretization.products.items()}
     else:
         projected_products = None
 
@@ -143,15 +143,15 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
     """
 
     projected_operators = {k: op.projected_to_subbasis(dim_range=dim, dim_source=dim) if op is not None else None
-                           for k, op in discretization.operators.iteritems()}
+                           for k, op in discretization.operators.items()}
     projected_functionals = {k: f.projected_to_subbasis(dim_range=None, dim_source=dim) if f is not None else None
-                             for k, f in discretization.functionals.iteritems()}
+                             for k, f in discretization.functionals.items()}
     projected_vector_operators = {k: op.projected_to_subbasis(dim_range=dim, dim_source=None) if op else None
-                                  for k, op in discretization.vector_operators.iteritems()}
+                                  for k, op in discretization.vector_operators.items()}
 
     if discretization.products is not None:
         projected_products = {k: op.projected_to_subbasis(dim_range=dim, dim_source=dim)
-                              for k, op in discretization.products.iteritems()}
+                              for k, op in discretization.products.items()}
     else:
         projected_products = None
 
@@ -161,7 +161,7 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
         # noinspection PyShadowingNames
         class FakeEstimator(object):
             rd = discretization
-            rc = SubbasisReconstructor(next(discretization.operators.itervalues()).source.dim, dim)
+            rc = SubbasisReconstructor(next(discretization.operators.values()).source.dim, dim)
 
             def estimate(self, U, mu=None, discretization=None):
                 return self.rd.estimate(self.rc.reconstruct(U), mu=mu)
@@ -178,7 +178,7 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
     if reconstructor is not None and hasattr(reconstructor, 'restricted_to_subbasis'):
         rc = reconstructor.restricted_to_subbasis(dim)
     else:
-        rc = SubbasisReconstructor(next(discretization.operators.itervalues()).source.dim, dim,
+        rc = SubbasisReconstructor(next(discretization.operators.values()).source.dim, dim,
                                    old_recontructor=reconstructor)
 
     return rd, rc, {}
