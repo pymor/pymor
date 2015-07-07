@@ -10,9 +10,7 @@ from pymor.core.defaults import defaults
 
 
 @defaults('rtol', 'atol')
-def float_cmp(x, y,
-              rtol=2**4 * np.finfo(np.zeros(1.).dtype).eps,
-              atol=2**4 * np.finfo(np.zeros(1.).dtype).eps):
+def float_cmp(x, y, rtol=1e-14, atol=1e-14):
     """Compare x and y component-wise for almost equality.
 
     For scalars we define almost equality as ::
