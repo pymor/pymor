@@ -320,10 +320,10 @@ class ListVectorArray(VectorArrayInterface):
                     # if other is self, we have to make a copy of our list, to prevent
                     # messing things up, e.g. when swapping vectors
                     other_list = list(l) if other is self else other._list
-                    for i, oi in izip(ind, o_ind):
+                    for i, oi in zip(ind, o_ind):
                         l[i] = other_list[oi].copy()
                 else:
-                    for i, oi in izip(ind, o_ind):
+                    for i, oi in zip(ind, o_ind):
                         self._list[i] = other._list[oi]
                     other_list = other._list
                     remaining = sorted(set(range(len(other_list))) - set(o_ind))
@@ -355,7 +355,7 @@ class ListVectorArray(VectorArrayInterface):
             return np.array([l[i].almost_equal(b, rtol=rtol, atol=atol) for i in ind])
         else:
             assert len(ind) == len(o_ind)
-            return np.array([l[i].almost_equal(ol[oi], rtol=rtol, atol=atol) for i, oi in izip(ind, o_ind)])
+            return np.array([l[i].almost_equal(ol[oi], rtol=rtol, atol=atol) for i, oi in zip(ind, o_ind)])
 
     def scal(self, alpha, ind=None):
         assert self.check_ind_unique(ind)
@@ -364,7 +364,7 @@ class ListVectorArray(VectorArrayInterface):
 
         if ind is None:
             if isinstance(alpha, np.ndarray):
-                for a, v in izip(alpha, self._list):
+                for a, v in zip(alpha, self._list):
                     v.scal(a)
             else:
                 for v in self._list:
@@ -425,7 +425,7 @@ class ListVectorArray(VectorArrayInterface):
         elif len_X == 1:
             xx = next(X)
             if isinstance(alpha, np.ndarray):
-                for a, y in izip(alpha, Y):
+                for a, y in zip(alpha, Y):
                     y.axpy(a, xx)
             else:
                 for y in Y:
@@ -433,10 +433,10 @@ class ListVectorArray(VectorArrayInterface):
         else:
             assert len_X == len_Y
             if isinstance(alpha, np.ndarray):
-                for a, xx, y in izip(alpha, X, Y):
+                for a, xx, y in zip(alpha, X, Y):
                     y.axpy(a, xx)
             else:
-                for xx, y in izip(X, Y):
+                for xx, y in zip(X, Y):
                     y.axpy(alpha, xx)
 
     def dot(self, other, ind=None, o_ind=None):
@@ -498,7 +498,7 @@ class ListVectorArray(VectorArrayInterface):
             len_B = len(o_ind)
 
         assert len_A == len_B
-        return np.array([a.dot(b) for a, b in izip(A, B)])
+        return np.array([a.dot(b) for a, b in zip(A, B)])
 
     def gramian(self, ind=None):
         assert self.check_ind(ind)
@@ -536,7 +536,7 @@ class ListVectorArray(VectorArrayInterface):
         RL = []
         for coeffs in coefficients:
             R = self.vector_type.make_zeros(self.vector_subtype)
-            for v, c in izip(V, coeffs):
+            for v, c in zip(V, coeffs):
                 R.axpy(c, v)
             RL.append(R)
 

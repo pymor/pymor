@@ -82,7 +82,7 @@ class LincombOperator(OperatorBase):
         coeffs = self.evaluate_coefficients(mu)
         R = self.operators[0].apply(U, ind=ind, mu=mu)
         R.scal(coeffs[0])
-        for op, c in izip(self.operators[1:], coeffs[1:]):
+        for op, c in zip(self.operators[1:], coeffs[1:]):
             R.axpy(c, op.apply(U, ind=ind, mu=mu))
         return R
 
@@ -101,7 +101,7 @@ class LincombOperator(OperatorBase):
         R = self.operators[0].apply_adjoint(U, ind=ind, mu=mu, source_product=source_product,
                                             range_product=range_product)
         R.scal(coeffs[0])
-        for op, c in izip(self.operators[1:], coeffs[1:]):
+        for op, c in zip(self.operators[1:], coeffs[1:]):
             R.axpy(c, op.apply_adjoint(U, ind=ind, mu=mu, source_product=source_product,
                                        range_product=range_product))
         return R
@@ -156,7 +156,7 @@ class LincombOperator(OperatorBase):
         vectors = [op.as_vector(mu) for op in self.operators]
         R = vectors[0]
         R.scal(coefficients[0])
-        for c, v in izip(coefficients[1:], vectors[1:]):
+        for c, v in zip(coefficients[1:], vectors[1:]):
             R.axpy(c, v)
         return R
 
@@ -494,7 +494,7 @@ class VectorArrayOperator(OperatorBase):
             array = operators[0]._array.copy()
         else:
             array = operators[0]._array * coefficients[0]
-        for op, c in izip(operators[1:], coefficients[1:]):
+        for op, c in zip(operators[1:], coefficients[1:]):
             array.axpy(c, op._array)
         return VectorArrayOperator(array, transposed=transposed, copy=False, name=name)
 

@@ -231,7 +231,7 @@ class Parameter(dict):
                 mu = (mu,)
             if len(mu) != len(parameter_type):
                 raise ValueError('Parameter length does not match.')
-            mu = dict(izip(parameter_type, mu))
+            mu = dict(zip(parameter_type, mu))
         elif set(mu.keys()) != set(parameter_type.keys()):
             raise ValueError('Provided parameter with keys {} does not match parameter type {}.'
                              .format(mu.keys(), parameter_type))

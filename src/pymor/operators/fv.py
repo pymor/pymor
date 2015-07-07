@@ -175,7 +175,7 @@ class EngquistOsherFlux(NumericalConvectiveFluxInterface):
     def evaluate_stage1(self, U, mu=None):
         int_els = np.abs(U)[:, np.newaxis, np.newaxis]
         return [np.concatenate([self.flux_derivative(U[:, np.newaxis] * p, mu)[:, np.newaxis, :] * int_els * w
-                               for p, w in izip(self.points, self.weights)], axis=1)]
+                               for p, w in zip(self.points, self.weights)], axis=1)]
 
     def evaluate_stage2(self, stage1_data, unit_outer_normals, volumes, mu=None):
         F0 = np.sum(self.flux.evaluate(np.array([[0.]]), mu=mu) * unit_outer_normals, axis=1)
@@ -312,7 +312,7 @@ class NonlinearAdvectionOperator(OperatorBase):
             for f in F_edge:
                 f[BOUNDARIES, 1] = f[BOUNDARIES, 0]
             if bi.has_dirichlet:
-                for f, f_d in izip(F_edge, F_dirichlet):
+                for f, f_d in zip(F_edge, F_dirichlet):
                     f[DIRICHLET_BOUNDARIES, 1] = f_d
 
             NUM_FLUX = self.numerical_flux.evaluate_stage2(F_edge, UNIT_OUTER_NORMALS, VOLS1, mu)

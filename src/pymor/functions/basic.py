@@ -265,4 +265,4 @@ class LincombFunction(FunctionBase):
     def evaluate(self, x, mu=None):
         mu = self.parse_parameter(mu)
         coeffs = self.evaluate_coefficients(mu)
-        return sum(c * f(x, mu) for c, f in izip(coeffs, self.functions))
+        return sum(c * f(x, mu) for c, f in zip(coeffs, self.functions))

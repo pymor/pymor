@@ -88,7 +88,7 @@ if HAVE_ALL:
             self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
 
         def set(self, U, ind):
-            for l, u in izip(self.lines, U):
+            for l, u in zip(self.lines, U):
                 if self.codim == 1:
                     if self.periodic:
                         l.set_ydata(np.concatenate((u[ind], [u[ind][0]])))

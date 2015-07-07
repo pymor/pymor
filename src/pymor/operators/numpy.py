@@ -278,7 +278,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             matrix = operators[0]._matrix.copy()
         else:
             matrix = operators[0]._matrix * coefficients[0]
-        for op, c in izip(operators[1:], coefficients[1:]):
+        for op, c in zip(operators[1:], coefficients[1:]):
             if c == 1:
                 try:
                     matrix += op._matrix

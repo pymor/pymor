@@ -114,7 +114,7 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
         # if necessary
         errors = map(lambda x: x[0] if hasattr(x, '__len__') else x, errors)
 
-        max_err, max_err_mu = max(((err, mu) for err, mu in izip(errors, samples)), key=lambda t: t[0])
+        max_err, max_err_mu = max(((err, mu) for err, mu in zip(errors, samples)), key=lambda t: t[0])
         max_errs.append(max_err)
         max_err_mus.append(max_err_mu)
         logger.info('Maximum error after {} extensions: {} (mu = {})'.format(extensions, max_err, max_err_mu))

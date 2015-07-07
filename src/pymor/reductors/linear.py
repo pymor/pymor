@@ -121,11 +121,11 @@ def reduce_stationary_affine_linear(discretization, RB, error_product=None, coer
         R_Os = [space.empty(reserve=len(RB)) for _ in range(len(d.operator.operators))]
         RR_Os = [space.empty(reserve=len(RB)) for _ in range(len(d.operator.operators))]
         if old_RB_size > 0:
-            for op, R_O, RR_O, old_R_O, old_RR_O in izip(d.operator.operators, R_Os, RR_Os,
+            for op, R_O, RR_O, old_R_O, old_RR_O in zip(d.operator.operators, R_Os, RR_Os,
                                                          old_data['R_Os'], old_data['RR_Os']):
                 R_O.append(old_R_O)
                 RR_O.append(old_RR_O)
-        for op, R_O, RR_O in izip(d.operator.operators, R_Os, RR_Os):
+        for op, R_O, RR_O in zip(d.operator.operators, R_Os, RR_Os):
             for i in range(old_RB_size, len(RB)):
                 append_vector(-op.apply(RB, [i]), R_O, RR_O)
 

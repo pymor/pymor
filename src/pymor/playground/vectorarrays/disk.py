@@ -186,7 +186,7 @@ class DiskVectorArray(VectorArrayInterface):
             for i in backup:
                 shutil.move(os.path.join(self.dir, str(i)),
                             os.path.join(self.dir, '_' + str(i)))
-            for d, s in izip(ind, o_ind):
+            for d, s in zip(ind, o_ind):
                 if s in backup:
                     shutil.copy(os.path.join(self.dir, '_' + str(s)),
                                 os.path.join(self.dir, str(d)))
@@ -196,7 +196,7 @@ class DiskVectorArray(VectorArrayInterface):
             for i in backup:
                 os.remove(os.path.join(self.dir, '_' + str(i)))
         else:
-            for d, s in izip(ind, o_ind):
+            for d, s in zip(ind, o_ind):
                 shutil.copy(os.path.join(other.dir, str(s)),
                             os.path.join(self.dir, str(d)))
             if remove_from_other:
@@ -218,7 +218,7 @@ class DiskVectorArray(VectorArrayInterface):
         else:
             assert len(ind) == len(o_ind)
             return np.array([self._load(i).almost_equal(other._load(oi), rtol=rtol, atol=atol)
-                            for i, oi in izip(ind, o_ind)])
+                            for i, oi in zip(ind, o_ind)])
 
     def scal(self, alpha, ind=None):
         assert self.check_ind_unique(ind)
@@ -226,7 +226,7 @@ class DiskVectorArray(VectorArrayInterface):
             or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
         ind = list(range(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
         if isinstance(alpha, np.ndarray):
-            for a, i in izip(alpha, ind):
+            for a, i in zip(alpha, ind):
                 new_vec = self._load(i)
                 new_vec.scal(a)
                 self._store(i, new_vec)
@@ -257,7 +257,7 @@ class DiskVectorArray(VectorArrayInterface):
         if len(x_ind) == 1:
             x = x._load(x_ind[0])
             if isinstance(alpha, np.ndarray):
-                for a, y in izip(alpha, ind):
+                for a, y in zip(alpha, ind):
                     new_vec = self._load(y)
                     new_vec.axpy(a, x)
                     self._store(y, new_vec)
@@ -268,12 +268,12 @@ class DiskVectorArray(VectorArrayInterface):
                     self._store(y, new_vec)
         else:
             if isinstance(alpha, np.ndarray):
-                for a, xx, y in izip(alpha, x_ind, ind):
+                for a, xx, y in zip(alpha, x_ind, ind):
                     new_vec = self._load(y)
                     new_vec.axpy(a, x._load(xx))
                     self._store(y, new_vec)
             else:
-                for xx, y in izip(x_ind, ind):
+                for xx, y in zip(x_ind, ind):
                     new_vec = self._load(y)
                     new_vec.axpy(alpha, x._load(xx))
                     self._store(y, new_vec)
@@ -298,7 +298,7 @@ class DiskVectorArray(VectorArrayInterface):
         ind = list(range(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
         o_ind = list(range(other._len)) if o_ind is None else [o_ind] if isinstance(o_ind, Number) else o_ind
         assert len(ind) == len(o_ind)
-        return np.array([self._load(i).dot(other._load(oi)) for i, oi in izip(ind, o_ind)])
+        return np.array([self._load(i).dot(other._load(oi)) for i, oi in zip(ind, o_ind)])
 
     def gramian(self, ind=None):
         assert self.check_ind(ind)
@@ -323,7 +323,7 @@ class DiskVectorArray(VectorArrayInterface):
         RL = type(self)([], subtype=self.subtype)
         for coeffs in coefficients:
             R = self.vector_type.make_zeros(self.vector_subtype)
-            for i, c in izip(ind, coeffs):
+            for i, c in zip(ind, coeffs):
                 R.axpy(c, self._load(i))
             RL._store(RL._len, R)
             RL._len += 1
