@@ -1,11 +1,8 @@
 language: python
 
 python:
-  - "2.7"
-  - "3.4"
-
-virtualenv:
-  system_site_packages: true
+  - "2.7_with_system_site_packages"
+  - 3.4
 
 before_install:
  - git fetch --depth=1000 --tags origin master
