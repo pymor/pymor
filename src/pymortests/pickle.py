@@ -25,15 +25,17 @@ is_equal_dispatch_table = {}
 
 def func_with_closure_generator():
     x = 42
+
     def func_with_closure():
         print(x)
+
     return func_with_closure
+
 
 cell_type = type(func_with_closure_generator().func_closure[0])
 
 
 def assert_is_equal(first, second):
-
     seen = []
 
     def _assert_is_equal(first, second):
@@ -84,7 +86,8 @@ def assert_is_equal(first, second):
         elif not isinstance(first, BasicInterface):
             assert first == second
         else:
-            assert (set(first.__dict__.keys()) - ignored_attributes) == (set(second.__dict__.keys()) - ignored_attributes)
+            assert (set(first.__dict__.keys()) - ignored_attributes) == (
+                set(second.__dict__.keys()) - ignored_attributes)
             for k, v in first.__dict__.iteritems():
                 if not k in ignored_attributes:
                     _assert_is_equal(v, second.__dict__.get(k))
@@ -99,7 +102,6 @@ def assert_picklable(o):
 
 
 def assert_picklable_without_dumps_function(o):
-
     def dumps_function_raise(function):
         raise PicklingError('Cannot pickle function {}'.format(function))
 

@@ -30,7 +30,6 @@ rect_grid_generators = [lambda arg=arg, kwargs=kwargs: RectGrid(arg, **kwargs) f
                          ((42, 30), dict(identify_bottom_top=True)),
                          ((42, 30), dict(identify_left_right=True, identify_bottom_top=True))]]
 
-
 tria_grid_generators = [lambda arg=arg, kwargs=kwargs: TriaGrid(arg, **kwargs) for arg, kwargs in
                         [((2, 4), {}),
                          ((1, 1), {}),
@@ -44,7 +43,6 @@ tria_grid_generators = [lambda arg=arg, kwargs=kwargs: TriaGrid(arg, **kwargs) f
                          ((42, 30), dict(identify_left_right=True)),
                          ((42, 30), dict(identify_bottom_top=True)),
                          ((42, 30), dict(identify_left_right=True, identify_bottom_top=True))]]
-
 
 oned_grid_generators = [lambda kwargs=kwargs: OnedGrid(**kwargs) for kwargs in
                         [dict(domain=np.array((-2, 2)), num_intervals=10),
@@ -83,9 +81,11 @@ subgrid_generators = [lambda args=args: subgrid_factory(*args) for args in
 def grid(request):
     return request.param()
 
+
 @pytest.fixture(params=(rect_grid_generators + tria_grid_generators))
 def rect_or_tria_grid(request):
     return request.param()
+
 
 @pytest.fixture(params=(rect_grid_generators + oned_grid_generators))
 def grid_with_orthogonal_centers(request):

@@ -18,6 +18,7 @@ import sys
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Launcher script for all available pyMOR demos.',
                                      epilog='Example: {} burgers 1'.format(sys.argv[0]))
+
     def _run(module):
         # only need to remove the modname from args, rest is automatic
         del sys.argv[1]

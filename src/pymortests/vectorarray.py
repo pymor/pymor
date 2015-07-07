@@ -20,6 +20,7 @@ from pymortests.pickle import assert_picklable_without_dumps_function
 
 pytestmark = pytest.mark.slow
 
+
 def ind_complement(v, ind):
     if ind is None:
         return []
@@ -54,7 +55,7 @@ def invalid_inds(v, length=None):
 
 def valid_inds(v, length=None):
     if length is None:
-        for ind in [None, [], range(len(v)), range(int(len(v)/2)), range(len(v)) * 2]:
+        for ind in [None, [], range(len(v)), range(int(len(v) / 2)), range(len(v)) * 2]:
             yield ind
         length = 32
     if len(v) > 0:
@@ -80,7 +81,7 @@ def valid_inds_of_same_length(v1, v2):
         yield 0, 0
         yield len(v1) - 1, len(v2) - 1
         yield [0], 0
-        yield (range(int(min(len(v1), len(v2))/2)),) * 2
+        yield (range(int(min(len(v1), len(v2)) / 2)),) * 2
         np.random.seed(len(v1) * len(v2))
         for count in np.linspace(0, min(len(v1), len(v2)), 3):
             yield (list(np.random.randint(0, len(v1), size=count)),
@@ -844,7 +845,7 @@ def test_amax(vector_array):
 
 
 # def test_amax_zero_dim(zero_dimensional_vector_space):
-#     for count in (0, 10):
+# for count in (0, 10):
 #         v = zero_dimensional_vector_space.zeros(count=count)
 #         for ind in valid_inds(v):
 #             with pytest.raises(Exception):
@@ -862,7 +863,7 @@ def test_add(compatible_vector_array_pair):
     if len(v2) < len(v1):
         v2.append(v2, o_ind=np.zeros(len(v1) - len(v2), dtype=np.int))
     elif len(v2) > len(v1):
-        v2.remove(range(len(v2)-len(v1)))
+        v2.remove(range(len(v2) - len(v1)))
     c1 = v1.copy()
     cc1 = v1.copy()
     c1.axpy(1, v2)
@@ -875,7 +876,7 @@ def test_iadd(compatible_vector_array_pair):
     if len(v2) < len(v1):
         v2.append(v2, o_ind=np.zeros(len(v1) - len(v2), dtype=np.int))
     elif len(v2) > len(v1):
-        v2.remove(range(len(v2)-len(v1)))
+        v2.remove(range(len(v2) - len(v1)))
     c1 = v1.copy()
     c1.axpy(1, v2)
     v1 += v2
@@ -887,7 +888,7 @@ def test_sub(compatible_vector_array_pair):
     if len(v2) < len(v1):
         v2.append(v2, o_ind=np.zeros(len(v1) - len(v2), dtype=np.int))
     elif len(v2) > len(v1):
-        v2.remove(range(len(v2)-len(v1)))
+        v2.remove(range(len(v2) - len(v1)))
     c1 = v1.copy()
     cc1 = v1.copy()
     c1.axpy(-1, v2)
@@ -900,7 +901,7 @@ def test_isub(compatible_vector_array_pair):
     if len(v2) < len(v1):
         v2.append(v2, o_ind=np.zeros(len(v1) - len(v2), dtype=np.int))
     elif len(v2) > len(v1):
-        v2.remove(range(len(v2)-len(v1)))
+        v2.remove(range(len(v2) - len(v1)))
     c1 = v1.copy()
     c1.axpy(-1, v2)
     v1 -= v2
@@ -1081,7 +1082,8 @@ def test_almost_equal_wrong_ind(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
     for ind1, ind2 in invalid_ind_pairs(v1, v2):
         if (ind1 is None and len(v1) == 1 or isinstance(ind1, Number) or hasattr(ind1, '__len__') and len(ind1) == 1 or
-            ind2 is None and len(v2) == 1 or isinstance(ind2, Number) or hasattr(ind2, '__len__') and len(ind2) == 1):  # NOQA
+                        ind2 is None and len(v2) == 1 or isinstance(ind2, Number) or hasattr(ind2, '__len__') and len(
+                ind2) == 1):  # NOQA
             continue
         c1, c2 = v1.copy(), v2.copy()
         with pytest.raises(Exception):

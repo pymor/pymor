@@ -16,6 +16,7 @@ from pymortests.base import runmodule
 from pymor.playground.grids import gmsh
 import pymortests.grid as tg
 
+
 @pytest.mark.xfail
 def test_eval():
     from pymor.playground.expression_function import ExpressionFunction
@@ -26,6 +27,7 @@ def test_eval():
     for (fn, fe) in FUNCTIONS:
         for x in (random.uniform(0, 1) for _ in xrange(9000)):
             np.testing.assert_array_almost_equal(fn([x]), fe(x))
+
 
 def test_gmsh():
     fn = os.path.join(os.path.dirname(__file__), '../../', 'testdata', 'gmsh_1.msh')

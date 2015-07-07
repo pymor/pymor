@@ -8,7 +8,6 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from scipy.linalg import solve_triangular
 
-
 from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import VectorArrayOperator, Concatenation, ComponentProjection, ZeroOperator
 from pymor.operators.interfaces import OperatorInterface
@@ -76,7 +75,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
 
         if len(interpolation_dofs) > 0:
             try:
-                self.restricted_operator, self.source_dofs  = operator.restricted(interpolation_dofs)
+                self.restricted_operator, self.source_dofs = operator.restricted(interpolation_dofs)
             except NotImplementedError:
                 self.logger.warn('Operator has no "restricted" method. The full operator will be evaluated.')
                 self.operator = operator
@@ -144,7 +143,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         else:
             U_components = NumpyVectorArray(U.components(self.source_dofs), copy=False)
             JU = self.restricted_operator.jacobian(U_components, mu=mu) \
-                                         .apply(NumpyVectorArray(np.eye(len(self.source_dofs)), copy=False))
+                .apply(NumpyVectorArray(np.eye(len(self.source_dofs)), copy=False))
             try:
                 if self.triangular:
                     interpolation_coefficients = solve_triangular(self.interpolation_matrix, JU.data.T,
