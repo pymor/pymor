@@ -232,6 +232,8 @@ class Concatenation(OperatorBase):
             return Concatenation(restricted_second, restricted_first), first_source_dofs
 
     def projected(self, range_basis, source_basis, product=None, name=None):
+        if not self.parametric and self.linear:
+            return super(Concatenation, self).projected(range_basis, source_basis, product=product, name=name)
         projected_first = self.first.projected(None, source_basis, product=None)
         if isinstance(projected_first, VectorArrayOperator) and not projected_first.transposed:
             return self.second.projected(range_basis, projected_first._array, product=product, name=name)
