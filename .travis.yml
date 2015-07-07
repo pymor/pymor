@@ -14,7 +14,7 @@ before_install:
  - sh -e /etc/init.d/xvfb start
  - pip install python-coveralls 
  - pip install --upgrade markupsafe
- - pip install distribute
+ - pip install distribute cython
  - pip install --upgrade numpy
  - pip install --upgrade pytest
  - pip install --upgrade pytest pytest-cov
