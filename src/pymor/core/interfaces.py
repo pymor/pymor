@@ -571,7 +571,7 @@ class _SIDGenerator(object):
 
         self.memo[id(obj)] = _MemoKey(len(self.memo), obj)
 
-        if t in (str, unicode):
+        if t is str:
             return obj
 
         if t is np.ndarray and t.dtype != object:
