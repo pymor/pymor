@@ -110,14 +110,8 @@ class ParameterType(dict):
         return iter(self)
 
     def items(self):
-        return list(self.items())
-
-    def items(self):
         for k in self:
             yield k, self[k]
-
-    def values(self):
-        return list(self.values())
 
     def values(self):
         for k in self:
