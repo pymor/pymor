@@ -127,6 +127,8 @@ class NumpyVectorArray(VectorArrayInterface):
         if o_ind is None:
             len_other = other._len
             if len_other <= self._array.shape[0] - self._len:
+                if self._array.dtype == np.float and other._array.dtype == np.complex:
+                    self._array = self._array.astype(np.complex)
                 self._array[self._len:self._len + len_other] = other._array[:len_other]
             else:
                 self._array = np.vstack((self._array[:self._len], other._array[:len_other]))
@@ -138,6 +140,8 @@ class NumpyVectorArray(VectorArrayInterface):
             else:
                 len_other = len(o_ind)
             if len_other <= self._array.shape[0] - self._len:
+                if self._array.dtype == np.float and other._array.dtype == np.complex:
+                    self._array = self._array.astype(np.complex)
                 other._array.take(o_ind, axis=0, out=self._array[self._len:self._len + len_other])
             else:
                 self._array = np.append(self._array[:self._len], other._array[o_ind], axis=0)
