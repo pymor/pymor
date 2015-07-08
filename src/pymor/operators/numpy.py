@@ -734,7 +734,10 @@ def _apply_inverse(matrix, V, options=None):
         options = default_options[user_options['type']]
         options.update(user_options)
 
-    R = np.empty((len(V), matrix.shape[1]))
+    if matrix.dtype == np.float64 and V.dtype == np.float64:
+        R = np.empty((len(V), matrix.shape[1]))
+    else:
+        R = np.empty((len(V), matrix.shape[1]), dtype=np.complex128)
 
     if options['type'] == 'solve':
         for i, VV in enumerate(V):
