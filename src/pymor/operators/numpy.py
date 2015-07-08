@@ -316,6 +316,11 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             matrix = operators[0]._matrix.copy()
         else:
             matrix = operators[0]._matrix * coefficients[0]
+
+        if (matrix.dtype == np.float64 and
+                (any(op._matrix.dtype == np.complex128 for op in operators) or any(c.imag != 0 for c in coefficients))):
+            matrix = matrix.astype(complex)
+
         for op, c in izip(operators[1:], coefficients[1:]):
             if isinstance(op, ZeroOperator):
                 continue
@@ -337,6 +342,11 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                     matrix -= op._matrix
                 except NotImplementedError:
                     matrix = matrix - op._matrix
+            elif c.imag == 0:
+                try:
+                    matrix += (op._matrix * c.real)
+                except NotImplementedError:
+                    matrix = matrix + (op._matrix * c.real)
             else:
                 try:
                     matrix += (op._matrix * c)
