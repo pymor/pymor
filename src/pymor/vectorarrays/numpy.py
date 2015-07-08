@@ -230,6 +230,12 @@ class NumpyVectorArray(VectorArrayInterface):
 
         if isinstance(alpha, np.ndarray) and not isinstance(ind, Number):
             alpha = alpha[:, np.newaxis]
+
+        if alpha.imag == 0:
+            alpha = alpha.real
+        elif self._array.dtype == np.float:
+            self._array = self._array.astype(np.complex)
+
         if ind is None:
             self._array[:self._len] *= alpha
         else:
