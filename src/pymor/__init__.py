@@ -79,7 +79,7 @@ except ImportError:
 
     try:
         revstring = subprocess.check_output(['git', 'describe', '--tags', '--candidates', '20', '--match', '*.*.*'],
-                                            cwd=os.path.dirname(__file__))
+                                            cwd=os.path.dirname(__file__), universal_newlines=True)
     except subprocess.CalledProcessError as e:
         import sys
 
