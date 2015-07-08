@@ -68,6 +68,7 @@ from __future__ import absolute_import, division, print_function
 from collections import OrderedDict
 import datetime
 from functools import partial
+import functools
 import getpass
 import inspect
 import os
@@ -284,6 +285,7 @@ class cached(object):
 
     def __init__(self, function):
         self.decorated_function = function
+        functools.update_wrapper(self, function)
         argspec = inspect.getargspec(function)
         self.argnames = argnames = argspec.args[1:]  # first argument is self
         defaults = function.__defaults__
@@ -330,7 +332,16 @@ class cached(object):
         Return a partial function where the first argument is the instance of the decorated instance object.
         """
         if instance is None:
-            return MethodType(self.decorated_function, None, instancetype)
+            # afaics this is called when decorating abstract/static class methods
+           @functools.wraps(self.decorated_function)
+           def wrapper(*args, **kwargs):
+               raise TypeError(
+                   'unbound method {}() must be called with {} instance '
+                   'as first argument (got nothing instead)'.format(
+                       self.decorated_function.__name__,
+                       instancetype.__name__)
+               )
+           return wrapper
         elif _caching_disabled or instance.cache_region is None:
             return partial(self.decorated_function, instance)
         else:
