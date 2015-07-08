@@ -167,6 +167,8 @@ class NumpyVectorArray(VectorArrayInterface):
         else:
             len_ind = self.len_ind(ind)
             other_array = np.array(self._array) if other is self else other._array
+            if self._array.dtype == np.float and other_array.dtype == np.complex:
+                self._array = self._array.astype(np.complex)
             if o_ind is None:
                 assert len_ind == other._len
                 self._array[ind] = other_array[:other._len]
