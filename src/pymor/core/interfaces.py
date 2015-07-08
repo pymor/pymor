@@ -83,7 +83,7 @@ import inspect
 import itertools
 import os
 import time
-from types import FunctionType, BuiltinFunctionType, NoneType
+from types import FunctionType, BuiltinFunctionType
 import uuid
 
 import numpy as np
@@ -92,7 +92,7 @@ from pymor.core import decorators, backports, logger
 from pymor.core.exceptions import ConstError, SIDGenerationError
 
 DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_COPY_DOCSTRINGS_DISABLE', 0)) == 1
-
+NoneType = type(None)
 
 class UID(object):
     '''Provides unique, quickly computed ids by combinding a session UUID4 with a counter.'''
