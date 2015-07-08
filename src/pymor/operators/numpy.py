@@ -279,9 +279,9 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         else:
             matrix = operators[0]._matrix * coefficients[0]
 
-        if (matrix.dtype == np.float64 and
-                (any(op._matrix.dtype == np.complex128 for op in operators) or any(c.imag != 0 for c in coefficients))):
-            matrix = matrix.astype(complex)
+        if (matrix.dtype == np.float and
+                (any(op._matrix.dtype == np.complex for op in operators) or any(c.imag != 0 for c in coefficients))):
+            matrix = matrix.astype(np.complex)
 
         for op, c in izip(operators[1:], coefficients[1:]):
             if c == 1:
@@ -734,10 +734,10 @@ def _apply_inverse(matrix, V, options=None):
         options = default_options[user_options['type']]
         options.update(user_options)
 
-    if matrix.dtype == np.float64 and V.dtype == np.float64:
+    if matrix.dtype == np.float and V.dtype == np.float:
         R = np.empty((len(V), matrix.shape[1]))
     else:
-        R = np.empty((len(V), matrix.shape[1]), dtype=np.complex128)
+        R = np.empty((len(V), matrix.shape[1]), dtype=np.complex)
 
     if options['type'] == 'solve':
         for i, VV in enumerate(V):
