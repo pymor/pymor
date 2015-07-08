@@ -9,3 +9,8 @@ ignore-paths:
     - src/pymortests/
 
 strictness: low
+
+pyroma:
+  run: true
+
+autodetect: yes
