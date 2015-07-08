@@ -187,7 +187,7 @@ class UberMeta(abc.ABCMeta):
         return c
 
 
-class BasicInterface(object):
+class BasicInterface(object, metaclass=UberMeta):
     """Base class for most classes in pyMOR.
 
     Attributes
@@ -209,8 +209,6 @@ class BasicInterface(object):
     with_arguments
         Set of allowed keyword arguments for `with_`.
     """
-
-    __metaclass__ = UberMeta
     _locked = False
 
     def __setattr__(self, key, value):
@@ -420,7 +418,7 @@ class ImmutableMeta(UberMeta):
     __call__ = _call
 
 
-class ImmutableInterface(BasicInterface):
+class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
     """Base class for immutable objects in pyMOR.
 
     Instances of `ImmutableInterface` are immutable in the sense that
@@ -455,7 +453,6 @@ class ImmutableInterface(BasicInterface):
     sid_ignore
         Set of attributes not to include in sid calculation.
     """
-    __metaclass__ = ImmutableMeta
     sid_ignore = frozenset({'_locked', '_logger', '_name', '_uid', '_sid_contains_cycles',
                             '_with_arguments_error', 'sid'})
 
@@ -569,7 +566,7 @@ class _SIDGenerator(object):
             return(v)
 
         t = type(obj)
-        if t in (NoneType, bool, int, long, float, FunctionType, BuiltinFunctionType, type):
+        if t in (NoneType, bool, int, float, FunctionType, BuiltinFunctionType, type):
             return obj
 
         self.memo[id(obj)] = _MemoKey(len(self.memo), obj)
