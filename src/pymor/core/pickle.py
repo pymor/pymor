@@ -18,12 +18,7 @@ import marshal
 import opcode
 from functools import partial
 from types import FunctionType, ModuleType
-
-
-try:
-    import pickle as pickle
-except ImportError:
-    import pickle as pickle
+import pickle
 
 
 dump = partial(pickle.dump, protocol=-1)
