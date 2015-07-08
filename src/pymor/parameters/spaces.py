@@ -4,7 +4,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from itertools import izip, product
+from itertools import product
 import numpy as np
 
 from pymor.parameters.base import Parameter, ParameterType

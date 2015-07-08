@@ -17,7 +17,7 @@
 from __future__ import absolute_import, division, print_function
 
 from collections import OrderedDict
-from itertools import izip
+
 
 import numpy as np
 from scipy.sparse import issparse

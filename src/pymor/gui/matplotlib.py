@@ -11,7 +11,7 @@ Instead, use :meth:`~pymor.gui.qt.visualize_matplotlib_1d` or
 
 from __future__ import absolute_import, division, print_function
 
-from itertools import izip
+
 
 import numpy as np
 

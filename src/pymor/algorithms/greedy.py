@@ -5,7 +5,7 @@
 from __future__ import absolute_import, division, print_function
 
 import time
-from itertools import izip
+
 
 from pymor.algorithms.basisextension import gram_schmidt_basis_extension
 from pymor.core.exceptions import ExtensionError

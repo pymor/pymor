@@ -12,7 +12,7 @@ for the `Qt <http://www.qt-project.org>`_ widget toolkit for the GUI.
 
 from __future__ import absolute_import, division, print_function
 
-from itertools import izip
+
 import math as m
 
 import numpy as np
