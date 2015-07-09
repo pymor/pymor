@@ -92,7 +92,7 @@ class DefaultContainer(object):
         # ensure that setting no defaults is the same as setting empty defaults
 
     def _add_defaults_for_function(self, defaultsdict, func, sid_ignore, qualname):
-        path = qualname or getattr(func, '__qualname__', func.__module__ + '.' + func.__name__)
+        path = qualname or (func.__module__ + '.' + getattr(func, '__qualname__', func.__name__))
         if path in self.registered_functions:
             raise ValueError('''Function with name {} already registered for default values!
 For Python 2 compatibility, please supply the '_qualname' parameter when decorating
@@ -108,7 +108,7 @@ methods of classes!'''.format(path))
         return result
 
     def _add_wrapper_function(self, func, qualname=None):
-        path = qualname or getattr(func, '__qualname__', func.__module__ + '.' + func.__name__)
+        path = qualname or (func.__module__ + '.' + getattr(func, '__qualname__', func.__name__))
         self.registered_functions[path] = func
         split_path = path.split('.')
         for k, v in self._data.items():
