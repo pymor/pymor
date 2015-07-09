@@ -76,7 +76,7 @@ def assert_is_equal(first, second):
             for k, u in first.items():
                 _assert_is_equal(u, second.get(k))
         elif isinstance(first, FunctionType):
-            for k in ['func_closure', 'func_code', 'func_dict', 'func_doc', 'func_name']:
+            for k in ['__closure__', '__code__', '__dict__', '__doc__', '__name__']:
                 _assert_is_equal(getattr(first, k), getattr(second, k))
         elif isinstance(first, MethodType):
             _assert_is_equal(first.__func__, second.__func__)
