@@ -24,7 +24,7 @@ class GenericRBReconstructor(BasicInterface):
     def restricted_to_subbasis(self, dim):
         """See :meth:`~pymor.operators.numpy.NumpyMatrixOperator.projected_to_subbasis`."""
         assert dim <= len(self.RB)
-        return GenericRBReconstructor(self.RB.copy(ind=range(dim)))
+        return GenericRBReconstructor(self.RB.copy(ind=list(range(dim))))
 
 
 def reduce_generic_rb(discretization, RB, operator_product=None, vector_product=None,
