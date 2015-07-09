@@ -29,7 +29,7 @@ def func_with_closure_generator():
         print(x)
     return func_with_closure
 
-cell_type = type(func_with_closure_generator().func_closure[0])
+cell_type = type(func_with_closure_generator().__closure__[0])
 
 
 def assert_is_equal(first, second):
@@ -74,7 +74,7 @@ def assert_is_equal(first, second):
             for k, u in first.items():
                 _assert_is_equal(u, second.get(k))
         elif isinstance(first, FunctionType):
-            for k in ['func_closure', 'func_code', 'func_dict', 'func_doc', 'func_name']:
+            for k in ['__closure__', '__code__', '__dict__', '__doc__', '__name__']:
                 _assert_is_equal(getattr(first, k), getattr(second, k))
         elif isinstance(first, MethodType):
             _assert_is_equal(first.im_func, second.im_func)
@@ -103,11 +103,11 @@ def assert_picklable_without_dumps_function(o):
     def dumps_function_raise(function):
         raise PicklingError('Cannot pickle function {}'.format(function))
 
-    old_code = dumps_function.func_code
-    dumps_function.func_code = dumps_function_raise.func_code
+    old_code = dumps_function.__code__
+    dumps_function.__code__ = dumps_function_raise.__code__
     try:
         s = dumps(o)
         o2 = loads(s)
         assert_is_equal(o, o2)
     finally:
-        dumps_function.func_code = old_code
+        dumps_function.__code__ = old_code

@@ -89,17 +89,17 @@ def dumps_function(function):
     Note that also this is heavily implementation specific and will probably only
     work with CPython. If possible, avoid using this method.
     '''
-    closure = None if function.func_closure is None else [c.cell_contents for c in function.func_closure]
-    code = marshal.dumps(function.func_code)
-    func_globals = function.func_globals
-    func_dict = function.func_dict
+    closure = None if function.__closure__ is None else [c.cell_contents for c in function.__closure__]
+    code = marshal.dumps(function.__code__)
+    func_globals = function.__globals__
+    func_dict = function.__dict__
 
     def wrap_modules(x):
         return Module(x) if isinstance(x, ModuleType) else x
 
     # note that global names in function.func_code can also refer to builtins ...
-    globals_ = {k: wrap_modules(func_globals[k]) for k in _global_names(function.func_code) if k in func_globals}
-    return dumps((function.func_name, code, globals_, function.func_defaults, closure, func_dict))
+    globals_ = {k: wrap_modules(func_globals[k]) for k in _global_names(function.__code__) if k in func_globals}
+    return dumps((function.__name__, code, globals_, function.__defaults__, closure, func_dict))
 
 
 def loads_function(s):
@@ -115,5 +115,5 @@ def loads_function(s):
         ctypes.pythonapi.PyCell_New.argtypes = [ctypes.py_object]
         closure = tuple(ctypes.pythonapi.PyCell_New(c) for c in closure)
     r = FunctionType(code, globals_, name, defaults, closure)
-    r.func_dict = func_dict
+    r.__dict__ = func_dict
     return r
