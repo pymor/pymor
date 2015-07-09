@@ -149,7 +149,7 @@ def apply_inverse(op, rhs, options=None):
     def_opts = globals()['options']()
 
     if options is None:
-        options = list(def_opts.values())[0]
+        options = next(iter(def_opts.values()))
     elif isinstance(options, str):
         if options == 'least_squares':
             for k, v in def_opts.items():
