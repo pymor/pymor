@@ -203,7 +203,8 @@ class AffineGridDefaultImplementations(object):
         if J.shape[-1] == J.shape[-2] == 2:
             JIT = inv_transposed_two_by_two(J)
         else:
-            JIT = np.array(map(np.linalg.pinv, J)).swapaxes(1, 2)
+            pinv = np.linalg.pinv
+            JIT = np.array([pinv(j) for j in J]).swapaxes(1, 2)
         return JIT
 
     @cached
@@ -224,7 +225,7 @@ class AffineGridDefaultImplementations(object):
         else:
             def f(A):
                 return np.linalg.det(A)
-            D = np.array(map(f, J))
+            D = np.array([f(j) for j in J])
 
         return np.sqrt(D)
 

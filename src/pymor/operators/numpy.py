@@ -707,7 +707,7 @@ def _apply_inverse(matrix, V, options=None):
     default_options = _invert_options(matrix)
 
     if options is None:
-        options = default_options.values()[0]
+        options = next(iter(default_options.values()))
     elif isinstance(options, str):
         if options == 'least_squares':
             for k, v in default_options.items():
@@ -719,7 +719,7 @@ def _apply_inverse(matrix, V, options=None):
             options = default_options[options]
     else:
         assert 'type' in options and options['type'] in default_options \
-            and options.viewkeys() <= default_options[options['type']].viewkeys()
+            and options.keys() <= default_options[options['type']].keys()
         user_options = options
         options = default_options[user_options['type']]
         options.update(user_options)
