@@ -33,7 +33,6 @@ def test_dim(grid):
 def test_size(grid):
     g = grid
     for d in range(g.dim + 1):
-        assert isinstance(g.size(d), int)
         assert g.size(d) >= 0
     with pytest.raises(AssertionError):
         g.size(-1)
