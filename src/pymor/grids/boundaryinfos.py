@@ -39,7 +39,7 @@ class BoundaryInfoFromIndicators(BoundaryInfoInterface):
         self.grid = grid
         assert_unique_type = assert_unique_type if assert_unique_type else [1]
         assert_some_type = assert_some_type if assert_some_type else []
-        self.boundary_types = indicators.keys()
+        self.boundary_types = frozenset(indicators.keys())
         self._masks = {boundary_type: [np.zeros(grid.size(codim), dtype='bool') for codim in range(1, grid.dim + 1)]
                        for boundary_type in self.boundary_types}
         for boundary_type, codims in self._masks.items():

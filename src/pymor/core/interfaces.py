@@ -303,7 +303,7 @@ class BasicInterface(object, metaclass=UberMeta):
         assert not any(hasattr(self, k) for k in kwargs)
         self.__dict__.update(kwargs)
         if self._added_attributes is None:
-            self._added_attributes = kwargs.keys()
+            self._added_attributes = list(kwargs.keys())
         else:
             self._added_attributes.extend(kwargs.keys())
 
