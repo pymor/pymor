@@ -104,7 +104,8 @@ def write_version():
         if 'PYMOR_DEB_VERSION' in os.environ:
             revstring = os.environ['PYMOR_DEB_VERSION']
         else:
-            revstring = subprocess.check_output(['git', 'describe', '--tags', '--candidates', '20', '--match', '*.*.*']).strip()
+            revstring = subprocess.check_output(['git', 'describe', '--tags', '--candidates', '20',
+                                                 '--match', '*.*.*']).decode().strip()
         with open(filename, 'w') as out:
             out.write('revstring = \'{}\''.format(revstring))
     except:
