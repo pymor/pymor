@@ -242,6 +242,11 @@ class NumpyVectorArray(VectorArrayInterface):
 
         B = x._array[:x._len] if x_ind is None else x._array[x_ind]
 
+        if alpha.imag == 0:
+            alpha = alpha.real
+        if self._array.dtype == np.float and (alpha.imag != 0 or B.dtype == np.complex):
+            self._array = self._array.astype(np.complex)
+
         if np.all(alpha == 1):
             if ind is None:
                 self._array[:self._len] += B
