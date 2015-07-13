@@ -13,6 +13,7 @@ from pymor.vectorarrays.block import BlockVectorArray
 from pymor.vectorarrays.numpy import NumpyVectorArray
 from pymor.vectorarrays.list import NumpyVector, ListVectorArray
 
+import os; TRAVIS = os.getenv('TRAVIS') == 'true'
 
 def random_integers(count, seed):
     np.random.seed(seed)
@@ -101,7 +102,7 @@ numpy_vector_array_generators = \
 numpy_list_vector_array_generators = \
     [lambda args=args: numpy_list_vector_array_factory(*args) for args in numpy_vector_array_factory_arguments]
 
-numpy_disk_vector_array_generators = \
+numpy_disk_vector_array_generators = [] if TRAVIS else \
     [lambda args=args: numpy_disk_vector_array_factory(*args) for args in numpy_vector_array_factory_arguments]
 
 block_vector_array_generators = \
@@ -117,7 +118,7 @@ numpy_list_vector_array_pair_with_same_dim_generators = \
                                             numpy_list_vector_array_factory(l2, d, s2))
      for l, l2, d, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_same_dim]
 
-numpy_disk_vector_array_pair_with_same_dim_generators = \
+numpy_disk_vector_array_pair_with_same_dim_generators = [] if TRAVIS else \
     [lambda l=l, l2=l2, d=d, s1=s1, s2=s2: (numpy_disk_vector_array_factory(l, d, s1),
                                             numpy_disk_vector_array_factory(l2, d, s2))
      for l, l2, d, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_same_dim]
@@ -137,7 +138,7 @@ numpy_list_vector_array_pair_with_different_dim_generators = \
                                                      numpy_list_vector_array_factory(l2, d2, s2))
      for l, l2, d1, d2, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_different_dim]
 
-numpy_disk_vector_array_pair_with_different_dim_generators = \
+numpy_disk_vector_array_pair_with_different_dim_generators = [] if TRAVIS else \
     [lambda l=l, l2=l2, d1=d1, d2=d2, s1=s1, s2=s2: (numpy_disk_vector_array_factory(l, d1, s1),
                                                      numpy_disk_vector_array_factory(l2, d2, s2))
      for l, l2, d1, d2, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_different_dim]

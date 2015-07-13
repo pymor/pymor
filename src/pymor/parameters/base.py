@@ -322,7 +322,7 @@ class Parameter(dict):
 
     @property
     def sid(self):
-        sid = self.__sid
+        sid = getattr(self, '__sid', None)
         if sid:
             return sid
         else:

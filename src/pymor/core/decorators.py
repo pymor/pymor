@@ -17,31 +17,9 @@ import inspect
 import copy
 import warnings
 
-try:
-    import contracts
-    HAVE_CONTRACTS = True
-except ImportError:
-    HAVE_CONTRACTS = False
-
 
 def fixup_docstring(doc):
-    """replaces all dots with underscores in contract lines
-    this is necessary to circumvent type identifier checking
-    in pycontracts itself
-    """
-    if doc is None:
-        return None
-    ret = []
-    for line in doc.split('\n'):
-        stripped_line = line.lstrip()
-        if stripped_line.startswith(':type'):
-            # line's like: :type ParamName: Some.Module.Classname
-            tokens = stripped_line.split()
-            idx = 2
-            if len(tokens) > idx and tokens[idx].startswith('pymor'):
-                line = ' %s %s %s' % (tokens[idx - 2], tokens[idx - 1], tokens[idx].replace('.', '_'))
-        ret.append(line)
-    return '\n'.join(ret)
+    return doc
 
 
 def _is_decorated(func):
@@ -95,95 +73,3 @@ class Deprecated(DecoratorBase):
             return func(*args, **kwargs)
         return new_func
 
-
-def contract(*arg, **kwargs):
-    """
-        Decorator for adding contracts to functions.
-
-        It is smart enough to support functions with variable number of
-        arguments and keyword arguments.
-
-        There are three ways to specify the contracts. In order of precedence:
-
-        - As arguments to this decorator. For example: ::
-
-              @contract(a='int,>0',b='list[N],N>0',returns='list[N]')
-              def my_function(a, b):
-                  # ...
-                  pass
-
-        - As annotations (supported only in Python 3): ::
-
-              @contract
-              def my_function(a:'int,>0', b:'list[N],N>0') -> 'list[N]':
-                  # ...
-                  pass
-
-        - Using ``:type:`` and ``:rtype:`` tags in the function's docstring: ::
-
-              @contract
-              def my_function(a, b):
-                  """
-
-    if not HAVE_CONTRACTS:
-        if isinstance(arg[0], types.FunctionType):
-            return arg[0]
-        else:
-            return lambda f: f
-
-    # this bit tags function as decorated
-    def tag_and_decorate(function, **kwargs):
-        @functools.wraps(function)
-        def __functools_wrap(function, **kwargs):
-            new_f = contracts.main.contracts_decorate(function, **kwargs)
-            cargs = copy.deepcopy(kwargs)
-            new_f.contract_kwargs = cargs or dict()
-            new_f.decorated = 'contract'
-            return new_f
-        return __functools_wrap(function, **kwargs)
-
-    # OK, this is black magic. You are not expected to understand this.
-    if arg:
-        if isinstance(arg[0], types.FunctionType):
-            # We were called without parameters
-            function = arg[0]
-            function.__doc__ = fixup_docstring(function.__doc__)
-            if contracts.all_disabled():
-                return function
-            try:
-                return tag_and_decorate(function, **kwargs)
-            except contracts.ContractSyntaxError as e:
-                # Erase the stack
-                raise contracts.ContractSyntaxError(e.error, e.where)
-        else:
-            msg = ('I expect that  contracts() is called with '
-                   'only keyword arguments (passed: %r)' % arg)
-            raise contracts.ContractException(msg)
-    else:
-        function.__doc__ = fixup_docstring(function.__doc__)
-        # We were called *with* parameters.
-        if contracts.all_disabled():
-            def tmp_wrap(function):
-                return function
-        else:
-            def tmp_wrap(function):
-                try:
-                    return tag_and_decorate(function, **kwargs)
-                except contracts.ContractSyntaxError as e:
-                    # Erase the stack
-                    raise contracts.ContractSyntaxError(e.error, e.where)
-        return tmp_wrap
-
-# alias this so we need no contracts import outside this module
-if HAVE_CONTRACTS:
-    contracts_decorate = contracts.main.contracts_decorate
-
-
-def contains_contract(string):
-    if not HAVE_CONTRACTS:
-        return False
-    try:
-        contracts.parse_contract_string(string)
-        return True
-    except:
-        return False

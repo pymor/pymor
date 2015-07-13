@@ -231,6 +231,16 @@ class Concatenation(OperatorBase):
         else:
             return Concatenation(restricted_second, restricted_first), first_source_dofs
 
+    def projected(self, range_basis, source_basis, product=None, name=None):
+        if not self.parametric and self.linear:
+            return super(Concatenation, self).projected(range_basis, source_basis, product=product, name=name)
+        projected_first = self.first.projected(None, source_basis, product=None)
+        if isinstance(projected_first, VectorArrayOperator) and not projected_first.transposed:
+            return self.second.projected(range_basis, projected_first._array, product=product, name=name)
+        else:
+            projected_second = self.second.projected(range_basis, None, product=product)
+            return Concatenation(projected_second, projected_first, name=name or self.name + '_projected')
+
 
 class ComponentProjection(OperatorBase):
     """|Operator| representing the projection of a Vector on some of its components.
@@ -613,6 +623,78 @@ class FixedParameterOperator(OperatorBase):
         return self.operator.apply_inverse(V, ind=ind, mu=self.mu, options=options)
 
 
+class AdjointOperator(OperatorBase):
+    """Represents the adjoint of a given |Operator|.
+
+    See :meth:`~pymor.operators.interfaces.OperatorInterface.apply_adjoint`.
+
+    Parameters
+    ----------
+    operator
+        The |Operator| of which the adjoint is formed.
+    source_product
+        If not `None`, scalar product |Operator| for the source |VectorSpace|
+        w.r.t. which to take the adjoint.
+    range_product
+        If not `None`, scalar product |Operator| for the range |VectorSpace|
+        w.r.t. which to take the adjoint.
+    name
+        If not `None`, name of the operator.
+    """
+
+    linear = True
+
+    def __init__(self, operator, source_product=None, range_product=None, name=None):
+        assert isinstance(operator, OperatorInterface)
+        assert operator.linear
+        self.build_parameter_type(inherits=(operator,))
+        self.source = operator.range
+        self.range = operator.source
+        self.operator = operator
+        self.source_product = source_product
+        self.range_product = range_product
+        self.name = name or operator.name + '_adjoint'
+
+    def apply(self, U, ind=None, mu=None):
+        return self.operator.apply_adjoint(U, ind=ind, mu=mu,
+                                           source_product=self.source_product, range_product=self.range_product)
+
+    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+        if range_product != self.source_product:
+            if range_product:
+                U = range_product.apply(U, ind=ind)
+                ind = None
+            if self.source_product:
+                U = self.source_product.apply_inverse(U, ind=ind)
+                ind = None
+
+        U = self.operator.apply(U, ind=ind, mu=mu)
+
+        if source_product != self.range_product:
+            if self.range_product:
+                U = self.range_product.apply(U)
+            if source_product:
+                U = source_product.apply_inverse(U)
+
+        return U
+
+    def projected(self, range_basis, source_basis, product=None, name=None):
+        if range_basis is not None:
+            if product is not None:
+                range_basis = product.apply(range_basis)
+            if self.source_product:
+                range_basis = self.source_product.apply_inverse(range_basis)
+
+        if source_basis is not None and self.range_product:
+            source_basis = self.range_product.apply(source_basis)
+
+        operator = self.operator.projected(source_basis, range_basis)
+        range_product = self.range_product if source_basis is None else None
+        source_product = self.source_product if range_basis is None else None
+        return AdjointOperator(operator, source_product=source_product, range_product=range_product,
+                               name=name or self.name + '_projected')
+
+
 class SelectionOperator(OperatorBase):
     """An |Operator| selecting one out of a list of |Operators|.
 
@@ -675,6 +757,12 @@ class SelectionOperator(OperatorBase):
         mu = self.parse_parameter(mu)
         operator_number = self._get_operator_number(mu)
         return self.operators[operator_number].as_vector(mu=mu)
+
+    def projected(self, range_basis, source_basis, product=None, name=None):
+        projected_operators = [op.projected(range_basis, source_basis, product=product, name=name)
+                               for op in self.operators]
+        return SelectionOperator(projected_operators, self.parameter_functional, self.boundaries,
+                                 name or self.name + '_projected')
 
 
 @defaults('raise_negative', 'tol')
