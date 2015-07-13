@@ -315,11 +315,16 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         if coefficients[0] == 1:
             matrix = operators[0]._matrix.copy()
         else:
-            matrix = operators[0]._matrix * coefficients[0]
+            if coefficients[0].imag == 0:
+                matrix = operators[0]._matrix * coefficients[0].real
+            else:
+                matrix = operators[0]._matrix * coefficients[0]
 
-        if (matrix.dtype == np.float and
-                (any(op._matrix.dtype == np.complex for op in operators) or any(c.imag != 0 for c in coefficients))):
-            matrix = matrix.astype(np.complex)
+        common_mat_dtype = reduce(np.promote_types, (op._matrix.dtype for op in operators))
+        common_coef_dtype = reduce(np.promote_types, (type(c.real if c.imag == 0 else c) for c in coefficients))
+        common_dtype = np.promote_types(common_mat_dtype, common_coef_dtype)
+        if matrix.dtype != common_dtype:
+            matrix = matrix.astype(common_dtype)
 
         for op, c in izip(operators[1:], coefficients[1:]):
             if isinstance(op, ZeroOperator):
@@ -787,10 +792,7 @@ def _apply_inverse(matrix, V, options=None):
         options = default_options[user_options['type']]
         options.update(user_options)
 
-    if matrix.dtype == np.float and V.dtype == np.float:
-        R = np.empty((len(V), matrix.shape[1]))
-    else:
-        R = np.empty((len(V), matrix.shape[1]), dtype=np.complex)
+    R = np.empty((len(V), matrix.shape[1]), dtype=np.promote_types(matrix.dtype, V.dtype))
 
     if options['type'] == 'solve':
         for i, VV in enumerate(V):
