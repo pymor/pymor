@@ -99,8 +99,8 @@ class NumpyVectorArray(VectorArrayInterface):
         if o_ind is None:
             len_other = other._len
             if len_other <= self._array.shape[0] - self._len:
-                if self._array.dtype == np.float and other._array.dtype == np.complex:
-                    self._array = self._array.astype(np.complex)
+                if self._array.dtype != other._array.dtype:
+                    self._array = self._array.astype(np.promote_types(self._array.dtype, other._array.dtype))
                 self._array[self._len:self._len + len_other] = other._array
             else:
                 self._array = np.vstack((self._array[:self._len], other._array[:len_other]))
@@ -112,8 +112,8 @@ class NumpyVectorArray(VectorArrayInterface):
             else:
                 len_other = len(o_ind)
             if len_other <= self._array.shape[0] - self._len:
-                if self._array.dtype == np.float and other._array.dtype == np.complex:
-                    self._array = self._array.astype(np.complex)
+                if self._array.dtype != other._array.dtype:
+                    self._array = self._array.astype(np.promote_types(self._array.dtype, other._array.dtype))
                 other._array.take(o_ind, axis=0, out=self._array[self._len:self._len + len_other])
             else:
                 self._array = np.append(self._array[:self._len], other._array[o_ind], axis=0)
@@ -167,8 +167,8 @@ class NumpyVectorArray(VectorArrayInterface):
         else:
             len_ind = self.len_ind(ind)
             other_array = np.array(self._array) if other is self else other._array
-            if self._array.dtype == np.float and other_array.dtype == np.complex:
-                self._array = self._array.astype(np.complex)
+            if self._array.dtype != other._array.dtype:
+                self._array = self._array.astype(np.promote_types(self._array.dtype, other._array.dtype))
             if o_ind is None:
                 assert len_ind == other._len
                 self._array[ind] = other_array[:other._len]
@@ -213,10 +213,9 @@ class NumpyVectorArray(VectorArrayInterface):
         if isinstance(alpha, np.ndarray) and not isinstance(ind, Number):
             alpha = alpha[:, np.newaxis]
 
-        if alpha.imag == 0:
-            alpha = alpha.real
-        elif self._array.dtype == np.float:
-            self._array = self._array.astype(np.complex)
+        alpha_dtype = type(alpha) if isinstance(alpha, Number) else alpha.dtype
+        if self._array.dtype != alpha_dtype:
+            self._array = self._array.astype(np.promote_types(self._array.dtype, alpha_dtype))
 
         if ind is None:
             self._array[:self._len] *= alpha
@@ -242,10 +241,9 @@ class NumpyVectorArray(VectorArrayInterface):
 
         B = x._array[:x._len] if x_ind is None else x._array[x_ind]
 
-        if alpha.imag == 0:
-            alpha = alpha.real
-        if self._array.dtype == np.float and (alpha.imag != 0 or B.dtype == np.complex):
-            self._array = self._array.astype(np.complex)
+        alpha_dtype = type(alpha) if isinstance(alpha, Number) else alpha.dtype
+        if self._array.dtype != alpha_dtype:
+            self._array = self._array.astype(np.promote_types(self._array.dtype, alpha_dtype))
 
         if np.all(alpha == 1):
             if ind is None:
