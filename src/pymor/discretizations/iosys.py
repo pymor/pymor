@@ -380,6 +380,145 @@ class LTISystem(DiscretizationInterface):
 
         return rom, rc, reduction_data
 
+    def irka(self, sigma, b, c, tol, maxit, prnt=False):
+        """Reduce using IRKA.
+
+        Parameters
+        ----------
+        sigma
+            Initial interpolation points (closed under conjugation), list of length r.
+        b
+            Initial right tangential directions, array of order m x r.
+        c
+            Initial left tangential directions, array of order p x r.
+        tol
+            Tolerance, largest change in interpolation points.
+        maxit
+            Maximum number of iterations.
+        prnt
+            Should consecutive distances be printed.
+
+        Returns
+        -------
+        rom
+            Reduced |LTISystem| model.
+        rc
+            Reconstructor of full state.
+        reduction_data
+            Dictionary of additional data produced by the reduction process. Contains projection matrices Vr and Wr,
+            distances between interpolation points in different iterations dist, and interpolation points from all
+            iterations Sigma.
+        """
+        Vr, Wr = self.interpolation(sigma, b, c)
+
+        dist = []
+        Sigma = [np.array(sigma)]
+        for it in xrange(maxit):
+            if self.E is None:
+                Er = Wr.dot(Vr)
+            else:
+                Er = self.E.apply2(Vr, Wr)
+            Ar = self.A.apply2(Vr, Wr)
+            Br = Wr.dot(self.B)
+            Cr = self.C.dot(Vr)
+
+            sigma, Y, X = spla.eig(Ar, Er, left=True, right=True)
+            sigma = np.array([np.abs(s.real) + s.imag * 1j for s in sigma])
+            Sigma.append(sigma.copy())
+
+            dist.append([])
+            for i in xrange(it + 1):
+                dist[-1].append(np.max(np.abs((Sigma[i] - Sigma[-1]) / Sigma[-1])))
+
+            if prnt:
+                # s = 'dist[{}] = [{:.1e}'.format(it, dist[-1][0])
+                # for i in xrange(1, it + 1):
+                #     s += ', {:.1e}'.format(dist[-1][i])
+                # s += ']'
+                # print(s)
+                print('dist[{}] = {:.5e}'.format(it, np.min(dist[-1])))
+
+            # D = np.diag(1. / np.diag(Y.T.conj().dot(Er).dot(X)))
+            b = Br.T.dot(Y.conj())
+            c = Cr.dot(X) # .dot(D)
+
+            Vr, Wr = self.interpolation(sigma, b, c)
+
+            if np.min(dist[-1]) < tol:
+                break
+
+        if self.E is None:
+            Er = Wr.dot(Vr)
+        else:
+            Er = self.E.apply2(Vr, Wr)
+        Ar = self.A.apply2(Vr, Wr)
+        Br = Wr.dot(self.B)
+        Cr = self.C.dot(Vr)
+        Dr = self.D
+
+        rc = GenericRBReconstructor(Vr)
+        reduction_data = {'Vr': Vr, 'Wr': Wr, 'dist': dist, 'Sigma': Sigma, 'b': b, 'c': c}
+
+        return LTISystem.from_matrices(Ar, Br, Cr, Dr, Er), rc, reduction_data
+
+    def interpolation(self, sigma, b, c):
+        """Find Vr and Wr.
+
+        Parameters
+        ----------
+        sigma
+            Interpolation points (closed under conjugation), vector of length r.
+        b
+            Right tangential directions, array of order m x r.
+        c
+            Left tangential directions, array of order p x r.
+
+        Returns
+        -------
+        Vr
+            Right projection matrix.
+        Wr
+            Left projection matrix.
+        """
+        r = len(sigma)
+
+        Vr = NumpyVectorArray.make_array(self.n, reserve=r)
+        Wr = NumpyVectorArray.make_array(self.n, reserve=r)
+
+        for i in xrange(r):
+            if sigma[i].imag == 0:
+                if self.E is None:
+                    E = NumpyMatrixOperator(sps.eye(self.n))
+                    sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i].real, -1))
+                else:
+                    sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i].real, -1))
+
+                Bb = VectorArrayOperator(self.B).apply(NumpyVectorArray(b[:, i].real.T))
+                Vr.append(sEmA.apply_inverse(Bb))
+                CTc = VectorArrayOperator(self.C).apply(NumpyVectorArray(c[:, i].real.T))
+                Wr.append(sEmA.apply_adjoint_inverse(CTc))
+            elif sigma[i].imag > 0:
+                if self.E is None:
+                    E = NumpyMatrixOperator(sps.eye(self.n))
+                    sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i], -1))
+                else:
+                    sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i], -1))
+
+                Bb = VectorArrayOperator(self.B).apply(NumpyVectorArray(b[:, i].T))
+                v = sEmA.apply_inverse(Bb)
+                Vr.append(NumpyVectorArray(v.data.real))
+                Vr.append(NumpyVectorArray(v.data.imag))
+
+                CTc = VectorArrayOperator(self.C).apply(NumpyVectorArray(c[:, i].T))
+                w = sEmA.apply_adjoint_inverse(CTc)
+                Wr.append(NumpyVectorArray(w.data.real))
+                Wr.append(NumpyVectorArray(w.data.imag))
+
+        Vr = gram_schmidt(Vr, atol=0, rtol=0)
+        Wr = gram_schmidt(Wr, atol=0, rtol=0)
+
+        return Vr, Wr
+
 
 class LyapunovEquation(pymess.equation):
     """Lyapunov equation class for pymess
