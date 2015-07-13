@@ -74,7 +74,6 @@ functionality:
        which should be excluded from sid calculation.
 """
 
-from __future__ import absolute_import, division, print_function
 import abc
 from pickle import dumps
 from copyreg import dispatch_table

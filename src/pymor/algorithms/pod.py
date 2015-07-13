@@ -5,8 +5,6 @@
 # Contributors: Andreas Buhr <andreas@andreasbuhr.de>
 #               Michael Laier <m_laie01@uni-muenster.de>
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 from scipy.linalg import eigh
 

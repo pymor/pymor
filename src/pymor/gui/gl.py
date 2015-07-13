@@ -11,8 +11,6 @@ intended to be used directly. Instead, use
 :class:`~pymor.gui.qt.PatchVisualizer`.
 """
 
-from __future__ import absolute_import, division, print_function
-
 import math as m
 
 import numpy as np

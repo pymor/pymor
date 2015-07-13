@@ -37,9 +37,6 @@ components of the given |Parameter| and performs some name mapping. (See the
 documentation of :meth:`~Parametric.build_parameter_type` for details.)
 """
 
-from __future__ import absolute_import, division, print_function
-
-
 from numbers import Number
 
 import numpy as np

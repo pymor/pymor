@@ -4,8 +4,6 @@
 #
 # Contributors: Michael Schaefer <michael.schaefer@uni-muenster.de>
 
-from __future__ import absolute_import, division, print_function
-
 from pymor.core.interfaces import ImmutableInterface
 from pymor.domaindescriptions.boundarytypes import BoundaryType
 

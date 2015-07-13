@@ -4,9 +4,6 @@
 #
 # Contributors: lucas-ca <lucascamp@web.de>
 
-from __future__ import absolute_import, division, print_function
-
-
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.discretizations.basic import StationaryDiscretization
 from pymor.domaindiscretizers.default import discretize_domain_default

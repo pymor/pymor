@@ -14,8 +14,6 @@
     |NumPy arrays| as an |Operator|.
 """
 
-from __future__ import absolute_import, division, print_function
-
 from collections import OrderedDict
 
 

@@ -34,7 +34,6 @@ Options:
   -h, --help             Show this message.
 """
 
-from __future__ import absolute_import, division, print_function
 import sys
 from docopt import docopt
 import time

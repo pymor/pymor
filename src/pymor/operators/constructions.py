@@ -7,8 +7,6 @@
 
 """Module containing some constructions to obtain new operators from old ones."""
 
-from __future__ import absolute_import, division, print_function
-
 from numbers import Number
 
 

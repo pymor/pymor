@@ -9,10 +9,6 @@ Instead, use :meth:`~pymor.gui.qt.visualize_matplotlib_1d` or
 :class:`~pymor.gui.qt.Matplotlib1DVisualizer`.
 """
 
-from __future__ import absolute_import, division, print_function
-
-
-
 import numpy as np
 
 try:

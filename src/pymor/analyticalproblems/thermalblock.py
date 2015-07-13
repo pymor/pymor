@@ -5,8 +5,6 @@
 #
 # Contributors: Michael Laier <m_laie01@uni-muenster.de>
 
-from __future__ import absolute_import, division, print_function
-
 from itertools import product
 
 from pymor.analyticalproblems.elliptic import EllipticProblem

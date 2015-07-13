@@ -5,8 +5,6 @@
 #
 # Contributors: Michael Laier <m_laie01@uni-muenster.de>
 
-from __future__ import absolute_import, division, print_function
-
 from pymor.core.interfaces import ImmutableInterface
 from pymor.domaindescriptions.basic import RectDomain
 from pymor.functions.basic import ConstantFunction

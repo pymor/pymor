@@ -7,9 +7,6 @@
 
 """ This module provides some operators for finite volume discretizations."""
 
-from __future__ import absolute_import, division, print_function
-
-
 import numpy as np
 from scipy.sparse import coo_matrix, csc_matrix, dia_matrix
 

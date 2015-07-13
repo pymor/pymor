@@ -20,8 +20,6 @@ independent from the basis, an :class:`~pymor.core.exceptions.ExtensionError`
 exception is raised.
 """
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 
 from pymor.algorithms.gram_schmidt import gram_schmidt

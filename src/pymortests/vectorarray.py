@@ -2,8 +2,6 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 from pickle import loads, dumps
 from itertools import product, chain
 from numbers import Number

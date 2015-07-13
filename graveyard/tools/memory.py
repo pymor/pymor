@@ -6,7 +6,6 @@
 
 # {{{ http://code.activestate.com/recipes/577504/ (r3) MIT licensed
 
-from __future__ import absolute_import, division, print_function
 from sys import getsizeof, stderr
 from itertools import chain
 from collections import deque

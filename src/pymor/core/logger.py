@@ -6,7 +6,6 @@
 via http://stackoverflow.com/questions/384076/how-can-i-make-the-python-logging-output-to-be-colored
 Can not be moved because it's needed to be imported in the root __init__.py OR ELSE
 """
-from __future__ import absolute_import, division, print_function
 import curses
 import logging
 import os
