@@ -18,19 +18,21 @@ from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.spaces import CubicParameterSpace
 from pymor.parameters.functionals import ExpressionParameterFunctional
 
+
 def discretize_stationary_from_disk(parameter_file):
-    """Generates stationary discretization only based on system relevant data given as .mat files on the hard disc. The path and further
-     specifications to these objects are given in an '.ini' parameter file (see example below). Suitable for discrete problems given by::
+    """Generates stationary discretization only based on system relevant data given as .mat files on the hard disc.
+    The path and further specifications to these objects are given in an '.ini' parameter file (see example below).
+    Suitable for discrete problems given by::
 
-	 L(u, w) = F(w)
+    L(u, w) = F(w)
 
-    with an operator L and a linear functional F with a parameter w  given as system matrices and rhs vectors in an affine decomposition
-    on the hard disk.
+    with an operator L and a linear functional F with a parameter w  given as system matrices and rhs vectors in
+    an affine decomposition on the hard disk.
 
     Parameters
     ----------
     parameterFile
-	    String containing the path to the .ini parameterfile.
+        String containing the path to the .ini parameter file.
 
     Returns
     -------
@@ -81,9 +83,9 @@ def discretize_stationary_from_disk(parameter_file):
     assert 'rhs-vectors' in config.sections()
     assert 'parameter' in config.sections()
 
-    system_mat        = config.items('system-matrices')
-    rhs_vec          = config.items('rhs-vectors')
-    parameter        = config.items('parameter')
+    system_mat = config.items('system-matrices')
+    rhs_vec = config.items('rhs-vectors')
+    parameter = config.items('parameter')
 
     # Dict of parameters types and ranges
     parameter_type = {}
@@ -92,13 +94,13 @@ def discretize_stationary_from_disk(parameter_file):
     # get parameters
     for i in range(len(parameter)):
         parameter_name = parameter[i][0]
-        parameter_list = tuple(float(j) for j in parameter[i][1].replace(" ","").split(','))
+        parameter_list = tuple(float(j) for j in parameter[i][1].replace(" ", "").split(','))
         parameter_range[parameter_name] = parameter_list
         # Assume scalar parameter dependence
         parameter_type[parameter_name] = 0
 
     # Create parameter space
-    parameter_space = CubicParameterSpace(parameter_type=parameter_type,ranges=parameter_range)
+    parameter_space = CubicParameterSpace(parameter_type=parameter_type, ranges=parameter_range)
 
     # Assemble operators
     system_operators, system_functionals = [], []
@@ -134,18 +136,20 @@ def discretize_stationary_from_disk(parameter_file):
         for i in range(len(product)):
             product_name = product[i][0]
             product_path = product[i][1]
-            info=io.loadmat(product_path,mat_dtype=True).values()
+            info = io.loadmat(product_path, mat_dtype=True).values()
             products[product_name] = NumpyMatrixOperator([j for j in info if isinstance(j, np.ndarray)][0])
     else:
         products = None
 
     # Create and return stationary discretization
-    return StationaryDiscretization(operator=system_lincombOperator, rhs=rhs_lincombOperator, parameter_space=parameter_space, products=products)
+    return StationaryDiscretization(operator=system_lincombOperator, rhs=rhs_lincombOperator,
+                                    parameter_space=parameter_space, products=products)
 
 
-def discretize_instationary_from_disk(parameterFile, T = None, steps = None, u0 = None, time_stepper = None):
-    """Generates instationary discretization only based on system relevant data given as .mat files on the hard disc. The path and further
-    specifications to these objects are given in an '.ini' parameter file (see example below). Suitable for discrete problems given by::
+def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=None, time_stepper=None):
+    """Generates instationary discretization only based on system relevant data given as .mat files
+    on the hard disc. The path and further specifications to these objects are given in an '.ini'
+    parameter file (see example below). Suitable for discrete problems given by::
 
     M(u(t), w) + L(u(t), w, t) = F(t, w)
                           u(0) = u_0
@@ -157,16 +161,16 @@ def discretize_instationary_from_disk(parameterFile, T = None, steps = None, u0 
 
     Parameters
     ----------
-    parameterFile
-	    String containing the path to the '.ini' parameter file.
+    parameter_file
+        String containing the path to the '.ini' parameter file.
     T
-        Endtime of desired solution, if None obtained from parameter file
+        End-time of desired solution, if None obtained from parameter file
     steps
         Number of time steps to do, if None obtained from parameter file
     u0
-	    Initial solution, if None obtained from parameter file
+        Initial solution, if None obtained from parameter file
     time_stepper
-	    The desired time_stepper to use, if None an Implicit euler scheme is used.
+        The desired time_stepper to use, if None an Implicit euler scheme is used.
 
     Returns
     -------
@@ -213,7 +217,7 @@ def discretize_instationary_from_disk(parameterFile, T = None, steps = None, u0 
     T: 10.0
     steps: 100
     """
-    assert ".ini" == parameterFile[-4:], "Given file is not an .ini file"
+    assert ".ini" == parameter_file[-4:], "Given file is not an .ini file"
 
     # Get input from parameter file
     config = ConfigParser.ConfigParser()
@@ -226,10 +230,10 @@ def discretize_instationary_from_disk(parameterFile, T = None, steps = None, u0 
     assert 'rhs-vectors' in config.sections()
     assert 'parameter' in config.sections()
 
-    system_mat        = config.items('system-matrices')
-    mass_mat         = config.items('mass-matrix')
-    rhs_vec          = config.items('rhs-vectors')
-    parameter        = config.items('parameter')
+    system_mat = config.items('system-matrices')
+    mass_mat = config.items('mass-matrix')
+    rhs_vec = config.items('rhs-vectors')
+    parameter = config.items('parameter')
 
     # Dict of parameters types and ranges
     parameter_type = {}
@@ -238,13 +242,13 @@ def discretize_instationary_from_disk(parameterFile, T = None, steps = None, u0 
     # get parameters
     for i in range(len(parameter)):
         parameter_name = parameter[i][0]
-        parameter_list = tuple(float(j) for j in parameter[i][1].replace(" ","").split(','))
+        parameter_list = tuple(float(j) for j in parameter[i][1].replace(" ", "").split(','))
         parameter_range[parameter_name] = parameter_list
         # Assume scalar parameter dependence
         parameter_type[parameter_name] = 0
 
     # Create parameter space
-    parameter_space = CubicParameterSpace(parameter_type=parameter_type,ranges=parameter_range)
+    parameter_space = CubicParameterSpace(parameter_type=parameter_type, ranges=parameter_range)
 
     # Assemble operators
     system_operators, system_functionals = [], []
@@ -283,7 +287,7 @@ def discretize_instationary_from_disk(parameterFile, T = None, steps = None, u0 
         u_0 = config.items('initial-solution')
         path = u_0[0][1]
         info = io.loadmat(path, mat_dtype=True).values()
-        u0  = NumpyMatrixOperator([j for j in info if isinstance(j, np.ndarray)][0])
+        u0 = NumpyMatrixOperator([j for j in info if isinstance(j, np.ndarray)][0])
 
     # get products if given
     if 'products' in config.sections():
@@ -292,7 +296,7 @@ def discretize_instationary_from_disk(parameterFile, T = None, steps = None, u0 
         for i in range(len(product)):
             product_name = product[i][0]
             product_path = product[i][1]
-            info=io.loadmat(product_path,mat_dtype=True).values()
+            info = io.loadmat(product_path, mat_dtype=True).values()
             products[product_name] = NumpyMatrixOperator([j for j in info if isinstance(j, np.ndarray)][0])
     else:
         products = None
@@ -313,4 +317,6 @@ def discretize_instationary_from_disk(parameterFile, T = None, steps = None, u0 
         time_stepper = time_stepper(steps)
 
     # Create and return instationary discretization
-    return InstationaryDiscretization(operator=system_lincombOperator, rhs=rhs_lincombOperator, parameter_space=parameter_space, initial_data=u0, T=T, time_stepper=time_stepper, mass=mass_operator, products=products)
+    return InstationaryDiscretization(operator=system_lincombOperator, rhs=rhs_lincombOperator,
+                                      parameter_space=parameter_space, initial_data=u0, T=T,
+                                      time_stepper=time_stepper, mass=mass_operator, products=products)
