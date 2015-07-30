@@ -222,7 +222,7 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
     # Get input from parameter file
     config = ConfigParser.ConfigParser()
     config.optionxform = str
-    config.read(parameterFile)
+    config.read(parameter_file)
 
     # Assert that all needed entries given
     assert 'system-matrices' in config.sections()
