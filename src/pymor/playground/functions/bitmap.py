@@ -44,6 +44,9 @@ class BitmapFunction(FunctionBase):
 
     def evaluate(self, x, mu=None):
         indices = np.maximum(np.floor((x - self.lower_left) * np.array(self.bitmap.shape) / self.size).astype(int), 0)
-        F = self.bitmap[np.minimum(indices[..., 0], self.bitmap.shape[0] - 1),
-                        np.minimum(indices[..., 1], self.bitmap.shape[1] - 1)] * ((self.range[1] - self.range[0]) / 255.) + self.range[0]
+        bitmapvalue = self.bitmap[np.minimum(indices[..., 0], self.bitmap.shape[0] - 1),
+                        np.minimum(indices[..., 1], self.bitmap.shape[1] - 1)]
+        assert (bitmapvalue <= 255).all()
+
+        F = bitmapvalue * ((self.range[1] - self.range[0]) / 255.) + self.range[0]
         return F
