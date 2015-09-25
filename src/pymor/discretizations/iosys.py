@@ -516,11 +516,30 @@ def solve_lyap(A, E, B, trans=False):
     B
         The |VectorArray| B.
     """
-    opts = pymess.options()
-    if trans:
-        opts.type = pymess.MESS_OP_TRANSPOSE
-    eqn = LyapunovEquation(opts, A, E, B)
-    Z, status = pymess.lradi(eqn, opts)
+    if A.source.dim <= 1000:
+        if not A.sparse:
+            A = A._matrix
+        else:
+            A = A._matrix.toarray()
+        if E is not None:
+            if not E.sparse:
+                E = E._matrix
+            else:
+                E = E._matrix.toarray()
+        if not trans:
+            Z = pymess.lyap(A, E, B.data.T)
+        else:
+            if E is None:
+                Z = pymess.lyap(A.T, None, B.data.T)
+            else:
+                Z = pymess.lyap(A.T, E.T, B.data.T)
+    else:
+        opts = pymess.options()
+        if trans:
+            opts.type = pymess.MESS_OP_TRANSPOSE
+        eqn = LyapunovEquation(opts, A, E, B)
+        Z, status = pymess.lradi(eqn, opts)
+
     Z = NumpyVectorArray(np.array(Z).T)
 
-    return Z.copy()
+    return Z
