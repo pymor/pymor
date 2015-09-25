@@ -303,13 +303,13 @@ class L2ProductP1(NumpyMatrixBasedOperator):
             SF = [lambda X: 1 - X[..., 0] - X[..., 1],
                   lambda X: X[..., 0],
                   lambda X: X[..., 1]]
+            q, w = triangle.quadrature(order=2)
         elif g.dim == 1:
             SF = [lambda X: 1 - X[..., 0],
                   lambda X: X[..., 0]]
+            q, w = line.quadrature(order=2)
         else:
             raise NotImplementedError
-
-        q, w = triangle.quadrature(order=2)
 
         # evaluate the shape functions on the quadrature points
         SFQ = np.array(tuple(f(q) for f in SF))
