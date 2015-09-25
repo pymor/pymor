@@ -3,7 +3,7 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""3D Thermalblock demo using FENICS.
+"""2D Thermalblock demo using FENICS.
 
 Usage:
   thermalblock.py [-hp] [--estimator-norm=NORM] [--extension-alg=ALG] [--grid=NI] [--help] [--order=ORDER]
