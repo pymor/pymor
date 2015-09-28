@@ -11,10 +11,14 @@ import weakref
 
 
 try:
-    from IPython.parallel import Client, TimeoutError
+    from ipyparallel import Client, TimeoutError
     HAVE_IPYTHON = True
 except ImportError:
-    HAVE_IPYTHON = False
+    try:
+        from IPython.parallel import Client, TimeoutError
+        HAVE_IPYTHON = True
+    except ImportError:
+        HAVE_IPYTHON = False
 
 
 from pymor.core.interfaces import BasicInterface, ImmutableInterface
