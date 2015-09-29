@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
+from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.operators.constructions import induced_norm
 from pymor.operators.cg import L2ProductP1
@@ -28,7 +29,7 @@ def test_gram_schmidt():
     for i in (1, 32):
         b = NumpyVectorArray(np.identity(i, dtype=np.float))
         a = gram_schmidt(b)
-        assert np.all(b.almost_equal(a))
+        assert np.all(almost_equal(b, a))
     c = NumpyVectorArray([[1.0, 0], [0., 0]])
     a = gram_schmidt(c)
     assert (a.data == np.array([[1.0, 0]])).all()
