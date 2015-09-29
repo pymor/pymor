@@ -13,7 +13,6 @@ public:
   void scal(double val);
   void axpy(double a, const Vector& x);
   double dot(const Vector& other) const;
-  bool almost_equal(const Vector& other, double rtol, double atol) const;
   double* data();
 private:
   std::vector<double> _data;

@@ -30,18 +30,6 @@ double Vector::dot(const Vector& other) const {
   return result;
 }
 
-bool Vector::almost_equal(const Vector& other, double rtol, double atol) const {
-  assert(other.dim == dim);
-  for (int i = 0; i < dim; i++) {
-    const double x = _data[i];
-    const double y = other._data[i];
-    if (std::abs(x - y) > rtol*std::abs(y) + atol) {
-      return false;
-    }
-  }
-  return true;
-}
-
 double* Vector::data() {
   return _data.data();
 }

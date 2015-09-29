@@ -34,10 +34,6 @@ Vector.add_instance_attribute('dim', 'int', is_const=True)
 Vector.add_method('scal', None, [pybindgen.param('double', 'val')])
 Vector.add_method('axpy', None, [pybindgen.param('double', 'a'), pybindgen.param('const Vector&', 'x')])
 Vector.add_method('dot', pybindgen.retval('double'), [pybindgen.param('const Vector&', 'other')], is_const=True)
-Vector.add_method('almost_equal', pybindgen.retval('bool'),
-                  [pybindgen.param('const Vector&', 'other'),
-                   pybindgen.param('double', 'rtol'),
-                   pybindgen.param('double', 'atol')], is_const=True)
 Vector.add_method('data', BufferReturn('double*', 'self->obj->dim * sizeof(double)'), [])
 
 DiffusionOperator = mod.add_class('DiffusionOperator')

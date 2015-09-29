@@ -91,12 +91,6 @@ class BlockVectorArray(VectorArrayInterface):
         for block, o_block in zip(self._blocks, other._blocks):
             block.replace(o_block, ind=ind, o_ind=o_ind, remove_from_other=remove_from_other)
 
-    def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
-        assert other in self.space
-        return np.all(np.array([block.almost_equal(other_block, ind=ind, o_ind=o_ind, rtol=rtol, atol=atol)
-                                for block, other_block in izip(self._blocks, other._blocks)]),
-                      axis=0)
-
     def scal(self, alpha, ind=None):
         for block in self._blocks:
             block.scal(alpha, ind=ind)
