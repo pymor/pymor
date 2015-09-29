@@ -105,9 +105,11 @@ class BlockVectorArray(VectorArrayInterface):
         assert x in self.space
         assert isinstance(alpha, Number) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
-        if len(x) > 0:
+        if x.len_ind(x_ind) > 0:
             for block, x_block in izip(self._blocks, x._blocks):
                 block.axpy(alpha, x_block, ind, x_ind)
+        else:
+            assert self.len_ind(ind) == 0
 
     def dot(self, other, ind=None, o_ind=None):
         assert other in self.space
