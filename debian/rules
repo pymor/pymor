@@ -22,8 +22,8 @@ override_dh_auto_install:
 
 override_dh_auto_build:
 	# pretend we're on RTD to mock missing deps on import
-	READTHEDOCS=True python setup.py build_sphinx -b html
 	dh_auto_build
+	PYTHONPATH=. http_proxy='127.0.0.1:9' READTHEDOCS=True python setup.py build_sphinx -b html
 
 override_dh_sphinxdoc-arch:
 
