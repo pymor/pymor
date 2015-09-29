@@ -405,6 +405,64 @@ class LTISystem(DiscretizationInterface):
 
         return rom, rc, reduction_data
 
+    def interpolation(self, sigma, b, c):
+        """Find Vr and Wr.
+
+        Parameters
+        ----------
+        sigma
+            Interpolation points (closed under conjugation), vector of length r.
+        b
+            Right tangential directions, array of order m x r.
+        c
+            Left tangential directions, array of order p x r.
+
+        Returns
+        -------
+        Vr
+            Right projection matrix.
+        Wr
+            Left projection matrix.
+        """
+        r = len(sigma)
+
+        Vr = NumpyVectorArray.make_array(self.n, reserve=r)
+        Wr = NumpyVectorArray.make_array(self.n, reserve=r)
+
+        for i in xrange(r):
+            if sigma[i].imag == 0:
+                if self.E is None:
+                    E = NumpyMatrixOperator(sps.eye(self.n))
+                    sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i].real, -1))
+                else:
+                    sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i].real, -1))
+
+                Bb = VectorArrayOperator(self.B).apply(NumpyVectorArray(b[:, i].real.T))
+                Vr.append(sEmA.apply_inverse(Bb))
+                CTc = VectorArrayOperator(self.C).apply(NumpyVectorArray(c[:, i].real.T))
+                Wr.append(sEmA.apply_adjoint_inverse(CTc))
+            elif sigma[i].imag > 0:
+                if self.E is None:
+                    E = NumpyMatrixOperator(sps.eye(self.n))
+                    sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i], -1))
+                else:
+                    sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i], -1))
+
+                Bb = VectorArrayOperator(self.B).apply(NumpyVectorArray(b[:, i].T))
+                v = sEmA.apply_inverse(Bb)
+                Vr.append(NumpyVectorArray(v.data.real))
+                Vr.append(NumpyVectorArray(v.data.imag))
+
+                CTc = VectorArrayOperator(self.C).apply(NumpyVectorArray(c[:, i].T))
+                w = sEmA.apply_adjoint_inverse(CTc)
+                Wr.append(NumpyVectorArray(w.data.real))
+                Wr.append(NumpyVectorArray(w.data.imag))
+
+        Vr = gram_schmidt(Vr, atol=0, rtol=0)
+        Wr = gram_schmidt(Wr, atol=0, rtol=0)
+
+        return Vr, Wr
+
     def irka(self, sigma, b, c, tol, maxit, prnt=False):
         """Reduce using IRKA.
 
@@ -472,64 +530,6 @@ class LTISystem(DiscretizationInterface):
         reduction_data = {'Vr': Vr, 'Wr': Wr, 'dist': dist, 'Sigma': Sigma, 'b': b, 'c': c}
 
         return LTISystem.from_matrices(Ar, Br, Cr, Dr, Er), rc, reduction_data
-
-    def interpolation(self, sigma, b, c):
-        """Find Vr and Wr.
-
-        Parameters
-        ----------
-        sigma
-            Interpolation points (closed under conjugation), vector of length r.
-        b
-            Right tangential directions, array of order m x r.
-        c
-            Left tangential directions, array of order p x r.
-
-        Returns
-        -------
-        Vr
-            Right projection matrix.
-        Wr
-            Left projection matrix.
-        """
-        r = len(sigma)
-
-        Vr = NumpyVectorArray.make_array(self.n, reserve=r)
-        Wr = NumpyVectorArray.make_array(self.n, reserve=r)
-
-        for i in xrange(r):
-            if sigma[i].imag == 0:
-                if self.E is None:
-                    E = NumpyMatrixOperator(sps.eye(self.n))
-                    sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i].real, -1))
-                else:
-                    sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i].real, -1))
-
-                Bb = VectorArrayOperator(self.B).apply(NumpyVectorArray(b[:, i].real.T))
-                Vr.append(sEmA.apply_inverse(Bb))
-                CTc = VectorArrayOperator(self.C).apply(NumpyVectorArray(c[:, i].real.T))
-                Wr.append(sEmA.apply_adjoint_inverse(CTc))
-            elif sigma[i].imag > 0:
-                if self.E is None:
-                    E = NumpyMatrixOperator(sps.eye(self.n))
-                    sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i], -1))
-                else:
-                    sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i], -1))
-
-                Bb = VectorArrayOperator(self.B).apply(NumpyVectorArray(b[:, i].T))
-                v = sEmA.apply_inverse(Bb)
-                Vr.append(NumpyVectorArray(v.data.real))
-                Vr.append(NumpyVectorArray(v.data.imag))
-
-                CTc = VectorArrayOperator(self.C).apply(NumpyVectorArray(c[:, i].T))
-                w = sEmA.apply_adjoint_inverse(CTc)
-                Wr.append(NumpyVectorArray(w.data.real))
-                Wr.append(NumpyVectorArray(w.data.imag))
-
-        Vr = gram_schmidt(Vr, atol=0, rtol=0)
-        Wr = gram_schmidt(Wr, atol=0, rtol=0)
-
-        return Vr, Wr
 
 
 class LyapunovEquation(pymess.equation):
