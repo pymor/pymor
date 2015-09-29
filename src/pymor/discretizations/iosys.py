@@ -439,13 +439,7 @@ class LTISystem(DiscretizationInterface):
         dist = []
         Sigma = [np.array(sigma)]
         for it in xrange(maxit):
-            if self.E is None:
-                Er = Wr.dot(Vr)
-            else:
-                Er = self.E.apply2(Vr, Wr)
-            Ar = self.A.apply2(Vr, Wr)
-            Br = Wr.dot(self.B)
-            Cr = self.C.dot(Vr)
+            Ar, Br, Cr, _, Er = self.project(Vr, Wr)
 
             sigma, Y, X = spla.eig(Ar, Er, left=True, right=True)
             sigma = np.array([np.abs(s.real) + s.imag * 1j for s in sigma])
@@ -472,14 +466,7 @@ class LTISystem(DiscretizationInterface):
             if np.min(dist[-1]) < tol:
                 break
 
-        if self.E is None:
-            Er = Wr.dot(Vr)
-        else:
-            Er = self.E.apply2(Vr, Wr)
-        Ar = self.A.apply2(Vr, Wr)
-        Br = Wr.dot(self.B)
-        Cr = self.C.dot(Vr)
-        Dr = self.D
+        Ar, Br, Cr, Dr, Er = self.project(Vr, Wr)
 
         rc = GenericRBReconstructor(Vr)
         reduction_data = {'Vr': Vr, 'Wr': Wr, 'dist': dist, 'Sigma': Sigma, 'b': b, 'c': c}
