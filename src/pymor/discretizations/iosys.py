@@ -93,7 +93,7 @@ class LTISystem(DiscretizationInterface):
 
     @classmethod
     def from_matrices(cls, A, B, C, D=None, E=None, cont_time=True):
-        """Creates LTISystem from matrices
+        """Create LTISystem from matrices.
 
         Parameters
         ----------
@@ -133,7 +133,7 @@ class LTISystem(DiscretizationInterface):
 
     @classmethod
     def from_mat_file(cls, file_name, cont_time=True):
-        """Creates LTISystem from matrices
+        """Create LTISystem from matrices stored in a .mat file.
 
         Parameters
         ----------
@@ -171,7 +171,7 @@ class LTISystem(DiscretizationInterface):
         raise NotImplementedError('Discretization has no solver.')
 
     def __add__(self, other):
-        """Add two LTI systems"""
+        """Add two LTI systems."""
         assert isinstance(other, LTISystem)
         assert self.m == other.m and self.p == other.p
         assert self.cont_time == other.cont_time
@@ -225,7 +225,7 @@ class LTISystem(DiscretizationInterface):
         return LTISystem.from_matrices(A, B, C, D, E, self.cont_time)
 
     def __neg__(self):
-        """Negate LTI system"""
+        """Negate LTI system."""
         A = self.A
         B = self.B
         C = NumpyVectorArray(-self.C.data)
@@ -237,11 +237,11 @@ class LTISystem(DiscretizationInterface):
         return LTISystem(A, B, C, D, E, self.cont_time)
 
     def __sub__(self, other):
-        """Subtract two LTI systems"""
+        """Subtract two LTI systems."""
         return self + (-other)
 
     def bode(self, w):
-        """Computes the Bode plot
+        """Compute the transfer function on the imaginary axis.
 
         Parameters
         ----------
@@ -282,7 +282,7 @@ class LTISystem(DiscretizationInterface):
         return self._tfw.copy()
 
     def compute_cgf(self):
-        """Computes the controllability gramian factor"""
+        """Compute the controllability gramian factor."""
         if not self.cont_time:
             raise NotImplementedError
 
@@ -290,7 +290,7 @@ class LTISystem(DiscretizationInterface):
             self._cgf = solve_lyap(self.A, self.E, self.B)
 
     def compute_ogf(self):
-        """Computes the observability gramian factor"""
+        """Compute the observability gramian factor."""
         if not self.cont_time:
             raise NotImplementedError
 
@@ -298,21 +298,21 @@ class LTISystem(DiscretizationInterface):
             self._ogf = solve_lyap(self.A, self.E, self.C, trans=True)
 
     def compute_hsv_U_V(self):
-        """Compute Hankel singular values and vectors"""
+        """Compute the Hankel singular values and vectors."""
         if self._hsv is None or self._U is None or self._V is None:
             self.compute_cgf()
             self.compute_ogf()
 
             if self.E is None:
-                self._U, self._hsv, Vh = spla.svd(self._ogf.dot(self._cgf))
+                U, self._hsv, Vh = spla.svd(self._cgf.dot(self._ogf))
             else:
-                self._U, self._hsv, Vh = spla.svd(self.E.apply2(self._ogf, self._cgf))
+                U, self._hsv, Vh = spla.svd(self.E.apply2(self._cgf, self._ogf))
 
-            self._U = NumpyVectorArray(self._U.T)
+            self._U = NumpyVectorArray(U.T)
             self._V = NumpyVectorArray(Vh)
 
     def norm(self, name='H2'):
-        """Computes a norm of the LTI system
+        """Compute a norm of the LTI system.
 
         Parameters
         ----------
@@ -333,8 +333,45 @@ class LTISystem(DiscretizationInterface):
         else:
             raise NotImplementedError('Only H2 norm is implemented.')
 
+    def project(self, Vr, Wr):
+        """Reduce using Petrov-Galerkin projection.
+
+        Parameters
+        ----------
+        Vr
+            Right projection matrix.
+        Wr
+            Left projection matrix.
+
+        Returns
+        -------
+        Ar
+            |NumPy| matrix of size r x r.
+        Br
+            |NumPy| matrix of size r x m.
+        Cr
+            |NumPy| matrix of size p x r.
+        Dr
+            |NumPy| matrix of size p x m or None.
+        Er
+            |NumPy| matrix of size r x r.
+        """
+        Ar = self.A.apply2(Wr, Vr)
+        Br = Wr.dot(self.B)
+        Cr = self.C.dot(Vr)
+        if self.D is None:
+            Dr = None
+        else:
+            Dr = self.D.copy()
+        if self.E is None:
+            Er = Wr.dot(Vr)
+        else:
+            Er = self.E.apply2(Wr, Vr)
+
+        return Ar, Br, Cr, Dr, Er
+
     def bt(self, r):
-        """Reduce using balanced truncation to order r
+        """Reduce using the balanced truncation method to order r.
 
         Parameters
         ----------
@@ -355,26 +392,14 @@ class LTISystem(DiscretizationInterface):
 
         self.compute_hsv_U_V()
 
-        print(self._V.dim)
-        print(len(self._V))
-        print(self._cgf.dim)
-        print(len(self._cgf))
-
-        Vr = VectorArrayOperator(self._cgf).apply(self._V, ind=range(r))
-        Wr = VectorArrayOperator(self._ogf).apply(self._U, ind=range(r))
+        Vr = VectorArrayOperator(self._cgf).apply(self._U, ind=range(r))
+        Wr = VectorArrayOperator(self._ogf).apply(self._V, ind=range(r))
         Vr = gram_schmidt(Vr, atol=0, rtol=0)
         Wr = gram_schmidt(Wr, atol=0, rtol=0)
 
-        Ar = NumpyMatrixOperator(self.A.apply2(Vr, Wr))
-        Br = NumpyVectorArray(Wr.dot(self.B).T)
-        Cr = NumpyVectorArray(self.C.dot(Vr))
-        Dr = self.D
-        if self.E is None:
-            Er = NumpyMatrixOperator(Wr.dot(Vr))
-        else:
-            Er = NumpyMatrixOperator(self.E.apply2(Vr, Wr))
+        Ar, Br, Cr, Dr, Er = self.project(Vr, Wr)
 
-        rom = LTISystem(Ar, Br, Cr, Dr, Er)
+        rom = LTISystem.from_matrices(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
         rc = GenericRBReconstructor(Vr)
         reduction_data = {'Vr': Vr, 'Wr': Wr}
 
@@ -655,11 +680,30 @@ def solve_lyap(A, E, B, trans=False):
     B
         The |VectorArray| B.
     """
-    opts = pymess.options()
-    if trans:
-        opts.type = pymess.MESS_OP_TRANSPOSE
-    eqn = LyapunovEquation(opts, A, E, B)
-    Z, status = pymess.lradi(eqn, opts)
+    if A.source.dim <= 1000:
+        if not A.sparse:
+            A = A._matrix
+        else:
+            A = A._matrix.toarray()
+        if E is not None:
+            if not E.sparse:
+                E = E._matrix
+            else:
+                E = E._matrix.toarray()
+        if not trans:
+            Z = pymess.lyap(A, E, B.data.T)
+        else:
+            if E is None:
+                Z = pymess.lyap(A.T, None, B.data.T)
+            else:
+                Z = pymess.lyap(A.T, E.T, B.data.T)
+    else:
+        opts = pymess.options()
+        if trans:
+            opts.type = pymess.MESS_OP_TRANSPOSE
+        eqn = LyapunovEquation(opts, A, E, B)
+        Z, status = pymess.lradi(eqn, opts)
+
     Z = NumpyVectorArray(np.array(Z).T)
 
-    return Z.copy()
+    return Z
