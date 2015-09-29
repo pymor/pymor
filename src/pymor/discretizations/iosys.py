@@ -304,11 +304,11 @@ class LTISystem(DiscretizationInterface):
             self.compute_ogf()
 
             if self.E is None:
-                self._U, self._hsv, Vh = spla.svd(self._ogf.dot(self._cgf))
+                U, self._hsv, Vh = spla.svd(self._cgf.dot(self._ogf))
             else:
-                self._U, self._hsv, Vh = spla.svd(self.E.apply2(self._ogf, self._cgf))
+                U, self._hsv, Vh = spla.svd(self.E.apply2(self._cgf, self._ogf))
 
-            self._U = NumpyVectorArray(self._U.T)
+            self._U = NumpyVectorArray(U.T)
             self._V = NumpyVectorArray(Vh)
 
     def norm(self, name='H2'):
@@ -333,6 +333,43 @@ class LTISystem(DiscretizationInterface):
         else:
             raise NotImplementedError('Only H2 norm is implemented.')
 
+    def project(self, Vr, Wr):
+        """Reduce using Petrov-Galerkin projection.
+
+        Parameters
+        ----------
+        Vr
+            Right projection matrix.
+        Wr
+            Left projection matrix.
+
+        Returns
+        -------
+        Ar
+            |NumPy| matrix of size r x r.
+        Br
+            |NumPy| matrix of size r x m.
+        Cr
+            |NumPy| matrix of size p x r.
+        Dr
+            |NumPy| matrix of size p x m or None.
+        Er
+            |NumPy| matrix of size r x r.
+        """
+        Ar = self.A.apply2(Wr, Vr)
+        Br = Wr.dot(self.B)
+        Cr = self.C.dot(Vr)
+        if self.D is None:
+            Dr = None
+        else:
+            Dr = self.D.copy()
+        if self.E is None:
+            Er = Wr.dot(Vr)
+        else:
+            Er = self.E.apply2(Wr, Vr)
+
+        return Ar, Br, Cr, Dr, Er
+
     def bt(self, r):
         """Reduce using the balanced truncation method to order r.
 
@@ -355,26 +392,14 @@ class LTISystem(DiscretizationInterface):
 
         self.compute_hsv_U_V()
 
-        print(self._V.dim)
-        print(len(self._V))
-        print(self._cgf.dim)
-        print(len(self._cgf))
-
-        Vr = VectorArrayOperator(self._cgf).apply(self._V, ind=range(r))
-        Wr = VectorArrayOperator(self._ogf).apply(self._U, ind=range(r))
+        Vr = VectorArrayOperator(self._cgf).apply(self._U, ind=range(r))
+        Wr = VectorArrayOperator(self._ogf).apply(self._V, ind=range(r))
         Vr = gram_schmidt(Vr, atol=0, rtol=0)
         Wr = gram_schmidt(Wr, atol=0, rtol=0)
 
-        Ar = NumpyMatrixOperator(self.A.apply2(Vr, Wr))
-        Br = NumpyVectorArray(Wr.dot(self.B).T)
-        Cr = NumpyVectorArray(self.C.dot(Vr))
-        Dr = self.D
-        if self.E is None:
-            Er = NumpyMatrixOperator(Wr.dot(Vr))
-        else:
-            Er = NumpyMatrixOperator(self.E.apply2(Vr, Wr))
+        Ar, Br, Cr, Dr, Er = self.project(Vr, Wr)
 
-        rom = LTISystem(Ar, Br, Cr, Dr, Er)
+        rom = LTISystem.from_matrices(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
         rc = GenericRBReconstructor(Vr)
         reduction_data = {'Vr': Vr, 'Wr': Wr}
 
