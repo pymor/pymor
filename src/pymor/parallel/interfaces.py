@@ -12,15 +12,15 @@ class WorkerPoolInterface(BasicInterface):
         pass
 
     @abstractmethod
-    def distribute(self, *args):
+    def push(self, *args):
         pass
 
     @abstractmethod
-    def distribute_array(self, U, copy=True):
+    def scatter_array(self, U, copy=True):
         pass
 
     @abstractmethod
-    def distribute_list(self, l):
+    def scatter_list(self, l):
         pass
 
     @abstractmethod

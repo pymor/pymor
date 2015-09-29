@@ -11,7 +11,7 @@ import weakref
 class WorkerPoolDefaultImplementations(object):
 
     @contextmanager
-    def distribute_array(self, U, copy=True):
+    def scatter_array(self, U, copy=True):
 
         def impl(U, copy):
             U = U()
@@ -27,7 +27,7 @@ class WorkerPoolDefaultImplementations(object):
                     s.append(U, o_ind=range(0, min(slice_len, len(U))), remove_from_other=True)
             del U
 
-            with self.distribute(UR) as remote_U:
+            with self.push(UR) as remote_U:
                 self.map(_append_array_slice, slices, U=remote_U)
                 del slices
                 yield remote_U
@@ -36,7 +36,7 @@ class WorkerPoolDefaultImplementations(object):
         return impl(weakref.ref(U), copy)
 
     @contextmanager
-    def distribute_list(self, l):
+    def scatter_list(self, l):
 
         def impl(l):
             slice_len = len(l) // len(self) + (1 if len(l) % len(self) else 0)
@@ -45,13 +45,13 @@ class WorkerPoolDefaultImplementations(object):
                 slices.append(l[i*slice_len:(i+1)*slice_len])
             del l[:]
 
-            with self.distribute([]) as remote_l:
+            with self.push([]) as remote_l:
                 self.map(_append_list_slice, slices, l=remote_l)
                 del slices
                 yield remote_l
 
         # always pass a copy of l which we can empty inside impl so that we do not hold refs to the data
-        # note that the weakref trick from 'distribute_array' does not work here since lists cannot be
+        # note that the weakref trick from 'scatter_array' does not work here since lists cannot be
         # weakrefed
         return impl(list(l))
 

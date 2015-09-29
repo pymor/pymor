@@ -124,18 +124,18 @@ class IPythonPool(WorkerPoolDefaultImplementations, WorkerPoolInterface):
             self.view = self.client[:]
         self.logger.info('Connected to {} engines'.format(len(self.view)))
         self.view.apply(_setup_worker, block=True)
-        self._distributed_immutable_objects = {}
+        self._pushed_immutable_objects = {}
         self._remote_objects_created = Counter()
 
     def __len__(self):
         return len(self.view)
 
-    def distribute(self, *args):
-        return IPythonPool.DistributedObjectManager(self, *args)
+    def push(self, *args):
+        return IPythonPool.PushedObjectManager(self, *args)
 
     def _map_kwargs(self, kwargs):
-        distributed_immutable_objects = self._distributed_immutable_objects
-        return {k: (distributed_immutable_objects.get(v.uid, v) if isinstance(v, ImmutableInterface) else
+        pushed_immutable_objects = self._pushed_immutable_objects
+        return {k: (pushed_immutable_objects.get(v.uid, v) if isinstance(v, ImmutableInterface) else
                     FunctionPicklingWrapper(v) if isinstance(v, FunctionType) else v)
                 for k, v in kwargs.iteritems()}
 
@@ -162,7 +162,7 @@ class IPythonPool(WorkerPoolDefaultImplementations, WorkerPoolInterface):
         else:
             return list(chain(*result))
 
-    class DistributedObjectManager(object):
+    class PushedObjectManager(object):
 
         def __init__(self, pool, *args):
             self.pool = weakref.ref(pool)
@@ -170,31 +170,31 @@ class IPythonPool(WorkerPoolDefaultImplementations, WorkerPoolInterface):
 
         def __enter__(self):
             pool = self.pool()
-            objects_to_distribute = {}
+            objects_to_push = {}
             self.remote_objects_to_remove = []
-            self.distributed_immutable_objects_to_remove = []
+            self.pushed_immutable_objects_to_remove = []
 
             def process_obj(o):
                 if isinstance(o, ImmutableInterface):
-                    if o.uid not in pool._distributed_immutable_objects:
+                    if o.uid not in pool._pushed_immutable_objects:
                         remote_id = pool._remote_objects_created.inc()
-                        objects_to_distribute[remote_id] = o
-                        pool._distributed_immutable_objects[o.uid] = IPythonRemoteObject(remote_id)
+                        objects_to_push[remote_id] = o
+                        pool._pushed_immutable_objects[o.uid] = IPythonRemoteObject(remote_id)
                         self.remote_objects_to_remove.append(remote_id)
-                        self.distributed_immutable_objects_to_remove.append(o.uid)
-                    return pool._distributed_immutable_objects[o.uid]
+                        self.pushed_immutable_objects_to_remove.append(o.uid)
+                    return pool._pushed_immutable_objects[o.uid]
                 else:
                     remote_id = pool._remote_objects_created.inc()
-                    objects_to_distribute[remote_id] = o
+                    objects_to_push[remote_id] = o
                     self.remote_objects_to_remove.append(remote_id)
                     return IPythonRemoteObject(remote_id)
 
             remote_objects = tuple(process_obj(o) for o in self.objs)
             if len(remote_objects) == 1:
                 remote_objects = remote_objects[0]
-            pool.view.apply_sync(_distribute_objects, objects_to_distribute)
+            pool.view.apply_sync(_push_objects, objects_to_push)
 
-            # release local refecrences to distributed objects
+            # release local refecrences to pushed objects
             del self.objs
 
             return remote_objects
@@ -202,8 +202,8 @@ class IPythonPool(WorkerPoolDefaultImplementations, WorkerPoolInterface):
         def __exit__(self, exc_type, exc_val, exc_tb):
             pool = self.pool()
             pool.view.apply(_remove_objects, self.remote_objects_to_remove)
-            for uid in self.distributed_immutable_objects_to_remove:
-                del pool._distributed_immutable_objects[uid]
+            for uid in self.pushed_immutable_objects_to_remove:
+                del pool._pushed_immutable_objects[uid]
             return False
 
 
@@ -243,7 +243,7 @@ def _setup_worker():
     _remote_objects.clear()
 
 
-def _distribute_objects(objs):
+def _push_objects(objs):
     global _remote_objects
     _remote_objects.update(objs)
 
