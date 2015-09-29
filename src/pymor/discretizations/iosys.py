@@ -93,7 +93,7 @@ class LTISystem(DiscretizationInterface):
 
     @classmethod
     def from_matrices(cls, A, B, C, D=None, E=None, cont_time=True):
-        """Creates LTISystem from matrices
+        """Create LTISystem from matrices.
 
         Parameters
         ----------
@@ -133,7 +133,7 @@ class LTISystem(DiscretizationInterface):
 
     @classmethod
     def from_mat_file(cls, file_name, cont_time=True):
-        """Creates LTISystem from matrices
+        """Create LTISystem from matrices stored in a .mat file.
 
         Parameters
         ----------
@@ -171,7 +171,7 @@ class LTISystem(DiscretizationInterface):
         raise NotImplementedError('Discretization has no solver.')
 
     def __add__(self, other):
-        """Add two LTI systems"""
+        """Add two LTI systems."""
         assert isinstance(other, LTISystem)
         assert self.m == other.m and self.p == other.p
         assert self.cont_time == other.cont_time
@@ -225,7 +225,7 @@ class LTISystem(DiscretizationInterface):
         return LTISystem.from_matrices(A, B, C, D, E, self.cont_time)
 
     def __neg__(self):
-        """Negate LTI system"""
+        """Negate LTI system."""
         A = self.A
         B = self.B
         C = NumpyVectorArray(-self.C.data)
@@ -237,11 +237,11 @@ class LTISystem(DiscretizationInterface):
         return LTISystem(A, B, C, D, E, self.cont_time)
 
     def __sub__(self, other):
-        """Subtract two LTI systems"""
+        """Subtract two LTI systems."""
         return self + (-other)
 
     def bode(self, w):
-        """Computes the Bode plot
+        """Compute the transfer function on the imaginary axis.
 
         Parameters
         ----------
@@ -282,7 +282,7 @@ class LTISystem(DiscretizationInterface):
         return self._tfw.copy()
 
     def compute_cgf(self):
-        """Computes the controllability gramian factor"""
+        """Compute the controllability gramian factor."""
         if not self.cont_time:
             raise NotImplementedError
 
@@ -290,7 +290,7 @@ class LTISystem(DiscretizationInterface):
             self._cgf = solve_lyap(self.A, self.E, self.B)
 
     def compute_ogf(self):
-        """Computes the observability gramian factor"""
+        """Compute the observability gramian factor."""
         if not self.cont_time:
             raise NotImplementedError
 
@@ -298,7 +298,7 @@ class LTISystem(DiscretizationInterface):
             self._ogf = solve_lyap(self.A, self.E, self.C, trans=True)
 
     def compute_hsv_U_V(self):
-        """Compute Hankel singular values and vectors"""
+        """Compute the Hankel singular values and vectors."""
         if self._hsv is None or self._U is None or self._V is None:
             self.compute_cgf()
             self.compute_ogf()
@@ -312,7 +312,7 @@ class LTISystem(DiscretizationInterface):
             self._V = NumpyVectorArray(Vh)
 
     def norm(self, name='H2'):
-        """Computes a norm of the LTI system
+        """Compute a norm of the LTI system.
 
         Parameters
         ----------
@@ -334,7 +334,7 @@ class LTISystem(DiscretizationInterface):
             raise NotImplementedError('Only H2 norm is implemented.')
 
     def bt(self, r):
-        """Reduce using balanced truncation to order r
+        """Reduce using the balanced truncation method to order r.
 
         Parameters
         ----------
