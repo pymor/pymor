@@ -508,16 +508,10 @@ class LTISystem(DiscretizationInterface):
                 dist[-1].append(np.max(np.abs((Sigma[i] - Sigma[-1]) / Sigma[-1])))
 
             if prnt:
-                # s = 'dist[{}] = [{:.1e}'.format(it, dist[-1][0])
-                # for i in xrange(1, it + 1):
-                #     s += ', {:.1e}'.format(dist[-1][i])
-                # s += ']'
-                # print(s)
                 print('dist[{}] = {:.5e}'.format(it, np.min(dist[-1])))
 
-            # D = np.diag(1. / np.diag(Y.T.conj().dot(Er).dot(X)))
             b = Br.T.dot(Y.conj())
-            c = Cr.dot(X) # .dot(D)
+            c = Cr.dot(X)
 
             Vr, Wr = self.interpolation(sigma, b, c)
 
@@ -526,10 +520,11 @@ class LTISystem(DiscretizationInterface):
 
         Ar, Br, Cr, Dr, Er = self.project(Vr, Wr)
 
+        rom = LTISystem.from_matrices(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
         rc = GenericRBReconstructor(Vr)
         reduction_data = {'Vr': Vr, 'Wr': Wr, 'dist': dist, 'Sigma': Sigma, 'b': b, 'c': c}
 
-        return LTISystem.from_matrices(Ar, Br, Cr, Dr, Er), rc, reduction_data
+        return rom, rc, reduction_data
 
 
 class LyapunovEquation(pymess.equation):
