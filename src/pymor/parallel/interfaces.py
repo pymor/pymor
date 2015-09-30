@@ -12,7 +12,7 @@ class WorkerPoolInterface(BasicInterface):
         pass
 
     @abstractmethod
-    def push(self, *args):
+    def push(self, obj):
         pass
 
     @abstractmethod
@@ -37,4 +37,24 @@ class WorkerPoolInterface(BasicInterface):
 
 
 class RemoteObjectInterface(object):
-    pass
+
+    removed = False
+
+    @abstractmethod
+    def _remove(self):
+        pass
+
+    def remove(self):
+        if self.removed:
+            return
+        self._remove()
+        self.removed = True
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.remove()
+
+    def __del__(self):
+        self.remove()

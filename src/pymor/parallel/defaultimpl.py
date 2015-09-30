@@ -4,56 +4,33 @@
 
 from __future__ import absolute_import, division, print_function
 
-from contextlib import contextmanager
-import weakref
-
 
 class WorkerPoolDefaultImplementations(object):
 
-    @contextmanager
     def scatter_array(self, U, copy=True):
-
-        def impl(U, copy):
-            U = U()
-            UR = U.empty()
-            slice_len = len(U) // len(self) + (1 if len(U) % len(self) else 0)
-            if copy:
-                slices = []
-                for i in range(len(self)):
-                    slices.append(U.copy(ind=range(i*slice_len, min((i+1)*slice_len, len(U)))))
-            else:
-                slices = [U.empty() for _ in range(len(self))]
-                for s in slices:
-                    s.append(U, o_ind=range(0, min(slice_len, len(U))), remove_from_other=True)
-            del U
-
-            with self.push(UR) as remote_U:
-                self.map(_append_array_slice, slices, U=remote_U)
-                del slices
-                yield remote_U
-
-        # pass weakref to impl to make sure that no reference to U is kept while inside the context
-        return impl(weakref.ref(U), copy)
-
-    @contextmanager
-    def scatter_list(self, l):
-
-        def impl(l):
-            slice_len = len(l) // len(self) + (1 if len(l) % len(self) else 0)
+        slice_len = len(U) // len(self) + (1 if len(U) % len(self) else 0)
+        if copy:
             slices = []
             for i in range(len(self)):
-                slices.append(l[i*slice_len:(i+1)*slice_len])
-            del l[:]
+                slices.append(U.copy(ind=range(i*slice_len, min((i+1)*slice_len, len(U)))))
+        else:
+            slices = [U.empty() for _ in range(len(self))]
+            for s in slices:
+                s.append(U, o_ind=range(0, min(slice_len, len(U))), remove_from_other=True)
+        remote_U = self.push(U.empty())
+        del U
+        self.map(_append_array_slice, slices, U=remote_U)
+        return remote_U
 
-            with self.push([]) as remote_l:
-                self.map(_append_list_slice, slices, l=remote_l)
-                del slices
-                yield remote_l
-
-        # always pass a copy of l which we can empty inside impl so that we do not hold refs to the data
-        # note that the weakref trick from 'scatter_array' does not work here since lists cannot be
-        # weakrefed
-        return impl(list(l))
+    def scatter_list(self, l):
+        slice_len = len(l) // len(self) + (1 if len(l) % len(self) else 0)
+        slices = []
+        for i in range(len(self)):
+            slices.append(l[i*slice_len:(i+1)*slice_len])
+        del l
+        remote_l = self.push([])
+        self.map(_append_list_slice, slices, l=remote_l)
+        return remote_l
 
 
 def _append_array_slice(s, U=None):

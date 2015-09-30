@@ -130,13 +130,28 @@ class IPythonPool(WorkerPoolDefaultImplementations, WorkerPoolInterface):
     def __len__(self):
         return len(self.view)
 
-    def push(self, *args):
-        return IPythonPool.PushedObjectManager(self, *args)
+    def push(self, obj):
+        if isinstance(obj, ImmutableInterface):
+            uid = obj.uid
+            if uid not in self._pushed_immutable_objects:
+                remote_id = RemoteId(self._remote_objects_created.inc())
+                self.view.apply_sync(_push_object, remote_id, obj)
+                self._pushed_immutable_objects[uid] = (remote_id, 1)
+            else:
+                remote_id, ref_count = self._pushed_immutable_objects[uid]
+                self._pushed_immutable_objects[uid] = (remote_id, ref_count + 1)
+            return IPythonRemoteObject(self, remote_id, uid=uid)
+        else:
+            remote_id = RemoteId(self._remote_objects_created.inc())
+            self.view.apply_sync(_push_object, remote_id, obj)
+            return IPythonRemoteObject(self, remote_id)
 
     def _map_kwargs(self, kwargs):
         pushed_immutable_objects = self._pushed_immutable_objects
-        return {k: (pushed_immutable_objects.get(v.uid, v) if isinstance(v, ImmutableInterface) else
-                    FunctionPicklingWrapper(v) if isinstance(v, FunctionType) else v)
+        return {k: (pushed_immutable_objects.get(v.uid, (v, 0))[0] if isinstance(v, ImmutableInterface) else
+                    v.remote_id if isinstance(v, IPythonRemoteObject) else
+                    FunctionPicklingWrapper(v) if isinstance(v, FunctionType) else
+                    v)
                 for k, v in kwargs.iteritems()}
 
     def apply(self, function, *args, **kwargs):
@@ -162,57 +177,37 @@ class IPythonPool(WorkerPoolDefaultImplementations, WorkerPoolInterface):
         else:
             return list(chain(*result))
 
-    class PushedObjectManager(object):
 
-        def __init__(self, pool, *args):
-            self.pool = weakref.ref(pool)
-            self.objs = args
+class IPythonRemoteObject(RemoteObjectInterface):
 
-        def __enter__(self):
-            pool = self.pool()
-            objects_to_push = {}
-            self.remote_objects_to_remove = []
-            self.pushed_immutable_objects_to_remove = []
+    def __init__(self, pool, remote_id, uid=None):
+        self.pool = weakref.ref(pool)
+        self.remote_id = remote_id
+        self.uid = uid
 
-            def process_obj(o):
-                if isinstance(o, ImmutableInterface):
-                    if o.uid not in pool._pushed_immutable_objects:
-                        remote_id = pool._remote_objects_created.inc()
-                        objects_to_push[remote_id] = o
-                        pool._pushed_immutable_objects[o.uid] = IPythonRemoteObject(remote_id)
-                        self.remote_objects_to_remove.append(remote_id)
-                        self.pushed_immutable_objects_to_remove.append(o.uid)
-                    return pool._pushed_immutable_objects[o.uid]
-                else:
-                    remote_id = pool._remote_objects_created.inc()
-                    objects_to_push[remote_id] = o
-                    self.remote_objects_to_remove.append(remote_id)
-                    return IPythonRemoteObject(remote_id)
+    def _remove(self):
+        pool = self.pool()
+        if self.uid is not None:
+            remote_id, ref_count = pool._pushed_immutable_objects.pop(self.uid)
+            if ref_count > 1:
+                pool._pushed_immutable_objects[self.remote_id] = (remote_id, ref_count - 1)
+            else:
+                pool.view.apply(_remove_object, remote_id)
+        else:
+            pool.view.apply(_remove_object, self.remote_id)
 
-            remote_objects = tuple(process_obj(o) for o in self.objs)
-            if len(remote_objects) == 1:
-                remote_objects = remote_objects[0]
-            pool.view.apply_sync(_push_objects, objects_to_push)
 
-            # release local refecrences to pushed objects
-            del self.objs
-
-            return remote_objects
-
-        def __exit__(self, exc_type, exc_val, exc_tb):
-            pool = self.pool()
-            pool.view.apply(_remove_objects, self.remote_objects_to_remove)
-            for uid in self.pushed_immutable_objects_to_remove:
-                del pool._pushed_immutable_objects[uid]
-            return False
+class RemoteId(int):
+    pass
 
 
 def _worker_call_function(function, loop, args, kwargs):
     from pymor.core.pickle import FunctionPicklingWrapper
     global _remote_objects
     function = function.function
-    kwargs = {k: (_remote_objects[v.key] if isinstance(v, IPythonRemoteObject) else
-                  v.function if isinstance(v, FunctionPicklingWrapper) else v)
+    kwargs = {k: (_remote_objects[v] if isinstance(v, RemoteId) else
+                  v.function if isinstance(v, FunctionPicklingWrapper) else
+                  v)
               for k, v in kwargs.iteritems()}
     if loop:
         return [function(*a, **kwargs) for a in izip(*args)]
@@ -243,18 +238,11 @@ def _setup_worker():
     _remote_objects.clear()
 
 
-def _push_objects(objs):
+def _push_object(remote_id, obj):
     global _remote_objects
-    _remote_objects.update(objs)
+    _remote_objects[remote_id] = obj
 
 
-def _remove_objects(ids):
+def _remove_object(remote_id):
     global _remote_objects
-    for i in ids:
-        del _remote_objects[i]
-
-
-class IPythonRemoteObject(RemoteObjectInterface):
-
-    def __init__(self, key):
-        self.key = key
+    del _remote_objects[remote_id]
