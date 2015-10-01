@@ -11,6 +11,8 @@ import numpy as np
 from pymor.algorithms.basisextension import gram_schmidt_basis_extension
 from pymor.core.exceptions import ExtensionError
 from pymor.core.logger import getLogger
+from pymor.parallel.dummy import dummy_pool
+from pymor.parallel.manager import RemoteObjectManager
 
 
 def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=True, error_norm=None,
@@ -87,8 +89,20 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
     samples = list(samples)
     sample_count = len(samples)
     logger.info('Started greedy search on {} samples'.format(sample_count))
+    if pool is None or pool is dummy_pool:
+        pool = dummy_pool
+    else:
+        logger.info('Using pool of {} workers for parallel greedy search'.format(len(pool)))
 
-    def greedy_main():
+    with RemoteObjectManager() as rom:
+        # Push everything we need during the greedy search to the workers.
+        # Distribute the training set evenly among the workes.
+        if not use_estimator:
+            rom.manage(pool.push(discretization))
+            if error_norm:
+                rom.manage(pool.push(error_norm))
+        samples = rom.manage(pool.scatter_list(samples))
+
         basis = initial_basis
 
         tic = time.time()
@@ -110,28 +124,15 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
                         'time': time.time() - tic, 'reduction_data': reduction_data}
 
             logger.info('Estimating errors ...')
-            if pool:
-                if use_estimator:
-                    errors, mus = zip(*pool.apply(_estimate, rd=rd, d=None, rc=None, samples=samples, error_norm=None))
-                else:
-                    # FIXME: Always communicating rc may become a bottleneck in some use cases.
-                    #        Add special treatment for GenericRBReconstructor?
-                    errors, mus = zip(*pool.apply(_estimate, rd=rd, d=discretization, rc=rc,
-                                                  samples=samples, error_norm=error_norm))
-                max_err_ind = np.argmax(errors)
-                max_err, max_err_mu = errors[max_err_ind], mus[max_err_ind]
+            if use_estimator:
+                errors, mus = zip(*pool.apply(_estimate, rd=rd, d=None, rc=None, samples=samples, error_norm=None))
             else:
-                if use_estimator:
-                    errors = [rd.estimate(rd.solve(mu), mu) for mu in samples]
-                elif error_norm is not None:
-                    errors = [error_norm(discretization.solve(mu) - rc.reconstruct(rd.solve(mu))) for mu in samples]
-                else:
-                    errors = [(discretization.solve(mu) - rc.reconstruct(rd.solve(mu))).l2_norm() for mu in samples]
-                # most error_norms will return an array of length 1 instead of a number, so we extract the numbers
-                # if necessary
-                errors = map(lambda x: x[0] if hasattr(x, '__len__') else x, errors)
-                max_err_ind = np.argmax(errors)
-                max_err, max_err_mu = errors[max_err_ind], samples[max_err_ind]
+                # FIXME: Always communicating rc may become a bottleneck in some use cases.
+                #        Add special treatment for GenericRBReconstructor?
+                errors, mus = zip(*pool.apply(_estimate, rd=rd, d=discretization, rc=rc,
+                                              samples=samples, error_norm=error_norm))
+            max_err_ind = np.argmax(errors)
+            max_err, max_err_mu = errors[max_err_ind], mus[max_err_ind]
 
             max_errs.append(max_err)
             max_err_mus.append(max_err_mu)
@@ -170,16 +171,6 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
                 'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
                 'time': tictoc, 'reduction_data': reduction_data}
 
-    if pool:
-        logger.info('Using pool of {} workers for parallel greedy search'.format(len(pool)))
-        objects_to_distribute = () if use_estimator else \
-                                (discretization, error_norm) if error_norm else \
-                                (discretization,)
-        with pool.distribute(*objects_to_distribute), pool.distribute_list(samples) as samples:
-            return greedy_main()
-    else:
-        return greedy_main()
-
 
 def _estimate(rd=None, d=None, rc=None, samples=None, error_norm=None):
     if not samples:
@@ -191,6 +182,8 @@ def _estimate(rd=None, d=None, rc=None, samples=None, error_norm=None):
         errors = [error_norm(d.solve(mu) - rc.reconstruct(rd.solve(mu))) for mu in samples]
     else:
         errors = [(d.solve(mu) - rc.reconstruct(rd.solve(mu))).l2_norm() for mu in samples]
+    # most error_norms will return an array of length 1 instead of a number, so we extract the numbers
+    # if necessary
     errors = map(lambda x: x[0] if hasattr(x, '__len__') else x, errors)
     max_err_ind = np.argmax(errors)
 
