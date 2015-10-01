@@ -19,6 +19,14 @@ if HAVE_FENICS:
     from pymor.vectorarrays.list import VectorInterface, ListVectorArray
 
 
+    class FenicsVectorSubtype(tuple):
+
+        def __eq__(self, other):
+            return (type(other) is FenicsVectorSubtype and
+                    df.cpp.common.MPI.size(self[0]) == df.cpp.common.MPI.size(other[0]) and
+                    self[1] == other[1])
+
+
     class FenicsVector(VectorInterface):
         """Wraps a FEniCS vector to make it usable with ListVectorArray."""
 
@@ -36,7 +44,7 @@ if HAVE_FENICS:
         @property
         def subtype(self):
             impl = self.impl
-            return (impl.mpi_comm(), self.impl.size())
+            return FenicsVectorSubtype((impl.mpi_comm(), self.impl.size()))
 
         @property
         def data(self):
@@ -123,4 +131,4 @@ if HAVE_FENICS:
 
 
     def FenicsVectorSpace(dim, mpi_comm=df.mpi_comm_world()):
-        return VectorSpace(ListVectorArray, (FenicsVector, (mpi_comm, dim)))
+        return VectorSpace(ListVectorArray, (FenicsVector, FenicsVectorSubtype((mpi_comm, dim))))
