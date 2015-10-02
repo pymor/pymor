@@ -79,7 +79,7 @@ from pymor.vectorarrays.list import ListVectorArray
 
 def discretize(args):
     # first assemble all matrices for the affine decomposition
-    mesh = df.UnitSquareMesh(args['--grid'], args['--grid'])
+    mesh = df.UnitSquareMesh(args['--grid'], args['--grid'], 'crossed')
     V = df.FunctionSpace(mesh, 'Lagrange', args['--order'])
     u = df.TrialFunction(V)
     v = df.TestFunction(V)
