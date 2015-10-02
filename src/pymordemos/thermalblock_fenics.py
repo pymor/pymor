@@ -87,7 +87,8 @@ def discretize(args):
     diffusion = df.Expression(  '(lower0 <= x[0]) * (open0 ? (x[0] < upper0) : (x[0] <= upper0)) *'
                               + '(lower1 <= x[1]) * (open1 ? (x[1] < upper1) : (x[1] <= upper1))',
                               lower0=0., upper0=0., open0=0,
-                              lower1=0., upper1=0., open1=0)
+                              lower1=0., upper1=0., open1=0,
+                              element=df.FunctionSpace(mesh, 'DG', 0).ufl_element())
 
     def assemble_matrix(x, y, nx, ny):
         diffusion.user_parameters['lower0'] = x/nx
