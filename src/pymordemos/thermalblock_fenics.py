@@ -6,7 +6,7 @@
 """2D Thermalblock demo using FENICS.
 
 Usage:
-  thermalblock.py [-hp] [--estimator-norm=NORM] [--extension-alg=ALG] [--grid=NI] [--help] [--order=ORDER]
+  thermalblock.py [-ehp] [--estimator-norm=NORM] [--extension-alg=ALG] [--grid=NI] [--help] [--order=ORDER]
                   [--pickle=PREFIX] [--plot-solutions] [--reductor=RED] [--test=COUNT]
                   XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
 
@@ -23,6 +23,8 @@ Arguments:
 
 
 Options:
+  -e, --with-estimator   Use error estimator.
+
   --estimator-norm=NORM  Norm (trivial, h1) in which to calculate the residual
                          [default: h1].
 
@@ -179,7 +181,7 @@ def thermalblock_demo(args):
                             'h1_gram_schmidt': partial(gram_schmidt_basis_extension, product=discretization.h1_product)}
     extension_algorithm = extension_algorithms[args['--extension-alg']]
     greedy_data = greedy(discretization, reductor, discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
-                         use_estimator=True, error_norm=discretization.h1_norm,
+                         use_estimator=args['--with-estimator'], error_norm=discretization.h1_norm,
                          extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'])
     rb_discretization, reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
 
@@ -231,6 +233,7 @@ def thermalblock_demo(args):
 
     Greedy basis generation:
        number of snapshots:                {args[SNAPSHOTS]}^({args[XBLOCKS]}x{args[YBLOCKS]})
+       used estimator:                     {args[--with-estimator]}
        estimator norm:                     {args[--estimator-norm]}
        extension method:                   {args[--extension-alg]}
        prescribed basis size:              {args[RBSIZE]}
