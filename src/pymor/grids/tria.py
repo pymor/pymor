@@ -170,11 +170,11 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
     def __str__(self):
         return (('Tria-Grid on domain [{xmin},{xmax}] x [{ymin},{ymax}]\n' +
                  'x0-intervals: {x0ni}, x1-intervals: {x1ni}\n' +
-                 'faces: {faces}, edges: {edges}, vertices: {vertices}')
+                 'elements: {elements}, edges: {edges}, vertices: {vertices}')
                 .format(xmin=self.x0_range[0], xmax=self.x0_range[1],
                         ymin=self.x1_range[0], ymax=self.x1_range[1],
                         x0ni=self.x0_num_intervals, x1ni=self.x1_num_intervals,
-                        faces=self.size(0), edges=self.size(1), vertices=self.size(2)))
+                        elements=self.size(0), edges=self.size(1), vertices=self.size(2)))
 
     def size(self, codim=0):
         assert 0 <= codim <= 2, 'Invalid codimension'

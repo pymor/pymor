@@ -4,7 +4,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymor.core.defaults import defaults
 from pymor.operators.basic import OperatorBase
 from pymor.vectorarrays.interfaces import VectorSpace
 from pymor.vectorarrays.list import VectorInterface, ListVectorArray
@@ -38,10 +37,6 @@ class WrappedVector(VectorInterface):
 
     def copy(self):
         return type(self)(Vector(self._impl))
-
-    @defaults('rtol', 'atol', qualname='wrapper.WrappedVector.almost_equal')
-    def almost_equal(self, other, rtol=1e-10, atol=1e-10):
-        return self._impl.almost_equal(other._impl, rtol, atol)
 
     def scal(self, alpha):
         self._impl.scal(alpha)

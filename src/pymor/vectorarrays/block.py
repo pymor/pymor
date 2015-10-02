@@ -91,12 +91,6 @@ class BlockVectorArray(VectorArrayInterface):
         for block, o_block in zip(self._blocks, other._blocks):
             block.replace(o_block, ind=ind, o_ind=o_ind, remove_from_other=remove_from_other)
 
-    def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
-        assert other in self.space
-        return np.all(np.array([block.almost_equal(other_block, ind=ind, o_ind=o_ind, rtol=rtol, atol=atol)
-                                for block, other_block in izip(self._blocks, other._blocks)]),
-                      axis=0)
-
     def scal(self, alpha, ind=None):
         for block in self._blocks:
             block.scal(alpha, ind=ind)
@@ -105,9 +99,11 @@ class BlockVectorArray(VectorArrayInterface):
         assert x in self.space
         assert isinstance(alpha, Number) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
-        if len(x) > 0:
+        if x.len_ind(x_ind) > 0:
             for block, x_block in izip(self._blocks, x._blocks):
                 block.axpy(alpha, x_block, ind, x_ind)
+        else:
+            assert self.len_ind(ind) == 0
 
     def dot(self, other, ind=None, o_ind=None):
         assert other in self.space

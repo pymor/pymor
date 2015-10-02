@@ -6,8 +6,8 @@ Build-Depends: debhelper (>= 8.0.0), python-pip, python-virtualenv, python-numpy
   python-scipy, python-pytest, python-pyside, 
   cython, python-sphinx, python-sympy, python-matplotlib,
   python-opengl, python-docopt, python-pyvtk, 
-  python-pytest-capturelog, python-pytest-cache, 
-  python-dev, python-execnet (>=1.1), python3, dh-make
+  python-dev, python-execnet (>=1.1), python3, dh-make,
+  python-docutils
 Standards-Version: 3.9.4
 Homepage: http://pymor.org
 #Vcs-Git: git://git.debian.org/collab-maint/pymor-base.git
@@ -21,18 +21,36 @@ Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends},
   cython, python-matplotlib, python-opengl,
   python-docopt, python-pyvtk,
   python-dev, python
+Suggests: python-pymor-doc
 Description: makes pyMOR importable system-wide + dependency tracking
- <insert long description, indented with spaces>
+  pyMOR is a software library developed at the University of Münster for building model order reduction applications
+  with the Python programming language. Its main focus lies on the application of reduced basis methods to
+  parameterized partial differential equations. All algorithms in pyMOR are formulated in terms of abstract interfaces
+  for seamless integration with external high-dimensional PDE solvers. Moreover, pure Python implementations of finite
+  element and finite volume discretizations using the NumPy/SciPy scientific computing stack are provided for getting
+  started quickly.
 
 Package: python-pymor-demos
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}, python, python-pymor, ipython, python-tk, python-matplotlib, python-opengl
+Suggests: python-pymor-doc
 Description: makes all included demos launchable via "pymor-demo" script
- <insert long description, indented with spaces>
+  pyMOR is a software library developed at the University of Münster for building model order reduction applications
+  with the Python programming language. Its main focus lies on the application of reduced basis methods to
+  parameterized partial differential equations. All algorithms in pyMOR are formulated in terms of abstract interfaces
+  for seamless integration with external high-dimensional PDE solvers. Moreover, pure Python implementations of finite
+  element and finite volume discretizations using the NumPy/SciPy scientific computing stack are provided for getting
+  started quickly.
  
 Package: python-pymor-doc
 Architecture: all
-Depends: ${misc:Depends}, python-pymor, python-sphinx, ${sphinxdoc:Depends} 
+Section: doc
+Depends: ${misc:Depends}, python-sphinx, ${sphinxdoc:Depends}
 Description: auto-generated sphinx-html documenttaion for python-pymor
- <insert long description, indented with spaces>
+  pyMOR is a software library developed at the University of Münster for building model order reduction applications
+  with the Python programming language. Its main focus lies on the application of reduced basis methods to
+  parameterized partial differential equations. All algorithms in pyMOR are formulated in terms of abstract interfaces
+  for seamless integration with external high-dimensional PDE solvers. Moreover, pure Python implementations of finite
+  element and finite volume discretizations using the NumPy/SciPy scientific computing stack are provided for getting
+  started quickly.
  

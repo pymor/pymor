@@ -2,3 +2,5 @@
 # We need a more recent version of Sphinx for being able to provide
 # our own docutils.conf.
 Sphinx >= 1.2b3
+cython
+
