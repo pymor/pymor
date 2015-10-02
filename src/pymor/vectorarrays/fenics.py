@@ -53,20 +53,6 @@ if HAVE_FENICS:
         def copy(self):
             return FenicsVector(self.impl.copy())
 
-        @defaults('rtol', 'atol', qualname='pymor.vectorarrays.fenics.FenicsVector.almost_equal')
-        def almost_equal(self, other, rtol=1e-14, atol=1e-14):
-            if self.dim == 0:
-                assert other.dim == 0
-                return True
-            err = self.impl - other.impl
-            err.abs()
-            max_err = other.impl.copy()
-            max_err.abs()
-            max_err *= rtol
-            max_err += atol
-            max_err -= err
-            return max_err.min() >= 0
-
         def scal(self, alpha):
             self.impl *= alpha
 
