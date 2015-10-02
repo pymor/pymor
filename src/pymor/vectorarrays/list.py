@@ -11,7 +11,6 @@ from numbers import Number
 import numpy as np
 
 from pymor.core.interfaces import BasicInterface, abstractmethod, abstractclassmethod, abstractproperty
-from pymor.tools.floatcmp import float_cmp_all
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 
@@ -37,10 +36,6 @@ class VectorInterface(BasicInterface):
 
     @abstractmethod
     def copy(self):
-        pass
-
-    @abstractmethod
-    def almost_equal(self, other, rtol=None, atol=None):
         pass
 
     @abstractmethod
@@ -142,10 +137,6 @@ class NumpyVector(VectorInterface):
 
     def copy(self):
         return NumpyVector(self._array, copy=True)
-
-    def almost_equal(self, other, rtol=None, atol=None):
-        assert self.dim == other.dim
-        return float_cmp_all(self._array, other._array, rtol=rtol, atol=atol)
 
     def scal(self, alpha):
         self._array *= alpha
@@ -328,34 +319,6 @@ class ListVectorArray(VectorArrayInterface):
                     other_list = other._list
                     remaining = sorted(set(xrange(len(other_list))) - set(o_ind))
                     other._list = [other_list[i] for i in remaining]
-
-    def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
-        assert self.check_ind(ind)
-        assert other.check_ind(o_ind)
-        assert other.space == self.space
-
-        if ind is None:
-            ind = xrange(len(self._list))
-        elif isinstance(ind, Number):
-            ind = [ind]
-
-        if o_ind is None:
-            o_ind = xrange(len(other._list))
-        elif isinstance(o_ind, Number):
-            o_ind = [o_ind]
-
-        l = self._list
-        ol = other._list
-
-        if len(ind) == 1:
-            a = l[ind[0]]
-            return np.array([a.almost_equal(ol[oi], rtol=rtol, atol=atol) for oi in o_ind])
-        elif len(o_ind) == 1:
-            b = ol[o_ind[0]]
-            return np.array([l[i].almost_equal(b, rtol=rtol, atol=atol) for i in ind])
-        else:
-            assert len(ind) == len(o_ind)
-            return np.array([l[i].almost_equal(ol[oi], rtol=rtol, atol=atol) for i, oi in izip(ind, o_ind)])
 
     def scal(self, alpha, ind=None):
         assert self.check_ind_unique(ind)

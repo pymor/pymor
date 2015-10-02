@@ -196,37 +196,6 @@ class VectorArrayInterface(BasicInterface):
         pass
 
     @abstractmethod
-    def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
-        """Check vectors for equality.
-
-        Equality of two vectors should be defined as in
-        :func:`pymor.tools.float_cmp_all`.
-
-        The subtypes of `self` and `other` have to agree. If the length
-        of `self` (`ind`) resp. `other` (`o_ind`) is 1, the one specified
-        vector is compared to all vectors of the other summand. Otherwise
-        the length of `ind` and `o_ind` have to agree.
-
-        Parameters
-        ----------
-        other
-            A |VectorArray| containing the vectors to compare with.
-        ind
-            Indices of the vectors that are to be compared (see class documentation).
-        o_ind
-            Indices of the vectors in `other` that are to be compared (see class documentation).
-        rtol
-            See :func:`pymor.tools.float_cmp_all`
-        atol
-            See :func:`pymor.tools.float_cmp_all`
-
-        Returns
-        -------
-        |NumPy array| of the truth values of the comparison.
-        """
-        pass
-
-    @abstractmethod
     def scal(self, alpha, ind=None):
         """BLAS SCAL operation (in-place scalar multiplication).
 

@@ -202,24 +202,6 @@ class DiskVectorArray(VectorArrayInterface):
             if remove_from_other:
                 other.remove(o_ind)
 
-    def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
-        assert self.check_ind(ind)
-        assert other.check_ind(o_ind)
-        assert other.space == self.space
-        ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
-        o_ind = list(xrange(other._len)) if o_ind is None else [o_ind] if isinstance(o_ind, Number) else o_ind
-
-        if len(ind) == 1:
-            a = self._load(ind[0])
-            return np.array([a.almost_equal(other._load(oi), rtol=rtol, atol=atol) for oi in o_ind])
-        elif len(o_ind) == 1:
-            b = other._load(o_ind[0])
-            return np.array([self._load(i).almost_equal(b, rtol=rtol, atol=atol) for i in ind])
-        else:
-            assert len(ind) == len(o_ind)
-            return np.array([self._load(i).almost_equal(other._load(oi), rtol=rtol, atol=atol)
-                            for i, oi in izip(ind, o_ind)])
-
     def scal(self, alpha, ind=None):
         assert self.check_ind_unique(ind)
         assert isinstance(alpha, Number) \
