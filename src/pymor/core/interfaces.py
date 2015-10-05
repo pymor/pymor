@@ -504,6 +504,12 @@ class ImmutableInterface(BasicInterface):
         self.__dict__['_sid_contains_cycles'] = has_cycles
         return sid
 
+    def __copy__(self):
+        return self
+
+    def __deepcopy__(self, memo):
+        return self
+
 
 def generate_sid(obj, debug=False):
     """Generate a unique |state id| (sid) for the current state of the given object.
