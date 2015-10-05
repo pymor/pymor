@@ -4,10 +4,10 @@
 
 from __future__ import absolute_import, division, print_function
 
+from copy import deepcopy
 from itertools import izip
 
 from pymor.core.interfaces import ImmutableInterface
-from pymor.core.pickle import dumps, loads
 from pymor.parallel.interfaces import WorkerPoolInterface, RemoteObjectInterface
 
 
@@ -20,7 +20,7 @@ class DummyPool(WorkerPoolInterface):
         if isinstance(obj, ImmutableInterface):
             return DummyRemoteObject(obj)
         else:
-            return DummyRemoteObject(loads(dumps(obj)))  # ensure we make a deep copy of the data
+            return DummyRemoteObject(deepcopy(obj))  # ensure we make a deep copy of the data
 
     def scatter_array(self, U, copy=True):
         if copy:
