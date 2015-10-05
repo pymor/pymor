@@ -127,6 +127,7 @@ if HAVE_ALL:
                     self.vertex_data = np.empty(len(subentities) * 6,
                                                 dtype=[('position', 'f4', 2), ('color', 'f4', 1)])
                     self.indices = np.arange(len(subentities) * 6, dtype=np.uint32)
+            self.indices = np.ascontiguousarray(self.indices)
 
             self.vertex_data['color'] = 1
 
