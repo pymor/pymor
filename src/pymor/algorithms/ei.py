@@ -25,7 +25,7 @@ from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 
 def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None,
-              projection='orthogonal', product=None):
+              projection='ei', product=None):
     """Generate data for empirical interpolation by a greedy search (EI-Greedy algorithm).
 
     Given a |VectorArray| `U`, this method generates a collateral basis and
@@ -231,7 +231,7 @@ def deim(U, modes=None, error_norm=None, product=None):
 
 def interpolate_operators(discretization, operator_names, parameter_sample, error_norm=None,
                           target_error=None, max_interpolation_dofs=None,
-                          projection='orthogonal', product=None):
+                          projection='ei', product=None):
     """Empirical operator interpolation using the EI-Greedy algorithm.
 
     This is a convenience method for facilitating the use of :func:`ei_greedy`. Given
