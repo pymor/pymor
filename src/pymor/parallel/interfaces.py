@@ -17,7 +17,7 @@ class WorkerPoolInterface(BasicInterface):
     collecting the return values from each function call. Moreover, a
     single worker can be instructed to execute a function
     (:meth:`WorkerPoolInterface.apply_only`). Finally, a parallelized
-    (:math:`~WorkerPoolInterface.map`) function is available, which
+    :meth:`~WorkerPoolInterface.map` function is available, which
     automatically scatters the data among the workers.
 
     All operations are performed synchronously.
@@ -120,7 +120,7 @@ class WorkerPoolInterface(BasicInterface):
         Returns
         -------
         List of return values of the function executions, ordered by
-        worker number (from `0` to `len(pool)`). If `function` returns
+        worker number (from `0` to `len(pool) - 1`). If `function` returns
         a (tuple) of n values, n lists of return values are returned.
         """
         pass
@@ -144,7 +144,7 @@ class WorkerPoolInterface(BasicInterface):
             The function to execute.
         worker
             The worker on which to execute the function. (Number between
-            `0` and `len(pool)`.)
+            `0` and `len(pool) - 1`.)
         args
             The positional arguments for `function`.
         kwargs
@@ -216,7 +216,7 @@ class RemoteObjectInterface(object):
     def remove(self):
         """Remove the remote object from the workers.
 
-        Remove the object to which this handle refers from all workers.
+        Remove the object to which this handle refers to from all workers.
         Note that the object will only be destroyed if no other
         object on the worker holds a reference to the object.
         Moreover, |immutable| objects will only be destroyed, if
