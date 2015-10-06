@@ -15,7 +15,8 @@ from pymor.core import NUMPY_INDEX_QUIRK
 from pymor.vectorarrays.interfaces import VectorSpace
 from pymortests.fixtures.vectorarray import \
     (vector_array_without_reserve, vector_array, compatible_vector_array_pair_without_reserve,
-     compatible_vector_array_pair, incompatible_vector_array_pair)
+     compatible_vector_array_pair, incompatible_vector_array_pair,
+     picklable_vector_array_without_reserve, picklable_vector_array)
 from pymortests.pickle import assert_picklable_without_dumps_function
 
 pytestmark = pytest.mark.slow
@@ -1153,5 +1154,5 @@ def test_gramian_wrong_ind(vector_array):
             v.gramian(ind)
 
 
-def test_pickle(vector_array):
-    assert_picklable_without_dumps_function(vector_array)
+def test_pickle(picklable_vector_array):
+    assert_picklable_without_dumps_function(picklable_vector_array)

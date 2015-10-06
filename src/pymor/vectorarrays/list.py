@@ -525,6 +525,16 @@ class ListVectorArray(VectorArrayInterface):
 
         return np.array([self._list[i].l2_norm() for i in ind])
 
+    def sup_norm(self, ind=None):
+        assert self.check_ind(ind)
+
+        if ind is None:
+            ind = xrange(len(self._list))
+        elif isinstance(ind, Number):
+            ind = [ind]
+
+        return np.array([self._list[i].sup_norm() for i in ind])
+
     def components(self, component_indices, ind=None):
         assert self.check_ind(ind)
         assert isinstance(component_indices, list) and (len(component_indices) == 0 or min(component_indices) >= 0) \

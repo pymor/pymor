@@ -9,10 +9,10 @@ import pymordemos
 import runpy
 import sys
 import pytest
-import multiprocessing
 
 from pymortests.base import runmodule
 from pymor.gui.gl import HAVE_PYSIDE
+from pymor.gui.qt import stop_gui_processes
 
 DEMO_ARGS = (('elliptic', [0, 0, 0, 0]), ('elliptic', [1, 2, 0, 3]), ('elliptic', ['--rect', 1, 2, 0, 3]),
              ('elliptic', [0, 0, 2, 1]), ('elliptic', ['--fv', 0, 0, 0, 0]), ('elliptic', ['--fv', 1, 2, 0, 3]),
@@ -53,8 +53,7 @@ def test_demos(demo_args):
         assert ret is not None
     except ImportError as ie:
         assert _is_failed_import_ok(ie)
-    for child in multiprocessing.active_children():
-        child.terminate()
+    stop_gui_processes()
 
 
 def test_demos_tested():

@@ -25,6 +25,11 @@ try:
 except ImportError:
     HAVE_PYSIDE = False
 
+import multiprocessing
+import os
+import signal
+import time
+
 from pymor.core.defaults import defaults
 from pymor.core.interfaces import BasicInterface
 from pymor.core.logger import getLogger
@@ -180,6 +185,8 @@ if HAVE_PYSIDE:
                 self.slider.setValue(ind)
 
 
+_launch_qt_app_pids = set()
+
 def _launch_qt_app(main_window_factory, block):
     """Wrapper to display plot in a separate process."""
 
@@ -195,11 +202,31 @@ def _launch_qt_app(main_window_factory, block):
     if block:
         doit()
     else:
-        from multiprocessing import Process
-        p = Process(target=doit)
+        p = multiprocessing.Process(target=doit)
         p.start()
+        _launch_qt_app_pids.add(p.pid)
         if block:
             p.join()
+
+
+def stop_gui_processes():
+    for p in multiprocessing.active_children():
+        if p.pid in _launch_qt_app_pids:
+            p.terminate()
+
+    waited = 0
+    while any(p.pid in _launch_qt_app_pids for p in multiprocessing.active_children()):
+        time.sleep(1)
+        waited += 1
+        if waited == 5:
+            break
+
+    for p in multiprocessing.active_children():
+        if p.pid in _launch_qt_app_pids:
+            try:
+                os.kill(p.pid, signal.SIGKILL)
+            except OSError:
+                pass
 
 
 @defaults('backend', sid_ignore=('backend',))
