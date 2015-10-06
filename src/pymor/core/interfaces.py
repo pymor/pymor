@@ -246,17 +246,6 @@ class BasicInterface(object):
     def name(self, n):
         self._name = n
 
-    _added_attributes = None
-
-    def add_attributes(self, **kwargs):
-        """Add attributes to a locked instance."""
-        assert not any(hasattr(self, k) for k in kwargs)
-        self.__dict__.update(kwargs)
-        if self._added_attributes is None:
-            self._added_attributes = kwargs.keys()
-        else:
-            self._added_attributes.extend(kwargs.keys())
-
     @property
     def logging_disabled(self):
         return self._logger is logger.dummy_logger
