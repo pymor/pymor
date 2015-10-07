@@ -67,3 +67,11 @@ addons:
     - python3
     - dh-make
     - python-docutils
+
+os:
+  - linux
+  - osx
+
+matrix:
+  allow_failures:
+    - os: osx
