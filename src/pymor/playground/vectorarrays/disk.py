@@ -48,8 +48,8 @@ class DiskVectorArray(VectorArrayInterface):
     def __init__(self, vectors, subtype=_NONE):
         if isinstance(vectors, ListVectorArray):
             assert subtype is self._NONE \
-                   or (type(subtype) is tuple and len(subtype) == 2
-                       and subtype[0] == vectors.vector_type and subtype[1] == vectors.subtype)
+                or (type(subtype) is tuple and len(subtype) == 2
+                    and subtype[0] == vectors.vector_type and subtype[1] == vectors.subtype)
             subtype = (vectors.vector_type and vectors.subtype)
             vectors = vectors._list
         else:
@@ -222,12 +222,12 @@ class DiskVectorArray(VectorArrayInterface):
         else:
             assert len(ind) == len(o_ind)
             return np.array([self._load(i).almost_equal(other._load(oi), rtol=rtol, atol=atol)
-                             for i, oi in izip(ind, o_ind)])
+                            for i, oi in izip(ind, o_ind)])
 
     def scal(self, alpha, ind=None):
         assert self.check_ind_unique(ind)
         assert isinstance(alpha, Number) \
-               or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
+            or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
         ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
         if isinstance(alpha, np.ndarray):
             for a, i in izip(alpha, ind):
@@ -246,7 +246,7 @@ class DiskVectorArray(VectorArrayInterface):
         assert self.space == x.space
         assert self.len_ind(ind) == x.len_ind(x_ind) or x.len_ind(x_ind) == 1
         assert isinstance(alpha, Number) \
-               or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
+            or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
         ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
         x_ind = list(xrange(x._len)) if x_ind is None else [x_ind] if isinstance(x_ind, Number) else x_ind
 
@@ -347,14 +347,14 @@ class DiskVectorArray(VectorArrayInterface):
     def components(self, component_indices, ind=None):
         assert self.check_ind(ind)
         assert isinstance(component_indices, list) and (len(component_indices) == 0 or min(component_indices) >= 0) \
-               or (isinstance(component_indices, np.ndarray) and component_indices.ndim == 1
-                   and (len(component_indices) == 0 or np.min(component_indices) >= 0))
+            or (isinstance(component_indices, np.ndarray) and component_indices.ndim == 1
+                and (len(component_indices) == 0 or np.min(component_indices) >= 0))
         ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
 
         if len(ind) == 0:
             assert len(component_indices) == 0 \
-                   or isinstance(component_indices, list) and max(component_indices) < self.dim \
-                   or isinstance(component_indices, np.ndarray) and np.max(component_indices) < self.dim
+                or isinstance(component_indices, list) and max(component_indices) < self.dim \
+                or isinstance(component_indices, np.ndarray) and np.max(component_indices) < self.dim
             return np.empty((0, len(component_indices)))
 
         R = np.empty((len(ind), len(component_indices)))

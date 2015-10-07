@@ -4,7 +4,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymor.core.interfaces import (BasicInterface, contract, abstractmethod)
+from pymor.core.interfaces import (BasicInterface, abstractmethod)
 from pymor.core.cache import CacheableInterface, cached
 from pymor.core import interfaces
 
@@ -24,7 +24,6 @@ class UnknownInterface(BasicInterface):
 class StupidInterface(BasicInterface):
     """I am a stupid Interface"""
 
-    @contract
     @abstractmethod
     def shout(self, phrase, repeat):
         """ I repeatedly print a phrase.
@@ -44,7 +43,6 @@ class StupidInterface(BasicInterface):
 class BrilliantInterface(BasicInterface):
     """I am a brilliant Interface"""
 
-    @contract
     @abstractmethod
     def whisper(self, phrase, repeat):
         """
@@ -84,13 +82,8 @@ class CacheImplementer(CacheableInterface):
 class DocImplementer(AverageImplementer):
     """I got my own docstring"""
 
-    @contract
     def whisper(self, phrase, repeat):
         """my interface is stupid, I can whisper a lot more
-        Since I'm overwriting an existing contract, I need to be decorated anew.
-
-        :type phrase: str
-        :type repeat: int,>0
         """
         self.logger.critical(phrase * repeat)
 
@@ -105,7 +98,6 @@ class BoringTestInterface(BasicInterface):
 
 class BoringTestClass(BasicInterface):
 
-    @contract
     def validate_interface(self, cls, other):
         """If you want to contract check on a type defined in the same module you CANNOT use the absolute path
         notation. For classes defined elsewhere you MUST use it. Only builtins and classes with
@@ -116,7 +108,6 @@ class BoringTestClass(BasicInterface):
         """
         pass
 
-    @contract
     def dirichletTest(self, dirichletA, dirichletB):
         """I'm used in testing whether contracts can distinguish
         between equally named classes in different modules

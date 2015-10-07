@@ -122,3 +122,26 @@ def loads_function(s):
     r = FunctionType(code, globals_, name, defaults, closure)
     r.func_dict = func_dict
     return r
+
+
+class FunctionPicklingWrapper(object):
+    """Serializable function container, using :func:`dumps_function` if necessary."""
+
+    def __init__(self, f):
+        self.function = f
+
+    def __getstate__(self):
+        f = self.function
+        if f.__module__ != '__main__':
+            try:
+                return dumps(f)
+            except PicklingError:
+                return (dumps_function(f),)
+        else:
+            return (dumps_function(f),)
+
+    def __setstate__(self, f):
+        if type(f) == tuple:
+            self.function = loads_function(f[0])
+        else:
+            self.function = loads(f)

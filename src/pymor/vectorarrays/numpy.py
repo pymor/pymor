@@ -11,7 +11,6 @@ import numpy as np
 from scipy.sparse import issparse
 
 from pymor.core import NUMPY_INDEX_QUIRK
-from pymor.tools.floatcmp import float_cmp
 from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpace
 
 
@@ -54,7 +53,7 @@ class NumpyVectorArray(VectorArrayInterface):
         assert isinstance(subtype, Number)
         assert count >= 0
         assert reserve >= 0
-        va = NumpyVectorArray(np.empty((0, 0)))
+        va = cls(np.empty((0, 0)))
         va._array = np.zeros((max(count, reserve), subtype))
         va._len = count
         return va
@@ -174,27 +173,6 @@ class NumpyVectorArray(VectorArrayInterface):
 
         if remove_from_other:
             other.remove(o_ind)
-
-    def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
-        assert self.check_ind(ind)
-        assert other.check_ind(o_ind)
-        assert self.dim == other.dim
-
-        if NUMPY_INDEX_QUIRK:
-            if self._len == 0 and hasattr(ind, '__len__'):
-                ind = None
-            if other._len == 0 and hasattr(o_ind, '__len__'):
-                o_ind = None
-
-        A = self._array[:self._len] if ind is None else \
-            self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
-        B = other._array[:other._len] if o_ind is None else \
-            other._array[o_ind] if hasattr(o_ind, '__len__') else other._array[o_ind:o_ind + 1]
-
-        R = np.all(float_cmp(A, B, rtol=rtol, atol=atol), axis=1).squeeze()
-        if R.ndim == 0:
-            R = R[np.newaxis, ...]
-        return R
 
     def scal(self, alpha, ind=None):
         assert self.check_ind_unique(ind)

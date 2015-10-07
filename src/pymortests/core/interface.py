@@ -7,7 +7,7 @@ import os
 import tempfile
 import pytest
 
-from pymor.core.interfaces import (abstractstaticmethod, abstractclassmethod)
+from pymor.core.interfaces import (ImmutableInterface, abstractstaticmethod, abstractclassmethod)
 from pymor.core import exceptions
 from pymor.core import decorators
 from pymortests.base import TestInterface, runmodule, SubclassForImplemetorsOf
@@ -112,14 +112,14 @@ class Test_Interface(TestInterface):
         assert isinstance(pymor.VERSION, pymor.Version)
 
 
-@SubclassForImplemetorsOf(BasicInterface)
+@SubclassForImplemetorsOf(ImmutableInterface)
 class WithcopyInterface(TestInterface):
 
     def test_with_(self):
         self_type = self.Type
         try:
             obj = self_type()
-        except TypeError as e:
+        except Exception as e:
             self.logger.debug('WithcopyInterface: Not testing {} because its init failed: {}'.format(self_type, str(e)))
             return
 

@@ -25,38 +25,14 @@ are the following:
        raises an exception. Private attributes (of the form `_name`) are exempted
        from this rule. Locked instances can be unlocked again using
        :meth:`BasicInterface.unlock`.
-    5. :meth:`BasicInterface.with_` can be used to create a copy of an instance with
-       some changed attributes. E.g. ::
-
-           obj.with_(a=x, b=y)
-
-       creates a copy with the `a` and `b` attributes of `obj` set to `x` and `y`.
-       (Note that in general `a` and `b` do not necessarily have to correspond to
-       class attributes of `obj`; it is up to the implementor to interpret the
-       provided arguments.) :attr:`BasicInterface.with_arguments` holds the
-       set of allowed arguments.
-
-       :class:`BasicInterface` provides a default implementation of `with_` which
-       works as follows:
-
-           - The argument names of the classes  `__init__` method are looked up.
-             If the instance has an attribute of the same name for each `__init__`
-             argument, `with_arguments` returns the argument names of `__init__`,
-             otherwise an empty set is returned and the `with_` functionality is
-             disabled.
-           - If the above condition is satisfied, a call to `with_` results in
-             the creation of a new instance where the arguments of `with_` are
-             passed through to `__init__`. The missing `__init__` arguments
-             are taken from the corresponding instance attributes.
-
-    6. :meth:`BasicInterface.uid` provides a unique id for each instance. While
+    5. :meth:`BasicInterface.uid` provides a unique id for each instance. While
        `id(obj)` is only guaranteed to be unique among all living Python objects,
        :meth:`BasicInterface.uid` will be (almost) unique among all pyMOR objects
        that have ever existed, including previous runs of the application. This
        is achieved by building the id from a uuid4 which is newly created for
        each pyMOR run and a counter which is increased for any object that requests
        an uid.
-    7. If not set by the user to another value, :attr:`BasicInterface.name` is
+    6. If not set by the user to another value, :attr:`BasicInterface.name` is
        generated from the class name and the :meth:`~BasicInterface.uid` of the
        instance.
 
@@ -72,6 +48,30 @@ functionality:
        and then computing a checksum of the resulting byte stream.
     3. :attr:`ImmutableInterface.sid_ignore` can be set to a set of attribute names
        which should be excluded from sid calculation.
+    4. :meth:`ImmutableInterface.with_` can be used to create a copy of an instance with
+       some changed attributes. E.g. ::
+
+           obj.with_(a=x, b=y)
+
+       creates a copy with the `a` and `b` attributes of `obj` set to `x` and `y`.
+       (Note that in general `a` and `b` do not necessarily have to correspond to
+       class attributes of `obj`; it is up to the implementor to interpret the
+       provided arguments.) :attr:`ImmutableInterface.with_arguments` holds the
+       set of allowed arguments.
+
+       :class:`ImmutableInterface` provides a default implementation of `with_` which
+       works as follows:
+
+           - The argument names of the classes  `__init__` method are looked up.
+             If the instance has an attribute of the same name for each `__init__`
+             argument, `with_arguments` returns the argument names of `__init__`,
+             otherwise an empty set is returned and the `with_` functionality is
+             disabled.
+           - If the above condition is satisfied, a call to `with_` results in
+             the creation of a new instance where the arguments of `with_` are
+             passed through to `__init__`. The missing `__init__` arguments
+             are taken from the corresponding instance attributes.
+
 """
 
 from __future__ import absolute_import, division, print_function
@@ -87,12 +87,6 @@ from types import FunctionType, BuiltinFunctionType, NoneType
 import uuid
 
 import numpy as np
-
-try:
-    import contracts
-    HAVE_CONTRACTS = True
-except ImportError:
-    HAVE_CONTRACTS = False
 
 from pymor.core import decorators, backports, logger
 from pymor.core.exceptions import ConstError, SIDGenerationError
@@ -125,15 +119,9 @@ class UberMeta(abc.ABCMeta):
     def __init__(cls, name, bases, namespace):
         """Metaclass of :class:`BasicInterface`.
 
-        I tell base classes when I derive a new class from them. I publish
-        a new contract type for each new class I create. I create a logger
+        I tell base classes when I derive a new class from them. I create a logger
         for each class I create. I add an `init_args` attribute to the class.
         """
-        # monkey a new contract into the decorator module so checking for that type at runtime can work
-        if HAVE_CONTRACTS:
-            dname = (cls.__module__ + '.' + name).replace('__main__.', 'main.').replace('.', '_')
-            if dname not in decorators.__dict__:
-                decorators.__dict__[dname] = contracts.new_contract(dname, lambda x: isinstance(x, cls))
 
         # all bases except object get the derived class' name appended
         for base in [b for b in bases if b != object]:
@@ -148,7 +136,7 @@ class UberMeta(abc.ABCMeta):
         abc.ABCMeta.__init__(cls, name, bases, namespace)
 
     def __new__(cls, classname, bases, classdict):
-        """I copy contract decorations and docstrings from base class methods to deriving classes.
+        """I copy docstrings from base class methods to deriving classes.
         I also forward "abstract{class|static}method" decorations in the base class to "{class|static}method"
         decorations in the new subclass.
 
@@ -164,34 +152,16 @@ class UberMeta(abc.ABCMeta):
                 # first copy/fixup docs
                 item.__doc__ = decorators.fixup_docstring(item.__doc__)
                 base_doc = None
-                contract_kwargs = dict()
                 for base in bases:
                     base_func = getattr(base, item.__name__, None)
                     if not DONT_COPY_DOCSTRINGS:
-                        has_contract = False
                         if base_func:
                             base_doc = getattr(base_func, '__doc__', None)
-                            if HAVE_CONTRACTS:
-                                has_contract = getattr(base_func, 'decorated', None) == 'contract'
-                                contract_kwargs = getattr(base_func, 'contract_kwargs', contract_kwargs)
                         if base_doc:
                             doc = decorators.fixup_docstring(getattr(item, '__doc__', ''))
-                            if HAVE_CONTRACTS:
-                                has_base_contract_docs = decorators.contains_contract(base_doc)
-                                has_contract_docs = decorators.contains_contract(doc)
-                                if has_base_contract_docs and not has_contract_docs:
-                                    base_doc += doc
-                                elif not has_base_contract_docs and doc is not None:
-                                    base_doc = doc
-                            elif doc is not None:
+                            if doc is not None:
                                 base_doc = doc
                             item.__doc__ = base_doc
-                        if has_contract:
-                            # TODO why is the rebind necessary?
-                            classdict['_H_%s' % attr] = item
-                            contract_kwargs = contract_kwargs or dict()
-                            p = decorators.contracts_decorate(item, modify_docstring=True, **contract_kwargs)
-                            classdict[attr] = p
                     if (hasattr(base_func, "__isabstractstaticmethod__") and
                             getattr(base_func, "__isabstractstaticmethod__")):
                         classdict[attr] = staticmethod(classdict[attr])
@@ -236,8 +206,6 @@ class BasicInterface(object):
         A unique id for each instance. The uid is obtained by using
         :class:`UIDProvider` and should be unique for all pyMOR objects
         ever created.
-    with_arguments
-        Set of allowed keyword arguments for `with_`.
     """
 
     __metaclass__ = UberMeta
@@ -277,67 +245,6 @@ class BasicInterface(object):
     @name.setter
     def name(self, n):
         self._name = n
-
-    @property
-    def with_arguments(self):
-        init_arguments = self._init_arguments
-        for arg in init_arguments:
-            if not hasattr(self, arg):
-                self._with_arguments_error = "Instance does not have attribute for __init__ argument '{}'".format(arg)
-                return set()
-        return set(init_arguments)
-
-    def with_(self, **kwargs):
-        """Returns a copy with changed attributes.
-
-        The default implementation is to call `_with_via_init(**kwargs)`.
-
-        Parameters
-        ----------
-        `**kwargs`
-            Names of attributes to change with their new values. Each attribute name
-            has to be contained in `with_arguments`.
-
-        Returns
-        -------
-        Copy of `self` with changed attributes.
-        """
-        with_arguments = self.with_arguments      # ensure that property is called first
-        if hasattr(self, '_with_arguments_error'):
-            raise ConstError('Using with_ is not possible because of the following Error: '
-                             + self._with_arguments_error)
-        if not set(kwargs.keys()) <= with_arguments:
-            raise ConstError('Changing "{}" using with() is not allowed in {} (only "{}")'.format(
-                kwargs.keys(), self.__class__, self.with_arguments))
-        return self._with_via_init(kwargs)
-
-    def _with_via_init(self, kwargs, new_class=None):
-        """Default implementation for with_ by calling __init__.
-
-        Parameters which are missing in `kwargs` are taken from the dictionary of the
-        instance. If `new_class` is provided, the copy is created as an instance of
-        `new_class`.
-        """
-        my_type = type(self) if new_class is None else new_class
-        init_args = kwargs
-        for arg in my_type._init_arguments:
-            if arg not in init_args:
-                init_args[arg] = getattr(self, arg)
-        c = my_type(**init_args)
-        if self.logging_disabled:
-            c.disable_logging()
-        return c
-
-    _added_attributes = None
-
-    def add_attributes(self, **kwargs):
-        """Add attributes to a locked instance."""
-        assert not any(hasattr(self, k) for k in kwargs)
-        self.__dict__.update(kwargs)
-        if self._added_attributes is None:
-            self._added_attributes = kwargs.keys()
-        else:
-            self._added_attributes.extend(kwargs.keys())
 
     @property
     def logging_disabled(self):
@@ -392,7 +299,6 @@ class BasicInterface(object):
         return self._uid.uid
 
 
-contract = decorators.contract
 abstractmethod = abc.abstractmethod
 abstractproperty = abc.abstractproperty
 
@@ -485,6 +391,8 @@ class ImmutableInterface(BasicInterface):
         :meth:`~ImmutableInterface.generate_sid` has been called.
     sid_ignore
         Set of attributes not to include in sid calculation.
+    with_arguments
+        Set of allowed keyword arguments for `with_`.
     """
     __metaclass__ = ImmutableMeta
     sid_ignore = frozenset({'_locked', '_logger', '_name', '_uid', '_sid_contains_cycles',
@@ -534,6 +442,62 @@ class ImmutableInterface(BasicInterface):
         self.__dict__['sid'] = sid
         self.__dict__['_sid_contains_cycles'] = has_cycles
         return sid
+
+    @property
+    def with_arguments(self):
+        init_arguments = self._init_arguments
+        for arg in init_arguments:
+            if not hasattr(self, arg):
+                self._with_arguments_error = "Instance does not have attribute for __init__ argument '{}'".format(arg)
+                return set()
+        return set(init_arguments)
+
+    def with_(self, **kwargs):
+        """Returns a copy with changed attributes.
+
+        The default implementation is to call `_with_via_init(**kwargs)`.
+
+        Parameters
+        ----------
+        `**kwargs`
+            Names of attributes to change with their new values. Each attribute name
+            has to be contained in `with_arguments`.
+
+        Returns
+        -------
+        Copy of `self` with changed attributes.
+        """
+        with_arguments = self.with_arguments      # ensure that property is called first
+        if hasattr(self, '_with_arguments_error'):
+            raise ConstError('Using with_ is not possible because of the following Error: '
+                             + self._with_arguments_error)
+        if not set(kwargs.keys()) <= with_arguments:
+            raise ConstError('Changing "{}" using with() is not allowed in {} (only "{}")'.format(
+                kwargs.keys(), self.__class__, self.with_arguments))
+        return self._with_via_init(kwargs)
+
+    def _with_via_init(self, kwargs, new_class=None):
+        """Default implementation for with_ by calling __init__.
+
+        Parameters which are missing in `kwargs` are taken from the dictionary of the
+        instance. If `new_class` is provided, the copy is created as an instance of
+        `new_class`.
+        """
+        my_type = type(self) if new_class is None else new_class
+        init_args = kwargs
+        for arg in my_type._init_arguments:
+            if arg not in init_args:
+                init_args[arg] = getattr(self, arg)
+        c = my_type(**init_args)
+        if self.logging_disabled:
+            c.disable_logging()
+        return c
+
+    def __copy__(self):
+        return self
+
+    def __deepcopy__(self, memo):
+        return self
 
 
 def generate_sid(obj, debug=False):
