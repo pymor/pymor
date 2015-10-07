@@ -14,7 +14,8 @@ before_install:
  - pip install python-coveralls 
  - pip install --upgrade markupsafe
  - pip install distribute
- - pip install cython pyside pyvtk docopt
+ - pip install cython pyvtk docopt
+ - travis_wait pip install pyside
  - pip install sympy matplotlib pyopengl
  - pip install --upgrade numpy
  - pip install --upgrade pytest
