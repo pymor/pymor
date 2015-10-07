@@ -58,7 +58,6 @@ import time
 from functools import partial
 from itertools import product
 
-import dolfin as df
 from docopt import docopt
 import numpy as np
 
@@ -79,6 +78,7 @@ from pymor.vectorarrays.list import ListVectorArray
 
 def discretize(args):
     # first assemble all matrices for the affine decomposition
+    import dolfin as df
     mesh = df.UnitSquareMesh(args['--grid'], args['--grid'], 'crossed')
     V = df.FunctionSpace(mesh, 'Lagrange', args['--order'])
     u = df.TrialFunction(V)
