@@ -50,10 +50,6 @@ class MPIVectorArray(VectorArrayInterface):
         mpi.call(mpi.method_call1, self.obj_id, 'replace', other.obj_id,
                  ind=ind, o_ind=o_ind, remove_from_other=remove_from_other)
 
-    def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
-        return mpi.call(mpi.method_call1, self.obj_id, 'almost_equal', other.obj_id,
-                        ind=ind, o_ind=o_ind, rtol=rtol, atol=atol)
-
     def scal(self, alpha, ind=None):
         mpi.call(mpi.method_call, self.obj_id, 'scal', alpha, ind=ind)
 
@@ -109,9 +105,6 @@ class MPIVectorArrayNoComm(MPIVectorArray):
     def dim(self):
         raise NotImplementedError
 
-    def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
-        raise NotImplementedError
-
     def dot(self, other, ind=None, o_ind=None):
         raise NotImplementedError
 
@@ -139,10 +132,6 @@ class MPIVectorArrayAutoComm(MPIVectorArray):
         if dim is None:
             dim = self._get_dims()[0]
         return dim
-
-    def almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
-        return mpi.call(_MPIVectorArrayAutoComm_almost_equal, self.obj_id, other.obj_id,
-                        ind=ind, o_ind=o_ind, rtol=rtol, atol=atol)
 
     def dot(self, other, ind=None, o_ind=None):
         return mpi.call(_MPIVectorArrayAutoComm_dot, self.obj_id, other.obj_id, ind=ind, o_ind=o_ind)
@@ -187,16 +176,6 @@ def _MPIVectorArrayAutoComm_dim(self):
     dims = mpi.comm.gather(self.dim, root=0)
     if mpi.rank0:
         return dims
-
-
-def _MPIVectorArrayAutoComm_almost_equal(self, other, ind=None, o_ind=None, rtol=None, atol=None):
-    self = mpi.get_object(self)
-    other = mpi.get_object(other)
-    local_results = self.almost_equal(other, ind=ind, o_ind=o_ind, rtol=rtol, atol=atol).astype(np.int8)
-    results = np.empty((mpi.size, len(local_results)), dtype=np.int8) if mpi.rank0 else None
-    mpi.comm.Gather(local_results, results, root=0)
-    if mpi.rank0:
-        return np.all(results, axis=0)
 
 
 def _MPIVectorArrayAutoComm_dot(self, other, ind=None, o_ind=None):
@@ -292,10 +271,6 @@ class MPIVector(VectorInterface):
         return type(self)(self.cls, self.vector_subtype,
                           mpi.call(mpi.method_call_manage, self.obj_id, 'copy'))
 
-    def almost_equal(self, other, rtol=None, atol=None):
-        return mpi.call(mpi.method_call1, self.obj_id, 'almost_equal', other.obj_id,
-                        rtol=rtol, atol=atol)
-
     def scal(self, alpha):
         mpi.call(mpi.method_call, self.obj_id, 'scal', alpha)
 
@@ -339,9 +314,6 @@ class MPIVectorNoComm(object):
     def dim(self):
         raise NotImplementedError
 
-    def almost_equal(self, other, rtol=None, atol=None):
-        raise NotImplementedError
-
     def dot(self, other):
         raise NotImplementedError
 
@@ -367,9 +339,6 @@ class MPIVectorAutoComm(MPIVector):
     def dim(self):
         return mpi.call(_MPIVectorAutoComm_dim, self.obj_id)
 
-    def almost_equal(self, other, rtol=None, atol=None):
-        return mpi.call(_MPIVectorAutoComm_almost_equal, self.obj_id, other.obj_id, rtol=rtol, atol=atol)
-
     def dot(self, other):
         return mpi.call(_MPIVectorAutoComm_dot, self.obj_id, other.obj_id)
 
@@ -391,16 +360,6 @@ def _MPIVectorAutoComm_dim(self):
     dims = mpi.comm.gather(self.dim, root=0)
     if mpi.rank0:
         return sum(dims)
-
-
-def _MPIVectorAutoComm_almost_equal(self, other, rtol=None, atol=None):
-    self = mpi.get_object(self)
-    other = mpi.get_object(other)
-    local_result = self.almost_equal(other, rtol=rtol, atol=atol).astype(np.int8)
-    results = np.empty((mpi.size,), dtype=np.int8) if mpi.rank0 else None
-    mpi.comm.Gather(local_result, results, root=0)
-    if mpi.rank0:
-        return np.all(results)
 
 
 def _MPIVectorAutoComm_dot(self, other):
