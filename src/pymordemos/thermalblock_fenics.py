@@ -65,14 +65,11 @@ from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmid
 from pymor.algorithms.greedy import greedy
 from pymor.core.pickle import dump
 from pymor.discretizations.basic import StationaryDiscretization
-from pymor.gui.fenics import FenicsVisualizer
 from pymor.operators.constructions import VectorFunctional, LincombOperator
-from pymor.operators.fenics import FenicsMatrixOperator
 from pymor.parameters.functionals import ProjectionParameterFunctional, ExpressionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace
 from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor.reductors.stationary import reduce_stationary_coercive
-from pymor.vectorarrays.fenics import FenicsVector
 from pymor.vectorarrays.list import ListVectorArray
 
 
@@ -115,6 +112,9 @@ def discretize(args):
     bc.apply(F)
 
     # wrap everything as a pyMOR discretization
+    from pymor.gui.fenics import FenicsVisualizer
+    from pymor.operators.fenics import FenicsMatrixOperator
+    from pymor.vectorarrays.fenics import FenicsVector
     ops = [FenicsMatrixOperator(mat0)] + [FenicsMatrixOperator(m) for m in mats]
 
     def parameter_functional_factory(x, y):
