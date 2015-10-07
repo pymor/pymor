@@ -28,6 +28,12 @@ install:
 
 sudo: false
 
+cache:
+  directories:
+    - $HOME/.cache/pip
+before_cache:
+  - rm -f $HOME/.cache/pip/log/debug.log
+
 # # command to run tests
 script:
         - DISPLAY=:99.0 py.test -k "${PYTEST_MARKER}"
