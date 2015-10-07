@@ -14,6 +14,8 @@ before_install:
  - pip install python-coveralls 
  - pip install --upgrade markupsafe
  - pip install distribute
+ - pip install cython pyside pyvtk docopt
+ - pip install sympy matplotlib pyopengl
  - pip install --upgrade numpy
  - pip install --upgrade pytest
  - pip install --upgrade pytest pytest-cov
@@ -54,15 +56,7 @@ addons:
     - python-virtualenv
     - python-numpy
     - python-scipy
-    - python-pytest
-    - python-pyside
-    - cython
     - python-sphinx
-    - python-sympy
-    - python-matplotlib
-    - python-opengl
-    - python-docopt
-    - python-pyvtk
     - python-dev
     - python3
     - dh-make
