@@ -67,6 +67,10 @@ addons:
     - python3
     - dh-make
     - python-docutils
+    - build-essential
+    - libblas-dev
+    - liblapack-dev
+    - libsuitesparse-dev
 
 os:
   - linux
