@@ -11,7 +11,7 @@ try:
     HAVE_MPI = True
 
     comm = MPI.COMM_WORLD
-    rank = rank = comm.Get_rank()
+    rank = comm.Get_rank()
     rank0 = rank == 0
     size = comm.Get_size()
     parallel = (size > 1)
