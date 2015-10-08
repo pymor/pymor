@@ -9,6 +9,12 @@ from pymor.playground.operators.numpy import NumpyListVectorArrayMatrixOperator
 
 
 def convert_to_numpy_list_vector_array(d):
+    """Use NumpyListVectorArrayMatrixOperator instead of NumpyMatrixOperator.
+
+    This simple function converts linear, affinely decomposed discretizations
+    to use :class:`~pymor.playground.operators.numpy.NumpyListVectorArrayMatrixOperator`
+    instead of |NumpyMatrixOperator|.
+    """
 
     def convert_operator(op, functional=False, vector=False):
         if isinstance(op, LincombOperator):

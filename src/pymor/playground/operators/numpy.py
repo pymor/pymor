@@ -14,6 +14,7 @@ from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
 class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
+    """Variant of |NumpyMatrixOperator| using |ListVectorArray| instead of |NumpyVectorArray|."""
 
     def __init__(self, matrix, functional=False, vector=False, name=None):
         assert not (functional and vector)
