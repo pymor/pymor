@@ -447,6 +447,14 @@ class ConstantOperator(OperatorBase):
         restricted_value = NumpyVectorArray(self._value.components(dofs))
         return ConstantOperator(restricted_value, NumpyVectorSpace(len(dofs))), dofs
 
+    def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
+        assert dim_source is None or (self.source.type is NumpyVectorArray and dim_source <= self.source.dim)
+        assert dim_range is None or (self.range.type is NumpyVectorArray and dim_range <= self.range.dim)
+        name = name or '{}_projected_to_subbasis'.format(self.name)
+        source = self.source if dim_source is None else NumpyVectorSpace(dim_source)
+        value = self._value if dim_range is None else NumpyVectorArray(self._value.data[:, :dim_range])
+        return ConstantOperator(value, source, name=name)
+
 
 class ZeroOperator(OperatorBase):
     """The |Operator| which maps every vector to zero.
