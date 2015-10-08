@@ -64,6 +64,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         assert isinstance(operator, OperatorInterface)
         assert isinstance(collateral_basis, VectorArrayInterface)
         assert collateral_basis in operator.range
+        assert len(interpolation_dofs) == len(collateral_basis)
 
         self.build_parameter_type(inherits=(operator,))
         self.source = operator.source
@@ -138,7 +139,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
 
         if len(self.interpolation_dofs) == 0:
             if self.source.type == self.range.type == NumpyVectorArray:
-                return NumpyMatrixOperator(np.zeros((0, self.source.dim)), solver_options=options,
+                return NumpyMatrixOperator(np.zeros((self.range.dim, self.source.dim)), solver_options=options,
                                            name=self.name + '_jacobian')
             else:
                 return ZeroOperator(self.source, self.range, name=self.name + '_jacobian')
@@ -206,6 +207,11 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
         assert len(U) == 1
         mu = self.parse_parameter(mu)
         options = self.solver_options.get('jacobian') if self.solver_options else None
+
+        if self.interpolation_matrix.shape[0] == 0:
+            return NumpyMatrixOperator(np.zeros((self.range.dim, self.source.dim)), solver_options=options,
+                                       name=self.name + '_jacobian')
+
         U_components = self.source_basis_dofs.lincomb(U.data[0])
         J = self.restricted_operator.jacobian(U_components, mu=mu).apply(self.source_basis_dofs)
         try:
