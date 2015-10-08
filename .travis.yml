@@ -23,6 +23,7 @@ before_install:
  - pip install --upgrade ipython
  - pip install ipyparallel
  - pip install PySide --no-index --find-links https://parkin.github.io/python-wheelhouse/;
+ - python ~/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/pyside_postinstall.py -install
 
 # command to install dependencies
 install:
@@ -73,6 +74,7 @@ addons:
     - liblapack-dev
     - libsuitesparse-dev
     - gfortran
+    - libqt4-dev
 
 os:
   - linux
