@@ -40,14 +40,14 @@ class MPIVectorArray(VectorArrayInterface):
                           mpi.call(mpi.method_call_manage, self.obj_id, 'copy', ind=ind))
 
     def append(self, other, o_ind=None, remove_from_other=False):
-        mpi.call(mpi.method_call1, self.obj_id, 'append', other.obj_id,
+        mpi.call(mpi.method_call, self.obj_id, 'append', other.obj_id,
                  o_ind=o_ind, remove_from_other=remove_from_other)
 
     def remove(self, ind=None):
         mpi.call(mpi.method_call, self.obj_id, 'remove', ind=ind)
 
     def replace(self, other, ind=None, o_ind=None, remove_from_other=False):
-        mpi.call(mpi.method_call1, self.obj_id, 'replace', other.obj_id,
+        mpi.call(mpi.method_call, self.obj_id, 'replace', other.obj_id,
                  ind=ind, o_ind=o_ind, remove_from_other=remove_from_other)
 
     def scal(self, alpha, ind=None):
@@ -57,10 +57,10 @@ class MPIVectorArray(VectorArrayInterface):
         mpi.call(_MPIVectorArray_axpy, self.obj_id, alpha, x.obj_id, ind=ind, x_ind=x_ind)
 
     def dot(self, other, ind=None, o_ind=None):
-        return mpi.call(mpi.method_call1, self.obj_id, 'dot', other.obj_id, ind=ind, o_ind=o_ind)
+        return mpi.call(mpi.method_call, self.obj_id, 'dot', other.obj_id, ind=ind, o_ind=o_ind)
 
     def pairwise_dot(self, other, ind=None, o_ind=None):
-        return mpi.call(mpi.method_call1, self.obj_id, 'pairwise_dot', other.obj_id, ind=ind, o_ind=o_ind)
+        return mpi.call(mpi.method_call, self.obj_id, 'pairwise_dot', other.obj_id, ind=ind, o_ind=o_ind)
 
     def lincomb(self, coefficients, ind=None):
         return type(self)(self.cls, self.array_subtype,
@@ -278,7 +278,7 @@ class MPIVector(VectorInterface):
         mpi.call(_MPIVector_axpy, self.obj_id, alpha, x.obj_id)
 
     def dot(self, other):
-        return mpi.call(mpi.method_call1, self.obj_id, 'dot', other.obj_id)
+        return mpi.call(mpi.method_call, self.obj_id, 'dot', other.obj_id)
 
     def l1_norm(self):
         return mpi.call(mpi.method_call, self.obj_id, 'l1_norm')

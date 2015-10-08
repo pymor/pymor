@@ -80,9 +80,13 @@ def mpi_info():
         print('\n'.join('{}: {}'.format(rank, processor) for rank, processor in data))
 
 
+def function_call(f, *args, **kwargs):
+    return f(*((get_object(arg) if type(arg) is ObjectId else arg) for arg in args),
+             **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.iteritems()})
+
+
 def function_call_manage(f, *args, **kwargs):
-    return manage_object(f(*((get_object(arg) if type(arg) is ObjectId else arg) for arg in args),
-                           **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.iteritems()}))
+    return manage_object(function_call(f, *args, **kwargs))
 
 
 def method_call(obj_id, name, *args, **kwargs):
@@ -92,46 +96,7 @@ def method_call(obj_id, name, *args, **kwargs):
 
 
 def method_call_manage(obj_id, name, *args, **kwargs):
-    obj = get_object(obj_id)
-    result = getattr(obj, name)(*((get_object(arg) if type(arg) is ObjectId else arg) for arg in args),
-                                **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.iteritems()})
-    return manage_object(result)
-
-
-def method_call0(obj_id, name, *args, **kwargs):
-    obj = get_object(obj_id)
-    return getattr(obj, name)(*args, **kwargs)
-
-
-def method_call0_manage(obj_id, name, *args, **kwargs):
-    obj = get_object(obj_id)
-    return manage_object(getattr(obj, name)(*args, **kwargs))
-
-
-def method_call1(obj_id, name, obj_id1, *args, **kwargs):
-    obj = get_object(obj_id)
-    obj1 = get_object(obj_id1)
-    return getattr(obj, name)(obj1, *args, **kwargs)
-
-
-def method_call1_manage(obj_id, name, obj_id1, *args, **kwargs):
-    obj = get_object(obj_id)
-    obj1 = get_object(obj_id1)
-    return manage_object(getattr(obj, name)(obj1, *args, **kwargs))
-
-
-def method_call2(obj_id, name, obj_id1, obj_id2, *args, **kwargs):
-    obj = get_object(obj_id)
-    obj1 = get_object(obj_id1)
-    obj2 = get_object(obj_id2)
-    return getattr(obj, name)(obj1, obj2, *args, **kwargs)
-
-
-def method_call2_manage(obj_id, name, obj_id1, obj_id2, *args, **kwargs):
-    obj = get_object(obj_id)
-    obj1 = get_object(obj_id1)
-    obj2 = get_object(obj_id2)
-    return manage_object(getattr(obj, name)(obj1, obj2, *args, **kwargs))
+    return manage_object(method_call(obj_id, name, *args, **kwargs))
 
 
 def run_code(code):
