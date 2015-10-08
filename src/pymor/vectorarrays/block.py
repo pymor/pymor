@@ -73,7 +73,7 @@ class BlockVectorArray(VectorArrayInterface):
     def append(self, other, o_ind=None, remove_from_other=False):
         assert self._blocks_are_valid()
         assert other in self.space
-        for block, other_block in izip(self._blocks, other._blocks):
+        for block, other_block in zip(self._blocks, other._blocks):
             block.append(other_block, o_ind=o_ind, remove_from_other=remove_from_other)
 
     def remove(self, ind=None):

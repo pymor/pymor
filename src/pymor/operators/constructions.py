@@ -95,7 +95,7 @@ class LincombOperator(OperatorBase):
         coeffs = self.evaluate_coefficients(mu)
         R = self.operators[0].apply2(V, U, V_ind=V_ind, U_ind=U_ind, mu=mu, product=product)
         R *= coeffs[0]
-        for op, c in izip(self.operators[1:], coeffs[1:]):
+        for op, c in zip(self.operators[1:], coeffs[1:]):
             R += c * op.apply2(V, U, V_ind=V_ind, U_ind=U_ind, mu=mu, product=product)
         return R
 
@@ -110,7 +110,7 @@ class LincombOperator(OperatorBase):
         coeffs = self.evaluate_coefficients(mu)
         R = self.operators[0].pairwise_apply2(V, U, V_ind=V_ind, U_ind=U_ind, mu=mu, product=product)
         R *= coeffs[0]
-        for op, c in izip(self.operators[1:], coeffs[1:]):
+        for op, c in zip(self.operators[1:], coeffs[1:]):
             R += c * op.pairwise_apply2(V, U, V_ind=V_ind, U_ind=U_ind, mu=mu, product=product)
         return R
 
