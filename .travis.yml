@@ -22,6 +22,7 @@ before_install:
  - pip install --upgrade pytest pytest-cov
  - pip install --upgrade ipython
  - pip install ipyparallel
+ - pip install PySide --no-index --find-links https://parkin.github.io/python-wheelhouse/;
 
 # command to install dependencies
 install:
