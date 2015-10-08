@@ -143,7 +143,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         else:
             U_components = NumpyVectorArray(U.components(self.source_dofs), copy=False)
             JU = self.restricted_operator.jacobian(U_components, mu=mu) \
-                .apply(NumpyVectorArray(np.eye(len(self.source_dofs)), copy=False))
+                                         .apply(NumpyVectorArray(np.eye(len(self.source_dofs)), copy=False))
             try:
                 if self.triangular:
                     interpolation_coefficients = solve_triangular(self.interpolation_matrix, JU.data.T,
