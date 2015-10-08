@@ -21,6 +21,7 @@ exception is raised.
 """
 
 import numpy as np
+from pymor.algorithms.basic import almost_equal
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.pod import pod
@@ -64,7 +65,7 @@ def trivial_basis_extension(basis, U, copy_basis=True, copy_U=True):
     old_basis_length = len(basis)
     remove = set()
     for i in range(len(U)):
-        if np.any(U.almost_equal(basis, ind=i)):
+        if np.any(almost_equal(U, basis, V_ind=i)):
             remove.add(i)
 
     new_basis = basis.copy() if copy_basis else basis
