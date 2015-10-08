@@ -25,8 +25,7 @@ class GenericRBReconstructor(BasicInterface):
         return GenericRBReconstructor(self.RB.copy(ind=list(range(dim))))
 
 
-def reduce_generic_rb(discretization, RB, operator_product=None, vector_product=None,
-                      disable_caching=True, extends=None):
+def reduce_generic_rb(discretization, RB, vector_product=None, disable_caching=True, extends=None):
     """Generic reduced basis reductor.
 
     Replaces each |Operator| of the given |Discretization| with the projection
@@ -38,9 +37,6 @@ def reduce_generic_rb(discretization, RB, operator_product=None, vector_product=
         The |Discretization| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
-    operator_product
-        Scalar product for the projection of the |Operators|. (See
-        :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.)
     vector_product
         Scalar product for the projection of vector-like |Operators|.
         (A typical vector-like operator would be the `initial_data`
@@ -68,9 +64,9 @@ def reduce_generic_rb(discretization, RB, operator_product=None, vector_product=
     if RB is None:
         RB = discretization.solution_space.empty()
 
-    projected_operators = {k: op.projected(range_basis=RB, source_basis=RB, product=operator_product) if op else None
+    projected_operators = {k: op.projected(range_basis=RB, source_basis=RB, product=None) if op else None
                            for k, op in discretization.operators.items()}
-    projected_functionals = {k: f.projected(range_basis=None, source_basis=RB, product=operator_product) if f else None
+    projected_functionals = {k: f.projected(range_basis=None, source_basis=RB, product=None) if f else None
                              for k, f in discretization.functionals.items()}
     projected_vector_operators = {k: (op.projected(range_basis=RB, source_basis=None, product=vector_product) if op
                                       else None)
@@ -78,7 +74,7 @@ def reduce_generic_rb(discretization, RB, operator_product=None, vector_product=
 
     if discretization.products is not None:
         projected_products = {k: p.projected(range_basis=RB, source_basis=RB)
-                              for k, p in discretization.products.items()}
+                              for k, p in discretization.products.iteritems()}
     else:
         projected_products = None
 

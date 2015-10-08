@@ -2,10 +2,9 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-import multiprocessing
 from pymor.grids.oned import OnedGrid
 from time import sleep
-from pymor.gui.qt import visualize_patch
+from pymor.gui.qt import visualize_patch, stop_gui_processes
 
 import pytest
 import numpy as np
@@ -37,8 +36,7 @@ def test_visualize_patch(backend_gridtype):
     U = discretization.solve()
     visualize_patch(data['grid'], U=U, backend=backend)
     sleep(2)  # so gui has a chance to popup
-    for child in multiprocessing.active_children():
-        child.terminate()
+    stop_gui_processes()
 
 
 if __name__ == "__main__":

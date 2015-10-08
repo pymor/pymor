@@ -3,12 +3,11 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""Thermalblock demo.
+"""2D Thermalblock demo using FENICS.
 
 Usage:
-  thermalblock.py [-ehp] [--estimator-norm=NORM] [--extension-alg=ALG] [--grid=NI] [--help]
-                  [--pickle=PREFIX] [--plot-solutions] [--plot-error-sequence] [--reductor=RED]
-                  [--test=COUNT] [--num-engines=COUNT] [--profile=PROFILE]
+  thermalblock.py [-ehp] [--estimator-norm=NORM] [--extension-alg=ALG] [--grid=NI] [--help] [--order=ORDER]
+                  [--pickle=PREFIX] [--plot-solutions] [--reductor=RED] [--test=COUNT]
                   XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
 
 
@@ -34,6 +33,8 @@ Options:
 
   --grid=NI              Use grid with 2*NI*NI elements [default: 100].
 
+  --order=ORDER          Polynomial order of the Lagrange finite elements to use [default: 1].
+
   -h, --help             Show this message.
 
   --pickle=PREFIX        Pickle reduced discretizaion, as well as reconstructor and high-dimensional
@@ -48,43 +49,102 @@ Options:
 
   --test=COUNT           Use COUNT snapshots for stochastic error estimation
                          [default: 10].
-
-  --num-engines=COUNT    If positive, the number of IPython cluster engines to use for
-                         parallel greedy search. If zero, no parallelization is performed.
-                         [default: 0]
-
-  --profile=PROFILE      IPython profile to use for parallelization.
 """
+
+from __future__ import absolute_import, division, print_function
 
 import sys
 import time
 from functools import partial
+from itertools import product
 
-import numpy as np
-import matplotlib.pyplot as plt
 from docopt import docopt
+import numpy as np
 
 from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension
 from pymor.algorithms.greedy import greedy
-from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
 from pymor.core.pickle import dump
-from pymor.discretizers.elliptic import discretize_elliptic_cg
-from pymor.parameters.functionals import ExpressionParameterFunctional
-from pymor.parallel.ipython import new_ipcluster_pool
-from pymor.reductors.basic import reduce_to_subbasis
+from pymor.discretizations.basic import StationaryDiscretization
+from pymor.operators.constructions import VectorFunctional, LincombOperator
+from pymor.parameters.functionals import ProjectionParameterFunctional, ExpressionParameterFunctional
+from pymor.parameters.spaces import CubicParameterSpace
 from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor.reductors.stationary import reduce_stationary_coercive
-from pymor.tools.context import no_context
+from pymor.vectorarrays.list import ListVectorArray
+
+
+def discretize(args):
+    # first assemble all matrices for the affine decomposition
+    import dolfin as df
+    mesh = df.UnitSquareMesh(args['--grid'], args['--grid'], 'crossed')
+    V = df.FunctionSpace(mesh, 'Lagrange', args['--order'])
+    u = df.TrialFunction(V)
+    v = df.TestFunction(V)
+
+    diffusion = df.Expression(  '(lower0 <= x[0]) * (open0 ? (x[0] < upper0) : (x[0] <= upper0)) *'
+                              + '(lower1 <= x[1]) * (open1 ? (x[1] < upper1) : (x[1] <= upper1))',
+                              lower0=0., upper0=0., open0=0,
+                              lower1=0., upper1=0., open1=0,
+                              element=df.FunctionSpace(mesh, 'DG', 0).ufl_element())
+
+    def assemble_matrix(x, y, nx, ny):
+        diffusion.user_parameters['lower0'] = x/nx
+        diffusion.user_parameters['lower1'] = y/ny
+        diffusion.user_parameters['upper0'] = (x + 1)/nx
+        diffusion.user_parameters['upper1'] = (y + 1)/ny
+        diffusion.user_parameters['open0'] = (x + 1 == nx)
+        diffusion.user_parameters['open1'] = (y + 1 == ny)
+        return df.assemble(df.inner(diffusion * df.nabla_grad(u), df.nabla_grad(v)) * df.dx)
+
+    mats = [assemble_matrix(x, y, args['XBLOCKS'], args['YBLOCKS'])
+            for x in range(args['XBLOCKS']) for y in range(args['YBLOCKS'])]
+    mat0 = mats[0].copy()
+    mat0.zero()
+    h1_mat = df.assemble((df.inner(df.nabla_grad(u), df.nabla_grad(v)) + u * v) * df.dx)
+
+    f = df.Constant(1.) * v * df.dx
+    F = df.assemble(f)
+
+    bc = df.DirichletBC(V, 0., df.DomainBoundary())
+    for m in mats:
+        bc.zero(m)
+    bc.apply(mat0)
+    bc.apply(F)
+
+    # wrap everything as a pyMOR discretization
+    from pymor.gui.fenics import FenicsVisualizer
+    from pymor.operators.fenics import FenicsMatrixOperator
+    from pymor.vectorarrays.fenics import FenicsVector
+    ops = [FenicsMatrixOperator(mat0)] + [FenicsMatrixOperator(m) for m in mats]
+
+    def parameter_functional_factory(x, y):
+        return ProjectionParameterFunctional(component_name='diffusion',
+                                             component_shape=(args['XBLOCKS'], args['YBLOCKS']),
+                                             coordinates=(args['YBLOCKS'] - y - 1, x),
+                                             name='diffusion_{}_{}'.format(x, y))
+    parameter_functionals = tuple(parameter_functional_factory(x, y)
+                                  for x, y in product(xrange(args['XBLOCKS']), xrange(args['YBLOCKS'])))
+
+    op = LincombOperator(ops, (1.,) + parameter_functionals)
+    rhs = VectorFunctional(ListVectorArray([FenicsVector(F)]))
+    h1_product = FenicsMatrixOperator(h1_mat)
+    visualizer = FenicsVisualizer(V)
+    parameter_space = CubicParameterSpace(op.parameter_type, 0.1, 1.)
+    d = StationaryDiscretization(op, rhs, products={'h1': h1_product},
+                                 parameter_space=parameter_space,
+                                 visualizer=visualizer, cache_region=None)
+
+    return d
 
 
 def thermalblock_demo(args):
     args['XBLOCKS'] = int(args['XBLOCKS'])
     args['YBLOCKS'] = int(args['YBLOCKS'])
     args['--grid'] = int(args['--grid'])
+    args['--order'] = int(args['--order'])
     args['SNAPSHOTS'] = int(args['SNAPSHOTS'])
     args['RBSIZE'] = int(args['RBSIZE'])
     args['--test'] = int(args['--test'])
-    args['--num-engines'] = int(args['--num-engines'])
     args['--estimator-norm'] = args['--estimator-norm'].lower()
     assert args['--estimator-norm'] in {'trivial', 'h1'}
     args['--extension-alg'] = args['--extension-alg'].lower()
@@ -92,14 +152,8 @@ def thermalblock_demo(args):
     args['--reductor'] = args['--reductor'].lower()
     assert args['--reductor'] in {'traditional', 'residual_basis'}
 
-    print('Solving on TriaGrid(({0},{0}))'.format(args['--grid']))
-
-    print('Setup Problem ...')
-    problem = ThermalBlockProblem(num_blocks=(args['XBLOCKS'], args['YBLOCKS']))
-
     print('Discretize ...')
-    discretization, _ = discretize_elliptic_cg(problem, diameter=1. / args['--grid'])
-    discretization.generate_sid()
+    discretization = discretize(args)
 
     print('The parameter type is {}'.format(discretization.parameter_type))
 
@@ -112,14 +166,14 @@ def thermalblock_demo(args):
             sys.stdout.flush()
             Us = Us + (discretization.solve(mu),)
             legend = legend + (str(mu['diffusion']),)
-        discretization.visualize(Us, legend=legend, title='Detailed Solutions for different parameters', block=True)
+        discretization.visualize(Us, legend=legend, title='Detailed Solutions for different parameters')
 
     print('RB generation ...')
 
     error_product = discretization.h1_product if args['--estimator-norm'] == 'h1' else None
-    coercivity_estimator=ExpressionParameterFunctional('min(diffusion)', discretization.parameter_type)
+    coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', discretization.parameter_type)
     reductors = {'residual_basis': partial(reduce_stationary_coercive, error_product=error_product,
-                                   coercivity_estimator=coercivity_estimator),
+                                           coercivity_estimator=coercivity_estimator),
                  'traditional': partial(reduce_stationary_affine_linear, error_product=error_product,
                                         coercivity_estimator=coercivity_estimator)}
     reductor = reductors[args['--reductor']]
@@ -127,70 +181,47 @@ def thermalblock_demo(args):
                             'gram_schmidt': gram_schmidt_basis_extension,
                             'h1_gram_schmidt': partial(gram_schmidt_basis_extension, product=discretization.h1_product)}
     extension_algorithm = extension_algorithms[args['--extension-alg']]
-
-    with (new_ipcluster_pool(num_engines=args['--num-engines'], profile=args['--profile'])
-          if args['--num-engines'] else no_context) as pool:
-        greedy_data = greedy(discretization, reductor,
-                             discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
-                             use_estimator=args['--with-estimator'], error_norm=discretization.h1_norm,
-                             extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'],
-                             pool=pool)
-
+    greedy_data = greedy(discretization, reductor, discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
+                         use_estimator=args['--with-estimator'], error_norm=discretization.h1_norm,
+                         extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'])
     rb_discretization, reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
 
     if args['--pickle']:
         print('\nWriting reduced discretization to file {} ...'.format(args['--pickle'] + '_reduced'))
         with open(args['--pickle'] + '_reduced', 'w') as f:
             dump(rb_discretization, f)
-        print('Writing detailed discretization and reconstructor to file {} ...'.format(args['--pickle'] + '_detailed'))
-        with open(args['--pickle'] + '_detailed', 'w') as f:
-            dump((discretization, reconstructor), f)
 
     print('\nSearching for maximum error on random snapshots ...')
-
-    def error_analysis(d, rd, rc, mus):
-        print('N = {}: '.format(rd.operator.source.dim), end='')
-        h1_err_max = -1
-        h1_est_max = -1
-        cond_max = -1
-        for mu in mus:
-            print('.', end='')
-            sys.stdout.flush()
-            u = rd.solve(mu)
-            URB = rc.reconstruct(u)
-            U = d.solve(mu)
-            h1_err = d.h1_norm(U - URB)[0]
-            h1_est = rd.estimate(u, mu=mu)
-            cond = np.linalg.cond(rd.operator.assemble(mu)._matrix)
-            if h1_err > h1_err_max:
-                h1_err_max = h1_err
-                mumax = mu
-            if h1_est > h1_est_max:
-                h1_est_max = h1_est
-                mu_est_max = mu
-            if cond > cond_max:
-                cond_max = cond
-                cond_max_mu = mu
-        print()
-        return h1_err_max, mumax, h1_est_max, mu_est_max, cond_max, cond_max_mu
 
     tic = time.time()
 
     real_rb_size = len(greedy_data['basis'])
-    if args['--plot-error-sequence']:
-        N_count = min(real_rb_size - 1, 25)
-        Ns = np.linspace(1, real_rb_size, N_count).astype(np.int)
-    else:
-        Ns = np.array([real_rb_size])
-    rd_rcs = [reduce_to_subbasis(rb_discretization, N, reconstructor)[:2] for N in Ns]
+
     mus = list(discretization.parameter_space.sample_randomly(args['--test']))
 
-    errs, err_mus, ests, est_mus, conds, cond_mus = zip(*(error_analysis(discretization, rd, rc, mus)
-                                                        for rd, rc in rd_rcs))
-    h1_err_max = errs[-1]
-    mumax = err_mus[-1]
-    cond_max = conds[-1]
-    cond_max_mu = cond_mus[-1]
+    h1_err_max = -1
+    h1_est_max = -1
+    cond_max = -1
+    for mu in mus:
+        print('.', end='')
+        sys.stdout.flush()
+        u = rb_discretization.solve(mu)
+        URB = reconstructor.reconstruct(u)
+        U = discretization.solve(mu)
+        h1_err = discretization.h1_norm(U - URB)[0]
+        h1_est = rb_discretization.estimate(u, mu=mu)
+        cond = np.linalg.cond(rb_discretization.operator.assemble(mu)._matrix)
+        if h1_err > h1_err_max:
+            h1_err_max = h1_err
+            mumax = mu
+        if h1_est > h1_est_max:
+            h1_est_max = h1_est
+            mu_est_max = mu
+        if cond > cond_max:
+            cond_max = cond
+            cond_max_mu = mu
+    print()
+
     toc = time.time()
     t_est = toc - tic
 
@@ -219,15 +250,11 @@ def thermalblock_demo(args):
 
     sys.stdout.flush()
 
-    if args['--plot-error-sequence']:
-        plt.semilogy(Ns, errs, Ns, ests)
-        plt.legend(('error', 'estimator'))
-        plt.show()
     if args['--plot-err']:
         U = discretization.solve(mumax)
         URB = reconstructor.reconstruct(rb_discretization.solve(mumax))
         discretization.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
-                                 title='Maximum Error Solution', separate_colorbars=True, block=True)
+                                 title='Maximum Error Solution')
 
 
 if __name__ == '__main__':

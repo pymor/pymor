@@ -10,6 +10,7 @@ from pymor.playground.vectorarrays.disk import DiskVectorArray
 from pymor.vectorarrays.block import BlockVectorArray
 from pymor.vectorarrays.numpy import NumpyVectorArray
 from pymor.vectorarrays.list import NumpyVector, ListVectorArray
+from pymor.vectorarrays.fenics import HAVE_FENICS
 
 import os; TRAVIS = os.getenv('TRAVIS') == 'true'
 
@@ -38,6 +39,16 @@ def numpy_disk_vector_array_factory(length, dim, seed):
 def block_vector_array_factory(length, dims, seed):
     return BlockVectorArray([numpy_vector_array_factory(length, dim, seed + i) for i, dim in enumerate(dims)],
                             copy=False)
+
+if HAVE_FENICS:
+    from pymor.vectorarrays.fenics import FenicsVectorSpace
+
+    def fenics_vector_array_factory(length, dim, seed):
+        U = FenicsVectorSpace(dim).zeros(length)
+        np.random.seed(seed)
+        for v, a in zip(U._list, np.random.random((length, dim))):
+            v.impl[:] = a
+        return U
 
 
 def vector_array_from_empty_reserve(v, reserve):
@@ -106,6 +117,11 @@ numpy_disk_vector_array_generators = [] if TRAVIS else \
 block_vector_array_generators = \
     [lambda args=args: block_vector_array_factory(*args) for args in block_vector_array_factory_arguments]
 
+fenics_vector_array_generators = \
+    [lambda args=args: fenics_vector_array_factory(*args) for args in numpy_vector_array_factory_arguments] \
+    if HAVE_FENICS else []
+
+
 numpy_vector_array_pair_with_same_dim_generators = \
     [lambda l=l, l2=l2, d=d, s1=s1, s2=s2: (numpy_vector_array_factory(l, d, s1),
                                             numpy_vector_array_factory(l2, d, s2))
@@ -125,6 +141,13 @@ block_vector_array_pair_with_same_dim_generators = \
     [lambda l=l, l2=l2, d=d, s1=s1, s2=s2: (block_vector_array_factory(l, d, s1),
                                             block_vector_array_factory(l2, d, s2))
      for l, l2, d, s1, s2 in block_vector_array_factory_arguments_pairs_with_same_dim]
+
+fenics_vector_array_pair_with_same_dim_generators = \
+    [lambda l=l, l2=l2, d=d, s1=s1, s2=s2: (fenics_vector_array_factory(l, d, s1),
+                                            fenics_vector_array_factory(l2, d, s2))
+     for l, l2, d, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_same_dim] \
+    if HAVE_FENICS else []
+
 
 numpy_vector_array_pair_with_different_dim_generators = \
     [lambda l=l, l2=l2, d1=d1, d2=d2, s1=s1, s2=s2: (numpy_vector_array_factory(l, d1, s1),
@@ -146,9 +169,23 @@ block_vector_array_pair_with_different_dim_generators = \
                                                      block_vector_array_factory(l2, d2, s2))
      for l, l2, d1, d2, s1, s2 in block_vector_array_factory_arguments_pairs_with_different_dim]
 
+fenics_vector_array_pair_with_different_dim_generators = \
+    [lambda l=l, l2=l2, d1=d1, d2=d2, s1=s1, s2=s2: (fenics_vector_array_factory(l, d1, s1),
+                                                     fenics_vector_array_factory(l2, d2, s2))
+     for l, l2, d1, d2, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_different_dim] \
+    if HAVE_FENICS else []
+
+
+@pytest.fixture(params=numpy_vector_array_generators + numpy_list_vector_array_generators +
+                       numpy_disk_vector_array_generators + block_vector_array_generators +
+                       fenics_vector_array_generators)
+def vector_array_without_reserve(request):
+    return request.param()
+
+
 @pytest.fixture(params=numpy_vector_array_generators + numpy_list_vector_array_generators +
                        numpy_disk_vector_array_generators + block_vector_array_generators)
-def vector_array_without_reserve(request):
+def picklable_vector_array_without_reserve(request):
     return request.param()
 
 
@@ -157,10 +194,16 @@ def vector_array(vector_array_without_reserve, request):
     return vector_array_from_empty_reserve(vector_array_without_reserve, request.param)
 
 
+@pytest.fixture(params=range(3))
+def picklable_vector_array(picklable_vector_array_without_reserve, request):
+    return vector_array_from_empty_reserve(picklable_vector_array_without_reserve, request.param)
+
+
 @pytest.fixture(params=(numpy_vector_array_pair_with_same_dim_generators +
                         numpy_list_vector_array_pair_with_same_dim_generators +
                         numpy_disk_vector_array_pair_with_same_dim_generators +
-                        block_vector_array_pair_with_same_dim_generators))
+                        block_vector_array_pair_with_same_dim_generators +
+                        fenics_vector_array_pair_with_same_dim_generators))
 def compatible_vector_array_pair_without_reserve(request):
     return request.param()
 
@@ -174,6 +217,7 @@ def compatible_vector_array_pair(compatible_vector_array_pair_without_reserve, r
 @pytest.fixture(params=(numpy_vector_array_pair_with_different_dim_generators +
                         numpy_list_vector_array_pair_with_different_dim_generators +
                         numpy_disk_vector_array_pair_with_different_dim_generators +
-                        block_vector_array_pair_with_different_dim_generators))
+                        block_vector_array_pair_with_different_dim_generators +
+                        fenics_vector_array_pair_with_different_dim_generators))
 def incompatible_vector_array_pair(request):
     return request.param()

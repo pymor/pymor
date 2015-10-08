@@ -84,6 +84,36 @@ class LincombOperator(OperatorBase):
             R.axpy(c, op.apply(U, ind=ind, mu=mu))
         return R
 
+    def apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None):
+        if hasattr(self, '_assembled_operator'):
+            if self._defaults_sid == defaults_sid():
+                return self._assembled_operator.apply2(V, U, V_ind=V_ind, U_ind=U_ind, product=product)
+            else:
+                return self.assemble().apply2(V, U, V_ind=V_ind, U_ind=U_ind, product=product)
+        elif self._try_assemble:
+            return self.assemble().apply2(V, U, V_ind=V_ind, U_ind=U_ind, product=product)
+        coeffs = self.evaluate_coefficients(mu)
+        R = self.operators[0].apply2(V, U, V_ind=V_ind, U_ind=U_ind, mu=mu, product=product)
+        R *= coeffs[0]
+        for op, c in izip(self.operators[1:], coeffs[1:]):
+            R += c * op.apply2(V, U, V_ind=V_ind, U_ind=U_ind, mu=mu, product=product)
+        return R
+
+    def pairwise_apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None):
+        if hasattr(self, '_assembled_operator'):
+            if self._defaults_sid == defaults_sid():
+                return self._assembled_operator.pairwise_apply2(V, U, V_ind=V_ind, U_ind=U_ind, product=product)
+            else:
+                return self.assemble().pairwise_apply2(V, U, V_ind=V_ind, U_ind=U_ind, product=product)
+        elif self._try_assemble:
+            return self.assemble().pairwise_apply2(V, U, V_ind=V_ind, U_ind=U_ind, product=product)
+        coeffs = self.evaluate_coefficients(mu)
+        R = self.operators[0].pairwise_apply2(V, U, V_ind=V_ind, U_ind=U_ind, mu=mu, product=product)
+        R *= coeffs[0]
+        for op, c in izip(self.operators[1:], coeffs[1:]):
+            R += c * op.pairwise_apply2(V, U, V_ind=V_ind, U_ind=U_ind, mu=mu, product=product)
+        return R
+
     def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
         if hasattr(self, '_assembled_operator'):
             if self._defaults_sid == defaults_sid():
@@ -230,6 +260,8 @@ class Concatenation(OperatorBase):
             return Concatenation(restricted_second, restricted_first), first_source_dofs
 
     def projected(self, range_basis, source_basis, product=None, name=None):
+        if not self.parametric and self.linear:
+            return super(Concatenation, self).projected(range_basis, source_basis, product=product, name=name)
         projected_first = self.first.projected(None, source_basis, product=None)
         if isinstance(projected_first, VectorArrayOperator) and not projected_first.transposed:
             return self.second.projected(range_basis, projected_first._array, product=product, name=name)
