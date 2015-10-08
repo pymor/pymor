@@ -23,6 +23,7 @@ before_install:
  - pip install ipyparallel
  - pip install PySide --no-index --find-links https://parkin.github.io/python-wheelhouse/;
  - python ~/virtualenv/python${TRAVIS_PYTHON_VERSION}_with_system_site_packages/bin/pyside_postinstall.py -install
+ - python -c 'import  dolfin' && echo "successfully dolfin imported"
 
 # command to install dependencies
 install:
