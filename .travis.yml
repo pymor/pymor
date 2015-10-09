@@ -3,9 +3,7 @@ language: python
 python:
   - 3.3
   - 3.4
-
-virtualenv:
-  system_site_packages: true
+  - 3.5
 
 before_install:
  - git fetch --depth=1000 --tags origin master
@@ -24,7 +22,7 @@ before_install:
  - pip install --upgrade ipython
  - pip install ipyparallel
  - pip install PySide --no-index --find-links https://parkin.github.io/python-wheelhouse/;
- - python ~/virtualenv/python${TRAVIS_PYTHON_VERSION}_with_system_site_packages/bin/pyside_postinstall.py -install
+ - python ~/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/pyside_postinstall.py -install
  - python -c 'import  dolfin' || echo "import dolfin failed"
 
 # command to install dependencies
@@ -68,6 +66,7 @@ addons:
     - python-numpy
     - python-sphinx
     - python-dev
+    - python3-all-dev
     - python3
     - dh-make
     - python-docutils
