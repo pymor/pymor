@@ -2,6 +2,17 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+"""Wrapper classes for building MPI distributed |VectorArrays|.
+
+This module contains several wrapper classes which allow to
+transform single rank |VectorArrays| into MPI distributed
+|VectorArrays| which can be used on rank 0 like ordinary
+|VectorArrays|. Similar classes are provided for handling
+:class:`Vectors <pymor.vectorarrays.list.VectorInterface>`.
+The implementations are based on the event loop provided
+by :mod:`pymor.tools.mpi`.
+"""
+
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
@@ -12,6 +23,41 @@ from pymor.vectorarrays.list import VectorInterface
 
 
 class MPIVectorArray(VectorArrayInterface):
+    """MPI distributed VectorArray.
+
+    Given a single-rank |VectorArray| implementation `cls`, this
+    wrapper class uses the event loop from :mod:`pymor.tools.mpi`
+    to build MPI distributed vector arrays where on each MPI rank
+    an instance of `cls` is used to manage the local data.
+
+    Instances of `MPIVectorArray` can be used on rank 0 like any
+    other (non-distributed) |VectorArray|.
+
+    Note, however, that the implementation of `cls` needs to be
+    MPI aware. For instance, `cls.dot` must perform the needed
+    MPI communication to sum up the local scalar products and
+    return the sums on rank 0.
+
+    Default implementations for all communication requiring
+    interface methods are provided by :class:`MPIVectorArrayAutoComm`.
+    See also :class:`MPIVectorArrayNoComm`.
+
+    Note that resource cleanup is handled by :meth:`object.__del__`.
+    Please be aware of the peculiarities of destructors in Python!
+
+    Parameters
+    ----------
+    cls
+        The class of the |VectorArray| implementation used on
+        every MPI rank.
+    subtype
+        `tuple` of the different subtypes of `cls` on the MPI ranks.
+        Alternatively, the length of subtype may be 1 in which
+        case the same subtype is assumed for all ranks.
+    obj_id
+        :class:`~pymor.tools.mpi.ObjectId` of the MPI distributed
+        instances of `cls` wrapped by this array.
+    """
 
     def __init__(self, cls, subtype, obj_id):
         self.cls = cls
@@ -100,6 +146,18 @@ def _MPIVectorArray_axpy(obj_id, alpha, x_obj_id, ind=None, x_ind=None):
 
 
 class MPIVectorArrayNoComm(MPIVectorArray):
+    """MPI distributed VectorArray.
+
+    This is a subclass of :class:`MPIVectorArray` which
+    overrides all communication requiring interface methods
+    to raise `NotImplementedError`.
+
+    This is mainly useful as a security measure when wrapping
+    arrays for which simply calling the respective method
+    on the wrapped arrays would lead to wrong results and
+    :class:`MPIVectorArrayAutoComm` cannot be used either
+    (for instance in the presence of shared DOFs).
+    """
 
     @property
     def dim(self):
@@ -125,6 +183,17 @@ class MPIVectorArrayNoComm(MPIVectorArray):
 
 
 class MPIVectorArrayAutoComm(MPIVectorArray):
+    """MPI distributed VectorArray.
+
+    This is a subclass of :class:`MPIVectorArray` which
+    provides default implementations for all communication
+    requiring interface methods for the case when the
+    wrapped array is not MPI aware.
+
+    Note, however, that depending on the discretization
+    these default implementations might lead to wrong results
+    (for instance in the presence of shared DOFs).
+    """
 
     @property
     def dim(self):
@@ -248,6 +317,43 @@ def _MPIVectorArrayAutoComm_amax(self, ind=None):
 
 
 class MPIVector(VectorInterface):
+    """MPI distributed Vector.
+
+    Given a single-rank implemenation of
+    :class:`~pymor.vectorarrays.list.VectorInterface` `cls`, this
+    wrapper class uses the event loop from :mod:`pymor.tools.mpi`
+    to build MPI distributed vector where on each MPI rank
+    an instance of `cls` is used to manage the local data.
+
+    Instances of `MPIVector` can be used on rank 0 in conjunction
+    with |ListVectorArray| like any other (non-distributed) Vector
+    class.
+
+    Note, however, that the implementation of `cls` needs to be
+    MPI aware. For instance, `cls.dot` must perform the needed
+    MPI communication to sum up the local scalar products and
+    return the sum on rank 0.
+
+    Default implementations for all communication requiring
+    interface methods are provided by :class:`MPIVectorAutoComm`.
+    See also :class:`MPIVectorNoComm`.
+
+    Note that resource cleanup is handled by :meth:`object.__del__`.
+    Please be aware of the peculiarities of destructors in Python!
+
+    Parameters
+    ----------
+    cls
+        The class of the :class:`~pymor.vectorarrays.list.VectorInterface`
+        implementation used on every MPI rank.
+    subtype
+        `tuple` of the different subtypes of `cls` on the MPI ranks.
+        Alternatively, the length of subtype may be 1 in which
+        case the same subtype is assumed for all ranks.
+    obj_id
+        :class:`~pymor.tools.mpi.ObjectId` of the MPI distributed
+        instances of `cls` wrapped by this object.
+    """
 
     def __init__(self, cls, subtype, obj_id):
         self.cls = cls
@@ -309,6 +415,18 @@ def _MPIVector_make_zeros(cls, subtype=(None,)):
 
 
 class MPIVectorNoComm(object):
+    """MPI distributed Vector.
+
+    This is a subclass of :class:`MPIVector` which
+    overrides all communication requiring interface methods
+    to raise `NotImplementedError`.
+
+    This is mainly useful as a security measure when wrapping
+    vectors for which simply calling the respective method
+    on the wrapped vectors would lead to wrong results and
+    :class:`MPIVectorAutoComm` cannot be used either
+    (for instance in the presence of shared DOFs).
+    """
 
     @property
     def dim(self):
@@ -334,6 +452,17 @@ class MPIVectorNoComm(object):
 
 
 class MPIVectorAutoComm(MPIVector):
+    """MPI distributed Vector.
+
+    This is a subclass of :class:`MPIArray` which
+    provides default implementations for all communication
+    requiring interface methods for the case when the
+    wrapped vector is not MPI aware.
+
+    Note, however, that depending on the discretization
+    these default implementations might lead to wrong results
+    (for instance in the presence of shared DOFs).
+    """
 
     @property
     def dim(self):
