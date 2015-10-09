@@ -18,7 +18,7 @@ the user can connect to by calling::
 
     ipython console --existing file_name_printed_by_ipython.json
 
-(Starting the  IPython console directly will not work properly
+(Starting the IPython console directly will not work properly
 with most MPI implementations.)
 When IPython is not available, the builtin python REPL is started.
 
@@ -41,8 +41,8 @@ methods. It is the user's responsibility to ensure that calls to
 to ensure that the returned :class:`ObjectId` refers to the same
 distributed object on all ranks. The functions :func:`function_call`,
 :func:`function_call_manage`, :func:`method_call`,
-:func:`method_call_manage` map :class:`ObjectId`s transparently to
-distributed objects. :func:`function_call_manage` and
+:func:`method_call_manage` map instances :class:`ObjectId`
+transparently to distributed objects. :func:`function_call_manage` and
 :func:`method_call_manage` will call :func:`manage_object` on the
 return value and return the corresponding `ObjectId`. The functions
 :func:`method_call` and :func:`method_call_manage` are given an
@@ -170,7 +170,7 @@ def function_call(f, *args, **kwargs):
     """Execute the function `f` with given arguments.
 
     Intended to be used in conjunction with :func:`call`.
-    Arguments which are :class:`ObjectId`s are transparently
+    Arguments of type :class:`ObjectId` are transparently
     mapped to the object they refer to.
     """
     return f(*((get_object(arg) if type(arg) is ObjectId else arg) for arg in args),
@@ -183,7 +183,7 @@ def function_call_manage(f, *args, **kwargs):
     Intended to be used in conjunction with :func:`call`.
     The return value of `f` is managed by calling :func:`manage_object`
     and the corresponding :class:`ObjectId` is returned.
-    Arguments which are :class:`ObjectId`s are transparently
+    Arguments of type :class:`ObjectId` are transparently
     mapped to the object they refer to.
     """
     return manage_object(function_call(f, *args, **kwargs))
@@ -193,7 +193,7 @@ def method_call(obj_id, name, *args, **kwargs):
     """Execute a method with given arguments.
 
     Intended to be used in conjunction with :func:`call`.
-    Arguments which are :class:`ObjectId`s are transparently
+    Arguments of type :class:`ObjectId` are transparently
     mapped to the object they refer to.
 
     Parameters
@@ -217,9 +217,9 @@ def method_call_manage(obj_id, name, *args, **kwargs):
     """Execute a method with given arguments and manage the return value.
 
     Intended to be used in conjunction with :func:`call`.
-    The return value of `f` is managed by calling :func:`manage_object`
-    and the corresponding :class:`ObjectId` is returned.
-    Arguments which are :class:`ObjectId`s are transparently
+    The return value of the called method is managed by calling
+    :func:`manage_object` and the corresponding :class:`ObjectId`
+    is returned.  Arguments of type :class:`ObjectId` are transparently
     mapped to the object they refer to.
 
     Parameters
