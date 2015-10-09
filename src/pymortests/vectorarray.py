@@ -64,7 +64,6 @@ def valid_inds(v, length=None):
             yield None
         np.random.seed(len(v) * length)
         yield list(np.random.randint(0, len(v), size=length))
-        yield list(np.random.randint(0, len(v), size=length))
     else:
         if len(v) == 0:
             yield None
