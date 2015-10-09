@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 from scipy import io
 
 import numpy as np
-import ConfigParser
+import configparser
 
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 from pymor.discretizations.basic import StationaryDiscretization
@@ -74,7 +74,7 @@ def discretize_stationary_from_disk(parameter_file):
     assert ".ini" == parameter_file[-4:], "Given file is not an .ini file"
 
     # Get input from parameter file
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.optionxform = str
     config.read(parameter_file)
 
@@ -220,7 +220,7 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
     assert ".ini" == parameter_file[-4:], "Given file is not an .ini file"
 
     # Get input from parameter file
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.optionxform = str
     config.read(parameter_file)
 
