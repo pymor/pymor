@@ -74,7 +74,7 @@ def reduce_generic_rb(discretization, RB, vector_product=None, disable_caching=T
 
     if discretization.products is not None:
         projected_products = {k: p.projected(range_basis=RB, source_basis=RB)
-                              for k, p in discretization.products.iteritems()}
+                              for k, p in discretization.products.items()}
     else:
         projected_products = None
 

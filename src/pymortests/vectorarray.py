@@ -846,7 +846,7 @@ def test_isub(compatible_vector_array_pair):
     if len(v2) < len(v1):
         v2.append(v2, o_ind=np.zeros(len(v1) - len(v2), dtype=np.int))
     elif len(v2) > len(v1):
-        v2.remove(range(len(v2)-len(v1)))
+        v2.remove(list(range(len(v2)-len(v1))))
     c1 = v1.copy()
     c1.axpy(-1, v2)
     v1 -= v2
