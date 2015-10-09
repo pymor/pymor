@@ -11,6 +11,11 @@ import numpy as np
 
 from pymor.core.interfaces import BasicInterface, abstractmethod, abstractproperty, abstractclassmethod
 
+def _numpy_version_older(version_tuple):
+    np_tuple = tuple(int(p) for p in np.__version__.split('.')[:3])
+    return np_tuple < version_tuple
+
+_INDEXTYPES = (Number,) if not _numpy_version_older((1,9)) else (Number, np.intp)
 
 class VectorArrayInterface(BasicInterface):
     """Interface for vector arrays.
@@ -489,7 +494,7 @@ class VectorArrayInterface(BasicInterface):
 
     def len_ind(self, ind):
         """Return the number of specified indices."""
-        return len(self) if ind is None else 1 if isinstance(ind, Number) else len(ind)
+        return len(self) if ind is None else 1 if isinstance(ind, _INDEXTYPES) else len(ind)
 
     def len_ind_unique(self, ind):
         """Return the number of specified unique indices."""
