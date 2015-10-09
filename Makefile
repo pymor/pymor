@@ -22,6 +22,9 @@ flake8:
 test:
 	python setup.py test
 
+fasttest:
+	PYTEST_MARKER="not slow" python setup.py test
+
 full-test:
 	@echo
 	@echo "Ensuring that all required pytest plugins are installed ..."
