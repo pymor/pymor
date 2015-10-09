@@ -8,7 +8,7 @@
 Usage:
   thermalblock.py [-ehp] [--estimator-norm=NORM] [--extension-alg=ALG] [--grid=NI] [--help]
                   [--pickle=PREFIX] [--plot-solutions] [--plot-error-sequence] [--reductor=RED]
-                  [--test=COUNT] [--num-engines=COUNT] [--profile=PROFILE]
+                  [--test=COUNT] [--num-engines=COUNT] [--profile=PROFILE] [--list-vector-array]
                   XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
 
 
@@ -54,6 +54,8 @@ Options:
                          [default: 0]
 
   --profile=PROFILE      IPython profile to use for parallelization.
+
+  --list-vector-array    Solve using ListVectorArray[NumpyVector] instead of NumpyVectorArray.
 """
 
 import sys
@@ -99,6 +101,11 @@ def thermalblock_demo(args):
 
     print('Discretize ...')
     discretization, _ = discretize_elliptic_cg(problem, diameter=1. / args['--grid'])
+
+    if args['--list-vector-array']:
+        from pymor.playground.discretizers.numpylistvectorarray import convert_to_numpy_list_vector_array
+        discretization = convert_to_numpy_list_vector_array(discretization)
+
     discretization.generate_sid()
 
     print('The parameter type is {}'.format(discretization.parameter_type))
