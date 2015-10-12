@@ -354,7 +354,7 @@ class ImmutableMeta(UberMeta):
     __call__ = _call
 
 
-class ImmutableInterface(BasicInterface):
+class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
     """Base class for immutable objects in pyMOR.
 
     Instances of `ImmutableInterface` are immutable in the sense that
