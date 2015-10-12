@@ -350,8 +350,8 @@ def print_defaults(import_all=True, shorten_paths=2):
             keys[int(i)].append('.'.join(k_parts))
         values[int(i)].append(repr(v))
         comments[int(i)].append(c)
-    key_width = max(max([0] + map(len, ks)) for ks in keys)
-    value_width = max(max([0] + map(len, vls)) for vls in values)
+    key_width = max(max([0] + list(map(len, ks))) for ks in keys)
+    value_width = max(max([0] + list(map(len, vls))) for vls in values)
     key_string = 'path (shortened)' if shorten_paths else 'path'
     header = '''
 {:{key_width}}   {:{value_width}}   source'''[1:].format(key_string, 'value',
@@ -414,7 +414,7 @@ def write_defaults_to_file(filename='./pymor_defaults.py', packages=('pymor',)):
         keys[int(i)].append("'" + k + "'")
         values[int(i)].append(repr(v))
         as_comment[int(i)].append(c == 'code')
-    key_width = max(max([0] + map(len, ks)) for ks in keys)
+    key_width = max(max([0] + list(map(len, ks))) for ks in keys)
 
     with open(filename, 'w') as f:
         print('''

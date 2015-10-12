@@ -99,7 +99,7 @@ class Line(ReferenceElementInterface):
         return np.apply_along_axis(np.linalg.norm, -2, A)
 
     def quadrature_info(self):
-        return {'gauss': GaussQuadratures.orders}, {'gauss': map(len, GaussQuadratures.points)}
+        return {'gauss': GaussQuadratures.orders}, {'gauss': list(map(len, GaussQuadratures.points))}
 
     def quadrature(self, order=None, npoints=None, quadrature_type='default'):
         if quadrature_type == 'default' or quadrature_type == 'gauss':
