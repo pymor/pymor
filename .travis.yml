@@ -1,7 +1,7 @@
 language: python
 
 python:
-  - 3.3
+  #- 3.3 disabled because there's currently no compat. pyside wheel
   - 3.4
   - 3.5
 
