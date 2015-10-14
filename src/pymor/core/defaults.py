@@ -416,7 +416,7 @@ def write_defaults_to_file(filename='./pymor_defaults.py', packages=('pymor',)):
         as_comment[int(i)].append(c == 'code')
     key_width = max(max([0] + list(map(len, ks))) for ks in keys)
 
-    with open(filename, 'w') as f:
+    with open(filename, 'wt') as f:
         print('''
 # pyMOR defaults config file
 # This file has been automatically created by pymor.core.defaults.write_defaults_to_file'.
@@ -477,7 +477,7 @@ def load_defaults_from_file(filename='./pymor_defaults.py'):
         Path of the configuration file.
     """
     env = {}
-    exec(open(filename).read(), env)
+    exec(open(filename, 'rt').read(), env)
     try:
         _default_container.update(env['d'], type='file')
     except KeyError as e:
