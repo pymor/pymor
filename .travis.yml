@@ -23,7 +23,7 @@ before_install:
  - pip install --upgrade pytest-cov
  - pip install --upgrade ipython
  - pip install ipyparallel
- - (pip install PySide --no-index --find-links https://parkin.github.io/python-wheelhouse/ && python ~/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/pyside_postinstall.py -install) || travis_retry travis_wait pip install PySide
+ - (pip install PySide --no-index --find-links https://parkin.github.io/python-wheelhouse/ && python ~/virtualenv/python${TRAVIS_PYTHON_VERSION}/bin/pyside_postinstall.py -install) || echo "installing PySide failed, continuing anyway"
  - python -c 'import  dolfin' || echo "import dolfin failed"
 
 # command to install dependencies
