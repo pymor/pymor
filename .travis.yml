@@ -8,6 +8,7 @@ python:
 before_install:
  - git fetch --depth=1000 --tags origin master
  - export DISPLAY=:99.0
+ - export PATH=/usr/lib/ccache:$PATH
  - sh -e /etc/init.d/xvfb start
  - pip install --upgrade pip
  - pip install https://bitbucket.org/dmitryew/pyevtk/get/tip.zip
@@ -35,6 +36,7 @@ sudo: false
 cache:
   directories:
     - $HOME/.cache/pip
+    - $HOME/.ccache
 before_cache:
   - rm -f $HOME/.cache/pip/log/debug.log
 
@@ -77,6 +79,7 @@ addons:
     - libsuitesparse-dev
     - gfortran
     - libqt4-dev
+    - ccache
 
 os:
   - linux
