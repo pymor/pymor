@@ -47,6 +47,8 @@ notifications:
   email: 
     on_success: change
     on_failure: change
+  webhooks:
+    - https://buildtimetrend.herokuapp.com/travis
 
 after_success:
  - coveralls
