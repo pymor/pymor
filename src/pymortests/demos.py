@@ -9,6 +9,7 @@ import sys
 import pytest
 
 from pymortests.base import runmodule
+from pymor.core.exceptions import PySideMissing
 from pymor.gui.gl import HAVE_PYSIDE
 from pymor.gui.qt import stop_gui_processes
 
@@ -37,21 +38,17 @@ def demo_args(request):
     return request.param
 
 
-def _is_failed_import_ok(error):
-    if str(error) == 'cannot visualize: import of PySide failed':
-        return not HAVE_PYSIDE
-    return False
-
-
+@pytest.mark.xfail(not HAVE_PYSIDE, raises=PySideMissing)
 def test_demos(demo_args):
     module, args = demo_args
     try:
         ret = _run(module, args)
         # TODO find a better/tighter assert/way to run the code
         assert ret is not None
-    except ImportError as ie:
-        assert _is_failed_import_ok(ie)
-    stop_gui_processes()
+    except Exception as ie:
+        raise ie
+    finally:
+        stop_gui_processes()
 
 
 def test_demos_tested():

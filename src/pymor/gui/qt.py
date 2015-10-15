@@ -30,6 +30,7 @@ import time
 from pymor.core.defaults import defaults
 from pymor.core.interfaces import BasicInterface
 from pymor.core.logger import getLogger
+from pymor.core.exceptions import PySideMissing
 from pymor.grids.oned import OnedGrid
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
@@ -265,7 +266,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         at the same time.
     """
     if not HAVE_PYSIDE:
-        raise ImportError('cannot visualize: import of PySide failed')
+        raise PySideMissing()
 
     assert backend in {'gl', 'matplotlib'}
 

@@ -35,3 +35,10 @@ class NewtonError(Exception):
 
 class SIDGenerationError(Exception):
     """Is raised when generate_sid fails."""
+
+class PySideMissing(ImportError):
+    """Raise me where having importable PySide is non-optional"""
+    
+    def __init__(self, msg=None):
+        msg = msg or 'cannot visualize: import of PySide failed'
+        super(PySideMissing, self).__init__(msg)
