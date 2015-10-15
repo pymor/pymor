@@ -49,7 +49,7 @@ def test_demos(demo_args):
     finally:
         stop_gui_processes()
 
-
+@pytest.mark.xfail(not HAVE_PYSIDE, reason="test_demos dynamically xfails if pyside is mandatory for demo")
 def test_demos_tested():
     modules = []
     for _, module_name, _ in pkgutil.walk_packages(pymordemos.__path__, pymordemos.__name__ + '.'):
