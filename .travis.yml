@@ -16,9 +16,9 @@ before_install:
  - pip install --upgrade markupsafe
  - pip install distribute
  - pip install cython docopt
- - pip install sympy matplotlib pyopengl
- - pip install --upgrade numpy
- - pip install --upgrade scipy
+ - travis_wait pip install sympy matplotlib pyopengl
+ - travis_wait pip install --upgrade numpy
+ - travis_wait pip install --upgrade scipy
  - pip install --upgrade pytest
  - pip install --upgrade pytest-cov
  - pip install --upgrade ipython
