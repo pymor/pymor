@@ -11,6 +11,7 @@ import pytest
 from tempfile import mkdtemp
 import shutil
 
+from pymor.core.exceptions import PySideMissing
 from pymortests.base import runmodule
 from pymor.gui.gl import HAVE_PYSIDE
 from pymor.gui.qt import stop_gui_processes
