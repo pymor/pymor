@@ -419,7 +419,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
         If `True`, block execution until the plot window is closed.
     """
     if not HAVE_PYSIDE:
-        raise ImportError('cannot visualize: import of PySide failed')
+        raise PySideMissing()
     if not HAVE_MATPLOTLIB:
         raise ImportError('cannot visualize: import of matplotlib failed')
 
