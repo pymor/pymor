@@ -8,6 +8,7 @@ from numbers import Number
 
 
 import numpy as np
+import sys
 
 from pymor.core.pickle import dumps, loads, dumps_function, loads_function, PicklingError
 from pymor.functions.interfaces import FunctionInterface
@@ -150,10 +151,12 @@ class GenericFunction(FunctionBase):
 
     def __getstate__(self):
         s = self.__dict__.copy()
+        # python 3.5 raises AttributeError for pickling local functions instead of PicklingError
+        pickle_exception = PicklingError if sys.version_info < (3,5) else (PicklingError, AttributeError)
         try:
             pickled_mapping = dumps(self._mapping)
             picklable = True
-        except PicklingError:
+        except pickle_exception:
             self.logger.warn('Mapping not picklable, trying pymor.core.pickle.dumps_function.')
             pickled_mapping = dumps_function(self._mapping)
             picklable = False
