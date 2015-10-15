@@ -108,6 +108,8 @@ def _test_demo(demo):
     result = None
     try:
         result = demo()
+    except PySideMissing:
+        pytest.xfail("PySide missing")
     finally:
         stop_gui_processes()
         from pymor.parallel.default import _cleanup
@@ -116,7 +118,6 @@ def _test_demo(demo):
     return result
 
 
-@pytest.mark.xfail(not HAVE_PYSIDE, raises=PySideMissing)
 def test_demos(demo_args):
     module, args = demo_args
     result = _test_demo(lambda: _run_module(module, args))
@@ -165,7 +166,6 @@ def test_analyze_pickle4():
         shutil.rmtree(d)
 
 
-@pytest.mark.xfail(not HAVE_PYSIDE, raises=PySideMissing)
 def test_thermalblock_ipython(demo_args):
     if demo_args[0] != 'pymordemos.thermalblock':
         return
@@ -179,7 +179,6 @@ def test_thermalblock_ipython(demo_args):
         time.sleep(10)  # cluster can be started directly afterwards, so we have to wait ...
 
 
-@pytest.mark.xfail(not HAVE_PYSIDE, raises=PySideMissing)
 def test_thermalblock_results(thermalblock_args):
     from pymordemos import thermalblock
     results = _test_demo(lambda: thermalblock.main(list(map(str, thermalblock_args[1]))))

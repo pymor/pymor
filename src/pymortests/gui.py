@@ -12,6 +12,7 @@ from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.discretizers.elliptic import discretize_elliptic_cg
 from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.grids.rect import RectGrid
+from pymor.core.exceptions import PySideMissing
 
 from pymortests.base import runmodule
 from pymor.domaindescriptions.basic import RectDomain, LineDomain
@@ -34,9 +35,12 @@ def test_visualize_patch(backend_gridtype):
     grid, bi = discretize_domain_default(problem.domain, grid_type=gridtype)
     discretization, data = discretize_elliptic_cg(analytical_problem=problem, grid=grid, boundary_info=bi)
     U = discretization.solve()
-    visualize_patch(data['grid'], U=U, backend=backend)
-    sleep(2)  # so gui has a chance to popup
-    stop_gui_processes()
+    try:
+        visualize_patch(data['grid'], U=U, backend=backend)
+    except PySideMissing as ie:
+        pytest.xfail("PySide missing")
+    finally:
+        stop_gui_processes()
 
 
 if __name__ == "__main__":
