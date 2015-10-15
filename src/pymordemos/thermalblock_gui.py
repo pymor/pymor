@@ -37,11 +37,15 @@ from docopt import docopt
 import time
 from functools import partial
 import numpy as np
-from PySide import QtGui
 import OpenGL
 
 OpenGL.ERROR_ON_COPY = True
 
+from pymor.core.exceptions import PySideMissing
+try:
+    from PySide import QtGui
+except ImportError as e:
+    raise PySideMissing()
 from pymor.algorithms.basisextension import gram_schmidt_basis_extension
 from pymor.algorithms.greedy import greedy
 from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
@@ -49,6 +53,7 @@ from pymor.discretizers.elliptic import discretize_elliptic_cg
 from pymor.gui.gl import ColorBarWidget, GLPatchWidget
 from pymor.reductors.coercive import reduce_coercive_simple
 from pymor import gui
+
 
 PARAM_STEPS = 10
 PARAM_MIN = 0.1
