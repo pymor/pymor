@@ -38,15 +38,14 @@ def demo_args(request):
     return request.param
 
 
-@pytest.mark.xfail(not HAVE_PYSIDE, raises=PySideMissing)
 def test_demos(demo_args):
     module, args = demo_args
     try:
         ret = _run(module, args)
         # TODO find a better/tighter assert/way to run the code
         assert ret is not None
-    except Exception as ie:
-        raise ie
+    except PySideMissing as ie:
+        pytest.xfail("PySide missing")
     finally:
         stop_gui_processes()
 
