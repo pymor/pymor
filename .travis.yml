@@ -82,8 +82,3 @@ addons:
 
 os:
   - linux
-  - osx
-
-matrix:
-  allow_failures:
-    - os: osx
