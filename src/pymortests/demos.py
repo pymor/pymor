@@ -87,7 +87,7 @@ def thermalblock_args(request):
 
 
 def _is_failed_import_ok(error):
-    if error.message == 'cannot visualize: import of PySide failed':
+    if str(error) == 'cannot visualize: import of PySide failed':
         return not HAVE_PYSIDE
     return False
 
