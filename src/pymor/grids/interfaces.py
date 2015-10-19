@@ -291,6 +291,10 @@ class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopological
         """
         return self._quadrature_points(codim, order, npoints, quadrature_type)
 
+    def bounding_box(self):
+        """returns a `(2, dim_outer)`-shaped array containing lower/upper bounding box coordinates."""
+        return self._bounding_box()
+
 
 class AffineGridWithOrthogonalCentersInterface(AffineGridInterface):
     """|AffineGrid| with an additional `orthogonal_centers` method."""

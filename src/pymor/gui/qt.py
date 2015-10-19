@@ -34,8 +34,7 @@ from pymor.core.defaults import defaults
 from pymor.core.interfaces import BasicInterface
 from pymor.core.logger import getLogger
 from pymor.grids.oned import OnedGrid
-from pymor.grids.rect import RectGrid
-from pymor.grids.tria import TriaGrid
+from pymor.grids.referenceelements import triangle, square
 from pymor.gui.gl import GLPatchWidget, ColorBarWidget, HAVE_GL
 from pymor.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget, HAVE_MATPLOTLIB
 from pymor.tools.vtkio import HAVE_PYVTK, write_vtk
@@ -465,7 +464,8 @@ class PatchVisualizer(BasicInterface):
     """
 
     def __init__(self, grid, bounding_box=([0, 0], [1, 1]), codim=2, backend=None, block=False):
-        assert isinstance(grid, (RectGrid, TriaGrid))
+        assert grid.reference_element in (triangle, square)
+        assert grid.dim_outer == 2
         assert codim in (0, 2)
         self.grid = grid
         self.bounding_box = bounding_box

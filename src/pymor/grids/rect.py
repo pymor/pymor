@@ -167,6 +167,9 @@ class RectGrid(AffineGridWithOrthogonalCentersInterface):
         else:
             return super(RectGrid, self).embeddings(codim)
 
+    def bounding_box(self):
+        return np.array(self.domain)
+
     def structured_to_global(self, codim):
         """Returns an array which maps structured indices to global codim-`codim` indices.
 

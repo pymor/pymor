@@ -197,6 +197,9 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
         else:
             return super(TriaGrid, self).embeddings(codim)
 
+    def bounding_box(self):
+        return np.array(self.domain)
+
     @cached
     def orthogonal_centers(self):
         embeddings = self.embeddings(0)

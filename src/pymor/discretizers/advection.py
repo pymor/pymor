@@ -119,7 +119,7 @@ def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=
 
     products = {'l2': L2Product(grid, boundary_info)}
     if grid.dim == 2:
-        visualizer = PatchVisualizer(grid=grid, bounding_box=grid.domain, codim=0)
+        visualizer = PatchVisualizer(grid=grid, bounding_box=grid.bounding_box(), codim=0)
     elif grid.dim == 1:
         visualizer = Matplotlib1DVisualizer(grid, codim=0)
     else:

@@ -294,6 +294,15 @@ def test_quadrature_points_values(grid):
                 np.testing.assert_allclose(Q, B[:, np.newaxis, :] + np.einsum('eij,qj->eqi', A, q))
 
 
+def test_bounding_box(grid):
+    g = grid
+    bbox = g.bounding_box()
+    assert bbox.shape == (2, g.dim_outer)
+    assert np.all(bbox[0] <= bbox[1])
+    assert np.all(g.centers(g.dim) >= bbox[0])
+    assert np.all(g.centers(g.dim) <= bbox[1])
+
+
 def test_orthogonal_centers(grid_with_orthogonal_centers):
     g = grid_with_orthogonal_centers
     C = g.orthogonal_centers()

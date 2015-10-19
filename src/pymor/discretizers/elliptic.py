@@ -92,7 +92,9 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
     F = Functional(grid, p.rhs, boundary_info, dirichlet_data=p.dirichlet_data, neumann_data=p.neumann_data)
 
     if isinstance(grid, (TriaGrid, RectGrid)):
-        visualizer = PatchVisualizer(grid=grid, bounding_box=grid.domain, codim=2)
+        visualizer = PatchVisualizer(grid=grid, bounding_box=grid.bounding_box(), codim=2)
+    elif isinstance(grid, (OnedGrid)):
+        visualizer = Matplotlib1DVisualizer(grid=grid, codim=1)
     else:
         visualizer = Matplotlib1DVisualizer(grid=grid, codim=1)
 
