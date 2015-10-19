@@ -48,10 +48,10 @@ tria_grid_generators = [lambda arg=arg, kwargs=kwargs: TriaGrid(arg, **kwargs) f
 
 oned_grid_generators = [lambda kwargs=kwargs: OnedGrid(**kwargs) for kwargs in
                         [dict(domain=np.array((-2, 2)), num_intervals=10),
-                         dict(domain=np.array((-2, -4)), num_intervals=100),
-                         dict(domain=np.array((-2, -4)), num_intervals=100, identify_left_right=True),
-                         dict(domain=np.array((3, 2)), num_intervals=10),
-                         dict(domain=np.array((3, 2)), num_intervals=10, identify_left_right=True),
+                         dict(domain=np.array((-4, -2)), num_intervals=100),
+                         dict(domain=np.array((-4, -2)), num_intervals=100, identify_left_right=True),
+                         dict(domain=np.array((2, 3)), num_intervals=10),
+                         dict(domain=np.array((2, 3)), num_intervals=10, identify_left_right=True),
                          dict(domain=np.array((1, 2)), num_intervals=10000)]]
 
 
