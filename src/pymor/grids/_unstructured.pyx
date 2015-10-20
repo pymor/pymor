@@ -18,7 +18,7 @@ def compute_edges(np.ndarray[DTYPE_t, ndim=2] faces, int num_vertices):
     cdef unsigned int j
     cdef unsigned int m
     cdef unsigned int n
-    cdef unsigned int x
+    cdef int x
     cdef unsigned int index
     cdef unsigned int max_edges
 
