@@ -13,6 +13,54 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class MPIOperator(OperatorBase):
+    """MPI distributed Operator.
+
+    Given a single-rank implementation of an |Operator|, this
+    wrapper class uses the event loop from :mod:`pymor.tools.mpi`
+    to allow an MPI distributed usage of the |Operator|.
+
+    Instances of `MPIOperator` can be used on rank 0 like any
+    other (non-distributed) |Operator|.
+
+    Note, however, that the underlying |Operator| implementation
+    needs to be MPI aware. For instance, the operator's `apply`
+    method has to perform the necessary MPI communication to
+    obtain all DOFs hosted on other MPI ranks which are required
+    for the local operator evaluation.
+
+    Instead of instantiating :class:`MPIOperator` directly, it
+    is usually preferable to use :func:`mpi_wrap_operator` instead.
+
+    Parameters
+    ----------
+    obj_id
+        :class:`~pymor.tools.mpi.ObjectId` of the local |Operators|
+        on each rank.
+    functional
+        Set to `True` if the operator represents a |Functional|. As
+        required for functionals in pyMOR, this will set the range
+        of the operator to `NumpyVectorSpace(1)` instead of
+        :class:`~pymor.vectorarrays.mpi.MPIVectorArray`-based space.
+    vector
+        Set to `True` if the operator represents a (parametric)
+        vector. As required for vector-like |Operators| in pyMOR,
+        this will set the source of the operator to `NumpyVectorSpace(1)`
+        instead of an :class:`~pymor.vectorarrays.mpi.MPIVectorArray`-based
+        space.
+    with_apply2
+        Set to `True` if the operator implementation has its own
+        MPI aware implementation of `apply2` and `pairwise_apply2`.
+        Otherwise, the default implementations using `apply` and
+        :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.dot`
+        (or `apply2` if a `product` is provided) will be used.
+    array_type
+        This class will be used to wrap the local |VectorArrays|
+        returned by the local operators into an MPI distributed
+        |VectorArray| managed from rank 0. By default,
+        :class:`~pymor.vectorarrays.mpi.MPIVectorArray` will be used,
+        other options are :class:`~pymor.vectorarrays.mpi.MPIVectorArrayAutoComm`
+        and :class:`~pymor.vectorarrays.mpi.MPIVectorArrayNoComm`.
+    """
 
     def __init__(self, obj_id, functional=False, vector=False, with_apply2=False, array_type=MPIVectorArray):
         assert not (functional and vector)
@@ -162,6 +210,23 @@ def _MPIOperator_get_range_subtypes(self):
 
 
 def mpi_wrap_operator(obj_id, functional=False, vector=False, with_apply2=False, array_type=MPIVectorArray):
+    """Wrap MPI distributed local |Operators| to a global |Operator| on rank 0.
+
+    Given MPI distributed local |Operators| referred to by the
+    `~pymor.tools.mpi.ObjectId` `obj_id`, return a new |Operator|
+    which manages these distributed operators from rank 0. This
+    is done by instantiating :class:`MPIOperator`. Additionally, the
+    structure of the wrapped operators is preserved. E.g. |LincombOperators|
+    will be wrapped as a |LincombOperator| of :class:`MPIOperators`.
+
+    Parameters
+    ----------
+    See :class:`MPIOperator`.
+
+    Returns
+    -------
+    The wrapped |Operator|.
+    """
     op = mpi.get_object(obj_id)
     if isinstance(op, LincombOperator):
         obj_ids = mpi.call(_mpi_wrap_operator_LincombOperator_manage_operators, obj_id)
