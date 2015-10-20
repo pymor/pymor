@@ -9,6 +9,7 @@ from pymor.operators.constructions import LincombOperator, VectorArrayOperator
 from pymor.tools import mpi
 from pymor.vectorarrays.interfaces import VectorSpace
 from pymor.vectorarrays.mpi import MPIVectorArray
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class MPIOperator(OperatorBase):
@@ -24,14 +25,16 @@ class MPIOperator(OperatorBase):
         self.name = op.name
         self.build_parameter_type(inherits=(op,))
         if vector:
-            self.source = op.source
+            self.source = NumpyVectorSpace(1)
+            assert self.source == op.source
         else:
             subtypes = mpi.call(_MPIOperator_get_source_subtypes, obj_id)
             if all(subtype == subtypes[0] for subtype in subtypes):
                 subtypes = (subtypes[0],)
             self.source = VectorSpace(array_type, (op.source.type, subtypes))
         if functional:
-            self.range = op.range
+            self.range = NumpyVectorSpace(1)
+            assert self.range == op.range
         else:
             subtypes = mpi.call(_MPIOperator_get_range_subtypes, obj_id)
             if all(subtype == subtypes[0] for subtype in subtypes):
@@ -61,7 +64,6 @@ class MPIOperator(OperatorBase):
                               mpi.call(mpi.method_call_manage, self.obj_id, 'as_vector', mu=mu))
         else:
             raise NotImplementedError
-
 
     def apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None):
         if not self.with_apply2:
