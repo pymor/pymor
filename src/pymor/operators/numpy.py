@@ -820,8 +820,9 @@ def _apply_inverse(matrix, V, options=None):
                         drop_rule=options['spilu_drop_rule'], permc_spec=options['spilu_permc_spec'])
         except TypeError as t:
             logger = getLogger('pymor.operators.numpy._apply_inverse')
-            logger.error("ignoring drop_rule and permc_spec in ilu factorization")
-            ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'])
+            logger.error("ignoring drop_rule in ilu factorization")
+            ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
+                        permc_spec=options['spilu_permc_spec'])
         precond = LinearOperator(matrix.shape, ilu.solve)
         for i, VV in enumerate(V):
             R[i], info = bicgstab(matrix, VV, tol=options['tol'], maxiter=options['maxiter'], M=precond)
