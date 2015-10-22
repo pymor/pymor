@@ -6,9 +6,8 @@
 """2D Thermalblock demo using FENICS.
 
 Usage:
-  thermalblock.py [-ehp] [--estimator-norm=NORM] [--extension-alg=ALG] [--grid=NI] [--help] [--order=ORDER]
-                  [--pickle=PREFIX] [--plot-solutions] [--reductor=RED] [--test=COUNT]
-                  XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
+  thermalblock_fenics.py [options] XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
+  thermalblock_fenics.py -h | --help
 
 
 Arguments:
@@ -23,10 +22,12 @@ Arguments:
 
 
 Options:
-  -e, --with-estimator   Use error estimator.
+  -h, --help             Show this message.
 
   --estimator-norm=NORM  Norm (trivial, h1) in which to calculate the residual
                          [default: h1].
+
+  --without-estimator    Do not use error estimator for basis generation.
 
   --extension-alg=ALG    Basis extension algorithm (trivial, gram_schmidt, h1_gram_schmidt)
                          to be used [default: h1_gram_schmidt].
@@ -34,8 +35,6 @@ Options:
   --grid=NI              Use grid with 2*NI*NI elements [default: 100].
 
   --order=ORDER          Polynomial order of the Lagrange finite elements to use [default: 1].
-
-  -h, --help             Show this message.
 
   --pickle=PREFIX        Pickle reduced discretizaion, as well as reconstructor and high-dimensional
                          discretization to files with this prefix.
@@ -182,7 +181,7 @@ def thermalblock_demo(args):
                             'h1_gram_schmidt': partial(gram_schmidt_basis_extension, product=discretization.h1_product)}
     extension_algorithm = extension_algorithms[args['--extension-alg']]
     greedy_data = greedy(discretization, reductor, discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
-                         use_estimator=args['--with-estimator'], error_norm=discretization.h1_norm,
+                         use_estimator=not args['--without-estimator'], error_norm=discretization.h1_norm,
                          extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'])
     rb_discretization, reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
 
@@ -234,7 +233,7 @@ def thermalblock_demo(args):
 
     Greedy basis generation:
        number of snapshots:                {args[SNAPSHOTS]}^({args[XBLOCKS]}x{args[YBLOCKS]})
-       used estimator:                     {args[--with-estimator]}
+       estimator disabled:                 {args[--without-estimator]}
        estimator norm:                     {args[--estimator-norm]}
        extension method:                   {args[--extension-alg]}
        prescribed basis size:              {args[RBSIZE]}
