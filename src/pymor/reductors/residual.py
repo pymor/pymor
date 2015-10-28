@@ -126,7 +126,7 @@ def reduce_residual(operator, functional=None, RB=None, product=None, extends=No
             raise CollectionError(op)
 
     for i in ind_range:
-        logger.info('Computing residual range for basis vector {}...'.format(i))
+        logger.info('Computing residual range for basis vector {} ...'.format(i))
         new_residual_range = operator.range.empty()
         try:
             if i == -1:
@@ -140,7 +140,7 @@ def reduce_residual(operator, functional=None, RB=None, product=None, extends=No
                     {})
 
         if product:
-            logger.info('Computing Riesz representatives for basis vector {}...'.format(i))
+            logger.info('Computing Riesz representatives for basis vector {} ...'.format(i))
             new_residual_range = product.apply_inverse(new_residual_range)
 
         gram_schmidt_offset = len(residual_range)
