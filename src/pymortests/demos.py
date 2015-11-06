@@ -21,7 +21,7 @@ DEMO_ARGS = (('elliptic', [0, 0, 0, 0]), ('elliptic', [1, 2, 0, 3]), ('elliptic'
              ('burgers_ei', [1, 2, 2, 5, 2, 5]), ('burgers', ['--num-flux=simplified_engquist_osher', '0.1']),
              ('elliptic2', [1, 20]), ('elliptic2', ['--fv', 1, 20]),
              ('elliptic_oned', [1, 20]), ('elliptic_oned', ['--fv', 1, 20]),
-             ('thermalblock', ['-e', 2, 2, 3, 5]), ('thermalblock', [2, 2, 3, 5]),
+             ('thermalblock', [2, 2, 3, 5]), ('thermalblock', ['--without-estimator', 2, 2, 3, 5]),
              ('thermalblock_gui', ['--testing', 2, 2, 3, 5]),
              ('thermalblock_pod', [2, 2, 3, 5]))
 DEMO_ARGS = [('pymordemos.{}'.format(a), b) for (a, b) in DEMO_ARGS]

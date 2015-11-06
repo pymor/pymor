@@ -25,7 +25,7 @@ from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 
 def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None,
-              projection='orthogonal', product=None):
+              projection='ei', product=None, copy=True):
     """Generate data for empirical interpolation by a greedy search (EI-Greedy algorithm).
 
     Given a |VectorArray| `U`, this method generates a collateral basis and
@@ -54,6 +54,8 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
     product
         If `projection == 'orthogonal'`, the product which is used to perform the projection.
         If `None`, the Euclidean product is used.
+    copy
+        If `False`, `U` will be modified during executing of the algorithm.
 
     Returns
     -------
@@ -81,6 +83,9 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
     collateral_basis = U.empty()
     max_errs = []
     triangularity_errs = []
+
+    if copy:
+        U = U.copy()
 
     if projection == 'orthogonal':
         ERR = U.copy()
@@ -231,7 +236,7 @@ def deim(U, modes=None, error_norm=None, product=None):
 
 def interpolate_operators(discretization, operator_names, parameter_sample, error_norm=None,
                           target_error=None, max_interpolation_dofs=None,
-                          projection='orthogonal', product=None):
+                          projection='ei', product=None):
     """Empirical operator interpolation using the EI-Greedy algorithm.
 
     This is a convenience method for facilitating the use of :func:`ei_greedy`. Given
@@ -287,7 +292,7 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
             evaluations.append(op.apply(U, mu=mu))
 
     dofs, basis, data = ei_greedy(evaluations, error_norm, target_error, max_interpolation_dofs,
-                                  projection=projection, product=product)
+                                  projection=projection, product=product, copy=False)
 
     ei_operators = {name: EmpiricalInterpolatedOperator(operator, dofs, basis, triangular=True)
                     for name, operator in zip(operator_names, operators)}

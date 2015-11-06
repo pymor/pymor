@@ -14,7 +14,7 @@ provided for getting started quickly.
 NOTE pyMOR is still in early development. Should you have any questions
 regarding pyMOR or wish to contribute, do not hesitate to contact us!
 
-[Docs] [Docs] [DOI] [Build Status] [Coverage Status] [Code Health]
+[Docs] [Docs] [DOI] [Build Status] [Coverage Status]
 
 License
 -------
@@ -153,24 +153,25 @@ and, optionally, switch to the branch you are interested in, e.g.
 
     git checkout 0.2.x
 
-Finally add pyMOR to the path of your virtualenv:
+Then, add pyMOR to the path of your virtualenv:
 
     echo "$PYMOR_SOURCE_DIR/src" > $VIRTUAL_ENV/lib/python2.7/site-packages/pymor.pth
 
 This will make pyMOR importable inside the virtualenv and will override
 any other pyMOR versions installed on the system.
 
+Finally, build the Cython extension modules as described in the next
+section.
+
 Cython extension modules
 ------------------------
 
 pyMOR uses Cython extension modules to speed up numerical algorithms
-which cannot be efficiently expressed using NumPy idioms. To benefit
-from these optimizations, the modules' source files (currently
-pymor/tools/inplace.pyx and pymor/tools/realations.pyx) have to be
-processed by Cython into a .c-file which then must be compiled into a
-shared object. These .so-files then take precedence over the
-non-optimized pure python modules. The whole build process is handeled
-automatically by setup.py.
+which cannot be efficiently expressed using NumPy idioms. The source
+files of these modules (files with extension .pyx) have to be processed
+by Cython into a .c-file which then must be compiled into a shared
+object (.so file). The whole build process is handeled automatically by
+setup.py.
 
 If you want to develop Cython extensions modules for pyMOR yourself, you
 should add your module to the ext_modules list defined in the _setup

@@ -6,7 +6,7 @@ Build-Depends: debhelper (>= 8.0.0), python-pip, python-virtualenv, python-numpy
   python-scipy, python-pytest, python-pyside, 
   cython, python-sphinx, python-sympy, python-matplotlib,
   python-opengl, python-docopt, python-pyvtk, 
-  python-dev, python-execnet (>=1.1), python3, dh-make,
+  python-dev, python3, dh-make,
   python-docutils
 Standards-Version: 3.9.4
 Homepage: http://pymor.org

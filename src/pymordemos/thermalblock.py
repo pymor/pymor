@@ -6,10 +6,8 @@
 """Thermalblock demo.
 
 Usage:
-  thermalblock.py [-ehp] [--estimator-norm=NORM] [--extension-alg=ALG] [--grid=NI] [--help]
-                  [--pickle=PREFIX] [--plot-solutions] [--plot-error-sequence] [--reductor=RED]
-                  [--test=COUNT] [--num-engines=COUNT] [--profile=PROFILE]
-                  XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
+  thermalblock.py [options] XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
+  thermalblock.py -h | --help
 
 
 Arguments:
@@ -24,17 +22,17 @@ Arguments:
 
 
 Options:
-  -e, --with-estimator   Use error estimator.
+  -h, --help             Show this message.
 
   --estimator-norm=NORM  Norm (trivial, h1) in which to calculate the residual
                          [default: h1].
+
+  --without-estimator    Do not use error estimator for basis generation.
 
   --extension-alg=ALG    Basis extension algorithm (trivial, gram_schmidt, h1_gram_schmidt)
                          to be used [default: h1_gram_schmidt].
 
   --grid=NI              Use grid with 2*NI*NI elements [default: 100].
-
-  -h, --help             Show this message.
 
   --pickle=PREFIX        Pickle reduced discretizaion, as well as reconstructor and high-dimensional
                          discretization to files with this prefix.
@@ -42,6 +40,8 @@ Options:
   -p, --plot-err         Plot error.
 
   --plot-solutions       Plot some example solutions.
+
+  --plot-error-sequence  Plot reduction error vs. basis size.
 
   --reductor=RED         Reductor (error estimator) to choose (traditional, residual_basis)
                          [default: residual_basis]
@@ -54,6 +54,8 @@ Options:
                          [default: 0]
 
   --profile=PROFILE      IPython profile to use for parallelization.
+
+  --list-vector-array    Solve using ListVectorArray[NumpyVector] instead of NumpyVectorArray.
 """
 
 from __future__ import absolute_import, division, print_function
@@ -101,6 +103,11 @@ def thermalblock_demo(args):
 
     print('Discretize ...')
     discretization, _ = discretize_elliptic_cg(problem, diameter=1. / args['--grid'])
+
+    if args['--list-vector-array']:
+        from pymor.playground.discretizers.numpylistvectorarray import convert_to_numpy_list_vector_array
+        discretization = convert_to_numpy_list_vector_array(discretization)
+
     discretization.generate_sid()
 
     print('The parameter type is {}'.format(discretization.parameter_type))
@@ -134,7 +141,7 @@ def thermalblock_demo(args):
           if args['--num-engines'] else no_context) as pool:
         greedy_data = greedy(discretization, reductor,
                              discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
-                             use_estimator=args['--with-estimator'], error_norm=discretization.h1_norm,
+                             use_estimator=not args['--without-estimator'], error_norm=discretization.h1_norm,
                              extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'],
                              pool=pool)
 
@@ -205,7 +212,7 @@ def thermalblock_demo(args):
 
     Greedy basis generation:
        number of snapshots:                {args[SNAPSHOTS]}^({args[XBLOCKS]}x{args[YBLOCKS]})
-       used estimator:                     {args[--with-estimator]}
+       estimator disabled:                 {args[--without-estimator]}
        estimator norm:                     {args[--estimator-norm]}
        extension method:                   {args[--extension-alg]}
        prescribed basis size:              {args[RBSIZE]}
