@@ -14,6 +14,7 @@ from pymor.grids.oned import OnedGrid
 from pymor.grids.rect import RectGrid
 from pymor.grids.subgrid import SubGrid
 from pymor.grids.tria import TriaGrid
+from pymor.grids.unstructured import UnstructuredTriangleGrid
 
 
 rect_grid_generators = [lambda arg=arg, kwargs=kwargs: RectGrid(arg, **kwargs) for arg, kwargs in
@@ -48,11 +49,14 @@ tria_grid_generators = [lambda arg=arg, kwargs=kwargs: TriaGrid(arg, **kwargs) f
 
 oned_grid_generators = [lambda kwargs=kwargs: OnedGrid(**kwargs) for kwargs in
                         [dict(domain=np.array((-2, 2)), num_intervals=10),
-                         dict(domain=np.array((-2, -4)), num_intervals=100),
-                         dict(domain=np.array((-2, -4)), num_intervals=100, identify_left_right=True),
-                         dict(domain=np.array((3, 2)), num_intervals=10),
-                         dict(domain=np.array((3, 2)), num_intervals=10, identify_left_right=True),
+                         dict(domain=np.array((-4, -2)), num_intervals=100),
+                         dict(domain=np.array((-4, -2)), num_intervals=100, identify_left_right=True),
+                         dict(domain=np.array((2, 3)), num_intervals=10),
+                         dict(domain=np.array((2, 3)), num_intervals=10, identify_left_right=True),
                          dict(domain=np.array((1, 2)), num_intervals=10000)]]
+
+unstructured_grid_generators = [lambda: UnstructuredTriangleGrid(np.array([[0, 0], [-1, -1], [1, -1], [1, 1], [-1, 1]]),
+                                                                 np.array([[0, 1, 2], [0, 3, 4], [0, 4, 1]]))]
 
 
 def subgrid_factory(grid_generator, neq, seed):
@@ -79,7 +83,8 @@ subgrid_generators = [lambda args=args: subgrid_factory(*args) for args in
                        (lambda: TriaGrid((24, 24)), 4, 123)]]
 
 
-@pytest.fixture(params=(rect_grid_generators + tria_grid_generators + oned_grid_generators + subgrid_generators))
+@pytest.fixture(params=(rect_grid_generators + tria_grid_generators + oned_grid_generators + subgrid_generators
+                        + unstructured_grid_generators))
 def grid(request):
     return request.param()
 

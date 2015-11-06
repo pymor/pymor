@@ -11,9 +11,7 @@ from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.discretizations.basic import StationaryDiscretization
 from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.grids.boundaryinfos import EmptyBoundaryInfo
-from pymor.grids.oned import OnedGrid
-from pymor.grids.rect import RectGrid
-from pymor.grids.tria import TriaGrid
+from pymor.grids.referenceelements import line, triangle, square
 from pymor.gui.qt import PatchVisualizer, Matplotlib1DVisualizer
 from pymor.operators import cg, fv
 from pymor.operators.constructions import LincombOperator
@@ -64,9 +62,9 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
         else:
             grid, boundary_info = domain_discretizer(analytical_problem.domain, diameter=diameter)
 
-    assert isinstance(grid, (OnedGrid, TriaGrid, RectGrid))
+    assert grid.reference_element in (line, triangle, square)
 
-    if isinstance(grid, RectGrid):
+    if grid.reference_element is square:
         Operator = cg.DiffusionOperatorQ1
         Functional = cg.L2ProductFunctionalQ1
     else:
@@ -91,13 +89,15 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
 
     F = Functional(grid, p.rhs, boundary_info, dirichlet_data=p.dirichlet_data, neumann_data=p.neumann_data)
 
-    if isinstance(grid, (TriaGrid, RectGrid)):
-        visualizer = PatchVisualizer(grid=grid, bounding_box=grid.domain, codim=2)
-    else:
+    if grid.reference_element in (triangle, square):
+        visualizer = PatchVisualizer(grid=grid, bounding_box=grid.bounding_box(), codim=2)
+    elif grid.reference_element is line:
         visualizer = Matplotlib1DVisualizer(grid=grid, codim=1)
+    else:
+        visualizer = None
 
     empty_bi = EmptyBoundaryInfo(grid)
-    l2_product = cg.L2ProductQ1(grid, empty_bi) if isinstance(grid, RectGrid) else cg.L2ProductP1(grid, empty_bi)
+    l2_product = cg.L2ProductQ1(grid, empty_bi) if grid.reference_element is square else cg.L2ProductP1(grid, empty_bi)
     h1_semi_product = Operator(grid, empty_bi)
     products = {'h1': l2_product + h1_semi_product,
                 'h1_semi': h1_semi_product,
@@ -182,9 +182,9 @@ def discretize_elliptic_fv(analytical_problem, diameter=None, domain_discretizer
         F = fv.L2ProductFunctional(grid, p.rhs, boundary_info=boundary_info, dirichlet_data=p.dirichlet_data,
                                    diffusion_function=p.diffusion_functions[0], neumann_data=p.neumann_data)
 
-    if isinstance(grid, (TriaGrid, RectGrid)):
-        visualizer = PatchVisualizer(grid=grid, bounding_box=grid.domain, codim=0)
-    elif isinstance(grid, (OnedGrid)):
+    if grid.reference_element in (triangle, square):
+        visualizer = PatchVisualizer(grid=grid, bounding_box=grid.bounding_box(), codim=0)
+    elif grid.reference_element is line:
         visualizer = Matplotlib1DVisualizer(grid=grid, codim=0)
     else:
         visualizer = None

@@ -265,3 +265,12 @@ class AffineGridDefaultImplementations(object):
         P, _ = self.reference_element(codim).quadrature(order, npoints, quadrature_type)
         A, B = self.embeddings(codim)
         return np.einsum('eij,kj->eki', A, P) + B[:, np.newaxis, :]
+
+    @cached
+    def _bounding_box(self):
+        bbox = np.empty((2, self.dim_outer))
+        centers = self.centers(self.dim)
+        for dim in range(self.dim_outer):
+            bbox[0, dim] = np.min(centers[:, dim])
+            bbox[1, dim] = np.max(centers[:, dim])
+        return bbox

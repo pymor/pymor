@@ -27,6 +27,7 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
     reference_element = line
 
     def __init__(self, domain=(0, 1), num_intervals=4, identify_left_right=False):
+        assert domain[0] < domain[1]
         self.reference_element = line
         self._domain = np.array(domain)
         self._num_intervals = num_intervals
@@ -73,6 +74,9 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
             return self.__A, self.__B
         else:
             return super(OnedGrid, self).embeddings(codim)
+
+    def bounding_box(self):
+        return np.array(self._domain).reshape((2, 1))
 
     def orthogonal_centers(self):
         return self.centers(0)
