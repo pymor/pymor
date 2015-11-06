@@ -13,6 +13,42 @@ from pymor.vectorarrays.mpi import MPIVectorArray
 
 
 class MPIDiscretization(DiscretizationBase):
+    """MPI distributed discretization.
+
+    Given a single-rank implementation of a |Discretization|, this
+    wrapper class uses the event loop from :mod:`pymor.tools.mpi`
+    to allow an MPI distributed usage of the |Discretization|.
+    The underlying implementation needs to be MPI aware.
+    In particular, the discretization's `solve` method has to
+    perform an MPI parallel solve of the discretization.
+
+    Note that this class is not intended to be instantiated directly.
+    Instead, you should use :func:`mpi_wrap_discretization`.
+
+    Parameters
+    ----------
+    obj_id
+        :class:`~pymor.tools.mpi.ObjectId` of the local
+        |Discretization| on each rank.
+    operators
+        Dictionary of all |Operators| contained in the discretization,
+        wrapped for use on rank 0. Use :func:`mpi_wrap_discretization`
+        to automatically wrap all operators of a given MPI-aware
+        |Discretization|.
+    functionals
+        See `operators`.
+    vector_operators
+        See `operators`.
+    products
+        See `operators`.
+    array_type
+        This class will be used to wrap the local |VectorArrays|
+        returned by `solve` on each rank into an MPI distributed
+        |VectorArray| managed from rank 0. By default,
+        :class:`~pymor.vectorarrays.mpi.MPIVectorArray` will be used,
+        other options are :class:`~pymor.vectorarrays.mpi.MPIVectorArrayAutoComm`
+        and :class:`~pymor.vectorarrays.mpi.MPIVectorArrayNoComm`.
+    """
 
     def __init__(self, obj_id, operators, functionals, vector_operators, products=None, array_type=MPIVectorArray):
         d = mpi.get_object(obj_id)
@@ -53,6 +89,44 @@ class MPIVisualizer(ImmutableInterface):
 
 
 def mpi_wrap_discretization(obj_id, use_with=False, with_apply2=False, array_type=MPIVectorArray):
+    """Wrap MPI distributed local |Discretizations| to a global |Discretization| on rank 0.
+
+    Given MPI distributed local |Discretizations| referred to by the
+    `~pymor.tools.mpi.ObjectId` `obj_id`, return a new |Discretization|
+    which manages these distributed discretizations from rank 0. This
+    is done by first wrapping all |Operators| of the |Discretization| using
+    :func:`~pymor.operators.mpi.mpi_wrap_operator`.
+
+    When `use_with` is `False`, an :class:`MPIDiscretization` is instatiated
+    with the wrapped operators. A call to
+    :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve`
+    will then use an MPI parallel call to the
+    :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve`
+    methods of the wrapped local |Discretizations| to obtain the solution.
+    This is usually what you want when the actual solve is performed by
+    an implementation in the external solver.
+
+    When `use_with` is `True`, :meth:`~pymor.core.interfaces.ImmutableInterface.with_`
+    is called on the local |Discretization| on rank 0, to obtain a new
+    |Discretization| with the wrapped MPI |Operators|. This is mainly useful
+    when the local discretizations are generic |Discretizations| as in
+    :mod:`pymor.discretizations.basic` and
+    :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve`
+    is implemented directly in pyMOR via operations on the contained
+    |Operators|.
+
+    Parameters
+    ----------
+    obj_id
+        :class:`~pymor.tools.mpi.ObjectId` of the local |Discretization|
+        on each rank.
+    use_with
+        See above.
+    with_apply2
+        See :class:`~pymor.operators.mpi.MPIOperator`.
+    array_type
+        See :class:`~pymor.operators.mpi.MPIOperator`.
+    """
 
     operators, functionals, vectors, products = \
         mpi.call(_mpi_wrap_discretization_manage_operators, obj_id)
