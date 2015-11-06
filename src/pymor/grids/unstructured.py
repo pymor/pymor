@@ -12,6 +12,20 @@ from pymor.grids._unstructured import compute_edges
 
 
 class UnstructuredTriangleGrid(AffineGridInterface):
+    """A generic unstructured, triangular grid.
+
+    Parameters
+    ----------
+    vertices
+        A (num_vertices, 2)-shaped |array| containing the coordinates
+        of all vertices in the grid. The row numbers in the array will
+        be the global indices of the given vertices (codim 2 entities).
+    faces
+        A (num_faces, 3)-shaped |array| containing the global indices
+        of the vertices which define a given triangle in the grid.
+        The row numbers in the array will be the global indices of the
+        given triangles (codim 0 entities).
+    """
 
     dim = 2
     dim_outer = 2
