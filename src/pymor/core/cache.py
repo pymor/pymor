@@ -45,16 +45,17 @@ the memory cache region can be configured via the
 `pymor.core.cache.default_regions.disk_max_size` and
 `pymor.core.cache.default_regions.memory_max_keys` |defaults|.
 
-There are multiple ways to disable and enable caching in pyMOR:
+There two ways to disable and enable caching in pyMOR:
 
-    1. Calling :func:`disable_caching` (:func:`enable_caching`).
-    2. Setting `cache_regions[region].enabled` to `False` or `True`.
-    3. Calling :meth:`CacheableInterface.disable_caching`
-       (:meth:`CacheableInterface.enable_caching`).
+    1. Calling :func:`disable_caching` (:func:`enable_caching`), to disable
+       (enable) caching globally.
+    2. Calling :meth:`CacheableInterface.disable_caching`
+       (:meth:`CacheableInterface.enable_caching`) to disable (enable) caching
+       for a given instance.
 
-Caching of a method is only active, if caching is enabled on global,
-region and instance level. For debugging purposes, it is moreover possible
-to set the environment variable `PYMOR_CACHE_DISABLE=1` which overrides
+Caching of a method is only active if caching has been enabled both globally
+(enabled by default) and on instance level. For debugging purposes, it is moreover
+possible to set the environment variable `PYMOR_CACHE_DISABLE=1` which overrides
 any call to :func:`enable_caching`.
 
 A cache region can be emptied using :meth:`CacheRegion.clear`. The function
@@ -81,15 +82,7 @@ from pymor.core.pickle import dump, load
 
 
 class CacheRegion(object):
-    """Base class for all pyMOR cache regions.
-
-    Attributes
-    ----------
-    enabled
-        If `False` caching is disabled for this region.
-    """
-
-    enabled = True
+    """Base class for all pyMOR cache regions."""
 
     def get(self, key):
         raise NotImplementedError
@@ -127,8 +120,6 @@ class MemoryRegion(CacheRegion):
 
 
 class SQLiteRegion(CacheRegion):
-
-    enabled = True
 
     def __init__(self, path, max_size):
         self.path = path
@@ -301,8 +292,6 @@ class cached(object):
             region = cache_regions[im_self.cache_region]
         except KeyError:
             raise KeyError('No cache region "{}" found'.format(im_self.cache_region))
-        if not region.enabled:
-            return self.decorated_function(im_self, *args, **kwargs)
 
         # ensure that passing a value as positional or keyword argument does not matter
         kwargs.update(zip(self.argnames, args))
