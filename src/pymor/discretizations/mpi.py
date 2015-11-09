@@ -1,0 +1,159 @@
+# This file is part of the pyMOR project (http://www.pymor.org).
+# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+
+from __future__ import absolute_import, division, print_function
+
+from pymor.core.interfaces import ImmutableInterface
+from pymor.discretizations.basic import DiscretizationBase
+from pymor.operators.mpi import mpi_wrap_operator
+from pymor.tools import mpi
+from pymor.vectorarrays.interfaces import VectorSpace
+from pymor.vectorarrays.mpi import MPIVectorArray
+
+
+class MPIDiscretization(DiscretizationBase):
+    """MPI distributed discretization.
+
+    Given a single-rank implementation of a |Discretization|, this
+    wrapper class uses the event loop from :mod:`pymor.tools.mpi`
+    to allow an MPI distributed usage of the |Discretization|.
+    The underlying implementation needs to be MPI aware.
+    In particular, the discretization's `solve` method has to
+    perform an MPI parallel solve of the discretization.
+
+    Note that this class is not intended to be instantiated directly.
+    Instead, you should use :func:`mpi_wrap_discretization`.
+
+    Parameters
+    ----------
+    obj_id
+        :class:`~pymor.tools.mpi.ObjectId` of the local
+        |Discretization| on each rank.
+    operators
+        Dictionary of all |Operators| contained in the discretization,
+        wrapped for use on rank 0. Use :func:`mpi_wrap_discretization`
+        to automatically wrap all operators of a given MPI-aware
+        |Discretization|.
+    functionals
+        See `operators`.
+    vector_operators
+        See `operators`.
+    products
+        See `operators`.
+    array_type
+        This class will be used to wrap the local |VectorArrays|
+        returned by `solve` on each rank into an MPI distributed
+        |VectorArray| managed from rank 0. By default,
+        :class:`~pymor.vectorarrays.mpi.MPIVectorArray` will be used,
+        other options are :class:`~pymor.vectorarrays.mpi.MPIVectorArrayAutoComm`
+        and :class:`~pymor.vectorarrays.mpi.MPIVectorArrayNoComm`.
+    """
+
+    def __init__(self, obj_id, operators, functionals, vector_operators, products=None, array_type=MPIVectorArray):
+        d = mpi.get_object(obj_id)
+        visualizer = MPIVisualizer(obj_id)
+        super(MPIDiscretization, self).__init__(operators, functionals, vector_operators, products=products,
+                                                visualizer=visualizer, cache_region=None, name=d.name)
+        self.obj_id = obj_id
+        subtypes = mpi.call(_MPIDiscretization_get_subtypes, obj_id)
+        if all(subtype == subtypes[0] for subtype in subtypes):
+            subtypes = (subtypes[0],)
+        self.solution_space = VectorSpace(array_type, (d.solution_space.type, subtypes))
+        self.build_parameter_type(inherits=(d,))
+        self.parameter_space = d.parameter_space
+
+    def _solve(self, mu=None):
+        space = self.solution_space
+        return space.type(space.subtype[0], space.subtype[1],
+                          mpi.call(mpi.method_call_manage, self.obj_id, 'solve', mu=mu))
+
+    def __del__(self):
+        mpi.call(mpi.remove_object, self.obj_id)
+
+
+def _MPIDiscretization_get_subtypes(self):
+    self = mpi.get_object(self)
+    subtypes = mpi.comm.gather(self.solution_space.subtype, root=0)
+    if mpi.rank0:
+        return tuple(subtypes)
+
+
+class MPIVisualizer(ImmutableInterface):
+
+    def __init__(self, d_obj_id):
+        self.d_obj_id = d_obj_id
+
+    def visualize(self, U, d, **kwargs):
+        mpi.call(mpi.method_call, self.d_obj_id, 'visualize', U.obj_id, **kwargs)
+
+
+def mpi_wrap_discretization(obj_id, use_with=False, with_apply2=False, array_type=MPIVectorArray):
+    """Wrap MPI distributed local |Discretizations| to a global |Discretization| on rank 0.
+
+    Given MPI distributed local |Discretizations| referred to by the
+    `~pymor.tools.mpi.ObjectId` `obj_id`, return a new |Discretization|
+    which manages these distributed discretizations from rank 0. This
+    is done by first wrapping all |Operators| of the |Discretization| using
+    :func:`~pymor.operators.mpi.mpi_wrap_operator`.
+
+    When `use_with` is `False`, an :class:`MPIDiscretization` is instatiated
+    with the wrapped operators. A call to
+    :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve`
+    will then use an MPI parallel call to the
+    :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve`
+    methods of the wrapped local |Discretizations| to obtain the solution.
+    This is usually what you want when the actual solve is performed by
+    an implementation in the external solver.
+
+    When `use_with` is `True`, :meth:`~pymor.core.interfaces.ImmutableInterface.with_`
+    is called on the local |Discretization| on rank 0, to obtain a new
+    |Discretization| with the wrapped MPI |Operators|. This is mainly useful
+    when the local discretizations are generic |Discretizations| as in
+    :mod:`pymor.discretizations.basic` and
+    :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve`
+    is implemented directly in pyMOR via operations on the contained
+    |Operators|.
+
+    Parameters
+    ----------
+    obj_id
+        :class:`~pymor.tools.mpi.ObjectId` of the local |Discretization|
+        on each rank.
+    use_with
+        See above.
+    with_apply2
+        See :class:`~pymor.operators.mpi.MPIOperator`.
+    array_type
+        See :class:`~pymor.operators.mpi.MPIOperator`.
+    """
+
+    operators, functionals, vectors, products = \
+        mpi.call(_mpi_wrap_discretization_manage_operators, obj_id)
+
+    operators = {k: mpi_wrap_operator(v, with_apply2=with_apply2, array_type=array_type) if v else None
+                 for k, v in operators.iteritems()}
+    functionals = {k: mpi_wrap_operator(v, functional=True, with_apply2=with_apply2, array_type=array_type) if v else None
+                   for k, v in functionals.iteritems()}
+    vectors = {k: mpi_wrap_operator(v, vector=True, with_apply2=with_apply2, array_type=array_type) if v else None
+               for k, v in vectors.iteritems()}
+    products = {k: mpi_wrap_operator(v, with_apply2=with_apply2, array_type=array_type) if v else None
+                for k, v in products.iteritems()} if products else None
+
+    if use_with:
+        d = mpi.get_object(obj_id)
+        visualizer = MPIVisualizer(obj_id)
+        return d.with_(operators=operators, functionals=functionals, vector_operators=vectors, products=products,
+                       visualizer=visualizer, cache_region=None)
+    else:
+        return MPIDiscretization(obj_id, operators, functionals, vectors, products, array_type=array_type)
+
+
+def _mpi_wrap_discretization_manage_operators(obj_id):
+    d = mpi.get_object(obj_id)
+    operators = {k: mpi.manage_object(v) if v else None for k, v in sorted(d.operators.iteritems())}
+    functionals = {k: mpi.manage_object(v) if v else None for k, v in sorted(d.functionals.iteritems())}
+    vectors = {k: mpi.manage_object(v) if v else None for k, v in sorted(d.vector_operators.iteritems())}
+    products = {k: mpi.manage_object(v) if v else None for k, v in sorted(d.products.iteritems())} if d.products else None
+    if mpi.rank0:
+        return operators, functionals, vectors, products
