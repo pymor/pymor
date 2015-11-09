@@ -377,4 +377,4 @@ class CacheableInterface(ImmutableInterface):
             `pymor.core.cache.cache_regions`. If `None` or `'none'`, caching
             is disabled.
         """
-        self.cache_region = region
+        self.__cache_region = region
