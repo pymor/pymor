@@ -362,20 +362,9 @@ class CacheableInterface(ImmutableInterface):
         is disabled.
     """
 
-    sid_ignore = ImmutableInterface.sid_ignore | {'_CacheableInterface__cache_region'}
+    sid_ignore = ImmutableInterface.sid_ignore | {'cache_region'}
 
-    __cache_region = 'memory'
-
-    @property
-    def cache_region(self):
-        return self.__cache_region
-
-    @cache_region.setter
-    def cache_region(self, region):
-        if region in (None, 'none'):
-            self.__cache_region = None
-        else:
-            self.__cache_region = region
+    cache_region = None
 
     def disable_caching(self):
         """Disable caching for this instance."""
@@ -391,4 +380,10 @@ class CacheableInterface(ImmutableInterface):
             `pymor.core.cache.cache_regions`. If `None` or `'none'`, caching
             is disabled.
         """
-        self.__cache_region = region
+        if region in (None, 'none'):
+            self.__dict__['cache_region'] = None
+        else:
+            self.__dict__['cache_region'] = region
+            r = cache_regions.get(region, None)
+            if r and r.persistent:
+                self.generate_sid()

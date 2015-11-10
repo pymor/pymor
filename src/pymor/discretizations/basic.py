@@ -31,7 +31,7 @@ class DiscretizationBase(DiscretizationInterface):
         self.products = products
         self.estimator = estimator
         self.visualizer = visualizer
-        self.cache_region = cache_region
+        self.enable_caching(cache_region)
         self.name = name
 
         if products:

@@ -32,6 +32,8 @@ class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplement
         The dimension of the grid.
     """
 
+    cache_region = 'memory'
+
     @abstractmethod
     def size(self, codim):
         """The number of entities of codimension `codim`."""
@@ -116,6 +118,7 @@ class ReferenceElementInterface(ReferenceElementDefaultImplementations, Cacheabl
 
     dim = None
     volume = None
+    cache_region = 'memory'
 
     @abstractmethod
     def size(self, codim):
@@ -324,6 +327,7 @@ class BoundaryInfoInterface(CacheableInterface):
     """
 
     boundary_types = frozenset()
+    cache_region = 'memory'
 
     def mask(self, boundary_type, codim):
         """retval[i] is `True` if the codim-`codim` entity of global index `i` is
