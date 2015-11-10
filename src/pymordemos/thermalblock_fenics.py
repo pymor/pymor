@@ -131,7 +131,7 @@ def discretize(args):
     parameter_space = CubicParameterSpace(op.parameter_type, 0.1, 1.)
     d = StationaryDiscretization(op, rhs, products={'h1': h1_product},
                                  parameter_space=parameter_space,
-                                 visualizer=visualizer, cache_region=None)
+                                 visualizer=visualizer)
 
     return d
 
