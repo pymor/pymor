@@ -66,6 +66,7 @@ A cache region can be emptied using :meth:`CacheRegion.clear`. The function
 from __future__ import absolute_import, division, print_function
 # cannot use unicode_literals here, or else dbm backend fails
 
+import atexit
 from collections import OrderedDict
 import datetime
 from functools import partial
@@ -79,6 +80,13 @@ from types import MethodType
 from pymor.core.defaults import defaults, defaults_sid
 from pymor.core.interfaces import ImmutableInterface, generate_sid
 from pymor.core.pickle import dump, load
+
+
+@atexit.register
+def cleanup_non_persisten_regions():
+    for region in cache_regions.values():
+        if not region.persistent:
+            region.clear()
 
 
 class CacheRegion(object):
