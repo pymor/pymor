@@ -55,6 +55,10 @@ Options:
 
   --profile=PROFILE      IPython profile to use for parallelization.
 
+  --cache-region=REGION  Name of cache region to use for caching solution snapshots
+                         (NONE, MEMORY, DISK, PERSISTENT)
+                         [default: NONE]
+
   --list-vector-array    Solve using ListVectorArray[NumpyVector] instead of NumpyVectorArray.
 """
 
@@ -95,6 +99,7 @@ def thermalblock_demo(args):
     assert args['--extension-alg'] in {'trivial', 'gram_schmidt', 'h1_gram_schmidt'}
     args['--reductor'] = args['--reductor'].lower()
     assert args['--reductor'] in {'traditional', 'residual_basis'}
+    args['--cache-region'] = args['--cache-region'].lower()
 
     print('Solving on TriaGrid(({0},{0}))'.format(args['--grid']))
 
@@ -108,7 +113,8 @@ def thermalblock_demo(args):
         from pymor.playground.discretizers.numpylistvectorarray import convert_to_numpy_list_vector_array
         discretization = convert_to_numpy_list_vector_array(discretization)
 
-    discretization.generate_sid()
+    if args['--cache-region'] != 'none':
+        discretization.enable_caching(args['--cache-region'])
 
     print('The parameter type is {}'.format(discretization.parameter_type))
 

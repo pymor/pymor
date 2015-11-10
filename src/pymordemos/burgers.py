@@ -84,7 +84,6 @@ def burgers_demo(args):
     discretization, data = discretizer(problem, diameter=1. / args['--grid'],
                                        num_flux=args['--num-flux'], lxf_lambda=args['--lxf-lambda'],
                                        nt=args['--nt'], domain_discretizer=domain_discretizer)
-    discretization.generate_sid()
     print(discretization.operator.grid)
 
     print('The parameter type is {}'.format(discretization.parameter_type))
