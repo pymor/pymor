@@ -318,6 +318,15 @@ class cached(object):
         except KeyError:
             raise KeyError('No cache region "{}" found'.format(im_self.cache_region))
 
+        # compute id for self
+        if region.persistent:
+            self_id = getattr(im_self, 'sid')
+            if not self_id:     # this can happen when cache_region is already set by the class to
+                                # a persistent region
+                self_id = im_self.generate_sid()
+        else:
+            self_id = im_self.uid
+
         # ensure that passing a value as positional or keyword argument does not matter
         kwargs.update(zip(self.argnames, args))
 
@@ -326,9 +335,7 @@ class cached(object):
         if defaults:
             kwargs = dict(defaults, **kwargs)
 
-        key = generate_sid((self.decorated_function.__name__, getattr(im_self, 'sid', im_self.uid),
-                            kwargs,
-                            defaults_sid()))
+        key = generate_sid((self.decorated_function.__name__, self_id, kwargs, defaults_sid()))
         found, value = region.get(key)
         if found:
             return value
