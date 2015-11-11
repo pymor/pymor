@@ -36,7 +36,7 @@ class IamDiskCached(cache.CacheableInterface):
 
 class IamLimitedCached(cache.CacheableInterface):
 
-    def __init__(self, region='disk'):
+    def __init__(self, cache_region='disk'):
         self.cache_region = region
 
     @cache.cached
