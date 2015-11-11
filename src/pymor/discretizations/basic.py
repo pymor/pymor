@@ -11,7 +11,6 @@ from pymor.algorithms.timestepping import TimeStepperInterface
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.operators.constructions import VectorOperator, induced_norm
 from pymor.operators.interfaces import OperatorInterface
-from pymor.tools.arguments import method_arguments
 from pymor.tools.frozendict import FrozenDict
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -159,7 +158,7 @@ class StationaryDiscretization(DiscretizationBase):
             functionals['rhs'] = kwargs['rhs']
             kwargs['functionals'] = functionals
 
-        return self._with_via_init(kwargs)
+        return super(StationaryDiscretization, self).with_(**kwargs)
 
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu)
@@ -304,12 +303,8 @@ class InstationaryDiscretization(DiscretizationBase):
         self.num_values = num_values
         self.build_parameter_type(inherits=(initial_data, operator, rhs, mass), provides={'_t': 0})
         self.parameter_space = parameter_space
-
         if hasattr(time_stepper, 'nt'):
-            self.with_arguments = self.with_arguments.union({'time_stepper_nt'})
-
-    with_arguments = frozenset(method_arguments(__init__))  # needed in order to be ably to modify with_arguments
-                                                            # during  __init__
+            self.add_with_arguments = self.add_with_arguments | {'time_stepper_nt'}
 
     def with_(self, **kwargs):
         assert set(kwargs.keys()) <= self.with_arguments
@@ -345,7 +340,7 @@ class InstationaryDiscretization(DiscretizationBase):
         if 'time_stepper_nt' in kwargs:
             kwargs['time_stepper'] = self.time_stepper.with_(nt=kwargs.pop('time_stepper_nt'))
 
-        return self._with_via_init(kwargs)
+        return super(InstationaryDiscretization, self).with_(**kwargs)
 
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu).copy()

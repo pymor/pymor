@@ -60,18 +60,9 @@ functionality:
        set of allowed arguments.
 
        :class:`ImmutableInterface` provides a default implementation of `with_` which
-       works as follows:
-
-           - The argument names of the classes  `__init__` method are looked up.
-             If the instance has an attribute of the same name for each `__init__`
-             argument, `with_arguments` returns the argument names of `__init__`,
-             otherwise an empty set is returned and the `with_` functionality is
-             disabled.
-           - If the above condition is satisfied, a call to `with_` results in
-             the creation of a new instance where the arguments of `with_` are
-             passed through to `__init__`. The missing `__init__` arguments
-             are taken from the corresponding instance attributes.
-
+       works by creating a new instance where the arguments of `with_` are passed
+       through to `__init__`. The missing `__init__` arguments are taken from the
+       corresponding instance attributes.
 """
 
 from __future__ import absolute_import, division, print_function
@@ -341,7 +332,7 @@ class ImmutableMeta(UberMeta):
         # Otherwise sids of objects in reference cycles may depend on the order in which
         # generate_sid is called upon these objects.
         if 'sid_ignore' in classdict:
-            classdict['sid_ignore'] = classdict['sid_ignore'] | {'_sid_contains_cycles', 'sid'}
+            classdict['sid_ignore'] = set(classdict['sid_ignore']) | {'_sid_contains_cycles', 'sid'}
 
         c = UberMeta.__new__(cls, classname, bases, classdict)
 
@@ -386,17 +377,21 @@ class ImmutableInterface(BasicInterface):
 
     Attributes
     ----------
+    add_with_arguments
+        Set of additional arguments for `with_`.
+        (See :attr:`~ImmutableInterface.with_arguments`.)
     sid
         The objects state id. Only avilable after
         :meth:`~ImmutableInterface.generate_sid` has been called.
     sid_ignore
         Set of attributes not to include in sid calculation.
     with_arguments
-        Set of allowed keyword arguments for `with_`.
+        Set of allowed keyword arguments for `with_`. This is the
+        union of the arguments names of `__init__` and the names
+        specified via :attr:`~ImmutableInterface.add_with_arguments`.
     """
     __metaclass__ = ImmutableMeta
-    sid_ignore = frozenset({'_locked', '_logger', '_name', '_uid', '_sid_contains_cycles',
-                            '_with_arguments_error', 'sid'})
+    sid_ignore = frozenset({'_locked', '_logger', '_name', '_uid', '_sid_contains_cycles', 'sid'})
 
     # Unlocking an immutable object will result in the deletion of its sid.
     # However, this will not delete the sids of objects referencing it.
@@ -443,19 +438,19 @@ class ImmutableInterface(BasicInterface):
         self.__dict__['_sid_contains_cycles'] = has_cycles
         return sid
 
+    add_with_arguments = frozenset()
+
     @property
     def with_arguments(self):
-        init_arguments = self._init_arguments
-        for arg in init_arguments:
-            if not hasattr(self, arg):
-                self._with_arguments_error = "Instance does not have attribute for __init__ argument '{}'".format(arg)
-                return set()
-        return set(init_arguments)
+        return set(self._init_arguments).union(getattr(self, 'add_with_arguments', []))
 
     def with_(self, **kwargs):
         """Returns a copy with changed attributes.
 
-        The default implementation is to call `_with_via_init(**kwargs)`.
+        The default implementation is to create a new class instance
+        with the given keyword arguments as arguments for `__init__`.
+        Missing arguments are obtained form instance attributes with the
+        same name.
 
         Parameters
         ----------
@@ -467,30 +462,24 @@ class ImmutableInterface(BasicInterface):
         -------
         Copy of `self` with changed attributes.
         """
-        with_arguments = self.with_arguments      # ensure that property is called first
-        if hasattr(self, '_with_arguments_error'):
-            raise ConstError('Using with_ is not possible because of the following Error: '
-                             + self._with_arguments_error)
-        if not set(kwargs.keys()) <= with_arguments:
-            raise ConstError('Changing "{}" using with() is not allowed in {} (only "{}")'.format(
+        if not set(kwargs.keys()) <= self.with_arguments:
+            raise ValueError('Changing "{}" using with() is not allowed in {} (only "{}")'.format(
                 kwargs.keys(), self.__class__, self.with_arguments))
-        return self._with_via_init(kwargs)
 
-    def _with_via_init(self, kwargs, new_class=None):
-        """Default implementation for with_ by calling __init__.
+        # fill missing __init__ arguments using instance attributes of same name
+        for arg in self._init_arguments:
+            if arg not in kwargs:
+                try:
+                    kwargs[arg] = getattr(self, arg)
+                except AttributeError:
+                    raise ValueError('Cannot find missing __init__ argument "{}" for "{}" as attribute of "{}"'.format(
+                        arg, self.__class__, self))
 
-        Parameters which are missing in `kwargs` are taken from the dictionary of the
-        instance. If `new_class` is provided, the copy is created as an instance of
-        `new_class`.
-        """
-        my_type = type(self) if new_class is None else new_class
-        init_args = kwargs
-        for arg in my_type._init_arguments:
-            if arg not in init_args:
-                init_args[arg] = getattr(self, arg)
-        c = my_type(**init_args)
+        c = type(self)(**kwargs)
+
         if self.logging_disabled:
             c.disable_logging()
+
         return c
 
     def __copy__(self):
