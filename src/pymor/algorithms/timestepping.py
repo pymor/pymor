@@ -83,18 +83,13 @@ class ImplicitEulerTimeStepper(TimeStepperInterface):
     ----------
     nt
         The number of time-steps the time-stepper will perform.
-    invert_options
-        The :attr:`~pymor.operators.interfaces.OperatorInterface.invert_options` used
-        to invert `M + dt*A`.
     """
 
-    def __init__(self, nt, invert_options=None):
+    def __init__(self, nt):
         self.nt = nt
-        self.invert_options = invert_options
 
     def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
-        return implicit_euler(operator, rhs, mass, initial_data, initial_time, end_time, self.nt, mu,
-                              self.invert_options, num_values)
+        return implicit_euler(operator, rhs, mass, initial_data, initial_time, end_time, self.nt, mu, num_values)
 
 
 class ExplicitEulerTimeStepper(TimeStepperInterface):
@@ -119,7 +114,7 @@ class ExplicitEulerTimeStepper(TimeStepperInterface):
         return explicit_euler(operator, rhs, initial_data, initial_time, end_time, self.nt, mu, num_values)
 
 
-def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None, num_values=None):
+def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None):
     assert isinstance(A, OperatorInterface)
     assert isinstance(F, (OperatorInterface, VectorArrayInterface))
     assert isinstance(M, OperatorInterface)
@@ -161,7 +156,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None, num_va
         mu['_t'] = t
         if F_time_dep:
             dt_F = F.as_vector(mu) * dt
-        U = M_dt_A.apply_inverse(M.apply(U) + dt_F, mu=mu, options=invert_options)
+        U = M_dt_A.apply_inverse(M.apply(U) + dt_F, mu=mu)
         while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
             R.append(U)
 
