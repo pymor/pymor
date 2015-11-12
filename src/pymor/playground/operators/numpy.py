@@ -70,7 +70,13 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
         else:
             vectors = (U._list[i] for i in ind)
 
-        return ListVectorArray([NumpyVector(_apply_inverse(self._matrix, v._array, options=self.solver_options),
+        if self.solver_options:
+            options = self.solver_options.get('numpy_sparse' if self.sparse else 'numpy_dense')
+        else:
+            options = None
+
+        return ListVectorArray([NumpyVector(_apply_inverse(self._matrix, v._array.reshape((1, -1)),
+                                                           options=options).ravel(),
                                             copy=False)
                                 for v in vectors],
                                subtype=self.source.subtype)
@@ -85,4 +91,4 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
         if lincomb is None:
             return None
         else:
-            return NumpyListVectorArrayMatrixOperator(lincomb._matrix, solver_options=self.solver_options, name=name)
+            return NumpyListVectorArrayMatrixOperator(lincomb._matrix, solver_options=solver_options, name=name)
