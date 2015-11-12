@@ -25,11 +25,12 @@ if HAVE_FENICS:
 
         linear = True
 
-        def __init__(self, matrix, name=None):
+        def __init__(self, matrix, solver_options=None, name=None):
             assert matrix.rank() == 2
             comm = matrix.mpi_comm()
             self.source = FenicsVectorSpace(matrix.size(1), mpi_comm=comm)
             self.range = FenicsVectorSpace(matrix.size(0), mpi_comm=comm)
+            self.solver_options = solver_options
             self.name = name
             self.matrix = matrix
 
@@ -69,7 +70,7 @@ if HAVE_FENICS:
                 df.solve(self.matrix, r.impl, v.impl)
             return R
 
-        def assemble_lincomb(self, operators, coefficients, name=None):
+        def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
             if not all(isinstance(op, (FenicsMatrixOperator, ZeroOperator)) for op in operators):
                 return None
 
@@ -83,4 +84,4 @@ if HAVE_FENICS:
                 matrix.axpy(c, op.matrix, False)  # in general, we cannot assume the same nonzero pattern for
                                                   # all matrices. how to improve this?
 
-            return FenicsMatrixOperator(matrix, name=name)
+            return FenicsMatrixOperator(matrix, solver_options=solver_options, name=name)

@@ -16,9 +16,9 @@ from pymor.vectorarrays.numpy import NumpyVectorArray
 class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
     """Variant of |NumpyMatrixOperator| using |ListVectorArray| instead of |NumpyVectorArray|."""
 
-    def __init__(self, matrix, functional=False, vector=False, name=None):
+    def __init__(self, matrix, functional=False, vector=False, solver_options=None, name=None):
         assert not (functional and vector)
-        super(NumpyListVectorArrayMatrixOperator, self).__init__(matrix, name)
+        super(NumpyListVectorArrayMatrixOperator, self).__init__(matrix, solver_options=solver_options, name=name)
         if not vector:
             self.source = VectorSpace(ListVectorArray, (NumpyVector, matrix.shape[1]))
         if not functional:
@@ -51,15 +51,13 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
     def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
         raise NotImplementedError
 
-    def apply_inverse(self, U, ind=None, mu=None, options=None):
+    def apply_inverse(self, U, ind=None, mu=None):
         assert U in self.range
         assert U.check_ind(ind)
         assert not self.functional and not self.vector
 
         if U.dim == 0:
-            if (self.source.dim == 0
-                    or isinstance(options, str) and options.startswith('least_squares')
-                    or isinstance(options, dict) and options['type'].startswith('least_squares')):
+            if self.source.dim == 0:
                 return ListVectorArray([NumpyVector(np.zeros(0), copy=False) for _ in range(U.len_ind(ind))],
                                        subtype=self.source.subtype)
             else:
@@ -72,7 +70,8 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
         else:
             vectors = (U._list[i] for i in ind)
 
-        return ListVectorArray([NumpyVector(_apply_inverse(self._matrix, v._array, options=options), copy=False)
+        return ListVectorArray([NumpyVector(_apply_inverse(self._matrix, v._array, options=self.solver_options),
+                                            copy=False)
                                 for v in vectors],
                                subtype=self.source.subtype)
 
@@ -81,9 +80,9 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
             raise TypeError('This operator does not represent a vector or linear functional.')
         return ListVectorArray([NumpyVector(self._matrix.ravel(), copy=True)])
 
-    def assemble_lincomb(self, operators, coefficients, name=None):
+    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         lincomb = super(NumpyListVectorArrayMatrixOperator, self).assemble_lincomb(operators, coefficients)
         if lincomb is None:
             return None
         else:
-            return NumpyListVectorArrayMatrixOperator(lincomb._matrix, name=name)
+            return NumpyListVectorArrayMatrixOperator(lincomb._matrix, solver_options=self.solver_options, name=name)

@@ -5,7 +5,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymor.core.interfaces import ImmutableInterface, abstractmethod, abstractstaticmethod
+from pymor.core.interfaces import ImmutableInterface, abstractmethod
 from pymor.parameters.base import Parametric
 
 
@@ -22,13 +22,9 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
     Attributes
     ----------
-    invert_options
-        |OrderedDict| of possible options for :meth:`~OperatorInterface.apply_inverse`.
-        Each key is a type of inversion algorithm which can be used to invert the
-        operator. `invert_options[k]` is a dict containing all options along with
-        their default values which can be set for algorithm `k`. We always have
-        `invert_options[k]['type'] == k` such that `invert_options[k]` can be passed
-        directly to :meth:`~OperatorInterface.apply_inverse()`.
+    solver_options
+        Solver options used for :meth:`~OperatorInterface.apply_inverse`.
+        If `None`, default options are used.
     linear
         `True` if the operator is linear.
     source
@@ -36,6 +32,8 @@ class OperatorInterface(ImmutableInterface, Parametric):
     range
         The range |VectorSpace|.
     """
+
+    solver_options = None
 
     @abstractmethod
     def apply(self, U, ind=None, mu=None):
@@ -164,7 +162,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         pass
 
     @abstractmethod
-    def apply_inverse(self, V, ind=None, mu=None, options=None):
+    def apply_inverse(self, V, ind=None, mu=None):
         """Apply the inverse operator.
 
         Parameters
@@ -176,15 +174,6 @@ class OperatorInterface(ImmutableInterface, Parametric):
             applied. (See the |VectorArray| documentation for further details.)
         mu
             The |Parameter| for which to evaluate the inverse operator.
-        options
-            Dictionary of options for the inversion algorithm. The dictionary
-            has to contain the key `'type'` whose value determines which inversion
-            algorithm is to be used. All other items represent options specific to
-            this algorithm.  `options` can also be given as a string, which is then
-            interpreted as the type of inversion algorithm. If `options` is `None`,
-            a default algorithm with default options is chosen.  Available algorithms
-            and their default options are provided by
-            :attr:`~OperatorInterface.invert_options`.
 
         Returns
         -------
@@ -268,7 +257,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         """
         pass
 
-    def assemble_lincomb(self, operators, coefficients, name=None):
+    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         """Try to assemble a linear combination of the given operators.
 
         This method is called in the `assemble` method of |LincombOperator| on
@@ -283,6 +272,9 @@ class OperatorInterface(ImmutableInterface, Parametric):
             List of |Operators| whose linear combination is formed.
         coefficients
             List of the corresponding linear coefficients.
+        solver_options
+            The :attr:`~OperatorInterface.solver_options` for the assembled
+            operator.
         name
             Name of the assembled operator.
 

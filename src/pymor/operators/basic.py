@@ -98,19 +98,13 @@ class OperatorBase(OperatorInterface):
         else:
             raise ValueError('Trying to apply adjoint of nonlinear operator.')
 
-    @property
-    def invert_options(self):
-        if self.linear:
-            return genericsolvers.invert_options()
-        else:
-            return {}
-
-    def apply_inverse(self, V, ind=None, mu=None, options=None):
+    def apply_inverse(self, V, ind=None, mu=None):
         from pymor.operators.constructions import FixedParameterOperator
         assembled_op = self.assemble(mu)
         if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
-            return assembled_op.apply_inverse(V, ind=ind, options=options)
+            return assembled_op.apply_inverse(V, ind=ind)
         else:
+            options = self.solver_options.get('generic') if self.solver_options else None
             return genericsolvers.apply_inverse(assembled_op, V.copy(ind), options=options)
 
     def as_vector(self, mu=None):
@@ -136,26 +130,30 @@ class OperatorBase(OperatorInterface):
                     V = self.apply_adjoint(range_basis, range_product=product)
                     if self.source.type == NumpyVectorArray:
                         from pymor.operators.numpy import NumpyMatrixOperator
-                        return NumpyMatrixOperator(V.data, name=name)
+                        return NumpyMatrixOperator(V.data, solver_options=self.solver_options, name=name)
                     else:
                         from pymor.operators.constructions import VectorArrayOperator
-                        return VectorArrayOperator(V, transposed=True, copy=False, name=name)
+                        return VectorArrayOperator(V, transposed=True, copy=False, solver_options=self.solver_options,
+                                                   name=name)
             else:
                 if range_basis is None:
                     V = self.apply(source_basis)
                     if self.range.type == NumpyVectorArray:
                         from pymor.operators.numpy import NumpyMatrixOperator
-                        return NumpyMatrixOperator(V.data.T, name=name)
+                        return NumpyMatrixOperator(V.data.T, solver_options=self.solver_options, name=name)
                     else:
                         from pymor.operators.constructions import VectorArrayOperator
-                        return VectorArrayOperator(V, transposed=False, copy=False, name=name)
+                        return VectorArrayOperator(V, transposed=False, copy=False, solver_options=self.solver_options,
+                                                   name=name)
                 elif product is None:
                     from pymor.operators.numpy import NumpyMatrixOperator
-                    return NumpyMatrixOperator(self.apply2(range_basis, source_basis), name=name)
+                    return NumpyMatrixOperator(self.apply2(range_basis, source_basis),
+                                               solver_options=self.solver_options, name=name)
                 else:
                     from pymor.operators.numpy import NumpyMatrixOperator
                     V = self.apply(source_basis)
-                    return NumpyMatrixOperator(product.apply2(range_basis, V), name=name)
+                    return NumpyMatrixOperator(product.apply2(range_basis, V),
+                                               solver_options=self.solver_options, name=name)
         else:
             self.logger.warn('Using inefficient generic projection operator')
             # Since the bases are not immutable and we do not own them,
@@ -189,7 +187,7 @@ class ProjectedOperator(OperatorBase):
 
     linear = False
 
-    def __init__(self, operator, range_basis, source_basis, product=None, copy=True, name=None):
+    def __init__(self, operator, range_basis, source_basis, product=None, copy=True, solver_options=None, name=None):
         assert isinstance(operator, OperatorInterface)
         assert source_basis is None or source_basis in operator.source
         assert range_basis is None or range_basis in operator.range
@@ -201,6 +199,7 @@ class ProjectedOperator(OperatorBase):
         self.build_parameter_type(inherits=(operator,))
         self.source = NumpyVectorSpace(len(source_basis)) if source_basis is not None else operator.source
         self.range = NumpyVectorSpace(len(range_basis)) if range_basis is not None else operator.range
+        self.solver_options = solver_options if solver_options is not None else operator.solver_options
         self.name = name
         self.operator = operator
         self.source_basis = source_basis.copy() if source_basis is not None and copy else source_basis
@@ -240,7 +239,8 @@ class ProjectedOperator(OperatorBase):
             else self.source_basis.copy(ind=range(dim_source))
         range_basis = self.range_basis if dim_range is None \
             else self.range_basis.copy(ind=range(dim_range))
-        return ProjectedOperator(self.operator, range_basis, source_basis, product=None, copy=False, name=name)
+        return ProjectedOperator(self.operator, range_basis, source_basis, product=None, copy=False,
+                                 solver_options=self.solver_options, name=name)
 
     def jacobian(self, U, mu=None):
         assert len(U) == 1
@@ -250,9 +250,12 @@ class ProjectedOperator(OperatorBase):
         else:
             J = self.operator.jacobian(self.source_basis.lincomb(U.data), mu=mu)
         return J.projected(range_basis=self.range_basis, source_basis=self.source_basis,
-                           product=self.product, name=self.name + '_jacobian')
+                           product=self.product, solver_options=self.solver_options, name=self.name + '_jacobian')
 
     def assemble(self, mu=None):
         op = self.operator.assemble(mu=mu)
-        return op.projected(range_basis=self.range_basis, source_basis=self.source_basis,
-                            product=self.product, name=self.name + '_assembled')
+        pop = op.projected(range_basis=self.range_basis, source_basis=self.source_basis,
+                           product=self.product, name=self.name + '_assembled')
+        if self.solver_options != pop.solver_options:
+            pop = pop.with_(solver_options=self.solver_options)
+        return pop

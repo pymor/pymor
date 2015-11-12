@@ -39,7 +39,7 @@ class LincombOperator(OperatorBase):
         Name of the operator.
     """
 
-    def __init__(self, operators, coefficients, name=None):
+    def __init__(self, operators, coefficients, solver_options=None, name=None):
         assert len(operators) > 0
         assert len(operators) == len(coefficients)
         assert all(isinstance(op, OperatorInterface) for op in operators)
@@ -51,6 +51,13 @@ class LincombOperator(OperatorBase):
         self.operators = operators
         self.linear = all(op.linear for op in operators)
         self.coefficients = coefficients
+        if solver_options is not None:
+            self.solver_options = solver_options
+        else:
+            for op in operators:
+                if op.solver_options is not None:
+                    self.solver_options = op.solver_options
+                    break
         self.name = name
         self.build_parameter_type(inherits=list(operators) +
                                   [f for f in coefficients if isinstance(f, ParameterFunctionalInterface)])
@@ -144,7 +151,8 @@ class LincombOperator(OperatorBase):
                 self.logger.warn('Re-assembling since state of global defaults has changed.')
         operators = [op.assemble(mu) for op in self.operators]
         coefficients = self.evaluate_coefficients(mu)
-        op = operators[0].assemble_lincomb(operators, coefficients, name=self.name + '_assembled')
+        op = operators[0].assemble_lincomb(operators, coefficients, solver_options=self.solver_options,
+                                           name=self.name + '_assembled')
         if not self.parametric:
             if op:
                 self._assembled_operator = op
@@ -156,7 +164,8 @@ class LincombOperator(OperatorBase):
         elif op:
             return op
         else:
-            return LincombOperator(operators, coefficients, name=self.name + '_assembled')
+            return LincombOperator(operators, coefficients, solver_options=self.solver_options,
+                                   name=self.name + '_assembled')
 
     def jacobian(self, U, mu=None):
         if hasattr(self, '_assembled_operator'):
@@ -168,9 +177,11 @@ class LincombOperator(OperatorBase):
             return self.assemble().jacobian(U)
         jacobians = [op.jacobian(U, mu) for op in self.operators]
         coefficients = self.evaluate_coefficients(mu)
-        jac = jacobians[0].assemble_lincomb(jacobians, coefficients, name=self.name + '_jacobian')
+        jac = jacobians[0].assemble_lincomb(jacobians, coefficients, solver_options=self.solver_options,
+                                            name=self.name + '_jacobian')
         if jac is None:
-            return LincombOperator(jacobians, coefficients, name=self.name + '_jacobian')
+            return LincombOperator(jacobians, coefficients, solver_options=self.solver_options,
+                                   name=self.name + '_jacobian')
         else:
             return jac
 
@@ -230,7 +241,7 @@ class Concatenation(OperatorBase):
         Name of the operator.
     """
 
-    def __init__(self, second, first, name=None):
+    def __init__(self, second, first, solver_options=None, name=None):
         assert isinstance(second, OperatorInterface)
         assert isinstance(first, OperatorInterface)
         assert first.range == second.source
@@ -240,6 +251,7 @@ class Concatenation(OperatorBase):
         self.source = first.source
         self.range = second.range
         self.linear = second.linear and first.linear
+        self.solver_options = solver_options if solver_options is not None else first.solver_options
         self.name = name
 
     def apply(self, U, ind=None, mu=None):
@@ -259,17 +271,22 @@ class Concatenation(OperatorBase):
         elif isinstance(restricted_first, IdentityOperator):
             return restricted_second, first_source_dofs
         else:
-            return Concatenation(restricted_second, restricted_first), first_source_dofs
+            return (Concatenation(restricted_second, restricted_first, solver_options=self.solver_options),
+                    first_source_dofs)
 
     def projected(self, range_basis, source_basis, product=None, name=None):
         if not self.parametric and self.linear:
             return super(Concatenation, self).projected(range_basis, source_basis, product=product, name=name)
         projected_first = self.first.projected(None, source_basis, product=None)
         if isinstance(projected_first, VectorArrayOperator) and not projected_first.transposed:
-            return self.second.projected(range_basis, projected_first._array, product=product, name=name)
+            pop = self.second.projected(range_basis, projected_first._array, product=product, name=name)
+            if self.solver_options != pop.solver_options:
+                pop = pop.with_(solver_options=self.solver_options)
+            return pop
         else:
             projected_second = self.second.projected(range_basis, None, product=product)
-            return Concatenation(projected_second, projected_first, name=name or self.name + '_projected')
+            return Concatenation(projected_second, projected_first, solver_options=self.solver_options,
+                                 name=name or self.name + '_projected')
 
 
 class ComponentProjection(OperatorBase):
@@ -288,11 +305,12 @@ class ComponentProjection(OperatorBase):
 
     linear = True
 
-    def __init__(self, components, source, name=None):
+    def __init__(self, components, source, solver_options=None, name=None):
         assert all(0 <= c < source.dim for c in components)
         self.components = np.array(components)
         self.range = NumpyVectorSpace(len(components))
         self.source = source
+        self.solver_options = solver_options
         self.name = name
 
     def apply(self, U, ind=None, mu=None):
@@ -302,7 +320,7 @@ class ComponentProjection(OperatorBase):
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
         source_dofs = self.components[dofs]
-        return IdentityOperator(NumpyVectorSpace(len(source_dofs))), source_dofs
+        return IdentityOperator(NumpyVectorSpace(len(source_dofs)), solver_options=self.solver_options), source_dofs
 
 
 class IdentityOperator(OperatorBase):
@@ -322,8 +340,9 @@ class IdentityOperator(OperatorBase):
 
     linear = True
 
-    def __init__(self, space, name=None):
+    def __init__(self, space, solver_options=None, name=None):
         self.source = self.range = space
+        self.solver_options = solver_options
         self.name = name
 
     def apply(self, U, ind=None, mu=None):
@@ -363,11 +382,12 @@ class ConstantOperator(OperatorBase):
 
     linear = False
 
-    def __init__(self, value, source, copy=True, name=None):
+    def __init__(self, value, source, copy=True, solver_options=None, name=None):
         assert isinstance(value, VectorArrayInterface)
         assert len(value) == 1
         self.source = source
         self.range = value.space
+        self.solver_options = solver_options
         self.name = name
         self._value = value.copy() if copy else value
 
@@ -379,7 +399,7 @@ class ConstantOperator(OperatorBase):
     def jacobian(self, U, mu=None):
         assert U in self.source
         assert len(U) == 1
-        return ZeroOperator(self.source, self.range, name=self.name + '_jacobian')
+        return ZeroOperator(self.source, self.range, solver_options=self.solver_options, name=self.name + '_jacobian')
 
     def projected(self, range_basis, source_basis, product=None, name=None):
         assert source_basis is None or source_basis in self.source
@@ -394,10 +414,10 @@ class ConstantOperator(OperatorBase):
             projected_value = self._value
         if source_basis is None:
             return ConstantOperator(projected_value, self.source, copy=False,
-                                    name=self.name + '_projected')
+                                    solver_options=self.solver_options, name=self.name + '_projected')
         else:
             return ConstantOperator(projected_value, NumpyVectorSpace(len(source_basis)), copy=False,
-                                    name=self.name + '_projected')
+                                    solver_options=self.solver_options, name=self.name + '_projected')
 
 
 class ZeroOperator(OperatorBase):
@@ -415,11 +435,12 @@ class ZeroOperator(OperatorBase):
 
     linear = True
 
-    def __init__(self, source, range, name=None):
+    def __init__(self, source, range, solver_options=None, name=None):
         assert isinstance(source, VectorSpace)
         assert isinstance(range, VectorSpace)
         self.source = source
         self.range = range
+        self.solver_options = solver_options
         self.name = name
 
     def apply(self, U, ind=None, mu=None):
@@ -433,16 +454,17 @@ class ZeroOperator(OperatorBase):
         assert product is None or product.source == product.range == self.range
         if source_basis is not None and range_basis is not None:
             return NumpyMatrixOperator(np.zeros((len(range_basis), len(source_basis))),
-                                       name=self.name + '_projected')
+                                       solver_options=self.solver_options, name=self.name + '_projected')
         else:
             new_source = NumpyVectorSpace(len(source_basis)) if source_basis is not None else self.source
             new_range = NumpyVectorSpace(len(range_basis)) if range_basis is not None else self.source
             return ZeroOperator(new_source, new_range, name=self.name + '_projected')
 
-    def assemble_lincomb(self, operators, coefficients, name=None):
+    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         assert operators[0] is self
         if len(operators) > 1:
-            return operators[1].assemble_lincomb(operators[1:], coefficients[1:], name=name)
+            return operators[1].assemble_lincomb(operators[1:], coefficients[1:], solver_options=solver_options,
+                                                 name=name)
         else:
             return self
 
@@ -472,7 +494,7 @@ class VectorArrayOperator(OperatorBase):
 
     linear = True
 
-    def __init__(self, array, transposed=False, copy=True, name=None):
+    def __init__(self, array, transposed=False, copy=True, solver_options=None, name=None):
         self._array = array.copy() if copy else array
         if transposed:
             self.source = array.space
@@ -481,6 +503,7 @@ class VectorArrayOperator(OperatorBase):
             self.source = NumpyVectorSpace(len(array))
             self.range = array.space
         self.transposed = transposed
+        self.solver_options = solver_options
         self.name = name
 
     def apply(self, U, ind=None, mu=None):
@@ -516,7 +539,7 @@ class VectorArrayOperator(OperatorBase):
             else:
                 return ATPrU
 
-    def assemble_lincomb(self, operators, coefficients, name=None):
+    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
 
         transposed = operators[0].transposed
         if not all(isinstance(op, VectorArrayOperator) and op.transposed == transposed for op in operators):
@@ -528,7 +551,7 @@ class VectorArrayOperator(OperatorBase):
             array = operators[0]._array * coefficients[0]
         for op, c in izip(operators[1:], coefficients[1:]):
             array.axpy(c, op._array)
-        return VectorArrayOperator(array, transposed=transposed, copy=False, name=name)
+        return VectorArrayOperator(array, transposed=transposed, copy=False, solver_options=solver_options, name=name)
 
     def as_vector(self, mu=None):
         if len(self._array) != 1:
@@ -564,10 +587,11 @@ class VectorOperator(VectorArrayOperator):
     linear = True
     source = NumpyVectorSpace(1)
 
-    def __init__(self, vector, copy=True, name=None):
+    def __init__(self, vector, copy=True, solver_options=None, name=None):
         assert isinstance(vector, VectorArrayInterface)
         assert len(vector) == 1
-        super(VectorOperator, self).__init__(vector, transposed=False, copy=copy, name=name)
+        super(VectorOperator, self).__init__(vector, transposed=False, copy=copy, solver_options=solver_options,
+                                             name=name)
 
 
 class VectorFunctional(VectorArrayOperator):
@@ -605,14 +629,16 @@ class VectorFunctional(VectorArrayOperator):
     linear = True
     range = NumpyVectorSpace(1)
 
-    def __init__(self, vector, product=None, copy=True, name=None):
+    def __init__(self, vector, product=None, copy=True, solver_options=None, name=None):
         assert isinstance(vector, VectorArrayInterface)
         assert len(vector) == 1
         assert product is None or isinstance(product, OperatorInterface) and vector in product.source
         if product is None:
-            super(VectorFunctional, self).__init__(vector, transposed=True, copy=copy, name=name)
+            super(VectorFunctional, self).__init__(vector, transposed=True, copy=copy, solver_options=solver_options,
+                                                   name=name)
         else:
-            super(VectorFunctional, self).__init__(product.apply(vector), transposed=True, copy=False, name=name)
+            super(VectorFunctional, self).__init__(product.apply(vector), transposed=True, copy=False,
+                                                   solver_options=solver_options, name=name)
 
 
 class FixedParameterOperator(OperatorBase):
@@ -628,7 +654,7 @@ class FixedParameterOperator(OperatorBase):
         of `operator`.
     """
 
-    def __init__(self, operator, mu=None, name=None):
+    def __init__(self, operator, mu=None, solver_options=None, name=None):
         assert isinstance(operator, OperatorInterface)
         assert operator.parse_parameter(mu) or True
         self.source = operator.source
@@ -636,6 +662,7 @@ class FixedParameterOperator(OperatorBase):
         self.operator = operator
         self.mu = mu.copy()
         self.linear = operator.linear
+        self.solver_options = solver_options if solver_options is not None else operator.solver_options
         self.name = name
 
     def apply(self, U, ind=None, mu=None):
@@ -645,12 +672,12 @@ class FixedParameterOperator(OperatorBase):
         return self.operator.apply_adjoint(U, ind=ind, mu=self.mu,
                                            source_product=source_product, range_product=range_product)
 
-    @property
-    def invert_options(self):
-        return self.operator.invert_options
-
-    def apply_inverse(self, V, ind=None, mu=None, options=None):
-        return self.operator.apply_inverse(V, ind=ind, mu=self.mu, options=options)
+    def apply_inverse(self, V, ind=None, mu=None):
+        if self.solver_options is not None and self.solver_options != self.operator.solver_options:
+            op = self.operator.with_(solver_options=self.solver_options)
+        else:
+            op = self.operator
+        return op.apply_inverse(V, ind=ind, mu=self.mu)
 
 
 class AdjointOperator(OperatorBase):
@@ -674,7 +701,7 @@ class AdjointOperator(OperatorBase):
 
     linear = True
 
-    def __init__(self, operator, source_product=None, range_product=None, name=None):
+    def __init__(self, operator, source_product=None, range_product=None, solver_options=None, name=None):
         assert isinstance(operator, OperatorInterface)
         assert operator.linear
         self.build_parameter_type(inherits=(operator,))
@@ -683,6 +710,7 @@ class AdjointOperator(OperatorBase):
         self.operator = operator
         self.source_product = source_product
         self.range_product = range_product
+        self.solver_options = solver_options
         self.name = name or operator.name + '_adjoint'
 
     def apply(self, U, ind=None, mu=None):
@@ -722,7 +750,7 @@ class AdjointOperator(OperatorBase):
         range_product = self.range_product if source_basis is None else None
         source_product = self.source_product if range_basis is None else None
         return AdjointOperator(operator, source_product=source_product, range_product=range_product,
-                               name=name or self.name + '_projected')
+                               solver_options=self.solver_options, name=name or self.name + '_projected')
 
 
 class SelectionOperator(OperatorBase):
@@ -750,7 +778,7 @@ class SelectionOperator(OperatorBase):
         Name of the operator.
 
     """
-    def __init__(self, operators, parameter_functional, boundaries, name=None):
+    def __init__(self, operators, parameter_functional, boundaries, solver_options=None, name=None):
         assert len(operators) > 0
         assert len(boundaries) == len(operators) - 1
         # check that boundaries are ascending:
@@ -763,7 +791,7 @@ class SelectionOperator(OperatorBase):
         self.range = operators[0].range
         self.operators = tuple(operators)
         self.linear = all(op.linear for op in operators)
-
+        self.solver_options = solver_options
         self.name = name
         self.build_parameter_type(inherits=list(operators) + [parameter_functional])
         self._try_assemble = not self.parametric
@@ -791,8 +819,7 @@ class SelectionOperator(OperatorBase):
     def projected(self, range_basis, source_basis, product=None, name=None):
         projected_operators = [op.projected(range_basis, source_basis, product=product, name=name)
                                for op in self.operators]
-        return SelectionOperator(projected_operators, self.parameter_functional, self.boundaries,
-                                 name or self.name + '_projected')
+        return self.with_(operators=projected_operators, name=name or self.name + '_projected')
 
 
 @defaults('raise_negative', 'tol')

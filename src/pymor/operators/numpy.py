@@ -57,9 +57,11 @@ class NumpyGenericOperator(OperatorBase):
         Name of the operator.
     """
 
-    def __init__(self, mapping, dim_source=1, dim_range=1, linear=False, parameter_type=None, name=None):
+    def __init__(self, mapping, dim_source=1, dim_range=1, linear=False, parameter_type=None, solver_options=None,
+                 name=None):
         self.source = NumpyVectorSpace(dim_source)
         self.range = NumpyVectorSpace(dim_range)
+        self.solver_options = solver_options
         self.name = name
         self._mapping = mapping
         self.linear = linear
@@ -109,17 +111,18 @@ class NumpyMatrixBasedOperator(OperatorBase):
         if hasattr(self, '_assembled_operator'):
             if self._defaults_sid != defaults_sid():
                 self.logger.warn('Re-assembling since state of global defaults has changed.')
-                op = self._assembled_operator = NumpyMatrixOperator(self._assemble())
+                op = self._assembled_operator = NumpyMatrixOperator(self._assemble(),
+                                                                    solver_options=self.solver_options)
                 self._defaults_sid = defaults_sid()
                 return op
             else:
                 return self._assembled_operator
         elif not self.parameter_type:
-            op = self._assembled_operator = NumpyMatrixOperator(self._assemble())
+            op = self._assembled_operator = NumpyMatrixOperator(self._assemble(), solver_options=self.solver_options)
             self._defaults_sid = defaults_sid()
             return op
         else:
-            return NumpyMatrixOperator(self._assemble(self.parse_parameter(mu)))
+            return NumpyMatrixOperator(self._assemble(self.parse_parameter(mu)), solver_options=self.solver_options)
 
     def apply(self, U, ind=None, mu=None):
         return self.assemble(mu).apply(U, ind=ind)
@@ -130,15 +133,8 @@ class NumpyMatrixBasedOperator(OperatorBase):
     def as_vector(self, mu=None):
         return self.assemble(mu).as_vector()
 
-    def apply_inverse(self, V, ind=None, mu=None, options=None):
-        return self.assemble(mu).apply_inverse(V, ind=ind, options=options)
-
-    @property
-    def invert_options(self):
-        if self.sparse is None:
-            raise ValueError('Sparsity unkown, assemble first.')
-        else:
-            return _invert_options(sparse=self.sparse)
+    def apply_inverse(self, V, ind=None, mu=None):
+        return self.assemble(mu).apply_inverse(V, ind=ind)
 
     def export_matrix(self, filename, matrix_name=None, output_format='matlab', mu=None):
         """Save the matrix of the operator to a file.
@@ -180,12 +176,13 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         Name of the operator.
     """
 
-    def __init__(self, matrix, name=None):
+    def __init__(self, matrix, solver_options=None, name=None):
         assert matrix.ndim <= 2
         if matrix.ndim == 1:
             matrix = np.reshape(matrix, (1, -1))
         self.source = NumpyVectorSpace(matrix.shape[1])
         self.range = NumpyVectorSpace(matrix.shape[0])
+        self.solver_options = solver_options
         self.name = name
         self._matrix = matrix
         self.sparse = issparse(matrix)
@@ -223,18 +220,22 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         else:
             return ATPrU
 
-    def apply_inverse(self, V, ind=None, mu=None, options=None):
+    def apply_inverse(self, V, ind=None, mu=None):
         assert V in self.range
         assert V.check_ind(ind)
         if V.dim == 0:
-            if (self.source.dim == 0
-                    or isinstance(options, str) and options.startswith('least_squares')
-                    or isinstance(options, dict) and options['type'].startswith('least_squares')):
+            if self.source.dim == 0:
                 return NumpyVectorArray(np.zeros((V.len_ind(ind), self.source.dim)))
             else:
                 raise InversionError
         V = V.data if ind is None else \
             V.data[ind] if hasattr(ind, '__len__') else V.data[ind:ind + 1]
+
+        if self.solver_options:
+            options = self.solver_options.get('numpy_sparse' if self.sparse else 'numpy_dense')
+        else:
+            options = None
+
         return NumpyVectorArray(_apply_inverse(self._matrix, V, options=options), copy=False)
 
     def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
@@ -268,9 +269,10 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         assert dim_range is None or dim_range <= self.range.dim
         name = name or '{}_projected_to_subbasis'.format(self.name)
         # copy instead of just slicing the matrix to ensure contiguous memory
-        return NumpyMatrixOperator(self._matrix[:dim_range, :dim_source].copy(), name=name)
+        return NumpyMatrixOperator(self._matrix[:dim_range, :dim_source].copy(), solver_options=self.solver_options,
+                                   name=name)
 
-    def assemble_lincomb(self, operators, coefficients, name=None):
+    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         if not all(isinstance(op, NumpyMatrixOperator) for op in operators):
             return None
 
@@ -294,7 +296,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                     matrix += (op._matrix * c)
                 except NotImplementedError:
                     matrix = matrix + (op._matrix * c)
-        return NumpyMatrixOperator(matrix)
+        return NumpyMatrixOperator(matrix, solver_options=solver_options)
 
     def __getstate__(self):
         if hasattr(self._matrix, 'factorization'):  # remove unplicklable SuperLU factorization
