@@ -641,7 +641,7 @@ def sparse_options(default_solver='spsolve',
     return ordered_opts
 
 
-def _invert_options(matrix=None, sparse=None):
+def _options(matrix=None, sparse=None):
     """Returns |invert_options| (with default values) for a given |NumPy| matrix.
 
     See :func:`sparse_options` for documentation of all possible options for
@@ -706,7 +706,7 @@ def _apply_inverse(matrix, V, options=None):
     |NumPy array| of the solution vectors.
     """
 
-    default_options = _invert_options(matrix)
+    default_options = _options(matrix)
 
     if options is None:
         options = default_options.values()[0]
