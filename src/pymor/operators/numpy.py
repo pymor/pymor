@@ -332,7 +332,7 @@ _sparse_options_sid = None
 def dense_options(default_solver='solve',
                   default_least_squares_solver='least_squares_lstsq',
                   least_squares_lstsq_rcond=-1.):
-    """Returns |invert_options| (with default values) for dense |NumPy| matricies.
+    """Returns |solver_options| (with default values) for dense |NumPy| matricies.
 
     Parameters
     ----------
@@ -347,7 +347,7 @@ def dense_options(default_solver='solve',
 
     Returns
     -------
-    A tuple of all possible |invert_options|.
+    A tuple of possible values for |solver_options| (key `'numpy_dense'`).
     """
 
     assert default_least_squares_solver.startswith('least_squares')
@@ -438,7 +438,7 @@ def sparse_options(default_solver='spsolve',
                    pyamg_sa_accel=None,
                    pyamg_sa_tol=1e-5,
                    pyamg_sa_maxiter=100):
-    """Returns |invert_options| (with default values) for sparse |NumPy| matricies.
+    """Returns |solver_options| (with default values) for sparse |NumPy| matricies.
 
     Parameters
     ----------
@@ -556,7 +556,7 @@ def sparse_options(default_solver='spsolve',
 
     Returns
     -------
-    A tuple of all possible |invert_options|.
+    A tuple of all possible |solver_options| (key `'numpy_sparse'`).
     """
 
     assert default_least_squares_solver.startswith('least_squares')
@@ -642,7 +642,10 @@ def sparse_options(default_solver='spsolve',
 
 
 def _options(matrix=None, sparse=None):
-    """Returns |invert_options| (with default values) for a given |NumPy| matrix.
+    """Returns |solver_options| (with default values) for a given |NumPy| matrix.
+
+    See :func:`dense_options` for documentation of all possible options for
+    dense matrices.
 
     See :func:`sparse_options` for documentation of all possible options for
     sparse matrices.
@@ -658,7 +661,8 @@ def _options(matrix=None, sparse=None):
 
     Returns
     -------
-    A tuple of all possible |invert_options|.
+    A tuple of all possible |solver_options| (key `'numpy_dense'` or `'numpy_sparse'`
+    depending on sparsity).
     """
     global _dense_options, _dense_options_sid, _sparse_options, _sparse_options_sid
     assert (matrix is None) != (sparse is None)
@@ -684,6 +688,9 @@ def _apply_inverse(matrix, V, options=None):
 
     Applies the inverse of `matrix` to the row vectors in `V`.
 
+    See :func:`dense_options` for documentation of all possible options for
+    sparse matrices.
+
     See :func:`sparse_options` for documentation of all possible options for
     sparse matrices.
 
@@ -699,7 +706,7 @@ def _apply_inverse(matrix, V, options=None):
         the right-hand sides of the linear equation systems to
         solve.
     options
-        |invert_options| to use. (See :func:`invert_options`.)
+        The solver options to use. (See :func:`_options`.)
 
     Returns
     -------

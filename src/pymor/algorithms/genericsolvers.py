@@ -141,7 +141,7 @@ def apply_inverse(op, rhs, options=None):
     rhs
         |VectorArray| of right-hand sides for the equation system.
     options
-        |invert_options| to use. (See :func:`invert_options`.)
+        The solver options to use. (See :func:`options`.)
 
     Returns
     -------

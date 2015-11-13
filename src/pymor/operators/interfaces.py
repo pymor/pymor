@@ -24,7 +24,18 @@ class OperatorInterface(ImmutableInterface, Parametric):
     ----------
     solver_options
         Solver options used for :meth:`~OperatorInterface.apply_inverse`.
-        If `None`, default options are used.
+        If `None`, default options are used. If not `None`, a dict of
+        options for different operator backends.
+        (In pyMOR itself, the keys `'numpy_dense'`, `'numpy_sparse'` for
+        |NumpyMatrixBasedOperators| and `'generic'` for the generic
+        fallback solvers in :mod:`pymor.algorithms.genericsolvers` are
+        recognized. Arbitrary other entries may be added to customize
+        external linear solvers.)
+        Note that `solver_options` is usually inherited by derived
+        operators (e.g. via :meth:`~OperatorInterface.projected`,
+        :meth:`~OperatorInterface.assemble_lincomb`). Thus, it can make
+        sense to add entries to `solver_options` which are not directly
+        relevant for the given operator itself.
     linear
         `True` if the operator is linear.
     source
@@ -273,8 +284,11 @@ class OperatorInterface(ImmutableInterface, Parametric):
         coefficients
             List of the corresponding linear coefficients.
         solver_options
-            The :attr:`~OperatorInterface.solver_options` for the assembled
-            operator.
+            |solver_options| for the assembled operator. When called by
+            |LincombOperator| and no |solver_options| have been specified
+            during instantiation the |LincombOperator|, this parameter will
+            be set to the first non-`None` |solver_options| of the given
+            `operators`.
         name
             Name of the assembled operator.
 
