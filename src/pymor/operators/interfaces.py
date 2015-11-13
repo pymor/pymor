@@ -5,7 +5,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-from pymor.core.interfaces import ImmutableInterface, abstractmethod, abstractstaticmethod
+from pymor.core.interfaces import ImmutableInterface, abstractmethod
 from pymor.parameters.base import Parametric
 
 
@@ -22,13 +22,23 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
     Attributes
     ----------
-    invert_options
-        |OrderedDict| of possible options for :meth:`~OperatorInterface.apply_inverse`.
-        Each key is a type of inversion algorithm which can be used to invert the
-        operator. `invert_options[k]` is a dict containing all options along with
-        their default values which can be set for algorithm `k`. We always have
-        `invert_options[k]['type'] == k` such that `invert_options[k]` can be passed
-        directly to :meth:`~OperatorInterface.apply_inverse()`.
+    solver_options
+        Solver options used for :meth:`~OperatorInterface.apply_inverse`
+        and :meth:`~OperatorInterface.solve_least_squares`.
+        If `None`, default options are used. If not `None`, a dict of
+        options for different operator backends.
+        (In pyMOR itself, the keys `'numpy_dense'`, `'numpy_sparse'`,
+        `'numpy_dense_least_squares'`, `'numpy_sparse_least_squares'`
+        for |NumpyMatrixBasedOperators| and `'generic'`,
+        `'generic_least_squares'` for the generic fallback solvers
+        in :mod:`pymor.algorithms.genericsolvers` are
+        recognized. Arbitrary other entries may be added to customize
+        external linear solvers.)
+        Note that `solver_options` is usually inherited by derived
+        operators (e.g. via :meth:`~OperatorInterface.projected`,
+        :meth:`~OperatorInterface.assemble_lincomb`). Thus, it can make
+        sense to add entries to `solver_options` which are not directly
+        relevant for the given operator itself.
     linear
         `True` if the operator is linear.
     source
@@ -36,6 +46,8 @@ class OperatorInterface(ImmutableInterface, Parametric):
     range
         The range |VectorSpace|.
     """
+
+    solver_options = None
 
     @abstractmethod
     def apply(self, U, ind=None, mu=None):
@@ -164,7 +176,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         pass
 
     @abstractmethod
-    def apply_inverse(self, V, ind=None, mu=None, options=None):
+    def apply_inverse(self, V, ind=None, mu=None):
         """Apply the inverse operator.
 
         Parameters
@@ -172,19 +184,10 @@ class OperatorInterface(ImmutableInterface, Parametric):
         V
             |VectorArray| of vectors to which the inverse operator is applied.
         ind
-            The indices of the vectors in `U` to which the inverse operator shall be
+            The indices of the vectors in `V` to which the inverse operator shall be
             applied. (See the |VectorArray| documentation for further details.)
         mu
             The |Parameter| for which to evaluate the inverse operator.
-        options
-            Dictionary of options for the inversion algorithm. The dictionary
-            has to contain the key `'type'` whose value determines which inversion
-            algorithm is to be used. All other items represent options specific to
-            this algorithm.  `options` can also be given as a string, which is then
-            interpreted as the type of inversion algorithm. If `options` is `None`,
-            a default algorithm with default options is chosen.  Available algorithms
-            and their default options are provided by
-            :attr:`~OperatorInterface.invert_options`.
 
         Returns
         -------
@@ -194,6 +197,37 @@ class OperatorInterface(ImmutableInterface, Parametric):
         ------
         InversionError
             The operator could not be inverted.
+        """
+        pass
+
+    @abstractmethod
+    def solve_least_squares(self, V, ind=None, mu=None):
+        """Solve least squares problem.
+
+        If we denote `self` by A, then this method finds
+        for each vector v contained in `V` vectors u s.t. ::
+
+            u = argmin ||Au - v||_2
+                  u'
+
+        Parameters
+        ----------
+        V
+            |VectorArray| of vectors for which the least squares problem is solved.
+        ind
+            The indices of the vectors in `V` for which the least squares problem
+            shall be solved. (See the |VectorArray| documentation for further details.)
+        mu
+            The |Parameter| for which to solve the least squares problem.
+
+        Returns
+        -------
+        |VectorArray| of the least squares problem solutions.
+
+        Raises
+        ------
+        InversionError
+            The the least squares problems could not be solved.
         """
         pass
 
@@ -268,7 +302,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         """
         pass
 
-    def assemble_lincomb(self, operators, coefficients, name=None):
+    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         """Try to assemble a linear combination of the given operators.
 
         This method is called in the `assemble` method of |LincombOperator| on
@@ -283,6 +317,12 @@ class OperatorInterface(ImmutableInterface, Parametric):
             List of |Operators| whose linear combination is formed.
         coefficients
             List of the corresponding linear coefficients.
+        solver_options
+            |solver_options| for the assembled operator. When called by
+            |LincombOperator| and no |solver_options| have been specified
+            during instantiation the |LincombOperator|, this parameter will
+            be set to the first non-`None` |solver_options| of the given
+            `operators`.
         name
             Name of the assembled operator.
 

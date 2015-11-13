@@ -169,19 +169,15 @@ def test_apply_adjoint_2_with_products(operator_with_arrays_and_products):
 
 def test_apply_inverse(operator_with_arrays):
     op, mu, _, V = operator_with_arrays
-    for options in chain([None], op.invert_options, op.invert_options.itervalues()):
-        for ind in valid_inds(V):
-            try:
-                U = op.apply_inverse(V, mu=mu, ind=ind, options=options)
-            except InversionError:
-                return
-            assert U in op.source
-            assert len(U) == V.len_ind(ind)
-            VV = op.apply(U, mu=mu)
-            if (isinstance(options, str) and options.startswith('least_squares')
-                    or not isinstance(options, (str, type(None))) and options['type'].startswith('least_squares')):
-                continue
-            assert float_cmp_all(VV.l2_norm(), V.l2_norm(ind=ind), atol=1e-10, rtol=0.5)
+    for ind in valid_inds(V):
+        try:
+            U = op.apply_inverse(V, mu=mu, ind=ind)
+        except InversionError:
+            return
+        assert U in op.source
+        assert len(U) == V.len_ind(ind)
+        VV = op.apply(U, mu=mu)
+        assert float_cmp_all(VV.l2_norm(), V.l2_norm(ind=ind), atol=1e-10, rtol=0.5)
 
 
 def test_projected(operator_with_arrays):

@@ -62,15 +62,19 @@ class MPIOperator(OperatorBase):
         and :class:`~pymor.vectorarrays.mpi.MPIVectorArrayNoComm`.
     """
 
-    def __init__(self, obj_id, functional=False, vector=False, with_apply2=False, array_type=MPIVectorArray):
+    def __init__(self, obj_id, functional=False, vector=False, with_apply2=False, array_type=MPIVectorArray,
+                 solver_options=None, name=None):
         assert not (functional and vector)
+        assert solver_options is None
         self.obj_id = obj_id
         self.op = op = mpi.get_object(obj_id)
         self.functional = functional
         self.vector = vector
         self.with_apply2 = with_apply2
+        self.array_type = array_type
         self.linear = op.linear
-        self.name = op.name
+        self.solver_options = self.op.solver_options
+        self.name = name or op.name
         self.build_parameter_type(inherits=(op,))
         if vector:
             self.source = NumpyVectorSpace(1)
@@ -88,10 +92,6 @@ class MPIOperator(OperatorBase):
             if all(subtype == subtypes[0] for subtype in subtypes):
                 subtypes = (subtypes[0],)
             self.range = VectorSpace(array_type, (op.range.type, subtypes))
-
-    @property
-    def invert_options(self):
-        return self.op.invert_options
 
     def apply(self, U, ind=None, mu=None):
         assert U in self.source
@@ -152,30 +152,37 @@ class MPIOperator(OperatorBase):
                               mpi.call(mpi.method_call_manage, self.obj_id, 'apply_adjoint',
                                        U, ind=ind, mu=mu, source_product=source_product, range_product=range_product))
 
-    def apply_inverse(self, U, ind=None, mu=None, options=None):
+    def apply_inverse(self, V, ind=None, mu=None):
         if self.vector or self.functional:
             raise NotImplementedError
-        assert U in self.range
+        assert V in self.range
         mu = self.parse_parameter(mu)
         space = self.source
         return space.type(space.subtype[0], space.subtype[1],
                           mpi.call(mpi.method_call_manage, self.obj_id, 'apply_inverse',
-                                   U.obj_id, ind=ind, mu=mu, options=options))
+                                   V.obj_id, ind=ind, mu=mu))
+
+    def solve_least_squares(self, V, ind=None, mu=None):
+        if self.vector or self.functional:
+            raise NotImplementedError
+        assert V in self.range
+        mu = self.parse_parameter(mu)
+        space = self.source
+        return space.type(space.subtype[0], space.subtype[1],
+                          mpi.call(mpi.method_call_manage, self.obj_id, 'solve_least_squares',
+                                   V.obj_id, ind=ind, mu=mu))
 
     def jacobian(self, U, mu=None):
         assert U in self.source
         mu = self.parse_parameter(mu)
-        return type(self)(mpi.call(mpi.method_call_manage, self.obj_id, 'jacobian', U.obj_id, mu=mu),
-                          functional=self.functional, vector=self.vector,
-                          with_apply2=self.with_apply2, array_type=self.source.type)
+        return self.with_(obj_id=mpi.call(mpi.method_call_manage, self.obj_id, 'jacobian', U.obj_id, mu=mu))
 
     def assemble(self, mu=None):
         mu = self.parse_parameter(mu)
-        return type(self)(mpi.call(mpi.method_call_manage, self.obj_id, 'assemble', mu=mu),
-                          functional=self.functional, vector=self.vector,
-                          with_apply2=self.with_apply2, array_type=self.source.type)
+        return self.with_(mpi.call(mpi.method_call_manage, self.obj_id, 'assemble', mu=mu))
 
-    def assemble_lincomb(self, operators, coefficients, name=None):
+    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
+        assert solver_options is None
         if not all(isinstance(op, MPIOperator) for op in operators):
             return None
         operators = [op.obj_id for op in operators]
@@ -185,8 +192,7 @@ class MPIOperator(OperatorBase):
             mpi.call(mpi.remove_object, obj_id)
             return None
         else:
-            return type(self)(obj_id, functional=self.functional, vector=self.vector,
-                              with_apply2=self.with_apply2, array_type=self.source.type)
+            return self.with_(obj_id=obj_id)
 
     def restricted(self, dofs):
         return mpi.call(mpi.method_call, self.obj_id, 'restricted', dofs)

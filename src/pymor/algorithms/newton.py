@@ -111,7 +111,10 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
         iteration += 1
         jacobian = operator.jacobian(U, mu=mu)
         try:
-            correction = jacobian.apply_inverse(residual, options='least_squares' if least_squares else None)
+            if least_squares:
+                correction = jacobian.solve_least_squares(residual)
+            else:
+                correction = jacobian.apply_inverse(residual)
         except InversionError:
             raise NewtonError('Could not invert jacobian')
         U += correction
