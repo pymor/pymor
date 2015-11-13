@@ -162,6 +162,16 @@ class MPIOperator(OperatorBase):
                           mpi.call(mpi.method_call_manage, self.obj_id, 'apply_inverse',
                                    U.obj_id, ind=ind, mu=mu, options=options))
 
+    def solve_least_squares(self, V, ind=None, mu=None):
+        if self.vector or self.functional:
+            raise NotImplementedError
+        assert V in self.range
+        mu = self.parse_parameter(mu)
+        space = self.source
+        return space.type(space.subtype[0], space.subtype[1],
+                          mpi.call(mpi.method_call_manage, self.obj_id, 'solve_least_squares',
+                                   V.obj_id, ind=ind, mu=mu))
+
     def jacobian(self, U, mu=None):
         assert U in self.source
         mu = self.parse_parameter(mu)

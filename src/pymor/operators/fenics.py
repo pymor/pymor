@@ -70,6 +70,10 @@ if HAVE_FENICS:
                 df.solve(self.matrix, r.impl, v.impl)
             return R
 
+        def solve_least_squares(self, V, ind=None, mu=None):
+            self.logger.warn('solve_least_squares not implemented, falling back to generic solver')
+            super(FenicsMatrixOperator, self).solve_least_squares(V, ind=ind, mu=mu)
+
         def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
             if not all(isinstance(op, (FenicsMatrixOperator, ZeroOperator)) for op in operators):
                 return None

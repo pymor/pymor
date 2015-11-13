@@ -107,6 +107,16 @@ class OperatorBase(OperatorInterface):
             options = self.solver_options.get('generic') if self.solver_options else None
             return genericsolvers.apply_inverse(assembled_op, V.copy(ind), options=options)
 
+    def solve_least_squares(self, V, ind=None, mu=None):
+        from pymor.operators.constructions import FixedParameterOperator
+        assembled_op = self.assemble(mu)
+        if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
+            return assembled_op.solve_least_squares(V, ind=ind)
+        else:
+            options = (self.solver_options.get('generic_least_squares', 'least_squares') if self.solver_options
+                       else 'least_squares')
+            return genericsolvers.apply_inverse(assembled_op, V.copy(ind), options=options)
+
     def as_vector(self, mu=None):
         if not self.linear:
             raise TypeError('This nonlinear operator does not represent a vector or linear functional.')

@@ -198,6 +198,37 @@ class OperatorInterface(ImmutableInterface, Parametric):
         pass
 
     @abstractmethod
+    def solve_least_squares(self, V, ind=None, mu=None):
+        """Solve least squares problem.
+
+        If we denote `self` by A, then this method finds
+        for each vector v contained in `V` vectors u s.t. ::
+
+            u = argmin ||Au - v||_2
+                  u'
+
+        Parameters
+        ----------
+        V
+            |VectorArray| of vectors for which the least squares problem is solved.
+        ind
+            The indices of the vectors in `V` for which the least squares problem
+            shall be solved. (See the |VectorArray| documentation for further details.)
+        mu
+            The |Parameter| for which to solve the least squares problem.
+
+        Returns
+        -------
+        |VectorArray| of the least squares problem solutions.
+
+        Raises
+        ------
+        InversionError
+            The the least squares problems could not be solved.
+        """
+        pass
+
+    @abstractmethod
     def jacobian(self, U, mu=None):
         """Return the operator's Jacobian.
 

@@ -679,6 +679,13 @@ class FixedParameterOperator(OperatorBase):
             op = self.operator
         return op.apply_inverse(V, ind=ind, mu=self.mu)
 
+    def solve_least_squares(self, V, ind=None, mu=None):
+        if self.solver_options is not None and self.solver_options != self.operator.solver_options:
+            op = self.operator.with_(solver_options=self.solver_options)
+        else:
+            op = self.operator
+        return op.solve_least_squares(V, ind=ind, mu=self.mu)
+
 
 class AdjointOperator(OperatorBase):
     """Represents the adjoint of a given |Operator|.

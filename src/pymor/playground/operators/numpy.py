@@ -81,6 +81,38 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
                                 for v in vectors],
                                subtype=self.source.subtype)
 
+    def solve_least_squares(self, V, ind=None, mu=None):
+        assert V in self.range
+        assert V.check_ind(ind)
+        assert not self.functional and not self.vector
+
+        if V.dim == 0:
+            if self.source.dim == 0:
+                return ListVectorArray([NumpyVector(np.zeros(0), copy=False) for _ in range(V.len_ind(ind))],
+                                       subtype=self.source.subtype)
+            else:
+                raise InversionError
+
+        if ind is None:
+            vectors = V._list
+        elif isinstance(ind, Number):
+            vectors = [V._list[ind]]
+        else:
+            vectors = (V._list[i] for i in ind)
+
+        if self.solver_options:
+            options = self.solver_options.get(('numpy_sparse_least_squares' if self.sparse
+                                               else 'numpy_dense_least_squares'),
+                                              'least_squares')
+        else:
+            options = 'least_squares'
+
+        return ListVectorArray([NumpyVector(_apply_inverse(self._matrix, v._array.reshape((1, -1)),
+                                                           options=options).ravel(),
+                                            copy=False)
+                                for v in vectors],
+                               subtype=self.source.subtype)
+
     def as_vector(self, mu=None):
         if self.source.dim != 1 and self.range.dim != 1:
             raise TypeError('This operator does not represent a vector or linear functional.')
