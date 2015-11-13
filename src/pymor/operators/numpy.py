@@ -407,7 +407,7 @@ def dense_options(default_solver='solve',
           'pyamg_sa_accel', 'pyamg_sa_tol', 'pyamg_sa_maxiter',
           sid_ignore=('least_squares_lsmr_show', 'least_squares_lsqr_show', 'pyamg_verb'))
 def sparse_options(default_solver='spsolve',
-                   default_least_squares_solver='least_squares_generic_lsmr',
+                   default_least_squares_solver='least_squares_lsmr',
                    bicgstab_tol=1e-15,
                    bicgstab_maxiter=None,
                    spilu_drop_tol=1e-4,
