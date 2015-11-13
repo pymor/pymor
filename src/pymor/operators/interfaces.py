@@ -23,12 +23,15 @@ class OperatorInterface(ImmutableInterface, Parametric):
     Attributes
     ----------
     solver_options
-        Solver options used for :meth:`~OperatorInterface.apply_inverse`.
+        Solver options used for :meth:`~OperatorInterface.apply_inverse`
+        and :meth:`~OperatorInterface.solve_least_squares`.
         If `None`, default options are used. If not `None`, a dict of
         options for different operator backends.
-        (In pyMOR itself, the keys `'numpy_dense'`, `'numpy_sparse'` for
-        |NumpyMatrixBasedOperators| and `'generic'` for the generic
-        fallback solvers in :mod:`pymor.algorithms.genericsolvers` are
+        (In pyMOR itself, the keys `'numpy_dense'`, `'numpy_sparse'`,
+        `'numpy_dense_least_squares'`, `'numpy_sparse_least_squares'`
+        for |NumpyMatrixBasedOperators| and `'generic'`,
+        `'generic_least_squares'` for the generic fallback solvers
+        in :mod:`pymor.algorithms.genericsolvers` are
         recognized. Arbitrary other entries may be added to customize
         external linear solvers.)
         Note that `solver_options` is usually inherited by derived
