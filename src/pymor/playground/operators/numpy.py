@@ -51,24 +51,24 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
     def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
         raise NotImplementedError
 
-    def apply_inverse(self, U, ind=None, mu=None):
-        assert U in self.range
-        assert U.check_ind(ind)
+    def apply_inverse(self, V, ind=None, mu=None):
+        assert V in self.range
+        assert V.check_ind(ind)
         assert not self.functional and not self.vector
 
-        if U.dim == 0:
+        if V.dim == 0:
             if self.source.dim == 0:
-                return ListVectorArray([NumpyVector(np.zeros(0), copy=False) for _ in range(U.len_ind(ind))],
+                return ListVectorArray([NumpyVector(np.zeros(0), copy=False) for _ in range(V.len_ind(ind))],
                                        subtype=self.source.subtype)
             else:
                 raise InversionError
 
         if ind is None:
-            vectors = U._list
+            vectors = V._list
         elif isinstance(ind, Number):
-            vectors = [U._list[ind]]
+            vectors = [V._list[ind]]
         else:
-            vectors = (U._list[i] for i in ind)
+            vectors = (V._list[i] for i in ind)
 
         if self.solver_options:
             options = self.solver_options.get('numpy_sparse' if self.sparse else 'numpy_dense')
