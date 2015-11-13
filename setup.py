@@ -126,7 +126,8 @@ def _setup(**kwargs):
                 'test': PyTest}
     from numpy import get_include
     ext_modules = [Extension("pymor.tools.relations", ["src/pymor/tools/relations.pyx"], include_dirs=[get_include()]),
-                   Extension("pymor.tools.inplace", ["src/pymor/tools/inplace.pyx"], include_dirs=[get_include()])]
+                   Extension("pymor.tools.inplace", ["src/pymor/tools/inplace.pyx"], include_dirs=[get_include()]),
+                   Extension("pymor.grids._unstructured", ["src/pymor/grids/_unstructured.pyx"], include_dirs=[get_include()])]
     # for some reason the *pyx files don't end up in sdist tarballs -> manually add them as package data
     # this _still_ doesn't make them end up in the tarball however -> manually add them in MANIFEST.in
     kwargs['package_data'] = {'pymor': list(itertools.chain(*[i.sources for i in ext_modules])) }

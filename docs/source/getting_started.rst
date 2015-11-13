@@ -33,11 +33,11 @@ directory of the source repository.  Try launching one of
 them using the ``pymor-demo`` script contained in the ``python-pymor-demos``
 package::
 
-    pymor-demo thermalblock --with-estimator --plot-err --plot-solutions 3 2 3 32
+    pymor-demo thermalblock --plot-err --plot-solutions 3 2 3 32
 
 The demo scripts can also be launched directly from the source tree::
 
-    ./thermalblock.py --with-estimator --plot-err --plot-solutions 3 2 3 32
+    ./thermalblock.py --plot-err --plot-solutions 3 2 3 32
 
 This will solve and reduce the so called thermal block problem using
 the reduced basis method with a greedy basis generation algorithm.

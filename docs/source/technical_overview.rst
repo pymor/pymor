@@ -127,7 +127,7 @@ operating on objects of the following types:
 
     Apart from describing the discrete problem, discretizations also implement
     algorithms for |solving| the given problem, returning |VectorArrays|
-    with space |solution_space|. The solution is usually |cached|, s.t.
+    with space |solution_space|. The solution can be |cached|, s.t.
     subsequent solving of the problem for the same parameters reduces to
     looking up the solution in pyMOR's cache.
 

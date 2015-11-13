@@ -11,6 +11,13 @@ PYLIBPATH := $(shell python -c "from distutils.command.build import build ; from
 export DH_VERBOSE=1
 export DH_OPTIONS=-v
 
+define buildscript
+import sys,sysconfig
+print("build/lib.{}-{}.{}".format(sysconfig.get_platform(), *sys.version_info[:2]))
+endef
+
+builddir := $(shell python -c '$(buildscript)')
+
 export PYMOR_DEB_VERSION=$(shell dpkg-parsechangelog | sed -n -e 's/^Version: //p')
 
 %:
@@ -21,9 +28,9 @@ override_dh_auto_install:
 	dh_auto_install
 
 override_dh_auto_build:
-	# pretend we're on RTD to mock missing deps on import
-	READTHEDOCS=True python setup.py build_sphinx -b html
 	dh_auto_build
+	python setup.py build
+	PYTHONPATH=$(builddir) http_proxy='127.0.0.1:9' READTHEDOCS=True python setup.py build_sphinx -b html
 
 override_dh_sphinxdoc-arch:
 

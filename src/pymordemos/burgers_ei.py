@@ -30,6 +30,10 @@ Arguments:
 
 
 Options:
+  --cache-region=REGION           Name of cache region to use for caching solution snapshots
+                                  (NONE, MEMORY, DISK, PERSISTENT)
+                                  [default: DISK]
+
   --grid=NI                       Use grid with (2*NI)*NI elements [default: 60].
 
   --grid-type=TYPE                Type of grid to use (rect, tria) [default: rect].
@@ -91,6 +95,7 @@ from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
 def burgers_demo(args):
+    args['--cache-region'] = args['--cache-region'].lower()
     args['--grid'] = int(args['--grid'])
     args['--grid-type'] = args['--grid-type'].lower()
     assert args['--grid-type'] in ('rect', 'tria')
@@ -126,6 +131,9 @@ def burgers_demo(args):
     discretization, _ = discretizer(problem, diameter=1. / args['--grid'],
                                     num_flux=args['--num-flux'], lxf_lambda=args['--lxf-lambda'],
                                     nt=args['--nt'], domain_discretizer=domain_discretizer)
+
+    if args['--cache-region'] != 'none':
+        discretization.enable_caching(args['--cache-region'])
 
     print(discretization.operator.grid)
 

@@ -45,16 +45,17 @@ the memory cache region can be configured via the
 `pymor.core.cache.default_regions.disk_max_size` and
 `pymor.core.cache.default_regions.memory_max_keys` |defaults|.
 
-There are multiple ways to disable and enable caching in pyMOR:
+There two ways to disable and enable caching in pyMOR:
 
-    1. Calling :func:`disable_caching` (:func:`enable_caching`).
-    2. Setting `cache_regions[region].enabled` to `False` or `True`.
-    3. Calling :meth:`CacheableInterface.disable_caching`
-       (:meth:`CacheableInterface.enable_caching`).
+    1. Calling :func:`disable_caching` (:func:`enable_caching`), to disable
+       (enable) caching globally.
+    2. Calling :meth:`CacheableInterface.disable_caching`
+       (:meth:`CacheableInterface.enable_caching`) to disable (enable) caching
+       for a given instance.
 
-Caching of a method is only active, if caching is enabled on global,
-region and instance level. For debugging purposes, it is moreover possible
-to set the environment variable `PYMOR_CACHE_DISABLE=1` which overrides
+Caching of a method is only active if caching has been enabled both globally
+(enabled by default) and on instance level. For debugging purposes, it is moreover
+possible to set the environment variable `PYMOR_CACHE_DISABLE=1` which overrides
 any call to :func:`enable_caching`.
 
 A cache region can be emptied using :meth:`CacheRegion.clear`. The function
@@ -65,6 +66,7 @@ A cache region can be emptied using :meth:`CacheRegion.clear`. The function
 from __future__ import absolute_import, division, print_function
 # cannot use unicode_literals here, or else dbm backend fails
 
+import atexit
 from collections import OrderedDict
 import datetime
 from functools import partial
@@ -80,16 +82,24 @@ from pymor.core.interfaces import ImmutableInterface, generate_sid
 from pymor.core.pickle import dump, load
 
 
+@atexit.register
+def cleanup_non_persisten_regions():
+    for region in cache_regions.values():
+        if not region.persistent:
+            region.clear()
+
+
 class CacheRegion(object):
     """Base class for all pyMOR cache regions.
 
     Attributes
     ----------
-    enabled
-        If `False` caching is disabled for this region.
+    persistent
+        If `True`, cache entries are kept between multiple
+        program runs.
     """
 
-    enabled = True
+    persistent = False
 
     def get(self, key):
         raise NotImplementedError
@@ -128,11 +138,10 @@ class MemoryRegion(CacheRegion):
 
 class SQLiteRegion(CacheRegion):
 
-    enabled = True
-
-    def __init__(self, path, max_size):
+    def __init__(self, path, max_size, persistent):
         self.path = path
         self.max_size = max_size
+        self.persistent = persistent
         self.bytes_written = 0
         if not os.path.exists(path):
             os.mkdir(path)
@@ -143,7 +152,10 @@ class SQLiteRegion(CacheRegion):
             conn.commit()
         else:
             self.conn = sqlite3.connect(os.path.join(path, 'pymor_cache.db'))
-            self.housekeeping()
+            if persistent:
+                self.housekeeping()
+            else:
+                self.clear()
 
     def get(self, key):
         c = self.conn.cursor()
@@ -236,9 +248,12 @@ class SQLiteRegion(CacheRegion):
             getLogger('pymor.core.cache.SQLiteRegion').info('Removed {} old cache entries'.format(len(ids_to_delete)))
 
 
-@defaults('disk_path', 'disk_max_size', 'memory_max_keys', sid_ignore=('disk_path', 'disk_max_size', 'memory_max_keys'))
+@defaults('disk_path', 'disk_max_size', 'persistent_path', 'persistent_max_size', 'memory_max_keys',
+          sid_ignore=('disk_path', 'disk_max_size', 'persistent_path', 'persistent_max_size', 'memory_max_keys'))
 def default_regions(disk_path=os.path.join(tempfile.gettempdir(), 'pymor.cache.' + getpass.getuser()),
                     disk_max_size=1024 ** 3,
+                    persistent_path=os.path.join(tempfile.gettempdir(), 'pymor.persistent.cache.' + getpass.getuser()),
+                    persistent_max_size=1024 ** 3,
                     memory_max_keys=1000):
 
     parse_size_string = lambda size: \
@@ -250,7 +265,8 @@ def default_regions(disk_path=os.path.join(tempfile.gettempdir(), 'pymor.cache.'
     if isinstance(disk_max_size, str):
         disk_max_size = parse_size_string(disk_max_size)
 
-    cache_regions['disk'] = SQLiteRegion(path=disk_path, max_size=disk_max_size)
+    cache_regions['disk'] = SQLiteRegion(path=disk_path, max_size=disk_max_size, persistent=False)
+    cache_regions['persistent'] = SQLiteRegion(path=persistent_path, max_size=persistent_max_size, persistent=True)
     cache_regions['memory'] = MemoryRegion(memory_max_keys)
 
 cache_regions = {}
@@ -301,8 +317,15 @@ class cached(object):
             region = cache_regions[im_self.cache_region]
         except KeyError:
             raise KeyError('No cache region "{}" found'.format(im_self.cache_region))
-        if not region.enabled:
-            return self.decorated_function(im_self, *args, **kwargs)
+
+        # compute id for self
+        if region.persistent:
+            self_id = getattr(im_self, 'sid')
+            if not self_id:     # this can happen when cache_region is already set by the class to
+                                # a persistent region
+                self_id = im_self.generate_sid()
+        else:
+            self_id = im_self.uid
 
         # ensure that passing a value as positional or keyword argument does not matter
         kwargs.update(zip(self.argnames, args))
@@ -312,9 +335,7 @@ class cached(object):
         if defaults:
             kwargs = dict(defaults, **kwargs)
 
-        key = generate_sid((self.decorated_function.__name__, getattr(im_self, 'sid', im_self.uid),
-                            kwargs,
-                            defaults_sid()))
+        key = generate_sid((self.decorated_function.__name__, self_id, kwargs, defaults_sid()))
         found, value = region.get(key)
         if found:
             return value
@@ -348,20 +369,9 @@ class CacheableInterface(ImmutableInterface):
         is disabled.
     """
 
-    sid_ignore = ImmutableInterface.sid_ignore | {'_CacheableInterface__cache_region'}
+    sid_ignore = ImmutableInterface.sid_ignore | {'cache_region'}
 
-    __cache_region = 'memory'
-
-    @property
-    def cache_region(self):
-        return self.__cache_region
-
-    @cache_region.setter
-    def cache_region(self, region):
-        if region in (None, 'none'):
-            self.__cache_region = None
-        else:
-            self.__cache_region = region
+    cache_region = None
 
     def disable_caching(self):
         """Disable caching for this instance."""
@@ -377,4 +387,10 @@ class CacheableInterface(ImmutableInterface):
             `pymor.core.cache.cache_regions`. If `None` or `'none'`, caching
             is disabled.
         """
-        self.cache_region = region
+        if region in (None, 'none'):
+            self.__dict__['cache_region'] = None
+        else:
+            self.__dict__['cache_region'] = region
+            r = cache_regions.get(region, None)
+            if r and r.persistent:
+                self.generate_sid()

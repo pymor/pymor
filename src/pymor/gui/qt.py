@@ -25,12 +25,16 @@ try:
 except ImportError:
     HAVE_PYSIDE = False
 
+import multiprocessing
+import os
+import signal
+import time
+
 from pymor.core.defaults import defaults
 from pymor.core.interfaces import BasicInterface
 from pymor.core.logger import getLogger
 from pymor.grids.oned import OnedGrid
-from pymor.grids.rect import RectGrid
-from pymor.grids.tria import TriaGrid
+from pymor.grids.referenceelements import triangle, square
 from pymor.gui.gl import GLPatchWidget, ColorBarWidget, HAVE_GL
 from pymor.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget, HAVE_MATPLOTLIB
 from pymor.tools.vtkio import HAVE_PYVTK, write_vtk
@@ -180,6 +184,8 @@ if HAVE_PYSIDE:
                 self.slider.setValue(ind)
 
 
+_launch_qt_app_pids = set()
+
 def _launch_qt_app(main_window_factory, block):
     """Wrapper to display plot in a separate process."""
 
@@ -195,11 +201,31 @@ def _launch_qt_app(main_window_factory, block):
     if block:
         doit()
     else:
-        from multiprocessing import Process
-        p = Process(target=doit)
+        p = multiprocessing.Process(target=doit)
         p.start()
+        _launch_qt_app_pids.add(p.pid)
         if block:
             p.join()
+
+
+def stop_gui_processes():
+    for p in multiprocessing.active_children():
+        if p.pid in _launch_qt_app_pids:
+            p.terminate()
+
+    waited = 0
+    while any(p.pid in _launch_qt_app_pids for p in multiprocessing.active_children()):
+        time.sleep(1)
+        waited += 1
+        if waited == 5:
+            break
+
+    for p in multiprocessing.active_children():
+        if p.pid in _launch_qt_app_pids:
+            try:
+                os.kill(p.pid, signal.SIGKILL)
+            except OSError:
+                pass
 
 
 @defaults('backend', sid_ignore=('backend',))
@@ -438,7 +464,8 @@ class PatchVisualizer(BasicInterface):
     """
 
     def __init__(self, grid, bounding_box=([0, 0], [1, 1]), codim=2, backend=None, block=False):
-        assert isinstance(grid, (RectGrid, TriaGrid))
+        assert grid.reference_element in (triangle, square)
+        assert grid.dim_outer == 2
         assert codim in (0, 2)
         self.grid = grid
         self.bounding_box = bounding_box

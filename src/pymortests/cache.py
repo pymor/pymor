@@ -36,7 +36,7 @@ class IamDiskCached(cache.CacheableInterface):
 
 class IamLimitedCached(cache.CacheableInterface):
 
-    def __init__(self, region='disk'):
+    def __init__(self, cache_region='disk'):
         self.cache_region = region
 
     @cache.cached
@@ -85,7 +85,7 @@ class TestCache(TestInterface):
     def test_region_api(self):
         tempdir = gettempdir()
         backends = [cache.MemoryRegion(100), cache.SQLiteRegion(path=os.path.join(tempdir, str(uuid4())),
-                                                                max_size=1024 ** 2)]
+                                                                max_size=1024 ** 2, persistent=False)]
         for backend in backends:
             assert not backend.get('mykey')[0]
             backend.set('mykey', 1)
