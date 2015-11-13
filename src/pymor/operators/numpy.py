@@ -382,7 +382,7 @@ def dense_options(default_solver='solve',
           'pyamg_sa_accel', 'pyamg_sa_tol', 'pyamg_sa_maxiter',
           sid_ignore=('least_squares_lsmr_show', 'least_squares_lsqr_show', 'pyamg_verb'))
 def sparse_options(default_solver='spsolve',
-                   default_least_squares_solver='least_squares_generic_lsmr',
+                   default_least_squares_solver='least_squares_lsmr',
                    bicgstab_tol=1e-15,
                    bicgstab_maxiter=None,
                    spilu_drop_tol=1e-4,
@@ -442,11 +442,10 @@ def sparse_options(default_solver='spsolve',
     ----------
     default_solver
         Default sparse solver to use (spsolve, bicgstab, bicgstab_spilu, pyamg,
-        pyamg_rs, pyamg_sa, generic_lgmres, least_squares_generic_lsmr,
-        least_squares_generic_lsqr).
+        pyamg_rs, pyamg_sa, generic_lgmres, least_squares_lsmr, least_squares_lsqr).
     default_least_squares_solver
-        Default solver to use for least squares problems (least_squares_generic_lsmr,
-        least_squares_generic_lsqr).
+        Default solver to use for least squares problems (least_squares_lsmr,
+        least_squares_lsqr).
     bicgstab_tol
         See :func:`scipy.sparse.linalg.bicgstab`.
     bicgstab_maxiter
