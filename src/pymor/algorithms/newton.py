@@ -13,8 +13,8 @@ from pymor.core.logger import getLogger
 
 @defaults('miniter', 'maxiter', 'reduction', 'abs_limit', 'stagnation_window', 'stagnation_threshold')
 def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_squares=False,
-           miniter=0, maxiter=10, reduction=1e-10, abs_limit=1e-15,
-           stagnation_window=0, stagnation_threshold=1e99,
+           miniter=0, maxiter=100, reduction=-1., abs_limit=-1.,
+           stagnation_window=3, stagnation_threshold=0.9,
            return_stages=False, return_residuals=False):
     """Basic Newton algorithm.
 
