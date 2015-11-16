@@ -333,7 +333,7 @@ class LTISystem(DiscretizationInterface):
         else:
             raise NotImplementedError('Only H2 and Hankel norms are implemented.')
 
-    def project(self, Vr, Wr):
+    def project(self, Vr, Wr, Er_is_identity=False):
         """Reduce using Petrov-Galerkin projection.
 
         Parameters
@@ -342,41 +342,56 @@ class LTISystem(DiscretizationInterface):
             Right projection matrix.
         Wr
             Left projection matrix.
+        Er_is_identity
+            If the reduced `E` is guaranteed to be the identity matrix.
 
         Returns
         -------
         Ar
-            |NumPy array| of size r x r.
+            |NumPy array| of size `r x r`.
         Br
-            |NumPy array| of size r x m.
+            |NumPy array| of size `r x m`.
         Cr
-            |NumPy array| of size p x r.
+            |NumPy array| of size `p x r`.
         Dr
-            |NumPy array| of size p x m or None.
+            |NumPy array| of size `p x m` or `None`.
         Er
-            |NumPy array| of size r x r.
+            |NumPy array| of size `r x r`.
         """
         Ar = self.A.apply2(Wr, Vr)
+
         Br = Wr.dot(self.B)
+
         Cr = self.C.dot(Vr)
+
         if self.D is None:
             Dr = None
         else:
             Dr = self.D.copy()
-        if self.E is None:
-            Er = Wr.dot(Vr)
+
+        if Er_is_identity:
+            Er = None
         else:
-            Er = self.E.apply2(Wr, Vr)
+            if self.E is None:
+                Er = Wr.dot(Vr)
+            else:
+                Er = self.E.apply2(Wr, Vr)
 
         return Ar, Br, Cr, Dr, Er
 
-    def bt(self, r):
-        """Reduce using the balanced truncation method to order r.
+    def bt(self, r=None, tol=None, meth='bfsr'):
+        """Reduce using the Balanced Truncation method to order `r` or with tolerance `tol`.
 
         Parameters
         ----------
         r
-            Order of the reduced model.
+            Order of the reduced model if `tol` is None.
+        tol
+            Tolerance for the absolute H_inf-error if `r` is None.
+        meth
+            Method used:
+            * square root method ('sr')
+            * balancing-free square root method ('bfsr')
 
         Returns
         -------
@@ -388,16 +403,39 @@ class LTISystem(DiscretizationInterface):
         reduction_data
             Additional data produced by the reduction process. Contains projection matrices `Vr` and `Wr`.
         """
-        assert 0 < r < self.n
+        assert r is not None and tol is None or r is None and tol is not None
+        assert r is None or  0 < r < self.n
+        assert meth in {'sr', 'bfsr'}
+
+        self.compute_cgf()
+        self.compute_ogf()
+
+        if r is not None and r > min([len(self._cgf), len(self._ogf)]):
+            raise ValueError('r needs to be smaller than the sizes of Gramian factors.\
+                              Try reducing the tolerance in the low-rank Lyapunov equation solver.')
 
         self.compute_hsv_U_V()
 
+        if r is None:
+            bounds = np.cumsum(self._hsv)
+            bounds = bounds[-1] - bounds
+            bounds *= 2
+            r = min(i + 1 for i, b in enumerate(bounds) if b <= tol)
+
         Vr = VectorArrayOperator(self._cgf).apply(self._U, ind=range(r))
         Wr = VectorArrayOperator(self._ogf).apply(self._V, ind=range(r))
-        Vr = gram_schmidt(Vr, atol=0, rtol=0)
-        Wr = gram_schmidt(Wr, atol=0, rtol=0)
 
-        Ar, Br, Cr, Dr, Er = self.project(Vr, Wr)
+        if meth == 'sr':
+            alpha = 1 / np.sqrt(self._hsv[:r])
+            Vr.scal(alpha)
+            Wr.scal(alpha)
+
+            Ar, Br, Cr, Dr, Er = self.project(Vr, Wr, Er_is_identity=True)
+        elif meth == 'bfsr':
+            Vr = gram_schmidt(Vr, atol=0, rtol=0)
+            Wr = gram_schmidt(Wr, atol=0, rtol=0)
+
+            Ar, Br, Cr, Dr, Er = self.project(Vr, Wr)
 
         rom = LTISystem.from_matrices(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
         rc = GenericRBReconstructor(Vr)
@@ -439,6 +477,7 @@ class LTISystem(DiscretizationInterface):
 
                 Bb = VectorArrayOperator(self.B).apply(NumpyVectorArray(b[:, i].real.T))
                 Vr.append(sEmA.apply_inverse(Bb))
+
                 CTc = VectorArrayOperator(self.C).apply(NumpyVectorArray(c[:, i].real.T))
                 Wr.append(sEmA.apply_adjoint_inverse(CTc))
             elif sigma[i].imag > 0:
