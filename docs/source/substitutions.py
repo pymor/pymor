@@ -102,6 +102,9 @@ common = '''
 
 .. |reduce_generic_rb| replace:: :func:`~pymor.reductors.basic.reduce_generic_rb`
 
+.. |LTISystem| replace:: :class:`~pymor.discretizations.iosys.LTISystem`
+.. |LTISystems| replace:: :class:`LTISystems <pymor.discretizations.iosys.LTISystem>`
+
 .. |NumPy| replace:: :mod:`NumPy <numpy>`
 .. |NumPy array| replace:: :class:`NumPy array <numpy.ndarray>`
 .. |NumPy arrays| replace:: :class:`NumPy arrays <numpy.ndarray>`
@@ -109,6 +112,12 @@ common = '''
 .. |Numpy arrays| replace:: :class:`NumPy arrays <numpy.ndarray>`
 .. |array| replace:: :class:`NumPy array <numpy.ndarray>`
 .. |Array| replace:: :class:`NumPy array <numpy.ndarray>`
+
+.. |SciPy| replace:: :mod:`SciPy <scipy>`
+.. |SciPy spmatrix| replace:: :class:`SciPy spmatrix <scipy.sparse.spmatrix>`
+.. |SciPy spmatrices| replace:: :class:`SciPy spmatrices <scipy.sparse.spmatrix>`
+.. |Scipy spmatrix| replace:: :class:`SciPy spmatrix <scipy.sparse.spmatrix>`
+.. |Scipy spmatrices| replace:: :class:`SciPy spmatrices <scipy.sparse.spmatrix>`
 
 .. |OrderedDict| replace:: :class:`~collections.OrderedDict`
 
