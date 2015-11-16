@@ -265,10 +265,8 @@ class LTISystem(DiscretizationInterface):
         E = self.E
         if E is None:
             if not A.sparse:
-                import scipy as sp
                 E = NumpyMatrixOperator(sp.eye(self.n))
             else:
-                import scipy.sparse as sps
                 E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
 
         for i in xrange(len(w)):
@@ -316,7 +314,7 @@ class LTISystem(DiscretizationInterface):
         Parameters
         ----------
         name
-            Name of the norm ('H2')
+            Name of the norm ('H2', 'Hankel')
         """
         if name == 'H2':
             if self._cgf is not None:
@@ -329,8 +327,11 @@ class LTISystem(DiscretizationInterface):
             else:
                 self.compute_ogf()
                 return spla.norm(self.B.dot(self._ogf))
+        elif name == 'Hankel':
+            self.compute_hsv_U_V()
+            return self._hsv[0]
         else:
-            raise NotImplementedError('Only H2 norm is implemented.')
+            raise NotImplementedError('Only H2 and Hankel norms are implemented.')
 
     def project(self, Vr, Wr):
         """Reduce using Petrov-Galerkin projection.
