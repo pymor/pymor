@@ -45,9 +45,9 @@ class LTISystem(DiscretizationInterface):
     C
         The |VectorArray| C^T.
     D
-        The |Operator| D or None (then D is assumed to be zero).
+        The |Operator| D or `None` (then D is assumed to be zero).
     E
-        The |Operator| E or None (then E is assumed to be the identity).
+        The |Operator| E or `None` (then E is assumed to be the identity).
     cont_time
         `True` if the system is continuous-time, otherwise discrete-time.
 
@@ -92,7 +92,7 @@ class LTISystem(DiscretizationInterface):
 
     @classmethod
     def from_matrices(cls, A, B, C, D=None, E=None, cont_time=True):
-        """Create LTISystem from matrices.
+        """Create |LTISystem| from matrices.
 
         Parameters
         ----------
@@ -103,16 +103,16 @@ class LTISystem(DiscretizationInterface):
         C
             The |NumPy array|, |SciPy spmatrix| C.
         D
-            The |NumPy array|, |SciPy spmatrix| D or None (then D is assumed to be zero).
+            The |NumPy array|, |SciPy spmatrix| D or `None` (then D is assumed to be zero).
         E
-            The |NumPy array|, |SciPy spmatrix| E or None (then E is assumed to be the identity).
+            The |NumPy array|, |SciPy spmatrix| E or `None` (then E is assumed to be the identity).
         cont_time
             `True` if the system is continuous-time, otherwise discrete-time.
 
         Returns
         -------
         lti
-            LTISystem with operators A, B, C, D, and E.
+            |LTISystem| with operators A, B, C, D, and E.
         """
         assert isinstance(A, (np.ndarray, sps.spmatrix))
         assert isinstance(B, (np.ndarray, sps.spmatrix))
@@ -132,12 +132,12 @@ class LTISystem(DiscretizationInterface):
 
     @classmethod
     def from_mat_file(cls, file_name, cont_time=True):
-        """Create LTISystem from matrices stored in a .mat file.
+        """Create |LTISystem| from matrices stored in a .mat file.
 
         Parameters
         ----------
         file_name
-            Name of the mat file (extension .mat does not need to be included)
+            Name of the .mat file (extension .mat does not need to be included)
             containing A, B, C, and optionally D and E.
         cont_time
             `True` if the system is continuous-time, otherwise discrete-time.
@@ -145,7 +145,7 @@ class LTISystem(DiscretizationInterface):
         Returns
         -------
         lti
-            LTISystem with operators A, B, C, D, and E.
+            |LTISystem| with operators A, B, C, D, and E.
         """
         import scipy.io as spio
         mat_dict = spio.loadmat(file_name)
@@ -170,7 +170,7 @@ class LTISystem(DiscretizationInterface):
         raise NotImplementedError('Discretization has no solver.')
 
     def __add__(self, other):
-        """Add two LTI systems."""
+        """Add two |LTISystems|."""
         assert isinstance(other, LTISystem)
         assert self.m == other.m and self.p == other.p
         assert self.cont_time == other.cont_time
@@ -224,7 +224,7 @@ class LTISystem(DiscretizationInterface):
         return LTISystem.from_matrices(A, B, C, D, E, self.cont_time)
 
     def __neg__(self):
-        """Negate LTI system."""
+        """Negate |LTISystem|."""
         A = self.A
         B = self.B
         C = NumpyVectorArray(-self.C.data)
@@ -236,7 +236,7 @@ class LTISystem(DiscretizationInterface):
         return LTISystem(A, B, C, D, E, self.cont_time)
 
     def __sub__(self, other):
-        """Subtract two LTI systems."""
+        """Subtract two |LTISystems|."""
         return self + (-other)
 
     def bode(self, w):
@@ -311,7 +311,7 @@ class LTISystem(DiscretizationInterface):
             self._V = NumpyVectorArray(Vh)
 
     def norm(self, name='H2'):
-        """Compute a norm of the LTI system.
+        """Compute a norm of the |LTISystem|.
 
         Parameters
         ----------
@@ -345,15 +345,15 @@ class LTISystem(DiscretizationInterface):
         Returns
         -------
         Ar
-            |NumPy| matrix of size r x r.
+            |NumPy array| of size r x r.
         Br
-            |NumPy| matrix of size r x m.
+            |NumPy array| of size r x m.
         Cr
-            |NumPy| matrix of size p x r.
+            |NumPy array| of size p x r.
         Dr
-            |NumPy| matrix of size p x m or None.
+            |NumPy array| of size p x m or None.
         Er
-            |NumPy| matrix of size r x r.
+            |NumPy array| of size r x r.
         """
         Ar = self.A.apply2(Wr, Vr)
         Br = Wr.dot(self.B)
@@ -385,7 +385,7 @@ class LTISystem(DiscretizationInterface):
             The reconstructor providing a `reconstruct(U)` method which reconstructs
             high-dimensional solutions from solutions `U` of the reduced |LTISystem|.
         reduction_data
-            Additional data produced by the reduction process. Contains projection matrices Vr and Wr.
+            Additional data produced by the reduction process. Contains projection matrices `Vr` and `Wr`.
         """
         assert 0 < r < self.n
 
@@ -405,16 +405,16 @@ class LTISystem(DiscretizationInterface):
         return rom, rc, reduction_data
 
     def interpolation(self, sigma, b, c):
-        """Find Vr and Wr.
+        """Find `Vr` and `Wr`.
 
         Parameters
         ----------
         sigma
-            Interpolation points (closed under conjugation), vector of length r.
+            Interpolation points (closed under conjugation), list of length `r`.
         b
-            Right tangential directions, array of order m x r.
+            Right tangential directions, |NumPy array| of order `m x r`.
         c
-            Left tangential directions, array of order p x r.
+            Left tangential directions, |NumPy array| of order `p x r`.
 
         Returns
         -------
@@ -468,11 +468,11 @@ class LTISystem(DiscretizationInterface):
         Parameters
         ----------
         sigma
-            Initial interpolation points (closed under conjugation), list of length r.
+            Initial interpolation points (closed under conjugation), list of length `r`.
         b
-            Initial right tangential directions, array of order m x r.
+            Initial right tangential directions, |NumPy array| of order `m x r`.
         c
-            Initial left tangential directions, array of order p x r.
+            Initial left tangential directions, |NumPy array| of order `p x r`.
         tol
             Tolerance, largest change in interpolation points.
         maxit
@@ -487,9 +487,9 @@ class LTISystem(DiscretizationInterface):
         rc
             Reconstructor of full state.
         reduction_data
-            Dictionary of additional data produced by the reduction process. Contains projection matrices Vr and Wr,
-            distances between interpolation points in different iterations dist, and interpolation points from all
-            iterations Sigma.
+            Dictionary of additional data produced by the reduction process. Contains
+            projection matrices `Vr` and `Wr`, distances between interpolation points in
+            different iterations `dist`, and interpolation points from all iterations `Sigma`.
         """
         Vr, Wr = self.interpolation(sigma, b, c)
 
