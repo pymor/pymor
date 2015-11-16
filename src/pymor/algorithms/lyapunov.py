@@ -6,15 +6,11 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-import scipy.sparse as sps
-
-from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorArray
-
 import pymess
 
 
-def solve_lyap(A, E, B, trans=False):
+def solve_lyap(A, E, B, trans=False, tol=None):
     """Find a factor of the solution of a Lyapunov equation
 
     Returns factor Z such that Z * Z^T is approximately the solution X of a Lyapunov equation (if E is None)::
@@ -43,6 +39,8 @@ def solve_lyap(A, E, B, trans=False):
         The |VectorArray| B.
     trans
         If A, E, and B need to be transposed.
+    tol
+        Tolerance parameter.
     """
     if A.source.dim <= 1000:
         if not A.sparse:
@@ -65,6 +63,10 @@ def solve_lyap(A, E, B, trans=False):
         opts = pymess.options()
         if trans:
             opts.type = pymess.MESS_OP_TRANSPOSE
+        if tol is not None:
+            opts.rel_change_tol = tol
+            opts.adi.res2_tol = tol
+            opts.adi.res2c_tol = tol
         if E is None:
             if not trans:
                 eqn = pymess.equation_lyap(opts, A._matrix, None, B.data.T)
