@@ -122,9 +122,8 @@ class ExplicitEulerTimeStepper(TimeStepperInterface):
 def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None, num_values=None):
     assert isinstance(A, OperatorInterface)
     assert isinstance(F, (type(None), OperatorInterface, VectorArrayInterface))
-    assert isinstance(M, OperatorInterface)
-    assert not M.parametric
-    assert A.source == A.range == M.source == M.range
+    assert isinstance(M, (type(None), OperatorInterface))
+    assert A.source == A.range
     num_values = num_values or nt + 1
     dt = (t1 - t0) / nt
     DT = (t1 - t0) / (num_values - 1)
@@ -143,6 +142,12 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, invert_options=None, num_va
         F_time_dep = False
         dt_F = F * dt
 
+    if M is None:
+        from pymor.operators.constructions import IdentityOperator
+        M = IdentityOperator(A.source)
+
+    assert A.source == M.source == M.range
+    assert not M.parametric
     assert U0 in A.source
     assert len(U0) == 1
 
