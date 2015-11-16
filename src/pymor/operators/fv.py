@@ -13,6 +13,7 @@ from itertools import izip
 import numpy as np
 from scipy.sparse import coo_matrix, csc_matrix, dia_matrix
 
+from pymor.core.defaults import defaults
 from pymor.core.interfaces import ImmutableInterface, abstractmethod
 from pymor.functions.interfaces import FunctionInterface
 from pymor.grids.interfaces import AffineGridWithOrthogonalCentersInterface
@@ -20,7 +21,7 @@ from pymor.grids.boundaryinfos import SubGridBoundaryInfo
 from pymor.grids.subgrid import SubGrid
 from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import Concatenation, ComponentProjection
-from pymor.operators.numpy import NumpyMatrixBasedOperator
+from pymor.operators.numpy import NumpyMatrixBasedOperator, NumpyMatrixOperator
 from pymor.parameters.base import Parametric
 from pymor.tools.inplace import iadd_masked, isub_masked
 from pymor.tools.quadratures import GaussQuadratures
@@ -186,6 +187,11 @@ class EngquistOsherFlux(NumericalConvectiveFluxInterface):
         return Fs
 
 
+@defaults('delta')
+def jacobian_options(delta=1e-7):
+    return {'delta': delta}
+
+
 class NonlinearAdvectionOperator(OperatorBase):
     """Nonlinear finite volume advection |Operator|.
 
@@ -323,6 +329,117 @@ class NonlinearAdvectionOperator(OperatorBase):
         R /= VOLS0
 
         return NumpyVectorArray(R)
+
+    def jacobian(self, U, mu=None):
+        assert isinstance(U, NumpyVectorArray)
+        assert U in self.source and len(U) == 1
+        mu = self.parse_parameter(mu)
+
+        if not hasattr(self, '_grid_data'):
+            self._fetch_grid_data()
+
+        U = U.data.ravel()
+
+        g = self.grid
+        bi = self.boundary_info
+        gd = self._grid_data
+        SUPE = gd['SUPE']
+        VOLS0 = gd['VOLS0']
+        VOLS1 = gd['VOLS1']
+        BOUNDARIES = gd['BOUNDARIES']
+        CENTERS = gd['CENTERS']
+        DIRICHLET_BOUNDARIES = gd['DIRICHLET_BOUNDARIES']
+        NEUMANN_BOUNDARIES = gd['NEUMANN_BOUNDARIES']
+        UNIT_OUTER_NORMALS = gd['UNIT_OUTER_NORMALS']
+        INNER = np.setdiff1d(np.arange(g.size(1)), BOUNDARIES)
+
+        solver_options = self.solver_options
+        delta = solver_options.get('jacobian_delta') if solver_options else None
+        if delta is None:
+            delta = jacobian_options()['delta']
+
+        if bi.has_dirichlet:
+            if hasattr(self, '_dirichlet_values'):
+                dirichlet_values = self._dirichlet_values
+            elif self.dirichlet_data is not None:
+                dirichlet_values = self.dirichlet_data(CENTERS[DIRICHLET_BOUNDARIES], mu=mu)
+            else:
+                dirichlet_values = np.zeros_like(DIRICHLET_BOUNDARIES)
+            F_dirichlet = self.numerical_flux.evaluate_stage1(dirichlet_values, mu)
+
+        UP = U + delta
+        UM = U - delta
+        F = self.numerical_flux.evaluate_stage1(U, mu)
+        FP = self.numerical_flux.evaluate_stage1(UP, mu)
+        FM = self.numerical_flux.evaluate_stage1(UM, mu)
+        del UP, UM
+
+        F_edge = [f[SUPE] for f in F]
+        FP_edge = [f[SUPE] for f in FP]
+        FM_edge = [f[SUPE] for f in FM]
+        del F, FP, FM
+
+        F0P_edge = [f.copy() for f in F_edge]
+        for f, ff in zip(F0P_edge, FP_edge):
+            f[:, 0] = ff[:, 0]
+            f[BOUNDARIES, 1] = f[BOUNDARIES, 0]
+        if bi.has_dirichlet:
+            for f, f_d in izip(F0P_edge, F_dirichlet):
+                f[DIRICHLET_BOUNDARIES, 1] = f_d
+        NUM_FLUX_0P = self.numerical_flux.evaluate_stage2(F0P_edge, UNIT_OUTER_NORMALS, VOLS1, mu)
+        del F0P_edge
+
+        F0M_edge = [f.copy() for f in F_edge]
+        for f, ff in zip(F0M_edge, FM_edge):
+            f[:, 0] = ff[:, 0]
+            f[BOUNDARIES, 1] = f[BOUNDARIES, 0]
+        if bi.has_dirichlet:
+            for f, f_d in izip(F0M_edge, F_dirichlet):
+                f[DIRICHLET_BOUNDARIES, 1] = f_d
+        NUM_FLUX_0M = self.numerical_flux.evaluate_stage2(F0M_edge, UNIT_OUTER_NORMALS, VOLS1, mu)
+        del F0M_edge
+
+        D_NUM_FLUX_0 = (NUM_FLUX_0P - NUM_FLUX_0M)
+        D_NUM_FLUX_0 /= (2 * delta)
+        if bi.has_neumann:
+            D_NUM_FLUX_0[NEUMANN_BOUNDARIES] = 0
+        del NUM_FLUX_0P, NUM_FLUX_0M
+
+        F1P_edge = [f.copy() for f in F_edge]
+        for f, ff in zip(F1P_edge, FP_edge):
+            f[:, 1] = ff[:, 1]
+            f[BOUNDARIES, 1] = f[BOUNDARIES, 0]
+        if bi.has_dirichlet:
+            for f, f_d in izip(F1P_edge, F_dirichlet):
+                f[DIRICHLET_BOUNDARIES, 1] = f_d
+        NUM_FLUX_1P = self.numerical_flux.evaluate_stage2(F1P_edge, UNIT_OUTER_NORMALS, VOLS1, mu)
+        del F1P_edge, FP_edge
+
+        F1M_edge = F_edge
+        for f, ff in zip(F1M_edge, FM_edge):
+            f[:, 1] = ff[:, 1]
+            f[BOUNDARIES, 1] = f[BOUNDARIES, 0]
+        if bi.has_dirichlet:
+            for f, f_d in izip(F1M_edge, F_dirichlet):
+                f[DIRICHLET_BOUNDARIES, 1] = f_d
+        NUM_FLUX_1M = self.numerical_flux.evaluate_stage2(F1M_edge, UNIT_OUTER_NORMALS, VOLS1, mu)
+        del F1M_edge, FM_edge
+        D_NUM_FLUX_1 = (NUM_FLUX_1P - NUM_FLUX_1M)
+        D_NUM_FLUX_1 /= (2 * delta)
+        if bi.has_neumann:
+            D_NUM_FLUX_1[NEUMANN_BOUNDARIES] = 0
+        del NUM_FLUX_1P, NUM_FLUX_1M
+
+        I1 = np.hstack([SUPE[INNER, 0], SUPE[INNER, 0], SUPE[INNER, 1], SUPE[INNER, 1], SUPE[BOUNDARIES, 0]])
+        I0 = np.hstack([SUPE[INNER, 0], SUPE[INNER, 1], SUPE[INNER, 0], SUPE[INNER, 1], SUPE[BOUNDARIES, 0]])
+        V = np.hstack([D_NUM_FLUX_0[INNER], -D_NUM_FLUX_0[INNER], D_NUM_FLUX_1[INNER], -D_NUM_FLUX_1[INNER],
+                       D_NUM_FLUX_0[BOUNDARIES]])
+
+        A = coo_matrix((V, (I0, I1)), shape=(g.size(0), g.size(0)))
+        A = csc_matrix(A).copy()   # See pymor.operators.cg.DiffusionOperatorP1 for why copy() is necessary
+        A = dia_matrix(([1. / VOLS0], [0]), shape=(g.size(0),) * 2) * A
+
+        return NumpyMatrixOperator(A)
 
 
 def nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, flux, lxf_lambda=1.0,
