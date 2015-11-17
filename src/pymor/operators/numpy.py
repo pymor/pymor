@@ -237,19 +237,27 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             V.data[ind] if hasattr(ind, '__len__') else V.data[ind:ind + 1]
         return NumpyVectorArray(_apply_inverse(self._matrix, V, options=options), copy=False)
 
-    def apply_adjoint_inverse(self, U, ind=None, mu=None, options=None):
-        assert U in self.source
-        assert U.check_ind(ind)
-        if U.dim == 0:
+    def apply_adjoint_inverse(self, V, ind=None, mu=None, source_product=None, range_product=None, options=None):
+        assert V in self.source
+        assert V.check_ind(ind)
+        assert source_product is None or source_product.source == source_product.range == self.source
+        assert range_product is None or range_product.source == range_product.range == self.range
+        if V.dim == 0:
             if (self.range.dim == 0
                     or isinstance(options, str) and options.startswith('least_squares')
                     or isinstance(options, dict) and options['type'].startswith('least_squares')):
-                return NumpyVectorArray(np.zeros((U.len_ind(ind), self.range.dim)))
+                return NumpyVectorArray(np.zeros((V.len_ind(ind), self.range.dim)))
             else:
                 raise InversionError
-        U = U.data if ind is None else \
-            U.data[ind] if hasattr(ind, '__len__') else U.data[ind:ind + 1]
-        return NumpyVectorArray(_apply_inverse(self._matrix.T, U, options=options), copy=False)
+        if source_product:
+            PsV = source_product.apply(V, ind=ind).data
+        else:
+            PsV = V.data if ind is None else V.data[ind] if hasattr(ind, '__len__') else V.data[ind:ind + 1]
+        ATinvPsV = NumpyVectorArray(_apply_inverse(self._matrix.T, PsV, options=options), copy=False)
+        if range_product:
+            return range_product.apply_inverse(ATinvPsV)
+        else:
+            return ATinvPsV
 
     def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
         """Project the operator to a subbasis.
