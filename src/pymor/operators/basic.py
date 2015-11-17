@@ -104,7 +104,7 @@ class OperatorBase(OperatorInterface):
         assembled_op = self.assemble(mu)
         if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
             return assembled_op.apply_inverse(V, ind=ind, least_squares=least_squares)
-        else:
+        elif self.linear:
             options = (self.solver_options.get('inverse') if self.solver_options else
                        'least_squares' if least_squares else
                        None)
@@ -125,6 +125,30 @@ class OperatorBase(OperatorInterface):
                             + '(maybe not invertible?)'
                         raise InversionError(msg)
                 raise e
+        else:
+            from pymor.algorithms.newton import newton
+            assert V.check_ind(ind)
+
+            options = self.solver_options
+            if options:
+                if isinstance(options, str):
+                    assert options == 'newton'
+                    options = {}
+                else:
+                    assert options['type'] == 'newton'
+                    options = options.copy()
+                    options.pop('type')
+            else:
+                options = {}
+            options['least_squares'] = least_squares
+
+            ind = (range(len(V)) if ind is None else
+                   [ind] if isinstance(ind, Number) else
+                   ind)
+            R = V.empty(reserve=len(ind))
+            for i in ind:
+                R.append(newton(self, V.copy(i), **options)[0])
+            return R
 
     def as_vector(self, mu=None):
         if not self.linear:
