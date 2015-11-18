@@ -69,6 +69,7 @@ class MPIOperator(OperatorBase):
         self.functional = functional
         self.vector = vector
         self.with_apply2 = with_apply2
+        self.array_type = array_type
         self.linear = op.linear
         self.name = op.name
         self.build_parameter_type(inherits=(op,))
@@ -165,15 +166,11 @@ class MPIOperator(OperatorBase):
     def jacobian(self, U, mu=None):
         assert U in self.source
         mu = self.parse_parameter(mu)
-        return type(self)(mpi.call(mpi.method_call_manage, self.obj_id, 'jacobian', U.obj_id, mu=mu),
-                          functional=self.functional, vector=self.vector,
-                          with_apply2=self.with_apply2, array_type=self.source.type)
+        return self.with_(obj_id=mpi.call(mpi.method_call_manage, self.obj_id, 'jacobian', U.obj_id, mu=mu))
 
     def assemble(self, mu=None):
         mu = self.parse_parameter(mu)
-        return type(self)(mpi.call(mpi.method_call_manage, self.obj_id, 'assemble', mu=mu),
-                          functional=self.functional, vector=self.vector,
-                          with_apply2=self.with_apply2, array_type=self.source.type)
+        return self.with_(mpi.call(mpi.method_call_manage, self.obj_id, 'assemble', mu=mu))
 
     def assemble_lincomb(self, operators, coefficients, name=None):
         if not all(isinstance(op, MPIOperator) for op in operators):
@@ -185,8 +182,7 @@ class MPIOperator(OperatorBase):
             mpi.call(mpi.remove_object, obj_id)
             return None
         else:
-            return type(self)(obj_id, functional=self.functional, vector=self.vector,
-                              with_apply2=self.with_apply2, array_type=self.source.type)
+            return self.with_(obj_id=obj_id)
 
     def restricted(self, dofs):
         return mpi.call(mpi.method_call, self.obj_id, 'restricted', dofs)
