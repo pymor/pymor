@@ -83,13 +83,20 @@ class ImplicitEulerTimeStepper(TimeStepperInterface):
     ----------
     nt
         The number of time-steps the time-stepper will perform.
+    solver_options
+        The |solver_options| used to invert `M + dt*A`.
+        The special values `'mass'` and '`operator'` are
+        recognized, in which case the solver_options of
+        M (resp. A) are used.
     """
 
-    def __init__(self, nt):
+    def __init__(self, nt, solver_options='operator'):
         self.nt = nt
+        self.solver_options = solver_options
 
     def solve(self, initial_time, end_time, initial_data, operator, rhs=None, mass=None, mu=None, num_values=None):
-        return implicit_euler(operator, rhs, mass, initial_data, initial_time, end_time, self.nt, mu, num_values)
+        return implicit_euler(operator, rhs, mass, initial_data, initial_time, end_time, self.nt, mu, num_values,
+                              solver_options=self.solver_options)
 
 
 class ExplicitEulerTimeStepper(TimeStepperInterface):
@@ -114,7 +121,7 @@ class ExplicitEulerTimeStepper(TimeStepperInterface):
         return explicit_euler(operator, rhs, initial_data, initial_time, end_time, self.nt, mu, num_values)
 
 
-def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None):
+def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_options='operator'):
     assert isinstance(A, OperatorInterface)
     assert isinstance(F, (OperatorInterface, VectorArrayInterface))
     assert isinstance(M, OperatorInterface)
@@ -144,7 +151,10 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None):
     R = A.source.empty(reserve=nt+1)
     R.append(U0)
 
-    M_dt_A = M + A * dt
+    options = A.solver_options if solver_options == 'operator' else \
+              M.solver_options if solver_options == 'mass' else \
+              solver_options
+    M_dt_A = (M + A * dt).with_(solver_options=options)
     if not A_time_dep:
         M_dt_A = M_dt_A.assemble(mu)
 
