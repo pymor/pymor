@@ -172,7 +172,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         V
             |VectorArray| of vectors to which the inverse operator is applied.
         ind
-            The indices of the vectors in `U` to which the inverse operator shall be
+            The indices of the vectors in `V` to which the inverse operator shall be
             applied. (See the |VectorArray| documentation for further details.)
         mu
             The |Parameter| for which to evaluate the inverse operator.

@@ -51,12 +51,12 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
     def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
         raise NotImplementedError
 
-    def apply_inverse(self, U, ind=None, mu=None, options=None):
-        assert U in self.range
-        assert U.check_ind(ind)
+    def apply_inverse(self, V, ind=None, mu=None, options=None):
+        assert V in self.range
+        assert V.check_ind(ind)
         assert not self.functional and not self.vector
 
-        if U.dim == 0:
+        if V.dim == 0:
             if (self.source.dim == 0
                     or isinstance(options, str) and options.startswith('least_squares')
                     or isinstance(options, dict) and options['type'].startswith('least_squares')):
@@ -66,11 +66,11 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
                 raise InversionError
 
         if ind is None:
-            vectors = U._list
+            vectors = V._list
         elif isinstance(ind, Number):
-            vectors = [U._list[ind]]
+            vectors = [V._list[ind]]
         else:
-            vectors = (U._list[i] for i in ind)
+            vectors = (V._list[i] for i in ind)
 
         return ListVectorArray([NumpyVector(_apply_inverse(self._matrix, v._array, options=options), copy=False)
                                 for v in vectors],
