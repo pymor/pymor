@@ -766,28 +766,31 @@ def _apply_inverse(matrix, V, options=None):
                     raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
                                          format(info))
     elif options['type'] == 'spsolve':
-        if scipy.version.version >= '0.14':
-            if hasattr(matrix, 'factorization'):
-                R = matrix.factorization.solve(V.T).T
-            elif options['keep_factorization']:
-                matrix.factorization = splu(matrix, permc_spec=options['permc_spec'])
-                R = matrix.factorization.solve(V.T).T
+        try:
+            if scipy.version.version >= '0.14':
+                if hasattr(matrix, 'factorization'):
+                    R = matrix.factorization.solve(V.T).T
+                elif options['keep_factorization']:
+                    matrix.factorization = splu(matrix, permc_spec=options['permc_spec'])
+                    R = matrix.factorization.solve(V.T).T
+                else:
+                    R = spsolve(matrix, V.T, permc_spec=options['permc_spec']).T
             else:
-                R = spsolve(matrix, V.T, permc_spec=options['permc_spec']).T
-        else:
-            if hasattr(matrix, 'factorization'):
-                for i, VV in enumerate(V):
-                    R[i] = matrix.factorization.solve(VV)
-            elif options['keep_factorization']:
-                matrix.factorization = splu(matrix, permc_spec=options['permc_spec'])
-                for i, VV in enumerate(V):
-                    R[i] = matrix.factorization.solve(VV)
-            elif len(V) > 1:
-                factorization = splu(matrix, permc_spec=options['permc_spec'])
-                for i, VV in enumerate(V):
-                    R[i] = factorization.solve(VV)
-            else:
-                R = spsolve(matrix, V.T, permc_spec=options['permc_spec']).reshape((1, -1))
+                if hasattr(matrix, 'factorization'):
+                    for i, VV in enumerate(V):
+                        R[i] = matrix.factorization.solve(VV)
+                elif options['keep_factorization']:
+                    matrix.factorization = splu(matrix, permc_spec=options['permc_spec'])
+                    for i, VV in enumerate(V):
+                        R[i] = matrix.factorization.solve(VV)
+                elif len(V) > 1:
+                    factorization = splu(matrix, permc_spec=options['permc_spec'])
+                    for i, VV in enumerate(V):
+                        R[i] = factorization.solve(VV)
+                else:
+                    R = spsolve(matrix, V.T, permc_spec=options['permc_spec']).reshape((1, -1))
+        except RuntimeError as e:
+            raise InversionError(e)
     elif options['type'] == 'lgmres':
         for i, VV in enumerate(V):
             R[i], info = lgmres(matrix, VV.copy(i),
