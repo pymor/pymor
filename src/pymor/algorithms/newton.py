@@ -11,10 +11,10 @@ from pymor.core.exceptions import InversionError, NewtonError
 from pymor.core.logger import getLogger
 
 
-@defaults('miniter', 'maxiter', 'reduction', 'abs_limit', 'stagnation_window', 'stagnation_threshold')
+@defaults('miniter', 'maxiter', 'rtol', 'atol', 'stagnation_window', 'stagnation_threshold')
 def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_squares=False,
-           miniter=0, maxiter=10, reduction=1e-10, abs_limit=1e-15,
-           stagnation_window=0, stagnation_threshold=1e99,
+           miniter=0, maxiter=100, rtol=-1., atol=-1.,
+           stagnation_window=3, stagnation_threshold=0.9,
            return_stages=False, return_residuals=False):
     """Basic Newton algorithm.
 
@@ -45,10 +45,10 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
         Minimum amount of iterations to perform.
     maxiter
         Fail if the iteration count reaches this value without converging.
-    reduction
+    rtol
         Finish if the residual norm has been reduced by this factor relative to the
         norm of the initial residual.
-    abs_limit
+    atol
         Finish if the residual norm is below this threshold.
     stagnation_window
         Finish if the residual norm has not been reduced by a factor of
@@ -101,7 +101,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
     error_sequence = [err]
     while (iteration < miniter
            or (iteration < maxiter
-               and err > abs_limit and err/error_sequence[0] > reduction
+               and err > atol and err/error_sequence[0] > rtol
                and (len(error_sequence) < stagnation_window + 1
                     or err/max(error_sequence[-stagnation_window - 1:]) < stagnation_threshold))):
         if iteration > 0 and return_stages:
@@ -122,10 +122,10 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
                     .format(iteration, err, err / error_sequence[-1], err / error_sequence[0]))
         error_sequence.append(err)
 
-    if err <= abs_limit:
-        logger.info('Absolute limit of {} reached. Stopping.'.format(abs_limit))
-    elif err/error_sequence[0] <= reduction:
-        logger.info('Prescribed total reduction of {} reached. Stopping.'.format(reduction))
+    if err <= atol:
+        logger.info('Absolute limit of {} reached. Stopping.'.format(atol))
+    elif err/error_sequence[0] <= rtol:
+        logger.info('Prescribed total reduction of {} reached. Stopping.'.format(rtol))
     elif (len(error_sequence) >= stagnation_window + 1
           and err/max(error_sequence[-stagnation_window - 1:]) >= stagnation_threshold):
         logger.info('Error is stagnating (threshold: {:5e}, window: {}). Stopping.'.format(stagnation_threshold,

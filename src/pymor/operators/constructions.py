@@ -659,6 +659,9 @@ class FixedParameterOperator(OperatorBase):
     def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
         return self.operator.apply_inverse(V, ind=ind, mu=self.mu, least_squares=least_squares)
 
+    def jacobian(self, U, mu=None):
+        return self.operator.jacobian(U, mu=self.mu)
+
 
 class AdjointOperator(OperatorBase):
     """Represents the adjoint of a given |Operator|.
