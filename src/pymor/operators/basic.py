@@ -124,6 +124,7 @@ class OperatorBase(OperatorInterface):
                             + '\nNote: linear solver was selected for solving least squares problem ' \
                             + '(maybe not invertible?)'
                         raise InversionError(msg)
+                raise e
 
     def as_vector(self, mu=None):
         if not self.linear:
