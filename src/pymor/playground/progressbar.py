@@ -3,6 +3,7 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from __future__ import print_function
 import sys
 
 ############################################################
@@ -79,7 +80,7 @@ class ProgressBar:
             carriage return first, so it will overwrite the current line in
             stdout."""
         if self.amount < self.max:
-            print '\r',
+            print('\r', end="")
             self.update_amount(self.amount + value)
             sys.stdout.write(str(self))
             sys.stdout.write(self.amount < self.max and "\r" or "\n")

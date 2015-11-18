@@ -8,7 +8,6 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 from scipy.linalg import solve_triangular
 
-
 from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import VectorArrayOperator, Concatenation, ComponentProjection, ZeroOperator
 from pymor.operators.interfaces import OperatorInterface
@@ -76,7 +75,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
 
         if len(interpolation_dofs) > 0:
             try:
-                self.restricted_operator, self.source_dofs  = operator.restricted(interpolation_dofs)
+                self.restricted_operator, self.source_dofs = operator.restricted(interpolation_dofs)
             except NotImplementedError:
                 self.logger.warn('Operator has no "restricted" method. The full operator will be evaluated.')
                 self.operator = operator

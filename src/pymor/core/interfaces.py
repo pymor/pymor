@@ -86,7 +86,7 @@ DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_COPY_DOCSTRINGS_DISABLE', 0)) =
 
 
 class UID(object):
-    '''Provides unique, quickly computed ids by combinding a session UUID4 with a counter.'''
+    """Provides unique, quickly computed ids by combinding a session UUID4 with a counter."""
 
     __slots__ = ['uid']
 

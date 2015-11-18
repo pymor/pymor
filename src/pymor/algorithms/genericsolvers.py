@@ -559,7 +559,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
 
     # Main iteration loop.
     while itn < iter_lim:
-        itn = itn + 1
+        itn += 1
         """
         %     Perform the next step of the bidiagonalization to obtain the
         %     next  beta, u, alfa, v.  These satisfy the relations
@@ -600,9 +600,9 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
         t2 = -theta / rho
         dk = w * (1 / rho)
 
-        x = x + w * t1
+        x += w * t1
         w = v + w * t2
-        ddnorm = ddnorm + dk.l2_norm()[0]**2
+        ddnorm += dk.l2_norm()[0] ** 2
 
         # Use a plane rotation on the right to eliminate the
         # super-diagonal element (theta) of the upper-bidiagonal matrix.
@@ -616,14 +616,14 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
         cs2 = gambar / gamma
         sn2 = theta / gamma
         z = rhs / gamma
-        xxnorm = xxnorm + z**2
+        xxnorm += z ** 2
 
         # Test for convergence.
         # First, estimate the condition of the matrix  Abar,
         # and the norms of  rbar  and  Abar'rbar.
         acond = anorm * np.sqrt(ddnorm)
         res1 = phibar**2
-        res2 = res2 + psi**2
+        res2 += psi ** 2
         rnorm = np.sqrt(res1 + res2)
         arnorm = alfa * abs(tau)
 
@@ -845,7 +845,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
 
     # Main iteration loop.
     while itn < maxiter:
-        itn = itn + 1
+        itn += 1
 
         # Perform the next step of the bidiagonalization to obtain the
         # next  beta, u, alpha, v.  These satisfy the relations
@@ -883,12 +883,12 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
         rhotemp = cbar * rho
         cbar, sbar, rhobar = _sym_ortho(cbar * rho, thetanew)
         zeta = cbar * zetabar
-        zetabar = - sbar * zetabar
+        zetabar *= - sbar
 
         # Update h, h_hat, x.
 
         hbar = h - hbar * (thetabar * rho / (rhoold * rhobarold))
-        x = x + hbar * (zeta / (rho * rhobar))
+        x += hbar * (zeta / (rho * rhobar))
         h = v - h * (thetanew / rho)
 
         # Estimate of ||r||.
@@ -915,13 +915,13 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
 
         tautildeold = (zetaold - thetatildeold * tautildeold) / rhotildeold
         taud = (zeta - thetatilde * tautildeold) / rhodold
-        d = d + betacheck * betacheck
+        d += betacheck * betacheck
         normr = np.sqrt(d + (betad - taud)**2 + betadd * betadd)
 
         # Estimate ||A||.
         normA2 = normA2 + beta * beta
         normA = np.sqrt(normA2)
-        normA2 = normA2 + alpha * alpha
+        normA2 += alpha * alpha
 
         # Estimate cond(A).
         maxrbar = max(maxrbar, rhobarold)
@@ -983,7 +983,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
                     pcount = 0
                     print(' ')
                     print(hdg1, hdg2)
-                pcount = pcount + 1
+                pcount += 1
                 str1 = '%6g %12.5e' % (itn, x.components([0])[0])
                 str2 = ' %10.3e %10.3e' % (normr, normar)
                 str3 = '  %8.1e %8.1e' % (test1, test2)

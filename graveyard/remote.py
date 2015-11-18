@@ -12,6 +12,7 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+
 TRAVIS = os.getenv('TRAVIS') == 'true'
 
 if not TRAVIS:
@@ -252,7 +253,8 @@ if not TRAVIS:
 
 
     def wrap_remote_operator(remote_view, remote_id):
-        remote_view.execute('RRES = isinstance(pymor.playground.remote.RR[{}], LincombOperatorInterface)'.format(remote_id))
+        remote_view.execute(
+            'RRES = isinstance(pymor.playground.remote.RR[{}], LincombOperatorInterface)'.format(remote_id))
         if remote_view['RRES']:
             return RemoteLincombOperator(remote_view, remote_id)
         else:
@@ -320,7 +322,8 @@ if not TRAVIS:
 
         def apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None, pairwise=True):
             if self.dim_range > 1:
-                return self.rv.apply(self._apply2, self.rid, V.rid, U.rid, U_ind=U_ind, V_ind=V_ind, mu=mu, product=product,
+                return self.rv.apply(self._apply2, self.rid, V.rid, U.rid, U_ind=U_ind, V_ind=V_ind, mu=mu,
+                                     product=product,
                                      pairwise=pairwise)
             else:
                 assert product is None
@@ -350,7 +353,8 @@ if not TRAVIS:
         @staticmethod
         def lincomb(operators, coefficients=None, num_coefficients=None, coefficients_name=None, name=None):
             assert all(isinstance(op, RemoteOperator) for op in operators)
-            op_id = operators[0].rv.apply(operators[0]._lincomb, [o.rid for o in operators], coefficients, num_coefficients,
+            op_id = operators[0].rv.apply(operators[0]._lincomb, [o.rid for o in operators], coefficients,
+                                          num_coefficients,
                                           coefficients_name, name)
             return wrap_remote_operator(operators[0].rv, op_id)
 
@@ -452,11 +456,13 @@ if not TRAVIS:
                         'name': self.name}
 
             static_data = get_static_data(self.rid)
-            super(RemoteStationaryDiscretization, self).__init__(self, operator=wrap_remote_operator(self.rv, static_data[
-                'operator']),
+            super(RemoteStationaryDiscretization, self).__init__(self,
+                                                                 operator=wrap_remote_operator(self.rv, static_data[
+                                                                     'operator']),
                                                                  rhs=wrap_remote_operator(self.rv, static_data['rhs']),
                                                                  products={k: wrap_remote_operator(self.rv, v)
-                                                                           for k, v in static_data['products'].iteritems()},
+                                                                           for k, v in
+                                                                           static_data['products'].iteritems()},
                                                                  parameter_space=static_data['parameter_space'],
                                                                  estimator=None, visualizer=None, cache_region=None,
                                                                  name='Remote_{}'.format(static_data['name']))

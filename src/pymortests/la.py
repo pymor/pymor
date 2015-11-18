@@ -25,6 +25,7 @@ def test_induced():
     value = norm(zero)
     np.testing.assert_almost_equal(value, 0.0)
 
+
 def test_gram_schmidt():
     for i in (1, 32):
         b = NumpyVectorArray(np.identity(i, dtype=np.float))
@@ -33,6 +34,7 @@ def test_gram_schmidt():
     c = NumpyVectorArray([[1.0, 0], [0., 0]])
     a = gram_schmidt(c)
     assert (a.data == np.array([[1.0, 0]])).all()
+
 
 if __name__ == "__main__":
     runmodule(filename=__file__)

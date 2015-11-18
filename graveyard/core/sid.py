@@ -13,7 +13,6 @@ from pymor.core.interfaces import BasicInterface, ImmutableMeta, _calculate_sid
 
 
 class generate_sid(object):
-
     def __init__(self, func=None, ignore=None):
         if func is not None and not hasattr(func, '__call__'):
             assert ignore is None
@@ -29,7 +28,7 @@ class generate_sid(object):
         if func is not None:
             # Beware! The following will probably break in python 3 if there are
             # keyword-only arguments
-            args, varargs, keywords, defaults  = inspect.getargspec(func)
+            args, varargs, keywords, defaults = inspect.getargspec(func)
             if varargs:
                 raise NotImplementedError
             assert args[0] == 'self'
@@ -52,7 +51,7 @@ class generate_sid(object):
                     kwarg_sids = tuple((k, _calculate_sid(o, k))
                                        for k, o in sorted(kwargs.iteritems())
                                        if k not in self.ignore)
-                    r.sid = (type(r), args[0].sid, self.__name__,  kwarg_sids)
+                    r.sid = (type(r), args[0].sid, self.__name__, kwarg_sids)
                     ImmutableMeta.sids_created += 1
                 except (ValueError, AttributeError) as e:
                     r.sid_failure = str(e)

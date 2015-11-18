@@ -8,6 +8,7 @@ import warnings
 
 warn = warnings.warn
 
+
 class ConstError(Exception):
     """I get thrown when you try to add a new member to
     a locked class instance"""

@@ -233,6 +233,7 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
         """
         from pymor.gui.qt import visualize_patch
         from pymor.vectorarrays.numpy import NumpyVectorArray
+
         if not isinstance(U, NumpyVectorArray):
             U = NumpyVectorArray(U, copy=False)
         bounding_box = kwargs.pop('bounding_box', self.domain)

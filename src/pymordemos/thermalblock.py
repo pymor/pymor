@@ -132,9 +132,9 @@ def thermalblock_demo(args):
     print('RB generation ...')
 
     error_product = discretization.h1_product if args['--estimator-norm'] == 'h1' else None
-    coercivity_estimator=ExpressionParameterFunctional('min(diffusion)', discretization.parameter_type)
+    coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', discretization.parameter_type)
     reductors = {'residual_basis': partial(reduce_stationary_coercive, error_product=error_product,
-                                   coercivity_estimator=coercivity_estimator),
+                                           coercivity_estimator=coercivity_estimator),
                  'traditional': partial(reduce_stationary_affine_linear, error_product=error_product,
                                         coercivity_estimator=coercivity_estimator)}
     reductor = reductors[args['--reductor']]
@@ -201,7 +201,7 @@ def thermalblock_demo(args):
     mus = list(discretization.parameter_space.sample_randomly(args['--test']))
 
     errs, err_mus, ests, est_mus, conds, cond_mus = zip(*(error_analysis(discretization, rd, rc, mus)
-                                                        for rd, rc in rd_rcs))
+                                                          for rd, rc in rd_rcs))
     h1_err_max = errs[-1]
     mumax = err_mus[-1]
     cond_max = conds[-1]
