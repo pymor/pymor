@@ -138,7 +138,7 @@ class NumpyMatrixBasedOperator(OperatorBase):
         if self.sparse is None:
             raise ValueError('Sparsity unkown, assemble first.')
         else:
-            return _invert_options(sparse=self.sparse)
+            return _options(sparse=self.sparse)
 
     def export_matrix(self, filename, matrix_name=None, output_format='matlab', mu=None):
         """Save the matrix of the operator to a file.
@@ -639,7 +639,7 @@ def sparse_options(default_solver='spsolve',
     return ordered_opts
 
 
-def _invert_options(matrix=None, sparse=None):
+def _options(matrix=None, sparse=None):
     """Returns |invert_options| (with default values) for a given |NumPy| matrix.
 
     See :func:`sparse_options` for documentation of all possible options for
@@ -697,14 +697,14 @@ def _apply_inverse(matrix, V, options=None):
         the right-hand sides of the linear equation systems to
         solve.
     options
-        |invert_options| to use. (See :func:`invert_options`.)
+        |invert_options| to use. (See :func:`_options`.)
 
     Returns
     -------
     |NumPy array| of the solution vectors.
     """
 
-    default_options = _invert_options(matrix)
+    default_options = _options(matrix)
 
     if options is None:
         options = default_options.values()[0]
