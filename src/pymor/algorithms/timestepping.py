@@ -123,15 +123,16 @@ class ExplicitEulerTimeStepper(TimeStepperInterface):
 
 def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_options='operator'):
     assert isinstance(A, OperatorInterface)
-    assert isinstance(F, (OperatorInterface, VectorArrayInterface))
-    assert isinstance(M, OperatorInterface)
-    assert not M.parametric
-    assert A.source == A.range == M.source == M.range
+    assert isinstance(F, (type(None), OperatorInterface, VectorArrayInterface))
+    assert isinstance(M, (type(None), OperatorInterface))
+    assert A.source == A.range
     num_values = num_values or nt + 1
     dt = (t1 - t0) / nt
     DT = (t1 - t0) / (num_values - 1)
 
-    if isinstance(F, OperatorInterface):
+    if F is None:
+        F_time_dep = False
+    elif isinstance(F, OperatorInterface):
         assert F.range.dim == 1
         assert F.source == A.range
         F_time_dep = '_t' in F.parameter_type
@@ -143,6 +144,12 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
         F_time_dep = False
         dt_F = F * dt
 
+    if M is None:
+        from pymor.operators.constructions import IdentityOperator
+        M = IdentityOperator(A.source)
+
+    assert A.source == M.source == M.range
+    assert not M.parametric
     assert U0 in A.source
     assert len(U0) == 1
 
@@ -164,9 +171,12 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
     for n in xrange(nt):
         t += dt
         mu['_t'] = t
+        rhs = M.apply(U)
         if F_time_dep:
             dt_F = F.as_vector(mu) * dt
-        U = M_dt_A.apply_inverse(M.apply(U) + dt_F, mu=mu)
+        if F:
+            rhs += dt_F
+        U = M_dt_A.apply_inverse(rhs, mu=mu)
         while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
             R.append(U)
 
