@@ -101,7 +101,7 @@ class OperatorBase(OperatorInterface):
     @property
     def invert_options(self):
         if self.linear:
-            return genericsolvers.invert_options()
+            return genericsolvers.options()
         else:
             return {}
 
