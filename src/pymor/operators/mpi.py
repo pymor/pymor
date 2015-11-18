@@ -149,7 +149,7 @@ class MPIOperator(OperatorBase):
                               mpi.call(mpi.method_call_manage, self.obj_id, 'apply_adjoint',
                                        U, ind=ind, mu=mu, source_product=source_product, range_product=range_product))
 
-    def apply_inverse(self, V, ind=None, mu=None):
+    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
         if self.vector or self.functional:
             raise NotImplementedError
         assert V in self.range
@@ -157,7 +157,7 @@ class MPIOperator(OperatorBase):
         space = self.source
         return space.type(space.subtype[0], space.subtype[1],
                           mpi.call(mpi.method_call_manage, self.obj_id, 'apply_inverse',
-                                   V.obj_id, ind=ind, mu=mu))
+                                   V.obj_id, ind=ind, mu=mu, least_squares=least_squares))
 
     def jacobian(self, U, mu=None):
         assert U in self.source

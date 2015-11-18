@@ -133,8 +133,8 @@ class NumpyMatrixBasedOperator(OperatorBase):
     def as_vector(self, mu=None):
         return self.assemble(mu).as_vector()
 
-    def apply_inverse(self, V, ind=None, mu=None):
-        return self.assemble(mu).apply_inverse(V, ind=ind)
+    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
+        return self.assemble(mu).apply_inverse(V, ind=ind, least_squares=least_squares)
 
 
     def export_matrix(self, filename, matrix_name=None, output_format='matlab', mu=None):
@@ -221,20 +221,38 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         else:
             return ATPrU
 
-    def apply_inverse(self, V, ind=None, mu=None):
+    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
         assert V in self.range
         assert V.check_ind(ind)
-        options = self.solver_options.get('inverse') if self.solver_options else None
+
         if V.dim == 0:
-            if (self.source.dim == 0
-                    or isinstance(options, str) and options.startswith('least_squares')
-                    or isinstance(options, dict) and options['type'].startswith('least_squares')):
+            if self.source.dim == 0 or least_squares:
                 return NumpyVectorArray(np.zeros((V.len_ind(ind), self.source.dim)))
             else:
                 raise InversionError
+
+        options = (self.solver_options.get('inverse') if self.solver_options else
+                   'least_squares' if least_squares else
+                   None)
+
+        if options and not least_squares:
+            solver_type = options if isinstance(options, str) else options['type']
+            if solver_type.startswith('least_squares'):
+                self.logger.warn('Least squares solver selected but "least_squares == False"')
+
         V = V.data if ind is None else \
             V.data[ind] if hasattr(ind, '__len__') else V.data[ind:ind + 1]
-        return NumpyVectorArray(_apply_inverse(self._matrix, V, options=options), copy=False)
+
+        try:
+            return NumpyVectorArray(_apply_inverse(self._matrix, V, options=options), copy=False)
+        except InversionError as e:
+            if least_squares and options:
+                solver_type = options if isinstance(options, str) else options['type']
+                if not solver_type.startswith('least_squares'):
+                    msg = str(e) \
+                        + '\nNote: linear solver was selected for solving least squares problem (maybe not invertible?)'
+                    raise InversionError(msg)
+            raise e
 
     def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
         """Project the operator to a subbasis.

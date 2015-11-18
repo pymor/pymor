@@ -12,6 +12,7 @@ from numbers import Number
 import numpy as np
 
 from pymor.algorithms import genericsolvers
+from pymor.core.exceptions import InversionError
 from pymor.operators.interfaces import OperatorInterface
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
@@ -98,14 +99,31 @@ class OperatorBase(OperatorInterface):
         else:
             raise ValueError('Trying to apply adjoint of nonlinear operator.')
 
-    def apply_inverse(self, V, ind=None, mu=None):
+    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
         from pymor.operators.constructions import FixedParameterOperator
         assembled_op = self.assemble(mu)
         if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
-            return assembled_op.apply_inverse(V, ind=ind)
+            return assembled_op.apply_inverse(V, ind=ind, least_squares=least_squares)
         else:
-            options = self.solver_options.get('inverse') if self.solver_options else None
-            return genericsolvers.apply_inverse(assembled_op, V.copy(ind), options=options)
+            options = (self.solver_options.get('inverse') if self.solver_options else
+                       'least_squares' if least_squares else
+                       None)
+
+            if options and not least_squares:
+                solver_type = options if isinstance(options, str) else options['type']
+                if solver_type.startswith('least_squares'):
+                    self.logger.warn('Least squares solver selected but "least_squares == False"')
+
+            try:
+                return genericsolvers.apply_inverse(assembled_op, V.copy(ind), options=options)
+            except InversionError as e:
+                if least_squares and options:
+                    solver_type = options if isinstance(options, str) else options['type']
+                    if not solver_type.startswith('least_squares'):
+                        msg = str(e) \
+                            + '\nNote: linear solver was selected for solving least squares problem ' \
+                            + '(maybe not invertible?)'
+                        raise InversionError(msg)
 
     def as_vector(self, mu=None):
         if not self.linear:
