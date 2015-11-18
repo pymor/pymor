@@ -69,9 +69,10 @@ if HAVE_FENICS:
                 df.solve(self.matrix, r.impl, v.impl)
             return R
 
-        def assemble_lincomb(self, operators, coefficients, name=None):
+        def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
             if not all(isinstance(op, (FenicsMatrixOperator, ZeroOperator)) for op in operators):
                 return None
+            assert not solver_options
 
             if coefficients[0] == 1:
                 matrix = operators[0].matrix.copy()

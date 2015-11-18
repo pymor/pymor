@@ -90,10 +90,6 @@ class MPIOperator(OperatorBase):
                 subtypes = (subtypes[0],)
             self.range = VectorSpace(array_type, (op.range.type, subtypes))
 
-    @property
-    def invert_options(self):
-        return self.op.invert_options
-
     def apply(self, U, ind=None, mu=None):
         assert U in self.source
         mu = self.parse_parameter(mu)
@@ -153,7 +149,7 @@ class MPIOperator(OperatorBase):
                               mpi.call(mpi.method_call_manage, self.obj_id, 'apply_adjoint',
                                        U, ind=ind, mu=mu, source_product=source_product, range_product=range_product))
 
-    def apply_inverse(self, V, ind=None, mu=None, options=None):
+    def apply_inverse(self, V, ind=None, mu=None):
         if self.vector or self.functional:
             raise NotImplementedError
         assert V in self.range
@@ -161,7 +157,7 @@ class MPIOperator(OperatorBase):
         space = self.source
         return space.type(space.subtype[0], space.subtype[1],
                           mpi.call(mpi.method_call_manage, self.obj_id, 'apply_inverse',
-                                   V.obj_id, ind=ind, mu=mu, options=options))
+                                   V.obj_id, ind=ind, mu=mu))
 
     def jacobian(self, U, mu=None):
         assert U in self.source
@@ -172,9 +168,10 @@ class MPIOperator(OperatorBase):
         mu = self.parse_parameter(mu)
         return self.with_(mpi.call(mpi.method_call_manage, self.obj_id, 'assemble', mu=mu))
 
-    def assemble_lincomb(self, operators, coefficients, name=None):
+    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         if not all(isinstance(op, MPIOperator) for op in operators):
             return None
+        assert solver_options is None
         operators = [op.obj_id for op in operators]
         obj_id = mpi.call(mpi.method_call_manage, self.obj_id, 'assemble_lincomb', operators, coefficients, name=name)
         op = mpi.get_object(obj_id)

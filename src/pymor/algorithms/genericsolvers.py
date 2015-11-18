@@ -45,7 +45,7 @@ def options(default_solver='generic_lgmres',
             least_squares_generic_lsqr_conlim=1e8,
             least_squares_generic_lsqr_iter_lim=None,
             least_squares_generic_lsqr_show=False):
-    """Returns |invert_options| (with default values) for arbitrary linear |Operators|.
+    """Returns |solver_options| (with default values) for arbitrary linear |Operators|.
 
     Parameters
     ----------
@@ -89,7 +89,7 @@ def options(default_solver='generic_lgmres',
 
     Returns
     -------
-    A tuple of all possible |invert_options|.
+    A tuple of possible values for |solver_options|.
     """
 
     assert default_least_squares_solver.startswith('least_squares')
@@ -141,7 +141,7 @@ def apply_inverse(op, rhs, options=None):
     rhs
         |VectorArray| of right-hand sides for the equation system.
     options
-        |invert_options| to use. (See :func:`options`.)
+        The solver options to use. (See :func:`options`.)
 
     Returns
     -------

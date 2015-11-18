@@ -39,7 +39,7 @@ class LincombOperator(OperatorBase):
         Name of the operator.
     """
 
-    def __init__(self, operators, coefficients, name=None):
+    def __init__(self, operators, coefficients, solver_options=None, name=None):
         assert len(operators) > 0
         assert len(operators) == len(coefficients)
         assert all(isinstance(op, OperatorInterface) for op in operators)
@@ -51,6 +51,7 @@ class LincombOperator(OperatorBase):
         self.operators = operators
         self.linear = all(op.linear for op in operators)
         self.coefficients = coefficients
+        self.solver_options = solver_options
         self.name = name
         self.build_parameter_type(inherits=list(operators) +
                                   [f for f in coefficients if isinstance(f, ParameterFunctionalInterface)])
@@ -144,7 +145,8 @@ class LincombOperator(OperatorBase):
                 self.logger.warn('Re-assembling since state of global defaults has changed.')
         operators = [op.assemble(mu) for op in self.operators]
         coefficients = self.evaluate_coefficients(mu)
-        op = operators[0].assemble_lincomb(operators, coefficients, name=self.name + '_assembled')
+        op = operators[0].assemble_lincomb(operators, coefficients, solver_options=self.solver_options,
+                                           name=self.name + '_assembled')
         if not self.parametric:
             if op:
                 self._assembled_operator = op
@@ -156,9 +158,12 @@ class LincombOperator(OperatorBase):
         elif op:
             return op
         else:
-            return LincombOperator(operators, coefficients, name=self.name + '_assembled')
+            return LincombOperator(operators, coefficients, solver_options=self.solver_options,
+                                   name=self.name + '_assembled')
 
     def jacobian(self, U, mu=None):
+        if self.linear:
+            return self.assemble(mu)
         if hasattr(self, '_assembled_operator'):
             if self._defaults_sid == defaults_sid():
                 return self._assembled_operator.jacobian(U)
@@ -168,9 +173,12 @@ class LincombOperator(OperatorBase):
             return self.assemble().jacobian(U)
         jacobians = [op.jacobian(U, mu) for op in self.operators]
         coefficients = self.evaluate_coefficients(mu)
-        jac = jacobians[0].assemble_lincomb(jacobians, coefficients, name=self.name + '_jacobian')
+        options = self.solver_options.get('jacobian') if self.solver_options else None
+        jac = jacobians[0].assemble_lincomb(jacobians, coefficients, solver_options=options,
+                                            name=self.name + '_jacobian')
         if jac is None:
-            return LincombOperator(jacobians, coefficients, name=self.name + '_jacobian')
+            return LincombOperator(jacobians, coefficients, solver_options=options,
+                                   name=self.name + '_jacobian')
         else:
             return jac
 
@@ -230,7 +238,7 @@ class Concatenation(OperatorBase):
         Name of the operator.
     """
 
-    def __init__(self, second, first, name=None):
+    def __init__(self, second, first, solver_options=None, name=None):
         assert isinstance(second, OperatorInterface)
         assert isinstance(first, OperatorInterface)
         assert first.range == second.source
@@ -240,6 +248,7 @@ class Concatenation(OperatorBase):
         self.source = first.source
         self.range = second.range
         self.linear = second.linear and first.linear
+        self.solver_options = solver_options
         self.name = name
 
     def apply(self, U, ind=None, mu=None):
@@ -439,10 +448,11 @@ class ZeroOperator(OperatorBase):
             new_range = NumpyVectorSpace(len(range_basis)) if range_basis is not None else self.source
             return ZeroOperator(new_source, new_range, name=self.name + '_projected')
 
-    def assemble_lincomb(self, operators, coefficients, name=None):
+    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         assert operators[0] is self
         if len(operators) > 1:
-            return operators[1].assemble_lincomb(operators[1:], coefficients[1:], name=name)
+            return operators[1].assemble_lincomb(operators[1:], coefficients[1:], solver_options=solver_options,
+                                                 name=name)
         else:
             return self
 
@@ -516,11 +526,12 @@ class VectorArrayOperator(OperatorBase):
             else:
                 return ATPrU
 
-    def assemble_lincomb(self, operators, coefficients, name=None):
+    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
 
         transposed = operators[0].transposed
         if not all(isinstance(op, VectorArrayOperator) and op.transposed == transposed for op in operators):
             return None
+        assert not solver_options
 
         if coefficients[0] == 1:
             array = operators[0]._array.copy()
@@ -645,12 +656,8 @@ class FixedParameterOperator(OperatorBase):
         return self.operator.apply_adjoint(U, ind=ind, mu=self.mu,
                                            source_product=source_product, range_product=range_product)
 
-    @property
-    def invert_options(self):
-        return self.operator.invert_options
-
-    def apply_inverse(self, V, ind=None, mu=None, options=None):
-        return self.operator.apply_inverse(V, ind=ind, mu=self.mu, options=options)
+    def apply_inverse(self, V, ind=None, mu=None):
+        return self.operator.apply_inverse(V, ind=ind, mu=self.mu)
 
 
 class AdjointOperator(OperatorBase):
