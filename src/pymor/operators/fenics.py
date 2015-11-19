@@ -59,10 +59,10 @@ if HAVE_FENICS:
             else:
                 return ATPrU
 
-        def apply_inverse(self, V, ind=None, mu=None, options=None):
+        def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
             assert V in self.range
-            assert options is None  # for now, simply use the default solver options set in FEniCS.
-
+            if least_squares:
+                raise NotImplementedError
             vectors = V._list if ind is None else [V._list[ind]] if isinstance(ind, Number) else [V._list[i] for i in ind]
             R = self.source.zeros(len(vectors))
             for r, v in zip(R._list, vectors):

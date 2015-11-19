@@ -656,8 +656,8 @@ class FixedParameterOperator(OperatorBase):
         return self.operator.apply_adjoint(U, ind=ind, mu=self.mu,
                                            source_product=source_product, range_product=range_product)
 
-    def apply_inverse(self, V, ind=None, mu=None):
-        return self.operator.apply_inverse(V, ind=ind, mu=self.mu)
+    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
+        return self.operator.apply_inverse(V, ind=ind, mu=self.mu, least_squares=least_squares)
 
     def jacobian(self, U, mu=None):
         return self.operator.jacobian(U, mu=self.mu)
