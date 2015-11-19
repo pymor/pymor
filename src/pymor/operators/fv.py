@@ -215,13 +215,14 @@ class NonlinearAdvectionOperator(OperatorBase):
 
     linear = False
 
-    def __init__(self, grid, boundary_info, numerical_flux, dirichlet_data=None, name=None):
+    def __init__(self, grid, boundary_info, numerical_flux, dirichlet_data=None, solver_options=None, name=None):
         assert dirichlet_data is None or isinstance(dirichlet_data, FunctionInterface)
 
         self.grid = grid
         self.boundary_info = boundary_info
         self.numerical_flux = numerical_flux
         self.dirichlet_data = dirichlet_data
+        self.solver_options = solver_options
         self.name = name
         if (isinstance(dirichlet_data, FunctionInterface) and boundary_info.has_dirichlet
                 and not dirichlet_data.parametric):
@@ -326,24 +327,24 @@ class NonlinearAdvectionOperator(OperatorBase):
 
 
 def nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, flux, lxf_lambda=1.0,
-                                                dirichlet_data=None, name=None):
+                                                dirichlet_data=None, solver_options=None, name=None):
     """Instantiate a :class:`NonlinearAdvectionOperator` using :class:`LaxFriedrichsFlux`."""
     num_flux = LaxFriedrichsFlux(flux, lxf_lambda)
-    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, name)
+    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name)
 
 
 def nonlinear_advection_simplified_engquist_osher_operator(grid, boundary_info, flux, flux_derivative,
-                                                           dirichlet_data=None, name=None):
+                                                           dirichlet_data=None, solver_options=None, name=None):
     """Instantiate a :class:`NonlinearAdvectionOperator` using :class:`SimplifiedEngquistOsherFlux`."""
     num_flux = SimplifiedEngquistOsherFlux(flux, flux_derivative)
-    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, name)
+    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name)
 
 
 def nonlinear_advection_engquist_osher_operator(grid, boundary_info, flux, flux_derivative, gausspoints=5, intervals=1,
-                                                dirichlet_data=None, name=None):
+                                                dirichlet_data=None, solver_options=None, name=None):
     """Instantiate a :class:`NonlinearAdvectionOperator` using :class:`EngquistOsherFlux`."""
     num_flux = EngquistOsherFlux(flux, flux_derivative, gausspoints=gausspoints, intervals=intervals)
-    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, name)
+    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name)
 
 
 class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
@@ -369,11 +370,12 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
         The name of the operator.
     """
 
-    def __init__(self, grid, boundary_info, velocity_field, lxf_lambda=1.0, name=None):
+    def __init__(self, grid, boundary_info, velocity_field, lxf_lambda=1.0, solver_options=None, name=None):
         self.grid = grid
         self.boundary_info = boundary_info
         self.velocity_field = velocity_field
         self.lxf_lambda = lxf_lambda
+        self.solver_options = solver_options
         self.name = name
         self.build_parameter_type(inherits=(velocity_field,))
         self.source = self.range = NumpyVectorSpace(grid.size(0))
@@ -435,9 +437,10 @@ class L2Product(NumpyMatrixBasedOperator):
 
     sparse = True
 
-    def __init__(self, grid, name=None):
+    def __init__(self, grid, solver_options=None, name=None):
         self.source = self.range = NumpyVectorSpace(grid.size(0))
         self.grid = grid
+        self.solver_options = solver_options
         self.name = name
 
     def _assemble(self, mu=None):
@@ -570,7 +573,8 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
 
     sparse = True
 
-    def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None, name=None):
+    def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None, solver_options=None,
+                 name=None):
         super(DiffusionOperator, self).__init__()
         assert isinstance(grid, AffineGridWithOrthogonalCentersInterface)
         assert diffusion_function is None \
@@ -581,6 +585,7 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
         self.boundary_info = boundary_info
         self.diffusion_function = diffusion_function
         self.diffusion_constant = diffusion_constant
+        self.solver_options = solver_options
         self.name = name
         self.source = self.range = NumpyVectorSpace(grid.size(0))
         if diffusion_function is not None:

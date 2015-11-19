@@ -59,7 +59,8 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         Name of the operator.
     """
 
-    def __init__(self, operator, interpolation_dofs, collateral_basis, triangular, name=None):
+    def __init__(self, operator, interpolation_dofs, collateral_basis, triangular,
+                 solver_options=None, name=None):
         assert isinstance(operator, OperatorInterface)
         assert isinstance(collateral_basis, VectorArrayInterface)
         assert collateral_basis in operator.range
@@ -68,6 +69,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         self.source = operator.source
         self.range = operator.range
         self.linear = operator.linear
+        self.solver_options = solver_options
         self.name = name or '{}_interpolated'.format(operator.name)
 
         interpolation_dofs = np.array(interpolation_dofs, dtype=np.int32)
@@ -132,15 +134,18 @@ class EmpiricalInterpolatedOperator(OperatorBase):
 
     def jacobian(self, U, mu=None):
         mu = self.parse_parameter(mu)
+        options = self.solver_options.get('jacobian') if self.solver_options else None
 
         if len(self.interpolation_dofs) == 0:
             if self.source.type == self.range.type == NumpyVectorArray:
-                return NumpyMatrixOperator(np.zeros((0, self.source.dim)), name=self.name + '_jacobian')
+                return NumpyMatrixOperator(np.zeros((0, self.source.dim)), solver_options=options,
+                                           name=self.name + '_jacobian')
             else:
                 return ZeroOperator(self.source, self.range, name=self.name + '_jacobian')
         elif hasattr(self, 'operator'):
             return EmpiricalInterpolatedOperator(self.operator.jacobian(U, mu=mu), self.interpolation_dofs,
-                                                 self.collateral_basis, self.triangular, self.name + '_jacobian')
+                                                 self.collateral_basis, self.triangular,
+                                                 solver_options=options, name=self.name + '_jacobian')
         else:
             U_components = NumpyVectorArray(U.components(self.source_dofs), copy=False)
             JU = self.restricted_operator.jacobian(U_components, mu=mu) \
@@ -158,7 +163,8 @@ class EmpiricalInterpolatedOperator(OperatorBase):
                 J = NumpyMatrixOperator(J.data.T)
             else:
                 J = VectorArrayOperator(J, copy=False)
-            return Concatenation(J, ComponentProjection(self.source_dofs, self.source), name=self.name + '_jacobian')
+            return Concatenation(J, ComponentProjection(self.source_dofs, self.source),
+                                 solver_options=options, name=self.name + '_jacobian')
 
 
 class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
@@ -168,7 +174,7 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
     """
 
     def __init__(self, restricted_operator, interpolation_matrix, source_basis_dofs,
-                 projected_collateral_basis, triangular, name=None):
+                 projected_collateral_basis, triangular, solver_options=None, name=None):
         self.source = NumpyVectorSpace(len(source_basis_dofs))
         self.range = projected_collateral_basis.space
         self.linear = restricted_operator.linear
@@ -178,6 +184,7 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
         self.source_basis_dofs = source_basis_dofs
         self.projected_collateral_basis = projected_collateral_basis
         self.triangular = triangular
+        self.solver_options = solver_options
         self.name = name or '{}_projected'.format(restricted_operator.name)
 
     def apply(self, U, ind=None, mu=None):
@@ -198,6 +205,7 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
     def jacobian(self, U, mu=None):
         assert len(U) == 1
         mu = self.parse_parameter(mu)
+        options = self.solver_options.get('jacobian') if self.solver_options else None
         U_components = self.source_basis_dofs.lincomb(U.data[0])
         J = self.restricted_operator.jacobian(U_components, mu=mu).apply(self.source_basis_dofs)
         try:
@@ -211,8 +219,9 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
                                           + np.nan)
         M = self.projected_collateral_basis.lincomb(interpolation_coefficients)
         if isinstance(M, NumpyVectorArray):
-            return NumpyMatrixOperator(M.data.T)
+            return NumpyMatrixOperator(M.data.T, solver_options=options)
         else:
+            assert not options
             return VectorArrayOperator(M)
 
     def projected_to_subbasis(self, dim_range=None, dim_source=None, dim_collateral=None, name=None):
@@ -239,4 +248,4 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
 
         return ProjectedEmpiciralInterpolatedOperator(restricted_operator, interpolation_matrix,
                                                       source_basis_dofs, projected_collateral_basis, self.triangular,
-                                                      name=name)
+                                                      solver_options=self.solver_options, name=name)

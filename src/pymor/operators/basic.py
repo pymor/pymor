@@ -98,19 +98,13 @@ class OperatorBase(OperatorInterface):
         else:
             raise ValueError('Trying to apply adjoint of nonlinear operator.')
 
-    @property
-    def invert_options(self):
-        if self.linear:
-            return genericsolvers.invert_options()
-        else:
-            return {}
-
-    def apply_inverse(self, V, ind=None, mu=None, options=None):
+    def apply_inverse(self, V, ind=None, mu=None):
         from pymor.operators.constructions import FixedParameterOperator
         assembled_op = self.assemble(mu)
         if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
-            return assembled_op.apply_inverse(V, ind=ind, options=options)
+            return assembled_op.apply_inverse(V, ind=ind)
         else:
+            options = self.solver_options.get('inverse') if self.solver_options else None
             return genericsolvers.apply_inverse(assembled_op, V.copy(ind), options=options)
 
     def as_vector(self, mu=None):
@@ -189,7 +183,7 @@ class ProjectedOperator(OperatorBase):
 
     linear = False
 
-    def __init__(self, operator, range_basis, source_basis, product=None, copy=True, name=None):
+    def __init__(self, operator, range_basis, source_basis, product=None, copy=True, solver_options=None, name=None):
         assert isinstance(operator, OperatorInterface)
         assert source_basis is None or source_basis in operator.source
         assert range_basis is None or range_basis in operator.range
@@ -201,6 +195,7 @@ class ProjectedOperator(OperatorBase):
         self.build_parameter_type(inherits=(operator,))
         self.source = NumpyVectorSpace(len(source_basis)) if source_basis is not None else operator.source
         self.range = NumpyVectorSpace(len(range_basis)) if range_basis is not None else operator.range
+        self.solver_options = solver_options
         self.name = name
         self.operator = operator
         self.source_basis = source_basis.copy() if source_basis is not None and copy else source_basis
@@ -240,19 +235,30 @@ class ProjectedOperator(OperatorBase):
             else self.source_basis.copy(ind=range(dim_source))
         range_basis = self.range_basis if dim_range is None \
             else self.range_basis.copy(ind=range(dim_range))
-        return ProjectedOperator(self.operator, range_basis, source_basis, product=None, copy=False, name=name)
+        return ProjectedOperator(self.operator, range_basis, source_basis, product=None, copy=False,
+                                 solver_options=self.solver_options, name=name)
 
     def jacobian(self, U, mu=None):
+        if self.linear:
+            return self.assemble(mu)
         assert len(U) == 1
         mu = self.parse_parameter(mu)
         if self.source_basis is None:
             J = self.operator.jacobian(U, mu=mu)
         else:
             J = self.operator.jacobian(self.source_basis.lincomb(U.data), mu=mu)
-        return J.projected(range_basis=self.range_basis, source_basis=self.source_basis,
-                           product=self.product, name=self.name + '_jacobian')
+        pop = J.projected(range_basis=self.range_basis, source_basis=self.source_basis,
+                          product=self.product, name=self.name + '_jacobian')
+        if self.solver_options:
+            options = self.solver_options.get('jacobian')
+            if options:
+                pop = pop.with_(solver_options=options)
+        return pop
 
     def assemble(self, mu=None):
         op = self.operator.assemble(mu=mu)
-        return op.projected(range_basis=self.range_basis, source_basis=self.source_basis,
-                            product=self.product, name=self.name + '_assembled')
+        pop = op.projected(range_basis=self.range_basis, source_basis=self.source_basis,
+                           product=self.product, name=self.name + '_assembled')
+        if self.solver_options:
+            pop = pop.with_(solver_options=self.solver_options)
+        return pop
