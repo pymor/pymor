@@ -69,7 +69,7 @@ class LincombOperator(OperatorBase):
         List of linear coefficients.
         """
         mu = self.parse_parameter(mu)
-        return np.array([c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients])
+        return [c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients]
 
     def apply(self, U, ind=None, mu=None):
         if hasattr(self, '_assembled_operator'):
