@@ -256,27 +256,17 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                     raise InversionError(msg)
             raise e
 
-    def apply_inverse_adjoint(self, V, ind=None, mu=None, source_product=None, range_product=None, options=None):
-        assert V in self.source
-        assert V.check_ind(ind)
-        assert source_product is None or source_product.source == source_product.range == self.source
-        assert range_product is None or range_product.source == range_product.range == self.range
-        if V.dim == 0:
-            if (self.range.dim == 0
-                    or isinstance(options, str) and options.startswith('least_squares')
-                    or isinstance(options, dict) and options['type'].startswith('least_squares')):
-                return NumpyVectorArray(np.zeros((V.len_ind(ind), self.range.dim)))
-            else:
-                raise InversionError
-        if source_product:
-            PsV = source_product.apply(V, ind=ind).data
+    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None,
+                              least_squares=False):
+        if source_product or range_product:
+            return super(NumpyMatrixOperator, self).apply_inverse_adjoint(U, ind=ind, mu=mu,
+                                                                          source_product=source_product,
+                                                                          range_product=range_product,
+                                                                          least_squares=least_squares)
         else:
-            PsV = V.data if ind is None else V.data[ind] if hasattr(ind, '__len__') else V.data[ind:ind + 1]
-        ATinvPsV = NumpyVectorArray(_apply_inverse(self._matrix.T, PsV, options=options), copy=False)
-        if range_product:
-            return range_product.apply_inverse(ATinvPsV)
-        else:
-            return ATinvPsV
+            options = {'inverse': self.solver_options.get('inverse_adjoint') if self.solver_options else None}
+            adjoint_op = NumpyMatrixOperator(self._matrix.T, solver_options=options)
+            return adjoint_op.apply_inverse(U, ind=ind, mu=mu, least_squares=least_squares)
 
     def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
         """Project the operator to a subbasis.
