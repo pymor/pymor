@@ -25,11 +25,13 @@ class OperatorInterface(ImmutableInterface, Parametric):
     solver_options
         If not `None`, a dict which can contain the follwing keys:
 
-        :'inverse':   solver options used for
-                      :meth:`~OperatorInterface.apply_inverse`
-        :'jacobian':  solver options for the operators returned
-                      by :meth:`~OperatorInterface.jacobian`
-                      (has no effect for linear operators)
+        :'inverse':           solver options used for
+                              :meth:`~OperatorInterface.apply_inverse_adjoint`
+        :'inverse_adjoint':   solver options used for
+                              :meth:`~OperatorInterface.apply_inverse`
+        :'jacobian':          solver options for the operators returned
+                              by :meth:`~OperatorInterface.jacobian`
+                              (has no effect for linear operators)
 
         If `solver_options` is `None` or a dict entry is missing
         or `None`, default options are used.
@@ -204,6 +206,48 @@ class OperatorInterface(ImmutableInterface, Parametric):
         Returns
         -------
         |VectorArray| of the inverse operator evaluations.
+
+        Raises
+        ------
+        InversionError
+            The operator could not be inverted.
+        """
+        pass
+
+    @abstractmethod
+    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None,
+                              least_squares=False):
+        """Apply the inverse adjoint operator.
+
+        Parameters
+        ----------
+        U
+            |VectorArray| of vectors to which the inverse adjoint operator is applied.
+        ind
+            The indices of the vectors in `U` to which the inverse adjoint operator shall be
+            applied. (See the |VectorArray| documentation for further details.)
+        mu
+            The |Parameter| for which to evaluate the inverse adjoint operator.
+        source_product
+            See :meth:`~OperatorInterface.apply_adjoint`.
+        range_product
+            See :meth:`~OperatorInterface.apply_adjoint`.
+        least_squares
+            If `True`, solve the least squares problem::
+
+                v = argmin ||A*v - u||_2.
+
+            Since for an invertible operator the least squares solution agrees
+            with the result of the application of the inverse operator,
+            setting this option should, in general, have no effect on the result
+            for those operators. However, note that when appropriate
+            |solver_options| are not set for the operator, most operator
+            implementations will choose a least squares solver by default which
+            may not be desirable for invertible operators.
+
+        Returns
+        -------
+        |VectorArray| of the inverse adjoint operator evaluations.
 
         Raises
         ------

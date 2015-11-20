@@ -256,6 +256,18 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                     raise InversionError(msg)
             raise e
 
+    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None,
+                              least_squares=False):
+        if source_product or range_product:
+            return super(NumpyMatrixOperator, self).apply_inverse_adjoint(U, ind=ind, mu=mu,
+                                                                          source_product=source_product,
+                                                                          range_product=range_product,
+                                                                          least_squares=least_squares)
+        else:
+            options = {'inverse': self.solver_options.get('inverse_adjoint') if self.solver_options else None}
+            adjoint_op = NumpyMatrixOperator(self._matrix.T, solver_options=options)
+            return adjoint_op.apply_inverse(U, ind=ind, mu=mu, least_squares=least_squares)
+
     def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
         """Project the operator to a subbasis.
 
