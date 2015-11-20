@@ -20,6 +20,7 @@ from collections import OrderedDict
 from itertools import izip
 
 import numpy as np
+import scipy.sparse
 from scipy.sparse import issparse
 from scipy.io import mmwrite, savemat
 
@@ -29,6 +30,7 @@ from pymor.core.exceptions import InversionError
 from pymor.core.interfaces import abstractmethod
 from pymor.core.logger import getLogger
 from pymor.operators.basic import OperatorBase
+from pymor.operators.constructions import IdentityOperator, ZeroOperator
 from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
 
 
@@ -289,7 +291,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                                    name=name)
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
-        if not all(isinstance(op, NumpyMatrixOperator) for op in operators):
+        if not all(isinstance(op, (NumpyMatrixOperator, ZeroOperator, IdentityOperator)) for op in operators):
             return None
 
         if coefficients[0] == 1:
@@ -297,7 +299,17 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         else:
             matrix = operators[0]._matrix * coefficients[0]
         for op, c in izip(operators[1:], coefficients[1:]):
-            if c == 1:
+            if isinstance(op, ZeroOperator):
+                continue
+            elif isinstance(op, IdentityOperator):
+                if operators[0].sparse:
+                    try:
+                        matrix += (scipy.sparse.eye(matrix.shape[0]) * c)
+                    except NotImplementedError:
+                        matrix = matrix + (scipy.sparse.eye(matrix.shape[0]) * c)
+                else:
+                    matrix += (np.eye(matrix.shape[0]) * c)
+            elif c == 1:
                 try:
                     matrix += op._matrix
                 except NotImplementedError:
