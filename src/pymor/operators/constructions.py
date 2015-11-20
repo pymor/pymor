@@ -18,7 +18,6 @@ from pymor.core.defaults import defaults_sid, defaults
 from pymor.core.interfaces import ImmutableInterface
 from pymor.operators.basic import OperatorBase
 from pymor.operators.interfaces import OperatorInterface
-from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Parametric
 from pymor.parameters.interfaces import ParameterFunctionalInterface
 from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpace
@@ -441,6 +440,7 @@ class ZeroOperator(OperatorBase):
         assert range_basis is None or range_basis in self.range
         assert product is None or product.source == product.range == self.range
         if source_basis is not None and range_basis is not None:
+            from pymor.operators.numpy import NumpyMatrixOperator
             return NumpyMatrixOperator(np.zeros((len(range_basis), len(source_basis))),
                                        name=self.name + '_projected')
         else:
