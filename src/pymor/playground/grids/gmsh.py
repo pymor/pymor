@@ -1,16 +1,22 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+#
+# Contributors: Michael Laier <m_laie01@uni-muenster.de>
 
 from __future__ import absolute_import, division, print_function
 
 from collections import defaultdict
 
 import numpy as np
+import time
 
-from pymor.grids.interfaces import AffineGridInterface
-from pymor.grids.referenceelements import triangle
+from pymor.grids.unstructured import UnstructuredTriangleGrid
 
+from pymor.domaindescriptions.boundarytypes import BoundaryType
+from pymor.grids.interfaces import BoundaryInfoInterface
+
+from pymor.core.logger import getLogger
 
 class GmshParseError(Exception):
     pass
@@ -18,10 +24,10 @@ class GmshParseError(Exception):
 
 def parse_gmsh_file(f):
 
-    allowed_sections = ['Nodes', 'Elements', 'PhysicalName', 'Periodic', 'NodeData',
+    allowed_sections = ['Nodes', 'Elements', 'PhysicalNames', 'Periodic', 'NodeData',
                         'ElementData', 'ElementNodeData']
 
-    supported_sections = ['Nodes', 'Elements']
+    supported_sections = ['Nodes', 'Elements', 'PhysicalNames']
 
     try:
 
@@ -66,12 +72,12 @@ def parse_gmsh_file(f):
             continue
         if not in_section:
             if not l.startswith('$'):
-                raise GmshParseError('expected section naem, got {}'.format(l))
+                raise GmshParseError('expected section name, got {}'.format(l))
             section = l[1:]
             if section not in allowed_sections:
                 raise GmshParseError('unknown section type: {}'.format(section))
             if section not in supported_sections:
-                raise GmshParseError('unsopported section type: {}'.format(section))
+                raise GmshParseError('unsupported section type: {}'.format(section))
             if section in sections:
                 raise GmshParseError('only one {} section allowed'.format(section))
             in_section = True
@@ -140,7 +146,26 @@ def parse_gmsh_file(f):
 
         return elements_by_type
 
-    parser_map = {'Nodes': parse_nodes, 'Elements': parse_elements}
+    def parse_names(physical_names):
+        try:
+            num_elements = int(physical_names[0])
+        except ValueError:
+            raise GmshParseError('first line of physical names sections is not a number: {}'.format(physical_names[0]))
+        if len(physical_names) != num_elements + 1:
+            raise GmshParseError('number-of-names field does not match number of lines in physical names section')
+
+        physical_names = [pn.split(' ') for pn in physical_names[1:]]
+        if not all(len(pn) == 3 for pn in physical_names):
+            raise GmshParseError('malformed physical names section')
+
+        try:
+            physical_names = [(int(b), int(a), str(c).replace('"', '')) for a, b, c in physical_names]
+        except ValueError:
+            raise GmshParseError('malformed physical names section')
+
+        return physical_names
+
+    parser_map = {'Nodes': parse_nodes, 'Elements': parse_elements, 'PhysicalNames': parse_names}
 
     for k, v in sections.iteritems():
         sections[k] = parser_map[k](v)
@@ -148,90 +173,120 @@ def parse_gmsh_file(f):
     return sections
 
 
-class GmshGrid(AffineGridInterface):
+class GmshGrid(UnstructuredTriangleGrid):
+    """An unstructured triangular grid that is build from an existing Gmsh MSH-file.
 
-    dim = 2
-    dim_outer = 2
-    reference_element = triangle
+    Parameters
+    ----------
+    sections
+        Parsed sections of the MSH-file.
+    """
 
-    def __init__(self, gmsh_file):
-        self.logger.info('Parsing gmsh file ...')
-        sections = parse_gmsh_file(gmsh_file)
-
-        self.logger.info('Checking is grid is a 2d triangular grid ...')
-        assert {'Nodes', 'Elements'} <= set(sections.keys())
+    def __init__(self, sections):
+        self.logger.info('Checking if grid is a 2d triangular grid ...')
+        assert {'Nodes', 'Elements', 'PhysicalNames'} <= set(sections.keys())
         assert set(sections['Elements'].keys()) <= {'line', 'triangle'}
         assert 'triangle' in sections['Elements']
         assert all(n[1][2] == 0 for n in sections['Nodes'])
 
-        self.logger.info('Creating entity maps ...')
-        node_ids = {}
-        for i, n in enumerate(sections['Nodes']):
-            node_ids[n[0]] = i
-        line_ids = {}
-        if 'line' in sections['Elements']:
-            for i, l in enumerate(sections['Elements']['line']):
-                    line_ids[l[0]] = i
-        triangle_ids = {}
-        for i, t in enumerate(sections['Elements']['triangle']):
-            triangle_ids[t[0]] = i
+        node_ids = dict(zip([n[0] for n in sections['Nodes']], np.arange(len(sections['Nodes']), dtype=np.int32)))
+        vertices = np.array([n[1][0:2] for n in sections['Nodes']])
 
-        self.logger.info('Building grid topology ...')
-
-        # the lines dict will hold the indices of lines defined by pairs of points
-        lines = {}
-        if 'line' in sections['Elements']:
-            for i, l in enumerate(sections['Elements']['line']):
-                lines[frozenset(l[2])] = i
-
-        codim1_subentities = np.empty((len(sections['Elements']['triangle']), 3), dtype=np.int32)
-        codim2_subentities = np.empty_like(codim1_subentities)
-        for i, t in enumerate(sections['Elements']['triangle']):
-            nodes = t[2]
-            codim2_subentities[i] = [node_ids[nodes[0]], node_ids[nodes[1]], node_ids[nodes[2]]]
-
-            edges = (frozenset(t[2][1:3]), frozenset((t[2][2], t[2][0])), frozenset((t[2][0:2])))
-            for e in edges:
-                if e not in lines:
-                    lines[e] = len(lines)
-            codim1_subentities[i] = [lines[edges[0]], lines[edges[1]], lines[edges[2]]]
-
-        self.logger.info('Calculating embeddings ...')
-        codim2_centers = np.array([n[1][0:2] for n in sections['Nodes']])
-        SEC = codim2_centers[codim2_subentities]
-        SHIFTS = SEC[:, 0, :]
-        TRANS = SEC[:, 1:, :] - SHIFTS[:, np.newaxis, :]
-        TRANS = TRANS.swapaxes(1, 2)
-
-        self.__embeddings = (TRANS, SHIFTS)
-        self.__subentities = (np.arange(len(codim1_subentities), dtype=np.int32).reshape(-1, 1),
-                              codim1_subentities, codim2_subentities)
-        self.__sizes = (len(codim1_subentities), len(lines), len(codim2_centers))
+        faces = np.array([[node_ids[nodes[0]], node_ids[nodes[1]], node_ids[nodes[2]]]
+                         for _, _, nodes in sections['Elements']['triangle']])
+        super(GmshGrid, self).__init__(vertices, faces)
 
     def __str__(self):
-        return 'GmshGrid with {} vertices, {} lines, {} triangles'.format(*self.__sizes)
+        return 'GmshGrid with {} triangles, {} edges, {} vertices'.format(self.size(0), self.size(1), self.size(2))
 
-    def size(self, codim=0):
-        assert 0 <= codim <= 2, 'Invalid codimension'
-        return self.__sizes[codim]
 
-    def subentities(self, codim=0, subentity_codim=None):
-        assert 0 <= codim <= 2, 'Invalid codimension'
-        if subentity_codim is None:
-            subentity_codim = codim + 1
-        assert codim <= subentity_codim <= self.dim, 'Invalid subentity codimensoin'
-        if codim == 0:
-            return self.__subentities[subentity_codim]
-        else:
-            return super(GmshGrid, self).subentities(codim, subentity_codim)
+class GmshBoundaryInfo(BoundaryInfoInterface):
+    """|BoundaryInfo| where |BoundaryTypes| are determined by a Gmsh MSH-file.
 
-    def embeddings(self, codim=0):
-        if codim == 0:
-            return self.__embeddings
-        else:
-            return super(GmshGrid, self).embeddings(codim)
+    Parameters
+    ----------
+    grid
+        The corresponding grid of type |GmshGrid|.
+    sections
+        Parsed sections of the MSH-file.
+    """
 
-    @staticmethod
-    def test_instances():
-        import os.path
-        return GmshGrid(open(os.path.join(os.path.dirname(__file__), '../../../../testdata/gmsh_1.msh'))),
+    def __init__(self, grid, sections):
+        assert isinstance(grid, GmshGrid)
+        self.grid = grid
+
+        # Save |BoundaryTypes|.
+        self.boundary_types = [BoundaryType(pn[2]) for pn in sections['PhysicalNames'] if pn[1] == 1]
+
+        # Compute ids, since Gmsh starts numbering with 1 instead of 0.
+        name_ids = dict(zip([pn[0] for pn in sections['PhysicalNames']], np.arange(len(sections['PhysicalNames']),
+                                                                                   dtype=np.int32)))
+        node_ids = dict(zip([n[0] for n in sections['Nodes']], np.arange(len(sections['Nodes']), dtype=np.int32)))
+
+        if 'line' in sections['Elements']:
+            superentities = grid.superentities(2, 1)
+
+            # find the edge for given vertices.
+            def find_edge(vertices):
+                edge_set = set(superentities[vertices[0]]).intersection(superentities[vertices[1]]) - {-1}
+                if len(edge_set) != 1:
+                    raise ValueError
+                return next(iter(edge_set))
+
+            line_ids = {l[0]: find_edge([node_ids[l[2][0]], node_ids[l[2][1]]]) for l in sections['Elements']['line']}
+
+        # compute boundary masks for all |BoundaryTypes|.
+        masks = {}
+        for bt in self.boundary_types:
+            masks[bt] = [np.array([False]*grid.size(1)), np.array([False]*grid.size(2))]
+            masks[bt][0][[line_ids[l[0]] for l in sections['Elements']['line']]] = \
+                [(bt.type == sections['PhysicalNames'][name_ids[l[1][0]]][2]) for l in sections['Elements']['line']]
+            ind = np.array([node_ids[n] for l in sections['Elements']['line'] for n in l[2] ])
+            val = masks[bt][0][[line_ids[l[0]] for l in sections['Elements']['line'] for n in l[2]]]
+            masks[bt][1][ind[val]] = True
+
+        self._masks = masks
+
+    def mask(self, boundary_type, codim):
+        assert 1 <= codim <= self.grid.dim
+        assert boundary_type in self.boundary_types
+        return self._masks[boundary_type][codim - 1]
+
+
+def load_gmsh(gmsh_file):
+    """Parse the Gmsh file and create a |GmshGrid| and |GmshBoundaryInfo|.
+
+    Parameters
+    ----------
+    gmsh_file
+        File handle of the Gmsh file.
+    Returns
+    -------
+    grid
+        The generated |GmshGrid|.
+    boundary_info
+        The generated |GmshBoundaryInfo|.
+    """
+    logger = getLogger('pymor.playground.grids.gmsh.load_gmsh')
+
+    logger.info('Parsing gmsh file ...')
+    tic = time.time()
+    sections = parse_gmsh_file(gmsh_file)
+    toc = time.time()
+    t_parse = toc - tic
+
+    logger.info('Create GmshGrid ...')
+    tic = time.time()
+    grid = GmshGrid(sections)
+    toc = time.time()
+    t_grid = toc - tic
+
+    logger.info('Create GmshBoundaryInfo ...')
+    tic = time.time()
+    bi = GmshBoundaryInfo(grid, sections)
+    toc = time.time()
+    t_bi = toc - tic
+
+    logger.info('Parsing took {} s; Grid creation took {} s; BoundaryInfo creation took {} s'.format(t_parse, t_grid, t_bi))
+
+    return grid, bi
