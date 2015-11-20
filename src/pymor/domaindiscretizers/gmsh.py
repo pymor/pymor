@@ -10,14 +10,10 @@ import tempfile
 import collections
 import os
 import time
-
-import numpy as np
-
 from subprocess import PIPE, Popen, CalledProcessError
 
 from pymor.domaindescriptions.basic import PolygonalDomain, RectDomain
-from pymor.playground.grids.gmsh import load_gmsh
-
+from pymor.grids.gmsh import load_gmsh
 from pymor.core.logger import getLogger
 
 

@@ -267,7 +267,7 @@ def load_gmsh(gmsh_file):
     boundary_info
         The generated |GmshBoundaryInfo|.
     """
-    logger = getLogger('pymor.playground.grids.gmsh.load_gmsh')
+    logger = getLogger('pymor.grids.gmsh.load_gmsh')
 
     logger.info('Parsing gmsh file ...')
     tic = time.time()
