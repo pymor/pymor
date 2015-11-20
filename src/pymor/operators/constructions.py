@@ -47,9 +47,9 @@ class LincombOperator(OperatorBase):
         assert all(op.range == operators[0].range for op in operators[1:])
         self.source = operators[0].source
         self.range = operators[0].range
-        self.operators = operators
+        self.operators = tuple(operators)
         self.linear = all(op.linear for op in operators)
-        self.coefficients = coefficients
+        self.coefficients = tuple(coefficients)
         self.solver_options = solver_options
         self.name = name
         self.build_parameter_type(inherits=list(operators) +
