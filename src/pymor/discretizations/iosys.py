@@ -479,7 +479,7 @@ class LTISystem(DiscretizationInterface):
                 Vr.append(sEmA.apply_inverse(Bb))
 
                 CTc = VectorArrayOperator(self.C).apply(NumpyVectorArray(c[:, i].real.T))
-                Wr.append(sEmA.apply_adjoint_inverse(CTc))
+                Wr.append(sEmA.apply_inverse_adjoint(CTc))
             elif sigma[i].imag > 0:
                 if self.E is None:
                     E = NumpyMatrixOperator(sps.eye(self.n))
@@ -493,7 +493,7 @@ class LTISystem(DiscretizationInterface):
                 Vr.append(NumpyVectorArray(v.data.imag))
 
                 CTc = VectorArrayOperator(self.C).apply(NumpyVectorArray(c[:, i].T))
-                w = sEmA.apply_adjoint_inverse(CTc)
+                w = sEmA.apply_inverse_adjoint(CTc)
                 Wr.append(NumpyVectorArray(w.data.real))
                 Wr.append(NumpyVectorArray(w.data.imag))
 

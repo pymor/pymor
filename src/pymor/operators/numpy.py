@@ -237,7 +237,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             V.data[ind] if hasattr(ind, '__len__') else V.data[ind:ind + 1]
         return NumpyVectorArray(_apply_inverse(self._matrix, V, options=options), copy=False)
 
-    def apply_adjoint_inverse(self, V, ind=None, mu=None, source_product=None, range_product=None, options=None):
+    def apply_inverse_adjoint(self, V, ind=None, mu=None, source_product=None, range_product=None, options=None):
         assert V in self.source
         assert V.check_ind(ind)
         assert source_product is None or source_product.source == source_product.range == self.source
