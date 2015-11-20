@@ -189,7 +189,7 @@ class LincombOperator(OperatorBase):
                 return self.assemble().as_vector()
         elif self._try_assemble:
             return self.assemble().as_vector()
-        coefficients = self.evaluate_coefficients(mu)
+        coefficients = np.array(self.evaluate_coefficients(mu))
         vectors = [op.as_vector(mu) for op in self.operators]
         R = vectors[0]
         R.scal(coefficients[0])
