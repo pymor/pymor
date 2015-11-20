@@ -14,22 +14,22 @@ from pymor.tools.floatcmp import float_cmp
 from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
-def _newton(order):
+def _newton(order, **kwargs):
     mop = MonomOperator(order)
     rhs = NumpyVectorArray([0.0])
     guess = NumpyVectorArray([1.0])
-    return newton(mop, rhs, initial_guess=guess)
+    return newton(mop, rhs, initial_guess=guess, **kwargs)
 
 
 @pytest.mark.parametrize("order", range(1, 8))
 def test_newton(order):
-    U, _ = _newton(order)
+    U, _ = _newton(order, atol=1e-15)
     assert float_cmp(U.data, 0.0)
 
 
 def test_newton_fail():
     with pytest.raises(NewtonError):
-        _ = _newton(0)
+        _ = _newton(0, maxiter=10, stagnation_threshold=np.inf)
 
 
 @pytest.fixture(params=('pod_basis_extension', 'gram_schmidt_basis_extension', 'trivial_basis_extension'))

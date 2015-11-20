@@ -27,25 +27,25 @@ _options_sid = None
           'least_squares_generic_lsqr_atol', 'least_squares_generic_lsqr_btol', 'least_squares_generic_lsqr_conlim',
           'least_squares_generic_lsqr_iter_lim', 'least_squares_generic_lsqr_show',
           sid_ignore=('least_squares_generic_lsmr_show', 'least_squares_generic_lsqr_show'))
-def invert_options(default_solver='generic_lgmres',
-                   default_least_squares_solver='least_squares_generic_lsmr',
-                   generic_lgmres_tol=1e-5,
-                   generic_lgmres_maxiter=1000,
-                   generic_lgmres_inner_m=39,
-                   generic_lgmres_outer_k=3,
-                   least_squares_generic_lsmr_damp=0.0,
-                   least_squares_generic_lsmr_atol=1e-6,
-                   least_squares_generic_lsmr_btol=1e-6,
-                   least_squares_generic_lsmr_conlim=1e8,
-                   least_squares_generic_lsmr_maxiter=None,
-                   least_squares_generic_lsmr_show=False,
-                   least_squares_generic_lsqr_damp=0.0,
-                   least_squares_generic_lsqr_atol=1e-6,
-                   least_squares_generic_lsqr_btol=1e-6,
-                   least_squares_generic_lsqr_conlim=1e8,
-                   least_squares_generic_lsqr_iter_lim=None,
-                   least_squares_generic_lsqr_show=False):
-    """Returns |invert_options| (with default values) for arbitrary linear |Operators|.
+def options(default_solver='generic_lgmres',
+            default_least_squares_solver='least_squares_generic_lsmr',
+            generic_lgmres_tol=1e-5,
+            generic_lgmres_maxiter=1000,
+            generic_lgmres_inner_m=39,
+            generic_lgmres_outer_k=3,
+            least_squares_generic_lsmr_damp=0.0,
+            least_squares_generic_lsmr_atol=1e-6,
+            least_squares_generic_lsmr_btol=1e-6,
+            least_squares_generic_lsmr_conlim=1e8,
+            least_squares_generic_lsmr_maxiter=None,
+            least_squares_generic_lsmr_show=False,
+            least_squares_generic_lsqr_damp=0.0,
+            least_squares_generic_lsqr_atol=1e-6,
+            least_squares_generic_lsqr_btol=1e-6,
+            least_squares_generic_lsqr_conlim=1e8,
+            least_squares_generic_lsqr_iter_lim=None,
+            least_squares_generic_lsqr_show=False):
+    """Returns |solver_options| (with default values) for arbitrary linear |Operators|.
 
     Parameters
     ----------
@@ -89,7 +89,7 @@ def invert_options(default_solver='generic_lgmres',
 
     Returns
     -------
-    A tuple of all possible |invert_options|.
+    A tuple of possible values for |solver_options|.
     """
 
     assert default_least_squares_solver.startswith('least_squares')
@@ -141,31 +141,31 @@ def apply_inverse(op, rhs, options=None):
     rhs
         |VectorArray| of right-hand sides for the equation system.
     options
-        |invert_options| to use. (See :func:`invert_options`.)
+        The solver options to use. (See :func:`options`.)
 
     Returns
     -------
     |VectorArray| of the solution vectors.
     """
 
-    default_options = invert_options()
+    def_opts = globals()['options']()
 
     if options is None:
-        options = default_options.values()[0]
+        options = def_opts.values()[0]
     elif isinstance(options, str):
         if options == 'least_squares':
-            for k, v in default_options.iteritems():
+            for k, v in def_opts.iteritems():
                 if k.startswith('least_squares'):
                     options = v
                     break
             assert not isinstance(options, str)
         else:
-            options = default_options[options]
+            options = def_opts[options]
     else:
-        assert 'type' in options and options['type'] in default_options \
-            and options.viewkeys() <= default_options[options['type']].viewkeys()
+        assert 'type' in options and options['type'] in def_opts \
+            and options.viewkeys() <= def_opts[options['type']].viewkeys()
         user_options = options
-        options = default_options[user_options['type']]
+        options = def_opts[user_options['type']]
         options.update(user_options)
 
     R = op.source.empty(reserve=len(rhs))

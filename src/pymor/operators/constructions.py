@@ -18,7 +18,6 @@ from pymor.core.defaults import defaults_sid, defaults
 from pymor.core.interfaces import ImmutableInterface
 from pymor.operators.basic import OperatorBase
 from pymor.operators.interfaces import OperatorInterface
-from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.parameters.base import Parametric
 from pymor.parameters.interfaces import ParameterFunctionalInterface
 from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpace
@@ -39,7 +38,7 @@ class LincombOperator(OperatorBase):
         Name of the operator.
     """
 
-    def __init__(self, operators, coefficients, name=None):
+    def __init__(self, operators, coefficients, solver_options=None, name=None):
         assert len(operators) > 0
         assert len(operators) == len(coefficients)
         assert all(isinstance(op, OperatorInterface) for op in operators)
@@ -48,9 +47,10 @@ class LincombOperator(OperatorBase):
         assert all(op.range == operators[0].range for op in operators[1:])
         self.source = operators[0].source
         self.range = operators[0].range
-        self.operators = operators
+        self.operators = tuple(operators)
         self.linear = all(op.linear for op in operators)
-        self.coefficients = coefficients
+        self.coefficients = tuple(coefficients)
+        self.solver_options = solver_options
         self.name = name
         self.build_parameter_type(inherits=list(operators) +
                                   [f for f in coefficients if isinstance(f, ParameterFunctionalInterface)])
@@ -69,7 +69,7 @@ class LincombOperator(OperatorBase):
         List of linear coefficients.
         """
         mu = self.parse_parameter(mu)
-        return np.array([c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients])
+        return [c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients]
 
     def apply(self, U, ind=None, mu=None):
         if hasattr(self, '_assembled_operator'):
@@ -144,7 +144,8 @@ class LincombOperator(OperatorBase):
                 self.logger.warn('Re-assembling since state of global defaults has changed.')
         operators = [op.assemble(mu) for op in self.operators]
         coefficients = self.evaluate_coefficients(mu)
-        op = operators[0].assemble_lincomb(operators, coefficients, name=self.name + '_assembled')
+        op = operators[0].assemble_lincomb(operators, coefficients, solver_options=self.solver_options,
+                                           name=self.name + '_assembled')
         if not self.parametric:
             if op:
                 self._assembled_operator = op
@@ -156,9 +157,12 @@ class LincombOperator(OperatorBase):
         elif op:
             return op
         else:
-            return LincombOperator(operators, coefficients, name=self.name + '_assembled')
+            return LincombOperator(operators, coefficients, solver_options=self.solver_options,
+                                   name=self.name + '_assembled')
 
     def jacobian(self, U, mu=None):
+        if self.linear:
+            return self.assemble(mu)
         if hasattr(self, '_assembled_operator'):
             if self._defaults_sid == defaults_sid():
                 return self._assembled_operator.jacobian(U)
@@ -168,9 +172,12 @@ class LincombOperator(OperatorBase):
             return self.assemble().jacobian(U)
         jacobians = [op.jacobian(U, mu) for op in self.operators]
         coefficients = self.evaluate_coefficients(mu)
-        jac = jacobians[0].assemble_lincomb(jacobians, coefficients, name=self.name + '_jacobian')
+        options = self.solver_options.get('jacobian') if self.solver_options else None
+        jac = jacobians[0].assemble_lincomb(jacobians, coefficients, solver_options=options,
+                                            name=self.name + '_jacobian')
         if jac is None:
-            return LincombOperator(jacobians, coefficients, name=self.name + '_jacobian')
+            return LincombOperator(jacobians, coefficients, solver_options=options,
+                                   name=self.name + '_jacobian')
         else:
             return jac
 
@@ -182,7 +189,7 @@ class LincombOperator(OperatorBase):
                 return self.assemble().as_vector()
         elif self._try_assemble:
             return self.assemble().as_vector()
-        coefficients = self.evaluate_coefficients(mu)
+        coefficients = np.array(self.evaluate_coefficients(mu))
         vectors = [op.as_vector(mu) for op in self.operators]
         R = vectors[0]
         R.scal(coefficients[0])
@@ -230,7 +237,7 @@ class Concatenation(OperatorBase):
         Name of the operator.
     """
 
-    def __init__(self, second, first, name=None):
+    def __init__(self, second, first, solver_options=None, name=None):
         assert isinstance(second, OperatorInterface)
         assert isinstance(first, OperatorInterface)
         assert first.range == second.source
@@ -240,6 +247,7 @@ class Concatenation(OperatorBase):
         self.source = first.source
         self.range = second.range
         self.linear = second.linear and first.linear
+        self.solver_options = solver_options
         self.name = name
 
     def apply(self, U, ind=None, mu=None):
@@ -343,6 +351,15 @@ class IdentityOperator(OperatorBase):
         else:
             return PrU
 
+    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
+        if all(isinstance(op, IdentityOperator) for op in operators):
+            assert all(op.source == operators[0].source for op in operators)
+            return IdentityOperator(operators[0].source, name=name) * sum(coefficients)
+        else:
+            return operators[1].assemble_lincomb(operators[1:] + [operators[0]],
+                                                 coefficients[1:] + [coefficients[0]],
+                                                 solver_options=solver_options, name=name)
+
 
 class ConstantOperator(OperatorBase):
     """A constant |Operator| always returning the same vector.
@@ -432,6 +449,7 @@ class ZeroOperator(OperatorBase):
         assert range_basis is None or range_basis in self.range
         assert product is None or product.source == product.range == self.range
         if source_basis is not None and range_basis is not None:
+            from pymor.operators.numpy import NumpyMatrixOperator
             return NumpyMatrixOperator(np.zeros((len(range_basis), len(source_basis))),
                                        name=self.name + '_projected')
         else:
@@ -439,10 +457,11 @@ class ZeroOperator(OperatorBase):
             new_range = NumpyVectorSpace(len(range_basis)) if range_basis is not None else self.source
             return ZeroOperator(new_source, new_range, name=self.name + '_projected')
 
-    def assemble_lincomb(self, operators, coefficients, name=None):
+    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         assert operators[0] is self
         if len(operators) > 1:
-            return operators[1].assemble_lincomb(operators[1:], coefficients[1:], name=name)
+            return operators[1].assemble_lincomb(operators[1:], coefficients[1:], solver_options=solver_options,
+                                                 name=name)
         else:
             return self
 
@@ -516,11 +535,12 @@ class VectorArrayOperator(OperatorBase):
             else:
                 return ATPrU
 
-    def assemble_lincomb(self, operators, coefficients, name=None):
+    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
 
         transposed = operators[0].transposed
         if not all(isinstance(op, VectorArrayOperator) and op.transposed == transposed for op in operators):
             return None
+        assert not solver_options
 
         if coefficients[0] == 1:
             array = operators[0]._array.copy()
@@ -645,12 +665,11 @@ class FixedParameterOperator(OperatorBase):
         return self.operator.apply_adjoint(U, ind=ind, mu=self.mu,
                                            source_product=source_product, range_product=range_product)
 
-    @property
-    def invert_options(self):
-        return self.operator.invert_options
+    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
+        return self.operator.apply_inverse(V, ind=ind, mu=self.mu, least_squares=least_squares)
 
-    def apply_inverse(self, V, ind=None, mu=None, options=None):
-        return self.operator.apply_inverse(V, ind=ind, mu=self.mu, options=options)
+    def jacobian(self, U, mu=None):
+        return self.operator.jacobian(U, mu=self.mu)
 
 
 class AdjointOperator(OperatorBase):

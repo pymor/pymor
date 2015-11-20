@@ -121,7 +121,7 @@ common = '''
 
 .. |OrderedDict| replace:: :class:`~collections.OrderedDict`
 
-.. |invert_options| replace:: :meth:`invert options <pymor.operators.interfaces.OperatorInterface.invert_options>`
+.. |solver_options| replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.solver_options`
 
 '''
 
