@@ -44,14 +44,11 @@ if __name__ == '__main__':
     C[0, n - 1] = 1
 
     # eigenvalues of A
-    #print(A)
-    #ev = np.linalg.eigvals(A)
-    #print(ev)
-    #print(ev.real)
-    #print(ev.imag)
-    #fig, ax = plt.subplots()
-    #ax.plot(ev.real, ev.imag, '.')
-    #plt.show()
+    ev = np.linalg.eigvals(A)
+    fig, ax = plt.subplots()
+    ax.plot(ev.real, ev.imag, '.')
+    ax.set_title('Eigenvalues of A')
+    plt.show()
 
     # LTI system
     lti = iosys.LTISystem.from_matrices(A, B, C)
@@ -60,19 +57,44 @@ if __name__ == '__main__':
     print('m = {}'.format(lti.m))
     print('p = {}'.format(lti.p))
 
+    # Bode plot of the full model
+    w = np.logspace(-2, 3, 100)
+    tfw = lti.bode(w)
+    fig, ax = plt.subplots()
+    ax.loglog(w, np.abs(tfw[0, 0, :]))
+    ax.set_title('Bode plot of the full model')
+    plt.show()
+
     # Hankel singular values
     lti.compute_hsv_U_V()
-    #print(lti._hsv)
+    fig, ax = plt.subplots()
+    ax.semilogy(lti._hsv)
+    ax.set_title('Hankel singular values')
+    plt.show()
 
     # H_2-norm of the system
-    print(lti.norm())
+    print('H_2-norm of the full model: {}'.format(lti.norm()))
 
     # Balanced Truncation
     r = 5
     rom_bt, _, _ = lti.bt(r)
-    print(rom_bt.norm())
+    print('H_2-norm of the BT ROM: {}'.format(rom_bt.norm()))
     err_bt = lti - rom_bt
-    print(err_bt.norm())
+    print('H_2-error for BT ROM: {}'.format(err_bt.norm()))
+
+    # Bode plot of the full and BT reduced model
+    tfw_bt = rom_bt.bode(w)
+    fig, ax = plt.subplots()
+    ax.loglog(w, np.abs(tfw[0, 0, :]), w, np.abs(tfw_bt[0, 0, :]))
+    ax.set_title('Bode plot of the full and BT reduced model')
+    plt.show()
+
+    # Bode plot of the BT error system
+    tfw_bt_err = err_bt.bode(w)
+    fig, ax = plt.subplots()
+    ax.loglog(w, np.abs(tfw_bt_err[0, 0, :]))
+    ax.set_title('Bode plot of the BT error system')
+    plt.show()
 
     # Iterative Rational Krylov Algorithm
     sigma = np.logspace(-1, 3, r)
@@ -85,11 +107,26 @@ if __name__ == '__main__':
 
     #print(reduction_data_irka['dist'])
     tmp = map(np.min, reduction_data_irka['dist'])
-    print(tmp)
-    #fig, ax = plt.subplots()
-    #ax.semilogy(tmp)
-    #plt.show()
+    #print(tmp)
+    fig, ax = plt.subplots()
+    ax.semilogy(tmp, '.-')
+    ax.set_title('Distances between shifts in IRKA iterations')
+    plt.show()
 
-    print(rom_irka.norm())
+    print('H_2-norm of the IRKA ROM: '.format(rom_irka.norm()))
     err_irka = lti - rom_irka
-    print(err_irka.norm())
+    print('H_2-error for IRKA ROM: {}'.format(err_irka.norm()))
+
+    # Bode plot of the full and IRKA reduced model
+    tfw_irka = rom_irka.bode(w)
+    fig, ax = plt.subplots()
+    ax.loglog(w, np.abs(tfw[0, 0, :]), w, np.abs(tfw_irka[0, 0, :]))
+    ax.set_title('Bode plot of the full and IRKA reduced model')
+    plt.show()
+
+    # Bode plot of the IRKA error system
+    tfw_irka_err = err_irka.bode(w)
+    fig, ax = plt.subplots()
+    ax.loglog(w, np.abs(tfw_irka_err[0, 0, :]))
+    ax.set_title('Bode plot of the IRKA error system')
+    plt.show()
