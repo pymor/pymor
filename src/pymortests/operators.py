@@ -180,6 +180,19 @@ def test_apply_inverse(operator_with_arrays):
         assert np.all(almost_equal(VV, V, V_ind=ind, atol=1e-10, rtol=1e-3))
 
 
+def test_apply_inverse_adjoint(operator_with_arrays):
+    op, mu, U, _ = operator_with_arrays
+    for ind in valid_inds(U):
+        try:
+            V = op.apply_inverse_adjoint(U, mu=mu, ind=ind)
+        except InversionError:
+            return
+        assert V in op.range
+        assert len(V) == U.len_ind(ind)
+        UU = op.apply_adjoint(V, mu=mu)
+        assert np.all(almost_equal(UU, U, V_ind=ind, atol=1e-10, rtol=1e-3))
+
+
 def test_projected(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     op_UV = op.projected(V, U)
