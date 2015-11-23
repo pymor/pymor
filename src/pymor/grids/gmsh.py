@@ -18,6 +18,7 @@ from pymor.grids.interfaces import BoundaryInfoInterface
 
 from pymor.core.logger import getLogger
 
+
 class GmshParseError(Exception):
     pass
 
@@ -241,7 +242,7 @@ class GmshBoundaryInfo(BoundaryInfoInterface):
             masks[bt] = [np.array([False]*grid.size(1)), np.array([False]*grid.size(2))]
             masks[bt][0][[line_ids[l[0]] for l in sections['Elements']['line']]] = \
                 [(bt.type == sections['PhysicalNames'][name_ids[l[1][0]]][2]) for l in sections['Elements']['line']]
-            ind = np.array([node_ids[n] for l in sections['Elements']['line'] for n in l[2] ])
+            ind = np.array([node_ids[n] for l in sections['Elements']['line'] for n in l[2]])
             val = masks[bt][0][[line_ids[l[0]] for l in sections['Elements']['line'] for n in l[2]]]
             masks[bt][1][ind[val]] = True
 
@@ -287,6 +288,7 @@ def load_gmsh(gmsh_file):
     toc = time.time()
     t_bi = toc - tic
 
-    logger.info('Parsing took {} s; Grid creation took {} s; BoundaryInfo creation took {} s'.format(t_parse, t_grid, t_bi))
+    logger.info('Parsing took {} s; Grid creation took {} s; BoundaryInfo creation took {} s'
+                .format(t_parse, t_grid, t_bi))
 
     return grid, bi

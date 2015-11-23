@@ -64,8 +64,10 @@ def discretize_Gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
         return points, domain_description.boundary_types
 
     def discretize_RectDomain():
-        points = [[domain_description.domain[0].tolist(), [domain_description.domain[1][0], domain_description.domain[0][1]],
-                  domain_description.domain[1].tolist(), [domain_description.domain[0][0], domain_description.domain[1][1]]]]
+        points = [[domain_description.domain[0].tolist(),
+                   [domain_description.domain[1][0], domain_description.domain[0][1]],
+                   domain_description.domain[1].tolist(),
+                   [domain_description.domain[0][0], domain_description.domain[1][1]]]]
         boundary_types = {}
         boundary_types[domain_description.bottom] = [1]
         if domain_description.right not in boundary_types:
@@ -109,13 +111,15 @@ def discretize_Gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
                 geo_file.write('Point('+str(id+1)+') = '+str(p+[0, 0]).replace('[', '{').replace(']', '}')+';\n')
 
             # store points and their ids
-            point_ids = dict(zip([str(p) for ps in points for p in ps], range(1, len([p for ps in points for p in ps])+1)))
+            point_ids = dict(zip([str(p) for ps in points for p in ps],
+                                 range(1, len([p for ps in points for p in ps])+1)))
             # shift points 1 entry to the left.
             points_deque = [collections.deque(ps) for ps in points]
             for ps_d in points_deque:
                 ps_d.rotate(-1)
             # create lines by connecting the points with shifted points, such that they form a polygonal chains.
-            lines = [[point_ids[str(p0)], point_ids[str(p1)]] for ps, ps_d in zip(points, points_deque) for p0, p1 in zip(ps, ps_d)]
+            lines = [[point_ids[str(p0)], point_ids[str(p1)]]
+                     for ps, ps_d in zip(points, points_deque) for p0, p1 in zip(ps, ps_d)]
             # assign ids to all lines and write them to the GEO-file.
             for l_id, l in enumerate(lines):
                 geo_file.write('Line('+str(l_id+1)+')'+' = '+str(l).replace('[', '{').replace(']', '}')+';\n')
@@ -127,12 +131,14 @@ def discretize_Gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
                 geo_file.write('Line Loop('+str(ll_id)+')'+' = '+str(ll).replace('[', '{').replace(']', '}')+';\n')
 
             # create the surface defined by line loops, starting with the exterior and then the holes.
-            geo_file.write('Plane Surface('+str(line_loop_ids[0]+1)+')'+' = '+str(line_loop_ids).replace('[', '{').replace(']', '}')+';\n')
+            geo_file.write('Plane Surface(' + str(line_loop_ids[0]+1) + ')' + ' = '
+                           + str(line_loop_ids).replace('[', '{').replace(']', '}') + ';\n')
             geo_file.write('Physical Surface("boundary") = {'+str(line_loop_ids[0]+1)+'};\n')
 
             # write boundaries.
             for boundary_type, bs in boundary_types.iteritems():
-                geo_file.write('Physical Line'+'("'+str(boundary_type)+'")'+' = '+str([l_id for l_id in bs]).replace('[', '{').replace(']', '}')+';\n')
+                geo_file.write('Physical Line' + '("' + str(boundary_type) + '")' + ' = '
+                               + str([l_id for l_id in bs]).replace('[', '{').replace(']', '}') + ';\n')
 
             geo_file.close()
         # When a GEO-File is provided just get the corresponding file path.

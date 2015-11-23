@@ -5,8 +5,8 @@
 #
 # Contributors: Michael Laier <m_laie01@uni-muenster.de>
 
-"""Simple demonstration of solving the Poisson equation in 2D on a circular sector domain of radius 1 using gmsh for
-meshing.
+"""Simple demonstration of solving the Poisson equation in 2D on a circular sector
+domain of radius 1 using gmsh for meshing.
 
 Usage:
     elliptic_gmsh.py [--fv] ANGLE NUM_POINTS CLMIN CLMAX CLSCALE
