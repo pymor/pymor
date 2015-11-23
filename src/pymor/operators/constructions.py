@@ -356,8 +356,17 @@ class IdentityOperator(OperatorBase):
         return V.copy(ind=ind)
 
     def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None, least_squares=False):
-        assert U in self.source
-        return U.copy(ind=ind)
+        if source_product or range_product:
+            return super(IdentityOperator, self).apply_inverse_adjoint(U, ind=ind, mu=mu,
+                                                                       source_product=source_product,
+                                                                       range_product=range_product,
+                                                                       least_squares=least_squares)
+        else:
+            assert U in self.source
+            return U.copy(ind=ind)
+
+    def assemble(self, mu=None):
+        return self
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         if all(isinstance(op, IdentityOperator) for op in operators):
