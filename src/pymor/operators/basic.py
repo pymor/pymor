@@ -173,7 +173,7 @@ class OperatorBase(OperatorInterface):
             # use generic solver for the adjoint operator
             from pymor.operators.constructions import AdjointOperator
             options = {'inverse': self.solver_options.get('inverse_adjoint') if self.solver_options else None}
-            adjoint_op = AdjointOperator(self.with_(solver_options=options))
+            adjoint_op = AdjointOperator(self.with_(solver_options=options), with_apply_inverse=False)
             return adjoint_op.apply_inverse(U, ind=ind, mu=mu, least_squares=least_squares)
 
     def as_vector(self, mu=None):
