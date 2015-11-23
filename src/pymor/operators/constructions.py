@@ -543,6 +543,16 @@ class VectorArrayOperator(OperatorBase):
             else:
                 return ATPrU
 
+    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None, least_squares=False):
+        if source_product or range_product:
+            return super(VectorArrayOperator, self).apply_inverse_adjoint(U, ind, mu=mu,
+                                                                          source_product=source_product,
+                                                                          range_product=range_product,
+                                                                          least_squares=least_squares)
+        else:
+            adjoint_op = VectorArrayOperator(self._array, transposed=not self.transposed, copy=False)
+            return adjoint_op.apply_inverse(U, ind=ind, mu=mu, least_squares=least_squares)
+
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
 
         transposed = operators[0].transposed
