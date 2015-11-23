@@ -9,8 +9,8 @@ from __future__ import absolute_import, division, print_function
 import tempfile
 import collections
 import os
+import subprocess
 import time
-from subprocess import PIPE, Popen, CalledProcessError
 
 from pymor.domaindescriptions.basic import PolygonalDomain, RectDomain
 from pymor.grids.gmsh import load_gmsh
@@ -87,6 +87,7 @@ def discretize_Gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
     try:
         # When a |PolygonalDomain| or |RectDomain| has to be discretized create a Gmsh GE0-file and write all data.
         if domain_description is not None:
+            logger.info('Writing Gmsh geometry file ...')
             # Create a temporary GEO-file if None is specified
             if geo_file_path is None:
                 geo_file = tempfile.NamedTemporaryFile(delete=False, suffix='.geo')
@@ -149,25 +150,16 @@ def discretize_Gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
         tic = time.time()
 
         # run Gmsh; initial meshing
+        logger.info('Calling Gmsh ...')
         cmd = ['gmsh', geo_file_path, '-2', '-algo', mesh_algorithm, '-clscale', str(clscale), options, '-o',
                msh_file_path]
-        gmsh = Popen(cmd, stdout=PIPE, stderr=PIPE)
-        out, err = gmsh.communicate()
-        print(out)
-        if gmsh.returncode != 0:
-            print(err)
-            raise CalledProcessError(gmsh.returncode, cmd=cmd, output=err)
+        subprocess.check_call(cmd)
 
         # run gmsh; perform mesh refinement
         cmd = ['gmsh', msh_file_path, '-refine', '-o', msh_file_path]
         for i in xrange(refinement_steps):
             logger.info('Performing Gmsh refinement step {}'.format(i+1))
-            gmsh = Popen(cmd, stdout=PIPE, stderr=PIPE)
-            out, err = gmsh.communicate()
-            print(out)
-            if gmsh.returncode != 0:
-                print(err)
-                raise CalledProcessError(gmsh.returncode, cmd=cmd, output=err)
+            subprocess.check_call(cmd)
 
         toc = time.time()
         t_gmsh = toc - tic
