@@ -177,7 +177,7 @@ def test_apply_inverse(operator_with_arrays):
         assert U in op.source
         assert len(U) == V.len_ind(ind)
         VV = op.apply(U, mu=mu)
-        assert float_cmp_all(VV.l2_norm(), V.l2_norm(ind=ind), atol=1e-10, rtol=0.5)
+        assert np.all(almost_equal(VV, V, V_ind=ind, atol=1e-10, rtol=1e-3))
 
 
 def test_projected(operator_with_arrays):
