@@ -9,16 +9,12 @@
 domain of radius 1 using gmsh for meshing.
 
 Usage:
-    elliptic_gmsh.py [--fv] ANGLE NUM_POINTS CLMIN CLMAX CLSCALE
+    elliptic_gmsh.py [--fv] ANGLE NUM_POINTS CLSCALE
 
 Arguments:
     ANGLE        The angle of the circular sector.
 
     NUM_POINTS   The number of points that form the arc of the circular sector.
-
-    CLMIN        Minimum mesh element size.
-
-    CLMAX        Maximum mesh element size.
 
     CLSCALE      Mesh element size scaling factor.
 
@@ -45,8 +41,6 @@ from pymor.vectorarrays.numpy import NumpyVectorArray
 def elliptic_gmsh_demo(args):
     args['ANGLE'] = float(args['ANGLE'])
     args['NUM_POINTS'] = int(args['NUM_POINTS'])
-    args['CLMIN'] = float(args['CLMIN'])
-    args['CLMAX'] = float(args['CLMAX'])
     args['CLSCALE'] = float(args['CLSCALE'])
 
     domain = CircularSectorDomain(args['ANGLE'], radius=1, num_points=args['NUM_POINTS'])
@@ -63,8 +57,7 @@ def elliptic_gmsh_demo(args):
     problem = EllipticProblem(domain=domain, rhs=rhs, dirichlet_data=dirichlet_data)
 
     print('Discretize ...')
-    grid, bi = discretize_Gmsh(domain_description=domain, clmin=args['CLMIN'], clmax=args['CLMAX'],
-                               clscale=args['CLSCALE'])
+    grid, bi = discretize_Gmsh(domain_description=domain, clscale=args['CLSCALE'])
     discretizer = discretize_elliptic_fv if args['--fv'] else discretize_elliptic_cg
     discretization, _ = discretizer(analytical_problem=problem, grid=grid, boundary_info=bi)
 

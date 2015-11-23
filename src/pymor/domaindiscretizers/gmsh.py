@@ -18,7 +18,7 @@ from pymor.core.logger import getLogger
 
 
 def discretize_Gmsh(domain_description=None, geo_file=None, geo_file_path=None, msh_file_path=None,
-                    mesh_algorithm='del2d', clscale=1., clmin=0.1, clmax=0.2, options='', refinement_steps=0):
+                    mesh_algorithm='del2d', clscale=1., options='', refinement_steps=0):
     """Discretize a |DomainDescription| or a already existing Gmsh GEO-file using the Gmsh Mesh module.
 
     Parameters
@@ -37,10 +37,6 @@ def discretize_Gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
         The algorithm used to mesh the domain (meshadapt, del2d, front2d).
     clscale
         Mesh element size scaling factor.
-    clmin
-        Minimum mesh element size.
-    clmax
-        Maximum mesh element size.
     options
         Other options to control the meshing procedure of Gmsh. See
         http://geuz.org/gmsh/doc/texinfo/gmsh.html#Command_002dline-options for all available options.
@@ -153,8 +149,8 @@ def discretize_Gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
         tic = time.time()
 
         # run Gmsh; initial meshing
-        cmd = ['gmsh', geo_file_path, '-2', '-algo', mesh_algorithm, '-clscale', str(clscale), '-clmin', str(clmin),
-               '-clmax', str(clmax), options, '-o', msh_file_path]
+        cmd = ['gmsh', geo_file_path, '-2', '-algo', mesh_algorithm, '-clscale', str(clscale), options, '-o',
+               msh_file_path]
         gmsh = Popen(cmd, stdout=PIPE, stderr=PIPE)
         out, err = gmsh.communicate()
         print(out)
