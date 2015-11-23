@@ -150,6 +150,32 @@ class OperatorBase(OperatorInterface):
                 R.append(newton(self, V.copy(i), **options)[0])
             return R
 
+    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None,
+                              least_squares=False):
+        from pymor.operators.constructions import FixedParameterOperator
+        assembled_op = self.assemble(mu)
+        if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
+            return assembled_op.apply_inverse_adjoint(U, ind=ind, source_product=source_product,
+                                                      range_product=range_product, least_squares=least_squares)
+        elif source_product or range_product:
+            if source_product:
+                U = source_product.apply(U, ind=ind)
+                ind = None
+            # maybe there is a better implementation for source_product == None and range_product == None
+            V = self.apply_inverse_adjoint(U, mu=mu, least_squares=least_squares)
+            if range_product:
+                return range_product.apply_inverse(V)
+            else:
+                return V
+        else:
+            if not self.linear:
+                raise NotImplementedError
+            # use generic solver for the adjoint operator
+            from pymor.operators.constructions import AdjointOperator
+            options = {'inverse': self.solver_options.get('inverse_adjoint') if self.solver_options else None}
+            adjoint_op = AdjointOperator(self.with_(solver_options=options), with_apply_inverse=False)
+            return adjoint_op.apply_inverse(U, ind=ind, mu=mu, least_squares=least_squares)
+
     def as_vector(self, mu=None):
         if not self.linear:
             raise TypeError('This nonlinear operator does not represent a vector or linear functional.')
