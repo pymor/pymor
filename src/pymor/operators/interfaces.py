@@ -26,9 +26,9 @@ class OperatorInterface(ImmutableInterface, Parametric):
         If not `None`, a dict which can contain the follwing keys:
 
         :'inverse':           solver options used for
-                              :meth:`~OperatorInterface.apply_inverse_adjoint`
-        :'inverse_adjoint':   solver options used for
                               :meth:`~OperatorInterface.apply_inverse`
+        :'inverse_adjoint':   solver options used for
+                              :meth:`~OperatorInterface.apply_inverse_adjoint`
         :'jacobian':          solver options for the operators returned
                               by :meth:`~OperatorInterface.jacobian`
                               (has no effect for linear operators)
