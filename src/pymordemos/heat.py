@@ -28,14 +28,16 @@ if __name__ == '__main__':
 
     # assemble A, B, and C
     A = np.zeros((n, n))
-    A[0, 0] = -2 * n * (n - 1)
-    A[0, 1] = 2 * (n - 1) ** 2
+    a = n * (n - 1)
+    b = (n - 1) ** 2
+    A[0, 0] = -2 * a
+    A[0, 1] = 2 * b
     for i in xrange(1, n - 1):
-        A[i, i - 1] = (n - 1) ** 2
-        A[i, i] = -2 * (n - 1) ** 2
-        A[i, i + 1] = (n - 1) ** 2
-    A[n - 1, n - 1] = -2 * n * (n - 1)
-    A[n - 1, n - 2] = 2 * (n - 1) ** 2
+        A[i, i - 1] = b
+        A[i, i] = -2 * b
+        A[i, i + 1] = b
+    A[-1, -1] = -2 * a
+    A[-1, -2] = 2 * b
 
     B = np.zeros((n, 1))
     B[0, 0] = 2 * (n - 1)
@@ -68,7 +70,7 @@ if __name__ == '__main__':
     # Hankel singular values
     lti.compute_hsv_U_V()
     fig, ax = plt.subplots()
-    ax.semilogy(lti._hsv)
+    ax.semilogy(xrange(1, len(lti._hsv) + 1), lti._hsv, '.-')
     ax.set_title('Hankel singular values')
     plt.show()
 
@@ -80,7 +82,7 @@ if __name__ == '__main__':
     rom_bt, _, _ = lti.bt(r)
     print('H_2-norm of the BT ROM: {}'.format(rom_bt.norm()))
     err_bt = lti - rom_bt
-    print('H_2-error for BT ROM: {}'.format(err_bt.norm()))
+    print('H_2-error for the BT ROM: {}'.format(err_bt.norm()))
 
     # Bode plot of the full and BT reduced model
     tfw_bt = rom_bt.bode(w)
@@ -98,9 +100,8 @@ if __name__ == '__main__':
 
     # Iterative Rational Krylov Algorithm
     sigma = np.logspace(-1, 3, r)
-    np.random.seed(1)
-    b = np.random.randn(lti.m, r)
-    c = np.random.randn(lti.p, r)
+    b = np.ones((lti.m, r))
+    c = np.ones((lti.p, r))
     tol = 1e-4
     maxit = 100
     rom_irka, _, reduction_data_irka = lti.irka(sigma, b, c, tol, maxit, prnt=True)
@@ -113,9 +114,9 @@ if __name__ == '__main__':
     ax.set_title('Distances between shifts in IRKA iterations')
     plt.show()
 
-    print('H_2-norm of the IRKA ROM: '.format(rom_irka.norm()))
+    print('H_2-norm of the IRKA ROM: {}'.format(rom_irka.norm()))
     err_irka = lti - rom_irka
-    print('H_2-error for IRKA ROM: {}'.format(err_irka.norm()))
+    print('H_2-error for the IRKA ROM: {}'.format(err_irka.norm()))
 
     # Bode plot of the full and IRKA reduced model
     tfw_irka = rom_irka.bode(w)
