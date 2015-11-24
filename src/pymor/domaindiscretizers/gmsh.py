@@ -25,17 +25,19 @@ def discretize_Gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
     Parameters
     ----------
     domain_description
-        A |DomainDescription| of the |PolygonalDomain| or |RectDomain| to discretize. Has to be None when geo_file is
-        not None.
+        A |DomainDescription| of the |PolygonalDomain| or |RectDomain| to discretize. Has to be `None`
+        when `geo_file` is given.
     geo_file
-        File handle of the Gmsh Geo-file to discretize. Has to be None when domain_description is not None.
+        File handle of the Gmsh Geo-file to discretize. Has to be `None` when
+        `domain_description` is given.
     geo_file_path
-        Path to the Gmsh GEO-file. When discretizing a |PolygonalDomain| or |RectDomain| and geo_file_path is None a
-        temporary file will be created. If geo_file is specified this is ignored and the path to geo_file will be used.
+        Path of the created Gmsh GEO-file. When discretizing a |PolygonalDomain| or |RectDomain| and
+        `geo_file_path` is `None`, a temporary file will be created. If `geo_file` is specified, this
+        is ignored and the path to `geo_file` will be used.
     msh_file_path
-        Path to the Gmsh GEO-file. If None a temporary file will be created.
+        Path of the created Gmsh MSH-file. If `None`, a temporary file will be created.
     mesh_algorithm
-        The algorithm used to mesh the domain (meshadapt, del2d, front2d).
+        The mesh generation algorithm (meshadapt, del2d, front2d).
     clscale
         Mesh element size scaling factor.
     options
@@ -43,12 +45,13 @@ def discretize_Gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
         http://geuz.org/gmsh/doc/texinfo/gmsh.html#Command_002dline-options for all available options.
     refinement_steps
         Number of refinement steps to do after the initial meshing.
+
     Returns
     -------
     grid
-        The generated |GmshGrid|.
+        The generated :class:`~pymor.grids.gmsh.GmshGrid`.
     boundary_info
-        The generated |GmshBoundaryInfo|.
+        The generated :class:`~pymor.grids.gmsh.GmshBoundaryInfo`.
     """
     assert domain_description is None or geo_file is None
     logger = getLogger('pymor.domaindiscretizers.gmsh.discretize_Gmsh')

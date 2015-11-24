@@ -175,12 +175,12 @@ def parse_gmsh_file(f):
 
 
 class GmshGrid(UnstructuredTriangleGrid):
-    """An unstructured triangular grid that is build from an existing Gmsh MSH-file.
+    """An unstructured triangular grid that is built from an existing Gmsh MSH-file.
 
     Parameters
     ----------
     sections
-        Parsed sections of the MSH-file.
+        Parsed sections of the MSH-file as returned by :func:`load_gmsh`.
     """
 
     def __init__(self, sections):
@@ -202,14 +202,14 @@ class GmshGrid(UnstructuredTriangleGrid):
 
 
 class GmshBoundaryInfo(BoundaryInfoInterface):
-    """|BoundaryInfo| where |BoundaryTypes| are determined by a Gmsh MSH-file.
+    """|BoundaryInfo| for a :class:`GmshGrid`.
 
     Parameters
     ----------
     grid
-        The corresponding grid of type |GmshGrid|.
+        The corresponding :class:`GmshGrid`.
     sections
-        Parsed sections of the MSH-file.
+        Parsed sections of the MSH-file as returned by :func:`load_gmsh`.
     """
 
     def __init__(self, grid, sections):
@@ -255,18 +255,19 @@ class GmshBoundaryInfo(BoundaryInfoInterface):
 
 
 def load_gmsh(gmsh_file):
-    """Parse the Gmsh file and create a |GmshGrid| and |GmshBoundaryInfo|.
+    """Parse a Gmsh file and create a corresponding :class:`GmshGrid` and :class:`GmshBoundaryInfo`.
 
     Parameters
     ----------
     gmsh_file
-        File handle of the Gmsh file.
+        File handle of the Gmsh MSH-file.
+
     Returns
     -------
     grid
-        The generated |GmshGrid|.
+        The generated :class:`GmshGrid`.
     boundary_info
-        The generated |GmshBoundaryInfo|.
+        The generated :class:`GmshBoundaryInfo`.
     """
     logger = getLogger('pymor.grids.gmsh.load_gmsh')
 

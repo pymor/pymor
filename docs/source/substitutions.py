@@ -65,6 +65,7 @@ common = '''
 .. |BoundaryType| replace:: :class:`~pymor.domaindescriptions.boundarytypes.BoundaryType`
 .. |BoundaryTypes| replace:: :class:`BoundaryTypes <pymor.domaindescriptions.boundarytypes.BoundaryType>`
 .. |RectDomain| replace:: :class:`~pymor.domaindescriptions.basic.RectDomain`
+.. |PolygonalDomain| replace:: :class:`~pymor.domaindescriptions.polygonal.PolygonalDomain`
 .. |CylindricalDomain| replace:: :class:`~pymor.domaindescriptions.basic.CylindricalDomain`
 .. |TorusDomain| replace:: :class:`~pymor.domaindescriptions.basic.TorusDomain`
 .. |LineDomain| replace:: :class:`~pymor.domaindescriptions.basic.LineDomain`
