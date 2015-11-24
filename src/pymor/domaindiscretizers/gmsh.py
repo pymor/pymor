@@ -12,7 +12,8 @@ import os
 import subprocess
 import time
 
-from pymor.domaindescriptions.basic import PolygonalDomain, RectDomain
+from pymor.domaindescriptions.basic import RectDomain
+from pymor.domaindescriptions.polygonal import PolygonalDomain
 from pymor.grids.gmsh import load_gmsh
 from pymor.core.logger import getLogger
 

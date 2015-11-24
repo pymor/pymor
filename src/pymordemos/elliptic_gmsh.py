@@ -32,7 +32,7 @@ import numpy as np
 
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.discretizers.elliptic import discretize_elliptic_cg, discretize_elliptic_fv
-from pymor.domaindescriptions.basic import CircularSectorDomain
+from pymor.domaindescriptions.polygonal import CircularSectorDomain
 from pymor.domaindiscretizers.gmsh import discretize_Gmsh
 from pymor.functions.basic import GenericFunction, ConstantFunction
 from pymor.vectorarrays.numpy import NumpyVectorArray
