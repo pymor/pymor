@@ -18,7 +18,7 @@ from pymor.grids.gmsh import load_gmsh
 from pymor.core.logger import getLogger
 
 
-def discretize_Gmsh(domain_description=None, geo_file=None, geo_file_path=None, msh_file_path=None,
+def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, msh_file_path=None,
                     mesh_algorithm='del2d', clscale=1., options='', refinement_steps=0):
     """Discretize a |DomainDescription| or a already existing Gmsh GEO-file using the Gmsh Mesh module.
 
@@ -54,7 +54,7 @@ def discretize_Gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
         The generated :class:`~pymor.grids.gmsh.GmshBoundaryInfo`.
     """
     assert domain_description is None or geo_file is None
-    logger = getLogger('pymor.domaindiscretizers.gmsh.discretize_Gmsh')
+    logger = getLogger('pymor.domaindiscretizers.gmsh.discretize_gmsh')
 
     def discretize_PolygonalDomain():
         # combine points and holes, since holes are points, too, and have to be stored as such.
