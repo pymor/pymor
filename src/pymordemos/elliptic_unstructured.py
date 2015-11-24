@@ -6,10 +6,12 @@
 # Contributors: Michael Laier <m_laie01@uni-muenster.de>
 
 """Simple demonstration of solving the Poisson equation in 2D on a circular sector
-domain of radius 1 using gmsh for meshing.
+domain of radius 1 using an unstructured mesh.
+
+Note that Gmsh (http://geuz.org/gmsh/) is required for meshing.
 
 Usage:
-    elliptic_gmsh.py [--fv] ANGLE NUM_POINTS CLSCALE
+    elliptic_unstructured.py [--fv] ANGLE NUM_POINTS CLSCALE
 
 Arguments:
     ANGLE        The angle of the circular sector.
