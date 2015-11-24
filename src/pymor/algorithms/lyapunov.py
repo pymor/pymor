@@ -6,6 +6,7 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
+from pymor.operators.interfaces import OperatorInterface
 from pymor.vectorarrays.numpy import NumpyVectorArray
 import pymess
 
@@ -36,29 +37,39 @@ def solve_lyap(A, E, B, trans=False, tol=None):
     E
         The |Operator| E or None.
     B
-        The |VectorArray| B.
+        The |Operator| B.
     trans
         If A, E, and B need to be transposed.
     tol
         Tolerance parameter.
     """
+    assert isinstance(A, OperatorInterface) and A.linear
+    assert A.source == A.range
+    assert isinstance(B, OperatorInterface) and B.linear
+    assert not trans and B.range == A.source or trans and B.source == A.source
+    assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source
+
     if A.source.dim <= 1000:
-        if not A.sparse:
-            A = A._matrix
-        else:
-            A = A._matrix.toarray()
+        A_matrix = A._matrix
+        if A.sparse:
+            A_matrix = A_matrix.toarray()
         if E is not None:
-            if not E.sparse:
-                E = E._matrix
-            else:
-                E = E._matrix.toarray()
+            E_matrix = E._matrix
+            if E.sparse:
+                E_matrix = E_matrix.toarray()
+        B_matrix = B._matrix
+        if B.sparse:
+            B_matrix = B_matrix.toarray()
         if not trans:
-            Z = pymess.lyap(A, E, B.data.T)
+            if E is None:
+                Z = pymess.lyap(A_matrix, None, B_matrix)
+            else:
+                Z = pymess.lyap(A_matrix, E_matrix, B_matrix)
         else:
             if E is None:
-                Z = pymess.lyap(A.T, None, B.data.T)
+                Z = pymess.lyap(A_matrix.T, None, B_matrix.T)
             else:
-                Z = pymess.lyap(A.T, E.T, B.data.T)
+                Z = pymess.lyap(A_matrix.T, E_matrix.T, B_matrix.T)
     else:
         opts = pymess.options()
         if trans:
@@ -68,15 +79,9 @@ def solve_lyap(A, E, B, trans=False, tol=None):
             opts.adi.res2_tol = tol
             opts.adi.res2c_tol = tol
         if E is None:
-            if not trans:
-                eqn = pymess.equation_lyap(opts, A._matrix, None, B.data.T)
-            else:
-                eqn = pymess.equation_lyap(opts, A._matrix, None, B.data)
+            eqn = pymess.equation_lyap(opts, A._matrix, None, B._matrix)
         else:
-            if not trans:
-                eqn = pymess.equation_lyap(opts, A._matrix, E._matrix, B.data.T)
-            else:
-                eqn = pymess.equation_lyap(opts, A._matrix, E._matrix, B.data)
+            eqn = pymess.equation_lyap(opts, A._matrix, E._matrix, B._matrix)
         Z, status = pymess.lradi(eqn, opts)
 
     Z = NumpyVectorArray(np.array(Z).T)

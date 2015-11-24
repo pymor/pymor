@@ -17,7 +17,6 @@ from pymor.operators.constructions import VectorArrayOperator
 from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.reductors.basic import GenericRBReconstructor
-from pymor.vectorarrays.interfaces import VectorArrayInterface
 from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
@@ -41,9 +40,9 @@ class LTISystem(DiscretizationInterface):
     A
         The |Operator| A.
     B
-        The |VectorArray| B.
+        The |Operator| B.
     C
-        The |VectorArray| C^T.
+        The |Operator| C.
     D
         The |Operator| D or `None` (then D is assumed to be zero).
     E
@@ -64,17 +63,19 @@ class LTISystem(DiscretizationInterface):
 
     def __init__(self, A, B, C, D=None, E=None, cont_time=True):
         assert isinstance(A, OperatorInterface) and A.linear
-        assert isinstance(B, VectorArrayInterface)
-        assert isinstance(C, VectorArrayInterface)
-        assert A.source == A.range and B in A.source and C in A.range
-        assert (D is None or isinstance(D, OperatorInterface) and D.linear and D.source.dim == len(B) and
-                D.range.dim == len(C))
+        assert A.source == A.range
+        assert isinstance(B, OperatorInterface) and B.linear
+        assert B.range == A.source
+        assert isinstance(C, OperatorInterface) and C.linear
+        assert C.source == A.range
+        assert (D is None or
+                isinstance(D, OperatorInterface) and D.linear and D.source == B.source and D.range == C.range)
         assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source
         assert cont_time in {True, False}
 
         self.n = A.source.dim
-        self.m = len(B)
-        self.p = len(C)
+        self.m = B.source.dim
+        self.p = C.range.dim
         self.A = A
         self.B = B
         self.C = C
@@ -88,7 +89,7 @@ class LTISystem(DiscretizationInterface):
         self._hsv = None
         self._U = None
         self._V = None
-        self.build_parameter_type(inherits=(A, D, E))
+        self.build_parameter_type(inherits=(A, B, C, D, E))
 
     @classmethod
     def from_matrices(cls, A, B, C, D=None, E=None, cont_time=True):
@@ -121,8 +122,8 @@ class LTISystem(DiscretizationInterface):
         assert E is None or isinstance(E, (np.ndarray, sps.spmatrix))
 
         A = NumpyMatrixOperator(A)
-        B = NumpyVectorArray(B.T)
-        C = NumpyVectorArray(C)
+        B = NumpyMatrixOperator(B)
+        C = NumpyMatrixOperator(C)
         if D is not None:
             D = NumpyMatrixOperator(D)
         if E is not None:
@@ -183,17 +184,17 @@ class LTISystem(DiscretizationInterface):
             A = A.tocsc()
 
         # form B
-        if not sps.issparse(self.B.data) and not sps.issparse(other.B.data):
-            B = sp.vstack((self.B.data.T, other.B.data.T))
+        if not self.B.sparse and not other.B.sparse:
+            B = sp.vstack((self.B._matrix, other.B._matrix))
         else:
-            B = sps.vstack((sps.coo_matrix(self.B.data.T), sps.coo_matrix(other.B.data.T)))
+            B = sps.vstack((sps.coo_matrix(self.B._matrix), sps.coo_matrix(other.B._matrix)))
             B = B.tocsc()
 
         # form C
-        if not sps.issparse(self.C.data) and not sps.issparse(other.C.data):
-            C = sp.hstack((self.C.data, other.C.data))
+        if not self.C.sparse and not other.C.sparse:
+            C = sp.hstack((self.C._matrix, other.C._matrix))
         else:
-            C = sps.hstack((sps.coo_matrix(self.C.data), sps.coo_matrix(other.C.data)))
+            C = sps.hstack((sps.coo_matrix(self.C._matrix), sps.coo_matrix(other.C._matrix)))
             C = C.tocsc()
 
         # form D
@@ -227,7 +228,7 @@ class LTISystem(DiscretizationInterface):
         """Negate |LTISystem|."""
         A = self.A
         B = self.B
-        C = NumpyVectorArray(-self.C.data)
+        C = NumpyMatrixOperator(-self.C._matrix)
         D = self.D
         if D is not None:
             D = NumpyMatrixOperator(-D._matrix)
@@ -269,30 +270,47 @@ class LTISystem(DiscretizationInterface):
             else:
                 E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
 
-        for i in xrange(len(w)):
-            iwEmA = A.assemble_lincomb((E, A), (1j * w[i], -1))
-            G = C.dot(iwEmA.apply_inverse(B))
+        for i, wi in enumerate(w):
+            iwEmA = A.assemble_lincomb((E, A), (1j * wi, -1))
+            Im = NumpyVectorArray(sp.eye(self.m))
+            G = C.apply(iwEmA.apply_inverse(B.apply(Im))).data.T
             if D is not None:
                 G += D._matrix
             self._tfw[:, :, i] = G
 
         return self._tfw.copy()
 
-    def compute_cgf(self):
-        """Compute the controllability gramian factor."""
+    def compute_cgf(self, tol=None):
+        """Compute the controllability Gramian factor.
+
+        Parameters
+        ----------
+        tol
+            Tolerance parameter for the low-rank Lyapunov equation solver.
+            If None, then the default tolerance is used. Otherwise, it should be a positive float and
+            the controllability Gramian factor is recomputed (if it was already computed).
+        """
         if not self.cont_time:
             raise NotImplementedError
 
-        if self._cgf is None:
-            self._cgf = solve_lyap(self.A, self.E, self.B)
+        if self._cgf is None or tol is not None:
+            self._cgf = solve_lyap(self.A, self.E, self.B, tol=tol)
 
-    def compute_ogf(self):
-        """Compute the observability gramian factor."""
+    def compute_ogf(self, tol=None):
+        """Compute the observability Gramian factor.
+
+        Parameters
+        ----------
+        tol
+            Tolerance parameter for the low-rank Lyapunov equation solver.
+            If None, then the default tolerance is used. Otherwise, it should be a positive float and
+            the observability Gramian factor is recomputed (if it was already computed).
+        """
         if not self.cont_time:
             raise NotImplementedError
 
-        if self._ogf is None:
-            self._ogf = solve_lyap(self.A, self.E, self.C, trans=True)
+        if self._ogf is None or tol is not None:
+            self._ogf = solve_lyap(self.A, self.E, self.C, trans=True, tol=tol)
 
     def compute_hsv_U_V(self):
         """Compute the Hankel singular values and vectors."""
@@ -318,15 +336,15 @@ class LTISystem(DiscretizationInterface):
         """
         if name == 'H2':
             if self._cgf is not None:
-                return spla.norm(self.C.dot(self._cgf))
+                return spla.norm(self.C.apply(self._cgf).data)
             if self._ogf is not None:
-                return spla.norm(self.B.dot(self._ogf))
+                return spla.norm(self.B.apply_adjoint(self._ogf).data)
             if self.m <= self.p:
                 self.compute_cgf()
-                return spla.norm(self.C.dot(self._cgf))
+                return spla.norm(self.C.apply(self._cgf).data)
             else:
                 self.compute_ogf()
-                return spla.norm(self.B.dot(self._ogf))
+                return spla.norm(self.B.apply_adjoint(self._ogf).data)
         elif name == 'Hankel':
             self.compute_hsv_U_V()
             return self._hsv[0]
@@ -360,9 +378,9 @@ class LTISystem(DiscretizationInterface):
         """
         Ar = self.A.apply2(Wr, Vr)
 
-        Br = Wr.dot(self.B)
+        Br = self.B.apply_adjoint(Wr).data
 
-        Cr = self.C.dot(Vr)
+        Cr = self.C.apply(Vr).data.T
 
         if self.D is None:
             Dr = None
@@ -475,10 +493,10 @@ class LTISystem(DiscretizationInterface):
                 else:
                     sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i].real, -1))
 
-                Bb = VectorArrayOperator(self.B).apply(NumpyVectorArray(b[:, i].real.T))
+                Bb = self.B.apply(NumpyVectorArray(b[:, i].real.T))
                 Vr.append(sEmA.apply_inverse(Bb))
 
-                CTc = VectorArrayOperator(self.C).apply(NumpyVectorArray(c[:, i].real.T))
+                CTc = self.C.apply_adjoint(NumpyVectorArray(c[:, i].real.T))
                 Wr.append(sEmA.apply_inverse_adjoint(CTc))
             elif sigma[i].imag > 0:
                 if self.E is None:
@@ -487,12 +505,12 @@ class LTISystem(DiscretizationInterface):
                 else:
                     sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i], -1))
 
-                Bb = VectorArrayOperator(self.B).apply(NumpyVectorArray(b[:, i].T))
+                Bb = self.B.apply(NumpyVectorArray(b[:, i].T))
                 v = sEmA.apply_inverse(Bb)
                 Vr.append(NumpyVectorArray(v.data.real))
                 Vr.append(NumpyVectorArray(v.data.imag))
 
-                CTc = VectorArrayOperator(self.C).apply(NumpyVectorArray(c[:, i].T))
+                CTc = self.C.apply_adjoint(NumpyVectorArray(c[:, i].T))
                 w = sEmA.apply_inverse_adjoint(CTc)
                 Wr.append(NumpyVectorArray(w.data.real))
                 Wr.append(NumpyVectorArray(w.data.imag))
