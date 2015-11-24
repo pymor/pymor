@@ -33,7 +33,6 @@ import numpy as np
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.discretizers.elliptic import discretize_elliptic_cg, discretize_elliptic_fv
 from pymor.domaindescriptions.polygonal import CircularSectorDomain
-from pymor.domaindiscretizers.gmsh import discretize_gmsh
 from pymor.functions.basic import GenericFunction, ConstantFunction
 from pymor.vectorarrays.numpy import NumpyVectorArray
 
@@ -57,9 +56,8 @@ def elliptic_gmsh_demo(args):
     problem = EllipticProblem(domain=domain, rhs=rhs, dirichlet_data=dirichlet_data)
 
     print('Discretize ...')
-    grid, bi = discretize_gmsh(domain_description=domain, clscale=args['CLSCALE'])
     discretizer = discretize_elliptic_fv if args['--fv'] else discretize_elliptic_cg
-    discretization, _ = discretizer(analytical_problem=problem, grid=grid, boundary_info=bi)
+    discretization, data = discretizer(analytical_problem=problem, diameter=args['CLSCALE'])
 
     print('Solve ...')
     U = discretization.solve()
@@ -71,6 +69,7 @@ def elliptic_gmsh_demo(args):
         return np.power(r, np.pi/args['ANGLE']) * np.sin(phi*np.pi/args['ANGLE'])
 
     solution = GenericFunction(ref_sol, 2)
+    grid = data['grid']
     U_ref = NumpyVectorArray(solution(grid.centers(0))) if args['--fv'] else NumpyVectorArray(solution(grid.centers(2)))
     discretization.visualize((U, U_ref, U-U_ref), legend=('Solution', 'Reference Solution', 'Error'),
                              separate_colorbars=True, block=True)
