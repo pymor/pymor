@@ -74,9 +74,7 @@ def elliptic_gmsh_demo(args):
     grid = data['grid']
     U_ref = NumpyVectorArray(solution(grid.centers(0))) if args['--fv'] else NumpyVectorArray(solution(grid.centers(2)))
     discretization.visualize((U, U_ref, U-U_ref), legend=('Solution', 'Reference Solution', 'Error'),
-                             separate_colorbars=True, block=True)
-
-    print('')
+                             separate_colorbars=True)
 
 
 def polar(X):
