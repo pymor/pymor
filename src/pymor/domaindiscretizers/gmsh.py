@@ -15,6 +15,7 @@ import time
 from pymor.domaindescriptions.basic import RectDomain
 from pymor.domaindescriptions.polygonal import PolygonalDomain
 from pymor.grids.gmsh import load_gmsh
+from pymor.core.exceptions import GmshError
 from pymor.core.logger import getLogger
 
 
@@ -55,6 +56,16 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
     """
     assert domain_description is None or geo_file is None
     logger = getLogger('pymor.domaindiscretizers.gmsh.discretize_gmsh')
+
+    # run Gmsh; initial meshing
+    logger.info('Checking for Gmsh ...')
+    try:
+        version = subprocess.check_output(['gmsh', '--version'], stderr=subprocess.STDOUT)
+    except (subprocess.CalledProcessError, OSError):
+        raise GmshError('Could not find Gmsh.'
+                        + ' Please ensure that the gmsh binary (http://geuz.org/gmsh/) is in your PATH.')
+
+    logger.info('Found version ' + version.strip())
 
     def discretize_PolygonalDomain():
         # combine points and holes, since holes are points, too, and have to be stored as such.
