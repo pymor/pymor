@@ -73,7 +73,8 @@ def elliptic_gmsh_demo(args):
     solution = GenericFunction(ref_sol, 2)
     grid = data['grid']
     U_ref = NumpyVectorArray(solution(grid.centers(0))) if args['--fv'] else NumpyVectorArray(solution(grid.centers(2)))
-    discretization.visualize((U, U_ref, U-U_ref), legend=('Solution', 'Reference Solution', 'Error'),
+    discretization.visualize((U, U_ref, U-U_ref),
+                             legend=('Solution', 'Analytical solution (circular boundary)', 'Error'),
                              separate_colorbars=True)
 
 
