@@ -76,6 +76,7 @@ addons:
     - libsuitesparse-dev
     - gfortran
     - libqt4-dev
+    - gmsh
 
 os:
   - linux
