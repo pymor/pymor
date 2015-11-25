@@ -157,13 +157,13 @@ class ReducedSim(SimBase):
 
     def _first(self):
         args = self.args
-        error_product = self.discretization.h1_product if args['--estimator-norm'] == 'h1' else None
+        error_product = self.discretization.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
         reductor = partial(reduce_stationary_affine_linear, error_product=error_product)
-        extension_algorithm = partial(gram_schmidt_basis_extension, product=self.discretization.h1_product)
+        extension_algorithm = partial(gram_schmidt_basis_extension, product=self.discretization.h1_0_semi_product)
 
         greedy_data = greedy(self.discretization, reductor,
                              self.discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
-                             use_estimator=True, error_norm=self.discretization.h1_norm,
+                             use_estimator=True, error_norm=self.discretization.h1_0_semi_norm,
                              extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'])
         self.rb_discretization, self.reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
         self.first = False

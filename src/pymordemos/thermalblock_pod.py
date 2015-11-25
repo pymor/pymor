@@ -95,7 +95,7 @@ def thermalblock_demo(args):
         snapshots.append(discretization.solve(mu))
 
     print('Performing POD ...')
-    pod_product = discretization.h1_product if args['--pod-norm'] == 'h1' else None
+    pod_product = discretization.h1_0_semi_product if args['--pod-norm'] == 'h1' else None
     rb = pod(snapshots, modes=args['RBSIZE'], product=pod_product)[0]
 
     print('Reducing ...')
@@ -114,7 +114,7 @@ def thermalblock_demo(args):
         print('Solving RB-Scheme for mu = {} ... '.format(mu), end='')
         URB = reconstructor.reconstruct(rb_discretization.solve(mu))
         U = discretization.solve(mu)
-        h1_err = discretization.h1_norm(U - URB)[0]
+        h1_err = discretization.h1_0_semi_norm(U - URB)[0]
         cond = np.linalg.cond(rb_discretization.operator.assemble(mu)._matrix)
         if h1_err > h1_err_max:
             h1_err_max = h1_err

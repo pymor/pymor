@@ -131,7 +131,7 @@ def thermalblock_demo(args):
 
     print('RB generation ...')
 
-    error_product = discretization.h1_product if args['--estimator-norm'] == 'h1' else None
+    error_product = discretization.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
     coercivity_estimator=ExpressionParameterFunctional('min(diffusion)', discretization.parameter_type)
     reductors = {'residual_basis': partial(reduce_stationary_coercive, error_product=error_product,
                                    coercivity_estimator=coercivity_estimator),
@@ -140,14 +140,14 @@ def thermalblock_demo(args):
     reductor = reductors[args['--reductor']]
     extension_algorithms = {'trivial': trivial_basis_extension,
                             'gram_schmidt': gram_schmidt_basis_extension,
-                            'h1_gram_schmidt': partial(gram_schmidt_basis_extension, product=discretization.h1_product)}
+                            'h1_gram_schmidt': partial(gram_schmidt_basis_extension, product=discretization.h1_0_semi_product)}
     extension_algorithm = extension_algorithms[args['--extension-alg']]
 
     with (new_ipcluster_pool(num_engines=args['--num-engines'], profile=args['--profile'])
           if args['--num-engines'] else no_context) as pool:
         greedy_data = greedy(discretization, reductor,
                              discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
-                             use_estimator=not args['--without-estimator'], error_norm=discretization.h1_norm,
+                             use_estimator=not args['--without-estimator'], error_norm=discretization.h1_0_semi_norm,
                              extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'],
                              pool=pool)
 
@@ -174,7 +174,7 @@ def thermalblock_demo(args):
             u = rd.solve(mu)
             URB = rc.reconstruct(u)
             U = d.solve(mu)
-            h1_err = d.h1_norm(U - URB)[0]
+            h1_err = d.h1_0_semi_norm(U - URB)[0]
             h1_est = rd.estimate(u, mu=mu)
             cond = np.linalg.cond(rd.operator.assemble(mu)._matrix)
             if h1_err > h1_err_max:
