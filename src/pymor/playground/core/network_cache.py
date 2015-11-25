@@ -16,7 +16,7 @@ from pymor.core.pickle import dump, load
 
 class NetworkFilesystemRegion(CacheRegion):
 
-    enabled = True
+    persistent = True
 
     def __init__(self, server_path, secret=''):
         self.server = xmlrpclib.ServerProxy(server_path)
