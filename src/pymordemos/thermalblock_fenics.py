@@ -99,7 +99,7 @@ def discretize(args):
             for x in range(args['XBLOCKS']) for y in range(args['YBLOCKS'])]
     mat0 = mats[0].copy()
     mat0.zero()
-    h1_mat = df.assemble((df.inner(df.nabla_grad(u), df.nabla_grad(v)) + u * v) * df.dx)
+    h1_mat = df.assemble(df.inner(df.nabla_grad(u), df.nabla_grad(v)) * df.dx)
 
     f = df.Constant(1.) * v * df.dx
     F = df.assemble(f)
@@ -108,6 +108,7 @@ def discretize(args):
     for m in mats:
         bc.zero(m)
     bc.apply(mat0)
+    bc.apply(h1_mat)
     bc.apply(F)
 
     # wrap everything as a pyMOR discretization
@@ -129,7 +130,7 @@ def discretize(args):
     h1_product = FenicsMatrixOperator(h1_mat)
     visualizer = FenicsVisualizer(V)
     parameter_space = CubicParameterSpace(op.parameter_type, 0.1, 1.)
-    d = StationaryDiscretization(op, rhs, products={'h1': h1_product},
+    d = StationaryDiscretization(op, rhs, products={'h1_0_semi': h1_product},
                                  parameter_space=parameter_space,
                                  visualizer=visualizer)
 
@@ -169,7 +170,7 @@ def thermalblock_demo(args):
 
     print('RB generation ...')
 
-    error_product = discretization.h1_product if args['--estimator-norm'] == 'h1' else None
+    error_product = discretization.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
     coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', discretization.parameter_type)
     reductors = {'residual_basis': partial(reduce_stationary_coercive, error_product=error_product,
                                            coercivity_estimator=coercivity_estimator),
@@ -178,10 +179,10 @@ def thermalblock_demo(args):
     reductor = reductors[args['--reductor']]
     extension_algorithms = {'trivial': trivial_basis_extension,
                             'gram_schmidt': gram_schmidt_basis_extension,
-                            'h1_gram_schmidt': partial(gram_schmidt_basis_extension, product=discretization.h1_product)}
+                            'h1_gram_schmidt': partial(gram_schmidt_basis_extension, product=discretization.h1_0_semi_product)}
     extension_algorithm = extension_algorithms[args['--extension-alg']]
     greedy_data = greedy(discretization, reductor, discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
-                         use_estimator=not args['--without-estimator'], error_norm=discretization.h1_norm,
+                         use_estimator=not args['--without-estimator'], error_norm=discretization.h1_0_semi_norm,
                          extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'])
     rb_discretization, reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
 
@@ -207,7 +208,7 @@ def thermalblock_demo(args):
         u = rb_discretization.solve(mu)
         URB = reconstructor.reconstruct(u)
         U = discretization.solve(mu)
-        h1_err = discretization.h1_norm(U - URB)[0]
+        h1_err = discretization.h1_0_semi_norm(U - URB)[0]
         h1_est = rb_discretization.estimate(u, mu=mu)
         cond = np.linalg.cond(rb_discretization.operator.assemble(mu)._matrix)
         if h1_err > h1_err_max:
