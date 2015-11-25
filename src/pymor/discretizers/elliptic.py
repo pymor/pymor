@@ -96,12 +96,18 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
     else:
         visualizer = None
 
+    Prod = cg.L2ProductQ1 if grid.reference_element is square else cg.L2ProductP1
     empty_bi = EmptyBoundaryInfo(grid)
-    l2_product = cg.L2ProductQ1(grid, empty_bi) if grid.reference_element is square else cg.L2ProductP1(grid, empty_bi)
+    l2_product = Prod(grid, empty_bi)
+    l2_0_product = Prod(grid, boundary_info, dirichlet_clear_columns=True)
     h1_semi_product = Operator(grid, empty_bi)
+    h1_0_semi_product = Operator(grid, boundary_info, dirichlet_clear_columns=True)
     products = {'h1': l2_product + h1_semi_product,
                 'h1_semi': h1_semi_product,
-                'l2': l2_product}
+                'l2': l2_product,
+                'h1_0': l2_0_product + h1_0_semi_product,
+                'h1_0_semi': h1_0_semi_product,
+                'l2_0': l2_0_product}
 
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
 
