@@ -260,6 +260,13 @@ class Concatenation(OperatorBase):
         return self.first.apply_adjoint(self.second.apply_adjoint(U, ind=ind, mu=mu, range_product=range_product),
                                         mu=mu, source_product=source_product)
 
+    def jacobian(self, U, mu=None):
+        assert len(U) == 1
+        V = self.first.apply(U, mu=mu)
+        options = self.solver_options.get('jacobian') if self.solver_options else None
+        return Concatenation(self.second.jacobian(V, mu=mu), self.first.jacobian(U, mu=mu),
+                             solver_options=options, name=self.name + '_jacobian')
+
     def restricted(self, dofs):
         restricted_second, second_source_dofs = self.second.restricted(dofs)
         restricted_first, first_source_dofs = self.first.restricted(second_source_dofs)
