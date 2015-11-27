@@ -15,6 +15,7 @@ from itertools import izip
 import numpy as np
 
 from pymor.core.defaults import defaults_sid, defaults
+from pymor.core.exceptions import InversionError
 from pymor.core.interfaces import ImmutableInterface
 from pymor.operators.basic import OperatorBase
 from pymor.operators.interfaces import OperatorInterface
@@ -460,6 +461,16 @@ class ZeroOperator(OperatorBase):
         assert U in self.source
         count = len(U) if ind is None else 1 if isinstance(ind, Number) else len(ind)
         return self.range.zeros(count)
+
+    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
+        if not least_squares:
+            raise InversionError
+        return self.source.zeros(V.len_ind(ind))
+
+    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None, least_squares=False):
+        if not least_squares:
+            raise InversionError
+        return self.range.zeros(U.len_ind(ind))
 
     def projected(self, range_basis, source_basis, product=None, name=None):
         assert source_basis is None or source_basis in self.source
