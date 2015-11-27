@@ -230,7 +230,7 @@ def mpi_wrap_operator(obj_id, functional=False, vector=False, with_apply2=False,
         if all(subtype == subtypes[0] for subtype in subtypes):
             subtypes = (subtypes[0],)
         return VectorArrayOperator(array_type(type(op._array), subtypes, array_obj_id),
-                                   transposed=op.transposed, copy=False, name=op.name)
+                                   transposed=op.transposed, name=op.name)
     else:
         return MPIOperator(obj_id, functional, vector, with_apply2, array_type)
 

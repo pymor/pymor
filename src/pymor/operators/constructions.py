@@ -388,22 +388,19 @@ class ConstantOperator(OperatorBase):
         returned by the operator.
     source
         Source |VectorSpace| of the operator.
-    copy
-        If `True`, store a copy of `vector` instead of `vector`
-        itself.
     name
         Name of the operator.
     """
 
     linear = False
 
-    def __init__(self, value, source, copy=True, name=None):
+    def __init__(self, value, source, name=None):
         assert isinstance(value, VectorArrayInterface)
         assert len(value) == 1
         self.source = source
         self.range = value.space
         self.name = name
-        self._value = value.copy() if copy else value
+        self._value = value.copy()
 
     def apply(self, U, ind=None, mu=None):
         assert U in self.source
@@ -427,10 +424,9 @@ class ConstantOperator(OperatorBase):
         else:
             projected_value = self._value
         if source_basis is None:
-            return ConstantOperator(projected_value, self.source, copy=False,
-                                    name=self.name + '_projected')
+            return ConstantOperator(projected_value, self.source, name=self.name + '_projected')
         else:
-            return ConstantOperator(projected_value, NumpyVectorSpace(len(source_basis)), copy=False,
+            return ConstantOperator(projected_value, NumpyVectorSpace(len(source_basis)),
                                     name=self.name + '_projected')
 
 
@@ -500,16 +496,14 @@ class VectorArrayOperator(OperatorBase):
         The |VectorArray| which is to be treated as an operator.
     transposed
         See description above.
-    copy
-        If `True`, store a copy of `array` instead of `array` itself.
     name
         The name of the operator.
     """
 
     linear = True
 
-    def __init__(self, array, transposed=False, copy=True, name=None):
-        self._array = array.copy() if copy else array
+    def __init__(self, array, transposed=False, name=None):
+        self._array = array.copy()
         if transposed:
             self.source = array.space
             self.range = NumpyVectorSpace(len(array))
@@ -559,7 +553,7 @@ class VectorArrayOperator(OperatorBase):
                                                                           range_product=range_product,
                                                                           least_squares=least_squares)
         else:
-            adjoint_op = VectorArrayOperator(self._array, transposed=not self.transposed, copy=False)
+            adjoint_op = VectorArrayOperator(self._array, transposed=not self.transposed)
             return adjoint_op.apply_inverse(U, ind=ind, mu=mu, least_squares=least_squares)
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
@@ -575,7 +569,7 @@ class VectorArrayOperator(OperatorBase):
             array = operators[0]._array * coefficients[0]
         for op, c in izip(operators[1:], coefficients[1:]):
             array.axpy(c, op._array)
-        return VectorArrayOperator(array, transposed=transposed, copy=False, name=name)
+        return VectorArrayOperator(array, transposed=transposed, name=name)
 
     def as_vector(self, mu=None):
         if len(self._array) != 1:
@@ -601,9 +595,6 @@ class VectorOperator(VectorArrayOperator):
     ----------
     vector
         |VectorArray| of length 1 containing the vector `v`.
-    copy
-        If `True`, store a copy of `vector` instead of `vector`
-        itself.
     name
         Name of the operator.
     """
@@ -611,10 +602,10 @@ class VectorOperator(VectorArrayOperator):
     linear = True
     source = NumpyVectorSpace(1)
 
-    def __init__(self, vector, copy=True, name=None):
+    def __init__(self, vector, name=None):
         assert isinstance(vector, VectorArrayInterface)
         assert len(vector) == 1
-        super(VectorOperator, self).__init__(vector, transposed=False, copy=copy, name=name)
+        super(VectorOperator, self).__init__(vector, transposed=False, name=name)
 
 
 class VectorFunctional(VectorArrayOperator):
@@ -642,9 +633,6 @@ class VectorFunctional(VectorArrayOperator):
         |VectorArray| of length 1 containing the vector `v`.
     product
         |Operator| representing the scalar product to use.
-    copy
-        If `True`, store a copy of `vector` instead of `vector`
-        itself.
     name
         Name of the operator.
     """
@@ -652,14 +640,14 @@ class VectorFunctional(VectorArrayOperator):
     linear = True
     range = NumpyVectorSpace(1)
 
-    def __init__(self, vector, product=None, copy=True, name=None):
+    def __init__(self, vector, product=None, name=None):
         assert isinstance(vector, VectorArrayInterface)
         assert len(vector) == 1
         assert product is None or isinstance(product, OperatorInterface) and vector in product.source
         if product is None:
-            super(VectorFunctional, self).__init__(vector, transposed=True, copy=copy, name=name)
+            super(VectorFunctional, self).__init__(vector, transposed=True, name=name)
         else:
-            super(VectorFunctional, self).__init__(product.apply(vector), transposed=True, copy=False, name=name)
+            super(VectorFunctional, self).__init__(product.apply(vector), transposed=True, name=name)
 
 
 class FixedParameterOperator(OperatorBase):
