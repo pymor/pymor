@@ -715,6 +715,10 @@ class FixedParameterOperator(OperatorBase):
     def jacobian(self, U, mu=None):
         return self.operator.jacobian(U, mu=self.mu)
 
+    def restricted(self, dofs):
+        op, source_dofs = self.operator.restricted(dofs)
+        return self.with_(operator=op), source_dofs
+
 
 class AdjointOperator(OperatorBase):
     """Represents the adjoint of a given |Operator|.
