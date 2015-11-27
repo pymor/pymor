@@ -8,10 +8,12 @@ You can use ``from pymor.basic import *`` in interactive session
 to have the most important parts of pyMOR directly available.
 """
 
+from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension, pod_basis_extension
 from pymor.algorithms.ei import interpolate_operators, ei_greedy, deim
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.greedy import greedy
+from pymor.algorithms.newton import newton
 from pymor.algorithms.pod import pod
 
 from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
@@ -28,6 +30,7 @@ from pymor.discretizations.basic import StationaryDiscretization, InstationaryDi
 
 from pymor.domaindescriptions.basic import RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain
 from pymor.domaindescriptions.boundarytypes import BoundaryType
+from pymor.domaindescriptions.polygonal import DiscDomain, CircularSectorDomain, PolygonalDomain
 
 from pymor.domaindiscretizers.default import discretize_domain_default
 
@@ -41,11 +44,15 @@ from pymor.grids.oned import OnedGrid
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
 
-from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixOperator
 from pymor.operators.constructions import (LincombOperator, Concatenation, ComponentProjection, IdentityOperator,
-                                           ConstantOperator, VectorArrayOperator, VectorOperator, VectorFunctional,
-                                           FixedParameterOperator, induced_norm)
+                                           ConstantOperator, ZeroOperator, VectorArrayOperator, VectorOperator,
+                                           VectorFunctional, FixedParameterOperator, AdjointOperator,
+                                           SelectionOperator, induced_norm)
 from pymor.operators.ei import EmpiricalInterpolatedOperator
+from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixOperator
+
+from pymor.parallel.ipython import new_ipcluster_pool, IPythonPool
+from pymor.parallel.manager import RemoteObjectManager
 
 from pymor.parameters.base import Parameter
 from pymor.parameters.functionals import (ProjectionParameterFunctional, GenericParameterFunctional,
@@ -55,7 +62,6 @@ from pymor.parameters.spaces import CubicParameterSpace
 from pymor.reductors.basic import reduce_generic_rb, reduce_to_subbasis
 from pymor.reductors.stationary import reduce_stationary_coercive
 
-from pymor.tools.floatcmp import float_cmp, float_cmp_all
 from pymor.tools.random import new_random_state
 
 from pymor.vectorarrays.constructions import cat_arrays
