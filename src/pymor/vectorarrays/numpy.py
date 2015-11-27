@@ -98,7 +98,7 @@ class NumpyVectorArray(VectorArrayInterface):
         if o_ind is None:
             len_other = other._len
             if len_other <= self._array.shape[0] - self._len:
-                self._array[self._len:self._len + len_other] = other._array
+                self._array[self._len:self._len + len_other] = other._array[:len_other]
             else:
                 self._array = np.vstack((self._array[:self._len], other._array[:len_other]))
             self._len += len_other
