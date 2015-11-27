@@ -36,7 +36,7 @@ class NumpyVectorArray(VectorArrayInterface):
             else:
                 self._array = instance
         elif issparse(instance):
-            self._array = np.array(instance.todense(), copy=False)
+            self._array = instance.toarray()
         elif hasattr(instance, 'data'):
             self._array = instance.data
             if copy:
