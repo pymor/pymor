@@ -870,6 +870,11 @@ class SelectionOperator(OperatorBase):
                 return i
         return len(self.boundaries)
 
+    def assemble(self, mu=None):
+        mu = self.parse_parameter(mu)
+        op = self.operators[self._get_operator_number(mu)]
+        return op.assemble(mu)
+
     def apply(self, U, ind=None, mu=None):
         mu = self.parse_parameter(mu)
         operator_number = self._get_operator_number(mu)
