@@ -859,7 +859,6 @@ class SelectionOperator(OperatorBase):
 
         self.name = name
         self.build_parameter_type(inherits=list(operators) + [parameter_functional])
-        self._try_assemble = not self.parametric
 
         self.boundaries = tuple(boundaries)
         self.parameter_functional = parameter_functional
