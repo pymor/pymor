@@ -259,8 +259,10 @@ def test_projected_with_product_2(operator_with_arrays_and_products):
 
 def test_jacobian(operator_with_arrays):
     op, mu, U, _ = operator_with_arrays
+    if len(U) == 0:
+        return
     try:
-        j = op.jacobian(U, mu=mu)
+        j = op.jacobian(U.copy(ind=0), mu=mu)
     except NotImplementedError:
         return
     assert j.linear
