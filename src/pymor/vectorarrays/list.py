@@ -139,23 +139,11 @@ class CopyOnWriteVector(VectorInterface):
         return c
 
     def scal(self, alpha):
-        try:
-            if self._refcount[0] > 1:
-                self._refcount[0] -= 1
-                self._copy_data()
-                self._refcount = [1]
-        except AttributeError:
-            self._refcount = [1]
+        self._copy_data_if_needed()
         self._scal(alpha)
 
     def axpy(self, alpha, x):
-        try:
-            if self._refcount[0] > 1:
-                self._refcount[0] -= 1
-                self._copy_data()
-                self._refcount = [1]
-        except AttributeError:
-            self._refcount = [1]
+        self._copy_data_if_needed()
         self._axpy(alpha, x)
 
     def __del__(self):
@@ -163,6 +151,15 @@ class CopyOnWriteVector(VectorInterface):
             self._refcount[0] -= 1
         except AttributeError:
             pass
+
+    def _copy_data_if_needed(self):
+        try:
+            if self._refcount[0] > 1:
+                self._refcount[0] -= 1
+                self._copy_data()
+                self._refcount = [1]
+        except AttributeError:
+            self._refcount = [1]
 
 
 class NumpyVector(CopyOnWriteVector):
