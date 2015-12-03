@@ -35,7 +35,7 @@ class VectorInterface(BasicInterface):
         return None
 
     @abstractmethod
-    def copy(self):
+    def copy(self, deep=False):
         pass
 
     @abstractmethod
@@ -286,15 +286,17 @@ class ListVectorArray(VectorArrayInterface):
     def subtype(self):
         return (self.vector_type, self.vector_subtype)
 
-    def copy(self, ind=None):
+    def copy(self, ind=None, deep=False):
         assert self.check_ind(ind)
 
         if ind is None:
-            return type(self)(self._list, subtype=self.subtype, copy=True)
+            vecs = [v.copy(deep=deep) for v in self._list]
         elif isinstance(ind, Number):
-            return type(self)([self._list[ind]], subtype=self.subtype, copy=True)
+            vecs = [self._list[ind].copy(deep=deep)]
         else:
-            return type(self)([self._list[i] for i in ind], subtype=self.subtype, copy=True)
+            vecs = [self._list[i].copy(deep=deep) for i in ind]
+
+        return type(self)(vecs, subtype=self.subtype, copy=False)
 
     def append(self, other, o_ind=None, remove_from_other=False):
         assert other.check_ind(o_ind)
