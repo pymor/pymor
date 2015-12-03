@@ -130,4 +130,5 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
         return 'ExpressionParameterFunctional({}, {})'.format(self.expression, repr(self.parameter_type))
 
     def __reduce__(self):
-        return (ExpressionParameterFunctional, (self.expression, self.parameter_type, self.name))
+        return (ExpressionParameterFunctional,
+                (self.expression, self.parameter_type, getattr(self, '_name', None)))
