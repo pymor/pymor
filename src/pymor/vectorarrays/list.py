@@ -108,7 +108,64 @@ class VectorInterface(BasicInterface):
         return result
 
 
-class NumpyVector(VectorInterface):
+class CopyOnWriteVector(VectorInterface):
+
+    @abstractclassmethod
+    def from_instance(cls, instance):
+        pass
+
+    @abstractmethod
+    def _copy_data(self):
+        pass
+
+    @abstractmethod
+    def _scal(self, alpha):
+        pass
+
+    @abstractmethod
+    def _axpy(self, alpha, x):
+        pass
+
+    def copy(self, deep=False):
+        c = self.from_instance(self)
+        if deep:
+            c._copy_data()
+        else:
+            try:
+                self._refcount[0] += 1
+            except AttributeError:
+                self._refcount = [2]
+            c._refcount = self._refcount
+        return c
+
+    def scal(self, alpha):
+        try:
+            if self._refcount[0] > 1:
+                self._refcount[0] -= 1
+                self._copy_data()
+                self._refcount = [1]
+        except AttributeError:
+            self._refcount = [1]
+        self._scal(alpha)
+
+    def axpy(self, alpha, x):
+        try:
+            if self._refcount[0] > 1:
+                self._refcount[0] -= 1
+                self._copy_data()
+                self._refcount = [1]
+        except AttributeError:
+            self._refcount = [1]
+        self._axpy(alpha, x)
+
+    def __del__(self):
+        try:
+            self._refcount[0] -= 1
+        except AttributeError:
+            pass
+
+
+class NumpyVector(CopyOnWriteVector):
     """Vector stored in a NumPy 1D-array."""
 
     def __init__(self, instance, dtype=None, copy=False, order=None, subok=False):
@@ -117,6 +174,10 @@ class NumpyVector(VectorInterface):
         else:
             self._array = np.array(instance, dtype=dtype, copy=copy, order=order, subok=subok, ndmin=1)
         assert self._array.ndim == 1
+
+    @classmethod
+    def from_instance(cls, instance):
+        return cls(instance._array)
 
     @classmethod
     def make_zeros(cls, subtype=None):
@@ -135,13 +196,13 @@ class NumpyVector(VectorInterface):
     def subtype(self):
         return len(self._array)
 
-    def copy(self):
-        return NumpyVector(self._array, copy=True)
+    def _copy_data(self):
+        self._array = self._array.copy()
 
-    def scal(self, alpha):
+    def _scal(self, alpha):
         self._array *= alpha
 
-    def axpy(self, alpha, x):
+    def _axpy(self, alpha, x):
         assert self.dim == x.dim
         if alpha == 0:
             return
