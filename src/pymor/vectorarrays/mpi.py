@@ -81,9 +81,9 @@ class MPIVectorArray(VectorArrayInterface):
     def subtype(self):
         return (self.cls, self.array_subtype)
 
-    def copy(self, ind=None):
+    def copy(self, ind=None, deep=False):
         return type(self)(self.cls, self.array_subtype,
-                          mpi.call(mpi.method_call_manage, self.obj_id, 'copy', ind=ind))
+                          mpi.call(mpi.method_call_manage, self.obj_id, 'copy', ind=ind, deep=deep))
 
     def append(self, other, o_ind=None, remove_from_other=False):
         mpi.call(mpi.method_call, self.obj_id, 'append', other.obj_id,
@@ -373,9 +373,9 @@ class MPIVector(VectorInterface):
     def subtype(self):
         return (self.cls, self.vector_subtype)
 
-    def copy(self):
+    def copy(self, deep=False):
         return type(self)(self.cls, self.vector_subtype,
-                          mpi.call(mpi.method_call_manage, self.obj_id, 'copy'))
+                          mpi.call(mpi.method_call_manage, self.obj_id, 'copy', deep=deep))
 
     def scal(self, alpha):
         mpi.call(mpi.method_call, self.obj_id, 'scal', alpha)
