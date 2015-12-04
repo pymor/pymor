@@ -332,7 +332,7 @@ class LTISystem(DiscretizationInterface):
         Parameters
         ----------
         name
-            Name of the norm ('H2', 'Hankel')
+            Name of the norm ('H2', 'Hinf', 'Hankel')
         """
         if name == 'H2':
             if self._cgf is not None:
@@ -345,11 +345,40 @@ class LTISystem(DiscretizationInterface):
             else:
                 self.compute_ogf()
                 return spla.norm(self.B.apply_adjoint(self._ogf).data)
+        elif name == 'Hinf':
+            from slycot import ab13dd
+            dico = 'C' if self.cont_time else 'D'
+            jobe = 'I' if self.E is None else 'G'
+            equil = 'S'
+            jobd = 'Z' if self.D is None else 'D'
+            A = self.A._matrix
+            if self.A.sparse:
+                A = A.toarray()
+            B = self.B._matrix
+            if self.B.sparse:
+                B = B.toarray()
+            C = self.C._matrix
+            if self.C.sparse:
+                C = C.toarray()
+            if self.D is None:
+                D = np.zeros((self.p, self.m))
+            else:
+                D = self.D._matrix
+                if self.D.sparse:
+                    D = D.toarray()
+            if self.E is None:
+                E = np.eye(self.n)
+            else:
+                E = self.E._matrix
+                if self.E.sparse:
+                    E = E.toarray()
+            gpeak, fpeak = ab13dd(dico, jobe, equil, jobd, self.n, self.m, self.p, A, E, B, C, D)
+            return gpeak
         elif name == 'Hankel':
             self.compute_hsv_U_V()
             return self._hsv[0]
         else:
-            raise NotImplementedError('Only H2 and Hankel norms are implemented.')
+            raise NotImplementedError('Only H2, Hinf, and Hankel norms are implemented.')
 
     def project(self, Vr, Wr, Er_is_identity=False):
         """Reduce using Petrov-Galerkin projection.
