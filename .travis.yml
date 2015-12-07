@@ -14,16 +14,10 @@ before_install:
  - pip install python-coveralls 
  - pip install --upgrade markupsafe
  - pip install distribute
- - pip install cython pyvtk docopt
- - pip install sympy matplotlib pyopengl
- - pip install --upgrade numpy
- - pip install --upgrade scipy
+ - pip install pyvtk docopt
  - pip install --upgrade pytest
  - pip install --upgrade pytest-cov
- - pip install --upgrade ipython
  - pip install ipyparallel
- - pip install PySide --no-index --find-links https://parkin.github.io/python-wheelhouse/;
- - python ~/virtualenv/python${TRAVIS_PYTHON_VERSION}_with_system_site_packages/bin/pyside_postinstall.py -install
  - python -c 'import  dolfin' || echo "import dolfin failed"
 
 # command to install dependencies
@@ -63,10 +57,20 @@ addons:
   apt:
     packages:
     - debhelper
+    - dolfin-dev
+    - python-dolfin
+    - fenics
     - python-pip
     - python-virtualenv
     - python-numpy
     - python-sphinx
+    - python-scipy
+    - python-ipython
+    - python-matplotlib
+    - python-pyside
+    - python-cython
+    - python-opengl
+    - python-sympy
     - python-dev
     - python3
     - dh-make
