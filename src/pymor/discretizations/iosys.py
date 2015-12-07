@@ -89,6 +89,9 @@ class LTISystem(DiscretizationInterface):
         self._hsv = None
         self._U = None
         self._V = None
+        self._H2_norm = None
+        self._Hinf_norm = None
+        self._fpeak = None
         self.build_parameter_type(inherits=(A, B, C, D, E))
 
     @classmethod
@@ -335,17 +338,24 @@ class LTISystem(DiscretizationInterface):
             Name of the norm ('H2', 'Hinf', 'Hankel')
         """
         if name == 'H2':
+            if self._H2_norm is not None:
+                return self._H2_norm
+
             if self._cgf is not None:
-                return spla.norm(self.C.apply(self._cgf).data)
-            if self._ogf is not None:
-                return spla.norm(self.B.apply_adjoint(self._ogf).data)
-            if self.m <= self.p:
+                self._H2_norm = spla.norm(self.C.apply(self._cgf).data)
+            elif self._ogf is not None:
+                self._H2_norm = spla.norm(self.B.apply_adjoint(self._ogf).data)
+            elif self.m <= self.p:
                 self.compute_cgf()
-                return spla.norm(self.C.apply(self._cgf).data)
+                self._H2_norm = spla.norm(self.C.apply(self._cgf).data)
             else:
                 self.compute_ogf()
-                return spla.norm(self.B.apply_adjoint(self._ogf).data)
+                self._H2_norm = spla.norm(self.B.apply_adjoint(self._ogf).data)
+            return self._H2_norm
         elif name == 'Hinf':
+            if self._Hinf_norm is not None:
+                return self._Hinf_norm
+
             from slycot import ab13dd
             dico = 'C' if self.cont_time else 'D'
             jobe = 'I' if self.E is None else 'G'
@@ -372,8 +382,8 @@ class LTISystem(DiscretizationInterface):
                 E = self.E._matrix
                 if self.E.sparse:
                     E = E.toarray()
-            gpeak, fpeak = ab13dd(dico, jobe, equil, jobd, self.n, self.m, self.p, A, E, B, C, D)
-            return gpeak
+            self._Hinf_norm, self._fpeak = ab13dd(dico, jobe, equil, jobd, self.n, self.m, self.p, A, E, B, C, D)
+            return self._Hinf_norm
         elif name == 'Hankel':
             self.compute_hsv_U_V()
             return self._hsv[0]
