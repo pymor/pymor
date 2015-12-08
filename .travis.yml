@@ -7,6 +7,7 @@ virtualenv:
   system_site_packages: true
 
 before_install:
+ - sudo apt-get install -y -qq dolfin-dev python-dolfin fenics ipython python-pyside cython python-opengl
  - git fetch --depth=1000 --tags origin master
  - export DISPLAY=:99.0
  - sh -e /etc/init.d/xvfb start
@@ -57,19 +58,12 @@ addons:
   apt:
     packages:
     - debhelper
-    - dolfin-dev
-    - python-dolfin
-    - fenics
     - python-pip
     - python-virtualenv
     - python-numpy
     - python-sphinx
     - python-scipy
-    - python-ipython
     - python-matplotlib
-    - python-pyside
-    - python-cython
-    - python-opengl
     - python-sympy
     - python-dev
     - python3
