@@ -93,9 +93,8 @@ returned
 '''.format(e.output, e.returncode))
         revstring = NO_VERSIONSTRING
 finally:
-    version = Version(revstring)
+    VERSION = Version(revstring)
 
-VERSION = version
 print('Loading pymor version {}'.format(VERSION))
 
 
