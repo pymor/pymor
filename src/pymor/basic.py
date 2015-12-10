@@ -38,6 +38,7 @@ from pymor.discretizers.advection import discretize_nonlinear_instationary_advec
 from pymor.discretizers.elliptic import discretize_elliptic_cg, discretize_elliptic_fv
 
 from pymor.functions.basic import ConstantFunction, GenericFunction, ExpressionFunction, LincombFunction
+from pymor.functions.bitmap import BitmapFunction
 
 from pymor.grids.boundaryinfos import EmptyBoundaryInfo, BoundaryInfoFromIndicators, AllDirichletBoundaryInfo
 from pymor.grids.oned import OnedGrid
