@@ -12,6 +12,7 @@ from pymor.discretizations.basic import InstationaryDiscretization
 from pymor.grids.oned import OnedGrid
 from pymor.gui.qt import Matplotlib1DVisualizer
 from pymor.operators.constructions import VectorFunctional, LincombOperator
+from pymor.parameters.functionals import ProjectionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace
 from pymor.reductors.basic import reduce_generic_rb
 
@@ -22,8 +23,8 @@ from wrapper import WrappedDiffusionOperator
 def discretize(n, nt, blocks):
     h = 1. / blocks
     ops = [WrappedDiffusionOperator.create(n, h * i, h * (i + 1)) for i in xrange(blocks)]
-    # operator = WrappedDiffusionOperator.create(n, 0, 1)
-    operator = LincombOperator(ops, coefficients_name='diffusion_coefficients')
+    pfs = [ProjectionParameterFunctional('diffusion_coefficients', (blocks,), (i,)) for i in xrange(blocks)]
+    operator = LincombOperator(ops, pfs)
 
     initial_data = operator.source.zeros()
 
@@ -35,7 +36,7 @@ def discretize(n, nt, blocks):
     rhs_data[:] = np.ones(len(rhs_data))
     rhs_data[0] = 0
     rhs_data[len(rhs_data) - 1] = 0
-    rhs = VectorFunctional(rhs_vec, copy=False)
+    rhs = VectorFunctional(rhs_vec)
 
     # hack together a visualizer ...
     grid = OnedGrid(domain=(0, 1), num_intervals=n)
