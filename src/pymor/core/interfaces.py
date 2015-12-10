@@ -231,7 +231,7 @@ class BasicInterface(object):
     @property
     def name(self):
         n = getattr(self, '_name', None)
-        return n or '{}_{}'.format(type(self).__name__, self.uid)
+        return n or type(self).__name__
 
     @name.setter
     def name(self, n):
