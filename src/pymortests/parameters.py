@@ -19,14 +19,14 @@ def space():
 
 
 def test_uniform(space):
-    values = list(space.sample_uniformly(num_samples))
+    values = space.sample_uniformly(num_samples)
     assert len(values) == num_samples
     for value in values:
         assert space.contains(value)
 
 
 def test_randomly(space):
-    values = list(space.sample_randomly(num_samples))
+    values = space.sample_randomly(num_samples)
     assert len(values) == num_samples
     for value in values:
         assert space.contains(value)

@@ -197,7 +197,7 @@ def burgers_demo(args):
 
     tic = time.time()
 
-    mus = list(discretization.parameter_space.sample_randomly(args['--test']))
+    mus = discretization.parameter_space.sample_randomly(args['--test'])
 
     def error_analysis(N, M):
         print('N = {}, M = {}: '.format(N, M), end='')

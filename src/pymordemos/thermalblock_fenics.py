@@ -197,7 +197,7 @@ def thermalblock_demo(args):
 
     real_rb_size = len(greedy_data['basis'])
 
-    mus = list(discretization.parameter_space.sample_randomly(args['--test']))
+    mus = discretization.parameter_space.sample_randomly(args['--test'])
 
     h1_err_max = -1
     h1_est_max = -1

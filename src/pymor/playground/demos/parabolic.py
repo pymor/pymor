@@ -24,7 +24,7 @@ def parabolic_demo():
                                    initial_data=U0, T=1, products=d_stat.products, time_stepper=time_stepper,
                                    parameter_space=d_stat.parameter_space, visualizer=d_stat.visualizer)
 
-    mu = next(d.parameter_space.sample_randomly(1))
+    mu = d.parameter_space.sample_randomly(1)[0]
     R = d.solve(mu)
     d.visualize(R)
 

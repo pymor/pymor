@@ -256,7 +256,7 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
     operator_names
         List of keys in the `operators` dict of the discretization. The corresponding
         |Operators| will be interpolated.
-    sample
+    parameter_sample
         A list of |Parameters| for which solution snapshots are calculated.
     error_norm
         See :func:`ei_greedy`.
@@ -282,11 +282,10 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
             :errors:  Sequence of maximum approximation errors during greedy search.
     """
 
-    sample = tuple(parameter_sample)
     operators = [discretization.operators[operator_name] for operator_name in operator_names]
 
     evaluations = operators[0].range.empty()
-    for mu in sample:
+    for mu in parameter_sample:
         U = discretization.solve(mu)
         for op in operators:
             evaluations.append(op.apply(U, mu=mu))

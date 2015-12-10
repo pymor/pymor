@@ -53,7 +53,7 @@ def analyze_pickle_histogram(args):
     print('Loading reduced discretization ...')
     rb_discretization = load(open(args['REDUCED_DATA']))
 
-    mus = list(rb_discretization.parameter_space.sample_randomly(args['SAMPLES']))
+    mus = rb_discretization.parameter_space.sample_randomly(args['SAMPLES'])
     us = []
     for mu in mus:
         print('Solving reduced for {} ... '.format(mu), end='')
@@ -184,7 +184,7 @@ def analyze_pickle_convergence(args):
     else:
         dims = np.arange(dim + 1)
 
-    mus = list(rb_discretization.parameter_space.sample_randomly(args['SAMPLES']))
+    mus = rb_discretization.parameter_space.sample_randomly(args['SAMPLES'])
 
     ESTS = []
     ERRS = []

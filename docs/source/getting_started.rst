@@ -205,7 +205,7 @@ Moreover, we need to select a |Parameter| training set. The discretization
 analytical problem. We can sample our parameters from this space, which is a
 :class:`~pymor.parameters.spaces.CubicParameterSpace`. E.g.:
 
->>> samples = list(d.parameter_space.sample_uniformly(4))
+>>> samples = d.parameter_space.sample_uniformly(4)
 >>> print(samples[0])
 {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]}
 

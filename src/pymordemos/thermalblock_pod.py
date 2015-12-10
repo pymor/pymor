@@ -89,7 +89,7 @@ def thermalblock_demo(args):
     tic = time.time()
 
     print('Solving on training set ...')
-    S_train = list(discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']))
+    S_train = discretization.parameter_space.sample_uniformly(args['SNAPSHOTS'])
     snapshots = discretization.operator.source.empty(reserve=len(S_train))
     for mu in S_train:
         snapshots.append(discretization.solve(mu))
