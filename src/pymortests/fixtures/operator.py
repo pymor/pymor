@@ -59,7 +59,7 @@ def thermalblock_factory(xblocks, yblocks, diameter, seed):
         U.append(iop.as_vector(exp))
     for exp in np.random.random(6):
         V.append(iop.as_vector(exp))
-    return d.operator, next(d.parameter_space.sample_randomly(1, seed=seed)), U, V, d.h1_product, d.l2_product
+    return d.operator, d.parameter_space.sample_randomly(1, seed=seed)[0], U, V, d.h1_product, d.l2_product
 
 
 def thermalblock_assemble_factory(xblocks, yblocks, diameter, seed):
