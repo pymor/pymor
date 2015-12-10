@@ -5,10 +5,12 @@
 # Contributors: Falk Meyer <falk.meyer@wwu.de>
 
 from __future__ import absolute_import, division, print_function
-from scipy import io
 
-import numpy as np
+import os.path
 import ConfigParser
+
+from scipy import io
+import numpy as np
 
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 from pymor.discretizations.basic import StationaryDiscretization
@@ -72,6 +74,7 @@ def discretize_stationary_from_disk(parameter_file):
     ...
     """
     assert ".ini" == parameter_file[-4:], "Given file is not an .ini file"
+    base_path = os.path.dirname(parameter_file)
 
     # Get input from parameter file
     config = ConfigParser.ConfigParser()
@@ -107,7 +110,7 @@ def discretize_stationary_from_disk(parameter_file):
 
     # get parameter functionals and system matrices
     for i in range(len(system_mat)):
-        path = system_mat[i][0]
+        path = os.path.join(base_path, system_mat[i][0])
         expr = system_mat[i][1]
         parameter_functional = ExpressionParameterFunctional(expr, parameter_type=parameter_type)
         info = io.loadmat(path, mat_dtype=True).values()
@@ -120,7 +123,7 @@ def discretize_stationary_from_disk(parameter_file):
     rhs_operators, rhs_functionals = [], []
 
     for i in range(len(rhs_vec)):
-        path = rhs_vec[i][0]
+        path = os.path.join(base_path, rhs_vec[i][0])
         expr = rhs_vec[i][1]
         parameter_functional = ExpressionParameterFunctional(expr, parameter_type=parameter_type)
         info = io.loadmat(path, mat_dtype=True).values()
@@ -135,7 +138,7 @@ def discretize_stationary_from_disk(parameter_file):
         products = {}
         for i in range(len(product)):
             product_name = product[i][0]
-            product_path = product[i][1]
+            product_path = os.path.join(base_path, product[i][1])
             info = io.loadmat(product_path, mat_dtype=True).values()
             products[product_name] = NumpyMatrixOperator([j for j in info if isinstance(j, np.ndarray)][0])
     else:
@@ -218,6 +221,7 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
     steps: 100
     """
     assert ".ini" == parameter_file[-4:], "Given file is not an .ini file"
+    base_path = os.path.dirname(parameter_file)
 
     # Get input from parameter file
     config = ConfigParser.ConfigParser()
@@ -255,7 +259,7 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
 
     # get parameter functionals and system matrices
     for i in range(len(system_mat)):
-        path = system_mat[i][0]
+        path = os.path.join(base_path, system_mat[i][0])
         expr = system_mat[i][1]
         parameter_functional = ExpressionParameterFunctional(expr, parameter_type=parameter_type)
         info = io.loadmat(path, mat_dtype=True).values()
@@ -268,7 +272,7 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
     rhs_operators, rhs_functionals = [], []
 
     for i in range(len(rhs_vec)):
-        path = rhs_vec[i][0]
+        path = os.path.join(base_path, rhs_vec[i][0])
         expr = rhs_vec[i][1]
         parameter_functional = ExpressionParameterFunctional(expr, parameter_type=parameter_type)
         info = io.loadmat(path, mat_dtype=True).values()
@@ -278,14 +282,14 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
     rhs_lincombOperator = LincombOperator(rhs_operators, coefficients=rhs_functionals)
 
     # get mass matrix
-    path = mass_mat[0][1]
+    path = os.path.join(base_path, mass_mat[0][1])
     info = io.loadmat(path, mat_dtype=True).values()
     mass_operator = NumpyMatrixOperator([j for j in info if isinstance(j, np.ndarray)][0])
 
     # Obtain initial solution if not given
     if u0 is None:
         u_0 = config.items('initial-solution')
-        path = u_0[0][1]
+        path = os.path.join(base_path, u_0[0][1])
         info = io.loadmat(path, mat_dtype=True).values()
         u0 = NumpyMatrixOperator([j for j in info if isinstance(j, np.ndarray)][0])
 
@@ -295,7 +299,7 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
         products = {}
         for i in range(len(product)):
             product_name = product[i][0]
-            product_path = product[i][1]
+            product_path = os.path.join(base_path, product[i][1])
             info = io.loadmat(product_path, mat_dtype=True).values()
             products[product_name] = NumpyMatrixOperator([j for j in info if isinstance(j, np.ndarray)][0])
     else:
