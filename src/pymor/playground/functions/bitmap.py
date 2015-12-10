@@ -34,9 +34,7 @@ class BitmapFunction(FunctionBase):
             raise ImportError("PIL is needed for loading images. Try 'pip install pillow'")
         img = Image.open(filename)
         assert img.mode == "L", "Image " + filename + " not in grayscale mode"
-        assert img.getextrema()[1] <= 255, "Image " + filename + " not in 8 bit per pixel mode"
         rawdata = np.array(img.getdata())
-        assert rawdata.ndim == 1, 'A grayscale image is needed. Problem with ' + filename
         assert rawdata.shape[0] == img.size[0]*img.size[1]
         self.bitmap = rawdata.reshape(img.size[0],img.size[1]).T[:, ::-1]
         self.bounding_box = bounding_box
