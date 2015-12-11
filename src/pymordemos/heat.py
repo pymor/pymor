@@ -74,15 +74,18 @@ if __name__ == '__main__':
     ax.set_title('Hankel singular values')
     plt.show()
 
-    # H_2-norm of the system
-    print('H_2-norm of the full model: {}'.format(lti.norm()))
+    # Norms of the system
+    print('H_2-norm of the full model:   {}'.format(lti.norm()))
+    print('H_inf-norm of the full model: {}'.format(lti.norm('Hinf')))
 
     # Balanced Truncation
     r = 5
     rom_bt, _, _ = lti.bt(r)
-    print('H_2-norm of the BT ROM: {}'.format(rom_bt.norm()))
+    print('H_2-norm of the BT ROM:       {}'.format(rom_bt.norm()))
+    print('H_inf-norm of the BT ROM:     {}'.format(rom_bt.norm('Hinf')))
     err_bt = lti - rom_bt
-    print('H_2-error for the BT ROM: {}'.format(err_bt.norm()))
+    print('H_2-error for the BT ROM:     {}'.format(err_bt.norm()))
+    print('H_inf-error for the BT ROM:   {}'.format(err_bt.norm('Hinf')))
 
     # Bode plot of the full and BT reduced model
     tfw_bt = rom_bt.bode(w)
@@ -114,9 +117,11 @@ if __name__ == '__main__':
     ax.set_title('Distances between shifts in IRKA iterations')
     plt.show()
 
-    print('H_2-norm of the IRKA ROM: {}'.format(rom_irka.norm()))
+    print('H_2-norm of the IRKA ROM:     {}'.format(rom_irka.norm()))
+    print('H_inf-norm of the IRKA ROM:   {}'.format(rom_irka.norm('Hinf')))
     err_irka = lti - rom_irka
-    print('H_2-error for the IRKA ROM: {}'.format(err_irka.norm()))
+    print('H_2-error for the IRKA ROM:   {}'.format(err_irka.norm()))
+    print('H_inf-error for the IRKA ROM: {}'.format(err_irka.norm('Hinf')))
 
     # Bode plot of the full and IRKA reduced model
     tfw_irka = rom_irka.bode(w)
