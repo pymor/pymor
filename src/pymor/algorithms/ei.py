@@ -101,11 +101,11 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
 
         if len(interpolation_dofs) >= max_interpolation_dofs:
             logger.info('Maximum number of interpolation DOFs reached. Stopping extension loop.')
-            logger.info('Final maximum {} error with {} interpolation DOFs: {}'.format(
+            logger.info('Final maximum {0} error with {1} interpolation DOFs: {2}'.format(
                 'projection' if projection else 'interpolation', len(interpolation_dofs), max_err))
             break
 
-        logger.info('Maximum {} error with {} interpolation DOFs: {}'
+        logger.info('Maximum {0} error with {1} interpolation DOFs: {2}'
                     .format('projection' if projection else 'interpolation',
                             len(interpolation_dofs), max_err))
 
@@ -117,11 +117,11 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
         new_vec = U.copy(ind=max_err_ind)
         new_dof = new_vec.amax()[0][0]
         if new_dof in interpolation_dofs:
-            logger.info('DOF {} selected twice for interplation! Stopping extension loop.'.format(new_dof))
+            logger.info('DOF {0} selected twice for interplation! Stopping extension loop.'.format(new_dof))
             break
         new_dof_value = new_vec.components([new_dof])[0, 0]
         if new_dof_value == 0.:
-            logger.info('DOF {} selected for interpolation has zero maximum error! Stopping extension loop.'
+            logger.info('DOF {0} selected for interpolation has zero maximum error! Stopping extension loop.'
                         .format(new_dof))
             break
         new_vec *= 1 / new_dof_value
@@ -143,7 +143,7 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
     for d in range(1, len(interpolation_matrix) + 1):
         triangularity_errs.append(np.max(triangularity_errors[:d, :d]))
 
-    logger.info('Interpolation matrix is not lower triangular with maximum error of {}'
+    logger.info('Interpolation matrix is not lower triangular with maximum error of {0}'
                 .format(triangularity_errs[-1]))
     logger.info('')
 
@@ -209,13 +209,13 @@ def deim(U, modes=None, error_norm=None, product=None):
 
         err = ERR.l2_norm() if error_norm is None else error_norm(ERR)
 
-        logger.info('Interpolation error for basis vector {}: {}'.format(i, err))
+        logger.info('Interpolation error for basis vector {0}: {1}'.format(i, err))
 
         # compute new interpolation dof and collateral basis vector
         new_dof = ERR.amax()[0][0]
 
         if new_dof in interpolation_dofs:
-            logger.info('DOF {} selected twice for interplation! Stopping extension loop.'.format(new_dof))
+            logger.info('DOF {0} selected twice for interplation! Stopping extension loop.'.format(new_dof))
             break
 
         interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
@@ -297,7 +297,7 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
                     for name, operator in zip(operator_names, operators)}
     operators_dict = discretization.operators.copy()
     operators_dict.update(ei_operators)
-    ei_discretization = discretization.with_(operators=operators_dict, name='{}_ei'.format(discretization.name))
+    ei_discretization = discretization.with_(operators=operators_dict, name='{0}_ei'.format(discretization.name))
 
     data.update({'dofs': dofs, 'basis': basis})
     return ei_discretization, data

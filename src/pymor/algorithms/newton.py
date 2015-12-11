@@ -95,7 +95,7 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
     residual = rhs - operator.apply(U, mu=mu)
 
     err = residual.l2_norm()[0] if error_norm is None else error_norm(residual)[0]
-    logger.info('      Initial Residual: {:5e}'.format(err))
+    logger.info('      Initial Residual: {0:5e}'.format(err))
 
     iteration = 0
     error_sequence = [err]
@@ -118,17 +118,17 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
         residual = rhs - operator.apply(U, mu=mu)
 
         err = residual.l2_norm()[0] if error_norm is None else error_norm(residual)[0]
-        logger.info('Iteration {:2}: Residual: {:5e},  Reduction: {:5e}, Total Reduction: {:5e}'
+        logger.info('Iteration {0:2}: Residual: {1:5e},  Reduction: {2:5e}, Total Reduction: {3:5e}'
                     .format(iteration, err, err / error_sequence[-1], err / error_sequence[0]))
         error_sequence.append(err)
 
     if err <= atol:
-        logger.info('Absolute limit of {} reached. Stopping.'.format(atol))
+        logger.info('Absolute limit of {0} reached. Stopping.'.format(atol))
     elif err/error_sequence[0] <= rtol:
-        logger.info('Prescribed total reduction of {} reached. Stopping.'.format(rtol))
+        logger.info('Prescribed total reduction of {0} reached. Stopping.'.format(rtol))
     elif (len(error_sequence) >= stagnation_window + 1
           and err/max(error_sequence[-stagnation_window - 1:]) >= stagnation_threshold):
-        logger.info('Error is stagnating (threshold: {:5e}, window: {}). Stopping.'.format(stagnation_threshold,
+        logger.info('Error is stagnating (threshold: {0:5e}, window: {1}). Stopping.'.format(stagnation_threshold,
                                                                                            stagnation_window))
     else:
         raise NewtonError('Failed to converge')

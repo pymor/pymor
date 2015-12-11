@@ -127,7 +127,7 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
         super(ExpressionParameterFunctional, self).__init__(mapping, parameter_type, name)
 
     def __repr__(self):
-        return 'ExpressionParameterFunctional({}, {})'.format(self.expression, repr(self.parameter_type))
+        return 'ExpressionParameterFunctional({0}, {1})'.format(self.expression, repr(self.parameter_type))
 
     def __reduce__(self):
         return (ExpressionParameterFunctional,

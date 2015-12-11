@@ -37,7 +37,7 @@ def _load_all():
         except (TypeError, ImportError) as t:
             fails.append((module_name, t))
     if len(fails) > 0:
-        logger.getLogger(__name__).fatal('Failed imports: {}'.format(pprint.pformat(fails)))
+        logger.getLogger(__name__).fatal('Failed imports: {0}'.format(pprint.pformat(fails)))
         raise ImportError(__name__)
 
 
@@ -57,7 +57,7 @@ def SubclassForImplemetorsOf(InterfaceType):
         test_types = set([T for T in InterfaceType.implementors(True) if not (T.has_interface_name()
                                                                               or issubclass(T, TestInterface))])
         for Type in test_types:
-            cname = 'Test_{}_{}'.format(Type.__name__, TestCase.__name__.replace('Interface', ''))
+            cname = 'Test_{0}_{1}'.format(Type.__name__, TestCase.__name__.replace('Interface', ''))
             pymor.core.dynamic.__dict__[cname] = type(cname, (TestCase,), {'Type': Type})
         return TestCase
 

@@ -89,7 +89,7 @@ class OperatorBase(OperatorInterface):
         return LincombOperator([self], [other])
 
     def __str__(self):
-        return '{}: R^{} --> R^{}  (parameter type: {}, class: {})'.format(
+        return '{0}: R^{1} --> R^{2}  (parameter type: {3}, class: {4})'.format(
             self.name, self.source.dim, self.range.dim, self.parameter_type,
             self.__class__.__name__)
 
@@ -187,7 +187,7 @@ class OperatorBase(OperatorInterface):
             raise TypeError('This operator does not represent a vector or linear functional.')
 
     def projected(self, range_basis, source_basis, product=None, name=None):
-        name = name or '{}_projected'.format(self.name)
+        name = name or '{0}_projected'.format(self.name)
         if self.linear and not self.parametric:
             assert source_basis is None or source_basis in self.source
             assert range_basis is None or range_basis in self.range
@@ -294,7 +294,7 @@ class ProjectedOperator(OperatorBase):
         assert dim_range is None or dim_range <= self.range.dim
         assert dim_source is None or self.source_basis is not None, 'not implemented'
         assert dim_range is None or self.range_basis is not None, 'not implemented'
-        name = name or '{}_projected_to_subbasis'.format(self.name)
+        name = name or '{0}_projected_to_subbasis'.format(self.name)
         source_basis = self.source_basis if dim_source is None \
             else self.source_basis.copy(ind=range(dim_source))
         range_basis = self.range_basis if dim_range is None \

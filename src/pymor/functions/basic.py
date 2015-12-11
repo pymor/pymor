@@ -85,7 +85,7 @@ class ConstantFunction(FunctionBase):
         return '{name}: x -> {value}'.format(name=self.name, value=self._value)
 
     def __repr__(self):
-        return 'ConstantFunction({}, {})'.format(repr(self._value), self.dim_domain)
+        return 'ConstantFunction({0}, {1})'.format(repr(self._value), self.dim_domain)
 
     def evaluate(self, x, mu=None):
         x = np.array(x, copy=False, ndmin=1)
@@ -210,7 +210,7 @@ class ExpressionFunction(GenericFunction):
         super(ExpressionFunction, self).__init__(mapping, dim_domain, shape_range, parameter_type, name)
 
     def __repr__(self):
-        return 'ExpressionFunction({}, {}, {}, {})'.format(self.expression, repr(self.parameter_type),
+        return 'ExpressionFunction({0}, {1}, {2}, {3})'.format(self.expression, repr(self.parameter_type),
                                                            self.shape_range, self.parameter_type)
 
     def __reduce__(self):

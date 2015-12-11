@@ -26,13 +26,13 @@ class TestGaussQuadrature(TestInterface):
 
     def test_polynomials(self):
         for n, function, _, integral in polynomials(GaussQuadratures.orders[-1]):
-            name = 'x^{}'.format(n)
+            name = 'x^{0}'.format(n)
             for order in GaussQuadratures.orders:
                 if n > order / 2:
                     continue
                 Q = GaussQuadratures.iter_quadrature(order)
                 ret = sum([function(p) * w for (p, w) in Q])
-                assert float_cmp(ret, integral), '{} integral wrong: {} vs {} (quadrature order {})'.format(
+                assert float_cmp(ret, integral), '{0} integral wrong: {1} vs {2} (quadrature order {3})'.format(
                     name, integral, ret, order)
 
     def test_other_functions(self):
@@ -40,7 +40,7 @@ class TestGaussQuadrature(TestInterface):
         for name, function, integral in FUNCTIONS:
             Q = GaussQuadratures.iter_quadrature(order)
             ret = sum([function(p) * w for (p, w) in Q])
-            assert float_cmp(ret, integral), '{} integral wrong: {} vs {} (quadrature order {})'.format(
+            assert float_cmp(ret, integral), '{0} integral wrong: {1} vs {2} (quadrature order {3})'.format(
                 name, integral, ret, order)
 
     def test_weights(self):
@@ -63,7 +63,7 @@ class TestCmp(TestInterface):
         nan = float('nan')
         inf = float('inf')
         for (rtol, atol) in itertools.product(tol_range, tol_range):
-            msg = 'rtol: {} | atol {}'.format(rtol, atol)
+            msg = 'rtol: {0} | atol {1}'.format(rtol, atol)
             assert float_cmp(0., 0., rtol, atol), msg
             assert float_cmp(-0., -0., rtol, atol), msg
             assert float_cmp(-1., -1., rtol, atol), msg

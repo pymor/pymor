@@ -71,14 +71,14 @@ def thermalblock_demo(args):
     print('Discretize ...')
     discretization, _ = discretize_elliptic_cg(problem, diameter=1. / args['--grid'])
 
-    print('The parameter type is {}'.format(discretization.parameter_type))
+    print('The parameter type is {0}'.format(discretization.parameter_type))
 
     if args['--plot-solutions']:
         print('Showing some solutions')
         Us = tuple()
         legend = tuple()
         for mu in discretization.parameter_space.sample_randomly(2):
-            print('Solving for diffusion = \n{} ... '.format(mu['diffusion']))
+            print('Solving for diffusion = \n{0} ... '.format(mu['diffusion']))
             sys.stdout.flush()
             Us = Us + (discretization.solve(mu),)
             legend = legend + (str(mu['diffusion']),)
@@ -111,7 +111,7 @@ def thermalblock_demo(args):
     h1_err_max = -1
     cond_max = -1
     for mu in discretization.parameter_space.sample_randomly(args['--test']):
-        print('Solving RB-Scheme for mu = {} ... '.format(mu), end='')
+        print('Solving RB-Scheme for mu = {0} ... '.format(mu), end='')
         URB = reconstructor.reconstruct(rb_discretization.solve(mu))
         U = discretization.solve(mu)
         h1_err = discretization.h1_0_semi_norm(U - URB)[0]
@@ -122,7 +122,7 @@ def thermalblock_demo(args):
         if cond > cond_max:
             cond_max = cond
             cond_max_mu = mu
-        print('H1-error = {}, condition = {}'.format(h1_err, cond))
+        print('H1-error = {0}, condition = {1}'.format(h1_err, cond))
     toc = time.time()
     t_est = toc - tic
     real_rb_size = len(rb)

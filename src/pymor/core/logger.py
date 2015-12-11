@@ -68,11 +68,11 @@ class ColoredFormatter(logging.Formatter):
         hours, remainder = divmod(remainder, 3600)
         minutes, seconds = divmod(remainder, 60)
         if days:
-            return '{}d {:02}:{:02}:{:02}'.format(days, hours, minutes, seconds)
+            return '{0}d {1:02}:{2:02}:{3:02}'.format(days, hours, minutes, seconds)
         elif hours:
-            return '{:02}:{:02}:{:02}'.format(hours, minutes, seconds)
+            return '{0:02}:{1:02}:{2:02}'.format(hours, minutes, seconds)
         else:
-            return '{:02}:{:02}'.format(minutes, seconds)
+            return '{0:02}:{1:02}'.format(minutes, seconds)
 
     def format(self, record):
         if not record.msg:

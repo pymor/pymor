@@ -116,14 +116,14 @@ def thermalblock_demo(args):
     if args['--cache-region'] != 'none':
         discretization.enable_caching(args['--cache-region'])
 
-    print('The parameter type is {}'.format(discretization.parameter_type))
+    print('The parameter type is {0}'.format(discretization.parameter_type))
 
     if args['--plot-solutions']:
         print('Showing some solutions')
         Us = tuple()
         legend = tuple()
         for mu in discretization.parameter_space.sample_randomly(2):
-            print('Solving for diffusion = \n{} ... '.format(mu['diffusion']))
+            print('Solving for diffusion = \n{0} ... '.format(mu['diffusion']))
             sys.stdout.flush()
             Us = Us + (discretization.solve(mu),)
             legend = legend + (str(mu['diffusion']),)
@@ -154,17 +154,17 @@ def thermalblock_demo(args):
     rb_discretization, reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
 
     if args['--pickle']:
-        print('\nWriting reduced discretization to file {} ...'.format(args['--pickle'] + '_reduced'))
+        print('\nWriting reduced discretization to file {0} ...'.format(args['--pickle'] + '_reduced'))
         with open(args['--pickle'] + '_reduced', 'w') as f:
             dump(rb_discretization, f)
-        print('Writing detailed discretization and reconstructor to file {} ...'.format(args['--pickle'] + '_detailed'))
+        print('Writing detailed discretization and reconstructor to file {0} ...'.format(args['--pickle'] + '_detailed'))
         with open(args['--pickle'] + '_detailed', 'w') as f:
             dump((discretization, reconstructor), f)
 
     print('\nSearching for maximum error on random snapshots ...')
 
     def error_analysis(d, rd, rc, mus):
-        print('N = {}: '.format(rd.operator.source.dim), end='')
+        print('N = {0}: '.format(rd.operator.source.dim), end='')
         h1_err_max = -1
         h1_est_max = -1
         cond_max = -1

@@ -31,11 +31,11 @@ def _write_meta_file(filename_base, steps, fn_tpl):
 </VTKFile>'''
 
     fn_tpl += '.vtu'
-    with open('{}.pvd'.format(filename_base), 'wb') as pvd:
+    with open('{0}.pvd'.format(filename_base), 'wb') as pvd:
         pvd.write(pvd_header)
         for step in xrange(steps):
             fn = fn_tpl.format(filename_base, step)
-            pvd.write('\t\t<DataSet timestep="{}" group="" part="0" file="{}" />\n'.format(step, fn))
+            pvd.write('\t\t<DataSet timestep="{0}" group="" part="0" file="{1}" />\n'.format(step, fn))
         pvd.write(pvd_footer)
 
 

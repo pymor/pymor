@@ -96,12 +96,12 @@ class NetworkFilesystemRegionServer(BasicInterface):
     def _set(self, secret, key):
         if self.secret and secret != self.secret:
             return
-        filename = '{}-{:0>6}.dat'.format(self.prefix, self.created + 1)
+        filename = '{0}-{1:0>6}.dat'.format(self.prefix, self.created + 1)
         file_path = os.path.join(self.path, filename)
         conn = self.conn
         c = conn.cursor()
         try:
-            c.execute("INSERT INTO entries(key, filename, size) VALUES ('{}', '{}', {})"
+            c.execute("INSERT INTO entries(key, filename, size) VALUES ('{0}', '{1}', {2})"
                       .format(key, filename, -1))
             conn.commit()
         except sqlite3.IntegrityError:
@@ -126,7 +126,7 @@ class NetworkFilesystemRegionServer(BasicInterface):
                 return False
             c = conn.cursor()
             try:
-                c.execute("UPDATE entries SET size='{}' WHERE key='{}'".format(file_size, key))
+                c.execute("UPDATE entries SET size='{0}' WHERE key='{1}'".format(file_size, key))
                 conn.commit()
             except sqlite3.IntegrityError:
                 raise RuntimeError('Cache is corrupt!')

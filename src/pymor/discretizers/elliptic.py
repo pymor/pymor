@@ -77,7 +77,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
         L0 = Operator(grid, boundary_info, diffusion_constant=0, name='diffusion_boundary_part')
 
         Li = [Operator(grid, boundary_info, diffusion_function=df, dirichlet_clear_diag=True,
-                       name='diffusion_{}'.format(i))
+                       name='diffusion_{0}'.format(i))
               for i, df in enumerate(p.diffusion_functions)]
 
         L = LincombOperator(operators=[L0] + Li, coefficients=[1.] + list(p.diffusion_functionals),
@@ -112,7 +112,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
 
     discretization = StationaryDiscretization(L, F, products=products, visualizer=visualizer,
-                                              parameter_space=parameter_space, name='{}_CG'.format(p.name))
+                                              parameter_space=parameter_space, name='{0}_CG'.format(p.name))
 
     return discretization, {'grid': grid, 'boundary_info': boundary_info}
 
@@ -165,7 +165,7 @@ def discretize_elliptic_fv(analytical_problem, diameter=None, domain_discretizer
     p = analytical_problem
 
     if p.diffusion_functionals is not None:
-        Li = [fv.DiffusionOperator(grid, boundary_info, diffusion_function=df, name='diffusion_{}'.format(i))
+        Li = [fv.DiffusionOperator(grid, boundary_info, diffusion_function=df, name='diffusion_{0}'.format(i))
               for i, df in enumerate(p.diffusion_functions)]
         L = LincombOperator(operators=Li, coefficients=list(p.diffusion_functionals),
                             name='diffusion')
@@ -173,7 +173,7 @@ def discretize_elliptic_fv(analytical_problem, diameter=None, domain_discretizer
         F0 = fv.L2ProductFunctional(grid, p.rhs, boundary_info=boundary_info, neumann_data=p.neumann_data)
         if p.dirichlet_data is not None:
             Fi = [fv.L2ProductFunctional(grid, None, boundary_info=boundary_info, dirichlet_data=p.dirichlet_data,
-                                         diffusion_function=df, name='dirichlet_{}'.format(i))
+                                         diffusion_function=df, name='dirichlet_{0}'.format(i))
                   for i, df in enumerate(p.diffusion_functions)]
             F = LincombOperator(operators=[F0] + Fi, coefficients=[1.] + list(p.diffusion_functionals),
                                 name='rhs')
@@ -201,6 +201,6 @@ def discretize_elliptic_fv(analytical_problem, diameter=None, domain_discretizer
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
 
     discretization = StationaryDiscretization(L, F, products=products, visualizer=visualizer,
-                                              parameter_space=parameter_space, name='{}_FV'.format(p.name))
+                                              parameter_space=parameter_space, name='{0}_FV'.format(p.name))
 
     return discretization, {'grid': grid, 'boundary_info': boundary_info}

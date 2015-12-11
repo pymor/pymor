@@ -266,7 +266,7 @@ class ListVectorArray(VectorArrayInterface):
     @property
     def data(self):
         if not hasattr(self.space.type, 'data'):
-            raise TypeError('{} does not have a data attribute'.format(self.space.type))
+            raise TypeError('{0} does not have a data attribute'.format(self.space.type))
         if len(self._list) > 0:
             return np.array([v.data for v in self._list])
         else:
@@ -636,4 +636,4 @@ class ListVectorArray(VectorArrayInterface):
         return MI, MV
 
     def __str__(self):
-        return 'ListVectorArray of {} {}s of dimension {}'.format(len(self._list), str(self.vector_type), self.dim)
+        return 'ListVectorArray of {0} {1}s of dimension {2}'.format(len(self._list), str(self.vector_type), self.dim)

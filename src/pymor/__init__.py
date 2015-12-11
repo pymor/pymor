@@ -54,13 +54,13 @@ class Version(object):
         return self.full_version > other.full_version
 
     def __str__(self):
-        git_part = '-{}-{}'.format(self.distance, self.shorthash) if self.distance else ''
+        git_part = '-{0}-{1}'.format(self.distance, self.shorthash) if self.distance else ''
         version_part = '.'.join(map(str, self.version))
-        rc_part = 'rc{}'.format(self.rc_number) if self.has_rc_number else ''
+        rc_part = 'rc{0}'.format(self.rc_number) if self.has_rc_number else ''
         return version_part + rc_part + git_part
 
     def __repr__(self):
-        return 'Version({})'.format(str(self))
+        return 'Version({0})'.format(str(self))
 
 
 NO_VERSIONSTRING = '0.0.0-0-0'
@@ -87,15 +87,15 @@ except ImportError:
 Failed to import pymor.version and 'git describe --tags --candidates 20 --match *.*.*'
 returned
 
-{}
+{0}
 
-(return code: {})
+(return code: {1})
 '''.format(e.output, e.returncode))
         revstring = NO_VERSIONSTRING
 finally:
     VERSION = Version(revstring)
 
-print('Loading pymor version {}'.format(VERSION))
+print('Loading pymor version {0}'.format(VERSION))
 
 
 import os

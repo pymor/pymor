@@ -129,7 +129,7 @@ class ParameterType(dict):
     def __str__(self):
         if self.__keys is None:
             self.__keys = sorted(self.keys())
-        return '{' + ', '.join('{}: {}'.format(k, self[k]) for k in self.__keys) + '}'
+        return '{' + ', '.join('{0}: {1}'.format(k, self[k]) for k in self.__keys) + '}'
 
     def __repr__(self):
         return 'ParameterType(' + str(self) + ')'
@@ -233,7 +233,7 @@ class Parameter(dict):
                 raise ValueError('Parameter length does not match.')
             mu = dict(izip(parameter_type, mu))
         elif set(mu.keys()) != set(parameter_type.keys()):
-            raise ValueError('Provided parameter with keys {} does not match parameter type {}.'
+            raise ValueError('Provided parameter with keys {0} does not match parameter type {1}.'
                              .format(mu.keys(), parameter_type))
         for k, v in mu.iteritems():
             if not isinstance(v, np.ndarray):
@@ -241,11 +241,11 @@ class Parameter(dict):
                 try:
                     v = v.reshape(parameter_type[k])
                 except ValueError:
-                    raise ValueError('Shape mismatch for parameter component {}: got {}, expected {}'
+                    raise ValueError('Shape mismatch for parameter component {0}: got {1}, expected {2}'
                                      .format(k, v.shape, parameter_type[k]))
                 mu[k] = v
             if v.shape != parameter_type[k]:
-                raise ValueError('Shape mismatch for parameter component {}: got {}, expected {}'
+                raise ValueError('Shape mismatch for parameter component {0}: got {1}, expected {2}'
                                  .format(k, v.shape, parameter_type[k]))
         return cls(mu)
 
@@ -339,9 +339,9 @@ class Parameter(dict):
             if v.ndim > 1:
                 v = v.ravel()
             if s == '{':
-                s += '{}: {}'.format(k, v)
+                s += '{0}: {1}'.format(k, v)
             else:
-                s += ', {}: {}'.format(k, v)
+                s += ', {0}: {1}'.format(k, v)
         s += '}'
         np.set_string_function(None, repr=False)
         return s
@@ -412,13 +412,13 @@ class Parametric(object):
         """
         if mu is None:
             assert not self.parameter_type, \
-                'Given parameter is None but expected parameter of type {}'.format(self.parameter_type)
+                'Given parameter is None but expected parameter of type {0}'.format(self.parameter_type)
             return Parameter({})
         if mu.__class__ is not Parameter:
             mu = Parameter.from_parameter_type(mu, self.parameter_type)
         assert not self.parameter_type or all(getattr(mu.get(k, None), 'shape', None) == v
                                               for k, v in self.parameter_type.iteritems()), \
-            ('Given parameter of type {} does not match expected parameter type {}'
+            ('Given parameter of type {0} does not match expected parameter type {1}'
              .format(mu.parameter_type, self.parameter_type))
         return mu
 
@@ -515,7 +515,7 @@ class Parametric(object):
         def check_local_type(local_type, global_names):
             assert not local_type or global_names, 'Must specify a global name for each key of local_type'
             for k in local_type:
-                assert k in global_names, 'Must specify a global name for {}'.format(k)
+                assert k in global_names, 'Must specify a global name for {0}'.format(k)
             return True
 
         assert check_local_type(local_type, global_names)
@@ -526,10 +526,10 @@ class Parametric(object):
             def check_op(op, global_type, provides):
                 for name, shape in op.parameter_type.iteritems():
                     assert name not in global_type or global_type[name] == shape,\
-                        ('Component dimensions of global name {} do not match ({} and {})'
+                        ('Component dimensions of global name {0} do not match ({1} and {2})'
                          .format(name, global_type[name], shape))
                     assert name not in provides or provides[name] == shape,\
-                        'Component dimensions of provided name {} do not match'.format(name)
+                        'Component dimensions of provided name {0} do not match'.format(name)
                 return True
 
             global_type = (dict(local_type) if local_global

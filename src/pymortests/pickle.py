@@ -101,7 +101,7 @@ def assert_picklable(o):
 def assert_picklable_without_dumps_function(o):
 
     def dumps_function_raise(function):
-        raise PicklingError('Cannot pickle function {}'.format(function))
+        raise PicklingError('Cannot pickle function {0}'.format(function))
 
     old_code = dumps_function.func_code
     dumps_function.func_code = dumps_function_raise.func_code

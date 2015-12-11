@@ -121,7 +121,7 @@ def discretize(args):
         return ProjectionParameterFunctional(component_name='diffusion',
                                              component_shape=(args['XBLOCKS'], args['YBLOCKS']),
                                              coordinates=(args['YBLOCKS'] - y - 1, x),
-                                             name='diffusion_{}_{}'.format(x, y))
+                                             name='diffusion_{0}_{1}'.format(x, y))
     parameter_functionals = tuple(parameter_functional_factory(x, y)
                                   for x, y in product(xrange(args['XBLOCKS']), xrange(args['YBLOCKS'])))
 
@@ -155,14 +155,14 @@ def thermalblock_demo(args):
     print('Discretize ...')
     discretization = discretize(args)
 
-    print('The parameter type is {}'.format(discretization.parameter_type))
+    print('The parameter type is {0}'.format(discretization.parameter_type))
 
     if args['--plot-solutions']:
         print('Showing some solutions')
         Us = tuple()
         legend = tuple()
         for mu in discretization.parameter_space.sample_randomly(2):
-            print('Solving for diffusion = \n{} ... '.format(mu['diffusion']))
+            print('Solving for diffusion = \n{0} ... '.format(mu['diffusion']))
             sys.stdout.flush()
             Us = Us + (discretization.solve(mu),)
             legend = legend + (str(mu['diffusion']),)
@@ -187,7 +187,7 @@ def thermalblock_demo(args):
     rb_discretization, reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
 
     if args['--pickle']:
-        print('\nWriting reduced discretization to file {} ...'.format(args['--pickle'] + '_reduced'))
+        print('\nWriting reduced discretization to file {0} ...'.format(args['--pickle'] + '_reduced'))
         with open(args['--pickle'] + '_reduced', 'w') as f:
             dump(rb_discretization, f)
 

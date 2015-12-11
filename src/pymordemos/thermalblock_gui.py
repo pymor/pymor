@@ -102,11 +102,11 @@ class SimPanel(QtGui.QWidget):
         shape = (args['YBLOCKS'], args['XBLOCKS'])
         mu = {'diffusion': np.array([s.value() for s in self.param_panel.spins]).reshape(shape)}
         U = self.sim.solve(mu)
-        print('Simtime {}'.format(time.time() - tic))
+        print('Simtime {0}'.format(time.time() - tic))
         tic = time.time()
         self.solution.set(U.data.ravel())
         self.param_panel.enable(True)
-        print('Drawtime {}'.format(time.time() - tic))
+        print('Drawtime {0}'.format(time.time() - tic))
 
 
 class AllPanel(QtGui.QWidget):

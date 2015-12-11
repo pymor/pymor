@@ -94,7 +94,7 @@ def event_loop():
                 method(*args, **kwargs)
         except:
             import traceback
-            print("Caught exception on MPI rank {}:".format(rank))
+            print("Caught exception on MPI rank {0}:".format(rank))
             traceback.print_exception(*sys.exc_info())
 
 
@@ -147,7 +147,7 @@ def mpi_info():
     """
     data = comm.gather((rank, MPI.Get_processor_name()), root=0)
     if rank0:
-        print('\n'.join('{}: {}'.format(rank, processor) for rank, processor in data))
+        print('\n'.join('{0}: {1}'.format(rank, processor) for rank, processor in data))
 
 
 def run_code(code):

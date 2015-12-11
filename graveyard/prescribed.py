@@ -67,7 +67,7 @@ class PrescribedBoundaryGrid(AffineGridInterface, cache.Cachable, Unpicklable):
             return self._idA * 100 + self._idB
 
         def __repr__(self):
-            return 'Edge {} - {}'.format(self._idA, self._idB)
+            return 'Edge {0} - {1}'.format(self._idA, self._idB)
 
     class Triangle(object):
         def __init__(self, ids, edges):
@@ -124,11 +124,11 @@ class PrescribedBoundaryGrid(AffineGridInterface, cache.Cachable, Unpicklable):
             self.__embed_B[i] = [R[4], R[5]]
         for i, k in self.__dict__.iteritems():
             try:
-                self.logger.debug('{} len {}'.format(i, len(k)))
+                self.logger.debug('{0} len {1}'.format(i, len(k)))
             except:
                 pass
         for i, k in enumerate(self.__subentities):
-            self.logger.debug('Subentities {} len {}'.format(i, len(k)))
+            self.logger.debug('Subentities {0} len {1}'.format(i, len(k)))
         assert(self.Edge(1, 0) == self.Edge(0, 1))
 
     def subentities(self, codim, subentity_codim=None):

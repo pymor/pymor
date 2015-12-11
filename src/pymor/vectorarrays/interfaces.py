@@ -579,6 +579,6 @@ class VectorSpace(BasicInterface):
         return isinstance(other, self.type) and self.subtype == other.subtype
 
     def __repr__(self):
-        return 'VectorSpace({}, {})'.format(self.type.__name__, repr(self.subtype))
+        return 'VectorSpace({0}, {1})'.format(self.type.__name__, repr(self.subtype))
 
     __str__ = __repr__

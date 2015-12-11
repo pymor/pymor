@@ -29,8 +29,8 @@ def walk(module):
             modules.append(module.__name__ + '.' + modname)
     modules = sorted(modules)
     packages = sorted(packages)
-    with open('{}/{}.rst'.format(BUILD_DIR, module.__name__), 'wb') as f:
-        print(section('{} package'.format(module.__name__)), file=f)
+    with open('{0}/{1}.rst'.format(BUILD_DIR, module.__name__), 'wb') as f:
+        print(section('{0} package'.format(module.__name__)), file=f)
 
         print('.. automodule:: ' + module.__name__, file=f)
         for option in MODULE_OPTIONS:
@@ -47,7 +47,7 @@ def walk(module):
         if modules:
             print(section('Submodules', level=1), file=f)
             for m in modules:
-                print(section('{} module'.format(m.split('.')[-1]), level=2), file=f)
+                print(section('{0} module'.format(m.split('.')[-1]), level=2), file=f)
                 print('.. automodule:: ' + m, file=f)
                 for option in MODULE_OPTIONS:
                     print('    ' + option, file=f)

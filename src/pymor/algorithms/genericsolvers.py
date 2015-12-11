@@ -178,7 +178,7 @@ def apply_inverse(op, rhs, options=None):
                              inner_m=options['inner_m'],
                              outer_k=options['outer_k'])
             if info > 0:
-                raise InversionError('lgmres failed to converge after {} iterations'.format(info))
+                raise InversionError('lgmres failed to converge after {0} iterations'.format(info))
             assert info == 0
             R.append(r)
     elif options['type'] == 'least_squares_generic_lsmr':
@@ -192,8 +192,8 @@ def apply_inverse(op, rhs, options=None):
                                                show=options['show'])
             assert 0 <= info <= 7
             if info == 7:
-                raise InversionError('lsmr failed to converge after {} iterations'.format(itn))
-            getLogger('pymor.algorithms.genericsolvers.lsmr').info('Converged after {} iterations'.format(itn))
+                raise InversionError('lsmr failed to converge after {0} iterations'.format(itn))
+            getLogger('pymor.algorithms.genericsolvers.lsmr').info('Converged after {0} iterations'.format(itn))
             R.append(r)
     elif options['type'] == 'least_squares_generic_lsqr':
         for i in xrange(len(rhs)):
@@ -206,8 +206,8 @@ def apply_inverse(op, rhs, options=None):
                                                   show=options['show'])
             assert 0 <= info <= 7
             if info == 7:
-                raise InversionError('lsmr failed to converge after {} iterations'.format(itn))
-            getLogger('pymor.algorithms.genericsolvers.lsqr').info('Converged after {} iterations'.format(itn))
+                raise InversionError('lsmr failed to converge after {0} iterations'.format(itn))
+            getLogger('pymor.algorithms.genericsolvers.lsqr').info('Converged after {0} iterations'.format(itn))
             R.append(r)
     else:
         raise ValueError('Unknown solver type')
@@ -387,7 +387,7 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
         # didn't converge ...
         return x, maxiter
 
-    getLogger('pymor.algorithms.genericsolvers.lgmres').info('Converged after {} iterations'.format(k_outer + 1))
+    getLogger('pymor.algorithms.genericsolvers.lgmres').info('Converged after {0} iterations'.format(k_outer + 1))
 
     return x, 0
 

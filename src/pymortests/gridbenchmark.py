@@ -30,14 +30,14 @@ def initialize_logging():
     output_dir = os.path.join(os.path.abspath(__file__).split('/src/')[0], 'logs')
     os.mkdir(output_dir)
     filename = os.path.join(output_dir,
-                            'gridbenchmark-{}-{}-{}-{}{}{}.log'.format(t.year, t.month, t.day,
+                            'gridbenchmark-{0}-{1}-{2}-{3}{4}{5}.log'.format(t.year, t.month, t.day,
                                                                        t.hour, t.minute, t.second))
     hfile = logging.FileHandler(filename)
     ffile = logging.Formatter('%(asctime)s %(levelname)s\t%(message)s')
     hfile.setFormatter(ffile)
     logger.addHandler(hfile)
 
-    print('Logging to {}\n'.format(filename))
+    print('Logging to {0}\n'.format(filename))
 
 
 def log(msg):
@@ -96,14 +96,14 @@ if __name__ == "__main__":
     grid_sizes = [128, 256, 512]
 
     for c in (RectGrid, TriaGrid):
-        log('Timing g.superentities(1, 0) for {}'.format(c.__name__))
+        log('Timing g.superentities(1, 0) for {0}'.format(c.__name__))
         for n in grid_sizes:
             B = Superentities10Benchmark(c, (n, n))
             log('{2}(({0},{0})): {1}'.format(n, B.benchmark(), c.__name__))
         log('')
 
     for c in (RectGrid, TriaGrid):
-        log('Timing g.superentities(1, 0) and g.superentity_indices(1, 0) for {}'.format(c.__name__))
+        log('Timing g.superentities(1, 0) and g.superentity_indices(1, 0) for {0}'.format(c.__name__))
         for n in grid_sizes:
             B = Superentity10BothBenchmark(c, (n, n))
             log('{2}(({0},{0})): {1}'.format(n, B.benchmark(), c.__name__))

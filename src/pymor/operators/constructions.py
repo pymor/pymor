@@ -216,7 +216,7 @@ class LincombOperator(OperatorBase):
         assert dim_range is None or dim_range <= self.range.dim
         proj_operators = [op.projected_to_subbasis(dim_range=dim_range, dim_source=dim_source)
                           for op in self.operators]
-        return self.with_(operators=proj_operators, name=name or '{}_projected_to_subbasis'.format(self.name))
+        return self.with_(operators=proj_operators, name=name or '{0}_projected_to_subbasis'.format(self.name))
 
     def __getstate__(self):
         d = self.__dict__.copy()
@@ -952,5 +952,5 @@ class InducedNorm(ImmutableInterface, Parametric):
             norm_squared = np.where(np.logical_and(0 > norm_squared, norm_squared > - self.tol),
                                     0, norm_squared)
         if self.raise_negative and np.any(norm_squared < 0):
-            raise ValueError('norm is negative (square = {})'.format(norm_squared))
+            raise ValueError('norm is negative (square = {0})'.format(norm_squared))
         return np.sqrt(norm_squared)

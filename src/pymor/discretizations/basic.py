@@ -35,8 +35,8 @@ class DiscretizationBase(DiscretizationInterface):
 
         if products:
             for k, v in products.iteritems():
-                setattr(self, '{}_product'.format(k), v)
-                setattr(self, '{}_norm'.format(k), induced_norm(v))
+                setattr(self, '{0}_product'.format(k), v)
+                setattr(self, '{0}_norm'.format(k), induced_norm(v))
 
     def visualize(self, U, **kwargs):
         """Visualize a solution |VectorArray| U.
@@ -164,7 +164,7 @@ class StationaryDiscretization(DiscretizationBase):
 
         # explicitly checking if logging is disabled saves the str(mu) call
         if not self.logging_disabled:
-            self.logger.info('Solving {} for {} ...'.format(self.name, mu))
+            self.logger.info('Solving {0} for {1} ...'.format(self.name, mu))
 
         return self.operator.apply_inverse(self.rhs.as_vector(mu), mu=mu)
 
@@ -339,7 +339,7 @@ class InstationaryDiscretization(DiscretizationBase):
 
         # explicitly checking if logging is disabled saves the expensive str(mu) call
         if not self.logging_disabled:
-            self.logger.info('Solving {} for {} ...'.format(self.name, mu))
+            self.logger.info('Solving {0} for {1} ...'.format(self.name, mu))
 
         mu['_t'] = 0
         U0 = self.initial_data.as_vector(mu)

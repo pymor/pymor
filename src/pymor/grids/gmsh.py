@@ -34,20 +34,20 @@ def parse_gmsh_file(f):
 
         l = next(f).strip()
         if l != '$MeshFormat':
-            raise GmshParseError('expected $MeshFormat, got {}'.format(l))
+            raise GmshParseError('expected $MeshFormat, got {0}'.format(l))
 
         l = next(f).strip()
         header = l.split(' ')
         if len(header) != 3:
-            raise GmshParseError('header {} has {} fields, expected 3'.format(l, len(header)))
+            raise GmshParseError('header {0} has {1} fields, expected 3'.format(l, len(header)))
 
         if header[0] != '2.2':
-            raise GmshParseError('wrong file format version: got {}, expected 2.2'.format(header[0]))
+            raise GmshParseError('wrong file format version: got {0}, expected 2.2'.format(header[0]))
 
         try:
             file_type = int(header[1])
         except ValueError:
-            raise GmshParseError('malformed header: expected integer, got {}'.format(header[1]))
+            raise GmshParseError('malformed header: expected integer, got {0}'.format(header[1]))
 
         if file_type != 0:
             raise GmshParseError('wrong file type: only ASCII gmsh files are supported')
@@ -55,11 +55,11 @@ def parse_gmsh_file(f):
         try:
             data_size = int(header[2])    # NOQA
         except ValueError:
-            raise GmshParseError('malformed header: expected integer, got {}'.format(header[2]))
+            raise GmshParseError('malformed header: expected integer, got {0}'.format(header[2]))
 
         l = next(f).strip()
         if l != '$EndMeshFormat':
-            raise GmshParseError('expected $EndMeshFormat, got {}'.format(l))
+            raise GmshParseError('expected $EndMeshFormat, got {0}'.format(l))
 
     except StopIteration:
         raise GmshParseError('unexcpected end of file')
@@ -73,24 +73,24 @@ def parse_gmsh_file(f):
             continue
         if not in_section:
             if not l.startswith('$'):
-                raise GmshParseError('expected section name, got {}'.format(l))
+                raise GmshParseError('expected section name, got {0}'.format(l))
             section = l[1:]
             if section not in allowed_sections:
-                raise GmshParseError('unknown section type: {}'.format(section))
+                raise GmshParseError('unknown section type: {0}'.format(section))
             if section not in supported_sections:
-                raise GmshParseError('unsupported section type: {}'.format(section))
+                raise GmshParseError('unsupported section type: {0}'.format(section))
             if section in sections:
-                raise GmshParseError('only one {} section allowed'.format(section))
+                raise GmshParseError('only one {0} section allowed'.format(section))
             in_section = True
         elif l.startswith('$'):
             if l != '$End' + section:
-                raise GmshParseError('expected $End{}, got {}'.format(section, l))
+                raise GmshParseError('expected $End{0}, got {1}'.format(section, l))
             in_section = False
         else:
             sections[section].append(l)
 
     if in_section:
-        raise GmshParseError('file ended while in section {}'.format(section))
+        raise GmshParseError('file ended while in section {0}'.format(section))
 
     # now we parse each section ...
 
@@ -98,7 +98,7 @@ def parse_gmsh_file(f):
         try:
             num_nodes = int(nodes[0])
         except ValueError:
-            raise GmshParseError('first line of nodes sections is not a number: {}'.format(nodes[0]))
+            raise GmshParseError('first line of nodes sections is not a number: {0}'.format(nodes[0]))
         if len(nodes) != num_nodes + 1:
             raise GmshParseError('number-of-nodes field does not match number of lines in nodes section')
 
@@ -117,7 +117,7 @@ def parse_gmsh_file(f):
         try:
             num_elements = int(elements[0])
         except ValueError:
-            raise GmshParseError('first line of elements sections is not a number: {}'.format(elements[0]))
+            raise GmshParseError('first line of elements sections is not a number: {0}'.format(elements[0]))
         if len(elements) != num_elements + 1:
             raise GmshParseError('number-of-elements field does not match number of lines in elements section')
 
@@ -132,7 +132,7 @@ def parse_gmsh_file(f):
 
         def parse_line(fields):
             if fields[1] not in element_types:
-                raise GmshParseError('element type {} not supported'.format(fields[0]))
+                raise GmshParseError('element type {0} not supported'.format(fields[0]))
             element_type = element_types[fields[1]]
             num_nodes = element_nodes[element_type]
             num_tags = fields[2]
@@ -151,7 +151,7 @@ def parse_gmsh_file(f):
         try:
             num_elements = int(physical_names[0])
         except ValueError:
-            raise GmshParseError('first line of physical names sections is not a number: {}'.format(physical_names[0]))
+            raise GmshParseError('first line of physical names sections is not a number: {0}'.format(physical_names[0]))
         if len(physical_names) != num_elements + 1:
             raise GmshParseError('number-of-names field does not match number of lines in physical names section')
 
@@ -198,7 +198,7 @@ class GmshGrid(UnstructuredTriangleGrid):
         super(GmshGrid, self).__init__(vertices, faces)
 
     def __str__(self):
-        return 'GmshGrid with {} triangles, {} edges, {} vertices'.format(self.size(0), self.size(1), self.size(2))
+        return 'GmshGrid with {0} triangles, {1} edges, {2} vertices'.format(self.size(0), self.size(1), self.size(2))
 
 
 class GmshBoundaryInfo(BoundaryInfoInterface):
@@ -289,7 +289,7 @@ def load_gmsh(gmsh_file):
     toc = time.time()
     t_bi = toc - tic
 
-    logger.info('Parsing took {} s; Grid creation took {} s; BoundaryInfo creation took {} s'
+    logger.info('Parsing took {0} s; Grid creation took {1} s; BoundaryInfo creation took {2} s'
                 .format(t_parse, t_grid, t_bi))
 
     return grid, bi

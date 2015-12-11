@@ -120,7 +120,7 @@ class WithcopyInterface(TestInterface):
         try:
             obj = self_type()
         except Exception as e:
-            self.logger.debug('WithcopyInterface: Not testing {} because its init failed: {}'.format(self_type, str(e)))
+            self.logger.debug('WithcopyInterface: Not testing {0} because its init failed: {1}'.format(self_type, str(e)))
             return
 
         try:

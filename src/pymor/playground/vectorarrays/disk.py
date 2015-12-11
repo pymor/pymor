@@ -355,4 +355,4 @@ class DiskVectorArray(VectorArrayInterface):
         return MI, MV
 
     def __str__(self):
-        return 'DiskVectorArray of {} {}s of dimension {}'.format(len(self._len), str(self.vector_type), self.dim)
+        return 'DiskVectorArray of {0} {1}s of dimension {2}'.format(len(self._len), str(self.vector_type), self.dim)

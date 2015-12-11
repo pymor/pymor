@@ -94,7 +94,7 @@ class DefaultContainer(object):
     def _add_defaults_for_function(self, defaultsdict, func, sid_ignore, qualname):
         path = qualname or getattr(func, '__qualname__', func.__module__ + '.' + func.__name__)
         if path in self.registered_functions:
-            raise ValueError('''Function with name {} already registered for default values!
+            raise ValueError('''Function with name {0} already registered for default values!
 For Python 2 compatibility, please supply the '_qualname' parameter when decorating
 methods of classes!'''.format(path))
         for k, v in defaultsdict.iteritems():
@@ -265,7 +265,7 @@ Defaults
 
         argstring_parts = []
         argstring_parts.extend(argnames[:-len(new_defaults)])
-        argstring_parts.extend('{}={}'.format(k, repr(v)) for k, v in zip(argnames[-len(new_defaults):], new_defaults))
+        argstring_parts.extend('{0}={1}'.format(k, repr(v)) for k, v in zip(argnames[-len(new_defaults):], new_defaults))
         if argspec.varargs:
             argstring_parts.append('*' + argspec.varargs)
         if argspec.keywords:
@@ -364,7 +364,7 @@ def print_defaults(import_all=True, shorten_paths=2):
 
         description = 'defaults not affecting state id calculation' if i else 'defaults affecting state id calcuation'
         print('=' * header_width)
-        print('{:^{width}}'.format(description, width=header_width))
+        print('{0:^{width}}'.format(description, width=header_width))
         print()
         print(header)
         print('=' * header_width)
@@ -377,7 +377,7 @@ def print_defaults(import_all=True, shorten_paths=2):
                 print('')
             lks = ks
 
-            print('{:{key_width}}   {:{value_width}}   {}'.format(k, v, c,
+            print('{0:{key_width}}   {1:{value_width}}   {2}'.format(k, v, c,
                                                                   key_width=key_width,
                                                                   value_width=value_width))
 
@@ -452,7 +452,7 @@ d = {}
                     print('', file=f)
                 lks = ks
 
-                print('{}d[{:{key_width}}] = {}'.format('# ' if c else '', k, v,
+                print('{0}d[{1:{key_width}}] = {2}'.format('# ' if c else '', k, v,
                                                         key_width=key_width),
                       file=f)
 
@@ -483,7 +483,7 @@ def load_defaults_from_file(filename='./pymor_defaults.py'):
     try:
         _default_container.update(env['d'], type='file')
     except KeyError as e:
-        raise KeyError('Error loading defaults from file. Key {} does not correspond to a default'.format(e))
+        raise KeyError('Error loading defaults from file. Key {0} does not correspond to a default'.format(e))
 
 
 def set_defaults(defaults):
@@ -506,7 +506,7 @@ def set_defaults(defaults):
     try:
         _default_container.update(defaults, type='user')
     except KeyError as e:
-        raise KeyError('Error setting defaults. Key {} does not correspond to a default'.format(e))
+        raise KeyError('Error setting defaults. Key {0} does not correspond to a default'.format(e))
 
 
 def defaults_sid():

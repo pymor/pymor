@@ -80,20 +80,20 @@ class new_ipcluster_pool(BasicInterface):
                 raise IOError('IPython cluster engines failed to start')
             wait = min(waited, timeout - waited)
             if wait > 0:
-                self.logger.info('Waiting {} more seconds for engines to start ...'.format(wait))
+                self.logger.info('Waiting {0} more seconds for engines to start ...'.format(wait))
                 time.sleep(wait)
         else:
             running = len(client)
             while running < num_engines and waited < timeout:
                 if waited % 10 == 0:
-                    self.logger.info('Waiting for {} of {} engines to start ...'
+                    self.logger.info('Waiting for {0} of {1} engines to start ...'
                                      .format(num_engines - running, num_engines))
                 time.sleep(1)
                 waited += 1
                 running = len(client)
             running = len(client)
             if running < num_engines:
-                raise IOError('{} of {} IPython cluster engines failed to start'
+                raise IOError('{0} of {1} IPython cluster engines failed to start'
                               .format(num_engines - running, num_engines))
         client.close()
 
@@ -122,7 +122,7 @@ class IPythonPool(WorkerPoolDefaultImplementations, WorkerPoolInterface):
             self.view = self.client[:num_engines]
         else:
             self.view = self.client[:]
-        self.logger.info('Connected to {} engines'.format(len(self.view)))
+        self.logger.info('Connected to {0} engines'.format(len(self.view)))
         self.view.apply(_setup_worker, block=True)
         self._pushed_immutable_objects = {}
         self._remote_objects_created = Counter()

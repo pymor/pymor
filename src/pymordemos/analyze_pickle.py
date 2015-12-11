@@ -56,7 +56,7 @@ def analyze_pickle_histogram(args):
     mus = rb_discretization.parameter_space.sample_randomly(args['SAMPLES'])
     us = []
     for mu in mus:
-        print('Solving reduced for {} ... '.format(mu), end='')
+        print('Solving reduced for {0} ... '.format(mu), end='')
         sys.stdout.flush()
         us.append(rb_discretization.solve(mu))
         print('done')
@@ -66,7 +66,7 @@ def analyze_pickle_histogram(args):
     if hasattr(rb_discretization, 'estimate'):
         ests = []
         for u, mu in zip(us, mus):
-            print('Estimating error for {} ... '.format(mu), end='')
+            print('Estimating error for {0} ... '.format(mu), end='')
             sys.stdout.flush()
             ests.append(rb_discretization.estimate(u, mu=mu))
             print('done')
@@ -77,7 +77,7 @@ def analyze_pickle_histogram(args):
 
         errs = []
         for u, mu in zip(us, mus):
-            print('Calculating error for {} ... '.format(mu))
+            print('Calculating error for {0} ... '.format(mu))
             sys.stdout.flush()
             err = discretization.solve(mu) - reconstructor.reconstruct(u)
             if args['--error-norm']:
@@ -192,7 +192,7 @@ def analyze_pickle_convergence(args):
     T_ESTS = []
     for N in dims:
         rd, rc, _ = reduce_to_subbasis(rb_discretization, N)
-        print('N = {:3} '.format(N), end='')
+        print('N = {0:3} '.format(N), end='')
         us = []
         print('solve ', end='')
         sys.stdout.flush()

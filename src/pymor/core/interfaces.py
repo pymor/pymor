@@ -90,7 +90,7 @@ class UID(object):
 
     __slots__ = ['uid']
 
-    prefix = '{}_'.format(uuid.uuid4())
+    prefix = '{0}_'.format(uuid.uuid4())
     counter = [0]
 
     def __init__(self):
@@ -123,7 +123,7 @@ class UberMeta(abc.ABCMeta):
                 getattr(base, attribute).append(derived)
             else:
                 setattr(base, attribute, [derived])
-        cls._logger = logger.getLogger('{}.{}'.format(cls.__module__.replace('__main__', 'pymor'), name))
+        cls._logger = logger.getLogger('{0}.{1}'.format(cls.__module__.replace('__main__', 'pymor'), name))
         abc.ABCMeta.__init__(cls, name, bases, namespace)
 
     def __new__(cls, classname, bases, classdict):
@@ -463,7 +463,7 @@ class ImmutableInterface(BasicInterface):
         Copy of `self` with changed attributes.
         """
         if not set(kwargs.keys()) <= self.with_arguments:
-            raise ValueError('Changing "{}" using with() is not allowed in {} (only "{}")'.format(
+            raise ValueError('Changing "{0}" using with() is not allowed in {1} (only "{2}")'.format(
                 kwargs.keys(), self.__class__, self.with_arguments))
 
         # fill missing __init__ arguments using instance attributes of same name
@@ -472,7 +472,7 @@ class ImmutableInterface(BasicInterface):
                 try:
                     kwargs[arg] = getattr(self, arg)
                 except AttributeError:
-                    raise ValueError('Cannot find missing __init__ argument "{}" for "{}" as attribute of "{}"'.format(
+                    raise ValueError('Cannot find missing __init__ argument "{0}" for "{1}" as attribute of "{2}"'.format(
                         arg, self.__class__, self))
 
         c = type(self)(**kwargs)
@@ -536,15 +536,15 @@ class _SIDGenerator(object):
         sid = hashlib.sha256(dumps(state, protocol=-1)).hexdigest()
 
         if debug:
-            print('SID: {}, reference cycles: {}'.format(sid, self.has_cycles))
+            print('SID: {0}, reference cycles: {1}'.format(sid, self.has_cycles))
             print()
             print()
 
         name = getattr(obj, 'name', None)
         if name:
-            self.logger.debug('{}: SID generation took {} seconds'.format(name, time.time() - start))
+            self.logger.debug('{0}: SID generation took {1} seconds'.format(name, time.time() - start))
         else:
-            self.logger.debug('SID generation took {} seconds'.format(time.time() - start))
+            self.logger.debug('SID generation took {0} seconds'.format(time.time() - start))
         return sid, self.has_cycles
 
     def deterministic_state(self, obj, first_obj=False):
@@ -588,10 +588,10 @@ class _SIDGenerator(object):
                     return (t, obj.sid)
                 except _SIDGenerationRecursionError:
                     self.has_cycles = True
-                    self.logger.debug('{}: contains cycles of immutable objects, consider refactoring'.format(obj.name))
+                    self.logger.debug('{0}: contains cycles of immutable objects, consider refactoring'.format(obj.name))
 
             if obj._implements_reduce:
-                self.logger.debug('{}: __reduce__ is implemented, not using sid_ignore'.format(obj.name))
+                self.logger.debug('{0}: __reduce__ is implemented, not using sid_ignore'.format(obj.name))
                 return self.handle_reduce_value(obj, t, obj.__reduce__(), first_obj)
             else:
                 try:
@@ -620,18 +620,18 @@ class _SIDGenerator(object):
                 if reduce:
                     rv = reduce()
                 else:
-                    raise SIDGenerationError('Cannot handle {} of type {}'.format(obj, t.__name__))
+                    raise SIDGenerationError('Cannot handle {0} of type {1}'.format(obj, t.__name__))
 
         return self.handle_reduce_value(obj, t, rv, first_obj)
 
     def handle_reduce_value(self, obj, t, rv, first_obj):
         if type(rv) is str:
             raise SIDGenerationError('__reduce__ methods returning a string are currently not handled '
-                                     + '(object {} of type {})'.format(obj, t.__name__))
+                                     + '(object {0} of type {1})'.format(obj, t.__name__))
 
         if type(rv) is not tuple or not (2 <= len(rv) <= 5):
             raise SIDGenerationError('__reduce__ return value malformed '
-                                     + '(object {} of type {})'.format(obj, t.__name__))
+                                     + '(object {0} of type {1})'.format(obj, t.__name__))
 
         rv = rv + (None,) * (5 - len(rv))
         func, args, state, listitems, dictitems = rv
@@ -651,7 +651,7 @@ class _MemoKey(object):
         self.obj = obj
 
     def __repr__(self):
-        return '_MemoKey({}, {})'.format(self.key, repr(self.obj))
+        return '_MemoKey({0}, {1})'.format(self.key, repr(self.obj))
 
     def __getstate__(self):
         return self.key

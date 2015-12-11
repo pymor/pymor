@@ -184,7 +184,7 @@ class SQLiteRegion(CacheRegion):
         conn = self.conn
         c = conn.cursor()
         try:
-            c.execute("INSERT INTO entries(key, filename, size) VALUES ('{}', '{}', {})"
+            c.execute("INSERT INTO entries(key, filename, size) VALUES ('{0}', '{1}', {2})"
                       .format(key, filename, file_size))
             conn.commit()
         except sqlite3.IntegrityError:
@@ -206,7 +206,7 @@ class SQLiteRegion(CacheRegion):
         entries = c.fetchall()
         if entries:
             ids_to_delete, files_to_delete = zip(*entries)
-            c.execute('DELETE FROM entries WHERE id in ({})'.format(','.join(map(str, ids_to_delete))))
+            c.execute('DELETE FROM entries WHERE id in ({0})'.format(','.join(map(str, ids_to_delete))))
             conn.commit()
             path = self.path
             for filename in files_to_delete:
@@ -234,7 +234,7 @@ class SQLiteRegion(CacheRegion):
                 ids_to_delete.append(id_)
                 files_to_delete.append(filename)
                 deleted += file_size
-            c.execute('DELETE FROM entries WHERE id in ({})'.format(','.join(map(str, ids_to_delete))))
+            c.execute('DELETE FROM entries WHERE id in ({0})'.format(','.join(map(str, ids_to_delete))))
             conn.commit()
             path = self.path
             for filename in files_to_delete:
@@ -245,7 +245,7 @@ class SQLiteRegion(CacheRegion):
                     getLogger('pymor.core.cache.SQLiteRegion').warn('Cannot delete cache entry ' + filename)
 
             from pymor.core.logger import getLogger
-            getLogger('pymor.core.cache.SQLiteRegion').info('Removed {} old cache entries'.format(len(ids_to_delete)))
+            getLogger('pymor.core.cache.SQLiteRegion').info('Removed {0} old cache entries'.format(len(ids_to_delete)))
 
 
 @defaults('disk_path', 'disk_max_size', 'persistent_path', 'persistent_max_size', 'memory_max_keys',
@@ -316,7 +316,7 @@ class cached(object):
         try:
             region = cache_regions[im_self.cache_region]
         except KeyError:
-            raise KeyError('No cache region "{}" found'.format(im_self.cache_region))
+            raise KeyError('No cache region "{0}" found'.format(im_self.cache_region))
 
         # compute id for self
         if region.persistent:
@@ -340,7 +340,7 @@ class cached(object):
         if found:
             return value
         else:
-            im_self.logger.debug('creating new cache entry for {}.{}'
+            im_self.logger.debug('creating new cache entry for {0}.{1}'
                                  .format(im_self.__class__.__name__, self.decorated_function.__name__))
             value = self.decorated_function(im_self, **kwargs)
             region.set(key, value)

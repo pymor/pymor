@@ -108,7 +108,7 @@ discretization, _ = discretize_elliptic_cg(problem, diameter=m.sqrt(2) / {grid})
     discretization_id = setup_remote(rv, 'discretization')
     discretization = RemoteStationaryDiscretization(rv, discretization_id)
 
-    print('The parameter type is {}'.format(discretization.parameter_type))
+    print('The parameter type is {0}'.format(discretization.parameter_type))
 
     print('RB generation ...')
 
@@ -131,7 +131,7 @@ discretization, _ = discretize_elliptic_cg(problem, diameter=m.sqrt(2) / {grid})
     h1_err_max = -1
     cond_max = -1
     for mu in discretization.parameter_space.sample_randomly(args['--test']):
-        print('Solving RB-Scheme for mu = {} ... '.format(mu), end='')
+        print('Solving RB-Scheme for mu = {0} ... '.format(mu), end='')
         URB = reconstructor.reconstruct(rb_discretization.solve(mu))
         U = discretization.solve(mu)
         h1_err = discretization.h1_norm(U - URB)[0]
@@ -144,7 +144,7 @@ discretization, _ = discretize_elliptic_cg(problem, diameter=m.sqrt(2) / {grid})
         if cond > cond_max:
             cond_max = cond
             cond_max_mu = mu
-        print('H1-error = {}, condition = {}'.format(h1_err, cond))
+        print('H1-error = {0}, condition = {1}'.format(h1_err, cond))
     toc = time.time()
     t_est = toc - tic
     real_rb_size = len(greedy_data['basis'])

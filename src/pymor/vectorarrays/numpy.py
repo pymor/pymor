@@ -390,7 +390,7 @@ class NumpyVectorArray(VectorArrayInterface):
         return self._array[:self._len].__str__()
 
     def __repr__(self):
-        return 'NumpyVectorArray({})'.format(self._array[:self._len].__str__())
+        return 'NumpyVectorArray({0})'.format(self._array[:self._len].__str__())
 
     def __del__(self):
         self._refcount[0] -= 1

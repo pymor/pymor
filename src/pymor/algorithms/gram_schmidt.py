@@ -68,7 +68,7 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
             initial_norm = np.sqrt(product.pairwise_apply2(A, A, V_ind=i, U_ind=i))[0]
 
         if initial_norm < atol:
-            logger.info("Removing vector {} of norm {}".format(i, initial_norm))
+            logger.info("Removing vector {0} of norm {1}".format(i, initial_norm))
             remove.append(i)
             continue
 
@@ -85,7 +85,7 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
                 if first_iteration:
                     first_iteration = False
                 else:
-                    logger.info('Orthonormalizing vector {} again'.format(i))
+                    logger.info('Orthonormalizing vector {0} again'.format(i))
 
                 # orthogonalize to all vectors left
                 for j in xrange(i):
@@ -105,7 +105,7 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
 
                 # remove vector if it got too small:
                 if norm / initial_norm < rtol:
-                    logger.info("Removing linear dependent vector {}".format(i))
+                    logger.info("Removing linear dependent vector {0}".format(i))
                     remove.append(i)
                     break
 
@@ -124,6 +124,6 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
         if error_matrix.size > 0:
             err = np.max(np.abs(error_matrix))
             if err >= check_tol:
-                raise AccuracyError('result not orthogonal (max err={})'.format(err))
+                raise AccuracyError('result not orthogonal (max err={0})'.format(err))
 
     return A
