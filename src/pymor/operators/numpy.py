@@ -190,6 +190,12 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         self._matrix = matrix
         self.sparse = issparse(matrix)
 
+    @classmethod
+    def from_file(cls, path, key=None, solver_options=None, name=None):
+        from pymor.tools.io import load_matrix
+        matrix = load_matrix(path, key=key)
+        return cls(matrix, solver_options=solver_options, name=name or key or path)
+
     def _assemble(self, mu=None):
         pass
 
