@@ -86,18 +86,18 @@ def burgers_demo(args):
                                        nt=args['--nt'], domain_discretizer=domain_discretizer)
     print(discretization.operator.grid)
 
-    print('The parameter type is {}'.format(discretization.parameter_type))
+    print('The parameter type is {0}'.format(discretization.parameter_type))
 
     mu = args['EXP']
     # U = discretization.solve(0)
-    print('Solving for exponent = {} ... '.format(mu))
+    print('Solving for exponent = {0} ... '.format(mu))
     sys.stdout.flush()
     # pr = cProfile.Profile()
     # pr.enable()
     tic = time.time()
     U = discretization.solve(mu)
     # pr.disable()
-    print('Solving took {}s'.format(time.time() - tic))
+    print('Solving took {0}s'.format(time.time() - tic))
     # pr.dump_stats('bla')
     discretization.visualize(U)
 

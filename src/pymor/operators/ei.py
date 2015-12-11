@@ -70,7 +70,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         self.range = operator.range
         self.linear = operator.linear
         self.solver_options = solver_options
-        self.name = name or '{}_interpolated'.format(operator.name)
+        self.name = name or '{0}_interpolated'.format(operator.name)
 
         interpolation_dofs = np.array(interpolation_dofs, dtype=np.int32)
         self.interpolation_dofs = interpolation_dofs
@@ -185,7 +185,7 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
         self.projected_collateral_basis = projected_collateral_basis
         self.triangular = triangular
         self.solver_options = solver_options
-        self.name = name or '{}_projected'.format(restricted_operator.name)
+        self.name = name or '{0}_projected'.format(restricted_operator.name)
 
     def apply(self, U, ind=None, mu=None):
         mu = self.parse_parameter(mu)
@@ -230,7 +230,7 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
         assert dim_collateral is None or dim_collateral <= self.restricted_operator.range.dim
         if not isinstance(self.projected_collateral_basis, NumpyVectorArray):
             raise NotImplementedError
-        name = name or '{}_projected_to_subbasis'.format(self.name)
+        name = name or '{0}_projected_to_subbasis'.format(self.name)
 
         interpolation_matrix = self.interpolation_matrix[:dim_collateral, :dim_collateral]
 

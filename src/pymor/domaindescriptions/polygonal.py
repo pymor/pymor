@@ -59,7 +59,7 @@ class PolygonalDomain(DomainDescriptionInterface):
         assert all(isinstance(bt, BoundaryType) for bt in self.boundary_types.iterkeys())
 
     def __repr__(self):
-        return 'PolygonalDomain({}, {}, {})'.format(repr(self.points), repr(self.boundary_types), repr(self.holes))
+        return 'PolygonalDomain({0}, {1}, {2})'.format(repr(self.points), repr(self.boundary_types), repr(self.holes))
 
 
 class CircularSectorDomain(PolygonalDomain):
@@ -115,7 +115,7 @@ class CircularSectorDomain(PolygonalDomain):
         super(CircularSectorDomain, self).__init__(points, boundary_types)
 
     def __repr__(self):
-        return 'PieDomain({}, {}, {}, {}, {})'.format(repr(self.angle), repr(self.radius), repr(self.arc),
+        return 'PieDomain({0}, {1}, {2}, {3}, {4})'.format(repr(self.angle), repr(self.radius), repr(self.arc),
                                                       repr(self.radii), repr(self.num_points))
 
 
@@ -153,4 +153,4 @@ class DiscDomain(PolygonalDomain):
         super(DiscDomain, self).__init__(points, boundary_types)
 
     def __repr__(self):
-        return 'DiscDomain({}, {}, {})'.format(repr(self.radius), repr(self.boundary), repr(self.num_points))
+        return 'DiscDomain({0}, {1}, {2})'.format(repr(self.radius), repr(self.boundary), repr(self.num_points))

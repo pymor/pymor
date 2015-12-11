@@ -383,7 +383,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                     write_vtk(self.grid, NumpyVectorArray(self.U[0], copy=False), base_name, codim=self.codim)
                 else:
                     for i, u in enumerate(self.U):
-                        write_vtk(self.grid, NumpyVectorArray(u, copy=False), '{}-{}'.format(base_name, i),
+                        write_vtk(self.grid, NumpyVectorArray(u, copy=False), '{0}-{1}'.format(base_name, i),
                                   codim=self.codim)
 
     _launch_qt_app(lambda: MainWindow(grid, U, bounding_box, codim, title=title, legend=legend,
@@ -513,7 +513,7 @@ class PatchVisualizer(BasicInterface):
                 write_vtk(self.grid, U, filename, codim=self.codim)
             else:
                 for i, u in enumerate(U):
-                    write_vtk(self.grid, u, '{}-{}'.format(filename, i), codim=self.codim)
+                    write_vtk(self.grid, u, '{0}-{1}'.format(filename, i), codim=self.codim)
         else:
             block = self.block if block is None else block
             visualize_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,

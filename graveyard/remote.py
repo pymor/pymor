@@ -76,7 +76,7 @@ if not TRAVIS:
             rv = remote_view
             class_rid = remote_id
 
-        WrappedRemoteVectorArray.__name__ = 'RemoteVectorArray_{}'.format(remote_id)
+        WrappedRemoteVectorArray.__name__ = 'RemoteVectorArray_{0}'.format(remote_id)
         wrapped_vector_arrays[(id(remote_view), remote_id)] = WrappedRemoteVectorArray
         return WrappedRemoteVectorArray
 
@@ -252,7 +252,7 @@ if not TRAVIS:
 
 
     def wrap_remote_operator(remote_view, remote_id):
-        remote_view.execute('RRES = isinstance(pymor.playground.remote.RR[{}], LincombOperatorInterface)'.format(remote_id))
+        remote_view.execute('RRES = isinstance(pymor.playground.remote.RR[{0}], LincombOperatorInterface)'.format(remote_id))
         if remote_view['RRES']:
             return RemoteLincombOperator(remote_view, remote_id)
         else:
@@ -291,7 +291,7 @@ if not TRAVIS:
                 self.assemble = self._assemble
             if as_vector:
                 self.as_vector = self._as_vector
-            self.name = 'Remote_{}'.format(name)
+            self.name = 'Remote_{0}'.format(name)
             self.__dict__.update(static_data)
             self.type_source = wrap_remote_vector_array_class(self.rv, self.type_source)
             self.real_type_range = wrap_remote_vector_array_class(self.rv, self.type_range)
@@ -391,12 +391,12 @@ if not TRAVIS:
             return self.lincomb([self], [other])
 
         def __str__(self):
-            return '{}: R^{} --> R^{}  (parameter type: {}, class: {})'.format(
+            return '{0}: R^{1} --> R^{2}  (parameter type: {3}, class: {4})'.format(
                 self.name, self.dim_source, self.dim_range, self.parameter_type,
                 self.__class__.__name__)
 
         def projected(self, source_basis, range_basis, product=None, name=None):
-            name = name or '{}_projected'.format(self.name)
+            name = name or '{0}_projected'.format(self.name)
             if self.linear:
                 return ProjectedLinearOperator(self, source_basis, range_basis, product, name)
             else:
@@ -459,7 +459,7 @@ if not TRAVIS:
                                                                            for k, v in static_data['products'].iteritems()},
                                                                  parameter_space=static_data['parameter_space'],
                                                                  estimator=None, visualizer=None, cache_region=None,
-                                                                 name='Remote_{}'.format(static_data['name']))
+                                                                 name='Remote_{0}'.format(static_data['name']))
 
             if static_data['estimator']:
                 self.unlock()
@@ -486,7 +486,7 @@ if not TRAVIS:
 
         def solve(self, mu=None):
             if not self.logging_disabled:
-                self.logger.info('Solving {} for {} ...'.format(self.name, mu))
+                self.logger.info('Solving {0} for {1} ...'.format(self.name, mu))
             U_id = self.rv.apply(self._solve, self.rid, mu)
             return self.operator.type_source(U_id)
 

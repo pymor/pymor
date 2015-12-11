@@ -88,11 +88,11 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
     logger = getLogger('pymor.algorithms.greedy.greedy')
     samples = list(samples)
     sample_count = len(samples)
-    logger.info('Started greedy search on {} samples'.format(sample_count))
+    logger.info('Started greedy search on {0} samples'.format(sample_count))
     if pool is None or pool is dummy_pool:
         pool = dummy_pool
     else:
-        logger.info('Using pool of {} workers for parallel greedy search'.format(len(pool)))
+        logger.info('Using pool of {0} workers for parallel greedy search'.format(len(pool)))
 
     with RemoteObjectManager() as rom:
         # Push everything we need during the greedy search to the workers.
@@ -136,13 +136,13 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
 
             max_errs.append(max_err)
             max_err_mus.append(max_err_mu)
-            logger.info('Maximum error after {} extensions: {} (mu = {})'.format(extensions, max_err, max_err_mu))
+            logger.info('Maximum error after {0} extensions: {1} (mu = {2})'.format(extensions, max_err, max_err_mu))
 
             if target_error is not None and max_err <= target_error:
-                logger.info('Reached maximal error on snapshots of {} <= {}'.format(max_err, target_error))
+                logger.info('Reached maximal error on snapshots of {0} <= {1}'.format(max_err, target_error))
                 break
 
-            logger.info('Extending with snapshot for mu = {}'.format(max_err_mu))
+            logger.info('Extending with snapshot for mu = {0}'.format(max_err_mu))
             U = discretization.solve(max_err_mu)
             try:
                 basis, extension_data = extension_algorithm(basis, U)
@@ -159,14 +159,14 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
             logger.info('')
 
             if max_extensions is not None and extensions >= max_extensions:
-                logger.info('Maximum number of {} extensions reached.'.format(max_extensions))
+                logger.info('Maximum number of {0} extensions reached.'.format(max_extensions))
                 logger.info('Reducing once more ...')
                 rd, rc, reduction_data = reductor(discretization, basis) if not hierarchic \
                     else reductor(discretization, basis, extends=(rd, rc, reduction_data))
                 break
 
         tictoc = time.time() - tic
-        logger.info('Greedy search took {} seconds'.format(tictoc))
+        logger.info('Greedy search took {0} seconds'.format(tictoc))
         return {'basis': basis, 'reduced_discretization': rd, 'reconstructor': rc,
                 'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
                 'time': tictoc, 'reduction_data': reduction_data}

@@ -61,7 +61,7 @@ class ThermalBlockProblem(EllipticProblem):
             return ProjectionParameterFunctional(component_name='diffusion',
                                                  component_shape=(num_blocks[1], num_blocks[0]),
                                                  coordinates=(num_blocks[1] - y - 1, x),
-                                                 name='diffusion_{}_{}'.format(x, y))
+                                                 name='diffusion_{0}_{1}'.format(x, y))
 
         diffusion_functions = tuple(ThermalBlockDiffusionFunction(x, y, num_blocks[0], num_blocks[1])
                                     for x, y in product(xrange(num_blocks[0]), xrange(num_blocks[1])))

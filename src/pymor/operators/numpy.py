@@ -297,7 +297,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         """
         assert dim_source is None or dim_source <= self.source.dim
         assert dim_range is None or dim_range <= self.range.dim
-        name = name or '{}_projected_to_subbasis'.format(self.name)
+        name = name or '{0}_projected_to_subbasis'.format(self.name)
         # copy instead of just slicing the matrix to ensure contiguous memory
         return NumpyMatrixOperator(self._matrix[:dim_range, :dim_source].copy(), solver_options=self.solver_options,
                                    name=name)
@@ -778,21 +778,21 @@ def _apply_inverse(matrix, V, options=None):
             try:
                 R[i] = np.linalg.solve(matrix, VV)
             except np.linalg.LinAlgError as e:
-                raise InversionError('{}: {}'.format(str(type(e)), str(e)))
+                raise InversionError('{0}: {1}'.format(str(type(e)), str(e)))
     elif options['type'] == 'least_squares_lstsq':
         for i, VV in enumerate(V):
             try:
                 R[i], _, _, _ = np.linalg.lstsq(matrix, VV, rcond=options['rcond'])
             except np.linalg.LinAlgError as e:
-                raise InversionError('{}: {}'.format(str(type(e)), str(e)))
+                raise InversionError('{0}: {1}'.format(str(type(e)), str(e)))
     elif options['type'] == 'bicgstab':
         for i, VV in enumerate(V):
             R[i], info = bicgstab(matrix, VV, tol=options['tol'], maxiter=options['maxiter'])
             if info != 0:
                 if info > 0:
-                    raise InversionError('bicgstab failed to converge after {} iterations'.format(info))
+                    raise InversionError('bicgstab failed to converge after {0} iterations'.format(info))
                 else:
-                    raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
+                    raise InversionError('bicgstab failed with error code {0} (illegal input or breakdown)'.
                                          format(info))
     elif options['type'] == 'bicgstab_spilu':
         ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
@@ -802,9 +802,9 @@ def _apply_inverse(matrix, V, options=None):
             R[i], info = bicgstab(matrix, VV, tol=options['tol'], maxiter=options['maxiter'], M=precond)
             if info != 0:
                 if info > 0:
-                    raise InversionError('bicgstab failed to converge after {} iterations'.format(info))
+                    raise InversionError('bicgstab failed to converge after {0} iterations'.format(info))
                 else:
-                    raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
+                    raise InversionError('bicgstab failed with error code {0} (illegal input or breakdown)'.
                                          format(info))
     elif options['type'] == 'spsolve':
         try:
@@ -840,7 +840,7 @@ def _apply_inverse(matrix, V, options=None):
                                 inner_m=options['inner_m'],
                                 outer_k=options['outer_k'])
             if info > 0:
-                raise InversionError('lgmres failed to converge after {} iterations'.format(info))
+                raise InversionError('lgmres failed to converge after {0} iterations'.format(info))
             assert info == 0
     elif options['type'] == 'least_squares_lsmr':
         for i, VV in enumerate(V):
@@ -853,7 +853,7 @@ def _apply_inverse(matrix, V, options=None):
                                                   show=options['show'])
             assert 0 <= info <= 7
             if info == 7:
-                raise InversionError('lsmr failed to converge after {} iterations'.format(itn))
+                raise InversionError('lsmr failed to converge after {0} iterations'.format(itn))
     elif options['type'] == 'least_squares_lsqr':
         for i, VV in enumerate(V):
             R[i], info, itn, _, _, _, _, _, _, _ = lsqr(matrix, VV.copy(i),
@@ -865,7 +865,7 @@ def _apply_inverse(matrix, V, options=None):
                                                         show=options['show'])
             assert 0 <= info <= 7
             if info == 7:
-                raise InversionError('lsmr failed to converge after {} iterations'.format(itn))
+                raise InversionError('lsmr failed to converge after {0} iterations'.format(itn))
     elif options['type'] == 'pyamg':
         if len(V) > 0:
             V_iter = iter(enumerate(V))

@@ -59,7 +59,7 @@ def elliptic_oned_demo(args):
     discretizer = discretize_elliptic_fv if args['--fv'] else discretize_elliptic_cg
     discretization, _ = discretizer(problem, diameter=1 / args['N'])
 
-    print('The parameter type is {}'.format(discretization.parameter_type))
+    print('The parameter type is {0}'.format(discretization.parameter_type))
 
     U = discretization.solution_space.empty()
     for mu in parameter_space.sample_uniformly(10):

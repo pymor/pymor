@@ -82,7 +82,7 @@ class RectDomain(DomainDescriptionInterface):
         right = ', right=' + repr(self.right) if self.right != BoundaryType('dirichlet') else ''
         top = ', top=' + repr(self.top) if self.top != BoundaryType('dirichlet') else ''
         bottom = ', bottom=' + repr(self.bottom) if self.bottom != BoundaryType('dirichlet') else ''
-        return 'RectDomain({}{})'.format(str(self.domain).replace('\n', ','), left + right + top + bottom)
+        return 'RectDomain({0}{1})'.format(str(self.domain).replace('\n', ','), left + right + top + bottom)
 
 
 class CylindricalDomain(DomainDescriptionInterface):
@@ -144,7 +144,7 @@ class CylindricalDomain(DomainDescriptionInterface):
     def __repr__(self):
         top = ', top=' + repr(self.top) if self.top != BoundaryType('dirichlet') else ''
         bottom = ', bottom=' + repr(self.bottom) if self.bottom != BoundaryType('dirichlet') else ''
-        return 'CylindricalDomain({}{})'.format(str(self.domain).replace('\n', ','), top + bottom)
+        return 'CylindricalDomain({0}{1})'.format(str(self.domain).replace('\n', ','), top + bottom)
 
 
 class TorusDomain(DomainDescriptionInterface):
@@ -193,7 +193,7 @@ class TorusDomain(DomainDescriptionInterface):
         return np.sqrt(self.width ** 2 + self.height ** 2)
 
     def __repr__(self):
-        return 'TorusDomain({})'.format(str(self.domain).replace('\n', ','))
+        return 'TorusDomain({0})'.format(str(self.domain).replace('\n', ','))
 
 
 class LineDomain(DomainDescriptionInterface):
@@ -233,7 +233,7 @@ class LineDomain(DomainDescriptionInterface):
     def __repr__(self):
         left = ', left=' + repr(self.left) if self.left != BoundaryType('dirichlet') else ''
         right = ', right=' + repr(self.right) if self.right != BoundaryType('dirichlet') else ''
-        return 'LineDomain({}{})'.format(self.domain, left + right)
+        return 'LineDomain({0}{1})'.format(self.domain, left + right)
 
 
 class CircleDomain(DomainDescriptionInterface):
@@ -259,4 +259,4 @@ class CircleDomain(DomainDescriptionInterface):
         return self.domain[1] - self.domain[0]
 
     def __repr__(self):
-        return 'CircleDomain({})'.format(self.domain)
+        return 'CircleDomain({0})'.format(self.domain)

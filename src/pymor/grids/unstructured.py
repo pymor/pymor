@@ -92,4 +92,4 @@ class UnstructuredTriangleGrid(AffineGridInterface):
         visualize_patch(self, U, codim=codim, bounding_box=bounding_box, **kwargs)
 
     def __str__(self):
-        return 'UnstructuredTriangleGrid with {} triangles, {} edges, {} vertices'.format(*self.__sizes)
+        return 'UnstructuredTriangleGrid with {0} triangles, {1} edges, {2} vertices'.format(*self.__sizes)

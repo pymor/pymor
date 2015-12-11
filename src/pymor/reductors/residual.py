@@ -126,21 +126,21 @@ def reduce_residual(operator, functional=None, RB=None, product=None, extends=No
             raise CollectionError(op)
 
     for i in ind_range:
-        logger.info('Computing residual range for basis vector {}...'.format(i))
+        logger.info('Computing residual range for basis vector {0}...'.format(i))
         new_residual_range = operator.range.empty()
         try:
             if i == -1:
                 collect_functional_ranges(functional, new_residual_range)
             collect_operator_ranges(operator, RB, i, new_residual_range)
         except CollectionError as e:
-            logger.warn('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
+            logger.warn('Cannot compute range of {0}. Evaluation will be slow.'.format(e.op))
             operator = operator.projected(None, RB)
             return (NonProjectedResidualOperator(operator, functional, product),
                     NonProjectedReconstructor(product),
                     {})
 
         if product:
-            logger.info('Computing Riesz representatives for basis vector {}...'.format(i))
+            logger.info('Computing Riesz representatives for basis vector {0}...'.format(i))
             new_residual_range = product.apply_inverse(new_residual_range)
 
         gram_schmidt_offset = len(residual_range)

@@ -137,17 +137,17 @@ def burgers_demo(args):
 
     print(discretization.operator.grid)
 
-    print('The parameter type is {}'.format(discretization.parameter_type))
+    print('The parameter type is {0}'.format(discretization.parameter_type))
 
     if args['--plot-solutions']:
         print('Showing some solutions')
         Us = tuple()
         legend = tuple()
         for mu in discretization.parameter_space.sample_uniformly(4):
-            print('Solving for exponent = {} ... '.format(mu['exponent']))
+            print('Solving for exponent = {0} ... '.format(mu['exponent']))
             sys.stdout.flush()
             Us = Us + (discretization.solve(mu),)
-            legend = legend + ('exponent: {}'.format(mu['exponent']),)
+            legend = legend + ('exponent: {0}'.format(mu['exponent']),)
         discretization.visualize(Us, legend=legend, title='Detailed Solutions', block=True)
 
     ei_discretization, ei_data = interpolate_operators(discretization, ['operator'],
@@ -163,14 +163,14 @@ def burgers_demo(args):
         ERRs = tuple()
         legend = tuple()
         for mu in discretization.parameter_space.sample_randomly(2):
-            print('Solving for exponent = \n{} ... '.format(mu['exponent']))
+            print('Solving for exponent = \n{0} ... '.format(mu['exponent']))
             sys.stdout.flush()
             U = discretization.solve(mu)
             U_EI = ei_discretization.solve(mu)
             ERR = U - U_EI
             ERRs = ERRs + (ERR,)
-            legend = legend + ('exponent: {}'.format(mu['exponent']),)
-            print('Error: {}'.format(np.max(discretization.l2_norm(ERR))))
+            legend = legend + ('exponent: {0}'.format(mu['exponent']),)
+            print('Error: {0}'.format(np.max(discretization.l2_norm(ERR))))
         discretization.visualize(ERRs, legend=legend, title='EI Errors', separate_colorbars=True)
 
         print('Showing interpolation DOFs ...')
@@ -200,7 +200,7 @@ def burgers_demo(args):
     mus = discretization.parameter_space.sample_randomly(args['--test'])
 
     def error_analysis(N, M):
-        print('N = {}, M = {}: '.format(N, M), end='')
+        print('N = {0}, M = {1}: '.format(N, M), end='')
         rd, rc, _ = reduce_to_subbasis(rb_discretization, N, reconstructor)
         rd = rd.with_(operator=rd.operator.projected_to_subbasis(dim_collateral=M))
         l2_err_max = -1

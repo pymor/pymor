@@ -99,11 +99,11 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., symmetrize=False, ortho
         if not product and not float_cmp_all(POD.dot(POD), np.eye(len(POD)),
                                              atol=check_tol, rtol=0.):
             err = np.max(np.abs(POD.dot(POD) - np.eye(len(POD))))
-            raise AccuracyError('result not orthogonal (max err={})'.format(err))
+            raise AccuracyError('result not orthogonal (max err={0})'.format(err))
         elif product and not float_cmp_all(product.apply2(POD, POD), np.eye(len(POD)),
                                            atol=check_tol, rtol=0.):
             err = np.max(np.abs(product.apply2(POD, POD) - np.eye(len(POD))))
-            raise AccuracyError('result not orthogonal (max err={})'.format(err))
+            raise AccuracyError('result not orthogonal (max err={0})'.format(err))
         if len(POD) < len(EVECS):
             raise AccuracyError('additional orthonormalization removed basis vectors')
 

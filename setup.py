@@ -45,7 +45,7 @@ class PyTest(TestCommand):
 class DependencyMissing(Exception):
 
     def __init__(self, names):
-        super(DependencyMissing, self).__init__('Try: "for i in {} ; do pip install $i ; done"'.format(' '.join(names)))
+        super(DependencyMissing, self).__init__('Try: "for i in {0} ; do pip install $i ; done"'.format(' '.join(names)))
 
 
 def _numpy_monkey():
@@ -106,7 +106,7 @@ def write_version():
         else:
             revstring = subprocess.check_output(['git', 'describe', '--tags', '--candidates', '20', '--match', '*.*.*']).strip()
         with open(filename, 'w') as out:
-            out.write('revstring = \'{}\''.format(revstring))
+            out.write('revstring = \'{0}\''.format(revstring))
     except:
         if os.path.exists(filename):
             loc = {}
