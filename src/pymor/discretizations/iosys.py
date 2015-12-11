@@ -559,7 +559,7 @@ class LTISystem(DiscretizationInterface):
 
         return Vr, Wr
 
-    def irka(self, sigma, b, c, tol, maxit, verbose=False):
+    def irka(self, sigma, b, c, tol, maxit, verbose=False, force_stability=True):
         """Reduce using IRKA.
 
         Parameters
@@ -576,6 +576,9 @@ class LTISystem(DiscretizationInterface):
             Maximum number of iterations.
         verbose
             Should consecutive distances be printed.
+        force_stability
+            If True, new interpolation points are always in the right half-plane.
+            Otherwise, they are reflections of reduced order model's poles.
 
         Returns
         -------
@@ -596,7 +599,10 @@ class LTISystem(DiscretizationInterface):
             Ar, Br, Cr, _, Er = self.project(Vr, Wr)
 
             sigma, Y, X = spla.eig(Ar, Er, left=True, right=True)
-            sigma = np.array([np.abs(s.real) + s.imag * 1j for s in sigma])
+            if force_stability:
+                sigma = np.array([np.abs(s.real) + s.imag * 1j for s in sigma])
+            else:
+                sigma = -sigma
             Sigma.append(sigma.copy())
 
             dist.append([])
