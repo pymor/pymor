@@ -559,7 +559,7 @@ class LTISystem(DiscretizationInterface):
 
         return Vr, Wr
 
-    def irka(self, sigma, b, c, tol, maxit, prnt=False):
+    def irka(self, sigma, b, c, tol, maxit, verbose=False):
         """Reduce using IRKA.
 
         Parameters
@@ -574,7 +574,7 @@ class LTISystem(DiscretizationInterface):
             Tolerance, largest change in interpolation points.
         maxit
             Maximum number of iterations.
-        prnt
+        verbose
             Should consecutive distances be printed.
 
         Returns
@@ -603,8 +603,8 @@ class LTISystem(DiscretizationInterface):
             for i in xrange(it + 1):
                 dist[-1].append(np.max(np.abs((Sigma[i] - Sigma[-1]) / Sigma[-1])))
 
-            if prnt:
-                print('dist[{}] = {:.5e}'.format(it, np.min(dist[-1])))
+            if verbose:
+                print('IRKA conv. crit. in step {}: {:.5e}'.format(it, np.min(dist[-1])))
 
             b = Br.T.dot(Y.conj())
             c = Cr.dot(X)
