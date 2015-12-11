@@ -61,11 +61,9 @@ if __name__ == '__main__':
 
     # Bode plot of the full model
     w = np.logspace(-2, 3, 100)
-    tfw = lti.bode(w)
-    fig, ax = plt.subplots()
-    ax.loglog(w, np.abs(tfw[0, 0, :]))
+    lti.bode(w)
+    fig, ax = iosys.LTISystem.mag_plot(lti)
     ax.set_title('Bode plot of the full model')
-    plt.show()
 
     # Hankel singular values
     lti.compute_hsv_U_V()
@@ -88,18 +86,14 @@ if __name__ == '__main__':
     print('H_inf-error for the BT ROM:   {}'.format(err_bt.norm('Hinf')))
 
     # Bode plot of the full and BT reduced model
-    tfw_bt = rom_bt.bode(w)
-    fig, ax = plt.subplots()
-    ax.loglog(w, np.abs(tfw[0, 0, :]), w, np.abs(tfw_bt[0, 0, :]))
+    rom_bt.bode(w)
+    fig, ax = iosys.LTISystem.mag_plot((lti, rom_bt))
     ax.set_title('Bode plot of the full and BT reduced model')
-    plt.show()
 
     # Bode plot of the BT error system
-    tfw_bt_err = err_bt.bode(w)
-    fig, ax = plt.subplots()
-    ax.loglog(w, np.abs(tfw_bt_err[0, 0, :]))
+    err_bt.bode(w)
+    fig, ax = iosys.LTISystem.mag_plot(err_bt)
     ax.set_title('Bode plot of the BT error system')
-    plt.show()
 
     # Iterative Rational Krylov Algorithm
     sigma = np.logspace(-1, 3, r)
@@ -124,15 +118,11 @@ if __name__ == '__main__':
     print('H_inf-error for the IRKA ROM: {}'.format(err_irka.norm('Hinf')))
 
     # Bode plot of the full and IRKA reduced model
-    tfw_irka = rom_irka.bode(w)
-    fig, ax = plt.subplots()
-    ax.loglog(w, np.abs(tfw[0, 0, :]), w, np.abs(tfw_irka[0, 0, :]))
+    rom_irka.bode(w)
+    fig, ax = iosys.LTISystem.mag_plot((lti, rom_irka))
     ax.set_title('Bode plot of the full and IRKA reduced model')
-    plt.show()
 
     # Bode plot of the IRKA error system
-    tfw_irka_err = err_irka.bode(w)
-    fig, ax = plt.subplots()
-    ax.loglog(w, np.abs(tfw_irka_err[0, 0, :]))
+    err_irka.bode(w)
+    fig, ax = iosys.LTISystem.mag_plot(err_irka)
     ax.set_title('Bode plot of the IRKA error system')
-    plt.show()

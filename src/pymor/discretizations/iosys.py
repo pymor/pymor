@@ -283,6 +283,67 @@ class LTISystem(DiscretizationInterface):
 
         return self._tfw.copy()
 
+    @classmethod
+    def mag_plot(cls, sys_list, plot_style_list=None, w=None, ord=None, dB=False, Hz=False):
+        """Draw the magnitude Bode plot
+
+        Parameters
+        ----------
+        sys_list
+            A single |LTISystem| or a list of |LTISystems|.
+        plot_style_list
+            A string or a list of strings of the same length as `sys_list`.
+            If None, matplotlib defaults are used.
+        w
+            Frequencies at which to compute the transfer function.
+            If None, use self._w.
+        ord
+            Order of the norm used to compute the magnitude (the default is the Frobenius norm).
+        dB
+            Should the magnitude be in dB on the plot.
+        Hz
+            Should the frequency be in Hz on the plot.
+        """
+        assert isinstance(sys_list, LTISystem) or all(isinstance(sys, LTISystem) for sys in sys_list)
+        if isinstance(sys_list, LTISystem):
+            sys_list = (sys_list,)
+
+        assert (plot_style_list is None or isinstance(plot_style_list, basestring) or
+                all(isinstance(plot_style, basestring) for plot_style in plot_style_list))
+        if isinstance(plot_style_list, basestring):
+            plot_style_list = (plot_style_list,)
+
+        assert w is not None or all(sys._w is not None for sys in sys_list)
+
+        if w is not None:
+            for sys in sys_list:
+                sys.bode(w)
+
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots()
+        for i, sys in enumerate(sys_list):
+            freq = sys._w
+            if Hz:
+                freq = freq.copy() / (2 * np.pi)
+            mag = np.array([spla.norm(sys._tfw[:, :, j], ord=ord) for j, _ in enumerate(freq)])
+            style = '' if plot_style_list is None else plot_style_list[i]
+            if dB:
+                mag = 20 * np.log2(mag)
+                ax.semilogx(freq, mag, style)
+            else:
+                ax.loglog(freq, mag, style)
+        ax.set_title('Magnitude Bode Plot')
+        if Hz:
+            ax.set_xlabel('Frequency (Hz)')
+        else:
+            ax.set_xlabel('Frequency (rad/s)')
+        if dB:
+            ax.set_ylabel('Magnitude (dB)')
+        else:
+            ax.set_ylabel('Magnitude')
+        plt.show()
+        return fig, ax
+
     def compute_cgf(self, tol=None):
         """Compute the controllability Gramian factor.
 
