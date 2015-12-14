@@ -9,7 +9,6 @@ from __future__ import absolute_import, division, print_function
 import os.path
 import ConfigParser
 
-from scipy import io
 import numpy as np
 
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
@@ -22,7 +21,8 @@ from pymor.parameters.functionals import ExpressionParameterFunctional
 
 
 def discretize_stationary_from_disk(parameter_file):
-    """Generates stationary discretization only based on system relevant data given as .mat files on the hard disc.
+    """Generates stationary discretization only based on data loaded from files.
+
     The path and further specifications to these objects are given in an '.ini' parameter file (see example below).
     Suitable for discrete problems given by::
 
@@ -42,7 +42,7 @@ def discretize_stationary_from_disk(parameter_file):
         The |Discretization| that has been generated.
 
 
-    Example parameter_file
+    Example
     -------
     Following parameter file is suitable for a discrete elliptic problem with
 
@@ -113,8 +113,7 @@ def discretize_stationary_from_disk(parameter_file):
         path = os.path.join(base_path, system_mat[i][0])
         expr = system_mat[i][1]
         parameter_functional = ExpressionParameterFunctional(expr, parameter_type=parameter_type)
-        info = io.loadmat(path, mat_dtype=True).values()
-        system_operators.append(NumpyMatrixOperator([j for j in info if isinstance(j, np.ndarray)][0]))
+        system_operators.append(NumpyMatrixOperator.from_file(path))
         system_functionals.append(parameter_functional)
 
     system_lincombOperator = LincombOperator(system_operators, coefficients=system_functionals)
@@ -126,8 +125,10 @@ def discretize_stationary_from_disk(parameter_file):
         path = os.path.join(base_path, rhs_vec[i][0])
         expr = rhs_vec[i][1]
         parameter_functional = ExpressionParameterFunctional(expr, parameter_type=parameter_type)
-        info = io.loadmat(path, mat_dtype=True).values()
-        rhs_operators.append(NumpyMatrixOperator([j for j in info if isinstance(j, np.ndarray)][0].T))
+        op = NumpyMatrixOperator.from_file(path)
+        assert isinstance(op._matrix, np.ndarray)
+        op = op.with_(matrix=op._matrix.reshape((1, -1)))
+        rhs_operators.append(op)
         rhs_functionals.append(parameter_functional)
 
     rhs_lincombOperator = LincombOperator(rhs_operators, coefficients=rhs_functionals)
@@ -139,8 +140,7 @@ def discretize_stationary_from_disk(parameter_file):
         for i in range(len(product)):
             product_name = product[i][0]
             product_path = os.path.join(base_path, product[i][1])
-            info = io.loadmat(product_path, mat_dtype=True).values()
-            products[product_name] = NumpyMatrixOperator([j for j in info if isinstance(j, np.ndarray)][0])
+            products[product_name] = NumpyMatrixOperator.from_file(product_path)
     else:
         products = None
 
@@ -150,8 +150,9 @@ def discretize_stationary_from_disk(parameter_file):
 
 
 def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=None, time_stepper=None):
-    """Generates instationary discretization only based on system relevant data given as .mat files
-    on the hard disc. The path and further specifications to these objects are given in an '.ini'
+    """Generates instationary discretization based on data given loaded from files.
+
+    The path and further specifications to these objects are given in an '.ini'
     parameter file (see example below). Suitable for discrete problems given by::
 
     M(u(t), w) + L(u(t), w, t) = F(t, w)
@@ -180,7 +181,7 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
     discretization
         The |Discretization| that has been generated.
 
-    Example parameter_file
+    Example
     -------
     Following parameter file is suitable for a discrete parabolic problem with
 
@@ -262,8 +263,7 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
         path = os.path.join(base_path, system_mat[i][0])
         expr = system_mat[i][1]
         parameter_functional = ExpressionParameterFunctional(expr, parameter_type=parameter_type)
-        info = io.loadmat(path, mat_dtype=True).values()
-        system_operators.append(NumpyMatrixOperator([j for j in info if isinstance(j, np.ndarray)][0]))
+        system_operators.append(NumpyMatrixOperator.from_file(path))
         system_functionals.append(parameter_functional)
 
     system_lincombOperator = LincombOperator(system_operators, coefficients=system_functionals)
@@ -275,23 +275,25 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
         path = os.path.join(base_path, rhs_vec[i][0])
         expr = rhs_vec[i][1]
         parameter_functional = ExpressionParameterFunctional(expr, parameter_type=parameter_type)
-        info = io.loadmat(path, mat_dtype=True).values()
-        rhs_operators.append(NumpyMatrixOperator([j for j in info if isinstance(j, np.ndarray)][0].T))
+        op = NumpyMatrixOperator.from_file(path)
+        assert isinstance(op._matrix, np.ndarray)
+        op = op.with_(matrix=op._matrix.reshape((1, -1)))
+        rhs_operators.append(op)
         rhs_functionals.append(parameter_functional)
 
     rhs_lincombOperator = LincombOperator(rhs_operators, coefficients=rhs_functionals)
 
     # get mass matrix
     path = os.path.join(base_path, mass_mat[0][1])
-    info = io.loadmat(path, mat_dtype=True).values()
-    mass_operator = NumpyMatrixOperator([j for j in info if isinstance(j, np.ndarray)][0])
+    mass_operator = NumpyMatrixOperator.from_file(path)
 
     # Obtain initial solution if not given
     if u0 is None:
         u_0 = config.items('initial-solution')
         path = os.path.join(base_path, u_0[0][1])
-        info = io.loadmat(path, mat_dtype=True).values()
-        u0 = NumpyMatrixOperator([j for j in info if isinstance(j, np.ndarray)][0])
+        op = NumpyMatrixOperator.from_file(path)
+        assert isinstance(op._matrix, np.ndarray)
+        u0 = op.with_(matrix=op._matrix.reshape((-1, 1)))
 
     # get products if given
     if 'products' in config.sections():
@@ -300,8 +302,7 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
         for i in range(len(product)):
             product_name = product[i][0]
             product_path = os.path.join(base_path, product[i][1])
-            info = io.loadmat(product_path, mat_dtype=True).values()
-            products[product_name] = NumpyMatrixOperator([j for j in info if isinstance(j, np.ndarray)][0])
+            products[product_name] = NumpyMatrixOperator.from_file(product_path)
     else:
         products = None
 
