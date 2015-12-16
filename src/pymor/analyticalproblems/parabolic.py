@@ -59,6 +59,9 @@ class ParabolicProblem(ImmutableInterface):
     diffusion_functions
     diffusion_functionals
     dirichlet_data
+    neumann_data
+    initial_data
+    T
     """
 
     def __init__(self, domain=RectDomain(), rhs=ConstantFunction(dim_domain=2),

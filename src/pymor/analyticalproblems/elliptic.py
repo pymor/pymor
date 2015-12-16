@@ -53,6 +53,7 @@ class EllipticProblem(ImmutableInterface):
     diffusion_functions
     diffusion_functionals
     dirichlet_data
+    neumann_data
     """
 
     def __init__(self, domain=RectDomain(), rhs=ConstantFunction(dim_domain=2),
