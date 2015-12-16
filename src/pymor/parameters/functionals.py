@@ -1,6 +1,8 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
+#
+# Contributors: Michael Laier <m_laie01@uni-muenster.de>
 
 from __future__ import absolute_import, division, print_function
 
@@ -132,3 +134,26 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
     def __reduce__(self):
         return (ExpressionParameterFunctional,
                 (self.expression, self.parameter_type, getattr(self, '_name', None)))
+
+
+class ProductParameterFunctional(ParameterFunctionalInterface):
+    """Forms the product of a list of |ParameterFunctionals| or numbers.
+
+    Parameters
+    ----------
+    factors
+        A list of |ParameterFunctionals| or numbers.
+    name
+        Name of the functional.
+    """
+
+    def __init__(self, factors, name=None):
+        assert len(factors) > 0
+        assert all(isinstance(f, (ParameterFunctionalInterface, Number)) for f in factors)
+        self.name = name
+        self.factors = tuple(factors)
+        self.build_parameter_type(inherits=[f for f in factors if isinstance(f, ProductParameterFunctional)])
+
+    def evaluate(self, mu=None):
+        mu = self.parse_parameter(mu)
+        return np.array([f.evaluate(mu) if hasattr(f, 'evaluate') else f for f in self.factors]).prod()
