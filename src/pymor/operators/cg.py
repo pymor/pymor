@@ -227,7 +227,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
             SF = np.squeeze(np.array([1 - q, q]))
             SF_INTS = np.einsum('ei,pi,e,i->ep', F, SF, g.integration_elements(1)[NI], w).ravel()
             SF_I = g.subentities(1, 2)[NI].ravel()
-            I += coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).array().ravel()
+            I += coo_matrix((SF_INTS, (np.zeros_like(SF_I), SF_I)), shape=(1, g.size(g.dim))).toarray().ravel()
 
         if bi is not None and bi.has_robin and self.robin_data is not None:
             RI = bi.robin_boundaries(1)
