@@ -20,9 +20,9 @@ Options:
 
     --rect       Use RectGrid instead of TriaGrid.
 
-    --grid=NI    Use grid with 2^NI elements [default: 7].
+    --grid=NI    Use grid with NIxNI intervals [default: 100].
 
-    --nt=COUNT   Number of time steps [default: 100].
+    --nt=COUNT   Number of time steps [default: 10].
 """
 
 from __future__ import absolute_import, division, print_function
@@ -47,8 +47,7 @@ def parabolic_demo(args):
     args['--nt'] = int(args['--nt'])
     args['--grid'] = int(args['--grid'])
 
-    n = 2**args['--grid']
-    grid_name = '{1}(({0},{0}))'.format(n, 'RectGrid' if args['--rect'] else 'TriaGrid')
+    grid_name = '{1}(({0},{0}))'.format(args['--grid'], 'RectGrid' if args['--rect'] else 'TriaGrid')
     print('Solving on {0}'.format(grid_name))
 
     print('Setup problem ...')
@@ -56,18 +55,17 @@ def parabolic_demo(args):
     rhs = ConstantFunction(value=0, dim_domain=2)
     diffusion_functional = GenericParameterFunctional(mapping=lambda mu: mu['diffusion'],
                                                       parameter_type={'diffusion': 0})
-    dirichlet = GenericFunction(lambda X: np.cos(np.pi*X[..., 0])*np.sin(np.pi*X[..., 1]), dim_domain=2)
-    neumann = ConstantFunction(value=1, dim_domain=2)
+    neumann = ConstantFunction(value=-1., dim_domain=2)
     initial = GenericFunction(lambda X: np.cos(np.pi*X[..., 0])*np.sin(np.pi*X[..., 1]), dim_domain=2)
 
     problem = ParabolicProblem(domain=domain, rhs=rhs, diffusion_functionals=[diffusion_functional],
-                                   dirichlet_data=dirichlet, neumann_data=neumann, initial_data=initial)
+                               dirichlet_data=initial, neumann_data=neumann, initial_data=initial)
 
     print('Discretize ...')
     if args['--rect']:
-        grid, bi = discretize_domain_default(problem.domain, diameter=m.sqrt(2) / n, grid_type=RectGrid)
+        grid, bi = discretize_domain_default(problem.domain, diameter=m.sqrt(2) / args['--grid'], grid_type=RectGrid)
     else:
-        grid, bi = discretize_domain_default(problem.domain, diameter=1. / n, grid_type=TriaGrid)
+        grid, bi = discretize_domain_default(problem.domain, diameter=1. / args['--grid'], grid_type=TriaGrid)
     discretizer = discretize_parabolic_fv if args['--fv'] else discretize_parabolic_cg
     discretization, _ = discretizer(analytical_problem=problem, grid=grid, boundary_info=bi, nt=args['--nt'])
 
