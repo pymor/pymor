@@ -12,7 +12,6 @@ import numpy as np
 
 from pymor.core.pickle import dumps, loads, dumps_function, loads_function, PicklingError
 from pymor.parameters.interfaces import ParameterFunctionalInterface
-from pymor.parameters.base import Parametric
 
 
 class ProjectionParameterFunctional(ParameterFunctionalInterface):
@@ -138,12 +137,12 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
 
 
 class ProductParameterFunctional(ParameterFunctionalInterface):
-    """Forms the product of a list of |ParameterFunctionals| and |Numbers|.
+    """Forms the product of a list of |ParameterFunctionals| or numbers.
 
     Parameters
     ----------
     factors
-        A list of |ParameterFunctionals| or |Numbers|.
+        A list of |ParameterFunctionals| or numbers.
     name
         Name of the functional.
     """
@@ -153,7 +152,7 @@ class ProductParameterFunctional(ParameterFunctionalInterface):
         assert all(isinstance(f, (ParameterFunctionalInterface, Number)) for f in factors)
         self.name = name
         self.factors = tuple(factors)
-        self.build_parameter_type(inherits=[f for f in factors if isinstance(f, Parametric)])
+        self.build_parameter_type(inherits=[f for f in factors if isinstance(f, ProductParameterFunctional)])
 
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)
