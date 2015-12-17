@@ -58,17 +58,19 @@ import sys
 try:
     from mpi4py import MPI
     HAVE_MPI = True
-
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
-    rank0 = rank == 0
     size = comm.Get_size()
-    parallel = (size > 1)
     finished = False
 
 except ImportError:
     HAVE_MPI = False
+    rank = 0
+    size = 1
+    finished = True
 
+rank0 = rank == 0
+parallel = (size > 1)
 
 _managed_objects = {}
 _object_counter = 0
