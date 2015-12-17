@@ -172,10 +172,7 @@ class IPythonPool(WorkerPoolDefaultImplementations, WorkerPoolInterface):
         chunks = _split_into_chunks(num_workers, *args)
         result = self.view.map_sync(_worker_call_function,
                                     *zip(*((function, True, a, kwargs) for a in izip(*chunks))))
-        if isinstance(result[0][0], tuple):
-            return tuple(list(x) for x in zip(*chain(*result)))
-        else:
-            return list(chain(*result))
+        return list(chain(*result))
 
 
 class IPythonRemoteObject(RemoteObjectInterface):
