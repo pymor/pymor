@@ -7,7 +7,6 @@ from __future__ import absolute_import, division, print_function
 from itertools import izip, chain
 import os
 import time
-import weakref
 
 
 try:
@@ -21,14 +20,9 @@ except ImportError:
         HAVE_IPYTHON = False
 
 
-from pymor.core.interfaces import BasicInterface, ImmutableInterface
-from pymor.core.pickle import FunctionPicklingWrapper
-from pymor.parallel.defaultimpl import WorkerPoolDefaultImplementations
-from pymor.parallel.interfaces import WorkerPoolInterface, RemoteObjectInterface
+from pymor.core.interfaces import BasicInterface
+from pymor.parallel.basic import WorkerPoolBase
 from pymor.tools.counter import Counter
-
-
-FunctionType = type(lambda x: x)
 
 
 class new_ipcluster_pool(BasicInterface):
@@ -114,9 +108,10 @@ class new_ipcluster_pool(BasicInterface):
         os.system(cmd)
 
 
-class IPythonPool(WorkerPoolDefaultImplementations, WorkerPoolInterface):
+class IPythonPool(WorkerPoolBase):
 
     def __init__(self, num_engines=None, **kwargs):
+        super(IPythonPool, self).__init__()
         self.client = Client(**kwargs)
         if num_engines is not None:
             self.view = self.client[:num_engines]
@@ -124,73 +119,30 @@ class IPythonPool(WorkerPoolDefaultImplementations, WorkerPoolInterface):
             self.view = self.client[:]
         self.logger.info('Connected to {} engines'.format(len(self.view)))
         self.view.apply(_setup_worker, block=True)
-        self._pushed_immutable_objects = {}
         self._remote_objects_created = Counter()
 
     def __len__(self):
         return len(self.view)
 
-    def push(self, obj):
-        if isinstance(obj, ImmutableInterface):
-            uid = obj.uid
-            if uid not in self._pushed_immutable_objects:
-                remote_id = RemoteId(self._remote_objects_created.inc())
-                self.view.apply_sync(_push_object, remote_id, obj)
-                self._pushed_immutable_objects[uid] = (remote_id, 1)
-            else:
-                remote_id, ref_count = self._pushed_immutable_objects[uid]
-                self._pushed_immutable_objects[uid] = (remote_id, ref_count + 1)
-            return IPythonRemoteObject(self, remote_id, uid=uid)
-        else:
-            remote_id = RemoteId(self._remote_objects_created.inc())
-            self.view.apply_sync(_push_object, remote_id, obj)
-            return IPythonRemoteObject(self, remote_id)
+    def _push_object(self, obj):
+        remote_id = RemoteId(self._remote_objects_created.inc())
+        self.view.apply_sync(_push_object, remote_id, obj)
+        return remote_id
 
-    def _map_kwargs(self, kwargs):
-        pushed_immutable_objects = self._pushed_immutable_objects
-        return {k: (pushed_immutable_objects.get(v.uid, (v, 0))[0] if isinstance(v, ImmutableInterface) else
-                    v.remote_id if isinstance(v, IPythonRemoteObject) else
-                    v)
-                for k, v in kwargs.iteritems()}
-
-    def apply(self, function, *args, **kwargs):
-        function = FunctionPicklingWrapper(function)
-        kwargs = self._map_kwargs(kwargs)
+    def _apply(self, function, *args, **kwargs):
         return self.view.apply_sync(_worker_call_function, function, False, args, kwargs)
 
-    def apply_only(self, function, worker, *args, **kwargs):
+    def _apply_only(self, function, worker, *args, **kwargs):
         view = self.client[worker]
-        function = FunctionPicklingWrapper(function)
-        kwargs = self._map_kwargs(kwargs)
         return view.apply_sync(_worker_call_function, function, False, args, kwargs)
 
-    def map(self, function, *args, **kwargs):
-        function = FunctionPicklingWrapper(function)
-        kwargs = self._map_kwargs(kwargs)
-        num_workers = len(self.view)
-        chunks = _split_into_chunks(num_workers, *args)
+    def _map(self, function, chunks, **kwargs):
         result = self.view.map_sync(_worker_call_function,
                                     *zip(*((function, True, a, kwargs) for a in izip(*chunks))))
         return list(chain(*result))
 
-
-class IPythonRemoteObject(RemoteObjectInterface):
-
-    def __init__(self, pool, remote_id, uid=None):
-        self.pool = weakref.ref(pool)
-        self.remote_id = remote_id
-        self.uid = uid
-
-    def _remove(self):
-        pool = self.pool()
-        if self.uid is not None:
-            remote_id, ref_count = pool._pushed_immutable_objects.pop(self.uid)
-            if ref_count > 1:
-                pool._pushed_immutable_objects[self.remote_id] = (remote_id, ref_count - 1)
-            else:
-                pool.view.apply(_remove_object, remote_id)
-        else:
-            pool.view.apply(_remove_object, self.remote_id)
+    def _remove_object(self, remote_id):
+        self.view.apply(_remove_object, remote_id)
 
 
 class RemoteId(int):
@@ -207,21 +159,6 @@ def _worker_call_function(function, loop, args, kwargs):
         return [function(*a, **kwargs) for a in izip(*args)]
     else:
         return function(*args, **kwargs)
-
-
-def _split_into_chunks(count, *args):
-    lens = map(len, args)
-    min_len = min(lens)
-    max_len = max(lens)
-    assert min_len == max_len
-    chunk_size = max_len // count + (1 if max_len % count > 0 else 0)
-
-    def split_arg(arg):
-        while arg:
-            chunk, arg = arg[:chunk_size], arg[chunk_size:]
-            yield chunk
-    chunks = tuple(list(split_arg(arg)) for arg in args)
-    return chunks
 
 
 _remote_objects = {}
