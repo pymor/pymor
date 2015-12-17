@@ -150,7 +150,6 @@ class IPythonPool(WorkerPoolDefaultImplementations, WorkerPoolInterface):
         pushed_immutable_objects = self._pushed_immutable_objects
         return {k: (pushed_immutable_objects.get(v.uid, (v, 0))[0] if isinstance(v, ImmutableInterface) else
                     v.remote_id if isinstance(v, IPythonRemoteObject) else
-                    FunctionPicklingWrapper(v) if isinstance(v, FunctionType) else
                     v)
                 for k, v in kwargs.iteritems()}
 
@@ -199,11 +198,9 @@ class RemoteId(int):
 
 
 def _worker_call_function(function, loop, args, kwargs):
-    from pymor.core.pickle import FunctionPicklingWrapper
     global _remote_objects
     function = function.function
     kwargs = {k: (_remote_objects[v] if isinstance(v, RemoteId) else
-                  v.function if isinstance(v, FunctionPicklingWrapper) else
                   v)
               for k, v in kwargs.iteritems()}
     if loop:
