@@ -48,7 +48,6 @@ class DiscretizationInterface(CacheableInterface, Parametric):
         """Perform the actual solving."""
         pass
 
-    @cached
     def solve(self, mu=None, **kwargs):
         """Solve for the |Parameter| `mu`.
 
@@ -63,7 +62,8 @@ class DiscretizationInterface(CacheableInterface, Parametric):
         -------
         The solution given as a |VectorArray|.
         """
-        return self._solve(mu, **kwargs)
+        mu = self.parse_parameter(mu)
+        return self.cached_method_call(self._solve, mu=mu, **kwargs)
 
     def estimate(self, U, mu=None):
         """Estimate the discretization error for a given solution.
