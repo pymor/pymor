@@ -63,14 +63,14 @@ def _single_worker_call_function(payload, worker):
             function, args, kwargs = payload[0]
             return mpi.function_call(function.function, *args, **kwargs)
         else:
-            mpi.comm.send(payload[0], dst=worker)
+            mpi.comm.send(payload[0], dest=worker)
             return mpi.comm.recv(source=worker)
     else:
         if mpi.rank != worker:
             return
         (function, args, kwargs) = mpi.comm.recv(source=0)
         retval = mpi.function_call(function.function, *args, **kwargs)
-        mpi.comm.send(retval, dst=0)
+        mpi.comm.send(retval, dest=0)
 
 
 def _worker_map_function(payload, function, **kwargs):
