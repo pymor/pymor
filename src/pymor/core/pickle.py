@@ -128,9 +128,12 @@ def loads_function(s):
 def _function_pickling_handler(f):
     if f.__module__ != '__main__':
         try:
+            copy_reg.dispatch_table.pop(FunctionType)
             return (loads, (dumps(f),))
         except PicklingError:
             return (loads_function, (dumps_function(f),))
+        finally:
+            copy_reg.dispatch_table[FunctionType] = _function_pickling_handler
     else:
         return (loads_function, (dumps_function(f),))
 
