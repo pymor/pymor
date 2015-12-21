@@ -9,7 +9,6 @@ from __future__ import absolute_import, division, print_function
 import weakref
 
 from pymor.core.interfaces import ImmutableInterface
-from pymor.core.pickle import FunctionPicklingWrapper
 from pymor.parallel.interfaces import WorkerPoolInterface, RemoteObjectInterface
 
 
@@ -68,17 +67,14 @@ class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPoolInterface):
                 for k, v in kwargs.iteritems()}
 
     def apply(self, function, *args, **kwargs):
-        function = FunctionPicklingWrapper(function)
         kwargs = self._map_kwargs(kwargs)
         return self._apply(function, *args, **kwargs)
 
     def apply_only(self, function, worker, *args, **kwargs):
-        function = FunctionPicklingWrapper(function)
         kwargs = self._map_kwargs(kwargs)
         return self._apply_only(function, worker, *args, **kwargs)
 
     def map(self, function, *args, **kwargs):
-        function = FunctionPicklingWrapper(function)
         kwargs = self._map_kwargs(kwargs)
         chunks = self._split_into_chunks(len(self), *args)
         return self._map(function, chunks, **kwargs)

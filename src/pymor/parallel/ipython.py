@@ -151,7 +151,6 @@ class RemoteId(int):
 
 def _worker_call_function(function, loop, args, kwargs):
     global _remote_objects
-    function = function.function
     kwargs = {k: (_remote_objects[v] if isinstance(v, RemoteId) else
                   v)
               for k, v in kwargs.iteritems()}

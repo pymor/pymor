@@ -53,7 +53,7 @@ class MPIPool(WorkerPoolBase):
 
 
 def _worker_call_function(function, *args, **kwargs):
-    result = function.function(*args, **kwargs)
+    result = function(*args, **kwargs)
     return mpi.comm.gather(result, root=0)
 
 
@@ -61,7 +61,7 @@ def _single_worker_call_function(payload, worker):
     if mpi.rank0:
         if worker == 0:
             function, args, kwargs = payload[0]
-            return mpi.function_call(function.function, *args, **kwargs)
+            return mpi.function_call(function, *args, **kwargs)
         else:
             mpi.comm.send(payload[0], dest=worker)
             return mpi.comm.recv(source=worker)
@@ -69,12 +69,11 @@ def _single_worker_call_function(payload, worker):
         if mpi.rank != worker:
             return
         (function, args, kwargs) = mpi.comm.recv(source=0)
-        retval = mpi.function_call(function.function, *args, **kwargs)
+        retval = mpi.function_call(function, *args, **kwargs)
         mpi.comm.send(retval, dest=0)
 
 
 def _worker_map_function(payload, function, **kwargs):
-    function = function.function
 
     if mpi.rank0:
         args = zip(*payload[0])
