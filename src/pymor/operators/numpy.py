@@ -475,7 +475,7 @@ def sparse_options(default_solver='spsolve',
                    pyamg_sa_smooth=('jacobi', {'omega': 4.0/3.0}),
                    pyamg_sa_presmoother=('block_gauss_seidel', {'sweep': 'symmetric'}),
                    pyamg_sa_postsmoother=('block_gauss_seidel', {'sweep': 'symmetric'}),
-                   pyamg_sa_improve_candidates=[('block_gauss_seidel', {'sweep': 'symmetric', 'iterations': 4}), None],
+                   pyamg_sa_improve_candidates=None,
                    pyamg_sa_max_levels=10,
                    pyamg_sa_max_coarse=500,
                    pyamg_sa_diagonal_dominance=False,
@@ -603,6 +603,8 @@ def sparse_options(default_solver='spsolve',
     -------
     A tuple of all possible |solver_options|.
     """
+    if pyamg_sa_improve_candidates is None:
+        pyamg_sa_improve_candidates = [('block_gauss_seidel', {'sweep': 'symmetric', 'iterations': 4}), None]
 
     assert default_least_squares_solver.startswith('least_squares')
 
