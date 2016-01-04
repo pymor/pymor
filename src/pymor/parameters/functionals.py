@@ -75,7 +75,12 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
 
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)
-        return self._mapping(mu)
+        value = self._mapping(mu)
+        # ensure that we return a number not an array
+        if isinstance(value, np.ndarray):
+            return value.item()
+        else:
+            return value
 
     def __getstate__(self):
         s = self.__dict__.copy()
