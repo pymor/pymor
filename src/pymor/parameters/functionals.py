@@ -17,35 +17,36 @@ from pymor.parameters.interfaces import ParameterFunctionalInterface
 class ProjectionParameterFunctional(ParameterFunctionalInterface):
     """|ParameterFunctional| returning a component of the given parameter.
 
+    For given parameter `mu`, this functional evaluates to ::
+
+        mu[component_name][coordinates]
+
+
     Parameters
     ----------
     component_name
-        The name of the component to return.
+        The name of the parameter component to return.
     component_shape
-        The shape of the component.
+        The shape of the parameter component.
     coordinates
-        If not `None`, return `mu[component_name][coordinates]` instead of
-        `mu[component_name]`.
+        See above.
     name
         Name of the functional.
     """
 
-    def __init__(self, component_name, component_shape, coordinates=None, name=None):
+    def __init__(self, component_name, component_shape, coordinates=tuple(), name=None):
         self.name = name
         if isinstance(component_shape, Number):
             component_shape = tuple() if component_shape == 0 else (component_shape,)
         self.build_parameter_type({component_name: component_shape}, local_global=True)
         self.component_name = component_name
-        if sum(component_shape) > 1:
-            assert coordinates is not None and coordinates < component_shape
         self.coordinates = coordinates
+        assert len(coordinates) == len(component_shape)
+        assert not component_shape or coordinates < component_shape
 
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)
-        if self.coordinates is None:
-            return mu[self.component_name]
-        else:
-            return mu[self.component_name][self.coordinates]
+        return mu[self.component_name].item(self.coordinates)
 
 
 class GenericParameterFunctional(ParameterFunctionalInterface):
