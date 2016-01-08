@@ -69,7 +69,6 @@ import time
 from functools import partial
 
 import numpy as np
-import matplotlib.pyplot as plt
 from docopt import docopt
 
 from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension
@@ -233,6 +232,7 @@ def thermalblock_demo(args):
     sys.stdout.flush()
 
     if args['--plot-error-sequence']:
+        import matplotlib.pyplot as plt
         plt.semilogy(Ns, errs, Ns, ests)
         plt.legend(('error', 'estimator'))
         plt.show()
