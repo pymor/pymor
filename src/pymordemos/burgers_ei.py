@@ -155,7 +155,6 @@ def burgers_demo(args):
                                                        error_norm=discretization.l2_norm,
                                                        target_error=1e-10,
                                                        max_interpolation_dofs=args['EISIZE'],
-                                                       projection='orthogonal',
                                                        product=discretization.l2_product)
 
     if args['--plot-ei-err']:
