@@ -86,6 +86,12 @@ def thermalblock_zero_factory(xblocks, yblocks, diameter, seed):
     return ZeroOperator(U.space, V.space), None, U, V, sp, rp
 
 
+def thermalblock_constant_factory(xblocks, yblocks, diameter, seed):
+    from pymor.operators.constructions import ConstantOperator
+    _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, seed)
+    return ConstantOperator(V.copy(0), U.space), None, U, V, sp, rp
+
+
 def thermalblock_vectorarray_factory(transposed, xblocks, yblocks, diameter, seed):
     from pymor.operators.constructions import VectorArrayOperator
     _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, seed)
@@ -176,6 +182,10 @@ thermalblock_zero_operator_generators = \
     [lambda args=args: thermalblock_zero_factory(*args)[0:2] for args in thermalblock_factory_arguments]
 
 
+thermalblock_constant_operator_generators = \
+    [lambda args=args: thermalblock_constant_factory(*args)[0:2] for args in thermalblock_factory_arguments]
+
+
 thermalblock_identity_operator_with_arrays_generators = \
     [lambda args=args: thermalblock_identity_factory(*args)[0:4] for args in thermalblock_factory_arguments]
 
@@ -184,12 +194,20 @@ thermalblock_zero_operator_with_arrays_generators = \
     [lambda args=args: thermalblock_zero_factory(*args)[0:4] for args in thermalblock_factory_arguments]
 
 
+thermalblock_constant_operator_with_arrays_generators = \
+    [lambda args=args: thermalblock_constant_factory(*args)[0:4] for args in thermalblock_factory_arguments]
+
+
 thermalblock_identity_operator_with_arrays_and_products_generators = \
     [lambda args=args: thermalblock_identity_factory(*args) for args in thermalblock_factory_arguments]
 
 
 thermalblock_zero_operator_with_arrays_and_products_generators = \
     [lambda args=args: thermalblock_zero_factory(*args) for args in thermalblock_factory_arguments]
+
+
+thermalblock_constant_operator_with_arrays_and_products_generators = \
+    [lambda args=args: thermalblock_constant_factory(*args) for args in thermalblock_factory_arguments]
 
 
 thermalblock_vectorarray_operator_generators = \
@@ -251,6 +269,7 @@ thermalblock_fixedparam_operator_with_arrays_and_products_generators = \
                        thermalblock_concatenation_operator_with_arrays_and_products_generators +
                        thermalblock_identity_operator_with_arrays_and_products_generators +
                        thermalblock_zero_operator_with_arrays_and_products_generators +
+                       thermalblock_constant_operator_with_arrays_and_products_generators +
                        thermalblock_vectorarray_operator_with_arrays_and_products_generators +
                        thermalblock_vector_operator_with_arrays_and_products_generators +
                        thermalblock_vectorfunc_operator_with_arrays_and_products_generators +
@@ -265,6 +284,7 @@ def operator_with_arrays_and_products(request):
                        thermalblock_concatenation_operator_with_arrays_generators +
                        thermalblock_identity_operator_with_arrays_generators +
                        thermalblock_zero_operator_with_arrays_generators +
+                       thermalblock_constant_operator_with_arrays_generators +
                        thermalblock_vectorarray_operator_with_arrays_generators +
                        thermalblock_vector_operator_with_arrays_generators +
                        thermalblock_vectorfunc_operator_with_arrays_generators +
@@ -279,6 +299,7 @@ def operator_with_arrays(request):
                        thermalblock_concatenation_operator_generators +
                        thermalblock_identity_operator_generators +
                        thermalblock_zero_operator_generators +
+                       thermalblock_constant_operator_generators +
                        thermalblock_vectorarray_operator_generators +
                        thermalblock_vector_operator_generators +
                        thermalblock_vectorfunc_operator_generators +
