@@ -416,6 +416,7 @@ class ConstantOperator(OperatorBase):
 
     def apply(self, U, ind=None, mu=None):
         assert U in self.source
+        assert U.check_ind(ind)
         count = len(U) if ind is None else 1 if isinstance(ind, Number) else len(ind)
         return self._value.copy(ind=([0] * count))
 
