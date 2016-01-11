@@ -385,6 +385,10 @@ class IdentityOperator(OperatorBase):
                                                  coefficients[1:] + [coefficients[0]],
                                                  solver_options=solver_options, name=name)
 
+    def restricted(self, dofs):
+        assert all(0 <= c < self.range.dim for c in dofs)
+        return IdentityOperator(NumpyVectorSpace(len(dofs))), dofs
+
 
 class ConstantOperator(OperatorBase):
     """A constant |Operator| always returning the same vector.
