@@ -1,0 +1,1009 @@
+{
+    "benchmarks": {
+        "benchmarks.TimeDemos.time_burgersei_highdim": {
+            "code": "def time_burgersei_highdim(self):\n    self._run('pymordemos.burgers_ei', [1, 2, 3, 40, 3, 10, '--test=0', '--cache-region=disk',\n                                        '--grid=120', '--nt=200'])\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeDemos.time_burgersei_highdim", 
+            "number": 0, 
+            "param_names": [], 
+            "params": [], 
+            "repeat": 0, 
+            "timeout": 3600, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeDemos.time_burgersei_largecb": {
+            "code": "def time_burgersei_largecb(self):\n    self._run('pymordemos.burgers_ei', [1, 2, 10, 700, 3, 10, '--test=0', '--cache-region=disk'])\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeDemos.time_burgersei_largecb", 
+            "number": 0, 
+            "param_names": [], 
+            "params": [], 
+            "repeat": 0, 
+            "timeout": 3600, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeDemos.time_burgersei_small": {
+            "code": "def time_burgersei_small(self):\n    self._run('pymordemos.burgers_ei', [1, 2, 3, 40, 3, 10, '--test=0', '--cache-region=disk'])\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeDemos.time_burgersei_small", 
+            "number": 0, 
+            "param_names": [], 
+            "params": [], 
+            "repeat": 0, 
+            "timeout": 3600, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeDemos.time_thermalblock_highdim": {
+            "code": "def time_thermalblock_highdim(self):\n    self._run('pymordemos.thermalblock', [2, 2, 2, 10, '--grid=300'])\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeDemos.time_thermalblock_highdim", 
+            "number": 0, 
+            "param_names": [], 
+            "params": [], 
+            "repeat": 0, 
+            "timeout": 3600, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeDemos.time_thermalblock_highdim_listva": {
+            "code": "def time_thermalblock_highdim_listva(self):\n    self._run('pymordemos.thermalblock', [2, 2, 2, 10, '--grid=300', '--list-vector-array'])\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeDemos.time_thermalblock_highdim_listva", 
+            "number": 0, 
+            "param_names": [], 
+            "params": [], 
+            "repeat": 0, 
+            "timeout": 3600, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeDemos.time_thermalblock_manymu": {
+            "code": "def time_thermalblock_manymu(self):\n    self._run('pymordemos.thermalblock', [2, 2, 16, 10, '--test=1'])\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeDemos.time_thermalblock_manymu", 
+            "number": 0, 
+            "param_names": [], 
+            "params": [], 
+            "repeat": 0, 
+            "timeout": 3600, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeDemos.time_thermalblock_manymu_listva": {
+            "code": "def time_thermalblock_manymu_listva(self):\n    self._run('pymordemos.thermalblock', [2, 2, 16, 10, '--test=1', '--list-vector-array'])\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeDemos.time_thermalblock_manymu_listva", 
+            "number": 0, 
+            "param_names": [], 
+            "params": [], 
+            "repeat": 0, 
+            "timeout": 3600, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeDemos.time_thermalblock_small": {
+            "code": "def time_thermalblock_small(self):\n    self._run('pymordemos.thermalblock', [2, 2, 2, 10])\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeDemos.time_thermalblock_small", 
+            "number": 0, 
+            "param_names": [], 
+            "params": [], 
+            "repeat": 0, 
+            "timeout": 3600, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeDemos.time_thermalblock_small_listva": {
+            "code": "def time_thermalblock_small_listva(self):\n    self._run('pymordemos.thermalblock', [2, 2, 2, 10, '--list-vector-array'])\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeDemos.time_thermalblock_small_listva", 
+            "number": 0, 
+            "param_names": [], 
+            "params": [], 
+            "repeat": 0, 
+            "timeout": 3600, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_amax": {
+            "code": "def time_amax(self, type_, len_, dim):\n    self.U.amax()\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_amax", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_amax_indexed": {
+            "code": "def time_amax_indexed(self, type_, len_, dim):\n    self.U.amax(ind=self.U_ind)\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_amax_indexed", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_axpy": {
+            "code": "def time_axpy(self, type_, len_, dim):\n    self.U.axpy(42., self.V)\n    self.U.axpy(-42., self.V)\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_axpy", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_axpy_indexed": {
+            "code": "def time_axpy_indexed(self, type_, len_, dim):\n    self.U.axpy(42., self.V, ind=self.U_ind, x_ind=self.V_ind)\n    self.U.axpy(-42., self.V, ind=self.U_ind, x_ind=self.V_ind)\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_axpy_indexed", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_components": {
+            "code": "def time_components(self, type_, len_, dim):\n    self.U.components(self.components)\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_components", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_components_indexed": {
+            "code": "def time_components_indexed(self, type_, len_, dim):\n    self.U.components(self.components, ind=self.U_ind)\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_components_indexed", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_copy": {
+            "code": "def time_copy(self, type_, len_, dim):\n    self.U.copy()\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_copy", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_copy_indexed": {
+            "code": "def time_copy_indexed(self, type_, len_, dim):\n    self.U.copy(ind=self.U_ind)\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_copy_indexed", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_dot": {
+            "code": "def time_dot(self, type_, len_, dim):\n    self.U.dot(self.V)\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_dot", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_dot_indexed": {
+            "code": "def time_dot_indexed(self, type_, len_, dim):\n    self.U.dot(self.V, ind=self.U_ind, o_ind=self.V_ind)\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_dot_indexed", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_empty": {
+            "code": "def time_empty(self, type_, len_, dim):\n    self.U.empty(len_)\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_empty", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_gramian": {
+            "code": "def time_gramian(self, type_, len_, dim):\n    self.U.gramian()\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_gramian", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_gramian_indexed": {
+            "code": "def time_gramian_indexed(self, type_, len_, dim):\n    self.U.gramian(ind=self.U_ind)\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_gramian_indexed", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_l1_norm": {
+            "code": "def time_l1_norm(self, type_, len_, dim):\n    self.U.l1_norm()\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_l1_norm", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_l1_norm_indexed": {
+            "code": "def time_l1_norm_indexed(self, type_, len_, dim):\n    self.U.l1_norm(ind=self.U_ind)\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_l1_norm_indexed", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_l2_norm": {
+            "code": "def time_l2_norm(self, type_, len_, dim):\n    self.U.l2_norm()\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_l2_norm", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_l2_norm_indexed": {
+            "code": "def time_l2_norm_indexed(self, type_, len_, dim):\n    self.U.l2_norm(ind=self.U_ind)\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_l2_norm_indexed", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_lincomb": {
+            "code": "def time_lincomb(self, type_, len_, dim):\n    self.U.lincomb(self.coeffs)\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_lincomb", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_lincomb_indexed": {
+            "code": "def time_lincomb_indexed(self, type_, len_, dim):\n    self.U.lincomb(self.coeffs_ind, ind=self.U_ind)\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_lincomb_indexed", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_pairwise_dot": {
+            "code": "def time_pairwise_dot(self, type_, len_, dim):\n    self.U.pairwise_dot(self.V)\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_pairwise_dot", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_pairwise_dot_indexed": {
+            "code": "def time_pairwise_dot_indexed(self, type_, len_, dim):\n    self.U.pairwise_dot(self.V, ind=self.U_ind, o_ind=self.V_ind)\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_pairwise_dot_indexed", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_scal": {
+            "code": "def time_scal(self, type_, len_, dim):\n    self.U.scal(42.)\n    self.U.scal(1/42.)  # important! setup is not called in the inner loop of timeit\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_scal", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_scal_indexed": {
+            "code": "def time_scal_indexed(self, type_, len_, dim):\n    self.U.scal(42., ind=self.U_ind)\n    self.U.scal(1/42., ind=self.U_ind)\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_scal_indexed", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_sup_norm": {
+            "code": "def time_sup_norm(self, type_, len_, dim):\n    self.U.sup_norm()\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_sup_norm", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_sup_norm_indexed": {
+            "code": "def time_sup_norm_indexed(self, type_, len_, dim):\n    self.U.sup_norm(ind=self.U_ind)\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_sup_norm_indexed", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }, 
+        "benchmarks.TimeVectorArray.time_zeros": {
+            "code": "def time_zeros(self, type_, len_, dim):\n    self.U.zeros(len_)\n", 
+            "goal_time": 2.0, 
+            "name": "benchmarks.TimeVectorArray.time_zeros", 
+            "number": 0, 
+            "param_names": [
+                "type", 
+                "len", 
+                "dim"
+            ], 
+            "params": [
+                [
+                    "'numpy'", 
+                    "'numpylist'"
+                ], 
+                [
+                    "10", 
+                    "100"
+                ], 
+                [
+                    "10", 
+                    "10000", 
+                    "1000000"
+                ]
+            ], 
+            "repeat": 0, 
+            "timeout": 60.0, 
+            "type": "time", 
+            "unit": "seconds"
+        }
+    }, 
+    "date_to_hash": {
+        "1436344220000": "adeb3bc3", 
+        "1436346280000": "a9d7498b", 
+        "1436352837000": "9b8f39bb", 
+        "1436360996000": "3f9da2b8", 
+        "1436366271000": "e1eb8eb5", 
+        "1436367181000": "30a0c3b0", 
+        "1436608184000": "82cb22d0", 
+        "1436723483000": "c7944c1f", 
+        "1436801083000": "60a341eb", 
+        "1448639916000": "2122f142", 
+        "1448640474000": "f7751f42", 
+        "1448642017000": "6d7cfcc6", 
+        "1448642117000": "e407562d", 
+        "1448642513000": "dbab7177", 
+        "1448642777000": "74ebce7b", 
+        "1448643134000": "e0195338", 
+        "1448726703000": "459167aa", 
+        "1449163841000": "f5bc852d", 
+        "1449519017000": "c083b2d1", 
+        "1449519756000": "b77166df", 
+        "1449565311000": "b29eeb2f", 
+        "1449568707000": "056376b2", 
+        "1449666507000": "30a7ca2e", 
+        "1449750394000": "b9493f47", 
+        "1449750429000": "35e72dae", 
+        "1449752150000": "318f9f4d", 
+        "1449753252000": "70dfe231", 
+        "1449753865000": "5e33949c", 
+        "1449754968000": "b0f95244", 
+        "1449756454000": "b28ae95e", 
+        "1449756532000": "63cc6919", 
+        "1449756666000": "5f426dd8", 
+        "1449757720000": "1b734308", 
+        "1450082967000": "ecb54dd5", 
+        "1450254227000": "ec6b6634", 
+        "1450257536000": "2372de86", 
+        "1450257544000": "5a15b0af", 
+        "1450435627000": "e2eb6a7e", 
+        "1451902556000": "3b66b123", 
+        "1451902587000": "d967354d", 
+        "1451902634000": "ce4c5737", 
+        "1451982524000": "b8754f4a", 
+        "1452254643000": "0e497490", 
+        "1452254699000": "31d69d10", 
+        "1452505792000": "9f044f76", 
+        "1452515369000": "bbf6489d", 
+        "1452523751000": "6af5deff", 
+        "1452524394000": "657be8fc"
+    }, 
+    "machines": {
+        "MACDUFF": {
+            "arch": "x86_64", 
+            "cpu": "Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz", 
+            "machine": "MACDUFF", 
+            "os": "Linux 3.19.0-30-generic", 
+            "ram": "8GB", 
+            "version": 1
+        }
+    }, 
+    "params": {
+        "Cython": [
+            null
+        ], 
+        "arch": [
+            "x86_64"
+        ], 
+        "branch": [
+            "master", 
+            "complex"
+        ], 
+        "cpu": [
+            "Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz"
+        ], 
+        "machine": [
+            "MACDUFF"
+        ], 
+        "matplotlib": [
+            null
+        ], 
+        "numpy": [
+            null
+        ], 
+        "os": [
+            "Linux 3.19.0-30-generic"
+        ], 
+        "python": [
+            "2.7"
+        ], 
+        "ram": [
+            "8GB"
+        ], 
+        "scipy": [
+            null
+        ]
+    }, 
+    "project": "pyMOR", 
+    "project_url": "http://www.pymor.org/", 
+    "show_commit_url": "http://github.com/pymor/pymor/commit/", 
+    "tags": {
+        "0.0.1": 1358351236000, 
+        "0.1.0": 1365414157000, 
+        "0.1.1": 1367920773000, 
+        "0.1.2": 1368547081000, 
+        "0.1.3": 1369155672000, 
+        "0.2.0": 1397132210000, 
+        "0.2.0rc1": 1394631103000, 
+        "0.2.0rc2": 1394812554000, 
+        "0.2.1": 1406029806000, 
+        "0.2.2": 1411487388000, 
+        "0.3.0": 1424968913000, 
+        "0.3.0rc0": 1411487388000, 
+        "0.3.0rc1": 1423674844000, 
+        "0.3.1": 1426784227000, 
+        "0.3.2": 1448440526000, 
+        "MRS2015-first-submission": 1434378018000
+    }
+}
