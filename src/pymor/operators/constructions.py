@@ -485,7 +485,7 @@ class ZeroOperator(OperatorBase):
                                        name=self.name + '_projected')
         else:
             new_source = NumpyVectorSpace(len(source_basis)) if source_basis is not None else self.source
-            new_range = NumpyVectorSpace(len(range_basis)) if range_basis is not None else self.source
+            new_range = NumpyVectorSpace(len(range_basis)) if range_basis is not None else self.range
             return ZeroOperator(new_source, new_range, name=self.name + '_projected')
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
