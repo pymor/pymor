@@ -50,6 +50,9 @@ class DummyPool(WorkerPoolInterface):
         else:
             return result
 
+    def __nonzero__(self):
+        return False
+
 
 dummy_pool = DummyPool()
 
