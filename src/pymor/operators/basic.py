@@ -127,6 +127,7 @@ class OperatorBase(OperatorInterface):
                 raise e
         else:
             from pymor.algorithms.newton import newton
+            from pymor.core.exceptions import NewtonError
             assert V.check_ind(ind)
 
             options = self.solver_options
@@ -147,7 +148,10 @@ class OperatorBase(OperatorInterface):
                    ind)
             R = V.empty(reserve=len(ind))
             for i in ind:
-                R.append(newton(self, V.copy(i), **options)[0])
+                try:
+                    R.append(newton(self, V.copy(i), **options)[0])
+                except NewtonError as e:
+                    raise InversionError(e)
             return R
 
     def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None,
