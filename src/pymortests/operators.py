@@ -277,6 +277,22 @@ def test_assemble(operator_with_arrays):
     assert op.range == aop.range
 
 
+def test_restricted(operator_with_arrays):
+    op, mu, U, _, = operator_with_arrays
+    if op.source.dim == 0:
+        return
+    np.random.seed(4711 + U.dim)
+    for num in [0, 1, 3, 7]:
+        components = np.random.randint(0, op.source.dim, num)
+        try:
+            rop, source_dofs = op.restricted(components)
+        except NotImplementedError:
+            return
+        op_U = NumpyVectorArray(op.apply(U, mu=mu).components(components))
+        rop_U = rop.apply(NumpyVectorArray(U.components(source_dofs)), mu=mu)
+        assert np.all(almost_equal(op_U, rop_U))
+
+
 ########################################################################################################################
 
 
