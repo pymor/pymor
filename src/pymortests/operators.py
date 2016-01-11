@@ -137,6 +137,8 @@ def test_pairwise_apply2_with_product(operator_with_arrays_and_products):
 
 def test_apply_adjoint(operator_with_arrays):
     op, mu, _, V = operator_with_arrays
+    if not op.linear:
+        return
     try:
         U = op.apply_adjoint(V, mu=mu)
     except NotImplementedError:
@@ -151,6 +153,8 @@ def test_apply_adjoint(operator_with_arrays):
 
 def test_apply_adjoint_2(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
+    if not op.linear:
+        return
     try:
         ATV = op.apply_adjoint(V, mu=mu)
     except NotImplementedError:
@@ -160,6 +164,8 @@ def test_apply_adjoint_2(operator_with_arrays):
 
 def test_apply_adjoint_2_with_products(operator_with_arrays_and_products):
     op, mu, U, V, sp, rp = operator_with_arrays_and_products
+    if not op.linear:
+        return
     try:
         ATV = op.apply_adjoint(V, mu=mu, source_product=sp, range_product=rp)
     except NotImplementedError:
@@ -182,6 +188,8 @@ def test_apply_inverse(operator_with_arrays):
 
 def test_apply_inverse_adjoint(operator_with_arrays):
     op, mu, U, _ = operator_with_arrays
+    if not op.linear:
+        return
     for ind in valid_inds(U):
         try:
             V = op.apply_inverse_adjoint(U, mu=mu, ind=ind)
@@ -195,6 +203,8 @@ def test_apply_inverse_adjoint(operator_with_arrays):
 
 def test_apply_inverse_adjoint_with_products(operator_with_arrays_and_products):
     op, mu, U, _, sp, rp = operator_with_arrays_and_products
+    if not op.linear:
+        return
     for ind in valid_inds(U):
         try:
             V = op.apply_inverse_adjoint(U, mu=mu, ind=ind, source_product=sp, range_product=rp)
