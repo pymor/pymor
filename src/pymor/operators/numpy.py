@@ -321,7 +321,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                 matrix = operators[0]._matrix * coefficients[0]
 
         common_mat_dtype = reduce(np.promote_types,
-                                  (op._matrix.dtype for op in operators if isinstance(op, NumpyMatrixOperator)))
+                                  (op._matrix.dtype for op in operators if hasattr(op, '_matrix')))
         common_coef_dtype = reduce(np.promote_types, (type(c.real if c.imag == 0 else c) for c in coefficients))
         common_dtype = np.promote_types(common_mat_dtype, common_coef_dtype)
         if matrix.dtype != common_dtype:

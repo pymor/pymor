@@ -231,7 +231,8 @@ class NumpyVectorArray(VectorArrayInterface):
         if isinstance(alpha, np.ndarray) and not isinstance(ind, Number):
             alpha = alpha[:, np.newaxis]
 
-        alpha_dtype = type(alpha) if isinstance(alpha, Number) else alpha.dtype
+        alpha_type = type(alpha)
+        alpha_dtype = alpha.dtype if alpha_type is np.ndarray else alpha_type
         if self._array.dtype != alpha_dtype:
             self._array = self._array.astype(np.promote_types(self._array.dtype, alpha_dtype))
 
@@ -262,7 +263,8 @@ class NumpyVectorArray(VectorArrayInterface):
 
         B = x._array[:x._len] if x_ind is None else x._array[x_ind]
 
-        alpha_dtype = type(alpha) if isinstance(alpha, Number) else alpha.dtype
+        alpha_type = type(alpha)
+        alpha_dtype = alpha.dtype if alpha_type is np.ndarray else alpha_type
         if self._array.dtype != alpha_dtype:
             self._array = self._array.astype(np.promote_types(self._array.dtype, alpha_dtype))
 
