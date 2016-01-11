@@ -442,6 +442,11 @@ class ConstantOperator(OperatorBase):
             return ConstantOperator(projected_value, NumpyVectorSpace(len(source_basis)),
                                     name=self.name + '_projected')
 
+    def restricted(self, dofs):
+        assert all(0 <= c < self.range.dim for c in dofs)
+        restricted_value = NumpyVectorArray(self._value.components(dofs))
+        return ConstantOperator(restricted_value, NumpyVectorSpace(len(dofs))), dofs
+
 
 class ZeroOperator(OperatorBase):
     """The |Operator| which maps every vector to zero.
