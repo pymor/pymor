@@ -505,6 +505,10 @@ class ZeroOperator(OperatorBase):
         else:
             return self
 
+    def restricted(self, dofs):
+        assert all(0 <= c < self.range.dim for c in dofs)
+        return ZeroOperator(NumpyVectorSpace(0), NumpyVectorSpace(len(dofs))), np.array([], dtype=np.int32)
+
 
 class VectorArrayOperator(OperatorBase):
     """Wraps a |VectorArray| as an |Operator|.
