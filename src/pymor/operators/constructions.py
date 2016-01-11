@@ -614,6 +614,14 @@ class VectorArrayOperator(OperatorBase):
         else:
             return self._array.copy()
 
+    def restricted(self, dofs):
+        assert all(0 <= c < self.range.dim for c in dofs)
+        if not self.transposed:
+            restricted_value = NumpyVectorArray(self._array.components(dofs))
+            return VectorArrayOperator(restricted_value, False), np.arange(self.source.dim, dtype=np.int32)
+        else:
+            raise NotImplementedError
+
 
 class VectorOperator(VectorArrayOperator):
     """Wrap a vector as a vector-like |Operator|.
