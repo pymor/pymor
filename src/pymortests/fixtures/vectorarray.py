@@ -13,6 +13,10 @@ from pymor.vectorarrays.block import BlockVectorArray
 from pymor.vectorarrays.numpy import NumpyVectorArray
 from pymor.vectorarrays.list import NumpyVector, ListVectorArray
 from pymor.vectorarrays.fenics import HAVE_FENICS
+try:
+    from pydealii.pymor.vectorarray import HAVE_DEALII
+except ImportError as _:
+    HAVE_DEALII = False
 
 import os; TRAVIS = os.getenv('TRAVIS') == 'true'
 
@@ -52,6 +56,16 @@ if HAVE_FENICS:
             v.impl[:] = a
         return U
 
+
+if HAVE_DEALII:
+    from pydealii.pymor.vectorarray import DealIIVectorSpace
+
+    def dealii_vector_array_factory(length, dim, seed):
+        U = DealIIVectorSpace(dim).zeros(length)
+        np.random.seed(seed)
+        for v, a in zip(U._list, np.random.random((length, dim))):
+            v.impl[:] = a
+        return U
 
 def vector_array_from_empty_reserve(v, reserve):
     if reserve == 0:
@@ -123,6 +137,9 @@ fenics_vector_array_generators = \
     [lambda args=args: fenics_vector_array_factory(*args) for args in numpy_vector_array_factory_arguments] \
     if HAVE_FENICS else []
 
+dealii_vector_array_generators = \
+    [lambda args=args: dealii_vector_array_factory(*args) for args in numpy_vector_array_factory_arguments] \
+    if HAVE_DEALII else []
 
 numpy_vector_array_pair_with_same_dim_generators = \
     [lambda l=l, l2=l2, d=d, s1=s1, s2=s2: (numpy_vector_array_factory(l, d, s1),
@@ -150,6 +167,11 @@ fenics_vector_array_pair_with_same_dim_generators = \
      for l, l2, d, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_same_dim] \
     if HAVE_FENICS else []
 
+dealii_vector_array_pair_with_same_dim_generators = \
+    [lambda l=l, l2=l2, d=d, s1=s1, s2=s2: (dealii_vector_array_factory(l, d, s1),
+                                            dealii_vector_array_factory(l2, d, s2))
+     for l, l2, d, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_same_dim] \
+    if HAVE_DEALII else []
 
 numpy_vector_array_pair_with_different_dim_generators = \
     [lambda l=l, l2=l2, d1=d1, d2=d2, s1=s1, s2=s2: (numpy_vector_array_factory(l, d1, s1),
