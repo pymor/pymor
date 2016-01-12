@@ -215,7 +215,7 @@ class ExpressionFunction(GenericFunction):
 
     def __reduce__(self):
         return (ExpressionFunction,
-                (self.expression, self.dim_domain, self.shape_range, self.parameter_type, self.name))
+                (self.expression, self.dim_domain, self.shape_range, self.parameter_type, getattr(self, '_name', None)))
 
 
 class LincombFunction(FunctionBase):

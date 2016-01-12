@@ -162,7 +162,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
             if isinstance(J, NumpyVectorArray):
                 J = NumpyMatrixOperator(J.data.T)
             else:
-                J = VectorArrayOperator(J, copy=False)
+                J = VectorArrayOperator(J)
             return Concatenation(J, ComponentProjection(self.source_dofs, self.source),
                                  solver_options=options, name=self.name + '_jacobian')
 
@@ -215,7 +215,7 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
             else:
                 interpolation_coefficients = np.linalg.solve(self.interpolation_matrix, J.data.T).T
         except ValueError:  # this exception occurs when J contains NaNs ...
-            interpolation_coefficients = (np.empty((len(self.projected_collateral_basis), len(self.source_basis_dofs)))
+            interpolation_coefficients = (np.empty((len(self.source_basis_dofs), len(self.projected_collateral_basis)))
                                           + np.nan)
         M = self.projected_collateral_basis.lincomb(interpolation_coefficients)
         if isinstance(M, NumpyVectorArray):

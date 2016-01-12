@@ -235,7 +235,8 @@ class Parameter(dict):
         elif set(mu.keys()) != set(parameter_type.keys()):
             raise ValueError('Provided parameter with keys {} does not match parameter type {}.'
                              .format(mu.keys(), parameter_type))
-        for k, v in mu.iteritems():
+
+        def parse_value(k, v):
             if not isinstance(v, np.ndarray):
                 v = np.array(v)
                 try:
@@ -243,11 +244,12 @@ class Parameter(dict):
                 except ValueError:
                     raise ValueError('Shape mismatch for parameter component {}: got {}, expected {}'
                                      .format(k, v.shape, parameter_type[k]))
-                mu[k] = v
             if v.shape != parameter_type[k]:
                 raise ValueError('Shape mismatch for parameter component {}: got {}, expected {}'
                                  .format(k, v.shape, parameter_type[k]))
-        return cls(mu)
+            return v
+
+        return cls({k: parse_value(k, v) for k, v in mu.iteritems()})
 
     def allclose(self, mu):
         """Compare to |Parameters| using :meth:`~pymor.tools.floatcmp.float_cmp_all`.

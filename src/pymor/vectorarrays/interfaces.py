@@ -131,13 +131,24 @@ class VectorArrayInterface(BasicInterface):
         return VectorSpace(type(self), self.subtype)
 
     @abstractmethod
-    def copy(self, ind=None):
+    def copy(self, ind=None, deep=False):
         """Returns a copy of a subarray.
+
+        All |VectorArray| implementations in pyMOR have copy-on-write semantics:
+        if not specified otherwise by setting `deep` to `True`, the returned
+        copy will hold a handle to the same array data as the original array,
+        and a deep copy of the data will only be performed when one of the arrays
+        is modified.
+
+        Note that for |NumpyVectorArray|, a deep copy is always performed when only
+        some vectors in array are copied (i.e. `ind` is specified).
 
         Parameters
         ----------
         ind
             Indices of the vectors that are to be copied (see class documentation).
+        deep
+            Ensure that an actual copy of the array data is made (see above).
 
         Returns
         -------

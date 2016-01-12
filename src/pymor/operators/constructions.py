@@ -15,6 +15,7 @@ from itertools import izip
 import numpy as np
 
 from pymor.core.defaults import defaults_sid, defaults
+from pymor.core.exceptions import InversionError
 from pymor.core.interfaces import ImmutableInterface
 from pymor.operators.basic import OperatorBase
 from pymor.operators.interfaces import OperatorInterface
@@ -259,6 +260,13 @@ class Concatenation(OperatorBase):
         return self.first.apply_adjoint(self.second.apply_adjoint(U, ind=ind, mu=mu, range_product=range_product),
                                         mu=mu, source_product=source_product)
 
+    def jacobian(self, U, mu=None):
+        assert len(U) == 1
+        V = self.first.apply(U, mu=mu)
+        options = self.solver_options.get('jacobian') if self.solver_options else None
+        return Concatenation(self.second.jacobian(V, mu=mu), self.first.jacobian(U, mu=mu),
+                             solver_options=options, name=self.name + '_jacobian')
+
     def restricted(self, dofs):
         restricted_second, second_source_dofs = self.second.restricted(dofs)
         restricted_first, first_source_dofs = self.first.restricted(second_source_dofs)
@@ -351,6 +359,23 @@ class IdentityOperator(OperatorBase):
         else:
             return PrU
 
+    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
+        assert V in self.range
+        return V.copy(ind=ind)
+
+    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None, least_squares=False):
+        if source_product or range_product:
+            return super(IdentityOperator, self).apply_inverse_adjoint(U, ind=ind, mu=mu,
+                                                                       source_product=source_product,
+                                                                       range_product=range_product,
+                                                                       least_squares=least_squares)
+        else:
+            assert U in self.source
+            return U.copy(ind=ind)
+
+    def assemble(self, mu=None):
+        return self
+
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         if all(isinstance(op, IdentityOperator) for op in operators):
             assert all(op.source == operators[0].source for op in operators)
@@ -359,6 +384,10 @@ class IdentityOperator(OperatorBase):
             return operators[1].assemble_lincomb(operators[1:] + [operators[0]],
                                                  coefficients[1:] + [coefficients[0]],
                                                  solver_options=solver_options, name=name)
+
+    def restricted(self, dofs):
+        assert all(0 <= c < self.range.dim for c in dofs)
+        return IdentityOperator(NumpyVectorSpace(len(dofs))), dofs
 
 
 class ConstantOperator(OperatorBase):
@@ -371,25 +400,23 @@ class ConstantOperator(OperatorBase):
         returned by the operator.
     source
         Source |VectorSpace| of the operator.
-    copy
-        If `True`, store a copy of `vector` instead of `vector`
-        itself.
     name
         Name of the operator.
     """
 
     linear = False
 
-    def __init__(self, value, source, copy=True, name=None):
+    def __init__(self, value, source, name=None):
         assert isinstance(value, VectorArrayInterface)
         assert len(value) == 1
         self.source = source
         self.range = value.space
         self.name = name
-        self._value = value.copy() if copy else value
+        self._value = value.copy()
 
     def apply(self, U, ind=None, mu=None):
         assert U in self.source
+        assert U.check_ind(ind)
         count = len(U) if ind is None else 1 if isinstance(ind, Number) else len(ind)
         return self._value.copy(ind=([0] * count))
 
@@ -410,11 +437,15 @@ class ConstantOperator(OperatorBase):
         else:
             projected_value = self._value
         if source_basis is None:
-            return ConstantOperator(projected_value, self.source, copy=False,
-                                    name=self.name + '_projected')
+            return ConstantOperator(projected_value, self.source, name=self.name + '_projected')
         else:
-            return ConstantOperator(projected_value, NumpyVectorSpace(len(source_basis)), copy=False,
+            return ConstantOperator(projected_value, NumpyVectorSpace(len(source_basis)),
                                     name=self.name + '_projected')
+
+    def restricted(self, dofs):
+        assert all(0 <= c < self.range.dim for c in dofs)
+        restricted_value = NumpyVectorArray(self._value.components(dofs))
+        return ConstantOperator(restricted_value, NumpyVectorSpace(len(dofs))), dofs
 
 
 class ZeroOperator(OperatorBase):
@@ -441,8 +472,23 @@ class ZeroOperator(OperatorBase):
 
     def apply(self, U, ind=None, mu=None):
         assert U in self.source
+        assert U.check_ind(ind)
         count = len(U) if ind is None else 1 if isinstance(ind, Number) else len(ind)
         return self.range.zeros(count)
+
+    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
+        assert V in self.range
+        assert V.check_ind(ind)
+        if not least_squares:
+            raise InversionError
+        return self.source.zeros(V.len_ind(ind))
+
+    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None, least_squares=False):
+        assert U in self.source
+        assert U.check_ind(ind)
+        if not least_squares:
+            raise InversionError
+        return self.range.zeros(U.len_ind(ind))
 
     def projected(self, range_basis, source_basis, product=None, name=None):
         assert source_basis is None or source_basis in self.source
@@ -454,7 +500,7 @@ class ZeroOperator(OperatorBase):
                                        name=self.name + '_projected')
         else:
             new_source = NumpyVectorSpace(len(source_basis)) if source_basis is not None else self.source
-            new_range = NumpyVectorSpace(len(range_basis)) if range_basis is not None else self.source
+            new_range = NumpyVectorSpace(len(range_basis)) if range_basis is not None else self.range
             return ZeroOperator(new_source, new_range, name=self.name + '_projected')
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
@@ -464,6 +510,10 @@ class ZeroOperator(OperatorBase):
                                                  name=name)
         else:
             return self
+
+    def restricted(self, dofs):
+        assert all(0 <= c < self.range.dim for c in dofs)
+        return ZeroOperator(NumpyVectorSpace(0), NumpyVectorSpace(len(dofs))), np.array([], dtype=np.int32)
 
 
 class VectorArrayOperator(OperatorBase):
@@ -483,16 +533,14 @@ class VectorArrayOperator(OperatorBase):
         The |VectorArray| which is to be treated as an operator.
     transposed
         See description above.
-    copy
-        If `True`, store a copy of `array` instead of `array` itself.
     name
         The name of the operator.
     """
 
     linear = True
 
-    def __init__(self, array, transposed=False, copy=True, name=None):
-        self._array = array.copy() if copy else array
+    def __init__(self, array, transposed=False, name=None):
+        self._array = array.copy()
         if transposed:
             self.source = array.space
             self.range = NumpyVectorSpace(len(array))
@@ -535,6 +583,16 @@ class VectorArrayOperator(OperatorBase):
             else:
                 return ATPrU
 
+    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None, least_squares=False):
+        if source_product or range_product:
+            return super(VectorArrayOperator, self).apply_inverse_adjoint(U, ind, mu=mu,
+                                                                          source_product=source_product,
+                                                                          range_product=range_product,
+                                                                          least_squares=least_squares)
+        else:
+            adjoint_op = VectorArrayOperator(self._array, transposed=not self.transposed)
+            return adjoint_op.apply_inverse(U, ind=ind, mu=mu, least_squares=least_squares)
+
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
 
         transposed = operators[0].transposed
@@ -548,13 +606,21 @@ class VectorArrayOperator(OperatorBase):
             array = operators[0]._array * coefficients[0]
         for op, c in izip(operators[1:], coefficients[1:]):
             array.axpy(c, op._array)
-        return VectorArrayOperator(array, transposed=transposed, copy=False, name=name)
+        return VectorArrayOperator(array, transposed=transposed, name=name)
 
     def as_vector(self, mu=None):
         if len(self._array) != 1:
             raise TypeError('This operator does not represent a vector or linear functional.')
         else:
             return self._array.copy()
+
+    def restricted(self, dofs):
+        assert all(0 <= c < self.range.dim for c in dofs)
+        if not self.transposed:
+            restricted_value = NumpyVectorArray(self._array.components(dofs))
+            return VectorArrayOperator(restricted_value, False), np.arange(self.source.dim, dtype=np.int32)
+        else:
+            raise NotImplementedError
 
 
 class VectorOperator(VectorArrayOperator):
@@ -574,9 +640,6 @@ class VectorOperator(VectorArrayOperator):
     ----------
     vector
         |VectorArray| of length 1 containing the vector `v`.
-    copy
-        If `True`, store a copy of `vector` instead of `vector`
-        itself.
     name
         Name of the operator.
     """
@@ -584,10 +647,10 @@ class VectorOperator(VectorArrayOperator):
     linear = True
     source = NumpyVectorSpace(1)
 
-    def __init__(self, vector, copy=True, name=None):
+    def __init__(self, vector, name=None):
         assert isinstance(vector, VectorArrayInterface)
         assert len(vector) == 1
-        super(VectorOperator, self).__init__(vector, transposed=False, copy=copy, name=name)
+        super(VectorOperator, self).__init__(vector, transposed=False, name=name)
 
 
 class VectorFunctional(VectorArrayOperator):
@@ -615,9 +678,6 @@ class VectorFunctional(VectorArrayOperator):
         |VectorArray| of length 1 containing the vector `v`.
     product
         |Operator| representing the scalar product to use.
-    copy
-        If `True`, store a copy of `vector` instead of `vector`
-        itself.
     name
         Name of the operator.
     """
@@ -625,14 +685,14 @@ class VectorFunctional(VectorArrayOperator):
     linear = True
     range = NumpyVectorSpace(1)
 
-    def __init__(self, vector, product=None, copy=True, name=None):
+    def __init__(self, vector, product=None, name=None):
         assert isinstance(vector, VectorArrayInterface)
         assert len(vector) == 1
         assert product is None or isinstance(product, OperatorInterface) and vector in product.source
         if product is None:
-            super(VectorFunctional, self).__init__(vector, transposed=True, copy=copy, name=name)
+            super(VectorFunctional, self).__init__(vector, transposed=True, name=name)
         else:
-            super(VectorFunctional, self).__init__(product.apply(vector), transposed=True, copy=False, name=name)
+            super(VectorFunctional, self).__init__(product.apply(vector), transposed=True, name=name)
 
 
 class FixedParameterOperator(OperatorBase):
@@ -668,8 +728,18 @@ class FixedParameterOperator(OperatorBase):
     def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
         return self.operator.apply_inverse(V, ind=ind, mu=self.mu, least_squares=least_squares)
 
+    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None, least_squares=False):
+        return self.operator.apply_inverse_adjoint(U, ind=ind, mu=self.mu,
+                                                   source_product=source_product,
+                                                   range_product=range_product,
+                                                   least_squares=least_squares)
+
     def jacobian(self, U, mu=None):
         return self.operator.jacobian(U, mu=self.mu)
+
+    def restricted(self, dofs):
+        op, source_dofs = self.operator.restricted(dofs)
+        return self.with_(operator=op), source_dofs
 
 
 class AdjointOperator(OperatorBase):
@@ -689,11 +759,18 @@ class AdjointOperator(OperatorBase):
         w.r.t. which to take the adjoint.
     name
         If not `None`, name of the operator.
+    with_apply_inverse
+        If `True`, provide own :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse`
+        and :meth:`~pymor.operator.interfaces.OperatorInterface.apply_inverse_adjoint`
+        implementations by calling these methods on the given `operator`.
+        (Is set to `False` in the default implementation of
+        and :meth:`~pymor.operator.interfaces.OperatorInterface.apply_inverse_adjoint`.)
     """
 
     linear = True
 
-    def __init__(self, operator, source_product=None, range_product=None, name=None):
+    def __init__(self, operator, source_product=None, range_product=None, name=None,
+                 with_apply_inverse=True):
         assert isinstance(operator, OperatorInterface)
         assert operator.linear
         self.build_parameter_type(inherits=(operator,))
@@ -703,6 +780,7 @@ class AdjointOperator(OperatorBase):
         self.source_product = source_product
         self.range_product = range_product
         self.name = name or operator.name + '_adjoint'
+        self.with_apply_inverse=with_apply_inverse
 
     def apply(self, U, ind=None, mu=None):
         return self.operator.apply_adjoint(U, ind=ind, mu=mu,
@@ -726,6 +804,39 @@ class AdjointOperator(OperatorBase):
                 U = source_product.apply_inverse(U)
 
         return U
+
+    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
+        if not self.with_apply_inverse:
+            return super(AdjointOperator, self).apply_inverse(V, ind=ind, mu=mu, least_squares=least_squares)
+
+        return self.operator.apply_inverse_adjoint(V, ind=ind, mu=mu,
+                                                   source_product=self.source_product,
+                                                   range_product=self.range_product,
+                                                   least_squares=least_squares)
+
+    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None, least_squares=False):
+        if not self.with_apply_inverse:
+            return super(AdjointOperator, self).apply_inverse_adjoint(U, ind=ind, mu=mu,
+                                                                      source_product=source_product,
+                                                                      range_product=range_product,
+                                                                      least_squares=least_squares)
+
+        assert U in self.source
+        if source_product and source_product != self.range_product:
+            U = source_product.apply(U, ind=ind)
+            ind = None
+        if self.range_product and source_product != self.range_product:
+            U = self.range_product.apply_inverse(U, ind=ind)
+            ind = None
+
+        V = self.operator.apply_inverse(U, ind=ind, mu=mu, least_squares=least_squares)
+
+        if self.source_product and self.source_product != range_product:
+            V = self.source_product.apply(V)
+        if range_product and self.source_product != range_product:
+            V = range_product.apply_inverse(V)
+
+        return V
 
     def projected(self, range_basis, source_basis, product=None, name=None):
         if range_basis is not None:
@@ -785,7 +896,6 @@ class SelectionOperator(OperatorBase):
 
         self.name = name
         self.build_parameter_type(inherits=list(operators) + [parameter_functional])
-        self._try_assemble = not self.parametric
 
         self.boundaries = tuple(boundaries)
         self.parameter_functional = parameter_functional
@@ -796,6 +906,11 @@ class SelectionOperator(OperatorBase):
             if self.boundaries[i] >= value:
                 return i
         return len(self.boundaries)
+
+    def assemble(self, mu=None):
+        mu = self.parse_parameter(mu)
+        op = self.operators[self._get_operator_number(mu)]
+        return op.assemble(mu)
 
     def apply(self, U, ind=None, mu=None):
         mu = self.parse_parameter(mu)

@@ -24,6 +24,7 @@ try:
     import cPickle as pickle
 except ImportError:
     import pickle as pickle
+import copy_reg
 
 
 dump = partial(pickle.dump, protocol=-1)
@@ -124,24 +125,17 @@ def loads_function(s):
     return r
 
 
-class FunctionPicklingWrapper(object):
-    """Serializable function container, using :func:`dumps_function` if necessary."""
+def _function_pickling_handler(f):
+    if f.__module__ != '__main__':
+        try:
+            copy_reg.dispatch_table.pop(FunctionType)
+            return (loads, (dumps(f),))
+        except PicklingError:
+            return (loads_function, (dumps_function(f),))
+        finally:
+            copy_reg.dispatch_table[FunctionType] = _function_pickling_handler
+    else:
+        return (loads_function, (dumps_function(f),))
 
-    def __init__(self, f):
-        self.function = f
 
-    def __getstate__(self):
-        f = self.function
-        if f.__module__ != '__main__':
-            try:
-                return dumps(f)
-            except PicklingError:
-                return (dumps_function(f),)
-        else:
-            return (dumps_function(f),)
-
-    def __setstate__(self, f):
-        if type(f) == tuple:
-            self.function = loads_function(f[0])
-        else:
-            self.function = loads(f)
+copy_reg.pickle(FunctionType, _function_pickling_handler)

@@ -47,6 +47,23 @@ class NumpyVectorArray(VectorArrayInterface):
             assert self._array.ndim == 1
             self._array = np.reshape(self._array, (1, -1))
         self._len = len(self._array)
+        self._refcount = [1]
+
+    @classmethod
+    def from_file(cls, path, key=None, single_vector=False, transpose=False):
+        assert not (single_vector and transpose)
+        from pymor.tools.io import load_matrix
+        array = load_matrix(path, key=key)
+        assert isinstance(array, np.ndarray)
+        assert array.ndim <= 2
+        if array.ndim == 1:
+            array = array.reshape((1, -1))
+        if single_vector:
+            assert array.shape[0] == 1 or array.shape[1] == 1
+            array = array.reshape((1, -1))
+        if transpose:
+            array = array.T
+        return cls(array)
 
     @classmethod
     def make_array(cls, subtype=None, count=0, reserve=0):
@@ -73,8 +90,15 @@ class NumpyVectorArray(VectorArrayInterface):
     def dim(self):
         return self._array.shape[1]
 
-    def copy(self, ind=None):
+    def copy(self, ind=None, deep=False):
         assert self.check_ind(ind)
+
+        if not deep and ind is None:
+            c = NumpyVectorArray(self._array, copy=False)
+            c._len = self._len
+            c._refcount = self._refcount
+            self._refcount[0] += 1
+            return c
 
         if NUMPY_INDEX_QUIRK and self._len == 0:
             return NumpyVectorArray(self._array[:0], copy=True)
@@ -92,6 +116,11 @@ class NumpyVectorArray(VectorArrayInterface):
         assert self.dim == other.dim
         assert other is not self or not remove_from_other
 
+        if self._refcount[0] > 1:
+            self._deep_copy()
+        if remove_from_other and other._refcount[0] > 1:
+            other._deep_copy()
+
         if NUMPY_INDEX_QUIRK and other._len == 0:
             o_ind = None
 
@@ -100,7 +129,7 @@ class NumpyVectorArray(VectorArrayInterface):
             if len_other <= self._array.shape[0] - self._len:
                 if self._array.dtype != other._array.dtype:
                     self._array = self._array.astype(np.promote_types(self._array.dtype, other._array.dtype))
-                self._array[self._len:self._len + len_other] = other._array
+                self._array[self._len:self._len + len_other] = other._array[:len_other]
             else:
                 self._array = np.vstack((self._array[:self._len], other._array[:len_other]))
             self._len += len_other
@@ -123,6 +152,9 @@ class NumpyVectorArray(VectorArrayInterface):
     def remove(self, ind=None):
         assert self.check_ind(ind)
 
+        if self._refcount[0] > 1:
+            self._deep_copy()
+
         if ind is None:
             self._array = np.zeros((0, self.dim))
             self._len = 0
@@ -144,6 +176,11 @@ class NumpyVectorArray(VectorArrayInterface):
         assert other.check_ind(o_ind)
         assert self.dim == other.dim
         assert other is not self or not remove_from_other
+
+        if self._refcount[0] > 1:
+            self._deep_copy()
+        if remove_from_other and other._refcount[0] > 1:
+            other._deep_copy()
 
         if NUMPY_INDEX_QUIRK:
             if self._len == 0 and hasattr(ind, '__len__'):
@@ -185,13 +222,17 @@ class NumpyVectorArray(VectorArrayInterface):
         assert isinstance(alpha, Number) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
 
+        if self._refcount[0] > 1:
+            self._deep_copy()
+
         if NUMPY_INDEX_QUIRK and self._len == 0:
             return
 
         if isinstance(alpha, np.ndarray) and not isinstance(ind, Number):
             alpha = alpha[:, np.newaxis]
 
-        alpha_dtype = type(alpha) if isinstance(alpha, Number) else alpha.dtype
+        alpha_type = type(alpha)
+        alpha_dtype = alpha.dtype if alpha_type is np.ndarray else alpha_type
         if self._array.dtype != alpha_dtype:
             self._array = self._array.astype(np.promote_types(self._array.dtype, alpha_dtype))
 
@@ -208,6 +249,9 @@ class NumpyVectorArray(VectorArrayInterface):
         assert isinstance(alpha, Number) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
 
+        if self._refcount[0] > 1:
+            self._deep_copy()
+
         if NUMPY_INDEX_QUIRK:
             if self._len == 0 and hasattr(ind, '__len__'):
                 ind = None
@@ -219,7 +263,8 @@ class NumpyVectorArray(VectorArrayInterface):
 
         B = x._array[:x._len] if x_ind is None else x._array[x_ind]
 
-        alpha_dtype = type(alpha) if isinstance(alpha, Number) else alpha.dtype
+        alpha_type = type(alpha)
+        alpha_dtype = alpha.dtype if alpha_type is np.ndarray else alpha_type
         if self._array.dtype != alpha_dtype:
             self._array = self._array.astype(np.promote_types(self._array.dtype, alpha_dtype))
 
@@ -263,7 +308,10 @@ class NumpyVectorArray(VectorArrayInterface):
         B = other._array[:other._len] if o_ind is None else \
             other._array[o_ind] if hasattr(o_ind, '__len__') else other._array[o_ind:o_ind + 1]
 
-        return A.dot(B.conj().T)
+        if B.dtype in _complex_dtypes:
+            return A.dot(B.conj().T)
+        else:
+            return A.dot(B.T)
 
     def pairwise_dot(self, other, ind=None, o_ind=None):
         assert self.check_ind(ind)
@@ -282,7 +330,10 @@ class NumpyVectorArray(VectorArrayInterface):
         B = other._array[:other._len] if o_ind is None else \
             other._array[o_ind] if hasattr(o_ind, '__len__') else other._array[o_ind:o_ind + 1]
 
-        return np.sum(A * B.conj(), axis=1)
+        if B.dtype in _complex_dtypes:
+            return np.sum(A * B.conj(), axis=1)
+        else:
+            return np.sum(A * B, axis=1)
 
     def lincomb(self, coefficients, ind=None):
         assert self.check_ind(ind)
@@ -380,7 +431,18 @@ class NumpyVectorArray(VectorArrayInterface):
     def __repr__(self):
         return 'NumpyVectorArray({})'.format(self._array[:self._len].__str__())
 
+    def __del__(self):
+        self._refcount[0] -= 1
+
+    def _deep_copy(self):
+        self._array = self._array.copy()  # copy the array data
+        self._refcount[0] -= 1            # decrease refcount for original array
+        self._refcount = [1]              # create new reference counter
+
 
 def NumpyVectorSpace(dim):
     """Shorthand for |VectorSpace| `(NumpyVectorArray, dim)`."""
     return VectorSpace(NumpyVectorArray, dim)
+
+
+_complex_dtypes = (np.complex64, np.complex128)

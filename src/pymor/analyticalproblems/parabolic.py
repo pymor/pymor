@@ -8,20 +8,22 @@
 from __future__ import absolute_import, division, print_function
 
 from pymor.core.interfaces import ImmutableInterface
+from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.domaindescriptions.basic import RectDomain
 from pymor.functions.basic import ConstantFunction
 
 
-class EllipticProblem(ImmutableInterface):
-    """Affinely decomposed linear elliptic problem.
+class ParabolicProblem(ImmutableInterface):
+    """Affinely decomposed linear parabolic problem.
 
     The problem consists in solving ::
 
-    |        K
-    |  - ∇ ⋅ ∑  θ_k(μ) ⋅ d_k(x) ∇ u(x, μ) = f(x, μ)
-    |       k=0
+    |                       K
+    |  ∂_t u(x, t, μ) - ∇ ⋅ ∑  θ_k(μ) ⋅ d_k(x) ∇ u(x, t, μ) = f(x, t, μ)
+    |                      k=0
+    |                                            u(x, 0, μ) = u_0(x, μ)
 
-    for u.
+    for u with t in [0, T], x in Ω.
 
     Parameters
     ----------
@@ -43,6 +45,10 @@ class EllipticProblem(ImmutableInterface):
         |Function| providing the Neumann boundary values in global coordinates.
     parameter_space
         |ParameterSpace| for the problem.
+    initial_data
+        |Function| providing the initial values in global coordinates.
+    T
+        The end time T.
     name
         Name of the problem.
 
@@ -54,24 +60,42 @@ class EllipticProblem(ImmutableInterface):
     diffusion_functionals
     dirichlet_data
     neumann_data
+    initial_data
+    T
     """
 
     def __init__(self, domain=RectDomain(), rhs=ConstantFunction(dim_domain=2),
-                 diffusion_functions=(ConstantFunction(dim_domain=2),),
-                 diffusion_functionals=None,
-                 dirichlet_data=None, neumann_data=None,
-                 parameter_space=None, name=None):
+                 diffusion_functions=(ConstantFunction(dim_domain=2),), diffusion_functionals=None, dirichlet_data=None,
+                 neumann_data=None, initial_data=ConstantFunction(dim_domain=2), T=1, parameter_space=None, name=None):
+
         assert isinstance(diffusion_functions, (tuple, list))
         assert diffusion_functionals is None and len(diffusion_functions) == 1 \
             or len(diffusion_functionals) == len(diffusion_functions)
         assert rhs.dim_domain == diffusion_functions[0].dim_domain
         assert dirichlet_data is None or dirichlet_data.dim_domain == diffusion_functions[0].dim_domain
         assert neumann_data is None or neumann_data.dim_domain == diffusion_functions[0].dim_domain
+        assert initial_data is None or initial_data.dim_domain == diffusion_functions[0].dim_domain
         self.domain = domain
         self.rhs = rhs
         self.diffusion_functions = diffusion_functions
         self.diffusion_functionals = diffusion_functionals
         self.dirichlet_data = dirichlet_data
         self.neumann_data = neumann_data
+        self.initial_data = initial_data
+        self.T = T
         self.parameter_space = parameter_space
         self.name = name
+
+    @classmethod
+    def from_elliptic(cls, elliptic_problem, initial_data=ConstantFunction(dim_domain=2), T=1):
+        assert isinstance(elliptic_problem, EllipticProblem)
+
+        return cls(elliptic_problem.domain, elliptic_problem.rhs, elliptic_problem.diffusion_functions,
+                   elliptic_problem.diffusion_functionals, elliptic_problem.dirichlet_data,
+                   elliptic_problem.neumann_data, initial_data, T, elliptic_problem.parameter_space,
+                   'ParabolicProblem_from_{}'.format(elliptic_problem.name))
+
+    def elliptic_part(self):
+        return EllipticProblem(self.domain, self.rhs, self.diffusion_functions, self.diffusion_functionals,
+                               self.dirichlet_data, self.neumann_data, self.parameter_space,
+                               '{}_elliptic_part'.format(self.name))

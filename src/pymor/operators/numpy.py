@@ -190,6 +190,12 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         self._matrix = matrix
         self.sparse = issparse(matrix)
 
+    @classmethod
+    def from_file(cls, path, key=None, solver_options=None, name=None):
+        from pymor.tools.io import load_matrix
+        matrix = load_matrix(path, key=key)
+        return cls(matrix, solver_options=solver_options, name=name or key or path)
+
     def _assemble(self, mu=None):
         pass
 
@@ -306,24 +312,25 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         if not all(isinstance(op, (NumpyMatrixOperator, ZeroOperator, IdentityOperator)) for op in operators):
             return None
 
+        common_mat_dtype = reduce(np.promote_types,
+                                  (op._matrix.dtype for op in operators if hasattr(op, '_matrix')))
+        common_coef_dtype = reduce(np.promote_types, (type(c.real if c.imag == 0 else c) for c in coefficients))
+        common_dtype = np.promote_types(common_mat_dtype, common_coef_dtype)
+
         if coefficients[0] == 1:
-            matrix = operators[0]._matrix.copy()
+            matrix = operators[0]._matrix.astype(common_dtype)
         else:
             if coefficients[0].imag == 0:
                 matrix = operators[0]._matrix * coefficients[0].real
             else:
                 matrix = operators[0]._matrix * coefficients[0]
-
-        common_mat_dtype = reduce(np.promote_types, (op._matrix.dtype for op in operators))
-        common_coef_dtype = reduce(np.promote_types, (type(c.real if c.imag == 0 else c) for c in coefficients))
-        common_dtype = np.promote_types(common_mat_dtype, common_coef_dtype)
-        if matrix.dtype != common_dtype:
-            matrix = matrix.astype(common_dtype)
+            if matrix.dtype != common_dtype:
+                matrix = matrix.astype(common_dtype)
 
         for op, c in izip(operators[1:], coefficients[1:]):
-            if isinstance(op, ZeroOperator):
+            if type(op) is ZeroOperator:
                 continue
-            elif isinstance(op, IdentityOperator):
+            elif type(op) is IdentityOperator:
                 if operators[0].sparse:
                     try:
                         matrix += (scipy.sparse.eye(matrix.shape[0]) * c)

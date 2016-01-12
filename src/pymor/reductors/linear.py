@@ -167,12 +167,12 @@ class StationaryAffineLinearReducedEstimator(ImmutableInterface):
         if not d.rhs.parametric:
             CR = np.ones(1)
         else:
-            CR = d.rhs.evaluate_coefficients(mu)
+            CR = np.array(d.rhs.evaluate_coefficients(mu))
 
         if not d.operator.parametric:
             CO = np.ones(1)
         else:
-            CO = d.operator.evaluate_coefficients(mu)
+            CO = np.array(d.operator.evaluate_coefficients(mu))
 
         C = np.hstack((CR, np.dot(CO[..., np.newaxis], U.data).ravel()))
 

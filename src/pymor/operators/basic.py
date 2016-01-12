@@ -127,6 +127,7 @@ class OperatorBase(OperatorInterface):
                 raise e
         else:
             from pymor.algorithms.newton import newton
+            from pymor.core.exceptions import NewtonError
             assert V.check_ind(ind)
 
             options = self.solver_options
@@ -147,7 +148,10 @@ class OperatorBase(OperatorInterface):
                    ind)
             R = V.empty(reserve=len(ind))
             for i in ind:
-                R.append(newton(self, V.copy(i), **options)[0])
+                try:
+                    R.append(newton(self, V.copy(i), **options)[0])
+                except NewtonError as e:
+                    raise InversionError(e)
             return R
 
     def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None,
@@ -173,7 +177,7 @@ class OperatorBase(OperatorInterface):
             # use generic solver for the adjoint operator
             from pymor.operators.constructions import AdjointOperator
             options = {'inverse': self.solver_options.get('inverse_adjoint') if self.solver_options else None}
-            adjoint_op = AdjointOperator(self.with_(solver_options=options))
+            adjoint_op = AdjointOperator(self.with_(solver_options=options), with_apply_inverse=False)
             return adjoint_op.apply_inverse(U, ind=ind, mu=mu, least_squares=least_squares)
 
     def as_vector(self, mu=None):
@@ -202,7 +206,7 @@ class OperatorBase(OperatorInterface):
                         return NumpyMatrixOperator(V.data, name=name)
                     else:
                         from pymor.operators.constructions import VectorArrayOperator
-                        return VectorArrayOperator(V, transposed=True, copy=False, name=name)
+                        return VectorArrayOperator(V, transposed=True, name=name)
             else:
                 if range_basis is None:
                     V = self.apply(source_basis)
@@ -211,7 +215,7 @@ class OperatorBase(OperatorInterface):
                         return NumpyMatrixOperator(V.data.T, name=name)
                     else:
                         from pymor.operators.constructions import VectorArrayOperator
-                        return VectorArrayOperator(V, transposed=False, copy=False, name=name)
+                        return VectorArrayOperator(V, transposed=False, name=name)
                 elif product is None:
                     from pymor.operators.numpy import NumpyMatrixOperator
                     return NumpyMatrixOperator(self.apply2(range_basis, source_basis), name=name)
@@ -221,9 +225,7 @@ class OperatorBase(OperatorInterface):
                     return NumpyMatrixOperator(product.apply2(range_basis, V), name=name)
         else:
             self.logger.warn('Using inefficient generic projection operator')
-            # Since the bases are not immutable and we do not own them,
-            # the ProjectedOperator will have to create copies of them.
-            return ProjectedOperator(self, range_basis, source_basis, product, copy=True, name=name)
+            return ProjectedOperator(self, range_basis, source_basis, product, name=name)
 
 
 class ProjectedOperator(OperatorBase):
@@ -243,16 +245,13 @@ class ProjectedOperator(OperatorBase):
         See :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
     product
         See :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
-    copy
-        If `True`, make a copy of the provided `source_basis` and `range_basis`. This is
-        usually necessary, as |VectorArrays| are not immutable.
     name
         Name of the projected operator.
     """
 
     linear = False
 
-    def __init__(self, operator, range_basis, source_basis, product=None, copy=True, solver_options=None, name=None):
+    def __init__(self, operator, range_basis, source_basis, product=None, solver_options=None, name=None):
         assert isinstance(operator, OperatorInterface)
         assert source_basis is None or source_basis in operator.source
         assert range_basis is None or range_basis in operator.range
@@ -267,8 +266,8 @@ class ProjectedOperator(OperatorBase):
         self.solver_options = solver_options
         self.name = name
         self.operator = operator
-        self.source_basis = source_basis.copy() if source_basis is not None and copy else source_basis
-        self.range_basis = range_basis.copy() if range_basis is not None and copy else range_basis
+        self.source_basis = source_basis.copy()
+        self.range_basis = range_basis.copy()
         self.linear = operator.linear
         self.product = product
 
@@ -304,7 +303,7 @@ class ProjectedOperator(OperatorBase):
             else self.source_basis.copy(ind=range(dim_source))
         range_basis = self.range_basis if dim_range is None \
             else self.range_basis.copy(ind=range(dim_range))
-        return ProjectedOperator(self.operator, range_basis, source_basis, product=None, copy=False,
+        return ProjectedOperator(self.operator, range_basis, source_basis, product=None,
                                  solver_options=self.solver_options, name=name)
 
     def jacobian(self, U, mu=None):

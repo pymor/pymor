@@ -22,44 +22,44 @@ Arguments:
 
 
 Options:
-  -h, --help             Show this message.
+  -h, --help                 Show this message.
 
-  --estimator-norm=NORM  Norm (trivial, h1) in which to calculate the residual
-                         [default: h1].
+  --estimator-norm=NORM      Norm (trivial, h1) in which to calculate the residual
+                             [default: h1].
 
-  --without-estimator    Do not use error estimator for basis generation.
+  --without-estimator        Do not use error estimator for basis generation.
 
-  --extension-alg=ALG    Basis extension algorithm (trivial, gram_schmidt, h1_gram_schmidt)
-                         to be used [default: h1_gram_schmidt].
+  --extension-alg=ALG        Basis extension algorithm (trivial, gram_schmidt, h1_gram_schmidt)
+                             to be used [default: h1_gram_schmidt].
 
-  --grid=NI              Use grid with 2*NI*NI elements [default: 100].
+  --grid=NI                  Use grid with 2*NI*NI elements [default: 100].
 
-  --pickle=PREFIX        Pickle reduced discretizaion, as well as reconstructor and high-dimensional
-                         discretization to files with this prefix.
+  --pickle=PREFIX            Pickle reduced discretizaion, as well as reconstructor and high-dimensional
+                             discretization to files with this prefix.
 
-  -p, --plot-err         Plot error.
+  -p, --plot-err             Plot error.
 
-  --plot-solutions       Plot some example solutions.
+  --plot-solutions           Plot some example solutions.
 
-  --plot-error-sequence  Plot reduction error vs. basis size.
+  --plot-error-sequence      Plot reduction error vs. basis size.
 
-  --reductor=RED         Reductor (error estimator) to choose (traditional, residual_basis)
-                         [default: residual_basis]
+  --reductor=RED             Reductor (error estimator) to choose (traditional, residual_basis)
+                             [default: residual_basis]
 
-  --test=COUNT           Use COUNT snapshots for stochastic error estimation
-                         [default: 10].
+  --test=COUNT               Use COUNT snapshots for stochastic error estimation
+                             [default: 10].
 
-  --num-engines=COUNT    If positive, the number of IPython cluster engines to use for
-                         parallel greedy search. If zero, no parallelization is performed.
-                         [default: 0]
+  --ipython-engines=COUNT    If positive, the number of IPython cluster engines to use for
+                             parallel greedy search. If zero, no parallelization is performed.
+                             [default: 0]
 
-  --profile=PROFILE      IPython profile to use for parallelization.
+  --ipython-profile=PROFILE  IPython profile to use for parallelization.
 
-  --cache-region=REGION  Name of cache region to use for caching solution snapshots
-                         (NONE, MEMORY, DISK, PERSISTENT)
-                         [default: NONE]
+  --cache-region=REGION      Name of cache region to use for caching solution snapshots
+                             (NONE, MEMORY, DISK, PERSISTENT)
+                             [default: NONE]
 
-  --list-vector-array    Solve using ListVectorArray[NumpyVector] instead of NumpyVectorArray.
+  --list-vector-array        Solve using ListVectorArray[NumpyVector] instead of NumpyVectorArray.
 """
 
 from __future__ import absolute_import, division, print_function
@@ -69,7 +69,6 @@ import time
 from functools import partial
 
 import numpy as np
-import matplotlib.pyplot as plt
 from docopt import docopt
 
 from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension
@@ -78,11 +77,10 @@ from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
 from pymor.core.pickle import dump
 from pymor.discretizers.elliptic import discretize_elliptic_cg
 from pymor.parameters.functionals import ExpressionParameterFunctional
-from pymor.parallel.ipython import new_ipcluster_pool
+from pymor.parallel.default import new_parallel_pool
 from pymor.reductors.basic import reduce_to_subbasis
 from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor.reductors.stationary import reduce_stationary_coercive
-from pymor.tools.context import no_context
 
 
 def thermalblock_demo(args):
@@ -92,7 +90,7 @@ def thermalblock_demo(args):
     args['SNAPSHOTS'] = int(args['SNAPSHOTS'])
     args['RBSIZE'] = int(args['RBSIZE'])
     args['--test'] = int(args['--test'])
-    args['--num-engines'] = int(args['--num-engines'])
+    args['--ipython-engines'] = int(args['--ipython-engines'])
     args['--estimator-norm'] = args['--estimator-norm'].lower()
     assert args['--estimator-norm'] in {'trivial', 'h1'}
     args['--extension-alg'] = args['--extension-alg'].lower()
@@ -131,7 +129,7 @@ def thermalblock_demo(args):
 
     print('RB generation ...')
 
-    error_product = discretization.h1_product if args['--estimator-norm'] == 'h1' else None
+    error_product = discretization.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
     coercivity_estimator=ExpressionParameterFunctional('min(diffusion)', discretization.parameter_type)
     reductors = {'residual_basis': partial(reduce_stationary_coercive, error_product=error_product,
                                    coercivity_estimator=coercivity_estimator),
@@ -140,16 +138,15 @@ def thermalblock_demo(args):
     reductor = reductors[args['--reductor']]
     extension_algorithms = {'trivial': trivial_basis_extension,
                             'gram_schmidt': gram_schmidt_basis_extension,
-                            'h1_gram_schmidt': partial(gram_schmidt_basis_extension, product=discretization.h1_product)}
+                            'h1_gram_schmidt': partial(gram_schmidt_basis_extension, product=discretization.h1_0_semi_product)}
     extension_algorithm = extension_algorithms[args['--extension-alg']]
 
-    with (new_ipcluster_pool(num_engines=args['--num-engines'], profile=args['--profile'])
-          if args['--num-engines'] else no_context) as pool:
-        greedy_data = greedy(discretization, reductor,
-                             discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
-                             use_estimator=not args['--without-estimator'], error_norm=discretization.h1_norm,
-                             extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'],
-                             pool=pool)
+    pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
+    greedy_data = greedy(discretization, reductor,
+                         discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
+                         use_estimator=not args['--without-estimator'], error_norm=discretization.h1_0_semi_norm,
+                         extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'],
+                         pool=pool)
 
     rb_discretization, reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
 
@@ -174,7 +171,7 @@ def thermalblock_demo(args):
             u = rd.solve(mu)
             URB = rc.reconstruct(u)
             U = d.solve(mu)
-            h1_err = d.h1_norm(U - URB)[0]
+            h1_err = d.h1_0_semi_norm(U - URB)[0]
             h1_est = rd.estimate(u, mu=mu)
             cond = np.linalg.cond(rd.operator.assemble(mu)._matrix)
             if h1_err > h1_err_max:
@@ -198,7 +195,7 @@ def thermalblock_demo(args):
     else:
         Ns = np.array([real_rb_size])
     rd_rcs = [reduce_to_subbasis(rb_discretization, N, reconstructor)[:2] for N in Ns]
-    mus = list(discretization.parameter_space.sample_randomly(args['--test']))
+    mus = discretization.parameter_space.sample_randomly(args['--test'])
 
     errs, err_mus, ests, est_mus, conds, cond_mus = zip(*(error_analysis(discretization, rd, rc, mus)
                                                         for rd, rc in rd_rcs))
@@ -235,6 +232,7 @@ def thermalblock_demo(args):
     sys.stdout.flush()
 
     if args['--plot-error-sequence']:
+        import matplotlib.pyplot as plt
         plt.semilogy(Ns, errs, Ns, ests)
         plt.legend(('error', 'estimator'))
         plt.show()

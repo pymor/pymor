@@ -35,7 +35,7 @@ class VectorInterface(BasicInterface):
         return None
 
     @abstractmethod
-    def copy(self):
+    def copy(self, deep=False):
         pass
 
     @abstractmethod
@@ -108,7 +108,61 @@ class VectorInterface(BasicInterface):
         return result
 
 
-class NumpyVector(VectorInterface):
+class CopyOnWriteVector(VectorInterface):
+
+    @abstractclassmethod
+    def from_instance(cls, instance):
+        pass
+
+    @abstractmethod
+    def _copy_data(self):
+        pass
+
+    @abstractmethod
+    def _scal(self, alpha):
+        pass
+
+    @abstractmethod
+    def _axpy(self, alpha, x):
+        pass
+
+    def copy(self, deep=False):
+        c = self.from_instance(self)
+        if deep:
+            c._copy_data()
+        else:
+            try:
+                self._refcount[0] += 1
+            except AttributeError:
+                self._refcount = [2]
+            c._refcount = self._refcount
+        return c
+
+    def scal(self, alpha):
+        self._copy_data_if_needed()
+        self._scal(alpha)
+
+    def axpy(self, alpha, x):
+        self._copy_data_if_needed()
+        self._axpy(alpha, x)
+
+    def __del__(self):
+        try:
+            self._refcount[0] -= 1
+        except AttributeError:
+            pass
+
+    def _copy_data_if_needed(self):
+        try:
+            if self._refcount[0] > 1:
+                self._refcount[0] -= 1
+                self._copy_data()
+                self._refcount = [1]
+        except AttributeError:
+            self._refcount = [1]
+
+
+class NumpyVector(CopyOnWriteVector):
     """Vector stored in a NumPy 1D-array."""
 
     def __init__(self, instance, dtype=None, copy=False, order=None, subok=False):
@@ -117,6 +171,10 @@ class NumpyVector(VectorInterface):
         else:
             self._array = np.array(instance, dtype=dtype, copy=copy, order=order, subok=subok, ndmin=1)
         assert self._array.ndim == 1
+
+    @classmethod
+    def from_instance(cls, instance):
+        return cls(instance._array)
 
     @classmethod
     def make_zeros(cls, subtype=None):
@@ -135,13 +193,13 @@ class NumpyVector(VectorInterface):
     def subtype(self):
         return len(self._array)
 
-    def copy(self):
-        return NumpyVector(self._array, copy=True)
+    def _copy_data(self):
+        self._array = self._array.copy()
 
-    def scal(self, alpha):
+    def _scal(self, alpha):
         self._array *= alpha
 
-    def axpy(self, alpha, x):
+    def _axpy(self, alpha, x):
         assert self.dim == x.dim
         if alpha == 0:
             return
@@ -225,15 +283,17 @@ class ListVectorArray(VectorArrayInterface):
     def subtype(self):
         return (self.vector_type, self.vector_subtype)
 
-    def copy(self, ind=None):
+    def copy(self, ind=None, deep=False):
         assert self.check_ind(ind)
 
         if ind is None:
-            return type(self)(self._list, subtype=self.subtype, copy=True)
+            vecs = [v.copy(deep=deep) for v in self._list]
         elif isinstance(ind, Number):
-            return type(self)([self._list[ind]], subtype=self.subtype, copy=True)
+            vecs = [self._list[ind].copy(deep=deep)]
         else:
-            return type(self)([self._list[i] for i in ind], subtype=self.subtype, copy=True)
+            vecs = [self._list[i].copy(deep=deep) for i in ind]
+
+        return type(self)(vecs, subtype=self.subtype, copy=False)
 
     def append(self, other, o_ind=None, remove_from_other=False):
         assert other.check_ind(o_ind)

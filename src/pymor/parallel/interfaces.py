@@ -120,8 +120,7 @@ class WorkerPoolInterface(BasicInterface):
         Returns
         -------
         List of return values of the function executions, ordered by
-        worker number (from `0` to `len(pool) - 1`). If `function` returns
-        a (tuple) of n values, n lists of return values are returned.
+        worker number (from `0` to `len(pool) - 1`).
         """
         pass
 
@@ -182,8 +181,7 @@ class WorkerPoolInterface(BasicInterface):
         Returns
         -------
         List of return values of the function executions, ordered by
-        the sequence of positional arguments.  If `function` returns
-        a (tuple) of k values, k lists of return values are returned.
+        the sequence of positional arguments.
         """
         pass
 

@@ -16,7 +16,7 @@ if HAVE_FENICS:
 
     from pymor.core.defaults import defaults
     from pymor.vectorarrays.interfaces import VectorSpace
-    from pymor.vectorarrays.list import VectorInterface, ListVectorArray
+    from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorArray
 
 
     class FenicsVectorSubtype(tuple):
@@ -27,11 +27,18 @@ if HAVE_FENICS:
                     self[1] == other[1])
 
 
-    class FenicsVector(VectorInterface):
+    class FenicsVector(CopyOnWriteVector):
         """Wraps a FEniCS vector to make it usable with ListVectorArray."""
 
         def __init__(self, impl):
             self.impl = impl
+
+        @classmethod
+        def from_instance(cls, instance):
+            return cls(instance.impl)
+
+        def _copy_data(self):
+            self.impl = self.impl.copy()
 
         def make_zeros(cls, subtype):
             impl = df.Vector(*subtype)
@@ -50,13 +57,10 @@ if HAVE_FENICS:
         def data(self):
             return self.impl.array()  # WARNING: This creates a copy!
 
-        def copy(self):
-            return FenicsVector(self.impl.copy())
-
-        def scal(self, alpha):
+        def _scal(self, alpha):
             self.impl *= alpha
 
-        def axpy(self, alpha, x):
+        def _axpy(self, alpha, x):
             if x is self:
                 self.scal(1. + alpha)
             else:
@@ -97,6 +101,7 @@ if HAVE_FENICS:
             return FenicsVector(self.impl + other.impl)
 
         def __iadd__(self, other):
+            self._copy_data_if_needed()
             self.impl += other.impl
             return self
 
@@ -106,6 +111,7 @@ if HAVE_FENICS:
             return FenicsVector(self.impl - other.impl)
 
         def __isub__(self, other):
+            self._copy_data_if_needed()
             self.impl -= other.impl
             return self
 
