@@ -308,7 +308,7 @@ class NumpyVectorArray(VectorArrayInterface):
         B = other._array[:other._len] if o_ind is None else \
             other._array[o_ind] if hasattr(o_ind, '__len__') else other._array[o_ind:o_ind + 1]
 
-        if np.iscomplexobj(B):
+        if B.dtype in _complex_dtypes:
             return A.dot(B.conj().T)
         else:
             return A.dot(B.T)
@@ -330,7 +330,7 @@ class NumpyVectorArray(VectorArrayInterface):
         B = other._array[:other._len] if o_ind is None else \
             other._array[o_ind] if hasattr(o_ind, '__len__') else other._array[o_ind:o_ind + 1]
 
-        if np.iscomplexobj(B):
+        if B.dtype in _complex_dtypes:
             return np.sum(A * B.conj(), axis=1)
         else:
             return np.sum(A * B, axis=1)
@@ -443,3 +443,6 @@ class NumpyVectorArray(VectorArrayInterface):
 def NumpyVectorSpace(dim):
     """Shorthand for |VectorSpace| `(NumpyVectorArray, dim)`."""
     return VectorSpace(NumpyVectorArray, dim)
+
+
+_complex_dtypes = (np.complex64, np.complex128)
