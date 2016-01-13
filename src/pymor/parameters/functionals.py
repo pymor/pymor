@@ -124,7 +124,7 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
 
     functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',
                                              'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
-                                             'exp', 'exp2', 'log', 'log2', 'log10',
+                                             'exp', 'exp2', 'log', 'log2', 'log10', 'array',
                                              'min', 'minimum', 'max', 'maximum', 'pi', 'e', }}
 
     def __init__(self, expression, parameter_type, name=None):

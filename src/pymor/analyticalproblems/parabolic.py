@@ -96,6 +96,12 @@ class ParabolicProblem(ImmutableInterface):
                    'ParabolicProblem_from_{}'.format(elliptic_problem.name))
 
     def elliptic_part(self):
-        return EllipticProblem(self.domain, self.rhs, self.diffusion_functions, self.diffusion_functionals,
-                               self.dirichlet_data, self.neumann_data, self.parameter_space,
-                               '{}_elliptic_part'.format(self.name))
+        return EllipticProblem(
+            domain=self.domain,
+            rhs=self.rhs,
+            diffusion_functions=self.diffusion_functions,
+            diffusion_functionals=self.diffusion_functionals,
+            dirichlet_data=self.dirichlet_data,
+            neumann_data=self.neumann_data,
+            parameter_space=self.parameter_space,
+            name='{}_elliptic_part'.format(self.name))
