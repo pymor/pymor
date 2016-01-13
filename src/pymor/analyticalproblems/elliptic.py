@@ -19,7 +19,7 @@ class EllipticProblem(ImmutableInterface):
     The problem consists in solving ::
 
     |        Kd                                     Kv                             Kr
-    | - ∇ ⋅ ∑  θ_{d,k}(μ) ⋅ d_k(x) ∇ u(x, μ) - ∇ ⋅ ∑  θ_{v,k}(μ) v_k(x) u(x, μ) + ∑  θ_{r,k}(μ) r_k(x) u(x, μ) = f(x, μ)
+    | - ∇ ⋅ ∑  θ_{d,k}(μ) ⋅ d_k(x) ∇ u(x, μ) + ∇ ⋅ ∑  θ_{v,k}(μ) v_k(x) u(x, μ) + ∑  θ_{r,k}(μ) r_k(x) u(x, μ) = f(x, μ)
     |       k=0                                    k=0                            k=0
 
     for u.
