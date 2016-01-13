@@ -960,7 +960,9 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
         assert robin_data is None or (isinstance(robin_data, tuple) and len(robin_data) == 2)
         assert robin_data is None or all([isinstance(f, FunctionInterface)
                                           and f.dim_domain == grid.dim_outer
-                                          and f.shape_range == tuple() for f in robin_data])
+                                          and (f.shape_range == tuple()
+                                               or f.shape_range == (grid.dim_outer,)
+                                               ) for f in robin_data])
         self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
@@ -968,6 +970,8 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
         self.solver_options = solver_options
         self.name = name
         self.order = order
+        if self.robin_data is not None:
+            self.build_parameter_type(inherits=(self.robin_data[0],))
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -986,7 +990,17 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
             return csc_matrix(I).copy()
         else:
             xref = g.quadrature_points(1, order=self.order)[RI]
-            robin_c = self.robin_data[0](xref, mu=mu)
+            # xref(robin-index, quadraturepoint-index)
+            if self.robin_data[0].shape_range == tuple():
+                robin_c = self.robin_data[0](xref, mu=mu)
+            else:
+                robin_elements = g.superentities(1, 0)[RI, 0]
+                robin_indices = g.superentity_indices(1, 0)[RI, 0]
+                normals = g.unit_outer_normals()[robin_elements, robin_indices]
+                robin_values = self.robin_data[0](xref, mu=mu)
+                robin_c = np.einsum('ei,eqi->eq', normals, robin_values)
+
+            # robin_c(robin-index, quadraturepoint-index)
             q, w = line.quadrature(order=self.order)
             SF = np.squeeze(np.array([1 - q, q]))
             SF_INTS = np.einsum('ep,pi,pj,e,p->eij', robin_c, SF, SF, g.integration_elements(1)[RI], w).ravel()

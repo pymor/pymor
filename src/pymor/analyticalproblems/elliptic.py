@@ -8,6 +8,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+import numpy as np
+
 from pymor.core.interfaces import ImmutableInterface
 from pymor.domaindescriptions.basic import RectDomain
 from pymor.functions.basic import ConstantFunction
@@ -56,6 +58,8 @@ class EllipticProblem(ImmutableInterface):
         |Function| providing the Dirichlet boundary values in global coordinates.
     neumann_data
         |Function| providing the Neumann boundary values in global coordinates.
+    robin_data
+        Tuple of two |Functions| providing the Robin parameter and boundary values.
     parameter_space
         |ParameterSpace| for the problem.
     name
@@ -67,8 +71,13 @@ class EllipticProblem(ImmutableInterface):
     rhs
     diffusion_functions
     diffusion_functionals
+    advection_functions
+    advection_functionals
+    reaction_functions
+    reaction_functionals
     dirichlet_data
     neumann_data
+    robin_data
     """
 
     def __init__(self, domain=RectDomain(), rhs=ConstantFunction(dim_domain=2),
@@ -78,7 +87,7 @@ class EllipticProblem(ImmutableInterface):
                  advection_functionals=None,
                  reaction_functions=None,
                  reaction_functionals=None,
-                 dirichlet_data=None, neumann_data=None,
+                 dirichlet_data=None, neumann_data=None, robin_data=None,
                  parameter_space=None, name=None):
         assert diffusion_functions is None or isinstance(diffusion_functions, (tuple, list))
         assert advection_functions is None or isinstance(advection_functions, (tuple, list))
@@ -113,8 +122,10 @@ class EllipticProblem(ImmutableInterface):
             for f in reaction_functions:
                 assert f.dim_domain == dim_domain
 
-        assert dirichlet_data is None or dirichlet_data.dim_domain == diffusion_functions[0].dim_domain
-        assert neumann_data is None or neumann_data.dim_domain == diffusion_functions[0].dim_domain
+        assert dirichlet_data is None or dirichlet_data.dim_domain == dim_domain
+        assert neumann_data is None or neumann_data.dim_domain == dim_domain
+        assert robin_data is None or (isinstance(robin_data, tuple) and len(robin_data) == 2)
+        assert robin_data is None or np.all([f.dim_domain == dim_domain for f in robin_data])
         self.domain = domain
         self.rhs = rhs
         self.diffusion_functions = diffusion_functions
@@ -125,5 +136,6 @@ class EllipticProblem(ImmutableInterface):
         self.reaction_functionals = reaction_functionals
         self.dirichlet_data = dirichlet_data
         self.neumann_data = neumann_data
+        self.robin_data = robin_data
         self.parameter_space = parameter_space
         self.name = name
