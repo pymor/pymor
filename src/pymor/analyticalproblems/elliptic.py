@@ -49,7 +49,7 @@ class EllipticProblem(ImmutableInterface):
         to be `None`, in which case no parameter dependence is assumed.
     reaction_functions
         List containing the |Functions| r_k(x), each having `shape_range`
-        of `(dim domain,)`.
+        of `tuple()`.
     reaction_functionals
         List containing the |ParameterFunctionals| θ_{r,k}(μ). If
         `len(reaction_functions) == 1`, `reaction_functionals` is allowed
