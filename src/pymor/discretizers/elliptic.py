@@ -121,7 +121,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
 
         # robin boundaries
         if p.robin_data is not None:
-            Li += [cg.RobinBoundaryOperator(grid, boundary_info, robin_data = p.robin_data, order=2, name='robin')]
+            Li += [cg.RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data, order=2, name='robin')]
             coefficients.append(1.)
 
         L = LincombOperator(operators=Li, coefficients=coefficients, name='ellipticOperator')
@@ -154,7 +154,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
 
         # robin boundaries
         if p.robin_data is not None:
-            Li += [cg.RobinBoundaryOperator(grid, boundary_info, robin_data = p.robin_data, order=2, name='robin')]
+            Li += [cg.RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data, order=2, name='robin')]
 
         if len(Li) == 1:
             L = Li[0]
