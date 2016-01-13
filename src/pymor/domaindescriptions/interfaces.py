@@ -15,10 +15,13 @@ class DomainDescriptionInterface(ImmutableInterface):
 
     Attributes
     ----------
+    dim
+        The dimension of the domain
     boundary_types
         Set of |BoundaryTypes| the domain has.
     """
 
+    dim = None
     boundary_types = frozenset()
 
     @property

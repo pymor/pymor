@@ -38,6 +38,8 @@ class RectDomain(DomainDescriptionInterface):
     bottom
     """
 
+    dim = 2
+
     def __init__(self, domain=([0, 0], [1, 1]), left=BoundaryType('dirichlet'), right=BoundaryType('dirichlet'),
                  top=BoundaryType('dirichlet'), bottom=BoundaryType('dirichlet')):
         assert domain[0][0] <= domain[1][0]
@@ -107,6 +109,8 @@ class CylindricalDomain(DomainDescriptionInterface):
     bottom
     """
 
+    dim = 2
+
     def __init__(self, domain=([0, 0], [1, 1]), top=BoundaryType('dirichlet'), bottom=BoundaryType('dirichlet')):
         assert domain[0][0] <= domain[1][0]
         assert domain[0][1] <= domain[1][1]
@@ -161,6 +165,8 @@ class TorusDomain(DomainDescriptionInterface):
     ----------
     domain
     """
+
+    dim = 2
 
     def __init__(self, domain=([0, 0], [1, 1])):
         assert domain[0][0] <= domain[1][0]
@@ -217,6 +223,8 @@ class LineDomain(DomainDescriptionInterface):
     right
     """
 
+    dim = 1
+
     def __init__(self, domain=(0, 1), left=BoundaryType('dirichlet'), right=BoundaryType('dirichlet')):
         assert domain[0] <= domain[1]
         assert left is None or isinstance(left, BoundaryType)
@@ -249,6 +257,8 @@ class CircleDomain(DomainDescriptionInterface):
     ----------
     domain
     """
+
+    dim = 1
 
     def __init__(self, domain=(0, 1)):
         assert domain[0] <= domain[1]
