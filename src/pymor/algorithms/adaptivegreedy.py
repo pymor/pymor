@@ -7,10 +7,296 @@ from __future__ import absolute_import, division, print_function
 from fractions import Fraction
 
 import numpy as np
+import time
 
+from pymor.algorithms.basisextension import gram_schmidt_basis_extension
+from pymor.core.exceptions import ExtensionError
 from pymor.core.interfaces import BasicInterface
+from pymor.core.logger import getLogger
+from pymor.parallel.dummy import dummy_pool
+from pymor.parallel.manager import RemoteObjectManager
 from pymor.parameters.base import Parameter
 from pymor.parameters.spaces import CubicParameterSpace
+
+
+def adaptive_greedy(discretization, reductor, parameter_space=None,
+                    initial_basis=None, use_estimator=True, error_norm=None,
+                    extension_algorithm=gram_schmidt_basis_extension, target_error=None, max_extensions=None,
+                    validation_mus=0, rho=1.1, gamma=0.2, theta=0.,
+                    visualize=False, visualize_vertex_size=80, pool=dummy_pool):
+    """Greedy basis generation algorithm with adaptively refined training set.
+
+    This method extends pyMOR's default :func:`~pymor.algorithms.greedy.greedy`
+    greedy basis generation algorithm by adaptive refinement of the
+    parameter training set according to [HDO11]_ to prevent overfitting
+    of the reduced basis to the training set. This is achieved by
+    estimating the reduction error on an additional validation set of
+    parameters. If the ratio between the estimated errors on the validation
+    set and the validation set is larger than `rho`, the training set
+    is refined using standard grid refinement techniques.
+
+    .. [HDO11] Haasdonk, B.; Dihlmann, M. & Ohlberger, M.,
+               A training set and multiple bases generation approach for
+               parameterized model reduction based on adaptive grids in
+               parameter space,
+               Math. Comput. Model. Dyn. Syst., 2011, 17, 423-442
+
+    Parameters
+    ----------
+    discretization
+        See :func:`~pymor.algorithms.greedy.greedy`.
+    reductor
+        See :func:`~pymor.algorithms.greedy.greedy`.
+    parameter_space
+        The |ParameterSpace| for which to compute the reduced model. If `None`
+        the parameter space of the `discretization` is used.
+    initial_basis
+        See :func:`~pymor.algorithms.greedy.greedy`.
+    use_estimator
+        See :func:`~pymor.algorithms.greedy.greedy`.
+    error_norm
+        See :func:`~pymor.algorithms.greedy.greedy`.
+    extension_algorithm
+        See :func:`~pymor.algorithms.greedy.greedy`.
+    target_error
+        See :func:`~pymor.algorithms.greedy.greedy`.
+    max_extensions
+        See :func:`~pymor.algorithms.greedy.greedy`.
+    validation_mus
+        One of the following:
+          - a list of |Parameters| to use as validation set,
+          - a positive number indicating the number of random parameters
+            to use as validation set,
+          - a non-positive number, indicating the negative number of random
+            parameters to use as validation set in addition to the centers
+            of the elements of the adaptive training set.
+    rho
+        Maximum allowed ratio between maximum estimated error on validation
+        set vs. maximum estimated error on training set. If the ratio is
+        larger, the training set is refined.
+    gamma
+        Weight of the age penalty term of the training set refinement
+        indicators.
+    theta
+        Ratio of training set elements to select for refinement.
+        (One element is always refined.)
+    visualize
+        If `True`, visualize the refinement indicators. (Only available
+        for 2 and 3 dimensional parameter spaces.)
+    visualize_vertex_size
+        Size of the vertices in the visualization.
+    pool
+        See :func:`~pymor.algorithms.greedy.greedy`.
+
+    Returns
+    -------
+    Dict with the following fields:
+
+        :basis:                  The reduced basis.
+        :reduced_discretization: The reduced |Discretization| obtained for the
+                                 computed basis.
+        :reconstructor:          Reconstructor for `reduced_discretization`.
+        :max_errs:               Sequence of maximum errors during the greedy run.
+        :max_err_mus:            The parameters corresponding to `max_errs`.
+        :max_val_errs:           Sequence of maximum errors on the validation set.
+        :max_val_err_mus:        The parameters corresponding to `max_val_errs`.
+        :refinements:            Number of refinements made in each extension step.
+        :training_set_sizes:     The final size of the training set in each extension step.
+    """
+
+    def estimate(mus):
+        if use_estimator:
+            errors = pool.map(_estimate, mus, rd=rd)
+        else:
+            errors = pool.map(_estimate, mus, rd=rd, d=d, rc=rc, error_norm=error_norm)
+        # most error_norms will return an array of length 1 instead of a number, so we extract the numbers
+        # if necessary
+        return np.array(map(lambda x: x[0] if hasattr(x, '__len__') else x, errors))
+
+    logger = getLogger('pymor.algorithms.adaptivegreedy.adaptive_greedy')
+
+    if pool is None or pool is dummy_pool:
+        pool = dummy_pool
+    else:
+        logger.info('Using pool of {} workers for parallel greedy search'.format(len(pool)))
+
+    with RemoteObjectManager() as rom:
+        # Push everything we need during the greedy search to the workers.
+        if not use_estimator:
+            rom.manage(pool.push(discretization))
+            if error_norm:
+                rom.manage(pool.push(error_norm))
+
+        tic = time.time()
+
+        # initial setup for main loop
+        d = discretization
+        basis = initial_basis
+        rd, rc, reduction_data = None, None, None
+        hierarchic = False
+
+        # setup training and validation sets
+        parameter_space = parameter_space or d.parameter_space
+        sample_set = AdaptiveSampleSet(parameter_space)
+        if validation_mus <= 0:
+            validation_set = sample_set.center_mus + parameter_space.sample_randomly(-validation_mus)
+        else:
+            validation_set = parameter_space.sample_randomly(validation_mus)
+        if visualize and sample_set.dim not in (2, 3):
+            raise NotImplementedError
+        logger.info('Training set size: {}. Validation set size: {}'
+                    .format(len(sample_set.vertex_mus), len(validation_set)))
+
+        extensions = 0
+        max_errs = []
+        max_err_mus = []
+        max_val_errs = []
+        max_val_err_mus = []
+        refinements = []
+        training_set_sizes = []
+
+        while True:  # main loop
+            logger.info('Reducing ...')
+            rd, rc, reduction_data = reductor(discretization, basis) if not hierarchic \
+                else reductor(discretization, basis, extends=(rd, rc, reduction_data))
+
+            current_refinements = 0
+            while True:  # estimate reduction errors and refine training set until no overfitting is detected
+
+                # estimate on training set
+                logger.info('Estimating errors ...')
+                errors = estimate(sample_set.vertex_mus)
+                max_err_ind = np.argmax(errors)
+                max_err, max_err_mu = errors[max_err_ind], sample_set.vertex_mus[max_err_ind]
+                logger.info('Maximum error after {} extensions: {} (mu = {})'.format(extensions, max_err, max_err_mu))
+
+                # estimate on validation set
+                val_errors = estimate(validation_set)
+                max_val_err_ind = np.argmax(val_errors)
+                max_val_err, max_val_err_mu = val_errors[max_val_err_ind], validation_set[max_val_err_ind]
+                logger.info('Maximum validation error: {}'.format(max_val_err))
+                logger.info('Validation error to training error ratio: {:.3e}'.format(max_val_err / max_err))
+
+                if max_val_err >= max_err * rho:  # overfitting?
+
+                    # compute element indicators for training set refinement
+                    if current_refinements == 0:
+                        logger.info2('Overfitting detected. Computing element indicators ...')
+                    else:
+                        logger.info3('Overfitting detected after refinement. Computing element indicators ...')
+                    vertex_errors = np.max(errors[sample_set.vertex_ids], axis=1)
+                    center_errors = estimate(sample_set.center_mus)
+                    indicators_age_part = (gamma * sample_set.volumes / sample_set.total_volume
+                                           * (sample_set.refinement_count - sample_set.creation_times))
+                    indicators_error_part = np.max([vertex_errors, center_errors], axis=0) / max_err
+                    indicators = indicators_age_part + indicators_error_part
+
+                    # select elements
+                    sorted_indicators_inds = np.argsort(indicators)[::-1]
+                    refinement_elements = sorted_indicators_inds[:max(int(len(sorted_indicators_inds) * theta), 1)]
+                    logger.info('Refining {} elements: {}'.format(len(refinement_elements), refinement_elements))
+
+                    # visualization
+                    if visualize:
+                        from mpl_toolkits.mplot3d import Axes3D  # NOQA
+                        import matplotlib.pyplot as plt
+                        plt.figure()
+                        plt.subplot(2, 2, 1, projection=None if sample_set.dim == 2 else '3d')
+                        plt.title('estimated errors')
+                        sample_set.visualize(vertex_data=errors, center_data=center_errors, new_figure=False)
+                        plt.subplot(2, 2, 2, projection=None if sample_set.dim == 2 else '3d')
+                        plt.title('indicators_error_part')
+                        vmax = np.max([indicators_error_part, indicators_age_part, indicators])
+                        data = {('volume_data' if sample_set.dim == 2 else 'center_data'): indicators_error_part}
+                        sample_set.visualize(vertex_size=visualize_vertex_size, vmin=0, vmax=vmax, new_figure=False,
+                                             **data)
+                        plt.subplot(2, 2, 3, projection=None if sample_set.dim == 2 else '3d')
+                        plt.title('indicators_age_part')
+                        data = {('volume_data' if sample_set.dim == 2 else 'center_data'): indicators_age_part}
+                        sample_set.visualize(vertex_size=visualize_vertex_size, vmin=0, vmax=vmax, new_figure=False,
+                                             **data)
+                        plt.subplot(2, 2, 4, projection=None if sample_set.dim == 2 else '3d')
+                        if sample_set.dim == 2:
+                            plt.title('indicators')
+                            sample_set.visualize(volume_data=indicators,
+                                                 center_data=np.zeros(len(refinement_elements)),
+                                                 center_inds=refinement_elements,
+                                                 vertex_size=visualize_vertex_size, vmin=0, vmax=vmax, new_figure=False)
+                        else:
+                            plt.title('selected cells')
+                            sample_set.visualize(center_data=np.zeros(len(refinement_elements)),
+                                                 center_inds=refinement_elements,
+                                                 vertex_size=visualize_vertex_size, vmin=0, vmax=vmax, new_figure=False)
+                        plt.show()
+
+                    # refine training set
+                    sample_set.refine(refinement_elements)
+                    current_refinements += 1
+
+                    # update validation set if needed
+                    if validation_mus <= 0:
+                        validation_set = sample_set.center_mus + parameter_space.sample_randomly(-validation_mus)
+
+                    logger.info('New training set size: {}. New validation set size: {}'
+                                .format(len(sample_set.vertex_mus), len(validation_set)))
+                    logger.info('Number of refinements: {}'.format(sample_set.refinement_count))
+                    logger.info('')
+                else:
+                    break  # no overfitting, leave the refinement loop
+
+            max_errs.append(max_err)
+            max_err_mus.append(max_err_mu)
+            max_val_errs.append(max_val_err)
+            max_val_err_mus.append(max_val_err_mu)
+            refinements.append(current_refinements)
+            training_set_sizes.append(len(sample_set.vertex_mus))
+
+            # break if traget error reached
+            if target_error is not None and max_err <= target_error:
+                logger.info('Reached maximal error on snapshots of {} <= {}'.format(max_err, target_error))
+                break
+
+            # basis extension
+            logger.info('Extending with snapshot for mu = {}'.format(max_err_mu))
+            U = discretization.solve(max_err_mu)
+            try:
+                basis, extension_data = extension_algorithm(basis, U)
+            except ExtensionError:
+                logger.info('Extension failed. Stopping now.')
+                break
+            extensions += 1
+            if 'hierarchic' not in extension_data:
+                logger.warn('Extension algorithm does not report if extension was hierarchic. Assuming it was\'nt ..')
+                hierarchic = False
+            else:
+                hierarchic = extension_data['hierarchic']
+
+            logger.info('')
+
+            # break if prescribed basis size reached
+            if max_extensions is not None and extensions >= max_extensions:
+                logger.info('Maximum number of {} extensions reached.'.format(max_extensions))
+                logger.info('Reducing once more ...')
+                rd, rc, reduction_data = reductor(discretization, basis) if not hierarchic \
+                    else reductor(discretization, basis, extends=(rd, rc, reduction_data))
+                break
+
+    tictoc = time.time() - tic
+    logger.info('Greedy search took {} seconds'.format(tictoc))
+    return {'basis': basis, 'reduced_discretization': rd, 'reconstructor': rc,
+            'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
+            'refinements': refinements, 'training_set_sizes': training_set_sizes,
+            'time': tictoc, 'reduction_data': reduction_data}
+
+
+def _estimate(mu, rd=None, d=None, rc=None, error_norm=None):
+    """Called by :func:`adaptive_greedy`."""
+    if d is None:
+        return rd.estimate(rd.solve(mu), mu)
+    elif error_norm is not None:
+        return error_norm(d.solve(mu) - rc.reconstruct(rd.solve(mu)))
+    else:
+        return (d.solve(mu) - rc.reconstruct(rd.solve(mu))).l2_norm()
 
 
 class AdaptiveSampleSet(BasicInterface):
