@@ -229,6 +229,13 @@ def discretize_elliptic_fv(analytical_problem, diameter=None, domain_discretizer
     assert boundary_info is None or grid is not None
     assert grid is None or domain_discretizer is None
 
+    if analytical_problem.advection_functions is not None:
+        raise NotImplementedError
+    if analytical_problem.reaction_functions is not None:
+        raise NotImplementedError
+    if analytical_problem.robin_data is not None:
+        raise NotImplementedError
+
     if grid is None:
         domain_discretizer = domain_discretizer or discretize_domain_default
         if diameter is None:
