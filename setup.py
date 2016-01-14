@@ -188,7 +188,7 @@ def setup_package():
         install_requires=install_requires,
         classifiers=['Development Status :: 4 - Beta',
             'License :: OSI Approved :: BSD License',
-            'Programming Language :: Python :: 2.7',
+            'Programming Language :: Python :: 3 :: Only',
             'Intended Audience :: Science/Research',
             'Topic :: Scientific/Engineering :: Mathematics',
             'Topic :: Scientific/Engineering :: Visualization'],
