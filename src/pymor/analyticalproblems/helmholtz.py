@@ -40,6 +40,7 @@ class HelmholtzProblem(EllipticProblem):
     def __init__(self, domain=RectDomain(), rhs=None, parameter_range=(0., 100.),
                  dirichlet_data=None, neumann_data=None):
 
+        self.parameter_range = parameter_range  # needed for with_
         parameter_space = CubicParameterSpace({'k': tuple()}, *parameter_range)
         super(HelmholtzProblem, self).__init__(
             diffusion_functions=[ConstantFunction(1., dim_domain=domain.dim)],
