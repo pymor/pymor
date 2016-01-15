@@ -45,10 +45,7 @@ class DummyPool(WorkerPoolInterface):
     def map(self, function, *args, **kwargs):
         kwargs = self._map_kwargs(kwargs)
         result = [function(*a, **kwargs) for a in izip(*args)]
-        if isinstance(result[0], tuple):
-            return zip(*result)
-        else:
-            return result
+        return result
 
     def __nonzero__(self):
         return False
