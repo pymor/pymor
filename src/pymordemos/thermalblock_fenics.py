@@ -39,7 +39,7 @@ Options:
   --pickle=PREFIX        Pickle reduced discretizaion, as well as reconstructor and high-dimensional
                          discretization to files with this prefix.
 
-  -p, --plot-err         Plot error.
+  --plot-error-sequence  Plot reduction error vs. basis size.
 
   --plot-solutions       Plot some example solutions.
 
@@ -53,14 +53,13 @@ Options:
 from __future__ import absolute_import, division, print_function
 
 import sys
-import time
 from functools import partial
 from itertools import product
 
 from docopt import docopt
-import numpy as np
 
 from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension
+from pymor.algorithms.error import reduction_error_analysis
 from pymor.algorithms.greedy import greedy
 from pymor.core.pickle import dump
 from pymor.discretizations.basic import StationaryDiscretization
@@ -193,68 +192,41 @@ def thermalblock_demo(args):
 
     print('\nSearching for maximum error on random snapshots ...')
 
-    tic = time.time()
+    results = reduction_error_analysis(rb_discretization,
+                                       discretization=discretization,
+                                       reconstructor=reconstructor,
+                                       estimator=True,
+                                       error_norms=(discretization.h1_0_semi_norm,),
+                                       condition=True,
+                                       test_mus=args['--test'],
+                                       basis_sizes=25 if args['--plot-error-sequence'] else 1,
+                                       plot=True)
 
-    real_rb_size = len(greedy_data['basis'])
-
-    mus = discretization.parameter_space.sample_randomly(args['--test'])
-
-    h1_err_max = -1
-    h1_est_max = -1
-    cond_max = -1
-    for mu in mus:
-        print('.', end='')
-        sys.stdout.flush()
-        u = rb_discretization.solve(mu)
-        URB = reconstructor.reconstruct(u)
-        U = discretization.solve(mu)
-        h1_err = discretization.h1_0_semi_norm(U - URB)[0]
-        h1_est = rb_discretization.estimate(u, mu=mu)
-        cond = np.linalg.cond(rb_discretization.operator.assemble(mu)._matrix)
-        if h1_err > h1_err_max:
-            h1_err_max = h1_err
-            mumax = mu
-        if h1_est > h1_est_max:
-            h1_est_max = h1_est
-            mu_est_max = mu
-        if cond > cond_max:
-            cond_max = cond
-            cond_max_mu = mu
-    print()
-
-    toc = time.time()
-    t_est = toc - tic
+    real_rb_size = rb_discretization.solution_space.dim
 
     print('''
-    *** RESULTS ***
+*** RESULTS ***
 
-    Problem:
-       number of blocks:                   {args[XBLOCKS]}x{args[YBLOCKS]}
-       h:                                  sqrt(2)/{args[--grid]}
+Problem:
+   number of blocks:                   {args[XBLOCKS]}x{args[YBLOCKS]}
+   h:                                  sqrt(2)/{args[--grid]}
 
-    Greedy basis generation:
-       number of snapshots:                {args[SNAPSHOTS]}^({args[XBLOCKS]}x{args[YBLOCKS]})
-       estimator disabled:                 {args[--without-estimator]}
-       estimator norm:                     {args[--estimator-norm]}
-       extension method:                   {args[--extension-alg]}
-       prescribed basis size:              {args[RBSIZE]}
-       actual basis size:                  {real_rb_size}
-       elapsed time:                       {greedy_data[time]}
-
-    Stochastic error estimation:
-       number of samples:                  {args[--test]}
-       maximal H1-error:                   {h1_err_max}  (mu = {mumax})
-       maximal condition of system matrix: {cond_max}  (mu = {cond_max_mu})
-       elapsed time:                       {t_est}
-    '''.format(**locals()))
+Greedy basis generation:
+   number of snapshots:                {args[SNAPSHOTS]}^({args[XBLOCKS]}x{args[YBLOCKS]})
+   estimator disabled:                 {args[--without-estimator]}
+   estimator norm:                     {args[--estimator-norm]}
+   extension method:                   {args[--extension-alg]}
+   prescribed basis size:              {args[RBSIZE]}
+   actual basis size:                  {real_rb_size}
+   elapsed time:                       {greedy_data[time]}
+'''.format(**locals()))
+    print(results['summary'])
 
     sys.stdout.flush()
 
-    if args['--plot-err']:
-        U = discretization.solve(mumax)
-        URB = reconstructor.reconstruct(rb_discretization.solve(mumax))
-        discretization.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
-                                 title='Maximum Error Solution')
+    if args['--plot-error-sequence']:
+        from matplotlib import pyplot as plt
+        plt.show(results['figure'])
 
 
 if __name__ == '__main__':

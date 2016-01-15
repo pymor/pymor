@@ -65,20 +65,18 @@ Options:
 from __future__ import absolute_import, division, print_function
 
 import sys
-import time
 from functools import partial
 
-import numpy as np
 from docopt import docopt
 
 from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension
+from pymor.algorithms.error import reduction_error_analysis
 from pymor.algorithms.greedy import greedy
 from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
 from pymor.core.pickle import dump
 from pymor.discretizers.elliptic import discretize_elliptic_cg
 from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.parallel.default import new_parallel_pool
-from pymor.reductors.basic import reduce_to_subbasis
 from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor.reductors.stationary import reduce_stationary_coercive
 
@@ -160,83 +158,44 @@ def thermalblock_demo(args):
 
     print('\nSearching for maximum error on random snapshots ...')
 
-    def error_analysis(d, rd, rc, mus):
-        print('N = {}: '.format(rd.operator.source.dim), end='')
-        h1_err_max = -1
-        h1_est_max = -1
-        cond_max = -1
-        for mu in mus:
-            print('.', end='')
-            sys.stdout.flush()
-            u = rd.solve(mu)
-            URB = rc.reconstruct(u)
-            U = d.solve(mu)
-            h1_err = d.h1_0_semi_norm(U - URB)[0]
-            h1_est = rd.estimate(u, mu=mu)
-            cond = np.linalg.cond(rd.operator.assemble(mu)._matrix)
-            if h1_err > h1_err_max:
-                h1_err_max = h1_err
-                mumax = mu
-            if h1_est > h1_est_max:
-                h1_est_max = h1_est
-                mu_est_max = mu
-            if cond > cond_max:
-                cond_max = cond
-                cond_max_mu = mu
-        print()
-        return h1_err_max, mumax, h1_est_max, mu_est_max, cond_max, cond_max_mu
+    results = reduction_error_analysis(rb_discretization,
+                                       discretization=discretization,
+                                       reconstructor=reconstructor,
+                                       estimator=False,
+                                       error_norms=(discretization.h1_0_semi_norm, discretization.l2_norm),
+                                       condition=True,
+                                       test_mus=args['--test'],
+                                       basis_sizes=0 if args['--plot-error-sequence'] else 1,
+                                       plot=args['--plot-error-sequence'],
+                                       pool=pool)
 
-    tic = time.time()
-
-    real_rb_size = len(greedy_data['basis'])
-    if args['--plot-error-sequence']:
-        N_count = min(real_rb_size - 1, 25)
-        Ns = np.linspace(1, real_rb_size, N_count).astype(np.int)
-    else:
-        Ns = np.array([real_rb_size])
-    rd_rcs = [reduce_to_subbasis(rb_discretization, N, reconstructor)[:2] for N in Ns]
-    mus = discretization.parameter_space.sample_randomly(args['--test'])
-
-    errs, err_mus, ests, est_mus, conds, cond_mus = zip(*(error_analysis(discretization, rd, rc, mus)
-                                                        for rd, rc in rd_rcs))
-    h1_err_max = errs[-1]
-    mumax = err_mus[-1]
-    cond_max = conds[-1]
-    cond_max_mu = cond_mus[-1]
-    toc = time.time()
-    t_est = toc - tic
+    real_rb_size = rb_discretization.solution_space.dim
 
     print('''
-    *** RESULTS ***
+*** RESULTS ***
 
-    Problem:
-       number of blocks:                   {args[XBLOCKS]}x{args[YBLOCKS]}
-       h:                                  sqrt(2)/{args[--grid]}
+Problem:
+   number of blocks:                   {args[XBLOCKS]}x{args[YBLOCKS]}
+   h:                                  sqrt(2)/{args[--grid]}
 
-    Greedy basis generation:
-       number of snapshots:                {args[SNAPSHOTS]}^({args[XBLOCKS]}x{args[YBLOCKS]})
-       estimator disabled:                 {args[--without-estimator]}
-       estimator norm:                     {args[--estimator-norm]}
-       extension method:                   {args[--extension-alg]}
-       prescribed basis size:              {args[RBSIZE]}
-       actual basis size:                  {real_rb_size}
-       elapsed time:                       {greedy_data[time]}
-
-    Stochastic error estimation:
-       number of samples:                  {args[--test]}
-       maximal H1-error:                   {h1_err_max}  (mu = {mumax})
-       maximal condition of system matrix: {cond_max}  (mu = {cond_max_mu})
-       elapsed time:                       {t_est}
-    '''.format(**locals()))
+Greedy basis generation:
+   number of snapshots:                {args[SNAPSHOTS]}^({args[XBLOCKS]}x{args[YBLOCKS]})
+   estimator disabled:                 {args[--without-estimator]}
+   estimator norm:                     {args[--estimator-norm]}
+   extension method:                   {args[--extension-alg]}
+   prescribed basis size:              {args[RBSIZE]}
+   actual basis size:                  {real_rb_size}
+   elapsed time:                       {greedy_data[time]}
+'''.format(**locals()))
+    print(results['summary'])
 
     sys.stdout.flush()
 
     if args['--plot-error-sequence']:
-        import matplotlib.pyplot as plt
-        plt.semilogy(Ns, errs, Ns, ests)
-        plt.legend(('error', 'estimator'))
-        plt.show()
+        from matplotlib import pyplot as plt
+        plt.show(results['figure'])
     if args['--plot-err']:
+        mumax = results['max_error_mus'][0, -1]
         U = discretization.solve(mumax)
         URB = reconstructor.reconstruct(rb_discretization.solve(mumax))
         discretization.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),

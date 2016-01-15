@@ -8,8 +8,7 @@
 """Thermalblock with POD demo.
 
 Usage:
-  thermalblock_pod.py [-hp] [--grid=NI] [--help] [--plot-solutions] [--pod-norm=NORM]
-                  [--test=COUNT] XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
+  thermalblock_pod.py [options] XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
 
 
 Arguments:
@@ -32,6 +31,8 @@ Options:
 
   --plot-solutions       Plot some example solutions.
 
+  --plot-error-sequence  Plot reduction error vs. basis size.
+
   --pod-norm=NORM        Norm (trivial, h1) w.r.t. which to calculate the POD
                          [default: h1].
 
@@ -48,6 +49,7 @@ import numpy as np
 from docopt import docopt
 
 from pymor.algorithms.pod import pod
+from pymor.algorithms.error import reduction_error_analysis
 from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
 from pymor.discretizers.elliptic import discretize_elliptic_cg
 from pymor.reductors.basic import reduce_generic_rb
@@ -107,49 +109,43 @@ def thermalblock_demo(args):
 
     print('\nSearching for maximum error on random snapshots ...')
 
-    tic = time.time()
-    h1_err_max = -1
-    cond_max = -1
-    for mu in discretization.parameter_space.sample_randomly(args['--test']):
-        print('Solving RB-Scheme for mu = {} ... '.format(mu), end='')
-        URB = reconstructor.reconstruct(rb_discretization.solve(mu))
-        U = discretization.solve(mu)
-        h1_err = discretization.h1_0_semi_norm(U - URB)[0]
-        cond = np.linalg.cond(rb_discretization.operator.assemble(mu)._matrix)
-        if h1_err > h1_err_max:
-            h1_err_max = h1_err
-            mumax = mu
-        if cond > cond_max:
-            cond_max = cond
-            cond_max_mu = mu
-        print('H1-error = {}, condition = {}'.format(h1_err, cond))
-    toc = time.time()
-    t_est = toc - tic
-    real_rb_size = len(rb)
+    results = reduction_error_analysis(rb_discretization,
+                                       discretization=discretization,
+                                       reconstructor=reconstructor,
+                                       estimator=False,
+                                       error_norms=(discretization.h1_0_semi_norm,),
+                                       condition=True,
+                                       test_mus=args['--test'],
+                                       basis_sizes=25 if args['--plot-error-sequence'] else 1,
+                                       plot=True)
+
+    real_rb_size = rb_discretization.solution_space.dim
 
     print('''
-    *** RESULTS ***
+*** RESULTS ***
 
-    Problem:
-       number of blocks:                   {args[XBLOCKS]}x{args[YBLOCKS]}
-       h:                                  sqrt(2)/{args[--grid]}
+Problem:
+   number of blocks:                   {args[XBLOCKS]}x{args[YBLOCKS]}
+   h:                                  sqrt(2)/{args[--grid]}
 
-    POD basis generation:
-       number of snapshots:                {args[SNAPSHOTS]}^({args[XBLOCKS]}x{args[YBLOCKS]})
-       pod norm:                           {args[--pod-norm]}
-       prescribed basis size:              {args[RBSIZE]}
-       actual basis size:                  {real_rb_size}
-       elapsed time:                       {t_offline}
-
-    Stochastic error estimation:
-       number of samples:                  {args[--test]}
-       maximal H1-error:                   {h1_err_max}  (mu = {mumax})
-       maximal condition of system matrix: {cond_max}  (mu = {cond_max_mu})
-       elapsed time:                       {t_est}
-    '''.format(**locals()))
+POD basis generation:
+   number of snapshots:                {args[SNAPSHOTS]}^({args[XBLOCKS]}x{args[YBLOCKS]})
+   pod norm:                           {args[--pod-norm]}
+   prescribed basis size:              {args[RBSIZE]}
+   actual basis size:                  {real_rb_size}
+   elapsed time:                       {t_offline}
+'''.format(**locals()))
+    print(results['summary'])
 
     sys.stdout.flush()
+
+    if args['--plot-error-sequence']:
+        from matplotlib import pyplot as plt
+        plt.show(results['figure'])
     if args['--plot-err']:
+        mumax = results['max_error_mus'][0, -1]
+        U = discretization.solve(mumax)
+        URB = reconstructor.reconstruct(rb_discretization.solve(mumax))
         discretization.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
                                  title='Maximum Error Solution', separate_colorbars=True, block=True)
 
