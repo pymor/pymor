@@ -62,6 +62,11 @@ def test_complex():
 
     # axpy
     assert not np.iscomplexobj(Cva.data)
+    Cva.axpy(1, Dva, 0)
+    assert np.iscomplexobj(Cva.data)
+
+    Cva = NumpyVectorArray(C)
+    assert not np.iscomplexobj(Cva.data)
     Cva.axpy(1j, Dva, 0)
     assert np.iscomplexobj(Cva.data)
 
@@ -92,3 +97,14 @@ def test_scal():
         for j in xrange(3):
             k += 1
             assert v.data[i, j] == k * 1j
+
+def test_axpy():
+    x = NumpyVectorArray(np.array([1.]))
+    y = NumpyVectorArray(np.array([1.]))
+    y.axpy(1 + 1j, x)
+    assert y.data[0, 0] == 2 + 1j
+
+    x = NumpyVectorArray(np.array([1 + 1j]))
+    y = NumpyVectorArray(np.array([1.]))
+    y.axpy(-1, x)
+    assert y.data[0, 0] == -1j
