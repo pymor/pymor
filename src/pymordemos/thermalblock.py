@@ -83,10 +83,102 @@ from docopt import docopt
 
 from pymor.algorithms.error import reduction_error_analysis
 from pymor.core.pickle import dump
-from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.parallel.default import new_parallel_pool
-from pymor.reductors.linear import reduce_stationary_affine_linear
-from pymor.reductors.stationary import reduce_stationary_coercive
+
+
+def thermalblock_demo(args):
+
+    args = parse_arguments(args)
+
+    pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
+
+    if args['--fenics']:
+        d, d_summary = discretize_fenics(args['XBLOCKS'], args['YBLOCKS'], args['--grid'], args['--order'])
+    else:
+        d, d_summary = discretize_pymor(args['XBLOCKS'], args['YBLOCKS'], args['--grid'], args['--list-vector-array'])
+
+    if args['--cache-region'] != 'none':
+        d.enable_caching(args['--cache-region'])
+
+    if args['--plot-solutions']:
+        print('Showing some solutions')
+        Us = tuple()
+        legend = tuple()
+        for mu in d.parameter_space.sample_randomly(2):
+            print('Solving for diffusion = \n{} ... '.format(mu['diffusion']))
+            sys.stdout.flush()
+            Us = Us + (d.solve(mu),)
+            legend = legend + (str(mu['diffusion']),)
+        d.visualize(Us, legend=legend, title='Detailed Solutions for different parameters',
+                    separate_colorbars=False, block=True)
+
+    print('RB generation ...')
+
+    # define estimator for coercivity constant
+    from pymor.parameters.functionals import ExpressionParameterFunctional
+    coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', d.parameter_type)
+
+    # inner product for computation of Riesz representatives
+    error_product = d.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
+
+    if args['--reductor'] == 'residual_basis':
+        from pymor.reductors.stationary import reduce_stationary_coercive
+        reductor = partial(reduce_stationary_coercive, error_product=error_product,
+                           coercivity_estimator=coercivity_estimator)
+    elif args['--reductor'] == 'traditional':
+        from pymor.reductors.linear import reduce_stationary_affine_linear
+        reductor = partial(reduce_stationary_affine_linear, error_product=error_product,
+                           coercivity_estimator=coercivity_estimator)
+    else:
+        assert False  # this should never happen
+
+    if args['--pod']:
+        rd, rc, red_summary = reduce_pod(d=d, reductor=reductor, snapshots_per_block=args['SNAPSHOTS'],
+                                         basis_size=args['RBSIZE'], product_name=args['--pod-product'])
+    else:
+        rd, rc, red_summary = reduce_greedy(d=d, reductor=reductor, snapshots_per_block=args['SNAPSHOTS'],
+                                            extension_alg_name=args['--extension-alg'],
+                                            max_extensions=args['RBSIZE'],
+                                            use_estimator=not args['--without-estimator'], pool=pool)
+
+    if args['--pickle']:
+        print('\nWriting reduced discretization to file {} ...'.format(args['--pickle'] + '_reduced'))
+        with open(args['--pickle'] + '_reduced', 'w') as f:
+            dump(rd, f)
+        if not args['--fenics']:  # FEniCS data structures do not support serialization
+            print('Writing detailed discretization and reconstructor to file {} ...'
+                  .format(args['--pickle'] + '_detailed'))
+            with open(args['--pickle'] + '_detailed', 'w') as f:
+                dump((d, rc), f)
+
+    print('\nSearching for maximum error on random snapshots ...')
+
+    results = reduction_error_analysis(rd,
+                                       discretization=d,
+                                       reconstructor=rc,
+                                       estimator=True,
+                                       error_norms=(d.h1_0_semi_norm, d.l2_norm),
+                                       condition=True,
+                                       test_mus=args['--test'],
+                                       basis_sizes=0 if args['--plot-error-sequence'] else 1,
+                                       plot=args['--plot-error-sequence'],
+                                       pool=pool)
+
+    print('\n*** RESULTS ***\n')
+    print(d_summary)
+    print(red_summary)
+    print(results['summary'])
+    sys.stdout.flush()
+
+    if args['--plot-error-sequence']:
+        from matplotlib import pyplot as plt
+        plt.show(results['figure'])
+    if args['--plot-err']:
+        mumax = results['max_error_mus'][0, -1]
+        U = d.solve(mumax)
+        URB = rc.reconstruct(rd.solve(mumax))
+        d.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
+                    title='Maximum Error Solution', separate_colorbars=True, block=True)
 
 
 def parse_arguments(args):
@@ -108,7 +200,7 @@ def parse_arguments(args):
     return args
 
 
-def discretize(xblocks, yblocks, grid_num_intervals, use_list_vector_array):
+def discretize_pymor(xblocks, yblocks, grid_num_intervals, use_list_vector_array):
     from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
     from pymor.discretizers.elliptic import discretize_elliptic_cg
     from pymor.playground.discretizers.numpylistvectorarray import convert_to_numpy_list_vector_array
@@ -123,7 +215,13 @@ def discretize(xblocks, yblocks, grid_num_intervals, use_list_vector_array):
     if use_list_vector_array:
         d = convert_to_numpy_list_vector_array(d)
 
-    return d
+    summary = '''pyMOR discretization:
+   number of blocks: {xblocks}x{yblocks}
+   grid intervals:   {grid_num_intervals}
+   ListVectorArray:  {use_list_vector_array}
+'''.format(**locals())
+
+    return d, summary
 
 
 def discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
@@ -209,7 +307,13 @@ def discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
                                  parameter_space=parameter_space,
                                  visualizer=visualizer)
 
-    return d
+    summary = '''FEniCS discretization:
+   number of blocks:      {xblocks}x{yblocks}
+   grid intervals:        {grid_num_intervals}
+   finite element order:  {element_order}
+'''.format(**locals())
+
+    return d, summary
 
 
 def reduce_greedy(d, reductor, snapshots_per_block,
@@ -239,8 +343,7 @@ def reduce_greedy(d, reductor, snapshots_per_block,
     # generate summary
     real_rb_size = rd.solution_space.dim
     training_set_size = len(training_set)
-    summary = '''
-Greedy basis generation:
+    summary = '''Greedy basis generation:
    size of training set:   {training_set_size}
    error estimator used:   {use_estimator}
    extension method:       {extension_alg_name}
@@ -282,8 +385,7 @@ def reduce_pod(d, reductor, snapshots_per_block, product_name, basis_size):
     # generate summary
     real_rb_size = rd.solution_space.dim
     training_set_size = len(training_set)
-    summary = '''
-POD basis generation:
+    summary = '''POD basis generation:
    size of training set:   {training_set_size}
    inner product for POD:  {product_name}
    prescribed basis size:  {basis_size}
@@ -292,100 +394,6 @@ POD basis generation:
 '''.format(**locals())
 
     return rd, rc, summary
-
-
-def thermalblock_demo(args):
-
-    args = parse_arguments(args)
-
-    pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
-
-    if args['--fenics']:
-        d = discretize_fenics(args['XBLOCKS'], args['YBLOCKS'], args['--grid'], args['--order'])
-    else:
-        d = discretize(args['XBLOCKS'], args['YBLOCKS'], args['--grid'], args['--list-vector-array'])
-
-    if args['--cache-region'] != 'none':
-        d.enable_caching(args['--cache-region'])
-
-    if args['--plot-solutions']:
-        print('Showing some solutions')
-        Us = tuple()
-        legend = tuple()
-        for mu in d.parameter_space.sample_randomly(2):
-            print('Solving for diffusion = \n{} ... '.format(mu['diffusion']))
-            sys.stdout.flush()
-            Us = Us + (d.solve(mu),)
-            legend = legend + (str(mu['diffusion']),)
-        d.visualize(Us, legend=legend, title='Detailed Solutions for different parameters',
-                    separate_colorbars=False, block=True)
-
-    print('RB generation ...')
-
-    # define reductor
-    error_product = d.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
-    coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', d.parameter_type)
-    reductors = {'residual_basis': partial(reduce_stationary_coercive, error_product=error_product,
-                                           coercivity_estimator=coercivity_estimator),
-                 'traditional': partial(reduce_stationary_affine_linear, error_product=error_product,
-                                        coercivity_estimator=coercivity_estimator)}
-    reductor = reductors[args['--reductor']]
-
-    if args['--pod']:
-        rd, rc, reduction_summary = reduce_pod(d=d, reductor=reductor, snapshots_per_block=args['SNAPSHOTS'],
-                                               basis_size=args['RBSIZE'], product_name=args['--pod-product'])
-    else:
-        rd, rc, reduction_summary = reduce_greedy(d=d, reductor=reductor, snapshots_per_block=args['SNAPSHOTS'],
-                                                  extension_alg_name=args['--extension-alg'],
-                                                  max_extensions=args['RBSIZE'],
-                                                  use_estimator=not args['--without-estimator'], pool=pool)
-
-    if args['--pickle']:
-        print('\nWriting reduced discretization to file {} ...'.format(args['--pickle'] + '_reduced'))
-        with open(args['--pickle'] + '_reduced', 'w') as f:
-            dump(rd, f)
-        if not args['--fenics']:  # FEniCS data structures do not support serialization
-            print('Writing detailed discretization and reconstructor to file {} ...'
-                  .format(args['--pickle'] + '_detailed'))
-            with open(args['--pickle'] + '_detailed', 'w') as f:
-                dump((d, rc), f)
-
-    print('\nSearching for maximum error on random snapshots ...')
-
-    results = reduction_error_analysis(rd,
-                                       discretization=d,
-                                       reconstructor=rc,
-                                       estimator=True,
-                                       error_norms=(d.h1_0_semi_norm, d.l2_norm),
-                                       condition=True,
-                                       test_mus=args['--test'],
-                                       basis_sizes=0 if args['--plot-error-sequence'] else 1,
-                                       plot=args['--plot-error-sequence'],
-                                       pool=pool)
-
-    real_rb_size = rd.solution_space.dim
-
-    print('''
-*** RESULTS ***
-
-Problem:
-   number of blocks:                   {args[XBLOCKS]}x{args[YBLOCKS]}
-   h:                                  sqrt(2)/{args[--grid]}
-'''.format(**locals()))
-    print(reduction_summary)
-    print(results['summary'])
-
-    sys.stdout.flush()
-
-    if args['--plot-error-sequence']:
-        from matplotlib import pyplot as plt
-        plt.show(results['figure'])
-    if args['--plot-err']:
-        mumax = results['max_error_mus'][0, -1]
-        U = d.solve(mumax)
-        URB = rc.reconstruct(rd.solve(mumax))
-        d.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
-                    title='Maximum Error Solution', separate_colorbars=True, block=True)
 
 
 if __name__ == '__main__':
