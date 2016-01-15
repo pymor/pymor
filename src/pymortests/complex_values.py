@@ -80,3 +80,15 @@ def test_real_imag():
             assert Bva.data[i, j] == k
             k += 1
             assert Cva.data[i, j] == k
+
+def test_scal():
+    v = np.array([[1, 2, 3],
+                  [4, 5, 6]], dtype=float)
+    v = NumpyVectorArray(v)
+    v.scal(1j)
+
+    k = 0
+    for i in xrange(2):
+        for j in xrange(3):
+            k += 1
+            assert v.data[i, j] == k * 1j
