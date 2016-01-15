@@ -32,7 +32,12 @@ Options:
   --extension-alg=ALG        Basis extension algorithm (trivial, gram_schmidt, h1_gram_schmidt)
                              to be used [default: h1_gram_schmidt].
 
+  --fenics                   Use FEniCS discretization.
+
   --grid=NI                  Use grid with 2*NI*NI elements [default: 100].
+
+  --order=ORDER              Polynomial order of the Lagrange finite elements to use in FEniCS
+                             discretization [default: 1].
 
   --pickle=PREFIX            Pickle reduced discretizaion, as well as reconstructor and high-dimensional
                              discretization to files with this prefix.
@@ -65,6 +70,7 @@ Options:
 from __future__ import absolute_import, division, print_function
 
 import sys
+from itertools import product
 from functools import partial
 
 from docopt import docopt
@@ -72,13 +78,115 @@ from docopt import docopt
 from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension
 from pymor.algorithms.error import reduction_error_analysis
 from pymor.algorithms.greedy import greedy
-from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
 from pymor.core.pickle import dump
-from pymor.discretizers.elliptic import discretize_elliptic_cg
 from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.parallel.default import new_parallel_pool
 from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor.reductors.stationary import reduce_stationary_coercive
+
+
+def discretize(xblocks, yblocks, grid_num_intervals, use_list_vector_array):
+    from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
+    from pymor.discretizers.elliptic import discretize_elliptic_cg
+    from pymor.playground.discretizers.numpylistvectorarray import convert_to_numpy_list_vector_array
+
+    print('Discretize ...')
+    # setup analytical problem
+    problem = ThermalBlockProblem(num_blocks=(args['XBLOCKS'], args['YBLOCKS']))
+
+    # discretize using continuous finite elements
+    d, _ = discretize_elliptic_cg(problem, diameter=1. / args['--grid'])
+
+    if use_list_vector_array:
+        d = convert_to_numpy_list_vector_array(d)
+
+    return d
+
+
+def discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
+
+    # assemble system matrices - FEniCS code
+    ########################################
+
+    import dolfin as df
+
+    mesh = df.UnitSquareMesh(grid_num_intervals, grid_num_intervals, 'crossed')
+    V = df.FunctionSpace(mesh, 'Lagrange', element_order)
+    u = df.TrialFunction(V)
+    v = df.TestFunction(V)
+
+    diffusion = df.Expression('(lower0 <= x[0]) * (open0 ? (x[0] < upper0) : (x[0] <= upper0)) *' +
+                              '(lower1 <= x[1]) * (open1 ? (x[1] < upper1) : (x[1] <= upper1))',
+                              lower0=0., upper0=0., open0=0,
+                              lower1=0., upper1=0., open1=0,
+                              element=df.FunctionSpace(mesh, 'DG', 0).ufl_element())
+
+    def assemble_matrix(x, y, nx, ny):
+        diffusion.user_parameters['lower0'] = x/nx
+        diffusion.user_parameters['lower1'] = y/ny
+        diffusion.user_parameters['upper0'] = (x + 1)/nx
+        diffusion.user_parameters['upper1'] = (y + 1)/ny
+        diffusion.user_parameters['open0'] = (x + 1 == nx)
+        diffusion.user_parameters['open1'] = (y + 1 == ny)
+        return df.assemble(df.inner(diffusion * df.nabla_grad(u), df.nabla_grad(v)) * df.dx)
+
+    mats = [assemble_matrix(x, y, xblocks, yblocks)
+            for x in range(xblocks) for y in range(yblocks)]
+    mat0 = mats[0].copy()
+    mat0.zero()
+    h1_mat = df.assemble(df.inner(df.nabla_grad(u), df.nabla_grad(v)) * df.dx)
+    l2_mat = df.assemble(u * v * df.dx)
+
+    f = df.Constant(1.) * v * df.dx
+    F = df.assemble(f)
+
+    bc = df.DirichletBC(V, 0., df.DomainBoundary())
+    for m in mats:
+        bc.zero(m)
+    bc.apply(mat0)
+    bc.apply(h1_mat)
+    bc.apply(F)
+
+    # wrap everything as a pyMOR discretization
+    ###########################################
+
+    # FEniCS wrappers
+    from pymor.gui.fenics import FenicsVisualizer
+    from pymor.operators.fenics import FenicsMatrixOperator
+    from pymor.vectorarrays.fenics import FenicsVector
+
+    # generic pyMOR classes
+    from pymor.discretizations.basic import StationaryDiscretization
+    from pymor.operators.constructions import LincombOperator, VectorFunctional
+    from pymor.parameters.functionals import ProjectionParameterFunctional
+    from pymor.parameters.spaces import CubicParameterSpace
+    from pymor.vectorarrays.list import ListVectorArray
+
+    # define parameter functionals (same as in pymor.analyticalproblems.thermalblock)
+    def parameter_functional_factory(x, y):
+        return ProjectionParameterFunctional(component_name='diffusion',
+                                             component_shape=(xblocks, yblocks),
+                                             coordinates=(yblocks - y - 1, x),
+                                             name='diffusion_{}_{}'.format(x, y))
+    parameter_functionals = tuple(parameter_functional_factory(x, y)
+                                  for x, y in product(xrange(args['XBLOCKS']), xrange(args['YBLOCKS'])))
+
+    # wrap operators
+    ops = [FenicsMatrixOperator(mat0)] + [FenicsMatrixOperator(m) for m in mats]
+    op = LincombOperator(ops, (1.,) + parameter_functionals)
+    rhs = VectorFunctional(ListVectorArray([FenicsVector(F)]))
+    h1_product = FenicsMatrixOperator(h1_mat, name='h1_0_semi')
+    l2_product = FenicsMatrixOperator(l2_mat, name='l2')
+
+    # build discretization
+    visualizer = FenicsVisualizer(V)
+    parameter_space = CubicParameterSpace(op.parameter_type, 0.1, 1.)
+    d = StationaryDiscretization(op, rhs, products={'h1_0_semi': h1_product,
+                                                    'l2': l2_product},
+                                 parameter_space=parameter_space,
+                                 visualizer=visualizer)
+
+    return d
 
 
 def thermalblock_demo(args):
@@ -96,18 +204,12 @@ def thermalblock_demo(args):
     args['--reductor'] = args['--reductor'].lower()
     assert args['--reductor'] in {'traditional', 'residual_basis'}
     args['--cache-region'] = args['--cache-region'].lower()
+    args['--order'] = int(args['--order'])
 
-    print('Solving on TriaGrid(({0},{0}))'.format(args['--grid']))
-
-    print('Setup Problem ...')
-    problem = ThermalBlockProblem(num_blocks=(args['XBLOCKS'], args['YBLOCKS']))
-
-    print('Discretize ...')
-    discretization, _ = discretize_elliptic_cg(problem, diameter=1. / args['--grid'])
-
-    if args['--list-vector-array']:
-        from pymor.playground.discretizers.numpylistvectorarray import convert_to_numpy_list_vector_array
-        discretization = convert_to_numpy_list_vector_array(discretization)
+    if args['--fenics']:
+        discretization = discretize_fenics(args['XBLOCKS'], args['YBLOCKS'], args['--grid'], args['--order'])
+    else:
+        discretization = discretize(args['XBLOCKS'], args['YBLOCKS'], args['--grid'], args['--list-vector-array'])
 
     if args['--cache-region'] != 'none':
         discretization.enable_caching(args['--cache-region'])
@@ -123,7 +225,8 @@ def thermalblock_demo(args):
             sys.stdout.flush()
             Us = Us + (discretization.solve(mu),)
             legend = legend + (str(mu['diffusion']),)
-        discretization.visualize(Us, legend=legend, title='Detailed Solutions for different parameters', block=True)
+        discretization.visualize(Us, legend=legend, title='Detailed Solutions for different parameters',
+                                 separate_colorbars=False, block=True)
 
     print('RB generation ...')
 
@@ -162,7 +265,7 @@ def thermalblock_demo(args):
     results = reduction_error_analysis(rb_discretization,
                                        discretization=discretization,
                                        reconstructor=reconstructor,
-                                       estimator=False,
+                                       estimator=True,
                                        error_norms=(discretization.h1_0_semi_norm, discretization.l2_norm),
                                        condition=True,
                                        test_mus=args['--test'],
