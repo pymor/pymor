@@ -114,3 +114,9 @@ def test_dot():
     y = NumpyVectorArray(np.array([1 - 1j]))
     z = x.dot(y)
     assert z[0, 0] == 2j
+
+def test_pairwise_dot():
+    x = NumpyVectorArray(np.array([1 + 1j]))
+    y = NumpyVectorArray(np.array([1 - 1j]))
+    z = x.pairwise_dot(y)
+    assert z == 2j
