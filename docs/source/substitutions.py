@@ -60,6 +60,7 @@ common = '''
 .. |CacheRegion| replace:: :class:`~pymor.core.cache.CacheRegion`
 
 .. |EllipticProblem| replace:: :class:`~pymor.analyticalproblems.elliptic.EllipticProblem`
+.. |ParabolicProblem| replace:: :class:`~pymor.analyticalproblems.parabolic.ParabolicProblem`
 .. |InstationaryAdvectionProblem| replace:: :class:`~pymor.analyticalproblems.advection.InstationaryAdvectionProblem`
 
 .. |BoundaryType| replace:: :class:`~pymor.domaindescriptions.boundarytypes.BoundaryType`
