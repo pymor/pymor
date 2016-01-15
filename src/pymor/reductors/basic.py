@@ -157,7 +157,7 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
         # noinspection PyShadowingNames
         class FakeEstimator(object):
             rd = discretization
-            rc = SubbasisReconstructor(next(discretization.operators.itervalues()).source.dim, dim)
+            rc = SubbasisReconstructor(discretization.solution_space.dim, dim)
 
             def estimate(self, U, mu=None, discretization=None):
                 return self.rd.estimate(self.rc.reconstruct(U), mu=mu)
@@ -174,7 +174,7 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
     if reconstructor is not None and hasattr(reconstructor, 'restricted_to_subbasis'):
         rc = reconstructor.restricted_to_subbasis(dim)
     else:
-        rc = SubbasisReconstructor(next(discretization.operators.itervalues()).source.dim, dim,
+        rc = SubbasisReconstructor(discretization.solution_space.dim, dim,
                                    old_recontructor=reconstructor)
 
     return rd, rc, {}
