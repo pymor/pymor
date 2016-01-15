@@ -7,11 +7,11 @@ from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
 def test_complex():
-    np.random.seed(1)
+    np.random.seed(0)
+    I = np.eye(5)
     A = np.random.randn(5, 5)
     B = np.random.randn(5, 5)
     C = np.random.randn(3, 5)
-    I = np.eye(5)
 
     Iop = NumpyMatrixOperator(I)
     Aop = NumpyMatrixOperator(A)
@@ -29,6 +29,7 @@ def test_complex():
     assert not np.iscomplexobj(Aop.apply_inverse(Cva).data)
     assert np.iscomplexobj((Aop * 1j).apply_inverse(Cva).data)
     assert np.iscomplexobj(Aop.assemble_lincomb((Aop, Bop), (1, 1j)).apply_inverse(Cva).data)
+    assert np.iscomplexobj(Aop.apply_inverse(Cva * 1j).data)
 
     # append
     for rsrv in (0, 10):
@@ -63,3 +64,19 @@ def test_complex():
     assert not np.iscomplexobj(Cva.data)
     Cva.axpy(1j, Dva, 0)
     assert np.iscomplexobj(Cva.data)
+
+def test_real_imag():
+    A = np.array([[1 + 2j, 3 + 4j],
+                  [5 + 6j, 7 + 8j],
+                  [9 + 10j, 11 + 12j]])
+    Ava = NumpyVectorArray(A)
+    Bva = Ava.real
+    Cva = Ava.imag
+
+    k = 0
+    for i in xrange(3):
+        for j in xrange(2):
+            k += 1
+            assert Bva.data[i, j] == k
+            k += 1
+            assert Cva.data[i, j] == k
