@@ -40,7 +40,7 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
         +----------------------+-------------+---------+
         | |CircleDomain|       | |OnedGrid|  |    X    |
         +----------------------+-------------+---------+
-        | |PolygonalDomain     | |GmshGrid|  |    X    |
+        | |PolygonalDomain|    | |GmshGrid|  |    X    |
         +----------------------+-------------+---------+
 
     Parameters
