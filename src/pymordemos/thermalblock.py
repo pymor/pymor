@@ -207,31 +207,31 @@ def thermalblock_demo(args):
     args['--order'] = int(args['--order'])
 
     if args['--fenics']:
-        discretization = discretize_fenics(args['XBLOCKS'], args['YBLOCKS'], args['--grid'], args['--order'])
+        d = discretize_fenics(args['XBLOCKS'], args['YBLOCKS'], args['--grid'], args['--order'])
     else:
-        discretization = discretize(args['XBLOCKS'], args['YBLOCKS'], args['--grid'], args['--list-vector-array'])
+        d = discretize(args['XBLOCKS'], args['YBLOCKS'], args['--grid'], args['--list-vector-array'])
 
     if args['--cache-region'] != 'none':
-        discretization.enable_caching(args['--cache-region'])
+        d.enable_caching(args['--cache-region'])
 
-    print('The parameter type is {}'.format(discretization.parameter_type))
+    print('The parameter type is {}'.format(d.parameter_type))
 
     if args['--plot-solutions']:
         print('Showing some solutions')
         Us = tuple()
         legend = tuple()
-        for mu in discretization.parameter_space.sample_randomly(2):
+        for mu in d.parameter_space.sample_randomly(2):
             print('Solving for diffusion = \n{} ... '.format(mu['diffusion']))
             sys.stdout.flush()
-            Us = Us + (discretization.solve(mu),)
+            Us = Us + (d.solve(mu),)
             legend = legend + (str(mu['diffusion']),)
-        discretization.visualize(Us, legend=legend, title='Detailed Solutions for different parameters',
-                                 separate_colorbars=False, block=True)
+        d.visualize(Us, legend=legend, title='Detailed Solutions for different parameters',
+                    separate_colorbars=False, block=True)
 
     print('RB generation ...')
 
-    error_product = discretization.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
-    coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', discretization.parameter_type)
+    error_product = d.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
+    coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', d.parameter_type)
     reductors = {'residual_basis': partial(reduce_stationary_coercive, error_product=error_product,
                                            coercivity_estimator=coercivity_estimator),
                  'traditional': partial(reduce_stationary_affine_linear, error_product=error_product,
@@ -240,40 +240,40 @@ def thermalblock_demo(args):
     extension_algorithms = {'trivial': trivial_basis_extension,
                             'gram_schmidt': gram_schmidt_basis_extension,
                             'h1_gram_schmidt': partial(gram_schmidt_basis_extension,
-                                                       product=discretization.h1_0_semi_product)}
+                                                       product=d.h1_0_semi_product)}
     extension_algorithm = extension_algorithms[args['--extension-alg']]
 
     pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
-    greedy_data = greedy(discretization, reductor,
-                         discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
-                         use_estimator=not args['--without-estimator'], error_norm=discretization.h1_0_semi_norm,
+    greedy_data = greedy(d, reductor,
+                         d.parameter_space.sample_uniformly(args['SNAPSHOTS']),
+                         use_estimator=not args['--without-estimator'], error_norm=d.h1_0_semi_norm,
                          extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'],
                          pool=pool)
 
-    rb_discretization, reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
+    rd, rc = greedy_data['reduced_discretization'], greedy_data['reconstructor']
 
     if args['--pickle']:
         print('\nWriting reduced discretization to file {} ...'.format(args['--pickle'] + '_reduced'))
         with open(args['--pickle'] + '_reduced', 'w') as f:
-            dump(rb_discretization, f)
+            dump(rd, f)
         print('Writing detailed discretization and reconstructor to file {} ...'.format(args['--pickle'] + '_detailed'))
         with open(args['--pickle'] + '_detailed', 'w') as f:
-            dump((discretization, reconstructor), f)
+            dump((d, rc), f)
 
     print('\nSearching for maximum error on random snapshots ...')
 
-    results = reduction_error_analysis(rb_discretization,
-                                       discretization=discretization,
-                                       reconstructor=reconstructor,
+    results = reduction_error_analysis(rd,
+                                       discretization=d,
+                                       reconstructor=rc,
                                        estimator=True,
-                                       error_norms=(discretization.h1_0_semi_norm, discretization.l2_norm),
+                                       error_norms=(d.h1_0_semi_norm, d.l2_norm),
                                        condition=True,
                                        test_mus=args['--test'],
                                        basis_sizes=0 if args['--plot-error-sequence'] else 1,
                                        plot=args['--plot-error-sequence'],
                                        pool=pool)
 
-    real_rb_size = rb_discretization.solution_space.dim
+    real_rb_size = rd.solution_space.dim
 
     print('''
 *** RESULTS ***
@@ -300,10 +300,10 @@ Greedy basis generation:
         plt.show(results['figure'])
     if args['--plot-err']:
         mumax = results['max_error_mus'][0, -1]
-        U = discretization.solve(mumax)
-        URB = reconstructor.reconstruct(rb_discretization.solve(mumax))
-        discretization.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
-                                 title='Maximum Error Solution', separate_colorbars=True, block=True)
+        U = d.solve(mumax)
+        URB = rc.reconstruct(rd.solve(mumax))
+        d.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
+                    title='Maximum Error Solution', separate_colorbars=True, block=True)
 
 
 if __name__ == '__main__':
