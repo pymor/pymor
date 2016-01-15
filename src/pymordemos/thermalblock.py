@@ -128,15 +128,16 @@ def thermalblock_demo(args):
     print('RB generation ...')
 
     error_product = discretization.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
-    coercivity_estimator=ExpressionParameterFunctional('min(diffusion)', discretization.parameter_type)
+    coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', discretization.parameter_type)
     reductors = {'residual_basis': partial(reduce_stationary_coercive, error_product=error_product,
-                                   coercivity_estimator=coercivity_estimator),
+                                           coercivity_estimator=coercivity_estimator),
                  'traditional': partial(reduce_stationary_affine_linear, error_product=error_product,
                                         coercivity_estimator=coercivity_estimator)}
     reductor = reductors[args['--reductor']]
     extension_algorithms = {'trivial': trivial_basis_extension,
                             'gram_schmidt': gram_schmidt_basis_extension,
-                            'h1_gram_schmidt': partial(gram_schmidt_basis_extension, product=discretization.h1_0_semi_product)}
+                            'h1_gram_schmidt': partial(gram_schmidt_basis_extension,
+                                                       product=discretization.h1_0_semi_product)}
     extension_algorithm = extension_algorithms[args['--extension-alg']]
 
     pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
