@@ -108,3 +108,9 @@ def test_axpy():
     y = NumpyVectorArray(np.array([1.]))
     y.axpy(-1, x)
     assert y.data[0, 0] == -1j
+
+def test_dot():
+    x = NumpyVectorArray(np.array([1 + 1j]))
+    y = NumpyVectorArray(np.array([1 - 1j]))
+    z = x.dot(y)
+    assert z[0, 0] == 2j
