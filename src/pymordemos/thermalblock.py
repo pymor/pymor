@@ -65,24 +65,47 @@ Options:
                              [default: NONE]
 
   --list-vector-array        Solve using ListVectorArray[NumpyVector] instead of NumpyVectorArray.
+
+  --pod                      Use POD instead of greedy algorithm for basis generation.
+
+  --pod-product=PROD         Inner product w.r.t. with to compute the pod (trivial, h1)
+                             [default: h1].
 """
 
 from __future__ import absolute_import, division, print_function
 
-import sys
-from itertools import product
 from functools import partial
+from itertools import product
+import sys
+import time
 
 from docopt import docopt
 
-from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension
 from pymor.algorithms.error import reduction_error_analysis
-from pymor.algorithms.greedy import greedy
 from pymor.core.pickle import dump
 from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.parallel.default import new_parallel_pool
 from pymor.reductors.linear import reduce_stationary_affine_linear
 from pymor.reductors.stationary import reduce_stationary_coercive
+
+
+def parse_arguments(args):
+    args['XBLOCKS'] = int(args['XBLOCKS'])
+    args['YBLOCKS'] = int(args['YBLOCKS'])
+    args['--grid'] = int(args['--grid'])
+    args['SNAPSHOTS'] = int(args['SNAPSHOTS'])
+    args['RBSIZE'] = int(args['RBSIZE'])
+    args['--test'] = int(args['--test'])
+    args['--ipython-engines'] = int(args['--ipython-engines'])
+    args['--estimator-norm'] = args['--estimator-norm'].lower()
+    assert args['--estimator-norm'] in {'trivial', 'h1'}
+    args['--extension-alg'] = args['--extension-alg'].lower()
+    assert args['--extension-alg'] in {'trivial', 'gram_schmidt', 'h1_gram_schmidt'}
+    args['--reductor'] = args['--reductor'].lower()
+    assert args['--reductor'] in {'traditional', 'residual_basis'}
+    args['--cache-region'] = args['--cache-region'].lower()
+    args['--order'] = int(args['--order'])
+    return args
 
 
 def discretize(xblocks, yblocks, grid_num_intervals, use_list_vector_array):
@@ -189,22 +212,93 @@ def discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
     return d
 
 
+def reduce_greedy(d, reductor, snapshots_per_block,
+                  extension_alg_name, max_extensions, use_estimator, pool):
+
+    from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension
+    from pymor.algorithms.greedy import greedy
+
+    # choose basis extension algorithm
+    if extension_alg_name == 'trivial':
+        extension_algorithm = trivial_basis_extension
+    elif extension_alg_name == 'gram_schmidt':
+        extension_algorithm = gram_schmidt_basis_extension
+    elif extension_alg_name == 'h1_gram_schmidt':
+        extension_algorithm = partial(gram_schmidt_basis_extension, product=d.h1_0_semi_product)
+    else:
+        assert False
+
+    # run greedy
+    training_set = d.parameter_space.sample_uniformly(snapshots_per_block)
+    greedy_data = greedy(d, reductor, training_set,
+                         use_estimator=use_estimator, error_norm=d.h1_0_semi_norm,
+                         extension_algorithm=extension_algorithm, max_extensions=max_extensions,
+                         pool=pool)
+    rd, rc = greedy_data['reduced_discretization'], greedy_data['reconstructor']
+
+    # generate summary
+    real_rb_size = rd.solution_space.dim
+    training_set_size = len(training_set)
+    summary = '''
+Greedy basis generation:
+   size of training set:   {training_set_size}
+   error estimator used:   {use_estimator}
+   extension method:       {extension_alg_name}
+   prescribed basis size:  {max_extensions}
+   actual basis size:      {real_rb_size}
+   elapsed time:           {greedy_data[time]}
+'''.format(**locals())
+
+    return rd, rc, summary
+
+
+def reduce_pod(d, reductor, snapshots_per_block, product_name, basis_size):
+    from pymor.algorithms.pod import pod
+
+    tic = time.time()
+
+    training_set = d.parameter_space.sample_uniformly(snapshots_per_block)
+
+    print('Solving on training set ...')
+    snapshots = d.operator.source.empty(reserve=len(training_set))
+    for mu in training_set:
+        snapshots.append(d.solve(mu))
+
+    if product_name == 'h1':
+        pod_product = d.h1_0_semi_product
+    elif product_name == 'trivial':
+        pod_product = None
+    else:
+        assert False
+
+    print('Performing POD ...')
+    basis, singular_values = pod(snapshots, modes=basis_size, product=pod_product)
+
+    print('Reducing ...')
+    rd, rc, _ = reductor(d, basis)
+
+    elapsed_time = time.time() - tic
+
+    # generate summary
+    real_rb_size = rd.solution_space.dim
+    training_set_size = len(training_set)
+    summary = '''
+POD basis generation:
+   size of training set:   {training_set_size}
+   inner product for POD:  {product_name}
+   prescribed basis size:  {basis_size}
+   actual basis size:      {real_rb_size}
+   elapsed time:           {elapsed_time}
+'''.format(**locals())
+
+    return rd, rc, summary
+
+
 def thermalblock_demo(args):
-    args['XBLOCKS'] = int(args['XBLOCKS'])
-    args['YBLOCKS'] = int(args['YBLOCKS'])
-    args['--grid'] = int(args['--grid'])
-    args['SNAPSHOTS'] = int(args['SNAPSHOTS'])
-    args['RBSIZE'] = int(args['RBSIZE'])
-    args['--test'] = int(args['--test'])
-    args['--ipython-engines'] = int(args['--ipython-engines'])
-    args['--estimator-norm'] = args['--estimator-norm'].lower()
-    assert args['--estimator-norm'] in {'trivial', 'h1'}
-    args['--extension-alg'] = args['--extension-alg'].lower()
-    assert args['--extension-alg'] in {'trivial', 'gram_schmidt', 'h1_gram_schmidt'}
-    args['--reductor'] = args['--reductor'].lower()
-    assert args['--reductor'] in {'traditional', 'residual_basis'}
-    args['--cache-region'] = args['--cache-region'].lower()
-    args['--order'] = int(args['--order'])
+
+    args = parse_arguments(args)
+
+    pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
 
     if args['--fenics']:
         d = discretize_fenics(args['XBLOCKS'], args['YBLOCKS'], args['--grid'], args['--order'])
@@ -213,8 +307,6 @@ def thermalblock_demo(args):
 
     if args['--cache-region'] != 'none':
         d.enable_caching(args['--cache-region'])
-
-    print('The parameter type is {}'.format(d.parameter_type))
 
     if args['--plot-solutions']:
         print('Showing some solutions')
@@ -230,6 +322,7 @@ def thermalblock_demo(args):
 
     print('RB generation ...')
 
+    # define reductor
     error_product = d.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
     coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', d.parameter_type)
     reductors = {'residual_basis': partial(reduce_stationary_coercive, error_product=error_product,
@@ -237,20 +330,15 @@ def thermalblock_demo(args):
                  'traditional': partial(reduce_stationary_affine_linear, error_product=error_product,
                                         coercivity_estimator=coercivity_estimator)}
     reductor = reductors[args['--reductor']]
-    extension_algorithms = {'trivial': trivial_basis_extension,
-                            'gram_schmidt': gram_schmidt_basis_extension,
-                            'h1_gram_schmidt': partial(gram_schmidt_basis_extension,
-                                                       product=d.h1_0_semi_product)}
-    extension_algorithm = extension_algorithms[args['--extension-alg']]
 
-    pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
-    greedy_data = greedy(d, reductor,
-                         d.parameter_space.sample_uniformly(args['SNAPSHOTS']),
-                         use_estimator=not args['--without-estimator'], error_norm=d.h1_0_semi_norm,
-                         extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'],
-                         pool=pool)
-
-    rd, rc = greedy_data['reduced_discretization'], greedy_data['reconstructor']
+    if args['--pod']:
+        rd, rc, reduction_summary = reduce_pod(d=d, reductor=reductor, snapshots_per_block=args['SNAPSHOTS'],
+                                               basis_size=args['RBSIZE'], product_name=args['--pod-product'])
+    else:
+        rd, rc, reduction_summary = reduce_greedy(d=d, reductor=reductor, snapshots_per_block=args['SNAPSHOTS'],
+                                                  extension_alg_name=args['--extension-alg'],
+                                                  max_extensions=args['RBSIZE'],
+                                                  use_estimator=not args['--without-estimator'], pool=pool)
 
     if args['--pickle']:
         print('\nWriting reduced discretization to file {} ...'.format(args['--pickle'] + '_reduced'))
@@ -283,16 +371,8 @@ def thermalblock_demo(args):
 Problem:
    number of blocks:                   {args[XBLOCKS]}x{args[YBLOCKS]}
    h:                                  sqrt(2)/{args[--grid]}
-
-Greedy basis generation:
-   number of snapshots:                {args[SNAPSHOTS]}^({args[XBLOCKS]}x{args[YBLOCKS]})
-   estimator disabled:                 {args[--without-estimator]}
-   estimator norm:                     {args[--estimator-norm]}
-   extension method:                   {args[--extension-alg]}
-   prescribed basis size:              {args[RBSIZE]}
-   actual basis size:                  {real_rb_size}
-   elapsed time:                       {greedy_data[time]}
 '''.format(**locals()))
+    print(reduction_summary)
     print(results['summary'])
 
     sys.stdout.flush()
