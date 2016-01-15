@@ -79,6 +79,14 @@ class NumpyVectorArray(VectorArrayInterface):
     def data(self):
         return self._array[:self._len]
 
+    @property
+    def real(self):
+        return NumpyVectorArray(self._array[:self._len].real, copy=True)
+
+    @property
+    def imag(self):
+        return NumpyVectorArray(self._array[:self._len].imag, copy=True)
+
     def __len__(self):
         return self._len
 
