@@ -76,6 +76,7 @@ common = '''
 .. |OnedGrid| replace:: :class:`~pymor.grids.oned.OnedGrid`
 .. |RectGrid| replace:: :class:`~pymor.grids.rect.RectGrid`
 .. |TriaGrid| replace:: :class:`~pymor.grids.tria.TriaGrid`
+.. |GmshGrid| replace:: :class:`~pymor.grids.gmsh.GmshGrid`
 
 .. |NumpyVectorArray| replace:: :class:`~pymor.vectorarrays.numpy.NumpyVectorArray`
 .. |NumpyVectorArrays| replace:: :class:`NumpyVectorArrays <pymor.vectorarrays.numpy.NumpyVectorArray>`
