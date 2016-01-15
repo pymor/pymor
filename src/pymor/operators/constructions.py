@@ -970,7 +970,7 @@ class InducedNorm(ImmutableInterface, Parametric):
         self.product = product
         self.raise_negative = raise_negative
         self.tol = tol
-        self.name = name
+        self.name = name or product.name
         self.build_parameter_type(inherits=(product,))
 
     def __call__(self, U, mu=None):
