@@ -97,9 +97,29 @@ def test_vtkio(rect_or_tria_grid):
                 else:
                     write_vtk(grid, data, out.name, codim=codim)
 
-def test_timer():
-    with timing.Timer('section_name'):
-        timing.busywait(100)
+
+class TestTiming(TestInterface):
+
+    def testTimingContext(self):
+        with timing.Timer('busywait', self.logger):
+            timing.busywait(100)
+        with timing.Timer('defaultlog'):
+            timing.busywait(100)
+
+    @timing.Timer('busywait_decorator', TestInterface.logger)
+    def wait(self):
+        timing.busywait(1000)
+
+    def testTimingDecorator(self):
+        self.wait()
+
+    def testTiming(self):
+        timer = timing.Timer('busywait', self.logger)
+        timer.start()
+        timing.busywait(1000)
+        timer.stop()
+        self.logger.info('plain timing took %s seconds', timer.dt)
+
 
 if __name__ == "__main__":
     runmodule(filename=__file__)
