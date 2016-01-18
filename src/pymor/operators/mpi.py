@@ -166,7 +166,7 @@ class MPIOperator(OperatorBase):
 
     def assemble(self, mu=None):
         mu = self.parse_parameter(mu)
-        return self.with_(mpi.call(mpi.method_call_manage, self.obj_id, 'assemble', mu=mu))
+        return self.with_(obj_id=mpi.call(mpi.method_call_manage, self.obj_id, 'assemble', mu=mu))
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         if not all(isinstance(op, MPIOperator) for op in operators):
