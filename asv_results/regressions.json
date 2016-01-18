@@ -1,0 +1,996 @@
+{
+    "regressions": [
+        [
+            "benchmarks.TimeVectorArray.time_copy('numpy', 10, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_copy.json", 
+            {}, 
+            0, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                5.619151129999999e-06, 
+                4.763983305e-06
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_gramian('numpy', 10, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_gramian.json", 
+            {}, 
+            0, 
+            [
+                [
+                    [
+                        null, 
+                        1845
+                    ]
+                ], 
+                6.33904786e-06, 
+                4.9424226e-06
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_scal_indexed('numpy', 10, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_scal_indexed.json", 
+            {}, 
+            0, 
+            [
+                [
+                    [
+                        null, 
+                        1839
+                    ]
+                ], 
+                5.68309798e-05, 
+                5.322978619999998e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_scal_indexed('numpy', 10, 10000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_scal_indexed.json", 
+            {}, 
+            1, 
+            [
+                [
+                    [
+                        null, 
+                        1839
+                    ]
+                ], 
+                0.0001295325579, 
+                0.00012656726080000001
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_scal_indexed('numpy', 100, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_scal_indexed.json", 
+            {}, 
+            3, 
+            [
+                [
+                    [
+                        null, 
+                        1838
+                    ]
+                ], 
+                6.0964003249999995e-05, 
+                5.8046272250000016e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_scal_indexed('numpylist', 10, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_scal_indexed.json", 
+            {}, 
+            6, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                6.298464965e-05, 
+                6.045097765e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_scal_indexed('numpylist', 10, 10000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_scal_indexed.json", 
+            {}, 
+            7, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                9.803676305000001e-05, 
+                9.52911013e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_scal_indexed('numpylist', 100, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_scal_indexed.json", 
+            {}, 
+            9, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                0.0001935508524, 
+                0.0001651378169
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_scal_indexed('numpylist', 100, 10000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_scal_indexed.json", 
+            {}, 
+            10, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                0.0005046253064999999, 
+                0.0004719646435
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_zeros('numpy', 10, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_zeros.json", 
+            {}, 
+            0, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                9.365750909999999e-06, 
+                8.227750645e-06
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_zeros('numpy', 10, 10000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_zeros.json", 
+            {}, 
+            1, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                5.380264835e-05, 
+                5.2304797900000004e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_zeros('numpy', 10, 1000000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_zeros.json", 
+            {}, 
+            2, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                1.9499657864999995e-05, 
+                1.773479896e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_zeros('numpy', 100, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_zeros.json", 
+            {}, 
+            3, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                1.0018881755e-05, 
+                8.771885765e-06
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_zeros('numpylist', 10, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_zeros.json", 
+            {}, 
+            6, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                6.10174565e-05, 
+                4.63897121e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_zeros('numpylist', 10, 10000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_zeros.json", 
+            {}, 
+            7, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                0.0001104696014, 
+                9.575444655e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_zeros('numpylist', 100, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_zeros.json", 
+            {}, 
+            9, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                0.0005214452859999999, 
+                0.00039533380000000005
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_zeros('numpylist', 100, 10000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_zeros.json", 
+            {}, 
+            10, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                0.001246184682, 
+                0.001118632112
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_l1_norm('numpy', 10, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_l1_norm.json", 
+            {}, 
+            0, 
+            [
+                [
+                    [
+                        null, 
+                        1840
+                    ]
+                ], 
+                9.868379345e-06, 
+                7.514672339999999e-06
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_l1_norm('numpy', 10, 10000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_l1_norm.json", 
+            {}, 
+            1, 
+            [
+                [
+                    [
+                        null, 
+                        1840
+                    ]
+                ], 
+                0.0001427670414, 
+                0.00013951880625
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_l1_norm('numpy', 100, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_l1_norm.json", 
+            {}, 
+            3, 
+            [
+                [
+                    [
+                        null, 
+                        1840
+                    ]
+                ], 
+                1.2638428349999998e-05, 
+                1.0263998499999998e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_lincomb_indexed('numpy', 10, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_lincomb_indexed.json", 
+            {}, 
+            0, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                2.66938026e-05, 
+                2.4595419000000004e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_lincomb_indexed('numpy', 10, 10000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_lincomb_indexed.json", 
+            {}, 
+            1, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                6.65881956e-05, 
+                6.451990365000001e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_lincomb_indexed('numpy', 100, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_lincomb_indexed.json", 
+            {}, 
+            3, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                2.8332103450000007e-05, 
+                2.6296148550000006e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_lincomb_indexed('numpylist', 10, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_lincomb_indexed.json", 
+            {}, 
+            6, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                6.355526645e-05, 
+                5.629564875e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_lincomb_indexed('numpylist', 10, 10000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_lincomb_indexed.json", 
+            {}, 
+            7, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                0.00010601712845, 
+                9.865138774999998e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_lincomb_indexed('numpylist', 100, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_lincomb_indexed.json", 
+            {}, 
+            9, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                0.00018262653499999997, 
+                0.00016017037325
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_lincomb_indexed('numpylist', 100, 10000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_lincomb_indexed.json", 
+            {}, 
+            10, 
+            [
+                [
+                    [
+                        null, 
+                        1803
+                    ]
+                ], 
+                0.000580184465, 
+                0.0005545626180000001
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_l2_norm_indexed('numpy', 10, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_l2_norm_indexed.json", 
+            {}, 
+            0, 
+            [
+                [
+                    [
+                        null, 
+                        1840
+                    ]
+                ], 
+                3.22144556e-05, 
+                2.93570277e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_l2_norm_indexed('numpylist', 10, 1000000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_l2_norm_indexed.json", 
+            {}, 
+            8, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                0.02427209045, 
+                0.024138673050000004
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_l2_norm_indexed('numpylist', 100, 1000000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_l2_norm_indexed.json", 
+            {}, 
+            11, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                0.3026646989999997, 
+                0.3007523104999996
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_dot('numpy', 10, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_dot.json", 
+            {}, 
+            0, 
+            [
+                [
+                    [
+                        null, 
+                        1845
+                    ]
+                ], 
+                5.4931046000000006e-06, 
+                4.05138501e-06
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_axpy_indexed('numpylist', 100, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_axpy_indexed.json", 
+            {}, 
+            9, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                0.00040395337750000004, 
+                0.0003749290984999999
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_axpy_indexed('numpylist', 100, 10000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_axpy_indexed.json", 
+            {}, 
+            10, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                0.0012403491185000001, 
+                0.0012028787065
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_l1_norm_indexed('numpy', 10, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_l1_norm_indexed.json", 
+            {}, 
+            0, 
+            [
+                [
+                    [
+                        null, 
+                        1840
+                    ]
+                ], 
+                2.8162324150000006e-05, 
+                2.414102755e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_l1_norm_indexed('numpy', 10, 10000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_l1_norm_indexed.json", 
+            {}, 
+            1, 
+            [
+                [
+                    [
+                        null, 
+                        1840
+                    ]
+                ], 
+                7.47704812e-05, 
+                7.032926145e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_l1_norm_indexed('numpy', 100, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_l1_norm_indexed.json", 
+            {}, 
+            3, 
+            [
+                [
+                    [
+                        null, 
+                        1840
+                    ]
+                ], 
+                3.05024874e-05, 
+                2.6301633750000003e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_lincomb('numpy', 10, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_lincomb.json", 
+            {}, 
+            0, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                7.86274039e-06, 
+                6.541849154999999e-06
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_lincomb('numpy', 10, 10000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_lincomb.json", 
+            {}, 
+            1, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                7.831789900000002e-05, 
+                7.63431206e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_lincomb('numpy', 100, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_lincomb.json", 
+            {}, 
+            3, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                8.31622494e-06, 
+                7.046162005e-06
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_lincomb('numpylist', 10, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_lincomb.json", 
+            {}, 
+            6, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                7.65125615e-05, 
+                6.481648910000001e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_lincomb('numpylist', 10, 10000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_lincomb.json", 
+            {}, 
+            7, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                0.00024310714150000003, 
+                0.00022918737450000002
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_lincomb('numpylist', 100, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_lincomb.json", 
+            {}, 
+            9, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                0.000515907138, 
+                0.00045061343949999997
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_lincomb('numpylist', 100, 10000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_lincomb.json", 
+            {}, 
+            10, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                0.0022316627200000003, 
+                0.002132220815
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_l2_norm('numpylist', 10, 1000000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_l2_norm.json", 
+            {}, 
+            8, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                0.12120925529999997, 
+                0.12034592634999998
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_l2_norm('numpylist', 100, 1000000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_l2_norm.json", 
+            {}, 
+            11, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                1.2102240054999998, 
+                1.2035491134999998
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_empty('numpy', 10, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_empty.json", 
+            {}, 
+            0, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                9.341156004999999e-06, 
+                8.146448630000001e-06
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_empty('numpy', 10, 10000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_empty.json", 
+            {}, 
+            1, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                5.3715238500000006e-05, 
+                5.22210818e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_empty('numpy', 100, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_empty.json", 
+            {}, 
+            3, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                1.0005442770000002e-05, 
+                8.846981934999999e-06
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_scal('numpy', 10, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_scal.json", 
+            {}, 
+            0, 
+            [
+                [
+                    [
+                        null, 
+                        1841
+                    ]
+                ], 
+                9.781550424999999e-06, 
+                8.506442929999998e-06
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_scal('numpy', 10, 10000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_scal.json", 
+            {}, 
+            1, 
+            [
+                [
+                    [
+                        null, 
+                        1841
+                    ]
+                ], 
+                0.0001250637157, 
+                0.0001221971356
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_scal('numpy', 100, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_scal.json", 
+            {}, 
+            3, 
+            [
+                [
+                    [
+                        null, 
+                        1841
+                    ]
+                ], 
+                1.244689718e-05, 
+                9.71048526e-06
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_scal('numpylist', 10, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_scal.json", 
+            {}, 
+            6, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                5.58952871e-05, 
+                4.4678294e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_scal('numpylist', 10, 10000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_scal.json", 
+            {}, 
+            7, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                0.00017886600585, 
+                0.00016731619720000002
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_scal('numpylist', 100, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_scal.json", 
+            {}, 
+            9, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                0.000495980451, 
+                0.000393820961
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_scal('numpylist', 100, 10000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_scal.json", 
+            {}, 
+            10, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                0.002063736955, 
+                0.00191705958
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_copy_indexed('numpy', 10, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_copy_indexed.json", 
+            {}, 
+            0, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                2.286271865e-05, 
+                2.071358375e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_copy_indexed('numpy', 10, 10000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_copy_indexed.json", 
+            {}, 
+            1, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                3.45369134e-05, 
+                3.229912495000001e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_copy_indexed('numpy', 100, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_copy_indexed.json", 
+            {}, 
+            3, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                2.4302420200000004e-05, 
+                2.2048345500000005e-05
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_copy_indexed('numpy', 100, 10000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_copy_indexed.json", 
+            {}, 
+            4, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                0.00016148418775000002, 
+                0.00015940940265
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_axpy('numpylist', 10, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_axpy.json", 
+            {}, 
+            6, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                0.00013389234540000004, 
+                0.0001231188068
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_axpy('numpylist', 10, 10000)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_axpy.json", 
+            {}, 
+            7, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                0.0004715599470000001, 
+                0.0004542082425
+            ]
+        ], 
+        [
+            "benchmarks.TimeVectorArray.time_axpy('numpylist', 100, 10)", 
+            "graphs/Cython-0.23.4/arch-x86_64/branch-master/cpu-Intel(R) Core(TM) i7 CPU         860  @ 2.80GHz/machine-MACDUFF/matplotlib-1.5.1/numpy-1.10.4/os-Linux 3.19.0-30-generic/python-2.7/ram-8GB/scipy-0.16.1/benchmarks.TimeVectorArray.time_axpy.json", 
+            {}, 
+            9, 
+            [
+                [
+                    [
+                        null, 
+                        1804
+                    ]
+                ], 
+                0.000928248229, 
+                0.0008153883095000001
+            ]
+        ]
+    ]
+}
