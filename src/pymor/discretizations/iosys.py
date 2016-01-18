@@ -607,13 +607,13 @@ class LTISystem(DiscretizationInterface):
 
                 Bb = self.B.apply(NumpyVectorArray(b[:, i].T))
                 v = sEmA.apply_inverse(Bb)
-                Vr.append(NumpyVectorArray(v.data.real))
-                Vr.append(NumpyVectorArray(v.data.imag))
+                Vr.append(v.real)
+                Vr.append(v.imag)
 
                 CTc = self.C.apply_adjoint(NumpyVectorArray(c[:, i].T))
                 w = sEmA.apply_inverse_adjoint(CTc)
-                Wr.append(NumpyVectorArray(w.data.real))
-                Wr.append(NumpyVectorArray(w.data.imag))
+                Wr.append(w.real)
+                Wr.append(w.imag)
 
         Vr = gram_schmidt(Vr, atol=0, rtol=0)
         Wr = gram_schmidt(Wr, atol=0, rtol=0)
