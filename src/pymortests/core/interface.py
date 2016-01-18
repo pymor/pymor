@@ -16,28 +16,6 @@ from pymor.grids.rect import RectGrid
 from pymor.tools import timing
 import pymor.core
 
-
-class TestTiming(TestInterface):
-
-    def testTimingContext(self):
-        with timing.Timer('busywait', self.logger.info):
-            timing.busywait(1000)
-
-    @timing.Timer('busywait_decorator', TestInterface.logger.info)
-    def wait(self):
-        timing.busywait(1000)
-
-    def testTimingDecorator(self):
-        self.wait()
-
-    def testTiming(self):
-        timer = timing.Timer('busywait', self.logger.info)
-        timer.start()
-        timing.busywait(1000)
-        timer.stop()
-        self.logger.info('plain timing took %s seconds', timer.dt)
-
-
 class Test_Interface(TestInterface):
 
     def testLock(self):
