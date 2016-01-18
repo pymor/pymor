@@ -54,7 +54,7 @@ class Timer(object):
 
     def __exit__(self, type_, value, traceback):
         self.stop()
-        self._log('Execution of %s took %f (s)', self._section, self.dt)
+        self._log.info('Execution of %s took %f (s)', self._section, self.dt)
 
     def __call__(self, func):
         func.decorated = self

@@ -16,6 +16,7 @@ from pymor.tools.quadratures import GaussQuadratures
 from pymor.tools.floatcmp import float_cmp, float_cmp_all
 from pymor.tools.vtkio import write_vtk
 from pymor.vectorarrays.numpy import NumpyVectorArray
+from pymor.tools import timing
 
 
 FUNCTIONS = (('sin(2x pi)', lambda x: sin(2 * x * pi), 0),
@@ -95,6 +96,10 @@ def test_vtkio(rect_or_tria_grid):
                         write_vtk(grid, data, out.name, codim=codim)
                 else:
                     write_vtk(grid, data, out.name, codim=codim)
+
+def test_timer():
+    with timing.Timer('section_name'):
+        timing.busywait(100)
 
 if __name__ == "__main__":
     runmodule(filename=__file__)
