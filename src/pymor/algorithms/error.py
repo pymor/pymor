@@ -262,13 +262,13 @@ def reduction_error_analysis(reduced_discretization, discretization=None, recons
                 ax.semilogy(basis_sizes, max_estimates)
                 legend.append('estimator')
             ax.legend(legend)
-            ax.set_title('errors')
+            ax.set_title('maximum errors')
             current_plot += 1
 
         if bool(error_norms) and estimator:
             ax = fig.add_subplot(1, num_plots, current_plot)
-            ax.plot(basis_sizes, min_effectivities)
-            ax.plot(basis_sizes, max_effectivities)
+            ax.semilogy(basis_sizes, min_effectivities)
+            ax.semilogy(basis_sizes, max_effectivities)
             ax.legend(('min', 'max'))
             ax.set_title('estimator effectivities')
             current_plot += 1
