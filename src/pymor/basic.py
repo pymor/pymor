@@ -11,8 +11,10 @@ to have the most important parts of pyMOR directly available.
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension, pod_basis_extension
 from pymor.algorithms.ei import interpolate_operators, ei_greedy, deim
+from pymor.algorithms.error import reduction_error_analysis
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.greedy import greedy
+from pymor.algorithms.adaptivegreedy import adaptive_greedy
 from pymor.algorithms.newton import newton
 from pymor.algorithms.pod import pod
 
@@ -52,7 +54,7 @@ from pymor.operators.constructions import (LincombOperator, Concatenation, Compo
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixOperator
 
-from pymor.parallel.ipython import new_ipcluster_pool, IPythonPool
+from pymor.parallel.default import new_parallel_pool
 from pymor.parallel.manager import RemoteObjectManager
 
 from pymor.parameters.base import Parameter
@@ -67,4 +69,5 @@ from pymor.tools.random import new_random_state
 
 from pymor.vectorarrays.constructions import cat_arrays
 from pymor.vectorarrays.interfaces import VectorSpace
+from pymor.vectorarrays.list import ListVectorArray
 from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
