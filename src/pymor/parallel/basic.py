@@ -87,9 +87,12 @@ class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPoolInterface):
         chunk_size = max_len // count + (1 if max_len % count > 0 else 0)
 
         def split_arg(arg):
-            while arg:
+            for _ in range(count):
                 chunk, arg = arg[:chunk_size], arg[chunk_size:]
                 yield chunk
+        from itertools import chain
+        for arg in args:
+            assert list(chain(*split_arg(arg))) == arg
         chunks = tuple(list(split_arg(arg)) for arg in args)
         return chunks
 
