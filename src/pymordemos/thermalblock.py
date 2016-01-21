@@ -45,7 +45,7 @@ Options:
 
   --fenics                        Use FEniCS discretization.
 
-  --grid=NI                       Use grid with 2*NI*NI elements [default: 100].
+  --grid=NI                       Use grid with 4*NI*NI elements [default: 100].
 
   -h, --help                      Show this message.
 
