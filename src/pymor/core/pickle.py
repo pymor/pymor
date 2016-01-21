@@ -174,7 +174,7 @@ def _function_pickling_handler(f):
         if f.__module__ != '__main__':
             try:
                 return 'A' + pickle.dumps(f)
-            except PicklingError:
+            except (TypeError, PicklingError):
                 return 'B' + dumps_function(f)
         else:
             return 'B' + dumps_function(f)
