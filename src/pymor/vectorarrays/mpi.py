@@ -128,8 +128,29 @@ class MPIVectorArray(VectorArrayInterface):
         mpi.call(mpi.remove_object, self.obj_id)
 
 
+class RegisteredSubtype(int):
+    pass
+
+
+_subtype_registry = {}
+_subtype_to_id = {}
+
+
+def _register_subtype(subtype):
+    # if mpi.rank == 0:
+    #     import pdb; pdb.set_trace()
+    subtype_id = _subtype_to_id.get(subtype)
+    if subtype_id is None:
+        subtype_id = RegisteredSubtype(len(_subtype_registry))
+        _subtype_registry[subtype_id] = subtype
+        _subtype_to_id[subtype] = subtype_id
+    return subtype_id
+
+
 def _MPIVectorArray_make_array(cls, subtype=(None,), count=0, reserve=0):
     subtype = subtype[mpi.rank] if len(subtype) > 1 else subtype[0]
+    if type(subtype) is RegisteredSubtype:
+        subtype = _subtype_registry[subtype]
     obj = cls.make_array(subtype=subtype, count=count, reserve=reserve)
     return mpi.manage_object(obj)
 
@@ -410,6 +431,8 @@ def _MPIVector_axpy(obj_id, alpha, x_obj_id):
 
 def _MPIVector_make_zeros(cls, subtype=(None,)):
     subtype = subtype[mpi.rank] if len(subtype) > 1 else subtype[0]
+    if type(subtype) is RegisteredSubtype:
+        subtype = _subtype_registry[subtype]
     obj = cls.make_zeros(subtype)
     return mpi.manage_object(obj)
 
