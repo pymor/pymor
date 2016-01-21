@@ -96,7 +96,20 @@ class MPIVisualizer(ImmutableInterface):
         self.d_obj_id = d_obj_id
 
     def visualize(self, U, d, **kwargs):
-        mpi.call(mpi.method_call, self.d_obj_id, 'visualize', U.obj_id, **kwargs)
+        if isinstance(U, tuple):
+            U = tuple(u.obj_id for u in U)
+        else:
+            U = U.obj_id
+        mpi.call(_MPIVisualizer_visualize, self.d_obj_id, U, **kwargs)
+
+
+def _MPIVisualizer_visualize(d, U, **kwargs):
+    d = mpi.get_object(d)
+    if isinstance(U, tuple):
+        U = tuple(mpi.get_object(u) for u in U)
+    else:
+        U = mpi.get_object(U)
+    d.visualize(U, **kwargs)
 
 
 def mpi_wrap_discretization(local_discretizations, use_with=False, with_apply2=False,
