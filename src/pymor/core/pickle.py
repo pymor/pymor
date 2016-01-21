@@ -38,33 +38,44 @@ UnpicklingError = pickle.UnpicklingError
 PROTOCOL = pickle.HIGHEST_PROTOCOL
 
 
-def dump(obj, file, protocol=None):
-    pickler = pickle.Pickler(file, protocol=PROTOCOL)
-    pickler.persistent_id = _function_pickling_handler
-    pickler.dump(obj)
-    return file.getvalue()
+# on CPython provide pickling methods which use
+# dumps_function in case pickling of a function fails
+import platform
+if platform.python_implementation() == 'CPython':
+
+    def dump(obj, file, protocol=None):
+        pickler = pickle.Pickler(file, protocol=PROTOCOL)
+        pickler.persistent_id = _function_pickling_handler
+        pickler.dump(obj)
+        return file.getvalue()
 
 
-def dumps(obj, protocol=None):
-    file = StringIO()
-    pickler = pickle.Pickler(file, protocol=PROTOCOL)
-    pickler.persistent_id = _function_pickling_handler
-    pickler.dump(obj)
-    return file.getvalue()
+    def dumps(obj, protocol=None):
+        file = StringIO()
+        pickler = pickle.Pickler(file, protocol=PROTOCOL)
+        pickler.persistent_id = _function_pickling_handler
+        pickler.dump(obj)
+        return file.getvalue()
 
 
-def load(file):
-    unpickler = pickle.Unpickler(file)
-    unpickler.persistent_load = _function_unpickling_handler
-    return unpickler.load()
+    def load(file):
+        unpickler = pickle.Unpickler(file)
+        unpickler.persistent_load = _function_unpickling_handler
+        return unpickler.load()
 
 
-def loads(str):
-    file = StringIO(str)
-    unpickler = pickle.Unpickler(file)
-    unpickler.persistent_load = _function_unpickling_handler
-    return unpickler.load()
+    def loads(str):
+        file = StringIO(str)
+        unpickler = pickle.Unpickler(file)
+        unpickler.persistent_load = _function_unpickling_handler
+        return unpickler.load()
 
+else:
+    from functools import partial
+    dump = partial(pickle.dump, protocol=PROTOCOL)
+    dumps = partial(pickle.dumps, protocol=PROTOCOL)
+    load = pickle.load
+    loads = pickle.loads
 
 
 # The following method is a slightly modified version of
