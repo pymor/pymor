@@ -191,7 +191,7 @@ def function_call_manage(f, *args, **kwargs):
     return manage_object(function_call(f, *args, **kwargs))
 
 
-def method_call(obj_id, name, *args, **kwargs):
+def method_call(obj_id, name_, *args, **kwargs):
     """Execute a method with given arguments.
 
     Intended to be used in conjunction with :func:`call`.
@@ -203,7 +203,7 @@ def method_call(obj_id, name, *args, **kwargs):
     obj_id
         The :class:`ObjectId` of the object on which to call
         the method.
-    name
+    name_
         Name of the method to call.
     args
         Sequential arguments for the method.
@@ -211,11 +211,11 @@ def method_call(obj_id, name, *args, **kwargs):
         Keyword arguments for the method.
     """
     obj = get_object(obj_id)
-    return getattr(obj, name)(*((get_object(arg) if type(arg) is ObjectId else arg) for arg in args),
-                              **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.iteritems()})
+    return getattr(obj, name_)(*((get_object(arg) if type(arg) is ObjectId else arg) for arg in args),
+                                **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.iteritems()})
 
 
-def method_call_manage(obj_id, name, *args, **kwargs):
+def method_call_manage(obj_id, name_, *args, **kwargs):
     """Execute a method with given arguments and manage the return value.
 
     Intended to be used in conjunction with :func:`call`.
@@ -229,14 +229,14 @@ def method_call_manage(obj_id, name, *args, **kwargs):
     obj_id
         The :class:`ObjectId` of the object on which to call
         the method.
-    name
+    name_
         Name of the method to call.
     args
         Sequential arguments for the method.
     kwargs
         Keyword arguments for the method.
     """
-    return manage_object(method_call(obj_id, name, *args, **kwargs))
+    return manage_object(method_call(obj_id, name_, *args, **kwargs))
 
 
 ################################################################################
