@@ -15,67 +15,75 @@ Arguments:
 
   YBLOCKS    Number of blocks in y direction.
 
-  SNAPSHOTS  Number of snapshots for basis generation per component.
-             In total SNAPSHOTS^(XBLOCKS * YBLOCKS).
+  SNAPSHOTS  naive:           ignored
+             greedy/pod:      Number of training_set parameters per block
+                              (in total SNAPSHOTS^(XBLOCKS * YBLOCKS)
+                              parameters).
+             adaptive_greedy: size of validation set.
 
   RBSIZE     Size of the reduced basis
 
 
 Options:
-  -h, --help                 Show this message.
+  --adaptive-greedy-rho=RHO       See pymor.algorithms.adaptivegreedy [default: 1.1].
 
-  --estimator-norm=NORM      Norm (trivial, h1) in which to calculate the residual
-                             [default: h1].
+  --adaptive-greedy-gamma=GAMMA   See pymor.algorithms.adaptivegreedy [default: 0.2].
 
-  --without-estimator        Do not use error estimator for basis generation.
+  --adaptive-greedy-theta=THETA   See pymor.algorithms.adaptivegreedy [default: 0.]
 
-  --extension-alg=ALG        Basis extension algorithm (trivial, gram_schmidt, h1_gram_schmidt)
-                             to be used [default: h1_gram_schmidt].
+  --alg=ALG                       The model reduction algorithm to use
+                                  (naive, greedy, adaptive_greedy, pod) [default: greedy].
 
-  --fenics                   Use FEniCS discretization.
+  --cache-region=REGION           Name of cache region to use for caching solution snapshots
+                                  (none, memory, disk, persistent) [default: none].
 
-  --grid=NI                  Use grid with 2*NI*NI elements [default: 100].
+  --estimator-norm=NORM           Norm (euclidean, h1) in which to calculate the residual
+                                  [default: h1].
 
-  --order=ORDER              Polynomial order of the Lagrange finite elements to use in FEniCS
-                             discretization [default: 1].
+  --extension-alg=ALG             Basis extension algorithm (trivial, gram_schmidt, h1_gram_schmidt)
+                                  to be used [default: h1_gram_schmidt].
 
-  --pickle=PREFIX            Pickle reduced discretizaion, as well as reconstructor and high-dimensional
-                             discretization to files with this prefix.
+  --fenics                        Use FEniCS discretization.
 
-  -p, --plot-err             Plot error.
+  --grid=NI                       Use grid with 2*NI*NI elements [default: 100].
 
-  --plot-solutions           Plot some example solutions.
+  -h, --help                      Show this message.
 
-  --plot-error-sequence      Plot reduction error vs. basis size.
+  --ipython-engines=COUNT         If positive, the number of IPython cluster engines to use for
+                                  parallel greedy search. If zero, no parallelization is performed.
+                                  [default: 0]
 
-  --reductor=RED             Reductor (error estimator) to choose (traditional, residual_basis)
-                             [default: residual_basis]
+  --ipython-profile=PROFILE       IPython profile to use for parallelization.
 
-  --test=COUNT               Use COUNT snapshots for stochastic error estimation
-                             [default: 10].
+  --list-vector-array             Solve using ListVectorArray[NumpyVector] instead of NumpyVectorArray.
 
-  --ipython-engines=COUNT    If positive, the number of IPython cluster engines to use for
-                             parallel greedy search. If zero, no parallelization is performed.
-                             [default: 0]
+  --order=ORDER                   Polynomial order of the Lagrange finite elements to use in FEniCS
+                                  discretization [default: 1].
 
-  --ipython-profile=PROFILE  IPython profile to use for parallelization.
+  --pickle=PREFIX                 Pickle reduced discretizaion, as well as reconstructor and high-dimensional
+                                  discretization to files with this prefix.
 
-  --cache-region=REGION      Name of cache region to use for caching solution snapshots
-                             (NONE, MEMORY, DISK, PERSISTENT)
-                             [default: NONE]
+  --plot-err                      Plot error.
 
-  --list-vector-array        Solve using ListVectorArray[NumpyVector] instead of NumpyVectorArray.
+  --plot-solutions                Plot some example solutions.
 
-  --pod                      Use POD instead of greedy algorithm for basis generation.
+  --plot-error-sequence           Plot reduction error vs. basis size.
 
-  --pod-product=PROD         Inner product w.r.t. with to compute the pod (trivial, h1)
-                             [default: h1].
+  --pod-product=PROD              Inner product w.r.t. with to compute the pod (euclidean, h1)
+                                  [default: h1].
+
+  --reductor=RED                  Reductor (error estimator) to choose (traditional, residual_basis)
+                                  [default: residual_basis]
+
+  --test=COUNT                    Use COUNT snapshots for stochastic error estimation
+                                  [default: 10].
+
+  --greedy-without-estimator      Do not use error estimator for basis generation.
 """
 
 from __future__ import absolute_import, division, print_function
 
 from functools import partial
-from itertools import product
 import sys
 import time
 
@@ -132,14 +140,30 @@ def thermalblock_demo(args):
     else:
         assert False  # this should never happen
 
-    if args['--pod']:
-        rd, rc, red_summary = reduce_pod(d=d, reductor=reductor, snapshots_per_block=args['SNAPSHOTS'],
-                                         basis_size=args['RBSIZE'], product_name=args['--pod-product'])
-    else:
+    if args['--alg'] == 'naive':
+        rd, rc, red_summary = reduce_naive(d=d, reductor=reductor, basis_size=args['RBSIZE'])
+    elif args['--alg'] == 'greedy':
+        parallel = not (args['--fenics'] and args['--greedy-without-estimator'])  # cannot pickle FEniCS discretization
         rd, rc, red_summary = reduce_greedy(d=d, reductor=reductor, snapshots_per_block=args['SNAPSHOTS'],
                                             extension_alg_name=args['--extension-alg'],
                                             max_extensions=args['RBSIZE'],
-                                            use_estimator=not args['--without-estimator'], pool=pool)
+                                            use_estimator=not args['--greedy-without-estimator'],
+                                            pool=pool if parallel else None)
+    elif args['--alg'] == 'adaptive_greedy':
+        parallel = not (args['--fenics'] and args['--greedy-without-estimator'])  # cannot pickle FEniCS discretization
+        rd, rc, red_summary = reduce_adaptive_greedy(d=d, reductor=reductor, validation_mus=args['SNAPSHOTS'],
+                                                     extension_alg_name=args['--extension-alg'],
+                                                     max_extensions=args['RBSIZE'],
+                                                     use_estimator=not args['--greedy-without-estimator'],
+                                                     rho=args['--adaptive-greedy-rho'],
+                                                     gamma=args['--adaptive-greedy-gamma'],
+                                                     theta=args['--adaptive-greedy-theta'],
+                                                     pool=pool if parallel else None)
+    elif args['--alg'] == 'pod':
+        rd, rc, red_summary = reduce_pod(d=d, reductor=reductor, snapshots_per_block=args['SNAPSHOTS'],
+                                         basis_size=args['RBSIZE'], product_name=args['--pod-product'])
+    else:
+        assert False  # this should never happen
 
     if args['--pickle']:
         print('\nWriting reduced discretization to file {} ...'.format(args['--pickle'] + '_reduced'))
@@ -162,7 +186,8 @@ def thermalblock_demo(args):
                                        test_mus=args['--test'],
                                        basis_sizes=0 if args['--plot-error-sequence'] else 1,
                                        plot=args['--plot-error-sequence'],
-                                       pool=pool)
+                                       pool=None if args['--fenics'] else pool,  # cannot pickle FEniCS discretization
+                                       random_seed=999)
 
     print('\n*** RESULTS ***\n')
     print(d_summary)
@@ -171,8 +196,8 @@ def thermalblock_demo(args):
     sys.stdout.flush()
 
     if args['--plot-error-sequence']:
-        from matplotlib import pyplot as plt
-        plt.show(results['figure'])
+        import matplotlib.pyplot
+        matplotlib.pyplot.show(results['figure'])
     if args['--plot-err']:
         mumax = results['max_error_mus'][0, -1]
         U = d.solve(mumax)
@@ -184,19 +209,36 @@ def thermalblock_demo(args):
 def parse_arguments(args):
     args['XBLOCKS'] = int(args['XBLOCKS'])
     args['YBLOCKS'] = int(args['YBLOCKS'])
-    args['--grid'] = int(args['--grid'])
     args['SNAPSHOTS'] = int(args['SNAPSHOTS'])
     args['RBSIZE'] = int(args['RBSIZE'])
-    args['--test'] = int(args['--test'])
-    args['--ipython-engines'] = int(args['--ipython-engines'])
-    args['--estimator-norm'] = args['--estimator-norm'].lower()
-    assert args['--estimator-norm'] in {'trivial', 'h1'}
-    args['--extension-alg'] = args['--extension-alg'].lower()
-    assert args['--extension-alg'] in {'trivial', 'gram_schmidt', 'h1_gram_schmidt'}
-    args['--reductor'] = args['--reductor'].lower()
-    assert args['--reductor'] in {'traditional', 'residual_basis'}
+
+    args['--adaptive-greedy-rho'] = float(args['--adaptive-greedy-rho'])
+    args['--adaptive-greedy-gamma'] = float(args['--adaptive-greedy-gamma'])
+    args['--adaptive-greedy-theta'] = float(args['--adaptive-greedy-theta'])
+    args['--alg'] = args['--alg'].lower()
     args['--cache-region'] = args['--cache-region'].lower()
+    args['--estimator-norm'] = args['--estimator-norm'].lower()
+    args['--extension-alg'] = args['--extension-alg'].lower()
+    args['--grid'] = int(args['--grid'])
+    args['--ipython-engines'] = int(args['--ipython-engines'])
     args['--order'] = int(args['--order'])
+    args['--reductor'] = args['--reductor'].lower()
+    args['--test'] = int(args['--test'])
+
+    assert args['--alg'] in {'naive', 'greedy', 'adaptive_greedy', 'pod'}
+    assert args['--cache-region'] in {'none', 'memory', 'disk', 'persistent'}
+    assert args['--estimator-norm'] in {'euclidean', 'h1'}
+    assert args['--extension-alg'] in {'trivial', 'gram_schmidt', 'h1_gram_schmidt'}
+    assert args['--pod-product'] in {'euclidean', 'h1'}
+    assert args['--reductor'] in {'traditional', 'residual_basis'}
+
+    if args['--fenics']:
+        if args['--cache-region'] != 'none':
+            raise ValueError('Caching of high-dimensional solutions is not supported for FEniCS discretization.')
+    else:
+        if args['--order'] != 1:
+            raise ValueError('Higher-order finite elements only supported for FEniCS discretization.')
+
     return args
 
 
@@ -329,6 +371,28 @@ def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
     return d
 
 
+def reduce_naive(d, reductor, basis_size):
+
+    tic = time.time()
+
+    training_set = d.parameter_space.sample_randomly(basis_size)
+
+    snapshots = d.operator.source.empty()
+    for mu in training_set:
+        snapshots.append(d.solve(mu))
+
+    rd, rc, _ = reductor(d, snapshots)
+
+    elapsed_time = time.time() - tic
+
+    summary = '''Naive basis generation:
+   basis size set: {basis_size}
+   elapsed time:   {elapsed_time}
+'''.format(**locals())
+
+    return rd, rc, summary
+
+
 def reduce_greedy(d, reductor, snapshots_per_block,
                   extension_alg_name, max_extensions, use_estimator, pool):
 
@@ -368,6 +432,46 @@ def reduce_greedy(d, reductor, snapshots_per_block,
     return rd, rc, summary
 
 
+def reduce_adaptive_greedy(d, reductor, validation_mus,
+                           extension_alg_name, max_extensions, use_estimator,
+                           rho, gamma, theta, pool):
+
+    from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension
+    from pymor.algorithms.adaptivegreedy import adaptive_greedy
+
+    # choose basis extension algorithm
+    if extension_alg_name == 'trivial':
+        extension_algorithm = trivial_basis_extension
+    elif extension_alg_name == 'gram_schmidt':
+        extension_algorithm = gram_schmidt_basis_extension
+    elif extension_alg_name == 'h1_gram_schmidt':
+        extension_algorithm = partial(gram_schmidt_basis_extension, product=d.h1_0_semi_product)
+    else:
+        assert False
+
+    # run greedy
+    greedy_data = adaptive_greedy(d, reductor, validation_mus=-validation_mus,
+                                  use_estimator=use_estimator, error_norm=d.h1_0_semi_norm,
+                                  extension_algorithm=extension_algorithm, max_extensions=max_extensions,
+                                  rho=rho, gamma=gamma, theta=theta, pool=pool)
+    rd, rc = greedy_data['reduced_discretization'], greedy_data['reconstructor']
+
+    # generate summary
+    real_rb_size = rd.solution_space.dim
+    validation_mus += 1  # the validation set consists of `validation_mus` random parameters
+                         # plus the centers of the adaptive sample set cells
+    summary = '''Adaptive greedy basis generation:
+   initial size of validation set:  {validation_mus}
+   error estimator used:            {use_estimator}
+   extension method:                {extension_alg_name}
+   prescribed basis size:           {max_extensions}
+   actual basis size:               {real_rb_size}
+   elapsed time:                    {greedy_data[time]}
+'''.format(**locals())
+
+    return rd, rc, summary
+
+
 def reduce_pod(d, reductor, snapshots_per_block, product_name, basis_size):
     from pymor.algorithms.pod import pod
 
@@ -382,7 +486,7 @@ def reduce_pod(d, reductor, snapshots_per_block, product_name, basis_size):
 
     if product_name == 'h1':
         pod_product = d.h1_0_semi_product
-    elif product_name == 'trivial':
+    elif product_name == 'euclidean':
         pod_product = None
     else:
         assert False
