@@ -47,7 +47,6 @@ if platform.python_implementation() == 'CPython':
         pickler = pickle.Pickler(file, protocol=PROTOCOL)
         pickler.persistent_id = _function_pickling_handler
         pickler.dump(obj)
-        return file.getvalue()
 
 
     def dumps(obj, protocol=None):
