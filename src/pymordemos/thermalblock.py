@@ -225,6 +225,25 @@ def discretize_pymor(xblocks, yblocks, grid_num_intervals, use_list_vector_array
 
 
 def discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
+    from pymor.tools import mpi
+
+    if mpi.parallel:
+        from pymor.discretizations.mpi import mpi_wrap_discretization
+        d = mpi_wrap_discretization(lambda: _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order),
+                                    use_with=True, pickle_subtypes=False)
+    else:
+        d = _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order)
+
+    summary = '''FEniCS discretization:
+   number of blocks:      {xblocks}x{yblocks}
+   grid intervals:        {grid_num_intervals}
+   finite element order:  {element_order}
+'''.format(**locals())
+
+    return d, summary
+
+
+def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
 
     # assemble system matrices - FEniCS code
     ########################################
@@ -290,7 +309,7 @@ def discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
                                              coordinates=(yblocks - y - 1, x),
                                              name='diffusion_{}_{}'.format(x, y))
     parameter_functionals = tuple(parameter_functional_factory(x, y)
-                                  for x, y in product(xrange(args['XBLOCKS']), xrange(args['YBLOCKS'])))
+                                  for x in range(xblocks) for y in range(yblocks))
 
     # wrap operators
     ops = [FenicsMatrixOperator(mat0, V, V)] + [FenicsMatrixOperator(m, V, V) for m in mats]
@@ -307,13 +326,7 @@ def discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
                                  parameter_space=parameter_space,
                                  visualizer=visualizer)
 
-    summary = '''FEniCS discretization:
-   number of blocks:      {xblocks}x{yblocks}
-   grid intervals:        {grid_num_intervals}
-   finite element order:  {element_order}
-'''.format(**locals())
-
-    return d, summary
+    return d
 
 
 def reduce_greedy(d, reductor, snapshots_per_block,
