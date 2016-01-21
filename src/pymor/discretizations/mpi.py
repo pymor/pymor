@@ -99,14 +99,18 @@ class MPIVisualizer(ImmutableInterface):
         mpi.call(mpi.method_call, self.d_obj_id, 'visualize', U.obj_id, **kwargs)
 
 
-def mpi_wrap_discretization(obj_id, use_with=False, with_apply2=False, pickle_subtypes=True, array_type=MPIVectorArray):
+def mpi_wrap_discretization(local_discretizations, use_with=False, with_apply2=False,
+                            pickle_subtypes=True, array_type=MPIVectorArray):
     """Wrap MPI distributed local |Discretizations| to a global |Discretization| on rank 0.
 
     Given MPI distributed local |Discretizations| referred to by the
-    `~pymor.tools.mpi.ObjectId` `obj_id`, return a new |Discretization|
+    `~pymor.tools.mpi.ObjectId` `local_discretizations`, return a new |Discretization|
     which manages these distributed discretizations from rank 0. This
     is done by first wrapping all |Operators| of the |Discretization| using
     :func:`~pymor.operators.mpi.mpi_wrap_operator`.
+
+    Alternatively, `local_discretizations` can be a callable (with no arguments)
+    which is then called to instantiate the local |Discretizations| on each rank.
 
     When `use_with` is `False`, an :class:`MPIDiscretization` is instatiated
     with the wrapped operators. A call to
@@ -128,9 +132,9 @@ def mpi_wrap_discretization(obj_id, use_with=False, with_apply2=False, pickle_su
 
     Parameters
     ----------
-    obj_id
-        :class:`~pymor.tools.mpi.ObjectId` of the local |Discretization|
-        on each rank.
+    local_discretizations
+        :class:`~pymor.tools.mpi.ObjectId` of the local |Discretizations|
+        on each rank or a callable generating the |Discretizations|.
     use_with
         See above.
     with_apply2
@@ -141,8 +145,11 @@ def mpi_wrap_discretization(obj_id, use_with=False, with_apply2=False, pickle_su
         See :class:`~pymor.operators.mpi.MPIOperator`.
     """
 
+    if not isinstance(local_discretizations, mpi.ObjectId):
+        local_discretizations = mpi.call(mpi.function_call_manage, local_discretizations)
+
     operators, functionals, vectors, products = \
-        mpi.call(_mpi_wrap_discretization_manage_operators, obj_id)
+        mpi.call(_mpi_wrap_discretization_manage_operators, local_discretizations)
 
     operators = {k: mpi_wrap_operator(v, with_apply2=with_apply2,
                                       pickle_subtypes=pickle_subtypes, array_type=array_type) if v else None
@@ -158,12 +165,12 @@ def mpi_wrap_discretization(obj_id, use_with=False, with_apply2=False, pickle_su
                 for k, v in products.iteritems()} if products else None
 
     if use_with:
-        d = mpi.get_object(obj_id)
-        visualizer = MPIVisualizer(obj_id)
+        d = mpi.get_object(local_discretizations)
+        visualizer = MPIVisualizer(local_discretizations)
         return d.with_(operators=operators, functionals=functionals, vector_operators=vectors, products=products,
                        visualizer=visualizer, cache_region=None)
     else:
-        return MPIDiscretization(obj_id, operators, functionals, vectors, products,
+        return MPIDiscretization(local_discretizations, operators, functionals, vectors, products,
                                  pickle_subtypes=pickle_subtypes, array_type=array_type)
 
 
