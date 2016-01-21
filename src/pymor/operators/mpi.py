@@ -173,7 +173,7 @@ class MPIOperator(OperatorBase):
             return None
         assert solver_options is None
         operators = [op.obj_id for op in operators]
-        obj_id = mpi.call(mpi.method_call_manage, self.obj_id, 'assemble_lincomb', operators, coefficients, name=name)
+        obj_id = mpi.call(_MPIOperator_assemble_lincomb, operators, coefficients, name=name)
         op = mpi.get_object(obj_id)
         if op is None:
             mpi.call(mpi.remove_object, obj_id)
@@ -200,6 +200,11 @@ def _MPIOperator_get_range_subtypes(self):
     subtypes = mpi.comm.gather(self.range.subtype, root=0)
     if mpi.rank0:
         return tuple(subtypes)
+
+
+def _MPIOperator_assemble_lincomb(operators, coefficients, name):
+    operators = [mpi.get_object(op) for op in operators]
+    return mpi.manage_object(operators[0].assemble_lincomb(operators, coefficients, name=name))
 
 
 def mpi_wrap_operator(obj_id, functional=False, vector=False, with_apply2=False, array_type=MPIVectorArray):
