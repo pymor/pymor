@@ -55,6 +55,8 @@ from __future__ import absolute_import, division, print_function
 
 import sys
 
+from pymor.core.defaults import defaults
+
 try:
     from mpi4py import MPI
     HAVE_MPI = True
@@ -81,6 +83,11 @@ _object_counter = 0
 
 
 ################################################################################
+
+
+@defaults('auto_launch')
+def event_loop_settings(auto_launch=True):
+    return {'auto_launch': auto_launch}
 
 
 def event_loop():
