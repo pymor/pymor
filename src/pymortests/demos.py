@@ -22,7 +22,7 @@ DEMO_ARGS = (('elliptic', [0, 0, 0, 0]), ('elliptic', [1, 2, 0, 3]), ('elliptic'
              ('elliptic2', [1, 20]), ('elliptic2', ['--fv', 1, 20]),
              ('elliptic_unstructured', [6., 16, 1e-1]),
              ('elliptic_oned', [1, 20]), ('elliptic_oned', ['--fv', 1, 20]),
-             ('thermalblock', [2, 2, 3, 5]), ('thermalblock', ['--without-estimator', 2, 2, 3, 5]),
+             ('thermalblock', [2, 2, 3, 5]), ('thermalblock', ['--greedy-without-estimator', 2, 2, 3, 5]),
              ('thermalblock_gui', ['--testing', 2, 2, 3, 5]),
              ('thermalblock', ['--alg=pod', 2, 2, 3, 5]),
              ('thermalblock', ['--alg=adaptive_greedy', 2, 2, 10, 30]),
