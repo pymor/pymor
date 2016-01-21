@@ -120,6 +120,7 @@ def loads_function(s):
         ctypes.pythonapi.PyCell_New.restype = ctypes.py_object
         ctypes.pythonapi.PyCell_New.argtypes = [ctypes.py_object]
         closure = tuple(ctypes.pythonapi.PyCell_New(c) for c in closure)
+    globals_['__builtins__'] = __builtins__
     r = FunctionType(code, globals_, name, defaults, closure)
     r.func_dict = func_dict
     return r
