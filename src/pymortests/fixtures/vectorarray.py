@@ -47,14 +47,40 @@ def block_vector_array_factory(length, dims, seed):
                             copy=False)
 
 if HAVE_FENICS:
+    import dolfin as df
     from pymor.vectorarrays.fenics import FenicsVectorSpace
 
-    def fenics_vector_array_factory(length, dim, seed):
-        U = FenicsVectorSpace(dim).zeros(length)
+    fenics_spaces = [df.FunctionSpace(df.UnitSquareMesh(ni, ni), 'Lagrange', 1)
+                     for ni in [1, 10, 32, 100]]
+
+    def fenics_vector_array_factory(length, space, seed):
+        V = fenics_spaces[space]
+        U = FenicsVectorSpace(V).zeros(length)
+        dim = U.dim
         np.random.seed(seed)
         for v, a in zip(U._list, np.random.random((length, dim))):
             v.impl[:] = a
         return U
+
+    fenics_vector_array_factory_arguments = \
+        zip([0,  0,  1, 43, 102],      # len
+            [0,  1,  3,  2,  2],      # ni
+            random_integers(5, 123))   # seed
+
+    fenics_vector_array_factory_arguments_pairs_with_same_dim = \
+        zip([0,  0,   1, 43, 102,  2],         # len1
+            [0,  1,  37,  9, 104,  2],         # len2
+            [0,  1,   3,  2,   2,  2],         # dim
+            random_integers(5, 1234) + [42],  # seed1
+            random_integers(5, 1235) + [42])  # seed2
+
+    fenics_vector_array_factory_arguments_pairs_with_different_dim = \
+        zip([0,  0,  1, 43, 102],      # len1
+            [0,  1,  1,  9,  10],      # len2
+            [0,  1,  2,  3,   1],      # dim1
+            [1,  2,  1,  2,   3],      # dim2
+            random_integers(5, 1234),  # seed1
+            random_integers(5, 1235))  # seed2
 
 
 if HAVE_DEALII:
@@ -134,7 +160,7 @@ block_vector_array_generators = \
     [lambda args=args: block_vector_array_factory(*args) for args in block_vector_array_factory_arguments]
 
 fenics_vector_array_generators = \
-    [lambda args=args: fenics_vector_array_factory(*args) for args in numpy_vector_array_factory_arguments] \
+    [lambda args=args: fenics_vector_array_factory(*args) for args in fenics_vector_array_factory_arguments] \
     if HAVE_FENICS else []
 
 dealii_vector_array_generators = \
@@ -164,7 +190,7 @@ block_vector_array_pair_with_same_dim_generators = \
 fenics_vector_array_pair_with_same_dim_generators = \
     [lambda l=l, l2=l2, d=d, s1=s1, s2=s2: (fenics_vector_array_factory(l, d, s1),
                                             fenics_vector_array_factory(l2, d, s2))
-     for l, l2, d, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_same_dim] \
+     for l, l2, d, s1, s2 in fenics_vector_array_factory_arguments_pairs_with_same_dim] \
     if HAVE_FENICS else []
 
 dealii_vector_array_pair_with_same_dim_generators = \
@@ -196,7 +222,7 @@ block_vector_array_pair_with_different_dim_generators = \
 fenics_vector_array_pair_with_different_dim_generators = \
     [lambda l=l, l2=l2, d1=d1, d2=d2, s1=s1, s2=s2: (fenics_vector_array_factory(l, d1, s1),
                                                      fenics_vector_array_factory(l2, d2, s2))
-     for l, l2, d1, d2, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_different_dim] \
+     for l, l2, d1, d2, s1, s2 in fenics_vector_array_factory_arguments_pairs_with_different_dim] \
     if HAVE_FENICS else []
 
 

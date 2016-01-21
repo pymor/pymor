@@ -15,8 +15,7 @@ if HAVE_FENICS:
     import numpy as np
 
     from pymor.core.interfaces import BasicInterface
-    from pymor.vectorarrays.fenics import FenicsVector
-    from pymor.vectorarrays.list import ListVectorArray
+    from pymor.vectorarrays.fenics import FenicsVectorSpace
 
     class FenicsVisualizer(BasicInterface):
         """Visualize a FEniCS grid function.
@@ -29,7 +28,7 @@ if HAVE_FENICS:
 
         def __init__(self, function_space):
             self.function_space = function_space
-            self.space = ListVectorArray([FenicsVector(df.Function(function_space).vector())]).space
+            self.space = FenicsVectorSpace(function_space)
 
         def visualize(self, U, discretization, title='', legend=None, filename=None, block=True,
                       separate_colorbars=True):

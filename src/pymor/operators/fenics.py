@@ -25,11 +25,10 @@ if HAVE_FENICS:
 
         linear = True
 
-        def __init__(self, matrix, name=None):
+        def __init__(self, matrix, source_space, range_space, name=None):
             assert matrix.rank() == 2
-            comm = matrix.mpi_comm()
-            self.source = FenicsVectorSpace(matrix.size(1), mpi_comm=comm)
-            self.range = FenicsVectorSpace(matrix.size(0), mpi_comm=comm)
+            self.source = FenicsVectorSpace(source_space)
+            self.range = FenicsVectorSpace(range_space)
             self.name = name
             self.matrix = matrix
 
@@ -84,4 +83,4 @@ if HAVE_FENICS:
                 matrix.axpy(c, op.matrix, False)  # in general, we cannot assume the same nonzero pattern for
                                                   # all matrices. how to improve this?
 
-            return FenicsMatrixOperator(matrix, name=name)
+            return FenicsMatrixOperator(matrix, self.source.subtype[1], self.range.subtype[1], name=name)

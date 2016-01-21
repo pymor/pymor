@@ -293,11 +293,11 @@ def discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
                                   for x, y in product(xrange(args['XBLOCKS']), xrange(args['YBLOCKS'])))
 
     # wrap operators
-    ops = [FenicsMatrixOperator(mat0)] + [FenicsMatrixOperator(m) for m in mats]
+    ops = [FenicsMatrixOperator(mat0, V, V)] + [FenicsMatrixOperator(m, V, V) for m in mats]
     op = LincombOperator(ops, (1.,) + parameter_functionals)
-    rhs = VectorFunctional(ListVectorArray([FenicsVector(F)]))
-    h1_product = FenicsMatrixOperator(h1_mat, name='h1_0_semi')
-    l2_product = FenicsMatrixOperator(l2_mat, name='l2')
+    rhs = VectorFunctional(ListVectorArray([FenicsVector(F, V)]))
+    h1_product = FenicsMatrixOperator(h1_mat, V, V, name='h1_0_semi')
+    l2_product = FenicsMatrixOperator(l2_mat, V, V, name='l2')
 
     # build discretization
     visualizer = FenicsVisualizer(V)
