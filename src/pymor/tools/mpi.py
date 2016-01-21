@@ -62,6 +62,10 @@ try:
     rank = comm.Get_rank()
     size = comm.Get_size()
     finished = False
+    import pymor.core.pickle
+    MPI.pickle.PROTOCOL = pymor.core.pickle.PROTOCOL
+    MPI.pickle.loads = pymor.core.pickle.loads
+    MPI.pickle.dumps = pymor.core.pickle.dumps
 
 except ImportError:
     HAVE_MPI = False
