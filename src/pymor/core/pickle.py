@@ -14,6 +14,9 @@ however, that its use should be avoided since it uses non-portable
 implementation details of CPython to achieve its goals.
 """
 
+from __future__ import absolute_import
+
+
 import marshal
 import opcode
 from functools import partial
