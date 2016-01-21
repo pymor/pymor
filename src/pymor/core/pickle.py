@@ -19,7 +19,6 @@ from __future__ import absolute_import
 
 import marshal
 import opcode
-from functools import partial
 from types import FunctionType, ModuleType
 
 
@@ -27,14 +26,45 @@ try:
     import cPickle as pickle
 except ImportError:
     import pickle as pickle
-import copy_reg
+
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
 
 
-dump = partial(pickle.dump, protocol=-1)
-dumps = partial(pickle.dumps, protocol=-1)
-load = pickle.load
-loads = pickle.loads
 PicklingError = pickle.PicklingError
+UnpicklingError = pickle.UnpicklingError
+PROTOCOL = pickle.HIGHEST_PROTOCOL
+
+
+def dump(obj, file, protocol=None):
+    pickler = pickle.Pickler(file, protocol=PROTOCOL)
+    pickler.persistent_id = _function_pickling_handler
+    pickler.dump(obj)
+    return file.getvalue()
+
+
+def dumps(obj, protocol=None):
+    file = StringIO()
+    pickler = pickle.Pickler(file, protocol=PROTOCOL)
+    pickler.persistent_id = _function_pickling_handler
+    pickler.dump(obj)
+    return file.getvalue()
+
+
+def load(file):
+    unpickler = pickle.Unpickler(file)
+    unpickler.persistent_load = _function_unpickling_handler
+    return unpickler.load()
+
+
+def loads(str):
+    file = StringIO(str)
+    unpickler = pickle.Unpickler(file)
+    unpickler.persistent_load = _function_unpickling_handler
+    return unpickler.load()
+
 
 
 # The following method is a slightly modified version of
@@ -130,16 +160,23 @@ def loads_function(s):
 
 
 def _function_pickling_handler(f):
-    if f.__module__ != '__main__':
-        try:
-            copy_reg.dispatch_table.pop(FunctionType)
-            return (loads, (dumps(f),))
-        except PicklingError:
-            return (loads_function, (dumps_function(f),))
-        finally:
-            copy_reg.dispatch_table[FunctionType] = _function_pickling_handler
+    if f.__class__ is FunctionType:
+        if f.__module__ != '__main__':
+            try:
+                return 'A' + pickle.dumps(f)
+            except PicklingError:
+                return 'B' + dumps_function(f)
+        else:
+            return 'B' + dumps_function(f)
     else:
-        return (loads_function, (dumps_function(f),))
+        return None
 
 
-copy_reg.pickle(FunctionType, _function_pickling_handler)
+def _function_unpickling_handler(persid):
+    mode, data = persid[0], persid[1:]
+    if mode == 'A':
+        return pickle.loads(data)
+    elif mode == 'B':
+        return loads_function(data)
+    else:
+        return UnpicklingError
