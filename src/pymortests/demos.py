@@ -61,17 +61,5 @@ def test_demos(demo_args):
     stop_gui_processes()
 
 
-def test_demos_tested():
-    modules = []
-    for _, module_name, _ in pkgutil.walk_packages(pymordemos.__path__, pymordemos.__name__ + '.'):
-        try:
-            __import__(module_name)
-            modules.append(module_name)
-        except (TypeError, ImportError):
-            pass
-    tested = set([f[0] for f in DEMO_ARGS if f[0].startswith('pymordemos.')])
-    assert tested <= set(modules)
-
-
 if __name__ == "__main__":
     runmodule(filename=__file__)
