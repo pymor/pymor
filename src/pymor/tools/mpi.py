@@ -65,9 +65,12 @@ try:
     size = comm.Get_size()
     finished = False
     import pymor.core.pickle
-    MPI.pickle.PROTOCOL = pymor.core.pickle.PROTOCOL
-    MPI.pickle.loads = pymor.core.pickle.loads
-    MPI.pickle.dumps = pymor.core.pickle.dumps
+    try:  # this only works for newer mpi4py versions
+        MPI.pickle.PROTOCOL = pymor.core.pickle.PROTOCOL
+        MPI.pickle.loads = pymor.core.pickle.loads
+        MPI.pickle.dumps = pymor.core.pickle.dumps
+    except AttributeError:
+        pass
 
 except ImportError:
     HAVE_MPI = False
