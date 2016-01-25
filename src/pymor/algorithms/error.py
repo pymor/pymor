@@ -165,7 +165,7 @@ def reduction_error_analysis(reduced_discretization, discretization=None, recons
             if basis_sizes == 0:
                 basis_sizes = rd.solution_space.dim + 1
             basis_sizes = min(rd.solution_space.dim + 1, basis_sizes)
-            basis_sizes = np.linspace(0, rd.solution_space.dim, basis_sizes, dtype=int)
+            basis_sizes = np.linspace(0, rd.solution_space.dim, basis_sizes).astype(int)
     if error_norm_names is None:
         error_norm_names = tuple(norm.name for norm in error_norms)
 
