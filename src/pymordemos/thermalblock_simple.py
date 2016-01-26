@@ -207,66 +207,69 @@ def reduce_pod(d, reductor, snapshots, basis_size):
 # Main script                                                                                      #
 ####################################################################################################
 
-
-# command line argument parsing
-###############################
-import sys
-if len(sys.argv) != 6:
-    print(__doc__)
-    sys.exit(1)
-MODEL, ALG, SNAPSHOTS, RBSIZE, TEST = sys.argv[1:]
-MODEL, ALG, SNAPSHOTS, RBSIZE, TEST = MODEL.lower(), ALG.lower(), int(SNAPSHOTS), int(RBSIZE), int(TEST)
-
-
-# discretize
-############
-if MODEL == 'pymor':
-    d = discretize_pymor()
-elif MODEL == 'fenics':
-    d = discretize_fenics()
-else:
-    raise NotImplementedError
+def main():
+    # command line argument parsing
+    ###############################
+    import sys
+    if len(sys.argv) != 6:
+        print(__doc__)
+        sys.exit(1)
+    MODEL, ALG, SNAPSHOTS, RBSIZE, TEST = sys.argv[1:]
+    MODEL, ALG, SNAPSHOTS, RBSIZE, TEST = MODEL.lower(), ALG.lower(), int(SNAPSHOTS), int(RBSIZE), int(TEST)
 
 
-# select reduction algorithm with error estimator
-#################################################
-coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', d.parameter_type)
-reductor = partial(reduce_stationary_coercive,
-                   error_product=d.h1_0_semi_product, coercivity_estimator=coercivity_estimator)
+    # discretize
+    ############
+    if MODEL == 'pymor':
+        d = discretize_pymor()
+    elif MODEL == 'fenics':
+        d = discretize_fenics()
+    else:
+        raise NotImplementedError
 
 
-# generate reduced model
-########################
-if ALG == 'naive':
-    rd, rc = reduce_naive(d, reductor, RBSIZE)
-elif ALG == 'greedy':
-    rd, rc = reduce_greedy(d, reductor, SNAPSHOTS, RBSIZE)
-elif ALG == 'adaptive_greedy':
-    rd, rc = reduce_adaptive_greedy(d, reductor, SNAPSHOTS, RBSIZE)
-elif ALG == 'pod':
-    rd, rc = reduce_pod(d, reductor, SNAPSHOTS, RBSIZE)
-else:
-    raise NotImplementedError
+    # select reduction algorithm with error estimator
+    #################################################
+    coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', d.parameter_type)
+    reductor = partial(reduce_stationary_coercive,
+                       error_product=d.h1_0_semi_product, coercivity_estimator=coercivity_estimator)
 
 
-# evaluate the reduction error
-##############################
-results = reduction_error_analysis(rd, discretization=d, reconstructor=rc, estimator=True,
-                                   error_norms=[d.h1_0_semi_norm], condition=True,
-                                   test_mus=TEST, random_seed=999, plot=True)
+    # generate reduced model
+    ########################
+    if ALG == 'naive':
+        rd, rc = reduce_naive(d, reductor, RBSIZE)
+    elif ALG == 'greedy':
+        rd, rc = reduce_greedy(d, reductor, SNAPSHOTS, RBSIZE)
+    elif ALG == 'adaptive_greedy':
+        rd, rc = reduce_adaptive_greedy(d, reductor, SNAPSHOTS, RBSIZE)
+    elif ALG == 'pod':
+        rd, rc = reduce_pod(d, reductor, SNAPSHOTS, RBSIZE)
+    else:
+        raise NotImplementedError
 
 
-# show results
-##############
-print(results['summary'])
-import matplotlib.pyplot
-matplotlib.pyplot.show(results['figure'])
+    # evaluate the reduction error
+    ##############################
+    results = reduction_error_analysis(rd, discretization=d, reconstructor=rc, estimator=True,
+                                       error_norms=[d.h1_0_semi_norm], condition=True,
+                                       test_mus=TEST, random_seed=999, plot=True)
 
 
-# visualize reduction error for worst-approximated mu
-#####################################################
-mumax = results['max_error_mus'][0, -1]
-U = d.solve(mumax)
-U_RB = rc.reconstruct(rd.solve(mumax))
-d.visualize((U, U_RB, U - U_RB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
-            separate_colorbars=True, block=True)
+    # show results
+    ##############
+    print(results['summary'])
+    import matplotlib.pyplot
+    matplotlib.pyplot.show(results['figure'])
+
+
+    # visualize reduction error for worst-approximated mu
+    #####################################################
+    mumax = results['max_error_mus'][0, -1]
+    U = d.solve(mumax)
+    U_RB = rc.reconstruct(rd.solve(mumax))
+    d.visualize((U, U_RB, U - U_RB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
+                separate_colorbars=True, block=True)
+
+if __name__ == '__main__':
+    main()
