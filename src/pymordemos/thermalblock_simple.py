@@ -114,16 +114,14 @@ def _discretize_fenics():
     from pymor.vectorarrays.fenics import FenicsVector
 
     # define parameter functionals (same as in pymor.analyticalproblems.thermalblock)
-    def parameter_functional_factory(x, y):
-        return ProjectionParameterFunctional(component_name='diffusion',
-                                             component_shape=(YBLOCKS, XBLOCKS),
-                                             coordinates=(YBLOCKS - y - 1, x))
-    parameter_functionals = tuple(parameter_functional_factory(x, y)
-                                  for x in range(XBLOCKS) for y in range(YBLOCKS))
+    parameter_functionals = [ProjectionParameterFunctional(component_name='diffusion',
+                                                           component_shape=(YBLOCKS, XBLOCKS),
+                                                           coordinates=(YBLOCKS - y - 1, x))
+                             for x in range(XBLOCKS) for y in range(YBLOCKS)]
 
     # wrap operators
     ops = [FenicsMatrixOperator(mat0, V, V)] + [FenicsMatrixOperator(m, V, V) for m in mats]
-    op = LincombOperator(ops, (1.,) + parameter_functionals)
+    op = LincombOperator(ops, [1.] + parameter_functionals)
     rhs = VectorFunctional(ListVectorArray([FenicsVector(F, V)]))
     h1_product = FenicsMatrixOperator(h1_mat, V, V, name='h1_0_semi')
 
