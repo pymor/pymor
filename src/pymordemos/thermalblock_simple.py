@@ -255,6 +255,14 @@ import matplotlib.pyplot
 matplotlib.pyplot.show(results['figure'])
 
 
+# write results to disk
+#######################
+from pymor.core.pickle import dump
+dump(rd, open('reduced_model.out', 'wb'))
+results.pop('figure')  # matplotlib figures cannot be serialized
+dump(results, open('results.out', 'wb'))
+
+
 # visualize reduction error for worst-approximated mu
 #####################################################
 mumax = results['max_error_mus'][0, -1]
