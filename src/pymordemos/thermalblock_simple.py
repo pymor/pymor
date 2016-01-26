@@ -3,12 +3,10 @@
 """Simplified version of the thermalblock demo.
 
 Usage:
-  thermalblock_simple.py XBLOCKS YBLOCKS ALG SNAPSHOTS RBSIZE
+  thermalblock_simple.py [options] MODEL ALG SNAPSHOTS RBSIZE TEST
 
 Arguments:
-  XBLOCKS    Number of blocks in x direction.
-
-  YBLOCKS    Number of blocks in y direction.
+  MODEL      High-dimensional model (pymor, fenics).
 
   ALG        The model reduction algorithm to use
              (naive, greedy, adaptive_greedy, pod).
