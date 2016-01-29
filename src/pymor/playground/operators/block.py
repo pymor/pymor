@@ -15,9 +15,15 @@ from pymor.vectorarrays.interfaces import VectorSpace
 
 class BlockOperator(OperatorBase):
     """A sparse matrix of arbitrary operators
+
+    Parameters
+    ----------
+    blocks
+        Two-dimensional |NumPy| array where each entry is an operator or None.
     """
 
     def _operators(self):
+        """Iterate over operators (not None)"""
         for row in self._blocks:
             for entry in row:
                 if entry is not None:
@@ -51,5 +57,28 @@ class BlockOperator(OperatorBase):
         self.linear = all(op.linear for op in self._operators())
         self._is_diagonal = (all(block is None if i != j else True for (i, j), block in np.ndenumerate(self._blocks))
                              and self.num_source_blocks == self.num_range_blocks)
-        # build parameter type
         self.build_parameter_type(inherits=list(self._operators()))
+
+    @classmethod
+    def hstack(cls, operators):
+        """Horizontal stacking of operators
+
+        Parameters
+        ----------
+        operators
+            A tuple, list, array, or iterable of operators.
+        """
+        blocks = np.array(operators).reshape(1, len(operators))
+        return cls(blocks)
+
+    @classmethod
+    def vstack(cls, operators):
+        """Vertical stacking of operators
+
+        Parameters
+        ----------
+        operators
+            A tuple, list, array, or iterable of operators.
+        """
+        blocks = np.array(operators).reshape(len(operators), 1)
+        return cls(blocks)
