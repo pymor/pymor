@@ -129,3 +129,11 @@ class BlockOperator(OperatorBase):
             V = source_product.apply_inverse(V)
 
         return V
+
+
+class BlockDiagonalOperator(BlockOperator):
+    """Block diagonal operator with arbitrary operators"""
+
+    def __init__(self, blocks):
+        blocks = np.diag([op for op in blocks])
+        super(BlockDiagonalOperator, self).__init__(blocks)
