@@ -68,7 +68,7 @@ class BlockOperator(OperatorBase):
         operators
             A tuple, list, array, or iterable of operators.
         """
-        blocks = np.array(operators).reshape(1, len(operators))
+        blocks = np.array([[op for op in operators]])
         return cls(blocks)
 
     @classmethod
@@ -80,5 +80,24 @@ class BlockOperator(OperatorBase):
         operators
             A tuple, list, array, or iterable of operators.
         """
-        blocks = np.array(operators).reshape(len(operators), 1)
+        blocks = np.array([[op] for op in operators])
         return cls(blocks)
+
+    def apply(self, U, ind=None, mu=None):
+        assert U in self.source
+        assert U.check_ind(ind)
+
+        blocks = []
+        for i in xrange(self.num_range_blocks):
+            block = None
+            for j in xrange(self.num_source_blocks):
+                op = self._blocks[i, j]
+                if op is not None:
+                    V = op.apply(U.block(j))
+                    if block is None:
+                        block = V.copy()
+                    else:
+                        block += V
+            blocks.append(block.copy())
+
+        return BlockVectorArray(blocks)
