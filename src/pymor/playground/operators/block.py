@@ -101,3 +101,31 @@ class BlockOperator(OperatorBase):
             blocks.append(block.copy())
 
         return BlockVectorArray(blocks)
+
+    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+        assert U in self.source
+        assert U.check_ind(ind)
+        assert source_product is None or source_product.source == source_product.range == self.source
+        assert range_product is None or range_product.source == range_product.range == self.range
+
+        if range_product is not None:
+            U = range_product.apply(U)
+
+        blocks = []
+        for j in xrange(self.num_source_blocks):
+            block = None
+            for i in xrange(self.num_range_blocks):
+                op = self._blocks[i, j]
+                if op is not None:
+                    V = op.apply_adjoint(U.block(i))
+                    if block is None:
+                        block = V.copy()
+                    else:
+                        block += V
+            blocks.append(block.copy())
+
+        V = BlockVectorArray(blocks)
+        if source_product is not None:
+            V = source_product.apply_inverse(V)
+
+        return V
