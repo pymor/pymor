@@ -93,7 +93,7 @@ class BlockOperator(OperatorBase):
             for j in xrange(self.num_source_blocks):
                 op = self._blocks[i, j]
                 if op is not None:
-                    V = op.apply(U.block(j))
+                    V = op.apply(U.block(j), ind=ind, mu=mu)
                     if block is None:
                         block = V.copy()
                     else:
@@ -117,7 +117,7 @@ class BlockOperator(OperatorBase):
             for i in xrange(self.num_range_blocks):
                 op = self._blocks[i, j]
                 if op is not None:
-                    V = op.apply_adjoint(U.block(i))
+                    V = op.apply_adjoint(U.block(i), ind=ind, mu=mu)
                     if block is None:
                         block = V.copy()
                     else:
@@ -137,3 +137,10 @@ class BlockDiagonalOperator(BlockOperator):
     def __init__(self, blocks):
         blocks = np.diag([op for op in blocks])
         super(BlockDiagonalOperator, self).__init__(blocks)
+
+    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
+        U = []
+        for i in xrange(self.num_source_blocks):
+            U.append(self._blocks[i, i].apply_inverse(V.block(i), ind=ind, mu=mu, least_squares=least_squares))
+
+        return BlockVectorArray(U)
