@@ -230,7 +230,7 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
                         #                          center_inds=refinement_elements,
                         #                          vertex_size=visualize_vertex_size, vmin=0, vmax=vmax, new_figure=False)
                         # plt.show()
-                        plt.savefig('adaptive_greedy_indicators_{}.eps'.format(current_refinements))
+                        plt.savefig('adaptive_greedy_indicators_{}_{}.eps'.format(len(refinements), current_refinements))
 
                     # refine training set
                     sample_set.refine(refinement_elements)
