@@ -288,6 +288,7 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
     logger.info('Greedy search took {} seconds'.format(tictoc))
     return {'basis': basis, 'reduced_discretization': rd, 'reconstructor': rc,
             'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
+            'max_val_errs': max_val_errs, 'max_val_err_mus': max_val_err_mus,
             'refinements': refinements, 'training_set_sizes': training_set_sizes,
             'time': tictoc, 'reduction_data': reduction_data}
 
