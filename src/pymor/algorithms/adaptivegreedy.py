@@ -201,33 +201,36 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
                         from mpl_toolkits.mplot3d import Axes3D  # NOQA
                         import matplotlib.pyplot as plt
                         plt.figure()
-                        plt.subplot(2, 2, 1, projection=None if sample_set.dim == 2 else '3d')
-                        plt.title('estimated errors')
-                        sample_set.visualize(vertex_data=errors, center_data=center_errors, new_figure=False)
-                        plt.subplot(2, 2, 2, projection=None if sample_set.dim == 2 else '3d')
-                        plt.title('indicators_error_part')
-                        vmax = np.max([indicators_error_part, indicators_age_part, indicators])
-                        data = {('volume_data' if sample_set.dim == 2 else 'center_data'): indicators_error_part}
-                        sample_set.visualize(vertex_size=visualize_vertex_size, vmin=0, vmax=vmax, new_figure=False,
-                                             **data)
-                        plt.subplot(2, 2, 3, projection=None if sample_set.dim == 2 else '3d')
-                        plt.title('indicators_age_part')
-                        data = {('volume_data' if sample_set.dim == 2 else 'center_data'): indicators_age_part}
-                        sample_set.visualize(vertex_size=visualize_vertex_size, vmin=0, vmax=vmax, new_figure=False,
-                                             **data)
-                        plt.subplot(2, 2, 4, projection=None if sample_set.dim == 2 else '3d')
-                        if sample_set.dim == 2:
-                            plt.title('indicators')
-                            sample_set.visualize(volume_data=indicators,
-                                                 center_data=np.zeros(len(refinement_elements)),
-                                                 center_inds=refinement_elements,
-                                                 vertex_size=visualize_vertex_size, vmin=0, vmax=vmax, new_figure=False)
-                        else:
-                            plt.title('selected cells')
-                            sample_set.visualize(center_data=np.zeros(len(refinement_elements)),
-                                                 center_inds=refinement_elements,
-                                                 vertex_size=visualize_vertex_size, vmin=0, vmax=vmax, new_figure=False)
-                        plt.show()
+                        plt.subplot(1, 1, 1, projection=None)
+                        errors = np.max([vertex_errors, center_errors], axis=0)
+                        sample_set.visualize(vertex_size=visualize_vertex_size, volume_data=errors, new_figure=False)
+                        plt.title('indicators')
+                        # sample_set.visualize(vertex_data=errors, center_data=center_errors, new_figure=False)
+                        # plt.subplot(2, 2, 2, projection=None if sample_set.dim == 2 else '3d')
+                        # plt.title('indicators_error_part')
+                        # vmax = np.max([indicators_error_part, indicators_age_part, indicators])
+                        # data = {('volume_data' if sample_set.dim == 2 else 'center_data'): indicators_error_part}
+                        # sample_set.visualize(vertex_size=visualize_vertex_size, vmin=0, vmax=vmax, new_figure=False,
+                        #                      **data)
+                        # plt.subplot(2, 2, 3, projection=None if sample_set.dim == 2 else '3d')
+                        # plt.title('indicators_age_part')
+                        # data = {('volume_data' if sample_set.dim == 2 else 'center_data'): indicators_age_part}
+                        # sample_set.visualize(vertex_size=visualize_vertex_size, vmin=0, vmax=vmax, new_figure=False,
+                        #                      **data)
+                        # plt.subplot(2, 2, 4, projection=None if sample_set.dim == 2 else '3d')
+                        # if sample_set.dim == 2:
+                        #     plt.title('indicators')
+                        #     sample_set.visualize(volume_data=indicators,
+                        #                          center_data=np.zeros(len(refinement_elements)),
+                        #                          center_inds=refinement_elements,
+                        #                          vertex_size=visualize_vertex_size, vmin=0, vmax=vmax, new_figure=False)
+                        # else:
+                        #     plt.title('selected cells')
+                        #     sample_set.visualize(center_data=np.zeros(len(refinement_elements)),
+                        #                          center_inds=refinement_elements,
+                        #                          vertex_size=visualize_vertex_size, vmin=0, vmax=vmax, new_figure=False)
+                        # plt.show()
+                        plt.savefig('adaptive_greedy_indicators_{}.eps'.format(current_refinements))
 
                     # refine training set
                     sample_set.refine(refinement_elements)
