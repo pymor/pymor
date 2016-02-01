@@ -148,6 +148,8 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
                     .format(len(sample_set.vertex_mus), len(validation_set)))
 
         extensions = 0
+        all_errors = []
+        all_refinement_elements = []
         max_errs = []
         max_err_mus = []
         max_val_errs = []
@@ -166,6 +168,7 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
                 # estimate on training set
                 logger.info('Estimating errors ...')
                 errors = estimate(sample_set.vertex_mus)
+                all_errors.append(errors)
                 max_err_ind = np.argmax(errors)
                 max_err, max_err_mu = errors[max_err_ind], sample_set.vertex_mus[max_err_ind]
                 logger.info('Maximum error after {} extensions: {} (mu = {})'.format(extensions, max_err, max_err_mu))
@@ -194,6 +197,7 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
                     # select elements
                     sorted_indicators_inds = np.argsort(indicators)[::-1]
                     refinement_elements = sorted_indicators_inds[:max(int(len(sorted_indicators_inds) * theta), 1)]
+                    all_refinement_elements.append(refinement_elements)
                     logger.info('Refining {} elements: {}'.format(len(refinement_elements), refinement_elements))
 
                     # visualization
@@ -287,7 +291,8 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
             'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
             'max_val_errs': max_val_errs, 'max_val_err_mus': max_val_err_mus,
             'refinements': refinements, 'training_set_sizes': training_set_sizes,
-            'time': tictoc, 'reduction_data': reduction_data}
+            'time': tictoc, 'reduction_data': reduction_data,
+            'all_errors': all_errors, 'all_refinement_elements': all_refinement_elements}
 
 
 def _estimate(mu, rd=None, d=None, rc=None, error_norm=None):
