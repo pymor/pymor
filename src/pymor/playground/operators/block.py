@@ -103,7 +103,7 @@ class BlockOperator(OperatorBase):
         return BlockVectorArray(blocks)
 
     def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
-        assert U in self.source
+        assert U in self.range
         assert U.check_ind(ind)
         assert source_product is None or source_product.source == source_product.range == self.source
         assert range_product is None or range_product.source == range_product.range == self.range
@@ -135,8 +135,11 @@ class BlockDiagonalOperator(BlockOperator):
     """Block diagonal operator with arbitrary operators"""
 
     def __init__(self, blocks):
-        blocks = np.diag([op for op in blocks])
-        super(BlockDiagonalOperator, self).__init__(blocks)
+        n = len(blocks)
+        blocks2 = np.array([[None for j in xrange(n)] for i in xrange(n)])
+        for i, op in enumerate(blocks):
+            blocks2[i, i] = op
+        super(BlockDiagonalOperator, self).__init__(blocks2)
 
     def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
         U = []
