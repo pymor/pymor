@@ -561,8 +561,86 @@ class LTISystem(DiscretizationInterface):
 
         return rom, rc, reduction_data
 
+    def arnoldi(self, sigma, b_or_c):
+        """Rational Arnoldi algorithm
+
+        Implemented only for single-input or single-output systems.
+
+        Parameters
+        ----------
+        sigma
+            Interpolation points (closed under conjugation)
+        b_or_c
+            Character 'b' or 'c', to choose between the input or output matrix.
+
+        Returns
+        -------
+        V
+            Projection matrix.
+        """
+        assert b_or_c == 'b' and self.m == 1 or b_or_c == 'c' and self.p == 1
+
+        r = len(sigma)
+        V = NumpyVectorArray.make_array(self.n, reserve=r)
+
+        v = NumpyVectorArray(np.array([1.]))
+        if b_or_c == 'b':
+            v = self.B.apply(v)
+        else:
+            v = self.C.apply_adjoint(v)
+        v /= v.l2_norm()[0]
+
+        for i in xrange(r):
+            if sigma[i].imag == 0:
+                if self.E is None:
+                    E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
+                    sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i].real, -1))
+                else:
+                    sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i].real, -1))
+
+                v = sEmA.apply_inverse(v)
+                if i > 0:
+                    v_norm_orig = v.l2_norm()[0]
+                    Vop = VectorArrayOperator(V)
+                    v -= Vop.apply(Vop.apply_adjoint(v))
+                    if v.l2_norm()[0] < v_norm_orig / 10:
+                        v -= Vop.apply(Vop.apply_adjoint(v))
+                v /= v.l2_norm()[0]
+                V.append(v)
+            elif sigma[i].imag > 0:
+                if self.E is None:
+                    E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
+                    sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i], -1))
+                else:
+                    sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i], -1))
+
+                v = sEmA.apply_inverse(v)
+
+                v1 = v.real
+                if i > 0:
+                    v1_norm_orig = v1.l2_norm()
+                    Vop = VectorArrayOperator(V)
+                    v1 -= Vop.apply(Vop.apply_adjoint(v1))
+                    if v1.l2_norm() < v1_norm_orig / 10:
+                        v1 -= Vop.apply(Vop.apply_adjoint(v1))
+                v1 /= v1.l2_norm()[0]
+                V.append(v1)
+
+                v2 = v.imag
+                v2_norm_orig = v2.l2_norm()
+                Vop = VectorArrayOperator(V)
+                v2 -= Vop.apply(Vop.apply_adjoint(v2))
+                if v2.l2_norm() < v2_norm_orig / 10:
+                    v2 -= Vop.apply(Vop.apply_adjoint(v2))
+                v2 /= v2.l2_norm()[0]
+                V.append(v2)
+
+                v = v2
+
+        return V
+
     def interpolation(self, sigma, b, c):
-        """Find `Vr` and `Wr`.
+        """Tangential Hermite interpolation at point `sigma` and directions `b` and `c`.
 
         Parameters
         ----------
@@ -588,7 +666,7 @@ class LTISystem(DiscretizationInterface):
         for i in xrange(r):
             if sigma[i].imag == 0:
                 if self.E is None:
-                    E = NumpyMatrixOperator(sps.eye(self.n))
+                    E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
                     sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i].real, -1))
                 else:
                     sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i].real, -1))
@@ -600,7 +678,7 @@ class LTISystem(DiscretizationInterface):
                 Wr.append(sEmA.apply_inverse_adjoint(CTc))
             elif sigma[i].imag > 0:
                 if self.E is None:
-                    E = NumpyMatrixOperator(sps.eye(self.n))
+                    E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
                     sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i], -1))
                 else:
                     sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i], -1))
