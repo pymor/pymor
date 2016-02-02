@@ -79,6 +79,14 @@ class NumpyVectorArray(VectorArrayInterface):
     def data(self):
         return self._array[:self._len]
 
+    @property
+    def real(self):
+        return NumpyVectorArray(self._array[:self._len].real, copy=True)
+
+    @property
+    def imag(self):
+        return NumpyVectorArray(self._array[:self._len].imag, copy=True)
+
     def __len__(self):
         return self._len
 
@@ -265,8 +273,10 @@ class NumpyVectorArray(VectorArrayInterface):
 
         alpha_type = type(alpha)
         alpha_dtype = alpha.dtype if alpha_type is np.ndarray else alpha_type
-        if self._array.dtype != alpha_dtype:
-            self._array = self._array.astype(np.promote_types(self._array.dtype, alpha_dtype))
+        if self._array.dtype != alpha_dtype or self._array.dtype != B.dtype:
+            dtype = np.promote_types(self._array.dtype, alpha_dtype)
+            dtype = np.promote_types(dtype, B.dtype)
+            self._array = self._array.astype(dtype)
 
         if np.all(alpha == 1):
             if ind is None:
