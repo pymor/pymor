@@ -131,7 +131,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
             return ProjectedEmpiciralInterpolatedOperator(self.restricted_operator, self.interpolation_matrix,
                                                           NumpyVectorArray(source_basis.components(self.source_dofs),
                                                                            copy=False),
-                                                          projected_collateral_basis, self.triangular, name)
+                                                          projected_collateral_basis, self.triangular, None, name)
 
     def jacobian(self, U, mu=None):
         mu = self.parse_parameter(mu)
