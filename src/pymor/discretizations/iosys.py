@@ -588,7 +588,7 @@ class LTISystem(DiscretizationInterface):
             v = self.B.apply(v)
         else:
             v = self.C.apply_adjoint(v)
-        v /= v.l2_norm()[0]
+        v.scal(1 / v.l2_norm()[0])
 
         for i in xrange(r):
             if sigma[i].imag == 0:
@@ -598,14 +598,18 @@ class LTISystem(DiscretizationInterface):
                 else:
                     sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i].real, -1))
 
-                v = sEmA.apply_inverse(v)
+                if b_or_c == 'b':
+                    v = sEmA.apply_inverse(v)
+                else:
+                    v = sEmA.apply_inverse_adjoint(v)
+
                 if i > 0:
                     v_norm_orig = v.l2_norm()[0]
                     Vop = VectorArrayOperator(V)
                     v -= Vop.apply(Vop.apply_adjoint(v))
                     if v.l2_norm()[0] < v_norm_orig / 10:
                         v -= Vop.apply(Vop.apply_adjoint(v))
-                v /= v.l2_norm()[0]
+                v.scal(1 / v.l2_norm()[0])
                 V.append(v)
             elif sigma[i].imag > 0:
                 if self.E is None:
@@ -614,7 +618,10 @@ class LTISystem(DiscretizationInterface):
                 else:
                     sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i], -1))
 
-                v = sEmA.apply_inverse(v)
+                if b_or_c == 'b':
+                    v = sEmA.apply_inverse(v)
+                else:
+                    v = sEmA.apply_inverse_adjoint(v)
 
                 v1 = v.real
                 if i > 0:
@@ -623,7 +630,7 @@ class LTISystem(DiscretizationInterface):
                     v1 -= Vop.apply(Vop.apply_adjoint(v1))
                     if v1.l2_norm() < v1_norm_orig / 10:
                         v1 -= Vop.apply(Vop.apply_adjoint(v1))
-                v1 /= v1.l2_norm()[0]
+                v1.scal(1 / v1.l2_norm()[0])
                 V.append(v1)
 
                 v2 = v.imag
@@ -632,7 +639,7 @@ class LTISystem(DiscretizationInterface):
                 v2 -= Vop.apply(Vop.apply_adjoint(v2))
                 if v2.l2_norm() < v2_norm_orig / 10:
                     v2 -= Vop.apply(Vop.apply_adjoint(v2))
-                v2 /= v2.l2_norm()[0]
+                v2.scal(1 / v2.l2_norm()[0])
                 V.append(v2)
 
                 v = v2
@@ -698,7 +705,7 @@ class LTISystem(DiscretizationInterface):
 
         return Vr, Wr
 
-    def irka(self, sigma, b, c, tol, maxit, verbose=False, force_stability=True):
+    def irka(self, sigma, b, c, tol, maxit, verbose=False, force_stability=True, arnoldi=False):
         """Reduce using IRKA.
 
         Parameters
@@ -730,7 +737,11 @@ class LTISystem(DiscretizationInterface):
             projection matrices `Vr` and `Wr`, distances between interpolation points in
             different iterations `dist`, and interpolation points from all iterations `Sigma`.
         """
-        Vr, Wr = self.interpolation(sigma, b, c)
+        if arnoldi and self.m == self.p == 1:
+            Vr = self.arnoldi(sigma, 'b')
+            Wr = self.arnoldi(sigma, 'c')
+        else:
+            Vr, Wr = self.interpolation(sigma, b, c)
 
         dist = []
         Sigma = [np.array(sigma)]
@@ -754,7 +765,11 @@ class LTISystem(DiscretizationInterface):
             b = Br.T.dot(Y.conj())
             c = Cr.dot(X)
 
-            Vr, Wr = self.interpolation(sigma, b, c)
+            if arnoldi and self.m == self.p == 1:
+                Vr = self.arnoldi(sigma, 'b')
+                Wr = self.arnoldi(sigma, 'c')
+            else:
+                Vr, Wr = self.interpolation(sigma, b, c)
 
             if np.min(dist[-1]) < tol:
                 break
