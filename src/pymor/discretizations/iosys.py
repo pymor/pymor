@@ -749,7 +749,7 @@ class LTISystem(DiscretizationInterface):
                 dist[-1].append(np.max(np.abs((Sigma[i] - Sigma[-1]) / Sigma[-1])))
 
             if verbose:
-                print('IRKA conv. crit. in step {}: {:.5e}'.format(it, np.min(dist[-1])))
+                print('IRKA conv. crit. in step {}: {:.5e}'.format(it + 1, np.min(dist[-1])))
 
             b = Br.T.dot(Y.conj())
             c = Cr.dot(X)
