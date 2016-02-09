@@ -1,38 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="en-us">
   <head>
-    <meta charset='utf-8'>
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+    <meta charset="UTF-8">
     <title>pyMOR by pymor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
   </head>
-
   <body>
-    <div id="container">
-      <div class="inner">
+    <section class="page-header">
+      <h1 class="project-name">pyMOR</h1>
+      <h2 class="project-tagline">Model Order Reduction with Python</h2>
+      <a href="https://github.com/pymor/pymor" class="btn">View on GitHub</a>
+      <a href="https://github.com/pymor/pymor/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/pymor/pymor/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
 
-        <header>
-          <h1>pyMOR</h1>
-          <h2>Model Order Reduction with Python</h2>
-        </header>
-
-        <section id="downloads" class="clearfix">
-          <a href="https://github.com/pymor/pymor/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
-          <a href="https://github.com/pymor/pymor/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
-          <a href="https://github.com/pymor/pymor" id="view-on-github" class="button"><span>View on GitHub</span></a>
-        </section>
-
-        <hr>
-
-        <section id="main_content">
-          <h1>
-<a id="pymor---model-order-reduction-with-python" class="anchor" href="#pymor---model-order-reduction-with-python" aria-hidden="true"><span class="octicon octicon-link"></span></a>pyMOR - Model Order Reduction with Python</h1>
+    <section class="main-content">
+      <h1>
+<a id="pymor---model-order-reduction-with-python" class="anchor" href="#pymor---model-order-reduction-with-python" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>pyMOR - Model Order Reduction with Python</h1>
 
 <p>pyMOR is a software library developed at the University of Münster for building
 model order reduction applications with the Python programming language.  Its
@@ -50,11 +38,10 @@ regarding pyMOR or wish to contribute, do not hesitate to contact us!</p>
 <a href="http://pymor.readthedocs.org/en/0.3.x"><img src="https://readthedocs.org/projects/pymor/badge/?version=0.3.x" alt="Docs"></a>
 <a href="http://dx.doi.org/10.5281/zenodo.15773"><img src="https://zenodo.org/badge/8838/pymor/pymor.svg" alt="DOI"></a>
 <a href="https://travis-ci.org/pymor/pymor"><img src="https://travis-ci.org/pymor/pymor.png?branch=master" alt="Build Status"></a>
-<a href="https://coveralls.io/r/pymor/pymor"><img src="https://coveralls.io/repos/pymor/pymor/badge.png" alt="Coverage Status"></a>
-<a href="https://landscape.io/github/pymor/pymor/master"><img src="https://landscape.io/github/pymor/pymor/master/landscape.png" alt="Code Health"></a></p>
+<a href="https://coveralls.io/r/pymor/pymor"><img src="https://coveralls.io/repos/pymor/pymor/badge.png" alt="Coverage Status"></a></p>
 
 <h2>
-<a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>License</h2>
 
 <p>Copyright (c) 2013, 2014, 2015, Rene Milk, Stephan Rave, Felix Schindler
 All rights reserved.</p>
@@ -85,13 +72,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
 
 <ul>
 <li>docs/source/pymordocstring.py  (sphinxcontrib-napoleon)</li>
-<li>src/pymor/la/genericsolvers.py (SciPy)</li>
+<li>src/pymor/algorithms/genericsolvers.py (SciPy)</li>
 </ul>
 
 <p>See these files for more information.</p>
 
 <h2>
-<a id="distribution-packages" class="anchor" href="#distribution-packages" aria-hidden="true"><span class="octicon octicon-link"></span></a>Distribution Packages</h2>
+<a id="distribution-packages" class="anchor" href="#distribution-packages" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Distribution Packages</h2>
 
 <p>Packages for Ubuntu are available via our
 <a href="https://launchpad.net/%7Epymor/+archive/stable">PPA</a>:</p>
@@ -114,7 +101,7 @@ sudo apt-get install python-pymor-doc
 all installed demos.</p>
 
 <h2>
-<a id="installation-into-a-virtualenv" class="anchor" href="#installation-into-a-virtualenv" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation into a virtualenv</h2>
+<a id="installation-into-a-virtualenv" class="anchor" href="#installation-into-a-virtualenv" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Installation into a virtualenv</h2>
 
 <p>When installing pyMOR manually, we recommend installation into a dedicated
 Python <a href="http://www.virtualenv.org/">virtualenv</a>. On Debian based systems,
@@ -168,7 +155,7 @@ and <a href="http://qt-project.org/wiki/PySide">PySide</a>. The latter
 packages are required for pyMOR's visualization routines.</p>
 
 <h2>
-<a id="documentation" class="anchor" href="#documentation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Documentation</h2>
+<a id="documentation" class="anchor" href="#documentation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Documentation</h2>
 
 <p>Documentation is available online at <a href="http://pymor.readthedocs.org/">Read the Docs</a>
 or offline in the <code>python-pymor-doc</code> package.</p>
@@ -182,7 +169,54 @@ or offline in the <code>python-pymor-doc</code> package.</p>
 documentation in <code>docs/_build/html</code>.</p>
 
 <h2>
-<a id="setting-up-an-environment-for-pymor-development" class="anchor" href="#setting-up-an-environment-for-pymor-development" aria-hidden="true"><span class="octicon octicon-link"></span></a>Setting up an Environment for pyMOR Development</h2>
+<a id="external-pde-solvers" class="anchor" href="#external-pde-solvers" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>External PDE solvers</h2>
+
+<p>pyMOR has been designed with easy integration of external PDE solvers
+in mind.</p>
+
+<p>A basic approach is to use the solver only to generate high-dimensional
+system matrices which are then read by pyMOR from disk (<code>pymor.discretizers.disk</code>).
+Another possibility is to steer the solver via an appropriate network
+protocol. </p>
+
+<p>Whenever possible, we recommend to recompile the solver as a 
+Python extension module which gives pyMOR direct access to the solver without 
+any communication overhead. A basic example using 
+<a href="https://github.com/gjcarneiro/pybindgen">pybindgen</a> can be found in 
+<code>src/pymordemos/minimal_cpp_demo</code>. A more elaborate nonlinear example
+using <a href="http://www.boost.org/">Boost.Python</a> can be found
+<a href="https://github.com/pymor/dune-burgers-demo">here</a>. Moreover,
+we provide bindings for the following solver libraries:</p>
+
+<ul>
+<li>
+<p><a href="http://fenicsproject.org">FEniCS</a></p>
+
+<p>MPI-compatible wrapper classes for dolfin linear algebra data structures are
+shipped with pyMOR (<code>pymor.vectorarrays.fenics</code>, <code>pymor.operators.fenics</code>).
+For an example see <code>pymordemos.thermalbock</code>, <code>pymordemos.thermalblock_simple</code>.</p>
+</li>
+<li>
+<p><a href="https://dealii.org">deal.II</a></p>
+
+<p>Python bindings and pyMOR wrapper classes can be found
+<a href="https://github.com/pymor/pymor-deal.II">here</a>.</p>
+</li>
+<li>
+<p><a href="https://www.dune-project.org">DUNE</a></p>
+
+<p><a href="https://github.com/pymor/dune-pymor">dune-pymor</a> automatically wraps
+<a href="https://users.dune-project.org/projects/dune-hdd/wiki">dune-hdd</a> discretizations
+for use with pyMOR.</p>
+</li>
+</ul>
+
+<p>Do not hesitate to contact
+<a href="http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev">us</a> if you
+need help with the integration of your PDE solver.</p>
+
+<h2>
+<a id="setting-up-an-environment-for-pymor-development" class="anchor" href="#setting-up-an-environment-for-pymor-development" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Setting up an Environment for pyMOR Development</h2>
 
 <p>If you want to modify (or extend!) pyMOR itself, we recommend to setup a
 virtualenv for development (see above). The virtualenv should have all
@@ -206,7 +240,7 @@ cd $PYMOR_SOURCE_DIR
 <pre><code>git checkout 0.2.x
 </code></pre>
 
-<p>Finally add pyMOR to the path of your virtualenv:</p>
+<p>Then, add pyMOR to the path of your virtualenv:</p>
 
 <pre><code>echo "$PYMOR_SOURCE_DIR/src" &gt; $VIRTUAL_ENV/lib/python2.7/site-packages/pymor.pth
 </code></pre>
@@ -214,16 +248,17 @@ cd $PYMOR_SOURCE_DIR
 <p>This will make pyMOR importable inside the virtualenv and will override any
 other pyMOR versions installed on the system.</p>
 
+<p>Finally, build the Cython extension modules as described in the next section.</p>
+
 <h2>
-<a id="cython-extension-modules" class="anchor" href="#cython-extension-modules" aria-hidden="true"><span class="octicon octicon-link"></span></a>Cython extension modules</h2>
+<a id="cython-extension-modules" class="anchor" href="#cython-extension-modules" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Cython extension modules</h2>
 
 <p>pyMOR uses <a href="http://www.cython.org/">Cython</a> extension modules to speed up
 numerical algorithms which cannot be efficiently expressed using NumPy idioms.
-To benefit from these optimizations, the modules' source files (currently
-<code>pymor/tools/inplace.pyx</code> and <code>pymor/tools/realations.pyx</code>) have to be processed
-by Cython into a <code>.c</code>-file which then must be compiled into a shared object.
-These <code>.so</code>-files then take precedence over the non-optimized pure python
-modules. The whole build process is handeled automatically by <code>setup.py</code>.</p>
+The source files of these modules (files with extension <code>.pyx</code>) have to be
+processed by Cython into a <code>.c</code>-file which then must be compiled into a shared
+object (<code>.so</code> file). The whole build process is handeled automatically by
+<code>setup.py</code>.</p>
 
 <p>If you want to develop Cython extensions modules for pyMOR yourself, you should
 add your module to the <code>ext_modules</code> list defined in the <code>_setup</code> method of
@@ -235,7 +270,7 @@ add your module to the <code>ext_modules</code> list defined in the <code>_setup
 <p>will then build the extension module and place it into your pyMOR source tree.</p>
 
 <h2>
-<a id="tests" class="anchor" href="#tests" aria-hidden="true"><span class="octicon octicon-link"></span></a>Tests</h2>
+<a id="tests" class="anchor" href="#tests" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Tests</h2>
 
 <p>pyMOR uses <a href="http://pytest.org/">pytest</a> for unit testing. To run the test suite,
 simply execute <code>make test</code> in the base directory of the pyMOR repository. This
@@ -248,21 +283,21 @@ directory. Alternatively, you can run <code>make full-test</code> which will als
 individually by executing <code>py.test src/pymortests/the_module.py</code>.</p>
 
 <h2>
-<a id="contact" class="anchor" href="#contact" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contact</h2>
+<a id="contact" class="anchor" href="#contact" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Contact</h2>
 
 <p>Should you have any questions regarding pyMOR or wish to contribute, 
 do not hestitate to contact us via our development mailing list:</p>
 
 <p><a href="http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev">http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev</a></p>
-        </section>
 
-        <footer>
-          pyMOR is maintained by <a href="https://github.com/pymor">pymor</a><br>
-          This page was generated by <a href="http://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.
-        </footer>
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/pymor/pymor">pyMOR</a> is maintained by <a href="https://github.com/pymor">pymor</a>.</span>
 
-        
-      </div>
-    </div>
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
   </body>
 </html>
