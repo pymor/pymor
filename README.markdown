@@ -139,6 +139,48 @@ inside the root directory of the pyMOR source tree. This will generate HTML
 documentation in `docs/_build/html`.
 
 
+External PDE solvers
+--------------------
+
+pyMOR has been designed with easy integration of external PDE solvers
+in mind.
+
+A basic approach is to use the solver only to generate high-dimensional
+system matrices which are then read by pyMOR from disk (`pymor.discretizers.disk`).
+Another possibility is to steer the solver via an appropriate network
+protocol. 
+
+Whenever possible, we recommend to recompile the solver as a 
+Python extension module which gives pyMOR direct access to the solver without 
+any communication overhead. A basic example using 
+[pybindgen](https://github.com/gjcarneiro/pybindgen) can be found in 
+`src/pymordemos/minimal_cpp_demo`. A more elaborate nonlinear example
+using [Boost.Python](http://www.boost.org/) can be found
+[here](https://github.com/pymor/dune-burgers-demo). Moreover,
+we provide bindings for the following solver libraries:
+
+* [FEniCS](http://fenicsproject.org)
+
+    MPI-compatible wrapper classes for dolfin linear algebra data structures are
+    shipped with pyMOR (`pymor.vectorarrays.fenics`, `pymor.operators.fenics`).
+    For an example see `pymordemos.thermalbock`, `pymordemos.thermalblock_simple`.
+
+* [deal.II](https://dealii.org)
+
+    Python bindings and pyMOR wrapper classes can be found
+    [here](https://github.com/pymor/pymor-deal.II).
+
+* [DUNE](https://www.dune-project.org)
+
+    [dune-pymor](https://github.com/pymor/dune-pymor) automatically wraps
+    [dune-hdd](https://users.dune-project.org/projects/dune-hdd/wiki) discretizations
+    for use with pyMOR.
+
+Do not hesitate to contact
+[us](http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev) if you
+need help with the integration of your PDE solver.
+
+
 Setting up an Environment for pyMOR Development
 -----------------------------------------------
 
