@@ -117,6 +117,24 @@ def write_version():
     return revstring
 
 def _setup(**kwargs):
+
+    # the following hack is taken from scipy's setup.py
+    # https://github.com/scipy/scipy
+    if len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or
+            sys.argv[1] in ('--help-commands', 'egg_info', '--version',
+                            'clean')):
+        # For these actions, NumPy is not required.
+        #
+        # They are required to succeed without Numpy for example when
+        # pip is used to install Scipy when Numpy is not yet present in
+        # the system.
+        try:
+            from setuptools import setup
+        except ImportError:
+            from distutils.core import setup
+        return setup(**kwargs)
+
+
     _numpy_monkey()
     import Cython.Distutils
     # numpy sometimes expects this attribute, sometimes not. all seems ok if it's set to none
@@ -156,17 +174,8 @@ def _missing(names):
             else:
                 yield name
 
-def check_pre_require():
-    '''these are packages that need to be present before we start out setup, because
-    distribute/distutil/numpy.distutils makes automatic installation too unreliable
-    '''
-    missing = list(_missing(dependencies.pre_setup_requires))
-    if len(missing):
-        raise DependencyMissing(missing)
-
 
 def setup_package():
-    check_pre_require()
     revstring = write_version()
 
     _setup(
