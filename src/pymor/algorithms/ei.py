@@ -119,7 +119,7 @@ def ei_greedy(U, error_norm=None, target_error=None, max_interpolation_dofs=None
         max_err_ind = np.argmax(errs)
         max_err = errs[max_err_ind]
 
-        if len(interpolation_dofs) >= max_interpolation_dofs:
+        if max_interpolation_dofs is not None and len(interpolation_dofs) >= max_interpolation_dofs:
             logger.info('Maximum number of interpolation DOFs reached. Stopping extension loop.')
             logger.info('Final maximum {} error with {} interpolation DOFs: {}'.format(
                 'projection' if projection else 'interpolation', len(interpolation_dofs), max_err))
@@ -362,7 +362,7 @@ def _parallel_ei_greedy(U, pool, error_norm=None, target_error=None, max_interpo
         # main loop
         while True:
 
-            if len(interpolation_dofs) >= max_interpolation_dofs:
+            if max_interpolation_dofs is not None and len(interpolation_dofs) >= max_interpolation_dofs:
                 logger.info('Maximum number of interpolation DOFs reached. Stopping extension loop.')
                 logger.info('Final maximum interpolation error with {} interpolation DOFs: {}'
                             .format(len(interpolation_dofs), max_err))
