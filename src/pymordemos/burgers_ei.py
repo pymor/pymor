@@ -162,7 +162,6 @@ def burgers_demo(args):
     ei_discretization, ei_data = interpolate_operators(discretization, ['operator'],
                                                        discretization.parameter_space.sample_uniformly(args['EI_SNAPSHOTS']),  # NOQA
                                                        error_norm=discretization.l2_norm,
-                                                       target_error=1e-10,
                                                        max_interpolation_dofs=args['EISIZE'],
                                                        product=discretization.l2_product,
                                                        pool=pool)
