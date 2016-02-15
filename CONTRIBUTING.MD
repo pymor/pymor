@@ -85,7 +85,7 @@ pyMOR follows the coding style of
 [PEP8](https://www.python.org/dev/peps/pep-0008/) apart from a
 few exceptions. Configurations for the 
 [PEP8](https://pypi.python.org/pypi/pep8) and 
-[pyflakes](https://pypi.python.org/pypi/pyflakes) code
+[flake8](https://pypi.python.org/pypi/flake8) code
 checkers are contained in 
 [setup.cfg](https://github.com/pymor/pymor/blob/master/setup.cfg).
 
