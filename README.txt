@@ -19,8 +19,8 @@ regarding pyMOR or wish to contribute, do not hesitate to contact us!
 License
 -------
 
-Copyright (c) 2013, 2014, 2015, Rene Milk, Stephan Rave, Felix Schindler
-All rights reserved.
+Copyright 2013-2016 pyMOR developers and contributors. All rights
+reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -48,7 +48,7 @@ The following files contain source code originating from other open
 source software projects:
 
 -   docs/source/pymordocstring.py (sphinxcontrib-napoleon)
--   src/pymor/algorithms/genericsolvers.py (SciPy)
+-   src/pymor/la/genericsolvers.py (SciPy)
 
 See these files for more information.
 
