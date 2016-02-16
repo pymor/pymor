@@ -85,18 +85,16 @@ class BlockOperator(OperatorBase):
         assert U in self.source
         assert U.check_ind(ind)
 
-        blocks = []
+        blocks = [None for i in xrange(self.num_range_blocks)]
         for i in xrange(self.num_range_blocks):
-            block = None
             for j in xrange(self.num_source_blocks):
                 op = self._blocks[i, j]
                 if op is not None:
                     V = op.apply(U.block(j), ind=ind, mu=mu)
-                    if block is None:
-                        block = V.copy()
+                    if blocks[i] is None:
+                        blocks[i] = V
                     else:
-                        block += V
-            blocks.append(block.copy())
+                        blocks[i] += V
 
         return BlockVectorArray(blocks)
 
@@ -109,18 +107,16 @@ class BlockOperator(OperatorBase):
         if range_product is not None:
             U = range_product.apply(U)
 
-        blocks = []
+        blocks = [None for j in xrange(self.num_source_blocks)]
         for j in xrange(self.num_source_blocks):
-            block = None
             for i in xrange(self.num_range_blocks):
                 op = self._blocks[i, j]
                 if op is not None:
                     V = op.apply_adjoint(U.block(i), ind=ind, mu=mu)
-                    if block is None:
-                        block = V.copy()
+                    if blocks[j] is None:
+                        blocks[j] = V
                     else:
-                        block += V
-            blocks.append(block.copy())
+                        blocks[j] += V
 
         V = BlockVectorArray(blocks)
         if source_product is not None:
@@ -140,8 +136,8 @@ class BlockDiagonalOperator(BlockOperator):
         super(BlockDiagonalOperator, self).__init__(blocks2)
 
     def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
-        U = []
+        U = [None for i in xrange(self.num_source_blocks)]
         for i in xrange(self.num_source_blocks):
-            U.append(self._blocks[i, i].apply_inverse(V.block(i), ind=ind, mu=mu, least_squares=least_squares))
+            U[i] = self._blocks[i, i].apply_inverse(V.block(i), ind=ind, mu=mu, least_squares=least_squares)
 
         return BlockVectorArray(U)
