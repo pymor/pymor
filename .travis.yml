@@ -22,7 +22,7 @@ dist: trusty
 script:
   # this runs in pytest in a fake, auto numbered, X Server
   - xvfb-run -a py.test -k "${PYTEST_MARKER}"
-  - pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
+  - virtualenv piptest && source piptest/bin/activate && pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
 
 notifications:
   email: 
