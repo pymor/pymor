@@ -1,8 +1,6 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-#
-# Contributors: Andreas Buhr <andreas@andreasbuhr.de>
 
 from __future__ import absolute_import, division, print_function
 
@@ -115,3 +113,24 @@ def test_blk_diag_apply_inverse():
     wva = Cop.apply_inverse(vva)
     w = np.hstack((wva.block(0).data, wva.block(1).data))
     assert np.allclose(spla.solve(C, v), w)
+
+def test_blk_diag_apply_inverse_adjoint():
+    np.random.seed(0)
+
+    A = np.random.randn(2, 2)
+    B = np.random.randn(3, 3)
+    C = spla.block_diag(A, B)
+    Aop = NumpyMatrixOperator(A)
+    Bop = NumpyMatrixOperator(B)
+    Cop = BlockDiagonalOperator((Aop, Bop))
+
+    v1 = np.random.randn(2)
+    v2 = np.random.randn(3)
+    v = np.hstack((v1, v2))
+    v1va = NumpyVectorArray(v1)
+    v2va = NumpyVectorArray(v2)
+    vva = BlockVectorArray((v1va, v2va))
+
+    wva = Cop.apply_inverse_adjoint(vva)
+    w = np.hstack((wva.block(0).data, wva.block(1).data))
+    assert np.allclose(spla.solve(C.T, v), w)
