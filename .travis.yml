@@ -20,9 +20,15 @@ sudo: required
 dist: trusty
 
 script:
-  # this runs in pytest in a fake, auto numbered, X Server
-  - xvfb-run -a py.test -k "${PYTEST_MARKER}"
-  - virtualenv piptest && source piptest/bin/activate && pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
+ - |
+  if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
+    virtualenv piptest
+    source piptest/bin/activate
+    pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
+  else
+    # this runs in pytest in a fake, auto numbered, X Server
+    xvfb-run -a py.test -k "${PYTEST_MARKER}"
+  fi
 
 notifications:
   email: 
@@ -39,6 +45,7 @@ branches:
 env:
   - PYTEST_MARKER="not slow"
   - PYTEST_MARKER="slow"
+  - PYTEST_MARKER="PIP_ONLY"
 
 addons:
   apt:
