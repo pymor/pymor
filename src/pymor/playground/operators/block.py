@@ -55,8 +55,6 @@ class BlockOperator(OperatorBase):
         self.num_source_blocks = len(source_types)
         self.num_range_blocks = len(range_types)
         self.linear = all(op.linear for op in self._operators())
-        self._is_diagonal = (all(block is None if i != j else True for (i, j), block in np.ndenumerate(self._blocks))
-                             and self.num_source_blocks == self.num_range_blocks)
         self.build_parameter_type(inherits=list(self._operators()))
 
     @classmethod
