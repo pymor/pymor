@@ -5,7 +5,9 @@
 * Felix Schindler, felix.schindler@uni-muenster.de
 
 
-# Contributors to pyMOR 0.4
+# Contributors
+
+## pyMOR 0.4
 
 * Andreas Buhr, andreas@andreasbuhr.de
     * ability to rescale colorbar in each frame
@@ -30,7 +32,7 @@
     * Robin bondary condition support for pymor.operators.cg
 
 
-# Contributors to pyMOR 0.3
+## pyMOR 0.3
 
 * Andreas Buhr, andreas@andreasbuhr.de
     * improved PIL compatibility for BitmapFunction
@@ -46,7 +48,7 @@
     * new 'columns' parameter for PatchVisualizer
 
 
-# Contributors to pyMOR 0.2
+## pyMOR 0.2
 
 * Andreas Buhr, andreas@andreasbuhr.de
     * reiteration procedure in Gram-Schmidt algorithm for improved numerical
