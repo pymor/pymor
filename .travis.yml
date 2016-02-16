@@ -24,7 +24,8 @@ script:
   if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     virtualenv piptest
     source piptest/bin/activate
-    pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
+    # this fails on PRs, so skip it
+    [[ "${TRAVIS_PULL_REQUEST}" == "false"]] && pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
   else
     # this runs in pytest in a fake, auto numbered, X Server
     xvfb-run -a py.test -k "${PYTEST_MARKER}"
