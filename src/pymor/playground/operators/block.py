@@ -136,8 +136,31 @@ class BlockDiagonalOperator(BlockOperator):
         super(BlockDiagonalOperator, self).__init__(blocks2)
 
     def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
+        assert V in self.range
+        assert V.check_ind(ind)
+
         U = [None for i in xrange(self.num_source_blocks)]
         for i in xrange(self.num_source_blocks):
             U[i] = self._blocks[i, i].apply_inverse(V.block(i), ind=ind, mu=mu, least_squares=least_squares)
 
         return BlockVectorArray(U)
+
+    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None,
+                              least_squares=False):
+        assert U in self.source
+        assert U.check_ind(ind)
+        assert source_product is None or source_product.source == source_product.range == self.source
+        assert range_product is None or range_product.source == range_product.range == self.range
+
+        if range_product is not None:
+            U = range_product.apply(U)
+
+        V = [None for i in xrange(self.num_source_blocks)]
+        for i in xrange(self.num_source_blocks):
+            V[i] = self._blocks[i, i].apply_inverse_adjoint(U.block(i), ind=ind, mu=mu, least_squares=least_squares)
+
+        V = BlockVectorArray(V)
+        if source_product is not None:
+            V = source_product.apply_inverse(V)
+
+        return V
