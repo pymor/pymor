@@ -20,7 +20,7 @@ on [github](https://github.com/pymor/pymor) containing the code.
 For this to work you will have to create a new github account
 (if you do not have one already) and push your commits into a
 [fork](https://guides.github.com/activities/forking/) of pyMOR 
-owend by you. Alternatively, you may send patches to our
+owned by you. Alternatively, you may send patches to our
 [mailinglist](http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev)
 that have been created using `git format-patch`.
 
