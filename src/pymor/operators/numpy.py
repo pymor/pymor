@@ -830,7 +830,7 @@ def _apply_inverse(matrix, V, options=None):
                                          format(info))
     elif options['type'] == 'spsolve':
         try:
-            if scipy.version.version >= '0.14':
+            if map(int, scipy.version.version.split('.')) >= [0, 14, 0]:
                 if hasattr(matrix, 'factorization'):
                     R = matrix.factorization.solve(V.T).T
                 elif options['keep_factorization']:
