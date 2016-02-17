@@ -121,7 +121,9 @@ if HAVE_ALL:
             self.setMinimumSize(300, 300)
             self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
 
-        def set(self, U):
+        def set(self, U, vmin=None, vmax=None):
+            self.vmin = self.vmin if vmin is None else vmin
+            self.vmax = self.vmax if vmax is None else vmax
             U = np.array(U)
             f = self.figure
             f.clear()

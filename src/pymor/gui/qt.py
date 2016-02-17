@@ -294,8 +294,10 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
             if backend == 'gl':
                 widget = GLPatchWidget
+                cbar_widget = ColorBarWidget
             else:
                 widget = MatplotlibPatchWidget
+                cbar_widget = None
                 if not separate_colorbars and len(U) > 1:
                     l = getLogger('pymor.gui.qt.visualize_patch')
                     l.warn('separate_colorbars=False not supported for matplotlib backend')
@@ -321,7 +323,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
 
                     layout = QHBoxLayout()
                     plot_layout = QGridLayout()
-                    self.colorbarwidgets = [ColorBarWidget(self, vmin=vmin, vmax=vmax)
+                    self.colorbarwidgets = [cbar_widget(self, vmin=vmin, vmax=vmax) if cbar_widget else None
                                             for vmin, vmax in izip(self.vmins, self.vmaxs)]
                     plots = [widget(self, grid, vmin=vmin, vmax=vmax, bounding_box=bounding_box, codim=codim)
                              for vmin, vmax in izip(self.vmins, self.vmaxs)]
@@ -336,7 +338,8 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                             else:
                                 hlayout = QHBoxLayout()
                                 hlayout.addWidget(plot)
-                                hlayout.addWidget(colorbar)
+                                if colorbar:
+                                    hlayout.addWidget(colorbar)
                                 subplot_layout.addLayout(hlayout)
                             plot_layout.addLayout(subplot_layout, int(i/columns), (i % columns), 1, 1)
                     else:
@@ -346,7 +349,8 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                             else:
                                 hlayout = QHBoxLayout()
                                 hlayout.addWidget(plot)
-                                hlayout.addWidget(colorbar)
+                                if colorbar:
+                                    hlayout.addWidget(colorbar)
                                 plot_layout.addLayout(hlayout, int(i/columns), (i % columns), 1, 1)
                     layout.addLayout(plot_layout)
                     if not separate_colorbars:
@@ -368,7 +372,8 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                     for u, plot, colorbar, vmin, vmax in izip(U, self.plots, self.colorbarwidgets, self.vmins,
                                                               self.vmaxs):
                         plot.set(u[ind], vmin=vmin, vmax=vmax)
-                        colorbar.set(vmin=vmin, vmax=vmax)
+                        if colorbar:
+                            colorbar.set(vmin=vmin, vmax=vmax)
 
             super(MainWindow, self).__init__(U, PlotWidget(), title=title, length=len(U[0]))
             self.grid = grid
