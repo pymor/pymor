@@ -75,20 +75,26 @@ class UnstructuredTriangleGrid(AffineGridInterface):
         Parameters
         ----------
         U
-            |VectorArray| of the data to visualize. If `len(U) > 1`, the data is visualized
-            as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
-            provided, in which case a subplot is created for each entry of the tuple. The
-            lengths of all arrays have to agree.
+            |NumPy array| of the data to visualize. If `U.dim == 2 and len(U) > 1`, the
+            data is visualized as a time series of plots. Alternatively, a tuple of
+            |Numpy arrays| can be provided, in which case a subplot is created for
+            each entry of the tuple. The lengths of all arrays have to agree.
         codim
             The codimension of the entities the data in `U` is attached to (either 0 or 2).
         kwargs
             See :func:`~pymor.gui.qt.visualize_patch`
         """
         from pymor.gui.qt import visualize_patch
+        from pymor.vectorarrays.interfaces import VectorArrayInterface
         from pymor.vectorarrays.numpy import NumpyVectorArray
-        if not isinstance(U, NumpyVectorArray):
-            U = NumpyVectorArray(U, copy=False)
-        bounding_box = kwargs.pop('bounding_box', self.bounding_box())
+        if isinstance(U, (np.ndarray, VectorArrayInterface)):
+            U = (U,)
+        assert all(isinstance(u, (np.ndarray, VectorArrayInterface)) for u in U)
+        U = tuple(NumpyVectorArray(u) if isinstance(u, np.ndarray) else
+                  u if isinstance(u, NumpyVectorArray) else
+                  NumpyVectorArray(u.data)
+                  for u in U)
+        bounding_box = kwargs.pop('bounding_box', self.domain)
         visualize_patch(self, U, codim=codim, bounding_box=bounding_box, **kwargs)
 
     def __str__(self):
