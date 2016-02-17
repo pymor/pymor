@@ -273,9 +273,15 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
 
     if backend == 'gl':
         if not HAVE_GL:
-            raise ImportError('cannot visualize: import of PyOpenGL failed')
-        if not HAVE_QTOPENGL:
-            raise ImportError('cannot visualize: import of PySide.QtOpenGL failed')
+            logger = getLogger('pymor.gui.qt.visualize_patch')
+            logger.warn('import of PyOpenGL failed, falling back to matplotlib; rendering will be slow')
+            backend = 'matplotlib'
+        elif not HAVE_QTOPENGL:
+            logger = getLogger('pymor.gui.qt.visualize_patch')
+            logger.warn('import of PySide.QtOpenGL failed, falling back to matplotlib; rendering will be slow')
+            backend = 'matplotlib'
+        if backend == 'matplotlib' and not HAVE_MATPLOTLIB:
+            raise ImportError('cannot visualize: import of matplotlib failed')
     else:
         if not HAVE_MATPLOTLIB:
             raise ImportError('cannot visualize: import of matplotlib failed')
