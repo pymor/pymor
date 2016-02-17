@@ -35,7 +35,7 @@ from pymor.core.interfaces import BasicInterface
 from pymor.core.logger import getLogger
 from pymor.grids.oned import OnedGrid
 from pymor.grids.referenceelements import triangle, square
-from pymor.gui.gl import GLPatchWidget, ColorBarWidget, HAVE_GL
+from pymor.gui.gl import GLPatchWidget, ColorBarWidget, HAVE_GL, HAVE_QTOPENGL
 from pymor.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget, HAVE_MATPLOTLIB
 from pymor.tools.vtkio import HAVE_PYVTK, write_vtk
 from pymor.vectorarrays.interfaces import VectorArrayInterface
@@ -274,6 +274,8 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     if backend == 'gl':
         if not HAVE_GL:
             raise ImportError('cannot visualize: import of PyOpenGL failed')
+        if not HAVE_QTOPENGL:
+            raise ImportError('cannot visualize: import of PySide.QtOpenGL failed')
     else:
         if not HAVE_MATPLOTLIB:
             raise ImportError('cannot visualize: import of matplotlib failed')

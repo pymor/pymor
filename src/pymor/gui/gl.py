@@ -18,11 +18,16 @@ import math as m
 import numpy as np
 
 try:
-    from PySide.QtOpenGL import QGLWidget
     from PySide.QtGui import QSizePolicy, QPainter, QFontMetrics
     HAVE_PYSIDE = True
 except ImportError:
     HAVE_PYSIDE = False
+
+try:
+    from PySide.QtOpenGL import QGLWidget
+    HAVE_QTOPENGL = True
+except ImportError:
+    HAVE_QTOPENGL = False
 
 try:
     import OpenGL.GL as gl
@@ -30,7 +35,7 @@ try:
 except ImportError:
     HAVE_GL = False
 
-HAVE_ALL = HAVE_PYSIDE and HAVE_GL
+HAVE_ALL = HAVE_PYSIDE and HAVE_QTOPENGL and HAVE_GL
 
 
 if HAVE_ALL:
