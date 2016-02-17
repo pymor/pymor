@@ -3,9 +3,7 @@
 # Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-# make sure we got distribute in place
-#from distribute_setup import use_setuptools
-#use_setuptools()
+from __future__ import print_function
 
 import sys
 import os
@@ -205,10 +203,20 @@ def setup_package():
         zip_safe=False,
     )
 
-    missing = list(_missing(install_suggests))
+    missing = list(_missing(install_suggests.keys()))
     if len(missing):
-        print('\n{0}\nThere are some suggested packages missing, try\nfor i in {1} ; do pip install $i ; done\n{0}'
-              .format('*' * 79, ' '.join(missing)))
+        import textwrap
+        print('\n' + '*' * 79 + '\n')
+        print('There are some suggested packages missing:\n')
+        col_width = max(map(len, missing)) + 3
+        for package in sorted(missing):
+            description = textwrap.wrap(install_suggests[package], 79 - col_width)
+            print('{:{}}'.format(package + ':', col_width) + description[0])
+            for d in description[1:]:
+                print(' ' * col_width + d)
+            print()
+        print("\ntry: 'pip install {}'".format(' '.join(missing)))
+        print('\n' + '*' * 79 + '\n')
 
 
 if __name__ == '__main__':

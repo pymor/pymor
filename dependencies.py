@@ -5,7 +5,14 @@
 tests_require = ['pytest', 'pytest-cache', 'pytest-capturelog', 'pytest-cov']
 install_requires = ['Cython', 'numpy', 'scipy', 'Sphinx', 'docopt']
 setup_requires = ['cython', 'numpy']
-install_suggests = ['ipython', 'ipdb', 'matplotlib', 'PyOpenGL', 'PySide', 'pyamg'] + tests_require
+install_suggests = {'ipython': 'an enhanced interactive python shell',
+                    'ipyparallel': 'required for pymor.parallel.ipython',
+                    'matplotlib': 'needed for error plots in demo scipts',
+                    'pyopengl': 'fast solution visualization for builtin discretizations (PySide also required)',
+                    'pyside': 'solution visualization for builtin discretizations',
+                    'pyamg': 'algebraic multigrid solvers',
+                    'mpi4py': 'required for pymor.tools.mpi and pymor.parallel.mpi',
+                    'pytest': 'testing framework required to execute unit tests'}
 
 import_names = {'ipython': 'IPython',
                 'pytest-cache': 'pytest_cache',
@@ -15,7 +22,7 @@ import_names = {'ipython': 'IPython',
                 'pytest-cov': 'pytest_cov',
                 'pytest-flakes': 'pytest_flakes',
                 'pytest-pep8': 'pytest_pep8',
-                'PyOpenGL': 'OpenGL'}
+                'pyopengl': 'OpenGL'}
 
 if __name__ == '__main__':
     print(' '.join([i for i in install_requires + install_suggests]))
