@@ -4,7 +4,6 @@
 
 from __future__ import absolute_import, division, print_function
 
-from itertools import chain
 import numpy as np
 import pytest
 
@@ -13,7 +12,6 @@ from pymor.core.exceptions import InversionError
 from pymor.operators.constructions import SelectionOperator
 from pymor.parameters.base import ParameterType
 from pymor.parameters.functionals import GenericParameterFunctional
-from pymor.tools.floatcmp import float_cmp_all
 from pymor.vectorarrays.numpy import NumpyVectorArray
 from pymortests.algorithms.stuff import MonomOperator
 from pymortests.fixtures.operator import operator, operator_with_arrays, operator_with_arrays_and_products
