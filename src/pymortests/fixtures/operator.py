@@ -290,7 +290,7 @@ thermalblock_fixedparam_operator_with_arrays_and_products_generators = \
     [lambda args=args: thermalblock_fixedparam_factory(*args) for args in thermalblock_factory_arguments]
 
 
-num_misc_operators = 3
+num_misc_operators = 5
 def misc_operator_with_arrays_and_products_factory(n):
     if n == 0:
         from pymor.operators.constructions import ComponentProjection
@@ -307,6 +307,16 @@ def misc_operator_with_arrays_and_products_factory(n):
         _, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 3, 4, 3, n)
         op = ComponentProjection([3, 3, 3], U.space)
         return op, _, U, V, sp, rp
+    elif n == 3:
+        from pymor.operators.constructions import AdjointOperator
+        op, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 20, 4, 3, n)
+        op = AdjointOperator(op, with_apply_inverse=True)
+        return op, _, V, U, rp, sp
+    elif n == 4:
+        from pymor.operators.constructions import AdjointOperator
+        op, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 20, 4, 3, n)
+        op = AdjointOperator(op, with_apply_inverse=False)
+        return op, _, V, U, rp, sp
     else:
         assert False
 
