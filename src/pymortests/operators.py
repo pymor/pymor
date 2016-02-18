@@ -291,7 +291,7 @@ def test_restricted(operator_with_arrays):
         return
     np.random.seed(4711 + U.dim)
     for num in [0, 1, 3, 7]:
-        components = np.random.randint(0, op.source.dim, num)
+        components = np.random.randint(0, op.range.dim, num)
         try:
             rop, source_dofs = op.restricted(components)
         except NotImplementedError:
