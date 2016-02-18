@@ -198,7 +198,10 @@ class OperatorBase(OperatorInterface):
                 if range_basis is None:
                     return self
                 else:
-                    V = self.apply_adjoint(range_basis, range_product=product)
+                    try:
+                        V = self.apply_adjoint(range_basis, range_product=product)
+                    except NotImplementedError:
+                        return ProjectedOperator(self, range_basis, None, product, name=name)
                     if self.source.type == NumpyVectorArray:
                         from pymor.operators.numpy import NumpyMatrixOperator
                         return NumpyMatrixOperator(V.data, name=name)
