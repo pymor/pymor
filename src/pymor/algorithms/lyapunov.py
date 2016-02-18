@@ -27,7 +27,12 @@ class LyapunovEquation(pymess.equation):
 
         A * X * E^T + E * X * A^T + RHS * RHS^T = 0.
 
-    For the dual Lyapunov equation, opt.type needs to be pymess.MESS_OP_TRANSPOSE.
+    For the dual Lyapunov equation::
+
+        A^T * X + X * A + RHS^T * RHS = 0,
+        A^T * X * E + E^T * X * A^T + RHS^T * RHS = 0,
+
+    opt.type needs to be pymess.MESS_OP_TRANSPOSE.
 
     Parameters
     ----------
@@ -50,13 +55,15 @@ class LyapunovEquation(pymess.equation):
                 self.RHS = RHS._matrix.toarray()
             else:
                 self.RHS = RHS._matrix
+            if opt.type == pymess.MESS_OP_TRANSPOSE:
+                self.RHS = self.RHS.T
         else:
             if opt.type == pymess.MESS_OP_NONE:
                 eye = NumpyVectorArray(sps.eye(RHS.source.dim))
-                self.RHS = np.array(RHS.apply(eye).data.T)
+                self.RHS = np.array(RHS.apply(eye).data)
             else:
                 eye = NumpyVectorArray(sps.eye(RHS.range.dim))
-                self.RHS = np.array(RHS.apply_adjoint(eye).data)
+                self.RHS = np.array(RHS.apply_adjoint(eye).data.T)
 
         self.A = A
         self.E = E
