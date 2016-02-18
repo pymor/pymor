@@ -928,6 +928,11 @@ class SelectionOperator(OperatorBase):
         operator_number = self._get_operator_number(mu)
         return self.operators[operator_number].apply(U, ind=ind, mu=mu)
 
+    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+        mu = self.parse_parameter(mu)
+        op = self.operators[self._get_operator_number(mu)]
+        return op.apply_adjoint(U, ind=ind, mu=mu, source_product=source_product, range_product=range_product)
+
     def as_vector(self, mu=None):
         mu = self.parse_parameter(mu)
         operator_number = self._get_operator_number(mu)
