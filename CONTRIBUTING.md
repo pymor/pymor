@@ -115,7 +115,7 @@ by simple majority vote if a candidate should be included into the
 group. In order to be accepted, an applicant should have made
 major contributions to pyMOR, both in form of code and by taking part
 in discussions on the mailing list and through github. The applicant
-should be a able to commit to the project for a time period of at
+should be able to commit to the project for a time period of at
 least one year.
 
 Main developers will be automatically retired (losing all priviliges)
