@@ -771,14 +771,18 @@ class AdjointOperator(OperatorBase):
         implementations by calling these methods on the given `operator`.
         (Is set to `False` in the default implementation of
         and :meth:`~pymor.operator.interfaces.OperatorInterface.apply_inverse_adjoint`.)
+    solver_options
+        When `with_apply_inverse` is `False`, the |solver_options| to use for
+        the `apply_inverse` default implementation.
     """
 
     linear = True
 
     def __init__(self, operator, source_product=None, range_product=None, name=None,
-                 with_apply_inverse=True):
+                 with_apply_inverse=True, solver_options=None):
         assert isinstance(operator, OperatorInterface)
         assert operator.linear
+        assert not with_apply_inverse or solver_options is None
         self.build_parameter_type(inherits=(operator,))
         self.source = operator.range
         self.range = operator.source
@@ -786,7 +790,8 @@ class AdjointOperator(OperatorBase):
         self.source_product = source_product
         self.range_product = range_product
         self.name = name or operator.name + '_adjoint'
-        self.with_apply_inverse=with_apply_inverse
+        self.with_apply_inverse = with_apply_inverse
+        self.solver_options = solver_options
 
     def apply(self, U, ind=None, mu=None):
         return self.operator.apply_adjoint(U, ind=ind, mu=mu,
