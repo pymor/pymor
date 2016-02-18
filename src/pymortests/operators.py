@@ -287,7 +287,7 @@ def test_assemble(operator_with_arrays):
 
 def test_restricted(operator_with_arrays):
     op, mu, U, _, = operator_with_arrays
-    if op.source.dim == 0:
+    if op.range.dim == 0:
         return
     np.random.seed(4711 + U.dim)
     for num in [0, 1, 3, 7]:
