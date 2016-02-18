@@ -1,15 +1,14 @@
 pyMOR - Model Order Reduction with Python
 =========================================
 
-pyMOR is a software library developed at the University of Münster for
-building model order reduction applications with the Python programming
-language. Its main focus lies on the application of reduced basis
-methods to parameterized partial differential equations. All algorithms
-in pyMOR are formulated in terms of abstract interfaces for seamless
-integration with external high-dimensional PDE solvers. Moreover, pure
-Python implementations of finite element and finite volume
-discretizations using the NumPy/SciPy scientific computing stack are
-provided for getting started quickly.
+pyMOR is a software library for building model order reduction
+applications with the Python programming language. Its main focus lies
+on the application of reduced basis methods to parameterized partial
+differential equations. All algorithms in pyMOR are formulated in terms
+of abstract interfaces for seamless integration with external
+high-dimensional PDE solvers. Moreover, pure Python implementations of
+finite element and finite volume discretizations using the NumPy/SciPy
+scientific computing stack are provided for getting started quickly.
 
 NOTE pyMOR is still in early development. Should you have any questions
 regarding pyMOR or wish to contribute, do not hesitate to contact us!
@@ -19,8 +18,8 @@ regarding pyMOR or wish to contribute, do not hesitate to contact us!
 License
 -------
 
-Copyright (c) 2013, 2014, 2015, Rene Milk, Stephan Rave, Felix Schindler
-All rights reserved.
+Copyright 2013-2016 pyMOR developers and contributors. All rights
+reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are
@@ -48,7 +47,7 @@ The following files contain source code originating from other open
 source software projects:
 
 -   docs/source/pymordocstring.py (sphinxcontrib-napoleon)
--   src/pymor/algorithms/genericsolvers.py (SciPy)
+-   src/pymor/la/genericsolvers.py (SciPy)
 
 See these files for more information.
 

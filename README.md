@@ -1,14 +1,14 @@
 pyMOR - Model Order Reduction with Python
 =========================================
 
-pyMOR is a software library developed at the University of Münster for building
-model order reduction applications with the Python programming language.  Its
-main focus lies on the application of reduced basis methods to parameterized
-partial differential equations.  All algorithms in pyMOR are formulated in
-terms of abstract interfaces for seamless integration with external
-high-dimensional PDE solvers. Moreover, pure Python implementations of finite
-element and finite volume discretizations using the NumPy/SciPy scientific
-computing stack are provided for getting started quickly.
+pyMOR is a software library for building model order reduction applications
+with the Python programming language.  Its main focus lies on the application
+of reduced basis methods to parameterized partial differential equations.  All
+algorithms in pyMOR are formulated in terms of abstract interfaces for seamless
+integration with external high-dimensional PDE solvers. Moreover, pure Python
+implementations of finite element and finite volume discretizations using the
+NumPy/SciPy scientific computing stack are provided for getting started
+quickly.
 
 **NOTE** pyMOR is still in early development.  Should you have any questions
 regarding pyMOR or wish to contribute, do not hesitate to contact us!
@@ -19,36 +19,33 @@ regarding pyMOR or wish to contribute, do not hesitate to contact us!
 [![Build Status](https://travis-ci.org/pymor/pymor.png?branch=master)](https://travis-ci.org/pymor/pymor)
 [![Coverage Status](https://coveralls.io/repos/pymor/pymor/badge.png)](https://coveralls.io/r/pymor/pymor)
 
+
 License
 -------
 
-Copyright (c) 2013, 2014, 2015, Rene Milk, Stephan Rave, Felix Schindler
-All rights reserved.
+Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
+following conditions are met:
 
-* Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
+* Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+  disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
+  disclaimer in the documentation and/or other materials provided with the distribution.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 
 The following files contain source code originating from other open source software projects:
 
 * docs/source/pymordocstring.py  (sphinxcontrib-napoleon)
-* src/pymor/algorithms/genericsolvers.py (SciPy)
+* src/pymor/la/genericsolvers.py (SciPy)
 
 See these files for more information.
 
