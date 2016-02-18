@@ -304,7 +304,7 @@ class ComponentProjection(OperatorBase):
 
     def __init__(self, components, source, name=None):
         assert all(0 <= c < source.dim for c in components)
-        self.components = np.array(components)
+        self.components = np.array(components, dtype=np.int32)
         self.range = NumpyVectorSpace(len(components))
         self.source = source
         self.name = name
