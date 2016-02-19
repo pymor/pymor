@@ -5,6 +5,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+from itertools import izip
+
 import numpy as np
 from scipy.sparse import issparse
 from types import FunctionType, MethodType
@@ -58,7 +60,11 @@ def assert_is_equal(first, second):
         assert type(first) == type(second)
 
         if isinstance(first, np.ndarray):
-            assert np.all(first == second)
+            if first.dtype == np.object:
+                assert first.shape == second.shape
+                [_assert_is_equal(f, s) for f, s in izip(first.ravel(), second.ravel())]
+            else:
+                assert np.all(first == second)
         elif issparse(first):
             ne = first != second
             if isinstance(ne, bool):
