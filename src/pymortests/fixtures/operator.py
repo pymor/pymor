@@ -290,7 +290,7 @@ thermalblock_fixedparam_operator_with_arrays_and_products_generators = \
     [lambda args=args: thermalblock_fixedparam_factory(*args) for args in thermalblock_factory_arguments]
 
 
-num_misc_operators = 6
+num_misc_operators = 10
 def misc_operator_with_arrays_and_products_factory(n):
     if n == 0:
         from pymor.operators.constructions import ComponentProjection
@@ -325,6 +325,31 @@ def misc_operator_with_arrays_and_products_factory(n):
         op2 = NumpyMatrixOperator(np.random.random((30, 30)))
         op = SelectionOperator([op0, op1, op2], ProjectionParameterFunctional('x', tuple()), [0.3, 0.6])
         return op, op.parse_parameter((n-5)/2), V, U, rp, sp
+    elif n == 8:
+        from pymor.operators.block import BlockDiagonalOperator
+        from pymor.vectorarrays.block import BlockVectorArray
+        op0, _, U0, V0, sp0, rp0 = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3, n)
+        op1, _, U1, V1, sp1, rp1 = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3, n+1)
+        op2, _, U2, V2, sp2, rp2 = numpy_matrix_operator_with_arrays_and_products_factory(30, 30, 4, 3, n+2)
+        op = BlockDiagonalOperator([op0, op1, op2])
+        sp = BlockDiagonalOperator([sp0, sp1, sp2])
+        rp = BlockDiagonalOperator([rp0, rp1, rp2])
+        U = BlockVectorArray([U0, U1, U2])
+        V = BlockVectorArray([V0, V1, V2])
+        return op, _, U, V, sp, rp
+    elif n == 9:
+        from pymor.operators.block import BlockDiagonalOperator, BlockOperator
+        from pymor.vectorarrays.block import BlockVectorArray
+        op0, _, U0, V0, sp0, rp0 = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3, n)
+        op1, _, U1, V1, sp1, rp1 = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3, n+1)
+        op2, _, U2, V2, sp2, rp2 = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, n+2)
+        op = BlockOperator([[op0, op2],
+                            [None, op1]])
+        sp = BlockDiagonalOperator([sp0, sp1])
+        rp = BlockDiagonalOperator([rp0, rp1])
+        U = BlockVectorArray([U0, U1])
+        V = BlockVectorArray([V0, V1])
+        return op, _, U, V, sp, rp
     else:
         assert False
 
