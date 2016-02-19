@@ -30,6 +30,7 @@ class BlockOperator(OperatorBase):
                     yield entry
 
     def __init__(self, blocks):
+        blocks = np.array(blocks)
         assert isinstance(blocks, np.ndarray) and blocks.ndim == 2
         self._blocks = blocks
 
