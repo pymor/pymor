@@ -81,7 +81,7 @@ def reduce_residual(operator, functional=None, RB=None, product=None, extends=No
     if extends and isinstance(extends[0], NonProjectedResidualOperator):
         extends = None
     if extends:
-        residual_range = extends[1].RB.copy()
+        residual_range = extends[1].RB
         residual_range_dims = list(extends[2]['residual_range_dims'])
     else:
         residual_range = operator.range.empty()
