@@ -204,12 +204,8 @@ class NonProjectedResidualOperator(ResidualOperator):
         else:
             return R
 
-    def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
-        product = self.product.projected_to_subbasis(dim_range, dim_range) if self.product is not None else None
-        return ResidualOperator(self.operator.projected_to_subbasis(dim_range, dim_source),
-                                self.functional.projected_to_subbasis(None, dim_range),
-                                product,
-                                name=name)
+    def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
+        return self.with_(operator=self.operator.projected_to_subbasis(None, dim_source))
 
 
 class NonProjectedReconstructor(ImmutableInterface):
