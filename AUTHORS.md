@@ -27,6 +27,7 @@
 
 * Petar Mlinarić, mlinaric@mpi-magdeburg.mpg.de
     * complex number support for NumpyVectorArray and NumpyMatrixOperator
+    * BlockOperator and BlockDiagonalOperator
 
 * Michael Schaefer, michael.schaefer@uni-muenster.de
     * Robin bondary condition support for pymor.operators.cg
