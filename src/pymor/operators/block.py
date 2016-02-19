@@ -153,15 +153,12 @@ class BlockDiagonalOperator(BlockOperator):
         assert source_product is None or source_product.source == source_product.range == self.source
         assert range_product is None or range_product.source == range_product.range == self.range
 
-        if range_product is not None:
-            U = range_product.apply(U)
+        if source_product or range_product:
+            return super(BlockDiagonalOperator, self).apply_inverse_adjoint(
+                U, ind=ind, mu=mu, source_product=source_product, range_product=range_product)
 
         V = [None for i in xrange(self.num_source_blocks)]
         for i in xrange(self.num_source_blocks):
             V[i] = self._blocks[i, i].apply_inverse_adjoint(U.block(i), ind=ind, mu=mu, least_squares=least_squares)
 
-        V = BlockVectorArray(V)
-        if source_product is not None:
-            V = source_product.apply_inverse(V)
-
-        return V
+        return BlockVectorArray(V)
