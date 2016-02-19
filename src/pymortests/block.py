@@ -8,8 +8,7 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.playground.operators.block import BlockOperator
-from pymor.playground.operators.block import BlockDiagonalOperator
+from pymor.operators.block import BlockOperator, BlockDiagonalOperator
 from pymor.vectorarrays.block import BlockVectorArray
 from pymor.vectorarrays.numpy import NumpyVectorArray
 
