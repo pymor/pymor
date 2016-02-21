@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
@@ -157,7 +157,7 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
         # noinspection PyShadowingNames
         class FakeEstimator(object):
             rd = discretization
-            rc = SubbasisReconstructor(next(discretization.operators.itervalues()).source.dim, dim)
+            rc = SubbasisReconstructor(discretization.solution_space.dim, dim)
 
             def estimate(self, U, mu=None, discretization=None):
                 return self.rd.estimate(self.rc.reconstruct(U), mu=mu)
@@ -174,7 +174,7 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
     if reconstructor is not None and hasattr(reconstructor, 'restricted_to_subbasis'):
         rc = reconstructor.restricted_to_subbasis(dim)
     else:
-        rc = SubbasisReconstructor(next(discretization.operators.itervalues()).source.dim, dim,
+        rc = SubbasisReconstructor(discretization.solution_space.dim, dim,
                                    old_recontructor=reconstructor)
 
     return rd, rc, {}

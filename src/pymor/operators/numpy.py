@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-#
-# Contributors: Michael Laier <m_laie01@uni-muenster.de>
 
 """This module provides the following |NumPy| based |Operators|:
 
@@ -446,7 +444,7 @@ def dense_options(default_solver='solve',
           'pyamg_sa_accel', 'pyamg_sa_tol', 'pyamg_sa_maxiter',
           sid_ignore=('least_squares_lsmr_show', 'least_squares_lsqr_show', 'pyamg_verb'))
 def sparse_options(default_solver='spsolve',
-                   default_least_squares_solver='least_squares_lsmr',
+                   default_least_squares_solver='least_squares_lsmr' if HAVE_SCIPY_LSMR else 'least_squares_generic_lsmr',
                    bicgstab_tol=1e-15,
                    bicgstab_maxiter=None,
                    spilu_drop_tol=1e-4,
@@ -830,7 +828,7 @@ def _apply_inverse(matrix, V, options=None):
                                          format(info))
     elif options['type'] == 'spsolve':
         try:
-            if scipy.version.version >= '0.14':
+            if map(int, scipy.version.version.split('.')) >= [0, 14, 0]:
                 if hasattr(matrix, 'factorization'):
                     R = matrix.factorization.solve(V.T).T
                 elif options['keep_factorization']:

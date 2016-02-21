@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-#
-# Contributors: Michael Laier <m_laie01@uni-muenster.de>
 
 from __future__ import absolute_import, division, print_function
 
@@ -96,6 +94,12 @@ class ParabolicProblem(ImmutableInterface):
                    'ParabolicProblem_from_{}'.format(elliptic_problem.name))
 
     def elliptic_part(self):
-        return EllipticProblem(self.domain, self.rhs, self.diffusion_functions, self.diffusion_functionals,
-                               self.dirichlet_data, self.neumann_data, self.parameter_space,
-                               '{}_elliptic_part'.format(self.name))
+        return EllipticProblem(
+            domain=self.domain,
+            rhs=self.rhs,
+            diffusion_functions=self.diffusion_functions,
+            diffusion_functionals=self.diffusion_functionals,
+            dirichlet_data=self.dirichlet_data,
+            neumann_data=self.neumann_data,
+            parameter_space=self.parameter_space,
+            name='{}_elliptic_part'.format(self.name))

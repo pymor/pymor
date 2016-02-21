@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import os
@@ -121,3 +121,18 @@ else:
 from pymor.core.logger import set_log_levels, set_log_format
 set_log_levels()
 set_log_format()
+
+
+from pymor.tools import mpi
+if mpi.parallel and mpi.event_loop_settings()['auto_launch']:
+    if mpi.rank0:
+        import atexit
+        @atexit.register
+        def quit_event_loop():
+            if not mpi.finished:
+                mpi.quit()
+    else:
+        print('Rank {}: MPI parallel run detected. Launching event loop ...'.format(mpi.rank))
+        mpi.event_loop()
+        import sys
+        sys.exit(0)

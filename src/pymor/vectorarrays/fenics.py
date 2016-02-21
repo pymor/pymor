@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
@@ -14,35 +14,27 @@ except ImportError:
 if HAVE_FENICS:
     import numpy as np
 
-    from pymor.core.defaults import defaults
     from pymor.vectorarrays.interfaces import VectorSpace
     from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorArray
-
-
-    class FenicsVectorSubtype(tuple):
-
-        def __eq__(self, other):
-            return (type(other) is FenicsVectorSubtype and
-                    df.cpp.common.MPI.size(self[0]) == df.cpp.common.MPI.size(other[0]) and
-                    self[1] == other[1])
 
 
     class FenicsVector(CopyOnWriteVector):
         """Wraps a FEniCS vector to make it usable with ListVectorArray."""
 
-        def __init__(self, impl):
+        def __init__(self, impl, space):
             self.impl = impl
+            self.space = space
 
         @classmethod
         def from_instance(cls, instance):
-            return cls(instance.impl)
+            return cls(instance.impl, instance.space)
 
         def _copy_data(self):
             self.impl = self.impl.copy()
 
         def make_zeros(cls, subtype):
-            impl = df.Vector(*subtype)
-            return cls(impl)
+            impl = df.Function(subtype).vector()
+            return cls(impl, subtype)
 
         @property
         def dim(self):
@@ -50,8 +42,7 @@ if HAVE_FENICS:
 
         @property
         def subtype(self):
-            impl = self.impl
-            return FenicsVectorSubtype((impl.mpi_comm(), self.impl.size()))
+            return self.space
 
         @property
         def data(self):
@@ -122,5 +113,5 @@ if HAVE_FENICS:
             return FenicsVector(-self.impl)
 
 
-    def FenicsVectorSpace(dim, mpi_comm=df.mpi_comm_world()):
-        return VectorSpace(ListVectorArray, (FenicsVector, FenicsVectorSubtype((mpi_comm, dim))))
+    def FenicsVectorSpace(V):
+        return VectorSpace(ListVectorArray, (FenicsVector, V))

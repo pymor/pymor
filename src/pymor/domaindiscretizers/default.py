@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
@@ -40,7 +40,7 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
         +----------------------+-------------+---------+
         | |CircleDomain|       | |OnedGrid|  |    X    |
         +----------------------+-------------+---------+
-        | |PolygonalDomain     | |GmshGrid|  |    X    |
+        | |PolygonalDomain|    | |GmshGrid|  |    X    |
         +----------------------+-------------+---------+
 
     Parameters

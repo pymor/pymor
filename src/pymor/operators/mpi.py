@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
@@ -8,7 +8,7 @@ from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import LincombOperator, VectorArrayOperator
 from pymor.tools import mpi
 from pymor.vectorarrays.interfaces import VectorSpace
-from pymor.vectorarrays.mpi import MPIVectorArray
+from pymor.vectorarrays.mpi import MPIVectorArray, _register_subtype
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -53,6 +53,13 @@ class MPIOperator(OperatorBase):
         Otherwise, the default implementations using `apply` and
         :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.dot`
         (or `apply2` if a `product` is provided) will be used.
+    pickle_subtypes
+        If `pickle_subtypes` is `False`, a unique identifier
+        is computed for each local source/range subtype, which is then
+        transferred to rank 0 instead of the true subtype. This
+        allows to use :class:`pymor.vectorarrays.mpi.MPIVectorArray`,
+        :class:`MPIOperator` even when the local subtypes are not
+        picklable.
     array_type
         This class will be used to wrap the local |VectorArrays|
         returned by the local operators into an MPI distributed
@@ -62,13 +69,15 @@ class MPIOperator(OperatorBase):
         and :class:`~pymor.vectorarrays.mpi.MPIVectorArrayNoComm`.
     """
 
-    def __init__(self, obj_id, functional=False, vector=False, with_apply2=False, array_type=MPIVectorArray):
+    def __init__(self, obj_id, functional=False, vector=False, with_apply2=False,
+                 pickle_subtypes=True, array_type=MPIVectorArray):
         assert not (functional and vector)
         self.obj_id = obj_id
         self.op = op = mpi.get_object(obj_id)
         self.functional = functional
         self.vector = vector
         self.with_apply2 = with_apply2
+        self.pickle_subtypes = pickle_subtypes
         self.array_type = array_type
         self.linear = op.linear
         self.name = op.name
@@ -77,7 +86,7 @@ class MPIOperator(OperatorBase):
             self.source = NumpyVectorSpace(1)
             assert self.source == op.source
         else:
-            subtypes = mpi.call(_MPIOperator_get_source_subtypes, obj_id)
+            subtypes = mpi.call(_MPIOperator_get_source_subtypes, obj_id, pickle_subtypes)
             if all(subtype == subtypes[0] for subtype in subtypes):
                 subtypes = (subtypes[0],)
             self.source = VectorSpace(array_type, (op.source.type, subtypes))
@@ -85,7 +94,7 @@ class MPIOperator(OperatorBase):
             self.range = NumpyVectorSpace(1)
             assert self.range == op.range
         else:
-            subtypes = mpi.call(_MPIOperator_get_range_subtypes, obj_id)
+            subtypes = mpi.call(_MPIOperator_get_range_subtypes, obj_id, pickle_subtypes)
             if all(subtype == subtypes[0] for subtype in subtypes):
                 subtypes = (subtypes[0],)
             self.range = VectorSpace(array_type, (op.range.type, subtypes))
@@ -166,14 +175,14 @@ class MPIOperator(OperatorBase):
 
     def assemble(self, mu=None):
         mu = self.parse_parameter(mu)
-        return self.with_(mpi.call(mpi.method_call_manage, self.obj_id, 'assemble', mu=mu))
+        return self.with_(obj_id=mpi.call(mpi.method_call_manage, self.obj_id, 'assemble', mu=mu))
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         if not all(isinstance(op, MPIOperator) for op in operators):
             return None
         assert solver_options is None
         operators = [op.obj_id for op in operators]
-        obj_id = mpi.call(mpi.method_call_manage, self.obj_id, 'assemble_lincomb', operators, coefficients, name=name)
+        obj_id = mpi.call(_MPIOperator_assemble_lincomb, operators, coefficients, name=name)
         op = mpi.get_object(obj_id)
         if op is None:
             mpi.call(mpi.remove_object, obj_id)
@@ -188,21 +197,33 @@ class MPIOperator(OperatorBase):
         mpi.call(mpi.remove_object, self.obj_id)
 
 
-def _MPIOperator_get_source_subtypes(self):
+def _MPIOperator_get_source_subtypes(self, pickle_subtypes):
     self = mpi.get_object(self)
-    subtypes = mpi.comm.gather(self.source.subtype, root=0)
+    subtype = self.source.subtype
+    if not pickle_subtypes:
+        subtype = _register_subtype(subtype)
+    subtypes = mpi.comm.gather(subtype, root=0)
     if mpi.rank0:
         return tuple(subtypes)
 
 
-def _MPIOperator_get_range_subtypes(self):
+def _MPIOperator_get_range_subtypes(self, pickle_subtypes):
     self = mpi.get_object(self)
-    subtypes = mpi.comm.gather(self.range.subtype, root=0)
+    subtype = self.range.subtype
+    if not pickle_subtypes:
+        subtype = _register_subtype(subtype)
+    subtypes = mpi.comm.gather(subtype, root=0)
     if mpi.rank0:
         return tuple(subtypes)
 
 
-def mpi_wrap_operator(obj_id, functional=False, vector=False, with_apply2=False, array_type=MPIVectorArray):
+def _MPIOperator_assemble_lincomb(operators, coefficients, name):
+    operators = [mpi.get_object(op) for op in operators]
+    return mpi.manage_object(operators[0].assemble_lincomb(operators, coefficients, name=name))
+
+
+def mpi_wrap_operator(obj_id, functional=False, vector=False, with_apply2=False,
+                      pickle_subtypes=True, array_type=MPIVectorArray):
     """Wrap MPI distributed local |Operators| to a global |Operator| on rank 0.
 
     Given MPI distributed local |Operators| referred to by the
@@ -223,16 +244,16 @@ def mpi_wrap_operator(obj_id, functional=False, vector=False, with_apply2=False,
     op = mpi.get_object(obj_id)
     if isinstance(op, LincombOperator):
         obj_ids = mpi.call(_mpi_wrap_operator_LincombOperator_manage_operators, obj_id)
-        return LincombOperator([mpi_wrap_operator(o, functional, vector, with_apply2, array_type) for o in obj_ids],
-                               op.coefficients, name=op.name)
+        return LincombOperator([mpi_wrap_operator(o, functional, vector, with_apply2, pickle_subtypes, array_type)
+                                for o in obj_ids], op.coefficients, name=op.name)
     elif isinstance(op, VectorArrayOperator):
-        array_obj_id, subtypes = mpi.call(_mpi_wrap_operator_VectorArrayOperator_manage_array, obj_id)
+        array_obj_id, subtypes = mpi.call(_mpi_wrap_operator_VectorArrayOperator_manage_array, obj_id, pickle_subtypes)
         if all(subtype == subtypes[0] for subtype in subtypes):
             subtypes = (subtypes[0],)
         return VectorArrayOperator(array_type(type(op._array), subtypes, array_obj_id),
                                    transposed=op.transposed, name=op.name)
     else:
-        return MPIOperator(obj_id, functional, vector, with_apply2, array_type)
+        return MPIOperator(obj_id, functional, vector, with_apply2, pickle_subtypes, array_type)
 
 
 def _mpi_wrap_operator_LincombOperator_manage_operators(obj_id):
@@ -243,10 +264,13 @@ def _mpi_wrap_operator_LincombOperator_manage_operators(obj_id):
         return obj_ids
 
 
-def _mpi_wrap_operator_VectorArrayOperator_manage_array(obj_id):
+def _mpi_wrap_operator_VectorArrayOperator_manage_array(obj_id, pickle_subtypes):
     op = mpi.get_object(obj_id)
     array_obj_id = mpi.manage_object(op._array)
-    subtypes = mpi.comm.gather(op._array.subtype, root=0)
+    subtype = op._array.subtype
+    if not pickle_subtypes:
+        subtype = _register_subtype(subtype)
+    subtypes = mpi.comm.gather(subtype, root=0)
     mpi.remove_object(obj_id)
     if mpi.rank0:
         return array_obj_id, tuple(subtypes)

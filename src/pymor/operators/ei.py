@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
@@ -64,6 +64,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         assert isinstance(operator, OperatorInterface)
         assert isinstance(collateral_basis, VectorArrayInterface)
         assert collateral_basis in operator.range
+        assert len(interpolation_dofs) == len(collateral_basis)
 
         self.build_parameter_type(inherits=(operator,))
         self.source = operator.source
@@ -130,7 +131,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
             return ProjectedEmpiciralInterpolatedOperator(self.restricted_operator, self.interpolation_matrix,
                                                           NumpyVectorArray(source_basis.components(self.source_dofs),
                                                                            copy=False),
-                                                          projected_collateral_basis, self.triangular, name)
+                                                          projected_collateral_basis, self.triangular, None, name)
 
     def jacobian(self, U, mu=None):
         mu = self.parse_parameter(mu)
@@ -138,7 +139,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
 
         if len(self.interpolation_dofs) == 0:
             if self.source.type == self.range.type == NumpyVectorArray:
-                return NumpyMatrixOperator(np.zeros((0, self.source.dim)), solver_options=options,
+                return NumpyMatrixOperator(np.zeros((self.range.dim, self.source.dim)), solver_options=options,
                                            name=self.name + '_jacobian')
             else:
                 return ZeroOperator(self.source, self.range, name=self.name + '_jacobian')
@@ -206,6 +207,11 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
         assert len(U) == 1
         mu = self.parse_parameter(mu)
         options = self.solver_options.get('jacobian') if self.solver_options else None
+
+        if self.interpolation_matrix.shape[0] == 0:
+            return NumpyMatrixOperator(np.zeros((self.range.dim, self.source.dim)), solver_options=options,
+                                       name=self.name + '_jacobian')
+
         U_components = self.source_basis_dofs.lincomb(U.data[0])
         J = self.restricted_operator.jacobian(U_components, mu=mu).apply(self.source_basis_dofs)
         try:

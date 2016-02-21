@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
@@ -15,28 +15,6 @@ from pymortests.core.dummies import *   # NOQA
 from pymor.grids.rect import RectGrid
 from pymor.tools import timing
 import pymor.core
-
-
-class TestTiming(TestInterface):
-
-    def testTimingContext(self):
-        with timing.Timer('busywait', self.logger.info):
-            timing.busywait(1000)
-
-    @timing.Timer('busywait_decorator', TestInterface.logger.info)
-    def wait(self):
-        timing.busywait(1000)
-
-    def testTimingDecorator(self):
-        self.wait()
-
-    def testTiming(self):
-        timer = timing.Timer('busywait', self.logger.info)
-        timer.start()
-        timing.busywait(1000)
-        timer.stop()
-        self.logger.info('plain timing took %s seconds', timer.dt)
-
 
 class Test_Interface(TestInterface):
 

@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """ This module provides a widgets for displaying plots of
@@ -121,7 +121,9 @@ if HAVE_ALL:
             self.setMinimumSize(300, 300)
             self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
 
-        def set(self, U):
+        def set(self, U, vmin=None, vmax=None):
+            self.vmin = self.vmin if vmin is None else vmin
+            self.vmax = self.vmax if vmax is None else vmax
             U = np.array(U)
             f = self.figure
             f.clear()

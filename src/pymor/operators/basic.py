@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-#
-# Contributors: Michael Laier <m_laie01@uni-muenster.de>
 
 from __future__ import absolute_import, division, print_function
 
@@ -177,7 +175,7 @@ class OperatorBase(OperatorInterface):
             # use generic solver for the adjoint operator
             from pymor.operators.constructions import AdjointOperator
             options = {'inverse': self.solver_options.get('inverse_adjoint') if self.solver_options else None}
-            adjoint_op = AdjointOperator(self.with_(solver_options=options), with_apply_inverse=False)
+            adjoint_op = AdjointOperator(self, with_apply_inverse=False, solver_options=options)
             return adjoint_op.apply_inverse(U, ind=ind, mu=mu, least_squares=least_squares)
 
     def as_vector(self, mu=None):
@@ -200,7 +198,10 @@ class OperatorBase(OperatorInterface):
                 if range_basis is None:
                     return self
                 else:
-                    V = self.apply_adjoint(range_basis, range_product=product)
+                    try:
+                        V = self.apply_adjoint(range_basis, range_product=product)
+                    except NotImplementedError:
+                        return ProjectedOperator(self, range_basis, None, product, name=name)
                     if self.source.type == NumpyVectorArray:
                         from pymor.operators.numpy import NumpyMatrixOperator
                         return NumpyMatrixOperator(V.data, name=name)
@@ -266,8 +267,8 @@ class ProjectedOperator(OperatorBase):
         self.solver_options = solver_options
         self.name = name
         self.operator = operator
-        self.source_basis = source_basis.copy()
-        self.range_basis = range_basis.copy()
+        self.source_basis = source_basis.copy() if source_basis is not None else None
+        self.range_basis = range_basis.copy() if range_basis is not None else None
         self.linear = operator.linear
         self.product = product
 

@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
@@ -126,7 +126,7 @@ def reduce_residual(operator, functional=None, RB=None, product=None, extends=No
             raise CollectionError(op)
 
     for i in ind_range:
-        logger.info('Computing residual range for basis vector {}...'.format(i))
+        logger.info('Computing residual range for basis vector {} ...'.format(i))
         new_residual_range = operator.range.empty()
         try:
             if i == -1:
@@ -140,7 +140,7 @@ def reduce_residual(operator, functional=None, RB=None, product=None, extends=No
                     {})
 
         if product:
-            logger.info('Computing Riesz representatives for basis vector {}...'.format(i))
+            logger.info('Computing Riesz representatives for basis vector {} ...'.format(i))
             new_residual_range = product.apply_inverse(new_residual_range)
 
         gram_schmidt_offset = len(residual_range)
@@ -204,12 +204,8 @@ class NonProjectedResidualOperator(ResidualOperator):
         else:
             return R
 
-    def projected_to_subbasis(self, dim_source=None, dim_range=None, name=None):
-        product = self.product.projected_to_subbasis(dim_range, dim_range) if self.product is not None else None
-        return ResidualOperator(self.operator.projected_to_subbasis(dim_range, dim_source),
-                                self.functional.projected_to_subbasis(None, dim_range),
-                                product,
-                                name=name)
+    def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
+        return self.with_(operator=self.operator.projected_to_subbasis(None, dim_source))
 
 
 class NonProjectedReconstructor(ImmutableInterface):

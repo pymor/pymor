@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """ This module provides helper methods to use pyMOR in parallel with MPI.
@@ -55,6 +55,8 @@ from __future__ import absolute_import, division, print_function
 
 import sys
 
+from pymor.core.defaults import defaults
+
 try:
     from mpi4py import MPI
     HAVE_MPI = True
@@ -62,6 +64,13 @@ try:
     rank = comm.Get_rank()
     size = comm.Get_size()
     finished = False
+    import pymor.core.pickle
+    try:  # this only works for newer mpi4py versions
+        MPI.pickle.PROTOCOL = pymor.core.pickle.PROTOCOL
+        MPI.pickle.loads = pymor.core.pickle.loads
+        MPI.pickle.dumps = pymor.core.pickle.dumps
+    except AttributeError:
+        pass
 
 except ImportError:
     HAVE_MPI = False
@@ -77,6 +86,11 @@ _object_counter = 0
 
 
 ################################################################################
+
+
+@defaults('auto_launch')
+def event_loop_settings(auto_launch=True):
+    return {'auto_launch': auto_launch}
 
 
 def event_loop():
@@ -191,7 +205,7 @@ def function_call_manage(f, *args, **kwargs):
     return manage_object(function_call(f, *args, **kwargs))
 
 
-def method_call(obj_id, name, *args, **kwargs):
+def method_call(obj_id, name_, *args, **kwargs):
     """Execute a method with given arguments.
 
     Intended to be used in conjunction with :func:`call`.
@@ -203,7 +217,7 @@ def method_call(obj_id, name, *args, **kwargs):
     obj_id
         The :class:`ObjectId` of the object on which to call
         the method.
-    name
+    name_
         Name of the method to call.
     args
         Sequential arguments for the method.
@@ -211,11 +225,11 @@ def method_call(obj_id, name, *args, **kwargs):
         Keyword arguments for the method.
     """
     obj = get_object(obj_id)
-    return getattr(obj, name)(*((get_object(arg) if type(arg) is ObjectId else arg) for arg in args),
-                              **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.iteritems()})
+    return getattr(obj, name_)(*((get_object(arg) if type(arg) is ObjectId else arg) for arg in args),
+                                **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.iteritems()})
 
 
-def method_call_manage(obj_id, name, *args, **kwargs):
+def method_call_manage(obj_id, name_, *args, **kwargs):
     """Execute a method with given arguments and manage the return value.
 
     Intended to be used in conjunction with :func:`call`.
@@ -229,14 +243,14 @@ def method_call_manage(obj_id, name, *args, **kwargs):
     obj_id
         The :class:`ObjectId` of the object on which to call
         the method.
-    name
+    name_
         Name of the method to call.
     args
         Sequential arguments for the method.
     kwargs
         Keyword arguments for the method.
     """
-    return manage_object(method_call(obj_id, name, *args, **kwargs))
+    return manage_object(method_call(obj_id, name_, *args, **kwargs))
 
 
 ################################################################################

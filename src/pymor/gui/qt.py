@@ -1,9 +1,6 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-#
-# Contributors: Andreas Buhr <andreas@andreasbuhr.de>
-#               Michael Schaefer <michael.schaefer@uni-muenster.de>
 
 """ This module provides a few methods and classes for visualizing data
 associated to grids. We use the `PySide <http://www.pyside.org>`_ bindings
@@ -35,7 +32,7 @@ from pymor.core.interfaces import BasicInterface
 from pymor.core.logger import getLogger
 from pymor.grids.oned import OnedGrid
 from pymor.grids.referenceelements import triangle, square
-from pymor.gui.gl import GLPatchWidget, ColorBarWidget, HAVE_GL
+from pymor.gui.gl import GLPatchWidget, ColorBarWidget, HAVE_GL, HAVE_QTOPENGL
 from pymor.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget, HAVE_MATPLOTLIB
 from pymor.tools.vtkio import HAVE_PYVTK, write_vtk
 from pymor.vectorarrays.interfaces import VectorArrayInterface
@@ -273,7 +270,15 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
 
     if backend == 'gl':
         if not HAVE_GL:
-            raise ImportError('cannot visualize: import of PyOpenGL failed')
+            logger = getLogger('pymor.gui.qt.visualize_patch')
+            logger.warn('import of PyOpenGL failed, falling back to matplotlib; rendering will be slow')
+            backend = 'matplotlib'
+        elif not HAVE_QTOPENGL:
+            logger = getLogger('pymor.gui.qt.visualize_patch')
+            logger.warn('import of PySide.QtOpenGL failed, falling back to matplotlib; rendering will be slow')
+            backend = 'matplotlib'
+        if backend == 'matplotlib' and not HAVE_MATPLOTLIB:
+            raise ImportError('cannot visualize: import of matplotlib failed')
     else:
         if not HAVE_MATPLOTLIB:
             raise ImportError('cannot visualize: import of matplotlib failed')
@@ -285,14 +290,17 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             assert isinstance(U, VectorArrayInterface) and hasattr(U, 'data') \
                 or (isinstance(U, tuple) and all(isinstance(u, VectorArrayInterface) and hasattr(u, 'data') for u in U)
                     and all(len(u) == len(U[0]) for u in U))
-            U = (U.data,) if hasattr(U, 'data') else tuple(u.data for u in U)
+            U = (U.data.astype(np.float64, copy=False),) if hasattr(U, 'data') else \
+                tuple(u.data.astype(np.float64, copy=False) for u in U)
             if isinstance(legend, str):
                 legend = (legend,)
             assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
             if backend == 'gl':
                 widget = GLPatchWidget
+                cbar_widget = ColorBarWidget
             else:
                 widget = MatplotlibPatchWidget
+                cbar_widget = None
                 if not separate_colorbars and len(U) > 1:
                     l = getLogger('pymor.gui.qt.visualize_patch')
                     l.warn('separate_colorbars=False not supported for matplotlib backend')
@@ -318,7 +326,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
 
                     layout = QHBoxLayout()
                     plot_layout = QGridLayout()
-                    self.colorbarwidgets = [ColorBarWidget(self, vmin=vmin, vmax=vmax)
+                    self.colorbarwidgets = [cbar_widget(self, vmin=vmin, vmax=vmax) if cbar_widget else None
                                             for vmin, vmax in izip(self.vmins, self.vmaxs)]
                     plots = [widget(self, grid, vmin=vmin, vmax=vmax, bounding_box=bounding_box, codim=codim)
                              for vmin, vmax in izip(self.vmins, self.vmaxs)]
@@ -333,7 +341,8 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                             else:
                                 hlayout = QHBoxLayout()
                                 hlayout.addWidget(plot)
-                                hlayout.addWidget(colorbar)
+                                if colorbar:
+                                    hlayout.addWidget(colorbar)
                                 subplot_layout.addLayout(hlayout)
                             plot_layout.addLayout(subplot_layout, int(i/columns), (i % columns), 1, 1)
                     else:
@@ -343,7 +352,8 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                             else:
                                 hlayout = QHBoxLayout()
                                 hlayout.addWidget(plot)
-                                hlayout.addWidget(colorbar)
+                                if colorbar:
+                                    hlayout.addWidget(colorbar)
                                 plot_layout.addLayout(hlayout, int(i/columns), (i % columns), 1, 1)
                     layout.addLayout(plot_layout)
                     if not separate_colorbars:
@@ -365,7 +375,8 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                     for u, plot, colorbar, vmin, vmax in izip(U, self.plots, self.colorbarwidgets, self.vmins,
                                                               self.vmaxs):
                         plot.set(u[ind], vmin=vmin, vmax=vmax)
-                        colorbar.set(vmin=vmin, vmax=vmax)
+                        if colorbar:
+                            colorbar.set(vmin=vmin, vmax=vmax)
 
             super(MainWindow, self).__init__(U, PlotWidget(), title=title, length=len(U[0]))
             self.grid = grid

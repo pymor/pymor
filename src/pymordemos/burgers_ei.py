@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-#
-# Contributors: Michael Laier <m_laie01@uni-muenster.de>
 
 """Burgers with EI demo.
 
@@ -162,7 +160,6 @@ def burgers_demo(args):
     ei_discretization, ei_data = interpolate_operators(discretization, ['operator'],
                                                        discretization.parameter_space.sample_uniformly(args['EI_SNAPSHOTS']),  # NOQA
                                                        error_norm=discretization.l2_norm,
-                                                       target_error=1e-10,
                                                        max_interpolation_dofs=args['EISIZE'],
                                                        product=discretization.l2_product,
                                                        pool=pool)

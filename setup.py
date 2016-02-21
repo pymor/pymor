@@ -1,16 +1,12 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-# make sure we got distribute in place
-#from distribute_setup import use_setuptools
-#use_setuptools()
+from __future__ import print_function
 
 import sys
 import os
-# not using this directly, but neeeds to be imported for nose not to fail
-import multiprocessing
 import subprocess
 from setuptools import find_packages
 from setuptools.command.test import test as TestCommand
@@ -18,8 +14,6 @@ from distutils.extension import Extension
 import itertools
 
 import dependencies
-
-_orig_generate_a_pyrex_source = None
 
 tests_require = dependencies.tests_require
 install_requires = dependencies.install_requires
@@ -36,7 +30,7 @@ class PyTest(TestCommand):
         self.test_suite = True
 
     def run_tests(self):
-        #import here, cause outside the eggs aren't loaded
+        # import here, cause outside the eggs aren't loaded
         import pytest
         errno = pytest.main(self.test_args)
         sys.exit(errno)
@@ -72,7 +66,7 @@ def _numpy_monkey():
 
         Assumes Cython is present
         '''
-        if not 'pymor' in source:
+        if 'pymor' not in source:
             return _orig_generate_a_pyrex_source(self, base, ext_name, source, extension)
 
         if self.inplace:
@@ -89,14 +83,14 @@ def _numpy_monkey():
                 defaults=Cython.Compiler.Main.default_options,
                 include_path=extension.include_dirs,
                 output_file=target_file)
-            cython_result = Cython.Compiler.Main.compile(source,
-                                                    options=options)
+            cython_result = Cython.Compiler.Main.compile(source, options=options)
             if cython_result.num_errors != 0:
-                raise DistutilsError("%d errors while compiling %r with Cython" \
-                    % (cython_result.num_errors, source))
+                raise DistutilsError("%d errors while compiling %r with Cython"
+                                     % (cython_result.num_errors, source))
         return target_file
 
     build_src.build_src.generate_a_pyrex_source = generate_a_pyrex_source
+
 
 def write_version():
     filename = os.path.join(os.path.dirname(__file__), 'src', 'pymor', 'version.py')
@@ -104,7 +98,8 @@ def write_version():
         if 'PYMOR_DEB_VERSION' in os.environ:
             revstring = os.environ['PYMOR_DEB_VERSION']
         else:
-            revstring = subprocess.check_output(['git', 'describe', '--tags', '--candidates', '20', '--match', '*.*.*']).strip()
+            revstring = subprocess.check_output(['git', 'describe',
+                                                 '--tags', '--candidates', '20', '--match', '*.*.*']).strip()
         with open(filename, 'w') as out:
             out.write('revstring = \'{}\''.format(revstring))
     except:
@@ -116,7 +111,24 @@ def write_version():
             revstring = '0.0.0-0-0'
     return revstring
 
+
 def _setup(**kwargs):
+
+    # the following hack is taken from scipy's setup.py
+    # https://github.com/scipy/scipy
+    if (len(sys.argv) >= 2 and
+            ('--help' in sys.argv[1:] or sys.argv[1] in ('--help-commands', 'egg_info', '--version', 'clean'))):
+        # For these actions, NumPy is not required.
+        #
+        # They are required to succeed without Numpy for example when
+        # pip is used to install Scipy when Numpy is not yet present in
+        # the system.
+        try:
+            from setuptools import setup
+        except ImportError:
+            from distutils.core import setup
+        return setup(**kwargs)
+
     _numpy_monkey()
     import Cython.Distutils
     # numpy sometimes expects this attribute, sometimes not. all seems ok if it's set to none
@@ -125,12 +137,13 @@ def _setup(**kwargs):
     cmdclass = {'build_ext': Cython.Distutils.build_ext,
                 'test': PyTest}
     from numpy import get_include
-    ext_modules = [Extension("pymor.tools.relations", ["src/pymor/tools/relations.pyx"], include_dirs=[get_include()]),
-                   Extension("pymor.tools.inplace", ["src/pymor/tools/inplace.pyx"], include_dirs=[get_include()]),
-                   Extension("pymor.grids._unstructured", ["src/pymor/grids/_unstructured.pyx"], include_dirs=[get_include()])]
+    include_dirs = [get_include()]
+    ext_modules = [Extension("pymor.tools.relations", ["src/pymor/tools/relations.pyx"], include_dirs=include_dirs),
+                   Extension("pymor.tools.inplace", ["src/pymor/tools/inplace.pyx"], include_dirs=include_dirs),
+                   Extension("pymor.grids._unstructured", ["src/pymor/grids/_unstructured.pyx"], include_dirs=include_dirs)]
     # for some reason the *pyx files don't end up in sdist tarballs -> manually add them as package data
     # this _still_ doesn't make them end up in the tarball however -> manually add them in MANIFEST.in
-    kwargs['package_data'] = {'pymor': list(itertools.chain(*[i.sources for i in ext_modules])) }
+    kwargs['package_data'] = {'pymor': list(itertools.chain(*[i.sources for i in ext_modules]))}
 
     kwargs['cmdclass'] = cmdclass
     kwargs['ext_modules'] = ext_modules
@@ -142,6 +155,7 @@ def _setup(**kwargs):
 
     from numpy.distutils.core import setup
     return setup(**kwargs)
+
 
 def _missing(names):
     for name in names:
@@ -156,17 +170,8 @@ def _missing(names):
             else:
                 yield name
 
-def check_pre_require():
-    '''these are packages that need to be present before we start out setup, because
-    distribute/distutil/numpy.distutils makes automatic installation too unreliable
-    '''
-    missing = list(_missing(dependencies.pre_setup_requires))
-    if len(missing):
-        raise DependencyMissing(missing)
-
 
 def setup_package():
-    check_pre_require()
     revstring = write_version()
 
     _setup(
@@ -179,29 +184,38 @@ def setup_package():
         package_dir={'': 'src'},
         packages=find_packages('src'),
         include_package_data=True,
-        scripts=['src/pymor-demo', 'distribute_setup.py', 'dependencies.py' ],
+        scripts=['src/pymor-demo', 'distribute_setup.py', 'dependencies.py'],
         url='http://pymor.org',
-        description=' ' ,
+        description=' ',
         long_description=open('README.txt').read(),
         setup_requires=setup_requires,
         tests_require=tests_require,
         install_requires=install_requires,
         classifiers=['Development Status :: 4 - Beta',
-            'License :: OSI Approved :: BSD License',
-            'Programming Language :: Python :: 2.7',
-            'Intended Audience :: Science/Research',
-            'Topic :: Scientific/Engineering :: Mathematics',
-            'Topic :: Scientific/Engineering :: Visualization'],
+                     'License :: OSI Approved :: BSD License',
+                     'Programming Language :: Python :: 2.7',
+                     'Intended Audience :: Science/Research',
+                     'Topic :: Scientific/Engineering :: Mathematics',
+                     'Topic :: Scientific/Engineering :: Visualization'],
         license='LICENSE.txt',
         zip_safe=False,
     )
 
-    missing = list(_missing(install_suggests))
+    missing = list(_missing(install_suggests.keys()))
     if len(missing):
-        print('\n{0}\nThere are some suggested packages missing, try\nfor i in {1} ; do pip install $i ; done\n{0}'
-              .format('*' * 79, ' '.join(missing)))
+        import textwrap
+        print('\n' + '*' * 79 + '\n')
+        print('There are some suggested packages missing:\n')
+        col_width = max(map(len, missing)) + 3
+        for package in sorted(missing):
+            description = textwrap.wrap(install_suggests[package], 79 - col_width)
+            print('{:{}}'.format(package + ':', col_width) + description[0])
+            for d in description[1:]:
+                print(' ' * col_width + d)
+            print()
+        print("\ntry: 'pip install {}'".format(' '.join(missing)))
+        print('\n' + '*' * 79 + '\n')
 
 
 if __name__ == '__main__':
     setup_package()
-

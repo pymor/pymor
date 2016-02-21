@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """This module contains methods for object serialization.
@@ -14,9 +14,11 @@ however, that its use should be avoided since it uses non-portable
 implementation details of CPython to achieve its goals.
 """
 
+from __future__ import absolute_import
+
+
 import marshal
 import opcode
-from functools import partial
 from types import FunctionType, ModuleType
 
 
@@ -24,14 +26,55 @@ try:
     import cPickle as pickle
 except ImportError:
     import pickle as pickle
-import copy_reg
+
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
 
 
-dump = partial(pickle.dump, protocol=-1)
-dumps = partial(pickle.dumps, protocol=-1)
-load = pickle.load
-loads = pickle.loads
 PicklingError = pickle.PicklingError
+UnpicklingError = pickle.UnpicklingError
+PROTOCOL = pickle.HIGHEST_PROTOCOL
+
+
+# on CPython provide pickling methods which use
+# dumps_function in case pickling of a function fails
+import platform
+if platform.python_implementation() == 'CPython':
+
+    def dump(obj, file, protocol=None):
+        pickler = pickle.Pickler(file, protocol=PROTOCOL)
+        pickler.persistent_id = _function_pickling_handler
+        pickler.dump(obj)
+
+
+    def dumps(obj, protocol=None):
+        file = StringIO()
+        pickler = pickle.Pickler(file, protocol=PROTOCOL)
+        pickler.persistent_id = _function_pickling_handler
+        pickler.dump(obj)
+        return file.getvalue()
+
+
+    def load(file):
+        unpickler = pickle.Unpickler(file)
+        unpickler.persistent_load = _function_unpickling_handler
+        return unpickler.load()
+
+
+    def loads(str):
+        file = StringIO(str)
+        unpickler = pickle.Unpickler(file)
+        unpickler.persistent_load = _function_unpickling_handler
+        return unpickler.load()
+
+else:
+    from functools import partial
+    dump = partial(pickle.dump, protocol=PROTOCOL)
+    dumps = partial(pickle.dumps, protocol=PROTOCOL)
+    load = pickle.load
+    loads = pickle.loads
 
 
 # The following method is a slightly modified version of
@@ -120,22 +163,30 @@ def loads_function(s):
         ctypes.pythonapi.PyCell_New.restype = ctypes.py_object
         ctypes.pythonapi.PyCell_New.argtypes = [ctypes.py_object]
         closure = tuple(ctypes.pythonapi.PyCell_New(c) for c in closure)
+    globals_['__builtins__'] = __builtins__
     r = FunctionType(code, globals_, name, defaults, closure)
     r.func_dict = func_dict
     return r
 
 
 def _function_pickling_handler(f):
-    if f.__module__ != '__main__':
-        try:
-            copy_reg.dispatch_table.pop(FunctionType)
-            return (loads, (dumps(f),))
-        except PicklingError:
-            return (loads_function, (dumps_function(f),))
-        finally:
-            copy_reg.dispatch_table[FunctionType] = _function_pickling_handler
+    if f.__class__ is FunctionType:
+        if f.__module__ != '__main__':
+            try:
+                return 'A' + pickle.dumps(f)
+            except (TypeError, PicklingError):
+                return 'B' + dumps_function(f)
+        else:
+            return 'B' + dumps_function(f)
     else:
-        return (loads_function, (dumps_function(f),))
+        return None
 
 
-copy_reg.pickle(FunctionType, _function_pickling_handler)
+def _function_unpickling_handler(persid):
+    mode, data = persid[0], persid[1:]
+    if mode == 'A':
+        return pickle.loads(data)
+    elif mode == 'B':
+        return loads_function(data)
+    else:
+        return UnpicklingError

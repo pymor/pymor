@@ -1,8 +1,6 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-#
-# Contributors: lucas-ca <lucascamp@web.de>
 
 from __future__ import absolute_import, division, print_function
 
@@ -65,27 +63,100 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
     assert grid.reference_element in (line, triangle, square)
 
     if grid.reference_element is square:
-        Operator = cg.DiffusionOperatorQ1
+        DiffusionOperator = cg.DiffusionOperatorQ1
+        AdvectionOperator = cg.AdvectionOperatorQ1
+        ReactionOperator  = cg.L2ProductQ1
         Functional = cg.L2ProductFunctionalQ1
     else:
-        Operator = cg.DiffusionOperatorP1
+        DiffusionOperator = cg.DiffusionOperatorP1
+        AdvectionOperator = cg.AdvectionOperatorP1
+        ReactionOperator  = cg.L2ProductP1
         Functional = cg.L2ProductFunctionalP1
 
     p = analytical_problem
 
-    if p.diffusion_functionals is not None:
-        L0 = Operator(grid, boundary_info, diffusion_constant=0, name='diffusion_boundary_part')
+    if p.diffusion_functionals is not None or p.advection_functionals is not None or p.reaction_functionals is not None:
+        # parametric case
+        Li = [DiffusionOperator(grid, boundary_info, diffusion_constant=0, name='boundary_part')]
+        coefficients = [1.]
 
-        Li = [Operator(grid, boundary_info, diffusion_function=df, dirichlet_clear_diag=True,
-                       name='diffusion_{}'.format(i))
-              for i, df in enumerate(p.diffusion_functions)]
+        # diffusion part
+        if p.diffusion_functionals is not None:
+            Li += [DiffusionOperator(grid, boundary_info, diffusion_function=df, dirichlet_clear_diag=True,
+                                     name='diffusion_{}'.format(i))
+                   for i, df in enumerate(p.diffusion_functions)]
+            coefficients += list(p.diffusion_functionals)
+        elif p.diffusion_functions is not None:
+            assert len(p.diffusion_functions) == 1
+            Li += [DiffusionOperator(grid, boundary_info, diffusion_function=p.diffusion_functions[0],
+                                     dirichlet_clear_diag=True, name='diffusion')]
+            coefficients.append(1.)
 
-        L = LincombOperator(operators=[L0] + Li, coefficients=[1.] + list(p.diffusion_functionals),
-                            name='diffusion')
+        # advection part
+        if p.advection_functionals is not None:
+            Li += [AdvectionOperator(grid, boundary_info, advection_function=af, dirichlet_clear_diag=True,
+                                     name='advection_{}'.format(i))
+                   for i, af in enumerate(p.advection_functions)]
+            coefficients += list(p.advection_functionals)
+        elif p.advection_functions is not None:
+            assert len(p.advection_functions) == 1
+            Li += [AdvectionOperator(grid, boundary_info, advection_function=p.advection_functions[0],
+                                     dirichlet_clear_diag=True, name='advection')]
+            coefficients.append(1.)
+
+        # reaction part
+        if p.reaction_functionals is not None:
+            Li += [ReactionOperator(grid, boundary_info, coefficient_function=rf, dirichlet_clear_diag=True,
+                                    name='reaction_{}'.format(i))
+                   for i, rf in enumerate(p.reaction_functions)]
+            coefficients += list(p.reaction_functionals)
+        elif p.reaction_functions is not None:
+            assert len(p.reaction_functions) == 1
+            Li += [ReactionOperator(grid, boundary_info, coefficient_function=p.reaction_functions[0],
+                                    dirichlet_clear_diag=True, name='reaction')]
+            coefficients.append(1.)
+
+        # robin boundaries
+        if p.robin_data is not None:
+            Li += [cg.RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data, order=2, name='robin')]
+            coefficients.append(1.)
+
+        L = LincombOperator(operators=Li, coefficients=coefficients, name='ellipticOperator')
     else:
-        assert len(p.diffusion_functions) == 1
-        L = Operator(grid, boundary_info, diffusion_function=p.diffusion_functions[0],
-                     name='diffusion')
+        # unparametric case, not operator for boundary treatment
+        Li = []
+
+        # only one operator has diagonal values, all subsequent operators have clear_diag
+        dirichlet_clear_diag = False
+        # diffusion part
+        if p.diffusion_functions is not None:
+            assert len(p.diffusion_functions) == 1
+            Li += [DiffusionOperator(grid, boundary_info, diffusion_function=p.diffusion_functions[0],
+                                     dirichlet_clear_diag=dirichlet_clear_diag, name='diffusion')]
+            dirichlet_clear_diag = True
+
+        # advection part
+        if p.advection_functions is not None:
+            assert len(p.advection_functions) == 1
+            Li += [AdvectionOperator(grid, boundary_info, advection_function=p.advection_functions[0],
+                                     dirichlet_clear_diag=dirichlet_clear_diag, name='advection')]
+            dirichlet_clear_diag = True
+
+        # reaction part
+        if p.reaction_functions is not None:
+            assert len(p.reaction_functions) == 1
+            Li += [ReactionOperator(grid, boundary_info, coefficient_function=p.reaction_functions[0],
+                                    dirichlet_clear_diag=dirichlet_clear_diag, name='reaction')]
+            dirichlet_clear_diag = True
+
+        # robin boundaries
+        if p.robin_data is not None:
+            Li += [cg.RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data, order=2, name='robin')]
+
+        if len(Li) == 1:
+            L = Li[0]
+        else:
+            L = LincombOperator(operators=Li, coefficients=[1.] * len(Li), name='ellipticOperator')
 
     F = Functional(grid, p.rhs, boundary_info, dirichlet_data=p.dirichlet_data, neumann_data=p.neumann_data)
 
@@ -98,10 +169,10 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
 
     Prod = cg.L2ProductQ1 if grid.reference_element is square else cg.L2ProductP1
     empty_bi = EmptyBoundaryInfo(grid)
-    l2_product = Prod(grid, empty_bi)
-    l2_0_product = Prod(grid, boundary_info, dirichlet_clear_columns=True)
-    h1_semi_product = Operator(grid, empty_bi)
-    h1_0_semi_product = Operator(grid, boundary_info, dirichlet_clear_columns=True)
+    l2_product = Prod(grid, empty_bi, name='l2')
+    l2_0_product = Prod(grid, boundary_info, dirichlet_clear_columns=True, name='l2_0')
+    h1_semi_product = DiffusionOperator(grid, empty_bi, name='h1_semi')
+    h1_0_semi_product = DiffusionOperator(grid, boundary_info, dirichlet_clear_columns=True, name='h1_0_semi')
     products = {'h1': l2_product + h1_semi_product,
                 'h1_semi': h1_semi_product,
                 'l2': l2_product,
@@ -155,6 +226,13 @@ def discretize_elliptic_fv(analytical_problem, diameter=None, domain_discretizer
     assert boundary_info is None or grid is not None
     assert grid is None or domain_discretizer is None
 
+    if analytical_problem.advection_functions is not None:
+        raise NotImplementedError
+    if analytical_problem.reaction_functions is not None:
+        raise NotImplementedError
+    if analytical_problem.robin_data is not None:
+        raise NotImplementedError
+
     if grid is None:
         domain_discretizer = domain_discretizer or discretize_domain_default
         if diameter is None:
@@ -195,7 +273,7 @@ def discretize_elliptic_fv(analytical_problem, diameter=None, domain_discretizer
     else:
         visualizer = None
 
-    l2_product = fv.L2Product(grid)
+    l2_product = fv.L2Product(grid, name='l2')
     products = {'l2': l2_product}
 
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None

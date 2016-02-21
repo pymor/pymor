@@ -1,12 +1,9 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-#
-# Contributors: Andreas Buhr <andreas@andreasbuhr.de>
 
 from __future__ import absolute_import, division, print_function
 
-from itertools import chain
 import numpy as np
 import pytest
 
@@ -15,7 +12,6 @@ from pymor.core.exceptions import InversionError
 from pymor.operators.constructions import SelectionOperator
 from pymor.parameters.base import ParameterType
 from pymor.parameters.functionals import GenericParameterFunctional
-from pymor.tools.floatcmp import float_cmp_all
 from pymor.vectorarrays.numpy import NumpyVectorArray
 from pymortests.algorithms.stuff import MonomOperator
 from pymortests.fixtures.operator import operator, operator_with_arrays, operator_with_arrays_and_products
@@ -289,11 +285,11 @@ def test_assemble(operator_with_arrays):
 
 def test_restricted(operator_with_arrays):
     op, mu, U, _, = operator_with_arrays
-    if op.source.dim == 0:
+    if op.range.dim == 0:
         return
     np.random.seed(4711 + U.dim)
     for num in [0, 1, 3, 7]:
-        components = np.random.randint(0, op.source.dim, num)
+        components = np.random.randint(0, op.range.dim, num)
         try:
             rop, source_dofs = op.restricted(components)
         except NotImplementedError:

@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
@@ -22,9 +22,10 @@ DEMO_ARGS = (('elliptic', [0, 0, 0, 0]), ('elliptic', [1, 2, 0, 3]), ('elliptic'
              ('elliptic2', [1, 20]), ('elliptic2', ['--fv', 1, 20]),
              ('elliptic_unstructured', [6., 16, 1e-1]),
              ('elliptic_oned', [1, 20]), ('elliptic_oned', ['--fv', 1, 20]),
-             ('thermalblock', [2, 2, 3, 5]), ('thermalblock', ['--without-estimator', 2, 2, 3, 5]),
+             ('thermalblock', [2, 2, 3, 5]), ('thermalblock', ['--greedy-without-estimator', 2, 2, 3, 5]),
              ('thermalblock_gui', ['--testing', 2, 2, 3, 5]),
-             ('thermalblock_pod', [2, 2, 3, 5]),
+             ('thermalblock', ['--alg=pod', 2, 2, 3, 5]),
+             ('thermalblock', ['--alg=adaptive_greedy', 2, 2, 10, 30]),
              ('parabolic', [1]),
              ('parabolic', ['--rect', 1]),
              ('parabolic', ['--fv', 1]),
@@ -58,18 +59,6 @@ def test_demos(demo_args):
     except ImportError as ie:
         assert _is_failed_import_ok(ie)
     stop_gui_processes()
-
-
-def test_demos_tested():
-    modules = []
-    for _, module_name, _ in pkgutil.walk_packages(pymordemos.__path__, pymordemos.__name__ + '.'):
-        try:
-            __import__(module_name)
-            modules.append(module_name)
-        except (TypeError, ImportError):
-            pass
-    tested = set([f[0] for f in DEMO_ARGS if f[0].startswith('pymordemos.')])
-    assert tested <= set(modules)
 
 
 if __name__ == "__main__":

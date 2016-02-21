@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
@@ -16,6 +16,7 @@ from pymor.tools.quadratures import GaussQuadratures
 from pymor.tools.floatcmp import float_cmp, float_cmp_all
 from pymor.tools.vtkio import write_vtk
 from pymor.vectorarrays.numpy import NumpyVectorArray
+from pymor.tools import timing
 
 
 FUNCTIONS = (('sin(2x pi)', lambda x: sin(2 * x * pi), 0),
@@ -95,6 +96,30 @@ def test_vtkio(rect_or_tria_grid):
                         write_vtk(grid, data, out.name, codim=codim)
                 else:
                     write_vtk(grid, data, out.name, codim=codim)
+
+
+class TestTiming(TestInterface):
+
+    def testTimingContext(self):
+        with timing.Timer('busywait', self.logger):
+            timing.busywait(100)
+        with timing.Timer('defaultlog'):
+            timing.busywait(100)
+
+    @timing.Timer('busywait_decorator', TestInterface.logger)
+    def wait(self):
+        timing.busywait(1000)
+
+    def testTimingDecorator(self):
+        self.wait()
+
+    def testTiming(self):
+        timer = timing.Timer('busywait', self.logger)
+        timer.start()
+        timing.busywait(1000)
+        timer.stop()
+        self.logger.info('plain timing took %s seconds', timer.dt)
+
 
 if __name__ == "__main__":
     runmodule(filename=__file__)

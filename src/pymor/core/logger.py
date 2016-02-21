@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """Utilities for colorized log output.
@@ -11,8 +11,14 @@ import curses
 import logging
 import os
 import time
+from types import MethodType
 
 from pymor.core.defaults import defaults
+
+INFO2 = logging.INFO + 1
+INFO3 = logging.INFO + 2
+logging.addLevelName(INFO2, 'INFO2')
+logging.addLevelName(INFO3, 'INFO3')
 
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 
@@ -24,6 +30,8 @@ BOLD_SEQ = "\033[1m"
 COLORS = {
     'WARNING':  YELLOW,
     'INFO':     GREEN,
+    'INFO2':    YELLOW,
+    'INFO3':    RED,
     'DEBUG':    BLUE,
     'CRITICAL': MAGENTA,
     'ERROR':    RED
@@ -86,6 +94,9 @@ class ColoredFormatter(logging.Formatter):
         if self.use_color and levelname in COLORS.keys():
             if levelname is 'INFO':
                 levelname_color = RESET_SEQ
+            elif levelname.startswith('INFO'):
+                levelname_color = RESET_SEQ
+                record.name = RESET_SEQ + COLOR_SEQ % (30 + COLORS[levelname]) + record.name + RESET_SEQ
             else:
                 levelname_color = RESET_SEQ + '|' + COLOR_SEQ % (30 + COLORS[levelname]) + levelname + RESET_SEQ
             record.levelname = levelname_color
@@ -111,6 +122,8 @@ def getLogger(module, level=None, filename=''):
     """
     module = 'pymor' if module == '__main__' else module
     logger = logging.getLogger(module)
+    logger.info2 = MethodType(_info2, logger, type(logger))
+    logger.info3 = MethodType(_info3, logger, type(logger))
     streamhandler = logging.StreamHandler()
     streamformatter = ColoredFormatter()
     streamhandler.setFormatter(streamformatter)
@@ -153,6 +166,12 @@ class DummyLogger(object):
     def getChild(self):
         return self
 
+    def info2(self, msg, *args, **kwargs):
+        self.log(INFO2, msg, *args, **kwargs)
+
+    def info3(self, msg, *args, **kwargs):
+        self.log(INFO3, msg, *args, **kwargs)
+
 
 dummy_logger = DummyLogger()
 
@@ -185,3 +204,11 @@ def set_log_format(max_hierarchy_level=1):
     """
     global MAX_HIERARCHY_LEVEL
     MAX_HIERARCHY_LEVEL = max_hierarchy_level
+
+
+def _info2(self, msg, *args, **kwargs):
+    self.log(INFO2, msg, *args, **kwargs)
+
+
+def _info3(self, msg, *args, **kwargs):
+    self.log(INFO3, msg, *args, **kwargs)

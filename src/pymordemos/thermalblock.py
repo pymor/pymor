@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """Thermalblock demo.
@@ -15,232 +15,502 @@ Arguments:
 
   YBLOCKS    Number of blocks in y direction.
 
-  SNAPSHOTS  Number of snapshots for basis generation per component.
-             In total SNAPSHOTS^(XBLOCKS * YBLOCKS).
+  SNAPSHOTS  naive:           ignored
+             greedy/pod:      Number of training_set parameters per block
+                              (in total SNAPSHOTS^(XBLOCKS * YBLOCKS)
+                              parameters).
+             adaptive_greedy: size of validation set.
 
   RBSIZE     Size of the reduced basis
 
 
 Options:
-  -h, --help                 Show this message.
+  --adaptive-greedy-rho=RHO       See pymor.algorithms.adaptivegreedy [default: 1.1].
 
-  --estimator-norm=NORM      Norm (trivial, h1) in which to calculate the residual
-                             [default: h1].
+  --adaptive-greedy-gamma=GAMMA   See pymor.algorithms.adaptivegreedy [default: 0.2].
 
-  --without-estimator        Do not use error estimator for basis generation.
+  --adaptive-greedy-theta=THETA   See pymor.algorithms.adaptivegreedy [default: 0.]
 
-  --extension-alg=ALG        Basis extension algorithm (trivial, gram_schmidt, h1_gram_schmidt)
-                             to be used [default: h1_gram_schmidt].
+  --alg=ALG                       The model reduction algorithm to use
+                                  (naive, greedy, adaptive_greedy, pod) [default: greedy].
 
-  --grid=NI                  Use grid with 2*NI*NI elements [default: 100].
+  --cache-region=REGION           Name of cache region to use for caching solution snapshots
+                                  (none, memory, disk, persistent) [default: none].
 
-  --pickle=PREFIX            Pickle reduced discretizaion, as well as reconstructor and high-dimensional
-                             discretization to files with this prefix.
+  --estimator-norm=NORM           Norm (euclidean, h1) in which to calculate the residual
+                                  [default: h1].
 
-  -p, --plot-err             Plot error.
+  --extension-alg=ALG             Basis extension algorithm (trivial, gram_schmidt, h1_gram_schmidt)
+                                  to be used [default: h1_gram_schmidt].
 
-  --plot-solutions           Plot some example solutions.
+  --fenics                        Use FEniCS discretization.
 
-  --plot-error-sequence      Plot reduction error vs. basis size.
+  --grid=NI                       Use grid with 4*NI*NI elements [default: 100].
 
-  --reductor=RED             Reductor (error estimator) to choose (traditional, residual_basis)
-                             [default: residual_basis]
+  -h, --help                      Show this message.
 
-  --test=COUNT               Use COUNT snapshots for stochastic error estimation
-                             [default: 10].
+  --ipython-engines=COUNT         If positive, the number of IPython cluster engines to use for
+                                  parallel greedy search. If zero, no parallelization is performed.
+                                  [default: 0]
 
-  --ipython-engines=COUNT    If positive, the number of IPython cluster engines to use for
-                             parallel greedy search. If zero, no parallelization is performed.
-                             [default: 0]
+  --ipython-profile=PROFILE       IPython profile to use for parallelization.
 
-  --ipython-profile=PROFILE  IPython profile to use for parallelization.
+  --list-vector-array             Solve using ListVectorArray[NumpyVector] instead of NumpyVectorArray.
 
-  --cache-region=REGION      Name of cache region to use for caching solution snapshots
-                             (NONE, MEMORY, DISK, PERSISTENT)
-                             [default: NONE]
+  --order=ORDER                   Polynomial order of the Lagrange finite elements to use in FEniCS
+                                  discretization [default: 1].
 
-  --list-vector-array        Solve using ListVectorArray[NumpyVector] instead of NumpyVectorArray.
+  --pickle=PREFIX                 Pickle reduced discretizaion, as well as reconstructor and high-dimensional
+                                  discretization to files with this prefix.
+
+  --plot-err                      Plot error.
+
+  --plot-solutions                Plot some example solutions.
+
+  --plot-error-sequence           Plot reduction error vs. basis size.
+
+  --pod-product=PROD              Inner product w.r.t. with to compute the pod (euclidean, h1)
+                                  [default: h1].
+
+  --reductor=RED                  Reductor (error estimator) to choose (traditional, residual_basis)
+                                  [default: residual_basis]
+
+  --test=COUNT                    Use COUNT snapshots for stochastic error estimation
+                                  [default: 10].
+
+  --greedy-without-estimator      Do not use error estimator for basis generation.
 """
 
 from __future__ import absolute_import, division, print_function
 
+from functools import partial
 import sys
 import time
-from functools import partial
 
-import numpy as np
 from docopt import docopt
 
-from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension
-from pymor.algorithms.greedy import greedy
-from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
+from pymor.algorithms.error import reduction_error_analysis
 from pymor.core.pickle import dump
-from pymor.discretizers.elliptic import discretize_elliptic_cg
-from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.parallel.default import new_parallel_pool
-from pymor.reductors.basic import reduce_to_subbasis
-from pymor.reductors.linear import reduce_stationary_affine_linear
-from pymor.reductors.stationary import reduce_stationary_coercive
 
 
 def thermalblock_demo(args):
-    args['XBLOCKS'] = int(args['XBLOCKS'])
-    args['YBLOCKS'] = int(args['YBLOCKS'])
-    args['--grid'] = int(args['--grid'])
-    args['SNAPSHOTS'] = int(args['SNAPSHOTS'])
-    args['RBSIZE'] = int(args['RBSIZE'])
-    args['--test'] = int(args['--test'])
-    args['--ipython-engines'] = int(args['--ipython-engines'])
-    args['--estimator-norm'] = args['--estimator-norm'].lower()
-    assert args['--estimator-norm'] in {'trivial', 'h1'}
-    args['--extension-alg'] = args['--extension-alg'].lower()
-    assert args['--extension-alg'] in {'trivial', 'gram_schmidt', 'h1_gram_schmidt'}
-    args['--reductor'] = args['--reductor'].lower()
-    assert args['--reductor'] in {'traditional', 'residual_basis'}
-    args['--cache-region'] = args['--cache-region'].lower()
 
-    print('Solving on TriaGrid(({0},{0}))'.format(args['--grid']))
+    args = parse_arguments(args)
 
-    print('Setup Problem ...')
-    problem = ThermalBlockProblem(num_blocks=(args['XBLOCKS'], args['YBLOCKS']))
+    pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
 
-    print('Discretize ...')
-    discretization, _ = discretize_elliptic_cg(problem, diameter=1. / args['--grid'])
-
-    if args['--list-vector-array']:
-        from pymor.playground.discretizers.numpylistvectorarray import convert_to_numpy_list_vector_array
-        discretization = convert_to_numpy_list_vector_array(discretization)
+    if args['--fenics']:
+        d, d_summary = discretize_fenics(args['XBLOCKS'], args['YBLOCKS'], args['--grid'], args['--order'])
+    else:
+        d, d_summary = discretize_pymor(args['XBLOCKS'], args['YBLOCKS'], args['--grid'], args['--list-vector-array'])
 
     if args['--cache-region'] != 'none':
-        discretization.enable_caching(args['--cache-region'])
-
-    print('The parameter type is {}'.format(discretization.parameter_type))
+        d.enable_caching(args['--cache-region'])
 
     if args['--plot-solutions']:
         print('Showing some solutions')
         Us = tuple()
         legend = tuple()
-        for mu in discretization.parameter_space.sample_randomly(2):
+        for mu in d.parameter_space.sample_randomly(2):
             print('Solving for diffusion = \n{} ... '.format(mu['diffusion']))
             sys.stdout.flush()
-            Us = Us + (discretization.solve(mu),)
+            Us = Us + (d.solve(mu),)
             legend = legend + (str(mu['diffusion']),)
-        discretization.visualize(Us, legend=legend, title='Detailed Solutions for different parameters', block=True)
+        d.visualize(Us, legend=legend, title='Detailed Solutions for different parameters',
+                    separate_colorbars=False, block=True)
 
     print('RB generation ...')
 
-    error_product = discretization.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
-    coercivity_estimator=ExpressionParameterFunctional('min(diffusion)', discretization.parameter_type)
-    reductors = {'residual_basis': partial(reduce_stationary_coercive, error_product=error_product,
-                                   coercivity_estimator=coercivity_estimator),
-                 'traditional': partial(reduce_stationary_affine_linear, error_product=error_product,
-                                        coercivity_estimator=coercivity_estimator)}
-    reductor = reductors[args['--reductor']]
-    extension_algorithms = {'trivial': trivial_basis_extension,
-                            'gram_schmidt': gram_schmidt_basis_extension,
-                            'h1_gram_schmidt': partial(gram_schmidt_basis_extension, product=discretization.h1_0_semi_product)}
-    extension_algorithm = extension_algorithms[args['--extension-alg']]
+    # define estimator for coercivity constant
+    from pymor.parameters.functionals import ExpressionParameterFunctional
+    coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', d.parameter_type)
 
-    pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
-    greedy_data = greedy(discretization, reductor,
-                         discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
-                         use_estimator=not args['--without-estimator'], error_norm=discretization.h1_0_semi_norm,
-                         extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'],
-                         pool=pool)
+    # inner product for computation of Riesz representatives
+    error_product = d.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
 
-    rb_discretization, reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
+    if args['--reductor'] == 'residual_basis':
+        from pymor.reductors.stationary import reduce_stationary_coercive
+        reductor = partial(reduce_stationary_coercive, error_product=error_product,
+                           coercivity_estimator=coercivity_estimator)
+    elif args['--reductor'] == 'traditional':
+        from pymor.reductors.linear import reduce_stationary_affine_linear
+        reductor = partial(reduce_stationary_affine_linear, error_product=error_product,
+                           coercivity_estimator=coercivity_estimator)
+    else:
+        assert False  # this should never happen
+
+    if args['--alg'] == 'naive':
+        rd, rc, red_summary = reduce_naive(d=d, reductor=reductor, basis_size=args['RBSIZE'])
+    elif args['--alg'] == 'greedy':
+        parallel = not (args['--fenics'] and args['--greedy-without-estimator'])  # cannot pickle FEniCS discretization
+        rd, rc, red_summary = reduce_greedy(d=d, reductor=reductor, snapshots_per_block=args['SNAPSHOTS'],
+                                            extension_alg_name=args['--extension-alg'],
+                                            max_extensions=args['RBSIZE'],
+                                            use_estimator=not args['--greedy-without-estimator'],
+                                            pool=pool if parallel else None)
+    elif args['--alg'] == 'adaptive_greedy':
+        parallel = not (args['--fenics'] and args['--greedy-without-estimator'])  # cannot pickle FEniCS discretization
+        rd, rc, red_summary = reduce_adaptive_greedy(d=d, reductor=reductor, validation_mus=args['SNAPSHOTS'],
+                                                     extension_alg_name=args['--extension-alg'],
+                                                     max_extensions=args['RBSIZE'],
+                                                     use_estimator=not args['--greedy-without-estimator'],
+                                                     rho=args['--adaptive-greedy-rho'],
+                                                     gamma=args['--adaptive-greedy-gamma'],
+                                                     theta=args['--adaptive-greedy-theta'],
+                                                     pool=pool if parallel else None)
+    elif args['--alg'] == 'pod':
+        rd, rc, red_summary = reduce_pod(d=d, reductor=reductor, snapshots_per_block=args['SNAPSHOTS'],
+                                         basis_size=args['RBSIZE'], product_name=args['--pod-product'])
+    else:
+        assert False  # this should never happen
 
     if args['--pickle']:
         print('\nWriting reduced discretization to file {} ...'.format(args['--pickle'] + '_reduced'))
         with open(args['--pickle'] + '_reduced', 'w') as f:
-            dump(rb_discretization, f)
-        print('Writing detailed discretization and reconstructor to file {} ...'.format(args['--pickle'] + '_detailed'))
-        with open(args['--pickle'] + '_detailed', 'w') as f:
-            dump((discretization, reconstructor), f)
+            dump(rd, f)
+        if not args['--fenics']:  # FEniCS data structures do not support serialization
+            print('Writing detailed discretization and reconstructor to file {} ...'
+                  .format(args['--pickle'] + '_detailed'))
+            with open(args['--pickle'] + '_detailed', 'w') as f:
+                dump((d, rc), f)
 
     print('\nSearching for maximum error on random snapshots ...')
 
-    def error_analysis(d, rd, rc, mus):
-        print('N = {}: '.format(rd.operator.source.dim), end='')
-        h1_err_max = -1
-        h1_est_max = -1
-        cond_max = -1
-        for mu in mus:
-            print('.', end='')
-            sys.stdout.flush()
-            u = rd.solve(mu)
-            URB = rc.reconstruct(u)
-            U = d.solve(mu)
-            h1_err = d.h1_0_semi_norm(U - URB)[0]
-            h1_est = rd.estimate(u, mu=mu)
-            cond = np.linalg.cond(rd.operator.assemble(mu)._matrix)
-            if h1_err > h1_err_max:
-                h1_err_max = h1_err
-                mumax = mu
-            if h1_est > h1_est_max:
-                h1_est_max = h1_est
-                mu_est_max = mu
-            if cond > cond_max:
-                cond_max = cond
-                cond_max_mu = mu
-        print()
-        return h1_err_max, mumax, h1_est_max, mu_est_max, cond_max, cond_max_mu
+    results = reduction_error_analysis(rd,
+                                       discretization=d,
+                                       reconstructor=rc,
+                                       estimator=True,
+                                       error_norms=(d.h1_0_semi_norm, d.l2_norm),
+                                       condition=True,
+                                       test_mus=args['--test'],
+                                       basis_sizes=0 if args['--plot-error-sequence'] else 1,
+                                       plot=args['--plot-error-sequence'],
+                                       pool=None if args['--fenics'] else pool,  # cannot pickle FEniCS discretization
+                                       random_seed=999)
 
-    tic = time.time()
-
-    real_rb_size = len(greedy_data['basis'])
-    if args['--plot-error-sequence']:
-        N_count = min(real_rb_size - 1, 25)
-        Ns = np.linspace(1, real_rb_size, N_count).astype(np.int)
-    else:
-        Ns = np.array([real_rb_size])
-    rd_rcs = [reduce_to_subbasis(rb_discretization, N, reconstructor)[:2] for N in Ns]
-    mus = discretization.parameter_space.sample_randomly(args['--test'])
-
-    errs, err_mus, ests, est_mus, conds, cond_mus = zip(*(error_analysis(discretization, rd, rc, mus)
-                                                        for rd, rc in rd_rcs))
-    h1_err_max = errs[-1]
-    mumax = err_mus[-1]
-    cond_max = conds[-1]
-    cond_max_mu = cond_mus[-1]
-    toc = time.time()
-    t_est = toc - tic
-
-    print('''
-    *** RESULTS ***
-
-    Problem:
-       number of blocks:                   {args[XBLOCKS]}x{args[YBLOCKS]}
-       h:                                  sqrt(2)/{args[--grid]}
-
-    Greedy basis generation:
-       number of snapshots:                {args[SNAPSHOTS]}^({args[XBLOCKS]}x{args[YBLOCKS]})
-       estimator disabled:                 {args[--without-estimator]}
-       estimator norm:                     {args[--estimator-norm]}
-       extension method:                   {args[--extension-alg]}
-       prescribed basis size:              {args[RBSIZE]}
-       actual basis size:                  {real_rb_size}
-       elapsed time:                       {greedy_data[time]}
-
-    Stochastic error estimation:
-       number of samples:                  {args[--test]}
-       maximal H1-error:                   {h1_err_max}  (mu = {mumax})
-       maximal condition of system matrix: {cond_max}  (mu = {cond_max_mu})
-       elapsed time:                       {t_est}
-    '''.format(**locals()))
-
+    print('\n*** RESULTS ***\n')
+    print(d_summary)
+    print(red_summary)
+    print(results['summary'])
     sys.stdout.flush()
 
     if args['--plot-error-sequence']:
-        import matplotlib.pyplot as plt
-        plt.semilogy(Ns, errs, Ns, ests)
-        plt.legend(('error', 'estimator'))
-        plt.show()
+        import matplotlib.pyplot
+        matplotlib.pyplot.show(results['figure'])
     if args['--plot-err']:
-        U = discretization.solve(mumax)
-        URB = reconstructor.reconstruct(rb_discretization.solve(mumax))
-        discretization.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
-                                 title='Maximum Error Solution', separate_colorbars=True, block=True)
+        mumax = results['max_error_mus'][0, -1]
+        U = d.solve(mumax)
+        URB = rc.reconstruct(rd.solve(mumax))
+        d.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
+                    title='Maximum Error Solution', separate_colorbars=True, block=True)
+
+
+def parse_arguments(args):
+    args['XBLOCKS'] = int(args['XBLOCKS'])
+    args['YBLOCKS'] = int(args['YBLOCKS'])
+    args['SNAPSHOTS'] = int(args['SNAPSHOTS'])
+    args['RBSIZE'] = int(args['RBSIZE'])
+
+    args['--adaptive-greedy-rho'] = float(args['--adaptive-greedy-rho'])
+    args['--adaptive-greedy-gamma'] = float(args['--adaptive-greedy-gamma'])
+    args['--adaptive-greedy-theta'] = float(args['--adaptive-greedy-theta'])
+    args['--alg'] = args['--alg'].lower()
+    args['--cache-region'] = args['--cache-region'].lower()
+    args['--estimator-norm'] = args['--estimator-norm'].lower()
+    args['--extension-alg'] = args['--extension-alg'].lower()
+    args['--grid'] = int(args['--grid'])
+    args['--ipython-engines'] = int(args['--ipython-engines'])
+    args['--order'] = int(args['--order'])
+    args['--reductor'] = args['--reductor'].lower()
+    args['--test'] = int(args['--test'])
+
+    assert args['--alg'] in {'naive', 'greedy', 'adaptive_greedy', 'pod'}
+    assert args['--cache-region'] in {'none', 'memory', 'disk', 'persistent'}
+    assert args['--estimator-norm'] in {'euclidean', 'h1'}
+    assert args['--extension-alg'] in {'trivial', 'gram_schmidt', 'h1_gram_schmidt'}
+    assert args['--pod-product'] in {'euclidean', 'h1'}
+    assert args['--reductor'] in {'traditional', 'residual_basis'}
+
+    if args['--fenics']:
+        if args['--cache-region'] != 'none':
+            raise ValueError('Caching of high-dimensional solutions is not supported for FEniCS discretization.')
+    else:
+        if args['--order'] != 1:
+            raise ValueError('Higher-order finite elements only supported for FEniCS discretization.')
+
+    return args
+
+
+def discretize_pymor(xblocks, yblocks, grid_num_intervals, use_list_vector_array):
+    from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
+    from pymor.discretizers.elliptic import discretize_elliptic_cg
+    from pymor.playground.discretizers.numpylistvectorarray import convert_to_numpy_list_vector_array
+
+    print('Discretize ...')
+    # setup analytical problem
+    problem = ThermalBlockProblem(num_blocks=(args['XBLOCKS'], args['YBLOCKS']))
+
+    # discretize using continuous finite elements
+    d, _ = discretize_elliptic_cg(problem, diameter=1. / args['--grid'])
+
+    if use_list_vector_array:
+        d = convert_to_numpy_list_vector_array(d)
+
+    summary = '''pyMOR discretization:
+   number of blocks: {xblocks}x{yblocks}
+   grid intervals:   {grid_num_intervals}
+   ListVectorArray:  {use_list_vector_array}
+'''.format(**locals())
+
+    return d, summary
+
+
+def discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
+    from pymor.tools import mpi
+
+    if mpi.parallel:
+        from pymor.discretizations.mpi import mpi_wrap_discretization
+        d = mpi_wrap_discretization(lambda: _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order),
+                                    use_with=True, pickle_subtypes=False)
+    else:
+        d = _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order)
+
+    summary = '''FEniCS discretization:
+   number of blocks:      {xblocks}x{yblocks}
+   grid intervals:        {grid_num_intervals}
+   finite element order:  {element_order}
+'''.format(**locals())
+
+    return d, summary
+
+
+def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
+
+    # assemble system matrices - FEniCS code
+    ########################################
+
+    import dolfin as df
+
+    mesh = df.UnitSquareMesh(grid_num_intervals, grid_num_intervals, 'crossed')
+    V = df.FunctionSpace(mesh, 'Lagrange', element_order)
+    u = df.TrialFunction(V)
+    v = df.TestFunction(V)
+
+    diffusion = df.Expression('(lower0 <= x[0]) * (open0 ? (x[0] < upper0) : (x[0] <= upper0)) *' +
+                              '(lower1 <= x[1]) * (open1 ? (x[1] < upper1) : (x[1] <= upper1))',
+                              lower0=0., upper0=0., open0=0,
+                              lower1=0., upper1=0., open1=0,
+                              element=df.FunctionSpace(mesh, 'DG', 0).ufl_element())
+
+    def assemble_matrix(x, y, nx, ny):
+        diffusion.user_parameters['lower0'] = x/nx
+        diffusion.user_parameters['lower1'] = y/ny
+        diffusion.user_parameters['upper0'] = (x + 1)/nx
+        diffusion.user_parameters['upper1'] = (y + 1)/ny
+        diffusion.user_parameters['open0'] = (x + 1 == nx)
+        diffusion.user_parameters['open1'] = (y + 1 == ny)
+        return df.assemble(df.inner(diffusion * df.nabla_grad(u), df.nabla_grad(v)) * df.dx)
+
+    mats = [assemble_matrix(x, y, xblocks, yblocks)
+            for x in range(xblocks) for y in range(yblocks)]
+    mat0 = mats[0].copy()
+    mat0.zero()
+    h1_mat = df.assemble(df.inner(df.nabla_grad(u), df.nabla_grad(v)) * df.dx)
+    l2_mat = df.assemble(u * v * df.dx)
+
+    f = df.Constant(1.) * v * df.dx
+    F = df.assemble(f)
+
+    bc = df.DirichletBC(V, 0., df.DomainBoundary())
+    for m in mats:
+        bc.zero(m)
+    bc.apply(mat0)
+    bc.apply(h1_mat)
+    bc.apply(F)
+
+    # wrap everything as a pyMOR discretization
+    ###########################################
+
+    # FEniCS wrappers
+    from pymor.gui.fenics import FenicsVisualizer
+    from pymor.operators.fenics import FenicsMatrixOperator
+    from pymor.vectorarrays.fenics import FenicsVector
+
+    # generic pyMOR classes
+    from pymor.discretizations.basic import StationaryDiscretization
+    from pymor.operators.constructions import LincombOperator, VectorFunctional
+    from pymor.parameters.functionals import ProjectionParameterFunctional
+    from pymor.parameters.spaces import CubicParameterSpace
+    from pymor.vectorarrays.list import ListVectorArray
+
+    # define parameter functionals (same as in pymor.analyticalproblems.thermalblock)
+    def parameter_functional_factory(x, y):
+        return ProjectionParameterFunctional(component_name='diffusion',
+                                             component_shape=(yblocks, xblocks),
+                                             coordinates=(yblocks - y - 1, x),
+                                             name='diffusion_{}_{}'.format(x, y))
+    parameter_functionals = tuple(parameter_functional_factory(x, y)
+                                  for x in range(xblocks) for y in range(yblocks))
+
+    # wrap operators
+    ops = [FenicsMatrixOperator(mat0, V, V)] + [FenicsMatrixOperator(m, V, V) for m in mats]
+    op = LincombOperator(ops, (1.,) + parameter_functionals)
+    rhs = VectorFunctional(ListVectorArray([FenicsVector(F, V)]))
+    h1_product = FenicsMatrixOperator(h1_mat, V, V, name='h1_0_semi')
+    l2_product = FenicsMatrixOperator(l2_mat, V, V, name='l2')
+
+    # build discretization
+    visualizer = FenicsVisualizer(V)
+    parameter_space = CubicParameterSpace(op.parameter_type, 0.1, 1.)
+    d = StationaryDiscretization(op, rhs, products={'h1_0_semi': h1_product,
+                                                    'l2': l2_product},
+                                 parameter_space=parameter_space,
+                                 visualizer=visualizer)
+
+    return d
+
+
+def reduce_naive(d, reductor, basis_size):
+
+    tic = time.time()
+
+    training_set = d.parameter_space.sample_randomly(basis_size)
+
+    snapshots = d.operator.source.empty()
+    for mu in training_set:
+        snapshots.append(d.solve(mu))
+
+    rd, rc, _ = reductor(d, snapshots)
+
+    elapsed_time = time.time() - tic
+
+    summary = '''Naive basis generation:
+   basis size set: {basis_size}
+   elapsed time:   {elapsed_time}
+'''.format(**locals())
+
+    return rd, rc, summary
+
+
+def reduce_greedy(d, reductor, snapshots_per_block,
+                  extension_alg_name, max_extensions, use_estimator, pool):
+
+    from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension
+    from pymor.algorithms.greedy import greedy
+
+    # choose basis extension algorithm
+    if extension_alg_name == 'trivial':
+        extension_algorithm = trivial_basis_extension
+    elif extension_alg_name == 'gram_schmidt':
+        extension_algorithm = gram_schmidt_basis_extension
+    elif extension_alg_name == 'h1_gram_schmidt':
+        extension_algorithm = partial(gram_schmidt_basis_extension, product=d.h1_0_semi_product)
+    else:
+        assert False
+
+    # run greedy
+    training_set = d.parameter_space.sample_uniformly(snapshots_per_block)
+    greedy_data = greedy(d, reductor, training_set,
+                         use_estimator=use_estimator, error_norm=d.h1_0_semi_norm,
+                         extension_algorithm=extension_algorithm, max_extensions=max_extensions,
+                         pool=pool)
+    rd, rc = greedy_data['reduced_discretization'], greedy_data['reconstructor']
+
+    # generate summary
+    real_rb_size = rd.solution_space.dim
+    training_set_size = len(training_set)
+    summary = '''Greedy basis generation:
+   size of training set:   {training_set_size}
+   error estimator used:   {use_estimator}
+   extension method:       {extension_alg_name}
+   prescribed basis size:  {max_extensions}
+   actual basis size:      {real_rb_size}
+   elapsed time:           {greedy_data[time]}
+'''.format(**locals())
+
+    return rd, rc, summary
+
+
+def reduce_adaptive_greedy(d, reductor, validation_mus,
+                           extension_alg_name, max_extensions, use_estimator,
+                           rho, gamma, theta, pool):
+
+    from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension
+    from pymor.algorithms.adaptivegreedy import adaptive_greedy
+
+    # choose basis extension algorithm
+    if extension_alg_name == 'trivial':
+        extension_algorithm = trivial_basis_extension
+    elif extension_alg_name == 'gram_schmidt':
+        extension_algorithm = gram_schmidt_basis_extension
+    elif extension_alg_name == 'h1_gram_schmidt':
+        extension_algorithm = partial(gram_schmidt_basis_extension, product=d.h1_0_semi_product)
+    else:
+        assert False
+
+    # run greedy
+    greedy_data = adaptive_greedy(d, reductor, validation_mus=-validation_mus,
+                                  use_estimator=use_estimator, error_norm=d.h1_0_semi_norm,
+                                  extension_algorithm=extension_algorithm, max_extensions=max_extensions,
+                                  rho=rho, gamma=gamma, theta=theta, pool=pool)
+    rd, rc = greedy_data['reduced_discretization'], greedy_data['reconstructor']
+
+    # generate summary
+    real_rb_size = rd.solution_space.dim
+    validation_mus += 1  # the validation set consists of `validation_mus` random parameters
+                         # plus the centers of the adaptive sample set cells
+    summary = '''Adaptive greedy basis generation:
+   initial size of validation set:  {validation_mus}
+   error estimator used:            {use_estimator}
+   extension method:                {extension_alg_name}
+   prescribed basis size:           {max_extensions}
+   actual basis size:               {real_rb_size}
+   elapsed time:                    {greedy_data[time]}
+'''.format(**locals())
+
+    return rd, rc, summary
+
+
+def reduce_pod(d, reductor, snapshots_per_block, product_name, basis_size):
+    from pymor.algorithms.pod import pod
+
+    tic = time.time()
+
+    training_set = d.parameter_space.sample_uniformly(snapshots_per_block)
+
+    print('Solving on training set ...')
+    snapshots = d.operator.source.empty(reserve=len(training_set))
+    for mu in training_set:
+        snapshots.append(d.solve(mu))
+
+    if product_name == 'h1':
+        pod_product = d.h1_0_semi_product
+    elif product_name == 'euclidean':
+        pod_product = None
+    else:
+        assert False
+
+    print('Performing POD ...')
+    basis, singular_values = pod(snapshots, modes=basis_size, product=pod_product)
+
+    print('Reducing ...')
+    rd, rc, _ = reductor(d, basis)
+
+    elapsed_time = time.time() - tic
+
+    # generate summary
+    real_rb_size = rd.solution_space.dim
+    training_set_size = len(training_set)
+    summary = '''POD basis generation:
+   size of training set:   {training_set_size}
+   inner product for POD:  {product_name}
+   prescribed basis size:  {basis_size}
+   actual basis size:      {real_rb_size}
+   elapsed time:           {elapsed_time}
+'''.format(**locals())
+
+    return rd, rc, summary
 
 
 if __name__ == '__main__':

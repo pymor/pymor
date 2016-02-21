@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
@@ -318,7 +318,7 @@ class NumpyVectorArray(VectorArrayInterface):
         B = other._array[:other._len] if o_ind is None else \
             other._array[o_ind] if hasattr(o_ind, '__len__') else other._array[o_ind:o_ind + 1]
 
-        if np.iscomplexobj(B):
+        if B.dtype in _complex_dtypes:
             return A.dot(B.conj().T)
         else:
             return A.dot(B.T)
@@ -340,7 +340,7 @@ class NumpyVectorArray(VectorArrayInterface):
         B = other._array[:other._len] if o_ind is None else \
             other._array[o_ind] if hasattr(o_ind, '__len__') else other._array[o_ind:o_ind + 1]
 
-        if np.iscomplexobj(B):
+        if B.dtype in _complex_dtypes:
             return np.sum(A * B.conj(), axis=1)
         else:
             return np.sum(A * B, axis=1)

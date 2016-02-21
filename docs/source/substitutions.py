@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 # flake8: noqa
@@ -60,6 +60,7 @@ common = '''
 .. |CacheRegion| replace:: :class:`~pymor.core.cache.CacheRegion`
 
 .. |EllipticProblem| replace:: :class:`~pymor.analyticalproblems.elliptic.EllipticProblem`
+.. |ParabolicProblem| replace:: :class:`~pymor.analyticalproblems.parabolic.ParabolicProblem`
 .. |InstationaryAdvectionProblem| replace:: :class:`~pymor.analyticalproblems.advection.InstationaryAdvectionProblem`
 
 .. |BoundaryType| replace:: :class:`~pymor.domaindescriptions.boundarytypes.BoundaryType`
@@ -75,6 +76,7 @@ common = '''
 .. |OnedGrid| replace:: :class:`~pymor.grids.oned.OnedGrid`
 .. |RectGrid| replace:: :class:`~pymor.grids.rect.RectGrid`
 .. |TriaGrid| replace:: :class:`~pymor.grids.tria.TriaGrid`
+.. |GmshGrid| replace:: :class:`~pymor.grids.gmsh.GmshGrid`
 
 .. |NumpyVectorArray| replace:: :class:`~pymor.vectorarrays.numpy.NumpyVectorArray`
 .. |NumpyVectorArrays| replace:: :class:`NumpyVectorArrays <pymor.vectorarrays.numpy.NumpyVectorArray>`

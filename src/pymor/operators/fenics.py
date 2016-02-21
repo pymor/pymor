@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
@@ -15,6 +15,7 @@ if HAVE_FENICS:
     from itertools import izip
     from numbers import Number
 
+    from pymor.core.defaults import defaults
     from pymor.operators.basic import OperatorBase
     from pymor.operators.constructions import ZeroOperator
     from pymor.vectorarrays.fenics import FenicsVectorSpace
@@ -25,13 +26,13 @@ if HAVE_FENICS:
 
         linear = True
 
-        def __init__(self, matrix, name=None):
+        def __init__(self, matrix, source_space, range_space, solver_options=None, name=None):
             assert matrix.rank() == 2
-            comm = matrix.mpi_comm()
-            self.source = FenicsVectorSpace(matrix.size(1), mpi_comm=comm)
-            self.range = FenicsVectorSpace(matrix.size(0), mpi_comm=comm)
-            self.name = name
+            self.source = FenicsVectorSpace(source_space)
+            self.range = FenicsVectorSpace(range_space)
             self.matrix = matrix
+            self.solver_options = solver_options
+            self.name = name
 
         def apply(self, U, ind=None, mu=None):
             assert U in self.source
@@ -65,8 +66,9 @@ if HAVE_FENICS:
                 raise NotImplementedError
             vectors = V._list if ind is None else [V._list[ind]] if isinstance(ind, Number) else [V._list[i] for i in ind]
             R = self.source.zeros(len(vectors))
+            options = self.solver_options.get('inverse') if self.solver_options else None
             for r, v in zip(R._list, vectors):
-                df.solve(self.matrix, r.impl, v.impl)
+                _apply_inverse(self.matrix, r.impl, v.impl, options)
             return R
 
         def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
@@ -84,4 +86,18 @@ if HAVE_FENICS:
                 matrix.axpy(c, op.matrix, False)  # in general, we cannot assume the same nonzero pattern for
                                                   # all matrices. how to improve this?
 
-            return FenicsMatrixOperator(matrix, name=name)
+            return FenicsMatrixOperator(matrix, self.source.subtype[1], self.range.subtype[1], name=name)
+
+
+    @defaults('solver', 'preconditioner')
+    def _solver_options(solver='bicgstab', preconditioner='amg'):
+        return {'solver': solver, 'preconditioner': preconditioner}
+
+
+    def _apply_inverse(matrix, r, v, options=None):
+        options = options or _solver_options()
+        solver = options.get('solver')
+        preconditioner = options.get('preconditioner')
+        # preconditioner argument may only be specified for iterative solvers:
+        options = (solver, preconditioner) if preconditioner else (solver,)
+        df.solve(matrix, r, v, *options)
