@@ -56,6 +56,20 @@ def test_demos(demo_args):
     import sys
     sys._called_from_test = True
 
+    def nop(*args, **kwargs):
+        pass
+
+    try:
+        from matplotlib import pyplot
+        pyplot.show = nop
+    except ImportError:
+        pass
+    try:
+        import dolfin
+        dolfin.plot = nop
+        dolfin.interactive = nop
+    except ImportError:
+        pass
     try:
         ret = _run(module, args)
         # TODO find a better/tighter assert/way to run the code
