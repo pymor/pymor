@@ -79,8 +79,7 @@ def estimate_image(operators=tuple(), functionals=tuple(), domain=None, extends=
         elif isinstance(op, Concatenation):
             firstrange = op.first.range.empty()
             collect_operator_ranges(op.first, source, firstrange)
-            for j in range(len(firstrange)):
-                collect_operator_ranges(op.second, firstrange, j, image)
+            collect_operator_ranges(op.second, firstrange, image)
         elif op.linear and not op.parametric:
             image.append(op.apply(source))
         else:
