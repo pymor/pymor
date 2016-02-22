@@ -52,6 +52,10 @@ def _is_failed_import_ok(error):
 
 def test_demos(demo_args):
     module, args = demo_args
+
+    import sys
+    sys._called_from_test = True
+
     try:
         ret = _run(module, args)
         # TODO find a better/tighter assert/way to run the code
