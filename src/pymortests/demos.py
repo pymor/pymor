@@ -79,7 +79,7 @@ def test_demos(demo_args):
         # TODO find a better/tighter assert/way to run the code
         assert ret is not None
     except ImportError as ie:
-        assert _is_failed_import_ok(ie)
+        assert _is_failed_import_ok(ie), ie
     stop_gui_processes()
 
 
