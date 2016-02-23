@@ -7,7 +7,7 @@ before_install:
  - sudo add-apt-repository -y ppa:fenics-packages/fenics
  - sudo apt-get update -qq
  # these are packages not on travis' whitelist/only in our ppa
- - sudo apt-get install -y -qq python-docopt python-pytest python-opengl python-distribute ipython python-pyside python-pyvtk
+ - sudo apt-get install -y -qq python-docopt python-pytest python-opengl python-distribute ipython python-pyside python-pyvtk python-mpi4py
  - for pkg in ipyparallel pytest-cov python-coveralls ; do sudo -E pip install ${pkg} ; done
  # using aptitude here because it auto-fixes problems
  - sudo aptitude install -y -q dolfin-dev python-dolfin
@@ -26,6 +26,8 @@ script:
     source piptest/bin/activate
     # this fails on PRs, so skip it
     [[ "${TRAVIS_PULL_REQUEST}" != "false" ]] || pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
+  elif [ "${PYTEST_MARKER}" == "MPI" ] ; then
+    xvfb-run -a mpirun -n 2 python src/pymortests/mpi_run_demo_tests.py
   else
     # this runs in pytest in a fake, auto numbered, X Server
     xvfb-run -a py.test -k "${PYTEST_MARKER}"
@@ -47,6 +49,7 @@ env:
   - PYTEST_MARKER="not slow"
   - PYTEST_MARKER="slow"
   - PYTEST_MARKER="PIP_ONLY"
+  - PYTEST_MARKER="MPI"
 
 addons:
   apt:
