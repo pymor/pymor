@@ -17,7 +17,7 @@ from pymortests.fixtures.vectorarray import \
     (vector_array_without_reserve, vector_array, compatible_vector_array_pair_without_reserve,
      compatible_vector_array_pair, incompatible_vector_array_pair,
      picklable_vector_array_without_reserve, picklable_vector_array)
-from pymortests.pickle import assert_picklable_without_dumps_function
+from pymortests.pickling import assert_picklable_without_dumps_function
 
 pytestmark = pytest.mark.slow
 
