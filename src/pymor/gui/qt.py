@@ -207,17 +207,6 @@ def _launch_qt_app(main_window_factory, block):
 def stop_gui_processes():
     for p in multiprocessing.active_children():
         if p.pid in _launch_qt_app_pids:
-            p.terminate()
-
-    waited = 0
-    while any(p.pid in _launch_qt_app_pids for p in multiprocessing.active_children()):
-        time.sleep(1)
-        waited += 1
-        if waited == 5:
-            break
-
-    for p in multiprocessing.active_children():
-        if p.pid in _launch_qt_app_pids:
             try:
                 os.kill(p.pid, signal.SIGKILL)
             except OSError:
