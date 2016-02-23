@@ -6,15 +6,14 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
-from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.algorithms.image import estimate_image_hierarchical
 from pymor.core.interfaces import ImmutableInterface
+from pymor.core.exceptions import ImageCollectionError
 from pymor.core.logger import getLogger
 from pymor.operators.basic import OperatorBase
-from pymor.operators.constructions import (LincombOperator, SelectionOperator, AdjointOperator, Concatenation,
-                                           induced_norm)
-from pymor.operators.ei import EmpiricalInterpolatedOperator
+from pymor.operators.constructions import induced_norm
 from pymor.reductors.basic import GenericRBReconstructor
-from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 def reduce_residual(operator, functional=None, RB=None, product=None, extends=None):
@@ -74,7 +73,7 @@ def reduce_residual(operator, functional=None, RB=None, product=None, extends=No
     assert product is None or product.source == product.range == operator.range
     assert extends is None or len(extends) == 3
 
-    logger = getLogger('pymor.reductors.reduce_residual')
+    logger = getLogger('pymor.reductors.residual.reduce_residual')
 
     if RB is None:
         RB = operator.source.empty()
@@ -82,74 +81,25 @@ def reduce_residual(operator, functional=None, RB=None, product=None, extends=No
     if extends and isinstance(extends[0], NonProjectedResidualOperator):
         extends = None
     if extends:
-        residual_range = extends[1].RB.copy()
+        residual_range = extends[1].RB
         residual_range_dims = list(extends[2]['residual_range_dims'])
-        ind_range = range(extends[0].source.dim, len(RB))
     else:
         residual_range = operator.range.empty()
         residual_range_dims = []
-        ind_range = range(-1, len(RB))
 
-    class CollectionError(Exception):
-        def __init__(self, op):
-            super(CollectionError, self).__init__()
-            self.op = op
+    logger.info('Estimating residual range ...')
+    try:
+        residual_range, residual_range_dims = \
+            estimate_image_hierarchical([operator], [functional], RB, (residual_range, residual_range_dims),
+                                        orthonormalize=True, product=product, riesz_representatives=True)
+    except ImageCollectionError as e:
+        logger.warn('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
+        operator = operator.projected(None, RB)
+        return (NonProjectedResidualOperator(operator, functional, product),
+                NonProjectedReconstructor(product),
+                {})
 
-    def collect_operator_ranges(op, source, ind, residual_range):
-        if isinstance(op, (LincombOperator, SelectionOperator)):
-            for o in op.operators:
-                collect_operator_ranges(o, source, ind, residual_range)
-        elif isinstance(op, EmpiricalInterpolatedOperator):
-            if hasattr(op, 'collateral_basis') and ind == -1:
-                residual_range.append(op.collateral_basis)
-        elif isinstance(op, Concatenation):
-            firstrange = op.first.range.empty()
-            collect_operator_ranges(op.first, source, ind, firstrange)
-            for j in range(len(firstrange)):
-                collect_operator_ranges(op.second, firstrange, j, residual_range)
-        elif op.linear and not op.parametric:
-            if ind >= 0:
-                residual_range.append(op.apply(source, ind=ind))
-        else:
-            raise CollectionError(op)
-
-    def collect_functional_ranges(op, residual_range):
-        if isinstance(op, (LincombOperator, SelectionOperator)):
-            for o in op.operators:
-                collect_functional_ranges(o, residual_range)
-        elif isinstance(op, AdjointOperator):
-            operator = Concatenation(op.range_product, op.operator) if op.range_product else op.operator
-            collect_operator_ranges(operator, NumpyVectorArray(np.ones(1)), 0, residual_range)
-        elif op.linear and not op.parametric:
-            residual_range.append(op.as_vector())
-        else:
-            raise CollectionError(op)
-
-    for i in ind_range:
-        logger.info('Computing residual range for basis vector {} ...'.format(i))
-        new_residual_range = operator.range.empty()
-        try:
-            if i == -1:
-                collect_functional_ranges(functional, new_residual_range)
-            collect_operator_ranges(operator, RB, i, new_residual_range)
-        except CollectionError as e:
-            logger.warn('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
-            operator = operator.projected(None, RB)
-            return (NonProjectedResidualOperator(operator, functional, product),
-                    NonProjectedReconstructor(product),
-                    {})
-
-        if product:
-            logger.info('Computing Riesz representatives for basis vector {} ...'.format(i))
-            new_residual_range = product.apply_inverse(new_residual_range)
-
-        gram_schmidt_offset = len(residual_range)
-        residual_range.append(new_residual_range)
-        logger.info('Orthonormalizing ...')
-        gram_schmidt(residual_range, offset=gram_schmidt_offset, product=product, copy=False)
-        residual_range_dims.append(len(residual_range))
-
-    logger.info('Projecting ...')
+    logger.info('Projecting residual operator ...')
     operator = operator.projected(residual_range, RB, product=None)  # the product always cancels out.
     functional = functional.projected(None, residual_range, product=None)
 
