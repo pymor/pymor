@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 
 from pymortests.fixtures.analyticalproblem import analytical_problem, picklable_analytical_problem
-from pymortests.pickle import assert_picklable, assert_picklable_without_dumps_function
+from pymortests.pickling import assert_picklable, assert_picklable_without_dumps_function
 
 
 def test_pickle(analytical_problem):

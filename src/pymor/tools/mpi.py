@@ -56,21 +56,22 @@ from __future__ import absolute_import, division, print_function
 import sys
 
 from pymor.core.defaults import defaults
+from pymor.core.pickle import dumps, loads
 
 try:
+    import mpi4py
     from mpi4py import MPI
     HAVE_MPI = True
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
     finished = False
-    import pymor.core.pickle
-    try:  # this only works for newer mpi4py versions
+    mpi4py_version = map(int, mpi4py.__version__.split('.'))
+    if mpi4py_version >= [2, 0]:
+        import pymor.core.pickle
         MPI.pickle.PROTOCOL = pymor.core.pickle.PROTOCOL
         MPI.pickle.loads = pymor.core.pickle.loads
         MPI.pickle.dumps = pymor.core.pickle.dumps
-    except AttributeError:
-        pass
 
 except ImportError:
     HAVE_MPI = False
@@ -93,64 +94,125 @@ def event_loop_settings(auto_launch=True):
     return {'auto_launch': auto_launch}
 
 
-def event_loop():
-    """Launches an MPI-based event loop.
+if mpi4py_version >= [2, 0]:
+    def event_loop():
+        """Launches an MPI-based event loop.
 
-    Events can be sent by either calling :func:`call` on
-    rank 0 to execute an arbitrary method on all ranks or
-    by calling :func:`quit` to exit the loop.
-    """
-    assert not rank0
-    while True:
-        try:
-            method, args, kwargs = comm.bcast(None)
-            if method == 'QUIT':
-                break
-            else:
-                method(*args, **kwargs)
-        except:
-            import traceback
-            print("Caught exception on MPI rank {}:".format(rank))
-            traceback.print_exception(*sys.exc_info())
+        Events can be sent by either calling :func:`call` on
+        rank 0 to execute an arbitrary method on all ranks or
+        by calling :func:`quit` to exit the loop.
+        """
+        assert not rank0
+        while True:
+            try:
+                method, args, kwargs = comm.bcast(None)
+                if method == 'QUIT':
+                    break
+                else:
+                    method(*args, **kwargs)
+            except:
+                import traceback
+                print("Caught exception on MPI rank {}:".format(rank))
+                traceback.print_exception(*sys.exc_info())
 
+    def call(method, *args, **kwargs):
+        """Execute method on all MPI ranks.
 
-def call(method, *args, **kwargs):
-    """Execute method on all MPI ranks.
+        Assuming :func:`event_loop` is running on all MPI ranks
+        (except rank 0), this will execute `method` on all
+        ranks (including rank 0) with sequential arguments
+        `args` and keyword arguments `kwargs`.
 
-    Assuming :func:`event_loop` is running on all MPI ranks
-    (except rank 0), this will execute `method` on all
-    ranks (including rank 0) with sequential arguments
-    `args` and keyword arguments `kwargs`.
+        Parameters
+        ----------
+        method
+            The function to execute on all ranks. Must be picklable.
+        args
+            The sequential arguments for `method`.
+        kwargs
+            The keyword arguments for `method`.
 
-    Parameters
-    ----------
-    method
-        The function to execute on all ranks. Must be picklable.
-    args
-        The sequential arguments for `method`.
-    kwargs
-        The keyword arguments for `method`.
+        Returns
+        -------
+        The return value of `method` on rank 0.
+        """
+        assert rank0
+        if finished:
+            return
+        comm.bcast((method, args, kwargs), root=0)
+        return method(*args, **kwargs)
 
-    Returns
-    -------
-    The return value of `method` on rank 0.
-    """
-    assert rank0
-    if finished:
-        return
-    comm.bcast((method, args, kwargs), root=0)
-    return method(*args, **kwargs)
+    def quit():
+        """Exit the event loop on all MPI ranks.
 
+        This will cause :func:`event_loop` to terminate on all
+        MPI ranks.
+        """
+        global finished
+        comm.bcast(('QUIT', None, None))
+        finished = True
 
-def quit():
-    """Exit the event loop on all MPI ranks.
+else:
+    # for older mpi4py versions we have to pickle manually to ensure
+    # that pymor.core.pickle is used which will correctly serialize
+    # lambdas, etc.
 
-    This will cause :func:`event_loop` to terminate on all
-    MPI ranks.
-    """
-    global finished
-    comm.bcast(('QUIT', None, None))
-    finished = True
+    def event_loop():
+        """Launches an MPI-based event loop.
+
+        Events can be sent by either calling :func:`call` on
+        rank 0 to execute an arbitrary method on all ranks or
+        by calling :func:`quit` to exit the loop.
+        """
+        assert not rank0
+        while True:
+            try:
+                method, args, kwargs = loads(comm.bcast(None))
+                if method == 'QUIT':
+                    break
+                else:
+                    method(*args, **kwargs)
+            except:
+                import traceback
+                print("Caught exception on MPI rank {}:".format(rank))
+                traceback.print_exception(*sys.exc_info())
+
+    def call(method, *args, **kwargs):
+        """Execute method on all MPI ranks.
+
+        Assuming :func:`event_loop` is running on all MPI ranks
+        (except rank 0), this will execute `method` on all
+        ranks (including rank 0) with sequential arguments
+        `args` and keyword arguments `kwargs`.
+
+        Parameters
+        ----------
+        method
+            The function to execute on all ranks. Must be picklable.
+        args
+            The sequential arguments for `method`.
+        kwargs
+            The keyword arguments for `method`.
+
+        Returns
+        -------
+        The return value of `method` on rank 0.
+        """
+        assert rank0
+        if finished:
+            return
+        comm.bcast(dumps((method, args, kwargs)), root=0)
+        return method(*args, **kwargs)
+
+    def quit():
+        """Exit the event loop on all MPI ranks.
+
+        This will cause :func:`event_loop` to terminate on all
+        MPI ranks.
+        """
+        global finished
+        comm.bcast(dumps(('QUIT', None, None)))
+        finished = True
 
 
 ################################################################################
