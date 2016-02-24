@@ -27,6 +27,7 @@ script:
     # this fails on PRs, so skip it
     [[ "${TRAVIS_PULL_REQUEST}" != "false" ]] || pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
   elif [ "${PYTEST_MARKER}" == "MPI" ] ; then
+    export PYTHONPATH=$(pwd)/src
     xvfb-run -a mpirun -n 2 python src/pymortests/mpi_run_demo_tests.py
   else
     # this runs in pytest in a fake, auto numbered, X Server
