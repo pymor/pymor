@@ -48,7 +48,7 @@ from pymor.algorithms.greedy import greedy
 from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
 from pymor.discretizers.elliptic import discretize_elliptic_cg
 from pymor.gui.gl import ColorBarWidget, GLPatchWidget
-from pymor.reductors.linear import reduce_stationary_affine_linear
+from pymor.reductors.coercive import reduce_coercive_simple
 from pymor import gui
 
 PARAM_STEPS = 10
@@ -156,7 +156,7 @@ class ReducedSim(SimBase):
     def _first(self):
         args = self.args
         error_product = self.discretization.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
-        reductor = partial(reduce_stationary_affine_linear, error_product=error_product)
+        reductor = partial(reduce_coercive_simple, error_product=error_product)
         extension_algorithm = partial(gram_schmidt_basis_extension, product=self.discretization.h1_0_semi_product)
 
         greedy_data = greedy(self.discretization, reductor,

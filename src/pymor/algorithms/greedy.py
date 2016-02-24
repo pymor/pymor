@@ -43,7 +43,7 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
         `(last_reduced_discretization, last_reconstructor, last_reduction_data)`
         which can be used by the reductor to speed up the reduction
         process. For an example see
-        :func:`~pymor.reductors.linear.reduce_stationary_affine_linear`.
+        :func:`~pymor.reductors.coercive.reduce_coercive`.
     samples
         The set of |Parameter| samples on which to perform the greedy search.
     initial_basis
