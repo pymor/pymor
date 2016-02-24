@@ -172,9 +172,10 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     for d in range(1, len(interpolation_matrix) + 1):
         triangularity_errs.append(np.max(triangularity_errors[:d, :d]))
 
-    logger.info('Interpolation matrix is not lower triangular with maximum error of {}'
-                .format(triangularity_errs[-1]))
-    logger.info('')
+    if len(triangularity_errs) > 0:
+        logger.info('Interpolation matrix is not lower triangular with maximum error of {}'
+                    .format(triangularity_errs[-1]))
+        logger.info('')
 
     data = {'errors': max_errs, 'triangularity_errors': triangularity_errs}
 
@@ -416,9 +417,10 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
     for d in range(1, len(interpolation_matrix) + 1):
         triangularity_errs.append(np.max(triangularity_errors[:d, :d]))
 
-    logger.info('Interpolation matrix is not lower triangular with maximum error of {}'
-                .format(triangularity_errs[-1]))
-    logger.info('')
+    if len(triangularity_errs) > 0:
+        logger.info('Interpolation matrix is not lower triangular with maximum error of {}'
+                    .format(triangularity_errs[-1]))
+        logger.info('')
 
     data = {'errors': max_errs, 'triangularity_errors': triangularity_errs}
 
