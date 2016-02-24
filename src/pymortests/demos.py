@@ -4,11 +4,14 @@
 
 from __future__ import absolute_import, division, print_function
 
+import os
 import pkgutil
 import pymordemos
 import runpy
 import sys
 import pytest
+from tempfile import mkdtemp
+import shutil
 
 from pymortests.base import runmodule
 from pymor.gui.gl import HAVE_PYSIDE
@@ -82,6 +85,47 @@ def test_demos(demo_args):
         assert _is_failed_import_ok(ie), ie
     stop_gui_processes()
 
+
+def test_analyze_pickle1():
+    d = mkdtemp()
+    try:
+        test_demos(('pymordemos.thermalblock', ['--pickle=' + os.path.join(d, 'data'), 2, 2, 2, 10]))
+        test_demos(('pymordemos.analyze_pickle',
+                   ['histogram', '--error-norm=h1_0_semi', os.path.join(d, 'data_reduced'), 10]))
+    finally:
+        shutil.rmtree(d)
+
+
+def test_analyze_pickle2():
+    d = mkdtemp()
+    try:
+        test_demos(('pymordemos.thermalblock', ['--pickle=' + os.path.join(d, 'data'), 2, 2, 2, 10]))
+        test_demos(('pymordemos.analyze_pickle',
+                   ['histogram', '--detailed=' + os.path.join(d, 'data_detailed'),
+                    os.path.join(d, 'data_reduced'), 10]))
+    finally:
+        shutil.rmtree(d)
+
+
+def test_analyze_pickle3():
+    d = mkdtemp()
+    try:
+        test_demos(('pymordemos.thermalblock', ['--pickle=' + os.path.join(d, 'data'), 2, 2, 2, 10]))
+        test_demos(('pymordemos.analyze_pickle',
+                   ['convergence', '--error-norm=h1_0_semi', os.path.join(d, 'data_reduced'), 10]))
+    finally:
+        shutil.rmtree(d)
+
+
+def test_analyze_pickle4():
+    d = mkdtemp()
+    try:
+        test_demos(('pymordemos.thermalblock', ['--pickle=' + os.path.join(d, 'data'), 2, 2, 2, 10]))
+        test_demos(('pymordemos.analyze_pickle',
+                   ['convergence', '--detailed=' + os.path.join(d, 'data_detailed'),
+                    os.path.join(d, 'data_reduced'), 10]))
+    finally:
+        shutil.rmtree(d)
 
 if __name__ == "__main__":
     runmodule(filename=__file__)
