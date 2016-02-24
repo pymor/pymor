@@ -74,6 +74,7 @@ try:
         MPI.pickle.dumps = pymor.core.pickle.dumps
 
 except ImportError:
+    mpi4py_version = None
     HAVE_MPI = False
     rank = 0
     size = 1
