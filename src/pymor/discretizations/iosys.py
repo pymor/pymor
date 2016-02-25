@@ -569,7 +569,7 @@ class LTISystem(DiscretizationInterface):
         Parameters
         ----------
         sigma
-            Interpolation points (closed under conjugation)
+            Interpolation points (closed under conjugation).
         b_or_c
             Character 'b' or 'c', to choose between the input or output matrix.
 
@@ -622,6 +622,120 @@ class LTISystem(DiscretizationInterface):
                     v = sEmA.apply_inverse(v)
                 else:
                     v = sEmA.apply_inverse_adjoint(v)
+
+                v1 = v.real
+                if i > 0:
+                    v1_norm_orig = v1.l2_norm()
+                    Vop = VectorArrayOperator(V)
+                    v1 -= Vop.apply(Vop.apply_adjoint(v1))
+                    if v1.l2_norm() < v1_norm_orig / 10:
+                        v1 -= Vop.apply(Vop.apply_adjoint(v1))
+                v1.scal(1 / v1.l2_norm()[0])
+                V.append(v1)
+
+                v2 = v.imag
+                v2_norm_orig = v2.l2_norm()
+                Vop = VectorArrayOperator(V)
+                v2 -= Vop.apply(Vop.apply_adjoint(v2))
+                if v2.l2_norm() < v2_norm_orig / 10:
+                    v2 -= Vop.apply(Vop.apply_adjoint(v2))
+                v2.scal(1 / v2.l2_norm()[0])
+                V.append(v2)
+
+                v = v2
+
+        return V
+
+    def arnoldi_tangential(self, sigma, b_or_c, directions):
+        """Tangential Rational Arnoldi algorithm
+
+        Implemented only for multi-input or multi-output systems.
+
+        Parameters
+        ----------
+        sigma
+            Interpolation points (closed under conjugation).
+        b_or_c
+            Character 'b' or 'c', to choose between the input or output matrix.
+        directions
+            Tangential directions, array of shape (self.m, len(sigma)) or (self.p, len(sigma))
+
+        Returns
+        -------
+        V
+            Projection matrix.
+        """
+        assert isinstance(directions, np.ndarray)
+        r = len(sigma)
+        assert (b_or_c == 'b' and self.m > 1 and directions.shape == (self.m, r)
+                or b_or_c == 'c' and self.p > 1 and directions.shape == (self.p, r))
+
+        directions = NumpyVectorArray(directions.T)
+        directions_norms = directions.l2_norm()
+        for i in xrange(r):
+            directions.scal(1 / directions_norms[i], ind=i)
+
+        V = NumpyVectorArray.make_array(self.n, reserve=r)
+
+        for i in xrange(r):
+            if sigma[i].imag == 0:
+                if self.E is None:
+                    E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
+                    sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i].real, -1))
+                else:
+                    sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i].real, -1))
+
+                if b_or_c == 'b':
+                    if i == 0:
+                        v = sEmA.apply_inverse(self.B.apply(directions.real, ind=0))
+                    else:
+                        VTB = NumpyVectorArray(self.B.apply_adjoint(V).data.T)
+                        res = (sEmA.apply(V).data.T.dot(NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse(VTB).data.T)
+                               - self.B._matrix.toarray())
+                        res = NumpyMatrixOperator(res)
+                        v = sEmA.apply_inverse(res.apply(directions.real, ind=i))
+                else:
+                    if i == 0:
+                        v = sEmA.apply_inverse_adjoint(self.C.apply_adjoint(directions.real, ind=0))
+                    else:
+                        VTCT = NumpyVectorArray(self.C.apply(V).data.T)
+                        res = (sEmA.apply_adjoint(V).data.T.dot(NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse_adjoint(VTCT).data.T)
+                               - self.C._matrix.T.toarray())
+                        res = NumpyMatrixOperator(res)
+                        v = sEmA.apply_inverse_adjoint(res.apply(directions.real, ind=i))
+
+                if i > 0:
+                    v_norm_orig = v.l2_norm()[0]
+                    Vop = VectorArrayOperator(V)
+                    v -= Vop.apply(Vop.apply_adjoint(v))
+                    if v.l2_norm()[0] < v_norm_orig / 10:
+                        v -= Vop.apply(Vop.apply_adjoint(v))
+                v.scal(1 / v.l2_norm()[0])
+                V.append(v)
+            elif sigma[i].imag > 0:
+                if self.E is None:
+                    E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
+                    sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i], -1))
+                else:
+                    sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i], -1))
+
+                if b_or_c == 'b':
+                    if i == 0:
+                        v = sEmA.apply_inverse(self.B.apply(directions, ind=0))
+                    else:
+                        VTB = NumpyVectorArray(self.B.apply_adjoint(V).data.T)
+                        res = sEmA.apply(V).data.T.dot(NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse(VTB).data.T) - self.B._matrix.toarray()
+                        res = NumpyMatrixOperator(res)
+                        v = sEmA.apply_inverse(res.apply(directions, ind=i))
+                else:
+                    if i == 0:
+                        v = sEmA.apply_inverse_adjoint(self.C.apply_adjoint(directions, ind=0))
+                    else:
+                        VTCT = NumpyVectorArray(self.C.apply(V).data.T)
+                        res = (sEmA.apply_adjoint(V).data.T.dot(NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse_adjoint(VTCT).data.T)
+                               - self.C._matrix.T.toarray())
+                        res = NumpyMatrixOperator(res)
+                        v = sEmA.apply_inverse_adjoint(res.apply(directions, ind=i))
 
                 v1 = v.real
                 if i > 0:
@@ -741,9 +855,15 @@ class LTISystem(DiscretizationInterface):
             projection matrices `Vr` and `Wr`, distances between interpolation points in
             different iterations `dist`, and interpolation points from all iterations `Sigma`.
         """
-        if arnoldi and self.m == self.p == 1:
-            Vr = self.arnoldi(sigma, 'b')
-            Wr = self.arnoldi(sigma, 'c')
+        if arnoldi:
+            if self.m == 1:
+                Vr = self.arnoldi(sigma, 'b')
+            else:
+                Vr = self.arnoldi_tangential(sigma, 'b', b)
+            if self.p == 1:
+                Wr = self.arnoldi(sigma, 'c')
+            else:
+                Wr = self.arnoldi_tangential(sigma, 'c', c)
         else:
             Vr, Wr = self.interpolation(sigma, b, c)
 
@@ -769,9 +889,15 @@ class LTISystem(DiscretizationInterface):
             b = Br.T.dot(Y.conj())
             c = Cr.dot(X)
 
-            if arnoldi and self.m == self.p == 1:
-                Vr = self.arnoldi(sigma, 'b')
-                Wr = self.arnoldi(sigma, 'c')
+            if arnoldi:
+                if self.m == 1:
+                    Vr = self.arnoldi(sigma, 'b')
+                else:
+                    Vr = self.arnoldi_tangential(sigma, 'b', b)
+                if self.p == 1:
+                    Wr = self.arnoldi(sigma, 'c')
+                else:
+                    Wr = self.arnoldi_tangential(sigma, 'c', c)
             else:
                 Vr, Wr = self.interpolation(sigma, b, c)
 
