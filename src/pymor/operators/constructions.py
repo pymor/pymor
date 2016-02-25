@@ -989,8 +989,8 @@ class InducedNorm(ImmutableInterface, Parametric):
         self.name = name or product.name
         self.build_parameter_type(inherits=(product,))
 
-    def __call__(self, U, mu=None):
-        norm_squared = self.product.pairwise_apply2(U, U, mu=mu)
+    def __call__(self, U, ind=None, mu=None):
+        norm_squared = self.product.pairwise_apply2(U, U, U_ind=ind, V_ind=ind, mu=mu)
         if self.tol > 0:
             norm_squared = np.where(np.logical_and(0 > norm_squared, norm_squared > - self.tol),
                                     0, norm_squared)
