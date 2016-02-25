@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """This module contains methods for object serialization.
@@ -14,18 +14,62 @@ however, that its use should be avoided since it uses non-portable
 implementation details of CPython to achieve its goals.
 """
 
+from __future__ import absolute_import
+
+
 import marshal
 import opcode
-from functools import partial
 from types import FunctionType, ModuleType
 import pickle
 
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
 
-dump = partial(pickle.dump, protocol=-1)
-dumps = partial(pickle.dumps, protocol=-1)
-load = pickle.load
-loads = pickle.loads
+
 PicklingError = pickle.PicklingError
+UnpicklingError = pickle.UnpicklingError
+PROTOCOL = pickle.HIGHEST_PROTOCOL
+
+
+# on CPython provide pickling methods which use
+# dumps_function in case pickling of a function fails
+import platform
+if platform.python_implementation() == 'CPython':
+
+    def dump(obj, file, protocol=None):
+        pickler = pickle.Pickler(file, protocol=PROTOCOL)
+        pickler.persistent_id = _function_pickling_handler
+        pickler.dump(obj)
+
+
+    def dumps(obj, protocol=None):
+        file = StringIO()
+        pickler = pickle.Pickler(file, protocol=PROTOCOL)
+        pickler.persistent_id = _function_pickling_handler
+        pickler.dump(obj)
+        return file.getvalue()
+
+
+    def load(file):
+        unpickler = pickle.Unpickler(file)
+        unpickler.persistent_load = _function_unpickling_handler
+        return unpickler.load()
+
+
+    def loads(str):
+        file = StringIO(str)
+        unpickler = pickle.Unpickler(file)
+        unpickler.persistent_load = _function_unpickling_handler
+        return unpickler.load()
+
+else:
+    from functools import partial
+    dump = partial(pickle.dump, protocol=PROTOCOL)
+    dumps = partial(pickle.dumps, protocol=PROTOCOL)
+    load = pickle.load
+    loads = pickle.loads
 
 
 # The following method is a slightly modified version of
@@ -114,29 +158,30 @@ def loads_function(s):
         ctypes.pythonapi.PyCell_New.restype = ctypes.py_object
         ctypes.pythonapi.PyCell_New.argtypes = [ctypes.py_object]
         closure = tuple(ctypes.pythonapi.PyCell_New(c) for c in closure)
+    globals_['__builtins__'] = __builtins__
     r = FunctionType(code, globals_, name, defaults, closure)
     r.__dict__ = func_dict
     return r
 
 
-class FunctionPicklingWrapper(object):
-    """Serializable function container, using :func:`dumps_function` if necessary."""
-
-    def __init__(self, f):
-        self.function = f
-
-    def __getstate__(self):
-        f = self.function
+def _function_pickling_handler(f):
+    if f.__class__ is FunctionType:
         if f.__module__ != '__main__':
             try:
-                return dumps(f)
-            except PicklingError:
-                return (dumps_function(f),)
+                return 'A' + pickle.dumps(f)
+            except (TypeError, PicklingError):
+                return 'B' + dumps_function(f)
         else:
-            return (dumps_function(f),)
+            return 'B' + dumps_function(f)
+    else:
+        return None
 
-    def __setstate__(self, f):
-        if type(f) == tuple:
-            self.function = loads_function(f[0])
-        else:
-            self.function = loads(f)
+
+def _function_unpickling_handler(persid):
+    mode, data = persid[0], persid[1:]
+    if mode == 'A':
+        return pickle.loads(data)
+    elif mode == 'B':
+        return loads_function(data)
+    else:
+        return UnpicklingError

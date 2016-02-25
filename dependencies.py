@@ -1,13 +1,18 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-tests_require = ['pytest', 'pytest-cache', 'pytest-capturelog', 'pytest-cov']
-install_requires = ['Cython', 'numpy', 'scipy', 'Sphinx', 'docopt']
-pre_setup_requires = ['cython', 'numpy']
-setup_requires = pre_setup_requires
-install_suggests = ['ipython', 'ipdb', 'matplotlib', 'PyOpenGL', 'PySide', 'pyamg'] + tests_require
-#install_suggests = ['ipython', 'ipdb', 'matplotlib', 'pyvtk', 'sympy', 'PyOpenGL', 'PySide'] + tests_require
+tests_require = ['pytest', 'pytest-cov']
+install_requires = ['cython>=0.20.1', 'numpy>=1.8.1', 'scipy>=0.13.3', 'Sphinx', 'docopt']
+setup_requires = ['cython>=0.20.1', 'numpy>=1.8.1']
+install_suggests = {'ipython': 'an enhanced interactive python shell',
+                    'ipyparallel': 'required for pymor.parallel.ipython',
+                    'matplotlib': 'needed for error plots in demo scipts',
+                    'pyopengl': 'fast solution visualization for builtin discretizations (PySide also required)',
+                    'pyside': 'solution visualization for builtin discretizations',
+                    'pyamg': 'algebraic multigrid solvers',
+                    'mpi4py': 'required for pymor.tools.mpi and pymor.parallel.mpi',
+                    'pytest': 'testing framework required to execute unit tests'}
 
 import_names = {'ipython': 'IPython',
                 'pytest-cache': 'pytest_cache',
@@ -17,7 +22,7 @@ import_names = {'ipython': 'IPython',
                 'pytest-cov': 'pytest_cov',
                 'pytest-flakes': 'pytest_flakes',
                 'pytest-pep8': 'pytest_pep8',
-                'PyOpenGL': 'OpenGL'}
+                'pyopengl': 'OpenGL'}
 
 if __name__ == '__main__':
     print(' '.join([i for i in install_requires + install_suggests]))

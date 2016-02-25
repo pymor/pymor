@@ -1,15 +1,17 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+import os
 import pkgutil
 import pymordemos
 import runpy
 import sys
 import pytest
+from tempfile import mkdtemp
+import shutil
 
 from pymortests.base import runmodule
-from pymor.core.exceptions import PySideMissing
 from pymor.gui.gl import HAVE_PYSIDE
 from pymor.gui.qt import stop_gui_processes
 
@@ -19,13 +21,25 @@ DEMO_ARGS = (('elliptic', [0, 0, 0, 0]), ('elliptic', [1, 2, 0, 3]), ('elliptic'
              ('burgers', ['--num-flux=lax_friedrichs', '0.1']), ('burgers', ['--num-flux=engquist_osher', '0.1']),
              ('burgers_ei', [1, 2, 2, 5, 2, 5]), ('burgers', ['--num-flux=simplified_engquist_osher', '0.1']),
              ('elliptic2', [1, 20]), ('elliptic2', ['--fv', 1, 20]),
+             ('elliptic_unstructured', [6., 16, 1e-1]),
              ('elliptic_oned', [1, 20]), ('elliptic_oned', ['--fv', 1, 20]),
-             ('thermalblock', ['-e', 2, 2, 3, 5]), ('thermalblock', [2, 2, 3, 5]),
+             ('thermalblock', ['--plot-solutions', '--plot-err', '--plot-error-sequence', 2, 2, 3, 5]),
+             ('thermalblock', ['--fenics', 2, 2, 3, 5]),
+             ('thermalblock', ['--greedy-without-estimator', 3, 1, 2, 5]),
              ('thermalblock_gui', ['--testing', 2, 2, 3, 5]),
-             ('thermalblock_pod', [2, 2, 3, 5]))
+             ('thermalblock', ['--alg=pod', 2, 2, 3, 5]),
+             ('thermalblock', ['--alg=adaptive_greedy', 2, 2, 10, 30]),
+             ('thermalblock', ['--alg=naive', '--reductor=traditional', 2, 2, 10, 30]),
+             ('thermalblock_adaptive', [10]),
+             ('thermalblock_adaptive', ['--visualize-refinement', 10]),
+             ('thermalblock_simple', ['pymor', 'naive', 2, 10, 10]),
+             ('thermalblock_simple', ['fenics', 'greedy', 2, 10, 10]),
+             ('parabolic', [1]),
+             ('parabolic', ['--rect', 1]),
+             ('parabolic', ['--fv', 1]),
+             ('parabolic', ['--rect', '--fv', 1]))
 DEMO_ARGS = [('pymordemos.{}'.format(a), b) for (a, b) in DEMO_ARGS]
 # DEMO_ARGS = [('pymor.playground.demos.remote_thermalblock', ['--local', '-e',2, 2, 3, 5])]
-DEMO_ARGS += [('pymor.playground.demos.parabolic', [])]
 
 
 def _run(module, args):
@@ -40,6 +54,24 @@ def demo_args(request):
 
 def test_demos(demo_args):
     module, args = demo_args
+
+    import sys
+    sys._called_from_test = True
+
+    def nop(*args, **kwargs):
+        pass
+
+    try:
+        from matplotlib import pyplot
+        pyplot.show = nop
+    except ImportError:
+        pass
+    try:
+        import dolfin
+        dolfin.plot = nop
+        dolfin.interactive = nop
+    except ImportError:
+        pass
     try:
         ret = _run(module, args)
         # TODO find a better/tighter assert/way to run the code
@@ -49,18 +81,47 @@ def test_demos(demo_args):
     finally:
         stop_gui_processes()
 
-@pytest.mark.xfail(not HAVE_PYSIDE, reason="test_demos dynamically xfails if pyside is mandatory for demo")
-def test_demos_tested():
-    modules = []
-    for _, module_name, _ in pkgutil.walk_packages(pymordemos.__path__, pymordemos.__name__ + '.'):
-        try:
-            __import__(module_name)
-            modules.append(module_name)
-        except (TypeError, ImportError):
-            pass
-    tested = set([f[0] for f in DEMO_ARGS if f[0].startswith('pymordemos.')])
-    assert tested <= set(modules)
 
+def test_analyze_pickle1():
+    d = mkdtemp()
+    try:
+        test_demos(('pymordemos.thermalblock', ['--pickle=' + os.path.join(d, 'data'), 2, 2, 2, 10]))
+        test_demos(('pymordemos.analyze_pickle',
+                   ['histogram', '--error-norm=h1_0_semi', os.path.join(d, 'data_reduced'), 10]))
+    finally:
+        shutil.rmtree(d)
+
+
+def test_analyze_pickle2():
+    d = mkdtemp()
+    try:
+        test_demos(('pymordemos.thermalblock', ['--pickle=' + os.path.join(d, 'data'), 2, 2, 2, 10]))
+        test_demos(('pymordemos.analyze_pickle',
+                   ['histogram', '--detailed=' + os.path.join(d, 'data_detailed'),
+                    os.path.join(d, 'data_reduced'), 10]))
+    finally:
+        shutil.rmtree(d)
+
+
+def test_analyze_pickle3():
+    d = mkdtemp()
+    try:
+        test_demos(('pymordemos.thermalblock', ['--pickle=' + os.path.join(d, 'data'), 2, 2, 2, 10]))
+        test_demos(('pymordemos.analyze_pickle',
+                   ['convergence', '--error-norm=h1_0_semi', os.path.join(d, 'data_reduced'), 10]))
+    finally:
+        shutil.rmtree(d)
+
+
+def test_analyze_pickle4():
+    d = mkdtemp()
+    try:
+        test_demos(('pymordemos.thermalblock', ['--pickle=' + os.path.join(d, 'data'), 2, 2, 2, 10]))
+        test_demos(('pymordemos.analyze_pickle',
+                   ['convergence', '--detailed=' + os.path.join(d, 'data_detailed'),
+                    os.path.join(d, 'data_reduced'), 10]))
+    finally:
+        shutil.rmtree(d)
 
 if __name__ == "__main__":
     runmodule(filename=__file__)

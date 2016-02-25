@@ -1,8 +1,6 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-#
-# Contributors: Andreas Buhr <andreas@andreasbuhr.de>
 
 from itertools import chain
 import numpy as np
@@ -13,11 +11,10 @@ from pymor.core.exceptions import InversionError
 from pymor.operators.constructions import SelectionOperator
 from pymor.parameters.base import ParameterType
 from pymor.parameters.functionals import GenericParameterFunctional
-from pymor.tools.floatcmp import float_cmp_all
 from pymor.vectorarrays.numpy import NumpyVectorArray
 from pymortests.algorithms.stuff import MonomOperator
 from pymortests.fixtures.operator import operator, operator_with_arrays, operator_with_arrays_and_products
-from pymortests.pickle import assert_picklable, assert_picklable_without_dumps_function
+from pymortests.pickling import assert_picklable, assert_picklable_without_dumps_function
 from pymortests.vectorarray import valid_inds, valid_inds_of_same_length, invalid_inds
 
 
@@ -135,6 +132,8 @@ def test_pairwise_apply2_with_product(operator_with_arrays_and_products):
 
 def test_apply_adjoint(operator_with_arrays):
     op, mu, _, V = operator_with_arrays
+    if not op.linear:
+        return
     try:
         U = op.apply_adjoint(V, mu=mu)
     except NotImplementedError:
@@ -149,6 +148,8 @@ def test_apply_adjoint(operator_with_arrays):
 
 def test_apply_adjoint_2(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
+    if not op.linear:
+        return
     try:
         ATV = op.apply_adjoint(V, mu=mu)
     except NotImplementedError:
@@ -158,6 +159,8 @@ def test_apply_adjoint_2(operator_with_arrays):
 
 def test_apply_adjoint_2_with_products(operator_with_arrays_and_products):
     op, mu, U, V, sp, rp = operator_with_arrays_and_products
+    if not op.linear:
+        return
     try:
         ATV = op.apply_adjoint(V, mu=mu, source_product=sp, range_product=rp)
     except NotImplementedError:
@@ -167,20 +170,45 @@ def test_apply_adjoint_2_with_products(operator_with_arrays_and_products):
 
 def test_apply_inverse(operator_with_arrays):
     op, mu, _, V = operator_with_arrays
-    for options in chain([None], op.invert_options, op.invert_options.values()):
-        for ind in valid_inds(V):
-            try:
-                U = op.apply_inverse(V, mu=mu, ind=ind, options=options)
-            except InversionError:
-                return
-            assert U in op.source
-            assert len(U) == V.len_ind(ind)
-            VV = op.apply(U, mu=mu)
-            if (isinstance(options, str) and options.startswith('least_squares')
-                    or not isinstance(options, (str, type(None))) and options['type'].startswith('least_squares')):
-                continue
-            assert float_cmp_all(VV.l2_norm(), V.l2_norm(ind=ind), atol=1e-10, rtol=0.5)
+    for ind in valid_inds(V):
+        try:
+            U = op.apply_inverse(V, mu=mu, ind=ind)
+        except InversionError:
+            return
+        assert U in op.source
+        assert len(U) == V.len_ind(ind)
+        VV = op.apply(U, mu=mu)
+        assert np.all(almost_equal(VV, V, V_ind=ind, atol=1e-10, rtol=1e-3))
 
+
+def test_apply_inverse_adjoint(operator_with_arrays):
+    op, mu, U, _ = operator_with_arrays
+    if not op.linear:
+        return
+    for ind in valid_inds(U):
+        try:
+            V = op.apply_inverse_adjoint(U, mu=mu, ind=ind)
+        except InversionError:
+            return
+        assert V in op.range
+        assert len(V) == U.len_ind(ind)
+        UU = op.apply_adjoint(V, mu=mu)
+        assert np.all(almost_equal(UU, U, V_ind=ind, atol=1e-10, rtol=1e-3))
+
+
+def test_apply_inverse_adjoint_with_products(operator_with_arrays_and_products):
+    op, mu, U, _, sp, rp = operator_with_arrays_and_products
+    if not op.linear:
+        return
+    for ind in valid_inds(U):
+        try:
+            V = op.apply_inverse_adjoint(U, mu=mu, ind=ind, source_product=sp, range_product=rp)
+        except InversionError:
+            return
+        assert V in op.range
+        assert len(V) == U.len_ind(ind)
+        UU = op.apply_adjoint(V, mu=mu, source_product=sp, range_product=rp)
+        assert np.all(almost_equal(UU, U, V_ind=ind, atol=1e-10, rtol=1e-3))
 
 def test_projected(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
@@ -236,8 +264,10 @@ def test_projected_with_product_2(operator_with_arrays_and_products):
 
 def test_jacobian(operator_with_arrays):
     op, mu, U, _ = operator_with_arrays
+    if len(U) == 0:
+        return
     try:
-        j = op.jacobian(U, mu=mu)
+        j = op.jacobian(U.copy(ind=0), mu=mu)
     except NotImplementedError:
         return
     assert j.linear
@@ -250,6 +280,22 @@ def test_assemble(operator_with_arrays):
     aop = op.assemble(mu=mu)
     assert op.source == aop.source
     assert op.range == aop.range
+
+
+def test_restricted(operator_with_arrays):
+    op, mu, U, _, = operator_with_arrays
+    if op.range.dim == 0:
+        return
+    np.random.seed(4711 + U.dim)
+    for num in [0, 1, 3, 7]:
+        components = np.random.randint(0, op.range.dim, num)
+        try:
+            rop, source_dofs = op.restricted(components)
+        except NotImplementedError:
+            return
+        op_U = NumpyVectorArray(op.apply(U, mu=mu).components(components))
+        rop_U = rop.apply(NumpyVectorArray(U.components(source_dofs)), mu=mu)
+        assert np.all(almost_equal(op_U, rop_U))
 
 
 ########################################################################################################################

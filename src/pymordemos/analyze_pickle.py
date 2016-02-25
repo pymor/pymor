@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """Analyze pickled data demo.
@@ -51,7 +51,7 @@ def analyze_pickle_histogram(args):
     print('Loading reduced discretization ...')
     rb_discretization = load(open(args['REDUCED_DATA']))
 
-    mus = list(rb_discretization.parameter_space.sample_randomly(args['SAMPLES']))
+    mus = rb_discretization.parameter_space.sample_randomly(args['SAMPLES'])
     us = []
     for mu in mus:
         print('Solving reduced for {} ... '.format(mu), end='')
@@ -172,6 +172,7 @@ def analyze_pickle_convergence(args):
     if args['--detailed']:
         print('Loading high-dimensional data ...')
         discretization, reconstructor = load(open(args['--detailed']))
+        discretization.enable_caching('disk')
 
     if not hasattr(rb_discretization, 'estimate') and not args['--detailed']:
         raise ValueError('Nothing to do! (Neither estimates nor true error can be computed.)')
@@ -182,7 +183,7 @@ def analyze_pickle_convergence(args):
     else:
         dims = np.arange(dim + 1)
 
-    mus = list(rb_discretization.parameter_space.sample_randomly(args['SAMPLES']))
+    mus = rb_discretization.parameter_space.sample_randomly(args['SAMPLES'])
 
     ESTS = []
     ERRS = []

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import sys, os, re
@@ -107,7 +107,7 @@ copyright = '2012-2015, the pyMOR AUTHORS'
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 #
-version = str(pymor.version)
+version = str(pymor.VERSION)
 
 # The full version, including alpha/beta/rc tags.
 release = version.split('-')[0]

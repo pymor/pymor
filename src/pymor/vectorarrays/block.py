@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from numbers import Number
@@ -66,9 +66,9 @@ class BlockVectorArray(VectorArrayInterface):
     def data(self):
         return np.hstack([block.data for block in self.blocks])
 
-    def copy(self, ind=None):
+    def copy(self, ind=None, deep=False):
         assert self.check_ind(ind)
-        return BlockVectorArray([block.copy(ind=ind) for block in self._blocks], copy=False)
+        return BlockVectorArray([block.copy(ind=ind, deep=deep) for block in self._blocks], copy=False)
 
     def append(self, other, o_ind=None, remove_from_other=False):
         assert self._blocks_are_valid()

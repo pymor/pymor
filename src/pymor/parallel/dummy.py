@@ -1,10 +1,11 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
 
 from copy import deepcopy
+from itertools import izip
 
 from pymor.core.interfaces import ImmutableInterface
 from pymor.parallel.interfaces import WorkerPoolInterface, RemoteObjectInterface
@@ -31,7 +32,7 @@ class DummyPool(WorkerPoolInterface):
         return DummyRemoteObject(l)
 
     def _map_kwargs(self, kwargs):
-        return {k: (v.obj if isinstance(v, DummyRemoteObject) else v) for k, v in kwargs.items()}
+        return {k: (v.obj if isinstance(v, DummyRemoteObject) else v) for k, v in kwargs.iteritems()}
 
     def apply(self, function, *args, **kwargs):
         kwargs = self._map_kwargs(kwargs)
@@ -43,11 +44,11 @@ class DummyPool(WorkerPoolInterface):
 
     def map(self, function, *args, **kwargs):
         kwargs = self._map_kwargs(kwargs)
-        result = [function(*a, **kwargs) for a in zip(*args)]
-        if isinstance(result[0], tuple):
-            return zip(*result)
-        else:
-            return result
+        result = [function(*a, **kwargs) for a in izip(*args)]
+        return result
+
+    def __nonzero__(self):
+        return False
 
 
 dummy_pool = DummyPool()

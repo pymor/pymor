@@ -1,11 +1,8 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-#
-# Contributors: Michael Laier <m_laie01@uni-muenster.de>
 
 from numbers import Number
-
 
 import numpy as np
 import sys
@@ -149,28 +146,6 @@ class GenericFunction(FunctionBase):
 
         return v
 
-    def __getstate__(self):
-        s = self.__dict__.copy()
-        # python 3.5 raises AttributeError for pickling local functions instead of PicklingError
-        pickle_exception = PicklingError if sys.version_info < (3,5) else (PicklingError, AttributeError)
-        try:
-            pickled_mapping = dumps(self._mapping)
-            picklable = True
-        except pickle_exception:
-            self.logger.warn('Mapping not picklable, trying pymor.core.pickle.dumps_function.')
-            pickled_mapping = dumps_function(self._mapping)
-            picklable = False
-        s['_mapping'] = pickled_mapping
-        s['_picklable'] = picklable
-        return s
-
-    def __setstate__(self, state):
-        if state.pop('_picklable'):
-            state['_mapping'] = loads(state['_mapping'])
-        else:
-            state['_mapping'] = loads_function(state['_mapping'])
-        self.__dict__.update(state)
-
 
 class ExpressionFunction(GenericFunction):
     """Turns a Python expression given as a string into a |Function|.
@@ -200,7 +175,7 @@ class ExpressionFunction(GenericFunction):
 
     functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',
                                              'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
-                                             'exp', 'exp2', 'log', 'log2', 'log10',
+                                             'exp', 'exp2', 'log', 'log2', 'log10', 'array',
                                              'min', 'minimum', 'max', 'maximum', 'pi', 'e'}}
 
     def __init__(self, expression, dim_domain=1, shape_range=tuple(), parameter_type=None, name=None):
@@ -216,7 +191,7 @@ class ExpressionFunction(GenericFunction):
 
     def __reduce__(self):
         return (ExpressionFunction,
-                (self.expression, self.dim_domain, self.shape_range, self.parameter_type, self.name))
+                (self.expression, self.dim_domain, self.shape_range, self.parameter_type, getattr(self, '_name', None)))
 
 
 class LincombFunction(FunctionBase):
@@ -266,4 +241,4 @@ class LincombFunction(FunctionBase):
     def evaluate(self, x, mu=None):
         mu = self.parse_parameter(mu)
         coeffs = self.evaluate_coefficients(mu)
-        return sum(c * f(x, mu) for c, f in zip(coeffs, self.functions))
+        return sum(c * f(x, mu) for c, f in izip(coeffs, self.functions))

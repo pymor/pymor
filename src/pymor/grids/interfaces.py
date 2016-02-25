@@ -1,9 +1,6 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-#
-# Contributors: Michael Laier <m_laie01@uni-muenster.de>
-#               Michael Schaefer <michael.schaefer@uni-muenster.de>
 
 import numpy as np
 
@@ -29,6 +26,8 @@ class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplement
     dim
         The dimension of the grid.
     """
+
+    cache_region = 'memory'
 
     @abstractmethod
     def size(self, codim):
@@ -114,6 +113,7 @@ class ReferenceElementInterface(ReferenceElementDefaultImplementations, Cacheabl
 
     dim = None
     volume = None
+    cache_region = 'memory'
 
     @abstractmethod
     def size(self, codim):
@@ -289,6 +289,10 @@ class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopological
         """
         return self._quadrature_points(codim, order, npoints, quadrature_type)
 
+    def bounding_box(self):
+        """returns a `(2, dim_outer)`-shaped array containing lower/upper bounding box coordinates."""
+        return self._bounding_box()
+
 
 class AffineGridWithOrthogonalCentersInterface(AffineGridInterface):
     """|AffineGrid| with an additional `orthogonal_centers` method."""
@@ -318,6 +322,7 @@ class BoundaryInfoInterface(CacheableInterface):
     """
 
     boundary_types = frozenset()
+    cache_region = 'memory'
 
     def mask(self, boundary_type, codim):
         """retval[i] is `True` if the codim-`codim` entity of global index `i` is

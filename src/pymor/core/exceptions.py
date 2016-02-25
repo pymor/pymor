@@ -7,6 +7,7 @@ import warnings
 
 warn = warnings.warn
 
+
 class ConstError(Exception):
     """I get thrown when you try to add a new member to
     a locked class instance"""
@@ -42,3 +43,14 @@ class PySideMissing(ImportError):
     def __init__(self, msg=None):
         msg = msg or 'cannot visualize: import of PySide failed'
         super(PySideMissing, self).__init__(msg)
+
+
+class GmshError(Exception):
+    """Is raised when a Gmsh related error occurs."""
+
+
+class ImageCollectionError(Exception):
+    """Is raised when a pymor.algorithms.image.estimate_image fails for given operator."""
+    def __init__(self, op):
+        super(ImageCollectionError, self).__init__('Cannot estimage image for {}'.format(op))
+        self.op = op

@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import time
@@ -14,7 +14,7 @@ from pymor.parallel.manager import RemoteObjectManager
 
 
 def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=True, error_norm=None,
-           extension_algorithm=gram_schmidt_basis_extension, target_error=None, max_extensions=None,
+           extension_algorithm=gram_schmidt_basis_extension, atol=None, rtol=None, max_extensions=None,
            pool=None):
     """Greedy basis generation algorithm.
 
@@ -41,7 +41,7 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
         `(last_reduced_discretization, last_reconstructor, last_reduction_data)`
         which can be used by the reductor to speed up the reduction
         process. For an example see
-        :func:`~pymor.reductors.linear.reduce_stationary_affine_linear`.
+        :func:`~pymor.reductors.coercive.reduce_coercive`.
     samples
         The set of |Parameter| samples on which to perform the greedy search.
     initial_basis
@@ -62,9 +62,12 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
         `extension_data` is a dict at least containing the key
         `hierarchic`. `hierarchic` should be set to `True` if `new_basis`
         contains `old_basis` as its first vectors.
-    target_error
+    atol
         If not `None`, stop the algorithm if the maximum (estimated) error
         on the sample set drops below this value.
+    rtol
+        If not `None`, stop the algorithm if the maximum (estimated)
+        relative error on the sample set drops below this value.
     max_extensions
         If not `None`, stop the algorithm after `max_extensions` extension
         steps.
@@ -136,8 +139,12 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
             max_err_mus.append(max_err_mu)
             logger.info('Maximum error after {} extensions: {} (mu = {})'.format(extensions, max_err, max_err_mu))
 
-            if target_error is not None and max_err <= target_error:
-                logger.info('Reached maximal error on snapshots of {} <= {}'.format(max_err, target_error))
+            if atol is not None and max_err <= atol:
+                logger.info('Absolute error tolerance ({}) reached! Stoping extension loop.'.format(atol))
+                break
+
+            if rtol is not None and max_err / max_errs[0] <= rtol:
+                logger.info('Relative error tolerance ({}) reached! Stoping extension loop.'.format(rtol))
                 break
 
             logger.info('Extending with snapshot for mu = {}'.format(max_err_mu))

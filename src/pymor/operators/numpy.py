@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-#
-# Contributors: Michael Laier <m_laie01@uni-muenster.de>
 
 """This module provides the following |NumPy| based |Operators|:
 
@@ -15,8 +13,6 @@
 """
 
 from collections import OrderedDict
-
-
 import numpy as np
 from scipy.sparse import issparse
 from scipy.io import mmwrite, savemat
@@ -27,6 +23,7 @@ from pymor.core.exceptions import InversionError
 from pymor.core.interfaces import abstractmethod
 from pymor.core.logger import getLogger
 from pymor.operators.basic import OperatorBase
+from pymor.operators.constructions import IdentityOperator, ZeroOperator
 from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
 
 
@@ -55,9 +52,11 @@ class NumpyGenericOperator(OperatorBase):
         Name of the operator.
     """
 
-    def __init__(self, mapping, dim_source=1, dim_range=1, linear=False, parameter_type=None, name=None):
+    def __init__(self, mapping, dim_source=1, dim_range=1, linear=False, parameter_type=None, solver_options=None,
+                 name=None):
         self.source = NumpyVectorSpace(dim_source)
         self.range = NumpyVectorSpace(dim_range)
+        self.solver_options = solver_options
         self.name = name
         self._mapping = mapping
         self.linear = linear
@@ -107,17 +106,18 @@ class NumpyMatrixBasedOperator(OperatorBase):
         if hasattr(self, '_assembled_operator'):
             if self._defaults_sid != defaults_sid():
                 self.logger.warn('Re-assembling since state of global defaults has changed.')
-                op = self._assembled_operator = NumpyMatrixOperator(self._assemble())
+                op = self._assembled_operator = NumpyMatrixOperator(self._assemble(),
+                                                                    solver_options=self.solver_options)
                 self._defaults_sid = defaults_sid()
                 return op
             else:
                 return self._assembled_operator
         elif not self.parameter_type:
-            op = self._assembled_operator = NumpyMatrixOperator(self._assemble())
+            op = self._assembled_operator = NumpyMatrixOperator(self._assemble(), solver_options=self.solver_options)
             self._defaults_sid = defaults_sid()
             return op
         else:
-            return NumpyMatrixOperator(self._assemble(self.parse_parameter(mu)))
+            return NumpyMatrixOperator(self._assemble(self.parse_parameter(mu)), solver_options=self.solver_options)
 
     def apply(self, U, ind=None, mu=None):
         return self.assemble(mu).apply(U, ind=ind)
@@ -128,15 +128,9 @@ class NumpyMatrixBasedOperator(OperatorBase):
     def as_vector(self, mu=None):
         return self.assemble(mu).as_vector()
 
-    def apply_inverse(self, V, ind=None, mu=None, options=None):
-        return self.assemble(mu).apply_inverse(V, ind=ind, options=options)
+    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
+        return self.assemble(mu).apply_inverse(V, ind=ind, least_squares=least_squares)
 
-    @property
-    def invert_options(self):
-        if self.sparse is None:
-            raise ValueError('Sparsity unkown, assemble first.')
-        else:
-            return _invert_options(sparse=self.sparse)
 
     def export_matrix(self, filename, matrix_name=None, output_format='matlab', mu=None):
         """Save the matrix of the operator to a file.
@@ -178,15 +172,22 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         Name of the operator.
     """
 
-    def __init__(self, matrix, name=None):
+    def __init__(self, matrix, solver_options=None, name=None):
         assert matrix.ndim <= 2
         if matrix.ndim == 1:
             matrix = np.reshape(matrix, (1, -1))
         self.source = NumpyVectorSpace(matrix.shape[1])
         self.range = NumpyVectorSpace(matrix.shape[0])
+        self.solver_options = solver_options
         self.name = name
         self._matrix = matrix
         self.sparse = issparse(matrix)
+
+    @classmethod
+    def from_file(cls, path, key=None, solver_options=None, name=None):
+        from pymor.tools.io import load_matrix
+        matrix = load_matrix(path, key=key)
+        return cls(matrix, solver_options=solver_options, name=name or key or path)
 
     def _assemble(self, mu=None):
         pass
@@ -221,19 +222,50 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         else:
             return ATPrU
 
-    def apply_inverse(self, V, ind=None, mu=None, options=None):
+    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
         assert V in self.range
         assert V.check_ind(ind)
+
         if V.dim == 0:
-            if (self.source.dim == 0
-                    or isinstance(options, str) and options.startswith('least_squares')
-                    or isinstance(options, dict) and options['type'].startswith('least_squares')):
+            if self.source.dim == 0 or least_squares:
                 return NumpyVectorArray(np.zeros((V.len_ind(ind), self.source.dim)))
             else:
                 raise InversionError
+
+        options = (self.solver_options.get('inverse') if self.solver_options else
+                   'least_squares' if least_squares else
+                   None)
+
+        if options and not least_squares:
+            solver_type = options if isinstance(options, str) else options['type']
+            if solver_type.startswith('least_squares'):
+                self.logger.warn('Least squares solver selected but "least_squares == False"')
+
         V = V.data if ind is None else \
             V.data[ind] if hasattr(ind, '__len__') else V.data[ind:ind + 1]
-        return NumpyVectorArray(_apply_inverse(self._matrix, V, options=options), copy=False)
+
+        try:
+            return NumpyVectorArray(_apply_inverse(self._matrix, V, options=options), copy=False)
+        except InversionError as e:
+            if least_squares and options:
+                solver_type = options if isinstance(options, str) else options['type']
+                if not solver_type.startswith('least_squares'):
+                    msg = str(e) \
+                        + '\nNote: linear solver was selected for solving least squares problem (maybe not invertible?)'
+                    raise InversionError(msg)
+            raise e
+
+    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None,
+                              least_squares=False):
+        if source_product or range_product:
+            return super(NumpyMatrixOperator, self).apply_inverse_adjoint(U, ind=ind, mu=mu,
+                                                                          source_product=source_product,
+                                                                          range_product=range_product,
+                                                                          least_squares=least_squares)
+        else:
+            options = {'inverse': self.solver_options.get('inverse_adjoint') if self.solver_options else None}
+            adjoint_op = NumpyMatrixOperator(self._matrix.T, solver_options=options)
+            return adjoint_op.apply_inverse(U, ind=ind, mu=mu, least_squares=least_squares)
 
     def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
         """Project the operator to a subbasis.
@@ -266,18 +298,40 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         assert dim_range is None or dim_range <= self.range.dim
         name = name or '{}_projected_to_subbasis'.format(self.name)
         # copy instead of just slicing the matrix to ensure contiguous memory
-        return NumpyMatrixOperator(self._matrix[:dim_range, :dim_source].copy(), name=name)
+        return NumpyMatrixOperator(self._matrix[:dim_range, :dim_source].copy(), solver_options=self.solver_options,
+                                   name=name)
 
-    def assemble_lincomb(self, operators, coefficients, name=None):
-        if not all(isinstance(op, NumpyMatrixOperator) for op in operators):
+    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
+        if not all(isinstance(op, (NumpyMatrixOperator, ZeroOperator, IdentityOperator)) for op in operators):
             return None
 
+        common_mat_dtype = reduce(np.promote_types,
+                                  (op._matrix.dtype for op in operators if hasattr(op, '_matrix')))
+        common_coef_dtype = reduce(np.promote_types, (type(c.real if c.imag == 0 else c) for c in coefficients))
+        common_dtype = np.promote_types(common_mat_dtype, common_coef_dtype)
+
         if coefficients[0] == 1:
-            matrix = operators[0]._matrix.copy()
+            matrix = operators[0]._matrix.astype(common_dtype)
         else:
-            matrix = operators[0]._matrix * coefficients[0]
-        for op, c in zip(operators[1:], coefficients[1:]):
-            if c == 1:
+            if coefficients[0].imag == 0:
+                matrix = operators[0]._matrix * coefficients[0].real
+            else:
+                matrix = operators[0]._matrix * coefficients[0]
+            if matrix.dtype != common_dtype:
+                matrix = matrix.astype(common_dtype)
+
+        for op, c in izip(operators[1:], coefficients[1:]):
+            if type(op) is ZeroOperator:
+                continue
+            elif type(op) is IdentityOperator:
+                if operators[0].sparse:
+                    try:
+                        matrix += (scipy.sparse.eye(matrix.shape[0]) * c)
+                    except NotImplementedError:
+                        matrix = matrix + (scipy.sparse.eye(matrix.shape[0]) * c)
+                else:
+                    matrix += (np.eye(matrix.shape[0]) * c)
+            elif c == 1:
                 try:
                     matrix += op._matrix
                 except NotImplementedError:
@@ -287,12 +341,17 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                     matrix -= op._matrix
                 except NotImplementedError:
                     matrix = matrix - op._matrix
+            elif c.imag == 0:
+                try:
+                    matrix += (op._matrix * c.real)
+                except NotImplementedError:
+                    matrix = matrix + (op._matrix * c.real)
             else:
                 try:
                     matrix += (op._matrix * c)
                 except NotImplementedError:
                     matrix = matrix + (op._matrix * c)
-        return NumpyMatrixOperator(matrix)
+        return NumpyMatrixOperator(matrix, solver_options=solver_options)
 
     def __getstate__(self):
         if hasattr(self._matrix, 'factorization'):  # remove unplicklable SuperLU factorization
@@ -328,7 +387,7 @@ _sparse_options_sid = None
 def dense_options(default_solver='solve',
                   default_least_squares_solver='least_squares_lstsq',
                   least_squares_lstsq_rcond=-1.):
-    """Returns |invert_options| (with default values) for dense |NumPy| matricies.
+    """Returns |solver_options| (with default values) for dense |NumPy| matricies.
 
     Parameters
     ----------
@@ -343,7 +402,7 @@ def dense_options(default_solver='solve',
 
     Returns
     -------
-    A tuple of all possible |invert_options|.
+    A tuple of possible values for |solver_options|.
     """
 
     assert default_least_squares_solver.startswith('least_squares')
@@ -352,7 +411,7 @@ def dense_options(default_solver='solve',
             ('least_squares_lstsq', {'type': 'least_squares_lstsq',
                                      'rcond': least_squares_lstsq_rcond}))
     opts = OrderedDict(opts)
-    opts.update(genericsolvers.invert_options())
+    opts.update(genericsolvers.options())
     def_opt = opts.pop(default_solver)
     if default_least_squares_solver != default_solver:
         def_ls_opt = opts.pop(default_least_squares_solver)
@@ -380,7 +439,7 @@ def dense_options(default_solver='solve',
           'pyamg_sa_accel', 'pyamg_sa_tol', 'pyamg_sa_maxiter',
           sid_ignore=('least_squares_lsmr_show', 'least_squares_lsqr_show', 'pyamg_verb'))
 def sparse_options(default_solver='spsolve',
-                   default_least_squares_solver='least_squares_generic_lsmr',
+                   default_least_squares_solver='least_squares_lsmr' if HAVE_SCIPY_LSMR else 'least_squares_generic_lsmr',
                    bicgstab_tol=1e-15,
                    bicgstab_maxiter=None,
                    spilu_drop_tol=1e-4,
@@ -434,17 +493,16 @@ def sparse_options(default_solver='spsolve',
                    pyamg_sa_accel=None,
                    pyamg_sa_tol=1e-5,
                    pyamg_sa_maxiter=100):
-    """Returns |invert_options| (with default values) for sparse |NumPy| matricies.
+    """Returns |solver_options| (with default values) for sparse |NumPy| matricies.
 
     Parameters
     ----------
     default_solver
         Default sparse solver to use (spsolve, bicgstab, bicgstab_spilu, pyamg,
-        pyamg_rs, pyamg_sa, generic_lgmres, least_squares_generic_lsmr,
-        least_squares_generic_lsqr).
+        pyamg_rs, pyamg_sa, generic_lgmres, least_squares_lsmr, least_squares_lsqr).
     default_least_squares_solver
-        Default solver to use for least squares problems (least_squares_generic_lsmr,
-        least_squares_generic_lsqr).
+        Default solver to use for least squares problems (least_squares_lsmr,
+        least_squares_lsqr).
     bicgstab_tol
         See :func:`scipy.sparse.linalg.bicgstab`.
     bicgstab_maxiter
@@ -552,7 +610,7 @@ def sparse_options(default_solver='spsolve',
 
     Returns
     -------
-    A tuple of all possible |invert_options|.
+    A tuple of all possible |solver_options|.
     """
 
     assert default_least_squares_solver.startswith('least_squares')
@@ -625,7 +683,7 @@ def sparse_options(default_solver='spsolve',
                                'tol': pyamg_sa_tol,
                                'maxiter': pyamg_sa_maxiter}))
     opts = OrderedDict(opts)
-    opts.update(genericsolvers.invert_options())
+    opts.update(genericsolvers.options())
     def_opt = opts.pop(default_solver)
     if default_least_squares_solver != default_solver:
         def_ls_opt = opts.pop(default_least_squares_solver)
@@ -637,8 +695,11 @@ def sparse_options(default_solver='spsolve',
     return ordered_opts
 
 
-def _invert_options(matrix=None, sparse=None):
-    """Returns |invert_options| (with default values) for a given |NumPy| matrix.
+def _options(matrix=None, sparse=None):
+    """Returns |solver_options| (with default values) for a given |NumPy| matrix.
+
+    See :func:`dense_options` for documentation of all possible options for
+    dense matrices.
 
     See :func:`sparse_options` for documentation of all possible options for
     sparse matrices.
@@ -654,7 +715,7 @@ def _invert_options(matrix=None, sparse=None):
 
     Returns
     -------
-    A tuple of all possible |invert_options|.
+    A tuple of all possible |solver_options|.
     """
     global _dense_options, _dense_options_sid, _sparse_options, _sparse_options_sid
     assert (matrix is None) != (sparse is None)
@@ -680,6 +741,9 @@ def _apply_inverse(matrix, V, options=None):
 
     Applies the inverse of `matrix` to the row vectors in `V`.
 
+    See :func:`dense_options` for documentation of all possible options for
+    sparse matrices.
+
     See :func:`sparse_options` for documentation of all possible options for
     sparse matrices.
 
@@ -695,20 +759,20 @@ def _apply_inverse(matrix, V, options=None):
         the right-hand sides of the linear equation systems to
         solve.
     options
-        |invert_options| to use. (See :func:`invert_options`.)
+        The solver options to use. (See :func:`_options`.)
 
     Returns
     -------
     |NumPy array| of the solution vectors.
     """
 
-    default_options = _invert_options(matrix)
+    default_options = _options(matrix)
 
     if options is None:
-        options = next(iter(default_options.values()))
+        options = default_options.values()[0]
     elif isinstance(options, str):
         if options == 'least_squares':
-            for k, v in default_options.items():
+            for k, v in default_options.iteritems():
                 if k.startswith('least_squares'):
                     options = v
                     break
@@ -717,12 +781,12 @@ def _apply_inverse(matrix, V, options=None):
             options = default_options[options]
     else:
         assert 'type' in options and options['type'] in default_options \
-            and options.keys() <= default_options[options['type']].keys()
+            and options.viewkeys() <= default_options[options['type']].viewkeys()
         user_options = options
         options = default_options[user_options['type']]
         options.update(user_options)
 
-    R = np.empty((len(V), matrix.shape[1]))
+    R = np.empty((len(V), matrix.shape[1]), dtype=np.promote_types(matrix.dtype, V.dtype))
 
     if options['type'] == 'solve':
         for i, VV in enumerate(V):
@@ -746,15 +810,8 @@ def _apply_inverse(matrix, V, options=None):
                     raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
                                          format(info))
     elif options['type'] == 'bicgstab_spilu':
-        # workaround for https://github.com/pymor/pymor/issues/171
-        try:
-            ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
-                        drop_rule=options['spilu_drop_rule'], permc_spec=options['spilu_permc_spec'])
-        except TypeError as t:
-            logger = getLogger('pymor.operators.numpy._apply_inverse')
-            logger.error("ignoring drop_rule in ilu factorization")
-            ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
-                        permc_spec=options['spilu_permc_spec'])
+        ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
+                    drop_rule=options['spilu_drop_rule'], permc_spec=options['spilu_permc_spec'])
         precond = LinearOperator(matrix.shape, ilu.solve)
         for i, VV in enumerate(V):
             R[i], info = bicgstab(matrix, VV, tol=options['tol'], maxiter=options['maxiter'], M=precond)
@@ -765,28 +822,31 @@ def _apply_inverse(matrix, V, options=None):
                     raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
                                          format(info))
     elif options['type'] == 'spsolve':
-        if scipy.version.version >= '0.14':
-            if hasattr(matrix, 'factorization'):
-                R = matrix.factorization.solve(V.T).T
-            elif options['keep_factorization']:
-                matrix.factorization = splu(matrix, permc_spec=options['permc_spec'])
-                R = matrix.factorization.solve(V.T).T
+        try:
+            if map(int, scipy.version.version.split('.')) >= [0, 14, 0]:
+                if hasattr(matrix, 'factorization'):
+                    R = matrix.factorization.solve(V.T).T
+                elif options['keep_factorization']:
+                    matrix.factorization = splu(matrix, permc_spec=options['permc_spec'])
+                    R = matrix.factorization.solve(V.T).T
+                else:
+                    R = spsolve(matrix, V.T, permc_spec=options['permc_spec']).T
             else:
-                R = spsolve(matrix, V.T, permc_spec=options['permc_spec']).T
-        else:
-            if hasattr(matrix, 'factorization'):
-                for i, VV in enumerate(V):
-                    R[i] = matrix.factorization.solve(VV)
-            elif options['keep_factorization']:
-                matrix.factorization = splu(matrix, permc_spec=options['permc_spec'])
-                for i, VV in enumerate(V):
-                    R[i] = matrix.factorization.solve(VV)
-            elif len(V) > 1:
-                factorization = splu(matrix, permc_spec=options['permc_spec'])
-                for i, VV in enumerate(V):
-                    R[i] = factorization.solve(VV)
-            else:
-                R = spsolve(matrix, V.T, permc_spec=options['permc_spec']).reshape((1, -1))
+                if hasattr(matrix, 'factorization'):
+                    for i, VV in enumerate(V):
+                        R[i] = matrix.factorization.solve(VV)
+                elif options['keep_factorization']:
+                    matrix.factorization = splu(matrix, permc_spec=options['permc_spec'])
+                    for i, VV in enumerate(V):
+                        R[i] = matrix.factorization.solve(VV)
+                elif len(V) > 1:
+                    factorization = splu(matrix, permc_spec=options['permc_spec'])
+                    for i, VV in enumerate(V):
+                        R[i] = factorization.solve(VV)
+                else:
+                    R = spsolve(matrix, V.T, permc_spec=options['permc_spec']).reshape((1, -1))
+        except RuntimeError as e:
+            raise InversionError(e)
     elif options['type'] == 'lgmres':
         for i, VV in enumerate(V):
             R[i], info = lgmres(matrix, VV.copy(i),

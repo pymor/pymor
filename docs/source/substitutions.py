@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 # flake8: noqa
@@ -60,11 +60,13 @@ common = '''
 .. |CacheRegion| replace:: :class:`~pymor.core.cache.CacheRegion`
 
 .. |EllipticProblem| replace:: :class:`~pymor.analyticalproblems.elliptic.EllipticProblem`
+.. |ParabolicProblem| replace:: :class:`~pymor.analyticalproblems.parabolic.ParabolicProblem`
 .. |InstationaryAdvectionProblem| replace:: :class:`~pymor.analyticalproblems.advection.InstationaryAdvectionProblem`
 
 .. |BoundaryType| replace:: :class:`~pymor.domaindescriptions.boundarytypes.BoundaryType`
 .. |BoundaryTypes| replace:: :class:`BoundaryTypes <pymor.domaindescriptions.boundarytypes.BoundaryType>`
 .. |RectDomain| replace:: :class:`~pymor.domaindescriptions.basic.RectDomain`
+.. |PolygonalDomain| replace:: :class:`~pymor.domaindescriptions.polygonal.PolygonalDomain`
 .. |CylindricalDomain| replace:: :class:`~pymor.domaindescriptions.basic.CylindricalDomain`
 .. |TorusDomain| replace:: :class:`~pymor.domaindescriptions.basic.TorusDomain`
 .. |LineDomain| replace:: :class:`~pymor.domaindescriptions.basic.LineDomain`
@@ -74,6 +76,7 @@ common = '''
 .. |OnedGrid| replace:: :class:`~pymor.grids.oned.OnedGrid`
 .. |RectGrid| replace:: :class:`~pymor.grids.rect.RectGrid`
 .. |TriaGrid| replace:: :class:`~pymor.grids.tria.TriaGrid`
+.. |GmshGrid| replace:: :class:`~pymor.grids.gmsh.GmshGrid`
 
 .. |NumpyVectorArray| replace:: :class:`~pymor.vectorarrays.numpy.NumpyVectorArray`
 .. |NumpyVectorArrays| replace:: :class:`NumpyVectorArrays <pymor.vectorarrays.numpy.NumpyVectorArray>`
@@ -112,7 +115,7 @@ common = '''
 
 .. |OrderedDict| replace:: :class:`~collections.OrderedDict`
 
-.. |invert_options| replace:: :meth:`invert options <pymor.operators.interfaces.OperatorInterface.invert_options>`
+.. |solver_options| replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.solver_options`
 
 '''
 

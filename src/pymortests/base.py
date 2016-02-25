@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import pprint
@@ -98,5 +98,5 @@ class MonomOperator(OperatorBase):
     def jacobian(self, U, mu=None):
         return MonomOperator(self.order - 1, self.derivative)
 
-    def apply_inverse(self, V, ind=None, mu=None, options=None):
+    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
         return NumpyVectorArray(1. / V.data)

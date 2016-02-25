@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.parameters.spaces import CubicParameterSpace
@@ -17,14 +17,14 @@ def space():
 
 
 def test_uniform(space):
-    values = list(space.sample_uniformly(num_samples))
+    values = space.sample_uniformly(num_samples)
     assert len(values) == num_samples
     for value in values:
         assert space.contains(value)
 
 
 def test_randomly(space):
-    values = list(space.sample_randomly(num_samples))
+    values = space.sample_randomly(num_samples)
     assert len(values) == num_samples
     for value in values:
         assert space.contains(value)

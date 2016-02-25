@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
@@ -25,6 +25,7 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
     reference_element = line
 
     def __init__(self, domain=(0, 1), num_intervals=4, identify_left_right=False):
+        assert domain[0] < domain[1]
         self.reference_element = line
         self._domain = np.array(domain)
         self._num_intervals = num_intervals
@@ -72,26 +73,35 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
         else:
             return super(OnedGrid, self).embeddings(codim)
 
+    def bounding_box(self):
+        return np.array(self._domain).reshape((2, 1))
+
     def orthogonal_centers(self):
         return self.centers(0)
 
     def visualize(self, U, codim=2, **kwargs):
-        """Visualize scalar data associated to the grid as a plot.
+        """Visualize scalar data associated to the grid as a patch plot.
 
         Parameters
         ----------
         U
-            |VectorArray| of the data to visualize. If `len(U) > 1`, the data is visualized
-            as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
-            provided, in which case several plots are made into the same axes. The
-            lengths of all arrays have to agree.
+            |NumPy array| of the data to visualize. If `U.dim == 2 and len(U) > 1`, the
+            data is visualized as a time series of plots. Alternatively, a tuple of
+            |Numpy arrays| can be provided, in which case a subplot is created for
+            each entry of the tuple. The lengths of all arrays have to agree.
         codim
-            The codimension of the entities the data in `U` is attached to (either 0 or 1).
+            The codimension of the entities the data in `U` is attached to (either 0 or 2).
         kwargs
-            See :func:`~pymor.gui.qt.visualize_matplotlib_1d`
+            See :func:`~pymor.gui.qt.visualize_patch`
         """
         from pymor.gui.qt import visualize_matplotlib_1d
+        from pymor.vectorarrays.interfaces import VectorArrayInterface
         from pymor.vectorarrays.numpy import NumpyVectorArray
-        if not isinstance(U, NumpyVectorArray):
-            U = NumpyVectorArray(U, copy=False)
+        if isinstance(U, (np.ndarray, VectorArrayInterface)):
+            U = (U,)
+        assert all(isinstance(u, (np.ndarray, VectorArrayInterface)) for u in U)
+        U = tuple(NumpyVectorArray(u) if isinstance(u, np.ndarray) else
+                  u if isinstance(u, NumpyVectorArray) else
+                  NumpyVectorArray(u.data)
+                  for u in U)
         visualize_matplotlib_1d(self, U, codim=codim, **kwargs)

@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
@@ -8,7 +8,7 @@ from pymor.algorithms.basic import almost_equal
 from pymor.core.pickle import dumps, loads
 from pymortests.fixtures.discretization import discretization, picklable_discretization
 from pymortests.base import runmodule
-from pymortests.pickle import assert_picklable, assert_picklable_without_dumps_function
+from pymortests.pickling import assert_picklable, assert_picklable_without_dumps_function
 
 
 def test_pickle(discretization):

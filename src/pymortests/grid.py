@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pickle import dumps, loads
@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from pymortests.fixtures.grid import grid
-from pymortests.pickle import assert_picklable_without_dumps_function
+from pymortests.pickling import assert_picklable_without_dumps_function
 
 
 # monkey np.testing.assert_allclose to behave the same as np.allclose

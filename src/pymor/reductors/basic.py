@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
@@ -12,7 +12,7 @@ class GenericRBReconstructor(BasicInterface):
     """Simple reconstructor forming linear combinations with a reduced basis."""
 
     def __init__(self, RB):
-        self.RB = RB
+        self.RB = RB.copy()
 
     def reconstruct(self, U):
         """Reconstruct high-dimensional vector from reduced vector `U`."""
@@ -22,7 +22,7 @@ class GenericRBReconstructor(BasicInterface):
     def restricted_to_subbasis(self, dim):
         """See :meth:`~pymor.operators.numpy.NumpyMatrixOperator.projected_to_subbasis`."""
         assert dim <= len(self.RB)
-        return GenericRBReconstructor(self.RB.copy(ind=list(range(dim))))
+        return GenericRBReconstructor(self.RB.copy(ind=range(dim)))
 
 
 def reduce_generic_rb(discretization, RB, vector_product=None, disable_caching=True, extends=None):
@@ -65,16 +65,16 @@ def reduce_generic_rb(discretization, RB, vector_product=None, disable_caching=T
         RB = discretization.solution_space.empty()
 
     projected_operators = {k: op.projected(range_basis=RB, source_basis=RB, product=None) if op else None
-                           for k, op in discretization.operators.items()}
+                           for k, op in discretization.operators.iteritems()}
     projected_functionals = {k: f.projected(range_basis=None, source_basis=RB, product=None) if f else None
-                             for k, f in discretization.functionals.items()}
+                             for k, f in discretization.functionals.iteritems()}
     projected_vector_operators = {k: (op.projected(range_basis=RB, source_basis=None, product=vector_product) if op
                                       else None)
-                                  for k, op in discretization.vector_operators.items()}
+                                  for k, op in discretization.vector_operators.iteritems()}
 
     if discretization.products is not None:
         projected_products = {k: p.projected(range_basis=RB, source_basis=RB)
-                              for k, p in discretization.products.items()}
+                              for k, p in discretization.products.iteritems()}
     else:
         projected_products = None
 
@@ -172,7 +172,7 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
     if reconstructor is not None and hasattr(reconstructor, 'restricted_to_subbasis'):
         rc = reconstructor.restricted_to_subbasis(dim)
     else:
-        rc = SubbasisReconstructor(next(discretization.operators.values()).source.dim, dim,
+        rc = SubbasisReconstructor(discretization.solution_space.dim, dim,
                                    old_recontructor=reconstructor)
 
     return rd, rc, {}

@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-#
-# Contributors: Michael Laier <m_laie01@uni-muenster.de>
 
 """Thermalblock with GUI demo
 
@@ -53,7 +51,7 @@ from pymor.algorithms.greedy import greedy
 from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
 from pymor.discretizers.elliptic import discretize_elliptic_cg
 from pymor.gui.gl import ColorBarWidget, GLPatchWidget
-from pymor.reductors.linear import reduce_stationary_affine_linear
+from pymor.reductors.coercive import reduce_coercive_simple
 from pymor import gui
 
 
@@ -161,13 +159,13 @@ class ReducedSim(SimBase):
 
     def _first(self):
         args = self.args
-        error_product = self.discretization.h1_product if args['--estimator-norm'] == 'h1' else None
-        reductor = partial(reduce_stationary_affine_linear, error_product=error_product)
-        extension_algorithm = partial(gram_schmidt_basis_extension, product=self.discretization.h1_product)
+        error_product = self.discretization.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
+        reductor = partial(reduce_coercive_simple, error_product=error_product)
+        extension_algorithm = partial(gram_schmidt_basis_extension, product=self.discretization.h1_0_semi_product)
 
         greedy_data = greedy(self.discretization, reductor,
                              self.discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
-                             use_estimator=True, error_norm=self.discretization.h1_norm,
+                             use_estimator=True, error_norm=self.discretization.h1_0_semi_norm,
                              extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'])
         self.rb_discretization, self.reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
         self.first = False

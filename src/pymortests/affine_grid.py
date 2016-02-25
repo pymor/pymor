@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
@@ -288,6 +288,15 @@ def test_quadrature_points_values(grid):
                 q, _ = g.reference_element(d).quadrature(order=o, quadrature_type=t)
                 np.testing.assert_allclose(Q, g.quadrature_points(d, npoints=p, quadrature_type=t))
                 np.testing.assert_allclose(Q, B[:, np.newaxis, :] + np.einsum('eij,qj->eqi', A, q))
+
+
+def test_bounding_box(grid):
+    g = grid
+    bbox = g.bounding_box()
+    assert bbox.shape == (2, g.dim_outer)
+    assert np.all(bbox[0] <= bbox[1])
+    assert np.all(g.centers(g.dim) >= bbox[0])
+    assert np.all(g.centers(g.dim) <= bbox[1])
 
 
 def test_orthogonal_centers(grid_with_orthogonal_centers):

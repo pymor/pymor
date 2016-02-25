@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-#
-# Contributors: Michael Laier <m_laie01@uni-muenster.de>
 
 """Burgers with EI demo.
 
@@ -30,6 +28,10 @@ Arguments:
 
 
 Options:
+  --cache-region=REGION           Name of cache region to use for caching solution snapshots
+                                  (NONE, MEMORY, DISK, PERSISTENT)
+                                  [default: DISK]
+
   --grid=NI                       Use grid with (2*NI)*NI elements [default: 60].
 
   --grid-type=TYPE                Type of grid to use (rect, tria) [default: rect].
@@ -66,6 +68,12 @@ Options:
   --vx=XSPEED                     Speed in x-direction [default: 1].
 
   --vy=YSPEED                     Speed in y-direction [default: 1].
+
+  --ipython-engines=COUNT         If positive, the number of IPython cluster engines to use
+                                  for parallel greedy search. If zero, no parallelization
+                                  is performed. [default: 0]
+
+  --ipython-profile=PROFILE       IPython profile to use for parallelization.
 """
 
 import sys
@@ -84,11 +92,13 @@ from pymor.discretizers.advection import discretize_nonlinear_instationary_advec
 from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
+from pymor.parallel.default import new_parallel_pool
 from pymor.reductors.basic import reduce_generic_rb, reduce_to_subbasis
 from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
 def burgers_demo(args):
+    args['--cache-region'] = args['--cache-region'].lower()
     args['--grid'] = int(args['--grid'])
     args['--grid-type'] = args['--grid-type'].lower()
     assert args['--grid-type'] in ('rect', 'tria')
@@ -104,6 +114,7 @@ def burgers_demo(args):
     args['--test'] = int(args['--test'])
     args['--vx'] = float(args['--vx'])
     args['--vy'] = float(args['--vy'])
+    args['--ipython-engines'] = int(args['--ipython-engines'])
     args['EXP_MIN'] = int(args['EXP_MIN'])
     args['EXP_MAX'] = int(args['EXP_MAX'])
     args['EI_SNAPSHOTS'] = int(args['EI_SNAPSHOTS'])
@@ -125,6 +136,9 @@ def burgers_demo(args):
                                     num_flux=args['--num-flux'], lxf_lambda=args['--lxf-lambda'],
                                     nt=args['--nt'], domain_discretizer=domain_discretizer)
 
+    if args['--cache-region'] != 'none':
+        discretization.enable_caching(args['--cache-region'])
+
     print(discretization.operator.grid)
 
     print('The parameter type is {}'.format(discretization.parameter_type))
@@ -140,13 +154,13 @@ def burgers_demo(args):
             legend = legend + ('exponent: {}'.format(mu['exponent']),)
         discretization.visualize(Us, legend=legend, title='Detailed Solutions', block=True)
 
+    pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
     ei_discretization, ei_data = interpolate_operators(discretization, ['operator'],
                                                        discretization.parameter_space.sample_uniformly(args['EI_SNAPSHOTS']),  # NOQA
                                                        error_norm=discretization.l2_norm,
-                                                       target_error=1e-10,
                                                        max_interpolation_dofs=args['EISIZE'],
-                                                       projection='orthogonal',
-                                                       product=discretization.l2_product)
+                                                       product=discretization.l2_product,
+                                                       pool=pool)
 
     if args['--plot-ei-err']:
         print('Showing some EI errors')
@@ -179,7 +193,8 @@ def burgers_demo(args):
 
     greedy_data = greedy(discretization, reductor, discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
                          use_estimator=False, error_norm=lambda U: np.max(discretization.l2_norm(U)),
-                         extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'])
+                         extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'],
+                         pool=pool)
 
     rb_discretization, reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
 
@@ -187,7 +202,7 @@ def burgers_demo(args):
 
     tic = time.time()
 
-    mus = list(discretization.parameter_space.sample_randomly(args['--test']))
+    mus = discretization.parameter_space.sample_randomly(args['--test'])
 
     def error_analysis(N, M):
         print('N = {}, M = {}: '.format(N, M), end='')

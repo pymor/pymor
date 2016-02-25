@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.core.interfaces import ImmutableInterface, abstractmethod, abstractstaticmethod
+from pymor.core.interfaces import ImmutableInterface, abstractmethod
 from pymor.parameters.base import Parametric
 
 
@@ -20,13 +20,25 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
     Attributes
     ----------
-    invert_options
-        |OrderedDict| of possible options for :meth:`~OperatorInterface.apply_inverse`.
-        Each key is a type of inversion algorithm which can be used to invert the
-        operator. `invert_options[k]` is a dict containing all options along with
-        their default values which can be set for algorithm `k`. We always have
-        `invert_options[k]['type'] == k` such that `invert_options[k]` can be passed
-        directly to :meth:`~OperatorInterface.apply_inverse()`.
+    solver_options
+        If not `None`, a dict which can contain the follwing keys:
+
+        :'inverse':           solver options used for
+                              :meth:`~OperatorInterface.apply_inverse`
+        :'inverse_adjoint':   solver options used for
+                              :meth:`~OperatorInterface.apply_inverse_adjoint`
+        :'jacobian':          solver options for the operators returned
+                              by :meth:`~OperatorInterface.jacobian`
+                              (has no effect for linear operators)
+
+        If `solver_options` is `None` or a dict entry is missing
+        or `None`, default options are used.
+        The interpretation of the given solver options is up to
+        the operator at hand. In general, a values in `solver_options`
+        should either be strings (indicating a solver type) or
+        dicts of options, usually with an entry `'type'` which
+        specifies the solver type to use and further items which
+        configure this solver.
     linear
         `True` if the operator is linear.
     source
@@ -34,6 +46,8 @@ class OperatorInterface(ImmutableInterface, Parametric):
     range
         The range |VectorSpace|.
     """
+
+    solver_options = None
 
     @abstractmethod
     def apply(self, U, ind=None, mu=None):
@@ -162,7 +176,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         pass
 
     @abstractmethod
-    def apply_inverse(self, V, ind=None, mu=None, options=None):
+    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
         """Apply the inverse operator.
 
         Parameters
@@ -170,23 +184,68 @@ class OperatorInterface(ImmutableInterface, Parametric):
         V
             |VectorArray| of vectors to which the inverse operator is applied.
         ind
-            The indices of the vectors in `U` to which the inverse operator shall be
+            The indices of the vectors in `V` to which the inverse operator shall be
             applied. (See the |VectorArray| documentation for further details.)
         mu
             The |Parameter| for which to evaluate the inverse operator.
-        options
-            Dictionary of options for the inversion algorithm. The dictionary
-            has to contain the key `'type'` whose value determines which inversion
-            algorithm is to be used. All other items represent options specific to
-            this algorithm.  `options` can also be given as a string, which is then
-            interpreted as the type of inversion algorithm. If `options` is `None`,
-            a default algorithm with default options is chosen.  Available algorithms
-            and their default options are provided by
-            :attr:`~OperatorInterface.invert_options`.
+        least_squares
+            If `True`, solve the least squares problem::
+
+                u = argmin ||Au - v||_2.
+
+            Since for an invertible operator the least squares solution agrees
+            with the result of the application of the inverse operator,
+            setting this option should, in general, have no effect on the result
+            for those operators. However, note that when appropriate
+            |solver_options| are not set for the operator, most operator
+            implementations will choose a least squares solver by default which
+            may not be desirable for invertible operators.
 
         Returns
         -------
         |VectorArray| of the inverse operator evaluations.
+
+        Raises
+        ------
+        InversionError
+            The operator could not be inverted.
+        """
+        pass
+
+    @abstractmethod
+    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None,
+                              least_squares=False):
+        """Apply the inverse adjoint operator.
+
+        Parameters
+        ----------
+        U
+            |VectorArray| of vectors to which the inverse adjoint operator is applied.
+        ind
+            The indices of the vectors in `U` to which the inverse adjoint operator shall be
+            applied. (See the |VectorArray| documentation for further details.)
+        mu
+            The |Parameter| for which to evaluate the inverse adjoint operator.
+        source_product
+            See :meth:`~OperatorInterface.apply_adjoint`.
+        range_product
+            See :meth:`~OperatorInterface.apply_adjoint`.
+        least_squares
+            If `True`, solve the least squares problem::
+
+                v = argmin ||A*v - u||_2.
+
+            Since for an invertible operator the least squares solution agrees
+            with the result of the application of the inverse operator,
+            setting this option should, in general, have no effect on the result
+            for those operators. However, note that when appropriate
+            |solver_options| are not set for the operator, most operator
+            implementations will choose a least squares solver by default which
+            may not be desirable for invertible operators.
+
+        Returns
+        -------
+        |VectorArray| of the inverse adjoint operator evaluations.
 
         Raises
         ------
@@ -266,7 +325,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         """
         pass
 
-    def assemble_lincomb(self, operators, coefficients, name=None):
+    def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         """Try to assemble a linear combination of the given operators.
 
         This method is called in the `assemble` method of |LincombOperator| on
@@ -281,6 +340,8 @@ class OperatorInterface(ImmutableInterface, Parametric):
             List of |Operators| whose linear combination is formed.
         coefficients
             List of the corresponding linear coefficients.
+        solver_options
+            |solver_options| for the assembled operator.
         name
             Name of the assembled operator.
 

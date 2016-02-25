@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-#
-# Contributors: Michael Laier <m_laie01@uni-muenster.de>
 
 from numbers import Number
 
 import numpy as np
 
 from pymor.algorithms import genericsolvers
+from pymor.core.exceptions import InversionError
 from pymor.operators.interfaces import OperatorInterface
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
@@ -96,20 +95,86 @@ class OperatorBase(OperatorInterface):
         else:
             raise ValueError('Trying to apply adjoint of nonlinear operator.')
 
-    @property
-    def invert_options(self):
-        if self.linear:
-            return genericsolvers.invert_options()
-        else:
-            return {}
-
-    def apply_inverse(self, V, ind=None, mu=None, options=None):
+    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
         from pymor.operators.constructions import FixedParameterOperator
         assembled_op = self.assemble(mu)
         if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
-            return assembled_op.apply_inverse(V, ind=ind, options=options)
+            return assembled_op.apply_inverse(V, ind=ind, least_squares=least_squares)
+        elif self.linear:
+            options = (self.solver_options.get('inverse') if self.solver_options else
+                       'least_squares' if least_squares else
+                       None)
+
+            if options and not least_squares:
+                solver_type = options if isinstance(options, str) else options['type']
+                if solver_type.startswith('least_squares'):
+                    self.logger.warn('Least squares solver selected but "least_squares == False"')
+
+            try:
+                return genericsolvers.apply_inverse(assembled_op, V.copy(ind), options=options)
+            except InversionError as e:
+                if least_squares and options:
+                    solver_type = options if isinstance(options, str) else options['type']
+                    if not solver_type.startswith('least_squares'):
+                        msg = str(e) \
+                            + '\nNote: linear solver was selected for solving least squares problem ' \
+                            + '(maybe not invertible?)'
+                        raise InversionError(msg)
+                raise e
         else:
-            return genericsolvers.apply_inverse(assembled_op, V.copy(ind), options=options)
+            from pymor.algorithms.newton import newton
+            from pymor.core.exceptions import NewtonError
+            assert V.check_ind(ind)
+
+            options = self.solver_options
+            if options:
+                if isinstance(options, str):
+                    assert options == 'newton'
+                    options = {}
+                else:
+                    assert options['type'] == 'newton'
+                    options = options.copy()
+                    options.pop('type')
+            else:
+                options = {}
+            options['least_squares'] = least_squares
+
+            ind = (range(len(V)) if ind is None else
+                   [ind] if isinstance(ind, Number) else
+                   ind)
+            R = V.empty(reserve=len(ind))
+            for i in ind:
+                try:
+                    R.append(newton(self, V.copy(i), **options)[0])
+                except NewtonError as e:
+                    raise InversionError(e)
+            return R
+
+    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None,
+                              least_squares=False):
+        from pymor.operators.constructions import FixedParameterOperator
+        assembled_op = self.assemble(mu)
+        if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
+            return assembled_op.apply_inverse_adjoint(U, ind=ind, source_product=source_product,
+                                                      range_product=range_product, least_squares=least_squares)
+        elif source_product or range_product:
+            if source_product:
+                U = source_product.apply(U, ind=ind)
+                ind = None
+            # maybe there is a better implementation for source_product == None and range_product == None
+            V = self.apply_inverse_adjoint(U, mu=mu, least_squares=least_squares)
+            if range_product:
+                return range_product.apply_inverse(V)
+            else:
+                return V
+        else:
+            if not self.linear:
+                raise NotImplementedError
+            # use generic solver for the adjoint operator
+            from pymor.operators.constructions import AdjointOperator
+            options = {'inverse': self.solver_options.get('inverse_adjoint') if self.solver_options else None}
+            adjoint_op = AdjointOperator(self, with_apply_inverse=False, solver_options=options)
+            return adjoint_op.apply_inverse(U, ind=ind, mu=mu, least_squares=least_squares)
 
     def as_vector(self, mu=None):
         if not self.linear:
@@ -131,13 +196,16 @@ class OperatorBase(OperatorInterface):
                 if range_basis is None:
                     return self
                 else:
-                    V = self.apply_adjoint(range_basis, range_product=product)
+                    try:
+                        V = self.apply_adjoint(range_basis, range_product=product)
+                    except NotImplementedError:
+                        return ProjectedOperator(self, range_basis, None, product, name=name)
                     if self.source.type == NumpyVectorArray:
                         from pymor.operators.numpy import NumpyMatrixOperator
                         return NumpyMatrixOperator(V.data, name=name)
                     else:
                         from pymor.operators.constructions import VectorArrayOperator
-                        return VectorArrayOperator(V, transposed=True, copy=False, name=name)
+                        return VectorArrayOperator(V, transposed=True, name=name)
             else:
                 if range_basis is None:
                     V = self.apply(source_basis)
@@ -146,7 +214,7 @@ class OperatorBase(OperatorInterface):
                         return NumpyMatrixOperator(V.data.T, name=name)
                     else:
                         from pymor.operators.constructions import VectorArrayOperator
-                        return VectorArrayOperator(V, transposed=False, copy=False, name=name)
+                        return VectorArrayOperator(V, transposed=False, name=name)
                 elif product is None:
                     from pymor.operators.numpy import NumpyMatrixOperator
                     return NumpyMatrixOperator(self.apply2(range_basis, source_basis), name=name)
@@ -156,9 +224,7 @@ class OperatorBase(OperatorInterface):
                     return NumpyMatrixOperator(product.apply2(range_basis, V), name=name)
         else:
             self.logger.warn('Using inefficient generic projection operator')
-            # Since the bases are not immutable and we do not own them,
-            # the ProjectedOperator will have to create copies of them.
-            return ProjectedOperator(self, range_basis, source_basis, product, copy=True, name=name)
+            return ProjectedOperator(self, range_basis, source_basis, product, name=name)
 
 
 class ProjectedOperator(OperatorBase):
@@ -178,16 +244,13 @@ class ProjectedOperator(OperatorBase):
         See :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
     product
         See :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
-    copy
-        If `True`, make a copy of the provided `source_basis` and `range_basis`. This is
-        usually necessary, as |VectorArrays| are not immutable.
     name
         Name of the projected operator.
     """
 
     linear = False
 
-    def __init__(self, operator, range_basis, source_basis, product=None, copy=True, name=None):
+    def __init__(self, operator, range_basis, source_basis, product=None, solver_options=None, name=None):
         assert isinstance(operator, OperatorInterface)
         assert source_basis is None or source_basis in operator.source
         assert range_basis is None or range_basis in operator.range
@@ -199,10 +262,11 @@ class ProjectedOperator(OperatorBase):
         self.build_parameter_type(inherits=(operator,))
         self.source = NumpyVectorSpace(len(source_basis)) if source_basis is not None else operator.source
         self.range = NumpyVectorSpace(len(range_basis)) if range_basis is not None else operator.range
+        self.solver_options = solver_options
         self.name = name
         self.operator = operator
-        self.source_basis = source_basis.copy() if source_basis is not None and copy else source_basis
-        self.range_basis = range_basis.copy() if range_basis is not None and copy else range_basis
+        self.source_basis = source_basis.copy() if source_basis is not None else None
+        self.range_basis = range_basis.copy() if range_basis is not None else None
         self.linear = operator.linear
         self.product = product
 
@@ -238,19 +302,30 @@ class ProjectedOperator(OperatorBase):
             else self.source_basis.copy(ind=range(dim_source))
         range_basis = self.range_basis if dim_range is None \
             else self.range_basis.copy(ind=range(dim_range))
-        return ProjectedOperator(self.operator, range_basis, source_basis, product=None, copy=False, name=name)
+        return ProjectedOperator(self.operator, range_basis, source_basis, product=None,
+                                 solver_options=self.solver_options, name=name)
 
     def jacobian(self, U, mu=None):
+        if self.linear:
+            return self.assemble(mu)
         assert len(U) == 1
         mu = self.parse_parameter(mu)
         if self.source_basis is None:
             J = self.operator.jacobian(U, mu=mu)
         else:
             J = self.operator.jacobian(self.source_basis.lincomb(U.data), mu=mu)
-        return J.projected(range_basis=self.range_basis, source_basis=self.source_basis,
-                           product=self.product, name=self.name + '_jacobian')
+        pop = J.projected(range_basis=self.range_basis, source_basis=self.source_basis,
+                          product=self.product, name=self.name + '_jacobian')
+        if self.solver_options:
+            options = self.solver_options.get('jacobian')
+            if options:
+                pop = pop.with_(solver_options=options)
+        return pop
 
     def assemble(self, mu=None):
         op = self.operator.assemble(mu=mu)
-        return op.projected(range_basis=self.range_basis, source_basis=self.source_basis,
-                            product=self.product, name=self.name + '_assembled')
+        pop = op.projected(range_basis=self.range_basis, source_basis=self.source_basis,
+                           product=self.product, name=self.name + '_assembled')
+        if self.solver_options:
+            pop = pop.with_(solver_options=self.solver_options)
+        return pop

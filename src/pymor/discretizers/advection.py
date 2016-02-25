@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
@@ -117,7 +117,7 @@ def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=
 
     products = {'l2': L2Product(grid, boundary_info)}
     if grid.dim == 2:
-        visualizer = PatchVisualizer(grid=grid, bounding_box=grid.domain, codim=0)
+        visualizer = PatchVisualizer(grid=grid, bounding_box=grid.bounding_box(), codim=0)
     elif grid.dim == 1:
         visualizer = Matplotlib1DVisualizer(grid, codim=0)
     else:

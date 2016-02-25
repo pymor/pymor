@@ -1,21 +1,25 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.operators.basic import OperatorBase
 from pymor.vectorarrays.interfaces import VectorSpace
-from pymor.vectorarrays.list import VectorInterface, ListVectorArray
+from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorArray
 
 import numpy as np
 import math as m
 from discretization import Vector, DiffusionOperator
 
 
-class WrappedVector(VectorInterface):
+class WrappedVector(CopyOnWriteVector):
 
     def __init__(self, vector):
         assert isinstance(vector, Vector)
         self._impl = vector
+
+    @classmethod
+    def from_instance(cls, instance):
+        return cls(instance._impl)
 
     @classmethod
     def make_zeros(cls, subtype):
@@ -33,13 +37,13 @@ class WrappedVector(VectorInterface):
     def data(self):
         return np.frombuffer(self._impl.data(), dtype=np.float)
 
-    def copy(self):
-        return type(self)(Vector(self._impl))
+    def _copy_data(self):
+        self._impl = Vector(self._impl)
 
-    def scal(self, alpha):
+    def _scal(self, alpha):
         self._impl.scal(alpha)
 
-    def axpy(self, alpha, x):
+    def _axpy(self, alpha, x):
         self._impl.axpy(alpha, x._impl)
 
     def dot(self, other):

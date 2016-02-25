@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-#
-# Contributors: Michael Laier <m_laie01@uni-muenster.de>
 
 from numbers import Number
 
@@ -134,13 +132,24 @@ class VectorArrayInterface(BasicInterface):
         return VectorSpace(type(self), self.subtype)
 
     @abstractmethod
-    def copy(self, ind=None):
+    def copy(self, ind=None, deep=False):
         """Returns a copy of a subarray.
+
+        All |VectorArray| implementations in pyMOR have copy-on-write semantics:
+        if not specified otherwise by setting `deep` to `True`, the returned
+        copy will hold a handle to the same array data as the original array,
+        and a deep copy of the data will only be performed when one of the arrays
+        is modified.
+
+        Note that for |NumpyVectorArray|, a deep copy is always performed when only
+        some vectors in array are copied (i.e. `ind` is specified).
 
         Parameters
         ----------
         ind
             Indices of the vectors that are to be copied (see class documentation).
+        deep
+            Ensure that an actual copy of the array data is made (see above).
 
         Returns
         -------
