@@ -222,7 +222,7 @@ def main():
     # select reduction algorithm with error estimator
     #################################################
     coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', d.parameter_type)
-    reductor = partial(reduce_stationary_coercive,
+    reductor = partial(reduce_coercive,
                        error_product=d.h1_0_semi_product, coercivity_estimator=coercivity_estimator)
 
 
