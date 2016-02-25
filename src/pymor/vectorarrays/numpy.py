@@ -9,7 +9,7 @@ import numpy as np
 from scipy.sparse import issparse
 
 from pymor.core import NUMPY_INDEX_QUIRK
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpace
+from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpace, _INDEXTYPES
 
 
 class NumpyVectorArray(VectorArrayInterface):
@@ -174,7 +174,7 @@ class NumpyVectorArray(VectorArrayInterface):
 
     def scal(self, alpha, ind=None):
         assert self.check_ind_unique(ind)
-        assert isinstance(alpha, Number) \
+        assert isinstance(alpha, _INDEXTYPES) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
 
         if NUMPY_INDEX_QUIRK and self._len == 0:
@@ -192,7 +192,7 @@ class NumpyVectorArray(VectorArrayInterface):
         assert x.check_ind(x_ind)
         assert self.dim == x.dim
         assert self.len_ind(ind) == x.len_ind(x_ind) or x.len_ind(x_ind) == 1
-        assert isinstance(alpha, Number) \
+        assert isinstance(alpha, _INDEXTYPES) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
 
         if NUMPY_INDEX_QUIRK:
