@@ -13,7 +13,7 @@ The implementations are based on the event loop provided
 by :mod:`pymor.tools.mpi`.
 """
 
-from __future__ import absolute_import, division, print_function
+
 
 import numpy as np
 

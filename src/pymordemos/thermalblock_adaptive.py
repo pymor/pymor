@@ -67,7 +67,7 @@ Options:
   --theta=VALUE              Ratio of elements to refine [default: 0.].
 """
 
-from __future__ import absolute_import, division, print_function
+
 
 import sys
 from functools import partial
