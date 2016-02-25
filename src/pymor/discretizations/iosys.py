@@ -667,6 +667,10 @@ class LTISystem(DiscretizationInterface):
         """
         r = len(sigma)
 
+        for i in xrange(r):
+            b[:, i] /= spla.norm(b[:, i])
+            c[:, i] /= spla.norm(c[:, i])
+
         Vr = NumpyVectorArray.make_array(self.n, reserve=r)
         Wr = NumpyVectorArray.make_array(self.n, reserve=r)
 
