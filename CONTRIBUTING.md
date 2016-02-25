@@ -2,7 +2,7 @@
 
 pyMOR is an open project and we welcome any contributions
 which improve or extend pyMOR. The purpose of this document
-is to make the contribution process easier to use and answer
+is to make the contribution process easier for you and to answer
 some questions which might arise.
 
 
