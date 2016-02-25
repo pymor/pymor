@@ -155,7 +155,7 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
         # noinspection PyShadowingNames
         class FakeEstimator(object):
             rd = discretization
-            rc = SubbasisReconstructor(next(iter(discretization.operators.values())).source.dim, dim)
+            rc = SubbasisReconstructor(discretization.solution_space.dim, dim)
 
             def estimate(self, U, mu=None, discretization=None):
                 return self.rd.estimate(self.rc.reconstruct(U), mu=mu)
