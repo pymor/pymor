@@ -89,6 +89,12 @@ class LTISystem(DiscretizationInterface):
         self._hsv = None
         self._U = None
         self._V = None
+        self._brgamma = 1.
+        self._brcgf = None
+        self._brogf = None
+        self._brsv = None
+        self._brU = None
+        self._brV = None
         self._H2_norm = None
         self._Hinf_norm = None
         self._fpeak = None
@@ -390,6 +396,106 @@ class LTISystem(DiscretizationInterface):
             self._U = NumpyVectorArray(U.T)
             self._V = NumpyVectorArray(Vh)
 
+    def compute_brcgf(self, gamma=1., tol=1e-14):
+        """Compute the bounded real controllability Gramian factor.
+
+        Parameters
+        ----------
+        gamma
+            Bound for the H_inf norm.
+        tol
+            Tolerance for the low-rank approximation.
+        """
+        assert gamma > 0 and 0 < tol < 1
+
+        if not self.cont_time or self.E is not None:
+            raise NotImplementedError
+
+        if self._brcgf is None or self._brgamma != gamma:
+            self._brgamma = gamma
+            A = self.A._matrix
+            if sps.issparse(A):
+                A = A.toarray()
+            B = self.B._matrix
+            if sps.issparse(B):
+                B = B.toarray()
+            C = self.C._matrix
+            if sps.issparse(C):
+                C = C.toarray()
+            X = spla.solve_continuous_are(A.T,
+                                          C.T / np.sqrt(gamma),
+                                          B.dot(B.T) / gamma,
+                                          -np.eye(self.p))
+            X = (X + X.T) / 2
+            T, Z = spla.schur(X)
+            ind = T.diagonal().argsort()[::-1]
+            T = np.diag(np.diag(T)[ind])
+            Z = Z[:, ind]
+            rank = self.n
+            for i in xrange(1, self.n):
+                if T[i, i] / T[0, 0] < tol:
+                    rank = i
+                    break
+            self._brcgf = NumpyVectorArray(Z[:, :rank].dot(np.diag(np.sqrt(T.diagonal()[:rank]))).T)
+
+    def compute_brogf(self, gamma=1., tol=1e-14):
+        """Compute the bounded real observability Gramian factor.
+
+        Parameters
+        ----------
+        gamma
+            Bound for the H_inf norm.
+        tol
+            Tolerance for the low-rank approximation.
+        """
+        assert gamma > 0 and 0 < tol < 1
+
+        if not self.cont_time or self.E is not None:
+            raise NotImplementedError
+
+        if self._brogf is None or self._brgamma != gamma:
+            self._brgamma = gamma
+            A = self.A._matrix
+            if sps.issparse(A):
+                A = A.toarray()
+            B = self.B._matrix
+            if sps.issparse(B):
+                B = B.toarray()
+            C = self.C._matrix
+            if sps.issparse(C):
+                C = C.toarray()
+            X = spla.solve_continuous_are(A,
+                                          B / np.sqrt(gamma),
+                                          C.T.dot(C) / gamma,
+                                          -np.eye(self.m))
+            X = (X + X.T) / 2
+            T, Z = spla.schur(X)
+            ind = T.diagonal().argsort()[::-1]
+            T = np.diag(np.diag(T)[ind])
+            Z = Z[:, ind]
+            rank = self.n
+            for i in xrange(1, self.n):
+                if T[i, i] / T[0, 0] < tol:
+                    rank = i
+                    break
+            self._brogf = NumpyVectorArray(Z[:, :rank].dot(np.diag(np.sqrt(T.diagonal()[:rank]))).T)
+
+    def compute_brsv_brU_brV(self, gamma=1.):
+        """Compute the bounded real singular values and vectors.
+
+        Parameters
+        ----------
+        gamma
+            Bound for the H_inf norm.
+        """
+        if self._brsv is None or self._brU is None or self._brV is None:
+            self.compute_brcgf(gamma=gamma)
+            self.compute_brogf(gamma=gamma)
+
+            U, self._brsv, Vh = spla.svd(self._brcgf.dot(self._brogf))
+            self._brU = NumpyVectorArray(U.T)
+            self._brV = NumpyVectorArray(Vh)
+
     def norm(self, name='H2'):
         """Compute a norm of the |LTISystem|.
 
@@ -545,6 +651,72 @@ class LTISystem(DiscretizationInterface):
 
         if meth == 'sr':
             alpha = 1 / np.sqrt(self._hsv[:r])
+            Vr.scal(alpha)
+            Wr.scal(alpha)
+
+            Ar, Br, Cr, Dr, Er = self.project(Vr, Wr, Er_is_identity=True)
+        elif meth == 'bfsr':
+            Vr = gram_schmidt(Vr, atol=0, rtol=0)
+            Wr = gram_schmidt(Wr, atol=0, rtol=0)
+
+            Ar, Br, Cr, Dr, Er = self.project(Vr, Wr)
+
+        rom = LTISystem.from_matrices(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
+        rc = GenericRBReconstructor(Vr)
+        reduction_data = {'Vr': Vr, 'Wr': Wr}
+
+        return rom, rc, reduction_data
+
+    def brbt(self, gamma=1., r=None, tol=None, meth='bfsr'):
+        """Reduce using the Bounded Real Balanced Truncation method to order `r` or with tolerance `tol`.
+
+        Parameters
+        ----------
+        gamma
+            Bound for the H_inf norm.
+        r
+            Order of the reduced model if `tol` is None.
+        tol
+            Tolerance for the absolute H_inf-error if `r` is None.
+        meth
+            Method used:
+            * square root method ('sr')
+            * balancing-free square root method ('bfsr')
+
+        Returns
+        -------
+        rom
+            Reduced |LTISystem|.
+        rc
+            The reconstructor providing a `reconstruct(U)` method which reconstructs
+            high-dimensional solutions from solutions `U` of the reduced |LTISystem|.
+        reduction_data
+            Additional data produced by the reduction process. Contains projection matrices `Vr` and `Wr`.
+        """
+        assert r is not None and tol is None or r is None and tol is not None
+        assert r is None or  0 < r < self.n
+        assert meth in {'sr', 'bfsr'}
+
+        self.compute_brcgf(gamma=gamma)
+        self.compute_brogf(gamma=gamma)
+
+        if r is not None and r > min([len(self._brcgf), len(self._brogf)]):
+            raise ValueError('r needs to be smaller than the sizes of Gramian factors.\
+                              Try reducing the tolerance in the low-rank Lyapunov equation solver.')
+
+        self.compute_brsv_brU_brV(gamma=gamma)
+
+        if r is None:
+            bounds = np.cumsum(self._brsv)
+            bounds = bounds[-1] - bounds
+            bounds *= 2 * self._brgamma
+            r = min(i + 1 for i, b in enumerate(bounds) if b <= tol)
+
+        Vr = VectorArrayOperator(self._brcgf).apply(self._brU, ind=range(r))
+        Wr = VectorArrayOperator(self._brogf).apply(self._brV, ind=range(r))
+
+        if meth == 'sr':
+            alpha = 1 / np.sqrt(self._brsv[:r])
             Vr.scal(alpha)
             Wr.scal(alpha)
 
