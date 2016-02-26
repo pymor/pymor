@@ -121,8 +121,8 @@ def getLogger(module, level=None, filename=''):
     """
     module = 'pymor' if module == '__main__' else module
     logger = logging.getLogger(module)
-    logger.info2 = MethodType(_info2, logger, type(logger))
-    logger.info3 = MethodType(_info3, logger, type(logger))
+    logger.info2 = MethodType(_info2, logger)
+    logger.info3 = MethodType(_info3, logger)
     streamhandler = logging.StreamHandler()
     streamformatter = ColoredFormatter()
     streamhandler.setFormatter(streamformatter)
