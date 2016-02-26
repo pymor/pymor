@@ -47,7 +47,7 @@ class DummyPool(WorkerPoolInterface):
         result = [function(*a, **kwargs) for a in zip(*args)]
         return result
 
-    def __nonzero__(self):
+    def __bool__(self):
         return False
 
 
