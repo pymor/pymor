@@ -80,7 +80,7 @@ class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPoolInterface):
         return self._map(function, chunks, **kwargs)
 
     def _split_into_chunks(self, count, *args):
-        lens = map(len, args)
+        lens = list(map(len, args))
         min_len = min(lens)
         max_len = max(lens)
         assert min_len == max_len

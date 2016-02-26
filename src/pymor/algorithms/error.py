@@ -238,7 +238,7 @@ def reduction_error_analysis(reduced_discretization, discretization=None, recons
     summary.append(('elapsed time', str(toc - tic)))
 
     summary_fields, summary_values = list(zip(*summary))
-    summary_field_width = np.max(map(len, summary_fields)) + 2
+    summary_field_width = np.max(list(map(len, summary_fields))) + 2
     summary_lines = ['    {:{}} {}'.format(field + ':', summary_field_width, value)
                      for field, value in zip(summary_fields, summary_values)]
     summary = 'Stochastic error estimation:\n' + '\n'.join(summary_lines)

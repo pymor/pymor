@@ -111,7 +111,7 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
             errors = pool.map(_estimate, mus, rd=rd, d=d, rc=rc, error_norm=error_norm)
         # most error_norms will return an array of length 1 instead of a number, so we extract the numbers
         # if necessary
-        return np.array(map(lambda x: x[0] if hasattr(x, '__len__') else x, errors))
+        return np.array([x[0] if hasattr(x, '__len__') else x for x in errors])
 
     logger = getLogger('pymor.algorithms.adaptivegreedy.adaptive_greedy')
 
@@ -331,7 +331,7 @@ class AdaptiveSampleSet(BasicInterface):
         self._update()
 
     def map_vertex_to_mu(self, vertex):
-        values = self.ranges[:, 0] + self.dimensions * map(float, vertex)
+        values = self.ranges[:, 0] + self.dimensions * list(map(float, vertex))
         mu = Parameter({})
         for k, shape in self.parameter_type.items():
             count = np.prod(shape)

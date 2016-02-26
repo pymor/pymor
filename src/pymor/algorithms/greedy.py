@@ -189,7 +189,7 @@ def _estimate(rd=None, d=None, rc=None, samples=None, error_norm=None):
         errors = [(d.solve(mu) - rc.reconstruct(rd.solve(mu))).l2_norm() for mu in samples]
     # most error_norms will return an array of length 1 instead of a number, so we extract the numbers
     # if necessary
-    errors = list(map(lambda x: x[0] if hasattr(x, '__len__') else x, errors))
+    errors = list([x[0] if hasattr(x, '__len__') else x for x in errors])
     max_err_ind = np.argmax(errors)
 
     return errors[max_err_ind], samples[max_err_ind]

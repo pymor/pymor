@@ -25,6 +25,7 @@ from pymor.core.logger import getLogger
 from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import IdentityOperator, ZeroOperator
 from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
+from functools import reduce
 
 
 class NumpyGenericOperator(OperatorBase):
@@ -823,7 +824,7 @@ def _apply_inverse(matrix, V, options=None):
                                          format(info))
     elif options['type'] == 'spsolve':
         try:
-            if map(int, scipy.version.version.split('.')) >= [0, 14, 0]:
+            if list(map(int, scipy.version.version.split('.'))) >= [0, 14, 0]:
                 if hasattr(matrix, 'factorization'):
                     R = matrix.factorization.solve(V.T).T
                 elif options['keep_factorization']:

@@ -105,7 +105,7 @@ class CubicParameterSpace(ParameterSpaceInterface):
 
     def __str__(self):
         rows = [(k, str(v), str(self.ranges[k])) for k, v in self.parameter_type.items()]
-        column_widths = [max(map(len, c)) for c in zip(*rows)]
+        column_widths = [max(list(map(len, c))) for c in zip(*rows)]
         return ('CubicParameterSpace\n' +
                 '\n'.join(('key: {:' + str(column_widths[0] + 2)
                            + '} shape: {:' + str(column_widths[1] + 2)

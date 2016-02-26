@@ -66,7 +66,7 @@ try:
     rank = comm.Get_rank()
     size = comm.Get_size()
     finished = False
-    mpi4py_version = map(int, mpi4py.__version__.split('.'))
+    mpi4py_version = list(map(int, mpi4py.__version__.split('.')))
     if mpi4py_version >= [2, 0]:
         import pymor.core.pickle
         MPI.pickle.PROTOCOL = pymor.core.pickle.PROTOCOL
