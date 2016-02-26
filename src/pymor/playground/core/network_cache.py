@@ -6,8 +6,8 @@ import os
 import sqlite3
 import datetime
 import base64
-import xmlrpclib
-from SimpleXMLRPCServer import SimpleXMLRPCServer
+import xmlrpc.client
+from xmlrpc.server import SimpleXMLRPCServer
 
 from pymor.core.cache import CacheRegion
 from pymor.core.interfaces import BasicInterface
@@ -19,7 +19,7 @@ class NetworkFilesystemRegion(CacheRegion):
     persistent = True
 
     def __init__(self, server_path, secret=''):
-        self.server = xmlrpclib.ServerProxy(server_path)
+        self.server = xmlrpc.client.ServerProxy(server_path)
         self.secret = secret
 
     def get(self, key):
