@@ -75,8 +75,8 @@ def assert_is_equal(first, second):
             for k in ['__closure__', '__code__', '__dict__', '__doc__', '__name__']:
                 _assert_is_equal(getattr(first, k), getattr(second, k))
         elif isinstance(first, MethodType):
-            _assert_is_equal(first.im_func, second.im_func)
-            _assert_is_equal(first.im_self, second.im_self)
+            _assert_is_equal(first.__func__, second.__func__)
+            _assert_is_equal(first.__self__, second.__self__)
         elif isinstance(first, cell_type):
             _assert_is_equal(first.cell_contents, second.cell_contents)
         elif not isinstance(first, BasicInterface):
