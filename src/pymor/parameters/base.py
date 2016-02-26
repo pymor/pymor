@@ -173,7 +173,7 @@ class Parameter(dict):
     def __init__(self, v):
         if v is None:
             v = {}
-        i = iter(v.items()) if hasattr(v, 'iteritems') else v
+        i = iter(v.items()) if hasattr(v, 'items') else v
         dict.__init__(self, {k: np.array(v) if not isinstance(v, np.ndarray) else v for k, v in i})
 
     @classmethod

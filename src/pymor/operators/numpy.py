@@ -770,7 +770,7 @@ def _apply_inverse(matrix, V, options=None):
     default_options = _options(matrix)
 
     if options is None:
-        options = default_options.values()[0]
+        options = list(default_options.values())[0]
     elif isinstance(options, str):
         if options == 'least_squares':
             for k, v in default_options.items():
