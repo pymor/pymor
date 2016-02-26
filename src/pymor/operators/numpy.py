@@ -412,7 +412,7 @@ def dense_options(default_solver='solve',
             ('least_squares_lstsq', {'type': 'least_squares_lstsq',
                                      'rcond': least_squares_lstsq_rcond}))
     opts = OrderedDict(opts)
-    opts.update(genericsolvers.options())
+    opts.update(genericsolvers.invert_options())
     def_opt = opts.pop(default_solver)
     if default_least_squares_solver != default_solver:
         def_ls_opt = opts.pop(default_least_squares_solver)
@@ -684,7 +684,7 @@ def sparse_options(default_solver='spsolve',
                                'tol': pyamg_sa_tol,
                                'maxiter': pyamg_sa_maxiter}))
     opts = OrderedDict(opts)
-    opts.update(genericsolvers.options())
+    opts.update(genericsolvers.invert_options())
     def_opt = opts.pop(default_solver)
     if default_least_squares_solver != default_solver:
         def_ls_opt = opts.pop(default_least_squares_solver)
