@@ -287,7 +287,7 @@ def disable_caching():
 
 def clear_caches():
     """Clear all cache regions."""
-    for r in cache_regions.itervalues():
+    for r in cache_regions.values():
         r.clear()
 
 

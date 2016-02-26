@@ -166,7 +166,7 @@ def parse_gmsh_file(f):
 
     parser_map = {'Nodes': parse_nodes, 'Elements': parse_elements, 'PhysicalNames': parse_names}
 
-    for k, v in sections.iteritems():
+    for k, v in sections.items():
         sections[k] = parser_map[k](v)
 
     return sections

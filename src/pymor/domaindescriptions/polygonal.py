@@ -56,7 +56,7 @@ class PolygonalDomain(DomainDescriptionInterface):
             self.boundary_types = dict(list(zip([boundary_types(centers)], [list(range(1, len(centers)+1))])))
 
         # check if the dict keys are given as |BoundaryType|
-        assert all(isinstance(bt, BoundaryType) for bt in self.boundary_types.iterkeys())
+        assert all(isinstance(bt, BoundaryType) for bt in self.boundary_types.keys())
 
     def __repr__(self):
         return 'PolygonalDomain({}, {}, {})'.format(repr(self.points), repr(self.boundary_types), repr(self.holes))

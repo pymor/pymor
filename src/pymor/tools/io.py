@@ -58,7 +58,7 @@ def _load(path, key=None):
         elif len(data) > 1:
             raise IOError('More than one object stored in NPY file {}'.format(key, path))
         else:
-            matrix = next(data.itervalues())
+            matrix = next(iter(data.values()))
     else:
         matrix = data
     if not isinstance(matrix, np.ndarray) and not issparse(matrix):

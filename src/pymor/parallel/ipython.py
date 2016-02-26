@@ -157,7 +157,7 @@ def _worker_call_function(function, loop, args, kwargs):
     global _remote_objects
     kwargs = {k: (_remote_objects[v] if isinstance(v, RemoteId) else
                   v)
-              for k, v in kwargs.iteritems()}
+              for k, v in kwargs.items()}
     if loop:
         return [function(*a, **kwargs) for a in zip(*args)]
     else:

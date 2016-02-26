@@ -64,7 +64,7 @@ class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPoolInterface):
         return {k: (pushed_immutable_objects.get(v.uid, (v, 0))[0] if isinstance(v, ImmutableInterface) else
                     v.remote_id if isinstance(v, RemoteObject) else
                     v)
-                for k, v in kwargs.iteritems()}
+                for k, v in kwargs.items()}
 
     def apply(self, function, *args, **kwargs):
         kwargs = self._map_kwargs(kwargs)

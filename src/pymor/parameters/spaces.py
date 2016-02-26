@@ -94,7 +94,7 @@ class CubicParameterSpace(ParameterSpaceInterface):
         ranges = self.ranges
         random_state = random_state or new_random_state(seed)
         get_param = lambda: Parameter(((k, random_state.uniform(ranges[k][0], ranges[k][1], shp))
-                                       for k, shp in self.parameter_type.iteritems()))
+                                       for k, shp in self.parameter_type.items()))
         if count is None:
             def param_generator():
                 while True:
@@ -104,7 +104,7 @@ class CubicParameterSpace(ParameterSpaceInterface):
             return [get_param() for _ in range(count)]
 
     def __str__(self):
-        rows = [(k, str(v), str(self.ranges[k])) for k, v in self.parameter_type.iteritems()]
+        rows = [(k, str(v), str(self.ranges[k])) for k, v in self.parameter_type.items()]
         column_widths = [max(map(len, c)) for c in zip(*rows)]
         return ('CubicParameterSpace\n' +
                 '\n'.join(('key: {:' + str(column_widths[0] + 2)

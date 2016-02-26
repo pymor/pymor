@@ -60,7 +60,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
 
     # when we are running MPI parallel and Gmsh is compiled with MPI support,
     # we have to make sure Gmsh does not notice the MPI environment or it will fail.
-    env = {k: v for k, v in os.environ.iteritems()
+    env = {k: v for k, v in os.environ.items()
            if 'MPI' not in k.upper()}
     try:
         version = subprocess.check_output(['gmsh', '--version'], stderr=subprocess.STDOUT, env=env)
@@ -151,7 +151,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
             geo_file.write('Physical Surface("boundary") = {'+str(line_loop_ids[0]+1)+'};\n')
 
             # write boundaries.
-            for boundary_type, bs in boundary_types.iteritems():
+            for boundary_type, bs in boundary_types.items():
                 geo_file.write('Physical Line' + '("' + str(boundary_type) + '")' + ' = '
                                + str([l_id for l_id in bs]).replace('[', '{').replace(']', '}') + ';\n')
 

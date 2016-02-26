@@ -32,7 +32,7 @@ class DummyPool(WorkerPoolInterface):
         return DummyRemoteObject(l)
 
     def _map_kwargs(self, kwargs):
-        return {k: (v.obj if isinstance(v, DummyRemoteObject) else v) for k, v in kwargs.iteritems()}
+        return {k: (v.obj if isinstance(v, DummyRemoteObject) else v) for k, v in kwargs.items()}
 
     def apply(self, function, *args, **kwargs):
         kwargs = self._map_kwargs(kwargs)
