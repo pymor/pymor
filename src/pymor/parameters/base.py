@@ -99,24 +99,13 @@ class ParameterType(dict):
         return iter(self.__keys)
 
     def keys(self):
-        if self.__keys is None:
-            self.__keys = sorted(dict.keys(self))
-        return list(self.__keys)
-
-    def iterkeys(self):
         return iter(self)
 
     def items(self):
-        return list(self.items())
-
-    def iteritems(self):
         for k in self:
             yield k, self[k]
 
     def values(self):
-        return list(self.values())
-
-    def itervalues(self):
         for k in self:
             yield self[k]
 
