@@ -14,18 +14,11 @@ however, that its use should be avoided since it uses non-portable
 implementation details of CPython to achieve its goals.
 """
 
-
-
-
 import marshal
 import opcode
 from types import FunctionType, ModuleType
 import pickle
-
-try:
-    from io import StringIO
-except ImportError:
-    from io import StringIO
+from io import BytesIO as IOtype
 
 
 PicklingError = pickle.PicklingError
@@ -45,7 +38,7 @@ if platform.python_implementation() == 'CPython':
 
 
     def dumps(obj, protocol=None):
-        file = StringIO()
+        file = IOtype()
         pickler = pickle.Pickler(file, protocol=PROTOCOL)
         pickler.persistent_id = _function_pickling_handler
         pickler.dump(obj)
@@ -59,7 +52,7 @@ if platform.python_implementation() == 'CPython':
 
 
     def loads(str):
-        file = StringIO(str)
+        file = IOtype(str)
         unpickler = pickle.Unpickler(file)
         unpickler.persistent_load = _function_unpickling_handler
         return unpickler.load()
@@ -168,20 +161,20 @@ def _function_pickling_handler(f):
     if f.__class__ is FunctionType:
         if f.__module__ != '__main__':
             try:
-                return 'A' + pickle.dumps(f)
+                return b'A' + pickle.dumps(f)
             except (TypeError, PicklingError):
-                return 'B' + dumps_function(f)
+                return b'B' + dumps_function(f)
         else:
-            return 'B' + dumps_function(f)
+            return b'B' + dumps_function(f)
     else:
         return None
 
 
 def _function_unpickling_handler(persid):
     mode, data = persid[0], persid[1:]
-    if mode == 'A':
+    if mode == b'A':
         return pickle.loads(data)
-    elif mode == 'B':
+    elif mode == b'B':
         return loads_function(data)
     else:
-        return UnpicklingError
+        raise UnpicklingError
