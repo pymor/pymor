@@ -155,7 +155,7 @@ class BlockVectorArray(VectorArrayInterface):
 
     def amax(self, ind=None):
         assert self.check_ind(ind)
-        inds, vals = zip(*(block.amax(ind=ind) for block in self._nonempty_blocks))
+        inds, vals = list(zip(*(block.amax(ind=ind) for block in self._nonempty_blocks)))
         inds, vals = np.array(inds), np.array(vals)
         inds += self._ind_bins[:-1][..., np.newaxis]
         block_inds = np.argmax(vals, axis=0)

@@ -201,7 +201,7 @@ class SQLiteRegion(CacheRegion):
         c.execute('SELECT id, filename FROM entries ORDER BY id ASC')
         entries = c.fetchall()
         if entries:
-            ids_to_delete, files_to_delete = zip(*entries)
+            ids_to_delete, files_to_delete = list(zip(*entries))
             c.execute('DELETE FROM entries WHERE id in ({})'.format(','.join(map(str, ids_to_delete))))
             conn.commit()
             path = self.path
@@ -324,7 +324,7 @@ class cached(object):
             self_id = im_self.uid
 
         # ensure that passing a value as positional or keyword argument does not matter
-        kwargs.update(zip(self.argnames, args))
+        kwargs.update(list(zip(self.argnames, args)))
 
         # ensure the values of optional parameters enter the cache key
         defaults = self.defaults

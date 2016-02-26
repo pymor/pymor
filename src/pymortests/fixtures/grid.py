@@ -63,7 +63,7 @@ def subgrid_factory(grid_generator, neq, seed):
     if neq == 0:
         return SubGrid(g, np.arange(g.size(0), dtype=np.int32))
     else:
-        return SubGrid(g, np.array(random.sample(range(g.size(0)), max(int(m.floor(g.size(0) / neq)), 1))))
+        return SubGrid(g, np.array(random.sample(list(range(g.size(0))), max(int(m.floor(g.size(0) / neq)), 1))))
 
 
 subgrid_generators = [lambda args=args: subgrid_factory(*args) for args in

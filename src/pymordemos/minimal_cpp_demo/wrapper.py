@@ -81,7 +81,7 @@ class WrappedDiffusionOperator(OperatorBase):
         assert U in self.source
 
         if ind is None:
-            ind = range(len(U))
+            ind = list(range(len(U)))
 
         def apply_one_vector(u):
             v = Vector(self.range.dim, 0)

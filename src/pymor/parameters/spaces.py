@@ -52,14 +52,14 @@ class CubicParameterSpace(ParameterSpaceInterface):
         if isinstance(counts, dict):
             pass
         elif isinstance(counts, (tuple, list, np.ndarray)):
-            counts = {k: c for k, c in izip(self.parameter_type, counts)}
+            counts = {k: c for k, c in zip(self.parameter_type, counts)}
         else:
             counts = {k: counts for k in self.parameter_type}
         linspaces = tuple(np.linspace(self.ranges[k][0], self.ranges[k][1], num=counts[k]) for k in self.parameter_type)
         iters = tuple(product(ls, repeat=max(1, np.zeros(sps).size))
-                      for ls, sps in izip(linspaces, self.parameter_type.values()))
+                      for ls, sps in zip(linspaces, self.parameter_type.values()))
         return [Parameter(((k, np.array(v).reshape(shp))
-                           for k, v, shp in izip(self.parameter_type, i, self.parameter_type.values())))
+                           for k, v, shp in zip(self.parameter_type, i, self.parameter_type.values())))
                 for i in product(*iters)]
 
     def sample_randomly(self, count=None, random_state=None, seed=None):
@@ -101,7 +101,7 @@ class CubicParameterSpace(ParameterSpaceInterface):
                     yield get_param()
             return param_generator()
         else:
-            return [get_param() for _ in xrange(count)]
+            return [get_param() for _ in range(count)]
 
     def __str__(self):
         rows = [(k, str(v), str(self.ranges[k])) for k, v in self.parameter_type.iteritems()]

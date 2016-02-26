@@ -1074,8 +1074,8 @@ def test_axpy_wrong_coefficients(compatible_vector_array_pair):
 
 def test_dot_wrong_ind(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
-    for ind1, ind2 in chain(zip(valid_inds(v1), invalid_inds(v2)),
-                            zip(invalid_inds(v1), valid_inds(v2))):
+    for ind1, ind2 in chain(list(zip(valid_inds(v1), invalid_inds(v2))),
+                            list(zip(invalid_inds(v1), valid_inds(v2)))):
         c1, c2 = v1.copy(), v2.copy()
         with pytest.raises(Exception):
             c1.dot(c2, ind=ind1, x_ind=ind2)

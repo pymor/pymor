@@ -126,8 +126,8 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
                 geo_file.write('Point('+str(id+1)+') = '+str(p+[0, 0]).replace('[', '{').replace(']', '}')+';\n')
 
             # store points and their ids
-            point_ids = dict(zip([str(p) for ps in points for p in ps],
-                                 range(1, len([p for ps in points for p in ps])+1)))
+            point_ids = dict(list(zip([str(p) for ps in points for p in ps],
+                                 list(range(1, len([p for ps in points for p in ps])+1)))))
             # shift points 1 entry to the left.
             points_deque = [collections.deque(ps) for ps in points]
             for ps_d in points_deque:
@@ -141,7 +141,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
 
             # form line_loops (polygonal chains), create ids and write them to file.
             line_loops = [[point_ids[str(p)] for p in ps] for ps in points]
-            line_loop_ids = range(len(lines)+1, len(lines)+len(line_loops)+1)
+            line_loop_ids = list(range(len(lines)+1, len(lines)+len(line_loops)+1))
             for ll_id, ll in zip(line_loop_ids, line_loops):
                 geo_file.write('Line Loop('+str(ll_id)+')'+' = '+str(ll).replace('[', '{').replace(']', '}')+';\n')
 
@@ -175,7 +175,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
 
         # run gmsh; perform mesh refinement
         cmd = ['gmsh', msh_file_path, '-refine', '-o', msh_file_path]
-        for i in xrange(refinement_steps):
+        for i in range(refinement_steps):
             logger.info('Performing Gmsh refinement step {}'.format(i+1))
             subprocess.check_call(cmd, env=env)
 

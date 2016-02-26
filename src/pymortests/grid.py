@@ -264,7 +264,7 @@ def test_neighbours_wrong_arguments(grid):
 
 def test_neighbours_shape(grid):
     g = grid
-    for e, n in product(range(g.dim + 1), range(g.dim + 1)):
+    for e, n in product(list(range(g.dim + 1)), list(range(g.dim + 1))):
         for s in range(max(e, n), g.dim + 1):
             assert g.neighbours(e, n, s).ndim == 2
             assert g.neighbours(e, n, s).shape[0] == g.size(e)
@@ -272,14 +272,14 @@ def test_neighbours_shape(grid):
 
 def test_neighbours_dtype(grid):
     g = grid
-    for e, n in product(range(g.dim + 1), range(g.dim + 1)):
+    for e, n in product(list(range(g.dim + 1)), list(range(g.dim + 1))):
         for s in range(max(e, n), g.dim + 1):
             assert g.neighbours(e, n, s).dtype == np.dtype('int32')
 
 
 def test_neighbours_entry_value_range(grid):
     g = grid
-    for e, n in product(range(g.dim + 1), range(g.dim + 1)):
+    for e, n in product(list(range(g.dim + 1)), list(range(g.dim + 1))):
         for s in range(max(e, n), g.dim + 1):
             np.testing.assert_array_less(g.neighbours(e, n, s), g.size(n))
             np.testing.assert_array_less(-2, g.neighbours(e, n, s))
@@ -287,7 +287,7 @@ def test_neighbours_entry_value_range(grid):
 
 def test_neighbours_entry_values_unique(grid):
     g = grid
-    for e, n in product(range(g.dim + 1), range(g.dim + 1)):
+    for e, n in product(list(range(g.dim + 1)), list(range(g.dim + 1))):
         for s in range(max(e, n), g.dim + 1):
             for S in g.neighbours(e, n, s):
                 S = S[S >= 0]
@@ -296,7 +296,7 @@ def test_neighbours_entry_values_unique(grid):
 
 def test_neighbours_each_entry_neighbour(grid):
     g = grid
-    for e, n in product(range(g.dim + 1), range(g.dim + 1)):
+    for e, n in product(list(range(g.dim + 1)), list(range(g.dim + 1))):
         for s in range(max(e, n), g.dim + 1):
             N = g.neighbours(e, n, s)
             ESE = g.subentities(e, s)
@@ -312,7 +312,7 @@ def test_neighbours_each_entry_neighbour(grid):
 
 def test_neighbours_each_neighbour_has_entry(grid):
     g = grid
-    for e, n in product(range(g.dim + 1), range(g.dim + 1)):
+    for e, n in product(list(range(g.dim + 1)), list(range(g.dim + 1))):
         for s in range(max(e, n), g.dim + 1):
             N = g.neighbours(e, n, s)
             SUE = g.superentities(s, e)

@@ -19,7 +19,7 @@ def _newton(order, **kwargs):
     return newton(mop, rhs, initial_guess=guess, **kwargs)
 
 
-@pytest.mark.parametrize("order", range(1, 8))
+@pytest.mark.parametrize("order", list(range(1, 8)))
 def test_newton(order):
     U, _ = _newton(order, atol=1e-15)
     assert float_cmp(U.data, 0.0)

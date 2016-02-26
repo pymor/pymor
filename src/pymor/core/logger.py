@@ -19,7 +19,7 @@ INFO3 = logging.INFO + 2
 logging.addLevelName(INFO2, 'INFO2')
 logging.addLevelName(INFO3, 'INFO3')
 
-BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
+BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = list(range(8))
 
 # The background is set with 40 plus the number of the color, and the foreground with 30
 # These are the sequences needed to get colored output

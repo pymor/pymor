@@ -188,7 +188,7 @@ class GmshGrid(UnstructuredTriangleGrid):
         assert 'triangle' in sections['Elements']
         assert all(n[1][2] == 0 for n in sections['Nodes'])
 
-        node_ids = dict(zip([n[0] for n in sections['Nodes']], np.arange(len(sections['Nodes']), dtype=np.int32)))
+        node_ids = dict(list(zip([n[0] for n in sections['Nodes']], np.arange(len(sections['Nodes']), dtype=np.int32))))
         vertices = np.array([n[1][0:2] for n in sections['Nodes']])
 
         faces = np.array([[node_ids[nodes[0]], node_ids[nodes[1]], node_ids[nodes[2]]]
@@ -218,9 +218,9 @@ class GmshBoundaryInfo(BoundaryInfoInterface):
         self.boundary_types = [BoundaryType(pn[2]) for pn in sections['PhysicalNames'] if pn[1] == 1]
 
         # Compute ids, since Gmsh starts numbering with 1 instead of 0.
-        name_ids = dict(zip([pn[0] for pn in sections['PhysicalNames']], np.arange(len(sections['PhysicalNames']),
-                                                                                   dtype=np.int32)))
-        node_ids = dict(zip([n[0] for n in sections['Nodes']], np.arange(len(sections['Nodes']), dtype=np.int32)))
+        name_ids = dict(list(zip([pn[0] for pn in sections['PhysicalNames']], np.arange(len(sections['PhysicalNames']),
+                                                                                   dtype=np.int32))))
+        node_ids = dict(list(zip([n[0] for n in sections['Nodes']], np.arange(len(sections['Nodes']), dtype=np.int32))))
 
         if 'line' in sections['Elements']:
             superentities = grid.superentities(2, 1)

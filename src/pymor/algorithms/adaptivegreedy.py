@@ -473,7 +473,7 @@ class AdaptiveSampleSet(BasicInterface):
 
     def _update(self):
         self.levels, self.centers, vertex_ids, creation_times = \
-            zip(*((node.level, node.center, node.vertex_ids, node.creation_time) for node in self._iter_leafs()))
+            list(zip(*((node.level, node.center, node.vertex_ids, node.creation_time) for node in self._iter_leafs())))
         self.levels = np.array(self.levels)
         self.volumes = self.total_volume / ((2**self.dim)**self.levels)
         self.vertex_ids = np.array(vertex_ids)

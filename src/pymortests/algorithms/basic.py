@@ -41,7 +41,7 @@ def test_almost_equal_product(operator_with_arrays_and_products):
     if len(v1) < 2:
         return
     v2 = v1.empty()
-    v2.append(v1, o_ind=range(len(v1) // 2))
+    v2.append(v1, o_ind=list(range(len(v1) // 2)))
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
         for rtol, atol in ((1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8)):
             norm = induced_norm(product)

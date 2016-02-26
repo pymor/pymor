@@ -168,7 +168,7 @@ class UberMeta(abc.ABCMeta):
             assert args[0] == 'self'
             c._init_arguments = tuple(args[1:])
             if defaults:
-                c._init_defaults = dict(zip(args[-len(defaults):], defaults))
+                c._init_defaults = dict(list(zip(args[-len(defaults):], defaults)))
             else:
                 c._init_defaults = dict()
         except TypeError:       # happens when no one declares an __init__ method and object is reached

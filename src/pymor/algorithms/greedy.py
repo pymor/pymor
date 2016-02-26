@@ -126,12 +126,12 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
 
             logger.info('Estimating errors ...')
             if use_estimator:
-                errors, mus = zip(*pool.apply(_estimate, rd=rd, d=None, rc=None, samples=samples, error_norm=None))
+                errors, mus = list(zip(*pool.apply(_estimate, rd=rd, d=None, rc=None, samples=samples, error_norm=None)))
             else:
                 # FIXME: Always communicating rc may become a bottleneck in some use cases.
                 #        Add special treatment for GenericRBReconstructor?
-                errors, mus = zip(*pool.apply(_estimate, rd=rd, d=discretization, rc=rc,
-                                              samples=samples, error_norm=error_norm))
+                errors, mus = list(zip(*pool.apply(_estimate, rd=rd, d=discretization, rc=rc,
+                                              samples=samples, error_norm=error_norm)))
             max_err_ind = np.argmax(errors)
             max_err, max_err_mu = errors[max_err_ind], mus[max_err_ind]
 

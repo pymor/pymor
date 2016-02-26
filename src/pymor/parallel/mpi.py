@@ -76,10 +76,10 @@ def _single_worker_call_function(payload, worker):
 def _worker_map_function(payload, function, **kwargs):
 
     if mpi.rank0:
-        args = zip(*payload[0])
+        args = list(zip(*payload[0]))
     else:
         args = None
-    args = zip(*mpi.comm.scatter(args, root=0))
+    args = list(zip(*mpi.comm.scatter(args, root=0)))
 
     result = [mpi.function_call(function, *a, **kwargs) for a in args]
     result = mpi.comm.gather(result, root=0)

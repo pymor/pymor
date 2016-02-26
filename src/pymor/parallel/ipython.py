@@ -142,7 +142,7 @@ class IPythonPool(WorkerPoolBase):
 
     def _map(self, function, chunks, **kwargs):
         result = self.view.map_sync(_worker_call_function,
-                                    *zip(*((function, True, a, kwargs) for a in izip(*chunks))))
+                                    *list(zip(*((function, True, a, kwargs) for a in zip(*chunks)))))
         return list(chain(*result))
 
     def _remove_object(self, remote_id):
@@ -159,7 +159,7 @@ def _worker_call_function(function, loop, args, kwargs):
                   v)
               for k, v in kwargs.iteritems()}
     if loop:
-        return [function(*a, **kwargs) for a in izip(*args)]
+        return [function(*a, **kwargs) for a in zip(*args)]
     else:
         return function(*args, **kwargs)
 

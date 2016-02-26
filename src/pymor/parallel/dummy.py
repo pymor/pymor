@@ -5,7 +5,7 @@
 
 
 from copy import deepcopy
-from itertools import izip
+
 
 from pymor.core.interfaces import ImmutableInterface
 from pymor.parallel.interfaces import WorkerPoolInterface, RemoteObjectInterface
@@ -44,7 +44,7 @@ class DummyPool(WorkerPoolInterface):
 
     def map(self, function, *args, **kwargs):
         kwargs = self._map_kwargs(kwargs)
-        result = [function(*a, **kwargs) for a in izip(*args)]
+        result = [function(*a, **kwargs) for a in zip(*args)]
         return result
 
     def __nonzero__(self):

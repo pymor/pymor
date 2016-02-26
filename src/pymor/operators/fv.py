@@ -277,7 +277,7 @@ class NonlinearAdvectionOperator(OperatorBase):
         if not hasattr(self, '_grid_data'):
             self._fetch_grid_data()
 
-        ind = range(len(U)) if ind is None else ind
+        ind = list(range(len(U))) if ind is None else ind
         U = U.data
         R = np.zeros((len(ind), self.source.dim))
 
@@ -380,7 +380,7 @@ class NonlinearAdvectionOperator(OperatorBase):
             f[:, 0] = ff[:, 0]
             f[BOUNDARIES, 1] = f[BOUNDARIES, 0]
         if bi.has_dirichlet:
-            for f, f_d in izip(F0P_edge, F_dirichlet):
+            for f, f_d in zip(F0P_edge, F_dirichlet):
                 f[DIRICHLET_BOUNDARIES, 1] = f_d
         NUM_FLUX_0P = self.numerical_flux.evaluate_stage2(F0P_edge, UNIT_OUTER_NORMALS, VOLS1, mu)
         del F0P_edge
@@ -390,7 +390,7 @@ class NonlinearAdvectionOperator(OperatorBase):
             f[:, 0] = ff[:, 0]
             f[BOUNDARIES, 1] = f[BOUNDARIES, 0]
         if bi.has_dirichlet:
-            for f, f_d in izip(F0M_edge, F_dirichlet):
+            for f, f_d in zip(F0M_edge, F_dirichlet):
                 f[DIRICHLET_BOUNDARIES, 1] = f_d
         NUM_FLUX_0M = self.numerical_flux.evaluate_stage2(F0M_edge, UNIT_OUTER_NORMALS, VOLS1, mu)
         del F0M_edge
@@ -406,7 +406,7 @@ class NonlinearAdvectionOperator(OperatorBase):
             f[:, 1] = ff[:, 1]
             f[BOUNDARIES, 1] = f[BOUNDARIES, 0]
         if bi.has_dirichlet:
-            for f, f_d in izip(F1P_edge, F_dirichlet):
+            for f, f_d in zip(F1P_edge, F_dirichlet):
                 f[DIRICHLET_BOUNDARIES, 1] = f_d
         NUM_FLUX_1P = self.numerical_flux.evaluate_stage2(F1P_edge, UNIT_OUTER_NORMALS, VOLS1, mu)
         del F1P_edge, FP_edge
@@ -416,7 +416,7 @@ class NonlinearAdvectionOperator(OperatorBase):
             f[:, 1] = ff[:, 1]
             f[BOUNDARIES, 1] = f[BOUNDARIES, 0]
         if bi.has_dirichlet:
-            for f, f_d in izip(F1M_edge, F_dirichlet):
+            for f, f_d in zip(F1M_edge, F_dirichlet):
                 f[DIRICHLET_BOUNDARIES, 1] = f_d
         NUM_FLUX_1M = self.numerical_flux.evaluate_stage2(F1M_edge, UNIT_OUTER_NORMALS, VOLS1, mu)
         del F1M_edge, FM_edge

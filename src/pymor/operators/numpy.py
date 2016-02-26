@@ -320,7 +320,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             if matrix.dtype != common_dtype:
                 matrix = matrix.astype(common_dtype)
 
-        for op, c in izip(operators[1:], coefficients[1:]):
+        for op, c in zip(operators[1:], coefficients[1:]):
             if type(op) is ZeroOperator:
                 continue
             elif type(op) is IdentityOperator:
