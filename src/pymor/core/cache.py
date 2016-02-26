@@ -218,7 +218,11 @@ class SQLiteRegion(CacheRegion):
         c = conn.cursor()
         c.execute('SELECT SUM(size) FROM entries')
         size = c.fetchone()
-        size = size[0] if size is not None else 0
+        # size[0] can apparently also be None
+        try:
+            size = int(size[0]) if size is not None else 0
+        except TypeError:
+            size = 0
         if size > self.max_size:
             bytes_to_delete = size - self.max_size + 0.75 * self.max_size
             deleted = 0
