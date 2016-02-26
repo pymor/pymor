@@ -234,7 +234,7 @@ def run_code(code):
 
     Intended to be used in conjunction with :func:`call`.
     """
-    exec code
+    exec(code)
 
 
 def import_module(path):
@@ -352,7 +352,7 @@ if __name__ == '__main__':
         if len(sys.argv) >= 2:
             filename = sys.argv[1]
             sys.argv = sys.argv[:1] + sys.argv[2:]
-            execfile(filename)
+            exec(compile(open(filename).read(), filename, 'exec'))
             import pymor.tools.mpi  # this is different from __main__
             pymor.tools.mpi.quit()  # change global state in the right module
         else:
