@@ -14,7 +14,7 @@ import numpy as np
 
 from pymor.core.defaults import defaults
 from pymor.core.pickle import dump, load
-from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.vectorarrays.interfaces import VectorArrayInterface, _INDEXTYPES
 from pymor.vectorarrays.list import ListVectorArray
 
 
@@ -104,10 +104,6 @@ class DiskVectorArray(VectorArrayInterface):
 
     def __len__(self):
         return self._len
-
-    @property
-    def data(self):
-        raise NotImplementedError
 
     @property
     def dim(self):
@@ -223,7 +219,7 @@ class DiskVectorArray(VectorArrayInterface):
         assert isinstance(alpha, Number) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
         ind = list(range(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
-        x_ind = list(range(x._len)) if x_ind is None else [x_ind] if isinstance(x_ind, Number) else x_ind
+        x_ind = list(range(x._len)) if x_ind is None else [x_ind] if isinstance(x_ind, _INDEXTYPES) else x_ind
 
         if self is x:
             if set(ind).intersection(set(x_ind)):
