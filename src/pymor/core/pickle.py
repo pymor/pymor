@@ -20,6 +20,7 @@ from types import FunctionType, ModuleType
 import pickle
 from io import BytesIO as IOtype
 
+import sys
 
 PicklingError = pickle.PicklingError
 UnpicklingError = pickle.UnpicklingError
@@ -171,7 +172,7 @@ def _function_pickling_handler(f):
 
 
 def _function_unpickling_handler(persid):
-    mode, data = persid[0], persid[1:]
+    mode, data = persid[0].to_bytes(1, sys.byteorder), persid[1:]
     if mode == b'A':
         return pickle.loads(data)
     elif mode == b'B':
