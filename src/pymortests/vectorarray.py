@@ -11,7 +11,7 @@ import numpy as np
 
 from pymor.algorithms.basic import almost_equal
 from pymor.core import NUMPY_INDEX_QUIRK
-from pymor.vectorarrays.interfaces import VectorSpace
+from pymor.vectorarrays.interfaces import VectorSpace, _INDEXTYPES
 from pymortests.fixtures.vectorarray import \
     (vector_array_without_reserve, vector_array, compatible_vector_array_pair_without_reserve,
      compatible_vector_array_pair, incompatible_vector_array_pair,
@@ -616,7 +616,7 @@ def test_lincomb_1d(vector_array):
         assert lc.subtype == v.subtype
         assert len(lc) == 1
         lc2 = v.zeros()
-        ind = list(range(len(v))) if ind is None else [ind] if isinstance(ind, Number) else ind
+        ind = list(range(len(v))) if ind is None else [ind] if isinstance(ind, _INDEXTYPES) else ind
         for coeff, i in zip(coeffs, ind):
             lc2.axpy(coeff, v, x_ind=i)
         assert np.all(almost_equal(lc, lc2))

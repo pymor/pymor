@@ -8,7 +8,7 @@ from numbers import Number
 import numpy as np
 
 from pymor.core.interfaces import BasicInterface, abstractmethod, abstractclassmethod, abstractproperty
-from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.vectorarrays.interfaces import VectorArrayInterface, _INDEXTYPES
 
 
 class VectorInterface(BasicInterface):
@@ -407,15 +407,15 @@ class ListVectorArray(VectorArrayInterface):
         assert x.check_ind(x_ind)
         assert self.space == x.space
         assert self.len_ind(ind) == x.len_ind(x_ind) or x.len_ind(x_ind) == 1
-        assert isinstance(alpha, Number) \
+        assert isinstance(alpha, _INDEXTYPES) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
 
         if self is x:
             if ind is None or x_ind is None:
                 self.axpy(alpha, x.copy(), ind, x_ind)
                 return
-            ind_set = {ind} if isinstance(ind, Number) else set(ind)
-            x_ind_set = {x_ind} if isinstance(x_ind, Number) else set(x_ind)
+            ind_set = {ind} if isinstance(ind, _INDEXTYPES) else set(ind)
+            x_ind_set = {x_ind} if isinstance(x_ind, _INDEXTYPES) else set(x_ind)
             if ind_set.intersection(x_ind_set):
                 self.axpy(alpha, x.copy(x_ind), ind)
                 return
@@ -423,7 +423,7 @@ class ListVectorArray(VectorArrayInterface):
         if ind is None:
             Y = iter(self._list)
             len_Y = len(self._list)
-        elif isinstance(ind, Number):
+        elif isinstance(ind, _INDEXTYPES):
             Y = iter([self._list[ind]])
             len_Y = 1
         else:
@@ -433,7 +433,7 @@ class ListVectorArray(VectorArrayInterface):
         if x_ind is None:
             X = iter(x._list)
             len_X = len(x._list)
-        elif isinstance(x_ind, Number):
+        elif isinstance(x_ind, _INDEXTYPES):
             X = iter([x._list[x_ind]])
             len_X = 1
         else:
