@@ -65,7 +65,7 @@ class NumpyVectorArray(VectorArrayInterface):
 
     @classmethod
     def make_array(cls, subtype=None, count=0, reserve=0):
-        assert isinstance(subtype, Number)
+        assert isinstance(subtype, _INDEXTYPES)
         assert count >= 0
         assert reserve >= 0
         va = cls(np.empty((0, 0)))
