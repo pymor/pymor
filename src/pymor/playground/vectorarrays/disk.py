@@ -69,7 +69,7 @@ class DiskVectorArray(VectorArrayInterface):
             pass
 
     def _store(self, i, v):
-        with open(os.path.join(self.dir, str(i)), 'w') as f:
+        with open(os.path.join(self.dir, str(i)), 'wb') as f:
             dump(v, f)
         self._cache[i] = v
         if len(self._cache) > self.cache_size:
@@ -79,7 +79,7 @@ class DiskVectorArray(VectorArrayInterface):
         if i in self._cache:
             return self._cache[i]
         else:
-            with open(os.path.join(self.dir, str(i))) as f:
+            with open(os.path.join(self.dir, str(i)), 'rb') as f:
                 v = load(f)
             self._cache[i] = v
             if len(self._cache) > self.cache_size:

@@ -162,7 +162,7 @@ class SQLiteRegion(CacheRegion):
             return False, None
         elif len(result) == 1:
             file_path = os.path.join(self.path, result[0][0])
-            with open(file_path) as f:
+            with open(file_path, 'rb') as f:
                 value = load(f)
             return True, value
         else:
@@ -172,7 +172,7 @@ class SQLiteRegion(CacheRegion):
         fd, file_path = tempfile.mkstemp('.dat', datetime.datetime.now().isoformat()[:-7] + '-', self.path)
         filename = os.path.basename(file_path)
         try:
-            f = os.fdopen(fd, 'w')
+            f = os.fdopen(fd, 'wb')
             dump(value, f)
             file_size = f.tell()
         finally:
