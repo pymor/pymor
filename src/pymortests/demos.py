@@ -32,6 +32,7 @@ DEMO_ARGS = (('elliptic', [0, 0, 0, 0]), ('elliptic', [1, 2, 0, 3]), ('elliptic'
              ('thermalblock', ['--alg=pod', 2, 2, 3, 5]),
              ('thermalblock', ['--alg=adaptive_greedy', 2, 2, 10, 30]),
              ('thermalblock', ['--alg=naive', '--reductor=traditional', 2, 2, 10, 30]),
+             ('thermalblock', ['--ipython-engines=2', 2, 2, 3, 5]),
              ('thermalblock_adaptive', [10]),
              ('thermalblock_adaptive', ['--visualize-refinement', 10]),
              ('thermalblock_simple', ['pymor', 'naive', 2, 10, 10]),
@@ -86,7 +87,10 @@ def test_demos(demo_args):
         assert ret is not None
     except ImportError as ie:
         assert _is_failed_import_ok(ie), ie
-    stop_gui_processes()
+    finally:
+        stop_gui_processes()
+        from pymor.parallel.default import _cleanup
+        _cleanup()
 
 
 def test_analyze_pickle1():
