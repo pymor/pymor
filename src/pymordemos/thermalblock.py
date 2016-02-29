@@ -165,12 +165,12 @@ def main(args):
 
     if args['--pickle']:
         print('\nWriting reduced discretization to file {} ...'.format(args['--pickle'] + '_reduced'))
-        with open(args['--pickle'] + '_reduced', 'w') as f:
+        with open(args['--pickle'] + '_reduced', 'wb') as f:
             dump(rd, f)
         if not args['--fenics']:  # FEniCS data structures do not support serialization
             print('Writing detailed discretization and reconstructor to file {} ...'
                   .format(args['--pickle'] + '_detailed'))
-            with open(args['--pickle'] + '_detailed', 'w') as f:
+            with open(args['--pickle'] + '_detailed', 'wb') as f:
                 dump((d, rc), f)
 
     print('\nSearching for maximum error on random snapshots ...')
