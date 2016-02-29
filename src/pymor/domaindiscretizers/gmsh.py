@@ -102,6 +102,8 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
 
         return points, boundary_types
 
+    # these two are referenced in a finally block, but were left undefined in some paths
+    geo_file, msh_file = None, None
     try:
         # When a |PolygonalDomain| or |RectDomain| has to be discretized create a Gmsh GE0-file and write all data.
         if domain_description is not None:
