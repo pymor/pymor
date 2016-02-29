@@ -32,7 +32,6 @@ DEMO_ARGS = (('elliptic', [0, 0, 0, 0]), ('elliptic', [1, 2, 0, 3]), ('elliptic'
              ('thermalblock', ['--alg=pod', 2, 2, 3, 5]),
              ('thermalblock', ['--alg=adaptive_greedy', 2, 2, 10, 30]),
              ('thermalblock', ['--alg=naive', '--reductor=traditional', 2, 2, 10, 30]),
-             ('thermalblock', ['--ipython-engines=2', 2, 2, 3, 5]),
              ('thermalblock_adaptive', [10]),
              ('thermalblock_adaptive', ['--visualize-refinement', 10]),
              ('thermalblock_simple', ['pymor', 'naive', 2, 10, 10]),
@@ -89,8 +88,6 @@ def test_demos(demo_args):
         assert _is_failed_import_ok(ie), ie
     finally:
         stop_gui_processes()
-        from pymor.parallel.default import _cleanup
-        _cleanup()
 
 
 def test_analyze_pickle1():
@@ -133,6 +130,16 @@ def test_analyze_pickle4():
                     os.path.join(d, 'data_reduced'), 10]))
     finally:
         shutil.rmtree(d)
+
+
+def test_thermalblock_ipython(demo_args):
+    if demo_args[0] != 'pymordemos.thermalblock':
+        return
+    from pymor.tools import mpi
+    if mpi.parallel:  # simply running 'ipcluster start' (without any profile) does not seem to work
+        return        # when running under mpirun, so we do not test this combination for now
+    test_demos((demo_args[0], ['--ipython-engines=2'] + demo_args[1]))
+
 
 if __name__ == "__main__":
     runmodule(filename=__file__)
