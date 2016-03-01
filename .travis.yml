@@ -3,25 +3,26 @@ language: generic
 before_install:
  - git fetch --depth=1000 --tags origin master
  - alias python=python${PYMOR_PYTHON_VERSION}
- - alias py.test=pip${PYMOR_PYTHON_MAJOR}
- - alias pip=pip${PYMOR_PYTHON_MAJOR}
+ - export pythonX=python${PYMOR_PYTHON_VERSION}
+ - export py.testX=py.test-${PYMOR_PYTHON_VERSION}
+ - export pipX=pip${PYMOR_PYTHON_MAJOR}
  - sudo add-apt-repository -y ppa:pymor/stable
  - sudo add-apt-repository -y ppa:fenics-packages/fenics
  - sudo apt-get update -qq
  # these are packages not on travis' whitelist/only in our ppa
  - sudo apt-get install -y -qq python-docopt python-pytest python-opengl python-distribute ipython python-pyside python-mpi4py
  - sudo apt-get install -y -qq python3-docopt python3-pytest python3-opengl ipython3 python3-pyside python3-mpi4py
- - for pkg in https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz ipyparallel pytest-cov sympy python-coveralls ; do sudo -E pip install ${pkg} ; done
+ - for pkg in https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz ipyparallel pytest-cov sympy python-coveralls ; do sudo -E pipX install ${pkg} ; done
  # using aptitude here because it auto-fixes problems
  - sudo aptitude install -y -q dolfin-dev python-dolfin
- - python -c 'import  dolfin' || echo "import dolfin failed"
+ - pythonX -c 'import  dolfin' || echo "import dolfin failed"
 
 install:
  - |
   if [ "${PYMOR_PYTHON_MAJOR}" == "2" ] ; then
     make 3to2
   fi
- - python setup.py build_ext -i
+ - pythonX setup.py build_ext -i
 
 sudo: required
 dist: trusty
@@ -29,16 +30,16 @@ dist: trusty
 script:
  - |
   if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
-    virtualenv --python=python${PYMOR_PYTHON_VERSION} piptest
+    virtualenv --python=pythonX piptest
     source piptest/bin/activate
     # this fails on PRs, so skip it
-    [[ "${TRAVIS_PULL_REQUEST}" != "false" ]] || pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
+    [[ "${TRAVIS_PULL_REQUEST}" != "false" ]] || pipX install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
   elif [ "${PYTEST_MARKER}" == "MPI" ] ; then
     export PYTHONPATH=$(pwd)/src
-    xvfb-run -a mpirun -n 2 python src/pymortests/mpi_run_demo_tests.py
+    xvfb-run -a mpirun -n 2 pythonX src/pymortests/mpi_run_demo_tests.py
   else
     # this runs in pytest in a fake, auto numbered, X Server
-    xvfb-run -a py.test -k "${PYTEST_MARKER}"
+    xvfb-run -a py.testX -k "${PYTEST_MARKER}"
   fi
 
 notifications:
