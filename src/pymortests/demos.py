@@ -86,7 +86,8 @@ def test_demos(demo_args):
         assert ret is not None
     except ImportError as ie:
         assert _is_failed_import_ok(ie), ie
-    stop_gui_processes()
+    finally:
+        stop_gui_processes()
 
 
 def test_analyze_pickle1():
@@ -129,6 +130,16 @@ def test_analyze_pickle4():
                     os.path.join(d, 'data_reduced'), 10]))
     finally:
         shutil.rmtree(d)
+
+
+def test_thermalblock_ipython(demo_args):
+    if demo_args[0] != 'pymordemos.thermalblock':
+        return
+    from pymor.tools import mpi
+    if mpi.parallel:  # simply running 'ipcluster start' (without any profile) does not seem to work
+        return        # when running under mpirun, so we do not test this combination for now
+    test_demos((demo_args[0], ['--ipython-engines=2'] + demo_args[1]))
+
 
 if __name__ == "__main__":
     runmodule(filename=__file__)
