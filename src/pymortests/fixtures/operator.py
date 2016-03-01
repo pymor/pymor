@@ -349,7 +349,7 @@ def misc_operator_with_arrays_and_products_factory(n):
         rp = BlockDiagonalOperator([rp0, rp1])
         U = BlockVectorArray([U0, U1])
         V = BlockVectorArray([V0, V1])
-        return op, _, U, V, sp, rp
+        return op, None, U, V, sp, rp
     else:
         assert False
 
