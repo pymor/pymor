@@ -172,8 +172,11 @@ def _function_pickling_handler(f):
 
 
 def _function_unpickling_handler(persid):
-    mode, data = persid[0].to_bytes(1, sys.byteorder), persid[1:]
-    if mode == b'A':
+    try:
+        mode, data = persid[0].to_bytes(1, sys.byteorder), persid[1:]
+    except AttributeError as a:
+        mode, data = persid[0], persid[1:]
+    if mode == 'A':
         return pickle.loads(data)
     elif mode == b'B':
         return loads_function(data)
