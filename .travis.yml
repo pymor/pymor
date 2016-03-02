@@ -12,17 +12,17 @@ before_install:
  # these are packages not on travis' whitelist/only in our ppa
  - sudo apt-get install -y -qq python-docopt python-pytest python-opengl python-distribute ipython python-pyside python-mpi4py
  - sudo apt-get install -y -qq python3-docopt python3-pytest python3-opengl ipython3 python3-pyside python3-mpi4py
- - for pkg in https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz ipyparallel pytest-cov sympy python-coveralls ; do sudo -E PIP_X install ${pkg} ; done
+ - for pkg in https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz ipyparallel pytest-cov sympy python-coveralls ; do sudo -E ${PIP_X} install ${pkg} ; done
  # using aptitude here because it auto-fixes problems
  - sudo aptitude install -y -q dolfin-dev python-dolfin
- - PYTHON_X -c 'import  dolfin' || echo "import dolfin failed"
+ - ${PYTHON_X} -c 'import  dolfin' || echo "import dolfin failed"
 
 install:
  - |
   if [ "${PYMOR_PYTHON_MAJOR}" == "2" ] ; then
     make 3to2
   fi
- - PYTHON_X setup.py build_ext -i
+ - ${PYTHON_X} setup.py build_ext -i
 
 sudo: required
 dist: trusty
@@ -30,16 +30,16 @@ dist: trusty
 script:
  - |
   if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
-    virtualenv --python=PYTHON_X piptest
+    virtualenv --python=${PYTHON_X} piptest
     source piptest/bin/activate
     # this fails on PRs, so skip it
-    [[ "${TRAVIS_PULL_REQUEST}" != "false" ]] || PIP_X install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
+    [[ "${TRAVIS_PULL_REQUEST}" != "false" ]] || ${PIP_X} install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
   elif [ "${PYTEST_MARKER}" == "MPI" ] ; then
     export PYTHONPATH=$(pwd)/src
-    xvfb-run -a mpirun -n 2 PYTHON_X src/pymortests/mpi_run_demo_tests.py
+    xvfb-run -a mpirun -n 2 ${PYTHON_X} src/pymortests/mpi_run_demo_tests.py
   else
     # this runs in pytest in a fake, auto numbered, X Server
-    xvfb-run -a PY_TEST_X -k "${PYTEST_MARKER}"
+    xvfb-run -a ${PY_TEST_X} -k "${PYTEST_MARKER}"
   fi
 
 notifications:
