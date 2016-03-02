@@ -11,7 +11,7 @@ before_install:
  - sudo apt-get update -qq
  # these are packages not on travis' whitelist/only in our ppa
  - sudo apt-get install -y -qq python-docopt python-pytest python-opengl python-distribute ipython python-pyside python-mpi4py
- - sudo apt-get install -y -qq cython3 python3-pip python3.4-venv python3-docopt python3-pytest python3-opengl ipython3 python3-pyside python3-mpi4py
+ - sudo apt-get install -y -qq python3-tk cython3 python3-pip python3.4-venv python3-docopt python3-pytest python3-opengl ipython3 python3-pyside python3-mpi4py
  - for pkg in https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz ipyparallel pytest-cov sympy python-coveralls ; do sudo -E ${PIP_X} install ${pkg} ; done
  # using aptitude here because it auto-fixes problems
  - sudo aptitude install -y -q dolfin-dev python-dolfin
