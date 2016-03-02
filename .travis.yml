@@ -59,12 +59,15 @@ addons:
     packages:
     - debhelper
     - python-pip
+    - python3-pip
     - python-markupsafe
+    - python3-markupsafe
     - git
     - cython
     - xvfb
     - libopenmpi-dev
     - python3-numpy
+    - python3.4-venv
     - python3-sphinx
     - python3-scipy
     - python3-matplotlib
