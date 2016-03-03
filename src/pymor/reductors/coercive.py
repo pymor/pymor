@@ -8,6 +8,7 @@ from itertools import izip
 
 import numpy as np
 
+from pymor.core.logger import getLogger
 from pymor.core.interfaces import ImmutableInterface
 from pymor.operators.constructions import LincombOperator, induced_norm
 from pymor.operators.numpy import NumpyMatrixOperator
@@ -64,12 +65,17 @@ def reduce_coercive(discretization, RB, error_product=None, coercivity_estimator
 
     assert extends is None or len(extends) == 3
 
+    logger = getLogger('pymor.reductors.coercive.reduce_coercive')
+
     old_residual_data = extends[2].pop('residual') if extends else None
 
-    rd, rc, data = reduce_generic_rb(discretization, RB, disable_caching=disable_caching, extends=extends)
+    with logger.block('RB projection ...'):
+        rd, rc, data = reduce_generic_rb(discretization, RB, disable_caching=disable_caching, extends=extends)
 
-    residual, residual_reconstructor, residual_data = reduce_residual(discretization.operator, discretization.rhs, RB,
-                                                                      product=error_product, extends=old_residual_data)
+    with logger.block('Assembling error estimator ...'):
+        residual, residual_reconstructor, residual_data \
+            = reduce_residual(discretization.operator, discretization.rhs, RB,
+                              product=error_product, extends=old_residual_data)
 
     estimator = ReduceCoerciveEstimator(residual, residual_data.get('residual_range_dims', None), coercivity_estimator)
 
