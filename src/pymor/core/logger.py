@@ -14,6 +14,7 @@ import time
 from types import MethodType
 
 from pymor.core.defaults import defaults
+from pymor.tools import mpi
 
 BLOCK = logging.INFO + 5
 BLOCK_TIME = BLOCK + 1
@@ -112,7 +113,11 @@ class ColoredFormatter(logging.Formatter):
             record.levelname = levelname_color
         elif levelname in ('INFO', 'BLOCK'):
             record.levelname = ''
-        return logging.Formatter.format(self, record)
+        msg = logging.Formatter.format(self, record)
+        if mpi.rank0:
+            return msg
+        else:
+            return 'RANK{}|'.format(mpi.rank) + msg
 
 
 @defaults('filename', sid_ignore='filename')
