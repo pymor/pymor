@@ -88,6 +88,8 @@ def test_demos(demo_args):
         assert _is_failed_import_ok(ie), ie
     finally:
         stop_gui_processes()
+        from pymor.parallel.default import _cleanup
+        _cleanup()
 
 
 def test_analyze_pickle1():
@@ -138,7 +140,11 @@ def test_thermalblock_ipython(demo_args):
     from pymor.tools import mpi
     if mpi.parallel:  # simply running 'ipcluster start' (without any profile) does not seem to work
         return        # when running under mpirun, so we do not test this combination for now
-    test_demos((demo_args[0], ['--ipython-engines=2'] + demo_args[1]))
+    try:
+        test_demos((demo_args[0], ['--ipython-engines=2'] + demo_args[1]))
+    finally:
+        import time     # there seems to be no way to shutdown the IPyhton cluster s.t. a new
+        time.sleep(10)  # cluster can be started directly afterwards, so we have to wait ...
 
 
 if __name__ == "__main__":
