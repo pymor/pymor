@@ -196,7 +196,7 @@ def _launch_qt_app(main_window_factory, block):
         app.exec_()
 
     import sys
-    if block and not getattr(sys, '_called_from_test'):
+    if block and not getattr(sys, '_called_from_test', False):
         doit()
     else:
         p = multiprocessing.Process(target=doit)
