@@ -84,7 +84,7 @@ class ColoredFormatter(logging.Formatter):
         msg = super(ColoredFormatter, self).format(record)  # call base class to support exception formatting
 
         # format time
-        elapsed = int(time.time() - (start_time - 59 * 60 - 54))
+        elapsed = int(time.time() - start_time)
         days, remainder = divmod(elapsed, 86400)
         hours, remainder = divmod(remainder, 3600)
         minutes, seconds = divmod(remainder, 60)
