@@ -41,7 +41,6 @@ COLORS = {
     'ERROR':    RED
 }
 
-FORMAT = '%(asctime)s$BOLD%(levelname)s|$BOLD%(name)s$RESET: %(message)s'
 MAX_HIERARCHY_LEVEL = 1
 BLOCK_TIMINGS = True
 INDENT_BLOCKS = True
@@ -49,14 +48,6 @@ INDENT = 0
 LAST_TIMESTAMP_LENGTH = 0
 
 start_time = time.time()
-
-
-def formatter_message(message, use_color):
-    if use_color:
-        message = message.replace("$RESET", RESET_SEQ).replace("$BOLD", BOLD_SEQ)
-    else:
-        message = message.replace("$RESET", "").replace("$BOLD", "")
-    return message
 
 
 class ColoredFormatter(logging.Formatter):
@@ -76,7 +67,7 @@ class ColoredFormatter(logging.Formatter):
             except Exception:
                 self.use_color = False
 
-        super(ColoredFormatter, self).__init__()  # formatter_message(FORMAT, self.use_color))
+        super(ColoredFormatter, self).__init__()
 
     def format(self, record):
         global LAST_TIMESTAMP_LENGTH
