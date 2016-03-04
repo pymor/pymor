@@ -316,9 +316,9 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
     """
 
     logger = getLogger('pymor.algorithms.ei.interpolate_operators')
-    with logger.block('Computing operator evaluations on solution snapshots ...'):
+    with RemoteObjectManager() as rom:
         operators = [discretization.operators[operator_name] for operator_name in operator_names]
-        with RemoteObjectManager() as rom:
+        with logger.block('Computing operator evaluations on solution snapshots ...'):
             if pool:
                 logger.info('Using pool of {} workers for parallel evaluation'.format(len(pool)))
                 evaluations = rom.manage(pool.push(discretization.solution_space.empty()))
@@ -331,10 +331,10 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
                     for op in operators:
                         evaluations.append(op.apply(U, mu=mu))
 
-    with logger.block('Performing EI-Greedy:'):
-        dofs, basis, data = ei_greedy(evaluations, error_norm, atol=atol, rtol=rtol,
-                                      max_interpolation_dofs=max_interpolation_dofs,
-                                      projection=projection, product=product, copy=False, pool=pool)
+        with logger.block('Performing EI-Greedy:'):
+            dofs, basis, data = ei_greedy(evaluations, error_norm, atol=atol, rtol=rtol,
+                                          max_interpolation_dofs=max_interpolation_dofs,
+                                          projection=projection, product=product, copy=False, pool=pool)
 
     ei_operators = {name: EmpiricalInterpolatedOperator(operator, dofs, basis, triangular=True)
                     for name, operator in zip(operator_names, operators)}
