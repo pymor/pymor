@@ -34,7 +34,6 @@ COLOR_SEQ = "\033[1;%dm"
 BOLD_SEQ = "\033[1m"
 COLORS = {
     'WARNING':  YELLOW,
-    'INFO':     GREEN,
     'INFO2':    YELLOW,
     'INFO3':    RED,
     'DEBUG':    BLUE,
@@ -47,6 +46,7 @@ MAX_HIERARCHY_LEVEL = 1
 BLOCK_TIMINGS = True
 INDENT_BLOCKS = True
 INDENT = 0
+LAST_TIMESTAMP_LENGTH = 0
 
 start_time = time.time()
 
@@ -76,48 +76,67 @@ class ColoredFormatter(logging.Formatter):
             except Exception:
                 self.use_color = False
 
-        super(ColoredFormatter, self).__init__(formatter_message(FORMAT, self.use_color))
+        super(ColoredFormatter, self).__init__()  # formatter_message(FORMAT, self.use_color))
 
-    def formatTime(self, record, datefmt=None):
-        elapsed = int(time.time() - start_time)
+    def format(self, record):
+        global LAST_TIMESTAMP_LENGTH
+
+        msg = super(ColoredFormatter, self).format(record)  # call base class to support exception formatting
+
+        # format time
+        elapsed = int(time.time() - (start_time - 59 * 60 - 54))
         days, remainder = divmod(elapsed, 86400)
         hours, remainder = divmod(remainder, 3600)
         minutes, seconds = divmod(remainder, 60)
-        indent = '  | ' * INDENT
-        if days:
-            return indent + '{}d {:02}:{:02}:{:02}'.format(days, hours, minutes, seconds)
-        elif hours:
-            return indent + '{:02}:{:02}:{:02}'.format(hours, minutes, seconds)
-        else:
-            return indent + '{:02}:{:02}'.format(minutes, seconds)
+        timestamp = '{}d {:02}:{:02}:{:02}'.format(days, hours, minutes, seconds) if days \
+            else '{:02}:{:02}:{:02}'.format(hours, minutes, seconds) if hours \
+            else '{:02}:{:02}'.format(minutes, seconds)
+        if not mpi.rank0:
+            timestamp = 'RANK{}|{}'.format(mpi.rank, timestamp)
+        if LAST_TIMESTAMP_LENGTH == 0:
+            LAST_TIMESTAMP_LENGTH = len(timestamp)
 
-    def format(self, record):
-        levelname = record.levelname
-        if levelname == 'BLOCK_TIME':
-            return '  | ' * (INDENT - 1) + '  \--------------- ' + record.msg
+        # handle special cases
         if not record.msg:
-            return '  | ' * INDENT
+            return ' ' * (LAST_TIMESTAMP_LENGTH+1) + '  | ' * INDENT
+        if record.levelname == 'BLOCK_TIME':
+            return ' ' * (LAST_TIMESTAMP_LENGTH+1) + '  | ' * (INDENT - 1) + '  \--------------- ' + record.msg
+
+        # handle length change of timestamp
+        if len(timestamp) > LAST_TIMESTAMP_LENGTH:
+            timestep_length = len(timestamp)
+            if INDENT > 0:
+                for i in reversed(range(LAST_TIMESTAMP_LENGTH, timestep_length)):
+                    timestamp = ' ' * (i + 2) + '  \ ' * INDENT + '\n' + timestamp
+            LAST_TIMESTAMP_LENGTH = timestep_length
+
+        indent = '  | ' * INDENT
+
         tokens = record.name.split('.')
         if len(tokens) > MAX_HIERARCHY_LEVEL - 1:
-            record.name = '.'.join(tokens[1:MAX_HIERARCHY_LEVEL] + [tokens[-1]])
+            path = '.'.join(tokens[1:MAX_HIERARCHY_LEVEL] + [tokens[-1]])
         else:
-            record.name = '.'.join(tokens[1:MAX_HIERARCHY_LEVEL])
-        if self.use_color and levelname in COLORS.keys():
-            if levelname in ('INFO', 'BLOCK'):
-                levelname_color = RESET_SEQ
-            elif levelname.startswith('INFO'):
-                levelname_color = RESET_SEQ
-                record.name = RESET_SEQ + COLOR_SEQ % (30 + COLORS[levelname]) + record.name + RESET_SEQ
+            path = '.'.join(tokens[1:MAX_HIERARCHY_LEVEL])
+
+        levelname = record.levelname
+        if levelname in ('INFO', 'BLOCK'):
+            path = BOLD_SEQ + path + RESET_SEQ
+            levelname = ''
+        elif levelname.startswith('INFO'):
+            if self.use_color:
+                path = (COLOR_SEQ % (30 + COLORS[levelname])) + path + RESET_SEQ
+                levelname = ''
             else:
-                levelname_color = RESET_SEQ + '|' + COLOR_SEQ % (30 + COLORS[levelname]) + levelname + RESET_SEQ
-            record.levelname = levelname_color
-        elif levelname in ('INFO', 'BLOCK'):
-            record.levelname = ''
-        msg = logging.Formatter.format(self, record)
-        if mpi.rank0:
-            return msg
+                path = BOLD_SEQ + path + RESET_SEQ
+                levelname = BOLD_SEQ + '|' + levelname + '|' + RESET_SEQ
         else:
-            return 'RANK{}|'.format(mpi.rank) + msg
+            path = BOLD_SEQ + path + RESET_SEQ
+            if self.use_color:
+                levelname = (COLOR_SEQ % (30 + COLORS[levelname])) + '|' + levelname + '|' + RESET_SEQ
+            else:
+                levelname = BOLD_SEQ + '|' + levelname + '|' + RESET_SEQ
+
+        return '{} {}{}{}: {}'.format(timestamp, indent, levelname, path, msg)
 
 
 @defaults('filename', sid_ignore='filename')
