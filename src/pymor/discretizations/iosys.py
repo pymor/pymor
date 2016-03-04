@@ -389,9 +389,9 @@ class LTISystem(DiscretizationInterface):
             self.compute_ogf()
 
             if self.E is None:
-                U, self._hsv, Vh = spla.svd(self._cgf.dot(self._ogf))
+                U, self._hsv, Vh = spla.svd(self._ogf.dot(self._cgf))
             else:
-                U, self._hsv, Vh = spla.svd(self.E.apply2(self._cgf, self._ogf))
+                U, self._hsv, Vh = spla.svd(self.E.apply2(self._ogf, self._cgf))
 
             self._U = NumpyVectorArray(U.T)
             self._V = NumpyVectorArray(Vh)
@@ -492,7 +492,7 @@ class LTISystem(DiscretizationInterface):
             self.compute_brcgf(gamma=gamma)
             self.compute_brogf(gamma=gamma)
 
-            U, self._brsv, Vh = spla.svd(self._brcgf.dot(self._brogf))
+            U, self._brsv, Vh = spla.svd(self._brogf.dot(self._brcgf))
             self._brU = NumpyVectorArray(U.T)
             self._brV = NumpyVectorArray(Vh)
 
@@ -646,8 +646,8 @@ class LTISystem(DiscretizationInterface):
             bounds *= 2
             r = min(i + 1 for i, b in enumerate(bounds) if b <= tol)
 
-        Vr = VectorArrayOperator(self._cgf).apply(self._U, ind=range(r))
-        Wr = VectorArrayOperator(self._ogf).apply(self._V, ind=range(r))
+        Vr = VectorArrayOperator(self._cgf).apply(self._V, ind=range(r))
+        Wr = VectorArrayOperator(self._ogf).apply(self._U, ind=range(r))
 
         if meth == 'sr':
             alpha = 1 / np.sqrt(self._hsv[:r])
@@ -712,8 +712,8 @@ class LTISystem(DiscretizationInterface):
             bounds *= 2 * self._brgamma
             r = min(i + 1 for i, b in enumerate(bounds) if b <= tol)
 
-        Vr = VectorArrayOperator(self._brcgf).apply(self._brU, ind=range(r))
-        Wr = VectorArrayOperator(self._brogf).apply(self._brV, ind=range(r))
+        Vr = VectorArrayOperator(self._brcgf).apply(self._brV, ind=range(r))
+        Wr = VectorArrayOperator(self._brogf).apply(self._brU, ind=range(r))
 
         if meth == 'sr':
             alpha = 1 / np.sqrt(self._brsv[:r])
