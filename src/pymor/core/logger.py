@@ -201,6 +201,9 @@ class DummyLogger(object):
     def getChild(self):
         return self
 
+    def block(self, msg, *args, **kwargs):
+        return LogIndenter(self, False)
+
     def info2(self, msg, *args, **kwargs):
         self.log(INFO2, msg, *args, **kwargs)
 
