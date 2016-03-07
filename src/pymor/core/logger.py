@@ -110,22 +110,22 @@ class ColoredFormatter(logging.Formatter):
             path = '.'.join(tokens[1:MAX_HIERARCHY_LEVEL])
 
         levelname = record.levelname
-        if levelname in ('INFO', 'BLOCK'):
-            path = BOLD_SEQ + path + RESET_SEQ
-            levelname = ''
-        elif levelname.startswith('INFO'):
-            if self.use_color:
+
+        if self.use_color:
+            if levelname in ('INFO', 'BLOCK'):
+                path = BOLD_SEQ + path + RESET_SEQ
+                levelname = ''
+            elif levelname.startswith('INFO'):
                 path = (COLOR_SEQ % (30 + COLORS[levelname])) + path + RESET_SEQ
                 levelname = ''
             else:
                 path = BOLD_SEQ + path + RESET_SEQ
-                levelname = BOLD_SEQ + '|' + levelname + '|' + RESET_SEQ
-        else:
-            path = BOLD_SEQ + path + RESET_SEQ
-            if self.use_color:
                 levelname = (COLOR_SEQ % (30 + COLORS[levelname])) + '|' + levelname + '|' + RESET_SEQ
+        else:
+            if levelname in ('INFO', 'BLOCK'):
+                levelname = ''
             else:
-                levelname = BOLD_SEQ + '|' + levelname + '|' + RESET_SEQ
+                levelname = '|' + levelname + '|'
 
         return '{} {}{}{}: {}'.format(timestamp, indent, levelname, path, msg)
 
