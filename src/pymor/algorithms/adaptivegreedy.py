@@ -257,8 +257,9 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
                 break
 
             # basis extension
-            with logger.block('Extending with snapshot for mu = {}'.format(max_err_mu)):
+            with logger.block('Computing solution snapshot for mu = {} ...'.format(max_err_mu)):
                 U = discretization.solve(max_err_mu)
+            with logger.block('Extending basis with solution snapshot ...'):
                 try:
                     basis, extension_data = extension_algorithm(basis, U)
                 except ExtensionError:
