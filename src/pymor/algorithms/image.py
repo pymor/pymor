@@ -212,8 +212,8 @@ def estimate_image_hierarchical(operators=tuple(), functionals=tuple(), domain=N
         gram_schmidt_offset = len(image)
         image.append(new_image, remove_from_other=True)
         if orthonormalize:
-            logger.info('Orthonormalizing ...')
-            gram_schmidt(image, offset=gram_schmidt_offset, product=product, copy=False)
+            with logger.block('Orthonormalizing ...'):
+                gram_schmidt(image, offset=gram_schmidt_offset, product=product, copy=False)
             image_dims.append(len(image))
 
     return image, image_dims

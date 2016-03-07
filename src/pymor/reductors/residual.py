@@ -87,21 +87,21 @@ def reduce_residual(operator, functional=None, RB=None, product=None, extends=No
         residual_range = operator.range.empty()
         residual_range_dims = []
 
-    logger.info('Estimating residual range ...')
-    try:
-        residual_range, residual_range_dims = \
-            estimate_image_hierarchical([operator], [functional], RB, (residual_range, residual_range_dims),
-                                        orthonormalize=True, product=product, riesz_representatives=True)
-    except ImageCollectionError as e:
-        logger.warn('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
-        operator = operator.projected(None, RB)
-        return (NonProjectedResidualOperator(operator, functional, product),
-                NonProjectedReconstructor(product),
-                {})
+    with logger.block('Estimating residual range ...'):
+        try:
+            residual_range, residual_range_dims = \
+                estimate_image_hierarchical([operator], [functional], RB, (residual_range, residual_range_dims),
+                                            orthonormalize=True, product=product, riesz_representatives=True)
+        except ImageCollectionError as e:
+            logger.warn('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
+            operator = operator.projected(None, RB)
+            return (NonProjectedResidualOperator(operator, functional, product),
+                    NonProjectedReconstructor(product),
+                    {})
 
-    logger.info('Projecting residual operator ...')
-    operator = operator.projected(residual_range, RB, product=None)  # the product always cancels out.
-    functional = functional.projected(None, residual_range, product=None)
+    with logger.block('Projecting residual operator ...'):
+        operator = operator.projected(residual_range, RB, product=None)  # the product always cancels out.
+        functional = functional.projected(None, residual_range, product=None)
 
     return (ResidualOperator(operator, functional),
             GenericRBReconstructor(residual_range),

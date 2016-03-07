@@ -175,7 +175,6 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     if len(triangularity_errs) > 0:
         logger.info('Interpolation matrix is not lower triangular with maximum error of {}'
                     .format(triangularity_errs[-1]))
-        logger.info('')
 
     data = {'errors': max_errs, 'triangularity_errors': triangularity_errs}
 
@@ -317,25 +316,25 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
     """
 
     logger = getLogger('pymor.algorithms.ei.interpolate_operators')
-    logger.info('Computing operator evaluations on solution snapshots ...')
-    operators = [discretization.operators[operator_name] for operator_name in operator_names]
-
     with RemoteObjectManager() as rom:
-        if pool:
-            logger.info('Using pool of {} workers for parallel evaluation'.format(len(pool)))
-            evaluations = rom.manage(pool.push(discretization.solution_space.empty()))
-            pool.map(_interpolate_operators_build_evaluations, parameter_sample,
-                     d=discretization, operators=operators, evaluations=evaluations)
-        else:
-            evaluations = operators[0].range.empty()
-            for mu in parameter_sample:
-                U = discretization.solve(mu)
-                for op in operators:
-                    evaluations.append(op.apply(U, mu=mu))
+        operators = [discretization.operators[operator_name] for operator_name in operator_names]
+        with logger.block('Computing operator evaluations on solution snapshots ...'):
+            if pool:
+                logger.info('Using pool of {} workers for parallel evaluation'.format(len(pool)))
+                evaluations = rom.manage(pool.push(discretization.solution_space.empty()))
+                pool.map(_interpolate_operators_build_evaluations, parameter_sample,
+                         d=discretization, operators=operators, evaluations=evaluations)
+            else:
+                evaluations = operators[0].range.empty()
+                for mu in parameter_sample:
+                    U = discretization.solve(mu)
+                    for op in operators:
+                        evaluations.append(op.apply(U, mu=mu))
 
-        dofs, basis, data = ei_greedy(evaluations, error_norm, atol=atol, rtol=rtol,
-                                      max_interpolation_dofs=max_interpolation_dofs,
-                                      projection=projection, product=product, copy=False, pool=pool)
+        with logger.block('Performing EI-Greedy:'):
+            dofs, basis, data = ei_greedy(evaluations, error_norm, atol=atol, rtol=rtol,
+                                          max_interpolation_dofs=max_interpolation_dofs,
+                                          projection=projection, product=product, copy=False, pool=pool)
 
     ei_operators = {name: EmpiricalInterpolatedOperator(operator, dofs, basis, triangular=True)
                     for name, operator in zip(operator_names, operators)}

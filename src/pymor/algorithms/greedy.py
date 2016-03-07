@@ -116,9 +116,9 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
 
         rd, rc, reduction_data = None, None, None
         while True:
-            logger.info('Reducing ...')
-            rd, rc, reduction_data = reductor(discretization, basis) if not hierarchic \
-                else reductor(discretization, basis, extends=(rd, rc, reduction_data))
+            with logger.block('Reducing ...'):
+                rd, rc, reduction_data = reductor(discretization, basis) if not hierarchic \
+                    else reductor(discretization, basis, extends=(rd, rc, reduction_data))
 
             if sample_count == 0:
                 logger.info('There is nothing else to do for empty samples.')
@@ -126,14 +126,14 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
                         'max_errs': [], 'max_err_mus': [], 'extensions': 0,
                         'time': time.time() - tic, 'reduction_data': reduction_data}
 
-            logger.info('Estimating errors ...')
-            if use_estimator:
-                errors, mus = zip(*pool.apply(_estimate, rd=rd, d=None, rc=None, samples=samples, error_norm=None))
-            else:
-                # FIXME: Always communicating rc may become a bottleneck in some use cases.
-                #        Add special treatment for GenericRBReconstructor?
-                errors, mus = zip(*pool.apply(_estimate, rd=rd, d=discretization, rc=rc,
-                                              samples=samples, error_norm=error_norm))
+            with logger.block('Estimating errors ...'):
+                if use_estimator:
+                    errors, mus = zip(*pool.apply(_estimate, rd=rd, d=None, rc=None, samples=samples, error_norm=None))
+                else:
+                    # FIXME: Always communicating rc may become a bottleneck in some use cases.
+                    #        Add special treatment for GenericRBReconstructor?
+                    errors, mus = zip(*pool.apply(_estimate, rd=rd, d=discretization, rc=rc,
+                                                  samples=samples, error_norm=error_norm))
             max_err_ind = np.argmax(errors)
             max_err, max_err_mu = errors[max_err_ind], mus[max_err_ind]
 
@@ -149,13 +149,14 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
                 logger.info('Relative error tolerance ({}) reached! Stoping extension loop.'.format(rtol))
                 break
 
-            logger.info('Extending with snapshot for mu = {}'.format(max_err_mu))
-            U = discretization.solve(max_err_mu)
-            try:
-                basis, extension_data = extension_algorithm(basis, U)
-            except ExtensionError:
-                logger.info('Extension failed. Stopping now.')
-                break
+            with logger.block('Computing solution snapshot for mu = {} ...'.format(max_err_mu)):
+                U = discretization.solve(max_err_mu)
+            with logger.block('Extending basis with solution snapshot ...'):
+                try:
+                    basis, extension_data = extension_algorithm(basis, U)
+                except ExtensionError:
+                    logger.info('Extension failed. Stopping now.')
+                    break
             extensions += 1
             if 'hierarchic' not in extension_data:
                 logger.warn('Extension algorithm does not report if extension was hierarchic. Assuming it was\'nt ..')
@@ -167,9 +168,9 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
 
             if max_extensions is not None and extensions >= max_extensions:
                 logger.info('Maximum number of {} extensions reached.'.format(max_extensions))
-                logger.info('Reducing once more ...')
-                rd, rc, reduction_data = reductor(discretization, basis) if not hierarchic \
-                    else reductor(discretization, basis, extends=(rd, rc, reduction_data))
+                with logger.block('Reducing once more ...'):
+                    rd, rc, reduction_data = reductor(discretization, basis) if not hierarchic \
+                        else reductor(discretization, basis, extends=(rd, rc, reduction_data))
                 break
 
         tictoc = time.time() - tic
