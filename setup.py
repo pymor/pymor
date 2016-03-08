@@ -19,21 +19,6 @@ setup_requires = dependencies.setup_requires
 install_suggests = dependencies.install_suggests
 
 
-class PyTest(TestCommand):
-
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        print(sys.argv[3:])
-        self.test_args = sys.argv[3:] + ['--cov=pymor', '--cov-report=html', '--cov-report=xml', 'src/pymortests']
-        self.test_suite = True
-
-    def run_tests(self):
-        # import here, cause outside the eggs aren't loaded
-        import pytest
-        errno = pytest.main(self.test_args)
-        sys.exit(errno)
-
-
 class DependencyMissing(Exception):
 
     def __init__(self, names):
@@ -132,8 +117,7 @@ def _setup(**kwargs):
     # numpy sometimes expects this attribute, sometimes not. all seems ok if it's set to none
     if not hasattr(Cython.Distutils.build_ext, 'fcompiler'):
         Cython.Distutils.build_ext.fcompiler = None
-    cmdclass = {'build_ext': Cython.Distutils.build_ext,
-                'test': PyTest}
+    cmdclass = {'build_ext': Cython.Distutils.build_ext}
     from numpy import get_include
     include_dirs = [get_include()]
     ext_modules = [Extension("pymor.tools.relations", ["src/pymor/tools/relations.pyx"], include_dirs=include_dirs),
