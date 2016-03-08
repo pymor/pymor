@@ -43,4 +43,5 @@ doc:
 
 3to2:
 	./3to2.sh src/
-	./3to2.sh doc/
+	./3to2.sh docs/
+	python setup.py build_ext -i
