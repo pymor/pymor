@@ -10,6 +10,7 @@ from scipy.linalg import eigh
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import AccuracyError
+from pymor.core.logger import getLogger
 from pymor.operators.interfaces import OperatorInterface
 from pymor.tools.floatcmp import float_cmp_all
 from pymor.vectorarrays.interfaces import VectorArrayInterface
@@ -66,31 +67,37 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., symmetrize=False, ortho
     assert modes is None or modes <= len(A)
     assert product is None or isinstance(product, OperatorInterface)
 
-    B = A.gramian() if product is None else product.apply2(A, A)
+    logger = getLogger('pymor.algorithms.pod.pod')
 
-    if symmetrize:     # according to rbmatlab this is necessary due to rounding
-        B = B + B.T
-        B *= 0.5
+    with logger.block('Computing Gramian ...'):
+        B = A.gramian() if product is None else product.apply2(A, A)
 
-    eigvals = None if modes is None else (len(B) - modes, len(B) - 1)
+        if symmetrize:     # according to rbmatlab this is necessary due to rounding
+            B = B + B.T
+            B *= 0.5
 
-    EVALS, EVECS = eigh(B, overwrite_a=True, turbo=True, eigvals=eigvals)
-    EVALS = EVALS[::-1]
-    EVECS = EVECS.T[::-1, :]  # is this a view? yes it is!
+    with logger.block('Computing eigenvalue decomposition ...'):
+        eigvals = None if modes is None else (len(B) - modes, len(B) - 1)
 
-    tol = max(rtol ** 2 * EVALS[0], atol ** 2)
-    above_tol = np.where(EVALS >= tol)[0]
-    if len(above_tol) == 0:
-        return A.space.empty(), np.array([])
-    last_above_tol = above_tol[-1]
+    with logger.block('Computing left-singular vectors ...'):
+        EVALS, EVECS = eigh(B, overwrite_a=True, turbo=True, eigvals=eigvals)
+        EVALS = EVALS[::-1]
+        EVECS = EVECS.T[::-1, :]  # is this a view? yes it is!
 
-    SVALS = np.sqrt(EVALS[:last_above_tol + 1])
-    EVECS = EVECS[:last_above_tol + 1]
+        tol = max(rtol ** 2 * EVALS[0], atol ** 2)
+        above_tol = np.where(EVALS >= tol)[0]
+        if len(above_tol) == 0:
+            return A.space.empty(), np.array([])
+        last_above_tol = above_tol[-1]
 
-    POD = A.lincomb(EVECS / SVALS[:, np.newaxis])
+        SVALS = np.sqrt(EVALS[:last_above_tol + 1])
+        EVECS = EVECS[:last_above_tol + 1]
+
+        POD = A.lincomb(EVECS / SVALS[:, np.newaxis])
 
     if orthonormalize:
-        POD = gram_schmidt(POD, product=product, copy=False)
+        with logger.block('Re-orthonormalizing POD modes ...'):
+            POD = gram_schmidt(POD, product=product, copy=False)
 
     if check:
         if not product and not float_cmp_all(POD.dot(POD), np.eye(len(POD)),
