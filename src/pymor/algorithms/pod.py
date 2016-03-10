@@ -79,7 +79,6 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., symmetrize=False, ortho
     with logger.block('Computing eigenvalue decomposition ...'):
         eigvals = None if modes is None else (len(B) - modes, len(B) - 1)
 
-    with logger.block('Computing left-singular vectors ...'):
         EVALS, EVECS = eigh(B, overwrite_a=True, turbo=True, eigvals=eigvals)
         EVALS = EVALS[::-1]
         EVECS = EVECS.T[::-1, :]  # is this a view? yes it is!
@@ -93,6 +92,7 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., symmetrize=False, ortho
         SVALS = np.sqrt(EVALS[:last_above_tol + 1])
         EVECS = EVECS[:last_above_tol + 1]
 
+    with logger.block('Computing left-singular vectors ...'):
         POD = A.lincomb(EVECS / SVALS[:, np.newaxis])
 
     if orthonormalize:
