@@ -831,7 +831,7 @@ def _apply_inverse(matrix, V, options=None):
         try:
             # maybe remove unusable factorization:
             if hasattr(matrix, 'factorization'):
-                fdtype = matrix.factorization.L.dtype
+                fdtype = matrix.factorizationdtype
                 if not np.can_cast(V.dtype, fdtype, casting='safe'):
                     del matrix.factorization
 
@@ -846,6 +846,7 @@ def _apply_inverse(matrix, V, options=None):
                     # the matrix is always converted to the promoted type.
                     # if matrix.dtype == promoted_type, this is a no_op
                     matrix.factorization = splu(matrix_astype_nocopy(matrix, promoted_type), permc_spec=options['permc_spec'])
+                    matrix.factorizationdtype = promoted_type
                     R = matrix.factorization.solve(V.T).T
                 else:
                     # the matrix is always converted to the promoted type.
@@ -858,6 +859,7 @@ def _apply_inverse(matrix, V, options=None):
                         R[i] = matrix.factorization.solve(VV).astype(promoted_type, copy=False)
                 elif options['keep_factorization']:
                     matrix.factorization = splu(matrix_astype_nocopy(matrix, promoted_type), permc_spec=options['permc_spec'])
+                    matrix.factorizationdtype = promoted_type
                     for i, VV in enumerate(V):
                         R[i] = matrix.factorization.solve(VV)
                 elif len(V) > 1:
