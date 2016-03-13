@@ -12,6 +12,14 @@ from scipy import stats
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.algorithms.lyapunov import solve_lyap
 
+import pytest
+
+
+n_list = [10, 500, 1200]
+m_list = [1, 2]
+meth_list = ['scipy', 'slycot', 'pymess_lyap']#, 'pymess_lradi']
+meth_E_list = ['slycot', 'pymess_lyap']#, 'pymess_lradi']
+
 
 def fro_norm(A):
     if not sps.issparse(A):
@@ -46,155 +54,163 @@ def relative_residual(A, E, B, Z, trans=False):
     return res / rhs
 
 
-def test_cgf_dense():
-    for n in (10, 500, 1200):
-        for m in (1, 2):
-            np.random.seed(1)
-            A = np.random.randn(n, n) - n * np.eye(n)
-            B = np.random.randn(n, m)
+@pytest.mark.parametrize('n', n_list)
+@pytest.mark.parametrize('m', m_list)
+@pytest.mark.parametrize('meth', meth_list)
+def test_cgf_dense(n, m, meth):
+    np.random.seed(0)
+    A = np.random.randn(n, n) - n * np.eye(n)
+    B = np.random.randn(n, m)
 
-            A = NumpyMatrixOperator(A)
-            B = NumpyMatrixOperator(B)
+    A = NumpyMatrixOperator(A)
+    B = NumpyMatrixOperator(B)
 
-            Z = solve_lyap(A, None, B)
+    Z = solve_lyap(A, None, B, meth=meth)
 
-            assert relative_residual(A, None, B, Z) < 1e-10
-
-
-def test_cgf_dense_E():
-    np.random.seed(1)
-    for n in (10, 500, 1200):
-        for m in (1, 2):
-            A = np.random.randn(n, n)
-            A = (A + A.T) / 2
-            A -= n * np.eye(n)
-
-            E = np.random.randn(n, n)
-            E = (E + E.T) / 2
-            E += n * np.eye(n)
-
-            B = np.random.randn(n, m)
-
-            A = NumpyMatrixOperator(A)
-            E = NumpyMatrixOperator(E)
-            B = NumpyMatrixOperator(B)
-
-            Z = solve_lyap(A, E, B)
-
-            assert relative_residual(A, E, B, Z) < 1e-10
+    assert relative_residual(A, None, B, Z) < 1e-10
 
 
-def test_cgf_sparse():
-    np.random.seed(1)
-    for n in (10, 500, 1200):
-        for m in (1, 2):
-            A = sps.random(n, n, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
-            A -= n * sps.eye(n)
-            B = sps.random(n, m, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
+@pytest.mark.parametrize('n', n_list)
+@pytest.mark.parametrize('m', m_list)
+@pytest.mark.parametrize('meth', meth_E_list)
+def test_cgf_dense_E(n, m, meth):
+    np.random.seed(0)
+    A = np.random.randn(n, n)
+    A = (A + A.T) / 2
+    A -= n * np.eye(n)
 
-            A = NumpyMatrixOperator(A)
-            B = NumpyMatrixOperator(B)
+    E = np.random.randn(n, n)
+    E = (E + E.T) / 2
+    E += n * np.eye(n)
 
-            Z = solve_lyap(A, None, B)
+    B = np.random.randn(n, m)
 
-            assert relative_residual(A, None, B, Z) < 1e-10
+    A = NumpyMatrixOperator(A)
+    E = NumpyMatrixOperator(E)
+    B = NumpyMatrixOperator(B)
 
+    Z = solve_lyap(A, E, B, meth=meth)
 
-def test_cgf_sparse_E():
-    np.random.seed(1)
-    for n in (10, 500, 1200):
-        for m in (1, 2):
-            A = sps.random(n, n, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
-            A = (A + A.T) / 2
-            A -= n * sps.eye(n)
-
-            E = sps.random(n, n, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
-            E = (E + E.T) / 2
-            E += n * sps.eye(n)
-
-            B = sps.random(n, m, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
-
-            A = NumpyMatrixOperator(A)
-            E = NumpyMatrixOperator(E)
-            B = NumpyMatrixOperator(B)
-
-            Z = solve_lyap(A, E, B)
-
-            assert relative_residual(A, E, B, Z) < 1e-10
+    assert relative_residual(A, E, B, Z) < 1e-10
 
 
-def test_ogf_dense():
-    np.random.seed(1)
-    for n in (100, 500, 1200):
-        for p in (1, 2):
-            A = np.random.randn(n, n) - n * np.eye(n)
-            C = np.random.randn(p, n)
+@pytest.mark.parametrize('n', n_list)
+@pytest.mark.parametrize('m', m_list)
+@pytest.mark.parametrize('meth', meth_list)
+def test_cgf_sparse(n, m, meth):
+    np.random.seed(0)
+    A = sps.random(n, n, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
+    A -= n * sps.eye(n)
+    B = sps.random(n, m, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
 
-            A = NumpyMatrixOperator(A)
-            C = NumpyMatrixOperator(C)
+    A = NumpyMatrixOperator(A)
+    B = NumpyMatrixOperator(B)
 
-            Z = solve_lyap(A, None, C, trans=True)
+    Z = solve_lyap(A, None, B, meth=meth)
 
-            assert relative_residual(A, None, C, Z, trans=True) < 1e-10
-
-
-def test_ogf_dense_E():
-    np.random.seed(1)
-    for n in (10, 500, 1200):
-        for p in (1, 2):
-            A = np.random.randn(n, n)
-            A = (A + A.T) / 2
-            A -= n * np.eye(n)
-
-            E = np.random.randn(n, n)
-            E = (E + E.T) / 2
-            E += n * np.eye(n)
-
-            C = np.random.randn(p, n)
-
-            A = NumpyMatrixOperator(A)
-            E = NumpyMatrixOperator(E)
-            C = NumpyMatrixOperator(C)
-
-            Z = solve_lyap(A, E, C, trans=True)
-
-            assert relative_residual(A, E, C, Z, trans=True) < 1e-10
+    assert relative_residual(A, None, B, Z) < 1e-10
 
 
-def test_ogf_sparse():
-    np.random.seed(1)
-    for n in (10, 500, 1200):
-        for p in (1, 2):
-            A = sps.random(n, n, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
-            A -= n * sps.eye(n)
-            C = sps.random(p, n, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
+@pytest.mark.parametrize('n', n_list)
+@pytest.mark.parametrize('m', m_list)
+@pytest.mark.parametrize('meth', meth_E_list)
+def test_cgf_sparse_E(n, m, meth):
+    np.random.seed(0)
+    A = sps.random(n, n, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
+    A = (A + A.T) / 2
+    A -= n * sps.eye(n)
 
-            A = NumpyMatrixOperator(A)
-            C = NumpyMatrixOperator(C)
+    E = sps.random(n, n, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
+    E = (E + E.T) / 2
+    E += n * sps.eye(n)
 
-            Z = solve_lyap(A, None, C, trans=True)
+    B = sps.random(n, m, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
 
-            assert relative_residual(A, None, C, Z, trans=True) < 1e-10
+    A = NumpyMatrixOperator(A)
+    E = NumpyMatrixOperator(E)
+    B = NumpyMatrixOperator(B)
+
+    Z = solve_lyap(A, E, B, meth=meth)
+
+    assert relative_residual(A, E, B, Z) < 1e-10
 
 
-def test_ogf_sparse_E():
-    np.random.seed(1)
-    for n in (10, 500, 1200):
-        for p in (1, 2):
-            A = sps.random(n, n, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
-            A = (A + A.T) / 2
-            A -= n * sps.eye(n)
+@pytest.mark.parametrize('n', n_list)
+@pytest.mark.parametrize('p', m_list)
+@pytest.mark.parametrize('meth', meth_list)
+def test_ogf_dense(n, p, meth):
+    np.random.seed(0)
+    A = np.random.randn(n, n) - n * np.eye(n)
+    C = np.random.randn(p, n)
 
-            E = sps.random(n, n, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
-            E = (E + E.T) / 2
-            E += n * sps.eye(n)
+    A = NumpyMatrixOperator(A)
+    C = NumpyMatrixOperator(C)
 
-            C = sps.random(p, n, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
+    Z = solve_lyap(A, None, C, trans=True, meth=meth)
 
-            A = NumpyMatrixOperator(A)
-            E = NumpyMatrixOperator(E)
-            C = NumpyMatrixOperator(C)
+    assert relative_residual(A, None, C, Z, trans=True) < 1e-10
 
-            Z = solve_lyap(A, E, C, trans=True)
 
-            assert relative_residual(A, E, C, Z, trans=True) < 1e-10
+@pytest.mark.parametrize('n', n_list)
+@pytest.mark.parametrize('p', m_list)
+@pytest.mark.parametrize('meth', meth_E_list)
+def test_ogf_dense_E(n, p, meth):
+    np.random.seed(0)
+    A = np.random.randn(n, n)
+    A = (A + A.T) / 2
+    A -= n * np.eye(n)
+
+    E = np.random.randn(n, n)
+    E = (E + E.T) / 2
+    E += n * np.eye(n)
+
+    C = np.random.randn(p, n)
+
+    A = NumpyMatrixOperator(A)
+    E = NumpyMatrixOperator(E)
+    C = NumpyMatrixOperator(C)
+
+    Z = solve_lyap(A, E, C, trans=True, meth=meth)
+
+    assert relative_residual(A, E, C, Z, trans=True) < 1e-10
+
+
+@pytest.mark.parametrize('n', n_list)
+@pytest.mark.parametrize('p', m_list)
+@pytest.mark.parametrize('meth', meth_list)
+def test_ogf_sparse(n, p, meth):
+    np.random.seed(0)
+    A = sps.random(n, n, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
+    A -= n * sps.eye(n)
+    C = sps.random(p, n, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
+
+    A = NumpyMatrixOperator(A)
+    C = NumpyMatrixOperator(C)
+
+    Z = solve_lyap(A, None, C, trans=True, meth=meth)
+
+    assert relative_residual(A, None, C, Z, trans=True) < 1e-10
+
+
+@pytest.mark.parametrize('n', n_list)
+@pytest.mark.parametrize('p', m_list)
+@pytest.mark.parametrize('meth', meth_E_list)
+def test_ogf_sparse_E(n, p, meth):
+    np.random.seed(0)
+    A = sps.random(n, n, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
+    A = (A + A.T) / 2
+    A -= n * sps.eye(n)
+
+    E = sps.random(n, n, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
+    E = (E + E.T) / 2
+    E += n * sps.eye(n)
+
+    C = sps.random(p, n, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
+
+    A = NumpyMatrixOperator(A)
+    E = NumpyMatrixOperator(E)
+    C = NumpyMatrixOperator(C)
+
+    Z = solve_lyap(A, E, C, trans=True, meth=meth)
+
+    assert relative_residual(A, E, C, Z, trans=True) < 1e-10
