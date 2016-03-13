@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright Holders: Rene Milk, Stephan Rave, Felix Schindler
+# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
@@ -142,7 +141,7 @@ class LyapunovEquation(pymess.equation):
         return np.matrix(x.data).T
 
 
-def solve_lyap(A, E, B, trans=False, tol=None):
+def solve_lyap(A, E, B, trans=False, meth='scipy', tol=None):
     """Find a factor of the solution of a Lyapunov equation
 
     Returns factor Z such that Z * Z^T is approximately the solution X of a Lyapunov equation (if E is None)::
@@ -171,6 +170,8 @@ def solve_lyap(A, E, B, trans=False, tol=None):
         The |Operator| B.
     trans
         If A, E, and B need to be transposed.
+    meth
+        Method to use {'scipy', 'pymess_lyap', 'pymess_lradi', 'slycot'}.
     tol
         Tolerance parameter.
     """
@@ -179,8 +180,62 @@ def solve_lyap(A, E, B, trans=False, tol=None):
     assert isinstance(B, OperatorInterface) and B.linear
     assert not trans and B.range == A.source or trans and B.source == A.source
     assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source
+    assert meth in {'scipy', 'pymess_lyap', 'pymess_lradi', 'slycot'}
 
-    if A.source.dim <= 1000:
+    if meth == 'scipy':
+        if E is not None:
+            raise NotImplementedError()
+        import scipy.linalg.solve_lyapunov
+        A_matrix = A._matrix
+        if A.sparse:
+            A_matrix = A_matrix.toarray()
+        B_matrix = B._matrix
+        if B.sparse:
+            B_matrix = B_matrix.toarray()
+        if not trans:
+            X = scipy.linalg.solve_lyapunov(A_matrix, -B_matrix.dot(B_matrix.T))
+        else:
+            X = scipy.linalg.solve_lyapunov(A_matrix.T, -B_matrix.T.dot(B_matrix))
+        from pymor.algorithms.cholp import cholp
+        Z = cholp(X, copy=False)
+    elif meth == 'slycot':
+        A_matrix = A._matrix
+        if A.sparse:
+            A_matrix = A_matrix.toarray()
+        if E is not None:
+            E_matrix = E._matrix
+            if E.sparse:
+                E_matrix = E_matrix.toarray()
+        B_matrix = B._matrix
+        if B.sparse:
+            B_matrix = B_matrix.toarray()
+
+        n = A_matrix.shape[0]
+        if not trans:
+            C = -B_matrix.dot(B_matrix.T)
+            trans = 'T'
+        else:
+            C = -B_matrix.T.dot(B_matrix)
+            trans = 'N'
+        dico = 'C'
+
+        if E is None:
+            from slycot import sb03md
+            U = np.zeros((n, n))
+            X, scale, w = sb03md(n, C, A_matrix, U, dico, trans)
+        else:
+            from slycot import sg03ad
+            job = 'X'
+            fact = 'N'
+            Q = np.zeros((n, n))
+            Z = np.zeros((n, n))
+            uplo = 'L'
+            X = C
+            sg03ad(dico, job, fact, trans, uplo, n, A_matrix, E_matrix, Q, Z, X)
+
+        from pymor.algorithms.cholp import cholp
+        Z = cholp(X, copy=False)
+    elif meth == 'pymess_lyap':
         A_matrix = A._matrix
         if A.sparse:
             A_matrix = A_matrix.toarray()
@@ -201,7 +256,7 @@ def solve_lyap(A, E, B, trans=False, tol=None):
                 Z = pymess.lyap(A_matrix.T, None, B_matrix.T)
             else:
                 Z = pymess.lyap(A_matrix.T, E_matrix.T, B_matrix.T)
-    else:
+    elif meth == 'pymess_lradi':
         opts = pymess.options()
         if trans:
             opts.type = pymess.MESS_OP_TRANSPOSE
