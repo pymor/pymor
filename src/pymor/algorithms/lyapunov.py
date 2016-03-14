@@ -185,7 +185,7 @@ def solve_lyap(A, E, B, trans=False, meth='scipy', tol=None):
     if meth == 'scipy':
         if E is not None:
             raise NotImplementedError()
-        import scipy.linalg.solve_lyapunov
+        import scipy.linalg as spla
         A_matrix = A._matrix
         if A.sparse:
             A_matrix = A_matrix.toarray()
@@ -193,12 +193,13 @@ def solve_lyap(A, E, B, trans=False, meth='scipy', tol=None):
         if B.sparse:
             B_matrix = B_matrix.toarray()
         if not trans:
-            X = scipy.linalg.solve_lyapunov(A_matrix, -B_matrix.dot(B_matrix.T))
+            X = spla.solve_lyapunov(A_matrix, -B_matrix.dot(B_matrix.T))
         else:
-            X = scipy.linalg.solve_lyapunov(A_matrix.T, -B_matrix.T.dot(B_matrix))
+            X = spla.solve_lyapunov(A_matrix.T, -B_matrix.T.dot(B_matrix))
         from pymor.algorithms.cholp import cholp
         Z = cholp(X, copy=False)
     elif meth == 'slycot':
+        import slycot
         A_matrix = A._matrix
         if A.sparse:
             A_matrix = A_matrix.toarray()
@@ -220,18 +221,16 @@ def solve_lyap(A, E, B, trans=False, meth='scipy', tol=None):
         dico = 'C'
 
         if E is None:
-            from slycot import sb03md
             U = np.zeros((n, n))
-            X, scale, w = sb03md(n, C, A_matrix, U, dico, trans)
+            X, scale, w = slycot.sb03md(n, C, A_matrix, U, dico, trans)
         else:
-            from slycot import sg03ad
             job = 'X'
             fact = 'N'
             Q = np.zeros((n, n))
             Z = np.zeros((n, n))
             uplo = 'L'
             X = C
-            sg03ad(dico, job, fact, trans, uplo, n, A_matrix, E_matrix, Q, Z, X)
+            slycot.sg03ad(dico, job, fact, trans, uplo, n, A_matrix, E_matrix, Q, Z, X)
 
         from pymor.algorithms.cholp import cholp
         Z = cholp(X, copy=False)
