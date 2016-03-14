@@ -222,7 +222,7 @@ def solve_lyap(A, E, B, trans=False, meth='scipy', tol=None):
 
         if E is None:
             U = np.zeros((n, n))
-            X, scale, w = slycot.sb03md(n, C, A_matrix, U, dico, trans)
+            X, scale, _, _, _ = slycot.sb03md(n, C, A_matrix, U, dico, trana=trans)
         else:
             job = 'X'
             fact = 'N'
@@ -230,7 +230,8 @@ def solve_lyap(A, E, B, trans=False, meth='scipy', tol=None):
             Z = np.zeros((n, n))
             uplo = 'L'
             X = C
-            slycot.sg03ad(dico, job, fact, trans, uplo, n, A_matrix, E_matrix, Q, Z, X)
+            _, _, _, _, X, scale, _, _, _, _, _ = slycot.sg03ad(dico, job, fact, trans, uplo, n, A_matrix, E_matrix,
+                                                                Q, Z, X)
 
         from pymor.algorithms.cholp import cholp
         Z = cholp(X, copy=False)
