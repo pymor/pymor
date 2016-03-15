@@ -21,10 +21,6 @@ before_install:
  - ${PYTHON_X} -c 'import  dolfin' || echo "import dolfin failed"
 
 install:
- - |
-  if [ "${PYMOR_PYTHON_MAJOR}" == "2" ] ; then
-    make 3to2
-  fi
  - ${PYTHON_X} setup.py build_ext -i
 
 sudo: required
