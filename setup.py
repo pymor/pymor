@@ -9,6 +9,7 @@ import subprocess
 from setuptools import find_packages
 from setuptools.command.test import test as TestCommand
 from distutils.extension import Extension
+from distutils.command.build_py import build_py as _build_py
 import itertools
 
 import dependencies
@@ -94,6 +95,44 @@ def write_version():
             revstring = '0.0.0-0-0'
     return revstring
 
+# When building under python 2.7, run refactorings from lib3to2
+class build_py27(_build_py):
+    def __init__(self, *args, **kwargs):
+        _build_py.__init__(self, *args, **kwargs)
+        import logging
+        from lib2to3 import refactor
+        import lib3to2.main
+        import lib3to2.fixes
+        rt_logger = logging.getLogger("RefactoringTool")
+        rt_logger.addHandler(logging.StreamHandler())
+        fixers = refactor.get_fixers_from_package('lib3to2.fixes')
+        for fix in ('fix_except', 'fix_int', 'fix_print', 'fix_range', 'fix_str', 'fix_throw', 
+                'fix_unittest', 'fix_absimport'):
+            fixers.remove('lib3to2.fixes.{}'.format(fix))
+        fixers.append('fix_pymor_futures')
+        print(fixers) 
+        self.rtool = lib3to2.main.StdoutRefactoringTool(
+            fixers,
+            None,
+            [],
+            False,
+            False
+        )
+        self.rtool.refactor_dir('src', write=True) 
+        self.rtool.refactor_dir('docs', write=True) 
+
+cmdclass = {}
+if sys.version_info[0] < 3:
+    setup_requires.append('3to2')
+    # cmdclass allows you to override the distutils commands that are
+    # run through 'python setup.py somecmd'. Under python 2.7 replace
+    # the 'build_py' with a custom subclass (build_py27) that invokes
+    # 3to2 refactoring on each python file as its copied to the build
+    # directory.
+    cmdclass['build_py'] = build_py27
+    print(cmdclass)
+
+# (Under python3 no commands are replaced, so the default command classes are used.)
 
 def _setup(**kwargs):
 
@@ -117,7 +156,7 @@ def _setup(**kwargs):
     # numpy sometimes expects this attribute, sometimes not. all seems ok if it's set to none
     if not hasattr(Cython.Distutils.build_ext, 'fcompiler'):
         Cython.Distutils.build_ext.fcompiler = None
-    cmdclass = {'build_ext': Cython.Distutils.build_ext}
+    cmdclass.update({'build_ext': Cython.Distutils.build_ext})
     from numpy import get_include
     include_dirs = [get_include()]
     ext_modules = [Extension("pymor.tools.relations", ["src/pymor/tools/relations.pyx"], include_dirs=include_dirs),
@@ -176,11 +215,14 @@ def setup_package():
         classifiers=['Development Status :: 4 - Beta',
                      'License :: OSI Approved :: BSD License',
                      'Programming Language :: Python :: 2.7',
+                     'Programming Language :: Python :: 3.4',
+                     'Programming Language :: Python :: 3.5',
                      'Intended Audience :: Science/Research',
                      'Topic :: Scientific/Engineering :: Mathematics',
                      'Topic :: Scientific/Engineering :: Visualization'],
         license='LICENSE.txt',
         zip_safe=False,
+        cmdclass=cmdclass,
     )
 
     missing = list(_missing(install_suggests.keys()))
