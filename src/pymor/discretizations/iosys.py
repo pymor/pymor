@@ -1083,3 +1083,196 @@ class LTISystem(DiscretizationInterface):
         reduction_data = {'Vr': Vr, 'Wr': Wr, 'dist': dist, 'Sigma': Sigma, 'b': b, 'c': c}
 
         return rom, rc, reduction_data
+
+
+class TF(DiscretizationInterface):
+    """Class for input-output systems represented by a transfer function
+
+    This class describes input-output systems given by::
+
+        E x'(t) = A x(t) + B u(t)
+           y(t) = C x(t) + D u(t)
+
+    if continuous-time, or::
+
+        E x(k + 1) = A x(k) + B u(k)
+          y(k)     = C x(k) + D u(k)
+
+    if discrete-time, where A, B, C, D, and E are linear operators.
+
+    Parameters
+    ----------
+    m
+        Number of inputs.
+    p
+        Number of outputs.
+    H
+        Transfer function defined at least on the open left complex half-plane.
+        H(s) is a |NumPy array| of shape (p, m).
+    dH
+        Complex derivative of H(s).
+    cont_time
+        `True` if the system is continuous-time, otherwise discrete-time.
+    """
+    linear = True
+
+    def __init__(self, m, p, H, dH, cont_time=True):
+        assert cont_time in {True, False}
+
+        self.m = m
+        self.p = p
+        self.H = H
+        self.cont_time = cont_time
+        self._w = None
+        self._tfw = None
+
+    def _solve(self, mu=None):
+        raise NotImplementedError('Discretization has no solver.')
+
+    def bode(self, w):
+        """Compute the transfer function on the imaginary axis.
+
+        Parameters
+        ----------
+        w
+            Frequencies at which to compute the transfer function.
+
+        Returns
+        -------
+        tfw
+            Transfer function values at frequencies in w, returned as a 3D |NumPy array|
+            of shape (p, m, len(w)).
+        """
+        if not self.cont_time:
+            raise NotImplementedError
+
+        self._w = w
+        self._tfw = np.zeros((self.p, self.m, len(w)), dtype=complex)
+
+        for i, wi in enumerate(w):
+            self._tfw[:, :, i] = self.H(1j * wi)
+
+        return self._tfw.copy()
+
+    def interpolation(self, sigma, b, c):
+        """Tangential Hermite interpolation at point `sigma` and directions `b` and `c`.
+
+        Parameters
+        ----------
+        sigma
+            Interpolation points (closed under conjugation), list of length `r`.
+        b
+            Right tangential directions, |NumPy array| of order `m x r`.
+        c
+            Left tangential directions, |NumPy array| of order `p x r`.
+
+        Returns
+        -------
+        Er
+            |NumPy array| of shape (r, r).
+        Wr
+            Left projection matrix.
+        """
+        r = len(sigma)
+
+        Er = np.zeros((r, r))
+        Ar = np.zeros((r, r))
+        Br = np.zeros((r, self.m))
+        Cr = np.zeros((self.p, r))
+
+        Ht = np.zeros((self.p, self.m, r))
+        dHt = np.zeros((self.p, self.m, r))
+        for i in xrange(r):
+            Ht[:, :, i] = self.H(sigma[i])
+            dHt[:, :, i] = self.dH(sigma[i])
+
+        for i in xrange(r):
+            for j in xrange(r):
+                if i != j:
+                    Er[i, j] = -c[:, i].dot((Ht[:, :, i] -
+                               Ht[:, :, j]).dot(b[:, j])) / (sigma[i] - sigma[j])
+                    Ar[i, j] = -c[:, i].dot((sigma[i] * Ht[:, :, i] -
+                               sigma[j] * Ht[:, :, j])).dot(b[:, j]) / (sigma[i] - sigma[j])
+                else:
+                    Er[i, i] = -c[:, i].dot(dHt[:, :, i].dot(b[:, j]))
+                    Ar[i, i] = -c[:, i].dot((Ht[:, :, i] + sigma[i] * dHt[:, :, i]).dot(b[:, j]))
+            Br[i, :] = Ht[:, :, i].T.dot(c[:, i])
+            Cr[:, i] = Ht[:, :, i].dot(b[:, i])
+
+        T = np.zeros((r, r))
+        for i in xrange(r):
+            if sigma[i].imag == 0:
+                T[i, i] = 1
+            else:
+                try:
+                    j = i + 1 + np.where(sigma[i + 1:] == sigma[i].conj)
+                except:
+                    j = None
+                if j:
+                    T[i, i] = 1;
+                    T[i, j] = 1;
+                    T[j, i] = -1j;
+                    T[j, j] = 1j;
+
+        Er = (T.dot(Er).dot(T.T)).real
+        Ar = (T.dot(Ar).dot(T.T)).real
+        Br = (T.dot(Br)).real
+        Cr = (Cr.dot(T.T)).real
+
+        return Er, Ar, Br, Cr
+
+    def tf_irka(self, sigma, b, c, tol, maxit, verbose=False, force_stability=True):
+        """Reduce using TF-IRKA.
+
+        Parameters
+        ----------
+        sigma
+            Initial interpolation points (closed under conjugation), list of length `r`.
+        b
+            Initial right tangential directions, |NumPy array| of order `m x r`.
+        c
+            Initial left tangential directions, |NumPy array| of order `p x r`.
+        tol
+            Tolerance, largest change in interpolation points.
+        maxit
+            Maximum number of iterations.
+        verbose
+            Should consecutive distances be printed.
+        force_stability
+            If True, new interpolation points are always in the right half-plane.
+            Otherwise, they are reflections of reduced order model's poles.
+
+        Returns
+        -------
+        rom
+            Reduced |LTISystem| model.
+        """
+        dist = []
+        Sigma = [np.array(sigma)]
+        for it in xrange(maxit):
+            Er, Ar, Br, Cr = self.interpolation(sigma, b, c);
+
+            sigma, Y, X = spla.eig(Ar, Er, left=True, right=True)
+            if force_stability:
+                sigma = np.array([np.abs(s.real) + s.imag * 1j for s in sigma])
+            else:
+                sigma = -sigma
+            Sigma.append(sigma.copy())
+
+            dist.append([])
+            for i in xrange(it + 1):
+                dist[-1].append(np.max(np.abs((Sigma[i] - Sigma[-1]) / Sigma[-1])))
+
+            if verbose:
+                print('TF-IRKA conv. crit. in step {}: {:.5e}'.format(it + 1, np.min(dist[-1])))
+
+            b = Br.T.dot(Y.conj())
+            c = Cr.dot(X)
+
+            if np.min(dist[-1]) < tol:
+                break
+
+        Er, Ar, Br, Cr = self.interpolation(sigma, b, c)
+        rom = LTISystem.from_matrices(Ar, Br, Cr, None, Er, cont_time=self.cont_time)
+
+        return rom
