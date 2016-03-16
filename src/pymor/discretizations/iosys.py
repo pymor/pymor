@@ -628,7 +628,7 @@ class LTISystem(DiscretizationInterface):
             Additional data produced by the reduction process. Contains projection matrices `Vr` and `Wr`.
         """
         assert r is not None and tol is None or r is None and tol is not None
-        assert r is None or  0 < r < self.n
+        assert r is None or 0 < r < self.n
         assert meth in {'sr', 'bfsr'}
 
         self.compute_cgf()
@@ -694,7 +694,7 @@ class LTISystem(DiscretizationInterface):
             Additional data produced by the reduction process. Contains projection matrices `Vr` and `Wr`.
         """
         assert r is not None and tol is None or r is None and tol is not None
-        assert r is None or  0 < r < self.n
+        assert r is None or 0 < r < self.n
         assert meth in {'sr', 'bfsr'}
 
         self.compute_brcgf(gamma=gamma)
@@ -839,8 +839,8 @@ class LTISystem(DiscretizationInterface):
         """
         assert isinstance(directions, np.ndarray)
         r = len(sigma)
-        assert (b_or_c == 'b' and self.m > 1 and directions.shape == (self.m, r)
-                or b_or_c == 'c' and self.p > 1 and directions.shape == (self.p, r))
+        assert (b_or_c == 'b' and self.m > 1 and directions.shape == (self.m, r) or
+                b_or_c == 'c' and self.p > 1 and directions.shape == (self.p, r))
 
         directions = NumpyVectorArray(directions.T)
         directions_norms = directions.l2_norm()
@@ -862,8 +862,8 @@ class LTISystem(DiscretizationInterface):
                         v = sEmA.apply_inverse(self.B.apply(directions.real, ind=0))
                     else:
                         VTB = NumpyVectorArray(self.B.apply_adjoint(V).data.T)
-                        res = (sEmA.apply(V).data.T.dot(NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse(VTB).data.T)
-                               - self.B._matrix.toarray())
+                        res = (sEmA.apply(V).data.T.dot(NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse(VTB).data.T) -
+                               self.B._matrix.toarray())
                         res = NumpyMatrixOperator(res)
                         v = sEmA.apply_inverse(res.apply(directions.real, ind=i))
                 else:
@@ -871,8 +871,8 @@ class LTISystem(DiscretizationInterface):
                         v = sEmA.apply_inverse_adjoint(self.C.apply_adjoint(directions.real, ind=0))
                     else:
                         VTCT = NumpyVectorArray(self.C.apply(V).data.T)
-                        res = (sEmA.apply_adjoint(V).data.T.dot(NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse_adjoint(VTCT).data.T)
-                               - self.C._matrix.T.toarray())
+                        res = (sEmA.apply_adjoint(V).data.T.dot(NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse_adjoint(VTCT).data.T) -
+                               self.C._matrix.T.toarray())
                         res = NumpyMatrixOperator(res)
                         v = sEmA.apply_inverse_adjoint(res.apply(directions.real, ind=i))
 
@@ -904,8 +904,8 @@ class LTISystem(DiscretizationInterface):
                         v = sEmA.apply_inverse_adjoint(self.C.apply_adjoint(directions, ind=0))
                     else:
                         VTCT = NumpyVectorArray(self.C.apply(V).data.T)
-                        res = (sEmA.apply_adjoint(V).data.T.dot(NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse_adjoint(VTCT).data.T)
-                               - self.C._matrix.T.toarray())
+                        res = (sEmA.apply_adjoint(V).data.T.dot(NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse_adjoint(VTCT).data.T) -
+                               self.C._matrix.T.toarray())
                         res = NumpyMatrixOperator(res)
                         v = sEmA.apply_inverse_adjoint(res.apply(directions, ind=i))
 
