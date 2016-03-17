@@ -1122,6 +1122,7 @@ class TF(DiscretizationInterface):
         self.m = m
         self.p = p
         self.H = H
+        self.dH = dH
         self.cont_time = cont_time
         self._w = None
         self._tfw = None
@@ -1175,13 +1176,13 @@ class TF(DiscretizationInterface):
         """
         r = len(sigma)
 
-        Er = np.zeros((r, r))
-        Ar = np.zeros((r, r))
-        Br = np.zeros((r, self.m))
-        Cr = np.zeros((self.p, r))
+        Er = np.zeros((r, r), dtype=complex)
+        Ar = np.zeros((r, r), dtype=complex)
+        Br = np.zeros((r, self.m), dtype=complex)
+        Cr = np.zeros((self.p, r), dtype=complex)
 
-        Ht = np.zeros((self.p, self.m, r))
-        dHt = np.zeros((self.p, self.m, r))
+        Ht = np.zeros((self.p, self.m, r), dtype=complex)
+        dHt = np.zeros((self.p, self.m, r), dtype=complex)
         for i in xrange(r):
             Ht[:, :, i] = self.H(sigma[i])
             dHt[:, :, i] = self.dH(sigma[i])
@@ -1199,7 +1200,7 @@ class TF(DiscretizationInterface):
             Br[i, :] = Ht[:, :, i].T.dot(c[:, i])
             Cr[:, i] = Ht[:, :, i].dot(b[:, i])
 
-        T = np.zeros((r, r))
+        T = np.zeros((r, r), dtype=complex)
         for i in xrange(r):
             if sigma[i].imag == 0:
                 T[i, i] = 1
