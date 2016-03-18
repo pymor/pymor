@@ -16,9 +16,9 @@ from pymor.tools.floatcmp import float_cmp_all
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 
-@defaults('rtol', 'atol', 'symmetrize', 'orthonormalize', 'check', 'check_tol')
-def pod(A, modes=None, product=None, rtol=4e-8, atol=0., symmetrize=False, orthonormalize=True,
-        check=True, check_tol=1e-10):
+@defaults('rtol', 'atol', 'l2_mean_err', 'symmetrize', 'orthonormalize', 'check', 'check_tol')
+def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_mean_err=0.,
+        symmetrize=False, orthonormalize=True, check=True, check_tol=1e-10):
     """Proper orthogonal decomposition of `A`.
 
     If the |VectorArray| `A` is viewed as a linear map ::
@@ -44,6 +44,13 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., symmetrize=False, ortho
         value are ignored.
     atol
         Singular values smaller than this value are ignored.
+    l2_mean_err
+        Do not return more modes than needed to bound the mean l2-approximation
+        error by this value. I.e. the number of returned modes is at most ::
+
+            argmin_N sqrt(1 / len(A) * sum_{n=N+1}^{infty} s_n^2) <= l2_mean_err
+
+        where `s_n` denotes the n-th singular value.
     symmetrize
         If `True`, symmetrize the gramian again before proceeding.
     orthonormalize
@@ -77,7 +84,7 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., symmetrize=False, ortho
             B *= 0.5
 
     with logger.block('Computing eigenvalue decomposition ...'):
-        eigvals = None if modes is None else (len(B) - modes, len(B) - 1)
+        eigvals = None if (modes is None or l2_mean_err > 0.) else (len(B) - modes, len(B) - 1)
 
         EVALS, EVECS = eigh(B, overwrite_a=True, turbo=True, eigvals=eigvals)
         EVALS = EVALS[::-1]
@@ -89,8 +96,16 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., symmetrize=False, ortho
             return A.space.empty(), np.array([])
         last_above_tol = above_tol[-1]
 
-        SVALS = np.sqrt(EVALS[:last_above_tol + 1])
-        EVECS = EVECS[:last_above_tol + 1]
+        errs = np.concatenate((np.cumsum(EVALS[::-1])[::-1], [0.]))
+        below_err = np.where(errs <= l2_mean_err**2 * len(A))[0]
+        first_below_err = below_err[0]
+
+        selected_modes = min(first_below_err, last_above_tol + 1)
+        if modes is not None:
+            selected_modes = min(selected_modes, modes)
+
+        SVALS = np.sqrt(EVALS[:selected_modes])
+        EVECS = EVECS[:selected_modes]
 
     with logger.block('Computing left-singular vectors ...'):
         POD = A.lincomb(EVECS / SVALS[:, np.newaxis])
