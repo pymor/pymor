@@ -17,8 +17,8 @@ import pytest
 
 n_list = [10, 500, 1200]
 m_list = [1, 2]
-meth_list = ['scipy', 'slycot', 'pymess_lyap']#, 'pymess_lradi']
-meth_E_list = ['slycot', 'pymess_lyap']#, 'pymess_lradi']
+meth_list = ['scipy', 'slycot', 'pymess_lyap', 'pymess_lradi']
+meth_E_list = ['slycot', 'pymess_lyap', 'pymess_lradi']
 
 
 def fro_norm(A):
