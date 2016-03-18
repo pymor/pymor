@@ -76,7 +76,7 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_mean_err=0.,
 
     logger = getLogger('pymor.algorithms.pod.pod')
 
-    with logger.block('Computing Gramian ...'):
+    with logger.block('Computing Gramian ({} vectors) ...'.format(len(A))):
         B = A.gramian() if product is None else product.apply2(A, A)
 
         if symmetrize:     # according to rbmatlab this is necessary due to rounding
@@ -107,7 +107,7 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_mean_err=0.,
         SVALS = np.sqrt(EVALS[:selected_modes])
         EVECS = EVECS[:selected_modes]
 
-    with logger.block('Computing left-singular vectors ...'):
+    with logger.block('Computing left-singular vectors ({} vectors) ...'.format(len(EVECS))):
         POD = A.lincomb(EVECS / SVALS[:, np.newaxis])
 
     if orthonormalize:
@@ -115,6 +115,7 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_mean_err=0.,
             POD = gram_schmidt(POD, product=product, copy=False)
 
     if check:
+        logger.info('Checking orthonormality ...')
         if not product and not float_cmp_all(POD.dot(POD), np.eye(len(POD)),
                                              atol=check_tol, rtol=0.):
             err = np.max(np.abs(POD.dot(POD) - np.eye(len(POD))))
