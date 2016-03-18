@@ -5,15 +5,12 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-import scipy.sparse as sps
 
 from pymor.operators.interfaces import OperatorInterface
-from pymor.operators.constructions import IdentityOperator, LincombOperator
-from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
-def solve_ricc(A, B=None, E=None, Q=None, C=None, R=None, D=None, G=None, L=None, trans=False, meth='scipy', tol=None):
+def solve_ricc(A, B=None, E=None, Q=None, C=None, R=None, D=None, G=None, L=None, trans=False, meth=None, tol=None):
     """Find a factor of the solution of a Riccati equation
 
     Returns factor Z such that Z * Z^T is approximately the solution X of a Riccati equation::
@@ -50,7 +47,7 @@ def solve_ricc(A, B=None, E=None, Q=None, C=None, R=None, D=None, G=None, L=None
     trans
         If the dual equation needs to be solved.
     meth
-        Method to use {'scipy', 'slycot', 'pymess_care'}.
+        Method to use {'scipy', 'slycot', 'pymess_care'}. If meth is None, a solver is chosen automatically.
     tol
         Tolerance parameter.
     """
@@ -81,7 +78,18 @@ def solve_ricc(A, B=None, E=None, Q=None, C=None, R=None, D=None, G=None, L=None
     if L is not None:
         assert isinstance(L, OperatorInterface) and L.linear
         assert L.source == B.source and L.range == B.range
-    assert meth in {'scipy', 'slycot', 'pymess_care'}
+    assert meth is None or meth in {'scipy', 'slycot', 'pymess_care'}
+
+    if meth is None:
+        try:
+            import slycot
+            meth = 'slycot'
+        except ImportError:
+            try:
+                import pymess
+                meth = 'pymess_care'
+            except ImportError:
+                meth = 'scipy'
 
     if meth == 'scipy':
         if E is not None or G is not None or L is not None:
@@ -116,7 +124,6 @@ def solve_ricc(A, B=None, E=None, Q=None, C=None, R=None, D=None, G=None, L=None
         from pymor.algorithms.cholp import cholp
         Z = cholp(X, copy=False)
     elif meth == 'slycot':
-        import slycot
         A_matrix = A._matrix
         if trans:
             A_matrix = A_matrix.T
@@ -187,7 +194,7 @@ def solve_ricc(A, B=None, E=None, Q=None, C=None, R=None, D=None, G=None, L=None
             sort = 'S'
             acc = 'R'
             _, X, _, _, _, _, _, _, iwarn, _ = slycot.sg02ad(dico, jobb, fact, uplo, jobl, scal, sort, acc, n, m, p,
-                                               A_matrix, E_matrix, B_matrix, Q_matrix, R_matrix, L_matrix)
+                                                             A_matrix, E_matrix, B_matrix, Q_matrix, R_matrix, L_matrix)
             if iwarn == 1:
                 print('slycot.sg02ad warning: solution may be inaccurate.')
 
@@ -196,7 +203,6 @@ def solve_ricc(A, B=None, E=None, Q=None, C=None, R=None, D=None, G=None, L=None
     elif meth == 'pymess_care':
         if Q is not None or R is not None or D is not None or G is not None or L is not None:
             raise NotImplementedError()
-        import pymess
         A_matrix = A._matrix
         if trans:
             A_matrix = A_matrix.T
