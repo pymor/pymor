@@ -205,10 +205,6 @@ def estimate_image_hierarchical(operators=tuple(), functionals=tuple(), domain=N
                                        orthonormalize=False, product=product,
                                        riesz_representatives=riesz_representatives)
 
-        if riesz_representatives and product:
-            logger.info('Computing Riesz representatives for basis vector {} ...'.format(i))
-            new_image = product.apply_inverse(new_image)
-
         gram_schmidt_offset = len(image)
         image.append(new_image, remove_from_other=True)
         if orthonormalize:
