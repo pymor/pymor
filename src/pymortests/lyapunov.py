@@ -15,7 +15,7 @@ from pymor.algorithms.lyapunov import solve_lyap
 import pytest
 
 
-n_list = [10, 500, 1200]
+n_list = [100, 500, 1000]
 m_list = [1, 2]
 meth_list = ['scipy', 'slycot', 'pymess_lyap', 'pymess_lradi']
 meth_E_list = ['slycot', 'pymess_lyap', 'pymess_lradi']
@@ -67,6 +67,7 @@ def test_cgf_dense(n, m, meth):
 
     Z = solve_lyap(A, None, B, meth=meth)
 
+    assert len(Z) <= n
     assert relative_residual(A, None, B, Z) < 1e-10
 
 
@@ -91,6 +92,7 @@ def test_cgf_dense_E(n, m, meth):
 
     Z = solve_lyap(A, E, B, meth=meth)
 
+    assert len(Z) <= n
     assert relative_residual(A, E, B, Z) < 1e-10
 
 
@@ -108,6 +110,7 @@ def test_cgf_sparse(n, m, meth):
 
     Z = solve_lyap(A, None, B, meth=meth)
 
+    assert len(Z) <= n
     assert relative_residual(A, None, B, Z) < 1e-10
 
 
@@ -132,6 +135,7 @@ def test_cgf_sparse_E(n, m, meth):
 
     Z = solve_lyap(A, E, B, meth=meth)
 
+    assert len(Z) <= n
     assert relative_residual(A, E, B, Z) < 1e-10
 
 
@@ -148,6 +152,7 @@ def test_ogf_dense(n, p, meth):
 
     Z = solve_lyap(A, None, C, trans=True, meth=meth)
 
+    assert len(Z) <= n
     assert relative_residual(A, None, C, Z, trans=True) < 1e-10
 
 
@@ -172,6 +177,7 @@ def test_ogf_dense_E(n, p, meth):
 
     Z = solve_lyap(A, E, C, trans=True, meth=meth)
 
+    assert len(Z) <= n
     assert relative_residual(A, E, C, Z, trans=True) < 1e-10
 
 
@@ -189,6 +195,7 @@ def test_ogf_sparse(n, p, meth):
 
     Z = solve_lyap(A, None, C, trans=True, meth=meth)
 
+    assert len(Z) <= n
     assert relative_residual(A, None, C, Z, trans=True) < 1e-10
 
 
@@ -213,4 +220,5 @@ def test_ogf_sparse_E(n, p, meth):
 
     Z = solve_lyap(A, E, C, trans=True, meth=meth)
 
+    assert len(Z) <= n
     assert relative_residual(A, E, C, Z, trans=True) < 1e-10
