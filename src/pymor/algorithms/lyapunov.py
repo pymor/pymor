@@ -6,11 +6,13 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 import scipy.sparse as sps
+import scipy.sparse.linalg as spsla
 
 from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.constructions import IdentityOperator, LincombOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorArray
+
 
 try:
     import pymess
@@ -139,6 +141,55 @@ try:
             else:
                 x = ApE.apply_inverse_adjoint(y)
             return np.matrix(x.data).T
+
+        def parameter(self, arp_p, arp_m, B=None, K=None):
+            n = self.A.source.dim
+
+            def A_mv(v):
+                v = NumpyVectorArray(v)
+                w = self.A.apply(v)
+                return w.data[0, :]
+
+            def A_rmv(v):
+                v = NumpyVectorArray(v)
+                w = self.A.apply_adjoint(v)
+                return w.data[0, :]
+
+            def A_mm(v):
+                v = NumpyVectorArray(v.T)
+                w = self.A.apply(v)
+                return w.data.T
+
+            A_scipy = spsla.LinearOperator((n, n), matvec=A_mv, rmatvec=A_rmv, matmat=A_mm, dtype=float)
+
+            if self.E is None:
+                E_scipy = None
+            else:
+                def E_mv(v):
+                    v = NumpyVectorArray(v)
+                    w = self.E.apply(v)
+                    return w.data[0, :]
+
+                def E_rmv(v):
+                    v = NumpyVectorArray(v)
+                    w = self.E.apply_adjoint(v)
+                    return w.data[0, :]
+
+                def E_mm(v):
+                    v = NumpyVectorArray(v.T)
+                    w = self.E.apply(v)
+                    return w.data.T
+
+                E_scipy = spsla.LinearOperator((n, n), matvec=E_mv, rmatvec=E_rmv, matmat=E_mm, dtype=float)
+
+            lm = spsla.eigs(A_scipy, 20, E_scipy, which='LM', return_eigenvectors=False)
+            sm = spsla.eigs(A_scipy, 20, E_scipy, which='SM', return_eigenvectors=False)
+
+            # concatenate both and take real part, and filter positive ones
+            ev = np.concatenate((lm, sm))
+            ev = ev.real
+            ev = ev[ev < 0]
+            return ev
 except ImportError:
     pass
 
@@ -218,6 +269,7 @@ def solve_lyap(A, E, B, trans=False, meth=None, tol=None):
         from pymor.algorithms.cholp import cholp
         Z = cholp(X, copy=False)
     elif meth == 'slycot':
+        import slycot
         A_matrix = A._matrix
         if A.sparse:
             A_matrix = A_matrix.toarray()
@@ -254,6 +306,7 @@ def solve_lyap(A, E, B, trans=False, meth=None, tol=None):
         from pymor.algorithms.cholp import cholp
         Z = cholp(X, copy=False)
     elif meth == 'pymess_lyap':
+        import pymess
         A_matrix = A._matrix
         if A.sparse:
             A_matrix = A_matrix.toarray()
@@ -275,6 +328,7 @@ def solve_lyap(A, E, B, trans=False, meth=None, tol=None):
             else:
                 Z = pymess.lyap(A_matrix.T, E_matrix.T, B_matrix.T)
     elif meth == 'pymess_lradi':
+        import pymess
         opts = pymess.options()
         if trans:
             opts.type = pymess.MESS_OP_TRANSPOSE
