@@ -84,8 +84,7 @@ from pymor.discretizers.elliptic import discretize_elliptic_cg
 from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace
 from pymor.parallel.default import new_parallel_pool
-from pymor.reductors.linear import reduce_stationary_affine_linear
-from pymor.reductors.stationary import reduce_stationary_coercive
+from pymor.reductors.coercive import reduce_coercive, reduce_coercive_simple
 
 
 def thermalblock_demo(args):
@@ -146,9 +145,9 @@ def thermalblock_demo(args):
 
     error_product = discretization.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
     coercivity_estimator=ExpressionParameterFunctional('min([diffusion[0], diffusion[1]**2])', discretization.parameter_type)
-    reductors = {'residual_basis': partial(reduce_stationary_coercive, error_product=error_product,
+    reductors = {'residual_basis': partial(reduce_coercive, error_product=error_product,
                                    coercivity_estimator=coercivity_estimator),
-                 'traditional': partial(reduce_stationary_affine_linear, error_product=error_product,
+                 'traditional': partial(reduce_coercive_simple, error_product=error_product,
                                         coercivity_estimator=coercivity_estimator)}
     reductor = reductors[args['--reductor']]
     extension_algorithms = {'trivial': trivial_basis_extension,

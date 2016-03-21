@@ -130,12 +130,12 @@ def thermalblock_demo(args):
     error_product = d.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
 
     if args['--reductor'] == 'residual_basis':
-        from pymor.reductors.stationary import reduce_stationary_coercive
-        reductor = partial(reduce_stationary_coercive, error_product=error_product,
+        from pymor.reductors.coercive import reduce_coercive
+        reductor = partial(reduce_coercive, error_product=error_product,
                            coercivity_estimator=coercivity_estimator)
     elif args['--reductor'] == 'traditional':
-        from pymor.reductors.linear import reduce_stationary_affine_linear
-        reductor = partial(reduce_stationary_affine_linear, error_product=error_product,
+        from pymor.reductors.coercive import reduce_coercive_simple
+        reductor = partial(reduce_coercive_simple, error_product=error_product,
                            coercivity_estimator=coercivity_estimator)
     else:
         assert False  # this should never happen

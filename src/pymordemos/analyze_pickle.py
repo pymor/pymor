@@ -174,6 +174,7 @@ def analyze_pickle_convergence(args):
     if args['--detailed']:
         print('Loading high-dimensional data ...')
         discretization, reconstructor = load(open(args['--detailed']))
+        discretization.enable_caching('disk')
 
     if not hasattr(rb_discretization, 'estimate') and not args['--detailed']:
         raise ValueError('Nothing to do! (Neither estimates nor true error can be computed.)')

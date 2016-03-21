@@ -8,6 +8,10 @@ from __future__ import absolute_import, division, print_function
 try:
     import dolfin as df
     HAVE_FENICS = True
+    FENICS_VERSION = map(int, df.__version__.split('.'))
+    if FENICS_VERSION[:2] != [1, 6]:
+        import warnings
+        warnings.warn('FEniCS support has only been tested with dolfin 1.6.')
 except ImportError:
     HAVE_FENICS = False
 

@@ -15,7 +15,7 @@ from pymor.parameters.functionals import GenericParameterFunctional
 from pymor.vectorarrays.numpy import NumpyVectorArray
 from pymortests.algorithms.stuff import MonomOperator
 from pymortests.fixtures.operator import operator, operator_with_arrays, operator_with_arrays_and_products
-from pymortests.pickle import assert_picklable, assert_picklable_without_dumps_function
+from pymortests.pickling import assert_picklable, assert_picklable_without_dumps_function
 from pymortests.vectorarray import valid_inds, valid_inds_of_same_length, invalid_inds
 
 

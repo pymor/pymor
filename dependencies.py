@@ -2,7 +2,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-tests_require = ['pytest', 'pytest-cache', 'pytest-capturelog', 'pytest-cov']
+tests_require = ['pytest', 'pytest-cov']
 install_requires = ['cython>=0.20.1', 'numpy>=1.8.1', 'scipy>=0.13.3', 'Sphinx', 'docopt']
 setup_requires = ['cython>=0.20.1', 'numpy>=1.8.1']
 install_suggests = {'ipython': 'an enhanced interactive python shell',

@@ -181,7 +181,7 @@ Next we want to use the :func:`~pymor.algorithms.greedy.greedy` algorithm
 to reduce the problem. For this we need to choose a basis extension algorithm
 as well as a reductor which will perform the actual RB-projection. We will
 use :func:`~pymor.algorithms.basisextension.gram_schmidt_basis_extension` and
-:func:`~pymor.reductors.stationary.reduce_stationary_coercive`. The latter
+:func:`~pymor.reductors.coercive.reduce_coercive`. The latter
 will also assemble an error estimator to estimate the reduction error. This
 will significantly speed up the basis generation, as we will only need to
 solve the high-dimensional problem for those parameters in the training set
@@ -196,7 +196,7 @@ the problem for a given parameter.
 
 >>> from functools import partial
 >>> extension_algorithm = partial(gram_schmidt_basis_extension, product=d.h1_product)
->>> reductor = partial(reduce_stationary_coercive, error_product=d.h1_product,
+>>> reductor = partial(reduce_coercive, error_product=d.h1_product,
                        coercivity_estimator=GenericParameterFunctional(lambda mu: np.min(mu['diffusion']),
                                                                        d.parameter_type))
 

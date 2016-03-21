@@ -309,40 +309,7 @@ class cached(object):
     def __call__(self, im_self, *args, **kwargs):
         """Via the magic that is partial functions returned from __get__, im_self is the instance object of the class
         we're decorating a method of and [kw]args are the actual parameters to the decorated method"""
-        if not cache_regions:
-            default_regions()
-        try:
-            region = cache_regions[im_self.cache_region]
-        except KeyError:
-            raise KeyError('No cache region "{}" found'.format(im_self.cache_region))
-
-        # compute id for self
-        if region.persistent:
-            self_id = getattr(im_self, 'sid')
-            if not self_id:     # this can happen when cache_region is already set by the class to
-                                # a persistent region
-                self_id = im_self.generate_sid()
-        else:
-            self_id = im_self.uid
-
-        # ensure that passing a value as positional or keyword argument does not matter
-        kwargs.update(zip(self.argnames, args))
-
-        # ensure the values of optional parameters enter the cache key
-        defaults = self.defaults
-        if defaults:
-            kwargs = dict(defaults, **kwargs)
-
-        key = generate_sid((self.decorated_function.__name__, self_id, kwargs, defaults_sid()))
-        found, value = region.get(key)
-        if found:
-            return value
-        else:
-            im_self.logger.debug('creating new cache entry for {}.{}'
-                                 .format(im_self.__class__.__name__, self.decorated_function.__name__))
-            value = self.decorated_function(im_self, **kwargs)
-            region.set(key, value)
-            return value
+        return im_self._cached_method_call(self.decorated_function, True, self.argnames, self.defaults, args, kwargs)
 
     def __get__(self, instance, instancetype):
         """Implement the descriptor protocol to make decorating instance method possible.
@@ -392,3 +359,50 @@ class CacheableInterface(ImmutableInterface):
             r = cache_regions.get(region, None)
             if r and r.persistent:
                 self.generate_sid()
+
+    def cached_method_call(self, method, *args, **kwargs):
+        assert isinstance(method, MethodType)
+
+        if _caching_disabled or self.cache_region is None:
+            return method(*args, **kwargs)
+
+        argnames = inspect.getargspec(method).args[1:]  # first argument is self
+        defaults = method.__defaults__
+        if defaults:
+            defaults = {k: v for k, v in zip(argnames[-len(defaults):], defaults)}
+        return self._cached_method_call(method, False, argnames, defaults, args, kwargs)
+
+    def _cached_method_call(self, method, pass_self, argnames, defaults, args, kwargs):
+            if not cache_regions:
+                default_regions()
+            try:
+                region = cache_regions[self.cache_region]
+            except KeyError:
+                raise KeyError('No cache region "{}" found'.format(self.cache_region))
+
+            # compute id for self
+            if region.persistent:
+                self_id = getattr(self, 'sid')
+                if not self_id:     # this can happen when cache_region is already set by the class to
+                                    # a persistent region
+                    self_id = self.generate_sid()
+            else:
+                self_id = self.uid
+
+            # ensure that passing a value as positional or keyword argument does not matter
+            kwargs.update(zip(argnames, args))
+
+            # ensure the values of optional parameters enter the cache key
+            if defaults:
+                kwargs = dict(defaults, **kwargs)
+
+            key = generate_sid((method.__name__, self_id, kwargs, defaults_sid()))
+            found, value = region.get(key)
+            if found:
+                return value
+            else:
+                self.logger.debug('creating new cache entry for {}.{}'
+                                  .format(self.__class__.__name__, method.__name__))
+                value = method(self, **kwargs) if pass_self else method(**kwargs)
+                region.set(key, value)
+                return value

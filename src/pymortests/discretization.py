@@ -10,7 +10,7 @@ from pymor.algorithms.basic import almost_equal
 from pymor.core.pickle import dumps, loads
 from pymortests.fixtures.discretization import discretization, picklable_discretization
 from pymortests.base import runmodule
-from pymortests.pickle import assert_picklable, assert_picklable_without_dumps_function
+from pymortests.pickling import assert_picklable, assert_picklable_without_dumps_function
 
 
 def test_pickle(discretization):

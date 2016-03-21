@@ -118,7 +118,7 @@ class IPythonPool(WorkerPoolBase):
         else:
             self.view = self.client[:]
         self.logger.info('Connected to {} engines'.format(len(self.view)))
-        self.view.apply(_setup_worker, block=True)
+        self.view.apply_sync(_setup_worker)
         self._remote_objects_created = Counter()
 
     def __len__(self):
@@ -151,7 +151,7 @@ class RemoteId(int):
 
 def _worker_call_function(function, loop, args, kwargs):
     global _remote_objects
-    kwargs = {k: (_remote_objects[v] if isinstance(v, RemoteId) else
+    kwargs = {k: (_remote_objects[v] if isinstance(v, RemoteId) else  # NOQA
                   v)
               for k, v in kwargs.iteritems()}
     if loop:
@@ -160,19 +160,16 @@ def _worker_call_function(function, loop, args, kwargs):
         return function(*args, **kwargs)
 
 
-_remote_objects = {}
-
-
 def _setup_worker():
     global _remote_objects
-    _remote_objects.clear()
+    _remote_objects = {}
 
 
 def _push_object(remote_id, obj):
     global _remote_objects
-    _remote_objects[remote_id] = obj
+    _remote_objects[remote_id] = obj  # NOQA
 
 
 def _remove_object(remote_id):
     global _remote_objects
-    del _remote_objects[remote_id]
+    del _remote_objects[remote_id]  # NOQA

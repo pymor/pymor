@@ -14,9 +14,14 @@ import time
 from types import MethodType
 
 from pymor.core.defaults import defaults
+from pymor.tools import mpi
 
+BLOCK = logging.INFO + 5
+BLOCK_TIME = BLOCK + 1
 INFO2 = logging.INFO + 1
 INFO3 = logging.INFO + 2
+logging.addLevelName(BLOCK, 'BLOCK')
+logging.addLevelName(BLOCK_TIME, 'BLOCK_TIME')
 logging.addLevelName(INFO2, 'INFO2')
 logging.addLevelName(INFO3, 'INFO3')
 
@@ -29,7 +34,6 @@ COLOR_SEQ = "\033[1;%dm"
 BOLD_SEQ = "\033[1m"
 COLORS = {
     'WARNING':  YELLOW,
-    'INFO':     GREEN,
     'INFO2':    YELLOW,
     'INFO3':    RED,
     'DEBUG':    BLUE,
@@ -37,18 +41,13 @@ COLORS = {
     'ERROR':    RED
 }
 
-FORMAT = '%(asctime)s$BOLD%(levelname)s|$BOLD%(name)s$RESET: %(message)s'
 MAX_HIERARCHY_LEVEL = 1
+BLOCK_TIMINGS = True
+INDENT_BLOCKS = True
+INDENT = 0
+LAST_TIMESTAMP_LENGTH = 0
 
 start_time = time.time()
-
-
-def formatter_message(message, use_color):
-    if use_color:
-        message = message.replace("$RESET", RESET_SEQ).replace("$BOLD", BOLD_SEQ)
-    else:
-        message = message.replace("$RESET", "").replace("$BOLD", "")
-    return message
 
 
 class ColoredFormatter(logging.Formatter):
@@ -68,41 +67,67 @@ class ColoredFormatter(logging.Formatter):
             except Exception:
                 self.use_color = False
 
-        super(ColoredFormatter, self).__init__(formatter_message(FORMAT, self.use_color))
+        super(ColoredFormatter, self).__init__()
 
-    def formatTime(self, record, datefmt=None):
+    def format(self, record):
+        global LAST_TIMESTAMP_LENGTH
+
+        msg = super(ColoredFormatter, self).format(record)  # call base class to support exception formatting
+
+        # format time
         elapsed = int(time.time() - start_time)
         days, remainder = divmod(elapsed, 86400)
         hours, remainder = divmod(remainder, 3600)
         minutes, seconds = divmod(remainder, 60)
-        if days:
-            return '{}d {:02}:{:02}:{:02}'.format(days, hours, minutes, seconds)
-        elif hours:
-            return '{:02}:{:02}:{:02}'.format(hours, minutes, seconds)
-        else:
-            return '{:02}:{:02}'.format(minutes, seconds)
+        timestamp = '{}d {:02}:{:02}:{:02}'.format(days, hours, minutes, seconds) if days \
+            else '{:02}:{:02}:{:02}'.format(hours, minutes, seconds) if hours \
+            else '{:02}:{:02}'.format(minutes, seconds)
+        if not mpi.rank0:
+            timestamp = 'RANK{}|{}'.format(mpi.rank, timestamp)
+        if LAST_TIMESTAMP_LENGTH == 0:
+            LAST_TIMESTAMP_LENGTH = len(timestamp)
 
-    def format(self, record):
+        # handle special cases
         if not record.msg:
-            return ''
+            return ' ' * (LAST_TIMESTAMP_LENGTH+1) + '|   ' * INDENT
+        if record.levelname == 'BLOCK_TIME':
+            return ' ' * (LAST_TIMESTAMP_LENGTH+1) + '|   ' * (INDENT - 1) + '\----------------- ' + record.msg
+
+        # handle length change of timestamp
+        if len(timestamp) > LAST_TIMESTAMP_LENGTH:
+            timestep_length = len(timestamp)
+            if INDENT > 0:
+                for i in reversed(range(LAST_TIMESTAMP_LENGTH, timestep_length)):
+                    timestamp = ' ' * (i + 2) + '\   ' * INDENT + '\n' + timestamp
+            LAST_TIMESTAMP_LENGTH = timestep_length
+
+        indent = '|   ' * INDENT
+
         tokens = record.name.split('.')
         if len(tokens) > MAX_HIERARCHY_LEVEL - 1:
-            record.name = '.'.join(tokens[1:MAX_HIERARCHY_LEVEL] + [tokens[-1]])
+            path = '.'.join(tokens[1:MAX_HIERARCHY_LEVEL] + [tokens[-1]])
         else:
-            record.name = '.'.join(tokens[1:MAX_HIERARCHY_LEVEL])
+            path = '.'.join(tokens[1:MAX_HIERARCHY_LEVEL])
+
         levelname = record.levelname
-        if self.use_color and levelname in COLORS.keys():
-            if levelname is 'INFO':
-                levelname_color = RESET_SEQ
+
+        if self.use_color:
+            if levelname in ('INFO', 'BLOCK'):
+                path = BOLD_SEQ + path + RESET_SEQ
+                levelname = ''
             elif levelname.startswith('INFO'):
-                levelname_color = RESET_SEQ
-                record.name = RESET_SEQ + COLOR_SEQ % (30 + COLORS[levelname]) + record.name + RESET_SEQ
+                path = (COLOR_SEQ % (30 + COLORS[levelname])) + path + RESET_SEQ
+                levelname = ''
             else:
-                levelname_color = RESET_SEQ + '|' + COLOR_SEQ % (30 + COLORS[levelname]) + levelname + RESET_SEQ
-            record.levelname = levelname_color
-        elif levelname is 'INFO':
-            record.levelname = ''
-        return logging.Formatter.format(self, record)
+                path = BOLD_SEQ + path + RESET_SEQ
+                levelname = (COLOR_SEQ % (30 + COLORS[levelname])) + '|' + levelname + '|' + RESET_SEQ
+        else:
+            if levelname in ('INFO', 'BLOCK'):
+                levelname = ''
+            else:
+                levelname = '|' + levelname + '|'
+
+        return '{} {}{}{}: {}'.format(timestamp, indent, levelname, path, msg)
 
 
 @defaults('filename', sid_ignore='filename')
@@ -122,6 +147,7 @@ def getLogger(module, level=None, filename=''):
     """
     module = 'pymor' if module == '__main__' else module
     logger = logging.getLogger(module)
+    logger.block = MethodType(_block, logger, type(logger))
     logger.info2 = MethodType(_info2, logger, type(logger))
     logger.info3 = MethodType(_info3, logger, type(logger))
     streamhandler = logging.StreamHandler()
@@ -166,6 +192,9 @@ class DummyLogger(object):
     def getChild(self):
         return self
 
+    def block(self, msg, *args, **kwargs):
+        return LogIndenter(self, False)
+
     def info2(self, msg, *args, **kwargs):
         self.log(INFO2, msg, *args, **kwargs)
 
@@ -191,8 +220,9 @@ def set_log_levels(levels={'pymor': 'INFO'}):
         getLogger(k).setLevel(v)
 
 
-@defaults('max_hierarchy_level', sid_ignore=('max_hierarchy_level'))
-def set_log_format(max_hierarchy_level=1):
+@defaults('max_hierarchy_level', 'indent_blocks', 'block_timings',
+          sid_ignore=('max_hierarchy_level', 'indent_blocks', 'block_timings'))
+def set_log_format(max_hierarchy_level=1, indent_blocks=True, block_timings=False):
     """Set log levels for pyMOR's logging facility.
 
     Parameters
@@ -201,9 +231,49 @@ def set_log_format(max_hierarchy_level=1):
         The number of components of the loggers name which are printed.
         (The first component is always stripped, the last component always
         preserved.)
+    indent_blocks
+        If `True`, indent log messages inside a code block started with
+        `with logger.block(...)`.
+    block_timings
+        If `True`, measure the duration of a code block started with
+        `with logger.block(...)`.
     """
     global MAX_HIERARCHY_LEVEL
+    global INDENT_BLOCKS
+    global BLOCK_TIMINGS
     MAX_HIERARCHY_LEVEL = max_hierarchy_level
+    INDENT_BLOCKS = indent_blocks
+    BLOCK_TIMINGS = block_timings
+
+
+class LogIndenter(object):
+
+    def __init__(self, logger, doit):
+        self.logger = logger
+        self.doit = doit
+
+    def __enter__(self):
+        global INDENT
+        global BLOCK_TIMINGS
+        if BLOCK_TIMINGS:
+            self.tic = time.time()
+        if self.doit:
+            INDENT += 1
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        global INDENT
+        global BLOCK_TIMINGS
+        if self.doit:
+            if BLOCK_TIMINGS:
+                duration = time.time() - self.tic
+                self.logger.log(BLOCK_TIME, 'duration: {}s'.format(duration))
+            INDENT -= 1
+
+
+def _block(self, msg, *args, **kwargs):
+    global INDENT_BLOCKS
+    self.log(BLOCK, msg, *args, **kwargs)
+    return LogIndenter(self, self.isEnabledFor(BLOCK) and INDENT_BLOCKS)
 
 
 def _info2(self, msg, *args, **kwargs):

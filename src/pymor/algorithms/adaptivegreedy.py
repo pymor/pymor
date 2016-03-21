@@ -156,16 +156,16 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
         training_set_sizes = []
 
         while True:  # main loop
-            logger.info('Reducing ...')
-            rd, rc, reduction_data = reductor(discretization, basis) if not hierarchic \
-                else reductor(discretization, basis, extends=(rd, rc, reduction_data))
+            with logger.block('Reducing ...'):
+                rd, rc, reduction_data = reductor(discretization, basis) if not hierarchic \
+                    else reductor(discretization, basis, extends=(rd, rc, reduction_data))
 
             current_refinements = 0
             while True:  # estimate reduction errors and refine training set until no overfitting is detected
 
                 # estimate on training set
-                logger.info('Estimating errors ...')
-                errors = estimate(sample_set.vertex_mus)
+                with logger.block('Estimating errors ...'):
+                    errors = estimate(sample_set.vertex_mus)
                 max_err_ind = np.argmax(errors)
                 max_err, max_err_mu = errors[max_err_ind], sample_set.vertex_mus[max_err_ind]
                 logger.info('Maximum error after {} extensions: {} (mu = {})'.format(extensions, max_err, max_err_mu))
@@ -257,13 +257,14 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
                 break
 
             # basis extension
-            logger.info('Extending with snapshot for mu = {}'.format(max_err_mu))
-            U = discretization.solve(max_err_mu)
-            try:
-                basis, extension_data = extension_algorithm(basis, U)
-            except ExtensionError:
-                logger.info('Extension failed. Stopping now.')
-                break
+            with logger.block('Computing solution snapshot for mu = {} ...'.format(max_err_mu)):
+                U = discretization.solve(max_err_mu)
+            with logger.block('Extending basis with solution snapshot ...'):
+                try:
+                    basis, extension_data = extension_algorithm(basis, U)
+                except ExtensionError:
+                    logger.info('Extension failed. Stopping now.')
+                    break
             extensions += 1
             if 'hierarchic' not in extension_data:
                 logger.warn('Extension algorithm does not report if extension was hierarchic. Assuming it was\'nt ..')
@@ -276,9 +277,9 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
             # break if prescribed basis size reached
             if max_extensions is not None and extensions >= max_extensions:
                 logger.info('Maximum number of {} extensions reached.'.format(max_extensions))
-                logger.info('Reducing once more ...')
-                rd, rc, reduction_data = reductor(discretization, basis) if not hierarchic \
-                    else reductor(discretization, basis, extends=(rd, rc, reduction_data))
+                with logger.block('Reducing once more ...'):
+                    rd, rc, reduction_data = reductor(discretization, basis) if not hierarchic \
+                        else reductor(discretization, basis, extends=(rd, rc, reduction_data))
                 break
 
     tictoc = time.time() - tic

@@ -57,8 +57,13 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
 
     # run Gmsh; initial meshing
     logger.info('Checking for Gmsh ...')
+
+    # when we are running MPI parallel and Gmsh is compiled with MPI support,
+    # we have to make sure Gmsh does not notice the MPI environment or it will fail.
+    env = {k: v for k, v in os.environ.iteritems()
+           if 'MPI' not in k.upper()}
     try:
-        version = subprocess.check_output(['gmsh', '--version'], stderr=subprocess.STDOUT)
+        version = subprocess.check_output(['gmsh', '--version'], stderr=subprocess.STDOUT, env=env)
     except (subprocess.CalledProcessError, OSError):
         raise GmshError('Could not find Gmsh.'
                         + ' Please ensure that the gmsh binary (http://geuz.org/gmsh/) is in your PATH.')
@@ -97,6 +102,8 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
 
         return points, boundary_types
 
+    # these two are referenced in a finally block, but were left undefined in some paths
+    geo_file, msh_file = None, None
     try:
         # When a |PolygonalDomain| or |RectDomain| has to be discretized create a Gmsh GE0-file and write all data.
         if domain_description is not None:
@@ -166,13 +173,13 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
         logger.info('Calling Gmsh ...')
         cmd = ['gmsh', geo_file_path, '-2', '-algo', mesh_algorithm, '-clscale', str(clscale), options, '-o',
                msh_file_path]
-        subprocess.check_call(cmd)
+        subprocess.check_call(cmd, env=env)
 
         # run gmsh; perform mesh refinement
         cmd = ['gmsh', msh_file_path, '-refine', '-o', msh_file_path]
         for i in xrange(refinement_steps):
             logger.info('Performing Gmsh refinement step {}'.format(i+1))
-            subprocess.check_call(cmd)
+            subprocess.check_call(cmd, env=env)
 
         toc = time.time()
         t_gmsh = toc - tic

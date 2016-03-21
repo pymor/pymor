@@ -195,28 +195,16 @@ def _launch_qt_app(main_window_factory, block):
         main_window.show()
         app.exec_()
 
-    if block:
+    import sys
+    if block and not getattr(sys, '_called_from_test', False):
         doit()
     else:
         p = multiprocessing.Process(target=doit)
         p.start()
         _launch_qt_app_pids.add(p.pid)
-        if block:
-            p.join()
 
 
 def stop_gui_processes():
-    for p in multiprocessing.active_children():
-        if p.pid in _launch_qt_app_pids:
-            p.terminate()
-
-    waited = 0
-    while any(p.pid in _launch_qt_app_pids for p in multiprocessing.active_children()):
-        time.sleep(1)
-        waited += 1
-        if waited == 5:
-            break
-
     for p in multiprocessing.active_children():
         if p.pid in _launch_qt_app_pids:
             try:
