@@ -1020,7 +1020,7 @@ class LTISystem(DiscretizationInterface):
         return Vr, Wr
 
     def irka(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_stability=True,
-             arnoldi=False):
+             arnoldi=False, compute_errors=False):
         """Reduce using IRKA.
 
         Parameters
@@ -1044,6 +1044,8 @@ class LTISystem(DiscretizationInterface):
             Otherwise, they are reflections of reduced order model's poles.
         arnoldi
             Should the Arnoldi process be used for rational interpolation.
+        compute_errors
+            Should the relative H_2-errors of intermediate reduced order models be computed.
 
         Returns
         -------
@@ -1054,7 +1056,8 @@ class LTISystem(DiscretizationInterface):
         reduction_data
             Dictionary of additional data produced by the reduction process. Contains
             projection matrices `Vr` and `Wr`, distances between interpolation points in
-            different iterations `dist`, and interpolation points from all iterations `Sigma`.
+            different iterations `dist`, interpolation points from all iterations `Sigma`,
+            and relative H_2-errors `errors` (if compute_errors is True).
         """
         assert 0 < r < self.n
         assert sigma is None or len(sigma) == r
@@ -1070,6 +1073,14 @@ class LTISystem(DiscretizationInterface):
             np.random.seed(0)
             c = np.random.randn(self.p, r)
 
+        if verbose:
+            if compute_errors:
+                print('iter | shift change | rel. H_2-error')
+                print('------------------------------------')
+            else:
+                print('iter | shift change')
+                print('-------------------')
+
         if arnoldi:
             if self.m == 1:
                 Vr = self.arnoldi(sigma, 'b')
@@ -1084,8 +1095,19 @@ class LTISystem(DiscretizationInterface):
 
         dist = []
         Sigma = [np.array(sigma)]
+        if compute_errors:
+            errors = []
         for it in xrange(maxit):
             Ar, Br, Cr, _, Er = self.project(Vr, Wr)
+
+            if compute_errors:
+                rom = LTISystem.from_matrices(Ar, Br, Cr, None, Er, cont_time=self.cont_time)
+                err = self - rom
+                try:
+                    rel_H2_err = err.norm() / self.norm()
+                except:
+                    rel_H2_err = np.inf
+                errors.append(rel_H2_err)
 
             sigma, Y, X = spla.eig(Ar, Er, left=True, right=True)
             if force_stability:
@@ -1099,7 +1121,10 @@ class LTISystem(DiscretizationInterface):
                 dist[-1].append(np.max(np.abs((Sigma[i] - Sigma[-1]) / Sigma[-1])))
 
             if verbose:
-                print('IRKA conv. crit. in step {}: {:.5e}'.format(it + 1, np.min(dist[-1])))
+                if compute_errors:
+                    print('{:4d} | {:.6e} | {:.6e}'.format(it + 1, np.min(dist[-1]), rel_H2_err))
+                else:
+                    print('{:4d} | {:.6e}'.format(it + 1, np.min(dist[-1])))
 
             b = Br.T.dot(Y.conj())
             c = Cr.dot(X)
@@ -1124,6 +1149,8 @@ class LTISystem(DiscretizationInterface):
         rom = LTISystem.from_matrices(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
         rc = GenericRBReconstructor(Vr)
         reduction_data = {'Vr': Vr, 'Wr': Wr, 'dist': dist, 'Sigma': Sigma, 'b': b, 'c': c}
+        if compute_errors:
+            reduction_data['errors'] = errors
 
         return rom, rc, reduction_data
 

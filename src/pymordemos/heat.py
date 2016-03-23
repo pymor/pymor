@@ -20,6 +20,9 @@ import pymor.discretizations.iosys as iosys
 import numpy as np
 import matplotlib.pyplot as plt
 
+import logging
+logging.getLogger('pymor.algorithms.gram_schmidt.gram_schmidt').setLevel(logging.ERROR)
+
 if __name__ == '__main__':
     # dimension of the system
     n = 100
@@ -99,7 +102,7 @@ if __name__ == '__main__':
     c = np.ones((lti.p, r))
     tol = 1e-4
     maxit = 100
-    rom_irka, _, reduction_data_irka = lti.irka(r, sigma, b, c, tol, maxit, verbose=True)
+    rom_irka, _, reduction_data_irka = lti.irka(r, sigma, verbose=True, compute_errors=True)
 
     #print(reduction_data_irka['dist'])
     tmp = map(np.min, reduction_data_irka['dist'])
