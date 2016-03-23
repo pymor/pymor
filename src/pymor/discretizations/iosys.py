@@ -1014,7 +1014,8 @@ class LTISystem(DiscretizationInterface):
 
         return Vr, Wr
 
-    def irka(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_stability=True, arnoldi=False):
+    def irka(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_stability=True,
+             arnoldi=False):
         """Reduce using IRKA.
 
         Parameters
@@ -1036,6 +1037,8 @@ class LTISystem(DiscretizationInterface):
         force_stability
             If True, new interpolation points are always in the right half-plane.
             Otherwise, they are reflections of reduced order model's poles.
+        arnoldi
+            Should the Arnoldi process be used for rational interpolation.
 
         Returns
         -------
