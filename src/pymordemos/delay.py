@@ -28,7 +28,7 @@ b = np.ones((1, r))
 c = np.ones((1, r))
 tol = 1e-4
 maxit = 100
-rom = tf.tf_irka(sigma, b, c, tol, maxit, verbose=True)
+rom = tf.tf_irka(r, sigma, b, c, tol, maxit, verbose=True)
 
 tfw_rom = rom.bode(w)
 

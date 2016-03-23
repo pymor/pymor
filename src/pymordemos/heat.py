@@ -99,7 +99,7 @@ if __name__ == '__main__':
     c = np.ones((lti.p, r))
     tol = 1e-4
     maxit = 100
-    rom_irka, _, reduction_data_irka = lti.irka(sigma, b, c, tol, maxit, verbose=True)
+    rom_irka, _, reduction_data_irka = lti.irka(r, sigma, b, c, tol, maxit, verbose=True)
 
     #print(reduction_data_irka['dist'])
     tmp = map(np.min, reduction_data_irka['dist'])

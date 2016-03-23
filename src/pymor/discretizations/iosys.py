@@ -1014,17 +1014,19 @@ class LTISystem(DiscretizationInterface):
 
         return Vr, Wr
 
-    def irka(self, sigma, b, c, tol, maxit, verbose=False, force_stability=True, arnoldi=False):
+    def irka(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_stability=True, arnoldi=False):
         """Reduce using IRKA.
 
         Parameters
         ----------
+        r
+            Order of the reduced order model.
         sigma
             Initial interpolation points (closed under conjugation), list of length `r`.
         b
-            Initial right tangential directions, |NumPy array| of order `m x r`.
+            Initial right tangential directions, |NumPy array| of shape (m, r).
         c
-            Initial left tangential directions, |NumPy array| of order `p x r`.
+            Initial left tangential directions, |NumPy array| of shape (p, r).
         tol
             Tolerance, largest change in interpolation points.
         maxit
@@ -1046,6 +1048,20 @@ class LTISystem(DiscretizationInterface):
             projection matrices `Vr` and `Wr`, distances between interpolation points in
             different iterations `dist`, and interpolation points from all iterations `Sigma`.
         """
+        assert 0 < r < self.n
+        assert sigma is None or len(sigma) == r
+        assert b is None or b.shape == (self.m, r)
+        assert c is None or c.shape == (self.p, r)
+
+        if sigma is None:
+            sigma = np.logspace(-1, 1, r)
+        if b is None:
+            np.random.seed(0)
+            b = np.random.randn(self.m, r)
+        if c is None:
+            np.random.seed(0)
+            c = np.random.randn(self.p, r)
+
         if arnoldi:
             if self.m == 1:
                 Vr = self.arnoldi(sigma, 'b')
@@ -1241,11 +1257,13 @@ class TF(DiscretizationInterface):
 
         return Er, Ar, Br, Cr
 
-    def tf_irka(self, sigma, b, c, tol, maxit, verbose=False, force_stability=True):
+    def tf_irka(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_stability=True):
         """Reduce using TF-IRKA.
 
         Parameters
         ----------
+        r
+            Order of the reduced order model.
         sigma
             Initial interpolation points (closed under conjugation), list of length `r`.
         b
@@ -1267,6 +1285,20 @@ class TF(DiscretizationInterface):
         rom
             Reduced |LTISystem| model.
         """
+        assert r > 0
+        assert sigma is None or len(sigma) == r
+        assert b is None or b.shape == (self.m, r)
+        assert c is None or c.shape == (self.p, r)
+
+        if sigma is None:
+            sigma = np.logspace(-1, 1, r)
+        if b is None:
+            np.random.seed(0)
+            b = np.random.randn(self.m, r)
+        if c is None:
+            np.random.seed(0)
+            c = np.random.randn(self.p, r)
+
         dist = []
         Sigma = [np.array(sigma)]
         for it in xrange(maxit):
