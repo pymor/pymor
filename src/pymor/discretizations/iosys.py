@@ -249,6 +249,41 @@ class LTISystem(DiscretizationInterface):
         """Subtract two |LTISystems|."""
         return self + (-other)
 
+    def eval_tf(self, s):
+        """Evaluate the transfer function
+
+        Parameters
+        ----------
+        s
+            Complex number.
+
+        Returns
+        -------
+        tfs
+            Transfer function evaulated at the complex number s, 2D |NumPy array|.
+        """
+        A = self.A
+        B = self.B
+        C = self.C
+        D = self.D
+        E = self.E
+        if E is None:
+            if not A.sparse:
+                E = NumpyMatrixOperator(sp.eye(self.n))
+            else:
+                E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
+
+        iwEmA = A.assemble_lincomb((E, A), (s, -1))
+        if self.m <= self.p:
+            eye = NumpyVectorArray(sp.eye(self.m))
+            tfs = C.apply(iwEmA.apply_inverse(B.apply(eye))).data.T
+        else:
+            eye = NumpyVectorArray(sp.eye(self.p))
+            tfs = B.apply_adjoint(iwEmA.apply_adjoint_inverse(C.apply_adjoint(eye))).data
+        if D is not None:
+            tfs += D._matrix
+        return tfs
+
     def bode(self, w):
         """Compute the transfer function on the imaginary axis.
 
@@ -266,26 +301,10 @@ class LTISystem(DiscretizationInterface):
             raise NotImplementedError
 
         self._w = w
-        self._tfw = np.zeros((self.p, self.m, len(w)), dtype=complex)
-
-        A = self.A
-        B = self.B
-        C = self.C
-        D = self.D
-        E = self.E
-        if E is None:
-            if not A.sparse:
-                E = NumpyMatrixOperator(sp.eye(self.n))
-            else:
-                E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
+        self._tfw = np.empty((self.p, self.m, len(w)), dtype=complex)
 
         for i, wi in enumerate(w):
-            iwEmA = A.assemble_lincomb((E, A), (1j * wi, -1))
-            Im = NumpyVectorArray(sp.eye(self.m))
-            G = C.apply(iwEmA.apply_inverse(B.apply(Im))).data.T
-            if D is not None:
-                G += D._matrix
-            self._tfw[:, :, i] = G
+            self._tfw[:, :, i] = self.eval_tf(1j * wi)
 
         return self._tfw.copy()
 
@@ -1148,7 +1167,7 @@ class TF(DiscretizationInterface):
             raise NotImplementedError
 
         self._w = w
-        self._tfw = np.zeros((self.p, self.m, len(w)), dtype=complex)
+        self._tfw = np.empty((self.p, self.m, len(w)), dtype=complex)
 
         for i, wi in enumerate(w):
             self._tfw[:, :, i] = self.H(1j * wi)
@@ -1176,13 +1195,13 @@ class TF(DiscretizationInterface):
         """
         r = len(sigma)
 
-        Er = np.zeros((r, r), dtype=complex)
-        Ar = np.zeros((r, r), dtype=complex)
-        Br = np.zeros((r, self.m), dtype=complex)
-        Cr = np.zeros((self.p, r), dtype=complex)
+        Er = np.empty((r, r), dtype=complex)
+        Ar = np.empty((r, r), dtype=complex)
+        Br = np.empty((r, self.m), dtype=complex)
+        Cr = np.empty((self.p, r), dtype=complex)
 
-        Ht = np.zeros((self.p, self.m, r), dtype=complex)
-        dHt = np.zeros((self.p, self.m, r), dtype=complex)
+        Ht = np.empty((self.p, self.m, r), dtype=complex)
+        dHt = np.empty((self.p, self.m, r), dtype=complex)
         for i in xrange(r):
             Ht[:, :, i] = self.H(sigma[i])
             dHt[:, :, i] = self.dH(sigma[i])
