@@ -880,8 +880,9 @@ class LTISystem(DiscretizationInterface):
                     if i == 0:
                         v = sEmA.apply_inverse(self.B.apply(directions.real, ind=0))
                     else:
+                        sEmA_projected = NumpyMatrixOperator(sEmA.apply2(V, V))
                         VTB = NumpyVectorArray(self.B.apply_adjoint(V).data.T)
-                        res = (sEmA.apply(V).data.T.dot(NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse(VTB).data.T) -
+                        res = (sEmA.apply(V).data.T.dot(sEmA_projected.apply_inverse(VTB).data.T) -
                                self.B._matrix.toarray())
                         res = NumpyMatrixOperator(res)
                         v = sEmA.apply_inverse(res.apply(directions.real, ind=i))
@@ -889,8 +890,9 @@ class LTISystem(DiscretizationInterface):
                     if i == 0:
                         v = sEmA.apply_inverse_adjoint(self.C.apply_adjoint(directions.real, ind=0))
                     else:
+                        sEmA_projected = NumpyMatrixOperator(sEmA.apply2(V, V))
                         VTCT = NumpyVectorArray(self.C.apply(V).data.T)
-                        res = (sEmA.apply_adjoint(V).data.T.dot(NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse_adjoint(VTCT).data.T) -
+                        res = (sEmA.apply_adjoint(V).data.T.dot(sEmA_projected.apply_inverse_adjoint(VTCT).data.T) -
                                self.C._matrix.T.toarray())
                         res = NumpyMatrixOperator(res)
                         v = sEmA.apply_inverse_adjoint(res.apply(directions.real, ind=i))
@@ -915,7 +917,9 @@ class LTISystem(DiscretizationInterface):
                         v = sEmA.apply_inverse(self.B.apply(directions, ind=0))
                     else:
                         VTB = NumpyVectorArray(self.B.apply_adjoint(V).data.T)
-                        res = sEmA.apply(V).data.T.dot(NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse(VTB).data.T) - self.B._matrix.toarray()
+                        sEmA_projected = NumpyMatrixOperator(sEmA.apply2(V, V))
+                        res = (sEmA.apply(V).data.T.dot(sEmA_projected.apply_inverse(VTB).data.T) -
+                               self.B._matrix.toarray())
                         res = NumpyMatrixOperator(res)
                         v = sEmA.apply_inverse(res.apply(directions, ind=i))
                 else:
@@ -923,7 +927,8 @@ class LTISystem(DiscretizationInterface):
                         v = sEmA.apply_inverse_adjoint(self.C.apply_adjoint(directions, ind=0))
                     else:
                         VTCT = NumpyVectorArray(self.C.apply(V).data.T)
-                        res = (sEmA.apply_adjoint(V).data.T.dot(NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse_adjoint(VTCT).data.T) -
+                        sEmA_projected = NumpyMatrixOperator(sEmA.apply2(V, V))
+                        res = (sEmA.apply_adjoint(V).data.T.dot(sEmA_projected.apply_inverse_adjoint(VTCT).data.T) -
                                self.C._matrix.T.toarray())
                         res = NumpyMatrixOperator(res)
                         v = sEmA.apply_inverse_adjoint(res.apply(directions, ind=i))
@@ -1229,9 +1234,9 @@ class TF(DiscretizationInterface):
             for j in xrange(r):
                 if i != j:
                     Er[i, j] = -c[:, i].dot((Ht[:, :, i] -
-                               Ht[:, :, j]).dot(b[:, j])) / (sigma[i] - sigma[j])
+                                             Ht[:, :, j]).dot(b[:, j])) / (sigma[i] - sigma[j])
                     Ar[i, j] = -c[:, i].dot((sigma[i] * Ht[:, :, i] -
-                               sigma[j] * Ht[:, :, j])).dot(b[:, j]) / (sigma[i] - sigma[j])
+                                             sigma[j] * Ht[:, :, j])).dot(b[:, j]) / (sigma[i] - sigma[j])
                 else:
                     Er[i, i] = -c[:, i].dot(dHt[:, :, i].dot(b[:, j]))
                     Ar[i, i] = -c[:, i].dot((Ht[:, :, i] + sigma[i] * dHt[:, :, i]).dot(b[:, j]))
@@ -1248,10 +1253,10 @@ class TF(DiscretizationInterface):
                 except:
                     j = None
                 if j:
-                    T[i, i] = 1;
-                    T[i, j] = 1;
-                    T[j, i] = -1j;
-                    T[j, j] = 1j;
+                    T[i, i] = 1
+                    T[i, j] = 1
+                    T[j, i] = -1j
+                    T[j, j] = 1j
 
         Er = (T.dot(Er).dot(T.T)).real
         Ar = (T.dot(Ar).dot(T.T)).real
@@ -1305,7 +1310,7 @@ class TF(DiscretizationInterface):
         dist = []
         Sigma = [np.array(sigma)]
         for it in xrange(maxit):
-            Er, Ar, Br, Cr = self.interpolation(sigma, b, c);
+            Er, Ar, Br, Cr = self.interpolation(sigma, b, c)
 
             sigma, Y, X = spla.eig(Ar, Er, left=True, right=True)
             if force_stability:
