@@ -105,7 +105,17 @@ class build_py27(_build_py):
         import lib3to2.fixes
         rt_logger = logging.getLogger("RefactoringTool")
         rt_logger.addHandler(logging.StreamHandler())
-        fixers = refactor.get_fixers_from_package('lib3to2.fixes')
+        try:
+            fixers = refactor.get_fixers_from_package('lib3to2.fixes')
+        except OSError:
+            # fallback for .egg installs
+            fixers = ['lib3to2.fixes.fix_{}'.format(s) for s in ('absimport', 'annotations', 'bitlength', 'bool',
+                'bytes', 'classdecorator', 'collections', 'dctsetcomp', 'division', 'except', 'features', 
+                'fullargspec', 'funcattrs', 'getcwd', 'imports', 'imports2', 'input', 'int', 'intern', 'itertools', 
+                'kwargs', 'memoryview', 'metaclass', 'methodattrs', 'newstyle', 'next', 'numliterals', 'open', 'print',
+                'printfunction', 'raise', 'range', 'reduce', 'setliteral', 'str', 'super', 'throw', 'unittest',
+                'unpacking', 'with')]
+
         for fix in ('fix_except', 'fix_int', 'fix_print', 'fix_range', 'fix_str', 'fix_throw', 
                 'fix_unittest', 'fix_absimport'):
             fixers.remove('lib3to2.fixes.{}'.format(fix))
