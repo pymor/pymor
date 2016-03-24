@@ -369,11 +369,13 @@ class LTISystem(DiscretizationInterface):
         plt.show()
         return fig, ax
 
-    def compute_cgf(self, tol=None):
+    def compute_cgf(self, meth=None, tol=None):
         """Compute the controllability Gramian factor.
 
         Parameters
         ----------
+        meth
+            Method used to solve the Lyapunov equation (see :func:`pymor.algorithms.lyapunov.solve_lyap`).
         tol
             Tolerance parameter for the low-rank Lyapunov equation solver.
             If None, then the default tolerance is used. Otherwise, it should be a positive float and
@@ -383,13 +385,15 @@ class LTISystem(DiscretizationInterface):
             raise NotImplementedError
 
         if self._cgf is None or tol is not None:
-            self._cgf = solve_lyap(self.A, self.E, self.B, tol=tol)
+            self._cgf = solve_lyap(self.A, self.E, self.B, meth=meth, tol=tol)
 
-    def compute_ogf(self, tol=None):
+    def compute_ogf(self, meth=None, tol=None):
         """Compute the observability Gramian factor.
 
         Parameters
         ----------
+        meth
+            Method used to solve the Lyapunov equation (see :func:`pymor.algorithms.lyapunov.solve_lyap`).
         tol
             Tolerance parameter for the low-rank Lyapunov equation solver.
             If None, then the default tolerance is used. Otherwise, it should be a positive float and
@@ -399,7 +403,7 @@ class LTISystem(DiscretizationInterface):
             raise NotImplementedError
 
         if self._ogf is None or tol is not None:
-            self._ogf = solve_lyap(self.A, self.E, self.C, trans=True, tol=tol)
+            self._ogf = solve_lyap(self.A, self.E, self.C, trans=True, meth=meth, tol=tol)
 
     def compute_hsv_U_V(self):
         """Compute the Hankel singular values and vectors."""
