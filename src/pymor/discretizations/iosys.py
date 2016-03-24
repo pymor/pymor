@@ -1246,6 +1246,10 @@ class TF(DiscretizationInterface):
         """
         r = len(sigma)
 
+        for i in xrange(r):
+            b[:, i] /= spla.norm(b[:, i])
+            c[:, i] /= spla.norm(c[:, i])
+
         Er = np.empty((r, r), dtype=complex)
         Ar = np.empty((r, r), dtype=complex)
         Br = np.empty((r, self.m), dtype=complex)
@@ -1270,25 +1274,25 @@ class TF(DiscretizationInterface):
             Br[i, :] = Ht[:, :, i].T.dot(c[:, i])
             Cr[:, i] = Ht[:, :, i].dot(b[:, i])
 
-        T = np.zeros((r, r), dtype=complex)
-        for i in xrange(r):
-            if sigma[i].imag == 0:
-                T[i, i] = 1
-            else:
-                try:
-                    j = i + 1 + np.where(sigma[i + 1:] == sigma[i].conj)
-                except:
-                    j = None
-                if j:
-                    T[i, i] = 1
-                    T[i, j] = 1
-                    T[j, i] = -1j
-                    T[j, j] = 1j
-
-        Er = (T.dot(Er).dot(T.T)).real
-        Ar = (T.dot(Ar).dot(T.T)).real
-        Br = (T.dot(Br)).real
-        Cr = (Cr.dot(T.T)).real
+#        T = np.zeros((r, r), dtype=complex)
+#        for i in xrange(r):
+#            if sigma[i].imag == 0:
+#                T[i, i] = 1
+#            else:
+#                try:
+#                    j = i + 1 + np.where(np.isclose(sigma[i + 1:], sigma[i].conjugate()))[0][0]
+#                except:
+#                    j = None
+#                if j:
+#                    T[i, i] = 1
+#                    T[i, j] = 1
+#                    T[j, i] = -1j
+#                    T[j, j] = 1j
+#
+#        Er = (T.dot(Er).dot(T.T)).real
+#        Ar = (T.dot(Ar).dot(T.T)).real
+#        Br = (T.dot(Br)).real
+#        Cr = (Cr.dot(T.T)).real
 
         return Er, Ar, Br, Cr
 
@@ -1334,6 +1338,10 @@ class TF(DiscretizationInterface):
             np.random.seed(0)
             c = np.random.randn(self.p, r)
 
+        if verbose:
+            print('iter | shift change')
+            print('-------------------')
+
         dist = []
         Sigma = [np.array(sigma)]
         for it in xrange(maxit):
@@ -1351,7 +1359,7 @@ class TF(DiscretizationInterface):
                 dist[-1].append(np.max(np.abs((Sigma[i] - Sigma[-1]) / Sigma[-1])))
 
             if verbose:
-                print('TF-IRKA conv. crit. in step {}: {:.5e}'.format(it + 1, np.min(dist[-1])))
+                print('{:4d} | {:.6e}'.format(it + 1, np.min(dist[-1])))
 
             b = Br.T.dot(Y.conj())
             c = Cr.dot(X)
