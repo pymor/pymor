@@ -231,6 +231,45 @@ class LTISystem(DiscretizationInterface):
         """Subtract two |LTISystems|."""
         return self + (-other)
 
+    def __mul__(self, other):
+        """Multiply (cascade) two |LTISystems|."""
+        assert self.m == other.p
+
+        # form A
+        A = BlockOperator(np.array([[self.A, Concatenation(self.B, other.C)], [None, other.A]]))
+
+        # form B
+        if other.D is None:
+            B = BlockOperator(np.array([[ZeroOperator(other.B.source, self.B.range)], [other.B]]))
+        else:
+            B = BlockOperator(np.array([[Concatenation(self.B, other.D)], [other.B]]))
+
+        # form C
+        if self.D is None:
+            C = BlockOperator(np.array([[self.C, ZeroOperator(other.C.source, self.C.range)]]))
+        else:
+            C = BlockOperator(np.array([[self.C, Concatenation(self.D, other.C)]]))
+
+        # form D
+        if self.D is None or other.D is None:
+            D = None
+        else:
+            D = Concatenation(self.D, other.D)
+
+        # form E
+        if self.E is None and other.E is None:
+            E = None
+        elif self.E is None and other.E is not None:
+            eye = IdentityOperator(self.A.source)
+            E = BlockDiagonalOperator((eye, other.E))
+        elif self.E is not None and other.E is None:
+            eye = IdentityOperator(other.A.source)
+            E = BlockDiagonalOperator((self.E, eye))
+        else:
+            E = BlockDiagonalOperator((self.E, other.E))
+
+        return LTISystem(A, B, C, D, E, self.cont_time)
+
     def eval_tf(self, s):
         """Evaluate the transfer function
 
