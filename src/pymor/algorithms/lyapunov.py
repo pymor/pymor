@@ -131,10 +131,10 @@ try:
             else:
                 E = self.E
 
-            if p.imag == 0.0:
-                ApE = LincombOperator((self.A, E), (1., p.real))
+            if p.imag == 0:
+                ApE = LincombOperator((self.A, E), (1, p.real))
             else:
-                ApE = LincombOperator((self.A, E), (1., p))
+                ApE = LincombOperator((self.A, E), (1, p))
 
             if op == pymess.MESS_OP_NONE:
                 x = ApE.apply_inverse(y)
@@ -239,15 +239,16 @@ def solve_lyap(A, E, B, trans=False, meth=None, tol=None):
     assert meth is None or meth in {'scipy', 'slycot', 'pymess_lyap', 'pymess_lradi'}
 
     if meth is None:
+        import imp
         try:
-            import pymess
-            if A.source.dim >= 1000:
+            imp.find_module('pymess')
+            if A.source.dim >= 1000 or not isinstance(A, NumpyMatrixOperator):
                 meth = 'pymess_lradi'
             else:
                 meth = 'pymess_lyap'
         except ImportError:
             try:
-                import slycot
+                imp.find_module('slycot')
                 meth = 'slycot'
             except ImportError:
                 meth = 'scipy'
