@@ -13,7 +13,9 @@ import scipy.sparse as sps
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.lyapunov import solve_lyap
 from pymor.discretizations.interfaces import DiscretizationInterface
-from pymor.operators.constructions import VectorArrayOperator
+from pymor.operators.block import BlockOperator, BlockDiagonalOperator
+from pymor.operators.constructions import (Concatenation, IdentityOperator, LincombOperator, VectorArrayOperator,
+                                           ZeroOperator)
 from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.reductors.basic import GenericRBReconstructor
@@ -185,26 +187,9 @@ class LTISystem(DiscretizationInterface):
         assert self.m == other.m and self.p == other.p
         assert self.cont_time == other.cont_time
 
-        # form A
-        if not self.A.sparse and not other.A.sparse:
-            A = spla.block_diag(self.A._matrix, other.A._matrix)
-        else:
-            A = sps.block_diag((self.A._matrix, other.A._matrix))
-            A = A.tocsc()
-
-        # form B
-        if not self.B.sparse and not other.B.sparse:
-            B = sp.vstack((self.B._matrix, other.B._matrix))
-        else:
-            B = sps.vstack((sps.coo_matrix(self.B._matrix), sps.coo_matrix(other.B._matrix)))
-            B = B.tocsc()
-
-        # form C
-        if not self.C.sparse and not other.C.sparse:
-            C = sp.hstack((self.C._matrix, other.C._matrix))
-        else:
-            C = sps.hstack((sps.coo_matrix(self.C._matrix), sps.coo_matrix(other.C._matrix)))
-            C = C.tocsc()
+        A = BlockDiagonalOperator((self.A, other.A))
+        B = BlockOperator(np.array([[self.B], [other.B]]))
+        C = BlockOperator(np.array([[self.C, other.C]]))
 
         # form D
         if self.D is None and other.D is None:
@@ -220,27 +205,24 @@ class LTISystem(DiscretizationInterface):
         if self.E is None and other.E is None:
             E = None
         elif self.E is None and other.E is not None:
-            E = sps.block_diag((sps.eye(self.n), other.E._matrix))
-            E = E.tocsc()
+            eye = IdentityOperator(self.A.source)
+            E = BlockDiagonalOperator((eye, other.E))
         elif self.E is not None and other.E is None:
-            E = sps.block_diag((self.E._matrix, sps.eye(other.n)))
-            E = E.tocsc()
-        elif not self.E.sparse and not other.E.sparse:
-            E = spla.block_diag(self.E._matrix, other.E._matrix)
+            eye = IdentityOperator(other.A.source)
+            E = BlockDiagonalOperator((self.E, eye))
         else:
-            E = sps.block_diag((self.E._matrix, other.E._matrix))
-            E = E.tocsc()
+            E = BlockDiagonalOperator((self.E, other.E))
 
-        return LTISystem.from_matrices(A, B, C, D, E, self.cont_time)
+        return LTISystem(A, B, C, D, E, self.cont_time)
 
     def __neg__(self):
         """Negate |LTISystem|."""
         A = self.A
         B = self.B
-        C = NumpyMatrixOperator(-self.C._matrix)
+        C = self.C * (-1)
         D = self.D
         if D is not None:
-            D = NumpyMatrixOperator(-D._matrix)
+            D = D * (-1)
         E = self.E
 
         return LTISystem(A, B, C, D, E, self.cont_time)
@@ -266,18 +248,15 @@ class LTISystem(DiscretizationInterface):
         B = self.B
         C = self.C
         D = self.D
-        E = self.E
-        if E is None:
-            if not A.sparse:
-                E = NumpyMatrixOperator(sp.eye(self.n))
-            else:
-                E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
+        E = IdentityOperator(self.A.source) if self.E is None else self.E
 
-        iwEmA = A.assemble_lincomb((E, A), (s, -1))
+        iwEmA = LincombOperator((E, A), (s, -1))
         if self.m <= self.p:
+            # TODO: make independent of B.source
             eye = NumpyVectorArray(sp.eye(self.m))
             tfs = C.apply(iwEmA.apply_inverse(B.apply(eye))).data.T
         else:
+            # TODO: make independent of C.range
             eye = NumpyVectorArray(sp.eye(self.p))
             tfs = B.apply_adjoint(iwEmA.apply_adjoint_inverse(C.apply_adjoint(eye))).data
         if D is not None:
@@ -531,16 +510,17 @@ class LTISystem(DiscretizationInterface):
             if self._H2_norm is not None:
                 return self._H2_norm
 
+            # TODO: use matrix version of l2_norm
             if self._cgf is not None:
-                self._H2_norm = spla.norm(self.C.apply(self._cgf).data)
+                self._H2_norm = np.sqrt(np.sum(self.C.apply(self._cgf).l2_norm() ** 2))
             elif self._ogf is not None:
-                self._H2_norm = spla.norm(self.B.apply_adjoint(self._ogf).data)
+                self._H2_norm = np.sqrt(np.sum(self.B.apply_adjoint(self._ogf).l2_norm() ** 2))
             elif self.m <= self.p:
                 self.compute_cgf()
-                self._H2_norm = spla.norm(self.C.apply(self._cgf).data)
+                self._H2_norm = np.sqrt(np.sum(self.C.apply(self._cgf).l2_norm() ** 2))
             else:
                 self.compute_ogf()
-                self._H2_norm = spla.norm(self.B.apply_adjoint(self._ogf).data)
+                self._H2_norm = np.sqrt(np.sum(self.B.apply_adjoint(self._ogf).l2_norm() ** 2))
             return self._H2_norm
         elif name == 'Hinf':
             if self._Hinf_norm is not None:
@@ -586,43 +566,37 @@ class LTISystem(DiscretizationInterface):
         Parameters
         ----------
         Vr
-            Right projection matrix.
+            Right projection matrix, vectorarray from self.A.source.
         Wr
-            Left projection matrix.
+            Left projection matrix, vectorarray from self.A.source.
         Er_is_identity
             If the reduced `E` is guaranteed to be the identity matrix.
 
         Returns
         -------
         Ar
-            |NumPy array| of size `r x r`.
+            Reduced `A` operator, NumpyMatrixOperator.
         Br
-            |NumPy array| of size `r x m`.
+            Reduced `B` operator, VectorArrayOperator (transposed).
         Cr
-            |NumPy array| of size `p x r`.
+            Reduced `C` operator, VectorArrayOperator.
         Dr
-            |NumPy array| of size `p x m` or `None`.
+            Simply self.D.
         Er
-            |NumPy array| of size `r x r`.
+            Reduced `E` operator, NumpyMatrixOperator or `None`.
         """
-        Ar = self.A.apply2(Wr, Vr)
-
-        Br = self.B.apply_adjoint(Wr).data
-
-        Cr = self.C.apply(Vr).data.T
-
-        if self.D is None:
-            Dr = None
-        else:
-            Dr = self.D.copy()
+        Ar = NumpyMatrixOperator(self.A.apply2(Wr, Vr))
+        Br = VectorArrayOperator(self.B.apply_adjoint(Wr), transposed=True)
+        Cr = VectorArrayOperator(self.C.apply(Vr))
+        Dr = self.D
 
         if Er_is_identity:
             Er = None
         else:
             if self.E is None:
-                Er = Wr.dot(Vr)
+                Er = NumpyMatrixOperator(Wr.dot(Vr))
             else:
-                Er = self.E.apply2(Wr, Vr)
+                Er = NumpyMatrixOperator(self.E.apply2(Wr, Vr))
 
         return Ar, Br, Cr, Dr, Er
 
@@ -648,7 +622,8 @@ class LTISystem(DiscretizationInterface):
             The reconstructor providing a `reconstruct(U)` method which reconstructs
             high-dimensional solutions from solutions `U` of the reduced |LTISystem|.
         reduction_data
-            Additional data produced by the reduction process. Contains projection matrices `Vr` and `Wr`.
+            Dictionary of additional data produced by the reduction process.
+            Contains projection matrices `Vr` and `Wr`.
         """
         assert r is not None and tol is None or r is None and tol is not None
         assert r is None or 0 < r < self.n
@@ -676,15 +651,13 @@ class LTISystem(DiscretizationInterface):
             alpha = 1 / np.sqrt(self._hsv[:r])
             Vr.scal(alpha)
             Wr.scal(alpha)
-
             Ar, Br, Cr, Dr, Er = self.project(Vr, Wr, Er_is_identity=True)
         elif meth == 'bfsr':
             Vr = gram_schmidt(Vr, atol=0, rtol=0)
             Wr = gram_schmidt(Wr, atol=0, rtol=0)
-
             Ar, Br, Cr, Dr, Er = self.project(Vr, Wr)
 
-        rom = LTISystem.from_matrices(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
+        rom = LTISystem(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
         rc = GenericRBReconstructor(Vr)
         reduction_data = {'Vr': Vr, 'Wr': Wr}
 
@@ -714,7 +687,8 @@ class LTISystem(DiscretizationInterface):
             The reconstructor providing a `reconstruct(U)` method which reconstructs
             high-dimensional solutions from solutions `U` of the reduced |LTISystem|.
         reduction_data
-            Additional data produced by the reduction process. Contains projection matrices `Vr` and `Wr`.
+            Dictionary of additional data produced by the reduction process.
+            Contains projection matrices `Vr` and `Wr`.
         """
         assert r is not None and tol is None or r is None and tol is not None
         assert r is None or 0 < r < self.n
@@ -742,15 +716,13 @@ class LTISystem(DiscretizationInterface):
             alpha = 1 / np.sqrt(self._brsv[:r])
             Vr.scal(alpha)
             Wr.scal(alpha)
-
             Ar, Br, Cr, Dr, Er = self.project(Vr, Wr, Er_is_identity=True)
         elif meth == 'bfsr':
             Vr = gram_schmidt(Vr, atol=0, rtol=0)
             Wr = gram_schmidt(Wr, atol=0, rtol=0)
-
             Ar, Br, Cr, Dr, Er = self.project(Vr, Wr)
 
-        rom = LTISystem.from_matrices(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
+        rom = LTISystem(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
         rc = GenericRBReconstructor(Vr)
         reduction_data = {'Vr': Vr, 'Wr': Wr}
 
@@ -776,8 +748,9 @@ class LTISystem(DiscretizationInterface):
         assert b_or_c == 'b' and self.m == 1 or b_or_c == 'c' and self.p == 1
 
         r = len(sigma)
-        V = NumpyVectorArray.make_array(self.n, reserve=r)
+        V = self.A.source.type.make_array(self.A.source.subtype, reserve=r)
 
+        # TODO: make independent of self.B.source or self.C.range
         v = NumpyVectorArray(np.array([1.]))
         if b_or_c == 'b':
             v = self.B.apply(v)
@@ -788,10 +761,10 @@ class LTISystem(DiscretizationInterface):
         for i in xrange(r):
             if sigma[i].imag == 0:
                 if self.E is None:
-                    E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
-                    sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i].real, -1))
+                    E = IdentityOperator(self.A.source)
+                    sEmA = LincombOperator((E, self.A), (sigma[i].real, -1))
                 else:
-                    sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i].real, -1))
+                    sEmA = LincombOperator((self.E, self.A), (sigma[i].real, -1))
 
                 if b_or_c == 'b':
                     v = sEmA.apply_inverse(v)
@@ -808,10 +781,10 @@ class LTISystem(DiscretizationInterface):
                 V.append(v)
             elif sigma[i].imag > 0:
                 if self.E is None:
-                    E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
-                    sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i], -1))
+                    E = IdentityOperator(self.A.source)
+                    sEmA = LincombOperator((E, self.A), (sigma[i], -1))
                 else:
-                    sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i], -1))
+                    sEmA = LincombOperator((self.E, self.A), (sigma[i], -1))
 
                 if b_or_c == 'b':
                     v = sEmA.apply_inverse(v)
@@ -853,53 +826,51 @@ class LTISystem(DiscretizationInterface):
         b_or_c
             Character 'b' or 'c', to choose between the input or output matrix.
         directions
-            Tangential directions, array of shape (self.m, len(sigma)) or (self.p, len(sigma))
+            Tangential directions, vectorarray of length `len(sigma)` from self.B.source
+            or self.C.range (depending on `b_or_c`).
 
         Returns
         -------
         V
             Projection matrix.
         """
-        assert isinstance(directions, np.ndarray)
         r = len(sigma)
-        assert (b_or_c == 'b' and self.m > 1 and directions.shape == (self.m, r) or
-                b_or_c == 'c' and self.p > 1 and directions.shape == (self.p, r))
+        assert len(directions) == r
+        assert (b_or_c == 'b' and self.m > 1 and directions in self.B.source or
+                b_or_c == 'c' and self.p > 1 and directions in self.C.range)
 
-        directions = NumpyVectorArray(directions.T)
-        directions_norms = directions.l2_norm()
-        for i in xrange(r):
-            directions.scal(1 / directions_norms[i], ind=i)
+        directions.scal(1 / directions.l2_norm())
 
-        V = NumpyVectorArray.make_array(self.n, reserve=r)
+        V = self.A.source.type.make_array(self.A.source.subtype, reserve=r)
 
         for i in xrange(r):
             if sigma[i].imag == 0:
                 if self.E is None:
-                    E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
-                    sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i].real, -1))
+                    E = IdentityOperator(self.A.source)
+                    sEmA = LincombOperator((E, self.A), (sigma[i].real, -1))
                 else:
-                    sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i].real, -1))
+                    sEmA = LincombOperator((self.E, self.A), (sigma[i].real, -1))
 
                 if b_or_c == 'b':
                     if i == 0:
                         v = sEmA.apply_inverse(self.B.apply(directions.real, ind=0))
                     else:
-                        sEmA_projected = NumpyMatrixOperator(sEmA.apply2(V, V))
-                        VTB = NumpyVectorArray(self.B.apply_adjoint(V).data.T)
-                        res = (sEmA.apply(V).data.T.dot(sEmA_projected.apply_inverse(VTB).data.T) -
-                               self.B._matrix.toarray())
-                        res = NumpyMatrixOperator(res)
-                        v = sEmA.apply_inverse(res.apply(directions.real, ind=i))
+                        Bd = self.B.apply(directions.real, ind=i)
+                        VTBd = VectorArrayOperator(V, transposed=True).apply(Bd)
+                        sEmA_proj_inv_VTBd = NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse(VTBd)
+                        V_sEmA_proj_inv_VTBd = VectorArrayOperator(V).apply(sEmA_proj_inv_VTBd)
+                        rd = sEmA.apply(V_sEmA_proj_inv_VTBd) - Bd
+                        v = sEmA.apply_inverse(rd)
                 else:
                     if i == 0:
                         v = sEmA.apply_inverse_adjoint(self.C.apply_adjoint(directions.real, ind=0))
                     else:
-                        sEmA_projected = NumpyMatrixOperator(sEmA.apply2(V, V))
-                        VTCT = NumpyVectorArray(self.C.apply(V).data.T)
-                        res = (sEmA.apply_adjoint(V).data.T.dot(sEmA_projected.apply_inverse_adjoint(VTCT).data.T) -
-                               self.C._matrix.T.toarray())
-                        res = NumpyMatrixOperator(res)
-                        v = sEmA.apply_inverse_adjoint(res.apply(directions.real, ind=i))
+                        CTd = self.C.apply_adjoint(directions.real, ind=i)
+                        VTCTd = VectorArrayOperator(V, transposed=True).apply(CTd)
+                        sEmA_proj_inv_VTCTd = NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse_adjoint(VTCTd)
+                        V_sEmA_proj_inv_VTCTd = VectorArrayOperator(V).apply(sEmA_proj_inv_VTCTd)
+                        rd = sEmA.apply_adjoint(V_sEmA_proj_inv_VTCTd) - CTd
+                        v = sEmA.apply_inverse_adjoint(rd)
 
                 if i > 0:
                     v_norm_orig = v.l2_norm()[0]
@@ -911,31 +882,31 @@ class LTISystem(DiscretizationInterface):
                 V.append(v)
             elif sigma[i].imag > 0:
                 if self.E is None:
-                    E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
-                    sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i], -1))
+                    E = IdentityOperator(self.A.source)
+                    sEmA = LincombOperator((E, self.A), (sigma[i], -1))
                 else:
-                    sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i], -1))
+                    sEmA = LincombOperator((self.E, self.A), (sigma[i], -1))
 
                 if b_or_c == 'b':
                     if i == 0:
                         v = sEmA.apply_inverse(self.B.apply(directions, ind=0))
                     else:
-                        VTB = NumpyVectorArray(self.B.apply_adjoint(V).data.T)
-                        sEmA_projected = NumpyMatrixOperator(sEmA.apply2(V, V))
-                        res = (sEmA.apply(V).data.T.dot(sEmA_projected.apply_inverse(VTB).data.T) -
-                               self.B._matrix.toarray())
-                        res = NumpyMatrixOperator(res)
-                        v = sEmA.apply_inverse(res.apply(directions, ind=i))
+                        Bd = self.B.apply(directions, ind=i)
+                        VTBd = VectorArrayOperator(V, transposed=True).apply(Bd)
+                        sEmA_proj_inv_VTBd = NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse(VTBd)
+                        V_sEmA_proj_inv_VTBd = VectorArrayOperator(V).apply(sEmA_proj_inv_VTBd)
+                        rd = sEmA.apply(V_sEmA_proj_inv_VTBd) - Bd
+                        v = sEmA.apply_inverse(rd)
                 else:
                     if i == 0:
                         v = sEmA.apply_inverse_adjoint(self.C.apply_adjoint(directions, ind=0))
                     else:
-                        VTCT = NumpyVectorArray(self.C.apply(V).data.T)
-                        sEmA_projected = NumpyMatrixOperator(sEmA.apply2(V, V))
-                        res = (sEmA.apply_adjoint(V).data.T.dot(sEmA_projected.apply_inverse_adjoint(VTCT).data.T) -
-                               self.C._matrix.T.toarray())
-                        res = NumpyMatrixOperator(res)
-                        v = sEmA.apply_inverse_adjoint(res.apply(directions, ind=i))
+                        CTd = self.C.apply_adjoint(directions, ind=i)
+                        VTCTd = VectorArrayOperator(V, transposed=True).apply(CTd)
+                        sEmA_proj_inv_VTCTd = NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse_adjoint(VTCTd)
+                        V_sEmA_proj_inv_VTCTd = VectorArrayOperator(V).apply(sEmA_proj_inv_VTCTd)
+                        rd = sEmA.apply_adjoint(V_sEmA_proj_inv_VTCTd) - CTd
+                        v = sEmA.apply_inverse_adjoint(rd)
 
                 v1 = v.real
                 if i > 0:
@@ -968,52 +939,53 @@ class LTISystem(DiscretizationInterface):
         sigma
             Interpolation points (closed under conjugation), list of length `r`.
         b
-            Right tangential directions, |NumPy array| of order `m x r`.
+            Right tangential directions, vectorarray of length `r` from self.B.source.
         c
-            Left tangential directions, |NumPy array| of order `p x r`.
+            Left tangential directions, vectorarray of length `r` from self.C.range.
 
         Returns
         -------
         Vr
-            Right projection matrix.
+            Right projection matrix, vectorarray from self.A.source.
         Wr
-            Left projection matrix.
+            Left projection matrix, vectorarray from self.A.source.
         """
         r = len(sigma)
+        assert b in self.B.source and len(b) == r
+        assert c in self.C.range and len(c) == r
 
-        for i in xrange(r):
-            b[:, i] /= spla.norm(b[:, i])
-            c[:, i] /= spla.norm(c[:, i])
+        b.scal(1 / b.l2_norm())
+        c.scal(1 / c.l2_norm())
 
-        Vr = NumpyVectorArray.make_array(self.n, reserve=r)
-        Wr = NumpyVectorArray.make_array(self.n, reserve=r)
+        Vr = self.A.source.type.make_array(self.A.source.subtype, reserve=r)
+        Wr = self.A.source.type.make_array(self.A.source.subtype, reserve=r)
 
         for i in xrange(r):
             if sigma[i].imag == 0:
                 if self.E is None:
-                    E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
-                    sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i].real, -1))
+                    E = IdentityOperator(self.A.source)
+                    sEmA = LincombOperator((E, self.A), (sigma[i].real, -1))
                 else:
-                    sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i].real, -1))
+                    sEmA = LincombOperator((self.E, self.A), (sigma[i].real, -1))
 
-                Bb = self.B.apply(NumpyVectorArray(b[:, i].real.T))
+                Bb = self.B.apply(b.real, ind=i)
                 Vr.append(sEmA.apply_inverse(Bb))
 
-                CTc = self.C.apply_adjoint(NumpyVectorArray(c[:, i].real.T))
+                CTc = self.C.apply_adjoint(c.real, ind=i)
                 Wr.append(sEmA.apply_inverse_adjoint(CTc))
             elif sigma[i].imag > 0:
                 if self.E is None:
-                    E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
-                    sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i], -1))
+                    E = IdentityOperator(self.A.source)
+                    sEmA = LincombOperator((E, self.A), (sigma[i], -1))
                 else:
-                    sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i], -1))
+                    sEmA = LincombOperator((self.E, self.A), (sigma[i], -1))
 
-                Bb = self.B.apply(NumpyVectorArray(b[:, i].T))
+                Bb = self.B.apply(b, ind=i)
                 v = sEmA.apply_inverse(Bb)
                 Vr.append(v.real)
                 Vr.append(v.imag)
 
-                CTc = self.C.apply_adjoint(NumpyVectorArray(c[:, i].T))
+                CTc = self.C.apply_adjoint(c, ind=i)
                 w = sEmA.apply_inverse_adjoint(CTc)
                 Wr.append(w.real)
                 Wr.append(w.imag)
@@ -1034,9 +1006,9 @@ class LTISystem(DiscretizationInterface):
         sigma
             Initial interpolation points (closed under conjugation), list of length `r`.
         b
-            Initial right tangential directions, |NumPy array| of shape (m, r).
+            Initial right tangential directions, vectorarray of length `r` from self.B.source.
         c
-            Initial left tangential directions, |NumPy array| of shape (p, r).
+            Initial left tangential directions, vectorarray of length `r` from self.C.range.
         tol
             Tolerance, largest change in interpolation points.
         maxit
@@ -1058,18 +1030,21 @@ class LTISystem(DiscretizationInterface):
         rc
             Reconstructor of full state.
         reduction_data
-            Dictionary of additional data produced by the reduction process. Contains
-            projection matrices `Vr` and `Wr`, distances between interpolation points in
-            different iterations `dist`, interpolation points from all iterations `Sigma`,
-            and relative H_2-errors `errors` (if compute_errors is True).
+            Dictionary of additional data produced by the reduction process. Contains:
+            * projection matrices `Vr` and `Wr`,
+            * distances between interpolation points in different iterations `dist`,
+            * interpolation points from all iterations `Sigma`,
+            * final tangential directions `b` and `c`, and
+            * relative H_2-errors `errors` (if compute_errors is True).
         """
         assert 0 < r < self.n
         assert sigma is None or len(sigma) == r
-        assert b is None or b.shape == (self.m, r)
-        assert c is None or c.shape == (self.p, r)
+        assert b is None or b in self.B.source and len(b) == r
+        assert c is None or c in self.C.range and len(c) == r
 
         if sigma is None:
             sigma = np.logspace(-1, 1, r)
+        # TODO: instantiate vectorarrays
         if b is None:
             np.random.seed(0)
             b = np.random.randn(self.m, r)
@@ -1080,10 +1055,10 @@ class LTISystem(DiscretizationInterface):
         if verbose:
             if compute_errors:
                 print('iter | shift change | rel. H_2-error')
-                print('------------------------------------')
+                print('-----+--------------+---------------')
             else:
                 print('iter | shift change')
-                print('-------------------')
+                print('-----+-------------')
 
         if arnoldi:
             if self.m == 1:
@@ -1105,7 +1080,7 @@ class LTISystem(DiscretizationInterface):
             Ar, Br, Cr, _, Er = self.project(Vr, Wr)
 
             if compute_errors:
-                rom = LTISystem.from_matrices(Ar, Br, Cr, None, Er, cont_time=self.cont_time)
+                rom = LTISystem(Ar, Br, Cr, None, Er, cont_time=self.cont_time)
                 err = self - rom
                 try:
                     rel_H2_err = err.norm() / self.norm()
@@ -1113,12 +1088,12 @@ class LTISystem(DiscretizationInterface):
                     rel_H2_err = np.inf
                 errors.append(rel_H2_err)
 
-            sigma, Y, X = spla.eig(Ar, Er, left=True, right=True)
+            sigma, Y, X = spla.eig(Ar._matrix, Er._matrix, left=True, right=True)
             if force_stability:
                 sigma = np.array([np.abs(s.real) + s.imag * 1j for s in sigma])
             else:
-                sigma = -sigma
-            Sigma.append(sigma.copy())
+                sigma *= -1
+            Sigma.append(sigma)
 
             dist.append([])
             for i in xrange(it + 1):
@@ -1130,8 +1105,8 @@ class LTISystem(DiscretizationInterface):
                 else:
                     print('{:4d} | {:.6e}'.format(it + 1, np.min(dist[-1])))
 
-            b = Br.T.dot(Y.conj())
-            c = Cr.dot(X)
+            b = Br.apply_adjoint(NumpyVectorArray(Y.conj().T))
+            c = Cr.apply(NumpyVectorArray(X.T))
 
             if arnoldi:
                 if self.m == 1:
@@ -1150,7 +1125,7 @@ class LTISystem(DiscretizationInterface):
 
         Ar, Br, Cr, Dr, Er = self.project(Vr, Wr)
 
-        rom = LTISystem.from_matrices(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
+        rom = LTISystem(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
         rc = GenericRBReconstructor(Vr)
         reduction_data = {'Vr': Vr, 'Wr': Wr, 'dist': dist, 'Sigma': Sigma, 'b': b, 'c': c}
         if compute_errors:
@@ -1237,18 +1212,24 @@ class TF(DiscretizationInterface):
         sigma
             Interpolation points (closed under conjugation), list of length `r`.
         b
-            Right tangential directions, |NumPy array| of order `m x r`.
+            Right tangential directions, |NumPy array| of shape `(self.m, r)`.
         c
-            Left tangential directions, |NumPy array| of order `p x r`.
+            Left tangential directions, |NumPy array| of shape `(self.p, r)`.
 
         Returns
         -------
         Er
-            |NumPy array| of shape (r, r).
-        Wr
-            Left projection matrix.
+            |NumPy array| of shape `(r, r)`.
+        Ar
+            |NumPy array| of shape `(r, r)`.
+        Br
+            |NumPy array| of shape `(r, self.m)`.
+        Cr
+            |NumPy array| of shape `(self.p, r)`.
         """
         r = len(sigma)
+        assert b.shape == (self.m, r)
+        assert c.shape == (self.p, r)
 
         for i in xrange(r):
             b[:, i] /= spla.norm(b[:, i])
@@ -1327,6 +1308,11 @@ class TF(DiscretizationInterface):
         -------
         rom
             Reduced |LTISystem| model.
+        reduction_data
+            Dictionary of additional data produced by the reduction process. Contains:
+            * distances between interpolation points in different iterations `dist`,
+            * interpolation points from all iterations `Sigma`, and
+            * final tangential directions `b` and `c`.
         """
         assert r > 0
         assert sigma is None or len(sigma) == r
@@ -1344,7 +1330,7 @@ class TF(DiscretizationInterface):
 
         if verbose:
             print('iter | shift change')
-            print('-------------------')
+            print('-----+-------------')
 
         dist = []
         Sigma = [np.array(sigma)]
@@ -1355,8 +1341,8 @@ class TF(DiscretizationInterface):
             if force_stability:
                 sigma = np.array([np.abs(s.real) + s.imag * 1j for s in sigma])
             else:
-                sigma = -sigma
-            Sigma.append(sigma.copy())
+                sigma *= -1
+            Sigma.append(sigma)
 
             dist.append([])
             for i in xrange(it + 1):
@@ -1373,5 +1359,6 @@ class TF(DiscretizationInterface):
 
         Er, Ar, Br, Cr = self.interpolation(sigma, b, c)
         rom = LTISystem.from_matrices(Ar, Br, Cr, None, Er, cont_time=self.cont_time)
+        reduction_data = {'dist': dist, 'Sigma': Sigma, 'b': b, 'c': c}
 
-        return rom
+        return rom, reduction_data
