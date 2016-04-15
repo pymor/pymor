@@ -1298,25 +1298,25 @@ class TF(DiscretizationInterface):
             Br[i, :] = Ht[:, :, i].T.dot(c[:, i])
             Cr[:, i] = Ht[:, :, i].dot(b[:, i])
 
-#        T = np.zeros((r, r), dtype=complex)
-#        for i in xrange(r):
-#            if sigma[i].imag == 0:
-#                T[i, i] = 1
-#            else:
-#                try:
-#                    j = i + 1 + np.where(np.isclose(sigma[i + 1:], sigma[i].conjugate()))[0][0]
-#                except:
-#                    j = None
-#                if j:
-#                    T[i, i] = 1
-#                    T[i, j] = 1
-#                    T[j, i] = -1j
-#                    T[j, j] = 1j
-#
-#        Er = (T.dot(Er).dot(T.T)).real
-#        Ar = (T.dot(Ar).dot(T.T)).real
-#        Br = (T.dot(Br)).real
-#        Cr = (Cr.dot(T.T)).real
+        T = np.zeros((r, r), dtype=complex)
+        for i in xrange(r):
+            if sigma[i].imag == 0:
+                T[i, i] = 1
+            else:
+                try:
+                    j = i + 1 + np.where(np.isclose(sigma[i + 1:], sigma[i].conjugate()))[0][0]
+                except:
+                    j = None
+                if j:
+                    T[i, i] = 1
+                    T[i, j] = 1
+                    T[j, i] = -1j
+                    T[j, j] = 1j
+
+        Er = (T.dot(Er).dot(T.conj().T)).real
+        Ar = (T.dot(Ar).dot(T.conj().T)).real
+        Br = (T.dot(Br)).real
+        Cr = (Cr.dot(T.conj().T)).real
 
         return Er, Ar, Br, Cr
 
