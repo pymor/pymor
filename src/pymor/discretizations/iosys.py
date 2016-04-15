@@ -319,11 +319,7 @@ class LTISystem(DiscretizationInterface):
             raise NotImplementedError
 
         self._w = w
-        self._tfw = np.empty((self.p, self.m, len(w)), dtype=complex)
-
-        for i, wi in enumerate(w):
-            self._tfw[:, :, i] = self.eval_tf(1j * wi)
-
+        self._tfw = np.dstack([self.eval_tf(1j * wi) for wi in w])
         return self._tfw.copy()
 
     @classmethod
@@ -346,6 +342,13 @@ class LTISystem(DiscretizationInterface):
             Should the magnitude be in dB on the plot.
         Hz
             Should the frequency be in Hz on the plot.
+
+        Returns
+        -------
+        fig
+            Matplotlib figure.
+        ax
+            Matplotlib axes.
         """
         assert isinstance(sys_list, LTISystem) or all(isinstance(sys, LTISystem) for sys in sys_list)
         if isinstance(sys_list, LTISystem):
@@ -365,10 +368,8 @@ class LTISystem(DiscretizationInterface):
         import matplotlib.pyplot as plt
         fig, ax = plt.subplots()
         for i, sys in enumerate(sys_list):
-            freq = sys._w
-            if Hz:
-                freq = freq.copy() / (2 * np.pi)
-            mag = np.array([spla.norm(sys._tfw[:, :, j], ord=ord) for j, _ in enumerate(freq)])
+            freq = sys._w / (2 * np.pi) if Hz else sys._w
+            mag = spla.norm(sys._tfw, ord=ord, axis=(0, 1))
             style = '' if plot_style_list is None else plot_style_list[i]
             if dB:
                 mag = 20 * np.log2(mag)
@@ -678,10 +679,9 @@ class LTISystem(DiscretizationInterface):
         self.compute_hsv_U_V()
 
         if r is None:
-            bounds = np.cumsum(self._hsv)
-            bounds = bounds[-1] - bounds
-            bounds *= 2
-            r = min(i + 1 for i, b in enumerate(bounds) if b <= tol)
+            bounds = np.zeros(self._hsv.shape)
+            bounds[:-1] = 2 * self._hsv[-1:0:-1].cumsum()[::-1]
+            r = np.argmax(bounds <= tol) + 1
 
         Vr = VectorArrayOperator(self._cgf).apply(self._V, ind=range(r))
         Wr = VectorArrayOperator(self._ogf).apply(self._U, ind=range(r))
@@ -743,10 +743,9 @@ class LTISystem(DiscretizationInterface):
         self.compute_brsv_brU_brV(gamma=gamma)
 
         if r is None:
-            bounds = np.cumsum(self._brsv)
-            bounds = bounds[-1] - bounds
-            bounds *= 2 * self._brgamma
-            r = min(i + 1 for i, b in enumerate(bounds) if b <= tol)
+            bounds = np.zeros(self._brsv.shape)
+            bounds[:-1] = 2 * self._brgamma * self._hsv[-1:0:-1].cumsum()[::-1]
+            r = np.argmax(bounds <= tol) + 1
 
         Vr = VectorArrayOperator(self._brcgf).apply(self._brV, ind=range(r))
         Wr = VectorArrayOperator(self._brogf).apply(self._brU, ind=range(r))
@@ -1236,10 +1235,7 @@ class TF(DiscretizationInterface):
             raise NotImplementedError
 
         self._w = w
-        self._tfw = np.empty((self.p, self.m, len(w)), dtype=complex)
-
-        for i, wi in enumerate(w):
-            self._tfw[:, :, i] = self.H(1j * wi)
+        self._tfw = np.dstack([self.H(1j * wi) for wi in w])
 
         return self._tfw.copy()
 
@@ -1279,11 +1275,8 @@ class TF(DiscretizationInterface):
         Br = np.empty((r, self.m), dtype=complex)
         Cr = np.empty((self.p, r), dtype=complex)
 
-        Ht = np.empty((self.p, self.m, r), dtype=complex)
-        dHt = np.empty((self.p, self.m, r), dtype=complex)
-        for i in xrange(r):
-            Ht[:, :, i] = self.H(sigma[i])
-            dHt[:, :, i] = self.dH(sigma[i])
+        Ht = np.dstack([self.H(s) for s in sigma])
+        dHt = np.dstack([self.dH(s) for s in sigma])
 
         for i in xrange(r):
             for j in xrange(r):
