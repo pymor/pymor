@@ -194,18 +194,41 @@ def test_slycot(n, m, p):
     B = np.random.randn(n, m)
     C = np.random.randn(p, n)
 
-    A = NumpyMatrixOperator(A)
-    B = NumpyMatrixOperator(B)
-    C = NumpyMatrixOperator(C)
+    Aop = NumpyMatrixOperator(A)
+    Bop = NumpyMatrixOperator(B)
+    Cop = NumpyMatrixOperator(C)
 
-    Z = solve_ricc(A, B=B, C=C, meth='slycot')
+    Z = solve_ricc(Aop, B=Bop, C=Cop, meth='slycot')
 
     assert len(Z) <= n
 
-    ATX = A._matrix.T.dot(Z.data.T).dot(Z.data)
-    XB = Z.data.T.dot(Z.data.dot(B._matrix))
-    CTC = C._matrix.T.dot(C._matrix)
+    ATX = A.T.dot(Z.data.T).dot(Z.data)
+    XB = Z.data.T.dot(Z.data.dot(B))
+    CTC = C.T.dot(C)
     assert fro_norm(ATX + ATX.T - XB.dot(XB.T) + CTC) / fro_norm(CTC) < 1e-10
+
+
+@pytest.mark.parametrize('n', n_list)
+@pytest.mark.parametrize('m', m_list)
+@pytest.mark.parametrize('p', p_list)
+def test_slycot_trans(n, m, p):
+    np.random.seed(0)
+    A = np.random.randn(n, n) - n * np.eye(n)
+    B = np.random.randn(n, m)
+    C = np.random.randn(p, n)
+
+    Aop = NumpyMatrixOperator(A)
+    Bop = NumpyMatrixOperator(B)
+    Cop = NumpyMatrixOperator(C)
+
+    Z = solve_ricc(Aop, B=Bop, C=Cop, trans=True, meth='slycot')
+
+    assert len(Z) <= n
+
+    AX = A.dot(Z.data.T).dot(Z.data)
+    XCT = Z.data.T.dot(Z.data.dot(C.T))
+    BBT = B.dot(B.T)
+    assert fro_norm(AX + AX.T - XCT.dot(XCT.T) + BBT) / fro_norm(BBT) < 1e-10
 
 
 @pytest.mark.parametrize('n', n_list)
@@ -218,19 +241,47 @@ def test_slycot_E(n, m, p):
     C = np.random.randn(p, n)
     E = np.random.randn(n, n) + n * np.eye(n)
 
-    A = NumpyMatrixOperator(A)
-    B = NumpyMatrixOperator(B)
-    C = NumpyMatrixOperator(C)
-    E = NumpyMatrixOperator(E)
+    Aop = NumpyMatrixOperator(A)
+    Bop = NumpyMatrixOperator(B)
+    Cop = NumpyMatrixOperator(C)
+    Eop = NumpyMatrixOperator(E)
 
-    Z = solve_ricc(A, B=B, C=C, E=E, meth='slycot')
+    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, meth='slycot')
 
     assert len(Z) <= n
 
-    ATZ = A._matrix.T.dot(Z.data.T)
-    ZTE = Z.data.dot(E._matrix)
+    ATZ = A.T.dot(Z.data.T)
+    ZTE = Z.data.dot(E)
     ATXE = ATZ.dot(ZTE)
-    ZTB = Z.data.dot(B._matrix)
-    ETXB = E._matrix.T.dot(Z.data.T).dot(ZTB)
-    CTC = C._matrix.T.dot(C._matrix)
+    ZTB = Z.data.dot(B)
+    ETXB = E.T.dot(Z.data.T).dot(ZTB)
+    CTC = C.T.dot(C)
     assert fro_norm(ATXE + ATXE.T - ETXB.dot(ETXB.T) + CTC) / fro_norm(CTC) < 1e-10
+
+
+@pytest.mark.parametrize('n', n_list)
+@pytest.mark.parametrize('m', m_list)
+@pytest.mark.parametrize('p', p_list)
+def test_slycot_E_trans(n, m, p):
+    np.random.seed(0)
+    A = np.random.randn(n, n) - n * np.eye(n)
+    B = np.random.randn(n, m)
+    C = np.random.randn(p, n)
+    E = np.random.randn(n, n) + n * np.eye(n)
+
+    Aop = NumpyMatrixOperator(A)
+    Bop = NumpyMatrixOperator(B)
+    Cop = NumpyMatrixOperator(C)
+    Eop = NumpyMatrixOperator(E)
+
+    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, trans=True, meth='slycot')
+
+    assert len(Z) <= n
+
+    AZ = A.dot(Z.data.T)
+    ZTET = Z.data.dot(E.T)
+    AXET = AZ.dot(ZTET)
+    ZTCT = Z.data.dot(C.T)
+    EXCT = E.dot(Z.data.T).dot(ZTCT)
+    BBT = B.dot(B.T)
+    assert fro_norm(AXET + AXET.T - EXCT.dot(EXCT.T) + BBT) / fro_norm(BBT) < 1e-10
