@@ -791,7 +791,8 @@ def _apply_inverse(matrix, V, options=None):
         options = default_options[user_options['type']]
         options.update(user_options)
 
-    R = np.empty((len(V), matrix.shape[1]), dtype=np.promote_types(matrix.dtype, V.dtype))
+    promoted_type = np.promote_types(matrix.dtype, V.dtype)
+    R = np.empty((len(V), matrix.shape[1]), dtype=promoted_type)
 
     if options['type'] == 'solve':
         for i, VV in enumerate(V):
@@ -828,28 +829,45 @@ def _apply_inverse(matrix, V, options=None):
                                          format(info))
     elif options['type'] == 'spsolve':
         try:
+            # maybe remove unusable factorization:
+            if hasattr(matrix, 'factorization'):
+                fdtype = matrix.factorizationdtype
+                if not np.can_cast(V.dtype, fdtype, casting='safe'):
+                    del matrix.factorization
+
             if map(int, scipy.version.version.split('.')) >= [0, 14, 0]:
                 if hasattr(matrix, 'factorization'):
-                    R = matrix.factorization.solve(V.T).T
+                    # we may use a complex factorization of a real matrix to
+                    # apply it to a real vector. In that case, we downcast
+                    # the result here, removing the imaginary part,
+                    # which should be zero.
+                    R = matrix.factorization.solve(V.T).T.astype(promoted_type, copy=False)
                 elif options['keep_factorization']:
-                    matrix.factorization = splu(matrix, permc_spec=options['permc_spec'])
+                    # the matrix is always converted to the promoted type.
+                    # if matrix.dtype == promoted_type, this is a no_op
+                    matrix.factorization = splu(matrix_astype_nocopy(matrix, promoted_type), permc_spec=options['permc_spec'])
+                    matrix.factorizationdtype = promoted_type
                     R = matrix.factorization.solve(V.T).T
                 else:
-                    R = spsolve(matrix, V.T, permc_spec=options['permc_spec']).T
+                    # the matrix is always converted to the promoted type.
+                    # if matrix.dtype == promoted_type, this is a no_op
+                    R = spsolve(matrix_astype_nocopy(matrix, promoted_type), V.T, permc_spec=options['permc_spec']).T
             else:
+                # see if-part for documentation
                 if hasattr(matrix, 'factorization'):
                     for i, VV in enumerate(V):
-                        R[i] = matrix.factorization.solve(VV)
+                        R[i] = matrix.factorization.solve(VV).astype(promoted_type, copy=False)
                 elif options['keep_factorization']:
-                    matrix.factorization = splu(matrix, permc_spec=options['permc_spec'])
+                    matrix.factorization = splu(matrix_astype_nocopy(matrix, promoted_type), permc_spec=options['permc_spec'])
+                    matrix.factorizationdtype = promoted_type
                     for i, VV in enumerate(V):
                         R[i] = matrix.factorization.solve(VV)
                 elif len(V) > 1:
-                    factorization = splu(matrix, permc_spec=options['permc_spec'])
+                    factorization = splu(matrix_astype_nocopy(matrix, promoted_type), permc_spec=options['permc_spec'])
                     for i, VV in enumerate(V):
                         R[i] = factorization.solve(VV)
                 else:
-                    R = spsolve(matrix, V.T, permc_spec=options['permc_spec']).reshape((1, -1))
+                    R = spsolve(matrix_astype_nocopy(matrix, promoted_type), V.T, permc_spec=options['permc_spec']).reshape((1, -1))
         except RuntimeError as e:
             raise InversionError(e)
     elif options['type'] == 'lgmres':
@@ -942,3 +960,12 @@ def _apply_inverse(matrix, V, options=None):
     else:
         raise ValueError('Unknown solver type')
     return R
+
+
+# unfortunately, this is necessary, as scipy does not
+# forward the copy=False argument in its csc_matrix.astype function
+def matrix_astype_nocopy(matrix, dtype):
+    if matrix.dtype == dtype:
+        return matrix
+    else:
+        return matrix.astype(dtype)
