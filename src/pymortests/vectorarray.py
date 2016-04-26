@@ -703,6 +703,28 @@ def test_l2_norm(vector_array):
         assert np.allclose(c.l2_norm(ind), 0)
 
 
+def test_l2_norm2(vector_array):
+    v = vector_array
+    if hasattr(v, 'data'):
+        dv = v.data
+    for ind in valid_inds(v):
+        c = v.copy()
+        norm = c.l2_norm2(ind)
+        assert isinstance(norm, np.ndarray)
+        assert norm.shape == (v.len_ind(ind),)
+        assert np.all(norm >= 0)
+        if v.dim == 0:
+            assert np.all(norm == 0)
+        if hasattr(v, 'data'):
+            assert np.allclose(norm, np.sum(np.power(indexed(dv, ind), 2), axis=1))
+        c.scal(4.)
+        assert np.allclose(c.l2_norm2(ind), norm * 16)
+        c.scal(-4.)
+        assert np.allclose(c.l2_norm2(ind), norm * 256)
+        c.scal(0.)
+        assert np.allclose(c.l2_norm2(ind), 0)
+
+
 def test_sup_norm(vector_array):
     v = vector_array
     if hasattr(v, 'data'):
