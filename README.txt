@@ -84,6 +84,15 @@ latest development version of pyMOR, execute
 which will require that the git version control system is installed on
 your system.
 
+From time to time, the master branch of pyMOR undergoes major changes
+and things might break (this is usually announced on our mailing list),
+so you might prefer to install pyMOR from the current release branch:
+
+    pip install [--user] git+https://github.com/pymor/pymor@0.4.x
+
+Release branches will always stay stable and will only receive bugfix
+commits after the corresponding release has been made.
+
 Note that pyMOR depends on Cython, as well as the NumPy and SciPy
 packages. On all major Linux distributions, these packages can be easily
 installed via the distribution's package manager. For Debian-based
