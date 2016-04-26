@@ -82,7 +82,7 @@ pass the optional --user argument, pyMOR will only be installed for your
 local user, not requiring administrator privileges. To install the
 latest development version of pyMOR, execute
 
-    pip install [--user] git+https://github.com/pymor
+    pip install [--user] git+https://github.com/pymor/pymor
 
 which will require that the git version control system is installed on
 your system.
