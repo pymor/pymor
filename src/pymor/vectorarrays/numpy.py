@@ -397,7 +397,7 @@ class NumpyVectorArray(VectorArrayInterface):
         A = self._array[:self._len] if ind is None else \
             self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
 
-        return np.sum(A * A.conj(), axis=1)
+        return np.sum((A * A.conj()).real, axis=1)
 
     def components(self, component_indices, ind=None):
         assert self.check_ind(ind)

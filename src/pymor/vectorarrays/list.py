@@ -225,7 +225,7 @@ class NumpyVector(CopyOnWriteVector):
         return np.linalg.norm(self._array)
 
     def l2_norm2(self):
-        return np.sum(self._array * self._array.conj())
+        return np.sum((self._array * self._array.conj()).real)
 
     def components(self, component_indices):
         return self._array[component_indices]
