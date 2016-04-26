@@ -10,9 +10,6 @@ high-dimensional PDE solvers. Moreover, pure Python implementations of
 finite element and finite volume discretizations using the NumPy/SciPy
 scientific computing stack are provided for getting started quickly.
 
-NOTE pyMOR is still in early development. Should you have any questions
-regarding pyMOR or wish to contribute, do not hesitate to contact us!
-
 [Docs] [Docs] [DOI] [Build Status] [Coverage Status]
 
 License

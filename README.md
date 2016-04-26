@@ -10,9 +10,6 @@ implementations of finite element and finite volume discretizations using the
 NumPy/SciPy scientific computing stack are provided for getting started
 quickly.
 
-**NOTE** pyMOR is still in early development.  Should you have any questions
-regarding pyMOR or wish to contribute, do not hesitate to contact us!
-
 [![Docs](https://readthedocs.org/projects/pymor/badge/?version=latest)](http://pymor.readthedocs.org/en/latest)
 [![Docs](https://readthedocs.org/projects/pymor/badge/?version=0.3.x)](http://pymor.readthedocs.org/en/0.3.x)
 [![DOI](https://zenodo.org/badge/8838/pymor/pymor.svg)](http://dx.doi.org/10.5281/zenodo.15773)
