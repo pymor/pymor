@@ -322,6 +322,11 @@ class DiskVectorArray(VectorArrayInterface):
         ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
         return np.array([self._load(i).l2_norm() for i in ind])
 
+    def l2_norm2(self, ind=None):
+        assert self.check_ind(ind)
+        ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
+        return np.array([self._load(i).l2_norm2() for i in ind])
+
     def components(self, component_indices, ind=None):
         assert self.check_ind(ind)
         assert isinstance(component_indices, list) and (len(component_indices) == 0 or min(component_indices) >= 0) \
