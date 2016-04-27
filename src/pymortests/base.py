@@ -133,8 +133,10 @@ def check_results(test_name, args, results, keys, atol=0, rtol=1e-14):
 
     for k in keys:
         if not np.all(np.allclose(old_results[k], results[k], atol=atol, rtol=rtol)):
-            with open(filename + '_changed', 'wb'):
+            abs_errs = np.abs(results[k] - old_results[k])
+            rel_errs = abs_errs / np.abs(old_results[k])
+            with open(filename + '_changed', 'wb') as f:
                 print(args, file=f)
                 dump(results, f, protocol=2)
-            assert False, 'Results for test {}({}, key: {}) have changed. Saved new results in {}'.format(
-                test_name, args, k, filename + '_changed')
+            assert False, 'Results for test {}({}, key: {}) have changed.\n (maximum error: {} abs / {} rel).\nSaved new results in {}'.format(
+                test_name, args, k, np.max(abs_errs), np.max(rel_errs), filename + '_changed')
