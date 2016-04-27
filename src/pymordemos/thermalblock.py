@@ -94,7 +94,7 @@ from pymor.core.pickle import dump
 from pymor.parallel.default import new_parallel_pool
 
 
-def thermalblock_demo(args):
+def main(args):
 
     args = parse_arguments(args)
 
@@ -205,8 +205,11 @@ def thermalblock_demo(args):
         d.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
                     title='Maximum Error Solution', separate_colorbars=True, block=True)
 
+    return results
+
 
 def parse_arguments(args):
+    args = docopt(__doc__, args)
     args['XBLOCKS'] = int(args['XBLOCKS'])
     args['YBLOCKS'] = int(args['YBLOCKS'])
     args['SNAPSHOTS'] = int(args['SNAPSHOTS'])
@@ -249,10 +252,10 @@ def discretize_pymor(xblocks, yblocks, grid_num_intervals, use_list_vector_array
 
     print('Discretize ...')
     # setup analytical problem
-    problem = ThermalBlockProblem(num_blocks=(args['XBLOCKS'], args['YBLOCKS']))
+    problem = ThermalBlockProblem(num_blocks=(xblocks, yblocks))
 
     # discretize using continuous finite elements
-    d, _ = discretize_elliptic_cg(problem, diameter=1. / args['--grid'])
+    d, _ = discretize_elliptic_cg(problem, diameter=1. / grid_num_intervals)
 
     if use_list_vector_array:
         d = convert_to_numpy_list_vector_array(d)
@@ -514,7 +517,4 @@ def reduce_pod(d, reductor, snapshots_per_block, product_name, basis_size):
 
 
 if __name__ == '__main__':
-    # parse arguments
-    args = docopt(__doc__)
-    # run demo
-    thermalblock_demo(args)
+    main(sys.argv[1:])
