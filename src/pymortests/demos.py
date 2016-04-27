@@ -12,7 +12,7 @@ import pytest
 from tempfile import mkdtemp
 import shutil
 
-from pymortests.base import runmodule
+from pymortests.base import runmodule, check_results
 from pymor.gui.gl import HAVE_PYSIDE
 from pymor.gui.qt import stop_gui_processes
 
@@ -73,7 +73,7 @@ DEMO_ARGS = (DISCRETIZATION_ARGS +
 DEMO_ARGS = [('pymordemos.{}'.format(a), b) for (a, b) in DEMO_ARGS]
 
 
-def _run(module, args):
+def _run_module(module, args):
     sys.argv = [module] + [str(a) for a in args]
     return runpy.run_module(module, init_globals=None, run_name='__main__', alter_sys=True)
 
@@ -83,15 +83,18 @@ def demo_args(request):
     return request.param
 
 
+@pytest.fixture(params=THERMALBLOCK_ARGS)
+def thermalblock_args(request):
+    return request.param
+
+
 def _is_failed_import_ok(error):
     if error.message == 'cannot visualize: import of PySide failed':
         return not HAVE_PYSIDE
     return False
 
 
-def test_demos(demo_args):
-    module, args = demo_args
-
+def _test_demo(demo):
     import sys
     sys._called_from_test = True
 
@@ -110,15 +113,21 @@ def test_demos(demo_args):
     except ImportError:
         pass
     try:
-        ret = _run(module, args)
-        # TODO find a better/tighter assert/way to run the code
-        assert ret is not None
+        result = demo()
     except ImportError as ie:
         assert _is_failed_import_ok(ie), ie
     finally:
         stop_gui_processes()
         from pymor.parallel.default import _cleanup
         _cleanup()
+
+    return result
+
+
+def test_demos(demo_args):
+    module, args = demo_args
+    result = _test_demo(lambda: _run_module(module, args))
+    assert result is not None
 
 
 def test_analyze_pickle1():
@@ -175,6 +184,14 @@ def test_thermalblock_ipython(demo_args):
         import time     # there seems to be no way to shutdown the IPyhton cluster s.t. a new
         time.sleep(10)  # cluster can be started directly afterwards, so we have to wait ...
 
+
+def test_thermalblock_results(thermalblock_args):
+    from pymordemos import thermalblock
+    results = _test_demo(lambda: thermalblock.main(map(str, thermalblock_args[1])))
+    check_results('test_thermalblock_results', thermalblock_args[1], results,
+                  {'basis_sizes', 'norms', 'max_norms', 'errors', 'max_errors', 'rel_errors', 'max_rel_errors',
+                   'estimates', 'max_estimates', 'effectivities', 'min_effectivities', 'max_effectivities', 'errors',
+                   'max_conditions'})
 
 if __name__ == "__main__":
     runmodule(filename=__file__)
