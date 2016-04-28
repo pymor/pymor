@@ -292,13 +292,11 @@ class LTISystem(DiscretizationInterface):
 
         iwEmA = LincombOperator((E, A), (s, -1))
         if self.m <= self.p:
-            # TODO: make independent of B.source
-            eye = NumpyVectorArray(sp.eye(self.m))
-            tfs = C.apply(iwEmA.apply_inverse(B.apply(eye))).data.T
+            eye_m = B.source.from_data(sp.eye(self.m))
+            tfs = C.apply(iwEmA.apply_inverse(B.apply(eye_m))).data.T
         else:
-            # TODO: make independent of C.range
-            eye = NumpyVectorArray(sp.eye(self.p))
-            tfs = B.apply_adjoint(iwEmA.apply_adjoint_inverse(C.apply_adjoint(eye))).data
+            eye_p = C.range.from_data(sp.eye(self.p))
+            tfs = B.apply_adjoint(iwEmA.apply_adjoint_inverse(C.apply_adjoint(eye_p))).data
         if D is not None:
             tfs += to_numpy_operator(D)._matrix
         return tfs
@@ -760,11 +758,12 @@ class LTISystem(DiscretizationInterface):
         r = len(sigma)
         V = self.A.source.type.make_array(self.A.source.subtype, reserve=r)
 
-        # TODO: make independent of self.B.source or self.C.range
-        v = NumpyVectorArray(np.array([1.]))
+        v = np.array([1.])
         if b_or_c == 'b':
+            v = self.B.source.from_data(v)
             v = self.B.apply(v)
         else:
+            v = self.C.range.from_data(v)
             v = self.C.apply_adjoint(v)
         v.scal(1 / v.l2_norm()[0])
 
@@ -1054,13 +1053,12 @@ class LTISystem(DiscretizationInterface):
 
         if sigma is None:
             sigma = np.logspace(-1, 1, r)
-        # TODO: instantiate vectorarrays
         if b is None:
             np.random.seed(0)
-            b = np.random.randn(self.m, r)
+            b = self.B.source.from_data(np.random.randn(r, self.m))
         if c is None:
             np.random.seed(0)
-            c = np.random.randn(self.p, r)
+            c = self.C.range.from_data(np.random.randn(r, self.p))
 
         if verbose:
             if compute_errors:
