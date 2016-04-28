@@ -51,7 +51,6 @@ class NumpyVectorArray(VectorArrayInterface):
 
     @classmethod
     def from_data(cls, data, subtype):
-        assert data.shape[1] == subtype
         return cls(data)
 
     @classmethod
