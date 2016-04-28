@@ -50,6 +50,11 @@ class NumpyVectorArray(VectorArrayInterface):
         self._refcount = [1]
 
     @classmethod
+    def from_data(cls, data, subtype):
+        assert data.shape[1] == subtype
+        return cls(data)
+
+    @classmethod
     def from_file(cls, path, key=None, single_vector=False, transpose=False):
         assert not (single_vector and transpose)
         from pymor.tools.io import load_matrix

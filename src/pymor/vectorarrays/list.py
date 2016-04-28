@@ -260,6 +260,10 @@ class ListVectorArray(VectorArrayInterface):
         vector_type, vector_subtype = subtype
         return cls([vector_type.make_zeros(vector_subtype) for _ in xrange(count)], subtype=subtype, copy=False)
 
+    @classmethod
+    def from_data(cls, data, subtype):
+        return cls(data, subtype=subtype)
+
     def __len__(self):
         return len(self._list)
 
