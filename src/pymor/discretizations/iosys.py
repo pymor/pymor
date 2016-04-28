@@ -304,7 +304,7 @@ class LTISystem(DiscretizationInterface):
         return tfs
 
     def bode(self, w):
-        """Compute the transfer function on the imaginary axis.
+        """Evaluate the transfer function on the imaginary axis.
 
         Parameters
         ----------
@@ -314,7 +314,7 @@ class LTISystem(DiscretizationInterface):
         Returns
         -------
         tfw
-            Transfer function values at frequencies in w, returned as a 3D |NumPy array| of shape (p, m, len(w)).
+            Transfer function values at frequencies in w, returned as a 3D |NumPy array| of shape `(p, m, len(w))`.
         """
         if not self.cont_time:
             raise NotImplementedError
@@ -333,10 +333,10 @@ class LTISystem(DiscretizationInterface):
             A single |LTISystem| or a list of |LTISystems|.
         plot_style_list
             A string or a list of strings of the same length as `sys_list`.
-            If None, matplotlib defaults are used.
+            If `None`, matplotlib defaults are used.
         w
             Frequencies at which to compute the transfer function.
-            If None, use self._w.
+            If `None`, use `self._w`.
         ord
             Order of the norm used to compute the magnitude (the default is the Frobenius norm).
         dB
@@ -398,7 +398,7 @@ class LTISystem(DiscretizationInterface):
             Method used to solve the Lyapunov equation (see :func:`pymor.algorithms.lyapunov.solve_lyap`).
         tol
             Tolerance parameter for the low-rank Lyapunov equation solver.
-            If None, then the default tolerance is used. Otherwise, it should be a positive float and
+            If `None`, then the default tolerance is used. Otherwise, it should be a positive float and
             the controllability Gramian factor is recomputed (if it was already computed).
         """
         if not self.cont_time:
@@ -416,7 +416,7 @@ class LTISystem(DiscretizationInterface):
             Method used to solve the Lyapunov equation (see :func:`pymor.algorithms.lyapunov.solve_lyap`).
         tol
             Tolerance parameter for the low-rank Lyapunov equation solver.
-            If None, then the default tolerance is used. Otherwise, it should be a positive float and
+            If `None`, then the default tolerance is used. Otherwise, it should be a positive float and
             the observability Gramian factor is recomputed (if it was already computed).
         """
         if not self.cont_time:
@@ -445,7 +445,7 @@ class LTISystem(DiscretizationInterface):
         Parameters
         ----------
         gamma
-            Bound for the H_inf norm.
+            Bound for the H_infinity norm.
         tol
             Tolerance for the low-rank approximation.
         """
@@ -481,7 +481,7 @@ class LTISystem(DiscretizationInterface):
         Parameters
         ----------
         gamma
-            Bound for the H_inf norm.
+            Bound for the H_infinity norm.
         tol
             Tolerance for the low-rank approximation.
         """
@@ -517,7 +517,7 @@ class LTISystem(DiscretizationInterface):
         Parameters
         ----------
         gamma
-            Bound for the H_inf norm.
+            Bound for the H_infinity norm.
         """
         if self._brsv is None or self._brU is None or self._brV is None:
             self.compute_brcgf(gamma=gamma)
@@ -578,24 +578,24 @@ class LTISystem(DiscretizationInterface):
         Parameters
         ----------
         Vr
-            Right projection matrix, vectorarray from self.A.source.
+            Right projection matrix, |VectorArray| from `self.A.source`.
         Wr
-            Left projection matrix, vectorarray from self.A.source.
+            Left projection matrix, |VectorArray| from `self.A.source`.
         Er_is_identity
             If the reduced `E` is guaranteed to be the identity matrix.
 
         Returns
         -------
         Ar
-            Reduced `A` operator, NumpyMatrixOperator.
+            Reduced `A` operator, |NumpyMatrixOperator|.
         Br
-            Reduced `B` operator, VectorArrayOperator (transposed).
+            Reduced `B` operator, :class:`~pymor.operators.constructions.VectorArrayOperator` (transposed).
         Cr
-            Reduced `C` operator, VectorArrayOperator.
+            Reduced `C` operator, :class:`~pymor.operators.constructions.VectorArrayOperator`.
         Dr
-            Simply self.D.
+            Simply `self.D`.
         Er
-            Reduced `E` operator, NumpyMatrixOperator or `None`.
+            Reduced `E` operator, |NumpyMatrixOperator| or `None`.
         """
         Ar = NumpyMatrixOperator(self.A.apply2(Wr, Vr))
         Br = VectorArrayOperator(self.B.apply_adjoint(Wr), transposed=True)
@@ -618,9 +618,9 @@ class LTISystem(DiscretizationInterface):
         Parameters
         ----------
         r
-            Order of the reduced model if `tol` is None.
+            Order of the reduced model if `tol` is `None`.
         tol
-            Tolerance for the absolute H_inf-error if `r` is None.
+            Tolerance for the absolute H_infinity-error if `r` is `None`.
         meth
             Method used:
             * square root method ('sr')
@@ -680,11 +680,11 @@ class LTISystem(DiscretizationInterface):
         Parameters
         ----------
         gamma
-            Bound for the H_inf norm.
+            Bound for the H_infinity norm.
         r
-            Order of the reduced model if `tol` is None.
+            Order of the reduced model if `tol` is `None`.
         tol
-            Tolerance for the absolute H_inf-error if `r` is None.
+            Tolerance for the absolute H_infinity-error if `r` is `None`.
         meth
             Method used:
             * square root method ('sr')
@@ -836,8 +836,8 @@ class LTISystem(DiscretizationInterface):
         b_or_c
             Character 'b' or 'c', to choose between the input or output matrix.
         directions
-            Tangential directions, vectorarray of length `len(sigma)` from self.B.source
-            or self.C.range (depending on `b_or_c`).
+            Tangential directions, |VectorArray| of length `len(sigma)` from `self.B.source`
+            or `self.C.range` (depending on `b_or_c`).
 
         Returns
         -------
@@ -949,16 +949,16 @@ class LTISystem(DiscretizationInterface):
         sigma
             Interpolation points (closed under conjugation), list of length `r`.
         b
-            Right tangential directions, vectorarray of length `r` from self.B.source.
+            Right tangential directions, |VectorArray| of length `r` from `self.B.source`.
         c
-            Left tangential directions, vectorarray of length `r` from self.C.range.
+            Left tangential directions, |VectorArray| of length `r` from `self.C.range`.
 
         Returns
         -------
         Vr
-            Right projection matrix, vectorarray from self.A.source.
+            Right projection matrix, |VectorArray| from `self.A.source`.
         Wr
-            Left projection matrix, vectorarray from self.A.source.
+            Left projection matrix, |VectorArray| from `self.A.source`.
         """
         r = len(sigma)
         assert b in self.B.source and len(b) == r
@@ -1016,9 +1016,9 @@ class LTISystem(DiscretizationInterface):
         sigma
             Initial interpolation points (closed under conjugation), list of length `r`.
         b
-            Initial right tangential directions, vectorarray of length `r` from self.B.source.
+            Initial right tangential directions, |VectorArray| of length `r` from `self.B.source`.
         c
-            Initial left tangential directions, vectorarray of length `r` from self.C.range.
+            Initial left tangential directions, |VectorArray| of length `r` from `self.C.range`.
         tol
             Tolerance, largest change in interpolation points.
         maxit
@@ -1045,7 +1045,7 @@ class LTISystem(DiscretizationInterface):
             * distances between interpolation points in different iterations `dist`,
             * interpolation points from all iterations `Sigma`,
             * final tangential directions `b` and `c`, and
-            * relative H_2-errors `errors` (if compute_errors is True).
+            * relative H_2-errors `errors` (if compute_errors is `True`).
         """
         assert 0 < r < self.n
         assert sigma is None or len(sigma) == r
@@ -1166,8 +1166,8 @@ class TF(DiscretizationInterface):
     p
         Number of outputs.
     H
-        Transfer function defined at least on the open left complex half-plane.
-        H(s) is a |NumPy array| of shape (p, m).
+        Transfer function defined at least on the open right complex half-plane.
+        H(s) is a |NumPy array| of shape `(p, m)`.
     dH
         Complex derivative of H(s).
     cont_time
@@ -1201,7 +1201,7 @@ class TF(DiscretizationInterface):
         -------
         tfw
             Transfer function values at frequencies in w, returned as a 3D |NumPy array|
-            of shape (p, m, len(w)).
+            of shape `(p, m, len(w))`.
         """
         if not self.cont_time:
             raise NotImplementedError
