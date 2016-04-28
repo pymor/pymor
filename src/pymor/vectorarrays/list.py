@@ -262,7 +262,7 @@ class ListVectorArray(VectorArrayInterface):
 
     @classmethod
     def from_data(cls, data, subtype):
-        return cls(data, subtype=subtype)
+        return cls([NumpyVector(v) for v in data], subtype=subtype)
 
     def __len__(self):
         return len(self._list)
