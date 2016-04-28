@@ -8,7 +8,6 @@ import numpy as np
 
 from pymor.algorithms.numpy import to_numpy_operator
 from pymor.operators.interfaces import OperatorInterface
-from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
 def operator2matrix(A):
@@ -79,6 +78,11 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
         If meth is None, a solver is chosen automatically.
     tol
         Tolerance parameter.
+
+    Returns
+    -------
+    Z
+        Low-rank factor of the Riccati equation solution, |VectorArray| from `A.source`.
     """
     assert isinstance(A, OperatorInterface) and A.linear
     assert A.source == A.range
@@ -249,6 +253,6 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
             else:
                 Z = pymess.care(A_mat.T, E_mat.T, C_mat.T, B_mat.T)
 
-    Z = NumpyVectorArray(np.array(Z).T)
+    Z = A.source.from_data(np.array(Z).T)
 
     return Z
