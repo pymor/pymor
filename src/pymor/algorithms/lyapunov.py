@@ -5,14 +5,12 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-import scipy.sparse as sps
 import scipy.sparse.linalg as spsla
 
 from pymor.algorithms.numpy import to_numpy_operator
 from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.constructions import IdentityOperator, LincombOperator
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
 try:
@@ -48,31 +46,17 @@ try:
             The |Operator| RHS.
         """
         def __init__(self, opt, A, E, RHS):
-            dim = A.source.dim
-
-            super(LyapunovEquation, self).__init__(name='lyap_eqn', opt=opt, dim=dim)
-
-            if isinstance(RHS, NumpyMatrixOperator):
-                if RHS.sparse:
-                    self.RHS = RHS._matrix.toarray()
-                else:
-                    self.RHS = RHS._matrix
-                if opt.type == pymess.MESS_OP_TRANSPOSE:
-                    self.RHS = self.RHS.T
-            else:
-                if opt.type == pymess.MESS_OP_NONE:
-                    eye = NumpyVectorArray(sps.eye(RHS.source.dim))
-                    self.RHS = np.array(RHS.apply(eye).data)
-                else:
-                    eye = NumpyVectorArray(sps.eye(RHS.range.dim))
-                    self.RHS = np.array(RHS.apply_adjoint(eye).data.T)
+            super(LyapunovEquation, self).__init__(name='lyap_eqn', opt=opt, dim=A.source.dim)
 
             self.A = A
             self.E = E
+            self.RHS = to_numpy_operator(RHS)._matrix
+            if opt.type == pymess.MESS_OP_TRANSPOSE:
+                self.RHS = self.RHS.T
             self.p = []
 
         def A_apply(self, op, y):
-            y = NumpyVectorArray(np.array(y).T)
+            y = self.A.source.from_data(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
                 x = self.A.apply(y)
             else:
@@ -83,7 +67,7 @@ try:
             if self.E is None:
                 return y
 
-            y = NumpyVectorArray(np.array(y).T)
+            y = self.A.source.from_data(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
                 x = self.E.apply(y)
             else:
@@ -91,7 +75,7 @@ try:
             return np.matrix(x.data).T
 
         def As_apply(self, op, y):
-            y = NumpyVectorArray(np.array(y).T)
+            y = self.A.source.from_data(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
                 x = self.A.apply_inverse(y)
             else:
@@ -102,7 +86,7 @@ try:
             if self.E is None:
                 return y
 
-            y = NumpyVectorArray(np.array(y).T)
+            y = self.A.source.from_data(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
                 x = self.E.apply_inverse(y)
             else:
@@ -110,7 +94,7 @@ try:
             return np.matrix(x.data).T
 
         def ApE_apply(self, op, p, idx_p, y):
-            y = NumpyVectorArray(np.array(y).T)
+            y = self.A.source.from_data(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
                 x = self.A.apply(y)
                 if self.E is None:
@@ -126,11 +110,8 @@ try:
             return np.matrix(x.data).T
 
         def ApEs_apply(self, op, p, idx_p, y):
-            y = NumpyVectorArray(np.array(y).T)
-            if self.E is None:
-                E = IdentityOperator(self.A.source)
-            else:
-                E = self.E
+            y = self.A.source.from_data(np.array(y).T)
+            E = IdentityOperator(self.A.source) if self.E is None else self.E
 
             if p.imag == 0:
                 ApE = LincombOperator((self.A, E), (1, p.real))
@@ -147,17 +128,17 @@ try:
             n = self.A.source.dim
 
             def A_mv(v):
-                v = NumpyVectorArray(v)
+                v = self.A.source.from_data(v)
                 w = self.A.apply(v)
                 return w.data[0, :]
 
             def A_rmv(v):
-                v = NumpyVectorArray(v)
+                v = self.A.range.from_data(v)
                 w = self.A.apply_adjoint(v)
                 return w.data[0, :]
 
             def A_mm(v):
-                v = NumpyVectorArray(v.T)
+                v = self.A.source.from_data(v.T)
                 w = self.A.apply(v)
                 return w.data.T
 
@@ -167,17 +148,17 @@ try:
                 E_scipy = None
             else:
                 def E_mv(v):
-                    v = NumpyVectorArray(v)
+                    v = self.E.source.from_data(v)
                     w = self.E.apply(v)
                     return w.data[0, :]
 
                 def E_rmv(v):
-                    v = NumpyVectorArray(v)
+                    v = self.E.range.from_data(v)
                     w = self.E.apply_adjoint(v)
                     return w.data[0, :]
 
                 def E_mm(v):
-                    v = NumpyVectorArray(v.T)
+                    v = self.E.source.from_data(v.T)
                     w = self.E.apply(v)
                     return w.data.T
 
@@ -231,6 +212,11 @@ def solve_lyap(A, E, B, trans=False, meth=None, tol=None):
             'pymess_lradi' (for bigger problems) > 'pymess_lyap' (for smaller problems) > 'slycot' > 'scipy'.
     tol
         Tolerance parameter.
+
+    Returns
+    -------
+    Z
+        Low-rank factor of the Lyapunov equation solution, |VectorArray| from `A.source`.
     """
     assert isinstance(A, OperatorInterface) and A.linear
     assert A.source == A.range
@@ -325,6 +311,6 @@ def solve_lyap(A, E, B, trans=False, meth=None, tol=None):
         eqn = LyapunovEquation(opts, A, E, B)
         Z, status = pymess.lradi(eqn, opts)
 
-    Z = NumpyVectorArray(np.array(Z).T)
+    Z = A.source.from_data(np.array(Z).T)
 
     return Z
