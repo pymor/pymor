@@ -550,17 +550,16 @@ class LTISystem(DiscretizationInterface):
             if self._H2_norm is not None:
                 return self._H2_norm
 
-            # TODO: use matrix version of l2_norm
             if self._cgf is not None:
-                self._H2_norm = np.sqrt(np.sum(self.C.apply(self._cgf).l2_norm() ** 2))
+                self._H2_norm = np.sqrt(self.C.apply(self._cgf).l2_norm2().sum())
             elif self._ogf is not None:
-                self._H2_norm = np.sqrt(np.sum(self.B.apply_adjoint(self._ogf).l2_norm() ** 2))
+                self._H2_norm = np.sqrt(self.B.apply_adjoint(self._ogf).l2_norm2().sum())
             elif self.m <= self.p:
                 self.compute_cgf()
-                self._H2_norm = np.sqrt(np.sum(self.C.apply(self._cgf).l2_norm() ** 2))
+                self._H2_norm = np.sqrt(self.C.apply(self._cgf).l2_norm2().sum())
             else:
                 self.compute_ogf()
-                self._H2_norm = np.sqrt(np.sum(self.B.apply_adjoint(self._ogf).l2_norm() ** 2))
+                self._H2_norm = np.sqrt(self.B.apply_adjoint(self._ogf).l2_norm2().sum())
             return self._H2_norm
         elif name == 'Hinf':
             if self._Hinf_norm is not None:
