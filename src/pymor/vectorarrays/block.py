@@ -42,7 +42,7 @@ class BlockVectorArray(VectorArrayInterface):
     def from_data(cls, data, subtype):
         assert isinstance(subtype, tuple)
         assert all([isinstance(subspace, VectorSpace) for subspace in subtype])
-        data_ind = np.zeros((len(subtype),))
+        data_ind = np.zeros((len(subtype) + 1,))
         data_ind[1:] = np.cumsum([subspace.dim for subspace in subtype])
         return BlockVectorArray([subspace.type.from_data(data[:, data_ind[i]:data_ind[i + 1]], subspace.subtype)
                                  for i, subspace in enumerate(subtype)])
