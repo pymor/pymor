@@ -8,6 +8,7 @@ import numpy as np
 import scipy.sparse as sps
 import scipy.sparse.linalg as spsla
 
+from pymor.algorithms.numpy import to_numpy_operator
 from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.constructions import IdentityOperator, LincombOperator
 from pymor.operators.numpy import NumpyMatrixOperator
@@ -257,43 +258,33 @@ def solve_lyap(A, E, B, trans=False, meth=None, tol=None):
         if E is not None:
             raise NotImplementedError()
         import scipy.linalg as spla
-        A_matrix = A._matrix
-        if A.sparse:
-            A_matrix = A_matrix.toarray()
-        B_matrix = B._matrix
-        if B.sparse:
-            B_matrix = B_matrix.toarray()
+        A_mat = to_numpy_operator(A)._matrix
+        B_mat = to_numpy_operator(B)._matrix
         if not trans:
-            X = spla.solve_lyapunov(A_matrix, -B_matrix.dot(B_matrix.T))
+            X = spla.solve_lyapunov(A_mat, -B_mat.dot(B_mat.T))
         else:
-            X = spla.solve_lyapunov(A_matrix.T, -B_matrix.T.dot(B_matrix))
+            X = spla.solve_lyapunov(A_mat.T, -B_mat.T.dot(B_mat))
         from pymor.algorithms.cholp import cholp
         Z = cholp(X, copy=False)
     elif meth == 'slycot':
         import slycot
-        A_matrix = A._matrix
-        if A.sparse:
-            A_matrix = A_matrix.toarray()
+        A_mat = to_numpy_operator(A)._matrix
         if E is not None:
-            E_matrix = E._matrix
-            if E.sparse:
-                E_matrix = E_matrix.toarray()
-        B_matrix = B._matrix
-        if B.sparse:
-            B_matrix = B_matrix.toarray()
+            E_mat = to_numpy_operator(E)._matrix
+        B_mat = to_numpy_operator(B)._matrix
 
-        n = A_matrix.shape[0]
+        n = A_mat.shape[0]
         if not trans:
-            C = -B_matrix.dot(B_matrix.T)
+            C = -B_mat.dot(B_mat.T)
             trans = 'T'
         else:
-            C = -B_matrix.T.dot(B_matrix)
+            C = -B_mat.T.dot(B_mat)
             trans = 'N'
         dico = 'C'
 
         if E is None:
             U = np.zeros((n, n))
-            X, scale, _, _, _ = slycot.sb03md(n, C, A_matrix, U, dico, trana=trans)
+            X, scale, _, _, _ = slycot.sb03md(n, C, A_mat, U, dico, trana=trans)
         else:
             job = 'X'
             fact = 'N'
@@ -301,33 +292,27 @@ def solve_lyap(A, E, B, trans=False, meth=None, tol=None):
             Z = np.zeros((n, n))
             uplo = 'L'
             X = C
-            _, _, _, _, X, scale, _, _, _, _, _ = slycot.sg03ad(dico, job, fact, trans, uplo, n, A_matrix, E_matrix,
+            _, _, _, _, X, scale, _, _, _, _, _ = slycot.sg03ad(dico, job, fact, trans, uplo, n, A_mat, E_mat,
                                                                 Q, Z, X)
 
         from pymor.algorithms.cholp import cholp
         Z = cholp(X, copy=False)
     elif meth == 'pymess_lyap':
         import pymess
-        A_matrix = A._matrix
-        if A.sparse:
-            A_matrix = A_matrix.toarray()
+        A_mat = to_numpy_operator(A)._matrix
         if E is not None:
-            E_matrix = E._matrix
-            if E.sparse:
-                E_matrix = E_matrix.toarray()
-        B_matrix = B._matrix
-        if B.sparse:
-            B_matrix = B_matrix.toarray()
+            E_mat = to_numpy_operator(E)._matrix
+        B_mat = to_numpy_operator(B)._matrix
         if not trans:
             if E is None:
-                Z = pymess.lyap(A_matrix, None, B_matrix)
+                Z = pymess.lyap(A_mat, None, B_mat)
             else:
-                Z = pymess.lyap(A_matrix, E_matrix, B_matrix)
+                Z = pymess.lyap(A_mat, E_mat, B_mat)
         else:
             if E is None:
-                Z = pymess.lyap(A_matrix.T, None, B_matrix.T)
+                Z = pymess.lyap(A_mat.T, None, B_mat.T)
             else:
-                Z = pymess.lyap(A_matrix.T, E_matrix.T, B_matrix.T)
+                Z = pymess.lyap(A_mat.T, E_mat.T, B_mat.T)
     elif meth == 'pymess_lradi':
         import pymess
         opts = pymess.options()
