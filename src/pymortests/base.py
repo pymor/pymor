@@ -4,12 +4,15 @@
 
 from __future__ import absolute_import, division, print_function
 
+import hashlib
 import pprint
 import pkgutil
+import os
 import sys
 import numpy as np
 from numpy.polynomial.polynomial import Polynomial
 from math import factorial
+from cPickle import dumps, dump, load
 
 from pymor.core import logger
 from pymor.operators.basic import OperatorBase
@@ -102,3 +105,36 @@ class MonomOperator(OperatorBase):
 
     def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
         return NumpyVectorArray(1. / V.data)
+
+
+def check_results(test_name, args, results, keys, atol=0, rtol=1e-14):
+    assert keys <= set(results.keys()), \
+        'Keys {} missing in results dict'.format(keys - set(results.keys()))
+    results = {k: results[k] for k in keys}
+
+    basepath = os.path.join(os.path.dirname(__file__),
+                            '..', '..', 'testdata', 'check_results')
+    arg_id = hashlib.sha1(dumps(args, protocol=2)).hexdigest()
+    filename = os.path.normpath(os.path.join(basepath, test_name, arg_id))
+
+    if not os.path.exists(os.path.join(basepath, test_name)):
+        os.mkdir(os.path.join(basepath, test_name))
+    if not os.path.exists(filename):
+        with open(filename, 'wb') as f:
+            print(args, file=f)
+            dump(results, f, protocol=2)
+        assert False, \
+            'No results found for test {} ({}), saved current results. Remember to check in {}.'.format(
+                test_name, args, filename)
+
+    with open(filename, 'rb') as f:
+        f.readline()
+        old_results = load(f)
+
+    for k in keys:
+        if not np.all(np.allclose(old_results[k], results[k], atol=atol, rtol=rtol)):
+            with open(filename + '_changed', 'wb'):
+                print(args, file=f)
+                dump(results, f, protocol=2)
+            assert False, 'Results for test {}({}, key: {}) have changed. Saved new results in {}'.format(
+                test_name, args, k, filename + '_changed')

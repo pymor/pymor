@@ -82,6 +82,20 @@ class VectorArrayInterface(BasicInterface):
         """
         pass
 
+    @abstractclassmethod
+    def from_data(cls, data, subtype):
+        """Create a |VectorArray| from |NumPy array|
+
+        Parameters
+        ----------
+        data
+            |NumPy array|.
+        subtype
+            The :attr:`~VectorArrayInterface.subtype`, the created array should have.
+            What a valid subtype is, is determined by the respective array implementation.
+        """
+        pass
+
     def empty(self, reserve=0):
         """Create an empty |VectorArray| of the same :attr:`~VectorArrayInterface.subtype`.
 
@@ -575,6 +589,20 @@ class VectorSpace(BasicInterface):
         A |VectorArray| containing `count` vectors whith each component zero.
         """
         return self.type.make_array(subtype=self.subtype, count=count)
+
+    def from_data(self, data):
+        """Create a |VectorArray| from a |NumPy array|
+
+        Parameters
+        ----------
+        data
+            |NumPy| array.
+
+        Returns
+        -------
+        A |VectorArray| with `data` as data.
+        """
+        return self.type.from_data(data, self.subtype)
 
     @property
     def dim(self):
