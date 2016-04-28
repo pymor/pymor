@@ -104,7 +104,7 @@ def _to_matrix(op, format, mapping):
         for i in xrange(1, len(op.operators)):
             res = res + op.coefficients[i] * _to_matrix(op.operators[i], format, mapping)
     elif isinstance(op, VectorArrayOperator):
-        res = op._array if op.transposed else op._array.T
+        res = op._array.data if op.transposed else op._array.data.T
         if format is not None:
             res = mapping[format](res)
     elif isinstance(op, ZeroOperator):
