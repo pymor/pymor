@@ -25,7 +25,7 @@ try:
 
             A * X + X * A^T + RHS * RHS^T = 0
 
-        if E is None, otherwise a generalized Lyapunov equation::
+        if E is `None`, otherwise a generalized Lyapunov equation::
 
             A * X * E^T + E * X * A^T + RHS * RHS^T = 0.
 
@@ -34,16 +34,16 @@ try:
             A^T * X + X * A + RHS^T * RHS = 0,
             A^T * X * E + E^T * X * A^T + RHS^T * RHS = 0,
 
-        opt.type needs to be pymess.MESS_OP_TRANSPOSE.
+        `opt.type` needs to be `pymess.MESS_OP_TRANSPOSE`.
 
         Parameters
         ----------
         opt
-            pymess options structure
+            pymess options structure.
         A
             The |Operator| A.
         E
-            The |Operator| E or None.
+            The |Operator| E or `None`.
         RHS
             The |Operator| RHS.
         """
@@ -237,7 +237,7 @@ def solve_lyap(A, E, B, trans=False, meth=None, tol=None):
     assert isinstance(B, OperatorInterface) and B.linear
     assert not trans and B.range == A.source or trans and B.source == A.source
     assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source
-    assert meth is None or meth in {'scipy', 'slycot', 'pymess_lyap', 'pymess_lradi'}
+    assert meth is None or meth in ('scipy', 'slycot', 'pymess_lyap', 'pymess_lradi')
 
     if meth is None:
         import imp
