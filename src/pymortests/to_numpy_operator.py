@@ -9,9 +9,10 @@ import scipy.sparse as sps
 
 from pymor.algorithms.numpy import to_numpy_operator
 from pymor.operators.block import BlockDiagonalOperator
-from pymor.operators.constructions import AdjointOperator, Concatenation, IdentityOperator, LincombOperator
+from pymor.operators.constructions import (AdjointOperator, Concatenation, IdentityOperator, LincombOperator,
+                                           VectorArrayOperator)
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
 
 
 def test_to_numpy_operator():
@@ -32,3 +33,11 @@ def test_to_numpy_operator():
                                                  [1, 1]), Concatenation(Bop, AdjointOperator(Cop))])
 
     assert np.allclose(X, to_numpy_operator(Xop)._matrix)
+
+    np.random.seed(0)
+    V = np.random.randn(10, 2)
+    Vva = NumpyVectorArray(V.T)
+    Vop = VectorArrayOperator(Vva)
+    assert np.allclose(V, to_numpy_operator(Vop)._matrix)
+    Vop = VectorArrayOperator(Vva, transposed=True)
+    assert np.allclose(V, to_numpy_operator(Vop)._matrix.T)
