@@ -76,7 +76,7 @@ class BlockVectorArray(VectorArrayInterface):
 
     @property
     def data(self):
-        return np.hstack([block.data for block in self.blocks])
+        return np.hstack([block.data for block in self._blocks])
 
     def copy(self, ind=None, deep=False):
         assert self.check_ind(ind)
