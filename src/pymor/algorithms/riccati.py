@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 
+from pymor.algorithms.numpy import to_numpy_operator
 from pymor.operators.interfaces import OperatorInterface
 from pymor.vectorarrays.numpy import NumpyVectorArray
 
@@ -26,9 +27,7 @@ def operator2matrix(A):
     if A is None:
         A_mat = None
     else:
-        A_mat = A._matrix
-        if A.sparse:
-            A_mat = A_mat.toarray()
+        A_mat = to_numpy_operator(A)._matrix
     return A_mat
 
 
