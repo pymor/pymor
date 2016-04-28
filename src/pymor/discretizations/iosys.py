@@ -12,6 +12,7 @@ import scipy.sparse as sps
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.lyapunov import solve_lyap
+from pymor.algorithms.numpy import to_numpy_operator
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.operators.block import BlockOperator, BlockDiagonalOperator
 from pymor.operators.constructions import (Concatenation, IdentityOperator, LincombOperator, VectorArrayOperator,
@@ -299,7 +300,7 @@ class LTISystem(DiscretizationInterface):
             eye = NumpyVectorArray(sp.eye(self.p))
             tfs = B.apply_adjoint(iwEmA.apply_adjoint_inverse(C.apply_adjoint(eye))).data
         if D is not None:
-            tfs += D._matrix
+            tfs += to_numpy_operator(D)._matrix
         return tfs
 
     def bode(self, w):
@@ -455,15 +456,9 @@ class LTISystem(DiscretizationInterface):
 
         if self._brcgf is None or self._brgamma != gamma:
             self._brgamma = gamma
-            A = self.A._matrix
-            if sps.issparse(A):
-                A = A.toarray()
-            B = self.B._matrix
-            if sps.issparse(B):
-                B = B.toarray()
-            C = self.C._matrix
-            if sps.issparse(C):
-                C = C.toarray()
+            A = to_numpy_operator(self.A)._matrix
+            B = to_numpy_operator(self.B)._matrix
+            C = to_numpy_operator(self.C)._matrix
             X = spla.solve_continuous_are(A.T,
                                           C.T / np.sqrt(gamma),
                                           B.dot(B.T) / gamma,
@@ -497,15 +492,9 @@ class LTISystem(DiscretizationInterface):
 
         if self._brogf is None or self._brgamma != gamma:
             self._brgamma = gamma
-            A = self.A._matrix
-            if sps.issparse(A):
-                A = A.toarray()
-            B = self.B._matrix
-            if sps.issparse(B):
-                B = B.toarray()
-            C = self.C._matrix
-            if sps.issparse(C):
-                C = C.toarray()
+            A = to_numpy_operator(self.A)._matrix
+            B = to_numpy_operator(self.B)._matrix
+            C = to_numpy_operator(self.C)._matrix
             X = spla.solve_continuous_are(A,
                                           B / np.sqrt(gamma),
                                           C.T.dot(C) / gamma,
@@ -570,27 +559,11 @@ class LTISystem(DiscretizationInterface):
             jobe = 'I' if self.E is None else 'G'
             equil = 'S'
             jobd = 'Z' if self.D is None else 'D'
-            A = self.A._matrix
-            if self.A.sparse:
-                A = A.toarray()
-            B = self.B._matrix
-            if self.B.sparse:
-                B = B.toarray()
-            C = self.C._matrix
-            if self.C.sparse:
-                C = C.toarray()
-            if self.D is None:
-                D = np.zeros((self.p, self.m))
-            else:
-                D = self.D._matrix
-                if self.D.sparse:
-                    D = D.toarray()
-            if self.E is None:
-                E = np.eye(self.n)
-            else:
-                E = self.E._matrix
-                if self.E.sparse:
-                    E = E.toarray()
+            A = to_numpy_operator(self.A)._matrix
+            B = to_numpy_operator(self.B)._matrix
+            C = to_numpy_operator(self.C)._matrix
+            D = np.zeros((self.p, self.m)) if self.D is None else to_numpy_operator(self.D)._matrix
+            E = np.eye(self.n) if self.E is None else to_numpy_operator(self.E)._matrix
             self._Hinf_norm, self._fpeak = ab13dd(dico, jobe, equil, jobd, self.n, self.m, self.p, A, E, B, C, D)
             return self._Hinf_norm
         elif name == 'Hankel':
