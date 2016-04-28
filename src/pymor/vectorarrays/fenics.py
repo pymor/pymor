@@ -70,6 +70,9 @@ if HAVE_FENICS:
         def l2_norm(self):
             return self.impl.norm('l2')
 
+        def l2_norm2(self):
+            return self.impl.norm('l2') ** 2
+
         def sup_norm(self):
             return self.impl.norm('linf')
 

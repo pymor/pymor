@@ -388,6 +388,17 @@ class NumpyVectorArray(VectorArrayInterface):
 
         return np.linalg.norm(A, axis=1)
 
+    def l2_norm2(self, ind=None):
+        assert self.check_ind(ind)
+
+        if NUMPY_INDEX_QUIRK and self._len == 0:
+            ind = None
+
+        A = self._array[:self._len] if ind is None else \
+            self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
+
+        return np.sum((A * A.conj()).real, axis=1)
+
     def components(self, component_indices, ind=None):
         assert self.check_ind(ind)
         assert isinstance(component_indices, list) and (len(component_indices) == 0 or min(component_indices) >= 0) \

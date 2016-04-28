@@ -58,6 +58,10 @@ class VectorInterface(BasicInterface):
     def l2_norm(self):
         pass
 
+    @abstractmethod
+    def l2_norm2(self):
+        pass
+
     def sup_norm(self):
         if self.dim == 0:
             return 0.
@@ -218,7 +222,10 @@ class NumpyVector(CopyOnWriteVector):
         return np.sum(np.abs(self._array))
 
     def l2_norm(self):
-        return np.sum(np.power(self._array, 2))**(1/2)
+        return np.linalg.norm(self._array)
+
+    def l2_norm2(self):
+        return np.sum((self._array * self._array.conj()).real)
 
     def components(self, component_indices):
         return self._array[component_indices]
@@ -584,6 +591,16 @@ class ListVectorArray(VectorArrayInterface):
             ind = [ind]
 
         return np.array([self._list[i].l2_norm() for i in ind])
+
+    def l2_norm2(self, ind=None):
+        assert self.check_ind(ind)
+
+        if ind is None:
+            ind = xrange(len(self._list))
+        elif isinstance(ind, Number):
+            ind = [ind]
+
+        return np.array([self._list[i].l2_norm2() for i in ind])
 
     def sup_norm(self, ind=None):
         assert self.check_ind(ind)
