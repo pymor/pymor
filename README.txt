@@ -10,9 +10,6 @@ high-dimensional PDE solvers. Moreover, pure Python implementations of
 finite element and finite volume discretizations using the NumPy/SciPy
 scientific computing stack are provided for getting started quickly.
 
-NOTE pyMOR is still in early development. Should you have any questions
-regarding pyMOR or wish to contribute, do not hesitate to contact us!
-
 [Docs] [Docs] [DOI] [Build Status] [Coverage Status]
 
 License
@@ -82,10 +79,19 @@ pass the optional --user argument, pyMOR will only be installed for your
 local user, not requiring administrator privileges. To install the
 latest development version of pyMOR, execute
 
-    pip install [--user] git+https://github.com/pymor
+    pip install [--user] git+https://github.com/pymor/pymor
 
 which will require that the git version control system is installed on
 your system.
+
+From time to time, the master branch of pyMOR undergoes major changes
+and things might break (this is usually announced on our mailing list),
+so you might prefer to install pyMOR from the current release branch:
+
+    pip install [--user] git+https://github.com/pymor/pymor@0.4.x
+
+Release branches will always stay stable and will only receive bugfix
+commits after the corresponding release has been made.
 
 Note that pyMOR depends on Cython, as well as the NumPy and SciPy
 packages. On all major Linux distributions, these packages can be easily
