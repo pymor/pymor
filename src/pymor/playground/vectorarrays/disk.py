@@ -105,6 +105,10 @@ class DiskVectorArray(VectorArrayInterface):
         va._len = count
         return va
 
+    @classmethod
+    def from_data(cls, data, subtype):
+        return cls(ListVectorArray.from_data(data, subtype[1]), subtype)
+
     def __len__(self):
         return self._len
 
