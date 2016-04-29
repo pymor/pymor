@@ -92,6 +92,15 @@ returned
 (return code: {})
 '''.format(e.output, e.returncode))
         revstring = NO_VERSIONSTRING
+    except OSError as e:
+        import sys
+
+        sys.stderr.write('''Warning: Could not determine current pyMOR version.
+Failed to import pymor.version and 'git describe --tags --candidates 20 --match *.*.*'
+could not be executed ({})
+
+'''.format(e.strerror))
+        revstring = NO_VERSIONSTRING
 finally:
     VERSION = Version(revstring)
 
