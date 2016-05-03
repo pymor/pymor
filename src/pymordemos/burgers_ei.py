@@ -99,7 +99,8 @@ from pymor.reductors.basic import reduce_generic_rb, reduce_to_subbasis
 from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
-def burgers_demo(args):
+def main(args):
+    args = docopt(__doc__, args)
     args['--cache-region'] = args['--cache-region'].lower()
     args['--grid'] = int(args['--grid'])
     args['--grid-type'] = args['--grid-type'].lower()
@@ -294,9 +295,8 @@ def burgers_demo(args):
         discretization.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
                                  title='Maximum Error Solution', separate_colorbars=True)
 
+    return ei_data, greedy_data
+
 
 if __name__ == '__main__':
-    # parse arguments
-    args = docopt(__doc__)
-    # run demo
-    burgers_demo(args)
+    main(sys.argv[1:])
