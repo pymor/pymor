@@ -107,36 +107,46 @@ class MonomOperator(OperatorBase):
         return NumpyVectorArray(1. / V.data)
 
 
-def check_results(test_name, args, results, keys, atol=0, rtol=1e-14):
-    assert keys <= set(results.keys()), \
-        'Keys {} missing in results dict'.format(keys - set(results.keys()))
-    results = {k: results[k] for k in keys}
+def check_results(test_name, params, results, *args):
+    tols = (1e-13, 1e-13)
+    keys = {}
+    for arg in args:
+        if isinstance(arg, tuple):
+            assert len(arg) == 2
+            tols = arg
+        else:
+            keys[arg] = tols
+
+    assert results is not None
+    assert set(keys.keys()) <= set(results.keys()), \
+        'Keys {} missing in results dict'.format(set(keys.keys()) - set(results.keys()))
+    results = {k: results[k] for k in keys.keys()}
 
     basepath = os.path.join(os.path.dirname(__file__),
                             '..', '..', 'testdata', 'check_results')
-    arg_id = hashlib.sha1(dumps(args, protocol=2)).hexdigest()
+    arg_id = hashlib.sha1(dumps(params, protocol=2)).hexdigest()
     filename = os.path.normpath(os.path.join(basepath, test_name, arg_id))
 
     if not os.path.exists(os.path.join(basepath, test_name)):
         os.mkdir(os.path.join(basepath, test_name))
     if not os.path.exists(filename):
         with open(filename, 'wb') as f:
-            print(args, file=f)
+            print(params, file=f)
             dump(results, f, protocol=2)
         assert False, \
             'No results found for test {} ({}), saved current results. Remember to check in {}.'.format(
-                test_name, args, filename)
+                test_name, params, filename)
 
     with open(filename, 'rb') as f:
         f.readline()
         old_results = load(f)
 
-    for k in keys:
+    for k, (atol, rtol) in keys.items():
         if not np.all(np.allclose(old_results[k], results[k], atol=atol, rtol=rtol)):
             abs_errs = np.abs(results[k] - old_results[k])
             rel_errs = abs_errs / np.abs(old_results[k])
             with open(filename + '_changed', 'wb') as f:
-                print(args, file=f)
+                print(params, file=f)
                 dump(results, f, protocol=2)
             assert False, 'Results for test {}({}, key: {}) have changed.\n (maximum error: {} abs / {} rel).\nSaved new results in {}'.format(
-                test_name, args, k, np.max(abs_errs), np.max(rel_errs), filename + '_changed')
+                test_name, params, k, np.max(abs_errs), np.max(rel_errs), filename + '_changed')
