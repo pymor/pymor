@@ -196,5 +196,14 @@ def test_thermalblock_results(thermalblock_args):
                   (1e-13, 4.), 'errors', 'max_errors', 'rel_errors', 'max_rel_errors',
                   'estimates', 'max_estimates', 'effectivities', 'min_effectivities', 'max_effectivities', 'errors')
 
+
+def test_burgers_ei_results():
+    from pymordemos import burgers_ei
+    args = map(str, [1, 2, 10, 100, 10, 30])
+    ei_results, greedy_results = _test_demo(lambda: burgers_ei.main(args))
+    ei_results['greedy_max_errs'] = greedy_results['max_errs']
+    check_results('test_burgers_ei_results', args, ei_results,
+                  (1e-13, 1e-7), 'errors', 'triangularity_errors', 'greedy_max_errs')
+
 if __name__ == "__main__":
     runmodule(filename=__file__)
