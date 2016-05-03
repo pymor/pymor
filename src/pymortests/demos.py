@@ -112,6 +112,7 @@ def _test_demo(demo):
         dolfin.interactive = nop
     except ImportError:
         pass
+    result = None
     try:
         result = demo()
     except ImportError as ie:
