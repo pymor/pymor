@@ -189,8 +189,10 @@ def test_thermalblock_ipython(demo_args):
 def test_thermalblock_results(thermalblock_args):
     from pymordemos import thermalblock
     results = _test_demo(lambda: thermalblock.main(map(str, thermalblock_args[1])))
+    # due to the symmetry of the problem and the random test parameters, the estimated
+    # error may change a lot
     check_results('test_thermalblock_results', thermalblock_args[1], results,
-                  (1e-14, 1e-14), 'basis_sizes', 'norms', 'max_norms',
+                  (1e-13, 1e-7), 'basis_sizes', 'norms', 'max_norms',
                   (1e-13, 4.), 'errors', 'max_errors', 'rel_errors', 'max_rel_errors',
                   'estimates', 'max_estimates', 'effectivities', 'min_effectivities', 'max_effectivities', 'errors')
 
