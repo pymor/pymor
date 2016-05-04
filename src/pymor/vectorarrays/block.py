@@ -136,8 +136,11 @@ class BlockVectorArray(VectorArrayInterface):
 
     def l2_norm(self, ind=None):
         assert self.check_ind(ind)
-        return np.sqrt(np.sum(np.array([block.l2_norm(ind=ind)**2 for block in self._blocks]),
-                              axis=0))
+        return np.sqrt(np.sum(np.array([block.l2_norm2(ind=ind) for block in self._blocks]), axis=0))
+
+    def l2_norm2(self, ind=None):
+        assert self.check_ind(ind)
+        return np.sum(np.array([block.l2_norm2(ind=ind) for block in self._blocks]), axis=0)
 
     def sup_norm(self, ind=None):
         assert self.check_ind(ind)

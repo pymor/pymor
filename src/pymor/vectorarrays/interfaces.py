@@ -364,6 +364,22 @@ class VectorArrayInterface(BasicInterface):
         """
         pass
 
+    @abstractmethod
+    def l2_norm2(self, ind=None):
+        """The squared l2-norms of the vectors contained in the array.
+
+        Parameters
+        ----------
+        ind
+            Indices of the vectors whose norms are to be calculated (see class documentation).
+
+        Returns
+        -------
+        A |NumPy array| `result` such that `result[i]` contains the norm
+        of `self[ind][i]`.
+        """
+        pass
+
     def sup_norm(self, ind=None):
         """The l-infinity--norms of the vectors contained in the array.
 

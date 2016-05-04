@@ -602,7 +602,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
 
         x = x + w * t1
         w = v + w * t2
-        ddnorm = ddnorm + dk.l2_norm()[0]**2
+        ddnorm = ddnorm + dk.l2_norm2()[0]
 
         # Use a plane rotation on the right to eliminate the
         # super-diagonal element (theta) of the upper-bidiagonal matrix.
