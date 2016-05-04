@@ -7,6 +7,12 @@
 
 # Contributors
 
+## pyMOR 0.5
+
+* Petar Mlinarić, mlinaric@mpi-magdeburg.mpg.de
+    * l2_norm2 methods for VectorArrays
+
+
 ## pyMOR 0.4
 
 * Andreas Buhr, andreas@andreasbuhr.de
