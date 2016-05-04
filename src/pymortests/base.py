@@ -122,7 +122,7 @@ def check_results(test_name, params, results, *args):
 
     basepath = os.path.join(os.path.dirname(__file__),
                             '..', '..', 'testdata', 'check_results')
-    arg_id = hashlib.sha1(str(params)).hexdigest()
+    arg_id = hashlib.sha1(str(params).encode()).hexdigest()
     filename = os.path.normpath(os.path.join(basepath, test_name, arg_id))
 
     if not os.path.exists(os.path.join(basepath, test_name)):
