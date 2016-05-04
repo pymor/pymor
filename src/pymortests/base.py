@@ -137,7 +137,7 @@ def check_results(test_name, params, results, *args):
 
     with open(filename, 'rb') as f:
         f.readline()
-        old_results = load(f)
+        old_results = load(f, encoding='latin-1')
 
     for k, (atol, rtol) in keys.items():
         if not np.all(np.allclose(old_results[k], results[k], atol=atol, rtol=rtol)):
