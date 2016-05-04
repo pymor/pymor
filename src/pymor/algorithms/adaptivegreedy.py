@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-
-
 from fractions import Fraction
 
 import numpy as np
@@ -313,7 +311,7 @@ class AdaptiveSampleSet(BasicInterface):
         self.parameter_type = parameter_space.parameter_type
         self.ranges = np.concatenate([np.tile(np.array(parameter_space.ranges[k])[np.newaxis, :],
                                               [np.prod(shape), 1])
-                                      for k, shape in list(parameter_space.parameter_type.items())], axis=0)
+                                      for k, shape in parameter_space.parameter_type.items()], axis=0)
         self.dimensions = self.ranges[:, 1] - self.ranges[:, 0]
         self.total_volume = np.prod(self.dimensions)
         self.dim = len(self.dimensions)
@@ -334,7 +332,7 @@ class AdaptiveSampleSet(BasicInterface):
     def map_vertex_to_mu(self, vertex):
         values = self.ranges[:, 0] + self.dimensions * list(map(float, vertex))
         mu = Parameter({})
-        for k, shape in list(self.parameter_type.items()):
+        for k, shape in self.parameter_type.items():
             count = np.prod(shape)
             head, values = values[:count], values[count:]
             mu[k] = np.array(head).reshape(shape)

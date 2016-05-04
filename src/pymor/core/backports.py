@@ -6,7 +6,6 @@
 """
 
 
-
 class abstractclassmethod(classmethod):
     """
     A decorator indicating abstract classmethods.

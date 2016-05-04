@@ -5,8 +5,6 @@
 
 """Module containing some basic but generic linear algebra algorithms."""
 
-
-
 import numpy as np
 
 from pymor.core.defaults import defaults

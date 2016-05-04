@@ -9,8 +9,6 @@ intended to be used directly. Instead, use
 :class:`~pymor.gui.qt.PatchVisualizer`.
 """
 
-
-
 import math as m
 
 import numpy as np

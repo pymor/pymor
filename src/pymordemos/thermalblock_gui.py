@@ -32,7 +32,6 @@ Options:
   -h, --help             Show this message.
 """
 
-
 import sys
 from docopt import docopt
 import time

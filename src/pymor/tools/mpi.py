@@ -51,8 +51,6 @@ method named by the second argument on the object referred to by the
 first argument.
 """
 
-
-
 import sys
 
 from pymor.core.defaults import defaults

@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-
-
 import numpy as np
 
 import collections
@@ -53,7 +51,7 @@ class PolygonalDomain(DomainDescriptionInterface):
                        for p0, p1 in zip(ps, ps_d)]
             # evaluate the boundary at the edge centers and save the |BoundaryTypes| together with the
             # corresponding edge id.
-            self.boundary_types = dict(list(zip([boundary_types(centers)], [list(range(1, len(centers)+1))])))
+            self.boundary_types = dict(zip([boundary_types(centers)], [list(range(1, len(centers)+1))]))
 
         # check if the dict keys are given as |BoundaryType|
         assert all(isinstance(bt, BoundaryType) for bt in self.boundary_types.keys())

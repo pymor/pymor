@@ -60,8 +60,6 @@ used to specify the path of a configuration file. If empty or set to
    are trying to hack it.)
 """
 
-
-
 from collections import defaultdict
 import functools
 import importlib
@@ -160,10 +158,10 @@ methods of classes!'''.format(path))
         self.get(key)[0]
 
     def keys(self):
-        return list(self._data.keys())
+        return self._data.keys()
 
     def import_all(self):
-        packages = set(k.split('.')[0] for k in list(self._data.keys())).union({'pymor'})
+        packages = set(k.split('.')[0] for k in self._data.keys()).union({'pymor'})
         for package in packages:
             _import_all(package)
 
@@ -173,7 +171,7 @@ methods of classes!'''.format(path))
         if not sid:
             from pymor.core.interfaces import generate_sid
             user_dict = {k: v['user'] if 'user' in v else v['file']
-                         for k, v in list(self._data.items()) if 'user' in v or 'file' in v and not v['sid_ignore']}
+                         for k, v in self._data.items() if 'user' in v or 'file' in v and not v['sid_ignore']}
             self._sid = sid = generate_sid(user_dict)
         return sid
 

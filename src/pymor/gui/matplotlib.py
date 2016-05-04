@@ -9,10 +9,6 @@ Instead, use :meth:`~pymor.gui.qt.visualize_matplotlib_1d` or
 :class:`~pymor.gui.qt.Matplotlib1DVisualizer`.
 """
 
-
-
-
-
 import numpy as np
 
 try:

@@ -5,10 +5,7 @@
 
 """Module containing some constructions to obtain new operators from old ones."""
 
-
-
 from numbers import Number
-
 
 import numpy as np
 

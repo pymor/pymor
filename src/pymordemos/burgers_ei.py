@@ -76,8 +76,6 @@ Options:
   --ipython-profile=PROFILE       IPython profile to use for parallelization.
 """
 
-
-
 import sys
 import math as m
 import time

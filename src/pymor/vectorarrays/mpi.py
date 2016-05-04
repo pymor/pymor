@@ -13,8 +13,6 @@ The implementations are based on the event loop provided
 by :mod:`pymor.tools.mpi`.
 """
 
-
-
 import numpy as np
 
 from pymor.tools import mpi

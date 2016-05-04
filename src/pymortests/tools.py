@@ -2,7 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-
 from math import sin, pi, exp
 import numpy as np
 import pytest

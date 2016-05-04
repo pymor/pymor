@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-
-
 from itertools import chain
 
 
@@ -79,7 +77,7 @@ def _worker_map_function(payload, function, **kwargs):
         args = list(zip(*payload[0]))
     else:
         args = None
-    args = list(zip(*mpi.comm.scatter(args, root=0)))
+    args = zip(*mpi.comm.scatter(args, root=0))
 
     result = [mpi.function_call(function, *a, **kwargs) for a in args]
     result = mpi.comm.gather(result, root=0)

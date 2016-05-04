@@ -2,7 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-
 from pymor.grids.oned import OnedGrid
 from time import sleep
 from pymor.gui.qt import visualize_patch, stop_gui_processes

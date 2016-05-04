@@ -5,9 +5,6 @@
 
 """ This module provides some operators for finite volume discretizations."""
 
-
-
-
 import numpy as np
 from scipy.sparse import coo_matrix, csc_matrix, dia_matrix
 

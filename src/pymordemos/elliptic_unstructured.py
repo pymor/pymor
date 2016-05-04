@@ -25,8 +25,6 @@ Options:
     --fv         Use finite volume discretization instead of finite elements.
 """
 
-
-
 from docopt import docopt
 import numpy as np
 

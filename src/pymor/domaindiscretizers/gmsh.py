@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-
-
 import tempfile
 import collections
 import os
@@ -128,8 +126,8 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
                 geo_file.write('Point('+str(id+1)+') = '+str(p+[0, 0]).replace('[', '{').replace(']', '}')+';\n')
 
             # store points and their ids
-            point_ids = dict(list(zip([str(p) for ps in points for p in ps],
-                                 list(range(1, len([p for ps in points for p in ps])+1)))))
+            point_ids = dict(zip([str(p) for ps in points for p in ps],
+                                 range(1, len([p for ps in points for p in ps])+1)))
             # shift points 1 entry to the left.
             points_deque = [collections.deque(ps) for ps in points]
             for ps_d in points_deque:

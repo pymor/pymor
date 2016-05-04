@@ -5,8 +5,6 @@
 
 """This module contains some iterative linear solvers which only use the |Operator| interface"""
 
-
-
 from collections import OrderedDict
 
 import numpy as np

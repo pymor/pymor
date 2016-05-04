@@ -3,8 +3,6 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 
-
-
 def cat_arrays(vector_arrays):
     """Return a new |VectorArray| which a concatenation of the arrays in `vector_arrays`."""
     vector_arrays = list(vector_arrays)

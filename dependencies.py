@@ -25,4 +25,4 @@ import_names = {'ipython': 'IPython',
                 'pyopengl': 'OpenGL'}
 
 if __name__ == '__main__':
-    print((' '.join([i for i in install_requires + install_suggests])))
+    print(' '.join([i for i in install_requires + install_suggests]))

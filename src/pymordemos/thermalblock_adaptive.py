@@ -67,8 +67,6 @@ Options:
   --theta=VALUE              Ratio of elements to refine [default: 0.].
 """
 
-
-
 import sys
 from functools import partial
 

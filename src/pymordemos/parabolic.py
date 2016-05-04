@@ -23,8 +23,6 @@ Options:
     --nt=COUNT   Number of time steps [default: 10].
 """
 
-
-
 import math as m
 from docopt import docopt
 import numpy as np

@@ -20,8 +20,6 @@ independent from the basis, an :class:`~pymor.core.exceptions.ExtensionError`
 exception is raised.
 """
 
-
-
 import numpy as np
 
 from pymor.algorithms.basic import almost_equal

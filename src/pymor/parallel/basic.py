@@ -4,8 +4,6 @@
 
 """This module contains a base class for implementing WorkerPoolInterface."""
 
-
-
 import weakref
 
 from pymor.core.interfaces import ImmutableInterface

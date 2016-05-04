@@ -13,8 +13,6 @@ the empirical interpolation of the |Operators| of a given discretization with
 a single function call.
 """
 
-
-
 import numpy as np
 
 from pymor.algorithms.gram_schmidt import gram_schmidt

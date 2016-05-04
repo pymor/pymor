@@ -14,23 +14,13 @@ however, that its use should be avoided since it uses non-portable
 implementation details of CPython to achieve its goals.
 """
 
-
-
-
 import marshal
 import opcode
 from types import FunctionType, ModuleType
 
 
-try:
-    import pickle as pickle
-except ImportError:
-    import pickle as pickle
-
-try:
-    from io import StringIO
-except ImportError:
-    from io import StringIO
+import pickle
+from io import StringIO
 
 
 PicklingError = pickle.PicklingError

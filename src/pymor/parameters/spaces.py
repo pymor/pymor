@@ -2,9 +2,8 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-
-
 from itertools import product
+
 import numpy as np
 
 from pymor.parameters.base import Parameter, ParameterType
@@ -59,9 +58,9 @@ class CubicParameterSpace(ParameterSpaceInterface):
             counts = {k: counts for k in self.parameter_type}
         linspaces = tuple(np.linspace(self.ranges[k][0], self.ranges[k][1], num=counts[k]) for k in self.parameter_type)
         iters = tuple(product(ls, repeat=max(1, np.zeros(sps).size))
-                      for ls, sps in zip(linspaces, list(self.parameter_type.values())))
+                      for ls, sps in zip(linspaces, self.parameter_type.values()))
         return [Parameter(((k, np.array(v).reshape(shp))
-                           for k, v, shp in zip(self.parameter_type, i, list(self.parameter_type.values()))))
+                           for k, v, shp in zip(self.parameter_type, i, self.parameter_type.values())))
                 for i in product(*iters)]
 
     def sample_randomly(self, count=None, random_state=None, seed=None):
@@ -107,7 +106,7 @@ class CubicParameterSpace(ParameterSpaceInterface):
 
     def __str__(self):
         rows = [(k, str(v), str(self.ranges[k])) for k, v in self.parameter_type.items()]
-        column_widths = [max(list(map(len, c))) for c in zip(*rows)]
+        column_widths = [max(map(len, c)) for c in zip(*rows)]
         return ('CubicParameterSpace\n' +
                 '\n'.join(('key: {:' + str(column_widths[0] + 2)
                            + '} shape: {:' + str(column_widths[1] + 2)

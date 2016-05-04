@@ -28,8 +28,6 @@ Options:
     --rect       Use RectGrid instead of TriaGrid.
 """
 
-
-
 import math as m
 from docopt import docopt
 import numpy as np

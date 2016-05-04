@@ -3,8 +3,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-
-
 try:
     import dolfin as df
     HAVE_FENICS = True
@@ -12,7 +10,6 @@ except ImportError:
     HAVE_FENICS = False
 
 if HAVE_FENICS:
-    
     from numbers import Number
 
     from pymor.core.defaults import defaults

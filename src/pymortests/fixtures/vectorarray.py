@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-
-
 from itertools import product
 import numpy as np
 import pytest
@@ -258,7 +256,7 @@ def compatible_vector_array_pair_without_reserve(request):
     return request.param()
 
 
-@pytest.fixture(params=list(product(list(range(3)), list(range(3)))))
+@pytest.fixture(params=list(product(range(3), range(3))))
 def compatible_vector_array_pair(compatible_vector_array_pair_without_reserve, request):
     v1, v2 = compatible_vector_array_pair_without_reserve
     return vector_array_from_empty_reserve(v1, request.param[0]), vector_array_from_empty_reserve(v2, request.param[1])

@@ -46,7 +46,7 @@ class PeekIterator(object):
         return self
 
     def __next__(self):
-        return next(self)
+        return self.next()
 
     def _fillcache(self, n):
         if not n:

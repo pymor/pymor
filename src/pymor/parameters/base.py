@@ -37,9 +37,6 @@ components of the given |Parameter| and performs some name mapping. (See the
 documentation of :meth:`~Parametric.build_parameter_type` for details.)
 """
 
-
-
-
 from numbers import Number
 
 import numpy as np
@@ -106,20 +103,14 @@ class ParameterType(dict):
             self.__keys = sorted(dict.keys(self))
         return list(self.__keys)
 
-    def iterkeys(self):
+    def keys(self):
         return iter(self)
 
     def items(self):
-        return list(self.items())
-
-    def iteritems(self):
         for k in self:
             yield k, self[k]
 
     def values(self):
-        return list(self.values())
-
-    def itervalues(self):
         for k in self:
             yield self[k]
 
@@ -265,7 +256,7 @@ class Parameter(dict):
         components are almost equal, else `False`.
         """
         assert isinstance(mu, Parameter)
-        if self.keys() != mu.keys():
+        if list(self.keys()) != list(mu.keys()):
             return False
         elif not all(float_cmp_all(v, mu[k]) for k, v in self.items()):
             return False
@@ -299,7 +290,7 @@ class Parameter(dict):
     def __eq__(self, mu):
         if not isinstance(mu, Parameter):
             mu = Parameter(mu)
-        if self.keys() != mu.keys():
+        if list(self.keys()) != list(mu.keys()):
             return False
         elif not all(np.array_equal(v, mu[k]) for k, v in self.items()):
             return False

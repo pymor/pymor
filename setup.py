@@ -3,8 +3,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-
-
 import sys
 import os
 import subprocess
@@ -201,12 +199,12 @@ def setup_package():
         zip_safe=False,
     )
 
-    missing = list(_missing(list(install_suggests.keys())))
+    missing = list(_missing(install_suggests.keys()))
     if len(missing):
         import textwrap
         print('\n' + '*' * 79 + '\n')
         print('There are some suggested packages missing:\n')
-        col_width = max(list(map(len, missing))) + 3
+        col_width = max(map(len, missing)) + 3
         for package in sorted(missing):
             description = textwrap.wrap(install_suggests[package], 79 - col_width)
             print('{:{}}'.format(package + ':', col_width) + description[0])

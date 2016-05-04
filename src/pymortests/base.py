@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-
-
 import hashlib
 import pprint
 import pkgutil
@@ -120,7 +118,7 @@ def check_results(test_name, params, results, *args):
     assert results is not None
     assert set(keys.keys()) <= set(results.keys()), \
         'Keys {} missing in results dict'.format(set(keys.keys()) - set(results.keys()))
-    results = {k: results[k] for k in list(keys.keys())}
+    results = {k: results[k] for k in keys.keys()}
 
     basepath = os.path.join(os.path.dirname(__file__),
                             '..', '..', 'testdata', 'check_results')
@@ -141,7 +139,7 @@ def check_results(test_name, params, results, *args):
         f.readline()
         old_results = load(f)
 
-    for k, (atol, rtol) in list(keys.items()):
+    for k, (atol, rtol) in keys.items():
         if not np.all(np.allclose(old_results[k], results[k], atol=atol, rtol=rtol)):
             abs_errs = np.abs(results[k] - old_results[k])
             rel_errs = abs_errs / np.abs(old_results[k])

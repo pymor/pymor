@@ -65,7 +65,6 @@ functionality:
        corresponding instance attributes.
 """
 
-
 import abc
 from pickle import dumps
 from copyreg import dispatch_table
@@ -138,7 +137,7 @@ class UberMeta(abc.ABCMeta):
             if attr in classdict:
                 raise ValueError(attr + ' is a reserved class attribute for subclasses of BasicInterface')
 
-        for attr, item in list(classdict.items()):
+        for attr, item in classdict.items():
             if isinstance(item, FunctionType):
                 # first copy/fixup docs
                 item.__doc__ = decorators.fixup_docstring(item.__doc__)
@@ -169,7 +168,7 @@ class UberMeta(abc.ABCMeta):
             assert args[0] == 'self'
             c._init_arguments = tuple(args[1:])
             if defaults:
-                c._init_defaults = dict(list(zip(args[-len(defaults):], defaults)))
+                c._init_defaults = dict(zip(args[-len(defaults):], defaults))
             else:
                 c._init_defaults = dict()
         except TypeError:       # happens when no one declares an __init__ method and object is reached
@@ -550,12 +549,12 @@ class _SIDGenerator(object):
             return(v)
 
         t = type(obj)
-        if t in (NoneType, bool, int, int, float, FunctionType, BuiltinFunctionType, type):
+        if t in (NoneType, bool, int, float, FunctionType, BuiltinFunctionType, type):
             return obj
 
         self.memo[id(obj)] = _MemoKey(len(self.memo), obj)
 
-        if t in (str, str):
+        if t in (str, bytes):
             return obj
 
         if t is np.ndarray and t.dtype != object:

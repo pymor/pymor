@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-
-
 from itertools import chain
 import os
 import time
@@ -138,7 +136,7 @@ class IPythonPool(WorkerPoolBase):
 
     def _map(self, function, chunks, **kwargs):
         result = self.view.map_sync(_worker_call_function,
-                                    *list(zip(*((function, True, a, kwargs) for a in zip(*chunks)))))
+                                    *zip(*((function, True, a, kwargs) for a in zip(*chunks))))
         return list(chain(*result))
 
     def _remove_object(self, remote_id):

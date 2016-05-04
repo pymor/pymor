@@ -40,8 +40,6 @@ Options:
   --vy=YSPEED            Speed in y-direction [default: 1].
 """
 
-
-
 import sys
 import math as m
 import time
