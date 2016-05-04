@@ -99,11 +99,6 @@ class ParameterType(dict):
         return iter(self.__keys)
 
     def keys(self):
-        if self.__keys is None:
-            self.__keys = sorted(dict.keys(self))
-        return list(self.__keys)
-
-    def keys(self):
         return iter(self)
 
     def items(self):
