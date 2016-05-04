@@ -2,7 +2,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
+
 
 from itertools import product
 import numpy as np
@@ -63,24 +63,24 @@ if HAVE_FENICS:
         return U
 
     fenics_vector_array_factory_arguments = \
-        zip([0,  0,  1, 43, 102],      # len
+        list(zip([0,  0,  1, 43, 102],      # len
             [0,  1,  3,  2,  2],      # ni
-            random_integers(5, 123))   # seed
+            random_integers(5, 123)))   # seed
 
     fenics_vector_array_factory_arguments_pairs_with_same_dim = \
-        zip([0,  0,   1, 43, 102,  2],         # len1
+        list(zip([0,  0,   1, 43, 102,  2],         # len1
             [0,  1,  37,  9, 104,  2],         # len2
             [0,  1,   3,  2,   2,  2],         # dim
             random_integers(5, 1234) + [42],  # seed1
-            random_integers(5, 1235) + [42])  # seed2
+            random_integers(5, 1235) + [42]))  # seed2
 
     fenics_vector_array_factory_arguments_pairs_with_different_dim = \
-        zip([0,  0,  1, 43, 102],      # len1
+        list(zip([0,  0,  1, 43, 102],      # len1
             [0,  1,  1,  9,  10],      # len2
             [0,  1,  2,  3,   1],      # dim1
             [1,  2,  1,  2,   3],      # dim2
             random_integers(5, 1234),  # seed1
-            random_integers(5, 1235))  # seed2
+            random_integers(5, 1235)))  # seed2
 
 
 if HAVE_DEALII:
@@ -108,44 +108,44 @@ def vector_array_from_empty_reserve(v, reserve):
 
 
 numpy_vector_array_factory_arguments = \
-    zip([0,  0,  1, 43, 102],      # len
+    list(zip([0,  0,  1, 43, 102],      # len
         [0, 10, 34, 32,   0],      # dim
-        random_integers(5, 123))   # seed
+        random_integers(5, 123)))   # seed
 
 numpy_vector_array_factory_arguments_pairs_with_same_dim = \
-    zip([0,  0,  1, 43, 102,  2],         # len1
+    list(zip([0,  0,  1, 43, 102,  2],         # len1
         [0,  1, 37,  9, 104,  2],         # len2
         [0, 10, 34, 32,   3, 13],         # dim
         random_integers(5, 1234) + [42],  # seed1
-        random_integers(5, 1235) + [42])  # seed2
+        random_integers(5, 1235) + [42]))  # seed2
 
 numpy_vector_array_factory_arguments_pairs_with_different_dim = \
-    zip([0,  0,  1, 43, 102],      # len1
+    list(zip([0,  0,  1, 43, 102],      # len1
         [0,  1,  1,  9,  10],      # len2
         [0, 10, 34, 32,   3],      # dim1
         [1, 11,  0, 33,   2],      # dim2
         random_integers(5, 1234),  # seed1
-        random_integers(5, 1235))  # seed2
+        random_integers(5, 1235)))  # seed2
 
 block_vector_array_factory_arguments = \
-    zip([0, 4, 3, 1, 3, 43, 102],      # len
+    list(zip([0, 4, 3, 1, 3, 43, 102],      # len
         [(32, 1), (0, 3), (0, 0), (10,), (34, 1), (32, 3, 1), (1, 1, 1)],      # dim
-        random_integers(7, 123))   # seed
+        random_integers(7, 123)))   # seed
 
 block_vector_array_factory_arguments_pairs_with_same_dim = \
-    zip([0, 0,  3, 1, 43, 102],         # len1
+    list(zip([0, 0,  3, 1, 43, 102],         # len1
         [0, 10, 2, 37,  9, 104],         # len2
         [(3, 2), (4, 0, 2), (4,), (34, 1, 1), (32, 3, 3),  (3, 3, 3)],  # dim
         random_integers(6, 1234),  # seed1
-        random_integers(6, 1235))  # seed2
+        random_integers(6, 1235)))  # seed2
 
 block_vector_array_factory_arguments_pairs_with_different_dim = \
-    zip([0, 0, 1, 43, 102],      # len1
+    list(zip([0, 0, 1, 43, 102],      # len1
         [0, 10, 1,  9,  10],      # len2
         [(3, 2), (9,), (34, 1, 1), (32, 3, 3),  (3, 3, 3)],      # dim1
         [(3, 1), (9, 3), (34, 2, 1), (32, 3), (4, 3, 3)],
         random_integers(5, 1234),  # seed1
-        random_integers(5, 1235))  # seed2
+        random_integers(5, 1235)))  # seed2
 
 numpy_vector_array_generators = \
     [lambda args=args: numpy_vector_array_factory(*args) for args in numpy_vector_array_factory_arguments]
@@ -239,12 +239,12 @@ def picklable_vector_array_without_reserve(request):
     return request.param()
 
 
-@pytest.fixture(params=range(3))
+@pytest.fixture(params=list(range(3)))
 def vector_array(vector_array_without_reserve, request):
     return vector_array_from_empty_reserve(vector_array_without_reserve, request.param)
 
 
-@pytest.fixture(params=range(3))
+@pytest.fixture(params=list(range(3)))
 def picklable_vector_array(picklable_vector_array_without_reserve, request):
     return vector_array_from_empty_reserve(picklable_vector_array_without_reserve, request.param)
 
@@ -258,7 +258,7 @@ def compatible_vector_array_pair_without_reserve(request):
     return request.param()
 
 
-@pytest.fixture(params=list(product(range(3), range(3))))
+@pytest.fixture(params=list(product(list(range(3)), list(range(3)))))
 def compatible_vector_array_pair(compatible_vector_array_pair_without_reserve, request):
     v1, v2 = compatible_vector_array_pair_without_reserve
     return vector_array_from_empty_reserve(v1, request.param[0]), vector_array_from_empty_reserve(v2, request.param[1])

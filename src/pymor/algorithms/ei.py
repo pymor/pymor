@@ -13,7 +13,7 @@ the empirical interpolation of the |Operators| of a given discretization with
 a single function call.
 """
 
-from __future__ import absolute_import, division, print_function
+
 
 import numpy as np
 
@@ -225,12 +225,12 @@ def deim(U, modes=None, error_norm=None, product=None):
     interpolation_matrix = np.zeros((0, 0))
     errs = []
 
-    for i in xrange(len(collateral_basis)):
+    for i in range(len(collateral_basis)):
 
         if len(interpolation_dofs) > 0:
             coefficients = np.linalg.solve(interpolation_matrix,
                                            collateral_basis.components(interpolation_dofs, ind=i).T).T
-            U_interpolated = collateral_basis.lincomb(coefficients, ind=range(len(interpolation_dofs)))
+            U_interpolated = collateral_basis.lincomb(coefficients, ind=list(range(len(interpolation_dofs))))
             ERR = collateral_basis.copy(ind=i)
             ERR -= U_interpolated
         else:
@@ -248,13 +248,13 @@ def deim(U, modes=None, error_norm=None, product=None):
             break
 
         interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
-        interpolation_matrix = collateral_basis.components(interpolation_dofs, ind=range(len(interpolation_dofs))).T
+        interpolation_matrix = collateral_basis.components(interpolation_dofs, ind=list(range(len(interpolation_dofs)))).T
         errs.append(err)
 
         logger.info('')
 
     if len(interpolation_dofs) < len(collateral_basis):
-        collateral_basis.remove(ind=range(len(interpolation_dofs), len(collateral_basis)))
+        collateral_basis.remove(ind=list(range(len(interpolation_dofs), len(collateral_basis))))
 
     logger.info('Finished.'.format(new_dof))
 

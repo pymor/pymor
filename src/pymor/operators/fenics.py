@@ -3,7 +3,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
+
 
 try:
     import dolfin as df
@@ -12,7 +12,7 @@ except ImportError:
     HAVE_FENICS = False
 
 if HAVE_FENICS:
-    from itertools import izip
+    
     from numbers import Number
 
     from pymor.core.defaults import defaults
@@ -80,7 +80,7 @@ if HAVE_FENICS:
                 matrix = operators[0].matrix.copy()
             else:
                 matrix = operators[0].matrix * coefficients[0]
-            for op, c in izip(operators[1:], coefficients[1:]):
+            for op, c in zip(operators[1:], coefficients[1:]):
                 if isinstance(op, ZeroOperator):
                     continue
                 matrix.axpy(c, op.matrix, False)  # in general, we cannot assume the same nonzero pattern for

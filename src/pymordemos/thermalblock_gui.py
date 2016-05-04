@@ -32,7 +32,7 @@ Options:
   -h, --help             Show this message.
 """
 
-from __future__ import absolute_import, division, print_function
+
 import sys
 from docopt import docopt
 import time
@@ -63,8 +63,8 @@ class ParamRuler(QtGui.QWidget):
         self.setMinimumSize(200, 100)
         box = QtGui.QGridLayout()
         self.spins = []
-        for j in xrange(args['YBLOCKS']):
-            for i in xrange(args['XBLOCKS']):
+        for j in range(args['YBLOCKS']):
+            for i in range(args['XBLOCKS']):
                 spin = QtGui.QDoubleSpinBox()
                 spin.setRange(PARAM_MIN, PARAM_MAX)
                 spin.setSingleStep((PARAM_MAX - PARAM_MIN) / PARAM_STEPS)

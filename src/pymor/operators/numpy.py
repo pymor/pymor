@@ -12,10 +12,11 @@
     |NumPy arrays| as an |Operator|.
 """
 
-from __future__ import absolute_import, division, print_function
+
 
 from collections import OrderedDict
-from itertools import izip
+from functools import reduce
+
 
 import numpy as np
 import scipy.sparse
@@ -325,7 +326,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             if matrix.dtype != common_dtype:
                 matrix = matrix.astype(common_dtype)
 
-        for op, c in izip(operators[1:], coefficients[1:]):
+        for op, c in zip(operators[1:], coefficients[1:]):
             if type(op) is ZeroOperator:
                 continue
             elif type(op) is IdentityOperator:
@@ -774,10 +775,10 @@ def _apply_inverse(matrix, V, options=None):
     default_options = _options(matrix)
 
     if options is None:
-        options = default_options.values()[0]
+        options = list(default_options.values())[0]
     elif isinstance(options, str):
         if options == 'least_squares':
-            for k, v in default_options.iteritems():
+            for k, v in default_options.items():
                 if k.startswith('least_squares'):
                     options = v
                     break
@@ -786,7 +787,7 @@ def _apply_inverse(matrix, V, options=None):
             options = default_options[options]
     else:
         assert 'type' in options and options['type'] in default_options \
-            and options.viewkeys() <= default_options[options['type']].viewkeys()
+            and options.keys() <= default_options[options['type']].keys()
         user_options = options
         options = default_options[user_options['type']]
         options.update(user_options)
@@ -835,7 +836,7 @@ def _apply_inverse(matrix, V, options=None):
                 if not np.can_cast(V.dtype, fdtype, casting='safe'):
                     del matrix.factorization
 
-            if map(int, scipy.version.version.split('.')) >= [0, 14, 0]:
+            if list(map(int, scipy.version.version.split('.'))) >= [0, 14, 0]:
                 if hasattr(matrix, 'factorization'):
                     # we may use a complex factorization of a real matrix to
                     # apply it to a real vector. In that case, we downcast

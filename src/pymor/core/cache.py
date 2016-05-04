@@ -61,7 +61,7 @@ A cache region can be emptied using :meth:`CacheRegion.clear`. The function
 """
 
 
-from __future__ import absolute_import, division, print_function
+
 # cannot use unicode_literals here, or else dbm backend fails
 
 import atexit
@@ -82,7 +82,7 @@ from pymor.core.pickle import dump, load
 
 @atexit.register
 def cleanup_non_persisten_regions():
-    for region in cache_regions.values():
+    for region in list(cache_regions.values()):
         if not region.persistent:
             region.clear()
 
@@ -203,7 +203,7 @@ class SQLiteRegion(CacheRegion):
         c.execute('SELECT id, filename FROM entries ORDER BY id ASC')
         entries = c.fetchall()
         if entries:
-            ids_to_delete, files_to_delete = zip(*entries)
+            ids_to_delete, files_to_delete = list(zip(*entries))
             c.execute('DELETE FROM entries WHERE id in ({})'.format(','.join(map(str, ids_to_delete))))
             conn.commit()
             path = self.path
@@ -289,7 +289,7 @@ def disable_caching():
 
 def clear_caches():
     """Clear all cache regions."""
-    for r in cache_regions.itervalues():
+    for r in cache_regions.values():
         r.clear()
 
 
@@ -390,7 +390,7 @@ class CacheableInterface(ImmutableInterface):
                 self_id = self.uid
 
             # ensure that passing a value as positional or keyword argument does not matter
-            kwargs.update(zip(argnames, args))
+            kwargs.update(list(zip(argnames, args)))
 
             # ensure the values of optional parameters enter the cache key
             if defaults:

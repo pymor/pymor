@@ -111,7 +111,7 @@ version = str(pymor.VERSION)
 
 # The full version, including alpha/beta/rc tags.
 release = version.split('-')[0]
-print version, release
+print(version, release)
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:

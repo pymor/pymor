@@ -3,7 +3,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
+
 
 from numbers import Number
 
@@ -170,11 +170,11 @@ class NumpyVectorArray(VectorArrayInterface):
             if hasattr(ind, '__len__'):
                 if len(ind) == 0:
                     return
-                remaining = sorted(set(xrange(len(self))) - set(ind))
+                remaining = sorted(set(range(len(self))) - set(ind))
                 self._array = self._array[remaining]
             else:
                 assert -self._len < ind < self._len
-                self._array = self._array[range(ind) + range(ind + 1, self._len)]
+                self._array = self._array[list(range(ind)) + list(range(ind + 1, self._len))]
             self._len = self._array.shape[0]
         if not self._array.flags['OWNDATA']:
             self._array = self._array.copy()

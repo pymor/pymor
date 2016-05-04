@@ -2,7 +2,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
+
 
 import hashlib
 import pprint
@@ -12,7 +12,7 @@ import sys
 import numpy as np
 from numpy.polynomial.polynomial import Polynomial
 from math import factorial
-from cPickle import dumps, dump, load
+from pickle import dumps, dump, load
 
 from pymor.core import logger
 from pymor.operators.basic import OperatorBase
@@ -74,7 +74,7 @@ def runmodule(filename):
 
 
 def polynomials(max_order):
-    for n in xrange(max_order + 1):
+    for n in range(max_order + 1):
         f = lambda x: np.power(x, n)
 
         def deri(k):
@@ -120,7 +120,7 @@ def check_results(test_name, params, results, *args):
     assert results is not None
     assert set(keys.keys()) <= set(results.keys()), \
         'Keys {} missing in results dict'.format(set(keys.keys()) - set(results.keys()))
-    results = {k: results[k] for k in keys.keys()}
+    results = {k: results[k] for k in list(keys.keys())}
 
     basepath = os.path.join(os.path.dirname(__file__),
                             '..', '..', 'testdata', 'check_results')
@@ -141,7 +141,7 @@ def check_results(test_name, params, results, *args):
         f.readline()
         old_results = load(f)
 
-    for k, (atol, rtol) in keys.items():
+    for k, (atol, rtol) in list(keys.items()):
         if not np.all(np.allclose(old_results[k], results[k], atol=atol, rtol=rtol)):
             abs_errs = np.abs(results[k] - old_results[k])
             rel_errs = abs_errs / np.abs(old_results[k])

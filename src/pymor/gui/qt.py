@@ -7,9 +7,9 @@ associated to grids. We use the `PySide <http://www.pyside.org>`_ bindings
 for the `Qt <http://www.qt-project.org>`_ widget toolkit for the GUI.
 """
 
-from __future__ import absolute_import, division, print_function
 
-from itertools import izip
+
+
 import math as m
 
 import numpy as np
@@ -315,11 +315,11 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                     layout = QHBoxLayout()
                     plot_layout = QGridLayout()
                     self.colorbarwidgets = [cbar_widget(self, vmin=vmin, vmax=vmax) if cbar_widget else None
-                                            for vmin, vmax in izip(self.vmins, self.vmaxs)]
+                                            for vmin, vmax in zip(self.vmins, self.vmaxs)]
                     plots = [widget(self, grid, vmin=vmin, vmax=vmax, bounding_box=bounding_box, codim=codim)
-                             for vmin, vmax in izip(self.vmins, self.vmaxs)]
+                             for vmin, vmax in zip(self.vmins, self.vmaxs)]
                     if legend:
-                        for i, plot, colorbar, l in izip(xrange(len(plots)), plots, self.colorbarwidgets, legend):
+                        for i, plot, colorbar, l in zip(range(len(plots)), plots, self.colorbarwidgets, legend):
                             subplot_layout = QVBoxLayout()
                             caption = QLabel(l)
                             caption.setAlignment(Qt.AlignHCenter)
@@ -334,7 +334,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                                 subplot_layout.addLayout(hlayout)
                             plot_layout.addLayout(subplot_layout, int(i/columns), (i % columns), 1, 1)
                     else:
-                        for i, plot, colorbar in izip(xrange(len(plots)), plots, self.colorbarwidgets):
+                        for i, plot, colorbar in zip(range(len(plots)), plots, self.colorbarwidgets):
                             if not separate_colorbars or backend == 'matplotlib':
                                 plot_layout.addWidget(plot, int(i/columns), (i % columns), 1, 1)
                             else:
@@ -360,7 +360,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                             self.vmins = (min(np.min(u[ind]) for u in U),) * len(U)
                             self.vmaxs = (max(np.max(u[ind]) for u in U),) * len(U)
 
-                    for u, plot, colorbar, vmin, vmax in izip(U, self.plots, self.colorbarwidgets, self.vmins,
+                    for u, plot, colorbar, vmin, vmax in zip(U, self.plots, self.colorbarwidgets, self.vmins,
                                                               self.vmaxs):
                         plot.set(u[ind], vmin=vmin, vmax=vmax)
                         if colorbar:

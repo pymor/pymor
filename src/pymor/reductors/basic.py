@@ -2,7 +2,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
+
 
 import numpy as np
 
@@ -24,7 +24,7 @@ class GenericRBReconstructor(BasicInterface):
     def restricted_to_subbasis(self, dim):
         """See :meth:`~pymor.operators.numpy.NumpyMatrixOperator.projected_to_subbasis`."""
         assert dim <= len(self.RB)
-        return GenericRBReconstructor(self.RB.copy(ind=range(dim)))
+        return GenericRBReconstructor(self.RB.copy(ind=list(range(dim))))
 
 
 def reduce_generic_rb(discretization, RB, vector_product=None, disable_caching=True, extends=None):
@@ -67,16 +67,16 @@ def reduce_generic_rb(discretization, RB, vector_product=None, disable_caching=T
         RB = discretization.solution_space.empty()
 
     projected_operators = {k: op.projected(range_basis=RB, source_basis=RB, product=None) if op else None
-                           for k, op in discretization.operators.iteritems()}
+                           for k, op in discretization.operators.items()}
     projected_functionals = {k: f.projected(range_basis=None, source_basis=RB, product=None) if f else None
-                             for k, f in discretization.functionals.iteritems()}
+                             for k, f in discretization.functionals.items()}
     projected_vector_operators = {k: (op.projected(range_basis=RB, source_basis=None, product=vector_product) if op
                                       else None)
-                                  for k, op in discretization.vector_operators.iteritems()}
+                                  for k, op in discretization.vector_operators.items()}
 
     if discretization.products is not None:
         projected_products = {k: p.projected(range_basis=RB, source_basis=RB)
-                              for k, p in discretization.products.iteritems()}
+                              for k, p in discretization.products.items()}
     else:
         projected_products = None
 
@@ -139,15 +139,15 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
     """
 
     projected_operators = {k: op.projected_to_subbasis(dim_range=dim, dim_source=dim) if op is not None else None
-                           for k, op in discretization.operators.iteritems()}
+                           for k, op in discretization.operators.items()}
     projected_functionals = {k: f.projected_to_subbasis(dim_range=None, dim_source=dim) if f is not None else None
-                             for k, f in discretization.functionals.iteritems()}
+                             for k, f in discretization.functionals.items()}
     projected_vector_operators = {k: op.projected_to_subbasis(dim_range=dim, dim_source=None) if op else None
-                                  for k, op in discretization.vector_operators.iteritems()}
+                                  for k, op in discretization.vector_operators.items()}
 
     if discretization.products is not None:
         projected_products = {k: op.projected_to_subbasis(dim_range=dim, dim_source=dim)
-                              for k, op in discretization.products.iteritems()}
+                              for k, op in discretization.products.items()}
     else:
         projected_products = None
 

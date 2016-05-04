@@ -2,7 +2,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
+
 
 import numpy as np
 import pytest
@@ -51,11 +51,11 @@ def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range
 
 
 numpy_matrix_operator_with_arrays_factory_arguments = \
-    zip([0, 0, 2, 10],           # dim_source
+    list(zip([0, 0, 2, 10],           # dim_source
         [0, 1, 4, 10],           # dim_range
         [3, 3, 3, 3],            # count_source
         [3, 3, 3, 3],            # count_range
-        random_integers(4, 44))  # seed
+        random_integers(4, 44)))  # seed
 
 
 numpy_matrix_operator_with_arrays_generators = \

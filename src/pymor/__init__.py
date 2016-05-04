@@ -104,7 +104,7 @@ could not be executed ({})
 finally:
     VERSION = Version(revstring)
 
-print('Loading pymor version {}'.format(VERSION))
+print(('Loading pymor version {}'.format(VERSION)))
 
 
 import os
@@ -116,7 +116,7 @@ if 'PYMOR_DEFAULTS' in os.environ:
         for fn in filename.split(':'):
             if not os.path.exists(fn):
                 raise IOError('Cannot load defaults from file ' + fn)
-            print('Loading defaults from file ' + fn + ' (set by PYMOR_DEFAULTS)')
+            print(('Loading defaults from file ' + fn + ' (set by PYMOR_DEFAULTS)'))
             load_defaults_from_file(fn)
 else:
     filename = os.path.join(os.getcwd(), 'pymor_defaults.py')
@@ -124,7 +124,7 @@ else:
         if os.stat(filename).st_uid != os.getuid():
             raise IOError('Cannot load defaults from config file ' + filename
                           + ': not owned by user running Python interpreter')
-        print('Loading defaults from file ' + filename)
+        print(('Loading defaults from file ' + filename))
         load_defaults_from_file(filename)
 
 from pymor.core.logger import set_log_levels, set_log_format
@@ -141,7 +141,7 @@ if mpi.parallel and mpi.event_loop_settings()['auto_launch']:
             if not mpi.finished:
                 mpi.quit()
     else:
-        print('Rank {}: MPI parallel run detected. Launching event loop ...'.format(mpi.rank))
+        print(('Rank {}: MPI parallel run detected. Launching event loop ...'.format(mpi.rank)))
         mpi.event_loop()
         import sys
         sys.exit(0)

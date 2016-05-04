@@ -2,7 +2,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
+
 
 import os
 import pymordemos
@@ -188,7 +188,7 @@ def test_thermalblock_ipython(demo_args):
 
 def test_thermalblock_results(thermalblock_args):
     from pymordemos import thermalblock
-    results = _test_demo(lambda: thermalblock.main(map(str, thermalblock_args[1])))
+    results = _test_demo(lambda: thermalblock.main(list(map(str, thermalblock_args[1]))))
     # due to the symmetry of the problem and the random test parameters, the estimated
     # error may change a lot
     check_results('test_thermalblock_results', thermalblock_args[1], results,
@@ -199,7 +199,7 @@ def test_thermalblock_results(thermalblock_args):
 
 def test_burgers_ei_results():
     from pymordemos import burgers_ei
-    args = map(str, [1, 2, 10, 100, 10, 30])
+    args = list(map(str, [1, 2, 10, 100, 10, 30]))
     ei_results, greedy_results = _test_demo(lambda: burgers_ei.main(args))
     ei_results['greedy_max_errs'] = greedy_results['max_errs']
     check_results('test_burgers_ei_results', args, ei_results,

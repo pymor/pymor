@@ -2,7 +2,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
+
 
 try:
     from pyvtk import (VtkData, UnstructuredGrid, PointData, CellData, Scalars)
@@ -33,7 +33,7 @@ def _write_meta_file(filename_base, steps, fn_tpl):
     fn_tpl += '.vtu'
     with open('{}.pvd'.format(filename_base), 'wb') as pvd:
         pvd.write(pvd_header)
-        for step in xrange(steps):
+        for step in range(steps):
             fn = fn_tpl.format(filename_base, step)
             pvd.write('\t\t<DataSet timestep="{}" group="" part="0" file="{}" />\n'.format(step, fn))
         pvd.write(pvd_footer)
@@ -44,7 +44,7 @@ def _vtk_grid(reference_element, subentities, coords):
         raise NotImplementedError
     subentity_ordering = subentities.tolist()
     num_points = len(coords[0])
-    points = [[coords[0][i], coords[1][i], coords[2][i]] for i in xrange(num_points)]
+    points = [[coords[0][i], coords[1][i], coords[2][i]] for i in range(num_points)]
     if reference_element == referenceelements.triangle:
         return UnstructuredGrid(points, triangle=subentity_ordering)
     else:
@@ -62,7 +62,7 @@ def _write_vtu_series(us_grid, data, filename_base, binary_vtk, last_step, is_ce
     steps = last_step + 1 if last_step is not None else len(data)
     fn_tpl = "{}_{:08d}"
     _write_meta_file(filename_base, steps, fn_tpl)
-    for i in xrange(steps):
+    for i in range(steps):
         fn = fn_tpl.format(filename_base, i)
         pd = _data_item(is_cell_data, data, i)
         vtk = VtkData(us_grid, pd, 'Unstructured Grid Example')

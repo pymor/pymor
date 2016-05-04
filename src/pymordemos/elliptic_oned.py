@@ -19,7 +19,7 @@ Options:
     --fv         Use finite volume discretization instead of finite elements.
 """
 
-from __future__ import absolute_import, division, print_function
+
 
 from docopt import docopt
 import numpy as np

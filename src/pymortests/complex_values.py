@@ -3,7 +3,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import print_function, unicode_literals, absolute_import, division
+
 
 import numpy as np
 
@@ -84,8 +84,8 @@ def test_real_imag():
     Cva = Ava.imag
 
     k = 0
-    for i in xrange(3):
-        for j in xrange(2):
+    for i in range(3):
+        for j in range(2):
             k += 1
             assert Bva.data[i, j] == k
             k += 1
@@ -98,8 +98,8 @@ def test_scal():
     v.scal(1j)
 
     k = 0
-    for i in xrange(2):
-        for j in xrange(3):
+    for i in range(2):
+        for j in range(3):
             k += 1
             assert v.data[i, j] == k * 1j
 

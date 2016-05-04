@@ -6,7 +6,7 @@
 via http://stackoverflow.com/questions/384076/how-can-i-make-the-python-logging-output-to-be-colored
 Can not be moved because it's needed to be imported in the root __init__.py OR ELSE
 """
-from __future__ import absolute_import, division, print_function
+
 import curses
 import logging
 import os
@@ -25,7 +25,7 @@ logging.addLevelName(BLOCK_TIME, 'BLOCK_TIME')
 logging.addLevelName(INFO2, 'INFO2')
 logging.addLevelName(INFO3, 'INFO3')
 
-BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
+BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = list(range(8))
 
 # The background is set with 40 plus the number of the color, and the foreground with 30
 # These are the sequences needed to get colored output
@@ -97,7 +97,7 @@ class ColoredFormatter(logging.Formatter):
         if len(timestamp) > LAST_TIMESTAMP_LENGTH:
             timestep_length = len(timestamp)
             if INDENT > 0:
-                for i in reversed(range(LAST_TIMESTAMP_LENGTH, timestep_length)):
+                for i in reversed(list(range(LAST_TIMESTAMP_LENGTH, timestep_length))):
                     timestamp = ' ' * (i + 2) + '\   ' * INDENT + '\n' + timestamp
             LAST_TIMESTAMP_LENGTH = timestep_length
 
@@ -216,7 +216,7 @@ def set_log_levels(levels={'pymor': 'INFO'}):
         values are the log levels to set for the loggers of the given names
         (see :meth:`~logging.Logger.setLevel`).
     """
-    for k, v in levels.items():
+    for k, v in list(levels.items()):
         getLogger(k).setLevel(v)
 
 

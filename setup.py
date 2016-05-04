@@ -3,7 +3,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import print_function
+
 
 import sys
 import os
@@ -105,7 +105,7 @@ def write_version():
     except:
         if os.path.exists(filename):
             loc = {}
-            execfile(filename, loc, loc)
+            exec(compile(open(filename).read(), filename, 'exec'), loc, loc)
             revstring = loc['revstring']
         else:
             revstring = '0.0.0-0-0'
@@ -201,12 +201,12 @@ def setup_package():
         zip_safe=False,
     )
 
-    missing = list(_missing(install_suggests.keys()))
+    missing = list(_missing(list(install_suggests.keys())))
     if len(missing):
         import textwrap
         print('\n' + '*' * 79 + '\n')
         print('There are some suggested packages missing:\n')
-        col_width = max(map(len, missing)) + 3
+        col_width = max(list(map(len, missing))) + 3
         for package in sorted(missing):
             description = textwrap.wrap(install_suggests[package], 79 - col_width)
             print('{:{}}'.format(package + ':', col_width) + description[0])

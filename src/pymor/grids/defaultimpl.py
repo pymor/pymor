@@ -2,7 +2,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
+
 
 import numpy as np
 
@@ -27,7 +27,7 @@ class ConformalTopologicalGridDefaultImplementations(object):
             SSE = np.empty((SE.shape[0], num_subsubentities), dtype=np.int32)
             SSE.fill(-1)
 
-            for ei in xrange(SE.shape[0]):
+            for ei in range(SE.shape[0]):
                 X = SESE[SE[ei]].ravel()
                 SSE[ei] = X[np.sort(np.unique(X, return_index=True)[1])]
 
@@ -137,7 +137,7 @@ class ReferenceElementDefaultImplementations(object):
         if subentity_codim > 1:
             A = []
             B = []
-            for i in xrange(self.size(subentity_codim)):
+            for i in range(self.size(subentity_codim)):
                 P = np.where(self.subentities(subentity_codim - 1, subentity_codim) == i)
                 parent_index, local_index = P[0][0], P[1][0]
                 A0, B0 = self.subentity_embedding(subentity_codim - 1)
@@ -173,7 +173,7 @@ class AffineGridDefaultImplementations(object):
         RSE = self.reference_element(codim - 1).subentities(1, subentity_codim - (codim - 1))[I]
 
         SSE = np.empty_like(RSE)
-        for i in xrange(RSE.shape[0]):
+        for i in range(RSE.shape[0]):
             SSE[i, :] = SE[i, RSE[i]]
 
         return SSE
@@ -189,7 +189,7 @@ class AffineGridDefaultImplementations(object):
         A1, B1 = self.reference_element(codim - 1).subentity_embedding(1)
         A = np.zeros((E.shape[0], A0.shape[1], A1.shape[2]))
         B = np.zeros((E.shape[0], A0.shape[1]))
-        for i in xrange(A1.shape[0]):
+        for i in range(A1.shape[0]):
             INDS = np.where(I == i)[0]
             A[INDS] = np.dot(A0[INDS], A1[i])
             B[INDS] = np.dot(A0[INDS], B1[i]) + B0[INDS]
@@ -203,7 +203,7 @@ class AffineGridDefaultImplementations(object):
         if J.shape[-1] == J.shape[-2] == 2:
             JIT = inv_transposed_two_by_two(J)
         else:
-            JIT = np.array(map(np.linalg.pinv, J)).swapaxes(1, 2)
+            JIT = np.array(list(map(np.linalg.pinv, J))).swapaxes(1, 2)
         return JIT
 
     @cached
@@ -224,7 +224,7 @@ class AffineGridDefaultImplementations(object):
         else:
             def f(A):
                 return np.linalg.det(A)
-            D = np.array(map(f, J))
+            D = np.array(list(map(f, J)))
 
         return np.sqrt(D)
 

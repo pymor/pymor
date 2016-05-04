@@ -2,7 +2,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
+
 
 import numpy as np
 
@@ -188,7 +188,7 @@ class ReferenceElementInterface(ReferenceElementDefaultImplementations, Cacheabl
 
     def quadrature_types(self):
         o, _ = self.quadrature_info()
-        return frozenset(o.keys())
+        return frozenset(list(o.keys()))
 
 
 class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopologicalGridInterface):

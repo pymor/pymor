@@ -4,7 +4,7 @@
 
 from numbers import Number
 
-import numpy as np
+from . import numpy as np
 
 from pymor.core.exceptions import InversionError
 from pymor.operators.numpy import NumpyMatrixOperator, _apply_inverse

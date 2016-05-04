@@ -25,7 +25,7 @@ Arguments:
   TEST       Number of parameters for stochastic error estimation.
 """
 
-from __future__ import division  # ensure that 1 / 2 is 0.5 and not 0
+  # ensure that 1 / 2 is 0.5 and not 0
 from pymor.basic import *        # most common pyMOR functions and classes
 from functools import partial    # fix parameters of given function
 
@@ -249,7 +249,7 @@ def main():
 
     # show results
     ##############
-    print(results['summary'])
+    print((results['summary']))
     import matplotlib.pyplot
     matplotlib.pyplot.show(results['figure'])
 

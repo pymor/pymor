@@ -65,10 +65,10 @@ functionality:
        corresponding instance attributes.
 """
 
-from __future__ import absolute_import, division, print_function
+
 import abc
-from cPickle import dumps
-from copy_reg import dispatch_table
+from pickle import dumps
+from copyreg import dispatch_table
 import hashlib
 import inspect
 import itertools
@@ -138,7 +138,7 @@ class UberMeta(abc.ABCMeta):
             if attr in classdict:
                 raise ValueError(attr + ' is a reserved class attribute for subclasses of BasicInterface')
 
-        for attr, item in classdict.items():
+        for attr, item in list(classdict.items()):
             if isinstance(item, FunctionType):
                 # first copy/fixup docs
                 item.__doc__ = decorators.fixup_docstring(item.__doc__)
@@ -169,7 +169,7 @@ class UberMeta(abc.ABCMeta):
             assert args[0] == 'self'
             c._init_arguments = tuple(args[1:])
             if defaults:
-                c._init_defaults = dict(zip(args[-len(defaults):], defaults))
+                c._init_defaults = dict(list(zip(args[-len(defaults):], defaults)))
             else:
                 c._init_defaults = dict()
         except TypeError:       # happens when no one declares an __init__ method and object is reached
@@ -178,7 +178,7 @@ class UberMeta(abc.ABCMeta):
         return c
 
 
-class BasicInterface(object):
+class BasicInterface(object, metaclass=UberMeta):
     """Base class for most classes in pyMOR.
 
     Attributes
@@ -198,8 +198,6 @@ class BasicInterface(object):
         :class:`UIDProvider` and should be unique for all pyMOR objects
         ever created.
     """
-
-    __metaclass__ = UberMeta
     _locked = False
 
     def __setattr__(self, key, value):
@@ -348,7 +346,7 @@ class ImmutableMeta(UberMeta):
     __call__ = _call
 
 
-class ImmutableInterface(BasicInterface):
+class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
     """Base class for immutable objects in pyMOR.
 
     Instances of `ImmutableInterface` are immutable in the sense that
@@ -390,7 +388,6 @@ class ImmutableInterface(BasicInterface):
         union of the arguments names of `__init__` and the names
         specified via :attr:`~ImmutableInterface.add_with_arguments`.
     """
-    __metaclass__ = ImmutableMeta
     sid_ignore = frozenset({'_locked', '_logger', '_name', '_uid', '_sid_contains_cycles', 'sid'})
 
     # Unlocking an immutable object will result in the deletion of its sid.
@@ -464,7 +461,7 @@ class ImmutableInterface(BasicInterface):
         """
         if not set(kwargs.keys()) <= self.with_arguments:
             raise ValueError('Changing "{}" using with() is not allowed in {} (only "{}")'.format(
-                kwargs.keys(), self.__class__, self.with_arguments))
+                list(kwargs.keys()), self.__class__, self.with_arguments))
 
         # fill missing __init__ arguments using instance attributes of same name
         for arg in self._init_arguments:
@@ -553,12 +550,12 @@ class _SIDGenerator(object):
             return(v)
 
         t = type(obj)
-        if t in (NoneType, bool, int, long, float, FunctionType, BuiltinFunctionType, type):
+        if t in (NoneType, bool, int, int, float, FunctionType, BuiltinFunctionType, type):
             return obj
 
         self.memo[id(obj)] = _MemoKey(len(self.memo), obj)
 
-        if t in (str, unicode):
+        if t in (str, str):
             return obj
 
         if t is np.ndarray and t.dtype != object:
@@ -574,7 +571,7 @@ class _SIDGenerator(object):
             return (t,) + tuple(self.deterministic_state(x) for x in sorted(obj))
 
         if t is dict:
-            return (dict,) + tuple((k, self.deterministic_state(v)) for k, v in sorted(obj.iteritems()))
+            return (dict,) + tuple((k, self.deterministic_state(v)) for k, v in sorted(obj.items()))
 
         if issubclass(t, ImmutableInterface):
             if hasattr(obj, 'sid') and not obj._sid_contains_cycles:
@@ -598,7 +595,7 @@ class _SIDGenerator(object):
                     state = obj.__getstate__()
                 except AttributeError:
                     state = obj.__dict__
-                state = {k: v for k, v in state.iteritems() if k not in obj.sid_ignore}
+                state = {k: v for k, v in state.items() if k not in obj.sid_ignore}
                 return self.deterministic_state(state) if first_obj else (t, self.deterministic_state(state))
 
         sid = getattr(obj, 'sid', None)

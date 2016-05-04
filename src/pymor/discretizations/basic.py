@@ -3,7 +3,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
+
 
 from itertools import chain
 
@@ -26,7 +26,7 @@ class DiscretizationBase(DiscretizationInterface):
         self.operators = FrozenDict(operators)
         self.functionals = FrozenDict(functionals)
         self.vector_operators = FrozenDict(vector_operators)
-        self.linear = all(op is None or op.linear for op in chain(operators.itervalues(), functionals.itervalues()))
+        self.linear = all(op is None or op.linear for op in chain(iter(operators.values()), iter(functionals.values())))
         self.products = products
         self.estimator = estimator
         self.visualizer = visualizer
@@ -34,7 +34,7 @@ class DiscretizationBase(DiscretizationInterface):
         self.name = name
 
         if products:
-            for k, v in products.iteritems():
+            for k, v in products.items():
                 setattr(self, '{}_product'.format(k), v)
                 setattr(self, '{}_norm'.format(k), induced_norm(v))
 
@@ -124,7 +124,7 @@ class StationaryDiscretization(DiscretizationBase):
         assert isinstance(rhs, OperatorInterface) and rhs.linear
         assert operator.source == operator.range == rhs.source
         assert rhs.range.dim == 1
-        assert all(f.source == operator.source for f in functionals.values())
+        assert all(f.source == operator.source for f in list(functionals.values()))
         assert 'operator' not in operators or operator == operators['operator']
         assert 'rhs' not in functionals or rhs == functionals['rhs']
 
@@ -280,7 +280,7 @@ class InstationaryDiscretization(DiscretizationBase):
         assert 'mass' not in operators or mass == operators['mass']
 
         assert isinstance(time_stepper, TimeStepperInterface)
-        assert all(f.source == operator.source for f in functionals.values() if f)
+        assert all(f.source == operator.source for f in list(functionals.values()) if f)
 
         operators_with_operator_mass = {'operator': operator, 'mass': mass}
         operators_with_operator_mass.update(operators)

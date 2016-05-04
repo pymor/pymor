@@ -2,7 +2,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
+
 
 from scipy.io import loadmat, mmread
 from scipy.sparse import issparse
@@ -24,7 +24,7 @@ def _loadmat(path, key=None):
         except KeyError:
             raise IOError('"{}" not found in MATLAB file {}'.format(key, path))
 
-    data = [v for v in data.values() if isinstance(v, np.ndarray) or issparse(v)]
+    data = [v for v in list(data.values()) if isinstance(v, np.ndarray) or issparse(v)]
 
     if len(data) == 0:
         raise IOError('No matrix data contained in MATLAB file {}'.format(key, path))
@@ -58,7 +58,7 @@ def _load(path, key=None):
         elif len(data) > 1:
             raise IOError('More than one object stored in NPY file {}'.format(key, path))
         else:
-            matrix = next(data.itervalues())
+            matrix = next(iter(data.values()))
     else:
         matrix = data
     if not isinstance(matrix, np.ndarray) and not issparse(matrix):

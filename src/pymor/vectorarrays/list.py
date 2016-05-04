@@ -3,9 +3,9 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
 
-from itertools import izip
+
+
 from numbers import Number
 
 import numpy as np
@@ -265,7 +265,7 @@ class ListVectorArray(VectorArrayInterface):
         assert count >= 0
         assert reserve >= 0
         vector_type, vector_subtype = subtype
-        return cls([vector_type.make_zeros(vector_subtype) for _ in xrange(count)], subtype=subtype, copy=False)
+        return cls([vector_type.make_zeros(vector_subtype) for _ in range(count)], subtype=subtype, copy=False)
 
     def __len__(self):
         return len(self._list)
@@ -323,7 +323,7 @@ class ListVectorArray(VectorArrayInterface):
                 self._list.append(other_list.pop(o_ind))
             else:
                 self._list.extend([other_list[i] for i in o_ind])
-                remaining = sorted(set(xrange(len(other_list))) - set(o_ind))
+                remaining = sorted(set(range(len(other_list))) - set(o_ind))
                 other._list = [other_list[i] for i in remaining]
 
     def remove(self, ind=None):
@@ -334,7 +334,7 @@ class ListVectorArray(VectorArrayInterface):
             del self._list[ind]
         else:
             thelist = self._list
-            remaining = sorted(set(xrange(len(self))) - set(ind))
+            remaining = sorted(set(range(len(self))) - set(ind))
             self._list = [thelist[i] for i in remaining]
 
     def replace(self, other, ind=None, o_ind=None, remove_from_other=False):
@@ -371,20 +371,20 @@ class ListVectorArray(VectorArrayInterface):
                 else:
                     self._list[ind[0]] = other._list.pop(o_ind)
             else:
-                o_ind = xrange(len(other)) if o_ind is None else o_ind
+                o_ind = range(len(other)) if o_ind is None else o_ind
                 assert len(ind) == len(o_ind)
                 if not remove_from_other:
                     l = self._list
                     # if other is self, we have to make a copy of our list, to prevent
                     # messing things up, e.g. when swapping vectors
                     other_list = list(l) if other is self else other._list
-                    for i, oi in izip(ind, o_ind):
+                    for i, oi in zip(ind, o_ind):
                         l[i] = other_list[oi].copy()
                 else:
-                    for i, oi in izip(ind, o_ind):
+                    for i, oi in zip(ind, o_ind):
                         self._list[i] = other._list[oi]
                     other_list = other._list
-                    remaining = sorted(set(xrange(len(other_list))) - set(o_ind))
+                    remaining = sorted(set(range(len(other_list))) - set(o_ind))
                     other._list = [other_list[i] for i in remaining]
 
     def scal(self, alpha, ind=None):
@@ -394,7 +394,7 @@ class ListVectorArray(VectorArrayInterface):
 
         if ind is None:
             if isinstance(alpha, np.ndarray):
-                for a, v in izip(alpha, self._list):
+                for a, v in zip(alpha, self._list):
                     v.scal(a)
             else:
                 for v in self._list:
@@ -455,7 +455,7 @@ class ListVectorArray(VectorArrayInterface):
         elif len_X == 1:
             xx = next(X)
             if isinstance(alpha, np.ndarray):
-                for a, y in izip(alpha, Y):
+                for a, y in zip(alpha, Y):
                     y.axpy(a, xx)
             else:
                 for y in Y:
@@ -463,10 +463,10 @@ class ListVectorArray(VectorArrayInterface):
         else:
             assert len_X == len_Y
             if isinstance(alpha, np.ndarray):
-                for a, xx, y in izip(alpha, X, Y):
+                for a, xx, y in zip(alpha, X, Y):
                     y.axpy(a, xx)
             else:
-                for xx, y in izip(X, Y):
+                for xx, y in zip(X, Y):
                     y.axpy(alpha, xx)
 
     def dot(self, other, ind=None, o_ind=None):
@@ -528,7 +528,7 @@ class ListVectorArray(VectorArrayInterface):
             len_B = len(o_ind)
 
         assert len_A == len_B
-        return np.array([a.dot(b) for a, b in izip(A, B)])
+        return np.array([a.dot(b) for a, b in zip(A, B)])
 
     def gramian(self, ind=None):
         assert self.check_ind(ind)
@@ -541,8 +541,8 @@ class ListVectorArray(VectorArrayInterface):
             A = [self._list[i] for i in ind]
 
         R = np.empty((len(A), len(A)))
-        for i in xrange(len(A)):
-            for j in xrange(i, len(A)):
+        for i in range(len(A)):
+            for j in range(i, len(A)):
                 R[i, j] = A[i].dot(A[j])
                 R[j, i] = R[i, j]
         return R
@@ -566,7 +566,7 @@ class ListVectorArray(VectorArrayInterface):
         RL = []
         for coeffs in coefficients:
             R = self.vector_type.make_zeros(self.vector_subtype)
-            for v, c in izip(V, coeffs):
+            for v, c in zip(V, coeffs):
                 R.axpy(c, v)
             RL.append(R)
 
@@ -576,7 +576,7 @@ class ListVectorArray(VectorArrayInterface):
         assert self.check_ind(ind)
 
         if ind is None:
-            ind = xrange(len(self._list))
+            ind = range(len(self._list))
         elif isinstance(ind, Number):
             ind = [ind]
 
@@ -586,7 +586,7 @@ class ListVectorArray(VectorArrayInterface):
         assert self.check_ind(ind)
 
         if ind is None:
-            ind = xrange(len(self._list))
+            ind = range(len(self._list))
         elif isinstance(ind, Number):
             ind = [ind]
 
@@ -596,7 +596,7 @@ class ListVectorArray(VectorArrayInterface):
         assert self.check_ind(ind)
 
         if ind is None:
-            ind = xrange(len(self._list))
+            ind = range(len(self._list))
         elif isinstance(ind, Number):
             ind = [ind]
 
@@ -606,7 +606,7 @@ class ListVectorArray(VectorArrayInterface):
         assert self.check_ind(ind)
 
         if ind is None:
-            ind = xrange(len(self._list))
+            ind = range(len(self._list))
         elif isinstance(ind, Number):
             ind = [ind]
 
@@ -619,7 +619,7 @@ class ListVectorArray(VectorArrayInterface):
                 and (len(component_indices) == 0 or np.min(component_indices) >= 0))
 
         if ind is None:
-            ind = xrange(len(self._list))
+            ind = range(len(self._list))
         elif isinstance(ind, Number):
             ind = [ind]
 
@@ -640,7 +640,7 @@ class ListVectorArray(VectorArrayInterface):
         assert self.dim > 0
 
         if ind is None:
-            ind = xrange(len(self._list))
+            ind = range(len(self._list))
         elif isinstance(ind, Number):
             ind = [ind]
 
