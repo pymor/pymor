@@ -44,6 +44,7 @@ script:
     export PYTHONPATH=$(pwd)/src
     xvfb-run -a mpirun -n 2 ${PYTHON_X} src/pymortests/mpi_run_demo_tests.py
   else
+    export PYTHONPATH=$(pwd)/src
     # this runs in pytest in a fake, auto numbered, X Server
     xvfb-run -a ${PY_TEST_X} -k "${PYTEST_MARKER}"
   fi
