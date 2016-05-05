@@ -120,7 +120,8 @@ def check_results(test_name, params, results, *args):
     assert results is not None
     assert set(keys.keys()) <= set(results.keys()), \
         'Keys {} missing in results dict'.format(set(keys.keys()) - set(results.keys()))
-    results = {k: results[k] for k in keys.keys()}
+    results = {k: np.asarray(results[k]) for k in keys.keys()}
+    assert all(v.dtype != object for v in results.values())
 
     basepath = os.path.join(os.path.dirname(__file__),
                             '..', '..', 'testdata', 'check_results')
@@ -132,6 +133,7 @@ def check_results(test_name, params, results, *args):
     if not os.path.exists(filename):
         with open(filename, 'wb') as f:
             print(params, file=f)
+            results = {k: v.tolist() for k, v in results.items()}
             dump(results, f, protocol=2)
         assert False, \
             'No results found for test {} ({}), saved current results. Remember to check in {}.'.format(
