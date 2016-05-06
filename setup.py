@@ -116,8 +116,8 @@ class build_py27(_build_py):
                 'printfunction', 'raise', 'range', 'reduce', 'setliteral', 'str', 'super', 'throw', 'unittest',
                 'unpacking', 'with')]
 
-        for fix in ('fix_except', 'fix_int', 'fix_print', 'fix_range', 'fix_str', 'fix_throw', 
-                'fix_unittest', 'fix_absimport'):
+        for fix in ('fix_except', 'fix_int', 'fix_print', 'fix_range', 'fix_str', 'fix_throw',
+                'fix_unittest', 'fix_absimport', 'fix_dctsetcomp', 'fix_setliteral', 'fix_with', 'fix_open'):
             fixers.remove('lib3to2.fixes.{}'.format(fix))
         fixers.append('fix_pymor_futures')
         print(fixers) 
@@ -125,7 +125,7 @@ class build_py27(_build_py):
             fixers,
             None,
             [],
-            False,
+            True,
             False
         )
         self.rtool.refactor_dir('src', write=True) 

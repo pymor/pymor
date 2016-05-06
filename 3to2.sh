@@ -10,7 +10,6 @@ FIXER="\
  -f bytes\
  -f classdecorator\
  -f collections\
- -f dctsetcomp\
  -f division\
  -f features\
  -f fullargspec\
@@ -28,14 +27,12 @@ FIXER="\
  -f newstyle\
  -f next\
  -f numliterals\
- -f open\
  -f printfunction\
- -f raise
+ -f raise\
  -f reduce\
  -f setliteral\
  -f super\
- -f unpacking\
- -f with"
+ -f unpacking"
 
 CORES=$(cat /proc/cpuinfo | \grep processor | tail -n 1 | awk '{printf("%d",$3 + 1 );} ')
-3to2 -j ${CORES}  -w --no-diffs ${FIXER} ${1} 
+3to2 -j ${CORES}  -wn --no-diffs ${FIXER} ${1} 
