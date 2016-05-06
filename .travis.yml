@@ -1,7 +1,9 @@
 language: generic
 
+git:
+  depth: 1000
+
 before_install:
- - git fetch --depth=1000 --tags origin master
  - alias python=python${PYMOR_PYTHON_VERSION}
  - export PYTHON_X=python${PYMOR_PYTHON_VERSION}
  # for some reason installing ptyhon-pytest does not install a /usr/bin/py.test-2.7 which we fake below
