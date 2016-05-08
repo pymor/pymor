@@ -33,7 +33,7 @@ if __name__ == '__main__':
     b = (n - 1) ** 2
     A[0, 0] = -2 * a
     A[0, 1] = 2 * b
-    for i in xrange(1, n - 1):
+    for i in range(1, n - 1):
         A[i, i - 1] = b
         A[i, i] = -2 * b
         A[i, i + 1] = b
@@ -69,7 +69,7 @@ if __name__ == '__main__':
     # Hankel singular values
     lti.compute_hsv_U_V()
     fig, ax = plt.subplots()
-    ax.semilogy(xrange(1, len(lti._hsv) + 1), lti._hsv, '.-')
+    ax.semilogy(range(1, len(lti._hsv) + 1), lti._hsv, '.-')
     ax.set_title('Hankel singular values')
     plt.show()
 

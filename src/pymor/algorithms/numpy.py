@@ -58,9 +58,9 @@ def _to_matrix(op, format, mapping):
                 res = op._matrix.asformat(format)
     elif isinstance(op, BlockOperator):
         op_blocks = op._blocks
-        mat_blocks = [[] for i in xrange(op.num_range_blocks)]
-        for i in xrange(op.num_range_blocks):
-            for j in xrange(op.num_source_blocks):
+        mat_blocks = [[] for i in range(op.num_range_blocks)]
+        for i in range(op.num_range_blocks):
+            for j in range(op.num_source_blocks):
                 if op_blocks[i, j] is None:
                     if format is None:
                         mat_blocks[i].append(np.zeros((op.range.subtype[i].dim, op.source.subtype[j].dim)))
@@ -101,7 +101,7 @@ def _to_matrix(op, format, mapping):
             res = sps.eye(op.source.dim, format=format)
     elif isinstance(op, LincombOperator):
         res = op.coefficients[0] * _to_matrix(op.operators[0], format, mapping)
-        for i in xrange(1, len(op.operators)):
+        for i in range(1, len(op.operators)):
             res = res + op.coefficients[i] * _to_matrix(op.operators[i], format, mapping)
     elif isinstance(op, VectorArrayOperator):
         res = op._array.data if op.transposed else op._array.data.T

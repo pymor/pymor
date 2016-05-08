@@ -58,7 +58,7 @@ t = np.linspace(0, 4, nt)
 x_old = np.zeros(rom.n, dtype=complex)
 x_new = np.zeros(rom.n, dtype=complex)
 y = np.zeros(nt, dtype=complex)
-for i in xrange(1, nt):
+for i in range(1, nt):
     h = t[i] - t[i - 1]
     x_new = spla.solve(E - h / 2 * A, (E + h / 2 * A).dot(x_old) + h * B[:, 0])
     x_old = x_new

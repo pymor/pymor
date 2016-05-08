@@ -27,7 +27,7 @@ def cholp(A, copy=True):
     piv = np.arange(n)
     I = 0
 
-    for i in xrange(n):
+    for i in range(n):
         d = A.diagonal()
         j = np.argmax(d[i:])
         j += i

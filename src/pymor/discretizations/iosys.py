@@ -467,7 +467,7 @@ class LTISystem(DiscretizationInterface):
             T = np.diag(np.diag(T)[ind])
             Z = Z[:, ind]
             rank = self.n
-            for i in xrange(1, self.n):
+            for i in range(1, self.n):
                 if T[i, i] / T[0, 0] < tol:
                     rank = i
                     break
@@ -503,7 +503,7 @@ class LTISystem(DiscretizationInterface):
             T = np.diag(np.diag(T)[ind])
             Z = Z[:, ind]
             rank = self.n
-            for i in xrange(1, self.n):
+            for i in range(1, self.n):
                 if T[i, i] / T[0, 0] < tol:
                     rank = i
                     break
@@ -767,7 +767,7 @@ class LTISystem(DiscretizationInterface):
             v = self.C.apply_adjoint(v)
         v.scal(1 / v.l2_norm()[0])
 
-        for i in xrange(r):
+        for i in range(r):
             if sigma[i].imag == 0:
                 if self.E is None:
                     E = IdentityOperator(self.A.source)
@@ -852,7 +852,7 @@ class LTISystem(DiscretizationInterface):
 
         V = self.A.source.type.make_array(self.A.source.subtype, reserve=r)
 
-        for i in xrange(r):
+        for i in range(r):
             if sigma[i].imag == 0:
                 if self.E is None:
                     E = IdentityOperator(self.A.source)
@@ -969,7 +969,7 @@ class LTISystem(DiscretizationInterface):
         Vr = self.A.source.type.make_array(self.A.source.subtype, reserve=r)
         Wr = self.A.source.type.make_array(self.A.source.subtype, reserve=r)
 
-        for i in xrange(r):
+        for i in range(r):
             if sigma[i].imag == 0:
                 if self.E is None:
                     E = IdentityOperator(self.A.source)
@@ -1084,7 +1084,7 @@ class LTISystem(DiscretizationInterface):
         Sigma = [np.array(sigma)]
         if compute_errors:
             errors = []
-        for it in xrange(maxit):
+        for it in range(maxit):
             Ar, Br, Cr, _, Er = self.project(Vr, Wr)
 
             if compute_errors:
@@ -1104,7 +1104,7 @@ class LTISystem(DiscretizationInterface):
             Sigma.append(sigma)
 
             dist.append([])
-            for i in xrange(it + 1):
+            for i in range(it + 1):
                 dist[-1].append(np.max(np.abs((Sigma[i] - Sigma[-1]) / Sigma[-1])))
 
             if verbose:
@@ -1236,7 +1236,7 @@ class TF(DiscretizationInterface):
         assert b.shape == (self.m, r)
         assert c.shape == (self.p, r)
 
-        for i in xrange(r):
+        for i in range(r):
             b[:, i] /= spla.norm(b[:, i])
             c[:, i] /= spla.norm(c[:, i])
 
@@ -1248,8 +1248,8 @@ class TF(DiscretizationInterface):
         Ht = np.dstack([self.H(s) for s in sigma])
         dHt = np.dstack([self.dH(s) for s in sigma])
 
-        for i in xrange(r):
-            for j in xrange(r):
+        for i in range(r):
+            for j in range(r):
                 if i != j:
                     Er[i, j] = -c[:, i].dot((Ht[:, :, i] -
                                              Ht[:, :, j]).dot(b[:, j])) / (sigma[i] - sigma[j])
@@ -1262,7 +1262,7 @@ class TF(DiscretizationInterface):
             Cr[:, i] = Ht[:, :, i].dot(b[:, i])
 
         T = np.zeros((r, r), dtype=complex)
-        for i in xrange(r):
+        for i in range(r):
             if sigma[i].imag == 0:
                 T[i, i] = 1
             else:
@@ -1336,7 +1336,7 @@ class TF(DiscretizationInterface):
 
         dist = []
         Sigma = [np.array(sigma)]
-        for it in xrange(maxit):
+        for it in range(maxit):
             Er, Ar, Br, Cr = self.interpolation(sigma, b, c)
 
             sigma, Y, X = spla.eig(Ar, Er, left=True, right=True)
@@ -1347,7 +1347,7 @@ class TF(DiscretizationInterface):
             Sigma.append(sigma)
 
             dist.append([])
-            for i in xrange(it + 1):
+            for i in range(it + 1):
                 dist[-1].append(np.max(np.abs((Sigma[i] - Sigma[-1]) / Sigma[-1])))
 
             if verbose:
