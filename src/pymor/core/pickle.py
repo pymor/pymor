@@ -14,24 +14,13 @@ however, that its use should be avoided since it uses non-portable
 implementation details of CPython to achieve its goals.
 """
 
-from __future__ import absolute_import
-
-
 import marshal
 import opcode
 from types import FunctionType, ModuleType
+import pickle
+from io import BytesIO as IOtype
 
-
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle as pickle
-
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
-
+import sys
 
 PicklingError = pickle.PicklingError
 UnpicklingError = pickle.UnpicklingError
@@ -50,7 +39,7 @@ if platform.python_implementation() == 'CPython':
 
 
     def dumps(obj, protocol=None):
-        file = StringIO()
+        file = IOtype()
         pickler = pickle.Pickler(file, protocol=PROTOCOL)
         pickler.persistent_id = _function_pickling_handler
         pickler.dump(obj)
@@ -64,7 +53,7 @@ if platform.python_implementation() == 'CPython':
 
 
     def loads(str):
-        file = StringIO(str)
+        file = IOtype(str)
         unpickler = pickle.Unpickler(file)
         unpickler.persistent_load = _function_unpickling_handler
         return unpickler.load()
@@ -138,24 +127,24 @@ def dumps_function(function):
     Note that also this is heavily implementation specific and will probably only
     work with CPython. If possible, avoid using this method.
     '''
-    closure = None if function.func_closure is None else [c.cell_contents for c in function.func_closure]
-    code = marshal.dumps(function.func_code)
-    func_globals = function.func_globals
-    func_dict = function.func_dict
+    closure = None if function.__closure__ is None else [c.cell_contents for c in function.__closure__]
+    code = marshal.dumps(function.__code__)
+    func_globals = function.__globals__
+    func_dict = function.__dict__
 
     def wrap_modules(x):
         return Module(x) if isinstance(x, ModuleType) else x
 
     # note that global names in function.func_code can also refer to builtins ...
-    globals_ = {k: wrap_modules(func_globals[k]) for k in _global_names(function.func_code) if k in func_globals}
-    return dumps((function.func_name, code, globals_, function.func_defaults, closure, func_dict))
+    globals_ = {k: wrap_modules(func_globals[k]) for k in _global_names(function.__code__) if k in func_globals}
+    return dumps((function.__name__, code, globals_, function.__defaults__, closure, func_dict))
 
 
 def loads_function(s):
     '''Restores a function serialized with :func:`dumps_function`.'''
     name, code, globals_, defaults, closure, func_dict = loads(s)
     code = marshal.loads(code)
-    for k, v in globals_.iteritems():
+    for k, v in globals_.items():
         if isinstance(v, Module):
             globals_[k] = v.mod
     if closure is not None:
@@ -165,7 +154,7 @@ def loads_function(s):
         closure = tuple(ctypes.pythonapi.PyCell_New(c) for c in closure)
     globals_['__builtins__'] = __builtins__
     r = FunctionType(code, globals_, name, defaults, closure)
-    r.func_dict = func_dict
+    r.__dict__ = func_dict
     return r
 
 
@@ -173,20 +162,23 @@ def _function_pickling_handler(f):
     if f.__class__ is FunctionType:
         if f.__module__ != '__main__':
             try:
-                return 'A' + pickle.dumps(f)
+                return b'A' + pickle.dumps(f)
             except (TypeError, PicklingError):
-                return 'B' + dumps_function(f)
+                return b'B' + dumps_function(f)
         else:
-            return 'B' + dumps_function(f)
+            return b'B' + dumps_function(f)
     else:
         return None
 
 
 def _function_unpickling_handler(persid):
-    mode, data = persid[0], persid[1:]
-    if mode == 'A':
+    try:
+        mode, data = persid[0].to_bytes(1, sys.byteorder), persid[1:]
+    except AttributeError as a:
+        mode, data = persid[0], persid[1:]
+    if mode == b'A':
         return pickle.loads(data)
-    elif mode == 'B':
+    elif mode == b'B':
         return loads_function(data)
     else:
-        return UnpicklingError
+        raise UnpicklingError

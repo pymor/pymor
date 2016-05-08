@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 from scipy.sparse import diags
 import pytest
@@ -30,17 +28,17 @@ class GenericOperator(OperatorBase):
         return self.op.apply_adjoint(U, ind=ind, mu=mu)
 
 
-@pytest.fixture(params=pymor.algorithms.genericsolvers.options().keys())
+@pytest.fixture(params=list(pymor.algorithms.genericsolvers.options().keys()))
 def generic_solver(request):
     return {'inverse': request.param}
 
 
-@pytest.fixture(params=dense_options().keys())
+@pytest.fixture(params=list(dense_options().keys()))
 def numpy_dense_solver(request):
     return {'inverse': request.param}
 
 
-@pytest.fixture(params=sparse_options().keys())
+@pytest.fixture(params=list(sparse_options().keys()))
 def numpy_sparse_solver(request):
     return {'inverse': request.param}
 

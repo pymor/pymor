@@ -3,8 +3,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 from numbers import Number
 import time
 
@@ -170,8 +168,8 @@ def reduction_error_analysis(reduced_discretization, discretization=None, recons
         error_norm_names = tuple(norm.name for norm in error_norms)
 
     norms, estimates, errors, conditions, custom_values = \
-        zip(*pool.map(_compute_errors, test_mus, d=d, rd=rd, rc=rc, estimator=estimator,
-                      error_norms=error_norms, condition=condition, custom=custom, basis_sizes=basis_sizes))
+        list(zip(*pool.map(_compute_errors, test_mus, d=d, rd=rd, rc=rc, estimator=estimator,
+                      error_norms=error_norms, condition=condition, custom=custom, basis_sizes=basis_sizes)))
     print()
 
     result = {}
@@ -237,8 +235,8 @@ def reduction_error_analysis(reduced_discretization, discretization=None, recons
     result['time'] = toc - tic
     summary.append(('elapsed time', str(toc - tic)))
 
-    summary_fields, summary_values = zip(*summary)
-    summary_field_width = np.max(map(len, summary_fields)) + 2
+    summary_fields, summary_values = list(zip(*summary))
+    summary_field_width = np.max(list(map(len, summary_fields))) + 2
     summary_lines = ['    {:{}} {}'.format(field + ':', summary_field_width, value)
                      for field, value in zip(summary_fields, summary_values)]
     summary = 'Stochastic error estimation:\n' + '\n'.join(summary_lines)

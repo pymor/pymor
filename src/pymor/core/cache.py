@@ -60,14 +60,11 @@ A cache region can be emptied using :meth:`CacheRegion.clear`. The function
 :func:`clear_caches` clears each cache region registered in `cache_regions`.
 """
 
-
-from __future__ import absolute_import, division, print_function
-# cannot use unicode_literals here, or else dbm backend fails
-
 import atexit
 from collections import OrderedDict
 import datetime
 from functools import partial
+import functools
 import getpass
 import inspect
 import os
@@ -164,7 +161,7 @@ class SQLiteRegion(CacheRegion):
             return False, None
         elif len(result) == 1:
             file_path = os.path.join(self.path, result[0][0])
-            with open(file_path) as f:
+            with open(file_path, 'rb') as f:
                 value = load(f)
             return True, value
         else:
@@ -173,12 +170,9 @@ class SQLiteRegion(CacheRegion):
     def set(self, key, value):
         fd, file_path = tempfile.mkstemp('.dat', datetime.datetime.now().isoformat()[:-7] + '-', self.path)
         filename = os.path.basename(file_path)
-        try:
-            f = os.fdopen(fd, 'w')
+        with os.fdopen(fd, 'wb') as f:
             dump(value, f)
             file_size = f.tell()
-        finally:
-            f.close()
         conn = self.conn
         c = conn.cursor()
         try:
@@ -220,7 +214,11 @@ class SQLiteRegion(CacheRegion):
         c = conn.cursor()
         c.execute('SELECT SUM(size) FROM entries')
         size = c.fetchone()
-        size = size[0] if size is not None else 0
+        # size[0] can apparently also be None
+        try:
+            size = int(size[0]) if size is not None else 0
+        except TypeError:
+            size = 0
         if size > self.max_size:
             bytes_to_delete = size - self.max_size + 0.75 * self.max_size
             deleted = 0
@@ -289,7 +287,7 @@ def disable_caching():
 
 def clear_caches():
     """Clear all cache regions."""
-    for r in cache_regions.itervalues():
+    for r in cache_regions.values():
         r.clear()
 
 
@@ -298,6 +296,7 @@ class cached(object):
 
     def __init__(self, function):
         self.decorated_function = function
+        functools.update_wrapper(self, function)
         argspec = inspect.getargspec(function)
         self.argnames = argnames = argspec.args[1:]  # first argument is self
         defaults = function.__defaults__
@@ -316,7 +315,16 @@ class cached(object):
         Return a partial function where the first argument is the instance of the decorated instance object.
         """
         if instance is None:
-            return MethodType(self.decorated_function, None, instancetype)
+            # afaics this is called when decorating abstract/static class methods
+           @functools.wraps(self.decorated_function)
+           def wrapper(*args, **kwargs):
+               raise TypeError(
+                   'unbound method {}() must be called with {} instance '
+                   'as first argument (got nothing instead)'.format(
+                       self.decorated_function.__name__,
+                       instancetype.__name__)
+               )
+           return wrapper
         elif _caching_disabled or instance.cache_region is None:
             return partial(self.decorated_function, instance)
         else:

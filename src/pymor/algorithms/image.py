@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
@@ -188,11 +186,11 @@ def estimate_image_hierarchical(operators=tuple(), functionals=tuple(), domain=N
     if extends:
         image = extends[0]
         image_dims = extends[1]
-        ind_range = range(len(image_dims) - 1, len(domain))
+        ind_range = list(range(len(image_dims) - 1, len(domain)))
     else:
         image = image_space.empty()
         image_dims = []
-        ind_range = range(-1, len(domain))
+        ind_range = list(range(-1, len(domain)))
 
     for i in ind_range:
         logger.info('Estimating image for basis vector {} ...'.format(i))

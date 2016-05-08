@@ -23,8 +23,6 @@ Options:
     --nt=COUNT   Number of time steps [default: 10].
 """
 
-from __future__ import absolute_import, division, print_function
-
 import math as m
 from docopt import docopt
 import numpy as np

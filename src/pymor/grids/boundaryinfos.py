@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 
 from pymor.domaindescriptions.boundarytypes import BoundaryType
@@ -39,10 +37,10 @@ class BoundaryInfoFromIndicators(BoundaryInfoInterface):
         self.grid = grid
         assert_unique_type = assert_unique_type if assert_unique_type else [1]
         assert_some_type = assert_some_type if assert_some_type else []
-        self.boundary_types = indicators.keys()
-        self._masks = {boundary_type: [np.zeros(grid.size(codim), dtype='bool') for codim in xrange(1, grid.dim + 1)]
+        self.boundary_types = frozenset(indicators.keys())
+        self._masks = {boundary_type: [np.zeros(grid.size(codim), dtype='bool') for codim in range(1, grid.dim + 1)]
                        for boundary_type in self.boundary_types}
-        for boundary_type, codims in self._masks.iteritems():
+        for boundary_type, codims in self._masks.items():
             for c, mask in enumerate(codims):
                 mask[grid.boundaries(c + 1)] = indicators[boundary_type](grid.centers(c + 1)[grid.boundaries(c + 1)])
         self.check_boundary_types(assert_unique_type=assert_unique_type, assert_some_type=assert_some_type)
@@ -87,7 +85,7 @@ class SubGridBoundaryInfo(BoundaryInfoInterface):
         boundary_types = grid_boundary_info.boundary_types
         has_new_boundaries = False
         masks = []
-        for codim in xrange(1, subgrid.dim + 1):
+        for codim in range(1, subgrid.dim + 1):
             parent_indices = subgrid.parent_indices(codim)[subgrid.boundaries(codim)]
             new_boundaries = np.where(np.logical_not(grid.boundary_mask(codim)[parent_indices]))
             if len(new_boundaries) > 0:

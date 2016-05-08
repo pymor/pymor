@@ -5,7 +5,7 @@ Maintainer: Rene Milk <rene.milk@uni-muenster.de>
 Build-Depends: debhelper (>= 8.0.0), python-pip, python-virtualenv, python-numpy,
   python-scipy, python-pytest, python-pyside, 
   cython, python-sphinx, python-sympy, python-matplotlib,
-  python-opengl, python-docopt, python-pyvtk, 
+  python-opengl, python-docopt, python-pyevtk,
   python-dev, python3, dh-make,
   python-docutils
 Standards-Version: 3.9.4
@@ -19,7 +19,7 @@ Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends},
   python-pip, python-virtualenv, python-numpy,
   python-scipy, python-pytest, python-pyside,
   cython, python-matplotlib, python-opengl,
-  python-docopt, python-pyvtk,
+  python-docopt, python-pyevtk,
   python-dev, python
 Suggests: python-pymor-doc
 Description: makes pyMOR importable system-wide + dependency tracking

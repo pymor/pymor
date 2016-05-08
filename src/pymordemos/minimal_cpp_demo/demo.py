@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 
 from pymor.algorithms.pod import pod
@@ -22,8 +20,8 @@ from wrapper import WrappedDiffusionOperator
 
 def discretize(n, nt, blocks):
     h = 1. / blocks
-    ops = [WrappedDiffusionOperator.create(n, h * i, h * (i + 1)) for i in xrange(blocks)]
-    pfs = [ProjectionParameterFunctional('diffusion_coefficients', (blocks,), (i,)) for i in xrange(blocks)]
+    ops = [WrappedDiffusionOperator.create(n, h * i, h * (i + 1)) for i in range(blocks)]
+    pfs = [ProjectionParameterFunctional('diffusion_coefficients', (blocks,), (i,)) for i in range(blocks)]
     operator = LincombOperator(ops, pfs)
 
     initial_data = operator.source.zeros()

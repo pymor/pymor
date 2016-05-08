@@ -29,10 +29,10 @@ def convert_to_numpy_list_vector_array(d):
         else:
             raise NotImplementedError
 
-    operators = {k: convert_operator(v) for k, v in d.operators.iteritems()}
-    functionals = {k: convert_operator(v, functional=True) for k, v in d.functionals.iteritems()}
-    vector_operators = {k: convert_operator(v, vector=True) for k, v in d.vector_operators.iteritems()}
-    products = {k: convert_operator(v) for k, v in d.products.iteritems()}
+    operators = {k: convert_operator(v) for k, v in d.operators.items()}
+    functionals = {k: convert_operator(v, functional=True) for k, v in d.functionals.items()}
+    vector_operators = {k: convert_operator(v, vector=True) for k, v in d.vector_operators.items()}
+    products = {k: convert_operator(v) for k, v in d.products.items()}
 
     return d.with_(operators=operators, functionals=functionals, vector_operators=vector_operators,
                    products=products)

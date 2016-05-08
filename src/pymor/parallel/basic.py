@@ -4,8 +4,6 @@
 
 """This module contains a base class for implementing WorkerPoolInterface."""
 
-from __future__ import absolute_import, division, print_function
-
 import weakref
 
 from pymor.core.interfaces import ImmutableInterface
@@ -19,11 +17,11 @@ class WorkerPoolDefaultImplementations(object):
         if copy:
             slices = []
             for i in range(len(self)):
-                slices.append(U.copy(ind=range(i*slice_len, min((i+1)*slice_len, len(U)))))
+                slices.append(U.copy(ind=list(range(i*slice_len, min((i+1)*slice_len, len(U))))))
         else:
             slices = [U.empty() for _ in range(len(self))]
             for s in slices:
-                s.append(U, o_ind=range(0, min(slice_len, len(U))), remove_from_other=True)
+                s.append(U, o_ind=list(range(0, min(slice_len, len(U)))), remove_from_other=True)
         remote_U = self.push(U.empty())
         del U
         self.map(_append_array_slice, slices, U=remote_U)
@@ -64,7 +62,7 @@ class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPoolInterface):
         return {k: (pushed_immutable_objects.get(v.uid, (v, 0))[0] if isinstance(v, ImmutableInterface) else
                     v.remote_id if isinstance(v, RemoteObject) else
                     v)
-                for k, v in kwargs.iteritems()}
+                for k, v in kwargs.items()}
 
     def apply(self, function, *args, **kwargs):
         kwargs = self._map_kwargs(kwargs)
@@ -80,7 +78,7 @@ class WorkerPoolBase(WorkerPoolDefaultImplementations, WorkerPoolInterface):
         return self._map(function, chunks, **kwargs)
 
     def _split_into_chunks(self, count, *args):
-        lens = map(len, args)
+        lens = list(map(len, args))
         min_len = min(lens)
         max_len = max(lens)
         assert min_len == max_len

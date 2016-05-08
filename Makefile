@@ -22,6 +22,9 @@ flake8:
 test:
 	python setup.py test
 
+fasttest:
+	PYTEST_MARKER="not slow" python setup.py test
+
 full-test:
 	@echo
 	@echo "Ensuring that all required pytest plugins are installed ..."
@@ -37,3 +40,8 @@ full-test:
 	
 doc:
 	PYTHONPATH=${PWD}/src/:${PYTHONPATH} make -C docs html
+
+3to2:
+	./3to2.sh src/
+	./3to2.sh docs/
+	python setup.py build_ext -i

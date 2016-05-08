@@ -60,8 +60,6 @@ used to specify the path of a configuration file. If empty or set to
    are trying to hack it.)
 """
 
-from __future__ import absolute_import, division, print_function
-
 from collections import defaultdict
 import functools
 import importlib
@@ -92,12 +90,12 @@ class DefaultContainer(object):
         # ensure that setting no defaults is the same as setting empty defaults
 
     def _add_defaults_for_function(self, defaultsdict, func, sid_ignore, qualname):
-        path = qualname or getattr(func, '__qualname__', func.__module__ + '.' + func.__name__)
+        path = qualname or (func.__module__ + '.' + getattr(func, '__qualname__', func.__name__))
         if path in self.registered_functions:
             raise ValueError('''Function with name {} already registered for default values!
 For Python 2 compatibility, please supply the '_qualname' parameter when decorating
 methods of classes!'''.format(path))
-        for k, v in defaultsdict.iteritems():
+        for k, v in defaultsdict.items():
             self._data[path + '.' + k]['code'] = v
             self._data[path + '.' + k]['sid_ignore'] = k in sid_ignore
 
@@ -108,10 +106,10 @@ methods of classes!'''.format(path))
         return result
 
     def _add_wrapper_function(self, func, qualname=None):
-        path = qualname or getattr(func, '__qualname__', func.__module__ + '.' + func.__name__)
+        path = qualname or (func.__module__ + '.' + getattr(func, '__qualname__', func.__name__))
         self.registered_functions[path] = func
         split_path = path.split('.')
-        for k, v in self._data.iteritems():
+        for k, v in self._data.items():
             if k.split('.')[:-1] == split_path:
                 v['func'] = func
 
@@ -119,7 +117,7 @@ methods of classes!'''.format(path))
         if hasattr(self, '_sid'):
             del self._sid
         assert type in ('user', 'file')
-        for k, v in defaults.iteritems():
+        for k, v in defaults.items():
             k_parts = k.split('.')
 
             func = self._data[k].get('func', None)
@@ -282,7 +280,7 @@ def {0}({1}):
         if func.__name__ in ('wrapped_func', 'argname', 'defaultsdict'):
             raise ValueError('Functions decorated with @default may not have the name ' + func.__name__)
         wrapper_globals = {'wrapped_func': func, 'argnames': argnames, 'defaultsdict': defaultsdict}
-        exec wrapper_code in wrapper_globals
+        exec(wrapper_code, wrapper_globals)
         wrapper = functools.wraps(func)(wrapper_globals[func.__name__])
 
         # On Python 2 we have to add the __wrapped__ attribute to the wrapper
@@ -352,8 +350,8 @@ def print_defaults(import_all=True, shorten_paths=2):
             keys[int(i)].append('.'.join(k_parts))
         values[int(i)].append(repr(v))
         comments[int(i)].append(c)
-    key_width = max(max([0] + map(len, ks)) for ks in keys)
-    value_width = max(max([0] + map(len, vls)) for vls in values)
+    key_width = max(max([0] + list(map(len, ks))) for ks in keys)
+    value_width = max(max([0] + list(map(len, vls))) for vls in values)
     key_string = 'path (shortened)' if shorten_paths else 'path'
     header = '''
 {:{key_width}}   {:{value_width}}   source'''[1:].format(key_string, 'value',
@@ -416,9 +414,9 @@ def write_defaults_to_file(filename='./pymor_defaults.py', packages=('pymor',)):
         keys[int(i)].append("'" + k + "'")
         values[int(i)].append(repr(v))
         as_comment[int(i)].append(c == 'code')
-    key_width = max(max([0] + map(len, ks)) for ks in keys)
+    key_width = max(max([0] + list(map(len, ks))) for ks in keys)
 
-    with open(filename, 'w') as f:
+    with open(filename, 'wt') as f:
         print('''
 # pyMOR defaults config file
 # This file has been automatically created by pymor.core.defaults.write_defaults_to_file'.
@@ -479,7 +477,7 @@ def load_defaults_from_file(filename='./pymor_defaults.py'):
         Path of the configuration file.
     """
     env = {}
-    exec open(filename).read() in env
+    exec(open(filename, 'rt').read(), env)
     try:
         _default_container.update(env['d'], type='file')
     except KeyError as e:

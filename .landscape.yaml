@@ -1,0 +1,16 @@
+# https://landscape.io/pages/docs 
+
+max-line-length: 120
+
+ignore-paths:
+    - distribute_setup.py
+    - graveyard
+    - src/pymor/playground/
+    - src/pymortests/
+
+strictness: low
+
+pyroma:
+  run: true
+
+autodetect: yes

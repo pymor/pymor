@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import print_function
-
 from types import FunctionType
 
 import pkgutil
@@ -53,7 +51,7 @@ def walk(module):
                     print('    ' + option, file=f)
                 print('', file=f)
                 module = __import__(m, fromlist='none')
-                for k, v in sorted(module.__dict__.iteritems()):
+                for k, v in sorted(module.__dict__.items()):
                     if isinstance(v, (type, FunctionType)) and v.__module__ == m:
                         if v.__name__.startswith('_') and not v.__doc__:
                             continue

@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 from pymor.core.interfaces import ImmutableInterface
 from pymor.discretizations.basic import DiscretizationBase
 from pymor.operators.mpi import mpi_wrap_operator
@@ -166,16 +164,16 @@ def mpi_wrap_discretization(local_discretizations, use_with=False, with_apply2=F
 
     operators = {k: mpi_wrap_operator(v, with_apply2=with_apply2,
                                       pickle_subtypes=pickle_subtypes, array_type=array_type) if v else None
-                 for k, v in operators.iteritems()}
+                 for k, v in operators.items()}
     functionals = {k: mpi_wrap_operator(v, functional=True, with_apply2=with_apply2,
                                         pickle_subtypes=pickle_subtypes, array_type=array_type) if v else None
-                   for k, v in functionals.iteritems()}
+                   for k, v in functionals.items()}
     vectors = {k: mpi_wrap_operator(v, vector=True, with_apply2=with_apply2,
                                     pickle_subtypes=pickle_subtypes, array_type=array_type) if v else None
-               for k, v in vectors.iteritems()}
+               for k, v in vectors.items()}
     products = {k: mpi_wrap_operator(v, with_apply2=with_apply2,
                                      pickle_subtypes=pickle_subtypes, array_type=array_type) if v else None
-                for k, v in products.iteritems()} if products else None
+                for k, v in products.items()} if products else None
 
     if use_with:
         d = mpi.get_object(local_discretizations)
@@ -189,9 +187,9 @@ def mpi_wrap_discretization(local_discretizations, use_with=False, with_apply2=F
 
 def _mpi_wrap_discretization_manage_operators(obj_id):
     d = mpi.get_object(obj_id)
-    operators = {k: mpi.manage_object(v) if v else None for k, v in sorted(d.operators.iteritems())}
-    functionals = {k: mpi.manage_object(v) if v else None for k, v in sorted(d.functionals.iteritems())}
-    vectors = {k: mpi.manage_object(v) if v else None for k, v in sorted(d.vector_operators.iteritems())}
-    products = {k: mpi.manage_object(v) if v else None for k, v in sorted(d.products.iteritems())} if d.products else None
+    operators = {k: mpi.manage_object(v) if v else None for k, v in sorted(d.operators.items())}
+    functionals = {k: mpi.manage_object(v) if v else None for k, v in sorted(d.functionals.items())}
+    vectors = {k: mpi.manage_object(v) if v else None for k, v in sorted(d.vector_operators.items())}
+    products = {k: mpi.manage_object(v) if v else None for k, v in sorted(d.products.items())} if d.products else None
     if mpi.rank0:
         return operators, functionals, vectors, products

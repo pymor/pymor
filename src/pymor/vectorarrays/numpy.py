@@ -3,15 +3,13 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 from numbers import Number
 
 import numpy as np
 from scipy.sparse import issparse
 
 from pymor.core import NUMPY_INDEX_QUIRK
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpace
+from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpace, _INDEXTYPES
 
 
 class NumpyVectorArray(VectorArrayInterface):
@@ -71,7 +69,7 @@ class NumpyVectorArray(VectorArrayInterface):
 
     @classmethod
     def make_array(cls, subtype=None, count=0, reserve=0):
-        assert isinstance(subtype, Number)
+        assert isinstance(subtype, _INDEXTYPES)
         assert count >= 0
         assert reserve >= 0
         va = cls(np.empty((0, 0)))
@@ -174,11 +172,11 @@ class NumpyVectorArray(VectorArrayInterface):
             if hasattr(ind, '__len__'):
                 if len(ind) == 0:
                     return
-                remaining = sorted(set(xrange(len(self))) - set(ind))
+                remaining = sorted(set(range(len(self))) - set(ind))
                 self._array = self._array[remaining]
             else:
                 assert -self._len < ind < self._len
-                self._array = self._array[range(ind) + range(ind + 1, self._len)]
+                self._array = self._array[list(range(ind)) + list(range(ind + 1, self._len))]
             self._len = self._array.shape[0]
         if not self._array.flags['OWNDATA']:
             self._array = self._array.copy()
@@ -231,7 +229,7 @@ class NumpyVectorArray(VectorArrayInterface):
 
     def scal(self, alpha, ind=None):
         assert self.check_ind_unique(ind)
-        assert isinstance(alpha, Number) \
+        assert isinstance(alpha, _INDEXTYPES) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
 
         if self._refcount[0] > 1:
@@ -258,7 +256,7 @@ class NumpyVectorArray(VectorArrayInterface):
         assert x.check_ind(x_ind)
         assert self.dim == x.dim
         assert self.len_ind(ind) == x.len_ind(x_ind) or x.len_ind(x_ind) == 1
-        assert isinstance(alpha, Number) \
+        assert isinstance(alpha, _INDEXTYPES) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
 
         if self._refcount[0] > 1:
