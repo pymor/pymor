@@ -237,12 +237,12 @@ def picklable_vector_array_without_reserve(request):
     return request.param()
 
 
-@pytest.fixture(params=list(range(3)))
+@pytest.fixture(params=range(3))
 def vector_array(vector_array_without_reserve, request):
     return vector_array_from_empty_reserve(vector_array_without_reserve, request.param)
 
 
-@pytest.fixture(params=list(range(3)))
+@pytest.fixture(params=range(3))
 def picklable_vector_array(picklable_vector_array_without_reserve, request):
     return vector_array_from_empty_reserve(picklable_vector_array_without_reserve, request.param)
 
@@ -256,7 +256,7 @@ def compatible_vector_array_pair_without_reserve(request):
     return request.param()
 
 
-@pytest.fixture(params=list(product(range(3), range(3))))
+@pytest.fixture(params=product(range(3), range(3)))
 def compatible_vector_array_pair(compatible_vector_array_pair_without_reserve, request):
     v1, v2 = compatible_vector_array_pair_without_reserve
     return vector_array_from_empty_reserve(v1, request.param[0]), vector_array_from_empty_reserve(v2, request.param[1])
