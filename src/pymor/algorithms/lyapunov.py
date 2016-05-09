@@ -30,7 +30,7 @@ try:
         For the dual Lyapunov equation::
 
             A^T * X + X * A + RHS^T * RHS = 0,
-            A^T * X * E + E^T * X * A^T + RHS^T * RHS = 0,
+            A^T * X * E + E^T * X * A + RHS^T * RHS = 0,
 
         `opt.type` needs to be `pymess.MESS_OP_TRANSPOSE`.
 
