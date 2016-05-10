@@ -15,21 +15,21 @@ from pymor.operators.constructions import (AdjointOperator, ComponentProjection,
 from pymor.operators.numpy import NumpyMatrixOperator
 
 
-def to_numpy_operator(op, format=None):
-    """Transfrom construction of NumpyMatrixOperators to NumpyMatrixOperator
+def to_matrix(op, format=None):
+    """Transfrom construction of NumpyMatrixOperators to NumPy or SciPy array
 
     Parameters
     ----------
     op
         Operator.
     format
-        Format of the |SciPy sparray| in the resulting NumpyMatrixOperator.
+        Format of the resulting |SciPy sparray|.
         If `None`, a dense format is used.
 
     Returns
     -------
     res
-        Equivalent NumpyMatrixOperator.
+        Equivalent matrix.
     """
     assert format is None or format in ('bsr', 'coo', 'csc', 'csr', 'dia', 'dok', 'lil')
     mapping = {
@@ -41,7 +41,7 @@ def to_numpy_operator(op, format=None):
         'dok': sps.dok_matrix,
         'lil': sps.lil_matrix
     }
-    return NumpyMatrixOperator(_to_matrix(op, format, mapping))
+    return _to_matrix(op, format, mapping)
 
 
 def _to_matrix(op, format, mapping):
