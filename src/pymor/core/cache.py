@@ -69,12 +69,15 @@ import getpass
 import inspect
 import os
 import sqlite3
+import sys
 import tempfile
 from types import MethodType
 
 from pymor.core.defaults import defaults, defaults_sid
 from pymor.core.interfaces import ImmutableInterface, generate_sid
 from pymor.core.pickle import dump, load
+
+PY2 = sys.version_info.major == 2
 
 
 @atexit.register
@@ -297,13 +300,22 @@ class cached(object):
     def __init__(self, function):
         self.decorated_function = function
         functools.update_wrapper(self, function)
-        argspec = inspect.getargspec(function)
-        self.argnames = argnames = argspec.args[1:]  # first argument is self
-        defaults = function.__defaults__
-        if defaults:
-            self.defaults = {k: v for k, v in zip(argnames[-len(defaults):], defaults)}
+        if PY2:
+            argspec = inspect.getargspec(function)
+            if argspec.varargs is not None:
+                raise NotImplementedError
+            self.argnames = argnames = argspec.args[1:]  # first argument is self
+            defaults = function.__defaults__
+            if defaults:
+                self.defaults = {k: v for k, v in zip(argnames[-len(defaults):], defaults)}
+            else:
+                self.defaults = None
         else:
-            self.defaults = None
+            params = inspect.signature(function).parameters
+            if any(v.kind == v.VAR_POSITIONAL for v in params.values()):
+                raise NotImplementedError
+            self.argnames = list(params.keys())[1:]  # first argument is self
+            self.defaults = {k: v.default for k, v in params.items() if v.default is not v.empty}
 
     def __call__(self, im_self, *args, **kwargs):
         """Via the magic that is partial functions returned from __get__, im_self is the instance object of the class
@@ -374,10 +386,20 @@ class CacheableInterface(ImmutableInterface):
         if _caching_disabled or self.cache_region is None:
             return method(*args, **kwargs)
 
-        argnames = inspect.getargspec(method).args[1:]  # first argument is self
-        defaults = method.__defaults__
-        if defaults:
-            defaults = {k: v for k, v in zip(argnames[-len(defaults):], defaults)}
+        if PY2:
+            argspec = inspect.getargspec(method)
+            if argspec.varargs is not None:
+                raise NotImplementedError
+            argnames = argspec.args[1:]  # first argument is self
+            defaults = method.__defaults__
+            if defaults:
+                defaults = {k: v for k, v in zip(argnames[-len(defaults):], defaults)}
+        else:
+            params = inspect.signature(method).parameters
+            if any(v.kind == v.VAR_POSITIONAL for v in params.values()):
+                raise NotImplementedError
+            argnames = list(params.keys())[1:]  # first argument is self
+            defaults = {k: v.default for k, v in params.items() if v.default is not v.empty}
         return self._cached_method_call(method, False, argnames, defaults, args, kwargs)
 
     def _cached_method_call(self, method, pass_self, argnames, defaults, args, kwargs):
