@@ -33,6 +33,7 @@ def test_to_matrix():
                                                  [1, 1]), Concatenation(Bop, AdjointOperator(Cop))])
 
     assert np.allclose(X, to_matrix(Xop))
+    assert np.allclose(X, to_matrix(Xop, format='csr').toarray())
 
     np.random.seed(0)
     V = np.random.randn(10, 2)
