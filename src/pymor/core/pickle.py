@@ -17,7 +17,10 @@ implementation details of CPython to achieve its goals.
 import marshal
 import opcode
 from types import FunctionType, ModuleType
-import pickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle as pickle
 from io import BytesIO as IOtype
 
 import sys

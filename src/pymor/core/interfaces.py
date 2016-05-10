@@ -66,7 +66,10 @@ functionality:
 """
 
 import abc
-from pickle import dumps, HIGHEST_PROTOCOL
+try:
+    from cPickle import dumps, HIGHEST_PROTOCOL
+except ImportError:
+    from pickle import dumps, HIGHEST_PROTOCOL
 from copyreg import dispatch_table
 import hashlib
 import inspect
