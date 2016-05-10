@@ -36,6 +36,7 @@ if HAVE_FENICS:
         def _copy_data(self):
             self.impl = self.impl.copy()
 
+        @classmethod
         def make_zeros(cls, subtype):
             impl = df.Function(subtype).vector()
             return cls(impl, subtype)
