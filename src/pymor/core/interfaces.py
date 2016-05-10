@@ -66,7 +66,7 @@ functionality:
 """
 
 import abc
-from pickle import dumps
+from pickle import dumps, HIGHEST_PROTOCOL
 from copyreg import dispatch_table
 import hashlib
 import inspect
@@ -611,7 +611,7 @@ class _SIDGenerator(object):
 
             reduce = getattr(obj, '__reduce_ex__', None)
             if reduce:
-                rv = reduce(2)
+                rv = reduce(HIGHEST_PROTOCOL)
             else:
                 reduce = getattr(obj, '__reduce__', None)
                 if reduce:
