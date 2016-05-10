@@ -130,8 +130,6 @@ class UberMeta(abc.ABCMeta):
 
     def __new__(cls, classname, bases, classdict):
         """I copy docstrings from base class methods to deriving classes.
-        I also forward "abstract{class|static}method" decorations in the base class to "{class|static}method"
-        decorations in the new subclass.
 
         Copying of docstrings can be prevented by setting the `PYMOR_COPY_DOCSTRINGS_DISABLE` environment
         variable to `1`.
@@ -155,12 +153,6 @@ class UberMeta(abc.ABCMeta):
                             if doc is not None:
                                 base_doc = doc
                             item.__doc__ = base_doc
-                    if (hasattr(base_func, "__isabstractstaticmethod__") and
-                            getattr(base_func, "__isabstractstaticmethod__")):
-                        classdict[attr] = staticmethod(classdict[attr])
-                    if (hasattr(base_func, "__isabstractclassmethod__") and
-                            getattr(base_func, "__isabstractclassmethod__")):
-                        classdict[attr] = classmethod(classdict[attr])
 
         c = abc.ABCMeta.__new__(cls, classname, bases, classdict)
 
@@ -295,32 +287,12 @@ abstractproperty = abc.abstractproperty
 
 import sys
 if sys.version_info >= (3, 1, 0):
-    abstractclassmethod_base = abc.abstractclassmethod
-    abstractstaticmethod_base = abc.abstractstaticmethod
+    abstractclassmethod = abc.abstractclassmethod
+    abstractstaticmethod = abc.abstractstaticmethod
 else:
     # backport path for issue5867
-    abstractclassmethod_base = backports.abstractclassmethod
-    abstractstaticmethod_base = backports.abstractstaticmethod
-
-
-class abstractclassmethod(abstractclassmethod_base):
-    """I mark my wrapped function with an additional __isabstractclassmethod__ member,
-    where my abstractclassmethod_base sets __isabstractmethod__ = True.
-    """
-
-    def __init__(self, callable_method):
-        callable_method.__isabstractclassmethod__ = True
-        super(abstractclassmethod, self).__init__(callable_method)
-
-
-class abstractstaticmethod(abstractstaticmethod_base):
-    """I mark my wrapped function with an additional __isabstractstaticmethod__ member,
-    where my abstractclassmethod_base sets __isabstractmethod__ = True.
-    """
-
-    def __init__(self, callable_method):
-        callable_method.__isabstractstaticmethod__ = True
-        super(abstractstaticmethod, self).__init__(callable_method)
+    abstractclassmethod = backports.abstractclassmethod
+    abstractstaticmethod = backports.abstractstaticmethod
 
 
 class ImmutableMeta(UberMeta):
