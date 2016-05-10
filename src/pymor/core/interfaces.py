@@ -333,7 +333,7 @@ class ImmutableMeta(UberMeta):
 
         c = UberMeta.__new__(cls, classname, bases, classdict)
 
-        c._implements_reduce = ('__reduce__' in classdict
+        c._implements_reduce = ('__reduce__' in classdict or '__reduce_ex__' in classdict
                                 or any(getattr(base, '_implements_reduce', False) for base in bases))
         return c
 
@@ -589,7 +589,7 @@ class _SIDGenerator(object):
 
             if obj._implements_reduce:
                 self.logger.debug('{}: __reduce__ is implemented, not using sid_ignore'.format(obj.name))
-                return self.handle_reduce_value(obj, t, obj.__reduce__(), first_obj)
+                return self.handle_reduce_value(obj, t, obj.__reduce_ex__(HIGHEST_PROTOCOL), first_obj)
             else:
                 try:
                     state = obj.__getstate__()
