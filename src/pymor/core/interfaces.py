@@ -78,12 +78,14 @@ import os
 import time
 from types import FunctionType, BuiltinFunctionType
 import uuid
+import sys
 
 import numpy as np
 
 from pymor.core import decorators, backports, logger
 from pymor.core.exceptions import ConstError, SIDGenerationError
 
+PY2 = sys.version_info.major == 2
 DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_COPY_DOCSTRINGS_DISABLE', 0)) == 1
 NoneType = type(None)
 
@@ -156,19 +158,27 @@ class UberMeta(abc.ABCMeta):
 
         c = abc.ABCMeta.__new__(cls, classname, bases, classdict)
 
-        # Beware! The following will probably break in python 3 if there are
-        # keyword-only arguemnts
-        try:
-            args, varargs, keywords, defaults = inspect.getargspec(c.__init__)
-            assert args[0] == 'self'
-            c._init_arguments = tuple(args[1:])
-            if defaults:
-                c._init_defaults = dict(zip(args[-len(defaults):], defaults))
-            else:
-                c._init_defaults = dict()
-        except TypeError:       # happens when no one declares an __init__ method and object is reached
-            c._init_arguments = tuple()
-            c._init_defaults = dict()
+        if PY2:
+            try:
+                args, varargs, keywords, defaults = inspect.getargspec(c.__init__)
+                assert args[0] == 'self'
+                c._init_arguments = tuple(args[1:])
+            except TypeError:       # happens when no one declares an __init__ method and object is reached
+                c._init_arguments = tuple()
+        else:
+            # getargspec is deprecated and does not work with keyword only args
+            init_sig = inspect.signature(c.__init__)
+            init_args = []
+            for arg, description in init_sig.parameters.items():
+                if arg == 'self':
+                    continue
+                if description.kind == description.POSITIONAL_ONLY:
+                    raise TypeError('It should not be possible that {}.__init__ has POSITIONAL_ONLY arguments'.
+                                    format(c))
+                if description.kind in (description.POSITIONAL_OR_KEYWORD, description.KEYWORD_ONLY):
+                    init_args.append(arg)
+            c._init_arguments = tuple(init_args)
+
         return c
 
 
@@ -285,14 +295,13 @@ class BasicInterface(object, metaclass=UberMeta):
 abstractmethod = abc.abstractmethod
 abstractproperty = abc.abstractproperty
 
-import sys
-if sys.version_info >= (3, 1, 0):
-    abstractclassmethod = abc.abstractclassmethod
-    abstractstaticmethod = abc.abstractstaticmethod
-else:
+if PY2:
     # backport path for issue5867
     abstractclassmethod = backports.abstractclassmethod
     abstractstaticmethod = backports.abstractstaticmethod
+else:
+    abstractclassmethod = abc.abstractclassmethod
+    abstractstaticmethod = abc.abstractstaticmethod
 
 
 class ImmutableMeta(UberMeta):
@@ -480,7 +489,7 @@ def generate_sid(obj, debug=False):
 
 # Helper classes for generate_sid
 
-if sys.version_info.major == 2:
+if PY2:
     import __builtin__
     STRING_TYPES = (str, __builtin__.unicode)
 else:
