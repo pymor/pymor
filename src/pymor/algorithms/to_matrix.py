@@ -54,10 +54,7 @@ def _to_matrix(op, format, mapping, mu):
             else:
                 res = op._matrix.toarray()
         else:
-            if not op.sparse:
-                res = mapping[format](op._matrix)
-            else:
-                res = op._matrix.asformat(format)
+            res = mapping[format](op._matrix)
     elif isinstance(op, BlockOperator):
         op_blocks = op._blocks
         mat_blocks = [[] for i in xrange(op.num_range_blocks)]
