@@ -509,9 +509,11 @@ def generate_sid(obj, debug=False):
 # Helper classes for generate_sid
 
 if sys.version_info.major == 2:
-    STRING_TYPES = (str, __builtins__.unicode)
+    import __builtin__
+    STRING_TYPES = (str, __builtin__.unicode)
 else:
     STRING_TYPES = (str, bytes)
+
 
 class _SIDGenerator(object):
 
