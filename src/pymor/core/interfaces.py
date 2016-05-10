@@ -526,7 +526,7 @@ class _SIDGenerator(object):
 
         if debug:
             print('-' * 100)
-            print('Deterministic state for ' + obj.name)
+            print('Deterministic state for ' + getattr(obj, 'name', str(obj)))
             print('-' * 100)
             print()
             import pprint
@@ -574,7 +574,8 @@ class _SIDGenerator(object):
             return (t,) + tuple(self.deterministic_state(x) for x in sorted(obj))
 
         if t is dict:
-            return (dict,) + tuple((k, self.deterministic_state(v)) for k, v in sorted(obj.iteritems()))
+            return (dict,) + tuple((k if type(k) is str else self.deterministic_state(k), self.deterministic_state(v))
+                                   for k, v in sorted(obj.iteritems()))
 
         if issubclass(t, ImmutableInterface):
             if hasattr(obj, 'sid') and not obj._sid_contains_cycles:
