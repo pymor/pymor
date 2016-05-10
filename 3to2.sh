@@ -3,7 +3,6 @@
 set -u
 
 FIXER="\
- -f absimport\
  -f annotations\
  -f bitlength\
  -f bool\
@@ -30,7 +29,6 @@ FIXER="\
  -f printfunction\
  -f raise\
  -f reduce\
- -f setliteral\
  -f super\
  -f unpacking"
 
