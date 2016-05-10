@@ -508,6 +508,10 @@ def generate_sid(obj, debug=False):
 
 # Helper classes for generate_sid
 
+if sys.version_info.major == 2:
+    STRING_TYPES = (str, __builtins__.unicode)
+else:
+    STRING_TYPES = (str, bytes)
 
 class _SIDGenerator(object):
 
@@ -557,7 +561,7 @@ class _SIDGenerator(object):
 
         self.memo[id(obj)] = _MemoKey(len(self.memo), obj)
 
-        if t in (str, bytes):
+        if t in STRING_TYPES:
             return obj
 
         if t is np.ndarray and t.dtype != object:
