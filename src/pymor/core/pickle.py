@@ -25,6 +25,8 @@ from io import BytesIO as IOtype
 
 import sys
 
+PY2 = sys.version_info.major == 2
+
 PicklingError = pickle.PicklingError
 UnpicklingError = pickle.UnpicklingError
 PROTOCOL = pickle.HIGHEST_PROTOCOL
@@ -76,7 +78,10 @@ def _generate_opcode(code_object):
     HAVE_ARGUMENT = opcode.HAVE_ARGUMENT
     EXTENDED_ARG = opcode.EXTENDED_ARG
 
-    codebytes = bytearray(code_object.co_code)
+    if PY2:
+        codebytes = bytearray(code_object.co_code)
+    else:
+        codebytes = code_object.co_code
     extended_arg = 0
     i = 0
     n = len(codebytes)
@@ -98,9 +103,9 @@ def _generate_opcode(code_object):
 def _global_names(code_object):
     '''Return all names in code_object.co_names which are used in a LOAD_GLOBAL statement.'''
     LOAD_GLOBAL = opcode.opmap['LOAD_GLOBAL']
-    indices = set(i for o, i in _generate_opcode(code_object) if o == LOAD_GLOBAL)
+    indices = {i for o, i in _generate_opcode(code_object) if o == LOAD_GLOBAL}
     names = code_object.co_names
-    return [names[i] for i in indices]
+    return {names[i] for i in indices}
 
 
 class Module(object):
@@ -133,19 +138,27 @@ def dumps_function(function):
     closure = None if function.__closure__ is None else [c.cell_contents for c in function.__closure__]
     code = marshal.dumps(function.__code__)
     func_globals = function.__globals__
-    func_dict = function.__dict__
 
     def wrap_modules(x):
         return Module(x) if isinstance(x, ModuleType) else x
 
     # note that global names in function.func_code can also refer to builtins ...
     globals_ = {k: wrap_modules(func_globals[k]) for k in _global_names(function.__code__) if k in func_globals}
-    return dumps((function.__name__, code, globals_, function.__defaults__, closure, func_dict))
+
+    if PY2:
+        return dumps((function.__name__, code, globals_, function.__defaults__, closure, function.__dict__,
+                      function.__doc__))
+    else:
+        return dumps((function.__name__, code, globals_, function.__defaults__, closure, function.__dict__,
+                      function.__doc__, function.__qualname__, function.__kwdefaults__, function.__annotations__))
 
 
 def loads_function(s):
     '''Restores a function serialized with :func:`dumps_function`.'''
-    name, code, globals_, defaults, closure, func_dict = loads(s)
+    if PY2:
+        name, code, globals_, defaults, closure, func_dict, doc = loads(s)
+    else:
+        name, code, globals_, defaults, closure, func_dict, doc, qualname, kwdefaults, annotations = loads(s)
     code = marshal.loads(code)
     for k, v in globals_.items():
         if isinstance(v, Module):
@@ -158,6 +171,11 @@ def loads_function(s):
     globals_['__builtins__'] = __builtins__
     r = FunctionType(code, globals_, name, defaults, closure)
     r.__dict__ = func_dict
+    r.__doc__ = doc
+    if not PY2:
+        r.__qualname__ = qualname
+        r.__kwdefaults__ = kwdefaults
+        r.__annotations__ = annotations
     return r
 
 
@@ -175,13 +193,10 @@ def _function_pickling_handler(f):
 
 
 def _function_unpickling_handler(persid):
-    try:
-        mode, data = persid[0].to_bytes(1, sys.byteorder), persid[1:]
-    except AttributeError as a:
-        mode, data = persid[0], persid[1:]
-    if mode == b'A':
+    mode, data = persid[0], persid[1:]
+    if mode == b'A'[0]:
         return pickle.loads(data)
-    elif mode == b'B':
+    elif mode == b'B'[0]:
         return loads_function(data)
     else:
         raise UnpicklingError
