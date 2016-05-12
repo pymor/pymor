@@ -60,7 +60,7 @@ used to specify the path of a configuration file. If empty or set to
    are trying to hack it.)
 """
 
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 import functools
 import importlib
 import inspect
@@ -92,7 +92,50 @@ class DefaultContainer(object):
         self._data = defaultdict(dict)
         self.registered_functions = set()
 
-    def _add_defaults_for_function(self, defaultsdict, func, sid_ignore, qualname):
+    def _add_defaults_for_function(self, func, args, sid_ignore, qualname):
+
+        if func.__doc__ is not None:
+            new_docstring = inspect.cleandoc(func.__doc__)
+            new_docstring += '''
+
+Defaults
+--------
+'''
+            new_docstring += '\n'.join(textwrap.wrap(', '.join(args), 80)) + '\n(see :mod:`pymor.core.defaults`)'
+            func.__doc__ = new_docstring
+
+        if PY2:
+            defaults = func.__defaults__
+            if not defaults:
+                raise ValueError('Wrapped function has no optional arguments at all!')
+            defaults = list(defaults)
+            argspec = inspect.getargspec(func)
+            argnames = argspec.args
+
+            if not set(args) <= set(argnames):
+                raise ValueError('Decorated function has no arguments named: ' +
+                                 ', '.join(set(args) - set(argnames)))
+
+            if not set(args) <= set(argnames[-len(defaults):]):
+                raise ValueError('Decorated function has no defaults for arguments named: ' +
+                                 ', '.join(set(args) - set(argnames[-len(defaults):])))
+
+            defaultsdict = {}
+            for n, v in zip(argnames[-len(defaults):], defaults):
+                if n in args:
+                    defaultsdict[n] = v
+        else:
+            params = OrderedDict(inspect.signature(func).parameters)
+            argnames = tuple(params.keys())
+            defaultsdict = {}
+            for n in args:
+                p = params.get(n, None)
+                if p is None:
+                    raise ValueError("Decorated function has no argument '{}'".format(n))
+                if p.default is p.empty:
+                    raise ValueError("Decorated function has no default for argument '{}'".format(n))
+                defaultsdict[n] = p.default
+
         path = qualname or (func.__module__ + '.' + getattr(func, '__qualname__', func.__name__))
         if path in self.registered_functions:
             raise ValueError('''Function with name {} already registered for default values!
@@ -104,16 +147,33 @@ methods of classes!'''.format(path))
             self._data[path + '.' + k]['code'] = v
             self._data[path + '.' + k]['sid_ignore'] = k in sid_ignore
 
-        result = {}
+        defaultsdict = {}
         for k in self._data:
             if k.startswith(path + '.'):
-                result[k.split('.')[-1]] = self.get(k)[0]
-        return result
+                defaultsdict[k.split('.')[-1]] = self.get(k)[0]
+
+        func.argnames = argnames
+        func.defaultsdict = defaultsdict
+        self._update_function_signature(func)
+
+    def _update_function_signature(self, func):
+        if PY2:
+            func.__defaults__ = tuple(func.defaultsdict.get(n, v)
+                                      for n, v in zip(func.argnames[-len(func.__defaults__):], func.__defaults__))
+        else:
+            sig = inspect.signature(func)
+            params = OrderedDict(sig.parameters)
+            for n, v in func.defaultsdict.items():
+                params[n] = params[n].replace(default=v)
+            func.__signature__ = sig.replace(parameters=params.values())
 
     def update(self, defaults, type='user'):
         if hasattr(self, '_sid'):
             del self._sid
         assert type in ('user', 'file')
+
+        functions_to_update = set()
+
         for k, v in defaults.items():
             k_parts = k.split('.')
 
@@ -133,12 +193,11 @@ methods of classes!'''.format(path))
 
             self._data[k][type] = v
             argname = k_parts[-1]
-            func.defaults[argname] = v
-            argspec = inspect.getargspec(func)
-            argind = argspec.args.index(argname) - len(argspec.args)
-            defaults = list(argspec.defaults)
-            defaults[argind] = v
-            func.__defaults__ = tuple(defaults)
+            func.defaultsdict[argname] = v
+            functions_to_update.add(func)
+
+        for func in functions_to_update:
+            self._update_function_signature(func)
 
     def get(self, key):
         values = self._data[key]
@@ -223,56 +282,24 @@ def defaults(*args, **kwargs):
         if not args:
             return func
 
-        if func.__doc__ is not None:
-            new_docstring = inspect.cleandoc(func.__doc__)
-            new_docstring += '''
-
-Defaults
---------
-'''
-            new_docstring += '\n'.join(textwrap.wrap(', '.join(args), 80)) + '\n(see :mod:`pymor.core.defaults`)'
-            func.__doc__ = new_docstring
-
-        defaults = func.__defaults__
-        if not defaults:
-            raise ValueError('Wrapped function has no optional arguments at all!')
-        defaults = list(defaults)
-        argspec = inspect.getargspec(func)
-        argnames = argspec.args
-
-        if not set(args) <= set(argnames):
-            raise ValueError('Decorated function has no arguments named: '
-                             + ', '.join(set(args) - set(argnames)))
-
-        if not set(args) <= set(argnames[-len(defaults):]):
-            raise ValueError('Decorated function has no defaults for arguments named: '
-                             + ', '.join(set(args) - set(argnames[-len(defaults):])))
-
-        defaultsdict = {}
-        for n, v in zip(argnames[-len(defaults):], defaults):
-            if n in args:
-                defaultsdict[n] = v
-
         global _default_container
-        defaultsdict = _default_container._add_defaults_for_function(defaultsdict, func,
-                                                                     sid_ignore=sid_ignore, qualname=qualname)
+        _default_container._add_defaults_for_function(func, args=args, sid_ignore=sid_ignore, qualname=qualname)
 
-        func.defaults = defaultsdict
-        func.__defaults__ = tuple(defaultsdict.get(n, v) for n, v in zip(argnames[-len(defaults):], defaults))
-
-        @functools.wraps(func)
+        @functools.wraps(func, updated=tuple())  # ensure that __signature__ is not copied
         def wrapper(*args, **kwargs):
-            for k, v in zip(argnames, args):
+            for k, v in zip(func.argnames, args):
                 if k in kwargs:
                     raise TypeError("() got multiple values for argument '{}'"
                                     .format(func.__name__, k))
                 kwargs[k] = v
-            argdict = {k: v if v is not None else func.defaults.get(k, None) for k, v in kwargs.items()}
-            return func(**argdict)
+            kwargs = {k: v if v is not None else func.defaultsdict.get(k, None) for k, v in kwargs.items()}
+            kwargs = dict(func.defaultsdict, **kwargs)
+            return func(**kwargs)
 
         # On Python 2 we have to add the __wrapped__ attribute to the wrapper
         # manually to help IPython find the right source code location
-        wrapper.__wrapped__ = func
+        if PY2:
+            wrapper.__wrapped__ = func
 
         if PY2 and int(os.environ.get('PYMOR_WITH_SPHINX', 0)) == 1:
             # On Python 2 we have to disable the defaults decorator in order
