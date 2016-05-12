@@ -161,7 +161,7 @@ methods of classes!'''.format(path))
         return self._data.keys()
 
     def import_all(self):
-        packages = set(k.split('.')[0] for k in self._data.keys()).union({'pymor'})
+        packages = {k.split('.')[0] for k in self._data.keys()}.union({'pymor'})
         for package in packages:
             _import_all(package)
 
@@ -300,7 +300,7 @@ def {0}({1}):
 
 def _import_all(package_name='pymor'):
 
-    package = __import__(package_name)
+    package = importlib.import_module(package_name)
 
     if hasattr(package, '__path__'):
         def onerror(name):
@@ -310,7 +310,7 @@ def _import_all(package_name='pymor'):
 
         for p in pkgutil.walk_packages(package.__path__, package_name + '.', onerror=onerror):
             try:
-                __import__(p[1])
+                importlib.import_module(p[1])
             except ImportError:
                 from pymor.core.logger import getLogger
                 logger = getLogger('pymor.core.defaults._import_all')
