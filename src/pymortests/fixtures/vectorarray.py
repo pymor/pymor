@@ -225,6 +225,13 @@ fenics_vector_array_pair_with_different_dim_generators = \
      for l, l2, d1, d2, s1, s2 in fenics_vector_array_factory_arguments_pairs_with_different_dim] \
     if HAVE_FENICS else []
 
+dealii_vector_array_pair_with_different_dim_generators = \
+    [lambda l=l, l2=l2, d1=d1, d2=d2, s1=s1, s2=s2: (dealii_vector_array_factory(l, d1, s1),
+                                                     dealii_vector_array_factory(l2, d2, s2))
+     for l, l2, d1, d2, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_different_dim] \
+    if HAVE_DEALII else []
+
+
 
 @pytest.fixture(params=numpy_vector_array_generators + numpy_list_vector_array_generators +
                        numpy_disk_vector_array_generators + block_vector_array_generators +
@@ -268,6 +275,7 @@ def compatible_vector_array_pair(compatible_vector_array_pair_without_reserve, r
                         numpy_list_vector_array_pair_with_different_dim_generators +
                         numpy_disk_vector_array_pair_with_different_dim_generators +
                         block_vector_array_pair_with_different_dim_generators +
-                        fenics_vector_array_pair_with_different_dim_generators))
+                        fenics_vector_array_pair_with_different_dim_generators +
+                        dealii_vector_array_pair_with_different_dim_generators))
 def incompatible_vector_array_pair(request):
     return request.param()
