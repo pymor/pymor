@@ -10,8 +10,13 @@ from collections import deque, defaultdict, OrderedDict
 from types import MethodType, FunctionType
 import re
 import functools
+import sys
 
 from sphinx.util.inspect import safe_getattr
+
+PY2 = sys.version_info.major == 2
+
+STRING_TYPE = basestring if PY2 else str
 
 INCLUDE_SPECIAL_WITH_DOC = False
 INCLUDE_PRIVATE_WITH_DOC = False
@@ -153,7 +158,7 @@ def parse_docstring(docstring):
     def is_section_header():
         section, underline = line_iter.peek(2)
         section = section.lower()
-        if (section in KNOWN_SECTIONS) and isinstance(underline, str):
+        if (section in KNOWN_SECTIONS) and isinstance(underline, STRING_TYPE):
             pattern = r'[=\-`:\'"~^_*+#<>]{' + str(len(section)) + r'}$'
             return bool(re.match(pattern, underline))
         return False
@@ -164,7 +169,7 @@ def parse_docstring(docstring):
                 or is_section_header()
                 or ['', ''] == [line1, line2])
 
-    if isinstance(docstring, str):
+    if isinstance(docstring, STRING_TYPE):
         docstring = dedent(docstring.splitlines())
     docstring = [s.rstrip().expandtabs(4) for s in docstring]
 
