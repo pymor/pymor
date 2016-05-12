@@ -64,8 +64,12 @@ from collections import defaultdict
 import functools
 import importlib
 import inspect
+import os
 import pkgutil
+import sys
 import textwrap
+
+PY2 = sys.version_info.major == 2
 
 
 _default_container = None
@@ -269,6 +273,11 @@ Defaults
         # On Python 2 we have to add the __wrapped__ attribute to the wrapper
         # manually to help IPython find the right source code location
         wrapper.__wrapped__ = func
+
+        if PY2 and int(os.environ.get('PYMOR_WITH_SPHINX', 0)) == 1:
+            # On Python 2 we have to disable the defaults decorator in order
+            # to produce correct function signatures in the API docs
+            return func
 
         return wrapper
 
