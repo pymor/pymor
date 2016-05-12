@@ -86,8 +86,7 @@ class DefaultContainer(object):
 
     def __init__(self):
         self._data = defaultdict(dict)
-        self.registered_functions = {}
-        # ensure that setting no defaults is the same as setting empty defaults
+        self.registered_functions = set()
 
     def _add_defaults_for_function(self, defaultsdict, func, sid_ignore, qualname):
         path = qualname or (func.__module__ + '.' + getattr(func, '__qualname__', func.__name__))
@@ -95,7 +94,9 @@ class DefaultContainer(object):
             raise ValueError('''Function with name {} already registered for default values!
 For Python 2 compatibility, please supply the '_qualname' parameter when decorating
 methods of classes!'''.format(path))
+        self.registered_functions.add(path)
         for k, v in defaultsdict.items():
+            self._data[path + '.' + k]['func'] = func
             self._data[path + '.' + k]['code'] = v
             self._data[path + '.' + k]['sid_ignore'] = k in sid_ignore
 
@@ -104,14 +105,6 @@ methods of classes!'''.format(path))
             if k.startswith(path + '.'):
                 result[k.split('.')[-1]] = self.get(k)[0]
         return result
-
-    def _add_wrapper_function(self, func, qualname=None):
-        path = qualname or (func.__module__ + '.' + getattr(func, '__qualname__', func.__name__))
-        self.registered_functions[path] = func
-        split_path = path.split('.')
-        for k, v in self._data.items():
-            if k.split('.')[:-1] == split_path:
-                v['func'] = func
 
     def update(self, defaults, type='user'):
         if hasattr(self, '_sid'):
@@ -136,7 +129,7 @@ methods of classes!'''.format(path))
 
             self._data[k][type] = v
             argname = k_parts[-1]
-            func._defaultsdict[argname] = v
+            func.defaults[argname] = v
             argspec = inspect.getargspec(func)
             argind = argspec.args.index(argname) - len(argspec.args)
             defaults = list(argspec.defaults)
@@ -260,39 +253,22 @@ Defaults
         defaultsdict = _default_container._add_defaults_for_function(defaultsdict, func,
                                                                      sid_ignore=sid_ignore, qualname=qualname)
 
-        new_defaults = tuple(defaultsdict.get(n, v) for n, v in zip(argnames[-len(defaults):], defaults))
+        func.defaults = defaultsdict
+        func.__defaults__ = tuple(defaultsdict.get(n, v) for n, v in zip(argnames[-len(defaults):], defaults))
 
-        argstring_parts = []
-        argstring_parts.extend(argnames[:-len(new_defaults)])
-        argstring_parts.extend('{}={}'.format(k, repr(v)) for k, v in zip(argnames[-len(new_defaults):], new_defaults))
-        if argspec.varargs:
-            argstring_parts.append('*' + argspec.varargs)
-        if argspec.keywords:
-            argstring_parts.append('**' + argspec.keywords)
-        argstring = ', '.join(argstring_parts)
-
-        wrapper_code = '''
-def {0}({1}):
-    loc = locals()
-    argdict = {{arg: loc[arg] if loc[arg] is not None else defaultsdict.get(arg, None) for arg in argnames}}
-    return wrapped_func(**argdict)
-        '''.format(func.__name__, argstring)
-
-        if func.__name__ in ('wrapped_func', 'argname', 'defaultsdict'):
-            raise ValueError('Functions decorated with @default may not have the name ' + func.__name__)
-        wrapper_globals = {'wrapped_func': func, 'argnames': argnames, 'defaultsdict': defaultsdict}
-        exec(wrapper_code, wrapper_globals)
-        wrapper = functools.wraps(func)(wrapper_globals[func.__name__])
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            for k, v in zip(argnames, args):
+                if k in kwargs:
+                    raise TypeError("() got multiple values for argument '{}'"
+                                    .format(func.__name__, k))
+                kwargs[k] = v
+            argdict = {k: v if v is not None else func.defaults.get(k, None) for k, v in kwargs.items()}
+            return func(**argdict)
 
         # On Python 2 we have to add the __wrapped__ attribute to the wrapper
         # manually to help IPython find the right source code location
         wrapper.__wrapped__ = func
-
-        # add defaultsdict to the function object, so that we can change it later
-        # on if we wish
-        wrapper._defaultsdict = defaultsdict
-
-        _default_container._add_wrapper_function(wrapper, qualname=qualname)
 
         return wrapper
 
