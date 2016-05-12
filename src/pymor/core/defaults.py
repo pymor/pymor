@@ -131,6 +131,7 @@ methods of classes!'''.format(path))
                         head = head[:-1]
             func = self._data[k].get('func', None)
             if not func:
+                del self._data[k]
                 raise KeyError(k)
 
             self._data[k][type] = v
