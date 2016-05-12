@@ -86,7 +86,7 @@ from pymor.core import decorators, backports, logger
 from pymor.core.exceptions import ConstError, SIDGenerationError
 
 PY2 = sys.version_info.major == 2
-DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_COPY_DOCSTRINGS_DISABLE', 0)) == 1
+DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_WITH_SPHINX', 0)) == 1
 NoneType = type(None)
 
 class UID(object):
@@ -133,8 +133,8 @@ class UberMeta(abc.ABCMeta):
     def __new__(cls, classname, bases, classdict):
         """I copy docstrings from base class methods to deriving classes.
 
-        Copying of docstrings can be prevented by setting the `PYMOR_COPY_DOCSTRINGS_DISABLE` environment
-        variable to `1`.
+        Copying of docstrings is disabled when the `PYMOR_WITH_SPHINX` environment
+        variable is set to `1`.
         """
         for attr in ('_init_arguments', '_init_defaults'):
             if attr in classdict:

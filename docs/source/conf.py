@@ -5,6 +5,8 @@
 
 import sys, os, re
 
+os.environ['PYMOR_WITH_SPHINX'] = '1'
+
 # Fix documentation generation for readthedocs.org
 
 if os.environ.get('READTHEDOCS', None) == 'True':
