@@ -102,7 +102,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'pyMOR'
-copyright = '2012-2015, the pyMOR AUTHORS'
+copyright = '2012-2016, the pyMOR AUTHORS'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
