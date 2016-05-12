@@ -50,14 +50,15 @@ def parabolic_demo(args):
 
     print('Setup problem ...')
     domain = RectDomain(top=BoundaryType('neumann'), bottom=BoundaryType('neumann'))
-    rhs = ConstantFunction(value=0, dim_domain=2)
+    rhs = ConstantFunction(value=0., dim_domain=2)
     diffusion_functional = GenericParameterFunctional(mapping=lambda mu: mu['diffusion'],
                                                       parameter_type={'diffusion': 0})
+    dirichlet = ConstantFunction(value=0., dim_domain=2)
     neumann = ConstantFunction(value=-1., dim_domain=2)
     initial = GenericFunction(lambda X: np.cos(np.pi*X[..., 0])*np.sin(np.pi*X[..., 1]), dim_domain=2)
 
     problem = ParabolicProblem(domain=domain, rhs=rhs, diffusion_functionals=[diffusion_functional],
-                               dirichlet_data=initial, neumann_data=neumann, initial_data=initial)
+                               dirichlet_data=dirichlet, neumann_data=neumann, initial_data=initial)
 
     print('Discretize ...')
     if args['--rect']:
