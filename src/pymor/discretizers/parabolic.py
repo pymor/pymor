@@ -76,7 +76,7 @@ def discretize_parabolic_cg(analytical_problem, diameter=None, domain_discretize
     if time_stepper is None:
         time_stepper = ImplicitEulerTimeStepper(nt=nt)
 
-    mass = d.l2_product if isinstance(time_stepper, ImplicitEulerTimeStepper) else None
+    mass = d.l2_0_product if isinstance(time_stepper, ImplicitEulerTimeStepper) else None
 
     discretization = InstationaryDiscretization(operator=d.operator, rhs=d.rhs, mass=mass, initial_data=I, T=p.T,
                                                 products=d.products, time_stepper=time_stepper,
