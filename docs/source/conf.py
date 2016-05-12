@@ -5,6 +5,8 @@
 
 import sys, os, re
 
+PY2 = sys.version_info.major == 2
+
 os.environ['PYMOR_WITH_SPHINX'] = '1'
 
 # Fix documentation generation for readthedocs.org
@@ -279,7 +281,7 @@ coverage_ignore_c_items = {}
 
 # autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance']
 
-intersphinx_mapping = {'python': ('http://docs.python.org/2.7', None),
+intersphinx_mapping = {'python': ('http://docs.python.org/' + ('2.7' if PY2 else '3'), None),
                        'numpy': ('http://docs.scipy.org/doc/numpy', None),
                        'scipy': ('http://docs.scipy.org/doc/scipy/reference', None)}
 
