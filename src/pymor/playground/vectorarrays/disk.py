@@ -107,7 +107,11 @@ class DiskVectorArray(VectorArrayInterface):
 
     @classmethod
     def from_data(cls, data, subtype):
-        return cls(ListVectorArray.from_data(data, subtype[1]), subtype)
+        va = cls([], subtype)
+        for i in range(len(data)):
+            v = va.vector_type.from_data(data[i], va.vector_subtype)
+            va._store(i, v)
+        return va
 
     def __len__(self):
         return self._len
