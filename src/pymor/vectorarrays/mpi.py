@@ -70,10 +70,6 @@ class MPIVectorArray(VectorArrayInterface):
                    mpi.call(_MPIVectorArray_make_array,
                             subtype[0], subtype=subtype[1], count=count, reserve=reserve))
 
-    @classmethod
-    def from_data(cls, data, subtype):
-        return cls(subtype[0], subtype[1], mpi.call(_MPIVectorArray_from_data, subtype[0], subtype=subtype[1]))
-
     def __len__(self):
         return mpi.call(mpi.method_call, self.obj_id, '__len__')
 
@@ -156,14 +152,6 @@ def _MPIVectorArray_make_array(cls, subtype=(None,), count=0, reserve=0):
     if type(subtype) is RegisteredSubtype:
         subtype = _subtype_registry[subtype]
     obj = cls.make_array(subtype=subtype, count=count, reserve=reserve)
-    return mpi.manage_object(obj)
-
-
-def _MPIVectorArray_from_data(cls, data, subtype):
-    subtype = subtype[mpi.rank] if len(subtype) > 1 else subtype[0]
-    if type(subtype) is RegisteredSubtype:
-        subtype = _subtype_registry[subtype]
-    obj = cls.from_data(data, subtype)
     return mpi.manage_object(obj)
 
 
