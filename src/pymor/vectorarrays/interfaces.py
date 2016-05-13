@@ -82,7 +82,7 @@ class VectorArrayInterface(BasicInterface):
         """
         pass
 
-    @abstractclassmethod
+    @classmethod
     def from_data(cls, data, subtype):
         """Create a |VectorArray| from |NumPy array|
 
@@ -94,7 +94,7 @@ class VectorArrayInterface(BasicInterface):
             The :attr:`~VectorArrayInterface.subtype`, the created array should have.
             What a valid subtype is, is determined by the respective array implementation.
         """
-        pass
+        raise NotImplementedError
 
     def empty(self, reserve=0):
         """Create an empty |VectorArray| of the same :attr:`~VectorArrayInterface.subtype`.
