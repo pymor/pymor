@@ -213,7 +213,7 @@ def setup_package():
             for d in description[1:]:
                 print(' ' * col_width + d)
             print()
-        print("\ntry: 'pip install {}'".format(' '.join(missing)))
+        print("\ntry: 'for pname in {}; do pip install $pname; done'".format(' '.join(missing)))
         print('\n' + '*' * 79 + '\n')
 
 
