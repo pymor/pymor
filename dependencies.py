@@ -22,7 +22,8 @@ import_names = {'ipython': 'IPython',
                 'pytest-cov': 'pytest_cov',
                 'pytest-flakes': 'pytest_flakes',
                 'pytest-pep8': 'pytest_pep8',
-                'pyopengl': 'OpenGL'}
+                'pyopengl': 'OpenGL',
+                'pyside': 'PySide'}
 
 if __name__ == '__main__':
     print(' '.join([i for i in install_requires + install_suggests]))
