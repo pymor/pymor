@@ -279,7 +279,7 @@ class LTISystem(DiscretizationInterface):
             tfs = C.apply(iwEmA.apply_inverse(B.apply(eye))).data.T
         else:
             eye = NumpyVectorArray(sp.eye(self.p))
-            tfs = B.apply_adjoint(iwEmA.apply_adjoint_inverse(C.apply_adjoint(eye))).data
+            tfs = B.apply_adjoint(iwEmA.apply_inverse_adjoint(C.apply_adjoint(eye))).data
         if D is not None:
             tfs += D._matrix
         return tfs
