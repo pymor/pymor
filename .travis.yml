@@ -14,6 +14,7 @@ before_install:
  - python -c 'import  dolfin' || echo "import dolfin failed"
 
 install:
+ - export CFLAGS=-coverage
  - python setup.py build_ext -i
 
 sudo: required
