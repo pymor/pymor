@@ -22,9 +22,11 @@ before_install:
  - |
   if [ "${PYMOR_PYTHON_MAJOR}" == "3" ] ; then
       sudo add-apt-repository -y ppa:pymor/fenics-py3
+      sudo aptitude update
       sudo aptitude install -y -q dolfin-dev python3-dolfin python3-mpi4py
   else
       sudo add-apt-repository -y ppa:fenics-packages/fenics
+      sudo aptitude update
       sudo aptitude install -y -q dolfin-dev python-dolfin python-mpi4py
   fi
  - ${PYTHON_X} -c 'import  dolfin' || echo "import dolfin failed"
