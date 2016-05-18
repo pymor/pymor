@@ -10,7 +10,6 @@ before_install:
  - export PY_TEST_X="${PYTHON_X} /usr/local/bin/py.test"
  - export PIP_X=pip${PYMOR_PYTHON_MAJOR}
  - sudo add-apt-repository -y ppa:pymor/stable
- - sudo add-apt-repository -y ppa:fkrull/deadsnakes-python2.7
  # our exp. py3 packages are incompat. with the official repo
  # using aptitude here because it auto-fixes problems
  - |
