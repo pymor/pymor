@@ -16,11 +16,11 @@ before_install:
   if [ "${PYMOR_PYTHON_MAJOR}" == "3" ] ; then
       sudo add-apt-repository -y ppa:pymor/fenics-py3
       sudo aptitude update
-      sudo aptitude install -y -q python3-zmq python3-dev python3-dolfin python3-mpi4py python3-tk cython3 python3-pip python3.4-venv python3-docopt python3-pytest python3-opengl ipython3 python3-pyside python3-mpi4py python3-sympy python3-scipy
+      sudo aptitude install -y -q libhdf5-openmpi-dev python3-zmq python3-dev python3-dolfin python3-mpi4py python3-tk cython3 python3-pip python3.4-venv python3-docopt python3-pytest python3-opengl ipython3 python3-pyside python3-mpi4py python3-sympy python3-scipy
   else
       sudo add-apt-repository -y ppa:fenics-packages/fenics
       sudo aptitude update
-      sudo aptitude install -y -q python-zmq python-dev python-dolfin python-mpi4py python2.7 python-pytest python-docopt python-pytest python-opengl python-distribute ipython python-pyside python-mpi4py
+      sudo aptitude install -y -q libhdf5-openmpi-dev python-zmq python-dev python-dolfin python-mpi4py python2.7 python-pytest python-docopt python-pytest python-opengl python-distribute ipython python-pyside python-mpi4py
   fi
  - ${PYTHON_X} -c 'import  dolfin' || echo "import dolfin failed"
  - for pkg in 3to2 https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz ipyparallel pytest-cov python-coveralls ; do sudo -E ${PIP_X} install ${pkg} ; done
