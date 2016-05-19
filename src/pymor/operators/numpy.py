@@ -267,7 +267,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                                                                           least_squares=least_squares)
         else:
             options = {'inverse': self.solver_options.get('inverse_adjoint') if self.solver_options else None}
-            adjoint_op = NumpyMatrixOperator(self._matrix.T, solver_options=options)
+            adjoint_op = NumpyMatrixOperator(self._matrix.T.conj(), solver_options=options)
             return adjoint_op.apply_inverse(U, ind=ind, mu=mu, least_squares=least_squares)
 
     def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):

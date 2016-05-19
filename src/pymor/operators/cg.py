@@ -12,9 +12,9 @@ from pymor.functions.interfaces import FunctionInterface
 from pymor.grids.referenceelements import triangle, line, square
 from pymor.operators.numpy import NumpyMatrixBasedOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymor.operators.constructions import antilinear
 
-
-class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
+class L2ProductFunctionalP1(antilinear(NumpyMatrixBasedOperator)):
     """|Functional| representing the scalar product with an L2-|Function| for linear finite elements.
 
     Boundary treatment can be performed by providing `boundary_info` and `dirichlet_data`,
@@ -134,7 +134,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         return I.reshape((1, -1))
 
 
-class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
+class L2ProductFunctionalQ1(antilinear(NumpyMatrixBasedOperator)):
     """|Functional| representing the scalar product with an L2-|Function| for bilinear finite elements.
 
     Boundary treatment can be performed by providing `boundary_info` and `dirichlet_data`,

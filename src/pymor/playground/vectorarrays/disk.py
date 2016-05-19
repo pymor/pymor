@@ -123,6 +123,9 @@ class DiskVectorArray(VectorArrayInterface):
         c._len = len(ind)
         return c
 
+    def conj(self):
+        raise NotImplementedError
+
     def append(self, other, o_ind=None, remove_from_other=False):
         assert other.check_ind(o_ind)
         assert other.space == self.space

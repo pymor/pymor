@@ -994,3 +994,29 @@ class InducedNorm(ImmutableInterface, Parametric):
         if self.raise_negative and np.any(norm_squared < 0):
             raise ValueError('norm is negative (square = {})'.format(norm_squared))
         return np.sqrt(norm_squared)
+
+def antilinear(operator_class):
+    class Antilin(operator_class):
+        def apply(self, U, ind=None, mu=None):
+            return super(Antilin, self).apply(U.conj(), ind=ind, mu=mu)
+
+        def apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None):
+            raise NotImplementedError
+
+        def pairwise_apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None):
+            raise NotImplementedError
+
+        def apply_adjoint(self, V, U, U_ind=None, V_ind=None, mu=None, product=None):
+            raise NotImplementedError
+
+        def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
+            return super(Antilin, self).apply_inverse(V, ind=ind, mu=mu, least_squares=least_squares).conj()
+
+        def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None,
+                                  least_squares=False):
+            raise NotImplementedError
+
+        def projected(self, range_basis, source_basis, product=None, name=None):
+            return super(Antilin, self).projected(range_basis, source_basis.conj(), product=product, name=name)
+
+    return Antilin

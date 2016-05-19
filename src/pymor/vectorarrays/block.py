@@ -66,6 +66,9 @@ class BlockVectorArray(VectorArrayInterface):
     def data(self):
         return np.hstack([block.data for block in self.blocks])
 
+    def conj(self):
+        return BlockVectorArray([block.conj() for block in self._blocks], copy=False)
+
     def copy(self, ind=None, deep=False):
         assert self.check_ind(ind)
         return BlockVectorArray([block.copy(ind=ind, deep=deep) for block in self._blocks], copy=False)

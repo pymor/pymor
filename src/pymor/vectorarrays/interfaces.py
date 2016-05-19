@@ -158,6 +158,18 @@ class VectorArrayInterface(BasicInterface):
         pass
 
     @abstractmethod
+    def conj(self):
+        """Returns the complex conjugate.
+
+        In the real case, this should be a no-op returning just self.
+
+        Returns
+        -------
+        The complex conjugate of the |VectorArray|. May return self
+        """
+        pass
+
+    @abstractmethod
     def append(self, other, o_ind=None, remove_from_other=False):
         """Append vectors to the array.
 

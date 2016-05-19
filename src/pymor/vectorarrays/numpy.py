@@ -96,6 +96,12 @@ class NumpyVectorArray(VectorArrayInterface):
     def dim(self):
         return self._array.shape[1]
 
+    def conj(self):
+        if np.iscomplexobj(self.data):
+            return NumpyVectorArray(self.data.conj())
+        else:
+            return self
+
     def copy(self, ind=None, deep=False):
         assert self.check_ind(ind)
 
@@ -316,10 +322,7 @@ class NumpyVectorArray(VectorArrayInterface):
         B = other._array[:other._len] if o_ind is None else \
             other._array[o_ind] if hasattr(o_ind, '__len__') else other._array[o_ind:o_ind + 1]
 
-        if B.dtype in _complex_dtypes:
-            return A.dot(B.conj().T)
-        else:
-            return A.dot(B.T)
+        return A.conj().dot(B.T)
 
     def pairwise_dot(self, other, ind=None, o_ind=None):
         assert self.check_ind(ind)
@@ -338,10 +341,7 @@ class NumpyVectorArray(VectorArrayInterface):
         B = other._array[:other._len] if o_ind is None else \
             other._array[o_ind] if hasattr(o_ind, '__len__') else other._array[o_ind:o_ind + 1]
 
-        if B.dtype in _complex_dtypes:
-            return np.sum(A * B.conj(), axis=1)
-        else:
-            return np.sum(A * B, axis=1)
+        return np.sum(A.conj() * B, axis=1)
 
     def lincomb(self, coefficients, ind=None):
         assert self.check_ind(ind)
@@ -464,4 +464,3 @@ def NumpyVectorSpace(dim):
     return VectorSpace(NumpyVectorArray, dim)
 
 
-_complex_dtypes = (np.complex64, np.complex128)

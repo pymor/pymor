@@ -36,6 +36,10 @@ class VectorInterface(BasicInterface):
         pass
 
     @abstractmethod
+    def conj(self):
+        pass
+
+    @abstractmethod
     def scal(self, alpha):
         pass
 
@@ -194,6 +198,12 @@ class NumpyVector(CopyOnWriteVector):
     def subtype(self):
         return len(self._array)
 
+    def conj(self):
+        if np.iscomplexobj(self.data):
+            return NumpyVector(self.data.conj())
+        else:
+            return self
+
     def _copy_data(self):
         self._array = self._array.copy()
 
@@ -286,6 +296,10 @@ class ListVectorArray(VectorArrayInterface):
     @property
     def subtype(self):
         return (self.vector_type, self.vector_subtype)
+
+    def conj(self):
+        vecs = [v.conj() for v in self._list]
+        return type(self)(vecs, subtype=self.subtype, copy=False)
 
     def copy(self, ind=None, deep=False):
         assert self.check_ind(ind)
