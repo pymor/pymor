@@ -16,7 +16,7 @@ implementation details of CPython to achieve its goals.
 
 import marshal
 import opcode
-from types import FunctionType, ModuleType
+from types import CodeType, FunctionType, ModuleType
 try:
     import cPickle as pickle
 except ImportError:
@@ -105,7 +105,19 @@ def _global_names(code_object):
     LOAD_GLOBAL = opcode.opmap['LOAD_GLOBAL']
     indices = {i for o, i in _generate_opcode(code_object) if o == LOAD_GLOBAL}
     names = code_object.co_names
-    return {names[i] for i in indices}
+    result = {names[i] for i in indices}
+
+    # On Python 3, comprehensions have their own scope. This is implemented
+    # by generating a new code object for the comprehension which is stored
+    # as a constant of the enclosing function's code object. If the comprehension
+    # refers to global names, these names are listed in co_names of the code
+    # object for the comprehension, so we have to look at these code objects as
+    # well:
+    for const in code_object.co_consts:
+        if type(const) is CodeType:
+            result.update(_global_names(const))
+
+    return result
 
 
 class Module(object):
