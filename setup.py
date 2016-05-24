@@ -99,6 +99,9 @@ def write_version():
 class build_py27(_build_py):
     def __init__(self, *args, **kwargs):
         _build_py.__init__(self, *args, **kwargs)
+        checkpoint_fn = os.path.join(os.path.dirname(__file__), '3to2.conversion.ok')
+        if os.path.exists(checkpoint_fn):
+            return
         import logging
         from lib2to3 import refactor
         import lib3to2.main
@@ -130,6 +133,7 @@ class build_py27(_build_py):
         )
         self.rtool.refactor_dir('src', write=True) 
         self.rtool.refactor_dir('docs', write=True) 
+        open(checkpoint_fn, 'wta').write('converted')
 
 cmdclass = {}
 if sys.version_info[0] < 3:
