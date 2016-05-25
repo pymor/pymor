@@ -99,6 +99,9 @@ def write_version():
 class build_py27(_build_py):
     def __init__(self, *args, **kwargs):
         _build_py.__init__(self, *args, **kwargs)
+        checkpoint_fn = os.path.join(os.path.dirname(__file__), '3to2.conversion.ok')
+        if os.path.exists(checkpoint_fn):
+            return
         import logging
         from lib2to3 import refactor
         import lib3to2.main
@@ -130,10 +133,11 @@ class build_py27(_build_py):
         )
         self.rtool.refactor_dir('src', write=True) 
         self.rtool.refactor_dir('docs', write=True) 
+        open(checkpoint_fn, 'wta').write('converted')
 
 cmdclass = {}
 if sys.version_info[0] < 3:
-    setup_requires.append('3to2')
+    setup_requires.insert(0, '3to2')
     # cmdclass allows you to override the distutils commands that are
     # run through 'python setup.py somecmd'. Under python 2.7 replace
     # the 'build_py' with a custom subclass (build_py27) that invokes
@@ -247,7 +251,7 @@ def setup_package():
             for d in description[1:]:
                 print(' ' * col_width + d)
             print()
-        print("\ntry: 'pip install {}'".format(' '.join(missing)))
+        print("\ntry: 'for pname in {}; do pip install $pname; done'".format(' '.join(missing)))
         print('\n' + '*' * 79 + '\n')
 
 

@@ -27,7 +27,7 @@ def walk(module):
             modules.append(module.__name__ + '.' + modname)
     modules = sorted(modules)
     packages = sorted(packages)
-    with open('{}/{}.rst'.format(BUILD_DIR, module.__name__), 'wb') as f:
+    with open('{}/{}.rst'.format(BUILD_DIR, module.__name__), 'wt') as f:
         print(section('{} package'.format(module.__name__)), file=f)
 
         print('.. automodule:: ' + module.__name__, file=f)

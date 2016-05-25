@@ -28,17 +28,17 @@ class GenericOperator(OperatorBase):
         return self.op.apply_adjoint(U, ind=ind, mu=mu)
 
 
-@pytest.fixture(params=list(pymor.algorithms.genericsolvers.options().keys()))
+@pytest.fixture(params=pymor.algorithms.genericsolvers.options().keys())
 def generic_solver(request):
     return {'inverse': request.param}
 
 
-@pytest.fixture(params=list(dense_options().keys()))
+@pytest.fixture(params=dense_options().keys())
 def numpy_dense_solver(request):
     return {'inverse': request.param}
 
 
-@pytest.fixture(params=list(sparse_options().keys()))
+@pytest.fixture(params=sparse_options().keys())
 def numpy_sparse_solver(request):
     return {'inverse': request.param}
 

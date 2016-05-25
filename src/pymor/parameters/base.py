@@ -65,8 +65,6 @@ class ParameterType(dict):
         a `dict` can be constructed.
     """
 
-    __keys = None
-
     def __init__(self, t):
         if t is None:
             t = {}
@@ -93,29 +91,11 @@ class ParameterType(dict):
     def copy(self):
         return ParameterType(self)
 
-    def __iter__(self):
-        if self.__keys is None:
-            self.__keys = sorted(dict.keys(self))
-        return iter(self.__keys)
-
-    def keys(self):
-        return iter(self)
-
-    def items(self):
-        for k in self:
-            yield k, self[k]
-
-    def values(self):
-        for k in self:
-            yield self[k]
-
     def fromkeys(self, S, v=None):
         raise NotImplementedError
 
     def __str__(self):
-        if self.__keys is None:
-            self.__keys = sorted(self.keys())
-        return '{' + ', '.join('{}: {}'.format(k, self[k]) for k in self.__keys) + '}'
+        return '{' + ', '.join('{}: {}'.format(k, self[k]) for k in sorted(self.keys())) + '}'
 
     def __repr__(self):
         return 'ParameterType(' + str(self) + ')'
@@ -168,8 +148,6 @@ class Parameter(dict):
         The state id of the |Parameter|. (See :mod:`pymor.core.interfaces`.)
     """
 
-    __keys = None
-
     def __init__(self, v):
         if v is None:
             v = {}
@@ -217,7 +195,7 @@ class Parameter(dict):
                 mu = (mu,)
             if len(mu) != len(parameter_type):
                 raise ValueError('Parameter length does not match.')
-            mu = dict(zip(parameter_type, mu))
+            mu = dict(zip(sorted(parameter_type), mu))
         elif set(mu.keys()) != set(parameter_type.keys()):
             raise ValueError('Provided parameter with keys {} does not match parameter type {}.'
                              .format(list(mu.keys()), parameter_type))
@@ -260,18 +238,13 @@ class Parameter(dict):
 
     def clear(self):
         dict.clear(self)
-        self.__keys = None
         self.__sid = None
 
     def copy(self):
         c = Parameter({k: v.copy() for k, v in self.items()})
-        if self.__keys is not None:
-            c.__keys = list(self.__keys)
         return c
 
     def __setitem__(self, key, value):
-        if key not in self:
-            self.__keys = None
         if not isinstance(value, np.ndarray):
             value = np.array(value)
         dict.__setitem__(self, key, value)
@@ -279,7 +252,6 @@ class Parameter(dict):
 
     def __delitem__(self, key):
         dict.__delitem__(self, key)
-        self.__keys = None
         self.__sid = None
 
     def __eq__(self, mu):
@@ -319,10 +291,8 @@ class Parameter(dict):
 
     def __str__(self):
         np.set_string_function(format_array, repr=False)
-        if self.__keys is None:
-            self.__keys = sorted(self.keys())
         s = '{'
-        for k in self.__keys:
+        for k in sorted(self.keys()):
             v = self[k]
             if v.ndim > 1:
                 v = v.ravel()

@@ -53,9 +53,11 @@ class Test_Interface(TestInterface):
                 pass
 
         class CompleteImplementer(ClassImplementer, StaticImplementer):
+            @classmethod
             def abstract_class_method(cls):
                 return cls.__name__
 
+            @staticmethod
             def abstract_static_method():
                 return 0
 

@@ -63,18 +63,20 @@ A cache region can be emptied using :meth:`CacheRegion.clear`. The function
 import atexit
 from collections import OrderedDict
 import datetime
-from functools import partial
 import functools
 import getpass
 import inspect
 import os
 import sqlite3
+import sys
 import tempfile
 from types import MethodType
 
 from pymor.core.defaults import defaults, defaults_sid
 from pymor.core.interfaces import ImmutableInterface, generate_sid
 from pymor.core.pickle import dump, load
+
+PY2 = sys.version_info.major == 2
 
 
 @atexit.register
@@ -291,46 +293,6 @@ def clear_caches():
         r.clear()
 
 
-class cached(object):
-    """Decorator to make a method of `CacheableInterface` actually cached."""
-
-    def __init__(self, function):
-        self.decorated_function = function
-        functools.update_wrapper(self, function)
-        argspec = inspect.getargspec(function)
-        self.argnames = argnames = argspec.args[1:]  # first argument is self
-        defaults = function.__defaults__
-        if defaults:
-            self.defaults = {k: v for k, v in zip(argnames[-len(defaults):], defaults)}
-        else:
-            self.defaults = None
-
-    def __call__(self, im_self, *args, **kwargs):
-        """Via the magic that is partial functions returned from __get__, im_self is the instance object of the class
-        we're decorating a method of and [kw]args are the actual parameters to the decorated method"""
-        return im_self._cached_method_call(self.decorated_function, True, self.argnames, self.defaults, args, kwargs)
-
-    def __get__(self, instance, instancetype):
-        """Implement the descriptor protocol to make decorating instance method possible.
-        Return a partial function where the first argument is the instance of the decorated instance object.
-        """
-        if instance is None:
-            # afaics this is called when decorating abstract/static class methods
-           @functools.wraps(self.decorated_function)
-           def wrapper(*args, **kwargs):
-               raise TypeError(
-                   'unbound method {}() must be called with {} instance '
-                   'as first argument (got nothing instead)'.format(
-                       self.decorated_function.__name__,
-                       instancetype.__name__)
-               )
-           return wrapper
-        elif _caching_disabled or instance.cache_region is None:
-            return partial(self.decorated_function, instance)
-        else:
-            return partial(self.__call__, instance)
-
-
 class CacheableInterface(ImmutableInterface):
     """Base class for anything that wants to use our built-in caching.
 
@@ -374,10 +336,20 @@ class CacheableInterface(ImmutableInterface):
         if _caching_disabled or self.cache_region is None:
             return method(*args, **kwargs)
 
-        argnames = inspect.getargspec(method).args[1:]  # first argument is self
-        defaults = method.__defaults__
-        if defaults:
-            defaults = {k: v for k, v in zip(argnames[-len(defaults):], defaults)}
+        if PY2:
+            argspec = inspect.getargspec(method)
+            if argspec.varargs is not None:
+                raise NotImplementedError
+            argnames = argspec.args[1:]  # first argument is self
+            defaults = method.__defaults__
+            if defaults:
+                defaults = {k: v for k, v in zip(argnames[-len(defaults):], defaults)}
+        else:
+            params = inspect.signature(method).parameters
+            if any(v.kind == v.VAR_POSITIONAL for v in params.values()):
+                raise NotImplementedError
+            argnames = list(params.keys())[1:]  # first argument is self
+            defaults = {k: v.default for k, v in params.items() if v.default is not v.empty}
         return self._cached_method_call(method, False, argnames, defaults, args, kwargs)
 
     def _cached_method_call(self, method, pass_self, argnames, defaults, args, kwargs):
@@ -414,3 +386,33 @@ class CacheableInterface(ImmutableInterface):
                 value = method(self, **kwargs) if pass_self else method(**kwargs)
                 region.set(key, value)
                 return value
+
+
+def cached(function):
+    """Decorator to make a method of `CacheableInterface` actually cached."""
+
+    if PY2:
+        argspec = inspect.getargspec(function)
+        if argspec.varargs is not None:
+            raise NotImplementedError
+        argnames = argnames = argspec.args[1:]  # first argument is self
+        defaults = function.__defaults__
+        if defaults:
+            defaults = {k: v for k, v in zip(argnames[-len(defaults):], defaults)}
+    else:
+        params = inspect.signature(function).parameters
+        if any(v.kind == v.VAR_POSITIONAL for v in params.values()):
+            raise NotImplementedError
+        argnames = list(params.keys())[1:]  # first argument is self
+        defaults = {k: v.default for k, v in params.items() if v.default is not v.empty}
+
+    @functools.wraps(function)
+    def wrapper(self, *args, **kwargs):
+        if _caching_disabled or self.cache_region is None:
+            return function(self, *args, **kwargs)
+        return self._cached_method_call(function, True, argnames, defaults, args, kwargs)
+
+    if PY2:
+        wrapper.__wrapped__ = function
+
+    return wrapper

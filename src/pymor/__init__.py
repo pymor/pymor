@@ -4,6 +4,13 @@
 
 import os
 
+# this solves sporadic mpi calls happening after finalize
+try:
+    import petsc4py
+    petsc4py.init()
+except ImportError:
+    pass
+
 from pymor.core.defaults import load_defaults_from_file
 
 

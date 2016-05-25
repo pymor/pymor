@@ -292,7 +292,6 @@ def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
     ########################################
 
     import dolfin as df
-
     mesh = df.UnitSquareMesh(grid_num_intervals, grid_num_intervals, 'crossed')
     V = df.FunctionSpace(mesh, 'Lagrange', element_order)
     u = df.TrialFunction(V)

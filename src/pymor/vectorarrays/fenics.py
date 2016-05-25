@@ -20,6 +20,14 @@ if HAVE_FENICS:
     from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorArray
 
 
+    # For pyMOR's MPI support to work, subtypes need to be hashable.
+    # However, FunctionSpace (our subtype) defines __eq__ but not __hash__
+    # which makes it unhashable on Pyhton 3. On the other hand, equality
+    # for FunctionSpace seems to be the same as identity, so we can easily
+    # monkey-patch:
+    df.FunctionSpace.__hash__ = lambda self: id(self)
+
+
     class FenicsVector(CopyOnWriteVector):
         """Wraps a FEniCS vector to make it usable with ListVectorArray."""
 
@@ -34,6 +42,7 @@ if HAVE_FENICS:
         def _copy_data(self):
             self.impl = self.impl.copy()
 
+        @classmethod
         def make_zeros(cls, subtype):
             impl = df.Function(subtype).vector()
             return cls(impl, subtype)
