@@ -137,7 +137,7 @@ class build_py27(_build_py):
 
 cmdclass = {}
 if sys.version_info[0] < 3:
-    setup_requires.append('3to2')
+    setup_requires.insert(0, '3to2')
     # cmdclass allows you to override the distutils commands that are
     # run through 'python setup.py somecmd'. Under python 2.7 replace
     # the 'build_py' with a custom subclass (build_py27) that invokes
