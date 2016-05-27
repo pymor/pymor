@@ -51,8 +51,6 @@ method named by the second argument on the object referred to by the
 first argument.
 """
 
-from __future__ import absolute_import, division, print_function
-
 import sys
 
 from pymor.core.defaults import defaults
@@ -66,7 +64,7 @@ try:
     rank = comm.Get_rank()
     size = comm.Get_size()
     finished = False
-    mpi4py_version = map(int, mpi4py.__version__.split('.'))
+    mpi4py_version = list(map(int, mpi4py.__version__.split('.')))
     if mpi4py_version >= [2, 0]:
         import pymor.core.pickle
         MPI.pickle.PROTOCOL = pymor.core.pickle.PROTOCOL
@@ -234,7 +232,7 @@ def run_code(code):
 
     Intended to be used in conjunction with :func:`call`.
     """
-    exec code
+    exec(code)
 
 
 def import_module(path):
@@ -253,7 +251,7 @@ def function_call(f, *args, **kwargs):
     mapped to the object they refer to.
     """
     return f(*((get_object(arg) if type(arg) is ObjectId else arg) for arg in args),
-             **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.iteritems()})
+             **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.items()})
 
 
 def function_call_manage(f, *args, **kwargs):
@@ -289,7 +287,7 @@ def method_call(obj_id, name_, *args, **kwargs):
     """
     obj = get_object(obj_id)
     return getattr(obj, name_)(*((get_object(arg) if type(arg) is ObjectId else arg) for arg in args),
-                                **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.iteritems()})
+                                **{k: (get_object(v) if type(v) is ObjectId else v) for k, v in kwargs.items()})
 
 
 def method_call_manage(obj_id, name_, *args, **kwargs):
@@ -352,7 +350,7 @@ if __name__ == '__main__':
         if len(sys.argv) >= 2:
             filename = sys.argv[1]
             sys.argv = sys.argv[:1] + sys.argv[2:]
-            execfile(filename)
+            exec(compile(open(filename, 'rt').read(), filename, 'exec'))
             import pymor.tools.mpi  # this is different from __main__
             pymor.tools.mpi.quit()  # change global state in the right module
         else:

@@ -15,12 +15,9 @@ PYMOR_CACHE_DISABLE
 PYMOR_COLORS_DISABLE
     If ``1``, disable coloring of logging output.
 
-PYMOR_COPY_DOCSTRINGS_DISABLE 
-    By default, docstrings of methods in base classes are copied
-    to overriding methods, if these do not define their own
-    docstring. Setting this variable to `1` disables this feature.
-    (We use this for when auto-generating API-documentation with
-    sphinx.)
+PYMOR_WITH_SPHINX
+    This variable is set to `1` during API documentation generation
+    using sphinx.
 
 PYMOR_DEFAULTS
     If empty or ``NONE``, do not load any :mod:`~pymor.core.defaults`

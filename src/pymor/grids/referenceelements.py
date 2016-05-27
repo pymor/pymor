@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 
 from pymor.grids.interfaces import ReferenceElementInterface
@@ -43,7 +41,7 @@ class Point(ReferenceElementInterface):
 
     def quadrature_info(self):
         # of course, the quadrature is of arbitrary oder ...
-        return {'gauss': tuple(xrange(42))}, {'gauss': (1,)}
+        return {'gauss': tuple(range(42))}, {'gauss': (1,)}
 
     def quadrature(self, order=None, npoints=None, quadrature_type='default'):
         if quadrature_type == 'default' or quadrature_type == 'gauss':
@@ -101,7 +99,7 @@ class Line(ReferenceElementInterface):
         return np.apply_along_axis(np.linalg.norm, -2, A)
 
     def quadrature_info(self):
-        return {'gauss': GaussQuadratures.orders}, {'gauss': map(len, GaussQuadratures.points)}
+        return {'gauss': GaussQuadratures.orders}, {'gauss': list(map(len, GaussQuadratures.points))}
 
     def quadrature(self, order=None, npoints=None, quadrature_type='default'):
         if quadrature_type == 'default' or quadrature_type == 'gauss':
@@ -127,9 +125,9 @@ class Square(ReferenceElementInterface):
         def tensor_weights(W):
             return np.dot(W[:, np.newaxis], W[np.newaxis, :]).ravel()
         self._quadrature_points = [tensor_points(GaussQuadratures.quadrature(npoints=p + 1)[0])
-                                   for p in xrange(GaussQuadratures.maxpoints())]
+                                   for p in range(GaussQuadratures.maxpoints())]
         self._quadrature_weights = [tensor_weights(GaussQuadratures.quadrature(npoints=p + 1)[1])
-                                    for p in xrange(GaussQuadratures.maxpoints())]
+                                    for p in range(GaussQuadratures.maxpoints())]
         self._quadrature_npoints = np.arange(1, GaussQuadratures.maxpoints() + 1) ** 2
         self._quadrature_orders = GaussQuadratures.orders
         self._quadrature_order_map = GaussQuadratures.order_map

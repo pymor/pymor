@@ -32,17 +32,20 @@ Options:
   -h, --help             Show this message.
 """
 
-from __future__ import absolute_import, division, print_function
 import sys
 from docopt import docopt
 import time
 from functools import partial
 import numpy as np
-from PySide import QtGui
 import OpenGL
 
 OpenGL.ERROR_ON_COPY = True
 
+from pymor.core.exceptions import PySideMissing
+try:
+    from PySide import QtGui
+except ImportError as e:
+    raise PySideMissing()
 from pymor.algorithms.basisextension import gram_schmidt_basis_extension
 from pymor.algorithms.greedy import greedy
 from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
@@ -50,6 +53,7 @@ from pymor.discretizers.elliptic import discretize_elliptic_cg
 from pymor.gui.gl import ColorBarWidget, GLPatchWidget
 from pymor.reductors.coercive import reduce_coercive_simple
 from pymor import gui
+
 
 PARAM_STEPS = 10
 PARAM_MIN = 0.1
@@ -63,8 +67,8 @@ class ParamRuler(QtGui.QWidget):
         self.setMinimumSize(200, 100)
         box = QtGui.QGridLayout()
         self.spins = []
-        for j in xrange(args['YBLOCKS']):
-            for i in xrange(args['XBLOCKS']):
+        for j in range(args['YBLOCKS']):
+            for i in range(args['XBLOCKS']):
                 spin = QtGui.QDoubleSpinBox()
                 spin.setRange(PARAM_MIN, PARAM_MAX)
                 spin.setSingleStep((PARAM_MAX - PARAM_MIN) / PARAM_STEPS)

@@ -6,7 +6,7 @@
 via http://stackoverflow.com/questions/384076/how-can-i-make-the-python-logging-output-to-be-colored
 Can not be moved because it's needed to be imported in the root __init__.py OR ELSE
 """
-from __future__ import absolute_import, division, print_function
+
 import curses
 import logging
 import os
@@ -147,9 +147,9 @@ def getLogger(module, level=None, filename=''):
     """
     module = 'pymor' if module == '__main__' else module
     logger = logging.getLogger(module)
-    logger.block = MethodType(_block, logger, type(logger))
-    logger.info2 = MethodType(_info2, logger, type(logger))
-    logger.info3 = MethodType(_info3, logger, type(logger))
+    logger.block = MethodType(_block, logger)
+    logger.info2 = MethodType(_info2, logger)
+    logger.info3 = MethodType(_info3, logger)
     streamhandler = logging.StreamHandler()
     streamformatter = ColoredFormatter()
     streamhandler.setFormatter(streamformatter)

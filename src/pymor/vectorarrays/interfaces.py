@@ -3,14 +3,17 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 from numbers import Number
 
 import numpy as np
 
 from pymor.core.interfaces import BasicInterface, abstractmethod, abstractproperty, abstractclassmethod
 
+def _numpy_version_older(version_tuple):
+    np_tuple = tuple(int(p) for p in np.__version__.split('.')[:3])
+    return np_tuple < version_tuple
+
+_INDEXTYPES = (Number,) if not _numpy_version_older((1,9)) else (Number, np.intp)
 
 class VectorArrayInterface(BasicInterface):
     """Interface for vector arrays.
@@ -492,7 +495,7 @@ class VectorArrayInterface(BasicInterface):
     def check_ind(self, ind):
         """Check if `ind` is an admissable list of indices in the sense of the class documentation."""
         return (ind is None or
-                isinstance(ind, Number) and 0 <= ind < len(self) or
+                isinstance(ind, _INDEXTYPES) and 0 <= ind < len(self) or
                 isinstance(ind, list) and (len(ind) == 0 or 0 <= min(ind) and max(ind) < len(self)) or
                 (isinstance(ind, np.ndarray) and ind.ndim == 1
                  and (len(ind) == 0 or 0 <= np.min(ind) and np.max(ind) < len(self))))
@@ -516,7 +519,7 @@ class VectorArrayInterface(BasicInterface):
 
     def len_ind(self, ind):
         """Return the number of specified indices."""
-        return len(self) if ind is None else 1 if isinstance(ind, Number) else len(ind)
+        return len(self) if ind is None else 1 if isinstance(ind, _INDEXTYPES) else len(ind)
 
     def len_ind_unique(self, ind):
         """Return the number of specified unique indices."""

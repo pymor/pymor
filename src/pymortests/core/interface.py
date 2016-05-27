@@ -2,7 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
 import os
 import tempfile
 import pytest
@@ -54,9 +53,11 @@ class Test_Interface(TestInterface):
                 pass
 
         class CompleteImplementer(ClassImplementer, StaticImplementer):
+            @classmethod
             def abstract_class_method(cls):
                 return cls.__name__
 
+            @staticmethod
             def abstract_static_method():
                 return 0
 

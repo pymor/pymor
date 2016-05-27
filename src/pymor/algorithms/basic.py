@@ -5,8 +5,6 @@
 
 """Module containing some basic but generic linear algebra algorithms."""
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 
 from pymor.core.defaults import defaults

@@ -79,7 +79,7 @@ class ProgressBar:
             carriage return first, so it will overwrite the current line in
             stdout."""
         if self.amount < self.max:
-            print '\r',
+            print('\r', end=' ')
             self.update_amount(self.amount + value)
             sys.stdout.write(str(self))
             sys.stdout.write(self.amount < self.max and "\r" or "\n")

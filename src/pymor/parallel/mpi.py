@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 from itertools import chain
 
 
@@ -76,7 +74,7 @@ def _single_worker_call_function(payload, worker):
 def _worker_map_function(payload, function, **kwargs):
 
     if mpi.rank0:
-        args = zip(*payload[0])
+        args = list(zip(*payload[0]))
     else:
         args = None
     args = zip(*mpi.comm.scatter(args, root=0))

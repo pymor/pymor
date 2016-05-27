@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import hashlib
 import pprint
 import pkgutil
@@ -12,7 +10,7 @@ import sys
 import numpy as np
 from numpy.polynomial.polynomial import Polynomial
 from math import factorial
-from cPickle import dumps, dump, load
+from pickle import dumps, dump, load
 
 from pymor.core import logger
 from pymor.operators.basic import OperatorBase
@@ -74,7 +72,7 @@ def runmodule(filename):
 
 
 def polynomials(max_order):
-    for n in xrange(max_order + 1):
+    for n in range(max_order + 1):
         f = lambda x: np.power(x, n)
 
         def deri(k):
@@ -125,7 +123,7 @@ def check_results(test_name, params, results, *args):
 
     basepath = os.path.join(os.path.dirname(__file__),
                             '..', '..', 'testdata', 'check_results')
-    arg_id = hashlib.sha1(str(params)).hexdigest()
+    arg_id = hashlib.sha1(str(params).encode()).hexdigest()
     filename = os.path.normpath(os.path.join(basepath, test_name, arg_id))
 
     if not os.path.exists(os.path.join(basepath, test_name)):

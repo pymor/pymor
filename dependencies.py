@@ -4,7 +4,7 @@
 
 tests_require = ['pytest', 'pytest-cov']
 install_requires = ['cython>=0.20.1', 'numpy>=1.8.1', 'scipy>=0.13.3', 'Sphinx', 'docopt']
-setup_requires = ['cython>=0.20.1', 'numpy>=1.8.1']
+setup_requires = ['pytest-runner', 'cython>=0.20.1', 'numpy>=1.8.1']
 install_suggests = {'ipython': 'an enhanced interactive python shell',
                     'ipyparallel': 'required for pymor.parallel.ipython',
                     'matplotlib': 'needed for error plots in demo scipts',
@@ -22,7 +22,8 @@ import_names = {'ipython': 'IPython',
                 'pytest-cov': 'pytest_cov',
                 'pytest-flakes': 'pytest_flakes',
                 'pytest-pep8': 'pytest_pep8',
-                'pyopengl': 'OpenGL'}
+                'pyopengl': 'OpenGL',
+                'pyside': 'PySide'}
 
 if __name__ == '__main__':
     print(' '.join([i for i in install_requires + install_suggests]))

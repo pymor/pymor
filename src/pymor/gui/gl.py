@@ -9,8 +9,6 @@ intended to be used directly. Instead, use
 :class:`~pymor.gui.qt.PatchVisualizer`.
 """
 
-from __future__ import absolute_import, division, print_function
-
 import math as m
 
 import numpy as np
@@ -268,7 +266,7 @@ if HAVE_ALL:
             bar_start = -1 + self.text_height / self.height() * 2
             bar_height = (1 - 2 * self.text_height / self.height()) * 2
             steps = 40
-            for i in xrange(steps + 1):
+            for i in range(steps + 1):
                 y = i * (1 / steps)
                 # gl.glColor(y, 0, 0)
                 gl.glVertex(-0.5, (bar_height*y + bar_start), y)

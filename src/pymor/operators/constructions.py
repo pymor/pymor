@@ -5,10 +5,7 @@
 
 """Module containing some constructions to obtain new operators from old ones."""
 
-from __future__ import absolute_import, division, print_function
-
 from numbers import Number
-from itertools import izip
 
 import numpy as np
 
@@ -19,7 +16,7 @@ from pymor.operators.basic import OperatorBase
 from pymor.operators.interfaces import OperatorInterface
 from pymor.parameters.base import Parametric
 from pymor.parameters.interfaces import ParameterFunctionalInterface
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpace
+from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpace, _INDEXTYPES
 from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
 
 
@@ -41,7 +38,7 @@ class LincombOperator(OperatorBase):
         assert len(operators) > 0
         assert len(operators) == len(coefficients)
         assert all(isinstance(op, OperatorInterface) for op in operators)
-        assert all(isinstance(c, (ParameterFunctionalInterface, Number)) for c in coefficients)
+        assert all(isinstance(c, (ParameterFunctionalInterface, _INDEXTYPES)) for c in coefficients)
         assert all(op.source == operators[0].source for op in operators[1:])
         assert all(op.range == operators[0].range for op in operators[1:])
         self.source = operators[0].source
@@ -81,7 +78,7 @@ class LincombOperator(OperatorBase):
         coeffs = self.evaluate_coefficients(mu)
         R = self.operators[0].apply(U, ind=ind, mu=mu)
         R.scal(coeffs[0])
-        for op, c in izip(self.operators[1:], coeffs[1:]):
+        for op, c in zip(self.operators[1:], coeffs[1:]):
             R.axpy(c, op.apply(U, ind=ind, mu=mu))
         return R
 
@@ -96,7 +93,7 @@ class LincombOperator(OperatorBase):
         coeffs = self.evaluate_coefficients(mu)
         R = self.operators[0].apply2(V, U, V_ind=V_ind, U_ind=U_ind, mu=mu, product=product)
         R *= coeffs[0]
-        for op, c in izip(self.operators[1:], coeffs[1:]):
+        for op, c in zip(self.operators[1:], coeffs[1:]):
             R += c * op.apply2(V, U, V_ind=V_ind, U_ind=U_ind, mu=mu, product=product)
         return R
 
@@ -111,7 +108,7 @@ class LincombOperator(OperatorBase):
         coeffs = self.evaluate_coefficients(mu)
         R = self.operators[0].pairwise_apply2(V, U, V_ind=V_ind, U_ind=U_ind, mu=mu, product=product)
         R *= coeffs[0]
-        for op, c in izip(self.operators[1:], coeffs[1:]):
+        for op, c in zip(self.operators[1:], coeffs[1:]):
             R += c * op.pairwise_apply2(V, U, V_ind=V_ind, U_ind=U_ind, mu=mu, product=product)
         return R
 
@@ -130,7 +127,7 @@ class LincombOperator(OperatorBase):
         R = self.operators[0].apply_adjoint(U, ind=ind, mu=mu, source_product=source_product,
                                             range_product=range_product)
         R.scal(coeffs[0])
-        for op, c in izip(self.operators[1:], coeffs[1:]):
+        for op, c in zip(self.operators[1:], coeffs[1:]):
             R.axpy(c, op.apply_adjoint(U, ind=ind, mu=mu, source_product=source_product,
                                        range_product=range_product))
         return R
@@ -192,7 +189,7 @@ class LincombOperator(OperatorBase):
         vectors = [op.as_vector(mu) for op in self.operators]
         R = vectors[0]
         R.scal(coefficients[0])
-        for c, v in izip(coefficients[1:], vectors[1:]):
+        for c, v in zip(coefficients[1:], vectors[1:]):
             R.axpy(c, v)
         return R
 
@@ -610,7 +607,7 @@ class VectorArrayOperator(OperatorBase):
             array = operators[0]._array.copy()
         else:
             array = operators[0]._array * coefficients[0]
-        for op, c in izip(operators[1:], coefficients[1:]):
+        for op, c in zip(operators[1:], coefficients[1:]):
             array.axpy(c, op._array)
         return VectorArrayOperator(array, transposed=transposed, name=name)
 

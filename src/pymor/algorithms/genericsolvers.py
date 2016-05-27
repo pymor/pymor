@@ -5,8 +5,6 @@
 
 """This module contains some iterative linear solvers which only use the |Operator| interface"""
 
-from __future__ import absolute_import, division, print_function
-
 from collections import OrderedDict
 
 import numpy as np
@@ -151,10 +149,10 @@ def apply_inverse(op, rhs, options=None):
     def_opts = globals()['options']()
 
     if options is None:
-        options = def_opts.values()[0]
+        options = next(iter(def_opts.values()))
     elif isinstance(options, str):
         if options == 'least_squares':
-            for k, v in def_opts.iteritems():
+            for k, v in def_opts.items():
                 if k.startswith('least_squares'):
                     options = v
                     break
@@ -163,7 +161,7 @@ def apply_inverse(op, rhs, options=None):
             options = def_opts[options]
     else:
         assert 'type' in options and options['type'] in def_opts \
-            and options.viewkeys() <= def_opts[options['type']].viewkeys()
+            and options.keys() <= def_opts[options['type']].keys()
         user_options = options
         options = def_opts[user_options['type']]
         options.update(user_options)
@@ -171,7 +169,7 @@ def apply_inverse(op, rhs, options=None):
     R = op.source.empty(reserve=len(rhs))
 
     if options['type'] == 'generic_lgmres':
-        for i in xrange(len(rhs)):
+        for i in range(len(rhs)):
             r, info = lgmres(op, rhs.copy(i),
                              tol=options['tol'],
                              maxiter=options['maxiter'],
@@ -182,7 +180,7 @@ def apply_inverse(op, rhs, options=None):
             assert info == 0
             R.append(r)
     elif options['type'] == 'least_squares_generic_lsmr':
-        for i in xrange(len(rhs)):
+        for i in range(len(rhs)):
             r, info, itn, _, _, _, _, _ = lsmr(op, rhs.copy(i),
                                                damp=options['damp'],
                                                atol=options['atol'],
@@ -196,7 +194,7 @@ def apply_inverse(op, rhs, options=None):
             getLogger('pymor.algorithms.genericsolvers.lsmr').info('Converged after {} iterations'.format(itn))
             R.append(r)
     elif options['type'] == 'least_squares_generic_lsqr':
-        for i in xrange(len(rhs)):
+        for i in range(len(rhs)):
             r, info, itn, _, _, _, _, _, _ = lsqr(op, rhs.copy(i),
                                                   damp=options['damp'],
                                                   atol=options['atol'],
@@ -239,7 +237,7 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
     if b_norm == 0:
         b_norm = 1
 
-    for k_outer in xrange(maxiter):
+    for k_outer in range(maxiter):
         r_outer = A.apply(x) - b
 
         # -- callback
@@ -266,7 +264,7 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
         ws = []
         y = None
 
-        for j in xrange(1, 1 + inner_m + len(outer_v)):
+        for j in range(1, 1 + inner_m + len(outer_v)):
             # -- Arnoldi process:
             #
             #    Build an orthonormal basis V and matrices W and H such that
@@ -351,7 +349,7 @@ def lgmres(A, b, x0=None, tol=1e-5, maxiter=1000, M=None, callback=None,
             hess = np.zeros((j+1, j))
             e1 = np.zeros((j+1,))
             e1[0] = inner_res_0
-            for q in xrange(j):
+            for q in range(j):
                 hess[:(q+2), q] = hs[q]
 
             y, resids, rank, s = lstsq(hess, e1)

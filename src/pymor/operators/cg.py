@@ -5,8 +5,6 @@
 
 """ This module provides some operators for continuous finite element discretizations."""
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 from scipy.sparse import coo_matrix, csc_matrix
 
