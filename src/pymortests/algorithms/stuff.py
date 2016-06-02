@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 import pytest
 
@@ -21,7 +19,7 @@ def _newton(order, **kwargs):
     return newton(mop, rhs, initial_guess=guess, **kwargs)
 
 
-@pytest.mark.parametrize("order", range(1, 8))
+@pytest.mark.parametrize("order", list(range(1, 8)))
 def test_newton(order):
     U, _ = _newton(order, atol=1e-15)
     assert float_cmp(U.data, 0.0)

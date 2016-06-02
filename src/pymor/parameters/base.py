@@ -37,9 +37,6 @@ components of the given |Parameter| and performs some name mapping. (See the
 documentation of :meth:`~Parametric.build_parameter_type` for details.)
 """
 
-from __future__ import absolute_import, division, print_function
-
-from itertools import izip
 from numbers import Number
 
 import numpy as np
@@ -68,8 +65,6 @@ class ParameterType(dict):
         a `dict` can be constructed.
     """
 
-    __keys = None
-
     def __init__(self, t):
         if t is None:
             t = {}
@@ -80,7 +75,7 @@ class ParameterType(dict):
             t = t.parameter_type
         else:
             t = dict(t)
-            for k, v in t.iteritems():
+            for k, v in t.items():
                 if not isinstance(v, tuple):
                     assert isinstance(v, Number)
                     t[k] = tuple() if v == 0 else (v,)
@@ -96,40 +91,11 @@ class ParameterType(dict):
     def copy(self):
         return ParameterType(self)
 
-    def __iter__(self):
-        if self.__keys is None:
-            self.__keys = sorted(dict.keys(self))
-        return iter(self.__keys)
-
-    def keys(self):
-        if self.__keys is None:
-            self.__keys = sorted(dict.keys(self))
-        return list(self.__keys)
-
-    def iterkeys(self):
-        return iter(self)
-
-    def items(self):
-        return list(self.iteritems())
-
-    def iteritems(self):
-        for k in self:
-            yield k, self[k]
-
-    def values(self):
-        return list(self.itervalues())
-
-    def itervalues(self):
-        for k in self:
-            yield self[k]
-
     def fromkeys(self, S, v=None):
         raise NotImplementedError
 
     def __str__(self):
-        if self.__keys is None:
-            self.__keys = sorted(self.keys())
-        return '{' + ', '.join('{}: {}'.format(k, self[k]) for k in self.__keys) + '}'
+        return '{' + ', '.join('{}: {}'.format(k, self[k]) for k in sorted(self.keys())) + '}'
 
     def __repr__(self):
         return 'ParameterType(' + str(self) + ')'
@@ -182,12 +148,10 @@ class Parameter(dict):
         The state id of the |Parameter|. (See :mod:`pymor.core.interfaces`.)
     """
 
-    __keys = None
-
     def __init__(self, v):
         if v is None:
             v = {}
-        i = v.iteritems() if hasattr(v, 'iteritems') else v
+        i = iter(v.items()) if hasattr(v, 'items') else v
         dict.__init__(self, {k: np.array(v) if not isinstance(v, np.ndarray) else v for k, v in i})
 
     @classmethod
@@ -231,10 +195,10 @@ class Parameter(dict):
                 mu = (mu,)
             if len(mu) != len(parameter_type):
                 raise ValueError('Parameter length does not match.')
-            mu = dict(izip(parameter_type, mu))
+            mu = dict(zip(sorted(parameter_type), mu))
         elif set(mu.keys()) != set(parameter_type.keys()):
             raise ValueError('Provided parameter with keys {} does not match parameter type {}.'
-                             .format(mu.keys(), parameter_type))
+                             .format(list(mu.keys()), parameter_type))
 
         def parse_value(k, v):
             if not isinstance(v, np.ndarray):
@@ -249,7 +213,7 @@ class Parameter(dict):
                                  .format(k, v.shape, parameter_type[k]))
             return v
 
-        return cls({k: parse_value(k, v) for k, v in mu.iteritems()})
+        return cls({k: parse_value(k, v) for k, v in mu.items()})
 
     def allclose(self, mu):
         """Compare to |Parameters| using :meth:`~pymor.tools.floatcmp.float_cmp_all`.
@@ -265,27 +229,22 @@ class Parameter(dict):
         components are almost equal, else `False`.
         """
         assert isinstance(mu, Parameter)
-        if self.viewkeys() != mu.viewkeys():
+        if list(self.keys()) != list(mu.keys()):
             return False
-        elif not all(float_cmp_all(v, mu[k]) for k, v in self.iteritems()):
+        elif not all(float_cmp_all(v, mu[k]) for k, v in self.items()):
             return False
         else:
             return True
 
     def clear(self):
         dict.clear(self)
-        self.__keys = None
         self.__sid = None
 
     def copy(self):
-        c = Parameter({k: v.copy() for k, v in self.iteritems()})
-        if self.__keys is not None:
-            c.__keys = list(self.__keys)
+        c = Parameter({k: v.copy() for k, v in self.items()})
         return c
 
     def __setitem__(self, key, value):
-        if key not in self:
-            self.__keys = None
         if not isinstance(value, np.ndarray):
             value = np.array(value)
         dict.__setitem__(self, key, value)
@@ -293,15 +252,14 @@ class Parameter(dict):
 
     def __delitem__(self, key):
         dict.__delitem__(self, key)
-        self.__keys = None
         self.__sid = None
 
     def __eq__(self, mu):
         if not isinstance(mu, Parameter):
             mu = Parameter(mu)
-        if self.viewkeys() != mu.viewkeys():
+        if list(self.keys()) != list(mu.keys()):
             return False
-        elif not all(np.array_equal(v, mu[k]) for k, v in self.iteritems()):
+        elif not all(np.array_equal(v, mu[k]) for k, v in self.items()):
             return False
         else:
             return True
@@ -320,7 +278,7 @@ class Parameter(dict):
 
     @property
     def parameter_type(self):
-        return ParameterType({k: v.shape for k, v in self.iteritems()})
+        return ParameterType({k: v.shape for k, v in self.items()})
 
     @property
     def sid(self):
@@ -333,10 +291,8 @@ class Parameter(dict):
 
     def __str__(self):
         np.set_string_function(format_array, repr=False)
-        if self.__keys is None:
-            self.__keys = sorted(self.keys())
         s = '{'
-        for k in self.__keys:
+        for k in sorted(self.keys()):
             v = self[k]
             if v.ndim > 1:
                 v = v.ravel()
@@ -419,7 +375,7 @@ class Parametric(object):
         if mu.__class__ is not Parameter:
             mu = Parameter.from_parameter_type(mu, self.parameter_type)
         assert not self.parameter_type or all(getattr(mu.get(k, None), 'shape', None) == v
-                                              for k, v in self.parameter_type.iteritems()), \
+                                              for k, v in self.parameter_type.items()), \
             ('Given parameter of type {} does not match expected parameter type {}'
              .format(mu.parameter_type, self.parameter_type))
         return mu
@@ -431,7 +387,7 @@ class Parametric(object):
         """
         assert mu.__class__ is Parameter
         return (None if self.parameter_local_type is None
-                else {k: mu[v] for k, v in self._parameter_global_names.iteritems()})
+                else {k: mu[v] for k, v in self._parameter_global_names.items()})
 
     def strip_parameter(self, mu):
         """Remove all components of the |Parameter| `mu` which are not part of the object's |ParameterType|.
@@ -443,7 +399,7 @@ class Parametric(object):
         """
         if mu.__class__ is not Parameter:
             mu = Parameter.from_parameter_type(mu, self.parameter_type)
-        assert all(getattr(mu.get(k, None), 'shape', None) == v for k, v in self.parameter_type.iteritems())
+        assert all(getattr(mu.get(k, None), 'shape', None) == v for k, v in self.parameter_type.items())
         return Parameter({k: mu[k] for k in self.parameter_type})
 
     def build_parameter_type(self, local_type=None, global_names=None, local_global=False,
@@ -526,7 +482,7 @@ class Parametric(object):
 
         if inherits:
             def check_op(op, global_type, provides):
-                for name, shape in op.parameter_type.iteritems():
+                for name, shape in op.parameter_type.items():
                     assert name not in global_type or global_type[name] == shape,\
                         ('Component dimensions of global name {} do not match ({} and {})'
                          .format(name, global_type[name], shape))
@@ -535,15 +491,15 @@ class Parametric(object):
                 return True
 
             global_type = (dict(local_type) if local_global
-                           else {global_names[k]: v for k, v in local_type.iteritems()})
+                           else {global_names[k]: v for k, v in local_type.items()})
             for op in (o for o in inherits if getattr(o, 'parametric', False)):
                 assert check_op(op, global_type, provides)
-                global_type.update({k: v for k, v in op.parameter_type.iteritems() if k not in provides})
+                global_type.update({k: v for k, v in op.parameter_type.items() if k not in provides})
 
             self.parameter_type = ParameterType(global_type)
         else:
             self.parameter_type = (ParameterType(local_type) if local_global
-                                   else ParameterType({global_names[k]: v for k, v in local_type.iteritems()}))
+                                   else ParameterType({global_names[k]: v for k, v in local_type.items()}))
 
         self.parameter_local_type = local_type
         self._parameter_global_names = global_names

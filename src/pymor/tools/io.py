@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 from scipy.io import loadmat, mmread
 from scipy.sparse import issparse
 import numpy as np
@@ -58,7 +56,7 @@ def _load(path, key=None):
         elif len(data) > 1:
             raise IOError('More than one object stored in NPY file {}'.format(key, path))
         else:
-            matrix = next(data.itervalues())
+            matrix = next(iter(data.values()))
     else:
         matrix = data
     if not isinstance(matrix, np.ndarray) and not issparse(matrix):

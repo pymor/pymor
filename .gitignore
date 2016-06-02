@@ -8,6 +8,7 @@
 *.so
 src/pymor/tools/inplace.c
 src/pymor/tools/relations.c
+src/pymor/grids/_unstructured.c
 src/pymordemos/minimal_cpp_demo/bindings_generated.cpp
 
 # Packages
@@ -60,3 +61,4 @@ coverage.xml
 libpeerconnection.log
 debian/pymor/
 .cache
+3to2.conversion.ok

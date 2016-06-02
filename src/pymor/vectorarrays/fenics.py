@@ -3,12 +3,10 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 try:
     import dolfin as df
     HAVE_FENICS = True
-    FENICS_VERSION = map(int, df.__version__.split('.'))
+    FENICS_VERSION = list(map(int, df.__version__.split('.')))
     if FENICS_VERSION[:2] != [1, 6]:
         import warnings
         warnings.warn('FEniCS support has only been tested with dolfin 1.6.')
@@ -20,6 +18,14 @@ if HAVE_FENICS:
 
     from pymor.vectorarrays.interfaces import VectorSpace
     from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorArray
+
+
+    # For pyMOR's MPI support to work, subtypes need to be hashable.
+    # However, FunctionSpace (our subtype) defines __eq__ but not __hash__
+    # which makes it unhashable on Pyhton 3. On the other hand, equality
+    # for FunctionSpace seems to be the same as identity, so we can easily
+    # monkey-patch:
+    df.FunctionSpace.__hash__ = lambda self: id(self)
 
 
     class FenicsVector(CopyOnWriteVector):
@@ -36,6 +42,7 @@ if HAVE_FENICS:
         def _copy_data(self):
             self.impl = self.impl.copy()
 
+        @classmethod
         def make_zeros(cls, subtype):
             impl = df.Function(subtype).vector()
             return cls(impl, subtype)
@@ -69,6 +76,9 @@ if HAVE_FENICS:
 
         def l2_norm(self):
             return self.impl.norm('l2')
+
+        def l2_norm2(self):
+            return self.impl.norm('l2') ** 2
 
         def sup_norm(self):
             return self.impl.norm('linf')

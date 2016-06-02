@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 from pymor.operators.basic import OperatorBase
 from pymor.vectorarrays.interfaces import VectorSpace
 from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorArray
@@ -83,7 +81,7 @@ class WrappedDiffusionOperator(OperatorBase):
         assert U in self.source
 
         if ind is None:
-            ind = xrange(len(U))
+            ind = range(len(U))
 
         def apply_one_vector(u):
             v = Vector(self.range.dim, 0)

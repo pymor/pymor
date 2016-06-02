@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import tempfile
 import collections
 import os
@@ -60,10 +58,10 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
 
     # when we are running MPI parallel and Gmsh is compiled with MPI support,
     # we have to make sure Gmsh does not notice the MPI environment or it will fail.
-    env = {k: v for k, v in os.environ.iteritems()
+    env = {k: v for k, v in os.environ.items()
            if 'MPI' not in k.upper()}
     try:
-        version = subprocess.check_output(['gmsh', '--version'], stderr=subprocess.STDOUT, env=env)
+        version = subprocess.check_output(['gmsh', '--version'], stderr=subprocess.STDOUT, env=env).decode()
     except (subprocess.CalledProcessError, OSError):
         raise GmshError('Could not find Gmsh.'
                         + ' Please ensure that the gmsh binary (http://geuz.org/gmsh/) is in your PATH.')
@@ -110,7 +108,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
             logger.info('Writing Gmsh geometry file ...')
             # Create a temporary GEO-file if None is specified
             if geo_file_path is None:
-                geo_file = tempfile.NamedTemporaryFile(delete=False, suffix='.geo')
+                geo_file = tempfile.NamedTemporaryFile(mode='wt', delete=False, suffix='.geo')
                 geo_file_path = geo_file.name
             else:
                 geo_file = open(geo_file_path, 'w')
@@ -143,7 +141,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
 
             # form line_loops (polygonal chains), create ids and write them to file.
             line_loops = [[point_ids[str(p)] for p in ps] for ps in points]
-            line_loop_ids = range(len(lines)+1, len(lines)+len(line_loops)+1)
+            line_loop_ids = list(range(len(lines)+1, len(lines)+len(line_loops)+1))
             for ll_id, ll in zip(line_loop_ids, line_loops):
                 geo_file.write('Line Loop('+str(ll_id)+')'+' = '+str(ll).replace('[', '{').replace(']', '}')+';\n')
 
@@ -153,7 +151,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
             geo_file.write('Physical Surface("boundary") = {'+str(line_loop_ids[0]+1)+'};\n')
 
             # write boundaries.
-            for boundary_type, bs in boundary_types.iteritems():
+            for boundary_type, bs in boundary_types.items():
                 geo_file.write('Physical Line' + '("' + str(boundary_type) + '")' + ' = '
                                + str([l_id for l_id in bs]).replace('[', '{').replace(']', '}') + ';\n')
 
@@ -163,7 +161,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
             geo_file_path = geo_file.name
         # Create a temporary MSH-file if no path is specified.
         if msh_file_path is None:
-            msh_file = tempfile.NamedTemporaryFile(delete=False, suffix='.msh')
+            msh_file = tempfile.NamedTemporaryFile(mode='wt', delete=False, suffix='.msh')
             msh_file_path = msh_file.name
             msh_file.close()
 
@@ -177,7 +175,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
 
         # run gmsh; perform mesh refinement
         cmd = ['gmsh', msh_file_path, '-refine', '-o', msh_file_path]
-        for i in xrange(refinement_steps):
+        for i in range(refinement_steps):
             logger.info('Performing Gmsh refinement step {}'.format(i+1))
             subprocess.check_call(cmd, env=env)
 

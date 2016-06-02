@@ -81,8 +81,6 @@ Options:
   --greedy-without-estimator      Do not use error estimator for basis generation.
 """
 
-from __future__ import absolute_import, division, print_function
-
 from functools import partial
 import sys
 import time
@@ -167,12 +165,12 @@ def main(args):
 
     if args['--pickle']:
         print('\nWriting reduced discretization to file {} ...'.format(args['--pickle'] + '_reduced'))
-        with open(args['--pickle'] + '_reduced', 'w') as f:
+        with open(args['--pickle'] + '_reduced', 'wb') as f:
             dump(rd, f)
         if not args['--fenics']:  # FEniCS data structures do not support serialization
             print('Writing detailed discretization and reconstructor to file {} ...'
                   .format(args['--pickle'] + '_detailed'))
-            with open(args['--pickle'] + '_detailed', 'w') as f:
+            with open(args['--pickle'] + '_detailed', 'wb') as f:
                 dump((d, rc), f)
 
     print('\nSearching for maximum error on random snapshots ...')
@@ -294,7 +292,6 @@ def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
     ########################################
 
     import dolfin as df
-
     mesh = df.UnitSquareMesh(grid_num_intervals, grid_num_intervals, 'crossed')
     V = df.FunctionSpace(mesh, 'Lagrange', element_order)
     u = df.TrialFunction(V)

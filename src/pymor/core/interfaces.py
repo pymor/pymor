@@ -65,25 +65,29 @@ functionality:
        corresponding instance attributes.
 """
 
-from __future__ import absolute_import, division, print_function
 import abc
-from cPickle import dumps
-from copy_reg import dispatch_table
+try:
+    from cPickle import dumps, HIGHEST_PROTOCOL
+except ImportError:
+    from pickle import dumps, HIGHEST_PROTOCOL
+from copyreg import dispatch_table
 import hashlib
 import inspect
 import itertools
 import os
 import time
-from types import FunctionType, BuiltinFunctionType, NoneType
+from types import FunctionType, BuiltinFunctionType
 import uuid
+import sys
 
 import numpy as np
 
 from pymor.core import decorators, backports, logger
 from pymor.core.exceptions import ConstError, SIDGenerationError
 
-DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_COPY_DOCSTRINGS_DISABLE', 0)) == 1
-
+PY2 = sys.version_info.major == 2
+DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_WITH_SPHINX', 0)) == 1
+NoneType = type(None)
 
 class UID(object):
     '''Provides unique, quickly computed ids by combinding a session UUID4 with a counter.'''
@@ -128,11 +132,9 @@ class UberMeta(abc.ABCMeta):
 
     def __new__(cls, classname, bases, classdict):
         """I copy docstrings from base class methods to deriving classes.
-        I also forward "abstract{class|static}method" decorations in the base class to "{class|static}method"
-        decorations in the new subclass.
 
-        Copying of docstrings can be prevented by setting the `PYMOR_COPY_DOCSTRINGS_DISABLE` environment
-        variable to `1`.
+        Copying of docstrings is disabled when the `PYMOR_WITH_SPHINX` environment
+        variable is set to `1`.
         """
         for attr in ('_init_arguments', '_init_defaults'):
             if attr in classdict:
@@ -153,32 +155,34 @@ class UberMeta(abc.ABCMeta):
                             if doc is not None:
                                 base_doc = doc
                             item.__doc__ = base_doc
-                    if (hasattr(base_func, "__isabstractstaticmethod__") and
-                            getattr(base_func, "__isabstractstaticmethod__")):
-                        classdict[attr] = staticmethod(classdict[attr])
-                    if (hasattr(base_func, "__isabstractclassmethod__") and
-                            getattr(base_func, "__isabstractclassmethod__")):
-                        classdict[attr] = classmethod(classdict[attr])
 
         c = abc.ABCMeta.__new__(cls, classname, bases, classdict)
 
-        # Beware! The following will probably break in python 3 if there are
-        # keyword-only arguemnts
-        try:
-            args, varargs, keywords, defaults = inspect.getargspec(c.__init__)
-            assert args[0] == 'self'
-            c._init_arguments = tuple(args[1:])
-            if defaults:
-                c._init_defaults = dict(zip(args[-len(defaults):], defaults))
-            else:
-                c._init_defaults = dict()
-        except TypeError:       # happens when no one declares an __init__ method and object is reached
-            c._init_arguments = tuple()
-            c._init_defaults = dict()
+        if PY2:
+            try:
+                args, varargs, keywords, defaults = inspect.getargspec(c.__init__)
+                assert args[0] == 'self'
+                c._init_arguments = tuple(args[1:])
+            except TypeError:       # happens when no one declares an __init__ method and object is reached
+                c._init_arguments = tuple()
+        else:
+            # getargspec is deprecated and does not work with keyword only args
+            init_sig = inspect.signature(c.__init__)
+            init_args = []
+            for arg, description in init_sig.parameters.items():
+                if arg == 'self':
+                    continue
+                if description.kind == description.POSITIONAL_ONLY:
+                    raise TypeError('It should not be possible that {}.__init__ has POSITIONAL_ONLY arguments'.
+                                    format(c))
+                if description.kind in (description.POSITIONAL_OR_KEYWORD, description.KEYWORD_ONLY):
+                    init_args.append(arg)
+            c._init_arguments = tuple(init_args)
+
         return c
 
 
-class BasicInterface(object):
+class BasicInterface(object, metaclass=UberMeta):
     """Base class for most classes in pyMOR.
 
     Attributes
@@ -198,8 +202,6 @@ class BasicInterface(object):
         :class:`UIDProvider` and should be unique for all pyMOR objects
         ever created.
     """
-
-    __metaclass__ = UberMeta
     _locked = False
 
     def __setattr__(self, key, value):
@@ -293,34 +295,13 @@ class BasicInterface(object):
 abstractmethod = abc.abstractmethod
 abstractproperty = abc.abstractproperty
 
-import sys
-if sys.version_info >= (3, 1, 0):
-    abstractclassmethod_base = abc.abstractclassmethod
-    abstractstaticmethod_base = abc.abstractstaticmethod
-else:
+if PY2:
     # backport path for issue5867
-    abstractclassmethod_base = backports.abstractclassmethod
-    abstractstaticmethod_base = backports.abstractstaticmethod
-
-
-class abstractclassmethod(abstractclassmethod_base):
-    """I mark my wrapped function with an additional __isabstractclassmethod__ member,
-    where my abstractclassmethod_base sets __isabstractmethod__ = True.
-    """
-
-    def __init__(self, callable_method):
-        callable_method.__isabstractclassmethod__ = True
-        super(abstractclassmethod, self).__init__(callable_method)
-
-
-class abstractstaticmethod(abstractstaticmethod_base):
-    """I mark my wrapped function with an additional __isabstractstaticmethod__ member,
-    where my abstractclassmethod_base sets __isabstractmethod__ = True.
-    """
-
-    def __init__(self, callable_method):
-        callable_method.__isabstractstaticmethod__ = True
-        super(abstractstaticmethod, self).__init__(callable_method)
+    abstractclassmethod = backports.abstractclassmethod
+    abstractstaticmethod = backports.abstractstaticmethod
+else:
+    abstractclassmethod = abc.abstractclassmethod
+    abstractstaticmethod = abc.abstractstaticmethod
 
 
 class ImmutableMeta(UberMeta):
@@ -336,7 +317,7 @@ class ImmutableMeta(UberMeta):
 
         c = UberMeta.__new__(cls, classname, bases, classdict)
 
-        c._implements_reduce = ('__reduce__' in classdict
+        c._implements_reduce = ('__reduce__' in classdict or '__reduce_ex__' in classdict
                                 or any(getattr(base, '_implements_reduce', False) for base in bases))
         return c
 
@@ -348,7 +329,7 @@ class ImmutableMeta(UberMeta):
     __call__ = _call
 
 
-class ImmutableInterface(BasicInterface):
+class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
     """Base class for immutable objects in pyMOR.
 
     Instances of `ImmutableInterface` are immutable in the sense that
@@ -390,7 +371,6 @@ class ImmutableInterface(BasicInterface):
         union of the arguments names of `__init__` and the names
         specified via :attr:`~ImmutableInterface.add_with_arguments`.
     """
-    __metaclass__ = ImmutableMeta
     sid_ignore = frozenset({'_locked', '_logger', '_name', '_uid', '_sid_contains_cycles', 'sid'})
 
     # Unlocking an immutable object will result in the deletion of its sid.
@@ -464,7 +444,7 @@ class ImmutableInterface(BasicInterface):
         """
         if not set(kwargs.keys()) <= self.with_arguments:
             raise ValueError('Changing "{}" using with() is not allowed in {} (only "{}")'.format(
-                kwargs.keys(), self.__class__, self.with_arguments))
+                list(kwargs.keys()), self.__class__, self.with_arguments))
 
         # fill missing __init__ arguments using instance attributes of same name
         for arg in self._init_arguments:
@@ -509,6 +489,12 @@ def generate_sid(obj, debug=False):
 
 # Helper classes for generate_sid
 
+if PY2:
+    import __builtin__
+    STRING_TYPES = (str, __builtin__.unicode)
+else:
+    STRING_TYPES = (str, bytes)
+
 
 class _SIDGenerator(object):
 
@@ -526,7 +512,7 @@ class _SIDGenerator(object):
 
         if debug:
             print('-' * 100)
-            print('Deterministic state for ' + obj.name)
+            print('Deterministic state for ' + getattr(obj, 'name', str(obj)))
             print('-' * 100)
             print()
             import pprint
@@ -553,12 +539,12 @@ class _SIDGenerator(object):
             return(v)
 
         t = type(obj)
-        if t in (NoneType, bool, int, long, float, FunctionType, BuiltinFunctionType, type):
+        if t in (NoneType, bool, int, float, FunctionType, BuiltinFunctionType, type):
             return obj
 
         self.memo[id(obj)] = _MemoKey(len(self.memo), obj)
 
-        if t in (str, unicode):
+        if t in STRING_TYPES:
             return obj
 
         if t is np.ndarray and t.dtype != object:
@@ -574,7 +560,8 @@ class _SIDGenerator(object):
             return (t,) + tuple(self.deterministic_state(x) for x in sorted(obj))
 
         if t is dict:
-            return (dict,) + tuple((k, self.deterministic_state(v)) for k, v in sorted(obj.iteritems()))
+            return (dict,) + tuple((k if type(k) is str else self.deterministic_state(k), self.deterministic_state(v))
+                                   for k, v in sorted(obj.items()))
 
         if issubclass(t, ImmutableInterface):
             if hasattr(obj, 'sid') and not obj._sid_contains_cycles:
@@ -592,13 +579,13 @@ class _SIDGenerator(object):
 
             if obj._implements_reduce:
                 self.logger.debug('{}: __reduce__ is implemented, not using sid_ignore'.format(obj.name))
-                return self.handle_reduce_value(obj, t, obj.__reduce__(), first_obj)
+                return self.handle_reduce_value(obj, t, obj.__reduce_ex__(HIGHEST_PROTOCOL), first_obj)
             else:
                 try:
                     state = obj.__getstate__()
                 except AttributeError:
                     state = obj.__dict__
-                state = {k: v for k, v in state.iteritems() if k not in obj.sid_ignore}
+                state = {k: v for k, v in state.items() if k not in obj.sid_ignore}
                 return self.deterministic_state(state) if first_obj else (t, self.deterministic_state(state))
 
         sid = getattr(obj, 'sid', None)
@@ -614,7 +601,7 @@ class _SIDGenerator(object):
 
             reduce = getattr(obj, '__reduce_ex__', None)
             if reduce:
-                rv = reduce(2)
+                rv = reduce(HIGHEST_PROTOCOL)
             else:
                 reduce = getattr(obj, '__reduce__', None)
                 if reduce:

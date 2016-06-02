@@ -2,11 +2,8 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 from numbers import Number
 
-from itertools import izip
 import numpy as np
 
 from pymor.functions.interfaces import FunctionInterface
@@ -242,4 +239,4 @@ class LincombFunction(FunctionBase):
     def evaluate(self, x, mu=None):
         mu = self.parse_parameter(mu)
         coeffs = self.evaluate_coefficients(mu)
-        return sum(c * f(x, mu) for c, f in izip(coeffs, self.functions))
+        return sum(c * f(x, mu) for c, f in zip(coeffs, self.functions))

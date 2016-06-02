@@ -3,9 +3,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
-from itertools import izip
 from numbers import Number
 import numpy as np
 
@@ -86,7 +83,7 @@ class BlockVectorArray(VectorArrayInterface):
     def append(self, other, o_ind=None, remove_from_other=False):
         assert self._blocks_are_valid()
         assert other in self.space
-        for block, other_block in izip(self._blocks, other._blocks):
+        for block, other_block in zip(self._blocks, other._blocks):
             block.append(other_block, o_ind=o_ind, remove_from_other=remove_from_other)
 
     def remove(self, ind=None):
@@ -110,7 +107,7 @@ class BlockVectorArray(VectorArrayInterface):
         assert isinstance(alpha, Number) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
         if x.len_ind(x_ind) > 0:
-            for block, x_block in izip(self._blocks, x._blocks):
+            for block, x_block in zip(self._blocks, x._blocks):
                 block.axpy(alpha, x_block, ind, x_ind)
         else:
             assert self.len_ind(ind) == 0
@@ -118,7 +115,7 @@ class BlockVectorArray(VectorArrayInterface):
     def dot(self, other, ind=None, o_ind=None):
         assert other in self.space
         dots = [block.dot(other_block, ind=ind, o_ind=o_ind)
-                for block, other_block in izip(self._blocks, other._blocks)]
+                for block, other_block in zip(self._blocks, other._blocks)]
         assert all([dot.shape == dots[0].shape for dot in dots])
         ret = np.zeros(dots[0].shape)
         for dot in dots:
@@ -128,7 +125,7 @@ class BlockVectorArray(VectorArrayInterface):
     def pairwise_dot(self, other, ind=None, o_ind=None):
         assert other in self.space
         dots = [block.pairwise_dot(other_block, ind=ind, o_ind=o_ind)
-                for block, other_block in izip(self._blocks, other._blocks)]
+                for block, other_block in zip(self._blocks, other._blocks)]
         assert all([dot.shape == dots[0].shape for dot in dots])
         ret = np.zeros(dots[0].shape)
         for dot in dots:
@@ -146,8 +143,11 @@ class BlockVectorArray(VectorArrayInterface):
 
     def l2_norm(self, ind=None):
         assert self.check_ind(ind)
-        return np.sqrt(np.sum(np.array([block.l2_norm(ind=ind)**2 for block in self._blocks]),
-                              axis=0))
+        return np.sqrt(np.sum(np.array([block.l2_norm2(ind=ind) for block in self._blocks]), axis=0))
+
+    def l2_norm2(self, ind=None):
+        assert self.check_ind(ind)
+        return np.sum(np.array([block.l2_norm2(ind=ind) for block in self._blocks]), axis=0)
 
     def sup_norm(self, ind=None):
         assert self.check_ind(ind)

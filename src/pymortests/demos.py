@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import os
 import pymordemos
 import runpy
@@ -13,6 +11,7 @@ from tempfile import mkdtemp
 import shutil
 
 from pymortests.base import runmodule, check_results
+from pymor.core.exceptions import PySideMissing
 from pymor.gui.gl import HAVE_PYSIDE
 from pymor.gui.qt import stop_gui_processes
 
@@ -46,7 +45,7 @@ THERMALBLOCK_ARGS = (
     ('thermalblock', ['--greedy-without-estimator', 3, 1, 2, 5]),
     ('thermalblock', ['--alg=pod', 2, 2, 3, 5]),
     ('thermalblock', ['--alg=adaptive_greedy', 2, 2, 10, 30]),
-    ('thermalblock', ['--alg=naive', '--reductor=traditional', 2, 2, 10, 30]),
+    ('thermalblock', ['--alg=naive', '--reductor=traditional', 2, 2, 10, 5]),
 )
 
 THERMALBLOCK_ADAPTIVE_ARGS = (
@@ -88,12 +87,6 @@ def thermalblock_args(request):
     return request.param
 
 
-def _is_failed_import_ok(error):
-    if error.message == 'cannot visualize: import of PySide failed':
-        return not HAVE_PYSIDE
-    return False
-
-
 def _test_demo(demo):
     import sys
     sys._called_from_test = True
@@ -112,10 +105,11 @@ def _test_demo(demo):
         dolfin.interactive = nop
     except ImportError:
         pass
+    result = None
     try:
         result = demo()
-    except ImportError as ie:
-        assert _is_failed_import_ok(ie), ie
+    except PySideMissing:
+        pytest.xfail("PySide missing")
     finally:
         stop_gui_processes()
         from pymor.parallel.default import _cleanup
@@ -187,11 +181,22 @@ def test_thermalblock_ipython(demo_args):
 
 def test_thermalblock_results(thermalblock_args):
     from pymordemos import thermalblock
-    results = _test_demo(lambda: thermalblock.main(map(str, thermalblock_args[1])))
+    results = _test_demo(lambda: thermalblock.main(list(map(str, thermalblock_args[1]))))
+    # due to the symmetry of the problem and the random test parameters, the estimated
+    # error may change a lot
     check_results('test_thermalblock_results', thermalblock_args[1], results,
-                  {'basis_sizes', 'norms', 'max_norms', 'errors', 'max_errors', 'rel_errors', 'max_rel_errors',
-                   'estimates', 'max_estimates', 'effectivities', 'min_effectivities', 'max_effectivities', 'errors',
-                   'max_conditions'})
+                  (1e-13, 1e-7), 'basis_sizes', 'norms', 'max_norms',
+                  (1e-13, 4.), 'errors', 'max_errors', 'rel_errors', 'max_rel_errors',
+                  'estimates', 'max_estimates', 'effectivities', 'min_effectivities', 'max_effectivities', 'errors')
+
+
+def test_burgers_ei_results():
+    from pymordemos import burgers_ei
+    args = list(map(str, [1, 2, 10, 100, 10, 30]))
+    ei_results, greedy_results = _test_demo(lambda: burgers_ei.main(args))
+    ei_results['greedy_max_errs'] = greedy_results['max_errs']
+    check_results('test_burgers_ei_results', args, ei_results,
+                  (1e-13, 1e-7), 'errors', 'triangularity_errors', 'greedy_max_errs')
 
 if __name__ == "__main__":
     runmodule(filename=__file__)

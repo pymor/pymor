@@ -8,7 +8,7 @@ Created on Fri Nov  2 10:12:55 2012
 Collection of function/class based decorators.
 
 """
-from __future__ import absolute_import, division, print_function
+
 import functools
 import types
 import inspect

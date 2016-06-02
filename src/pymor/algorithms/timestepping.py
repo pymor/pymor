@@ -18,8 +18,6 @@ and :class:`ImplicitEulerTimeStepper` encapsulate :func:`explicit_euler` and
 :func:`implicit_euler` to provide this interface.
 """
 
-from __future__ import absolute_import, division, print_function
-
 from pymor.core.interfaces import ImmutableInterface, abstractmethod
 from pymor.operators.interfaces import OperatorInterface
 from pymor.vectorarrays.interfaces import VectorArrayInterface
@@ -168,7 +166,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
     t = t0
     U = U0.copy()
 
-    for n in xrange(nt):
+    for n in range(nt):
         t += dt
         mu['_t'] = t
         rhs = M.apply(U)
@@ -217,14 +215,14 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
     U = U0.copy()
 
     if F is None:
-        for n in xrange(nt):
+        for n in range(nt):
             t += dt
             mu['_t'] = t
             U.axpy(-dt, A.apply(U, mu=mu))
             while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
                 R.append(U)
     else:
-        for n in xrange(nt):
+        for n in range(nt):
             t += dt
             mu['_t'] = t
             if F_time_dep:

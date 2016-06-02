@@ -3,8 +3,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import print_function
-from __future__ import division
 import numpy as np
 
 from pymor.grids.interfaces import AffineGridWithOrthogonalCentersInterface

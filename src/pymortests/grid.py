@@ -2,9 +2,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
-from cPickle import dumps, loads
+from pickle import dumps, loads
 from itertools import product
 
 import numpy as np
@@ -34,8 +32,7 @@ def test_dim(grid):
 
 def test_size(grid):
     g = grid
-    for d in xrange(g.dim + 1):
-        assert isinstance(g.size(d), int)
+    for d in range(g.dim + 1):
         assert g.size(d) >= 0
     with pytest.raises(AssertionError):
         g.size(-1)
@@ -45,7 +42,7 @@ def test_size(grid):
 
 def test_subentities_wrong_arguments(grid):
     g = grid
-    for e in xrange(g.dim + 1):
+    for e in range(g.dim + 1):
         with pytest.raises(AssertionError):
             g.subentities(e, g.dim + 1)
         with pytest.raises(AssertionError):
@@ -58,31 +55,31 @@ def test_subentities_wrong_arguments(grid):
 
 def test_subentities_shape(grid):
     g = grid
-    for e in xrange(g.dim + 1):
-        for s in xrange(e, g.dim + 1):
+    for e in range(g.dim + 1):
+        for s in range(e, g.dim + 1):
             assert g.subentities(e, s).ndim == 2
             assert g.subentities(e, s).shape[0] == g.size(e)
 
 
 def test_subentities_dtype(grid):
     g = grid
-    for e in xrange(g.dim + 1):
-        for s in xrange(e, g.dim + 1):
+    for e in range(g.dim + 1):
+        for s in range(e, g.dim + 1):
             assert g.subentities(e, s).dtype == np.dtype('int32')
 
 
 def test_subentities_entry_value_range(grid):
     g = grid
-    for e in xrange(g.dim + 1):
-        for s in xrange(e, g.dim + 1):
+    for e in range(g.dim + 1):
+        for s in range(e, g.dim + 1):
             np.testing.assert_array_less(g.subentities(e, s), g.size(s))
             np.testing.assert_array_less(-2, g.subentities(e, s))
 
 
 def test_subentities_entry_values_unique(grid):
     g = grid
-    for e in xrange(g.dim + 1):
-        for s in xrange(e, g.dim + 1):
+    for e in range(g.dim + 1):
+        for s in range(e, g.dim + 1):
             for S in g.subentities(e, s):
                 S = S[S >= 0]
                 assert S.size == np.unique(S).size
@@ -90,28 +87,28 @@ def test_subentities_entry_values_unique(grid):
 
 def test_subentities_codim_d_codim_d(grid):
     g = grid
-    for d in xrange(g.dim + 1):
+    for d in range(g.dim + 1):
         assert g.subentities(d, d).shape == (g.size(d), 1)
         np.testing.assert_array_equal(g.subentities(d, d).ravel(), np.arange(g.size(d)))
 
 
 def test_subentities_transitivity(grid):
     g = grid
-    for e in xrange(g.dim + 1):
-        for s in xrange(e + 1, g.dim + 1):
-            for ss in xrange(s + 1, g.dim + 1):
+    for e in range(g.dim + 1):
+        for s in range(e + 1, g.dim + 1):
+            for ss in range(s + 1, g.dim + 1):
                 SE = g.subentities(e, s)
                 SSE = g.subentities(e, ss)
                 SESE = g.subentities(s, ss)
-                for i in xrange(SE.shape[0]):
-                    for j in xrange(SE.shape[1]):
+                for i in range(SE.shape[0]):
+                    for j in range(SE.shape[1]):
                         if SE[i, j] != -1:
                             assert set(SESE[SE[i, j]]) <= set(SSE[i]).union((-1,))
 
 
 def test_superentities_wrong_arguments(grid):
     g = grid
-    for e in xrange(g.dim + 1):
+    for e in range(g.dim + 1):
         with pytest.raises(AssertionError):
             g.superentities(e, -1)
         with pytest.raises(AssertionError):
@@ -126,8 +123,8 @@ def test_superentities_wrong_arguments(grid):
 
 def test_superentities_shape(grid):
     g = grid
-    for e in xrange(g.dim + 1):
-        for s in xrange(e):
+    for e in range(g.dim + 1):
+        for s in range(e):
             assert g.superentities(e, s).ndim == 2
             assert g.superentities(e, s).shape[0] == g.size(e)
             assert g.superentities(e, s).shape[1] > 0
@@ -136,23 +133,23 @@ def test_superentities_shape(grid):
 
 def test_superentities_dtype(grid):
     g = grid
-    for e in xrange(g.dim + 1):
-        for s in xrange(e):
+    for e in range(g.dim + 1):
+        for s in range(e):
             assert g.superentities(e, s).dtype == np.dtype('int32')
 
 
 def test_superentities_entry_value_range(grid):
     g = grid
-    for e in xrange(g.dim + 1):
-        for s in xrange(e):
+    for e in range(g.dim + 1):
+        for s in range(e):
             np.testing.assert_array_less(g.superentities(e, s), g.size(s))
             np.testing.assert_array_less(-2, g.superentities(e, s))
 
 
 def test_superentities_entry_values_unique(grid):
     g = grid
-    for e in xrange(g.dim + 1):
-        for s in xrange(e):
+    for e in range(g.dim + 1):
+        for s in range(e):
             for S in g.superentities(e, s):
                 S = S[S >= 0]
                 assert S.size == np.unique(S).size
@@ -160,8 +157,8 @@ def test_superentities_entry_values_unique(grid):
 
 def test_superentities_entries_sorted(grid):
     g = grid
-    for e in xrange(g.dim + 1):
-        for s in xrange(e):
+    for e in range(g.dim + 1):
+        for s in range(e):
             for S in g.superentities(e, s):
                 i = 0
                 while (i + 1 < len(S)) and (S[i] < S[i + 1]):
@@ -173,18 +170,18 @@ def test_superentities_entries_sorted(grid):
 
 def test_superentities_codim_d_codim_d(grid):
     g = grid
-    for d in xrange(g.dim + 1):
+    for d in range(g.dim + 1):
         assert g.superentities(d, d).shape == (g.size(d), 1)
         np.testing.assert_array_equal(g.superentities(d, d).ravel(), np.arange(g.size(d)))
 
 
 def test_superentities_each_entry_superentity(grid):
     g = grid
-    for e in xrange(g.dim + 1):
-        for s in xrange(e):
+    for e in range(g.dim + 1):
+        for s in range(e):
             SE = g.superentities(e, s)
             SUBE = g.subentities(s, e)
-            for i in xrange(SE.shape[0]):
+            for i in range(SE.shape[0]):
                 for se in SE[i]:
                     if se != -1:
                         assert i in SUBE[se]
@@ -192,11 +189,11 @@ def test_superentities_each_entry_superentity(grid):
 
 def test_superentities_each_superentity_has_entry(grid):
     g = grid
-    for e in xrange(g.dim + 1):
-        for s in xrange(e):
+    for e in range(g.dim + 1):
+        for s in range(e):
             SE = g.superentities(e, s)
             SUBE = g.subentities(s, e)
-            for i in xrange(SUBE.shape[0]):
+            for i in range(SUBE.shape[0]):
                 for se in SUBE[i]:
                     if se != -1:
                         assert i in SE[se]
@@ -204,7 +201,7 @@ def test_superentities_each_superentity_has_entry(grid):
 
 def test_superentity_indices_wrong_arguments(grid):
     g = grid
-    for e in xrange(g.dim + 1):
+    for e in range(g.dim + 1):
         with pytest.raises(AssertionError):
             g.superentity_indices(e, -1)
         with pytest.raises(AssertionError):
@@ -219,22 +216,22 @@ def test_superentity_indices_wrong_arguments(grid):
 
 def test_superentity_indices_shape(grid):
     g = grid
-    for e in xrange(g.dim + 1):
-        for s in xrange(e):
+    for e in range(g.dim + 1):
+        for s in range(e):
             assert g.superentity_indices(e, s).shape == g.superentities(e, s).shape
 
 
 def test_superentity_indices_dtype(grid):
     g = grid
-    for e in xrange(g.dim + 1):
-        for s in xrange(e):
+    for e in range(g.dim + 1):
+        for s in range(e):
             assert g.superentity_indices(e, s).dtype == np.dtype('int32')
 
 
 def test_superentity_indices_valid_entries(grid):
     g = grid
-    for e in xrange(g.dim + 1):
-        for s in xrange(e):
+    for e in range(g.dim + 1):
+        for s in range(e):
             SE = g.superentities(e, s)
             SEI = g.superentity_indices(e, s)
             SUBE = g.subentities(s, e)
@@ -245,8 +242,8 @@ def test_superentity_indices_valid_entries(grid):
 
 def test_neighbours_wrong_arguments(grid):
     g = grid
-    for e in xrange(g.dim + 1):
-        for n in xrange(g.dim + 1):
+    for e in range(g.dim + 1):
+        for n in range(g.dim + 1):
             with pytest.raises(AssertionError):
                 g.neighbours(e, n, -1)
             with pytest.raises(AssertionError):
@@ -267,31 +264,31 @@ def test_neighbours_wrong_arguments(grid):
 
 def test_neighbours_shape(grid):
     g = grid
-    for e, n in product(xrange(g.dim + 1), xrange(g.dim + 1)):
-        for s in xrange(max(e, n), g.dim + 1):
+    for e, n in product(range(g.dim + 1), range(g.dim + 1)):
+        for s in range(max(e, n), g.dim + 1):
             assert g.neighbours(e, n, s).ndim == 2
             assert g.neighbours(e, n, s).shape[0] == g.size(e)
 
 
 def test_neighbours_dtype(grid):
     g = grid
-    for e, n in product(xrange(g.dim + 1), xrange(g.dim + 1)):
-        for s in xrange(max(e, n), g.dim + 1):
+    for e, n in product(range(g.dim + 1), range(g.dim + 1)):
+        for s in range(max(e, n), g.dim + 1):
             assert g.neighbours(e, n, s).dtype == np.dtype('int32')
 
 
 def test_neighbours_entry_value_range(grid):
     g = grid
-    for e, n in product(xrange(g.dim + 1), xrange(g.dim + 1)):
-        for s in xrange(max(e, n), g.dim + 1):
+    for e, n in product(range(g.dim + 1), range(g.dim + 1)):
+        for s in range(max(e, n), g.dim + 1):
             np.testing.assert_array_less(g.neighbours(e, n, s), g.size(n))
             np.testing.assert_array_less(-2, g.neighbours(e, n, s))
 
 
 def test_neighbours_entry_values_unique(grid):
     g = grid
-    for e, n in product(xrange(g.dim + 1), xrange(g.dim + 1)):
-        for s in xrange(max(e, n), g.dim + 1):
+    for e, n in product(range(g.dim + 1), range(g.dim + 1)):
+        for s in range(max(e, n), g.dim + 1):
             for S in g.neighbours(e, n, s):
                 S = S[S >= 0]
                 assert S.size == np.unique(S).size
@@ -299,8 +296,8 @@ def test_neighbours_entry_values_unique(grid):
 
 def test_neighbours_each_entry_neighbour(grid):
     g = grid
-    for e, n in product(xrange(g.dim + 1), xrange(g.dim + 1)):
-        for s in xrange(max(e, n), g.dim + 1):
+    for e, n in product(range(g.dim + 1), range(g.dim + 1)):
+        for s in range(max(e, n), g.dim + 1):
             N = g.neighbours(e, n, s)
             ESE = g.subentities(e, s)
             NSE = g.subentities(n, s)
@@ -315,19 +312,19 @@ def test_neighbours_each_entry_neighbour(grid):
 
 def test_neighbours_each_neighbour_has_entry(grid):
     g = grid
-    for e, n in product(xrange(g.dim + 1), xrange(g.dim + 1)):
-        for s in xrange(max(e, n), g.dim + 1):
+    for e, n in product(range(g.dim + 1), range(g.dim + 1)):
+        for s in range(max(e, n), g.dim + 1):
             N = g.neighbours(e, n, s)
             SUE = g.superentities(s, e)
             SUN = g.superentities(s, n)
             if e != n:
-                for si in xrange(SUE.shape[0]):
+                for si in range(SUE.shape[0]):
                     for ei, ni in product(SUE[si], SUN[si]):
                         if ei != -1 and ni != -1:
                             assert ni in N[ei],\
                                 'Failed for\n{g}\ne={e}, n={n}, s={s}, ei={ei}, ni={ni}'.format(**locals())
             else:
-                for si in xrange(SUE.shape[0]):
+                for si in range(SUE.shape[0]):
                     for ei, ni in product(SUE[si], SUN[si]):
                         if ei != ni and ei != -1 and ni != -1:
                             assert ni in N[ei],\
@@ -336,8 +333,8 @@ def test_neighbours_each_neighbour_has_entry(grid):
 
 def test_neighbours_not_neighbour_of_itself(grid):
     g = grid
-    for e in xrange(g.dim + 1):
-        for s in xrange(e, g.dim + 1):
+    for e in range(g.dim + 1):
+        for s in range(e, g.dim + 1):
             N = g.neighbours(e, e, s)
             for ei, E in enumerate(N):
                 assert ei not in E,\
@@ -354,13 +351,13 @@ def test_boundary_mask_wrong_arguments(grid):
 
 def test_boundary_mask_shape(grid):
     g = grid
-    for d in xrange(g.dim + 1):
+    for d in range(g.dim + 1):
         assert g.boundary_mask(d).shape == (g.size(d),)
 
 
 def test_boundary_mask_dtype(grid):
     g = grid
-    for d in xrange(g.dim + 1):
+    for d in range(g.dim + 1):
         g.boundary_mask(d).dtype == np.dtype('bool')
 
 
@@ -385,7 +382,7 @@ def test_boundary_mask_entries_codim0(grid):
 
 def test_boundary_mask_entries_codim_d(grid):
     g = grid
-    for d in xrange(2, g.dim + 1):
+    for d in range(2, g.dim + 1):
         BMD = g.boundary_mask(d)
         BM1 = g.boundary_mask(1)
         SE = g.superentities(d, 1)
@@ -404,26 +401,26 @@ def test_boundaries_wrong_arguments(grid):
 
 def test_boundaries_shape(grid):
     g = grid
-    for d in xrange(g.dim + 1):
+    for d in range(g.dim + 1):
         assert len(g.boundaries(d).shape) == 1
 
 
 def test_boundaries_dtype(grid):
     g = grid
-    for d in xrange(g.dim + 1):
+    for d in range(g.dim + 1):
         assert g.boundaries(d).dtype == np.dtype('int32')
 
 
 def test_boundaries_entry_value_range(grid):
     g = grid
-    for d in xrange(g.dim + 1):
+    for d in range(g.dim + 1):
         np.testing.assert_array_less(g.boundaries(d), g.size(d))
         np.testing.assert_array_less(-1, g.boundaries(d))
 
 
 def test_boundaries_entries(grid):
     g = grid
-    for d in xrange(g.dim + 1):
+    for d in range(g.dim + 1):
         np.testing.assert_array_equal(np.where(g.boundary_mask(d))[0], g.boundaries(d))
 
 
