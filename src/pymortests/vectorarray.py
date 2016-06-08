@@ -156,7 +156,10 @@ def test_zeros(vector_array):
 def test_from_data(vector_array):
     if hasattr(vector_array, 'data'):
         d = vector_array.data
-        v = vector_array.from_data(d, vector_array.subtype)
+        try:
+            v = vector_array.from_data(d, vector_array.subtype)
+        except NotImplementedError:
+            pass
         assert np.allclose(d, v.data)
 
 
