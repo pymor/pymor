@@ -43,7 +43,7 @@ def reduce_parabolic(discretization, RB, product=None, coercivity_estimator=None
     from [BEOR14]_.
 
     .. warning::
-        The reduced basis `RB` is required to be orthonormal w.r.t. to the given
+        The reduced basis `RB` is required to be orthonormal w.r.t. the given
         energy product. If not, the projection of the initial values will be
         computed incorrectly.
 
