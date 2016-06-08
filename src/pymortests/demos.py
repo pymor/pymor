@@ -39,7 +39,10 @@ DEMO_ARGS = (('elliptic', [0, 0, 0, 0]), ('elliptic', [1, 2, 0, 3]), ('elliptic'
              ('parabolic', [1]),
              ('parabolic', ['--rect', 1]),
              ('parabolic', ['--fv', 1]),
-             ('parabolic', ['--rect', '--fv', 1]))
+             ('parabolic', ['--rect', '--fv', 1]),
+             ('parabolic_mor', ['pymor', 'greedy', 2, 3, 1]),
+             ('parabolic_mor', ['pymor', 'pod', 2, 3, 1]),
+             ('parabolic_mor', ['fenics', 'adaptive_greedy', 2, 3, 1]))
 DEMO_ARGS = [('pymordemos.{}'.format(a), b) for (a, b) in DEMO_ARGS]
 # DEMO_ARGS = [('pymor.playground.demos.remote_thermalblock', ['--local', '-e',2, 2, 3, 5])]
 
