@@ -275,7 +275,7 @@ def main():
     results = reduction_error_analysis(
         rd, discretization=d, reconstructor=rc, estimator=True,
         error_norms=[lambda U: DT * np.sqrt(np.sum(d.h1_0_semi_norm(U)[1:]**2))],
-        error_norm_names=['l^2-h^2'],
+        error_norm_names=['l^2-h^1'],
         condition=False, test_mus=TEST, random_seed=999, plot=True
     )
 
