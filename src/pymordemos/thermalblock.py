@@ -81,8 +81,6 @@ Options:
   --greedy-without-estimator      Do not use error estimator for basis generation.
 """
 
-from __future__ import absolute_import, division, print_function
-
 from functools import partial
 import sys
 import time
@@ -94,7 +92,7 @@ from pymor.core.pickle import dump
 from pymor.parallel.default import new_parallel_pool
 
 
-def thermalblock_demo(args):
+def main(args):
 
     args = parse_arguments(args)
 
@@ -167,12 +165,12 @@ def thermalblock_demo(args):
 
     if args['--pickle']:
         print('\nWriting reduced discretization to file {} ...'.format(args['--pickle'] + '_reduced'))
-        with open(args['--pickle'] + '_reduced', 'w') as f:
+        with open(args['--pickle'] + '_reduced', 'wb') as f:
             dump(rd, f)
         if not args['--fenics']:  # FEniCS data structures do not support serialization
             print('Writing detailed discretization and reconstructor to file {} ...'
                   .format(args['--pickle'] + '_detailed'))
-            with open(args['--pickle'] + '_detailed', 'w') as f:
+            with open(args['--pickle'] + '_detailed', 'wb') as f:
                 dump((d, rc), f)
 
     print('\nSearching for maximum error on random snapshots ...')
@@ -205,8 +203,11 @@ def thermalblock_demo(args):
         d.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
                     title='Maximum Error Solution', separate_colorbars=True, block=True)
 
+    return results
+
 
 def parse_arguments(args):
+    args = docopt(__doc__, args)
     args['XBLOCKS'] = int(args['XBLOCKS'])
     args['YBLOCKS'] = int(args['YBLOCKS'])
     args['SNAPSHOTS'] = int(args['SNAPSHOTS'])
@@ -249,10 +250,10 @@ def discretize_pymor(xblocks, yblocks, grid_num_intervals, use_list_vector_array
 
     print('Discretize ...')
     # setup analytical problem
-    problem = ThermalBlockProblem(num_blocks=(args['XBLOCKS'], args['YBLOCKS']))
+    problem = ThermalBlockProblem(num_blocks=(xblocks, yblocks))
 
     # discretize using continuous finite elements
-    d, _ = discretize_elliptic_cg(problem, diameter=1. / args['--grid'])
+    d, _ = discretize_elliptic_cg(problem, diameter=1. / grid_num_intervals)
 
     if use_list_vector_array:
         d = convert_to_numpy_list_vector_array(d)
@@ -291,7 +292,6 @@ def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
     ########################################
 
     import dolfin as df
-
     mesh = df.UnitSquareMesh(grid_num_intervals, grid_num_intervals, 'crossed')
     V = df.FunctionSpace(mesh, 'Lagrange', element_order)
     u = df.TrialFunction(V)
@@ -514,7 +514,4 @@ def reduce_pod(d, reductor, snapshots_per_block, product_name, basis_size):
 
 
 if __name__ == '__main__':
-    # parse arguments
-    args = docopt(__doc__)
-    # run demo
-    thermalblock_demo(args)
+    main(sys.argv[1:])

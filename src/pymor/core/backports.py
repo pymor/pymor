@@ -4,7 +4,6 @@
 
 """This module contains pure python backports of library features from python >= 3 to 2.7
 """
-from __future__ import absolute_import, division, print_function
 
 
 class abstractclassmethod(classmethod):

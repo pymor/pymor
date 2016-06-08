@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import math as m
 import random
 
@@ -65,7 +63,7 @@ def subgrid_factory(grid_generator, neq, seed):
     if neq == 0:
         return SubGrid(g, np.arange(g.size(0), dtype=np.int32))
     else:
-        return SubGrid(g, np.array(random.sample(xrange(g.size(0)), max(int(m.floor(g.size(0) / neq)), 1))))
+        return SubGrid(g, np.array(random.sample(range(g.size(0)), max(int(m.floor(g.size(0) / neq)), 1))))
 
 
 subgrid_generators = [lambda args=args: subgrid_factory(*args) for args in

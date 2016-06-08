@@ -34,8 +34,6 @@ Options:
                             the error.
 """
 
-from __future__ import absolute_import, division, print_function
-
 import sys
 import time
 
@@ -51,7 +49,7 @@ def analyze_pickle_histogram(args):
     args['SAMPLES'] = int(args['SAMPLES'])
 
     print('Loading reduced discretization ...')
-    rb_discretization = load(open(args['REDUCED_DATA']))
+    rb_discretization = load(open(args['REDUCED_DATA'], 'rb'))
 
     mus = rb_discretization.parameter_space.sample_randomly(args['SAMPLES'])
     us = []
@@ -73,7 +71,7 @@ def analyze_pickle_histogram(args):
 
     if args['--detailed']:
         print('Loading high-dimensional data ...')
-        discretization, reconstructor = load(open(args['--detailed']))
+        discretization, reconstructor = load(open(args['--detailed'], 'rb'))
 
         errs = []
         for u, mu in zip(us, mus):
@@ -169,11 +167,11 @@ def analyze_pickle_convergence(args):
     args['SAMPLES'] = int(args['SAMPLES'])
 
     print('Loading reduced discretization ...')
-    rb_discretization = load(open(args['REDUCED_DATA']))
+    rb_discretization = load(open(args['REDUCED_DATA'], 'rb'))
 
     if args['--detailed']:
         print('Loading high-dimensional data ...')
-        discretization, reconstructor = load(open(args['--detailed']))
+        discretization, reconstructor = load(open(args['--detailed'], 'rb'))
         discretization.enable_caching('disk')
 
     if not hasattr(rb_discretization, 'estimate') and not args['--detailed']:

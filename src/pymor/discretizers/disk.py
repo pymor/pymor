@@ -2,10 +2,8 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import os.path
-import ConfigParser
+import configparser
 
 import numpy as np
 
@@ -75,7 +73,7 @@ def discretize_stationary_from_disk(parameter_file):
     base_path = os.path.dirname(parameter_file)
 
     # Get input from parameter file
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.optionxform = str
     config.read(parameter_file)
 
@@ -223,7 +221,7 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
     base_path = os.path.dirname(parameter_file)
 
     # Get input from parameter file
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.optionxform = str
     config.read(parameter_file)
 

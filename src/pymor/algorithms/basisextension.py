@@ -20,8 +20,6 @@ independent from the basis, an :class:`~pymor.core.exceptions.ExtensionError`
 exception is raised.
 """
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 
 from pymor.algorithms.basic import almost_equal
@@ -66,7 +64,7 @@ def trivial_basis_extension(basis, U, copy_basis=True, copy_U=True):
 
     old_basis_length = len(basis)
     remove = set()
-    for i in xrange(len(U)):
+    for i in range(len(U)):
         if np.any(almost_equal(U, basis, U_ind=i)):
             remove.add(i)
 
