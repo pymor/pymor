@@ -158,9 +158,9 @@ def test_from_data(vector_array):
         d = vector_array.data
         try:
             v = vector_array.from_data(d, vector_array.subtype)
+            assert np.allclose(d, v.data)
         except NotImplementedError:
             pass
-        assert np.allclose(d, v.data)
 
 
 def test_shape(vector_array):
