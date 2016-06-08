@@ -2,9 +2,12 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from functools import total_ordering
+
 from pymor.core.interfaces import ImmutableInterface
 
 
+@total_ordering
 class BoundaryType(ImmutableInterface):
     """Represents a boundary type, i.e. Dirichlet, Neumann, etc.
 
@@ -55,6 +58,9 @@ class BoundaryType(ImmutableInterface):
             return self.type != other.type
         else:
             return NotImplemented
+
+    def __lt__(self, other):
+        return self.type < other.type
 
     def __hash__(self):
         return hash(self.type)

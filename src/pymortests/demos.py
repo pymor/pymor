@@ -66,9 +66,15 @@ BURGERS_EI_ARGS = (
     ('burgers_ei', [1, 2, 2, 5, 2, 5]),
 )
 
+PARABOLIC_MOR_ARGS = (
+    ('parabolic_mor', ['pymor', 'greedy', 2, 3, 1]),
+    ('parabolic_mor', ['pymor', 'pod', 2, 3, 1]),
+    ('parabolic_mor', ['fenics', 'adaptive_greedy', 2, 3, 1]),
+)
+
 DEMO_ARGS = (DISCRETIZATION_ARGS +
              THERMALBLOCK_ARGS + THERMALBLOCK_ADAPTIVE_ARGS + THERMALBLOCK_SIMPLE_ARGS + THERMALBLOCK_GUI_ARGS +
-             BURGERS_EI_ARGS)
+             BURGERS_EI_ARGS + PARABOLIC_MOR_ARGS)
 DEMO_ARGS = [('pymordemos.{}'.format(a), b) for (a, b) in DEMO_ARGS]
 
 
@@ -197,6 +203,16 @@ def test_burgers_ei_results():
     ei_results['greedy_max_errs'] = greedy_results['max_errs']
     check_results('test_burgers_ei_results', args, ei_results,
                   (1e-13, 1e-7), 'errors', 'triangularity_errors', 'greedy_max_errs')
+
+
+def test_parabolic_mor_results():
+    from pymordemos import parabolic_mor
+    args = ['pymor', 'greedy', 5, 20, 3]
+    results = _test_demo(lambda: parabolic_mor.main(*args))
+    check_results('test_parabolic_mor_results', args, results,
+                  (1e-13, 1e-7), 'basis_sizes', 'norms', 'max_norms',
+                  (1e-13, 4.), 'errors', 'max_errors', 'rel_errors', 'max_rel_errors',
+                  'estimates', 'max_estimates', 'effectivities', 'min_effectivities', 'max_effectivities', 'errors')
 
 if __name__ == "__main__":
     runmodule(filename=__file__)
