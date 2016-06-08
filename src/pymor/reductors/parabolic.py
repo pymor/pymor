@@ -141,9 +141,9 @@ class ReduceParabolicEstimator(ImmutableInterface):
         C = self.coercivity_estimator(mu) if self.coercivity_estimator else 1.
 
         est = np.empty(len(U))
-        est[0] = (1./C) * self.initial_residual.apply(U, ind=0, mu=mu).l2_norm()[0]**2
+        est[0] = (1./C) * self.initial_residual.apply(U, ind=0, mu=mu).l2_norm2()[0]
         est[1:] = self.residual.apply(U, U, ind=list(range(1, len(U))), ind_old=list(range(0, len(U) - 1)),
-                                      mu=mu).l2_norm()**2
+                                      mu=mu).l2_norm2()
         est[1:] *= (dt/C**2)
         est = np.sqrt(np.cumsum(est))
 
