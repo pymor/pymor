@@ -23,7 +23,7 @@ def to_matrix(op, format=None, mu=None):
     op
         Operator.
     format
-        Format of the resulting |SciPy sparray|.
+        Format of the resulting |SciPy spmatrix|.
         If `None`, a dense format is used.
     mu
         |Parameter|.
