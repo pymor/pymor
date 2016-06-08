@@ -66,9 +66,15 @@ BURGERS_EI_ARGS = (
     ('burgers_ei', [1, 2, 2, 5, 2, 5]),
 )
 
+PARABOLIC_MOR_ARGS = (
+    ('parabolic_mor', ['pymor', 'greedy', 2, 3, 1]),
+    ('parabolic_mor', ['pymor', 'pod', 2, 3, 1]),
+    ('parabolic_mor', ['fenics', 'adaptive_greedy', 2, 3, 1]),
+)
+
 DEMO_ARGS = (DISCRETIZATION_ARGS +
              THERMALBLOCK_ARGS + THERMALBLOCK_ADAPTIVE_ARGS + THERMALBLOCK_SIMPLE_ARGS + THERMALBLOCK_GUI_ARGS +
-             BURGERS_EI_ARGS)
+             BURGERS_EI_ARGS + PARABOLIC_MOR_ARGS)
 DEMO_ARGS = [('pymordemos.{}'.format(a), b) for (a, b) in DEMO_ARGS]
 
 
