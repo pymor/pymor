@@ -229,17 +229,7 @@ def reduce_pod(d, reductor, snapshots, basis_size):
 # Main script                                                                                      #
 ####################################################################################################
 
-def main():
-    # command line argument parsing
-    ###############################
-    import sys
-    if len(sys.argv) != 6:
-        print(__doc__)
-        sys.exit(1)
-    BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST = sys.argv[1:]
-    BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST = BACKEND.lower(), ALG.lower(), int(SNAPSHOTS), int(RBSIZE), int(TEST)
-
-
+def main(BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST):
     # discretize
     ############
     if BACKEND == 'pymor':
@@ -306,6 +296,14 @@ def main():
     d.visualize((U, U_RB, U - U_RB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
                 separate_colorbars=True)
 
+    return results
+
 
 if __name__ == '__main__':
-    main()
+    import sys
+    if len(sys.argv) != 6:
+        print(__doc__)
+        sys.exit(1)
+    BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST = sys.argv[1:]
+    BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST = BACKEND.lower(), ALG.lower(), int(SNAPSHOTS), int(RBSIZE), int(TEST)
+    main(BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST)
