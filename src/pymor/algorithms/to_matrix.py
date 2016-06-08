@@ -34,6 +34,7 @@ def to_matrix(op, format=None, mu=None):
         Equivalent matrix.
     """
     assert format is None or format in ('bsr', 'coo', 'csc', 'csr', 'dia', 'dok', 'lil')
+    op = op.assemble(mu)
     mapping = {
         'bsr': sps.bsr_matrix,
         'coo': sps.coo_matrix,
