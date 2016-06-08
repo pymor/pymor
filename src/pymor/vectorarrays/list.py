@@ -25,7 +25,7 @@ class VectorInterface(BasicInterface):
 
     @classmethod
     def from_data(cls, data, subtype):
-        pass
+        raise NotImplementedError
 
     @abstractproperty
     def dim(self):
