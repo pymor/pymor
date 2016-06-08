@@ -9,20 +9,25 @@ from pymor.core.exceptions import ImageCollectionError
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import AdjointOperator, Concatenation, LincombOperator, SelectionOperator
 from pymor.operators.ei import EmpiricalInterpolatedOperator
+from pymor.vectorarrays.interfaces import VectorArrayInterface
 from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
 
 
-def estimate_image(operators=tuple(), functionals=tuple(), domain=None, extends=False,
-                   orthonormalize=True, product=None, riesz_representatives=False):
+def estimate_image(operators=tuple(), vectors=tuple(),
+                   domain=None, extends=False, orthonormalize=True, product=None,
+                   riesz_representatives=False):
     """Estimate the image of given operators for all mu.
 
-    Given lists of |Operators| and |Functionals| and a |VectorArray| `domain` of
-    vectors in the source space, this algorithms determines a |VectorArray| `image` of
-    range vectors such that:
+    Let `operators` be a list of |Operators| with common source and domain, and let
+    `vectors` be a list of |VectorArrays| or vector-like |Operators| in the range
+    of these operators. Given a |VectorArray| `domain` of vectors in the source of the
+    operators, this algorithms determines a |VectorArray| `image` of range vectors
+    such that the linear span of `image` contains:
 
-        For all possible |Parameters| `mu` and all |VectorArrays| `U` contained in the
-        linear span of `domain`, `op.apply(U, mu=mu)` and `f.as_vector(mu)` are contained
-        in the linear span of `image` for each of the given functionals and operators.
+    - `op.apply(U, mu=mu)` for all operators `op` in `operators`, for all possible |Parameters|
+      `mu` and for all |VectorArrays| `U` contained in the linear span of `domain`,
+    - `U` for all |VectorArrays| in `vectors`,
+    - `v.as_vector(mu)` for all |Operators| in `vectors` and all possible |Parameters| `mu`.
 
     The algorithm will try to choose `image` as small as possible. However, no optimality
     is guaranteed.
@@ -31,15 +36,16 @@ def estimate_image(operators=tuple(), functionals=tuple(), domain=None, extends=
     ----------
     operators
         See above.
-    functionals
+    vectors
         See above.
     domain
         See above. If `None`, an empty `domain` |VectorArray| is assumed.
     extends
         For some operators, e.g. |EmpiricalInterpolatedOperator|, as well as for all
-        `functionals`, `image` is estimated independently from the choice of `domain`.
-        If `extends` is `True`, such operators are ignored. (This is useful in case
-        these vectors have already been obtained by earlier calls to this function.)
+        elements of `vectors`, `image` is estimated independently from the choice of
+        `domain`.  If `extends` is `True`, such operators are ignored. (This is useful
+        in case these vectors have already been obtained by earlier calls to this
+        function.)
     orthonormalize
         Compute an orthonormal basis for the linear span of `image` using the
         :func:`~pymor.algorithms.gram_schmidt.gram_schmidt` algorithm.
@@ -47,7 +53,8 @@ def estimate_image(operators=tuple(), functionals=tuple(), domain=None, extends=
         Inner product |Operator| w.r.t. which to orthonormalize.
     riesz_representatives
         If `True`, compute Riesz representatives of the vectors in `image` before
-        orthonormalizing. (Useful for dual norm computation.)
+        orthonormalizing. (Useful for norm computation when the range of the
+        `operators` is a dual space.)
 
     Returns
     -------
@@ -56,15 +63,22 @@ def estimate_image(operators=tuple(), functionals=tuple(), domain=None, extends=
     Raises
     ------
     ImageCollectionError
-        Is raised when for a given |Operator| or |Functional| no image estimate
-        is possible.
+        Is raised when for a given |Operator| no image estimate is possible.
     """
-    assert operators or functionals
-    domain_space = operators[0].source if operators else functionals[0].source
-    image_space = operators[0].range if operators else functionals[0].source
-    assert all(f.range == NumpyVectorSpace(1) and f.source == image_space and f.linear for f in functionals)
+    assert operators or vectors
+    domain_space = operators[0].source if operators else None
+    image_space = operators[0].range if operators \
+        else vectors[0].space if isinstance(vectors[0], VectorArrayInterface) \
+        else vectors[0].range if vectors[0].range != NumpyVectorSpace(1) \
+        else vectors[0].source
+    assert all(
+        isinstance(v, VectorArrayInterface) and v in image_space or
+        v.source == NumpyVectorSpace(1) and v.range == image_space and v.linear or
+        v.range == NumpyVectorSpace(1) and v.source == image_space and v.linear
+        for v in vectors
+    )
     assert all(op.source == domain_space and op.range == image_space for op in operators)
-    assert domain is None or domain in domain_space
+    assert domain is None or domain_space is None or domain in domain_space
     assert product is None or product.source == product.range == image_space
 
     def collect_operator_ranges(op, source, image):
@@ -83,11 +97,13 @@ def estimate_image(operators=tuple(), functionals=tuple(), domain=None, extends=
         else:
             raise ImageCollectionError(op)
 
-    def collect_functional_ranges(op, image):
+    def collect_vector_ranges(op, image):
         if isinstance(op, (LincombOperator, SelectionOperator)):
             for o in op.operators:
-                collect_functional_ranges(o, image)
+                collect_vector_ranges(o, image)
         elif isinstance(op, AdjointOperator):
+            if op.source not in image_space:
+                raise ImageCollectionError(op)  # Not implemented
             operator = Concatenation(op.range_product, op.operator) if op.range_product else op.operator
             collect_operator_ranges(operator, NumpyVectorArray(np.ones(1)), image)
         elif op.linear and not op.parametric:
@@ -95,13 +111,13 @@ def estimate_image(operators=tuple(), functionals=tuple(), domain=None, extends=
         else:
             raise ImageCollectionError(op)
 
-    if domain is None:
-        domain = domain_space.empty()
     image = image_space.empty()
     if not extends:
-        for f in functionals:
-            collect_functional_ranges(f, image)
+        for f in vectors:
+            collect_vector_ranges(f, image)
 
+    if operators and domain is None:
+        domain = domain_space.empty()
     for op in operators:
         collect_operator_ranges(op, domain, image)
 
@@ -114,7 +130,7 @@ def estimate_image(operators=tuple(), functionals=tuple(), domain=None, extends=
     return image
 
 
-def estimate_image_hierarchical(operators=tuple(), functionals=tuple(), domain=None, extends=None,
+def estimate_image_hierarchical(operators=tuple(), vectors=tuple(), domain=None, extends=None,
                                 orthonormalize=True, product=None, riesz_representatives=False):
     """Estimate the image of given operators for all mu.
 
@@ -128,15 +144,14 @@ def estimate_image_hierarchical(operators=tuple(), functionals=tuple(), domain=N
 
     This function also returns an `image_dims` list, such that the first
     `image_dims[i+1]` vectors of `image` correspond to the first `i`
-    vectors of `domain` (the first `image_dims[0]` vectors are the vectors
-    corresponding to the `functionals` and to the |Operators| with fixed
-    image estimate).
+    vectors of `domain` (the first `image_dims[0]` vectors correspond
+    to `vectors` and to the |Operators| with fixed image estimate).
 
     Parameters
     ----------
     operators
         See :func:`estimate_image`.
-    functionals
+    vectors
         See :func:`estimate_image`.
     domain
         See :func:`estimate_image`.
@@ -166,36 +181,43 @@ def estimate_image_hierarchical(operators=tuple(), functionals=tuple(), domain=N
     Raises
     ------
     ImageCollectionError
-        Is raised when for a given |Operator| or |Functional| no image estimate
-        is possible.
+        Is raised when for a given |Operator| no image estimate is possible.
     """
-    assert operators or functionals
-    domain_space = operators[0].source if operators else functionals[0].source
-    image_space = operators[0].range if operators else functionals[0].source
-    assert all(f.range == NumpyVectorSpace(1) and f.source == image_space and f.linear for f in functionals)
+    assert operators or vectors
+    domain_space = operators[0].source if operators else None
+    image_space = operators[0].range if operators \
+        else vectors[0].space if isinstance(vectors[0], VectorArrayInterface) \
+        else vectors[0].range if vectors[0].range != NumpyVectorSpace(1) \
+        else vectors[0].source
+    assert all(
+        isinstance(v, VectorArrayInterface) and v in image_space or
+        v.source == NumpyVectorSpace(1) and v.range == image_space and v.linear or
+        v.range == NumpyVectorSpace(1) and v.source == image_space and v.linear
+        for v in vectors
+    )
     assert all(op.source == domain_space and op.range == image_space for op in operators)
-    assert domain is None or domain in domain_space
+    assert domain is None or domain_space is None or domain in domain_space
     assert product is None or product.source == product.range == image_space
     assert extends is None or len(extends) == 2
 
     logger = getLogger('pymor.algorithms.image.estimate_image_hierarchical')
 
-    if domain is None:
+    if operators and domain is None:
         domain = domain_space.empty()
 
     if extends:
         image = extends[0]
         image_dims = extends[1]
-        ind_range = list(range(len(image_dims) - 1, len(domain)))
+        ind_range = list(range(len(image_dims) - 1, len(domain))) if operators else list(range(len(image_dims) - 1, 0))
     else:
         image = image_space.empty()
         image_dims = []
-        ind_range = list(range(-1, len(domain)))
+        ind_range = list(range(-1, len(domain))) if operators else [-1]
 
     for i in ind_range:
         logger.info('Estimating image for basis vector {} ...'.format(i))
         if i == -1:
-            new_image = estimate_image(operators, functionals, None, extends=False,
+            new_image = estimate_image(operators, vectors, None, extends=False,
                                        orthonormalize=False, product=product,
                                        riesz_representatives=riesz_representatives)
         else:
