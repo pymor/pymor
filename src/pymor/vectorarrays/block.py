@@ -35,6 +35,16 @@ class BlockVectorArray(VectorArrayInterface):
                                                           count=count,
                                                           reserve=reserve) for subspace in subtype])
 
+    @classmethod
+    def from_data(cls, data, subtype):
+        assert isinstance(subtype, tuple)
+        assert all([isinstance(subspace, VectorSpace) for subspace in subtype])
+        if data.ndim == 1:
+            data = data.reshape(1, -1)
+        data_ind = np.cumsum([0] + [subspace.dim for subspace in subtype])
+        return cls([subspace.type.from_data(data[:, data_ind[i]:data_ind[i + 1]], subspace.subtype)
+                    for i, subspace in enumerate(subtype)])
+
     def block(self, ind):
         """
         Returns a copy of each block (no slicing).
@@ -64,7 +74,7 @@ class BlockVectorArray(VectorArrayInterface):
 
     @property
     def data(self):
-        return np.hstack([block.data for block in self.blocks])
+        return np.hstack([block.data for block in self._blocks])
 
     def copy(self, ind=None, deep=False):
         assert self.check_ind(ind)
