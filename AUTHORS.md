@@ -11,6 +11,7 @@
 
 * Petar Mlinarić, mlinaric@mpi-magdeburg.mpg.de
     * l2_norm2 methods for VectorArrays
+    * from_data methods for VectorSpace and VectorArrays
 
 
 ## pyMOR 0.4
