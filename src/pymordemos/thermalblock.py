@@ -16,9 +16,11 @@ Arguments:
   YBLOCKS    Number of blocks in y direction.
 
   SNAPSHOTS  naive:           ignored
+
              greedy/pod:      Number of training_set parameters per block
                               (in total SNAPSHOTS^(XBLOCKS * YBLOCKS)
                               parameters).
+
              adaptive_greedy: size of validation set.
 
   RBSIZE     Size of the reduced basis

@@ -15,9 +15,11 @@ Arguments:
              (naive, greedy, adaptive_greedy, pod).
 
   SNAPSHOTS  naive:           ignored
+
              greedy/pod:      Number of training_set parameters per block
                               (in total SNAPSHOTS^(XBLOCKS * YBLOCKS)
                               parameters).
+
              adaptive_greedy: size of validation set.
 
   RBSIZE     Size of the reduced basis.
