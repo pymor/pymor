@@ -87,7 +87,7 @@ gen_apidoc.walk(pymor)
 gen_apidoc.walk(pymordemos)
 
 
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath',
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.imgmath',
               'sphinx.ext.coverage',
               'sphinx.ext.autosummary',
               'sphinx.ext.viewcode',
