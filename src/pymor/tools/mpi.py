@@ -278,7 +278,7 @@ def method_call(obj_id, name_, *args, **kwargs):
     obj_id
         The :class:`ObjectId` of the object on which to call
         the method.
-    name_
+    `name_`
         Name of the method to call.
     args
         Sequential arguments for the method.
@@ -304,7 +304,7 @@ def method_call_manage(obj_id, name_, *args, **kwargs):
     obj_id
         The :class:`ObjectId` of the object on which to call
         the method.
-    name_
+    `name_`
         Name of the method to call.
     args
         Sequential arguments for the method.

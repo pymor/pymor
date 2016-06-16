@@ -22,7 +22,7 @@ def discretize_stationary_from_disk(parameter_file):
     The path and further specifications to these objects are given in an '.ini' parameter file (see example below).
     Suitable for discrete problems given by::
 
-    L(u, w) = F(w)
+        L(u, w) = F(w)
 
     with an operator L and a linear functional F with a parameter w  given as system matrices and rhs vectors in
     an affine decomposition on the hard disk.
@@ -47,27 +47,30 @@ def discretize_stationary_from_disk(parameter_file):
     expressions.
 
     Optional products can be provided to introduce a dict of inner products on
-    the discrete space. The content of the file is then given as:
+    the discrete space. The content of the file is then given as::
 
-    [system-matrices]
-    # path_to_object: parameter_functional_associated_with_object
-    K1.mat: f_1(w_1,...,w_n)
-    K2.mat: f_2(w_1,...,w_n)
-    ...
-    [rhs-vectors]
-    L1.mat: g_1(w_1,...,w_n)
-    L2.mat: g_2(w_1,...,w_n)
-    ...
-    [parameter]
-    # Name: lower_bound,upper_bound
-    w_1: a_1,b_1
-    ...
-    w_n: a_n,b_n
-    [products]
-    # Name: path_to_object
-    Prod1: S.mat
-    Prod2: T.mat
-    ...
+        [system-matrices]
+        # path_to_object: parameter_functional_associated_with_object
+        K1.mat: f_1(w_1,...,w_n)
+        K2.mat: f_2(w_1,...,w_n)
+        ...
+
+        [rhs-vectors]
+        L1.mat: g_1(w_1,...,w_n)
+        L2.mat: g_2(w_1,...,w_n)
+        ...
+
+        [parameter]
+        # Name: lower_bound,upper_bound
+        w_1: a_1,b_1
+        ...
+        w_n: a_n,b_n
+
+        [products]
+        # Name: path_to_object
+        Prod1: S.mat
+        Prod2: T.mat
+        ...
     """
     assert ".ini" == parameter_file[-4:], "Given file is not an .ini file"
     base_path = os.path.dirname(parameter_file)
@@ -151,8 +154,8 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
     The path and further specifications to these objects are given in an '.ini'
     parameter file (see example below). Suitable for discrete problems given by::
 
-    M(u(t), w) + L(u(t), w, t) = F(t, w)
-                          u(0) = u_0
+        M(u(t), w) + L(u(t), w, t) = F(t, w)
+                              u(0) = u_0
 
     for t in [0,T], where L is a linear time-dependent
     |Operator|, F is a time-dependent linear |Functional|, u_0 the
@@ -187,35 +190,41 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
 
     Optional products can be provided to introduce a dict of inner products on the discrete space.
     Time specifications like T and steps can also be provided, but are optional when already given
-    by call of this method. The content of the file is then given as:
+    by call of this method. The content of the file is then given as::
 
-    [system-matrices]
-    # path_to_object: parameter_functional_associated_with_object
-    K1.mat: f_1(w_1,...,w_n)
-    K2.mat: f_2(w_1,...,w_n)
-    ...
-    [rhs-vectors]
-    L1.mat: g_1(w_1,...,w_n)
-    L2.mat: g_2(w_1,...,w_n)
-    ...
-    [mass-matrix]
-    D.mat
-    [initial-solution]
-    u0: u0.mat
-    [parameter]
-    # Name: lower_bound,upper_bound
-    w_1: a_1,b_1
-    ...
-    w_n: a_n,b_n
-    [products]
-    # Name: path_to_object
-    Prod1: S.mat
-    Prod2: T.mat
-    ...
-    [time]
-    # fixed_Name: value
-    T: 10.0
-    steps: 100
+        [system-matrices]
+        # path_to_object: parameter_functional_associated_with_object
+        K1.mat: f_1(w_1,...,w_n)
+        K2.mat: f_2(w_1,...,w_n)
+        ...
+
+        [rhs-vectors]
+        L1.mat: g_1(w_1,...,w_n)
+        L2.mat: g_2(w_1,...,w_n)
+        ...
+
+        [mass-matrix]
+        D.mat
+
+        [initial-solution]
+        u0: u0.mat
+
+        [parameter]
+        # Name: lower_bound,upper_bound
+        w_1: a_1,b_1
+        ...
+        w_n: a_n,b_n
+
+        [products]
+        # Name: path_to_object
+        Prod1: S.mat
+        Prod2: T.mat
+        ...
+
+        [time]
+        # fixed_Name: value
+        T: 10.0
+        steps: 100
     """
     assert ".ini" == parameter_file[-4:], "Given file is not an .ini file"
     base_path = os.path.dirname(parameter_file)
