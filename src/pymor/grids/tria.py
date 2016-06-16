@@ -156,10 +156,10 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
         ROT315 = np.array([[1./np.sqrt(2.),    1./np.sqrt(2.)],
                            [-1./np.sqrt(2.),   1./np.sqrt(2.)]])
         SCAL = np.diag([self.x0_diameter / np.sqrt(2), self.x1_diameter / np.sqrt(2)])
-        A0 = np.tile(SCAL.dot(ROT225), (n_elements / 4, 1, 1))
-        A1 = np.tile(SCAL.dot(ROT315), (n_elements / 4, 1, 1))
-        A2 = np.tile(SCAL.dot(ROT45), (n_elements / 4, 1, 1))
-        A3 = np.tile(SCAL.dot(ROT135), (n_elements / 4, 1, 1))
+        A0 = np.tile(SCAL.dot(ROT225), (int(n_elements / 4), 1, 1))
+        A1 = np.tile(SCAL.dot(ROT315), (int(n_elements / 4), 1, 1))
+        A2 = np.tile(SCAL.dot(ROT45), (int(n_elements / 4), 1, 1))
+        A3 = np.tile(SCAL.dot(ROT135), (int(n_elements / 4), 1, 1))
         A = np.vstack((A0, A1, A2, A3))
         self.__embeddings = (A, B)
 
