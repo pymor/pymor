@@ -104,7 +104,7 @@ could not be executed ({})
 finally:
     VERSION = Version(revstring)
 
-print('Loading pymor version {}'.format(VERSION))
+print('Loading pyMOR version {}'.format(VERSION))
 
 
 import os
