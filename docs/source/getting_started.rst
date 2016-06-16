@@ -17,7 +17,7 @@ via our PPA::
 Daily snapshots can be installed by using the ``pymor/daily`` PPA instead of
 ``pymor/stable``. The current release can also be installed via
 `pip <http://pip-installer.org>`_. Please take a look at our
-`README <https://github.com/pymor/pymor#installation-into-a-virtualenv>`_ file for
+`README <https://github.com/pymor/pymor#installation-via-pip>`_ file for
 further details. The
 `README <https://github.com/pymor/pymor#setting-up-an-environment-for-pymor-development>`_
 also contains instructions for setting up a development environment for working
@@ -79,11 +79,11 @@ The third parameter ``SNAPSHOTS`` of ``thermalblock.py`` determines how many
 different values per parameter component μ_ij should be considered.
 I.e. the parameter training set for basis generation will have the
 size ``SNAPSHOTS^(XBLOCKS x YBLOCKS)``. After the basis of size 32 (the
-last parameter) has been computed, the quality obtained reduced model
+last parameter) has been computed, the quality of the obtained reduced model
 (on the 32-dimensional reduced basis space) is evaluated by comparing the
-solutions of the reduced and detailed models for new randomly chosen
-parameters. Finally plots of the detailed and reduced solutions as well
-as the difference between the two are displayed for the random parameter
+solutions of the reduced and detailed models for new, randomly chosen
+parameters. Finally, plots of the detailed and reduced solutions, as well
+as the difference between the two, are displayed for the random parameter
 which maximises reduction error.
 
 
@@ -172,7 +172,7 @@ have a look:
 This tells us, that the |Parameter| which
 `~pymor.discretizations.interfaces.DiscretizationInterface.solve` expects
 should be a dictionary with one key ``'diffusion'`` whose value is a
-|NumPy array| of shape ``(2, 3)`` corresponding to the block structure of
+|NumPy array| of shape ``(2, 3)``, corresponding to the block structure of
 the problem. However, by using the 
 :meth:`~pymor.parameters.base.Parametric.parse_parameter` method, pyMOR is
 smart enough to correctly parse the input ``[1.0, 0.1, 0.3, 0.1, 0.2, 1.0]``.
@@ -188,17 +188,19 @@ solve the high-dimensional problem for those parameters in the training set
 which are actually selected for basis extension. To control the condition of
 the reduced system matrix, we must ensure that the generated basis is
 orthonormal w.r.t. the H1-product on the solution space. For this we pass
-the basis extension algorithm the :attr:`h1_product` attribute of the
-discretization. We pass the same product to the reductor for computing the
-Riesz representatives for error estimation. Moreover, we have to provide
+the :attr:`h1_product` attribute of the discretization to the basis extension algorithm.
+We pass the same product to the reductor which uses it for computing the
+Riesz representatives required for error estimation. Moreover, we have to provide
 a |ParameterFunctional| which computes a lower bound for the coercivity of
 the problem for a given parameter.
 
 >>> from functools import partial
 >>> extension_algorithm = partial(gram_schmidt_basis_extension, product=d.h1_product)
->>> reductor = partial(reduce_coercive, error_product=d.h1_product,
-                       coercivity_estimator=GenericParameterFunctional(lambda mu: np.min(mu['diffusion']),
-                                                                       d.parameter_type))
+>>> reductor = partial(
+...     reduce_coercive,
+...     error_product=d.h1_product,
+...     coercivity_estimator=ExpressionParameterFunctional('min(diffusion)', d.parameter_type)
+... )
 
 Moreover, we need to select a |Parameter| training set. The discretization
 ``d`` already comes with a |ParameterSpace| which it has inherited from the
@@ -213,19 +215,37 @@ Now we start the basis generation:
 
 >>> greedy_data = greedy(d, reductor, samples,
 ...                      extension_algorithm=extension_algorithm,
-...                      use_estimator=True, max_extensions=32)
-07:42|algorithms.greedy.greedy: Started greedy search on 4096 samples
-07:42|algorithms.greedy.greedy: Reducing ...
-07:42|algorithms.greedy.greedy: Estimating errors ...
+...                      use_estimator=True,
+...                      max_extensions=32)
+01:44 greedy: Started greedy search on 4096 samples
+01:44 greedy: Reducing ...
+01:44 |   reduce_coercive: RB projection ...
     ...
-07:44|algorithms.greedy.greedy: Maximum error after 0 extensions: 9.86736953629 (mu = {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]})
-07:44|algorithms.greedy.greedy: Extending with snapshot for mu = {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]}
-07:44|discretizations.basic.StationaryDiscretization: Solving ThermalBlock_CG for {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]} ...
+01:45 |   reduce_coercive: Assembling error estimator ...
+01:45 |   |   reduce_residual: Estimating residual range ...
+01:45 |   |   |   estimate_image_hierarchical: Estimating image for basis vector -1 ...
+01:45 |   |   |   estimate_image_hierarchical: Orthonormalizing ...
+01:45 |   |   reduce_residual: Projecting residual operator ...
+01:45 greedy: Estimating errors ...
+01:47 greedy: Maximum error after 0 extensions: 9.86736953629 (mu = {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]})
+01:47 greedy: Computing solution snapshot for mu = {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]} ...
+01:47 |   StationaryDiscretization: Solving ThermalBlock_CG for {diffusion: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]} ...
+01:47 greedy: Extending basis with solution snapshot ...
+01:47 greedy: Reducing ...
     ...
+01:47 greedy: Estimating errors ...
+01:50 greedy: Maximum error after 1 extensions: 3.30998133771 (mu = {diffusion: [0.1, 0.1, 1.0, 0.1, 0.1, 0.1]})
+01:50 greedy: Computing solution snapshot for mu = {diffusion: [0.1, 0.1, 1.0, 0.1, 0.1, 0.1]} ...
+01:50 |   StationaryDiscretization: Solving ThermalBlock_CG for {diffusion: [0.1, 0.1, 1.0, 0.1, 0.1, 0.1]} ...
+01:50 greedy: Extending basis with solution snapshot ...
     ...
-15:26|algorithms.greedy.greedy: Maximum number of 32 extensions reached.
-15:26|algorithms.greedy.greedy: Reducing once more ...
-15:55|algorithms.greedy.greedy: Greedy search took 492.942929029 seconds
+    ... 
+03:52 greedy: Maximum number of 32 extensions reached.
+03:52 greedy: Reducing once more ...
+    ...
+03:55 greedy: Greedy search took 130.547789097 seconds
+
+
 
 The ``max_extensions`` parameter defines how many basis vectors we want to
 obtain. ``greedy_data`` is a dictionary containing various data that has
@@ -262,7 +282,7 @@ method:
 >>> import numpy as np
 >>> gram_matrix = d.h1_product.apply2(rb, rb)
 >>> print(np.max(np.abs(gram_matrix - np.eye(32))))
-1.24982272795e-13
+1.16563426164e-13
 
 Looks good! We can now solve the reduced model for the same parameter as above.
 The result is a vector of coefficients w.r.t. the reduced basis, which is
@@ -289,7 +309,8 @@ the detailed solution and the error:
 >>> ERR = U - U_red
 >>> print(d.h1_norm(ERR))
 [ 0.00944595]
->>> d.visualize((U, U_red, ERR), legend=('Detailed', 'Reduced', 'Error'),
+>>> d.visualize((U, U_red, ERR),
+...             legend=('Detailed', 'Reduced', 'Error'),
 ...             separate_colorbars=True)
 
 We can nicely observe that, as expected, the error is maximized along the
