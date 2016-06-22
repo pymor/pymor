@@ -21,7 +21,7 @@ class BitmapFunction(FunctionBase):
     """
 
     dim_domain = 2
-    shape_range = tuple()
+    shape_range = ()
 
     def __init__(self, filename, bounding_box=[[0., 0.], [1., 1.]], range=[0., 1.]):
         try:

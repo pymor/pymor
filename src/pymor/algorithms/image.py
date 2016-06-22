@@ -13,7 +13,7 @@ from pymor.vectorarrays.interfaces import VectorArrayInterface
 from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
 
 
-def estimate_image(operators=tuple(), vectors=tuple(),
+def estimate_image(operators=(), vectors=(),
                    domain=None, extends=False, orthonormalize=True, product=None,
                    riesz_representatives=False):
     """Estimate the image of given operators for all mu.
@@ -130,7 +130,7 @@ def estimate_image(operators=tuple(), vectors=tuple(),
     return image
 
 
-def estimate_image_hierarchical(operators=tuple(), vectors=tuple(), domain=None, extends=None,
+def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=None,
                                 orthonormalize=True, product=None, riesz_representatives=False):
     """Estimate the image of given operators for all mu.
 

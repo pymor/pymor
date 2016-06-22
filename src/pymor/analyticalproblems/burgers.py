@@ -132,7 +132,7 @@ class BurgersFlux(FunctionInterface):
 
     def __init__(self, v):
         self.v = v
-        self.build_parameter_type({'exponent': tuple()}, local_global=True)
+        self.build_parameter_type({'exponent': ()}, local_global=True)
 
     def evaluate(self, U, mu=None):
         mu = self.parse_parameter(mu)
@@ -148,7 +148,7 @@ class BurgersFluxDerivative(FunctionInterface):
 
     def __init__(self, v):
         self.v = v
-        self.build_parameter_type({'exponent': tuple()}, local_global=True)
+        self.build_parameter_type({'exponent': ()}, local_global=True)
 
     def evaluate(self, U, mu=None):
         mu = self.parse_parameter(mu)
@@ -160,7 +160,7 @@ class BurgersFluxDerivative(FunctionInterface):
 class BurgersSinInitialData(FunctionInterface):
 
     dim_domain = 1
-    shape_range = tuple()
+    shape_range = ()
 
     def evaluate(self, x, mu=None):
         return 0.5 * (np.sin(2 * np.pi * x[..., 0]) + 1.)
@@ -169,7 +169,7 @@ class BurgersSinInitialData(FunctionInterface):
 class BurgersBumpInitialData(FunctionInterface):
 
     dim_domain = 1
-    shape_range = tuple()
+    shape_range = ()
 
     def evaluate(self, x, mu=None):
         return (x[..., 0] >= 0.5) * (x[..., 0] <= 1) * 1
@@ -183,7 +183,7 @@ class Burgers2DFlux(FunctionInterface):
     def __init__(self, vx, vy):
         self.vx = vx
         self.vy = vy
-        self.build_parameter_type({'exponent': tuple()}, local_global=True)
+        self.build_parameter_type({'exponent': ()}, local_global=True)
 
     def evaluate(self, U, mu=None):
         mu = self.parse_parameter(mu)
@@ -203,7 +203,7 @@ class Burgers2DFluxDerivative(FunctionInterface):
     def __init__(self, vx, vy):
         self.vx = vx
         self.vy = vy
-        self.build_parameter_type({'exponent': tuple()}, local_global=True)
+        self.build_parameter_type({'exponent': ()}, local_global=True)
 
     def evaluate(self, U, mu=None):
         mu = self.parse_parameter(mu)
@@ -218,7 +218,7 @@ class Burgers2DFluxDerivative(FunctionInterface):
 class Burgers2DSinInitialData(FunctionInterface):
 
     dim_domain = 2
-    shape_range = tuple()
+    shape_range = ()
 
     def evaluate(self, x, mu=None):
         return 0.5 * (np.sin(2 * np.pi * x[..., 0]) * np.sin(2 * np.pi * x[..., 1]) + 1.)
@@ -227,7 +227,7 @@ class Burgers2DSinInitialData(FunctionInterface):
 class Burgers2DBumpInitialData(FunctionInterface):
 
     dim_domain = 2
-    shape_range = tuple()
+    shape_range = ()
 
     def evaluate(self, x, mu=None):
         return (x[..., 0] >= 0.5) * (x[..., 0] <= 1) * 1

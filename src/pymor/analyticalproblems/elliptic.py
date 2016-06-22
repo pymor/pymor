@@ -27,10 +27,10 @@ class EllipticProblem(ImmutableInterface):
         A |DomainDescription| of the domain the problem is posed on.
     rhs
         The |Function| f(x, μ). `rhs.dim_domain` has to agree with the
-        dimension of `domain`, whereas `rhs.shape_range` has to be `tuple()`.
+        dimension of `domain`, whereas `rhs.shape_range` has to be `()`.
     diffusion_functions
         List containing the |Functions| d_k(x), each having `shape_range`
-        of either `tuple()` or `(dim domain, dim domain)`.
+        of either `()` or `(dim domain, dim domain)`.
     diffusion_functionals
         List containing the |ParameterFunctionals| θ_{d,k}(μ). If
         `len(diffusion_functions) == 1`, `diffusion_functionals` is allowed
@@ -44,7 +44,7 @@ class EllipticProblem(ImmutableInterface):
         to be `None`, in which case no parameter dependence is assumed.
     reaction_functions
         List containing the |Functions| r_k(x), each having `shape_range`
-        of `tuple()`.
+        of `()`.
     reaction_functionals
         List containing the |ParameterFunctionals| θ_{r,k}(μ). If
         `len(reaction_functions) == 1`, `reaction_functionals` is allowed

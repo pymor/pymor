@@ -274,7 +274,7 @@ def defaults(*args, **kwargs):
 
     assert all(isinstance(arg, str) for arg in args)
     assert set(kwargs.keys()) <= {'sid_ignore', 'qualname'}
-    sid_ignore = kwargs.get('sid_ignore', tuple())
+    sid_ignore = kwargs.get('sid_ignore', ())
     qualname = kwargs.get('qualname', None)
 
     def the_decorator(func):
@@ -285,7 +285,7 @@ def defaults(*args, **kwargs):
         global _default_container
         _default_container._add_defaults_for_function(func, args=args, sid_ignore=sid_ignore, qualname=qualname)
 
-        @functools.wraps(func, updated=tuple())  # ensure that __signature__ is not copied
+        @functools.wraps(func, updated=())  # ensure that __signature__ is not copied
         def wrapper(*args, **kwargs):
             for k, v in zip(func.argnames, args):
                 if k in kwargs:

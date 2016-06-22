@@ -74,7 +74,7 @@ class ThermalBlockProblem(EllipticProblem):
 class ThermalBlockDiffusionFunction(FunctionInterface):
 
     dim_domain = 2
-    shape_range = tuple()
+    shape_range = ()
 
     def __init__(self, x, y, nx, ny):
         self.x = x

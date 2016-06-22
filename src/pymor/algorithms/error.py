@@ -16,8 +16,8 @@ from pymor.reductors.basic import reduce_to_subbasis
 
 def reduction_error_analysis(reduced_discretization, discretization=None, reconstructor=None,
                              test_mus=10, basis_sizes=0, random_seed=None,
-                             estimator=True, condition=False, error_norms=tuple(), error_norm_names=None,
-                             estimator_norm_index=0, custom=tuple(),
+                             estimator=True, condition=False, error_norms=(), error_norm_names=None,
+                             estimator_norm_index=0, custom=(),
                              plot=False, plot_custom_logarithmic=True,
                              pool=dummy_pool):
     """Analyze the model reduction error.

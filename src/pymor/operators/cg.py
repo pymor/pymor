@@ -55,7 +55,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, neumann_data=None, robin_data=None,
                  order=2, solver_options=None, name=None):
         assert grid.reference_element(0) in {line, triangle}
-        assert function.shape_range == tuple()
+        assert function.shape_range == ()
         self.source = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
@@ -175,7 +175,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
     def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, neumann_data=None, robin_data=None,
                  order=2, name=None):
         assert grid.reference_element(0) in {square}
-        assert function.shape_range == tuple()
+        assert function.shape_range == ()
         self.source = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
@@ -270,7 +270,7 @@ class L2ProductP1(NumpyMatrixBasedOperator):
         zero (e.g. for affine decomposition). Otherwise, if either `dirichlet_clear_rows` or
         `dirichlet_clear_columns` is `True`, the diagonal entries are set to one.
     coefficient_function
-        Coefficient |Function| for product with ``shape_range == tuple()``.
+        Coefficient |Function| for product with ``shape_range == ()``.
         If `None`, constant one is assumed.
     name
         The name of the product.
@@ -371,7 +371,7 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
         zero (e.g. for affine decomposition). Otherwise, if either `dirichlet_clear_rows` or
         `dirichlet_clear_columns` is `True`, the diagonal entries are set to one.
     coefficient_function
-        Coefficient |Function| for product with ``shape_range == tuple()``.
+        Coefficient |Function| for product with ``shape_range == ()``.
         If `None`, constant one is assumed.
     name
         The name of the product.
@@ -462,7 +462,7 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
     boundary_info
         |BoundaryInfo| for the treatment of Dirichlet boundary conditions.
     diffusion_function
-        The |Function| `d(x)` with ``shape_range == tuple()`` or
+        The |Function| `d(x)` with ``shape_range == ()`` or
         ``shape_range = (grid.dim_outer, grid.dim_outer)``. If `None`, constant one is
         assumed.
     diffusion_constant
@@ -487,7 +487,7 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
         assert diffusion_function is None \
             or (isinstance(diffusion_function, FunctionInterface) and
                 diffusion_function.dim_domain == grid.dim_outer and
-                diffusion_function.shape_range == tuple() or diffusion_function.shape_range == (grid.dim_outer,) * 2)
+                diffusion_function.shape_range == () or diffusion_function.shape_range == (grid.dim_outer,) * 2)
         self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
@@ -519,7 +519,7 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
         SF_GRADS = np.einsum('eij,pj->epi', g.jacobian_inverse_transposed(0), SF_GRAD)
 
         self.logger.info('Calculate all local scalar products beween gradients ...')
-        if self.diffusion_function is not None and self.diffusion_function.shape_range == tuple():
+        if self.diffusion_function is not None and self.diffusion_function.shape_range == ():
             D = self.diffusion_function(self.grid.centers(0), mu=mu)
             SF_INTS = np.einsum('epi,eqi,e,e->epq', SF_GRADS, SF_GRADS, g.volumes(0), D).ravel()
             del D
@@ -582,7 +582,7 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
     boundary_info
         |BoundaryInfo| for the treatment of Dirichlet boundary conditions.
     diffusion_function
-        The |Function| `d(x)` with ``shape_range == tuple()`` or
+        The |Function| `d(x)` with ``shape_range == ()`` or
         ``shape_range = (grid.dim_outer, grid.dim_outer)``. If `None`, constant one is
         assumed.
     diffusion_constant
@@ -607,7 +607,7 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         assert diffusion_function is None \
             or (isinstance(diffusion_function, FunctionInterface) and
                 diffusion_function.dim_domain == grid.dim_outer and
-                diffusion_function.shape_range == tuple() or diffusion_function.shape_range == (grid.dim_outer,) * 2)
+                diffusion_function.shape_range == () or diffusion_function.shape_range == (grid.dim_outer,) * 2)
         self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
@@ -638,7 +638,7 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         SF_GRADS = np.einsum('eij,pjc->epic', g.jacobian_inverse_transposed(0), SF_GRAD)
 
         self.logger.info('Calculate all local scalar products beween gradients ...')
-        if self.diffusion_function is not None and self.diffusion_function.shape_range == tuple():
+        if self.diffusion_function is not None and self.diffusion_function.shape_range == ():
             D = self.diffusion_function(self.grid.quadrature_points(0, order=2), mu=mu)
             SF_INTS = np.einsum('epic,eqic,c,e,ec->epq', SF_GRADS, SF_GRADS, w, g.integration_elements(0), D).ravel()
             del D
@@ -955,7 +955,7 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
         assert robin_data is None or (isinstance(robin_data, tuple) and len(robin_data) == 2)
         assert robin_data is None or all([isinstance(f, FunctionInterface)
                                           and f.dim_domain == grid.dim_outer
-                                          and (f.shape_range == tuple()
+                                          and (f.shape_range == ()
                                                or f.shape_range == (grid.dim_outer,)
                                                ) for f in robin_data])
         self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
@@ -986,7 +986,7 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
         else:
             xref = g.quadrature_points(1, order=self.order)[RI]
             # xref(robin-index, quadraturepoint-index)
-            if self.robin_data[0].shape_range == tuple():
+            if self.robin_data[0].shape_range == ():
                 robin_c = self.robin_data[0](xref, mu=mu)
             else:
                 robin_elements = g.superentities(1, 0)[RI, 0]
@@ -1021,7 +1021,7 @@ class InterpolationOperator(NumpyMatrixBasedOperator):
 
     def __init__(self, grid, function):
         assert function.dim_domain == grid.dim_outer
-        assert function.shape_range == tuple()
+        assert function.shape_range == ()
         self.grid = grid
         self.function = function
         self.range = NumpyVectorSpace(grid.size(grid.dim))

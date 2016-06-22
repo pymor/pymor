@@ -119,7 +119,7 @@ class GenericFunction(FunctionBase):
         The name of the function.
     """
 
-    def __init__(self, mapping, dim_domain=1, shape_range=tuple(), parameter_type=None, name=None):
+    def __init__(self, mapping, dim_domain=1, shape_range=(), parameter_type=None, name=None):
         assert dim_domain > 0
         assert isinstance(shape_range, (Number, tuple))
         self.dim_domain = dim_domain
@@ -177,7 +177,7 @@ class ExpressionFunction(GenericFunction):
                                              'min', 'minimum', 'max', 'maximum', 'pi', 'e',
                                              'sum', 'prod'}}
 
-    def __init__(self, expression, dim_domain=1, shape_range=tuple(), parameter_type=None, name=None):
+    def __init__(self, expression, dim_domain=1, shape_range=(), parameter_type=None, name=None):
         self.expression = expression
         code = compile(expression, '<expression>', 'eval')
         functions = self.functions
