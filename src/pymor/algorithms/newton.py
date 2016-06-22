@@ -129,6 +129,8 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
         logger.info('Iteration {:2}: Residual: {:5e},  Reduction: {:5e}, Total Reduction: {:5e}'
                     .format(iteration, err, err / error_sequence[-1], err / error_sequence[0]))
         error_sequence.append(err)
+        if not np.isfinite(err):
+            raise NewtonError('Failed to converge')
 
     data['error_sequence'] = np.array(error_sequence)
 
