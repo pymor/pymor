@@ -9,7 +9,7 @@ Usage:
   thermalblock_simple.py [options] MODEL ALG SNAPSHOTS RBSIZE TEST
 
 Arguments:
-  MODEL      High-dimensional model (pymor, fenics).
+  MODEL      High-dimensional model (pymor, fenics, ngsolve).
 
   ALG        The model reduction algorithm to use
              (naive, greedy, adaptive_greedy, pod).
@@ -135,6 +135,108 @@ def _discretize_fenics():
     return d
 
 
+def discretize_ngsolve():
+    from ngsolve import (ngsglobals, Mesh, H1, CoefficientFunction, LinearForm, SymbolicLFI,
+                         BilinearForm, SymbolicBFI, grad, TaskManager)
+    from netgen.geom2d import SplineGeometry
+
+    ngsglobals.msg_level = 1
+
+    geo = SplineGeometry()
+
+    #
+    # domains 1,2,3,4 and boundary condition labels (sw,se,ws,...):
+    # 
+    #                          D0 ( outer domain )    
+    #                     
+    #                      6-----nw----7-----ne-----8
+    #                      |           |            |
+    #                      |           |            |
+    # D0 ( outer domain )  w     D3    i     D4     e  D0 ( outer domain )
+    #                      n           n            n
+    #                      |           |            |
+    #                      3-----iw----4-----ie-----5
+    #                      |           |            |
+    #                      |           |            |
+    # D0 ( outer domain )  w     D1    i     D2     e  D0 ( outer domain )
+    #                      s           s            s
+    #                      |           |            |
+    #                      0-----sw----1-----se-----2
+    #                          D0 ( outer domain )
+    #                                                                      
+    pts = [geo.AppendPoint(*p) for p in [(-1, -1),
+                                         (0,  -1),
+                                         (1,  -1),
+                                         (-1,  0),
+                                         (0,   0),
+                                         (1,   0),
+                                         (-1,  1),
+                                         (0,   1),
+                                         (1,   1)]]
+
+    geo.Append(["line", pts[0], pts[1]], bc="sw", leftdomain=1, rightdomain=0)
+    geo.Append(["line", pts[1], pts[2]], bc="se", leftdomain=2, rightdomain=0)
+    geo.Append(["line", pts[3], pts[4]], bc="iw", leftdomain=3, rightdomain=1)
+    geo.Append(["line", pts[4], pts[5]], bc="ie", leftdomain=4, rightdomain=2)
+    geo.Append(["line", pts[6], pts[7]], bc="nw", leftdomain=0, rightdomain=3)
+    geo.Append(["line", pts[7], pts[8]], bc="ne", leftdomain=0, rightdomain=4)
+    geo.Append(["line", pts[0], pts[3]], bc="ws", leftdomain=0, rightdomain=1)
+    geo.Append(["line", pts[3], pts[6]], bc="wn", leftdomain=0, rightdomain=3)
+    geo.Append(["line", pts[1], pts[4]], bc="is", leftdomain=1, rightdomain=2)
+    geo.Append(["line", pts[4], pts[7]], bc="in", leftdomain=3, rightdomain=4)
+    geo.Append(["line", pts[2], pts[5]], bc="es", leftdomain=2, rightdomain=0)
+    geo.Append(["line", pts[5], pts[8]], bc="en", leftdomain=4, rightdomain=0)
+
+
+    # generate a triangular mesh of mesh-size 0.2
+    mesh = Mesh(geo.GenerateMesh(maxh=0.2))
+
+    # H1-conforming finite element space
+    V = H1(mesh, order=3, dirichlet="sw|ws|se|es|nw|wn|ne|en")
+    v = V.TestFunction()
+    u = V.TrialFunction()
+
+    # domain constant coefficient function (one value per domain):
+    # sourcefct = DomainConstantCF((1,1,1,1))
+    # or as a coeff as array: variable coefficient function (one CoefFct. per domain):
+    sourcefct = CoefficientFunction([1, 1, 1, 1])
+
+    with TaskManager():
+        # the right hand side
+        f = LinearForm(V)
+        f += SymbolicLFI(sourcefct * v)
+        f.Assemble()
+
+
+        # the bilinear-form
+        mats = []
+        for i in range(4):
+            coeffs = [0] * 4
+            coeffs[i] = 1
+            diffusion = CoefficientFunction(coeffs)
+            a = BilinearForm(V, symmetric=False)
+            a += SymbolicBFI(diffusion * grad(u) * grad(v), definedon=[i])
+            a.Assemble()
+            mats.append(a.mat)
+
+    from pymor.gui.ngsolve import NGSolveVisualizer
+    from pymor.operators.ngsolve import NGSolveMatrixOperator
+    from pymor.vectorarrays.ngsolve import NGSolveVectorSpace
+
+    op = LincombOperator([NGSolveMatrixOperator(m, V, V) for m in mats],
+                         [ProjectionParameterFunctional('diffusion', (4,), (i,)) for i in range(4)])
+
+    h1_0_op = op.assemble([1, 1, 1, 1])
+
+    F = NGSolveVectorSpace(V).zeros()
+    F._list[0].vec.data = f.vec.data
+    F = VectorFunctional(F)
+
+    return StationaryDiscretization(op, F, visualizer=NGSolveVisualizer(),
+                                    products={'h1_0_semi': h1_0_op},
+                                    parameter_space=CubicParameterSpace(op.parameter_type, 0.1, 1.))
+
+
 ####################################################################################################
 # Reduction algorithms                                                                             #
 ####################################################################################################
@@ -213,6 +315,8 @@ def main():
         d = discretize_pymor()
     elif MODEL == 'fenics':
         d = discretize_fenics()
+    elif MODEL == 'ngsolve':
+        d = discretize_ngsolve()
     else:
         raise NotImplementedError
 
@@ -259,8 +363,11 @@ def main():
     mumax = results['max_error_mus'][0, -1]
     U = d.solve(mumax)
     U_RB = rc.reconstruct(rd.solve(mumax))
-    d.visualize((U, U_RB, U - U_RB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
-                separate_colorbars=True, block=True)
+    if MODEL == 'ngsolve':
+        d.visualize(U - U_RB)
+    else:
+        d.visualize((U, U_RB, U - U_RB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
+                    separate_colorbars=True, block=True)
 
 
 if __name__ == '__main__':
