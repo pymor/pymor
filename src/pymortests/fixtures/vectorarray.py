@@ -266,7 +266,7 @@ dealii_vector_array_pair_with_different_dim_generators = \
 
 @pytest.fixture(params=numpy_vector_array_generators + numpy_list_vector_array_generators +
                        block_vector_array_generators + fenics_vector_array_generators +
-                       ngsolve_vector_array_generators)
+                       ngsolve_vector_array_generators + dealii_vector_array_generators)
 def vector_array_without_reserve(request):
     return request.param()
 
@@ -291,7 +291,8 @@ def picklable_vector_array(picklable_vector_array_without_reserve, request):
                         numpy_list_vector_array_pair_with_same_dim_generators +
                         block_vector_array_pair_with_same_dim_generators +
                         fenics_vector_array_pair_with_same_dim_generators +
-                        ngsolve_vector_array_pair_with_same_dim_generators)
+                        ngsolve_vector_array_pair_with_same_dim_generators +
+                        dealii_vector_array_pair_with_same_dim_generators))
 def compatible_vector_array_pair_without_reserve(request):
     return request.param()
 
