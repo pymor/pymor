@@ -49,7 +49,7 @@ if HAVE_NGSOLVE:
 
         @property
         def data(self):
-            return np.array(self.vec)  # WARNING: This creates a copy and is slow
+            return self.vec.FV().NumPy()
 
         def _scal(self, alpha):
             self.vec.data = float(alpha) * self.vec
@@ -61,7 +61,7 @@ if HAVE_NGSOLVE:
             return self.vec.InnerProduct(other.vec)
 
         def l1_norm(self):
-            raise NotImplementedError
+            return np.linalg.norm(self.data, ord=1)
 
         def l2_norm(self):
             return self.vec.Norm()
@@ -69,17 +69,19 @@ if HAVE_NGSOLVE:
         def l2_norm2(self):
             return self.vec.Norm() ** 2
 
-        def sup_norm(self):
-            raise NotImplementedError
-
         def components(self, component_indices):
+            if len(component_indices) == 0:
+                return np.array([], dtype=np.intc)
             assert 0 <= np.min(component_indices)
             assert np.max(component_indices) < self.dim
             vec = self.vec
-            return np.array([vec[i] for i in component_indices])
+            return np.array([vec[int(i)] for i in component_indices])
 
         def amax(self):
-            raise NotImplementedError
+            A = np.abs(self.data)
+            max_ind = np.argmax(A)
+            max_val = A[max_ind]
+            return max_ind, max_val
 
 
     def NGSolveVectorSpace(fespace):
