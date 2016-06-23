@@ -9,6 +9,7 @@ from itertools import chain
 
 import numpy as np
 
+from pymor.algorithms.basic import inner
 from pymor.core.defaults import defaults_sid, defaults
 from pymor.core.exceptions import InversionError
 from pymor.core.interfaces import ImmutableInterface
@@ -429,10 +430,7 @@ class ConstantOperator(OperatorBase):
         assert range_basis is None or range_basis in self.range
         assert product is None or product.source == product.range == self.range
         if range_basis is not None:
-            if product:
-                projected_value = NumpyVectorArray(product.apply2(range_basis, self._value).T, copy=False)
-            else:
-                projected_value = NumpyVectorArray(range_basis.dot(self._value).T, copy=False)
+            projected_value = NumpyVectorArray(inner(range_basis, self._value, product).T, copy=False)
         else:
             projected_value = self._value
         if source_basis is None:
@@ -569,10 +567,7 @@ class VectorArrayOperator(OperatorBase):
         assert source_product is None or source_product.source == source_product.range == self.source
         assert range_product is None or range_product.source == range_product.range == self.range
         if not self.transposed:
-            if range_product:
-                ATPrU = NumpyVectorArray(range_product.apply2(self._array, U).T)
-            else:
-                ATPrU = NumpyVectorArray(self._array.dot(U).T)
+            ATPrU = NumpyVectorArray(inner(self._array, U, range_product).T, copy=False)
             if source_product:
                 return source_product.apply_inverse(ATPrU)
             else:
@@ -937,58 +932,3 @@ class SelectionOperator(OperatorBase):
                                for op in self.operators]
         return SelectionOperator(projected_operators, self.parameter_functional, self.boundaries,
                                  name or self.name + '_projected')
-
-
-@defaults('raise_negative', 'tol')
-def induced_norm(product, raise_negative=True, tol=1e-10, name=None):
-    """Obtain induced norm of an inner product.
-
-    The norm of the vectors in a |VectorArray| U is calculated by
-    calling ::
-
-        product.pairwise_apply2(U, U, mu=mu).
-
-    In addition, negative norm squares of absolute value smaller
-    than `tol` are clipped to `0`.
-    If `raise_negative` is `True`, a :exc:`ValueError` exception
-    is raised if there are negative norm squares of absolute value
-    larger than `tol`.
-
-    Parameters
-    ----------
-    product
-        The inner product |Operator| for which the norm is to be
-        calculated.
-    raise_negative
-        If `True`, raise an exception if calculated norm is negative.
-    tol
-        See above.
-
-    Returns
-    -------
-    norm
-        A function `norm(U, mu=None)` taking a |VectorArray| `U`
-        as input together with the |Parameter| `mu` which is
-        passed to the product.
-    """
-    return InducedNorm(product, raise_negative, tol, name)
-
-
-class InducedNorm(ImmutableInterface, Parametric):
-    """Instantiated by :func:`induced_norm`. Do not use directly."""
-
-    def __init__(self, product, raise_negative, tol, name):
-        self.product = product
-        self.raise_negative = raise_negative
-        self.tol = tol
-        self.name = name or product.name
-        self.build_parameter_type(product)
-
-    def __call__(self, U, mu=None):
-        norm_squared = self.product.pairwise_apply2(U, U, mu=mu)
-        if self.tol > 0:
-            norm_squared = np.where(np.logical_and(0 > norm_squared, norm_squared > - self.tol),
-                                    0, norm_squared)
-        if self.raise_negative and np.any(norm_squared < 0):
-            raise ValueError('norm is negative (square = {})'.format(norm_squared))
-        return np.sqrt(norm_squared)

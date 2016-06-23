@@ -7,8 +7,7 @@ from numbers import Number
 import pytest
 import numpy as np
 
-from pymor.algorithms.basic import almost_equal
-from pymor.operators.constructions import induced_norm
+from pymor.algorithms.basic import almost_equal, Norm
 from pymortests.fixtures.vectorarray import \
     (vector_array_without_reserve, vector_array, compatible_vector_array_pair_without_reserve,
      compatible_vector_array_pair, incompatible_vector_array_pair)
@@ -42,7 +41,7 @@ def test_almost_equal_product(operator_with_arrays_and_products):
     v2.append(v1[:len(v1) // 2])
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
         for rtol, atol in ((1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8)):
-            norm = induced_norm(product)
+            norm = Norm(product)
 
             r = almost_equal(v1[ind1], v2[ind2], norm=norm)
             assert isinstance(r, np.ndarray)
@@ -99,7 +98,7 @@ def test_almost_equal_self(vector_array):
 
 def test_almost_equal_self_product(operator_with_arrays_and_products):
     _, _, v, _, product, _ = operator_with_arrays_and_products
-    norm = induced_norm(product)
+    norm = Norm(product)
     for ind in valid_inds(v):
         for rtol, atol in ((1e-5, 1e-8), (1e-10, 1e-12), (0., 1e-8), (1e-5, 1e-8), (1e-12, 0.)):
             r = almost_equal(v[ind], v[ind], norm=norm)

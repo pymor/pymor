@@ -4,12 +4,12 @@
 
 import numpy as np
 
+from pymor.algorithms.basic import Norm
 from pymor.algorithms.image import estimate_image_hierarchical
 from pymor.core.interfaces import ImmutableInterface
 from pymor.core.exceptions import ImageCollectionError
 from pymor.core.logger import getLogger
 from pymor.operators.basic import OperatorBase
-from pymor.operators.constructions import induced_norm
 from pymor.reductors.basic import GenericRBReconstructor
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -186,7 +186,7 @@ class NonProjectedReconstructor(ImmutableInterface):
     """
 
     def __init__(self, product):
-        self.norm = induced_norm(product) if product else None
+        self.norm = Norm(product) if product else None
 
     def reconstruct(self, U):
         if self.norm:

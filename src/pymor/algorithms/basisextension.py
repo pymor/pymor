@@ -22,7 +22,7 @@ exception is raised.
 
 import numpy as np
 
-from pymor.algorithms.basic import almost_equal
+from pymor.algorithms.basic import almost_equal, inner
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.pod import pod
 from pymor.core.exceptions import ExtensionError
@@ -173,10 +173,7 @@ def pod_basis_extension(basis, U, count=1, copy_basis=True, product=None, orthon
 
     new_basis = basis.copy() if copy_basis else basis
 
-    if product is None:
-        U_proj_err = U - basis.lincomb(U.dot(basis))
-    else:
-        U_proj_err = U - basis.lincomb(product.apply2(U, basis))
+    U_proj_err = U - basis.lincomb(inner(U, basis, product))
 
     new_basis.append(pod(U_proj_err, modes=count, product=product, orthonormalize=False)[0])
 

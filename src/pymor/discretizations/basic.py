@@ -5,9 +5,10 @@
 
 from itertools import chain
 
+from pymor.algorithms.basic import Norm
 from pymor.algorithms.timestepping import TimeStepperInterface
 from pymor.discretizations.interfaces import DiscretizationInterface
-from pymor.operators.constructions import VectorOperator, induced_norm
+from pymor.operators.constructions import VectorOperator
 from pymor.operators.interfaces import OperatorInterface
 from pymor.tools.frozendict import FrozenDict
 from pymor.vectorarrays.interfaces import VectorArrayInterface
@@ -34,7 +35,7 @@ class DiscretizationBase(DiscretizationInterface):
         if products:
             for k, v in products.items():
                 setattr(self, '{}_product'.format(k), v)
-                setattr(self, '{}_norm'.format(k), induced_norm(v))
+                setattr(self, '{}_norm'.format(k), Norm(v))
 
     def visualize(self, U, **kwargs):
         """Visualize a solution |VectorArray| U.
