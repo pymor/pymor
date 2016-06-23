@@ -159,8 +159,8 @@ class ReducedSim(SimBase):
 
     def _first(self):
         args = self.args
-        error_product = self.discretization.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
-        reductor = partial(reduce_coercive_simple, error_product=error_product)
+        product = self.discretization.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
+        reductor = partial(reduce_coercive_simple, product=product)
         extension_algorithm = partial(gram_schmidt_basis_extension, product=self.discretization.h1_0_semi_product)
 
         greedy_data = greedy(self.discretization, reductor,

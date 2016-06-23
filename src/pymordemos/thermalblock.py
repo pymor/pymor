@@ -127,15 +127,15 @@ def main(args):
     coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', d.parameter_type)
 
     # inner product for computation of Riesz representatives
-    error_product = d.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
+    product = d.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
 
     if args['--reductor'] == 'residual_basis':
         from pymor.reductors.coercive import reduce_coercive
-        reductor = partial(reduce_coercive, error_product=error_product,
+        reductor = partial(reduce_coercive, product=product,
                            coercivity_estimator=coercivity_estimator)
     elif args['--reductor'] == 'traditional':
         from pymor.reductors.coercive import reduce_coercive_simple
-        reductor = partial(reduce_coercive_simple, error_product=error_product,
+        reductor = partial(reduce_coercive_simple, product=product,
                            coercivity_estimator=coercivity_estimator)
     else:
         assert False  # this should never happen
