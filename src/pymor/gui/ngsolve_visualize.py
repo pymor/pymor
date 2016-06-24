@@ -4,6 +4,10 @@ if __name__ == '__main__':
     from pymor.core.pickle import load
 
     with open(os.environ['NGSOLVE_VISUALIZE_FILE'], 'rb') as f:
-        u = load(f)
+        V = load(f)
+        vec = load(f)
+
+    u = GridFunction(V)
+    u.vec.data = vec
 
     Draw(u)

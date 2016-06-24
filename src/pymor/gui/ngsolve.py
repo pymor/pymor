@@ -21,6 +21,9 @@ if HAVE_NGSOLVE:
     class NGSolveVisualizer(ImmutableInterface):
         """Visualize a FEniCS grid function."""
 
+        def __init__(self, fespace):
+            self.fespace = fespace
+
         def visualize(self, U, discretization, block=True):
             """Visualize the provided data."""
             if not block:
@@ -38,5 +41,6 @@ if HAVE_NGSOLVE:
             # else:
             assert len(U) == 1
             with NamedTemporaryFile() as f:
+                dump(self.fespace, f)
                 dump(U._list[0].impl, f)
                 os.system('NGSOLVE_VISUALIZE_FILE={} netgen {}'.format(f.name, NGSOLVE_VISUALIZE_PATH))

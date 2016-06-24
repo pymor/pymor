@@ -78,37 +78,13 @@ if HAVE_NGSOLVE:
     from netgen.geom2d import unit_square
     from pymor.vectorarrays.ngsolve import NGSolveVectorSpace
 
-    ngsolve_spaces = [ngs.H1(ngs.Mesh(unit_square.GenerateMesh(maxh=h)), order=1)
-                      for h in [1., 0.5, 0.2, 0.1]]
-
-    def ngsolve_vector_array_factory(length, space, seed):
-        V = ngsolve_spaces[space]
-        U = NGSolveVectorSpace(V).zeros(length)
+    def ngsolve_vector_array_factory(length, dim, seed):
+        U = NGSolveVectorSpace(dim).zeros(length)
         dim = U.dim
         np.random.seed(seed)
         for v, a in zip(U._list, np.random.random((length, dim))):
             v.data[:] = a
         return U
-
-    ngsolve_vector_array_factory_arguments = \
-        list(zip([0,  0,  1, 43, 102],      # len
-            [0,  1,  3,  2,  2],      # ni
-            random_integers(5, 123)))   # seed
-
-    ngsolve_vector_array_factory_arguments_pairs_with_same_dim = \
-        list(zip([0,  0,   1, 43, 102,  2],         # len1
-            [0,  1,  37,  9, 104,  2],         # len2
-            [0,  1,   3,  2,   2,  2],         # dim
-            random_integers(5, 1234) + [42],  # seed1
-            random_integers(5, 1235) + [42]))  # seed2
-
-    ngsolve_vector_array_factory_arguments_pairs_with_different_dim = \
-        list(zip([0,  0,  1, 43, 102],      # len1
-            [0,  1,  1,  9,  10],      # len2
-            [0,  1,  2,  3,   1],      # dim1
-            [1,  2,  1,  2,   3],      # dim2
-            random_integers(5, 1234),  # seed1
-            random_integers(5, 1235)))  # seed2
 
 
 if config.HAVE_DEALII:
@@ -190,7 +166,7 @@ fenics_vector_array_generators = \
     if config.HAVE_FENICS else []
 
 ngsolve_vector_array_generators = \
-    [lambda args=args: ngsolve_vector_array_factory(*args) for args in ngsolve_vector_array_factory_arguments] \
+    [lambda args=args: ngsolve_vector_array_factory(*args) for args in numpy_vector_array_factory_arguments] \
     if HAVE_NGSOLVE else []
 
 dealii_vector_array_generators = \
@@ -221,7 +197,7 @@ fenics_vector_array_pair_with_same_dim_generators = \
 ngsolve_vector_array_pair_with_same_dim_generators = \
     [lambda l=l, l2=l2, d=d, s1=s1, s2=s2: (ngsolve_vector_array_factory(l, d, s1),
                                             ngsolve_vector_array_factory(l2, d, s2))
-     for l, l2, d, s1, s2 in ngsolve_vector_array_factory_arguments_pairs_with_same_dim] \
+     for l, l2, d, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_same_dim] \
     if HAVE_NGSOLVE else []
 
 dealii_vector_array_pair_with_same_dim_generators = \
@@ -254,7 +230,7 @@ fenics_vector_array_pair_with_different_dim_generators = \
 ngsolve_vector_array_pair_with_different_dim_generators = \
     [lambda l=l, l2=l2, d1=d1, d2=d2, s1=s1, s2=s2: (ngsolve_vector_array_factory(l, d1, s1),
                                                      ngsolve_vector_array_factory(l2, d2, s2))
-     for l, l2, d1, d2, s1, s2 in ngsolve_vector_array_factory_arguments_pairs_with_different_dim] \
+     for l, l2, d1, d2, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_different_dim] \
     if HAVE_NGSOLVE else []
 
 dealii_vector_array_pair_with_different_dim_generators = \

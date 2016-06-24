@@ -22,10 +22,11 @@ if HAVE_NGSOLVE:
 
         linear = True
 
-        def __init__(self, matrix, source_space, range_space, name=None):
-            self.source = NGSolveVectorSpace(source_space)
-            self.range = NGSolveVectorSpace(range_space)
+        def __init__(self, matrix, free_dofs=None, name=None):
+            self.source = NGSolveVectorSpace(matrix.width)
+            self.range = NGSolveVectorSpace(matrix.height)
             self.matrix = matrix
+            self.free_dofs = free_dofs
             self.name = name
 
         def apply(self, U, ind=None, mu=None):
@@ -34,7 +35,7 @@ if HAVE_NGSOLVE:
             vectors = U._list if ind is None else [U._list[ind]] if isinstance(ind, Number) else [U._list[i] for i in ind]
             R = self.range.zeros(len(vectors))
             for u, r in zip(vectors, R._list):
-                self.matrix.Mult(u.vec, r.vec, 1.)
+                self.matrix.Mult(u.impl, r.impl, 1.)
             return R
 
         # def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
@@ -61,9 +62,9 @@ if HAVE_NGSOLVE:
             vectors = V._list if ind is None else [V._list[ind]] if isinstance(ind, Number) else [V._list[i] for i in ind]
             R = self.source.zeros(len(vectors))
             with ngsolve.TaskManager():
-                inv = self.matrix.Inverse(self.source.subtype[1].FreeDofs())
+                inv = self.matrix.Inverse(self.free_dofs)
                 for r, v in zip(R._list, vectors):
-                    r.vec.data = inv * v.vec
+                    r.impl.data = inv * v.impl
             return R
 
         def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
@@ -77,4 +78,4 @@ if HAVE_NGSOLVE:
                 if isinstance(op, ZeroOperator):
                     continue
                 matrix.AsVector().data += float(c) * op.matrix.AsVector()
-            return NGSolveMatrixOperator(matrix, self.source.subtype[1], self.range.subtype[1], name=name)
+            return NGSolveMatrixOperator(matrix, self.free_dofs, name=name)

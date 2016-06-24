@@ -221,18 +221,17 @@ def discretize_ngsolve():
 
     from pymor.gui.ngsolve import NGSolveVisualizer
     from pymor.operators.ngsolve import NGSolveMatrixOperator
-    from pymor.vectorarrays.ngsolve import NGSolveVectorSpace
 
-    op = LincombOperator([NGSolveMatrixOperator(m, V, V) for m in mats],
+    op = LincombOperator([NGSolveMatrixOperator(m, V.FreeDofs()) for m in mats],
                          [ProjectionParameterFunctional('diffusion', (4,), (i,)) for i in range(4)])
 
     h1_0_op = op.assemble([1, 1, 1, 1])
 
-    F = NGSolveVectorSpace(V).zeros()
-    F._list[0].vec.data = f.vec.data
+    F = op.range.zeros()
+    F._list[0].impl.data = f.vec
     F = VectorFunctional(F)
 
-    return StationaryDiscretization(op, F, visualizer=NGSolveVisualizer(),
+    return StationaryDiscretization(op, F, visualizer=NGSolveVisualizer(V),
                                     products={'h1_0_semi': h1_0_op},
                                     parameter_space=CubicParameterSpace(op.parameter_type, 0.1, 1.))
 

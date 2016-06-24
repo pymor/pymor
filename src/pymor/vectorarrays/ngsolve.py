@@ -10,7 +10,7 @@ except ImportError:
     HAVE_NGSOLVE = False
 
 if HAVE_NGSOLVE:
-    from ngsolve import GridFunction
+    from ngsolve import BaseVector
     import numpy as np
 
     from pymor.vectorarrays.interfaces import VectorSpace
@@ -22,67 +22,63 @@ if HAVE_NGSOLVE:
 
         def __init__(self, impl):
             self.impl = impl
-            self.vec = impl.vec
+            self._array = impl.FV().NumPy()
 
         @classmethod
         def from_instance(cls, instance):
             return cls(instance.impl)
 
         def _copy_data(self):
-            new_impl = GridFunction(self.impl.space)
-            new_impl.vec.data = self.vec
+            new_impl = BaseVector(self.impl.size)
+            new_impl.data = self.impl
             self.impl = new_impl
-            self.vec = new_impl.vec
+            self._array = new_impl.FV().NumPy()
 
         @classmethod
         def make_zeros(cls, subtype):
-            impl = GridFunction(subtype)  # subtype is FESpace
+            impl = BaseVector(subtype)
+            impl.FV().NumPy()[:] = 0
             return cls(impl)
 
         @property
         def dim(self):
-            return self.vec.size
+            return self.impl.size
 
         @property
         def subtype(self):
-            return self.impl.space
+            return self.impl.size
 
         @property
         def data(self):
-            return self.vec.FV().NumPy()
+            return self._array
 
         def _scal(self, alpha):
-            self.vec.data = float(alpha) * self.vec
+            self.impl.data = float(alpha) * self.impl
 
         def _axpy(self, alpha, x):
-            self.vec.data = self.vec + float(alpha) * x.vec
+            self.impl.data = self.impl + float(alpha) * x.impl
 
         def dot(self, other):
-            return self.vec.InnerProduct(other.vec)
+            return self.impl.InnerProduct(other.impl)
 
         def l1_norm(self):
-            return np.linalg.norm(self.data, ord=1)
+            return np.linalg.norm(self._array, ord=1)
 
         def l2_norm(self):
-            return self.vec.Norm()
+            return self.impl.Norm()
 
         def l2_norm2(self):
-            return self.vec.Norm() ** 2
+            return self.impl.Norm() ** 2
 
         def components(self, component_indices):
-            if len(component_indices) == 0:
-                return np.array([], dtype=np.intc)
-            assert 0 <= np.min(component_indices)
-            assert np.max(component_indices) < self.dim
-            vec = self.vec
-            return np.array([vec[int(i)] for i in component_indices])
+            return self._array[component_indices]
 
         def amax(self):
-            A = np.abs(self.data)
+            A = np.abs(self._array)
             max_ind = np.argmax(A)
             max_val = A[max_ind]
             return max_ind, max_val
 
 
-    def NGSolveVectorSpace(fespace):
-        return VectorSpace(ListVectorArray, (NGSolveVector, fespace))
+    def NGSolveVectorSpace(dim):
+        return VectorSpace(ListVectorArray, (NGSolveVector, dim))
