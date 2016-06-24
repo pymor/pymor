@@ -222,7 +222,7 @@ ngsolve_vector_array_pair_with_same_dim_generators = \
     [lambda l=l, l2=l2, d=d, s1=s1, s2=s2: (ngsolve_vector_array_factory(l, d, s1),
                                             ngsolve_vector_array_factory(l2, d, s2))
      for l, l2, d, s1, s2 in ngsolve_vector_array_factory_arguments_pairs_with_same_dim] \
-    if HAVE_FENICS else []
+    if HAVE_NGSOLVE else []
 
 dealii_vector_array_pair_with_same_dim_generators = \
     [lambda l=l, l2=l2, d=d, s1=s1, s2=s2: (dealii_vector_array_factory(l, d, s1),
