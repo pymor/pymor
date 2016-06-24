@@ -289,7 +289,7 @@ def defaults(*args, **kwargs):
         def wrapper(*args, **kwargs):
             for k, v in zip(func.argnames, args):
                 if k in kwargs:
-                    raise TypeError("() got multiple values for argument '{}'"
+                    raise TypeError("{} got multiple values for argument '{}'"
                                     .format(func.__name__, k))
                 kwargs[k] = v
             kwargs = {k: v if v is not None else func.defaultsdict.get(k, None) for k, v in kwargs.items()}
