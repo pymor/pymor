@@ -54,13 +54,13 @@ class BurgersProblem(InstationaryAdvectionProblem):
         else:
             domain = LineDomain([0, 2], right=None)
 
-        super(BurgersProblem, self).__init__(domain=domain,
-                                             rhs=None,
-                                             flux_function=flux_function,
-                                             flux_function_derivative=flux_function_derivative,
-                                             initial_data=initial_data,
-                                             dirichlet_data=dirichlet_data,
-                                             T=0.3, name='BurgersProblem')
+        super().__init__(domain=domain,
+                         rhs=None,
+                         flux_function=flux_function,
+                         flux_function_derivative=flux_function_derivative,
+                         initial_data=initial_data,
+                         dirichlet_data=dirichlet_data,
+                         T=0.3, name='BurgersProblem')
 
         self.parameter_space = CubicParameterSpace({'exponent': 0}, *parameter_range)
         self.parameter_range = parameter_range
@@ -109,13 +109,13 @@ class Burgers2DProblem(InstationaryAdvectionProblem):
 
         domain = TorusDomain([[0, 0], [2, 1]]) if torus else RectDomain([[0, 0], [2, 1]], right=None, top=None)
 
-        super(Burgers2DProblem, self).__init__(domain=domain,
-                                               rhs=None,
-                                               flux_function=flux_function,
-                                               flux_function_derivative=flux_function_derivative,
-                                               initial_data=initial_data,
-                                               dirichlet_data=dirichlet_data,
-                                               T=0.3, name='Burgers2DProblem')
+        super().__init__(domain=domain,
+                         rhs=None,
+                         flux_function=flux_function,
+                         flux_function_derivative=flux_function_derivative,
+                         initial_data=initial_data,
+                         dirichlet_data=dirichlet_data,
+                         T=0.3, name='Burgers2DProblem')
 
         self.parameter_space = CubicParameterSpace({'exponent': 0}, *parameter_range)
         self.parameter_range = parameter_range

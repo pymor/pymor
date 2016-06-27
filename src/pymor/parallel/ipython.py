@@ -109,7 +109,7 @@ class new_ipcluster_pool(BasicInterface):
 class IPythonPool(WorkerPoolBase):
 
     def __init__(self, num_engines=None, **kwargs):
-        super(IPythonPool, self).__init__()
+        super().__init__()
         self.client = Client(**kwargs)
         if num_engines is not None:
             self.view = self.client[:num_engines]

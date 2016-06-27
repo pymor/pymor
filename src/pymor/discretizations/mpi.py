@@ -59,8 +59,8 @@ class MPIDiscretization(DiscretizationBase):
                  pickle_subtypes=True, array_type=MPIVectorArray):
         d = mpi.get_object(obj_id)
         visualizer = MPIVisualizer(obj_id)
-        super(MPIDiscretization, self).__init__(operators, functionals, vector_operators, products=products,
-                                                visualizer=visualizer, cache_region=None, name=d.name)
+        super().__init__(operators, functionals, vector_operators, products=products,
+                         visualizer=visualizer, cache_region=None, name=d.name)
         self.obj_id = obj_id
         subtypes = mpi.call(_MPIDiscretization_get_subtypes, obj_id, pickle_subtypes)
         if all(subtype == subtypes[0] for subtype in subtypes):

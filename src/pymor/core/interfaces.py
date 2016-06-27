@@ -322,7 +322,7 @@ class ImmutableMeta(UberMeta):
         return c
 
     def _call(self, *args, **kwargs):
-        instance = super(ImmutableMeta, self).__call__(*args, **kwargs)
+        instance = super().__call__(*args, **kwargs)
         instance._locked = True
         return instance
 
@@ -388,7 +388,7 @@ class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
             unless you really know what you are doing. (One exception might
             be the modification of a newly created copy of an immutable object.)
         """
-        super(ImmutableInterface, self).unlock()
+        super().unlock()
         if hasattr(self, 'sid'):
             del self.sid
 

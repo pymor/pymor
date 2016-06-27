@@ -46,7 +46,7 @@ class IamLimitedCached(cache.CacheableInterface):
 class IWillBeCopied(cache.CacheableInterface):
 
     def __init__(self):
-        super(IWillBeCopied, self).__init__()
+        super().__init__()
 
     @cache.cached
     def my_id(self, x):

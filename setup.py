@@ -23,7 +23,7 @@ install_suggests = dependencies.install_suggests
 class DependencyMissing(Exception):
 
     def __init__(self, names):
-        super(DependencyMissing, self).__init__('Try: "for i in {} ; do pip install $i ; done"'.format(' '.join(names)))
+        super().__init__('Try: "for i in {} ; do pip install $i ; done"'.format(' '.join(names)))
 
 
 def _numpy_monkey():

@@ -107,7 +107,7 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
         code = compile(expression, '<expression>', 'eval')
         functions = self.functions
         mapping = lambda mu: eval(code, functions, mu)
-        super(ExpressionParameterFunctional, self).__init__(mapping, parameter_type, name)
+        super().__init__(mapping, parameter_type, name)
 
     def __repr__(self):
         return 'ExpressionParameterFunctional({}, {})'.format(self.expression, repr(self.parameter_type))

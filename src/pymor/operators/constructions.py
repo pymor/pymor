@@ -274,7 +274,7 @@ class Concatenation(OperatorBase):
 
     def projected(self, range_basis, source_basis, product=None, name=None):
         if not self.parametric and self.linear:
-            return super(Concatenation, self).projected(range_basis, source_basis, product=product, name=name)
+            return super().projected(range_basis, source_basis, product=product, name=name)
         projected_first = self.first.projected(None, source_basis, product=None)
         if isinstance(projected_first, VectorArrayOperator) and not projected_first.transposed:
             return self.second.projected(range_basis, projected_first._array, product=product, name=name)
@@ -360,10 +360,10 @@ class IdentityOperator(OperatorBase):
 
     def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None, least_squares=False):
         if source_product or range_product:
-            return super(IdentityOperator, self).apply_inverse_adjoint(U, ind=ind, mu=mu,
-                                                                       source_product=source_product,
-                                                                       range_product=range_product,
-                                                                       least_squares=least_squares)
+            return super().apply_inverse_adjoint(U, ind=ind, mu=mu,
+                                                 source_product=source_product,
+                                                 range_product=range_product,
+                                                 least_squares=least_squares)
         else:
             assert U in self.source
             return U.copy(ind=ind)
@@ -588,10 +588,10 @@ class VectorArrayOperator(OperatorBase):
 
     def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None, least_squares=False):
         if source_product or range_product:
-            return super(VectorArrayOperator, self).apply_inverse_adjoint(U, ind, mu=mu,
-                                                                          source_product=source_product,
-                                                                          range_product=range_product,
-                                                                          least_squares=least_squares)
+            return super().apply_inverse_adjoint(U, ind, mu=mu,
+                                                 source_product=source_product,
+                                                 range_product=range_product,
+                                                 least_squares=least_squares)
         else:
             adjoint_op = VectorArrayOperator(self._array, transposed=not self.transposed)
             return adjoint_op.apply_inverse(U, ind=ind, mu=mu, least_squares=least_squares)
@@ -653,7 +653,7 @@ class VectorOperator(VectorArrayOperator):
     def __init__(self, vector, name=None):
         assert isinstance(vector, VectorArrayInterface)
         assert len(vector) == 1
-        super(VectorOperator, self).__init__(vector, transposed=False, name=name)
+        super().__init__(vector, transposed=False, name=name)
 
 
 class VectorFunctional(VectorArrayOperator):
@@ -693,9 +693,9 @@ class VectorFunctional(VectorArrayOperator):
         assert len(vector) == 1
         assert product is None or isinstance(product, OperatorInterface) and vector in product.source
         if product is None:
-            super(VectorFunctional, self).__init__(vector, transposed=True, name=name)
+            super().__init__(vector, transposed=True, name=name)
         else:
-            super(VectorFunctional, self).__init__(product.apply(vector), transposed=True, name=name)
+            super().__init__(product.apply(vector), transposed=True, name=name)
 
 
 class FixedParameterOperator(OperatorBase):
@@ -815,7 +815,7 @@ class AdjointOperator(OperatorBase):
 
     def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
         if not self.with_apply_inverse:
-            return super(AdjointOperator, self).apply_inverse(V, ind=ind, mu=mu, least_squares=least_squares)
+            return super().apply_inverse(V, ind=ind, mu=mu, least_squares=least_squares)
 
         return self.operator.apply_inverse_adjoint(V, ind=ind, mu=mu,
                                                    source_product=self.source_product,
@@ -824,10 +824,10 @@ class AdjointOperator(OperatorBase):
 
     def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None, least_squares=False):
         if not self.with_apply_inverse:
-            return super(AdjointOperator, self).apply_inverse_adjoint(U, ind=ind, mu=mu,
-                                                                      source_product=source_product,
-                                                                      range_product=range_product,
-                                                                      least_squares=least_squares)
+            return super().apply_inverse_adjoint(U, ind=ind, mu=mu,
+                                                 source_product=source_product,
+                                                 range_product=range_product,
+                                                 least_squares=least_squares)
 
         assert U in self.source
         if source_product and source_product != self.range_product:

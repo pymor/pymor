@@ -59,13 +59,13 @@ class UnstructuredTriangleGrid(AffineGridInterface):
         if codim == 0:
             return self.__subentities[subentity_codim]
         else:
-            return super(UnstructuredTriangleGrid, self).subentities(codim, subentity_codim)
+            return super().subentities(codim, subentity_codim)
 
     def embeddings(self, codim=0):
         if codim == 0:
             return self.__embeddings
         else:
-            return super(UnstructuredTriangleGrid, self).embeddings(codim)
+            return super().embeddings(codim)
 
     def visualize(self, U, codim=2, **kwargs):
         """Visualize scalar data associated to the grid as a patch plot.

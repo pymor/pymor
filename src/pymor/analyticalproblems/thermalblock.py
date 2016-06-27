@@ -64,8 +64,7 @@ class ThermalBlockProblem(EllipticProblem):
         parameter_functionals = tuple(parameter_functional_factory(x, y)
                                       for x, y in product(range(num_blocks[0]), range(num_blocks[1])))
 
-        super(ThermalBlockProblem, self).__init__(domain, rhs, diffusion_functions, parameter_functionals,
-                                                  name='ThermalBlock')
+        super().__init__(domain, rhs, diffusion_functions, parameter_functionals, name='ThermalBlock')
         self.parameter_space = parameter_space
         self.parameter_range = parameter_range
         self.num_blocks = num_blocks

@@ -40,7 +40,7 @@ class HelmholtzProblem(EllipticProblem):
 
         self.parameter_range = parameter_range  # needed for with_
         parameter_space = CubicParameterSpace({'k': ()}, *parameter_range)
-        super(HelmholtzProblem, self).__init__(
+        super().__init__(
             diffusion_functions=[ConstantFunction(1., dim_domain=domain.dim)],
             diffusion_functionals=[1.],
             reaction_functions=[ConstantFunction(1., dim_domain=domain.dim)],

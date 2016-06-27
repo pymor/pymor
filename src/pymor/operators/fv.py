@@ -241,7 +241,7 @@ class NonlinearAdvectionOperator(OperatorBase):
                          for arg in list(kwargs) if arg.startswith('numerical_flux_')}
         if num_flux_args:
             kwargs['numerical_flux'] = self.numerical_flux.with_(**num_flux_args)
-        return super(NonlinearAdvectionOperator, self).with_(**kwargs)
+        return super().with_(**kwargs)
 
     def restricted(self, dofs):
         source_dofs = np.setdiff1d(np.union1d(self.grid.neighbours(0, 0)[dofs].ravel(), dofs),
@@ -687,7 +687,7 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
 
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None, solver_options=None,
                  name=None):
-        super(DiffusionOperator, self).__init__()
+        super().__init__()
         assert isinstance(grid, AffineGridWithOrthogonalCentersInterface)
         assert diffusion_function is None \
             or (isinstance(diffusion_function, FunctionInterface) and

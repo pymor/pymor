@@ -119,7 +119,7 @@ class MPIOperator(OperatorBase):
 
     def apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None):
         if not self.with_apply2:
-            return super(MPIOperator, self).apply2(V, U, U_ind=U_ind, V_ind=V_ind, mu=mu, product=product)
+            return super().apply2(V, U, U_ind=U_ind, V_ind=V_ind, mu=mu, product=product)
         assert V in self.range
         assert U in self.source
         mu = self.parse_parameter(mu)
@@ -131,7 +131,7 @@ class MPIOperator(OperatorBase):
 
     def pairwise_apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None):
         if not self.with_apply2:
-            return super(MPIOperator, self).pairwise_apply2(V, U, U_ind=U_ind, V_ind=V_ind, mu=mu, product=product)
+            return super().pairwise_apply2(V, U, U_ind=U_ind, V_ind=V_ind, mu=mu, product=product)
         assert V in self.range
         assert U in self.source
         mu = self.parse_parameter(mu)

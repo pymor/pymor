@@ -182,7 +182,7 @@ class ExpressionFunction(GenericFunction):
         code = compile(expression, '<expression>', 'eval')
         functions = self.functions
         mapping = lambda x, mu=None: eval(code, functions, {'x': x, 'mu': mu})
-        super(ExpressionFunction, self).__init__(mapping, dim_domain, shape_range, parameter_type, name)
+        super().__init__(mapping, dim_domain, shape_range, parameter_type, name)
 
     def __repr__(self):
         return 'ExpressionFunction({}, {}, {}, {})'.format(self.expression, repr(self.parameter_type),
