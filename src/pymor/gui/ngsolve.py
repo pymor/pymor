@@ -12,35 +12,55 @@ except ImportError:
 if HAVE_NGSOLVE:
     import os
     from tempfile import NamedTemporaryFile
+    from threading import Thread
 
     from pymor.core.interfaces import ImmutableInterface
     from pymor.core.pickle import dump
+    from pymor.vectorarrays.interfaces import VectorArrayInterface
+    from pymor.vectorarrays.ngsolve import NGSolveVectorSpace
 
     NGSOLVE_VISUALIZE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ngsolve_visualize.py')
 
     class NGSolveVisualizer(ImmutableInterface):
-        """Visualize a FEniCS grid function."""
+        """Visualize an NGSolve grid function."""
 
         def __init__(self, fespace):
             self.fespace = fespace
+            self.space = NGSolveVectorSpace(fespace.ndof)
 
-        def visualize(self, U, discretization, block=True):
+        def visualize(self, U, discretization, legend=None, separate_colorbars=True, block=True):
             """Visualize the provided data."""
-            if not block:
+            if isinstance(U, VectorArrayInterface):
+                U = (U,)
+            assert all(u in self.space for u in U)
+            if any(len(u) != 1 for u in U):
                 raise NotImplementedError
-            # if filename:
-            #     assert not isinstance(U, tuple)
-            #     assert U in self.space
-            #     f = df.File(filename)
-            #     function = df.Function(self.function_space)
-            #     if legend:
-            #         function.rename(legend, legend)
-            #     for u in U._list:
-            #         function.vector()[:] = u.impl
-            #         f << function
-            # else:
-            assert len(U) == 1
+
+            if legend is None:
+                legend = ['VectorArray{}'.format(i) for i in range(len(U))]
+            if isinstance(legend, str):
+                legend = [legend]
+            assert len(legend) == len(U)
+            legend = [l.replace(' ', '_') for l in legend]  # NGSolve GUI will fail otherwise
+
+            if not separate_colorbars:
+                raise NotImplementedError
+
+            thread = NGSolveVisualizerThread((self.fespace, U, legend))
+            thread.start()
+            if block:
+                thread.join()
+
+
+    class NGSolveVisualizerThread(Thread):
+
+        def __init__(self, data):
+            super().__init__()
+            self.data = data
+
+        def run(self):
             with NamedTemporaryFile() as f:
-                dump(self.fespace, f)
-                dump(U._list[0].impl, f)
+                dump(self.data, f)
+                del(self.data)
+                f.flush()
                 os.system('NGSOLVE_VISUALIZE_FILE={} netgen {}'.format(f.name, NGSOLVE_VISUALIZE_PATH))
