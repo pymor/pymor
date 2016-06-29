@@ -137,3 +137,14 @@ class Norm(ImmutableInterface):
 
     def __call__(self, U, mu=None):
         return norm(U, self.product, raise_negative=self.raise_negative, tol=self.tol)
+
+
+def project(U, basis, product=None, orthonormal=True, gramian=None):
+    if orthonormal:
+        return basis.lincomb(inner(U, basis, product))
+    else:
+        if gramian is None:
+            gramian = inner(basis, basis, product)
+        rhs = inner(basis, U, product)
+        coeffs = np.linalg.solve(gramian, rhs).T
+        return basis.lincomb(coeffs)
