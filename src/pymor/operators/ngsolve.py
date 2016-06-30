@@ -38,22 +38,23 @@ if HAVE_NGSOLVE:
                 self.matrix.Mult(u.impl, r.impl, 1.)
             return R
 
-        # def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
-        #     assert U in self.range
-        #     assert U.check_ind(ind)
-        #     assert source_product is None or source_product.source == source_product.range == self.source
-        #     assert range_product is None or range_product.source == range_product.range == self.range
-        #     if range_product:
-        #         PrU = range_product.apply(U, ind=ind)._list
-        #     else:
-        #         PrU = U._list if ind is None else [U._list[ind]] if isinstance(ind, Number) else [U._list[i] for i in ind]
-        #     ATPrU = self.source.zeros(len(PrU))
-        #     for u, r in zip(PrU, ATPrU._list):
-        #         self.matrix.transpmult(u.impl, r.impl)
-        #     if source_product:
-        #         return source_product.apply_inverse(ATPrU)
-        #     else:
-        #         return ATPrU
+        def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+            assert U in self.range
+            assert U.check_ind(ind)
+            assert source_product is None or source_product.source == source_product.range == self.source
+            assert range_product is None or range_product.source == range_product.range == self.range
+            if range_product:
+                PrU = range_product.apply(U, ind=ind)._list
+            else:
+                PrU = U._list if ind is None else [U._list[ind]] if isinstance(ind, Number) else [U._list[i] for i in ind]
+            ATPrU = self.source.zeros(len(PrU))
+            mat = self.matrix.Transpose()
+            for u, r in zip(PrU, ATPrU._list):
+                mat.Mult(u.impl, r.impl, 1.)
+            if source_product:
+                return source_product.apply_inverse(ATPrU)
+            else:
+                return ATPrU
 
         def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
             assert V in self.range
