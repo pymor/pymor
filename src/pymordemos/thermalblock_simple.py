@@ -32,10 +32,11 @@ from functools import partial    # fix parameters of given function
 
 
 # parameters for high-dimensional models
-XBLOCKS = 2
-YBLOCKS = 2
-GRID_INTERVALS = 100
+XBLOCKS = 2             # pyMOR/FEniCS
+YBLOCKS = 2             # pyMOR/FEniCS
+GRID_INTERVALS = 100    # pyMOR/FEniCS
 FENICS_ORDER = 2
+NGS_ORDER = 4
 
 
 ####################################################################################################
@@ -138,68 +139,39 @@ def _discretize_fenics():
 def discretize_ngsolve():
     from ngsolve import (ngsglobals, Mesh, H1, CoefficientFunction, LinearForm, SymbolicLFI,
                          BilinearForm, SymbolicBFI, grad, TaskManager)
-    from netgen.geom2d import SplineGeometry
+    from netgen.csg import CSGeometry, OrthoBrick, Pnt
+    import numpy as np
 
     ngsglobals.msg_level = 1
 
-    geo = SplineGeometry()
+    geo = CSGeometry()
+    obox = OrthoBrick(Pnt(-1, -1, -1), Pnt(1, 1, 1)).bc("outer")
 
-    #
-    # domains 1,2,3,4 and boundary condition labels (sw,se,ws,...):
-    # 
-    #                          D0 ( outer domain )    
-    #                     
-    #                      6-----nw----7-----ne-----8
-    #                      |           |            |
-    #                      |           |            |
-    # D0 ( outer domain )  w     D3    i     D4     e  D0 ( outer domain )
-    #                      n           n            n
-    #                      |           |            |
-    #                      3-----iw----4-----ie-----5
-    #                      |           |            |
-    #                      |           |            |
-    # D0 ( outer domain )  w     D1    i     D2     e  D0 ( outer domain )
-    #                      s           s            s
-    #                      |           |            |
-    #                      0-----sw----1-----se-----2
-    #                          D0 ( outer domain )
-    #                                                                      
-    pts = [geo.AppendPoint(*p) for p in [(-1, -1),
-                                         (0,  -1),
-                                         (1,  -1),
-                                         (-1,  0),
-                                         (0,   0),
-                                         (1,   0),
-                                         (-1,  1),
-                                         (0,   1),
-                                         (1,   1)]]
+    b = []
+    b.append(OrthoBrick(Pnt(-1, -1, -1), Pnt(0.0, 0.0, 0.0)).mat("mat1").bc("inner"))
+    b.append(OrthoBrick(Pnt(-1,  0, -1), Pnt(0.0, 1.0, 0.0)).mat("mat2").bc("inner"))
+    b.append(OrthoBrick(Pnt(0,  -1, -1), Pnt(1.0, 0.0, 0.0)).mat("mat3").bc("inner"))
+    b.append(OrthoBrick(Pnt(0,   0, -1), Pnt(1.0, 1.0, 0.0)).mat("mat4").bc("inner"))
+    b.append(OrthoBrick(Pnt(-1, -1,  0), Pnt(0.0, 0.0, 1.0)).mat("mat5").bc("inner"))
+    b.append(OrthoBrick(Pnt(-1,  0,  0), Pnt(0.0, 1.0, 1.0)).mat("mat6").bc("inner"))
+    b.append(OrthoBrick(Pnt(0,  -1,  0), Pnt(1.0, 0.0, 1.0)).mat("mat7").bc("inner"))
+    b.append(OrthoBrick(Pnt(0,   0,  0), Pnt(1.0, 1.0, 1.0)).mat("mat8").bc("inner"))
+    box = (obox - b[0] - b[1] - b[2] - b[3] - b[4] - b[5] - b[6] - b[7])
 
-    geo.Append(["line", pts[0], pts[1]], bc="sw", leftdomain=1, rightdomain=0)
-    geo.Append(["line", pts[1], pts[2]], bc="se", leftdomain=2, rightdomain=0)
-    geo.Append(["line", pts[3], pts[4]], bc="iw", leftdomain=3, rightdomain=1)
-    geo.Append(["line", pts[4], pts[5]], bc="ie", leftdomain=4, rightdomain=2)
-    geo.Append(["line", pts[6], pts[7]], bc="nw", leftdomain=0, rightdomain=3)
-    geo.Append(["line", pts[7], pts[8]], bc="ne", leftdomain=0, rightdomain=4)
-    geo.Append(["line", pts[0], pts[3]], bc="ws", leftdomain=0, rightdomain=1)
-    geo.Append(["line", pts[3], pts[6]], bc="wn", leftdomain=0, rightdomain=3)
-    geo.Append(["line", pts[1], pts[4]], bc="is", leftdomain=1, rightdomain=2)
-    geo.Append(["line", pts[4], pts[7]], bc="in", leftdomain=3, rightdomain=4)
-    geo.Append(["line", pts[2], pts[5]], bc="es", leftdomain=2, rightdomain=0)
-    geo.Append(["line", pts[5], pts[8]], bc="en", leftdomain=4, rightdomain=0)
+    geo.Add(box)
+    for bi in b:
+        geo.Add(bi)
+    # domain 0 is empty!
 
-
-    # generate a triangular mesh of mesh-size 0.2
-    mesh = Mesh(geo.GenerateMesh(maxh=0.2))
+    mesh = Mesh(geo.GenerateMesh(maxh=0.3))
 
     # H1-conforming finite element space
-    V = H1(mesh, order=1, dirichlet="sw|ws|se|es|nw|wn|ne|en")
+    V = H1(mesh, order=NGS_ORDER, dirichlet="outer")
     v = V.TestFunction()
     u = V.TrialFunction()
 
-    # domain constant coefficient function (one value per domain):
-    # sourcefct = DomainConstantCF((1,1,1,1))
-    # or as a coeff as array: variable coefficient function (one CoefFct. per domain):
-    sourcefct = CoefficientFunction([1, 1, 1, 1])
+    # Coeff as array: variable coefficient function (one CoefFct. per domain):
+    sourcefct = CoefficientFunction([1 for i in range(9)])
 
     with TaskManager():
         # the right hand side
@@ -207,15 +179,16 @@ def discretize_ngsolve():
         f += SymbolicLFI(sourcefct * v)
         f.Assemble()
 
-
         # the bilinear-form
         mats = []
-        for i in range(4):
-            coeffs = [0] * 4
-            coeffs[i] = 1
-            diffusion = CoefficientFunction(coeffs)
+        coeffs = [[0, 1, 0, 0, 0, 0, 0, 0, 1],
+                  [0, 0, 1, 0, 0, 0, 0, 1, 0],
+                  [0, 0, 0, 1, 0, 0, 1, 0, 0],
+                  [0, 0, 0, 0, 1, 1, 0, 0, 0]]
+        for c in coeffs:
+            diffusion = CoefficientFunction(c)
             a = BilinearForm(V, symmetric=False)
-            a += SymbolicBFI(diffusion * grad(u) * grad(v), definedon=[i])
+            a += SymbolicBFI(diffusion * grad(u) * grad(v), definedon=np.where(np.array(c) == 1))
             a.Assemble()
             mats.append(a.mat)
 
@@ -223,9 +196,9 @@ def discretize_ngsolve():
     from pymor.operators.ngsolve import NGSolveMatrixOperator
 
     op = LincombOperator([NGSolveMatrixOperator(m, V.FreeDofs()) for m in mats],
-                         [ProjectionParameterFunctional('diffusion', (4,), (i,)) for i in range(4)])
+                         [ProjectionParameterFunctional('diffusion', (len(coeffs),), (i,)) for i in range(len(coeffs))])
 
-    h1_0_op = op.assemble([1, 1, 1, 1])
+    h1_0_op = op.assemble([1] * len(coeffs)).with_(name='h1_0_semi')
 
     F = op.range.zeros()
     F._list[0].impl.data = f.vec
