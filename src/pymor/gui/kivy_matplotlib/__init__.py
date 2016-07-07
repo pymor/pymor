@@ -1,0 +1,1 @@
+from pymor.gui.kivy_matplotlib.backend_kivyagg import FigureCanvasKivyAgg
