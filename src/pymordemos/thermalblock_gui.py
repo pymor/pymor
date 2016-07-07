@@ -50,7 +50,7 @@ from pymor.algorithms.basisextension import gram_schmidt_basis_extension
 from pymor.algorithms.greedy import greedy
 from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
 from pymor.discretizers.elliptic import discretize_elliptic_cg
-from pymor.gui.gl import ColorBarWidget, GLPatchWidget
+from pymor.gui.qt.widgets.gl import ColorBarWidget, GLPatchWidget
 from pymor.reductors.coercive import reduce_coercive_simple
 from pymor import gui
 

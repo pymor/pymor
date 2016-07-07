@@ -5,8 +5,8 @@
 """ This module provides a widget for displaying patch plots of
 scalar data assigned to 2D-grids using OpenGL. This widget is not
 intended to be used directly. Instead, use
-:meth:`~pymor.gui.qt.visualize_patch` or
-:class:`~pymor.gui.qt.PatchVisualizer`.
+:meth:`~pymor.gui.qt.qt.visualize_patch` or
+:class:`~pymor.gui.visualizers.PatchVisualizer`.
 """
 
 import math as m

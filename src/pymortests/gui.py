@@ -4,7 +4,7 @@
 
 from pymor.grids.oned import OnedGrid
 from time import sleep
-from pymor.gui.qt import visualize_patch, stop_gui_processes
+from pymor.gui.qt.qt import visualize_patch, stop_gui_processes
 
 import pytest
 import numpy as np

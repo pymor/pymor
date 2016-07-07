@@ -12,8 +12,8 @@ import shutil
 
 from pymortests.base import runmodule, check_results
 from pymor.core.exceptions import PySideMissing
-from pymor.gui.gl import HAVE_PYSIDE
-from pymor.gui.qt import stop_gui_processes
+from pymor.gui.qt.widgets.gl import HAVE_PYSIDE
+from pymor.gui.qt.qt import stop_gui_processes
 
 
 DISCRETIZATION_ARGS = (

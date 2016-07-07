@@ -5,8 +5,8 @@
 """ This module provides a widgets for displaying plots of
 scalar data assigned to one- and two-dimensional grids using
 :mod:`matplotlib`. This widget is not intended to be used directly.
-Instead, use :meth:`~pymor.gui.qt.visualize_matplotlib_1d` or
-:class:`~pymor.gui.qt.Matplotlib1DVisualizer`.
+Instead, use :meth:`~pymor.gui.qt.qt.visualize_matplotlib_1d` or
+:class:`~pymor.gui.visualizers.Matplotlib1DVisualizer`.
 """
 
 import numpy as np

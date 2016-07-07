@@ -8,7 +8,7 @@ from pymor.algorithms.timestepping import ExplicitEulerTimeStepper
 from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
 from pymor.discretizations.basic import InstationaryDiscretization
 from pymor.domaindiscretizers.default import discretize_domain_default
-from pymor.gui.qt import PatchVisualizer, Matplotlib1DVisualizer
+from pymor.gui.visualizers import PatchVisualizer, Matplotlib1DVisualizer
 from pymor.operators.numpy import NumpyGenericOperator
 from pymor.operators.fv import (nonlinear_advection_lax_friedrichs_operator,
                                 nonlinear_advection_engquist_osher_operator,
@@ -19,7 +19,7 @@ from pymor.vectorarrays.numpy import NumpyVectorArray
 
 def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=None, nt=100, num_flux='lax_friedrichs',
                                                    lxf_lambda=1., eo_gausspoints=5, eo_intervals=1, num_values=None,
-                                                   domain_discretizer=None, grid=None, boundary_info=None):
+                                                   domain_discretizer=None, grid=None, boundary_info=None, frontend='kivy'):
     """Discretizes an |InstationaryAdvectionProblem| using the finite volume method.
 
     Simple explicit Euler time-stepping is used for time-discretization.
@@ -117,9 +117,9 @@ def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=
 
     products = {'l2': L2Product(grid, boundary_info)}
     if grid.dim == 2:
-        visualizer = PatchVisualizer(grid=grid, bounding_box=grid.bounding_box(), codim=0)
+        visualizer = PatchVisualizer(grid=grid, bounding_box=grid.bounding_box(), codim=0, frontend=frontend)
     elif grid.dim == 1:
-        visualizer = Matplotlib1DVisualizer(grid, codim=0)
+        visualizer = Matplotlib1DVisualizer(grid, codim=0, frontend=frontend)
     else:
         visualizer = None
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None

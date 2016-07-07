@@ -108,11 +108,11 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
 
     if backend == 'gl':
         if not HAVE_GL:
-            logger = getLogger('pymor.gui.qt.visualize_patch')
+            logger = getLogger('pymor.gui.qt.qt.visualize_patch')
             logger.warn('import of PyOpenGL failed, falling back to matplotlib; rendering will be slow')
             backend = 'matplotlib'
         elif not HAVE_QTOPENGL:
-            logger = getLogger('pymor.gui.qt.visualize_patch')
+            logger = getLogger('pymor.gui.qt.qt.visualize_patch')
             logger.warn('import of PySide.QtOpenGL failed, falling back to matplotlib; rendering will be slow')
             backend = 'matplotlib'
         if backend == 'matplotlib' and not HAVE_MATPLOTLIB:
@@ -140,7 +140,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                 widget = MatplotlibPatchWidget
                 cbar_widget = None
                 if not separate_colorbars and len(U) > 1:
-                    l = getLogger('pymor.gui.qt.visualize_patch')
+                    l = getLogger('pymor.gui.qt.qt.visualize_patch')
                     l.warn('separate_colorbars=False not supported for matplotlib backend')
                 separate_colorbars = True
 
