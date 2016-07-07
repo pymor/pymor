@@ -227,9 +227,9 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
         codim
             The codimension of the entities the data in `U` is attached to (either 0 or 2).
         kwargs
-            See :func:`~pymor.gui.qt.visualize_patch`
+            See :func:`~pymor.gui.kivy_frontend.kivy_frontend.visualize_patch`
         """
-        from pymor.gui.qt import visualize_patch
+        from pymor.gui.kivy_frontend.kivy_frontend import visualize_patch
         from pymor.vectorarrays.interfaces import VectorArrayInterface
         from pymor.vectorarrays.numpy import NumpyVectorArray
         if isinstance(U, (np.ndarray, VectorArrayInterface)):

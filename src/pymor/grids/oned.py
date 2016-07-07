@@ -79,7 +79,7 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
     def orthogonal_centers(self):
         return self.centers(0)
 
-    def visualize(self, U, codim=2, **kwargs):
+    def visualize(self, U, codim=1, **kwargs):
         """Visualize scalar data associated to the grid as a patch plot.
 
         Parameters
@@ -90,11 +90,11 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
             |Numpy arrays| can be provided, in which case a subplot is created for
             each entry of the tuple. The lengths of all arrays have to agree.
         codim
-            The codimension of the entities the data in `U` is attached to (either 0 or 2).
+            The codimension of the entities the data in `U` is attached to (either 0 or 1).
         kwargs
-            See :func:`~pymor.gui.qt.visualize_patch`
+            See :func:`~pymor.gui.kivy_frontend.kivy_frontend.visualize_patch`
         """
-        from pymor.gui.qt import visualize_matplotlib_1d
+        from pymor.gui.kivy_frontend.kivy_frontend import visualize_oned
         from pymor.vectorarrays.interfaces import VectorArrayInterface
         from pymor.vectorarrays.numpy import NumpyVectorArray
         if isinstance(U, (np.ndarray, VectorArrayInterface)):
@@ -104,4 +104,4 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
                   u if isinstance(u, NumpyVectorArray) else
                   NumpyVectorArray(u.data)
                   for u in U)
-        visualize_matplotlib_1d(self, U, codim=codim, **kwargs)
+        visualize_oned(self, U, codim=codim, **kwargs)
