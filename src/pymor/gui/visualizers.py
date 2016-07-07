@@ -6,8 +6,8 @@ from pymor.grids.oned import OnedGrid
 from pymor.grids.referenceelements import triangle, square
 
 from pymor.gui.qt.qt import visualize_matplotlib_1d as visualize_matplotlib_1d_qt, visualize_patch as visualize_patch_qt
-#from pymor.gui.kivy_frontend.kivy_frontend import visualize_oned as visualize_oned_kivy, \
-#    visualize_patch as visualize_patch_kivy
+from pymor.gui.kivy_frontend.kivy_frontend import visualize_oned as visualize_oned_kivy, \
+    visualize_patch as visualize_patch_kivy
 
 
 class Matplotlib1DVisualizer(BasicInterface):
