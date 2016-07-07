@@ -13,7 +13,7 @@ from pymor.operators.constructions import LincombOperator
 
 
 def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer=None,
-                           grid=None, boundary_info=None, frontend=None):
+                           grid=None, boundary_info=None, frontend='kivy'):
     """Discretizes an |EllipticProblem| using finite elements.
 
     Parameters
@@ -186,7 +186,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
 
 
 def discretize_elliptic_fv(analytical_problem, diameter=None, domain_discretizer=None,
-                           grid=None, boundary_info=None, frontend=None):
+                           grid=None, boundary_info=None, frontend='kivy'):
     """Discretizes an |EllipticProblem| using the finite volume method.
 
     Parameters
