@@ -27,7 +27,7 @@ class abstractclassmethod(classmethod):
 
     def __init__(self, callable_method):
         callable_method.__isabstractmethod__ = True
-        super(abstractclassmethod, self).__init__(callable_method)
+        super().__init__(callable_method)
 
 
 class abstractstaticmethod(staticmethod):
@@ -51,4 +51,4 @@ class abstractstaticmethod(staticmethod):
 
     def __init__(self, callable_method):
         callable_method.__isabstractmethod__ = True
-        super(abstractstaticmethod, self).__init__(callable_method)
+        super().__init__(callable_method)

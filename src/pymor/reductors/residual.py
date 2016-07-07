@@ -160,11 +160,11 @@ class NonProjectedResidualOperator(ResidualOperator):
     """
 
     def __init__(self, operator, rhs, rhs_is_functional, product):
-        super(NonProjectedResidualOperator, self).__init__(operator, rhs, rhs_is_functional)
+        super().__init__(operator, rhs, rhs_is_functional)
         self.product = product
 
     def apply(self, U, ind=None, mu=None):
-        R = super(NonProjectedResidualOperator, self).apply(U, ind=ind, mu=mu)
+        R = super().apply(U, ind=ind, mu=mu)
         if self.product:
             if self.rhs_is_functional:
                 R_riesz = self.product.apply_inverse(R)
@@ -334,11 +334,11 @@ class NonProjectedImplicitEulerResidualOperator(ImplicitEulerResidualOperator):
     """
 
     def __init__(self, operator, mass, functional, dt, product):
-        super(NonProjectedImplicitEulerResidualOperator, self).__init__(operator, mass, functional, dt)
+        super().__init__(operator, mass, functional, dt)
         self.product = product
 
     def apply(self, U, U_old, ind=None, ind_old=None, mu=None):
-        R = super(NonProjectedImplicitEulerResidualOperator, self).apply(U, U_old, ind=ind, ind_old=ind_old, mu=mu)
+        R = super().apply(U, U_old, ind=ind, ind_old=ind_old, mu=mu)
         if self.product:
             R_riesz = self.product.apply_inverse(R)
             return R_riesz * (np.sqrt(R_riesz.dot(R)) / R_riesz.l2_norm())[0]

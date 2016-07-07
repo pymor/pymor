@@ -39,12 +39,12 @@ class HelmholtzProblem(EllipticProblem):
                  dirichlet_data=None, neumann_data=None):
 
         self.parameter_range = parameter_range  # needed for with_
-        parameter_space = CubicParameterSpace({'k': tuple()}, *parameter_range)
-        super(HelmholtzProblem, self).__init__(
+        parameter_space = CubicParameterSpace({'k': ()}, *parameter_range)
+        super().__init__(
             diffusion_functions=[ConstantFunction(1., dim_domain=domain.dim)],
             diffusion_functionals=[1.],
             reaction_functions=[ConstantFunction(1., dim_domain=domain.dim)],
-            reaction_functionals=[ExpressionParameterFunctional('-k**2', {'k': tuple()})],
+            reaction_functionals=[ExpressionParameterFunctional('-k**2', {'k': ()})],
             domain=domain,
             rhs=rhs or ConstantFunction(1., dim_domain=domain.dim),
             parameter_space=parameter_space,

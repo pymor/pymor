@@ -12,7 +12,7 @@ from pymor.tools import mpi
 class MPIPool(WorkerPoolBase):
 
     def __init__(self):
-        super(MPIPool, self).__init__()
+        super().__init__()
         self.logger.info('Connected to {} ranks'.format(mpi.size))
         self._payload = mpi.call(mpi.function_call_manage, _setup_worker)
 

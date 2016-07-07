@@ -36,7 +36,7 @@ def basedir(path=os.path.join(tempfile.gettempdir(), 'pymor.diskarray.' + getpas
 class DiskVectorArray(VectorArrayInterface):
     """|VectorArray| implementation via a list of vectors stored in temporary files."""
 
-    _NONE = tuple()
+    _NONE = ()
 
     def __init__(self, vectors, subtype=_NONE):
         if isinstance(vectors, ListVectorArray):

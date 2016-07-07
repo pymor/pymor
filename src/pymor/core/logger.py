@@ -67,12 +67,12 @@ class ColoredFormatter(logging.Formatter):
             except Exception:
                 self.use_color = False
 
-        super(ColoredFormatter, self).__init__()
+        super().__init__()
 
     def format(self, record):
         global LAST_TIMESTAMP_LENGTH
 
-        msg = super(ColoredFormatter, self).format(record)  # call base class to support exception formatting
+        msg = super().format(record)  # call base class to support exception formatting
 
         # format time
         elapsed = int(time.time() - start_time)

@@ -67,7 +67,6 @@ from pymor.parameters.spaces import CubicParameterSpace
 from pymor.reductors.basic import reduce_generic_rb, reduce_to_subbasis
 from pymor.reductors.coercive import reduce_coercive, reduce_coercive_simple
 from pymor.reductors.parabolic import reduce_parabolic
-from pymor.reductors.stationary import reduce_stationary_coercive  # deprecated, will be removed in next release
 
 from pymor.tools.random import new_random_state
 

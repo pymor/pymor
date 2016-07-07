@@ -167,7 +167,7 @@ class Square(ReferenceElementInterface):
                           np.array([1., 1.]), np.array([0., 1.])))
             return A, B
         else:
-            return super(Square, self).subentity_embedding(subentity_codim)
+            return super().subentity_embedding(subentity_codim)
 
     def sub_reference_element(self, codim):
         assert 0 <= codim <= 2, 'Invalid codimension (must be between 0 and 2 but was {})'.format(codim)
@@ -253,7 +253,7 @@ class Triangle(ReferenceElementInterface):
                           np.array([0., 0.])))
             return A, B
         else:
-            return super(Triangle, self).subentity_embedding(subentity_codim)
+            return super().subentity_embedding(subentity_codim)
 
     def sub_reference_element(self, codim):
         assert 0 <= codim <= 2, 'Invalid codimension (must be between 0 and 2 but was {})'.format(codim)

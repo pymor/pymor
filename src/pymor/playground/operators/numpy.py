@@ -18,7 +18,7 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
 
     def __init__(self, matrix, functional=False, vector=False, solver_options=None, name=None):
         assert not (functional and vector)
-        super(NumpyListVectorArrayMatrixOperator, self).__init__(matrix, solver_options=solver_options, name=name)
+        super().__init__(matrix, solver_options=solver_options, name=name)
         if not vector:
             self.source = VectorSpace(ListVectorArray, (NumpyVector, matrix.shape[1]))
         if not functional:
@@ -31,7 +31,7 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
         assert U.check_ind(ind)
 
         if self.vector:
-            V = super(NumpyListVectorArrayMatrixOperator, self).apply(U, ind=ind, mu=mu)
+            V = super().apply(U, ind=ind, mu=mu)
             return ListVectorArray([NumpyVector(v, copy=False) for v in V.data],
                                    subtype=self.range.subtype)
 
@@ -100,7 +100,7 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
         return ListVectorArray([NumpyVector(self._matrix.ravel(), copy=True)])
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
-        lincomb = super(NumpyListVectorArrayMatrixOperator, self).assemble_lincomb(operators, coefficients)
+        lincomb = super().assemble_lincomb(operators, coefficients)
         if lincomb is None:
             return None
         else:

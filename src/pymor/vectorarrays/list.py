@@ -253,7 +253,7 @@ class ListVectorArray(VectorArrayInterface):
     subtype for `vector_type`.
     """
 
-    _NONE = tuple()
+    _NONE = ()
 
     def __init__(self, vectors, subtype=_NONE, copy=True):
         vectors = list(vectors)

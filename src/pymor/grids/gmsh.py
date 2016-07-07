@@ -191,7 +191,7 @@ class GmshGrid(UnstructuredTriangleGrid):
 
         faces = np.array([[node_ids[nodes[0]], node_ids[nodes[1]], node_ids[nodes[2]]]
                          for _, _, nodes in sections['Elements']['triangle']])
-        super(GmshGrid, self).__init__(vertices, faces)
+        super().__init__(vertices, faces)
 
     def __str__(self):
         return 'GmshGrid with {} triangles, {} edges, {} vertices'.format(self.size(0), self.size(1), self.size(2))

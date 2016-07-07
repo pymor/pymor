@@ -97,11 +97,21 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
 
     iteration = 0
     error_sequence = [err]
-    while (iteration < miniter
-           or (iteration < maxiter
-               and err > atol and err/error_sequence[0] > rtol
-               and (len(error_sequence) < stagnation_window + 1
-                    or err/max(error_sequence[-stagnation_window - 1:]) < stagnation_threshold))):
+    while True:
+        if iteration >= miniter:
+            if err <= atol:
+                logger.info('Absolute limit of {} reached. Stopping.'.format(atol))
+                break
+            if err/error_sequence[0] <= rtol:
+                logger.info('Prescribed total reduction of {} reached. Stopping.'.format(rtol))
+                break
+            if (len(error_sequence) >= stagnation_window + 1 and
+                    err/max(error_sequence[-stagnation_window - 1:]) >= stagnation_threshold):
+                logger.info('Error is stagnating (threshold: {:5e}, window: {}). Stopping.'.format(stagnation_threshold,
+                                                                                                   stagnation_window))
+                break
+            if iteration >= maxiter:
+                raise NewtonError('Failed to converge')
         if iteration > 0 and return_stages:
             data['stages'].append(U)
         if return_residuals:
@@ -119,17 +129,8 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
         logger.info('Iteration {:2}: Residual: {:5e},  Reduction: {:5e}, Total Reduction: {:5e}'
                     .format(iteration, err, err / error_sequence[-1], err / error_sequence[0]))
         error_sequence.append(err)
-
-    if err <= atol:
-        logger.info('Absolute limit of {} reached. Stopping.'.format(atol))
-    elif err/error_sequence[0] <= rtol:
-        logger.info('Prescribed total reduction of {} reached. Stopping.'.format(rtol))
-    elif (len(error_sequence) >= stagnation_window + 1
-          and err/max(error_sequence[-stagnation_window - 1:]) >= stagnation_threshold):
-        logger.info('Error is stagnating (threshold: {:5e}, window: {}). Stopping.'.format(stagnation_threshold,
-                                                                                           stagnation_window))
-    else:
-        raise NewtonError('Failed to converge')
+        if not np.isfinite(err):
+            raise NewtonError('Failed to converge')
 
     data['error_sequence'] = np.array(error_sequence)
 

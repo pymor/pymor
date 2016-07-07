@@ -50,7 +50,7 @@ if HAVE_ALL:
                 axes = figure.gca()
                 axes.hold(True)
             self.codim = codim
-            lines = tuple()
+            lines = ()
             centers = grid.centers(1)
             if grid._identify_left_right:
                 centers = np.concatenate((centers, [[grid._domain[1]]]), axis=0)
@@ -78,7 +78,7 @@ if HAVE_ALL:
                     axes.legend(legend)
             self.lines = lines
 
-            super(Matplotlib1DWidget, self).__init__(figure)
+            super().__init__(figure)
             self.setParent(parent)
             self.setMinimumSize(300, 300)
             self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
@@ -102,7 +102,7 @@ if HAVE_ALL:
             assert codim in (0, 2)
 
             self.figure = Figure(dpi=dpi)
-            super(MatplotlibPatchWidget, self).__init__(self.figure)
+            super().__init__(self.figure)
 
             subentities, coordinates, entity_map = flatten_grid(grid)
             self.subentities = subentities if grid.reference_element is triangle \

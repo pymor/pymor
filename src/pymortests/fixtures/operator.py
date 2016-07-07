@@ -74,7 +74,7 @@ def thermalblock_factory(xblocks, yblocks, diameter, seed):
     p = ThermalBlockProblem((xblocks, yblocks))
     d, d_data = discretize_elliptic_cg(p, diameter)
     f = GenericFunction(lambda X, mu: X[..., 0]**mu['exp'] + X[..., 1],
-                        dim_domain=2, parameter_type={'exp': tuple()})
+                        dim_domain=2, parameter_type={'exp': ()})
     iop = InterpolationOperator(d_data['grid'], f)
     U = d.operator.source.empty()
     V = d.operator.range.empty()
@@ -321,7 +321,7 @@ def misc_operator_with_arrays_and_products_factory(n):
         op0, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(30, 30, 4, 3, n)
         op1 = NumpyMatrixOperator(np.random.random((30, 30)))
         op2 = NumpyMatrixOperator(np.random.random((30, 30)))
-        op = SelectionOperator([op0, op1, op2], ProjectionParameterFunctional('x', tuple()), [0.3, 0.6])
+        op = SelectionOperator([op0, op1, op2], ProjectionParameterFunctional('x', ()), [0.3, 0.6])
         return op, op.parse_parameter((n-5)/2), V, U, rp, sp
     elif n == 8:
         from pymor.operators.block import BlockDiagonalOperator

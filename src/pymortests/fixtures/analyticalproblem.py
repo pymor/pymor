@@ -47,7 +47,7 @@ non_picklable_elliptic_problems = \
                      diffusion_functions=[GenericFunction(dim_domain=2,
                                                           mapping=lambda X,p=p: X[...,0]**p) for p in range(5)],
                      diffusion_functionals=[ExpressionParameterFunctional('max(mu["exp"], {})'.format(m),
-                                                                          parameter_type={'exp': tuple()})
+                                                                          parameter_type={'exp': ()})
                                             for m in range(5)])]
 
 

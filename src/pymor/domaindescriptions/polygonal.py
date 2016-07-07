@@ -110,7 +110,7 @@ class CircularSectorDomain(PolygonalDomain):
         if None in boundary_types:
             del boundary_types[None]
 
-        super(CircularSectorDomain, self).__init__(points, boundary_types)
+        super().__init__(points, boundary_types)
 
     def __repr__(self):
         return 'PieDomain({}, {}, {}, {}, {})'.format(repr(self.angle), repr(self.radius), repr(self.arc),
@@ -148,7 +148,7 @@ class DiscDomain(PolygonalDomain):
                   np.linspace(start=0, stop=2*np.pi, num=num_points, endpoint=False)]
         boundary_types = {} if self.boundary is None else {boundary: list(range(1, len(points)+1))}
 
-        super(DiscDomain, self).__init__(points, boundary_types)
+        super().__init__(points, boundary_types)
 
     def __repr__(self):
         return 'DiscDomain({}, {}, {})'.format(repr(self.radius), repr(self.boundary), repr(self.num_points))

@@ -25,9 +25,9 @@ def _loadmat(path, key=None):
     data = [v for v in data.values() if isinstance(v, np.ndarray) or issparse(v)]
 
     if len(data) == 0:
-        raise IOError('No matrix data contained in MATLAB file {}'.format(key, path))
+        raise IOError('No matrix data contained in MATLAB file {}'.format(path))
     elif len(data) > 1:
-        raise IOError('More than one matrix object stored in MATLAB file {}'.format(key, path))
+        raise IOError('More than one matrix object stored in MATLAB file {}'.format(path))
     else:
         return data[0]
 
@@ -52,7 +52,7 @@ def _load(path, key=None):
             except KeyError:
                 raise IOError('"{}" not found in NPY file {}'.format(key, path))
         elif len(data) == 0:
-            raise IOError('No data contained in NPY file {}'.format(key, path))
+            raise IOError('No data contained in NPY file {}'.format(path))
         elif len(data) > 1:
             raise IOError('More than one object stored in NPY file {}'.format(key, path))
         else:

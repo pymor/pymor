@@ -130,8 +130,8 @@ def thermalblock_demo(args):
 
     if args['--plot-solutions']:
         print('Showing some solutions')
-        Us = tuple()
-        legend = tuple()
+        Us = ()
+        legend = ()
         for mu in discretization.parameter_space.sample_randomly(2):
             print('Solving for diffusion = \n{} ... '.format(mu['diffusion']))
             sys.stdout.flush()
@@ -141,11 +141,11 @@ def thermalblock_demo(args):
 
     print('RB generation ...')
 
-    error_product = discretization.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
+    product = discretization.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
     coercivity_estimator=ExpressionParameterFunctional('min([diffusion[0], diffusion[1]**2])', discretization.parameter_type)
-    reductors = {'residual_basis': partial(reduce_coercive, error_product=error_product,
+    reductors = {'residual_basis': partial(reduce_coercive, product=product,
                                    coercivity_estimator=coercivity_estimator),
-                 'traditional': partial(reduce_coercive_simple, error_product=error_product,
+                 'traditional': partial(reduce_coercive_simple, product=product,
                                         coercivity_estimator=coercivity_estimator)}
     reductor = reductors[args['--reductor']]
     extension_algorithms = {'trivial': trivial_basis_extension,

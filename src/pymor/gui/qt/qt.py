@@ -31,7 +31,6 @@ from pymor.tools.vtkio import HAVE_PYVTK, write_vtk
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 from pymor.vectorarrays.numpy import NumpyVectorArray
 
-
 _launch_qt_app_pids = set()
 
 def _launch_qt_app(main_window_factory, block):
@@ -147,7 +146,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
 
             class PlotWidget(QWidget):
                 def __init__(self):
-                    super(PlotWidget, self).__init__()
+                    super().__init__()
                     if separate_colorbars:
                         if rescale_colorbars:
                             self.vmins = tuple(np.min(u[0]) for u in U)
@@ -217,7 +216,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                         if colorbar:
                             colorbar.set(vmin=vmin, vmax=vmax)
 
-            super(MainWindow, self).__init__(U, PlotWidget(), title=title, length=len(U[0]))
+            super().__init__(U, PlotWidget(), title=title, length=len(U[0]))
             self.grid = grid
             self.codim = codim
 
@@ -287,7 +286,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
             plot_widget = Matplotlib1DWidget(None, grid, count=len(U), vmin=[np.min(u) for u in U],
                                              vmax=[np.max(u) for u in U], legend=legend, codim=codim,
                                              separate_plots=separate_plots)
-            super(MainWindow, self).__init__(U, plot_widget, title=title, length=len(U[0]))
+            super().__init__(U, plot_widget, title=title, length=len(U[0]))
             self.grid = grid
 
     _launch_qt_app(lambda: MainWindow(grid, U, codim, title=title, legend=legend, separate_plots=separate_plots), block)

@@ -254,7 +254,7 @@ def deim(U, modes=None, error_norm=None, product=None):
     if len(interpolation_dofs) < len(collateral_basis):
         collateral_basis.remove(ind=list(range(len(interpolation_dofs), len(collateral_basis))))
 
-    logger.info('Finished.'.format(new_dof))
+    logger.info('Finished.')
 
     data = {'errors': errs}
 
