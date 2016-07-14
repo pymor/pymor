@@ -23,7 +23,7 @@ def almost_equal(U, V, U_ind=None, V_ind=None, product=None, norm=None, rtol=1e-
     The norm to be used can be specified via the `norm` or `product`
     parameter.
 
-    If the length of `U` (`U_ind`) resp. `V` (`V_ind`) is 1, the one
+    If the length of `U` (`U_ind`) resp. `V` (`V_ind`) is 1, the single
     specified vector is compared to all vectors of the other array.
     Otherwise, the lengths of both indexed arrays have to agree.
 
@@ -34,13 +34,14 @@ def almost_equal(U, V, U_ind=None, V_ind=None, product=None, norm=None, rtol=1e-
     U_ind, V_ind
         Indices of the vectors that are to be compared (see |VectorArray|).
     product
-        If specified, use this scalar product |Operator| to compute the norm.
+        If specified, use this inner product |Operator| to compute the norm.
         `product` and `norm` are mutually exclusive.
     norm
         If specified, must be a callable, which is used to compute the norm
-        or one of the string 'l1', 'l2', 'sup', in which case the respective
-        |VectorArray| norm methods are used. `product` and `norm` are mutually
-        exclusive. If neither is specified, `norm='l2'` is assumed.
+        or, alternatively, one of the string 'l1', 'l2', 'sup', in which case the
+        respective |VectorArray| norm methods are used.
+        `product` and `norm` are mutually exclusive. If neither is specified,
+        `norm='l2'` is assumed.
     rtol
         The relative tolerance.
     atol
