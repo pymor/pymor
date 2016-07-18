@@ -3,4 +3,5 @@
 # our own docutils.conf.
 Sphinx >= 1.2b3
 cython
+numpy
 
