@@ -340,7 +340,7 @@ class CacheableInterface(ImmutableInterface):
 
     def disable_caching(self):
         """Disable caching for this instance."""
-        self.__cache_region = None
+        self.__dict__['cache_region'] = None
 
     def enable_caching(self, region):
         """Enable caching for this instance.
