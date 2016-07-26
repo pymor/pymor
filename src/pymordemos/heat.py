@@ -67,9 +67,9 @@ if __name__ == '__main__':
     ax.set_title('Bode plot of the full model')
 
     # Hankel singular values
-    lti.compute_hsv_U_V()
+    lti.compute_sv_U_V(('lyap',))
     fig, ax = plt.subplots()
-    ax.semilogy(range(1, len(lti._hsv) + 1), lti._hsv, '.-')
+    ax.semilogy(range(1, len(lti._sv[('lyap',)]) + 1), lti._sv[('lyap',)], '.-')
     ax.set_title('Hankel singular values')
     plt.show()
 
@@ -79,10 +79,11 @@ if __name__ == '__main__':
 
     # Balanced Truncation
     r = 5
-    rom_bt, _, _ = lti.bt(r)
+    rom_bt, _, _ = lti.bt(r, me_solver='slycot')
     print('H_2-norm of the BT ROM:       {}'.format(rom_bt.norm()))
     print('H_inf-norm of the BT ROM:     {}'.format(rom_bt.norm('Hinf')))
     err_bt = lti - rom_bt
+    err_bt.compute_gramian(('lyap', 'cf'), me_solver='slycot')
     print('H_2-error for the BT ROM:     {}'.format(err_bt.norm()))
     print('H_inf-error for the BT ROM:   {}'.format(err_bt.norm('Hinf')))
 
