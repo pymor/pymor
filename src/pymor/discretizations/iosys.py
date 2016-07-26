@@ -346,9 +346,9 @@ class LTISystem(DiscretizationInterface):
         if isinstance(sys_list, LTISystem):
             sys_list = (sys_list,)
 
-        assert (plot_style_list is None or isinstance(plot_style_list, basestring) or
-                all(isinstance(plot_style, basestring) for plot_style in plot_style_list))
-        if isinstance(plot_style_list, basestring):
+        assert (plot_style_list is None or isinstance(plot_style_list, str) or
+                all(isinstance(plot_style, str) for plot_style in plot_style_list))
+        if isinstance(plot_style_list, str):
             plot_style_list = (plot_style_list,)
 
         assert w is not None or all(sys._w is not None for sys in sys_list)
@@ -605,8 +605,8 @@ class LTISystem(DiscretizationInterface):
                 bounds[:-1] = 2 * typ[1] * self._sv[typ][-1:0:-1].cumsum()[::-1]
             r = np.argmax(bounds <= tol) + 1
 
-        Vr = VectorArrayOperator(self._gramian[typ_cf]).apply(self._V[typ], ind=range(r))
-        Wr = VectorArrayOperator(self._gramian[typ_of]).apply(self._U[typ], ind=range(r))
+        Vr = VectorArrayOperator(self._gramian[typ_cf]).apply(self._V[typ], ind=list(range(r)))
+        Wr = VectorArrayOperator(self._gramian[typ_of]).apply(self._U[typ], ind=list(range(r)))
 
         if method == 'sr':
             alpha = 1 / np.sqrt(self._sv[typ][:r])
