@@ -11,7 +11,7 @@ class BufferReturn(pybindgen.ReturnValue):
     CTYPES = []
 
     def __init__(self, ctype, length_expression):
-        super(BufferReturn, self).__init__(ctype, is_const=False)
+        super().__init__(ctype, is_const=False)
         self.length_expression = length_expression
 
     def convert_c_to_python(self, wrapper):

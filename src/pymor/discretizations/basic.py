@@ -130,11 +130,11 @@ class StationaryDiscretization(DiscretizationBase):
         operators_with_operator.update(operators)
         functionals_with_rhs = {'rhs': rhs}
         functionals_with_rhs.update(functionals)
-        super(StationaryDiscretization, self).__init__(operators=operators_with_operator,
-                                                       functionals=functionals_with_rhs,
-                                                       vector_operators=vector_operators, products=products,
-                                                       estimator=estimator, visualizer=visualizer,
-                                                       cache_region=cache_region, name=name)
+        super().__init__(operators=operators_with_operator,
+                         functionals=functionals_with_rhs,
+                         vector_operators=vector_operators, products=products,
+                         estimator=estimator, visualizer=visualizer,
+                         cache_region=cache_region, name=name)
         self.solution_space = operator.source
         self.operator = operator
         self.rhs = rhs
@@ -155,7 +155,7 @@ class StationaryDiscretization(DiscretizationBase):
         kwargs.setdefault('operator', None)
         kwargs.setdefault('rhs', None)
 
-        return super(StationaryDiscretization, self).with_(**kwargs)
+        return super().with_(**kwargs)
 
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu)
@@ -289,11 +289,11 @@ class InstationaryDiscretization(DiscretizationBase):
         vector_operators_with_initial_data = {'initial_data': initial_data}
         vector_operators_with_initial_data.update(vector_operators)
 
-        super(InstationaryDiscretization, self).__init__(operators=operators_with_operator_mass,
-                                                         functionals=functionals_with_rhs,
-                                                         vector_operators=vector_operators_with_initial_data,
-                                                         products=products, estimator=estimator,
-                                                         visualizer=visualizer, cache_region=cache_region, name=name)
+        super().__init__(operators=operators_with_operator_mass,
+                         functionals=functionals_with_rhs,
+                         vector_operators=vector_operators_with_initial_data,
+                         products=products, estimator=estimator,
+                         visualizer=visualizer, cache_region=cache_region, name=name)
         self.T = T
         self.solution_space = operator.source
         self.initial_data = initial_data
@@ -330,7 +330,7 @@ class InstationaryDiscretization(DiscretizationBase):
         if 'time_stepper_nt' in kwargs:
             kwargs['time_stepper'] = self.time_stepper.with_(nt=kwargs.pop('time_stepper_nt'))
 
-        return super(InstationaryDiscretization, self).with_(**kwargs)
+        return super().with_(**kwargs)
 
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu).copy()

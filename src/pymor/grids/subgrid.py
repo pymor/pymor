@@ -92,13 +92,13 @@ class SubGrid(AffineGridInterface):
             assert codim <= subentity_codim <= self.dim, 'Invalid subentity codimension'
             return self.__subentities[subentity_codim]
         else:
-            return super(SubGrid, self).subentities(codim, subentity_codim)
+            return super().subentities(codim, subentity_codim)
 
     def embeddings(self, codim):
         if codim == 0:
             return self.__embeddings
         else:
-            return super(SubGrid, self).embeddings(codim)
+            return super().embeddings(codim)
 
     def __getstate__(self):
         d = self.__dict__.copy()

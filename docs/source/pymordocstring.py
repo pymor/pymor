@@ -21,7 +21,7 @@ STRING_TYPE = basestring if PY2 else str
 INCLUDE_SPECIAL_WITH_DOC = False
 INCLUDE_PRIVATE_WITH_DOC = False
 
-MEMBER_BLACKLIST = tuple()
+MEMBER_BLACKLIST = ()
 
 FIELD_SECTIONS = ('parameters', 'yields', 'returns', 'raises', 'attributes')
 GENERIC_SECTIONS = ('example', 'examples', 'see also', 'defaults')

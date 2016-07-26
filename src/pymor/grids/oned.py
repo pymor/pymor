@@ -65,13 +65,13 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
             else:
                 return self.__subentities.T
         else:
-            return super(OnedGrid, self).subentities(codim, subentity_codim)
+            return super().subentities(codim, subentity_codim)
 
     def embeddings(self, codim):
         if codim == 0:
             return self.__A, self.__B
         else:
-            return super(OnedGrid, self).embeddings(codim)
+            return super().embeddings(codim)
 
     def bounding_box(self):
         return np.array(self._domain).reshape((2, 1))

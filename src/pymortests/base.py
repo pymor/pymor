@@ -106,6 +106,7 @@ class MonomOperator(OperatorBase):
 
 
 def check_results(test_name, params, results, *args):
+    params = str(params)
     tols = (1e-13, 1e-13)
     keys = {}
     for arg in args:
@@ -123,14 +124,14 @@ def check_results(test_name, params, results, *args):
 
     basepath = os.path.join(os.path.dirname(__file__),
                             '..', '..', 'testdata', 'check_results')
-    arg_id = hashlib.sha1(str(params).encode()).hexdigest()
+    arg_id = hashlib.sha1(params.encode()).hexdigest()
     filename = os.path.normpath(os.path.join(basepath, test_name, arg_id))
 
     if not os.path.exists(os.path.join(basepath, test_name)):
         os.mkdir(os.path.join(basepath, test_name))
     if not os.path.exists(filename):
         with open(filename, 'wb') as f:
-            print(params, file=f)
+            f.write((params + '\n').encode())
             results = {k: v.tolist() for k, v in results.items()}
             dump(results, f, protocol=2)
         assert False, \
@@ -146,7 +147,7 @@ def check_results(test_name, params, results, *args):
             abs_errs = np.abs(results[k] - old_results[k])
             rel_errs = abs_errs / np.abs(old_results[k])
             with open(filename + '_changed', 'wb') as f:
-                print(params, file=f)
+                f.write((params + '\n').encode())
                 dump(results, f, protocol=2)
             assert False, 'Results for test {}({}, key: {}) have changed.\n (maximum error: {} abs / {} rel).\nSaved new results in {}'.format(
                 test_name, params, k, np.max(abs_errs), np.max(rel_errs), filename + '_changed')

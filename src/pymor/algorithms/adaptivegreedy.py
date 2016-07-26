@@ -46,7 +46,7 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
     reductor
         See :func:`~pymor.algorithms.greedy.greedy`.
     parameter_space
-        The |ParameterSpace| for which to compute the reduced model. If `None`
+        The |ParameterSpace| for which to compute the reduced model. If `None`,
         the parameter space of the `discretization` is used.
     initial_basis
         See :func:`~pymor.algorithms.greedy.greedy`.
@@ -73,7 +73,7 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
         set vs. maximum estimated error on training set. If the ratio is
         larger, the training set is refined.
     gamma
-        Weight of the age penalty term of the training set refinement
+        Weight of the age penalty term in the training set refinement
         indicators.
     theta
         Ratio of training set elements to select for refinement.
@@ -94,12 +94,15 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
         :reduced_discretization: The reduced |Discretization| obtained for the
                                  computed basis.
         :reconstructor:          Reconstructor for `reduced_discretization`.
+        :extensions:             Number of greedy iterations.
         :max_errs:               Sequence of maximum errors during the greedy run.
         :max_err_mus:            The parameters corresponding to `max_errs`.
         :max_val_errs:           Sequence of maximum errors on the validation set.
         :max_val_err_mus:        The parameters corresponding to `max_val_errs`.
         :refinements:            Number of refinements made in each extension step.
         :training_set_sizes:     The final size of the training set in each extension step.
+        :time:                   Duration of the algorithm.
+        :reduction_data:         Reduction data returned by the last reductor call.
     """
 
     def estimate(mus):
@@ -300,7 +303,7 @@ def _estimate(mu, rd=None, d=None, rc=None, error_norm=None):
 
 
 class AdaptiveSampleSet(BasicInterface):
-    """An adaptive parameter samples set.
+    """An adaptive parameter sample set.
 
     Used by :func:`adaptive_greedy`.
     """

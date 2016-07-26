@@ -132,7 +132,7 @@ class BlockDiagonalOperator(BlockOperator):
         blocks2 = np.array([[None for j in range(n)] for i in range(n)])
         for i, op in enumerate(blocks):
             blocks2[i, i] = op
-        super(BlockDiagonalOperator, self).__init__(blocks2)
+        super().__init__(blocks2)
 
     def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
         assert V in self.range
@@ -152,7 +152,7 @@ class BlockDiagonalOperator(BlockOperator):
         assert range_product is None or range_product.source == range_product.range == self.range
 
         if source_product or range_product:
-            return super(BlockDiagonalOperator, self).apply_inverse_adjoint(
+            return super().apply_inverse_adjoint(
                 U, ind=ind, mu=mu, source_product=source_product, range_product=range_product)
 
         V = [None for i in range(self.num_source_blocks)]

@@ -43,7 +43,7 @@ operating on objects of the following types:
     based on a Python list of vectors.
 
     Associated to each vector array is a |VectorSpace|. A Vector space in pyMOR
-    is simply the combination of a |VectorArray| class and an appropriate
+    is simply the combination of a |VectorArray| subclass and an appropriate
     |subtype|.  For |NumpyVectorArrays|, the subtype is a single integer
     denoting the dimension of the array. Subtypes for other array classes
     could, e.g., include a socket for communication with a specific PDE solver
@@ -168,7 +168,7 @@ main benefits:
 1. If multiple objects/algorithms hold references to the same
    |Operator| or |Discretization|, none of the objects has to worry that the
    referenced object changes without their knowledge.
-2. It becomes affordable to generate persisten keys for |caching| of computation
+2. It becomes affordable to generate persistent keys for |caching| of computation
    results by generating |state ids| which uniquely identify the object's state.
    Since the state cannot change, these ids have to be computed only once for the
    lifetime of the object.

@@ -11,6 +11,8 @@
 
 * Petar Mlinarić, mlinaric@mpi-magdeburg.mpg.de
     * l2_norm2 methods for VectorArrays
+    * from_data methods for VectorSpace and VectorArrays
+    * algorithms.to_matrix
 
 
 ## pyMOR 0.4
@@ -25,7 +27,9 @@
     * PolygonalDomain, CircularSectorDomain, DiscDomain
     * pymor.domaindiscretizers.gmsh
     * ParabolicProblem, discretize_parabolic_cg, discretize_parabolic_fv
-    * pymordemos.parabolic
+    * reductors.parabolic
+    * reductors.residual.reduce_implicit_euler_residual
+    * pymordemos.parabolic, pymordemos.parabolic_mor
     * ProductParameterFunctional
 
 * Falk Meyer, falk.meyer@uni-muenster.de

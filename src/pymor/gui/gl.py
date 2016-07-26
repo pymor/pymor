@@ -90,7 +90,7 @@ if HAVE_ALL:
             assert grid.reference_element in (triangle, square)
             assert grid.dim == 2
             assert codim in (0, 2)
-            super(GLPatchWidget, self).__init__(parent)
+            super().__init__(parent)
             self.setMinimumSize(300, 300)
             self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
 
@@ -221,7 +221,7 @@ if HAVE_ALL:
     class ColorBarWidget(QGLWidget):
 
         def __init__(self, parent, U=None, vmin=None, vmax=None):
-            super(ColorBarWidget, self).__init__(parent)
+            super().__init__(parent)
             self.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding))
             self.setAutoFillBackground(False)
             self.set(U, vmin, vmax)

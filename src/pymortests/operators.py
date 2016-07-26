@@ -21,7 +21,7 @@ def test_selection_op():
     p1 = MonomOperator(1)
     select_rhs_functional = GenericParameterFunctional(
         lambda x: round(float(x["nrrhs"])), 
-        ParameterType({"nrrhs" : tuple()})
+        ParameterType({"nrrhs" : ()})
     )
     s1 = SelectionOperator(
         operators = [p1], 

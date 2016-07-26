@@ -78,7 +78,7 @@ class ParameterType(dict):
             for k, v in t.items():
                 if not isinstance(v, tuple):
                     assert isinstance(v, Number)
-                    t[k] = tuple() if v == 0 else (v,)
+                    t[k] = () if v == 0 else (v,)
         # calling dict.__init__ breaks multiple inheritance but is faster than
         # the super() call
         dict.__init__(self, t)

@@ -157,13 +157,13 @@ class RectGrid(AffineGridWithOrthogonalCentersInterface):
             else:
                 return self.__subentities[subentity_codim - 1]
         else:
-            return super(RectGrid, self).subentities(codim, subentity_codim)
+            return super().subentities(codim, subentity_codim)
 
     def embeddings(self, codim=0):
         if codim == 0:
             return self.__embeddings
         else:
-            return super(RectGrid, self).embeddings(codim)
+            return super().embeddings(codim)
 
     def bounding_box(self):
         return np.array(self.domain)

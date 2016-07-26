@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 tests_require = ['pytest', 'pytest-cov']
-install_requires = ['cython>=0.20.1', 'numpy>=1.8.1', 'scipy>=0.13.3', 'Sphinx', 'docopt']
+install_requires = ['cython>=0.20.1', 'numpy>=1.8.1', 'scipy>=0.13.3', 'Sphinx>=1.4.0', 'docopt']
 setup_requires = ['pytest-runner', 'cython>=0.20.1', 'numpy>=1.8.1']
 install_suggests = {'ipython': 'an enhanced interactive python shell',
                     'ipyparallel': 'required for pymor.parallel.ipython',

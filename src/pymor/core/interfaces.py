@@ -164,7 +164,7 @@ class UberMeta(abc.ABCMeta):
                 assert args[0] == 'self'
                 c._init_arguments = tuple(args[1:])
             except TypeError:       # happens when no one declares an __init__ method and object is reached
-                c._init_arguments = tuple()
+                c._init_arguments = ()
         else:
             # getargspec is deprecated and does not work with keyword only args
             init_sig = inspect.signature(c.__init__)
@@ -322,7 +322,7 @@ class ImmutableMeta(UberMeta):
         return c
 
     def _call(self, *args, **kwargs):
-        instance = super(ImmutableMeta, self).__call__(*args, **kwargs)
+        instance = super().__call__(*args, **kwargs)
         instance._locked = True
         return instance
 
@@ -388,7 +388,7 @@ class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
             unless you really know what you are doing. (One exception might
             be the modification of a newly created copy of an immutable object.)
         """
-        super(ImmutableInterface, self).unlock()
+        super().unlock()
         if hasattr(self, 'sid'):
             del self.sid
 
@@ -409,7 +409,7 @@ class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
         if hasattr(self, 'sid'):
             return self.sid
         else:
-            return self._generate_sid(debug, tuple())
+            return self._generate_sid(debug, ())
 
     def _generate_sid(self, debug, seen_immutables):
         sid_generator = _SIDGenerator()
@@ -484,7 +484,7 @@ def generate_sid(obj, debug=False):
     The generated state id.
     """
     sid_generator = _SIDGenerator()
-    return sid_generator.generate(obj, debug, tuple())[0]
+    return sid_generator.generate(obj, debug, ())[0]
 
 
 # Helper classes for generate_sid

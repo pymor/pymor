@@ -23,6 +23,10 @@ class VectorInterface(BasicInterface):
     def make_zeros(cls, subtype=None):
         pass
 
+    @classmethod
+    def from_data(cls, data, subtype):
+        raise NotImplementedError
+
     @abstractproperty
     def dim(self):
         pass
@@ -182,6 +186,12 @@ class NumpyVector(CopyOnWriteVector):
         assert isinstance(subtype, Number)
         return NumpyVector(np.zeros(subtype))
 
+    @classmethod
+    def from_data(cls, data, subtype):
+        assert isinstance(data, np.ndarray) and data.ndim == 1
+        assert len(data) == subtype
+        return cls(data)
+
     @property
     def data(self):
         return self._array
@@ -243,7 +253,7 @@ class ListVectorArray(VectorArrayInterface):
     subtype for `vector_type`.
     """
 
-    _NONE = tuple()
+    _NONE = ()
 
     def __init__(self, vectors, subtype=_NONE, copy=True):
         vectors = list(vectors)
@@ -266,7 +276,8 @@ class ListVectorArray(VectorArrayInterface):
 
     @classmethod
     def from_data(cls, data, subtype):
-        return cls([NumpyVector(v) for v in data], subtype=subtype)
+        vector_type, vector_subtype = subtype
+        return cls([vector_type.from_data(v, vector_subtype) for v in data], subtype=subtype)
 
     def __len__(self):
         return len(self._list)

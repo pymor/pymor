@@ -29,10 +29,10 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
         Name of the functional.
     """
 
-    def __init__(self, component_name, component_shape, coordinates=tuple(), name=None):
+    def __init__(self, component_name, component_shape, coordinates=(), name=None):
         self.name = name
         if isinstance(component_shape, Number):
-            component_shape = tuple() if component_shape == 0 else (component_shape,)
+            component_shape = () if component_shape == 0 else (component_shape,)
         self.build_parameter_type({component_name: component_shape}, local_global=True)
         self.component_name = component_name
         self.coordinates = coordinates
@@ -107,7 +107,7 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
         code = compile(expression, '<expression>', 'eval')
         functions = self.functions
         mapping = lambda mu: eval(code, functions, mu)
-        super(ExpressionParameterFunctional, self).__init__(mapping, parameter_type, name)
+        super().__init__(mapping, parameter_type, name)
 
     def __repr__(self):
         return 'ExpressionParameterFunctional({}, {})'.format(self.expression, repr(self.parameter_type))
