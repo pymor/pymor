@@ -176,7 +176,7 @@ except ImportError:
     pass
 
 
-def solve_lyap(A, E, B, trans=False, meth=None, tol=None):
+def solve_lyap(A, E, B, trans=False, me_solver=None, tol=None):
     """Find a factor of the solution of a Lyapunov equation
 
     Returns factor Z such that Z * Z^T is approximately the solution X of a Lyapunov equation (if E is None)::
@@ -205,9 +205,9 @@ def solve_lyap(A, E, B, trans=False, meth=None, tol=None):
         The |Operator| B.
     trans
         If the dual equation needs to be solved.
-    meth
+    me_solver
         Method to use ('scipy', 'slycot', 'pymess_lyap', 'pymess_lradi').
-        If meth is None, a method is chosen according to availability and priority::
+        If `me_solver` is None, a method is chosen according to availability and priority::
 
             'pymess_lradi' (for bigger problems) > 'pymess_lyap' (for smaller problems) > 'slycot' > 'scipy'.
     tol
@@ -223,24 +223,24 @@ def solve_lyap(A, E, B, trans=False, meth=None, tol=None):
     assert isinstance(B, OperatorInterface) and B.linear
     assert not trans and B.range == A.source or trans and B.source == A.source
     assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source
-    assert meth is None or meth in ('scipy', 'slycot', 'pymess_lyap', 'pymess_lradi')
+    assert me_solver is None or me_solver in ('scipy', 'slycot', 'pymess_lyap', 'pymess_lradi')
 
-    if meth is None:
+    if me_solver is None:
         import imp
         try:
             imp.find_module('pymess')
             if A.source.dim >= 1000 or not isinstance(A, NumpyMatrixOperator):
-                meth = 'pymess_lradi'
+                me_solver = 'pymess_lradi'
             else:
-                meth = 'pymess_lyap'
+                me_solver = 'pymess_lyap'
         except ImportError:
             try:
                 imp.find_module('slycot')
-                meth = 'slycot'
+                me_solver = 'slycot'
             except ImportError:
-                meth = 'scipy'
+                me_solver = 'scipy'
 
-    if meth == 'scipy':
+    if me_solver == 'scipy':
         if E is not None:
             raise NotImplementedError()
         import scipy.linalg as spla
@@ -252,7 +252,7 @@ def solve_lyap(A, E, B, trans=False, meth=None, tol=None):
             X = spla.solve_lyapunov(A_mat.T, -B_mat.T.dot(B_mat))
         from pymor.algorithms.cholp import cholp
         Z = cholp(X, copy=False)
-    elif meth == 'slycot':
+    elif me_solver == 'slycot':
         import slycot
         A_mat = to_numpy_operator(A)._matrix
         if E is not None:
@@ -283,7 +283,7 @@ def solve_lyap(A, E, B, trans=False, meth=None, tol=None):
 
         from pymor.algorithms.cholp import cholp
         Z = cholp(X, copy=False)
-    elif meth == 'pymess_lyap':
+    elif me_solver == 'pymess_lyap':
         import pymess
         A_mat = to_numpy_operator(A)._matrix
         if E is not None:
@@ -299,7 +299,7 @@ def solve_lyap(A, E, B, trans=False, meth=None, tol=None):
                 Z = pymess.lyap(A_mat.T, None, B_mat.T)
             else:
                 Z = pymess.lyap(A_mat.T, E_mat.T, B_mat.T)
-    elif meth == 'pymess_lradi':
+    elif me_solver == 'pymess_lradi':
         import pymess
         opts = pymess.options()
         if trans:
