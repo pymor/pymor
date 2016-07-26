@@ -87,12 +87,10 @@ class LTISystem(DiscretizationInterface):
         self.cont_time = cont_time
         self._w = None
         self._tfw = None
-        self._cgf = {}
-        self._ogf = {}
+        self._gramian = {}
         self._sv = {}
         self._U = {}
         self._V = {}
-        self._brgamma = 1.
         self._H2_norm = None
         self._Hinf_norm = None
         self._fpeak = None
@@ -382,15 +380,20 @@ class LTISystem(DiscretizationInterface):
         plt.show()
         return fig, ax
 
-    # TODO: Gramians depending on typ
-    def compute_cgf(self, typ='lyap', meth=None, tol=None, param=None):
-        """Compute the controllability Gramian factor.
+    def compute_gramian(self, typ, method=None, tol=None):
+        """Compute a Gramian.
 
         Parameters
         ----------
         typ
-            Type of the Gramian ('lyap', 'lqg', 'br').
-        meth
+            Type of the Gramian:
+            * ('lyap', 'cf'): Lyapunov controllability Gramian factor,
+            * ('lyap', 'of'): Lyapunov observability Gramian factor,
+            * ('lqg', 'cf'): LQG controllability Gramian factor,
+            * ('lqg', 'of'): LQG observability Gramian factor,
+            * ('br', 'cf', gamma): Bounded Real controllability Gramian factor,
+            * ('br', 'of', gamma): Bounded Real observability Gramian factor.
+        method
             Method used to solve the matrix equation (see
             :func:`pymor.algorithms.lyapunov.solve_lyap` or
             :func:`pymor.algorithms.lyapunov.solve_ricc`).
@@ -399,103 +402,68 @@ class LTISystem(DiscretizationInterface):
             If `None`, then the default tolerance is used. Otherwise, it should be
             a positive float and the controllability Gramian factor is recomputed
             (if it was already computed).
-
-        param
-            Parameter appearing in the matrix equation (only for typ == 'br').
         """
         if not self.cont_time:
             raise NotImplementedError
 
-        if typ not in self._cgf or param not in self._cgf[typ] or tol is not None:
-            if typ == 'lyap':
-                self._cgf[typ] = solve_lyap(self.A, self.E, self.B, meth=meth, tol=tol)
-            elif typ == 'lqg':
-                self._cgf[typ] = solve_ricc(self.A, E=self.E, C=self.C, trans=True,
-                                            meth=meth, tol=tol)
-            elif typ == 'br':
-                assert isinstance(param, float) and param > 0
-                if typ not in self._cgf:
-                    self._cgf[typ] = {}
-                self._cgf[typ][param] = solve_ricc(self.A, E=self.E,
-                                            B=self.B / np.sqrt(param), C=self.C / np.sqrt(param),
-                                            R=-IdentityOperator(self.C.range),
-                                            trans=True, meth=meth, tol=tol)
+        if typ not in self._gramian or tol is not None:
+            if typ[0] == 'lyap':
+                if typ[1] == 'cf':
+                    self._gramian[typ] = solve_lyap(self.A, self.E, self.B, method=method, tol=tol)
+                elif typ[1] == 'of':
+                    self._gramian[typ] = solve_lyap(self.A, self.E, self.C, trans=True, method=method, tol=tol)
+                else:
+                    raise NotImplementedError('Only cf and of are possible for lyap Gramian.')
+            elif typ[0] == 'lqg':
+                if typ[1] == 'cf':
+                    self._gramian[typ] = solve_ricc(self.A, E=self.E, B=self.B, C=self.C,
+                                                    trans=True, method=method, tol=tol)
+                elif typ[1] == 'of':
+                    self._gramian[typ] = solve_ricc(self.A, E=self.E, B=self.B, C=self.C,
+                                                    trans=False, method=method, tol=tol)
+                else:
+                    raise NotImplementedError('Only cf and of are possible for lqg Gramian.')
+            elif typ[0] == 'br':
+                assert isinstance(typ[2], float) and typ[2] > 0
+                if typ[1] == 'cf':
+                    self._gramian[typ] = solve_ricc(self.A, E=self.E,
+                                                    B=self.B / np.sqrt(typ[2]), C=self.C / np.sqrt(typ[2]),
+                                                    R=-IdentityOperator(self.C.range),
+                                                    trans=True, method=method, tol=tol)
+                elif typ[1] == 'of':
+                    self._gramian[typ] = solve_ricc(self.A, E=self.E,
+                                                    B=self.B / np.sqrt(typ[2]), C=self.C / np.sqrt(typ[2]),
+                                                    R=-IdentityOperator(self.B.source),
+                                                    trans=False, method=method, tol=tol)
+                else:
+                    raise NotImplementedError('Only cf and of are possible for br Gramian.')
+            else:
+                raise NotImplementedError('Only lyap, lqg, and br Gramians are available.')
 
-    # TODO: Gramians depending on typ
-    def compute_ogf(self, typ='lyap', meth=None, tol=None, param=None):
-        """Compute the observability Gramian factor.
-
-        Parameters
-        ----------
-        typ
-            Type of the Gramian ('lyap', 'lqg', 'br').
-        meth
-            Method used to solve the matrix equation (see
-            :func:`pymor.algorithms.lyapunov.solve_lyap` or
-            :func:`pymor.algorithms.lyapunov.solve_ricc`).
-        tol
-            Tolerance parameter for the low-rank matrix equation solver.
-            If `None`, then the default tolerance is used. Otherwise, it should be
-            a positive float and the controllability Gramian factor is recomputed
-            (if it was already computed).
-
-        param
-            Parameter appearing in the matrix equation (only for typ == 'br').
-        """
-        if not self.cont_time:
-            raise NotImplementedError
-
-        if typ not in self._ogf or param not in self._ogf[typ] or tol is not None:
-            if typ == 'lyap':
-                self._ogf[typ] = solve_lyap(self.A, self.E, self.C, trans=True, meth=meth, tol=tol)
-            elif typ == 'lqg':
-                self._ogf[typ] = solve_ricc(self.A, E=self.E, C=self.C, trans=False, meth=meth, tol=tol)
-            elif typ == 'br':
-                assert isinstance(param, float) and param > 0
-                if typ not in self._ogf:
-                    self._ogf[typ] = {}
-                self._ogf[typ][param] = solve_ricc(self.A, E=self.E,
-                               B=self.B / np.sqrt(param), C=self.C / np.sqrt(param),
-                               R=-IdentityOperator(self.B.source),
-                               trans=False, meth=meth, tol=tol)
-            self._ogf[typ] = Z
-
-    def compute_sv_U_V(self, typ='lyap'):
-        """Compute the Hankel singular values and vectors.
+    def compute_sv_U_V(self, typ):
+        """Compute singular values and vectors.
 
         Parameters
         ----------
         typ
-            Type of the Gramian ('lyap', 'lqg', 'stoh', 'br', 'pr').
+            Type of the Gramian:
+            * ('lyap',): Lyapunov Gramian,
+            * ('lqg',): LQG Gramian,
+            * ('br', gamma): Bounded Real Gramian,
         """
         if typ not in self._sv or typ not in self._U or typ not in self._V:
-            self.compute_cgf(typ=typ)
-            self.compute_ogf(typ=typ)
+            typ_cf = (typ[0], 'cf') + typ[1:]
+            typ_of = (typ[0], 'of') + typ[1:]
+            self.compute_gramian(typ_cf)
+            self.compute_gramian(typ_of)
 
             if self.E is None:
-                U, self._sv[typ], Vh = spla.svd(self._ogf[typ].dot(self._cgf[typ]))
+                U, self._sv[typ], Vh = spla.svd(self._gramian[typ_of].dot(self._gramian[typ_cf]))
             else:
-                U, self._sv[typ], Vh = spla.svd(self.E.apply2(self._ogf[typ], self._cgf[typ]))
+                U, self._sv[typ], Vh = spla.svd(self.E.apply2(self._gramian[typ_of], self._gramian[typ_cf]))
 
             self._U[typ] = NumpyVectorArray(U.T)
             self._V[typ] = NumpyVectorArray(Vh)
-
-    # TODO: move this to compute_cgf
-    def compute_brsv_brU_brV(self, gamma=1.):
-        """Compute the bounded real singular values and vectors.
-
-        Parameters
-        ----------
-        gamma
-            Bound for the H_infinity norm.
-        """
-        if self._brsv is None or self._brU is None or self._brV is None:
-            self.compute_brcgf(gamma=gamma)
-            self.compute_brogf(gamma=gamma)
-
-            U, self._brsv, Vh = spla.svd(self._brogf.dot(self._brcgf))
-            self._brU = NumpyVectorArray(U.T)
-            self._brV = NumpyVectorArray(Vh)
 
     def norm(self, name='H2'):
         """Compute a norm of the |LTISystem|.
@@ -509,16 +477,17 @@ class LTISystem(DiscretizationInterface):
             if self._H2_norm is not None:
                 return self._H2_norm
 
-            if self._cgf['lyap'] is not None:
-                self._H2_norm = np.sqrt(self.C.apply(self._cgf['lyap']).l2_norm2().sum())
-            elif self._ogf['lyap'] is not None:
-                self._H2_norm = np.sqrt(self.B.apply_adjoint(self._ogf['lyap']).l2_norm2().sum())
+            if ('lyap', 'cf') in self._gramian:
+                self._H2_norm = np.sqrt(self.C.apply(self._gramian[('lyap', 'cf')]).l2_norm2().sum())
+            elif ('lyap', 'of') in self._gramian:
+                self._H2_norm = np.sqrt(self.B.apply_adjoint(self._gramian[('lyap', 'of')]).l2_norm2().sum())
             elif self.m <= self.p:
-                self.compute_cgf()
-                self._H2_norm = np.sqrt(self.C.apply(self._cgf['lyap']).l2_norm2().sum())
+                self.compute_gramian(('lyap', 'cf'))
+                self._H2_norm = np.sqrt(self.C.apply(self._gramian[('lyap', 'cf')]).l2_norm2().sum())
             else:
-                self.compute_ogf()
-                self._H2_norm = np.sqrt(self.B.apply_adjoint(self._ogf['lyap']).l2_norm2().sum())
+                self.compute_gramian(('lyap', 'of'))
+                self._H2_norm = np.sqrt(self.B.apply_adjoint(self._gramian[('lyap', 'of')]).l2_norm2().sum())
+
             return self._H2_norm
         elif name == 'Hinf':
             if self._Hinf_norm is not None:
@@ -535,10 +504,11 @@ class LTISystem(DiscretizationInterface):
             D = np.zeros((self.p, self.m)) if self.D is None else to_numpy_operator(self.D)._matrix
             E = np.eye(self.n) if self.E is None else to_numpy_operator(self.E)._matrix
             self._Hinf_norm, self._fpeak = ab13dd(dico, jobe, equil, jobd, self.n, self.m, self.p, A, E, B, C, D)
+
             return self._Hinf_norm
         elif name == 'Hankel':
-            self.compute_sv_U_V()
-            return self._sv['lyap'][0]
+            self.compute_sv_U_V(('lyap',))
+            return self._sv[('lyap',)][0]
         else:
             raise NotImplementedError('Only H2, Hinf, and Hankel norms are implemented.')
 
@@ -582,7 +552,7 @@ class LTISystem(DiscretizationInterface):
 
         return Ar, Br, Cr, Dr, Er
 
-    def bt(self, r=None, tol=None, typ='lyap', meth='bfsr'):
+    def bt(self, r=None, tol=None, typ='lyap', method='bfsr'):
         """Reduce using the Balanced Truncation method to order `r` or with tolerance `tol`.
 
         Parameters
@@ -590,10 +560,10 @@ class LTISystem(DiscretizationInterface):
         r
             Order of the reduced model if `tol` is `None`.
         tol
-            Tolerance for the absolute H_infinity-error if `r` is `None`.
+            Tolerance for the error bound if `r` is `None`.
         typ
-            Type of the Gramian ('lyap', 'lqg', 'stoh', 'br', 'pr').
-        meth
+            Type of the Gramian (see :func:`~pymor.discretizations.iosys.LTISytem.compute_sv_U_V`).
+        method
             Method used:
             * square root method ('sr')
             * balancing-free square root method ('bfsr')
@@ -611,97 +581,39 @@ class LTISystem(DiscretizationInterface):
         """
         assert r is not None and tol is None or r is None and tol is not None
         assert r is None or 0 < r < self.n
-        assert meth in {'sr', 'bfsr'}
+        assert method in ('sr', 'bfsr')
 
-        self.compute_cgf(typ=typ)
-        self.compute_ogf(typ=typ)
+        typ_cf = (typ[0], 'cf') + typ[1:]
+        typ_of = (typ[0], 'of') + typ[1:]
+        self.compute_gramian(typ_cf)
+        self.compute_gramian(typ_of)
 
-        if r is not None and r > min([len(self._cgf[typ]), len(self._ogf[typ])]):
+        if r is not None and r > min([len(self._gramian[typ_cf]), len(self._gramian[typ_of])]):
             raise ValueError('r needs to be smaller than the sizes of Gramian factors.\
                               Try reducing the tolerance in the low-rank Lyapunov equation solver.')
 
-        self.compute_sv_U_V(typ=typ)
+        self.compute_sv_U_V(typ)
 
-        # TODO: bound depending on typ
         if r is None:
             bounds = np.zeros(self._sv[typ].shape)
-            bounds[:-1] = 2 * self._sv[typ][-1:0:-1].cumsum()[::-1]
+            if typ[0] == 'lyap':
+                bounds[:-1] = 2 * self._sv[typ][-1:0:-1].cumsum()[::-1]
+            elif typ[0] == 'lqg':
+                tmp = self._sv[typ][-1:0:-1]
+                bounds[:-1] = 2 * (tmp / np.sqrt(1 + tmp ** 2)).cumsum()[::-1]
+            elif typ[0] == 'br':
+                bounds[:-1] = 2 * typ[1] * self._sv[typ][-1:0:-1].cumsum()[::-1]
             r = np.argmax(bounds <= tol) + 1
 
-        Vr = VectorArrayOperator(self._cgf[typ]).apply(self._V[typ], ind=range(r))
-        Wr = VectorArrayOperator(self._ogf[typ]).apply(self._U[typ], ind=range(r))
+        Vr = VectorArrayOperator(self._gramian[typ_cf]).apply(self._V[typ], ind=range(r))
+        Wr = VectorArrayOperator(self._gramian[typ_of]).apply(self._U[typ], ind=range(r))
 
-        if meth == 'sr':
+        if method == 'sr':
             alpha = 1 / np.sqrt(self._sv[typ][:r])
             Vr.scal(alpha)
             Wr.scal(alpha)
             Ar, Br, Cr, Dr, Er = self.project(Vr, Wr, Er_is_identity=True)
-        elif meth == 'bfsr':
-            Vr = gram_schmidt(Vr, atol=0, rtol=0)
-            Wr = gram_schmidt(Wr, atol=0, rtol=0)
-            Ar, Br, Cr, Dr, Er = self.project(Vr, Wr)
-
-        rom = LTISystem(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
-        rc = GenericRBReconstructor(Vr)
-        reduction_data = {'Vr': Vr, 'Wr': Wr}
-
-        return rom, rc, reduction_data
-
-    # TODO: move this to bt
-    def brbt(self, gamma=1., r=None, tol=None, meth='bfsr'):
-        """Reduce using the Bounded Real Balanced Truncation method to order `r` or with tolerance `tol`.
-
-        Parameters
-        ----------
-        gamma
-            Bound for the H_infinity norm.
-        r
-            Order of the reduced model if `tol` is `None`.
-        tol
-            Tolerance for the absolute H_infinity-error if `r` is `None`.
-        meth
-            Method used:
-            * square root method ('sr')
-            * balancing-free square root method ('bfsr')
-
-        Returns
-        -------
-        rom
-            Reduced |LTISystem|.
-        rc
-            The reconstructor providing a `reconstruct(U)` method which reconstructs
-            high-dimensional solutions from solutions `U` of the reduced |LTISystem|.
-        reduction_data
-            Dictionary of additional data produced by the reduction process.
-            Contains projection matrices `Vr` and `Wr`.
-        """
-        assert r is not None and tol is None or r is None and tol is not None
-        assert r is None or 0 < r < self.n
-        assert meth in {'sr', 'bfsr'}
-
-        self.compute_brcgf(gamma=gamma)
-        self.compute_brogf(gamma=gamma)
-
-        if r is not None and r > min([len(self._brcgf), len(self._brogf)]):
-            raise ValueError('r needs to be smaller than the sizes of Gramian factors.\
-                              Try reducing the tolerance in the low-rank Lyapunov equation solver.')
-
-        self.compute_brsv_brU_brV(gamma=gamma)
-
-        if r is None:
-            bounds = np.zeros(self._brsv.shape)
-            bounds[:-1] = 2 * self._brgamma * self._hsv[-1:0:-1].cumsum()[::-1]
-            r = np.argmax(bounds <= tol) + 1
-
-        Vr = VectorArrayOperator(self._brcgf).apply(self._brV, ind=range(r))
-        Wr = VectorArrayOperator(self._brogf).apply(self._brU, ind=range(r))
-
-        if meth == 'sr':
-            alpha = 1 / np.sqrt(self._brsv[:r])
-            Vr.scal(alpha)
-            Wr.scal(alpha)
-            Ar, Br, Cr, Dr, Er = self.project(Vr, Wr, Er_is_identity=True)
-        elif meth == 'bfsr':
+        elif method == 'bfsr':
             Vr = gram_schmidt(Vr, atol=0, rtol=0)
             Wr = gram_schmidt(Wr, atol=0, rtol=0)
             Ar, Br, Cr, Dr, Er = self.project(Vr, Wr)
