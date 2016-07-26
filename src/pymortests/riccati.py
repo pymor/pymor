@@ -43,7 +43,7 @@ def test_scipy(n, m, p):
     Cop = NumpyMatrixOperator(C)
     Rop = NumpyMatrixOperator(R)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, R=Rop, meth='scipy')
+    Z = solve_ricc(Aop, B=Bop, C=Cop, R=Rop, me_solver='scipy')
 
     assert len(Z) <= n
 
@@ -71,7 +71,7 @@ def test_scipy_trans(n, m, p):
     Cop = NumpyMatrixOperator(C)
     Rop = NumpyMatrixOperator(R)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, R=Rop, trans=True, meth='scipy')
+    Z = solve_ricc(Aop, B=Bop, C=Cop, R=Rop, trans=True, me_solver='scipy')
 
     assert len(Z) <= n
 
@@ -96,7 +96,7 @@ def test_pymess(n, m, p):
     Bop = NumpyMatrixOperator(B)
     Cop = NumpyMatrixOperator(C)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, meth='pymess_care')
+    Z = solve_ricc(Aop, B=Bop, C=Cop, me_solver='pymess_care')
 
     assert len(Z) <= n
 
@@ -119,7 +119,7 @@ def test_pymess_trans(n, m, p):
     Bop = NumpyMatrixOperator(B)
     Cop = NumpyMatrixOperator(C)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, trans=True, meth='pymess_care')
+    Z = solve_ricc(Aop, B=Bop, C=Cop, trans=True, me_solver='pymess_care')
 
     assert len(Z) <= n
 
@@ -144,7 +144,7 @@ def test_pymess_E(n, m, p):
     Cop = NumpyMatrixOperator(C)
     Eop = NumpyMatrixOperator(E)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, meth='pymess_care')
+    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, me_solver='pymess_care')
 
     assert len(Z) <= n
 
@@ -172,7 +172,7 @@ def test_pymess_E_trans(n, m, p):
     Cop = NumpyMatrixOperator(C)
     Eop = NumpyMatrixOperator(E)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, trans=True, meth='pymess_care')
+    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, trans=True, me_solver='pymess_care')
 
     assert len(Z) <= n
 
@@ -198,7 +198,7 @@ def test_slycot(n, m, p):
     Bop = NumpyMatrixOperator(B)
     Cop = NumpyMatrixOperator(C)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, meth='slycot')
+    Z = solve_ricc(Aop, B=Bop, C=Cop, me_solver='slycot')
 
     assert len(Z) <= n
 
@@ -221,7 +221,7 @@ def test_slycot_trans(n, m, p):
     Bop = NumpyMatrixOperator(B)
     Cop = NumpyMatrixOperator(C)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, trans=True, meth='slycot')
+    Z = solve_ricc(Aop, B=Bop, C=Cop, trans=True, me_solver='slycot')
 
     assert len(Z) <= n
 
@@ -246,7 +246,7 @@ def test_slycot_E(n, m, p):
     Cop = NumpyMatrixOperator(C)
     Eop = NumpyMatrixOperator(E)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, meth='slycot')
+    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, me_solver='slycot')
 
     assert len(Z) <= n
 
@@ -274,7 +274,7 @@ def test_slycot_E_trans(n, m, p):
     Cop = NumpyMatrixOperator(C)
     Eop = NumpyMatrixOperator(E)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, trans=True, meth='slycot')
+    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, trans=True, me_solver='slycot')
 
     assert len(Z) <= n
 
