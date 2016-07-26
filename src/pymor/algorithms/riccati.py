@@ -31,7 +31,7 @@ def operator2matrix(A):
 
 
 def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
-               trans=False, meth=None, tol=None):
+               trans=False, me_solver=None, tol=None):
     """Find a factor of the solution of a Riccati equation
 
     Returns factor Z such that Z * Z^T is approximately the solution X of a
@@ -73,9 +73,9 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
         The |Operator| L or None.
     trans
         If the dual equation needs to be solved.
-    meth
+    me_solver
         Method to use {'scipy', 'slycot', 'pymess_care'}.
-        If meth is None, a solver is chosen automatically.
+        If `me_solver` is None, a solver is chosen automatically.
     tol
         Tolerance parameter.
 
@@ -126,21 +126,21 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
             if R is not None:
                 assert isinstance(R, OperatorInterface) and R.linear
                 assert R.source == R.range == C.range
-    assert meth is None or meth in {'scipy', 'slycot', 'pymess_care'}
+    assert me_solver is None or me_solver in {'scipy', 'slycot', 'pymess_care'}
 
-    if meth is None:
+    if me_solver is None:
         import imp
         try:
             imp.find_module('slycot')
-            meth = 'slycot'
+            me_solver = 'slycot'
         except ImportError:
             try:
                 imp.find_module('pymess')
-                meth = 'pymess_care'
+                me_solver = 'pymess_care'
             except ImportError:
-                meth = 'scipy'
+                me_solver = 'scipy'
 
-    if meth == 'scipy':
+    if me_solver == 'scipy':
         if E is not None or G is not None:
             raise NotImplementedError()
         import scipy.linalg as spla
@@ -164,7 +164,7 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
             X = spla.solve_continuous_are(A_mat.T, C_mat.T, Q_mat, R_mat)
         from pymor.algorithms.cholp import cholp
         Z = cholp(X, copy=False)
-    elif meth == 'slycot':
+    elif me_solver == 'slycot':
         import slycot
         A_mat = operator2matrix(A)
         B_mat = operator2matrix(B)
@@ -237,7 +237,7 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
                 print('slycot.sg02ad warning: solution may be inaccurate.')
         from pymor.algorithms.cholp import cholp
         Z = cholp(X, copy=False)
-    elif meth == 'pymess_care':
+    elif me_solver == 'pymess_care':
         if Q is not None or R is not None or G is not None:
             raise NotImplementedError()
         import pymess
