@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 import scipy.sparse.linalg as spsla
 
-from pymor.algorithms.numpy import to_numpy_operator
+from pymor.algorithms.to_matrix import to_matrix
 from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.constructions import IdentityOperator, LincombOperator
 from pymor.operators.numpy import NumpyMatrixOperator
@@ -50,7 +50,7 @@ try:
 
             self.A = A
             self.E = E
-            self.RHS = to_numpy_operator(RHS)._matrix
+            self.RHS = to_matrix(RHS)
             if opt.type == pymess.MESS_OP_TRANSPOSE:
                 self.RHS = self.RHS.T
             self.p = []
@@ -244,8 +244,8 @@ def solve_lyap(A, E, B, trans=False, me_solver=None, tol=None):
         if E is not None:
             raise NotImplementedError()
         import scipy.linalg as spla
-        A_mat = to_numpy_operator(A)._matrix
-        B_mat = to_numpy_operator(B)._matrix
+        A_mat = to_matrix(A)
+        B_mat = to_matrix(B)
         if not trans:
             X = spla.solve_lyapunov(A_mat, -B_mat.dot(B_mat.T))
         else:
@@ -254,10 +254,10 @@ def solve_lyap(A, E, B, trans=False, me_solver=None, tol=None):
         Z = cholp(X, copy=False)
     elif me_solver == 'slycot':
         import slycot
-        A_mat = to_numpy_operator(A)._matrix
+        A_mat = to_matrix(A)
         if E is not None:
-            E_mat = to_numpy_operator(E)._matrix
-        B_mat = to_numpy_operator(B)._matrix
+            E_mat = to_matrix(E)
+        B_mat = to_matrix(B)
 
         n = A_mat.shape[0]
         if not trans:
@@ -285,10 +285,10 @@ def solve_lyap(A, E, B, trans=False, me_solver=None, tol=None):
         Z = cholp(X, copy=False)
     elif me_solver == 'pymess_lyap':
         import pymess
-        A_mat = to_numpy_operator(A)._matrix
+        A_mat = to_matrix(A)
         if E is not None:
-            E_mat = to_numpy_operator(E)._matrix
-        B_mat = to_numpy_operator(B)._matrix
+            E_mat = to_matrix(E)
+        B_mat = to_matrix(B)
         if not trans:
             if E is None:
                 Z = pymess.lyap(A_mat, None, B_mat)

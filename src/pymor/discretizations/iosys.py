@@ -12,7 +12,7 @@ import scipy.sparse as sps
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.lyapunov import solve_lyap
-from pymor.algorithms.numpy import to_numpy_operator
+from pymor.algorithms.to_matrix import to_matrix
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.operators.block import BlockOperator, BlockDiagonalOperator
 from pymor.operators.constructions import (Concatenation, IdentityOperator, LincombOperator,
@@ -291,7 +291,7 @@ class LTISystem(DiscretizationInterface):
             eye_p = C.range.from_data(sp.eye(self.p))
             tfs = B.apply_adjoint(iwEmA.apply_adjoint_inverse(C.apply_adjoint(eye_p))).data
         if D is not None:
-            tfs += to_numpy_operator(D)._matrix
+            tfs += to_matrix(D)
         return tfs
 
     def bode(self, w):
@@ -506,11 +506,11 @@ class LTISystem(DiscretizationInterface):
             jobe = 'I' if self.E is None else 'G'
             equil = 'S'
             jobd = 'Z' if self.D is None else 'D'
-            A = to_numpy_operator(self.A)._matrix
-            B = to_numpy_operator(self.B)._matrix
-            C = to_numpy_operator(self.C)._matrix
-            D = np.zeros((self.p, self.m)) if self.D is None else to_numpy_operator(self.D)._matrix
-            E = np.eye(self.n) if self.E is None else to_numpy_operator(self.E)._matrix
+            A = to_matrix(self.A)
+            B = to_matrix(self.B)
+            C = to_matrix(self.C)
+            D = np.zeros((self.p, self.m)) if self.D is None else to_matrix(self.D)
+            E = np.eye(self.n) if self.E is None else to_matrix(self.E)
             self._Hinf_norm, self._fpeak = ab13dd(dico, jobe, equil, jobd, self.n, self.m, self.p, A, E, B, C, D)
 
             return self._Hinf_norm
