@@ -975,7 +975,7 @@ class LTISystem(DiscretizationInterface):
             * projection matrices `Vr` and `Wr`,
             * distances between interpolation points in different iterations `dist`,
             * interpolation points from all iterations `Sigma`,
-            * final tangential directions `b` and `c`, and
+            * right and left tangential directions `R` and `L`, and
             * relative :math:`\mathcal{H}_2`-errors `errors` (if compute_errors is `True`).
         """
         assert 0 < r < self.n
@@ -1014,6 +1014,8 @@ class LTISystem(DiscretizationInterface):
 
         dist = []
         Sigma = [np.array(sigma)]
+        R = [b]
+        L = [c]
         if compute_errors:
             errors = []
         for it in range(maxit):
@@ -1047,6 +1049,8 @@ class LTISystem(DiscretizationInterface):
 
             b = Br.apply_adjoint(NumpyVectorArray(Y.conj().T))
             c = Cr.apply(NumpyVectorArray(X.T))
+            R.append(b)
+            L.append(c)
 
             if arnoldi:
                 if self.m == 1:
@@ -1067,7 +1071,7 @@ class LTISystem(DiscretizationInterface):
 
         rom = LTISystem(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
         rc = GenericRBReconstructor(Vr)
-        reduction_data = {'Vr': Vr, 'Wr': Wr, 'dist': dist, 'Sigma': Sigma, 'b': b, 'c': c}
+        reduction_data = {'Vr': Vr, 'Wr': Wr, 'dist': dist, 'Sigma': Sigma, 'R': R, 'L': L}
         if compute_errors:
             reduction_data['errors'] = errors
 
@@ -1247,7 +1251,7 @@ class TF(DiscretizationInterface):
 
             * distances between interpolation points in different iterations `dist`,
             * interpolation points from all iterations `Sigma`, and
-            * final tangential directions `b` and `c`.
+            * right and left tangential directions `R` and `L`.
         """
         assert r > 0
         assert sigma is None or len(sigma) == r
@@ -1269,6 +1273,8 @@ class TF(DiscretizationInterface):
 
         dist = []
         Sigma = [np.array(sigma)]
+        R = [b]
+        L = [c]
         for it in range(maxit):
             Er, Ar, Br, Cr = self.interpolation(sigma, b, c)
 
@@ -1288,12 +1294,14 @@ class TF(DiscretizationInterface):
 
             b = Br.T.dot(Y.conj())
             c = Cr.dot(X)
+            R.append(b)
+            L.append(c)
 
             if np.min(dist[-1]) < tol:
                 break
 
         Er, Ar, Br, Cr = self.interpolation(sigma, b, c)
         rom = LTISystem.from_matrices(Ar, Br, Cr, None, Er, cont_time=self.cont_time)
-        reduction_data = {'dist': dist, 'Sigma': Sigma, 'b': b, 'c': c}
+        reduction_data = {'dist': dist, 'Sigma': Sigma, 'R': R, 'L': L}
 
         return rom, reduction_data
