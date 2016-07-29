@@ -31,24 +31,24 @@ def fro_norm(A):
 def relative_residual(A, E, B, Z, trans=False):
     if not trans:
         if E is None:
-            AZZT = A.apply(Z).data.T.dot(Z.data)
-            BBT = B._matrix.dot(B._matrix.T)
+            AZZT = A.dot(Z).dot(Z.T)
+            BBT = B.dot(B.T)
             res = fro_norm(AZZT + AZZT.T + BBT)
             rhs = fro_norm(BBT)
         else:
-            AZZTET = A.apply(Z).data.T.dot(E.apply(Z).data)
-            BBT = B._matrix.dot(B._matrix.T)
+            AZZTET = A.dot(Z).dot(E.dot(Z).T)
+            BBT = B.dot(B.T)
             res = fro_norm(AZZTET + AZZTET.T + BBT)
             rhs = fro_norm(BBT)
     else:
         if E is None:
-            ATZZT = A.apply_adjoint(Z).data.T.dot(Z.data)
-            CTC = B._matrix.T.dot(B._matrix)
+            ATZZT = A.T.dot(Z).dot(Z.T)
+            CTC = B.T.dot(B)
             res = fro_norm(ATZZT + ATZZT.T + CTC)
             rhs = fro_norm(CTC)
         else:
-            ATZZTE = A.apply_adjoint(Z).data.T.dot(E.apply_adjoint(Z).data)
-            CTC = B._matrix.T.dot(B._matrix)
+            ATZZTE = A.T.dot(Z).dot(E.T.dot(Z).T)
+            CTC = B.T.dot(B)
             res = fro_norm(ATZZTE + ATZZTE.T + CTC)
             rhs = fro_norm(CTC)
     return res / rhs
@@ -62,12 +62,13 @@ def test_cgf_dense(n, m, me_solver):
     A = np.random.randn(n, n) - n * np.eye(n)
     B = np.random.randn(n, m)
 
-    A = NumpyMatrixOperator(A)
-    B = NumpyMatrixOperator(B)
+    Aop = NumpyMatrixOperator(A)
+    Bop = NumpyMatrixOperator(B)
 
-    Z = solve_lyap(A, None, B, me_solver=me_solver)
+    Zva = solve_lyap(Aop, None, Bop, me_solver=me_solver)
+    Z = Zva.data.T
 
-    assert len(Z) <= n
+    assert len(Zva) <= n
     assert relative_residual(A, None, B, Z) < 1e-10
 
 
@@ -86,13 +87,14 @@ def test_cgf_dense_E(n, m, me_solver):
 
     B = np.random.randn(n, m)
 
-    A = NumpyMatrixOperator(A)
-    E = NumpyMatrixOperator(E)
-    B = NumpyMatrixOperator(B)
+    Aop = NumpyMatrixOperator(A)
+    Eop = NumpyMatrixOperator(E)
+    Bop = NumpyMatrixOperator(B)
 
-    Z = solve_lyap(A, E, B, me_solver=me_solver)
+    Zva = solve_lyap(Aop, Eop, Bop, me_solver=me_solver)
+    Z = Zva.data.T
 
-    assert len(Z) <= n
+    assert len(Zva) <= n
     assert relative_residual(A, E, B, Z) < 1e-10
 
 
@@ -105,12 +107,13 @@ def test_cgf_sparse(n, m, me_solver):
     A -= n * sps.eye(n)
     B = sps.random(n, m, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
 
-    A = NumpyMatrixOperator(A)
-    B = NumpyMatrixOperator(B)
+    Aop = NumpyMatrixOperator(A)
+    Bop = NumpyMatrixOperator(B)
 
-    Z = solve_lyap(A, None, B, me_solver=me_solver)
+    Zva = solve_lyap(Aop, None, Bop, me_solver=me_solver)
+    Z = Zva.data.T
 
-    assert len(Z) <= n
+    assert len(Zva) <= n
     assert relative_residual(A, None, B, Z) < 1e-10
 
 
@@ -129,13 +132,14 @@ def test_cgf_sparse_E(n, m, me_solver):
 
     B = sps.random(n, m, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
 
-    A = NumpyMatrixOperator(A)
-    E = NumpyMatrixOperator(E)
-    B = NumpyMatrixOperator(B)
+    Aop = NumpyMatrixOperator(A)
+    Eop = NumpyMatrixOperator(E)
+    Bop = NumpyMatrixOperator(B)
 
-    Z = solve_lyap(A, E, B, me_solver=me_solver)
+    Zva = solve_lyap(Aop, Eop, Bop, me_solver=me_solver)
+    Z = Zva.data.T
 
-    assert len(Z) <= n
+    assert len(Zva) <= n
     assert relative_residual(A, E, B, Z) < 1e-10
 
 
@@ -147,12 +151,13 @@ def test_ogf_dense(n, p, me_solver):
     A = np.random.randn(n, n) - n * np.eye(n)
     C = np.random.randn(p, n)
 
-    A = NumpyMatrixOperator(A)
-    C = NumpyMatrixOperator(C)
+    Aop = NumpyMatrixOperator(A)
+    Cop = NumpyMatrixOperator(C)
 
-    Z = solve_lyap(A, None, C, trans=True, me_solver=me_solver)
+    Zva = solve_lyap(Aop, None, Cop, trans=True, me_solver=me_solver)
+    Z = Zva.data.T
 
-    assert len(Z) <= n
+    assert len(Zva) <= n
     assert relative_residual(A, None, C, Z, trans=True) < 1e-10
 
 
@@ -171,13 +176,14 @@ def test_ogf_dense_E(n, p, me_solver):
 
     C = np.random.randn(p, n)
 
-    A = NumpyMatrixOperator(A)
-    E = NumpyMatrixOperator(E)
-    C = NumpyMatrixOperator(C)
+    Aop = NumpyMatrixOperator(A)
+    Eop = NumpyMatrixOperator(E)
+    Cop = NumpyMatrixOperator(C)
 
-    Z = solve_lyap(A, E, C, trans=True, me_solver=me_solver)
+    Zva = solve_lyap(Aop, Eop, Cop, trans=True, me_solver=me_solver)
+    Z = Zva.data.T
 
-    assert len(Z) <= n
+    assert len(Zva) <= n
     assert relative_residual(A, E, C, Z, trans=True) < 1e-10
 
 
@@ -190,12 +196,13 @@ def test_ogf_sparse(n, p, me_solver):
     A -= n * sps.eye(n)
     C = sps.random(p, n, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
 
-    A = NumpyMatrixOperator(A)
-    C = NumpyMatrixOperator(C)
+    Aop = NumpyMatrixOperator(A)
+    Cop = NumpyMatrixOperator(C)
 
-    Z = solve_lyap(A, None, C, trans=True, me_solver=me_solver)
+    Zva = solve_lyap(Aop, None, Cop, trans=True, me_solver=me_solver)
+    Z = Zva.data.T
 
-    assert len(Z) <= n
+    assert len(Zva) <= n
     assert relative_residual(A, None, C, Z, trans=True) < 1e-10
 
 
@@ -214,11 +221,12 @@ def test_ogf_sparse_E(n, p, me_solver):
 
     C = sps.random(p, n, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
 
-    A = NumpyMatrixOperator(A)
-    E = NumpyMatrixOperator(E)
-    C = NumpyMatrixOperator(C)
+    Aop = NumpyMatrixOperator(A)
+    Eop = NumpyMatrixOperator(E)
+    Cop = NumpyMatrixOperator(C)
 
-    Z = solve_lyap(A, E, C, trans=True, me_solver=me_solver)
+    Zva = solve_lyap(Aop, Eop, Cop, trans=True, me_solver=me_solver)
+    Z = Zva.data.T
 
-    assert len(Z) <= n
+    assert len(Zva) <= n
     assert relative_residual(A, E, C, Z, trans=True) < 1e-10
