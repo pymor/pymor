@@ -12,6 +12,7 @@ import scipy.sparse as sps
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.lyapunov import solve_lyap
+from pymor.algorithms.riccati import solve_ricc
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.operators.block import BlockOperator, BlockDiagonalOperator
@@ -24,17 +25,19 @@ from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
 class LTISystem(DiscretizationInterface):
-    """Class for linear time-invariant systems
+    r"""Class for linear time-invariant systems
 
-    This class describes input-state-output systems given by::
+    This class describes input-state-output systems given by
 
-        E x'(t) = A x(t) + B u(t)
-           y(t) = C x(t) + D u(t)
+    .. math::
+        E x'(t) &= A x(t) + B u(t) \\
+           y(t) &= C x(t) + D u(t)
 
-    if continuous-time, or::
+    if continuous-time, or
 
-        E x(k + 1) = A x(k) + B u(k)
-          y(k)     = C x(k) + D u(k)
+    .. math::
+        E x(k + 1) &= A x(k) + B u(k) \\
+          y(k)     &= C x(k) + D u(k)
 
     if discrete-time, where A, B, C, D, and E are linear operators.
 
@@ -103,15 +106,15 @@ class LTISystem(DiscretizationInterface):
         Parameters
         ----------
         A
-            The |NumPy array|, |SciPy spmatrix| A.
+            The |NumPy array| or |SciPy spmatrix| A.
         B
-            The |NumPy array|, |SciPy spmatrix| B.
+            The |NumPy array| or |SciPy spmatrix| B.
         C
-            The |NumPy array|, |SciPy spmatrix| C.
+            The |NumPy array| or |SciPy spmatrix| C.
         D
-            The |NumPy array|, |SciPy spmatrix| D or `None` (then D is assumed to be zero).
+            The |NumPy array| or |SciPy spmatrix| D or `None` (then D is assumed to be zero).
         E
-            The |NumPy array|, |SciPy spmatrix| E or `None` (then E is assumed to be the identity).
+            The |NumPy array| or |SciPy spmatrix| E or `None` (then E is assumed to be the identity).
         cont_time
             `True` if the system is continuous-time, otherwise discrete-time.
 
@@ -275,7 +278,7 @@ class LTISystem(DiscretizationInterface):
         Returns
         -------
         tfs
-            Transfer function evaulated at the complex number s, 2D |NumPy array|.
+            Transfer function evaulated at the complex number `s`, 2D |NumPy array|.
         """
         A = self.A
         B = self.B
@@ -305,7 +308,8 @@ class LTISystem(DiscretizationInterface):
         Returns
         -------
         tfw
-            Transfer function values at frequencies in w, returned as a 3D |NumPy array| of shape `(p, m, len(w))`.
+            Transfer function values at frequencies in `w`,
+            returned as a 3D |NumPy array| of shape `(p, m, len(w))`.
         """
         if not self.cont_time:
             raise NotImplementedError
@@ -324,9 +328,11 @@ class LTISystem(DiscretizationInterface):
             A single |LTISystem| or a list of |LTISystems|.
         plot_style_list
             A string or a list of strings of the same length as `sys_list`.
+
             If `None`, matplotlib defaults are used.
         w
             Frequencies at which to compute the transfer function.
+
             If `None`, use `self._w`.
         ord
             Order of the norm used to compute the magnitude (the default is the Frobenius norm).
@@ -387,6 +393,7 @@ class LTISystem(DiscretizationInterface):
         ----------
         typ
             Type of the Gramian:
+
             * ('lyap', 'cf'): Lyapunov controllability Gramian factor,
             * ('lyap', 'of'): Lyapunov observability Gramian factor,
             * ('lqg', 'cf'): LQG controllability Gramian factor,
@@ -396,12 +403,12 @@ class LTISystem(DiscretizationInterface):
         me_solver
             Matrix equation solver to use (see
             :func:`pymor.algorithms.lyapunov.solve_lyap` or
-            :func:`pymor.algorithms.lyapunov.solve_ricc`).
+            :func:`pymor.algorithms.riccati.solve_ricc`).
         tol
             Tolerance parameter for the low-rank matrix equation solver.
+
             If `None`, then the default tolerance is used. Otherwise, it should be
-            a positive float and the controllability Gramian factor is recomputed
-            (if it was already computed).
+            a positive float and the Gramian factor is recomputed (if it was already computed).
         """
         assert isinstance(typ, tuple)
 
@@ -449,13 +456,14 @@ class LTISystem(DiscretizationInterface):
         ----------
         typ
             Type of the Gramian:
+
             * ('lyap',): Lyapunov Gramian,
             * ('lqg',): LQG Gramian,
             * ('br', gamma): Bounded Real Gramian,
         me_solver
             Matrix equation solver to use (see
             :func:`pymor.algorithms.lyapunov.solve_lyap` or
-            :func:`pymor.algorithms.lyapunov.solve_ricc`).
+            :func:`pymor.algorithms.riccati.solve_ricc`).
         """
         assert isinstance(typ, tuple)
 
@@ -479,7 +487,7 @@ class LTISystem(DiscretizationInterface):
         Parameters
         ----------
         name
-            Name of the norm ('H2', 'Hinf', 'Hankel')
+            Name of the norm ('H2', 'Hinf', 'Hankel').
         """
         if name == 'H2':
             if self._H2_norm is not None:
@@ -570,13 +578,14 @@ class LTISystem(DiscretizationInterface):
         tol
             Tolerance for the error bound if `r` is `None`.
         typ
-            Type of the Gramian (see :func:`~pymor.discretizations.iosys.LTISytem.compute_sv_U_V`).
+            Type of the Gramian (see :func:`~pymor.discretizations.iosys.LTISystem.compute_sv_U_V`).
         me_solver
             Matrix equation solver to use (see
             :func:`pymor.algorithms.lyapunov.solve_lyap` or
-            :func:`pymor.algorithms.lyapunov.solve_ricc`).
+            :func:`pymor.algorithms.riccati.solve_ricc`).
         method
             Projection method used:
+
             * square root method ('sr')
             * balancing-free square root method ('bfsr')
 
@@ -914,12 +923,18 @@ class LTISystem(DiscretizationInterface):
             Order of the reduced order model.
         sigma
             Initial interpolation points (closed under conjugation), list of length `r`.
+
+            If `None`, interpolation points are log-spaced between 0.1 and 10.
         b
             Initial right tangential directions, |VectorArray| of length `r` from `self.B.source`.
+
+            If `None`, `b` is chosen pseudo-randomly.
         c
             Initial left tangential directions, |VectorArray| of length `r` from `self.C.range`.
+
+            If `None`, `c` is chosen pseudo-randomly.
         tol
-            Tolerance, largest change in interpolation points.
+            Tolerance for the largest change in interpolation points.
         maxit
             Maximum number of iterations.
         verbose
@@ -930,7 +945,7 @@ class LTISystem(DiscretizationInterface):
         arnoldi
             Should the Arnoldi process be used for rational interpolation.
         compute_errors
-            Should the relative H_2-errors of intermediate reduced order models be computed.
+            Should the relative :math:`\mathcal{H}_2`-errors of intermediate reduced order models be computed.
 
         Returns
         -------
@@ -940,11 +955,12 @@ class LTISystem(DiscretizationInterface):
             Reconstructor of full state.
         reduction_data
             Dictionary of additional data produced by the reduction process. Contains:
+
             * projection matrices `Vr` and `Wr`,
             * distances between interpolation points in different iterations `dist`,
             * interpolation points from all iterations `Sigma`,
             * final tangential directions `b` and `c`, and
-            * relative H_2-errors `errors` (if compute_errors is `True`).
+            * relative :math:`\mathcal{H}_2`-errors `errors` (if compute_errors is `True`).
         """
         assert 0 < r < self.n
         assert sigma is None or len(sigma) == r
@@ -1045,17 +1061,7 @@ class LTISystem(DiscretizationInterface):
 class TF(DiscretizationInterface):
     """Class for input-output systems represented by a transfer function
 
-    This class describes input-output systems given by::
-
-        E x'(t) = A x(t) + B u(t)
-           y(t) = C x(t) + D u(t)
-
-    if continuous-time, or::
-
-        E x(k + 1) = A x(k) + B u(k)
-          y(k)     = C x(k) + D u(k)
-
-    if discrete-time, where A, B, C, D, and E are linear operators.
+    This class describes input-output systems given by a transfer function :math:`H(s)`.
 
     Parameters
     ----------
@@ -1065,6 +1071,7 @@ class TF(DiscretizationInterface):
         Number of outputs.
     H
         Transfer function defined at least on the open right complex half-plane.
+
         H(s) is a |NumPy array| of shape `(p, m)`.
     dH
         Complex derivative of H(s).
@@ -1192,12 +1199,18 @@ class TF(DiscretizationInterface):
             Order of the reduced order model.
         sigma
             Initial interpolation points (closed under conjugation), list of length `r`.
+
+            If `None`, interpolation points are log-spaced between 0.1 and 10.
         b
-            Initial right tangential directions, |NumPy array| of order `m x r`.
+            Initial right tangential directions, |NumPy array| of shape `(self.m, r)`.
+
+            If `None`, `b` is chosen pseudo-randomly.
         c
-            Initial left tangential directions, |NumPy array| of order `p x r`.
+            Initial left tangential directions, |NumPy array| of shape `(self.p, r)`.
+
+            If `None`, `c` is chosen pseudo-randomly.
         tol
-            Tolerance, largest change in interpolation points.
+            Tolerance for the largest change in interpolation points.
         maxit
             Maximum number of iterations.
         verbose
@@ -1212,6 +1225,7 @@ class TF(DiscretizationInterface):
             Reduced |LTISystem| model.
         reduction_data
             Dictionary of additional data produced by the reduction process. Contains:
+
             * distances between interpolation points in different iterations `dist`,
             * interpolation points from all iterations `Sigma`, and
             * final tangential directions `b` and `c`.

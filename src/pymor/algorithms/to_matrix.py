@@ -16,7 +16,7 @@ from pymor.operators.numpy import NumpyMatrixOperator
 
 
 def to_matrix(op, format=None, mu=None):
-    """Transfrom construction of NumpyMatrixOperators to NumPy or SciPy array
+    """Transform a construction of NumpyMatrixOperators to NumPy or SciPy array
 
     Parameters
     ----------
@@ -24,6 +24,7 @@ def to_matrix(op, format=None, mu=None):
         Operator.
     format
         Format of the resulting |SciPy spmatrix|.
+
         If `None`, a dense format is used.
     mu
         |Parameter|.

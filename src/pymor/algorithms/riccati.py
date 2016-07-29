@@ -16,12 +16,12 @@ def operator2matrix(A):
     Parameters
     ----------
     A
-        NumpyMatrixOperator or None.
+        NumpyMatrixOperator or `None`.
 
     Returns
     -------
     A_mat
-        |NumPy array| or None.
+        |NumPy array| or `None`.
     """
     if A is None:
         A_mat = None
@@ -34,20 +34,22 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
                trans=False, me_solver=None, tol=None):
     """Find a factor of the solution of a Riccati equation
 
-    Returns factor Z such that Z * Z^T is approximately the solution X of a
-    Riccati equation::
+    Returns factor :math:`Z` such that :math:`Z Z^T` is approximately the
+    solution :math:`X` of a Riccati equation
 
-        A^T * X * E + E^T * X * A - E^T * X * B * R^{-1} * B^T * X * E + Q = 0.
+    .. math::
+        A^T X E + E^T X A - E^T X B R^{-1} B^T X E + Q = 0.
 
-    If E in None, it is taken to be the identity matrix.
-    Q can instead be given as C^T * C. In this case, Q needs to be None, and
-    C not None.
+    If E in `None`, it is taken to be the identity matrix.
+    Q can instead be given as C^T * C. In this case, Q needs to be `None`, and
+    C not `None`.
     B * R^{-1} B^T can instead be given by G. In this case, B and R need to be
-    None, and G not None.
-    If R and G are None, then R is taken to be the identity matrix.
-    If trans is True, then the dual Riccati equation is solved::
+    `None`, and G not `None`.
+    If R and G are `None`, then R is taken to be the identity matrix.
+    If trans is `True`, then the dual Riccati equation is solved
 
-        A * X * E^T + E * X * A^T - E * X * C^T * R^{-1} * C * X * E^T + Q = 0,
+    .. math::
+        A X E^T + E X A^T - E X C^T R^{-1} C X E^T + Q = 0,
 
     where Q can be replaced by B * B^T and C^T * R^{-1} * C by G.
 
@@ -56,26 +58,26 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
     A
         The |Operator| A.
     B
-        The |Operator| B or None.
+        The |Operator| B or `None`.
     E
-        The |Operator| E or None.
+        The |Operator| E or `None`.
     Q
-        The |Operator| Q or None.
+        The |Operator| Q or `None`.
     C
-        The |Operator| C or None.
+        The |Operator| C or `None`.
     R
-        The |Operator| R or None.
+        The |Operator| R or `None`.
     D
-        The |Operator| D or None.
+        The |Operator| D or `None`.
     G
-        The |Operator| G or None.
+        The |Operator| G or `None`.
     L
-        The |Operator| L or None.
+        The |Operator| L or `None`.
     trans
         If the dual equation needs to be solved.
     me_solver
         Method to use {'scipy', 'slycot', 'pymess_care'}.
-        If `me_solver` is None, a solver is chosen automatically.
+        If `me_solver` is `None`, a solver is chosen automatically.
     tol
         Tolerance parameter.
 

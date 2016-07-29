@@ -17,20 +17,23 @@ try:
     import pymess
 
     class LyapunovEquation(pymess.equation):
-        """Lyapunov equation class for pymess
+        r"""Lyapunov equation class for pymess
 
-        Represents a Lyapunov equation::
+        Represents a Lyapunov equation
 
-            A * X + X * A^T + RHS * RHS^T = 0
+        .. math::
+            A X + X A^T + \text{RHS} \cdot \text{RHS}^T = 0
 
-        if E is `None`, otherwise a generalized Lyapunov equation::
+        if E is `None`, otherwise a generalized Lyapunov equation
 
-            A * X * E^T + E * X * A^T + RHS * RHS^T = 0.
+        .. math::
+            A X E^T + E X A^T + \text{RHS} \cdot \text{RHS}^T = 0.
 
-        For the dual Lyapunov equation::
+        For the dual Lyapunov equation
 
-            A^T * X + X * A + RHS^T * RHS = 0,
-            A^T * X * E + E^T * X * A + RHS^T * RHS = 0,
+        .. math::
+            A^T X + X A + \text{RHS}^T \cdot \text{RHS} = 0, \\
+            A^T X E + E^T X A + \text{RHS}^T \cdot \text{RHS} = 0,
 
         `opt.type` needs to be `pymess.MESS_OP_TRANSPOSE`.
 
@@ -179,35 +182,41 @@ except ImportError:
 def solve_lyap(A, E, B, trans=False, me_solver=None, tol=None):
     """Find a factor of the solution of a Lyapunov equation
 
-    Returns factor Z such that Z * Z^T is approximately the solution X of a Lyapunov equation (if E is None)::
+    Returns factor :math:`Z` such that :math:`Z Z^T` is approximately
+    the solution :math:`X` of a Lyapunov equation (if E is `None`)
 
-        A * X + X * A^T + B * B^T = 0
+    .. math::
+        A X + X A^T + B B^T = 0
 
-    or generalized Lyapunov equation::
+    or generalized Lyapunov equation
 
-        A * X * E^T + E * X * A^T + B * B^T = 0.
+    .. math::
+        A X E^T + E X A^T + B B^T = 0.
 
-    If trans is True, then solve (if E is None)::
+    If trans is `True`, then solve (if E is `None`)
 
-        A^T * X + X * A + B^T * B = 0
+    .. math::
+        A^T X + X A + B^T B = 0
 
-    or::
+    or
 
-        A^T * X * E + E^T * X * A + B^T * B = 0.
+    .. math::
+        A^T X E + E^T X A + B^T B = 0.
 
     Parameters
     ----------
     A
         The |Operator| A.
     E
-        The |Operator| E or None.
+        The |Operator| E or `None`.
     B
         The |Operator| B.
     trans
         If the dual equation needs to be solved.
     me_solver
         Method to use ('scipy', 'slycot', 'pymess_lyap', 'pymess_lradi').
-        If `me_solver` is None, a method is chosen according to availability and priority::
+
+        If `me_solver` is `None`, a method is chosen according to availability and priority:
 
             'pymess_lradi' (for bigger problems) > 'pymess_lyap' (for smaller problems) > 'slycot' > 'scipy'.
     tol
