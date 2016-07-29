@@ -571,6 +571,15 @@ class LTISystem(DiscretizationInterface):
     def bt(self, r=None, tol=None, typ=('lyap',), me_solver=None, method='bfsr'):
         """Reduce using the Balanced Truncation method to order `r` or with tolerance `tol`.
 
+        .. [A05]  A. Antoulas, Approximation of Large-Scale Dynamical Systems,
+                  SIAM, 2005.
+        .. [MG91] D. Mustafa, K. Glover, Controller Reduction by H_∞-Balanced Truncation,
+                  IEEE Transactions on Automatic Control, 36(6), 668-682, 1991.
+        .. [OJ88] P. C. Opdenacker, E. A. Jonckheere, A Contraction Mapping
+                  Preserving Balanced Reduction Scheme and Its Infinity Norm
+                  Error Bounds,
+                  IEEE Transactions on Circuits and Systems, 35(2), 184-189, 1988.
+
         Parameters
         ----------
         r
@@ -917,6 +926,13 @@ class LTISystem(DiscretizationInterface):
              arnoldi=False, compute_errors=False):
         """Reduce using IRKA.
 
+        .. [GAB08] S. Gugercin, A. C. Antoulas, C. A. Beattie, H_2 model reduction
+                   for large-scale linear dynamical systems,
+                   SIAM Journal on Matrix Analysis and Applications, 30(2), 609-638, 2008.
+        .. [ABG10] A. C. Antoulas, C. A. Beattie, S. Gugercin, Interpolatory model
+                   reduction of large-scale dynamical systems,
+                   Efficient Modeling and Control of Large-Scale Systems, Springer-Verlag, 2010.
+
         Parameters
         ----------
         r
@@ -1192,6 +1208,9 @@ class TF(DiscretizationInterface):
 
     def tf_irka(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_stability=True):
         """Reduce using TF-IRKA.
+
+        .. [AG12] C. A. Beattie, S. Gugercin, Realization-independent H2-approximation,
+                  Proceedings of the 51st IEEE Conference on Decision and Control, 2012.
 
         Parameters
         ----------
