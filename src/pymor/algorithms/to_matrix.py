@@ -70,7 +70,7 @@ def _to_matrix(op, format, mapping, mu):
                 else:
                     mat_blocks[i].append(_to_matrix(op_blocks[i, j], format, mapping, mu))
         if format is None:
-            res = np.bmat(mat_blocks)
+            res = np.array(np.bmat(mat_blocks))
         else:
             res = sps.bmat(mat_blocks, format=format)
     elif isinstance(op, AdjointOperator):
