@@ -376,6 +376,8 @@ class IdentityOperator(OperatorBase):
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         if all(isinstance(op, IdentityOperator) for op in operators):
+            if len(operators) == 1:  # avoid infinite recursion
+                return None
             assert all(op.source == operators[0].source for op in operators)
             return IdentityOperator(operators[0].source, name=name) * sum(coefficients)
         else:
@@ -515,7 +517,7 @@ class ZeroOperator(OperatorBase):
             return operators[1].assemble_lincomb(operators[1:], coefficients[1:], solver_options=solver_options,
                                                  name=name)
         else:
-            return self
+            return None
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
