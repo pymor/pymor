@@ -88,6 +88,7 @@ class LTISystem(DiscretizationInterface):
         self.D = D
         self.E = E
         self.cont_time = cont_time
+        self._poles = None
         self._w = None
         self._tfw = None
         self._gramian = {}
@@ -266,6 +267,13 @@ class LTISystem(DiscretizationInterface):
             E = BlockDiagonalOperator((self.E, other.E))
 
         return LTISystem(A, B, C, D, E, self.cont_time)
+
+    def compute_poles(self):
+        """Compute system poles."""
+        if self._poles is None:
+            A = to_matrix(self.A)
+            E = None if self.E is None else to_matrix(self.E)
+            self._poles = spla.eigvals(A, E)
 
     def eval_tf(self, s):
         """Evaluate the transfer function.
