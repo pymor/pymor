@@ -119,7 +119,7 @@ class BlockVectorArray(VectorArrayInterface):
         assert all([dot.shape == dots[0].shape for dot in dots])
         ret = np.zeros(dots[0].shape)
         for dot in dots:
-            ret += dot
+            ret = ret + dot
         return ret
 
     def pairwise_dot(self, other, ind=None, o_ind=None):
@@ -129,7 +129,7 @@ class BlockVectorArray(VectorArrayInterface):
         assert all([dot.shape == dots[0].shape for dot in dots])
         ret = np.zeros(dots[0].shape)
         for dot in dots:
-            ret += dot
+            ret = ret + dot
         return ret
 
     def lincomb(self, coefficients, ind=None):
