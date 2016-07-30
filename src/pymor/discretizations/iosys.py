@@ -25,7 +25,7 @@ from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
 class LTISystem(DiscretizationInterface):
-    r"""Class for linear time-invariant systems
+    r"""Class for linear time-invariant systems.
 
     This class describes input-state-output systems given by
 
@@ -268,7 +268,7 @@ class LTISystem(DiscretizationInterface):
         return LTISystem(A, B, C, D, E, self.cont_time)
 
     def eval_tf(self, s):
-        """Evaluate the transfer function
+        """Evaluate the transfer function.
 
         Parameters
         ----------
@@ -278,7 +278,7 @@ class LTISystem(DiscretizationInterface):
         Returns
         -------
         tfs
-            Transfer function evaulated at the complex number `s`, 2D |NumPy array|.
+            Transfer function evaluated at the complex number `s`, 2D |NumPy array|.
         """
         A = self.A
         B = self.B
@@ -320,7 +320,7 @@ class LTISystem(DiscretizationInterface):
 
     @classmethod
     def mag_plot(cls, sys_list, plot_style_list=None, w=None, ord=None, dB=False, Hz=False):
-        """Draw the magnitude Bode plot
+        """Draw the magnitude Bode plot.
 
         Parameters
         ----------
@@ -655,7 +655,7 @@ class LTISystem(DiscretizationInterface):
         return rom, rc, reduction_data
 
     def arnoldi(self, sigma, b_or_c):
-        """Rational Arnoldi algorithm
+        """Rational Arnoldi algorithm.
 
         Implemented only for single-input or single-output systems.
 
@@ -742,7 +742,7 @@ class LTISystem(DiscretizationInterface):
         return V
 
     def arnoldi_tangential(self, sigma, b_or_c, directions):
-        """Tangential Rational Arnoldi algorithm
+        """Tangential Rational Arnoldi algorithm.
 
         Implemented only for multi-input or multi-output systems.
 
@@ -1079,7 +1079,7 @@ class LTISystem(DiscretizationInterface):
 
 
 class TF(DiscretizationInterface):
-    """Class for input-output systems represented by a transfer function
+    """Class for input-output systems represented by a transfer function.
 
     This class describes input-output systems given by a transfer function :math:`H(s)`.
 
