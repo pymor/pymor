@@ -463,7 +463,7 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
         |BoundaryInfo| for the treatment of Dirichlet boundary conditions.
     diffusion_function
         The |Function| `d(x)` with ``shape_range == ()`` or
-        ``shape_range = (grid.dim_outer, grid.dim_outer)``. If `None`, constant one is
+        ``shape_range = (grid.dim, grid.dim)``. If `None`, constant one is
         assumed.
     diffusion_constant
         The constant `c`. If `None`, `c` is set to one.
@@ -486,8 +486,8 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
         assert grid.reference_element(0) in {triangle, line}, 'A simplicial grid is expected!'
         assert diffusion_function is None \
             or (isinstance(diffusion_function, FunctionInterface) and
-                diffusion_function.dim_domain == grid.dim_outer and
-                diffusion_function.shape_range == () or diffusion_function.shape_range == (grid.dim_outer,) * 2)
+                diffusion_function.dim_domain == grid.dim and
+                diffusion_function.shape_range == () or diffusion_function.shape_range == (grid.dim,) * 2)
         self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
@@ -583,7 +583,7 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         |BoundaryInfo| for the treatment of Dirichlet boundary conditions.
     diffusion_function
         The |Function| `d(x)` with ``shape_range == ()`` or
-        ``shape_range = (grid.dim_outer, grid.dim_outer)``. If `None`, constant one is
+        ``shape_range = (grid.dim, grid.dim)``. If `None`, constant one is
         assumed.
     diffusion_constant
         The constant `c`. If `None`, `c` is set to one.
@@ -606,8 +606,8 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         assert grid.reference_element(0) in {square}, 'A square grid is expected!'
         assert diffusion_function is None \
             or (isinstance(diffusion_function, FunctionInterface) and
-                diffusion_function.dim_domain == grid.dim_outer and
-                diffusion_function.shape_range == () or diffusion_function.shape_range == (grid.dim_outer,) * 2)
+                diffusion_function.dim_domain == grid.dim and
+                diffusion_function.shape_range == () or diffusion_function.shape_range == (grid.dim,) * 2)
         self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
@@ -702,7 +702,7 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
     boundary_info
         |BoundaryInfo| for the treatment of Dirichlet boundary conditions.
     advection_function
-        The |Function| `v(x)` with ``shape_range = (grid.dim_outer, )``.
+        The |Function| `v(x)` with ``shape_range = (grid.dim, )``.
         If `None`, constant one is assumed.
     advection_constant
         The constant `c`. If `None`, `c` is set to one.
@@ -725,8 +725,8 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
         assert grid.reference_element(0) in {triangle, line}, 'A simplicial grid is expected!'
         assert advection_function is None \
             or (isinstance(advection_function, FunctionInterface) and
-                advection_function.dim_domain == grid.dim_outer and
-                advection_function.shape_range == (grid.dim_outer,))
+                advection_function.dim_domain == grid.dim and
+                advection_function.shape_range == (grid.dim,))
         self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
@@ -820,7 +820,7 @@ class AdvectionOperatorQ1(NumpyMatrixBasedOperator):
     boundary_info
         |BoundaryInfo| for the treatment of Dirichlet boundary conditions.
     advection_function
-        The |Function| `v(x)` with ``shape_range = (grid.dim_outer, )``.
+        The |Function| `v(x)` with ``shape_range = (grid.dim, )``.
         If `None`, constant one is assumed.
     advection_constant
         The constant `c`. If `None`, `c` is set to one.
@@ -843,8 +843,8 @@ class AdvectionOperatorQ1(NumpyMatrixBasedOperator):
         assert grid.reference_element(0) in {square}, 'A square grid is expected!'
         assert advection_function is None \
             or (isinstance(advection_function, FunctionInterface) and
-                advection_function.dim_domain == grid.dim_outer and
-                advection_function.shape_range == (grid.dim_outer,))
+                advection_function.dim_domain == grid.dim and
+                advection_function.shape_range == (grid.dim,))
         self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
         self.boundary_info = boundary_info
@@ -954,9 +954,9 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
     def __init__(self, grid, boundary_info, robin_data=None, order=2, solver_options=None, name=None):
         assert robin_data is None or (isinstance(robin_data, tuple) and len(robin_data) == 2)
         assert robin_data is None or all([isinstance(f, FunctionInterface)
-                                          and f.dim_domain == grid.dim_outer
+                                          and f.dim_domain == grid.dim
                                           and (f.shape_range == ()
-                                               or f.shape_range == (grid.dim_outer,)
+                                               or f.shape_range == (grid.dim,)
                                                ) for f in robin_data])
         self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
         self.grid = grid
@@ -1020,7 +1020,7 @@ class InterpolationOperator(NumpyMatrixBasedOperator):
     linear = True
 
     def __init__(self, grid, function):
-        assert function.dim_domain == grid.dim_outer
+        assert function.dim_domain == grid.dim
         assert function.shape_range == ()
         self.grid = grid
         self.function = function

@@ -36,7 +36,6 @@ class SubGrid(AffineGridInterface):
     def __init__(self, grid, entities):
         assert isinstance(grid, AffineGridInterface)
         self.dim = grid.dim
-        self.dim_outer = grid.dim_outer
         self.reference_element = grid.reference_element
 
         parent_indices = [np.array(np.unique(entities), dtype=np.int32)]

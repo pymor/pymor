@@ -21,12 +21,6 @@ def monkey_allclose(a, b, rtol=1.e-5, atol=1.e-8):
 np.testing.assert_allclose = monkey_allclose
 
 
-def test_dim_outer(grid):
-    g = grid
-    assert isinstance(g.dim_outer, int)
-    assert g.dim_outer >= g.dim
-
-
 def test_reference_element_wrong_arguments(grid):
     g = grid
     with pytest.raises(AssertionError):
@@ -61,8 +55,8 @@ def test_embeddings_shape(grid):
         RES = g.embeddings(d)
         assert len(RES) == 2
         A, B = RES
-        assert A.shape == (g.size(d), g.dim_outer, g.dim - d)
-        assert B.shape == (g.size(d), g.dim_outer)
+        assert A.shape == (g.size(d), g.dim, g.dim - d)
+        assert B.shape == (g.size(d), g.dim)
 
 
 def test_embeddings_transitivity(grid):
@@ -91,7 +85,7 @@ def test_jacobian_inverse_transposed_wrong_arguments(grid):
 def test_jacobian_inverse_transposed_shape(grid):
     g = grid
     for d in range(g.dim):
-        assert g.jacobian_inverse_transposed(d).shape == (g.size(d), g.dim_outer, g.dim - d)
+        assert g.jacobian_inverse_transposed(d).shape == (g.size(d), g.dim, g.dim - d)
 
 
 def test_jacobian_inverse_transposed_values(grid):
@@ -174,7 +168,7 @@ def test_volumes_inverse_values(grid):
 def test_unit_outer_normals_shape(grid):
     g = grid
     SE = g.subentities(0, 1)
-    assert g.unit_outer_normals().shape == SE.shape + (g.dim_outer,)
+    assert g.unit_outer_normals().shape == SE.shape + (g.dim,)
 
 
 def test_unit_outer_normals_normed(grid):
@@ -216,7 +210,7 @@ def test_centers_wrong_arguments(grid):
 def test_centers_shape(grid):
     g = grid
     for d in range(g.dim):
-        assert g.centers(d).shape == (g.size(d), g.dim_outer)
+        assert g.centers(d).shape == (g.size(d), g.dim)
 
 
 def test_centers_values(grid):
@@ -274,8 +268,8 @@ def test_quadrature_points_shape(grid):
         os, ps = g.reference_element(d).quadrature_info()
         for t in os.keys():
             for o, p in zip(os[t], ps[t]):
-                assert g.quadrature_points(d, order=o, quadrature_type=t).shape == (g.size(d), p, g.dim_outer)
-                assert g.quadrature_points(d, npoints=p, quadrature_type=t).shape == (g.size(d), p, g.dim_outer)
+                assert g.quadrature_points(d, order=o, quadrature_type=t).shape == (g.size(d), p, g.dim)
+                assert g.quadrature_points(d, npoints=p, quadrature_type=t).shape == (g.size(d), p, g.dim)
 
 
 def test_quadrature_points_values(grid):
@@ -294,7 +288,7 @@ def test_quadrature_points_values(grid):
 def test_bounding_box(grid):
     g = grid
     bbox = g.bounding_box()
-    assert bbox.shape == (2, g.dim_outer)
+    assert bbox.shape == (2, g.dim)
     assert np.all(bbox[0] <= bbox[1])
     assert np.all(g.centers(g.dim) >= bbox[0])
     assert np.all(g.centers(g.dim) <= bbox[1])

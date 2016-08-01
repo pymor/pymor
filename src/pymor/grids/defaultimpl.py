@@ -267,9 +267,9 @@ class AffineGridDefaultImplementations(object):
 
     @cached
     def _bounding_box(self):
-        bbox = np.empty((2, self.dim_outer))
+        bbox = np.empty((2, self.dim))
         centers = self.centers(self.dim)
-        for dim in range(self.dim_outer):
+        for dim in range(self.dim):
             bbox[0, dim] = np.min(centers[:, dim])
             bbox[1, dim] = np.max(centers[:, dim])
         return bbox
