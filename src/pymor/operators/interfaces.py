@@ -70,7 +70,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         pass
 
     @abstractmethod
-    def apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None):
+    def apply2(self, V, U, U_ind=None, V_ind=None, mu=None):
         """Treat the operator as a 2-form by calculating (V, A(U)).
 
         In particular, if ( , ) is the Euclidean product and A is a linear operator
@@ -104,7 +104,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         pass
 
     @abstractmethod
-    def pairwise_apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None):
+    def pairwise_apply2(self, V, U, U_ind=None, V_ind=None, mu=None):
         """Treat the operator as a 2-form by calculating (V, A(U)).
 
         Same as :meth:`OperatorInterface.apply2`, except that vectors from `V`
