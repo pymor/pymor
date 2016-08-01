@@ -274,88 +274,6 @@ def test_remove(vector_array):
         assert len(c) == 0
 
 
-def test_replace(compatible_vector_array_pair):
-    v1, v2 = compatible_vector_array_pair
-    len_v1, len_v2 = len(v1), len(v2)
-    if hasattr(v1, 'data'):
-        dv1 = v1.data
-        dv2 = v2.data
-    for ind1, ind2 in valid_inds_of_same_length(v1, v2):
-        if v1.len_ind(ind1) != v1.len_ind_unique(ind1):
-            with pytest.raises(Exception):
-                c1, c2 = v1.copy(), v2.copy()
-                c1.replace(c2, ind=ind1, o_ind=ind2, remove_from_other=False)
-            with pytest.raises(Exception):
-                c1, c2 = v1.copy(), v2.copy()
-                c1.replace(c2, ind=ind1, o_ind=ind2, remove_from_other=True)
-            continue
-        c1, c2 = v1.copy(), v2.copy()
-        c1.replace(c2, ind=ind1, o_ind=ind2, remove_from_other=False)
-        assert len(c1) == len(v1)
-        assert c1.dim == v1.dim
-        assert c1.subtype == v1.subtype
-        assert np.all(almost_equal(c1, v2, U_ind=ind1, V_ind=ind2))
-        assert np.all(almost_equal(c2, v2))
-        if hasattr(v1, 'data'):
-            x = dv1.copy()
-            if NUMPY_INDEX_QUIRK and len(x) == 0 and hasattr(ind1, '__len__') and len(ind1) == 0:
-                pass
-            else:
-                x[ind1] = indexed(dv2, ind2)
-            assert np.allclose(c1.data, x)
-
-        c1, c2 = v1.copy(), v2.copy()
-        c1.replace(c2, ind=ind1, o_ind=ind2, remove_from_other=True)
-        assert len(c1) == len(v1)
-        assert c1.dim == v1.dim
-        assert c1.subtype == v1.subtype
-        ind2_complement = ind_complement(v2, ind2)
-        assert np.all(almost_equal(c1, v2, U_ind=ind1, V_ind=ind2))
-        assert len(c2) == len(ind2_complement)
-        assert np.all(almost_equal(c2, v2, V_ind=ind2_complement))
-        if hasattr(v1, 'data'):
-            x = dv1.copy()
-            if NUMPY_INDEX_QUIRK and len(x) == 0 and hasattr(ind1, '__len__') and len(ind1) == 0:
-                pass
-            else:
-                x[ind1] = indexed(dv2, ind2)
-            assert np.allclose(c1.data, x)
-            assert np.allclose(c2.data, indexed(dv2, ind2_complement))
-
-
-def test_replace_self(vector_array):
-    v = vector_array
-    if hasattr(v, 'data'):
-        dv = v.data
-    for ind1, ind2 in valid_inds_of_same_length(v, v):
-        if v.len_ind(ind1) != v.len_ind_unique(ind1):
-            c = v.copy()
-            with pytest.raises(Exception):
-                c.replace(c, ind=ind1, o_ind=ind2, remove_from_other=False)
-            c = v.copy()
-            with pytest.raises(Exception):
-                c.replace(c, ind=ind1, o_ind=ind2, remove_from_other=True)
-            continue
-
-        c = v.copy()
-        with pytest.raises(Exception):
-            c.replace(c, ind=ind1, o_ind=ind2, remove_from_other=True)
-
-        c = v.copy()
-        c.replace(c, ind=ind1, o_ind=ind2, remove_from_other=False)
-        assert len(c) == len(v)
-        assert c.dim == v.dim
-        assert c.subtype == v.subtype
-        assert np.all(almost_equal(c, v, U_ind=ind1, V_ind=ind2))
-        if hasattr(v, 'data'):
-            x = dv.copy()
-            if NUMPY_INDEX_QUIRK and len(x) == 0 and hasattr(ind1, '__len__') and len(ind1) == 0:
-                pass
-            else:
-                x[ind1] = indexed(dv, ind2)
-            assert np.allclose(c.data, x)
-
-
 def test_scal(vector_array):
     v = vector_array
     if hasattr(v, 'data'):
@@ -940,17 +858,6 @@ def test_append_incompatible(incompatible_vector_array_pair):
         c1.append(c2, ind=0)
 
 
-def test_replace_incompatible(incompatible_vector_array_pair):
-    v1, v2 = incompatible_vector_array_pair
-    for ind1, ind2 in valid_inds_of_same_length(v1, v2):
-        c1, c2 = v1.copy(), v2.copy()
-        with pytest.raises(Exception):
-            c1.replace(c2, ind=ind1, o_ind=ind2, remove_from_other=False)
-        c1, c2 = v1.copy(), v2.copy()
-        with pytest.raises(Exception):
-            c1.replace(c2, ind=ind1, o_ind=ind2, remove_from_other=True)
-
-
 def test_axpy_incompatible(incompatible_vector_array_pair):
     v1, v2 = incompatible_vector_array_pair
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
@@ -1032,17 +939,6 @@ def test_remove_wrong_ind(vector_array):
         c = v.copy()
         with pytest.raises(Exception):
             c.remove(ind)
-
-
-def test_replace_wrong_ind(compatible_vector_array_pair):
-    v1, v2 = compatible_vector_array_pair
-    for ind1, ind2 in invalid_ind_pairs(v1, v2):
-        c1, c2 = v1.copy(), v2.copy()
-        with pytest.raises(Exception):
-            c1.replace(c2, ind=ind1, o_ind=ind2, remove_from_other=False)
-        c1, c2 = v1.copy(), v2.copy()
-        with pytest.raises(Exception):
-            c1.replace(c2, ind=ind1, o_ind=ind2, remove_from_other=True)
 
 
 def test_scal_wrong_ind(vector_array):
