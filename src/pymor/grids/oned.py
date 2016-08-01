@@ -21,7 +21,6 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
     """
 
     dim = 1
-    dim_outer = 1
     reference_element = line
 
     def __init__(self, domain=(0, 1), num_intervals=4, identify_left_right=False):

@@ -462,7 +462,7 @@ class PatchVisualizer(BasicInterface):
 
     def __init__(self, grid, bounding_box=([0, 0], [1, 1]), codim=2, backend=None, block=False):
         assert grid.reference_element in (triangle, square)
-        assert grid.dim_outer == 2
+        assert grid.dim == 2
         assert codim in (0, 2)
         self.grid = grid
         self.bounding_box = bounding_box

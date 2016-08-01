@@ -691,7 +691,7 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
         assert isinstance(grid, AffineGridWithOrthogonalCentersInterface)
         assert diffusion_function is None \
             or (isinstance(diffusion_function, FunctionInterface) and
-                diffusion_function.dim_domain == grid.dim_outer and
+                diffusion_function.dim_domain == grid.dim and
                 diffusion_function.shape_range == ())
         self.grid = grid
         self.boundary_info = boundary_info

@@ -26,7 +26,6 @@ class UnstructuredTriangleGrid(AffineGridInterface):
     """
 
     dim = 2
-    dim_outer = 2
     reference_element = triangle
 
     def __init__(self, vertices, faces):
