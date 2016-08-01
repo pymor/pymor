@@ -91,13 +91,6 @@ class BlockVectorArray(VectorArrayInterface):
         for block in self._blocks:
             block.remove(ind)
 
-    def replace(self, other, ind=None, o_ind=None, remove_from_other=False):
-        assert other in self.space
-        assert self.check_ind(ind)
-        assert other.check_ind(o_ind)
-        for block, o_block in zip(self._blocks, other._blocks):
-            block.replace(o_block, ind=ind, o_ind=o_ind, remove_from_other=remove_from_other)
-
     def scal(self, alpha, ind=None):
         for block in self._blocks:
             block.scal(alpha, ind=ind)
