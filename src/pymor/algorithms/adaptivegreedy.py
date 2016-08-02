@@ -132,7 +132,7 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
 
         # initial setup for main loop
         d = discretization
-        basis = initial_basis
+        basis = initial_basis if initial_basis is not None else d.solution_space.empty()
         rd, rc, reduction_data = None, None, None
         hierarchic = False
 
@@ -262,7 +262,7 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
                 U = discretization.solve(max_err_mu)
             with logger.block('Extending basis with solution snapshot ...'):
                 try:
-                    basis, extension_data = extension_algorithm(basis, U)
+                    extension_data = extension_algorithm(basis, U)
                 except ExtensionError:
                     logger.info('Extension failed. Stopping now.')
                     break
