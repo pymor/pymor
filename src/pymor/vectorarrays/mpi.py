@@ -90,10 +90,6 @@ class MPIVectorArray(VectorArrayInterface):
     def remove(self, ind=None):
         mpi.call(mpi.method_call, self.obj_id, 'remove', ind=ind)
 
-    def replace(self, other, ind=None, o_ind=None, remove_from_other=False):
-        mpi.call(mpi.method_call, self.obj_id, 'replace', other.obj_id,
-                 ind=ind, o_ind=o_ind, remove_from_other=remove_from_other)
-
     def scal(self, alpha, ind=None):
         mpi.call(mpi.method_call, self.obj_id, 'scal', alpha, ind=ind)
 

@@ -172,37 +172,6 @@ class DiskVectorArray(VectorArrayInterface):
                         os.path.join(self.dir, str(d)))
         self._len = len(remaining)
 
-    def replace(self, other, ind=None, o_ind=None, remove_from_other=False):
-        assert self.check_ind_unique(ind)
-        self._cache.clear()
-        assert other.check_ind(o_ind)
-        assert other.space == self.space
-        assert other is not self or not remove_from_other
-        ind = list(range(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
-        o_ind = list(range(other._len)) if o_ind is None else [o_ind] if isinstance(o_ind, Number) else o_ind
-        assert len(ind) == len(o_ind)
-
-        if other is self:
-            backup = set(ind).intersection(set(o_ind))
-            for i in backup:
-                shutil.move(os.path.join(self.dir, str(i)),
-                            os.path.join(self.dir, '_' + str(i)))
-            for d, s in zip(ind, o_ind):
-                if s in backup:
-                    shutil.copy(os.path.join(self.dir, '_' + str(s)),
-                                os.path.join(self.dir, str(d)))
-                else:
-                    shutil.copy(os.path.join(self.dir, str(s)),
-                                os.path.join(self.dir, str(d)))
-            for i in backup:
-                os.remove(os.path.join(self.dir, '_' + str(i)))
-        else:
-            for d, s in zip(ind, o_ind):
-                shutil.copy(os.path.join(other.dir, str(s)),
-                            os.path.join(self.dir, str(d)))
-            if remove_from_other:
-                other.remove(o_ind)
-
     def scal(self, alpha, ind=None):
         assert self.check_ind_unique(ind)
         assert isinstance(alpha, Number) \
