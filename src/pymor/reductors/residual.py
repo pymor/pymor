@@ -170,7 +170,7 @@ class NonProjectedResidualOperator(ResidualOperator):
                 R_riesz = self.product.apply_inverse(R)
                 return R_riesz * (np.sqrt(R_riesz.dot(R)) / R_riesz.l2_norm())[0]
             else:
-                return np.sqrt(self.product.pairwise_apply2(R, R) / R.l2_norm())[0]
+                return R * (np.sqrt(self.product.pairwise_apply2(R, R)) / R.l2_norm())[0]
         else:
             return R
 
