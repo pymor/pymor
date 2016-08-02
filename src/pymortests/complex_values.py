@@ -47,17 +47,6 @@ def test_complex():
             va.append(Dva, o_ind)
             assert np.iscomplexobj(va.data)
 
-    # replace
-    va = NumpyVectorArray.make_array(subtype=5, reserve=0)
-    va.append(Cva)
-    D = np.random.randn(1, 5) + 1j * np.random.randn(1, 5)
-    Dva = NumpyVectorArray(D)
-
-    assert not np.iscomplexobj(va.data)
-    assert np.iscomplexobj(Dva.data)
-    va.replace(Dva, 1, 0)
-    assert np.iscomplexobj(va.data)
-
     # scal
     assert not np.iscomplexobj(Cva.data)
     assert np.iscomplexobj((Cva * 1j).data)
