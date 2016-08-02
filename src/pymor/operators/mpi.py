@@ -137,7 +137,7 @@ class MPIOperator(OperatorBase):
         U = U if self.vector else U.obj_id
         V = V if self.functional else V.obj_id
         return mpi.call(mpi.method_call, self.obj_id, 'pairwise_apply2',
-                        V, U, U_ind=U_ind, V_ind=V_ind, mu=mu, product=product)
+                        V, U, U_ind=U_ind, V_ind=V_ind, mu=mu)
 
     def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
         assert U in self.range

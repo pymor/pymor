@@ -71,10 +71,10 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
     @abstractmethod
     def apply2(self, V, U, U_ind=None, V_ind=None, mu=None):
-        """Treat the operator as a 2-form by calculating (V, A(U)).
+        """Treat the operator as a 2-form by computing ``V.dot(self.apply(U))``.
 
-        In particular, if ( , ) is the Euclidean product and A is a linear operator
-        given by multiplication with a matrix M, then ::
+        If A is a linear operator given by multiplication with a matrix M, then
+        `apply2` is given as::
 
             A.apply2(V, U) = V^T*M*U
 
@@ -92,9 +92,6 @@ class OperatorInterface(ImmutableInterface, Parametric):
             applied. (See the |VectorArray| documentation for further details.)
         mu
             The |Parameter| for which to evaluate the operator.
-        product
-            The scalar product used in the expression `(V, A(U))` given as
-            an |Operator|.  If `None`, the euclidean product is chosen.
 
         Returns
         -------
@@ -105,7 +102,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
     @abstractmethod
     def pairwise_apply2(self, V, U, U_ind=None, V_ind=None, mu=None):
-        """Treat the operator as a 2-form by calculating (V, A(U)).
+        """Treat the operator as a 2-form by computing ``V.dot(self.apply(U))``.
 
         Same as :meth:`OperatorInterface.apply2`, except that vectors from `V`
         and `U` are applied in pairs.
@@ -124,9 +121,6 @@ class OperatorInterface(ImmutableInterface, Parametric):
             applied. (See the |VectorArray| documentation for further details.)
         mu
             The |Parameter| for which to evaluate the operator.
-        product
-            The scalar product used in the expression `(V, A(U))` given as
-            an |Operator|.  If `None`, the euclidean product is chosen.
 
         Returns
         -------
