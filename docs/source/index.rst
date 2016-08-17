@@ -16,6 +16,7 @@ computing stack are provided for getting started quickly.
     getting_started
     technical_overview
     environment
+    release_notes
 
 API Documentation
 *****************
