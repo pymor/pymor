@@ -141,8 +141,14 @@ Improvements to pyMOR's discretizaion tookit
   :meth:`~pymor.discretizers.elliptic.discretize_elliptic_cg` has been
   extended accordingly `[#211] <https://github.com/pymor/pymor/pull/211>`_.
 
+- The :mod:`continuous Galerkin <pymor.operators.cg>` module has been extended to
+  support Robin boundary conditions `[#110] <https://github.com/pymor/pymor/pull/110>`_.
+
 - :class:`~pymor.functions.bitmap.BitmapFunction` allows to use grayscale
   image data as data |Functions| `[#194] <https://github.com/pymor/pymor/issues/194>`_.
+
+- For the visualization of time-dependent data, the colorbars can now be
+  rescaled with each new frame `[#91] <https://github.com/pymor/pymor/pull/91>`_.
 
 
 Caching improvements
@@ -191,6 +197,14 @@ Caching improvements
 
 Additional new features
 ^^^^^^^^^^^^^^^^^^^^^^^
+
+- New :class:`~pymor.parameters.functionals.ProductParameterFunctional`
+    This |ParameterFunctional| represents the product of a given list of
+    |ParameterFunctionals|.
+
+- New :class:`~pymor.operators.constructions.SelectionOperator` `[#105] <https://github.com/pymor/pymor/pull/105>`_
+    This |Operator| represents one |Operator| of a given list of |Operators|,
+    depending on the evaluation of a provided |ParameterFunctional|,
 
 - `pycontracts` has been removed as a dependency of pyMOR `[#127] <https://github.com/pymor/pymor/pull/127>`_
 
