@@ -7,7 +7,7 @@ Release Notes
 pyMOR 0.4 (FUTURE)
 ------------------
 
-With the pyMOR 0.4 release we have changed to copyright of
+With the pyMOR 0.4 release we have changed the copyright of
 pyMOR to 
 
   Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
@@ -30,7 +30,7 @@ FEniCS and deal.II support
 pyMOR now includes wrapper classes for integrating PDE solvers
 written with the `dolfin` library of the `FEniCS <https://fenicsproject.org>`_
 project. For a usage example, see :meth:`pymordemos.thermalblock_simple.discretize_fenics`.
-Experimental support for the `deal.II <http://dealii.org>`_ can be
+Experimental support for `deal.II <http://dealii.org>`_ can be
 found in the `pymor-deal.II <https://github.com/pymor/pymor-deal.II>`_
 repository of the pyMOR GitHub organization.
 
@@ -104,7 +104,7 @@ New reduction algorithms
 Copy-on-write semantics for |VectorArrays|
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.copy` method
-of the |VectorArray| interfaces is now assumed to have shallow-copy-deep-copy-on-write
+of the |VectorArray| interface is now assumed to have shallow-copy-deep-copy-on-write
 semantics. I.e., the returned |VectorArray| will contain a reference to the same
 data as the original array, and the actual data will only be copied when one of
 the arrays is changed. Both |NumpyVectorArray| and |ListVectorArray| have been
@@ -119,18 +119,18 @@ Improvements to pyMOR's discretizaion tookit
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 - An unstructured triangular |Grid| is now provided by :class:`~pymor.grids.unstructured.UnstructuredTriangleGrid`.
   Such a |Grid| can be obtained using the :meth:`~pymor.domaindiscretizers.gmsh.discretize_gmsh`
-  method can parse `Gmsh <http://gmsh.info/>`_ output files. Moreover, this
+  method, which can parse `Gmsh <http://gmsh.info/>`_ output files. Moreover, this
   method can generate `Gmsh` input files to create unstructured meshes for
-  an arbitrary :class:`~pymor.domaindescriptions.polygonal.PolygonalDomain`.
-  `[#9] <https://github.com/pymor/pymor/issues/9>`_
+  an arbitrary :class:`~pymor.domaindescriptions.polygonal.PolygonalDomain`
+  `[#9] <https://github.com/pymor/pymor/issues/9>`_.
 
 - Basic support for parabolic problems has been added.
   The :meth:`~pymor.discretizers.parabolic.discretize_parabolic_cg` and
   :meth:`~pymor.discretizers.parabolic.discretize_parabolic_fv` methods can
   be used to build continuous finite element or finite volume |Discretizations|
   from a given :class:`pymor.analyticalproblems.parabolic.ParabolicProblem`.
-  The :mod:`~pymordemos.parabolic` demo demonstrates the use of these methods.
-  `[#189] <https://github.com/pymor/pymor/issues/189>`_
+  The :mod:`~pymordemos.parabolic` demo demonstrates the use of these methods
+  `[#189] <https://github.com/pymor/pymor/issues/189>`_.
 
 - The :mod:`pymor.discretizers.disk` module contains methods to create stationary and
   instationary affinely decomposed |Discretizations| from matrix data files
@@ -156,14 +156,14 @@ Caching improvements
 - |state id| generation is now based on deterministic pickling.
   In previous version of pyMOR, the |state id| of |immutable| objects
   was computed from the state ids of the parameters passed to the
-  object's `__init__` method. This approach was a complicated and error-prone.
-  Instead, we now compute the state id as a hash of a deterministic serialization
+  object's `__init__` method. This approach was complicated and error-prone.
+  Instead, we now compute the |state id| as a hash of a deterministic serialization
   of the object's state. While this approach is more robust, it is also
   slightly more expensive. However, due to the object's immutability,
-  the state id only has to be computed once, and state ids are now only
+  the |state id| only has to be computed once, and state ids are now only
   required for storing results in persistent cache regions (see below).
   Computing such results will usually be much more expensive than the
-  state id calculation `[#106] <https://github.com/pymor/pymor/issues/106>`_.
+  |state id| calculation `[#106] <https://github.com/pymor/pymor/issues/106>`_.
 
 - :class:`CacheRegions <pymor.core.cache.CacheRegion>` now have a
   :attr:`~pymor.core.cache.CacheRegion.persistent` attribute indicating
@@ -274,7 +274,7 @@ Backward incompatible changes
     The `options` parameter of :meth:`OperatorInterface.apply_inverse <pymor.operators.interfaces.OperatorInterface.apply_inverse>`
     has been replaced by the :attr:`~pymor.operators.interfaces.OperatorInterface.solver_options`
     attribute. This attribute controls which fixed (linear) solver options are
-    used for when :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse` is
+    used when :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse` is
     called. See `here <https://github.com/pymor/pymor/pull/184>` for more details.
 
 - Renaming of reductors for coercive problems `[#224] <https://github.com/pymor/pymor/issues/224>`_.
@@ -284,7 +284,7 @@ Backward incompatible changes
     :meth:`pymor.reductors.coercive.reduce_coercive_simple`. The old names
     are deprecated and will be removed in pyMOR 0.5.
 
-- Non-parametric object have now :attr:`~pymor.parameters.base.Parametric.parameter_type` `{}` instead of `None` `[#84] <https://github.com/pymor/pymor/issues/84>`_.
+- Non-parametric objects have now :attr:`~pymor.parameters.base.Parametric.parameter_type` `{}` instead of `None` `[#84] <https://github.com/pymor/pymor/issues/84>`_.
 
 - Sampling methods of |ParameterSpaces| now return iterables instead of iterators `[#108] <https://github.com/pymor/pymor/issues/108>`_.
 
@@ -319,7 +319,7 @@ Backward incompatible changes
 - Python fallbacks to Cython functions have been removed `[#145] <https://github.com/pymor/pymor/issues/145>`_.
     In order to use pyMOR's discretization toolkit, building of the
     :mod:`~pymor.grids._unstructured`, :mod:`~pymor.tools.inplace`,
-    :mod:`~pymor.tools.inplace` Cython extension modules in now
+    :mod:`~pymor.tools.inplace` Cython extension modules is now
     required.
 
 
