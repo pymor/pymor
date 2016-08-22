@@ -192,7 +192,7 @@ Caching improvements
   can be used to cache the results of a function call. This is now used
   in :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve`
   to enable parsing of the input parameter before it enters the cache key
-  calculation `[#231] <https://github.com/pymor/pymor/pull/231>`.
+  calculation `[#231] <https://github.com/pymor/pymor/pull/231>`_.
 
 
 Additional new features
@@ -259,10 +259,10 @@ Backward incompatible changes
     corresponds to the `pairwise == True` case. Similarly the `pariwise` parameter
     of the :meth:`~pymor.operators.interfaces.OperatorInterface.apply2` method
     of the |Operator| interface has been removed and a
-    :meth:`pymor.operators.interfaces.OperatorInterface.pairwise_apply2"` method
+    :meth:`pymor.operators.interfaces.OperatorInterface.pairwise_apply2` method
     has been added.
 
-- `almost_equal` has been removed from the |VectorArray| interface `[#143] <https://github.com/pymor/pymor/issues/143>`.
+- `almost_equal` has been removed from the |VectorArray| interface `[#143] <https://github.com/pymor/pymor/issues/143>`_.
     As a replacement, the new method :meth:`pymor.algorithms.basic.almost_equal`
     can be used to compare |VectorArrays| for almost equality by the norm
     of their difference.
@@ -293,7 +293,7 @@ Backward incompatible changes
     must now be explicitly enabled by using
     :meth:`pymor.core.cache.CacheableInterface.enable_caching`.
 
-- The default value for `extension_algorithm` parameter of :meth:`~pymor.algortihms.greedy.greedy` has been removed `[#82] <https://github.com/pymor/pymor/issues/82>`_.
+- The default value for `extension_algorithm` parameter of :meth:`~pymor.algorithms.greedy` has been removed `[#82] <https://github.com/pymor/pymor/issues/82>`_.
 
 - Changes to :meth:`~pymor.algorithms.ei.ei_greedy` `[#159] <https://github.com/pymor/pymor/issues/159>`_, `[#160] <https://github.com/pymor/pymor/issues/160>`_.
     The default for the `projection` parameter has been changed from `'orthogonal'`
