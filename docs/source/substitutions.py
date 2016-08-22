@@ -114,6 +114,8 @@ common = '''
 .. |array| replace:: :class:`NumPy array <numpy.ndarray>`
 .. |Array| replace:: :class:`NumPy array <numpy.ndarray>`
 
+.. |SciPy| replace:: :mod:`SciPy <scipy>`
+
 .. |OrderedDict| replace:: :class:`~collections.OrderedDict`
 
 .. |solver_options| replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.solver_options`

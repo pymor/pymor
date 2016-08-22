@@ -40,7 +40,7 @@ Parallelization of pyMOR's reduction algorithms
 We have added a parallelization framework to pyMOR which allows
 parallel execution of reduction algorithms based on a simple
 |WorkerPool| interface `[#14] <https://github.com/pymor/pymor/issues/14>`_.
-The :meth:`~pymor.algorithms.greedy` `[#155] <https://github.com/pymor/pymor/pull/155>`_
+The :meth:`~pymor.algorithms.greedy.greedy` `[#155] <https://github.com/pymor/pymor/pull/155>`_
 and :meth:`~pymor.algorithms.ei.ei_greedy` algorithms `[#162] <https://github.com/pymor/pymor/pull/162>`_
 have been refactored to utilize this interface.
 Two |WorkerPool| implementations are shipped with pyMOR:
@@ -238,7 +238,7 @@ Additional new features
     and `info3` methods to highlight important information (which does
     fall in the 'warning' category).
 
-- Default implementation of `as_vector` for functionals `[#107] <https://github.com/pymor/pymor/issues/107>`_.
+- Default implementation of :meth:`~pymor.operators.interfaces.OperatorInterface.as_vector` for functionals `[#107] <https://github.com/pymor/pymor/issues/107>`_.
     :meth:`OperatorBase.as_vector <pymor.operators.basic.OperatorBase>` now
     contains a default implementation for functionals by calling
     :meth:`~pymor.operators.interfaces.OperatorInterface.apply_adjoint`.
@@ -252,14 +252,14 @@ Backward incompatible changes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 - |VectorArray| implementations have been moved to the :mod:`pymor.vectorarrays` sub-package `[#89] <https://github.com/pymor/pymor/issues/89>`_.
 
-- The `dot` method of the |VectorArray| interface has been split into `dot` and `pairwise_dot` `[#76] <https://github.com/pymor/pymor/issues/76>`_.
+- The `dot` method of the |VectorArray| interface has been split into :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.dot` and :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.pairwise_dot` `[#76] <https://github.com/pymor/pymor/issues/76>`_.
     The `pairwise` parameter of :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.dot`
     has been removed, always assuming `pairwise == False`. The method
     :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.pairwise_dot`
     corresponds to the `pairwise == True` case. Similarly the `pariwise` parameter
     of the :meth:`~pymor.operators.interfaces.OperatorInterface.apply2` method
     of the |Operator| interface has been removed and a
-    :meth:`pymor.operators.interfaces.OperatorInterface.pairwise_apply2` method
+    :meth:`~pymor.operators.interfaces.OperatorInterface.pairwise_apply2` method
     has been added.
 
 - `almost_equal` has been removed from the |VectorArray| interface `[#143] <https://github.com/pymor/pymor/issues/143>`_.
@@ -270,7 +270,7 @@ Backward incompatible changes
 - `lincomb` has been removed from the |Operator| interface `[#83] <https://github.com/pymor/pymor/issues/83>`_.
     Instead, a |LincombOperator| should be directly instantiated.
 
-- Removal of the `options` parameter of :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse` in favor of `solver_options` attribute `[#122] <https://github.com/pymor/pymor/issues/122>`_.
+- Removal of the `options` parameter of :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse` in favor of :attr:`~pymor.operators.interfaces.OperatorInterface.solver_options` attribute `[#122] <https://github.com/pymor/pymor/issues/122>`_.
     The `options` parameter of :meth:`OperatorInterface.apply_inverse <pymor.operators.interfaces.OperatorInterface.apply_inverse>`
     has been replaced by the :attr:`~pymor.operators.interfaces.OperatorInterface.solver_options`
     attribute. This attribute controls which fixed (linear) solver options are
@@ -288,12 +288,12 @@ Backward incompatible changes
 
 - Sampling methods of |ParameterSpaces| now return iterables instead of iterators `[#108] <https://github.com/pymor/pymor/issues/108>`_.
 
-- Caching of `Discretization.solve` is now disabled by default `[#178] <https://github.com/pymor/pymor/issues/178>`_.
+- Caching of :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve` is now disabled by default `[#178] <https://github.com/pymor/pymor/issues/178>`_.
     Caching of :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve`
     must now be explicitly enabled by using
     :meth:`pymor.core.cache.CacheableInterface.enable_caching`.
 
-- The default value for `extension_algorithm` parameter of :meth:`~pymor.algorithms.greedy` has been removed `[#82] <https://github.com/pymor/pymor/issues/82>`_.
+- The default value for `extension_algorithm` parameter of :meth:`~pymor.algorithms.greedy.greedy` has been removed `[#82] <https://github.com/pymor/pymor/issues/82>`_.
 
 - Changes to :meth:`~pymor.algorithms.ei.ei_greedy` `[#159] <https://github.com/pymor/pymor/issues/159>`_, `[#160] <https://github.com/pymor/pymor/issues/160>`_.
     The default for the `projection` parameter has been changed from `'orthogonal'`
@@ -306,11 +306,11 @@ Backward incompatible changes
 
 - The `copy` parameter of :meth:`pymor.algorithms.gram_schmidt.gram_schmidt` now defaults to `True` `[#123] <https://github.com/pymor/pymor/issues/123>`_.
 
-- `with_` has been moved from `BasicInterface` to `ImmutableInterface` `[#154] <https://github.com/pymor/pymor/issues/154>`_.
+- `with_` has been moved from |BasicInterface| to |ImmutableInterface| `[#154] <https://github.com/pymor/pymor/issues/154>`_.
 
 - `BasicInterface.add_attributes` has been removed `[#158] <https://github.com/pymor/pymor/issues/158>`_.
 
-- Auto-generated names no longer contain the uid `[#198] <https://github.com/pymor/pymor/issues/198>`_.
+- Auto-generated names no longer contain the :attr:`~pymor.core.interfaces.BasicInterface.uid` `[#198] <https://github.com/pymor/pymor/issues/198>`_.
     The auto-generated :attr:`~pymor.core.interfaces.BasicInterface.name`
     of pyMOR objects no longer contains their
     :attr:`~pymor.core.interfaces.BasicInterface.uid`. Instead, the name
@@ -319,7 +319,7 @@ Backward incompatible changes
 - Python fallbacks to Cython functions have been removed `[#145] <https://github.com/pymor/pymor/issues/145>`_.
     In order to use pyMOR's discretization toolkit, building of the
     :mod:`~pymor.grids._unstructured`, :mod:`~pymor.tools.inplace`,
-    :mod:`~pymor.tools.inplace` Cython extension modules is now
+    :mod:`~pymor.tools.relations` Cython extension modules is now
     required.
 
 
