@@ -127,7 +127,7 @@ today_fmt = '%B %d, %Y'
 #unused_docs = []
 
 # The reST default role (used for this markup: `text`) to use for all documents.
-default_role = "autolink"
+default_role = "literal"
 
 # List of directories, relative to source directories, that shouldn't be searched
 # for source files.
