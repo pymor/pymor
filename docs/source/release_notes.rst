@@ -104,15 +104,15 @@ New reduction algorithms
 Copy-on-write semantics for |VectorArrays|
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.copy` method
-of the |VectorArray| interface is now assumed to have shallow-copy-deep-copy-on-write
+of the |VectorArray| interface is now assumed to have copy-on-write
 semantics. I.e., the returned |VectorArray| will contain a reference to the same
 data as the original array, and the actual data will only be copied when one of
 the arrays is changed. Both |NumpyVectorArray| and |ListVectorArray| have been
 updated accordingly `[#55] <https://github.com/pymor/pymor/issues/55>`_.
 As a main benefit of this approach, |immutable| objects having a |VectorArray| as
 an attribute now can safely create copies of the passed |VectorArrays| (to ensure
-the immutability of their state) without having to worry about unnecessary increased memory
-consumption.
+the immutability of their state) without having to worry about unnecessarily
+increased memory consumption.
 
 
 Improvements to pyMOR's discretizaion tookit
