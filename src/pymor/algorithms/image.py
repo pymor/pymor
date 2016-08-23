@@ -16,9 +16,9 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
 def estimate_image(operators=(), vectors=(),
                    domain=None, extends=False, orthonormalize=True, product=None,
                    riesz_representatives=False):
-    """Estimate the image of given operators for all mu.
+    """Estimate the image of given |Operators| for all mu.
 
-    Let `operators` be a list of |Operators| with common source and domain, and let
+    Let `operators` be a list of |Operators| with common source and range, and let
     `vectors` be a list of |VectorArrays| or vector-like |Operators| in the range
     of these operators. Given a |VectorArray| `domain` of vectors in the source of the
     operators, this algorithms determines a |VectorArray| `image` of range vectors
@@ -53,8 +53,8 @@ def estimate_image(operators=(), vectors=(),
         Inner product |Operator| w.r.t. which to orthonormalize.
     riesz_representatives
         If `True`, compute Riesz representatives of the vectors in `image` before
-        orthonormalizing. (Useful for norm computation when the range of the
-        `operators` is a dual space.)
+        orthonormalizing (useful for dual norm computation when the range of the
+        `operators` is a dual space).
 
     Returns
     -------
@@ -132,20 +132,20 @@ def estimate_image(operators=(), vectors=(),
 
 def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=None,
                                 orthonormalize=True, product=None, riesz_representatives=False):
-    """Estimate the image of given operators for all mu.
+    """Estimate the image of given |Operators| for all mu.
 
     This is an extended version of :func:`estimate_image`, which calls
     :func:`estimate_image` individually for each vector of `domain`.
 
     As a result, the vectors in the returned `image` |VectorArray| will
     be ordered by the `domain` vector they correspond to (starting with
-    vectors which correspond to the `functionals` and to the |Operators| for
+    vectors which correspond to the `functionals` and to |Operators| for
     which the image is estimated independently from `domain`).
 
     This function also returns an `image_dims` list, such that the first
     `image_dims[i+1]` vectors of `image` correspond to the first `i`
     vectors of `domain` (the first `image_dims[0]` vectors correspond
-    to `vectors` and to the |Operators| with fixed image estimate).
+    to `vectors` and to |Operators| with fixed image estimate).
 
     Parameters
     ----------
