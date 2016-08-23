@@ -33,7 +33,6 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
     reductor
         Reductor for reducing the given |Discretization|. This has to be a
         function of the form `reductor(discretization, basis, extends=None)`.
-        If your reductor takes more arguments, use, e.g., :func:`functools.partial`.
         The method has to return a tuple
         `(reduced_discretization, reconstructor, reduction_data)`.
         In case the last basis extension was `hierarchic` (see
@@ -45,12 +44,12 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
     samples
         The set of |Parameter| samples on which to perform the greedy search.
     initial_basis
-        The initial reduced basis with which the algorithm starts. If `None`,
+        The initial reduced basis at the start of the algorithm. If `None`,
         an empty basis is used as initial basis.
     use_estimator
         If `True`, use `reduced_discretization.estimate()` to estimate the
-        errors on the sample set. Otherwise a detailed simulation is
-        performed to calculate the error.
+        errors on the sample set. Otherwise `discretization.solve()` is
+        called to compute the exact model reduction error.
     error_norm
         If `use_estimator == False`, use this function to calculate the
         norm of the error. If `None`, the Euclidean norm is used.
@@ -84,6 +83,10 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
         :reconstructor:          Reconstructor for `reduced_discretization`.
         :max_errs:               Sequence of maximum errors during the greedy run.
         :max_err_mus:            The parameters corresponding to `max_errs`.
+        :extensions:             Number of performed basis extensions.
+        :time:                   Total runtime of the algorithm.
+        :reduction_data:         The `reduction_data` returned by the last
+                                 `reductor` call.
     """
 
     logger = getLogger('pymor.algorithms.greedy.greedy')
