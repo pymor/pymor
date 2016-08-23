@@ -44,20 +44,20 @@ def newton(operator, rhs, initial_guess=None, mu=None, error_norm=None, least_sq
     maxiter
         Fail if the iteration count reaches this value without converging.
     rtol
-        Finish if the residual norm has been reduced by this factor relative to the
+        Finish when the residual norm has been reduced by this factor relative to the
         norm of the initial residual.
     atol
-        Finish if the residual norm is below this threshold.
+        Finish when the residual norm is below this threshold.
     stagnation_window
-        Finish if the residual norm has not been reduced by a factor of
+        Finish when the residual norm has not been reduced by a factor of
         `stagnation_threshold` during the last `stagnation_window` iterations.
     stagnation_threshold
         See `stagnation_window`.
     return_stages
-        If `True` return a |VectorArray| of the approximations of `U` after each iteration
-        in the `data` dict.
+        If `True`, return a |VectorArray| of the intermediate approximations of `U`
+        after each iteration.
     return_residuals
-        If `True` return a |VectorArray| of all residual vectors which have been computed
+        If `True`, return a |VectorArray| of all residual vectors which have been computed
         during the Newton iterations.
 
     Returns
