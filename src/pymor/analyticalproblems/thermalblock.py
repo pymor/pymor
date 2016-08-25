@@ -40,9 +40,9 @@ class ThermalBlockProblem(EllipticProblem):
     Parameters
     ----------
     num_blocks
-        The tuple (nx, ny)
+        The tuple `(nx, ny)`
     parameter_range
-        A tuple (μ_min, μ_max). Each |Parameter| component μ_ij is allowed
+        A tuple `(μ_min, μ_max)`. Each |Parameter| component μ_ij is allowed
         to lie in the interval [μ_min, μ_max].
     rhs
         The |Function| f(x, μ).
