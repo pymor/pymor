@@ -9,22 +9,22 @@ Any class that wishes to provide cached method calls should derive from
 be marked using the :class:`cached` decorator.
 
 To ensure consistency, :class:`CacheableInterface` derives from
-:class:`~pymor.core.interfaces.ImmutableInterface`: The return value of a
-cached method call should only depend on its arguments as well as
-the immutable state of the class instance.
+|ImmutableInterface|: The return value of a cached method call should
+only depend on its arguments as well as the immutable state of the class
+instance.
 
 Making this assumption, the keys for cache lookup are created from
 the following data:
 
-    1. the instance's |state id| if available, else the instance's
-       unique id (see :class:`~pymor.core.interfaces.BasicInterface`),
+    1. the instance's |state id| in case of a :attr:`~CacheRegion.persistent`
+       :class:`CacheRegion`, else the instance's
+       :attr:`~pymor.core.interfaces.BasicInterface.uid`,
     2. the method's `__name__`,
-    3. the state id of the arguments,
-    4. the state id of pyMOR's global :mod:`~pymor.core.defaults`.
+    3. the |state id| of the arguments,
+    4. the |state id| of pyMOR's global |defaults|.
 
-Note, however, that instances of :class:`~pymor.core.interfaces.ImmutableInterface`
-are allowed to have mutable private attributes. It is the implementors
-responsibility not to break things.
+Note that instances of |ImmutableInterface| are allowed to have mutable
+private attributes. It is the implementors responsibility not to break things.
 (See this :ref:`warning <ImmutableInterfaceWarning>`.)
 
 Backends for storage of cached return values derive from :class:`CacheRegion`.
@@ -32,15 +32,17 @@ Currently two backends are provided for memory-based and disk-based caching
 (:class:`MemoryRegion` and :class:`SQLiteRegion`). The available regions
 are stored in the module level `cache_regions` dict. The user can add
 additional regions (e.g. multiple disk cache regions) as required.
-:class:`CacheableInterface` has a `region` attribute through which a key of
-the `cache_regions` dict can provided to select a cache region which should
-be used by the instance. (Setting `region` to `None` or `'none'` disables caching.)
+:attr:`CacheableInterface.cache_region` specifies a key of the `cache_regions` dict
+to select a cache region which should be used by the instance.
+(Setting :attr:`~CacheableInterface.cache_region` to `None` or `'none'` disables caching.)
 
-By default, a 'memory' and a 'disk' cache region are automatically configured. The
-path and maximum size of the disk region as well as the maximum number of keys of
+By default, a 'memory', a 'disk' and a 'persistent' cache region are configured. The
+paths and maximum sizes of the disk regions, as well as the maximum number of keys of
 the memory cache region can be configured via the
 `pymor.core.cache.default_regions.disk_path`,
-`pymor.core.cache.default_regions.disk_max_size` and
+`pymor.core.cache.default_regions.disk_max_size`,
+`pymor.core.cache.default_regions.persistent_path`,
+`pymor.core.cache.default_regions.persistent_max_size` and
 `pymor.core.cache.default_regions.memory_max_keys` |defaults|.
 
 There two ways to disable and enable caching in pyMOR:
@@ -100,9 +102,24 @@ class CacheRegion(object):
     persistent = False
 
     def get(self, key):
+        """Return cache entry for given key.
+
+        Parameters
+        ----------
+        key
+            The key for the cache entry.
+
+        Returns
+        -------
+        `(True, entry)`
+            in case the `key` has been found in the cache region.
+        `(False, None)`
+            in case the `key` is not present in the cache region.
+        """
         raise NotImplementedError
 
     def set(self, key, value):
+        """Set cache entry for `key` to given `value`."""
         raise NotImplementedError
 
     def clear(self):
@@ -329,8 +346,8 @@ class CacheableInterface(ImmutableInterface):
     Attributes
     ----------
     cache_region
-        Name of the `CacheRegion` to use. Must correspond to a key in
-        :attr:`pymor.core.cache.cache_regions`. If `None` or `'none'`, caching
+        Name of the :class:`CacheRegion` to use. Must correspond to a key in
+        the :attr:`cache_regions` dict. If `None` or `'none'`, caching
         is disabled.
     """
 
@@ -345,11 +362,14 @@ class CacheableInterface(ImmutableInterface):
     def enable_caching(self, region):
         """Enable caching for this instance.
 
+        When setting the object's cache region to a :attr:`~CacheRegion.persistent`
+        :class:`CacheRegion`, the object's |state id| will be computed.
+
         Parameters
         ----------
         region
             Name of the `CacheRegion` to use. Must correspond to a key in
-            `pymor.core.cache.cache_regions`. If `None` or `'none'`, caching
+            the :attr:`cache_regions` dict. If `None` or `'none'`, caching
             is disabled.
         """
         if region in (None, 'none'):
@@ -361,6 +381,25 @@ class CacheableInterface(ImmutableInterface):
                 self.generate_sid()
 
     def cached_method_call(self, method, *args, **kwargs):
+        """Call a given `method` and cache the return value.
+
+        This method can be used as an alternative to the :func:`cached`
+        decorator.
+
+        Parameters
+        ----------
+        method
+            The method that is to be called. This has to be a method
+            of `self`.
+        args
+            Positional arguments for `method`.
+        kwargs
+            Keyword arguments for `method`
+
+        Returns
+        -------
+        The (possibly cached) return value of `method(*args, **kwargs)`.
+        """
         assert isinstance(method, MethodType)
 
         if _caching_disabled or self.cache_region is None:
