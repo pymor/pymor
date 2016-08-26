@@ -7,9 +7,9 @@
 
 A default value in pyMOR is always the default value of some
 function argument. To mark the value of an optional function argument
-as an user-modifiable default value, use the :func:defaults: decorator.
-As an additional feature, if `None` is passed as value for such
-an argument, its default value is used instead of `None`. This is useful
+as a user-modifiable default value use the :func:`defaults` decorator.
+As an additional feature, if `None` is passed for such an argument,
+its default value is used instead of `None`. This is useful
 for writing code of the following form::
 
     @default('option')
@@ -30,12 +30,12 @@ The user interface for handling default values in pyMOR is provided
 by :func:`set_defaults`, :func:`load_defaults_from_file`,
 :func:`write_defaults_to_file` and :func:`print_defaults`.
 
-If pyMOR is imported, it will automatically search for configuration
-files named `pymor_defaults.py` in the current working directory.
-The first file found will be loaded via :func:`load_defaults_from_file`.
-However, for your security, this file will only be loaded, if it is
-owned by the user running the Python iterpreter.
-(:func:`load_defaults_from_file` uses `exec` to load the configuration.)
+If pyMOR is imported, it will automatically search for a configuration
+file named `pymor_defaults.py` in the current working directory.
+If found, the file is loaded via :func:`load_defaults_from_file`.
+However, as a security precaution, the file will only be loaded if it is
+owned by the user running the Python interpreter
+(:func:`load_defaults_from_file` uses `exec` to load the configuration).
 As an alternative, the environment variable `PYMOR_DEFAULTS` can be
 used to specify the path of a configuration file. If empty or set to
 `NONE`, no configuration file will be loaded whatsoever.
@@ -43,21 +43,24 @@ used to specify the path of a configuration file. If empty or set to
 .. _defaults_warning:
 .. warning::
    The state of pyMOR's global defaults enters the calculation of each
-   state id (see :mod:`pymor.core.interfaces`). Thus, if you first
-   instantiate an immutable object and then change the defaults, the
-   resulting object will have a different state id than if you first
-   change the defaults.  (This is necessary as the object can save
-   internal state upon initialization, which depends on the state of
-   the global defaults.) As a consequence, the key generated for
-   :mod:`caching <pymor.core.cache>` will depend on the time the
-   defaults have been changed. While no wrong results will be produced,
-   changing defaults at different times will cause unnecessary cache
-   misses and will pollute the cache with duplicate entries.
+   |state id|. Thus, if you first instantiate an immutable object and
+   then change the defaults, the resulting object will have a different
+   |state id| than if you first change the defaults. (This is necessary
+   as the object can save internal state upon initialization, which
+   depends on the state of the global defaults.) As a consequence, the
+   key generated for :mod:`caching <pymor.core.cache>` will depend on the
+   time the defaults have been changed. While no wrong results will be
+   produced, changing defaults at different times will cause unnecessary
+   cache misses and will pollute the cache with duplicate entries.
 
-   As a rule of thumb, defaults should be set once and for all at the
-   start of a pyMOR application. Anything else should be considered
-   a dirty hack. (pyMOR will warn you if it gets the impression you
-   are trying to hack it.)
+   An exemption from this rule are defaults which are listed in the
+   `sid_ignore` argument of the :func:`defaults` decorator. Such
+   defaults will not enter the |state id| calculation. This allows the
+   user to change defaults related to input/output, e.g.
+   :mod:`logging <pymor.core.logger>`, without breaking caching.
+   Before marking defaults as ignored in your own code, however, make
+   sure to double check that these defaults will not affect the result
+   of any mathematical algorithm.
 """
 
 from collections import defaultdict, OrderedDict
@@ -239,20 +242,19 @@ _default_container = DefaultContainer()
 def defaults(*args, **kwargs):
     """Function decorator for marking function arguments as user-configurable defaults.
 
-    If a function decorated with `defaults` is called, the values of the marked
+    If a function decorated with :func:`defaults` is called, the values of the marked
     default parameters are set to the values defined via :func:`load_defaults_from_file`
-    or :func:`set_defaults` if no value is provided by the caller of the function.
-    If no value is specified using these methods, the default value provided by in the
-    function signature is used.
-
+    or :func:`set_defaults` in case no value has been provided by the caller of the function.
     Moreover, if `None` is passed as a value for a default argument, the argument
-    is set to its default value, as well.
+    is set to its default value, as well. If no value has been specified using
+    :func:`set_defaults` or :func:`load_defaults_from_file`, the default value provided in
+    the function signature is used.
 
     If the argument `arg` of function `f` in sub-module `m` of package `p` is
     marked as a default value, its value will be changeable by the aforementioned
     methods under the path `p.m.f.arg`.
 
-    The `defaults` decorator can also be used for user code.
+    Note that the `defaults` decorator can also be used in user code.
 
     Parameters
     ----------
@@ -331,16 +333,16 @@ def _import_all(package_name='pymor'):
 
 
 def print_defaults(import_all=True, shorten_paths=2):
-    """Print all default values set in pyMOR.
+    """Print all |default| values set in pyMOR.
 
     Parameters
     ----------
     import_all
-        While `print_defaults` will always print all defaults defined in
+        While :func:`print_defaults` will always print all defaults defined in
         loaded configuration files or set via :func:`set_defaults`, default
-        values set in the function signature can only be printed, if the
+        values set in the function signature can only be printed after the
         modules containing these functions have been imported. If `import_all`
-        is set to `True`, `print_defaults` will therefore first import all
+        is set to `True`, :func:`print_defaults` will therefore first import all
         of pyMOR's modules, to provide a complete lists of defaults.
     shorten_paths
         Shorten the paths of all default values by `shorten_paths` components.
@@ -397,7 +399,7 @@ def print_defaults(import_all=True, shorten_paths=2):
 
 
 def write_defaults_to_file(filename='./pymor_defaults.py', packages=('pymor',)):
-    """Write the currently set default values in pyMOR to a configuration file.
+    """Write the currently set |default| values to a configuration file.
 
     The resulting file is an ordinary Python script and can be modified
     by the user at will. It can be loaded in a later session using
@@ -474,15 +476,16 @@ d = {}
 
 
 def load_defaults_from_file(filename='./pymor_defaults.py'):
-    """Loads default values define in a configuration file.
+    """Loads |default| values defined in configuration file.
 
-    Such configuration files can be created via :func:`write_defaults_to_file`.
-    The file is loaded via Python's `exec` function, so be very careful
+    Suitable configuration files can be created via :func:`write_defaults_to_file`.
+    The file is loaded via Python's :func:`exec` function, so be very careful
     with configuration files you have not created your own. You have been
     warned!
 
-    (Note that defaults should only be changed/loaded before state ids have been
-    calculated. See this :ref:`warning <defaults_warning>` for details.)
+    Note that defaults should generally only be changed/loaded before
+    |state ids| have been calculated. See this :ref:`warning <defaults_warning>`
+    for details.
 
     Parameters
     ----------
@@ -498,21 +501,21 @@ def load_defaults_from_file(filename='./pymor_defaults.py'):
 
 
 def set_defaults(defaults):
-    """Set default values.
+    """Set |default| values.
 
     This method sets the default value of function arguments marked via the
     :func:`defaults` decorator, overriding default values specified in the
     function signature or set earlier via :func:`load_defaults_from_file` or
-    previous `set_defaults` calls.
+    previous :func:`set_defaults` calls.
 
-    (Note that defaults should only be changed/loaded before state ids have been
-    calculated. See this :ref:`warning <defaults_warning>` for details.)
+    Note that defaults should generally only be changed/loaded before state ids
+    have been calculated. See this :ref:`warning <defaults_warning>` for details.
 
     Parameters
     ----------
     defaults
         Dictionary of default values. Keys are the full paths of the default
-        values. (See :func:`defaults`.)
+        values (see :func:`defaults`).
     """
     try:
         _default_container.update(defaults, type='user')
@@ -521,13 +524,9 @@ def set_defaults(defaults):
 
 
 def defaults_sid():
-    """Return a state id for pyMOR's global defaults.
+    """Return a |state id| for pyMOR's global |defaults|.
 
-    This method is used for the calculation of state ids of immutable objects
-    (see :mod:`pymor.core.interfaces`.) and for :mod:`~pymor.core.cache` key
-    generation.
-
-    For other uses see the implementation of
-    :meth:`pymor.operators.numpy.NumpyMatrixBasedOperator.assemble`.
+    This method is used for the calculation of |state ids| of |immutable|
+    objects and for :mod:`~pymor.core.cache` key generation.
     """
     return _default_container.sid
