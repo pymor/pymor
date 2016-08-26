@@ -2,9 +2,12 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""Utilities for colorized log output.
-via http://stackoverflow.com/questions/384076/how-can-i-make-the-python-logging-output-to-be-colored
-Can not be moved because it's needed to be imported in the root __init__.py OR ELSE
+"""This module contains pyMOR's logging facilities.
+
+pyMOR's logging facilities are based on the :mod:`logging` module of the
+Python standard library. To obtain a new logger object use :func:`getLogger`.
+Logging can be configured via the :func:`set_log_format` and
+:func:`set_log_levels` methods.
 """
 
 import curses
