@@ -10,12 +10,12 @@ all objects in pyMOR. The most notable features provided by :class:`BasicInterfa
 are the following:
 
     1. :class:`BasicInterface` sets class :class:`UberMeta` as metaclass
-       which itself inherits from :class:`abc.ABCMeta`, so it is possible
+       which itself inherits from :class:`abc.ABCMeta`. Thus it is possible
        to define interface classes with abstract methods using the
        :func:`abstractmethod` decorator. There are also decorators for
        abstract class methods, static methods, and properties.
     2. Using metaclass magic, each *class* deriving from :class:`BasicInterface`
-       comes with its own logger instance accessible through its `logger`
+       comes with its own :mod:`~pymor.core.logger` instance accessible through its `logger`
        attribute. The logger prefix is automatically set to the class name.
     3. Logging can be disabled and re-enabled for each *instance* using the
        :meth:`BasicInterface.disable_logging` and :meth:`BasicInterface.enable_logging`
@@ -33,8 +33,7 @@ are the following:
        each pyMOR run and a counter which is increased for any object that requests
        an uid.
     6. If not set by the user to another value, :attr:`BasicInterface.name` is
-       generated from the class name and the :meth:`~BasicInterface.uid` of the
-       instance.
+       set to the name of the object's class.
 
 
 :class:`ImmutableInterface` derives from :class:`BasicInterface` and adds the following
@@ -43,11 +42,12 @@ functionality:
     1. Using more metaclass magic, each instance which derives from
        :class:`ImmutableInterface` is locked after its `__init__` method has returned.
     2. A unique _`state id` for the instance can be calculated by calling
-       :meth:`~ImmutableInterface.generate_sid` and is then stored as `sid` attribute.
+       :meth:`~ImmutableInterface.generate_sid` and is then stored as the object's 
+       `sid` attribute.
        The state id is obtained by deterministically serializing the object's state
        and then computing a checksum of the resulting byte stream.
     3. :attr:`ImmutableInterface.sid_ignore` can be set to a set of attribute names
-       which should be excluded from sid calculation.
+       which should be excluded from state id calculation.
     4. :meth:`ImmutableInterface.with_` can be used to create a copy of an instance with
        some changed attributes. E.g. ::
 
@@ -60,9 +60,9 @@ functionality:
        set of allowed arguments.
 
        :class:`ImmutableInterface` provides a default implementation of `with_` which
-       works by creating a new instance where the arguments of `with_` are passed
-       through to `__init__`. The missing `__init__` arguments are taken from the
-       corresponding instance attributes.
+       works by creating a new instance, passing  the arguments of `with_` to
+       `__init__`. The missing `__init__` arguments are taken from instance
+       attributes of the same name.
 """
 
 import abc
@@ -188,7 +188,7 @@ class BasicInterface(object, metaclass=UberMeta):
     Attributes
     ----------
     locked
-        `True` if the instance is made immutable using `lock`.
+        `True` if the instance is made immutable using :meth:`lock`.
     logger
         A per-class instance of :class:`logging.Logger` with the class
         name as prefix.
@@ -196,11 +196,10 @@ class BasicInterface(object, metaclass=UberMeta):
         `True` if logging has been disabled.
     name
         The name of the instance. If not set by the user, the name is
-        generated from the class name and the `uid` of the instance.
+        set to the class name.
     uid
         A unique id for each instance. The uid is obtained by using
-        :class:`UIDProvider` and should be unique for all pyMOR objects
-        ever created.
+        :class:`UID` and is unique for all pyMOR objects ever created.
     """
     _locked = False
 
@@ -261,7 +260,7 @@ class BasicInterface(object, metaclass=UberMeta):
     @classmethod
     def implementors(cls, descend=False):
         """I return a, potentially empty, list of my subclass-objects.
-        If descend is True I traverse my entire subclass hierarchy and return a flattened list.
+        If `descend` is `True`, I traverse my entire subclass hierarchy and return a flattened list.
         """
         if not hasattr(cls, '_%s__implementors' % cls.__name__):
             return []
@@ -337,24 +336,22 @@ class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
 
     .. _ImmutableInterfaceWarning:
     .. warning::
-       For instances of `ImmutableInterface`, the following should always
-       be true ::
+           For instances of `ImmutableInterface`,
+           the result of member function calls should be completely
+           determined by the function's arguments together with the
+           object's |state id| and the current state of pyMOR's
+           global |defaults|.
 
-           The result of any member function call is determined by the
-           function's arguments together with the state id of the
-           corresponding instance and the current state of pyMOR's
-           global defaults.
+    While, in principle, you are allowed to modify private members after
+    instance initialization, this should never affect the outcome of
+    future method calls. In particular, if you update any internal state
+    after initialization, you have to ensure that this state is not affected
+    by possible changes of the global :mod:`~pymor.core.defaults`.
 
-       While, in principle, you are allowed to modify private members after
-       instance initialization, this should never affect the outcome of
-       future method calls. In particular, if you update any internal state
-       after initialization, you have to ensure that this state is not affecteed
-       by possible changes of the global :mod:`~pymor.core.defaults`.
-
-       Also note that mutable private attributes will cause false cache
-       misses when these attributes enter |state id| calculation. If your
-       implementation uses such attributes, you should therefore add their
-       names to the :attr:`~ImmutableInterface.sid_ignore` set.
+    Also note that mutable private attributes will cause false cache
+    misses when these attributes enter |state id| calculation. If your
+    implementation uses such attributes, you should therefore add their
+    names to the :attr:`~ImmutableInterface.sid_ignore` set.
 
     Attributes
     ----------
@@ -362,13 +359,13 @@ class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
         Set of additional arguments for `with_`.
         (See :attr:`~ImmutableInterface.with_arguments`.)
     sid
-        The objects state id. Only avilable after
+        The objects |state id|. Only available after
         :meth:`~ImmutableInterface.generate_sid` has been called.
     sid_ignore
-        Set of attributes not to include in sid calculation.
+        Set of attributes not to include in |state id| calculation.
     with_arguments
         Set of allowed keyword arguments for `with_`. This is the
-        union of the arguments names of `__init__` and the names
+        union of the argument names of `__init__` and the names
         specified via :attr:`~ImmutableInterface.add_with_arguments`.
     """
     sid_ignore = frozenset({'_locked', '_logger', '_name', '_uid', '_sid_contains_cycles', 'sid'})
@@ -383,10 +380,9 @@ class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
 
         .. warning::
             Unlocking an instance of :class:`ImmutableInterface` will result in the
-            deletion of its sid. However, this will not delete the sids of
-            objects referencing it. You really should not unlock an object
-            unless you really know what you are doing. (One exception might
-            be the modification of a newly created copy of an immutable object.)
+            deletion of its |state id|. However, this will not delete the |state ids|
+            of objects referencing it. You really should not unlock an object
+            unless you really know what you are doing.
         """
         super().unlock()
         if hasattr(self, 'sid'):
@@ -395,16 +391,16 @@ class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
     def generate_sid(self, debug=False):
         """Generate a unique |state id| for the given object.
 
-        The generated sid is stored in the object's `sid` attribute.
+        The generated state id is stored in the object's `sid` attribute.
 
         Parameters
         ----------
         debug
-            If `True`, produce some debug output.
+            If `True`, produce some debugging output.
 
         Returns
         -------
-        The generated sid.
+        The generated |state id|.
         """
         if hasattr(self, 'sid'):
             return self.sid
@@ -470,7 +466,7 @@ class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
 
 
 def generate_sid(obj, debug=False):
-    """Generate a unique |state id| (sid) for the current state of the given object.
+    """Generate a unique |state id| for the current state of the given object.
 
     Parameters
     ----------
