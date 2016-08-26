@@ -6,11 +6,11 @@
 
 Instead of importing serialization functions from Python's
 :mod:`pickle` module directly, you should use the `dump`, `dumps`,
-`load`, `loads` functions defined here.
-
-Moreover, :func:`dumps_function` provides a way to serialize
-function objects which cannot be serialized by `dumps`. Note,
-however, that its use should be avoided since it uses non-portable
+`load`, `loads` functions defined here. In particular, these
+methods will use :func:`dumps_function` to serialize
+function objects which cannot be pickled by Python's standard
+methods. Note, however, pickling such methods should be avoided
+since the implementation of :func:`dumps_function` uses non-portable
 implementation details of CPython to achieve its goals.
 """
 
