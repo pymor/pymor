@@ -20,14 +20,14 @@ class BurgersProblem(InstationaryAdvectionProblem):
         ∂_t u(x, t, μ)  +  ∂_x (v * u(x, t, μ)^μ) = 0
                                        u(x, 0, μ) = u_0(x)
 
-    for u with t in [0, 0.3], x in [0, 2].
+    for u with t in [0, 0.3] and x in [0, 2].
 
     Parameters
     ----------
     v
         The velocity v.
     circle
-        If `True` impose periodic boundary conditions. Otherwise Dirichlet left,
+        If `True`, impose periodic boundary conditions. Otherwise Dirichlet left,
         outflow right.
     initial_data_type
         Type of initial data (`'sin'` or `'bump'`).
@@ -86,8 +86,8 @@ class Burgers2DProblem(InstationaryAdvectionProblem):
     vy
         The y component of the velocity vector v.
     torus
-        If `True` impose periodic boundary conditions. Otherwise Dirichlet left and bottom,
-        outflow top and right.
+        If `True`, impose periodic boundary conditions. Otherwise,
+        Dirichlet left and bottom, outflow top and right.
     initial_data_type
         Type of initial data (`'sin'` or `'bump'`).
     parameter_range

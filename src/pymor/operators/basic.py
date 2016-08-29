@@ -21,18 +21,16 @@ class OperatorBase(OperatorInterface):
     from this class.
     """
 
-    def apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None):
+    def apply2(self, V, U, U_ind=None, V_ind=None, mu=None):
         mu = self.parse_parameter(mu)
         assert isinstance(V, VectorArrayInterface)
         assert isinstance(U, VectorArrayInterface)
         U_ind = None if U_ind is None else np.array(U_ind, copy=False, dtype=np.int, ndmin=1)
         V_ind = None if V_ind is None else np.array(V_ind, copy=False, dtype=np.int, ndmin=1)
         AU = self.apply(U, ind=U_ind, mu=mu)
-        if product is not None:
-            AU = product.apply(AU)
         return V.dot(AU, ind=V_ind)
 
-    def pairwise_apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None):
+    def pairwise_apply2(self, V, U, U_ind=None, V_ind=None, mu=None):
         mu = self.parse_parameter(mu)
         assert isinstance(V, VectorArrayInterface)
         assert isinstance(U, VectorArrayInterface)
@@ -42,8 +40,6 @@ class OperatorBase(OperatorInterface):
         lv = len(V_ind) if V_ind is not None else len(V)
         assert lu == lv
         AU = self.apply(U, ind=U_ind, mu=mu)
-        if product is not None:
-            AU = product.apply(AU)
         return V.pairwise_dot(AU, ind=V_ind)
 
     def jacobian(self, U, mu=None):

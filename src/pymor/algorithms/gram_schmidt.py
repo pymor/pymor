@@ -20,15 +20,15 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
     A
         The |VectorArray| which is to be orthonormalized.
     product
-        The scalar product w.r.t. which to orthonormalize, given as a linear
-        |Operator|. If `None` the Euclidean product is used.
+        The inner product |Operator| w.r.t. which to orthonormalize.
+        If `None`, the Euclidean product is used.
     atol
         Vectors of norm smaller than `atol` are removed from the array.
     rtol
         Relative tolerance used to detect linear dependent vectors
         (which are then removed from the array).
     offset
-        Assume that the first `offset` vectors are already orthogonal and start the
+        Assume that the first `offset` vectors are already orthonormal and start the
         algorithm at the `offset + 1`-th vector.
     reiterate
         If `True`, orthonormalize again if the norm of the orthogonalized vector is
@@ -37,11 +37,11 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
         If `reiterate` is `True`, re-orthonormalize if the ratio between the norms of
         the orthogonalized vector and the original vector is smaller than this value.
     check
-        If `True`, check if the resulting VectorArray is really orthonormal.
+        If `True`, check if the resulting |VectorArray| is really orthonormal.
     check_tol
         Tolerance for the check.
     copy
-        If `True`, create a copy of `A` instead of modifying `A` itself.
+        If `True`, create a copy of `A` instead of modifying `A` in-place.
 
 
     Returns

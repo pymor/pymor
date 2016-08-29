@@ -42,7 +42,6 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
     """
 
     dim = 2
-    dim_outer = 2
     reference_element = triangle
 
     def __init__(self, num_intervals=(2, 2), domain=([0, 0], [1, 1]),

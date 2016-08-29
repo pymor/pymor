@@ -19,24 +19,21 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_mean_err=0.,
         symmetrize=False, orthonormalize=True, check=True, check_tol=1e-10):
     """Proper orthogonal decomposition of `A`.
 
-    If the |VectorArray| `A` is viewed as a linear map ::
-
-        A: R^(len(A)) ---> R^(dim(A))
-
-    then the return value of this method is simply the |VectorArray| of left-singular
-    vectors of the singular value decomposition of `A` with the scalar product
-    on R^(dim(A) given by `product` and the scalar product on R^(len(A)) being
-    the Euclidean product.
+    Viewing the |VectorArray| `A` as a `A.dim` x `len(A)` matrix,
+    the return value of this method is the |VectorArray| of left-singular
+    vectors of the singular value decomposition of `A`, where the inner product
+    on R^(`dim(A)`) is given by `product` and the inner product on R^(`len(A)`)
+    is the Euclidean inner product.
 
     Parameters
     ----------
     A
         The |VectorArray| for which the POD is to be computed.
     modes
-        If not `None` only the first `modes` POD modes (singular vectors) are
+        If not `None`, only the first `modes` POD modes (singular vectors) are
         returned.
-    products
-        Scalar product |Operator| w.r.t. which the POD is computed.
+    product
+        Inner product |Operator| w.r.t. which the POD is computed.
     rtol
         Singular values smaller than this value multiplied by the largest singular
         value are ignored.
@@ -46,14 +43,14 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_mean_err=0.,
         Do not return more modes than needed to bound the mean l2-approximation
         error by this value. I.e. the number of returned modes is at most ::
 
-            argmin_N sqrt(1 / len(A) * sum_{n=N+1}^{infty} s_n^2) <= l2_mean_err
+            argmin_N { 1 / len(A) * sum_{n=N+1}^{infty} s_n^2 <= l2_mean_err^2 }
 
         where `s_n` denotes the n-th singular value.
     symmetrize
-        If `True`, symmetrize the gramian again before proceeding.
+        If `True`, symmetrize the Gramian again before proceeding.
     orthonormalize
         If `True`, orthonormalize the computed POD modes again using
-        :func:`algorithms.gram_schmidt.gram_schmidt`.
+        the :func:`~pymor.algorithms.gram_schmidt.gram_schmidt` algorithm.
     check
         If `True`, check the computed POD modes for orthonormality.
     check_tol

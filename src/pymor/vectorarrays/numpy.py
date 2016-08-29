@@ -181,52 +181,6 @@ class NumpyVectorArray(VectorArrayInterface):
         if not self._array.flags['OWNDATA']:
             self._array = self._array.copy()
 
-    def replace(self, other, ind=None, o_ind=None, remove_from_other=False):
-        assert self.check_ind_unique(ind)
-        assert other.check_ind(o_ind)
-        assert self.dim == other.dim
-        assert other is not self or not remove_from_other
-
-        if self._refcount[0] > 1:
-            self._deep_copy()
-        if remove_from_other and other._refcount[0] > 1:
-            other._deep_copy()
-
-        if NUMPY_INDEX_QUIRK:
-            if self._len == 0 and hasattr(ind, '__len__'):
-                ind = None
-            if other._len == 0 and hasattr(o_ind, '__len__'):
-                o_ind = None
-
-        if ind is None:
-            if o_ind is None:
-                if other is self:
-                    return
-                assert other._len == self._len
-                self._array = other._array[:other._len].copy()
-            else:
-                if not hasattr(o_ind, '__len__'):
-                    o_ind = [o_ind]
-                assert self._len == len(o_ind)
-                self._array = other._array[o_ind]
-            self._len = self._array.shape[0]
-        else:
-            len_ind = self.len_ind(ind)
-            other_array = np.array(self._array) if other is self else other._array
-            if self._array.dtype != other._array.dtype:
-                self._array = self._array.astype(np.promote_types(self._array.dtype, other._array.dtype))
-            if o_ind is None:
-                assert len_ind == other._len
-                self._array[ind] = other_array[:other._len]
-            else:
-                len_oind = other.len_ind(o_ind)
-                assert len_ind == len_oind
-                self._array[ind] = other_array[o_ind]
-        assert self._array.flags['OWNDATA']
-
-        if remove_from_other:
-            other.remove(o_ind)
-
     def scal(self, alpha, ind=None):
         assert self.check_ind_unique(ind)
         assert isinstance(alpha, _INDEXTYPES) \

@@ -11,7 +11,7 @@ from pymor.parameters.spaces import CubicParameterSpace
 
 
 class HelmholtzProblem(EllipticProblem):
-    """Problem given by solving the Helmholtz equation.
+    """Helmholtz equation problem.
 
     This problem is to solve the Helmholtz equation ::
 
@@ -26,11 +26,11 @@ class HelmholtzProblem(EllipticProblem):
     rhs
         The |Function| f(x, μ).
     parameter_range
-        A tuple (k_min, k_max) describing the interval in which k is allowd to vary.
+        A tuple `(k_min, k_max)` describing the interval in which k is allowd to vary.
     dirichlet_data
-        |Function| providing the Dirichlet boundary values in global coordinates.
+        |Function| providing the Dirichlet boundary values.
     neumann_data
-        |Function| providing the Neumann boundary values in global coordinates.
+        |Function| providing the Neumann boundary values.
     name
         Name of the problem.
     """

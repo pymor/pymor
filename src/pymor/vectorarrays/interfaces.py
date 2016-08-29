@@ -200,28 +200,6 @@ class VectorArrayInterface(BasicInterface):
         pass
 
     @abstractmethod
-    def replace(self, other, ind=None, o_ind=None, remove_from_other=False):
-        """Replace vectors of the array.
-
-        Parameters
-        ----------
-        other
-            A |VectorArray| containing the replacement vectors.
-        ind
-            Indices of the vectors that are to be replaced (see class documentation).
-            Repeated indices are forbidden.
-        o_ind
-            Indices of the replacement vectors (see class documentation).
-            `len(ind)` has to agree with `len(o_ind)`.
-            Repeated indices are allowed.
-        remove_from_other
-            If `True`, the new vectors are removed from `other`.
-            For list-like implementations this can be used to prevent
-            unnecessary copies of the involved vectors.
-        """
-        pass
-
-    @abstractmethod
     def scal(self, alpha, ind=None):
         """BLAS SCAL operation (in-place scalar multiplication).
 

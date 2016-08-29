@@ -92,7 +92,7 @@ def write_vtk(grid, data, filename_base, codim=2, binary_vtk=True, last_step=Non
     """
     if not HAVE_PYVTK:
         raise ImportError('could not import pyevtk')
-    if grid.dim != 2 or grid.dim_outer != 2:
+    if grid.dim != 2:
         raise NotImplementedError
     if codim not in (0, 2):
         raise NotImplementedError

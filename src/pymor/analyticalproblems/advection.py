@@ -13,7 +13,7 @@ from pymor.functions.basic import ConstantFunction
 class InstationaryAdvectionProblem(ImmutableInterface):
     """Instationary advection problem.
 
-    The problem is to solve ::
+    The problem is to solve the scalar conservation law::
 
         ∂_t u(x, t, μ)  +  ∇ ⋅ f(u(x, t, μ), t, μ) = s(x, t, μ)
                                         u(x, 0, μ) = u_0(x, μ)
@@ -24,24 +24,23 @@ class InstationaryAdvectionProblem(ImmutableInterface):
     ----------
     domain
         A |DomainDescription| of the domain Ω the problem is posed on.
+    rhs
+        The |Function| s. Note that the current time is handled as an
+        additional `'_t'` component of the |Parameter| `mu` passed
+        to `rhs`.
     flux_function
         The |Function| f. Note that the current time is handled as an
         additional `'_t'` component of the |Parameter| `mu` which is
-        passed to `flux_function` and is not part of the domain of the
-        function. Moreover, `flux_function.dim_domain` has to be 1,
-        whereas `flux_function.shape_range` has to be `(dim Ω,)`.
+        passed to `flux_function`. `flux_function.dim_domain` has to be
+        1, whereas `flux_function.shape_range` has to be `(dim Ω,)`.
     flux_function_derivative
         The derivative of f with respect to u.
-    rhs
-        The |Function| s. Note that the current time is handled as an
-        additional `'_t'` component of the |Parameter| `mu` which is
-        passed to `rhs` and is not part of the domain of the function.
     dirichlet_data
-        |Function| providing the Dirichlet boundary values in global coordinates.
+        |Function| providing the Dirichlet boundary values.
     initial_data
-        |Function| providing the initial values in global coordinates.
+        |Function| providing the initial values u_0.
     T
-        The end time T.
+        The final time T.
     name
         Name of the problem.
 
@@ -51,8 +50,8 @@ class InstationaryAdvectionProblem(ImmutableInterface):
     rhs
     flux_function
     flux_function_derivative
-    initial_data
     dirichlet_data
+    initial_data
     T
     """
 

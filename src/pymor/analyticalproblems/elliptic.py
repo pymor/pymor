@@ -16,7 +16,7 @@ class EllipticProblem(ImmutableInterface):
     The problem consists in solving ::
 
     |        Kd                                     Kv                             Kr
-    | - ∇ ⋅ ∑  θ_{d,k}(μ) ⋅ d_k(x) ∇ u(x, μ) + ∇ ⋅ ∑  θ_{v,k}(μ) v_k(x) u(x, μ) + ∑  θ_{r,k}(μ) r_k(x) u(x, μ) = f(x, μ)
+    | - ∇ ⋅  ∑  θ_{d,k}(μ) ⋅ d_k(x) ∇ u(x, μ) + ∇ ⋅ ∑  θ_{v,k}(μ) v_k(x) u(x, μ) + ∑  θ_{r,k}(μ) r_k(x) u(x, μ) = f(x, μ)
     |       k=0                                    k=0                            k=0
 
     for u.
@@ -37,7 +37,7 @@ class EllipticProblem(ImmutableInterface):
         to be `None`, in which case no parameter dependence is assumed.
     advection_functions
         List containing the |Functions| v_k(x), each having `shape_range`
-        of `(dim domain, )`.
+        of `(dim domain,)`.
     advection_functionals
         List containing the |ParameterFunctionals| θ_{v,k}(μ). If
         `len(advection_functions) == 1`, `advection_functionals` is allowed
@@ -50,9 +50,9 @@ class EllipticProblem(ImmutableInterface):
         `len(reaction_functions) == 1`, `reaction_functionals` is allowed
         to be `None`, in which case no parameter dependence is assumed.
     dirichlet_data
-        |Function| providing the Dirichlet boundary values in global coordinates.
+        |Function| providing the Dirichlet boundary values.
     neumann_data
-        |Function| providing the Neumann boundary values in global coordinates.
+        |Function| providing the Neumann boundary values.
     robin_data
         Tuple of two |Functions| providing the Robin parameter and boundary values.
     parameter_space
