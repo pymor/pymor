@@ -24,37 +24,37 @@ def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=
                                                    domain_discretizer=None, grid=None, boundary_info=None):
     """Discretizes an |InstationaryAdvectionProblem| using the finite volume method.
 
-    Simple explicit Euler time-stepping is used for time-discretization.
+    Explicit Euler time-stepping is used for time discretization.
 
     Parameters
     ----------
     analytical_problem
         The |InstationaryAdvectionProblem| to discretize.
     diameter
-        If not `None`, `diameter` is passed to the `domain_discretizer`.
+        If not `None`, `diameter` is passed as an argument to the
+        `domain_discretizer`.
     nt
-        The number of time-steps.
+        The number of time steps.
     num_flux
         The numerical flux to use in the finite volume formulation. Allowed
-        values are `'lax_friedrichs'`, `'engquist_osher'`, `'simplified_engquist_osher'`.
-        (See :mod:`pymor.operators.fv`.)
+        values are `'lax_friedrichs'`, `'engquist_osher'`, `'simplified_engquist_osher'`
+        (see :mod:`pymor.operators.fv`).
     lxf_lambda
-        The stabilization parameter for the Lax-Friedrichs numerical flux.
-        (Ignored, if different flux is chosen.)
+        The stabilization parameter for the Lax-Friedrichs numerical flux
+        (ignored, if different flux is chosen).
     eo_gausspoints
-        Number of Gauss points for the Engquist-Osher numerical flux.
-        (Ignored, if different flux is chosen.)
+        Number of Gauss points for the Engquist-Osher numerical flux
+        (ignored, if different flux is chosen).
     eo_intervals
         Number of sub-intervals to use for integration when using Engquist-Osher
-        numerical flux. (Ignored, if different flux is chosen.)
+        numerical flux (ignored, if different flux is chosen).
     num_values
         The number of returned vectors of the solution trajectory. If `None`, each
         intermediate vector that is calculated is returned.
     domain_discretizer
         Discretizer to be used for discretizing the analytical domain. This has
-        to be a function `domain_discretizer(domain_description, diameter, ...)`.
-        If further arguments should be passed to the discretizer, use
-        :func:`functools.partial`. If `None`, |discretize_domain_default| is used.
+        to be a function `domain_discretizer(domain_description, diameter)`.
+        If `None`, |discretize_domain_default| is used.
     grid
         Instead of using a domain discretizer, the |Grid| can also be passed directly
         using this parameter.
