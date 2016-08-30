@@ -8,22 +8,24 @@ from pymor.parameters.base import Parametric
 
 
 class DiscretizationInterface(CacheableInterface, Parametric):
-    """Describes a discretization.
+    """Interface for discretization objects.
 
-    A discretization is an object describing a discrete problem
-    via its type and the |Operators| it contains and which can
+    A discretization object defines a discrete problem
+    via its `class` and the |Operators| it contains.
+    Furthermore, discretizatoins can be
     :meth:`solved <DiscretizationInterface.solve>` for a given
     |Parameter| resulting in a solution |VectorArray|.
 
     Attributes
     ----------
     solution_space
-        |VectorSpace| of the |VectorArrays| returned by solve.
+        |VectorSpace| of the |VectorArrays| returned by :meth:`solve`.
     linear
-        `True` if the discretization describes a linear Problem.
+        `True` if the discretization describes a linear problem.
     operators
-        Dictionary of all |Operators| contained in the discretization.
-        (Compare the implementation of :func:`pymor.reductors.basic.reduce_generic_rb`.)
+        Dictionary of all |Operators| contained in the discretization
+        (see :func:`pymor.reductors.basic.reduce_generic_rb` for a usage
+        example).
     functionals
         Same as `operators` but for |Functionals|.
     vector_operators
@@ -47,9 +49,10 @@ class DiscretizationInterface(CacheableInterface, Parametric):
         pass
 
     def solve(self, mu=None, **kwargs):
-        """Solve for the |Parameter| `mu`.
+        """Solve the discrete problem for the |Parameter| `mu`.
 
-        The result will be :mod:`cached <pymor.core.cache>` by default.
+        The result will be :mod:`cached <pymor.core.cache>`
+        in case caching has been activated for the given discretization.
 
         Parameters
         ----------
@@ -66,12 +69,16 @@ class DiscretizationInterface(CacheableInterface, Parametric):
     def estimate(self, U, mu=None):
         """Estimate the discretization error for a given solution.
 
+        The discretization error could be the error w.r.t. the analytical
+        solution of the given problem or the model reduction error w.r.t.
+        a corresponding high-dimensional |Discretization|.
+
         Parameters
         ----------
         U
-            The solution obtained by :meth:`~DiscretizationInterface.solve`.
+            The solution obtained by :meth:`~solve`.
         mu
-            Parameter for which `U` has been obtained.
+            |Parameter| for which `U` has been obtained.
 
         Returns
         -------
