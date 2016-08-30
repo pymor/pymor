@@ -44,7 +44,8 @@ class DiscretizationBase(DiscretizationInterface):
         Parameters
         ----------
         U
-            The |VectorArray| from :attr:`~DiscretizationInterface.solution_space`
+            The |VectorArray| from
+            :attr:`~pymor.discretizations.interfaces.DiscretizationInterface.solution_space`
             that shall be visualized.
         kwargs
             See docstring of `self.visualizer.visualize`.
@@ -91,17 +92,16 @@ class StationaryDiscretization(DiscretizationBase):
     estimator
         An error estimator for the problem. This can be any object with
         an `estimate(U, mu, discretization)` method. If `estimator` is
-        not `None` an `estimate(U, mu)` method is added to the
+        not `None`, an `estimate(U, mu)` method is added to the
         discretization which will call `estimator.estimate(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
         a `visualize(U, discretization, ...)` method. If `visualizer`
-        is not `None` a `visualize(U, *args, **kwargs)` method is added
-        to the discretization, which forwards its arguments to the
+        is not `None`, a `visualize(U, *args, **kwargs)` method is added
+        to the discretization which forwards its arguments to the
         visualizer's `visualize` method.
     cache_region
-        `None` or name of the cache region to use. See
-        :mod:`pymor.core.cache`.
+        `None` or name of the |CacheRegion| to use.
     name
         Name of the discretization.
 
@@ -185,9 +185,9 @@ class InstationaryDiscretization(DiscretizationBase):
     Parameters
     ----------
     T
-        The end-time T.
+        The final time T.
     initial_data
-        The initial data u_0. Either a |VectorArray| of length 1 or
+        The initial data `u_0`. Either a |VectorArray| of length 1 or
         (for the |Parameter|-dependent case) a vector-like |Operator|
         (i.e. a linear |Operator| with `source.dim == 1`) which
         applied to `NumpyVectorArray(np.array([1]))` will yield the
@@ -197,10 +197,10 @@ class InstationaryDiscretization(DiscretizationBase):
     rhs
         The |Functional| F.
     mass
-        The mass |Operator| `M`. If `None` the identity is assumed.
+        The mass |Operator| `M`. If `None`, the identity is assumed.
     time_stepper
-        T time-stepper to be used by :meth:`solve`. Has to satisfy
-        the :class:`~pymor.algorithms.timestepping.TimeStepperInterface`.
+        The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepperInterface>`
+        to be used by :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve`.
     num_values
         The number of returned vectors of the solution trajectory. If `None`, each
         intermediate vector that is calculated is returned.
@@ -219,24 +219,23 @@ class InstationaryDiscretization(DiscretizationBase):
     estimator
         An error estimator for the problem. This can be any object with
         an `estimate(U, mu, discretization)` method. If `estimator` is
-        not `None` an `estimate(U, mu)` method is added to the
+        not `None`, an `estimate(U, mu)` method is added to the
         discretization which will call `estimator.estimate(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
         a `visualize(U, discretization, ...)` method. If `visualizer`
-        is not `None` a `visualize(U, *args, **kwargs)` method is added
-        to the discretization, which forwards its arguments to the
+        is not `None`, a `visualize(U, *args, **kwargs)` method is added
+        to the discretization which forwards its arguments to the
         visualizer's `visualize` method.
     cache_region
-        `None` or name of the cache region to use. See
-        :mod:`pymor.core.cache`.
+        `None` or name of the |CacheRegion| to use.
     name
         Name of the discretization.
 
     Attributes
     ----------
     T
-        The end-time.
+        The final time T.
     initial_data
         The intial data u_0 given by a vector-like |Operator|. The same
         as `vector_operators['initial_data']`.
@@ -247,7 +246,7 @@ class InstationaryDiscretization(DiscretizationBase):
     mass
         The mass operator M. The same as `operators['mass']`.
     time_stepper
-        The provided time-stepper.
+        The provided :class:`time-stepper <pymor.algorithms.timestepping.TimeStepperInterface>`.
     """
 
     def __init__(self, T, initial_data=None, operator=None, rhs=None, mass=None, time_stepper=None, num_values=None,
