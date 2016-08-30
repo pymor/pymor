@@ -11,14 +11,15 @@ from pymor.vectorarrays.mpi import MPIVectorArray, _register_subtype
 
 
 class MPIDiscretization(DiscretizationBase):
-    """MPI distributed discretization.
+    """Wrapper class for MPI distributed |Discretizations|.
 
     Given a single-rank implementation of a |Discretization|, this
     wrapper class uses the event loop from :mod:`pymor.tools.mpi`
     to allow an MPI distributed usage of the |Discretization|.
     The underlying implementation needs to be MPI aware.
-    In particular, the discretization's `solve` method has to
-    perform an MPI parallel solve of the discretization.
+    In particular, the discretization's
+    :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve`
+    method has to perform an MPI parallel solve of the discretization.
 
     Note that this class is not intended to be instantiated directly.
     Instead, you should use :func:`mpi_wrap_discretization`.
@@ -43,13 +44,13 @@ class MPIDiscretization(DiscretizationBase):
         If `pickle_subtypes` is `False`, a unique identifier
         is computed for each local `solution_space` subtype, which is then
         transferred to rank 0 instead of the true subtype. This
-        allows to use :class:`pymor.vectorarrays.mpi.MPIVectorArray`,
-        :class:`pymor.operators.mpi.MPIOperator`, :class.`MPIDiscretization`
+        allows to use :class:`~pymor.vectorarrays.mpi.MPIVectorArray`,
+        :class:`~pymor.operators.mpi.MPIOperator`, :class:`MPIDiscretization`
         even when the local subtypes are not picklable.
     array_type
         This class will be used to wrap the local |VectorArrays|
-        returned by `solve` on each rank into an MPI distributed
-        |VectorArray| managed from rank 0. By default,
+        returned by :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve`
+        on each rank into an MPI distributed |VectorArray| managed from rank 0. By default,
         :class:`~pymor.vectorarrays.mpi.MPIVectorArray` will be used,
         other options are :class:`~pymor.vectorarrays.mpi.MPIVectorArrayAutoComm`
         and :class:`~pymor.vectorarrays.mpi.MPIVectorArrayNoComm`.
@@ -115,15 +116,15 @@ def mpi_wrap_discretization(local_discretizations, use_with=False, with_apply2=F
     """Wrap MPI distributed local |Discretizations| to a global |Discretization| on rank 0.
 
     Given MPI distributed local |Discretizations| referred to by the
-    `~pymor.tools.mpi.ObjectId` `local_discretizations`, return a new |Discretization|
+    :class:`~pymor.tools.mpi.ObjectId` `local_discretizations`, return a new |Discretization|
     which manages these distributed discretizations from rank 0. This
     is done by first wrapping all |Operators| of the |Discretization| using
     :func:`~pymor.operators.mpi.mpi_wrap_operator`.
 
     Alternatively, `local_discretizations` can be a callable (with no arguments)
-    which is then called to instantiate the local |Discretizations| on each rank.
+    which is then called on each rank to instantiate the local |Discretizations|.
 
-    When `use_with` is `False`, an :class:`MPIDiscretization` is instatiated
+    When `use_with` is `False`, an :class:`MPIDiscretization` is instantiated
     with the wrapped operators. A call to
     :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve`
     will then use an MPI parallel call to the
