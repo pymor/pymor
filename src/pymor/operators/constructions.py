@@ -519,8 +519,11 @@ class ZeroOperator(OperatorBase):
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         assert operators[0] is self
         if len(operators) > 1:
-            return operators[1].assemble_lincomb(operators[1:], coefficients[1:], solver_options=solver_options,
-                                                 name=name)
+            if all(isinstance(op, ZeroOperator) for op in operators):
+                return self
+            else:
+                return operators[1].assemble_lincomb(operators[1:], coefficients[1:], solver_options=solver_options,
+                                                     name=name)
         else:
             return None
 
