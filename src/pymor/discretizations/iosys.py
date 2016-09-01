@@ -355,7 +355,7 @@ class LTISystem(DiscretizationInterface):
         plt.show()
         return fig, ax
 
-    def compute_gramian(self, typ, me_solver=None, tol=None):
+    def compute_gramian(self, typ, subtyp, param=None, me_solver=None, tol=None):
         """Compute a Gramian.
 
         Parameters
@@ -363,12 +363,18 @@ class LTISystem(DiscretizationInterface):
         typ
             Type of the Gramian:
 
-            - ('lyap', 'cf'): Lyapunov controllability Gramian factor,
-            - ('lyap', 'of'): Lyapunov observability Gramian factor,
-            - ('lqg', 'cf'): LQG controllability Gramian factor,
-            - ('lqg', 'of'): LQG observability Gramian factor,
-            - ('br', 'cf', gamma): Bounded Real controllability Gramian factor,
-            - ('br', 'of', gamma): Bounded Real observability Gramian factor.
+            - 'lyap': Lyapunov Gramian,
+            - 'lqg': LQG Gramian,
+            - 'br': Bounded Real Gramian.
+        subtyp
+            Subtype of the Gramian:
+
+            - 'cf': controllability Gramian factor,
+            - 'of': observability Gramian factor.
+        param
+            Parameter of the Gramian:
+
+            - used for the Bound Real Gramian (then it must be a positive float).
         me_solver
             Matrix equation solver to use (see
             :func:`pymor.algorithms.lyapunov.solve_lyap` or
@@ -379,56 +385,60 @@ class LTISystem(DiscretizationInterface):
             If `None`, then the default tolerance is used. Otherwise, it should be
             a positive float and the Gramian factor is recomputed (if it was already computed).
         """
-        assert isinstance(typ, tuple)
+        assert isinstance(typ, str)
+        assert isinstance(subtyp, str)
 
         if not self.cont_time:
             raise NotImplementedError
 
-        if typ not in self._gramian or tol is not None:
+        if (typ not in self._gramian or subtyp not in self._gramian[typ] or param not in self._gramian[typ][subtyp] or
+                tol is not None):
             A = self.operators['A']
             B = self.operators['B']
             C = self.operators['C']
             E = self.operators['E'] if not isinstance(self.operators['E'], IdentityOperator) else None
-            if typ[0] == 'lyap':
-                if typ[1] == 'cf':
-                    self._gramian[typ] = solve_lyap(A, E, B, trans=False, me_solver=me_solver, tol=tol)
-                elif typ[1] == 'of':
-                    self._gramian[typ] = solve_lyap(A, E, C, trans=True, me_solver=me_solver, tol=tol)
+            if typ == 'lyap':
+                assert param is None
+                if subtyp == 'cf':
+                    self._gramian[typ][subtyp][None] = solve_lyap(A, E, B, trans=False, me_solver=me_solver, tol=tol)
+                elif subtyp == 'of':
+                    self._gramian[typ][subtyp][None] = solve_lyap(A, E, C, trans=True, me_solver=me_solver, tol=tol)
                 else:
-                    raise NotImplementedError('Only cf and of are possible for lyap Gramian.')
-            elif typ[0] == 'lqg':
-                if typ[1] == 'cf':
-                    self._gramian[typ] = solve_ricc(A, E=E, B=B, C=C, trans=True, me_solver=me_solver, tol=tol)
-                elif typ[1] == 'of':
-                    self._gramian[typ] = solve_ricc(A, E=E, B=B, C=C, trans=False, me_solver=me_solver, tol=tol)
+                    raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for 'lyap' type.")
+            elif typ == 'lqg':
+                assert param is None
+                if subtyp == 'cf':
+                    self._gramian[typ][subtyp][None] = solve_ricc(A, E=E, B=B, C=C, trans=True, me_solver=me_solver,
+                                                                  tol=tol)
+                elif subtyp == 'of':
+                    self._gramian[typ][subtyp][None] = solve_ricc(A, E=E, B=B, C=C, trans=False, me_solver=me_solver,
+                                                                  tol=tol)
                 else:
-                    raise NotImplementedError('Only cf and of are possible for lqg Gramian.')
-            elif typ[0] == 'br':
-                assert isinstance(typ[2], float) and typ[2] > 0
-                if typ[1] == 'cf':
-                    self._gramian[typ] = solve_ricc(A, E=E, B=B / np.sqrt(typ[2]), C=C / np.sqrt(typ[2]),
-                                                    R=-IdentityOperator(C.range),
-                                                    trans=True, me_solver=me_solver, tol=tol)
-                elif typ[1] == 'of':
-                    self._gramian[typ] = solve_ricc(A, E=E, B=B / np.sqrt(typ[2]), C=C / np.sqrt(typ[2]),
-                                                    R=-IdentityOperator(B.source),
-                                                    trans=False, me_solver=me_solver, tol=tol)
+                    raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for 'lqg' type.")
+            elif typ == 'br':
+                assert isinstance(param, float) and param > 0
+                if subtyp == 'cf':
+                    self._gramian[typ][subtyp][param] = solve_ricc(A, E=E, B=B / np.sqrt(typ[2]), C=C / np.sqrt(typ[2]),
+                                                                   R=-IdentityOperator(C.range),
+                                                                   trans=True, me_solver=me_solver, tol=tol)
+                elif subtyp == 'of':
+                    self._gramian[typ][subtyp][param] = solve_ricc(A, E=E, B=B / np.sqrt(typ[2]), C=C / np.sqrt(typ[2]),
+                                                                   R=-IdentityOperator(B.source),
+                                                                   trans=False, me_solver=me_solver, tol=tol)
                 else:
-                    raise NotImplementedError('Only cf and of are possible for br Gramian.')
+                    raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for 'br' type.")
             else:
-                raise NotImplementedError('Only lyap, lqg, and br Gramians are available.')
+                raise NotImplementedError("Only 'lyap', 'lqg', and 'br' types are available.")
 
-    def compute_sv_U_V(self, typ, me_solver=None):
+    def compute_sv_U_V(self, typ, param=None, me_solver=None):
         """Compute singular values and vectors.
 
         Parameters
         ----------
         typ
-            Type of the Gramian:
-
-            - ('lyap',): Lyapunov Gramian,
-            - ('lqg',): LQG Gramian,
-            - ('br', gamma): Bounded Real Gramian,
+            Type of the Gramian (see :func:`~pymor.discretizations.iosys.LTISystem.compute_gramian`).
+        param
+            Parameter of the Gramian (see :func:`~pymor.discretizations.iosys.LTISystem.compute_gramian`).
         me_solver
             Matrix equation solver to use (see
             :func:`pymor.algorithms.lyapunov.solve_lyap` or
@@ -436,16 +446,17 @@ class LTISystem(DiscretizationInterface):
         """
         assert isinstance(typ, tuple)
 
-        if typ not in self._sv or typ not in self._U or typ not in self._V:
-            typ_cf = (typ[0], 'cf') + typ[1:]
-            typ_of = (typ[0], 'of') + typ[1:]
-            self.compute_gramian(typ_cf, me_solver=me_solver)
-            self.compute_gramian(typ_of, me_solver=me_solver)
+        if (typ not in self._sv or param not in self._sv[typ] or
+                typ not in self._U or param not in self._U[typ] or
+                typ not in self._V or param not in self._V[typ]):
+            self.compute_gramian(typ, 'cf', param=param, me_solver=me_solver)
+            self.compute_gramian(typ, 'of', param=param, me_solver=me_solver)
 
-            U, self._sv[typ], Vh = spla.svd(self.operators['E'].apply2(self._gramian[typ_of], self._gramian[typ_cf]))
+            U, self._sv[typ][param], Vh = spla.svd(self.operators['E'].apply2(self._gramian[typ]['of'][param],
+                                                                              self._gramian[typ]['cf'][param]))
 
-            self._U[typ] = NumpyVectorArray(U.T)
-            self._V[typ] = NumpyVectorArray(Vh)
+            self._U[typ][param] = NumpyVectorArray(U.T)
+            self._V[typ][param] = NumpyVectorArray(Vh)
 
     def norm(self, name='H2'):
         """Compute a norm of the |LTISystem|.
@@ -461,16 +472,16 @@ class LTISystem(DiscretizationInterface):
 
             B, C = self.operators['B'], self.operators['C']
 
-            if ('lyap', 'cf') in self._gramian:
-                self._H2_norm = np.sqrt(C.apply(self._gramian[('lyap', 'cf')]).l2_norm2().sum())
-            elif ('lyap', 'of') in self._gramian:
-                self._H2_norm = np.sqrt(B.apply_adjoint(self._gramian[('lyap', 'of')]).l2_norm2().sum())
+            if 'lyap' in self._gramian and 'cf' in self._gramian['lyap']:
+                self._H2_norm = np.sqrt(C.apply(self._gramian['lyap']['cf'][None]).l2_norm2().sum())
+            elif 'lyap' in self._gramian and 'of' in self._gramian['lyap']:
+                self._H2_norm = np.sqrt(B.apply_adjoint(self._gramian['lyap']['of'][None]).l2_norm2().sum())
             elif self.m <= self.p:
-                self.compute_gramian(('lyap', 'cf'))
-                self._H2_norm = np.sqrt(C.apply(self._gramian[('lyap', 'cf')]).l2_norm2().sum())
+                self.compute_gramian('lyap', 'cf')
+                self._H2_norm = np.sqrt(C.apply(self._gramian['lyap']['cf'][None]).l2_norm2().sum())
             else:
-                self.compute_gramian(('lyap', 'of'))
-                self._H2_norm = np.sqrt(B.apply_adjoint(self._gramian[('lyap', 'of')]).l2_norm2().sum())
+                self.compute_gramian('lyap', 'of')
+                self._H2_norm = np.sqrt(B.apply_adjoint(self._gramian['lyap']['of'][None]).l2_norm2().sum())
 
             return self._H2_norm
         elif name == 'Hinf':
@@ -488,8 +499,8 @@ class LTISystem(DiscretizationInterface):
 
             return self._Hinf_norm
         elif name == 'Hankel':
-            self.compute_sv_U_V(('lyap',))
-            return self._sv[('lyap',)][0]
+            self.compute_sv_U_V('lyap')
+            return self._sv['lyap'][None][0]
         else:
             raise NotImplementedError('Only H2, Hinf, and Hankel norms are implemented.')
 
@@ -528,7 +539,7 @@ class LTISystem(DiscretizationInterface):
 
         return self.__class__(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
 
-    def bt(self, r=None, tol=None, typ=('lyap',), me_solver=None, method='bfsr'):
+    def bt(self, r=None, tol=None, typ='lyap', param=None, me_solver=None, method='bfsr'):
         """Reduce using the Balanced Truncation method to order `r` or with tolerance `tol`.
 
         .. [A05]  A. Antoulas, Approximation of Large-Scale Dynamical Systems,
@@ -547,7 +558,9 @@ class LTISystem(DiscretizationInterface):
         tol
             Tolerance for the error bound if `r` is `None`.
         typ
-            Type of the Gramian (see :func:`~pymor.discretizations.iosys.LTISystem.compute_sv_U_V`).
+            Type of the Gramian (see :func:`~pymor.discretizations.iosys.LTISystem.compute_gramian`).
+        param
+            Parameter of the Gramian (see :func:`~pymor.discretizations.iosys.LTISystem.compute_gramian`).
         me_solver
             Matrix equation solver to use (see
             :func:`pymor.algorithms.lyapunov.solve_lyap` or
@@ -573,33 +586,31 @@ class LTISystem(DiscretizationInterface):
         assert r is None or 0 < r < self.n
         assert method in ('sr', 'bfsr')
 
-        typ_cf = (typ[0], 'cf') + typ[1:]
-        typ_of = (typ[0], 'of') + typ[1:]
-        self.compute_gramian(typ_cf, me_solver=me_solver)
-        self.compute_gramian(typ_of, me_solver=me_solver)
+        self.compute_gramian(typ, 'cf', param=param, me_solver=me_solver)
+        self.compute_gramian(typ, 'of', param=param, me_solver=me_solver)
 
-        if r is not None and r > min([len(self._gramian[typ_cf]), len(self._gramian[typ_of])]):
+        if r is not None and r > min([len(self._gramian[typ]['cf'][param]), len(self._gramian[typ]['of'][param])]):
             raise ValueError('r needs to be smaller than the sizes of Gramian factors.' +
                              ' Try reducing the tolerance in the low-rank Lyapunov equation solver.')
 
-        self.compute_sv_U_V(typ, me_solver=me_solver)
+        self.compute_sv_U_V(typ, param=param, me_solver=me_solver)
 
         if r is None:
-            bounds = np.zeros(self._sv[typ].shape)
+            bounds = np.zeros(self._sv[typ][param].shape)
             if typ[0] == 'lyap':
-                bounds[:-1] = 2 * self._sv[typ][-1:0:-1].cumsum()[::-1]
+                bounds[:-1] = 2 * self._sv[typ][param][-1:0:-1].cumsum()[::-1]
             elif typ[0] == 'lqg':
-                tmp = self._sv[typ][-1:0:-1]
+                tmp = self._sv[typ][param][-1:0:-1]
                 bounds[:-1] = 2 * (tmp / np.sqrt(1 + tmp ** 2)).cumsum()[::-1]
             elif typ[0] == 'br':
-                bounds[:-1] = 2 * typ[1] * self._sv[typ][-1:0:-1].cumsum()[::-1]
+                bounds[:-1] = 2 * param * self._sv[typ][param][-1:0:-1].cumsum()[::-1]
             r = np.argmax(bounds <= tol) + 1
 
-        Vr = VectorArrayOperator(self._gramian[typ_cf]).apply(self._V[typ], ind=list(range(r)))
-        Wr = VectorArrayOperator(self._gramian[typ_of]).apply(self._U[typ], ind=list(range(r)))
+        Vr = VectorArrayOperator(self._gramian[typ]['cf'][param]).apply(self._V[typ][param], ind=list(range(r)))
+        Wr = VectorArrayOperator(self._gramian[typ]['of'][param]).apply(self._U[typ][param], ind=list(range(r)))
 
         if method == 'sr':
-            alpha = 1 / np.sqrt(self._sv[typ][:r])
+            alpha = 1 / np.sqrt(self._sv[typ][param][:r])
             Vr.scal(alpha)
             Wr.scal(alpha)
             rom = self.project(Vr, Wr, Er_is_identity=True)
