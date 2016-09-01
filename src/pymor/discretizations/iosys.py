@@ -85,8 +85,8 @@ class LTISystem(DiscretizationInterface):
         self.A = A
         self.B = B
         self.C = C
-        self.D = D
-        self.E = E
+        self.D = D if D is not None else ZeroOperator(B.source, C.range)
+        self.E = E if E is not None else IdentityOperator(A.source)
         self.cont_time = cont_time
         self._poles = None
         self._w = None
@@ -186,30 +186,10 @@ class LTISystem(DiscretizationInterface):
         assert self.cont_time == other.cont_time
 
         A = BlockDiagonalOperator((self.A, other.A))
-        B = BlockOperator(np.array([[self.B], [other.B]]))
-        C = BlockOperator(np.array([[self.C, other.C]]))
-
-        # form D
-        if self.D is None and other.D is None:
-            D = None
-        elif self.D is not None and other.D is None:
-            D = self.D
-        elif self.D is None and other.D is not None:
-            D = other.D
-        else:
-            D = self.D + other.D
-
-        # form E
-        if self.E is None and other.E is None:
-            E = None
-        elif self.E is None and other.E is not None:
-            eye = IdentityOperator(self.A.source)
-            E = BlockDiagonalOperator((eye, other.E))
-        elif self.E is not None and other.E is None:
-            eye = IdentityOperator(other.A.source)
-            E = BlockDiagonalOperator((self.E, eye))
-        else:
-            E = BlockDiagonalOperator((self.E, other.E))
+        B = BlockOperator.vstack((self.B, other.B))
+        C = BlockOperator.hstack((self.C, other.C))
+        D = (self.D + other.D).assemble()
+        E = BlockDiagonalOperator((self.E, other.E))
 
         return LTISystem(A, B, C, D, E, self.cont_time)
 
@@ -217,10 +197,8 @@ class LTISystem(DiscretizationInterface):
         """Negate |LTISystem|."""
         A = self.A
         B = self.B
-        C = self.C * (-1)
-        D = self.D
-        if D is not None:
-            D = D * (-1)
+        C = (self.C * (-1)).assemble()
+        D = (self.D * (-1)).assemble()
         E = self.E
 
         return LTISystem(A, B, C, D, E, self.cont_time)
@@ -231,40 +209,13 @@ class LTISystem(DiscretizationInterface):
 
     def __mul__(self, other):
         """Multiply (cascade) two |LTISystems|."""
-        assert self.m == other.p
+        assert self.source == other.range
 
-        # form A
-        A = BlockOperator(np.array([[self.A, Concatenation(self.B, other.C)], [None, other.A]]))
-
-        # form B
-        if other.D is None:
-            B = BlockOperator(np.array([[ZeroOperator(other.B.source, self.B.range)], [other.B]]))
-        else:
-            B = BlockOperator(np.array([[Concatenation(self.B, other.D)], [other.B]]))
-
-        # form C
-        if self.D is None:
-            C = BlockOperator(np.array([[self.C, ZeroOperator(other.C.source, self.C.range)]]))
-        else:
-            C = BlockOperator(np.array([[self.C, Concatenation(self.D, other.C)]]))
-
-        # form D
-        if self.D is None or other.D is None:
-            D = None
-        else:
-            D = Concatenation(self.D, other.D)
-
-        # form E
-        if self.E is None and other.E is None:
-            E = None
-        elif self.E is None and other.E is not None:
-            eye = IdentityOperator(self.A.source)
-            E = BlockDiagonalOperator((eye, other.E))
-        elif self.E is not None and other.E is None:
-            eye = IdentityOperator(other.A.source)
-            E = BlockDiagonalOperator((self.E, eye))
-        else:
-            E = BlockDiagonalOperator((self.E, other.E))
+        A = BlockOperator([[self.A, Concatenation(self.B, other.C)], [None, other.A]])
+        B = BlockOperator.vstack((Concatenation(self.B, other.D), other.B))
+        C = BlockOperator.hstack((self.C, Concatenation(self.D, other.C)))
+        D = Concatenation(self.D, other.D)
+        E = BlockDiagonalOperator((self.E, other.E))
 
         return LTISystem(A, B, C, D, E, self.cont_time)
 
@@ -272,7 +223,7 @@ class LTISystem(DiscretizationInterface):
         """Compute system poles."""
         if self._poles is None:
             A = to_matrix(self.A)
-            E = None if self.E is None else to_matrix(self.E)
+            E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E)
             self._poles = spla.eigvals(A, E)
 
     def eval_tf(self, s):
@@ -292,17 +243,20 @@ class LTISystem(DiscretizationInterface):
         B = self.B
         C = self.C
         D = self.D
-        E = IdentityOperator(self.A.source) if self.E is None else self.E
+        E = self.E
 
-        iwEmA = LincombOperator((E, A), (s, -1))
+        sEmA = LincombOperator((E, A), (s, -1))
         if self.m <= self.p:
-            eye_m = B.source.from_data(sp.eye(self.m))
-            tfs = C.apply(iwEmA.apply_inverse(B.apply(eye_m))).data.T
+            I_m = B.source.from_data(sp.eye(self.m))
+            tfs = C.apply(sEmA.apply_inverse(B.apply(I_m))).data.T
         else:
-            eye_p = C.range.from_data(sp.eye(self.p))
-            tfs = B.apply_adjoint(iwEmA.apply_adjoint_inverse(C.apply_adjoint(eye_p))).data
-        if D is not None:
-            tfs += to_matrix(D)
+            I_p = C.range.from_data(sp.eye(self.p))
+            tfs = B.apply_adjoint(sEmA.apply_adjoint_inverse(C.apply_adjoint(I_p))).data
+        if not isinstance(D, ZeroOperator):
+            if self.m <= self.p:
+                tfs += D.apply(I_m).data.T
+            else:
+                tfs += D.apply_adjoint(I_p).data
         return tfs
 
     def bode(self, w):
@@ -424,32 +378,32 @@ class LTISystem(DiscretizationInterface):
             raise NotImplementedError
 
         if typ not in self._gramian or tol is not None:
+            A = self.A
+            B = self.B
+            C = self.C
+            E = self.E if not isinstance(self.E, IdentityOperator) else None
             if typ[0] == 'lyap':
                 if typ[1] == 'cf':
-                    self._gramian[typ] = solve_lyap(self.A, self.E, self.B, me_solver=me_solver, tol=tol)
+                    self._gramian[typ] = solve_lyap(A, E, B, trans=False, me_solver=me_solver, tol=tol)
                 elif typ[1] == 'of':
-                    self._gramian[typ] = solve_lyap(self.A, self.E, self.C, trans=True, me_solver=me_solver, tol=tol)
+                    self._gramian[typ] = solve_lyap(A, E, C, trans=True, me_solver=me_solver, tol=tol)
                 else:
                     raise NotImplementedError('Only cf and of are possible for lyap Gramian.')
             elif typ[0] == 'lqg':
                 if typ[1] == 'cf':
-                    self._gramian[typ] = solve_ricc(self.A, E=self.E, B=self.B, C=self.C,
-                                                    trans=True, me_solver=me_solver, tol=tol)
+                    self._gramian[typ] = solve_ricc(A, E=E, B=B, C=C, trans=True, me_solver=me_solver, tol=tol)
                 elif typ[1] == 'of':
-                    self._gramian[typ] = solve_ricc(self.A, E=self.E, B=self.B, C=self.C,
-                                                    trans=False, me_solver=me_solver, tol=tol)
+                    self._gramian[typ] = solve_ricc(A, E=E, B=B, C=C, trans=False, me_solver=me_solver, tol=tol)
                 else:
                     raise NotImplementedError('Only cf and of are possible for lqg Gramian.')
             elif typ[0] == 'br':
                 assert isinstance(typ[2], float) and typ[2] > 0
                 if typ[1] == 'cf':
-                    self._gramian[typ] = solve_ricc(self.A, E=self.E,
-                                                    B=self.B / np.sqrt(typ[2]), C=self.C / np.sqrt(typ[2]),
+                    self._gramian[typ] = solve_ricc(A, E=E, B=B / np.sqrt(typ[2]), C=C / np.sqrt(typ[2]),
                                                     R=-IdentityOperator(self.C.range),
                                                     trans=True, me_solver=me_solver, tol=tol)
                 elif typ[1] == 'of':
-                    self._gramian[typ] = solve_ricc(self.A, E=self.E,
-                                                    B=self.B / np.sqrt(typ[2]), C=self.C / np.sqrt(typ[2]),
+                    self._gramian[typ] = solve_ricc(A, E=E, B=B / np.sqrt(typ[2]), C=C / np.sqrt(typ[2]),
                                                     R=-IdentityOperator(self.B.source),
                                                     trans=False, me_solver=me_solver, tol=tol)
                 else:
@@ -481,10 +435,7 @@ class LTISystem(DiscretizationInterface):
             self.compute_gramian(typ_cf, me_solver=me_solver)
             self.compute_gramian(typ_of, me_solver=me_solver)
 
-            if self.E is None:
-                U, self._sv[typ], Vh = spla.svd(self._gramian[typ_of].dot(self._gramian[typ_cf]))
-            else:
-                U, self._sv[typ], Vh = spla.svd(self.E.apply2(self._gramian[typ_of], self._gramian[typ_cf]))
+            U, self._sv[typ], Vh = spla.svd(self.E.apply2(self._gramian[typ_of], self._gramian[typ_cf]))
 
             self._U[typ] = NumpyVectorArray(U.T)
             self._V[typ] = NumpyVectorArray(Vh)
@@ -522,11 +473,7 @@ class LTISystem(DiscretizationInterface):
             jobe = 'I' if self.E is None else 'G'
             equil = 'S'
             jobd = 'Z' if self.D is None else 'D'
-            A = to_matrix(self.A)
-            B = to_matrix(self.B)
-            C = to_matrix(self.C)
-            D = np.zeros((self.p, self.m)) if self.D is None else to_matrix(self.D)
-            E = np.eye(self.n) if self.E is None else to_matrix(self.E)
+            A, B, C, D, E = map(to_matrix, (self.A, self.B, self.C, self.D, self.E))
             self._Hinf_norm, self._fpeak = ab13dd(dico, jobe, equil, jobd, self.n, self.m, self.p, A, E, B, C, D)
 
             return self._Hinf_norm
@@ -569,10 +516,7 @@ class LTISystem(DiscretizationInterface):
         if Er_is_identity:
             Er = None
         else:
-            if self.E is None:
-                Er = NumpyMatrixOperator(Wr.dot(Vr))
-            else:
-                Er = NumpyMatrixOperator(self.E.apply2(Wr, Vr))
+            Er = NumpyMatrixOperator(self.E.apply2(Wr, Vr))
 
         return Ar, Br, Cr, Dr, Er
 
@@ -627,8 +571,8 @@ class LTISystem(DiscretizationInterface):
         self.compute_gramian(typ_of, me_solver=me_solver)
 
         if r is not None and r > min([len(self._gramian[typ_cf]), len(self._gramian[typ_of])]):
-            raise ValueError('r needs to be smaller than the sizes of Gramian factors.\
-                              Try reducing the tolerance in the low-rank Lyapunov equation solver.')
+            raise ValueError('r needs to be smaller than the sizes of Gramian factors.' +
+                             ' Try reducing the tolerance in the low-rank Lyapunov equation solver.')
 
         self.compute_sv_U_V(typ, me_solver=me_solver)
 
@@ -695,11 +639,7 @@ class LTISystem(DiscretizationInterface):
 
         for i in range(r):
             if sigma[i].imag == 0:
-                if self.E is None:
-                    E = IdentityOperator(self.A.source)
-                    sEmA = LincombOperator((E, self.A), (sigma[i].real, -1))
-                else:
-                    sEmA = LincombOperator((self.E, self.A), (sigma[i].real, -1))
+                sEmA = LincombOperator((self.E, self.A), (sigma[i].real, -1))
 
                 if b_or_c == 'b':
                     v = sEmA.apply_inverse(v)
@@ -715,11 +655,7 @@ class LTISystem(DiscretizationInterface):
                 v.scal(1 / v.l2_norm()[0])
                 V.append(v)
             elif sigma[i].imag > 0:
-                if self.E is None:
-                    E = IdentityOperator(self.A.source)
-                    sEmA = LincombOperator((E, self.A), (sigma[i], -1))
-                else:
-                    sEmA = LincombOperator((self.E, self.A), (sigma[i], -1))
+                sEmA = LincombOperator((self.E, self.A), (sigma[i], -1))
 
                 if b_or_c == 'b':
                     v = sEmA.apply_inverse(v)
@@ -728,19 +664,19 @@ class LTISystem(DiscretizationInterface):
 
                 v1 = v.real
                 if i > 0:
-                    v1_norm_orig = v1.l2_norm()
+                    v1_norm_orig = v1.l2_norm()[0]
                     Vop = VectorArrayOperator(V)
                     v1 -= Vop.apply(Vop.apply_adjoint(v1))
-                    if v1.l2_norm() < v1_norm_orig / 10:
+                    if v1.l2_norm()[0] < v1_norm_orig / 10:
                         v1 -= Vop.apply(Vop.apply_adjoint(v1))
                 v1.scal(1 / v1.l2_norm()[0])
                 V.append(v1)
 
                 v2 = v.imag
-                v2_norm_orig = v2.l2_norm()
+                v2_norm_orig = v2.l2_norm()[0]
                 Vop = VectorArrayOperator(V)
                 v2 -= Vop.apply(Vop.apply_adjoint(v2))
-                if v2.l2_norm() < v2_norm_orig / 10:
+                if v2.l2_norm()[0] < v2_norm_orig / 10:
                     v2 -= Vop.apply(Vop.apply_adjoint(v2))
                 v2.scal(1 / v2.l2_norm()[0])
                 V.append(v2)
@@ -780,11 +716,7 @@ class LTISystem(DiscretizationInterface):
 
         for i in range(r):
             if sigma[i].imag == 0:
-                if self.E is None:
-                    E = IdentityOperator(self.A.source)
-                    sEmA = LincombOperator((E, self.A), (sigma[i].real, -1))
-                else:
-                    sEmA = LincombOperator((self.E, self.A), (sigma[i].real, -1))
+                sEmA = LincombOperator((self.E, self.A), (sigma[i].real, -1))
 
                 if b_or_c == 'b':
                     if i == 0:
@@ -816,11 +748,7 @@ class LTISystem(DiscretizationInterface):
                 v.scal(1 / v.l2_norm()[0])
                 V.append(v)
             elif sigma[i].imag > 0:
-                if self.E is None:
-                    E = IdentityOperator(self.A.source)
-                    sEmA = LincombOperator((E, self.A), (sigma[i], -1))
-                else:
-                    sEmA = LincombOperator((self.E, self.A), (sigma[i], -1))
+                sEmA = LincombOperator((self.E, self.A), (sigma[i], -1))
 
                 if b_or_c == 'b':
                     if i == 0:
@@ -845,19 +773,19 @@ class LTISystem(DiscretizationInterface):
 
                 v1 = v.real
                 if i > 0:
-                    v1_norm_orig = v1.l2_norm()
+                    v1_norm_orig = v1.l2_norm()[0]
                     Vop = VectorArrayOperator(V)
                     v1 -= Vop.apply(Vop.apply_adjoint(v1))
-                    if v1.l2_norm() < v1_norm_orig / 10:
+                    if v1.l2_norm()[0] < v1_norm_orig / 10:
                         v1 -= Vop.apply(Vop.apply_adjoint(v1))
                 v1.scal(1 / v1.l2_norm()[0])
                 V.append(v1)
 
                 v2 = v.imag
-                v2_norm_orig = v2.l2_norm()
+                v2_norm_orig = v2.l2_norm()[0]
                 Vop = VectorArrayOperator(V)
                 v2 -= Vop.apply(Vop.apply_adjoint(v2))
-                if v2.l2_norm() < v2_norm_orig / 10:
+                if v2.l2_norm()[0] < v2_norm_orig / 10:
                     v2 -= Vop.apply(Vop.apply_adjoint(v2))
                 v2.scal(1 / v2.l2_norm()[0])
                 V.append(v2)
@@ -867,7 +795,7 @@ class LTISystem(DiscretizationInterface):
         return V
 
     def interpolation(self, sigma, b, c):
-        """Tangential Hermite interpolation at point `sigma` and directions `b` and `c`.
+        """Tangential Hermite interpolation at points `sigma` and directions `b` and `c`.
 
         Parameters
         ----------
@@ -897,11 +825,7 @@ class LTISystem(DiscretizationInterface):
 
         for i in range(r):
             if sigma[i].imag == 0:
-                if self.E is None:
-                    E = IdentityOperator(self.A.source)
-                    sEmA = LincombOperator((E, self.A), (sigma[i].real, -1))
-                else:
-                    sEmA = LincombOperator((self.E, self.A), (sigma[i].real, -1))
+                sEmA = LincombOperator((self.E, self.A), (sigma[i].real, -1))
 
                 Bb = self.B.apply(b.real, ind=i)
                 Vr.append(sEmA.apply_inverse(Bb))
@@ -909,11 +833,7 @@ class LTISystem(DiscretizationInterface):
                 CTc = self.C.apply_adjoint(c.real, ind=i)
                 Wr.append(sEmA.apply_inverse_adjoint(CTc))
             elif sigma[i].imag > 0:
-                if self.E is None:
-                    E = IdentityOperator(self.A.source)
-                    sEmA = LincombOperator((E, self.A), (sigma[i], -1))
-                else:
-                    sEmA = LincombOperator((self.E, self.A), (sigma[i], -1))
+                sEmA = LincombOperator((self.E, self.A), (sigma[i], -1))
 
                 Bb = self.B.apply(b, ind=i)
                 v = sEmA.apply_inverse(Bb)
@@ -930,7 +850,7 @@ class LTISystem(DiscretizationInterface):
 
         return Vr, Wr
 
-    def irka(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_stability=True,
+    def irka(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_sigma_in_rhp=True,
              arnoldi=False, compute_errors=False):
         """Reduce using IRKA.
 
@@ -952,18 +872,18 @@ class LTISystem(DiscretizationInterface):
         b
             Initial right tangential directions, |VectorArray| of length `r` from `self.B.source`.
 
-            If `None`, `b` is chosen pseudo-randomly.
+            If `None`, `b` is chosen with all ones.
         c
             Initial left tangential directions, |VectorArray| of length `r` from `self.C.range`.
 
-            If `None`, `c` is chosen pseudo-randomly.
+            If `None`, `c` is chosen with all ones.
         tol
             Tolerance for the largest change in interpolation points.
         maxit
             Maximum number of iterations.
         verbose
             Should consecutive distances be printed.
-        force_stability
+        force_sigma_in_rhp
             If True, new interpolation points are always in the right half-plane.
             Otherwise, they are reflections of reduced order model's poles.
         arnoldi
@@ -994,11 +914,9 @@ class LTISystem(DiscretizationInterface):
         if sigma is None:
             sigma = np.logspace(-1, 1, r)
         if b is None:
-            np.random.seed(0)
-            b = self.B.source.from_data(np.random.randn(r, self.m))
+            b = self.B.source.from_data(np.ones((r, self.m)))
         if c is None:
-            np.random.seed(0)
-            c = self.C.range.from_data(np.random.randn(r, self.p))
+            c = self.C.range.from_data(np.ones((r, self.p)))
 
         if verbose:
             if compute_errors:
@@ -1039,7 +957,7 @@ class LTISystem(DiscretizationInterface):
                 errors.append(rel_H2_err)
 
             sigma, Y, X = spla.eig(Ar._matrix, Er._matrix, left=True, right=True)
-            if force_stability:
+            if force_sigma_in_rhp:
                 sigma = np.array([np.abs(s.real) + s.imag * 1j for s in sigma])
             else:
                 sigma *= -1
@@ -1218,7 +1136,7 @@ class TF(DiscretizationInterface):
 
         return Er, Ar, Br, Cr
 
-    def tf_irka(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_stability=True):
+    def tf_irka(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_sigma_in_rhp=True):
         """Reduce using TF-IRKA.
 
         .. [AG12] C. A. Beattie, S. Gugercin, Realization-independent H2-approximation,
@@ -1235,18 +1153,18 @@ class TF(DiscretizationInterface):
         b
             Initial right tangential directions, |NumPy array| of shape `(self.m, r)`.
 
-            If `None`, `b` is chosen pseudo-randomly.
+            If `None`, `b` is chosen with all ones.
         c
             Initial left tangential directions, |NumPy array| of shape `(self.p, r)`.
 
-            If `None`, `c` is chosen pseudo-randomly.
+            If `None`, `c` is chosen with all ones.
         tol
             Tolerance for the largest change in interpolation points.
         maxit
             Maximum number of iterations.
         verbose
             Should consecutive distances be printed.
-        force_stability
+        force_sigma_in_rhp
             If True, new interpolation points are always in the right half-plane.
             Otherwise, they are reflections of reduced order model's poles.
 
@@ -1269,11 +1187,9 @@ class TF(DiscretizationInterface):
         if sigma is None:
             sigma = np.logspace(-1, 1, r)
         if b is None:
-            np.random.seed(0)
-            b = np.random.randn(self.m, r)
+            b = np.ones((self.m, r))
         if c is None:
-            np.random.seed(0)
-            c = np.random.randn(self.p, r)
+            c = np.ones((self.p, r))
 
         if verbose:
             print('iter | shift change')
@@ -1287,7 +1203,7 @@ class TF(DiscretizationInterface):
             Er, Ar, Br, Cr = self.interpolation(sigma, b, c)
 
             sigma, Y, X = spla.eig(Ar, Er, left=True, right=True)
-            if force_stability:
+            if force_sigma_in_rhp:
                 sigma = np.array([np.abs(s.real) + s.imag * 1j for s in sigma])
             else:
                 sigma *= -1
