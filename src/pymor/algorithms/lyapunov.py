@@ -271,15 +271,15 @@ def solve_lyap(A, E, B, trans=False, me_solver=None, tol=None):
         n = A_mat.shape[0]
         if not trans:
             C = -B_mat.dot(B_mat.T)
-            trans = 'T'
+            trana = 'T'
         else:
             C = -B_mat.T.dot(B_mat)
-            trans = 'N'
+            trana = 'N'
         dico = 'C'
 
         if E is None:
             U = np.zeros((n, n))
-            X, scale, _, _, _ = slycot.sb03md(n, C, A_mat, U, dico, trana=trans)
+            X, scale, _, _, _ = slycot.sb03md(n, C, A_mat, U, dico, trana=trana)
         else:
             job = 'X'
             fact = 'N'
@@ -287,7 +287,7 @@ def solve_lyap(A, E, B, trans=False, me_solver=None, tol=None):
             Z = np.zeros((n, n))
             uplo = 'L'
             X = C
-            _, _, _, _, X, scale, _, _, _, _, _ = slycot.sg03ad(dico, job, fact, trans, uplo, n, A_mat, E_mat,
+            _, _, _, _, X, scale, _, _, _, _, _ = slycot.sg03ad(dico, job, fact, trana, uplo, n, A_mat, E_mat,
                                                                 Q, Z, X)
 
         from pymor.algorithms.cholp import cholp
