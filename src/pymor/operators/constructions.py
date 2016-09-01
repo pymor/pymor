@@ -482,8 +482,12 @@ class ZeroOperator(OperatorBase):
     def apply(self, U, ind=None, mu=None):
         assert U in self.source
         assert U.check_ind(ind)
-        count = len(U) if ind is None else 1 if isinstance(ind, Number) else len(ind)
-        return self.range.zeros(count)
+        return self.range.zeros(U.len_ind(ind))
+
+    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+        assert U in self.range
+        assert U.check_ind(ind)
+        return self.source.zeros(U.len_ind(ind))
 
     def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
         assert V in self.range
