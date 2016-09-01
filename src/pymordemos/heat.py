@@ -75,7 +75,7 @@ if __name__ == '__main__':
     # Hankel singular values
     lti.compute_sv_U_V('lyap')
     fig, ax = plt.subplots()
-    ax.semilogy(range(1, len(lti._sv['lyap'][None]) + 1), lti._sv['lyap'][None], '.-')
+    ax.semilogy(range(1, len(lti._sv['lyap']) + 1), lti._sv['lyap'], '.-')
     ax.set_title('Hankel singular values')
     plt.show()
 
