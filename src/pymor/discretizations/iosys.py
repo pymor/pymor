@@ -144,6 +144,40 @@ class LTISystem(DiscretizationInterface):
         return cls(A, B, C, D, E, cont_time)
 
     @classmethod
+    def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, cont_time=True):
+        """Create |LTISystem| from matrices stored in separate files.
+
+        Parameters
+        ----------
+        A_file
+            Name of the file (with extension) containing A.
+        B_file
+            Name of the file (with extension) containing B.
+        C_file
+            Name of the file (with extension) containing C.
+        D_file
+            `None` or name of the file (with extension) containing D.
+        E_file
+            `None` or name of the file (with extension) containing E.
+        cont_time
+            `True` if the system is continuous-time, otherwise discrete-time.
+
+        Returns
+        -------
+        lti
+            |LTISystem| with operators A, B, C, D, and E.
+        """
+        from pymor.tools.io import load_matrix
+
+        A = load_matrix(A_file)
+        B = load_matrix(B_file)
+        C = load_matrix(C_file)
+        D = load_matrix(D_file) if D_file is not None else None
+        E = load_matrix(E_file) if E_file is not None else None
+
+        return cls.from_matrices(A, B, C, D, E, cont_time)
+
+    @classmethod
     def from_mat_file(cls, file_name, cont_time=True):
         """Create |LTISystem| from matrices stored in a .mat file.
 
@@ -168,14 +202,35 @@ class LTISystem(DiscretizationInterface):
         A = mat_dict['A']
         B = mat_dict['B']
         C = mat_dict['C']
-        if 'D' in mat_dict:
-            D = mat_dict['D']
-        else:
-            D = None
-        if 'E' in mat_dict:
-            E = mat_dict['E']
-        else:
-            E = None
+        D = mat_dict['D'] if 'D' in mat_dict else None
+        E = mat_dict['E'] if 'E' in mat_dict else None
+
+        return cls.from_matrices(A, B, C, D, E, cont_time)
+
+    @classmethod
+    def from_abcde_files(cls, files_basename, cont_time=True):
+        """Create |LTISystem| from matrices stored in a .[ABCDE] files.
+
+        Parameters
+        ----------
+        files_basename
+            Basename of files containing A, B, C, and optionally D and E.
+        cont_time
+            `True` if the system is continuous-time, otherwise discrete-time.
+
+        Returns
+        -------
+        lti
+            |LTISystem| with operators A, B, C, D, and E.
+        """
+        from pymor.tools.io import load_matrix
+        import os.path
+
+        A = load_matrix(files_basename + '.A')
+        B = load_matrix(files_basename + '.B')
+        C = load_matrix(files_basename + '.C')
+        D = load_matrix(files_basename + '.D') if os.path.isfile(files_basename + '.D') else None
+        E = load_matrix(files_basename + '.E') if os.path.isfile(files_basename + '.E') else None
 
         return cls.from_matrices(A, B, C, D, E, cont_time)
 
@@ -185,8 +240,8 @@ class LTISystem(DiscretizationInterface):
     def __add__(self, other):
         """Add two |LTISystems|."""
         assert isinstance(other, LTISystem)
-        assert (self.operators['B'].source == other.operators['B'].source and
-                self.operators['C'].range == other.operators['C'].range)
+        assert self.operators['B'].source == other.operators['B'].source
+        assert self.operators['C'].range == other.operators['C'].range
         assert self.cont_time == other.cont_time
 
         A = BlockDiagonalOperator((self.operators['A'], other.operators['A']))
