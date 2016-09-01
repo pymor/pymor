@@ -195,7 +195,7 @@ class LTISystem(DiscretizationInterface):
         D = (self.operators['D'] + other.operators['D']).assemble()
         E = BlockDiagonalOperator((self.operators['E'], other.operators['E']))
 
-        return LTISystem(A, B, C, D, E, self.cont_time)
+        return self.__class__(A, B, C, D, E, self.cont_time)
 
     def __neg__(self):
         """Negate |LTISystem|."""
@@ -205,7 +205,7 @@ class LTISystem(DiscretizationInterface):
         D = (self.operators['D'] * (-1)).assemble()
         E = self.operators['E']
 
-        return LTISystem(A, B, C, D, E, self.cont_time)
+        return self.__class__(A, B, C, D, E, self.cont_time)
 
     def __sub__(self, other):
         """Subtract two |LTISystems|."""
@@ -224,7 +224,7 @@ class LTISystem(DiscretizationInterface):
         D = Concatenation(self.operators['D'], other.operators['D'])
         E = BlockDiagonalOperator((self.operators['E'], other.operators['E']))
 
-        return LTISystem(A, B, C, D, E, self.cont_time)
+        return self.__class__(A, B, C, D, E, self.cont_time)
 
     def compute_poles(self):
         """Compute system poles."""
@@ -363,12 +363,12 @@ class LTISystem(DiscretizationInterface):
         typ
             Type of the Gramian:
 
-            * ('lyap', 'cf'): Lyapunov controllability Gramian factor,
-            * ('lyap', 'of'): Lyapunov observability Gramian factor,
-            * ('lqg', 'cf'): LQG controllability Gramian factor,
-            * ('lqg', 'of'): LQG observability Gramian factor,
-            * ('br', 'cf', gamma): Bounded Real controllability Gramian factor,
-            * ('br', 'of', gamma): Bounded Real observability Gramian factor.
+            - ('lyap', 'cf'): Lyapunov controllability Gramian factor,
+            - ('lyap', 'of'): Lyapunov observability Gramian factor,
+            - ('lqg', 'cf'): LQG controllability Gramian factor,
+            - ('lqg', 'of'): LQG observability Gramian factor,
+            - ('br', 'cf', gamma): Bounded Real controllability Gramian factor,
+            - ('br', 'of', gamma): Bounded Real observability Gramian factor.
         me_solver
             Matrix equation solver to use (see
             :func:`pymor.algorithms.lyapunov.solve_lyap` or
@@ -426,9 +426,9 @@ class LTISystem(DiscretizationInterface):
         typ
             Type of the Gramian:
 
-            * ('lyap',): Lyapunov Gramian,
-            * ('lqg',): LQG Gramian,
-            * ('br', gamma): Bounded Real Gramian,
+            - ('lyap',): Lyapunov Gramian,
+            - ('lqg',): LQG Gramian,
+            - ('br', gamma): Bounded Real Gramian,
         me_solver
             Matrix equation solver to use (see
             :func:`pymor.algorithms.lyapunov.solve_lyap` or
@@ -507,16 +507,14 @@ class LTISystem(DiscretizationInterface):
 
         Returns
         -------
-        Ar
-            Reduced `A` operator, |NumpyMatrixOperator|.
-        Br
-            Reduced `B` operator, :class:`~pymor.operators.constructions.VectorArrayOperator` (transposed).
-        Cr
-            Reduced `C` operator, :class:`~pymor.operators.constructions.VectorArrayOperator`.
-        Dr
-            Simply `self.operators['D']`.
-        Er
-            Reduced `E` operator, |NumpyMatrixOperator| or `None`.
+        lti
+            Projected |LTISystem|:
+
+            - `A` is |NumpyMatrixOperator|,
+            - `B` is :class:`~pymor.operators.constructions.VectorArrayOperator` (transposed),
+            - `C` is :class:`~pymor.operators.constructions.VectorArrayOperator`,
+            - `D` is `self.operators['D']`,
+            - `E` is |NumpyMatrixOperator| or :class:`~pymor.operators.constructions.IdentityOperator`.
         """
         Ar = NumpyMatrixOperator(self.operators['A'].apply2(Wr, Vr))
         Br = VectorArrayOperator(self.operators['B'].apply_adjoint(Wr), transposed=True)
@@ -528,7 +526,7 @@ class LTISystem(DiscretizationInterface):
         else:
             Er = NumpyMatrixOperator(self.operators['E'].apply2(Wr, Vr))
 
-        return Ar, Br, Cr, Dr, Er
+        return self.__class__(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
 
     def bt(self, r=None, tol=None, typ=('lyap',), me_solver=None, method='bfsr'):
         """Reduce using the Balanced Truncation method to order `r` or with tolerance `tol`.
@@ -557,8 +555,8 @@ class LTISystem(DiscretizationInterface):
         method
             Projection method used:
 
-            * square root method ('sr')
-            * balancing-free square root method ('bfsr')
+            - square root method ('sr')
+            - balancing-free square root method ('bfsr')
 
         Returns
         -------
@@ -604,13 +602,12 @@ class LTISystem(DiscretizationInterface):
             alpha = 1 / np.sqrt(self._sv[typ][:r])
             Vr.scal(alpha)
             Wr.scal(alpha)
-            Ar, Br, Cr, Dr, Er = self.project(Vr, Wr, Er_is_identity=True)
+            rom = self.project(Vr, Wr, Er_is_identity=True)
         elif method == 'bfsr':
             Vr = gram_schmidt(Vr, atol=0, rtol=0)
             Wr = gram_schmidt(Wr, atol=0, rtol=0)
-            Ar, Br, Cr, Dr, Er = self.project(Vr, Wr)
+            rom = self.project(Vr, Wr)
 
-        rom = LTISystem(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
         rc = GenericRBReconstructor(Vr)
         reduction_data = {'Vr': Vr, 'Wr': Wr}
 
@@ -913,11 +910,11 @@ class LTISystem(DiscretizationInterface):
         reduction_data
             Dictionary of additional data produced by the reduction process. Contains:
 
-            * projection matrices `Vr` and `Wr`,
-            * distances between interpolation points in different iterations `dist`,
-            * interpolation points from all iterations `Sigma`,
-            * right and left tangential directions `R` and `L`, and
-            * relative :math:`\mathcal{H}_2`-errors `errors` (if compute_errors is `True`).
+            - projection matrices `Vr` and `Wr`,
+            - distances between interpolation points in different iterations `dist`,
+            - interpolation points from all iterations `Sigma`,
+            - right and left tangential directions `R` and `L`, and
+            - relative :math:`\mathcal{H}_2`-errors `errors` (if compute_errors is `True`).
         """
         assert 0 < r < self.n
         assert sigma is None or len(sigma) == r
@@ -958,10 +955,9 @@ class LTISystem(DiscretizationInterface):
         if compute_errors:
             errors = []
         for it in range(maxit):
-            Ar, Br, Cr, _, Er = self.project(Vr, Wr)
+            rom = self.project(Vr, Wr)
 
             if compute_errors:
-                rom = LTISystem(Ar, Br, Cr, None, Er, cont_time=self.cont_time)
                 err = self - rom
                 try:
                     rel_H2_err = err.norm() / self.norm()
@@ -969,7 +965,7 @@ class LTISystem(DiscretizationInterface):
                     rel_H2_err = np.inf
                 errors.append(rel_H2_err)
 
-            sigma, Y, X = spla.eig(Ar._matrix, Er._matrix, left=True, right=True)
+            sigma, Y, X = spla.eig(rom.operators['A']._matrix, rom.operators['E']._matrix, left=True, right=True)
             if force_sigma_in_rhp:
                 sigma = np.array([np.abs(s.real) + s.imag * 1j for s in sigma])
             else:
@@ -986,8 +982,8 @@ class LTISystem(DiscretizationInterface):
                 else:
                     print('{:4d} | {:.6e}'.format(it + 1, np.min(dist[-1])))
 
-            b = Br.apply_adjoint(NumpyVectorArray(Y.conj().T))
-            c = Cr.apply(NumpyVectorArray(X.T))
+            b = rom.operators['B'].apply_adjoint(NumpyVectorArray(Y.conj().T))
+            c = rom.operators['C'].apply(NumpyVectorArray(X.T))
             R.append(b)
             L.append(c)
 
@@ -1006,9 +1002,7 @@ class LTISystem(DiscretizationInterface):
             if np.min(dist[-1]) < tol:
                 break
 
-        Ar, Br, Cr, Dr, Er = self.project(Vr, Wr)
-
-        rom = LTISystem(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
+        rom = self.project(Vr, Wr)
         rc = GenericRBReconstructor(Vr)
         reduction_data = {'Vr': Vr, 'Wr': Wr, 'dist': dist, 'Sigma': Sigma, 'R': R, 'L': L}
         if compute_errors:
@@ -1188,9 +1182,9 @@ class TF(DiscretizationInterface):
         reduction_data
             Dictionary of additional data produced by the reduction process. Contains:
 
-            * distances between interpolation points in different iterations `dist`,
-            * interpolation points from all iterations `Sigma`, and
-            * right and left tangential directions `R` and `L`.
+            - distances between interpolation points in different iterations `dist`,
+            - interpolation points from all iterations `Sigma`, and
+            - right and left tangential directions `R` and `L`.
         """
         assert r > 0
         assert sigma is None or len(sigma) == r
