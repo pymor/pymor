@@ -185,13 +185,14 @@ subsequent |solve| call, but not its result.
 
 Of course, in many situations one may wish to change properties of an immutable
 object, e.g. the number of timesteps for a given discretization. This can be
-easily achieved using the `~pymor.core.interfaces.BasicInterface.with_` method
-every immutable object has: a call of the form ``o.with_(a=x, b=y)`` will return
-a copy of `o` in which the attribute `a` now has the value `x` and the
-attribute `b` the value `y`. It can be generally assumed that calls to
-`~pymor.core.interfaces.BasicInterface.with_` are inexpensive. The set of
-allowed arguments can be found in the
-:attr:`~pymor.core.interfaces.BasicInterface.with_arguments` attribute.
+easily achieved using the
+:meth:`~pymor.core.interfaces.ImmutableInterface.with_` method every immutable
+object has: a call of the form ``o.with_(a=x, b=y)`` will return a copy of `o`
+in which the attribute `a` now has the value `x` and the attribute `b` the
+value `y`. It can be generally assumed that calls to
+:meth:`~pymor.core.interfaces.ImmutableInterface.with_` are inexpensive. The
+set of allowed arguments can be found in the
+:attr:`~pymor.core.interfaces.ImmutableInterface.with_arguments` attribute.
 
 All immutable classes in pyMOR and most other classes derive from
 |BasicInterface| which, through its meta class, provides several convenience
