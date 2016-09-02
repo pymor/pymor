@@ -3,8 +3,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 from pymor.core.interfaces import ImmutableInterface
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.domaindescriptions.basic import RectDomain
@@ -29,24 +27,24 @@ class ParabolicProblem(ImmutableInterface):
         A |DomainDescription| of the domain the problem is posed on.
     rhs
         The |Function| f(x, μ). `rhs.dim_domain` has to agree with the
-        dimension of `domain`, whereas `rhs.shape_range` has to be `tuple()`.
+        dimension of `domain`, whereas `rhs.shape_range` has to be `()`.
     diffusion_functions
         List containing the |Functions| d_k(x), each having `shape_range`
-        of either `tuple()` or `(dim domain, dim domain)`.
+        of either `()` or `(dim domain, dim domain)`.
     diffusion_functionals
         List containing the |ParameterFunctionals| θ_k(μ). If
         `len(diffusion_functions) == 1`, `diffusion_functionals` is allowed
         to be `None`, in which case no parameter dependence is assumed.
     dirichlet_data
-        |Function| providing the Dirichlet boundary values in global coordinates.
+        |Function| providing the Dirichlet boundary values.
     neumann_data
-        |Function| providing the Neumann boundary values in global coordinates.
+        |Function| providing the Neumann boundary values.
+    initial_data
+        |Function| providing the initial values.
+    T
+        The final time T.
     parameter_space
         |ParameterSpace| for the problem.
-    initial_data
-        |Function| providing the initial values in global coordinates.
-    T
-        The end time T.
     name
         Name of the problem.
 

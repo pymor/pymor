@@ -3,9 +3,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
-from itertools import izip
 from numbers import Number
 import atexit
 from collections import OrderedDict
@@ -17,7 +14,7 @@ import numpy as np
 
 from pymor.core.defaults import defaults
 from pymor.core.pickle import dump, load
-from pymor.vectorarrays.interfaces import VectorArrayInterface
+from pymor.vectorarrays.interfaces import VectorArrayInterface, _INDEXTYPES
 from pymor.vectorarrays.list import ListVectorArray
 
 
@@ -39,7 +36,7 @@ def basedir(path=os.path.join(tempfile.gettempdir(), 'pymor.diskarray.' + getpas
 class DiskVectorArray(VectorArrayInterface):
     """|VectorArray| implementation via a list of vectors stored in temporary files."""
 
-    _NONE = tuple()
+    _NONE = ()
 
     def __init__(self, vectors, subtype=_NONE):
         if isinstance(vectors, ListVectorArray):
@@ -72,7 +69,7 @@ class DiskVectorArray(VectorArrayInterface):
             pass
 
     def _store(self, i, v):
-        with open(os.path.join(self.dir, str(i)), 'w') as f:
+        with open(os.path.join(self.dir, str(i)), 'wb') as f:
             dump(v, f)
         self._cache[i] = v
         if len(self._cache) > self.cache_size:
@@ -82,7 +79,7 @@ class DiskVectorArray(VectorArrayInterface):
         if i in self._cache:
             return self._cache[i]
         else:
-            with open(os.path.join(self.dir, str(i))) as f:
+            with open(os.path.join(self.dir, str(i)), 'rb') as f:
                 v = load(f)
             self._cache[i] = v
             if len(self._cache) > self.cache_size:
@@ -91,7 +88,7 @@ class DiskVectorArray(VectorArrayInterface):
 
     def get(self, ind=None):
         assert self.check_ind(ind)
-        ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
+        ind = list(range(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
         return ListVectorArray([self._load(i) for i in ind], subtype=self.subtype, copy=False)
 
     @classmethod
@@ -105,12 +102,16 @@ class DiskVectorArray(VectorArrayInterface):
         va._len = count
         return va
 
+    @classmethod
+    def from_data(cls, data, subtype):
+        va = cls([], subtype)
+        for i in range(len(data)):
+            v = va.vector_type.from_data(data[i], va.vector_subtype)
+            va._store(i, v)
+        return va
+
     def __len__(self):
         return self._len
-
-    @property
-    def data(self):
-        raise NotImplementedError
 
     @property
     def dim(self):
@@ -122,7 +123,7 @@ class DiskVectorArray(VectorArrayInterface):
 
     def copy(self, ind=None):
         assert self.check_ind(ind)
-        ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
+        ind = list(range(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
         c = type(self)([], subtype=self.subtype)
         for d, s in enumerate(ind):
             shutil.copy(os.path.join(self.dir, str(s)),
@@ -134,7 +135,7 @@ class DiskVectorArray(VectorArrayInterface):
         assert other.check_ind(o_ind)
         assert other.space == self.space
         assert other is not self or not remove_from_other
-        o_ind = list(xrange(other._len)) if o_ind is None else [o_ind] if isinstance(o_ind, Number) else o_ind
+        o_ind = list(range(other._len)) if o_ind is None else [o_ind] if isinstance(o_ind, Number) else o_ind
 
         self._cache.clear()
         if not remove_from_other:
@@ -153,7 +154,7 @@ class DiskVectorArray(VectorArrayInterface):
                                 os.path.join(self.dir, str(d + self._len)))
                 self._len += len(o_ind)
 
-                remaining = sorted(set(xrange(other._len)) - set(o_ind))
+                remaining = sorted(set(range(other._len)) - set(o_ind))
                 for d, s in enumerate(remaining):
                     shutil.move(os.path.join(other.dir, str(s)),
                                 os.path.join(other.dir, str(d)))
@@ -162,53 +163,22 @@ class DiskVectorArray(VectorArrayInterface):
     def remove(self, ind=None):
         assert self.check_ind(ind)
         self._cache.clear()
-        ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else list(set(ind))
+        ind = list(range(self._len)) if ind is None else [ind] if isinstance(ind, Number) else list(set(ind))
         for i in ind:
             os.remove(os.path.join(self.dir, str(i)))
-        remaining = sorted(set(xrange(len(self))) - set(ind))
+        remaining = sorted(set(range(len(self))) - set(ind))
         for d, s in enumerate(remaining):
             shutil.move(os.path.join(self.dir, str(s)),
                         os.path.join(self.dir, str(d)))
         self._len = len(remaining)
 
-    def replace(self, other, ind=None, o_ind=None, remove_from_other=False):
-        assert self.check_ind_unique(ind)
-        self._cache.clear()
-        assert other.check_ind(o_ind)
-        assert other.space == self.space
-        assert other is not self or not remove_from_other
-        ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
-        o_ind = list(xrange(other._len)) if o_ind is None else [o_ind] if isinstance(o_ind, Number) else o_ind
-        assert len(ind) == len(o_ind)
-
-        if other is self:
-            backup = set(ind).intersection(set(o_ind))
-            for i in backup:
-                shutil.move(os.path.join(self.dir, str(i)),
-                            os.path.join(self.dir, '_' + str(i)))
-            for d, s in izip(ind, o_ind):
-                if s in backup:
-                    shutil.copy(os.path.join(self.dir, '_' + str(s)),
-                                os.path.join(self.dir, str(d)))
-                else:
-                    shutil.copy(os.path.join(self.dir, str(s)),
-                                os.path.join(self.dir, str(d)))
-            for i in backup:
-                os.remove(os.path.join(self.dir, '_' + str(i)))
-        else:
-            for d, s in izip(ind, o_ind):
-                shutil.copy(os.path.join(other.dir, str(s)),
-                            os.path.join(self.dir, str(d)))
-            if remove_from_other:
-                other.remove(o_ind)
-
     def scal(self, alpha, ind=None):
         assert self.check_ind_unique(ind)
         assert isinstance(alpha, Number) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
-        ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
+        ind = list(range(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
         if isinstance(alpha, np.ndarray):
-            for a, i in izip(alpha, ind):
+            for a, i in zip(alpha, ind):
                 new_vec = self._load(i)
                 new_vec.scal(a)
                 self._store(i, new_vec)
@@ -225,8 +195,8 @@ class DiskVectorArray(VectorArrayInterface):
         assert self.len_ind(ind) == x.len_ind(x_ind) or x.len_ind(x_ind) == 1
         assert isinstance(alpha, Number) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
-        ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
-        x_ind = list(xrange(x._len)) if x_ind is None else [x_ind] if isinstance(x_ind, Number) else x_ind
+        ind = list(range(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
+        x_ind = list(range(x._len)) if x_ind is None else [x_ind] if isinstance(x_ind, _INDEXTYPES) else x_ind
 
         if self is x:
             if set(ind).intersection(set(x_ind)):
@@ -239,7 +209,7 @@ class DiskVectorArray(VectorArrayInterface):
         if len(x_ind) == 1:
             x = x._load(x_ind[0])
             if isinstance(alpha, np.ndarray):
-                for a, y in izip(alpha, ind):
+                for a, y in zip(alpha, ind):
                     new_vec = self._load(y)
                     new_vec.axpy(a, x)
                     self._store(y, new_vec)
@@ -250,12 +220,12 @@ class DiskVectorArray(VectorArrayInterface):
                     self._store(y, new_vec)
         else:
             if isinstance(alpha, np.ndarray):
-                for a, xx, y in izip(alpha, x_ind, ind):
+                for a, xx, y in zip(alpha, x_ind, ind):
                     new_vec = self._load(y)
                     new_vec.axpy(a, x._load(xx))
                     self._store(y, new_vec)
             else:
-                for xx, y in izip(x_ind, ind):
+                for xx, y in zip(x_ind, ind):
                     new_vec = self._load(y)
                     new_vec.axpy(alpha, x._load(xx))
                     self._store(y, new_vec)
@@ -264,8 +234,8 @@ class DiskVectorArray(VectorArrayInterface):
         assert self.check_ind(ind)
         assert other.check_ind(o_ind)
         assert self.space == other.space
-        ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
-        o_ind = list(xrange(other._len)) if o_ind is None else [o_ind] if isinstance(o_ind, Number) else o_ind
+        ind = list(range(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
+        o_ind = list(range(other._len)) if o_ind is None else [o_ind] if isinstance(o_ind, Number) else o_ind
 
         R = np.empty((len(ind), len(o_ind)))
         for i, a in enumerate(ind):
@@ -277,14 +247,14 @@ class DiskVectorArray(VectorArrayInterface):
         assert self.check_ind(ind)
         assert other.check_ind(o_ind)
         assert self.space == other.space
-        ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
-        o_ind = list(xrange(other._len)) if o_ind is None else [o_ind] if isinstance(o_ind, Number) else o_ind
+        ind = list(range(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
+        o_ind = list(range(other._len)) if o_ind is None else [o_ind] if isinstance(o_ind, Number) else o_ind
         assert len(ind) == len(o_ind)
-        return np.array([self._load(i).dot(other._load(oi)) for i, oi in izip(ind, o_ind)])
+        return np.array([self._load(i).dot(other._load(oi)) for i, oi in zip(ind, o_ind)])
 
     def gramian(self, ind=None):
         assert self.check_ind(ind)
-        ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
+        ind = list(range(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
 
         R = np.empty((len(ind), len(ind)))
         for i, ii in enumerate(ind):
@@ -296,7 +266,7 @@ class DiskVectorArray(VectorArrayInterface):
     def lincomb(self, coefficients, ind=None):
         assert self.check_ind(ind)
         assert 1 <= coefficients.ndim <= 2
-        ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
+        ind = list(range(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
 
         if coefficients.ndim == 1:
             coefficients = coefficients[np.newaxis, :]
@@ -305,7 +275,7 @@ class DiskVectorArray(VectorArrayInterface):
         RL = type(self)([], subtype=self.subtype)
         for coeffs in coefficients:
             R = self.vector_type.make_zeros(self.vector_subtype)
-            for i, c in izip(ind, coeffs):
+            for i, c in zip(ind, coeffs):
                 R.axpy(c, self._load(i))
             RL._store(RL._len, R)
             RL._len += 1
@@ -314,20 +284,25 @@ class DiskVectorArray(VectorArrayInterface):
 
     def l1_norm(self, ind=None):
         assert self.check_ind(ind)
-        ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
+        ind = list(range(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
         return np.array([self._load(i).l1_norm() for i in ind])
 
     def l2_norm(self, ind=None):
         assert self.check_ind(ind)
-        ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
+        ind = list(range(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
         return np.array([self._load(i).l2_norm() for i in ind])
+
+    def l2_norm2(self, ind=None):
+        assert self.check_ind(ind)
+        ind = list(range(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
+        return np.array([self._load(i).l2_norm2() for i in ind])
 
     def components(self, component_indices, ind=None):
         assert self.check_ind(ind)
         assert isinstance(component_indices, list) and (len(component_indices) == 0 or min(component_indices) >= 0) \
             or (isinstance(component_indices, np.ndarray) and component_indices.ndim == 1
                 and (len(component_indices) == 0 or np.min(component_indices) >= 0))
-        ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
+        ind = list(range(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
 
         if len(ind) == 0:
             assert len(component_indices) == 0 \
@@ -344,7 +319,7 @@ class DiskVectorArray(VectorArrayInterface):
     def amax(self, ind=None):
         assert self.check_ind(ind)
         assert self.dim > 0
-        ind = list(xrange(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
+        ind = list(range(self._len)) if ind is None else [ind] if isinstance(ind, Number) else ind
 
         MI = np.empty(len(ind), dtype=np.int)
         MV = np.empty(len(ind))

@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import time
 
 import numpy as np
@@ -35,7 +33,6 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
     reductor
         Reductor for reducing the given |Discretization|. This has to be a
         function of the form `reductor(discretization, basis, extends=None)`.
-        If your reductor takes more arguments, use, e.g., :func:`functools.partial`.
         The method has to return a tuple
         `(reduced_discretization, reconstructor, reduction_data)`.
         In case the last basis extension was `hierarchic` (see
@@ -47,12 +44,12 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
     samples
         The set of |Parameter| samples on which to perform the greedy search.
     initial_basis
-        The initial reduced basis with which the algorithm starts. If `None`,
+        The initial reduced basis at the start of the algorithm. If `None`,
         an empty basis is used as initial basis.
     use_estimator
         If `True`, use `reduced_discretization.estimate()` to estimate the
-        errors on the sample set. Otherwise a detailed simulation is
-        performed to calculate the error.
+        errors on the sample set. Otherwise `discretization.solve()` is
+        called to compute the exact model reduction error.
     error_norm
         If `use_estimator == False`, use this function to calculate the
         norm of the error. If `None`, the Euclidean norm is used.
@@ -86,6 +83,10 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
         :reconstructor:          Reconstructor for `reduced_discretization`.
         :max_errs:               Sequence of maximum errors during the greedy run.
         :max_err_mus:            The parameters corresponding to `max_errs`.
+        :extensions:             Number of performed basis extensions.
+        :time:                   Total runtime of the algorithm.
+        :reduction_data:         The `reduction_data` returned by the last
+                                 `reductor` call.
     """
 
     logger = getLogger('pymor.algorithms.greedy.greedy')
@@ -128,12 +129,12 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
 
             with logger.block('Estimating errors ...'):
                 if use_estimator:
-                    errors, mus = zip(*pool.apply(_estimate, rd=rd, d=None, rc=None, samples=samples, error_norm=None))
+                    errors, mus = list(zip(*pool.apply(_estimate, rd=rd, d=None, rc=None, samples=samples, error_norm=None)))
                 else:
                     # FIXME: Always communicating rc may become a bottleneck in some use cases.
                     #        Add special treatment for GenericRBReconstructor?
-                    errors, mus = zip(*pool.apply(_estimate, rd=rd, d=discretization, rc=rc,
-                                                  samples=samples, error_norm=error_norm))
+                    errors, mus = list(zip(*pool.apply(_estimate, rd=rd, d=discretization, rc=rc,
+                                                  samples=samples, error_norm=error_norm)))
             max_err_ind = np.argmax(errors)
             max_err, max_err_mu = errors[max_err_ind], mus[max_err_ind]
 
@@ -192,7 +193,7 @@ def _estimate(rd=None, d=None, rc=None, samples=None, error_norm=None):
         errors = [(d.solve(mu) - rc.reconstruct(rd.solve(mu))).l2_norm() for mu in samples]
     # most error_norms will return an array of length 1 instead of a number, so we extract the numbers
     # if necessary
-    errors = map(lambda x: x[0] if hasattr(x, '__len__') else x, errors)
+    errors = [x[0] if hasattr(x, '__len__') else x for x in errors]
     max_err_ind = np.argmax(errors)
 
     return errors[max_err_ind], samples[max_err_ind]

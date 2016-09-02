@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 
 from pymor.core.interfaces import abstractmethod
@@ -201,13 +199,7 @@ class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopological
     have to be implemented. Cached default implementations for all other methods are
     provided by :class:`~pymor.grids.defaultimpl.AffineGridDefaultImplementations`.
 
-    Attributes
-    ----------
-    dim_outer
-        The dimension of the space into which the grid is embedded.
     """
-
-    dim_outer = None
 
     @abstractmethod
     def reference_element(self, codim):
@@ -292,7 +284,7 @@ class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopological
         return self._quadrature_points(codim, order, npoints, quadrature_type)
 
     def bounding_box(self):
-        """returns a `(2, dim_outer)`-shaped array containing lower/upper bounding box coordinates."""
+        """returns a `(2, dim)`-shaped array containing lower/upper bounding box coordinates."""
         return self._bounding_box()
 
 

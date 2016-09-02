@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 
 from pymor.grids.interfaces import AffineGridInterface
@@ -28,7 +26,6 @@ class UnstructuredTriangleGrid(AffineGridInterface):
     """
 
     dim = 2
-    dim_outer = 2
     reference_element = triangle
 
     def __init__(self, vertices, faces):
@@ -61,13 +58,13 @@ class UnstructuredTriangleGrid(AffineGridInterface):
         if codim == 0:
             return self.__subentities[subentity_codim]
         else:
-            return super(UnstructuredTriangleGrid, self).subentities(codim, subentity_codim)
+            return super().subentities(codim, subentity_codim)
 
     def embeddings(self, codim=0):
         if codim == 0:
             return self.__embeddings
         else:
-            return super(UnstructuredTriangleGrid, self).embeddings(codim)
+            return super().embeddings(codim)
 
     def visualize(self, U, codim=2, **kwargs):
         """Visualize scalar data associated to the grid as a patch plot.

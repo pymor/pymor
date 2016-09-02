@@ -3,15 +3,13 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 from numbers import Number
 
 import numpy as np
 from scipy.sparse import issparse
 
 from pymor.core import NUMPY_INDEX_QUIRK
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpace
+from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpace, _INDEXTYPES
 
 
 class NumpyVectorArray(VectorArrayInterface):
@@ -50,6 +48,10 @@ class NumpyVectorArray(VectorArrayInterface):
         self._refcount = [1]
 
     @classmethod
+    def from_data(cls, data, subtype):
+        return cls(data)
+
+    @classmethod
     def from_file(cls, path, key=None, single_vector=False, transpose=False):
         assert not (single_vector and transpose)
         from pymor.tools.io import load_matrix
@@ -67,7 +69,7 @@ class NumpyVectorArray(VectorArrayInterface):
 
     @classmethod
     def make_array(cls, subtype=None, count=0, reserve=0):
-        assert isinstance(subtype, Number)
+        assert isinstance(subtype, _INDEXTYPES)
         assert count >= 0
         assert reserve >= 0
         va = cls(np.empty((0, 0)))
@@ -170,64 +172,18 @@ class NumpyVectorArray(VectorArrayInterface):
             if hasattr(ind, '__len__'):
                 if len(ind) == 0:
                     return
-                remaining = sorted(set(xrange(len(self))) - set(ind))
+                remaining = sorted(set(range(len(self))) - set(ind))
                 self._array = self._array[remaining]
             else:
                 assert -self._len < ind < self._len
-                self._array = self._array[range(ind) + range(ind + 1, self._len)]
+                self._array = self._array[list(range(ind)) + list(range(ind + 1, self._len))]
             self._len = self._array.shape[0]
         if not self._array.flags['OWNDATA']:
             self._array = self._array.copy()
 
-    def replace(self, other, ind=None, o_ind=None, remove_from_other=False):
-        assert self.check_ind_unique(ind)
-        assert other.check_ind(o_ind)
-        assert self.dim == other.dim
-        assert other is not self or not remove_from_other
-
-        if self._refcount[0] > 1:
-            self._deep_copy()
-        if remove_from_other and other._refcount[0] > 1:
-            other._deep_copy()
-
-        if NUMPY_INDEX_QUIRK:
-            if self._len == 0 and hasattr(ind, '__len__'):
-                ind = None
-            if other._len == 0 and hasattr(o_ind, '__len__'):
-                o_ind = None
-
-        if ind is None:
-            if o_ind is None:
-                if other is self:
-                    return
-                assert other._len == self._len
-                self._array = other._array[:other._len].copy()
-            else:
-                if not hasattr(o_ind, '__len__'):
-                    o_ind = [o_ind]
-                assert self._len == len(o_ind)
-                self._array = other._array[o_ind]
-            self._len = self._array.shape[0]
-        else:
-            len_ind = self.len_ind(ind)
-            other_array = np.array(self._array) if other is self else other._array
-            if self._array.dtype != other._array.dtype:
-                self._array = self._array.astype(np.promote_types(self._array.dtype, other._array.dtype))
-            if o_ind is None:
-                assert len_ind == other._len
-                self._array[ind] = other_array[:other._len]
-            else:
-                len_oind = other.len_ind(o_ind)
-                assert len_ind == len_oind
-                self._array[ind] = other_array[o_ind]
-        assert self._array.flags['OWNDATA']
-
-        if remove_from_other:
-            other.remove(o_ind)
-
     def scal(self, alpha, ind=None):
         assert self.check_ind_unique(ind)
-        assert isinstance(alpha, Number) \
+        assert isinstance(alpha, _INDEXTYPES) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
 
         if self._refcount[0] > 1:
@@ -254,7 +210,7 @@ class NumpyVectorArray(VectorArrayInterface):
         assert x.check_ind(x_ind)
         assert self.dim == x.dim
         assert self.len_ind(ind) == x.len_ind(x_ind) or x.len_ind(x_ind) == 1
-        assert isinstance(alpha, Number) \
+        assert isinstance(alpha, _INDEXTYPES) \
             or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
 
         if self._refcount[0] > 1:
@@ -387,6 +343,17 @@ class NumpyVectorArray(VectorArrayInterface):
             self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
 
         return np.linalg.norm(A, axis=1)
+
+    def l2_norm2(self, ind=None):
+        assert self.check_ind(ind)
+
+        if NUMPY_INDEX_QUIRK and self._len == 0:
+            ind = None
+
+        A = self._array[:self._len] if ind is None else \
+            self._array[ind] if hasattr(ind, '__len__') else self._array[ind:ind + 1]
+
+        return np.sum((A * A.conj()).real, axis=1)
 
     def components(self, component_indices, ind=None):
         assert self.check_ind(ind)

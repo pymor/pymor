@@ -7,9 +7,6 @@ associated to grids. We use the `PySide <http://www.pyside.org>`_ bindings
 for the `Qt <http://www.qt-project.org>`_ widget toolkit for the GUI.
 """
 
-from __future__ import absolute_import, division, print_function
-
-from itertools import izip
 import math as m
 
 import numpy as np
@@ -30,6 +27,7 @@ import time
 from pymor.core.defaults import defaults
 from pymor.core.interfaces import BasicInterface
 from pymor.core.logger import getLogger
+from pymor.core.exceptions import PySideMissing
 from pymor.grids.oned import OnedGrid
 from pymor.grids.referenceelements import triangle, square
 from pymor.gui.gl import GLPatchWidget, ColorBarWidget, HAVE_GL, HAVE_QTOPENGL
@@ -45,7 +43,7 @@ if HAVE_PYSIDE:
         """Base class for plot main windows."""
 
         def __init__(self, U, plot, length=1, title=None):
-            super(PlotMainWindow, self).__init__()
+            super().__init__()
 
             layout = QVBoxLayout()
 
@@ -252,7 +250,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         at the same time.
     """
     if not HAVE_PYSIDE:
-        raise ImportError('cannot visualize: import of PySide failed')
+        raise PySideMissing()
 
     assert backend in {'gl', 'matplotlib'}
 
@@ -296,7 +294,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
 
             class PlotWidget(QWidget):
                 def __init__(self):
-                    super(PlotWidget, self).__init__()
+                    super().__init__()
                     if separate_colorbars:
                         if rescale_colorbars:
                             self.vmins = tuple(np.min(u[0]) for u in U)
@@ -315,11 +313,11 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                     layout = QHBoxLayout()
                     plot_layout = QGridLayout()
                     self.colorbarwidgets = [cbar_widget(self, vmin=vmin, vmax=vmax) if cbar_widget else None
-                                            for vmin, vmax in izip(self.vmins, self.vmaxs)]
+                                            for vmin, vmax in zip(self.vmins, self.vmaxs)]
                     plots = [widget(self, grid, vmin=vmin, vmax=vmax, bounding_box=bounding_box, codim=codim)
-                             for vmin, vmax in izip(self.vmins, self.vmaxs)]
+                             for vmin, vmax in zip(self.vmins, self.vmaxs)]
                     if legend:
-                        for i, plot, colorbar, l in izip(xrange(len(plots)), plots, self.colorbarwidgets, legend):
+                        for i, plot, colorbar, l in zip(range(len(plots)), plots, self.colorbarwidgets, legend):
                             subplot_layout = QVBoxLayout()
                             caption = QLabel(l)
                             caption.setAlignment(Qt.AlignHCenter)
@@ -334,7 +332,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                                 subplot_layout.addLayout(hlayout)
                             plot_layout.addLayout(subplot_layout, int(i/columns), (i % columns), 1, 1)
                     else:
-                        for i, plot, colorbar in izip(xrange(len(plots)), plots, self.colorbarwidgets):
+                        for i, plot, colorbar in zip(range(len(plots)), plots, self.colorbarwidgets):
                             if not separate_colorbars or backend == 'matplotlib':
                                 plot_layout.addWidget(plot, int(i/columns), (i % columns), 1, 1)
                             else:
@@ -360,13 +358,13 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
                             self.vmins = (min(np.min(u[ind]) for u in U),) * len(U)
                             self.vmaxs = (max(np.max(u[ind]) for u in U),) * len(U)
 
-                    for u, plot, colorbar, vmin, vmax in izip(U, self.plots, self.colorbarwidgets, self.vmins,
+                    for u, plot, colorbar, vmin, vmax in zip(U, self.plots, self.colorbarwidgets, self.vmins,
                                                               self.vmaxs):
                         plot.set(u[ind], vmin=vmin, vmax=vmax)
                         if colorbar:
                             colorbar.set(vmin=vmin, vmax=vmax)
 
-            super(MainWindow, self).__init__(U, PlotWidget(), title=title, length=len(U[0]))
+            super().__init__(U, PlotWidget(), title=title, length=len(U[0]))
             self.grid = grid
             self.codim = codim
 
@@ -419,7 +417,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
         If `True`, block execution until the plot window is closed.
     """
     if not HAVE_PYSIDE:
-        raise ImportError('cannot visualize: import of PySide failed')
+        raise PySideMissing()
     if not HAVE_MATPLOTLIB:
         raise ImportError('cannot visualize: import of matplotlib failed')
 
@@ -436,7 +434,7 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
             plot_widget = Matplotlib1DWidget(None, grid, count=len(U), vmin=[np.min(u) for u in U],
                                              vmax=[np.max(u) for u in U], legend=legend, codim=codim,
                                              separate_plots=separate_plots)
-            super(MainWindow, self).__init__(U, plot_widget, title=title, length=len(U[0]))
+            super().__init__(U, plot_widget, title=title, length=len(U[0]))
             self.grid = grid
 
     _launch_qt_app(lambda: MainWindow(grid, U, codim, title=title, legend=legend, separate_plots=separate_plots), block)
@@ -464,7 +462,7 @@ class PatchVisualizer(BasicInterface):
 
     def __init__(self, grid, bounding_box=([0, 0], [1, 1]), codim=2, backend=None, block=False):
         assert grid.reference_element in (triangle, square)
-        assert grid.dim_outer == 2
+        assert grid.dim == 2
         assert codim in (0, 2)
         self.grid = grid
         self.bounding_box = bounding_box

@@ -4,7 +4,6 @@
 
 """This module contains pure python backports of library features from python >= 3 to 2.7
 """
-from __future__ import absolute_import, division, print_function
 
 
 class abstractclassmethod(classmethod):
@@ -28,7 +27,7 @@ class abstractclassmethod(classmethod):
 
     def __init__(self, callable_method):
         callable_method.__isabstractmethod__ = True
-        super(abstractclassmethod, self).__init__(callable_method)
+        super().__init__(callable_method)
 
 
 class abstractstaticmethod(staticmethod):
@@ -52,4 +51,4 @@ class abstractstaticmethod(staticmethod):
 
     def __init__(self, callable_method):
         callable_method.__isabstractmethod__ = True
-        super(abstractstaticmethod, self).__init__(callable_method)
+        super().__init__(callable_method)

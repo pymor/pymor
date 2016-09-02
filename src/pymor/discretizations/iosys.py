@@ -12,26 +12,33 @@ import scipy.sparse as sps
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.lyapunov import solve_lyap
+from pymor.algorithms.riccati import solve_ricc
+from pymor.algorithms.to_matrix import to_matrix
 from pymor.discretizations.interfaces import DiscretizationInterface
-from pymor.operators.constructions import VectorArrayOperator
+from pymor.operators.block import BlockOperator, BlockDiagonalOperator
+from pymor.operators.constructions import (Concatenation, IdentityOperator, LincombOperator,
+                                           VectorArrayOperator, ZeroOperator)
 from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.reductors.basic import GenericRBReconstructor
+from pymor.tools.frozendict import FrozenDict
 from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
 class LTISystem(DiscretizationInterface):
-    """Class for linear time-invariant systems
+    r"""Class for linear time-invariant systems.
 
-    This class describes input-state-output systems given by::
+    This class describes input-state-output systems given by
 
-        E x'(t) = A x(t) + B u(t)
-           y(t) = C x(t) + D u(t)
+    .. math::
+        E x'(t) &= A x(t) + B u(t) \\
+           y(t) &= C x(t) + D u(t)
 
-    if continuous-time, or::
+    if continuous-time, or
 
-        E x(k + 1) = A x(k) + B u(k)
-          y(k)     = C x(k) + D u(k)
+    .. math::
+        E x(k + 1) &= A x(k) + B u(k) \\
+          y(k)     &= C x(k) + D u(k)
 
     if discrete-time, where A, B, C, D, and E are linear operators.
 
@@ -58,6 +65,14 @@ class LTISystem(DiscretizationInterface):
         Number of inputs.
     p
         Number of outputs.
+    ss_operators
+        Dictonary for state-from-state operators A and E.
+    si_operators
+        Dictonary for state-from-input operator B.
+    os_operators
+        Dictonary for output-from-state operator C.
+    oi_operators
+        Dictonary for output-from-input operator D.
     """
     linear = True
 
@@ -71,30 +86,23 @@ class LTISystem(DiscretizationInterface):
         assert (D is None or
                 isinstance(D, OperatorInterface) and D.linear and D.source == B.source and D.range == C.range)
         assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source
-        assert cont_time in {True, False}
+        assert cont_time in (True, False)
 
         self.n = A.source.dim
         self.m = B.source.dim
         self.p = C.range.dim
-        self.A = A
-        self.B = B
-        self.C = C
-        self.D = D
-        self.E = E
+        self.ss_operators = FrozenDict({'A': A, 'E': E if E is not None else IdentityOperator(A.source)})
+        self.si_operators = FrozenDict({'B': B})
+        self.os_operators = FrozenDict({'C': C})
+        self.oi_operators = FrozenDict({'D': D if D is not None else ZeroOperator(B.source, C.range)})
         self.cont_time = cont_time
+        self._poles = None
         self._w = None
         self._tfw = None
-        self._cgf = None
-        self._ogf = None
-        self._hsv = None
-        self._U = None
-        self._V = None
-        self._brgamma = 1.
-        self._brcgf = None
-        self._brogf = None
-        self._brsv = None
-        self._brU = None
-        self._brV = None
+        self._gramian = {}
+        self._sv = {}
+        self._U = {}
+        self._V = {}
         self._H2_norm = None
         self._Hinf_norm = None
         self._fpeak = None
@@ -107,15 +115,15 @@ class LTISystem(DiscretizationInterface):
         Parameters
         ----------
         A
-            The |NumPy array|, |SciPy spmatrix| A.
+            The |NumPy array| or |SciPy spmatrix| A.
         B
-            The |NumPy array|, |SciPy spmatrix| B.
+            The |NumPy array| or |SciPy spmatrix| B.
         C
-            The |NumPy array|, |SciPy spmatrix| C.
+            The |NumPy array| or |SciPy spmatrix| C.
         D
-            The |NumPy array|, |SciPy spmatrix| D or `None` (then D is assumed to be zero).
+            The |NumPy array| or |SciPy spmatrix| D or `None` (then D is assumed to be zero).
         E
-            The |NumPy array|, |SciPy spmatrix| E or `None` (then E is assumed to be the identity).
+            The |NumPy array| or |SciPy spmatrix| E or `None` (then E is assumed to be the identity).
         cont_time
             `True` if the system is continuous-time, otherwise discrete-time.
 
@@ -139,6 +147,40 @@ class LTISystem(DiscretizationInterface):
             E = NumpyMatrixOperator(E)
 
         return cls(A, B, C, D, E, cont_time)
+
+    @classmethod
+    def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, cont_time=True):
+        """Create |LTISystem| from matrices stored in separate files.
+
+        Parameters
+        ----------
+        A_file
+            Name of the file (with extension) containing A.
+        B_file
+            Name of the file (with extension) containing B.
+        C_file
+            Name of the file (with extension) containing C.
+        D_file
+            `None` or name of the file (with extension) containing D.
+        E_file
+            `None` or name of the file (with extension) containing E.
+        cont_time
+            `True` if the system is continuous-time, otherwise discrete-time.
+
+        Returns
+        -------
+        lti
+            |LTISystem| with operators A, B, C, D, and E.
+        """
+        from pymor.tools.io import load_matrix
+
+        A = load_matrix(A_file)
+        B = load_matrix(B_file)
+        C = load_matrix(C_file)
+        D = load_matrix(D_file) if D_file is not None else None
+        E = load_matrix(E_file) if E_file is not None else None
+
+        return cls.from_matrices(A, B, C, D, E, cont_time)
 
     @classmethod
     def from_mat_file(cls, file_name, cont_time=True):
@@ -165,14 +207,35 @@ class LTISystem(DiscretizationInterface):
         A = mat_dict['A']
         B = mat_dict['B']
         C = mat_dict['C']
-        if 'D' in mat_dict:
-            D = mat_dict['D']
-        else:
-            D = None
-        if 'E' in mat_dict:
-            E = mat_dict['E']
-        else:
-            E = None
+        D = mat_dict['D'] if 'D' in mat_dict else None
+        E = mat_dict['E'] if 'E' in mat_dict else None
+
+        return cls.from_matrices(A, B, C, D, E, cont_time)
+
+    @classmethod
+    def from_abcde_files(cls, files_basename, cont_time=True):
+        """Create |LTISystem| from matrices stored in a .[ABCDE] files.
+
+        Parameters
+        ----------
+        files_basename
+            Basename of files containing A, B, C, and optionally D and E.
+        cont_time
+            `True` if the system is continuous-time, otherwise discrete-time.
+
+        Returns
+        -------
+        lti
+            |LTISystem| with operators A, B, C, D, and E.
+        """
+        from pymor.tools.io import load_matrix
+        import os.path
+
+        A = load_matrix(files_basename + '.A')
+        B = load_matrix(files_basename + '.B')
+        C = load_matrix(files_basename + '.C')
+        D = load_matrix(files_basename + '.D') if os.path.isfile(files_basename + '.D') else None
+        E = load_matrix(files_basename + '.E') if os.path.isfile(files_basename + '.E') else None
 
         return cls.from_matrices(A, B, C, D, E, cont_time)
 
@@ -182,75 +245,56 @@ class LTISystem(DiscretizationInterface):
     def __add__(self, other):
         """Add two |LTISystems|."""
         assert isinstance(other, LTISystem)
-        assert self.m == other.m and self.p == other.p
+        assert self.is_operators['B'].source == other.is_operators['B'].source
+        assert self.so_operators['C'].range == other.so_operators['C'].range
         assert self.cont_time == other.cont_time
 
-        # form A
-        if not self.A.sparse and not other.A.sparse:
-            A = spla.block_diag(self.A._matrix, other.A._matrix)
-        else:
-            A = sps.block_diag((self.A._matrix, other.A._matrix))
-            A = A.tocsc()
+        A = BlockDiagonalOperator((self.ss_operators['A'], other.ss_operators['A']))
+        B = BlockOperator.vstack((self.si_operators['B'], other.si_operators['B']))
+        C = BlockOperator.hstack((self.os_operators['C'], other.os_operators['C']))
+        D = (self.oi_operators['D'] + other.oi_operators['D']).assemble()
+        E = BlockDiagonalOperator((self.ss_operators['E'], other.ss_operators['E']))
 
-        # form B
-        if not self.B.sparse and not other.B.sparse:
-            B = sp.vstack((self.B._matrix, other.B._matrix))
-        else:
-            B = sps.vstack((sps.coo_matrix(self.B._matrix), sps.coo_matrix(other.B._matrix)))
-            B = B.tocsc()
-
-        # form C
-        if not self.C.sparse and not other.C.sparse:
-            C = sp.hstack((self.C._matrix, other.C._matrix))
-        else:
-            C = sps.hstack((sps.coo_matrix(self.C._matrix), sps.coo_matrix(other.C._matrix)))
-            C = C.tocsc()
-
-        # form D
-        if self.D is None and other.D is None:
-            D = None
-        elif self.D is not None and other.D is None:
-            D = self.D
-        elif self.D is None and other.D is not None:
-            D = other.D
-        else:
-            D = self.D + other.D
-
-        # form E
-        if self.E is None and other.E is None:
-            E = None
-        elif self.E is None and other.E is not None:
-            E = sps.block_diag((sps.eye(self.n), other.E._matrix))
-            E = E.tocsc()
-        elif self.E is not None and other.E is None:
-            E = sps.block_diag((self.E._matrix, sps.eye(other.n)))
-            E = E.tocsc()
-        elif not self.E.sparse and not other.E.sparse:
-            E = spla.block_diag(self.E._matrix, other.E._matrix)
-        else:
-            E = sps.block_diag((self.E._matrix, other.E._matrix))
-            E = E.tocsc()
-
-        return LTISystem.from_matrices(A, B, C, D, E, self.cont_time)
+        return self.__class__(A, B, C, D, E, self.cont_time)
 
     def __neg__(self):
         """Negate |LTISystem|."""
-        A = self.A
-        B = self.B
-        C = NumpyMatrixOperator(-self.C._matrix)
-        D = self.D
-        if D is not None:
-            D = NumpyMatrixOperator(-D._matrix)
-        E = self.E
+        A = self.ss_operators['A']
+        B = self.si_operators['B']
+        C = (self.os_operators['C'] * (-1)).assemble()
+        D = (self.oi_operators['D'] * (-1)).assemble()
+        E = self.ss_operators['E']
 
-        return LTISystem(A, B, C, D, E, self.cont_time)
+        return self.__class__(A, B, C, D, E, self.cont_time)
 
     def __sub__(self, other):
         """Subtract two |LTISystems|."""
         return self + (-other)
 
+    def __mul__(self, other):
+        """Multiply (cascade) two |LTISystems|."""
+        assert self.si_operators['B'].source == other.os_operators['C'].range
+
+        A = BlockOperator([[self.ss_operators['A'], Concatenation(self.si_operators['B'], other.os_operators['C'])],
+                           [None, other.ss_operators['A']]])
+        B = BlockOperator.vstack((Concatenation(self.si_operators['B'], other.oi_operators['D']),
+                                  other.si_operators['B']))
+        C = BlockOperator.hstack((self.os_operators['C'], Concatenation(self.oi_operators['D'],
+                                  other.os_operators['C'])))
+        D = Concatenation(self.oi_operators['D'], other.oi_operators['D'])
+        E = BlockDiagonalOperator((self.ss_operators['E'], other.ss_operators['E']))
+
+        return self.__class__(A, B, C, D, E, self.cont_time)
+
+    def compute_poles(self):
+        """Compute system poles."""
+        if self._poles is None:
+            A = to_matrix(self.ss_operators['A'])
+            E = None if isinstance(self.ss_operators['E'], IdentityOperator) else to_matrix(self.ss_operators['E'])
+            self._poles = spla.eigvals(A, E)
+
     def eval_tf(self, s):
-        """Evaluate the transfer function
+        """Evaluate the transfer function.
 
         Parameters
         ----------
@@ -260,32 +304,30 @@ class LTISystem(DiscretizationInterface):
         Returns
         -------
         tfs
-            Transfer function evaulated at the complex number s, 2D |NumPy array|.
+            Transfer function evaluated at the complex number `s`, 2D |NumPy array|.
         """
-        A = self.A
-        B = self.B
-        C = self.C
-        D = self.D
-        E = self.E
-        if E is None:
-            if not A.sparse:
-                E = NumpyMatrixOperator(sp.eye(self.n))
-            else:
-                E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
+        A = self.ss_operators['A']
+        B = self.si_operators['B']
+        C = self.os_operators['C']
+        D = self.oi_operators['D']
+        E = self.ss_operators['E']
 
-        iwEmA = A.assemble_lincomb((E, A), (s, -1))
+        sEmA = LincombOperator((E, A), (s, -1))
         if self.m <= self.p:
-            eye = NumpyVectorArray(sp.eye(self.m))
-            tfs = C.apply(iwEmA.apply_inverse(B.apply(eye))).data.T
+            I_m = B.source.from_data(sp.eye(self.m))
+            tfs = C.apply(sEmA.apply_inverse(B.apply(I_m))).data.T
         else:
-            eye = NumpyVectorArray(sp.eye(self.p))
-            tfs = B.apply_adjoint(iwEmA.apply_inverse_adjoint(C.apply_adjoint(eye))).data
-        if D is not None:
-            tfs += D._matrix
+            I_p = C.range.from_data(sp.eye(self.p))
+            tfs = B.apply_adjoint(sEmA.apply_adjoint_inverse(C.apply_adjoint(I_p))).data
+        if not isinstance(D, ZeroOperator):
+            if self.m <= self.p:
+                tfs += D.apply(I_m).data.T
+            else:
+                tfs += D.apply_adjoint(I_p).data
         return tfs
 
     def bode(self, w):
-        """Compute the transfer function on the imaginary axis.
+        """Evaluate the transfer function on the imaginary axis.
 
         Parameters
         ----------
@@ -295,22 +337,19 @@ class LTISystem(DiscretizationInterface):
         Returns
         -------
         tfw
-            Transfer function values at frequencies in w, returned as a 3D |NumPy array| of shape (p, m, len(w)).
+            Transfer function values at frequencies in `w`,
+            returned as a 3D |NumPy array| of shape `(p, m, len(w))`.
         """
         if not self.cont_time:
             raise NotImplementedError
 
         self._w = w
-        self._tfw = np.empty((self.p, self.m, len(w)), dtype=complex)
-
-        for i, wi in enumerate(w):
-            self._tfw[:, :, i] = self.eval_tf(1j * wi)
-
+        self._tfw = np.dstack([self.eval_tf(1j * wi) for wi in w])
         return self._tfw.copy()
 
     @classmethod
     def mag_plot(cls, sys_list, plot_style_list=None, w=None, ord=None, dB=False, Hz=False):
-        """Draw the magnitude Bode plot
+        """Draw the magnitude Bode plot.
 
         Parameters
         ----------
@@ -318,24 +357,33 @@ class LTISystem(DiscretizationInterface):
             A single |LTISystem| or a list of |LTISystems|.
         plot_style_list
             A string or a list of strings of the same length as `sys_list`.
-            If None, matplotlib defaults are used.
+
+            If `None`, matplotlib defaults are used.
         w
             Frequencies at which to compute the transfer function.
-            If None, use self._w.
+
+            If `None`, use `self._w`.
         ord
             Order of the norm used to compute the magnitude (the default is the Frobenius norm).
         dB
             Should the magnitude be in dB on the plot.
         Hz
             Should the frequency be in Hz on the plot.
+
+        Returns
+        -------
+        fig
+            Matplotlib figure.
+        ax
+            Matplotlib axes.
         """
         assert isinstance(sys_list, LTISystem) or all(isinstance(sys, LTISystem) for sys in sys_list)
         if isinstance(sys_list, LTISystem):
             sys_list = (sys_list,)
 
-        assert (plot_style_list is None or isinstance(plot_style_list, basestring) or
-                all(isinstance(plot_style, basestring) for plot_style in plot_style_list))
-        if isinstance(plot_style_list, basestring):
+        assert (plot_style_list is None or isinstance(plot_style_list, str) or
+                all(isinstance(plot_style, str) for plot_style in plot_style_list))
+        if isinstance(plot_style_list, str):
             plot_style_list = (plot_style_list,)
 
         assert w is not None or all(sys._w is not None for sys in sys_list)
@@ -347,10 +395,8 @@ class LTISystem(DiscretizationInterface):
         import matplotlib.pyplot as plt
         fig, ax = plt.subplots()
         for i, sys in enumerate(sys_list):
-            freq = sys._w
-            if Hz:
-                freq = freq.copy() / (2 * np.pi)
-            mag = np.array([spla.norm(sys._tfw[:, :, j], ord=ord) for j, _ in enumerate(freq)])
+            freq = sys._w / (2 * np.pi) if Hz else sys._w
+            mag = spla.norm(sys._tfw, ord=ord, axis=(0, 1))
             style = '' if plot_style_list is None else plot_style_list[i]
             if dB:
                 mag = 20 * np.log2(mag)
@@ -369,155 +415,96 @@ class LTISystem(DiscretizationInterface):
         plt.show()
         return fig, ax
 
-    def compute_cgf(self, meth=None, tol=None):
-        """Compute the controllability Gramian factor.
+    def compute_gramian(self, typ, subtyp, me_solver=None, tol=None):
+        """Compute a Gramian.
 
         Parameters
         ----------
-        meth
-            Method used to solve the Lyapunov equation (see :func:`pymor.algorithms.lyapunov.solve_lyap`).
+        typ
+            Type of the Gramian:
+
+            - 'lyap': Lyapunov Gramian,
+            - 'lqg': LQG Gramian,
+            - ('br', gamma): Bounded Real Gramian with parameter gamma.
+        subtyp
+            Subtype of the Gramian:
+
+            - 'cf': controllability Gramian factor,
+            - 'of': observability Gramian factor.
+        me_solver
+            Matrix equation solver to use (see
+            :func:`pymor.algorithms.lyapunov.solve_lyap` or
+            :func:`pymor.algorithms.riccati.solve_ricc`).
         tol
-            Tolerance parameter for the low-rank Lyapunov equation solver.
-            If None, then the default tolerance is used. Otherwise, it should be a positive float and
-            the controllability Gramian factor is recomputed (if it was already computed).
+            Tolerance parameter for the low-rank matrix equation solver.
+
+            If `None`, then the default tolerance is used. Otherwise, it should be
+            a positive float and the Gramian factor is recomputed (if it was already computed).
         """
+        assert isinstance(typ, (str, tuple))
+        assert isinstance(subtyp, str)
+
         if not self.cont_time:
             raise NotImplementedError
 
-        if self._cgf is None or tol is not None:
-            self._cgf = solve_lyap(self.A, self.E, self.B, meth=meth, tol=tol)
-
-    def compute_ogf(self, meth=None, tol=None):
-        """Compute the observability Gramian factor.
-
-        Parameters
-        ----------
-        meth
-            Method used to solve the Lyapunov equation (see :func:`pymor.algorithms.lyapunov.solve_lyap`).
-        tol
-            Tolerance parameter for the low-rank Lyapunov equation solver.
-            If None, then the default tolerance is used. Otherwise, it should be a positive float and
-            the observability Gramian factor is recomputed (if it was already computed).
-        """
-        if not self.cont_time:
-            raise NotImplementedError
-
-        if self._ogf is None or tol is not None:
-            self._ogf = solve_lyap(self.A, self.E, self.C, trans=True, meth=meth, tol=tol)
-
-    def compute_hsv_U_V(self):
-        """Compute the Hankel singular values and vectors."""
-        if self._hsv is None or self._U is None or self._V is None:
-            self.compute_cgf()
-            self.compute_ogf()
-
-            if self.E is None:
-                U, self._hsv, Vh = spla.svd(self._ogf.dot(self._cgf))
+        if typ not in self._gramian or subtyp not in self._gramian[typ] or tol is not None:
+            A = self.ss_operators['A']
+            B = self.si_operators['B']
+            C = self.os_operators['C']
+            E = self.ss_operators['E'] if not isinstance(self.ss_operators['E'], IdentityOperator) else None
+            if typ == 'lyap':
+                if subtyp == 'cf':
+                    self._gramian[typ][subtyp] = solve_lyap(A, E, B, trans=False, me_solver=me_solver, tol=tol)
+                elif subtyp == 'of':
+                    self._gramian[typ][subtyp] = solve_lyap(A, E, C, trans=True, me_solver=me_solver, tol=tol)
+                else:
+                    raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for 'lyap' type.")
+            elif typ == 'lqg':
+                if subtyp == 'cf':
+                    self._gramian[typ][subtyp] = solve_ricc(A, E=E, B=B, C=C, trans=True, me_solver=me_solver, tol=tol)
+                elif subtyp == 'of':
+                    self._gramian[typ][subtyp] = solve_ricc(A, E=E, B=B, C=C, trans=False, me_solver=me_solver, tol=tol)
+                else:
+                    raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for 'lqg' type.")
+            elif isinstance(typ, tuple) and typ[0] == 'br':
+                assert isinstance(typ[1], float)
+                assert typ[1] > 0
+                if subtyp == 'cf':
+                    self._gramian[typ][subtyp] = solve_ricc(A, E=E, B=B / np.sqrt(typ[1]), C=C / np.sqrt(typ[1]),
+                                                            R=-IdentityOperator(C.range),
+                                                            trans=True, me_solver=me_solver, tol=tol)
+                elif subtyp == 'of':
+                    self._gramian[typ][subtyp] = solve_ricc(A, E=E, B=B / np.sqrt(typ[1]), C=C / np.sqrt(typ[1]),
+                                                            R=-IdentityOperator(B.source),
+                                                            trans=False, me_solver=me_solver, tol=tol)
+                else:
+                    raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for ('br', gamma) type.")
             else:
-                U, self._hsv, Vh = spla.svd(self.E.apply2(self._ogf, self._cgf))
+                raise NotImplementedError("Only 'lyap', 'lqg', and ('br', gamma) types are available.")
 
-            self._U = NumpyVectorArray(U.T)
-            self._V = NumpyVectorArray(Vh)
-
-    def compute_brcgf(self, gamma=1., tol=1e-14):
-        """Compute the bounded real controllability Gramian factor.
+    def compute_sv_U_V(self, typ, me_solver=None):
+        """Compute singular values and vectors.
 
         Parameters
         ----------
-        gamma
-            Bound for the H_inf norm.
-        tol
-            Tolerance for the low-rank approximation.
+        typ
+            Type of the Gramian (see :func:`~pymor.discretizations.iosys.LTISystem.compute_gramian`).
+        me_solver
+            Matrix equation solver to use (see
+            :func:`pymor.algorithms.lyapunov.solve_lyap` or
+            :func:`pymor.algorithms.riccati.solve_ricc`).
         """
-        assert gamma > 0 and 0 < tol < 1
+        assert isinstance(typ, tuple)
 
-        if not self.cont_time or self.E is not None:
-            raise NotImplementedError
+        if typ not in self._sv or typ not in self._U or typ not in self._V:
+            self.compute_gramian(typ, 'cf', me_solver=me_solver)
+            self.compute_gramian(typ, 'of', me_solver=me_solver)
 
-        if self._brcgf is None or self._brgamma != gamma:
-            self._brgamma = gamma
-            A = self.A._matrix
-            if sps.issparse(A):
-                A = A.toarray()
-            B = self.B._matrix
-            if sps.issparse(B):
-                B = B.toarray()
-            C = self.C._matrix
-            if sps.issparse(C):
-                C = C.toarray()
-            X = spla.solve_continuous_are(A.T,
-                                          C.T / np.sqrt(gamma),
-                                          B.dot(B.T) / gamma,
-                                          -np.eye(self.p))
-            X = (X + X.T) / 2
-            T, Z = spla.schur(X)
-            ind = T.diagonal().argsort()[::-1]
-            T = np.diag(np.diag(T)[ind])
-            Z = Z[:, ind]
-            rank = self.n
-            for i in xrange(1, self.n):
-                if T[i, i] / T[0, 0] < tol:
-                    rank = i
-                    break
-            self._brcgf = NumpyVectorArray(Z[:, :rank].dot(np.diag(np.sqrt(T.diagonal()[:rank]))).T)
+            U, self._sv[typ], Vh = spla.svd(self.ss_operators['E'].apply2(self._gramian[typ]['of'],
+                                                                          self._gramian[typ]['cf']))
 
-    def compute_brogf(self, gamma=1., tol=1e-14):
-        """Compute the bounded real observability Gramian factor.
-
-        Parameters
-        ----------
-        gamma
-            Bound for the H_inf norm.
-        tol
-            Tolerance for the low-rank approximation.
-        """
-        assert gamma > 0 and 0 < tol < 1
-
-        if not self.cont_time or self.E is not None:
-            raise NotImplementedError
-
-        if self._brogf is None or self._brgamma != gamma:
-            self._brgamma = gamma
-            A = self.A._matrix
-            if sps.issparse(A):
-                A = A.toarray()
-            B = self.B._matrix
-            if sps.issparse(B):
-                B = B.toarray()
-            C = self.C._matrix
-            if sps.issparse(C):
-                C = C.toarray()
-            X = spla.solve_continuous_are(A,
-                                          B / np.sqrt(gamma),
-                                          C.T.dot(C) / gamma,
-                                          -np.eye(self.m))
-            X = (X + X.T) / 2
-            T, Z = spla.schur(X)
-            ind = T.diagonal().argsort()[::-1]
-            T = np.diag(np.diag(T)[ind])
-            Z = Z[:, ind]
-            rank = self.n
-            for i in xrange(1, self.n):
-                if T[i, i] / T[0, 0] < tol:
-                    rank = i
-                    break
-            self._brogf = NumpyVectorArray(Z[:, :rank].dot(np.diag(np.sqrt(T.diagonal()[:rank]))).T)
-
-    def compute_brsv_brU_brV(self, gamma=1.):
-        """Compute the bounded real singular values and vectors.
-
-        Parameters
-        ----------
-        gamma
-            Bound for the H_inf norm.
-        """
-        if self._brsv is None or self._brU is None or self._brV is None:
-            self.compute_brcgf(gamma=gamma)
-            self.compute_brogf(gamma=gamma)
-
-            U, self._brsv, Vh = spla.svd(self._brogf.dot(self._brcgf))
-            self._brU = NumpyVectorArray(U.T)
-            self._brV = NumpyVectorArray(Vh)
+            self._U[typ] = NumpyVectorArray(U.T)
+            self._V[typ] = NumpyVectorArray(Vh)
 
     def norm(self, name='H2'):
         """Compute a norm of the |LTISystem|.
@@ -525,22 +512,25 @@ class LTISystem(DiscretizationInterface):
         Parameters
         ----------
         name
-            Name of the norm ('H2', 'Hinf', 'Hankel')
+            Name of the norm ('H2', 'Hinf', 'Hankel').
         """
         if name == 'H2':
             if self._H2_norm is not None:
                 return self._H2_norm
 
-            if self._cgf is not None:
-                self._H2_norm = spla.norm(self.C.apply(self._cgf).data)
-            elif self._ogf is not None:
-                self._H2_norm = spla.norm(self.B.apply_adjoint(self._ogf).data)
+            B, C = self.si_operators['B'], self.os_operators['C']
+
+            if 'lyap' in self._gramian and 'cf' in self._gramian['lyap']:
+                self._H2_norm = np.sqrt(C.apply(self._gramian['lyap']['cf']).l2_norm2().sum())
+            elif 'lyap' in self._gramian and 'of' in self._gramian['lyap']:
+                self._H2_norm = np.sqrt(B.apply_adjoint(self._gramian['lyap']['of']).l2_norm2().sum())
             elif self.m <= self.p:
-                self.compute_cgf()
-                self._H2_norm = spla.norm(self.C.apply(self._cgf).data)
+                self.compute_gramian('lyap', 'cf')
+                self._H2_norm = np.sqrt(C.apply(self._gramian['lyap']['cf']).l2_norm2().sum())
             else:
-                self.compute_ogf()
-                self._H2_norm = spla.norm(self.B.apply_adjoint(self._ogf).data)
+                self.compute_gramian('lyap', 'of')
+                self._H2_norm = np.sqrt(B.apply_adjoint(self._gramian['lyap']['of']).l2_norm2().sum())
+
             return self._H2_norm
         elif name == 'Hinf':
             if self._Hinf_norm is not None:
@@ -548,35 +538,17 @@ class LTISystem(DiscretizationInterface):
 
             from slycot import ab13dd
             dico = 'C' if self.cont_time else 'D'
-            jobe = 'I' if self.E is None else 'G'
+            jobe = 'I' if isinstance(self.ss_operators['E'], IdentityOperator) else 'G'
             equil = 'S'
-            jobd = 'Z' if self.D is None else 'D'
-            A = self.A._matrix
-            if self.A.sparse:
-                A = A.toarray()
-            B = self.B._matrix
-            if self.B.sparse:
-                B = B.toarray()
-            C = self.C._matrix
-            if self.C.sparse:
-                C = C.toarray()
-            if self.D is None:
-                D = np.zeros((self.p, self.m))
-            else:
-                D = self.D._matrix
-                if self.D.sparse:
-                    D = D.toarray()
-            if self.E is None:
-                E = np.eye(self.n)
-            else:
-                E = self.E._matrix
-                if self.E.sparse:
-                    E = E.toarray()
+            jobd = 'Z' if isinstance(self.oi_operators['D'], ZeroOperator) else 'D'
+            A, B, C, D, E = map(to_matrix, (self.ss_operators['A'], self.si_operators['B'], self.os_operators['C'],
+                                            self.oi_operators['D'], self.ss_operators['E']))
             self._Hinf_norm, self._fpeak = ab13dd(dico, jobe, equil, jobd, self.n, self.m, self.p, A, E, B, C, D)
+
             return self._Hinf_norm
         elif name == 'Hankel':
-            self.compute_hsv_U_V()
-            return self._hsv[0]
+            self.compute_sv_U_V('lyap')
+            return self._sv['lyap'][0]
         else:
             raise NotImplementedError('Only H2, Hinf, and Hankel norms are implemented.')
 
@@ -586,59 +558,64 @@ class LTISystem(DiscretizationInterface):
         Parameters
         ----------
         Vr
-            Right projection matrix.
+            Right projection matrix, |VectorArray| from `self.ss_operators['A'].source`.
         Wr
-            Left projection matrix.
+            Left projection matrix, |VectorArray| from `self.ss_operators['A'].source`.
         Er_is_identity
             If the reduced `E` is guaranteed to be the identity matrix.
 
         Returns
         -------
-        Ar
-            |NumPy array| of size `r x r`.
-        Br
-            |NumPy array| of size `r x m`.
-        Cr
-            |NumPy array| of size `p x r`.
-        Dr
-            |NumPy array| of size `p x m` or `None`.
-        Er
-            |NumPy array| of size `r x r`.
+        lti
+            Projected |LTISystem|:
+
+            - `A` is |NumpyMatrixOperator|,
+            - `B` is :class:`~pymor.operators.constructions.VectorArrayOperator` (transposed),
+            - `C` is :class:`~pymor.operators.constructions.VectorArrayOperator`,
+            - `D` is `self.oi_operators['D']`,
+            - `E` is |NumpyMatrixOperator| or :class:`~pymor.operators.constructions.IdentityOperator`.
         """
-        Ar = self.A.apply2(Wr, Vr)
-
-        Br = self.B.apply_adjoint(Wr).data
-
-        Cr = self.C.apply(Vr).data.T
-
-        if self.D is None:
-            Dr = None
-        else:
-            Dr = self.D.copy()
+        Ar = NumpyMatrixOperator(self.ss_operators['A'].apply2(Wr, Vr))
+        Br = VectorArrayOperator(self.si_operators['B'].apply_adjoint(Wr), transposed=True)
+        Cr = VectorArrayOperator(self.os_operators['C'].apply(Vr))
+        Dr = self.oi_operators['D']
 
         if Er_is_identity:
             Er = None
         else:
-            if self.E is None:
-                Er = Wr.dot(Vr)
-            else:
-                Er = self.E.apply2(Wr, Vr)
+            Er = NumpyMatrixOperator(self.ss_operators['E'].apply2(Wr, Vr))
 
-        return Ar, Br, Cr, Dr, Er
+        return self.__class__(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
 
-    def bt(self, r=None, tol=None, meth='bfsr'):
+    def bt(self, r=None, tol=None, typ='lyap', me_solver=None, method='bfsr'):
         """Reduce using the Balanced Truncation method to order `r` or with tolerance `tol`.
 
+        .. [A05]  A. Antoulas, Approximation of Large-Scale Dynamical Systems,
+                  SIAM, 2005.
+        .. [MG91] D. Mustafa, K. Glover, Controller Reduction by H_∞-Balanced Truncation,
+                  IEEE Transactions on Automatic Control, 36(6), 668-682, 1991.
+        .. [OJ88] P. C. Opdenacker, E. A. Jonckheere, A Contraction Mapping
+                  Preserving Balanced Reduction Scheme and Its Infinity Norm
+                  Error Bounds,
+                  IEEE Transactions on Circuits and Systems, 35(2), 184-189, 1988.
+
         Parameters
         ----------
         r
-            Order of the reduced model if `tol` is None.
+            Order of the reduced model if `tol` is `None`.
         tol
-            Tolerance for the absolute H_inf-error if `r` is None.
-        meth
-            Method used:
-            * square root method ('sr')
-            * balancing-free square root method ('bfsr')
+            Tolerance for the error bound if `r` is `None`.
+        typ
+            Type of the Gramian (see :func:`~pymor.discretizations.iosys.LTISystem.compute_gramian`).
+        me_solver
+            Matrix equation solver to use (see
+            :func:`pymor.algorithms.lyapunov.solve_lyap` or
+            :func:`pymor.algorithms.riccati.solve_ricc`).
+        method
+            Projection method used:
+
+            - square root method ('sr')
+            - balancing-free square root method ('bfsr')
 
         Returns
         -------
@@ -648,116 +625,53 @@ class LTISystem(DiscretizationInterface):
             The reconstructor providing a `reconstruct(U)` method which reconstructs
             high-dimensional solutions from solutions `U` of the reduced |LTISystem|.
         reduction_data
-            Additional data produced by the reduction process. Contains projection matrices `Vr` and `Wr`.
+            Dictionary of additional data produced by the reduction process.
+            Contains projection matrices `Vr` and `Wr`.
         """
         assert r is not None and tol is None or r is None and tol is not None
         assert r is None or 0 < r < self.n
-        assert meth in {'sr', 'bfsr'}
+        assert method in ('sr', 'bfsr')
 
-        self.compute_cgf()
-        self.compute_ogf()
+        self.compute_gramian(typ, 'cf', me_solver=me_solver)
+        self.compute_gramian(typ, 'of', me_solver=me_solver)
 
-        if r is not None and r > min([len(self._cgf), len(self._ogf)]):
-            raise ValueError('r needs to be smaller than the sizes of Gramian factors.\
-                              Try reducing the tolerance in the low-rank Lyapunov equation solver.')
+        if r is not None and r > min([len(self._gramian[typ]['cf']), len(self._gramian[typ]['of'])]):
+            raise ValueError('r needs to be smaller than the sizes of Gramian factors.' +
+                             ' Try reducing the tolerance in the low-rank Lyapunov equation solver.')
 
-        self.compute_hsv_U_V()
-
-        if r is None:
-            bounds = np.cumsum(self._hsv)
-            bounds = bounds[-1] - bounds
-            bounds *= 2
-            r = min(i + 1 for i, b in enumerate(bounds) if b <= tol)
-
-        Vr = VectorArrayOperator(self._cgf).apply(self._V, ind=range(r))
-        Wr = VectorArrayOperator(self._ogf).apply(self._U, ind=range(r))
-
-        if meth == 'sr':
-            alpha = 1 / np.sqrt(self._hsv[:r])
-            Vr.scal(alpha)
-            Wr.scal(alpha)
-
-            Ar, Br, Cr, Dr, Er = self.project(Vr, Wr, Er_is_identity=True)
-        elif meth == 'bfsr':
-            Vr = gram_schmidt(Vr, atol=0, rtol=0)
-            Wr = gram_schmidt(Wr, atol=0, rtol=0)
-
-            Ar, Br, Cr, Dr, Er = self.project(Vr, Wr)
-
-        rom = LTISystem.from_matrices(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
-        rc = GenericRBReconstructor(Vr)
-        reduction_data = {'Vr': Vr, 'Wr': Wr}
-
-        return rom, rc, reduction_data
-
-    def brbt(self, gamma=1., r=None, tol=None, meth='bfsr'):
-        """Reduce using the Bounded Real Balanced Truncation method to order `r` or with tolerance `tol`.
-
-        Parameters
-        ----------
-        gamma
-            Bound for the H_inf norm.
-        r
-            Order of the reduced model if `tol` is None.
-        tol
-            Tolerance for the absolute H_inf-error if `r` is None.
-        meth
-            Method used:
-            * square root method ('sr')
-            * balancing-free square root method ('bfsr')
-
-        Returns
-        -------
-        rom
-            Reduced |LTISystem|.
-        rc
-            The reconstructor providing a `reconstruct(U)` method which reconstructs
-            high-dimensional solutions from solutions `U` of the reduced |LTISystem|.
-        reduction_data
-            Additional data produced by the reduction process. Contains projection matrices `Vr` and `Wr`.
-        """
-        assert r is not None and tol is None or r is None and tol is not None
-        assert r is None or 0 < r < self.n
-        assert meth in {'sr', 'bfsr'}
-
-        self.compute_brcgf(gamma=gamma)
-        self.compute_brogf(gamma=gamma)
-
-        if r is not None and r > min([len(self._brcgf), len(self._brogf)]):
-            raise ValueError('r needs to be smaller than the sizes of Gramian factors.\
-                              Try reducing the tolerance in the low-rank Lyapunov equation solver.')
-
-        self.compute_brsv_brU_brV(gamma=gamma)
+        self.compute_sv_U_V(typ, me_solver=me_solver)
 
         if r is None:
-            bounds = np.cumsum(self._brsv)
-            bounds = bounds[-1] - bounds
-            bounds *= 2 * self._brgamma
-            r = min(i + 1 for i, b in enumerate(bounds) if b <= tol)
+            bounds = np.zeros(self._sv[typ].shape)
+            if typ[0] == 'lyap':
+                bounds[:-1] = 2 * self._sv[typ][-1:0:-1].cumsum()[::-1]
+            elif typ[0] == 'lqg':
+                tmp = self._sv[typ][-1:0:-1]
+                bounds[:-1] = 2 * (tmp / np.sqrt(1 + tmp ** 2)).cumsum()[::-1]
+            elif typ[0] == 'br':
+                bounds[:-1] = 2 * typ[1] * self._sv[typ][-1:0:-1].cumsum()[::-1]
+            r = np.argmax(bounds <= tol) + 1
 
-        Vr = VectorArrayOperator(self._brcgf).apply(self._brV, ind=range(r))
-        Wr = VectorArrayOperator(self._brogf).apply(self._brU, ind=range(r))
+        Vr = VectorArrayOperator(self._gramian[typ]['cf']).apply(self._V[typ], ind=list(range(r)))
+        Wr = VectorArrayOperator(self._gramian[typ]['of']).apply(self._U[typ], ind=list(range(r)))
 
-        if meth == 'sr':
-            alpha = 1 / np.sqrt(self._brsv[:r])
+        if method == 'sr':
+            alpha = 1 / np.sqrt(self._sv[typ][:r])
             Vr.scal(alpha)
             Wr.scal(alpha)
-
-            Ar, Br, Cr, Dr, Er = self.project(Vr, Wr, Er_is_identity=True)
-        elif meth == 'bfsr':
+            rom = self.project(Vr, Wr, Er_is_identity=True)
+        elif method == 'bfsr':
             Vr = gram_schmidt(Vr, atol=0, rtol=0)
             Wr = gram_schmidt(Wr, atol=0, rtol=0)
+            rom = self.project(Vr, Wr)
 
-            Ar, Br, Cr, Dr, Er = self.project(Vr, Wr)
-
-        rom = LTISystem.from_matrices(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
         rc = GenericRBReconstructor(Vr)
         reduction_data = {'Vr': Vr, 'Wr': Wr}
 
         return rom, rc, reduction_data
 
     def arnoldi(self, sigma, b_or_c):
-        """Rational Arnoldi algorithm
+        """Rational Arnoldi algorithm.
 
         Implemented only for single-input or single-output systems.
 
@@ -776,22 +690,20 @@ class LTISystem(DiscretizationInterface):
         assert b_or_c == 'b' and self.m == 1 or b_or_c == 'c' and self.p == 1
 
         r = len(sigma)
-        V = NumpyVectorArray.make_array(self.n, reserve=r)
+        V = self.ss_operators['A'].source.type.make_array(self.ss_operators['A'].source.subtype, reserve=r)
 
-        v = NumpyVectorArray(np.array([1.]))
+        v = np.array([1.])
         if b_or_c == 'b':
-            v = self.B.apply(v)
+            v = self.si_operators['B'].source.from_data(v)
+            v = self.si_operators['B'].apply(v)
         else:
-            v = self.C.apply_adjoint(v)
+            v = self.os_operators['C'].range.from_data(v)
+            v = self.os_operators['C'].apply_adjoint(v)
         v.scal(1 / v.l2_norm()[0])
 
-        for i in xrange(r):
+        for i in range(r):
             if sigma[i].imag == 0:
-                if self.E is None:
-                    E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
-                    sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i].real, -1))
-                else:
-                    sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i].real, -1))
+                sEmA = LincombOperator((self.ss_operators['E'], self.ss_operators['A']), (sigma[i].real, -1))
 
                 if b_or_c == 'b':
                     v = sEmA.apply_inverse(v)
@@ -807,11 +719,7 @@ class LTISystem(DiscretizationInterface):
                 v.scal(1 / v.l2_norm()[0])
                 V.append(v)
             elif sigma[i].imag > 0:
-                if self.E is None:
-                    E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
-                    sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i], -1))
-                else:
-                    sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i], -1))
+                sEmA = LincombOperator((self.ss_operators['E'], self.ss_operators['A']), (sigma[i], -1))
 
                 if b_or_c == 'b':
                     v = sEmA.apply_inverse(v)
@@ -820,19 +728,19 @@ class LTISystem(DiscretizationInterface):
 
                 v1 = v.real
                 if i > 0:
-                    v1_norm_orig = v1.l2_norm()
+                    v1_norm_orig = v1.l2_norm()[0]
                     Vop = VectorArrayOperator(V)
                     v1 -= Vop.apply(Vop.apply_adjoint(v1))
-                    if v1.l2_norm() < v1_norm_orig / 10:
+                    if v1.l2_norm()[0] < v1_norm_orig / 10:
                         v1 -= Vop.apply(Vop.apply_adjoint(v1))
                 v1.scal(1 / v1.l2_norm()[0])
                 V.append(v1)
 
                 v2 = v.imag
-                v2_norm_orig = v2.l2_norm()
+                v2_norm_orig = v2.l2_norm()[0]
                 Vop = VectorArrayOperator(V)
                 v2 -= Vop.apply(Vop.apply_adjoint(v2))
-                if v2.l2_norm() < v2_norm_orig / 10:
+                if v2.l2_norm()[0] < v2_norm_orig / 10:
                     v2 -= Vop.apply(Vop.apply_adjoint(v2))
                 v2.scal(1 / v2.l2_norm()[0])
                 V.append(v2)
@@ -842,7 +750,7 @@ class LTISystem(DiscretizationInterface):
         return V
 
     def arnoldi_tangential(self, sigma, b_or_c, directions):
-        """Tangential Rational Arnoldi algorithm
+        """Tangential Rational Arnoldi algorithm.
 
         Implemented only for multi-input or multi-output systems.
 
@@ -853,53 +761,48 @@ class LTISystem(DiscretizationInterface):
         b_or_c
             Character 'b' or 'c', to choose between the input or output matrix.
         directions
-            Tangential directions, array of shape (self.m, len(sigma)) or (self.p, len(sigma))
+            Tangential directions, |VectorArray| of length `len(sigma)` from
+            `self.si_operators['B'].source` or `self.os_operators['C'].range`
+            (depending on `b_or_c`).
 
         Returns
         -------
         V
             Projection matrix.
         """
-        assert isinstance(directions, np.ndarray)
         r = len(sigma)
-        assert (b_or_c == 'b' and self.m > 1 and directions.shape == (self.m, r) or
-                b_or_c == 'c' and self.p > 1 and directions.shape == (self.p, r))
+        assert len(directions) == r
+        assert (b_or_c == 'b' and self.m > 1 and directions in self.si_operators['B'].source or
+                b_or_c == 'c' and self.p > 1 and directions in self.os_operators['C'].range)
 
-        directions = NumpyVectorArray(directions.T)
-        directions_norms = directions.l2_norm()
-        for i in xrange(r):
-            directions.scal(1 / directions_norms[i], ind=i)
+        directions.scal(1 / directions.l2_norm())
 
-        V = NumpyVectorArray.make_array(self.n, reserve=r)
+        V = self.ss_operators['A'].source.type.make_array(self.ss_operators['A'].source.subtype, reserve=r)
 
-        for i in xrange(r):
+        for i in range(r):
             if sigma[i].imag == 0:
-                if self.E is None:
-                    E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
-                    sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i].real, -1))
-                else:
-                    sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i].real, -1))
+                sEmA = LincombOperator((self.ss_operators['E'], self.ss_operators['A']), (sigma[i].real, -1))
 
                 if b_or_c == 'b':
                     if i == 0:
-                        v = sEmA.apply_inverse(self.B.apply(directions.real, ind=0))
+                        v = sEmA.apply_inverse(self.si_operators['B'].apply(directions.real, ind=0))
                     else:
-                        sEmA_projected = NumpyMatrixOperator(sEmA.apply2(V, V))
-                        VTB = NumpyVectorArray(self.B.apply_adjoint(V).data.T)
-                        res = (sEmA.apply(V).data.T.dot(sEmA_projected.apply_inverse(VTB).data.T) -
-                               self.B._matrix.toarray())
-                        res = NumpyMatrixOperator(res)
-                        v = sEmA.apply_inverse(res.apply(directions.real, ind=i))
+                        Bd = self.si_operators['B'].apply(directions.real, ind=i)
+                        VTBd = VectorArrayOperator(V, transposed=True).apply(Bd)
+                        sEmA_proj_inv_VTBd = NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse(VTBd)
+                        V_sEmA_proj_inv_VTBd = VectorArrayOperator(V).apply(sEmA_proj_inv_VTBd)
+                        rd = sEmA.apply(V_sEmA_proj_inv_VTBd) - Bd
+                        v = sEmA.apply_inverse(rd)
                 else:
                     if i == 0:
-                        v = sEmA.apply_inverse_adjoint(self.C.apply_adjoint(directions.real, ind=0))
+                        v = sEmA.apply_inverse_adjoint(self.os_operators['C'].apply_adjoint(directions.real, ind=0))
                     else:
-                        sEmA_projected = NumpyMatrixOperator(sEmA.apply2(V, V))
-                        VTCT = NumpyVectorArray(self.C.apply(V).data.T)
-                        res = (sEmA.apply_adjoint(V).data.T.dot(sEmA_projected.apply_inverse_adjoint(VTCT).data.T) -
-                               self.C._matrix.T.toarray())
-                        res = NumpyMatrixOperator(res)
-                        v = sEmA.apply_inverse_adjoint(res.apply(directions.real, ind=i))
+                        CTd = self.os_operators['C'].apply_adjoint(directions.real, ind=i)
+                        VTCTd = VectorArrayOperator(V, transposed=True).apply(CTd)
+                        sEmA_proj_inv_VTCTd = NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse_adjoint(VTCTd)
+                        V_sEmA_proj_inv_VTCTd = VectorArrayOperator(V).apply(sEmA_proj_inv_VTCTd)
+                        rd = sEmA.apply_adjoint(V_sEmA_proj_inv_VTCTd) - CTd
+                        v = sEmA.apply_inverse_adjoint(rd)
 
                 if i > 0:
                     v_norm_orig = v.l2_norm()[0]
@@ -910,48 +813,44 @@ class LTISystem(DiscretizationInterface):
                 v.scal(1 / v.l2_norm()[0])
                 V.append(v)
             elif sigma[i].imag > 0:
-                if self.E is None:
-                    E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
-                    sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i], -1))
-                else:
-                    sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i], -1))
+                sEmA = LincombOperator((self.ss_operators['E'], self.ss_operators['A']), (sigma[i], -1))
 
                 if b_or_c == 'b':
                     if i == 0:
-                        v = sEmA.apply_inverse(self.B.apply(directions, ind=0))
+                        v = sEmA.apply_inverse(self.si_operators['B'].apply(directions, ind=0))
                     else:
-                        VTB = NumpyVectorArray(self.B.apply_adjoint(V).data.T)
-                        sEmA_projected = NumpyMatrixOperator(sEmA.apply2(V, V))
-                        res = (sEmA.apply(V).data.T.dot(sEmA_projected.apply_inverse(VTB).data.T) -
-                               self.B._matrix.toarray())
-                        res = NumpyMatrixOperator(res)
-                        v = sEmA.apply_inverse(res.apply(directions, ind=i))
+                        Bd = self.si_operators['B'].apply(directions, ind=i)
+                        VTBd = VectorArrayOperator(V, transposed=True).apply(Bd)
+                        sEmA_proj_inv_VTBd = NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse(VTBd)
+                        V_sEmA_proj_inv_VTBd = VectorArrayOperator(V).apply(sEmA_proj_inv_VTBd)
+                        rd = sEmA.apply(V_sEmA_proj_inv_VTBd) - Bd
+                        v = sEmA.apply_inverse(rd)
                 else:
                     if i == 0:
-                        v = sEmA.apply_inverse_adjoint(self.C.apply_adjoint(directions, ind=0))
+                        v = sEmA.apply_inverse_adjoint(self.os_operators['C'].apply_adjoint(directions, ind=0))
                     else:
-                        VTCT = NumpyVectorArray(self.C.apply(V).data.T)
-                        sEmA_projected = NumpyMatrixOperator(sEmA.apply2(V, V))
-                        res = (sEmA.apply_adjoint(V).data.T.dot(sEmA_projected.apply_inverse_adjoint(VTCT).data.T) -
-                               self.C._matrix.T.toarray())
-                        res = NumpyMatrixOperator(res)
-                        v = sEmA.apply_inverse_adjoint(res.apply(directions, ind=i))
+                        CTd = self.os_operators['C'].apply_adjoint(directions, ind=i)
+                        VTCTd = VectorArrayOperator(V, transposed=True).apply(CTd)
+                        sEmA_proj_inv_VTCTd = NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse_adjoint(VTCTd)
+                        V_sEmA_proj_inv_VTCTd = VectorArrayOperator(V).apply(sEmA_proj_inv_VTCTd)
+                        rd = sEmA.apply_adjoint(V_sEmA_proj_inv_VTCTd) - CTd
+                        v = sEmA.apply_inverse_adjoint(rd)
 
                 v1 = v.real
                 if i > 0:
-                    v1_norm_orig = v1.l2_norm()
+                    v1_norm_orig = v1.l2_norm()[0]
                     Vop = VectorArrayOperator(V)
                     v1 -= Vop.apply(Vop.apply_adjoint(v1))
-                    if v1.l2_norm() < v1_norm_orig / 10:
+                    if v1.l2_norm()[0] < v1_norm_orig / 10:
                         v1 -= Vop.apply(Vop.apply_adjoint(v1))
                 v1.scal(1 / v1.l2_norm()[0])
                 V.append(v1)
 
                 v2 = v.imag
-                v2_norm_orig = v2.l2_norm()
+                v2_norm_orig = v2.l2_norm()[0]
                 Vop = VectorArrayOperator(V)
                 v2 -= Vop.apply(Vop.apply_adjoint(v2))
-                if v2.l2_norm() < v2_norm_orig / 10:
+                if v2.l2_norm()[0] < v2_norm_orig / 10:
                     v2 -= Vop.apply(Vop.apply_adjoint(v2))
                 v2.scal(1 / v2.l2_norm()[0])
                 V.append(v2)
@@ -961,59 +860,52 @@ class LTISystem(DiscretizationInterface):
         return V
 
     def interpolation(self, sigma, b, c):
-        """Tangential Hermite interpolation at point `sigma` and directions `b` and `c`.
+        """Tangential Hermite interpolation at points `sigma` and directions `b` and `c`.
 
         Parameters
         ----------
         sigma
             Interpolation points (closed under conjugation), list of length `r`.
         b
-            Right tangential directions, |NumPy array| of order `m x r`.
+            Right tangential directions, |VectorArray| of length `r` from `self.si_operators['B'].source`.
         c
-            Left tangential directions, |NumPy array| of order `p x r`.
+            Left tangential directions, |VectorArray| of length `r` from `self.os_operators['C'].range`.
 
         Returns
         -------
         Vr
-            Right projection matrix.
+            Right projection matrix, |VectorArray| from `self.ss_operators['A'].source`.
         Wr
-            Left projection matrix.
+            Left projection matrix, |VectorArray| from `self.ss_operators['A'].source`.
         """
         r = len(sigma)
+        assert b in self.si_operators['B'].source and len(b) == r
+        assert c in self.os_operators['C'].range and len(c) == r
 
-        for i in xrange(r):
-            b[:, i] /= spla.norm(b[:, i])
-            c[:, i] /= spla.norm(c[:, i])
+        b.scal(1 / b.l2_norm())
+        c.scal(1 / c.l2_norm())
 
-        Vr = NumpyVectorArray.make_array(self.n, reserve=r)
-        Wr = NumpyVectorArray.make_array(self.n, reserve=r)
+        Vr = self.ss_operators['A'].source.type.make_array(self.ss_operators['A'].source.subtype, reserve=r)
+        Wr = self.ss_operators['A'].source.type.make_array(self.ss_operators['A'].source.subtype, reserve=r)
 
-        for i in xrange(r):
+        for i in range(r):
             if sigma[i].imag == 0:
-                if self.E is None:
-                    E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
-                    sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i].real, -1))
-                else:
-                    sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i].real, -1))
+                sEmA = LincombOperator((self.ss_operators['E'], self.ss_operators['A']), (sigma[i].real, -1))
 
-                Bb = self.B.apply(NumpyVectorArray(b[:, i].real.T))
+                Bb = self.si_operators['B'].apply(b.real, ind=i)
                 Vr.append(sEmA.apply_inverse(Bb))
 
-                CTc = self.C.apply_adjoint(NumpyVectorArray(c[:, i].real.T))
+                CTc = self.os_operators['C'].apply_adjoint(c.real, ind=i)
                 Wr.append(sEmA.apply_inverse_adjoint(CTc))
             elif sigma[i].imag > 0:
-                if self.E is None:
-                    E = NumpyMatrixOperator(sps.eye(self.n, format='csc'))
-                    sEmA = self.A.assemble_lincomb((E, self.A), (sigma[i], -1))
-                else:
-                    sEmA = self.A.assemble_lincomb((self.E, self.A), (sigma[i], -1))
+                sEmA = LincombOperator((self.ss_operators['E'], self.ss_operators['A']), (sigma[i], -1))
 
-                Bb = self.B.apply(NumpyVectorArray(b[:, i].T))
+                Bb = self.si_operators['B'].apply(b, ind=i)
                 v = sEmA.apply_inverse(Bb)
                 Vr.append(v.real)
                 Vr.append(v.imag)
 
-                CTc = self.C.apply_adjoint(NumpyVectorArray(c[:, i].T))
+                CTc = self.os_operators['C'].apply_adjoint(c, ind=i)
                 w = sEmA.apply_inverse_adjoint(CTc)
                 Wr.append(w.real)
                 Wr.append(w.imag)
@@ -1023,9 +915,16 @@ class LTISystem(DiscretizationInterface):
 
         return Vr, Wr
 
-    def irka(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_stability=True,
+    def irka(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_sigma_in_rhp=True,
              arnoldi=False, compute_errors=False):
         """Reduce using IRKA.
+
+        .. [GAB08] S. Gugercin, A. C. Antoulas, C. A. Beattie, H_2 model reduction
+                   for large-scale linear dynamical systems,
+                   SIAM Journal on Matrix Analysis and Applications, 30(2), 609-638, 2008.
+        .. [ABG10] A. C. Antoulas, C. A. Beattie, S. Gugercin, Interpolatory model
+                   reduction of large-scale dynamical systems,
+                   Efficient Modeling and Control of Large-Scale Systems, Springer-Verlag, 2010.
 
         Parameters
         ----------
@@ -1033,23 +932,31 @@ class LTISystem(DiscretizationInterface):
             Order of the reduced order model.
         sigma
             Initial interpolation points (closed under conjugation), list of length `r`.
+
+            If `None`, interpolation points are log-spaced between 0.1 and 10.
         b
-            Initial right tangential directions, |NumPy array| of shape (m, r).
+            Initial right tangential directions, |VectorArray| of length `r` from
+            `self.si_operators['B'].source`.
+
+            If `None`, `b` is chosen with all ones.
         c
-            Initial left tangential directions, |NumPy array| of shape (p, r).
+            Initial left tangential directions, |VectorArray| of length `r` from
+            `self.os_operators['C'].range`.
+
+            If `None`, `c` is chosen with all ones.
         tol
-            Tolerance, largest change in interpolation points.
+            Tolerance for the largest change in interpolation points.
         maxit
             Maximum number of iterations.
         verbose
             Should consecutive distances be printed.
-        force_stability
+        force_sigma_in_rhp
             If True, new interpolation points are always in the right half-plane.
             Otherwise, they are reflections of reduced order model's poles.
         arnoldi
             Should the Arnoldi process be used for rational interpolation.
         compute_errors
-            Should the relative H_2-errors of intermediate reduced order models be computed.
+            Should the relative :math:`\mathcal{H}_2`-errors of intermediate reduced order models be computed.
 
         Returns
         -------
@@ -1058,32 +965,33 @@ class LTISystem(DiscretizationInterface):
         rc
             Reconstructor of full state.
         reduction_data
-            Dictionary of additional data produced by the reduction process. Contains
-            projection matrices `Vr` and `Wr`, distances between interpolation points in
-            different iterations `dist`, interpolation points from all iterations `Sigma`,
-            and relative H_2-errors `errors` (if compute_errors is True).
+            Dictionary of additional data produced by the reduction process. Contains:
+
+            - projection matrices `Vr` and `Wr`,
+            - distances between interpolation points in different iterations `dist`,
+            - interpolation points from all iterations `Sigma`,
+            - right and left tangential directions `R` and `L`, and
+            - relative :math:`\mathcal{H}_2`-errors `errors` (if compute_errors is `True`).
         """
         assert 0 < r < self.n
         assert sigma is None or len(sigma) == r
-        assert b is None or b.shape == (self.m, r)
-        assert c is None or c.shape == (self.p, r)
+        assert b is None or b in self.si_operators['B'].source and len(b) == r
+        assert c is None or c in self.os_operators['C'].range and len(c) == r
 
         if sigma is None:
             sigma = np.logspace(-1, 1, r)
         if b is None:
-            np.random.seed(0)
-            b = np.random.randn(self.m, r)
+            b = self.si_operators['B'].source.from_data(np.ones((r, self.m)))
         if c is None:
-            np.random.seed(0)
-            c = np.random.randn(self.p, r)
+            c = self.os_operators['C'].range.from_data(np.ones((r, self.p)))
 
         if verbose:
             if compute_errors:
                 print('iter | shift change | rel. H_2-error')
-                print('------------------------------------')
+                print('-----+--------------+---------------')
             else:
                 print('iter | shift change')
-                print('-------------------')
+                print('-----+-------------')
 
         if arnoldi:
             if self.m == 1:
@@ -1099,13 +1007,14 @@ class LTISystem(DiscretizationInterface):
 
         dist = []
         Sigma = [np.array(sigma)]
+        R = [b]
+        L = [c]
         if compute_errors:
             errors = []
-        for it in xrange(maxit):
-            Ar, Br, Cr, _, Er = self.project(Vr, Wr)
+        for it in range(maxit):
+            rom = self.project(Vr, Wr)
 
             if compute_errors:
-                rom = LTISystem.from_matrices(Ar, Br, Cr, None, Er, cont_time=self.cont_time)
                 err = self - rom
                 try:
                     rel_H2_err = err.norm() / self.norm()
@@ -1113,15 +1022,15 @@ class LTISystem(DiscretizationInterface):
                     rel_H2_err = np.inf
                 errors.append(rel_H2_err)
 
-            sigma, Y, X = spla.eig(Ar, Er, left=True, right=True)
-            if force_stability:
+            sigma, Y, X = spla.eig(rom.ss_operators['A']._matrix, rom.ss_operators['E']._matrix, left=True, right=True)
+            if force_sigma_in_rhp:
                 sigma = np.array([np.abs(s.real) + s.imag * 1j for s in sigma])
             else:
-                sigma = -sigma
-            Sigma.append(sigma.copy())
+                sigma *= -1
+            Sigma.append(sigma)
 
             dist.append([])
-            for i in xrange(it + 1):
+            for i in range(it + 1):
                 dist[-1].append(np.max(np.abs((Sigma[i] - Sigma[-1]) / Sigma[-1])))
 
             if verbose:
@@ -1130,8 +1039,10 @@ class LTISystem(DiscretizationInterface):
                 else:
                     print('{:4d} | {:.6e}'.format(it + 1, np.min(dist[-1])))
 
-            b = Br.T.dot(Y.conj())
-            c = Cr.dot(X)
+            b = rom.si_operators['B'].apply_adjoint(NumpyVectorArray(Y.conj().T))
+            c = rom.os_operators['C'].apply(NumpyVectorArray(X.T))
+            R.append(b)
+            L.append(c)
 
             if arnoldi:
                 if self.m == 1:
@@ -1148,11 +1059,9 @@ class LTISystem(DiscretizationInterface):
             if np.min(dist[-1]) < tol:
                 break
 
-        Ar, Br, Cr, Dr, Er = self.project(Vr, Wr)
-
-        rom = LTISystem.from_matrices(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
+        rom = self.project(Vr, Wr)
         rc = GenericRBReconstructor(Vr)
-        reduction_data = {'Vr': Vr, 'Wr': Wr, 'dist': dist, 'Sigma': Sigma, 'b': b, 'c': c}
+        reduction_data = {'Vr': Vr, 'Wr': Wr, 'dist': dist, 'Sigma': Sigma, 'R': R, 'L': L}
         if compute_errors:
             reduction_data['errors'] = errors
 
@@ -1160,19 +1069,9 @@ class LTISystem(DiscretizationInterface):
 
 
 class TF(DiscretizationInterface):
-    """Class for input-output systems represented by a transfer function
+    """Class for input-output systems represented by a transfer function.
 
-    This class describes input-output systems given by::
-
-        E x'(t) = A x(t) + B u(t)
-           y(t) = C x(t) + D u(t)
-
-    if continuous-time, or::
-
-        E x(k + 1) = A x(k) + B u(k)
-          y(k)     = C x(k) + D u(k)
-
-    if discrete-time, where A, B, C, D, and E are linear operators.
+    This class describes input-output systems given by a transfer function :math:`H(s)`.
 
     Parameters
     ----------
@@ -1181,8 +1080,9 @@ class TF(DiscretizationInterface):
     p
         Number of outputs.
     H
-        Transfer function defined at least on the open left complex half-plane.
-        H(s) is a |NumPy array| of shape (p, m).
+        Transfer function defined at least on the open right complex half-plane.
+
+        H(s) is a |NumPy array| of shape `(p, m)`.
     dH
         Complex derivative of H(s).
     cont_time
@@ -1216,16 +1116,13 @@ class TF(DiscretizationInterface):
         -------
         tfw
             Transfer function values at frequencies in w, returned as a 3D |NumPy array|
-            of shape (p, m, len(w)).
+            of shape `(p, m, len(w))`.
         """
         if not self.cont_time:
             raise NotImplementedError
 
         self._w = w
-        self._tfw = np.empty((self.p, self.m, len(w)), dtype=complex)
-
-        for i, wi in enumerate(w):
-            self._tfw[:, :, i] = self.H(1j * wi)
+        self._tfw = np.dstack([self.H(1j * wi) for wi in w])
 
         return self._tfw.copy()
 
@@ -1237,20 +1134,26 @@ class TF(DiscretizationInterface):
         sigma
             Interpolation points (closed under conjugation), list of length `r`.
         b
-            Right tangential directions, |NumPy array| of order `m x r`.
+            Right tangential directions, |NumPy array| of shape `(self.m, r)`.
         c
-            Left tangential directions, |NumPy array| of order `p x r`.
+            Left tangential directions, |NumPy array| of shape `(self.p, r)`.
 
         Returns
         -------
         Er
-            |NumPy array| of shape (r, r).
-        Wr
-            Left projection matrix.
+            |NumPy array| of shape `(r, r)`.
+        Ar
+            |NumPy array| of shape `(r, r)`.
+        Br
+            |NumPy array| of shape `(r, self.m)`.
+        Cr
+            |NumPy array| of shape `(self.p, r)`.
         """
         r = len(sigma)
+        assert b.shape == (self.m, r)
+        assert c.shape == (self.p, r)
 
-        for i in xrange(r):
+        for i in range(r):
             b[:, i] /= spla.norm(b[:, i])
             c[:, i] /= spla.norm(c[:, i])
 
@@ -1259,14 +1162,11 @@ class TF(DiscretizationInterface):
         Br = np.empty((r, self.m), dtype=complex)
         Cr = np.empty((self.p, r), dtype=complex)
 
-        Ht = np.empty((self.p, self.m, r), dtype=complex)
-        dHt = np.empty((self.p, self.m, r), dtype=complex)
-        for i in xrange(r):
-            Ht[:, :, i] = self.H(sigma[i])
-            dHt[:, :, i] = self.dH(sigma[i])
+        Ht = np.dstack([self.H(s) for s in sigma])
+        dHt = np.dstack([self.dH(s) for s in sigma])
 
-        for i in xrange(r):
-            for j in xrange(r):
+        for i in range(r):
+            for j in range(r):
                 if i != j:
                     Er[i, j] = -c[:, i].dot((Ht[:, :, i] -
                                              Ht[:, :, j]).dot(b[:, j])) / (sigma[i] - sigma[j])
@@ -1278,30 +1178,33 @@ class TF(DiscretizationInterface):
             Br[i, :] = Ht[:, :, i].T.dot(c[:, i])
             Cr[:, i] = Ht[:, :, i].dot(b[:, i])
 
-#        T = np.zeros((r, r), dtype=complex)
-#        for i in xrange(r):
-#            if sigma[i].imag == 0:
-#                T[i, i] = 1
-#            else:
-#                try:
-#                    j = i + 1 + np.where(np.isclose(sigma[i + 1:], sigma[i].conjugate()))[0][0]
-#                except:
-#                    j = None
-#                if j:
-#                    T[i, i] = 1
-#                    T[i, j] = 1
-#                    T[j, i] = -1j
-#                    T[j, j] = 1j
-#
-#        Er = (T.dot(Er).dot(T.T)).real
-#        Ar = (T.dot(Ar).dot(T.T)).real
-#        Br = (T.dot(Br)).real
-#        Cr = (Cr.dot(T.T)).real
+        T = np.zeros((r, r), dtype=complex)
+        for i in range(r):
+            if sigma[i].imag == 0:
+                T[i, i] = 1
+            else:
+                try:
+                    j = i + 1 + np.where(np.isclose(sigma[i + 1:], sigma[i].conjugate()))[0][0]
+                except:
+                    j = None
+                if j:
+                    T[i, i] = 1
+                    T[i, j] = 1
+                    T[j, i] = -1j
+                    T[j, j] = 1j
+
+        Er = (T.dot(Er).dot(T.conj().T)).real
+        Ar = (T.dot(Ar).dot(T.conj().T)).real
+        Br = (T.dot(Br)).real
+        Cr = (Cr.dot(T.conj().T)).real
 
         return Er, Ar, Br, Cr
 
-    def tf_irka(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_stability=True):
+    def tf_irka(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_sigma_in_rhp=True):
         """Reduce using TF-IRKA.
+
+        .. [AG12] C. A. Beattie, S. Gugercin, Realization-independent H2-approximation,
+                  Proceedings of the 51st IEEE Conference on Decision and Control, 2012.
 
         Parameters
         ----------
@@ -1309,17 +1212,23 @@ class TF(DiscretizationInterface):
             Order of the reduced order model.
         sigma
             Initial interpolation points (closed under conjugation), list of length `r`.
+
+            If `None`, interpolation points are log-spaced between 0.1 and 10.
         b
-            Initial right tangential directions, |NumPy array| of order `m x r`.
+            Initial right tangential directions, |NumPy array| of shape `(self.m, r)`.
+
+            If `None`, `b` is chosen with all ones.
         c
-            Initial left tangential directions, |NumPy array| of order `p x r`.
+            Initial left tangential directions, |NumPy array| of shape `(self.p, r)`.
+
+            If `None`, `c` is chosen with all ones.
         tol
-            Tolerance, largest change in interpolation points.
+            Tolerance for the largest change in interpolation points.
         maxit
             Maximum number of iterations.
         verbose
             Should consecutive distances be printed.
-        force_stability
+        force_sigma_in_rhp
             If True, new interpolation points are always in the right half-plane.
             Otherwise, they are reflections of reduced order model's poles.
 
@@ -1327,6 +1236,12 @@ class TF(DiscretizationInterface):
         -------
         rom
             Reduced |LTISystem| model.
+        reduction_data
+            Dictionary of additional data produced by the reduction process. Contains:
+
+            - distances between interpolation points in different iterations `dist`,
+            - interpolation points from all iterations `Sigma`, and
+            - right and left tangential directions `R` and `L`.
         """
         assert r > 0
         assert sigma is None or len(sigma) == r
@@ -1336,30 +1251,30 @@ class TF(DiscretizationInterface):
         if sigma is None:
             sigma = np.logspace(-1, 1, r)
         if b is None:
-            np.random.seed(0)
-            b = np.random.randn(self.m, r)
+            b = np.ones((self.m, r))
         if c is None:
-            np.random.seed(0)
-            c = np.random.randn(self.p, r)
+            c = np.ones((self.p, r))
 
         if verbose:
             print('iter | shift change')
-            print('-------------------')
+            print('-----+-------------')
 
         dist = []
         Sigma = [np.array(sigma)]
-        for it in xrange(maxit):
+        R = [b]
+        L = [c]
+        for it in range(maxit):
             Er, Ar, Br, Cr = self.interpolation(sigma, b, c)
 
             sigma, Y, X = spla.eig(Ar, Er, left=True, right=True)
-            if force_stability:
+            if force_sigma_in_rhp:
                 sigma = np.array([np.abs(s.real) + s.imag * 1j for s in sigma])
             else:
-                sigma = -sigma
-            Sigma.append(sigma.copy())
+                sigma *= -1
+            Sigma.append(sigma)
 
             dist.append([])
-            for i in xrange(it + 1):
+            for i in range(it + 1):
                 dist[-1].append(np.max(np.abs((Sigma[i] - Sigma[-1]) / Sigma[-1])))
 
             if verbose:
@@ -1367,11 +1282,14 @@ class TF(DiscretizationInterface):
 
             b = Br.T.dot(Y.conj())
             c = Cr.dot(X)
+            R.append(b)
+            L.append(c)
 
             if np.min(dist[-1]) < tol:
                 break
 
         Er, Ar, Br, Cr = self.interpolation(sigma, b, c)
         rom = LTISystem.from_matrices(Ar, Br, Cr, None, Er, cont_time=self.cont_time)
+        reduction_data = {'dist': dist, 'Sigma': Sigma, 'R': R, 'L': L}
 
-        return rom
+        return rom, reduction_data

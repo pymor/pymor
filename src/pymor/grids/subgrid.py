@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import weakref
 
 import numpy as np
@@ -38,7 +36,6 @@ class SubGrid(AffineGridInterface):
     def __init__(self, grid, entities):
         assert isinstance(grid, AffineGridInterface)
         self.dim = grid.dim
-        self.dim_outer = grid.dim_outer
         self.reference_element = grid.reference_element
 
         parent_indices = [np.array(np.unique(entities), dtype=np.int32)]
@@ -46,7 +43,7 @@ class SubGrid(AffineGridInterface):
 
         subentities = [np.arange(len(parent_indices[0]), dtype=np.int32).reshape((-1, 1))]
 
-        for codim in xrange(1, self.dim + 1):
+        for codim in range(1, self.dim + 1):
             SUBE = grid.subentities(0, codim)[parent_indices[0]]
             if np.any(SUBE < 0):
                 raise NotImplementedError
@@ -94,13 +91,13 @@ class SubGrid(AffineGridInterface):
             assert codim <= subentity_codim <= self.dim, 'Invalid subentity codimension'
             return self.__subentities[subentity_codim]
         else:
-            return super(SubGrid, self).subentities(codim, subentity_codim)
+            return super().subentities(codim, subentity_codim)
 
     def embeddings(self, codim):
         if codim == 0:
             return self.__embeddings
         else:
-            return super(SubGrid, self).embeddings(codim)
+            return super().embeddings(codim)
 
     def __getstate__(self):
         d = self.__dict__.copy()

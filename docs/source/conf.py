@@ -5,6 +5,10 @@
 
 import sys, os, re
 
+PY2 = sys.version_info.major == 2
+
+os.environ['PYMOR_WITH_SPHINX'] = '1'
+
 # Fix documentation generation for readthedocs.org
 
 if os.environ.get('READTHEDOCS', None) == 'True':
@@ -83,7 +87,7 @@ gen_apidoc.walk(pymor)
 gen_apidoc.walk(pymordemos)
 
 
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath',
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.imgmath',
               'sphinx.ext.coverage',
               'sphinx.ext.autosummary',
               'sphinx.ext.viewcode',
@@ -102,7 +106,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'pyMOR'
-copyright = '2012-2015, the pyMOR AUTHORS'
+copyright = '2012-2016, the pyMOR AUTHORS'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -111,7 +115,7 @@ version = str(pymor.VERSION)
 
 # The full version, including alpha/beta/rc tags.
 release = version.split('-')[0]
-print version, release
+print(version, release)
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -123,7 +127,7 @@ today_fmt = '%B %d, %Y'
 #unused_docs = []
 
 # The reST default role (used for this markup: `text`) to use for all documents.
-default_role = "autolink"
+default_role = "literal"
 
 # List of directories, relative to source directories, that shouldn't be searched
 # for source files.
@@ -277,7 +281,7 @@ coverage_ignore_c_items = {}
 
 # autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance']
 
-intersphinx_mapping = {'python': ('http://docs.python.org/2.7', None),
+intersphinx_mapping = {'python': ('http://docs.python.org/' + ('2.7' if PY2 else '3'), None),
                        'numpy': ('http://docs.scipy.org/doc/numpy', None),
                        'scipy': ('http://docs.scipy.org/doc/scipy/reference', None)}
 

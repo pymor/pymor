@@ -32,17 +32,20 @@ Options:
   -h, --help             Show this message.
 """
 
-from __future__ import absolute_import, division, print_function
 import sys
 from docopt import docopt
 import time
 from functools import partial
 import numpy as np
-from PySide import QtGui
 import OpenGL
 
 OpenGL.ERROR_ON_COPY = True
 
+from pymor.core.exceptions import PySideMissing
+try:
+    from PySide import QtGui
+except ImportError as e:
+    raise PySideMissing()
 from pymor.algorithms.basisextension import gram_schmidt_basis_extension
 from pymor.algorithms.greedy import greedy
 from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
@@ -51,6 +54,7 @@ from pymor.gui.gl import ColorBarWidget, GLPatchWidget
 from pymor.reductors.coercive import reduce_coercive_simple
 from pymor import gui
 
+
 PARAM_STEPS = 10
 PARAM_MIN = 0.1
 PARAM_MAX = 1
@@ -58,13 +62,13 @@ PARAM_MAX = 1
 
 class ParamRuler(QtGui.QWidget):
     def __init__(self, parent, sim):
-        super(ParamRuler, self).__init__(parent)
+        super().__init__(parent)
         self.sim = sim
         self.setMinimumSize(200, 100)
         box = QtGui.QGridLayout()
         self.spins = []
-        for j in xrange(args['YBLOCKS']):
-            for i in xrange(args['XBLOCKS']):
+        for j in range(args['YBLOCKS']):
+            for i in range(args['XBLOCKS']):
                 spin = QtGui.QDoubleSpinBox()
                 spin.setRange(PARAM_MIN, PARAM_MAX)
                 spin.setSingleStep((PARAM_MAX - PARAM_MIN) / PARAM_STEPS)
@@ -82,7 +86,7 @@ class ParamRuler(QtGui.QWidget):
 # noinspection PyShadowingNames
 class SimPanel(QtGui.QWidget):
     def __init__(self, parent, sim):
-        super(SimPanel, self).__init__(parent)
+        super().__init__(parent)
         self.sim = sim
         box = QtGui.QHBoxLayout()
         self.solution = GLPatchWidget(self, self.sim.grid, vmin=0., vmax=0.8)
@@ -109,7 +113,7 @@ class SimPanel(QtGui.QWidget):
 
 class AllPanel(QtGui.QWidget):
     def __init__(self, parent, reduced_sim, detailed_sim):
-        super(AllPanel, self).__init__(parent)
+        super().__init__(parent)
 
         box = QtGui.QVBoxLayout()
         self.reduced_panel = SimPanel(self, reduced_sim)
@@ -122,7 +126,7 @@ class AllPanel(QtGui.QWidget):
 # noinspection PyShadowingNames
 class RBGui(QtGui.QMainWindow):
     def __init__(self, args):
-        super(RBGui, self).__init__()
+        super().__init__()
         args['XBLOCKS'] = int(args['XBLOCKS'])
         args['YBLOCKS'] = int(args['YBLOCKS'])
         args['--grid'] = int(args['--grid'])
@@ -151,12 +155,12 @@ class SimBase(object):
 class ReducedSim(SimBase):
 
     def __init__(self, args):
-        super(ReducedSim, self).__init__(args)
+        super().__init__(args)
 
     def _first(self):
         args = self.args
-        error_product = self.discretization.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
-        reductor = partial(reduce_coercive_simple, error_product=error_product)
+        product = self.discretization.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
+        reductor = partial(reduce_coercive_simple, product=product)
         extension_algorithm = partial(gram_schmidt_basis_extension, product=self.discretization.h1_0_semi_product)
 
         greedy_data = greedy(self.discretization, reductor,
@@ -176,7 +180,7 @@ class ReducedSim(SimBase):
 class DetailedSim(SimBase):
 
     def __init__(self, args):
-        super(DetailedSim, self).__init__(args)
+        super().__init__(args)
         self.discretization.disable_caching()
 
     def solve(self, mu):

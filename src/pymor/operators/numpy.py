@@ -12,10 +12,8 @@
     |NumPy arrays| as an |Operator|.
 """
 
-from __future__ import absolute_import, division, print_function
-
 from collections import OrderedDict
-from itertools import izip
+from functools import reduce
 
 import numpy as np
 import scipy.sparse
@@ -263,10 +261,10 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None,
                               least_squares=False):
         if source_product or range_product:
-            return super(NumpyMatrixOperator, self).apply_inverse_adjoint(U, ind=ind, mu=mu,
-                                                                          source_product=source_product,
-                                                                          range_product=range_product,
-                                                                          least_squares=least_squares)
+            return super().apply_inverse_adjoint(U, ind=ind, mu=mu,
+                                                 source_product=source_product,
+                                                 range_product=range_product,
+                                                 least_squares=least_squares)
         else:
             options = {'inverse': self.solver_options.get('inverse_adjoint') if self.solver_options else None}
             adjoint_op = NumpyMatrixOperator(self._matrix.T, solver_options=options)
@@ -325,7 +323,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             if matrix.dtype != common_dtype:
                 matrix = matrix.astype(common_dtype)
 
-        for op, c in izip(operators[1:], coefficients[1:]):
+        for op, c in zip(operators[1:], coefficients[1:]):
             if type(op) is ZeroOperator:
                 continue
             elif type(op) is IdentityOperator:
@@ -774,10 +772,10 @@ def _apply_inverse(matrix, V, options=None):
     default_options = _options(matrix)
 
     if options is None:
-        options = default_options.values()[0]
+        options = next(iter(default_options.values()))
     elif isinstance(options, str):
         if options == 'least_squares':
-            for k, v in default_options.iteritems():
+            for k, v in default_options.items():
                 if k.startswith('least_squares'):
                     options = v
                     break
@@ -786,12 +784,13 @@ def _apply_inverse(matrix, V, options=None):
             options = default_options[options]
     else:
         assert 'type' in options and options['type'] in default_options \
-            and options.viewkeys() <= default_options[options['type']].viewkeys()
+            and options.keys() <= default_options[options['type']].keys()
         user_options = options
         options = default_options[user_options['type']]
         options.update(user_options)
 
-    R = np.empty((len(V), matrix.shape[1]), dtype=np.promote_types(matrix.dtype, V.dtype))
+    promoted_type = np.promote_types(matrix.dtype, V.dtype)
+    R = np.empty((len(V), matrix.shape[1]), dtype=promoted_type)
 
     if options['type'] == 'solve':
         for i, VV in enumerate(V):
@@ -815,8 +814,15 @@ def _apply_inverse(matrix, V, options=None):
                     raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
                                          format(info))
     elif options['type'] == 'bicgstab_spilu':
-        ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
-                    drop_rule=options['spilu_drop_rule'], permc_spec=options['spilu_permc_spec'])
+        # workaround for https://github.com/pymor/pymor/issues/171
+        try:
+            ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
+                        drop_rule=options['spilu_drop_rule'], permc_spec=options['spilu_permc_spec'])
+        except TypeError as t:
+            logger = getLogger('pymor.operators.numpy._apply_inverse')
+            logger.error("ignoring drop_rule in ilu factorization")
+            ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
+                        permc_spec=options['spilu_permc_spec'])
         precond = LinearOperator(matrix.shape, ilu.solve)
         for i, VV in enumerate(V):
             R[i], info = bicgstab(matrix, VV, tol=options['tol'], maxiter=options['maxiter'], M=precond)
@@ -828,28 +834,45 @@ def _apply_inverse(matrix, V, options=None):
                                          format(info))
     elif options['type'] == 'spsolve':
         try:
-            if map(int, scipy.version.version.split('.')) >= [0, 14, 0]:
+            # maybe remove unusable factorization:
+            if hasattr(matrix, 'factorization'):
+                fdtype = matrix.factorizationdtype
+                if not np.can_cast(V.dtype, fdtype, casting='safe'):
+                    del matrix.factorization
+
+            if list(map(int, scipy.version.version.split('.'))) >= [0, 14, 0]:
                 if hasattr(matrix, 'factorization'):
-                    R = matrix.factorization.solve(V.T).T
+                    # we may use a complex factorization of a real matrix to
+                    # apply it to a real vector. In that case, we downcast
+                    # the result here, removing the imaginary part,
+                    # which should be zero.
+                    R = matrix.factorization.solve(V.T).T.astype(promoted_type, copy=False)
                 elif options['keep_factorization']:
-                    matrix.factorization = splu(matrix, permc_spec=options['permc_spec'])
+                    # the matrix is always converted to the promoted type.
+                    # if matrix.dtype == promoted_type, this is a no_op
+                    matrix.factorization = splu(matrix_astype_nocopy(matrix, promoted_type), permc_spec=options['permc_spec'])
+                    matrix.factorizationdtype = promoted_type
                     R = matrix.factorization.solve(V.T).T
                 else:
-                    R = spsolve(matrix, V.T, permc_spec=options['permc_spec']).T
+                    # the matrix is always converted to the promoted type.
+                    # if matrix.dtype == promoted_type, this is a no_op
+                    R = spsolve(matrix_astype_nocopy(matrix, promoted_type), V.T, permc_spec=options['permc_spec']).T
             else:
+                # see if-part for documentation
                 if hasattr(matrix, 'factorization'):
                     for i, VV in enumerate(V):
-                        R[i] = matrix.factorization.solve(VV)
+                        R[i] = matrix.factorization.solve(VV).astype(promoted_type, copy=False)
                 elif options['keep_factorization']:
-                    matrix.factorization = splu(matrix, permc_spec=options['permc_spec'])
+                    matrix.factorization = splu(matrix_astype_nocopy(matrix, promoted_type), permc_spec=options['permc_spec'])
+                    matrix.factorizationdtype = promoted_type
                     for i, VV in enumerate(V):
                         R[i] = matrix.factorization.solve(VV)
                 elif len(V) > 1:
-                    factorization = splu(matrix, permc_spec=options['permc_spec'])
+                    factorization = splu(matrix_astype_nocopy(matrix, promoted_type), permc_spec=options['permc_spec'])
                     for i, VV in enumerate(V):
                         R[i] = factorization.solve(VV)
                 else:
-                    R = spsolve(matrix, V.T, permc_spec=options['permc_spec']).reshape((1, -1))
+                    R = spsolve(matrix_astype_nocopy(matrix, promoted_type), V.T, permc_spec=options['permc_spec']).reshape((1, -1))
         except RuntimeError as e:
             raise InversionError(e)
     elif options['type'] == 'lgmres':
@@ -942,3 +965,12 @@ def _apply_inverse(matrix, V, options=None):
     else:
         raise ValueError('Unknown solver type')
     return R
+
+
+# unfortunately, this is necessary, as scipy does not
+# forward the copy=False argument in its csc_matrix.astype function
+def matrix_astype_nocopy(matrix, dtype):
+    if matrix.dtype == dtype:
+        return matrix
+    else:
+        return matrix.astype(dtype)

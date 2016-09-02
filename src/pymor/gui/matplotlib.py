@@ -9,10 +9,6 @@ Instead, use :meth:`~pymor.gui.qt.visualize_matplotlib_1d` or
 :class:`~pymor.gui.qt.Matplotlib1DVisualizer`.
 """
 
-from __future__ import absolute_import, division, print_function
-
-from itertools import izip
-
 import numpy as np
 
 try:
@@ -54,7 +50,7 @@ if HAVE_ALL:
                 axes = figure.gca()
                 axes.hold(True)
             self.codim = codim
-            lines = tuple()
+            lines = ()
             centers = grid.centers(1)
             if grid._identify_left_right:
                 centers = np.concatenate((centers, [[grid._domain[1]]]), axis=0)
@@ -65,7 +61,7 @@ if HAVE_ALL:
                 xs = centers
             else:
                 xs = np.repeat(centers, 2)[1:-1]
-            for i in xrange(count):
+            for i in range(count):
                 if separate_plots:
                     figure.add_subplot(int(count / 2) + count % 2, 2, i + 1)
                     axes = figure.gca()
@@ -82,13 +78,13 @@ if HAVE_ALL:
                     axes.legend(legend)
             self.lines = lines
 
-            super(Matplotlib1DWidget, self).__init__(figure)
+            super().__init__(figure)
             self.setParent(parent)
             self.setMinimumSize(300, 300)
             self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
 
         def set(self, U, ind):
-            for l, u in izip(self.lines, U):
+            for l, u in zip(self.lines, U):
                 if self.codim == 1:
                     if self.periodic:
                         l.set_ydata(np.concatenate((u[ind], [u[ind][0]])))
@@ -106,7 +102,7 @@ if HAVE_ALL:
             assert codim in (0, 2)
 
             self.figure = Figure(dpi=dpi)
-            super(MatplotlibPatchWidget, self).__init__(self.figure)
+            super().__init__(self.figure)
 
             subentities, coordinates, entity_map = flatten_grid(grid)
             self.subentities = subentities if grid.reference_element is triangle \

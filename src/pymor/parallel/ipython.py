@@ -2,9 +2,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
-from itertools import izip, chain
+from itertools import chain
 import os
 import time
 
@@ -111,7 +109,7 @@ class new_ipcluster_pool(BasicInterface):
 class IPythonPool(WorkerPoolBase):
 
     def __init__(self, num_engines=None, **kwargs):
-        super(IPythonPool, self).__init__()
+        super().__init__()
         self.client = Client(**kwargs)
         if num_engines is not None:
             self.view = self.client[:num_engines]
@@ -138,7 +136,7 @@ class IPythonPool(WorkerPoolBase):
 
     def _map(self, function, chunks, **kwargs):
         result = self.view.map_sync(_worker_call_function,
-                                    *zip(*((function, True, a, kwargs) for a in izip(*chunks))))
+                                    *zip(*((function, True, a, kwargs) for a in zip(*chunks))))
         return list(chain(*result))
 
     def _remove_object(self, remote_id):
@@ -153,9 +151,9 @@ def _worker_call_function(function, loop, args, kwargs):
     global _remote_objects
     kwargs = {k: (_remote_objects[v] if isinstance(v, RemoteId) else  # NOQA
                   v)
-              for k, v in kwargs.iteritems()}
+              for k, v in kwargs.items()}
     if loop:
-        return [function(*a, **kwargs) for a in izip(*args)]
+        return [function(*a, **kwargs) for a in zip(*args)]
     else:
         return function(*args, **kwargs)
 

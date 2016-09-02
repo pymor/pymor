@@ -3,14 +3,17 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 from numbers import Number
 
 import numpy as np
 
 from pymor.core.interfaces import BasicInterface, abstractmethod, abstractproperty, abstractclassmethod
 
+def _numpy_version_older(version_tuple):
+    np_tuple = tuple(int(p) for p in np.__version__.split('.')[:3])
+    return np_tuple < version_tuple
+
+_INDEXTYPES = (Number,) if not _numpy_version_older((1,9)) else (Number, np.intp)
 
 class VectorArrayInterface(BasicInterface):
     """Interface for vector arrays.
@@ -81,6 +84,20 @@ class VectorArrayInterface(BasicInterface):
             A hint for the backend to which length the array will grow.
         """
         pass
+
+    @classmethod
+    def from_data(cls, data, subtype):
+        """Create a |VectorArray| from |NumPy array|
+
+        Parameters
+        ----------
+        data
+            |NumPy array|.
+        subtype
+            The :attr:`~VectorArrayInterface.subtype`, the created array should have.
+            What a valid subtype is, is determined by the respective array implementation.
+        """
+        raise NotImplementedError
 
     def empty(self, reserve=0):
         """Create an empty |VectorArray| of the same :attr:`~VectorArrayInterface.subtype`.
@@ -179,28 +196,6 @@ class VectorArrayInterface(BasicInterface):
         ----------
         ind
             Indices of the vectors that are to be removed (see class documentation).
-        """
-        pass
-
-    @abstractmethod
-    def replace(self, other, ind=None, o_ind=None, remove_from_other=False):
-        """Replace vectors of the array.
-
-        Parameters
-        ----------
-        other
-            A |VectorArray| containing the replacement vectors.
-        ind
-            Indices of the vectors that are to be replaced (see class documentation).
-            Repeated indices are forbidden.
-        o_ind
-            Indices of the replacement vectors (see class documentation).
-            `len(ind)` has to agree with `len(o_ind)`.
-            Repeated indices are allowed.
-        remove_from_other
-            If `True`, the new vectors are removed from `other`.
-            For list-like implementations this can be used to prevent
-            unnecessary copies of the involved vectors.
         """
         pass
 
@@ -364,6 +359,22 @@ class VectorArrayInterface(BasicInterface):
         """
         pass
 
+    @abstractmethod
+    def l2_norm2(self, ind=None):
+        """The squared l2-norms of the vectors contained in the array.
+
+        Parameters
+        ----------
+        ind
+            Indices of the vectors whose norms are to be calculated (see class documentation).
+
+        Returns
+        -------
+        A |NumPy array| `result` such that `result[i]` contains the norm
+        of `self[ind][i]`.
+        """
+        pass
+
     def sup_norm(self, ind=None):
         """The l-infinity--norms of the vectors contained in the array.
 
@@ -476,7 +487,7 @@ class VectorArrayInterface(BasicInterface):
     def check_ind(self, ind):
         """Check if `ind` is an admissable list of indices in the sense of the class documentation."""
         return (ind is None or
-                isinstance(ind, Number) and 0 <= ind < len(self) or
+                isinstance(ind, _INDEXTYPES) and 0 <= ind < len(self) or
                 isinstance(ind, list) and (len(ind) == 0 or 0 <= min(ind) and max(ind) < len(self)) or
                 (isinstance(ind, np.ndarray) and ind.ndim == 1
                  and (len(ind) == 0 or 0 <= np.min(ind) and np.max(ind) < len(self))))
@@ -500,7 +511,7 @@ class VectorArrayInterface(BasicInterface):
 
     def len_ind(self, ind):
         """Return the number of specified indices."""
-        return len(self) if ind is None else 1 if isinstance(ind, Number) else len(ind)
+        return len(self) if ind is None else 1 if isinstance(ind, _INDEXTYPES) else len(ind)
 
     def len_ind_unique(self, ind):
         """Return the number of specified unique indices."""
@@ -559,6 +570,20 @@ class VectorSpace(BasicInterface):
         A |VectorArray| containing `count` vectors whith each component zero.
         """
         return self.type.make_array(subtype=self.subtype, count=count)
+
+    def from_data(self, data):
+        """Create a |VectorArray| from a |NumPy array|
+
+        Parameters
+        ----------
+        data
+            |NumPy| array.
+
+        Returns
+        -------
+        A |VectorArray| with `data` as data.
+        """
+        return self.type.from_data(data, self.subtype)
 
     @property
     def dim(self):

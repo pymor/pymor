@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import LincombOperator, VectorArrayOperator
 from pymor.tools import mpi
@@ -119,29 +117,27 @@ class MPIOperator(OperatorBase):
         else:
             raise NotImplementedError
 
-    def apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None):
+    def apply2(self, V, U, U_ind=None, V_ind=None, mu=None):
         if not self.with_apply2:
-            return super(MPIOperator, self).apply2(V, U, U_ind=U_ind, V_ind=V_ind, mu=mu, product=product)
+            return super().apply2(V, U, U_ind=U_ind, V_ind=V_ind, mu=mu)
         assert V in self.range
         assert U in self.source
         mu = self.parse_parameter(mu)
         U = U if self.vector else U.obj_id
         V = V if self.functional else V.obj_id
-        product = product and product.obj_id
         return mpi.call(mpi.method_call, self.obj_id, 'apply2',
-                        V, U, U_ind=U_ind, V_ind=V_ind, mu=mu, product=product)
+                        V, U, U_ind=U_ind, V_ind=V_ind, mu=mu)
 
-    def pairwise_apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None):
+    def pairwise_apply2(self, V, U, U_ind=None, V_ind=None, mu=None):
         if not self.with_apply2:
-            return super(MPIOperator, self).pairwise_apply2(V, U, U_ind=U_ind, V_ind=V_ind, mu=mu, product=product)
+            return super().pairwise_apply2(V, U, U_ind=U_ind, V_ind=V_ind, mu=mu)
         assert V in self.range
         assert U in self.source
         mu = self.parse_parameter(mu)
         U = U if self.vector else U.obj_id
         V = V if self.functional else V.obj_id
-        product = product and product.obj_id
         return mpi.call(mpi.method_call, self.obj_id, 'pairwise_apply2',
-                        V, U, U_ind=U_ind, V_ind=V_ind, mu=mu, product=product)
+                        V, U, U_ind=U_ind, V_ind=V_ind, mu=mu)
 
     def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
         assert U in self.range

@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 import pytest
 
@@ -23,7 +21,7 @@ def test_selection_op():
     p1 = MonomOperator(1)
     select_rhs_functional = GenericParameterFunctional(
         lambda x: round(float(x["nrrhs"])), 
-        ParameterType({"nrrhs" : tuple()})
+        ParameterType({"nrrhs" : ()})
     )
     s1 = SelectionOperator(
         operators = [p1], 
@@ -103,31 +101,12 @@ def test_apply2(operator_with_arrays):
             assert np.allclose(M, M2)
 
 
-def test_apply2_with_product(operator_with_arrays_and_products):
-    op, mu, U, V, sp, rp = operator_with_arrays_and_products
-    for U_ind in valid_inds(U):
-        for V_ind in valid_inds(V):
-            M = op.apply2(V, U, U_ind=U_ind, V_ind=V_ind, mu=mu, product=rp)
-            assert M.shape == (V.len_ind(V_ind), U.len_ind(U_ind))
-            M2 = V.dot(rp.apply(op.apply(U, ind=U_ind, mu=mu)), ind=V_ind)
-            assert np.allclose(M, M2)
-
-
 def test_pairwise_apply2(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     for U_ind, V_ind in valid_inds_of_same_length(U, V):
         M = op.pairwise_apply2(V, U, U_ind=U_ind, V_ind=V_ind, mu=mu)
         assert M.shape == (V.len_ind(V_ind),)
         M2 = V.pairwise_dot(op.apply(U, ind=U_ind, mu=mu), ind=V_ind)
-        assert np.allclose(M, M2)
-
-
-def test_pairwise_apply2_with_product(operator_with_arrays_and_products):
-    op, mu, U, V, sp, rp = operator_with_arrays_and_products
-    for U_ind, V_ind in valid_inds_of_same_length(U, V):
-        M = op.pairwise_apply2(V, U, U_ind=U_ind, V_ind=V_ind, mu=mu, product=rp)
-        assert M.shape == (V.len_ind(V_ind),)
-        M2 = V.pairwise_dot(rp.apply(op.apply(U, ind=U_ind, mu=mu)), ind=V_ind)
         assert np.allclose(M, M2)
 
 

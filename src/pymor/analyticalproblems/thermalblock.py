@@ -3,8 +3,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 from itertools import product
 
 from pymor.analyticalproblems.elliptic import EllipticProblem
@@ -42,9 +40,9 @@ class ThermalBlockProblem(EllipticProblem):
     Parameters
     ----------
     num_blocks
-        The tuple (nx, ny)
+        The tuple `(nx, ny)`
     parameter_range
-        A tuple (μ_min, μ_max). Each |Parameter| component μ_ij is allowed
+        A tuple `(μ_min, μ_max)`. Each |Parameter| component μ_ij is allowed
         to lie in the interval [μ_min, μ_max].
     rhs
         The |Function| f(x, μ).
@@ -62,12 +60,11 @@ class ThermalBlockProblem(EllipticProblem):
                                                  name='diffusion_{}_{}'.format(x, y))
 
         diffusion_functions = tuple(ThermalBlockDiffusionFunction(x, y, num_blocks[0], num_blocks[1])
-                                    for x, y in product(xrange(num_blocks[0]), xrange(num_blocks[1])))
+                                    for x, y in product(range(num_blocks[0]), range(num_blocks[1])))
         parameter_functionals = tuple(parameter_functional_factory(x, y)
-                                      for x, y in product(xrange(num_blocks[0]), xrange(num_blocks[1])))
+                                      for x, y in product(range(num_blocks[0]), range(num_blocks[1])))
 
-        super(ThermalBlockProblem, self).__init__(domain, rhs, diffusion_functions, parameter_functionals,
-                                                  name='ThermalBlock')
+        super().__init__(domain, rhs, diffusion_functions, parameter_functionals, name='ThermalBlock')
         self.parameter_space = parameter_space
         self.parameter_range = parameter_range
         self.num_blocks = num_blocks
@@ -76,7 +73,7 @@ class ThermalBlockProblem(EllipticProblem):
 class ThermalBlockDiffusionFunction(FunctionInterface):
 
     dim_domain = 2
-    shape_range = tuple()
+    shape_range = ()
 
     def __init__(self, x, y, nx, ny):
         self.x = x

@@ -3,8 +3,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 from numbers import Number
 
 import numpy as np
@@ -23,18 +21,16 @@ class OperatorBase(OperatorInterface):
     from this class.
     """
 
-    def apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None):
+    def apply2(self, V, U, U_ind=None, V_ind=None, mu=None):
         mu = self.parse_parameter(mu)
         assert isinstance(V, VectorArrayInterface)
         assert isinstance(U, VectorArrayInterface)
         U_ind = None if U_ind is None else np.array(U_ind, copy=False, dtype=np.int, ndmin=1)
         V_ind = None if V_ind is None else np.array(V_ind, copy=False, dtype=np.int, ndmin=1)
         AU = self.apply(U, ind=U_ind, mu=mu)
-        if product is not None:
-            AU = product.apply(AU)
         return V.dot(AU, ind=V_ind)
 
-    def pairwise_apply2(self, V, U, U_ind=None, V_ind=None, mu=None, product=None):
+    def pairwise_apply2(self, V, U, U_ind=None, V_ind=None, mu=None):
         mu = self.parse_parameter(mu)
         assert isinstance(V, VectorArrayInterface)
         assert isinstance(U, VectorArrayInterface)
@@ -44,8 +40,6 @@ class OperatorBase(OperatorInterface):
         lv = len(V_ind) if V_ind is not None else len(V)
         assert lu == lv
         AU = self.apply(U, ind=U_ind, mu=mu)
-        if product is not None:
-            AU = product.apply(AU)
         return V.pairwise_dot(AU, ind=V_ind)
 
     def jacobian(self, U, mu=None):
@@ -141,7 +135,7 @@ class OperatorBase(OperatorInterface):
                 options = {}
             options['least_squares'] = least_squares
 
-            ind = (range(len(V)) if ind is None else
+            ind = (list(range(len(V))) if ind is None else
                    [ind] if isinstance(ind, Number) else
                    ind)
             R = V.empty(reserve=len(ind))
@@ -301,9 +295,9 @@ class ProjectedOperator(OperatorBase):
         assert dim_range is None or self.range_basis is not None, 'not implemented'
         name = name or '{}_projected_to_subbasis'.format(self.name)
         source_basis = self.source_basis if dim_source is None \
-            else self.source_basis.copy(ind=range(dim_source))
+            else self.source_basis.copy(ind=list(range(dim_source)))
         range_basis = self.range_basis if dim_range is None \
-            else self.range_basis.copy(ind=range(dim_range))
+            else self.range_basis.copy(ind=list(range(dim_range)))
         return ProjectedOperator(self.operator, range_basis, source_basis, product=None,
                                  solver_options=self.solver_options, name=name)
 

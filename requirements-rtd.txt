@@ -1,6 +1,7 @@
 # This file is sourced by readthedocs.org to install missing dependencies.
 # We need a more recent version of Sphinx for being able to provide
 # our own docutils.conf.
-Sphinx >= 1.2b3
+Sphinx>=1.4.0
 cython
+numpy
 

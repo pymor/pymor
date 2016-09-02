@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 
 from pymor.discretizers.elliptic import discretize_elliptic_cg, discretize_elliptic_fv
@@ -76,7 +74,7 @@ def discretize_parabolic_cg(analytical_problem, diameter=None, domain_discretize
     if time_stepper is None:
         time_stepper = ImplicitEulerTimeStepper(nt=nt)
 
-    mass = d.l2_product if isinstance(time_stepper, ImplicitEulerTimeStepper) else None
+    mass = d.l2_0_product
 
     discretization = InstationaryDiscretization(operator=d.operator, rhs=d.rhs, mass=mass, initial_data=I, T=p.T,
                                                 products=d.products, time_stepper=time_stepper,

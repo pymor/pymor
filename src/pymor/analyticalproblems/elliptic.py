@@ -3,8 +3,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 
 from pymor.core.interfaces import ImmutableInterface
@@ -18,7 +16,7 @@ class EllipticProblem(ImmutableInterface):
     The problem consists in solving ::
 
     |        Kd                                     Kv                             Kr
-    | - ∇ ⋅ ∑  θ_{d,k}(μ) ⋅ d_k(x) ∇ u(x, μ) + ∇ ⋅ ∑  θ_{v,k}(μ) v_k(x) u(x, μ) + ∑  θ_{r,k}(μ) r_k(x) u(x, μ) = f(x, μ)
+    | - ∇ ⋅  ∑  θ_{d,k}(μ) ⋅ d_k(x) ∇ u(x, μ) + ∇ ⋅ ∑  θ_{v,k}(μ) v_k(x) u(x, μ) + ∑  θ_{r,k}(μ) r_k(x) u(x, μ) = f(x, μ)
     |       k=0                                    k=0                            k=0
 
     for u.
@@ -29,32 +27,32 @@ class EllipticProblem(ImmutableInterface):
         A |DomainDescription| of the domain the problem is posed on.
     rhs
         The |Function| f(x, μ). `rhs.dim_domain` has to agree with the
-        dimension of `domain`, whereas `rhs.shape_range` has to be `tuple()`.
+        dimension of `domain`, whereas `rhs.shape_range` has to be `()`.
     diffusion_functions
         List containing the |Functions| d_k(x), each having `shape_range`
-        of either `tuple()` or `(dim domain, dim domain)`.
+        of either `()` or `(dim domain, dim domain)`.
     diffusion_functionals
         List containing the |ParameterFunctionals| θ_{d,k}(μ). If
         `len(diffusion_functions) == 1`, `diffusion_functionals` is allowed
         to be `None`, in which case no parameter dependence is assumed.
     advection_functions
         List containing the |Functions| v_k(x), each having `shape_range`
-        of `(dim domain, )`.
+        of `(dim domain,)`.
     advection_functionals
         List containing the |ParameterFunctionals| θ_{v,k}(μ). If
         `len(advection_functions) == 1`, `advection_functionals` is allowed
         to be `None`, in which case no parameter dependence is assumed.
     reaction_functions
         List containing the |Functions| r_k(x), each having `shape_range`
-        of `tuple()`.
+        of `()`.
     reaction_functionals
         List containing the |ParameterFunctionals| θ_{r,k}(μ). If
         `len(reaction_functions) == 1`, `reaction_functionals` is allowed
         to be `None`, in which case no parameter dependence is assumed.
     dirichlet_data
-        |Function| providing the Dirichlet boundary values in global coordinates.
+        |Function| providing the Dirichlet boundary values.
     neumann_data
-        |Function| providing the Neumann boundary values in global coordinates.
+        |Function| providing the Neumann boundary values.
     robin_data
         Tuple of two |Functions| providing the Robin parameter and boundary values.
     parameter_space

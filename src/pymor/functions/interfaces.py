@@ -3,8 +3,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 from pymor.core.interfaces import ImmutableInterface, abstractmethod
 from pymor.parameters.base import Parametric
 
@@ -19,8 +17,8 @@ class FunctionInterface(ImmutableInterface, Parametric):
     The returned values are |NumPy arrays| of arbitrary (but fixed)
     shape. Note that NumPy distinguished between one-dimensional
     arrays of length 1 (with shape `(1,)`) and zero-dimensional
-    scalar arrays (with shape `tuple()`). In pyMOR, we usually
-    expect scalar-valued functions to have `shape_range == tuple()`.
+    scalar arrays (with shape `()`). In pyMOR, we usually
+    expect scalar-valued functions to have `shape_range == ()`.
 
     While the function might raise an error if it is evaluated
     for an argument not in the domain Ω, the exact behavior is left

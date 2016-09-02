@@ -3,8 +3,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.domaindescriptions.basic import RectDomain
 from pymor.functions.basic import ConstantFunction
@@ -13,7 +11,7 @@ from pymor.parameters.spaces import CubicParameterSpace
 
 
 class HelmholtzProblem(EllipticProblem):
-    """Problem given by solving the Helmholtz equation.
+    """Helmholtz equation problem.
 
     This problem is to solve the Helmholtz equation ::
 
@@ -28,11 +26,11 @@ class HelmholtzProblem(EllipticProblem):
     rhs
         The |Function| f(x, μ).
     parameter_range
-        A tuple (k_min, k_max) describing the interval in which k is allowd to vary.
+        A tuple `(k_min, k_max)` describing the interval in which k is allowd to vary.
     dirichlet_data
-        |Function| providing the Dirichlet boundary values in global coordinates.
+        |Function| providing the Dirichlet boundary values.
     neumann_data
-        |Function| providing the Neumann boundary values in global coordinates.
+        |Function| providing the Neumann boundary values.
     name
         Name of the problem.
     """
@@ -41,12 +39,12 @@ class HelmholtzProblem(EllipticProblem):
                  dirichlet_data=None, neumann_data=None):
 
         self.parameter_range = parameter_range  # needed for with_
-        parameter_space = CubicParameterSpace({'k': tuple()}, *parameter_range)
-        super(HelmholtzProblem, self).__init__(
+        parameter_space = CubicParameterSpace({'k': ()}, *parameter_range)
+        super().__init__(
             diffusion_functions=[ConstantFunction(1., dim_domain=domain.dim)],
             diffusion_functionals=[1.],
             reaction_functions=[ConstantFunction(1., dim_domain=domain.dim)],
-            reaction_functionals=[ExpressionParameterFunctional('-k**2', {'k': tuple()})],
+            reaction_functionals=[ExpressionParameterFunctional('-k**2', {'k': ()})],
             domain=domain,
             rhs=rhs or ConstantFunction(1., dim_domain=domain.dim),
             parameter_space=parameter_space,

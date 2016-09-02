@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 
 from pymor.core.cache import cached
@@ -44,7 +42,6 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
     """
 
     dim = 2
-    dim_outer = 2
     reference_element = triangle
 
     def __init__(self, num_intervals=(2, 2), domain=([0, 0], [1, 1]),
@@ -156,10 +153,10 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
         ROT315 = np.array([[1./np.sqrt(2.),    1./np.sqrt(2.)],
                            [-1./np.sqrt(2.),   1./np.sqrt(2.)]])
         SCAL = np.diag([self.x0_diameter / np.sqrt(2), self.x1_diameter / np.sqrt(2)])
-        A0 = np.tile(SCAL.dot(ROT225), (n_elements / 4, 1, 1))
-        A1 = np.tile(SCAL.dot(ROT315), (n_elements / 4, 1, 1))
-        A2 = np.tile(SCAL.dot(ROT45), (n_elements / 4, 1, 1))
-        A3 = np.tile(SCAL.dot(ROT135), (n_elements / 4, 1, 1))
+        A0 = np.tile(SCAL.dot(ROT225), (int(n_elements / 4), 1, 1))
+        A1 = np.tile(SCAL.dot(ROT315), (int(n_elements / 4), 1, 1))
+        A2 = np.tile(SCAL.dot(ROT45), (int(n_elements / 4), 1, 1))
+        A3 = np.tile(SCAL.dot(ROT135), (int(n_elements / 4), 1, 1))
         A = np.vstack((A0, A1, A2, A3))
         self.__embeddings = (A, B)
 
@@ -189,13 +186,13 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
             else:
                 return self.__subentities[subentity_codim - 1]
         else:
-            return super(TriaGrid, self).subentities(codim, subentity_codim)
+            return super().subentities(codim, subentity_codim)
 
     def embeddings(self, codim=0):
         if codim == 0:
             return self.__embeddings
         else:
-            return super(TriaGrid, self).embeddings(codim)
+            return super().embeddings(codim)
 
     def bounding_box(self):
         return np.array(self.domain)

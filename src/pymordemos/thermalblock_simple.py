@@ -15,9 +15,11 @@ Arguments:
              (naive, greedy, adaptive_greedy, pod).
 
   SNAPSHOTS  naive:           ignored
+
              greedy/pod:      Number of training_set parameters per block
                               (in total SNAPSHOTS^(XBLOCKS * YBLOCKS)
                               parameters).
+
              adaptive_greedy: size of validation set.
 
   RBSIZE     Size of the reduced basis.
@@ -25,7 +27,6 @@ Arguments:
   TEST       Number of parameters for stochastic error estimation.
 """
 
-from __future__ import division  # ensure that 1 / 2 is 0.5 and not 0
 from pymor.basic import *        # most common pyMOR functions and classes
 from functools import partial    # fix parameters of given function
 
@@ -223,7 +224,7 @@ def main():
     #################################################
     coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', d.parameter_type)
     reductor = partial(reduce_coercive,
-                       error_product=d.h1_0_semi_product, coercivity_estimator=coercivity_estimator)
+                       product=d.h1_0_semi_product, coercivity_estimator=coercivity_estimator)
 
 
     # generate reduced model

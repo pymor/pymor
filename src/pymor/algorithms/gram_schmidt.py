@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 
 from pymor.core.defaults import defaults
@@ -22,15 +20,15 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
     A
         The |VectorArray| which is to be orthonormalized.
     product
-        The scalar product w.r.t. which to orthonormalize, given as a linear
-        |Operator|. If `None` the Euclidean product is used.
+        The inner product |Operator| w.r.t. which to orthonormalize.
+        If `None`, the Euclidean product is used.
     atol
         Vectors of norm smaller than `atol` are removed from the array.
     rtol
         Relative tolerance used to detect linear dependent vectors
         (which are then removed from the array).
     offset
-        Assume that the first `offset` vectors are already orthogonal and start the
+        Assume that the first `offset` vectors are already orthonormal and start the
         algorithm at the `offset + 1`-th vector.
     reiterate
         If `True`, orthonormalize again if the norm of the orthogonalized vector is
@@ -39,11 +37,11 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
         If `reiterate` is `True`, re-orthonormalize if the ratio between the norms of
         the orthogonalized vector and the original vector is smaller than this value.
     check
-        If `True`, check if the resulting VectorArray is really orthonormal.
+        If `True`, check if the resulting |VectorArray| is really orthonormal.
     check_tol
         Tolerance for the check.
     copy
-        If `True`, create a copy of `A` instead of modifying `A` itself.
+        If `True`, create a copy of `A` instead of modifying `A` in-place.
 
 
     Returns
@@ -58,7 +56,7 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
 
     # main loop
     remove = []
-    for i in xrange(offset, len(A)):
+    for i in range(offset, len(A)):
         # first calculate norm
         if product is None:
             initial_norm = A.l2_norm(ind=i)[0]
@@ -86,7 +84,7 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
                     logger.info('Orthonormalizing vector {} again'.format(i))
 
                 # orthogonalize to all vectors left
-                for j in xrange(i):
+                for j in range(i):
                     if j in remove:
                         continue
                     if product is None:
@@ -115,9 +113,9 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
 
     if check:
         if product:
-            error_matrix = product.apply2(A, A, V_ind=range(offset, len(A)))
+            error_matrix = product.apply2(A, A, V_ind=list(range(offset, len(A))))
         else:
-            error_matrix = A.dot(A, ind=range(offset, len(A)))
+            error_matrix = A.dot(A, ind=list(range(offset, len(A))))
         error_matrix[:len(A) - offset, offset:len(A)] -= np.eye(len(A) - offset)
         if error_matrix.size > 0:
             err = np.max(np.abs(error_matrix))

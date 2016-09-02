@@ -3,8 +3,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 
 from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
@@ -22,14 +20,14 @@ class BurgersProblem(InstationaryAdvectionProblem):
         ∂_t u(x, t, μ)  +  ∂_x (v * u(x, t, μ)^μ) = 0
                                        u(x, 0, μ) = u_0(x)
 
-    for u with t in [0, 0.3], x in [0, 2].
+    for u with t in [0, 0.3] and x in [0, 2].
 
     Parameters
     ----------
     v
         The velocity v.
     circle
-        If `True` impose periodic boundary conditions. Otherwise Dirichlet left,
+        If `True`, impose periodic boundary conditions. Otherwise Dirichlet left,
         outflow right.
     initial_data_type
         Type of initial data (`'sin'` or `'bump'`).
@@ -56,13 +54,13 @@ class BurgersProblem(InstationaryAdvectionProblem):
         else:
             domain = LineDomain([0, 2], right=None)
 
-        super(BurgersProblem, self).__init__(domain=domain,
-                                             rhs=None,
-                                             flux_function=flux_function,
-                                             flux_function_derivative=flux_function_derivative,
-                                             initial_data=initial_data,
-                                             dirichlet_data=dirichlet_data,
-                                             T=0.3, name='BurgersProblem')
+        super().__init__(domain=domain,
+                         rhs=None,
+                         flux_function=flux_function,
+                         flux_function_derivative=flux_function_derivative,
+                         initial_data=initial_data,
+                         dirichlet_data=dirichlet_data,
+                         T=0.3, name='BurgersProblem')
 
         self.parameter_space = CubicParameterSpace({'exponent': 0}, *parameter_range)
         self.parameter_range = parameter_range
@@ -88,8 +86,8 @@ class Burgers2DProblem(InstationaryAdvectionProblem):
     vy
         The y component of the velocity vector v.
     torus
-        If `True` impose periodic boundary conditions. Otherwise Dirichlet left and bottom,
-        outflow top and right.
+        If `True`, impose periodic boundary conditions. Otherwise,
+        Dirichlet left and bottom, outflow top and right.
     initial_data_type
         Type of initial data (`'sin'` or `'bump'`).
     parameter_range
@@ -111,13 +109,13 @@ class Burgers2DProblem(InstationaryAdvectionProblem):
 
         domain = TorusDomain([[0, 0], [2, 1]]) if torus else RectDomain([[0, 0], [2, 1]], right=None, top=None)
 
-        super(Burgers2DProblem, self).__init__(domain=domain,
-                                               rhs=None,
-                                               flux_function=flux_function,
-                                               flux_function_derivative=flux_function_derivative,
-                                               initial_data=initial_data,
-                                               dirichlet_data=dirichlet_data,
-                                               T=0.3, name='Burgers2DProblem')
+        super().__init__(domain=domain,
+                         rhs=None,
+                         flux_function=flux_function,
+                         flux_function_derivative=flux_function_derivative,
+                         initial_data=initial_data,
+                         dirichlet_data=dirichlet_data,
+                         T=0.3, name='Burgers2DProblem')
 
         self.parameter_space = CubicParameterSpace({'exponent': 0}, *parameter_range)
         self.parameter_range = parameter_range
@@ -134,7 +132,7 @@ class BurgersFlux(FunctionInterface):
 
     def __init__(self, v):
         self.v = v
-        self.build_parameter_type({'exponent': tuple()}, local_global=True)
+        self.build_parameter_type({'exponent': ()}, local_global=True)
 
     def evaluate(self, U, mu=None):
         mu = self.parse_parameter(mu)
@@ -150,7 +148,7 @@ class BurgersFluxDerivative(FunctionInterface):
 
     def __init__(self, v):
         self.v = v
-        self.build_parameter_type({'exponent': tuple()}, local_global=True)
+        self.build_parameter_type({'exponent': ()}, local_global=True)
 
     def evaluate(self, U, mu=None):
         mu = self.parse_parameter(mu)
@@ -162,7 +160,7 @@ class BurgersFluxDerivative(FunctionInterface):
 class BurgersSinInitialData(FunctionInterface):
 
     dim_domain = 1
-    shape_range = tuple()
+    shape_range = ()
 
     def evaluate(self, x, mu=None):
         return 0.5 * (np.sin(2 * np.pi * x[..., 0]) + 1.)
@@ -171,7 +169,7 @@ class BurgersSinInitialData(FunctionInterface):
 class BurgersBumpInitialData(FunctionInterface):
 
     dim_domain = 1
-    shape_range = tuple()
+    shape_range = ()
 
     def evaluate(self, x, mu=None):
         return (x[..., 0] >= 0.5) * (x[..., 0] <= 1) * 1
@@ -185,7 +183,7 @@ class Burgers2DFlux(FunctionInterface):
     def __init__(self, vx, vy):
         self.vx = vx
         self.vy = vy
-        self.build_parameter_type({'exponent': tuple()}, local_global=True)
+        self.build_parameter_type({'exponent': ()}, local_global=True)
 
     def evaluate(self, U, mu=None):
         mu = self.parse_parameter(mu)
@@ -205,7 +203,7 @@ class Burgers2DFluxDerivative(FunctionInterface):
     def __init__(self, vx, vy):
         self.vx = vx
         self.vy = vy
-        self.build_parameter_type({'exponent': tuple()}, local_global=True)
+        self.build_parameter_type({'exponent': ()}, local_global=True)
 
     def evaluate(self, U, mu=None):
         mu = self.parse_parameter(mu)
@@ -220,7 +218,7 @@ class Burgers2DFluxDerivative(FunctionInterface):
 class Burgers2DSinInitialData(FunctionInterface):
 
     dim_domain = 2
-    shape_range = tuple()
+    shape_range = ()
 
     def evaluate(self, x, mu=None):
         return 0.5 * (np.sin(2 * np.pi * x[..., 0]) * np.sin(2 * np.pi * x[..., 1]) + 1.)
@@ -229,7 +227,7 @@ class Burgers2DSinInitialData(FunctionInterface):
 class Burgers2DBumpInitialData(FunctionInterface):
 
     dim_domain = 2
-    shape_range = tuple()
+    shape_range = ()
 
     def evaluate(self, x, mu=None):
         return (x[..., 0] >= 0.5) * (x[..., 0] <= 1) * 1

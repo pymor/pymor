@@ -3,8 +3,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import print_function
-from __future__ import division
 import numpy as np
 
 from pymor.grids.interfaces import AffineGridWithOrthogonalCentersInterface
@@ -23,7 +21,6 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
     """
 
     dim = 1
-    dim_outer = 1
     reference_element = line
 
     def __init__(self, domain=(0, 1), num_intervals=4, identify_left_right=False):
@@ -67,13 +64,13 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
             else:
                 return self.__subentities.T
         else:
-            return super(OnedGrid, self).subentities(codim, subentity_codim)
+            return super().subentities(codim, subentity_codim)
 
     def embeddings(self, codim):
         if codim == 0:
             return self.__A, self.__B
         else:
-            return super(OnedGrid, self).embeddings(codim)
+            return super().embeddings(codim)
 
     def bounding_box(self):
         return np.array(self._domain).reshape((2, 1))

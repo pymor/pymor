@@ -3,8 +3,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 from scipy.linalg import solve_triangular
 
@@ -116,7 +114,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         if len(self.interpolation_dofs) == 0:
             return ZeroOperator(self.source, self.range, self.name).projected(range_basis, source_basis, product, name)
         elif not hasattr(self, 'restricted_operator') or source_basis is None:
-            return super(EmpiricalInterpolatedOperator, self).projected(range_basis, source_basis, product, name)
+            return super().projected(range_basis, source_basis, product, name)
         else:
             name = name or self.name + '_projected'
 

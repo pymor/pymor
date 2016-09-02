@@ -13,9 +13,8 @@ operating on objects of the following types:
 |VectorArrays|
     Vector arrays are ordered collections of vectors. Each vector of the array
     must be of the same |dimension|. Subsets of vectors can be
-    |copied| to a new array, |appended| to an existing array, |removed| from the
-    array or |replaced| by vectors of a different array.
-    Basic linear algebra operations can be performed on the vectors of the
+    |copied| to a new array, |appended| to an existing array or |removed| from the
+    array. Basic linear algebra operations can be performed on the vectors of the
     array: vectors can be |scaled| in-place, the BLAS |axpy| operation is
     supported and |scalar products| between vectors can be formed. Linear
     combinations of vectors can be formed using the |lincomb| method. Moreover,
@@ -43,7 +42,7 @@ operating on objects of the following types:
     based on a Python list of vectors.
 
     Associated to each vector array is a |VectorSpace|. A Vector space in pyMOR
-    is simply the combination of a |VectorArray| class and an appropriate
+    is simply the combination of a |VectorArray| subclass and an appropriate
     |subtype|.  For |NumpyVectorArrays|, the subtype is a single integer
     denoting the dimension of the array. Subtypes for other array classes
     could, e.g., include a socket for communication with a specific PDE solver
@@ -66,7 +65,6 @@ operating on objects of the following types:
     .. |lincomb|          replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.lincomb`
     .. |make_array|       replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.make_array`
     .. |removed|          replace:: :meth:`deleted <pymor.vectorarrays.interfaces.VectorArrayInterface.remove>`
-    .. |replaced|         replace:: :meth:`replaced <pymor.vectorarrays.interfaces.VectorArrayInterface.replace>`
     .. |scalar products|  replace:: :meth:`scalar products <pymor.vectorarrays.interfaces.VectorArrayInterface.dot>`
     .. |scaled|           replace:: :meth:`scaled <pymor.vectorarrays.interfaces.VectorArrayInterface.scal>`
     .. |subtype|          replace:: :attr:`~pymor.vectorarrays.interfaces.VectorSpace.subtype`
@@ -168,7 +166,7 @@ main benefits:
 1. If multiple objects/algorithms hold references to the same
    |Operator| or |Discretization|, none of the objects has to worry that the
    referenced object changes without their knowledge.
-2. It becomes affordable to generate persisten keys for |caching| of computation
+2. It becomes affordable to generate persistent keys for |caching| of computation
    results by generating |state ids| which uniquely identify the object's state.
    Since the state cannot change, these ids have to be computed only once for the
    lifetime of the object.

@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 from collections import defaultdict
 
 import numpy as np
@@ -166,7 +164,7 @@ def parse_gmsh_file(f):
 
     parser_map = {'Nodes': parse_nodes, 'Elements': parse_elements, 'PhysicalNames': parse_names}
 
-    for k, v in sections.iteritems():
+    for k, v in sections.items():
         sections[k] = parser_map[k](v)
 
     return sections
@@ -193,7 +191,7 @@ class GmshGrid(UnstructuredTriangleGrid):
 
         faces = np.array([[node_ids[nodes[0]], node_ids[nodes[1]], node_ids[nodes[2]]]
                          for _, _, nodes in sections['Elements']['triangle']])
-        super(GmshGrid, self).__init__(vertices, faces)
+        super().__init__(vertices, faces)
 
     def __str__(self):
         return 'GmshGrid with {} triangles, {} edges, {} vertices'.format(self.size(0), self.size(1), self.size(2))

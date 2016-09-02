@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 from fractions import Fraction
 
 import numpy as np
@@ -48,7 +46,7 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
     reductor
         See :func:`~pymor.algorithms.greedy.greedy`.
     parameter_space
-        The |ParameterSpace| for which to compute the reduced model. If `None`
+        The |ParameterSpace| for which to compute the reduced model. If `None`,
         the parameter space of the `discretization` is used.
     initial_basis
         See :func:`~pymor.algorithms.greedy.greedy`.
@@ -75,7 +73,7 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
         set vs. maximum estimated error on training set. If the ratio is
         larger, the training set is refined.
     gamma
-        Weight of the age penalty term of the training set refinement
+        Weight of the age penalty term in the training set refinement
         indicators.
     theta
         Ratio of training set elements to select for refinement.
@@ -96,12 +94,15 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
         :reduced_discretization: The reduced |Discretization| obtained for the
                                  computed basis.
         :reconstructor:          Reconstructor for `reduced_discretization`.
+        :extensions:             Number of greedy iterations.
         :max_errs:               Sequence of maximum errors during the greedy run.
         :max_err_mus:            The parameters corresponding to `max_errs`.
         :max_val_errs:           Sequence of maximum errors on the validation set.
         :max_val_err_mus:        The parameters corresponding to `max_val_errs`.
         :refinements:            Number of refinements made in each extension step.
         :training_set_sizes:     The final size of the training set in each extension step.
+        :time:                   Duration of the algorithm.
+        :reduction_data:         Reduction data returned by the last reductor call.
     """
 
     def estimate(mus):
@@ -111,7 +112,7 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
             errors = pool.map(_estimate, mus, rd=rd, d=d, rc=rc, error_norm=error_norm)
         # most error_norms will return an array of length 1 instead of a number, so we extract the numbers
         # if necessary
-        return np.array(map(lambda x: x[0] if hasattr(x, '__len__') else x, errors))
+        return np.array([x[0] if hasattr(x, '__len__') else x for x in errors])
 
     logger = getLogger('pymor.algorithms.adaptivegreedy.adaptive_greedy')
 
@@ -302,7 +303,7 @@ def _estimate(mu, rd=None, d=None, rc=None, error_norm=None):
 
 
 class AdaptiveSampleSet(BasicInterface):
-    """An adaptive parameter samples set.
+    """An adaptive parameter sample set.
 
     Used by :func:`adaptive_greedy`.
     """
@@ -332,7 +333,7 @@ class AdaptiveSampleSet(BasicInterface):
         self._update()
 
     def map_vertex_to_mu(self, vertex):
-        values = self.ranges[:, 0] + self.dimensions * map(float, vertex)
+        values = self.ranges[:, 0] + self.dimensions * list(map(float, vertex))
         mu = Parameter({})
         for k, shape in self.parameter_type.items():
             count = np.prod(shape)
@@ -474,7 +475,7 @@ class AdaptiveSampleSet(BasicInterface):
 
     def _update(self):
         self.levels, self.centers, vertex_ids, creation_times = \
-            zip(*((node.level, node.center, node.vertex_ids, node.creation_time) for node in self._iter_leafs()))
+            list(zip(*((node.level, node.center, node.vertex_ids, node.creation_time) for node in self._iter_leafs())))
         self.levels = np.array(self.levels)
         self.volumes = self.total_volume / ((2**self.dim)**self.levels)
         self.vertex_ids = np.array(vertex_ids)

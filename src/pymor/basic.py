@@ -21,6 +21,7 @@ from pymor.algorithms.pod import pod
 from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
 from pymor.analyticalproblems.burgers import BurgersProblem, Burgers2DProblem
 from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.analyticalproblems.parabolic import ParabolicProblem
 from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
 
 from pymor.core.cache import clear_caches, enable_caching, disable_caching
@@ -38,6 +39,7 @@ from pymor.domaindiscretizers.default import discretize_domain_default
 
 from pymor.discretizers.advection import discretize_nonlinear_instationary_advection_fv
 from pymor.discretizers.elliptic import discretize_elliptic_cg, discretize_elliptic_fv
+from pymor.discretizers.parabolic import discretize_parabolic_cg, discretize_parabolic_fv
 
 from pymor.functions.basic import ConstantFunction, GenericFunction, ExpressionFunction, LincombFunction
 from pymor.functions.bitmap import BitmapFunction
@@ -64,7 +66,7 @@ from pymor.parameters.spaces import CubicParameterSpace
 
 from pymor.reductors.basic import reduce_generic_rb, reduce_to_subbasis
 from pymor.reductors.coercive import reduce_coercive, reduce_coercive_simple
-from pymor.reductors.stationary import reduce_stationary_coercive  # deprecated, will be removed in next release
+from pymor.reductors.parabolic import reduce_parabolic
 
 from pymor.tools.random import new_random_state
 

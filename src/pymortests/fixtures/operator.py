@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 import pytest
 
@@ -51,11 +49,11 @@ def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range
 
 
 numpy_matrix_operator_with_arrays_factory_arguments = \
-    zip([0, 0, 2, 10],           # dim_source
+    list(zip([0, 0, 2, 10],           # dim_source
         [0, 1, 4, 10],           # dim_range
         [3, 3, 3, 3],            # count_source
         [3, 3, 3, 3],            # count_range
-        random_integers(4, 44))  # seed
+        random_integers(4, 44)))  # seed
 
 
 numpy_matrix_operator_with_arrays_generators = \
@@ -76,7 +74,7 @@ def thermalblock_factory(xblocks, yblocks, diameter, seed):
     p = ThermalBlockProblem((xblocks, yblocks))
     d, d_data = discretize_elliptic_cg(p, diameter)
     f = GenericFunction(lambda X, mu: X[..., 0]**mu['exp'] + X[..., 1],
-                        dim_domain=2, parameter_type={'exp': tuple()})
+                        dim_domain=2, parameter_type={'exp': ()})
     iop = InterpolationOperator(d_data['grid'], f)
     U = d.operator.source.empty()
     V = d.operator.range.empty()
@@ -323,7 +321,7 @@ def misc_operator_with_arrays_and_products_factory(n):
         op0, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(30, 30, 4, 3, n)
         op1 = NumpyMatrixOperator(np.random.random((30, 30)))
         op2 = NumpyMatrixOperator(np.random.random((30, 30)))
-        op = SelectionOperator([op0, op1, op2], ProjectionParameterFunctional('x', tuple()), [0.3, 0.6])
+        op = SelectionOperator([op0, op1, op2], ProjectionParameterFunctional('x', ()), [0.3, 0.6])
         return op, op.parse_parameter((n-5)/2), V, U, rp, sp
     elif n == 8:
         from pymor.operators.block import BlockDiagonalOperator
@@ -349,7 +347,7 @@ def misc_operator_with_arrays_and_products_factory(n):
         rp = BlockDiagonalOperator([rp0, rp1])
         U = BlockVectorArray([U0, U1])
         V = BlockVectorArray([V0, V1])
-        return op, _, U, V, sp, rp
+        return op, None, U, V, sp, rp
     else:
         assert False
 

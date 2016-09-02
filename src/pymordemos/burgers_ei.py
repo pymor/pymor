@@ -76,8 +76,6 @@ Options:
   --ipython-profile=PROFILE       IPython profile to use for parallelization.
 """
 
-from __future__ import absolute_import, division, print_function
-
 import sys
 import math as m
 import time
@@ -99,7 +97,8 @@ from pymor.reductors.basic import reduce_generic_rb, reduce_to_subbasis
 from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
-def burgers_demo(args):
+def main(args):
+    args = docopt(__doc__, args)
     args['--cache-region'] = args['--cache-region'].lower()
     args['--grid'] = int(args['--grid'])
     args['--grid-type'] = args['--grid-type'].lower()
@@ -147,8 +146,8 @@ def burgers_demo(args):
 
     if args['--plot-solutions']:
         print('Showing some solutions')
-        Us = tuple()
-        legend = tuple()
+        Us = ()
+        legend = ()
         for mu in discretization.parameter_space.sample_uniformly(4):
             print('Solving for exponent = {} ... '.format(mu['exponent']))
             sys.stdout.flush()
@@ -166,8 +165,8 @@ def burgers_demo(args):
 
     if args['--plot-ei-err']:
         print('Showing some EI errors')
-        ERRs = tuple()
-        legend = tuple()
+        ERRs = ()
+        legend = ()
         for mu in discretization.parameter_space.sample_randomly(2):
             print('Solving for exponent = \n{} ... '.format(mu['exponent']))
             sys.stdout.flush()
@@ -294,9 +293,8 @@ def burgers_demo(args):
         discretization.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
                                  title='Maximum Error Solution', separate_colorbars=True)
 
+    return ei_data, greedy_data
+
 
 if __name__ == '__main__':
-    # parse arguments
-    args = docopt(__doc__)
-    # run demo
-    burgers_demo(args)
+    main(sys.argv[1:])

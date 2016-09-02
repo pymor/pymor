@@ -10,13 +10,18 @@ from collections import deque, defaultdict, OrderedDict
 from types import MethodType, FunctionType
 import re
 import functools
+import sys
 
 from sphinx.util.inspect import safe_getattr
+
+PY2 = sys.version_info.major == 2
+
+STRING_TYPE = basestring if PY2 else str
 
 INCLUDE_SPECIAL_WITH_DOC = False
 INCLUDE_PRIVATE_WITH_DOC = False
 
-MEMBER_BLACKLIST = tuple()
+MEMBER_BLACKLIST = ()
 
 FIELD_SECTIONS = ('parameters', 'yields', 'returns', 'raises', 'attributes')
 GENERIC_SECTIONS = ('example', 'examples', 'see also', 'defaults')
@@ -53,7 +58,7 @@ class PeekIterator(object):
             n = 1
         try:
             while len(self._cache) < n:
-                self._cache.append(self._iterable.next())
+                self._cache.append(next(self._iterable))
         except StopIteration:
             while len(self._cache) < n:
                 self._cache.append(self.sentinel)
@@ -132,14 +137,14 @@ def parse_docstring(docstring):
         while (line_iter.has_next()
                and line_iter.peek()
                and not is_section_header()):
-            lines.append(line_iter.next())
+            lines.append(next(line_iter))
         return lines
 
     def consume_empty():
         lines = []
         line = line_iter.peek()
         while line_iter.has_next() and not line:
-            lines.append(line_iter.next())
+            lines.append(next(line_iter))
             line = line_iter.peek()
         return lines
 
@@ -147,13 +152,13 @@ def parse_docstring(docstring):
         consume_empty()
         lines = []
         while not is_section_break():
-            lines.append(line_iter.next())
+            lines.append(next(line_iter))
         return lines + consume_empty()
 
     def is_section_header():
         section, underline = line_iter.peek(2)
         section = section.lower()
-        if (section in KNOWN_SECTIONS) and isinstance(underline, basestring):
+        if (section in KNOWN_SECTIONS) and isinstance(underline, STRING_TYPE):
             pattern = r'[=\-`:\'"~^_*+#<>]{' + str(len(section)) + r'}$'
             return bool(re.match(pattern, underline))
         return False
@@ -164,7 +169,7 @@ def parse_docstring(docstring):
                 or is_section_header()
                 or ['', ''] == [line1, line2])
 
-    if isinstance(docstring, basestring):
+    if isinstance(docstring, STRING_TYPE):
         docstring = dedent(docstring.splitlines())
     docstring = [s.rstrip().expandtabs(4) for s in docstring]
 
@@ -183,7 +188,7 @@ def parse_docstring(docstring):
                 sections.append(('nonsection', non_section_lines))
                 non_section_lines = []
             section = line_iter.next().lower()
-            line_iter.next()
+            next(line_iter)
             sections.append((section, consume_to_next_section()))
         else:
             if not non_section_lines:
@@ -203,12 +208,12 @@ def parse_fields_section(lines):
         lines = []
         line = line_iter.peek()
         while(line_iter.has_next() and (not line or is_indented(line, indent))):
-            lines.append(line_iter.next())
+            lines.append(next(line_iter))
             line = line_iter.peek()
         return lines
 
     def consume_field(parse_type=True, prefer_type=False):
-        line = line_iter.next()
+        line = next(line_iter)
         if parse_type:
             _name, _, _type = line.partition(':')
         else:
@@ -358,7 +363,7 @@ def inspect_class(obj):
 
     key_func = lambda x: '|' + x[0].lower() if x[0].startswith('_') else x[0].lower()
     methods = {k: [':meth:`~{}.{}`'.format(get_full_class_name(c), n) for n, c in sorted(v, key=key_func)]
-               for k, v in methods.iteritems()}
+               for k, v in methods.items()}
     rows = [(':class:`~{}`'.format(get_full_class_name(c)), ', '.join(methods[c]))
             for c in mro if c is not object and c in methods]
     if rows:
@@ -368,13 +373,13 @@ def inspect_class(obj):
     else:
         im = []
 
-    all_attributes = {x[0] for v in attributes.itervalues() for x in v}
+    all_attributes = {x[0] for v in attributes.values() for x in v}
     for c in mro:
         for a in c.__dict__.get('_sphinx_documented_attributes', []):
             if not a in all_attributes:
                 attributes[c].append((a, c))
     attributes = {k: [':attr:`~{}.{}`'.format(get_full_class_name(c), n) for n, c in sorted(v, key=key_func)]
-                  for k, v in attributes.iteritems()}
+                  for k, v in attributes.items()}
     rows = [(':class:`~{}`'.format(get_full_class_name(c)), ', '.join(attributes[c]))
             for c in mro if c is not object and c in attributes]
     if rows:
@@ -407,7 +412,7 @@ def format_docstring(obj, lines=None, dont_recurse=False):
     ))
 
     sections = {}
-    for section, lines in fields.iteritems():
+    for section, lines in fields.items():
         sections[section] = section_formatters[section](section.capitalize(), lines)
 
     if isinstance(obj, type):

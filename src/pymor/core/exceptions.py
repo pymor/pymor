@@ -3,7 +3,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
 import warnings
 
 warn = warnings.warn
@@ -46,5 +45,12 @@ class GmshError(Exception):
 class ImageCollectionError(Exception):
     """Is raised when a pymor.algorithms.image.estimate_image fails for given operator."""
     def __init__(self, op):
-        super(ImageCollectionError, self).__init__('Cannot estimage image for {}'.format(op))
+        super().__init__('Cannot estimage image for {}'.format(op))
         self.op = op
+
+
+class PySideMissing(ImportError):
+    """Raise me where having importable PySide is non-optional"""
+    def __init__(self, msg=None):
+        msg = msg or 'cannot visualize: import of PySide failed'
+        super().__init__(msg)

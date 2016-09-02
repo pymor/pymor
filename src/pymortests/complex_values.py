@@ -3,8 +3,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import print_function, unicode_literals, absolute_import, division
-
 import numpy as np
 
 from pymor.operators.numpy import NumpyMatrixOperator
@@ -49,17 +47,6 @@ def test_complex():
             va.append(Dva, o_ind)
             assert np.iscomplexobj(va.data)
 
-    # replace
-    va = NumpyVectorArray.make_array(subtype=5, reserve=0)
-    va.append(Cva)
-    D = np.random.randn(1, 5) + 1j * np.random.randn(1, 5)
-    Dva = NumpyVectorArray(D)
-
-    assert not np.iscomplexobj(va.data)
-    assert np.iscomplexobj(Dva.data)
-    va.replace(Dva, 1, 0)
-    assert np.iscomplexobj(va.data)
-
     # scal
     assert not np.iscomplexobj(Cva.data)
     assert np.iscomplexobj((Cva * 1j).data)
@@ -84,8 +71,8 @@ def test_real_imag():
     Cva = Ava.imag
 
     k = 0
-    for i in xrange(3):
-        for j in xrange(2):
+    for i in range(3):
+        for j in range(2):
             k += 1
             assert Bva.data[i, j] == k
             k += 1
@@ -98,8 +85,8 @@ def test_scal():
     v.scal(1j)
 
     k = 0
-    for i in xrange(2):
-        for j in xrange(3):
+    for i in range(2):
+        for j in range(3):
             k += 1
             assert v.data[i, j] == k * 1j
 

@@ -2,8 +2,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 import numpy as np
 
 import collections
@@ -53,10 +51,10 @@ class PolygonalDomain(DomainDescriptionInterface):
                        for p0, p1 in zip(ps, ps_d)]
             # evaluate the boundary at the edge centers and save the |BoundaryTypes| together with the
             # corresponding edge id.
-            self.boundary_types = dict(zip([boundary_types(centers)], [range(1, len(centers)+1)]))
+            self.boundary_types = dict(zip([boundary_types(centers)], [list(range(1, len(centers)+1))]))
 
         # check if the dict keys are given as |BoundaryType|
-        assert all(isinstance(bt, BoundaryType) for bt in self.boundary_types.iterkeys())
+        assert all(isinstance(bt, BoundaryType) for bt in self.boundary_types.keys())
 
     def __repr__(self):
         return 'PolygonalDomain({}, {}, {})'.format(repr(self.points), repr(self.boundary_types), repr(self.holes))
@@ -104,15 +102,15 @@ class CircularSectorDomain(PolygonalDomain):
                        np.linspace(start=0, stop=angle, num=self.num_points, endpoint=True)])
 
         if self.arc == self.radii:
-            boundary_types = {self.arc: range(1, len(points)+1)}
+            boundary_types = {self.arc: list(range(1, len(points)+1))}
         else:
-            boundary_types = {self.arc: range(2, len(points))}
+            boundary_types = {self.arc: list(range(2, len(points)))}
             boundary_types.update({self.radii: [1, len(points)]})
 
         if None in boundary_types:
             del boundary_types[None]
 
-        super(CircularSectorDomain, self).__init__(points, boundary_types)
+        super().__init__(points, boundary_types)
 
     def __repr__(self):
         return 'PieDomain({}, {}, {}, {}, {})'.format(repr(self.angle), repr(self.radius), repr(self.arc),
@@ -148,9 +146,9 @@ class DiscDomain(PolygonalDomain):
 
         points = [[self.radius*np.cos(t), self.radius*np.sin(t)] for t in
                   np.linspace(start=0, stop=2*np.pi, num=num_points, endpoint=False)]
-        boundary_types = {} if self.boundary is None else {boundary: range(1, len(points)+1)}
+        boundary_types = {} if self.boundary is None else {boundary: list(range(1, len(points)+1))}
 
-        super(DiscDomain, self).__init__(points, boundary_types)
+        super().__init__(points, boundary_types)
 
     def __repr__(self):
         return 'DiscDomain({}, {}, {})'.format(repr(self.radius), repr(self.boundary), repr(self.num_points))

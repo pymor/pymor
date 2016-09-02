@@ -12,13 +12,11 @@ by an external library into an instationary |Discretization|.
 
 Currently, implementations of :func:`explicit_euler` and :func:`implicit_euler`
 time-stepping are provided. The :class:`TimeStepperInterface` defines a
-common interface that has to be fulfilled by the time-steppers that are used
+common interface that has to be fulfilled by the time-steppers used
 by |InstationaryDiscretization|. The classes :class:`ExplicitEulerTimeStepper`
 and :class:`ImplicitEulerTimeStepper` encapsulate :func:`explicit_euler` and
 :func:`implicit_euler` to provide this interface.
 """
-
-from __future__ import absolute_import, division, print_function
 
 from pymor.core.interfaces import ImmutableInterface, abstractmethod
 from pymor.operators.interfaces import OperatorInterface
@@ -54,8 +52,8 @@ class TimeStepperInterface(ImmutableInterface):
         operator
             The |Operator| A.
         rhs
-            The right hand side F (either |VectorArray| of length 1 or |Operator| with
-            `range.dim == 1`). If `None`, zero right hand side is assumed.
+            The right-hand side F (either |VectorArray| of length 1 or |Operator| with
+            `range.dim == 1`). If `None`, zero right-hand side is assumed.
         mass
             The |Operator| M. If `None`, the identity operator is assumed.
         mu
@@ -73,7 +71,7 @@ class TimeStepperInterface(ImmutableInterface):
 
 
 class ImplicitEulerTimeStepper(TimeStepperInterface):
-    """Implict-Euler time-stepper.
+    """Implict Euler time-stepper.
 
     Solves equations of the form ::
 
@@ -85,7 +83,7 @@ class ImplicitEulerTimeStepper(TimeStepperInterface):
         The number of time-steps the time-stepper will perform.
     solver_options
         The |solver_options| used to invert `M + dt*A`.
-        The special values `'mass'` and '`operator'` are
+        The special values `'mass'` and `'operator'` are
         recognized, in which case the solver_options of
         M (resp. A) are used.
     """
@@ -100,7 +98,7 @@ class ImplicitEulerTimeStepper(TimeStepperInterface):
 
 
 class ExplicitEulerTimeStepper(TimeStepperInterface):
-    """Implict-Euler time-stepper.
+    """Explicit Euler time-stepper.
 
     Solves equations of the form ::
 
@@ -168,7 +166,7 @@ def implicit_euler(A, F, M, U0, t0, t1, nt, mu=None, num_values=None, solver_opt
     t = t0
     U = U0.copy()
 
-    for n in xrange(nt):
+    for n in range(nt):
         t += dt
         mu['_t'] = t
         rhs = M.apply(U)
@@ -217,14 +215,14 @@ def explicit_euler(A, F, U0, t0, t1, nt, mu=None, num_values=None):
     U = U0.copy()
 
     if F is None:
-        for n in xrange(nt):
+        for n in range(nt):
             t += dt
             mu['_t'] = t
             U.axpy(-dt, A.apply(U, mu=mu))
             while t - t0 + (min(dt, DT) * 0.5) >= len(R) * DT:
                 R.append(U)
     else:
-        for n in xrange(nt):
+        for n in range(nt):
             t += dt
             mu['_t'] = t
             if F_time_dep:

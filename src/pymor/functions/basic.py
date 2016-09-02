@@ -2,11 +2,8 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 from numbers import Number
 
-from itertools import izip
 import numpy as np
 
 from pymor.functions.interfaces import FunctionInterface
@@ -122,7 +119,7 @@ class GenericFunction(FunctionBase):
         The name of the function.
     """
 
-    def __init__(self, mapping, dim_domain=1, shape_range=tuple(), parameter_type=None, name=None):
+    def __init__(self, mapping, dim_domain=1, shape_range=(), parameter_type=None, name=None):
         assert dim_domain > 0
         assert isinstance(shape_range, (Number, tuple))
         self.dim_domain = dim_domain
@@ -177,14 +174,15 @@ class ExpressionFunction(GenericFunction):
     functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',
                                              'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
                                              'exp', 'exp2', 'log', 'log2', 'log10', 'array',
-                                             'min', 'minimum', 'max', 'maximum', 'pi', 'e'}}
+                                             'min', 'minimum', 'max', 'maximum', 'pi', 'e',
+                                             'sum', 'prod'}}
 
-    def __init__(self, expression, dim_domain=1, shape_range=tuple(), parameter_type=None, name=None):
+    def __init__(self, expression, dim_domain=1, shape_range=(), parameter_type=None, name=None):
         self.expression = expression
         code = compile(expression, '<expression>', 'eval')
         functions = self.functions
         mapping = lambda x, mu=None: eval(code, functions, {'x': x, 'mu': mu})
-        super(ExpressionFunction, self).__init__(mapping, dim_domain, shape_range, parameter_type, name)
+        super().__init__(mapping, dim_domain, shape_range, parameter_type, name)
 
     def __repr__(self):
         return 'ExpressionFunction({}, {}, {}, {})'.format(self.expression, repr(self.parameter_type),
@@ -242,4 +240,4 @@ class LincombFunction(FunctionBase):
     def evaluate(self, x, mu=None):
         mu = self.parse_parameter(mu)
         coeffs = self.evaluate_coefficients(mu)
-        return sum(c * f(x, mu) for c, f in izip(coeffs, self.functions))
+        return sum(c * f(x, mu) for c, f in zip(coeffs, self.functions))

@@ -17,8 +17,8 @@ import pytest
 
 n_list = [50, 100]
 m_list = [1, 2]
-meth_list = ['scipy', 'slycot', 'pymess_lyap', 'pymess_lradi']
-meth_E_list = ['slycot', 'pymess_lyap', 'pymess_lradi']
+me_solver_list = ['scipy', 'slycot', 'pymess_lyap', 'pymess_lradi']
+me_solver_E_list = ['slycot', 'pymess_lyap', 'pymess_lradi']
 
 
 def fro_norm(A):
@@ -56,8 +56,8 @@ def relative_residual(A, E, B, Z, trans=False):
 
 @pytest.mark.parametrize('n', n_list)
 @pytest.mark.parametrize('m', m_list)
-@pytest.mark.parametrize('meth', meth_list)
-def test_cgf_dense(n, m, meth):
+@pytest.mark.parametrize('me_solver', me_solver_list)
+def test_cgf_dense(n, m, me_solver):
     np.random.seed(0)
     A = np.random.randn(n, n) - n * np.eye(n)
     B = np.random.randn(n, m)
@@ -65,7 +65,7 @@ def test_cgf_dense(n, m, meth):
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
 
-    Zva = solve_lyap(Aop, None, Bop, meth=meth)
+    Zva = solve_lyap(Aop, None, Bop, me_solver=me_solver)
     Z = Zva.data.T
 
     assert len(Zva) <= n
@@ -74,8 +74,8 @@ def test_cgf_dense(n, m, meth):
 
 @pytest.mark.parametrize('n', n_list)
 @pytest.mark.parametrize('m', m_list)
-@pytest.mark.parametrize('meth', meth_E_list)
-def test_cgf_dense_E(n, m, meth):
+@pytest.mark.parametrize('me_solver', me_solver_E_list)
+def test_cgf_dense_E(n, m, me_solver):
     np.random.seed(0)
     A = np.random.randn(n, n)
     A = (A + A.T) / 2
@@ -91,7 +91,7 @@ def test_cgf_dense_E(n, m, meth):
     Eop = NumpyMatrixOperator(E)
     Bop = NumpyMatrixOperator(B)
 
-    Zva = solve_lyap(Aop, Eop, Bop, meth=meth)
+    Zva = solve_lyap(Aop, Eop, Bop, me_solver=me_solver)
     Z = Zva.data.T
 
     assert len(Zva) <= n
@@ -100,8 +100,8 @@ def test_cgf_dense_E(n, m, meth):
 
 @pytest.mark.parametrize('n', n_list)
 @pytest.mark.parametrize('m', m_list)
-@pytest.mark.parametrize('meth', meth_list)
-def test_cgf_sparse(n, m, meth):
+@pytest.mark.parametrize('me_solver', me_solver_list)
+def test_cgf_sparse(n, m, me_solver):
     np.random.seed(0)
     A = sps.random(n, n, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
     A -= n * sps.eye(n)
@@ -110,7 +110,7 @@ def test_cgf_sparse(n, m, meth):
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
 
-    Zva = solve_lyap(Aop, None, Bop, meth=meth)
+    Zva = solve_lyap(Aop, None, Bop, me_solver=me_solver)
     Z = Zva.data.T
 
     assert len(Zva) <= n
@@ -119,8 +119,8 @@ def test_cgf_sparse(n, m, meth):
 
 @pytest.mark.parametrize('n', n_list)
 @pytest.mark.parametrize('m', m_list)
-@pytest.mark.parametrize('meth', meth_E_list)
-def test_cgf_sparse_E(n, m, meth):
+@pytest.mark.parametrize('me_solver', me_solver_E_list)
+def test_cgf_sparse_E(n, m, me_solver):
     np.random.seed(0)
     A = sps.random(n, n, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
     A = (A + A.T) / 2
@@ -136,7 +136,7 @@ def test_cgf_sparse_E(n, m, meth):
     Eop = NumpyMatrixOperator(E)
     Bop = NumpyMatrixOperator(B)
 
-    Zva = solve_lyap(Aop, Eop, Bop, meth=meth)
+    Zva = solve_lyap(Aop, Eop, Bop, me_solver=me_solver)
     Z = Zva.data.T
 
     assert len(Zva) <= n
@@ -145,8 +145,8 @@ def test_cgf_sparse_E(n, m, meth):
 
 @pytest.mark.parametrize('n', n_list)
 @pytest.mark.parametrize('p', m_list)
-@pytest.mark.parametrize('meth', meth_list)
-def test_ogf_dense(n, p, meth):
+@pytest.mark.parametrize('me_solver', me_solver_list)
+def test_ogf_dense(n, p, me_solver):
     np.random.seed(0)
     A = np.random.randn(n, n) - n * np.eye(n)
     C = np.random.randn(p, n)
@@ -154,7 +154,7 @@ def test_ogf_dense(n, p, meth):
     Aop = NumpyMatrixOperator(A)
     Cop = NumpyMatrixOperator(C)
 
-    Zva = solve_lyap(Aop, None, Cop, trans=True, meth=meth)
+    Zva = solve_lyap(Aop, None, Cop, trans=True, me_solver=me_solver)
     Z = Zva.data.T
 
     assert len(Zva) <= n
@@ -163,8 +163,8 @@ def test_ogf_dense(n, p, meth):
 
 @pytest.mark.parametrize('n', n_list)
 @pytest.mark.parametrize('p', m_list)
-@pytest.mark.parametrize('meth', meth_E_list)
-def test_ogf_dense_E(n, p, meth):
+@pytest.mark.parametrize('me_solver', me_solver_E_list)
+def test_ogf_dense_E(n, p, me_solver):
     np.random.seed(0)
     A = np.random.randn(n, n)
     A = (A + A.T) / 2
@@ -180,7 +180,7 @@ def test_ogf_dense_E(n, p, meth):
     Eop = NumpyMatrixOperator(E)
     Cop = NumpyMatrixOperator(C)
 
-    Zva = solve_lyap(Aop, Eop, Cop, trans=True, meth=meth)
+    Zva = solve_lyap(Aop, Eop, Cop, trans=True, me_solver=me_solver)
     Z = Zva.data.T
 
     assert len(Zva) <= n
@@ -189,8 +189,8 @@ def test_ogf_dense_E(n, p, meth):
 
 @pytest.mark.parametrize('n', n_list)
 @pytest.mark.parametrize('p', m_list)
-@pytest.mark.parametrize('meth', meth_list)
-def test_ogf_sparse(n, p, meth):
+@pytest.mark.parametrize('me_solver', me_solver_list)
+def test_ogf_sparse(n, p, me_solver):
     np.random.seed(0)
     A = sps.random(n, n, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
     A -= n * sps.eye(n)
@@ -199,7 +199,7 @@ def test_ogf_sparse(n, p, meth):
     Aop = NumpyMatrixOperator(A)
     Cop = NumpyMatrixOperator(C)
 
-    Zva = solve_lyap(Aop, None, Cop, trans=True, meth=meth)
+    Zva = solve_lyap(Aop, None, Cop, trans=True, me_solver=me_solver)
     Z = Zva.data.T
 
     assert len(Zva) <= n
@@ -208,8 +208,8 @@ def test_ogf_sparse(n, p, meth):
 
 @pytest.mark.parametrize('n', n_list)
 @pytest.mark.parametrize('p', m_list)
-@pytest.mark.parametrize('meth', meth_E_list)
-def test_ogf_sparse_E(n, p, meth):
+@pytest.mark.parametrize('me_solver', me_solver_E_list)
+def test_ogf_sparse_E(n, p, me_solver):
     np.random.seed(0)
     A = sps.random(n, n, density=5 / n, format='csc', data_rvs=stats.norm().rvs)
     A = (A + A.T) / 2
@@ -225,7 +225,7 @@ def test_ogf_sparse_E(n, p, meth):
     Eop = NumpyMatrixOperator(E)
     Cop = NumpyMatrixOperator(C)
 
-    Zva = solve_lyap(Aop, Eop, Cop, trans=True, meth=meth)
+    Zva = solve_lyap(Aop, Eop, Cop, trans=True, me_solver=me_solver)
     Z = Zva.data.T
 
     assert len(Zva) <= n

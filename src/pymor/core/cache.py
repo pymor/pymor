@@ -9,22 +9,22 @@ Any class that wishes to provide cached method calls should derive from
 be marked using the :class:`cached` decorator.
 
 To ensure consistency, :class:`CacheableInterface` derives from
-:class:`~pymor.core.interfaces.ImmutableInterface`: The return value of a
-cached method call should only depend on its arguments as well as
-the immutable state of the class instance.
+|ImmutableInterface|: The return value of a cached method call should
+only depend on its arguments as well as the immutable state of the class
+instance.
 
 Making this assumption, the keys for cache lookup are created from
 the following data:
 
-    1. the instance's |state id| if available, else the instance's
-       unique id (see :class:`~pymor.core.interfaces.BasicInterface`),
+    1. the instance's |state id| in case of a :attr:`~CacheRegion.persistent`
+       :class:`CacheRegion`, else the instance's
+       :attr:`~pymor.core.interfaces.BasicInterface.uid`,
     2. the method's `__name__`,
-    3. the state id of the arguments,
-    4. the state id of pyMOR's global :mod:`~pymor.core.defaults`.
+    3. the |state id| of the arguments,
+    4. the |state id| of pyMOR's global |defaults|.
 
-Note, however, that instances of :class:`~pymor.core.interfaces.ImmutableInterface`
-are allowed to have mutable private attributes. It is the implementors
-responsibility not to break things.
+Note that instances of |ImmutableInterface| are allowed to have mutable
+private attributes. It is the implementors responsibility not to break things.
 (See this :ref:`warning <ImmutableInterfaceWarning>`.)
 
 Backends for storage of cached return values derive from :class:`CacheRegion`.
@@ -32,15 +32,17 @@ Currently two backends are provided for memory-based and disk-based caching
 (:class:`MemoryRegion` and :class:`SQLiteRegion`). The available regions
 are stored in the module level `cache_regions` dict. The user can add
 additional regions (e.g. multiple disk cache regions) as required.
-:class:`CacheableInterface` has a `region` attribute through which a key of
-the `cache_regions` dict can provided to select a cache region which should
-be used by the instance. (Setting `region` to `None` or `'none'` disables caching.)
+:attr:`CacheableInterface.cache_region` specifies a key of the `cache_regions` dict
+to select a cache region which should be used by the instance.
+(Setting :attr:`~CacheableInterface.cache_region` to `None` or `'none'` disables caching.)
 
-By default, a 'memory' and a 'disk' cache region are automatically configured. The
-path and maximum size of the disk region as well as the maximum number of keys of
+By default, a 'memory', a 'disk' and a 'persistent' cache region are configured. The
+paths and maximum sizes of the disk regions, as well as the maximum number of keys of
 the memory cache region can be configured via the
 `pymor.core.cache.default_regions.disk_path`,
-`pymor.core.cache.default_regions.disk_max_size` and
+`pymor.core.cache.default_regions.disk_max_size`,
+`pymor.core.cache.default_regions.persistent_path`,
+`pymor.core.cache.default_regions.persistent_max_size` and
 `pymor.core.cache.default_regions.memory_max_keys` |defaults|.
 
 There two ways to disable and enable caching in pyMOR:
@@ -60,24 +62,23 @@ A cache region can be emptied using :meth:`CacheRegion.clear`. The function
 :func:`clear_caches` clears each cache region registered in `cache_regions`.
 """
 
-
-from __future__ import absolute_import, division, print_function
-# cannot use unicode_literals here, or else dbm backend fails
-
 import atexit
 from collections import OrderedDict
 import datetime
-from functools import partial
+import functools
 import getpass
 import inspect
 import os
 import sqlite3
+import sys
 import tempfile
 from types import MethodType
 
 from pymor.core.defaults import defaults, defaults_sid
 from pymor.core.interfaces import ImmutableInterface, generate_sid
 from pymor.core.pickle import dump, load
+
+PY2 = sys.version_info.major == 2
 
 
 @atexit.register
@@ -100,9 +101,24 @@ class CacheRegion(object):
     persistent = False
 
     def get(self, key):
+        """Return cache entry for given key.
+
+        Parameters
+        ----------
+        key
+            The key for the cache entry.
+
+        Returns
+        -------
+        `(True, entry)`
+            in case the `key` has been found in the cache region.
+        `(False, None)`
+            in case the `key` is not present in the cache region.
+        """
         raise NotImplementedError
 
     def set(self, key, value):
+        """Set cache entry for `key` to given `value`."""
         raise NotImplementedError
 
     def clear(self):
@@ -164,7 +180,7 @@ class SQLiteRegion(CacheRegion):
             return False, None
         elif len(result) == 1:
             file_path = os.path.join(self.path, result[0][0])
-            with open(file_path) as f:
+            with open(file_path, 'rb') as f:
                 value = load(f)
             return True, value
         else:
@@ -173,12 +189,9 @@ class SQLiteRegion(CacheRegion):
     def set(self, key, value):
         fd, file_path = tempfile.mkstemp('.dat', datetime.datetime.now().isoformat()[:-7] + '-', self.path)
         filename = os.path.basename(file_path)
-        try:
-            f = os.fdopen(fd, 'w')
+        with os.fdopen(fd, 'wb') as f:
             dump(value, f)
             file_size = f.tell()
-        finally:
-            f.close()
         conn = self.conn
         c = conn.cursor()
         try:
@@ -220,7 +233,11 @@ class SQLiteRegion(CacheRegion):
         c = conn.cursor()
         c.execute('SELECT SUM(size) FROM entries')
         size = c.fetchone()
-        size = size[0] if size is not None else 0
+        # size[0] can apparently also be None
+        try:
+            size = int(size[0]) if size is not None else 0
+        except TypeError:
+            size = 0
         if size > self.max_size:
             bytes_to_delete = size - self.max_size + 0.75 * self.max_size
             deleted = 0
@@ -289,38 +306,8 @@ def disable_caching():
 
 def clear_caches():
     """Clear all cache regions."""
-    for r in cache_regions.itervalues():
+    for r in cache_regions.values():
         r.clear()
-
-
-class cached(object):
-    """Decorator to make a method of `CacheableInterface` actually cached."""
-
-    def __init__(self, function):
-        self.decorated_function = function
-        argspec = inspect.getargspec(function)
-        self.argnames = argnames = argspec.args[1:]  # first argument is self
-        defaults = function.__defaults__
-        if defaults:
-            self.defaults = {k: v for k, v in zip(argnames[-len(defaults):], defaults)}
-        else:
-            self.defaults = None
-
-    def __call__(self, im_self, *args, **kwargs):
-        """Via the magic that is partial functions returned from __get__, im_self is the instance object of the class
-        we're decorating a method of and [kw]args are the actual parameters to the decorated method"""
-        return im_self._cached_method_call(self.decorated_function, True, self.argnames, self.defaults, args, kwargs)
-
-    def __get__(self, instance, instancetype):
-        """Implement the descriptor protocol to make decorating instance method possible.
-        Return a partial function where the first argument is the instance of the decorated instance object.
-        """
-        if instance is None:
-            return MethodType(self.decorated_function, None, instancetype)
-        elif _caching_disabled or instance.cache_region is None:
-            return partial(self.decorated_function, instance)
-        else:
-            return partial(self.__call__, instance)
 
 
 class CacheableInterface(ImmutableInterface):
@@ -329,8 +316,8 @@ class CacheableInterface(ImmutableInterface):
     Attributes
     ----------
     cache_region
-        Name of the `CacheRegion` to use. Must correspond to a key in
-        :attr:`pymor.core.cache.cache_regions`. If `None` or `'none'`, caching
+        Name of the :class:`CacheRegion` to use. Must correspond to a key in
+        the :attr:`cache_regions` dict. If `None` or `'none'`, caching
         is disabled.
     """
 
@@ -340,16 +327,19 @@ class CacheableInterface(ImmutableInterface):
 
     def disable_caching(self):
         """Disable caching for this instance."""
-        self.__cache_region = None
+        self.__dict__['cache_region'] = None
 
     def enable_caching(self, region):
         """Enable caching for this instance.
+
+        When setting the object's cache region to a :attr:`~CacheRegion.persistent`
+        :class:`CacheRegion`, the object's |state id| will be computed.
 
         Parameters
         ----------
         region
             Name of the `CacheRegion` to use. Must correspond to a key in
-            `pymor.core.cache.cache_regions`. If `None` or `'none'`, caching
+            the :attr:`cache_regions` dict. If `None` or `'none'`, caching
             is disabled.
         """
         if region in (None, 'none'):
@@ -361,15 +351,44 @@ class CacheableInterface(ImmutableInterface):
                 self.generate_sid()
 
     def cached_method_call(self, method, *args, **kwargs):
+        """Call a given `method` and cache the return value.
+
+        This method can be used as an alternative to the :func:`cached`
+        decorator.
+
+        Parameters
+        ----------
+        method
+            The method that is to be called. This has to be a method
+            of `self`.
+        args
+            Positional arguments for `method`.
+        kwargs
+            Keyword arguments for `method`
+
+        Returns
+        -------
+        The (possibly cached) return value of `method(*args, **kwargs)`.
+        """
         assert isinstance(method, MethodType)
 
         if _caching_disabled or self.cache_region is None:
             return method(*args, **kwargs)
 
-        argnames = inspect.getargspec(method).args[1:]  # first argument is self
-        defaults = method.__defaults__
-        if defaults:
-            defaults = {k: v for k, v in zip(argnames[-len(defaults):], defaults)}
+        if PY2:
+            argspec = inspect.getargspec(method)
+            if argspec.varargs is not None:
+                raise NotImplementedError
+            argnames = argspec.args[1:]  # first argument is self
+            defaults = method.__defaults__
+            if defaults:
+                defaults = {k: v for k, v in zip(argnames[-len(defaults):], defaults)}
+        else:
+            params = inspect.signature(method).parameters
+            if any(v.kind == v.VAR_POSITIONAL for v in params.values()):
+                raise NotImplementedError
+            argnames = list(params.keys())[1:]  # first argument is self
+            defaults = {k: v.default for k, v in params.items() if v.default is not v.empty}
         return self._cached_method_call(method, False, argnames, defaults, args, kwargs)
 
     def _cached_method_call(self, method, pass_self, argnames, defaults, args, kwargs):
@@ -406,3 +425,33 @@ class CacheableInterface(ImmutableInterface):
                 value = method(self, **kwargs) if pass_self else method(**kwargs)
                 region.set(key, value)
                 return value
+
+
+def cached(function):
+    """Decorator to make a method of `CacheableInterface` actually cached."""
+
+    if PY2:
+        argspec = inspect.getargspec(function)
+        if argspec.varargs is not None:
+            raise NotImplementedError
+        argnames = argnames = argspec.args[1:]  # first argument is self
+        defaults = function.__defaults__
+        if defaults:
+            defaults = {k: v for k, v in zip(argnames[-len(defaults):], defaults)}
+    else:
+        params = inspect.signature(function).parameters
+        if any(v.kind == v.VAR_POSITIONAL for v in params.values()):
+            raise NotImplementedError
+        argnames = list(params.keys())[1:]  # first argument is self
+        defaults = {k: v.default for k, v in params.items() if v.default is not v.empty}
+
+    @functools.wraps(function)
+    def wrapper(self, *args, **kwargs):
+        if _caching_disabled or self.cache_region is None:
+            return function(self, *args, **kwargs)
+        return self._cached_method_call(function, True, argnames, defaults, args, kwargs)
+
+    if PY2:
+        wrapper.__wrapped__ = function
+
+    return wrapper

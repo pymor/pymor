@@ -5,9 +5,6 @@
 
 """ This module provides some operators for finite volume discretizations."""
 
-from __future__ import absolute_import, division, print_function
-
-from itertools import izip
 import numpy as np
 from scipy.sparse import coo_matrix, csc_matrix, dia_matrix
 
@@ -173,7 +170,7 @@ class EngquistOsherFlux(NumericalConvectiveFluxInterface):
     def evaluate_stage1(self, U, mu=None):
         int_els = np.abs(U)[:, np.newaxis, np.newaxis]
         return [np.concatenate([self.flux_derivative(U[:, np.newaxis] * p, mu)[:, np.newaxis, :] * int_els * w
-                               for p, w in izip(self.points, self.weights)], axis=1)]
+                               for p, w in zip(self.points, self.weights)], axis=1)]
 
     def evaluate_stage2(self, stage1_data, unit_outer_normals, volumes, mu=None):
         F0 = np.sum(self.flux.evaluate(np.array([[0.]]), mu=mu) * unit_outer_normals, axis=1)
@@ -244,7 +241,7 @@ class NonlinearAdvectionOperator(OperatorBase):
                          for arg in list(kwargs) if arg.startswith('numerical_flux_')}
         if num_flux_args:
             kwargs['numerical_flux'] = self.numerical_flux.with_(**num_flux_args)
-        return super(NonlinearAdvectionOperator, self).with_(**kwargs)
+        return super().with_(**kwargs)
 
     def restricted(self, dofs):
         source_dofs = np.setdiff1d(np.union1d(self.grid.neighbours(0, 0)[dofs].ravel(), dofs),
@@ -280,7 +277,7 @@ class NonlinearAdvectionOperator(OperatorBase):
         if not hasattr(self, '_grid_data'):
             self._fetch_grid_data()
 
-        ind = xrange(len(U)) if ind is None else ind
+        ind = range(len(U)) if ind is None else ind
         U = U.data
         R = np.zeros((len(ind), self.source.dim))
 
@@ -314,7 +311,7 @@ class NonlinearAdvectionOperator(OperatorBase):
             for f in F_edge:
                 f[BOUNDARIES, 1] = f[BOUNDARIES, 0]
             if bi.has_dirichlet:
-                for f, f_d in izip(F_edge, F_dirichlet):
+                for f, f_d in zip(F_edge, F_dirichlet):
                     f[DIRICHLET_BOUNDARIES, 1] = f_d
 
             NUM_FLUX = self.numerical_flux.evaluate_stage2(F_edge, UNIT_OUTER_NORMALS, VOLS1, mu)
@@ -383,7 +380,7 @@ class NonlinearAdvectionOperator(OperatorBase):
             f[:, 0] = ff[:, 0]
             f[BOUNDARIES, 1] = f[BOUNDARIES, 0]
         if bi.has_dirichlet:
-            for f, f_d in izip(F0P_edge, F_dirichlet):
+            for f, f_d in zip(F0P_edge, F_dirichlet):
                 f[DIRICHLET_BOUNDARIES, 1] = f_d
         NUM_FLUX_0P = self.numerical_flux.evaluate_stage2(F0P_edge, UNIT_OUTER_NORMALS, VOLS1, mu)
         del F0P_edge
@@ -393,7 +390,7 @@ class NonlinearAdvectionOperator(OperatorBase):
             f[:, 0] = ff[:, 0]
             f[BOUNDARIES, 1] = f[BOUNDARIES, 0]
         if bi.has_dirichlet:
-            for f, f_d in izip(F0M_edge, F_dirichlet):
+            for f, f_d in zip(F0M_edge, F_dirichlet):
                 f[DIRICHLET_BOUNDARIES, 1] = f_d
         NUM_FLUX_0M = self.numerical_flux.evaluate_stage2(F0M_edge, UNIT_OUTER_NORMALS, VOLS1, mu)
         del F0M_edge
@@ -409,7 +406,7 @@ class NonlinearAdvectionOperator(OperatorBase):
             f[:, 1] = ff[:, 1]
             f[BOUNDARIES, 1] = f[BOUNDARIES, 0]
         if bi.has_dirichlet:
-            for f, f_d in izip(F1P_edge, F_dirichlet):
+            for f, f_d in zip(F1P_edge, F_dirichlet):
                 f[DIRICHLET_BOUNDARIES, 1] = f_d
         NUM_FLUX_1P = self.numerical_flux.evaluate_stage2(F1P_edge, UNIT_OUTER_NORMALS, VOLS1, mu)
         del F1P_edge, FP_edge
@@ -419,7 +416,7 @@ class NonlinearAdvectionOperator(OperatorBase):
             f[:, 1] = ff[:, 1]
             f[BOUNDARIES, 1] = f[BOUNDARIES, 0]
         if bi.has_dirichlet:
-            for f, f_d in izip(F1M_edge, F_dirichlet):
+            for f, f_d in zip(F1M_edge, F_dirichlet):
                 f[DIRICHLET_BOUNDARIES, 1] = f_d
         NUM_FLUX_1M = self.numerical_flux.evaluate_stage2(F1M_edge, UNIT_OUTER_NORMALS, VOLS1, mu)
         del F1M_edge, FM_edge
@@ -603,7 +600,7 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
 
     def __init__(self, grid, function=None, boundary_info=None, dirichlet_data=None, diffusion_function=None,
                  diffusion_constant=None, neumann_data=None, order=1, name=None):
-        assert function is None or function.shape_range == tuple()
+        assert function is None or function.shape_range == ()
         self.source = NumpyVectorSpace(grid.size(0))
         self.grid = grid
         self.boundary_info = boundary_info
@@ -690,12 +687,12 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
 
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None, solver_options=None,
                  name=None):
-        super(DiffusionOperator, self).__init__()
+        super().__init__()
         assert isinstance(grid, AffineGridWithOrthogonalCentersInterface)
         assert diffusion_function is None \
             or (isinstance(diffusion_function, FunctionInterface) and
-                diffusion_function.dim_domain == grid.dim_outer and
-                diffusion_function.shape_range == tuple())
+                diffusion_function.dim_domain == grid.dim and
+                diffusion_function.shape_range == ())
         self.grid = grid
         self.boundary_info = boundary_info
         self.diffusion_function = diffusion_function

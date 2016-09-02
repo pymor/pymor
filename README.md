@@ -10,9 +10,6 @@ implementations of finite element and finite volume discretizations using the
 NumPy/SciPy scientific computing stack are provided for getting started
 quickly.
 
-**NOTE** pyMOR is still in early development.  Should you have any questions
-regarding pyMOR or wish to contribute, do not hesitate to contact us!
-
 [![Docs](https://readthedocs.org/projects/pymor/badge/?version=latest)](http://pymor.readthedocs.org/en/latest)
 [![Docs](https://readthedocs.org/projects/pymor/badge/?version=0.3.x)](http://pymor.readthedocs.org/en/0.3.x)
 [![DOI](https://zenodo.org/badge/8838/pymor/pymor.svg)](http://dx.doi.org/10.5281/zenodo.15773)
@@ -85,10 +82,20 @@ optional `--user` argument, pyMOR will only be installed for your local user,
 not requiring administrator privileges. To install the latest development version
 of pyMOR, execute
 
-    pip install [--user] git+https://github.com/pymor
+    pip install [--user] git+https://github.com/pymor/pymor
 
 which will require that the [git](https://git-scm.com/) version control system is
 installed on your system.
+
+From time to time, the master branch of pyMOR undergoes major changes and things
+might break (this is usually announced on our
+[mailing list](http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev)),
+so you might prefer to install pyMOR from the current release branch:
+
+    pip install [--user] git+https://github.com/pymor/pymor@0.4.x
+
+Release branches will always stay stable and will only receive bugfix commits
+after the corresponding release has been made.
 
 Note that pyMOR depends on [Cython](http://www.cython.org/), as well as the
 [NumPy](http://numpy.org/) and [SciPy](http://www.scipy.org/) packages.

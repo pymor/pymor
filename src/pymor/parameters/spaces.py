@@ -2,9 +2,8 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
+from itertools import product
 
-from itertools import izip, product
 import numpy as np
 
 from pymor.parameters.base import Parameter, ParameterType
@@ -54,14 +53,14 @@ class CubicParameterSpace(ParameterSpaceInterface):
         if isinstance(counts, dict):
             pass
         elif isinstance(counts, (tuple, list, np.ndarray)):
-            counts = {k: c for k, c in izip(self.parameter_type, counts)}
+            counts = {k: c for k, c in zip(self.parameter_type, counts)}
         else:
             counts = {k: counts for k in self.parameter_type}
         linspaces = tuple(np.linspace(self.ranges[k][0], self.ranges[k][1], num=counts[k]) for k in self.parameter_type)
         iters = tuple(product(ls, repeat=max(1, np.zeros(sps).size))
-                      for ls, sps in izip(linspaces, self.parameter_type.values()))
+                      for ls, sps in zip(linspaces, self.parameter_type.values()))
         return [Parameter(((k, np.array(v).reshape(shp))
-                           for k, v, shp in izip(self.parameter_type, i, self.parameter_type.values())))
+                           for k, v, shp in zip(self.parameter_type, i, self.parameter_type.values())))
                 for i in product(*iters)]
 
     def sample_randomly(self, count=None, random_state=None, seed=None):
@@ -96,17 +95,17 @@ class CubicParameterSpace(ParameterSpaceInterface):
         ranges = self.ranges
         random_state = random_state or new_random_state(seed)
         get_param = lambda: Parameter(((k, random_state.uniform(ranges[k][0], ranges[k][1], shp))
-                                       for k, shp in self.parameter_type.iteritems()))
+                                       for k, shp in self.parameter_type.items()))
         if count is None:
             def param_generator():
                 while True:
                     yield get_param()
             return param_generator()
         else:
-            return [get_param() for _ in xrange(count)]
+            return [get_param() for _ in range(count)]
 
     def __str__(self):
-        rows = [(k, str(v), str(self.ranges[k])) for k, v in self.parameter_type.iteritems()]
+        rows = [(k, str(v), str(self.ranges[k])) for k, v in self.parameter_type.items()]
         column_widths = [max(map(len, c)) for c in zip(*rows)]
         return ('CubicParameterSpace\n' +
                 '\n'.join(('key: {:' + str(column_widths[0] + 2)

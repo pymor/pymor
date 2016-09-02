@@ -10,6 +10,14 @@ import numpy as np
 def cholp(A, copy=True):
     """Low-rank approximation using pivoted Cholesky decomposition
 
+    .. note::
+
+        Should be replaced with LAPACK routine DPSTRF (when it becomes available in NumPy).
+
+    .. [H02] N. J. Higham, Accuracy and Stability of Numerical Algorithms,
+             Second edition, Society for Industrial and Applied Mathematics,
+             Philadelphia, PA, 2002; sec. 10.3.
+
     Parameters
     ----------
     A
@@ -27,7 +35,7 @@ def cholp(A, copy=True):
     piv = np.arange(n)
     I = 0
 
-    for i in xrange(n):
+    for i in range(n):
         d = A.diagonal()
         j = np.argmax(d[i:])
         j += i

@@ -4,6 +4,13 @@
 
 import os
 
+# this solves sporadic mpi calls happening after finalize
+try:
+    import petsc4py
+    petsc4py.init()
+except ImportError:
+    pass
+
 from pymor.core.defaults import load_defaults_from_file
 
 
@@ -79,7 +86,7 @@ except ImportError:
 
     try:
         revstring = subprocess.check_output(['git', 'describe', '--tags', '--candidates', '20', '--match', '*.*.*'],
-                                            cwd=os.path.dirname(__file__))
+                                            cwd=os.path.dirname(__file__), universal_newlines=True)
     except subprocess.CalledProcessError as e:
         import sys
 
@@ -92,10 +99,19 @@ returned
 (return code: {})
 '''.format(e.output, e.returncode))
         revstring = NO_VERSIONSTRING
+    except OSError as e:
+        import sys
+
+        sys.stderr.write('''Warning: Could not determine current pyMOR version.
+Failed to import pymor.version and 'git describe --tags --candidates 20 --match *.*.*'
+could not be executed ({})
+
+'''.format(e.strerror))
+        revstring = NO_VERSIONSTRING
 finally:
     VERSION = Version(revstring)
 
-print('Loading pymor version {}'.format(VERSION))
+print('Loading pyMOR version {}'.format(VERSION))
 
 
 import os

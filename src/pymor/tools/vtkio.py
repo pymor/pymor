@@ -2,10 +2,10 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from __future__ import absolute_import, division, print_function
-
 try:
-    from pyvtk import (VtkData, UnstructuredGrid, PointData, CellData, Scalars)
+    from evtk.hl import gridToVTK, pointsToVTK, _addDataToFile, _appendDataToFile
+    from evtk.vtk import VtkGroup, VtkFile, VtkUnstructuredGrid, VtkVertex, VtkTriangle, VtkQuad
+
     HAVE_PYVTK = True
 except ImportError:
     HAVE_PYVTK = False
@@ -16,61 +16,61 @@ from pymor.grids import referenceelements
 from pymor.grids.constructions import flatten_grid
 
 
-def _write_meta_file(filename_base, steps, fn_tpl):
-    """Outputs a collection file for a series of vtu files
-
-    This DOES NOT WORK for the currently used legacy vtk format below
-    """
-
-    pvd_header = '''<?xml version="1.0"?>
-<VTKFile type="Collection" version="0.1" byte_order="LittleEndian">
-    <Collection>
-'''
-    pvd_footer = '''
-    </Collection>
-</VTKFile>'''
-
-    fn_tpl += '.vtu'
-    with open('{}.pvd'.format(filename_base), 'wb') as pvd:
-        pvd.write(pvd_header)
-        for step in xrange(steps):
-            fn = fn_tpl.format(filename_base, step)
-            pvd.write('\t\t<DataSet timestep="{}" group="" part="0" file="{}" />\n'.format(step, fn))
-        pvd.write(pvd_footer)
-
-
-def _vtk_grid(reference_element, subentities, coords):
-    if reference_element not in (referenceelements.triangle, referenceelements.square):
-        raise NotImplementedError
-    subentity_ordering = subentities.tolist()
-    num_points = len(coords[0])
-    points = [[coords[0][i], coords[1][i], coords[2][i]] for i in xrange(num_points)]
-    if reference_element == referenceelements.triangle:
-        return UnstructuredGrid(points, triangle=subentity_ordering)
-    else:
-        return UnstructuredGrid(points=points, quad=subentity_ordering)
-
-
-def _data_item(is_cell_data, data, step):
-    sd = data[step, :]
-    if is_cell_data:
-        return CellData(Scalars(sd, 'cell_data', lookup_table='default'))
-    return PointData(Scalars(sd, 'vertex_data'))
-
-
-def _write_vtu_series(us_grid, data, filename_base, binary_vtk, last_step, is_cell_data):
+def _write_vtu_series(grid, coordinates, connectivity, data, filename_base, last_step, is_cell_data):
     steps = last_step + 1 if last_step is not None else len(data)
     fn_tpl = "{}_{:08d}"
-    _write_meta_file(filename_base, steps, fn_tpl)
-    for i in xrange(steps):
-        fn = fn_tpl.format(filename_base, i)
-        pd = _data_item(is_cell_data, data, i)
-        vtk = VtkData(us_grid, pd, 'Unstructured Grid Example')
-        if binary_vtk:
-            vtk.tofile(fn, 'binary')
-        else:
-            vtk.tofile(fn)
 
+    npoints = grid.size(2)
+    ncells = grid.size(0)
+
+    ref = grid.reference_element
+    if ref is ref is referenceelements.triangle:
+        points_per_cell = 3
+        vtk_el_type = VtkTriangle.tid
+    elif ref is referenceelements.square:
+        points_per_cell = 4
+        vtk_el_type = VtkQuad.tid
+    else:
+        raise NotImplementedError("vtk output only available for grids with triangle or rectangle reference elments")
+
+    connectivity = connectivity.reshape(-1)
+    cell_types = np.empty(ncells, dtype='uint8')
+    cell_types[:] = vtk_el_type
+    offsets = np.arange(start=points_per_cell, stop=ncells*points_per_cell+1, step=points_per_cell, dtype='int32')
+
+    group = VtkGroup(filename_base)
+    for i in range(steps):
+        fn = fn_tpl.format(filename_base, i)
+        vtk_data = data[i, :]
+        w = VtkFile(fn, VtkUnstructuredGrid)
+        w.openGrid()
+        w.openPiece(ncells=ncells, npoints=npoints)
+
+        w.openElement("Points")
+        w.addData("Coordinates", coordinates)
+        w.closeElement("Points")
+        w.openElement("Cells")
+        w.addData("connectivity", connectivity)
+        w.addData("offsets", offsets)
+        w.addData("types", cell_types)
+        w.closeElement("Cells")
+        if is_cell_data:
+            _addDataToFile(w, cellData={"Data": vtk_data}, pointData=None)
+        else:
+            _addDataToFile(w, cellData=None, pointData={"Data": vtk_data})
+
+        w.closePiece()
+        w.closeGrid()
+        w.appendData(coordinates)
+        w.appendData(connectivity).appendData(offsets).appendData(cell_types)
+        if is_cell_data:
+            _appendDataToFile(w, cellData={"Data": vtk_data}, pointData=None)
+        else:
+            _appendDataToFile(w, cellData=None, pointData={"Data": vtk_data})
+
+        w.save()
+        group.addFile(filepath=fn, sim_time=i)
+    group.save()
 
 def write_vtk(grid, data, filename_base, codim=2, binary_vtk=True, last_step=None):
     """Output grid-associated data in (legacy) vtk format
@@ -91,19 +91,14 @@ def write_vtk(grid, data, filename_base, codim=2, binary_vtk=True, last_step=Non
         if set must be <= len(data) to restrict output of timeseries
     """
     if not HAVE_PYVTK:
-        raise ImportError('could not import pyvtk')
-    if grid.dim != 2 or grid.dim_outer != 2:
+        raise ImportError('could not import pyevtk')
+    if grid.dim != 2:
         raise NotImplementedError
     if codim not in (0, 2):
         raise NotImplementedError
 
     subentities, coordinates, entity_map = flatten_grid(grid)
+    x, y, z = coordinates[:, 0].copy(), coordinates[:, 1].copy(), np.zeros(coordinates[:, 1].size)
+    _write_vtu_series(grid, coordinates=(x, y, z), connectivity=subentities, data=data.data,
+                      filename_base=filename_base, last_step=last_step, is_cell_data=(codim == 0))
 
-    x, y = coordinates[:, 0], coordinates[:, 1]
-    z = np.zeros(len(x))
-    coords = (x, y, z)
-    us_grid = _vtk_grid(grid.reference_element, subentities, coords)
-    if codim == 0:
-        _write_vtu_series(us_grid, data.data, filename_base, binary_vtk, last_step, True)
-    else:
-        _write_vtu_series(us_grid, data.data[:, entity_map], filename_base, binary_vtk, last_step, False)
