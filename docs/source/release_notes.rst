@@ -1,4 +1,4 @@
-.. _getting_started:
+.. _release_notes:
 
 *************
 Release Notes
