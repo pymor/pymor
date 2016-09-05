@@ -24,12 +24,11 @@ def discretize_parabolic_cg(analytical_problem, diameter=None, domain_discretize
     analytical_problem
         The |ParabolicProblem| to discretize.
     diameter
-        If not `None`, `diameter` is passed to the `domain_discretizer`.
+        If not `None`, `diameter` is passed as an argument to the `domain_discretizer`.
     domain_discretizer
         Discretizer to be used for discretizing the analytical domain. This has
         to be a function `domain_discretizer(domain_description, diameter, ...)`.
-        If further arguments should be passed to the discretizer, use
-        :func:`functools.partial`. If `None`, |discretize_domain_default| is used.
+        If `None`, |discretize_domain_default| is used.
     grid
         Instead of using a domain discretizer, the |Grid| can also be passed directly
         using this parameter.
@@ -40,10 +39,11 @@ def discretize_parabolic_cg(analytical_problem, diameter=None, domain_discretize
         The number of returned vectors of the solution trajectory. If `None`, each
         intermediate vector that is calculated is returned.
     time_stepper
-        The time-stepper to be used by :class:`~pymor.discretizations.basic.InstationaryDiscretization.solve`. Has to
-        satisfy the :class:`~pymor.algorithms.timestepping.TimeStepperInterface`.
+        The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepperInterface>`
+        to be used by :class:`~pymor.discretizations.basic.InstationaryDiscretization.solve`.
     nt
-        The number of time-steps. If provided implicit euler time-stepping is used.
+        If `time_stepper` is not specified, the number of time steps for implicit
+        Euler time stepping.
 
     Returns
     -------
@@ -111,10 +111,11 @@ def discretize_parabolic_fv(analytical_problem, diameter=None, domain_discretize
         The number of returned vectors of the solution trajectory. If `None`, each
         intermediate vector that is calculated is returned.
     time_stepper
-        The time-stepper to be used by :class:`~pymor.discretizations.basic.InstationaryDiscretization.solve`. Has to
-        satisfy the :class:`~pymor.algorithms.timestepping.TimeStepperInterface`.
+        The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepperInterface>`
+        to be used by :class:`~pymor.discretizations.basic.InstationaryDiscretization.solve`.
     nt
-        The number of time-steps. If provided implicit euler time-stepping is used.
+        If `time_stepper` is not specified, the number of time steps for implicit
+        Euler time stepping.
 
     Returns
     -------
