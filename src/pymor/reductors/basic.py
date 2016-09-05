@@ -176,3 +176,46 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
                                    old_recontructor=reconstructor)
 
     return rd, rc, {}
+
+
+def reduce_generic_pg(discretization, V, W):
+    """Generic Petrov-Galerkin reductor.
+
+    Replaces each |Operator| of the given |Discretization| with the projection
+    onto the span of the given projection matrices.
+
+    Parameters
+    ----------
+    discretization
+        The |Discretization| which is to be reduced.
+    V
+        |VectorArray| containing the right projection matrix.
+    W
+        |VectorArray| containing the left projection matrix.
+
+    Returns
+    -------
+    rd
+        The reduced |Discretization|.
+    rc
+        The reconstructor providing a `reconstruct(U)` method which reconstructs
+        high-dimensional solutions from solutions `U` of the reduced |Discretization|.
+    reduction_data
+        Additional data produced by the reduction process. Currently empty.
+    """
+    assert len(V) == len(W)
+
+    projected_ss_operators = {k: op.projected(range_basis=W, source_basis=V, product=None) if op else None
+                              for k, op in discretization.ss_operators.items()}
+    projected_is_operators = {k: op.projected(range_basis=W, source_basis=None, product=None) if op else None
+                              for k, op in discretization.is_operators.items()}
+    projected_so_operators = {k: op.projected(range_basis=None, source_basis=V, product=None) if op else None
+                              for k, op in discretization.so_operators.items()}
+    projected_io_operators = discretization.io_operators
+
+    rd = discretization.with_(ss_operators=projected_ss_operators, is_operators=projected_is_operators,
+                              so_operators=projected_so_operators, io_operators=projected_io_operators)
+    rd.disable_logging()
+    rc = GenericRBReconstructor(RB)
+
+    return rd, rc, {}
