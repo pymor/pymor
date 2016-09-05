@@ -20,7 +20,7 @@ from pymor.operators.constructions import (Concatenation, IdentityOperator, Linc
                                            VectorArrayOperator, ZeroOperator)
 from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.reductors.basic import GenericRBReconstructor
+from pymor.reductors.basic import reduce_generic_pg
 from pymor.tools.frozendict import FrozenDict
 from pymor.vectorarrays.numpy import NumpyVectorArray
 
@@ -572,41 +572,6 @@ class LTISystem(DiscretizationInterface):
         else:
             raise NotImplementedError('Only H2, Hinf, and Hankel norms are implemented.')
 
-    def project(self, Vr, Wr, Er_is_identity=False):
-        """Reduce using Petrov-Galerkin projection.
-
-        Parameters
-        ----------
-        Vr
-            Right projection matrix, |VectorArray| from `self.A.source`.
-        Wr
-            Left projection matrix, |VectorArray| from `self.A.source`.
-        Er_is_identity
-            If the reduced `E` is guaranteed to be the identity matrix.
-
-        Returns
-        -------
-        lti
-            Projected |LTISystem|:
-
-            - `A` is |NumpyMatrixOperator|,
-            - `B` is :class:`~pymor.operators.constructions.VectorArrayOperator` (transposed),
-            - `C` is :class:`~pymor.operators.constructions.VectorArrayOperator`,
-            - `D` is `self.D`,
-            - `E` is |NumpyMatrixOperator| or :class:`~pymor.operators.constructions.IdentityOperator`.
-        """
-        Ar = NumpyMatrixOperator(self.A.apply2(Wr, Vr))
-        Br = VectorArrayOperator(self.B.apply_adjoint(Wr), transposed=True)
-        Cr = VectorArrayOperator(self.C.apply(Vr))
-        Dr = self.D
-
-        if Er_is_identity:
-            Er = None
-        else:
-            Er = NumpyMatrixOperator(self.E.apply2(Wr, Vr))
-
-        return self.__class__(Ar, Br, Cr, Dr, Er, cont_time=self.cont_time)
-
     def bt(self, r=None, tol=None, typ='lyap', me_solver=None, method='bfsr'):
         """Reduce using the Balanced Truncation method to order `r` or with tolerance `tol`.
 
@@ -679,13 +644,12 @@ class LTISystem(DiscretizationInterface):
             alpha = 1 / np.sqrt(self._sv[typ][:r])
             Vr.scal(alpha)
             Wr.scal(alpha)
-            rom = self.project(Vr, Wr, Er_is_identity=True)
+            rom, rc, _ = reduce_generic_pg(self, Vr, Wr, use_default=['E'])
         elif method == 'bfsr':
             Vr = gram_schmidt(Vr, atol=0, rtol=0)
             Wr = gram_schmidt(Wr, atol=0, rtol=0)
-            rom = self.project(Vr, Wr)
+            rom, rc, _ = reduce_generic_pg(self, Vr, Wr)
 
-        rc = GenericRBReconstructor(Vr)
         reduction_data = {'Vr': Vr, 'Wr': Wr}
 
         return rom, rc, reduction_data
@@ -1032,7 +996,7 @@ class LTISystem(DiscretizationInterface):
         if compute_errors:
             errors = []
         for it in range(maxit):
-            rom = self.project(Vr, Wr)
+            rom = reduce_generic_pg(self, Vr, Wr)[0]
 
             if compute_errors:
                 err = self - rom
@@ -1079,8 +1043,7 @@ class LTISystem(DiscretizationInterface):
             if np.min(dist[-1]) < tol:
                 break
 
-        rom = self.project(Vr, Wr)
-        rc = GenericRBReconstructor(Vr)
+        rom, rc, _ = reduce_generic_pg(self, Vr, Wr)
         reduction_data = {'Vr': Vr, 'Wr': Wr, 'dist': dist, 'Sigma': Sigma, 'R': R, 'L': L}
         if compute_errors:
             reduction_data['errors'] = errors
