@@ -15,7 +15,7 @@ from pymor.tools.floatcmp import float_cmp
 
 
 def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=None):
-    """Discretize a |DomainDescription| using a sensible default implementation.
+    """Mesh a |DomainDescription| using an appropriate default implementation.
 
     This method can discretize the following |DomainDescriptions|:
 
@@ -44,7 +44,7 @@ def discretize_domain_default(domain_description, diameter=1 / 100, grid_type=No
     Parameters
     ----------
     domain_description
-        A |DomainDescription| of the domain to discretize.
+        A |DomainDescription| of the domain to mesh.
     diameter
         Maximal diameter of the codim-0 entities of the generated |Grid|.
     grid_type
