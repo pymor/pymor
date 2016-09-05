@@ -17,9 +17,10 @@ class PolygonalDomain(DomainDescriptionInterface):
     points
         List of points [x_0, x_1] that describe the polygonal chain that bounds the domain.
     boundary_types
-        Either a dictionary {BoundaryType: [i_0, ...], BoundaryType: [j_0, ...], ...} with i_0, ... being the
-        id of the line (starting with 0) that connects the corresponding points,
-        or a function that returns the |BoundaryType| for a given coordinate.
+        Either a dictionary `{boundary_type: [i_0, ...], boundary_type: [j_0, ...], ...}`
+        with `i_0, ...` being the ids of boundary segments for a given |BoundaryType|
+        (`0` is the line connecting point `0` to `1`, `1` is the line connecting point `1` to `2`
+        etc.), or a function that returns the |BoundaryType| for a given coordinate.
     holes
         List of lists of points that describe the polygonal chains that bound the holes inside the domain.
 
@@ -74,7 +75,8 @@ class CircularSectorDomain(PolygonalDomain):
     radii
         The |BoundaryType| of the two radii.
     num_points
-        The number of points that describe the polygonal chain bounding the domain.
+        The number of points of the polygonal chain approximating the circular
+        boundary.
 
     Attributes
     ----------
@@ -127,7 +129,7 @@ class DiscDomain(PolygonalDomain):
     boundary
         The |BoundaryType| of the boundary.
     num_points
-        The number of points that describe the polygonal chain bounding the domain.
+        The number of points of the polygonal chain approximating the boundary.
 
     Attributes
     ----------
