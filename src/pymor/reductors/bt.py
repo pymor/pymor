@@ -10,16 +10,19 @@ from pymor.operators.constructions import VectorArrayOperator
 
 
 def bt(discretization, r=None, tol=None, typ='lyap', me_solver=None, method='bfsr'):
-    """Reduce using the Balanced Truncation method to order `r` or with tolerance `tol`.
+    r"""Reduce using the Balanced Truncation method to order `r` or with tolerance `tol`.
 
-    .. [A05]  A. Antoulas, Approximation of Large-Scale Dynamical Systems,
+    .. [A05]  A. C. Antoulas, Approximation of Large-Scale Dynamical
+              Systems,
               SIAM, 2005.
-    .. [MG91] D. Mustafa, K. Glover, Controller Reduction by H_∞-Balanced Truncation,
+    .. [MG91] D. Mustafa, K. Glover, Controller Reduction by
+              :math:`\mathcal{H}_\infty`-Balanced Truncation,
               IEEE Transactions on Automatic Control, 36(6), 668-682, 1991.
     .. [OJ88] P. C. Opdenacker, E. A. Jonckheere, A Contraction Mapping
               Preserving Balanced Reduction Scheme and Its Infinity Norm
               Error Bounds,
-              IEEE Transactions on Circuits and Systems, 35(2), 184-189, 1988.
+              IEEE Transactions on Circuits and Systems, 35(2), 184-189,
+              1988.
 
     Parameters
     ----------
@@ -30,7 +33,8 @@ def bt(discretization, r=None, tol=None, typ='lyap', me_solver=None, method='bfs
     tol
         Tolerance for the error bound if `r` is `None`.
     typ
-        Type of the Gramian (see :func:`pymor.discretizations.iosys.LTISystem.compute_gramian`).
+        Type of the Gramian (see
+        :func:`pymor.discretizations.iosys.LTISystem.compute_gramian`).
     me_solver
         Matrix equation solver to use (see
         :func:`pymor.algorithms.lyapunov.solve_lyap` or
@@ -46,11 +50,12 @@ def bt(discretization, r=None, tol=None, typ='lyap', me_solver=None, method='bfs
     rom
         Reduced |LTISystem|.
     rc
-        The reconstructor providing a `reconstruct(U)` method which reconstructs
-        high-dimensional solutions from solutions `U` of the reduced |LTISystem|.
+        The reconstructor providing a `reconstruct(U)` method which
+        reconstructs high-dimensional solutions from solutions `U` of the
+        reduced |LTISystem|.
     reduction_data
         Dictionary of additional data produced by the reduction process.
-        Contains projection matrices `Vr` and `Wr`.
+        Contains projection matrices `V` and `W`.
     """
     assert r is not None and tol is None or r is None and tol is not None
     assert r is None or 0 < r < discretization.n
@@ -76,19 +81,19 @@ def bt(discretization, r=None, tol=None, typ='lyap', me_solver=None, method='bfs
             bounds[:-1] = 2 * typ[1] * discretization._sv[typ][-1:0:-1].cumsum()[::-1]
         r = np.argmax(bounds <= tol) + 1
 
-    Vr = VectorArrayOperator(discretization._gramian[typ]['cf']).apply(discretization._V[typ], ind=list(range(r)))
-    Wr = VectorArrayOperator(discretization._gramian[typ]['of']).apply(discretization._U[typ], ind=list(range(r)))
+    V = VectorArrayOperator(discretization._gramian[typ]['cf']).apply(discretization._V[typ], ind=list(range(r)))
+    W = VectorArrayOperator(discretization._gramian[typ]['of']).apply(discretization._U[typ], ind=list(range(r)))
 
     if method == 'sr':
         alpha = 1 / np.sqrt(discretization._sv[typ][:r])
-        Vr.scal(alpha)
-        Wr.scal(alpha)
-        rom, rc, _ = reduce_generic_pg(discretization, Vr, Wr, use_default=['E'])
+        V.scal(alpha)
+        W.scal(alpha)
+        rom, rc, _ = reduce_generic_pg(discretization, V, W, use_default=['E'])
     elif method == 'bfsr':
-        Vr = gram_schmidt(Vr, atol=0, rtol=0)
-        Wr = gram_schmidt(Wr, atol=0, rtol=0)
-        rom, rc, _ = reduce_generic_pg(discretization, Vr, Wr)
+        V = gram_schmidt(V, atol=0, rtol=0)
+        W = gram_schmidt(W, atol=0, rtol=0)
+        rom, rc, _ = reduce_generic_pg(discretization, V, W)
 
-    reduction_data = {'Vr': Vr, 'Wr': Wr}
+    reduction_data = {'V': V, 'W': W}
 
     return rom, rc, reduction_data

@@ -10,17 +10,14 @@ import scipy as sp
 import scipy.linalg as spla
 import scipy.sparse as sps
 
-from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.algorithms.lyapunov import solve_lyap
 from pymor.algorithms.riccati import solve_ricc
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.operators.block import BlockOperator, BlockDiagonalOperator
-from pymor.operators.constructions import (Concatenation, IdentityOperator, LincombOperator,
-                                           VectorArrayOperator, ZeroOperator)
+from pymor.operators.constructions import (Concatenation, IdentityOperator, LincombOperator, ZeroOperator)
 from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.reductors.basic import reduce_generic_pg
 from pymor.tools.frozendict import FrozenDict
 from pymor.vectorarrays.numpy import NumpyVectorArray
 
@@ -444,14 +441,14 @@ class LTISystem(DiscretizationInterface):
         typ
             Type of the Gramian:
 
-            - 'lyap': Lyapunov Gramian,
-            - 'lqg': LQG Gramian,
-            - ('br', gamma): Bounded Real Gramian with parameter gamma.
+            - `'lyap'`: Lyapunov Gramian,
+            - `'lqg'`: LQG Gramian,
+            - `('br', gamma)`: Bounded Real Gramian with parameter gamma.
         subtyp
             Subtype of the Gramian:
 
-            - 'cf': controllability Gramian factor,
-            - 'of': observability Gramian factor.
+            - `'cf'`: controllability Gramian factor,
+            - `'of'`: observability Gramian factor.
         me_solver
             Matrix equation solver to use (see
             :func:`pymor.algorithms.lyapunov.solve_lyap` or
@@ -532,7 +529,7 @@ class LTISystem(DiscretizationInterface):
         Parameters
         ----------
         name
-            Name of the norm ('H2', 'Hinf', 'Hankel').
+            Name of the norm (`'H2'`, `'Hinf'`, `'Hankel'`).
         """
         if name == 'H2':
             if self._H2_norm is not None:
@@ -572,402 +569,6 @@ class LTISystem(DiscretizationInterface):
         else:
             raise NotImplementedError('Only H2, Hinf, and Hankel norms are implemented.')
 
-    def arnoldi(self, sigma, b_or_c):
-        """Rational Arnoldi algorithm.
-
-        Implemented only for single-input or single-output systems.
-
-        Parameters
-        ----------
-        sigma
-            Interpolation points (closed under conjugation).
-        b_or_c
-            Character 'b' or 'c', to choose between the input or output matrix.
-
-        Returns
-        -------
-        V
-            Projection matrix.
-        """
-        assert b_or_c == 'b' and self.m == 1 or b_or_c == 'c' and self.p == 1
-
-        r = len(sigma)
-        V = self.A.source.type.make_array(self.A.source.subtype, reserve=r)
-
-        v = np.array([1.])
-        if b_or_c == 'b':
-            v = self.B.source.from_data(v)
-            v = self.B.apply(v)
-        else:
-            v = self.C.range.from_data(v)
-            v = self.C.apply_adjoint(v)
-        v.scal(1 / v.l2_norm()[0])
-
-        for i in range(r):
-            if sigma[i].imag == 0:
-                sEmA = LincombOperator((self.E, self.A), (sigma[i].real, -1))
-
-                if b_or_c == 'b':
-                    v = sEmA.apply_inverse(v)
-                else:
-                    v = sEmA.apply_inverse_adjoint(v)
-
-                if i > 0:
-                    v_norm_orig = v.l2_norm()[0]
-                    Vop = VectorArrayOperator(V)
-                    v -= Vop.apply(Vop.apply_adjoint(v))
-                    if v.l2_norm()[0] < v_norm_orig / 10:
-                        v -= Vop.apply(Vop.apply_adjoint(v))
-                v.scal(1 / v.l2_norm()[0])
-                V.append(v)
-            elif sigma[i].imag > 0:
-                sEmA = LincombOperator((self.E, self.A), (sigma[i], -1))
-
-                if b_or_c == 'b':
-                    v = sEmA.apply_inverse(v)
-                else:
-                    v = sEmA.apply_inverse_adjoint(v)
-
-                v1 = v.real
-                if i > 0:
-                    v1_norm_orig = v1.l2_norm()[0]
-                    Vop = VectorArrayOperator(V)
-                    v1 -= Vop.apply(Vop.apply_adjoint(v1))
-                    if v1.l2_norm()[0] < v1_norm_orig / 10:
-                        v1 -= Vop.apply(Vop.apply_adjoint(v1))
-                v1.scal(1 / v1.l2_norm()[0])
-                V.append(v1)
-
-                v2 = v.imag
-                v2_norm_orig = v2.l2_norm()[0]
-                Vop = VectorArrayOperator(V)
-                v2 -= Vop.apply(Vop.apply_adjoint(v2))
-                if v2.l2_norm()[0] < v2_norm_orig / 10:
-                    v2 -= Vop.apply(Vop.apply_adjoint(v2))
-                v2.scal(1 / v2.l2_norm()[0])
-                V.append(v2)
-
-                v = v2
-
-        return V
-
-    def arnoldi_tangential(self, sigma, b_or_c, directions):
-        """Tangential Rational Arnoldi algorithm.
-
-        Implemented only for multi-input or multi-output systems.
-
-        Parameters
-        ----------
-        sigma
-            Interpolation points (closed under conjugation).
-        b_or_c
-            Character 'b' or 'c', to choose between the input or output matrix.
-        directions
-            Tangential directions, |VectorArray| of length `len(sigma)` from
-            `self.B.source` or `self.C.range`
-            (depending on `b_or_c`).
-
-        Returns
-        -------
-        V
-            Projection matrix.
-        """
-        r = len(sigma)
-        assert len(directions) == r
-        assert (b_or_c == 'b' and self.m > 1 and directions in self.B.source or
-                b_or_c == 'c' and self.p > 1 and directions in self.C.range)
-
-        directions.scal(1 / directions.l2_norm())
-
-        V = self.A.source.type.make_array(self.A.source.subtype, reserve=r)
-
-        for i in range(r):
-            if sigma[i].imag == 0:
-                sEmA = LincombOperator((self.E, self.A), (sigma[i].real, -1))
-
-                if b_or_c == 'b':
-                    if i == 0:
-                        v = sEmA.apply_inverse(self.B.apply(directions.real, ind=0))
-                    else:
-                        Bd = self.B.apply(directions.real, ind=i)
-                        VTBd = VectorArrayOperator(V, transposed=True).apply(Bd)
-                        sEmA_proj_inv_VTBd = NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse(VTBd)
-                        V_sEmA_proj_inv_VTBd = VectorArrayOperator(V).apply(sEmA_proj_inv_VTBd)
-                        rd = sEmA.apply(V_sEmA_proj_inv_VTBd) - Bd
-                        v = sEmA.apply_inverse(rd)
-                else:
-                    if i == 0:
-                        v = sEmA.apply_inverse_adjoint(self.C.apply_adjoint(directions.real, ind=0))
-                    else:
-                        CTd = self.C.apply_adjoint(directions.real, ind=i)
-                        VTCTd = VectorArrayOperator(V, transposed=True).apply(CTd)
-                        sEmA_proj_inv_VTCTd = NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse_adjoint(VTCTd)
-                        V_sEmA_proj_inv_VTCTd = VectorArrayOperator(V).apply(sEmA_proj_inv_VTCTd)
-                        rd = sEmA.apply_adjoint(V_sEmA_proj_inv_VTCTd) - CTd
-                        v = sEmA.apply_inverse_adjoint(rd)
-
-                if i > 0:
-                    v_norm_orig = v.l2_norm()[0]
-                    Vop = VectorArrayOperator(V)
-                    v -= Vop.apply(Vop.apply_adjoint(v))
-                    if v.l2_norm()[0] < v_norm_orig / 10:
-                        v -= Vop.apply(Vop.apply_adjoint(v))
-                v.scal(1 / v.l2_norm()[0])
-                V.append(v)
-            elif sigma[i].imag > 0:
-                sEmA = LincombOperator((self.E, self.A), (sigma[i], -1))
-
-                if b_or_c == 'b':
-                    if i == 0:
-                        v = sEmA.apply_inverse(self.B.apply(directions, ind=0))
-                    else:
-                        Bd = self.B.apply(directions, ind=i)
-                        VTBd = VectorArrayOperator(V, transposed=True).apply(Bd)
-                        sEmA_proj_inv_VTBd = NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse(VTBd)
-                        V_sEmA_proj_inv_VTBd = VectorArrayOperator(V).apply(sEmA_proj_inv_VTBd)
-                        rd = sEmA.apply(V_sEmA_proj_inv_VTBd) - Bd
-                        v = sEmA.apply_inverse(rd)
-                else:
-                    if i == 0:
-                        v = sEmA.apply_inverse_adjoint(self.C.apply_adjoint(directions, ind=0))
-                    else:
-                        CTd = self.C.apply_adjoint(directions, ind=i)
-                        VTCTd = VectorArrayOperator(V, transposed=True).apply(CTd)
-                        sEmA_proj_inv_VTCTd = NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse_adjoint(VTCTd)
-                        V_sEmA_proj_inv_VTCTd = VectorArrayOperator(V).apply(sEmA_proj_inv_VTCTd)
-                        rd = sEmA.apply_adjoint(V_sEmA_proj_inv_VTCTd) - CTd
-                        v = sEmA.apply_inverse_adjoint(rd)
-
-                v1 = v.real
-                if i > 0:
-                    v1_norm_orig = v1.l2_norm()[0]
-                    Vop = VectorArrayOperator(V)
-                    v1 -= Vop.apply(Vop.apply_adjoint(v1))
-                    if v1.l2_norm()[0] < v1_norm_orig / 10:
-                        v1 -= Vop.apply(Vop.apply_adjoint(v1))
-                v1.scal(1 / v1.l2_norm()[0])
-                V.append(v1)
-
-                v2 = v.imag
-                v2_norm_orig = v2.l2_norm()[0]
-                Vop = VectorArrayOperator(V)
-                v2 -= Vop.apply(Vop.apply_adjoint(v2))
-                if v2.l2_norm()[0] < v2_norm_orig / 10:
-                    v2 -= Vop.apply(Vop.apply_adjoint(v2))
-                v2.scal(1 / v2.l2_norm()[0])
-                V.append(v2)
-
-                v = v2
-
-        return V
-
-    def interpolation(self, sigma, b, c):
-        """Tangential Hermite interpolation at points `sigma` and directions `b` and `c`.
-
-        Parameters
-        ----------
-        sigma
-            Interpolation points (closed under conjugation), list of length `r`.
-        b
-            Right tangential directions, |VectorArray| of length `r` from `self.B.source`.
-        c
-            Left tangential directions, |VectorArray| of length `r` from `self.C.range`.
-
-        Returns
-        -------
-        Vr
-            Right projection matrix, |VectorArray| from `self.A.source`.
-        Wr
-            Left projection matrix, |VectorArray| from `self.A.source`.
-        """
-        r = len(sigma)
-        assert b in self.B.source and len(b) == r
-        assert c in self.C.range and len(c) == r
-
-        b.scal(1 / b.l2_norm())
-        c.scal(1 / c.l2_norm())
-
-        Vr = self.A.source.type.make_array(self.A.source.subtype, reserve=r)
-        Wr = self.A.source.type.make_array(self.A.source.subtype, reserve=r)
-
-        for i in range(r):
-            if sigma[i].imag == 0:
-                sEmA = LincombOperator((self.E, self.A), (sigma[i].real, -1))
-
-                Bb = self.B.apply(b.real, ind=i)
-                Vr.append(sEmA.apply_inverse(Bb))
-
-                CTc = self.C.apply_adjoint(c.real, ind=i)
-                Wr.append(sEmA.apply_inverse_adjoint(CTc))
-            elif sigma[i].imag > 0:
-                sEmA = LincombOperator((self.E, self.A), (sigma[i], -1))
-
-                Bb = self.B.apply(b, ind=i)
-                v = sEmA.apply_inverse(Bb)
-                Vr.append(v.real)
-                Vr.append(v.imag)
-
-                CTc = self.C.apply_adjoint(c, ind=i)
-                w = sEmA.apply_inverse_adjoint(CTc)
-                Wr.append(w.real)
-                Wr.append(w.imag)
-
-        Vr = gram_schmidt(Vr, atol=0, rtol=0)
-        Wr = gram_schmidt(Wr, atol=0, rtol=0)
-
-        return Vr, Wr
-
-    def irka(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_sigma_in_rhp=True,
-             arnoldi=False, compute_errors=False):
-        """Reduce using IRKA.
-
-        .. [GAB08] S. Gugercin, A. C. Antoulas, C. A. Beattie, H_2 model reduction
-                   for large-scale linear dynamical systems,
-                   SIAM Journal on Matrix Analysis and Applications, 30(2), 609-638, 2008.
-        .. [ABG10] A. C. Antoulas, C. A. Beattie, S. Gugercin, Interpolatory model
-                   reduction of large-scale dynamical systems,
-                   Efficient Modeling and Control of Large-Scale Systems, Springer-Verlag, 2010.
-
-        Parameters
-        ----------
-        r
-            Order of the reduced order model.
-        sigma
-            Initial interpolation points (closed under conjugation), list of length `r`.
-
-            If `None`, interpolation points are log-spaced between 0.1 and 10.
-        b
-            Initial right tangential directions, |VectorArray| of length `r` from
-            `self.B.source`.
-
-            If `None`, `b` is chosen with all ones.
-        c
-            Initial left tangential directions, |VectorArray| of length `r` from
-            `self.C.range`.
-
-            If `None`, `c` is chosen with all ones.
-        tol
-            Tolerance for the largest change in interpolation points.
-        maxit
-            Maximum number of iterations.
-        verbose
-            Should consecutive distances be printed.
-        force_sigma_in_rhp
-            If True, new interpolation points are always in the right half-plane.
-            Otherwise, they are reflections of reduced order model's poles.
-        arnoldi
-            Should the Arnoldi process be used for rational interpolation.
-        compute_errors
-            Should the relative :math:`\mathcal{H}_2`-errors of intermediate reduced order models be computed.
-
-        Returns
-        -------
-        rom
-            Reduced |LTISystem| model.
-        rc
-            Reconstructor of full state.
-        reduction_data
-            Dictionary of additional data produced by the reduction process. Contains:
-
-            - projection matrices `Vr` and `Wr`,
-            - distances between interpolation points in different iterations `dist`,
-            - interpolation points from all iterations `Sigma`,
-            - right and left tangential directions `R` and `L`, and
-            - relative :math:`\mathcal{H}_2`-errors `errors` (if compute_errors is `True`).
-        """
-        assert 0 < r < self.n
-        assert sigma is None or len(sigma) == r
-        assert b is None or b in self.B.source and len(b) == r
-        assert c is None or c in self.C.range and len(c) == r
-
-        if sigma is None:
-            sigma = np.logspace(-1, 1, r)
-        if b is None:
-            b = self.B.source.from_data(np.ones((r, self.m)))
-        if c is None:
-            c = self.C.range.from_data(np.ones((r, self.p)))
-
-        if verbose:
-            if compute_errors:
-                print('iter | shift change | rel. H_2-error')
-                print('-----+--------------+---------------')
-            else:
-                print('iter | shift change')
-                print('-----+-------------')
-
-        if arnoldi:
-            if self.m == 1:
-                Vr = self.arnoldi(sigma, 'b')
-            else:
-                Vr = self.arnoldi_tangential(sigma, 'b', b)
-            if self.p == 1:
-                Wr = self.arnoldi(sigma, 'c')
-            else:
-                Wr = self.arnoldi_tangential(sigma, 'c', c)
-        else:
-            Vr, Wr = self.interpolation(sigma, b, c)
-
-        dist = []
-        Sigma = [np.array(sigma)]
-        R = [b]
-        L = [c]
-        if compute_errors:
-            errors = []
-        for it in range(maxit):
-            rom = reduce_generic_pg(self, Vr, Wr)[0]
-
-            if compute_errors:
-                err = self - rom
-                try:
-                    rel_H2_err = err.norm() / self.norm()
-                except:
-                    rel_H2_err = np.inf
-                errors.append(rel_H2_err)
-
-            sigma, Y, X = spla.eig(rom.A._matrix, rom.E._matrix, left=True, right=True)
-            if force_sigma_in_rhp:
-                sigma = np.array([np.abs(s.real) + s.imag * 1j for s in sigma])
-            else:
-                sigma *= -1
-            Sigma.append(sigma)
-
-            dist.append([])
-            for i in range(it + 1):
-                dist[-1].append(np.max(np.abs((Sigma[i] - Sigma[-1]) / Sigma[-1])))
-
-            if verbose:
-                if compute_errors:
-                    print('{:4d} | {:.6e} | {:.6e}'.format(it + 1, np.min(dist[-1]), rel_H2_err))
-                else:
-                    print('{:4d} | {:.6e}'.format(it + 1, np.min(dist[-1])))
-
-            b = rom.B.apply_adjoint(NumpyVectorArray(Y.conj().T))
-            c = rom.C.apply(NumpyVectorArray(X.T))
-            R.append(b)
-            L.append(c)
-
-            if arnoldi:
-                if self.m == 1:
-                    Vr = self.arnoldi(sigma, 'b')
-                else:
-                    Vr = self.arnoldi_tangential(sigma, 'b', b)
-                if self.p == 1:
-                    Wr = self.arnoldi(sigma, 'c')
-                else:
-                    Wr = self.arnoldi_tangential(sigma, 'c', c)
-            else:
-                Vr, Wr = self.interpolation(sigma, b, c)
-
-            if np.min(dist[-1]) < tol:
-                break
-
-        rom, rc, _ = reduce_generic_pg(self, Vr, Wr)
-        reduction_data = {'Vr': Vr, 'Wr': Wr, 'dist': dist, 'Sigma': Sigma, 'R': R, 'L': L}
-        if compute_errors:
-            reduction_data['errors'] = errors
-
-        return rom, rc, reduction_data
-
 
 class TF(DiscretizationInterface):
     """Class for input-output systems represented by a transfer function.
@@ -983,9 +584,9 @@ class TF(DiscretizationInterface):
     H
         Transfer function defined at least on the open right complex half-plane.
 
-        H(s) is a |NumPy array| of shape `(p, m)`.
+        `H(s)` is a |NumPy array| of shape `(p, m)`.
     dH
-        Complex derivative of H(s).
+        Complex derivative of `H`.
     cont_time
         `True` if the system is continuous-time, otherwise discrete-time.
     """
@@ -1016,7 +617,7 @@ class TF(DiscretizationInterface):
         Returns
         -------
         tfw
-            Transfer function values at frequencies in w, returned as a 3D |NumPy array|
+            Transfer function values at frequencies in `w`, returned as a 3D |NumPy array|
             of shape `(p, m, len(w))`.
         """
         if not self.cont_time:
@@ -1104,23 +705,29 @@ class TF(DiscretizationInterface):
     def tf_irka(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_sigma_in_rhp=True):
         """Reduce using TF-IRKA.
 
-        .. [AG12] C. A. Beattie, S. Gugercin, Realization-independent H2-approximation,
-                  Proceedings of the 51st IEEE Conference on Decision and Control, 2012.
+        .. [AG12] C. A. Beattie, S. Gugercin, Realization-independent
+                  H2-approximation,
+                  Proceedings of the 51st IEEE Conference on Decision and
+                  Control, 2012.
 
         Parameters
         ----------
         r
             Order of the reduced order model.
         sigma
-            Initial interpolation points (closed under conjugation), list of length `r`.
+            Initial interpolation points (closed under conjugation), list of
+            length `r`.
 
-            If `None`, interpolation points are log-spaced between 0.1 and 10.
+            If `None`, interpolation points are log-spaced between 0.1 and
+            10.
         b
-            Initial right tangential directions, |NumPy array| of shape `(self.m, r)`.
+            Initial right tangential directions, |NumPy array| of shape
+            `(self.m, r)`.
 
             If `None`, `b` is chosen with all ones.
         c
-            Initial left tangential directions, |NumPy array| of shape `(self.p, r)`.
+            Initial left tangential directions, |NumPy array| of shape
+            `(self.p, r)`.
 
             If `None`, `c` is chosen with all ones.
         tol
@@ -1130,17 +737,20 @@ class TF(DiscretizationInterface):
         verbose
             Should consecutive distances be printed.
         force_sigma_in_rhp
-            If True, new interpolation points are always in the right half-plane.
-            Otherwise, they are reflections of reduced order model's poles.
+            If `True`, new interpolation points are always in the right
+            half-plane. Otherwise, they are reflections of reduced order
+            model's poles.
 
         Returns
         -------
         rom
             Reduced |LTISystem| model.
         reduction_data
-            Dictionary of additional data produced by the reduction process. Contains:
+            Dictionary of additional data produced by the reduction process.
+            Contains:
 
-            - distances between interpolation points in different iterations `dist`,
+            - distances between interpolation points in different iterations
+              `dist`,
             - interpolation points from all iterations `Sigma`, and
             - right and left tangential directions `R` and `L`.
         """
