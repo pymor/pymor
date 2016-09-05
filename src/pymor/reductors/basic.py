@@ -178,7 +178,7 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
     return rd, rc, {}
 
 
-def reduce_generic_pg(discretization, V, W):
+def reduce_generic_pg(discretization, V, W, use_default=None):
     """Generic Petrov-Galerkin reductor.
 
     Replaces each |Operator| of the given |Discretization| with the projection
@@ -192,6 +192,9 @@ def reduce_generic_pg(discretization, V, W):
         |VectorArray| containing the right projection matrix.
     W
         |VectorArray| containing the left projection matrix.
+    use_default
+        Iterable of keys of |Operators| that should not be projected,
+        but a default value in `discretization.with_` is to be used.
 
     Returns
     -------
@@ -205,11 +208,11 @@ def reduce_generic_pg(discretization, V, W):
     """
     assert len(V) == len(W)
 
-    projected_ss_operators = {k: op.projected(range_basis=W, source_basis=V, product=None) if op else None
+    projected_ss_operators = {k: op.projected(range_basis=W, source_basis=V) if op and k not in use_default else None
                               for k, op in discretization.ss_operators.items()}
-    projected_is_operators = {k: op.projected(range_basis=W, source_basis=None, product=None) if op else None
+    projected_is_operators = {k: op.projected(range_basis=W, source_basis=None) if op and k not in use_default else None
                               for k, op in discretization.is_operators.items()}
-    projected_so_operators = {k: op.projected(range_basis=None, source_basis=V, product=None) if op else None
+    projected_so_operators = {k: op.projected(range_basis=None, source_basis=V) if op and k not in use_default else None
                               for k, op in discretization.so_operators.items()}
     projected_io_operators = discretization.io_operators
 
