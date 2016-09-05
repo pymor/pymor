@@ -40,8 +40,8 @@ def interpolation(discretization, sigma, b, c):
     Br = np.empty((r, discretization.m), dtype=complex)
     Cr = np.empty((discretization.p, r), dtype=complex)
 
-    Hs = [discretization.H(s) for s in sigma]
-    dHs = [discretization.dH(s) for s in sigma]
+    Hs = [discretization.eval_tf(s) for s in sigma]
+    dHs = [discretization.eval_dtf(s) for s in sigma]
 
     for i in range(r):
         for j in range(r):

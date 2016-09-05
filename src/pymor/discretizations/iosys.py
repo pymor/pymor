@@ -22,7 +22,52 @@ from pymor.tools.frozendict import FrozenDict
 from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
-class LTISystem(DiscretizationInterface):
+class InputOutputSystem(DiscretizationInterface):
+    """Base class for input-output systems.
+
+    Attributes
+    ----------
+    m
+        Number of inputs.
+    p
+        Number of outputs.
+    """
+    m = p = 0
+
+    def _solve(self, mu=None):
+        raise NotImplementedError('Discretization has no solver.')
+
+    def eval_tf(self, s, mu=None):
+        """Evaluate the transfer function of the system."""
+        raise NotImplementedError
+
+    def eval_dtf(self, s, mu=None):
+        """Evaluate the derivative of the transfer function of the system."""
+        raise NotImplementedError
+
+    def bode(self, w):
+        """Evaluate the transfer function on the imaginary axis.
+
+        Parameters
+        ----------
+        w
+            Frequencies at which to compute the transfer function.
+
+        Returns
+        -------
+        tfw
+            Transfer function values at frequencies in `w`,
+            returned as a 3D |NumPy array| of shape `(p, m, len(w))`.
+        """
+        if not self.cont_time:
+            raise NotImplementedError
+
+        self._w = w
+        self._tfw = np.dstack([self.eval_tf(1j * wi) for wi in w])
+        return self._tfw.copy()
+
+
+class LTISystem(InputOutputSystem):
     r"""Class for linear time-invariant systems.
 
     This class describes input-state-output systems given by
@@ -257,9 +302,6 @@ class LTISystem(DiscretizationInterface):
 
         return cls.from_matrices(A, B, C, D, E, cont_time)
 
-    def _solve(self, mu=None):
-        raise NotImplementedError('Discretization has no solver.')
-
     def __add__(self, other):
         """Add two |LTISystems|."""
         assert isinstance(other, LTISystem)
@@ -314,6 +356,16 @@ class LTISystem(DiscretizationInterface):
     def eval_tf(self, s):
         """Evaluate the transfer function.
 
+        The transfer function at `s` is
+
+        .. math::
+            C (s E - A)^{-1} B + D.
+
+        .. note::
+            We assume that either the number of inputs or the number of
+            outputs is small compared to the order of the system, e.g. less
+            than 10.
+
         Parameters
         ----------
         s
@@ -336,7 +388,7 @@ class LTISystem(DiscretizationInterface):
             tfs = C.apply(sEmA.apply_inverse(B.apply(I_m))).data.T
         else:
             I_p = C.range.from_data(sp.eye(self.p))
-            tfs = B.apply_adjoint(sEmA.apply_adjoint_inverse(C.apply_adjoint(I_p))).data
+            tfs = B.apply_adjoint(sEmA.apply_adjoint_inverse(C.apply_adjoint(I_p))).data.conj()
         if not isinstance(D, ZeroOperator):
             if self.m <= self.p:
                 tfs += D.apply(I_m).data.T
@@ -344,26 +396,43 @@ class LTISystem(DiscretizationInterface):
                 tfs += D.apply_adjoint(I_p).data
         return tfs
 
-    def bode(self, w):
-        """Evaluate the transfer function on the imaginary axis.
+    def eval_dtf(self, s):
+        """Evaluate the derivative of the transfer function.
+
+        The derivative of the transfer function at `s` is
+
+        .. math::
+            -C (s E - A)^{-1} E (s E - A)^{-1} B.
+
+        .. note::
+            We assume that either the number of inputs or the number of
+            outputs is small compared to the order of the system, e.g. less
+            than 10.
 
         Parameters
         ----------
-        w
-            Frequencies at which to compute the transfer function.
+        s
+            Complex number.
 
         Returns
         -------
-        tfw
-            Transfer function values at frequencies in `w`,
-            returned as a 3D |NumPy array| of shape `(p, m, len(w))`.
+        dtfs
+            Derivative of transfer function evaluated at the complex number `s`, 2D |NumPy array|.
         """
-        if not self.cont_time:
-            raise NotImplementedError
+        A = self.A
+        B = self.B
+        C = self.C
+        E = self.E
 
-        self._w = w
-        self._tfw = np.dstack([self.eval_tf(1j * wi) for wi in w])
-        return self._tfw.copy()
+        sEmA = LincombOperator((E, A), (s, -1))
+        if self.m <= self.p:
+            I_m = B.source.from_data(sp.eye(self.m))
+            dtfs = -C.apply(sEmA.apply_inverse(E.apply(sEmA.apply_inverse(B.apply(I_m))))).data.T
+        else:
+            I_p = C.range.from_data(sp.eye(self.p))
+            dtfs = B.apply_adjoint(sEmA.apply_adjoint_inverse(E.apply_adjoint(sEmA.apply_adjoint_inverse(
+                C.apply_adjoint(I_p))))).data.conj()
+        return dtfs
 
     @classmethod
     def mag_plot(cls, sys_list, plot_style_list=None, w=None, ord=None, dB=False, Hz=False):
@@ -570,7 +639,7 @@ class LTISystem(DiscretizationInterface):
             raise NotImplementedError('Only H2, Hinf, and Hankel norms are implemented.')
 
 
-class TF(DiscretizationInterface):
+class TF(InputOutputSystem):
     """Class for input-output systems represented by a transfer function.
 
     This class describes input-output systems given by a transfer function :math:`H(s)`.
@@ -597,33 +666,14 @@ class TF(DiscretizationInterface):
 
         self.m = m
         self.p = p
-        self.H = H
-        self.dH = dH
+        self.tf = H
+        self.dtf = dH
         self.cont_time = cont_time
         self._w = None
         self._tfw = None
 
-    def _solve(self, mu=None):
-        raise NotImplementedError('Discretization has no solver.')
+    def eval_tf(self, s):
+        return self.tf(s)
 
-    def bode(self, w):
-        """Compute the transfer function on the imaginary axis.
-
-        Parameters
-        ----------
-        w
-            Frequencies at which to compute the transfer function.
-
-        Returns
-        -------
-        tfw
-            Transfer function values at frequencies in `w`, returned as a 3D |NumPy array|
-            of shape `(p, m, len(w))`.
-        """
-        if not self.cont_time:
-            raise NotImplementedError
-
-        self._w = w
-        self._tfw = np.dstack([self.H(1j * wi) for wi in w])
-
-        return self._tfw.copy()
+    def eval_dtf(self, s):
+        return self.dtf(s)
