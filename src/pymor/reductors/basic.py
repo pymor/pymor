@@ -214,8 +214,9 @@ def reduce_generic_pg(discretization, V, W):
     projected_io_operators = discretization.io_operators
 
     rd = discretization.with_(ss_operators=projected_ss_operators, is_operators=projected_is_operators,
-                              so_operators=projected_so_operators, io_operators=projected_io_operators)
+                              so_operators=projected_so_operators, io_operators=projected_io_operators,
+                              cont_time=discretization.cont_time)
     rd.disable_logging()
-    rc = GenericRBReconstructor(RB)
+    rc = GenericRBReconstructor(V)
 
     return rd, rc, {}
