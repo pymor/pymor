@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
@@ -17,60 +18,72 @@ from pymor.parameters.functionals import ExpressionParameterFunctional
 
 
 def discretize_stationary_from_disk(parameter_file):
-    """Generates stationary discretization only based on data loaded from files.
+    """Load a linear affinely decomposed |StationaryDiscretization| from file.
 
-    The path and further specifications to these objects are given in an '.ini' parameter file (see example below).
-    Suitable for discrete problems given by::
+    The discretization is defined via an `.ini`-style file as follows ::
 
-        L(u, w) = F(w)
+        [system-matrices]
+        L_1.mat: l_1(μ_1,...,μ_n)
+        L_2.mat: l_2(μ_1,...,μ_n)
+        ...
 
-    with an operator L and a linear functional F with a parameter w  given as system matrices and rhs vectors in
-    an affine decomposition on the hard disk.
+        [rhs-vectors]
+        F_1.mat: f_1(μ_1,...,μ_n)
+        F_2.mat: f_2(μ_1,...,μ_n)
+        ...
+
+        [parameter]
+        μ_1: a_1,b_1
+        ...
+        μ_n: a_n,b_n
+
+        [products]
+        Prod1: P_1.mat
+        Prod2: P_2.mat
+        ...
+
+    Here, `L_1.mat`, `L_2.mat`, ..., `F_1.mat`, `F_2.mat`, ... are files
+    containing matrices `L_1`, `L_2`, ... and vectors `F_1.mat`, `F_2.mat`, ...
+    which correspond to the affine components of the operator and right-hand
+    side functional.  The respective coefficient functionals, are given via the
+    string expressions `l_1(...)`, `l_2(...)`, ..., `f_1(...)` in the
+    (scalar-valued) |Parameter| components `w_1`, ..., `w_n`. The allowed lower
+    and upper bounds `a_i, b_i` for the component `μ_i` are specified in the
+    `[parameters]` section. The resulting operator and right-hand side are
+    then of the form ::
+
+        L(μ) = l_1(μ)*L_1 + l_2(μ)*L_2+ ...
+        F(μ) = f_1(μ)*F_1 + f_2(μ)*L_2+ ...
+
+    In the `[products]` section, an optional list of inner products `Prod1`, `Prod2`, ..
+    with corresponding matrices `P_1.mat`, `P_2.mat` can be specified.
+
+    Example::
+
+        [system-matrices]
+        matrix1.mat: 1.
+        matrix2.mat: 1. - theta**2
+
+        [rhs-vectors]
+        rhs.mat: 1.
+
+        [parameter]
+        theta: 0, 0.5
+
+        [products]
+        h1: h1.mat
+        l2: mass.mat
+
 
     Parameters
     ----------
-    parameterFile
-        String containing the path to the .ini parameter file.
+    parameter_file
+        Path to the parameter file.
 
     Returns
     -------
     discretization
-        The |Discretization| that has been generated.
-
-
-    Example
-    -------
-    Following parameter file is suitable for a discrete elliptic problem with
-
-    L(u, w) = (f_1(w)*K1 + f_2(w)*K2+...)*u and F(w) = g_1(w)*L1+g_2(w)*L2+... with
-    parameter w_i in [a_i,b_i], where f_i(w) and g_i(w) are strings of valid python
-    expressions.
-
-    Optional products can be provided to introduce a dict of inner products on
-    the discrete space. The content of the file is then given as::
-
-        [system-matrices]
-        # path_to_object: parameter_functional_associated_with_object
-        K1.mat: f_1(w_1,...,w_n)
-        K2.mat: f_2(w_1,...,w_n)
-        ...
-
-        [rhs-vectors]
-        L1.mat: g_1(w_1,...,w_n)
-        L2.mat: g_2(w_1,...,w_n)
-        ...
-
-        [parameter]
-        # Name: lower_bound,upper_bound
-        w_1: a_1,b_1
-        ...
-        w_n: a_n,b_n
-
-        [products]
-        # Name: path_to_object
-        Prod1: S.mat
-        Prod2: T.mat
-        ...
+        The |StationaryDiscretization| that has been generated.
     """
     assert ".ini" == parameter_file[-4:], "Given file is not an .ini file"
     base_path = os.path.dirname(parameter_file)
@@ -149,58 +162,19 @@ def discretize_stationary_from_disk(parameter_file):
 
 
 def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=None, time_stepper=None):
-    """Generates instationary discretization based on data given loaded from files.
+    """Load a linear affinely decomposed |InstationaryDiscretization| from file.
 
-    The path and further specifications to these objects are given in an '.ini'
-    parameter file (see example below). Suitable for discrete problems given by::
-
-        M(u(t), w) + L(u(t), w, t) = F(t, w)
-                              u(0) = u_0
-
-    for t in [0,T], where L is a linear time-dependent
-    |Operator|, F is a time-dependent linear |Functional|, u_0 the
-    initial data and w the parameter. The mass |Operator| M is assumed to be linear,
-    time-independent and |Parameter|-independent.
-
-    Parameters
-    ----------
-    parameter_file
-        String containing the path to the '.ini' parameter file.
-    T
-        End-time of desired solution, if None obtained from parameter file
-    steps
-        Number of time steps to do, if None obtained from parameter file
-    u0
-        Initial solution, if None obtained from parameter file
-    time_stepper
-        The desired time_stepper to use, if None an Implicit euler scheme is used.
-
-    Returns
-    -------
-    discretization
-        The |Discretization| that has been generated.
-
-    Example
-    -------
-    Following parameter file is suitable for a discrete parabolic problem with
-
-    L(u(w), w) = (f_1(w)*K1 + f_2(w)*K2+...)*u, F(w) = g_1(w)*L1+g_2(w)*L2+..., M = D and
-    u_0(w)=u0 with parameter w_i in [a_i,b_i], where f_i(w) and g_i(w) are strings of valid python
-    expressions.
-
-    Optional products can be provided to introduce a dict of inner products on the discrete space.
-    Time specifications like T and steps can also be provided, but are optional when already given
-    by call of this method. The content of the file is then given as::
+    Similarly to :func:`discretize_stationary_from_disk`, the discretization is
+    specified via an `ini.`-file of the following form ::
 
         [system-matrices]
-        # path_to_object: parameter_functional_associated_with_object
-        K1.mat: f_1(w_1,...,w_n)
-        K2.mat: f_2(w_1,...,w_n)
+        L_1.mat: l_1(μ_1,...,μ_n)
+        L_2.mat: l_2(μ_1,...,μ_n)
         ...
 
         [rhs-vectors]
-        L1.mat: g_1(w_1,...,w_n)
-        L2.mat: g_2(w_1,...,w_n)
+        F_1.mat: f_1(μ_1,...,μ_n)
+        F_2.mat: f_2(μ_1,...,μ_n)
         ...
 
         [mass-matrix]
@@ -210,21 +184,41 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
         u0: u0.mat
 
         [parameter]
-        # Name: lower_bound,upper_bound
-        w_1: a_1,b_1
+        μ_1: a_1,b_1
         ...
-        w_n: a_n,b_n
+        μ_n: a_n,b_n
 
         [products]
-        # Name: path_to_object
-        Prod1: S.mat
-        Prod2: T.mat
+        Prod1: P_1.mat
+        Prod2: P_2.mat
         ...
 
         [time]
-        # fixed_Name: value
-        T: 10.0
-        steps: 100
+        T: final time
+        steps: number of time steps
+
+
+    Parameters
+    ----------
+    parameter_file
+        Path to the '.ini' parameter file.
+    T
+        End-time of desired solution. If `None`, the value specified in the
+        parameter file is used.
+    steps
+        Number of time steps to. If `None`, the value specified in the
+        parameter file is used.
+    u0
+        Initial solution. If `None` the initial solution is obtained
+        from parameter file.
+    time_stepper
+        The desired :class:`time stepper <pymor.algorithms.timestepping.TimeStepperInterface>`
+        to use. If `None`, implicit Euler time stepping is used.
+
+    Returns
+    -------
+    discretization
+        The |InstationaryDiscretization| that has been generated.
     """
     assert ".ini" == parameter_file[-4:], "Given file is not an .ini file"
     base_path = os.path.dirname(parameter_file)
