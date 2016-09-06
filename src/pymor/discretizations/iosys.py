@@ -87,15 +87,15 @@ class LTISystem(InputOutputSystem):
     Parameters
     ----------
     A
-        The |Operator| A.
+        |Operator| A.
     B
-        The |Operator| B.
+        |Operator| B.
     C
-        The |Operator| C.
+        |Operator| C.
     D
-        The |Operator| D or `None` (then D is assumed to be zero).
+        |Operator| D or `None` (then D is assumed to be zero).
     E
-        The |Operator| E or `None` (then E is assumed to be identity).
+        |Operator| E or `None` (then E is assumed to be identity).
     ss_operators
         Dictonary for state-to-state operators A and E.
     is_operators
@@ -116,15 +116,15 @@ class LTISystem(InputOutputSystem):
     p
         Number of outputs.
     A
-        The |Operator| A. The same as `ss_operators['A']`.
+        |Operator| A. Same as `ss_operators['A']`.
     B
-        The |Operator| B. The same as `is_operators['B']`.
+        |Operator| B. Same as `is_operators['B']`.
     C
-        The |Operator| C. The same as `so_operators['C']`.
+        |Operator| C. Same as `so_operators['C']`.
     D
-        The |Operator| D. The same as `io_operators['D']`.
+        |Operator| D. Same as `io_operators['D']`.
     E
-        The |Operator| E. The same as `ss_operators['E']`.
+        |Operator| E. Same as `ss_operators['E']`.
     """
     linear = True
 
@@ -178,15 +178,15 @@ class LTISystem(InputOutputSystem):
         Parameters
         ----------
         A
-            The |NumPy array| or |SciPy spmatrix| A.
+            |NumPy array| or |SciPy spmatrix| A.
         B
-            The |NumPy array| or |SciPy spmatrix| B.
+            |NumPy array| or |SciPy spmatrix| B.
         C
-            The |NumPy array| or |SciPy spmatrix| C.
+            |NumPy array| or |SciPy spmatrix| C.
         D
-            The |NumPy array| or |SciPy spmatrix| D or `None` (then D is assumed to be zero).
+            |NumPy array| or |SciPy spmatrix| D or `None` (then D is assumed to be zero).
         E
-            The |NumPy array| or |SciPy spmatrix| E or `None` (then E is assumed to be identity).
+            |NumPy array| or |SciPy spmatrix| E or `None` (then E is assumed to be identity).
         cont_time
             `True` if the system is continuous-time, otherwise discrete-time.
 
@@ -699,23 +699,23 @@ class SecondOrderSystem(InputOutputSystem):
     Parameters
     ----------
     M
-        The |Operator| M or `None` (then M is assumed to be identity).
+        |Operator| M or `None` (then M is assumed to be identity).
     D
-        The |Operator| D or `None` (then D is assumed to be zero).
+        |Operator| D or `None` (then D is assumed to be zero).
     K
-        The |Operator| K.
+        |Operator| K.
     B
-        The |Operator| B.
+        |Operator| B.
     Cp
-        The |Operator| Cp.
+        |Operator| Cp.
     Cv
-        The |Operator| Cv.
+        |Operator| Cv.
     ss_operators
         Dictonary for state-to-state operators M, D, and K.
     is_operators
         Dictonary for input-to-state operator B.
     so_operators
-        Dictonary for state-to-output operator Cp and Cv.
+        Dictonary for state-to-output operators Cp and Cv.
     cont_time
         `True` if the system is continuous-time, otherwise discrete-time.
 
@@ -728,17 +728,17 @@ class SecondOrderSystem(InputOutputSystem):
     p
         Number of outputs.
     M
-        The |Operator| M. The same as `ss_operators['M']`.
+        |Operator| M. Same as `ss_operators['M']`.
     D
-        The |Operator| M. The same as `ss_operators['D']`.
+        |Operator| M. Same as `ss_operators['D']`.
     K
-        The |Operator| M. The same as `ss_operators['K']`.
+        |Operator| M. Same as `ss_operators['K']`.
     B
-        The |Operator| B. The same as `is_operators['B']`.
+        |Operator| B. Same as `is_operators['B']`.
     Cp
-        The |Operator| C. The same as `so_operators['Cp']`.
+        |Operator| Cp. Same as `so_operators['Cp']`.
     Cv
-        The |Operator| C. The same as `so_operators['Cv']`.
+        |Operator| Cv. Same as `so_operators['Cv']`.
     """
     linear = True
 
@@ -875,3 +875,107 @@ class SecondOrderSystem(InputOutputSystem):
             dtfs -= B.apply_adjoint(s2MpsDpK.apply_inverse_adjoint(sM2pD.apply_adjoint(s2MpsDpK.apply_inverse_adjoint(
                 Cp.apply_adjoint(I_p) + Cv.apply_adjoint(I_p) * s.conj())))).data.conj()
         return dtfs
+
+
+class BilinearSystem(InputOutputSystem):
+    """Class for bilinear systems.
+
+    This class describes input-output systems given by
+
+    .. math::
+        E x'(t) &= A x(t) + \sum_{i = 1}^m{N_i x(t) u_i(t)} + B u(t) \\
+           y(t) &= C x(t)
+
+    if continuous-time, or
+
+    .. math::
+        E x(k + 1) &= A x(k) + \sum_{i = 1}^m{N_i x(k) u_i(k)} + B u(k) \\
+              y(k) &= C x(k)
+
+    if discrete-time, where E, A, N_i, B, and C are linear operators and m
+    is the number of inputs.
+
+    Parameters
+    ----------
+    E
+        |Operator| E or `None` (then E is assumed to be identity).
+    A
+        |Operator| A.
+    N
+        Tuple of |Operators| N_i.
+    B
+        |Operator| B.
+    C
+        |Operator| C.
+    ss_operators
+        Dictonary for state-to-state operators E, A, and N_i.
+    is_operators
+        Dictonary for input-to-state operator B.
+    so_operators
+        Dictonary for state-to-output operator C.
+    cont_time
+        `True` if the system is continuous-time, otherwise discrete-time.
+
+    Attributes
+    ----------
+    n
+        Order of the system (equal to A.source.dim).
+    m
+        Number of inputs.
+    p
+        Number of outputs.
+    E
+        |Operator| E. Same as `ss_operators['E']`.
+    A
+        |Operator| A. Same as `ss_operators['A']`.
+    N
+        List of |Operators| N_i. Same as `ss_operators['N']`.
+    B
+        |Operator| B. Same as `is_operators['B']`.
+    C
+        |Operator| C. Same as `so_operators['C']`.
+    """
+    linear = True
+
+    def __init__(self, E=None, A=None, N=None, B=None, C=None, ss_operators=None, is_operators=None,
+                 so_operators=None, io_operators=None, cont_time=True):
+        E = E or ss_operators.get('E')
+        A = A or ss_operators['A']
+        N = N or ss_operators['N']
+        B = B or is_operators['B']
+        C = C or so_operators['C']
+        assert isinstance(A, OperatorInterface) and A.linear
+        assert A.source == A.range
+        assert all(isinstance(Ni, OperatorInterface) and Ni.linear for Ni in N)
+        assert all(Ni.source == Ni.range == A.source for Ni in N)
+        assert isinstance(B, OperatorInterface) and B.linear
+        assert B.range == A.source
+        assert isinstance(C, OperatorInterface) and C.linear
+        assert C.source == A.range
+        assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source
+        assert cont_time in (True, False)
+
+        self.n = A.source.dim
+        self.m = B.source.dim
+        self.p = C.range.dim
+        self.E = E if E is not None else IdentityOperator(A.source)
+        self.A = A
+        self.N = N
+        self.B = B
+        self.C = C
+        self.ss_operators = FrozenDict({'E': self.E, 'A': A, 'N': N})
+        self.is_operators = FrozenDict({'B': B})
+        self.so_operators = FrozenDict({'C': C})
+        self.io_operators = FrozenDict({})
+        self.cont_time = cont_time
+        self._poles = None
+        self._w = None
+        self._tfw = None
+        self._gramian = {}
+        self._sv = {}
+        self._U = {}
+        self._V = {}
+        self._H2_norm = None
+        self._Hinf_norm = None
+        self._fpeak = None
+        self.build_parameter_type(inherits=(E, A, N, B, C))
