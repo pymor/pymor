@@ -1084,6 +1084,121 @@ class LinearDelaySystem(InputOutputSystem):
         return dtfs
 
 
+class LinearStochasticSystem(InputOutputSystem):
+    r"""Class for linear stochastic systems.
+
+    This class describes input-output systems given by
+
+    .. math::
+        E \mathrm{d}x(t) &= A x(t) \mathrm{d}t
+                            + \sum_{i = 1}^q{A_i x(t) \mathrm{d}\omega_i(t)}
+                            + B u(t) \mathrm{d}t \\
+                    y(t) &= C x(t)
+
+    if continuous-time, or
+
+    .. math::
+        E x(k + 1) &= A x(k) + \sum_{i = 1}^q{A_i x(k) \omega_i(k)} + B u(k) \\
+              y(k) &= C x(k)
+
+    if discrete-time, where :math:`E`, :math:`A`, :math:`A_i`, :math:`B`,
+    and :math:`C` are linear operators and :math:`\omega_i` are stochastic
+    processes.
+
+    Parameters
+    ----------
+    E
+        The |Operator| E or `None` (then E is assumed to be identity).
+    A
+        The |Operator| A.
+    As
+        The tuple of |Operators| A_i.
+    B
+        The |Operator| B.
+    C
+        The |Operator| C.
+    ss_operators
+        A dictonary for state-to-state |Operators| E, A, and As.
+    is_operators
+        A dictonary for input-to-state |Operator| B.
+    so_operators
+        A dictonary for state-to-output |Operator| C.
+    cont_time
+        `True` if the system is continuous-time, otherwise `False`.
+
+    Attributes
+    ----------
+    n
+        The order of the system (equal to A.source.dim).
+    m
+        The number of inputs.
+    p
+        The number of outputs.
+    q
+        The number of stochastic processes.
+    E
+        The |Operator| E. The same as `ss_operators['E']`.
+    A
+        The |Operator| A. The same as `ss_operators['A']`.
+    As
+        The tuple of |Operators| A_i. The same as `ss_operators['As']`.
+    B
+        The |Operator| B. The same as `is_operators['B']`.
+    C
+        The |Operator| C. The same as `so_operators['C']`.
+    """
+    linear = True
+
+    def __init__(self, E=None, A=None, As=None, tau=None, B=None, C=None, ss_operators=None, is_operators=None,
+                 so_operators=None, io_operators=None, cont_time=True):
+        E = E or ss_operators.get('E')
+        A = A or ss_operators['A']
+        As = As or ss_operators['As']
+        B = B or is_operators['B']
+        C = C or so_operators['C']
+        assert isinstance(A, OperatorInterface) and A.linear
+        assert A.source == A.range
+        assert isinstance(As, tuple)
+        assert len(As) > 0
+        assert all(isinstance(Ai, OperatorInterface) and Ai.linear for Ai in As)
+        assert all(Ai.source == Ai.range == A.source for Ai in As)
+        assert isinstance(tau, tuple)
+        assert len(tau) == len(As)
+        assert all(taui > 0 for taui in tau)
+        assert isinstance(B, OperatorInterface) and B.linear
+        assert B.range == A.source
+        assert isinstance(C, OperatorInterface) and C.linear
+        assert C.source == A.range
+        assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source
+        assert cont_time in (True, False)
+
+        self.n = A.source.dim
+        self.m = B.source.dim
+        self.p = C.range.dim
+        self.q = len(As)
+        self.E = E if E is not None else IdentityOperator(A.source)
+        self.A = A
+        self.As = As
+        self.B = B
+        self.C = C
+        self.ss_operators = FrozenDict({'E': self.E, 'A': A, 'As': As})
+        self.is_operators = FrozenDict({'B': B})
+        self.so_operators = FrozenDict({'C': C})
+        self.io_operators = FrozenDict({})
+        self.cont_time = cont_time
+        self._poles = None
+        self._w = None
+        self._tfw = None
+        self._gramian = {}
+        self._sv = {}
+        self._U = {}
+        self._V = {}
+        self._H2_norm = None
+        self._Hinf_norm = None
+        self._fpeak = None
+        self.build_parameter_type(inherits=(E, A, As, B, C))
+
+
 class BilinearSystem(InputOutputSystem):
     r"""Class for bilinear systems.
 
