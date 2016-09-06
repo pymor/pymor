@@ -21,7 +21,7 @@ if HAVE_FENICS:
         Parameters
         ----------
         function_space
-            The FEniCS FunctionSpace for which we want to visualize dof vectors.
+            The FEniCS `FunctionSpace` for which we want to visualize DOF vectors.
         """
 
         def __init__(self, function_space):
@@ -38,10 +38,10 @@ if HAVE_FENICS:
                 |VectorArray| of the data to visualize (length must be 1). Alternatively,
                 a tuple of |VectorArrays| which will be visualized in separate windows.
                 If `filename` is specified, only one |VectorArray| may be provided which,
-                however, is allowed to contain multipled vectors which will be interpreted
+                however, is allowed to contain multipled vectors that will be interpreted
                 as a time series.
             discretization
-                Filled in :meth:`pymor.discretizations.DiscretizationBase.visualize` (ignored).
+                Filled in by :meth:`pymor.discretizations.DiscretizationBase.visualize` (ignored).
             title
                 Title of the plot.
             legend
