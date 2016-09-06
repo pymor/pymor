@@ -22,20 +22,17 @@
       <h1>
 <a id="pymor---model-order-reduction-with-python" class="anchor" href="#pymor---model-order-reduction-with-python" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>pyMOR - Model Order Reduction with Python</h1>
 
-<p>pyMOR is a software library developed at the University of Münster for building
-model order reduction applications with the Python programming language.  Its
-main focus lies on the application of reduced basis methods to parameterized
-partial differential equations.  All algorithms in pyMOR are formulated in
-terms of abstract interfaces for seamless integration with external
-high-dimensional PDE solvers. Moreover, pure Python implementations of finite
-element and finite volume discretizations using the NumPy/SciPy scientific
-computing stack are provided for getting started quickly.</p>
+<p>pyMOR is a software library for building model order reduction applications
+with the Python programming language.  Its main focus lies on the application
+of reduced basis methods to parameterized partial differential equations.  All
+algorithms in pyMOR are formulated in terms of abstract interfaces for seamless
+integration with external high-dimensional PDE solvers. Moreover, pure Python
+implementations of finite element and finite volume discretizations using the
+NumPy/SciPy scientific computing stack are provided for getting started
+quickly.</p>
 
-<p><strong>NOTE</strong> pyMOR is still in early development.  Should you have any questions
-regarding pyMOR or wish to contribute, do not hesitate to contact us!</p>
-
-<p><a href="http://pymor.readthedocs.io/en/latest"><img src="https://readthedocs.io/projects/pymor/badge/?version=latest" alt="Docs"></a>
-<a href="http://pymor.readthedocs.io/en/0.3.x"><img src="https://readthedocs.io/projects/pymor/badge/?version=0.3.x" alt="Docs"></a>
+<p><a href="http://pymor.readthedocs.org/en/latest"><img src="https://readthedocs.org/projects/pymor/badge/?version=latest" alt="Docs"></a>
+<a href="http://pymor.readthedocs.org/en/0.3.x"><img src="https://readthedocs.org/projects/pymor/badge/?version=0.3.x" alt="Docs"></a>
 <a href="http://dx.doi.org/10.5281/zenodo.15773"><img src="https://zenodo.org/badge/8838/pymor/pymor.svg" alt="DOI"></a>
 <a href="https://travis-ci.org/pymor/pymor"><img src="https://travis-ci.org/pymor/pymor.png?branch=master" alt="Build Status"></a>
 <a href="https://coveralls.io/r/pymor/pymor"><img src="https://coveralls.io/repos/pymor/pymor/badge.png" alt="Coverage Status"></a></p>
@@ -43,36 +40,31 @@ regarding pyMOR or wish to contribute, do not hesitate to contact us!</p>
 <h2>
 <a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>License</h2>
 
-<p>Copyright (c) 2013, 2014, 2015, Rene Milk, Stephan Rave, Felix Schindler
-All rights reserved.</p>
+<p>Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.</p>
 
-<p>Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:</p>
+<p>Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
+following conditions are met:</p>
 
 <ul>
-<li>Redistributions of source code must retain the above copyright notice, this
-list of conditions and the following disclaimer.</li>
-<li>Redistributions in binary form must reproduce the above copyright notice,
-this list of conditions and the following disclaimer in the documentation
-and/or other materials provided with the distribution.</li>
+<li>Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+disclaimer.</li>
+<li>Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
+disclaimer in the documentation and/or other materials provided with the distribution.</li>
 </ul>
 
-<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
 
 <p>The following files contain source code originating from other open source software projects:</p>
 
 <ul>
 <li>docs/source/pymordocstring.py  (sphinxcontrib-napoleon)</li>
-<li>src/pymor/algorithms/genericsolvers.py (SciPy)</li>
+<li>src/pymor/la/genericsolvers.py (SciPy)</li>
 </ul>
 
 <p>See these files for more information.</p>
@@ -101,63 +93,64 @@ sudo apt-get install python-pymor-doc
 all installed demos.</p>
 
 <h2>
-<a id="installation-into-a-virtualenv" class="anchor" href="#installation-into-a-virtualenv" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Installation into a virtualenv</h2>
+<a id="installation-via-pip" class="anchor" href="#installation-via-pip" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Installation via pip</h2>
 
-<p>When installing pyMOR manually, we recommend installation into a dedicated
-Python <a href="http://www.virtualenv.org/">virtualenv</a>. On Debian based systems,
-install virtualenv using</p>
+<p>pyMOR can also easily be installed via the <a href="https://pip.pypa.io/en/stable/">pip</a>
+command:</p>
 
-<pre><code>sudo apt-get install python-virtualenv
+<pre><code>pip install [--user] pymor
 </code></pre>
 
-<p>On Ubuntu systems, you may also wish to install pyMOR's dependencies 
-system-wide using</p>
+<p>This will install the latest release of pyMOR on your system. If you pass the
+optional <code>--user</code> argument, pyMOR will only be installed for your local user,
+not requiring administrator privileges. To install the latest development version
+of pyMOR, execute</p>
 
-<pre><code>sudo apt-add-repository ppa:pymor/stable
-sudo apt-get update
-sudo apt-get build-dep python-pymor
+<pre><code>pip install [--user] git+https://github.com/pymor/pymor
 </code></pre>
 
-<p>Then create a new virtualenv and activate it:</p>
+<p>which will require that the <a href="https://git-scm.com/">git</a> version control system is
+installed on your system.</p>
 
-<pre><code>virtualenv --system-site-packages $PATH_TO_VIRTUALENV
-source $PATH_TO_VIRTUALENV/bin/activate
+<p>From time to time, the master branch of pyMOR undergoes major changes and things
+might break (this is usually announced on our
+<a href="http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev">mailing list</a>),
+so you might prefer to install pyMOR from the current release branch:</p>
+
+<pre><code>pip install [--user] git+https://github.com/pymor/pymor@0.4.x
 </code></pre>
 
-<p>The <code>--system-site-packages</code> flag makes Python packages installed
-by your distribution available inside the virtualenv. If you do not wish
-this behaviour, simply remove the flag.</p>
+<p>Release branches will always stay stable and will only receive bugfix commits
+after the corresponding release has been made.</p>
 
-<p>On older distributions you will have to upgrade the distribute package.
-Moreover, if NumPy and Cython are not already available in the virtualenv,
-we will have to install them manually. (Automatic dependency resolution
-via pip fails for these packages. To build NumPy and, later, SciPy, you
-will need to have Fortran as well as BLAS and LAPACK headers installed
-on your system.)</p>
+<p>Note that pyMOR depends on <a href="http://www.cython.org/">Cython</a>, as well as the
+<a href="http://numpy.org/">NumPy</a> and <a href="http://www.scipy.org/">SciPy</a> packages.
+On all major Linux distributions, these packages can be easily installed
+via the distribution's package manager. For Debian-based systems (e.g. Ubuntu),
+the following command should work:</p>
 
-<pre><code>pip install --upgrade distribute
-pip install cython
-pip install numpy
+<pre><code>sudo apt-get install cython python-pip python-numpy python-scipy
 </code></pre>
 
-<p>Finally install pyMOR itself with all missing dependencies:</p>
+<p>When not available on your system, pip will automatically build and
+install these dependencies. This, however, will in turn require a full C/C++ compiler
+toolchain and header files for several libraries (BLAS, etc.).</p>
 
-<pre><code>pip install pymor
+<p>After installation of pyMOR, further optional packages will be suggested if
+not already installed.  Some of these (<a href="http://qt-project.org/wiki/PySide">PySide</a>,
+<a href="http://matplotlib.org">matplotlib</a>, <a href="http://pyopengl.sourceforge.net/">pyopengl</a>,
+<a href="http://mpi4py.scipy.org/">mpi4py</a>) are again most easily installed
+via your package manager. For Debian-based systems, try:</p>
+
+<pre><code>sudo apt-get install python-pyside python-matplotlib python-opengl python-mpi4py
 </code></pre>
 
-<p>The installation script might recommend the installation of additional
-packages. (This is easy to miss, as pip will install dependencies after
-pyMOR itself has been installed, so search at the top of your console
-log!) You will most likely want to install <a href="http://www.ipython.org">IPython</a>
-and, in particular, <a href="http://matplotlib.org">matplotlib</a>,
-<a href="http://pyopengl.sourceforge.net/">PyOpenGL</a>,
-and <a href="http://qt-project.org/wiki/PySide">PySide</a>. The latter
-packages are required for pyMOR's visualization routines.</p>
+<p>Again, all these dependencies can also be installed directly via pip.</p>
 
 <h2>
 <a id="documentation" class="anchor" href="#documentation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Documentation</h2>
 
-<p>Documentation is available online at <a href="http://pymor.readthedocs.io/">Read the Docs</a>
+<p>Documentation is available online at <a href="http://pymor.readthedocs.org/">Read the Docs</a>
 or offline in the <code>python-pymor-doc</code> package.</p>
 
 <p>To build the documentation yourself, execute</p>
@@ -218,18 +211,19 @@ need help with the integration of your PDE solver.</p>
 <h2>
 <a id="setting-up-an-environment-for-pymor-development" class="anchor" href="#setting-up-an-environment-for-pymor-development" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Setting up an Environment for pyMOR Development</h2>
 
-<p>If you want to modify (or extend!) pyMOR itself, we recommend to setup a
-virtualenv for development (see above). The virtualenv should have all
-dependencies of pyMOR available. On Ubuntu machines, you can simply install
-pyMOR from our PPA and then create an empty virtualenv with system
-site-packages enabled. Otherwise, follow the above instructions for installing
-pyMOR inside a virtualenv. However, pyMOR itself should not be installed inside
-the virtualenv. If it is, use</p>
+<p>First make sure that all dependencies are installed. This can be easily
+achieved by first installing pyMOR with its dependencies as described
+above. Then uninstall the pyMOR package itself, e.g.</p>
 
-<pre><code>pip uninstall pymor
+<pre><code>sudo apt-get uninstall python-pymor
 </code></pre>
 
-<p>to remove it. Then, clone the pyMOR git repository using</p>
+<p>or</p>
+
+<pre><code>pip uninstall pyMOR
+</code></pre>
+
+<p>Then, clone the pyMOR git repository using</p>
 
 <pre><code>git clone https://github.com/pymor/pymor $PYMOR_SOURCE_DIR
 cd $PYMOR_SOURCE_DIR
@@ -240,15 +234,20 @@ cd $PYMOR_SOURCE_DIR
 <pre><code>git checkout 0.2.x
 </code></pre>
 
-<p>Then, add pyMOR to the path of your virtualenv:</p>
+<p>Then, add pyMOR to the search path of your Python interpreter, either by
+setting PYTHONPATH</p>
 
-<pre><code>echo "$PYMOR_SOURCE_DIR/src" &gt; $VIRTUAL_ENV/lib/python2.7/site-packages/pymor.pth
+<pre><code>export PYTHONPATH=$PYMOR_SOURCE_DIR/src:$PYTHONPATH
 </code></pre>
 
-<p>This will make pyMOR importable inside the virtualenv and will override any
-other pyMOR versions installed on the system.</p>
+<p>or by using a .pth file:</p>
 
-<p>Finally, build the Cython extension modules as described in the next section.</p>
+<pre><code>echo "$PYMOR_SOURCE_DIR/src" &gt; $PYTHON_ROOT/lib/python2.7/site-packages/pymor.pth
+</code></pre>
+
+<p>Here, PYTHON_ROOT is either '/usr', '$HOME/.local' or the root of your
+<a href="http://www.virtualenv.org/">virtual environment</a>. Finally, build the Cython
+extension modules as described in the next section.</p>
 
 <h2>
 <a id="cython-extension-modules" class="anchor" href="#cython-extension-modules" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Cython extension modules</h2>
