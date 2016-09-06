@@ -112,8 +112,8 @@ def thermalblock_demo(args):
 
     if args['--plot-solutions']:
         print('Showing some solutions')
-        Us = tuple()
-        legend = tuple()
+        Us = ()
+        legend = ()
         for mu in d.parameter_space.sample_randomly(2):
             print('Solving for diffusion = \n{} ... '.format(mu['diffusion']))
             sys.stdout.flush()

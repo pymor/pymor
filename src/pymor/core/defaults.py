@@ -221,7 +221,7 @@ def defaults(*args, **kwargs):
 
     assert all(isinstance(arg, str) for arg in args)
     assert set(kwargs.keys()) <= {'sid_ignore', 'qualname'}
-    sid_ignore = kwargs.get('sid_ignore', tuple())
+    sid_ignore = kwargs.get('sid_ignore', ())
     qualname = kwargs.get('qualname', None)
 
     def the_decorator(func):

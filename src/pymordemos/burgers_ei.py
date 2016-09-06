@@ -147,8 +147,8 @@ def burgers_demo(args):
 
     if args['--plot-solutions']:
         print('Showing some solutions')
-        Us = tuple()
-        legend = tuple()
+        Us = ()
+        legend = ()
         for mu in discretization.parameter_space.sample_uniformly(4):
             print('Solving for exponent = {} ... '.format(mu['exponent']))
             sys.stdout.flush()
@@ -166,8 +166,8 @@ def burgers_demo(args):
 
     if args['--plot-ei-err']:
         print('Showing some EI errors')
-        ERRs = tuple()
-        legend = tuple()
+        ERRs = ()
+        legend = ()
         for mu in discretization.parameter_space.sample_randomly(2):
             print('Solving for exponent = \n{} ... '.format(mu['exponent']))
             sys.stdout.flush()

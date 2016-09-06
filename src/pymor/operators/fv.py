@@ -603,7 +603,7 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
 
     def __init__(self, grid, function=None, boundary_info=None, dirichlet_data=None, diffusion_function=None,
                  diffusion_constant=None, neumann_data=None, order=1, name=None):
-        assert function is None or function.shape_range == tuple()
+        assert function is None or function.shape_range == ()
         self.source = NumpyVectorSpace(grid.size(0))
         self.grid = grid
         self.boundary_info = boundary_info
@@ -695,7 +695,7 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
         assert diffusion_function is None \
             or (isinstance(diffusion_function, FunctionInterface) and
                 diffusion_function.dim_domain == grid.dim_outer and
-                diffusion_function.shape_range == tuple())
+                diffusion_function.shape_range == ())
         self.grid = grid
         self.boundary_info = boundary_info
         self.diffusion_function = diffusion_function

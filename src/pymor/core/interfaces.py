@@ -173,7 +173,7 @@ class UberMeta(abc.ABCMeta):
             else:
                 c._init_defaults = dict()
         except TypeError:       # happens when no one declares an __init__ method and object is reached
-            c._init_arguments = tuple()
+            c._init_arguments = ()
             c._init_defaults = dict()
         return c
 
@@ -425,7 +425,7 @@ class ImmutableInterface(BasicInterface):
         if hasattr(self, 'sid'):
             return self.sid
         else:
-            return self._generate_sid(debug, tuple())
+            return self._generate_sid(debug, ())
 
     def _generate_sid(self, debug, seen_immutables):
         sid_generator = _SIDGenerator()
@@ -500,7 +500,7 @@ def generate_sid(obj, debug=False):
     The generated state id.
     """
     sid_generator = _SIDGenerator()
-    return sid_generator.generate(obj, debug, tuple())[0]
+    return sid_generator.generate(obj, debug, ())[0]
 
 
 # Helper classes for generate_sid

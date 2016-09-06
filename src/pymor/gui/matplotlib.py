@@ -54,7 +54,7 @@ if HAVE_ALL:
                 axes = figure.gca()
                 axes.hold(True)
             self.codim = codim
-            lines = tuple()
+            lines = ()
             centers = grid.centers(1)
             if grid._identify_left_right:
                 centers = np.concatenate((centers, [[grid._domain[1]]]), axis=0)
