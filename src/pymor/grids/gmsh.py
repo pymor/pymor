@@ -17,7 +17,7 @@ from pymor.grids.unstructured import UnstructuredTriangleGrid
 
 
 class GmshGrid(UnstructuredTriangleGrid):
-    """An unstructured triangular grid that is built from an existing Gmsh MSH-file.
+    """An :class:`~pymor.grids.unstructured.UnstructuredTriangleGrid` built from an existing Gmsh MSH-file.
 
     Parameters
     ----------
