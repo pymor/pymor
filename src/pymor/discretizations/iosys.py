@@ -69,6 +69,76 @@ class InputOutputSystem(DiscretizationInterface):
         self._tfw = np.dstack([self.eval_tf(1j * wi) for wi in w])
         return self._tfw.copy()
 
+    @classmethod
+    def mag_plot(cls, sys_list, plot_style_list=None, w=None, ord=None, dB=False, Hz=False):
+        """Draw the magnitude Bode plot.
+
+        Parameters
+        ----------
+        sys_list
+            A single |LTISystem| or a list of |LTISystems|.
+        plot_style_list
+            A string or a list of strings of the same length as `sys_list`.
+
+            If `None`, matplotlib defaults are used.
+        w
+            Frequencies at which to compute the transfer function.
+
+            If `None`, use `self._w`.
+        ord
+            The order of the norm used to compute the magnitude (the default is
+            the Frobenius norm).
+        dB
+            Should the magnitude be in dB on the plot.
+        Hz
+            Should the frequency be in Hz on the plot.
+
+        Returns
+        -------
+        fig
+            Matplotlib figure.
+        ax
+            Matplotlib axes.
+        """
+        assert isinstance(sys_list, InputOutputSystem) or all(isinstance(sys, InputOutputSystem) for sys in sys_list)
+        if isinstance(sys_list, LTISystem):
+            sys_list = (sys_list,)
+
+        assert (plot_style_list is None or isinstance(plot_style_list, str) or
+                all(isinstance(plot_style, str) for plot_style in plot_style_list))
+        if isinstance(plot_style_list, str):
+            plot_style_list = (plot_style_list,)
+        assert len(plot_style_list) == len(sys_list)
+
+        assert w is not None or all(sys._w is not None for sys in sys_list)
+
+        if w is not None:
+            for sys in sys_list:
+                sys.bode(w)
+
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots()
+        for i, sys in enumerate(sys_list):
+            freq = sys._w / (2 * np.pi) if Hz else sys._w
+            mag = spla.norm(sys._tfw, ord=ord, axis=(0, 1))
+            style = '' if plot_style_list is None else plot_style_list[i]
+            if dB:
+                mag = 20 * np.log2(mag)
+                ax.semilogx(freq, mag, style)
+            else:
+                ax.loglog(freq, mag, style)
+        ax.set_title('Magnitude Bode Plot')
+        if Hz:
+            ax.set_xlabel('Frequency (Hz)')
+        else:
+            ax.set_xlabel('Frequency (rad/s)')
+        if dB:
+            ax.set_ylabel('Magnitude (dB)')
+        else:
+            ax.set_ylabel('Magnitude')
+        plt.show()
+        return fig, ax
+
 
 class LTISystem(InputOutputSystem):
     r"""Class for linear time-invariant systems.
@@ -439,75 +509,6 @@ class LTISystem(InputOutputSystem):
             dtfs = B.apply_adjoint(sEmA.apply_inverse_adjoint(E.apply_adjoint(sEmA.apply_inverse_adjoint(
                 C.apply_adjoint(I_p))))).data.conj()
         return dtfs
-
-    @classmethod
-    def mag_plot(cls, sys_list, plot_style_list=None, w=None, ord=None, dB=False, Hz=False):
-        """Draw the magnitude Bode plot.
-
-        Parameters
-        ----------
-        sys_list
-            A single |LTISystem| or a list of |LTISystems|.
-        plot_style_list
-            A string or a list of strings of the same length as `sys_list`.
-
-            If `None`, matplotlib defaults are used.
-        w
-            Frequencies at which to compute the transfer function.
-
-            If `None`, use `self._w`.
-        ord
-            The order of the norm used to compute the magnitude (the default is
-            the Frobenius norm).
-        dB
-            Should the magnitude be in dB on the plot.
-        Hz
-            Should the frequency be in Hz on the plot.
-
-        Returns
-        -------
-        fig
-            Matplotlib figure.
-        ax
-            Matplotlib axes.
-        """
-        assert isinstance(sys_list, LTISystem) or all(isinstance(sys, LTISystem) for sys in sys_list)
-        if isinstance(sys_list, LTISystem):
-            sys_list = (sys_list,)
-
-        assert (plot_style_list is None or isinstance(plot_style_list, str) or
-                all(isinstance(plot_style, str) for plot_style in plot_style_list))
-        if isinstance(plot_style_list, str):
-            plot_style_list = (plot_style_list,)
-
-        assert w is not None or all(sys._w is not None for sys in sys_list)
-
-        if w is not None:
-            for sys in sys_list:
-                sys.bode(w)
-
-        import matplotlib.pyplot as plt
-        fig, ax = plt.subplots()
-        for i, sys in enumerate(sys_list):
-            freq = sys._w / (2 * np.pi) if Hz else sys._w
-            mag = spla.norm(sys._tfw, ord=ord, axis=(0, 1))
-            style = '' if plot_style_list is None else plot_style_list[i]
-            if dB:
-                mag = 20 * np.log2(mag)
-                ax.semilogx(freq, mag, style)
-            else:
-                ax.loglog(freq, mag, style)
-        ax.set_title('Magnitude Bode Plot')
-        if Hz:
-            ax.set_xlabel('Frequency (Hz)')
-        else:
-            ax.set_xlabel('Frequency (rad/s)')
-        if dB:
-            ax.set_ylabel('Magnitude (dB)')
-        else:
-            ax.set_ylabel('Magnitude')
-        plt.show()
-        return fig, ax
 
     def compute_gramian(self, typ, subtyp, me_solver=None, tol=None):
         """Compute a Gramian.
