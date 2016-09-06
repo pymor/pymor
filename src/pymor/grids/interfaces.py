@@ -119,7 +119,7 @@ class ReferenceElementInterface(ReferenceElementDefaultImplementations, Cacheabl
 
     @abstractmethod
     def size(self, codim):
-        """Number of subentites of codimension `codim`."""
+        """Number of subentities of codimension `codim`."""
 
     @abstractmethod
     def subentities(self, codim, subentity_codim):
@@ -143,11 +143,11 @@ class ReferenceElementInterface(ReferenceElementDefaultImplementations, Cacheabl
 
     @abstractmethod
     def sub_reference_element(self, codim):
-        """Returns the reference relement of the codim-`codim` subentities."""
+        """Returns the reference element of the codim-`codim` subentities."""
         return self._sub_reference_element(codim)
 
     def __call__(self, codim):
-        """Returns the reference relement of the codim-`codim` subentities."""
+        """Returns the reference element of the codim-`codim` subentities."""
         return self.sub_reference_element(codim)
 
     @abstractmethod
@@ -164,7 +164,7 @@ class ReferenceElementInterface(ReferenceElementDefaultImplementations, Cacheabl
 
     @abstractmethod
     def mapped_diameter(self, A):
-        """The diameter of the reference element after tranforming it with the
+        """The diameter of the reference element after transforming it with the
         matrix `A` (vectorized).
         """
         pass
@@ -182,7 +182,7 @@ class ReferenceElementInterface(ReferenceElementDefaultImplementations, Cacheabl
     def quadrature_info(self):
         """Returns a tuple of dicts `(O, N)` where `O[quadrature_type]` is a list
         of orders which are implemented for `quadrature_type` and `N[quadrature_type]`
-        is a list of the corrsponding numbers of integration points.
+        is a list of the corresponding numbers of integration points.
         """
         pass
 
@@ -223,11 +223,11 @@ class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopological
         the embedding of `e`, to the local ordering inside the reference element.
 
         For `codim > 0`, we provide a default implementation by calculating the
-        subentites of `e` as follows:
+        subentities of `e` as follows:
 
             1. Find the `codim-1` parent entity `e_0` of `e` with minimal global index
-            2. Lookup the local indicies of the subentites of `e` inside `e_0` using the reference element.
-            3. Map these local indicies to global indicies using `subentities(codim - 1, subentity_codim)`.
+            2. Lookup the local indices of the subentities of `e` inside `e_0` using the reference element.
+            3. Map these local indices to global indices using `subentities(codim - 1, subentity_codim)`.
 
         This procedures assures that `subentities(codim, subentity_codim)[e]`
         has the right ordering w.r.t. the embedding determined by `e_0`, which
@@ -249,7 +249,7 @@ class AffineGridInterface(AffineGridDefaultImplementations, ConformalTopological
         return self._embeddings(codim)
 
     def jacobian_inverse_transposed(self, codim):
-        """`retval[e]` is the transposed (pseudo-)inverse of the jacobian of `embeddings(codim)[e]`.
+        """`retval[e]` is the transposed (pseudo-)inverse of the Jacobian of `embeddings(codim)[e]`.
         """
         return self._jacobian_inverse_transposed(codim)
 
@@ -303,7 +303,7 @@ class AffineGridWithOrthogonalCentersInterface(AffineGridInterface):
     def orthogonal_centers(self):
         """`retval[e]` is a point inside the codim-0 entity with global index `e`
         such that the line segment from `retval[e]` to `retval[e2]` is always
-        orthogonal to the codim-1 entity shared by the codim-0 entites with global
+        orthogonal to the codim-1 entity shared by the codim-0 entities with global
         index `e` and `e2`.
 
         (This is mainly useful for gradient approximation in finite volume schemes.)
