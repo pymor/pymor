@@ -14,6 +14,47 @@ from pymor.grids.interfaces import BoundaryInfoInterface
 from pymor.grids.unstructured import UnstructuredTriangleGrid
 
 
+def load_gmsh(gmsh_file):
+    """Parse a Gmsh file and create a corresponding :class:`GmshGrid` and :class:`GmshBoundaryInfo`.
+
+    Parameters
+    ----------
+    gmsh_file
+        File handle of the Gmsh MSH-file.
+
+    Returns
+    -------
+    grid
+        The generated :class:`GmshGrid`.
+    boundary_info
+        The generated :class:`GmshBoundaryInfo`.
+    """
+    logger = getLogger('pymor.grids.gmsh.load_gmsh')
+
+    logger.info('Parsing gmsh file ...')
+    tic = time.time()
+    sections = _parse_gmsh_file(gmsh_file)
+    toc = time.time()
+    t_parse = toc - tic
+
+    logger.info('Create GmshGrid ...')
+    tic = time.time()
+    grid = GmshGrid(sections)
+    toc = time.time()
+    t_grid = toc - tic
+
+    logger.info('Create GmshBoundaryInfo ...')
+    tic = time.time()
+    bi = GmshBoundaryInfo(grid, sections)
+    toc = time.time()
+    t_bi = toc - tic
+
+    logger.info('Parsing took {} s; Grid creation took {} s; BoundaryInfo creation took {} s'
+                .format(t_parse, t_grid, t_bi))
+
+    return grid, bi
+
+
 class GmshGrid(UnstructuredTriangleGrid):
     """An :class:`~pymor.grids.unstructured.UnstructuredTriangleGrid` built from an existing Gmsh MSH-file.
 
@@ -92,47 +133,6 @@ class GmshBoundaryInfo(BoundaryInfoInterface):
         assert 1 <= codim <= self.grid.dim
         assert boundary_type in self.boundary_types
         return self._masks[boundary_type][codim - 1]
-
-
-def load_gmsh(gmsh_file):
-    """Parse a Gmsh file and create a corresponding :class:`GmshGrid` and :class:`GmshBoundaryInfo`.
-
-    Parameters
-    ----------
-    gmsh_file
-        File handle of the Gmsh MSH-file.
-
-    Returns
-    -------
-    grid
-        The generated :class:`GmshGrid`.
-    boundary_info
-        The generated :class:`GmshBoundaryInfo`.
-    """
-    logger = getLogger('pymor.grids.gmsh.load_gmsh')
-
-    logger.info('Parsing gmsh file ...')
-    tic = time.time()
-    sections = _parse_gmsh_file(gmsh_file)
-    toc = time.time()
-    t_parse = toc - tic
-
-    logger.info('Create GmshGrid ...')
-    tic = time.time()
-    grid = GmshGrid(sections)
-    toc = time.time()
-    t_grid = toc - tic
-
-    logger.info('Create GmshBoundaryInfo ...')
-    tic = time.time()
-    bi = GmshBoundaryInfo(grid, sections)
-    toc = time.time()
-    t_bi = toc - tic
-
-    logger.info('Parsing took {} s; Grid creation took {} s; BoundaryInfo creation took {} s'
-                .format(t_parse, t_grid, t_bi))
-
-    return grid, bi
 
 
 def _parse_gmsh_file(f):
