@@ -35,7 +35,7 @@ class InputOutputSystem(DiscretizationInterface):
     m = p = 0
 
     def _solve(self, mu=None):
-        raise NotImplementedError('Discretization has no solver.')
+        raise NotImplementedError
 
     def eval_tf(self, s, mu=None):
         """Evaluate the transfer function of the system."""
@@ -95,7 +95,7 @@ class LTISystem(InputOutputSystem):
     D
         The |Operator| D or `None` (then D is assumed to be zero).
     E
-        The |Operator| E or `None` (then E is assumed to be the identity).
+        The |Operator| E or `None` (then E is assumed to be identity).
     ss_operators
         Dictonary for state-to-state operators A and E.
     is_operators
@@ -155,9 +155,9 @@ class LTISystem(InputOutputSystem):
         self.D = D if D is not None else ZeroOperator(B.source, C.range)
         self.E = E if E is not None else IdentityOperator(A.source)
         self.ss_operators = FrozenDict({'A': A, 'E': self.E})
-        self.si_operators = FrozenDict({'B': B})
-        self.os_operators = FrozenDict({'C': C})
-        self.oi_operators = FrozenDict({'D': self.D})
+        self.is_operators = FrozenDict({'B': B})
+        self.so_operators = FrozenDict({'C': C})
+        self.io_operators = FrozenDict({'D': self.D})
         self.cont_time = cont_time
         self._poles = None
         self._w = None
@@ -186,7 +186,7 @@ class LTISystem(InputOutputSystem):
         D
             The |NumPy array| or |SciPy spmatrix| D or `None` (then D is assumed to be zero).
         E
-            The |NumPy array| or |SciPy spmatrix| E or `None` (then E is assumed to be the identity).
+            The |NumPy array| or |SciPy spmatrix| E or `None` (then E is assumed to be identity).
         cont_time
             `True` if the system is continuous-time, otherwise discrete-time.
 
@@ -388,7 +388,7 @@ class LTISystem(InputOutputSystem):
             tfs = C.apply(sEmA.apply_inverse(B.apply(I_m))).data.T
         else:
             I_p = C.range.from_data(sp.eye(self.p))
-            tfs = B.apply_adjoint(sEmA.apply_adjoint_inverse(C.apply_adjoint(I_p))).data.conj()
+            tfs = B.apply_adjoint(sEmA.apply_inverse_adjoint(C.apply_adjoint(I_p))).data.conj()
         if not isinstance(D, ZeroOperator):
             if self.m <= self.p:
                 tfs += D.apply(I_m).data.T
@@ -430,7 +430,7 @@ class LTISystem(InputOutputSystem):
             dtfs = -C.apply(sEmA.apply_inverse(E.apply(sEmA.apply_inverse(B.apply(I_m))))).data.T
         else:
             I_p = C.range.from_data(sp.eye(self.p))
-            dtfs = B.apply_adjoint(sEmA.apply_adjoint_inverse(E.apply_adjoint(sEmA.apply_adjoint_inverse(
+            dtfs = B.apply_adjoint(sEmA.apply_inverse_adjoint(E.apply_adjoint(sEmA.apply_inverse_adjoint(
                 C.apply_adjoint(I_p))))).data.conj()
         return dtfs
 
@@ -662,7 +662,7 @@ class TF(InputOutputSystem):
     linear = True
 
     def __init__(self, m, p, H, dH, cont_time=True):
-        assert cont_time in {True, False}
+        assert cont_time in (True, False)
 
         self.m = m
         self.p = p
@@ -677,3 +677,201 @@ class TF(InputOutputSystem):
 
     def eval_dtf(self, s):
         return self.dtf(s)
+
+
+class SecondOrderSystem(InputOutputSystem):
+    """Class for linear second order systems.
+
+    This class describes input-output systems given by
+
+    .. math::
+        M x''(t) + D x'(t) + K x(t) &= B u(t) \\
+                               y(t) &= C_p x(t) + C_v x'(t)
+
+    if continuous-time, or
+
+    .. math::
+        M x(k + 2) + D x(k + 1) + K x(k) &= B u(k) \\
+                                    y(k) &= C_p x(k) + C_v x(k + 1)
+
+    if discrete-time, where M, D, K, B, Cp, and Cv are linear operators.
+
+    Parameters
+    ----------
+    M
+        The |Operator| M or `None` (then M is assumed to be identity).
+    D
+        The |Operator| D or `None` (then D is assumed to be zero).
+    K
+        The |Operator| K.
+    B
+        The |Operator| B.
+    Cp
+        The |Operator| Cp.
+    Cv
+        The |Operator| Cv.
+    ss_operators
+        Dictonary for state-to-state operators M, D, and K.
+    is_operators
+        Dictonary for input-to-state operator B.
+    so_operators
+        Dictonary for state-to-output operator Cp and Cv.
+    cont_time
+        `True` if the system is continuous-time, otherwise discrete-time.
+
+    Attributes
+    ----------
+    n
+        Order of the system (equal to M.source.dim).
+    m
+        Number of inputs.
+    p
+        Number of outputs.
+    M
+        The |Operator| M. The same as `ss_operators['M']`.
+    D
+        The |Operator| M. The same as `ss_operators['D']`.
+    K
+        The |Operator| M. The same as `ss_operators['K']`.
+    B
+        The |Operator| B. The same as `is_operators['B']`.
+    Cp
+        The |Operator| C. The same as `so_operators['Cp']`.
+    Cv
+        The |Operator| C. The same as `so_operators['Cv']`.
+    """
+    linear = True
+
+    def __init__(self, M=None, D=None, K=None, B=None, Cp=None, Cv=None, ss_operators=None, is_operators=None,
+                 so_operators=None, io_operators=None, cont_time=True):
+        M = M or ss_operators.get('M')
+        D = D or ss_operators.get('D')
+        K = K or ss_operators['D']
+        B = B or is_operators['B']
+        Cp = Cp or so_operators['Cp']
+        Cv = Cv or so_operators['Cv']
+        assert isinstance(K, OperatorInterface) and K.linear
+        assert K.source == K.range
+        assert isinstance(B, OperatorInterface) and B.linear
+        assert B.range == K.source
+        assert isinstance(Cp, OperatorInterface) and Cp.linear
+        assert Cp.source == K.range
+        assert isinstance(Cv, OperatorInterface) and Cv.linear
+        assert Cv.source == K.range
+        assert Cp.range == Cv.range
+        assert M is None or isinstance(M, OperatorInterface) and M.linear and M.source == M.range == K.source
+        assert D is None or isinstance(D, OperatorInterface) and D.linear and D.source == D.range == K.source
+        assert cont_time in (True, False)
+
+        self.n = K.source.dim
+        self.m = B.source.dim
+        self.p = Cp.range.dim
+        self.M = M if M is not None else IdentityOperator(K.source)
+        self.D = D if D is not None else ZeroOperator(K.source, K.range)
+        self.K = K
+        self.B = B
+        self.Cp = Cp
+        self.Cv = Cv
+        self.ss_operators = FrozenDict({'M': self.M, 'D': self.D, 'K': K})
+        self.is_operators = FrozenDict({'B': B})
+        self.so_operators = FrozenDict({'Cp': Cp, 'Cv': Cv})
+        self.io_operators = FrozenDict({})
+        self.cont_time = cont_time
+        self._poles = None
+        self._w = None
+        self._tfw = None
+        self._gramian = {}
+        self._sv = {}
+        self._U = {}
+        self._V = {}
+        self._H2_norm = None
+        self._Hinf_norm = None
+        self._fpeak = None
+        self.build_parameter_type(inherits=(M, D, K, B, Cp, Cv))
+
+    def eval_tf(self, s):
+        """Evaluate the transfer function.
+
+        The transfer function at `s` is
+
+        .. math::
+            (C_p + s C_v) (s^2 M + s D + K)^{-1} B.
+
+        .. note::
+            We assume that either the number of inputs or the number of
+            outputs is small compared to the order of the system, e.g. less
+            than 10.
+
+        Parameters
+        ----------
+        s
+            Complex number.
+
+        Returns
+        -------
+        tfs
+            Transfer function evaluated at the complex number `s`, 2D |NumPy array|.
+        """
+        M = self.M
+        D = self.D
+        K = self.K
+        B = self.B
+        Cp = self.Cp
+        Cv = self.Cv
+
+        s2MpsDpK = LincombOperator((M, D, K), (s ** 2, s, 1))
+        if self.m <= self.p:
+            I_m = B.source.from_data(sp.eye(self.m))
+            CppsCv = LincombOperator((Cp, Cv), (1, s))
+            tfs = CppsCv.apply(s2MpsDpK.apply_inverse(B.apply(I_m))).data.T
+        else:
+            I_p = Cp.range.from_data(sp.eye(self.p))
+            tfs = B.apply_adjoint(s2MpsDpK.apply_inverse_adjoint(Cp.apply_adjoint(I_p) +
+                                                                 Cv.apply_adjoint(I_p) * s.conj())).data.conj()
+        return tfs
+
+    def eval_dtf(self, s):
+        """Evaluate the derivative of the transfer function.
+
+        The derivative of the transfer function at `s` is
+
+        .. math::
+            s C_v (s^2 M + s D + K)^{-1} B
+            - (C_p + s C_v) (s^2 M + s D + K)^{-1} (2 s M + D)
+                (s^2 M + s D + K)^{-1} B.
+
+        .. note::
+            We assume that either the number of inputs or the number of
+            outputs is small compared to the order of the system, e.g. less
+            than 10.
+
+        Parameters
+        ----------
+        s
+            Complex number.
+
+        Returns
+        -------
+        dtfs
+            Derivative of transfer function evaluated at the complex number `s`, 2D |NumPy array|.
+        """
+        M = self.M
+        D = self.D
+        K = self.K
+        B = self.B
+        Cp = self.Cp
+        Cv = self.Cv
+
+        s2MpsDpK = LincombOperator((M, D, K), (s ** 2, s, 1))
+        sM2pD = LincombOperator((M, D), (2 * s, 1))
+        if self.m <= self.p:
+            I_m = B.source.from_data(sp.eye(self.m))
+            dtfs = Cv.apply(s2MpsDpK.apply_inverse(B.apply(I_m))).data.T * s
+            CppsCv = LincombOperator((Cp, Cv), (1, s))
+            dtfs -= CppsCv.apply(s2MpsDpK.apply_inverse(sM2pD.apply(s2MpsDpK.apply_inverse(B.apply(I_m))))).data.T
+        else:
+            I_p = Cp.range.from_data(sp.eye(self.p))
+            dtfs = B.apply_adjoint(s2MpsDpK.apply_inverse_adjoint(Cv.apply_adjoint(I_m))).data.conj() * s
+            dtfs -= B.apply_adjoint(s2MpsDpK.apply_inverse_adjoint(sM2pD.apply_adjoint(s2MpsDpK.apply_inverse_adjoint(
+                Cp.apply_adjoint(I_p) + Cv.apply_adjoint(I_p) * s.conj())))).data.conj()
+        return dtfs
