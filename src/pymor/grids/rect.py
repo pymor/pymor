@@ -168,9 +168,9 @@ class RectGrid(AffineGridWithOrthogonalCentersInterface):
         return np.array(self.domain)
 
     def structured_to_global(self, codim):
-        """Returns an array which maps structured indices to global codim-`codim` indices.
+        """Returns an |array| which maps structured indices to global codim-`codim` indices.
 
-        In other words `structed_to_global(codim)[i, j]` is the global index of the i-th in
+        In other words `structured_to_global(codim)[i, j]` is the global index of the i-th in
         x0-direction and j-th in x1-direction codim-`codim` entity of the grid.
         """
         if self.identify_left_right or self.identify_bottom_top or codim not in (0, 2):
@@ -188,7 +188,7 @@ class RectGrid(AffineGridWithOrthogonalCentersInterface):
         return self._global_to_structured[codim]
 
     def vertex_coordinates(self, dim):
-        """Returns an array of the x_dim koordinates of the grid vertices.
+        """Returns an array of the x_dim coordinates of the grid vertices.
 
         I.e. ::
 
