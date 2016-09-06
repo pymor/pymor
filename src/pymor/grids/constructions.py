@@ -13,7 +13,7 @@ from pymor.grids.tria import TriaGrid
 def flatten_grid(grid):
     """This method is used by our visualizers to render n-dimensional grids which cannot
     be embedded into R^n by duplicating vertices which would have to be mapped to multiple
-    points at once. (Think of grids on rectangular domains with identified edges.)
+    points at once (think of grids on rectangular domains with identified edges).
 
     Parameters
     ----------
