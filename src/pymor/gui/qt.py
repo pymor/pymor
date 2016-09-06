@@ -459,7 +459,7 @@ class PatchVisualizer(BasicInterface):
     backend
         Plot backend to use ('gl' or 'matplotlib').
     block
-        If `True` block execution until the plot window is closed.
+        If `True`, block execution until the plot window is closed.
     """
 
     def __init__(self, grid, bounding_box=([0, 0], [1, 1]), codim=2, backend=None, block=False):
@@ -554,14 +554,14 @@ class Matplotlib1DVisualizer(BasicInterface):
             provided, in which case several plots are made into the same axes. The
             lengths of all arrays have to agree.
         discretization
-            Filled in :meth:`pymor.discretizations.DiscretizationBase.visualize` (ignored).
+            Filled in by :meth:`pymor.discretizations.DiscretizationBase.visualize` (ignored).
         title
             Title of the plot.
         legend
             Description of the data that is plotted. Most useful if `U` is a tuple in which
             case `legend` has to be a tuple of strings of the same length.
         block
-            If `True` block execution until the plot window is closed. If `None`, use the
+            If `True`, block execution until the plot window is closed. If `None`, use the
             default provided during instantiation.
         """
         block = self.block if block is None else block
