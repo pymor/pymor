@@ -28,11 +28,14 @@ class InputOutputSystem(DiscretizationInterface):
     Attributes
     ----------
     m
-        Number of inputs.
+        The number of inputs.
     p
-        Number of outputs.
+        The number of outputs.
+    cont_time
+        `True` if the system is continuous-time, otherwise `False`.
     """
     m = p = 0
+    cont_time = True
 
     def _solve(self, mu=None):
         raise NotImplementedError
@@ -57,7 +60,7 @@ class InputOutputSystem(DiscretizationInterface):
         -------
         tfw
             Transfer function values at frequencies in `w`,
-            returned as a 3D |NumPy array| of shape `(p, m, len(w))`.
+            |NumPy array| of shape `(self.p, self.m, len(w))`.
         """
         if not self.cont_time:
             raise NotImplementedError
@@ -82,49 +85,50 @@ class LTISystem(InputOutputSystem):
         E x(k + 1) &= A x(k) + B u(k) \\
           y(k)     &= C x(k) + D u(k)
 
-    if discrete-time, where A, B, C, D, and E are linear operators.
+    if discrete-time, where :math:`A`, :math:`B`, :math:`C`, :math:`D`, and
+    :math:`E` are linear operators.
 
     Parameters
     ----------
     A
-        |Operator| A.
+        The |Operator| A.
     B
-        |Operator| B.
+        The |Operator| B.
     C
-        |Operator| C.
+        The |Operator| C.
     D
-        |Operator| D or `None` (then D is assumed to be zero).
+        The |Operator| D or `None` (then D is assumed to be zero).
     E
-        |Operator| E or `None` (then E is assumed to be identity).
+        The |Operator| E or `None` (then E is assumed to be identity).
     ss_operators
-        Dictonary for state-to-state operators A and E.
+        A dictonary for state-to-state |Operators| A and E.
     is_operators
-        Dictonary for input-to-state operator B.
+        A dictonary for input-to-state |Operator| B.
     so_operators
-        Dictonary for state-to-output operator C.
+        A dictonary for state-to-output |Operator| C.
     io_operators
-        Dictonary for input-to-output operator D.
+        A dictonary for input-to-output |operator| D.
     cont_time
-        `True` if the system is continuous-time, otherwise discrete-time.
+        `True` if the system is continuous-time, otherwise `False`.
 
     Attributes
     ----------
     n
-        Order of the system.
+        The order of the system.
     m
-        Number of inputs.
+        The number of inputs.
     p
-        Number of outputs.
+        The number of outputs.
     A
-        |Operator| A. Same as `ss_operators['A']`.
+        The |Operator| A. The same as `ss_operators['A']`.
     B
-        |Operator| B. Same as `is_operators['B']`.
+        The |Operator| B. The same as `is_operators['B']`.
     C
-        |Operator| C. Same as `so_operators['C']`.
+        The |Operator| C. The same as `so_operators['C']`.
     D
-        |Operator| D. Same as `io_operators['D']`.
+        The |Operator| D. The same as `io_operators['D']`.
     E
-        |Operator| E. Same as `ss_operators['E']`.
+        The |Operator| E. The same as `ss_operators['E']`.
     """
     linear = True
 
@@ -178,22 +182,24 @@ class LTISystem(InputOutputSystem):
         Parameters
         ----------
         A
-            |NumPy array| or |SciPy spmatrix| A.
+            The |NumPy array| or |SciPy spmatrix| A.
         B
-            |NumPy array| or |SciPy spmatrix| B.
+            The |NumPy array| or |SciPy spmatrix| B.
         C
-            |NumPy array| or |SciPy spmatrix| C.
+            The |NumPy array| or |SciPy spmatrix| C.
         D
-            |NumPy array| or |SciPy spmatrix| D or `None` (then D is assumed to be zero).
+            The |NumPy array| or |SciPy spmatrix| D or `None` (then D is assumed
+            to be zero).
         E
-            |NumPy array| or |SciPy spmatrix| E or `None` (then E is assumed to be identity).
+            The |NumPy array| or |SciPy spmatrix| E or `None` (then E is assumed
+            to be identity).
         cont_time
-            `True` if the system is continuous-time, otherwise discrete-time.
+            `True` if the system is continuous-time, otherwise `False`.
 
         Returns
         -------
         lti
-            |LTISystem| with operators A, B, C, D, and E.
+            The |LTISystem| with operators A, B, C, D, and E.
         """
         assert isinstance(A, (np.ndarray, sps.spmatrix))
         assert isinstance(B, (np.ndarray, sps.spmatrix))
@@ -218,22 +224,22 @@ class LTISystem(InputOutputSystem):
         Parameters
         ----------
         A_file
-            Name of the file (with extension) containing A.
+            The name of the file (with extension) containing A.
         B_file
-            Name of the file (with extension) containing B.
+            The name of the file (with extension) containing B.
         C_file
-            Name of the file (with extension) containing C.
+            The name of the file (with extension) containing C.
         D_file
-            `None` or name of the file (with extension) containing D.
+            `None` or the name of the file (with extension) containing D.
         E_file
-            `None` or name of the file (with extension) containing E.
+            `None` or the name of the file (with extension) containing E.
         cont_time
-            `True` if the system is continuous-time, otherwise discrete-time.
+            `True` if the system is continuous-time, otherwise `False`.
 
         Returns
         -------
         lti
-            |LTISystem| with operators A, B, C, D, and E.
+            The |LTISystem| with operators A, B, C, D, and E.
         """
         from pymor.tools.io import load_matrix
 
@@ -252,15 +258,15 @@ class LTISystem(InputOutputSystem):
         Parameters
         ----------
         file_name
-            Name of the .mat file (extension .mat does not need to be included)
-            containing A, B, C, and optionally D and E.
+            The name of the .mat file (extension .mat does not need to be
+            included) containing A, B, C, and optionally D and E.
         cont_time
-            `True` if the system is continuous-time, otherwise discrete-time.
+            `True` if the system is continuous-time, otherwise `False`.
 
         Returns
         -------
         lti
-            |LTISystem| with operators A, B, C, D, and E.
+            The |LTISystem| with operators A, B, C, D, and E.
         """
         import scipy.io as spio
         mat_dict = spio.loadmat(file_name)
@@ -282,14 +288,14 @@ class LTISystem(InputOutputSystem):
         Parameters
         ----------
         files_basename
-            Basename of files containing A, B, C, and optionally D and E.
+            The basename of files containing A, B, C, and optionally D and E.
         cont_time
-            `True` if the system is continuous-time, otherwise discrete-time.
+            `True` if the system is continuous-time, otherwise `False`.
 
         Returns
         -------
         lti
-            |LTISystem| with operators A, B, C, D, and E.
+            The |LTISystem| with operators A, B, C, D, and E.
         """
         from pymor.tools.io import load_matrix
         import os.path
@@ -356,15 +362,14 @@ class LTISystem(InputOutputSystem):
     def eval_tf(self, s):
         """Evaluate the transfer function.
 
-        The transfer function at `s` is
+        The transfer function at :math:`s` is
 
         .. math::
             C (s E - A)^{-1} B + D.
 
         .. note::
-            We assume that either the number of inputs or the number of
-            outputs is small compared to the order of the system, e.g. less
-            than 10.
+            We assume that either the number of inputs or the number of outputs
+            is small compared to the order of the system, e.g. less than 10.
 
         Parameters
         ----------
@@ -374,7 +379,8 @@ class LTISystem(InputOutputSystem):
         Returns
         -------
         tfs
-            Transfer function evaluated at the complex number `s`, 2D |NumPy array|.
+            Transfer function evaluated at the complex number `s`, |NumPy array|
+            of shape `(self.p, self.m)`.
         """
         A = self.A
         B = self.B
@@ -399,15 +405,14 @@ class LTISystem(InputOutputSystem):
     def eval_dtf(self, s):
         """Evaluate the derivative of the transfer function.
 
-        The derivative of the transfer function at `s` is
+        The derivative of the transfer function at :math:`s` is
 
         .. math::
             -C (s E - A)^{-1} E (s E - A)^{-1} B.
 
         .. note::
-            We assume that either the number of inputs or the number of
-            outputs is small compared to the order of the system, e.g. less
-            than 10.
+            We assume that either the number of inputs or the number of outputs
+            is small compared to the order of the system, e.g. less than 10.
 
         Parameters
         ----------
@@ -417,7 +422,8 @@ class LTISystem(InputOutputSystem):
         Returns
         -------
         dtfs
-            Derivative of transfer function evaluated at the complex number `s`, 2D |NumPy array|.
+            Derivative of transfer function evaluated at the complex number `s`,
+            |NumPy array| of shape `(self.p, self.m)`.
         """
         A = self.A
         B = self.B
@@ -451,7 +457,8 @@ class LTISystem(InputOutputSystem):
 
             If `None`, use `self._w`.
         ord
-            Order of the norm used to compute the magnitude (the default is the Frobenius norm).
+            The order of the norm used to compute the magnitude (the default is
+            the Frobenius norm).
         dB
             Should the magnitude be in dB on the plot.
         Hz
@@ -508,25 +515,26 @@ class LTISystem(InputOutputSystem):
         Parameters
         ----------
         typ
-            Type of the Gramian:
+            The type of the Gramian:
 
             - `'lyap'`: Lyapunov Gramian,
             - `'lqg'`: LQG Gramian,
             - `('br', gamma)`: Bounded Real Gramian with parameter gamma.
         subtyp
-            Subtype of the Gramian:
+            The subtype of the Gramian:
 
             - `'cf'`: controllability Gramian factor,
             - `'of'`: observability Gramian factor.
         me_solver
-            Matrix equation solver to use (see
+            The matrix equation solver to use (see
             :func:`pymor.algorithms.lyapunov.solve_lyap` or
             :func:`pymor.algorithms.riccati.solve_ricc`).
         tol
-            Tolerance parameter for the low-rank matrix equation solver.
+            The tolerance parameter for the low-rank matrix equation solver.
 
-            If `None`, then the default tolerance is used. Otherwise, it should be
-            a positive float and the Gramian factor is recomputed (if it was already computed).
+            If `None`, then the default tolerance is used. Otherwise, it should
+            be a positive float and the Gramian factor is recomputed (if it was
+            already computed).
         """
         assert isinstance(typ, (str, tuple))
         assert isinstance(subtyp, str)
@@ -575,9 +583,10 @@ class LTISystem(InputOutputSystem):
         Parameters
         ----------
         typ
-            Type of the Gramian (see :func:`~pymor.discretizations.iosys.LTISystem.compute_gramian`).
+            The type of the Gramian (see
+            :func:`~pymor.discretizations.iosys.LTISystem.compute_gramian`).
         me_solver
-            Matrix equation solver to use (see
+            The matrix equation solver to use (see
             :func:`pymor.algorithms.lyapunov.solve_lyap` or
             :func:`pymor.algorithms.riccati.solve_ricc`).
         """
@@ -598,7 +607,7 @@ class LTISystem(InputOutputSystem):
         Parameters
         ----------
         name
-            Name of the norm (`'H2'`, `'Hinf'`, `'Hankel'`).
+            The name of the norm (`'H2'`, `'Hinf'`, `'Hankel'`).
         """
         if name == 'H2':
             if self._H2_norm is not None:
@@ -642,22 +651,24 @@ class LTISystem(InputOutputSystem):
 class TF(InputOutputSystem):
     """Class for input-output systems represented by a transfer function.
 
-    This class describes input-output systems given by a transfer function :math:`H(s)`.
+    This class describes input-output systems given by a transfer function
+    :math:`H(s)`.
 
     Parameters
     ----------
     m
-        Number of inputs.
+        The number of inputs.
     p
-        Number of outputs.
+        The number of outputs.
     H
-        Transfer function defined at least on the open right complex half-plane.
+        The transfer function defined at least on the open right complex
+        half-plane.
 
         `H(s)` is a |NumPy array| of shape `(p, m)`.
     dH
-        Complex derivative of `H`.
+        The complex derivative of `H`.
     cont_time
-        `True` if the system is continuous-time, otherwise discrete-time.
+        `True` if the system is continuous-time, otherwise `False`.
     """
     linear = True
 
@@ -680,7 +691,7 @@ class TF(InputOutputSystem):
 
 
 class SecondOrderSystem(InputOutputSystem):
-    """Class for linear second order systems.
+    r"""Class for linear second order systems.
 
     This class describes input-output systems given by
 
@@ -694,51 +705,52 @@ class SecondOrderSystem(InputOutputSystem):
         M x(k + 2) + D x(k + 1) + K x(k) &= B u(k) \\
                                     y(k) &= C_p x(k) + C_v x(k + 1)
 
-    if discrete-time, where M, D, K, B, Cp, and Cv are linear operators.
+    if discrete-time, where :math:`M`, :math:`D`, :math:`K`, :math:`B`,
+    :math:`C_p`, and :math:`C_v` are linear operators.
 
     Parameters
     ----------
     M
-        |Operator| M or `None` (then M is assumed to be identity).
+        The |Operator| M or `None` (then M is assumed to be identity).
     D
-        |Operator| D or `None` (then D is assumed to be zero).
+        The |Operator| D or `None` (then D is assumed to be zero).
     K
-        |Operator| K.
+        The |Operator| K.
     B
-        |Operator| B.
+        The |Operator| B.
     Cp
-        |Operator| Cp.
+        The |Operator| Cp.
     Cv
-        |Operator| Cv.
+        The |Operator| Cv.
     ss_operators
-        Dictonary for state-to-state operators M, D, and K.
+        A dictonary for state-to-state |Operators| M, D, and K.
     is_operators
-        Dictonary for input-to-state operator B.
+        A dictonary for input-to-state |Operator| B.
     so_operators
-        Dictonary for state-to-output operators Cp and Cv.
+        A dictonary for state-to-output |Operators| Cp and Cv.
     cont_time
-        `True` if the system is continuous-time, otherwise discrete-time.
+        `True` if the system is continuous-time, otherwise `False`.
 
     Attributes
     ----------
     n
-        Order of the system (equal to M.source.dim).
+        The order of the system (equal to M.source.dim).
     m
-        Number of inputs.
+        The number of inputs.
     p
-        Number of outputs.
+        The number of outputs.
     M
-        |Operator| M. Same as `ss_operators['M']`.
+        The |Operator| M. The same as `ss_operators['M']`.
     D
-        |Operator| M. Same as `ss_operators['D']`.
+        The |Operator| D. The same as `ss_operators['D']`.
     K
-        |Operator| M. Same as `ss_operators['K']`.
+        The |Operator| K. The same as `ss_operators['K']`.
     B
-        |Operator| B. Same as `is_operators['B']`.
+        The |Operator| B. The same as `is_operators['B']`.
     Cp
-        |Operator| Cp. Same as `so_operators['Cp']`.
+        The |Operator| Cp. The same as `so_operators['Cp']`.
     Cv
-        |Operator| Cv. Same as `so_operators['Cv']`.
+        The |Operator| Cv. The same as `so_operators['Cv']`.
     """
     linear = True
 
@@ -792,15 +804,14 @@ class SecondOrderSystem(InputOutputSystem):
     def eval_tf(self, s):
         """Evaluate the transfer function.
 
-        The transfer function at `s` is
+        The transfer function at :math:`s` is
 
         .. math::
             (C_p + s C_v) (s^2 M + s D + K)^{-1} B.
 
         .. note::
-            We assume that either the number of inputs or the number of
-            outputs is small compared to the order of the system, e.g. less
-            than 10.
+            We assume that either the number of inputs or the number of outputs
+            is small compared to the order of the system, e.g. less than 10.
 
         Parameters
         ----------
@@ -810,7 +821,8 @@ class SecondOrderSystem(InputOutputSystem):
         Returns
         -------
         tfs
-            Transfer function evaluated at the complex number `s`, 2D |NumPy array|.
+            Transfer function evaluated at the complex number `s`, |NumPy array|
+            of shape `(self.p, self.m)`.
         """
         M = self.M
         D = self.D
@@ -833,7 +845,7 @@ class SecondOrderSystem(InputOutputSystem):
     def eval_dtf(self, s):
         """Evaluate the derivative of the transfer function.
 
-        The derivative of the transfer function at `s` is
+        The derivative of the transfer function at :math:`s` is
 
         .. math::
             s C_v (s^2 M + s D + K)^{-1} B
@@ -841,9 +853,8 @@ class SecondOrderSystem(InputOutputSystem):
                 (s^2 M + s D + K)^{-1} B.
 
         .. note::
-            We assume that either the number of inputs or the number of
-            outputs is small compared to the order of the system, e.g. less
-            than 10.
+            We assume that either the number of inputs or the number of outputs
+            is small compared to the order of the system, e.g. less than 10.
 
         Parameters
         ----------
@@ -853,7 +864,8 @@ class SecondOrderSystem(InputOutputSystem):
         Returns
         -------
         dtfs
-            Derivative of transfer function evaluated at the complex number `s`, 2D |NumPy array|.
+            Derivative of transfer function evaluated at the complex number `s`,
+            |NumPy array| of shape `(self.p, self.m)`.
         """
         M = self.M
         D = self.D
@@ -877,8 +889,203 @@ class SecondOrderSystem(InputOutputSystem):
         return dtfs
 
 
+class LinearDelaySystem(InputOutputSystem):
+    r"""Class for linear delay systems.
+
+    This class describes input-output systems given by
+
+    .. math::
+        E x'(t) &= A x(t) + \sum_{i = 1}^q{A_i x(t - \tau_i)} + B u(t) \\
+           y(t) &= C x(t)
+
+    if continuous-time, or
+
+    .. math::
+        E x(k + 1) &= A x(k) + \sum_{i = 1}^q{A_i x(k - \tau_i)} + B u(k) \\
+              y(k) &= C x(k)
+
+    if discrete-time, where :math:`E`, :math:`A`, :math:`A_i`, :math:`B`,
+    and :math:`C` are linear operators.
+
+    Parameters
+    ----------
+    E
+        The |Operator| E or `None` (then E is assumed to be identity).
+    A
+        The |Operator| A.
+    Ad
+        The tuple of |Operators| A_i.
+    tau
+        The tuple of delay times (positive floats or ints).
+    B
+        The |Operator| B.
+    C
+        The |Operator| C.
+    ss_operators
+        A dictonary for state-to-state |Operators| E, A, and Ad.
+    is_operators
+        A dictonary for input-to-state |Operator| B.
+    so_operators
+        A dictonary for state-to-output |Operator| C.
+    cont_time
+        `True` if the system is continuous-time, otherwise `False`.
+
+    Attributes
+    ----------
+    n
+        The order of the system (equal to A.source.dim).
+    m
+        The number of inputs.
+    p
+        The number of outputs.
+    q
+        The number of delay terms.
+    E
+        The |Operator| E. The same as `ss_operators['E']`.
+    A
+        The |Operator| A. The same as `ss_operators['A']`.
+    Ad
+        The tuple of |Operators| A_i. The same as `ss_operators['Ad']`.
+    B
+        The |Operator| B. The same as `is_operators['B']`.
+    C
+        The |Operator| C. The same as `so_operators['C']`.
+    """
+    linear = True
+
+    def __init__(self, E=None, A=None, Ad=None, tau=None, B=None, C=None, ss_operators=None, is_operators=None,
+                 so_operators=None, io_operators=None, cont_time=True):
+        E = E or ss_operators.get('E')
+        A = A or ss_operators['A']
+        Ad = Ad or ss_operators['Ad']
+        B = B or is_operators['B']
+        C = C or so_operators['C']
+        assert isinstance(A, OperatorInterface) and A.linear
+        assert A.source == A.range
+        assert isinstance(Ad, tuple)
+        assert len(Ad) > 0
+        assert all(isinstance(Ai, OperatorInterface) and Ai.linear for Ai in Ad)
+        assert all(Ai.source == Ai.range == A.source for Ai in Ad)
+        assert isinstance(tau, tuple)
+        assert len(tau) == len(Ad)
+        assert all(taui > 0 for taui in tau)
+        assert isinstance(B, OperatorInterface) and B.linear
+        assert B.range == A.source
+        assert isinstance(C, OperatorInterface) and C.linear
+        assert C.source == A.range
+        assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source
+        assert cont_time in (True, False)
+
+        self.n = A.source.dim
+        self.m = B.source.dim
+        self.p = C.range.dim
+        self.q = len(Ad)
+        self.E = E if E is not None else IdentityOperator(A.source)
+        self.A = A
+        self.Ad = Ad
+        self.B = B
+        self.C = C
+        self.ss_operators = FrozenDict({'E': self.E, 'A': A, 'Ad': Ad})
+        self.is_operators = FrozenDict({'B': B})
+        self.so_operators = FrozenDict({'C': C})
+        self.io_operators = FrozenDict({})
+        self.cont_time = cont_time
+        self._poles = None
+        self._w = None
+        self._tfw = None
+        self._gramian = {}
+        self._sv = {}
+        self._U = {}
+        self._V = {}
+        self._H2_norm = None
+        self._Hinf_norm = None
+        self._fpeak = None
+        self.build_parameter_type(inherits=(E, A, Ad, B, C))
+
+    def eval_tf(self, s):
+        r"""Evaluate the transfer function.
+
+        The transfer function at :math:`s` is
+
+        .. math::
+            C \left(s E - A - \sum_{i = 1}^q{e^{-\tau_i s} A_i}\right)^{-1} B.
+
+        .. note::
+            We assume that either the number of inputs or the number of outputs
+            is small compared to the order of the system, e.g. less than 10.
+
+        Parameters
+        ----------
+        s
+            Complex number.
+
+        Returns
+        -------
+        tfs
+            Transfer function evaluated at the complex number `s`, |NumPy array|
+            of shape `(self.p, self.m)`.
+        """
+        E = self.E
+        A = self.A
+        Ad = self.Ad
+        B = self.B
+        C = self.C
+
+        middle = LincombOperator((E, A) + Ad, (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau))
+        if self.m <= self.p:
+            I_m = B.source.from_data(sp.eye(self.m))
+            tfs = C.apply(middle.apply_inverse(B.apply(I_m))).data.T
+        else:
+            I_p = C.range.from_data(sp.eye(self.p))
+            tfs = B.apply_adjoint(middle.apply_inverse_adjoint(C.apply_adjoint(I_p))).data.conj()
+        return tfs
+
+    def eval_dtf(self, s):
+        r"""Evaluate the derivative of the transfer function.
+
+        The derivative of the transfer function at :math:`s` is
+
+        .. math::
+            -C \left(s E - A - \sum_{i = 1}^q{e^{-\tau_i s} A_i}\right)^{-1}
+                \left(E + \sum_{i = 1}^q{\tau_i e^{-\tau_i s} A_i}\right)
+                \left(s E - A - \sum_{i = 1}^q{e^{-\tau_i s} A_i}\right)^{-1} B.
+
+        .. note::
+            We assume that either the number of inputs or the number of outputs
+            is small compared to the order of the system, e.g. less than 10.
+
+        Parameters
+        ----------
+        s
+            Complex number.
+
+        Returns
+        -------
+        dtfs
+            Derivative of transfer function evaluated at the complex number `s`,
+            |NumPy array| of shape `(self.p, self.m)`.
+        """
+        E = self.E
+        A = self.A
+        Ad = self.Ad
+        B = self.B
+        C = self.C
+
+        left_and_right = LincombOperator((E, A) + Ad, (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau))
+        middle = LincombOperator((E,) + Ad, (s,) + tuple(taui * np.exp(-taui * s) for taui in self.tau))
+        if self.m <= self.p:
+            I_m = B.source.from_data(sp.eye(self.m))
+            dtfs = C.apply(left_and_right.apply_inverse(middle.apply(left_and_right.apply_inverse(
+                B.apply(I_m))))).data.T
+        else:
+            I_p = C.range.from_data(sp.eye(self.p))
+            dtfs = B.apply_adjoint(left_and_right.apply_inverse_adjoint(middle.apply_adjoint(
+                left_and_right.apply_inverse_adjointi(C.apply_adjoint(I_p))))).data.conj()
+        return dtfs
+
+
 class BilinearSystem(InputOutputSystem):
-    """Class for bilinear systems.
+    r"""Class for bilinear systems.
 
     This class describes input-output systems given by
 
@@ -892,50 +1099,51 @@ class BilinearSystem(InputOutputSystem):
         E x(k + 1) &= A x(k) + \sum_{i = 1}^m{N_i x(k) u_i(k)} + B u(k) \\
               y(k) &= C x(k)
 
-    if discrete-time, where E, A, N_i, B, and C are linear operators and m
-    is the number of inputs.
+    if discrete-time, where :math:`E`, :math:`A`, :math:`N_i`, :math:`B`,
+    and :math:`C` are linear operators and :math:`m` is the number of
+    inputs.
 
     Parameters
     ----------
     E
-        |Operator| E or `None` (then E is assumed to be identity).
+        The |Operator| E or `None` (then E is assumed to be identity).
     A
-        |Operator| A.
+        The |Operator| A.
     N
-        Tuple of |Operators| N_i.
+        The tuple of |Operators| N_i.
     B
-        |Operator| B.
+        The |Operator| B.
     C
-        |Operator| C.
+        The |Operator| C.
     ss_operators
-        Dictonary for state-to-state operators E, A, and N_i.
+        A dictonary for state-to-state |Operators| E, A, and N_i.
     is_operators
-        Dictonary for input-to-state operator B.
+        A dictonary for input-to-state |Operator| B.
     so_operators
-        Dictonary for state-to-output operator C.
+        A dictonary for state-to-output |Operator| C.
     cont_time
-        `True` if the system is continuous-time, otherwise discrete-time.
+        `True` if the system is continuous-time, otherwise `False`.
 
     Attributes
     ----------
     n
-        Order of the system (equal to A.source.dim).
+        The order of the system (equal to A.source.dim).
     m
-        Number of inputs.
+        The number of inputs.
     p
-        Number of outputs.
+        The number of outputs.
     E
-        |Operator| E. Same as `ss_operators['E']`.
+        The |Operator| E. The same as `ss_operators['E']`.
     A
-        |Operator| A. Same as `ss_operators['A']`.
+        The |Operator| A. The same as `ss_operators['A']`.
     N
-        List of |Operators| N_i. Same as `ss_operators['N']`.
+        The tuple of |Operators| N_i. The same as `ss_operators['N']`.
     B
-        |Operator| B. Same as `is_operators['B']`.
+        The |Operator| B. The same as `is_operators['B']`.
     C
-        |Operator| C. Same as `so_operators['C']`.
+        The |Operator| C. The same as `so_operators['C']`.
     """
-    linear = True
+    linear = False
 
     def __init__(self, E=None, A=None, N=None, B=None, C=None, ss_operators=None, is_operators=None,
                  so_operators=None, io_operators=None, cont_time=True):
@@ -946,10 +1154,12 @@ class BilinearSystem(InputOutputSystem):
         C = C or so_operators['C']
         assert isinstance(A, OperatorInterface) and A.linear
         assert A.source == A.range
-        assert all(isinstance(Ni, OperatorInterface) and Ni.linear for Ni in N)
-        assert all(Ni.source == Ni.range == A.source for Ni in N)
         assert isinstance(B, OperatorInterface) and B.linear
         assert B.range == A.source
+        assert isinstance(N, tuple)
+        assert len(N) == B.source.dim
+        assert all(isinstance(Ni, OperatorInterface) and Ni.linear for Ni in N)
+        assert all(Ni.source == Ni.range == A.source for Ni in N)
         assert isinstance(C, OperatorInterface) and C.linear
         assert C.source == A.range
         assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source
