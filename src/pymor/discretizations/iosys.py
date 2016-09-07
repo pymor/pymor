@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
@@ -15,7 +14,7 @@ from pymor.algorithms.riccati import solve_ricc
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.operators.block import BlockOperator, BlockDiagonalOperator
-from pymor.operators.constructions import (Concatenation, IdentityOperator, LincombOperator, ZeroOperator)
+from pymor.operators.constructions import Concatenation, IdentityOperator, LincombOperator, ZeroOperator
 from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.tools.frozendict import FrozenDict
@@ -23,19 +22,29 @@ from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
 class InputOutputSystem(DiscretizationInterface):
-    """Base class for input-output systems.
+    """Base class for input-output systems."""
 
-    Attributes
-    ----------
-    m
-        The number of inputs.
-    p
-        The number of outputs.
-    cont_time
-        `True` if the system is continuous-time, otherwise `False`.
-    """
-    m = p = 0
-    cont_time = True
+    def __init__(self, m, p, ss_operators, is_operators, so_operators, io_operators, cont_time=True, cache_region=None,
+                 name=None):
+        self.m = m
+        self.p = p
+        self.ss_operators = FrozenDict(ss_operators)
+        self.is_operators = FrozenDict(is_operators)
+        self.so_operators = FrozenDict(so_operators)
+        self.io_operators = FrozenDict(io_operators)
+        self.cont_time = cont_time
+        self.enable_caching(cache_region)
+        self.name = name
+        self._poles = None
+        self._w = None
+        self._tfw = None
+        self._gramian = {}
+        self._sv = {}
+        self._U = {}
+        self._V = {}
+        self._H2_norm = None
+        self._Hinf_norm = None
+        self._fpeak = None
 
     def _solve(self, mu=None):
         raise NotImplementedError
@@ -180,15 +189,16 @@ class LTISystem(InputOutputSystem):
         A dictonary for input-to-output |operator| D.
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
+    cache_region
+        `None` or name of the cache region to use. See
+        :mod:`pymor.core.cache`.
+    name
+        Name of the system.
 
     Attributes
     ----------
     n
         The order of the system.
-    m
-        The number of inputs.
-    p
-        The number of outputs.
     A
         The |Operator| A. The same as `ss_operators['A']`.
     B
@@ -203,7 +213,7 @@ class LTISystem(InputOutputSystem):
     linear = True
 
     def __init__(self, A=None, B=None, C=None, D=None, E=None, ss_operators=None, is_operators=None,
-                 so_operators=None, io_operators=None, cont_time=True):
+                 so_operators=None, io_operators=None, cont_time=True, cache_region=None, name=None):
         A = A or ss_operators['A']
         B = B or is_operators['B']
         C = C or so_operators['C']
@@ -221,28 +231,15 @@ class LTISystem(InputOutputSystem):
         assert cont_time in (True, False)
 
         self.n = A.source.dim
-        self.m = B.source.dim
-        self.p = C.range.dim
         self.A = A
         self.B = B
         self.C = C
         self.D = D if D is not None else ZeroOperator(B.source, C.range)
         self.E = E if E is not None else IdentityOperator(A.source)
-        self.ss_operators = FrozenDict({'A': A, 'E': self.E})
-        self.is_operators = FrozenDict({'B': B})
-        self.so_operators = FrozenDict({'C': C})
-        self.io_operators = FrozenDict({'D': self.D})
-        self.cont_time = cont_time
-        self._poles = None
-        self._w = None
-        self._tfw = None
-        self._gramian = {}
-        self._sv = {}
-        self._U = {}
-        self._V = {}
-        self._H2_norm = None
-        self._Hinf_norm = None
-        self._fpeak = None
+        super().__init__(m=B.source.dim, p=C.range.dim,
+                         ss_operators={'A': A, 'E': self.E}, is_operators={'B': B},
+                         so_operators={'C': C}, io_operators={'D': self.D},
+                         cont_time=cont_time, cache_region=cache_region, name=name)
         self.build_parameter_type(inherits=(A, B, C, D, E))
 
     @classmethod
@@ -670,19 +667,29 @@ class TF(InputOutputSystem):
         The complex derivative of `H`.
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
+    cache_region
+        `None` or name of the cache region to use. See
+        :mod:`pymor.core.cache`.
+    name
+        Name of the system.
+
+    Attributes
+    ----------
+    tf
+        The transfer function.
+    dtf
+        The complex derivative of the transfer function.
     """
     linear = True
 
-    def __init__(self, m, p, H, dH, cont_time=True):
+    def __init__(self, m, p, H, dH, cont_time=True, cache_region=None, name=None):
         assert cont_time in (True, False)
 
-        self.m = m
-        self.p = p
         self.tf = H
         self.dtf = dH
-        self.cont_time = cont_time
-        self._w = None
-        self._tfw = None
+        super().__init__(m=m, p=p,
+                         ss_operators={}, is_operators={}, so_operators={}, io_operators={},
+                         cont_time=cont_time, cache_region=cache_region, name=name)
 
     def eval_tf(self, s):
         return self.tf(s)
@@ -731,15 +738,16 @@ class SecondOrderSystem(InputOutputSystem):
         A dictonary for state-to-output |Operators| Cp and Cv.
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
+    cache_region
+        `None` or name of the cache region to use. See
+        :mod:`pymor.core.cache`.
+    name
+        Name of the system.
 
     Attributes
     ----------
     n
         The order of the system (equal to M.source.dim).
-    m
-        The number of inputs.
-    p
-        The number of outputs.
     M
         The |Operator| M. The same as `ss_operators['M']`.
     D
@@ -756,7 +764,7 @@ class SecondOrderSystem(InputOutputSystem):
     linear = True
 
     def __init__(self, M=None, D=None, K=None, B=None, Cp=None, Cv=None, ss_operators=None, is_operators=None,
-                 so_operators=None, io_operators=None, cont_time=True):
+                 so_operators=None, io_operators=None, cont_time=True, cache_region=None, name=None):
         M = M or ss_operators.get('M')
         D = D or ss_operators.get('D')
         K = K or ss_operators['D']
@@ -777,29 +785,16 @@ class SecondOrderSystem(InputOutputSystem):
         assert cont_time in (True, False)
 
         self.n = K.source.dim
-        self.m = B.source.dim
-        self.p = Cp.range.dim
         self.M = M if M is not None else IdentityOperator(K.source)
         self.D = D if D is not None else ZeroOperator(K.source, K.range)
         self.K = K
         self.B = B
         self.Cp = Cp
         self.Cv = Cv
-        self.ss_operators = FrozenDict({'M': self.M, 'D': self.D, 'K': K})
-        self.is_operators = FrozenDict({'B': B})
-        self.so_operators = FrozenDict({'Cp': Cp, 'Cv': Cv})
-        self.io_operators = FrozenDict({})
-        self.cont_time = cont_time
-        self._poles = None
-        self._w = None
-        self._tfw = None
-        self._gramian = {}
-        self._sv = {}
-        self._U = {}
-        self._V = {}
-        self._H2_norm = None
-        self._Hinf_norm = None
-        self._fpeak = None
+        super().__init__(m=B.source.dim, p=Cp.range.dim,
+                         ss_operators={'M': self.M, 'D': self.D, 'K': K}, is_operators={'B': B},
+                         so_operators={'Cp': Cp, 'Cv': Cv}, io_operators={},
+                         cont_time=cont_time, cache_region=cache_region, name=name)
         self.build_parameter_type(inherits=(M, D, K, B, Cp, Cv))
 
     def eval_tf(self, s):
@@ -930,15 +925,16 @@ class LinearDelaySystem(InputOutputSystem):
         A dictonary for state-to-output |Operator| C.
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
+    cache_region
+        `None` or name of the cache region to use. See
+        :mod:`pymor.core.cache`.
+    name
+        Name of the system.
 
     Attributes
     ----------
     n
         The order of the system (equal to A.source.dim).
-    m
-        The number of inputs.
-    p
-        The number of outputs.
     q
         The number of delay terms.
     E
@@ -955,7 +951,7 @@ class LinearDelaySystem(InputOutputSystem):
     linear = True
 
     def __init__(self, E=None, A=None, Ad=None, tau=None, B=None, C=None, ss_operators=None, is_operators=None,
-                 so_operators=None, io_operators=None, cont_time=True):
+                 so_operators=None, io_operators=None, cont_time=True, cache_region=None, name=None):
         E = E or ss_operators.get('E')
         A = A or ss_operators['A']
         Ad = Ad or ss_operators['Ad']
@@ -978,29 +974,16 @@ class LinearDelaySystem(InputOutputSystem):
         assert cont_time in (True, False)
 
         self.n = A.source.dim
-        self.m = B.source.dim
-        self.p = C.range.dim
         self.q = len(Ad)
         self.E = E if E is not None else IdentityOperator(A.source)
         self.A = A
         self.Ad = Ad
         self.B = B
         self.C = C
-        self.ss_operators = FrozenDict({'E': self.E, 'A': A, 'Ad': Ad})
-        self.is_operators = FrozenDict({'B': B})
-        self.so_operators = FrozenDict({'C': C})
-        self.io_operators = FrozenDict({})
-        self.cont_time = cont_time
-        self._poles = None
-        self._w = None
-        self._tfw = None
-        self._gramian = {}
-        self._sv = {}
-        self._U = {}
-        self._V = {}
-        self._H2_norm = None
-        self._Hinf_norm = None
-        self._fpeak = None
+        super().__init__(m=B.source.dim, p=C.range.dim,
+                         ss_operators={'E': self.E, 'A': A, 'Ad': Ad}, is_operators={'B': B},
+                         so_operators={'C': C}, io_operators={},
+                         cont_time=cont_time, cache_region=cache_region, name=name)
         self.build_parameter_type(inherits=(E, A, Ad, B, C))
 
     def eval_tf(self, s):
@@ -1126,15 +1109,16 @@ class LinearStochasticSystem(InputOutputSystem):
         A dictonary for state-to-output |Operator| C.
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
+    cache_region
+        `None` or name of the cache region to use. See
+        :mod:`pymor.core.cache`.
+    name
+        Name of the system.
 
     Attributes
     ----------
     n
         The order of the system (equal to A.source.dim).
-    m
-        The number of inputs.
-    p
-        The number of outputs.
     q
         The number of stochastic processes.
     E
@@ -1151,7 +1135,7 @@ class LinearStochasticSystem(InputOutputSystem):
     linear = True
 
     def __init__(self, E=None, A=None, As=None, tau=None, B=None, C=None, ss_operators=None, is_operators=None,
-                 so_operators=None, io_operators=None, cont_time=True):
+                 so_operators=None, io_operators=None, cont_time=True, cache_region=None, name=None):
         E = E or ss_operators.get('E')
         A = A or ss_operators['A']
         As = As or ss_operators['As']
@@ -1174,29 +1158,16 @@ class LinearStochasticSystem(InputOutputSystem):
         assert cont_time in (True, False)
 
         self.n = A.source.dim
-        self.m = B.source.dim
-        self.p = C.range.dim
         self.q = len(As)
         self.E = E if E is not None else IdentityOperator(A.source)
         self.A = A
         self.As = As
         self.B = B
         self.C = C
-        self.ss_operators = FrozenDict({'E': self.E, 'A': A, 'As': As})
-        self.is_operators = FrozenDict({'B': B})
-        self.so_operators = FrozenDict({'C': C})
-        self.io_operators = FrozenDict({})
-        self.cont_time = cont_time
-        self._poles = None
-        self._w = None
-        self._tfw = None
-        self._gramian = {}
-        self._sv = {}
-        self._U = {}
-        self._V = {}
-        self._H2_norm = None
-        self._Hinf_norm = None
-        self._fpeak = None
+        super().__init__(m=B.source.dim, p=C.range.dim,
+                         ss_operators={'E': self.E, 'A': A, 'As': As}, is_operators={'B': B},
+                         so_operators={'C': C}, io_operators={},
+                         cont_time=cont_time, cache_region=cache_region, name=name)
         self.build_parameter_type(inherits=(E, A, As, B, C))
 
 
@@ -1239,15 +1210,16 @@ class BilinearSystem(InputOutputSystem):
         A dictonary for state-to-output |Operator| C.
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
+    cache_region
+        `None` or name of the cache region to use. See
+        :mod:`pymor.core.cache`.
+    name
+        Name of the system.
 
     Attributes
     ----------
     n
         The order of the system (equal to A.source.dim).
-    m
-        The number of inputs.
-    p
-        The number of outputs.
     E
         The |Operator| E. The same as `ss_operators['E']`.
     A
@@ -1262,7 +1234,7 @@ class BilinearSystem(InputOutputSystem):
     linear = False
 
     def __init__(self, E=None, A=None, N=None, B=None, C=None, ss_operators=None, is_operators=None,
-                 so_operators=None, io_operators=None, cont_time=True):
+                 so_operators=None, io_operators=None, cont_time=True, cache_region=None, name=None):
         E = E or ss_operators.get('E')
         A = A or ss_operators['A']
         N = N or ss_operators['N']
@@ -1282,26 +1254,13 @@ class BilinearSystem(InputOutputSystem):
         assert cont_time in (True, False)
 
         self.n = A.source.dim
-        self.m = B.source.dim
-        self.p = C.range.dim
         self.E = E if E is not None else IdentityOperator(A.source)
         self.A = A
         self.N = N
         self.B = B
         self.C = C
-        self.ss_operators = FrozenDict({'E': self.E, 'A': A, 'N': N})
-        self.is_operators = FrozenDict({'B': B})
-        self.so_operators = FrozenDict({'C': C})
-        self.io_operators = FrozenDict({})
-        self.cont_time = cont_time
-        self._poles = None
-        self._w = None
-        self._tfw = None
-        self._gramian = {}
-        self._sv = {}
-        self._U = {}
-        self._V = {}
-        self._H2_norm = None
-        self._Hinf_norm = None
-        self._fpeak = None
+        super().__init__(m=B.source.dim, p=C.range.dim,
+                         ss_operators={'E': self.E, 'A': A, 'N': N}, is_operators={'B': B},
+                         so_operators={'C': C}, io_operators={},
+                         cont_time=cont_time, cache_region=cache_region, name=name)
         self.build_parameter_type(inherits=(E, A, N, B, C))
