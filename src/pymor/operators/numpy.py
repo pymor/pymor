@@ -5,7 +5,7 @@
 
 """This module provides the following |NumPy| based |Operators|:
 
-  - |NumpyMatrixOperator| wraps a 2D |NumPy array| as a |Operator|.
+  - |NumpyMatrixOperator| wraps a 2D |NumPy array| as an |Operator|.
   - |NumpyMatrixBasedOperator| should be used as base class for all |Operators|
     which assemble into a |NumpyMatrixOperator|.
   - |NumpyGenericOperator| wraps an arbitrary Python function between
@@ -104,7 +104,7 @@ class NumpyMatrixBasedOperator(OperatorBase):
 
         Returns
         -------
-        The assembled **parameter independent** |Operator|.
+        The assembled parameter independent |Operator|.
         """
         if hasattr(self, '_assembled_operator'):
             if self._defaults_sid != defaults_sid():
@@ -390,7 +390,7 @@ _sparse_options_sid = None
 def dense_options(default_solver='solve',
                   default_least_squares_solver='least_squares_lstsq',
                   least_squares_lstsq_rcond=-1.):
-    """Returns |solver_options| (with default values) for dense |NumPy| matricies.
+    """Returns possible |solver_options| (with default values) for dense |NumPy| matricies.
 
     Parameters
     ----------
@@ -496,7 +496,7 @@ def sparse_options(default_solver='spsolve',
                    pyamg_sa_accel=None,
                    pyamg_sa_tol=1e-5,
                    pyamg_sa_maxiter=100):
-    """Returns |solver_options| (with default values) for sparse |NumPy| matricies.
+    """Returns possible |solver_options| (with default values) for sparse |NumPy| matricies.
 
     Parameters
     ----------
@@ -699,7 +699,7 @@ def sparse_options(default_solver='spsolve',
 
 
 def _options(matrix=None, sparse=None):
-    """Returns |solver_options| (with default values) for a given |NumPy| matrix.
+    """Returns possible |solver_options| (with default values) for a given |NumPy| matrix.
 
     See :func:`dense_options` for documentation of all possible options for
     dense matrices.
@@ -713,7 +713,7 @@ def _options(matrix=None, sparse=None):
         The matrix for which to return the options.
     sparse
         Instead of providing a matrix via the `matrix` argument,
-        `sparse` can be set to `True` or `False` to requset the
+        `sparse` can be set to `True` or `False` to request the
         invert options for sparse or dense matrices.
 
     Returns
@@ -750,13 +750,14 @@ def _apply_inverse(matrix, V, options=None):
     See :func:`sparse_options` for documentation of all possible options for
     sparse matrices.
 
-    This method is called by :meth:`pymor.core.NumpyMatrixOperator.apply_inverse`
+    This method is called by :meth:`NumpyMatrixOperator.apply_inverse`
     and usually should not be used directly.
 
     Parameters
     ----------
     matrix
-        The |NumPy| matrix to invert.
+        The left-hand side of the linear equation systems to
+        solve as a |NumPy| matrix.
     V
         2-dimensional |NumPy array| containing as row vectors
         the right-hand sides of the linear equation systems to
