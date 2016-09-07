@@ -13,7 +13,7 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class MPIOperator(OperatorBase):
-    """MPI distributed Operator.
+    """MPI distributed |Operator|.
 
     Given a single-rank implementation of an |Operator|, this
     wrapper class uses the event loop from :mod:`pymor.tools.mpi`
@@ -52,14 +52,13 @@ class MPIOperator(OperatorBase):
         MPI aware implementation of `apply2` and `pairwise_apply2`.
         Otherwise, the default implementations using `apply` and
         :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.dot`
-        (or `apply2` if a `product` is provided) will be used.
+        will be used.
     pickle_subtypes
         If `pickle_subtypes` is `False`, a unique identifier
         is computed for each local source/range subtype, which is then
         transferred to rank 0 instead of the true subtype. This
-        allows to use :class:`pymor.vectorarrays.mpi.MPIVectorArray`,
-        :class:`MPIOperator` even when the local subtypes are not
-        picklable.
+        allows the useage of :class:`~pymor.vectorarrays.mpi.MPIVectorArray`
+        even when the local subtypes are not picklable.
     array_type
         This class will be used to wrap the local |VectorArrays|
         returned by the local operators into an MPI distributed
@@ -227,11 +226,11 @@ def mpi_wrap_operator(obj_id, functional=False, vector=False, with_apply2=False,
     """Wrap MPI distributed local |Operators| to a global |Operator| on rank 0.
 
     Given MPI distributed local |Operators| referred to by the
-    `~pymor.tools.mpi.ObjectId` `obj_id`, return a new |Operator|
+    :class:`~pymor.tools.mpi.ObjectId` `obj_id`, return a new |Operator|
     which manages these distributed operators from rank 0. This
     is done by instantiating :class:`MPIOperator`. Additionally, the
     structure of the wrapped operators is preserved. E.g. |LincombOperators|
-    will be wrapped as a |LincombOperator| of :class:`MPIOperators`.
+    will be wrapped as a |LincombOperator| of :class:`MPIOperators <MPIOperator>`.
 
     Parameters
     ----------
