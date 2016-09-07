@@ -230,11 +230,18 @@ class OperatorBase(OperatorInterface):
 
 
 class ProjectedOperator(OperatorBase):
-    """Genric |Operator| for representing the projection of an |Operator| to a subspace.
+    """Generic |Operator| representing the projection of an |Operator| to a subspace.
 
-    This class is not intended to be instantiated directly. Instead, you should use
-    the :meth:`~pymor.operators.interfaces.OperatorInterface.projected` method of the given
-    |Operator|.
+    This operator is implemented as the concatenation of the linear combination with
+    `source_basis`, application of the original `operator` and projection onto
+    `range_basis`. As such, this operator can be used to obtain a reduced basis
+    projection of any given |Operator|. However, no offline/online decomposition is
+    performed, so this operator is mainly useful for testing before implementing
+    offline/online decomposition for a specific application.
+
+    This operator is instantiated in the default implementation of
+    :meth:`~pymor.operators.interfaces.OperatorInterface.projected` in
+    :class:`OperatorBase` for parametric or nonlinear operators.
 
     Parameters
     ----------
