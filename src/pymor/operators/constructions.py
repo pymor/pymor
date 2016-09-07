@@ -514,7 +514,7 @@ class ZeroOperator(OperatorBase):
             return operators[1].assemble_lincomb(operators[1:], coefficients[1:], solver_options=solver_options,
                                                  name=name)
         else:
-            return None
+            return self
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)

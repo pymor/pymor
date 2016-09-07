@@ -22,9 +22,12 @@ where :math:`u(t)` is the input and :math:`y(t)` is the output.
 
 from __future__ import absolute_import, division, print_function
 
-import pymor.discretizations.iosys as iosys
 import numpy as np
 import matplotlib.pyplot as plt
+
+from pymor.discretizations.iosys import LTISystem
+from pymor.reductors.bt import bt
+from pymor.reductors.lti import irka
 
 import logging
 logging.getLogger('pymor.algorithms.gram_schmidt.gram_schmidt').setLevel(logging.ERROR)
@@ -52,25 +55,27 @@ if __name__ == '__main__':
     C = np.zeros((1, n))
     C[0, n - 1] = 1
 
-    # eigenvalues of A
-    ev = np.linalg.eigvals(A)
-    fig, ax = plt.subplots()
-    ax.plot(ev.real, ev.imag, '.')
-    ax.set_title('Eigenvalues of A')
-    plt.show()
-
     # LTI system
-    lti = iosys.LTISystem.from_matrices(A, B, C)
+    lti = LTISystem.from_matrices(A, B, C)
 
     print('n = {}'.format(lti.n))
     print('m = {}'.format(lti.m))
     print('p = {}'.format(lti.p))
 
+    # System poles
+    lti.compute_poles()
+    poles = lti._poles
+    fig, ax = plt.subplots()
+    ax.plot(poles.real, poles.imag, '.')
+    ax.set_title('System poles')
+    plt.show()
+
     # Bode plot of the full model
     w = np.logspace(-2, 3, 100)
     lti.bode(w)
-    fig, ax = iosys.LTISystem.mag_plot(lti)
+    fig, ax = LTISystem.mag_plot(lti)
     ax.set_title('Bode plot of the full model')
+    plt.show()
 
     # Hankel singular values
     lti.compute_sv_U_V('lyap')
@@ -85,7 +90,7 @@ if __name__ == '__main__':
 
     # Balanced Truncation
     r = 5
-    rom_bt, _, _ = lti.bt(r, me_solver='slycot')
+    rom_bt, _, _ = bt(lti, r, me_solver='slycot')
     print('H_2-norm of the BT ROM:       {}'.format(rom_bt.norm()))
     print('H_inf-norm of the BT ROM:     {}'.format(rom_bt.norm('Hinf')))
     err_bt = lti - rom_bt
@@ -95,25 +100,25 @@ if __name__ == '__main__':
 
     # Bode plot of the full and BT reduced model
     rom_bt.bode(w)
-    fig, ax = iosys.LTISystem.mag_plot((lti, rom_bt))
+    fig, ax = LTISystem.mag_plot((lti, rom_bt))
     ax.set_title('Bode plot of the full and BT reduced model')
+    plt.show()
 
     # Bode plot of the BT error system
     err_bt.bode(w)
-    fig, ax = iosys.LTISystem.mag_plot(err_bt)
+    fig, ax = LTISystem.mag_plot(err_bt)
     ax.set_title('Bode plot of the BT error system')
+    plt.show()
 
     # Iterative Rational Krylov Algorithm
     sigma = np.logspace(-1, 3, r)
-    b = np.ones((lti.m, r))
-    c = np.ones((lti.p, r))
     tol = 1e-4
     maxit = 100
-    rom_irka, _, reduction_data_irka = lti.irka(r, sigma, verbose=True, compute_errors=True)
+    rom_irka, _, reduction_data_irka = irka(lti, r, sigma, tol=tol, maxit=maxit, verbose=True, compute_errors=True)
 
-    #print(reduction_data_irka['dist'])
+    # print(reduction_data_irka['dist'])
     tmp = map(np.min, reduction_data_irka['dist'])
-    #print(tmp)
+    # print(tmp)
     fig, ax = plt.subplots()
     ax.semilogy(tmp, '.-')
     ax.set_title('Distances between shifts in IRKA iterations')
@@ -127,10 +132,12 @@ if __name__ == '__main__':
 
     # Bode plot of the full and IRKA reduced model
     rom_irka.bode(w)
-    fig, ax = iosys.LTISystem.mag_plot((lti, rom_irka))
+    fig, ax = LTISystem.mag_plot((lti, rom_irka))
     ax.set_title('Bode plot of the full and IRKA reduced model')
+    plt.show()
 
     # Bode plot of the IRKA error system
     err_irka.bode(w)
-    fig, ax = iosys.LTISystem.mag_plot(err_irka)
+    fig, ax = LTISystem.mag_plot(err_irka)
     ax.set_title('Bode plot of the IRKA error system')
+    plt.show()

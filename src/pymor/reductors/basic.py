@@ -208,6 +208,8 @@ def reduce_generic_pg(discretization, V, W, use_default=None):
     """
     assert len(V) == len(W)
 
+    use_default = use_default or {}
+
     projected_ss_operators = {k: op.projected(range_basis=W, source_basis=V) if op and k not in use_default else None
                               for k, op in discretization.ss_operators.items()}
     projected_is_operators = {k: op.projected(range_basis=W, source_basis=None) if op and k not in use_default else None

@@ -113,11 +113,11 @@ class InputOutputSystem(DiscretizationInterface):
         if isinstance(sys_list, LTISystem):
             sys_list = (sys_list,)
 
-        assert (plot_style_list is None or isinstance(plot_style_list, str) or
-                all(isinstance(plot_style, str) for plot_style in plot_style_list))
+        assert (plot_style_list is None or isinstance(plot_style_list, str) and len(sys_list) == 1 or
+                all(isinstance(plot_style, str) for plot_style in plot_style_list) and
+                len(sys_list) == len(plot_style_list))
         if isinstance(plot_style_list, str):
             plot_style_list = (plot_style_list,)
-        assert len(plot_style_list) == len(sys_list)
 
         assert w is not None or all(sys._w is not None for sys in sys_list)
 
@@ -214,6 +214,10 @@ class LTISystem(InputOutputSystem):
 
     def __init__(self, A=None, B=None, C=None, D=None, E=None, ss_operators=None, is_operators=None,
                  so_operators=None, io_operators=None, cont_time=True, cache_region=None, name=None):
+        ss_operators = ss_operators or {}
+        is_operators = is_operators or {}
+        so_operators = so_operators or {}
+        io_operators = io_operators or {}
         A = A or ss_operators['A']
         B = B or is_operators['B']
         C = C or so_operators['C']
@@ -282,7 +286,7 @@ class LTISystem(InputOutputSystem):
         if E is not None:
             E = NumpyMatrixOperator(E)
 
-        return cls(A, B, C, D, E, cont_time)
+        return cls(A, B, C, D, E, cont_time=cont_time)
 
     @classmethod
     def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, cont_time=True):
@@ -316,7 +320,7 @@ class LTISystem(InputOutputSystem):
         D = load_matrix(D_file) if D_file is not None else None
         E = load_matrix(E_file) if E_file is not None else None
 
-        return cls.from_matrices(A, B, C, D, E, cont_time)
+        return cls.from_matrices(A, B, C, D, E, cont_time=cont_time)
 
     @classmethod
     def from_mat_file(cls, file_name, cont_time=True):
@@ -346,7 +350,7 @@ class LTISystem(InputOutputSystem):
         D = mat_dict['D'] if 'D' in mat_dict else None
         E = mat_dict['E'] if 'E' in mat_dict else None
 
-        return cls.from_matrices(A, B, C, D, E, cont_time)
+        return cls.from_matrices(A, B, C, D, E, cont_time=cont_time)
 
     @classmethod
     def from_abcde_files(cls, files_basename, cont_time=True):
@@ -373,7 +377,7 @@ class LTISystem(InputOutputSystem):
         D = load_matrix(files_basename + '.D') if os.path.isfile(files_basename + '.D') else None
         E = load_matrix(files_basename + '.E') if os.path.isfile(files_basename + '.E') else None
 
-        return cls.from_matrices(A, B, C, D, E, cont_time)
+        return cls.from_matrices(A, B, C, D, E, cont_time=cont_time)
 
     def __add__(self, other):
         """Add two |LTISystems|."""
@@ -385,10 +389,10 @@ class LTISystem(InputOutputSystem):
         A = BlockDiagonalOperator((self.A, other.A))
         B = BlockOperator.vstack((self.B, other.B))
         C = BlockOperator.hstack((self.C, other.C))
-        D = (self.D + other.D).assemble()
+        D = BlockOperator([[(self.D + other.D).assemble()]])
         E = BlockDiagonalOperator((self.E, other.E))
 
-        return self.__class__(A, B, C, D, E, self.cont_time)
+        return self.__class__(A, B, C, D, E, cont_time=self.cont_time)
 
     def __neg__(self):
         """Negate |LTISystem|."""
@@ -398,7 +402,7 @@ class LTISystem(InputOutputSystem):
         D = (self.D * (-1)).assemble()
         E = self.E
 
-        return self.__class__(A, B, C, D, E, self.cont_time)
+        return self.__class__(A, B, C, D, E, cont_time=self.cont_time)
 
     def __sub__(self, other):
         """Subtract two |LTISystems|."""
@@ -417,7 +421,7 @@ class LTISystem(InputOutputSystem):
         D = Concatenation(self.D, other.D)
         E = BlockDiagonalOperator((self.E, other.E))
 
-        return self.__class__(A, B, C, D, E, self.cont_time)
+        return self.__class__(A, B, C, D, E, cont_time=self.cont_time)
 
     def compute_poles(self):
         """Compute system poles."""
@@ -546,6 +550,7 @@ class LTISystem(InputOutputSystem):
             C = self.C
             E = self.E if not isinstance(self.E, IdentityOperator) else None
             if typ == 'lyap':
+                self._gramian.setdefault(typ, {})
                 if subtyp == 'cf':
                     self._gramian[typ][subtyp] = solve_lyap(A, E, B, trans=False, me_solver=me_solver, tol=tol)
                 elif subtyp == 'of':
@@ -553,6 +558,7 @@ class LTISystem(InputOutputSystem):
                 else:
                     raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for 'lyap' type.")
             elif typ == 'lqg':
+                self._gramian.setdefault(typ, {})
                 if subtyp == 'cf':
                     self._gramian[typ][subtyp] = solve_ricc(A, E=E, B=B, C=C, trans=True, me_solver=me_solver, tol=tol)
                 elif subtyp == 'of':
@@ -562,6 +568,7 @@ class LTISystem(InputOutputSystem):
             elif isinstance(typ, tuple) and typ[0] == 'br':
                 assert isinstance(typ[1], float)
                 assert typ[1] > 0
+                self._gramian.setdefault(typ, {})
                 if subtyp == 'cf':
                     self._gramian[typ][subtyp] = solve_ricc(A, E=E, B=B / np.sqrt(typ[1]), C=C / np.sqrt(typ[1]),
                                                             R=-IdentityOperator(C.range),
@@ -588,8 +595,6 @@ class LTISystem(InputOutputSystem):
             :func:`pymor.algorithms.lyapunov.solve_lyap` or
             :func:`pymor.algorithms.riccati.solve_ricc`).
         """
-        assert isinstance(typ, tuple)
-
         if typ not in self._sv or typ not in self._U or typ not in self._V:
             self.compute_gramian(typ, 'cf', me_solver=me_solver)
             self.compute_gramian(typ, 'of', me_solver=me_solver)
@@ -765,6 +770,10 @@ class SecondOrderSystem(InputOutputSystem):
 
     def __init__(self, M=None, D=None, K=None, B=None, Cp=None, Cv=None, ss_operators=None, is_operators=None,
                  so_operators=None, io_operators=None, cont_time=True, cache_region=None, name=None):
+        ss_operators = ss_operators or {}
+        is_operators = is_operators or {}
+        so_operators = so_operators or {}
+        io_operators = io_operators or {}
         M = M or ss_operators.get('M')
         D = D or ss_operators.get('D')
         K = K or ss_operators['D']
@@ -952,6 +961,10 @@ class LinearDelaySystem(InputOutputSystem):
 
     def __init__(self, E=None, A=None, Ad=None, tau=None, B=None, C=None, ss_operators=None, is_operators=None,
                  so_operators=None, io_operators=None, cont_time=True, cache_region=None, name=None):
+        ss_operators = ss_operators or {}
+        is_operators = is_operators or {}
+        so_operators = so_operators or {}
+        io_operators = io_operators or {}
         E = E or ss_operators.get('E')
         A = A or ss_operators['A']
         Ad = Ad or ss_operators['Ad']
@@ -1136,6 +1149,10 @@ class LinearStochasticSystem(InputOutputSystem):
 
     def __init__(self, E=None, A=None, As=None, tau=None, B=None, C=None, ss_operators=None, is_operators=None,
                  so_operators=None, io_operators=None, cont_time=True, cache_region=None, name=None):
+        ss_operators = ss_operators or {}
+        is_operators = is_operators or {}
+        so_operators = so_operators or {}
+        io_operators = io_operators or {}
         E = E or ss_operators.get('E')
         A = A or ss_operators['A']
         As = As or ss_operators['As']
@@ -1235,6 +1252,10 @@ class BilinearSystem(InputOutputSystem):
 
     def __init__(self, E=None, A=None, N=None, B=None, C=None, ss_operators=None, is_operators=None,
                  so_operators=None, io_operators=None, cont_time=True, cache_region=None, name=None):
+        ss_operators = ss_operators or {}
+        is_operators = is_operators or {}
+        so_operators = so_operators or {}
+        io_operators = io_operators or {}
         E = E or ss_operators.get('E')
         A = A or ss_operators['A']
         N = N or ss_operators['N']
