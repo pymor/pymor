@@ -13,7 +13,26 @@ from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpace
 
 
 class BlockVectorArray(VectorArrayInterface):
-    """|VectorArray| implementation
+    """|VectorArray| where each vector is a direct sum of sub-vectors.
+
+    Given a list of equal length |VectorArrays| `blocks`, this |VectorArray|
+    represents the direct sums of the vectors contained in the arrays.
+
+    The :attr:`~pymor.vectorarrays.interfaces.VectorArrayInterface.subtype`
+    of the array will be the tuple ::
+
+        (blocks[0].space, blocks[1].space, ..., blocks[-1].space).
+
+    :class:`BlockVectorArray` can be used in conjunction with
+    :class:`~pymor.operators.block.BlockOperator`.
+
+
+    Parameters
+    ----------
+    blocks
+        The list of sub-arrays.
+    copy
+        If `True`, copy all arrays contained in `blocks`.
     """
 
     def __init__(self, blocks, copy=False):
