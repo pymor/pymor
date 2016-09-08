@@ -17,17 +17,17 @@ class VectorArrayInterface(BasicInterface):
 
     A vector array should be thought of as a list of (possibly high-dimensional) vectors.
     While the vectors themselves will be inaccessible in general (e.g. because they are
-    managed by external code on large systems), operations on the vectors like addition can
+    managed by an external PDE solver code), operations on the vectors like addition can
     be performed via the interface.
 
     It is moreover assumed that the number of vectors is small enough such that scalar data
-    associated to each vector can be handled on the Python side. I.e. methods like
+    associated to each vector can be handled on the Python side. As such, methods like
     :meth:`~VectorArrayInterface.l2_norm` or :meth:`~VectorArrayInterface.gramian` will
     always return |NumPy arrays|.
 
     An implementation of the interface via |NumPy arrays| is given by |NumpyVectorArray|.
     In general, it is the implementors decision how memory is allocated internally (e.g.
-    continuous block of memory vs. list of pointers to the individual vectors.) Thus no
+    continuous block of memory vs. list of pointers to the individual vectors.) Thus, no
     general assumptions can be made on the costs of operations like appending to or removing
     vectors from the array. As a hint for 'continuous block of memory' implementations,
     |VectorArray| constructors should provide a `reserve` keyword argument which allows
@@ -55,14 +55,14 @@ class VectorArrayInterface(BasicInterface):
     space
         |VectorSpace| array the array belongs to.
     subtype
-        Can be any Python object with a sensible implementation of `__eq__`. Two
-        arrays are compatible (e.g. can be added) if they are instances of the same class
-        and share the same subtype. A valid subtype has to be provided
-        to :meth:`~VectorArrayInterface.make_array` and the resulting array will be
-        of that subtype. By default, the subtype of an array is simply `None`. For
-        |NumpyVectorArray|, the subtype is a single integer denoting the dimension of
-        the array. Subtypes for other array classes could, e.g., include a socket for
-        communication with a specific PDE solver instance.
+        Can be any Python object. Two arrays are compatible (e.g. can be added)
+        if they are instances of the same class and have equal subtypes. A valid
+        subtype has to be provided to :meth:`~VectorArrayInterface.make_array` and
+        the resulting array will be of that subtype. By default, the subtype of an
+        array is simply `None`. For |NumpyVectorArray|, the subtype is a single
+        integer denoting the dimension of the array. Subtypes for other array classes
+        could, e.g., include a socket for communication with a specific PDE solver
+        instance.
     """
 
     @abstractclassmethod
@@ -235,9 +235,8 @@ class VectorArrayInterface(BasicInterface):
 
             self[ind] = alpha*x[x_ind] + self[ind]
 
-        The subtypes of `self` and `x` have to agree. If the length of `x` (`x_ind`) is 1,
-        the same `x` vector is used for all vectors in `self`. Otherwise, the lengths of `self`
-        (`ind`) and `x` (`x_ind`) have to agree.
+        If the length of `x` (`x_ind`) is 1, the same `x` vector is used for all vectors
+        in `self`. Otherwise, the lengths of `self` (`ind`) and `x` (`x_ind`) have to agree.
         If `alpha` is a scalar, each `x` vector is multiplied with the same factor `alpha`.
         Otherwise, `alpha` has to be a one-dimensional |NumPy array| of the same length as
         `self` (`ind`)  containing the coefficients for each `x` vector.
@@ -260,48 +259,48 @@ class VectorArrayInterface(BasicInterface):
 
     @abstractmethod
     def dot(self, other, ind=None, o_ind=None):
-        """Returns the scalar products between |VectorArray| elements.
+        """Returns the inner products between |VectorArray| elements.
 
         Parameters
         ----------
         other
             A |VectorArray| containing the second factors.
         ind
-            Indices of the vectors whose scalar products are to be taken
+            Indices of the vectors whose inner products are to be taken
             (see class documentation).
         o_ind
-            Indices of the vectors in `other` whose scalar products are to be
+            Indices of the vectors in `other` whose inner products are to be
             taken (see class documentation).
 
         Returns
         -------
-        A |NumPy array| `result` such that ::
+        A |NumPy array| `result` such that:
 
-            result[i, j] = ( self[ind][i], other[o_ind][j] ).
+            result[i, j] = ( self[ind[i]], other[o_ind[j]] ).
 
         """
         pass
 
     @abstractmethod
     def pairwise_dot(self, other, ind=None, o_ind=None):
-        """Returns the scalar products between |VectorArray| elements.
+        """Returns the pairwise inner products between |VectorArray| elements.
 
         Parameters
         ----------
         other
             A |VectorArray| containing the second factors.
         ind
-            Indices of the vectors whose scalar products are to be taken
+            Indices of the vectors whose inner products are to be taken
             (see class documentation).
         o_ind
-            Indices of the vectors in `other` whose scalar products are to be
+            Indices of the vectors in `other` whose inner products are to be
             taken (see class documentation).
 
         Returns
         -------
-        A |NumPy array| `result` such that ::
+        A |NumPy array| `result` such that:
 
-            result[i] = ( self[ind][i], other[o_ind][i] ).
+            result[i] = ( self[ind[i]], other[o_ind[i]] ).
 
         """
         pass
@@ -321,14 +320,14 @@ class VectorArrayInterface(BasicInterface):
 
         Returns
         -------
-        A |VectorArray| `result` such that ::
+        A |VectorArray| `result` such that:
 
             result[i] = ∑ self[j] * coefficients[i,j]
 
         in case `coefficients` is of dimension 2, otherwise
         `len(result) == 1` and
 
-            result[1] = ∑ self[j] * coefficients[j].
+            result[0] = ∑ self[j] * coefficients[j].
         """
         pass
 
@@ -344,7 +343,7 @@ class VectorArrayInterface(BasicInterface):
         Returns
         -------
         A |NumPy array| `result` such that `result[i]` contains the norm
-        of `self[ind][i]`.
+        of `self[ind[i]]`.
         """
         pass
 
@@ -360,7 +359,7 @@ class VectorArrayInterface(BasicInterface):
         Returns
         -------
         A |NumPy array| `result` such that `result[i]` contains the norm
-        of `self[ind][i]`.
+        of `self[ind[i]]`.
         """
         pass
 
@@ -375,7 +374,7 @@ class VectorArrayInterface(BasicInterface):
         Returns
         -------
         A |NumPy array| `result` such that `result[i]` contains the norm
-        of `self[ind][i]`.
+        of `self[ind[i]]`.
         """
         if self.dim == 0:
             assert self.check_ind(ind)
@@ -394,7 +393,7 @@ class VectorArrayInterface(BasicInterface):
             List or 1D |NumPy array| of indices of the vector components that are to
             be returned.
         ind
-            Indices of the vectors whose components are to be calculated (see class documentation).
+            Indices of the vectors whose components are to be retrieved (see class documentation).
 
         Returns
         -------
@@ -425,7 +424,7 @@ class VectorArrayInterface(BasicInterface):
         pass
 
     def gramian(self, ind=None):
-        """Shorthand for `dot(self, ind=ind, o_ind=ind)`."""
+        """Shorthand for `self.dot(self, ind=ind, o_ind=ind)`."""
         return self.dot(self, ind=ind, o_ind=ind)
 
     def __add__(self, other):
@@ -512,8 +511,8 @@ class VectorSpace(BasicInterface):
 
     A vector space is simply the combination of a |VectorArray| type and a
     :attr:`~VectorArrayInterface.subtype`. This data is exactly sufficient to construct
-    new arrays using the :meth:`~VectorArrayInterface.make_array` method.
-    (See the implementation of :meth:`~VectorSpace.zeros`.)
+    new arrays using the :meth:`~VectorArrayInterface.make_array` method
+    (see the implementation of :meth:`~VectorSpace.zeros`).
 
     A |VectorArray| `U` is contained in a vector space `space`, if ::
 
@@ -556,7 +555,7 @@ class VectorSpace(BasicInterface):
 
         Returns
         -------
-        A |VectorArray| containing `count` vectors whith each component zero.
+        A |VectorArray| containing `count` vectors with each component zero.
         """
         return self.type.make_array(subtype=self.subtype, count=count)
 
