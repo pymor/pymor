@@ -1,7 +1,9 @@
 language: generic
 
+git:
+  depth: 1000
+
 before_install:
- - git fetch --depth=1000 --tags origin master
  - alias python=python${TRAVIS_PYTHON_VERSION}
  - sudo add-apt-repository -y ppa:pymor/stable
  - sudo add-apt-repository -y ppa:fenics-packages/fenics
