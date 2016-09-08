@@ -14,9 +14,9 @@ class WorkerPoolInterface(BasicInterface):
     workers (:meth:`~WorkerPoolInterface.push`, :meth:`~WorkerPoolInterface.scatter_array`,
     :meth:`~WorkerPoolInterface.scatter_list`) and execute functions on
     the distributed data in parallel (:meth:`~WorkerPoolInterface.apply`),
-    collecting the return values from each function call. Moreover, a
-    single worker can be instructed to execute a function
-    (:meth:`WorkerPoolInterface.apply_only`). Finally, a parallelized
+    collecting the return values from each function call. A
+    single worker can be instructed to execute a function using the
+    :meth:`WorkerPoolInterface.apply_only` method. Finally, a parallelized
     :meth:`~WorkerPoolInterface.map` function is available, which
     automatically scatters the data among the workers.
 
@@ -30,17 +30,17 @@ class WorkerPoolInterface(BasicInterface):
 
     @abstractmethod
     def push(self, obj):
-        """Push a copy of 'obj' to  all workers of the pool.
+        """Push a copy of `obj` to  all workers of the pool.
 
-        A |RemoteObject| is returned as a handle to the pushed objects.
-        This object can be used as an argument to :meth:`~WorkerPoolInterface.apply`,
+        A |RemoteObject| is returned as a handle to the pushed object.
+        This object can be used as a keyword argument to :meth:`~WorkerPoolInterface.apply`,
         :meth:`~WorkerPoolInterface.apply_only`, :meth:`~WorkerPoolInterface.map`
         and will then be transparently mapped to the respective copy
         of the pushed object on the worker.
 
         |Immutable| objects will be pushed only once. If the same |immutable| object
         is pushed a second time, the returned |RemoteObject| will refer to the
-        already transfered copy. It is therefore safe to use `push` to ensure
+        already transferred copy. It is therefore safe to use `push` to ensure
         that a given |immutable| object is available on the worker. No unnecessary
         copies will be created.
 
@@ -157,7 +157,7 @@ class WorkerPoolInterface(BasicInterface):
 
     @abstractmethod
     def map(self, function, *args, **kwargs):
-        """Parallel version of the builtin map function.
+        """Parallel version of the builtin :func:`map` function.
 
         Each positional argument (after `function`) must be a sequence
         of same length n. `map` calls `function` in parallel on each of these n
@@ -187,7 +187,7 @@ class WorkerPoolInterface(BasicInterface):
 
 
 class RemoteObjectInterface(object):
-    """Handle to data on workers of a |WorkerPool|.
+    """Handle to remote data on the workers of a |WorkerPool|.
 
     See documentation of :class:`WorkerPoolInterface` for usage
     of these handles in conjunction with :meth:`~WorkerPoolInterface.apply`,
@@ -201,7 +201,7 @@ class RemoteObjectInterface(object):
     Attributes
     ----------
     removed
-        `True`, if :meth:`RemoteObjectInterface.remove` has been called.
+        `True`, after :meth:`remove` has been called.
     """
 
     removed = False
@@ -214,12 +214,12 @@ class RemoteObjectInterface(object):
     def remove(self):
         """Remove the remote object from the workers.
 
-        Remove the object to which this handle refers to from all workers.
+        Remove the object this handle refers to from all workers.
         Note that the object will only be destroyed if no other
-        object on the worker holds a reference to the object.
-        Moreover, |immutable| objects will only be destroyed, if
-        `remove` has been called on _all_ |RemoteObjects| which refer
-        to the object (also see :meth:`~WorkerPoolInterface.push`).
+        object on the worker holds a reference to that object.
+        Moreover, |immutable| objects will only be destroyed if
+        :meth:`remove` has been called on *all* |RemoteObjects|
+        which refer to the object (see :meth:`~WorkerPoolInterface.push`).
         """
         if self.removed:
             return
