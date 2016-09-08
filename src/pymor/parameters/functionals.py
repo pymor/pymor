@@ -47,16 +47,15 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
 class GenericParameterFunctional(ParameterFunctionalInterface):
     """A wrapper making an arbitrary Python function a |ParameterFunctional|
 
-    Note that a GenericParameterFunctional can only be :mod:`~pymor.core.pickle`d
-    if the function it is wrapping can be serialized. If normal pickling of the
-    function fails, serialization using :func:`~pymor.core.pickle.dumps_function`
-    will be tried as a last resort. For this reason, it is usually preferable to
-    use ExpressionParameterFunctional instead, which always can be serialized.
+    Note that a GenericParameterFunctional can only be :mod:`pickled <pymor.core.pickle>`
+    if the function it is wrapping can be pickled. For this reason, it is usually
+    preferable to use :class:`ExpressionParameterFunctional` instead of
+    :class:`GenericParameterFunctional`.
 
     Parameters
     ----------
     parameter_type
-        The |ParameterType| of the |Parameters| the functional takes.
+        The |ParameterType| of the |Parameters| the functional expects.
     mapping
         The function to wrap. The function has signature `mapping(mu)`.
     name
@@ -81,20 +80,20 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
 class ExpressionParameterFunctional(GenericParameterFunctional):
     """Turns a Python expression given as a string into a |ParameterFunctional|.
 
-    Some |NumPy| arithmetic functions like 'sin', 'log', 'min' are supported.
+    Some |NumPy| arithmetic functions like `sin`, `log`, `min` are supported.
     For a full list see the `functions` class attribute.
 
     .. warning::
-       :meth:`eval` is used to evaluate the given expression. As a consequence,
-       using this class with expression strings from untrusted sources will cause
+       :meth:`eval` is used to evaluate the given expression.
+       Using this class with expression strings from untrusted sources will cause
        mayhem and destruction!
 
     Parameters
     ----------
     expression
-        The Python expression for the functional as a string.
+        A Python expression in the parameter components of the given `parameter_type`.
     parameter_type
-        The |ParameterType| of the |Parameters| the functional takes.
+        The |ParameterType| of the |Parameters| the functional expects.
     """
 
     functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',

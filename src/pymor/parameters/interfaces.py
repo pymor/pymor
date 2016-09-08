@@ -7,7 +7,7 @@ from pymor.parameters.base import Parametric
 
 
 class ParameterSpaceInterface(ImmutableInterface):
-    """Interface for parameter spaces.
+    """Interface for |Parameter| spaces.
 
     Attributes
     ----------
@@ -24,7 +24,7 @@ class ParameterSpaceInterface(ImmutableInterface):
 
 
 class ParameterFunctionalInterface(ImmutableInterface, Parametric):
-    """Interface for parameter functionals.
+    """Interface for |Parameter| functionals.
 
     A parameter functional is simply a function mapping a |Parameter| to
     a number.

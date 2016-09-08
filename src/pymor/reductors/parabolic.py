@@ -22,22 +22,22 @@ def reduce_parabolic(discretization, RB, product=None, coercivity_estimator=None
     as follows:
 
     .. math::
-        \left[ C_a^{-1}(\mu)\|e_N(\mu)\|^2 + \sum_{n=1}^{N} dt\|e_n(\mu)\|^2_e \right]^{1/2}
-            \leq \left[ C_a^{-1}(\mu)dt \sum_{n=1}^{N}\|\mathcal{R}^n(u_n(\mu), \mu)\|^2_{e,-1}
+        \left[ C_a^{-1}(\mu)\|e_N(\mu)\|^2 + \sum_{n=1}^{N} \Delta t\|e_n(\mu)\|^2_e \right]^{1/2}
+            \leq \left[ C_a^{-1}(\mu)\Delta t \sum_{n=1}^{N}\|\mathcal{R}^n(u_n(\mu), \mu)\|^2_{e,-1}
                         + C_a^{-1}(\mu)\|e_0\|^2 \right]^{1/2}
 
     Here, :math:`\|\cdot\|` denotes the norm induced by the problem's mass matrix
     (e.g. the L^2-norm) and :math:`\|\cdot\|_e` is an arbitrary energy norm w.r.t.
     which the space operator :math:`A(\mu)` is coercive, and :math:`C_a(\mu)` is a
     lower bound for its coercivity constant. Finally, :math:`\mathcal{R}^n` denotes
-    the implicit Euler timestepping residual for the (fixed) time step size :math:`dt`,
+    the implicit Euler timestepping residual for the (fixed) time step size :math:`\Delta t`,
 
     .. math::
         \mathcal{R}^n(u_n(\mu), \mu) :=
-            f - M \frac{u_{n}(\mu) - u_{n-1}(\mu)}{dt} - A(u_n(\mu), \mu),
+            f - M \frac{u_{n}(\mu) - u_{n-1}(\mu)}{\Delta t} - A(u_n(\mu), \mu),
 
     where :math:`M` denotes the mass operator and :math:`f` the source term.
-    The dual residual norm is evaluated using the numerically stable projection
+    The dual norm of the residual is computed using the numerically stable projection
     from [BEOR14]_.
 
     .. warning::
@@ -51,10 +51,6 @@ def reduce_parabolic(discretization, RB, product=None, coercivity_estimator=None
     .. [HO08]   B. Haasdonk, M. Ohlberger, Reduced basis method for finite volume
                 approximations of parametrized evolution equations,
                 M2AN 42(2), 277-302, 2008.
-    .. [BEOR14] A. Buhr, C. Engwer, M. Ohlberger, S. Rave, A Numerically Stable A
-                Posteriori Error Estimator for Reduced Basis Approximations of Elliptic
-                Equations, Proceedings of the 11th World Congress on Computational
-                Mechanics, 2014.
 
     Parameters
     ----------
@@ -66,12 +62,15 @@ def reduce_parabolic(discretization, RB, product=None, coercivity_estimator=None
         The energy inner product |Operator| w.r.t. the reduction error is estimated.
         RB must be to be orthonomrmal w.r.t. this product!
     coercivity_estimator
-        `None` or a |Parameterfunctional| returning a lower bound for the coercivity
-        constant of `discretization.operator` w.r.t. `product`.
+        `None` or a |Parameterfunctional| returning a lower bound :math:`C_a(\mu)`
+        for the coercivity constant of `discretization.operator` w.r.t. `product`.
     disable_caching
         If `True`, caching of solutions is disabled for the reduced |Discretization|.
     extends
-        See :meth:`~pymor.algorithms.greedy.greedy`.
+        Set by :meth:`~pymor.algorithms.greedy.greedy` to the result of the
+        last reduction in case the basis extension was `hierarchic` (used to prevent
+        re-computation of residual range basis vectors already obtained from previous
+        reductions).
 
     Returns
     -------
@@ -81,8 +80,8 @@ def reduce_parabolic(discretization, RB, product=None, coercivity_estimator=None
         The reconstructor providing a `reconstruct(U)` method which reconstructs
         high-dimensional solutions from solutions `U` of the reduced |Discretization|.
     reduction_data
-        Additional data produced by the reduction process. (See
-        :meth:`~pymor.algorithms.greedy.greedy`.)
+        Additional data produced by the reduction process (compare the
+        `extends` parameter).
     """
 
     assert extends is None or len(extends) == 3
@@ -123,7 +122,7 @@ def reduce_parabolic(discretization, RB, product=None, coercivity_estimator=None
 
 
 class ReduceParabolicEstimator(ImmutableInterface):
-    """Instatiated by :meth:`reduce_parabolic_energy_estimate`.
+    """Instantiated by :func:`reduce_parabolic`.
 
     Not to be used directly.
     """

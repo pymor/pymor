@@ -21,7 +21,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
     Attributes
     ----------
     solver_options
-        If not `None`, a dict which can contain the follwing keys:
+        If not `None`, a dict which can contain the following keys:
 
         :'inverse':           solver options used for
                               :meth:`~OperatorInterface.apply_inverse`
@@ -34,7 +34,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         If `solver_options` is `None` or a dict entry is missing
         or `None`, default options are used.
         The interpretation of the given solver options is up to
-        the operator at hand. In general, a values in `solver_options`
+        the operator at hand. In general, values in `solver_options`
         should either be strings (indicating a solver type) or
         dicts of options, usually with an entry `'type'` which
         specifies the solver type to use and further items which
@@ -51,7 +51,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
     @abstractmethod
     def apply(self, U, ind=None, mu=None):
-        """Apply the operator.
+        """Apply the operator to a |VectorArray|.
 
         Parameters
         ----------
@@ -59,7 +59,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
             |VectorArray| of vectors to which the operator is applied.
         ind
             The indices of the vectors in `U` to which the operator shall be
-            applied. (See the |VectorArray| documentation for further details.)
+            applied (see the |VectorArray| documentation for further details).
         mu
             The |Parameter| for which to evaluate the operator.
 
@@ -73,10 +73,10 @@ class OperatorInterface(ImmutableInterface, Parametric):
     def apply2(self, V, U, U_ind=None, V_ind=None, mu=None):
         """Treat the operator as a 2-form by computing ``V.dot(self.apply(U))``.
 
-        If A is a linear operator given by multiplication with a matrix M, then
-        `apply2` is given as::
+        If the operator is a linear operator given by multiplication with a matrix
+        M, then `apply2` is given as::
 
-            A.apply2(V, U) = V^T*M*U
+            op.apply2(V, U) = V^T*M*U.
 
         Parameters
         ----------
@@ -86,10 +86,10 @@ class OperatorInterface(ImmutableInterface, Parametric):
             |VectorArray| of the right right arguments U.
         V_ind
             The indices of the vectors in `V` to which the operator shall be
-            applied. (See the |VectorArray| documentation for further details.)
+            applied (see |VectorArray| documentation for further details).
         U_ind
             The indices of the vectors in `U` to which the operator shall be
-            applied. (See the |VectorArray| documentation for further details.)
+            applied (see |VectorArray| documentation for further details).
         mu
             The |Parameter| for which to evaluate the operator.
 
@@ -115,10 +115,10 @@ class OperatorInterface(ImmutableInterface, Parametric):
             |VectorArray| of the right right arguments U.
         V_ind
             The indices of the vectors in `V` to which the operator shall be
-            applied. (See the |VectorArray| documentation for further details.)
+            applied (see |VectorArray| documentation for further details).
         U_ind
             The indices of the vectors in `U` to which the operator shall be
-            applied. (See the |VectorArray| documentation for further details.)
+            applied (see |VectorArray| documentation for further details).
         mu
             The |Parameter| for which to evaluate the operator.
 
@@ -133,19 +133,19 @@ class OperatorInterface(ImmutableInterface, Parametric):
     def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
         """Apply the adjoint operator.
 
-        For a linear operator A the adjoint A^* of A is given by ::
+        For a linear operator `op` the adjoint `op^*` of `op` is given by::
 
-            (A^*v, u)_s = (v, Au)_r
+            (op^*(v), u)_s = (v, op(u))_r,
 
-        where ( , )_s and ( , )_r denote the scalar products on the source
-        and range space of A. If A and the two products are given by the
-        matrices M, P_s and P_r, then::
+        where `( , )_s` and `( , )_r` denote the inner products on the source
+        and range space of `op`. If `op` and the two products are given by the
+        matrices `M`, `P_s` and `P_r`, then::
 
-            A^*v = P_s^(-1) * M^T * P_r * v
+            op^*(v) = P_s^(-1) * M^T * P_r * v,
 
-        with M^T denoting the transposed of M. Thus, if ( , )_s and ( , )_r
-        are the euclidean products, A^*v is simply given by multiplication of
-        the matrix of A with v from the left.
+        with `M^T` denoting the transposed of `M`. Thus, if `( , )_s` and `( , )_r`
+        are the Euclidean inner products, `op^*v` is simply given by multiplication of
+        the matrix of `op` with `v` from the left.
 
         Parameters
         ----------
@@ -153,15 +153,15 @@ class OperatorInterface(ImmutableInterface, Parametric):
             |VectorArray| of vectors to which the adjoint operator is applied.
         ind
             The indices of the vectors in `U` to which the operator shall be
-            applied. (See the |VectorArray| documentation for further details.)
+            applied (see the |VectorArray| documentation for further details).
         mu
             The |Parameter| for which to apply the adjoint operator.
         source_product
-            The scalar product |Operator| on the source space.
-            If `None`, the euclidean product is chosen.
+            The inner product |Operator| on the source space.
+            If `None`, the Euclidean product is chosen.
         range_product
-            The scalar product |Operator| on the range space.
-            If `None`, the euclidean product is chosen.
+            The inner product |Operator| on the range space.
+            If `None`, the Euclidean product is chosen.
 
         Returns
         -------
@@ -179,21 +179,21 @@ class OperatorInterface(ImmutableInterface, Parametric):
             |VectorArray| of vectors to which the inverse operator is applied.
         ind
             The indices of the vectors in `V` to which the inverse operator shall be
-            applied. (See the |VectorArray| documentation for further details.)
+            applied (see |VectorArray| documentation for further details).
         mu
             The |Parameter| for which to evaluate the inverse operator.
         least_squares
             If `True`, solve the least squares problem::
 
-                u = argmin ||Au - v||_2.
+                u = argmin ||op(u) - v||_2.
 
             Since for an invertible operator the least squares solution agrees
             with the result of the application of the inverse operator,
             setting this option should, in general, have no effect on the result
-            for those operators. However, note that when appropriate
-            |solver_options| are not set for the operator, most operator
-            implementations will choose a least squares solver by default which
-            may not be desirable for invertible operators.
+            for those operators. However, note that when no appropriate
+            |solver_options| are set for the operator, most implementations
+            will choose a least squares solver by default which may be
+            undesirable.
 
         Returns
         -------
@@ -217,7 +217,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
             |VectorArray| of vectors to which the inverse adjoint operator is applied.
         ind
             The indices of the vectors in `U` to which the inverse adjoint operator shall be
-            applied. (See the |VectorArray| documentation for further details.)
+            applied (see the |VectorArray| documentation for further details).
         mu
             The |Parameter| for which to evaluate the inverse adjoint operator.
         source_product
@@ -227,15 +227,15 @@ class OperatorInterface(ImmutableInterface, Parametric):
         least_squares
             If `True`, solve the least squares problem::
 
-                v = argmin ||A*v - u||_2.
+                v = argmin ||op*(v) - u||_2.
 
             Since for an invertible operator the least squares solution agrees
             with the result of the application of the inverse operator,
             setting this option should, in general, have no effect on the result
-            for those operators. However, note that when appropriate
-            |solver_options| are not set for the operator, most operator
+            for those operators. However, note that when no appropriate
+            |solver_options| are set for the operator, most operator
             implementations will choose a least squares solver by default which
-            may not be desirable for invertible operators.
+            may be undesirable.
 
         Returns
         -------
@@ -250,7 +250,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
     @abstractmethod
     def jacobian(self, U, mu=None):
-        """Return the operator's Jacobian.
+        """Return the operator's Jacobian as a new |Operator|.
 
         Parameters
         ----------
@@ -262,7 +262,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
         Returns
         -------
-        |Operator| representing the Jacobian.
+        Linear |Operator| representing the Jacobian.
         """
         pass
 
@@ -301,7 +301,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
     def assemble(self, mu=None):
         """Assemble the operator for a given parameter.
 
-        What the result of the assembly is strongly depends on the given operator.
+        The result of the method strongly depends on the given operator.
         For instance, a matrix-based operator will assemble its matrix, a |LincombOperator|
         will try to form the linear combination of its operators, whereas an arbitrary
         operator might simply return a :class:`~pymor.operators.constructions.FixedParameterOperator`.
@@ -322,7 +322,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         """Try to assemble a linear combination of the given operators.
 
-        This method is called in the `assemble` method of |LincombOperator| on
+        This method is called in the :meth:`assemble` method of |LincombOperator| on
         the first of its operator. If an assembly of the given linear combination
         is possible, e.g. the linear combination of the system matrices of the
         operators can be formed, then the assembled operator is returned.
@@ -349,53 +349,49 @@ class OperatorInterface(ImmutableInterface, Parametric):
     def projected(self, range_basis, source_basis, product=None, name=None):
         """Project the operator to subspaces of the source and range space.
 
-        Denote `self` by A. Given a scalar product ( ⋅, ⋅), and vectors b_1, ..., b_N,
-        c_1, ..., c_M, the projected operator A_P is defined by ::
+        Given an inner product `( ⋅, ⋅)`, source vectors `b_1, ..., b_N`
+        and range vectors `c_1, ..., c_M`, the projection `op_proj` of `op`
+        is defined by ::
 
-            [ A_P(e_j) ]_i = ( c_i, A(b_j) )
+            [ op_proj(e_j) ]_i = ( c_i, op(b_j) )
 
-        for all i,j, where e_j denotes the j-th canonical basis vector of R^N.
+        for all i,j, where `e_j` denotes the j-th canonical basis vector of R^N.
 
-        In particular, if the c_i are orthonormal w.r.t. the given product,
-        then A_P is the coordinate representation w.r.t. the b_i/c_i bases
-        of the restriction of A to span(b_i) concatenated with the orthogonal
-        projection onto span(c_i).
+        In particular, if the `c_i` are orthonormal w.r.t. the given product,
+        then `op_proj` is the coordinate representation w.r.t. the `b_i/c_i` bases
+        of the restriction of `op` to `span(b_i)` concatenated with the
+        orthogonal projection onto `span(c_i)`.
 
-        From another point of view, if A is viewed as a bilinear form
-        (see :meth:`~OperatorInterface.apply2`) and ( ⋅, ⋅ ) is the Euclidean
-        product, then A_P represents the matrix of the bilinear form restricted
-        span(b_i) / spanc(c_i) (w.r.t. the b_i/c_i bases).
+        From another point of view, if `op` is viewed as a bilinear form
+        (see :meth:`apply2`) and `( ⋅, ⋅ )` is the Euclidean inner
+        product, then `op_proj` represents the matrix of the bilinear form restricted
+        `span(b_i) / spanc(c_i)` (w.r.t. the `b_i/c_i` bases).
 
         How the projected operator is realized will depend on the implementation
         of the operator to project.  While a projected |NumpyMatrixOperator| will
         again be a |NumpyMatrixOperator|, only a generic
-        :class:`pymor.operators.basic.ProjectedOperator` will be returned
-        in general. (Note that the latter will not be suitable to obtain an
-        efficient offline/online-decomposition for reduced basis schemes.)
+        :class:`~pymor.operators.basic.ProjectedOperator` can be returned
+        in general.
 
         A default implementation is provided in |OperatorBase|.
-
-        .. warning::
-            No check is performed whether the b_i and c_j are orthonormal or linear
-            independent.
 
         Parameters
         ----------
         range_basis
-            The c_1, ..., c_M as a |VectorArray|. If `None`, no projection in the range
-            space is performed.
+            The vectors `c_1, ..., c_M` as a |VectorArray|. If `None`, no
+            projection in the range space is performed.
         source_basis
-            The b_1, ..., b_N as a |VectorArray| or `None`. If `None`, no restriction of
-            the source space is performed.
+            The vectors `b_1, ..., b_N` as a |VectorArray| or `None`. If `None`,
+            no restriction of the source space is performed.
         product
-            An |Operator| representing the scalar product.  If `None`, the
-            Euclidean product is chosen.
+            An |Operator| representing the inner product.  If `None`, the
+            Euclidean inner product is chosen.
         name
             Name of the projected operator.
 
         Returns
         -------
-        The projected |Operator|.
+        The projected |Operator| `op_proj`.
         """
         pass
 
@@ -415,9 +411,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         for few selected degrees of freedom. If the operator has a small
         stencil, only few `source_dofs` will be needed to evaluate the
         restricted operator which can make its evaluation very fast
-        compared to evaluating the original operator. Note that the interface
-        does not make any assumptions on the efficiency of evaluating the
-        restricted operator.
+        compared to evaluating the original operator.
 
         Parameters
         ----------
@@ -439,15 +433,15 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
     @abstractmethod
     def __add__(self, other):
-        """Sum of two operators"""
+        """Sum of two operators."""
         pass
 
     @abstractmethod
     def __radd__(self, other):
-        """Sum of two operators"""
+        """Sum of two operators."""
         pass
 
     @abstractmethod
     def __mul__(self, other):
-        """Product of operator by a scalar"""
+        """Product of operator by a scalar."""
         pass

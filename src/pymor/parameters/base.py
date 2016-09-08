@@ -5,7 +5,7 @@
 """This module contains the implementation of pyMOR's parameter handling facilities.
 
 A |Parameter| in pyMOR is basically a `dict` of |NumPy Arrays|. Each item of the
-dict is called a parameter component. The |ParameterType| of a |Parameter| is a dict
+dict is called a parameter component. The |ParameterType| of a |Parameter| is the dict
 of the shapes of the parameter components, i.e. ::
 
     mu.parameter_type['component'] == mu['component'].shape
@@ -14,27 +14,27 @@ Classes which represent mathematical objects depending on parameters, e.g. |Func
 |Operators|, |Discretizations| derive from the |Parametric| mixin. Each |Parametric|
 object has a :attr:`~Parametric.parameter_type` attribute holding the |ParameterType|
 of the |Parameters| the object's `evaluate`, `apply`, `solve`, etc. methods expect.
-Note that the |ParameterType| of the given |Parameter| is allowed to actually be a
-superset (in the obvious sense) of the object's |ParameterType|.
+Note that the |ParameterType| of the given |Parameter| is allowed to be a
+superset of the object's |ParameterType|.
 
 The |ParameterType| of a |Parametric| object is determined in its :meth:`__init__`
 method by calling :meth:`~Parametric.build_parameter_type` which computes the
 |ParameterType| as the union of the |ParameterTypes| of the objects given to the
-method. This way, an, e.g., |Operator| can inherit the |ParameterTypes| of the
+method. This way, e.g., an |Operator| can inherit the |ParameterTypes| of the
 data functions it depends upon.
 
 A |Parametric| object can have a |ParameterSpace| assigned to it by setting the
-:attr:`~Parametric.parameter_space` attribute. (The |ParameterType| of the space
-has to agree with the |ParameterType| of the object.) The
+:attr:`~Parametric.parameter_space` attribute (the |ParameterType| of the space
+has to agree with the |ParameterType| of the object). The
 :meth:`~Parametric.parse_parameter` method parses a user input according to
 the object's |ParameterType| to make it a |Parameter| (e.g. if the |ParameterType|
 consists of a single one-dimensional component, the user can simply supply a list
-of numbers of the right length). Moreover, if given a |Parameter|, it checks whether
-the |Parameter| has an appropriate |ParameterType|. Thus :meth:`~Parametric.parse_parameter`
-should always be called by the implementor for any given parameter argument. The
-:meth:`~Parametric.local_parameter` method is used to extract the local parameter
-components of the given |Parameter| and performs some name mapping. (See the
-documentation of :meth:`~Parametric.build_parameter_type` for details.)
+of numbers of the right length). Moreover, when given a |Parameter|,
+:meth:`~Parametric.parse_parameter` ensures the |Parameter| has an appropriate
+|ParameterType|. The :meth:`~Parametric.local_parameter` method is used to extract
+the local parameter components of the given |Parameter| and performs some name
+mapping (see the documentation of :meth:`~Parametric.build_parameter_type` for
+details).
 """
 
 from numbers import Number
@@ -51,10 +51,10 @@ class ParameterType(dict):
 
     A parameter type is simply a dictionary with strings as keys and tuples of
     natural numbers as values. The keys are the names of the parameter components
-    and the tuples their expected shape. (Compare :class:`Parameter`.)
+    and the tuples their expected shape (compare :class:`Parameter`).
 
     Apart from checking the correct format of its values, the only difference
-    between a ParameterType and an ordinary `dict` is, that |ParameterType|
+    between a |ParameterType| and an ordinary `dict` is, that |ParameterType|
     orders its keys alphabetically.
 
     Parameters
@@ -127,9 +127,9 @@ class Parameter(dict):
         - The :meth:`allclose` method allows to compare |Parameters| for
           equality in a mathematically meaningful way.
         - Each |Parameter| has a :attr:`~Parameter.sid` property providing a
-          unique state id. (See :mod:`pymor.core.interfaces`.)
+          unique |state id|.
         - We override :meth:`__str__` to ensure alphanumerical ordering of the keys
-          and more or less pretty printing of the values.
+          and pretty printing of the values.
         - The :attr:`parameter_type` property can be used to obtain the |ParameterType|
           of the parameter.
         - Use :meth:`from_parameter_type` to construct a |Parameter| from a |ParameterType|
@@ -145,7 +145,7 @@ class Parameter(dict):
     parameter_type
         The |ParameterType| of the |Parameter|.
     sid
-        The state id of the |Parameter|. (See :mod:`pymor.core.interfaces`.)
+        The |state id| of the |Parameter|.
     """
 
     def __init__(self, v):
@@ -160,7 +160,7 @@ class Parameter(dict):
         |ParameterType|.
 
         Depending on the |ParameterType|, `mu` can be given as a |Parameter|, dict, tuple,
-        list, array or scalar. For the excact details, please refer to the source code.
+        list, array or scalar.
 
         Parameters
         ----------
@@ -216,7 +216,7 @@ class Parameter(dict):
         return cls({k: parse_value(k, v) for k, v in mu.items()})
 
     def allclose(self, mu):
-        """Compare to |Parameters| using :meth:`~pymor.tools.floatcmp.float_cmp_all`.
+        """Compare two |Parameters| using :meth:`~pymor.tools.floatcmp.float_cmp_all`.
 
         Parameters
         ----------
@@ -315,7 +315,7 @@ class Parametric(object):
     which should be set by the implementor during :meth:`__init__` using the
     :meth:`build_parameter_type` method. Methods expecting the |Parameter| (typically
     `evaluate`, `apply`, `solve`, etc. ..) should accept an optional argument `mu` defaulting
-    to `None`. This `mu` should then be fed into :meth:`parse_parameter` to obtain a
+    to `None`. This argument `mu` should then be fed into :meth:`parse_parameter` to obtain a
     |Parameter| of correct |ParameterType| from the (user supplied) input `mu`. The local
     parameter components (see :meth:`build_parameter_type`) can be extracted using
     :meth:`local_type`.
@@ -332,7 +332,7 @@ class Parametric(object):
         |ParameterSpace| the parameters are expected to lie in or `None`.
     parametric:
         `True` if the object really depends on a parameter, i.e. :attr:`parameter_type`
-        is not `None`.
+        is not empty.
     """
 
     parameter_type = None
@@ -461,7 +461,7 @@ class Parametric(object):
         provides
             `Dict` of parameter component names and their shapes which are provided by the object
             itself to the objects in the `inherited` list. The parameter components listed here
-            will, thus, not become part of the object's |ParameterType|.
+            will not become part of the object's |ParameterType|.
         """
         assert not local_global or global_names is None
         assert inherits is None or all(op is None or isinstance(op, Parametric) for op in inherits)

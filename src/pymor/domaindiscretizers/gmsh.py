@@ -17,7 +17,7 @@ from pymor.core.logger import getLogger
 
 def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, msh_file_path=None,
                     mesh_algorithm='del2d', clscale=1., options='', refinement_steps=0):
-    """Discretize a |DomainDescription| or a already existing Gmsh GEO-file using the Gmsh Mesh module.
+    """Mesh a |DomainDescription| or an already existing Gmsh GEO-file using the Gmsh mesher.
 
     Parameters
     ----------
@@ -28,13 +28,13 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
         File handle of the Gmsh Geo-file to discretize. Has to be `None` when
         `domain_description` is given.
     geo_file_path
-        Path of the created Gmsh GEO-file. When discretizing a |PolygonalDomain| or |RectDomain| and
+        Path of the created Gmsh GEO-file. When meshing a |PolygonalDomain| or |RectDomain| and
         `geo_file_path` is `None`, a temporary file will be created. If `geo_file` is specified, this
         is ignored and the path to `geo_file` will be used.
     msh_file_path
         Path of the created Gmsh MSH-file. If `None`, a temporary file will be created.
     mesh_algorithm
-        The mesh generation algorithm (meshadapt, del2d, front2d).
+        The mesh generation algorithm to use (meshadapt, del2d, front2d).
     clscale
         Mesh element size scaling factor.
     options

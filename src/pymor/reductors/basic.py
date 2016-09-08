@@ -28,8 +28,8 @@ class GenericRBReconstructor(BasicInterface):
 def reduce_generic_rb(discretization, RB, vector_product=None, disable_caching=True, extends=None):
     """Generic reduced basis reductor.
 
-    Replaces each |Operator| of the given |Discretization| with the projection
-    onto the span of the given reduced basis.
+    Replaces each |Operator| of the given |Discretization| with the Galerkin
+    projection onto the span of the given reduced basis.
 
     Parameters
     ----------
@@ -38,26 +38,26 @@ def reduce_generic_rb(discretization, RB, vector_product=None, disable_caching=T
     RB
         |VectorArray| containing the reduced basis on which to project.
     vector_product
-        Scalar product for the projection of vector-like |Operators|.
+        Inner product for the projection of vector-like |Operators|.
         (A typical vector-like operator would be the `initial_data`
-        Operator| of an |InstationaryDiscretization| holding
+        |Operator| of an |InstationaryDiscretization| holding
         the initial data of a Cauchy problem.)
     disable_caching
-        If `True`, caching of solutions is diabled for the reduced |Discretization|.
+        If `True`, caching of solutions is disabled for the reduced |Discretization|.
     extends
         Set by :meth:`~pymor.algorithms.greedy.greedy` to the result of the
-        last reduction in case the basis extension was `hierarchic`. Currently
-        ignored by this reductor.
+        last reduction in case the basis extension was `hierarchic` (ignored).
 
     Returns
     -------
     rd
         The reduced |Discretization|.
     rc
-        The reconstructor providing a `reconstruct(U)` method which reconstructs
-        high-dimensional solutions from solutions `U` of the reduced |Discretization|.
+        The :class:`reconstructor <GenericRBReconstructor>` providing a
+        `reconstruct(U)` method which reconstructs high-dimensional solutions
+        from solutions `U` of the reduced |Discretization|.
     reduction_data
-        Additional data produced by the reduction process. Currently empty.
+        Additional data produced by the reduction process (empty).
     """
     assert extends is None or len(extends) == 3
 

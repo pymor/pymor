@@ -10,6 +10,7 @@ from pymor.tools import mpi
 
 
 class MPIPool(WorkerPoolBase):
+    """|WorkerPool| based pyMOR's MPI :mod:`event loop <pymor.tools.mpi>`."""
 
     def __init__(self):
         super().__init__()

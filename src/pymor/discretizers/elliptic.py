@@ -21,12 +21,11 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
     analytical_problem
         The |EllipticProblem| to discretize.
     diameter
-        If not `None`, `diameter` is passed to the `domain_discretizer`.
+        If not `None`, `diameter` is passed as an argument to the `domain_discretizer`.
     domain_discretizer
         Discretizer to be used for discretizing the analytical domain. This has
         to be a function `domain_discretizer(domain_description, diameter, ...)`.
-        If further arguments should be passed to the discretizer, use
-        :func:`functools.partial`. If `None`, |discretize_domain_default| is used.
+        If `None`, |discretize_domain_default| is used.
     grid
         Instead of using a domain discretizer, the |Grid| can also be passed directly
         using this parameter.
@@ -194,12 +193,11 @@ def discretize_elliptic_fv(analytical_problem, diameter=None, domain_discretizer
     analytical_problem
         The |EllipticProblem| to discretize.
     diameter
-        If not `None`, `diameter` is passed to the `domain_discretizer`.
+        If not `None`, `diameter` is passed as an argument to the `domain_discretizer`.
     domain_discretizer
         Discretizer to be used for discretizing the analytical domain. This has
         to be a function `domain_discretizer(domain_description, diameter, ...)`.
-        If further arguments should be passed to the discretizer, use
-        :func:`functools.partial`. If `None`, |discretize_domain_default| is used.
+        If `None`, |discretize_domain_default| is used.
     grid
         Instead of using a domain discretizer, the |Grid| can also be passed directly
         using this parameter.

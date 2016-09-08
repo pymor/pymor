@@ -8,7 +8,7 @@ from pymor.functions.basic import FunctionBase
 
 
 class BitmapFunction(FunctionBase):
-    """Define a 2D function via a grayscale image.
+    """Define a 2D |Function| via a grayscale image.
 
     Parameters
     ----------
@@ -17,7 +17,7 @@ class BitmapFunction(FunctionBase):
     bounding_box
         Lower left and upper right coordinates of the domain of the function.
     range
-        A pixel of value p is mapped to ``(p / 255.) * range[1] + range[0]``.
+        A pixel of value p is mapped to `(p / 255.) * range[1] + range[0]`.
     """
 
     dim_domain = 2

@@ -13,14 +13,15 @@ from pymor.parallel.dummy import dummy_pool
 def new_parallel_pool(ipython_num_engines=None, ipython_profile=None, allow_mpi=True):
     """Creates a new default |WorkerPool|.
 
-    If `ipython_num_engines` or `ipython_profile` is given by the user or set as a
-    |default|, an :class:`~pymor.parallel.ipython.IPythonPool` |WorkerPool| will
+    If `ipython_num_engines` or `ipython_profile` is provided as an argument or set as
+    a |default|, an :class:`~pymor.parallel.ipython.IPythonPool` |WorkerPool| will
     be created using the given parameters via the `ipcluster` script.
 
     Otherwise, when `allow_mpi` is `True` and an MPI parallel run is detected,
     an :class:`~pymor.parallel.mpi.MPIPool` |WorkerPool| will be created.
 
-    Otherwise, a sequential run is assumed and :attr:`pymor.parallel.dummy.dummy_pool`
+    Otherwise, a sequential run is assumed and
+    :attr:`pymor.parallel.dummy.dummy_pool <pymor.parallel.dummy.DummyPool>`
     is returned.
     """
 

@@ -24,6 +24,31 @@ from pymor.tools.counter import Counter
 
 
 class new_ipcluster_pool(BasicInterface):
+    """Create a new IPython parallel cluster and connect to it.
+
+    This context manager can be used to create an :class:`IPythonPool`
+    |WorkerPool|. When entering the context a new IPython cluster is
+    created using the `ipcluster` script and an :class:`IPythonPool`
+    is instantiated for the newly created cluster. When leaving
+    the context the cluster is shut down.
+
+    Parameters
+    ----------
+    profile
+        Passed as `--profile` parameter to the `ipcluster` script.
+    cluster_id
+        Passed as `--cluster-id` parameter to the `ipcluster` script.
+    nun_engines
+        Passed as `--n` parameter to the `ipcluster` script.
+    ipython_dir
+        Passed as `--ipython-dir` parameter to the `ipcluster` script.
+    min_wait
+        Wait at least this many seconds before trying to connect to the
+        new cluster.
+    timeout
+        Wait at most this many seconds for all Ipython cluster engines to
+        become available.
+    """
 
     def __init__(self, profile=None, cluster_id=None, num_engines=None, ipython_dir=None, min_wait=1, timeout=60):
         self.profile = profile
@@ -107,6 +132,16 @@ class new_ipcluster_pool(BasicInterface):
 
 
 class IPythonPool(WorkerPoolBase):
+    """|WorkerPool| based on the IPython parallel computing features.
+
+    Parameters
+    ----------
+    num_engines
+        Number of IPython engines to use. If `None`, all available
+        engines are used.
+    kwargs
+        Keyword arguments used to instantiate the IPython cluster client.
+    """
 
     def __init__(self, num_engines=None, **kwargs):
         super().__init__()

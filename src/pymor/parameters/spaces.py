@@ -20,10 +20,10 @@ class CubicParameterSpace(ParameterSpaceInterface):
         The |ParameterType| of the space.
     minimum
         The minimum for each matrix entry of each |Parameter| component.
-        Must be `None` if `ranges` is not `None`.
+        Must be `None` if `ranges` is specified.
     maximum
         The maximum for each matrix entry of each |Parameter| component.
-        Must be `None` if `ranges` is not `None`.
+        Must be `None` if `ranges` is specified.
     ranges
         dict whose keys agree with `parameter_type` and whose values
         are tuples (min, max) specifying the minimum and maximum of each
@@ -49,7 +49,7 @@ class CubicParameterSpace(ParameterSpaceInterface):
                    for k in self.parameter_type)
 
     def sample_uniformly(self, counts):
-        """Uniformly sample |Parameters| for the space."""
+        """Uniformly sample |Parameters| from the space."""
         if isinstance(counts, dict):
             pass
         elif isinstance(counts, (tuple, list, np.ndarray)):
@@ -82,8 +82,9 @@ class CubicParameterSpace(ParameterSpaceInterface):
             If `None`, a new random state is generated using `seed`
             as random seed.
         seed
-            Random seed to use. If `None` the default random seed is
-            used.
+            Random seed to use. If `None`, the
+            :func:`default <pymor.tools.random.new_random_state>` random seed
+            is used.
 
         Returns
         -------

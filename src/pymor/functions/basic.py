@@ -93,11 +93,10 @@ class ConstantFunction(FunctionBase):
 class GenericFunction(FunctionBase):
     """Wrapper making an arbitrary Python function between |NumPy arrays| a proper |Function|.
 
-    Note that a GenericFunction can only be :mod:`~pymor.core.pickle`d
-    if the function it is wrapping can be serialized. If normal pickling of the
-    function fails, serialization using :func:`~pymor.core.pickle.dumps_function`
-    will be tried as a last resort. For this reason, it is usually preferable to
-    use ExpressionFunction instead, which always can be serialized.
+    Note that a :class:`GenericFunction` can only be :mod:`pickled <pymor.core.pickle>`
+    if the function it is wrapping can be pickled (cf. :func:`~pymor.core.pickle.dumps_function`).
+    For this reason, it is usually preferable to use :class:`ExpressionFunction`
+    instead of :class:`GenericFunction`.
 
     Parameters
     ----------
@@ -152,8 +151,8 @@ class ExpressionFunction(GenericFunction):
     For a full list see the `functions` class attribute.
 
     .. warning::
-       :meth:`eval` is used to evaluate the given expression. As a consequence,
-       using this class with expression strings from untrusted sources will cause
+       :meth:`eval` is used to evaluate the given expression.
+       Using this class with expression strings from untrusted sources will cause
        mayhem and destruction!
 
     Parameters
@@ -196,10 +195,8 @@ class ExpressionFunction(GenericFunction):
 class LincombFunction(FunctionBase):
     """A |Function| representing a linear combination of |Functions|.
 
-    The linear coefficients can be provided as scalars or
-    |ParameterFunctionals|. Alternatively, if no linear coefficients
-    are given, the missing coefficients become part of the
-    |Parameter| the functions expects.
+    The linear coefficients can be provided either as scalars or as
+    |ParameterFunctionals|.
 
     Parameters
     ----------

@@ -12,12 +12,16 @@ from pymor.vectorarrays.interfaces import VectorSpace
 
 
 class BlockOperator(OperatorBase):
-    """A sparse matrix of arbitrary operators
+    """A sparse matrix of arbitrary |Operators|.
+
+    This operator can be :meth:`applied <pymor.operators.interfaces.OperatorInterface.apply>`
+    to :class:`BlockVectorArrays <pymor.vectorarrays.block.BlockVectorArray>` of an
+    appropriate :attr:`~pymor.vectorarrays.interfaces.VectorArrayInterface.subtype`.
 
     Parameters
     ----------
     blocks
-        Two-dimensional |NumPy| array where each entry is an operator or None.
+        Two-dimensional |NumPy| array where each entry is an |Operator| or `None`.
     """
 
     def _operators(self):
@@ -58,24 +62,24 @@ class BlockOperator(OperatorBase):
 
     @classmethod
     def hstack(cls, operators):
-        """Horizontal stacking of operators
+        """Horizontal stacking of |Operators|.
 
         Parameters
         ----------
         operators
-            A tuple, list, array, or iterable of operators.
+            A tuple, list, array, or iterable of |Operators|.
         """
         blocks = np.array([[op for op in operators]])
         return cls(blocks)
 
     @classmethod
     def vstack(cls, operators):
-        """Vertical stacking of operators
+        """Vertical stacking of |Operators|.
 
         Parameters
         ----------
         operators
-            A tuple, list, array, or iterable of operators.
+            A tuple, list, array, or iterable of |Operators|.
         """
         blocks = np.array([[op] for op in operators])
         return cls(blocks)
@@ -125,7 +129,11 @@ class BlockOperator(OperatorBase):
 
 
 class BlockDiagonalOperator(BlockOperator):
-    """Block diagonal operator with arbitrary operators"""
+    """Block diagonal |Operator| of arbitrary |Operators|.
+
+    This is a specialization of :class:`BlockOperator` for the
+    block diagonal case.
+    """
 
     def __init__(self, blocks):
         n = len(blocks)

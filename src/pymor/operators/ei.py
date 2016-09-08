@@ -18,8 +18,8 @@ from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
 class EmpiricalInterpolatedOperator(OperatorBase):
     """Interpolate an |Operator| using Empirical Operator Interpolation.
 
-    Let `L` be an |Operator|, `0 <= c_1, ..., c_M <= L.range.dim` indices
-    of interpolation DOFs and `b_1, ..., b_M in R^(L.range.dim)` collateral
+    Let `L` be an |Operator|, `0 <= c_1, ..., c_M < L.range.dim` indices
+    of interpolation DOFs and let `b_1, ..., b_M in R^(L.range.dim)` be collateral
     basis vectors. If moreover `ψ_j(U)` denotes the j-th component of `U`, the
     empirical interpolation `L_EI` of `L` w.r.t. the given data is given by ::
 
@@ -31,8 +31,8 @@ class EmpiricalInterpolatedOperator(OperatorBase):
 
     Since the original operator only has to be evaluated at the given interpolation
     DOFs, |EmpiricalInterpolatedOperator| calls
-    :meth:`~pymor.operators.interfaces.Operatorinterface.restricted`(interpolation_dofs)`
-    to obtain a restricted version of the operator which is stored and later used
+    :meth:`~pymor.operators.interfaces.OperatorInterface.restricted`
+    to obtain a restricted version of the operator which is used
     to quickly obtain the required evaluations. If the `restricted` method, is not
     implemented, the full operator will be evaluated (which will lead to
     the same result, but without any speedup).
@@ -44,8 +44,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
     Parameters
     ----------
     operator
-        The |Operator| to interpolate. The operator must implement a `restricted`
-        method as described above.
+        The |Operator| to interpolate.
     interpolation_dofs
         List or 1D |NumPy array| of the interpolation DOFs `c_1, ..., c_M`.
     collateral_basis
