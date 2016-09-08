@@ -27,16 +27,17 @@ def reduce_residual(operator, rhs=None, RB=None, rhs_is_functional=True, product
         residual.apply(U, mu)
             == product.apply_inverse(operator.apply(U, mu) - rhs.as_vector(mu))
 
-    Given a basis U of a subspace of the source space of `operator`, this method
-    determines a low-dimensional subspace containing the image the space under
+    Given a basis `RB` of a subspace of the source space of `operator`, this method
+    uses :func:`~pymor.algorithms.image.estimate_image_hierarchical` to determine
+    a low-dimensional subspace containing the image of the subspace under
     `residual` (resp. `riesz_residual`), computes an orthonormal basis
     `residual_range` for this range space and then returns the Petrov-Galerkin projection ::
 
         projected_residual
-            === residual.projected(range_basis=residual_range, source_basis=U)
+            === residual.projected(range_basis=residual_range, source_basis=RB)
 
     of the residual operator. Given an reduced basis coefficient vector `u`, w.r.t.
-    `V` the (dual) norm of the residual can then be computed as ::
+    `RB`, the (dual) norm of the residual can then be computed as ::
 
         projected_residual.apply(u, mu).l2_norm()
 
@@ -56,14 +57,14 @@ def reduce_residual(operator, rhs=None, RB=None, rhs_is_functional=True, product
     RB
         |VectorArray| containing a basis of the reduced space onto which to project.
     product
-        Scalar product |Operator| w.r.t. which to compute the Riesz representatives
+        Inner product |Operator| w.r.t. which to compute the Riesz representatives
         in case `rhs_is_functional` is `True`. When `product` is `None`, no Riesz
         representatives are computed
     extends
         Set by :meth:`~pymor.algorithms.greedy.greedy` to the result of the
-        last reduction in case the basis extension was `hierarchic`. Used to prevent
+        last reduction in case the basis extension was `hierarchic` (used to prevent
         re-computation of `residual_range` basis vectors already obtained from previous
-        reductions.
+        reductions).
 
     Returns
     -------
@@ -72,7 +73,7 @@ def reduce_residual(operator, rhs=None, RB=None, rhs_is_functional=True, product
     reconstructor
         See above.
     reduction_data
-        Additional data produced by the reduction process. (Compare the `extends` parameter.)
+        Additional data produced by the reduction process (compare the `extends` parameter).
     """
     assert rhs is None \
         or rhs_is_functional and (rhs.range == NumpyVectorSpace(1) and rhs.source == operator.range and rhs.linear) \
@@ -205,8 +206,9 @@ def reduce_implicit_euler_residual(operator, mass, dt, functional=None, RB=None,
                - functional.as_vector(mu))
 
     This reductor determines a low-dimensional subspace of the image of a reduced
-    basis space under `riesz_residual`, computes an orthonormal basis `residual_range`
-    of this range space and then returns the Petrov-Galerkin projection ::
+    basis space under `riesz_residual` using :func:`~pymor.algorithms.image.estimate_image_hierarchical`,
+    computes an orthonormal basis `residual_range` of this range space and then
+    returns the Petrov-Galerkin projection ::
 
         projected_riesz_residual
             === riesz_residual.projected(range_basis=residual_range, source_basis=RB)
@@ -234,12 +236,12 @@ def reduce_implicit_euler_residual(operator, mass, dt, functional=None, RB=None,
     RB
         |VectorArray| containing a basis of the reduced space onto which to project.
     product
-        Scalar product |Operator| w.r.t. which to compute the Riesz representatives.
+        Inner product |Operator| w.r.t. which to compute the Riesz representatives.
     extends
         Set by :meth:`~pymor.algorithms.greedy.greedy` to the result of the
-        last reduction in case the basis extension was `hierarchic`. Used to prevent
+        last reduction in case the basis extension was `hierarchic` (used to prevent
         re-computation of `residual_range` basis vectors already obtained from previous
-        reductions.
+        reductions).
 
     Returns
     -------
@@ -248,7 +250,7 @@ def reduce_implicit_euler_residual(operator, mass, dt, functional=None, RB=None,
     reconstructor
         See above.
     reduction_data
-        Additional data produced by the reduction process. (Compare the `extends` parameter.)
+        Additional data produced by the reduction process (compare the `extends` parameter).
     """
     assert functional is None \
         or functional.range == NumpyVectorSpace(1) and functional.source == operator.source and functional.linear
