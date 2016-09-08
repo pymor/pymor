@@ -19,15 +19,18 @@ from pymor.vectorarrays.numpy import NumpyVectorArray
 
 def reduce_coercive(discretization, RB, error_product=None, coercivity_estimator=None,
                     disable_caching=True, extends=None):
-    """Reductor for |StationaryDiscretizations| with coercive operator.
+    """Reductor for |StationaryDiscretizations| with coercive linear operator.
 
     This reductor uses :meth:`~pymor.reductors.basic.reduce_generic_rb` for the actual
-    RB-projection. The only addition is an error estimator. The estimator evaluates the
-    dual norm of the residual with respect to a given inner product. We use
-    :func:`~pymor.reductors.residual.reduce_residual` for improved numerical stability.
-    (See "A. Buhr, C. Engwer, M. Ohlberger, S. Rave, A Numerically Stable A Posteriori
-    Error Estimator for Reduced Basis Approximations of Elliptic Equations,
-    Proceedings of the 11th World Congress on Computational Mechanics, 2014.")
+    reduce basis projection. The only addition is an error estimator which evaluates the
+    dual norm of the residual with respect to a given inner product. For the reduction
+    of the residual we use :func:`~pymor.reductors.residual.reduce_residual` for
+    improved numerical stability [BEOR14]_.
+
+    .. [BEOR14] A. Buhr, C. Engwer, M. Ohlberger, S. Rave, A Numerically Stable A
+                Posteriori Error Estimator for Reduced Basis Approximations of Elliptic
+                Equations, Proceedings of the 11th World Congress on Computational
+                Mechanics, 2014.
 
     Parameters
     ----------
@@ -36,7 +39,7 @@ def reduce_coercive(discretization, RB, error_product=None, coercivity_estimator
     RB
         |VectorArray| containing the reduced basis on which to project.
     error_product
-        Scalar product |Operator| used to calculate Riesz representative of the
+        Inner product |Operator| used to calculate Riesz representative of the
         residual. If `None`, the Euclidean product is used.
     coercivity_estimator
         `None` or a |Parameterfunctional| returning a lower bound for the coercivity
@@ -47,20 +50,21 @@ def reduce_coercive(discretization, RB, error_product=None, coercivity_estimator
         If `True`, caching of solutions is disabled for the reduced |Discretization|.
     extends
         Set by :meth:`~pymor.algorithms.greedy.greedy` to the result of the
-        last reduction in case the basis extension was `hierarchic`. Used to prevent
+        last reduction in case the basis extension was `hierarchic` (used to prevent
         re-computation of residual range basis vectors already obtained from previous
-        reductions.
+        reductions).
 
     Returns
     -------
     rd
         The reduced |Discretization|.
     rc
-        The reconstructor providing a `reconstruct(U)` method which reconstructs
-        high-dimensional solutions from solutions `U` of the reduced |Discretization|.
+        The :class:`reconstructor <GenericRBReconstructor>` providing a
+        `reconstruct(U)` method which reconstructs high-dimensional solutions
+        from solutions `U` of the reduced |Discretization|.
     reduction_data
-        Additional data produced by the reduction process. (Compare the `extends`
-        parameter.)
+        Additional data produced by the reduction process (compare the
+        `extends` parameter).
     """
 
     assert extends is None or len(extends) == 3
@@ -87,7 +91,7 @@ def reduce_coercive(discretization, RB, error_product=None, coercivity_estimator
 
 
 class ReduceCoerciveEstimator(ImmutableInterface):
-    """Instatiated by :meth:`reduce_coercive`.
+    """Instantiated by :meth:`reduce_coercive`.
 
     Not to be used directly.
     """
@@ -124,8 +128,8 @@ def reduce_coercive_simple(discretization, RB, error_product=None, coercivity_es
        with better numerical stability.
 
     This reductor uses :meth:`~pymor.reductors.basic.reduce_generic_rb` for the actual
-    RB-projection. The only addition is an error estimator. The estimator evaluates the
-    norm of the residual with respect to a given inner product.
+    reduced basis projection. The only addition is an error estimator. The estimator
+    evaluates the norm of the residual with respect to a given inner product.
 
     Parameters
     ----------
@@ -134,7 +138,7 @@ def reduce_coercive_simple(discretization, RB, error_product=None, coercivity_es
     RB
         |VectorArray| containing the reduced basis on which to project.
     error_product
-        Scalar product |Operator| used to calculate Riesz representative of the
+        Inner product |Operator| used to calculate the Riesz representative of the
         residual. If `None`, the Euclidean product is used.
     coercivity_estimator
         `None` or a |Parameterfunctional| returning a lower bound for the coercivity
@@ -145,20 +149,21 @@ def reduce_coercive_simple(discretization, RB, error_product=None, coercivity_es
         If `True`, caching of solutions is disabled for the reduced |Discretization|.
     extends
         Set by :meth:`~pymor.algorithms.greedy.greedy` to the result of the
-        last reduction in case the basis extension was `hierarchic`. Used to prevent
-        re-computation of Riesz representatives already obtained from previous
-        reductions.
+        last reduction in case the basis extension was `hierarchic` (used to prevent
+        re-computation of residual range basis vectors already obtained from previous
+        reductions).
 
     Returns
     -------
     rd
         The reduced |Discretization|.
     rc
-        The reconstructor providing a `reconstruct(U)` method which reconstructs
-        high-dimensional solutions from solutions `U` of the reduced |Discretization|.
+        The :class:`reconstructor <GenericRBReconstructor>` providing a
+        `reconstruct(U)` method which reconstructs high-dimensional solutions
+        from solutions `U` of the reduced |Discretization|.
     reduction_data
-        Additional data produced by the reduction process. In this case the computed
-        Riesz representatives. (Compare the `extends` parameter.)
+        Additional data produced by the reduction process (compare the
+        `extends` parameter).
     """
 
     # assert isinstance(discretization, StationaryDiscretization)
@@ -249,7 +254,7 @@ def reduce_coercive_simple(discretization, RB, error_product=None, coercivity_es
 
 
 class ReduceCoerciveSimpleEstimator(ImmutableInterface):
-    """Instatiated by :meth:`reduce_coercive_simple`.
+    """Instantiated by :meth:`reduce_coercive_simple`.
 
     Not to be used directly.
     """
