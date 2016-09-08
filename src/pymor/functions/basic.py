@@ -93,10 +93,10 @@ class ConstantFunction(FunctionBase):
 class GenericFunction(FunctionBase):
     """Wrapper making an arbitrary Python function between |NumPy arrays| a proper |Function|.
 
-    Note that a `GenericFunction` can only be :mod:`~pymor.core.pickle`d
+    Note that a :class:`GenericFunction` can only be :mod:`pickled <pymor.core.pickle>`
     if the function it is wrapping can be pickled (cf. :func:`~pymor.core.pickle.dumps_function`).
     For this reason, it is usually preferable to use :class:`ExpressionFunction`
-    instead of `GenericFunction`.
+    instead of :class:`GenericFunction`.
 
     Parameters
     ----------
