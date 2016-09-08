@@ -17,9 +17,10 @@ from pymor.vectorarrays.interfaces import VectorArrayInterface
 class VectorInterface(BasicInterface):
     """Interface for vectors.
 
-    This Interface is mainly intended to be used in conjunction with |ListVectorArray|. In general, all
-    pyMOR objects operate on |VectorArrays| instead of single vectors! All methods of the interface have
-    a direct counterpart in the |VectorArray| interface.
+    This Interface is intended to be used in conjunction with |ListVectorArray|.
+    All pyMOR algorithms operate on |VectorArrays| instead of single vectors!
+    All methods of the interface have a direct counterpart in the |VectorArray|
+    interface.
     """
 
     @abstractclassmethod
@@ -231,12 +232,25 @@ class NumpyVector(CopyOnWriteVector):
 
 
 class ListVectorArray(VectorArrayInterface):
-    """|VectorArray| implementation via a python list of vectors.
+    """|VectorArray| implementation via a Python list of vectors.
 
-    The subtypes a ListVectorArray can have are tuples
-    `(vector_type, vector_subtype)` where `vector_type` is a
-    subclass of VectorInterface and `vector_subtype` is a valid
-    subtype for `vector_type`.
+    The :attr:`subtypes <pymor.vectorarrays.interfaces.VectorArrayInterface.subtype>`
+    a |ListVectorArray| can have are tuples `(vector_type, vector_subtype)`
+    where `vector_type` is a subclass of :class:`VectorInterface` and
+    `vector_subtype` is a valid subtype for `vector_type`.
+
+    Parameters
+    ----------
+    vectors
+        List of :class:`vectors <VectorInterface>` contained in
+        the array.
+    subtype
+        If `vectors` is empty, the array's
+        :attr:`~pymor.vectorarrays.interfaces.VectorArrayInterface.subtype`
+        must be provided, as the subtype cannot be derived from `vectors`
+        in this case.
+    copy
+        If `True`, make copies of the vectors in `vectors`.
     """
 
     _NONE = ()
