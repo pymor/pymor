@@ -4,7 +4,7 @@
 
 """ This module provides helper methods to use pyMOR in parallel with MPI.
 
-Executing this module will execute :func:`event_loop` on all MPI ranks
+Executing this module will run :func:`event_loop` on all MPI ranks
 except for rank 0 where either a given script is executed::
 
     mpirun -n 16 python -m pymor.tools.mpi /path/to/script
@@ -20,15 +20,15 @@ the user can connect to by calling::
 
 (Starting the IPython console directly will not work properly
 with most MPI implementations.)
-When IPython is not available, the builtin python REPL is started.
+When IPython is not available, the builtin Python REPL is started.
 
 When :func:`event_loop` is running on the MPI ranks, :func:`call`
-can be run on rank 0 to execute the same Python function (given
-as first arguments) simultaneously on all MPI ranks (including
+can be used on rank 0 to execute the same Python function (given
+as first argument) simultaneously on all MPI ranks (including
 rank 0). Calling :func:`quit` will exit :func:`event_loop` on
 all MPI ranks.
 
-Moreover, this module provides several helper methods which are
+Additionally, this module provides several helper methods which are
 intended to be used in conjunction with :func:`call`: :func:`mpi_info`
 will print a summary of all active MPI ranks, :func:`run_code`
 will execute the given code string on all MPI ranks,
@@ -44,10 +44,10 @@ distributed object on all ranks. The functions :func:`function_call`,
 :func:`method_call_manage` map instances :class:`ObjectId`
 transparently to distributed objects. :func:`function_call_manage` and
 :func:`method_call_manage` will call :func:`manage_object` on the
-return value and return the corresponding `ObjectId`. The functions
+return value and return the corresponding :class:`ObjectId`. The functions
 :func:`method_call` and :func:`method_call_manage` are given an
-`ObjectId` and a string as first and second argument and execute
-method named by the second argument on the object referred to by the
+:class:`ObjectId` and a string as first and second argument and execute
+the method named by the second argument on the object referred to by the
 first argument.
 """
 
@@ -90,6 +90,14 @@ _object_counter = 0
 
 @defaults('auto_launch')
 def event_loop_settings(auto_launch=True):
+    """Settings for pyMOR's MPI event loop.
+
+    Parameters
+    ----------
+    auto_launch
+        If `True`, automatically execute :func:`event_loop` on
+        all MPI ranks (except 0) when pyMOR is imported.
+    """
     return {'auto_launch': auto_launch}
 
 
@@ -119,15 +127,15 @@ if mpi4py_version >= [2, 0]:
 
         Assuming :func:`event_loop` is running on all MPI ranks
         (except rank 0), this will execute `method` on all
-        ranks (including rank 0) with sequential arguments
+        ranks (including rank 0) with positional arguments
         `args` and keyword arguments `kwargs`.
 
         Parameters
         ----------
         method
-            The function to execute on all ranks. Must be picklable.
+            The function to execute on all ranks (must be picklable).
         args
-            The sequential arguments for `method`.
+            The positional arguments for `method`.
         kwargs
             The keyword arguments for `method`.
 
@@ -181,15 +189,15 @@ else:
 
         Assuming :func:`event_loop` is running on all MPI ranks
         (except rank 0), this will execute `method` on all
-        ranks (including rank 0) with sequential arguments
+        ranks (including rank 0) with positional arguments
         `args` and keyword arguments `kwargs`.
 
         Parameters
         ----------
         method
-            The function to execute on all ranks. Must be picklable.
+            The function to execute on all ranks (must be picklable).
         args
-            The sequential arguments for `method`.
+            The positional arguments for `method`.
         kwargs
             The keyword arguments for `method`.
 
@@ -281,7 +289,7 @@ def method_call(obj_id, name_, *args, **kwargs):
     `name_`
         Name of the method to call.
     args
-        Sequential arguments for the method.
+        Positional arguments for the method.
     kwargs
         Keyword arguments for the method.
     """
@@ -307,7 +315,7 @@ def method_call_manage(obj_id, name_, *args, **kwargs):
     `name_`
         Name of the method to call.
     args
-        Sequential arguments for the method.
+        Positional arguments for the method.
     kwargs
         Keyword arguments for the method.
     """
@@ -337,7 +345,7 @@ def get_object(obj_id):
 
 
 def remove_object(obj_id):
-    """Return the object referred to by `obj_id` from the registry."""
+    """Remove the object referred to by `obj_id` from the registry."""
     del _managed_objects[obj_id]
 
 
