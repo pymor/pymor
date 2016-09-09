@@ -49,10 +49,10 @@ def interpolation(discretization, sigma, b, c):
                 Er[i, j] = -c[:, i].dot((Hs[i] - Hs[j]).dot(b[:, j])) / (sigma[i] - sigma[j])
                 Ar[i, j] = -c[:, i].dot((sigma[i] * Hs[i] - sigma[j] * Hs[j])).dot(b[:, j]) / (sigma[i] - sigma[j])
             else:
-                Er[i, i] = -c[:, i].dot(dHs[:, :, i].dot(b[:, j]))
-                Ar[i, i] = -c[:, i].dot((Hs[:, :, i] + sigma[i] * dHs[:, :, i]).dot(b[:, j]))
-        Br[i, :] = Hs[:, :, i].T.dot(c[:, i])
-        Cr[:, i] = Hs[:, :, i].dot(b[:, i])
+                Er[i, i] = -c[:, i].dot(dHs[i].dot(b[:, i]))
+                Ar[i, i] = -c[:, i].dot((Hs[i] + sigma[i] * dHs[i]).dot(b[:, i]))
+        Br[i, :] = Hs[i].T.dot(c[:, i])
+        Cr[:, i] = Hs[i].dot(b[:, i])
 
     T = np.zeros((r, r), dtype=complex)
     for i in range(r):

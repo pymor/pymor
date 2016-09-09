@@ -14,18 +14,19 @@ import numpy as np
 import scipy.linalg as spla
 import matplotlib.pyplot as plt
 
-import pymor.discretizations.iosys as iosys
+from pymor.discretizations.iosys import TF
+from pymor.reductors.tf import interpolation, tf_irka
 
 if __name__ == '__main__':
     tau = 0.1
 
     def H(s):
-        return np.exp(-s) / (tau * s + 1)
+        return np.array([[np.exp(-s) / (tau * s + 1)]])
 
     def dH(s):
-        return -(tau * s + tau + 1) * np.exp(-s) / (tau * s + 1) ** 2
+        return np.array([[-(tau * s + tau + 1) * np.exp(-s) / (tau * s + 1) ** 2]])
 
-    tf = iosys.TF(1, 1, H, dH)
+    tf = TF(1, 1, H, dH)
 
     w = np.logspace(-1, 3, 1000)
     tfw = tf.bode(w)
@@ -35,8 +36,8 @@ if __name__ == '__main__':
     b = np.ones((1, r))
     c = np.ones((1, r))
     tol = 1e-3
-    maxit = 100
-    rom, reduction_data = tf.tf_irka(r, sigma, b, c, tol, maxit, verbose=True)
+    maxit = 1000
+    rom, reduction_data = tf_irka(tf, r, sigma, b, c, tol, maxit, verbose=True)
 
     Sigma = reduction_data['Sigma']
     fig, ax = plt.subplots()
@@ -59,9 +60,8 @@ if __name__ == '__main__':
 
     nt = 1000
     t = np.linspace(0, 4, nt)
-    x_old = np.zeros(rom.n, dtype=complex)
-    x_new = np.zeros(rom.n, dtype=complex)
-    y = np.zeros(nt, dtype=complex)
+    x_old = np.zeros(rom.n)
+    y = np.zeros(nt)
     for i in range(1, nt):
         h = t[i] - t[i - 1]
         x_new = spla.solve(E - h / 2 * A, (E + h / 2 * A).dot(x_old) + h * B[:, 0])
@@ -70,7 +70,33 @@ if __name__ == '__main__':
 
     step_response = np.piecewise(t, [t < 1, t >= 1], [0, 1]) * (1 - np.exp(-(t - 1) / tau))
     fig, ax = plt.subplots()
-    ax.plot(t, step_response, 'b-', t, np.real(y), 'r-')
+    ax.plot(t, step_response, 'b-', t, y, 'r-')
     ax.set_title('Step responses of the full and reduced model')
+    ax.set_xlabel(r'$t$')
+    plt.show()
+
+    # match steady state (add interpolation point at 0)
+    sigma_ss = list(Sigma[-1]) + [0]
+    b_ss = np.ones((1, r + 1))
+    c_ss = np.ones((1, r + 1))
+    rom_ss = interpolation(tf, sigma_ss, b_ss, c_ss)
+
+    # step response
+    E_ss = rom_ss.E._matrix
+    A_ss = rom_ss.A._matrix
+    B_ss = rom_ss.B._matrix
+    C_ss = rom_ss.C._matrix
+
+    x_ss_old = np.zeros(rom_ss.n)
+    y_ss = np.zeros(nt)
+    for i in range(1, nt):
+        h = t[i] - t[i - 1]
+        x_ss_new = spla.solve(E_ss - h / 2 * A_ss, (E_ss + h / 2 * A_ss).dot(x_ss_old) + h * B_ss[:, 0])
+        x_ss_old = x_ss_new
+        y_ss[i] = C_ss.dot(x_ss_new)[0]
+
+    fig, ax = plt.subplots()
+    ax.plot(t, step_response, 'b-', t, y_ss, 'r-')
+    ax.set_title('Step responses of the full and reduced model 2')
     ax.set_xlabel(r'$t$')
     plt.show()
