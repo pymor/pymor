@@ -176,7 +176,6 @@ class InputOutputSystem(DiscretizationInterface):
             ax.set_ylabel('Magnitude (dB)')
         else:
             ax.set_ylabel('Magnitude')
-        plt.show()
         return fig, ax
 
 
