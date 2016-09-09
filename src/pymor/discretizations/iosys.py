@@ -246,6 +246,30 @@ class LTISystem(InputOutputSystem):
                          cont_time=cont_time, cache_region=cache_region, name=name)
         self.build_parameter_type(inherits=(A, B, C, D, E))
 
+    def with_(self, **kwargs):
+        assert set(kwargs.keys()) <= self.with_arguments
+
+        # when 'ss_operators' is not given but 'A' or 'E', make sure that
+        # we use the old 'ss_operators' dict but with updated 'A' and 'E'
+        kwargs.setdefault('ss_operators', dict(self.ss_operators,
+                                               A=kwargs.get('A', self.A),
+                                               E=kwargs.get('E', self.E)))
+        kwargs.setdefault('is_operators', dict(self.is_operators,
+                                               B=kwargs.get('B', self.B)))
+        kwargs.setdefault('so_operators', dict(self.so_operators,
+                                               C=kwargs.get('C', self.C)))
+        kwargs.setdefault('io_operators', dict(self.io_operators,
+                                               D=kwargs.get('D', self.D)))
+
+        # make sure we do not use self.A (for the case that 'ss_operators' is given)
+        kwargs.setdefault('A', None)
+        kwargs.setdefault('B', None)
+        kwargs.setdefault('C', None)
+        kwargs.setdefault('D', None)
+        kwargs.setdefault('E', None)
+
+        return super().with_(**kwargs)
+
     @classmethod
     def from_matrices(cls, A, B, C, D=None, E=None, cont_time=True):
         """Create |LTISystem| from matrices.
@@ -806,6 +830,31 @@ class SecondOrderSystem(InputOutputSystem):
                          cont_time=cont_time, cache_region=cache_region, name=name)
         self.build_parameter_type(inherits=(M, D, K, B, Cp, Cv))
 
+    def with_(self, **kwargs):
+        assert set(kwargs.keys()) <= self.with_arguments
+
+        # when 'ss_operators' is not given but 'M', 'D', or 'K', make sure that
+        # we use the old 'ss_operators' dict but with updated 'M', 'D', and 'K'
+        kwargs.setdefault('ss_operators', dict(self.ss_operators,
+                                               M=kwargs.get('M', self.M),
+                                               D=kwargs.get('D', self.D),
+                                               K=kwargs.get('K', self.K)))
+        kwargs.setdefault('is_operators', dict(self.is_operators,
+                                               B=kwargs.get('B', self.B)))
+        kwargs.setdefault('so_operators', dict(self.so_operators,
+                                               Cp=kwargs.get('Cp', self.Cp),
+                                               Cv=kwargs.get('Cv', self.Cv)))
+
+        # make sure we do not use self.M (for the case that 'ss_operators' is given)
+        kwargs.setdefault('M', None)
+        kwargs.setdefault('D', None)
+        kwargs.setdefault('K', None)
+        kwargs.setdefault('B', None)
+        kwargs.setdefault('Cp', None)
+        kwargs.setdefault('Cv', None)
+
+        return super().with_(**kwargs)
+
     def eval_tf(self, s):
         """Evaluate the transfer function.
 
@@ -999,6 +1048,29 @@ class LinearDelaySystem(InputOutputSystem):
                          cont_time=cont_time, cache_region=cache_region, name=name)
         self.build_parameter_type(inherits=(E, A, Ad, B, C))
 
+    def with_(self, **kwargs):
+        assert set(kwargs.keys()) <= self.with_arguments
+
+        # when 'ss_operators' is not given but 'A' or 'E', make sure that
+        # we use the old 'ss_operators' dict but with updated 'A' and 'E'
+        kwargs.setdefault('ss_operators', dict(self.ss_operators,
+                                               E=kwargs.get('E', self.E),
+                                               A=kwargs.get('A', self.A),
+                                               Ad=kwargs.get('Ad', self.Ad)))
+        kwargs.setdefault('is_operators', dict(self.is_operators,
+                                               B=kwargs.get('B', self.B)))
+        kwargs.setdefault('so_operators', dict(self.so_operators,
+                                               C=kwargs.get('C', self.C)))
+
+        # make sure we do not use self.A (for the case that 'ss_operators' is given)
+        kwargs.setdefault('E', None)
+        kwargs.setdefault('A', None)
+        kwargs.setdefault('Ad', None)
+        kwargs.setdefault('B', None)
+        kwargs.setdefault('C', None)
+
+        return super().with_(**kwargs)
+
     def eval_tf(self, s):
         r"""Evaluate the transfer function.
 
@@ -1187,6 +1259,29 @@ class LinearStochasticSystem(InputOutputSystem):
                          cont_time=cont_time, cache_region=cache_region, name=name)
         self.build_parameter_type(inherits=(E, A, As, B, C))
 
+    def with_(self, **kwargs):
+        assert set(kwargs.keys()) <= self.with_arguments
+
+        # when 'ss_operators' is not given but 'A' or 'E', make sure that
+        # we use the old 'ss_operators' dict but with updated 'A' and 'E'
+        kwargs.setdefault('ss_operators', dict(self.ss_operators,
+                                               E=kwargs.get('E', self.E),
+                                               A=kwargs.get('A', self.A),
+                                               As=kwargs.get('As', self.As)))
+        kwargs.setdefault('is_operators', dict(self.is_operators,
+                                               B=kwargs.get('B', self.B)))
+        kwargs.setdefault('so_operators', dict(self.so_operators,
+                                               C=kwargs.get('C', self.C)))
+
+        # make sure we do not use self.A (for the case that 'ss_operators' is given)
+        kwargs.setdefault('E', None)
+        kwargs.setdefault('A', None)
+        kwargs.setdefault('As', None)
+        kwargs.setdefault('B', None)
+        kwargs.setdefault('C', None)
+
+        return super().with_(**kwargs)
+
 
 class BilinearSystem(InputOutputSystem):
     r"""Class for bilinear systems.
@@ -1285,3 +1380,26 @@ class BilinearSystem(InputOutputSystem):
                          so_operators={'C': C}, io_operators={},
                          cont_time=cont_time, cache_region=cache_region, name=name)
         self.build_parameter_type(inherits=(E, A, N, B, C))
+
+    def with_(self, **kwargs):
+        assert set(kwargs.keys()) <= self.with_arguments
+
+        # when 'ss_operators' is not given but 'A' or 'E', make sure that
+        # we use the old 'ss_operators' dict but with updated 'A' and 'E'
+        kwargs.setdefault('ss_operators', dict(self.ss_operators,
+                                               E=kwargs.get('E', self.E),
+                                               A=kwargs.get('A', self.A),
+                                               N=kwargs.get('N', self.N)))
+        kwargs.setdefault('is_operators', dict(self.is_operators,
+                                               B=kwargs.get('B', self.B)))
+        kwargs.setdefault('so_operators', dict(self.so_operators,
+                                               C=kwargs.get('C', self.C)))
+
+        # make sure we do not use self.A (for the case that 'ss_operators' is given)
+        kwargs.setdefault('E', None)
+        kwargs.setdefault('A', None)
+        kwargs.setdefault('N', None)
+        kwargs.setdefault('B', None)
+        kwargs.setdefault('C', None)
+
+        return super().with_(**kwargs)
