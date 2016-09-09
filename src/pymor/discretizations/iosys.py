@@ -49,6 +49,37 @@ class InputOutputSystem(DiscretizationInterface):
     def _solve(self, mu=None):
         raise NotImplementedError
 
+    def __add__(self, other):
+        """Add two input-state-output systems."""
+        assert type(self) == type(other)
+        assert self.cont_time == other.cont_time
+
+        add_ss_operators = {k: BlockDiagonalOperator((self.ss_operators[k], other.ss_operators[k]))
+                            for k in self.ss_operators}
+        add_is_operators = {k: BlockOperator.vstack((self.is_operators[k], other.is_operators[k]))
+                            for k in self.is_operators}
+        add_so_operators = {k: BlockOperator.hstack((self.so_operators[k], other.so_operators[k]))
+                            for k in self.so_operators}
+        add_io_operators = {k: BlockOperator([[(self.io_operators[k] + other.io_operators[k]).assemble()]])
+                            for k in self.io_operators}
+
+        return self.with_(ss_operators=add_ss_operators, is_operators=add_is_operators,
+                          so_operators=add_so_operators, io_operators=add_io_operators,
+                          cont_time=self.cont_time)
+
+    def __neg__(self):
+        """Negate input-state-output system."""
+        neg_so_operators = {k: (op * (-1)).assemble() for k, op in self.so_operators.items()}
+        neg_io_operators = {k: (op * (-1)).assemble() for k, op in self.io_operators.items()}
+
+        return self.with_(ss_operators=self.ss_operators, is_operators=self.is_operators,
+                          so_operators=neg_so_operators, io_operators=neg_io_operators,
+                          cont_time=self.cont_time)
+
+    def __sub__(self, other):
+        """Subtract two input-state-output system."""
+        return self + (-other)
+
     def eval_tf(self, s, mu=None):
         """Evaluate the transfer function of the system."""
         raise NotImplementedError
@@ -402,35 +433,6 @@ class LTISystem(InputOutputSystem):
         E = load_matrix(files_basename + '.E') if os.path.isfile(files_basename + '.E') else None
 
         return cls.from_matrices(A, B, C, D, E, cont_time=cont_time)
-
-    def __add__(self, other):
-        """Add two |LTISystems|."""
-        assert isinstance(other, LTISystem)
-        assert self.B.source == other.B.source
-        assert self.C.range == other.C.range
-        assert self.cont_time == other.cont_time
-
-        A = BlockDiagonalOperator((self.A, other.A))
-        B = BlockOperator.vstack((self.B, other.B))
-        C = BlockOperator.hstack((self.C, other.C))
-        D = BlockOperator([[(self.D + other.D).assemble()]])
-        E = BlockDiagonalOperator((self.E, other.E))
-
-        return self.__class__(A, B, C, D, E, cont_time=self.cont_time)
-
-    def __neg__(self):
-        """Negate |LTISystem|."""
-        A = self.A
-        B = self.B
-        C = (self.C * (-1)).assemble()
-        D = (self.D * (-1)).assemble()
-        E = self.E
-
-        return self.__class__(A, B, C, D, E, cont_time=self.cont_time)
-
-    def __sub__(self, other):
-        """Subtract two |LTISystems|."""
-        return self + (-other)
 
     def __mul__(self, other):
         """Multiply (cascade) two |LTISystems|."""
