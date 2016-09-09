@@ -105,20 +105,19 @@ if __name__ == '__main__':
     plt.show()
 
     # Bode plot of the BT error system
-    err_bt.bode(w)
-    fig, ax = LTISystem.mag_plot(err_bt)
-    ax.set_title('Bode plot of the BT error system')
-    plt.show()
+#    err_bt.bode(w)
+#    fig, ax = LTISystem.mag_plot(err_bt)
+#    ax.set_title('Bode plot of the BT error system')
+#    plt.show()
 
     # Iterative Rational Krylov Algorithm
     sigma = np.logspace(-1, 3, r)
     tol = 1e-4
     maxit = 100
-    rom_irka, _, reduction_data_irka = irka(lti, r, sigma, tol=tol, maxit=maxit, verbose=True, compute_errors=True)
+    rom_irka, _, reduction_data_irka = irka(lti, r, sigma, tol=tol, maxit=maxit, verbose=True, compute_errors=False)
 
-    # print(reduction_data_irka['dist'])
-    tmp = map(np.min, reduction_data_irka['dist'])
-    # print(tmp)
+    # Shift distances
+    tmp = [np.min(d) for d in reduction_data_irka['dist']]
     fig, ax = plt.subplots()
     ax.semilogy(tmp, '.-')
     ax.set_title('Distances between shifts in IRKA iterations')
@@ -127,6 +126,7 @@ if __name__ == '__main__':
     print('H_2-norm of the IRKA ROM:     {}'.format(rom_irka.norm()))
     print('H_inf-norm of the IRKA ROM:   {}'.format(rom_irka.norm('Hinf')))
     err_irka = lti - rom_irka
+    err_irka.compute_gramian('lyap', 'cf', me_solver='slycot')
     print('H_2-error for the IRKA ROM:   {}'.format(err_irka.norm()))
     print('H_inf-error for the IRKA ROM: {}'.format(err_irka.norm('Hinf')))
 
@@ -137,7 +137,7 @@ if __name__ == '__main__':
     plt.show()
 
     # Bode plot of the IRKA error system
-    err_irka.bode(w)
-    fig, ax = LTISystem.mag_plot(err_irka)
-    ax.set_title('Bode plot of the IRKA error system')
-    plt.show()
+#    err_irka.bode(w)
+#    fig, ax = LTISystem.mag_plot(err_irka)
+#    ax.set_title('Bode plot of the IRKA error system')
+#    plt.show()
