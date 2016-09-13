@@ -10,7 +10,6 @@ import scipy.sparse.linalg as spsla
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.constructions import IdentityOperator, LincombOperator
-from pymor.operators.numpy import NumpyMatrixOperator
 
 
 try:
@@ -238,7 +237,7 @@ def solve_lyap(A, E, B, trans=False, me_solver=None, tol=None):
         import imp
         try:
             imp.find_module('pymess')
-            if A.source.dim >= 1000 or not isinstance(A, NumpyMatrixOperator):
+            if A.source.dim >= 1000:
                 me_solver = 'pymess_lradi'
             else:
                 me_solver = 'pymess_lyap'
