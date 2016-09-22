@@ -10,8 +10,6 @@ high-dimensional PDE solvers. Moreover, pure Python implementations of
 finite element and finite volume discretizations using the NumPy/SciPy
 scientific computing stack are provided for getting started quickly.
 
-[Docs] [Docs] [DOI] [Build Status] [Coverage Status]
-
 License
 -------
 
@@ -184,7 +182,7 @@ Then, clone the pyMOR git repository using
 
 and, optionally, switch to the branch you are interested in, e.g.
 
-    git checkout 0.2.x
+    git checkout 0.4.x
 
 Then, add pyMOR to the search path of your Python interpreter, either by
 setting PYTHONPATH
@@ -237,3 +235,4 @@ Should you have any questions regarding pyMOR or wish to contribute, do
 not hestitate to contact us via our development mailing list:
 
 http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev
+
