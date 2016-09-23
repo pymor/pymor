@@ -33,10 +33,12 @@ DISCRETIZATION_ARGS = (
     ('burgers', ['--num-flux=lax_friedrichs', '0.1']),
     ('burgers', ['--num-flux=engquist_osher', '0.1']),
     ('burgers', ['--num-flux=simplified_engquist_osher', '0.1']),
-    ('parabolic', [1]),
-    ('parabolic', ['--rect', 1]),
-    ('parabolic', ['--fv', 1]),
-    ('parabolic', ['--rect', '--fv', 1]),
+    ('parabolic', ['heat', 1]),
+    ('parabolic', ['heat', '--rect', 1]),
+    ('parabolic', ['heat', '--fv', 1]),
+    ('parabolic', ['heat', '--rect', '--fv', 1]),
+    ('parabolic', ['dar', 1]),
+    ('parabolic', ['dar', '--rect', 1]),
 )
 
 THERMALBLOCK_ARGS = (
