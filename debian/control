@@ -3,7 +3,7 @@ Section: math
 Priority: extra
 Maintainer: Rene Milk <rene.milk@uni-muenster.de>  
 Build-Depends: debhelper (>= 8.0.0), python-pip, python-virtualenv, python-numpy,
-  python-scipy, python-pytest, python-pyside, 
+  python-scipy, python-pytest, python-pyside, python-setuptools,
   cython, python-sphinx, python-sympy, python-matplotlib,
   python-opengl, python-docopt, python-pyevtk,
   python-dev, python3, dh-make,
@@ -20,7 +20,7 @@ Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends},
   python-scipy, python-pytest, python-pyside,
   cython, python-matplotlib, python-opengl,
   python-docopt, python-pyevtk,
-  python-dev, python
+  python-dev, python, python-mpi4py, mpi-default-dev
 Suggests: python-pymor-doc
 Description: makes pyMOR importable system-wide + dependency tracking
   pyMOR is a software library developed at the University of Münster for building model order reduction applications
