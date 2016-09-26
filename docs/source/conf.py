@@ -95,7 +95,7 @@ try:
     import sphinx.ext.imgmath
     extensions.append('sphinx.ext.imgmath')
 except ImportError:
-    pass
+    extensions.append('sphinx.ext.pngmath')
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
