@@ -293,9 +293,9 @@ def solve_lyap(A, E, B, trans=False, me_solver=None, tol=None):
         Z = cholp(X, copy=False)
     elif me_solver == 'pymess_lyap':
         import pymess
-        A_mat = to_matrix(A)
+        A_mat = to_matrix(A) if A.source.dim < 1000 else to_matrix(A, format='csc')
         if E is not None:
-            E_mat = to_matrix(E)
+            E_mat = to_matrix(E) if E.source.dim < 1000 else to_matrix(E, format='csc')
         B_mat = to_matrix(B)
         if not trans:
             if E is None:
