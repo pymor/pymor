@@ -113,6 +113,11 @@ via your package manager. For Debian-based systems, try:
 
 Again, all these dependencies can also be installed directly via pip.
 
+**Warning:** Ubuntu 16.04 currently ships
+[broken](https://bugs.launchpad.net/ubuntu/+source/mpi4py/+bug/1583432) mpi4py
+packages which will cause pyMOR to fail at import time. Fixed packages can be
+found in the [pyMOR PPA](https://launchpad.net/~pymor/+archive/stable).
+
 
 Documentation
 -------------
