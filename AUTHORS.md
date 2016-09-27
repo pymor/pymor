@@ -9,6 +9,10 @@
 
 ## pyMOR 0.5
 
+* Julia Brunken, julia.brunken@uni-muenster.de
+    * support for advection, reaction terms and Robin boundary data
+      in ParabolicProblem
+
 * Petar Mlinarić, mlinaric@mpi-magdeburg.mpg.de
     * l2_norm2 methods for VectorArrays
     * from_data methods for VectorSpace and VectorArrays
