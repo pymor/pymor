@@ -213,7 +213,7 @@ pyMOR uses [Cython](http://www.cython.org/) extension modules to speed up
 numerical algorithms which cannot be efficiently expressed using NumPy idioms.
 The source files of these modules (files with extension `.pyx`) have to be
 processed by Cython into a `.c`-file which then must be compiled into a shared
-object (`.so` file). The whole build process is handeled automatically by
+object (`.so` file). The whole build process is handled automatically by
 `setup.py`.
 
 If you want to develop Cython extensions modules for pyMOR yourself, you should
@@ -243,6 +243,6 @@ Contact
 -------
 
 Should you have any questions regarding pyMOR or wish to contribute, 
-do not hestitate to contact us via our development mailing list:
+do not hesitate to contact us via our development mailing list:
 
 <http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev>
