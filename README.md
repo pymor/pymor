@@ -12,7 +12,7 @@ quickly.
 
 [![Docs](https://readthedocs.org/projects/pymor/badge/?version=latest)](http://pymor.readthedocs.org/en/latest)
 [![Docs](https://readthedocs.org/projects/pymor/badge/?version=0.4.x)](http://pymor.readthedocs.org/en/0.4.x)
-[![DOI](https://zenodo.org/badge/8838/pymor/pymor.svg)](http://dx.doi.org/10.5281/zenodo.15773)
+[![DOI](https://zenodo.org/badge/9220688.svg)](https://zenodo.org/badge/latestdoi/9220688)
 [![Build Status](https://travis-ci.org/pymor/pymor.png?branch=master)](https://travis-ci.org/pymor/pymor)
 [![Coverage Status](https://coveralls.io/repos/pymor/pymor/badge.png)](https://coveralls.io/r/pymor/pymor)
 
