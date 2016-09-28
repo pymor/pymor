@@ -32,8 +32,8 @@ NumPy/SciPy scientific computing stack are provided for getting started
 quickly.</p>
 
 <p><a href="http://pymor.readthedocs.org/en/latest"><img src="https://readthedocs.org/projects/pymor/badge/?version=latest" alt="Docs"></a>
-<a href="http://pymor.readthedocs.org/en/0.3.x"><img src="https://readthedocs.org/projects/pymor/badge/?version=0.4.x" alt="Docs"></a>
-<a href="http://dx.doi.org/10.5281/zenodo.15773"><img src="https://zenodo.org/badge/8838/pymor/pymor.svg" alt="DOI"></a>
+<a href="http://pymor.readthedocs.org/en/0.4.x"><img src="https://readthedocs.org/projects/pymor/badge/?version=0.4.x" alt="Docs"></a>
+<a href="https://zenodo.org/badge/latestdoi/9220688"><img src="https://zenodo.org/badge/9220688.svg" alt="DOI"></a>
 <a href="https://travis-ci.org/pymor/pymor"><img src="https://travis-ci.org/pymor/pymor.png?branch=master" alt="Build Status"></a>
 <a href="https://coveralls.io/r/pymor/pymor"><img src="https://coveralls.io/repos/pymor/pymor/badge.png" alt="Coverage Status"></a></p>
 
@@ -146,6 +146,11 @@ via your package manager. For Debian-based systems, try:</p>
 </code></pre>
 
 <p>Again, all these dependencies can also be installed directly via pip.</p>
+
+<p><strong>Warning:</strong> Ubuntu 16.04 currently ships
+<a href="https://bugs.launchpad.net/ubuntu/+source/mpi4py/+bug/1583432">broken</a> mpi4py
+packages which will cause pyMOR to fail at import time. Fixed packages can be
+found in the <a href="https://launchpad.net/%7Epymor/+archive/stable">pyMOR PPA</a>.</p>
 
 <h2>
 <a id="documentation" class="anchor" href="#documentation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Documentation</h2>
