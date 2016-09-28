@@ -1,3 +1,11 @@
+pymor (0.4.1~14.04~ppa2) trusty; urgency=medium
+
+  * new upstream release
+  * depend on mpi-default-dev to circumvent mpi4py package bug
+  * build-depends on latex/dvipng for doc building
+
+ -- René Milk <rene.milk@wwu.de>  Mon, 26 Sep 2016 08:42:29 +0200
+
 pymor (0.2.2~12.04~ppa2) precise; urgency=medium
 
   * new upstream release
