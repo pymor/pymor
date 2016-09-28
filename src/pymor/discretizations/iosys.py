@@ -594,13 +594,14 @@ class LTISystem(InputOutputSystem):
                 assert isinstance(typ[1], float)
                 assert typ[1] > 0
                 self._gramian.setdefault(typ, {})
+                c = 1 / np.sqrt(typ[1])
                 if subtyp == 'cf':
-                    self._gramian[typ][subtyp] = solve_ricc(A, E=E, B=B / np.sqrt(typ[1]), C=C / np.sqrt(typ[1]),
-                                                            R=-IdentityOperator(C.range),
+                    self._gramian[typ][subtyp] = solve_ricc(A, E=E, B=B * c, C=C * c,
+                                                            R=IdentityOperator(C.range) * (-1),
                                                             trans=True, me_solver=me_solver, tol=tol)
                 elif subtyp == 'of':
-                    self._gramian[typ][subtyp] = solve_ricc(A, E=E, B=B / np.sqrt(typ[1]), C=C / np.sqrt(typ[1]),
-                                                            R=-IdentityOperator(B.source),
+                    self._gramian[typ][subtyp] = solve_ricc(A, E=E, B=B * c, C=C * c,
+                                                            R=IdentityOperator(B.source) * (-1),
                                                             trans=False, me_solver=me_solver, tol=tol)
                 else:
                     raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for ('br', gamma) type.")
