@@ -37,6 +37,7 @@ script:
   if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     virtualenv --python=${PYTHON_X} piptest
     source piptest/bin/activate
+    pip install --upgrade pip
     # this fails on PRs, so skip it
     [[ "${TRAVIS_PULL_REQUEST}" != "false" ]] || ${PIP_X} --verbose install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
     ${PIP_X} uninstall pymor
