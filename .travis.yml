@@ -39,12 +39,12 @@ script:
     source piptest/bin/activate
     pip install --upgrade pip
     # this fails on PRs, so skip it
-    [[ "${TRAVIS_PULL_REQUEST}" != "false" ]] || ${PIP_X} -q install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
-    ${PIP_X} uninstall -q -y pymor
-    ${PYTHON_X} setup.py sdist -d /tmp/pymor_sdist/ --format=gztar
+    [[ "${TRAVIS_PULL_REQUEST}" != "false" ]] || pip -q install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
+    pip uninstall -q -y pymor
+    python setup.py sdist -d /tmp/pymor_sdist/ --format=gztar
     git clean -xdf
-    ${PIP_X} install -q /tmp/pymor_sdist/pymor-*.tar.gz
-    check-manifest -p ${PYTHON_X} ${PWD}
+    pip install -q /tmp/pymor_sdist/pymor-*.tar.gz
+    check-manifest -p python ${PWD}
   elif [ "${PYTEST_MARKER}" == "MPI" ] ; then
     export PYTHONPATH=$(pwd)/src
     xvfb-run -a mpirun -n 2 ${PYTHON_X} src/pymortests/mpi_run_demo_tests.py
