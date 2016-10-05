@@ -9,7 +9,7 @@ import numpy as np
 
 @defaults('seed')
 def new_random_state(seed=42):
-    '''Returns a new |NumPy| :class:`~numpy.random.RandomState`.
+    """Returns a new |NumPy| :class:`~numpy.random.RandomState`.
 
     Parameters
     ----------
@@ -18,6 +18,6 @@ def new_random_state(seed=42):
 
     Returns
     -------
-    New `~numpy.random.RandomState` object.
-    '''
+    New `RandomState` object.
+    """
     return np.random.RandomState(seed)

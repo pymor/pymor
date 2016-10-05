@@ -16,12 +16,13 @@ class NumpyVectorArray(VectorArrayInterface):
     """|VectorArray| implementation via |NumPy arrays|.
 
     This is the default |VectorArray| type used by all |Operators|
-    implemented directly in pyMOR. Reduced |Operators| will also
-    expect |NumpyVectorArrays|.
+    in pyMOR's discretization toolkit. Moreover, all reduced |Operators|
+    are based on |NumpyVectorArray|.
 
     Note that this class is just a thin wrapper around the underlying
     |NumPy array|. Thus, while operations like
-    :meth:`~VectorArrayInterface.axpy` or :meth:`VectorArrayInterface.dot`
+    :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.axpy` or
+    :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.dot`
     will be quite efficient, removing or appending vectors will
     be costly.
     """

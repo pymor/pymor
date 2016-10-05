@@ -4,8 +4,8 @@
 Release Notes
 *************
 
-pyMOR 0.4 (FUTURE)
-------------------
+pyMOR 0.4 (September 28, 2016)
+------------------------------
 
 With the pyMOR 0.4 release we have changed the copyright of
 pyMOR to 

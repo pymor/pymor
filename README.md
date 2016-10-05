@@ -11,8 +11,8 @@ NumPy/SciPy scientific computing stack are provided for getting started
 quickly.
 
 [![Docs](https://readthedocs.org/projects/pymor/badge/?version=latest)](http://pymor.readthedocs.org/en/latest)
-[![Docs](https://readthedocs.org/projects/pymor/badge/?version=0.3.x)](http://pymor.readthedocs.org/en/0.3.x)
-[![DOI](https://zenodo.org/badge/8838/pymor/pymor.svg)](http://dx.doi.org/10.5281/zenodo.15773)
+[![Docs](https://readthedocs.org/projects/pymor/badge/?version=0.4.x)](http://pymor.readthedocs.org/en/0.4.x)
+[![DOI](https://zenodo.org/badge/9220688.svg)](https://zenodo.org/badge/latestdoi/9220688)
 [![Build Status](https://travis-ci.org/pymor/pymor.png?branch=master)](https://travis-ci.org/pymor/pymor)
 [![Coverage Status](https://coveralls.io/repos/pymor/pymor/badge.png)](https://coveralls.io/r/pymor/pymor)
 
@@ -119,6 +119,11 @@ via your package manager. For Debian-based systems, try:
 
 Again, all these dependencies can also be installed directly via pip.
 
+**Warning:** Ubuntu 16.04 currently ships
+[broken](https://bugs.launchpad.net/ubuntu/+source/mpi4py/+bug/1583432) mpi4py
+packages which will cause pyMOR to fail at import time. Fixed packages can be
+found in the [pyMOR PPA](https://launchpad.net/~pymor/+archive/stable).
+
 
 Documentation
 -------------
@@ -196,7 +201,7 @@ Then, clone the pyMOR git repository using
 
 and, optionally, switch to the branch you are interested in, e.g.
 
-    git checkout 0.2.x
+    git checkout 0.4.x
 
 Then, add pyMOR to the search path of your Python interpreter, either by
 setting PYTHONPATH
