@@ -208,11 +208,11 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
     if extends:
         image = extends[0]
         image_dims = extends[1]
-        ind_range = list(range(len(image_dims) - 1, len(domain))) if operators else list(range(len(image_dims) - 1, 0))
+        ind_range = range(len(image_dims) - 1, len(domain)) if operators else range(len(image_dims) - 1, 0)
     else:
         image = image_space.empty()
         image_dims = []
-        ind_range = list(range(-1, len(domain))) if operators else [-1]
+        ind_range = range(-1, len(domain)) if operators else [-1]
 
     for i in ind_range:
         logger.info('Estimating image for basis vector {} ...'.format(i))
@@ -221,7 +221,7 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
                                        orthonormalize=False, product=product,
                                        riesz_representatives=riesz_representatives)
         else:
-            new_image = estimate_image(operators, [], domain.copy(i), extends=True,
+            new_image = estimate_image(operators, [], domain[i].copy(), extends=True,
                                        orthonormalize=False, product=product,
                                        riesz_representatives=riesz_representatives)
 

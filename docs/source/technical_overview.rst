@@ -16,14 +16,13 @@ operating on objects of the following types:
     |copied| to a new array, |appended| to an existing array or |removed| from the
     array. Basic linear algebra operations can be performed on the vectors of the
     array: vectors can be |scaled| in-place, the BLAS |axpy| operation is
-    supported and |scalar products| between vectors can be formed. Linear
+    supported and |inner products| between vectors can be formed. Linear
     combinations of vectors can be formed using the |lincomb| method. Moreover,
     various norms can be computed and selected |components| of the vectors can
     be extracted for :mod:`empirical interpolation <pymor.algorithms.ei>`.
-
-    Each of these methods takes optional `ind` parameters to specify the subset
-    of vectors on which to operate. If the parameter is not specified, the whole
-    array is selected for the operation. 
+    To act on subsets of vectors of an array, arrays can be |indexed|, returning
+    a new |VectorArray| which acts as a view onto the respective vectors in the
+    original array.
 
     New vector arrays can be created using the |empty| and |zeros| method. As a
     convenience, many of Python's math special methods are implemented in terms
@@ -31,15 +30,16 @@ operating on objects of the following types:
 
     Note that there is not the notion of a single vector in pyMOR. The main
     reason for this design choice is to take advantage of vectorized
-    implementations like |NumpyVectorArray| which internally store the
-    vectors as two-dimensional |NumPy| arrays. As an example, the application of
-    a linear matrix based operator to an array via the |apply| method boils down
-    to a call to |NumPy|'s optimized :meth:`~numpy.ndarray.dot` method. If there
-    were only lists of vectors in pyMOR, the above matrix-matrix multiplication
-    would have to be expressed by a loop of matrix-vector multiplications. However,
-    when working with external solvers, vector arrays will often be just lists
-    of vectors. For this use-case we provide |ListVectorArray|, a vector array
-    based on a Python list of vectors.
+    implementations like |NumpyVectorArray| which internally store the vectors
+    as two-dimensional |NumPy| arrays. As an example, the application of a
+    linear matrix based operator to an array via the |apply| method boils down
+    to a call to |NumPy|'s optimized :meth:`~numpy.ndarray.dot` method. If
+    there were only lists of vectors in pyMOR, the above matrix-matrix
+    multiplication would have to be expressed by a loop of matrix-vector
+    multiplications.  However, when working with external solvers, vector
+    arrays will often be given as lists of indiviual vector objects. For this
+    use-case we provide |ListVectorArray|, a |VectorArray| based on a Python
+    list of vectors.
 
     Associated to each vector array is a |VectorSpace|. A Vector space in pyMOR
     is simply the combination of a |VectorArray| subclass and an appropriate
@@ -62,10 +62,11 @@ operating on objects of the following types:
     .. |copied|           replace:: :meth:`copied <pymor.vectorarrays.interfaces.VectorArrayInterface.copy>`
     .. |dimension|        replace:: :attr:`dimension <pymor.vectorarrays.interfaces.VectorArrayInterface.dim>`
     .. |empty|            replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.empty`
+    .. |indexed|          replace:: :meth:`indexed <pymor.vectorarrays.interfaces.VectorArrayInterface.__getitem__>`
+    .. |inner products|   replace:: :meth:`inner products <pymor.vectorarrays.interfaces.VectorArrayInterface.dot>`
     .. |lincomb|          replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.lincomb`
     .. |make_array|       replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.make_array`
-    .. |removed|          replace:: :meth:`deleted <pymor.vectorarrays.interfaces.VectorArrayInterface.remove>`
-    .. |scalar products|  replace:: :meth:`scalar products <pymor.vectorarrays.interfaces.VectorArrayInterface.dot>`
+    .. |removed|          replace:: :meth:`deleted <pymor.vectorarrays.interfaces.VectorArrayInterface.__delitem__>`
     .. |scaled|           replace:: :meth:`scaled <pymor.vectorarrays.interfaces.VectorArrayInterface.scal>`
     .. |subtype|          replace:: :attr:`~pymor.vectorarrays.interfaces.VectorSpace.subtype`
     .. |zeros|            replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.zeros`

@@ -6,7 +6,7 @@ from itertools import product
 import numpy as np
 import pytest
 
-from pymor.playground.vectorarrays.disk import DiskVectorArray
+# from pymor.playground.vectorarrays.disk import DiskVectorArray
 from pymor.vectorarrays.block import BlockVectorArray
 from pymor.vectorarrays.numpy import NumpyVectorArray
 from pymor.vectorarrays.list import NumpyVector, ListVectorArray
@@ -34,10 +34,10 @@ def numpy_list_vector_array_factory(length, dim, seed):
                            subtype=(NumpyVector, dim), copy=False)
 
 
-def numpy_disk_vector_array_factory(length, dim, seed):
-    np.random.seed(seed)
-    return DiskVectorArray([NumpyVector(v, copy=False) for v in np.random.random((length, dim))],
-                           subtype=(NumpyVector, dim))
+# def numpy_disk_vector_array_factory(length, dim, seed):
+#     np.random.seed(seed)
+#     return DiskVectorArray([NumpyVector(v, copy=False) for v in np.random.random((length, dim))],
+#                            subtype=(NumpyVector, dim))
 
 
 def block_vector_array_factory(length, dims, seed):
@@ -151,8 +151,8 @@ numpy_vector_array_generators = \
 numpy_list_vector_array_generators = \
     [lambda args=args: numpy_list_vector_array_factory(*args) for args in numpy_vector_array_factory_arguments]
 
-numpy_disk_vector_array_generators = [] if TRAVIS else \
-    [lambda args=args: numpy_disk_vector_array_factory(*args) for args in numpy_vector_array_factory_arguments]
+# numpy_disk_vector_array_generators = [] if TRAVIS else \
+#     [lambda args=args: numpy_disk_vector_array_factory(*args) for args in numpy_vector_array_factory_arguments]
 
 block_vector_array_generators = \
     [lambda args=args: block_vector_array_factory(*args) for args in block_vector_array_factory_arguments]
@@ -175,10 +175,10 @@ numpy_list_vector_array_pair_with_same_dim_generators = \
                                             numpy_list_vector_array_factory(l2, d, s2))
      for l, l2, d, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_same_dim]
 
-numpy_disk_vector_array_pair_with_same_dim_generators = [] if TRAVIS else \
-    [lambda l=l, l2=l2, d=d, s1=s1, s2=s2: (numpy_disk_vector_array_factory(l, d, s1),
-                                            numpy_disk_vector_array_factory(l2, d, s2))
-     for l, l2, d, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_same_dim]
+# numpy_disk_vector_array_pair_with_same_dim_generators = [] if TRAVIS else \
+#     [lambda l=l, l2=l2, d=d, s1=s1, s2=s2: (numpy_disk_vector_array_factory(l, d, s1),
+#                                             numpy_disk_vector_array_factory(l2, d, s2))
+#      for l, l2, d, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_same_dim]
 
 block_vector_array_pair_with_same_dim_generators = \
     [lambda l=l, l2=l2, d=d, s1=s1, s2=s2: (block_vector_array_factory(l, d, s1),
@@ -207,10 +207,10 @@ numpy_list_vector_array_pair_with_different_dim_generators = \
                                                      numpy_list_vector_array_factory(l2, d2, s2))
      for l, l2, d1, d2, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_different_dim]
 
-numpy_disk_vector_array_pair_with_different_dim_generators = [] if TRAVIS else \
-    [lambda l=l, l2=l2, d1=d1, d2=d2, s1=s1, s2=s2: (numpy_disk_vector_array_factory(l, d1, s1),
-                                                     numpy_disk_vector_array_factory(l2, d2, s2))
-     for l, l2, d1, d2, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_different_dim]
+# numpy_disk_vector_array_pair_with_different_dim_generators = [] if TRAVIS else \
+#     [lambda l=l, l2=l2, d1=d1, d2=d2, s1=s1, s2=s2: (numpy_disk_vector_array_factory(l, d1, s1),
+#                                                      numpy_disk_vector_array_factory(l2, d2, s2))
+#      for l, l2, d1, d2, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_different_dim]
 
 block_vector_array_pair_with_different_dim_generators = \
     [lambda l=l, l2=l2, d1=d1, d2=d2, s1=s1, s2=s2: (block_vector_array_factory(l, d1, s1),
@@ -232,14 +232,13 @@ dealii_vector_array_pair_with_different_dim_generators = \
 
 
 @pytest.fixture(params=numpy_vector_array_generators + numpy_list_vector_array_generators +
-                       numpy_disk_vector_array_generators + block_vector_array_generators +
-                       fenics_vector_array_generators)
+                       block_vector_array_generators + fenics_vector_array_generators)
 def vector_array_without_reserve(request):
     return request.param()
 
 
 @pytest.fixture(params=numpy_vector_array_generators + numpy_list_vector_array_generators +
-                       numpy_disk_vector_array_generators + block_vector_array_generators)
+                       block_vector_array_generators)
 def picklable_vector_array_without_reserve(request):
     return request.param()
 
@@ -256,7 +255,6 @@ def picklable_vector_array(picklable_vector_array_without_reserve, request):
 
 @pytest.fixture(params=(numpy_vector_array_pair_with_same_dim_generators +
                         numpy_list_vector_array_pair_with_same_dim_generators +
-                        numpy_disk_vector_array_pair_with_same_dim_generators +
                         block_vector_array_pair_with_same_dim_generators +
                         fenics_vector_array_pair_with_same_dim_generators))
 def compatible_vector_array_pair_without_reserve(request):
@@ -271,7 +269,6 @@ def compatible_vector_array_pair(compatible_vector_array_pair_without_reserve, r
 
 @pytest.fixture(params=(numpy_vector_array_pair_with_different_dim_generators +
                         numpy_list_vector_array_pair_with_different_dim_generators +
-                        numpy_disk_vector_array_pair_with_different_dim_generators +
                         block_vector_array_pair_with_different_dim_generators +
                         fenics_vector_array_pair_with_different_dim_generators +
                         dealii_vector_array_pair_with_different_dim_generators))

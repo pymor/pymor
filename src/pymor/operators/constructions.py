@@ -70,68 +70,68 @@ class LincombOperator(OperatorBase):
         mu = self.parse_parameter(mu)
         return [c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients]
 
-    def apply(self, U, ind=None, mu=None):
+    def apply(self, U, mu=None):
         if hasattr(self, '_assembled_operator'):
             if self._defaults_sid == defaults_sid():
-                return self._assembled_operator.apply(U, ind=ind)
+                return self._assembled_operator.apply(U)
             else:
-                return self.assemble().apply(U, ind=ind)
+                return self.assemble().apply(U)
         elif self._try_assemble:
-            return self.assemble().apply(U, ind=ind)
+            return self.assemble().apply(U)
         coeffs = self.evaluate_coefficients(mu)
-        R = self.operators[0].apply(U, ind=ind, mu=mu)
+        R = self.operators[0].apply(U, mu=mu)
         R.scal(coeffs[0])
         for op, c in zip(self.operators[1:], coeffs[1:]):
-            R.axpy(c, op.apply(U, ind=ind, mu=mu))
+            R.axpy(c, op.apply(U, mu=mu))
         return R
 
-    def apply2(self, V, U, U_ind=None, V_ind=None, mu=None):
+    def apply2(self, V, U, mu=None):
         if hasattr(self, '_assembled_operator'):
             if self._defaults_sid == defaults_sid():
-                return self._assembled_operator.apply2(V, U, V_ind=V_ind, U_ind=U_ind)
+                return self._assembled_operator.apply2(V, U)
             else:
-                return self.assemble().apply2(V, U, V_ind=V_ind, U_ind=U_ind)
+                return self.assemble().apply2(V, U)
         elif self._try_assemble:
-            return self.assemble().apply2(V, U, V_ind=V_ind, U_ind=U_ind)
+            return self.assemble().apply2(V, U)
         coeffs = self.evaluate_coefficients(mu)
-        R = self.operators[0].apply2(V, U, V_ind=V_ind, U_ind=U_ind, mu=mu)
+        R = self.operators[0].apply2(V, U, mu=mu)
         R *= coeffs[0]
         for op, c in zip(self.operators[1:], coeffs[1:]):
-            R += c * op.apply2(V, U, V_ind=V_ind, U_ind=U_ind, mu=mu)
+            R += c * op.apply2(V, U, mu=mu)
         return R
 
-    def pairwise_apply2(self, V, U, U_ind=None, V_ind=None, mu=None):
+    def pairwise_apply2(self, V, U, mu=None):
         if hasattr(self, '_assembled_operator'):
             if self._defaults_sid == defaults_sid():
-                return self._assembled_operator.pairwise_apply2(V, U, V_ind=V_ind, U_ind=U_ind)
+                return self._assembled_operator.pairwise_apply2(V, U)
             else:
-                return self.assemble().pairwise_apply2(V, U, V_ind=V_ind, U_ind=U_ind)
+                return self.assemble().pairwise_apply2(V, U)
         elif self._try_assemble:
-            return self.assemble().pairwise_apply2(V, U, V_ind=V_ind, U_ind=U_ind)
+            return self.assemble().pairwise_apply2(V, U)
         coeffs = self.evaluate_coefficients(mu)
-        R = self.operators[0].pairwise_apply2(V, U, V_ind=V_ind, U_ind=U_ind, mu=mu)
+        R = self.operators[0].pairwise_apply2(V, U, mu=mu)
         R *= coeffs[0]
         for op, c in zip(self.operators[1:], coeffs[1:]):
-            R += c * op.pairwise_apply2(V, U, V_ind=V_ind, U_ind=U_ind, mu=mu)
+            R += c * op.pairwise_apply2(V, U, mu=mu)
         return R
 
-    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         if hasattr(self, '_assembled_operator'):
             if self._defaults_sid == defaults_sid():
-                return self._assembled_operator.apply_adjoint(U, ind=ind, source_product=source_product,
+                return self._assembled_operator.apply_adjoint(U, source_product=source_product,
                                                               range_product=range_product)
             else:
-                return self.assemble().apply_adjoint(U, ind=ind, source_product=source_product,
+                return self.assemble().apply_adjoint(U, source_product=source_product,
                                                      range_product=range_product)
         elif self._try_assemble:
-            return self.assemble().apply_adjoint(U, ind=ind, source_product=source_product,
+            return self.assemble().apply_adjoint(U, source_product=source_product,
                                                  range_product=range_product)
         coeffs = self.evaluate_coefficients(mu)
-        R = self.operators[0].apply_adjoint(U, ind=ind, mu=mu, source_product=source_product,
+        R = self.operators[0].apply_adjoint(U, mu=mu, source_product=source_product,
                                             range_product=range_product)
         R.scal(coeffs[0])
         for op, c in zip(self.operators[1:], coeffs[1:]):
-            R.axpy(c, op.apply_adjoint(U, ind=ind, mu=mu, source_product=source_product,
+            R.axpy(c, op.apply_adjoint(U, mu=mu, source_product=source_product,
                                        range_product=range_product))
         return R
 
@@ -249,13 +249,13 @@ class Concatenation(OperatorBase):
         self.solver_options = solver_options
         self.name = name
 
-    def apply(self, U, ind=None, mu=None):
+    def apply(self, U, mu=None):
         mu = self.parse_parameter(mu)
-        return self.second.apply(self.first.apply(U, ind=ind, mu=mu), mu=mu)
+        return self.second.apply(self.first.apply(U, mu=mu), mu=mu)
 
-    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         mu = self.parse_parameter(mu)
-        return self.first.apply_adjoint(self.second.apply_adjoint(U, ind=ind, mu=mu, range_product=range_product),
+        return self.first.apply_adjoint(self.second.apply_adjoint(U, mu=mu, range_product=range_product),
                                         mu=mu, source_product=source_product)
 
     def jacobian(self, U, mu=None):
@@ -310,9 +310,9 @@ class ComponentProjection(OperatorBase):
         self.source = source
         self.name = name
 
-    def apply(self, U, ind=None, mu=None):
+    def apply(self, U, mu=None):
         assert U in self.source
-        return NumpyVectorArray(U.components(self.components, ind), copy=False)
+        return NumpyVectorArray(U.components(self.components), copy=False)
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
@@ -341,36 +341,36 @@ class IdentityOperator(OperatorBase):
         self.source = self.range = space
         self.name = name
 
-    def apply(self, U, ind=None, mu=None):
+    def apply(self, U, mu=None):
         assert U in self.source
-        return U.copy(ind=ind)
+        return U.copy()
 
-    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         assert U in self.range
         assert source_product is None or source_product.source == source_product.range == self.source
         assert range_product is None or range_product.source == range_product.range == self.range
         if range_product:
-            PrU = range_product.apply(U, ind=ind)
+            PrU = range_product.apply(U)
         else:
-            PrU = U.copy(ind=ind)
+            PrU = U.copy()
         if source_product:
             return source_product.apply_inverse(PrU)
         else:
             return PrU
 
-    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, least_squares=False):
         assert V in self.range
-        return V.copy(ind=ind)
+        return V.copy()
 
-    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, source_product=None, range_product=None, least_squares=False):
         if source_product or range_product:
-            return super().apply_inverse_adjoint(U, ind=ind, mu=mu,
+            return super().apply_inverse_adjoint(U, mu=mu,
                                                  source_product=source_product,
                                                  range_product=range_product,
                                                  least_squares=least_squares)
         else:
             assert U in self.source
-            return U.copy(ind=ind)
+            return U.copy()
 
     def assemble(self, mu=None):
         return self
@@ -415,11 +415,9 @@ class ConstantOperator(OperatorBase):
         self.name = name
         self._value = value.copy()
 
-    def apply(self, U, ind=None, mu=None):
+    def apply(self, U, mu=None):
         assert U in self.source
-        assert U.check_ind(ind)
-        count = len(U) if ind is None else 1 if isinstance(ind, Number) else len(ind)
-        return self._value.copy(ind=([0] * count))
+        return self._value[[0] * len(U)].copy()
 
     def jacobian(self, U, mu=None):
         assert U in self.source
@@ -479,25 +477,21 @@ class ZeroOperator(OperatorBase):
         self.range = range
         self.name = name
 
-    def apply(self, U, ind=None, mu=None):
+    def apply(self, U, mu=None):
         assert U in self.source
-        assert U.check_ind(ind)
-        count = len(U) if ind is None else 1 if isinstance(ind, Number) else len(ind)
-        return self.range.zeros(count)
+        return self.range.zeros(len(U))
 
-    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, least_squares=False):
         assert V in self.range
-        assert V.check_ind(ind)
         if not least_squares:
             raise InversionError
-        return self.source.zeros(V.len_ind(ind))
+        return self.source.zeros(len(V))
 
-    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, source_product=None, range_product=None, least_squares=False):
         assert U in self.source
-        assert U.check_ind(ind)
         if not least_squares:
             raise InversionError
-        return self.range.zeros(U.len_ind(ind))
+        return self.range.zeros(len(U))
 
     def projected(self, range_basis, source_basis, product=None, name=None):
         assert source_basis is None or source_basis in self.source
@@ -559,48 +553,46 @@ class VectorArrayOperator(OperatorBase):
         self.transposed = transposed
         self.name = name
 
-    def apply(self, U, ind=None, mu=None):
+    def apply(self, U, mu=None):
         assert U in self.source
         if not self.transposed:
-            if ind is not None:
-                U = U.copy(ind)
             return self._array.lincomb(U.data)
         else:
-            return NumpyVectorArray(U.dot(self._array, ind=ind), copy=False)
+            return NumpyVectorArray(U.dot(self._array))
 
-    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         assert U in self.range
         assert source_product is None or source_product.source == source_product.range == self.source
         assert range_product is None or range_product.source == range_product.range == self.range
         if not self.transposed:
             if range_product:
-                ATPrU = NumpyVectorArray(range_product.apply2(self._array, U, U_ind=ind).T, copy=False)
+                ATPrU = NumpyVectorArray(range_product.apply2(self._array, U).T)
             else:
-                ATPrU = NumpyVectorArray(self._array.dot(U, o_ind=ind).T, copy=False)
+                ATPrU = NumpyVectorArray(self._array.dot(U).T)
             if source_product:
                 return source_product.apply_inverse(ATPrU)
             else:
                 return ATPrU
         else:
             if range_product:
-                PrU = range_product.apply(U, ind=ind)
+                PrU = range_product.apply(U)
             else:
-                PrU = U.copy(ind)
+                PrU = U
             ATPrU = self._array.lincomb(PrU.data)
             if source_product:
                 return source_product.apply_inverse(ATPrU)
             else:
                 return ATPrU
 
-    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, source_product=None, range_product=None, least_squares=False):
         if source_product or range_product:
-            return super().apply_inverse_adjoint(U, ind, mu=mu,
+            return super().apply_inverse_adjoint(U, mu=mu,
                                                  source_product=source_product,
                                                  range_product=range_product,
                                                  least_squares=least_squares)
         else:
             adjoint_op = VectorArrayOperator(self._array, transposed=not self.transposed)
-            return adjoint_op.apply_inverse(U, ind=ind, mu=mu, least_squares=least_squares)
+            return adjoint_op.apply_inverse(U, mu=mu, least_squares=least_squares)
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
 
@@ -727,18 +719,18 @@ class FixedParameterOperator(OperatorBase):
         self.linear = operator.linear
         self.name = name
 
-    def apply(self, U, ind=None, mu=None):
-        return self.operator.apply(U, ind=ind, mu=self.mu)
+    def apply(self, U, mu=None):
+        return self.operator.apply(U, mu=self.mu)
 
-    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
-        return self.operator.apply_adjoint(U, ind=ind, mu=self.mu,
+    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
+        return self.operator.apply_adjoint(U, mu=self.mu,
                                            source_product=source_product, range_product=range_product)
 
-    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
-        return self.operator.apply_inverse(V, ind=ind, mu=self.mu, least_squares=least_squares)
+    def apply_inverse(self, V, mu=None, least_squares=False):
+        return self.operator.apply_inverse(V, mu=self.mu, least_squares=least_squares)
 
-    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None, least_squares=False):
-        return self.operator.apply_inverse_adjoint(U, ind=ind, mu=self.mu,
+    def apply_inverse_adjoint(self, U, mu=None, source_product=None, range_product=None, least_squares=False):
+        return self.operator.apply_inverse_adjoint(U, mu=self.mu,
                                                    source_product=source_product,
                                                    range_product=range_product,
                                                    least_squares=least_squares)
@@ -796,20 +788,18 @@ class AdjointOperator(OperatorBase):
         self.with_apply_inverse = with_apply_inverse
         self.solver_options = solver_options
 
-    def apply(self, U, ind=None, mu=None):
-        return self.operator.apply_adjoint(U, ind=ind, mu=mu,
+    def apply(self, U, mu=None):
+        return self.operator.apply_adjoint(U, mu=mu,
                                            source_product=self.source_product, range_product=self.range_product)
 
-    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         if range_product != self.source_product:
             if range_product:
-                U = range_product.apply(U, ind=ind)
-                ind = None
+                U = range_product.apply(U)
             if self.source_product:
-                U = self.source_product.apply_inverse(U, ind=ind)
-                ind = None
+                U = self.source_product.apply_inverse(U)
 
-        U = self.operator.apply(U, ind=ind, mu=mu)
+        U = self.operator.apply(U, mu=mu)
 
         if source_product != self.range_product:
             if self.range_product:
@@ -819,31 +809,29 @@ class AdjointOperator(OperatorBase):
 
         return U
 
-    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, least_squares=False):
         if not self.with_apply_inverse:
-            return super().apply_inverse(V, ind=ind, mu=mu, least_squares=least_squares)
+            return super().apply_inverse(V, mu=mu, least_squares=least_squares)
 
-        return self.operator.apply_inverse_adjoint(V, ind=ind, mu=mu,
+        return self.operator.apply_inverse_adjoint(V, mu=mu,
                                                    source_product=self.source_product,
                                                    range_product=self.range_product,
                                                    least_squares=least_squares)
 
-    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None, least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, source_product=None, range_product=None, least_squares=False):
         if not self.with_apply_inverse:
-            return super().apply_inverse_adjoint(U, ind=ind, mu=mu,
+            return super().apply_inverse_adjoint(U, mu=mu,
                                                  source_product=source_product,
                                                  range_product=range_product,
                                                  least_squares=least_squares)
 
         assert U in self.source
         if source_product and source_product != self.range_product:
-            U = source_product.apply(U, ind=ind)
-            ind = None
+            U = source_product.apply(U)
         if self.range_product and source_product != self.range_product:
-            U = self.range_product.apply_inverse(U, ind=ind)
-            ind = None
+            U = self.range_product.apply_inverse(U)
 
-        V = self.operator.apply_inverse(U, ind=ind, mu=mu, least_squares=least_squares)
+        V = self.operator.apply_inverse(U, mu=mu, least_squares=least_squares)
 
         if self.source_product and self.source_product != range_product:
             V = self.source_product.apply(V)
@@ -925,15 +913,15 @@ class SelectionOperator(OperatorBase):
         op = self.operators[self._get_operator_number(mu)]
         return op.assemble(mu)
 
-    def apply(self, U, ind=None, mu=None):
+    def apply(self, U, mu=None):
         mu = self.parse_parameter(mu)
         operator_number = self._get_operator_number(mu)
-        return self.operators[operator_number].apply(U, ind=ind, mu=mu)
+        return self.operators[operator_number].apply(U, mu=mu)
 
-    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         mu = self.parse_parameter(mu)
         op = self.operators[self._get_operator_number(mu)]
-        return op.apply_adjoint(U, ind=ind, mu=mu, source_product=source_product, range_product=range_product)
+        return op.apply_adjoint(U, mu=mu, source_product=source_product, range_product=range_product)
 
     def as_vector(self, mu=None):
         mu = self.parse_parameter(mu)
@@ -992,8 +980,8 @@ class InducedNorm(ImmutableInterface, Parametric):
         self.name = name or product.name
         self.build_parameter_type(inherits=(product,))
 
-    def __call__(self, U, ind=None, mu=None):
-        norm_squared = self.product.pairwise_apply2(U, U, U_ind=ind, V_ind=ind, mu=mu)
+    def __call__(self, U, mu=None):
+        norm_squared = self.product.pairwise_apply2(U, U, mu=mu)
         if self.tol > 0:
             norm_squared = np.where(np.logical_and(0 > norm_squared, norm_squared > - self.tol),
                                     0, norm_squared)

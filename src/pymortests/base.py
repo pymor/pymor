@@ -95,13 +95,13 @@ class MonomOperator(OperatorBase):
         self.derivative = self.monom.deriv()
         self.linear = order == 1
 
-    def apply(self, U, ind=None, mu=None):
+    def apply(self, U, mu=None):
         return NumpyVectorArray(self.monom(U.data))
 
     def jacobian(self, U, mu=None):
         return MonomOperator(self.order - 1, self.derivative)
 
-    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, least_squares=False):
         return NumpyVectorArray(1. / V.data)
 
 

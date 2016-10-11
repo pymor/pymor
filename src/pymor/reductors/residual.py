@@ -135,12 +135,12 @@ class ResidualOperator(OperatorBase):
         self.rhs_is_functional = rhs_is_functional
         self.name = name
 
-    def apply(self, U, ind=None, mu=None):
-        V = self.operator.apply(U, ind=ind, mu=mu)
+    def apply(self, U, mu=None):
+        V = self.operator.apply(U, mu=mu)
         if self.rhs:
             F = self.rhs_vector or self.rhs.as_vector(mu)
             if len(V) > 1:
-                V.axpy(-1., F, x_ind=[0]*len(V))
+                V.axpy(-1., F[[0]*len(V)])
             else:
                 V.axpy(-1., F)
         return V
@@ -164,8 +164,8 @@ class NonProjectedResidualOperator(ResidualOperator):
         super().__init__(operator, rhs, rhs_is_functional)
         self.product = product
 
-    def apply(self, U, ind=None, mu=None):
-        R = super().apply(U, ind=ind, mu=mu)
+    def apply(self, U, mu=None):
+        R = super().apply(U, mu=mu)
         if self.product:
             if self.rhs_is_functional:
                 R_riesz = self.product.apply_inverse(R)
@@ -309,14 +309,14 @@ class ImplicitEulerResidualOperator(OperatorBase):
         self.dt = dt
         self.name = name
 
-    def apply(self, U, U_old, ind, ind_old=None, mu=None):
-        V = self.operator.apply(U, ind=ind, mu=mu)
-        V.axpy(1./self.dt, self.mass.apply(U, ind=ind, mu=mu))
-        V.axpy(-1./self.dt, self.mass.apply(U_old, ind=ind_old, mu=mu))
+    def apply(self, U, U_old, mu=None):
+        V = self.operator.apply(U, mu=mu)
+        V.axpy(1./self.dt, self.mass.apply(U, mu=mu))
+        V.axpy(-1./self.dt, self.mass.apply(U_old, mu=mu))
         if self.functional:
             F = self.functional_vector or self.functional.as_vector(mu)
             if len(V) > 1:
-                V.axpy(-1., F, x_ind=[0]*len(V))
+                V.axpy(-1., F[[0]*len(V)])
             else:
                 V.axpy(-1., F)
         return V
@@ -339,8 +339,8 @@ class NonProjectedImplicitEulerResidualOperator(ImplicitEulerResidualOperator):
         super().__init__(operator, mass, functional, dt)
         self.product = product
 
-    def apply(self, U, U_old, ind=None, ind_old=None, mu=None):
-        R = super().apply(U, U_old, ind=ind, ind_old=ind_old, mu=mu)
+    def apply(self, U, U_old, mu=None):
+        R = super().apply(U, U_old, mu=mu)
         if self.product:
             R_riesz = self.product.apply_inverse(R)
             return R_riesz * (np.sqrt(R_riesz.dot(R)) / R_riesz.l2_norm())[0]

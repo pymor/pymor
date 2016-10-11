@@ -66,15 +66,13 @@ class NumpyGenericOperator(OperatorBase):
         if parameter_type is not None:
             self.build_parameter_type(parameter_type, local_global=True)
 
-    def apply(self, U, ind=None, mu=None):
+    def apply(self, U, mu=None):
         assert U in self.source
-        assert U.check_ind(ind)
-        U_array = U._array[:U._len] if ind is None else U._array[ind]
         if self.parametric:
             mu = self.parse_parameter(mu)
-            return NumpyVectorArray(self._mapping(U_array, mu=mu), copy=False)
+            return NumpyVectorArray(self._mapping(U.data, mu=mu), copy=False)
         else:
-            return NumpyVectorArray(self._mapping(U_array), copy=False)
+            return NumpyVectorArray(self._mapping(U.data), copy=False)
 
 
 class NumpyMatrixBasedOperator(OperatorBase):
@@ -122,17 +120,17 @@ class NumpyMatrixBasedOperator(OperatorBase):
         else:
             return NumpyMatrixOperator(self._assemble(self.parse_parameter(mu)), solver_options=self.solver_options)
 
-    def apply(self, U, ind=None, mu=None):
-        return self.assemble(mu).apply(U, ind=ind)
+    def apply(self, U, mu=None):
+        return self.assemble(mu).apply(U)
 
-    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
-        return self.assemble(mu).apply_adjoint(U, ind=ind, source_product=source_product, range_product=range_product)
+    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
+        return self.assemble(mu).apply_adjoint(U, source_product=source_product, range_product=range_product)
 
     def as_vector(self, mu=None):
         return self.assemble(mu).as_vector()
 
-    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
-        return self.assemble(mu).apply_inverse(V, ind=ind, least_squares=least_squares)
+    def apply_inverse(self, V, mu=None, least_squares=False):
+        return self.assemble(mu).apply_inverse(V, least_squares=least_squares)
 
 
     def export_matrix(self, filename, matrix_name=None, output_format='matlab', mu=None):
@@ -204,34 +202,30 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             raise TypeError('This operator does not represent a vector or linear functional.')
         return NumpyVectorArray(matrix.ravel(), copy=True)
 
-    def apply(self, U, ind=None, mu=None):
+    def apply(self, U, mu=None):
         assert U in self.source
-        assert U.check_ind(ind)
-        U_array = U._array[:U._len] if ind is None else U._array[ind]
-        return NumpyVectorArray(self._matrix.dot(U_array.T).T, copy=False)
+        return NumpyVectorArray(self._matrix.dot(U.data.T).T, copy=False)
 
-    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         assert U in self.range
-        assert U.check_ind(ind)
         assert source_product is None or source_product.source == source_product.range == self.source
         assert range_product is None or range_product.source == range_product.range == self.range
         if range_product:
-            PrU = range_product.apply(U, ind=ind).data
+            PrU = range_product.apply(U).data
         else:
-            PrU = U.data if ind is None else U.data[ind]
+            PrU = U.data
         ATPrU = NumpyVectorArray(self._matrix.T.dot(PrU.T).T, copy=False)
         if source_product:
             return source_product.apply_inverse(ATPrU)
         else:
             return ATPrU
 
-    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, least_squares=False):
         assert V in self.range
-        assert V.check_ind(ind)
 
         if V.dim == 0:
             if self.source.dim == 0 or least_squares:
-                return NumpyVectorArray(np.zeros((V.len_ind(ind), self.source.dim)))
+                return NumpyVectorArray(np.zeros((len(V), self.source.dim)))
             else:
                 raise InversionError
 
@@ -244,11 +238,8 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             if solver_type.startswith('least_squares'):
                 self.logger.warn('Least squares solver selected but "least_squares == False"')
 
-        V = V.data if ind is None else \
-            V.data[ind] if hasattr(ind, '__len__') else V.data[ind:ind + 1]
-
         try:
-            return NumpyVectorArray(_apply_inverse(self._matrix, V, options=options), copy=False)
+            return NumpyVectorArray(_apply_inverse(self._matrix, V.data, options=options))
         except InversionError as e:
             if least_squares and options:
                 solver_type = options if isinstance(options, str) else options['type']
@@ -258,17 +249,17 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                     raise InversionError(msg)
             raise e
 
-    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None,
+    def apply_inverse_adjoint(self, U, mu=None, source_product=None, range_product=None,
                               least_squares=False):
         if source_product or range_product:
-            return super().apply_inverse_adjoint(U, ind=ind, mu=mu,
+            return super().apply_inverse_adjoint(U, mu=mu,
                                                  source_product=source_product,
                                                  range_product=range_product,
                                                  least_squares=least_squares)
         else:
             options = {'inverse': self.solver_options.get('inverse_adjoint') if self.solver_options else None}
             adjoint_op = NumpyMatrixOperator(self._matrix.T, solver_options=options)
-            return adjoint_op.apply_inverse(U, ind=ind, mu=mu, least_squares=least_squares)
+            return adjoint_op.apply_inverse(U, mu=mu, least_squares=least_squares)
 
     def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
         """Project the operator to a subbasis.
@@ -281,7 +272,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
         should be the same as ::
 
-            op.projected(r_basis.copy(range(dim_range)), s_basis.copy(range(dim_source)), prod)
+            op.projected(r_basis[:dim_range].copy(), s_basis[:dim_source].copy(), prod)
 
         For a |NumpyMatrixOperator| this amounts to extracting the upper-left
         (dim_range, dim_source) corner of the matrix it wraps.
@@ -878,7 +869,7 @@ def _apply_inverse(matrix, V, options=None):
             raise InversionError(e)
     elif options['type'] == 'lgmres':
         for i, VV in enumerate(V):
-            R[i], info = lgmres(matrix, VV.copy(i),
+            R[i], info = lgmres(matrix, VV,
                                 tol=options['tol'],
                                 maxiter=options['maxiter'],
                                 inner_m=options['inner_m'],
@@ -888,7 +879,7 @@ def _apply_inverse(matrix, V, options=None):
             assert info == 0
     elif options['type'] == 'least_squares_lsmr':
         for i, VV in enumerate(V):
-            R[i], info, itn, _, _, _, _, _ = lsmr(matrix, VV.copy(i),
+            R[i], info, itn, _, _, _, _, _ = lsmr(matrix, VV,
                                                   damp=options['damp'],
                                                   atol=options['atol'],
                                                   btol=options['btol'],
@@ -900,7 +891,7 @@ def _apply_inverse(matrix, V, options=None):
                 raise InversionError('lsmr failed to converge after {} iterations'.format(itn))
     elif options['type'] == 'least_squares_lsqr':
         for i, VV in enumerate(V):
-            R[i], info, itn, _, _, _, _, _, _, _ = lsqr(matrix, VV.copy(i),
+            R[i], info, itn, _, _, _, _, _, _, _ = lsqr(matrix, VV,
                                                         damp=options['damp'],
                                                         atol=options['atol'],
                                                         btol=options['btol'],
