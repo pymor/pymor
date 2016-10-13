@@ -36,7 +36,7 @@ script:
  - |
   if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     export SDIST_DIR=/tmp/pymor_sdist/
-    virtualenv --python=${PYTHON_X} piptest
+    virtualenv --system-site-packages --python=${PYTHON_X} piptest
     source piptest/bin/activate
     pip install --upgrade pip pytest
     # this fails on PRs, so skip it
