@@ -47,7 +47,7 @@ script:
     pushd ${SDIST_DIR}
     pip install $(ls ${SDIST_DIR})
     popd
-    xvfb-run -a py.test --pyargs pymortests -c ${OLDPWD}/.installed_pytest.ini -k "not slow"
+    xvfb-run -a py.test --pyargs pymortests -c .installed_pytest.ini -k "not slow"
   elif [ "${PYTEST_MARKER}" == "MPI" ] ; then
     export PYTHONPATH=$(pwd)/src
     xvfb-run -a mpirun -n 2 ${PYTHON_X} src/pymortests/mpi_run_demo_tests.py
