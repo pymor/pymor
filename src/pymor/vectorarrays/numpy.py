@@ -164,10 +164,7 @@ class NumpyVectorArray(VectorArrayInterface):
         if self._refcount[0] > 1:
             self._deep_copy()
 
-        if NUMPY_INDEX_QUIRK and self._len == 0:
-            return
-
-        if isinstance(alpha, np.ndarray):
+        if type(alpha) is np.ndarray:
             alpha = alpha[:, np.newaxis]
 
         alpha_type = type(alpha)
@@ -186,10 +183,6 @@ class NumpyVectorArray(VectorArrayInterface):
         if self._refcount[0] > 1:
             self._deep_copy()
 
-        if NUMPY_INDEX_QUIRK:
-            if self._len == 0 and hasattr(_ind, '__len__'):
-                _ind = None
-
         B = x.base._array[x.ind] if x.is_view else x._array[:x._len]
         assert self.len_ind(_ind) == len(B) or len(B) == 1
 
@@ -200,16 +193,9 @@ class NumpyVectorArray(VectorArrayInterface):
             dtype = np.promote_types(dtype, B.dtype)
             self._array = self._array.astype(dtype)
 
-        if np.all(alpha == 0):
-            return
-        elif np.all(alpha == 1):
-            self._array[_ind] += B
-        elif np.all(alpha == -1):
-            self._array[_ind] -= B
-        else:
-            if isinstance(alpha, np.ndarray):
-                alpha = alpha[:, np.newaxis]
-            self._array[_ind] += B * alpha
+        if type(alpha) is np.ndarray:
+            alpha = alpha[:, np.newaxis]
+        self._array[_ind] += B * alpha
 
     def dot(self, other, *, _ind=None):
         if _ind is None:
@@ -326,6 +312,45 @@ class NumpyVectorArray(VectorArrayInterface):
         self._refcount[0] -= 1            # decrease refcount for original array
         self._refcount = [1]              # create new reference counter
 
+    def __add__(self, other):
+        if isinstance(other, _INDEXTYPES):
+            assert other == 0
+            return self.copy()
+        assert self.dim == other.dim
+        return NumpyVectorArray(self._array[:self._len] +
+                                (other.base._array[other.ind] if other.is_view else other._array[:other._len]))
+
+    def __iadd__(self, other):
+        assert self.dim == other.dim
+        self._array[:self._len] += other.base._array[other.ind] if other.is_view else other._array[:other._len]
+        return self
+
+    __radd__ = __add__
+
+    def __sub__(self, other):
+        assert self.dim == other.dim
+        return NumpyVectorArray(self._array[:self._len] -
+                                (other.base._array[other.ind] if other.is_view else other._array[:other._len]))
+
+    def __isub__(self, other):
+        assert self.dim == other.dim
+        self._array[:self._len] -= other.base._array[other.ind] if other.is_view else other._array[:other._len]
+        return self
+
+    def __mul__(self, other):
+        assert isinstance(other, _INDEXTYPES) \
+            or isinstance(other, np.ndarray) and other.shape == (len(self),)
+        return NumpyVectorArray(self._array[:self._len] * other)
+
+    def __imul__(self, other):
+        assert isinstance(other, _INDEXTYPES) \
+            or isinstance(other, np.ndarray) and other.shape == (len(self),)
+        self._array[:self._len] *= other
+        return self
+
+    def __neg__(self):
+        return NumpyVectorArray(-self._array[:self._len])
+
 
 def NumpyVectorSpace(dim):
     """Shorthand for |VectorSpace| `(NumpyVectorArray, dim)`."""
@@ -408,6 +433,48 @@ class NumpyVectorArrayView(NumpyVectorArray):
     def amax(self):
         return self.base.amax(_ind=self.ind)
         raise NotImplementedError
+
+    def __add__(self, other):
+        if isinstance(other, _INDEXTYPES):
+            assert other == 0
+            return self.copy()
+        assert self.dim == other.dim
+        return NumpyVectorArray(self.base._array[self.ind] +
+                                (other.base._array[other.ind] if other.is_view else other._array[:other._len]))
+
+    def __iadd__(self, other):
+        assert self.dim == other.dim
+        assert self.base.check_ind_unique(self.ind)
+        self.base.array[self.ind] += other.base._array[other.ind] if other.is_view else other._array[:other._len]
+        return self
+
+    __radd__ = __add__
+
+    def __sub__(self, other):
+        assert self.dim == other.dim
+        return NumpyVectorArray(self.base._array[self.ind] -
+                                (other.base._array[other.ind] if other.is_view else other._array[:other._len]))
+
+    def __isub__(self, other):
+        assert self.dim == other.dim
+        assert self.base.check_ind_unique(self.ind)
+        self.base._array[self.ind] -= other.base._array[other.ind] if other.is_view else other._array[:other._len]
+        return self
+
+    def __mul__(self, other):
+        assert isinstance(other, _INDEXTYPES) \
+            or isinstance(other, np.ndarray) and other.shape == (len(self),)
+        return NumpyVectorArray(self.base._array[self.ind] * other)
+
+    def __imul__(self, other):
+        assert isinstance(other, _INDEXTYPES) \
+            or isinstance(other, np.ndarray) and other.shape == (len(self),)
+        assert self.base.check_ind_unique(self.ind)
+        self.base._array[self.ind] *= other
+        return self
+
+    def __neg__(self):
+        return NumpyVectorArray(-self.base._array[self.ind])
 
     def __del__(self):
         return
