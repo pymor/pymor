@@ -15,10 +15,10 @@ class BufferReturn(pybindgen.ReturnValue):
         self.length_expression = length_expression
 
     def convert_c_to_python(self, wrapper):
-        pybuf = wrapper.after_call.declare_variable("PyObject*", "pybuf")
-        wrapper.after_call.write_code("%s = PyBuffer_FromReadWriteMemory(retval, %s);"
-                                      % (pybuf, self.length_expression))
-        wrapper.build_params.add_parameter("N", [pybuf], prepend=True)
+        memview = wrapper.after_call.declare_variable("PyObject*", "memview")
+        wrapper.after_call.write_code("%s = PyMemoryView_FromMemory((char*)retval, %s, PyBUF_WRITE);"
+                                      % (memview, self.length_expression))
+        wrapper.build_params.add_parameter("N", [memview], prepend=True)
 
 
 mod = pybindgen.Module('discretization')

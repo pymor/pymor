@@ -55,6 +55,9 @@ class WrappedVector(CopyOnWriteVector):
     def l2_norm(self):
         return m.sqrt(self.dot(self))
 
+    def l2_norm2(self):
+        return self.dot(self)
+
     def sup_norm(self):
         raise NotImplementedError
 
