@@ -153,7 +153,7 @@ def _testdatafiles():
     root = os.path.dirname(__file__)
     testdata = set()
 
-    for dir_, _, files in os.walk(os.path.join(root,'testdata')):
+    for dir_, _, files in os.walk(os.path.join(root, 'src', 'pymortests', 'testdata')):
         for fileName in files:
             relDir = os.path.relpath(dir_, root)
             relFile = os.path.join(relDir, fileName)
@@ -190,8 +190,8 @@ def _setup(**kwargs):
                    Extension("pymor.grids._unstructured", ["src/pymor/grids/_unstructured.pyx"], include_dirs=include_dirs)]
     # for some reason the *pyx files don't end up in sdist tarballs -> manually add them as package data
     # this _still_ doesn't make them end up in the tarball however -> manually add them in MANIFEST.in
-    kwargs['package_data'] = {'pymor': list(itertools.chain(*[i.sources for i in ext_modules]))}
-    kwargs['data_files'] = [('testdata', _testdatafiles())]
+    kwargs['package_data'] = {'pymor': list(itertools.chain(*[i.sources for i in ext_modules])),
+                                'pymortests': _testdatafiles()}
 
 
     kwargs['cmdclass'] = cmdclass

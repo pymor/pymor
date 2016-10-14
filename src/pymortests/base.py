@@ -11,6 +11,7 @@ import numpy as np
 from numpy.polynomial.polynomial import Polynomial
 from math import factorial
 from pickle import dumps, dump, load
+from pkg_resources import resource_filename
 
 from pymor.core import logger
 from pymor.operators.basic import OperatorBase
@@ -122,10 +123,9 @@ def check_results(test_name, params, results, *args):
     results = {k: np.asarray(results[k]) for k in keys.keys()}
     assert all(v.dtype != object for v in results.values())
 
-    basepath = os.path.join(os.path.dirname(__file__),
-                            '..', '..', 'testdata', 'check_results')
+    basepath = resource_filename('pymortests', 'testdata/check_results')
     arg_id = hashlib.sha1(params.encode()).hexdigest()
-    filename = os.path.normpath(os.path.join(basepath, test_name, arg_id))
+    filename = resource_filename('pymortests', 'testdata/{}/{}'.format(test_name, arg_id))
 
     if not os.path.exists(os.path.join(basepath, test_name)):
         os.mkdir(os.path.join(basepath, test_name))
