@@ -21,7 +21,7 @@ class WorkerPoolDefaultImplementations(object):
         else:
             slices = [U.empty() for _ in range(len(self))]
             for s in slices:
-                s.append(U[:min(slice_len, len(U))].copy(), remove_from_other=True)
+                s.append(U[:min(slice_len, len(U))], remove_from_other=True)
         remote_U = self.push(U.empty())
         del U
         self.map(_append_array_slice, slices, U=remote_U)

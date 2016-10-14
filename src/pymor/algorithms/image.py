@@ -221,7 +221,7 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
                                        orthonormalize=False, product=product,
                                        riesz_representatives=riesz_representatives)
         else:
-            new_image = estimate_image(operators, [], domain[i].copy(), extends=True,
+            new_image = estimate_image(operators, [], domain[i], extends=True,
                                        orthonormalize=False, product=product,
                                        riesz_representatives=riesz_representatives)
 

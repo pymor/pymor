@@ -101,7 +101,7 @@ class OperatorBase(OperatorInterface):
                     self.logger.warn('Least squares solver selected but "least_squares == False"')
 
             try:
-                return genericsolvers.apply_inverse(assembled_op, V.copy(), options=options)
+                return genericsolvers.apply_inverse(assembled_op, V, options=options)
             except InversionError as e:
                 if least_squares and options:
                     solver_type = options if isinstance(options, str) else options['type']

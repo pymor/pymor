@@ -272,7 +272,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
         should be the same as ::
 
-            op.projected(r_basis[:dim_range].copy(), s_basis[:dim_source].copy(), prod)
+            op.projected(r_basis[:dim_range], s_basis[:dim_source], prod)
 
         For a |NumpyMatrixOperator| this amounts to extracting the upper-left
         (dim_range, dim_source) corner of the matrix it wraps.
