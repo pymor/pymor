@@ -25,25 +25,21 @@ class NumpyVectorArray(VectorArrayInterface):
     be costly.
     """
 
-    def __init__(self, instance, dtype=None, copy=False, order=None, subok=False):
-        assert not isinstance(instance, np.matrixlib.defmatrix.matrix)
-        if isinstance(instance, np.ndarray):
+    def __init__(self, array, copy=False):
+        if type(array) is np.ndarray:
             if copy:
-                self._array = instance.copy()
-            else:
-                self._array = instance
-        elif issparse(instance):
-            self._array = instance.toarray()
-        elif hasattr(instance, 'data'):
-            self._array = instance.data
-            if copy:
-                self._array = self._array.copy()
+                array = array.copy()
+        elif issparse(array):
+            array = array.toarray()
+        elif hasattr(array, 'data'):
+            array = array.data.copy() if copy else array.data
         else:
-            self._array = np.array(instance, dtype=dtype, copy=copy, order=order, subok=subok, ndmin=2)
-        if self._array.ndim != 2:
-            assert self._array.ndim == 1
-            self._array = np.reshape(self._array, (1, -1))
-        self._len = len(self._array)
+            array = np.array(array, copy=copy, ndmin=2)
+        if array.ndim != 2:
+            assert array.ndim == 1
+            array = np.reshape(array, (1, -1))
+        self._array = array
+        self._len = len(array)
         self._refcount = [1]
 
     @classmethod
