@@ -148,6 +148,18 @@ if sys.version_info[0] < 3:
 
 # (Under python3 no commands are replaced, so the default command classes are used.)
 
+
+def _testdatafiles():
+    root = os.path.dirname(__file__)
+    testdata = set()
+
+    for dir_, _, files in os.walk(os.path.join(root,'testdata')):
+        for fileName in files:
+            relDir = os.path.relpath(dir_, root)
+            relFile = os.path.join(relDir, fileName)
+            testdata.add(relFile)
+    return list(testdata)
+
 def _setup(**kwargs):
 
     # the following hack is taken from scipy's setup.py
@@ -179,6 +191,8 @@ def _setup(**kwargs):
     # for some reason the *pyx files don't end up in sdist tarballs -> manually add them as package data
     # this _still_ doesn't make them end up in the tarball however -> manually add them in MANIFEST.in
     kwargs['package_data'] = {'pymor': list(itertools.chain(*[i.sources for i in ext_modules]))}
+    kwargs['data_files'] = [('testdata', _testdatafiles())]
+
 
     kwargs['cmdclass'] = cmdclass
     kwargs['ext_modules'] = ext_modules
