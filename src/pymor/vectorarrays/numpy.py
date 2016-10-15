@@ -125,7 +125,7 @@ class NumpyVectorArray(VectorArrayInterface):
             return C
         else:
             new_array = self._array[_ind]
-            if new_array.flags['OWNDATA']:
+            if not new_array.flags['OWNDATA']:
                 new_array = new_array.copy()
             return NumpyVectorArray(new_array)
 
@@ -322,6 +322,8 @@ class NumpyVectorArray(VectorArrayInterface):
 
     def __iadd__(self, other):
         assert self.dim == other.dim
+        if self._refcount[0] > 1:
+            self._deep_copy()
         self._array[:self._len] += other.base._array[other.ind] if other.is_view else other._array[:other._len]
         return self
 
@@ -334,6 +336,8 @@ class NumpyVectorArray(VectorArrayInterface):
 
     def __isub__(self, other):
         assert self.dim == other.dim
+        if self._refcount[0] > 1:
+            self._deep_copy()
         self._array[:self._len] -= other.base._array[other.ind] if other.is_view else other._array[:other._len]
         return self
 
@@ -345,6 +349,8 @@ class NumpyVectorArray(VectorArrayInterface):
     def __imul__(self, other):
         assert isinstance(other, _INDEXTYPES) \
             or isinstance(other, np.ndarray) and other.shape == (len(self),)
+        if self._refcount[0] > 1:
+            self._deep_copy()
         self._array[:self._len] *= other
         return self
 
@@ -445,6 +451,8 @@ class NumpyVectorArrayView(NumpyVectorArray):
     def __iadd__(self, other):
         assert self.dim == other.dim
         assert self.base.check_ind_unique(self.ind)
+        if self.base._refcount[0] > 1:
+            self._deep_copy()
         self.base.array[self.ind] += other.base._array[other.ind] if other.is_view else other._array[:other._len]
         return self
 
@@ -458,6 +466,8 @@ class NumpyVectorArrayView(NumpyVectorArray):
     def __isub__(self, other):
         assert self.dim == other.dim
         assert self.base.check_ind_unique(self.ind)
+        if self.base._refcount[0] > 1:
+            self._deep_copy()
         self.base._array[self.ind] -= other.base._array[other.ind] if other.is_view else other._array[:other._len]
         return self
 
@@ -470,6 +480,8 @@ class NumpyVectorArrayView(NumpyVectorArray):
         assert isinstance(other, _INDEXTYPES) \
             or isinstance(other, np.ndarray) and other.shape == (len(self),)
         assert self.base.check_ind_unique(self.ind)
+        if self.base._refcount[0] > 1:
+            self._deep_copy()
         self.base._array[self.ind] *= other
         return self
 
