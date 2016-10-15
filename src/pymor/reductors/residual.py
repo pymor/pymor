@@ -140,9 +140,9 @@ class ResidualOperator(OperatorBase):
         if self.rhs:
             F = self.rhs_vector or self.rhs.as_vector(mu)
             if len(V) > 1:
-                V.axpy(-1., F[[0]*len(V)])
+                V -= F[[0]*len(V)]
             else:
-                V.axpy(-1., F)
+                V -= F
         return V
 
     def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
@@ -316,9 +316,9 @@ class ImplicitEulerResidualOperator(OperatorBase):
         if self.functional:
             F = self.functional_vector or self.functional.as_vector(mu)
             if len(V) > 1:
-                V.axpy(-1., F[[0]*len(V)])
+                V -= F[[0]*len(V)]
             else:
-                V.axpy(-1., F)
+                V -= F
         return V
 
     def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):

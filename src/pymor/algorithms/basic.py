@@ -63,7 +63,7 @@ def almost_equal(U, V, product=None, norm=None, rtol=1e-14, atol=1e-14):
         if len(U) > 1:
             X.append(X[np.zeros(len(U) - 1, dtype=np.int)])
 
-    X.axpy(-1, U)
+    X -= U
     ERR_norm = norm(X)
 
     return ERR_norm <= atol + V_norm * rtol
