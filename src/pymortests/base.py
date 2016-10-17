@@ -125,7 +125,7 @@ def check_results(test_name, params, results, *args):
 
     basepath = resource_filename('pymortests', 'testdata/check_results')
     arg_id = hashlib.sha1(params.encode()).hexdigest()
-    filename = resource_filename('pymortests', 'testdata/{}/{}'.format(test_name, arg_id))
+    filename = resource_filename('pymortests', 'testdata/check_results/{}/{}'.format(test_name, arg_id))
 
     if not os.path.exists(os.path.join(basepath, test_name)):
         os.mkdir(os.path.join(basepath, test_name))
