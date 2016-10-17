@@ -11,7 +11,7 @@ import numpy as np
 from numpy.polynomial.polynomial import Polynomial
 from math import factorial
 from pickle import dumps, dump, load
-from pkg_resources import resource_filename
+from pkg_resources import resource_filename, resource_stream
 
 from pymor.core import logger
 from pymor.operators.basic import OperatorBase
@@ -129,10 +129,10 @@ def check_results(test_name, params, results, *args):
     testname_dir = os.path.join(basepath, test_name)
 
     try:
-        with open(filename, 'rb') as f:
+        with resource_stream('pymortests', 'testdata/check_results/{}/{}'.format(test_name, arg_id)) as f:
             f.readline()
             old_results = load(f)
-    except IOError:
+    except FileNotFoundError:
         if not os.path.exists(testname_dir):
             os.mkdir(testname_dir)
         with open(filename, 'wb') as f:
