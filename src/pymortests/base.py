@@ -126,10 +126,15 @@ def check_results(test_name, params, results, *args):
     basepath = resource_filename('pymortests', 'testdata/check_results')
     arg_id = hashlib.sha1(params.encode()).hexdigest()
     filename = resource_filename('pymortests', 'testdata/check_results/{}/{}'.format(test_name, arg_id))
+    testname_dir = os.path.join(basepath, test_name)
 
-    if not os.path.exists(os.path.join(basepath, test_name)):
-        os.mkdir(os.path.join(basepath, test_name))
-    if not os.path.exists(filename):
+    try:
+        with open(filename, 'rb') as f:
+            f.readline()
+            old_results = load(f)
+    except IOError:
+        if not os.path.exists(testname_dir):
+            os.mkdir(testname_dir)
         with open(filename, 'wb') as f:
             f.write((params + '\n').encode())
             results = {k: v.tolist() for k, v in results.items()}
@@ -138,9 +143,6 @@ def check_results(test_name, params, results, *args):
             'No results found for test {} ({}), saved current results. Remember to check in {}.'.format(
                 test_name, params, filename)
 
-    with open(filename, 'rb') as f:
-        f.readline()
-        old_results = load(f)
 
     for k, (atol, rtol) in keys.items():
         if not np.all(np.allclose(old_results[k], results[k], atol=atol, rtol=rtol)):
