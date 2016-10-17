@@ -15,7 +15,7 @@ include src/pymordemos/minimal_cpp_demo/discretization.cc
 include src/pymordemos/minimal_cpp_demo/discretization.hh
 include src/pymordemos/minimal_cpp_demo/wrapper.py
 
-recursive-include testdata *
+recursive-include src/pymortests/testdata *
 
 recursive-include docs *.conf
 recursive-include docs *.css
