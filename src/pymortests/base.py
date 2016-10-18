@@ -11,6 +11,7 @@ import numpy as np
 from numpy.polynomial.polynomial import Polynomial
 from math import factorial
 from pickle import dumps, dump, load
+from pkg_resources import resource_filename, resource_stream
 
 from pymor.core import logger
 from pymor.operators.basic import OperatorBase
@@ -122,14 +123,18 @@ def check_results(test_name, params, results, *args):
     results = {k: np.asarray(results[k]) for k in keys.keys()}
     assert all(v.dtype != object for v in results.values())
 
-    basepath = os.path.join(os.path.dirname(__file__),
-                            '..', '..', 'testdata', 'check_results')
+    basepath = resource_filename('pymortests', 'testdata/check_results')
     arg_id = hashlib.sha1(params.encode()).hexdigest()
-    filename = os.path.normpath(os.path.join(basepath, test_name, arg_id))
+    filename = resource_filename('pymortests', 'testdata/check_results/{}/{}'.format(test_name, arg_id))
+    testname_dir = os.path.join(basepath, test_name)
 
-    if not os.path.exists(os.path.join(basepath, test_name)):
-        os.mkdir(os.path.join(basepath, test_name))
-    if not os.path.exists(filename):
+    try:
+        with resource_stream('pymortests', 'testdata/check_results/{}/{}'.format(test_name, arg_id)) as f:
+            f.readline()
+            old_results = load(f)
+    except FileNotFoundError:
+        if not os.path.exists(testname_dir):
+            os.mkdir(testname_dir)
         with open(filename, 'wb') as f:
             f.write((params + '\n').encode())
             results = {k: v.tolist() for k, v in results.items()}
@@ -138,9 +143,6 @@ def check_results(test_name, params, results, *args):
             'No results found for test {} ({}), saved current results. Remember to check in {}.'.format(
                 test_name, params, filename)
 
-    with open(filename, 'rb') as f:
-        f.readline()
-        old_results = load(f)
 
     for k, (atol, rtol) in keys.items():
         if not np.all(np.allclose(old_results[k], results[k], atol=atol, rtol=rtol)):

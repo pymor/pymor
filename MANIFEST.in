@@ -2,3 +2,26 @@ include *.txt
 include *.html
 include src/pymor/tools/*.pyx
 include src/pymor/grids/*.pyx
+include src/pymor/version.py
+
+include .coveragerc
+include Makefile
+include pytest.ini
+
+include src/pymordemos/minimal_cpp_demo/bindings.py
+include src/pymordemos/minimal_cpp_demo/buildit.sh
+include src/pymordemos/minimal_cpp_demo/demo.py
+include src/pymordemos/minimal_cpp_demo/discretization.cc
+include src/pymordemos/minimal_cpp_demo/discretization.hh
+include src/pymordemos/minimal_cpp_demo/wrapper.py
+
+recursive-include src/pymortests/testdata *
+
+recursive-include docs *.conf
+recursive-include docs *.css
+recursive-include docs *.py
+recursive-include docs *.rst
+recursive-include docs Makefile
+
+include *.md
+include *.py

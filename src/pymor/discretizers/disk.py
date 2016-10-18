@@ -85,7 +85,8 @@ def discretize_stationary_from_disk(parameter_file):
     discretization
         The |StationaryDiscretization| that has been generated.
     """
-    assert ".ini" == parameter_file[-4:], "Given file is not an .ini file"
+    assert ".ini" == parameter_file[-4:], 'Given file is not an .ini file: {}'.format(parameter_file)
+    assert os.path.isfile(parameter_file)
     base_path = os.path.dirname(parameter_file)
 
     # Get input from parameter file
@@ -221,6 +222,7 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
         The |InstationaryDiscretization| that has been generated.
     """
     assert ".ini" == parameter_file[-4:], "Given file is not an .ini file"
+    assert os.path.isfile(parameter_file)
     base_path = os.path.dirname(parameter_file)
 
     # Get input from parameter file
