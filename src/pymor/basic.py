@@ -32,7 +32,6 @@ from pymor.core.pickle import dump, dumps, load, loads
 from pymor.discretizations.basic import StationaryDiscretization, InstationaryDiscretization
 
 from pymor.domaindescriptions.basic import RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain
-from pymor.domaindescriptions.boundarytypes import BoundaryType
 from pymor.domaindescriptions.polygonal import DiscDomain, CircularSectorDomain, PolygonalDomain
 
 from pymor.domaindiscretizers.default import discretize_domain_default

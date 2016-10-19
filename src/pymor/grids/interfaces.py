@@ -6,7 +6,6 @@ import numpy as np
 
 from pymor.core.interfaces import abstractmethod
 from pymor.core.cache import CacheableInterface, cached
-from pymor.domaindescriptions.boundarytypes import BoundaryType
 from pymor.grids.defaultimpl import (ConformalTopologicalGridDefaultImplementations,
                                      ReferenceElementDefaultImplementations,
                                      AffineGridDefaultImplementations,)
@@ -304,15 +303,15 @@ class AffineGridWithOrthogonalCentersInterface(AffineGridInterface):
 
 
 class BoundaryInfoInterface(CacheableInterface):
-    """Provides |BoundaryTypes| for the boundaries of a given |ConformalTopologicalGrid|.
+    """Provides boundary types for the boundaries of a given |ConformalTopologicalGrid|.
 
-    For every |BoundaryType| and codimension a mask is provided, marking grid entities
+    For every boundary type and codimension a mask is provided, marking grid entities
     of the respective type and codimension by their global index.
 
     Attributes
     ----------
     boundary_types
-        set of all |BoundaryTypes| the grid has.
+        set of all boundary types the grid has.
     """
 
     boundary_types = frozenset()
@@ -320,19 +319,19 @@ class BoundaryInfoInterface(CacheableInterface):
 
     def mask(self, boundary_type, codim):
         """retval[i] is `True` if the codim-`codim` entity of global index `i` is
-        associated to the |BoundaryType| `boundary_type`.
+        associated to the boundary type `boundary_type`.
         """
         raise ValueError('Has no boundary_type "{}"'.format(boundary_type))
 
     def unique_boundary_type_mask(self, codim):
         """retval[i] is `True` if the codim-`codim` entity of global index `i` is
-        associated to one and only one |BoundaryType|.
+        associated to one and only one boundary type.
         """
         return np.less_equal(sum(self.mask(bt, codim=codim).astype(np.int) for bt in self.boundary_types), 1)
 
     def no_boundary_type_mask(self, codim):
         """retval[i] is `True` if the codim-`codim` entity of global index `i` is
-        associated to no |BoundaryType|.
+        associated to no boundary type.
         """
         return np.equal(sum(self.mask(bt, codim=codim).astype(np.int) for bt in self.boundary_types), 0)
 
@@ -346,24 +345,24 @@ class BoundaryInfoInterface(CacheableInterface):
 
     @property
     def has_dirichlet(self):
-        return BoundaryType('dirichlet') in self.boundary_types
+        return 'dirichlet' in self.boundary_types
 
     @property
     def has_neumann(self):
-        return BoundaryType('neumann') in self.boundary_types
+        return 'neumann' in self.boundary_types
 
     @property
     def has_robin(self):
-        return BoundaryType('robin') in self.boundary_types
+        return 'robin' in self.boundary_types
 
     def dirichlet_mask(self, codim):
-        return self.mask(BoundaryType('dirichlet'), codim)
+        return self.mask('dirichlet', codim)
 
     def neumann_mask(self, codim):
-        return self.mask(BoundaryType('neumann'), codim)
+        return self.mask('neumann', codim)
 
     def robin_mask(self, codim):
-        return self.mask(BoundaryType('robin'), codim)
+        return self.mask('robin', codim)
 
     @cached
     def _dirichlet_boundaries(self, codim):

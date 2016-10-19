@@ -41,7 +41,7 @@ def parabolic_demo(args):
     if args['heat']:
         args['TOP'] = float(args['TOP'])
         problem = ParabolicProblem(
-            domain=RectDomain(top=BoundaryType('dirichlet'), bottom=BoundaryType('neumann')),
+            domain=RectDomain(top='dirichlet', bottom='neumann'),
 
             diffusion_functions=[ConstantFunction(1., dim_domain=2),
                                  ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * (x[..., 1] < 0.7) * 1.',

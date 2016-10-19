@@ -212,14 +212,14 @@ element or finite volume discretizations based on the `NumPy/Scipy
 describes the problem we want to discretize. |analytical problems| contain
 |Functions| which define the analytical data functions associated with the
 problem and a |DomainDescription| that provides a geometrical definition of the
-domain the problem is posed on and associates a |BoundaryType| to each part of
+domain the problem is posed on and associates a boundary type to each part of
 its boundary.
 
 To obtain a |Discretization| from an |analytical problem| we use a
 :mod:`discretizer <pymor.discretizers>`. A discretizer will first mesh the
 computational domain by feeding the |DomainDescription| into a
 :mod:`domaindiscretizer <pymor.domaindiscretizers>` which will return the |Grid|
-along with a |BoundaryInfo| associating boundary entities with |BoundaryTypes|.
+along with a |BoundaryInfo| associating boundary entities with boundary types.
 Next, the |Grid|, |BoundaryInfo| and the various data functions of the
 |analytical problem| are used to instatiate :mod:`finite element
 <pymor.operators.cg>` or :mod:`finite volume <pymor.operators.fv>` operators.

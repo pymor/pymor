@@ -34,7 +34,6 @@ import numpy as np
 
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.discretizers.elliptic import discretize_elliptic_cg, discretize_elliptic_fv
-from pymor.domaindescriptions.boundarytypes import BoundaryType
 from pymor.domaindescriptions.basic import RectDomain
 from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.functions.basic import GenericFunction, ConstantFunction
@@ -62,9 +61,9 @@ def elliptic_demo(args):
                 GenericFunction(lambda X:  50*(0.1 <= X[..., 1]) * (X[..., 1] <= 0.2)
                                           +50*(0.8 <= X[..., 1]) * (X[..., 1] <= 0.9), 2)]
     domains = [RectDomain(),
-               RectDomain(right=BoundaryType('neumann')),
-               RectDomain(right=BoundaryType('neumann'), top=BoundaryType('neumann')),
-               RectDomain(right=BoundaryType('neumann'), top=BoundaryType('neumann'), bottom=BoundaryType('neumann'))]
+               RectDomain(right='neumann'),
+               RectDomain(right='neumann', top='neumann'),
+               RectDomain(right='neumann', top='neumann', bottom='neumann')]
 
     rhs = rhss[args['PROBLEM-NUMBER']]
     dirichlet = dirichlets[args['DIRICHLET-NUMBER']]
