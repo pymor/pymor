@@ -36,7 +36,7 @@ def test_complex():
 
     # append
     for rsrv in (0, 10):
-        for o_ind in (None, [0]):
+        for o_ind in (slice(None), [0]):
             va = NumpyVectorArray.make_array(subtype=5, reserve=rsrv)
             va.append(Cva)
             D = np.random.randn(1, 5) + 1j * np.random.randn(1, 5)
@@ -44,7 +44,7 @@ def test_complex():
 
             assert not np.iscomplexobj(va.data)
             assert np.iscomplexobj(Dva.data)
-            va.append(Dva, o_ind)
+            va.append(Dva[o_ind])
             assert np.iscomplexobj(va.data)
 
     # scal
@@ -54,12 +54,12 @@ def test_complex():
 
     # axpy
     assert not np.iscomplexobj(Cva.data)
-    Cva.axpy(1, Dva, 0)
+    Cva[0].axpy(1, Dva)
     assert np.iscomplexobj(Cva.data)
 
     Cva = NumpyVectorArray(C)
     assert not np.iscomplexobj(Cva.data)
-    Cva.axpy(1j, Dva, 0)
+    Cva[0].axpy(1j, Dva)
     assert np.iscomplexobj(Cva.data)
 
 def test_real_imag():

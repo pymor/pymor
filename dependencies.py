@@ -26,4 +26,4 @@ import_names = {'ipython': 'IPython',
                 'pyside': 'PySide'}
 
 if __name__ == '__main__':
-    print(' '.join([i for i in install_requires + install_suggests]))
+    print(' '.join([i for i in install_requires + list(install_suggests.keys())]))

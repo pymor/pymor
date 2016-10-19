@@ -87,13 +87,19 @@ gen_apidoc.walk(pymor)
 gen_apidoc.walk(pymordemos)
 
 
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.imgmath',
+extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.coverage',
               'sphinx.ext.autosummary',
               'sphinx.ext.viewcode',
               'sphinx.ext.intersphinx',
               'pymordocstring'
               ]
+try:
+    # was added in sphinx 1.4, some of our target  platforms have only 1.2.x
+    import sphinx.ext.imgmath
+    extensions.append('sphinx.ext.imgmath')
+except ImportError:
+    extensions.append('sphinx.ext.pngmath')
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

@@ -20,11 +20,6 @@ are the following:
     3. Logging can be disabled and re-enabled for each *instance* using the
        :meth:`BasicInterface.disable_logging` and :meth:`BasicInterface.enable_logging`
        methods.
-    4. An instance can be made immutable using :meth:`BasicInterface.lock`.
-       If an instance is locked, each attempt to change one of its attributes
-       raises an exception. Private attributes (of the form `_name`) are exempted
-       from this rule. Locked instances can be unlocked again using
-       :meth:`BasicInterface.unlock`.
     5. :meth:`BasicInterface.uid` provides a unique id for each instance. While
        `id(obj)` is only guaranteed to be unique among all living Python objects,
        :meth:`BasicInterface.uid` will be (almost) unique among all pyMOR objects
@@ -41,6 +36,8 @@ functionality:
 
     1. Using more metaclass magic, each instance which derives from
        :class:`ImmutableInterface` is locked after its `__init__` method has returned.
+       Each attempt to change one of its attributes raises an exception. Private
+       attributes (of the form `_name`) are exempted from this rule.
     2. A unique _`state id` for the instance can be calculated by calling
        :meth:`~ImmutableInterface.generate_sid` and is then stored as the object's 
        `sid` attribute.
@@ -82,7 +79,7 @@ import sys
 
 import numpy as np
 
-from pymor.core import decorators, backports, logger
+from pymor.core import backports, logger
 from pymor.core.exceptions import ConstError, SIDGenerationError
 
 PY2 = sys.version_info.major == 2
@@ -142,8 +139,7 @@ class UberMeta(abc.ABCMeta):
 
         for attr, item in classdict.items():
             if isinstance(item, FunctionType):
-                # first copy/fixup docs
-                item.__doc__ = decorators.fixup_docstring(item.__doc__)
+                # first copy docs
                 base_doc = None
                 for base in bases:
                     base_func = getattr(base, item.__name__, None)
@@ -151,7 +147,7 @@ class UberMeta(abc.ABCMeta):
                         if base_func:
                             base_doc = getattr(base_func, '__doc__', None)
                         if base_doc:
-                            doc = decorators.fixup_docstring(getattr(item, '__doc__', ''))
+                            doc = getattr(item, '__doc__', '')
                             if doc is not None:
                                 base_doc = doc
                             item.__doc__ = base_doc
@@ -187,8 +183,6 @@ class BasicInterface(object, metaclass=UberMeta):
 
     Attributes
     ----------
-    locked
-        `True` if the instance is made immutable using :meth:`lock`.
     logger
         A per-class instance of :class:`logging.Logger` with the class
         name as prefix.
@@ -201,34 +195,6 @@ class BasicInterface(object, metaclass=UberMeta):
         A unique id for each instance. The uid is obtained by using
         :class:`UID` and is unique for all pyMOR objects ever created.
     """
-    _locked = False
-
-    def __setattr__(self, key, value):
-        """depending on _locked state I delegate the setattr call to object or
-        raise an Exception
-        """
-        if not self._locked or key[0] == '_':
-            return object.__setattr__(self, key, value)
-        else:
-            raise ConstError('Changing "%s" is not allowed in locked "%s"' % (key, self.__class__))
-
-    @property
-    def locked(self):
-        return self._locked
-
-    def lock(self, doit=True):
-        """Make the instance immutable.
-
-        Trying to change an attribute after locking raises a `ConstError`.
-        Private attributes (of the form `_attribute`) are exempted from
-        this rule.
-        """
-        object.__setattr__(self, '_locked', doit)
-
-    def unlock(self):
-        """Make the instance mutable again, after it has been locked using `lock`."""
-        object.__setattr__(self, '_locked', False)
-
     @property
     def name(self):
         n = getattr(self, '_name', None)
@@ -332,7 +298,8 @@ class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
     """Base class for immutable objects in pyMOR.
 
     Instances of `ImmutableInterface` are immutable in the sense that
-    they are :meth:`locked <BasicInterface.lock>` after `__init__` returns.
+    after execution of `__init__`, any modification of a non-private
+    attribute will raise an exception.
 
     .. _ImmutableInterfaceWarning:
     .. warning::
@@ -370,23 +337,17 @@ class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
     """
     sid_ignore = frozenset({'_locked', '_logger', '_name', '_uid', '_sid_contains_cycles', 'sid'})
 
-    # Unlocking an immutable object will result in the deletion of its sid.
-    # However, this will not delete the sids of objects referencing it.
-    # You really should not unlock an object unless you really know what
-    # you are doing. (One exception might be the modification of a newly
-    # created copy of an immutable object.)
-    def unlock(self):
-        """Make the instance mutable.
+    _locked = False
 
-        .. warning::
-            Unlocking an instance of :class:`ImmutableInterface` will result in the
-            deletion of its |state id|. However, this will not delete the |state ids|
-            of objects referencing it. You really should not unlock an object
-            unless you really know what you are doing.
+    def __setattr__(self, key, value):
+        """depending on _locked state I delegate the setattr call to object or
+        raise an Exception
         """
-        super().unlock()
-        if hasattr(self, 'sid'):
-            del self.sid
+        if not self._locked or key[0] == '_':
+            return object.__setattr__(self, key, value)
+        else:
+            raise ConstError('Changing "%s" is not allowed in locked "%s"' % (key, self.__class__))
+
 
     def generate_sid(self, debug=False):
         """Generate a unique |state id| for the given object.

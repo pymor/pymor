@@ -11,6 +11,7 @@ from tempfile import NamedTemporaryFile
 from pymortests.base import TestInterface, runmodule
 from pymortests.fixtures.grid import rect_or_tria_grid
 from pymortests.base import polynomials
+from pymor.tools.deprecated import Deprecated
 from pymor.tools.quadratures import GaussQuadratures
 from pymor.tools.floatcmp import float_cmp, float_cmp_all
 from pymor.tools.vtkio import write_vtk
@@ -118,6 +119,22 @@ class TestTiming(TestInterface):
         timing.busywait(1000)
         timer.stop()
         self.logger.info('plain timing took %s seconds', timer.dt)
+
+
+def testDeprecated():
+    @Deprecated('use other stuff instead')
+    def deprecated_function():
+        pass
+    # Cause all warnings to always be triggered.
+    import warnings
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        # Trigger a warning.
+        deprecated_function()
+        # Verify some things
+        assert len(w) == 1
+        assert issubclass(w[-1].category, DeprecationWarning)
+        assert "DeprecationWarning" in str(w[-1].message)
 
 
 if __name__ == "__main__":

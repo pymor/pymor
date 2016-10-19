@@ -1,6 +1,7 @@
 # pyMOR main developers
 
 * René Milk, rene.milk@uni-muenster.de
+* Petar Mlinarić, mlinaric@mpi-magdeburg.mpg.de
 * Stephan Rave, stephan.rave@uni-muenster.de
 * Felix Schindler, felix.schindler@uni-muenster.de
 
@@ -9,10 +10,9 @@
 
 ## pyMOR 0.5
 
-* Petar Mlinarić, mlinaric@mpi-magdeburg.mpg.de
-    * l2_norm2 methods for VectorArrays
-    * from_data methods for VectorSpace and VectorArrays
-    * algorithms.to_matrix
+* Julia Brunken, julia.brunken@uni-muenster.de
+    * support for advection, reaction terms and Robin boundary data
+      in ParabolicProblem
 
 
 ## pyMOR 0.4

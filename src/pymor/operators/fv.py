@@ -266,7 +266,7 @@ class NonlinearAdvectionOperator(OperatorBase):
         self._grid_data.update(UNIT_OUTER_NORMALS=g.unit_outer_normals()[self._grid_data['SUPE'][:, 0],
                                                                          self._grid_data['SUPI'][:, 0]])
 
-    def apply(self, U, ind=None, mu=None):
+    def apply(self, U, mu=None):
         assert isinstance(U, NumpyVectorArray)
         assert U in self.source
         mu = self.parse_parameter(mu)
@@ -274,9 +274,8 @@ class NonlinearAdvectionOperator(OperatorBase):
         if not hasattr(self, '_grid_data'):
             self._fetch_grid_data()
 
-        ind = range(len(U)) if ind is None else ind
         U = U.data
-        R = np.zeros((len(ind), self.source.dim))
+        R = np.zeros((len(U), self.source.dim))
 
         bi = self.boundary_info
         gd = self._grid_data
@@ -298,7 +297,7 @@ class NonlinearAdvectionOperator(OperatorBase):
                 dirichlet_values = np.zeros_like(DIRICHLET_BOUNDARIES)
             F_dirichlet = self.numerical_flux.evaluate_stage1(dirichlet_values, mu)
 
-        for i, j in enumerate(ind):
+        for i, j in enumerate(range(len(U))):
             Ui = U[j]
             Ri = R[i]
 

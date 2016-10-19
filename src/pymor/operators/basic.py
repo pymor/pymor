@@ -21,26 +21,20 @@ class OperatorBase(OperatorInterface):
     from this class.
     """
 
-    def apply2(self, V, U, U_ind=None, V_ind=None, mu=None):
+    def apply2(self, V, U, mu=None):
         mu = self.parse_parameter(mu)
         assert isinstance(V, VectorArrayInterface)
         assert isinstance(U, VectorArrayInterface)
-        U_ind = None if U_ind is None else np.array(U_ind, copy=False, dtype=np.int, ndmin=1)
-        V_ind = None if V_ind is None else np.array(V_ind, copy=False, dtype=np.int, ndmin=1)
-        AU = self.apply(U, ind=U_ind, mu=mu)
-        return V.dot(AU, ind=V_ind)
+        AU = self.apply(U, mu=mu)
+        return V.dot(AU)
 
-    def pairwise_apply2(self, V, U, U_ind=None, V_ind=None, mu=None):
+    def pairwise_apply2(self, V, U, mu=None):
         mu = self.parse_parameter(mu)
         assert isinstance(V, VectorArrayInterface)
         assert isinstance(U, VectorArrayInterface)
-        U_ind = None if U_ind is None else np.array(U_ind, copy=False, dtype=np.int, ndmin=1)
-        V_ind = None if V_ind is None else np.array(V_ind, copy=False, dtype=np.int, ndmin=1)
-        lu = len(U_ind) if U_ind is not None else len(U)
-        lv = len(V_ind) if V_ind is not None else len(V)
-        assert lu == lv
-        AU = self.apply(U, ind=U_ind, mu=mu)
-        return V.pairwise_dot(AU, ind=V_ind)
+        assert len(U) == len(V)
+        AU = self.apply(U, mu=mu)
+        return V.pairwise_dot(AU)
 
     def jacobian(self, U, mu=None):
         if self.linear:
@@ -85,17 +79,17 @@ class OperatorBase(OperatorInterface):
             self.name, self.source.dim, self.range.dim, self.parameter_type,
             self.__class__.__name__)
 
-    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         if self.linear:
             raise NotImplementedError
         else:
             raise ValueError('Trying to apply adjoint of nonlinear operator.')
 
-    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, least_squares=False):
         from pymor.operators.constructions import FixedParameterOperator
         assembled_op = self.assemble(mu)
         if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
-            return assembled_op.apply_inverse(V, ind=ind, least_squares=least_squares)
+            return assembled_op.apply_inverse(V, least_squares=least_squares)
         elif self.linear:
             options = (self.solver_options.get('inverse') if self.solver_options else
                        'least_squares' if least_squares else
@@ -107,7 +101,7 @@ class OperatorBase(OperatorInterface):
                     self.logger.warn('Least squares solver selected but "least_squares == False"')
 
             try:
-                return genericsolvers.apply_inverse(assembled_op, V.copy(ind), options=options)
+                return genericsolvers.apply_inverse(assembled_op, V, options=options)
             except InversionError as e:
                 if least_squares and options:
                     solver_type = options if isinstance(options, str) else options['type']
@@ -120,7 +114,6 @@ class OperatorBase(OperatorInterface):
         else:
             from pymor.algorithms.newton import newton
             from pymor.core.exceptions import NewtonError
-            assert V.check_ind(ind)
 
             options = self.solver_options
             if options:
@@ -135,28 +128,24 @@ class OperatorBase(OperatorInterface):
                 options = {}
             options['least_squares'] = least_squares
 
-            ind = (list(range(len(V))) if ind is None else
-                   [ind] if isinstance(ind, Number) else
-                   ind)
-            R = V.empty(reserve=len(ind))
-            for i in ind:
+            R = V.empty(reserve=len(V))
+            for i in range(len(V)):
                 try:
-                    R.append(newton(self, V.copy(i), **options)[0])
+                    R.append(newton(self, V[i], **options)[0])
                 except NewtonError as e:
                     raise InversionError(e)
             return R
 
-    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None,
+    def apply_inverse_adjoint(self, U, mu=None, source_product=None, range_product=None,
                               least_squares=False):
         from pymor.operators.constructions import FixedParameterOperator
         assembled_op = self.assemble(mu)
         if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
-            return assembled_op.apply_inverse_adjoint(U, ind=ind, source_product=source_product,
+            return assembled_op.apply_inverse_adjoint(U, source_product=source_product,
                                                       range_product=range_product, least_squares=least_squares)
         elif source_product or range_product:
             if source_product:
-                U = source_product.apply(U, ind=ind)
-                ind = None
+                U = source_product.apply(U)
             # maybe there is a better implementation for source_product == None and range_product == None
             V = self.apply_inverse_adjoint(U, mu=mu, least_squares=least_squares)
             if range_product:
@@ -170,7 +159,7 @@ class OperatorBase(OperatorInterface):
             from pymor.operators.constructions import AdjointOperator
             options = {'inverse': self.solver_options.get('inverse_adjoint') if self.solver_options else None}
             adjoint_op = AdjointOperator(self, with_apply_inverse=False, solver_options=options)
-            return adjoint_op.apply_inverse(U, ind=ind, mu=mu, least_squares=least_squares)
+            return adjoint_op.apply_inverse(U, mu=mu, least_squares=least_squares)
 
     def as_vector(self, mu=None):
         if not self.linear:
@@ -273,19 +262,18 @@ class ProjectedOperator(OperatorBase):
         self.linear = operator.linear
         self.product = product
 
-    def apply(self, U, ind=None, mu=None):
+    def apply(self, U, mu=None):
         mu = self.parse_parameter(mu)
         if self.source_basis is None:
             if self.range_basis is None:
-                return self.operator.apply(U, ind=ind, mu=mu)
+                return self.operator.apply(U, mu=mu)
             elif self.product is None:
-                return NumpyVectorArray(self.operator.apply2(self.range_basis, U, U_ind=ind, mu=mu).T)
+                return NumpyVectorArray(self.operator.apply2(self.range_basis, U, mu=mu).T)
             else:
-                V = self.operator.apply(U, ind=ind, mu=mu)
+                V = self.operator.apply(U, mu=mu)
                 return NumpyVectorArray(self.product.apply2(V, self.range_basis))
         else:
-            U_array = U._array[:U._len] if ind is None else U._array[ind]
-            UU = self.source_basis.lincomb(U_array)
+            UU = self.source_basis.lincomb(U.data)
             if self.range_basis is None:
                 return self.operator.apply(UU, mu=mu)
             elif self.product is None:
@@ -302,9 +290,9 @@ class ProjectedOperator(OperatorBase):
         assert dim_range is None or self.range_basis is not None, 'not implemented'
         name = name or '{}_projected_to_subbasis'.format(self.name)
         source_basis = self.source_basis if dim_source is None \
-            else self.source_basis.copy(ind=list(range(dim_source)))
+            else self.source_basis[:dim_source]
         range_basis = self.range_basis if dim_range is None \
-            else self.range_basis.copy(ind=list(range(dim_range)))
+            else self.range_basis[:dim_range]
         return ProjectedOperator(self.operator, range_basis, source_basis, product=None,
                                  solver_options=self.solver_options, name=name)
 

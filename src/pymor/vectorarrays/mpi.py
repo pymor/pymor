@@ -21,7 +21,7 @@ from pymor.vectorarrays.list import VectorInterface
 
 
 class MPIVectorArray(VectorArrayInterface):
-    """MPI distributed VectorArray.
+    """MPI distributed |VectorArray|.
 
     Given a single-rank |VectorArray| implementation `cls`, this
     wrapper class uses the event loop from :mod:`pymor.tools.mpi`
@@ -33,12 +33,12 @@ class MPIVectorArray(VectorArrayInterface):
 
     Note, however, that the implementation of `cls` needs to be
     MPI aware. For instance, `cls.dot` must perform the needed
-    MPI communication to sum up the local scalar products and
+    MPI communication to sum up the local inner products and
     return the sums on rank 0.
 
     Default implementations for all communication requiring
-    interface methods are provided by :class:`MPIVectorArrayAutoComm`.
-    See also :class:`MPIVectorArrayNoComm`.
+    interface methods are provided by :class:`MPIVectorArrayAutoComm`
+    (also see :class:`MPIVectorArrayNoComm`).
 
     Note that resource cleanup is handled by :meth:`object.__del__`.
     Please be aware of the peculiarities of destructors in Python!
@@ -50,7 +50,7 @@ class MPIVectorArray(VectorArrayInterface):
         every MPI rank.
     subtype
         `tuple` of the different subtypes of `cls` on the MPI ranks.
-        Alternatively, the length of subtype may be 1 in which
+        Alternatively, the length of subtype may be 1, in which
         case the same subtype is assumed for all ranks.
     obj_id
         :class:`~pymor.tools.mpi.ObjectId` of the MPI distributed
@@ -71,6 +71,15 @@ class MPIVectorArray(VectorArrayInterface):
     def __len__(self):
         return mpi.call(mpi.method_call, self.obj_id, '__len__')
 
+    def __getitem__(self, ind):
+        U = type(self)(self.cls, self.array_subtype,
+                       mpi.call(mpi.method_call_manage, self.obj_id, '__getitem__', ind))
+        U.is_view = True
+        return U
+
+    def __delitem__(self, ind):
+        mpi.call(mpi.method_call, self.obj_id, '__delitem__', ind)
+
     @property
     def dim(self):
         return mpi.call(_MPIVectorArray_dim, self.obj_id)
@@ -79,47 +88,43 @@ class MPIVectorArray(VectorArrayInterface):
     def subtype(self):
         return (self.cls, self.array_subtype)
 
-    def copy(self, ind=None, deep=False):
+    def copy(self, deep=False):
         return type(self)(self.cls, self.array_subtype,
-                          mpi.call(mpi.method_call_manage, self.obj_id, 'copy', ind=ind, deep=deep))
+                          mpi.call(mpi.method_call_manage, self.obj_id, 'copy', deep=deep))
 
-    def append(self, other, o_ind=None, remove_from_other=False):
-        mpi.call(mpi.method_call, self.obj_id, 'append', other.obj_id,
-                 o_ind=o_ind, remove_from_other=remove_from_other)
+    def append(self, other, remove_from_other=False):
+        mpi.call(mpi.method_call, self.obj_id, 'append', other.obj_id, remove_from_other=remove_from_other)
 
-    def remove(self, ind=None):
-        mpi.call(mpi.method_call, self.obj_id, 'remove', ind=ind)
+    def scal(self, alpha):
+        mpi.call(mpi.method_call, self.obj_id, 'scal', alpha)
 
-    def scal(self, alpha, ind=None):
-        mpi.call(mpi.method_call, self.obj_id, 'scal', alpha, ind=ind)
+    def axpy(self, alpha, x):
+        mpi.call(_MPIVectorArray_axpy, self.obj_id, alpha, x.obj_id)
 
-    def axpy(self, alpha, x, ind=None, x_ind=None):
-        mpi.call(_MPIVectorArray_axpy, self.obj_id, alpha, x.obj_id, ind=ind, x_ind=x_ind)
+    def dot(self, other):
+        return mpi.call(mpi.method_call, self.obj_id, 'dot', other.obj_id)
 
-    def dot(self, other, ind=None, o_ind=None):
-        return mpi.call(mpi.method_call, self.obj_id, 'dot', other.obj_id, ind=ind, o_ind=o_ind)
+    def pairwise_dot(self, other):
+        return mpi.call(mpi.method_call, self.obj_id, 'pairwise_dot', other.obj_id)
 
-    def pairwise_dot(self, other, ind=None, o_ind=None):
-        return mpi.call(mpi.method_call, self.obj_id, 'pairwise_dot', other.obj_id, ind=ind, o_ind=o_ind)
-
-    def lincomb(self, coefficients, ind=None):
+    def lincomb(self, coefficients):
         return type(self)(self.cls, self.array_subtype,
-                          mpi.call(mpi.method_call_manage, self.obj_id, 'lincomb', coefficients, ind=ind))
+                          mpi.call(mpi.method_call_manage, self.obj_id, 'lincomb', coefficients))
 
-    def l1_norm(self, ind=None):
-        return mpi.call(mpi.method_call, self.obj_id, 'l1_norm', ind=ind)
+    def l1_norm(self):
+        return mpi.call(mpi.method_call, self.obj_id, 'l1_norm')
 
-    def l2_norm(self, ind=None):
-        return mpi.call(mpi.method_call, self.obj_id, 'l2_norm', ind=ind)
+    def l2_norm(self):
+        return mpi.call(mpi.method_call, self.obj_id, 'l2_norm')
 
-    def l2_norm2(self, ind=None):
-        return mpi.call(mpi.method_call, self.obj_id, 'l2_norm2', ind=ind)
+    def l2_norm2(self):
+        return mpi.call(mpi.method_call, self.obj_id, 'l2_norm2')
 
-    def components(self, component_indices, ind=None):
-        return mpi.call(mpi.method_call, self.obj_id, 'components', component_indices, ind=ind)
+    def components(self, component_indices):
+        return mpi.call(mpi.method_call, self.obj_id, 'components', component_indices)
 
-    def amax(self, ind=None):
-        return mpi.call(mpi.method_call, self.obj_id, 'amax', ind=ind)
+    def amax(self):
+        return mpi.call(mpi.method_call, self.obj_id, 'amax')
 
     def __del__(self):
         mpi.call(mpi.remove_object, self.obj_id)
@@ -157,14 +162,14 @@ def _MPIVectorArray_dim(obj_id):
     return obj.dim
 
 
-def _MPIVectorArray_axpy(obj_id, alpha, x_obj_id, ind=None, x_ind=None):
+def _MPIVectorArray_axpy(obj_id, alpha, x_obj_id):
     obj = mpi.get_object(obj_id)
     x = mpi.get_object(x_obj_id)
-    obj.axpy(alpha, x, ind=ind, x_ind=x_ind)
+    obj.axpy(alpha, x)
 
 
 class MPIVectorArrayNoComm(MPIVectorArray):
-    """MPI distributed VectorArray.
+    """MPI distributed |VectorArray|.
 
     This is a subclass of :class:`MPIVectorArray` which
     overrides all communication requiring interface methods
@@ -181,30 +186,30 @@ class MPIVectorArrayNoComm(MPIVectorArray):
     def dim(self):
         raise NotImplementedError
 
-    def dot(self, other, ind=None, o_ind=None):
+    def dot(self, other):
         raise NotImplementedError
 
-    def pairwise_dot(self, other, ind=None, o_ind=None):
+    def pairwise_dot(self, other):
         raise NotImplementedError
 
-    def l1_norm(self, ind=None):
+    def l1_norm(self):
         raise NotImplementedError
 
-    def l2_norm(self, ind=None):
+    def l2_norm(self):
         raise NotImplementedError
 
-    def l2_norm2(self, ind=None):
+    def l2_norm2(self):
         raise NotImplementedError
 
-    def components(self, component_indices, ind=None):
+    def components(self, component_indices):
         raise NotImplementedError
 
-    def amax(self, ind=None):
+    def amax(self):
         raise NotImplementedError
 
 
 class MPIVectorArrayAutoComm(MPIVectorArray):
-    """MPI distributed VectorArray.
+    """MPI distributed |VectorArray|.
 
     This is a subclass of :class:`MPIVectorArray` which
     provides default implementations for all communication
@@ -223,33 +228,33 @@ class MPIVectorArrayAutoComm(MPIVectorArray):
             dim = self._get_dims()[0]
         return dim
 
-    def dot(self, other, ind=None, o_ind=None):
-        return mpi.call(_MPIVectorArrayAutoComm_dot, self.obj_id, other.obj_id, ind=ind, o_ind=o_ind)
+    def dot(self, other):
+        return mpi.call(_MPIVectorArrayAutoComm_dot, self.obj_id, other.obj_id)
 
-    def pairwise_dot(self, other, ind=None, o_ind=None):
-        return mpi.call(_MPIVectorArrayAutoComm_pairwise_dot, self.obj_id, other.obj_id, ind=ind, o_ind=o_ind)
+    def pairwise_dot(self, other):
+        return mpi.call(_MPIVectorArrayAutoComm_pairwise_dot, self.obj_id, other.obj_id)
 
-    def l1_norm(self, ind=None):
-        return mpi.call(_MPIVectorArrayAutoComm_l1_norm, self.obj_id, ind=ind)
+    def l1_norm(self):
+        return mpi.call(_MPIVectorArrayAutoComm_l1_norm, self.obj_id)
 
-    def l2_norm(self, ind=None):
-        return mpi.call(_MPIVectorArrayAutoComm_l2_norm, self.obj_id, ind=ind)
+    def l2_norm(self):
+        return mpi.call(_MPIVectorArrayAutoComm_l2_norm, self.obj_id)
 
-    def l2_norm2(self, ind=None):
-        return mpi.call(_MPIVectorArrayAutoComm_l2_norm2, self.obj_id, ind=ind)
+    def l2_norm2(self):
+        return mpi.call(_MPIVectorArrayAutoComm_l2_norm2, self.obj_id)
 
-    def components(self, component_indices, ind=None):
+    def components(self, component_indices):
         offsets = getattr(self, '_offsets', None)
         if offsets is None:
             offsets = self._get_dims()[1]
         component_indices = np.array(component_indices)
-        return mpi.call(_MPIVectorArrayAutoComm_components, self.obj_id, offsets, component_indices, ind=ind)
+        return mpi.call(_MPIVectorArrayAutoComm_components, self.obj_id, offsets, component_indices)
 
-    def amax(self, ind=None):
+    def amax(self):
         offsets = getattr(self, '_offsets', None)
         if offsets is None:
             offsets = self._get_dims()[1]
-        inds, vals = mpi.call(_MPIVectorArrayAutoComm_amax, self.obj_id, ind=ind)
+        inds, vals = mpi.call(_MPIVectorArrayAutoComm_amax, self.obj_id)
         inds += offsets[:, np.newaxis]
         max_inds = np.argmax(vals, axis=0)
         # np.choose does not work due to
@@ -271,10 +276,10 @@ def _MPIVectorArrayAutoComm_dim(self):
         return dims
 
 
-def _MPIVectorArrayAutoComm_dot(self, other, ind=None, o_ind=None):
+def _MPIVectorArrayAutoComm_dot(self, other):
     self = mpi.get_object(self)
     other = mpi.get_object(other)
-    local_results = self.dot(other, ind=ind, o_ind=o_ind)
+    local_results = self.dot(other)
     assert local_results.dtype == np.float64
     results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
     mpi.comm.Gather(local_results, results, root=0)
@@ -282,10 +287,10 @@ def _MPIVectorArrayAutoComm_dot(self, other, ind=None, o_ind=None):
         return np.sum(results, axis=0)
 
 
-def _MPIVectorArrayAutoComm_pairwise_dot(self, other, ind=None, o_ind=None):
+def _MPIVectorArrayAutoComm_pairwise_dot(self, other):
     self = mpi.get_object(self)
     other = mpi.get_object(other)
-    local_results = self.pairwise_dot(other, ind=ind, o_ind=o_ind)
+    local_results = self.pairwise_dot(other)
     assert local_results.dtype == np.float64
     results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
     mpi.comm.Gather(local_results, results, root=0)
@@ -293,9 +298,9 @@ def _MPIVectorArrayAutoComm_pairwise_dot(self, other, ind=None, o_ind=None):
         return np.sum(results, axis=0)
 
 
-def _MPIVectorArrayAutoComm_l1_norm(self, ind=None):
+def _MPIVectorArrayAutoComm_l1_norm(self):
     self = mpi.get_object(self)
-    local_results = self.l1_norm(ind=ind)
+    local_results = self.l1_norm()
     assert local_results.dtype == np.float64
     results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
     mpi.comm.Gather(local_results, results, root=0)
@@ -303,9 +308,9 @@ def _MPIVectorArrayAutoComm_l1_norm(self, ind=None):
         return np.sum(results, axis=0)
 
 
-def _MPIVectorArrayAutoComm_l2_norm(self, ind=None):
+def _MPIVectorArrayAutoComm_l2_norm(self):
     self = mpi.get_object(self)
-    local_results = self.l2_norm2(ind=ind)
+    local_results = self.l2_norm2()
     assert local_results.dtype == np.float64
     results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
     mpi.comm.Gather(local_results, results, root=0)
@@ -313,9 +318,9 @@ def _MPIVectorArrayAutoComm_l2_norm(self, ind=None):
         return np.sqrt(np.sum(results, axis=0))
 
 
-def _MPIVectorArrayAutoComm_l2_norm2(self, ind=None):
+def _MPIVectorArrayAutoComm_l2_norm2(self):
     self = mpi.get_object(self)
-    local_results = self.l2_norm2(ind=ind)
+    local_results = self.l2_norm2()
     assert local_results.dtype == np.float64
     results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
     mpi.comm.Gather(local_results, results, root=0)
@@ -323,13 +328,13 @@ def _MPIVectorArrayAutoComm_l2_norm2(self, ind=None):
         return np.sum(results, axis=0)
 
 
-def _MPIVectorArrayAutoComm_components(self, offsets, component_indices, ind=None):
+def _MPIVectorArrayAutoComm_components(self, offsets, component_indices):
     self = mpi.get_object(self)
     offset = offsets[mpi.rank]
     dim = self.dim
     my_indices = np.logical_and(component_indices >= offset, component_indices < offset + dim)
-    local_results = np.zeros((self.len_ind(ind), len(component_indices)))
-    local_results[:, my_indices] = self.components(component_indices[my_indices] - offset, ind=ind)
+    local_results = np.zeros((len(self), len(component_indices)))
+    local_results[:, my_indices] = self.components(component_indices[my_indices] - offset)
     assert local_results.dtype == np.float64
     results = np.empty((mpi.size,) + local_results.shape, dtype=np.float64) if mpi.rank0 else None
     mpi.comm.Gather(local_results, results, root=0)
@@ -337,9 +342,9 @@ def _MPIVectorArrayAutoComm_components(self, offsets, component_indices, ind=Non
         return np.sum(results, axis=0)
 
 
-def _MPIVectorArrayAutoComm_amax(self, ind=None):
+def _MPIVectorArrayAutoComm_amax(self):
     self = mpi.get_object(self)
-    local_inds, local_vals = self.amax(ind=ind)
+    local_inds, local_vals = self.amax()
     assert local_inds.dtype == np.int64
     assert local_vals.dtype == np.float64
     inds = np.empty((mpi.size,) + local_inds.shape, dtype=np.int64) if mpi.rank0 else None
@@ -353,7 +358,7 @@ def _MPIVectorArrayAutoComm_amax(self, ind=None):
 class MPIVector(VectorInterface):
     """MPI distributed Vector.
 
-    Given a single-rank implemenation of
+    Given a single-rank implementation of
     :class:`~pymor.vectorarrays.list.VectorInterface` `cls`, this
     wrapper class uses the event loop from :mod:`pymor.tools.mpi`
     to build MPI distributed vector where on each MPI rank
@@ -365,12 +370,12 @@ class MPIVector(VectorInterface):
 
     Note, however, that the implementation of `cls` needs to be
     MPI aware. For instance, `cls.dot` must perform the needed
-    MPI communication to sum up the local scalar products and
+    MPI communication to sum up the local inner products and
     return the sum on rank 0.
 
     Default implementations for all communication requiring
-    interface methods are provided by :class:`MPIVectorAutoComm`.
-    See also :class:`MPIVectorNoComm`.
+    interface methods are provided by :class:`MPIVectorAutoComm`
+    (also see :class:`MPIVectorNoComm`).
 
     Note that resource cleanup is handled by :meth:`object.__del__`.
     Please be aware of the peculiarities of destructors in Python!
@@ -382,7 +387,7 @@ class MPIVector(VectorInterface):
         implementation used on every MPI rank.
     subtype
         `tuple` of the different subtypes of `cls` on the MPI ranks.
-        Alternatively, the length of subtype may be 1 in which
+        Alternatively, the length of subtype may be 1, in which
         case the same subtype is assumed for all ranks.
     obj_id
         :class:`~pymor.tools.mpi.ObjectId` of the MPI distributed
@@ -496,7 +501,7 @@ class MPIVectorNoComm(object):
 class MPIVectorAutoComm(MPIVector):
     """MPI distributed Vector.
 
-    This is a subclass of :class:`MPIArray` which
+    This is a subclass of :class:`MPIVector` which
     provides default implementations for all communication
     requiring interface methods for the case when the
     wrapped vector is not MPI aware.

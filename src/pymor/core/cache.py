@@ -118,7 +118,12 @@ class CacheRegion(object):
         raise NotImplementedError
 
     def set(self, key, value):
-        """Set cache entry for `key` to given `value`."""
+        """Set cache entry for `key` to given `value`.
+
+        This method is usually called only once for
+        any given `key` (with the exemption of issues
+        due to concurrency).
+        """
         raise NotImplementedError
 
     def clear(self):
@@ -142,6 +147,9 @@ class MemoryRegion(CacheRegion):
             return True, value
 
     def set(self, key, value):
+        if key in self._cache:
+            getLogger('pymor.core.cache.MemoryRegion').warn('Key already present in cache region, ignoring.')
+            return
         if len(self._cache) == self.max_keys:
             self._cache.popitem(last=False)
         self._cache[key] = value

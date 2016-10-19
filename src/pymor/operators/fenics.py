@@ -31,24 +31,21 @@ if HAVE_FENICS:
             self.solver_options = solver_options
             self.name = name
 
-        def apply(self, U, ind=None, mu=None):
+        def apply(self, U, mu=None):
             assert U in self.source
-            assert U.check_ind(ind)
-            vectors = U._list if ind is None else [U._list[ind]] if isinstance(ind, Number) else [U._list[i] for i in ind]
-            R = self.range.zeros(len(vectors))
-            for u, r in zip(vectors, R._list):
+            R = self.range.zeros(len(U))
+            for u, r in zip(U._list, R._list):
                 self.matrix.mult(u.impl, r.impl)
             return R
 
-        def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+        def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
             assert U in self.range
-            assert U.check_ind(ind)
             assert source_product is None or source_product.source == source_product.range == self.source
             assert range_product is None or range_product.source == range_product.range == self.range
             if range_product:
-                PrU = range_product.apply(U, ind=ind)._list
+                PrU = range_product.apply(U)._list
             else:
-                PrU = U._list if ind is None else [U._list[ind]] if isinstance(ind, Number) else [U._list[i] for i in ind]
+                PrU = U._list
             ATPrU = self.source.zeros(len(PrU))
             for u, r in zip(PrU, ATPrU._list):
                 self.matrix.transpmult(u.impl, r.impl)
@@ -57,14 +54,13 @@ if HAVE_FENICS:
             else:
                 return ATPrU
 
-        def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
+        def apply_inverse(self, V, mu=None, least_squares=False):
             assert V in self.range
             if least_squares:
                 raise NotImplementedError
-            vectors = V._list if ind is None else [V._list[ind]] if isinstance(ind, Number) else [V._list[i] for i in ind]
-            R = self.source.zeros(len(vectors))
+            R = self.source.zeros(len(V))
             options = self.solver_options.get('inverse') if self.solver_options else None
-            for r, v in zip(R._list, vectors):
+            for r, v in zip(R._list, V._list):
                 _apply_inverse(self.matrix, r.impl, v.impl, options)
             return R
 

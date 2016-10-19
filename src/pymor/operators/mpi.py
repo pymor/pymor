@@ -96,16 +96,16 @@ class MPIOperator(OperatorBase):
                 subtypes = (subtypes[0],)
             self.range = VectorSpace(array_type, (op.range.type, subtypes))
 
-    def apply(self, U, ind=None, mu=None):
+    def apply(self, U, mu=None):
         assert U in self.source
         mu = self.parse_parameter(mu)
         U = U if self.vector else U.obj_id
         if self.functional:
-            return mpi.call(mpi.method_call, self.obj_id, 'apply', U, ind=ind, mu=mu)
+            return mpi.call(mpi.method_call, self.obj_id, 'apply', U, mu=mu)
         else:
             space = self.range
             return space.type(space.subtype[0], space.subtype[1],
-                              mpi.call(mpi.method_call_manage, self.obj_id, 'apply', U, ind=ind, mu=mu))
+                              mpi.call(mpi.method_call_manage, self.obj_id, 'apply', U, mu=mu))
 
     def as_vector(self, mu=None):
         mu = self.parse_parameter(mu)
@@ -116,29 +116,29 @@ class MPIOperator(OperatorBase):
         else:
             raise NotImplementedError
 
-    def apply2(self, V, U, U_ind=None, V_ind=None, mu=None):
+    def apply2(self, V, U, mu=None):
         if not self.with_apply2:
-            return super().apply2(V, U, U_ind=U_ind, V_ind=V_ind, mu=mu)
+            return super().apply2(V, U, mu=mu)
         assert V in self.range
         assert U in self.source
         mu = self.parse_parameter(mu)
         U = U if self.vector else U.obj_id
         V = V if self.functional else V.obj_id
         return mpi.call(mpi.method_call, self.obj_id, 'apply2',
-                        V, U, U_ind=U_ind, V_ind=V_ind, mu=mu)
+                        V, U, mu=mu)
 
-    def pairwise_apply2(self, V, U, U_ind=None, V_ind=None, mu=None):
+    def pairwise_apply2(self, V, U, mu=None):
         if not self.with_apply2:
-            return super().pairwise_apply2(V, U, U_ind=U_ind, V_ind=V_ind, mu=mu)
+            return super().pairwise_apply2(V, U, mu=mu)
         assert V in self.range
         assert U in self.source
         mu = self.parse_parameter(mu)
         U = U if self.vector else U.obj_id
         V = V if self.functional else V.obj_id
         return mpi.call(mpi.method_call, self.obj_id, 'pairwise_apply2',
-                        V, U, U_ind=U_ind, V_ind=V_ind, mu=mu)
+                        V, U, mu=mu)
 
-    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         assert U in self.range
         mu = self.parse_parameter(mu)
         U = U if self.functional else U.obj_id
@@ -146,14 +146,14 @@ class MPIOperator(OperatorBase):
         range_product = range_product and range_product.obj_id
         if self.vector:
             return mpi.call(mpi.method_call, self.obj_id, 'apply_adjoint',
-                            U, ind=ind, mu=mu, source_product=source_product, range_product=range_product)
+                            U, mu=mu, source_product=source_product, range_product=range_product)
         else:
             space = self.source
             return space.type(space.subtype[0], space.subtype[1],
                               mpi.call(mpi.method_call_manage, self.obj_id, 'apply_adjoint',
-                                       U, ind=ind, mu=mu, source_product=source_product, range_product=range_product))
+                                       U, mu=mu, source_product=source_product, range_product=range_product))
 
-    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, least_squares=False):
         if self.vector or self.functional:
             raise NotImplementedError
         assert V in self.range
@@ -161,7 +161,7 @@ class MPIOperator(OperatorBase):
         space = self.source
         return space.type(space.subtype[0], space.subtype[1],
                           mpi.call(mpi.method_call_manage, self.obj_id, 'apply_inverse',
-                                   V.obj_id, ind=ind, mu=mu, least_squares=least_squares))
+                                   V.obj_id, mu=mu, least_squares=least_squares))
 
     def jacobian(self, U, mu=None):
         assert U in self.source

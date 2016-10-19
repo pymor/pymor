@@ -5,7 +5,7 @@
 from itertools import product
 
 import pytest
-import os
+from pkg_resources import resource_filename
 
 from pymor.discretizers.advection import discretize_nonlinear_instationary_advection_fv
 from pymor.discretizers.disk import discretize_stationary_from_disk, discretize_instationary_from_disk
@@ -20,9 +20,9 @@ picklable_discretizaion_generators = \
         [lambda p=p,d=d: discretize_nonlinear_instationary_advection_fv(p, diameter=d)[0]
          for p, d in product(burgers_problems, [1./10., 1./15.])] + \
         [lambda p=p: discretize_stationary_from_disk(parameter_file=p)
-         for p in (os.path.join(os.path.dirname(__file__), '../../../testdata/parameter_stationary.ini'),)] + \
+         for p in (resource_filename('pymortests', 'testdata/parameter_stationary.ini'),)] + \
         [lambda p=p: discretize_instationary_from_disk(parameter_file=p)
-         for p in (os.path.join(os.path.dirname(__file__), '../../../testdata/parameter_instationary.ini'),)]
+         for p in (resource_filename('pymortests', 'testdata/parameter_instationary.ini'),)]
 
 
 non_picklable_discretization_generators = \
