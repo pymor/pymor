@@ -17,22 +17,6 @@ import pymor.core
 
 class Test_Interface(TestInterface):
 
-    def testLock(self):
-        b = AverageImplementer()
-        b.level = 43
-        b.lock()
-        assert b.locked
-        with pytest.raises(exceptions.ConstError):
-            b.new = 42
-        with pytest.raises(exceptions.ConstError):
-            b.level = 0
-        b.lock(False)
-        b.level = 1
-        b.new = 43
-        assert hasattr(b, 'new')
-        assert b.level == 1
-        assert b.new == 43
-
     def testImplementorlist(self):
         imps = ['StupidImplementer', 'AverageImplementer', 'FailImplementer']
         assert imps == StupidInterface.implementor_names()
