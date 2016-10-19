@@ -79,7 +79,7 @@ import sys
 
 import numpy as np
 
-from pymor.core import decorators, backports, logger
+from pymor.core import backports, logger
 from pymor.core.exceptions import ConstError, SIDGenerationError
 
 PY2 = sys.version_info.major == 2
@@ -139,8 +139,7 @@ class UberMeta(abc.ABCMeta):
 
         for attr, item in classdict.items():
             if isinstance(item, FunctionType):
-                # first copy/fixup docs
-                item.__doc__ = decorators.fixup_docstring(item.__doc__)
+                # first copy docs
                 base_doc = None
                 for base in bases:
                     base_func = getattr(base, item.__name__, None)
@@ -148,7 +147,7 @@ class UberMeta(abc.ABCMeta):
                         if base_func:
                             base_doc = getattr(base_func, '__doc__', None)
                         if base_doc:
-                            doc = decorators.fixup_docstring(getattr(item, '__doc__', ''))
+                            doc = getattr(item, '__doc__', '')
                             if doc is not None:
                                 base_doc = doc
                             item.__doc__ = base_doc
