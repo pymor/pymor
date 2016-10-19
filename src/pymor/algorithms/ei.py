@@ -139,7 +139,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
             break
 
         # compute new interpolation dof and collateral basis vector
-        new_vec = U.copy(ind=max_err_ind)
+        new_vec = U[max_err_ind].copy()
         new_dof = new_vec.amax()[0][0]
         if new_dof in interpolation_dofs:
             logger.info('DOF {} selected twice for interplation! Stopping extension loop.'.format(new_dof))
@@ -160,8 +160,8 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
         if projection == 'orthogonal':
             onb_collateral_basis.append(new_vec)
             gram_schmidt(onb_collateral_basis, offset=len(onb_collateral_basis) - 1, copy=False)
-            coeffs = ERR.dot(onb_collateral_basis, o_ind=len(onb_collateral_basis) - 1)
-            ERR.axpy(-coeffs[:, 0], onb_collateral_basis, x_ind=len(onb_collateral_basis) - 1)
+            coeffs = ERR.dot(onb_collateral_basis[len(onb_collateral_basis) - 1])
+            ERR.axpy(-coeffs[:, 0], onb_collateral_basis[len(onb_collateral_basis) - 1])
         errs = ERR.l2_norm() if error_norm is None else error_norm(ERR)
         max_err_ind = np.argmax(errs)
         max_err = errs[max_err_ind]
@@ -229,12 +229,12 @@ def deim(U, modes=None, error_norm=None, product=None):
 
         if len(interpolation_dofs) > 0:
             coefficients = np.linalg.solve(interpolation_matrix,
-                                           collateral_basis.components(interpolation_dofs, ind=i).T).T
-            U_interpolated = collateral_basis.lincomb(coefficients, ind=list(range(len(interpolation_dofs))))
-            ERR = collateral_basis.copy(ind=i)
+                                           collateral_basis[i].components(interpolation_dofs).T).T
+            U_interpolated = collateral_basis[:len(interpolation_dofs)].lincomb(coefficients)
+            ERR = collateral_basis[i].copy()
             ERR -= U_interpolated
         else:
-            ERR = collateral_basis.copy(ind=i)
+            ERR = collateral_basis[i].copy()
 
         err = np.max(ERR.l2_norm() if error_norm is None else error_norm(ERR))
 
@@ -248,13 +248,13 @@ def deim(U, modes=None, error_norm=None, product=None):
             break
 
         interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
-        interpolation_matrix = collateral_basis.components(interpolation_dofs, ind=list(range(len(interpolation_dofs)))).T
+        interpolation_matrix = collateral_basis[:len(interpolation_dofs)].components(interpolation_dofs).T
         errs.append(err)
 
         logger.info('')
 
     if len(interpolation_dofs) < len(collateral_basis):
-        collateral_basis.remove(ind=list(range(len(interpolation_dofs), len(collateral_basis))))
+        del collateral_basis[len(interpolation_dofs):len(collateral_basis)]
 
     logger.info('Finished.')
 
@@ -444,7 +444,7 @@ def _parallel_ei_greedy_initialize(U=None, error_norm=None, copy=None, data=None
 
 
 def _parallel_ei_greedy_get_vector(data=None):
-    return data['U'].copy(ind=data['max_err_ind'])
+    return data['U'][data['max_err_ind']].copy()
 
 
 def _parallel_ei_greedy_update(new_vec=None, new_dof=None, data=None):

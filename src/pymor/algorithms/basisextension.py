@@ -65,11 +65,11 @@ def trivial_basis_extension(basis, U, copy_basis=True, copy_U=True):
     old_basis_length = len(basis)
     remove = set()
     for i in range(len(U)):
-        if np.any(almost_equal(U, basis, U_ind=i)):
+        if np.any(almost_equal(U[i], basis)):
             remove.add(i)
 
     new_basis = basis.copy() if copy_basis else basis
-    new_basis.append(U, o_ind=[i for i in range(len(U)) if i not in remove],
+    new_basis.append(U[[i for i in range(len(U)) if i not in remove]],
                      remove_from_other=(not copy_U))
 
     if len(new_basis) == old_basis_length:

@@ -12,7 +12,7 @@ from pymor.operators.constructions import induced_norm
 
 
 @defaults('rtol', 'atol')
-def almost_equal(U, V, U_ind=None, V_ind=None, product=None, norm=None, rtol=1e-14, atol=1e-14):
+def almost_equal(U, V, product=None, norm=None, rtol=1e-14, atol=1e-14):
     """Compare U and V for almost equality.
 
     The vectors of `U` and `V` are compared in pairs for almost equality.
@@ -23,16 +23,14 @@ def almost_equal(U, V, U_ind=None, V_ind=None, product=None, norm=None, rtol=1e-
     The norm to be used can be specified via the `norm` or `product`
     parameter.
 
-    If the length of `U` (`U_ind`) resp. `V` (`V_ind`) is 1, the single
-    specified vector is compared to all vectors of the other array.
+    If the length of `U`  resp. `V`  is 1, the single specified
+    vector is compared to all vectors of the other array.
     Otherwise, the lengths of both indexed arrays have to agree.
 
     Parameters
     ----------
     U, V
         |VectorArrays| to be compared.
-    U_ind, V_ind
-        Indices of the vectors that are to be compared (see |VectorArray|).
     product
         If specified, use this inner product |Operator| to compute the norm.
         `product` and `norm` are mutually exclusive.
@@ -57,16 +55,15 @@ def almost_equal(U, V, U_ind=None, V_ind=None, product=None, norm=None, rtol=1e-
         norm_str = norm
         norm = lambda U: getattr(U, norm_str + '_norm')()
 
-    X = V.copy(V_ind)
+    X = V.copy()
     V_norm = norm(X)
 
     # broadcast if necessary
     if len(X) == 1:
-        len_U = U.len_ind(U_ind)
-        if len_U > 1:
-            X.append(X, o_ind=np.zeros(len_U - 1, dtype=np.int))
+        if len(U) > 1:
+            X.append(X[np.zeros(len(U) - 1, dtype=np.int)])
 
-    X.axpy(-1, U, x_ind=U_ind)
+    X -= U
     ERR_norm = norm(X)
 
     return ERR_norm <= atol + V_norm * rtol

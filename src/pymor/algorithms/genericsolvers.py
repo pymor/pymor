@@ -170,7 +170,7 @@ def apply_inverse(op, rhs, options=None):
 
     if options['type'] == 'generic_lgmres':
         for i in range(len(rhs)):
-            r, info = lgmres(op, rhs.copy(i),
+            r, info = lgmres(op, rhs[i],
                              tol=options['tol'],
                              maxiter=options['maxiter'],
                              inner_m=options['inner_m'],
@@ -181,7 +181,7 @@ def apply_inverse(op, rhs, options=None):
             R.append(r)
     elif options['type'] == 'least_squares_generic_lsmr':
         for i in range(len(rhs)):
-            r, info, itn, _, _, _, _, _ = lsmr(op, rhs.copy(i),
+            r, info, itn, _, _, _, _, _ = lsmr(op, rhs[i],
                                                damp=options['damp'],
                                                atol=options['atol'],
                                                btol=options['btol'],
@@ -195,7 +195,7 @@ def apply_inverse(op, rhs, options=None):
             R.append(r)
     elif options['type'] == 'least_squares_generic_lsqr':
         for i in range(len(rhs)):
-            r, info, itn, _, _, _, _, _, _ = lsqr(op, rhs.copy(i),
+            r, info, itn, _, _, _, _, _, _ = lsqr(op, rhs[i],
                                                   damp=options['damp'],
                                                   atol=options['atol'],
                                                   btol=options['btol'],

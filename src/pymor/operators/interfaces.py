@@ -50,16 +50,13 @@ class OperatorInterface(ImmutableInterface, Parametric):
     solver_options = None
 
     @abstractmethod
-    def apply(self, U, ind=None, mu=None):
+    def apply(self, U, mu=None):
         """Apply the operator to a |VectorArray|.
 
         Parameters
         ----------
         U
             |VectorArray| of vectors to which the operator is applied.
-        ind
-            The indices of the vectors in `U` to which the operator shall be
-            applied (see the |VectorArray| documentation for further details).
         mu
             The |Parameter| for which to evaluate the operator.
 
@@ -70,7 +67,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         pass
 
     @abstractmethod
-    def apply2(self, V, U, U_ind=None, V_ind=None, mu=None):
+    def apply2(self, V, U, mu=None):
         """Treat the operator as a 2-form by computing ``V.dot(self.apply(U))``.
 
         If the operator is a linear operator given by multiplication with a matrix
@@ -84,24 +81,18 @@ class OperatorInterface(ImmutableInterface, Parametric):
             |VectorArray| of the left arguments V.
         U
             |VectorArray| of the right right arguments U.
-        V_ind
-            The indices of the vectors in `V` to which the operator shall be
-            applied (see |VectorArray| documentation for further details).
-        U_ind
-            The indices of the vectors in `U` to which the operator shall be
-            applied (see |VectorArray| documentation for further details).
         mu
             The |Parameter| for which to evaluate the operator.
 
         Returns
         -------
-        A |NumPy array| with shape `(len(V_ind), len(U_ind))` containing the 2-form
+        A |NumPy array| with shape `(len(V), len(U))` containing the 2-form
         evaluations.
         """
         pass
 
     @abstractmethod
-    def pairwise_apply2(self, V, U, U_ind=None, V_ind=None, mu=None):
+    def pairwise_apply2(self, V, U, mu=None):
         """Treat the operator as a 2-form by computing ``V.dot(self.apply(U))``.
 
         Same as :meth:`OperatorInterface.apply2`, except that vectors from `V`
@@ -113,24 +104,18 @@ class OperatorInterface(ImmutableInterface, Parametric):
             |VectorArray| of the left arguments V.
         U
             |VectorArray| of the right right arguments U.
-        V_ind
-            The indices of the vectors in `V` to which the operator shall be
-            applied (see |VectorArray| documentation for further details).
-        U_ind
-            The indices of the vectors in `U` to which the operator shall be
-            applied (see |VectorArray| documentation for further details).
         mu
             The |Parameter| for which to evaluate the operator.
 
         Returns
         -------
-        A |NumPy array| with shape `(len(V_ind),) == (len(U_ind),)` containing
+        A |NumPy array| with shape `(len(V),) == (len(U),)` containing
         the 2-form evaluations.
         """
         pass
 
     @abstractmethod
-    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         """Apply the adjoint operator.
 
         For a linear operator `op` the adjoint `op^*` of `op` is given by::
@@ -151,9 +136,6 @@ class OperatorInterface(ImmutableInterface, Parametric):
         ----------
         U
             |VectorArray| of vectors to which the adjoint operator is applied.
-        ind
-            The indices of the vectors in `U` to which the operator shall be
-            applied (see the |VectorArray| documentation for further details).
         mu
             The |Parameter| for which to apply the adjoint operator.
         source_product
@@ -170,16 +152,13 @@ class OperatorInterface(ImmutableInterface, Parametric):
         pass
 
     @abstractmethod
-    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, least_squares=False):
         """Apply the inverse operator.
 
         Parameters
         ----------
         V
             |VectorArray| of vectors to which the inverse operator is applied.
-        ind
-            The indices of the vectors in `V` to which the inverse operator shall be
-            applied (see |VectorArray| documentation for further details).
         mu
             The |Parameter| for which to evaluate the inverse operator.
         least_squares
@@ -207,7 +186,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
         pass
 
     @abstractmethod
-    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None,
+    def apply_inverse_adjoint(self, U, mu=None, source_product=None, range_product=None,
                               least_squares=False):
         """Apply the inverse adjoint operator.
 
@@ -215,9 +194,6 @@ class OperatorInterface(ImmutableInterface, Parametric):
         ----------
         U
             |VectorArray| of vectors to which the inverse adjoint operator is applied.
-        ind
-            The indices of the vectors in `U` to which the inverse adjoint operator shall be
-            applied (see the |VectorArray| documentation for further details).
         mu
             The |Parameter| for which to evaluate the inverse adjoint operator.
         source_product

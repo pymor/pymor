@@ -26,39 +26,31 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
         self.functional = functional
         self.vector = vector
 
-    def apply(self, U, ind=None, mu=None):
+    def apply(self, U, mu=None):
         assert U in self.source
-        assert U.check_ind(ind)
 
         if self.vector:
-            V = super().apply(U, ind=ind, mu=mu)
+            V = super().apply(U, mu=mu)
             return ListVectorArray([NumpyVector(v, copy=False) for v in V.data],
                                    subtype=self.range.subtype)
 
-        if ind is None:
-            vectors = U._list
-        elif isinstance(ind, Number):
-            vectors = [U._list[ind]]
-        else:
-            vectors = (U._list[i] for i in ind)
-        V = [self._matrix.dot(v._array) for v in vectors]
+        V = [self._matrix.dot(v._array) for v in U._list]
 
         if self.functional:
             return NumpyVectorArray(V) if len(V) > 0 else self.range.empty()
         else:
             return ListVectorArray([NumpyVector(v, copy=False) for v in V], subtype=self.range.subtype)
 
-    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         raise NotImplementedError
 
-    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, least_squares=False):
         assert V in self.range
-        assert V.check_ind(ind)
         assert not self.functional and not self.vector
 
         if V.dim == 0:
             if self.source.dim == 0 and least_squares:
-                return ListVectorArray([NumpyVector(np.zeros(0), copy=False) for _ in range(V.len_ind(ind))],
+                return ListVectorArray([NumpyVector(np.zeros(0), copy=False) for _ in range(len(V))],
                                        subtype=self.source.subtype)
             else:
                 raise InversionError
@@ -72,18 +64,11 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
             if solver_type.startswith('least_squares'):
                 self.logger.warn('Least squares solver selected but "least_squares == False"')
 
-        if ind is None:
-            vectors = V._list
-        elif isinstance(ind, Number):
-            vectors = [V._list[ind]]
-        else:
-            vectors = (V._list[i] for i in ind)
-
         try:
             return ListVectorArray([NumpyVector(_apply_inverse(self._matrix, v._array.reshape((1, -1)),
                                                                options=options).ravel(),
                                                 copy=False)
-                                    for v in vectors],
+                                    for v in V._list],
                                    subtype=self.source.subtype)
         except InversionError as e:
             if least_squares and options:

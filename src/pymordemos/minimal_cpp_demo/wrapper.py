@@ -80,15 +80,12 @@ class WrappedDiffusionOperator(OperatorBase):
     def create(cls, n, left, right):
         return cls(DiffusionOperator(n, left, right))
 
-    def apply(self, U, ind=None, mu=None):
+    def apply(self, U, mu=None):
         assert U in self.source
-
-        if ind is None:
-            ind = range(len(U))
 
         def apply_one_vector(u):
             v = Vector(self.range.dim, 0)
             self._impl.apply(u._impl, v)
             return WrappedVector(v)
 
-        return ListVectorArray([apply_one_vector(U._list[i]) for i in ind], subtype=self.range.subtype)
+        return ListVectorArray([apply_one_vector(u) for u in U._list], subtype=self.range.subtype)

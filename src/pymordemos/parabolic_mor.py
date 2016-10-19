@@ -291,8 +291,8 @@ def main(BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST):
     U = d.solve(mumax)
     U_RB = rc.reconstruct(rd.solve(mumax))
     if BACKEND == 'fenics':  # right now the fenics visualizer does not support time trajectories
-        U = U.copy(len(U) - 1)
-        U_RB = U_RB.copy(len(U_RB) - 1)
+        U = U[len(U) - 1].copy()
+        U_RB = U_RB[len(U_RB) - 1].copy()
     d.visualize((U, U_RB, U - U_RB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
                 separate_colorbars=True)
 
