@@ -189,8 +189,6 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
             print('iter | conv. criterion')
             print('-----+----------------')
 
-    rom, rc, reduction_data = interpolation(discretization, sigma, b, c, use_arnoldi=use_arnoldi)
-
     dist = []
     Sigma = [np.array(sigma)]
     R = [b]
@@ -198,6 +196,8 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
     if compute_errors:
         errors = []
     for it in range(maxit):
+        rom, rc, reduction_data = interpolation(discretization, sigma, b, c, use_arnoldi=use_arnoldi)
+
         if compute_errors:
             err = discretization - rom
             try:
@@ -258,7 +258,7 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
         if dist[-1] < tol:
             break
 
-        rom, rc, reduction_data = interpolation(discretization, sigma, b, c, use_arnoldi=use_arnoldi)
+    rom, rc, reduction_data = interpolation(discretization, sigma, b, c, use_arnoldi=use_arnoldi)
 
     reduction_data.update({'dist': dist, 'Sigma': Sigma, 'R': R, 'L': L})
     if compute_errors:
