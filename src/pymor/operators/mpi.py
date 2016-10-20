@@ -78,7 +78,7 @@ class MPIOperator(OperatorBase):
         self.array_type = array_type
         self.linear = op.linear
         self.name = op.name
-        self.build_parameter_type(inherits=(op,))
+        self.build_parameter_type(op)
         if vector:
             self.source = NumpyVectorSpace(1)
             assert self.source == op.source

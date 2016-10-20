@@ -2,6 +2,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from itertools import chain
 from numbers import Number
 
 import numpy as np
@@ -126,7 +127,7 @@ class GenericFunction(FunctionBase):
         self.name = name
         self._mapping = mapping
         if parameter_type is not None:
-            self.build_parameter_type(parameter_type, local_global=True)
+            self.build_parameter_type(parameter_type)
 
     def __str__(self):
         return '{name}: x -> {mapping}'.format(name=self.name, mapping=self._mapping)
@@ -226,8 +227,8 @@ class LincombFunction(FunctionBase):
         self.functions = functions
         self.coefficients = coefficients
         self.name = name
-        self.build_parameter_type(inherits=list(functions) +
-                                  [f for f in coefficients if isinstance(f, ParameterFunctionalInterface)])
+        self.build_parameter_type(*chain(functions,
+                                         (f for f in coefficients if isinstance(f, ParameterFunctionalInterface))))
 
     def evaluate_coefficients(self, mu):
         """Compute the linear coefficients for a given |Parameter| `mu`."""
