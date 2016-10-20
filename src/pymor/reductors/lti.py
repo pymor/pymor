@@ -156,7 +156,7 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
         Contains:
 
         - projection matrices `V` and `W`,
-        - distances between interpolation points in different iterations
+        - distances between interpolation points in subsequent iterations
           `dist`,
         - interpolation points from all iterations `Sigma`,
         - right and left tangential directions `R` and `L`, and
@@ -207,15 +207,13 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
             sigma *= -1
         Sigma.append(sigma)
 
-        dist.append([])
-        for i in range(it + 1):
-            dist[-1].append(np.max(np.abs((Sigma[i] - Sigma[-1]) / Sigma[-1])))
+        dist.append(np.max(np.abs((Sigma[-2] - Sigma[-1]) / Sigma[-2])))
 
         if verbose:
             if compute_errors:
-                print('{:4d} | {:.6e} | {:.6e}'.format(it + 1, np.min(dist[-1]), rel_H2_err))
+                print('{:4d} | {:.6e} | {:.6e}'.format(it + 1, dist[-1], rel_H2_err))
             else:
-                print('{:4d} | {:.6e}'.format(it + 1, np.min(dist[-1])))
+                print('{:4d} | {:.6e}'.format(it + 1, dist[-1]))
 
         Y = rom.B.source.from_data(Y.conj().T)
         X = rom.C.range.from_data(X.T)
@@ -224,7 +222,7 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
         R.append(b)
         L.append(c)
 
-        if np.min(dist[-1]) < tol:
+        if dist[-1] < tol:
             break
 
         rom, rc, reduction_data = interpolation(discretization, sigma, b, c, use_arnoldi=use_arnoldi)

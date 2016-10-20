@@ -117,7 +117,7 @@ if __name__ == '__main__':
 
     # Shift distances
     fig, ax = plt.subplots()
-    ax.semilogy([np.min(d) for d in reduction_data_irka['dist']], '.-')
+    ax.semilogy(reduction_data_irka['dist'], '.-')
     ax.set_title('Distances between shifts in IRKA iterations')
     plt.show()
 

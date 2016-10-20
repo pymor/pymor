@@ -123,7 +123,7 @@ def tf_irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, 
         Dictionary of additional data produced by the reduction process.
         Contains:
 
-        - distances between interpolation points in different iterations
+        - distances between interpolation points in subsequent iterations
           `dist`,
         - interpolation points from all iterations `Sigma`, and
         - right and left tangential directions `R` and `L`.
@@ -158,19 +158,17 @@ def tf_irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, 
             sigma *= -1
         Sigma.append(sigma)
 
-        dist.append([])
-        for i in range(it + 1):
-            dist[-1].append(np.max(np.abs((Sigma[i] - Sigma[-1]) / Sigma[-1])))
+        dist.append(np.max(np.abs((Sigma[-2] - Sigma[-1]) / Sigma[-2])))
 
         if verbose:
-            print('{:4d} | {:.6e}'.format(it + 1, np.min(dist[-1])))
+            print('{:4d} | {:.6e}'.format(it + 1, dist[-1]))
 
         b = rom.B._matrix.T.dot(Y.conj())
         c = rom.C._matrix.dot(X)
         R.append(b)
         L.append(c)
 
-        if np.min(dist[-1]) < tol:
+        if dist[-1] < tol:
             break
 
     rom = interpolation(discretization, sigma, b, c)
