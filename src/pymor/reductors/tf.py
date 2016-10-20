@@ -77,7 +77,8 @@ def interpolation(discretization, sigma, b, c):
     return LTISystem.from_matrices(Ar, Br, Cr, D=None, E=Er, cont_time=discretization.cont_time)
 
 
-def tf_irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_sigma_in_rhp=True):
+def tf_irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_sigma_in_rhp=True,
+            conv_crit='rel_sigma'):
     """Reduce using TF-IRKA.
 
     .. [AG12] C. A. Beattie, S. Gugercin, Realization-independent
@@ -114,6 +115,10 @@ def tf_irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, 
         If `True`, new interpolation points are always in the right
         half-plane. Otherwise, they are reflections of reduced order model's
         poles.
+    conv_crit
+        Convergence criterion:
+            - `'rel_sigma'`: relative change in interpolation points
+            - `'rel_H2'`: relative H_2 distance of reduced order models
 
     Returns
     -------
@@ -132,6 +137,7 @@ def tf_irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, 
     assert sigma is None or len(sigma) == r
     assert b is None or isinstance(b, np.ndarray) and b.shape == (discretization.m, r)
     assert c is None or isinstance(c, np.ndarray) and c.shape == (discretization.p, r)
+    assert conv_crit in ('rel_sigma', 'rel_H2')
 
     if sigma is None:
         sigma = np.logspace(-1, 1, r)
@@ -141,8 +147,8 @@ def tf_irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, 
         c = np.ones((discretization.p, r))
 
     if verbose:
-        print('iter | shift change')
-        print('-----+-------------')
+        print('iter | conv. criterion')
+        print('-----+----------------')
 
     dist = []
     Sigma = [np.array(sigma)]
@@ -158,10 +164,24 @@ def tf_irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, 
             sigma *= -1
         Sigma.append(sigma)
 
-        dist.append(np.max(np.abs((Sigma[-2] - Sigma[-1]) / Sigma[-2])))
+        if conv_crit == 'rel_sigma':
+            dist.append(np.max(np.abs((Sigma[-2] - Sigma[-1]) / Sigma[-2])))
+        elif conv_crit == 'rel_H2':
+            if it == 0:
+                rom_new = rom
+                dist.append(np.inf)
+            else:
+                rom_old = rom_new
+                rom_new = rom
+                rom_diff = rom_old - rom_new
+                try:
+                    rel_H2_dist = rom_diff.norm() / rom_old.norm()
+                except:
+                    rel_H2_dist = np.inf
+                dist.append(rel_H2_dist)
 
         if verbose:
-            print('{:4d} | {:.6e}'.format(it + 1, dist[-1]))
+            print('{:4d} | {:15.9e}'.format(it + 1, dist[-1]))
 
         b = rom.B._matrix.T.dot(Y.conj())
         c = rom.C._matrix.dot(X)

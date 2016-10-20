@@ -91,7 +91,7 @@ def interpolation(discretization, sigma, b, c, use_arnoldi=False):
 
 
 def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_sigma_in_rhp=True,
-         use_arnoldi=False, compute_errors=False):
+         use_arnoldi=False, conv_crit='rel_sigma', compute_errors=False):
     r"""Reduce using IRKA.
 
     .. [GAB08] S. Gugercin, A. C. Antoulas, C. A. Beattie,
@@ -137,6 +137,11 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
         poles.
     use_arnoldi
         Should the Arnoldi process be used for rational interpolation.
+    conv_crit
+        Convergence criterion:
+            - `'rel_sigma'`: relative change in interpolation points
+            - `'max_sin_PG'`: maximum of sines in Petrov-Galerkin subspaces
+            - `'rel_H2'`: relative H_2 distance of reduced order models
     compute_errors
         Should the relative :math:`\mathcal{H}_2`-errors of intermediate
         reduced order models be computed.
@@ -167,6 +172,7 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
     assert sigma is None or len(sigma) == r
     assert b is None or b in discretization.B.source and len(b) == r
     assert c is None or c in discretization.C.range and len(c) == r
+    assert conv_crit in ('rel_sigma', 'max_sin_PG', 'rel_H2')
 
     if sigma is None:
         sigma = np.logspace(-1, 1, r)
@@ -177,11 +183,11 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
 
     if verbose:
         if compute_errors:
-            print('iter | shift change | rel. H_2-error')
-            print('-----+--------------+---------------')
+            print('iter | conv. criterion | rel. H_2-error')
+            print('-----+-----------------+----------------')
         else:
-            print('iter | shift change')
-            print('-----+-------------')
+            print('iter | conv. criterion')
+            print('-----+----------------')
 
     rom, rc, reduction_data = interpolation(discretization, sigma, b, c, use_arnoldi=use_arnoldi)
 
@@ -207,13 +213,40 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
             sigma *= -1
         Sigma.append(sigma)
 
-        dist.append(np.max(np.abs((Sigma[-2] - Sigma[-1]) / Sigma[-2])))
+        if conv_crit == 'rel_sigma':
+            dist.append(spla.norm((Sigma[-2] - Sigma[-1]) / Sigma[-2], ord=np.inf))
+        elif conv_crit == 'max_sin_PG':
+            if it == 0:
+                V_new = reduction_data['V'].data.T
+                W_new = reduction_data['W'].data.T
+                dist.append(1)
+            else:
+                V_old = V_new
+                W_old = W_new
+                V_new = reduction_data['V'].data.T
+                W_new = reduction_data['W'].data.T
+                sinV = spla.norm(V_new - V_old.dot(V_old.T.dot(V_new)), ord=2)
+                sinW = spla.norm(W_new - W_old.dot(W_old.T.dot(W_new)), ord=2)
+                dist.append(np.max([sinV, sinW]))
+        elif conv_crit == 'rel_H2':
+            if it == 0:
+                rom_new = rom
+                dist.append(np.inf)
+            else:
+                rom_old = rom_new
+                rom_new = rom
+                rom_diff = rom_old - rom_new
+                try:
+                    rel_H2_dist = rom_diff.norm() / rom_old.norm()
+                except:
+                    rel_H2_dist = np.inf
+                dist.append(rel_H2_dist)
 
         if verbose:
             if compute_errors:
-                print('{:4d} | {:.6e} | {:.6e}'.format(it + 1, dist[-1], rel_H2_err))
+                print('{:4d} | {:15.9e} | {:15.9e}'.format(it + 1, dist[-1], rel_H2_err))
             else:
-                print('{:4d} | {:.6e}'.format(it + 1, dist[-1]))
+                print('{:4d} | {:15.9e}'.format(it + 1, dist[-1]))
 
         Y = rom.B.source.from_data(Y.conj().T)
         X = rom.C.range.from_data(X.T)
