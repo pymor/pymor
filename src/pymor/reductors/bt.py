@@ -29,7 +29,8 @@ def bt(discretization, r=None, tol=None, typ='lyap', me_solver=None, method='bfs
     discretization
         The |LTISystem| which is to be reduced.
     r
-        Order of the reduced model if `tol` is `None`.
+        Order of the reduced model if `tol` is `None`, maximum order if
+        `tol` is specified.
     tol
         Tolerance for the error bound if `r` is `None`.
     typ
@@ -57,7 +58,7 @@ def bt(discretization, r=None, tol=None, typ='lyap', me_solver=None, method='bfs
         Dictionary of additional data produced by the reduction process.
         Contains projection matrices `V` and `W`.
     """
-    assert r is not None and tol is None or r is None and tol is not None
+    assert r is not None or tol is not None
     assert r is None or 0 < r < discretization.n
     assert method in ('sr', 'bfsr')
 
@@ -67,16 +68,21 @@ def bt(discretization, r=None, tol=None, typ='lyap', me_solver=None, method='bfs
         raise ValueError('r needs to be smaller than the sizes of Gramian factors.' +
                          ' Try reducing the tolerance in the low-rank Lyapunov equation solver.')
 
-    if r is None:
-        bounds = np.zeros(discretization._sv[typ].shape)
-        if typ[0] == 'lyap':
-            bounds[:-1] = 2 * discretization._sv[typ][-1:0:-1].cumsum()[::-1]
-        elif typ[0] == 'lqg':
-            tmp = discretization._sv[typ][-1:0:-1]
-            bounds[:-1] = 2 * (tmp / np.sqrt(1 + tmp ** 2)).cumsum()[::-1]
-        elif typ[0] == 'br':
-            bounds[:-1] = 2 * typ[1] * discretization._sv[typ][-1:0:-1].cumsum()[::-1]
-        r = np.argmax(bounds <= tol) + 1
+    if tol is not None:
+        bounds = np.zeros((discretization.n,))
+        sv = np.zeros((discretization.n,))
+        len_sv = len(discretization._sv[typ])
+        sv[:len_sv] = discretization._sv[typ]
+        sv[len_sv:] = discretization._sv[typ][-1]
+        sv_reverse = sv[-1:0:-1]
+        if typ == 'lyap':
+            bounds[:-1] = 2 * sv_reverse.cumsum()[::-1]
+        elif typ == 'lqg':
+            bounds[:-1] = 2 * (sv_reverse / np.sqrt(1 + sv_reverse ** 2)).cumsum()[::-1]
+        elif isinstance(typ, tuple) and typ[0] == 'br':
+            bounds[:-1] = 2 * typ[1] * sv_reverse.cumsum()[::-1]
+        r_tol = np.argmax(bounds <= tol) + 1
+        r = r_tol if r is None else min([r, r_tol])
 
     V = VectorArrayOperator(discretization._gramian[typ]['cf']).apply(discretization._V[typ], ind=list(range(r)))
     W = VectorArrayOperator(discretization._gramian[typ]['of']).apply(discretization._U[typ], ind=list(range(r)))
