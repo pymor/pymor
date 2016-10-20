@@ -9,7 +9,6 @@ import time
 
 from pymor.core.exceptions import GmshError
 from pymor.core.logger import getLogger
-from pymor.domaindescriptions.boundarytypes import BoundaryType
 from pymor.grids.interfaces import BoundaryInfoInterface
 from pymor.grids.unstructured import UnstructuredTriangleGrid
 
@@ -97,8 +96,8 @@ class GmshBoundaryInfo(BoundaryInfoInterface):
         assert isinstance(grid, GmshGrid)
         self.grid = grid
 
-        # Save |BoundaryTypes|.
-        self.boundary_types = [BoundaryType(pn[2]) for pn in sections['PhysicalNames'] if pn[1] == 1]
+        # Save boundary types.
+        self.boundary_types = [pn[2] for pn in sections['PhysicalNames'] if pn[1] == 1]
 
         # Compute ids, since Gmsh starts numbering with 1 instead of 0.
         name_ids = dict(zip([pn[0] for pn in sections['PhysicalNames']], np.arange(len(sections['PhysicalNames']),
@@ -117,12 +116,12 @@ class GmshBoundaryInfo(BoundaryInfoInterface):
 
             line_ids = {l[0]: find_edge([node_ids[l[2][0]], node_ids[l[2][1]]]) for l in sections['Elements']['line']}
 
-        # compute boundary masks for all |BoundaryTypes|.
+        # compute boundary masks for all boundary types.
         masks = {}
         for bt in self.boundary_types:
             masks[bt] = [np.array([False]*grid.size(1)), np.array([False]*grid.size(2))]
             masks[bt][0][[line_ids[l[0]] for l in sections['Elements']['line']]] = \
-                [(bt.type == sections['PhysicalNames'][name_ids[l[1][0]]][2]) for l in sections['Elements']['line']]
+                [(bt == sections['PhysicalNames'][name_ids[l[1][0]]][2]) for l in sections['Elements']['line']]
             ind = np.array([node_ids[n] for l in sections['Elements']['line'] for n in l[2]])
             val = masks[bt][0][[line_ids[l[0]] for l in sections['Elements']['line'] for n in l[2]]]
             masks[bt][1][ind[val]] = True
