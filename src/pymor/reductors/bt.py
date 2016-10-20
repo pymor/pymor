@@ -61,14 +61,11 @@ def bt(discretization, r=None, tol=None, typ='lyap', me_solver=None, method='bfs
     assert r is None or 0 < r < discretization.n
     assert method in ('sr', 'bfsr')
 
-    discretization.compute_gramian(typ, 'cf', me_solver=me_solver)
-    discretization.compute_gramian(typ, 'of', me_solver=me_solver)
+    discretization.compute_sv_U_V(typ, me_solver=me_solver)
 
     if r is not None and r > min([len(discretization._gramian[typ]['cf']), len(discretization._gramian[typ]['of'])]):
         raise ValueError('r needs to be smaller than the sizes of Gramian factors.' +
                          ' Try reducing the tolerance in the low-rank Lyapunov equation solver.')
-
-    discretization.compute_sv_U_V(typ, me_solver=me_solver)
 
     if r is None:
         bounds = np.zeros(discretization._sv[typ].shape)
