@@ -26,21 +26,11 @@ class DiscretizationInterface(CacheableInterface, Parametric):
         Dictionary of all |Operators| contained in the discretization
         (see :func:`pymor.reductors.basic.reduce_generic_rb` for a usage
         example).
-    functionals
-        Same as `operators` but for |Functionals|.
-    vector_operators
-        Same as operators but for |Operators| representing vectors, i.e.
-        linear |Operators| with `source.dim == 1`.
-    products
-        Same as |Operators| but for inner product operators associated with the
-        discretization.
     """
 
     solution_space = None
     linear = False
     operators = dict()
-    functionals = dict()
-    vector_operators = dict()
     products = dict()
 
     @abstractmethod

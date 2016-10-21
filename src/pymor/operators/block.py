@@ -25,6 +25,8 @@ class BlockOperator(OperatorBase):
         Two-dimensional array-like where each entry is an |Operator| or `None`.
     """
 
+    kind = 'operator'
+
     def _operators(self):
         """Iterator over operators."""
         for (i, j) in np.ndindex(self._blocks.shape):

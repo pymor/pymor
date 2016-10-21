@@ -56,9 +56,10 @@ class NumpyGenericOperator(OperatorBase):
     """
 
     def __init__(self, mapping, dim_source=1, dim_range=1, linear=False, parameter_type=None, solver_options=None,
-                 name=None):
+                 kind='operator', name=None):
         self.source = NumpyVectorSpace(dim_source)
         self.range = NumpyVectorSpace(dim_range)
+        self.kind = kind
         self.solver_options = solver_options
         self.name = name
         self._mapping = mapping
@@ -108,17 +109,22 @@ class NumpyMatrixBasedOperator(OperatorBase):
             if self._defaults_sid != defaults_sid():
                 self.logger.warn('Re-assembling since state of global defaults has changed.')
                 op = self._assembled_operator = NumpyMatrixOperator(self._assemble(),
+                                                                    kind=self.kind,
                                                                     solver_options=self.solver_options)
                 self._defaults_sid = defaults_sid()
                 return op
             else:
                 return self._assembled_operator
         elif not self.parameter_type:
-            op = self._assembled_operator = NumpyMatrixOperator(self._assemble(), solver_options=self.solver_options)
+            op = self._assembled_operator = NumpyMatrixOperator(self._assemble(),
+                                                                kind=self.kind,
+                                                                solver_options=self.solver_options)
             self._defaults_sid = defaults_sid()
             return op
         else:
-            return NumpyMatrixOperator(self._assemble(self.parse_parameter(mu)), solver_options=self.solver_options)
+            return NumpyMatrixOperator(self._assemble(self.parse_parameter(mu)),
+                                       kind=kind,
+                                       solver_options=self.solver_options)
 
     def apply(self, U, mu=None):
         return self.assemble(mu).apply(U)
@@ -131,7 +137,6 @@ class NumpyMatrixBasedOperator(OperatorBase):
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         return self.assemble(mu).apply_inverse(V, least_squares=least_squares)
-
 
     def export_matrix(self, filename, matrix_name=None, output_format='matlab', mu=None):
         """Save the matrix of the operator to a file.
@@ -173,12 +178,13 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         Name of the operator.
     """
 
-    def __init__(self, matrix, solver_options=None, name=None):
+    def __init__(self, matrix, solver_options=None, kind='operator', name=None):
         assert matrix.ndim <= 2
         if matrix.ndim == 1:
             matrix = np.reshape(matrix, (1, -1))
         self.source = NumpyVectorSpace(matrix.shape[1])
         self.range = NumpyVectorSpace(matrix.shape[0])
+        self.kind = kind
         self.solver_options = solver_options
         self.name = name
         self._matrix = matrix
@@ -292,7 +298,9 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         assert dim_range is None or dim_range <= self.range.dim
         name = name or '{}_projected_to_subbasis'.format(self.name)
         # copy instead of just slicing the matrix to ensure contiguous memory
-        return NumpyMatrixOperator(self._matrix[:dim_range, :dim_source].copy(), solver_options=self.solver_options,
+        return NumpyMatrixOperator(self._matrix[:dim_range, :dim_source].copy(),
+                                   kind=self.kind,
+                                   solver_options=self.solver_options,
                                    name=name)
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
@@ -345,7 +353,9 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                     matrix += (op._matrix * c)
                 except NotImplementedError:
                     matrix = matrix + (op._matrix * c)
-        return NumpyMatrixOperator(matrix, solver_options=solver_options)
+        return NumpyMatrixOperator(matrix,
+                                   kind=self.kind,
+                                   solver_options=solver_options)
 
     def __getstate__(self):
         if hasattr(self._matrix, 'factorization'):  # remove unplicklable SuperLU factorization

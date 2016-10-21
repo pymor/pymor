@@ -64,25 +64,26 @@ def reduce_generic_rb(discretization, RB, vector_product=None, disable_caching=T
     if RB is None:
         RB = discretization.solution_space.empty()
 
-    projected_operators = {k: op.projected(range_basis=RB, source_basis=RB, product=None) if op else None
-                           for k, op in discretization.operators.items()}
-    projected_functionals = {k: f.projected(range_basis=None, source_basis=RB, product=None) if f else None
-                             for k, f in discretization.functionals.items()}
-    projected_vector_operators = {k: (op.projected(range_basis=RB, source_basis=None, product=vector_product) if op
-                                      else None)
-                                  for k, op in discretization.vector_operators.items()}
+    def project_operator(op):
+        if op is None:
+            return None
+        elif op.is_operator:
+            return op.projected(range_basis=RB, source_basis=RB, product=None)
+        elif op.is_functional:
+            return op.projected(range_basis=None, source_basis=RB, product=None)
+        elif op.is_vector:
+            return op.projected(range_basis=RB, source_basis=None, product=vector_product)
+        elif op.is_function:
+            return op
+        else:
+            raise TypeError
 
-    if discretization.products is not None:
-        projected_products = {k: p.projected(range_basis=RB, source_basis=RB)
-                              for k, p in discretization.products.items()}
-    else:
-        projected_products = None
+    projected_operators = {k: project_operator(op) for k, op in discretization.operators.items()}
 
     cache_region = None if disable_caching else discretization.caching
 
-    rd = discretization.with_(operators=projected_operators, functionals=projected_functionals,
-                              vector_operators=projected_vector_operators,
-                              products=projected_products, visualizer=None, estimator=None,
+    rd = discretization.with_(operators=projected_operators,
+                              visualizer=None, estimator=None,
                               cache_region=cache_region, name=discretization.name + '_reduced')
     rd.disable_logging()
     rc = GenericRBReconstructor(RB)
@@ -136,18 +137,21 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
         Reconstructor for `rd`.
     """
 
-    projected_operators = {k: op.projected_to_subbasis(dim_range=dim, dim_source=dim) if op is not None else None
-                           for k, op in discretization.operators.items()}
-    projected_functionals = {k: f.projected_to_subbasis(dim_range=None, dim_source=dim) if f is not None else None
-                             for k, f in discretization.functionals.items()}
-    projected_vector_operators = {k: op.projected_to_subbasis(dim_range=dim, dim_source=None) if op else None
-                                  for k, op in discretization.vector_operators.items()}
+    def project_operator(op):
+        if op is None:
+            return None
+        elif op.is_operator:
+            return op.projected_to_subbasis(dim_range=dim, dim_source=dim)
+        elif op.is_functional:
+            return op.projected_to_subbasis(dim_range=None, dim_source=dim)
+        elif op.is_vector:
+            return op.projected_to_subbasis(dim_range=dim, dim_source=None)
+        elif op.is_function:
+            return op
+        else:
+            raise TypeError
 
-    if discretization.products is not None:
-        projected_products = {k: op.projected_to_subbasis(dim_range=dim, dim_source=dim)
-                              for k, op in discretization.products.items()}
-    else:
-        projected_products = None
+    projected_operators = {k: project_operator(op) for k, op in discretization.operators.items()}
 
     if hasattr(discretization, 'estimator') and hasattr(discretization.estimator, 'restricted_to_subbasis'):
         estimator = discretization.estimator.restricted_to_subbasis(dim, discretization=discretization)
@@ -163,9 +167,8 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
     else:
         estimator = None
 
-    rd = discretization.with_(operators=projected_operators, functionals=projected_functionals,
-                              vector_operators=projected_vector_operators,
-                              products=projected_products, visualizer=None, estimator=estimator,
+    rd = discretization.with_(operators=projected_operators,
+                              visualizer=None, estimator=estimator,
                               name=discretization.name + '_reduced_to_subbasis')
     rd.disable_logging()
 

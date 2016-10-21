@@ -44,8 +44,10 @@ class LincombOperator(OperatorBase):
         assert all(isinstance(c, (ParameterFunctionalInterface, _INDEXTYPES)) for c in coefficients)
         assert all(op.source == operators[0].source for op in operators[1:])
         assert all(op.range == operators[0].range for op in operators[1:])
+        assert all(op.kind == operators[0].kind for op in operators[1:])
         self.source = operators[0].source
         self.range = operators[0].range
+        self.kind = operators[0].kind
         self.operators = tuple(operators)
         self.linear = all(op.linear for op in operators)
         self.coefficients = tuple(coefficients)
@@ -245,6 +247,7 @@ class Concatenation(OperatorBase):
         self.build_parameter_type(second, first)
         self.source = first.source
         self.range = second.range
+        self.kind = self._kind_map[(second.kind), (first.kind)]
         self.linear = second.linear and first.linear
         self.solver_options = solver_options
         self.name = name
@@ -285,6 +288,17 @@ class Concatenation(OperatorBase):
             projected_second = self.second.projected(range_basis, None, product=product)
             return Concatenation(projected_second, projected_first, name=name or self.name + '_projected')
 
+    _kind_map = {
+        ('operator', 'operator'):   'operator',
+        ('operator', 'vector'):     'vector',
+        ('functional', 'operator'): 'functional',
+        ('functional', 'vector'):   'function',
+        ('vector', 'function'):     'vector',
+        ('vector', 'functional'):   'operator',
+        ('function', 'functional'): 'functional',
+        ('function', 'function'):   'function'
+    }
+
 
 class ComponentProjection(OperatorBase):
     """|Operator| representing the projection of a |VectorArray| on some of its components.
@@ -303,11 +317,12 @@ class ComponentProjection(OperatorBase):
 
     linear = True
 
-    def __init__(self, components, source, name=None):
+    def __init__(self, components, source, functional=False, name=None):
         assert all(0 <= c < source.dim for c in components)
         self.components = np.array(components, dtype=np.int32)
         self.range = NumpyVectorSpace(len(components))
         self.source = source
+        self.kind = 'functional' if functional else 'operator'
         self.name = name
 
     def apply(self, U, mu=None):
@@ -335,6 +350,7 @@ class IdentityOperator(OperatorBase):
         Name of the operator.
     """
 
+    kind = 'operator'
     linear = True
 
     def __init__(self, space, name=None):
@@ -407,7 +423,7 @@ class ConstantOperator(OperatorBase):
 
     linear = False
 
-    def __init__(self, value, source, name=None):
+    def __init__(self, value, source, kind='operator', name=None):
         assert isinstance(value, VectorArrayInterface)
         assert len(value) == 1
         self.source = source
@@ -422,7 +438,7 @@ class ConstantOperator(OperatorBase):
     def jacobian(self, U, mu=None):
         assert U in self.source
         assert len(U) == 1
-        return ZeroOperator(self.source, self.range, name=self.name + '_jacobian')
+        return ZeroOperator(self.source, self.range, kind=self.kind, name=self.name + '_jacobian')
 
     def projected(self, range_basis, source_basis, product=None, name=None):
         assert source_basis is None or source_basis in self.source
@@ -470,11 +486,12 @@ class ZeroOperator(OperatorBase):
 
     linear = True
 
-    def __init__(self, source, range, name=None):
+    def __init__(self, source, range, kind='operator', name=None):
         assert isinstance(source, VectorSpace)
         assert isinstance(range, VectorSpace)
         self.source = source
         self.range = range
+        self.kind = kind
         self.name = name
 
     def apply(self, U, mu=None):
@@ -504,6 +521,7 @@ class ZeroOperator(OperatorBase):
         if source_basis is not None and range_basis is not None:
             from pymor.operators.numpy import NumpyMatrixOperator
             return NumpyMatrixOperator(np.zeros((len(range_basis), len(source_basis))),
+                                       kind=self.kind,
                                        name=self.name + '_projected')
         else:
             new_source = NumpyVectorSpace(len(source_basis)) if source_basis is not None else self.source
@@ -546,7 +564,7 @@ class VectorArrayOperator(OperatorBase):
 
     linear = True
 
-    def __init__(self, array, transposed=False, name=None):
+    def __init__(self, array, transposed=False, kind='operator', name=None):
         self._array = array.copy()
         if transposed:
             self.source = array.space
@@ -554,6 +572,7 @@ class VectorArrayOperator(OperatorBase):
         else:
             self.source = NumpyVectorSpace(len(array))
             self.range = array.space
+        self.kind = kind
         self.transposed = transposed
         self.name = name
 
@@ -655,7 +674,7 @@ class VectorOperator(VectorArrayOperator):
     def __init__(self, vector, name=None):
         assert isinstance(vector, VectorArrayInterface)
         assert len(vector) == 1
-        super().__init__(vector, transposed=False, name=name)
+        super().__init__(vector, transposed=False, kind='vector', name=name)
 
 
 class VectorFunctional(VectorArrayOperator):
@@ -695,9 +714,9 @@ class VectorFunctional(VectorArrayOperator):
         assert len(vector) == 1
         assert product is None or isinstance(product, OperatorInterface) and vector in product.source
         if product is None:
-            super().__init__(vector, transposed=True, name=name)
+            super().__init__(vector, transposed=True, kind='functional', name=name)
         else:
-            super().__init__(product.apply(vector), transposed=True, name=name)
+            super().__init__(product.apply(vector), transposed=True, kind='functional', name=name)
 
 
 class FixedParameterOperator(OperatorBase):
@@ -718,6 +737,7 @@ class FixedParameterOperator(OperatorBase):
         assert operator.parse_parameter(mu) or True
         self.source = operator.source
         self.range = operator.range
+        self.kind = operator.kind
         self.operator = operator
         self.mu = mu.copy()
         self.linear = operator.linear
@@ -785,6 +805,7 @@ class AdjointOperator(OperatorBase):
         self.build_parameter_type(operator)
         self.source = operator.range
         self.range = operator.source
+        self.kind = self._kind_map[operator.kind]
         self.operator = operator
         self.source_product = source_product
         self.range_product = range_product
@@ -860,6 +881,13 @@ class AdjointOperator(OperatorBase):
         return AdjointOperator(operator, source_product=source_product, range_product=range_product,
                                name=name or self.name + '_projected')
 
+    _kind_map = {
+        'operator': 'operator',
+        'vector': 'functional',
+        'functional': 'vector',
+        'function': 'function'
+    }
+
 
 class SelectionOperator(OperatorBase):
     """An |Operator| selected from a list of |Operators|.
@@ -894,8 +922,10 @@ class SelectionOperator(OperatorBase):
         assert all(isinstance(op, OperatorInterface) for op in operators)
         assert all(op.source == operators[0].source for op in operators[1:])
         assert all(op.range == operators[0].range for op in operators[1:])
+        assert all(op.kind == operators[0].kind for op in operators[1:])
         self.source = operators[0].source
         self.range = operators[0].range
+        self.kind = operators[0].kind
         self.operators = tuple(operators)
         self.linear = all(op.linear for op in operators)
 

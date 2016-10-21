@@ -169,16 +169,16 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
     l2_0_product = Prod(grid, boundary_info, dirichlet_clear_columns=True, name='l2_0')
     h1_semi_product = DiffusionOperator(grid, empty_bi, name='h1_semi')
     h1_0_semi_product = DiffusionOperator(grid, boundary_info, dirichlet_clear_columns=True, name='h1_0_semi')
-    products = {'h1': l2_product + h1_semi_product,
-                'h1_semi': h1_semi_product,
-                'l2': l2_product,
-                'h1_0': l2_0_product + h1_0_semi_product,
-                'h1_0_semi': h1_0_semi_product,
-                'l2_0': l2_0_product}
+    products = {'h1_product': l2_product + h1_semi_product,
+                'h1_semi_product': h1_semi_product,
+                'l2_product': l2_product,
+                'h1_0_product': l2_0_product + h1_0_semi_product,
+                'h1_0_semi_product': h1_0_semi_product,
+                'l2_0_product': l2_0_product}
 
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
 
-    discretization = StationaryDiscretization(L, F, products=products, visualizer=visualizer,
+    discretization = StationaryDiscretization(L, F, operators=products, visualizer=visualizer,
                                               parameter_space=parameter_space, name='{}_CG'.format(p.name))
 
     return discretization, {'grid': grid, 'boundary_info': boundary_info}
@@ -269,11 +269,11 @@ def discretize_elliptic_fv(analytical_problem, diameter=None, domain_discretizer
         visualizer = None
 
     l2_product = fv.L2Product(grid, name='l2')
-    products = {'l2': l2_product}
+    products = {'l2_product': l2_product}
 
     parameter_space = p.parameter_space if hasattr(p, 'parameter_space') else None
 
-    discretization = StationaryDiscretization(L, F, products=products, visualizer=visualizer,
+    discretization = StationaryDiscretization(L, F, operators=products, visualizer=visualizer,
                                               parameter_space=parameter_space, name='{}_FV'.format(p.name))
 
     return discretization, {'grid': grid, 'boundary_info': boundary_info}

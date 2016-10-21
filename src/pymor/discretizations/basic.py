@@ -3,8 +3,6 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from itertools import chain
-
 from pymor.algorithms.timestepping import TimeStepperInterface
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.operators.constructions import VectorOperator, induced_norm
@@ -19,22 +17,19 @@ class DiscretizationBase(DiscretizationInterface):
 
     sid_ignore = DiscretizationInterface.sid_ignore | {'visualizer'}
 
-    def __init__(self, operators, functionals, vector_operators, products=None, estimator=None, visualizer=None,
+    def __init__(self, operators, estimator=None, visualizer=None,
                  cache_region=None, name=None):
         self.operators = FrozenDict(operators)
-        self.functionals = FrozenDict(functionals)
-        self.vector_operators = FrozenDict(vector_operators)
-        self.linear = all(op is None or op.linear for op in chain(operators.values(), functionals.values()))
-        self.products = products
+        self.linear = all(op is None or op.linear for op in operators.values())
         self.estimator = estimator
         self.visualizer = visualizer
         self.enable_caching(cache_region)
         self.name = name
 
-        if products:
-            for k, v in products.items():
-                setattr(self, '{}_product'.format(k), v)
-                setattr(self, '{}_norm'.format(k), induced_norm(v))
+        for k, v in operators.items():
+            if k.endswith('_product'):
+                setattr(self, k, v)
+                setattr(self, '{}_norm'.format(k[:-len('_product')]), induced_norm(v))
 
     def visualize(self, U, **kwargs):
         """Visualize a solution |VectorArray| U.
@@ -75,16 +70,8 @@ class StationaryDiscretization(DiscretizationBase):
         The |Operator| L.
     rhs
         The |Functional| F.
-    products
-        A dict of inner product |Operators| defined on the discrete space the
-        problem is posed on. For each product a corresponding norm
-        is added as a method of the discretization.
     operators
         A dict of |Operators| associated with the discretization.
-    functionals
-        A dict of (output) |Functionals| associated with the discretization.
-    vector_operators
-        A dict of vector-like |Operators| associated with the discretization.
     parameter_space
         The |ParameterSpace| for which the discrete problem is posed.
     estimator
@@ -111,28 +98,21 @@ class StationaryDiscretization(DiscretizationBase):
         The |Functional| F. The same as `functionals['rhs']`.
     """
 
-    def __init__(self, operator=None, rhs=None, products=None, operators=None, functionals=None, vector_operators=None,
+    def __init__(self, operator=None, rhs=None, operators=None,
                  parameter_space=None, estimator=None, visualizer=None, cache_region=None, name=None):
-        functionals = functionals or {}
         operators = operators or {}
-        vector_operators = vector_operators or {}
         operator = operator or operators['operator']
-        rhs = rhs or functionals['rhs']
+        rhs = rhs or operators['rhs']
         assert isinstance(operator, OperatorInterface)
         assert isinstance(rhs, OperatorInterface) and rhs.linear
         assert operator.source == operator.range == rhs.source
         assert rhs.range.dim == 1
-        assert all(f.source == operator.source for f in functionals.values())
         assert 'operator' not in operators or operator == operators['operator']
-        assert 'rhs' not in functionals or rhs == functionals['rhs']
+        assert 'rhs' not in operators or rhs == operators['rhs']
 
-        operators_with_operator = {'operator': operator}
-        operators_with_operator.update(operators)
-        functionals_with_rhs = {'rhs': rhs}
-        functionals_with_rhs.update(functionals)
-        super().__init__(operators=operators_with_operator,
-                         functionals=functionals_with_rhs,
-                         vector_operators=vector_operators, products=products,
+        operators_with_operators = {'operator': operator, 'rhs': rhs}
+        operators_with_operators.update(operators)
+        super().__init__(operators=operators_with_operators,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
         self.solution_space = operator.source
@@ -147,9 +127,8 @@ class StationaryDiscretization(DiscretizationBase):
         # when 'operators' is not given but 'operator', make sure that
         # we use the old 'operators' dict but with updated 'operator'
         kwargs.setdefault('operators', dict(self.operators,
-                                            operator=kwargs.get('operator', self.operator)))
-        kwargs.setdefault('functionals', dict(self.functionals,
-                                              rhs=kwargs.get('rhs', self.rhs)))
+                                            operator=kwargs.get('operator', self.operator),
+                                            rhs=kwargs.get('rhs', self.rhs)))
 
         # make sure we do not use self.operator (for the case that 'operators' is given)
         kwargs.setdefault('operator', None)
@@ -202,16 +181,6 @@ class InstationaryDiscretization(DiscretizationBase):
     num_values
         The number of returned vectors of the solution trajectory. If `None`, each
         intermediate vector that is calculated is returned.
-    products
-        A dict of product |Operators| defined on the discrete space the
-        problem is posed on. For each product a corresponding norm
-        is added as a method of the discretization.
-    operators
-        A dict of |Operators| associated with the discretization.
-    functionals
-        A dict of (output) |Functionals| associated with the discretization.
-    vector_operators
-        A dict of vector-like |Operators| associated with the discretization.
     parameter_space
         The |ParameterSpace| for which the discrete problem is posed.
     estimator
@@ -248,21 +217,19 @@ class InstationaryDiscretization(DiscretizationBase):
     """
 
     def __init__(self, T, initial_data=None, operator=None, rhs=None, mass=None, time_stepper=None, num_values=None,
-                 products=None, operators=None, functionals=None, vector_operators=None, parameter_space=None,
+                 operators=None, parameter_space=None,
                  estimator=None, visualizer=None, cache_region=None, name=None):
-        functionals = functionals or {}
         operators = operators or {}
-        vector_operators = vector_operators or {}
-        initial_data = initial_data or vector_operators['initial_data']
+        initial_data = initial_data or operators['initial_data']
         operator = operator or operators['operator']
-        rhs = rhs or functionals.get('rhs')
-        mass = mass or operators.get('mass')
+        rhs = rhs or operators['rhs']
+        mass = mass or operators['mass']
         if isinstance(initial_data, VectorArrayInterface):
             initial_data = VectorOperator(initial_data, name='initial_data')
 
         assert isinstance(initial_data, OperatorInterface)
         assert initial_data.source == NumpyVectorSpace(1)
-        assert 'initial_data' not in vector_operators or initial_data == vector_operators['initial_data']
+        assert 'initial_data' not in operators or initial_data == operators['initial_data']
 
         assert isinstance(operator, OperatorInterface)
         assert operator.source == operator.range == initial_data.range
@@ -270,28 +237,19 @@ class InstationaryDiscretization(DiscretizationBase):
 
         assert rhs is None or isinstance(rhs, OperatorInterface) and rhs.linear
         assert rhs is None or rhs.source == operator.source and rhs.range.dim == 1
-        assert 'rhs' not in functionals or rhs == functionals['rhs']
+        assert 'rhs' not in operators or rhs == operators['rhs']
 
         assert mass is None or isinstance(mass, OperatorInterface) and mass.linear
         assert mass is None or mass.source == mass.range == operator.source
         assert 'mass' not in operators or mass == operators['mass']
 
         assert isinstance(time_stepper, TimeStepperInterface)
-        assert all(f.source == operator.source for f in functionals.values() if f)
 
-        operators_with_operator_mass = {'operator': operator, 'mass': mass}
-        operators_with_operator_mass.update(operators)
+        operators_with_operators = {'initial_data': initial_data, 'operator': operator, 'mass': mass, 'rhs': rhs}
+        operators_with_operators.update(operators)
 
-        functionals_with_rhs = {'rhs': rhs} if rhs else {}
-        functionals_with_rhs.update(functionals)
-
-        vector_operators_with_initial_data = {'initial_data': initial_data}
-        vector_operators_with_initial_data.update(vector_operators)
-
-        super().__init__(operators=operators_with_operator_mass,
-                         functionals=functionals_with_rhs,
-                         vector_operators=vector_operators_with_initial_data,
-                         products=products, estimator=estimator,
+        super().__init__(operators=operators_with_operators,
+                         estimator=estimator,
                          visualizer=visualizer, cache_region=cache_region, name=name)
         self.T = T
         self.solution_space = operator.source
@@ -314,11 +272,9 @@ class InstationaryDiscretization(DiscretizationBase):
         # we use the old 'operators' dict but with updated 'operators' and 'mass'
         kwargs.setdefault('operators', dict(self.operators,
                                             operator=kwargs.get('operator', self.operator),
-                                            mass=kwargs.get('mass', self.mass)))
-        kwargs.setdefault('functionals', dict(self.functionals,
-                                              rhs=kwargs.get('rhs', self.rhs)))
-        kwargs.setdefault('vector_operators', dict(self.vector_operators,
-                                                   initial_data=kwargs.get('initial_data', self.initial_data)))
+                                            mass=kwargs.get('mass', self.mass),
+                                            rhs=kwargs.get('rhs', self.rhs),
+                                            initial_data=kwargs.get('initial_data', self.initial_data)))
 
         # make sure we do not use self.operator (for the case that 'operators' is given)
         kwargs.setdefault('operator', None)

@@ -211,6 +211,7 @@ class NonlinearAdvectionOperator(OperatorBase):
 
     sid_ignore = OperatorBase.sid_ignore | {'_grid_data'}
 
+    kind = 'operator'
     linear = False
 
     def __init__(self, grid, boundary_info, numerical_flux, dirichlet_data=None, solver_options=None, name=None):
@@ -431,7 +432,7 @@ class NonlinearAdvectionOperator(OperatorBase):
         A = csc_matrix(A).copy()   # See pymor.operators.cg.DiffusionOperatorP1 for why copy() is necessary
         A = dia_matrix(([1. / VOLS0], [0]), shape=(g.size(0),) * 2) * A
 
-        return NumpyMatrixOperator(A)
+        return NumpyMatrixOperator(A, kind=self.kind)
 
 
 def nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, flux, lxf_lambda=1.0,
@@ -477,6 +478,8 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
     name
         The name of the operator.
     """
+
+    kind = 'operator'
 
     def __init__(self, grid, boundary_info, velocity_field, lxf_lambda=1.0, solver_options=None, name=None):
         self.grid = grid
@@ -540,6 +543,7 @@ class L2Product(NumpyMatrixBasedOperator):
         The name of the product.
     """
 
+    kind = 'operator'
     sparse = True
 
     def __init__(self, grid, solver_options=None, name=None):
@@ -589,6 +593,7 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
     """
 
     range = NumpyVectorSpace(1)
+    kind = 'functional'
     sparse = False
 
     def __init__(self, grid, function=None, boundary_info=None, dirichlet_data=None, diffusion_function=None,
@@ -676,6 +681,7 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
         Name of the operator.
     """
 
+    kind = 'operator'
     sparse = True
 
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None, solver_options=None,
