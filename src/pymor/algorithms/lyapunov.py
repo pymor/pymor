@@ -127,53 +127,7 @@ try:
             return np.matrix(x.data).T
 
         def parameter(self, arp_p, arp_m, B=None, K=None):
-            n = self.A.source.dim
-
-            def A_mv(v):
-                v = self.A.source.from_data(v)
-                w = self.A.apply(v)
-                return w.data[0, :]
-
-            def A_rmv(v):
-                v = self.A.range.from_data(v)
-                w = self.A.apply_adjoint(v)
-                return w.data[0, :]
-
-            def A_mm(v):
-                v = self.A.source.from_data(v.T)
-                w = self.A.apply(v)
-                return w.data.T
-
-            A_scipy = spsla.LinearOperator((n, n), matvec=A_mv, rmatvec=A_rmv, matmat=A_mm, dtype=float)
-
-            if self.E is None:
-                E_scipy = None
-            else:
-                def E_mv(v):
-                    v = self.E.source.from_data(v)
-                    w = self.E.apply(v)
-                    return w.data[0, :]
-
-                def E_rmv(v):
-                    v = self.E.range.from_data(v)
-                    w = self.E.apply_adjoint(v)
-                    return w.data[0, :]
-
-                def E_mm(v):
-                    v = self.E.source.from_data(v.T)
-                    w = self.E.apply(v)
-                    return w.data.T
-
-                E_scipy = spsla.LinearOperator((n, n), matvec=E_mv, rmatvec=E_rmv, matmat=E_mm, dtype=float)
-
-            lm = spsla.eigs(A_scipy, 20, E_scipy, which='LM', return_eigenvectors=False)
-            sm = spsla.eigs(A_scipy, 20, E_scipy, which='SM', return_eigenvectors=False)
-
-            # concatenate both and take real part, and filter positive ones
-            ev = np.concatenate((lm, sm))
-            ev = ev.real
-            ev = ev[ev < 0]
-            return ev
+            return None
 except ImportError:
     pass
 
@@ -310,6 +264,7 @@ def solve_lyap(A, E, B, trans=False, me_solver=None, tol=None):
     elif me_solver == 'pymess_lradi':
         import pymess
         opts = pymess.options()
+        opts.adi.shifts.paratype = pymess.MESS_LRCFADI_PARA_ADAPTIVE_V
         if trans:
             opts.type = pymess.MESS_OP_TRANSPOSE
         if tol is not None:
