@@ -64,7 +64,7 @@ class NumpyGenericOperator(OperatorBase):
         self._mapping = mapping
         self.linear = linear
         if parameter_type is not None:
-            self.build_parameter_type(parameter_type, local_global=True)
+            self.build_parameter_type(parameter_type)
 
     def apply(self, U, mu=None):
         assert U in self.source

@@ -138,7 +138,7 @@ class StationaryDiscretization(DiscretizationBase):
         self.solution_space = operator.source
         self.operator = operator
         self.rhs = rhs
-        self.build_parameter_type(inherits=(operator, rhs))
+        self.build_parameter_type(operator, rhs)
         self.parameter_space = parameter_space
 
     def with_(self, **kwargs):
@@ -301,7 +301,7 @@ class InstationaryDiscretization(DiscretizationBase):
         self.mass = mass
         self.time_stepper = time_stepper
         self.num_values = num_values
-        self.build_parameter_type(inherits=(initial_data, operator, rhs, mass), provides={'_t': 0})
+        self.build_parameter_type(initial_data, operator, rhs, mass, provides={'_t': 0})
         self.parameter_space = parameter_space
         if hasattr(time_stepper, 'nt'):
             self.add_with_arguments = self.add_with_arguments | {'time_stepper_nt'}

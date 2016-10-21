@@ -67,7 +67,7 @@ class MPIDiscretization(DiscretizationBase):
         if all(subtype == subtypes[0] for subtype in subtypes):
             subtypes = (subtypes[0],)
         self.solution_space = VectorSpace(array_type, (d.solution_space.type, subtypes))
-        self.build_parameter_type(inherits=(d,))
+        self.build_parameter_type(d)
         self.parameter_space = d.parameter_space
 
     def _solve(self, mu=None):

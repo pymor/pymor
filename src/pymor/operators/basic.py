@@ -251,7 +251,7 @@ class ProjectedOperator(OperatorBase):
                 and range_basis is not None
                 and operator.range == product.source
                 and product.range == product.source)
-        self.build_parameter_type(inherits=(operator,))
+        self.build_parameter_type(operator)
         self.source = NumpyVectorSpace(len(source_basis)) if source_basis is not None else operator.source
         self.range = NumpyVectorSpace(len(range_basis)) if range_basis is not None else operator.range
         self.solver_options = solver_options

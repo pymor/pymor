@@ -64,7 +64,7 @@ class BlockOperator(OperatorBase):
         self.num_source_blocks = len(source_types)
         self.num_range_blocks = len(range_types)
         self.linear = all(op.linear for op in self._operators())
-        self.build_parameter_type(inherits=list(self._operators()))
+        self.build_parameter_type(*self._operators())
 
     @classmethod
     def hstack(cls, operators):

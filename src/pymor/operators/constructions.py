@@ -5,7 +5,7 @@
 
 """Module containing some constructions to obtain new operators from old ones."""
 
-from numbers import Number
+from itertools import chain
 
 import numpy as np
 
@@ -51,8 +51,8 @@ class LincombOperator(OperatorBase):
         self.coefficients = tuple(coefficients)
         self.solver_options = solver_options
         self.name = name
-        self.build_parameter_type(inherits=list(operators) +
-                                  [f for f in coefficients if isinstance(f, ParameterFunctionalInterface)])
+        self.build_parameter_type(*chain(operators,
+                                         (f for f in coefficients if isinstance(f, ParameterFunctionalInterface))))
         self._try_assemble = not self.parametric
 
     def evaluate_coefficients(self, mu):
@@ -242,7 +242,7 @@ class Concatenation(OperatorBase):
         assert first.range == second.source
         self.first = first
         self.second = second
-        self.build_parameter_type(inherits=(second, first))
+        self.build_parameter_type(second, first)
         self.source = first.source
         self.range = second.range
         self.linear = second.linear and first.linear
@@ -782,7 +782,7 @@ class AdjointOperator(OperatorBase):
         assert isinstance(operator, OperatorInterface)
         assert operator.linear
         assert not with_apply_inverse or solver_options is None
-        self.build_parameter_type(inherits=(operator,))
+        self.build_parameter_type(operator)
         self.source = operator.range
         self.range = operator.source
         self.operator = operator
@@ -900,7 +900,7 @@ class SelectionOperator(OperatorBase):
         self.linear = all(op.linear for op in operators)
 
         self.name = name
-        self.build_parameter_type(inherits=list(operators) + [parameter_functional])
+        self.build_parameter_type(parameter_functional, *operators)
 
         self.boundaries = tuple(boundaries)
         self.parameter_functional = parameter_functional
@@ -982,7 +982,7 @@ class InducedNorm(ImmutableInterface, Parametric):
         self.raise_negative = raise_negative
         self.tol = tol
         self.name = name or product.name
-        self.build_parameter_type(inherits=(product,))
+        self.build_parameter_type(product)
 
     def __call__(self, U, mu=None):
         norm_squared = self.product.pairwise_apply2(U, U, mu=mu)
