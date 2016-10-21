@@ -513,7 +513,7 @@ def test_pairwise_dot(compatible_vector_array_pair):
         assert isinstance(r, np.ndarray)
         assert r.shape == (v1.len_ind(ind1),)
         r2 = v2[ind2].pairwise_dot(v1[ind1])
-        assert np.all(r == r2)
+        assert np.allclose,(r, r2)
         assert np.all(r <= v1[ind1].l2_norm() * v2[ind2].l2_norm() * (1. + 1e-10))
         if hasattr(v1, 'data'):
             assert np.allclose(r, np.sum(indexed(dv1, ind1) * indexed(dv2, ind2), axis=1))
@@ -528,7 +528,7 @@ def test_pairwise_dot_self(vector_array):
         assert isinstance(r, np.ndarray)
         assert r.shape == (v.len_ind(ind1),)
         r2 = v[ind2].pairwise_dot(v[ind1])
-        assert np.all(r == r2)
+        assert np.allclose(r, r2)
         assert np.all(r <= v[ind1].l2_norm() * v[ind2].l2_norm() * (1. + 1e-10))
         if hasattr(v, 'data'):
             assert np.allclose(r, np.sum(indexed(dv, ind1) * indexed(dv, ind2), axis=1))
@@ -546,7 +546,7 @@ def test_dot(compatible_vector_array_pair):
         assert isinstance(r, np.ndarray)
         assert r.shape == (v1.len_ind(ind1), v2.len_ind(ind2))
         r2 = v2[ind2].dot(v1[ind1])
-        assert np.all(r == r2.T)
+        assert np.allclose(r, r2.T)
         assert np.all(r <= v1[ind1].l2_norm()[:, np.newaxis] * v2[ind2].l2_norm()[np.newaxis, :] * (1. + 1e-10))
         if hasattr(v1, 'data'):
             assert np.allclose(r, indexed(dv1, ind1).dot(indexed(dv2, ind2).T))
@@ -561,13 +561,13 @@ def test_dot_self(vector_array):
         assert isinstance(r, np.ndarray)
         assert r.shape == (v.len_ind(ind1), v.len_ind(ind2))
         r2 = v[ind2].dot(v[ind1])
-        assert np.all(r == r2.T)
+        assert np.allclose(r, r2.T)
         assert np.all(r <= v[ind1].l2_norm()[:, np.newaxis] * v[ind2].l2_norm()[np.newaxis, :] * (1. + 1e-10))
         if hasattr(v, 'data'):
             assert np.allclose(r, indexed(dv, ind1).dot(indexed(dv, ind2).T))
     for ind in valid_inds(v):
         r = v[ind].dot(v[ind])
-        assert np.all(r == r.T)
+        assert np.allclose(r, r.T)
 
 
 def test_lincomb_1d(vector_array):
