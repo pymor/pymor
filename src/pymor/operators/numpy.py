@@ -83,15 +83,23 @@ class NumpyGenericOperator(OperatorBase):
         else:
             return NumpyVectorArray(self._mapping(U.data), copy=False)
 
-    def apply_adjoint(self, U, mu=None):
+    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         if self._adjoint_mapping is None:
             raise ValueError('NumpyGenericOperator: adjoint mapping was not defined.')
         assert U in self.range
+        if range_product:
+            PrU = range_product.apply(U).data
+        else:
+            PrU = U.data
         if self.parametric:
             mu = self.parse_parameter(mu)
-            return NumpyVectorArray(self._adjoint_mapping(U.data, mu=mu), copy=False)
+            ATPrU = NumpyVectorArray(self._adjoint_mapping(PrU, mu=mu), copy=False)
         else:
-            return NumpyVectorArray(self._adjoint_mapping(U.data), copy=False)
+            ATPrU = NumpyVectorArray(self._adjoint_mapping(PrU), copy=False)
+        if source_product:
+            return source_product.apply_inverse(ATPrU)
+        else:
+            return ATPrU
 
 
 class NumpyMatrixBasedOperator(OperatorBase):
