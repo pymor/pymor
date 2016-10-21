@@ -15,7 +15,7 @@ from pymor.algorithms.lyapunov import solve_lyap
 import pytest
 
 
-n_list = [50, 100]
+n_list = [200, 300]
 m_list = [1, 2]
 me_solver_list = ['scipy', 'slycot', 'pymess_lyap', 'pymess_lradi']
 me_solver_E_list = ['slycot', 'pymess_lyap', 'pymess_lradi']
