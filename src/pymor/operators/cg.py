@@ -50,6 +50,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         The name of the functional.
     """
 
+    kind = 'functional'
     sparse = False
     range = NumpyVectorSpace(1)
 
@@ -171,6 +172,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         The name of the functional.
     """
 
+    kind = 'functional'
     sparse = False
     range = NumpyVectorSpace(1)
 
@@ -275,6 +277,7 @@ class L2ProductP1(NumpyMatrixBasedOperator):
         The name of the product.
     """
 
+    kind = 'operator'
     sparse = True
 
     def __init__(self, grid, boundary_info, dirichlet_clear_rows=True, dirichlet_clear_columns=False,
@@ -373,6 +376,7 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
         The name of the product.
     """
 
+    kind = 'operator'
     sparse = True
 
     def __init__(self, grid, boundary_info, dirichlet_clear_rows=True, dirichlet_clear_columns=False,
@@ -474,6 +478,7 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
         Name of the operator.
     """
 
+    kind = 'operator'
     sparse = True
 
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
@@ -594,6 +599,7 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         Name of the operator.
     """
 
+    kind = 'operator'
     sparse = True
 
     def __init__(self, grid, boundary_info, diffusion_function=None, diffusion_constant=None,
@@ -713,6 +719,7 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
         Name of the operator.
     """
 
+    kind = 'operator'
     sparse = True
 
     def __init__(self, grid, boundary_info, advection_function=None, advection_constant=None,
@@ -831,6 +838,7 @@ class AdvectionOperatorQ1(NumpyMatrixBasedOperator):
         Name of the operator.
     """
 
+    kind = 'operator'
     sparse = True
 
     def __init__(self, grid, boundary_info, advection_function=None, advection_constant=None,
@@ -945,6 +953,7 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
         Name of the operator.
     """
 
+    kind = 'operator'
     sparse = True
 
     def __init__(self, grid, boundary_info, robin_data=None, order=2, solver_options=None, name=None):
@@ -1012,6 +1021,7 @@ class InterpolationOperator(NumpyMatrixBasedOperator):
         The |Function| to interpolate.
     """
 
+    kind = 'vector'
     source = NumpyVectorSpace(1)
     linear = True
 

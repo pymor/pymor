@@ -34,17 +34,6 @@ class MPIOperator(OperatorBase):
     obj_id
         :class:`~pymor.tools.mpi.ObjectId` of the local |Operators|
         on each rank.
-    functional
-        Set to `True` if the operator represents a |Functional|. As
-        required for functionals in pyMOR, this will set the range
-        of the operator to `NumpyVectorSpace(1)` instead of
-        :class:`~pymor.vectorarrays.mpi.MPIVectorArray`-based space.
-    vector
-        Set to `True` if the operator represents a (parametric)
-        vector. As required for vector-like |Operators| in pyMOR,
-        this will set the source of the operator to `NumpyVectorSpace(1)`
-        instead of an :class:`~pymor.vectorarrays.mpi.MPIVectorArray`-based
-        space.
     with_apply2
         Set to `True` if the operator implementation has its own
         MPI aware implementation of `apply2` and `pairwise_apply2`.
@@ -66,20 +55,17 @@ class MPIOperator(OperatorBase):
         and :class:`~pymor.vectorarrays.mpi.MPIVectorArrayNoComm`.
     """
 
-    def __init__(self, obj_id, functional=False, vector=False, with_apply2=False,
+    def __init__(self, obj_id, with_apply2=False,
                  pickle_subtypes=True, array_type=MPIVectorArray):
-        assert not (functional and vector)
         self.obj_id = obj_id
         self.op = op = mpi.get_object(obj_id)
-        self.functional = functional
-        self.vector = vector
         self.with_apply2 = with_apply2
         self.pickle_subtypes = pickle_subtypes
         self.array_type = array_type
         self.linear = op.linear
         self.name = op.name
         self.build_parameter_type(op)
-        if vector:
+        if op.is_vector or op.is_function:
             self.source = NumpyVectorSpace(1)
             assert self.source == op.source
         else:
@@ -87,7 +73,7 @@ class MPIOperator(OperatorBase):
             if all(subtype == subtypes[0] for subtype in subtypes):
                 subtypes = (subtypes[0],)
             self.source = VectorSpace(array_type, (op.source.type, subtypes))
-        if functional:
+        if op.is_functional or op.is_function:
             self.range = NumpyVectorSpace(1)
             assert self.range == op.range
         else:
@@ -95,12 +81,13 @@ class MPIOperator(OperatorBase):
             if all(subtype == subtypes[0] for subtype in subtypes):
                 subtypes = (subtypes[0],)
             self.range = VectorSpace(array_type, (op.range.type, subtypes))
+        self.kind = op.kind
 
     def apply(self, U, mu=None):
         assert U in self.source
         mu = self.parse_parameter(mu)
-        U = U if self.vector else U.obj_id
-        if self.functional:
+        U = U if self.is_vector else U.obj_id
+        if self.is_functional:
             return mpi.call(mpi.method_call, self.obj_id, 'apply', U, mu=mu)
         else:
             space = self.range
@@ -109,7 +96,7 @@ class MPIOperator(OperatorBase):
 
     def as_vector(self, mu=None):
         mu = self.parse_parameter(mu)
-        if self.functional:
+        if self.is_functional:
             space = self.source
             return space.type(space.subtype[0], space.subtype[1],
                               mpi.call(mpi.method_call_manage, self.obj_id, 'as_vector', mu=mu))
@@ -122,8 +109,8 @@ class MPIOperator(OperatorBase):
         assert V in self.range
         assert U in self.source
         mu = self.parse_parameter(mu)
-        U = U if self.vector else U.obj_id
-        V = V if self.functional else V.obj_id
+        U = U if self.is_vector else U.obj_id
+        V = V if self.is_functional else V.obj_id
         return mpi.call(mpi.method_call, self.obj_id, 'apply2',
                         V, U, mu=mu)
 
@@ -133,18 +120,18 @@ class MPIOperator(OperatorBase):
         assert V in self.range
         assert U in self.source
         mu = self.parse_parameter(mu)
-        U = U if self.vector else U.obj_id
-        V = V if self.functional else V.obj_id
+        U = U if self.is_vector else U.obj_id
+        V = V if self.is_functional else V.obj_id
         return mpi.call(mpi.method_call, self.obj_id, 'pairwise_apply2',
                         V, U, mu=mu)
 
     def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         assert U in self.range
         mu = self.parse_parameter(mu)
-        U = U if self.functional else U.obj_id
+        U = U if self.is_functional else U.obj_id
         source_product = source_product and source_product.obj_id
         range_product = range_product and range_product.obj_id
-        if self.vector:
+        if self.is_vector:
             return mpi.call(mpi.method_call, self.obj_id, 'apply_adjoint',
                             U, mu=mu, source_product=source_product, range_product=range_product)
         else:
@@ -154,7 +141,7 @@ class MPIOperator(OperatorBase):
                                        U, mu=mu, source_product=source_product, range_product=range_product))
 
     def apply_inverse(self, V, mu=None, least_squares=False):
-        if self.vector or self.functional:
+        if not self.is_operator:
             raise NotImplementedError
         assert V in self.range
         mu = self.parse_parameter(mu)
@@ -217,7 +204,7 @@ def _MPIOperator_assemble_lincomb(operators, coefficients, name):
     return mpi.manage_object(operators[0].assemble_lincomb(operators, coefficients, name=name))
 
 
-def mpi_wrap_operator(obj_id, functional=False, vector=False, with_apply2=False,
+def mpi_wrap_operator(obj_id, with_apply2=False,
                       pickle_subtypes=True, array_type=MPIVectorArray):
     """Wrap MPI distributed local |Operators| to a global |Operator| on rank 0.
 
@@ -239,7 +226,7 @@ def mpi_wrap_operator(obj_id, functional=False, vector=False, with_apply2=False,
     op = mpi.get_object(obj_id)
     if isinstance(op, LincombOperator):
         obj_ids = mpi.call(_mpi_wrap_operator_LincombOperator_manage_operators, obj_id)
-        return LincombOperator([mpi_wrap_operator(o, functional, vector, with_apply2, pickle_subtypes, array_type)
+        return LincombOperator([mpi_wrap_operator(o, with_apply2, pickle_subtypes, array_type)
                                 for o in obj_ids], op.coefficients, name=op.name)
     elif isinstance(op, VectorArrayOperator):
         array_obj_id, subtypes = mpi.call(_mpi_wrap_operator_VectorArrayOperator_manage_array, obj_id, pickle_subtypes)
@@ -248,7 +235,7 @@ def mpi_wrap_operator(obj_id, functional=False, vector=False, with_apply2=False,
         return VectorArrayOperator(array_type(type(op._array), subtypes, array_obj_id),
                                    transposed=op.transposed, name=op.name)
     else:
-        return MPIOperator(obj_id, functional, vector, with_apply2, pickle_subtypes, array_type)
+        return MPIOperator(obj_id, with_apply2, pickle_subtypes, array_type)
 
 
 def _mpi_wrap_operator_LincombOperator_manage_operators(obj_id):

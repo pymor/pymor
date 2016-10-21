@@ -23,10 +23,11 @@ if HAVE_FENICS:
 
         linear = True
 
-        def __init__(self, matrix, source_space, range_space, solver_options=None, name=None):
+        def __init__(self, matrix, source_space, range_space, solver_options=None, kind='operator', name=None):
             assert matrix.rank() == 2
             self.source = FenicsVectorSpace(source_space)
             self.range = FenicsVectorSpace(range_space)
+            self.kind = kind
             self.matrix = matrix
             self.solver_options = solver_options
             self.name = name

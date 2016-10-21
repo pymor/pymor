@@ -187,26 +187,26 @@ class OperatorBase(OperatorInterface):
                         return ProjectedOperator(self, range_basis, None, product, name=name)
                     if self.source.type == NumpyVectorArray:
                         from pymor.operators.numpy import NumpyMatrixOperator
-                        return NumpyMatrixOperator(V.data, name=name)
+                        return NumpyMatrixOperator(V.data, kind=self.kind, name=name)
                     else:
                         from pymor.operators.constructions import VectorArrayOperator
-                        return VectorArrayOperator(V, transposed=True, name=name)
+                        return VectorArrayOperator(V, transposed=True, kind=self.kind, name=name)
             else:
                 if range_basis is None:
                     V = self.apply(source_basis)
                     if self.range.type == NumpyVectorArray:
                         from pymor.operators.numpy import NumpyMatrixOperator
-                        return NumpyMatrixOperator(V.data.T, name=name)
+                        return NumpyMatrixOperator(V.data.T, kind=self.kind, name=name)
                     else:
                         from pymor.operators.constructions import VectorArrayOperator
                         return VectorArrayOperator(V, transposed=False, name=name)
                 elif product is None:
                     from pymor.operators.numpy import NumpyMatrixOperator
-                    return NumpyMatrixOperator(self.apply2(range_basis, source_basis), name=name)
+                    return NumpyMatrixOperator(self.apply2(range_basis, source_basis), kind=self.kind, name=name)
                 else:
                     from pymor.operators.numpy import NumpyMatrixOperator
                     V = self.apply(source_basis)
-                    return NumpyMatrixOperator(product.apply2(range_basis, V), name=name)
+                    return NumpyMatrixOperator(product.apply2(range_basis, V), kind=self.kind, name=name)
         else:
             self.logger.warn('Using inefficient generic projection operator')
             return ProjectedOperator(self, range_basis, source_basis, product, name=name)
@@ -254,6 +254,7 @@ class ProjectedOperator(OperatorBase):
         self.build_parameter_type(operator)
         self.source = NumpyVectorSpace(len(source_basis)) if source_basis is not None else operator.source
         self.range = NumpyVectorSpace(len(range_basis)) if range_basis is not None else operator.range
+        self.kind = operator.kind
         self.solver_options = solver_options
         self.name = name
         self.operator = operator

@@ -47,7 +47,28 @@ class OperatorInterface(ImmutableInterface, Parametric):
         The range |VectorSpace|.
     """
 
+    kind = None
     solver_options = None
+
+    @property
+    def is_operator(self):
+        assert self.kind is not None
+        return self.kind == 'operator'
+
+    @property
+    def is_functional(self):
+        assert self.kind is not None
+        return self.kind == 'functional'
+
+    @property
+    def is_vector(self):
+        assert self.kind is not None
+        return self.kind == 'vector'
+
+    @property
+    def is_function(self):
+        assert self.kind is not None
+        return self.kind == 'function'
 
     @abstractmethod
     def apply(self, U, mu=None):
