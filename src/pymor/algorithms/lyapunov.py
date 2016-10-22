@@ -21,18 +21,18 @@ try:
         Represents a Lyapunov equation
 
         .. math::
-            A X + X A^T + \text{RHS} \cdot \text{RHS}^T = 0
+            A X + X A^T + B B^T = 0
 
         if E is `None`, otherwise a generalized Lyapunov equation
 
         .. math::
-            A X E^T + E X A^T + \text{RHS} \cdot \text{RHS}^T = 0.
+            A X E^T + E X A^T + B B^T = 0.
 
         For the dual Lyapunov equation
 
         .. math::
-            A^T X + X A + \text{RHS}^T \cdot \text{RHS} = 0, \\
-            A^T X E + E^T X A + \text{RHS}^T \cdot \text{RHS} = 0,
+            A^T X + X A + B^T B = 0, \\
+            A^T X E + E^T X A + B^T B = 0,
 
         `opt.type` needs to be `pymess.MESS_OP_TRANSPOSE`.
 
@@ -44,15 +44,15 @@ try:
             The |Operator| A.
         E
             The |Operator| E or `None`.
-        RHS
-            The |Operator| RHS.
+        B
+            The |Operator| B.
         """
-        def __init__(self, opt, A, E, RHS):
-            super(LyapunovEquation, self).__init__(name='lyap_eqn', opt=opt, dim=A.source.dim)
+        def __init__(self, opt, A, E, B):
+            super().__init__(name='lyap_eqn', opt=opt, dim=A.source.dim)
 
             self.A = A
             self.E = E
-            self.RHS = to_matrix(RHS)
+            self.RHS = to_matrix(B)
             if opt.type == pymess.MESS_OP_TRANSPOSE:
                 self.RHS = self.RHS.T
             self.p = []
