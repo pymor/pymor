@@ -30,6 +30,128 @@ def operator2matrix(A):
     return A_mat
 
 
+try:
+    import pymess
+
+    class RiccatiEquation(pymess.equation):
+        r"""Riccati equation class for pymess
+
+        Represents a Riccati equation
+
+        .. math::
+            A^T X + X A - X B B^T X + C^T C = 0
+
+        if E is `None`, otherwise a generalized Lyapunov equation
+
+        .. math::
+            A^T X E + E^T X A - E^T X B B^T X E + C^T C = 0.
+
+        For the dual Riccati equation
+
+        .. math::
+            A X + X A^T - X C^T C X + B B^T = 0, \\
+            A X E^T + E X A^T - E X C^T C X E^T + B B^T = 0,
+
+        `opt.type` needs to be `pymess.MESS_OP_NONE`.
+
+        Parameters
+        ----------
+        opt
+            pymess options structure.
+        A
+            The |Operator| A.
+        E
+            The |Operator| E or `None`.
+        B
+            The |Operator| B.
+        C
+            The |Operator| C.
+        """
+        def __init__(self, opt, A, E, B, C):
+            super().__init__(name='ricc_eqn', opt=opt, dim=A.source.dim)
+
+            self.A = A
+            self.E = E
+            self.B = B
+            self.C = C
+            self.RHS = to_matrix(B) if opt.type == pymess.MESS_OP_NONE else to_matrix(C).T
+            self.p = []
+
+        def A_apply(self, op, y):
+            y = self.A.source.from_data(np.array(y).T)
+            if op == pymess.MESS_OP_NONE:
+                x = self.A.apply(y)
+            else:
+                x = self.A.apply_adjoint(y)
+            return np.matrix(x.data).T
+
+        def E_apply(self, op, y):
+            if self.E is None:
+                return y
+
+            y = self.A.source.from_data(np.array(y).T)
+            if op == pymess.MESS_OP_NONE:
+                x = self.E.apply(y)
+            else:
+                x = self.E.apply_adjoint(y)
+            return np.matrix(x.data).T
+
+        def As_apply(self, op, y):
+            y = self.A.source.from_data(np.array(y).T)
+            if op == pymess.MESS_OP_NONE:
+                x = self.A.apply_inverse(y)
+            else:
+                x = self.A.apply_inverse_adjoint(y)
+            return np.matrix(x.data).T
+
+        def Es_apply(self, op, y):
+            if self.E is None:
+                return y
+
+            y = self.A.source.from_data(np.array(y).T)
+            if op == pymess.MESS_OP_NONE:
+                x = self.E.apply_inverse(y)
+            else:
+                x = self.E.apply_inverse_adjoint(y)
+            return np.matrix(x.data).T
+
+        def ApE_apply(self, op, p, idx_p, y):
+            y = self.A.source.from_data(np.array(y).T)
+            if op == pymess.MESS_OP_NONE:
+                x = self.A.apply(y)
+                if self.E is None:
+                    x += p * y
+                else:
+                    x += p * self.E.apply(y)
+            else:
+                x = self.A.apply_adjoint(y)
+                if self.E is None:
+                    x += p.conjugate() * y
+                else:
+                    x += p.conjugate() * self.E.apply_adjoint(y)
+            return np.matrix(x.data).T
+
+        def ApEs_apply(self, op, p, idx_p, y):
+            y = self.A.source.from_data(np.array(y).T)
+            E = IdentityOperator(self.A.source) if self.E is None else self.E
+
+            if p.imag == 0:
+                ApE = LincombOperator((self.A, E), (1, p.real))
+            else:
+                ApE = LincombOperator((self.A, E), (1, p))
+
+            if op == pymess.MESS_OP_NONE:
+                x = ApE.apply_inverse(y)
+            else:
+                x = ApE.apply_inverse_adjoint(y)
+            return np.matrix(x.data).T
+
+        def parameter(self, arp_p, arp_m, B=None, K=None):
+            return None
+except ImportError:
+    pass
+
+
 def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
                trans=False, me_solver=None, tol=None):
     """Find a factor of the solution of a Riccati equation
@@ -76,7 +198,7 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
     trans
         If the dual equation needs to be solved.
     me_solver
-        Method to use {'scipy', 'slycot', 'pymess_care'}.
+        Method to use ('scipy', 'slycot', 'pymess_care', 'pymess_lrnm').
         If `me_solver` is `None`, a solver is chosen automatically.
     tol
         Tolerance parameter.
@@ -84,7 +206,8 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
     Returns
     -------
     Z
-        Low-rank factor of the Riccati equation solution, |VectorArray| from `A.source`.
+        Low-rank factor of the Riccati equation solution,
+        |VectorArray| from `A.source`.
     """
     assert isinstance(A, OperatorInterface) and A.linear
     assert A.source == A.range
@@ -138,7 +261,10 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
         except ImportError:
             try:
                 imp.find_module('pymess')
-                me_solver = 'pymess_care'
+                if A.source.dim >= 1000:
+                    me_solver = 'pymess_lrnm'
+                else:
+                    me_solver = 'pymess_care'
             except ImportError:
                 me_solver = 'scipy'
 
@@ -254,6 +380,18 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
                 Z = pymess.care(A_mat.T, None, C_mat.T, B_mat.T)
             else:
                 Z = pymess.care(A_mat.T, E_mat.T, C_mat.T, B_mat.T)
+    elif me_solver == 'pymess_lrnm':
+        import pymess
+        opts = pymess.options()
+        opts.adi.shifts.paratype = pymess.MESS_LRCFADI_PARA_ADAPTIVE_V
+        if not trans:
+            opts.type = pymess.MESS_OP_TRANSPOSE
+        if tol is not None:
+            opts.rel_change_tol = tol
+            opts.adi.res2_tol = tol
+            opts.adi.res2c_tol = tol
+        eqn = RiccatiEquation(opts, A, E, B, C)
+        Z, status = pymess.lrnm(eqn, opts)
 
     Z = A.source.from_data(np.array(Z).T)
 
