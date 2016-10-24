@@ -64,7 +64,7 @@ class BlockOperator(OperatorBase):
         self.num_source_blocks = len(source_types)
         self.num_range_blocks = len(range_types)
         self.linear = all(op.linear for op in self._operators())
-        self.build_parameter_type(inherits=list(self._operators()))
+        self.build_parameter_type(*self._operators())
 
     @classmethod
     def hstack(cls, operators):
@@ -90,13 +90,12 @@ class BlockOperator(OperatorBase):
         blocks = np.array([[op] for op in operators])
         return cls(blocks)
 
-    def apply(self, U, ind=None, mu=None):
+    def apply(self, U, mu=None):
         assert U in self.source
-        assert U.check_ind(ind)
 
         V_blocks = [None for i in range(self.num_range_blocks)]
         for (i, j), op in np.ndenumerate(self._blocks):
-            Vi = op.apply(U.block(j), ind=ind, mu=mu)
+            Vi = op.apply(U.block(j), mu=mu)
             if V_blocks[i] is None:
                 V_blocks[i] = Vi
             else:
@@ -104,9 +103,8 @@ class BlockOperator(OperatorBase):
 
         return BlockVectorArray(V_blocks)
 
-    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         assert U in self.range
-        assert U.check_ind(ind)
         assert source_product is None or source_product.source == source_product.range == self.source
         assert range_product is None or range_product.source == range_product.range == self.range
 
@@ -115,7 +113,7 @@ class BlockOperator(OperatorBase):
 
         V_blocks = [None for j in range(self.num_source_blocks)]
         for (i, j), op in np.ndenumerate(self._blocks):
-            Vj = op.apply_adjoint(U.block(i), ind=ind, mu=mu)
+            Vj = op.apply_adjoint(U.block(i), mu=mu)
             if V_blocks[j] is None:
                 V_blocks[j] = Vj
             else:
@@ -170,26 +168,22 @@ class BlockDiagonalOperator(BlockOperator):
             blocks2[i, i] = op
         super().__init__(blocks2)
 
-    def apply(self, U, ind=None, mu=None):
+    def apply(self, U, mu=None):
         assert U in self.source
-        assert U.check_ind(ind)
 
-        V_blocks = [self._blocks[i, i].apply(U.block(i), ind=ind, mu=mu)
-                    for i in range(self.num_range_blocks)]
+        V_blocks = [self._blocks[i, i].apply(U.block(i), mu=mu) for i in range(self.num_range_blocks)]
 
         return BlockVectorArray(V_blocks)
 
-    def apply_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None):
+    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         assert U in self.range
-        assert U.check_ind(ind)
         assert source_product is None or source_product.source == source_product.range == self.source
         assert range_product is None or range_product.source == range_product.range == self.range
 
         if range_product is not None:
             U = range_product.apply(U)
 
-        V_blocks = [self._blocks[i, i].apply_adjoint(U.block(i), ind=ind, mu=mu)
-                    for i in range(self.num_source_blocks)]
+        V_blocks = [self._blocks[i, i].apply_adjoint(U.block(i), mu=mu) for i in range(self.num_source_blocks)]
 
         V = BlockVectorArray(V_blocks)
         if source_product is not None:
@@ -197,27 +191,24 @@ class BlockDiagonalOperator(BlockOperator):
 
         return V
 
-    def apply_inverse(self, V, ind=None, mu=None, least_squares=False):
+    def apply_inverse(self, V, mu=None, least_squares=False):
         assert V in self.range
-        assert V.check_ind(ind)
 
-        U_blocks = [self._blocks[i, i].apply_inverse(V.block(i), ind=ind, mu=mu, least_squares=least_squares)
+        U_blocks = [self._blocks[i, i].apply_inverse(V.block(i), mu=mu, least_squares=least_squares)
                     for i in range(self.num_source_blocks)]
 
         return BlockVectorArray(U_blocks)
 
-    def apply_inverse_adjoint(self, U, ind=None, mu=None, source_product=None, range_product=None,
-                              least_squares=False):
+    def apply_inverse_adjoint(self, U, mu=None, source_product=None, range_product=None, least_squares=False):
         assert U in self.source
-        assert U.check_ind(ind)
         assert source_product is None or source_product.source == source_product.range == self.source
         assert range_product is None or range_product.source == range_product.range == self.range
 
         if source_product or range_product:
             return super().apply_inverse_adjoint(
-                U, ind=ind, mu=mu, source_product=source_product, range_product=range_product)
+                U, mu=mu, source_product=source_product, range_product=range_product)
 
-        V_blocks = [self._blocks[i, i].apply_inverse_adjoint(U.block(i), ind=ind, mu=mu, least_squares=least_squares)
+        V_blocks = [self._blocks[i, i].apply_inverse_adjoint(U.block(i), mu=mu, least_squares=least_squares)
                     for i in range(self.num_source_blocks)]
 
         return BlockVectorArray(V_blocks)

@@ -3,7 +3,9 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.interfaces import ImmutableInterface
-from pymor.domaindescriptions.boundarytypes import BoundaryType
+
+
+KNOWN_BOUNDARY_TYPES = {'dirichlet', 'neumann', 'robin'}
 
 
 class DomainDescriptionInterface(ImmutableInterface):
@@ -14,7 +16,7 @@ class DomainDescriptionInterface(ImmutableInterface):
     dim
         The dimension of the domain
     boundary_types
-        Set of |BoundaryTypes| the domain has.
+        Set of boundary types the domain has.
     """
 
     dim = None
@@ -22,12 +24,12 @@ class DomainDescriptionInterface(ImmutableInterface):
 
     @property
     def has_dirichlet(self):
-        return BoundaryType('dirichlet') in self.boundary_types
+        return 'dirichlet' in self.boundary_types
 
     @property
     def has_neumann(self):
-        return BoundaryType('neumann') in self.boundary_types
+        return 'neumann' in self.boundary_types
 
     @property
     def has_robin(self):
-        return BoundaryType('robin') in self.boundary_types
+        return 'robin' in self.boundary_types

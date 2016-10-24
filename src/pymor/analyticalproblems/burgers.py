@@ -132,7 +132,7 @@ class BurgersFlux(FunctionInterface):
 
     def __init__(self, v):
         self.v = v
-        self.build_parameter_type({'exponent': ()}, local_global=True)
+        self.build_parameter_type(exponent=())
 
     def evaluate(self, U, mu=None):
         mu = self.parse_parameter(mu)
@@ -148,7 +148,7 @@ class BurgersFluxDerivative(FunctionInterface):
 
     def __init__(self, v):
         self.v = v
-        self.build_parameter_type({'exponent': ()}, local_global=True)
+        self.build_parameter_type(exponent=())
 
     def evaluate(self, U, mu=None):
         mu = self.parse_parameter(mu)
@@ -183,7 +183,7 @@ class Burgers2DFlux(FunctionInterface):
     def __init__(self, vx, vy):
         self.vx = vx
         self.vy = vy
-        self.build_parameter_type({'exponent': ()}, local_global=True)
+        self.build_parameter_type(exponent=())
 
     def evaluate(self, U, mu=None):
         mu = self.parse_parameter(mu)
@@ -203,7 +203,7 @@ class Burgers2DFluxDerivative(FunctionInterface):
     def __init__(self, vx, vy):
         self.vx = vx
         self.vy = vy
-        self.build_parameter_type({'exponent': ()}, local_global=True)
+        self.build_parameter_type(exponent=())
 
     def evaluate(self, U, mu=None):
         mu = self.parse_parameter(mu)

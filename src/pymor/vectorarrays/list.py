@@ -286,15 +286,13 @@ class ListVectorArray(VectorArrayInterface):
         assert count >= 0
         assert reserve >= 0
         vector_type, vector_subtype = subtype
-        return cls([vector_type.make_zeros(vector_subtype) for _ in range(count)], subtype=subtype, copy=False)
+        return ListVectorArray([vector_type.make_zeros(vector_subtype) for _ in range(count)],
+                               subtype=subtype, copy=False)
 
     @classmethod
     def from_data(cls, data, subtype):
         vector_type, vector_subtype = subtype
-        return cls([vector_type.from_data(v, vector_subtype) for v in data], subtype=subtype)
-
-    def __len__(self):
-        return len(self._list)
+        return ListVectorArray([vector_type.from_data(v, vector_subtype) for v in data], subtype=subtype)
 
     @property
     def data(self):
@@ -316,317 +314,198 @@ class ListVectorArray(VectorArrayInterface):
     def subtype(self):
         return (self.vector_type, self.vector_subtype)
 
-    def copy(self, ind=None, deep=False):
+    def __len__(self):
+        return len(self._list)
+
+    def __getitem__(self, ind):
+        return ListVectorArrayView(self, ind)
+
+    def __delitem__(self, ind):
         assert self.check_ind(ind)
-
-        if ind is None:
-            vecs = [v.copy(deep=deep) for v in self._list]
-        elif isinstance(ind, Number):
-            vecs = [self._list[ind].copy(deep=deep)]
-        else:
-            vecs = [self._list[i].copy(deep=deep) for i in ind]
-
-        return type(self)(vecs, subtype=self.subtype, copy=False)
-
-    def append(self, other, o_ind=None, remove_from_other=False):
-        assert other.check_ind(o_ind)
-        assert other.space == self.space
-        assert other is not self or not remove_from_other
-
-        other_list = other._list
-        if not remove_from_other:
-            if o_ind is None:
-                self._list.extend([v.copy() for v in other_list])
-            elif isinstance(o_ind, Number):
-                self._list.append(other_list[o_ind].copy())
-            else:
-                self._list.extend([other_list[i].copy() for i in o_ind])
-        else:
-            if o_ind is None:
-                self._list.extend(other_list)
-                other._list = []
-            elif isinstance(o_ind, Number):
-                self._list.append(other_list.pop(o_ind))
-            else:
-                self._list.extend([other_list[i] for i in o_ind])
-                remaining = sorted(set(range(len(other_list))) - set(o_ind))
-                other._list = [other_list[i] for i in remaining]
-
-    def remove(self, ind=None):
-        assert self.check_ind(ind)
-        if ind is None:
-            self._list = []
-        elif isinstance(ind, Number):
-            del self._list[ind]
-        else:
+        if hasattr(ind, '__len__'):
             thelist = self._list
-            remaining = sorted(set(range(len(self))) - set(ind))
+            l = len(thelist)
+            remaining = sorted(set(range(l)) - set(i if 0 <= i else l+i for i in ind))
             self._list = [thelist[i] for i in remaining]
-
-    def scal(self, alpha, ind=None):
-        assert self.check_ind_unique(ind)
-        assert isinstance(alpha, Number) \
-            or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
-
-        if ind is None:
-            if isinstance(alpha, np.ndarray):
-                for a, v in zip(alpha, self._list):
-                    v.scal(a)
-            else:
-                for v in self._list:
-                    v.scal(alpha)
-        elif isinstance(ind, Number):
-            if isinstance(alpha, np.ndarray):
-                alpha = alpha[0]
-            self._list[ind].scal(alpha)
         else:
-            l = self._list
-            if isinstance(alpha, np.ndarray):
-                for a, i in zip(alpha, ind):
-                    l[i].scal(a)
-            else:
-                for i in ind:
-                    l[i].scal(alpha)
+            del self._list[ind]
 
-    def axpy(self, alpha, x, ind=None, x_ind=None):
-        assert self.check_ind_unique(ind)
-        assert x.check_ind(x_ind)
-        assert self.space == x.space
-        assert self.len_ind(ind) == x.len_ind(x_ind) or x.len_ind(x_ind) == 1
+    def append(self, other, remove_from_other=False):
+        assert other.space == self.space
+        assert not remove_from_other or (other is not self and getattr(other, 'base', None) is not self)
+
+        if not remove_from_other:
+            self._list.extend([v.copy() for v in other._list])
+        else:
+            self._list.extend(other._list)
+            if other.is_view:
+                del other.base[other.ind]
+            else:
+                del other[:]
+
+    def copy(self, deep=False):
+        return ListVectorArray([v.copy(deep=deep) for v in self._list],
+                               subtype=self.subtype, copy=False)
+
+    def scal(self, alpha):
         assert isinstance(alpha, _INDEXTYPES) \
-            or isinstance(alpha, np.ndarray) and alpha.shape == (self.len_ind(ind),)
+            or isinstance(alpha, np.ndarray) and alpha.shape == (len(self),)
 
-        if self is x:
-            if ind is None or x_ind is None:
-                self.axpy(alpha, x.copy(), ind, x_ind)
-                return
-            ind_set = {ind} if isinstance(ind, _INDEXTYPES) else set(ind)
-            x_ind_set = {x_ind} if isinstance(x_ind, _INDEXTYPES) else set(x_ind)
-            if ind_set.intersection(x_ind_set):
-                self.axpy(alpha, x.copy(x_ind), ind)
-                return
-
-        if ind is None:
-            Y = iter(self._list)
-            len_Y = len(self._list)
-        elif isinstance(ind, _INDEXTYPES):
-            Y = iter([self._list[ind]])
-            len_Y = 1
+        if type(alpha) is np.ndarray:
+            for a, v in zip(alpha, self._list):
+                v.scal(a)
         else:
-            Y = (self._list[i] for i in ind)
-            len_Y = len(ind)
+            for v in self._list:
+                v.scal(alpha)
 
-        if x_ind is None:
-            X = iter(x._list)
-            len_X = len(x._list)
-        elif isinstance(x_ind, _INDEXTYPES):
-            X = iter([x._list[x_ind]])
-            len_X = 1
-        else:
-            X = (x._list[i] for i in x_ind)
-            len_X = len(x_ind)
+    def axpy(self, alpha, x):
+        assert self.space == x.space
+        len_x = len(x)
+        assert len(self) == len_x or len_x == 1
+        assert isinstance(alpha, _INDEXTYPES) \
+            or isinstance(alpha, np.ndarray) and alpha.shape == (len(self),)
 
         if np.all(alpha == 0):
             return
-        elif len_X == 1:
-            xx = next(X)
-            if isinstance(alpha, np.ndarray):
-                for a, y in zip(alpha, Y):
+
+        if self is x or x.is_view and self is x.base:
+            x = x.copy()
+
+        if len(x) == 1:
+            xx = x._list[0]
+            if type(alpha) is np.ndarray:
+                for a, y in zip(alpha, self._list):
                     y.axpy(a, xx)
             else:
-                for y in Y:
+                for y in self._list:
                     y.axpy(alpha, xx)
         else:
-            assert len_X == len_Y
-            if isinstance(alpha, np.ndarray):
-                for a, xx, y in zip(alpha, X, Y):
+            if type(alpha) is np.ndarray:
+                for a, xx, y in zip(alpha, x._list, self._list):
                     y.axpy(a, xx)
             else:
-                for xx, y in zip(X, Y):
+                for xx, y in zip(x._list, self._list):
                     y.axpy(alpha, xx)
 
-    def dot(self, other, ind=None, o_ind=None):
-        assert self.check_ind(ind)
-        assert other.check_ind(o_ind)
+    def dot(self, other):
         assert self.space == other.space
-
-        if ind is None:
-            A = self._list
-            len_A = len(A)
-        elif isinstance(ind, Number):
-            A = [self._list[ind]]
-            len_A = 1
-        else:
-            A = (self._list[i] for i in ind)
-            len_A = len(ind)
-
-        if o_ind is None:
-            B = other._list
-            len_B = len(B)
-        elif isinstance(o_ind, Number):
-            B = [other._list[o_ind]]
-            len_B = 1
-        else:
-            B = (other._list[i] for i in o_ind)
-            len_B = len(o_ind)
-
-        A = list(A)
-        B = list(B)
-        R = np.empty((len_A, len_B))
-        for i, a in enumerate(A):
-            for j, b in enumerate(B):
+        R = np.empty((len(self._list), len(other)))
+        for i, a in enumerate(self._list):
+            for j, b in enumerate(other._list):
                 R[i, j] = a.dot(b)
         return R
 
-    def pairwise_dot(self, other, ind=None, o_ind=None):
-        assert self.check_ind(ind)
-        assert other.check_ind(o_ind)
+    def pairwise_dot(self, other):
         assert self.space == other.space
+        assert len(self._list) == len(other)
+        return np.array([a.dot(b) for a, b in zip(self._list, other._list)])
 
-        if ind is None:
-            A = self._list
-            len_A = len(A)
-        elif isinstance(ind, Number):
-            A = [self._list[ind]]
-            len_A = 1
-        else:
-            A = (self._list[i] for i in ind)
-            len_A = len(ind)
-
-        if o_ind is None:
-            B = other._list
-            len_B = len(B)
-        elif isinstance(o_ind, Number):
-            B = [other._list[o_ind]]
-            len_B = 1
-        else:
-            B = (other._list[i] for i in o_ind)
-            len_B = len(o_ind)
-
-        assert len_A == len_B
-        return np.array([a.dot(b) for a, b in zip(A, B)])
-
-    def gramian(self, ind=None):
-        assert self.check_ind(ind)
-
-        if ind is None:
-            A = self._list
-        elif isinstance(ind, Number):
-            A = [self._list[ind]]
-        else:
-            A = [self._list[i] for i in ind]
-
-        R = np.empty((len(A), len(A)))
-        for i in range(len(A)):
-            for j in range(i, len(A)):
-                R[i, j] = A[i].dot(A[j])
+    def gramian(self):
+        l = len(self._list)
+        R = np.empty((l, l))
+        for i in range(l):
+            for j in range(i, l):
+                R[i, j] = self._list[i].dot(self._list[j])
                 R[j, i] = R[i, j]
         return R
 
-    def lincomb(self, coefficients, ind=None):
-        assert self.check_ind(ind)
+    def lincomb(self, coefficients):
         assert 1 <= coefficients.ndim <= 2
-
         if coefficients.ndim == 1:
             coefficients = coefficients[np.newaxis, :]
 
-        if ind is None:
-            V = self._list
-        elif isinstance(ind, Number):
-            V = [self._list[ind]]
-        else:
-            V = [self._list[i] for i in ind]
-
-        assert coefficients.shape[1] == self.len_ind(ind)
+        assert coefficients.shape[1] == len(self)
 
         RL = []
         for coeffs in coefficients:
             R = self.vector_type.make_zeros(self.vector_subtype)
-            for v, c in zip(V, coeffs):
+            for v, c in zip(self._list, coeffs):
                 R.axpy(c, v)
             RL.append(R)
 
-        return type(self)(RL, subtype=self.subtype, copy=False)
+        return ListVectorArray(RL, subtype=self.subtype, copy=False)
 
-    def l1_norm(self, ind=None):
-        assert self.check_ind(ind)
+    def l1_norm(self):
+        return np.array([v.l1_norm() for v in self._list])
 
-        if ind is None:
-            ind = range(len(self._list))
-        elif isinstance(ind, Number):
-            ind = [ind]
+    def l2_norm(self):
+        return np.array([v.l2_norm() for v in self._list])
 
-        return np.array([self._list[i].l1_norm() for i in ind])
+    def l2_norm2(self):
+        return np.array([v.l2_norm2() for v in self._list])
 
-    def l2_norm(self, ind=None):
-        assert self.check_ind(ind)
+    def sup_norm(self):
+        return np.array([v.sup_norm() for v in self._list])
 
-        if ind is None:
-            ind = range(len(self._list))
-        elif isinstance(ind, Number):
-            ind = [ind]
-
-        return np.array([self._list[i].l2_norm() for i in ind])
-
-    def l2_norm2(self, ind=None):
-        assert self.check_ind(ind)
-
-        if ind is None:
-            ind = range(len(self._list))
-        elif isinstance(ind, Number):
-            ind = [ind]
-
-        return np.array([self._list[i].l2_norm2() for i in ind])
-
-    def sup_norm(self, ind=None):
-        assert self.check_ind(ind)
-
-        if ind is None:
-            ind = range(len(self._list))
-        elif isinstance(ind, Number):
-            ind = [ind]
-
-        return np.array([self._list[i].sup_norm() for i in ind])
-
-    def components(self, component_indices, ind=None):
-        assert self.check_ind(ind)
+    def components(self, component_indices):
         assert isinstance(component_indices, list) and (len(component_indices) == 0 or min(component_indices) >= 0) \
             or (isinstance(component_indices, np.ndarray) and component_indices.ndim == 1
                 and (len(component_indices) == 0 or np.min(component_indices) >= 0))
 
-        if ind is None:
-            ind = range(len(self._list))
-        elif isinstance(ind, Number):
-            ind = [ind]
+        R = np.empty((len(self), len(component_indices)))
 
-        if len(ind) == 0:
-            assert len(component_indices) == 0 \
-                or isinstance(component_indices, list) and max(component_indices) < self.dim \
-                or isinstance(component_indices, np.ndarray) and np.max(component_indices) < self.dim
-            return np.empty((0, len(component_indices)))
+        assert len(self) > 0 or len(component_indices) == 0 or max(component_indices) < self.dim
 
-        R = np.empty((len(ind), len(component_indices)))
-        for k, i in enumerate(ind):
-            R[k] = self._list[i].components(component_indices)
+        for k, v in enumerate(self._list):
+            R[k] = v.components(component_indices)
 
         return R
 
-    def amax(self, ind=None):
-        assert self.check_ind(ind)
+    def amax(self):
         assert self.dim > 0
 
-        if ind is None:
-            ind = range(len(self._list))
-        elif isinstance(ind, Number):
-            ind = [ind]
+        MI = np.empty(len(self._list), dtype=np.int)
+        MV = np.empty(len(self._list))
 
-        MI = np.empty(len(ind), dtype=np.int)
-        MV = np.empty(len(ind))
-
-        for k, i in enumerate(ind):
-            MI[k], MV[k] = self._list[i].amax()
+        for k, v in enumerate(self._list):
+            MI[k], MV[k] = v.amax()
 
         return MI, MV
 
     def __str__(self):
         return 'ListVectorArray of {} {}s of dimension {}'.format(len(self._list), str(self.vector_type), self.dim)
+
+
+class ListVectorArrayView(ListVectorArray):
+
+    is_view = True
+
+    def __init__(self, base, ind):
+        self.base = base
+        self.vector_type = base.vector_type
+        self.vector_subtype = base.vector_subtype
+        assert base.check_ind(ind)
+        self.ind = base.normalize_ind(ind)
+        if type(ind) is slice:
+            self._list = base._list[ind]
+        elif hasattr(ind, '__len__'):
+            _list = base._list
+            self._list = [_list[i] for i in ind]
+        else:
+            self._list = [base._list[ind]]
+
+    @property
+    def space(self):
+        return self.base.space
+
+    def __getitem__(self, ind):
+        return self.base[self.base.sub_index(self.ind, ind)]
+
+    def __delitem__(self, ind):
+        raise TypeError('Cannot remove from ListVectorArrayView')
+
+    def append(self, other, remove_from_other=False):
+        raise TypeError('Cannot append to ListVectorArrayView')
+
+    def scal(self, alpha):
+        assert self.base.check_ind_unique(self.ind)
+        super().scal(alpha)
+
+    def axpy(self, alpha, x):
+        assert self.base.check_ind_unique(self.ind)
+        if x is self.base or x.is_view and x.base is self.base:
+            x = x.copy()
+        super().axpy(alpha, x)
+
+    def __str__(self):
+        return 'ListVectorArrayView of {} {}s of dimension {}'.format(len(self._list), str(self.vector_type), self.dim)

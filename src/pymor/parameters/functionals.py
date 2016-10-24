@@ -33,7 +33,7 @@ class ProjectionParameterFunctional(ParameterFunctionalInterface):
         self.name = name
         if isinstance(component_shape, Number):
             component_shape = () if component_shape == 0 else (component_shape,)
-        self.build_parameter_type({component_name: component_shape}, local_global=True)
+        self.build_parameter_type({component_name: component_shape})
         self.component_name = component_name
         self.coordinates = coordinates
         assert len(coordinates) == len(component_shape)
@@ -65,7 +65,7 @@ class GenericParameterFunctional(ParameterFunctionalInterface):
     def __init__(self, mapping, parameter_type, name=None):
         self.name = name
         self._mapping = mapping
-        self.build_parameter_type(parameter_type, local_global=True)
+        self.build_parameter_type(parameter_type)
 
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)
@@ -132,7 +132,7 @@ class ProductParameterFunctional(ParameterFunctionalInterface):
         assert all(isinstance(f, (ParameterFunctionalInterface, Number)) for f in factors)
         self.name = name
         self.factors = tuple(factors)
-        self.build_parameter_type(inherits=[f for f in factors if isinstance(f, ProductParameterFunctional)])
+        self.build_parameter_type(*(f for f in factors if isinstance(f, ProductParameterFunctional)))
 
     def evaluate(self, mu=None):
         mu = self.parse_parameter(mu)

@@ -78,7 +78,7 @@ class LaxFriedrichsFlux(NumericalConvectiveFluxInterface):
     def __init__(self, flux, lxf_lambda=1.0):
         self.flux = flux
         self.lxf_lambda = lxf_lambda
-        self.build_parameter_type(inherits=(flux,))
+        self.build_parameter_type(flux)
 
     def evaluate_stage1(self, U, mu=None):
         return U, self.flux(U[..., np.newaxis], mu)
@@ -107,7 +107,7 @@ class SimplifiedEngquistOsherFlux(NumericalConvectiveFluxInterface):
     def __init__(self, flux, flux_derivative):
         self.flux = flux
         self.flux_derivative = flux_derivative
-        self.build_parameter_type(inherits=(flux, flux_derivative))
+        self.build_parameter_type(flux, flux_derivative)
 
     def evaluate_stage1(self, U, mu=None):
         return self.flux(U[..., np.newaxis], mu), self.flux_derivative(U[..., np.newaxis], mu)
@@ -158,7 +158,7 @@ class EngquistOsherFlux(NumericalConvectiveFluxInterface):
         self.flux_derivative = flux_derivative
         self.gausspoints = gausspoints
         self.intervals = intervals
-        self.build_parameter_type(inherits=(flux, flux_derivative))
+        self.build_parameter_type(flux, flux_derivative)
         points, weights = GaussQuadratures.quadrature(npoints=self.gausspoints)
         points = points / intervals
         points = ((np.arange(self.intervals, dtype=np.float)[:, np.newaxis] * (1 / intervals))
@@ -227,7 +227,7 @@ class NonlinearAdvectionOperator(OperatorBase):
             self._dirichlet_values = self.dirichlet_data(grid.centers(1)[boundary_info.dirichlet_boundaries(1)])
             self._dirichlet_values = self._dirichlet_values.ravel()
             self._dirichlet_values_flux_shaped = self._dirichlet_values.reshape((-1, 1))
-        self.build_parameter_type(inherits=(numerical_flux, dirichlet_data))
+        self.build_parameter_type(numerical_flux, dirichlet_data)
         self.source = self.range = NumpyVectorSpace(grid.size(0))
         self.add_with_arguments = self.add_with_arguments.union('numerical_flux_{}'.format(arg)
                                                                 for arg in numerical_flux.with_arguments)
@@ -266,7 +266,7 @@ class NonlinearAdvectionOperator(OperatorBase):
         self._grid_data.update(UNIT_OUTER_NORMALS=g.unit_outer_normals()[self._grid_data['SUPE'][:, 0],
                                                                          self._grid_data['SUPI'][:, 0]])
 
-    def apply(self, U, ind=None, mu=None):
+    def apply(self, U, mu=None):
         assert isinstance(U, NumpyVectorArray)
         assert U in self.source
         mu = self.parse_parameter(mu)
@@ -274,9 +274,8 @@ class NonlinearAdvectionOperator(OperatorBase):
         if not hasattr(self, '_grid_data'):
             self._fetch_grid_data()
 
-        ind = range(len(U)) if ind is None else ind
         U = U.data
-        R = np.zeros((len(ind), self.source.dim))
+        R = np.zeros((len(U), self.source.dim))
 
         bi = self.boundary_info
         gd = self._grid_data
@@ -298,7 +297,7 @@ class NonlinearAdvectionOperator(OperatorBase):
                 dirichlet_values = np.zeros_like(DIRICHLET_BOUNDARIES)
             F_dirichlet = self.numerical_flux.evaluate_stage1(dirichlet_values, mu)
 
-        for i, j in enumerate(ind):
+        for i, j in enumerate(range(len(U))):
             Ui = U[j]
             Ri = R[i]
 
@@ -486,7 +485,7 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
         self.lxf_lambda = lxf_lambda
         self.solver_options = solver_options
         self.name = name
-        self.build_parameter_type(inherits=(velocity_field,))
+        self.build_parameter_type(velocity_field)
         self.source = self.range = NumpyVectorSpace(grid.size(0))
 
     def _assemble(self, mu=None):
@@ -605,7 +604,7 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
         self.neumann_data = neumann_data
         self.order = order
         self.name = name
-        self.build_parameter_type(inherits=(function, dirichlet_data, diffusion_function, neumann_data))
+        self.build_parameter_type(function, dirichlet_data, diffusion_function, neumann_data)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -695,7 +694,7 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
         self.name = name
         self.source = self.range = NumpyVectorSpace(grid.size(0))
         if diffusion_function is not None:
-            self.build_parameter_type(inherits=(diffusion_function,))
+            self.build_parameter_type(diffusion_function)
 
     def _assemble(self, mu=None):
         grid = self.grid

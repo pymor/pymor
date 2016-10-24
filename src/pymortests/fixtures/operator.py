@@ -113,7 +113,7 @@ def thermalblock_zero_factory(xblocks, yblocks, diameter, seed):
 def thermalblock_constant_factory(xblocks, yblocks, diameter, seed):
     from pymor.operators.constructions import ConstantOperator
     _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, seed)
-    return ConstantOperator(V.copy(0), U.space), None, U, V, sp, rp
+    return ConstantOperator(V[0], U.space), None, U, V, sp, rp
 
 
 def thermalblock_vectorarray_factory(transposed, xblocks, yblocks, diameter, seed):
@@ -134,7 +134,7 @@ def thermalblock_vectorarray_factory(transposed, xblocks, yblocks, diameter, see
 def thermalblock_vector_factory(xblocks, yblocks, diameter, seed):
     from pymor.operators.constructions import VectorOperator
     _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, seed)
-    op = VectorOperator(U.copy(ind=0))
+    op = VectorOperator(U[0])
     U = NumpyVectorArray(np.random.random((7, 1)), copy=False)
     sp = NumpyMatrixOperator(np.eye(1) * 2)
     return op, None, U, V, sp, rp
@@ -143,7 +143,7 @@ def thermalblock_vector_factory(xblocks, yblocks, diameter, seed):
 def thermalblock_vectorfunc_factory(product, xblocks, yblocks, diameter, seed):
     from pymor.operators.constructions import VectorFunctional
     _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, seed)
-    op = VectorFunctional(U.copy(ind=0), product=sp if product else None)
+    op = VectorFunctional(U[0], product=sp if product else None)
     U = V
     V = NumpyVectorArray(np.random.random((7, 1)), copy=False)
     sp = rp

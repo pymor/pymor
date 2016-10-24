@@ -85,13 +85,23 @@ def _run_module(module, args):
     return runpy.run_module(module, init_globals=None, run_name='__main__', alter_sys=True)
 
 
+def _skip_if_no_fenics(param):
+    _, args = param
+    needs_fenics = len([f for f in args if 'fenics' in str(f)]) > 0
+    import pymor.vectorarrays.fenics as fe
+    if needs_fenics and not fe.HAVE_FENICS:
+        pytest.skip('skipped test due to missing Fenics')
+
+
 @pytest.fixture(params=DEMO_ARGS)
 def demo_args(request):
+    _skip_if_no_fenics(request.param)
     return request.param
 
 
 @pytest.fixture(params=THERMALBLOCK_ARGS)
 def thermalblock_args(request):
+    _skip_if_no_fenics(request.param)
     return request.param
 
 

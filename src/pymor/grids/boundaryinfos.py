@@ -4,12 +4,12 @@
 
 import numpy as np
 
-from pymor.domaindescriptions.boundarytypes import BoundaryType
+from pymor.domaindescriptions.interfaces import KNOWN_BOUNDARY_TYPES
 from pymor.grids.interfaces import BoundaryInfoInterface
 
 
 class EmptyBoundaryInfo(BoundaryInfoInterface):
-    """|BoundaryInfo| with no |BoundaryTypes| attached to any boundary.
+    """|BoundaryInfo| with no boundary types attached to any boundary.
     """
 
     def __init__(self, grid):
@@ -21,16 +21,16 @@ class EmptyBoundaryInfo(BoundaryInfoInterface):
 
 
 class BoundaryInfoFromIndicators(BoundaryInfoInterface):
-    """|BoundaryInfo| where the |BoundaryTypes| are determined by indicator functions.
+    """|BoundaryInfo| where the boundary types are determined by indicator functions.
 
     Parameters
     ----------
     grid
         The |Grid| to which the |BoundaryInfo| is associated.
     indicators
-        Dict where each key is a |BoundaryType| and the corresponding value is a boolean
+        Dict where each key is a boundary type and the corresponding value is a boolean
         valued function defined on the analytical domain which indicates if a point belongs
-        to a boundary of the given |BoundaryType| (the indicator functions must be vectorized).
+        to a boundary of the given boundary type (the indicator functions must be vectorized).
     """
 
     def __init__(self, grid, indicators, assert_unique_type=None, assert_some_type=None):
@@ -51,14 +51,14 @@ class BoundaryInfoFromIndicators(BoundaryInfoInterface):
 
 
 class AllDirichletBoundaryInfo(BoundaryInfoInterface):
-    """|BoundaryInfo| where `BoundaryType('dirichlet')` is attached to each boundary entity."""
+    """|BoundaryInfo| where the boundary type 'dirichlet' is attached to each boundary entity."""
 
     def __init__(self, grid):
         self.grid = grid
-        self.boundary_types = frozenset({BoundaryType('dirichlet')})
+        self.boundary_types = frozenset({'dirichlet'})
 
     def mask(self, boundary_type, codim):
-        assert boundary_type == BoundaryType('dirichlet'), 'Has no boundary_type "{}"'.format(boundary_type)
+        assert boundary_type == 'dirichlet', 'Has no boundary_type "{}"'.format(boundary_type)
         assert 1 <= codim <= self.grid.dim
         return np.ones(self.grid.size(codim), dtype='bool') * self.grid.boundary_mask(codim)
 
@@ -75,12 +75,13 @@ class SubGridBoundaryInfo(BoundaryInfoInterface):
     grid_boundary_info
         The |BoundaryInfo| of the parent |Grid| from which to derive the |BoundaryInfo|
     new_boundary_type
-        The |BoundaryType| which is assigned to the new boundaries of `subgrid`. If
-        `None`, no |BoundaryType| is assigned.
+        The boundary type which is assigned to the new boundaries of `subgrid`. If
+        `None`, no boundary type is assigned.
     """
 
     def __init__(self, subgrid, grid, grid_boundary_info, new_boundary_type=None):
-        assert new_boundary_type is None or isinstance(new_boundary_type, BoundaryType)
+        if new_boundary_type is not None and new_boundary_type not in KNOWN_BOUNDARY_TYPES:
+            self.logger.warn('Unknown boundary type: {}'.format(new_boundary_type))
 
         boundary_types = grid_boundary_info.boundary_types
         has_new_boundaries = False

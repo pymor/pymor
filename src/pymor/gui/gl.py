@@ -38,23 +38,26 @@ if HAVE_ALL:
     from ctypes import c_void_p
 
     from pymor.grids.constructions import flatten_grid
+    from pymor.core.defaults import defaults
     from pymor.grids.referenceelements import triangle, square
 
-    def compile_vertex_shader(source):
+    def compile_shader(source, vertex=True):
         """Compile a vertex shader from source."""
-        vertex_shader = gl.glCreateShader(gl.GL_VERTEX_SHADER)
-        gl.glShaderSource(vertex_shader, source)
-        gl.glCompileShader(vertex_shader)
+        shader_type = gl.GL_VERTEX_SHADER if vertex else gl.GL_FRAGMENT_SHADER
+        shader = gl.glCreateShader(shader_type)
+        gl.glShaderSource(shader, source)
+        gl.glCompileShader(shader)
         # check compilation error
-        result = gl.glGetShaderiv(vertex_shader, gl.GL_COMPILE_STATUS)
+        result = gl.glGetShaderiv(shader, gl.GL_COMPILE_STATUS)
         if not result:
-            raise RuntimeError(gl.glGetShaderInfoLog(vertex_shader))
-        return vertex_shader
+            raise RuntimeError(gl.glGetShaderInfoLog(shader))
+        return shader
 
-    def link_shader_program(vertex_shader):
+    def link_shader_program(shaders):
         """Create a shader program with from compiled shaders."""
         program = gl.glCreateProgram()
-        gl.glAttachShader(program, vertex_shader)
+        for shader in shaders:
+            gl.glAttachShader(program, shader)
         gl.glLinkProgram(program)
         # check linking error
         result = gl.glGetProgramiv(program, gl.GL_LINK_STATUS)
@@ -66,23 +69,52 @@ if HAVE_ALL:
     #version 120
     // Attribute variable that contains coordinates of the vertices.
     attribute vec3 position;
+    varying float value;
 
-    vec3 getJetColor(float value) {
-         float fourValue = 4 * value;
-         float red   = min(fourValue - 1.5, -fourValue + 4.5);
-         float green = min(fourValue - 0.5, -fourValue + 3.5);
-         float blue  = min(fourValue + 0.5, -fourValue + 2.5);
-
-         return clamp( vec3(red, green, blue), 0.0, 1.0 );
-    }
     void main()
     {
         gl_Position.xy = position.xy;
         gl_Position.z = 0.;
         gl_Position.w = 1.;
-        gl_FrontColor = vec4(getJetColor(position.z), 1);
+        value = position.z;
     }
     """
+
+    FS = """
+    #version 120
+
+    uniform sampler1D colormap;
+
+    varying float value;
+
+    void main()
+    {
+        gl_FragColor = texture1D(colormap, value);
+    }
+    """
+
+    @defaults('name', sid_ignore=('name',))
+    def colormap_texture(name='viridis'):
+        resolution = min(gl.GL_MAX_TEXTURE_SIZE, 1024)
+        colormap_id = gl.glGenTextures(1)
+        gl.glBindTexture(gl.GL_TEXTURE_1D, colormap_id)
+        gl.glTexParameteri(gl.GL_TEXTURE_1D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
+        gl.glTexParameteri(gl.GL_TEXTURE_1D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
+        gl.glTexParameteri(gl.GL_TEXTURE_1D, gl.GL_TEXTURE_WRAP_S, gl.GL_CLAMP_TO_EDGE)
+        colormap = np.empty((resolution, 4), dtype='f4')
+        from matplotlib.pyplot import get_cmap
+        try:
+            cmap = get_cmap(name)
+        except ValueError:
+            from pymor.core.logger import getLogger
+            if name != 'viridis': # this is our default which might not exist for older matplotlib so a warning would be
+                                  # annoying
+                getLogger('pymor.gui.gl.colormap_texture').warn('Unknown colormap {}, using default colormap'.format(name))
+            cmap = get_cmap()
+        colormap[:] = cmap(np.linspace(0., 1., resolution))
+        gl.glTexImage1D(gl.GL_TEXTURE_1D, 0, gl.GL_RGBA, resolution, 0, gl.GL_RGBA, gl.GL_FLOAT, colormap)
+        gl.glBindTexture(gl.GL_TEXTURE_1D, 0)
+        return colormap_id
 
     class GLPatchWidget(QGLWidget):
 
@@ -143,7 +175,8 @@ if HAVE_ALL:
         def initializeGL(self):
             gl.glClearColor(1.0, 1.0, 1.0, 1.0)
 
-            self.shaders_program = link_shader_program(compile_vertex_shader(VS))
+            self.shaders_program = link_shader_program([compile_shader(VS, vertex=True),
+                                                        compile_shader(FS, vertex=False)])
             gl.glUseProgram(self.shaders_program)
 
             self.vertices_id = gl.glGenBuffers(1)
@@ -156,6 +189,9 @@ if HAVE_ALL:
             gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER, self.indices, gl.GL_STATIC_DRAW)
             gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0)
 
+            self.colormap_id = colormap_texture()
+            self.colormap_location = gl.glGetUniformLocation(self.shaders_program, 'colormap')
+
         def paintGL(self):
             if self.update_vbo:
                 gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vertices_id)
@@ -164,6 +200,10 @@ if HAVE_ALL:
                 self.update_vbo = False
 
             gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+
+            gl.glUniform1i(self.colormap_location, 0)
+            gl.glActiveTexture(gl.GL_TEXTURE0 + 0)
+            gl.glBindTexture(gl.GL_TEXTURE_1D, self.colormap_id)
 
             gl.glPushClientAttrib(gl.GL_CLIENT_VERTEX_ARRAY_BIT)
             gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vertices_id)
@@ -233,8 +273,12 @@ if HAVE_ALL:
 
         def initializeGL(self):
             gl.glClearColor(1.0, 1.0, 1.0, 1.0)
-            self.shaders_program = link_shader_program(compile_vertex_shader(VS))
+            self.shaders_program = link_shader_program([compile_shader(VS, vertex=True),
+                                                        compile_shader(FS, vertex=False)])
             gl.glUseProgram(self.shaders_program)
+
+            self.colormap_id = colormap_texture()
+            self.colormap_location = gl.glGetUniformLocation(self.shaders_program, 'colormap')
 
         def set(self, U=None, vmin=None, vmax=None):
             # normalize U
@@ -261,6 +305,9 @@ if HAVE_ALL:
             self.makeCurrent()
             gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
             gl.glUseProgram(self.shaders_program)
+            gl.glUniform1i(self.colormap_location, 0)
+            gl.glActiveTexture(gl.GL_TEXTURE0 + 0)
+            gl.glBindTexture(gl.GL_TEXTURE_1D, self.colormap_id)
 
             gl.glBegin(gl.GL_QUAD_STRIP)
             bar_start = -1 + self.text_height / self.height() * 2

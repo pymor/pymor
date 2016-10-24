@@ -31,10 +31,7 @@ the object's |ParameterType| to make it a |Parameter| (e.g. if the |ParameterTyp
 consists of a single one-dimensional component, the user can simply supply a list
 of numbers of the right length). Moreover, when given a |Parameter|,
 :meth:`~Parametric.parse_parameter` ensures the |Parameter| has an appropriate
-|ParameterType|. The :meth:`~Parametric.local_parameter` method is used to extract
-the local parameter components of the given |Parameter| and performs some name
-mapping (see the documentation of :meth:`~Parametric.build_parameter_type` for
-details).
+|ParameterType|.
 """
 
 from numbers import Number
@@ -316,18 +313,12 @@ class Parametric(object):
     :meth:`build_parameter_type` method. Methods expecting the |Parameter| (typically
     `evaluate`, `apply`, `solve`, etc. ..) should accept an optional argument `mu` defaulting
     to `None`. This argument `mu` should then be fed into :meth:`parse_parameter` to obtain a
-    |Parameter| of correct |ParameterType| from the (user supplied) input `mu`. The local
-    parameter components (see :meth:`build_parameter_type`) can be extracted using
-    :meth:`local_type`.
+    |Parameter| of correct |ParameterType| from the (user supplied) input `mu`.
 
     Attributes
     ----------
     parameter_type
         The |ParameterType| of the |Parameters| the object expects.
-    parameter_local_type
-        The |ParameterType| of the parameter components which are introduced
-        by the object itself and are not inherited by other objects it
-        depends on. (See :meth:`build_parameter_type`.)
     parameter_space
         |ParameterSpace| the parameters are expected to lie in or `None`.
     parametric:
@@ -336,10 +327,6 @@ class Parametric(object):
     """
 
     parameter_type = None
-    parameter_local_type = None
-
-    _parameter_global_names = None
-    _parameter_space = None
 
     @property
     def parameter_space(self):
@@ -380,15 +367,6 @@ class Parametric(object):
              .format(mu.parameter_type, self.parameter_type))
         return mu
 
-    def local_parameter(self, mu):
-        """Extract the local parameter components with their local names from a given |Parameter|.
-
-        See :meth:`build_parameter_type` for details.
-        """
-        assert mu.__class__ is Parameter
-        return (None if self.parameter_local_type is None
-                else {k: mu[v] for k, v in self._parameter_global_names.items()})
-
     def strip_parameter(self, mu):
         """Remove all components of the |Parameter| `mu` which are not part of the object's |ParameterType|.
 
@@ -402,104 +380,67 @@ class Parametric(object):
         assert all(getattr(mu.get(k, None), 'shape', None) == v for k, v in self.parameter_type.items())
         return Parameter({k: mu[k] for k in self.parameter_type})
 
-    def build_parameter_type(self, local_type=None, global_names=None, local_global=False,
-                             inherits=None, provides=None):
+    def build_parameter_type(self, *args, **kwargs):
         """Builds the |ParameterType| of the object. Should be called by :meth:`__init__`.
 
         The |ParameterType| of a |Parametric| object is determined by the parameter components
         the object itself requires for evaluation, and by the parameter components
-        required by the objects the object depends upon for evaluation. We speak of local
-        and inherited parameter components. The |ParameterType| of the local parameter
-        components are provided via the `local_type` parameter, whereas the |Parametric|
-        objects from which parameter components are inherited are provided as the `inherits`
-        parameter.
+        required by the objects the object depends upon for evaluation.
 
-        Since the implementor does not necessarily know the future use of the object,
-        a mapping between the names of the local parameter components and their intended
-        global names (from the user perspective) can be provided via the `global_names`
-        parameter. This mapping of names will be usually provided by the user when
-        instantiating the class. (E.g. a |Function| evaluating x->x^a could depend
-        on a local parameter component named 'base', whereas the user wishes to name
-        the component 'decay_rate'.) If such a mapping is not desired, the `local_global`
-        parameter must be set to `True`. (To later extract the local parameter components
-        with their local names from a given |Parameter| use the :meth:`local_parameter`
-        method.)
-
-        After the name mapping, all parameter components (local or inherited by one of the
-        objects provided via `inherits`) with the same name are treated as identical and
+        All parameter components (directly specified or inherited by the |ParameterType|
+        of a given |Parametric| object) with the same name are treated as identical and
         are thus required to have the same shapes. The object's |ParameterType| is then
         made up by the shapes of all parameter components appearing.
 
         Additionally components of the resulting |ParameterType| can be removed by
-        specifying them via the `provides` `dict`. The idea is that the object itself
+        specifying them via the `provides` parameter. The idea is that the object itself
         may provide parameter components to the inherited objects which thus should
         not become part of the object's own parameter type. (A typical application
         would be |InstationaryDiscretization|, which provides a time parameter
         component to its (time-dependent) operators during time-stepping.)
 
-        .. note::
-           As parameter components of the |ParameterTypes| of different objects are
-           treated as equal if they have the same name, renaming a local parameter
-           component is not merely a convenience feature but can also have a semantic
-           meaning by identifying local parameter components with inherited ones.
-
-
         Parameters
         ----------
-        local_type
-            |ParameterType| of the local parameter components.
-        global_names
-            A `dict` of the form `{'localname': 'globalname', ...}` defining a name mapping
-            specifying global parameter component names for each key of `local_type`. If `None`
-            and `local_type` is not `None`, `local_global` must be set to `True`.
-        local_global
-            If `True,` treat the names of the local parameter components as global names of these
-            components. In this case, `global_names` must be `None`.
-        inherits
-            Iterable where each entry is a |Parametric| object whose |ParameterType| shall become
-            part of the built |ParameterType|.
+        args
+            Each positional argument must eihter be a dict of parameter components and shapes or
+            a |Parametric| object whose :attr:`~Parametric.parameter_type` is added.
+        kwargs
+            Each keyword argument is interpreted as parameter component with corresponding shape.
         provides
-            `Dict` of parameter component names and their shapes which are provided by the object
-            itself to the objects in the `inherited` list. The parameter components listed here
-            will not become part of the object's |ParameterType|.
+            `Dict` of parameter component names and shapes which are provided by the object
+            itself. The parameter components listed here will not become part of the object's
+            |ParameterType|.
         """
-        assert not local_global or global_names is None
-        assert inherits is None or all(op is None or isinstance(op, Parametric) for op in inherits)
+        provides = kwargs.pop('provides', {})
+        my_parameter_type = {}
 
-        local_type = ParameterType(local_type)
-        if local_global and local_type is not None:
-            global_names = {k: k for k in local_type}
-
-        def check_local_type(local_type, global_names):
-            assert not local_type or global_names, 'Must specify a global name for each key of local_type'
-            for k in local_type:
-                assert k in global_names, 'Must specify a global name for {}'.format(k)
+        def check_shapes(shape1, shape2):
+            if type(shape1) is not tuple:
+                assert isinstance(shape1, Number)
+                shape1 = () if shape1 == 0 else (shape1,)
+            if type(shape2) is not tuple:
+                assert isinstance(shape2, Number)
+                shape2 = () if shape2 == 0 else (shape2,)
+            assert shape1 == shape2, \
+                ('Dimension mismatch for parameter component {} (got {} and {})'
+                 .format(component, my_parameter_type[component], shape))
             return True
 
-        assert check_local_type(local_type, global_names)
+        for arg in args:
+            if hasattr(arg, 'parameter_type'):
+                arg = arg.parameter_type
+            if arg is None:
+                continue
+            for component, shape in arg.items():
+                assert component not in my_parameter_type or check_shapes(my_parameter_type[component], shape)
+                my_parameter_type[component] = shape
 
-        provides = ParameterType(provides)
+        for component, shape in kwargs.items():
+            assert component not in my_parameter_type or check_shapes(my_parameter_type[component], shape)
+            my_parameter_type[component] = shape
 
-        if inherits:
-            def check_op(op, global_type, provides):
-                for name, shape in op.parameter_type.items():
-                    assert name not in global_type or global_type[name] == shape,\
-                        ('Component dimensions of global name {} do not match ({} and {})'
-                         .format(name, global_type[name], shape))
-                    assert name not in provides or provides[name] == shape,\
-                        'Component dimensions of provided name {} do not match'.format(name)
-                return True
+        for component, shape in provides.items():
+            assert component not in my_parameter_type or check_shapes(my_parameter_type[component], shape)
+            my_parameter_type.pop(component, None)
 
-            global_type = (dict(local_type) if local_global
-                           else {global_names[k]: v for k, v in local_type.items()})
-            for op in (o for o in inherits if getattr(o, 'parametric', False)):
-                assert check_op(op, global_type, provides)
-                global_type.update({k: v for k, v in op.parameter_type.items() if k not in provides})
-
-            self.parameter_type = ParameterType(global_type)
-        else:
-            self.parameter_type = (ParameterType(local_type) if local_global
-                                   else ParameterType({global_names[k]: v for k, v in local_type.items()}))
-
-        self.parameter_local_type = local_type
-        self._parameter_global_names = global_names
+        self.parameter_type = ParameterType(my_parameter_type)

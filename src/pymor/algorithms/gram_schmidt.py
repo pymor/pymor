@@ -59,9 +59,9 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
     for i in range(offset, len(A)):
         # first calculate norm
         if product is None:
-            initial_norm = A.l2_norm(ind=i)[0]
+            initial_norm = A[i].l2_norm()[0]
         else:
-            initial_norm = np.sqrt(product.pairwise_apply2(A, A, V_ind=i, U_ind=i))[0]
+            initial_norm = np.sqrt(product.pairwise_apply2(A[i], A[i]))[0]
 
         if initial_norm < atol:
             logger.info("Removing vector {} of norm {}".format(i, initial_norm))
@@ -69,7 +69,7 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
             continue
 
         if i == 0:
-            A.scal(1/initial_norm, ind=0)
+            A[0].scal(1/initial_norm)
 
         else:
             first_iteration = True
@@ -88,16 +88,16 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
                     if j in remove:
                         continue
                     if product is None:
-                        p = A.pairwise_dot(A, ind=i, o_ind=j)[0]
+                        p = A[i].pairwise_dot(A[j])[0]
                     else:
-                        p = product.pairwise_apply2(A, A, V_ind=i, U_ind=j)[0]
-                    A.axpy(-p, A, ind=i, x_ind=j)
+                        p = product.pairwise_apply2(A[i], A[j])[0]
+                    A[i].axpy(-p, A[j])
 
                 # calculate new norm
                 if product is None:
-                    old_norm, norm = norm, A.l2_norm(ind=i)[0]
+                    old_norm, norm = norm, A[i].l2_norm()[0]
                 else:
-                    old_norm, norm = norm, np.sqrt(product.pairwise_apply2(A, A, V_ind=i, U_ind=i))[0]
+                    old_norm, norm = norm, np.sqrt(product.pairwise_apply2(A[i], A[i])[0])
 
                 # remove vector if it got too small:
                 if norm / initial_norm < rtol:
@@ -106,16 +106,16 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
                     break
 
             if norm > 0:
-                A.scal(1 / norm, ind=i)
+                A[i].scal(1 / norm)
 
     if remove:
-        A.remove(remove)
+        del A[remove]
 
     if check:
         if product:
-            error_matrix = product.apply2(A, A, V_ind=list(range(offset, len(A))))
+            error_matrix = product.apply2(A[offset:len(A)], A)
         else:
-            error_matrix = A.dot(A, ind=list(range(offset, len(A))))
+            error_matrix = A[offset:len(A)].dot(A)
         error_matrix[:len(A) - offset, offset:len(A)] -= np.eye(len(A) - offset)
         if error_matrix.size > 0:
             err = np.max(np.abs(error_matrix))

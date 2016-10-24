@@ -8,7 +8,6 @@ import pytest
 
 from pymor.core.interfaces import (ImmutableInterface, abstractstaticmethod, abstractclassmethod)
 from pymor.core import exceptions
-from pymor.core import decorators
 from pymortests.base import TestInterface, runmodule, SubclassForImplemetorsOf
 from pymortests.core.dummies import *   # NOQA
 from pymor.grids.rect import RectGrid
@@ -16,22 +15,6 @@ from pymor.tools import timing
 import pymor.core
 
 class Test_Interface(TestInterface):
-
-    def testLock(self):
-        b = AverageImplementer()
-        b.level = 43
-        b.lock()
-        assert b.locked
-        with pytest.raises(exceptions.ConstError):
-            b.new = 42
-        with pytest.raises(exceptions.ConstError):
-            b.level = 0
-        b.lock(False)
-        b.level = 1
-        b.new = 43
-        assert hasattr(b, 'new')
-        assert b.level == 1
-        assert b.new == 43
 
     def testImplementorlist(self):
         imps = ['StupidImplementer', 'AverageImplementer', 'FailImplementer']
@@ -70,21 +53,6 @@ class Test_Interface(TestInterface):
         inst = CompleteImplementer()
         assert inst.abstract_class_method() == 'CompleteImplementer'
         assert inst.abstract_static_method() == 0
-
-    def testDeprecated(self):
-        @decorators.Deprecated('use other stuff instead')
-        def deprecated_function():
-            pass
-        # Cause all warnings to always be triggered.
-        import warnings
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            # Trigger a warning.
-            deprecated_function()
-            # Verify some things
-            assert len(w) == 1
-            assert issubclass(w[-1].category, DeprecationWarning)
-            assert "DeprecationWarning" in str(w[-1].message)
 
     def testVersion(self):
         assert pymor.VERSION > pymor.NO_VERSION

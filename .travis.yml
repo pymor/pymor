@@ -24,7 +24,7 @@ before_install:
   fi
  - ${PYTHON_X} -c 'import  dolfin' || echo "import dolfin failed"
  - for pkg in 3to2 https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz ipyparallel pytest-cov python-coveralls ; do sudo -E ${PIP_X} install ${pkg} ; done
- - sudo -E ${PIP_X} install -U pytest
+ - sudo -E ${PIP_X} install -U pytest check-manifest
 
 install:
  - ${PYTHON_X} setup.py build_ext -i
@@ -35,10 +35,16 @@ dist: trusty
 script:
  - |
   if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
-    virtualenv --python=${PYTHON_X} piptest
-    source piptest/bin/activate
+    export SDIST_DIR=/tmp/pymor_sdist/
     # this fails on PRs, so skip it
-    [[ "${TRAVIS_PULL_REQUEST}" != "false" ]] || ${PIP_X} --verbose install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
+    [[ "${TRAVIS_PULL_REQUEST}" != "false" ]] || sudo -E ${PIP_X} -q install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
+    sudo -E ${PIP_X} uninstall  -y pymor
+    ${PYTHON_X} setup.py sdist -d ${SDIST_DIR}/ --format=gztar
+    check-manifest -p ${PYTHON_X} ${PWD}
+    pushd ${SDIST_DIR}
+    sudo -E ${PIP_X} install $(ls ${SDIST_DIR})
+    popd
+    xvfb-run -a ${PY_TEST_X} --pyargs pymortests -c .installed_pytest.ini -k "not slow"
   elif [ "${PYTEST_MARKER}" == "MPI" ] ; then
     export PYTHONPATH=$(pwd)/src
     xvfb-run -a mpirun -n 2 ${PYTHON_X} src/pymortests/mpi_run_demo_tests.py
@@ -49,7 +55,7 @@ script:
   fi
 
 notifications:
-  email: 
+  email:
     on_success: change
     on_failure: change
 

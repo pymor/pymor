@@ -67,7 +67,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
         self.order = order
         self.solver_options = solver_options
         self.name = name
-        self.build_parameter_type(inherits=(function, dirichlet_data, neumann_data))
+        self.build_parameter_type(function, dirichlet_data, neumann_data)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -187,7 +187,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         self.robin_data = robin_data
         self.order = order
         self.name = name
-        self.build_parameter_type(inherits=(function, dirichlet_data))
+        self.build_parameter_type(function, dirichlet_data)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -494,7 +494,7 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
         self.solver_options = solver_options
         self.name = name
         if diffusion_function is not None:
-            self.build_parameter_type(inherits=(diffusion_function,))
+            self.build_parameter_type(diffusion_function)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -614,7 +614,7 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
         self.solver_options = solver_options
         self.name = name
         if diffusion_function is not None:
-            self.build_parameter_type(inherits=(diffusion_function,))
+            self.build_parameter_type(diffusion_function)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -733,7 +733,7 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
         self.solver_options = solver_options
         self.name = name
         if advection_function is not None:
-            self.build_parameter_type(inherits=(advection_function,))
+            self.build_parameter_type(advection_function)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -851,7 +851,7 @@ class AdvectionOperatorQ1(NumpyMatrixBasedOperator):
         self.solver_options = solver_options
         self.name = name
         if advection_function is not None:
-            self.build_parameter_type(inherits=(advection_function,))
+            self.build_parameter_type(advection_function)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -962,7 +962,7 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
         self.name = name
         self.order = order
         if self.robin_data is not None:
-            self.build_parameter_type(inherits=(self.robin_data[0],))
+            self.build_parameter_type(self.robin_data[0])
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -1021,7 +1021,7 @@ class InterpolationOperator(NumpyMatrixBasedOperator):
         self.grid = grid
         self.function = function
         self.range = NumpyVectorSpace(grid.size(grid.dim))
-        self.build_parameter_type(inherits=(function,))
+        self.build_parameter_type(function)
 
     def _assemble(self, mu=None):
         return self.function.evaluate(self.grid.centers(self.grid.dim), mu=mu).reshape((-1, 1))

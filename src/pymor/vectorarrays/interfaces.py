@@ -4,16 +4,20 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from numbers import Number
+import sys
 
 import numpy as np
 
 from pymor.core.interfaces import BasicInterface, abstractmethod, abstractproperty, abstractclassmethod
 
+
 def _numpy_version_older(version_tuple):
     np_tuple = tuple(int(p) for p in np.__version__.split('.')[:3])
     return np_tuple < version_tuple
 
-_INDEXTYPES = (Number,) if not _numpy_version_older((1,9)) else (Number, np.intp)
+_INDEXTYPES = (Number,) if not _numpy_version_older((1, 9)) else (Number, np.intp)
+PY2 = sys.version_info.major == 2
+
 
 class VectorArrayInterface(BasicInterface):
     """Interface for vector arrays.
@@ -21,26 +25,37 @@ class VectorArrayInterface(BasicInterface):
     A vector array should be thought of as a list of (possibly high-dimensional) vectors.
     While the vectors themselves will be inaccessible in general (e.g. because they are
     managed by an external PDE solver code), operations on the vectors like addition can
-    be performed via the interface.
+    be performed via this interface.
 
-    It is moreover assumed that the number of vectors is small enough such that scalar data
+    It is assumed that the number of vectors is small enough such that scalar data
     associated to each vector can be handled on the Python side. As such, methods like
     :meth:`~VectorArrayInterface.l2_norm` or :meth:`~VectorArrayInterface.gramian` will
     always return |NumPy arrays|.
 
-    An implementation of the interface via |NumPy arrays| is given by |NumpyVectorArray|.
-    In general, it is the implementors decision how memory is allocated internally (e.g.
-    continuous block of memory vs. list of pointers to the individual vectors.) Thus, no
-    general assumptions can be made on the costs of operations like appending to or removing
-    vectors from the array. As a hint for 'continuous block of memory' implementations,
-    |VectorArray| constructors should provide a `reserve` keyword argument which allows
-    to specify to what size the array is assumed to grow.
+    An implementation of the `VectorArrayInterface` via |NumPy arrays| is given by
+    |NumpyVectorArray|.  In general, it is the implementors decision how memory is
+    allocated internally (e.g.  continuous block of memory vs. list of pointers to the
+    individual vectors.) Thus, no general assumptions can be made on the costs of operations
+    like appending to or removing vectors from the array. As a hint for 'continuous block
+    of memory' implementations, |VectorArray| constructors provide a `reserve` keyword
+    argument which allows to specify to what size the array is assumed to grow.
 
-    Most methods provide `ind` and/or `o_ind` arguments which are used to specify on which
-    vectors the method is supposed to operate. If `ind` (`o_ind`) is `None` the whole array
-    is selected. Otherwise, `ind` can be a single index in `range(len(self))`, a `list`
-    of indices or a one-dimensional |NumPy array| of indices. An index can be repeated
-    in which case the corresponding vector is selected several times.
+    As with |Numpy array|, |VectorArrays| can be indexed with numbers, slices and
+    lists or one-dimensional |NumPy arrays|. Indexing will always return a new
+    |VectorArray| which acts as a view into the original data. Thus, if the indexed
+    array is modified via :meth:`~VectorArrayInterface.scal` or :meth:`~VectorArrayInterface.axpy`,
+    the vectors in the original array will be changed. Indices may be negative, in
+    which case the vector is selected by counting from the end of the array. Moreover
+    Indices can be repeated, in which case the corresponding vector is selected several
+    times. The resulting view will be immutable, however.
+
+    .. note::
+        It is disallowed to append vectors to a |VectorArray| view or to remove
+        vectors from it. Removing vectors from an array with existing views
+        will lead to undefined behavior of these views. As such, it is generally
+        advisable to make a :meth:`~VectorArrayInterface.copy` of a view for long
+        term storage. Since :meth:`~VectorArrayInterface.copy` has copy-on-write
+        semantics, this will usually cause little overhead.
 
     Attributes
     ----------
@@ -55,6 +70,8 @@ class VectorArrayInterface(BasicInterface):
 
     dim
         The dimension of the vectors in the array.
+    is_view
+        `True` if the array is a view obtained by indexing another array.
     space
         |VectorSpace| array the array belongs to.
     subtype
@@ -67,6 +84,8 @@ class VectorArrayInterface(BasicInterface):
         could, e.g., include a socket for communication with a specific PDE solver
         instance.
     """
+
+    is_view = False
 
     @abstractclassmethod
     def make_array(cls, subtype=None, count=0, reserve=0):
@@ -128,11 +147,6 @@ class VectorArrayInterface(BasicInterface):
         """
         return self.make_array(subtype=self.subtype, count=count)
 
-    @abstractmethod
-    def __len__(self):
-        """The number of vectors in the array."""
-        pass
-
     @abstractproperty
     def dim(self):
         pass
@@ -146,7 +160,37 @@ class VectorArrayInterface(BasicInterface):
         return VectorSpace(type(self), self.subtype)
 
     @abstractmethod
-    def copy(self, ind=None, deep=False):
+    def __len__(self):
+        """The number of vectors in the array."""
+        pass
+
+    @abstractmethod
+    def __getitem__(self, ind):
+        """Return a |VectorArray| view onto a subset of the vectors in the array."""
+        pass
+
+    @abstractmethod
+    def __delitem__(self, ind):
+        """Remove vectors from the array."""
+        pass
+
+    @abstractmethod
+    def append(self, other, remove_from_other=False):
+        """Append vectors to the array.
+
+        Parameters
+        ----------
+        other
+            A |VectorArray| containing the vectors to be appended.
+        remove_from_other
+            If `True`, the appended vectors are removed from `other`.
+            For list-like implementations this can be used to prevent
+            unnecessary copies of the involved vectors.
+        """
+        pass
+
+    @abstractmethod
+    def copy(self, deep=False):
         """Returns a copy of a subarray.
 
         All |VectorArray| implementations in pyMOR have copy-on-write semantics:
@@ -156,12 +200,10 @@ class VectorArrayInterface(BasicInterface):
         is modified.
 
         Note that for |NumpyVectorArray|, a deep copy is always performed when only
-        some vectors in array are copied (i.e. `ind` is specified).
+        some vectors in the array are copied.
 
         Parameters
         ----------
-        ind
-            Indices of the vectors that are to be copied (see class documentation).
         deep
             Ensure that an actual copy of the array data is made (see above).
 
@@ -172,43 +214,15 @@ class VectorArrayInterface(BasicInterface):
         pass
 
     @abstractmethod
-    def append(self, other, o_ind=None, remove_from_other=False):
-        """Append vectors to the array.
-
-        Parameters
-        ----------
-        other
-            A |VectorArray| containing the vectors to be appended.
-        o_ind
-            Indices of the vectors that are to be appended (see class documentation).
-        remove_from_other
-            If `True`, the appended vectors are removed from `other`.
-            For list-like implementations this can be used to prevent
-            unnecessary copies of the involved vectors.
-        """
-        pass
-
-    @abstractmethod
-    def remove(self, ind=None):
-        """Remove vectors from the array.
-
-        Parameters
-        ----------
-        ind
-            Indices of the vectors that are to be removed (see class documentation).
-        """
-        pass
-
-    @abstractmethod
-    def scal(self, alpha, ind=None):
+    def scal(self, alpha):
         """BLAS SCAL operation (in-place scalar multiplication).
 
         This method calculates ::
 
-            self[ind] = alpha*self[ind]
+            self = alpha*self
 
         If `alpha` is a scalar, each vector is multiplied by this scalar. Otherwise, `alpha`
-        has to be a one-dimensional |NumPy array| of the same length as `self` (`ind`)
+        has to be a one-dimensional |NumPy array| of the same length as `self`
         containing the factors for each vector.
 
         Parameters
@@ -216,25 +230,22 @@ class VectorArrayInterface(BasicInterface):
         alpha
             The scalar coefficient or one-dimensional |NumPy array| of coefficients
             with which the vectors in `self` are multiplied.
-        ind
-            Indices of the vectors of `self` that are to be scaled (see class documentation).
-            Repeated indices are forbidden.
         """
         pass
 
     @abstractmethod
-    def axpy(self, alpha, x, ind=None, x_ind=None):
+    def axpy(self, alpha, x):
         """BLAS AXPY operation.
 
         This method forms the sum ::
 
-            self[ind] = alpha*x[x_ind] + self[ind]
+            self = alpha*x + self
 
-        If the length of `x` (`x_ind`) is 1, the same `x` vector is used for all vectors
-        in `self`. Otherwise, the lengths of `self` (`ind`) and `x` (`x_ind`) have to agree.
+        If the length of `x` is 1, the same `x` vector is used for all vectors
+        in `self`. Otherwise, the lengths of `self`  and `x` have to agree.
         If `alpha` is a scalar, each `x` vector is multiplied with the same factor `alpha`.
         Otherwise, `alpha` has to be a one-dimensional |NumPy array| of the same length as
-        `self` (`ind`)  containing the coefficients for each `x` vector.
+        `self` containing the coefficients for each `x` vector.
 
         Parameters
         ----------
@@ -243,65 +254,47 @@ class VectorArrayInterface(BasicInterface):
             the vectors in `x` are multiplied.
         x
             A |VectorArray| containing the x-summands.
-        ind
-            Indices of the vectors of `self` that are to be added (see class documentation).
-            Repeated indices are forbidden.
-        x_ind
-            Indices of the vectors in `x` that are to be added (see class documentation).
-            Repeated indices are allowed.
         """
         pass
 
     @abstractmethod
-    def dot(self, other, ind=None, o_ind=None):
+    def dot(self, other):
         """Returns the inner products between |VectorArray| elements.
 
         Parameters
         ----------
         other
             A |VectorArray| containing the second factors.
-        ind
-            Indices of the vectors whose inner products are to be taken
-            (see class documentation).
-        o_ind
-            Indices of the vectors in `other` whose inner products are to be
-            taken (see class documentation).
 
         Returns
         -------
         A |NumPy array| `result` such that:
 
-            result[i, j] = ( self[ind[i]], other[o_ind[j]] ).
+            result[i, j] = ( self[i], other[j] ).
 
         """
         pass
 
     @abstractmethod
-    def pairwise_dot(self, other, ind=None, o_ind=None):
+    def pairwise_dot(self, other):
         """Returns the pairwise inner products between |VectorArray| elements.
 
         Parameters
         ----------
         other
             A |VectorArray| containing the second factors.
-        ind
-            Indices of the vectors whose inner products are to be taken
-            (see class documentation).
-        o_ind
-            Indices of the vectors in `other` whose inner products are to be
-            taken (see class documentation).
 
         Returns
         -------
         A |NumPy array| `result` such that:
 
-            result[i] = ( self[ind[i]], other[o_ind[i]] ).
+            result[i] = ( self[i], other[i] ).
 
         """
         pass
 
     @abstractmethod
-    def lincomb(self, coefficients, ind=None):
+    def lincomb(self, coefficients):
         """Returns linear combinations of the vectors contained in the array.
 
         Parameters
@@ -310,8 +303,6 @@ class VectorArrayInterface(BasicInterface):
             A |NumPy array| of dimension 1 or 2 containing the linear
             coefficients. `coefficients.shape[-1]` has to agree with
             `len(self)`.
-        ind
-            Indices of the vectors which are linear combined (see class documentation).
 
         Returns
         -------
@@ -327,75 +318,54 @@ class VectorArrayInterface(BasicInterface):
         pass
 
     @abstractmethod
-    def l1_norm(self, ind=None):
+    def l1_norm(self):
         """The l1-norms of the vectors contained in the array.
 
-        Parameters
-        ----------
-        ind
-            Indices of the vectors whose norms are to be calculated (see class documentation).
-
         Returns
         -------
         A |NumPy array| `result` such that `result[i]` contains the norm
-        of `self[ind[i]]`.
+        of `self[i]`.
         """
         pass
 
     @abstractmethod
-    def l2_norm(self, ind=None):
+    def l2_norm(self):
         """The l2-norms of the vectors contained in the array.
 
-        Parameters
-        ----------
-        ind
-            Indices of the vectors whose norms are to be calculated (see class documentation).
-
         Returns
         -------
         A |NumPy array| `result` such that `result[i]` contains the norm
-        of `self[ind[i]]`.
+        of `self[i]`.
         """
         pass
 
     @abstractmethod
-    def l2_norm2(self, ind=None):
+    def l2_norm2(self):
         """The squared l2-norms of the vectors contained in the array.
-
-        Parameters
-        ----------
-        ind
-            Indices of the vectors whose norms are to be calculated (see class documentation).
 
         Returns
         -------
         A |NumPy array| `result` such that `result[i]` contains the norm
-        of `self[ind][i]`.
+        of `self[i]`.
         """
         pass
 
-    def sup_norm(self, ind=None):
+    def sup_norm(self):
         """The l-infinity--norms of the vectors contained in the array.
-
-        Parameters
-        ----------
-        ind
-            Indices of the vectors whose norms are to be calculated (see class documentation).
 
         Returns
         -------
         A |NumPy array| `result` such that `result[i]` contains the norm
-        of `self[ind[i]]`.
+        of `self[i]`.
         """
         if self.dim == 0:
-            assert self.check_ind(ind)
-            return np.zeros(self.len_ind(ind))
+            return np.zeros(len(self))
         else:
-            _, max_val = self.amax(ind)
+            _, max_val = self.amax()
             return max_val
 
     @abstractmethod
-    def components(self, component_indices, ind=None):
+    def components(self, component_indices):
         """Extract components of the vectors contained in the array.
 
         Parameters
@@ -403,25 +373,17 @@ class VectorArrayInterface(BasicInterface):
         component_indices
             List or 1D |NumPy array| of indices of the vector components that are to
             be returned.
-        ind
-            Indices of the vectors whose components are to be retrieved (see class documentation).
 
         Returns
         -------
         A |NumPy array| `result` such that `result[i, j]` is the `component_indices[j]`-th
-        component of the `ind[i]`-th vector of the array.
+        component of the `i`-th vector of the array.
         """
         pass
 
     @abstractmethod
-    def amax(self, ind=None):
+    def amax(self):
         """The maximum absolute value of the vectors contained in the array.
-
-        Parameters
-        ----------
-        ind
-            Indices of the vectors whose maximum absolute value is to be calculated
-            (see class documentation).
 
         Returns
         -------
@@ -434,9 +396,9 @@ class VectorArrayInterface(BasicInterface):
         """
         pass
 
-    def gramian(self, ind=None):
-        """Shorthand for `self.dot(self, ind=ind, o_ind=ind)`."""
-        return self.dot(self, ind=ind, o_ind=ind)
+    def gramian(self):
+        """Shorthand for `self.dot(self)`."""
+        return self.dot(self)
 
     def __add__(self, other):
         """The pairwise sum of two |VectorArrays|."""
@@ -485,36 +447,66 @@ class VectorArrayInterface(BasicInterface):
 
     def check_ind(self, ind):
         """Check if `ind` is an admissable list of indices in the sense of the class documentation."""
-        return (ind is None or
-                isinstance(ind, _INDEXTYPES) and 0 <= ind < len(self) or
-                isinstance(ind, list) and (len(ind) == 0 or 0 <= min(ind) and max(ind) < len(self)) or
-                (isinstance(ind, np.ndarray) and ind.ndim == 1
-                 and (len(ind) == 0 or 0 <= np.min(ind) and np.max(ind) < len(self))))
+        l = len(self)
+        return (type(ind) is slice or
+                isinstance(ind, _INDEXTYPES) and -l <= ind < l or
+                isinstance(ind, (list, np.ndarray)) and all(-l <= i < l for i in ind))
 
     def check_ind_unique(self, ind):
         """Check if `ind` is an admissable list of non-repeated indices in the sense of the class documentation."""
-        if ind is None or isinstance(ind, Number) and 0 <= ind < len(self):
-            return True
-        elif isinstance(ind, list):
-            if len(ind) == 0:
-                return True
-            s = set(ind)
-            return len(s) == len(ind) and 0 <= min(s) and max(s) < len(self)
-        elif isinstance(ind, np.ndarray) and ind.ndim == 1:
-            if len(ind) == 0:
-                return True
-            u = np.unique(ind)
-            return len(u) == len(ind) and 0 <= u[0] and u[-1] < len(self)
-        else:
-            return False
+        l = len(self)
+        return (type(ind) is slice or
+                isinstance(ind, _INDEXTYPES) and -l <= ind < l or
+                isinstance(ind, (list, np.ndarray)) and len(set(i if i >= 0 else l+i for i in ind if -l <= i < l)) == len(ind))
 
     def len_ind(self, ind):
-        """Return the number of specified indices."""
-        return len(self) if ind is None else 1 if isinstance(ind, _INDEXTYPES) else len(ind)
+        """Return the number of given indices."""
+        l = len(self)
+        return (len(range(*ind.indices(l))) if type(ind) is slice else
+                1 if not hasattr(ind, '__len__') else
+                len(ind))
 
     def len_ind_unique(self, ind):
         """Return the number of specified unique indices."""
-        return len(self) if ind is None else 1 if isinstance(ind, Number) else len(set(ind))
+        l = len(self)
+        return (len(range(*ind.indices(l))) if type(ind) is slice else
+                1 if isinstance(ind, _INDEXTYPES) else
+                len(set(i if i >= 0 else l+i for i in ind)))
+
+    def normalize_ind(self, ind):
+        """Normalize given indices such that they are independent of the array length."""
+        if type(ind) is slice:
+            return slice(*ind.indices(len(self)))
+        elif not hasattr(ind, '__len__'):
+            ind = ind if 0 <= ind else len(self)+ind
+            return slice(ind, ind+1)
+        else:
+            l = len(self)
+            return [i if 0 <= i else l+i for i in ind]
+
+    def sub_index(self, ind, ind_ind):
+        """Return indices corresponding to the view `self[ind][ind_ind]`"""
+        if type(ind) is slice:
+            ind = range(*ind.indices(len(self)))
+            if type(ind_ind) is slice:
+                if PY2:  # Currently we do not convert range to xrange, so ind is a list
+                    return ind[ind_ind]
+                else:
+                    result = ind[ind_ind]
+                    return slice(result.start, result.stop, result.step)
+            elif hasattr(ind_ind, '__len__'):
+                return [ind[i] for i in ind_ind]
+            else:
+                return [ind[ind_ind]]
+        else:
+            if not hasattr(ind, '__len__'):
+                ind = [ind]
+            if type(ind_ind) is slice:
+                return ind[ind_ind]
+            elif hasattr(ind_ind, '__len__'):
+                return [ind[i] for i in ind_ind]
+            else:
+                return [ind[ind_ind]]
 
 
 class VectorSpace(BasicInterface):

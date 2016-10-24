@@ -21,11 +21,11 @@ class GenericOperator(OperatorBase):
     def __init__(self, solver_options=None):
         self.solver_options = solver_options
 
-    def apply(self, U, ind=None, mu=None):
-        return self.op.apply(U, ind=ind, mu=mu)
+    def apply(self, U, mu=None):
+        return self.op.apply(U, mu=mu)
 
-    def apply_adjoint(self, U, ind=None, mu=None):
-        return self.op.apply_adjoint(U, ind=ind, mu=mu)
+    def apply_adjoint(self, U, mu=None):
+        return self.op.apply_adjoint(U, mu=mu)
 
 
 @pytest.fixture(params=pymor.algorithms.genericsolvers.options().keys())

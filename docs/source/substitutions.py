@@ -64,8 +64,6 @@ common = '''
 .. |ParabolicProblem| replace:: :class:`~pymor.analyticalproblems.parabolic.ParabolicProblem`
 .. |InstationaryAdvectionProblem| replace:: :class:`~pymor.analyticalproblems.advection.InstationaryAdvectionProblem`
 
-.. |BoundaryType| replace:: :class:`~pymor.domaindescriptions.boundarytypes.BoundaryType`
-.. |BoundaryTypes| replace:: :class:`BoundaryTypes <pymor.domaindescriptions.boundarytypes.BoundaryType>`
 .. |RectDomain| replace:: :class:`~pymor.domaindescriptions.basic.RectDomain`
 .. |PolygonalDomain| replace:: :class:`~pymor.domaindescriptions.polygonal.PolygonalDomain`
 .. |CylindricalDomain| replace:: :class:`~pymor.domaindescriptions.basic.CylindricalDomain`

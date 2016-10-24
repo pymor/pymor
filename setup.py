@@ -6,6 +6,7 @@
 import sys
 import os
 import subprocess
+
 from setuptools import find_packages
 from setuptools.command.test import test as TestCommand
 from distutils.extension import Extension
@@ -148,6 +149,18 @@ if sys.version_info[0] < 3:
 
 # (Under python3 no commands are replaced, so the default command classes are used.)
 
+
+def _testdatafiles():
+    root = os.path.join(os.path.dirname(__file__), 'src', 'pymortests')
+    testdata = set()
+
+    for dir_, _, files in os.walk(os.path.join(root, 'testdata')):
+        for fileName in files:
+            relDir = os.path.relpath(dir_, root)
+            relFile = os.path.join(relDir, fileName)
+            testdata.add(relFile)
+    return list(testdata)
+
 def _setup(**kwargs):
 
     # the following hack is taken from scipy's setup.py
@@ -178,7 +191,10 @@ def _setup(**kwargs):
                    Extension("pymor.grids._unstructured", ["src/pymor/grids/_unstructured.pyx"], include_dirs=include_dirs)]
     # for some reason the *pyx files don't end up in sdist tarballs -> manually add them as package data
     # this _still_ doesn't make them end up in the tarball however -> manually add them in MANIFEST.in
-    kwargs['package_data'] = {'pymor': list(itertools.chain(*[i.sources for i in ext_modules]))}
+    # duplication is necessary since Manifest sometime is only regarded in sdist, package_data in bdist
+    # all filenames need to be relative to their package root, not the source root
+    kwargs['package_data'] = {'pymor': [f.replace('src/pymor/', '') for f in itertools.chain(*[i.sources for i in ext_modules])],
+                                'pymortests': _testdatafiles()}
 
     kwargs['cmdclass'] = cmdclass
     kwargs['ext_modules'] = ext_modules
