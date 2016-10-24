@@ -8,6 +8,7 @@ import numpy as np
 
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.operators.interfaces import OperatorInterface
+from pymor.operators.constructions import IdentityOperator, LincombOperator
 
 
 def operator2matrix(A):
@@ -72,9 +73,9 @@ try:
 
             self.A = A
             self.E = E
-            self.B = B
-            self.C = C
-            self.RHS = to_matrix(B) if opt.type == pymess.MESS_OP_NONE else to_matrix(C).T
+            self.B = to_matrix(B)
+            self.C = to_matrix(C)
+            self.RHS = self.B if opt.type == pymess.MESS_OP_NONE else self.C.T
             self.p = []
 
         def A_apply(self, op, y):
@@ -251,7 +252,7 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
             if R is not None:
                 assert isinstance(R, OperatorInterface) and R.linear
                 assert R.source == R.range == C.range
-    assert me_solver is None or me_solver in {'scipy', 'slycot', 'pymess_care'}
+    assert me_solver is None or me_solver in {'scipy', 'slycot', 'pymess_care', 'pymess_lrnm'}
 
     if me_solver is None:
         import imp
@@ -381,6 +382,8 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
             else:
                 Z = pymess.care(A_mat.T, E_mat.T, C_mat.T, B_mat.T)
     elif me_solver == 'pymess_lrnm':
+        if Q is not None or R is not None or G is not None:
+            raise NotImplementedError()
         import pymess
         opts = pymess.options()
         opts.adi.shifts.paratype = pymess.MESS_LRCFADI_PARA_ADAPTIVE_V
