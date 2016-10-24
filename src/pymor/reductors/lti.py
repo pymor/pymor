@@ -63,20 +63,20 @@ def interpolation(discretization, sigma, b, c, use_arnoldi=False):
             if sigma[i].imag == 0:
                 sEmA = LincombOperator((discretization.E, discretization.A), (sigma[i].real, -1))
 
-                Bb = discretization.B.apply(b.real, ind=i)
+                Bb = discretization.B.apply(b.real[i])
                 V.append(sEmA.apply_inverse(Bb))
 
-                CTc = discretization.C.apply_adjoint(c.real, ind=i)
+                CTc = discretization.C.apply_adjoint(c.real[i])
                 W.append(sEmA.apply_inverse_adjoint(CTc))
             elif sigma[i].imag > 0:
                 sEmA = LincombOperator((discretization.E, discretization.A), (sigma[i], -1))
 
-                Bb = discretization.B.apply(b, ind=i)
+                Bb = discretization.B.apply(b[i])
                 v = sEmA.apply_inverse(Bb)
                 V.append(v.real)
                 V.append(v.imag)
 
-                CTc = discretization.C.apply_adjoint(c, ind=i)
+                CTc = discretization.C.apply_adjoint(c[i])
                 w = sEmA.apply_inverse_adjoint(CTc)
                 W.append(w.real)
                 W.append(w.imag)

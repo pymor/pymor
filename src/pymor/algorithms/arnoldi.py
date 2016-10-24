@@ -190,9 +190,9 @@ def arnoldi_tangential(A, E, B, sigma, directions, trans=False):
 
             if not trans:
                 if i == 0:
-                    v = sEmA.apply_inverse(B.apply(directions.real, ind=0))
+                    v = sEmA.apply_inverse(B.apply(directions.real[0]))
                 else:
-                    Bd = B.apply(directions.real, ind=i)
+                    Bd = B.apply(directions.real[i])
                     VTBd = VectorArrayOperator(V, transposed=True).apply(Bd)
                     sEmA_proj_inv_VTBd = NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse(VTBd)
                     V_sEmA_proj_inv_VTBd = VectorArrayOperator(V).apply(sEmA_proj_inv_VTBd)
@@ -200,9 +200,9 @@ def arnoldi_tangential(A, E, B, sigma, directions, trans=False):
                     v = sEmA.apply_inverse(rd)
             else:
                 if i == 0:
-                    v = sEmA.apply_inverse_adjoint(B.apply_adjoint(directions.real, ind=0))
+                    v = sEmA.apply_inverse_adjoint(B.apply_adjoint(directions.real[0]))
                 else:
-                    CTd = B.apply_adjoint(directions.real, ind=i)
+                    CTd = B.apply_adjoint(directions.real[i])
                     VTCTd = VectorArrayOperator(V, transposed=True).apply(CTd)
                     sEmA_proj_inv_VTCTd = NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse_adjoint(VTCTd)
                     V_sEmA_proj_inv_VTCTd = VectorArrayOperator(V).apply(sEmA_proj_inv_VTCTd)
@@ -222,9 +222,9 @@ def arnoldi_tangential(A, E, B, sigma, directions, trans=False):
 
             if not trans:
                 if i == 0:
-                    v = sEmA.apply_inverse(B.apply(directions, ind=0))
+                    v = sEmA.apply_inverse(B.apply(directions[0]))
                 else:
-                    Bd = B.apply(directions, ind=i)
+                    Bd = B.apply(directions[i])
                     VTBd = VectorArrayOperator(V, transposed=True).apply(Bd)
                     sEmA_proj_inv_VTBd = NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse(VTBd)
                     V_sEmA_proj_inv_VTBd = VectorArrayOperator(V).apply(sEmA_proj_inv_VTBd)
@@ -232,9 +232,9 @@ def arnoldi_tangential(A, E, B, sigma, directions, trans=False):
                     v = sEmA.apply_inverse(rd)
             else:
                 if i == 0:
-                    v = sEmA.apply_inverse_adjoint(B.apply_adjoint(directions, ind=0))
+                    v = sEmA.apply_inverse_adjoint(B.apply_adjoint(directions[0]))
                 else:
-                    CTd = B.apply_adjoint(directions, ind=i)
+                    CTd = B.apply_adjoint(directions[i])
                     VTCTd = VectorArrayOperator(V, transposed=True).apply(CTd)
                     sEmA_proj_inv_VTCTd = NumpyMatrixOperator(sEmA.apply2(V, V)).apply_inverse_adjoint(VTCTd)
                     V_sEmA_proj_inv_VTCTd = VectorArrayOperator(V).apply(sEmA_proj_inv_VTCTd)

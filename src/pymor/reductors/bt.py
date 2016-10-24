@@ -84,8 +84,8 @@ def bt(discretization, r=None, tol=None, typ='lyap', me_solver=None, method='bfs
         r_tol = np.argmax(bounds <= tol) + 1
         r = r_tol if r is None else min([r, r_tol])
 
-    V = VectorArrayOperator(discretization._gramian[typ]['cf']).apply(discretization._V[typ], ind=list(range(r)))
-    W = VectorArrayOperator(discretization._gramian[typ]['of']).apply(discretization._U[typ], ind=list(range(r)))
+    V = VectorArrayOperator(discretization._gramian[typ]['cf']).apply(discretization._V[typ][:r])
+    W = VectorArrayOperator(discretization._gramian[typ]['of']).apply(discretization._U[typ][:r])
 
     if method == 'sr':
         alpha = 1 / np.sqrt(discretization._sv[typ][:r])
