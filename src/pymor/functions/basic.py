@@ -177,20 +177,23 @@ class ExpressionFunction(GenericFunction):
                                              'min', 'minimum', 'max', 'maximum', 'pi', 'e',
                                              'sum', 'prod', 'abs', 'sign', 'zeros', 'ones'}}
 
-    def __init__(self, expression, dim_domain=1, shape_range=(), parameter_type=None, name=None):
+    def __init__(self, expression, dim_domain=1, shape_range=(), parameter_type=None, locals_=None, name=None):
         self.expression = expression
+        self.locals_ = locals_ or {}
         code = compile(expression, '<expression>', 'eval')
         functions = self.functions
-        mapping = lambda x, mu=None: eval(code, functions, {'x': x, 'mu': mu})
+        mapping = lambda x, mu=None: eval(code, functions, dict({'x': x, 'mu': mu}, **self.locals_))
         super().__init__(mapping, dim_domain, shape_range, parameter_type, name)
 
     def __repr__(self):
-        return 'ExpressionFunction({}, {}, {}, {})'.format(self.expression, repr(self.parameter_type),
-                                                           self.shape_range, self.parameter_type)
+        return 'ExpressionFunction({}, {}, {}, {}, {})'.format(self.expression, repr(self.parameter_type),
+                                                               self.shape_range, self.parameter_type,
+                                                               self.locals_)
 
     def __reduce__(self):
         return (ExpressionFunction,
-                (self.expression, self.dim_domain, self.shape_range, self.parameter_type, getattr(self, '_name', None)))
+                (self.expression, self.dim_domain, self.shape_range, self.parameter_type, self.locals_,
+                 getattr(self, '_name', None)))
 
 
 class LincombFunction(FunctionBase):
