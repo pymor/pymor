@@ -171,7 +171,7 @@ class StationaryDiscretization(DiscretizationBase):
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
         self.solution_space = self.operator.source
-        self.build_parameter_type(inherits=(self.operator, self.rhs))
+        self.build_parameter_type(self.operator, self.rhs)
         self.parameter_space = parameter_space
 
         assert self.operator is not None
