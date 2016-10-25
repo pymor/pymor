@@ -41,6 +41,8 @@ class InstationaryAdvectionProblem(ImmutableInterface):
         |Function| providing the initial values u_0.
     T
         The final time T.
+    parameter_space
+        The |ParameterSpace| for the problem.
     name
         Name of the problem.
 
@@ -53,13 +55,15 @@ class InstationaryAdvectionProblem(ImmutableInterface):
     dirichlet_data
     initial_data
     T
+    parameter_space
     """
 
     def __init__(self, domain=RectDomain(), rhs=ConstantFunction(dim_domain=2),
                  flux_function=ConstantFunction(value=np.array([0, 0]), dim_domain=1),
                  flux_function_derivative=ConstantFunction(value=np.array([0, 0]), dim_domain=1),
                  dirichlet_data=ConstantFunction(value=0, dim_domain=2),
-                 initial_data=ConstantFunction(value=1, dim_domain=2), T=1, name=None):
+                 initial_data=ConstantFunction(value=1, dim_domain=2), T=1,
+                 parameter_space=None, name=None):
         self.domain = domain
         self.rhs = rhs
         self.flux_function = flux_function
@@ -67,4 +71,5 @@ class InstationaryAdvectionProblem(ImmutableInterface):
         self.dirichlet_data = dirichlet_data
         self.initial_data = initial_data
         self.T = T
+        self.parameter_space = parameter_space
         self.name = name
