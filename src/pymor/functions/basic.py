@@ -175,7 +175,7 @@ class ExpressionFunction(GenericFunction):
                                              'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
                                              'exp', 'exp2', 'log', 'log2', 'log10', 'array',
                                              'min', 'minimum', 'max', 'maximum', 'pi', 'e',
-                                             'sum', 'prod'}}
+                                             'sum', 'prod', 'abs', 'sign', 'zeros', 'ones'}}
 
     def __init__(self, expression, dim_domain=1, shape_range=(), parameter_type=None, name=None):
         self.expression = expression
