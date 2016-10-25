@@ -41,8 +41,8 @@ def test_ext(extension_alg):
     current = ident[0]
     for i in range(1, size):
         c = NumpyVectorArray(current)
-        n, _ = extension_alg(c, NumpyVectorArray(ident[i]))
-        assert np.allclose(n.data, ident[0:i+1])
+        extension_alg(c, NumpyVectorArray(ident[i]))
+        assert np.allclose(c.data, ident[0:i+1])
         current = ident[0:i+1]
 
 if __name__ == "__main__":

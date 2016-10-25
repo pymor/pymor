@@ -44,8 +44,9 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
     samples
         The set of |Parameter| samples on which to perform the greedy search.
     initial_basis
-        The initial reduced basis at the start of the algorithm. If `None`,
-        an empty basis is used as initial basis.
+        The initial reduced basis with which the algorithm starts. If `None`,
+        an empty |VectorArray| from `discretization.solution_space` is used
+        as initial basis.
     use_estimator
         If `True`, use `reduced_discretization.estimate()` to estimate the
         errors on the sample set. Otherwise `discretization.solve()` is
@@ -56,11 +57,10 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
     extension_algorithm
         The extension algorithm to be used to extend the current reduced
         basis with the maximum error snapshot. This has to be a function
-        of the form `extension_algorithm(old_basis, new_vector)`, which
-        returns a tuple `(new_basis, extension_data)`, where
-        `extension_data` is a dict at least containing the key
-        `hierarchic`. `hierarchic` should be set to `True` if `new_basis`
-        contains `old_basis` as its first vectors.
+        of the form `extension_algorithm(basis, snapshot)` which
+        returns a dict at least containing the key `hierarchic`.
+        `hierarchic` should be set to `True` if the extended basis
+        contains the old basis as its first vectors.
     atol
         If not `None`, stop the algorithm if the maximum (estimated) error
         on the sample set drops below this value.
@@ -107,7 +107,7 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
                 rom.manage(pool.push(error_norm))
         samples = rom.manage(pool.scatter_list(samples))
 
-        basis = initial_basis
+        basis = initial_basis if initial_basis is not None else discretization.solution_space.empty()
 
         tic = time.time()
         extensions = 0
@@ -154,7 +154,7 @@ def greedy(discretization, reductor, samples, initial_basis=None, use_estimator=
                 U = discretization.solve(max_err_mu)
             with logger.block('Extending basis with solution snapshot ...'):
                 try:
-                    basis, extension_data = extension_algorithm(basis, U)
+                    extension_data = extension_algorithm(basis, U)
                 except ExtensionError:
                     logger.info('Extension failed. Stopping now.')
                     break
