@@ -5,7 +5,6 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-import scipy.sparse.linalg as spsla
 
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.operators.interfaces import OperatorInterface
@@ -57,7 +56,7 @@ try:
                 self.RHS = self.RHS.T
             self.p = []
 
-        def A_apply(self, op, y):
+        def AX_apply(self, op, y):
             y = self.A.source.from_data(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
                 x = self.A.apply(y)
@@ -65,7 +64,7 @@ try:
                 x = self.A.apply_adjoint(y)
             return np.matrix(x.data).T
 
-        def E_apply(self, op, y):
+        def EX_apply(self, op, y):
             if self.E is None:
                 return y
 
@@ -76,7 +75,7 @@ try:
                 x = self.E.apply_adjoint(y)
             return np.matrix(x.data).T
 
-        def As_apply(self, op, y):
+        def AINV_apply(self, op, y):
             y = self.A.source.from_data(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
                 x = self.A.apply_inverse(y)
@@ -84,7 +83,7 @@ try:
                 x = self.A.apply_inverse_adjoint(y)
             return np.matrix(x.data).T
 
-        def Es_apply(self, op, y):
+        def EINV_apply(self, op, y):
             if self.E is None:
                 return y
 
@@ -95,7 +94,7 @@ try:
                 x = self.E.apply_inverse_adjoint(y)
             return np.matrix(x.data).T
 
-        def ApE_apply(self, op, p, idx_p, y):
+        def ApEX_apply(self, op, p, idx_p, y):
             y = self.A.source.from_data(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
                 x = self.A.apply(y)
@@ -111,7 +110,7 @@ try:
                     x += p.conjugate() * self.E.apply_adjoint(y)
             return np.matrix(x.data).T
 
-        def ApEs_apply(self, op, p, idx_p, y):
+        def ApEINV_apply(self, op, p, idx_p, y):
             y = self.A.source.from_data(np.array(y).T)
             E = IdentityOperator(self.A.source) if self.E is None else self.E
 
