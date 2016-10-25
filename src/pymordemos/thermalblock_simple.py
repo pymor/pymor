@@ -46,7 +46,7 @@ FENICS_ORDER = 2
 def discretize_pymor():
 
     # setup analytical problem
-    problem = ThermalBlockProblem(num_blocks=(XBLOCKS, YBLOCKS))
+    problem = thermal_block_problem(num_blocks=(XBLOCKS, YBLOCKS))
 
     # discretize using continuous finite elements
     d, _ = discretize_elliptic_cg(problem, diameter=1. / GRID_INTERVALS)

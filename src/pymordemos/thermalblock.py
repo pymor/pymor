@@ -246,13 +246,13 @@ def parse_arguments(args):
 
 
 def discretize_pymor(xblocks, yblocks, grid_num_intervals, use_list_vector_array):
-    from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
+    from pymor.analyticalproblems.thermalblock import thermal_block_problem
     from pymor.discretizers.elliptic import discretize_elliptic_cg
     from pymor.playground.discretizers.numpylistvectorarray import convert_to_numpy_list_vector_array
 
     print('Discretize ...')
     # setup analytical problem
-    problem = ThermalBlockProblem(num_blocks=(xblocks, yblocks))
+    problem = thermal_block_problem(num_blocks=(xblocks, yblocks))
 
     # discretize using continuous finite elements
     d, _ = discretize_elliptic_cg(problem, diameter=1. / grid_num_intervals)
