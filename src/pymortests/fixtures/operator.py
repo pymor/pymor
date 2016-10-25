@@ -288,7 +288,7 @@ thermalblock_fixedparam_operator_with_arrays_and_products_generators = \
     [lambda args=args: thermalblock_fixedparam_factory(*args) for args in thermalblock_factory_arguments]
 
 
-num_misc_operators = 11
+num_misc_operators = 10
 def misc_operator_with_arrays_and_products_factory(n):
     if n == 0:
         from pymor.operators.constructions import ComponentProjection
@@ -348,7 +348,13 @@ def misc_operator_with_arrays_and_products_factory(n):
         U = BlockVectorArray([U0, U1])
         V = BlockVectorArray([V0, V1])
         return op, None, U, V, sp, rp
-    elif n == 10:
+    else:
+        assert False
+
+
+num_unpicklable_misc_operators = 1
+def unpicklable_misc_operator_with_arrays_and_products_factory(n):
+    if n == 0:
         from pymor.operators.numpy import NumpyGenericOperator
         op, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 20, 4, 3, n)
         mat = op._matrix
@@ -371,6 +377,21 @@ misc_operator_with_arrays_and_products_generators = \
     [lambda n=n: misc_operator_with_arrays_and_products_factory(n) for n in range(num_misc_operators)]
 
 
+unpicklable_misc_operator_generators = \
+    [lambda n=n: unpicklable_misc_operator_with_arrays_and_products_factory(n)[0:2]
+     for n in range(num_unpicklable_misc_operators)]
+
+
+unpicklable_misc_operator_with_arrays_generators = \
+    [lambda n=n: unpicklable_misc_operator_with_arrays_and_products_factory(n)[0:4]
+     for n in range(num_unpicklable_misc_operators)]
+
+
+unpicklable_misc_operator_with_arrays_and_products_generators = \
+    [lambda n=n: unpicklable_misc_operator_with_arrays_and_products_factory(n)
+     for n in range(num_unpicklable_misc_operators)]
+
+
 @pytest.fixture(params=thermalblock_operator_with_arrays_and_products_generators +
                        thermalblock_assemble_operator_with_arrays_and_products_generators +
                        thermalblock_concatenation_operator_with_arrays_and_products_generators +
@@ -381,7 +402,8 @@ misc_operator_with_arrays_and_products_generators = \
                        thermalblock_vector_operator_with_arrays_and_products_generators +
                        thermalblock_vectorfunc_operator_with_arrays_and_products_generators +
                        thermalblock_fixedparam_operator_with_arrays_and_products_generators +
-                       misc_operator_with_arrays_and_products_generators)
+                       misc_operator_with_arrays_and_products_generators +
+                       unpicklable_misc_operator_with_arrays_and_products_generators)
 def operator_with_arrays_and_products(request):
     return request.param()
 
@@ -397,7 +419,8 @@ def operator_with_arrays_and_products(request):
                        thermalblock_vector_operator_with_arrays_generators +
                        thermalblock_vectorfunc_operator_with_arrays_generators +
                        thermalblock_fixedparam_operator_with_arrays_generators +
-                       misc_operator_with_arrays_generators)
+                       misc_operator_with_arrays_generators +
+                       unpicklable_misc_operator_with_arrays_generators)
 def operator_with_arrays(request):
     return request.param()
 
@@ -413,6 +436,23 @@ def operator_with_arrays(request):
                        thermalblock_vector_operator_generators +
                        thermalblock_vectorfunc_operator_generators +
                        thermalblock_fixedparam_operator_generators +
-                       misc_operator_generators)
+                       misc_operator_generators +
+                       unpicklable_misc_operator_generators)
 def operator(request):
+    return request.param()
+
+
+@pytest.fixture(params=numpy_matrix_operator_generators +
+                       thermalblock_operator_generators +
+                       thermalblock_assemble_operator_generators +
+                       thermalblock_concatenation_operator_generators +
+                       thermalblock_identity_operator_generators +
+                       thermalblock_zero_operator_generators +
+                       thermalblock_constant_operator_generators +
+                       thermalblock_vectorarray_operator_generators +
+                       thermalblock_vector_operator_generators +
+                       thermalblock_vectorfunc_operator_generators +
+                       thermalblock_fixedparam_operator_generators +
+                       misc_operator_generators)
+def picklable_operator(request):
     return request.param()
