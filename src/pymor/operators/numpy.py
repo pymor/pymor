@@ -43,25 +43,34 @@ class NumpyGenericOperator(OperatorBase):
 
         If `parameter_type` is not `None`, the function has to have the signature
         `mapping(U, mu)`.
+    adjoint_mapping
+        The adjoint function to wrap. If `parameter_type` is `None`, the function is of
+        the form `adjoint_mapping(U)` and is expected to be vectorized. In particular::
+
+            adjoint_mapping(U).shape == U.shape[:-1] + (dim_source,).
+
+        If `parameter_type` is not `None`, the function has to have the signature
+        `adjoint_mapping(U, mu)`.
     dim_source
         Dimension of the operator's source.
     dim_range
         Dimension of the operator's range.
     linear
-        Set to `True` if the provided `mapping` is linear.
+        Set to `True` if the provided `mapping` and `adjoint_mapping` are linear.
     parameter_type
         The |ParameterType| of the |Parameters| the mapping accepts.
     name
         Name of the operator.
     """
 
-    def __init__(self, mapping, dim_source=1, dim_range=1, linear=False, parameter_type=None, solver_options=None,
-                 name=None):
+    def __init__(self, mapping, adjoint_mapping=None, dim_source=1, dim_range=1, linear=False, parameter_type=None,
+                 solver_options=None, name=None):
         self.source = NumpyVectorSpace(dim_source)
         self.range = NumpyVectorSpace(dim_range)
         self.solver_options = solver_options
         self.name = name
         self._mapping = mapping
+        self._adjoint_mapping = adjoint_mapping
         self.linear = linear
         if parameter_type is not None:
             self.build_parameter_type(parameter_type)
@@ -73,6 +82,24 @@ class NumpyGenericOperator(OperatorBase):
             return NumpyVectorArray(self._mapping(U.data, mu=mu), copy=False)
         else:
             return NumpyVectorArray(self._mapping(U.data), copy=False)
+
+    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
+        if self._adjoint_mapping is None:
+            raise ValueError('NumpyGenericOperator: adjoint mapping was not defined.')
+        assert U in self.range
+        if range_product:
+            PrU = range_product.apply(U).data
+        else:
+            PrU = U.data
+        if self.parametric:
+            mu = self.parse_parameter(mu)
+            ATPrU = NumpyVectorArray(self._adjoint_mapping(PrU, mu=mu), copy=False)
+        else:
+            ATPrU = NumpyVectorArray(self._adjoint_mapping(PrU), copy=False)
+        if source_product:
+            return source_product.apply_inverse(ATPrU)
+        else:
+            return ATPrU
 
 
 class NumpyMatrixBasedOperator(OperatorBase):
