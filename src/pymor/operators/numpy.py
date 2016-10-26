@@ -757,7 +757,8 @@ def _options(matrix=None, sparse=None):
             return _dense_options
 
 
-def _apply_inverse(matrix, V, options=None):
+@defaults('check_finite')
+def _apply_inverse(matrix, V, options=None, check_finite=True):
     """Solve linear equation system.
 
     Applies the inverse of `matrix` to the row vectors in `V`.
@@ -983,6 +984,11 @@ def _apply_inverse(matrix, V, options=None):
                                             options=options).data
     else:
         raise ValueError('Unknown solver type')
+
+    if check_finite:
+        if not np.isfinite(np.sum(R)):
+            raise InversionError('Result contains non-finite values')
+
     return R
 
 
