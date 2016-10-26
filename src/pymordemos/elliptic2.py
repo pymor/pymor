@@ -20,13 +20,12 @@ Options:
 """
 
 from docopt import docopt
-import numpy as np
 
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.discretizers.elliptic import discretize_elliptic_cg, discretize_elliptic_fv
 from pymor.domaindescriptions.basic import RectDomain
-from pymor.functions.basic import GenericFunction
-from pymor.parameters.functionals import ProjectionParameterFunctional, GenericParameterFunctional
+from pymor.functions.basic import ExpressionFunction
+from pymor.parameters.functionals import ProjectionParameterFunctional, ExpressionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace
 
 
@@ -35,16 +34,16 @@ def elliptic2_demo(args):
     assert 0 <= args['PROBLEM-NUMBER'] <= 1, ValueError('Invalid problem number.')
     args['N'] = int(args['N'])
 
-    rhss = [GenericFunction(lambda X: np.ones(X.shape[:-1]) * 10, dim_domain=2),
-            GenericFunction(lambda X: (X[..., 0] - 0.5) ** 2 * 1000, dim_domain=2)]
+    rhss = [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()),
+            ExpressionFunction('(x[..., 0] - 0.5)**2 * 1000', 2, ())]
     rhs = rhss[args['PROBLEM-NUMBER']]
 
-    d0 = GenericFunction(lambda X: 1 - X[..., 0], dim_domain=2)
-    d1 = GenericFunction(lambda X: X[..., 0], dim_domain=2)
+    d0 = ExpressionFunction('1 - x[..., 0]', 2, ())
+    d1 = ExpressionFunction('x[..., 0]', 2, ())
 
     parameter_space = CubicParameterSpace({'diffusionl': 0}, 0.1, 1)
     f0 = ProjectionParameterFunctional('diffusionl', 0)
-    f1 = GenericParameterFunctional(lambda mu: 1, {})
+    f1 = ExpressionParameterFunctional('1', {})
 
     print('Solving on TriaGrid(({0},{0}))'.format(args['N']))
 

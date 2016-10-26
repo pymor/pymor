@@ -36,7 +36,7 @@ from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.discretizers.elliptic import discretize_elliptic_cg, discretize_elliptic_fv
 from pymor.domaindescriptions.basic import RectDomain
 from pymor.domaindiscretizers.default import discretize_domain_default
-from pymor.functions.basic import GenericFunction, ConstantFunction
+from pymor.functions.basic import ExpressionFunction, ConstantFunction
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
 
@@ -51,15 +51,15 @@ def elliptic_demo(args):
     args['NEUMANN-COUNT'] = int(args['NEUMANN-COUNT'])
     assert 0 <= args['NEUMANN-COUNT'] <= 3, ValueError('Invalid Neumann boundary count.')
 
-    rhss = [GenericFunction(lambda X: np.ones(X.shape[:-1]) * 10, 2),
-            GenericFunction(lambda X: (X[..., 0] - 0.5) ** 2 * 1000, 2)]
-    dirichlets = [GenericFunction(lambda X: np.zeros(X.shape[:-1]), 2),
-                  GenericFunction(lambda X: np.ones(X.shape[:-1]), 2),
-                  GenericFunction(lambda X: X[..., 0], 2)]
+    rhss = [ExpressionFunction('ones(x.shape[:-1]) * 10', 2, ()),
+            ExpressionFunction('(x[..., 0] - 0.5) ** 2 * 1000', 2, ())]
+    dirichlets = [ExpressionFunction('zeros(x.shape[:-1])', 2, ()),
+                  ExpressionFunction('ones(x.shape[:-1])', 2, ()),
+                  ExpressionFunction('x[..., 0]', 2, ())]
     neumanns = [None,
                 ConstantFunction(3., dim_domain=2),
-                GenericFunction(lambda X:  50*(0.1 <= X[..., 1]) * (X[..., 1] <= 0.2)
-                                          +50*(0.8 <= X[..., 1]) * (X[..., 1] <= 0.9), 2)]
+                ExpressionFunction('50*(0.1 <= x[..., 1]) * (x[..., 1] <= 0.2)'
+                                   '+50*(0.8 <= x[..., 1]) * (x[..., 1] <= 0.9)', 2, ())]
     domains = [RectDomain(),
                RectDomain(right='neumann'),
                RectDomain(right='neumann', top='neumann'),

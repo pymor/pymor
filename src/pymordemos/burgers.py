@@ -47,7 +47,7 @@ from functools import partial
 
 from docopt import docopt
 
-from pymor.analyticalproblems.burgers import Burgers2DProblem
+from pymor.analyticalproblems.burgers import burgers_problem_2d
 from pymor.discretizers.advection import discretize_nonlinear_instationary_advection_fv
 from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.grids.rect import RectGrid
@@ -72,8 +72,8 @@ def burgers_demo(args):
     print('Setup Problem ...')
     grid_type_map = {'rect': RectGrid, 'tria': TriaGrid}
     domain_discretizer = partial(discretize_domain_default, grid_type=grid_type_map[args['--grid-type']])
-    problem = Burgers2DProblem(vx=args['--vx'], vy=args['--vy'], initial_data_type=args['--initial-data'],
-                               parameter_range=(0, 1e42), torus=not args['--not-periodic'])
+    problem = burgers_problem_2d(vx=args['--vx'], vy=args['--vy'], initial_data_type=args['--initial-data'],
+                                 parameter_range=(0, 1e42), torus=not args['--not-periodic'])
 
     print('Discretize ...')
     discretizer = discretize_nonlinear_instationary_advection_fv
