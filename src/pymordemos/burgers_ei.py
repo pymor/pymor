@@ -160,7 +160,6 @@ def main(args):
                                                        discretization.parameter_space.sample_uniformly(args['EI_SNAPSHOTS']),  # NOQA
                                                        error_norm=discretization.l2_norm,
                                                        max_interpolation_dofs=args['EISIZE'],
-                                                       product=discretization.l2_product,
                                                        pool=pool)
 
     if args['--plot-ei-err']:

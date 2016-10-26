@@ -15,7 +15,6 @@ a single function call.
 
 import numpy as np
 
-from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.core.logger import getLogger
 from pymor.algorithms.pod import pod
 from pymor.operators.ei import EmpiricalInterpolatedOperator
@@ -26,7 +25,7 @@ from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 
 def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=None,
-              projection='ei', product=None, copy=True, pool=dummy_pool):
+              copy=True, pool=dummy_pool):
     """Generate data for empirical interpolation using EI-Greedy algorithm.
 
     Given a |VectorArray| `U`, this method generates a collateral basis and
@@ -51,13 +50,6 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     max_interpolation_dofs
         Stop the greedy search if the number of interpolation DOF (= dimension of the collateral
         basis) reaches this value.
-    projection
-        If `'ei'`, compute the approximation error by comparing the given vectors by their
-        interpolants. If `'orthogonal'`, compute the error by comparing with the orthogonal projection
-        onto the span of the collateral basis.
-    product
-        If `projection == 'orthogonal'`, the inner product which is used to perform the projection.
-        If `None`, the Euclidean product is used.
     copy
         If `False`, `U` will be modified during executing of the algorithm.
     pool
@@ -79,15 +71,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
                                     be near zero).
     """
 
-    assert projection in ('orthogonal', 'ei')
-
     if pool:  # dispatch to parallel implemenation
-        if projection == 'ei':
-            pass
-        elif projection == 'orthogonal':
-            raise ValueError('orthogonal projection not supported in parallel implementation')
-        else:
-            assert False
         assert isinstance(U, (VectorArrayInterface, RemoteObjectInterface))
         with RemoteObjectManager() as rom:
             if isinstance(U, VectorArrayInterface):
@@ -108,11 +92,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     if copy:
         U = U.copy()
 
-    if projection == 'orthogonal':
-        ERR = U.copy()
-        onb_collateral_basis = collateral_basis.empty()
-    else:
-        ERR = U
+    ERR = U
 
     errs = ERR.l2_norm() if error_norm is None else error_norm(ERR)
     max_err_ind = np.argmax(errs)
@@ -122,13 +102,12 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
     while True:
         if max_interpolation_dofs is not None and len(interpolation_dofs) >= max_interpolation_dofs:
             logger.info('Maximum number of interpolation DOFs reached. Stopping extension loop.')
-            logger.info('Final maximum {} error with {} interpolation DOFs: {}'.format(
-                'projection' if projection else 'interpolation', len(interpolation_dofs), max_err))
+            logger.info('Final maximum interpolation error with {} interpolation DOFs: {}'.format(
+                len(interpolation_dofs), max_err))
             break
 
-        logger.info('Maximum {} error with {} interpolation DOFs: {}'
-                    .format('projection' if projection else 'interpolation',
-                            len(interpolation_dofs), max_err))
+        logger.info('Maximum interpolation error with {} interpolation DOFs: {}'
+                    .format(len(interpolation_dofs), max_err))
 
         if atol is not None and max_err <= atol:
             logger.info('Absolute error tolerance reached! Stopping extension loop.')
@@ -157,11 +136,6 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
         # update U and ERR
         new_dof_values = U.components([new_dof])
         U.axpy(-new_dof_values[:, 0], new_vec)
-        if projection == 'orthogonal':
-            onb_collateral_basis.append(new_vec)
-            gram_schmidt(onb_collateral_basis, offset=len(onb_collateral_basis) - 1, copy=False)
-            coeffs = ERR.dot(onb_collateral_basis[len(onb_collateral_basis) - 1])
-            ERR.axpy(-coeffs[:, 0], onb_collateral_basis[len(onb_collateral_basis) - 1])
         errs = ERR.l2_norm() if error_norm is None else error_norm(ERR)
         max_err_ind = np.argmax(errs)
         max_err = errs[max_err_ind]
@@ -264,8 +238,7 @@ def deim(U, modes=None, error_norm=None, product=None):
 
 
 def interpolate_operators(discretization, operator_names, parameter_sample, error_norm=None,
-                          atol=None, rtol=None, max_interpolation_dofs=None,
-                          projection='ei', product=None, pool=dummy_pool):
+                          atol=None, rtol=None, max_interpolation_dofs=None, pool=dummy_pool):
     """Empirical operator interpolation using the EI-Greedy algorithm.
 
     This is a convenience method to facilitate the use of :func:`ei_greedy`. Given
@@ -294,10 +267,6 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
     rtol
         See :func:`ei_greedy`.
     max_interpolation_dofs
-        See :func:`ei_greedy`.
-    projection
-        See :func:`ei_greedy`.
-    product
         See :func:`ei_greedy`.
     pool
         If not `None`, the |WorkerPool| to use for parallelization.
@@ -337,7 +306,7 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
         with logger.block('Performing EI-Greedy:'):
             dofs, basis, data = ei_greedy(evaluations, error_norm, atol=atol, rtol=rtol,
                                           max_interpolation_dofs=max_interpolation_dofs,
-                                          projection=projection, product=product, copy=False, pool=pool)
+                                          copy=False, pool=pool)
 
     ei_operators = {name: EmpiricalInterpolatedOperator(operator, dofs, basis, triangular=True)
                     for name, operator in zip(operator_names, operators)}
