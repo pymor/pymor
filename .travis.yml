@@ -28,7 +28,7 @@ before_install:
     sudo aptitude install -yq python3.5-dev python3.5-minimal
     # remove incompat package and reinstall with pip
     sudo aptitude remove -y python3-numpy
-    sudo pip install -U numpy scipy
+    sudo -E ${PIP_X} install -U numpy scipy
   fi
  - ${PYTHON_X} -c 'import  dolfin' || echo "import dolfin failed"
  - for pkg in 3to2 https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz ipyparallel pytest-cov python-coveralls ; do sudo -E ${PIP_X} install ${pkg} ; done
