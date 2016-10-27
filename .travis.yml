@@ -28,8 +28,8 @@ before_install:
     sudo aptitude install -yq python3.5-dev python3.5-minimal
     # remove incompat package and reinstall with updated pip
     sudo aptitude remove -y python3-numpy
-    sudo -E ${PIP_X} install -U pip
-    export PIP_X=/usr/local/bin/pip3
+    wget -O /tmp/get-pip.py https://bootstrap.pypa.io/get-pip.py && sudo python3.5 /tmp/get-pip.py
+    export PIP_X=/usr/local/bin/pip3.5
     sudo -E ${PIP_X} install -U numpy scipy setuptools distribute matplotlib sympy sphinx
   fi
  - ${PYTHON_X} -c 'import  dolfin' || echo "import dolfin failed"
