@@ -27,10 +27,10 @@ before_install:
     sudo aptitude update
     sudo aptitude install -yq python3.5-dev python3.5-minimal
     # remove incompat package and reinstall with updated pip
-    sudo aptitude remove -y python3-numpy
+    sudo aptitude remove -y python3-numpy python3-pyside
     wget -O /tmp/get-pip.py https://bootstrap.pypa.io/get-pip.py && sudo python3.5 /tmp/get-pip.py
     export PIP_X=/usr/local/bin/pip3.5
-    sudo -E ${PIP_X} install -U numpy scipy setuptools distribute matplotlib sympy sphinx
+    sudo -E ${PIP_X} install -U numpy scipy setuptools distribute matplotlib sympy sphinx pyopengl
   fi
  - ${PYTHON_X} -c 'import  dolfin' || echo "import dolfin failed"
  - for pkg in 3to2 https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz ipyparallel pytest-cov python-coveralls ; do sudo -E ${PIP_X} install ${pkg} ; done
