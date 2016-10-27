@@ -55,10 +55,10 @@ def burgers_problem(v=1., circle=True, initial_data_type='sin', parameter_range=
 
         rhs=None,
 
-        flux_function=ExpressionFunction("sign(x) * abs(x)**mu['exponent'] * v",
+        flux_function=ExpressionFunction('sign(x) * abs(x)**exponent * v',
                                          1, (1,), {'exponent': ()}, {'v': v}),
 
-        flux_function_derivative=ExpressionFunction("mu['exponent'] * sign(x) * abs(x)**(mu['exponent']-1) * v",
+        flux_function_derivative=ExpressionFunction('exponent * sign(x) * abs(x)**(exponent-1) * v',
                                                     1, (1,), {'exponent': ()}, {'v': v}),
 
         parameter_space=CubicParameterSpace({'exponent': 0}, *parameter_range),
@@ -114,10 +114,10 @@ def burgers_problem_2d(vx=1., vy=1., torus=True, initial_data_type='sin', parame
 
         rhs=None,
 
-        flux_function=ExpressionFunction("sign(x) * abs(x)**mu['exponent'] * v",
+        flux_function=ExpressionFunction("sign(x) * abs(x)**exponent * v",
                                          1, (2,), {'exponent': ()}, {'v': np.array([vx, vy])}),
 
-        flux_function_derivative=ExpressionFunction("mu['exponent'] * sign(x) * abs(x)**(mu['exponent']-1) * v",
+        flux_function_derivative=ExpressionFunction("exponent * sign(x) * abs(x)**(exponent-1) * v",
                                                     1, (2,), {'exponent': ()}, {'v': np.array([vx, vy])}),
 
         parameter_space=CubicParameterSpace({'exponent': 0}, *parameter_range),
