@@ -30,7 +30,7 @@ before_install:
     sudo aptitude remove -y python3-numpy
     sudo -E ${PIP_X} install -U pip
     export PIP_X=/usr/local/bin/pip3
-    sudo -E ${PIP_X} install -U numpy scipy
+    sudo -E ${PIP_X} install -U numpy scipy setuptools distribute matplotlib sympy sphinx
   fi
  - ${PYTHON_X} -c 'import  dolfin' || echo "import dolfin failed"
  - for pkg in 3to2 https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz ipyparallel pytest-cov python-coveralls ; do sudo -E ${PIP_X} install ${pkg} ; done
