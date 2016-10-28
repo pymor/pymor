@@ -11,17 +11,19 @@ before_install:
  # no wheels w/o current pip
  # also trusty's numpy is _way_ slow
  - pip install -U pip numpy
- # our exp. py3 packages are incompat. with the official repo
  - |
+  # our exp. py3 packages are incompat. with the official repo
+  # don't move any debs to addons, having these here makes sure the ppa versions are used
   if [ "${TRAVIS_PYTHON_VERSION}" == "3.4" ] ; then
-      sudo add-apt-repository -y ppa:pymor/fenics-py3
-      sudo aptitude update
-      sudo aptitude install -y -q libslepc3.4.2-dev libhdf5-openmpi-dev python3-zmq python3-dev python3-dolfin python3-pyside python3-mpi4py
+      export FENICS_PPA="ppa:pymor/fenics-py3"
+      export FENICS_PACKAGES="python3-zmq python3-dolfin python3-pyside python3-mpi4py"
   else
-      sudo add-apt-repository -y ppa:fenics-packages/fenics
-      sudo aptitude update
-      sudo aptitude install -y -q libslepc3.4.2-dev libhdf5-openmpi-dev python-zmq python-dev python-dolfin python-pyside python-mpi4py
+      export FENICS_PPA="ppa:fenics-packages/fenics"
+      export FENICS_PACKAGES="python-zmq python-dolfin python-pyside python-mpi4py"
   fi
+  sudo add-apt-repository -y ${FENICS_PPA}
+  sudo aptitude update
+  sudo aptitude install -y -q libslepc3.4.2-dev libhdf5-openmpi-dev  ${FENICS_PACKAGES}
  - ${PYTHON_X} -c 'import  dolfin' || echo "import dolfin failed"
 
 install:
@@ -70,37 +72,12 @@ branches:
 addons:
   apt:
     packages:
-    - debhelper
-    - python-pip
-    - python-markupsafe
-    - python3-markupsafe
     - git
-    - cython
     - xvfb
-    - libopenmpi-dev
-    - python3-numpy
-    - python3-sphinx
-    - python3-matplotlib
     - python3-dev
-    - python3-six
-    - python-six
-    - python-virtualenv
-    - python-numpy
-    - python-sphinx
-    - python-scipy
-    - python-matplotlib
-    - python-sympy
     - python-dev
-    - python3
-    - dh-make
-    - python-docutils
-    - build-essential
-    - libblas-dev
-    - liblapack-dev
-    - libatlas-dev
-    - libsuitesparse-dev
-    - gfortran
-    - libqt4-dev
+    - python3-tk
+    - python-tk
     - gmsh
 
 os:
