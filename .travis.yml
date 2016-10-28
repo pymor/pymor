@@ -25,12 +25,12 @@ before_install:
   if [ "${PYMOR_PYTHON_VERSION}" == "3.5" ] ; then
     sudo add-apt-repository -y ppa:fkrull/deadsnakes
     sudo aptitude update
-    sudo aptitude install -yq python3.5-dev python3.5-minimal
+    sudo aptitude install -yq python3.5-dev python3.5-minimal tcl-dev tk-dev
     # remove incompat package and reinstall with updated pip
     sudo aptitude remove -y python3-numpy python3-pyside
     wget -O /tmp/get-pip.py https://bootstrap.pypa.io/get-pip.py && sudo python3.5 /tmp/get-pip.py
     export PIP_X=/usr/local/bin/pip3.5
-    sudo -E ${PIP_X} install -U numpy scipy setuptools distribute matplotlib sympy sphinx pyopengl
+    sudo -E ${PIP_X} install -U numpy scipy setuptools distribute matplotlib sympy sphinx pyopengl ipyparallel zmq
   fi
  - ${PYTHON_X} -c 'import  dolfin' || echo "import dolfin failed"
  - for pkg in 3to2 https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz ipyparallel pytest-cov python-coveralls ; do sudo -E ${PIP_X} install ${pkg} ; done
