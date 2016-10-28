@@ -1,7 +1,42 @@
 language: python
+sudo: required
+dist: trusty
+os: linux
 
 git:
   depth: 1000
+cache:
+    pip
+notifications:
+  email:
+    on_success: change
+    on_failure: change
+branches:
+  except:
+    - gh-pages
+addons:
+  apt:
+    packages:
+    - git
+    - xvfb
+    - python3-dev
+    - python-dev
+    - python3-tk
+    - python-tk
+    - gmsh
+
+env:
+  matrix:
+  - PYTEST_MARKER="not slow"
+  - PYTEST_MARKER="slow"
+  - PYTEST_MARKER="PIP_ONLY"
+  - PYTEST_MARKER="MPI"
+
+python:
+    # system packages enable us to use fenics debs
+    - "2.7_with_system_site_packages"
+    - "3.4_with_system_site_packages"
+    - "3.5"
 
 before_install:
  - export PYTHON_X=python
@@ -32,8 +67,6 @@ install:
  - ${PIP_X} install -r requirements-optional.txt || echo "Some optional modules failed to install"
  - ${PYTHON_X} setup.py build_ext -i
 
-sudo: required
-dist: trusty
 
 script:
  - |
@@ -57,44 +90,5 @@ script:
     xvfb-run -a ${PY_TEST_X} -k "${PYTEST_MARKER}"
   fi
 
-notifications:
-  email:
-    on_success: change
-    on_failure: change
+after_success: coveralls
 
-after_success:
-  - coveralls
-
-branches:
-  except:
-    - gh-pages
-
-addons:
-  apt:
-    packages:
-    - git
-    - xvfb
-    - python3-dev
-    - python-dev
-    - python3-tk
-    - python-tk
-    - gmsh
-
-os:
-  - linux
-
-env:
-  matrix:
-  - PYTEST_MARKER="not slow"
-  - PYTEST_MARKER="slow"
-  - PYTEST_MARKER="PIP_ONLY"
-  - PYTEST_MARKER="MPI"
-
-python:
-    # system packages enable us to use fenics debs
-    - "2.7_with_system_site_packages"
-    - "3.4_with_system_site_packages"
-    - "3.5"
-
-cache:
-    pip
