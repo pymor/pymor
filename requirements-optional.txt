@@ -1,12 +1,10 @@
-pytest
-pytest-cov
-check-manifest
-pyside; python_version <= "3.4"
-mpi4py
 ipython
+pytest-cov
 pyamg
-pytest
-matplotlib
-https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz
+mpi4py
+pyside; python_version <= "3.4"
 pyopengl
+pytest
+https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz
 ipyparallel
+matplotlib
