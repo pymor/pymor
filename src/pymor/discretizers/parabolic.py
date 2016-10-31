@@ -5,7 +5,8 @@
 import numpy as np
 
 from pymor.discretizers.elliptic import discretize_elliptic_cg, discretize_elliptic_fv
-from pymor.analyticalproblems.parabolic import ParabolicProblem
+from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.discretizations.basic import InstationaryDiscretization
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 from pymor.operators.cg import InterpolationOperator
@@ -14,13 +15,14 @@ from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
 def discretize_parabolic_cg(analytical_problem, diameter=None, domain_discretizer=None,
-                           grid=None, boundary_info=None, num_values=None, time_stepper=None, nt=None):
-    """Discretizes an |ParabolicProblem| using finite elements.
+                            grid=None, boundary_info=None, num_values=None, time_stepper=None, nt=None):
+    """Discretizes an |InstationaryProblem| with an |EllipticProblem| as stationary part
+    using finite elements.
 
     Parameters
     ----------
     analytical_problem
-        The |ParabolicProblem| to discretize.
+        The |InstationaryProblem| to discretize.
     diameter
         If not `None`, `diameter` is passed as an argument to the `domain_discretizer`.
     domain_discretizer
@@ -54,7 +56,8 @@ def discretize_parabolic_cg(analytical_problem, diameter=None, domain_discretize
             :boundary_info:  The generated |BoundaryInfo|.
     """
 
-    assert isinstance(analytical_problem, ParabolicProblem)
+    assert isinstance(analytical_problem, InstationaryProblem)
+    assert isinstance(analytical_problem.stationary_part, EllipticProblem)
     assert grid is None or boundary_info is not None
     assert boundary_info is None or grid is not None
     assert grid is None or domain_discretizer is None
@@ -62,8 +65,8 @@ def discretize_parabolic_cg(analytical_problem, diameter=None, domain_discretize
 
     p = analytical_problem
 
-    d, data = discretize_elliptic_cg(p.elliptic_part(), diameter=diameter, domain_discretizer=domain_discretizer,
-        grid=grid, boundary_info=boundary_info)
+    d, data = discretize_elliptic_cg(p.stationary_part, diameter=diameter, domain_discretizer=domain_discretizer,
+                                     grid=grid, boundary_info=boundary_info)
 
     if p.initial_data.parametric:
         I = InterpolationOperator(data['grid'], p.initial_data)
@@ -78,20 +81,21 @@ def discretize_parabolic_cg(analytical_problem, diameter=None, domain_discretize
 
     discretization = InstationaryDiscretization(operator=d.operator, rhs=d.rhs, mass=mass, initial_data=I, T=p.T,
                                                 products=d.products, time_stepper=time_stepper,
-                                                parameter_space=d.parameter_space, visualizer=d.visualizer,
+                                                parameter_space=p.parameter_space, visualizer=d.visualizer,
                                                 num_values=num_values, name='{}_CG'.format(p.name))
 
     return discretization, data
 
 
 def discretize_parabolic_fv(analytical_problem, diameter=None, domain_discretizer=None,
-                           grid=None, boundary_info=None, num_values=None, time_stepper=None, nt=None):
-    """Discretizes an |ParabolicProblem| using the finite volume method.
+                            grid=None, boundary_info=None, num_values=None, time_stepper=None, nt=None):
+    """Discretizes an |InstationaryProblem| with an |EllipticProblem| as stationary part
+    using the finite volume method.
 
     Parameters
     ----------
     analytical_problem
-        The |ParabolicProblem| to discretize.
+        The |InstationaryProblem| to discretize.
     diameter
         If not `None`, `diameter` is passed to the `domain_discretizer`.
     domain_discretizer
@@ -126,7 +130,8 @@ def discretize_parabolic_fv(analytical_problem, diameter=None, domain_discretize
             :boundary_info:  The generated |BoundaryInfo|.
     """
 
-    assert isinstance(analytical_problem, ParabolicProblem)
+    assert isinstance(analytical_problem, InstationaryProblem)
+    assert isinstance(analytical_problem.stationary_part, EllipticProblem)
     assert grid is None or boundary_info is not None
     assert boundary_info is None or grid is not None
     assert grid is None or domain_discretizer is None
@@ -134,8 +139,8 @@ def discretize_parabolic_fv(analytical_problem, diameter=None, domain_discretize
 
     p = analytical_problem
 
-    d, data = discretize_elliptic_fv(p.elliptic_part(), diameter=diameter, domain_discretizer=domain_discretizer,
-                                         grid=grid, boundary_info=boundary_info)
+    d, data = discretize_elliptic_fv(p.stationary_part, diameter=diameter, domain_discretizer=domain_discretizer,
+                                     grid=grid, boundary_info=boundary_info)
 
     if p.initial_data.parametric:
         def initial_projection(U, mu):
@@ -155,7 +160,7 @@ def discretize_parabolic_fv(analytical_problem, diameter=None, domain_discretize
 
     discretization = InstationaryDiscretization(operator=d.operator, rhs=d.rhs, mass=None, initial_data=I, T=p.T,
                                                 products=d.products, time_stepper=time_stepper,
-                                                parameter_space=d.parameter_space, visualizer=d.visualizer,
+                                                parameter_space=p.parameter_space, visualizer=d.visualizer,
                                                 num_values=num_values, name='{}_FV'.format(p.name))
 
     return discretization, data
