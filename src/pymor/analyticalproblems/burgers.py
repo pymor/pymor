@@ -37,10 +37,10 @@ def burgers_problem(v=1., circle=True, initial_data_type='sin', parameter_range=
     assert initial_data_type in ('sin', 'bump')
 
     if initial_data_type == 'sin':
-        initial_data = ExpressionFunction('0.5 * (sin(2 * pi * x[..., 0]) + 1.)', 1, ())
+        initial_data = ExpressionFunction('0.5 * (sin(2 * pi * x) + 1.)', 1, ())
         dirichlet_data = ConstantFunction(dim_domain=1, value=0.5)
     else:
-        initial_data = ExpressionFunction('(x[..., 0] >= 0.5) * (x[..., 0] <= 1) * 1.', 1, ())
+        initial_data = ExpressionFunction('(x >= 0.5) * (x <= 1) * 1.', 1, ())
         dirichlet_data = ConstantFunction(dim_domain=1, value=0.)
 
     return InstationaryAdvectionProblem(

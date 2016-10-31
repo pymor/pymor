@@ -31,7 +31,7 @@ import numpy as np
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.discretizers.elliptic import discretize_elliptic_cg, discretize_elliptic_fv
 from pymor.domaindescriptions.polygonal import CircularSectorDomain
-from pymor.functions.basic import GenericFunction, ConstantFunction
+from pymor.functions.basic import ConstantFunction, ExpressionFunction
 from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
@@ -44,11 +44,8 @@ def elliptic_gmsh_demo(args):
 
     rhs = ConstantFunction(np.array(0.), dim_domain=2, name='rhs')
 
-    def dirichlet(X):
-        _, phi = polar(X)
-        return np.sin(phi*np.pi/args['ANGLE'])
-
-    dirichlet_data = GenericFunction(dirichlet, dim_domain=2, name='dirichlet')
+    dirichlet_data = ExpressionFunction('sin(polar(x)[1] * pi/angle)', 2, (),
+                                        {}, {'angle': args['ANGLE']}, name='dirichlet')
 
     print('Setup problem ...')
     problem = EllipticProblem(domain=domain, rhs=rhs, dirichlet_data=dirichlet_data)
@@ -62,27 +59,13 @@ def elliptic_gmsh_demo(args):
 
     print('Plot ...')
 
-    def ref_sol(X):
-        r, phi = polar(X)
-        return np.power(r, np.pi/args['ANGLE']) * np.sin(phi*np.pi/args['ANGLE'])
-
-    solution = GenericFunction(ref_sol, 2)
+    solution = ExpressionFunction('(lambda r, phi: r**(pi/angle) * sin(phi * pi/angle))(*polar(x))', 2, (),
+                                  {}, {'angle': args['ANGLE']})
     grid = data['grid']
     U_ref = NumpyVectorArray(solution(grid.centers(0))) if args['--fv'] else NumpyVectorArray(solution(grid.centers(2)))
     discretization.visualize((U, U_ref, U-U_ref),
                              legend=('Solution', 'Analytical solution (circular boundary)', 'Error'),
                              separate_colorbars=True)
-
-
-def polar(X):
-    r = np.sqrt(X[..., 0]**2 + X[..., 1]**2)
-    phi = np.zeros(X.shape[:-1])
-    part1 = np.all([X[..., 1] >= 0, r > 0], axis=0)
-    part2 = np.all([X[..., 1] < 0, r > 0], axis=0)
-    phi[part1] = np.arccos(X[..., 0][part1] / r[part1])
-    phi[part2] = 2*np.pi - np.arccos(X[..., 0][part2] / r[part2])
-
-    return r, phi
 
 
 if __name__ == '__main__':
