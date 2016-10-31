@@ -45,26 +45,31 @@ DT = 1. / NT
 def discretize_pymor():
 
     # setup analytical problem
-    problem = ParabolicProblem(
-        domain=RectDomain(top='dirichlet', bottom='neumann'),
+    problem = InstationaryProblem(
 
-        diffusion_functions=[ConstantFunction(1., dim_domain=2),
-                             ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * (x[..., 1] < 0.7) * 1.',
-                                                dim_domain=2),
-                             ExpressionFunction('(x[..., 0] > 0.35) * (x[..., 0] < 0.40) * (x[..., 1] > 0.3) * 1. + ' +
-                                                '(x[..., 0] > 0.60) * (x[..., 0] < 0.65) * (x[..., 1] > 0.3) * 1.',
-                                                dim_domain=2)],
+        EllipticProblem(
+            domain=RectDomain(top='dirichlet', bottom='neumann'),
 
-        diffusion_functionals=[1.,
-                               100. - 1.,
-                               ExpressionParameterFunctional('top - 1.', {'top': 0})],
+            diffusion_functions=[ConstantFunction(1., dim_domain=2),
+                                 ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * (x[..., 1] < 0.7) * 1.',
+                                                    dim_domain=2),
+                                 ExpressionFunction('(x[..., 0] > 0.35) * (x[..., 0] < 0.40) * (x[..., 1] > 0.3) * 1. + ' +
+                                                    '(x[..., 0] > 0.60) * (x[..., 0] < 0.65) * (x[..., 1] > 0.3) * 1.',
+                                                    dim_domain=2)],
 
-        rhs=ConstantFunction(value=0., dim_domain=2),
+            diffusion_functionals=[1.,
+                                   100. - 1.,
+                                   ExpressionParameterFunctional('top - 1.', {'top': 0})],
 
-        dirichlet_data=ConstantFunction(value=0., dim_domain=2),
+            rhs=ConstantFunction(value=0., dim_domain=2),
 
-        neumann_data=ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * -1000.',
-                                        dim_domain=2),
+            dirichlet_data=ConstantFunction(value=0., dim_domain=2),
+
+            neumann_data=ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * -1000.',
+                                            dim_domain=2),
+        ),
+
+        T=1.,
 
         initial_data=ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * (x[..., 1] < 0.7) * 10.',
                                         dim_domain=2),
@@ -73,8 +78,7 @@ def discretize_pymor():
     )
 
     # discretize using continuous finite elements
-    grid, bi = discretize_domain_default(problem.domain, diameter=1. / GRID_INTERVALS, grid_type=TriaGrid)
-    d, _ = discretize_parabolic_cg(analytical_problem=problem, grid=grid, boundary_info=bi, nt=NT)
+    d, _ = discretize_parabolic_cg(analytical_problem=problem, diameter=1./GRID_INTERVALS, nt=NT)
     d.enable_caching('persistent')
 
     return d
