@@ -59,6 +59,8 @@ before_install:
   sudo aptitude update
   sudo aptitude install -y -q libslepc3.4.2-dev libhdf5-openmpi-dev  ${FENICS_PACKAGES}
  - python -c 'import  dolfin' || echo "import dolfin failed"
+ - pip install --no-index -f https://pymor.github.io/wheels/ pyside
+ - python -c 'import  PySide' || echo "import PySide failed"
 
 install:
  - pip install -r requirements.txt
