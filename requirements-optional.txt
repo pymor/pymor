@@ -1,4 +1,4 @@
-ipython
+ipython>=3.0
 pytest-cov
 pyamg
 mpi4py
