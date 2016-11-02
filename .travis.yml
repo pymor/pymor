@@ -44,8 +44,9 @@ before_install:
  - export PIP_X=pip
  - sudo add-apt-repository -y ppa:pymor/stable
  # no wheels w/o current pip
+ - pip install -U pip
  # also trusty's numpy is _way_ slow
- - pip install -U pip numpy
+ - pip install -U numpy
  - |
   # our exp. py3 packages are incompat. with the official repo
   # don't move any debs to addons, having these here makes sure the ppa versions are used
