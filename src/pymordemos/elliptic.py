@@ -75,7 +75,13 @@ def elliptic_demo(args):
         print('Solving on {0}'.format(grid_name))
 
         print('Setup problem ...')
-        problem = EllipticProblem(domain=domain, rhs=rhs, dirichlet_data=dirichlet, neumann_data=neumann)
+        problem = EllipticProblem(
+            domain=domain,
+            diffusion=ConstantFunction(1, dim_domain=2),
+            rhs=rhs,
+            dirichlet_data=dirichlet,
+            neumann_data=neumann
+        )
 
         print('Discretize ...')
         if args['--rect']:

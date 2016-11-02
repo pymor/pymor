@@ -31,7 +31,7 @@ def test_visualize_patch(backend_gridtype):
     rhs = GenericFunction(lambda X: np.ones(X.shape[:-1]) * 10, dim)  # NOQA
     dirichlet = GenericFunction(lambda X: np.zeros(X.shape[:-1]), dim)  # NOQA
     diffusion = GenericFunction(lambda X: np.ones(X.shape[:-1]), dim)  # NOQA
-    problem = EllipticProblem(domain=domain, rhs=rhs, dirichlet_data=dirichlet, diffusion_functions=(diffusion,))
+    problem = EllipticProblem(domain=domain, rhs=rhs, dirichlet_data=dirichlet, diffusion=diffusion)
     grid, bi = discretize_domain_default(problem.domain, grid_type=gridtype)
     discretization, data = discretize_elliptic_cg(analytical_problem=problem, grid=grid, boundary_info=bi)
     U = discretization.solve()
