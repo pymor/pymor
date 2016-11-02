@@ -74,12 +74,12 @@ script:
   if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     export SDIST_DIR=/tmp/pymor_sdist/
     # this fails on PRs, so skip it
-    [[ "${TRAVIS_PULL_REQUEST}" != "false" ]] || sudo -E pip -q install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
-    sudo -E pip uninstall  -y pymor
+    [[ "${TRAVIS_PULL_REQUEST}" != "false" ]] || pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
+    pip uninstall  -y pymor
     python setup.py sdist -d ${SDIST_DIR}/ --format=gztar
     check-manifest -p python ${PWD}
     pushd ${SDIST_DIR}
-    sudo -E pip install $(ls ${SDIST_DIR})
+    pip install $(ls ${SDIST_DIR})
     popd
     xvfb-run -a ${PY_TEST_X} --pyargs pymortests -c .installed_pytest.ini -k "not slow"
   elif [ "${PYTEST_MARKER}" == "MPI" ] ; then
