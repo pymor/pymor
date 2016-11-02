@@ -39,9 +39,7 @@ python:
     - "3.5"
 
 before_install:
- - export PYTHON_X=python
  - export PY_TEST_X="py.test"
- - export PIP_X=pip
  - sudo add-apt-repository -y ppa:pymor/stable
  # no wheels w/o current pip
  - pip install -U pip
@@ -60,13 +58,13 @@ before_install:
   sudo add-apt-repository -y ${FENICS_PPA}
   sudo aptitude update
   sudo aptitude install -y -q libslepc3.4.2-dev libhdf5-openmpi-dev  ${FENICS_PACKAGES}
- - ${PYTHON_X} -c 'import  dolfin' || echo "import dolfin failed"
+ - python -c 'import  dolfin' || echo "import dolfin failed"
 
 install:
- - ${PIP_X} install -r requirements.txt
- - ${PIP_X} install -r requirements-travis.txt
- - ${PIP_X} install -r requirements-optional.txt || echo "Some optional modules failed to install"
- - ${PYTHON_X} setup.py build_ext -i
+ - pip install -r requirements.txt
+ - pip install -r requirements-travis.txt
+ - pip install -r requirements-optional.txt || echo "Some optional modules failed to install"
+ - python setup.py build_ext -i
 
 
 script:
@@ -74,17 +72,17 @@ script:
   if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     export SDIST_DIR=/tmp/pymor_sdist/
     # this fails on PRs, so skip it
-    [[ "${TRAVIS_PULL_REQUEST}" != "false" ]] || sudo -E ${PIP_X} -q install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
-    sudo -E ${PIP_X} uninstall  -y pymor
-    ${PYTHON_X} setup.py sdist -d ${SDIST_DIR}/ --format=gztar
-    check-manifest -p ${PYTHON_X} ${PWD}
+    [[ "${TRAVIS_PULL_REQUEST}" != "false" ]] || sudo -E pip -q install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
+    sudo -E pip uninstall  -y pymor
+    python setup.py sdist -d ${SDIST_DIR}/ --format=gztar
+    check-manifest -p python ${PWD}
     pushd ${SDIST_DIR}
-    sudo -E ${PIP_X} install $(ls ${SDIST_DIR})
+    sudo -E pip install $(ls ${SDIST_DIR})
     popd
     xvfb-run -a ${PY_TEST_X} --pyargs pymortests -c .installed_pytest.ini -k "not slow"
   elif [ "${PYTEST_MARKER}" == "MPI" ] ; then
     export PYTHONPATH=$(pwd)/src
-    xvfb-run -a mpirun -n 2 ${PYTHON_X} src/pymortests/mpi_run_demo_tests.py
+    xvfb-run -a mpirun -n 2 python src/pymortests/mpi_run_demo_tests.py
   else
     export PYTHONPATH=$(pwd)/src
     # this runs in pytest in a fake, auto numbered, X Server
