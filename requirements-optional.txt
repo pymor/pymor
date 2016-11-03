@@ -1,10 +1,10 @@
 ipython>=3.0
-pytest-cov
 pyamg
-mpi4py
-pyside; python_version <= "3.4"
-pyopengl
-pytest
 https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz
-ipyparallel
+mpi4py
+pytest-cov
+pyside
 matplotlib
+pyopengl
+ipyparallel
+pytest

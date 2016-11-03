@@ -6,7 +6,7 @@
 tests_require = ['pytest', 'pytest-cov']
 install_requires = ['cython>=0.20.1', 'numpy>=1.8.1', 'scipy>=0.13.3', 'Sphinx>=1.4.0', 'docopt']
 setup_requires = ['pytest-runner', 'cython>=0.20.1', 'numpy>=1.8.1']
-install_suggests = {'ipython': 'an enhanced interactive python shell',
+install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
                     'ipyparallel': 'required for pymor.parallel.ipython',
                     'matplotlib': 'needed for error plots in demo scipts',
                     'pyopengl': 'fast solution visualization for builtin discretizations (PySide also required)',
@@ -14,7 +14,7 @@ install_suggests = {'ipython': 'an enhanced interactive python shell',
                     'mpi4py': 'required for pymor.tools.mpi and pymor.parallel.mpi',
                     'https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz': 'writing vtk output',
                     'pytest': 'testing framework required to execute unit tests',
-                    'pyside; python_version <= "3.4"': 'solution visualization for builtin discretizations'}
+                    'pyside': 'solution visualization for builtin discretizations'}
 
 import_names = {'ipython': 'IPython',
                 'pytest-cache': 'pytest_cache',
