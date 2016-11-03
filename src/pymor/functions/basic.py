@@ -135,12 +135,16 @@ class GenericFunction(FunctionBase):
     def evaluate(self, x, mu=None):
         x = np.array(x, copy=False, ndmin=1)
         assert x.shape[-1] == self.dim_domain
+
         if self.parametric:
             mu = self.parse_parameter(mu)
             v = self._mapping(x, mu)
         else:
             v = self._mapping(x)
-        assert v.shape == x.shape[:-1] + self.shape_range
+
+        if v.shape != x.shape[:-1] + self.shape_range:
+            assert v.shape[:len(x.shape) - 1] == x.shape[:-1]
+            v = v.reshape(x.shape[:-1] + self.shape_range)
 
         return v
 
@@ -171,28 +175,29 @@ class ExpressionFunction(GenericFunction):
         The name of the function.
     """
 
-    functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',
+    functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan', 'arctan2',
                                              'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
                                              'exp', 'exp2', 'log', 'log2', 'log10', 'array',
                                              'min', 'minimum', 'max', 'maximum', 'pi', 'e',
                                              'sum', 'prod', 'abs', 'sign', 'zeros', 'ones'}}
+    functions['norm'] = np.linalg.norm
+    functions['polar'] = lambda x: (np.linalg.norm(x, axis=-1), np.arctan2(x[..., 1], x[..., 0]) % (2*np.pi))
 
-    def __init__(self, expression, dim_domain=1, shape_range=(), parameter_type=None, locals_=None, name=None):
+    def __init__(self, expression, dim_domain=1, shape_range=(), parameter_type=None, values=None, name=None):
         self.expression = expression
-        self.locals_ = locals_ or {}
+        self.values = values or {}
         code = compile(expression, '<expression>', 'eval')
-        functions = self.functions
-        mapping = lambda x, mu=None: eval(code, functions, dict({'x': x, 'mu': mu}, **self.locals_))
-        super().__init__(mapping, dim_domain, shape_range, parameter_type, name)
+        super().__init__(lambda x, mu={}: eval(code, dict(self.functions, **self.values), dict(mu, x=x, mu=mu)),
+                         dim_domain, shape_range, parameter_type, name)
 
     def __repr__(self):
         return 'ExpressionFunction({}, {}, {}, {}, {})'.format(self.expression, repr(self.parameter_type),
                                                                self.shape_range, self.parameter_type,
-                                                               self.locals_)
+                                                               self.values)
 
     def __reduce__(self):
         return (ExpressionFunction,
-                (self.expression, self.dim_domain, self.shape_range, self.parameter_type, self.locals_,
+                (self.expression, self.dim_domain, self.shape_range, self.parameter_type, self.values,
                  getattr(self, '_name', None)))
 
 

@@ -37,10 +37,10 @@ def burgers_problem(v=1., circle=True, initial_data_type='sin', parameter_range=
     assert initial_data_type in ('sin', 'bump')
 
     if initial_data_type == 'sin':
-        initial_data = ExpressionFunction('0.5 * (sin(2 * pi * x[..., 0]) + 1.)', 1, ())
+        initial_data = ExpressionFunction('0.5 * (sin(2 * pi * x) + 1.)', 1, ())
         dirichlet_data = ConstantFunction(dim_domain=1, value=0.5)
     else:
-        initial_data = ExpressionFunction('(x[..., 0] >= 0.5) * (x[..., 0] <= 1) * 1.', 1, ())
+        initial_data = ExpressionFunction('(x >= 0.5) * (x <= 1) * 1.', 1, ())
         dirichlet_data = ConstantFunction(dim_domain=1, value=0.)
 
     return InstationaryAdvectionProblem(
@@ -55,10 +55,10 @@ def burgers_problem(v=1., circle=True, initial_data_type='sin', parameter_range=
 
         rhs=None,
 
-        flux_function=ExpressionFunction("sign(x) * abs(x)**mu['exponent'] * v",
+        flux_function=ExpressionFunction('sign(x) * abs(x)**exponent * v',
                                          1, (1,), {'exponent': ()}, {'v': v}),
 
-        flux_function_derivative=ExpressionFunction("mu['exponent'] * sign(x) * abs(x)**(mu['exponent']-1) * v",
+        flux_function_derivative=ExpressionFunction('exponent * sign(x) * abs(x)**(exponent-1) * v',
                                                     1, (1,), {'exponent': ()}, {'v': v}),
 
         parameter_space=CubicParameterSpace({'exponent': 0}, *parameter_range),
@@ -114,10 +114,10 @@ def burgers_problem_2d(vx=1., vy=1., torus=True, initial_data_type='sin', parame
 
         rhs=None,
 
-        flux_function=ExpressionFunction("sign(x) * abs(x)**mu['exponent'] * v",
+        flux_function=ExpressionFunction("sign(x) * abs(x)**exponent * v",
                                          1, (2,), {'exponent': ()}, {'v': np.array([vx, vy])}),
 
-        flux_function_derivative=ExpressionFunction("mu['exponent'] * sign(x) * abs(x)**(mu['exponent']-1) * v",
+        flux_function_derivative=ExpressionFunction("exponent * sign(x) * abs(x)**(exponent-1) * v",
                                                     1, (2,), {'exponent': ()}, {'v': np.array([vx, vy])}),
 
         parameter_space=CubicParameterSpace({'exponent': 0}, *parameter_range),

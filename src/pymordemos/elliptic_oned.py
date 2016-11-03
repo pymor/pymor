@@ -35,11 +35,11 @@ def elliptic_oned_demo(args):
     args['N'] = int(args['N'])
 
     rhss = [ExpressionFunction('ones(x.shape[:-1]) * 10', 1, ()),
-            ExpressionFunction('(x[..., 0] - 0.5)**2 * 1000', 1, ())]
+            ExpressionFunction('(x - 0.5)**2 * 1000', 1, ())]
     rhs = rhss[args['PROBLEM-NUMBER']]
 
-    d0 = ExpressionFunction('1 - x[..., 0]', 1, ())
-    d1 = ExpressionFunction('x[..., 0]', 1, ())
+    d0 = ExpressionFunction('1 - x', 1, ())
+    d1 = ExpressionFunction('x', 1, ())
 
     parameter_space = CubicParameterSpace({'diffusionl': 0}, 0.1, 1)
     f0 = ProjectionParameterFunctional('diffusionl', 0)

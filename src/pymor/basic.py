@@ -22,7 +22,7 @@ from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
 from pymor.analyticalproblems.burgers import burgers_problem, burgers_problem_2d
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.analyticalproblems.helmholtz import helmholtz_problem
-from pymor.analyticalproblems.parabolic import ParabolicProblem
+from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
 
 from pymor.core.cache import clear_caches, enable_caching, disable_caching

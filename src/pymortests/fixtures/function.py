@@ -47,8 +47,8 @@ picklable_generic_functions = \
 
 expression_functions = \
     [ExpressionFunction('x', dim_domain=2, shape_range=(2,)),
-     ExpressionFunction("mu['c']*x", dim_domain=1, shape_range=(1,), parameter_type={'c': ()}),
-     ExpressionFunction("mu['c'][2]*sin(x)", dim_domain=1, shape_range=(1,), parameter_type={'c': (3,)})]
+     ExpressionFunction("c*x", dim_domain=1, shape_range=(1,), parameter_type={'c': ()}),
+     ExpressionFunction("c[2]*sin(x)", dim_domain=1, shape_range=(1,), parameter_type={'c': (3,)})]
 
 @pytest.fixture(params=constant_functions + generic_functions + picklable_generic_functions + expression_functions)
 def function(request):
