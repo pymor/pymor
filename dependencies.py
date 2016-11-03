@@ -32,8 +32,8 @@ if __name__ == '__main__':
     import os
     import itertools
     with open(os.path.join(os.path.dirname(__file__), 'requirements.txt'), 'wt') as req:
-        for module in set(itertools.chain(install_requires, setup_requires)):
+        for module in sorted(set(itertools.chain(install_requires, setup_requires))):
             req.write(module+'\n')
     with open(os.path.join(os.path.dirname(__file__), 'requirements-optional.txt'), 'wt') as req:
-        for module in set(itertools.chain(tests_require, install_suggests.keys())):
+        for module in sorted(set(itertools.chain(tests_require, install_suggests.keys()))):
             req.write(module+'\n')

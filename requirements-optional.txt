@@ -1,10 +1,10 @@
-ipython>=3.0
-pyamg
 https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz
-mpi4py
-pytest-cov
-pyside
-matplotlib
-pyopengl
 ipyparallel
+ipython>=3.0
+matplotlib
+mpi4py
+pyamg
+pyopengl
+pyside
 pytest
+pytest-cov
