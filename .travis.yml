@@ -1,134 +1,94 @@
-language: generic
+language: python
+sudo: required
+dist: trusty
+os: linux
 
 git:
   depth: 1000
+cache:
+    pip
+notifications:
+  email:
+    on_success: change
+    on_failure: change
+branches:
+  except:
+    - gh-pages
+addons:
+  apt:
+    packages:
+    - git
+    - xvfb
+    - python3-dev
+    - python-dev
+    - python3-tk
+    - python-tk
+    - gmsh
+
+env:
+  matrix:
+  - PYTEST_MARKER="not slow"
+  - PYTEST_MARKER="slow"
+  - PYTEST_MARKER="PIP_ONLY"
+  - PYTEST_MARKER="MPI"
+
+python:
+    # system packages enable us to use fenics debs
+    - "2.7_with_system_site_packages"
+    - "3.4_with_system_site_packages"
+    - "3.5"
 
 before_install:
- - alias python=python${PYMOR_PYTHON_VERSION}
- - export PYTHON_X=python${PYMOR_PYTHON_VERSION}
- # for some reason installing ptyhon-pytest does not install a /usr/bin/py.test-2.7 which we fake below
- - export PY_TEST_X="${PYTHON_X} /usr/local/bin/py.test"
- - export PIP_X=pip${PYMOR_PYTHON_MAJOR}
- - sudo add-apt-repository -y ppa:pymor/stable
- # our exp. py3 packages are incompat. with the official repo
- # using aptitude here because it auto-fixes problems
+ # no wheels w/o current pip
+ - pip install -U pip
+ # also trusty's numpy is _way_ slow
+ - pip install -U numpy
  - |
-  if [ "${PYMOR_PYTHON_MAJOR}" == "3" ] ; then
-      sudo add-apt-repository -y ppa:pymor/fenics-py3
-      sudo aptitude update
-      sudo aptitude install -y -q libslepc3.4.2-dev libhdf5-openmpi-dev python3-zmq python3-dev python3-dolfin python3-mpi4py python3-tk cython3 python3-pip python3.4-venv python3-docopt python3-pytest python3-opengl ipython3 python3-pyside python3-mpi4py python3-sympy python3-scipy
+  # our exp. py3 packages are incompat. with the official repo
+  # don't move any debs to addons, having these here makes sure the ppa versions are used
+  if [ "${TRAVIS_PYTHON_VERSION}" == "3.4" ] ; then
+      export FENICS_PPA="ppa:pymor/fenics-py3"
+      export FENICS_PACKAGES="python3-zmq python3-dolfin python3-pyside python3-mpi4py"
   else
-      sudo add-apt-repository -y ppa:fenics-packages/fenics
-      sudo aptitude update
-      sudo aptitude install -y -q libslepc3.4.2-dev libhdf5-openmpi-dev python-zmq python-dev python-dolfin python-mpi4py python2.7 python-pytest python-docopt python-pytest python-opengl python-distribute ipython python-pyside python-mpi4py
+      export FENICS_PPA="ppa:fenics-packages/fenics"
+      export FENICS_PACKAGES="python-zmq python-dolfin python-pyside python-mpi4py"
   fi
-  if [ "${PYMOR_PYTHON_VERSION}" == "3.5" ] ; then
-    sudo add-apt-repository -y ppa:fkrull/deadsnakes
-    sudo aptitude update
-    sudo aptitude install -yq python3.5-dev python3.5-minimal
-    # remove incompat package and reinstall with updated pip
-    sudo aptitude remove -y python3-numpy
-    sudo -E ${PIP_X} install -U pip
-    export PIP_X=/usr/local/bin/pip3
-    sudo -E ${PIP_X} install -U numpy scipy setuptools distribute matplotlib sympy sphinx
-  fi
- - ${PYTHON_X} -c 'import  dolfin' || echo "import dolfin failed"
- - for pkg in 3to2 https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz ipyparallel pytest-cov python-coveralls ; do sudo -E ${PIP_X} install ${pkg} ; done
- - sudo -E ${PIP_X} install -U pytest check-manifest
+  sudo add-apt-repository -y ppa:pymor/stable
+  sudo add-apt-repository -y ${FENICS_PPA}
+  sudo aptitude update
+  sudo aptitude install -y -q libslepc3.4.2-dev libhdf5-openmpi-dev  ${FENICS_PACKAGES}
+ - python -c 'import  dolfin' || echo "import dolfin failed"
+ - pip install --no-index -f https://pymor.github.io/wheels/ pyside
+ - python -c 'import  PySide' || echo "import PySide failed"
 
 install:
- - ${PYTHON_X} setup.py build_ext -i
+ - pip install -r requirements.txt
+ - pip install -r requirements-travis.txt
+ - pip install -r requirements-optional.txt || echo "Some optional modules failed to install"
+ - python setup.py build_ext -i
 
-sudo: required
-dist: trusty
 
 script:
  - |
   if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     export SDIST_DIR=/tmp/pymor_sdist/
     # this fails on PRs, so skip it
-    [[ "${TRAVIS_PULL_REQUEST}" != "false" ]] || sudo -E ${PIP_X} -q install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
-    sudo -E ${PIP_X} uninstall  -y pymor
-    ${PYTHON_X} setup.py sdist -d ${SDIST_DIR}/ --format=gztar
-    check-manifest -p ${PYTHON_X} ${PWD}
+    [[ "${TRAVIS_PULL_REQUEST}" != "false" ]] || pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
+    pip uninstall  -y pymor
+    python setup.py sdist -d ${SDIST_DIR}/ --format=gztar
+    check-manifest -p python ${PWD}
     pushd ${SDIST_DIR}
-    sudo -E ${PIP_X} install $(ls ${SDIST_DIR})
+    pip install $(ls ${SDIST_DIR})
     popd
-    xvfb-run -a ${PY_TEST_X} --pyargs pymortests -c .installed_pytest.ini -k "not slow"
+    xvfb-run -a py.test --pyargs pymortests -c .installed_pytest.ini -k "not slow"
   elif [ "${PYTEST_MARKER}" == "MPI" ] ; then
     export PYTHONPATH=$(pwd)/src
-    xvfb-run -a mpirun -n 2 ${PYTHON_X} src/pymortests/mpi_run_demo_tests.py
+    xvfb-run -a mpirun -n 2 python src/pymortests/mpi_run_demo_tests.py
   else
     export PYTHONPATH=$(pwd)/src
     # this runs in pytest in a fake, auto numbered, X Server
-    xvfb-run -a ${PY_TEST_X} -k "${PYTEST_MARKER}"
+    xvfb-run -a py.test -k "${PYTEST_MARKER}"
   fi
 
-notifications:
-  email:
-    on_success: change
-    on_failure: change
-
-after_success:
-  - coveralls
-
-branches:
-  except:
-    - gh-pages
-
-addons:
-  apt:
-    packages:
-    - debhelper
-    - python-pip
-    - python-markupsafe
-    - python3-markupsafe
-    - git
-    - cython
-    - xvfb
-    - libopenmpi-dev
-    - python3-numpy
-    - python3-sphinx
-    - python3-matplotlib
-    - python3-dev
-    - python3-six
-    - python-six
-    - python-virtualenv
-    - python-numpy
-    - python-sphinx
-    - python-scipy
-    - python-matplotlib
-    - python-sympy
-    - python-dev
-    - python3
-    - dh-make
-    - python-docutils
-    - build-essential
-    - libblas-dev
-    - liblapack-dev
-    - libatlas-dev
-    - libsuitesparse-dev
-    - gfortran
-    - libqt4-dev
-    - gmsh
-
-os:
-  - linux
-
-env:
-  global: PYMOR_PYTHON_MAJOR=3 PYMOR_PYTHON_VERSION=3.4
-  matrix:
-  - PYTEST_MARKER="not slow"
-  - PYTEST_MARKER="slow"
-  - PYTEST_MARKER="PIP_ONLY"
-  - PYTEST_MARKER="MPI"
-  - PYMOR_PYTHON_MAJOR=2 PYMOR_PYTHON_VERSION=2.7 PYTEST_MARKER="not slow"
-  - PYMOR_PYTHON_MAJOR=2 PYMOR_PYTHON_VERSION=2.7 PYTEST_MARKER="slow"
-  - PYMOR_PYTHON_MAJOR=2 PYMOR_PYTHON_VERSION=2.7 PYTEST_MARKER="PIP_ONLY"
-  - PYMOR_PYTHON_MAJOR=2 PYMOR_PYTHON_VERSION=2.7 PYTEST_MARKER="MPI"
-  #- PYMOR_PYTHON_MAJOR=3 PYMOR_PYTHON_VERSION=3.5 PYTEST_MARKER="not slow"
-  #- PYMOR_PYTHON_MAJOR=3 PYMOR_PYTHON_VERSION=3.5 PYTEST_MARKER="slow"
-  #- PYMOR_PYTHON_MAJOR=3 PYMOR_PYTHON_VERSION=3.5 PYTEST_MARKER="PIP_ONLY"
-  #- PYMOR_PYTHON_MAJOR=3 PYMOR_PYTHON_VERSION=3.5 PYTEST_MARKER="MPI"
-
+after_success: coveralls
 
