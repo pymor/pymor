@@ -35,7 +35,7 @@ def bt(discretization, r=None, tol=None, typ='lyap', me_solver=None, method='bfs
         Tolerance for the error bound if `r` is `None`.
     typ
         Type of the Gramian (see
-        :func:`pymor.discretizations.iosys.LTISystem.compute_gramian`).
+        :func:`pymor.discretizations.iosys.LTISystem.gramian`).
     me_solver
         Matrix equation solver to use (see
         :func:`pymor.algorithms.lyapunov.solve_lyap` or
@@ -62,19 +62,20 @@ def bt(discretization, r=None, tol=None, typ='lyap', me_solver=None, method='bfs
     assert r is None or 0 < r < discretization.n
     assert method in ('sr', 'bfsr')
 
-    discretization.compute_sv_U_V(typ, me_solver=me_solver)
+    sv, U, V = discretization.sv_U_V(typ, me_solver=me_solver)
+    cf = discretization.gramian(typ, 'cf', me_solver=me_solver)
+    of = discretization.gramian(typ, 'of', me_solver=me_solver)
 
-    if r is not None and r > min([len(discretization._gramian[typ]['cf']), len(discretization._gramian[typ]['of'])]):
+    if r is not None and r > min([len(cf), len(of)]):
         raise ValueError('r needs to be smaller than the sizes of Gramian factors.' +
                          ' Try reducing the tolerance in the low-rank Lyapunov equation solver.')
 
     if tol is not None:
         bounds = np.zeros((discretization.n,))
-        sv = np.zeros((discretization.n,))
-        len_sv = len(discretization._sv[typ])
-        sv[:len_sv] = discretization._sv[typ]
-        sv[len_sv:] = discretization._sv[typ][-1]
-        sv_reverse = sv[-1:0:-1]
+        sv_reverse = np.zeros((discretization.n,))
+        sv_reverse[:len(sv)] = sv
+        sv_reverse[len(sv):] = sv[typ][-1]
+        sv_reverse = sv_reverse[-1:0:-1]
         if typ == 'lyap':
             bounds[:-1] = 2 * sv_reverse.cumsum()[::-1]
         elif typ == 'lqg':
@@ -84,11 +85,11 @@ def bt(discretization, r=None, tol=None, typ='lyap', me_solver=None, method='bfs
         r_tol = np.argmax(bounds <= tol) + 1
         r = r_tol if r is None else min([r, r_tol])
 
-    V = VectorArrayOperator(discretization._gramian[typ]['cf']).apply(discretization._V[typ][:r])
-    W = VectorArrayOperator(discretization._gramian[typ]['of']).apply(discretization._U[typ][:r])
+    V = VectorArrayOperator(cf).apply(V[:r])
+    W = VectorArrayOperator(of).apply(U[:r])
 
     if method == 'sr':
-        alpha = 1 / np.sqrt(discretization._sv[typ][:r])
+        alpha = 1 / np.sqrt(sv[:r])
         V.scal(alpha)
         W.scal(alpha)
         rom, rc, _ = reduce_generic_pg(discretization, V, W, use_default=['E'])
