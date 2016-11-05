@@ -111,8 +111,7 @@ def thermalblock_demo(args):
                    ExpressionParameterFunctional('diffusion[0]', {'diffusion': (2,)}),
                    ExpressionParameterFunctional('diffusion[1]', {'diffusion': (2,)})]
     problem = EllipticProblem(domain=problem.domain,
-                              diffusion_functions=problem.diffusion_functions,
-                              diffusion_functionals=functionals,
+                              diffusion=problem.diffusion.with_(coefficients=functionals),
                               rhs=problem.rhs,
                               parameter_space=CubicParameterSpace({'diffusion': (2,)}, 0.1, 1.))
 

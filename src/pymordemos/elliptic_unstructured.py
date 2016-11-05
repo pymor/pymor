@@ -40,15 +40,14 @@ def elliptic_gmsh_demo(args):
     args['NUM_POINTS'] = int(args['NUM_POINTS'])
     args['CLSCALE'] = float(args['CLSCALE'])
 
-    domain = CircularSectorDomain(args['ANGLE'], radius=1, num_points=args['NUM_POINTS'])
-
-    rhs = ConstantFunction(np.array(0.), dim_domain=2, name='rhs')
-
-    dirichlet_data = ExpressionFunction('sin(polar(x)[1] * pi/angle)', 2, (),
-                                        {}, {'angle': args['ANGLE']}, name='dirichlet')
-
     print('Setup problem ...')
-    problem = EllipticProblem(domain=domain, rhs=rhs, dirichlet_data=dirichlet_data)
+    problem = EllipticProblem(
+        domain=CircularSectorDomain(args['ANGLE'], radius=1, num_points=args['NUM_POINTS']),
+        diffusion=ConstantFunction(1, dim_domain=2),
+        rhs=ConstantFunction(np.array(0.), dim_domain=2, name='rhs'),
+        dirichlet_data=ExpressionFunction('sin(polar(x)[1] * pi/angle)', 2, (),
+                                          {}, {'angle': args['ANGLE']}, name='dirichlet')
+    )
 
     print('Discretize ...')
     discretizer = discretize_elliptic_fv if args['--fv'] else discretize_elliptic_cg

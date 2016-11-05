@@ -5,7 +5,7 @@
 
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.domaindescriptions.basic import RectDomain
-from pymor.functions.basic import ConstantFunction
+from pymor.functions.basic import ConstantFunction, LincombFunction
 from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace
 
@@ -46,13 +46,10 @@ def helmholtz_problem(domain=RectDomain(), rhs=None, parameter_range=(0., 100.),
 
         neumann_data=neumann_data,
 
-        diffusion_functions=[ConstantFunction(1., dim_domain=domain.dim)],
+        diffusion=ConstantFunction(1., dim_domain=domain.dim),
 
-        diffusion_functionals=[1.],
-
-        reaction_functions=[ConstantFunction(1., dim_domain=domain.dim)],
-
-        reaction_functionals=[ExpressionParameterFunctional('-k**2', {'k': ()})],
+        reaction=LincombFunction([ConstantFunction(1., dim_domain=domain.dim)],
+                                 [ExpressionParameterFunctional('-k**2', {'k': ()})]),
 
         parameter_space=CubicParameterSpace({'k': ()}, *parameter_range),
 

@@ -50,16 +50,17 @@ def discretize_pymor():
         EllipticProblem(
             domain=RectDomain(top='dirichlet', bottom='neumann'),
 
-            diffusion_functions=[ConstantFunction(1., dim_domain=2),
-                                 ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * (x[..., 1] < 0.7) * 1.',
-                                                    dim_domain=2),
-                                 ExpressionFunction('(x[..., 0] > 0.35) * (x[..., 0] < 0.40) * (x[..., 1] > 0.3) * 1. + ' +
-                                                    '(x[..., 0] > 0.60) * (x[..., 0] < 0.65) * (x[..., 1] > 0.3) * 1.',
-                                                    dim_domain=2)],
-
-            diffusion_functionals=[1.,
-                                   100. - 1.,
-                                   ExpressionParameterFunctional('top - 1.', {'top': 0})],
+            diffusion=LincombFunction(
+                [ConstantFunction(1., dim_domain=2),
+                 ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * (x[..., 1] < 0.7) * 1.',
+                                    dim_domain=2),
+                 ExpressionFunction('(x[..., 0] > 0.35) * (x[..., 0] < 0.40) * (x[..., 1] > 0.3) * 1. + ' +
+                                    '(x[..., 0] > 0.60) * (x[..., 0] < 0.65) * (x[..., 1] > 0.3) * 1.',
+                                    dim_domain=2)],
+                [1.,
+                 100. - 1.,
+                 ExpressionParameterFunctional('top - 1.', {'top': 0})]
+            ),
 
             rhs=ConstantFunction(value=0., dim_domain=2),
 

@@ -9,7 +9,7 @@ from pymor.analyticalproblems.burgers import burgers_problem, burgers_problem_2d
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.analyticalproblems.helmholtz import helmholtz_problem
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
-from pymor.functions.basic import GenericFunction, ConstantFunction
+from pymor.functions.basic import GenericFunction, ConstantFunction, LincombFunction
 from pymor.parameters.functionals import ExpressionParameterFunctional
 
 
@@ -44,11 +44,12 @@ picklable_elliptic_problems = \
 
 non_picklable_elliptic_problems = \
     [EllipticProblem(rhs=ConstantFunction(dim_domain=2, value=21.),
-                     diffusion_functions=[GenericFunction(dim_domain=2,
-                                                          mapping=lambda X,p=p: X[...,0]**p) for p in range(5)],
-                     diffusion_functionals=[ExpressionParameterFunctional('max(mu["exp"], {})'.format(m),
-                                                                          parameter_type={'exp': ()})
-                                            for m in range(5)])]
+                     diffusion=LincombFunction(
+                         [GenericFunction(dim_domain=2, mapping=lambda X, p=p: X[..., 0]**p)
+                          for p in range(5)],
+                         [ExpressionParameterFunctional('max(mu["exp"], {})'.format(m), parameter_type={'exp': ()})
+                          for m in range(5)]
+                     ))]
 
 
 elliptic_problems = picklable_thermalblock_problems + non_picklable_elliptic_problems
