@@ -74,7 +74,7 @@ def bt(discretization, r=None, tol=None, typ='lyap', me_solver=None, method='bfs
         bounds = np.zeros((discretization.n,))
         sv_reverse = np.zeros((discretization.n,))
         sv_reverse[:len(sv)] = sv
-        sv_reverse[len(sv):] = sv[typ][-1]
+        sv_reverse[len(sv):] = sv[-1]
         sv_reverse = sv_reverse[-1:0:-1]
         if typ == 'lyap':
             bounds[:-1] = 2 * sv_reverse.cumsum()[::-1]

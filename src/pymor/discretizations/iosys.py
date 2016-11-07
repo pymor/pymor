@@ -614,29 +614,32 @@ class LTISystem(InputOutputSystem):
         Parameters
         ----------
         name
-            The name of the norm (`'H2'`, `'Hinf'`, `'Hankel'`).
+            The name of the norm (`'H2'`, `'Hinf'`, `'Hinf_fpeak'`, `'Hankel'`).
         """
         if name == 'H2':
             B, C = self.B, self.C
 
             if self.m <= self.p:
-                cf = self.gramian('lyap', 'cf')
+                cf = self.gramian('lyap', 'cf', me_solver=me_solver)
                 return np.sqrt(C.apply(cf).l2_norm2().sum())
             else:
-                of = self.gramian('lyap', 'of')
+                of = self.gramian('lyap', 'of', me_solver=me_solver)
                 return np.sqrt(B.apply_adjoint(of).l2_norm2().sum())
 
-        elif name == 'Hinf':
+        elif name == 'Hinf' or name == 'Hinf_fpeak':
             from slycot import ab13dd
             dico = 'C' if self.cont_time else 'D'
             jobe = 'I' if isinstance(self.E, IdentityOperator) else 'G'
             equil = 'S'
             jobd = 'Z' if isinstance(self.D, ZeroOperator) else 'D'
-            A, B, C, D, E = map(to_matrix, (self.A, self.B, self.C,
-                                            self.D, self.E))
-            return ab13dd(dico, jobe, equil, jobd, self.n, self.m, self.p, A, E, B, C, D)
+            A, B, C, D, E = map(to_matrix, (self.A, self.B, self.C, self.D, self.E))
+            Hinf, fpeak = ab13dd(dico, jobe, equil, jobd, self.n, self.m, self.p, A, E, B, C, D)
+            if name == 'Hinf':
+                return Hinf
+            else:
+                return Hinf, fpeak
         elif name == 'Hankel':
-            return self.sv_U_V('lyap', me_solver)[0]
+            return self.sv_U_V('lyap', me_solver=me_solver)[0][0]
         else:
             raise NotImplementedError('Only H2, Hinf, and Hankel norms are implemented.')
 
