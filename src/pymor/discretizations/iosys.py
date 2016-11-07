@@ -626,7 +626,7 @@ class LTISystem(InputOutputSystem):
                 of = self.gramian('lyap', 'of', me_solver=me_solver)
                 return np.sqrt(B.apply_adjoint(of).l2_norm2().sum())
 
-        elif name == 'Hinf' or name == 'Hinf_fpeak':
+        elif name == 'Hinf_fpeak':
             from slycot import ab13dd
             dico = 'C' if self.cont_time else 'D'
             jobe = 'I' if isinstance(self.E, IdentityOperator) else 'G'
@@ -634,10 +634,9 @@ class LTISystem(InputOutputSystem):
             jobd = 'Z' if isinstance(self.D, ZeroOperator) else 'D'
             A, B, C, D, E = map(to_matrix, (self.A, self.B, self.C, self.D, self.E))
             Hinf, fpeak = ab13dd(dico, jobe, equil, jobd, self.n, self.m, self.p, A, E, B, C, D)
-            if name == 'Hinf':
-                return Hinf
-            else:
-                return Hinf, fpeak
+            return Hinf, fpeak
+        elif name == 'Hinf':
+            return self.norm('Hinf_fpeak', me_solver=me_solver)[0]
         elif name == 'Hankel':
             return self.sv_U_V('lyap', me_solver=me_solver)[0][0]
         else:
