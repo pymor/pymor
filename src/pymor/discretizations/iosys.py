@@ -12,6 +12,7 @@ import scipy.sparse as sps
 from pymor.algorithms.lyapunov import solve_lyap
 from pymor.algorithms.riccati import solve_ricc
 from pymor.algorithms.to_matrix import to_matrix
+from pymor.core.cache import cached
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.operators.block import BlockOperator, BlockDiagonalOperator
 from pymor.operators.constructions import Concatenation, IdentityOperator, LincombOperator, ZeroOperator
@@ -24,8 +25,8 @@ from pymor.vectorarrays.numpy import NumpyVectorArray
 class InputOutputSystem(DiscretizationInterface):
     """Base class for input-output systems."""
 
-    def __init__(self, m, p, ss_operators, is_operators, so_operators, io_operators, cont_time=True, cache_region=None,
-                 name=None):
+    def __init__(self, m, p, ss_operators, is_operators, so_operators, io_operators, cont_time=True,
+                 cache_region='memory', name=None):
         self.m = m
         self.p = p
         self.ss_operators = FrozenDict(ss_operators)
@@ -35,16 +36,6 @@ class InputOutputSystem(DiscretizationInterface):
         self.cont_time = cont_time
         self.enable_caching(cache_region)
         self.name = name
-        self._poles = None
-        self._w = None
-        self._tfw = None
-        self._gramian = {}
-        self._sv = {}
-        self._U = {}
-        self._V = {}
-        self._H2_norm = None
-        self._Hinf_norm = None
-        self._fpeak = None
 
     def _solve(self, mu=None):
         raise NotImplementedError
@@ -88,6 +79,7 @@ class InputOutputSystem(DiscretizationInterface):
         """Evaluate the derivative of the transfer function of the system."""
         raise NotImplementedError
 
+    @cached
     def bode(self, w):
         """Evaluate the transfer function on the imaginary axis.
 
@@ -105,9 +97,7 @@ class InputOutputSystem(DiscretizationInterface):
         if not self.cont_time:
             raise NotImplementedError
 
-        self._w = w
-        self._tfw = np.dstack([self.eval_tf(1j * wi) for wi in w])
-        return self._tfw.copy()
+        return np.dstack([self.eval_tf(1j * wi) for wi in w])
 
     @classmethod
     def mag_plot(cls, sys_list, plot_style_list=None, w=None, ord=None, dB=False, Hz=False):
@@ -123,8 +113,6 @@ class InputOutputSystem(DiscretizationInterface):
             If `None`, matplotlib defaults are used.
         w
             Frequencies at which to compute the transfer function.
-
-            If `None`, use `self._w`.
         ord
             The order of the norm used to compute the magnitude (the default is
             the Frobenius norm).
@@ -150,17 +138,12 @@ class InputOutputSystem(DiscretizationInterface):
         if isinstance(plot_style_list, str):
             plot_style_list = (plot_style_list,)
 
-        assert w is not None or all(sys._w is not None for sys in sys_list)
-
-        if w is not None:
-            for sys in sys_list:
-                sys.bode(w)
-
         import matplotlib.pyplot as plt
         fig, ax = plt.subplots()
         for i, sys in enumerate(sys_list):
-            freq = sys._w / (2 * np.pi) if Hz else sys._w
-            mag = spla.norm(sys._tfw, ord=ord, axis=(0, 1))
+            tfw = sys.bode(w)
+            freq = w / (2 * np.pi) if Hz else w
+            mag = spla.norm(tfw, ord=ord, axis=(0, 1))
             style = '' if plot_style_list is None else plot_style_list[i]
             if dB:
                 mag = 20 * np.log2(mag)
@@ -243,7 +226,7 @@ class LTISystem(InputOutputSystem):
     linear = True
 
     def __init__(self, A=None, B=None, C=None, D=None, E=None, ss_operators=None, is_operators=None,
-                 so_operators=None, io_operators=None, cont_time=True, cache_region=None, name=None):
+                 so_operators=None, io_operators=None, cont_time=True, cache_region='memory', name=None):
         ss_operators = ss_operators or {}
         is_operators = is_operators or {}
         so_operators = so_operators or {}
@@ -448,12 +431,12 @@ class LTISystem(InputOutputSystem):
 
         return self.__class__(A, B, C, D, E, cont_time=self.cont_time)
 
-    def compute_poles(self):
+    @cached
+    def poles(self):
         """Compute system poles."""
-        if self._poles is None:
-            A = to_matrix(self.A)
-            E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E)
-            self._poles = spla.eigvals(A, E)
+        A = to_matrix(self.A)
+        E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E)
+        return spla.eigvals(A, E)
 
     def eval_tf(self, s):
         """Evaluate the transfer function.
@@ -536,7 +519,8 @@ class LTISystem(InputOutputSystem):
                 C.apply_adjoint(I_p))))).data.conj()
         return dtfs
 
-    def compute_gramian(self, typ, subtyp, me_solver=None, tol=None):
+    @cached
+    def gramian(self, typ, subtyp, me_solver=None, tol=None):
         """Compute a Gramian.
 
         Parameters
@@ -569,110 +553,92 @@ class LTISystem(InputOutputSystem):
         if not self.cont_time:
             raise NotImplementedError
 
-        if typ not in self._gramian or subtyp not in self._gramian[typ] or tol is not None:
-            A = self.A
-            B = self.B
-            C = self.C
-            E = self.E if not isinstance(self.E, IdentityOperator) else None
-            if typ == 'lyap':
-                self._gramian.setdefault(typ, {})
-                if subtyp == 'cf':
-                    self._gramian[typ][subtyp] = solve_lyap(A, E, B, trans=False, me_solver=me_solver, tol=tol)
-                elif subtyp == 'of':
-                    self._gramian[typ][subtyp] = solve_lyap(A, E, C, trans=True, me_solver=me_solver, tol=tol)
-                else:
-                    raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for 'lyap' type.")
-            elif typ == 'lqg':
-                self._gramian.setdefault(typ, {})
-                if subtyp == 'cf':
-                    self._gramian[typ][subtyp] = solve_ricc(A, E=E, B=B, C=C, trans=True, me_solver=me_solver, tol=tol)
-                elif subtyp == 'of':
-                    self._gramian[typ][subtyp] = solve_ricc(A, E=E, B=B, C=C, trans=False, me_solver=me_solver, tol=tol)
-                else:
-                    raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for 'lqg' type.")
-            elif isinstance(typ, tuple) and typ[0] == 'br':
-                assert isinstance(typ[1], float)
-                assert typ[1] > 0
-                self._gramian.setdefault(typ, {})
-                c = 1 / np.sqrt(typ[1])
-                if subtyp == 'cf':
-                    self._gramian[typ][subtyp] = solve_ricc(A, E=E, B=B * c, C=C * c,
-                                                            R=IdentityOperator(C.range) * (-1),
-                                                            trans=True, me_solver=me_solver, tol=tol)
-                elif subtyp == 'of':
-                    self._gramian[typ][subtyp] = solve_ricc(A, E=E, B=B * c, C=C * c,
-                                                            R=IdentityOperator(B.source) * (-1),
-                                                            trans=False, me_solver=me_solver, tol=tol)
-                else:
-                    raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for ('br', gamma) type.")
-            else:
-                raise NotImplementedError("Only 'lyap', 'lqg', and ('br', gamma) types are available.")
+        A = self.A
+        B = self.B
+        C = self.C
+        E = self.E if not isinstance(self.E, IdentityOperator) else None
 
-    def compute_sv_U_V(self, typ, me_solver=None):
+        if typ == 'lyap':
+            if subtyp == 'cf':
+                return solve_lyap(A, E, B, trans=False, me_solver=me_solver, tol=tol)
+            elif subtyp == 'of':
+                return solve_lyap(A, E, C, trans=True, me_solver=me_solver, tol=tol)
+            else:
+                raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for 'lyap' type.")
+        elif typ == 'lqg':
+            if subtyp == 'cf':
+                return solve_ricc(A, E=E, B=B, C=C, trans=True, me_solver=me_solver, tol=tol)
+            elif subtyp == 'of':
+                return solve_ricc(A, E=E, B=B, C=C, trans=False, me_solver=me_solver, tol=tol)
+            else:
+                raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for 'lqg' type.")
+        elif isinstance(typ, tuple) and typ[0] == 'br':
+            assert isinstance(typ[1], float)
+            assert typ[1] > 0
+            c = 1 / np.sqrt(typ[1])
+            if subtyp == 'cf':
+                return solve_ricc(A, E=E, B=B * c, C=C * c, R=IdentityOperator(C.range) * (-1),
+                                  trans=True, me_solver=me_solver, tol=tol)
+            elif subtyp == 'of':
+                return solve_ricc(A, E=E, B=B * c, C=C * c, R=IdentityOperator(B.source) * (-1),
+                                  trans=False, me_solver=me_solver, tol=tol)
+            else:
+                raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for ('br', gamma) type.")
+        else:
+            raise NotImplementedError("Only 'lyap', 'lqg', and ('br', gamma) types are available.")
+
+    @cached
+    def sv_U_V(self, typ, me_solver=None):
         """Compute singular values and vectors.
 
         Parameters
         ----------
         typ
             The type of the Gramian (see
-            :func:`~pymor.discretizations.iosys.LTISystem.compute_gramian`).
+            :func:`~pymor.discretizations.iosys.LTISystem.gramian`).
         me_solver
             The matrix equation solver to use (see
             :func:`pymor.algorithms.lyapunov.solve_lyap` or
             :func:`pymor.algorithms.riccati.solve_ricc`).
         """
-        if typ not in self._sv or typ not in self._U or typ not in self._V:
-            self.compute_gramian(typ, 'cf', me_solver=me_solver)
-            self.compute_gramian(typ, 'of', me_solver=me_solver)
+        cf = self.gramian(typ, 'cf', me_solver=me_solver)
+        of = self.gramian(typ, 'of', me_solver=me_solver)
 
-            U, self._sv[typ], Vh = spla.svd(self.E.apply2(self._gramian[typ]['of'], self._gramian[typ]['cf']))
+        U, sv, Vh = spla.svd(self.E.apply2(of, cf))
+        return sv, NumpyVectorArray(U.T), NumpyVectorArray(Vh)
 
-            self._U[typ] = NumpyVectorArray(U.T)
-            self._V[typ] = NumpyVectorArray(Vh)
-
-    def norm(self, name='H2'):
+    @cached
+    def norm(self, name='H2', me_solver=None):
         """Compute a norm of the |LTISystem|.
 
         Parameters
         ----------
         name
-            The name of the norm (`'H2'`, `'Hinf'`, `'Hankel'`).
+            The name of the norm (`'H2'`, `'Hinf'`, `'Hinf_fpeak'`, `'Hankel'`).
         """
         if name == 'H2':
-            if self._H2_norm is not None:
-                return self._H2_norm
-
             B, C = self.B, self.C
 
-            if 'lyap' in self._gramian and 'cf' in self._gramian['lyap']:
-                self._H2_norm = np.sqrt(C.apply(self._gramian['lyap']['cf']).l2_norm2().sum())
-            elif 'lyap' in self._gramian and 'of' in self._gramian['lyap']:
-                self._H2_norm = np.sqrt(B.apply_adjoint(self._gramian['lyap']['of']).l2_norm2().sum())
-            elif self.m <= self.p:
-                self.compute_gramian('lyap', 'cf')
-                self._H2_norm = np.sqrt(C.apply(self._gramian['lyap']['cf']).l2_norm2().sum())
+            if self.m <= self.p:
+                cf = self.gramian('lyap', 'cf', me_solver=me_solver)
+                return np.sqrt(C.apply(cf).l2_norm2().sum())
             else:
-                self.compute_gramian('lyap', 'of')
-                self._H2_norm = np.sqrt(B.apply_adjoint(self._gramian['lyap']['of']).l2_norm2().sum())
+                of = self.gramian('lyap', 'of', me_solver=me_solver)
+                return np.sqrt(B.apply_adjoint(of).l2_norm2().sum())
 
-            return self._H2_norm
-        elif name == 'Hinf':
-            if self._Hinf_norm is not None:
-                return self._Hinf_norm
-
+        elif name == 'Hinf_fpeak':
             from slycot import ab13dd
             dico = 'C' if self.cont_time else 'D'
             jobe = 'I' if isinstance(self.E, IdentityOperator) else 'G'
             equil = 'S'
             jobd = 'Z' if isinstance(self.D, ZeroOperator) else 'D'
-            A, B, C, D, E = map(to_matrix, (self.A, self.B, self.C,
-                                            self.D, self.E))
-            self._Hinf_norm, self._fpeak = ab13dd(dico, jobe, equil, jobd, self.n, self.m, self.p, A, E, B, C, D)
-
-            return self._Hinf_norm
+            A, B, C, D, E = map(to_matrix, (self.A, self.B, self.C, self.D, self.E))
+            Hinf, fpeak = ab13dd(dico, jobe, equil, jobd, self.n, self.m, self.p, A, E, B, C, D)
+            return Hinf, fpeak
+        elif name == 'Hinf':
+            return self.norm('Hinf_fpeak', me_solver=me_solver)[0]
         elif name == 'Hankel':
-            self.compute_sv_U_V('lyap')
-            return self._sv['lyap'][0]
+            return self.sv_U_V('lyap', me_solver=me_solver)[0][0]
         else:
             raise NotImplementedError('Only H2, Hinf, and Hankel norms are implemented.')
 
@@ -713,7 +679,7 @@ class TF(InputOutputSystem):
     """
     linear = True
 
-    def __init__(self, m, p, H, dH, cont_time=True, cache_region=None, name=None):
+    def __init__(self, m, p, H, dH, cont_time=True, cache_region='memory', name=None):
         assert cont_time in (True, False)
 
         self.tf = H
@@ -795,7 +761,7 @@ class SecondOrderSystem(InputOutputSystem):
     linear = True
 
     def __init__(self, M=None, D=None, K=None, B=None, Cp=None, Cv=None, ss_operators=None, is_operators=None,
-                 so_operators=None, io_operators=None, cont_time=True, cache_region=None, name=None):
+                 so_operators=None, io_operators=None, cont_time=True, cache_region='memory', name=None):
         ss_operators = ss_operators or {}
         is_operators = is_operators or {}
         so_operators = so_operators or {}
@@ -1011,7 +977,7 @@ class LinearDelaySystem(InputOutputSystem):
     linear = True
 
     def __init__(self, E=None, A=None, Ad=None, tau=None, B=None, C=None, ss_operators=None, is_operators=None,
-                 so_operators=None, io_operators=None, cont_time=True, cache_region=None, name=None):
+                 so_operators=None, io_operators=None, cont_time=True, cache_region='memory', name=None):
         ss_operators = ss_operators or {}
         is_operators = is_operators or {}
         so_operators = so_operators or {}
@@ -1222,7 +1188,7 @@ class LinearStochasticSystem(InputOutputSystem):
     linear = True
 
     def __init__(self, E=None, A=None, As=None, tau=None, B=None, C=None, ss_operators=None, is_operators=None,
-                 so_operators=None, io_operators=None, cont_time=True, cache_region=None, name=None):
+                 so_operators=None, io_operators=None, cont_time=True, cache_region='memory', name=None):
         ss_operators = ss_operators or {}
         is_operators = is_operators or {}
         so_operators = so_operators or {}
@@ -1348,7 +1314,7 @@ class BilinearSystem(InputOutputSystem):
     linear = False
 
     def __init__(self, E=None, A=None, N=None, B=None, C=None, ss_operators=None, is_operators=None,
-                 so_operators=None, io_operators=None, cont_time=True, cache_region=None, name=None):
+                 so_operators=None, io_operators=None, cont_time=True, cache_region='memory', name=None):
         ss_operators = ss_operators or {}
         is_operators = is_operators or {}
         so_operators = so_operators or {}

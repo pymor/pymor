@@ -63,8 +63,7 @@ if __name__ == '__main__':
     print('p = {}'.format(lti.p))
 
     # System poles
-    lti.compute_poles()
-    poles = lti._poles
+    poles = lti.poles()
     fig, ax = plt.subplots()
     ax.plot(poles.real, poles.imag, '.')
     ax.set_title('System poles')
@@ -72,15 +71,14 @@ if __name__ == '__main__':
 
     # Bode plot of the full model
     w = np.logspace(-2, 3, 100)
-    lti.bode(w)
-    fig, ax = LTISystem.mag_plot(lti)
+    fig, ax = LTISystem.mag_plot(lti, w=w)
     ax.set_title('Bode plot of the full model')
     plt.show()
 
     # Hankel singular values
-    lti.compute_sv_U_V('lyap')
+    sv = lti.sv_U_V('lyap')[0]
     fig, ax = plt.subplots()
-    ax.semilogy(range(1, len(lti._sv['lyap']) + 1), lti._sv['lyap'], '.-')
+    ax.semilogy(range(1, len(sv) + 1), sv, '.-')
     ax.set_title('Hankel singular values')
     plt.show()
 
@@ -90,7 +88,7 @@ if __name__ == '__main__':
 
     # Balanced Truncation
     r = 5
-    rom_bt, _, _ = bt(lti, r)
+    rom_bt, _, _ = bt(lti, r, tol=1e-5)
     print('H_2-norm of the BT ROM:       {}'.format(rom_bt.norm()))
     print('H_inf-norm of the BT ROM:     {}'.format(rom_bt.norm('Hinf')))
     err_bt = lti - rom_bt
@@ -98,14 +96,12 @@ if __name__ == '__main__':
     print('H_inf-error for the BT ROM:   {}'.format(err_bt.norm('Hinf')))
 
     # Bode plot of the full and BT reduced model
-    rom_bt.bode(w)
-    fig, ax = LTISystem.mag_plot((lti, rom_bt))
+    fig, ax = LTISystem.mag_plot((lti, rom_bt), w=w)
     ax.set_title('Bode plot of the full and BT reduced model')
     plt.show()
 
     # Bode plot of the BT error system
-    err_bt.bode(w)
-    fig, ax = LTISystem.mag_plot(err_bt)
+    fig, ax = LTISystem.mag_plot(err_bt, w=w)
     ax.set_title('Bode plot of the BT error system')
     plt.show()
 
@@ -128,13 +124,11 @@ if __name__ == '__main__':
     print('H_inf-error for the IRKA ROM: {}'.format(err_irka.norm('Hinf')))
 
     # Bode plot of the full and IRKA reduced model
-    rom_irka.bode(w)
-    fig, ax = LTISystem.mag_plot((lti, rom_irka))
+    fig, ax = LTISystem.mag_plot((lti, rom_irka), w=w)
     ax.set_title('Bode plot of the full and IRKA reduced model')
     plt.show()
 
     # Bode plot of the IRKA error system
-    err_irka.bode(w)
-    fig, ax = LTISystem.mag_plot(err_irka)
+    fig, ax = LTISystem.mag_plot(err_irka, w=w)
     ax.set_title('Bode plot of the IRKA error system')
     plt.show()
