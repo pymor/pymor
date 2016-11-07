@@ -226,7 +226,7 @@ class LTISystem(InputOutputSystem):
     linear = True
 
     def __init__(self, A=None, B=None, C=None, D=None, E=None, ss_operators=None, is_operators=None,
-                 so_operators=None, io_operators=None, cont_time=True, cache_region=None, name=None):
+                 so_operators=None, io_operators=None, cont_time=True, cache_region='memory', name=None):
         ss_operators = ss_operators or {}
         is_operators = is_operators or {}
         so_operators = so_operators or {}
@@ -679,7 +679,7 @@ class TF(InputOutputSystem):
     """
     linear = True
 
-    def __init__(self, m, p, H, dH, cont_time=True, cache_region=None, name=None):
+    def __init__(self, m, p, H, dH, cont_time=True, cache_region='memory', name=None):
         assert cont_time in (True, False)
 
         self.tf = H
@@ -761,7 +761,7 @@ class SecondOrderSystem(InputOutputSystem):
     linear = True
 
     def __init__(self, M=None, D=None, K=None, B=None, Cp=None, Cv=None, ss_operators=None, is_operators=None,
-                 so_operators=None, io_operators=None, cont_time=True, cache_region=None, name=None):
+                 so_operators=None, io_operators=None, cont_time=True, cache_region='memory', name=None):
         ss_operators = ss_operators or {}
         is_operators = is_operators or {}
         so_operators = so_operators or {}
@@ -977,7 +977,7 @@ class LinearDelaySystem(InputOutputSystem):
     linear = True
 
     def __init__(self, E=None, A=None, Ad=None, tau=None, B=None, C=None, ss_operators=None, is_operators=None,
-                 so_operators=None, io_operators=None, cont_time=True, cache_region=None, name=None):
+                 so_operators=None, io_operators=None, cont_time=True, cache_region='memory', name=None):
         ss_operators = ss_operators or {}
         is_operators = is_operators or {}
         so_operators = so_operators or {}
@@ -1188,7 +1188,7 @@ class LinearStochasticSystem(InputOutputSystem):
     linear = True
 
     def __init__(self, E=None, A=None, As=None, tau=None, B=None, C=None, ss_operators=None, is_operators=None,
-                 so_operators=None, io_operators=None, cont_time=True, cache_region=None, name=None):
+                 so_operators=None, io_operators=None, cont_time=True, cache_region='memory', name=None):
         ss_operators = ss_operators or {}
         is_operators = is_operators or {}
         so_operators = so_operators or {}
@@ -1314,7 +1314,7 @@ class BilinearSystem(InputOutputSystem):
     linear = False
 
     def __init__(self, E=None, A=None, N=None, B=None, C=None, ss_operators=None, is_operators=None,
-                 so_operators=None, io_operators=None, cont_time=True, cache_region=None, name=None):
+                 so_operators=None, io_operators=None, cont_time=True, cache_region='memory', name=None):
         ss_operators = ss_operators or {}
         is_operators = is_operators or {}
         so_operators = so_operators or {}
