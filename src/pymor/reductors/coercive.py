@@ -10,7 +10,7 @@ from pymor.operators.constructions import LincombOperator, induced_norm
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.reductors.basic import reduce_generic_rb
 from pymor.reductors.residual import reduce_residual
-from pymor.vectorarrays.numpy import NumpyVectorArray
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 def reduce_coercive(discretization, RB, product=None, coercivity_estimator=None,
@@ -276,7 +276,7 @@ class ReduceCoerciveSimpleEstimator(ImmutableInterface):
 
         C = np.hstack((CR, np.dot(CO[..., np.newaxis], U.data).ravel()))
 
-        est = self.norm(NumpyVectorArray(C))
+        est = self.norm(NumpyVectorSpace.make_array(C))
         if self.coercivity_estimator:
             est /= self.coercivity_estimator(mu)
 

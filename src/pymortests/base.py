@@ -15,7 +15,7 @@ from pkg_resources import resource_filename, resource_stream
 
 from pymor.core import logger
 from pymor.operators.basic import OperatorBase
-from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
+from pymor.vectorarrays.numpy import scalars
 
 
 class TestInterface(object):
@@ -86,8 +86,7 @@ def polynomials(max_order):
 
 
 class MonomOperator(OperatorBase):
-    source = range = NumpyVectorSpace(1)
-    type_source = type_range = NumpyVectorArray
+    source = range = scalars(1)
 
     def __init__(self, order, monom=None):
         self.monom = monom if monom else Polynomial(np.identity(order + 1)[order])
@@ -97,13 +96,13 @@ class MonomOperator(OperatorBase):
         self.linear = order == 1
 
     def apply(self, U, mu=None):
-        return NumpyVectorArray(self.monom(U.data))
+        return self.source.make_array(self.monom(U.data))
 
     def jacobian(self, U, mu=None):
         return MonomOperator(self.order - 1, self.derivative)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
-        return NumpyVectorArray(1. / V.data)
+        return self.range.make_array(1. / V.data)
 
 
 def check_results(test_name, params, results, *args):

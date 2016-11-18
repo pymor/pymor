@@ -5,7 +5,7 @@
 from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import LincombOperator, VectorArrayOperator
 from pymor.tools import mpi
-from pymor.vectorarrays.interfaces import VectorSpace
+from pymor.vectorarrays.interfaces import VectorSpaceInterface
 from pymor.vectorarrays.mpi import MPIVectorArray, _register_subtype
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 

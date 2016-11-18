@@ -11,7 +11,7 @@ from pymor.core.logger import getLogger
 from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import induced_norm
 from pymor.reductors.basic import GenericRBReconstructor
-from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymor.vectorarrays.numpy import scalars
 
 
 def reduce_residual(operator, rhs=None, RB=None, rhs_is_functional=True, product=None, extends=None):
@@ -76,8 +76,8 @@ def reduce_residual(operator, rhs=None, RB=None, rhs_is_functional=True, product
         Additional data produced by the reduction process (compare the `extends` parameter).
     """
     assert rhs is None \
-        or rhs_is_functional and (rhs.range == NumpyVectorSpace(1) and rhs.source == operator.range and rhs.linear) \
-        or not rhs_is_functional and (rhs.source == NumpyVectorSpace(1) and rhs.range == operator.range and rhs.linear)
+        or rhs_is_functional and (rhs.range == scalars(1) and rhs.source == operator.range and rhs.linear) \
+        or not rhs_is_functional and (rhs.source == scalars(1) and rhs.range == operator.range and rhs.linear)
     assert RB is None or RB in operator.source
     assert product is None or product.source == product.range == operator.range
     assert extends is None or len(extends) == 3
@@ -253,7 +253,7 @@ def reduce_implicit_euler_residual(operator, mass, dt, functional=None, RB=None,
         Additional data produced by the reduction process (compare the `extends` parameter).
     """
     assert functional is None \
-        or functional.range == NumpyVectorSpace(1) and functional.source == operator.source and functional.linear
+        or functional.range == scalars(1) and functional.source == operator.source and functional.linear
     assert RB is None or RB in operator.source
     assert product is None or product.source == product.range == operator.range
     assert extends is None or len(extends) == 3

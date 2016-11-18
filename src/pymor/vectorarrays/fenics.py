@@ -16,8 +16,7 @@ except ImportError:
 if HAVE_FENICS:
     import numpy as np
 
-    from pymor.vectorarrays.interfaces import VectorSpace
-    from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorArray
+    from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorArray, ListVectorSpace
 
 
     # For pyMOR's MPI support to work, subtypes need to be hashable.
@@ -31,29 +30,15 @@ if HAVE_FENICS:
     class FenicsVector(CopyOnWriteVector):
         """Wraps a FEniCS vector to make it usable with ListVectorArray."""
 
-        def __init__(self, impl, space):
+        def __init__(self, impl):
             self.impl = impl
-            self.space = space
 
         @classmethod
         def from_instance(cls, instance):
-            return cls(instance.impl, instance.space)
+            return cls(instance.impl)
 
         def _copy_data(self):
             self.impl = self.impl.copy()
-
-        @classmethod
-        def make_zeros(cls, subtype):
-            impl = df.Function(subtype).vector()
-            return cls(impl, subtype)
-
-        @property
-        def dim(self):
-            return self.impl.size()
-
-        @property
-        def subtype(self):
-            return self.space
 
         @property
         def data(self):
@@ -127,5 +112,22 @@ if HAVE_FENICS:
             return FenicsVector(-self.impl)
 
 
-    def FenicsVectorSpace(V):
-        return VectorSpace(ListVectorArray, (FenicsVector, V))
+    class FenicsVectorSpace(ListVectorSpace):
+
+        def __init__(self, V, id_='STATE'):
+            self.V = V
+            self.id = id_
+
+        @property
+        def dim(self):
+            return df.Function(self.V).vector().size()
+
+        def __eq__(self, other):
+            return type(other) is FenicsVectorSpace and self.V == other.V and self.id == other.id
+
+        def zero_vector(self):
+            impl = df.Function(self.V).vector()
+            return FenicsVector(impl)
+
+        def make_vector(self, obj):
+            return FenicsVector(obj)

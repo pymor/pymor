@@ -71,6 +71,5 @@ from pymor.reductors.parabolic import reduce_parabolic
 from pymor.tools.random import new_random_state
 
 from pymor.vectorarrays.constructions import cat_arrays
-from pymor.vectorarrays.interfaces import VectorSpace
-from pymor.vectorarrays.list import ListVectorArray
-from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
+from pymor.vectorarrays.list import ListVectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorSpace, scalars

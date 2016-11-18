@@ -3,12 +3,10 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from numbers import Number
-
 import numpy as np
 
-from pymor.core.interfaces import BasicInterface, abstractmethod, abstractclassmethod, abstractproperty
-from pymor.vectorarrays.interfaces import VectorArrayInterface, _INDEXTYPES
+from pymor.core.interfaces import BasicInterface, abstractmethod, abstractclassmethod, classinstancemethod
+from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _INDEXTYPES
 
 
 class VectorInterface(BasicInterface):
@@ -19,22 +17,6 @@ class VectorInterface(BasicInterface):
     All methods of the interface have a direct counterpart in the |VectorArray|
     interface.
     """
-
-    @abstractclassmethod
-    def make_zeros(cls, subtype=None):
-        pass
-
-    @classmethod
-    def from_data(cls, data, subtype):
-        raise NotImplementedError
-
-    @abstractproperty
-    def dim(self):
-        pass
-
-    @property
-    def subtype(self):
-        return None
 
     @abstractmethod
     def copy(self, deep=False):
@@ -171,27 +153,12 @@ class CopyOnWriteVector(VectorInterface):
 class NumpyVector(CopyOnWriteVector):
     """Vector stored in a NumPy 1D-array."""
 
-    def __init__(self, instance, dtype=None, copy=False, order=None, subok=False):
-        if isinstance(instance, np.ndarray) and not copy:
-            self._array = instance
-        else:
-            self._array = np.array(instance, dtype=dtype, copy=copy, order=order, subok=subok, ndmin=1)
-        assert self._array.ndim == 1
+    def __init__(self, array):
+        self._array = array
 
     @classmethod
     def from_instance(cls, instance):
         return cls(instance._array)
-
-    @classmethod
-    def make_zeros(cls, subtype=None):
-        assert isinstance(subtype, Number)
-        return NumpyVector(np.zeros(subtype))
-
-    @classmethod
-    def from_data(cls, data, subtype):
-        assert isinstance(data, np.ndarray) and data.ndim == 1
-        assert len(data) == subtype
-        return cls(data)
 
     @property
     def data(self):
@@ -199,10 +166,6 @@ class NumpyVector(CopyOnWriteVector):
 
     @property
     def dim(self):
-        return len(self._array)
-
-    @property
-    def subtype(self):
         return len(self._array)
 
     def _copy_data(self):
@@ -269,30 +232,9 @@ class ListVectorArray(VectorArrayInterface):
 
     _NONE = ()
 
-    def __init__(self, vectors, subtype=_NONE, copy=True):
-        vectors = list(vectors)
-        if subtype is self._NONE:
-            assert len(vectors) > 0
-            subtype = (type(vectors[0]), vectors[0].subtype)
-        if not copy:
-            self._list = vectors
-        else:
-            self._list = [v.copy() for v in vectors]
-        self.vector_type, self.vector_subtype = vector_type, vector_subtype = subtype
-        assert all(v.subtype == vector_subtype for v in self._list)
-
-    @classmethod
-    def make_array(cls, subtype=None, count=0, reserve=0):
-        assert count >= 0
-        assert reserve >= 0
-        vector_type, vector_subtype = subtype
-        return ListVectorArray([vector_type.make_zeros(vector_subtype) for _ in range(count)],
-                               subtype=subtype, copy=False)
-
-    @classmethod
-    def from_data(cls, data, subtype):
-        vector_type, vector_subtype = subtype
-        return ListVectorArray([vector_type.from_data(v, vector_subtype) for v in data], subtype=subtype)
+    def __init__(self, vectors, space):
+        self._list = vectors
+        self.space = space
 
     @property
     def data(self):
@@ -302,17 +244,6 @@ class ListVectorArray(VectorArrayInterface):
             return np.array([v.data for v in self._list])
         else:
             return np.empty((0, self.dim))
-
-    @property
-    def dim(self):
-        if len(self._list) > 0:
-            return self._list[0].dim
-        else:
-            return self.vector_type.make_zeros(self.vector_subtype).dim
-
-    @property
-    def subtype(self):
-        return (self.vector_type, self.vector_subtype)
 
     def __len__(self):
         return len(self._list)
@@ -344,8 +275,7 @@ class ListVectorArray(VectorArrayInterface):
                 del other[:]
 
     def copy(self, deep=False):
-        return ListVectorArray([v.copy(deep=deep) for v in self._list],
-                               subtype=self.subtype, copy=False)
+        return ListVectorArray([v.copy(deep=deep) for v in self._list], self.space)
 
     def scal(self, alpha):
         assert isinstance(alpha, _INDEXTYPES) \
@@ -418,12 +348,12 @@ class ListVectorArray(VectorArrayInterface):
 
         RL = []
         for coeffs in coefficients:
-            R = self.vector_type.make_zeros(self.vector_subtype)
+            R = self.space.zero_vector()
             for v, c in zip(self._list, coeffs):
                 R.axpy(c, v)
             RL.append(R)
 
-        return ListVectorArray(RL, subtype=self.subtype, copy=False)
+        return ListVectorArray(RL, self.space)
 
     def l1_norm(self):
         return np.array([v.l1_norm() for v in self._list])
@@ -463,7 +393,80 @@ class ListVectorArray(VectorArrayInterface):
         return MI, MV
 
     def __str__(self):
-        return 'ListVectorArray of {} {}s of dimension {}'.format(len(self._list), str(self.vector_type), self.dim)
+        return 'ListVectorArray of {} of space {}'.format(len(self._list), self.space)
+
+
+class ListVectorSpace(VectorSpaceInterface):
+
+    def zeros(self, count=1, reserve=0):
+        assert count >= 0 and reserve >= 0
+        return ListVectorArray([self.zero_vector() for _ in range(count)], self)
+
+    @classinstancemethod
+    def make_array(cls, obj, id_='STATE'):
+        if len(obj) == 0:
+            raise NotImplementedError
+        return cls.space_from_vector_obj(obj[0], id_=id_).make_array(obj)
+
+    @make_array.instancemethod
+    def make_array(self, obj):
+        return ListVectorArray([self.make_vector(v) for v in obj], self)
+
+    @classinstancemethod
+    def from_data(cls, data, id_='STATE'):
+        return cls.space_from_dim(data.shape[1], id_=id_).from_data(data)
+
+    @from_data.instancemethod
+    def from_data(self, data):
+        return ListVectorArray([self.vector_from_data(v) for v in data], self)
+
+    @abstractmethod
+    def zero_vector(self):
+        pass
+
+    @abstractmethod
+    def make_vector(self, data):
+        pass
+
+    def vector_from_data(self, data):
+        raise NotImplementedError
+
+    @classmethod
+    def space_from_vector_obj(cls, vec, id_):
+        raise NotImplementedError
+
+    @classmethod
+    def space_from_dim(cls, dim, id_):
+        raise NotImplementedError
+
+
+class NumpyListVectorSpace(ListVectorSpace):
+
+    def __init__(self, dim, id_='STATE'):
+        self.dim = dim
+        self.id = id_
+
+    def __eq__(self, other):
+        return type(other) is NumpyListVectorSpace and self.dim == other.dim and self.id == other.id
+
+    @classmethod
+    def space_from_vector_obj(cls, vec, id_):
+        return cls(len(vec), id_)
+
+    @classmethod
+    def space_from_dim(cls, dim, id_):
+        return cls(dim, id_)
+
+    def zero_vector(self):
+        return NumpyVector(np.zeros(self.dim))
+
+    def make_vector(self, obj):
+        obj = np.asarray(obj)
+        assert obj.ndim == 1 and len(obj) == self.dim
+        return NumpyVector(obj)
+
+    def vector_from_data(self, data):
+        return self.make_vector(data)
 
 
 class ListVectorArrayView(ListVectorArray):
@@ -472,8 +475,6 @@ class ListVectorArrayView(ListVectorArray):
 
     def __init__(self, base, ind):
         self.base = base
-        self.vector_type = base.vector_type
-        self.vector_subtype = base.vector_subtype
         assert base.check_ind(ind)
         self.ind = base.normalize_ind(ind)
         if type(ind) is slice:

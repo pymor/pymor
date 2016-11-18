@@ -20,7 +20,7 @@ from pymor.operators.numpy import NumpyMatrixBasedOperator, NumpyMatrixOperator
 from pymor.parameters.base import Parametric
 from pymor.tools.inplace import iadd_masked, isub_masked
 from pymor.tools.quadratures import GaussQuadratures
-from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorSpace, scalars
 
 
 class NumericalConvectiveFluxInterface(ImmutableInterface, Parametric):
@@ -213,7 +213,8 @@ class NonlinearAdvectionOperator(OperatorBase):
 
     linear = False
 
-    def __init__(self, grid, boundary_info, numerical_flux, dirichlet_data=None, solver_options=None, name=None):
+    def __init__(self, grid, boundary_info, numerical_flux, dirichlet_data=None, solver_options=None,
+                 space_id='STATE', name=None):
         assert dirichlet_data is None or isinstance(dirichlet_data, FunctionInterface)
 
         self.grid = grid
@@ -221,6 +222,7 @@ class NonlinearAdvectionOperator(OperatorBase):
         self.numerical_flux = numerical_flux
         self.dirichlet_data = dirichlet_data
         self.solver_options = solver_options
+        self.space_id = space_id
         self.name = name
         if (isinstance(dirichlet_data, FunctionInterface) and boundary_info.has_dirichlet
                 and not dirichlet_data.parametric):
@@ -228,7 +230,7 @@ class NonlinearAdvectionOperator(OperatorBase):
             self._dirichlet_values = self._dirichlet_values.ravel()
             self._dirichlet_values_flux_shaped = self._dirichlet_values.reshape((-1, 1))
         self.build_parameter_type(numerical_flux, dirichlet_data)
-        self.source = self.range = NumpyVectorSpace(grid.size(0))
+        self.source = self.range = NumpyVectorSpace(grid.size(0), space_id)
         self.add_with_arguments = self.add_with_arguments.union('numerical_flux_{}'.format(arg)
                                                                 for arg in numerical_flux.with_arguments)
 
@@ -246,7 +248,8 @@ class NonlinearAdvectionOperator(OperatorBase):
                                    assume_unique=True)
         sub_grid = SubGrid(self.grid, entities=source_dofs)
         sub_boundary_info = SubGridBoundaryInfo(sub_grid, self.grid, self.boundary_info)
-        op = self.with_(grid=sub_grid, boundary_info=sub_boundary_info, name='{}_restricted'.format(self.name))
+        op = self.with_(grid=sub_grid, boundary_info=sub_boundary_info, space_id='SCALARS',
+                        name='{}_restricted'.format(self.name))
         sub_grid_indices = sub_grid.indices_from_parent_indices(dofs, codim=0)
         proj = ComponentProjection(sub_grid_indices, op.range)
         return Concatenation(proj, op), sub_grid.parent_indices(0)
@@ -267,7 +270,6 @@ class NonlinearAdvectionOperator(OperatorBase):
                                                                          self._grid_data['SUPI'][:, 0]])
 
     def apply(self, U, mu=None):
-        assert isinstance(U, NumpyVectorArray)
         assert U in self.source
         mu = self.parse_parameter(mu)
 
@@ -320,10 +322,9 @@ class NonlinearAdvectionOperator(OperatorBase):
 
         R /= VOLS0
 
-        return NumpyVectorArray(R)
+        return self.range.make_array(R)
 
     def jacobian(self, U, mu=None):
-        assert isinstance(U, NumpyVectorArray)
         assert U in self.source and len(U) == 1
         mu = self.parse_parameter(mu)
 
@@ -431,28 +432,28 @@ class NonlinearAdvectionOperator(OperatorBase):
         A = csc_matrix(A).copy()   # See pymor.operators.cg.DiffusionOperatorP1 for why copy() is necessary
         A = dia_matrix(([1. / VOLS0], [0]), shape=(g.size(0),) * 2) * A
 
-        return NumpyMatrixOperator(A)
+        return NumpyMatrixOperator(A, source_id=self.source.id, range_id=self.range.id)
 
 
 def nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, flux, lxf_lambda=1.0,
                                                 dirichlet_data=None, solver_options=None, name=None):
     """Instantiate a :class:`NonlinearAdvectionOperator` using :class:`LaxFriedrichsFlux`."""
     num_flux = LaxFriedrichsFlux(flux, lxf_lambda)
-    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name)
+    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name)
 
 
 def nonlinear_advection_simplified_engquist_osher_operator(grid, boundary_info, flux, flux_derivative,
                                                            dirichlet_data=None, solver_options=None, name=None):
     """Instantiate a :class:`NonlinearAdvectionOperator` using :class:`SimplifiedEngquistOsherFlux`."""
     num_flux = SimplifiedEngquistOsherFlux(flux, flux_derivative)
-    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name)
+    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name)
 
 
 def nonlinear_advection_engquist_osher_operator(grid, boundary_info, flux, flux_derivative, gausspoints=5, intervals=1,
                                                 dirichlet_data=None, solver_options=None, name=None):
     """Instantiate a :class:`NonlinearAdvectionOperator` using :class:`EngquistOsherFlux`."""
     num_flux = EngquistOsherFlux(flux, flux_derivative, gausspoints=gausspoints, intervals=intervals)
-    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name)
+    return NonlinearAdvectionOperator(grid, boundary_info, num_flux, dirichlet_data, solver_options, name=name)
 
 
 class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
@@ -588,7 +589,7 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
         The name of the functional.
     """
 
-    range = NumpyVectorSpace(1)
+    range = scalars(1)
     sparse = False
 
     def __init__(self, grid, function=None, boundary_info=None, dirichlet_data=None, diffusion_function=None,

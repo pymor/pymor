@@ -10,7 +10,7 @@ from pymor.core.logger import getLogger
 from pymor.operators.constructions import AdjointOperator, Concatenation, LincombOperator, SelectionOperator
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.vectorarrays.interfaces import VectorArrayInterface
-from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
+from pymor.vectorarrays.numpy import scalars, NumpyVectorArray
 
 
 def estimate_image(operators=(), vectors=(),
@@ -69,12 +69,12 @@ def estimate_image(operators=(), vectors=(),
     domain_space = operators[0].source if operators else None
     image_space = operators[0].range if operators \
         else vectors[0].space if isinstance(vectors[0], VectorArrayInterface) \
-        else vectors[0].range if vectors[0].range != NumpyVectorSpace(1) \
+        else vectors[0].range if vectors[0].range != scalars(1) \
         else vectors[0].source
     assert all(
         isinstance(v, VectorArrayInterface) and v in image_space or
-        v.source == NumpyVectorSpace(1) and v.range == image_space and v.linear or
-        v.range == NumpyVectorSpace(1) and v.source == image_space and v.linear
+        v.source == scalars(1) and v.range == image_space and v.linear or
+        v.range == scalars(1) and v.source == image_space and v.linear
         for v in vectors
     )
     assert all(op.source == domain_space and op.range == image_space for op in operators)
@@ -187,12 +187,12 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
     domain_space = operators[0].source if operators else None
     image_space = operators[0].range if operators \
         else vectors[0].space if isinstance(vectors[0], VectorArrayInterface) \
-        else vectors[0].range if vectors[0].range != NumpyVectorSpace(1) \
+        else vectors[0].range if vectors[0].range != scalars(1) \
         else vectors[0].source
     assert all(
         isinstance(v, VectorArrayInterface) and v in image_space or
-        v.source == NumpyVectorSpace(1) and v.range == image_space and v.linear or
-        v.range == NumpyVectorSpace(1) and v.source == image_space and v.linear
+        v.source == scalars(1) and v.range == image_space and v.linear or
+        v.range == scalars(1) and v.source == image_space and v.linear
         for v in vectors
     )
     assert all(op.source == domain_space and op.range == image_space for op in operators)

@@ -138,7 +138,7 @@ def discretize_stationary_from_disk(parameter_file):
         path = os.path.join(base_path, rhs_vec[i][0])
         expr = rhs_vec[i][1]
         parameter_functional = ExpressionParameterFunctional(expr, parameter_type=parameter_type)
-        op = NumpyMatrixOperator.from_file(path)
+        op = NumpyMatrixOperator.from_file(path, range_id='SCALARS')
         assert isinstance(op._matrix, np.ndarray)
         op = op.with_(matrix=op._matrix.reshape((1, -1)))
         rhs_operators.append(op)
@@ -276,7 +276,7 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
         path = os.path.join(base_path, rhs_vec[i][0])
         expr = rhs_vec[i][1]
         parameter_functional = ExpressionParameterFunctional(expr, parameter_type=parameter_type)
-        op = NumpyMatrixOperator.from_file(path)
+        op = NumpyMatrixOperator.from_file(path, range_id='SCALARS')
         assert isinstance(op._matrix, np.ndarray)
         op = op.with_(matrix=op._matrix.reshape((1, -1)))
         rhs_operators.append(op)
@@ -292,7 +292,7 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
     if u0 is None:
         u_0 = config.items('initial-solution')
         path = os.path.join(base_path, u_0[0][1])
-        op = NumpyMatrixOperator.from_file(path)
+        op = NumpyMatrixOperator.from_file(path, source_id='SCALARS')
         assert isinstance(op._matrix, np.ndarray)
         u0 = op.with_(matrix=op._matrix.reshape((-1, 1)))
 

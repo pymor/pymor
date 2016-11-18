@@ -11,7 +11,7 @@ from scipy.sparse import coo_matrix, csc_matrix
 from pymor.functions.interfaces import FunctionInterface
 from pymor.grids.referenceelements import triangle, line, square
 from pymor.operators.numpy import NumpyMatrixBasedOperator
-from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorSpace, scalars
 
 
 class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
@@ -51,7 +51,7 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     """
 
     sparse = False
-    range = NumpyVectorSpace(1)
+    range = scalars(1)
 
     def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, neumann_data=None, robin_data=None,
                  order=2, solver_options=None, name=None):
@@ -172,7 +172,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
     """
 
     sparse = False
-    range = NumpyVectorSpace(1)
+    range = scalars(1)
 
     def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, neumann_data=None, robin_data=None,
                  order=2, name=None):
@@ -1012,7 +1012,7 @@ class InterpolationOperator(NumpyMatrixBasedOperator):
         The |Function| to interpolate.
     """
 
-    source = NumpyVectorSpace(1)
+    source = scalars(1)
     linear = True
 
     def __init__(self, grid, function):

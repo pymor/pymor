@@ -11,7 +11,7 @@ from pymor.operators.constructions import VectorOperator, induced_norm
 from pymor.operators.interfaces import OperatorInterface
 from pymor.tools.frozendict import FrozenDict
 from pymor.vectorarrays.interfaces import VectorArrayInterface
-from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymor.vectorarrays.numpy import scalars
 
 
 class DiscretizationBase(DiscretizationInterface):
@@ -297,7 +297,7 @@ class InstationaryDiscretization(DiscretizationBase):
             self.add_with_arguments = self.add_with_arguments | {'time_stepper_nt'}
 
         assert isinstance(time_stepper, TimeStepperInterface)
-        assert self.initial_data.source == NumpyVectorSpace(1)
+        assert self.initial_data.source == scalars(1)
         assert self.operator.source == self.operator.range == self.initial_data.range
         assert self.rhs is None \
             or self.rhs.linear and self.rhs.source == self.operator.source and self.rhs.range.dim == 1

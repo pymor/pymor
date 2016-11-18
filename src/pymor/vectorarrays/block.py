@@ -6,7 +6,8 @@
 from numbers import Number
 import numpy as np
 
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpace, _INDEXTYPES
+from pymor.core.interfaces import classinstancemethod
+from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _INDEXTYPES
 
 
 class BlockVectorArray(VectorArrayInterface):
@@ -28,41 +29,12 @@ class BlockVectorArray(VectorArrayInterface):
     ----------
     blocks
         The list of sub-arrays.
-    copy
-        If `True`, copy all arrays contained in `blocks`.
     """
 
-    def __init__(self, blocks, copy=False):
-        assert isinstance(blocks, (tuple, list))
-        assert all([isinstance(block, VectorArrayInterface) for block in blocks])
-        assert len(blocks) > 0
-        self._blocks = tuple(block.copy() for block in blocks) if copy else tuple(blocks)
-        self._nonempty_blocks = tuple(block for block in blocks if block.dim > 0)
-        self._dims = np.array([block.dim for block in blocks])
-        self._nonempty_dims = np.array([block.dim for block in self._nonempty_blocks])
-        self._ind_bins = np.cumsum([0] + [block.dim for block in self._nonempty_blocks])
+    def __init__(self, blocks, space):
+        self._blocks = tuple(blocks)
+        self.space = space
         assert self._blocks_are_valid()
-
-    def _blocks_are_valid(self):
-        return all([len(block) == len(self._blocks[0]) for block in self._blocks])
-
-    @classmethod
-    def make_array(cls, subtype=None, count=0, reserve=0):
-        assert isinstance(subtype, tuple)
-        assert all([isinstance(subspace, VectorSpace) for subspace in subtype])
-        return BlockVectorArray([subspace.type.make_array(subspace.subtype,
-                                                          count=count,
-                                                          reserve=reserve) for subspace in subtype])
-
-    @classmethod
-    def from_data(cls, data, subtype):
-        assert isinstance(subtype, tuple)
-        assert all([isinstance(subspace, VectorSpace) for subspace in subtype])
-        if data.ndim == 1:
-            data = data.reshape(1, -1)
-        data_ind = np.cumsum([0] + [subspace.dim for subspace in subtype])
-        return cls([subspace.type.from_data(data[:, data_ind[i]:data_ind[i + 1]], subspace.subtype)
-                    for i, subspace in enumerate(subtype)])
 
     @property
     def data(self):
@@ -84,14 +56,6 @@ class BlockVectorArray(VectorArrayInterface):
     def num_blocks(self):
         return len(self.subtype)
 
-    @property
-    def subtype(self):
-        return tuple(block.space for block in self._blocks)
-
-    @property
-    def dim(self):
-        return np.sum(self._dims)
-
     def __len__(self):
         return len(self._blocks[0])
 
@@ -110,7 +74,7 @@ class BlockVectorArray(VectorArrayInterface):
             block.append(other_block, remove_from_other=remove_from_other)
 
     def copy(self, deep=False):
-        return BlockVectorArray([block.copy(deep) for block in self._blocks], copy=False)
+        return BlockVectorArray([block.copy(deep) for block in self._blocks], self.space)
 
     def scal(self, alpha):
         for block in self._blocks:
@@ -147,7 +111,7 @@ class BlockVectorArray(VectorArrayInterface):
 
     def lincomb(self, coefficients):
         lincombs = [block.lincomb(coefficients) for block in self._blocks]
-        return BlockVectorArray(lincombs)
+        return BlockVectorArray(lincombs, self.space)
 
     def l1_norm(self):
         return np.sum(np.array([block.l1_norm() for block in self._blocks]), axis=0)
@@ -166,20 +130,71 @@ class BlockVectorArray(VectorArrayInterface):
         if not len(component_indices):
             return np.zeros((len(self), 0))
 
-        bins = self._ind_bins
-        block_inds = np.digitize(component_indices, bins) - 1
-        component_indices -= bins[block_inds]
-        blocks = self._nonempty_blocks
+        self._compute_bins()
+        block_inds = np.digitize(component_indices, self._bins) - 1
+        component_indices -= self._bins[block_inds]
+        block_inds = self._bin_map[block_inds]
+        blocks = self._blocks
         return np.array([blocks[bi].components([ci])[:, 0]
                          for bi, ci in zip(block_inds, component_indices)]).T
 
     def amax(self):
-        inds, vals = zip(*(block.amax() for block in self._nonempty_blocks))
+        self._compute_bins()
+        blocks = self._blocks
+        inds, vals = zip(*(blocks[bi].amax() for bi in self._bin_map))
         inds, vals = np.array(inds), np.array(vals)
-        inds += self._ind_bins[:-1][..., np.newaxis]
+        inds += self._bins[:-1][..., np.newaxis]
         block_inds = np.argmax(vals, axis=0)
         ar = np.arange(inds.shape[1])
         return inds[block_inds, ar], vals[block_inds, ar]
+
+    def _blocks_are_valid(self):
+        return all([len(block) == len(self._blocks[0]) for block in self._blocks])
+
+    def _compute_bins(self):
+        if not hasattr(self, '_bins'):
+            dims = np.array([subspace.dim for subspace in self.space.subspaces])
+            self._bin_map = bin_map = np.where(dims > 0)[0]
+            self._bins = np.cumsum(np.hstack(([0], dims[bin_map])))
+
+
+class BlockVectorSpace(VectorSpaceInterface):
+
+    def __init__(self, subspaces, id_='STATE'):
+        subspaces = tuple(subspaces)
+        assert all([isinstance(subspace, VectorSpaceInterface) for subspace in subspaces])
+        self.subspaces = subspaces
+        self.id = id_
+
+    def __eq__(self, other):
+        return (type(other) is BlockVectorSpace and
+                len(self.subspaces) == len(other.subspaces) and
+                all(space == other_space for space, other_space in zip(self.subspaces, other.subspaces)))
+
+    @property
+    def dim(self):
+        return sum(subspace.dim for subspace in self.subspaces)
+
+    def zeros(self, count=1, reserve=0):
+        return BlockVectorArray([subspace.zeros(count=count, reserve=reserve) for subspace in self.subspaces], self)
+
+    @classinstancemethod
+    def make_array(cls, obj, id_='STATE'):
+        assert len(obj) > 0
+        return cls(tuple(o.space for o in obj), id_=id_).make_array(obj)
+
+    @make_array.instancemethod
+    def make_array(self, obj):
+        assert len(obj) == len(self.subspaces)
+        assert all(block in subspace for block, subspace in zip(obj, self.subspaces))
+        return BlockVectorArray(obj, self)
+
+    def from_data(self, data):
+        if data.ndim == 1:
+            data = data.reshape(1, -1)
+        data_ind = np.cumsum([0] + [subspace.dim for subspace in self.subspaces])
+        return BlockVectorArray([subspace.from_data(data[:, data_ind[i]:data_ind[i + 1]])
+                                 for i, subspace in enumerate(self.subspaces)], self)
 
 
 class BlockVectorArrayView(BlockVectorArray):
@@ -188,11 +203,4 @@ class BlockVectorArrayView(BlockVectorArray):
 
     def __init__(self, base, ind):
         self._blocks = tuple(block[ind] for block in base._blocks)
-        self._nonempty_blocks = tuple(block for block in self._blocks if block.dim > 0)
-        self._dims = base._dims
-        self._nonempty_dims = base._nonempty_dims
-        self._ind_bins = base._ind_bins
-
-    @property
-    def space(self):
-        return VectorSpace(BlockVectorArray, self.subtype)
+        self.space = base.space

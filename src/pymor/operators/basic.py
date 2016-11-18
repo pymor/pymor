@@ -11,7 +11,7 @@ from pymor.algorithms import genericsolvers
 from pymor.core.exceptions import InversionError
 from pymor.operators.interfaces import OperatorInterface
 from pymor.vectorarrays.interfaces import VectorArrayInterface
-from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
+from pymor.vectorarrays.numpy import scalars, NumpyVectorSpace
 
 
 class OperatorBase(OperatorInterface):
@@ -164,10 +164,10 @@ class OperatorBase(OperatorInterface):
     def as_vector(self, mu=None):
         if not self.linear:
             raise TypeError('This nonlinear operator does not represent a vector or linear functional.')
-        elif self.source.dim == 1 and self.source.type is NumpyVectorArray:
-            return self.apply(NumpyVectorArray(1), mu=mu)
-        elif self.range.dim == 1 and self.range.type is NumpyVectorArray:
-            return self.apply_adjoint(NumpyVectorArray(1), mu=mu)
+        elif self.source == scalars(1):
+            return self.apply(scalars(1).make_array(1), mu=mu)
+        elif self.range == scalars(1):
+            return self.apply_adjoint(scalars(1).make_array(1), mu=mu)
         else:
             raise TypeError('This operator does not represent a vector or linear functional.')
 
@@ -185,28 +185,40 @@ class OperatorBase(OperatorInterface):
                         V = self.apply_adjoint(range_basis, range_product=product)
                     except NotImplementedError:
                         return ProjectedOperator(self, range_basis, None, product, name=name)
-                    if self.source.type == NumpyVectorArray:
+                    if isinstance(self.source, NumpyVectorSpace):
                         from pymor.operators.numpy import NumpyMatrixOperator
-                        return NumpyMatrixOperator(V.data, name=name)
+                        return NumpyMatrixOperator(V.data,
+                                                   source_id=self.source.id,
+                                                   range_id=self.range.id,
+                                                   name=name)
                     else:
                         from pymor.operators.constructions import VectorArrayOperator
-                        return VectorArrayOperator(V, transposed=True, name=name)
+                        return VectorArrayOperator(V, transposed=True, space_id=self.range.id, name=name)
             else:
                 if range_basis is None:
                     V = self.apply(source_basis)
-                    if self.range.type == NumpyVectorArray:
+                    if isinstance(self.range, NumpyVectorSpace):
                         from pymor.operators.numpy import NumpyMatrixOperator
-                        return NumpyMatrixOperator(V.data.T, name=name)
+                        return NumpyMatrixOperator(V.data.T,
+                                                   source_id=self.source.id,
+                                                   range_id=self.range.id,
+                                                   name=name)
                     else:
                         from pymor.operators.constructions import VectorArrayOperator
-                        return VectorArrayOperator(V, transposed=False, name=name)
+                        return VectorArrayOperator(V, transposed=False, space_id=self.source.id, name=name)
                 elif product is None:
                     from pymor.operators.numpy import NumpyMatrixOperator
-                    return NumpyMatrixOperator(self.apply2(range_basis, source_basis), name=name)
+                    return NumpyMatrixOperator(self.apply2(range_basis, source_basis),
+                                               source_id=self.source.id,
+                                               range_id=self.range.id,
+                                               name=name)
                 else:
                     from pymor.operators.numpy import NumpyMatrixOperator
                     V = self.apply(source_basis)
-                    return NumpyMatrixOperator(product.apply2(range_basis, V), name=name)
+                    return NumpyMatrixOperator(product.apply2(range_basis, V),
+                                               source_id=self.source.id,
+                                               range_id=self.range.id,
+                                               name=name)
         else:
             self.logger.warn('Using inefficient generic projection operator')
             return ProjectedOperator(self, range_basis, source_basis, product, name=name)
@@ -252,8 +264,8 @@ class ProjectedOperator(OperatorBase):
                 and operator.range == product.source
                 and product.range == product.source)
         self.build_parameter_type(operator)
-        self.source = NumpyVectorSpace(len(source_basis)) if source_basis is not None else operator.source
-        self.range = NumpyVectorSpace(len(range_basis)) if range_basis is not None else operator.range
+        self.source = NumpyVectorSpace(len(source_basis), operator.source.id) if source_basis is not None else operator.source
+        self.range = NumpyVectorSpace(len(range_basis), operator.range.id) if range_basis is not None else operator.range
         self.solver_options = solver_options
         self.name = name
         self.operator = operator
@@ -268,19 +280,19 @@ class ProjectedOperator(OperatorBase):
             if self.range_basis is None:
                 return self.operator.apply(U, mu=mu)
             elif self.product is None:
-                return NumpyVectorArray(self.operator.apply2(self.range_basis, U, mu=mu).T)
+                return self.range.make_array(self.operator.apply2(self.range_basis, U, mu=mu).T)
             else:
                 V = self.operator.apply(U, mu=mu)
-                return NumpyVectorArray(self.product.apply2(V, self.range_basis))
+                return self.range.make_array(self.product.apply2(V, self.range_basis))
         else:
             UU = self.source_basis.lincomb(U.data)
             if self.range_basis is None:
                 return self.operator.apply(UU, mu=mu)
             elif self.product is None:
-                return NumpyVectorArray(self.operator.apply2(self.range_basis, UU, mu=mu).T)
+                return self.range.make_array(self.operator.apply2(self.range_basis, UU, mu=mu).T)
             else:
                 V = self.operator.apply(UU, mu=mu)
-                return NumpyVectorArray(self.product.apply2(V, self.range_basis))
+                return self.range.make_array(self.product.apply2(V, self.range_basis))
 
     def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
         """See :meth:`NumpyMatrixOperator.projected_to_subbasis`."""

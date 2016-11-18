@@ -5,7 +5,7 @@
 import numpy as np
 
 from pymor.core.interfaces import BasicInterface
-from pymor.vectorarrays.numpy import NumpyVectorArray
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class GenericRBReconstructor(BasicInterface):
@@ -16,7 +16,8 @@ class GenericRBReconstructor(BasicInterface):
 
     def reconstruct(self, U):
         """Reconstruct high-dimensional vector from reduced vector `U`."""
-        assert isinstance(U, NumpyVectorArray)
+        RB = self.RB
+        assert U in NumpyVectorSpace(len(RB), RB.space.id)
         return self.RB.lincomb(U.data)
 
     def restricted_to_subbasis(self, dim):
@@ -100,10 +101,10 @@ class SubbasisReconstructor(BasicInterface):
 
     def reconstruct(self, U):
         """Reconstruct high-dimensional vector from reduced vector `U`."""
-        assert isinstance(U, NumpyVectorArray)
+        assert isinstance(U.space, NumpyVectorSpace)
         UU = np.zeros((len(U), self.dim))
         UU[:, :self.dim_subbasis] = U.data
-        UU = NumpyVectorArray(UU, copy=False)
+        UU = NumpyVectorSpace.make_array(UU, U.space.id)
         if self.old_recontructor:
             return self.old_recontructor.reconstruct(UU)
         else:

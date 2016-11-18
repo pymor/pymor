@@ -6,7 +6,7 @@ from pymor.core.interfaces import ImmutableInterface
 from pymor.discretizations.basic import DiscretizationBase
 from pymor.operators.mpi import mpi_wrap_operator
 from pymor.tools import mpi
-from pymor.vectorarrays.interfaces import VectorSpace
+from pymor.vectorarrays.interfaces import VectorSpaceInterface
 from pymor.vectorarrays.mpi import MPIVectorArray, _register_subtype
 
 
