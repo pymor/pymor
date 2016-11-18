@@ -47,6 +47,17 @@ The following files contain source code originating from other open source softw
 See these files for more information.
 
 
+Citing
+------
+
+If you use pyMOR for academic work, please consider citing our 
+[publication](https://epubs.siam.org/doi/abs/10.1137/15M1026614):
+
+	R. Milk, S. Rave, F. Schindler
+	pyMOR - Generic Algorithms and Interfaces for Model Order Reduction
+	SIAM J. Sci. Comput., 38(5), pp. S194–S216
+
+
 Distribution Packages
 ---------------------
 
