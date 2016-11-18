@@ -5,7 +5,6 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-import scipy as sp
 import scipy.linalg as spla
 import scipy.sparse as sps
 
@@ -15,19 +14,40 @@ from pymor.algorithms.riccati import solve_ricc
 import pytest
 
 
-n_list = [10, 100]
+n_list_small = [10, 100]
+n_list_big = [1000]
 m_list = [1, 2]
 p_list = [1, 2]
 
 
 def fro_norm(A):
     if not sps.issparse(A):
-        return sp.linalg.norm(A)
+        return spla.norm(A)
     else:
         return sps.linalg.norm(A)
 
 
-@pytest.mark.parametrize('n', n_list)
+def diff_conv_1d_fd(n, a, b):
+    diagonals = [-a * 2 * (n + 1) ** 2 * np.ones((n,)),
+                 (a * (n + 1) ** 2 + b * (n + 1) / 2) * np.ones((n - 1,)),
+                 (a * (n + 1) ** 2 - b * (n + 1) / 2) * np.ones((n - 1,))]
+    A = sps.diags(diagonals, [0, -1, 1])
+    return A
+
+
+def diff_conv_1d_fem(n, a, b):
+    diagonals = [-a * 2 * (n + 1) ** 2 * np.ones((n,)),
+                 (a * (n + 1) ** 2 + b * (n + 1) / 2) * np.ones((n - 1,)),
+                 (a * (n + 1) ** 2 - b * (n + 1) / 2) * np.ones((n - 1,))]
+    A = sps.diags(diagonals, [0, -1, 1])
+    diagonals = [2 / 3 * np.ones((n,)),
+                 1 / 6 * np.ones((n - 1,)),
+                 1 / 6 * np.ones((n - 1,))]
+    E = sps.diags(diagonals, [0, -1, 1])
+    return A, E
+
+
+@pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
 def test_scipy(n, m, p):
@@ -55,7 +75,7 @@ def test_scipy(n, m, p):
     assert fro_norm(ATX + ATX.T - XB.dot(RinvBTXT) + CTC) / fro_norm(CTC) < 1e-10
 
 
-@pytest.mark.parametrize('n', n_list)
+@pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
 def test_scipy_trans(n, m, p):
@@ -83,12 +103,13 @@ def test_scipy_trans(n, m, p):
     assert fro_norm(AX + AX.T - XCT.dot(RinvCXT) + BBT) / fro_norm(BBT) < 1e-10
 
 
-@pytest.mark.parametrize('n', n_list)
+@pytest.mark.parametrize('n', n_list_big)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
-def test_pymess(n, m, p):
+@pytest.mark.parametrize('me_solver', ['pymess_care', 'pymess_lrnm'])
+def test_pymess(n, m, p, me_solver):
     np.random.seed(0)
-    A = np.random.randn(n, n) - n * np.eye(n)
+    A = diff_conv_1d_fd(n, 1, 1)
     B = np.random.randn(n, m)
     C = np.random.randn(p, n)
 
@@ -96,7 +117,7 @@ def test_pymess(n, m, p):
     Bop = NumpyMatrixOperator(B)
     Cop = NumpyMatrixOperator(C)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, me_solver='pymess_care')
+    Z = solve_ricc(Aop, B=Bop, C=Cop, me_solver=me_solver)
 
     assert len(Z) <= n
 
@@ -106,12 +127,13 @@ def test_pymess(n, m, p):
     assert fro_norm(ATX + ATX.T - XB.dot(XB.T) + CTC) / fro_norm(CTC) < 1e-10
 
 
-@pytest.mark.parametrize('n', n_list)
+@pytest.mark.parametrize('n', n_list_big)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
-def test_pymess_trans(n, m, p):
+@pytest.mark.parametrize('me_solver', ['pymess_care', 'pymess_lrnm'])
+def test_pymess_trans(n, m, p, me_solver):
     np.random.seed(0)
-    A = np.random.randn(n, n) - n * np.eye(n)
+    A = diff_conv_1d_fd(n, 1, 1)
     B = np.random.randn(n, m)
     C = np.random.randn(p, n)
 
@@ -119,7 +141,7 @@ def test_pymess_trans(n, m, p):
     Bop = NumpyMatrixOperator(B)
     Cop = NumpyMatrixOperator(C)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, trans=True, me_solver='pymess_care')
+    Z = solve_ricc(Aop, B=Bop, C=Cop, trans=True, me_solver=me_solver)
 
     assert len(Z) <= n
 
@@ -129,27 +151,27 @@ def test_pymess_trans(n, m, p):
     assert fro_norm(AX + AX.T - XCT.dot(XCT.T) + BBT) / fro_norm(BBT) < 1e-10
 
 
-@pytest.mark.parametrize('n', n_list)
+@pytest.mark.parametrize('n', n_list_big)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
-def test_pymess_E(n, m, p):
+@pytest.mark.parametrize('me_solver', ['pymess_care', 'pymess_lrnm'])
+def test_pymess_E(n, m, p, me_solver):
     np.random.seed(0)
-    A = np.random.randn(n, n) - n * np.eye(n)
+    A, E = diff_conv_1d_fem(n, 1, 1)
     B = np.random.randn(n, m)
     C = np.random.randn(p, n)
-    E = np.random.randn(n, n) + n * np.eye(n)
 
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
     Cop = NumpyMatrixOperator(C)
     Eop = NumpyMatrixOperator(E)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, me_solver='pymess_care')
+    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, me_solver=me_solver)
 
     assert len(Z) <= n
 
     ATZ = A.T.dot(Z.data.T)
-    ZTE = Z.data.dot(E)
+    ZTE = E.T.dot(Z.data.T).T  # Z.data.dot(E)
     ATXE = ATZ.dot(ZTE)
     ZTB = Z.data.dot(B)
     ETXB = E.T.dot(Z.data.T).dot(ZTB)
@@ -157,27 +179,27 @@ def test_pymess_E(n, m, p):
     assert fro_norm(ATXE + ATXE.T - ETXB.dot(ETXB.T) + CTC) / fro_norm(CTC) < 1e-10
 
 
-@pytest.mark.parametrize('n', n_list)
+@pytest.mark.parametrize('n', n_list_big)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
-def test_pymess_E_trans(n, m, p):
+@pytest.mark.parametrize('me_solver', ['pymess_care', 'pymess_lrnm'])
+def test_pymess_E_trans(n, m, p, me_solver):
     np.random.seed(0)
-    A = np.random.randn(n, n) - n * np.eye(n)
+    A, E = diff_conv_1d_fem(n, 1, 1)
     B = np.random.randn(n, m)
     C = np.random.randn(p, n)
-    E = np.random.randn(n, n) + n * np.eye(n)
 
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
     Cop = NumpyMatrixOperator(C)
     Eop = NumpyMatrixOperator(E)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, trans=True, me_solver='pymess_care')
+    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, trans=True, me_solver=me_solver)
 
     assert len(Z) <= n
 
     AZ = A.dot(Z.data.T)
-    ZTET = Z.data.dot(E.T)
+    ZTET = E.dot(Z.data.T).T  # Z.data.dot(E.T)
     AXET = AZ.dot(ZTET)
     ZTCT = Z.data.dot(C.T)
     EXCT = E.dot(Z.data.T).dot(ZTCT)
@@ -185,12 +207,13 @@ def test_pymess_E_trans(n, m, p):
     assert fro_norm(AXET + AXET.T - EXCT.dot(EXCT.T) + BBT) / fro_norm(BBT) < 1e-10
 
 
-@pytest.mark.parametrize('n', n_list)
+@pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
 def test_slycot(n, m, p):
     np.random.seed(0)
-    A = np.random.randn(n, n) - n * np.eye(n)
+    # A = np.random.randn(n, n) - n * np.eye(n)
+    A = diff_conv_1d_fd(n, 1, 1)
     B = np.random.randn(n, m)
     C = np.random.randn(p, n)
 
@@ -208,12 +231,13 @@ def test_slycot(n, m, p):
     assert fro_norm(ATX + ATX.T - XB.dot(XB.T) + CTC) / fro_norm(CTC) < 1e-10
 
 
-@pytest.mark.parametrize('n', n_list)
+@pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
 def test_slycot_trans(n, m, p):
     np.random.seed(0)
-    A = np.random.randn(n, n) - n * np.eye(n)
+    # A = np.random.randn(n, n) - n * np.eye(n)
+    A = diff_conv_1d_fd(n, 1, 1)
     B = np.random.randn(n, m)
     C = np.random.randn(p, n)
 
@@ -231,15 +255,16 @@ def test_slycot_trans(n, m, p):
     assert fro_norm(AX + AX.T - XCT.dot(XCT.T) + BBT) / fro_norm(BBT) < 1e-10
 
 
-@pytest.mark.parametrize('n', n_list)
+@pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
 def test_slycot_E(n, m, p):
     np.random.seed(0)
-    A = np.random.randn(n, n) - n * np.eye(n)
+    # A = np.random.randn(n, n) - n * np.eye(n)
+    A, E = diff_conv_1d_fem(n, 1, 1)
     B = np.random.randn(n, m)
     C = np.random.randn(p, n)
-    E = np.random.randn(n, n) + n * np.eye(n)
+    # E = np.random.randn(n, n) + n * np.eye(n)
 
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
@@ -251,7 +276,7 @@ def test_slycot_E(n, m, p):
     assert len(Z) <= n
 
     ATZ = A.T.dot(Z.data.T)
-    ZTE = Z.data.dot(E)
+    ZTE = E.T.dot(Z.data.T).T  # Z.data.dot(E)
     ATXE = ATZ.dot(ZTE)
     ZTB = Z.data.dot(B)
     ETXB = E.T.dot(Z.data.T).dot(ZTB)
@@ -259,15 +284,16 @@ def test_slycot_E(n, m, p):
     assert fro_norm(ATXE + ATXE.T - ETXB.dot(ETXB.T) + CTC) / fro_norm(CTC) < 1e-10
 
 
-@pytest.mark.parametrize('n', n_list)
+@pytest.mark.parametrize('n', n_list_small)
 @pytest.mark.parametrize('m', m_list)
 @pytest.mark.parametrize('p', p_list)
 def test_slycot_E_trans(n, m, p):
     np.random.seed(0)
-    A = np.random.randn(n, n) - n * np.eye(n)
+    # A = np.random.randn(n, n) - n * np.eye(n)
+    A, E = diff_conv_1d_fem(n, 1, 1)
     B = np.random.randn(n, m)
     C = np.random.randn(p, n)
-    E = np.random.randn(n, n) + n * np.eye(n)
+    # E = np.random.randn(n, n) + n * np.eye(n)
 
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
@@ -279,7 +305,7 @@ def test_slycot_E_trans(n, m, p):
     assert len(Z) <= n
 
     AZ = A.dot(Z.data.T)
-    ZTET = Z.data.dot(E.T)
+    ZTET = E.dot(Z.data.T).T  # Z.data.dot(E.T)
     AXET = AZ.dot(ZTET)
     ZTCT = Z.data.dot(C.T)
     EXCT = E.dot(Z.data.T).dot(ZTCT)
