@@ -177,7 +177,7 @@ class ExpressionFunction(GenericFunction):
 
     functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan', 'arctan2',
                                              'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
-                                             'exp', 'exp2', 'log', 'log2', 'log10', 'array',
+                                             'exp', 'exp2', 'log', 'log2', 'log10', 'sqrt', 'array',
                                              'min', 'minimum', 'max', 'maximum', 'pi', 'e',
                                              'sum', 'prod', 'abs', 'sign', 'zeros', 'ones'}}
     functions['norm'] = np.linalg.norm
