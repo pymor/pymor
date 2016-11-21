@@ -516,7 +516,7 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
         V_out = edge_volumes[outflow_edges] * normal_velocities[outflow_edges]
 
         I_dir = SUPE[dirichlet_edges, 0]
-        V_dir = edge_volumes[outflow_edges] * (0.5 * normal_velocities[dirichlet_edges] + 0.5 / self.lxf_lambda)
+        V_dir = edge_volumes[dirichlet_edges] * (0.5 * normal_velocities[dirichlet_edges] + 0.5 / self.lxf_lambda)
 
         I0 = np.hstack([I0_inner, I_out, I_dir])
         I1 = np.hstack([I1_inner, I_out, I_dir])
