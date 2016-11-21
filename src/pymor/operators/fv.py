@@ -555,6 +555,42 @@ class L2Product(NumpyMatrixBasedOperator):
         return A
 
 
+class ReactionOperator(NumpyMatrixBasedOperator):
+    """Finite Volume reaction |Operator|.
+
+    The operator is of the form ::
+
+        L(u, mu)(x) = c(x, mu)⋅u(x)
+
+    Parameters
+    ----------
+    grid
+        The |Grid| for which to assemble the operator.
+    reaction_coefficient
+        The function 'c'
+    name
+        The name of the operator.
+    """
+
+    sparse = True
+
+    def __init__(self, grid, reaction_coefficient, solver_options=None, name=None):
+        assert reaction_coefficient.dim_domain == grid.dim and reaction_coefficient.shape_range == ()
+        self.source = self.range = NumpyVectorSpace(grid.size(0))
+        self.grid = grid
+        self.reaction_coefficient = reaction_coefficient
+        self.solver_options = solver_options
+        self.name = name
+        self.build_parameter_type(reaction_coefficient)
+
+    def _assemble(self, mu=None):
+
+        A = dia_matrix((self.reaction_coefficient.evaluate(self.grid.centers(0), mu=mu), [0]),
+                       shape=(self.grid.size(0),) * 2)
+
+        return A
+
+
 class L2ProductFunctional(NumpyMatrixBasedOperator):
     """Finite volume |Functional| representing the inner product with an L2-|Function|.
 
