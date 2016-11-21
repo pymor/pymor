@@ -73,22 +73,34 @@ class VectorArrayInterface(BasicInterface):
     is_view
         `True` if the array is a view obtained by indexing another array.
     space
-        |VectorSpace| array the array belongs to.
-    subtype
-        Can be any Python object. Two arrays are compatible (e.g. can be added)
-        if they are instances of the same class and have equal subtypes. A valid
-        subtype has to be provided to :meth:`~VectorArrayInterface.make_array` and
-        the resulting array will be of that subtype. By default, the subtype of an
-        array is simply `None`. For |NumpyVectorArray|, the subtype is a single
-        integer denoting the dimension of the array. Subtypes for other array classes
-        could, e.g., include a socket for communication with a specific PDE solver
-        instance.
+        The |VectorSpace| the array belongs to.
     """
 
     is_view = False
 
+    def zeros(self, count=1, reserve=0):
+        """Create a |VectorArray| of null vectors of the same |VectorSpace|.
+
+        This is a shorthand for `self.space.zeros(count, reserve)`.
+
+        Parameters
+        ----------
+        count
+            The number of vectors.
+        reserve
+            Hint for the backend to which length the array will grow.
+
+        Returns
+        -------
+        A |VectorArray| containing `count` vectors whith each component
+        zero.
+        """
+        return self.space.zeros(count, reserve=reserve)
+
     def empty(self, reserve=0):
-        """Create an empty |VectorArray| of the same :attr:`~VectorArrayInterface.subtype`.
+        """Create an empty |VectorArray| of the same |VectorSpace|.
+
+        This is a shorthand for `self.space.zeros(0, reserve)`.
 
         Parameters
         ----------
@@ -100,21 +112,6 @@ class VectorArrayInterface(BasicInterface):
         An empty |VectorArray|.
         """
         return self.space.zeros(0, reserve=reserve)
-
-    def zeros(self, count=1, reserve=0):
-        """Create a |VectorArray| of null vectors of the same :attr:`~VectorArrayInterface.subtype`.
-
-        Parameters
-        ----------
-        count
-            The number of vectors.
-
-        Returns
-        -------
-        A |VectorArray| containing `count` vectors whith each component
-        zero.
-        """
-        return self.space.zeros(count, reserve=reserve)
 
     @property
     def dim(self):
@@ -473,36 +470,80 @@ class VectorArrayInterface(BasicInterface):
 class VectorSpaceInterface(ImmutableInterface):
     """Class describing a vector space.
 
-    A vector space is simply the combination of a |VectorArray| type and a
-    :attr:`~VectorArrayInterface.subtype`. This data is exactly sufficient to construct
-    new arrays using the :meth:`~VectorArrayInterface.make_array` method
-    (see the implementation of :meth:`~VectorSpace.zeros`).
+    Vector spaces act as factories for |VectorArrays| of vectors
+    contained in them. As such, they hold all data necessary to
+    create |VectorArrays| of a given type (e.g. the dimension of
+    the vectors, or a socket for communication with an external
+    PDE solver).
 
-    A |VectorArray| `U` is contained in a vector space `space`, if ::
+    New |VectorArrays| of null vectors are created via
+    :meth:`~VectorSpaceInterface.zeros`.  The
+    :meth:`~VectorSpaceInterface.make_array` method builds a new
+    |VectorArray| from given raw data of the underlying linear algebra
+    backend (e.g. a |Numpy array| in the case  of |NumpyVectorSpace|).
+    Some vector spaces can create new |VectorArrays| from a given
+    |Numpy array| via the :meth:`~VectorArrayInterface.from_data`
+    method.
 
-        type(U) == space.type and U.subtype == space.subtype
+    Each vector space is a string :attr:`~VectorArrayInterface.id`
+    to distinguish mathematically different spaces appearing
+    in the formulation of a given problem.
+
+    Vector spaces can be compared for equality via the `==` and `!=`
+    operators. To test if a given |VectorArray| is an element of
+    the space, the `in` operator can be used.
 
 
     Attributes
     ----------
-    type
-        The type of |VectorArrays| in the space.
     id
+        A string describing the mathematical identity of the
+        vector space (for instance to distinguish different
+        components in an equation system). The default value
+        is `'STATE'`.
     dim
+        The dimension (number of degrees of freedom) of the
+        vectors contained in the space.
     """
 
+    id = 'STATE'
     dim = None
-
-    def __init__(self, type_, id_='STATE'):
-        self.type = type
-        self.id = id_
 
     @abstractmethod
     def make_array(*args, **kwargs):
+        """Create a |VectorArray| from raw data.
+
+        This method is used in the implementation of |Operators|
+        and |Discretizations| to create new |VectorArrays| from
+        raw data of the underlying solver backends. The ownership
+        of the data is transferred to the newly created array.
+
+        The exact signature of this method depends on the wrapped
+        solver backend.
+        """
+        pass
+
+    @abstractmethod
+    def zeros(self, count=1, reserve=0):
+        """Create a |VectorArray| of null vectors
+
+        Parameters
+        ----------
+        count
+            The number of vectors.
+        reserve
+            Hint for the backend to which length the array will grow.
+
+        Returns
+        -------
+        A |VectorArray| containing `count` vectors with each component zero.
+        """
         pass
 
     def empty(self, reserve=0):
         """Create an empty |VectorArray|
+
+        This is a shorthand for `self.zeros(0, reserve)`.
 
         Parameters
         ----------
@@ -515,23 +556,11 @@ class VectorSpaceInterface(ImmutableInterface):
         """
         return self.zeros(0, reserve=reserve)
 
-    @abstractmethod
-    def zeros(self, count=1, reserve=0):
-        """Create a |VectorArray| of null vectors
-
-        Parameters
-        ----------
-        count
-            The number of vectors.
-
-        Returns
-        -------
-        A |VectorArray| containing `count` vectors with each component zero.
-        """
-        pass
-
     def from_data(self, data):
         """Create a |VectorArray| from a |NumPy array|
+
+        Note that this method will not be supported by all vector
+        space implementations.
 
         Parameters
         ----------
@@ -553,7 +582,5 @@ class VectorSpaceInterface(ImmutableInterface):
     def __contains__(self, other):
         return self == getattr(other, 'space', None)
 
-    # def __repr__(self):
-    #     return 'VectorSpace({}, {})'.format(self.type.__name__, repr(self.subtype))
-
-    # __str__ = __repr__
+    def __repr__(self):
+        return '{}({})'.format(self.__class__, self.id)

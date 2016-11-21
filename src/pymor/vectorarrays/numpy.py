@@ -314,8 +314,6 @@ class NumpyVectorArray(VectorArrayInterface):
 
 class NumpyVectorSpace(VectorSpaceInterface):
 
-    type = NumpyVectorArray
-
     def __init__(self, dim, id_='STATE'):
         self.dim = dim
         self.id = id_
