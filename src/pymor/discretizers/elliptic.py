@@ -182,10 +182,6 @@ def discretize_elliptic_fv(analytical_problem, diameter=None, domain_discretizer
     assert boundary_info is None or grid is not None
     assert grid is None or domain_discretizer is None
 
-    if analytical_problem.advection is not None:
-        raise NotImplementedError
-    if analytical_problem.reaction is not None:
-        raise NotImplementedError
     if analytical_problem.robin_data is not None:
         raise NotImplementedError
 
@@ -198,25 +194,48 @@ def discretize_elliptic_fv(analytical_problem, diameter=None, domain_discretizer
 
     p = analytical_problem
 
+    Li, coefficients = [], []
+
+    # diffusion part
     if isinstance(p.diffusion, LincombFunction):
-        Li = [fv.DiffusionOperator(grid, boundary_info, diffusion_function=df, name='diffusion_{}'.format(i))
-              for i, df in enumerate(p.diffusion.functions)]
-        L = LincombOperator(operators=Li, coefficients=list(p.diffusion.coefficients),
-                            name='diffusion')
+        Li += [fv.DiffusionOperator(grid, boundary_info, diffusion_function=df, name='diffusion_{}'.format(i))
+               for i, df in enumerate(p.diffusion.functions)]
+        coefficients += p.diffusion.coefficients
+    elif p.diffusion is not None:
+        Li += [fv.DiffusionOperator(grid, boundary_info, diffusion_function=p.diffusion, name='diffusion')]
+        coefficients += [1.]
 
-        F0 = fv.L2ProductFunctional(grid, p.rhs, boundary_info=boundary_info, neumann_data=p.neumann_data)
-        if p.dirichlet_data is not None:
-            Fi = [fv.L2ProductFunctional(grid, None, boundary_info=boundary_info, dirichlet_data=p.dirichlet_data,
-                                         diffusion_function=df, name='dirichlet_{}'.format(i))
-                  for i, df in enumerate(p.diffusion.functions)]
-            F = LincombOperator(operators=[F0] + Fi, coefficients=[1.] + list(p.diffusion.coefficients),
-                                name='rhs')
-        else:
-            F = F0
+    # advection part
+    if isinstance(p.advection, LincombFunction):
+        Li += [fv.LinearAdvectionLaxFriedrichs(grid, boundary_info, af, name='advection_{}'.format(i))
+               for i, af in enumerate(p.advection.functions)]
+        coefficients += list(p.advection.coefficients)
+    elif p.advection is not None:
+        Li += [fv.LinearAdvectionLaxFriedrichs(grid, boundary_info, p.advection, name='advection')]
+        coefficients.append(1.)
 
+    # reaction part
+    if isinstance(p.reaction, LincombFunction):
+        raise NotImplementedError
+    elif p.reaction is not None:
+        Li += [fv.ReactionOperator(grid, p.reaction, name='reaction')]
+        coefficients += [1.]
+
+    # system operator
+    if len(coefficients) == 1 and coefficients[0] == 1.:
+        L = Li[0]
     else:
-        L = fv.DiffusionOperator(grid, boundary_info, diffusion_function=p.diffusion, name='diffusion')
+        L = LincombOperator(operators=Li, coefficients=coefficients, name='elliptic_operator')
 
+    # rhs
+    if p.dirichlet_data is not None and isinstance(p.diffusion, LincombFunction):
+        F0 = fv.L2ProductFunctional(grid, p.rhs, boundary_info=boundary_info, neumann_data=p.neumann_data)
+        Fi = [fv.L2ProductFunctional(grid, None, boundary_info=boundary_info, dirichlet_data=p.dirichlet_data,
+                                     diffusion_function=df, name='dirichlet_{}'.format(i))
+              for i, df in enumerate(p.diffusion.functions)]
+        F = LincombOperator(operators=[F0] + Fi, coefficients=[1.] + list(p.diffusion.coefficients),
+                            name='rhs')
+    else:
         F = fv.L2ProductFunctional(grid, p.rhs, boundary_info=boundary_info, dirichlet_data=p.dirichlet_data,
                                    diffusion_function=p.diffusion, neumann_data=p.neumann_data)
 
