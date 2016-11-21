@@ -73,7 +73,7 @@ if HAVE_FENICS:
             if len(component_indices) == 0:
                 return np.array([], dtype=np.intc)
             assert 0 <= np.min(component_indices)
-            assert np.max(component_indices) < self.dim
+            assert np.max(component_indices) < self.impl.size()
             x = df.Vector()
             self.impl.gather(x, component_indices)
             return x.array()
