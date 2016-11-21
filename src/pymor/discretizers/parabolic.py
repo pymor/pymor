@@ -141,6 +141,7 @@ def discretize_parabolic_fv(analytical_problem, diameter=None, domain_discretize
 
     d, data = discretize_elliptic_fv(p.stationary_part, diameter=diameter, domain_discretizer=domain_discretizer,
                                      grid=grid, boundary_info=boundary_info)
+    grid = data['grid']
 
     if p.initial_data.parametric:
         def initial_projection(U, mu):
