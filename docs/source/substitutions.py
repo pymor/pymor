@@ -62,7 +62,6 @@ common = '''
 
 .. |EllipticProblem| replace:: :class:`~pymor.analyticalproblems.elliptic.EllipticProblem`
 .. |InstationaryProblem| replace:: :class:`~pymor.analyticalproblems.instationary.InstationaryProblem`
-.. |InstationaryAdvectionProblem| replace:: :class:`~pymor.analyticalproblems.advection.InstationaryAdvectionProblem`
 
 .. |RectDomain| replace:: :class:`~pymor.domaindescriptions.basic.RectDomain`
 .. |PolygonalDomain| replace:: :class:`~pymor.domaindescriptions.polygonal.PolygonalDomain`

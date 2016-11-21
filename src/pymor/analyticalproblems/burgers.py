@@ -5,7 +5,8 @@
 
 import numpy as np
 
-from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
+from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.domaindescriptions.basic import LineDomain, RectDomain, TorusDomain, CircleDomain
 from pymor.functions.basic import ConstantFunction, ExpressionFunction
 from pymor.parameters.spaces import CubicParameterSpace
@@ -43,28 +44,29 @@ def burgers_problem(v=1., circle=True, initial_data_type='sin', parameter_range=
         initial_data = ExpressionFunction('(x >= 0.5) * (x <= 1) * 1.', 1, ())
         dirichlet_data = ConstantFunction(dim_domain=1, value=0.)
 
-    return InstationaryAdvectionProblem(
+    return InstationaryProblem(
 
-        domain=CircleDomain([0, 2]) if circle else LineDomain([0, 2], right=None),
+        EllipticProblem(
+            domain=CircleDomain([0, 2]) if circle else LineDomain([0, 2], right=None),
+
+            dirichlet_data=dirichlet_data,
+
+            rhs=None,
+
+            nonlinear_advection=ExpressionFunction('sign(x) * abs(x)**exponent * v',
+                                                   1, (1,), {'exponent': ()}, {'v': v}),
+
+            nonlinear_advection_derivative=ExpressionFunction('exponent * sign(x) * abs(x)**(exponent-1) * v',
+                                                              1, (1,), {'exponent': ()}, {'v': v}),
+        ),
 
         T=0.3,
 
         initial_data=initial_data,
 
-        dirichlet_data=dirichlet_data,
-
-        rhs=None,
-
-        flux_function=ExpressionFunction('sign(x) * abs(x)**exponent * v',
-                                         1, (1,), {'exponent': ()}, {'v': v}),
-
-        flux_function_derivative=ExpressionFunction('exponent * sign(x) * abs(x)**(exponent-1) * v',
-                                                    1, (1,), {'exponent': ()}, {'v': v}),
-
         parameter_space=CubicParameterSpace({'exponent': 0}, *parameter_range),
 
         name="burgers_problem({}, {}, '{}')".format(v, circle, initial_data_type)
-
     )
 
 
@@ -102,26 +104,27 @@ def burgers_problem_2d(vx=1., vy=1., torus=True, initial_data_type='sin', parame
         initial_data = ExpressionFunction("(x[..., 0] >= 0.5) * (x[..., 0] <= 1) * 1", 2, ())
         dirichlet_data = ConstantFunction(dim_domain=2, value=0.)
 
-    return InstationaryAdvectionProblem(
+    return InstationaryProblem(
 
-        domain=TorusDomain([[0, 0], [2, 1]]) if torus else RectDomain([[0, 0], [2, 1]], right=None, top=None),
+        EllipticProblem(
+            domain=TorusDomain([[0, 0], [2, 1]]) if torus else RectDomain([[0, 0], [2, 1]], right=None, top=None),
 
-        T=0.3,
+            dirichlet_data=dirichlet_data,
+
+            rhs=None,
+
+            nonlinear_advection=ExpressionFunction("sign(x) * abs(x)**exponent * v",
+                                                   1, (2,), {'exponent': ()}, {'v': np.array([vx, vy])}),
+
+            nonlinear_advection_derivative=ExpressionFunction("exponent * sign(x) * abs(x)**(exponent-1) * v",
+                                                              1, (2,), {'exponent': ()}, {'v': np.array([vx, vy])}),
+        ),
 
         initial_data=initial_data,
 
-        dirichlet_data=dirichlet_data,
-
-        rhs=None,
-
-        flux_function=ExpressionFunction("sign(x) * abs(x)**exponent * v",
-                                         1, (2,), {'exponent': ()}, {'v': np.array([vx, vy])}),
-
-        flux_function_derivative=ExpressionFunction("exponent * sign(x) * abs(x)**(exponent-1) * v",
-                                                    1, (2,), {'exponent': ()}, {'v': np.array([vx, vy])}),
+        T=0.3,
 
         parameter_space=CubicParameterSpace({'exponent': 0}, *parameter_range),
 
         name="burgers_problem_2d({}, {}, {}, '{}')".format(vx, vy, torus, initial_data_type)
-
     )

@@ -4,7 +4,6 @@
 
 import pytest
 
-from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
 from pymor.analyticalproblems.burgers import burgers_problem, burgers_problem_2d
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.analyticalproblems.helmholtz import helmholtz_problem
@@ -55,27 +54,11 @@ non_picklable_elliptic_problems = \
 elliptic_problems = picklable_thermalblock_problems + non_picklable_elliptic_problems
 
 
-picklable_advection_problems = \
-    [InstationaryAdvectionProblem()]
-
-
-non_picklable_advection_problems = \
-    [InstationaryAdvectionProblem(rhs=ConstantFunction(dim_domain=2, value=42.),
-                                  flux_function=GenericFunction(dim_domain=1, shape_range=(2,),
-                                                                mapping=lambda X: X**2 + X),
-                                  flux_function_derivative=GenericFunction(dim_domain=1, shape_range=(2,),
-                                                                           mapping=lambda X: X * 2))]
-
-
-advection_problems = picklable_advection_problems + non_picklable_advection_problems
-
-
-@pytest.fixture(params=elliptic_problems + advection_problems + thermalblock_problems + burgers_problems)
+@pytest.fixture(params=elliptic_problems + thermalblock_problems + burgers_problems)
 def analytical_problem(request):
     return request.param
 
 
-@pytest.fixture(params=picklable_elliptic_problems + picklable_advection_problems
-                       + picklable_thermalblock_problems + burgers_problems)
+@pytest.fixture(params=picklable_elliptic_problems + picklable_thermalblock_problems + burgers_problems)
 def picklable_analytical_problem(request):
     return request.param

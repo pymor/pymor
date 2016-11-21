@@ -50,6 +50,11 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
     assert boundary_info is None or grid is not None
     assert grid is None or domain_discretizer is None
 
+    p = analytical_problem
+
+    if not (p.nonlinear_advection == p.nonlinear_advection_derivative == p.nonlinear_reaction == None):
+        raise NotImplementedError
+
     if grid is None:
         domain_discretizer = domain_discretizer or discretize_domain_default
         if diameter is None:
@@ -69,8 +74,6 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
         AdvectionOperator = cg.AdvectionOperatorP1
         ReactionOperator = cg.L2ProductP1
         Functional = cg.L2ProductFunctionalP1
-
-    p = analytical_problem
 
     Li = [DiffusionOperator(grid, boundary_info, diffusion_constant=0, name='boundary_part')]
     coefficients = [1.]
@@ -182,6 +185,10 @@ def discretize_elliptic_fv(analytical_problem, diameter=None, domain_discretizer
     assert boundary_info is None or grid is not None
     assert grid is None or domain_discretizer is None
 
+    p = analytical_problem
+
+    if not (p.nonlinear_advection == p.nonlinear_advection_derivative == p.nonlinear_reaction == None):
+        raise NotImplementedError
     if analytical_problem.robin_data is not None:
         raise NotImplementedError
 
@@ -191,8 +198,6 @@ def discretize_elliptic_fv(analytical_problem, diameter=None, domain_discretizer
             grid, boundary_info = domain_discretizer(analytical_problem.domain)
         else:
             grid, boundary_info = domain_discretizer(analytical_problem.domain, diameter=diameter)
-
-    p = analytical_problem
 
     Li, coefficients = [], []
 

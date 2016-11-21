@@ -18,7 +18,6 @@ from pymor.algorithms.adaptivegreedy import adaptive_greedy
 from pymor.algorithms.newton import newton
 from pymor.algorithms.pod import pod
 
-from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
 from pymor.analyticalproblems.burgers import burgers_problem, burgers_problem_2d
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.analyticalproblems.helmholtz import helmholtz_problem

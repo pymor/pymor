@@ -5,7 +5,8 @@
 import numpy as np
 
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper
-from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
+from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.discretizations.basic import InstationaryDiscretization
 from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.gui.qt import PatchVisualizer, Matplotlib1DVisualizer
@@ -19,14 +20,14 @@ from pymor.operators.fv import (nonlinear_advection_lax_friedrichs_operator,
 def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=None, nt=100, num_flux='lax_friedrichs',
                                                    lxf_lambda=1., eo_gausspoints=5, eo_intervals=1, num_values=None,
                                                    domain_discretizer=None, grid=None, boundary_info=None):
-    """Discretizes an |InstationaryAdvectionProblem| using the finite volume method.
+    """Discretizes an instationary |EllipticProblem| using the finite volume method.
 
     Explicit Euler time-stepping is used for time discretization.
 
     Parameters
     ----------
     analytical_problem
-        The |InstationaryAdvectionProblem| to discretize.
+        The instationary |EllipticProblem| to discretize.
     diameter
         If not `None`, `diameter` is passed as an argument to the
         `domain_discretizer`.
@@ -72,34 +73,39 @@ def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=
 
     """
 
-    assert isinstance(analytical_problem, InstationaryAdvectionProblem)
+    assert isinstance(analytical_problem, InstationaryProblem)
+    assert isinstance(analytical_problem.stationary_part, EllipticProblem)
     assert grid is None or boundary_info is not None
     assert boundary_info is None or grid is not None
     assert grid is None or domain_discretizer is None
     assert num_flux in ('lax_friedrichs', 'engquist_osher', 'simplified_engquist_osher')
 
+    p = analytical_problem
+    ps = p.stationary_part
+
+    if not (ps.diffusion == ps.advection == ps.reaction == None):
+        raise NotImplementedError
+
     if grid is None:
         domain_discretizer = domain_discretizer or discretize_domain_default
         if diameter is None:
-            grid, boundary_info = domain_discretizer(analytical_problem.domain)
+            grid, boundary_info = domain_discretizer(ps.domain)
         else:
-            grid, boundary_info = domain_discretizer(analytical_problem.domain, diameter=diameter)
-
-    p = analytical_problem
+            grid, boundary_info = domain_discretizer(ps.domain, diameter=diameter)
 
     if num_flux == 'lax_friedrichs':
-        L = nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, p.flux_function,
-                                                        dirichlet_data=p.dirichlet_data, lxf_lambda=lxf_lambda)
+        L = nonlinear_advection_lax_friedrichs_operator(grid, boundary_info, ps.nonlinear_advection,
+                                                        dirichlet_data=ps.dirichlet_data, lxf_lambda=lxf_lambda)
     elif num_flux == 'engquist_osher':
-        L = nonlinear_advection_engquist_osher_operator(grid, boundary_info, p.flux_function,
-                                                        p.flux_function_derivative,
+        L = nonlinear_advection_engquist_osher_operator(grid, boundary_info, ps.nonlinear_advection,
+                                                        ps.nonlinear_advection,
                                                         gausspoints=eo_gausspoints, intervals=eo_intervals,
-                                                        dirichlet_data=p.dirichlet_data)
+                                                        dirichlet_data=ps.dirichlet_data)
     else:
-        L = nonlinear_advection_simplified_engquist_osher_operator(grid, boundary_info, p.flux_function,
-                                                                   p.flux_function_derivative,
-                                                                   dirichlet_data=p.dirichlet_data)
-    F = None if p.rhs is None else L2ProductFunctional(grid, p.rhs)
+        L = nonlinear_advection_simplified_engquist_osher_operator(grid, boundary_info, ps.nonlinear_advection,
+                                                                   ps.nonlinear_advection_derivative,
+                                                                   dirichlet_data=ps.dirichlet_data)
+    F = None if ps.rhs is None else L2ProductFunctional(grid, ps.rhs)
 
     if p.initial_data.parametric:
         def initial_projection(U, mu):
