@@ -61,7 +61,7 @@ def discretize_parabolic_cg(analytical_problem, diameter=None, domain_discretize
     assert grid is None or boundary_info is not None
     assert boundary_info is None or grid is not None
     assert grid is None or domain_discretizer is None
-    assert time_stepper is None or nt is None
+    assert (time_stepper is None) != (nt is None)
 
     p = analytical_problem
 
@@ -135,7 +135,7 @@ def discretize_parabolic_fv(analytical_problem, diameter=None, domain_discretize
     assert grid is None or boundary_info is not None
     assert boundary_info is None or grid is not None
     assert grid is None or domain_discretizer is None
-    assert time_stepper is None or nt is None
+    assert (time_stepper is None) != (nt is None)
 
     p = analytical_problem
 
