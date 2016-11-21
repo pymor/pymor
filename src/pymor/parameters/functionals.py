@@ -96,10 +96,13 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
         The |ParameterType| of the |Parameters| the functional expects.
     """
 
-    functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan',
+    functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan', 'arctan2',
                                              'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
-                                             'exp', 'exp2', 'log', 'log2', 'log10', 'array',
-                                             'min', 'minimum', 'max', 'maximum', 'pi', 'e', }}
+                                             'exp', 'exp2', 'log', 'log2', 'log10', 'sqrt', 'array',
+                                             'min', 'minimum', 'max', 'maximum', 'pi', 'e',
+                                             'sum', 'prod', 'abs', 'sign', 'zeros', 'ones'}}
+    functions['norm'] = np.linalg.norm
+    functions['polar'] = lambda x: (np.linalg.norm(x, axis=-1), np.arctan2(x[..., 1], x[..., 0]) % (2*np.pi))
 
     def __init__(self, expression, parameter_type, name=None):
         self.expression = expression
