@@ -548,7 +548,7 @@ class VectorSpaceInterface(ImmutableInterface):
         return other is self
 
     def __contains__(self, other):
-        return self == other.space
+        return self == getattr(other, 'space', None)
 
     # def __repr__(self):
     #     return 'VectorSpace({}, {})'.format(self.type.__name__, repr(self.subtype))
