@@ -16,7 +16,7 @@ except ImportError:
 if HAVE_FENICS:
     import numpy as np
 
-    from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorArray, ListVectorSpace
+    from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorSpace
 
 
     # For pyMOR's MPI support to work, subtypes need to be hashable.

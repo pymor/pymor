@@ -79,7 +79,7 @@ if HAVE_FENICS:
                 matrix.axpy(c, op.matrix, False)  # in general, we cannot assume the same nonzero pattern for
                                                   # all matrices. how to improve this?
 
-            return FenicsMatrixOperator(matrix, self.source.subtype[1], self.range.subtype[1], name=name)
+            return FenicsMatrixOperator(matrix, self.source.V, self.range.V, name=name)
 
 
     @defaults('solver', 'preconditioner')

@@ -113,7 +113,7 @@ def _discretize_fenics():
     # FEniCS wrappers
     from pymor.gui.fenics import FenicsVisualizer
     from pymor.operators.fenics import FenicsMatrixOperator
-    from pymor.vectorarrays.fenics import FenicsVector
+    from pymor.vectorarrays.fenics import FenicsVectorSpace
 
     # define parameter functionals (same as in pymor.analyticalproblems.thermalblock)
     parameter_functionals = [ProjectionParameterFunctional(component_name='diffusion',
@@ -124,7 +124,7 @@ def _discretize_fenics():
     # wrap operators
     ops = [FenicsMatrixOperator(mat0, V, V)] + [FenicsMatrixOperator(m, V, V) for m in mats]
     op = LincombOperator(ops, [1.] + parameter_functionals)
-    rhs = VectorFunctional(ListVectorArray([FenicsVector(F, V)]))
+    rhs = VectorFunctional(FenicsVectorSpace(V).make_array([F]))
     h1_product = FenicsMatrixOperator(h1_mat, V, V, name='h1_0_semi')
 
     # build discretization
