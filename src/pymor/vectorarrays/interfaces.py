@@ -547,6 +547,9 @@ class VectorSpaceInterface(ImmutableInterface):
     def __eq__(self, other):
         return other is self
 
+    def __ne__(self, other):
+        return not (self == other)
+
     def __contains__(self, other):
         return self == getattr(other, 'space', None)
 
