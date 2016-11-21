@@ -103,6 +103,7 @@ class ExpressionParameterFunctional(GenericParameterFunctional):
                                              'sum', 'prod', 'abs', 'sign', 'zeros', 'ones'}}
     functions['norm'] = np.linalg.norm
     functions['polar'] = lambda x: (np.linalg.norm(x, axis=-1), np.arctan2(x[..., 1], x[..., 0]) % (2*np.pi))
+    functions['np'] = np
 
     def __init__(self, expression, parameter_type, name=None):
         self.expression = expression
