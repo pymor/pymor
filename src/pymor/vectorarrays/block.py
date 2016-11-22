@@ -54,7 +54,7 @@ class BlockVectorArray(VectorArrayInterface):
 
     @property
     def num_blocks(self):
-        return len(self.subtype)
+        return len(self._blocks)
 
     def __len__(self):
         return len(self._blocks[0])
