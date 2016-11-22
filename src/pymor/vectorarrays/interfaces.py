@@ -582,5 +582,8 @@ class VectorSpaceInterface(ImmutableInterface):
     def __contains__(self, other):
         return self == getattr(other, 'space', None)
 
+    def __hash__(self):
+        return hash(self.id)
+
     def __repr__(self):
         return '{}({})'.format(self.__class__, self.id)
