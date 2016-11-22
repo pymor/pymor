@@ -398,6 +398,27 @@ class ListVectorArray(VectorArrayInterface):
 
 class ListVectorSpace(VectorSpaceInterface):
 
+    dim = None
+
+    @abstractmethod
+    def zero_vector(self):
+        pass
+
+    @abstractmethod
+    def make_vector(self, data):
+        pass
+
+    def vector_from_data(self, data):
+        raise NotImplementedError
+
+    @classmethod
+    def space_from_vector_obj(cls, vec, id_):
+        raise NotImplementedError
+
+    @classmethod
+    def space_from_dim(cls, dim, id_):
+        raise NotImplementedError
+
     def zeros(self, count=1, reserve=0):
         assert count >= 0 and reserve >= 0
         return ListVectorArray([self.zero_vector() for _ in range(count)], self)
@@ -419,25 +440,6 @@ class ListVectorSpace(VectorSpaceInterface):
     @from_data.instancemethod
     def from_data(self, data):
         return ListVectorArray([self.vector_from_data(v) for v in data], self)
-
-    @abstractmethod
-    def zero_vector(self):
-        pass
-
-    @abstractmethod
-    def make_vector(self, data):
-        pass
-
-    def vector_from_data(self, data):
-        raise NotImplementedError
-
-    @classmethod
-    def space_from_vector_obj(cls, vec, id_):
-        raise NotImplementedError
-
-    @classmethod
-    def space_from_dim(cls, dim, id_):
-        raise NotImplementedError
 
 
 class NumpyListVectorSpace(ListVectorSpace):
