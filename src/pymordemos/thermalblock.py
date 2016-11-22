@@ -275,7 +275,7 @@ def discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
     if mpi.parallel:
         from pymor.discretizations.mpi import mpi_wrap_discretization
         d = mpi_wrap_discretization(lambda: _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order),
-                                    use_with=True, pickle_subtypes=False)
+                                    use_with=True, pickle_local_spaces=False)
     else:
         d = _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order)
 

@@ -6,8 +6,7 @@ from pymor.core.interfaces import ImmutableInterface
 from pymor.discretizations.basic import DiscretizationBase
 from pymor.operators.mpi import mpi_wrap_operator
 from pymor.tools import mpi
-from pymor.vectorarrays.interfaces import VectorSpaceInterface
-from pymor.vectorarrays.mpi import MPIVectorArray, _register_subtype
+from pymor.vectorarrays.mpi import MPIVectorSpace, _register_local_space
 
 
 class MPIDiscretization(DiscretizationBase):
@@ -34,20 +33,16 @@ class MPIDiscretization(DiscretizationBase):
         wrapped for use on rank 0. Use :func:`mpi_wrap_discretization`
         to automatically wrap all operators of a given MPI-aware
         |Discretization|.
-    functionals
-        See `operators`.
-    vector_operators
-        See `operators`.
     products
         See `operators`.
-    pickle_subtypes
+    pickle_local_spaces
         If `pickle_subtypes` is `False`, a unique identifier
         is computed for each local `solution_space` subtype, which is then
         transferred to rank 0 instead of the true subtype. This
         allows to use :class:`~pymor.vectorarrays.mpi.MPIVectorArray`,
         :class:`~pymor.operators.mpi.MPIOperator`, :class:`MPIDiscretization`
         even when the local subtypes are not picklable.
-    array_type
+    space_type
         This class will be used to wrap the local |VectorArrays|
         returned by :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve`
         on each rank into an MPI distributed |VectorArray| managed from rank 0. By default,
@@ -56,37 +51,37 @@ class MPIDiscretization(DiscretizationBase):
         and :class:`~pymor.vectorarrays.mpi.MPIVectorArrayNoComm`.
     """
 
-    def __init__(self, obj_id, operators, functionals, vector_operators, products=None,
-                 pickle_subtypes=True, array_type=MPIVectorArray):
+    def __init__(self, obj_id, operators, products=None,
+                 pickle_local_spaces=True, space_type=MPIVectorSpace):
         d = mpi.get_object(obj_id)
         visualizer = MPIVisualizer(obj_id)
-        super().__init__(operators, functionals, vector_operators, products=products,
+        super().__init__(operators=operators, products=products,
                          visualizer=visualizer, cache_region=None, name=d.name)
         self.obj_id = obj_id
-        subtypes = mpi.call(_MPIDiscretization_get_subtypes, obj_id, pickle_subtypes)
-        if all(subtype == subtypes[0] for subtype in subtypes):
-            subtypes = (subtypes[0],)
-        self.solution_space = VectorSpace(array_type, (d.solution_space.type, subtypes))
+        local_spaces = mpi.call(_MPIDiscretization_get_local_spaces, obj_id, pickle_local_spaces)
+        if all(ls == local_spaces[0] for ls in local_spaces):
+            local_spaces = (local_spaces[0],)
+        self.solution_space = space_type(local_spaces)
         self.build_parameter_type(d)
         self.parameter_space = d.parameter_space
 
     def _solve(self, mu=None):
-        space = self.solution_space
-        return space.type(space.subtype[0], space.subtype[1],
-                          mpi.call(mpi.method_call_manage, self.obj_id, 'solve', mu=mu))
+        return self.solution_space.make_array(
+            mpi.call(mpi.method_call_manage, self.obj_id, 'solve', mu=mu)
+        )
 
     def __del__(self):
         mpi.call(mpi.remove_object, self.obj_id)
 
 
-def _MPIDiscretization_get_subtypes(self, pickle_subtypes):
+def _MPIDiscretization_get_local_spaces(self, pickle_local_spaces):
     self = mpi.get_object(self)
-    subtype = self.solution_space.subtype
-    if not pickle_subtypes:
-        subtype = _register_subtype(subtype)
-    subtypes = mpi.comm.gather(subtype, root=0)
+    local_space = self.solution_space
+    if not pickle_local_spaces:
+        local_space = _register_local_space(local_space)
+    local_spaces = mpi.comm.gather(local_space, root=0)
     if mpi.rank0:
-        return tuple(subtypes)
+        return tuple(local_spaces)
 
 
 class MPIVisualizer(ImmutableInterface):
@@ -112,7 +107,7 @@ def _MPIVisualizer_visualize(d, U, **kwargs):
 
 
 def mpi_wrap_discretization(local_discretizations, use_with=False, with_apply2=False,
-                            pickle_subtypes=True, array_type=MPIVectorArray):
+                            pickle_local_spaces=True, space_type=MPIVectorSpace):
     """Wrap MPI distributed local |Discretizations| to a global |Discretization| on rank 0.
 
     Given MPI distributed local |Discretizations| referred to by the
@@ -151,46 +146,36 @@ def mpi_wrap_discretization(local_discretizations, use_with=False, with_apply2=F
         See above.
     with_apply2
         See :class:`~pymor.operators.mpi.MPIOperator`.
-    pickle_subtypes
+    pickle_local_spaces
         See :class:`~pymor.operators.mpi.MPIOperator`.
-    array_type
+    space_type
         See :class:`~pymor.operators.mpi.MPIOperator`.
     """
 
     if not isinstance(local_discretizations, mpi.ObjectId):
         local_discretizations = mpi.call(mpi.function_call_manage, local_discretizations)
 
-    operators, functionals, vectors, products = \
-        mpi.call(_mpi_wrap_discretization_manage_operators, local_discretizations)
+    operators, products = mpi.call(_mpi_wrap_discretization_manage_operators, local_discretizations)
 
     operators = {k: mpi_wrap_operator(v, with_apply2=with_apply2,
-                                      pickle_subtypes=pickle_subtypes, array_type=array_type) if v else None
+                                      pickle_local_spaces=pickle_local_spaces, space_type=space_type) if v else None
                  for k, v in operators.items()}
-    functionals = {k: mpi_wrap_operator(v, functional=True, with_apply2=with_apply2,
-                                        pickle_subtypes=pickle_subtypes, array_type=array_type) if v else None
-                   for k, v in functionals.items()}
-    vectors = {k: mpi_wrap_operator(v, vector=True, with_apply2=with_apply2,
-                                    pickle_subtypes=pickle_subtypes, array_type=array_type) if v else None
-               for k, v in vectors.items()}
     products = {k: mpi_wrap_operator(v, with_apply2=with_apply2,
-                                     pickle_subtypes=pickle_subtypes, array_type=array_type) if v else None
-                for k, v in products.items()} if products else None
+                                     pickle_local_spaces=pickle_local_spaces, space_type=space_type) if v else None
+                for k, v in products.items()}
 
     if use_with:
         d = mpi.get_object(local_discretizations)
         visualizer = MPIVisualizer(local_discretizations)
-        return d.with_(operators=operators, functionals=functionals, vector_operators=vectors, products=products,
-                       visualizer=visualizer, cache_region=None)
+        return d.with_(operators=operators, products=products, visualizer=visualizer, cache_region=None)
     else:
-        return MPIDiscretization(local_discretizations, operators, functionals, vectors, products,
-                                 pickle_subtypes=pickle_subtypes, array_type=array_type)
+        return MPIDiscretization(local_discretizations, operators, products,
+                                 pickle_local_spaces=pickle_local_spaces, space_type=space_type)
 
 
 def _mpi_wrap_discretization_manage_operators(obj_id):
     d = mpi.get_object(obj_id)
     operators = {k: mpi.manage_object(v) if v else None for k, v in sorted(d.operators.items())}
-    functionals = {k: mpi.manage_object(v) if v else None for k, v in sorted(d.functionals.items())}
-    vectors = {k: mpi.manage_object(v) if v else None for k, v in sorted(d.vector_operators.items())}
-    products = {k: mpi.manage_object(v) if v else None for k, v in sorted(d.products.items())} if d.products else None
+    products = {k: mpi.manage_object(v) if v else None for k, v in sorted(d.products.items())} if d.products else {}
     if mpi.rank0:
-        return operators, functionals, vectors, products
+        return operators, products
