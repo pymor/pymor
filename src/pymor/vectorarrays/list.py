@@ -238,9 +238,9 @@ class ListVectorArray(VectorArrayInterface):
 
     @property
     def data(self):
-        if not hasattr(self.space.type, 'data'):
-            raise TypeError('{} does not have a data attribute'.format(self.space.type))
         if len(self._list) > 0:
+            if not hasattr(self._list[0], 'data'):
+                raise NotImplementedError('{} does not have a data attribute'.format(self._list[0]))
             return np.array([v.data for v in self._list])
         else:
             return np.empty((0, self.dim))
@@ -405,7 +405,7 @@ class ListVectorSpace(VectorSpaceInterface):
         pass
 
     @abstractmethod
-    def make_vector(self, data):
+    def make_vector(self, obj):
         pass
 
     def vector_from_data(self, data):
