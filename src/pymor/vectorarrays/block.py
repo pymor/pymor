@@ -15,20 +15,10 @@ class BlockVectorArray(VectorArrayInterface):
 
     Given a list of equal length |VectorArrays| `blocks`, this |VectorArray|
     represents the direct sums of the vectors contained in the arrays.
-
-    The :attr:`~pymor.vectorarrays.interfaces.VectorArrayInterface.subtype`
-    of the array will be the tuple ::
-
-        (blocks[0].space, blocks[1].space, ..., blocks[-1].space).
+    The associated |VectorSpace| is :class:`BlockVectorSpace`.
 
     :class:`BlockVectorArray` can be used in conjunction with
     :class:`~pymor.operators.block.BlockOperator`.
-
-
-    Parameters
-    ----------
-    blocks
-        The list of sub-arrays.
     """
 
     def __init__(self, blocks, space):
@@ -159,6 +149,19 @@ class BlockVectorArray(VectorArrayInterface):
 
 
 class BlockVectorSpace(VectorSpaceInterface):
+    """|VectorSpace| of :class:`BlockVectorArrays <BlockVectorArray>`.
+
+    A :class:`BlockVectorSpace` is defined by the |VectorSpaces| of the
+    individual subblocks which constitute a given array. In particular
+    for a given :class`BlockVectorArray` `U`, we have the identity ::
+
+        (U.blocks[0].space, U.blocks[1].space, ..., U.blocks[-1].space) == U.space.
+
+    Parameters
+    ----------
+    subspaces
+        The tuple defined above.
+    """
 
     def __init__(self, subspaces, id_='STATE'):
         subspaces = tuple(subspaces)

@@ -19,9 +19,9 @@ if HAVE_FENICS:
     from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorSpace
 
 
-    # For pyMOR's MPI support to work, subtypes need to be hashable.
-    # However, FunctionSpace (our subtype) defines __eq__ but not __hash__
-    # which makes it unhashable on Pyhton 3. On the other hand, equality
+    # For pyMOR's MPI support to work, VectorSpaces need to be hashable.
+    # However, FunctionSpace defines __eq__ but not __hash__ which
+    # makes it unhashable on Pyhton 3. On the other hand, equality
     # for FunctionSpace seems to be the same as identity, so we can easily
     # monkey-patch:
     df.FunctionSpace.__hash__ = lambda self: id(self)

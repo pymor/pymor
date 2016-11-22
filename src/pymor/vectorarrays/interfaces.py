@@ -37,8 +37,8 @@ class VectorArrayInterface(BasicInterface):
     allocated internally (e.g.  continuous block of memory vs. list of pointers to the
     individual vectors.) Thus, no general assumptions can be made on the costs of operations
     like appending to or removing vectors from the array. As a hint for 'continuous block
-    of memory' implementations, |VectorArray| constructors provide a `reserve` keyword
-    argument which allows to specify to what size the array is assumed to grow.
+    of memory' implementations, :meth:`~VectorSpaceInterface.zeros` provides a `reserve`
+    keyword argument which allows to specify to what size the array is assumed to grow.
 
     As with |Numpy array|, |VectorArrays| can be indexed with numbers, slices and
     lists or one-dimensional |NumPy arrays|. Indexing will always return a new
@@ -46,7 +46,7 @@ class VectorArrayInterface(BasicInterface):
     array is modified via :meth:`~VectorArrayInterface.scal` or :meth:`~VectorArrayInterface.axpy`,
     the vectors in the original array will be changed. Indices may be negative, in
     which case the vector is selected by counting from the end of the array. Moreover
-    Indices can be repeated, in which case the corresponding vector is selected several
+    indices can be repeated, in which case the corresponding vector is selected several
     times. The resulting view will be immutable, however.
 
     .. note::
@@ -482,10 +482,10 @@ class VectorSpaceInterface(ImmutableInterface):
     |VectorArray| from given raw data of the underlying linear algebra
     backend (e.g. a |Numpy array| in the case  of |NumpyVectorSpace|).
     Some vector spaces can create new |VectorArrays| from a given
-    |Numpy array| via the :meth:`~VectorArrayInterface.from_data`
+    |Numpy array| via the :meth:`~VectorSpaceInterface.from_data`
     method.
 
-    Each vector space is a string :attr:`~VectorArrayInterface.id`
+    Each vector space has a string :attr:`~VectorSpaceInterface.id`
     to distinguish mathematically different spaces appearing
     in the formulation of a given problem.
 
@@ -500,7 +500,10 @@ class VectorSpaceInterface(ImmutableInterface):
         A string describing the mathematical identity of the
         vector space (for instance to distinguish different
         components in an equation system). The default value
-        is `'STATE'`.
+        is `'STATE'`. To identify arrays of scalar values
+        (as the source space of vector-like |Operators| and
+        as the range space of |Functionals|) the id `'SCALARS'`
+        is used.
     dim
         The dimension (number of degrees of freedom) of the
         vectors contained in the space.

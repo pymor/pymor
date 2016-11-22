@@ -36,19 +36,9 @@ class MPIDiscretization(DiscretizationBase):
     products
         See `operators`.
     pickle_local_spaces
-        If `pickle_subtypes` is `False`, a unique identifier
-        is computed for each local `solution_space` subtype, which is then
-        transferred to rank 0 instead of the true subtype. This
-        allows to use :class:`~pymor.vectorarrays.mpi.MPIVectorArray`,
-        :class:`~pymor.operators.mpi.MPIOperator`, :class:`MPIDiscretization`
-        even when the local subtypes are not picklable.
+        See :class:`~pymor.operators.mpi.MPIOperator`.
     space_type
-        This class will be used to wrap the local |VectorArrays|
-        returned by :meth:`~pymor.discretizations.interfaces.DiscretizationInterface.solve`
-        on each rank into an MPI distributed |VectorArray| managed from rank 0. By default,
-        :class:`~pymor.vectorarrays.mpi.MPIVectorArray` will be used,
-        other options are :class:`~pymor.vectorarrays.mpi.MPIVectorArrayAutoComm`
-        and :class:`~pymor.vectorarrays.mpi.MPIVectorArrayNoComm`.
+        See :class:`~pymor.operators.mpi.MPIOperator`.
     """
 
     def __init__(self, obj_id, operators, products=None,

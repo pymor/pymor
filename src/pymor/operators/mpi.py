@@ -40,18 +40,18 @@ class MPIOperator(OperatorBase):
         :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.dot`
         will be used.
     pickle_local_spaces
-        If `pickle_subtypes` is `False`, a unique identifier
-        is computed for each local source/range subtype, which is then
-        transferred to rank 0 instead of the true subtype. This
+        If `pickle_local_spaces` is `False`, a unique identifier
+        is computed for each local source/range |VectorSpace|, which is then
+        transferred to rank 0 instead of the true |VectorSpace|. This
         allows the useage of :class:`~pymor.vectorarrays.mpi.MPIVectorArray`
-        even when the local subtypes are not picklable.
+        even when the local |VectorSpaces| are not picklable.
     space_type
         This class will be used to wrap the local |VectorArrays|
         returned by the local operators into an MPI distributed
         |VectorArray| managed from rank 0. By default,
-        :class:`~pymor.vectorarrays.mpi.MPIVectorArray` will be used,
-        other options are :class:`~pymor.vectorarrays.mpi.MPIVectorArrayAutoComm`
-        and :class:`~pymor.vectorarrays.mpi.MPIVectorArrayNoComm`.
+        :class:`~pymor.vectorarrays.mpi.MPIVectorSpace` will be used,
+        other options are :class:`~pymor.vectorarrays.mpi.MPIVectorSpaceAutoComm`
+        and :class:`~pymor.vectorarrays.mpi.MPIVectorSpaceNoComm`.
     """
 
     def __init__(self, obj_id, with_apply2=False, pickle_local_spaces=True, space_type=MPIVectorSpace):

@@ -15,8 +15,7 @@ class BlockOperator(OperatorBase):
     """A matrix of arbitrary |Operators|.
 
     This operator can be :meth:`applied <pymor.operators.interfaces.OperatorInterface.apply>`
-    to :class:`BlockVectorArrays <pymor.vectorarrays.block.BlockVectorArray>` of an
-    appropriate :attr:`~pymor.vectorarrays.interfaces.VectorArrayInterface.subtype`.
+    to a compatible :class:`BlockVectorArrays <pymor.vectorarrays.block.BlockVectorArray>`.
 
     Parameters
     ----------
@@ -70,7 +69,7 @@ class BlockOperator(OperatorBase):
         Parameters
         ----------
         operators
-            An iterable of |Operators| or `None`s.
+            An iterable where each item is an |Operator| or `None`.
         """
         blocks = np.array([[op for op in operators]])
         return cls(blocks)
@@ -82,7 +81,7 @@ class BlockOperator(OperatorBase):
         Parameters
         ----------
         operators
-            An iterable of |Operators| or `None`s.
+            An iterable where each item is an |Operator| or `None`.
         """
         blocks = np.array([[op] for op in operators])
         return cls(blocks)

@@ -7,8 +7,8 @@
 This module contains several wrapper classes which allow to
 transform single rank |VectorArrays| into MPI distributed
 |VectorArrays| which can be used on rank 0 like ordinary
-|VectorArrays|. Similar classes are provided for handling
-:class:`Vectors <pymor.vectorarrays.list.VectorInterface>`.
+|VectorArrays|.
+
 The implementations are based on the event loop provided
 by :mod:`pymor.tools.mpi`.
 """
@@ -17,7 +17,6 @@ import numpy as np
 
 from pymor.tools import mpi
 from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface
-from pymor.vectorarrays.list import VectorInterface, ListVectorSpace
 
 
 class MPIVectorArray(VectorArrayInterface):
@@ -41,6 +40,8 @@ class MPIVectorArray(VectorArrayInterface):
 
     Note that resource cleanup is handled by :meth:`object.__del__`.
     Please be aware of the peculiarities of destructors in Python!
+
+    The associated |VectorSpace| is :class:`MPIVectorSpace`.
     """
 
     def __init__(self, obj_id, space):
@@ -102,6 +103,16 @@ class MPIVectorArray(VectorArrayInterface):
 
 
 class MPIVectorSpace(VectorSpaceInterface):
+    """|VectorSpace| of :class:`MPIVectorArrays <MPIVectorArray>`.
+
+    Parameters
+    ----------
+    local_spaces
+        `tuple` of the different |VectorSpaces| of the local
+        |VectorArrays| on the MPI ranks.
+        Alternatively, the length of `local_spaces` may be 1, in which
+        case the same |VectorSpace| is assumed for all ranks.
+    """
 
     array_type = MPIVectorArray
 
@@ -110,6 +121,18 @@ class MPIVectorSpace(VectorSpaceInterface):
         self.id = id_
 
     def make_array(self, obj_id):
+        """Create array from rank-local |VectorArray| instances.
+
+        Parameters
+        ----------
+        obj_id
+            :class:`~pymor.tools.mpi.ObjectId` of the MPI distributed
+            instances of `cls` wrapped by this array.
+
+        Returns
+        -------
+        The newly created :class:`MPIVectorArray`.
+        """
         assert mpi.call(_MPIVectorSpace_check_local_spaces,
                         self.local_spaces, obj_id)
         return self.array_type(obj_id, self)
@@ -199,6 +222,8 @@ class MPIVectorArrayNoComm(MPIVectorArray):
     on the wrapped arrays would lead to wrong results and
     :class:`MPIVectorArrayAutoComm` cannot be used either
     (for instance in the presence of shared DOFs).
+
+    The associated |VectorSpace| is :class:`MPIVectorSpaceNoComm`.
     """
 
     def dot(self, other):
@@ -224,6 +249,7 @@ class MPIVectorArrayNoComm(MPIVectorArray):
 
 
 class MPIVectorSpaceNoComm(MPIVectorSpace):
+    """|VectorSpace| for :class:`MPIVectorArrayNoComm`."""
 
     array_type = MPIVectorArrayNoComm
 
@@ -243,6 +269,8 @@ class MPIVectorArrayAutoComm(MPIVectorArray):
     Note, however, that depending on the discretization
     these default implementations might lead to wrong results
     (for instance in the presence of shared DOFs).
+
+    The associated |VectorSpace| is :class:`MPIVectorSpaceAutoComm`.
     """
 
     def dot(self, other):
@@ -281,6 +309,7 @@ class MPIVectorArrayAutoComm(MPIVectorArray):
 
 
 class MPIVectorSpaceAutoComm(MPIVectorSpace):
+    """|VectorSpace| for :class:`MPIVectorArrayAutoComm`."""
 
     array_type = MPIVectorArrayAutoComm
 

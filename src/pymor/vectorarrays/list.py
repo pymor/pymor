@@ -10,12 +10,11 @@ from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInter
 
 
 class VectorInterface(BasicInterface):
-    """Interface for vectors.
+    """Interface for vectors used in conjunction with |ListVectorArray|.
 
-    This Interface is intended to be used in conjunction with |ListVectorArray|.
-    All pyMOR algorithms operate on |VectorArrays| instead of single vectors!
-    All methods of the interface have a direct counterpart in the |VectorArray|
-    interface.
+    This interface must be staisfied by the individual entries of the
+    vector `list` managed by |ListVectorArray|. All interface methods
+    have a direct counterpart in the |VectorArray| interface.
     """
 
     @abstractmethod
@@ -209,25 +208,19 @@ class NumpyVector(CopyOnWriteVector):
 
 
 class ListVectorArray(VectorArrayInterface):
-    """|VectorArray| implementation via a Python list of vectors.
+    """|VectorArray| implemented as a Python list of vectors.
 
-    The :attr:`subtypes <pymor.vectorarrays.interfaces.VectorArrayInterface.subtype>`
-    a |ListVectorArray| can have are tuples `(vector_type, vector_subtype)`
-    where `vector_type` is a subclass of :class:`VectorInterface` and
-    `vector_subtype` is a valid subtype for `vector_type`.
+    This |VectorArray| implementation is the first choice when
+    creating pyMOR wrappers for external solvers which are based
+    on single vector objects. In order to do so, a wrapping
+    subclass of :class:`VectorInterface` has to be provided
+    on which the implementation of |ListVectorArray| will operate.
+    The associated |VectorSpace| is a subclass of
+    :class:`ListVectorSpace`.
 
-    Parameters
-    ----------
-    vectors
-        List of :class:`vectors <VectorInterface>` contained in
-        the array.
-    subtype
-        If `vectors` is empty, the array's
-        :attr:`~pymor.vectorarrays.interfaces.VectorArrayInterface.subtype`
-        must be provided, as the subtype cannot be derived from `vectors`
-        in this case.
-    copy
-        If `True`, make copies of the vectors in `vectors`.
+    For an example, see :class:`NumpyVector`, :class:`NumpyListVectorSpace`
+    or :class:`~pymor.vectorarrays.fenics.FenicsVector`,
+    :class:`~pymor.vectorarrays.fenics.FenicsVectorSpace`.
     """
 
     _NONE = ()
@@ -397,6 +390,7 @@ class ListVectorArray(VectorArrayInterface):
 
 
 class ListVectorSpace(VectorSpaceInterface):
+    """|VectorSpace| of |ListVectorArrays|."""
 
     dim = None
 

@@ -18,12 +18,14 @@ class NumpyVectorArray(VectorArrayInterface):
     in pyMOR's discretization toolkit. Moreover, all reduced |Operators|
     are based on |NumpyVectorArray|.
 
-    Note that this class is just a thin wrapper around the underlying
+    This class is just a thin wrapper around the underlying
     |NumPy array|. Thus, while operations like
     :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.axpy` or
     :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.dot`
     will be quite efficient, removing or appending vectors will
     be costly.
+
+    The associated |VectorSpace| is |NumpyVectorSpace|.
     """
 
     def __init__(self, array, space):
@@ -313,6 +315,15 @@ class NumpyVectorArray(VectorArrayInterface):
 
 
 class NumpyVectorSpace(VectorSpaceInterface):
+    """|VectorSpace| of |NumpyVectorArrays|.
+
+    Parameters
+    ----------
+    dim
+        The dimension of the vectors contained in the space.
+    id
+        See :attr:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.id`.
+    """
 
     def __init__(self, dim, id_='STATE'):
         self.dim = dim

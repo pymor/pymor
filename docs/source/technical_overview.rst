@@ -22,11 +22,8 @@ operating on objects of the following types:
     be extracted for :mod:`empirical interpolation <pymor.algorithms.ei>`.
     To act on subsets of vectors of an array, arrays can be |indexed|, returning
     a new |VectorArray| which acts as a view onto the respective vectors in the
-    original array.
-
-    New vector arrays can be created using the |empty| and |zeros| method. As a
-    convenience, many of Python's math special methods are implemented in terms
-    of the interface methods.
+    original array. As a convenience, many of Python's math operators are
+    implemented in terms of the interface methods.
 
     Note that there is not the notion of a single vector in pyMOR. The main
     reason for this design choice is to take advantage of vectorized
@@ -37,23 +34,29 @@ operating on objects of the following types:
     there were only lists of vectors in pyMOR, the above matrix-matrix
     multiplication would have to be expressed by a loop of matrix-vector
     multiplications.  However, when working with external solvers, vector
-    arrays will often be given as lists of indiviual vector objects. For this
+    arrays will often be given as lists of individual vector objects. For this
     use-case we provide |ListVectorArray|, a |VectorArray| based on a Python
     list of vectors.
 
-    Associated to each vector array is a |VectorSpace|. A Vector space in pyMOR
-    is simply the combination of a |VectorArray| subclass and an appropriate
-    |subtype|.  For |NumpyVectorArrays|, the subtype is a single integer
-    denoting the dimension of the array. Subtypes for other array classes
-    could, e.g., include a socket for communication with a specific PDE solver
-    instance.
+    Associated to each vector array is a |VectorSpace| which acts as a
+    factory for new arrays of a given type.  New vector arrays can be created
+    from their associated the |zeros| and |empty| methods. To wrap the raw
+    objects of the underlying linear algebra backend into a new |VectorArray|,
+    |make_array| is used.
+
+    The data needed to define a new |VectorSpace| largely depends on the
+    implementation of the underlying backend. For |NumpyVectorSpace|, the
+    only required datum is the dimension of the contained vectors.
+    |VectorSpaces| for other backends could, e.g., hold a socket for
+    communication with a specific PDE solver instance. Additionally,
+    each |VectorSpace| has a string |id| which is used to signify the
+    mathematical identity of the given space. The default id is `'STATE'`,
+    whereas `'SCALARS'` is used to signify arrays of real or complex
+    numbers (see below).
     
-    Two arrays in pyMOR are compatible (e.g. can be added) if they are from the
-    same |VectorSpace|, i.e. they are instances of the same class and share the
-    same subtype. The |VectorSpace| is also precisely the information needed to
-    create new arrays of null vectors using the |make_array| class method. In
-    fact |empty| and |zeros| are implemented by calling |make_array| with the
-    |subtype| of the |VectorArray| instance for which they have been called.
+    Two arrays in pyMOR are compatible (e.g. can be added) if they are from
+    the same |VectorSpace|. If a |VectorArray| is contained in a given
+    |VectorSpace| can be tested with the `in` operator.
     
     .. |apply|            replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.apply`
     .. |appended|         replace:: :meth:`appended <pymor.vectorarrays.interfaces.VectorArrayInterface.append>`
@@ -61,15 +64,16 @@ operating on objects of the following types:
     .. |components|       replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.components`
     .. |copied|           replace:: :meth:`copied <pymor.vectorarrays.interfaces.VectorArrayInterface.copy>`
     .. |dimension|        replace:: :attr:`dimension <pymor.vectorarrays.interfaces.VectorArrayInterface.dim>`
-    .. |empty|            replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.empty`
+    .. |empty|            replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.empty`
+    .. |id|               replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.id`
     .. |indexed|          replace:: :meth:`indexed <pymor.vectorarrays.interfaces.VectorArrayInterface.__getitem__>`
     .. |inner products|   replace:: :meth:`inner products <pymor.vectorarrays.interfaces.VectorArrayInterface.dot>`
     .. |lincomb|          replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.lincomb`
-    .. |make_array|       replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.make_array`
+    .. |make_array|       replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.make_array`
     .. |removed|          replace:: :meth:`deleted <pymor.vectorarrays.interfaces.VectorArrayInterface.__delitem__>`
     .. |scaled|           replace:: :meth:`scaled <pymor.vectorarrays.interfaces.VectorArrayInterface.scal>`
     .. |subtype|          replace:: :attr:`~pymor.vectorarrays.interfaces.VectorSpace.subtype`
-    .. |zeros|            replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.zeros`
+    .. |zeros|            replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.zeros`
 
 |Operators|
     The main property of operators in pyMOR is that they can be |applied| to
@@ -81,10 +85,10 @@ operating on objects of the following types:
     
     Operators in pyMOR are also used to represent bilinear forms via the
     |apply2| method. A functional in pyMOR is simply an operator with
-    ``VectorSpace(NumpyVectorArray, 1)`` as |range|. Dually, a vector-like
-    operator is an operator with a ``VectorSpace(NumpyVectorArray, 1)`` as
-    |source|. Such vector-like operators are used in pyMOR to represent
-    |Parameter| dependent vectors such as the initial data of an
+    `NumpyVectorSpace(1, 'SCALARS')` as |range|. This space can also be obtained
+    via the `scalars(1)` shorthand. Dually, a vector-like operator is an operator
+    with `scalars(1)` as |source|. Such vector-like operators are used in pyMOR to
+    represent |Parameter| dependent vectors such as the initial data of an
     |InstationaryDiscretization|. For linear functionals and vector-like
     operators, the |as_vector| method can be called to obtain a vector
     representation of the operator as a |VectorArray| of length 1.
@@ -119,10 +123,10 @@ operating on objects of the following types:
 |Discretizations|
     Discretizations in pyMOR encode the mathematical structure of a given
     discrete problem by acting as container classes for operators. Each
-    discretization object has |operators|, |functionals|, |vector_operators| and
-    |products| dictionaries holding the |Operators| which appear in the
-    formulation of the discrete problem. The keys in these dictionaries describe
-    the role of the respective operator in the discrete problem.
+    discretization object has |operators|, |products| dictionaries holding the
+    |Operators| which appear in the formulation of the discrete problem. The
+    keys in these dictionaries describe the role of the respective operator
+    in the discrete problem.
 
     Apart from describing the discrete problem, discretizations also implement
     algorithms for |solving| the given problem, returning |VectorArrays|
