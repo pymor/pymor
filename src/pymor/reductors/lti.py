@@ -56,8 +56,8 @@ def interpolation(discretization, sigma, b, c, use_arnoldi=False):
         b.scal(1 / b.l2_norm())
         c.scal(1 / c.l2_norm())
 
-        V = discretization.A.source.type.make_array(discretization.A.source.subtype, reserve=r)
-        W = discretization.A.source.type.make_array(discretization.A.source.subtype, reserve=r)
+        V = discretization.A.source.empty(reserve=r)
+        W = discretization.A.source.empty(reserve=r)
 
         for i in range(r):
             if sigma[i].imag == 0:
@@ -248,8 +248,8 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
             else:
                 print('{:4d} | {:15.9e}'.format(it + 1, dist[-1]))
 
-        Y = rom.B.source.from_data(Y.conj().T)
-        X = rom.C.range.from_data(X.T)
+        Y = rom.B.range.from_data(Y.conj().T)
+        X = rom.C.source.from_data(X.T)
         b = rom.B.apply_adjoint(Y)
         c = rom.C.apply(X)
         R.append(b)

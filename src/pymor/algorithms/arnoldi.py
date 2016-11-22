@@ -59,7 +59,7 @@ def arnoldi(A, E, b, sigma, trans=False):
     assert not trans and b.source.dim == 1 or trans and b.range.dim == 1
 
     r = len(sigma)
-    V = A.source.type.make_array(A.source.subtype, reserve=r)
+    V = A.source.empty(reserve=r)
 
     v = b.as_vector()
     v.scal(1 / v.l2_norm()[0])
@@ -182,7 +182,7 @@ def arnoldi_tangential(A, E, B, sigma, directions, trans=False):
 
     directions.scal(1 / directions.l2_norm())
 
-    V = A.source.type.make_array(A.source.subtype, reserve=r)
+    V = A.source.empty(reserve=r)
 
     for i in range(r):
         if sigma[i].imag == 0:

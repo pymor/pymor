@@ -19,7 +19,7 @@ from pymor.operators.constructions import Concatenation, IdentityOperator, Linco
 from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.tools.frozendict import FrozenDict
-from pymor.vectorarrays.numpy import NumpyVectorArray
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class InputOutputSystem(DiscretizationInterface):
@@ -605,7 +605,7 @@ class LTISystem(InputOutputSystem):
         of = self.gramian(typ, 'of', me_solver=me_solver)
 
         U, sv, Vh = spla.svd(self.E.apply2(of, cf))
-        return sv, NumpyVectorArray(U.T), NumpyVectorArray(Vh)
+        return sv, NumpyVectorSpace.make_array(U.T), NumpyVectorSpace.make_array(Vh)
 
     @cached
     def norm(self, name='H2', me_solver=None):
