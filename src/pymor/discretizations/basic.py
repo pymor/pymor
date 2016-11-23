@@ -15,27 +15,31 @@ class DiscretizationBase(DiscretizationInterface):
     """Base class for |Discretizations| providing some common functionality."""
 
     sid_ignore = DiscretizationInterface.sid_ignore | {'visualizer'}
+    add_with_arguments = DiscretizationInterface.add_with_arguments | {'operators'}
     special_operators = frozenset()
 
-    def __init__(self, operators, products=None, estimator=None, visualizer=None,
+    def __init__(self, operators=None, products=None, estimator=None, visualizer=None,
                  cache_region=None, name=None, **kwargs):
 
         operators = {} if operators is None else dict(operators)
 
         # handle special operators
         for on in self.special_operators:
+            # special operators must be provided as keyword argument to __init__
+            assert on in kwargs
             # special operators may not already exist as attributes
             assert not hasattr(self, on)
-            # special operators must be uniquely given
-            assert kwargs[on] is None or on not in operators or kwargs[on] == operators[on]
+            # special operators may not be contained in operators dict
+            assert on not in operators
 
             op = kwargs[on]
-            if op is None:
-                op = operators.get(on)
-
-            assert op is None or isinstance(op, OperatorInterface)
-
+            # operators either have to be None or an Operator
+            assert op is None \
+                or isinstance(op, OperatorInterface) \
+                or all(isinstance(o, OperatorInterface) for o in op)
+            # set special operator as an attribute
             setattr(self, on, op)
+            # add special operator to the operators dict
             operators[on] = op
 
         self.operators = FrozenDict(operators)
@@ -51,18 +55,31 @@ class DiscretizationBase(DiscretizationInterface):
                 setattr(self, '{}_product'.format(k), v)
                 setattr(self, '{}_norm'.format(k), induced_norm(v))
 
+        self.build_parameter_type(*operators.values())
+
     def with_(self, **kwargs):
         assert set(kwargs.keys()) <= self.with_arguments
 
-        # when an operators is not specified but a special operator contained in operators,
-        # make sure that we use the old operators dict but with updated special operators
-        kwargs.setdefault('operators',
-                          dict(self.operators,
-                               **{on: kwargs.get(on, getattr(self, on)) for on in self.special_operators}))
+        if 'operators' in kwargs:
+            # extract special operators from provided operators dict
+            operators = kwargs['operators']
+            for on in self.special_operators:
+                if on in operators:
+                    assert on not in kwargs or kwargs[on] == operators[on]
+                    kwargs[on] = operators.pop(on)
+            kwargs['operators'] = operators
+        else:
+            # when an operators dict is not specified make sure that we use the old operators dict
+            # but without the special operators
+            kwargs['operators'] = {on: op for on, op in self.operators.items()
+                                   if on not in self.special_operators}
 
-        # make sure we do not use old special operators in case operators is specified
-        for on in self.special_operators:
-            kwargs.setdefault(on, None)
+        # delete empty 'operators' dicts for cases where __init__ does not take
+        # an 'operator' argument
+        if 'operators' not in self._init_arguments:
+            operators = kwargs.pop('operators')
+            # in that case, there should not be any operators left in 'operators'
+            assert not operators
 
         return super(DiscretizationBase, self).with_(**kwargs)
 
@@ -135,22 +152,23 @@ class StationaryDiscretization(DiscretizationBase):
         The |Operator| L. The same as `operators['operator']`.
     rhs
         The |Functional| F. The same as `operators['rhs']`.
+    operators
+        Dict of all |Operators| appearing in the discretization.
     """
 
     special_operators = frozenset({'operator', 'rhs'})
 
-    def __init__(self, operator=None, rhs=None, products=None, operators=None,
+    def __init__(self, operator, rhs, products=None, operators=None,
                  parameter_space=None, estimator=None, visualizer=None, cache_region=None, name=None):
+        assert operator.source == operator.range == rhs.source
+        assert rhs.source == operator.source and rhs.range.is_scalar and rhs.linear
         super().__init__(operator=operator, rhs=rhs,
                          operators=operators,
                          products=products,
                          estimator=estimator, visualizer=visualizer,
                          cache_region=cache_region, name=name)
         self.solution_space = self.operator.source
-        self.build_parameter_type(self.operator, self.rhs)
         self.parameter_space = parameter_space
-        assert self.operator.source == self.operator.range == self.rhs.source
-        assert self.rhs.source == self.operator.source and self.rhs.range.is_scalar and self.rhs.linear
 
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu)
@@ -236,16 +254,26 @@ class InstationaryDiscretization(DiscretizationBase):
         The mass operator M. The same as `operators['mass']`.
     time_stepper
         The provided :class:`time-stepper <pymor.algorithms.timestepping.TimeStepperInterface>`.
+    operators
+        Dict of all |Operators| appearing in the discretization.
     """
 
     special_operators = frozenset({'operator', 'mass', 'rhs', 'initial_data'})
 
-    def __init__(self, T, initial_data=None, operator=None, rhs=None, mass=None, time_stepper=None, num_values=None,
+    def __init__(self, T, initial_data, operator, rhs, mass=None, time_stepper=None, num_values=None,
                  products=None, operators=None, parameter_space=None, estimator=None, visualizer=None,
                  cache_region=None, name=None):
 
         if isinstance(initial_data, VectorArrayInterface):
             initial_data = VectorOperator(initial_data, name='initial_data')
+
+        assert isinstance(time_stepper, TimeStepperInterface)
+        assert initial_data.source.is_scalar
+        assert operator.source == operator.range == initial_data.range
+        assert rhs is None \
+            or rhs.linear and rhs.source == operator.source and rhs.range.is_scalar
+        assert mass is None \
+            or mass.linear and mass.source == mass.range == operator.source
 
         super().__init__(initial_data=initial_data, operator=operator, rhs=rhs, mass=mass,
                          operators=operators, products=products, estimator=estimator,
@@ -258,14 +286,6 @@ class InstationaryDiscretization(DiscretizationBase):
         self.parameter_space = parameter_space
         if hasattr(time_stepper, 'nt'):
             self.add_with_arguments = self.add_with_arguments | {'time_stepper_nt'}
-
-        assert isinstance(time_stepper, TimeStepperInterface)
-        assert self.initial_data.source.is_scalar
-        assert self.operator.source == self.operator.range == self.initial_data.range
-        assert self.rhs is None \
-            or self.rhs.linear and self.rhs.source == self.operator.source and self.rhs.range.is_scalar
-        assert self.mass is None \
-            or self.mass.linear and self.mass.source == self.mass.range == self.operator.source
 
     def with_(self, **kwargs):
         assert set(kwargs.keys()) <= self.with_arguments
