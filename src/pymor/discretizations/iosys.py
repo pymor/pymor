@@ -557,7 +557,7 @@ class LTISystem(InputOutputSystem):
         of = self.gramian(typ, 'of', me_solver=me_solver)
 
         U, sv, Vh = spla.svd(self.E.apply2(of, cf))
-        return sv, NumpyVectorSpace.make_array(U.T), NumpyVectorSpace.make_array(Vh)
+        return sv, U.T, Vh
 
     @cached
     def norm(self, name='H2', me_solver=None):

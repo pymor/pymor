@@ -6,7 +6,6 @@ import numpy as np
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.reductors.basic import reduce_generic_pg
-from pymor.operators.constructions import VectorArrayOperator
 
 
 def bt(discretization, r=None, tol=None, typ='lyap', me_solver=None, method='bfsr'):
@@ -85,8 +84,8 @@ def bt(discretization, r=None, tol=None, typ='lyap', me_solver=None, method='bfs
         r_tol = np.argmax(bounds <= tol) + 1
         r = r_tol if r is None else min([r, r_tol])
 
-    V = VectorArrayOperator(cf, space_id='STATE').apply(V[:r])
-    W = VectorArrayOperator(of, space_id='STATE').apply(U[:r])
+    V = cf.lincomb(V[:r])
+    W = of.lincomb(U[:r])
 
     if method == 'sr':
         alpha = 1 / np.sqrt(sv[:r])
