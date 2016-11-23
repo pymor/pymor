@@ -202,17 +202,11 @@ def reduce_generic_pg(discretization, V, W, use_default=None):
 
     use_default = use_default or []
 
-    projected_ss_operators = {k: op.projected(range_basis=W, source_basis=V) if op and k not in use_default else None
-                              for k, op in discretization.ss_operators.items()}
-    projected_is_operators = {k: op.projected(range_basis=W, source_basis=None) if op and k not in use_default else None
-                              for k, op in discretization.is_operators.items()}
-    projected_so_operators = {k: op.projected(range_basis=None, source_basis=V) if op and k not in use_default else None
-                              for k, op in discretization.so_operators.items()}
-    projected_io_operators = discretization.io_operators
+    projected_ops = {k: op.projected(range_basis=W if W in op.range else None,
+                                     source_basis=V if V in op.source else None) if op and k not in use_default else None
+                     for k, op in discretization.operators.items()}
 
-    rd = discretization.with_(ss_operators=projected_ss_operators, is_operators=projected_is_operators,
-                              so_operators=projected_so_operators, io_operators=projected_io_operators,
-                              cont_time=discretization.cont_time)
+    rd = discretization.with_(operators=projected_ops)
     rd.disable_logging()
     rc = GenericRBReconstructor(V)
 

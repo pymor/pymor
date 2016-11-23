@@ -13,29 +13,20 @@ from pymor.algorithms.lyapunov import solve_lyap
 from pymor.algorithms.riccati import solve_ricc
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import cached
-from pymor.discretizations.interfaces import DiscretizationInterface
+from pymor.discretizations.basic import DiscretizationBase
 from pymor.operators.block import BlockOperator, BlockDiagonalOperator
 from pymor.operators.constructions import Concatenation, IdentityOperator, LincombOperator, ZeroOperator
-from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.tools.frozendict import FrozenDict
-from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-class InputOutputSystem(DiscretizationInterface):
+class InputOutputSystem(DiscretizationBase):
     """Base class for input-output systems."""
 
-    def __init__(self, m, p, ss_operators, is_operators, so_operators, io_operators, cont_time=True,
-                 cache_region='memory', name=None):
+    def __init__(self, m, p, cont_time=True, cache_region='memory', name=None, **kwargs):
         self.m = m
         self.p = p
-        self.ss_operators = FrozenDict(ss_operators)
-        self.is_operators = FrozenDict(is_operators)
-        self.so_operators = FrozenDict(so_operators)
-        self.io_operators = FrozenDict(io_operators)
+        super().__init__(cache_region=cache_region, name=name, **kwargs)
         self.cont_time = cont_time
-        self.enable_caching(cache_region)
-        self.name = name
 
     def _solve(self, mu=None):
         raise NotImplementedError
@@ -45,27 +36,32 @@ class InputOutputSystem(DiscretizationInterface):
         assert type(self) == type(other)
         assert self.cont_time == other.cont_time
 
-        add_ss_operators = {k: BlockDiagonalOperator((self.ss_operators[k], other.ss_operators[k]))
-                            for k in self.ss_operators}
-        add_is_operators = {k: BlockOperator.vstack((self.is_operators[k], other.is_operators[k]))
-                            for k in self.is_operators}
-        add_so_operators = {k: BlockOperator.hstack((self.so_operators[k], other.so_operators[k]))
-                            for k in self.so_operators}
-        add_io_operators = {k: BlockOperator([[(self.io_operators[k] + other.io_operators[k]).assemble()]])
-                            for k in self.io_operators}
+        def add_operator(op, other_op):
+            if op.source.id == 'INPUT':
+                if op.range.id == 'OUTPUT':
+                    return BlockOperator([[(op + other_op).assemble()]], source_id=op.source.id, range_id=op.range.id)
+                elif op.range.id == 'STATE':
+                    return BlockOperator.vstack((op, other_op), source_id=op.source.id, range_id=op.range.id)
+                else:
+                    raise NotImplementedError
+            else:
+                if op.range.id == 'OUTPUT':
+                    return BlockOperator.hstack((op, other_op), source_id=op.source.id, range_id=op.range.id)
+                elif op.range.id == 'STATE':
+                    return BlockDiagonalOperator((op, other_op), source_id=op.source.id, range_id=op.range.id)
+                else:
+                    raise NotImplementedError
 
-        return self.with_(ss_operators=add_ss_operators, is_operators=add_is_operators,
-                          so_operators=add_so_operators, io_operators=add_io_operators,
-                          cont_time=self.cont_time)
+        new_operators = {k: add_operator(self.operators[k], other.operators[k]) for k in self.operators}
+
+        return self.with_(operators=new_operators, cont_time=self.cont_time)
 
     def __neg__(self):
         """Negate input-state-output system."""
-        neg_so_operators = {k: (op * (-1)).assemble() for k, op in self.so_operators.items()}
-        neg_io_operators = {k: (op * (-1)).assemble() for k, op in self.io_operators.items()}
+        new_operators = {k: (op * (-1)).assemble() if op.range.id == 'OUTPUT' else op
+                         for k, op in self.operators.items()}
 
-        return self.with_(ss_operators=self.ss_operators, is_operators=self.is_operators,
-                          so_operators=neg_so_operators, io_operators=neg_io_operators,
-                          cont_time=self.cont_time)
+        return self.with_(operators=new_operators)
 
     def __sub__(self, other):
         """Subtract two input-state-output system."""
@@ -192,14 +188,6 @@ class LTISystem(InputOutputSystem):
         The |Operator| D or `None` (then D is assumed to be zero).
     E
         The |Operator| E or `None` (then E is assumed to be identity).
-    ss_operators
-        A dictonary for state-to-state |Operators| A and E.
-    is_operators
-        A dictonary for input-to-state |Operator| B.
-    so_operators
-        A dictonary for state-to-output |Operator| C.
-    io_operators
-        A dictonary for input-to-output |operator| D.
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     cache_region
@@ -213,75 +201,39 @@ class LTISystem(InputOutputSystem):
     n
         The order of the system.
     A
-        The |Operator| A. The same as `ss_operators['A']`.
+        The |Operator| A.
     B
-        The |Operator| B. The same as `is_operators['B']`.
+        The |Operator| B.
     C
-        The |Operator| C. The same as `so_operators['C']`.
+        The |Operator| C.
     D
-        The |Operator| D. The same as `io_operators['D']`.
+        The |Operator| D.
     E
-        The |Operator| E. The same as `ss_operators['E']`.
+        The |Operator| E.
+    operators
+        Dict of all |Operators| appearing in the discretization.
     """
+
     linear = True
 
-    def __init__(self, A=None, B=None, C=None, D=None, E=None, ss_operators=None, is_operators=None,
-                 so_operators=None, io_operators=None, cont_time=True, cache_region='memory', name=None):
-        ss_operators = ss_operators or {}
-        is_operators = is_operators or {}
-        so_operators = so_operators or {}
-        io_operators = io_operators or {}
-        A = A or ss_operators['A']
-        B = B or is_operators['B']
-        C = C or so_operators['C']
-        D = D or io_operators.get('D')
-        E = E or ss_operators.get('E')
-        assert isinstance(A, OperatorInterface) and A.linear
-        assert A.source == A.range
-        assert isinstance(B, OperatorInterface) and B.linear
-        assert B.range == A.source
-        assert isinstance(C, OperatorInterface) and C.linear
-        assert C.source == A.range
-        assert (D is None or
-                isinstance(D, OperatorInterface) and D.linear and D.source == B.source and D.range == C.range)
-        assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source
+    special_operators = frozenset({'A', 'B', 'C', 'D', 'E'})
+
+    def __init__(self, A, B, C, D=None, E=None, cont_time=True, cache_region='memory', name=None):
+
+        D = D or ZeroOperator(B.source, C.range)
+        E = E or IdentityOperator(A.source)
+
+        assert A.linear and A.source == A.range and A.source.id == 'STATE'
+        assert B.linear and B.range == A.source and B.source.id == 'INPUT'
+        assert C.linear and C.source == A.range and C.range.id == 'OUTPUT'
+        assert D.linear and D.source == B.source and D.range == C.range
+        assert E.linear and E.source == E.range == A.source
         assert cont_time in (True, False)
 
+        super().__init__(B.source.dim, C.range.dim, cont_time=cont_time, cache_region=cache_region, name=name,
+                         A=A, B=B, C=C, D=D, E=E)
+
         self.n = A.source.dim
-        self.A = A
-        self.B = B
-        self.C = C
-        self.D = D if D is not None else ZeroOperator(B.source, C.range)
-        self.E = E if E is not None else IdentityOperator(A.source)
-        super().__init__(m=B.source.dim, p=C.range.dim,
-                         ss_operators={'A': A, 'E': self.E}, is_operators={'B': B},
-                         so_operators={'C': C}, io_operators={'D': self.D},
-                         cont_time=cont_time, cache_region=cache_region, name=name)
-        self.build_parameter_type(inherits=(A, B, C, D, E))
-
-    def with_(self, **kwargs):
-        assert set(kwargs.keys()) <= self.with_arguments
-
-        # when 'ss_operators' is not given but 'A' or 'E', make sure that
-        # we use the old 'ss_operators' dict but with updated 'A' and 'E'
-        kwargs.setdefault('ss_operators', dict(self.ss_operators,
-                                               A=kwargs.get('A', self.A),
-                                               E=kwargs.get('E', self.E)))
-        kwargs.setdefault('is_operators', dict(self.is_operators,
-                                               B=kwargs.get('B', self.B)))
-        kwargs.setdefault('so_operators', dict(self.so_operators,
-                                               C=kwargs.get('C', self.C)))
-        kwargs.setdefault('io_operators', dict(self.io_operators,
-                                               D=kwargs.get('D', self.D)))
-
-        # make sure we do not use self.A (for the case that 'ss_operators' is given)
-        kwargs.setdefault('A', None)
-        kwargs.setdefault('B', None)
-        kwargs.setdefault('C', None)
-        kwargs.setdefault('D', None)
-        kwargs.setdefault('E', None)
-
-        return super().with_(**kwargs)
 
     @classmethod
     def from_matrices(cls, A, B, C, D=None, E=None, cont_time=True):
@@ -315,13 +267,13 @@ class LTISystem(InputOutputSystem):
         assert D is None or isinstance(D, (np.ndarray, sps.spmatrix))
         assert E is None or isinstance(E, (np.ndarray, sps.spmatrix))
 
-        A = NumpyMatrixOperator(A)
-        B = NumpyMatrixOperator(B)
-        C = NumpyMatrixOperator(C)
+        A = NumpyMatrixOperator(A, source_id='STATE', range_id='STATE')
+        B = NumpyMatrixOperator(B, source_id='INPUT', range_id='STATE')
+        C = NumpyMatrixOperator(C, source_id='STATE', range_id='OUTPUT')
         if D is not None:
-            D = NumpyMatrixOperator(D)
+            D = NumpyMatrixOperator(D, source_id='INPUT', range_id='OUTPUT')
         if E is not None:
-            E = NumpyMatrixOperator(E)
+            E = NumpyMatrixOperator(E, source_id='STATE', range_id='STATE')
 
         return cls(A, B, C, D, E, cont_time=cont_time)
 
@@ -684,9 +636,7 @@ class TF(InputOutputSystem):
 
         self.tf = H
         self.dtf = dH
-        super().__init__(m=m, p=p,
-                         ss_operators={}, is_operators={}, so_operators={}, io_operators={},
-                         cont_time=cont_time, cache_region=cache_region, name=name)
+        super().__init__(m=m, p=p, cont_time=cont_time, cache_region=cache_region, name=name)
 
     def eval_tf(self, s):
         return self.tf(s)
@@ -727,12 +677,6 @@ class SecondOrderSystem(InputOutputSystem):
         The |Operator| Cp.
     Cv
         The |Operator| Cv.
-    ss_operators
-        A dictonary for state-to-state |Operators| M, D, and K.
-    is_operators
-        A dictonary for input-to-state |Operator| B.
-    so_operators
-        A dictonary for state-to-output |Operators| Cp and Cv.
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     cache_region
@@ -746,82 +690,43 @@ class SecondOrderSystem(InputOutputSystem):
     n
         The order of the system (equal to M.source.dim).
     M
-        The |Operator| M. The same as `ss_operators['M']`.
+        The |Operator| M.
     D
-        The |Operator| D. The same as `ss_operators['D']`.
+        The |Operator| D.
     K
-        The |Operator| K. The same as `ss_operators['K']`.
+        The |Operator| K.
     B
-        The |Operator| B. The same as `is_operators['B']`.
+        The |Operator| B.
     Cp
-        The |Operator| Cp. The same as `so_operators['Cp']`.
+        The |Operator| Cp.
     Cv
-        The |Operator| Cv. The same as `so_operators['Cv']`.
+        The |Operator| Cv.
+    operators
+        Dictionary of all |Operators| contained in the discretization.
     """
     linear = True
 
-    def __init__(self, M=None, D=None, K=None, B=None, Cp=None, Cv=None, ss_operators=None, is_operators=None,
-                 so_operators=None, io_operators=None, cont_time=True, cache_region='memory', name=None):
-        ss_operators = ss_operators or {}
-        is_operators = is_operators or {}
-        so_operators = so_operators or {}
-        io_operators = io_operators or {}
-        M = M or ss_operators.get('M')
-        D = D or ss_operators.get('D')
-        K = K or ss_operators['D']
-        B = B or is_operators['B']
-        Cp = Cp or so_operators['Cp']
-        Cv = Cv or so_operators['Cv']
-        assert isinstance(K, OperatorInterface) and K.linear
-        assert K.source == K.range
-        assert isinstance(B, OperatorInterface) and B.linear
-        assert B.range == K.source
-        assert isinstance(Cp, OperatorInterface) and Cp.linear
-        assert Cp.source == K.range
-        assert isinstance(Cv, OperatorInterface) and Cv.linear
-        assert Cv.source == K.range
+    special_operators = frozenset({'M', 'D', 'K', 'B', 'Cp', 'Cv'})
+
+    def __init__(self, K, B, Cp, Cv, M=None, D=None,
+                 cont_time=True, cache_region='memory', name=None):
+
+        M = M or IdentityOperator(K.source)
+        D = D or ZeroOperator(K.source, K.range)
+
+        assert K.linear and K.source == K.range and K.source.id == 'STATE'
+        assert B.linear and B.range == K.source and B.source.id == 'INPUT'
+        assert Cp.linear and Cp.source == K.range and Cp.range.id == 'OUTPUT'
+        assert Cv.linear and Cv.source == K.range
         assert Cp.range == Cv.range
-        assert M is None or isinstance(M, OperatorInterface) and M.linear and M.source == M.range == K.source
-        assert D is None or isinstance(D, OperatorInterface) and D.linear and D.source == D.range == K.source
+        assert M.linear and M.source == M.range == K.source
+        assert D.linear and D.source == D.range == K.source
         assert cont_time in (True, False)
 
+        super().__init__(B.source.dim, Cp.range.dim, cont_time=cont_time, cache_region=cache_region, name=name,
+                         K=K, B=B, Cp=Cp, Cv=Cv, M=M, D=D)
+
         self.n = K.source.dim
-        self.M = M if M is not None else IdentityOperator(K.source)
-        self.D = D if D is not None else ZeroOperator(K.source, K.range)
-        self.K = K
-        self.B = B
-        self.Cp = Cp
-        self.Cv = Cv
-        super().__init__(m=B.source.dim, p=Cp.range.dim,
-                         ss_operators={'M': self.M, 'D': self.D, 'K': K}, is_operators={'B': B},
-                         so_operators={'Cp': Cp, 'Cv': Cv}, io_operators={},
-                         cont_time=cont_time, cache_region=cache_region, name=name)
-        self.build_parameter_type(inherits=(M, D, K, B, Cp, Cv))
-
-    def with_(self, **kwargs):
-        assert set(kwargs.keys()) <= self.with_arguments
-
-        # when 'ss_operators' is not given but 'M', 'D', or 'K', make sure that
-        # we use the old 'ss_operators' dict but with updated 'M', 'D', and 'K'
-        kwargs.setdefault('ss_operators', dict(self.ss_operators,
-                                               M=kwargs.get('M', self.M),
-                                               D=kwargs.get('D', self.D),
-                                               K=kwargs.get('K', self.K)))
-        kwargs.setdefault('is_operators', dict(self.is_operators,
-                                               B=kwargs.get('B', self.B)))
-        kwargs.setdefault('so_operators', dict(self.so_operators,
-                                               Cp=kwargs.get('Cp', self.Cp),
-                                               Cv=kwargs.get('Cv', self.Cv)))
-
-        # make sure we do not use self.M (for the case that 'ss_operators' is given)
-        kwargs.setdefault('M', None)
-        kwargs.setdefault('D', None)
-        kwargs.setdefault('K', None)
-        kwargs.setdefault('B', None)
-        kwargs.setdefault('Cp', None)
-        kwargs.setdefault('Cv', None)
-
-        return super().with_(**kwargs)
 
     def eval_tf(self, s):
         """Evaluate the transfer function.
@@ -943,12 +848,6 @@ class LinearDelaySystem(InputOutputSystem):
         The |Operator| B.
     C
         The |Operator| C.
-    ss_operators
-        A dictonary for state-to-state |Operators| E, A, and Ad.
-    is_operators
-        A dictonary for input-to-state |Operator| B.
-    so_operators
-        A dictonary for state-to-output |Operator| C.
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     cache_region
@@ -964,80 +863,39 @@ class LinearDelaySystem(InputOutputSystem):
     q
         The number of delay terms.
     E
-        The |Operator| E. The same as `ss_operators['E']`.
+        The |Operator| E.
     A
-        The |Operator| A. The same as `ss_operators['A']`.
+        The |Operator| A.
     Ad
-        The tuple of |Operators| A_i. The same as `ss_operators['Ad']`.
+        The tuple of |Operators| A_i.
     B
-        The |Operator| B. The same as `is_operators['B']`.
+        The |Operator| B.
     C
-        The |Operator| C. The same as `so_operators['C']`.
+        The |Operator| C.
+    operators
+        Dict of all |Operators| appearing in the discretization.
     """
     linear = True
+    special_operators = frozenset({'A', 'Ad', 'B', 'C', 'E'})
 
-    def __init__(self, E=None, A=None, Ad=None, tau=None, B=None, C=None, ss_operators=None, is_operators=None,
-                 so_operators=None, io_operators=None, cont_time=True, cache_region='memory', name=None):
-        ss_operators = ss_operators or {}
-        is_operators = is_operators or {}
-        so_operators = so_operators or {}
-        io_operators = io_operators or {}
-        E = E or ss_operators.get('E')
-        A = A or ss_operators['A']
-        Ad = Ad or ss_operators['Ad']
-        B = B or is_operators['B']
-        C = C or so_operators['C']
-        assert isinstance(A, OperatorInterface) and A.linear
-        assert A.source == A.range
-        assert isinstance(Ad, tuple)
-        assert len(Ad) > 0
-        assert all(isinstance(Ai, OperatorInterface) and Ai.linear for Ai in Ad)
-        assert all(Ai.source == Ai.range == A.source for Ai in Ad)
-        assert isinstance(tau, tuple)
-        assert len(tau) == len(Ad)
-        assert all(taui > 0 for taui in tau)
-        assert isinstance(B, OperatorInterface) and B.linear
-        assert B.range == A.source
-        assert isinstance(C, OperatorInterface) and C.linear
-        assert C.source == A.range
-        assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source
+    def __init__(self, A, Ad, tau, B, C, E=None, cont_time=True, cache_region='memory', name=None):
+
+        E = E or IdentityOperator(A.source)
+
+        assert A.linear and A.source == A.range and A.source.id == 'STATE'
+        assert isinstance(Ad, tuple) and len(Ad) > 0
+        assert all(Ai.linear and Ai.source == Ai.range == A.source for Ai in Ad)
+        assert isinstance(tau, tuple) and len(tau) == len(Ad) and all(taui > 0 for taui in tau)
+        assert B.linear and B.range == A.source and B.source.id == 'INPUT'
+        assert C.linear and C.source == A.range and C.range.id == 'OUTPUT'
+        assert E.linear and E.source == E.range == A.source
         assert cont_time in (True, False)
 
+        super().__init__(m=B.source.dim, p=C.range.dim, cont_time=cont_time, cache_region=cache_region, name=name,
+                         A=A, Ad=Ad, B=B, C=C, E=E)
+        self.tau = tau
         self.n = A.source.dim
         self.q = len(Ad)
-        self.E = E if E is not None else IdentityOperator(A.source)
-        self.A = A
-        self.Ad = Ad
-        self.B = B
-        self.C = C
-        super().__init__(m=B.source.dim, p=C.range.dim,
-                         ss_operators={'E': self.E, 'A': A, 'Ad': Ad}, is_operators={'B': B},
-                         so_operators={'C': C}, io_operators={},
-                         cont_time=cont_time, cache_region=cache_region, name=name)
-        self.build_parameter_type(inherits=(E, A, Ad, B, C))
-
-    def with_(self, **kwargs):
-        assert set(kwargs.keys()) <= self.with_arguments
-
-        # when 'ss_operators' is not given but 'A' or 'E', make sure that
-        # we use the old 'ss_operators' dict but with updated 'A' and 'E'
-        kwargs.setdefault('ss_operators', dict(self.ss_operators,
-                                               E=kwargs.get('E', self.E),
-                                               A=kwargs.get('A', self.A),
-                                               Ad=kwargs.get('Ad', self.Ad)))
-        kwargs.setdefault('is_operators', dict(self.is_operators,
-                                               B=kwargs.get('B', self.B)))
-        kwargs.setdefault('so_operators', dict(self.so_operators,
-                                               C=kwargs.get('C', self.C)))
-
-        # make sure we do not use self.A (for the case that 'ss_operators' is given)
-        kwargs.setdefault('E', None)
-        kwargs.setdefault('A', None)
-        kwargs.setdefault('Ad', None)
-        kwargs.setdefault('B', None)
-        kwargs.setdefault('C', None)
-
-        return super().with_(**kwargs)
 
     def eval_tf(self, s):
         r"""Evaluate the transfer function.
@@ -1154,12 +1012,6 @@ class LinearStochasticSystem(InputOutputSystem):
         The |Operator| B.
     C
         The |Operator| C.
-    ss_operators
-        A dictonary for state-to-state |Operators| E, A, and As.
-    is_operators
-        A dictonary for input-to-state |Operator| B.
-    so_operators
-        A dictonary for state-to-output |Operator| C.
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     cache_region
@@ -1175,80 +1027,41 @@ class LinearStochasticSystem(InputOutputSystem):
     q
         The number of stochastic processes.
     E
-        The |Operator| E. The same as `ss_operators['E']`.
+        The |Operator| E.
     A
-        The |Operator| A. The same as `ss_operators['A']`.
+        The |Operator| A.
     As
-        The tuple of |Operators| A_i. The same as `ss_operators['As']`.
+        The tuple of |Operators| A_i.
     B
-        The |Operator| B. The same as `is_operators['B']`.
+        The |Operator| B.
     C
-        The |Operator| C. The same as `so_operators['C']`.
+        The |Operator| C.
+    operators
+        Dictionary of all |Operators| contained in the discretization.
     """
-    linear = True
 
-    def __init__(self, E=None, A=None, As=None, tau=None, B=None, C=None, ss_operators=None, is_operators=None,
-                 so_operators=None, io_operators=None, cont_time=True, cache_region='memory', name=None):
-        ss_operators = ss_operators or {}
-        is_operators = is_operators or {}
-        so_operators = so_operators or {}
-        io_operators = io_operators or {}
-        E = E or ss_operators.get('E')
-        A = A or ss_operators['A']
-        As = As or ss_operators['As']
-        B = B or is_operators['B']
-        C = C or so_operators['C']
-        assert isinstance(A, OperatorInterface) and A.linear
-        assert A.source == A.range
-        assert isinstance(As, tuple)
-        assert len(As) > 0
-        assert all(isinstance(Ai, OperatorInterface) and Ai.linear for Ai in As)
-        assert all(Ai.source == Ai.range == A.source for Ai in As)
-        assert isinstance(tau, tuple)
-        assert len(tau) == len(As)
-        assert all(taui > 0 for taui in tau)
-        assert isinstance(B, OperatorInterface) and B.linear
-        assert B.range == A.source
-        assert isinstance(C, OperatorInterface) and C.linear
-        assert C.source == A.range
-        assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source
+    linear = True
+    special_operators = frozenset({'A', 'As', 'B', 'C', 'E'})
+
+    def __init__(self, A, As, tau, B, C, E=None, cont_time=True, cache_region='memory', name=None):
+
+        E = E or IdentityOperator(A.source)
+
+        assert A.linear and A.source == A.range and A.source == 'STATE'
+        assert isinstance(As, tuple) and len(As) > 0
+        assert all(Ai.linear and Ai.source == Ai.range == A.source for Ai in As)
+        assert isinstance(tau, tuple) and len(tau) == len(As) and all(taui > 0 for taui in tau)
+        assert B.linear and B.range == A.source and B.source.id == 'INPUT'
+        assert C.linear and C.source == A.range and C.range.id == 'OUTPUT'
+        assert E.linear and E.source == E.range == A.source
         assert cont_time in (True, False)
+
+        super().__init__(m=B.source.dim, p=C.range.dim, cont_time=cont_time, cache_region=cache_region, name=name,
+                         A=A, As=As, B=B, C=C, E=E)
 
         self.n = A.source.dim
         self.q = len(As)
-        self.E = E if E is not None else IdentityOperator(A.source)
-        self.A = A
-        self.As = As
-        self.B = B
-        self.C = C
-        super().__init__(m=B.source.dim, p=C.range.dim,
-                         ss_operators={'E': self.E, 'A': A, 'As': As}, is_operators={'B': B},
-                         so_operators={'C': C}, io_operators={},
-                         cont_time=cont_time, cache_region=cache_region, name=name)
-        self.build_parameter_type(inherits=(E, A, As, B, C))
-
-    def with_(self, **kwargs):
-        assert set(kwargs.keys()) <= self.with_arguments
-
-        # when 'ss_operators' is not given but 'A' or 'E', make sure that
-        # we use the old 'ss_operators' dict but with updated 'A' and 'E'
-        kwargs.setdefault('ss_operators', dict(self.ss_operators,
-                                               E=kwargs.get('E', self.E),
-                                               A=kwargs.get('A', self.A),
-                                               As=kwargs.get('As', self.As)))
-        kwargs.setdefault('is_operators', dict(self.is_operators,
-                                               B=kwargs.get('B', self.B)))
-        kwargs.setdefault('so_operators', dict(self.so_operators,
-                                               C=kwargs.get('C', self.C)))
-
-        # make sure we do not use self.A (for the case that 'ss_operators' is given)
-        kwargs.setdefault('E', None)
-        kwargs.setdefault('A', None)
-        kwargs.setdefault('As', None)
-        kwargs.setdefault('B', None)
-        kwargs.setdefault('C', None)
-
-        return super().with_(**kwargs)
+        self.tau = tau
 
 
 class BilinearSystem(InputOutputSystem):
@@ -1282,12 +1095,6 @@ class BilinearSystem(InputOutputSystem):
         The |Operator| B.
     C
         The |Operator| C.
-    ss_operators
-        A dictonary for state-to-state |Operators| E, A, and N_i.
-    is_operators
-        A dictonary for input-to-state |Operator| B.
-    so_operators
-        A dictonary for state-to-output |Operator| C.
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     cache_region
@@ -1301,73 +1108,34 @@ class BilinearSystem(InputOutputSystem):
     n
         The order of the system (equal to A.source.dim).
     E
-        The |Operator| E. The same as `ss_operators['E']`.
+        The |Operator| E.
     A
-        The |Operator| A. The same as `ss_operators['A']`.
+        The |Operator| A.
     N
-        The tuple of |Operators| N_i. The same as `ss_operators['N']`.
+        The tuple of |Operators| N_i.
     B
-        The |Operator| B. The same as `is_operators['B']`.
+        The |Operator| B.
     C
-        The |Operator| C. The same as `so_operators['C']`.
+        The |Operator| C.
+    operators
+        Dictionary of all |Operators| contained in the discretization.
     """
+
     linear = False
 
-    def __init__(self, E=None, A=None, N=None, B=None, C=None, ss_operators=None, is_operators=None,
-                 so_operators=None, io_operators=None, cont_time=True, cache_region='memory', name=None):
-        ss_operators = ss_operators or {}
-        is_operators = is_operators or {}
-        so_operators = so_operators or {}
-        io_operators = io_operators or {}
-        E = E or ss_operators.get('E')
-        A = A or ss_operators['A']
-        N = N or ss_operators['N']
-        B = B or is_operators['B']
-        C = C or so_operators['C']
-        assert isinstance(A, OperatorInterface) and A.linear
-        assert A.source == A.range
-        assert isinstance(B, OperatorInterface) and B.linear
-        assert B.range == A.source
-        assert isinstance(N, tuple)
-        assert len(N) == B.source.dim
-        assert all(isinstance(Ni, OperatorInterface) and Ni.linear for Ni in N)
-        assert all(Ni.source == Ni.range == A.source for Ni in N)
-        assert isinstance(C, OperatorInterface) and C.linear
-        assert C.source == A.range
-        assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source
+    def __init__(self, A, N, B, C, E=None, cont_time=True, cache_region='memory', name=None):
+
+        E = E or IdentityOperator(A.source)
+
+        assert A.linear and A.source == A.range and A.source.id == 'STATE'
+        assert B.linear and B.range == A.source and B.source.id == 'INPUT'
+        assert isinstance(N, tuple) and len(N) == B.source.dim
+        assert all(Ni.linear and Ni.source == Ni.range == A.source for Ni in N)
+        assert C.linear and C.source == A.range and C.range.id == 'OUTPUT'
+        assert E.linear and E.source == E.range == A.source
         assert cont_time in (True, False)
 
+        super().__init__(m=B.source.dim, p=C.range.dim, cont_time=cont_time, cache_region=cache_region, name=name,
+                         A=A, N=N, B=B, C=C, E=E)
+
         self.n = A.source.dim
-        self.E = E if E is not None else IdentityOperator(A.source)
-        self.A = A
-        self.N = N
-        self.B = B
-        self.C = C
-        super().__init__(m=B.source.dim, p=C.range.dim,
-                         ss_operators={'E': self.E, 'A': A, 'N': N}, is_operators={'B': B},
-                         so_operators={'C': C}, io_operators={},
-                         cont_time=cont_time, cache_region=cache_region, name=name)
-        self.build_parameter_type(inherits=(E, A, N, B, C))
-
-    def with_(self, **kwargs):
-        assert set(kwargs.keys()) <= self.with_arguments
-
-        # when 'ss_operators' is not given but 'A' or 'E', make sure that
-        # we use the old 'ss_operators' dict but with updated 'A' and 'E'
-        kwargs.setdefault('ss_operators', dict(self.ss_operators,
-                                               E=kwargs.get('E', self.E),
-                                               A=kwargs.get('A', self.A),
-                                               N=kwargs.get('N', self.N)))
-        kwargs.setdefault('is_operators', dict(self.is_operators,
-                                               B=kwargs.get('B', self.B)))
-        kwargs.setdefault('so_operators', dict(self.so_operators,
-                                               C=kwargs.get('C', self.C)))
-
-        # make sure we do not use self.A (for the case that 'ss_operators' is given)
-        kwargs.setdefault('E', None)
-        kwargs.setdefault('A', None)
-        kwargs.setdefault('N', None)
-        kwargs.setdefault('B', None)
-        kwargs.setdefault('C', None)
-
-        return super().with_(**kwargs)
