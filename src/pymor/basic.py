@@ -36,9 +36,9 @@ from pymor.domaindescriptions.polygonal import DiscDomain, CircularSectorDomain,
 
 from pymor.domaindiscretizers.default import discretize_domain_default
 
-from pymor.discretizers.advection import discretize_nonlinear_instationary_advection_fv
-from pymor.discretizers.elliptic import discretize_elliptic_cg, discretize_elliptic_fv
-from pymor.discretizers.parabolic import discretize_parabolic_cg, discretize_parabolic_fv
+from pymor.discretizers.elliptic import discretize_elliptic_cg
+from pymor.discretizers.parabolic import discretize_parabolic_cg
+from pymor.discretizers.fv import discretize_stationary_fv, discretize_instationary_fv
 
 from pymor.functions.basic import ConstantFunction, GenericFunction, ExpressionFunction, LincombFunction
 from pymor.functions.bitmap import BitmapFunction

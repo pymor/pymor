@@ -4,6 +4,7 @@
 
 import pytest
 
+from pymor.domaindescriptions.basic import RectDomain
 from pymor.analyticalproblems.burgers import burgers_problem, burgers_problem_2d
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.analyticalproblems.helmholtz import helmholtz_problem
@@ -37,7 +38,7 @@ burgers_problems = \
 
 
 picklable_elliptic_problems = \
-    [EllipticProblem(),
+    [EllipticProblem(domain=RectDomain(), rhs=ConstantFunction(dim_domain=2, value=1.)),
      helmholtz_problem()]
 
 

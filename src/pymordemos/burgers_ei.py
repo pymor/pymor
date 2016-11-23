@@ -88,7 +88,7 @@ from pymor.algorithms.greedy import greedy
 from pymor.algorithms.basisextension import pod_basis_extension
 from pymor.algorithms.ei import interpolate_operators
 from pymor.analyticalproblems.burgers import burgers_problem_2d
-from pymor.discretizers.advection import discretize_nonlinear_instationary_advection_fv
+from pymor.discretizers.fv import discretize_instationary_fv
 from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
@@ -130,12 +130,13 @@ def main(args):
                                  parameter_range=(args['EXP_MIN'], args['EXP_MAX']), torus=not args['--not-periodic'])
 
     print('Discretize ...')
-    discretizer = discretize_nonlinear_instationary_advection_fv
     if args['--grid-type'] == 'rect':
         args['--grid'] *= 1. / m.sqrt(2)
-    discretization, _ = discretizer(problem, diameter=1. / args['--grid'],
-                                    num_flux=args['--num-flux'], lxf_lambda=args['--lxf-lambda'],
-                                    nt=args['--nt'], domain_discretizer=domain_discretizer)
+    discretization, _ = discretize_instationary_fv(
+        problem, diameter=1. / args['--grid'],
+        num_flux=args['--num-flux'], lxf_lambda=args['--lxf-lambda'],
+        nt=args['--nt'], domain_discretizer=domain_discretizer
+    )
 
     if args['--cache-region'] != 'none':
         discretization.enable_caching(args['--cache-region'])

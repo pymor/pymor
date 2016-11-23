@@ -33,7 +33,8 @@ from docopt import docopt
 import numpy as np
 
 from pymor.analyticalproblems.elliptic import EllipticProblem
-from pymor.discretizers.elliptic import discretize_elliptic_cg, discretize_elliptic_fv
+from pymor.discretizers.elliptic import discretize_elliptic_cg
+from pymor.discretizers.fv import discretize_stationary_fv
 from pymor.domaindescriptions.basic import RectDomain
 from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.functions.basic import ExpressionFunction, ConstantFunction
@@ -88,7 +89,7 @@ def elliptic_demo(args):
             grid, bi = discretize_domain_default(problem.domain, diameter=m.sqrt(2) / n, grid_type=RectGrid)
         else:
             grid, bi = discretize_domain_default(problem.domain, diameter=1. / n, grid_type=TriaGrid)
-        discretizer = discretize_elliptic_fv if args['--fv'] else discretize_elliptic_cg
+        discretizer = discretize_stationary_fv if args['--fv'] else discretize_elliptic_cg
         discretization, _ = discretizer(analytical_problem=problem, grid=grid, boundary_info=bi)
 
         print('Solve ...')
