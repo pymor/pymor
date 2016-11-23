@@ -28,7 +28,7 @@ class BlockOperator(OperatorBase):
         for (i, j) in np.ndindex(self._blocks.shape):
             yield self._blocks[i, j]
 
-    def __init__(self, blocks):
+    def __init__(self, blocks, source_id='STATE', range_id='STATE'):
         blocks = np.array(blocks)
         assert isinstance(blocks, np.ndarray) and blocks.ndim == 2
         self._blocks = blocks
@@ -55,8 +55,8 @@ class BlockOperator(OperatorBase):
             if blocks[i, j] is None:
                 self._blocks[i, j] = ZeroOperator(source_types[j], range_types[i])
 
-        self.source = BlockVectorSpace(source_types)
-        self.range = BlockVectorSpace(range_types)
+        self.source = BlockVectorSpace(source_types, id_=source_id)
+        self.range = BlockVectorSpace(range_types, id_=range_id)
         self.num_source_blocks = len(source_types)
         self.num_range_blocks = len(range_types)
         self.linear = all(op.linear for op in self._operators())
@@ -64,10 +64,11 @@ class BlockOperator(OperatorBase):
 
     @property
     def T(self):
-        return type(self)(np.vectorize(lambda op: op.T if op else None)(self._blocks.T))
+        return type(self)(np.vectorize(lambda op: op.T if op else None)(self._blocks.T),
+                          source_id=self.range_id, range_id=self.source.id)
 
     @classmethod
-    def hstack(cls, operators):
+    def hstack(cls, operators, source_id='STATE', range_id='STATE'):
         """Horizontal stacking of |Operators|.
 
         Parameters
@@ -76,10 +77,10 @@ class BlockOperator(OperatorBase):
             An iterable where each item is an |Operator| or `None`.
         """
         blocks = np.array([[op for op in operators]])
-        return cls(blocks)
+        return cls(blocks, source_id=source_id, range_id=range_id)
 
     @classmethod
-    def vstack(cls, operators):
+    def vstack(cls, operators, source_id='STATE', range_id='STATE'):
         """Vertical stacking of |Operators|.
 
         Parameters
@@ -88,7 +89,7 @@ class BlockOperator(OperatorBase):
             An iterable where each item is an |Operator| or `None`.
         """
         blocks = np.array([[op] for op in operators])
-        return cls(blocks)
+        return cls(blocks, source_id=source_id, range_id=range_id)
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -161,7 +162,7 @@ class BlockDiagonalOperator(BlockOperator):
     block diagonal case.
     """
 
-    def __init__(self, blocks):
+    def __init__(self, blocks, source_id='STATE', range_id='STATE'):
         blocks = np.array(blocks)
         assert 1 <= blocks.ndim <= 2
         if blocks.ndim == 2:
@@ -170,7 +171,7 @@ class BlockDiagonalOperator(BlockOperator):
         blocks2 = np.empty((n, n), dtype=object)
         for i, op in enumerate(blocks):
             blocks2[i, i] = op
-        super().__init__(blocks2)
+        super().__init__(blocks2, source_id=source_id, range_id=range_id)
 
     def apply(self, U, mu=None):
         assert U in self.source
