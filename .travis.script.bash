@@ -1,4 +1,4 @@
-
+#!/bin/bash
 # most of these should be baked into the docker image already
 pip install -r requirements.txt
 pip install -r requirements-travis.txt
