@@ -1,22 +1,20 @@
 #!/bin/bash
-# base image does alias sudo='gosu root'
-
 # most of these should be baked into the docker image already
-sudo pip install -r requirements.txt
-sudo pip install -r requirements-travis.txt
-sudo pip install -r requirements-optional.txt || echo "Some optional modules failed to install"
+pip install -r requirements.txt
+pip install -r requirements-travis.txt
+pip install -r requirements-optional.txt || echo "Some optional modules failed to install"
 
 
 python setup.py build_ext -i
 if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     export SDIST_DIR=/tmp/pymor_sdist/
     # this fails on PRs, so skip it
-    [[ "${TRAVIS_PULL_REQUEST}" != "false" ]] || sudo pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
-    sudo pip uninstall  -y pymor
+    [[ "${TRAVIS_PULL_REQUEST}" != "false" ]] || pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
+    pip uninstall  -y pymor
     python setup.py sdist -d ${SDIST_DIR}/ --format=gztar
     check-manifest -p python ${PWD}
     pushd ${SDIST_DIR}
-    sudo pip install $(ls ${SDIST_DIR})
+    pip install $(ls ${SDIST_DIR})
     popd
     xvfb-run -a py.test --pyargs pymortests -c .installed_pytest.ini -k "not slow"
 elif [ "${PYTEST_MARKER}" == "MPI" ] ; then
