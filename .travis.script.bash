@@ -1,5 +1,7 @@
 #!/bin/bash
-# base image does alias sudo='gosu root'
+
+# base image has no sudo installed as per official docker suggestions
+alias sudo='gosu root'
 
 # most of these should be baked into the docker image already
 sudo pip install -r requirements.txt
