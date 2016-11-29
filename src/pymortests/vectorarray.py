@@ -29,7 +29,9 @@ def ind_complement(v, ind):
 
 
 def indexed(v, ind):
-    if type(ind) is slice:
+    if ind is None:
+        return v
+    elif type(ind) is slice:
         return v[ind]
     elif isinstance(ind, _INDEXTYPES):
         return v[[ind]]
@@ -221,16 +223,24 @@ def test_getitem_repeated(vector_array):
 
 def test_copy(vector_array):
     v = vector_array
-    for ind in valid_inds(v):
-        c = v[ind].copy()
-        assert len(c) == v.len_ind(ind)
-        assert c.dim == v.dim
-        assert c.subtype == v.subtype
-        assert np.all(almost_equal(c, v[ind]))
-        if hasattr(v, 'data'):
-            dv = v.data
-            dc = c.data
-            assert np.allclose(dc, indexed(dv, ind))
+    for ind in chain(valid_inds(v), [None]):
+        for deep in (True, False):
+            if ind is None:
+                c = v.copy(deep)
+                assert len(c) == len(v)
+            else:
+                c = v[ind].copy(deep)
+                assert len(c) == v.len_ind(ind)
+            assert c.dim == v.dim
+            assert c.subtype == v.subtype
+            if ind is None:
+                assert np.all(almost_equal(c, v))
+            else:
+                assert np.all(almost_equal(c, v[ind]))
+            if hasattr(v, 'data'):
+                dv = v.data
+                dc = c.data
+                assert np.allclose(dc, indexed(dv, ind))
 
 
 def test_copy_repeated_index(vector_array):
@@ -238,20 +248,21 @@ def test_copy_repeated_index(vector_array):
     if len(v) == 0:
         return
     ind = [int(len(vector_array) * 3 / 4)] * 2
-    c = v[ind].copy()
-    assert almost_equal(c[0], v[ind[0]])
-    assert almost_equal(c[1], v[ind[0]])
-    if hasattr(v, 'data'):
-        dv = indexed(v.data, ind)
-        dc = c.data
-        assert dv.shape == dc.shape
-    c[0].scal(2.)
-    assert almost_equal(c[1], v[ind[0]])
-    assert c[0].l2_norm() == 2 * v[ind[0]].l2_norm()
-    if hasattr(v, 'data'):
-        dv = indexed(v.data, ind)
-        dc = c.data
-        assert dv.shape == dc.shape
+    for deep in (True, False):
+        c = v[ind].copy(deep)
+        assert almost_equal(c[0], v[ind[0]])
+        assert almost_equal(c[1], v[ind[0]])
+        if hasattr(v, 'data'):
+            dv = indexed(v.data, ind)
+            dc = c.data
+            assert dv.shape == dc.shape
+        c[0].scal(2.)
+        assert almost_equal(c[1], v[ind[0]])
+        assert c[0].l2_norm() == 2 * v[ind[0]].l2_norm()
+        if hasattr(v, 'data'):
+            dv = indexed(v.data, ind)
+            dc = c.data
+            assert dv.shape == dc.shape
 
 
 def test_append(compatible_vector_array_pair):
