@@ -74,6 +74,8 @@ class NumpyVectorArray(VectorArrayInterface):
 
     @property
     def data(self):
+        if self._refcount[0] > 1:
+            self._deep_copy()
         return self._array[:self._len]
 
     @property
