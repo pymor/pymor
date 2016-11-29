@@ -7,6 +7,10 @@ dist: trusty
 language: bash
 services: docker
 
+# necessary for version.py generation to function properly
+git:
+    depth: 1000
+
 before_script:
     - export IMAGE="pymor/testing:${DOCKER_TAG}"
     - docker pull ${IMAGE}
