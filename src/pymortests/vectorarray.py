@@ -160,8 +160,7 @@ def test_empty(vector_array):
         assert v.space == vector_array.space
         assert len(v) == 0
         if hasattr(v, 'data'):
-            d = v.data
-            assert d.shape == (0, v.dim)
+            assert v.data.shape == (0, v.dim)
 
 
 def test_zeros(vector_array):
@@ -177,9 +176,8 @@ def test_zeros(vector_array):
             assert max(v.sup_norm()) == 0
             assert max(v.l2_norm()) == 0
         if hasattr(v, 'data'):
-            d = v.data
-            assert d.shape == (c, v.dim)
-            assert np.allclose(d, np.zeros((c, v.dim)))
+            assert v.data.shape == (c, v.dim)
+            assert np.allclose(v.data, np.zeros((c, v.dim)))
 
 
 def test_from_data(vector_array):
@@ -197,8 +195,7 @@ def test_shape(vector_array):
     assert len(vector_array) >= 0
     assert vector_array.dim >= 0
     if hasattr(v, 'data'):
-        d = v.data
-        assert d.shape == (len(v), v.dim)
+        assert v.data.shape == (len(v), v.dim)
 
 
 def test_space(vector_array):
@@ -238,9 +235,7 @@ def test_copy(vector_array):
             else:
                 assert np.all(almost_equal(c, v[ind]))
             if hasattr(v, 'data'):
-                dv = v.data
-                dc = c.data
-                assert np.allclose(dc, indexed(dv, ind))
+                assert np.allclose(c.data, indexed(v.data, ind))
 
 
 def test_copy_repeated_index(vector_array):
@@ -253,23 +248,16 @@ def test_copy_repeated_index(vector_array):
         assert almost_equal(c[0], v[ind[0]])
         assert almost_equal(c[1], v[ind[0]])
         if hasattr(v, 'data'):
-            dv = indexed(v.data, ind)
-            dc = c.data
-            assert dv.shape == dc.shape
+            assert indexed(v.data, ind).shape == c.data.shape
         c[0].scal(2.)
         assert almost_equal(c[1], v[ind[0]])
         assert c[0].l2_norm() == 2 * v[ind[0]].l2_norm()
         if hasattr(v, 'data'):
-            dv = indexed(v.data, ind)
-            dc = c.data
-            assert dv.shape == dc.shape
+            assert indexed(v.data, ind).shape == c.data.shape
 
 
 def test_append(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
-    if hasattr(v1, 'data'):
-        dv1 = v1.data
-        dv2 = v2.data
     len_v1, len_v2 = len(v1), len(v2)
     for ind in valid_inds(v2):
         c1, c2 = v1.copy(), v2.copy()
@@ -279,7 +267,7 @@ def test_append(compatible_vector_array_pair):
         assert len(c1) == len_v1 + len_ind
         assert np.all(almost_equal(c1[len_v1:len(c1)], c2[ind]))
         if hasattr(v1, 'data'):
-            assert np.allclose(c1.data, np.vstack((dv1, indexed(dv2, ind))))
+            assert np.allclose(c1.data, np.vstack((v1.data, indexed(v2.data, ind))))
         c1.append(c2[ind], remove_from_other=True)
         assert len(c2) == len(ind_complement_)
         assert c2.dim == c1.dim
@@ -288,7 +276,7 @@ def test_append(compatible_vector_array_pair):
         assert np.all(almost_equal(c1[len_v1:len_v1 + len_ind], c1[len_v1 + len_ind:len(c1)]))
         assert np.all(almost_equal(c2, v2[ind_complement_]))
         if hasattr(v1, 'data'):
-            assert np.allclose(c2.data, indexed(dv2, ind_complement_))
+            assert np.allclose(c2.data, indexed(v2.data, ind_complement_))
 
 
 def test_append_self(vector_array):
@@ -307,8 +295,6 @@ def test_append_self(vector_array):
 
 def test_del(vector_array):
     v = vector_array
-    if hasattr(v, 'data'):
-        dv = v.data
     for ind in valid_inds(v):
         ind_complement_ = ind_complement(v, ind)
         c = v.copy()
@@ -318,15 +304,13 @@ def test_del(vector_array):
         assert len(c) == len(ind_complement_)
         assert np.all(almost_equal(v[ind_complement_], c))
         if hasattr(v, 'data'):
-            assert np.allclose(c.data, indexed(dv, ind_complement_))
+            assert np.allclose(c.data, indexed(v.data, ind_complement_))
         del c[:]
         assert len(c) == 0
 
 
 def test_scal(vector_array):
     v = vector_array
-    if hasattr(v, 'data'):
-        dv = v.data
     for ind in valid_inds(v):
         if v.len_ind(ind) != v.len_ind_unique(ind):
             with pytest.raises(Exception):
@@ -351,7 +335,7 @@ def test_scal(vector_array):
             assert np.allclose(c[ind].sup_norm(), v[ind].sup_norm() * abs(x))
             assert np.allclose(c[ind].l2_norm(), v[ind].l2_norm() * abs(x))
             if hasattr(v, 'data'):
-                y = dv.copy()
+                y = v.data.copy()
                 if NUMPY_INDEX_QUIRK and len(y) == 0:
                     pass
                 else:
@@ -363,9 +347,6 @@ def test_scal(vector_array):
 
 def test_axpy(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
-    if hasattr(v1, 'data'):
-        dv1 = v1.data
-        dv2 = v2.data
 
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
         if v1.len_ind(ind1) != v1.len_ind_unique(ind1):
@@ -392,9 +373,9 @@ def test_axpy(compatible_vector_array_pair):
             assert np.all(c1[ind1].l1_norm() <= (v1[ind1].l1_norm() + abs(a) * v2[ind2].l1_norm()) * (1. + 1e-10))
             assert np.all(c1[ind1].l2_norm() <= (v1[ind1].l2_norm() + abs(a) * v2[ind2].l2_norm()) * (1. + 1e-10))
             if hasattr(v1, 'data'):
-                x = dv1.copy()
+                x = v1.data.copy()
                 if isinstance(ind1, Number):
-                    x[[ind1]] += indexed(dv2, ind2) * a
+                    x[[ind1]] += indexed(v2.data, ind2) * a
                 else:
                     if NUMPY_INDEX_QUIRK and len(x) == 0:
                         pass
@@ -403,7 +384,7 @@ def test_axpy(compatible_vector_array_pair):
                             aa = a[:, np.newaxis]
                         else:
                             aa = a
-                        x[ind1] += indexed(dv2, ind2) * aa
+                        x[ind1] += indexed(v2.data, ind2) * aa
                 assert np.allclose(c1.data, x)
             c1[ind1].axpy(-a, c2[ind2])
             assert len(c1) == len(v1)
@@ -412,9 +393,6 @@ def test_axpy(compatible_vector_array_pair):
 
 def test_axpy_one_x(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
-    if hasattr(v1, 'data'):
-        dv1 = v1.data
-        dv2 = v2.data
 
     for ind1, ind2 in product(valid_inds(v1), valid_inds(v2, 1)):
         if v1.len_ind(ind1) != v1.len_ind_unique(ind1):
@@ -441,9 +419,9 @@ def test_axpy_one_x(compatible_vector_array_pair):
             assert np.all(c1[ind1].l1_norm() <= (v1[ind1].l1_norm() + abs(a) * v2[ind2].l1_norm()) * (1. + 1e-10))
             assert np.all(c1[ind1].l2_norm() <= (v1[ind1].l2_norm() + abs(a) * v2[ind2].l2_norm()) * (1. + 1e-10))
             if hasattr(v1, 'data'):
-                x = dv1.copy()
+                x = v1.data.copy()
                 if isinstance(ind1, Number):
-                    x[[ind1]] += indexed(dv2, ind2) * a
+                    x[[ind1]] += indexed(v2.data, ind2) * a
                 else:
                     if NUMPY_INDEX_QUIRK and len(x) == 0:
                         pass
@@ -452,7 +430,7 @@ def test_axpy_one_x(compatible_vector_array_pair):
                             aa = a[:, np.newaxis]
                         else:
                             aa = a
-                        x[ind1] += indexed(dv2, ind2) * aa
+                        x[ind1] += indexed(v2.data, ind2) * aa
                 assert np.allclose(c1.data, x)
             c1[ind1].axpy(-a, c2[ind2])
             assert len(c1) == len(v1)
@@ -461,8 +439,6 @@ def test_axpy_one_x(compatible_vector_array_pair):
 
 def test_axpy_self(vector_array):
     v = vector_array
-    if hasattr(v, 'data'):
-        dv = v.data
 
     for ind1, ind2 in valid_inds_of_same_length(v, v):
         if v.len_ind(ind1) != v.len_ind_unique(ind1):
@@ -486,9 +462,9 @@ def test_axpy_self(vector_array):
             assert np.all(c[ind1].sup_norm() <= v[ind1].sup_norm() + abs(a) * v[ind2].sup_norm() * (1. + 1e-10))
             assert np.all(c[ind1].l1_norm() <= (v[ind1].l1_norm() + abs(a) * v[ind2].l1_norm()) * (1. + 1e-10))
             if hasattr(v, 'data'):
-                x = dv.copy()
+                x = v.data.copy()
                 if isinstance(ind1, Number):
-                    x[[ind1]] += indexed(dv, ind2) * a
+                    x[[ind1]] += indexed(v.data, ind2) * a
                 else:
                     if NUMPY_INDEX_QUIRK and len(x) == 0:
                         pass
@@ -497,7 +473,7 @@ def test_axpy_self(vector_array):
                             aa = a[:, np.newaxis]
                         else:
                             aa = a
-                        x[ind1] += indexed(dv, ind2) * aa
+                        x[ind1] += indexed(v.data, ind2) * aa
                 assert np.allclose(c.data, x)
             c[ind1].axpy(-a, v[ind2])
             assert len(c) == len(v)
@@ -517,8 +493,6 @@ def test_axpy_self(vector_array):
 
 def test_pairwise_dot(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
-    if hasattr(v1, 'data'):
-        dv1, dv2 = v1.data, v2.data
     for ind1, ind2 in valid_inds_of_same_length(v1, v2):
         r = v1[ind1].pairwise_dot(v2[ind2])
         assert isinstance(r, np.ndarray)
@@ -527,13 +501,11 @@ def test_pairwise_dot(compatible_vector_array_pair):
         assert np.allclose,(r, r2)
         assert np.all(r <= v1[ind1].l2_norm() * v2[ind2].l2_norm() * (1. + 1e-10))
         if hasattr(v1, 'data'):
-            assert np.allclose(r, np.sum(indexed(dv1, ind1) * indexed(dv2, ind2), axis=1))
+            assert np.allclose(r, np.sum(indexed(v1.data, ind1) * indexed(v2.data, ind2), axis=1))
 
 
 def test_pairwise_dot_self(vector_array):
     v = vector_array
-    if hasattr(v, 'data'):
-        dv = v.data
     for ind1, ind2 in valid_inds_of_same_length(v, v):
         r = v[ind1].pairwise_dot(v[ind2])
         assert isinstance(r, np.ndarray)
@@ -542,7 +514,7 @@ def test_pairwise_dot_self(vector_array):
         assert np.allclose(r, r2)
         assert np.all(r <= v[ind1].l2_norm() * v[ind2].l2_norm() * (1. + 1e-10))
         if hasattr(v, 'data'):
-            assert np.allclose(r, np.sum(indexed(dv, ind1) * indexed(dv, ind2), axis=1))
+            assert np.allclose(r, np.sum(indexed(v.data, ind1) * indexed(v.data, ind2), axis=1))
     for ind in valid_inds(v):
         r = v[ind].pairwise_dot(v[ind])
         assert np.allclose(r, v[ind].l2_norm() ** 2)
@@ -550,8 +522,6 @@ def test_pairwise_dot_self(vector_array):
 
 def test_dot(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
-    if hasattr(v1, 'data'):
-        dv1, dv2 = v1.data, v2.data
     for ind1, ind2 in chain(valid_inds_of_different_length(v1, v2), valid_inds_of_same_length(v1, v2)):
         r = v1[ind1].dot(v2[ind2])
         assert isinstance(r, np.ndarray)
@@ -560,13 +530,11 @@ def test_dot(compatible_vector_array_pair):
         assert np.allclose(r, r2.T)
         assert np.all(r <= v1[ind1].l2_norm()[:, np.newaxis] * v2[ind2].l2_norm()[np.newaxis, :] * (1. + 1e-10))
         if hasattr(v1, 'data'):
-            assert np.allclose(r, indexed(dv1, ind1).dot(indexed(dv2, ind2).T))
+            assert np.allclose(r, indexed(v1.data, ind1).dot(indexed(v2.data, ind2).T))
 
 
 def test_dot_self(vector_array):
     v = vector_array
-    if hasattr(v, 'data'):
-        dv = v.data
     for ind1, ind2 in chain(valid_inds_of_different_length(v, v), valid_inds_of_same_length(v, v)):
         r = v[ind1].dot(v[ind2])
         assert isinstance(r, np.ndarray)
@@ -575,7 +543,7 @@ def test_dot_self(vector_array):
         assert np.allclose(r, r2.T)
         assert np.all(r <= v[ind1].l2_norm()[:, np.newaxis] * v[ind2].l2_norm()[np.newaxis, :] * (1. + 1e-10))
         if hasattr(v, 'data'):
-            assert np.allclose(r, indexed(dv, ind1).dot(indexed(dv, ind2).T))
+            assert np.allclose(r, indexed(v.data, ind1).dot(indexed(v.data, ind2).T))
     for ind in valid_inds(v):
         r = v[ind].dot(v[ind])
         assert np.allclose(r, r.T)
@@ -633,8 +601,6 @@ def test_lincomb_wrong_coefficients(vector_array):
 
 def test_l1_norm(vector_array):
     v = vector_array
-    if hasattr(v, 'data'):
-        dv = v.data
     for ind in valid_inds(v):
         c = v.copy()
         norm = c[ind].l1_norm()
@@ -644,7 +610,7 @@ def test_l1_norm(vector_array):
         if v.dim == 0:
             assert np.all(norm == 0)
         if hasattr(v, 'data'):
-            assert np.allclose(norm, np.sum(np.abs(indexed(dv, ind)), axis=1))
+            assert np.allclose(norm, np.sum(np.abs(indexed(v.data, ind)), axis=1))
         c.scal(4.)
         assert np.allclose(c[ind].l1_norm(), norm * 4)
         c.scal(-4.)
@@ -655,8 +621,6 @@ def test_l1_norm(vector_array):
 
 def test_l2_norm(vector_array):
     v = vector_array
-    if hasattr(v, 'data'):
-        dv = v.data
     for ind in valid_inds(v):
         c = v.copy()
         norm = c[ind].l2_norm()
@@ -666,7 +630,7 @@ def test_l2_norm(vector_array):
         if v.dim == 0:
             assert np.all(norm == 0)
         if hasattr(v, 'data'):
-            assert np.allclose(norm, np.sqrt(np.sum(np.power(indexed(dv, ind), 2), axis=1)))
+            assert np.allclose(norm, np.sqrt(np.sum(np.power(indexed(v.data, ind), 2), axis=1)))
         c.scal(4.)
         assert np.allclose(c[ind].l2_norm(), norm * 4)
         c.scal(-4.)
@@ -677,8 +641,6 @@ def test_l2_norm(vector_array):
 
 def test_l2_norm2(vector_array):
     v = vector_array
-    if hasattr(v, 'data'):
-        dv = v.data
     for ind in valid_inds(v):
         c = v.copy()
         norm = c[ind].l2_norm2()
@@ -688,7 +650,7 @@ def test_l2_norm2(vector_array):
         if v.dim == 0:
             assert np.all(norm == 0)
         if hasattr(v, 'data'):
-            assert np.allclose(norm, np.sum(np.power(indexed(dv, ind), 2), axis=1))
+            assert np.allclose(norm, np.sum(np.power(indexed(v.data, ind), 2), axis=1))
         c.scal(4.)
         assert np.allclose(c[ind].l2_norm2(), norm * 16)
         c.scal(-4.)
@@ -699,8 +661,6 @@ def test_l2_norm2(vector_array):
 
 def test_sup_norm(vector_array):
     v = vector_array
-    if hasattr(v, 'data'):
-        dv = v.data
     for ind in valid_inds(v):
         c = v.copy()
         norm = c[ind].sup_norm()
@@ -710,7 +670,7 @@ def test_sup_norm(vector_array):
         if v.dim == 0:
             assert np.all(norm == 0)
         if hasattr(v, 'data') and v.dim > 0:
-            assert np.allclose(norm, np.max(np.abs(indexed(dv, ind)), axis=1))
+            assert np.allclose(norm, np.max(np.abs(indexed(v.data, ind)), axis=1))
         c.scal(4.)
         assert np.allclose(c[ind].sup_norm(), norm * 4)
         c.scal(-4.)
@@ -722,8 +682,6 @@ def test_sup_norm(vector_array):
 def test_components(vector_array):
     v = vector_array
     np.random.seed(len(v) + 24 + v.dim)
-    if hasattr(v, 'data'):
-        dv = v.data
     for ind in valid_inds(v):
         c = v.copy()
         comp = c[ind].components(np.array([], dtype=np.int))
@@ -752,7 +710,7 @@ def test_components(vector_array):
                 comp2 = c[ind].components(np.hstack((c_ind, c_ind)))
                 assert np.all(comp2 == np.hstack((comp, comp)))
                 if hasattr(v, 'data'):
-                    assert np.all(comp == indexed(dv, ind)[:, c_ind])
+                    assert np.all(comp == indexed(v.data, ind)[:, c_ind])
 
 
 def test_components_wrong_component_indices(vector_array):
