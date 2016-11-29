@@ -16,14 +16,14 @@ if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     pushd ${SDIST_DIR}
     pip install $(ls ${SDIST_DIR})
     popd
-    xvfb-run -a py.test --pyargs pymortests -c .installed_pytest.ini -k "not slow"
+    xvfb-run -a py.test -r sxX --pyargs pymortests -c .installed_pytest.ini -k "not slow"
 elif [ "${PYTEST_MARKER}" == "MPI" ] ; then
     export PYTHONPATH=$(pwd)/src
     xvfb-run -a mpirun --allow-run-as-root -n 2 python src/pymortests/mpi_run_demo_tests.py
 else
     export PYTHONPATH=$(pwd)/src
     # this runs in pytest in a fake, auto numbered, X Server
-    xvfb-run -a py.test -k "${PYTEST_MARKER}"
+    xvfb-run -a py.test -r sxX -k "${PYTEST_MARKER}"
 fi
 
 # TODO: insert coveralls calling here
