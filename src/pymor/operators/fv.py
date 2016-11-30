@@ -20,7 +20,11 @@ from pymor.operators.numpy import NumpyMatrixBasedOperator, NumpyMatrixOperator
 from pymor.parameters.base import Parametric
 from pymor.tools.inplace import iadd_masked, isub_masked
 from pymor.tools.quadratures import GaussQuadratures
-from pymor.vectorarrays.numpy import NumpyVectorSpace, scalars
+from pymor.vectorarrays.numpy import NumpyVectorSpace
+
+
+def FVVectorSpace(grid, id_='STATE'):
+    return NumpyVectorSpace(grid.size(0), id_)
 
 
 class NumericalConvectiveFluxInterface(ImmutableInterface, Parametric):
@@ -230,7 +234,7 @@ class NonlinearAdvectionOperator(OperatorBase):
             self._dirichlet_values = self._dirichlet_values.ravel()
             self._dirichlet_values_flux_shaped = self._dirichlet_values.reshape((-1, 1))
         self.build_parameter_type(numerical_flux, dirichlet_data)
-        self.source = self.range = NumpyVectorSpace(grid.size(0), space_id)
+        self.source = self.range = FVVectorSpace(grid, space_id)
         self.add_with_arguments = self.add_with_arguments.union('numerical_flux_{}'.format(arg)
                                                                 for arg in numerical_flux.with_arguments)
 
@@ -248,7 +252,7 @@ class NonlinearAdvectionOperator(OperatorBase):
                                    assume_unique=True)
         sub_grid = SubGrid(self.grid, entities=source_dofs)
         sub_boundary_info = SubGridBoundaryInfo(sub_grid, self.grid, self.boundary_info)
-        op = self.with_(grid=sub_grid, boundary_info=sub_boundary_info, space_id='SCALARS',
+        op = self.with_(grid=sub_grid, boundary_info=sub_boundary_info, space_id=None,
                         name='{}_restricted'.format(self.name))
         sub_grid_indices = sub_grid.indices_from_parent_indices(dofs, codim=0)
         proj = ComponentProjection(sub_grid_indices, op.range)
@@ -487,7 +491,7 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
         self.solver_options = solver_options
         self.name = name
         self.build_parameter_type(velocity_field)
-        self.source = self.range = NumpyVectorSpace(grid.size(0))
+        self.source = self.range = FVVectorSpace(grid)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -544,7 +548,7 @@ class L2Product(NumpyMatrixBasedOperator):
     sparse = True
 
     def __init__(self, grid, solver_options=None, name=None):
-        self.source = self.range = NumpyVectorSpace(grid.size(0))
+        self.source = self.range = FVVectorSpace(grid)
         self.grid = grid
         self.solver_options = solver_options
         self.name = name
@@ -589,13 +593,13 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
         The name of the functional.
     """
 
-    range = scalars(1)
+    range = NumpyVectorSpace(1)
     sparse = False
 
     def __init__(self, grid, function=None, boundary_info=None, dirichlet_data=None, diffusion_function=None,
                  diffusion_constant=None, neumann_data=None, order=1, name=None):
         assert function is None or function.shape_range == ()
-        self.source = NumpyVectorSpace(grid.size(0))
+        self.source = FVVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info
         self.function = function
@@ -693,7 +697,7 @@ class DiffusionOperator(NumpyMatrixBasedOperator):
         self.diffusion_constant = diffusion_constant
         self.solver_options = solver_options
         self.name = name
-        self.source = self.range = NumpyVectorSpace(grid.size(0))
+        self.source = self.range = FVVectorSpace(grid)
         if diffusion_function is not None:
             self.build_parameter_type(diffusion_function)
 

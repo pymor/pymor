@@ -93,7 +93,7 @@ def reduce_parabolic(discretization, RB, product=None, coercivity_estimator=None
     old_initial_resdidual_data = extends[2].pop('initial_residual') if extends else None
 
     with logger.block('RB projection ...'):
-        rd, rc, data = reduce_generic_rb(discretization, RB, vector_product=product,
+        rd, rc, data = reduce_generic_rb(discretization, RB, product=product,
                                          disable_caching=disable_caching, extends=extends)
 
     dt = discretization.T / discretization.time_stepper.nt

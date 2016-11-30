@@ -116,9 +116,12 @@ class MPIVectorSpace(VectorSpaceInterface):
 
     array_type = MPIVectorArray
 
-    def __init__(self, local_spaces, id_='STATE'):
+    def __init__(self, local_spaces):
         self.local_spaces = tuple(local_spaces)
-        self.id = id_
+        if type(local_spaces[0]) is RegisteredLocalSpace:
+            self.id = _local_space_registry[local_spaces[0]].id
+        else:
+            self.id = local_spaces[0].id
 
     def make_array(self, obj_id):
         """Create array from rank-local |VectorArray| instances.

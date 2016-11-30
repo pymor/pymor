@@ -17,7 +17,7 @@ from pymor.operators.interfaces import OperatorInterface
 from pymor.parameters.base import Parametric
 from pymor.parameters.interfaces import ParameterFunctionalInterface
 from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _INDEXTYPES
-from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace, scalars
+from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
 
 
 class LincombOperator(OperatorBase):
@@ -306,7 +306,7 @@ class ComponentProjection(OperatorBase):
     def __init__(self, components, source, name=None):
         assert all(0 <= c < source.dim for c in components)
         self.components = np.array(components, dtype=np.int32)
-        self.range = scalars(len(components))
+        self.range = NumpyVectorSpace(len(components))
         self.source = source
         self.name = name
 
@@ -317,7 +317,7 @@ class ComponentProjection(OperatorBase):
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
         source_dofs = self.components[dofs]
-        return IdentityOperator(scalars(len(source_dofs))), source_dofs
+        return IdentityOperator(NumpyVectorSpace(len(source_dofs))), source_dofs
 
 
 class IdentityOperator(OperatorBase):
@@ -388,7 +388,7 @@ class IdentityOperator(OperatorBase):
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
-        return IdentityOperator(scalars(len(dofs))), dofs
+        return IdentityOperator(NumpyVectorSpace(len(dofs))), dofs
 
 
 class ConstantOperator(OperatorBase):
@@ -443,8 +443,8 @@ class ConstantOperator(OperatorBase):
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
-        restricted_value = NumpyVectorSpace.make_array(self._value.components(dofs), 'SCALARS')
-        return ConstantOperator(restricted_value, scalars(len(dofs))), dofs
+        restricted_value = NumpyVectorSpace.make_array(self._value.components(dofs))
+        return ConstantOperator(restricted_value, NumpyVectorSpace(len(dofs))), dofs
 
     def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
         assert dim_source is None or (self.source.type is NumpyVectorArray and dim_source <= self.source.dim)
@@ -504,6 +504,7 @@ class ZeroOperator(OperatorBase):
         if source_basis is not None and range_basis is not None:
             from pymor.operators.numpy import NumpyMatrixOperator
             return NumpyMatrixOperator(np.zeros((len(range_basis), len(source_basis))),
+                                       source_id=self.source.id, range_id=self.range.id,
                                        name=self.name + '_projected')
         else:
             new_source = (NumpyVectorSpace(len(source_basis), self.source.id) if source_basis is not None else
@@ -522,7 +523,7 @@ class ZeroOperator(OperatorBase):
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
-        return ZeroOperator(scalars(0), scalars(len(dofs))), np.array([], dtype=np.int32)
+        return ZeroOperator(NumpyVectorSpace(0), NumpyVectorSpace(len(dofs))), np.array([], dtype=np.int32)
 
 
 class VectorArrayOperator(OperatorBase):
@@ -548,7 +549,7 @@ class VectorArrayOperator(OperatorBase):
 
     linear = True
 
-    def __init__(self, array, transposed=False, space_id='SCALARS', name=None):
+    def __init__(self, array, transposed=False, space_id=None, name=None):
         self._array = array.copy()
         if transposed:
             self.source = array.space
@@ -624,7 +625,7 @@ class VectorArrayOperator(OperatorBase):
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
         if not self.transposed:
-            restricted_value = NumpyVectorSpace.make_array(self._array.components(dofs), 'SCALARS')
+            restricted_value = NumpyVectorSpace.make_array(self._array.components(dofs))
             return VectorArrayOperator(restricted_value, False), np.arange(self.source.dim, dtype=np.int32)
         else:
             raise NotImplementedError
@@ -652,7 +653,7 @@ class VectorOperator(VectorArrayOperator):
     """
 
     linear = True
-    source = scalars(1)
+    source = NumpyVectorSpace(1)
 
     def __init__(self, vector, name=None):
         assert isinstance(vector, VectorArrayInterface)
@@ -690,7 +691,7 @@ class VectorFunctional(VectorArrayOperator):
     """
 
     linear = True
-    range = scalars(1)
+    range = NumpyVectorSpace(1)
 
     def __init__(self, vector, product=None, name=None):
         assert isinstance(vector, VectorArrayInterface)

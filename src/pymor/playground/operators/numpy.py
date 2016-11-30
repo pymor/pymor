@@ -7,23 +7,24 @@ import numpy as np
 from pymor.core.exceptions import InversionError
 from pymor.operators.numpy import NumpyMatrixOperator, _apply_inverse
 from pymor.vectorarrays.list import NumpyListVectorSpace
-from pymor.vectorarrays.numpy import scalars
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
     """Variant of |NumpyMatrixOperator| using |ListVectorArray| instead of |NumpyVectorArray|."""
 
-    def __init__(self, matrix, functional=False, vector=False, solver_options=None, name=None):
+    def __init__(self, matrix, functional=False, vector=False, source_id=None, range_id=None,
+                 solver_options=None, name=None):
         assert not (functional and vector)
-        super().__init__(matrix, solver_options=solver_options, name=name)
+        super().__init__(matrix, source_id=source_id, range_id=range_id, solver_options=solver_options, name=name)
         if vector:
-            self.source = scalars(1)
+            self.source = NumpyVectorSpace(1, source_id)
         else:
-            self.source = NumpyListVectorSpace(matrix.shape[1])
+            self.source = NumpyListVectorSpace(matrix.shape[1], source_id)
         if functional:
-            self.range = scalars(1)
+            self.range = NumpyVectorSpace(1, range_id)
         else:
-            self.range = NumpyListVectorSpace(matrix.shape[0])
+            self.range = NumpyListVectorSpace(matrix.shape[0], range_id)
         self.functional = functional
         self.vector = vector
 
@@ -77,9 +78,9 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
             raise e
 
     def as_vector(self, mu=None):
-        if self.range == scalars(1):
+        if self.range == NumpyVectorSpace(1):
             return self.source.make_array([self._matrix.ravel()])
-        elif self.source == scalars(1):
+        elif self.source == NumpyVectorSpace(1):
             return self.range.make_array([self._matrix.ravel()])
         else:
             raise TypeError('This operator does not represent a vector or linear functional.')
@@ -89,4 +90,5 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
         if lincomb is None:
             return None
         else:
-            return NumpyListVectorArrayMatrixOperator(lincomb._matrix, solver_options=solver_options, name=name)
+            return NumpyListVectorArrayMatrixOperator(lincomb._matrix, source_id=self.source.id, range_id=self.range.id,
+                                                      solver_options=solver_options, name=name)

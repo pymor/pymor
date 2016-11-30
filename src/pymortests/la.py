@@ -18,10 +18,11 @@ def test_induced():
     grid = TriaGrid(num_intervals=(10, 10))
     boundary_info = AllDirichletBoundaryInfo(grid)
     product = L2ProductP1(grid, boundary_info)
-    zero = NumpyVectorSpace.from_data(np.zeros(grid.size(2)))
+    zero = product.source.zeros()
     norm = induced_norm(product)
     value = norm(zero)
     np.testing.assert_almost_equal(value, 0.0)
+
 
 def test_gram_schmidt():
     for i in (1, 32):

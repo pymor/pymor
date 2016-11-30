@@ -27,7 +27,7 @@ from pymor.core.interfaces import abstractmethod
 from pymor.core.logger import getLogger
 from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import IdentityOperator, ZeroOperator
-from pymor.vectorarrays.numpy import NumpyVectorSpace, scalars
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class NumpyGenericOperator(OperatorBase):
@@ -64,7 +64,7 @@ class NumpyGenericOperator(OperatorBase):
     """
 
     def __init__(self, mapping, adjoint_mapping=None, dim_source=1, dim_range=1, linear=False, parameter_type=None,
-                 source_id='STATE', range_id='STATE', solver_options=None, name=None):
+                 source_id=None, range_id=None, solver_options=None, name=None):
         self.source = NumpyVectorSpace(dim_source, source_id)
         self.range = NumpyVectorSpace(dim_range, range_id)
         self.solver_options = solver_options
@@ -209,7 +209,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         Name of the operator.
     """
 
-    def __init__(self, matrix, source_id='STATE', range_id='STATE', solver_options=None, name=None):
+    def __init__(self, matrix, source_id=None, range_id=None, solver_options=None, name=None):
         assert matrix.ndim <= 2
         if matrix.ndim == 1:
             matrix = np.reshape(matrix, (1, -1))
@@ -223,7 +223,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         self.sparse = issparse(matrix)
 
     @classmethod
-    def from_file(cls, path, key=None, source_id='STATE', range_id='STATE', solver_options=None, name=None):
+    def from_file(cls, path, key=None, source_id=None, range_id=None, solver_options=None, name=None):
         from pymor.tools.io import load_matrix
         matrix = load_matrix(path, key=key)
         return cls(matrix, solver_options=solver_options, source_id=source_id, range_id=range_id,
@@ -236,9 +236,9 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         return self
 
     def as_vector(self, mu=None):
-        if self.range == scalars(1):
+        if self.range == NumpyVectorSpace(1):
             return self.source.make_array(self._matrix.ravel())
-        elif self.source == scalars(1):
+        elif self.source == NumpyVectorSpace(1):
             return self.range.make_array(self._matrix.ravel())
         else:
             raise TypeError('This operator does not represent a vector or linear functional.')

@@ -15,7 +15,7 @@ from pkg_resources import resource_filename, resource_stream
 
 from pymor.core import logger
 from pymor.operators.basic import OperatorBase
-from pymor.vectorarrays.numpy import scalars
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class TestInterface(object):
@@ -86,7 +86,7 @@ def polynomials(max_order):
 
 
 class MonomOperator(OperatorBase):
-    source = range = scalars(1)
+    source = range = NumpyVectorSpace(1)
 
     def __init__(self, order, monom=None):
         self.monom = monom if monom else Polynomial(np.identity(order + 1)[order])

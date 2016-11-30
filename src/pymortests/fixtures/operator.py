@@ -14,7 +14,7 @@ def random_integers(count, seed):
 
 
 def numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_source, count_range, seed,
-                                              source_id='STATE', range_id='STATE'):
+                                              source_id=None, range_id=None):
     np.random.seed(seed)
     op = NumpyMatrixOperator(np.random.random((dim_range, dim_source)), source_id=source_id, range_id=range_id)
     s = op.source.make_array(np.random.random((count_source, dim_source)))
@@ -23,7 +23,7 @@ def numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_sourc
 
 
 def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range, count_source, count_range, seed,
-                                                           source_id='STATE', range_id='STATE'):
+                                                           source_id=None, range_id=None):
     from scipy.linalg import eigh
     op, _, U, V = numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_source, count_range, seed,
                                                             source_id=source_id, range_id=range_id)
@@ -126,10 +126,10 @@ def thermalblock_vectorarray_factory(transposed, xblocks, yblocks, diameter, see
         U = V
         V = op.range.make_array(np.random.random((7, op.range.dim)))
         sp = rp
-        rp = NumpyMatrixOperator(np.eye(op.range.dim) * 2, source_id='SCALARS', range_id='SCALARS')
+        rp = NumpyMatrixOperator(np.eye(op.range.dim) * 2)
     else:
         U = op.source.make_array(np.random.random((7, op.source.dim)))
-        sp = NumpyMatrixOperator(np.eye(op.source.dim) * 2, source_id='SCALARS', range_id='SCALARS')
+        sp = NumpyMatrixOperator(np.eye(op.source.dim) * 2)
     return op, None, U, V, sp, rp
 
 
@@ -138,7 +138,7 @@ def thermalblock_vector_factory(xblocks, yblocks, diameter, seed):
     _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, seed)
     op = VectorOperator(U[0])
     U = op.source.make_array(np.random.random((7, 1)))
-    sp = NumpyMatrixOperator(np.eye(1) * 2, source_id='SCALARS', range_id='SCALARS')
+    sp = NumpyMatrixOperator(np.eye(1) * 2)
     return op, None, U, V, sp, rp
 
 
@@ -149,7 +149,7 @@ def thermalblock_vectorfunc_factory(product, xblocks, yblocks, diameter, seed):
     U = V
     V = op.range.make_array(np.random.random((7, 1)))
     sp = rp
-    rp = NumpyMatrixOperator(np.eye(1) * 2, source_id='SCALARS', range_id='SCALARS')
+    rp = NumpyMatrixOperator(np.eye(1) * 2)
     return op, None, U, V, sp, rp
 
 
@@ -294,17 +294,17 @@ num_misc_operators = 10
 def misc_operator_with_arrays_and_products_factory(n):
     if n == 0:
         from pymor.operators.constructions import ComponentProjection
-        _, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 10, 4, 3, n, range_id='SCALARS')
+        _, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 10, 4, 3, n)
         op = ComponentProjection(np.random.randint(0, 100, 10), U.space)
         return op, _, U, V, sp, rp
     elif n == 1:
         from pymor.operators.constructions import ComponentProjection
-        _, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 0, 4, 3, n, range_id='SCALARS')
+        _, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 0, 4, 3, n)
         op = ComponentProjection([], U.space)
         return op, _, U, V, sp, rp
     elif n == 2:
         from pymor.operators.constructions import ComponentProjection
-        _, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 3, 4, 3, n, range_id='SCALARS')
+        _, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 3, 4, 3, n)
         op = ComponentProjection([3, 3, 3], U.space)
         return op, _, U, V, sp, rp
     elif n == 3:

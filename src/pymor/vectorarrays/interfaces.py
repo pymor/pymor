@@ -497,19 +497,15 @@ class VectorSpaceInterface(ImmutableInterface):
     Attributes
     ----------
     id
-        A string describing the mathematical identity of the
-        vector space (for instance to distinguish different
-        components in an equation system). The default value
-        is `'STATE'`. To identify arrays of scalar values
-        (as the source space of vector-like |Operators| and
-        as the range space of |Functionals|) the id `'SCALARS'`
-        is used.
+        None, or a string describing the mathematical identity
+        of the vector space (for instance to distinguish different
+        components in an equation system).
     dim
         The dimension (number of degrees of freedom) of the
         vectors contained in the space.
     """
 
-    id = 'STATE'
+    id = None
     dim = None
 
     @abstractmethod

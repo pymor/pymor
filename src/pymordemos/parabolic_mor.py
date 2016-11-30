@@ -179,7 +179,7 @@ def _discretize_fenics():
 
         parameter_space=CubicParameterSpace({'top': 0}, minimum=1, maximum=100.),
 
-        visualizer=FenicsVisualizer(V)
+        visualizer=FenicsVisualizer(FenicsVectorSpace(V))
     )
 
     return d

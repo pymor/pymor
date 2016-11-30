@@ -325,7 +325,7 @@ class NumpyVectorSpace(VectorSpaceInterface):
         See :attr:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.id`.
     """
 
-    def __init__(self, dim, id_='STATE'):
+    def __init__(self, dim, id_=None):
         self.dim = dim
         self.id = id_
 
@@ -341,7 +341,7 @@ class NumpyVectorSpace(VectorSpaceInterface):
         return va
 
     @classinstancemethod
-    def make_array(cls, obj, id_='STATE'):
+    def make_array(cls, obj, id_=None):
         return cls._array_factory(obj, id_=id_)
 
     @make_array.instancemethod
@@ -349,7 +349,7 @@ class NumpyVectorSpace(VectorSpaceInterface):
         return self._array_factory(obj, space=self)
 
     @classinstancemethod
-    def from_data(cls, data, id_='STATE'):
+    def from_data(cls, data, id_=None):
         return cls._array_factory(data, id_=id_)
 
     @from_data.instancemethod
@@ -357,7 +357,7 @@ class NumpyVectorSpace(VectorSpaceInterface):
         return self._array_factory(data, space=self)
 
     @classinstancemethod
-    def from_file(cls, path, key=None, single_vector=False, transpose=False, id_='STATE'):
+    def from_file(cls, path, key=None, single_vector=False, transpose=False, id_=None):
         assert not (single_vector and transpose)
         from pymor.tools.io import load_matrix
         array = load_matrix(path, key=key)
@@ -377,7 +377,7 @@ class NumpyVectorSpace(VectorSpaceInterface):
         return self.from_file(path, key=key, single_vector=single_vector, transpose=transpose, id_=self.id)
 
     @classmethod
-    def _array_factory(cls, array, space=None, id_='STATE'):
+    def _array_factory(cls, array, space=None, id_=None):
         if type(array) is np.ndarray:
             pass
         elif issparse(array):
@@ -396,11 +396,8 @@ class NumpyVectorSpace(VectorSpaceInterface):
             return NumpyVectorArray(array, space)
 
     def __repr__(self):
-        return 'NumpyVectorSpace({}, {})'.format(self.dim, self.id)
-
-
-def scalars(dim=1):
-    return NumpyVectorSpace(dim, 'SCALARS')
+        return 'NumpyVectorSpace({})'.format(self.dim) if self.id is None \
+            else 'NumpyVectorSpace({}, {})'.format(self.dim, self.id)
 
 
 class NumpyVectorArrayView(NumpyVectorArray):

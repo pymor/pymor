@@ -6,7 +6,7 @@ from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import LincombOperator, VectorArrayOperator
 from pymor.tools import mpi
 from pymor.vectorarrays.mpi import MPIVectorSpace, _register_local_space
-from pymor.vectorarrays.numpy import scalars
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class MPIOperator(OperatorBase):
@@ -57,42 +57,42 @@ class MPIOperator(OperatorBase):
     def __init__(self, obj_id, with_apply2=False, pickle_local_spaces=True, space_type=MPIVectorSpace):
         self.obj_id = obj_id
         self.op = op = mpi.get_object(obj_id)
-        assert not op.source.id == op.range.id == 'SCALARS'
+        assert not op.source.id == op.range.id == None
         self.with_apply2 = with_apply2
         self.pickle_local_spaces = pickle_local_spaces
         self.space_type = space_type
         self.linear = op.linear
         self.name = op.name
         self.build_parameter_type(op)
-        if op.source.id == 'SCALARS':
+        if op.source.id is None:
             self.source = op.source
         else:
             local_spaces = mpi.call(_MPIOperator_get_local_spaces, obj_id, True, pickle_local_spaces)
             if all(ls == local_spaces[0] for ls in local_spaces):
                 local_spaces = (local_spaces[0],)
-            self.source = space_type(local_spaces, op.source.id)
-        if op.range.id == 'SCALARS':
+            self.source = space_type(local_spaces)
+        if op.range.id is None:
             self.range = op.range
         else:
             local_spaces = mpi.call(_MPIOperator_get_local_spaces, obj_id, False, pickle_local_spaces)
             if all(ls == local_spaces[0] for ls in local_spaces):
                 local_spaces = (local_spaces[0],)
-            self.range = space_type(local_spaces, op.range.id)
+            self.range = space_type(local_spaces)
 
     def apply(self, U, mu=None):
         assert U in self.source
         mu = self.parse_parameter(mu)
-        U = U if self.source.id == 'SCALARS' else U.obj_id
-        if self.range.id == 'SCALARS':
+        U = U if self.source.id is None else U.obj_id
+        if self.range.id is None:
             return mpi.call(mpi.method_call, self.obj_id, 'apply', U, mu=mu)
         else:
             return self.range.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'apply', U, mu=mu))
 
     def as_vector(self, mu=None):
         mu = self.parse_parameter(mu)
-        if self.source == scalars(1):
+        if self.source == NumpyVectorSpace(1):
             return self.range.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'as_vector', mu=mu))
-        elif self.range == scalars(1):
+        elif self.range == NumpyVectorSpace(1):
             return self.source.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'as_vector', mu=mu))
         else:
             raise TypeError('This operator does not represent a vector or linear functional.')
@@ -103,8 +103,8 @@ class MPIOperator(OperatorBase):
         assert V in self.range
         assert U in self.source
         mu = self.parse_parameter(mu)
-        U = U if self.source.id == 'SCALARS' else U.obj_id
-        V = V if self.range.id == 'SCALARS' else V.obj_id
+        U = U if self.source.id is None else U.obj_id
+        V = V if self.range.id is None else V.obj_id
         return mpi.call(mpi.method_call, self.obj_id, 'apply2', V, U, mu=mu)
 
     def pairwise_apply2(self, V, U, mu=None):
@@ -113,17 +113,17 @@ class MPIOperator(OperatorBase):
         assert V in self.range
         assert U in self.source
         mu = self.parse_parameter(mu)
-        U = U if self.source.id == 'SCALARS' else U.obj_id
-        V = V if self.range.id == 'SCALARS' else V.obj_id
+        U = U if self.source.id is None else U.obj_id
+        V = V if self.range.id is None else V.obj_id
         return mpi.call(mpi.method_call, self.obj_id, 'pairwise_apply2', V, U, mu=mu)
 
     def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         assert U in self.range
         mu = self.parse_parameter(mu)
-        U = U if self.range.id == 'SCALARS' else U.obj_id
+        U = U if self.range.id is None else U.obj_id
         source_product = source_product and source_product.obj_id
         range_product = range_product and range_product.obj_id
-        if self.source.id == 'SCALARS':
+        if self.source.id is None:
             return mpi.call(mpi.method_call, self.obj_id, 'apply_adjoint',
                             U, mu=mu, source_product=source_product, range_product=range_product)
         else:
@@ -133,7 +133,7 @@ class MPIOperator(OperatorBase):
             )
 
     def apply_inverse(self, V, mu=None, least_squares=False):
-        if self.source.id == 'SCALARS' or self.range.id == 'SCALARS':
+        if self.source.id is None or self.range.id is None:
             raise NotImplementedError
         assert V in self.range
         mu = self.parse_parameter(mu)

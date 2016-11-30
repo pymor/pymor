@@ -26,7 +26,8 @@ class GenericRBReconstructor(BasicInterface):
         return GenericRBReconstructor(self.RB[:dim])
 
 
-def reduce_generic_rb(discretization, RB, vector_product=None, disable_caching=True, extends=None):
+def reduce_generic_rb(discretization, RB, orthogonal_projection=('initial_data',), product=None,
+                      disable_caching=True, extends=None):
     """Generic reduced basis reductor.
 
     Replaces each |Operator| of the given |Discretization| with the Galerkin
@@ -38,11 +39,13 @@ def reduce_generic_rb(discretization, RB, vector_product=None, disable_caching=T
         The |Discretization| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
-    vector_product
-        Inner product for the projection of vector-like |Operators|.
-        (A typical vector-like operator would be the `initial_data`
-        |Operator| of an |InstationaryDiscretization| holding
-        the initial data of a Cauchy problem.)
+    orthogonal_projection
+        List of keys in `discretization.operators` for which the corresponding |Operator|
+        should be orthogonally projected (i.e. operators which map to vectors in
+        contrast to bilinear forms which map to functionals).
+    product
+        Inner product for the projection of the |Operators| given by
+        `orthogonal_projection`.
     disable_caching
         If `True`, caching of solutions is disabled for the reduced |Discretization|.
     extends
@@ -65,14 +68,14 @@ def reduce_generic_rb(discretization, RB, vector_product=None, disable_caching=T
     if RB is None:
         RB = discretization.solution_space.empty()
 
-    def project_operator(op):
+    def project_operator(k, op):
         return op.projected(range_basis=RB if RB in op.range else None,
                             source_basis=RB if RB in op.source else None,
-                            product=vector_product if op.source.id == 'SCALARS' else None)
+                            product=product if k in orthogonal_projection else None)
 
-    projected_operators = {k: project_operator(op) if op else None for k, op in discretization.operators.items()}
+    projected_operators = {k: project_operator(k, op) if op else None for k, op in discretization.operators.items()}
 
-    projected_products = {k: project_operator(p) for k, p in discretization.products.items()}
+    projected_products = {k: project_operator(k, p) for k, p in discretization.products.items()}
 
     cache_region = None if disable_caching else discretization.caching
 
@@ -132,8 +135,8 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
     """
 
     def project_operator(op):
-        return op.projected_to_subbasis(dim_range=dim if op.range.id != 'SCALARS' else None,
-                                        dim_source=dim if op.source.id != 'SCALARS' else None)
+        return op.projected_to_subbasis(dim_range=dim if op.range == discretization.solution_space else None,
+                                        dim_source=dim if op.source == discretization.solution_space else None)
 
     projected_operators = {k: project_operator(op) if op else None for k, op in discretization.operators.items()}
 

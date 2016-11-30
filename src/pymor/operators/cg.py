@@ -11,7 +11,11 @@ from scipy.sparse import coo_matrix, csc_matrix
 from pymor.functions.interfaces import FunctionInterface
 from pymor.grids.referenceelements import triangle, line, square
 from pymor.operators.numpy import NumpyMatrixBasedOperator
-from pymor.vectorarrays.numpy import NumpyVectorSpace, scalars
+from pymor.vectorarrays.numpy import NumpyVectorSpace
+
+
+def CGVectorSpace(grid, id_='STATE'):
+    return NumpyVectorSpace(grid.size(grid.dim), id_)
 
 
 class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
@@ -51,13 +55,13 @@ class L2ProductFunctionalP1(NumpyMatrixBasedOperator):
     """
 
     sparse = False
-    range = scalars(1)
+    range = NumpyVectorSpace(1)
 
     def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, neumann_data=None, robin_data=None,
                  order=2, solver_options=None, name=None):
         assert grid.reference_element(0) in {line, triangle}
         assert function.shape_range == ()
-        self.source = NumpyVectorSpace(grid.size(grid.dim))
+        self.source = CGVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info
         self.function = function
@@ -172,13 +176,13 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
     """
 
     sparse = False
-    range = scalars(1)
+    range = NumpyVectorSpace(1)
 
     def __init__(self, grid, function, boundary_info=None, dirichlet_data=None, neumann_data=None, robin_data=None,
                  order=2, name=None):
         assert grid.reference_element(0) in {square}
         assert function.shape_range == ()
-        self.source = NumpyVectorSpace(grid.size(grid.dim))
+        self.source = CGVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info
         self.function = function
@@ -280,7 +284,7 @@ class L2ProductP1(NumpyMatrixBasedOperator):
     def __init__(self, grid, boundary_info, dirichlet_clear_rows=True, dirichlet_clear_columns=False,
                  dirichlet_clear_diag=False, coefficient_function=None, solver_options=None, name=None):
         assert grid.reference_element in (line, triangle)
-        self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
+        self.source = self.range = CGVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info
         self.dirichlet_clear_rows = dirichlet_clear_rows
@@ -378,7 +382,7 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
     def __init__(self, grid, boundary_info, dirichlet_clear_rows=True, dirichlet_clear_columns=False,
                  dirichlet_clear_diag=False, coefficient_function=None, solver_options=None, name=None):
         assert grid.reference_element in {square}
-        self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
+        self.source = self.range = CGVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info
         self.dirichlet_clear_rows = dirichlet_clear_rows
@@ -484,7 +488,7 @@ class DiffusionOperatorP1(NumpyMatrixBasedOperator):
             or (isinstance(diffusion_function, FunctionInterface) and
                 diffusion_function.dim_domain == grid.dim and
                 diffusion_function.shape_range == () or diffusion_function.shape_range == (grid.dim,) * 2)
-        self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
+        self.source = self.range = CGVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info
         self.diffusion_constant = diffusion_constant
@@ -604,7 +608,7 @@ class DiffusionOperatorQ1(NumpyMatrixBasedOperator):
             or (isinstance(diffusion_function, FunctionInterface) and
                 diffusion_function.dim_domain == grid.dim and
                 diffusion_function.shape_range == () or diffusion_function.shape_range == (grid.dim,) * 2)
-        self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
+        self.source = self.range = CGVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info
         self.diffusion_constant = diffusion_constant
@@ -723,7 +727,7 @@ class AdvectionOperatorP1(NumpyMatrixBasedOperator):
             or (isinstance(advection_function, FunctionInterface) and
                 advection_function.dim_domain == grid.dim and
                 advection_function.shape_range == (grid.dim,))
-        self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
+        self.source = self.range = CGVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info
         self.advection_constant = advection_constant
@@ -841,7 +845,7 @@ class AdvectionOperatorQ1(NumpyMatrixBasedOperator):
             or (isinstance(advection_function, FunctionInterface) and
                 advection_function.dim_domain == grid.dim and
                 advection_function.shape_range == (grid.dim,))
-        self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
+        self.source = self.range = CGVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info
         self.advection_constant = advection_constant
@@ -954,7 +958,7 @@ class RobinBoundaryOperator(NumpyMatrixBasedOperator):
                                           and (f.shape_range == ()
                                                or f.shape_range == (grid.dim,)
                                                ) for f in robin_data])
-        self.source = self.range = NumpyVectorSpace(grid.size(grid.dim))
+        self.source = self.range = CGVectorSpace(grid)
         self.grid = grid
         self.boundary_info = boundary_info
         self.robin_data = robin_data
@@ -1012,7 +1016,7 @@ class InterpolationOperator(NumpyMatrixBasedOperator):
         The |Function| to interpolate.
     """
 
-    source = scalars(1)
+    source = NumpyVectorSpace(1)
     linear = True
 
     def __init__(self, grid, function):
@@ -1020,7 +1024,7 @@ class InterpolationOperator(NumpyMatrixBasedOperator):
         assert function.shape_range == ()
         self.grid = grid
         self.function = function
-        self.range = NumpyVectorSpace(grid.size(grid.dim))
+        self.range = CGVectorSpace(grid)
         self.build_parameter_type(function)
 
     def _assemble(self, mu=None):

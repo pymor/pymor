@@ -163,7 +163,7 @@ class BlockVectorSpace(VectorSpaceInterface):
         The tuple defined above.
     """
 
-    def __init__(self, subspaces, id_='STATE'):
+    def __init__(self, subspaces, id_=None):
         subspaces = tuple(subspaces)
         assert all([isinstance(subspace, VectorSpaceInterface) for subspace in subspaces])
         self.subspaces = subspaces
@@ -182,7 +182,7 @@ class BlockVectorSpace(VectorSpaceInterface):
         return BlockVectorArray([subspace.zeros(count=count, reserve=reserve) for subspace in self.subspaces], self)
 
     @classinstancemethod
-    def make_array(cls, obj, id_='STATE'):
+    def make_array(cls, obj, id_=None):
         assert len(obj) > 0
         return cls(tuple(o.space for o in obj), id_=id_).make_array(obj)
 

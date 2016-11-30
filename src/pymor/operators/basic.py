@@ -5,13 +5,11 @@
 
 from numbers import Number
 
-import numpy as np
-
 from pymor.algorithms import genericsolvers
 from pymor.core.exceptions import InversionError
 from pymor.operators.interfaces import OperatorInterface
 from pymor.vectorarrays.interfaces import VectorArrayInterface
-from pymor.vectorarrays.numpy import scalars, NumpyVectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class OperatorBase(OperatorInterface):
@@ -164,10 +162,10 @@ class OperatorBase(OperatorInterface):
     def as_vector(self, mu=None):
         if not self.linear:
             raise TypeError('This nonlinear operator does not represent a vector or linear functional.')
-        elif self.source == scalars(1):
-            return self.apply(scalars(1).make_array(1), mu=mu)
-        elif self.range == scalars(1):
-            return self.apply_adjoint(scalars(1).make_array(1), mu=mu)
+        elif self.source == NumpyVectorSpace(1):
+            return self.apply(self.source.make_array(1), mu=mu)
+        elif self.range == NumpyVectorSpace(1):
+            return self.apply_adjoint(self.range.make_array(1), mu=mu)
         else:
             raise TypeError('This operator does not represent a vector or linear functional.')
 

@@ -49,10 +49,8 @@ operating on objects of the following types:
     only required datum is the dimension of the contained vectors.
     |VectorSpaces| for other backends could, e.g., hold a socket for
     communication with a specific PDE solver instance. Additionally,
-    each |VectorSpace| has a string |id| which is used to signify the
-    mathematical identity of the given space. The default id is `'STATE'`,
-    whereas `'SCALARS'` is used to signify arrays of real or complex
-    numbers (see below).
+    each |VectorSpace| has a string |id|, defaulting to `None`, which
+    is used to signify the mathematical identity of the given space.
     
     Two arrays in pyMOR are compatible (e.g. can be added) if they are from
     the same |VectorSpace|. If a |VectorArray| is contained in a given
@@ -85,11 +83,10 @@ operating on objects of the following types:
     
     Operators in pyMOR are also used to represent bilinear forms via the
     |apply2| method. A functional in pyMOR is simply an operator with
-    `NumpyVectorSpace(1, 'SCALARS')` as |range|. This space can also be obtained
-    via the `scalars(1)` shorthand. Dually, a vector-like operator is an operator
-    with `scalars(1)` as |source|. Such vector-like operators are used in pyMOR to
-    represent |Parameter| dependent vectors such as the initial data of an
-    |InstationaryDiscretization|. For linear functionals and vector-like
+    `NumpyVectorSpace(1)` as |range|. Dually, a vector-like operator is an operator
+    with `NumpyVectorSpace(1)` as |source|. Such vector-like operators are used
+    in pyMOR to represent |Parameter| dependent vectors such as the initial data
+    of an |InstationaryDiscretization|. For linear functionals and vector-like
     operators, the |as_vector| method can be called to obtain a vector
     representation of the operator as a |VectorArray| of length 1.
 

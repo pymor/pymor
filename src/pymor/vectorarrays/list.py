@@ -418,7 +418,7 @@ class ListVectorSpace(VectorSpaceInterface):
         return ListVectorArray([self.zero_vector() for _ in range(count)], self)
 
     @classinstancemethod
-    def make_array(cls, obj, id_='STATE'):
+    def make_array(cls, obj, id_=None):
         if len(obj) == 0:
             raise NotImplementedError
         return cls.space_from_vector_obj(obj[0], id_=id_).make_array(obj)
@@ -428,7 +428,7 @@ class ListVectorSpace(VectorSpaceInterface):
         return ListVectorArray([self.make_vector(v) for v in obj], self)
 
     @classinstancemethod
-    def from_data(cls, data, id_='STATE'):
+    def from_data(cls, data, id_=None):
         return cls.space_from_dim(data.shape[1], id_=id_).from_data(data)
 
     @from_data.instancemethod
@@ -438,7 +438,7 @@ class ListVectorSpace(VectorSpaceInterface):
 
 class NumpyListVectorSpace(ListVectorSpace):
 
-    def __init__(self, dim, id_='STATE'):
+    def __init__(self, dim, id_=None):
         self.dim = dim
         self.id = id_
 

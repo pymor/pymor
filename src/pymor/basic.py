@@ -72,4 +72,4 @@ from pymor.tools.random import new_random_state
 
 from pymor.vectorarrays.constructions import cat_arrays
 from pymor.vectorarrays.list import ListVectorSpace
-from pymor.vectorarrays.numpy import NumpyVectorSpace, scalars
+from pymor.vectorarrays.numpy import NumpyVectorSpace

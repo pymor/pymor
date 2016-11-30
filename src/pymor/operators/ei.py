@@ -90,11 +90,10 @@ class EmpiricalInterpolatedOperator(OperatorBase):
             return self.range.zeros(len(U))
 
         if hasattr(self, 'restricted_operator'):
-            U_components = NumpyVectorSpace.make_array(U.components(self.source_dofs), 'SCALARS')
+            U_components = NumpyVectorSpace.make_array(U.components(self.source_dofs))
             AU = self.restricted_operator.apply(U_components, mu=mu)
         else:
-            AU = NumpyVectorSpace.make_array(self.operator.apply(U, mu=mu).components(self.interpolation_dofs),
-                                             'SCALARS')
+            AU = NumpyVectorSpace.make_array(self.operator.apply(U, mu=mu).components(self.interpolation_dofs))
         try:
             if self.triangular:
                 interpolation_coefficients = solve_triangular(self.interpolation_matrix, AU.data.T,
@@ -129,8 +128,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
                 projected_collateral_basis = self.collateral_basis
 
             return ProjectedEmpiciralInterpolatedOperator(self.restricted_operator, self.interpolation_matrix,
-                                                          NumpyVectorSpace.make_array(source_basis.components(self.source_dofs),
-                                                                                      'SCALARS'),
+                                                          NumpyVectorSpace.make_array(source_basis.components(self.source_dofs)),
                                                           projected_collateral_basis, self.triangular,
                                                           self.source.id, None, name)
 
@@ -141,6 +139,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
         if len(self.interpolation_dofs) == 0:
             if isinstance(self.source, NumpyVectorSpace) and isinstance(self.range, NumpyVectorSpace):
                 return NumpyMatrixOperator(np.zeros((self.range.dim, self.source.dim)), solver_options=options,
+                                           source_id=self.source.id, range_id=self.range.id,
                                            name=self.name + '_jacobian')
             else:
                 return ZeroOperator(self.source, self.range, name=self.name + '_jacobian')
@@ -163,7 +162,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
                 interpolation_coefficients = np.empty((len(JU), len(self.collateral_basis))) + np.nan
             J = self.collateral_basis.lincomb(interpolation_coefficients)
             if isinstance(J.space, NumpyVectorSpace):
-                J = NumpyMatrixOperator(J.data.T, source_id='SCALARS', range_id=self.range.id)
+                J = NumpyMatrixOperator(J.data.T, range_id=self.range.id)
             else:
                 J = VectorArrayOperator(J)
             return Concatenation(J, ComponentProjection(self.source_dofs, self.source),
@@ -212,6 +211,7 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
 
         if self.interpolation_matrix.shape[0] == 0:
             return NumpyMatrixOperator(np.zeros((self.range.dim, self.source.dim)), solver_options=options,
+                                       source_id=self.source.id, range_id=self.range.id,
                                        name=self.name + '_jacobian')
 
         U_components = self.source_basis_dofs.lincomb(U.data[0])
@@ -253,8 +253,8 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
                                                                  old_pcb.space.id)
 
         old_sbd = self.source_basis_dofs
-        source_basis_dofs = NumpyVectorSpace.make_array(old_sbd.data[:dim_source], 'SCALARS') if dim_collateral is None \
-            else NumpyVectorSpace.make_array(old_sbd.data[:dim_source, source_dofs], 'SCALARS')
+        source_basis_dofs = NumpyVectorSpace.make_array(old_sbd.data[:dim_source]) if dim_collateral is None \
+            else NumpyVectorSpace.make_array(old_sbd.data[:dim_source, source_dofs])
 
         return ProjectedEmpiciralInterpolatedOperator(restricted_operator, interpolation_matrix,
                                                       source_basis_dofs, projected_collateral_basis, self.triangular,

@@ -126,7 +126,7 @@ def discretize_stationary_from_disk(parameter_file):
         path = os.path.join(base_path, system_mat[i][0])
         expr = system_mat[i][1]
         parameter_functional = ExpressionParameterFunctional(expr, parameter_type=parameter_type)
-        system_operators.append(NumpyMatrixOperator.from_file(path))
+        system_operators.append(NumpyMatrixOperator.from_file(path, source_id='STATE', range_id='STATE'))
         system_functionals.append(parameter_functional)
 
     system_lincombOperator = LincombOperator(system_operators, coefficients=system_functionals)
@@ -138,7 +138,7 @@ def discretize_stationary_from_disk(parameter_file):
         path = os.path.join(base_path, rhs_vec[i][0])
         expr = rhs_vec[i][1]
         parameter_functional = ExpressionParameterFunctional(expr, parameter_type=parameter_type)
-        op = NumpyMatrixOperator.from_file(path, range_id='SCALARS')
+        op = NumpyMatrixOperator.from_file(path, source_id='STATE')
         assert isinstance(op._matrix, np.ndarray)
         op = op.with_(matrix=op._matrix.reshape((1, -1)))
         rhs_operators.append(op)
@@ -153,7 +153,7 @@ def discretize_stationary_from_disk(parameter_file):
         for i in range(len(product)):
             product_name = product[i][0]
             product_path = os.path.join(base_path, product[i][1])
-            products[product_name] = NumpyMatrixOperator.from_file(product_path)
+            products[product_name] = NumpyMatrixOperator.from_file(product_path, source_id='STATE', range_id='STATE')
     else:
         products = None
 
@@ -264,7 +264,7 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
         path = os.path.join(base_path, system_mat[i][0])
         expr = system_mat[i][1]
         parameter_functional = ExpressionParameterFunctional(expr, parameter_type=parameter_type)
-        system_operators.append(NumpyMatrixOperator.from_file(path))
+        system_operators.append(NumpyMatrixOperator.from_file(path, source_id='STATE', range_id='STATE'))
         system_functionals.append(parameter_functional)
 
     system_lincombOperator = LincombOperator(system_operators, coefficients=system_functionals)
@@ -276,7 +276,7 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
         path = os.path.join(base_path, rhs_vec[i][0])
         expr = rhs_vec[i][1]
         parameter_functional = ExpressionParameterFunctional(expr, parameter_type=parameter_type)
-        op = NumpyMatrixOperator.from_file(path, range_id='SCALARS')
+        op = NumpyMatrixOperator.from_file(path, source_id='STATE')
         assert isinstance(op._matrix, np.ndarray)
         op = op.with_(matrix=op._matrix.reshape((1, -1)))
         rhs_operators.append(op)
@@ -286,13 +286,13 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
 
     # get mass matrix
     path = os.path.join(base_path, mass_mat[0][1])
-    mass_operator = NumpyMatrixOperator.from_file(path)
+    mass_operator = NumpyMatrixOperator.from_file(path, source_id='STATE', range_id='STATE')
 
     # Obtain initial solution if not given
     if u0 is None:
         u_0 = config.items('initial-solution')
         path = os.path.join(base_path, u_0[0][1])
-        op = NumpyMatrixOperator.from_file(path, source_id='SCALARS')
+        op = NumpyMatrixOperator.from_file(path, range_id='STATE')
         assert isinstance(op._matrix, np.ndarray)
         u0 = op.with_(matrix=op._matrix.reshape((-1, 1)))
 
@@ -303,7 +303,7 @@ def discretize_instationary_from_disk(parameter_file, T=None, steps=None, u0=Non
         for i in range(len(product)):
             product_name = product[i][0]
             product_path = os.path.join(base_path, product[i][1])
-            products[product_name] = NumpyMatrixOperator.from_file(product_path)
+            products[product_name] = NumpyMatrixOperator.from_file(product_path, source_id='STATE', range_id='STATE')
     else:
         products = None
 

@@ -128,7 +128,7 @@ def _discretize_fenics():
     h1_product = FenicsMatrixOperator(h1_mat, V, V, name='h1_0_semi')
 
     # build discretization
-    visualizer = FenicsVisualizer(V)
+    visualizer = FenicsVisualizer(FenicsVectorSpace(V))
     parameter_space = CubicParameterSpace(op.parameter_type, 0.1, 1.)
     d = StationaryDiscretization(op, rhs, products={'h1_0_semi': h1_product},
                                  parameter_space=parameter_space,
