@@ -5,6 +5,8 @@
 
 from numbers import Number
 
+import numpy as np
+
 from pymor.algorithms import genericsolvers
 from pymor.core.exceptions import InversionError
 from pymor.operators.interfaces import OperatorInterface
@@ -159,15 +161,13 @@ class OperatorBase(OperatorInterface):
             adjoint_op = AdjointOperator(self, with_apply_inverse=False, solver_options=options)
             return adjoint_op.apply_inverse(U, mu=mu, least_squares=least_squares)
 
-    def as_vector(self, mu=None):
-        if not self.linear:
-            raise TypeError('This nonlinear operator does not represent a vector or linear functional.')
-        elif self.source == NumpyVectorSpace(1):
-            return self.apply(self.source.make_array(1), mu=mu)
-        elif self.range == NumpyVectorSpace(1):
-            return self.apply_adjoint(self.range.make_array(1), mu=mu)
-        else:
-            raise TypeError('This operator does not represent a vector or linear functional.')
+    def as_range_array(self, mu=None):
+        assert isinstance(self.source, NumpyVectorSpace)
+        return self.apply(self.source.make_array(np.eye(self.source.dim)), mu=mu)
+
+    def as_source_array(self, mu=None):
+        assert isinstance(self.range, NumpyVectorSpace)
+        return self.apply_adjoint(self.range.make_array(np.eye(self.range.dim)), mu=mu)
 
     def projected(self, range_basis, source_basis, product=None, name=None):
         name = name or '{}_projected'.format(self.name)

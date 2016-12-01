@@ -131,14 +131,14 @@ class ResidualOperator(OperatorBase):
         self.linear = operator.linear
         self.operator = operator
         self.rhs = rhs
-        self.rhs_vector = rhs.as_vector() if rhs and not rhs.parametric else None
+        self.rhs_vector = rhs.as_vector(space=operator.range) if rhs and not rhs.parametric else None
         self.rhs_is_functional = rhs_is_functional
         self.name = name
 
     def apply(self, U, mu=None):
         V = self.operator.apply(U, mu=mu)
         if self.rhs:
-            F = self.rhs_vector or self.rhs.as_vector(mu)
+            F = self.rhs_vector or self.rhs.as_vector(mu, space=self.operator.range)
             if len(V) > 1:
                 V -= F[[0]*len(V)]
             else:
@@ -305,7 +305,7 @@ class ImplicitEulerResidualOperator(OperatorBase):
         self.operator = operator
         self.mass = mass
         self.functional = functional
-        self.functional_vector = functional.as_vector() if functional and not functional.parametric else None
+        self.functional_vector = functional.as_source_array() if functional and not functional.parametric else None
         self.dt = dt
         self.name = name
 
@@ -314,7 +314,7 @@ class ImplicitEulerResidualOperator(OperatorBase):
         V.axpy(1./self.dt, self.mass.apply(U, mu=mu))
         V.axpy(-1./self.dt, self.mass.apply(U_old, mu=mu))
         if self.functional:
-            F = self.functional_vector or self.functional.as_vector(mu)
+            F = self.functional_vector or self.functional.as_source_array(mu)
             if len(V) > 1:
                 V -= F[[0]*len(V)]
             else:

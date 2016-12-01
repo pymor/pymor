@@ -107,7 +107,7 @@ def estimate_image(operators=(), vectors=(),
             operator = Concatenation(op.range_product, op.operator) if op.range_product else op.operator
             collect_operator_ranges(operator, operator.source.make_array(np.ones(1)), image)
         elif op.linear and not op.parametric:
-            image.append(op.as_vector())
+            image.append(op.as_vector(space=image.space))
         else:
             raise ImageCollectionError(op)
 

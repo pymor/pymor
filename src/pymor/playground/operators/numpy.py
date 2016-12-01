@@ -77,13 +77,13 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
                     raise InversionError(msg)
             raise e
 
-    def as_vector(self, mu=None):
-        if self.range == NumpyVectorSpace(1):
-            return self.source.make_array([self._matrix.ravel()])
-        elif self.source == NumpyVectorSpace(1):
-            return self.range.make_array([self._matrix.ravel()])
-        else:
-            raise TypeError('This operator does not represent a vector or linear functional.')
+    def as_range_array(self, mu=None):
+        assert not self.sparse
+        return self.range.make_array(list(self._matrix.T.copy()))
+
+    def as_source_array(self, mu=None):
+        assert not self.sparse
+        return self.source.make_array(list(self._matrix.copy()))
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         lincomb = super().assemble_lincomb(operators, coefficients)

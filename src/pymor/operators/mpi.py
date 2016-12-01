@@ -88,14 +88,13 @@ class MPIOperator(OperatorBase):
         else:
             return self.range.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'apply', U, mu=mu))
 
-    def as_vector(self, mu=None):
+    def as_range_array(self, mu=None):
         mu = self.parse_parameter(mu)
-        if self.source == NumpyVectorSpace(1):
-            return self.range.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'as_vector', mu=mu))
-        elif self.range == NumpyVectorSpace(1):
-            return self.source.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'as_vector', mu=mu))
-        else:
-            raise TypeError('This operator does not represent a vector or linear functional.')
+        return self.range.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'as_range_array', mu=mu))
+
+    def as_source_array(self, mu=None):
+        mu = self.parse_parameter(mu)
+        return self.source.make_array(mpi.call(mpi.method_call_manage, self.obj_id, 'as_source_array', mu=mu))
 
     def apply2(self, V, U, mu=None):
         if not self.with_apply2:

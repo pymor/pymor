@@ -160,7 +160,7 @@ class StationaryDiscretization(DiscretizationBase):
         if not self.logging_disabled:
             self.logger.info('Solving {} for {} ...'.format(self.name, mu))
 
-        return self.operator.apply_inverse(self.rhs.as_vector(mu), mu=mu)
+        return self.operator.apply_inverse(self.rhs.as_source_array(mu), mu=mu)
 
 
 class InstationaryDiscretization(DiscretizationBase):
@@ -283,6 +283,6 @@ class InstationaryDiscretization(DiscretizationBase):
             self.logger.info('Solving {} for {} ...'.format(self.name, mu))
 
         mu['_t'] = 0
-        U0 = self.initial_data.as_vector(mu)
+        U0 = self.initial_data.as_range_array(mu)
         return self.time_stepper.solve(operator=self.operator, rhs=self.rhs, initial_data=U0, mass=self.mass,
                                        initial_time=0, end_time=self.T, mu=mu, num_values=self.num_values)

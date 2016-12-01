@@ -163,8 +163,11 @@ class NumpyMatrixBasedOperator(OperatorBase):
     def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         return self.assemble(mu).apply_adjoint(U, source_product=source_product, range_product=range_product)
 
-    def as_vector(self, mu=None):
-        return self.assemble(mu).as_vector()
+    def as_range_array(self, mu=None):
+        return self.assemble(mu).as_range_array()
+
+    def as_source_array(self, mu=None):
+        return self.assemble(mu).as_source_array()
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         return self.assemble(mu).apply_inverse(V, least_squares=least_squares)
@@ -235,13 +238,13 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     def assemble(self, mu=None):
         return self
 
-    def as_vector(self, mu=None):
-        if self.range == NumpyVectorSpace(1):
-            return self.source.make_array(self._matrix.ravel())
-        elif self.source == NumpyVectorSpace(1):
-            return self.range.make_array(self._matrix.ravel())
-        else:
-            raise TypeError('This operator does not represent a vector or linear functional.')
+    def as_range_array(self, mu=None):
+        assert not self.sparse
+        return self.range.make_array(self._matrix.T.copy())
+
+    def as_source_array(self, mu=None):
+        assert not self.sparse
+        return self.source.make_array(self._matrix.copy())
 
     def apply(self, U, mu=None):
         assert U in self.source

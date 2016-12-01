@@ -5,6 +5,7 @@
 
 from pymor.core.interfaces import ImmutableInterface, abstractmethod
 from pymor.parameters.base import Parametric
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class OperatorInterface(ImmutableInterface, Parametric):
@@ -242,36 +243,105 @@ class OperatorInterface(ImmutableInterface, Parametric):
         """
         pass
 
-    @abstractmethod
-    def as_vector(self, mu=None):
+    def as_range_array(self, mu=None):
+        """Return a |VectorArray| representation of the operator in its range space.
+
+        In the case of a linear operator with |NumpyVectorSpace| as
+        :attr:`~OperatorInterface.source`, this method returns for every |Parameter|
+        `mu` a |VectorArray| `V` in the operator's :attr:`~OperatorInterface.range`,
+        such that ::
+
+            V.lincomb(U.data) == self.apply(U, mu)
+
+        for all |VectorArrays| `U`.
+
+        Parameters
+        ----------
+        mu
+            The |Parameter| for which to return the |VectorArray| representation.
+
+        Returns
+        -------
+        V
+            The |VectorArray| defined above.
+        """
+        assert isinstance(self.source, NumpyVectorSpace) and self.linear
+        raise NotImplementedError
+
+    def as_source_array(self, mu=None):
+        """Return a |VectorArray| representation of the operator in its source space.
+
+        In the case of a linear operator with |NumpyVectorSpace| as
+        :attr:`~OperatorInterface.range`, this method returns for every |Parameter|
+        `mu` a |VectorArray| `V` in the operator's :attr:`~OperatorInterface.source`,
+        such that ::
+
+            self.range.make_array(V.dot(U)) == self.apply(U, mu)
+
+        for all |VectorArrays| `U`.
+
+        Parameters
+        ----------
+        mu
+            The |Parameter| for which to return the |VectorArray| representation.
+
+        Returns
+        -------
+        V
+            The |VectorArray| defined above.
+        """
+        assert isinstance(self.range, NumpyVectorSpace) and self.linear
+        raise NotImplementedError
+
+    def as_vector(self, mu=None, *, space=None):
         """Return a vector representation of a linear functional or vector operator.
 
-        This method may only be called on linear functionals, i.e. linear |Operators|
-        with |NumpyVectorSpace| `(1)` as :attr:`~OperatorInterface.range`,
-        or on operators describing vectors, i.e. linear |Operators| with
-        |NumpyVectorSpace| `(1)` as :attr:`~OperatorInterface.source`.
+        Depending on the operator's :attr:`~OperatorInterface.source` and
+        :attr:`~OperatorInterface.range`, this method is equivalent to calling
+        :meth:`~OperatorInterface.as_range_array` or :meth:`~OperatorInterface.as_source_array`
+        respectively. The resulting |VectorArray| is required to have length 1.
 
-        In the case of a functional, the identity ::
-
-            self.as_vector(mu).dot(U) == self.apply(U, mu)
-
-        holds, whereas in the case of a vector-like operator we have ::
-
-            self.as_vector(mu) == self.apply(NumpyVectorArray(1), mu).
+        Note that in case both :attr:`~OperatorInterface.source` and
+        :attr:`~OperatorInterface.range` are one-dimensional |NumpyVectorSpaces|
+        but with different :attr:`ids <pymor.vectorarrays.interfaces.VectorSpaceInterface.id>`,
+        it is impossible to determine which space to choose. In this case,
+        the desired space has to be specified via the `space` parameter.
 
         Parameters
         ----------
         mu
             The |Parameter| for which to return the vector representation.
+        space
+            See above.
 
         Returns
         -------
         V
             |VectorArray| of length 1 containing the vector representation.
-            `V` belongs to `self.source` for functionals and to `self.range` for
-            vector-like operators.
         """
-        pass
+        if not self.linear:
+            raise TypeError('This nonlinear operator does not represent a vector or linear functional.')
+        if space is not None:
+            if self.range == space:
+                V = self.as_range_array(mu)
+                assert len(V) == 1
+                return V
+            elif self.source == space:
+                V = self.as_source_array(mu)
+                assert len(V) == 1
+                return V
+            else:
+                raise TypeError('This operator cannot be represented by a VectorArray in the given space.')
+        elif self.source.dim == 1 and isinstance(self.source, NumpyVectorSpace):
+            if self.range.dim == 1 and isinstance(self.range, NumpyVectorSpace) and self.range.id != self.source.id:
+                raise TypeError("Cannot determine space of VectorArray representation (specify 'space' parameter).")
+            return self.as_range_array(mu)
+        elif self.range.dim == 1 and isinstance(self.range, NumpyVectorSpace):
+            if self.source.dim == 1 and isinstance(self.source, NumpyVectorSpace) and self.source.id != self.range.id:
+                raise TypeError("Cannot determine space of VectorArray representation (specify 'space' parameter).")
+            return self.as_source_array(mu)
+        else:
+            raise TypeError('This operator does not represent a vector or linear functional.')
 
     @abstractmethod
     def assemble(self, mu=None):

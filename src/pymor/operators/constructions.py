@@ -180,21 +180,28 @@ class LincombOperator(OperatorBase):
         else:
             return jac
 
-    def as_vector(self, mu=None):
+    def _as_array(self, source, mu):
         if hasattr(self, '_assembled_operator'):
             if self._defaults_sid == defaults_sid():
-                return self._assembled_operator.as_vector()
+                return self._assembled_operator.as_source_array() if source \
+                    else self._assembled_operator.as_range_array()
             else:
-                return self.assemble().as_vector()
+                return self.assemble().as_source_array() if source else self.assemble().as_range_array()
         elif self._try_assemble:
-            return self.assemble().as_vector()
+            return self.assemble().as_source_array() if source else self.assemble().as_range_array()
         coefficients = np.array(self.evaluate_coefficients(mu))
-        vectors = [op.as_vector(mu) for op in self.operators]
-        R = vectors[0]
+        arrays = [op.as_source_array(mu) if source else op.as_range_array(mu) for op in self.operators]
+        R = arrays[0]
         R.scal(coefficients[0])
-        for c, v in zip(coefficients[1:], vectors[1:]):
+        for c, v in zip(coefficients[1:], arrays[1:]):
             R.axpy(c, v)
         return R
+
+    def as_range_array(self, mu=None):
+        return self._as_array(False, mu)
+
+    def as_source_array(self, mu=None):
+        return self._as_array(True, mu)
 
     def projected(self, range_basis, source_basis, product=None, name=None):
         if hasattr(self, '_assembled_operator'):
@@ -616,11 +623,17 @@ class VectorArrayOperator(OperatorBase):
             array.axpy(c, op._array)
         return VectorArrayOperator(array, transposed=transposed, name=name)
 
-    def as_vector(self, mu=None):
-        if len(self._array) != 1:
-            raise TypeError('This operator does not represent a vector or linear functional.')
-        else:
+    def as_range_array(self, mu=None):
+        if not self.transposed:
             return self._array.copy()
+        else:
+            super().as_range_array(mu)
+
+    def as_source_array(self, mu=None):
+        if self.transposed:
+            return self._array.copy()
+        else:
+            super().as_source_array(mu)
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
@@ -642,7 +655,7 @@ class VectorOperator(VectorArrayOperator):
 
     In particular::
 
-        VectorOperator(vector).as_vector() == vector
+        VectorOperator(vector).as_range_array() == vector
 
     Parameters
     ----------
@@ -674,11 +687,11 @@ class VectorFunctional(VectorArrayOperator):
 
     In particular, if `product` is `None` ::
 
-        VectorFunctional(vector).as_vector() == vector.
+        VectorFunctional(vector).as_source_array() == vector.
 
     If `product` is not none, we obtain ::
 
-        VectorFunctional(vector).as_vector() == product.apply(vector).
+        VectorFunctional(vector).as_source_array() == product.apply(vector).
 
     Parameters
     ----------
@@ -930,10 +943,15 @@ class SelectionOperator(OperatorBase):
         op = self.operators[self._get_operator_number(mu)]
         return op.apply_adjoint(U, mu=mu, source_product=source_product, range_product=range_product)
 
-    def as_vector(self, mu=None):
+    def as_range_array(self, mu=None):
         mu = self.parse_parameter(mu)
         operator_number = self._get_operator_number(mu)
-        return self.operators[operator_number].as_vector(mu=mu)
+        return self.operators[operator_number].as_range_array(mu=mu)
+
+    def as_source_array(self, mu=None):
+        mu = self.parse_parameter(mu)
+        operator_number = self._get_operator_number(mu)
+        return self.operators[operator_number].as_source_array(mu=mu)
 
     def projected(self, range_basis, source_basis, product=None, name=None):
         projected_operators = [op.projected(range_basis, source_basis, product=product, name=name)
