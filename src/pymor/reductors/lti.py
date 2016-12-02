@@ -177,9 +177,9 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
     if sigma is None:
         sigma = np.logspace(-1, 1, r)
     if b is None:
-        b = discretization.B.source.from_data(np.ones((r, discretization.m)))
+        b = discretization.B.source.make_array(np.ones((r, discretization.m)))
     if c is None:
-        c = discretization.C.range.from_data(np.ones((r, discretization.p)))
+        c = discretization.C.range.make_array(np.ones((r, discretization.p)))
 
     if verbose:
         if compute_errors:
@@ -248,8 +248,8 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
             else:
                 print('{:4d} | {:15.9e}'.format(it + 1, dist[-1]))
 
-        Y = rom.B.range.from_data(Y.conj().T)
-        X = rom.C.source.from_data(X.T)
+        Y = rom.B.range.make_array(Y.conj().T)
+        X = rom.C.source.make_array(X.T)
         b = rom.B.apply_adjoint(Y)
         c = rom.C.apply(X)
         R.append(b)

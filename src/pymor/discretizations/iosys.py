@@ -421,16 +421,14 @@ class LTISystem(InputOutputSystem):
 
         sEmA = LincombOperator((E, A), (s, -1))
         if self.m <= self.p:
-            I_m = B.source.from_data(sp.eye(self.m))
-            tfs = C.apply(sEmA.apply_inverse(B.apply(I_m))).data.T
+            tfs = C.apply(sEmA.apply_inverse(B.as_range_array())).data.T
         else:
-            I_p = C.range.from_data(sp.eye(self.p))
-            tfs = B.apply_adjoint(sEmA.apply_inverse_adjoint(C.apply_adjoint(I_p))).data.conj()
+            tfs = B.apply_adjoint(sEmA.apply_inverse_adjoint(C.as_source_array())).data.conj()
         if not isinstance(D, ZeroOperator):
             if self.m <= self.p:
-                tfs += D.apply(I_m).data.T
+                tfs += D.as_range_array().data.T
             else:
-                tfs += D.apply_adjoint(I_p).data
+                tfs += D.as_source_array().data
         return tfs
 
     def eval_dtf(self, s):
@@ -463,12 +461,10 @@ class LTISystem(InputOutputSystem):
 
         sEmA = LincombOperator((E, A), (s, -1))
         if self.m <= self.p:
-            I_m = B.source.from_data(sp.eye(self.m))
-            dtfs = -C.apply(sEmA.apply_inverse(E.apply(sEmA.apply_inverse(B.apply(I_m))))).data.T
+            dtfs = -C.apply(sEmA.apply_inverse(E.apply(sEmA.apply_inverse(B.as_range_array())))).data.T
         else:
-            I_p = C.range.from_data(sp.eye(self.p))
             dtfs = B.apply_adjoint(sEmA.apply_inverse_adjoint(E.apply_adjoint(sEmA.apply_inverse_adjoint(
-                C.apply_adjoint(I_p))))).data.conj()
+                C.as_source_array())))).data.conj()
         return dtfs
 
     @cached
@@ -760,13 +756,11 @@ class SecondOrderSystem(InputOutputSystem):
 
         s2MpsDpK = LincombOperator((M, D, K), (s ** 2, s, 1))
         if self.m <= self.p:
-            I_m = B.source.from_data(sp.eye(self.m))
             CppsCv = LincombOperator((Cp, Cv), (1, s))
-            tfs = CppsCv.apply(s2MpsDpK.apply_inverse(B.apply(I_m))).data.T
+            tfs = CppsCv.apply(s2MpsDpK.apply_inverse(B.as_range_array())).data.T
         else:
-            I_p = Cp.range.from_data(sp.eye(self.p))
-            tfs = B.apply_adjoint(s2MpsDpK.apply_inverse_adjoint(Cp.apply_adjoint(I_p) +
-                                                                 Cv.apply_adjoint(I_p) * s.conj())).data.conj()
+            tfs = B.apply_adjoint(s2MpsDpK.apply_inverse_adjoint(Cp.as_source_array() +
+                                                                 Cv.as_source_array() * s.conj())).data.conj()
         return tfs
 
     def eval_dtf(self, s):
@@ -804,15 +798,13 @@ class SecondOrderSystem(InputOutputSystem):
         s2MpsDpK = LincombOperator((M, D, K), (s ** 2, s, 1))
         sM2pD = LincombOperator((M, D), (2 * s, 1))
         if self.m <= self.p:
-            I_m = B.source.from_data(sp.eye(self.m))
-            dtfs = Cv.apply(s2MpsDpK.apply_inverse(B.apply(I_m))).data.T * s
+            dtfs = Cv.apply(s2MpsDpK.apply_inverse(B.as_range_array())).data.T * s
             CppsCv = LincombOperator((Cp, Cv), (1, s))
-            dtfs -= CppsCv.apply(s2MpsDpK.apply_inverse(sM2pD.apply(s2MpsDpK.apply_inverse(B.apply(I_m))))).data.T
+            dtfs -= CppsCv.apply(s2MpsDpK.apply_inverse(sM2pD.apply(s2MpsDpK.apply_inverse(B.as_range_array())))).data.T
         else:
-            I_p = Cp.range.from_data(sp.eye(self.p))
-            dtfs = B.apply_adjoint(s2MpsDpK.apply_inverse_adjoint(Cv.apply_adjoint(I_m))).data.conj() * s
+            dtfs = B.apply_adjoint(s2MpsDpK.apply_inverse_adjoint(Cv.as_source_array())).data.conj() * s
             dtfs -= B.apply_adjoint(s2MpsDpK.apply_inverse_adjoint(sM2pD.apply_adjoint(s2MpsDpK.apply_inverse_adjoint(
-                Cp.apply_adjoint(I_p) + Cv.apply_adjoint(I_p) * s.conj())))).data.conj()
+                Cp.as_source_array() + Cv.as_source_array() * s.conj())))).data.conj()
         return dtfs
 
 
@@ -928,11 +920,9 @@ class LinearDelaySystem(InputOutputSystem):
 
         middle = LincombOperator((E, A) + Ad, (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau))
         if self.m <= self.p:
-            I_m = B.source.from_data(sp.eye(self.m))
-            tfs = C.apply(middle.apply_inverse(B.apply(I_m))).data.T
+            tfs = C.apply(middle.apply_inverse(B.as_range_array())).data.T
         else:
-            I_p = C.range.from_data(sp.eye(self.p))
-            tfs = B.apply_adjoint(middle.apply_inverse_adjoint(C.apply_adjoint(I_p))).data.conj()
+            tfs = B.apply_adjoint(middle.apply_inverse_adjoint(C.as_source_array())).data.conj()
         return tfs
 
     def eval_dtf(self, s):
@@ -969,13 +959,11 @@ class LinearDelaySystem(InputOutputSystem):
         left_and_right = LincombOperator((E, A) + Ad, (s, -1) + tuple(-np.exp(-taui * s) for taui in self.tau))
         middle = LincombOperator((E,) + Ad, (s,) + tuple(taui * np.exp(-taui * s) for taui in self.tau))
         if self.m <= self.p:
-            I_m = B.source.from_data(sp.eye(self.m))
             dtfs = C.apply(left_and_right.apply_inverse(middle.apply(left_and_right.apply_inverse(
-                B.apply(I_m))))).data.T
+                B.as_range_array())))).data.T
         else:
-            I_p = C.range.from_data(sp.eye(self.p))
             dtfs = B.apply_adjoint(left_and_right.apply_inverse_adjoint(middle.apply_adjoint(
-                left_and_right.apply_inverse_adjointi(C.apply_adjoint(I_p))))).data.conj()
+                left_and_right.apply_inverse_adjointi(C.as_source_array())))).data.conj()
         return dtfs
 
 
