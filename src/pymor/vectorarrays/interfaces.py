@@ -503,10 +503,13 @@ class VectorSpaceInterface(ImmutableInterface):
     dim
         The dimension (number of degrees of freedom) of the
         vectors contained in the space.
+    is_scalar
+        Equivalent to `isinstance(space, NumpyVectorSpace) and space.dim == 1`.
     """
 
     id = None
     dim = None
+    is_scalar = False
 
     @abstractmethod
     def make_array(*args, **kwargs):

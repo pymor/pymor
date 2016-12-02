@@ -332,12 +332,12 @@ class OperatorInterface(ImmutableInterface, Parametric):
                 return V
             else:
                 raise TypeError('This operator cannot be represented by a VectorArray in the given space.')
-        elif self.source.dim == 1 and isinstance(self.source, NumpyVectorSpace):
-            if self.range.dim == 1 and isinstance(self.range, NumpyVectorSpace) and self.range.id != self.source.id:
+        elif self.source.is_scalar:
+            if self.range.is_scalar and self.range.id != self.source.id:
                 raise TypeError("Cannot determine space of VectorArray representation (specify 'space' parameter).")
             return self.as_range_array(mu)
-        elif self.range.dim == 1 and isinstance(self.range, NumpyVectorSpace):
-            if self.source.dim == 1 and isinstance(self.source, NumpyVectorSpace) and self.source.id != self.range.id:
+        elif self.range.is_scalar:
+            if self.source.is_scalar and self.source.id != self.range.id:
                 raise TypeError("Cannot determine space of VectorArray representation (specify 'space' parameter).")
             return self.as_source_array(mu)
         else:

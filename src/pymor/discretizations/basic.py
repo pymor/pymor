@@ -9,7 +9,6 @@ from pymor.operators.constructions import VectorOperator, induced_norm
 from pymor.operators.interfaces import OperatorInterface
 from pymor.tools.frozendict import FrozenDict
 from pymor.vectorarrays.interfaces import VectorArrayInterface
-from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class DiscretizationBase(DiscretizationInterface):
@@ -151,7 +150,7 @@ class StationaryDiscretization(DiscretizationBase):
         self.build_parameter_type(self.operator, self.rhs)
         self.parameter_space = parameter_space
         assert self.operator.source == self.operator.range == self.rhs.source
-        assert self.rhs.source == self.operator.source and self.rhs.range == NumpyVectorSpace(1) and self.rhs.linear
+        assert self.rhs.source == self.operator.source and self.rhs.range.is_scalar and self.rhs.linear
 
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu)
@@ -261,10 +260,10 @@ class InstationaryDiscretization(DiscretizationBase):
             self.add_with_arguments = self.add_with_arguments | {'time_stepper_nt'}
 
         assert isinstance(time_stepper, TimeStepperInterface)
-        assert self.initial_data.source == NumpyVectorSpace(1)
+        assert self.initial_data.source.is_scalar
         assert self.operator.source == self.operator.range == self.initial_data.range
         assert self.rhs is None \
-            or self.rhs.linear and self.rhs.source == self.operator.source and self.rhs.range == NumpyVectorSpace(1)
+            or self.rhs.linear and self.rhs.source == self.operator.source and self.rhs.range.is_scalar
         assert self.mass is None \
             or self.mass.linear and self.mass.source == self.mass.range == self.operator.source
 

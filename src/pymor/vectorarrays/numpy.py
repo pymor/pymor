@@ -395,6 +395,10 @@ class NumpyVectorSpace(VectorSpaceInterface):
             assert array.shape[1] == space.dim
             return NumpyVectorArray(array, space)
 
+    @property
+    def is_scalar(self):
+        return self.dim == 1
+
     def __repr__(self):
         return 'NumpyVectorSpace({})'.format(self.dim) if self.id is None \
             else 'NumpyVectorSpace({}, {})'.format(self.dim, self.id)
