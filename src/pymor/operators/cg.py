@@ -293,6 +293,7 @@ class L2ProductP1(NumpyMatrixBasedOperator):
         self.coefficient_function = coefficient_function
         self.solver_options = solver_options
         self.name = name
+        self.build_parameter_type(coefficient_function)
 
     def _assemble(self, mu=None):
         g = self.grid
@@ -391,6 +392,7 @@ class L2ProductQ1(NumpyMatrixBasedOperator):
         self.coefficient_function = coefficient_function
         self.solver_options = solver_options
         self.name = name
+        self.build_parameter_type(coefficient_function)
 
     def _assemble(self, mu=None):
         g = self.grid

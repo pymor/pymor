@@ -521,7 +521,7 @@ class LinearAdvectionLaxFriedrichs(NumpyMatrixBasedOperator):
         V_out = edge_volumes[outflow_edges] * normal_velocities[outflow_edges]
 
         I_dir = SUPE[dirichlet_edges, 0]
-        V_dir = edge_volumes[outflow_edges] * (0.5 * normal_velocities[dirichlet_edges] + 0.5 / self.lxf_lambda)
+        V_dir = edge_volumes[dirichlet_edges] * (0.5 * normal_velocities[dirichlet_edges] + 0.5 / self.lxf_lambda)
 
         I0 = np.hstack([I0_inner, I_out, I_dir])
         I1 = np.hstack([I1_inner, I_out, I_dir])
@@ -556,6 +556,42 @@ class L2Product(NumpyMatrixBasedOperator):
     def _assemble(self, mu=None):
 
         A = dia_matrix((self.grid.volumes(0), [0]), shape=(self.grid.size(0),) * 2)
+
+        return A
+
+
+class ReactionOperator(NumpyMatrixBasedOperator):
+    """Finite Volume reaction |Operator|.
+
+    The operator is of the form ::
+
+        L(u, mu)(x) = c(x, mu)⋅u(x)
+
+    Parameters
+    ----------
+    grid
+        The |Grid| for which to assemble the operator.
+    reaction_coefficient
+        The function 'c'
+    name
+        The name of the operator.
+    """
+
+    sparse = True
+
+    def __init__(self, grid, reaction_coefficient, solver_options=None, name=None):
+        assert reaction_coefficient.dim_domain == grid.dim and reaction_coefficient.shape_range == ()
+        self.source = self.range = NumpyVectorSpace(grid.size(0))
+        self.grid = grid
+        self.reaction_coefficient = reaction_coefficient
+        self.solver_options = solver_options
+        self.name = name
+        self.build_parameter_type(reaction_coefficient)
+
+    def _assemble(self, mu=None):
+
+        A = dia_matrix((self.reaction_coefficient.evaluate(self.grid.centers(0), mu=mu), [0]),
+                       shape=(self.grid.size(0),) * 2)
 
         return A
 

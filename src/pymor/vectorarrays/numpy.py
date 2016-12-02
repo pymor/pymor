@@ -36,6 +36,8 @@ class NumpyVectorArray(VectorArrayInterface):
 
     @property
     def data(self):
+        if self._refcount[0] > 1:
+            self._deep_copy()
         return self._array[:self._len]
 
     @property
@@ -78,7 +80,7 @@ class NumpyVectorArray(VectorArrayInterface):
             self._refcount[0] += 1
             return C
         else:
-            new_array = self._array[_ind]
+            new_array = self._array[:self._len] if _ind is None else self._array[_ind]
             if not new_array.flags['OWNDATA']:
                 new_array = new_array.copy()
             return NumpyVectorArray(new_array, self.space)

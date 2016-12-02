@@ -8,6 +8,7 @@ from numbers import Number
 import numpy as np
 
 from pymor.functions.interfaces import FunctionInterface
+from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.parameters.interfaces import ParameterFunctionalInterface
 
 
@@ -175,13 +176,7 @@ class ExpressionFunction(GenericFunction):
         The name of the function.
     """
 
-    functions = {k: getattr(np, k) for k in {'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan', 'arctan2',
-                                             'sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh',
-                                             'exp', 'exp2', 'log', 'log2', 'log10', 'array',
-                                             'min', 'minimum', 'max', 'maximum', 'pi', 'e',
-                                             'sum', 'prod', 'abs', 'sign', 'zeros', 'ones'}}
-    functions['norm'] = np.linalg.norm
-    functions['polar'] = lambda x: (np.linalg.norm(x, axis=-1), np.arctan2(x[..., 1], x[..., 0]) % (2*np.pi))
+    functions = ExpressionParameterFunctional.functions
 
     def __init__(self, expression, dim_domain=1, shape_range=(), parameter_type=None, values=None, name=None):
         self.expression = expression
