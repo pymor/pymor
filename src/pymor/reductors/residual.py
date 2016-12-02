@@ -342,7 +342,7 @@ class NonProjectedImplicitEulerResidualOperator(ImplicitEulerResidualOperator):
         R = super().apply(U, U_old, mu=mu)
         if self.product:
             R_riesz = self.product.apply_inverse(R)
-            return R_riesz * (np.sqrt(R_riesz.dot(R)) / R_riesz.l2_norm())[0]
+            return R_riesz * (np.sqrt(R_riesz.pairwise_dot(R)) / R_riesz.l2_norm())[0]
         else:
             return R
 
