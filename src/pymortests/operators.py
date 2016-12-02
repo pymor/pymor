@@ -127,6 +127,28 @@ def test_apply_adjoint(operator_with_arrays):
         assert np.all(almost_equal(Uind, op.apply_adjoint(V[ind], mu=mu)))
 
 
+def test_apply_adjoint2(operator_with_arrays):
+    op, mu, U, V = operator_with_arrays
+    if not op.linear:
+        return
+    try:
+        op.apply_adjoint(V, mu=mu)
+    except NotImplementedError:
+        return
+    assert np.allclose(V.dot(op.apply(U, mu=mu)), op.apply_adjoint(V, mu=mu).dot(U))
+
+
+def test_T(operator_with_arrays):
+    op, mu, U, V = operator_with_arrays
+    if not op.linear:
+        return
+    try:
+        op.T.apply(V, mu=mu)
+    except NotImplementedError:
+        return
+    assert np.allclose(V.dot(op.apply(U, mu=mu)), op.T.apply(V, mu=mu).dot(U))
+
+
 def test_apply_adjoint_2(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     if not op.linear:

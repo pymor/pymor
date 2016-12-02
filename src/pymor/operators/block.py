@@ -62,6 +62,10 @@ class BlockOperator(OperatorBase):
         self.linear = all(op.linear for op in self._operators())
         self.build_parameter_type(*self._operators())
 
+    @property
+    def T(self):
+        return type(self)(np.vectorize(lambda op: op.T if op else None)(self._blocks.T))
+
     @classmethod
     def hstack(cls, operators):
         """Horizontal stacking of |Operators|.
@@ -158,6 +162,10 @@ class BlockDiagonalOperator(BlockOperator):
     """
 
     def __init__(self, blocks):
+        blocks = np.array(blocks)
+        assert 1 <= blocks.ndim <= 2
+        if blocks.ndim == 2:
+            blocks = np.diag(blocks)
         n = len(blocks)
         blocks2 = np.empty((n, n), dtype=object)
         for i, op in enumerate(blocks):

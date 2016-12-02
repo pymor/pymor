@@ -46,9 +46,20 @@ class OperatorInterface(ImmutableInterface, Parametric):
         The source |VectorSpace|.
     range
         The range |VectorSpace|.
+    T
+        The transposed operator, i.e. ::
+
+            self.T.apply(V, mu) == self.apply_adjoint(V, mu)
+
+        for all V, mu.
     """
 
     solver_options = None
+
+    @property
+    def T(self):
+        from pymor.operators.constructions import AdjointOperator
+        return AdjointOperator(self)
 
     @abstractmethod
     def apply(self, U, mu=None):

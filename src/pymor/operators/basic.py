@@ -272,6 +272,14 @@ class ProjectedOperator(OperatorBase):
         self.linear = operator.linear
         self.product = product
 
+    @property
+    def T(self):
+        if self.product:
+            return super().T
+        else:
+            return ProjectedOperator(self.operator.T, self.source_basis, self.range_basis,
+                                     name=self.name + '_transposed')
+
     def apply(self, U, mu=None):
         mu = self.parse_parameter(mu)
         if self.source_basis is None:

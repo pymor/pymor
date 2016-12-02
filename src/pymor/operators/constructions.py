@@ -55,6 +55,11 @@ class LincombOperator(OperatorBase):
                                          (f for f in coefficients if isinstance(f, ParameterFunctionalInterface))))
         self._try_assemble = not self.parametric
 
+    @property
+    def T(self):
+        return self.with_(operators=[op.T for op in self.operators],
+                          name=self.name + '_transposed')
+
     def evaluate_coefficients(self, mu):
         """Compute the linear coefficients for a given |Parameter|.
 
@@ -256,6 +261,10 @@ class Concatenation(OperatorBase):
         self.solver_options = solver_options
         self.name = name
 
+    @property
+    def T(self):
+        return type(self)(self.first.T, self.second.T, name=self.name + '_transposed')
+
     def apply(self, U, mu=None):
         mu = self.parse_parameter(mu)
         return self.second.apply(self.first.apply(U, mu=mu), mu=mu)
@@ -347,6 +356,10 @@ class IdentityOperator(OperatorBase):
     def __init__(self, space, name=None):
         self.source = self.range = space
         self.name = name
+
+    @property
+    def T(self):
+        return self
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -484,6 +497,10 @@ class ZeroOperator(OperatorBase):
         self.range = range
         self.name = name
 
+    @property
+    def T(self):
+        return type(self)(self.range, self.source, name=self.name + '_transposed')
+
     def apply(self, U, mu=None):
         assert U in self.source
         return self.range.zeros(len(U))
@@ -565,7 +582,12 @@ class VectorArrayOperator(OperatorBase):
             self.source = NumpyVectorSpace(len(array), space_id)
             self.range = array.space
         self.transposed = transposed
+        self.space_id = space_id
         self.name = name
+
+    @property
+    def T(self):
+        return VectorArrayOperator(self._array, not self.transposed, self.space_id, self.name + '_transposed')
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -739,6 +761,10 @@ class FixedParameterOperator(OperatorBase):
         self.linear = operator.linear
         self.name = name
 
+    @property
+    def T(self):
+        return self.with_(operator=self.operator.T, name=self.name + '_transposed')
+
     def apply(self, U, mu=None):
         return self.operator.apply(U, mu=self.mu)
 
@@ -807,6 +833,13 @@ class AdjointOperator(OperatorBase):
         self.name = name or operator.name + '_adjoint'
         self.with_apply_inverse = with_apply_inverse
         self.solver_options = solver_options
+
+    @property
+    def T(self):
+        if not self.source_product and not self.range_product:
+            return self.operator
+        else:
+            return super().T
 
     def apply(self, U, mu=None):
         return self.operator.apply_adjoint(U, mu=mu,
@@ -920,6 +953,11 @@ class SelectionOperator(OperatorBase):
 
         self.boundaries = tuple(boundaries)
         self.parameter_functional = parameter_functional
+
+    @property
+    def T(self):
+        return self.with_(operators=[op.T for op in self.operators],
+                          name=self.name + '_transposed')
 
     def _get_operator_number(self, mu):
         value = self.parameter_functional.evaluate(mu)

@@ -117,6 +117,13 @@ class NumpyMatrixBasedOperator(OperatorBase):
     linear = True
     sparse = None
 
+    @property
+    def T(self):
+        if not self.parametric:
+            return self.assemble().T
+        else:
+            return super().T
+
     @abstractmethod
     def _assemble(self, mu=None):
         pass
@@ -231,6 +238,12 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         matrix = load_matrix(path, key=key)
         return cls(matrix, solver_options=solver_options, source_id=source_id, range_id=range_id,
                    name=name or key or path)
+
+    @property
+    def T(self):
+        # TODO: Process solver_options
+        return self.with_(matrix=self._matrix.T, source_id=self.range_id, range_id=self.source_id,
+                          solver_options=None, name=self.name + '_transposed')
 
     def _assemble(self, mu=None):
         pass
