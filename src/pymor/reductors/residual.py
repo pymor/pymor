@@ -13,14 +13,14 @@ from pymor.operators.constructions import induced_norm
 from pymor.reductors.basic import GenericRBReconstructor
 
 
-def reduce_residual(operator, rhs=None, RB=None, rhs_is_functional=True, product=None, extends=None):
+def reduce_residual(operator, rhs=None, RB=None, product=None, extends=None):
     """Generic reduced basis residual reductor.
 
     Given an operator and a right-hand side, the residual is given by::
 
         residual.apply(U, mu) == operator.apply(U, mu) - rhs.as_vector(mu)
 
-    When the rhs is a functional we are usually interested in the Riesz representative
+    When the rhs is a functional we are interested in the Riesz representative
     of the residual::
 
         residual.apply(U, mu)
@@ -35,7 +35,7 @@ def reduce_residual(operator, rhs=None, RB=None, rhs_is_functional=True, product
         projected_residual
             === residual.projected(range_basis=residual_range, source_basis=RB)
 
-    of the residual operator. Given an reduced basis coefficient vector `u`, w.r.t.
+    of the residual operator. Given a reduced basis coefficient vector `u`, w.r.t.
     `RB`, the (dual) norm of the residual can then be computed as ::
 
         projected_residual.apply(u, mu).l2_norm()
@@ -51,14 +51,11 @@ def reduce_residual(operator, rhs=None, RB=None, rhs_is_functional=True, product
         See definition of `residual`.
     rhs
         See definition of `residual`. If `None`, zero right-hand side is assumed.
-    rhs_is_functional
-        Set this to `True` when `rhs` is a |Functional|.
     RB
         |VectorArray| containing a basis of the reduced space onto which to project.
     product
-        Inner product |Operator| w.r.t. which to compute the Riesz representatives
-        in case `rhs_is_functional` is `True`. When `product` is `None`, no Riesz
-        representatives are computed
+        Inner product |Operator| w.r.t. which to orthonormalize and w.r.t. which to
+        compute the Riesz representatives in case `rhs` is a functional.
     extends
         Set by :meth:`~pymor.algorithms.greedy.greedy` to the result of the
         last reduction in case the basis extension was `hierarchic` (used to prevent
@@ -80,6 +77,16 @@ def reduce_residual(operator, rhs=None, RB=None, rhs_is_functional=True, product
     assert RB is None or RB in operator.source
     assert product is None or product.source == product.range == operator.range
     assert extends is None or len(extends) == 3
+
+    # Note that it is possible that rhs.source == rhs.range, nameley if both
+    # are one-dimensional NumpyVectorSpaces which agree with the range of
+    # operator. Usually, this should not happen, since at least one of these
+    # spaces should have an id which is different from the id of operator.range.
+    # However, even if it happens but rhs is actually a vector, we are on
+    # the safe side, since first computing the Riesz representatives does not
+    # change anything in one-dimensional spaces, and it does not matter whether
+    # we project from the left or from the right.
+    rhs_is_functional = (rhs.source == operator.range)
 
     logger = getLogger('pymor.reductors.residual.reduce_residual')
 
