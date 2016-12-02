@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# any failure here should fail the whole test
+set -e
+
 # most of these should be baked into the docker image already
 pip install -r requirements.txt
 pip install -r requirements-travis.txt
