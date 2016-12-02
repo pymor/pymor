@@ -128,11 +128,12 @@ def check_results(test_name, params, results, *args):
     filename = resource_filename('pymortests', 'testdata/check_results/{}/{}'.format(test_name, arg_id))
     testname_dir = os.path.join(basepath, test_name)
 
-    def _dump_results(fn):
+    def _dump_results(fn, res):
         with open(fn, 'wb') as f:
             f.write((params + '\n').encode())
-            results = {k: v.tolist() for k, v in results.items()}
-            dump(results, f, protocol=2)
+            res = {k: v.tolist() for k, v in res.items()}
+            dump(res, f, protocol=2)
+
     try:
         with resource_stream('pymortests', 'testdata/check_results/{}/{}'.format(test_name, arg_id)) as f:
             f.readline()
