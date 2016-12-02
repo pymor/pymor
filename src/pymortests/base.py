@@ -141,7 +141,7 @@ def check_results(test_name, params, results, *args):
     except FileNotFoundError:
         if not os.path.exists(testname_dir):
             os.mkdir(testname_dir)
-        _dump_results(filename)
+        _dump_results(filename, results)
         assert False, \
             'No results found for test {} ({}), saved current results. Remember to check in {}.'.format(
                 test_name, params, filename)
@@ -151,6 +151,6 @@ def check_results(test_name, params, results, *args):
         if not np.all(np.allclose(old_results[k], results[k], atol=atol, rtol=rtol)):
             abs_errs = np.abs(results[k] - old_results[k])
             rel_errs = abs_errs / np.abs(old_results[k])
-            _dump_results(filename + '_changed')
+            _dump_results(filename + '_changed', results)
             assert False, 'Results for test {}({}, key: {}) have changed.\n (maximum error: {} abs / {} rel).\nSaved new results in {}'.format(
                 test_name, params, k, np.max(abs_errs), np.max(rel_errs), filename + '_changed')
