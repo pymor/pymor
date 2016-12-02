@@ -105,7 +105,8 @@ def reduce_residual(operator, rhs=None, RB=None, product=None, extends=None):
     with logger.block('Estimating residual range ...'):
         try:
             residual_range, residual_range_dims = \
-                estimate_image_hierarchical([operator], [rhs], RB, (residual_range, residual_range_dims),
+                estimate_image_hierarchical([operator], [rhs.T if rhs_is_functional else rhs], RB,
+                                            (residual_range, residual_range_dims),
                                             orthonormalize=True, product=product,
                                             riesz_representatives=rhs_is_functional)
         except ImageCollectionError as e:
@@ -281,7 +282,7 @@ def reduce_implicit_euler_residual(operator, mass, dt, functional=None, RB=None,
     with logger.block('Estimating residual range ...'):
         try:
             residual_range, residual_range_dims = \
-                estimate_image_hierarchical([operator, mass], [functional], RB, (residual_range, residual_range_dims),
+                estimate_image_hierarchical([operator, mass], [functional.T], RB, (residual_range, residual_range_dims),
                                             orthonormalize=True, product=product, riesz_representatives=True)
         except ImageCollectionError as e:
             logger.warn('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))

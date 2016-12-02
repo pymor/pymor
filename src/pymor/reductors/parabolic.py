@@ -105,7 +105,7 @@ def reduce_parabolic(discretization, RB, product=None, coercivity_estimator=None
         )
 
         initial_residual, initial_residual_reconstructor, initial_residual_data = reduce_residual(
-            IdentityOperator(discretization.solution_space), discretization.initial_data, RB, False,
+            IdentityOperator(discretization.solution_space), discretization.initial_data, RB,
             product=discretization.l2_product, extends=old_initial_resdidual_data
         )
 
