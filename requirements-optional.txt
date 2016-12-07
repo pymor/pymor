@@ -6,6 +6,7 @@ mpi4py
 pyamg
 pyopengl
 pyside ; python_version < '3.5'
+https://pymor.github.io/wheels/PySide-1.2.2-cp35-cp35m-linux_x86_64.whl ; python_version == '3.5'
 pytest
 pytest-cov
 pillow
