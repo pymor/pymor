@@ -4,9 +4,9 @@
 set -e
 
 # most of these should be baked into the docker image already
-pip install -r requirements.txt
-pip install -r requirements-travis.txt
-pip install -r requirements-optional.txt || echo "Some optional modules failed to install"
+sudo pip install -r requirements.txt
+sudo pip install -r requirements-travis.txt
+sudo pip install -r requirements-optional.txt || echo "Some optional modules failed to install"
 
 
 python setup.py build_ext -i
@@ -14,13 +14,13 @@ if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     export SDIST_DIR=/tmp/pymor_sdist/
     # this fails on PRs, so skip it
     if [[ "${TRAVIS_PULL_REQUEST}" != "false" ]] ; then
-      pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT} 
-      pip uninstall  -y pymor
+      sudo pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
+      sudo pip uninstall  -y pymor
     fi
     python setup.py sdist -d ${SDIST_DIR}/ --format=gztar
     check-manifest -p python ${PWD}
     pushd ${SDIST_DIR}
-    pip install $(ls ${SDIST_DIR})
+    sudo pip install $(ls ${SDIST_DIR})
     popd
     xvfb-run -a py.test -r sxX --pyargs pymortests -c .installed_pytest.ini -k "not slow"
     COVERALLS_REPO_TOKEN=${COVERALLS_TOKEN} coveralls
