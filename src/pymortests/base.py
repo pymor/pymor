@@ -128,6 +128,12 @@ def check_results(test_name, params, results, *args):
     filename = resource_filename('pymortests', 'testdata/check_results/{}/{}'.format(test_name, arg_id))
     testname_dir = os.path.join(basepath, test_name)
 
+    def _dump_results(fn, res):
+        with open(fn, 'wb') as f:
+            f.write((params + '\n').encode())
+            res = {k: v.tolist() for k, v in res.items()}
+            dump(res, f, protocol=2)
+
     try:
         with resource_stream('pymortests', 'testdata/check_results/{}/{}'.format(test_name, arg_id)) as f:
             f.readline()
@@ -135,10 +141,7 @@ def check_results(test_name, params, results, *args):
     except FileNotFoundError:
         if not os.path.exists(testname_dir):
             os.mkdir(testname_dir)
-        with open(filename, 'wb') as f:
-            f.write((params + '\n').encode())
-            results = {k: v.tolist() for k, v in results.items()}
-            dump(results, f, protocol=2)
+        _dump_results(filename, results)
         assert False, \
             'No results found for test {} ({}), saved current results. Remember to check in {}.'.format(
                 test_name, params, filename)
@@ -148,8 +151,6 @@ def check_results(test_name, params, results, *args):
         if not np.all(np.allclose(old_results[k], results[k], atol=atol, rtol=rtol)):
             abs_errs = np.abs(results[k] - old_results[k])
             rel_errs = abs_errs / np.abs(old_results[k])
-            with open(filename + '_changed', 'wb') as f:
-                f.write((params + '\n').encode())
-                dump(results, f, protocol=2)
+            _dump_results(filename + '_changed', results)
             assert False, 'Results for test {}({}, key: {}) have changed.\n (maximum error: {} abs / {} rel).\nSaved new results in {}'.format(
                 test_name, params, k, np.max(abs_errs), np.max(rel_errs), filename + '_changed')
