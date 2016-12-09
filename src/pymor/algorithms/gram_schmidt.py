@@ -4,6 +4,7 @@
 
 import numpy as np
 
+from pymor.algorithms.basic import inner, pairwise_inner, norm
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import AccuracyError
 from pymor.core.logger import getLogger
@@ -58,10 +59,7 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
     remove = []
     for i in range(offset, len(A)):
         # first calculate norm
-        if product is None:
-            initial_norm = A[i].l2_norm()[0]
-        else:
-            initial_norm = np.sqrt(product.pairwise_apply2(A[i], A[i]))[0]
+        initial_norm = norm(A[i], product)[0]
 
         if initial_norm < atol:
             logger.info("Removing vector {} of norm {}".format(i, initial_norm))
@@ -73,10 +71,10 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
 
         else:
             first_iteration = True
-            norm = initial_norm
+            current_norm = initial_norm
             # If reiterate is True, reiterate as long as the norm of the vector changes
             # strongly during orthonormalization (due to Andreas Buhr).
-            while first_iteration or reiterate and norm/old_norm < reiteration_threshold:
+            while first_iteration or reiterate and current_norm/old_norm < reiteration_threshold:
 
                 if first_iteration:
                     first_iteration = False
@@ -87,35 +85,26 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
                 for j in range(i):
                     if j in remove:
                         continue
-                    if product is None:
-                        p = A[i].pairwise_dot(A[j])[0]
-                    else:
-                        p = product.pairwise_apply2(A[i], A[j])[0]
+                    p = pairwise_inner(A[i], A[j], product)[0]
                     A[i].axpy(-p, A[j])
 
                 # calculate new norm
-                if product is None:
-                    old_norm, norm = norm, A[i].l2_norm()[0]
-                else:
-                    old_norm, norm = norm, np.sqrt(product.pairwise_apply2(A[i], A[i])[0])
+                old_norm, current_norm = current_norm, norm(A[i], product)[0]
 
                 # remove vector if it got too small:
-                if norm / initial_norm < rtol:
+                if current_norm / initial_norm < rtol:
                     logger.info("Removing linear dependent vector {}".format(i))
                     remove.append(i)
                     break
 
-            if norm > 0:
-                A[i].scal(1 / norm)
+            if current_norm > 0:
+                A[i].scal(1 / current_norm)
 
     if remove:
         del A[remove]
 
     if check:
-        if product:
-            error_matrix = product.apply2(A[offset:len(A)], A)
-        else:
-            error_matrix = A[offset:len(A)].dot(A)
+        error_matrix = inner(A[offset:len(A)], A, product)
         error_matrix[:len(A) - offset, offset:len(A)] -= np.eye(len(A) - offset)
         if error_matrix.size > 0:
             err = np.max(np.abs(error_matrix))

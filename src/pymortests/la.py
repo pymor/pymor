@@ -4,9 +4,8 @@
 
 import numpy as np
 
-from pymor.algorithms.basic import almost_equal
+from pymor.algorithms.basic import almost_equal, Norm
 from pymor.algorithms.gram_schmidt import gram_schmidt
-from pymor.operators.constructions import induced_norm
 from pymor.operators.cg import L2ProductP1
 from pymortests.base import runmodule
 from pymor.grids.tria import TriaGrid
@@ -19,7 +18,7 @@ def test_induced():
     boundary_info = AllDirichletBoundaryInfo(grid)
     product = L2ProductP1(grid, boundary_info)
     zero = NumpyVectorArray(np.zeros(grid.size(2)))
-    norm = induced_norm(product)
+    norm = Norm(product)
     value = norm(zero)
     np.testing.assert_almost_equal(value, 0.0)
 

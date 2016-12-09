@@ -4,9 +4,10 @@
 
 import numpy as np
 
+from pymor.algorithms.basic import Norm
 from pymor.core.logger import getLogger
 from pymor.core.interfaces import ImmutableInterface
-from pymor.operators.constructions import LincombOperator, induced_norm
+from pymor.operators.constructions import LincombOperator
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.reductors.basic import reduce_generic_rb
 from pymor.reductors.residual import reduce_residual
@@ -258,7 +259,7 @@ class ReduceCoerciveSimpleEstimator(ImmutableInterface):
     def __init__(self, estimator_matrix, coercivity_estimator):
         self.estimator_matrix = estimator_matrix
         self.coercivity_estimator = coercivity_estimator
-        self.norm = induced_norm(estimator_matrix)
+        self.norm = Norm(estimator_matrix)
 
     def estimate(self, U, mu, discretization):
         d = discretization

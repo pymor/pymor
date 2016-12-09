@@ -8,7 +8,8 @@
 import numpy as np
 
 from pymor.core.defaults import defaults
-from pymor.operators.constructions import induced_norm
+from pymor.core.interfaces import ImmutableInterface
+from pymor.parameters.base import Parametric
 
 
 @defaults('rtol', 'atol')
@@ -48,7 +49,7 @@ def almost_equal(U, V, product=None, norm=None, rtol=1e-14, atol=1e-14):
 
     assert product is None or norm is None
     assert not isinstance(norm, str) or norm in ('l1', 'l2', 'sup')
-    norm = induced_norm(product) if product is not None else norm
+    norm = Norm(product) if product is not None else norm
     if norm is None:
         norm = 'l2'
     if isinstance(norm, str):
@@ -67,3 +68,83 @@ def almost_equal(U, V, product=None, norm=None, rtol=1e-14, atol=1e-14):
     ERR_norm = norm(X)
 
     return ERR_norm <= atol + V_norm * rtol
+
+
+def inner(V, U, product=None):
+    if product:
+        return product.apply2(V, U)
+    else:
+        return V.dot(U)
+
+
+def pairwise_inner(V, U, product=None):
+    if product:
+        return product.pairwise_apply2(V, U)
+    else:
+        return V.pairwise_dot(U)
+
+
+@defaults('raise_negative', 'tol')
+def norm(U, product=None, raise_negative=True, tol=1e-10):
+    if product:
+        norm_squared = product.pairwise_apply2(U, U)
+        if tol > 0:
+            norm_squared = np.where(np.logical_and(0 > norm_squared, norm_squared > - tol),
+                                    0, norm_squared)
+        if raise_negative and np.any(norm_squared < 0):
+            raise ValueError('norm is negative (square = {})'.format(norm_squared))
+        return np.sqrt(norm_squared)
+    else:
+        return U.l2_norm()
+
+
+class Norm(ImmutableInterface):
+    """The induced norm of a scalar product.
+
+    The norm of a the vectors in a |VectorArray| U is calculated by
+    calling ::
+
+        product.pairwise_apply2(U, U, mu=mu)
+
+    In addition, negative norm squares of absolute value smaller
+    than `tol` are clipped to `0`.
+    If `raise_negative` is `True`, a :exc:`ValueError` exception
+    is raised if there are still negative norm squares afterwards.
+
+    Parameters
+    ----------
+    product
+        The scalar product |Operator| for which the norm is to be
+        calculated.
+    raise_negative
+        If `True`, raise an exception if calcuated norm is negative.
+    tol
+        See above.
+
+    Returns
+    -------
+    norm
+        A function `norm(U, mu=None)` taking a |VectorArray| `U`
+        as input together with the |Parameter| `mu` which is
+        passed to the product.
+    """
+
+    def __init__(self, product, raise_negative=None, tol=None, name=None):
+        self.product = product
+        self.raise_negative = raise_negative
+        self.tol = tol
+        self.name = name or product.name
+
+    def __call__(self, U, mu=None):
+        return norm(U, self.product, raise_negative=self.raise_negative, tol=self.tol)
+
+
+def project(U, basis, product=None, orthonormal=True, gramian=None):
+    if orthonormal:
+        return basis.lincomb(inner(U, basis, product))
+    else:
+        if gramian is None:
+            gramian = inner(basis, basis, product)
+        rhs = inner(basis, U, product)
+        coeffs = np.linalg.solve(gramian, rhs).T
+        return basis.lincomb(coeffs)

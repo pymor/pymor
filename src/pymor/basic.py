@@ -8,7 +8,7 @@ You can use ``from pymor.basic import *`` in interactive session
 to have the most important parts of pyMOR directly available.
 """
 
-from pymor.algorithms.basic import almost_equal
+from pymor.algorithms.basic import almost_equal, inner, pairwise_inner, norm, Norm
 from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension, pod_basis_extension
 from pymor.algorithms.ei import interpolate_operators, ei_greedy, deim
 from pymor.algorithms.error import reduction_error_analysis
@@ -52,7 +52,7 @@ from pymor.grids.tria import TriaGrid
 from pymor.operators.constructions import (LincombOperator, Concatenation, ComponentProjection, IdentityOperator,
                                            ConstantOperator, ZeroOperator, VectorArrayOperator, VectorOperator,
                                            VectorFunctional, FixedParameterOperator, AdjointOperator,
-                                           SelectionOperator, induced_norm)
+                                           SelectionOperator)
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.operators.numpy import NumpyGenericOperator, NumpyMatrixOperator
 

@@ -6,7 +6,7 @@
 import numpy as np
 from scipy.linalg import solve_triangular
 
-
+from pymor.algorithms.basic import inner
 from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import VectorArrayOperator, Concatenation, ComponentProjection, ZeroOperator
 from pymor.operators.interfaces import OperatorInterface
@@ -117,10 +117,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
             name = name or self.name + '_projected'
 
             if range_basis is not None:
-                if product is None:
-                    projected_collateral_basis = NumpyVectorArray(self.collateral_basis.dot(range_basis))
-                else:
-                    projected_collateral_basis = NumpyVectorArray(product.apply2(self.collateral_basis, range_basis))
+                projected_collateral_basis = NumpyVectorArray(inner(self.collateral_basis, range_basis, product))
             else:
                 projected_collateral_basis = self.collateral_basis
 
