@@ -63,9 +63,10 @@ def test_sylv_schur_V(n, r, m):
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
 
-    Brva = NumpyVectorSpace.from_data(Br)
+    Arop = NumpyMatrixOperator(Ar)
+    Brop = NumpyMatrixOperator(Br)
 
-    Vva = solve_sylv_schur(Aop, Ar, B=Bop, Br=Brva)
+    Vva = solve_sylv_schur(Aop, Arop, B=Bop, Br=Brop)
 
     V = Vva.data.T
 
@@ -94,9 +95,11 @@ def test_sylv_schur_V_E(n, r, m):
     Eop = NumpyMatrixOperator(E)
     Bop = NumpyMatrixOperator(B)
 
-    Brva = NumpyVectorSpace.from_data(Br)
+    Arop = NumpyMatrixOperator(Ar)
+    Erop = NumpyMatrixOperator(Er)
+    Brop = NumpyMatrixOperator(Br)
 
-    Vva = solve_sylv_schur(Aop, Ar, E=Eop, Er=Er, B=Bop, Br=Brva)
+    Vva = solve_sylv_schur(Aop, Arop, E=Eop, Er=Erop, B=Bop, Br=Brop)
 
     V = Vva.data.T
 
@@ -121,9 +124,10 @@ def test_sylv_schur_W(n, r, p):
     Aop = NumpyMatrixOperator(A)
     Cop = NumpyMatrixOperator(C)
 
-    Crva = NumpyVectorSpace.from_data(Cr.T)
+    Arop = NumpyMatrixOperator(Ar)
+    Crop = NumpyMatrixOperator(Cr)
 
-    Wva = solve_sylv_schur(Aop, Ar, C=Cop, Cr=Crva)
+    Wva = solve_sylv_schur(Aop, Arop, C=Cop, Cr=Crop)
 
     W = Wva.data.T
 
@@ -152,9 +156,11 @@ def test_sylv_schur_W_E(n, r, p):
     Eop = NumpyMatrixOperator(E)
     Cop = NumpyMatrixOperator(C)
 
-    Crva = NumpyVectorSpace.from_data(Cr.T)
+    Arop = NumpyMatrixOperator(Ar)
+    Erop = NumpyMatrixOperator(Er)
+    Crop = NumpyMatrixOperator(Cr)
 
-    Wva = solve_sylv_schur(Aop, Ar, E=Eop, Er=Er, C=Cop, Cr=Crva)
+    Wva = solve_sylv_schur(Aop, Arop, E=Eop, Er=Erop, C=Cop, Cr=Crop)
 
     W = Wva.data.T
 
