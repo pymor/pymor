@@ -7,6 +7,7 @@ import scipy.linalg as spla
 
 from pymor.algorithms.arnoldi import arnoldi
 from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.algorithms.sylvester import solve_sylv_schur
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.operators.constructions import IdentityOperator, LincombOperator
 from pymor.reductors.basic import reduce_generic_pg
@@ -277,6 +278,152 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
     rom, rc, reduction_data = interpolation(discretization, sigma, b, c, use_arnoldi=use_arnoldi)
 
     reduction_data.update({'dist': dist, 'Sigma': Sigma, 'R': R, 'L': L})
+    if compute_errors:
+        reduction_data['errors'] = errors
+
+    return rom, rc, reduction_data
+
+
+def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, conv_crit='rel_sigma', compute_errors=False):
+    """Reduce using TSIA (Two Sided Iteration Algorithm).
+
+    In exact arithmetic, TSIA is equivalent to IRKA (under some
+    assumptions on the poles of the reduced model). The main difference
+    in implementation is that TSIA computes the Schur decomposition of
+    the reduced matrices, while IRKA computes the eigenvalue
+    decomposition. Therefore, TSIA might behave better for non-normal
+    reduced matrices.
+
+    .. [BKS11]  P. Benner, M. Köhler, J. Saak,
+                Sparse-Dense Sylvester Equations in :math:`\mathcal{H}_2`-Model Order Reduction,
+                Max Planck Institute Magdeburg Preprint, available from http://www.mpi-magdeburg.mpg.de/preprints/,
+                2011.
+
+    Parameters
+    ----------
+    discretization
+        The |LTISystem| which is to be reduced.
+    rom0
+        Initial reduced order model.
+    tol
+        Tolerance for the convergence criterion.
+    maxit
+        Maximum number of iterations.
+    verbose
+        Should convergence criterion during iterations be printed.
+    conv_crit
+        Convergence criterion:
+            - `'rel_sigma'`: relative change in interpolation points
+            - `'max_sin_PG'`: maximum of sines in Petrov-Galerkin subspaces
+            - `'rel_H2'`: relative H_2 distance of reduced order models
+    compute_errors
+        Should the relative :math:`\mathcal{H}_2`-errors of intermediate
+        reduced order models be computed.
+
+        .. warning::
+            Computing :math:`\mathcal{H}_2`-errors is expensive. Use this
+            option only if necessary.
+
+    Returns
+    -------
+    rom
+        Reduced |LTISystem| model.
+    rc
+        Reconstructor of full state.
+    reduction_data
+        Dictionary of additional data produced by the reduction process.
+        Contains:
+
+        - projection matrices `V` and `W`,
+        - convergence criterion in iterations `dist`,
+        - relative :math:`\mathcal{H}_2`-errors `errors` (if
+          `compute_errors` is `True`).
+    """
+    r = rom0.n
+    assert 0 < r < discretization.n
+    assert conv_crit in ('rel_sigma', 'max_sin_PG', 'rel_H2')
+
+    if verbose:
+        if compute_errors:
+            print('iter | conv. criterion | rel. H_2-error')
+            print('-----+-----------------+----------------')
+        else:
+            print('iter | conv. criterion')
+            print('-----+----------------')
+
+    V, W = solve_sylv_schur(discretization.A, rom0.A,
+                            E=discretization.E, Er=rom0.E,
+                            B=discretization.B, Br=rom0.B,
+                            C=discretization.C, Cr=rom0.C)
+    V = gram_schmidt(V, atol=0, rtol=0)
+    W = gram_schmidt(W, atol=0, rtol=0)
+
+    if conv_crit == 'rel_sigma':
+        sigma = spla.eigvals(rom0.A._matrix, rom0.E._matrix)
+    dist = []
+    if compute_errors:
+        errors = []
+    for it in range(maxit):
+        rom, rc, reduction_data = reduce_generic_pg(discretization, V, W)
+
+        if compute_errors:
+            err = discretization - rom
+            try:
+                rel_H2_err = err.norm() / discretization.norm()
+            except:
+                rel_H2_err = np.inf
+            errors.append(rel_H2_err)
+
+        if conv_crit == 'rel_sigma':
+            sigma_old, sigma = sigma, spla.eigvals(rom.A._matrix, rom.E._matrix)
+            try:
+                dist.append(spla.norm((sigma_old - sigma) / sigma_old, ord=np.inf))
+            except:
+                dist.append(np.nan)
+        elif conv_crit == 'max_sin_PG':
+            if it == 0:
+                V_new = V
+                W_new = W
+                dist.append(1)
+            if it > 0:
+                V_old, V_new = V_new, V
+                W_old, W_new = W_new, W
+                sinV = spla.norm(V_new - V_old.dot(V_old.T.dot(V_new)), ord=2)
+                sinW = spla.norm(W_new - W_old.dot(W_old.T.dot(W_new)), ord=2)
+                dist.append(np.max([sinV, sinW]))
+        elif conv_crit == 'rel_H2':
+            if it == 0:
+                rom_new = rom
+                dist.append(np.inf)
+            else:
+                rom_old = rom_new
+                rom_new = rom
+                rom_diff = rom_old - rom_new
+                try:
+                    rel_H2_dist = rom_diff.norm() / rom_old.norm()
+                except:
+                    rel_H2_dist = np.inf
+                dist.append(rel_H2_dist)
+
+        if verbose:
+            if compute_errors:
+                print('{:4d} | {:15.9e} | {:15.9e}'.format(it + 1, dist[-1], rel_H2_err))
+            else:
+                print('{:4d} | {:15.9e}'.format(it + 1, dist[-1]))
+
+        V, W = solve_sylv_schur(discretization.A, rom.A,
+                                E=discretization.E, Er=rom.E,
+                                B=discretization.B, Br=rom.B,
+                                C=discretization.C, Cr=rom.C)
+        V = gram_schmidt(V, atol=0, rtol=0)
+        W = gram_schmidt(W, atol=0, rtol=0)
+
+        if dist[-1] < tol:
+            break
+
+    rom, rc, reduction_data = reduce_generic_pg(discretization, V, W)
+
+    reduction_data['dist'] = dist
     if compute_errors:
         reduction_data['errors'] = errors
 
