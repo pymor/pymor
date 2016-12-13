@@ -127,7 +127,8 @@ def options(default_solver='generic_lgmres',
     return _options
 
 
-def apply_inverse(op, rhs, options=None):
+@defaults('check_finite')
+def apply_inverse(op, rhs, options=None, check_finite=True):
     """Solve linear equation system.
 
     Applies the inverse of `op` to the vectors in `rhs`.
@@ -209,6 +210,10 @@ def apply_inverse(op, rhs, options=None):
             R.append(r)
     else:
         raise ValueError('Unknown solver type')
+
+    if check_finite:
+        if not np.isfinite(np.all(R.l2_norm())):
+            raise InversionError('Result contains non-finite values')
 
     return R
 

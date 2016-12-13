@@ -23,6 +23,7 @@ def convert_to_numpy_list_vector_array(d):
             op = op.assemble()
             if isinstance(op, NumpyMatrixOperator):
                 return NumpyListVectorArrayMatrixOperator(op._matrix, functional=functional, vector=vector,
+                                                          source_id=op.source.id, range_id=op.range.id,
                                                           name=op.name)
             else:
                 raise NotImplementedError

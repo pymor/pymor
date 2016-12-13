@@ -7,13 +7,12 @@ from itertools import product
 
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.domaindescriptions.basic import RectDomain
-from pymor.functions.basic import ConstantFunction
-from pymor.functions.interfaces import FunctionInterface
+from pymor.functions.basic import ConstantFunction, ExpressionFunction, LincombFunction
 from pymor.parameters.functionals import ProjectionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace
 
 
-class ThermalBlockProblem(EllipticProblem):
+def thermal_block_problem(num_blocks=(3, 3), parameter_range=(0.1, 1)):
     """Analytical description of a 2D 'thermal block' diffusion problem.
 
     This problem is to solve the elliptic equation ::
@@ -34,9 +33,6 @@ class ThermalBlockProblem(EllipticProblem):
            |        |        |        |
            ----------------------------
 
-    The Problem is implemented as an |EllipticProblem| with the
-    characteristic functions of the blocks as `diffusion_functions`.
-
     Parameters
     ----------
     num_blocks
@@ -44,52 +40,41 @@ class ThermalBlockProblem(EllipticProblem):
     parameter_range
         A tuple `(μ_min, μ_max)`. Each |Parameter| component μ_ij is allowed
         to lie in the interval [μ_min, μ_max].
-    rhs
-        The |Function| f(x, μ).
     """
 
-    def __init__(self, num_blocks=(3, 3), parameter_range=(0.1, 1), rhs=ConstantFunction(dim_domain=2)):
+    def parameter_functional_factory(ix, iy):
+        return ProjectionParameterFunctional(component_name='diffusion',
+                                             component_shape=(num_blocks[1], num_blocks[0]),
+                                             coordinates=(num_blocks[1] - iy - 1, ix),
+                                             name='diffusion_{}_{}'.format(ix, iy))
 
-        domain = RectDomain()
-        parameter_space = CubicParameterSpace({'diffusion': (num_blocks[1], num_blocks[0])}, *parameter_range)
-
-        def parameter_functional_factory(x, y):
-            return ProjectionParameterFunctional(component_name='diffusion',
-                                                 component_shape=(num_blocks[1], num_blocks[0]),
-                                                 coordinates=(num_blocks[1] - y - 1, x),
-                                                 name='diffusion_{}_{}'.format(x, y))
-
-        diffusion_functions = tuple(ThermalBlockDiffusionFunction(x, y, num_blocks[0], num_blocks[1])
-                                    for x, y in product(range(num_blocks[0]), range(num_blocks[1])))
-        parameter_functionals = tuple(parameter_functional_factory(x, y)
-                                      for x, y in product(range(num_blocks[0]), range(num_blocks[1])))
-
-        super().__init__(domain, rhs, diffusion_functions, parameter_functionals, name='ThermalBlock')
-        self.parameter_space = parameter_space
-        self.parameter_range = parameter_range
-        self.num_blocks = num_blocks
-
-
-class ThermalBlockDiffusionFunction(FunctionInterface):
-
-    dim_domain = 2
-    shape_range = ()
-
-    def __init__(self, x, y, nx, ny):
-        self.x = x
-        self.y = y
-        self.nx = nx
-        self.ny = ny
-        self.dx = 1. / nx
-        self.dy = 1. / ny
-
-    def evaluate(self, x, mu=None):
-        if self.x + 1 < self.nx:
-            X = (x[..., 0] >= self.x * self.dx) * (x[..., 0] < (self.x + 1) * self.dx)
+    def diffusion_function_factory(ix, iy):
+        if ix + 1 < num_blocks[0]:
+            X = '(x[..., 0] >= ix * dx) * (x[..., 0] < (ix + 1) * dx)'
         else:
-            X = (x[..., 0] >= self.x * self.dx)
-        if self.y + 1 < self.ny:
-            Y = (x[..., 1] >= self.y * self.dy) * (x[..., 1] < (self.y + 1) * self.dy)
+            X = '(x[..., 0] >= ix * dx)'
+        if iy + 1 < num_blocks[1]:
+            Y = '(x[..., 1] >= iy * dy) * (x[..., 1] < (iy + 1) * dy)'
         else:
-            Y = (x[..., 1] >= self.y * self.dy)
-        return X * Y * 1.
+            Y = '(x[..., 1] >= iy * dy)'
+        return ExpressionFunction('{} * {} * 1.'.format(X, Y),
+                                  2, (), {}, {'ix': ix, 'iy': iy, 'dx': 1. / num_blocks[0], 'dy': 1. / num_blocks[1]},
+                                  name='diffusion_{}_{}'.format(ix, iy))
+
+    return EllipticProblem(
+
+        domain=RectDomain(),
+
+        rhs=ConstantFunction(dim_domain=2, value=1.),
+
+        diffusion=LincombFunction([diffusion_function_factory(ix, iy)
+                                   for ix, iy in product(range(num_blocks[0]), range(num_blocks[1]))],
+                                  [parameter_functional_factory(ix, iy)
+                                   for ix, iy in product(range(num_blocks[0]), range(num_blocks[1]))],
+                                  name='diffusion'),
+
+        parameter_space=CubicParameterSpace({'diffusion': (num_blocks[1], num_blocks[0])}, *parameter_range),
+
+        name='ThermalBlock({})'.format(num_blocks)
+
+    )

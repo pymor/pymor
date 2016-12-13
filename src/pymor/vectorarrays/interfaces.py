@@ -8,7 +8,7 @@ import sys
 
 import numpy as np
 
-from pymor.core.interfaces import BasicInterface, abstractmethod, abstractproperty, abstractclassmethod
+from pymor.core.interfaces import BasicInterface, ImmutableInterface, abstractmethod
 
 
 def _numpy_version_older(version_tuple):
@@ -37,8 +37,8 @@ class VectorArrayInterface(BasicInterface):
     allocated internally (e.g.  continuous block of memory vs. list of pointers to the
     individual vectors.) Thus, no general assumptions can be made on the costs of operations
     like appending to or removing vectors from the array. As a hint for 'continuous block
-    of memory' implementations, |VectorArray| constructors provide a `reserve` keyword
-    argument which allows to specify to what size the array is assumed to grow.
+    of memory' implementations, :meth:`~VectorSpaceInterface.zeros` provides a `reserve`
+    keyword argument which allows to specify to what size the array is assumed to grow.
 
     As with |Numpy array|, |VectorArrays| can be indexed with numbers, slices and
     lists or one-dimensional |NumPy arrays|. Indexing will always return a new
@@ -46,7 +46,7 @@ class VectorArrayInterface(BasicInterface):
     array is modified via :meth:`~VectorArrayInterface.scal` or :meth:`~VectorArrayInterface.axpy`,
     the vectors in the original array will be changed. Indices may be negative, in
     which case the vector is selected by counting from the end of the array. Moreover
-    Indices can be repeated, in which case the corresponding vector is selected several
+    indices can be repeated, in which case the corresponding vector is selected several
     times. The resulting view will be immutable, however.
 
     .. note::
@@ -73,53 +73,34 @@ class VectorArrayInterface(BasicInterface):
     is_view
         `True` if the array is a view obtained by indexing another array.
     space
-        |VectorSpace| array the array belongs to.
-    subtype
-        Can be any Python object. Two arrays are compatible (e.g. can be added)
-        if they are instances of the same class and have equal subtypes. A valid
-        subtype has to be provided to :meth:`~VectorArrayInterface.make_array` and
-        the resulting array will be of that subtype. By default, the subtype of an
-        array is simply `None`. For |NumpyVectorArray|, the subtype is a single
-        integer denoting the dimension of the array. Subtypes for other array classes
-        could, e.g., include a socket for communication with a specific PDE solver
-        instance.
+        The |VectorSpace| the array belongs to.
     """
 
     is_view = False
 
-    @abstractclassmethod
-    def make_array(cls, subtype=None, count=0, reserve=0):
-        """Create a |VectorArray| of null vectors.
+    def zeros(self, count=1, reserve=0):
+        """Create a |VectorArray| of null vectors of the same |VectorSpace|.
+
+        This is a shorthand for `self.space.zeros(count, reserve)`.
 
         Parameters
         ----------
-        subtype
-            The :attr:`~VectorArrayInterface.subtype`, the created array should have.
-            What a valid subtype is, is determined by the respective array implementation.
         count
-            The number of null vectors to create. For `count == 0`, an empty array is
-            returned.
+            The number of vectors.
         reserve
-            A hint for the backend to which length the array will grow.
-        """
-        pass
+            Hint for the backend to which length the array will grow.
 
-    @classmethod
-    def from_data(cls, data, subtype):
-        """Create a |VectorArray| from |NumPy array|
-
-        Parameters
-        ----------
-        data
-            |NumPy array|.
-        subtype
-            The :attr:`~VectorArrayInterface.subtype`, the created array should have.
-            What a valid subtype is, is determined by the respective array implementation.
+        Returns
+        -------
+        A |VectorArray| containing `count` vectors whith each component
+        zero.
         """
-        raise NotImplementedError
+        return self.space.zeros(count, reserve=reserve)
 
     def empty(self, reserve=0):
-        """Create an empty |VectorArray| of the same :attr:`~VectorArrayInterface.subtype`.
+        """Create an empty |VectorArray| of the same |VectorSpace|.
+
+        This is a shorthand for `self.space.zeros(0, reserve)`.
 
         Parameters
         ----------
@@ -130,34 +111,11 @@ class VectorArrayInterface(BasicInterface):
         -------
         An empty |VectorArray|.
         """
-        return self.make_array(subtype=self.subtype, reserve=reserve)
+        return self.space.zeros(0, reserve=reserve)
 
-    def zeros(self, count=1):
-        """Create a |VectorArray| of null vectors of the same :attr:`~VectorArrayInterface.subtype`.
-
-        Parameters
-        ----------
-        count
-            The number of vectors.
-
-        Returns
-        -------
-        A |VectorArray| containing `count` vectors whith each component
-        zero.
-        """
-        return self.make_array(subtype=self.subtype, count=count)
-
-    @abstractproperty
+    @property
     def dim(self):
-        pass
-
-    @property
-    def subtype(self):
-        return None
-
-    @property
-    def space(self):
-        return VectorSpace(type(self), self.subtype)
+        return self.space.dim
 
     @abstractmethod
     def __len__(self):
@@ -509,33 +467,85 @@ class VectorArrayInterface(BasicInterface):
                 return [ind[ind_ind]]
 
 
-class VectorSpace(BasicInterface):
+class VectorSpaceInterface(ImmutableInterface):
     """Class describing a vector space.
 
-    A vector space is simply the combination of a |VectorArray| type and a
-    :attr:`~VectorArrayInterface.subtype`. This data is exactly sufficient to construct
-    new arrays using the :meth:`~VectorArrayInterface.make_array` method
-    (see the implementation of :meth:`~VectorSpace.zeros`).
+    Vector spaces act as factories for |VectorArrays| of vectors
+    contained in them. As such, they hold all data necessary to
+    create |VectorArrays| of a given type (e.g. the dimension of
+    the vectors, or a socket for communication with an external
+    PDE solver).
 
-    A |VectorArray| `U` is contained in a vector space `space`, if ::
+    New |VectorArrays| of null vectors are created via
+    :meth:`~VectorSpaceInterface.zeros`.  The
+    :meth:`~VectorSpaceInterface.make_array` method builds a new
+    |VectorArray| from given raw data of the underlying linear algebra
+    backend (e.g. a |Numpy array| in the case  of |NumpyVectorSpace|).
+    Some vector spaces can create new |VectorArrays| from a given
+    |Numpy array| via the :meth:`~VectorSpaceInterface.from_data`
+    method.
 
-        type(U) == space.type and U.subtype == space.subtype
+    Each vector space has a string :attr:`~VectorSpaceInterface.id`
+    to distinguish mathematically different spaces appearing
+    in the formulation of a given problem.
+
+    Vector spaces can be compared for equality via the `==` and `!=`
+    operators. To test if a given |VectorArray| is an element of
+    the space, the `in` operator can be used.
 
 
     Attributes
     ----------
-    type
-        The type of |VectorArrays| in the space.
-    subtype
-        The subtype used to construct arrays of the given space.
+    id
+        None, or a string describing the mathematical identity
+        of the vector space (for instance to distinguish different
+        components in an equation system).
+    dim
+        The dimension (number of degrees of freedom) of the
+        vectors contained in the space.
+    is_scalar
+        Equivalent to `isinstance(space, NumpyVectorSpace) and space.dim == 1`.
     """
 
-    def __init__(self, space_type, subtype=None):
-        self.type = space_type
-        self.subtype = subtype
+    id = None
+    dim = None
+    is_scalar = False
+
+    @abstractmethod
+    def make_array(*args, **kwargs):
+        """Create a |VectorArray| from raw data.
+
+        This method is used in the implementation of |Operators|
+        and |Discretizations| to create new |VectorArrays| from
+        raw data of the underlying solver backends. The ownership
+        of the data is transferred to the newly created array.
+
+        The exact signature of this method depends on the wrapped
+        solver backend.
+        """
+        pass
+
+    @abstractmethod
+    def zeros(self, count=1, reserve=0):
+        """Create a |VectorArray| of null vectors
+
+        Parameters
+        ----------
+        count
+            The number of vectors.
+        reserve
+            Hint for the backend to which length the array will grow.
+
+        Returns
+        -------
+        A |VectorArray| containing `count` vectors with each component zero.
+        """
+        pass
 
     def empty(self, reserve=0):
         """Create an empty |VectorArray|
+
+        This is a shorthand for `self.zeros(0, reserve)`.
 
         Parameters
         ----------
@@ -546,24 +556,13 @@ class VectorSpace(BasicInterface):
         -------
         An empty |VectorArray|.
         """
-        return self.type.make_array(subtype=self.subtype, reserve=reserve)
-
-    def zeros(self, count=1):
-        """Create a |VectorArray| of null vectors
-
-        Parameters
-        ----------
-        count
-            The number of vectors.
-
-        Returns
-        -------
-        A |VectorArray| containing `count` vectors with each component zero.
-        """
-        return self.type.make_array(subtype=self.subtype, count=count)
+        return self.zeros(0, reserve=reserve)
 
     def from_data(self, data):
         """Create a |VectorArray| from a |NumPy array|
+
+        Note that this method will not be supported by all vector
+        space implementations.
 
         Parameters
         ----------
@@ -574,25 +573,19 @@ class VectorSpace(BasicInterface):
         -------
         A |VectorArray| with `data` as data.
         """
-        return self.type.from_data(data, self.subtype)
-
-    @property
-    def dim(self):
-        return self.empty().dim
+        raise NotImplementedError
 
     def __eq__(self, other):
-        """Two spaces are equal iff their types and subtypes agree."""
-        return other.type == self.type and self.subtype == other.subtype
+        return other is self
 
     def __ne__(self, other):
-        """Two spaces are equal iff their types and subtypes agree."""
-        return other.type != self.type or self.subtype != other.subtype
+        return not (self == other)
 
     def __contains__(self, other):
-        """A |VectorArray| is contained in the space, iff it is an instance of its type and has the same subtype."""
-        return isinstance(other, self.type) and self.subtype == other.subtype
+        return self == getattr(other, 'space', None)
+
+    def __hash__(self):
+        return hash(self.id)
 
     def __repr__(self):
-        return 'VectorSpace({}, {})'.format(self.type.__name__, repr(self.subtype))
-
-    __str__ = __repr__
+        return '{}({})'.format(self.__class__.__name__, self.id)

@@ -5,12 +5,13 @@
 
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.domaindescriptions.basic import RectDomain
-from pymor.functions.basic import ConstantFunction
+from pymor.functions.basic import ConstantFunction, LincombFunction
 from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace
 
 
-class HelmholtzProblem(EllipticProblem):
+def helmholtz_problem(domain=RectDomain(), rhs=None, parameter_range=(0., 100.),
+                      dirichlet_data=None, neumann_data=None):
     """Helmholtz equation problem.
 
     This problem is to solve the Helmholtz equation ::
@@ -35,18 +36,23 @@ class HelmholtzProblem(EllipticProblem):
         Name of the problem.
     """
 
-    def __init__(self, domain=RectDomain(), rhs=None, parameter_range=(0., 100.),
-                 dirichlet_data=None, neumann_data=None):
+    return EllipticProblem(
 
-        self.parameter_range = parameter_range  # needed for with_
-        parameter_space = CubicParameterSpace({'k': ()}, *parameter_range)
-        super().__init__(
-            diffusion_functions=[ConstantFunction(1., dim_domain=domain.dim)],
-            diffusion_functionals=[1.],
-            reaction_functions=[ConstantFunction(1., dim_domain=domain.dim)],
-            reaction_functionals=[ExpressionParameterFunctional('-k**2', {'k': ()})],
-            domain=domain,
-            rhs=rhs or ConstantFunction(1., dim_domain=domain.dim),
-            parameter_space=parameter_space,
-            dirichlet_data=dirichlet_data,
-            neumann_data=neumann_data)
+        domain=domain,
+
+        rhs=rhs or ConstantFunction(1., dim_domain=domain.dim),
+
+        dirichlet_data=dirichlet_data,
+
+        neumann_data=neumann_data,
+
+        diffusion=ConstantFunction(1., dim_domain=domain.dim),
+
+        reaction=LincombFunction([ConstantFunction(1., dim_domain=domain.dim)],
+                                 [ExpressionParameterFunctional('-k**2', {'k': ()})]),
+
+        parameter_space=CubicParameterSpace({'k': ()}, *parameter_range),
+
+        name='helmholtz_problem'
+
+    )

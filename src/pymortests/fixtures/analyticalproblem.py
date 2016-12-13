@@ -2,53 +2,54 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
-
 import pytest
 
 from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
-from pymor.analyticalproblems.burgers import BurgersProblem, Burgers2DProblem
+from pymor.analyticalproblems.burgers import burgers_problem, burgers_problem_2d
 from pymor.analyticalproblems.elliptic import EllipticProblem
-from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
-from pymor.functions.basic import GenericFunction, ConstantFunction
+from pymor.analyticalproblems.helmholtz import helmholtz_problem
+from pymor.analyticalproblems.thermalblock import thermal_block_problem
+from pymor.functions.basic import GenericFunction, ConstantFunction, LincombFunction
 from pymor.parameters.functionals import ExpressionParameterFunctional
 
 
 picklable_thermalblock_problems = \
-    [ThermalBlockProblem(),
-     ThermalBlockProblem(num_blocks=(3, 2)),
-     ThermalBlockProblem(num_blocks=(1, 1)),
-     ThermalBlockProblem(num_blocks=(2, 2), parameter_range=(1., 100.))]
+    [thermal_block_problem(),
+     thermal_block_problem(num_blocks=(3, 2)),
+     thermal_block_problem(num_blocks=(1, 1)),
+     thermal_block_problem(num_blocks=(2, 2), parameter_range=(1., 100.))]
 
 
 non_picklable_thermalblock_problems = \
-    [ThermalBlockProblem(num_blocks=(1, 3), parameter_range=(0.4, 0.5),
-                         rhs=GenericFunction(dim_domain=2, mapping=lambda X: X[..., 0] + X[..., 1]))]
+    [thermal_block_problem(num_blocks=(1, 3), parameter_range=(0.4, 0.5)).with_(
+        rhs=GenericFunction(dim_domain=2, mapping=lambda X: X[..., 0] + X[..., 1]))]
 
 
 thermalblock_problems = picklable_thermalblock_problems + non_picklable_thermalblock_problems
 
 
 burgers_problems = \
-    [BurgersProblem(),
-     BurgersProblem(v=0.2, circle=False),
-     BurgersProblem(v=0.4, initial_data_type='bump'),
-     BurgersProblem(parameter_range=(1., 1.3)),
-     Burgers2DProblem(),
-     Burgers2DProblem(torus=False, initial_data_type='bump', parameter_range=(1.3, 1.5))]
+    [burgers_problem(),
+     burgers_problem(v=0.2, circle=False),
+     burgers_problem(v=0.4, initial_data_type='bump'),
+     burgers_problem(parameter_range=(1., 1.3)),
+     burgers_problem_2d(),
+     burgers_problem_2d(torus=False, initial_data_type='bump', parameter_range=(1.3, 1.5))]
 
 
 picklable_elliptic_problems = \
-    [EllipticProblem()]
+    [EllipticProblem(),
+     helmholtz_problem()]
 
 
 non_picklable_elliptic_problems = \
     [EllipticProblem(rhs=ConstantFunction(dim_domain=2, value=21.),
-                     diffusion_functions=[GenericFunction(dim_domain=2,
-                                                          mapping=lambda X,p=p: X[...,0]**p) for p in range(5)],
-                     diffusion_functionals=[ExpressionParameterFunctional('max(mu["exp"], {})'.format(m),
-                                                                          parameter_type={'exp': ()})
-                                            for m in range(5)])]
+                     diffusion=LincombFunction(
+                         [GenericFunction(dim_domain=2, mapping=lambda X, p=p: X[..., 0]**p)
+                          for p in range(5)],
+                         [ExpressionParameterFunctional('max(mu["exp"], {})'.format(m), parameter_type={'exp': ()})
+                          for m in range(5)]
+                     ))]
 
 
 elliptic_problems = picklable_thermalblock_problems + non_picklable_elliptic_problems

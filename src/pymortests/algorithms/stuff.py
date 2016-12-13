@@ -9,13 +9,13 @@ from pymortests.base import runmodule, MonomOperator
 from pymor.algorithms.newton import newton, NewtonError
 import pymor.algorithms.basisextension as bxt
 from pymor.tools.floatcmp import float_cmp
-from pymor.vectorarrays.numpy import NumpyVectorArray
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 def _newton(order, **kwargs):
     mop = MonomOperator(order)
-    rhs = NumpyVectorArray([0.0])
-    guess = NumpyVectorArray([1.0])
+    rhs = NumpyVectorSpace.from_data([0.0])
+    guess = NumpyVectorSpace.from_data([1.0])
     return newton(mop, rhs, initial_guess=guess, **kwargs)
 
 
@@ -40,8 +40,8 @@ def test_ext(extension_alg):
     ident = np.identity(size)
     current = ident[0]
     for i in range(1, size):
-        c = NumpyVectorArray(current)
-        n, _ = extension_alg(c, NumpyVectorArray(ident[i]))
+        c = NumpyVectorSpace.from_data(current)
+        n, _ = extension_alg(c, NumpyVectorSpace.from_data(ident[i]))
         assert np.allclose(n.data, ident[0:i+1])
         current = ident[0:i+1]
 

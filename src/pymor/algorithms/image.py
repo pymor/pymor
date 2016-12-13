@@ -9,8 +9,9 @@ from pymor.core.exceptions import ImageCollectionError
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import AdjointOperator, Concatenation, LincombOperator, SelectionOperator
 from pymor.operators.ei import EmpiricalInterpolatedOperator
+from pymor.operators.interfaces import OperatorInterface
 from pymor.vectorarrays.interfaces import VectorArrayInterface
-from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 def estimate_image(operators=(), vectors=(),
@@ -27,7 +28,7 @@ def estimate_image(operators=(), vectors=(),
     - `op.apply(U, mu=mu)` for all operators `op` in `operators`, for all possible |Parameters|
       `mu` and for all |VectorArrays| `U` contained in the linear span of `domain`,
     - `U` for all |VectorArrays| in `vectors`,
-    - `v.as_vector(mu)` for all |Operators| in `vectors` and all possible |Parameters| `mu`.
+    - `v.as_range_array(mu)` for all |Operators| in `vectors` and all possible |Parameters| `mu`.
 
     The algorithm will try to choose `image` as small as possible. However, no optimality
     is guaranteed.
@@ -69,20 +70,24 @@ def estimate_image(operators=(), vectors=(),
     domain_space = operators[0].source if operators else None
     image_space = operators[0].range if operators \
         else vectors[0].space if isinstance(vectors[0], VectorArrayInterface) \
-        else vectors[0].range if vectors[0].range != NumpyVectorSpace(1) \
-        else vectors[0].source
+        else vectors[0].range
+    assert all(op.source == domain_space and op.range == image_space for op in operators)
     assert all(
-        isinstance(v, VectorArrayInterface) and v in image_space or
-        v.source == NumpyVectorSpace(1) and v.range == image_space and v.linear or
-        v.range == NumpyVectorSpace(1) and v.source == image_space and v.linear
+        isinstance(v, VectorArrayInterface) and (
+            v in image_space
+        ) or
+        isinstance(v, OperatorInterface) and (
+            v.range == image_space and isinstance(v.source, NumpyVectorSpace) and v.linear
+        )
         for v in vectors
     )
-    assert all(op.source == domain_space and op.range == image_space for op in operators)
     assert domain is None or domain_space is None or domain in domain_space
     assert product is None or product.source == product.range == image_space
 
     def collect_operator_ranges(op, source, image):
-        if isinstance(op, (LincombOperator, SelectionOperator)):
+        if op.linear and not op.parametric:
+            image.append(op.apply(source))
+        elif isinstance(op, (LincombOperator, SelectionOperator)):
             for o in op.operators:
                 collect_operator_ranges(o, source, image)
         elif isinstance(op, EmpiricalInterpolatedOperator):
@@ -92,29 +97,24 @@ def estimate_image(operators=(), vectors=(),
             firstrange = op.first.range.empty()
             collect_operator_ranges(op.first, source, firstrange)
             collect_operator_ranges(op.second, firstrange, image)
-        elif op.linear and not op.parametric:
-            image.append(op.apply(source))
         else:
             raise ImageCollectionError(op)
 
     def collect_vector_ranges(op, image):
-        if isinstance(op, (LincombOperator, SelectionOperator)):
+        if isinstance(op, VectorArrayInterface):
+            image.append(op)
+        elif op.linear and not op.parametric:
+            image.append(op.as_range_array())
+        elif isinstance(op, (LincombOperator, SelectionOperator)):
             for o in op.operators:
                 collect_vector_ranges(o, image)
-        elif isinstance(op, AdjointOperator):
-            if op.source not in image_space:
-                raise ImageCollectionError(op)  # Not implemented
-            operator = Concatenation(op.range_product, op.operator) if op.range_product else op.operator
-            collect_operator_ranges(operator, NumpyVectorArray(np.ones(1)), image)
-        elif op.linear and not op.parametric:
-            image.append(op.as_vector())
         else:
             raise ImageCollectionError(op)
 
     image = image_space.empty()
     if not extends:
-        for f in vectors:
-            collect_vector_ranges(f, image)
+        for v in vectors:
+            collect_vector_ranges(v, image)
 
     if operators and domain is None:
         domain = domain_space.empty()
@@ -187,15 +187,17 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
     domain_space = operators[0].source if operators else None
     image_space = operators[0].range if operators \
         else vectors[0].space if isinstance(vectors[0], VectorArrayInterface) \
-        else vectors[0].range if vectors[0].range != NumpyVectorSpace(1) \
-        else vectors[0].source
+        else vectors[0].range
+    assert all(op.source == domain_space and op.range == image_space for op in operators)
     assert all(
-        isinstance(v, VectorArrayInterface) and v in image_space or
-        v.source == NumpyVectorSpace(1) and v.range == image_space and v.linear or
-        v.range == NumpyVectorSpace(1) and v.source == image_space and v.linear
+        isinstance(v, VectorArrayInterface) and (
+            v in image_space
+        ) or
+        isinstance(v, OperatorInterface) and (
+            v.range == image_space and isinstance(v.source, NumpyVectorSpace) and v.linear
+        )
         for v in vectors
     )
-    assert all(op.source == domain_space and op.range == image_space for op in operators)
     assert domain is None or domain_space is None or domain in domain_space
     assert product is None or product.source == product.range == image_space
     assert extends is None or len(extends) == 2

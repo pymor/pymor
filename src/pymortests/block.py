@@ -7,8 +7,8 @@ import scipy.linalg as spla
 
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.operators.block import BlockOperator, BlockDiagonalOperator
-from pymor.vectorarrays.block import BlockVectorArray
-from pymor.vectorarrays.numpy import NumpyVectorArray
+from pymor.vectorarrays.block import BlockVectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 def test_hstack():
     np.random.seed(0)
@@ -47,9 +47,9 @@ def test_apply():
     v1 = np.random.randn(3)
     v2 = np.random.randn(4)
     v = np.hstack((v1, v2))
-    v1va = NumpyVectorArray(v1)
-    v2va = NumpyVectorArray(v2)
-    vva = BlockVectorArray((v1va, v2va))
+    v1va = NumpyVectorSpace.from_data(v1)
+    v2va = NumpyVectorSpace.from_data(v2)
+    vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Aop.apply(vva)
     w = np.hstack((wva.block(0).data, wva.block(1).data))
@@ -72,9 +72,9 @@ def test_apply_adjoint():
     v1 = np.random.randn(2)
     v2 = np.random.randn(5)
     v = np.hstack((v1, v2))
-    v1va = NumpyVectorArray(v1)
-    v2va = NumpyVectorArray(v2)
-    vva = BlockVectorArray((v1va, v2va))
+    v1va = NumpyVectorSpace.from_data(v1)
+    v2va = NumpyVectorSpace.from_data(v2)
+    vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Aop.apply_adjoint(vva)
     w = np.hstack((wva.block(0).data, wva.block(1).data))
@@ -103,9 +103,9 @@ def test_blk_diag_apply_inverse():
     v1 = np.random.randn(2)
     v2 = np.random.randn(3)
     v = np.hstack((v1, v2))
-    v1va = NumpyVectorArray(v1)
-    v2va = NumpyVectorArray(v2)
-    vva = BlockVectorArray((v1va, v2va))
+    v1va = NumpyVectorSpace.from_data(v1)
+    v2va = NumpyVectorSpace.from_data(v2)
+    vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Cop.apply_inverse(vva)
     w = np.hstack((wva.block(0).data, wva.block(1).data))
@@ -124,9 +124,9 @@ def test_blk_diag_apply_inverse_adjoint():
     v1 = np.random.randn(2)
     v2 = np.random.randn(3)
     v = np.hstack((v1, v2))
-    v1va = NumpyVectorArray(v1)
-    v2va = NumpyVectorArray(v2)
-    vva = BlockVectorArray((v1va, v2va))
+    v1va = NumpyVectorSpace.from_data(v1)
+    v2va = NumpyVectorSpace.from_data(v2)
+    vva = BlockVectorSpace.make_array((v1va, v2va))
 
     wva = Cop.apply_inverse_adjoint(vva)
     w = np.hstack((wva.block(0).data, wva.block(1).data))

@@ -8,16 +8,14 @@ import numpy as np
 from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import ZeroOperator
 from pymor.operators.interfaces import OperatorInterface
-from pymor.vectorarrays.block import BlockVectorArray
-from pymor.vectorarrays.interfaces import VectorSpace
+from pymor.vectorarrays.block import BlockVectorSpace
 
 
 class BlockOperator(OperatorBase):
     """A matrix of arbitrary |Operators|.
 
     This operator can be :meth:`applied <pymor.operators.interfaces.OperatorInterface.apply>`
-    to :class:`BlockVectorArrays <pymor.vectorarrays.block.BlockVectorArray>` of an
-    appropriate :attr:`~pymor.vectorarrays.interfaces.VectorArrayInterface.subtype`.
+    to a compatible :class:`BlockVectorArrays <pymor.vectorarrays.block.BlockVectorArray>`.
 
     Parameters
     ----------
@@ -57,14 +55,16 @@ class BlockOperator(OperatorBase):
             if blocks[i, j] is None:
                 self._blocks[i, j] = ZeroOperator(source_types[j], range_types[i])
 
-        self.source = VectorSpace(BlockVectorArray, tuple(source_types))
-        self.range = VectorSpace(BlockVectorArray, tuple(range_types))
-        self._source_dims = tuple(space.dim for space in self.source.subtype)
-        self._range_dims = tuple(space.dim for space in self.range.subtype)
+        self.source = BlockVectorSpace(source_types)
+        self.range = BlockVectorSpace(range_types)
         self.num_source_blocks = len(source_types)
         self.num_range_blocks = len(range_types)
         self.linear = all(op.linear for op in self._operators())
         self.build_parameter_type(*self._operators())
+
+    @property
+    def T(self):
+        return type(self)(np.vectorize(lambda op: op.T if op else None)(self._blocks.T))
 
     @classmethod
     def hstack(cls, operators):
@@ -73,7 +73,7 @@ class BlockOperator(OperatorBase):
         Parameters
         ----------
         operators
-            An iterable of |Operators| or `None`s.
+            An iterable where each item is an |Operator| or `None`.
         """
         blocks = np.array([[op for op in operators]])
         return cls(blocks)
@@ -85,7 +85,7 @@ class BlockOperator(OperatorBase):
         Parameters
         ----------
         operators
-            An iterable of |Operators| or `None`s.
+            An iterable where each item is an |Operator| or `None`.
         """
         blocks = np.array([[op] for op in operators])
         return cls(blocks)
@@ -101,7 +101,7 @@ class BlockOperator(OperatorBase):
             else:
                 V_blocks[i] += Vi
 
-        return BlockVectorArray(V_blocks)
+        return self.range.make_array(V_blocks)
 
     def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         assert U in self.range
@@ -119,7 +119,7 @@ class BlockOperator(OperatorBase):
             else:
                 V_blocks[j] += Vj
 
-        V = BlockVectorArray(V_blocks)
+        V = self.source.make_array(V_blocks)
         if source_product is not None:
             V = source_product.apply_inverse(V)
 
@@ -162,6 +162,10 @@ class BlockDiagonalOperator(BlockOperator):
     """
 
     def __init__(self, blocks):
+        blocks = np.array(blocks)
+        assert 1 <= blocks.ndim <= 2
+        if blocks.ndim == 2:
+            blocks = np.diag(blocks)
         n = len(blocks)
         blocks2 = np.empty((n, n), dtype=object)
         for i, op in enumerate(blocks):
@@ -173,7 +177,7 @@ class BlockDiagonalOperator(BlockOperator):
 
         V_blocks = [self._blocks[i, i].apply(U.block(i), mu=mu) for i in range(self.num_range_blocks)]
 
-        return BlockVectorArray(V_blocks)
+        return self.range.make_array(V_blocks)
 
     def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         assert U in self.range
@@ -185,7 +189,7 @@ class BlockDiagonalOperator(BlockOperator):
 
         V_blocks = [self._blocks[i, i].apply_adjoint(U.block(i), mu=mu) for i in range(self.num_source_blocks)]
 
-        V = BlockVectorArray(V_blocks)
+        V = self.source.make_array(V_blocks)
         if source_product is not None:
             V = source_product.apply_inverse(V)
 
@@ -197,7 +201,7 @@ class BlockDiagonalOperator(BlockOperator):
         U_blocks = [self._blocks[i, i].apply_inverse(V.block(i), mu=mu, least_squares=least_squares)
                     for i in range(self.num_source_blocks)]
 
-        return BlockVectorArray(U_blocks)
+        return self.source.make_array(U_blocks)
 
     def apply_inverse_adjoint(self, U, mu=None, source_product=None, range_product=None, least_squares=False):
         assert U in self.source
@@ -211,7 +215,7 @@ class BlockDiagonalOperator(BlockOperator):
         V_blocks = [self._blocks[i, i].apply_inverse_adjoint(U.block(i), mu=mu, least_squares=least_squares)
                     for i in range(self.num_source_blocks)]
 
-        return BlockVectorArray(V_blocks)
+        return self.range.make_array(V_blocks)
 
     def assemble(self, mu=None):
         blocks = np.empty((self.num_source_blocks,), dtype=object)

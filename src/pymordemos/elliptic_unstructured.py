@@ -31,8 +31,7 @@ import numpy as np
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.discretizers.elliptic import discretize_elliptic_cg, discretize_elliptic_fv
 from pymor.domaindescriptions.polygonal import CircularSectorDomain
-from pymor.functions.basic import GenericFunction, ConstantFunction
-from pymor.vectorarrays.numpy import NumpyVectorArray
+from pymor.functions.basic import ConstantFunction, ExpressionFunction
 
 
 def elliptic_gmsh_demo(args):
@@ -40,18 +39,14 @@ def elliptic_gmsh_demo(args):
     args['NUM_POINTS'] = int(args['NUM_POINTS'])
     args['CLSCALE'] = float(args['CLSCALE'])
 
-    domain = CircularSectorDomain(args['ANGLE'], radius=1, num_points=args['NUM_POINTS'])
-
-    rhs = ConstantFunction(np.array(0.), dim_domain=2, name='rhs')
-
-    def dirichlet(X):
-        _, phi = polar(X)
-        return np.sin(phi*np.pi/args['ANGLE'])
-
-    dirichlet_data = GenericFunction(dirichlet, dim_domain=2, name='dirichlet')
-
     print('Setup problem ...')
-    problem = EllipticProblem(domain=domain, rhs=rhs, dirichlet_data=dirichlet_data)
+    problem = EllipticProblem(
+        domain=CircularSectorDomain(args['ANGLE'], radius=1, num_points=args['NUM_POINTS']),
+        diffusion=ConstantFunction(1, dim_domain=2),
+        rhs=ConstantFunction(np.array(0.), dim_domain=2, name='rhs'),
+        dirichlet_data=ExpressionFunction('sin(polar(x)[1] * pi/angle)', 2, (),
+                                          {}, {'angle': args['ANGLE']}, name='dirichlet')
+    )
 
     print('Discretize ...')
     discretizer = discretize_elliptic_fv if args['--fv'] else discretize_elliptic_cg
@@ -62,27 +57,13 @@ def elliptic_gmsh_demo(args):
 
     print('Plot ...')
 
-    def ref_sol(X):
-        r, phi = polar(X)
-        return np.power(r, np.pi/args['ANGLE']) * np.sin(phi*np.pi/args['ANGLE'])
-
-    solution = GenericFunction(ref_sol, 2)
+    solution = ExpressionFunction('(lambda r, phi: r**(pi/angle) * sin(phi * pi/angle))(*polar(x))', 2, (),
+                                  {}, {'angle': args['ANGLE']})
     grid = data['grid']
-    U_ref = NumpyVectorArray(solution(grid.centers(0))) if args['--fv'] else NumpyVectorArray(solution(grid.centers(2)))
+    U_ref = U.space.make_array(solution(grid.centers(0)) if args['--fv'] else solution(grid.centers(2)))
     discretization.visualize((U, U_ref, U-U_ref),
                              legend=('Solution', 'Analytical solution (circular boundary)', 'Error'),
                              separate_colorbars=True)
-
-
-def polar(X):
-    r = np.sqrt(X[..., 0]**2 + X[..., 1]**2)
-    phi = np.zeros(X.shape[:-1])
-    part1 = np.all([X[..., 1] >= 0, r > 0], axis=0)
-    part2 = np.all([X[..., 1] < 0, r > 0], axis=0)
-    phi[part1] = np.arccos(X[..., 0][part1] / r[part1])
-    phi[part2] = 2*np.pi - np.arccos(X[..., 0][part2] / r[part2])
-
-    return r, phi
 
 
 if __name__ == '__main__':

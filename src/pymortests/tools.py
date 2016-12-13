@@ -15,7 +15,7 @@ from pymor.tools.deprecated import Deprecated
 from pymor.tools.quadratures import GaussQuadratures
 from pymor.tools.floatcmp import float_cmp, float_cmp_all
 from pymor.tools.vtkio import write_vtk
-from pymor.vectorarrays.numpy import NumpyVectorArray
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymor.tools import timing
 
 
@@ -89,7 +89,7 @@ def test_vtkio(rect_or_tria_grid):
     grid = rect_or_tria_grid
     steps = 4
     for dim in range(1, 2):
-        for codim, data in enumerate((NumpyVectorArray(np.zeros((steps, grid.size(c)))) for c in range(grid.dim+1))):
+        for codim, data in enumerate((NumpyVectorSpace.from_data(np.zeros((steps, grid.size(c)))) for c in range(grid.dim+1))):
             with NamedTemporaryFile('wb') as out:
                 if codim == 1:
                     with pytest.raises(NotImplementedError):

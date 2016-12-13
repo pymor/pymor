@@ -114,13 +114,13 @@ First, we will import the most commonly used methods and classes of pyMOR
 by executing:
 
 >>> from pymor.basic import *
-Loading pymor version 0.3.0
+Loading pymor version 0.5.0
 
 Next we will instantiate a class describing the analytical problem
 we want so solve. In this case, a 
-:class:`~pymor.analyticalproblems.thermalblock.ThermalBlockProblem`:
+:meth:`~pymor.analyticalproblems.thermalblock.thermal_block_problem`:
 
->>> p = ThermalBlockProblem(num_blocks=(3, 2))
+>>> p = thermal_block_problem(num_blocks=(3, 2))
 
 We want to discretize this problem using the finite element method.
 We could do this by hand, creating a |Grid|, instatiating
@@ -129,8 +129,8 @@ operators for each subblock of the domain, forming a |LincombOperator|
 to represent the affine decomposition, instantiating a
 :class:`~pymor.operators.cg.L2ProductFunctionalP1` as right hand side, and
 putting it all together into a |StationaryDiscretization|. However, since
-:class:`~pymor.analyticalproblems.thermalblock.ThermalBlockProblem` derives
-form :class:`~pymor.analyticalproblems.elliptic.EllipticProblem`, we can use
+:meth:`~pymor.analyticalproblems.thermalblock.thermal_block_problem` returns
+a :class:`~pymor.analyticalproblems.elliptic.EllipticProblem`, we can use
 a predifined *discretizer* to do the work for us. In this case, we use
 :func:`~pymor.discretizers.elliptic.discretize_elliptic_cg`:
 

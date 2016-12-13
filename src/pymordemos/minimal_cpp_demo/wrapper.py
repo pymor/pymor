@@ -3,8 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.operators.basic import OperatorBase
-from pymor.vectorarrays.interfaces import VectorSpace
-from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorArray
+from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorSpace
 
 import numpy as np
 import math as m
@@ -20,18 +19,6 @@ class WrappedVector(CopyOnWriteVector):
     @classmethod
     def from_instance(cls, instance):
         return cls(instance._impl)
-
-    @classmethod
-    def make_zeros(cls, subtype):
-        return cls(Vector(subtype, 0))
-
-    @property
-    def subtype(self):
-        return self._impl.dim
-
-    @property
-    def dim(self):
-        return self._impl.dim
 
     @property
     def data(self):
@@ -68,12 +55,27 @@ class WrappedVector(CopyOnWriteVector):
         raise NotImplementedError
 
 
+class WrappedVectorSpace(ListVectorSpace):
+
+    def __init__(self, dim):
+        self.dim = dim
+
+    def zero_vector(self):
+        return WrappedVector(Vector(self.dim, 0))
+
+    def make_vector(self, obj):
+        return WrappedVector(obj)
+
+    def __eq__(self, other):
+        return type(other) is WrappedVectorSpace and self.dim == other.dim
+
+
 class WrappedDiffusionOperator(OperatorBase):
     def __init__(self, op):
         assert isinstance(op, DiffusionOperator)
         self._impl = op
-        self.source = VectorSpace(ListVectorArray, (WrappedVector, op.dim_source))
-        self.range = VectorSpace(ListVectorArray, (WrappedVector, op.dim_range))
+        self.source = WrappedVectorSpace(op.dim_source)
+        self.range = WrappedVectorSpace(op.dim_range)
         self.linear = True
 
     @classmethod
@@ -86,6 +88,6 @@ class WrappedDiffusionOperator(OperatorBase):
         def apply_one_vector(u):
             v = Vector(self.range.dim, 0)
             self._impl.apply(u._impl, v)
-            return WrappedVector(v)
+            return v
 
-        return ListVectorArray([apply_one_vector(u) for u in U._list], subtype=self.range.subtype)
+        return self.range.make_array([apply_one_vector(u) for u in U._list])

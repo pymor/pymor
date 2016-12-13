@@ -246,13 +246,13 @@ def parse_arguments(args):
 
 
 def discretize_pymor(xblocks, yblocks, grid_num_intervals, use_list_vector_array):
-    from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
+    from pymor.analyticalproblems.thermalblock import thermal_block_problem
     from pymor.discretizers.elliptic import discretize_elliptic_cg
     from pymor.playground.discretizers.numpylistvectorarray import convert_to_numpy_list_vector_array
 
     print('Discretize ...')
     # setup analytical problem
-    problem = ThermalBlockProblem(num_blocks=(xblocks, yblocks))
+    problem = thermal_block_problem(num_blocks=(xblocks, yblocks))
 
     # discretize using continuous finite elements
     d, _ = discretize_elliptic_cg(problem, diameter=1. / grid_num_intervals)
@@ -275,7 +275,7 @@ def discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
     if mpi.parallel:
         from pymor.discretizations.mpi import mpi_wrap_discretization
         d = mpi_wrap_discretization(lambda: _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order),
-                                    use_with=True, pickle_subtypes=False)
+                                    use_with=True, pickle_local_spaces=False)
     else:
         d = _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order)
 
@@ -337,14 +337,13 @@ def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
     # FEniCS wrappers
     from pymor.gui.fenics import FenicsVisualizer
     from pymor.operators.fenics import FenicsMatrixOperator
-    from pymor.vectorarrays.fenics import FenicsVector
+    from pymor.vectorarrays.fenics import FenicsVectorSpace
 
     # generic pyMOR classes
     from pymor.discretizations.basic import StationaryDiscretization
     from pymor.operators.constructions import LincombOperator, VectorFunctional
     from pymor.parameters.functionals import ProjectionParameterFunctional
     from pymor.parameters.spaces import CubicParameterSpace
-    from pymor.vectorarrays.list import ListVectorArray
 
     # define parameter functionals (same as in pymor.analyticalproblems.thermalblock)
     def parameter_functional_factory(x, y):
@@ -358,12 +357,12 @@ def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
     # wrap operators
     ops = [FenicsMatrixOperator(mat0, V, V)] + [FenicsMatrixOperator(m, V, V) for m in mats]
     op = LincombOperator(ops, (1.,) + parameter_functionals)
-    rhs = VectorFunctional(ListVectorArray([FenicsVector(F, V)]))
+    rhs = VectorFunctional(FenicsVectorSpace(V).make_array([F]))
     h1_product = FenicsMatrixOperator(h1_mat, V, V, name='h1_0_semi')
     l2_product = FenicsMatrixOperator(l2_mat, V, V, name='l2')
 
     # build discretization
-    visualizer = FenicsVisualizer(V)
+    visualizer = FenicsVisualizer(FenicsVectorSpace(V))
     parameter_space = CubicParameterSpace(op.parameter_type, 0.1, 1.)
     d = StationaryDiscretization(op, rhs, products={'h1_0_semi': h1_product,
                                                     'l2': l2_product},

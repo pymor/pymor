@@ -9,7 +9,7 @@ import pytest
 import pymor.algorithms.genericsolvers
 from pymor.operators.basic import OperatorBase
 from pymor.operators.numpy import NumpyMatrixOperator, sparse_options, dense_options
-from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class GenericOperator(OperatorBase):
@@ -45,20 +45,20 @@ def numpy_sparse_solver(request):
 
 def test_generic_solvers(generic_solver):
     op = GenericOperator(generic_solver)
-    rhs = NumpyVectorArray(np.ones(10))
+    rhs = op.range.make_array(np.ones(10))
     solution = op.apply_inverse(rhs)
     assert ((op.apply(solution) - rhs).l2_norm() / rhs.l2_norm())[0] < 1e-8
 
 
 def test_numpy_dense_solvers(numpy_dense_solver):
     op = NumpyMatrixOperator(np.eye(10) * np.arange(1, 11), solver_options=numpy_dense_solver)
-    rhs = NumpyVectorArray(np.ones(10))
+    rhs = op.range.make_array(np.ones(10))
     solution = op.apply_inverse(rhs)
     assert ((op.apply(solution) - rhs).l2_norm() / rhs.l2_norm())[0] < 1e-8
 
 
 def test_numpy_sparse_solvers(numpy_sparse_solver):
     op = NumpyMatrixOperator(diags([np.arange(1., 11.)], [0]), solver_options=numpy_sparse_solver)
-    rhs = NumpyVectorArray(np.ones(10))
+    rhs = op.range.make_array(np.ones(10))
     solution = op.apply_inverse(rhs)
     assert ((op.apply(solution) - rhs).l2_norm() / rhs.l2_norm())[0] < 1e-8
