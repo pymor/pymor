@@ -32,7 +32,6 @@ from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.discretizers.elliptic import discretize_elliptic_cg, discretize_elliptic_fv
 from pymor.domaindescriptions.polygonal import CircularSectorDomain
 from pymor.functions.basic import ConstantFunction, ExpressionFunction
-from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
 def elliptic_gmsh_demo(args):
@@ -61,7 +60,7 @@ def elliptic_gmsh_demo(args):
     solution = ExpressionFunction('(lambda r, phi: r**(pi/angle) * sin(phi * pi/angle))(*polar(x))', 2, (),
                                   {}, {'angle': args['ANGLE']})
     grid = data['grid']
-    U_ref = NumpyVectorArray(solution(grid.centers(0))) if args['--fv'] else NumpyVectorArray(solution(grid.centers(2)))
+    U_ref = U.space.make_array(solution(grid.centers(0)) if args['--fv'] else solution(grid.centers(2)))
     discretization.visualize((U, U_ref, U-U_ref),
                              legend=('Solution', 'Analytical solution (circular boundary)', 'Error'),
                              separate_colorbars=True)

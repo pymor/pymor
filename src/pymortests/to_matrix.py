@@ -12,7 +12,7 @@ from pymor.operators.block import BlockDiagonalOperator
 from pymor.operators.constructions import (AdjointOperator, Concatenation, IdentityOperator, LincombOperator,
                                            VectorArrayOperator)
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 def test_to_matrix():
@@ -37,7 +37,7 @@ def test_to_matrix():
 
     np.random.seed(0)
     V = np.random.randn(10, 2)
-    Vva = NumpyVectorArray(V.T)
+    Vva = NumpyVectorSpace.make_array(V.T)
     Vop = VectorArrayOperator(Vva)
     assert np.allclose(V, to_matrix(Vop))
     Vop = VectorArrayOperator(Vva, transposed=True)

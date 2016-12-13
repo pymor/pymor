@@ -90,7 +90,7 @@ def discretize_fenics():
 
     if mpi.parallel:
         from pymor.discretizations.mpi import mpi_wrap_discretization
-        return mpi_wrap_discretization(_discretize_fenics, use_with=True, pickle_subtypes=False)
+        return mpi_wrap_discretization(_discretize_fenics, use_with=True, pickle_local_spaces=False)
     else:
         return _discretize_fenics()
 
@@ -150,12 +150,12 @@ def _discretize_fenics():
 
     from pymor.gui.fenics import FenicsVisualizer
     from pymor.operators.fenics import FenicsMatrixOperator
-    from pymor.vectorarrays.fenics import FenicsVector
+    from pymor.vectorarrays.fenics import FenicsVectorSpace
 
     d = InstationaryDiscretization(
         T=1.,
 
-        initial_data=ListVectorArray([FenicsVector(u0, V)]),
+        initial_data=FenicsVectorSpace(V).make_array([u0]),
 
         operator=LincombOperator([FenicsMatrixOperator(mat0, V, V),
                                   FenicsMatrixOperator(h1_0_mat, V, V),
@@ -166,7 +166,7 @@ def _discretize_fenics():
                                   100. - 1.,
                                   ExpressionParameterFunctional('top - 1.', {'top': 0})]),
 
-        rhs=VectorFunctional(ListVectorArray([FenicsVector(f, V)])),
+        rhs=VectorFunctional(FenicsVectorSpace(V).make_array([f])),
 
         mass=FenicsMatrixOperator(l2_0_mat, V, V, name='l2'),
 
@@ -179,7 +179,7 @@ def _discretize_fenics():
 
         parameter_space=CubicParameterSpace({'top': 0}, minimum=1, maximum=100.),
 
-        visualizer=FenicsVisualizer(V)
+        visualizer=FenicsVisualizer(FenicsVectorSpace(V))
     )
 
     return d

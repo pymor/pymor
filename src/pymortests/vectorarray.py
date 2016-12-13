@@ -10,7 +10,7 @@ import numpy as np
 
 from pymor.algorithms.basic import almost_equal
 from pymor.core import NUMPY_INDEX_QUIRK
-from pymor.vectorarrays.interfaces import VectorSpace, _INDEXTYPES
+from pymor.vectorarrays.interfaces import VectorSpaceInterface, _INDEXTYPES
 from pymortests.fixtures.vectorarray import \
     (vector_array_without_reserve, vector_array, compatible_vector_array_pair_without_reserve,
      compatible_vector_array_pair, incompatible_vector_array_pair,
@@ -155,8 +155,6 @@ def test_empty(vector_array):
         vector_array.empty(-1)
     for r in (0, 1, 100):
         v = vector_array.empty(reserve=r)
-        assert v.dim == vector_array.dim
-        assert v.subtype == vector_array.subtype
         assert v.space == vector_array.space
         assert len(v) == 0
         if hasattr(v, 'data'):
@@ -168,8 +166,6 @@ def test_zeros(vector_array):
         vector_array.zeros(-1)
     for c in (0, 1, 2, 30):
         v = vector_array.zeros(count=c)
-        assert v.dim == vector_array.dim
-        assert v.subtype == vector_array.subtype
         assert v.space == vector_array.space
         assert len(v) == c
         if min(v.dim, c) > 0:
@@ -184,7 +180,7 @@ def test_from_data(vector_array):
     if hasattr(vector_array, 'data'):
         d = vector_array.data
         try:
-            v = vector_array.from_data(d, vector_array.subtype)
+            v = vector_array.space.from_data(d)
             assert np.allclose(d, v.data)
         except NotImplementedError:
             pass
@@ -200,10 +196,7 @@ def test_shape(vector_array):
 
 def test_space(vector_array):
     v = vector_array
-    assert isinstance(v.space, VectorSpace)
-    assert v.dim == v.space.dim
-    assert v.subtype == v.space.subtype
-    assert type(v) == v.space.type
+    assert isinstance(v.space, VectorSpaceInterface)
     assert v in v.space
 
 
@@ -228,8 +221,7 @@ def test_copy(vector_array):
             else:
                 c = v[ind].copy(deep)
                 assert len(c) == v.len_ind(ind)
-            assert c.dim == v.dim
-            assert c.subtype == v.subtype
+            assert c.space == v.space
             if ind is None:
                 assert np.all(almost_equal(c, v))
             else:
@@ -270,8 +262,7 @@ def test_append(compatible_vector_array_pair):
             assert np.allclose(c1.data, np.vstack((v1.data, indexed(v2.data, ind))))
         c1.append(c2[ind], remove_from_other=True)
         assert len(c2) == len(ind_complement_)
-        assert c2.dim == c1.dim
-        assert c2.subtype == c1.subtype
+        assert c2.space == c1.space
         assert len(c1) == len_v1 + 2 * len_ind
         assert np.all(almost_equal(c1[len_v1:len_v1 + len_ind], c1[len_v1 + len_ind:len(c1)]))
         assert np.all(almost_equal(c2, v2[ind_complement_]))
@@ -299,8 +290,7 @@ def test_del(vector_array):
         ind_complement_ = ind_complement(v, ind)
         c = v.copy()
         del c[ind]
-        assert c.dim == v.dim
-        assert c.subtype == v.subtype
+        assert c.space == v.space
         assert len(c) == len(ind_complement_)
         assert np.all(almost_equal(v[ind_complement_], c))
         if hasattr(v, 'data'):
@@ -555,8 +545,7 @@ def test_lincomb_1d(vector_array):
     for ind in valid_inds(v):
         coeffs = np.random.random(v.len_ind(ind))
         lc = v[ind].lincomb(coeffs)
-        assert lc.dim == v.dim
-        assert lc.subtype == v.subtype
+        assert lc.space == v.space
         assert len(lc) == 1
         lc2 = v.zeros()
         for coeff, i in zip(coeffs, ind_to_list(v, ind)):
@@ -571,8 +560,7 @@ def test_lincomb_2d(vector_array):
         for count in (0, 1, 5):
             coeffs = np.random.random((count, v.len_ind(ind)))
             lc = v[ind].lincomb(coeffs)
-            assert lc.dim == v.dim
-            assert lc.subtype == v.subtype
+            assert lc.space == v.space
             assert len(lc) == count
             lc2 = v.empty(reserve=count)
             for coeffs_1d in coeffs:

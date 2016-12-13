@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
 def random_integers(count, seed):
@@ -14,17 +13,20 @@ def random_integers(count, seed):
     return list(np.random.randint(0, 3200, count))
 
 
-def numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_source, count_range, seed):
+def numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_source, count_range, seed,
+                                              source_id=None, range_id=None):
     np.random.seed(seed)
-    op = NumpyMatrixOperator(np.random.random((dim_range, dim_source)))
-    s = NumpyVectorArray(np.random.random((count_source, dim_source)), copy=False)
-    r = NumpyVectorArray(np.random.random((count_range, dim_range)), copy=False)
+    op = NumpyMatrixOperator(np.random.random((dim_range, dim_source)), source_id=source_id, range_id=range_id)
+    s = op.source.make_array(np.random.random((count_source, dim_source)))
+    r = op.range.make_array(np.random.random((count_range, dim_range)))
     return op, None, s, r
 
 
-def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range, count_source, count_range, seed):
+def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range, count_source, count_range, seed,
+                                                           source_id=None, range_id=None):
     from scipy.linalg import eigh
-    op, _, U, V = numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_source, count_range, seed)
+    op, _, U, V = numpy_matrix_operator_with_arrays_factory(dim_source, dim_range, count_source, count_range, seed,
+                                                            source_id=source_id, range_id=range_id)
     if dim_source > 0:
         while True:
             sp = np.random.random((dim_source, dim_source))
@@ -32,9 +34,9 @@ def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range
             evals = eigh(sp, eigvals_only=True)
             if np.min(evals) > 1e-6:
                 break
-        sp = NumpyMatrixOperator(sp)
+        sp = NumpyMatrixOperator(sp, source_id=source_id, range_id=source_id)
     else:
-        sp = NumpyMatrixOperator(np.zeros((0, 0)))
+        sp = NumpyMatrixOperator(np.zeros((0, 0)), source_id=source_id, range_id=source_id)
     if dim_range > 0:
         while True:
             rp = np.random.random((dim_range, dim_range))
@@ -42,9 +44,9 @@ def numpy_matrix_operator_with_arrays_and_products_factory(dim_source, dim_range
             evals = eigh(rp, eigvals_only=True)
             if np.min(evals) > 1e-6:
                 break
-        rp = NumpyMatrixOperator(rp)
+        rp = NumpyMatrixOperator(rp, source_id=range_id, range_id=range_id)
     else:
-        rp = NumpyMatrixOperator(np.zeros((0, 0)))
+        rp = NumpyMatrixOperator(np.zeros((0, 0)), source_id=range_id, range_id=range_id)
     return op, None, U, V, sp, rp
 
 
@@ -122,11 +124,11 @@ def thermalblock_vectorarray_factory(transposed, xblocks, yblocks, diameter, see
     op = VectorArrayOperator(U, transposed)
     if transposed:
         U = V
-        V = NumpyVectorArray(np.random.random((7, op.range.dim)), copy=False)
+        V = op.range.make_array(np.random.random((7, op.range.dim)))
         sp = rp
         rp = NumpyMatrixOperator(np.eye(op.range.dim) * 2)
     else:
-        U = NumpyVectorArray(np.random.random((7, op.source.dim)), copy=False)
+        U = op.source.make_array(np.random.random((7, op.source.dim)))
         sp = NumpyMatrixOperator(np.eye(op.source.dim) * 2)
     return op, None, U, V, sp, rp
 
@@ -135,7 +137,7 @@ def thermalblock_vector_factory(xblocks, yblocks, diameter, seed):
     from pymor.operators.constructions import VectorOperator
     _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, seed)
     op = VectorOperator(U[0])
-    U = NumpyVectorArray(np.random.random((7, 1)), copy=False)
+    U = op.source.make_array(np.random.random((7, 1)))
     sp = NumpyMatrixOperator(np.eye(1) * 2)
     return op, None, U, V, sp, rp
 
@@ -145,7 +147,7 @@ def thermalblock_vectorfunc_factory(product, xblocks, yblocks, diameter, seed):
     _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, seed)
     op = VectorFunctional(U[0], product=sp if product else None)
     U = V
-    V = NumpyVectorArray(np.random.random((7, 1)), copy=False)
+    V = op.range.make_array(np.random.random((7, 1)))
     sp = rp
     rp = NumpyMatrixOperator(np.eye(1) * 2)
     return op, None, U, V, sp, rp
@@ -325,19 +327,17 @@ def misc_operator_with_arrays_and_products_factory(n):
         return op, op.parse_parameter((n-5)/2), V, U, rp, sp
     elif n == 8:
         from pymor.operators.block import BlockDiagonalOperator
-        from pymor.vectorarrays.block import BlockVectorArray
         op0, _, U0, V0, sp0, rp0 = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3, n)
         op1, _, U1, V1, sp1, rp1 = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3, n+1)
         op2, _, U2, V2, sp2, rp2 = numpy_matrix_operator_with_arrays_and_products_factory(30, 30, 4, 3, n+2)
         op = BlockDiagonalOperator([op0, op1, op2])
         sp = BlockDiagonalOperator([sp0, sp1, sp2])
         rp = BlockDiagonalOperator([rp0, rp1, rp2])
-        U = BlockVectorArray([U0, U1, U2])
-        V = BlockVectorArray([V0, V1, V2])
+        U = op.source.make_array([U0, U1, U2])
+        V = op.range.make_array([V0, V1, V2])
         return op, _, U, V, sp, rp
     elif n == 9:
         from pymor.operators.block import BlockDiagonalOperator, BlockOperator
-        from pymor.vectorarrays.block import BlockVectorArray
         op0, _, U0, V0, sp0, rp0 = numpy_matrix_operator_with_arrays_and_products_factory(10, 10, 4, 3, n)
         op1, _, U1, V1, sp1, rp1 = numpy_matrix_operator_with_arrays_and_products_factory(20, 20, 4, 3, n+1)
         op2, _, U2, V2, sp2, rp2 = numpy_matrix_operator_with_arrays_and_products_factory(20, 10, 4, 3, n+2)
@@ -345,8 +345,8 @@ def misc_operator_with_arrays_and_products_factory(n):
                             [None, op1]])
         sp = BlockDiagonalOperator([sp0, sp1])
         rp = BlockDiagonalOperator([rp0, rp1])
-        U = BlockVectorArray([U0, U1])
-        V = BlockVectorArray([V0, V1])
+        U = op.source.make_array([U0, U1])
+        V = op.range.make_array([V0, V1])
         return op, None, U, V, sp, rp
     else:
         assert False

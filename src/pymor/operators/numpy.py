@@ -27,7 +27,7 @@ from pymor.core.interfaces import abstractmethod
 from pymor.core.logger import getLogger
 from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import IdentityOperator, ZeroOperator
-from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class NumpyGenericOperator(OperatorBase):
@@ -64,9 +64,9 @@ class NumpyGenericOperator(OperatorBase):
     """
 
     def __init__(self, mapping, adjoint_mapping=None, dim_source=1, dim_range=1, linear=False, parameter_type=None,
-                 solver_options=None, name=None):
-        self.source = NumpyVectorSpace(dim_source)
-        self.range = NumpyVectorSpace(dim_range)
+                 source_id=None, range_id=None, solver_options=None, name=None):
+        self.source = NumpyVectorSpace(dim_source, source_id)
+        self.range = NumpyVectorSpace(dim_range, range_id)
         self.solver_options = solver_options
         self.name = name
         self._mapping = mapping
@@ -74,14 +74,16 @@ class NumpyGenericOperator(OperatorBase):
         self.linear = linear
         if parameter_type is not None:
             self.build_parameter_type(parameter_type)
+        self.source_id = source_id  # needed for with_
+        self.range_id = range_id
 
     def apply(self, U, mu=None):
         assert U in self.source
         if self.parametric:
             mu = self.parse_parameter(mu)
-            return NumpyVectorArray(self._mapping(U.data, mu=mu), copy=False)
+            return self.range.make_array(self._mapping(U.data, mu=mu))
         else:
-            return NumpyVectorArray(self._mapping(U.data), copy=False)
+            return self.range.make_array(self._mapping(U.data))
 
     def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         if self._adjoint_mapping is None:
@@ -93,9 +95,9 @@ class NumpyGenericOperator(OperatorBase):
             PrU = U.data
         if self.parametric:
             mu = self.parse_parameter(mu)
-            ATPrU = NumpyVectorArray(self._adjoint_mapping(PrU, mu=mu), copy=False)
+            ATPrU = self.source.make_array(self._adjoint_mapping(PrU, mu=mu))
         else:
-            ATPrU = NumpyVectorArray(self._adjoint_mapping(PrU), copy=False)
+            ATPrU = self.source.make_array(self._adjoint_mapping(PrU))
         if source_product:
             return source_product.apply_inverse(ATPrU)
         else:
@@ -114,6 +116,13 @@ class NumpyMatrixBasedOperator(OperatorBase):
 
     linear = True
     sparse = None
+
+    @property
+    def T(self):
+        if not self.parametric:
+            return self.assemble().T
+        else:
+            return super().T
 
     @abstractmethod
     def _assemble(self, mu=None):
@@ -135,17 +144,25 @@ class NumpyMatrixBasedOperator(OperatorBase):
             if self._defaults_sid != defaults_sid():
                 self.logger.warn('Re-assembling since state of global defaults has changed.')
                 op = self._assembled_operator = NumpyMatrixOperator(self._assemble(),
+                                                                    source_id=self.source.id,
+                                                                    range_id=self.range.id,
                                                                     solver_options=self.solver_options)
                 self._defaults_sid = defaults_sid()
                 return op
             else:
                 return self._assembled_operator
         elif not self.parameter_type:
-            op = self._assembled_operator = NumpyMatrixOperator(self._assemble(), solver_options=self.solver_options)
+            op = self._assembled_operator = NumpyMatrixOperator(self._assemble(),
+                                                                source_id=self.source.id,
+                                                                range_id=self.range.id,
+                                                                solver_options=self.solver_options)
             self._defaults_sid = defaults_sid()
             return op
         else:
-            return NumpyMatrixOperator(self._assemble(self.parse_parameter(mu)), solver_options=self.solver_options)
+            return NumpyMatrixOperator(self._assemble(self.parse_parameter(mu)),
+                                       source_id=self.source.id,
+                                       range_id=self.range.id,
+                                       solver_options=self.solver_options)
 
     def apply(self, U, mu=None):
         return self.assemble(mu).apply(U)
@@ -153,12 +170,14 @@ class NumpyMatrixBasedOperator(OperatorBase):
     def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         return self.assemble(mu).apply_adjoint(U, source_product=source_product, range_product=range_product)
 
-    def as_vector(self, mu=None):
-        return self.assemble(mu).as_vector()
+    def as_range_array(self, mu=None):
+        return self.assemble(mu).as_range_array()
+
+    def as_source_array(self, mu=None):
+        return self.assemble(mu).as_source_array()
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         return self.assemble(mu).apply_inverse(V, least_squares=least_squares)
-
 
     def export_matrix(self, filename, matrix_name=None, output_format='matlab', mu=None):
         """Save the matrix of the operator to a file.
@@ -200,22 +219,31 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         Name of the operator.
     """
 
-    def __init__(self, matrix, solver_options=None, name=None):
+    def __init__(self, matrix, source_id=None, range_id=None, solver_options=None, name=None):
         assert matrix.ndim <= 2
         if matrix.ndim == 1:
             matrix = np.reshape(matrix, (1, -1))
-        self.source = NumpyVectorSpace(matrix.shape[1])
-        self.range = NumpyVectorSpace(matrix.shape[0])
+        self.source = NumpyVectorSpace(matrix.shape[1], source_id)
+        self.range = NumpyVectorSpace(matrix.shape[0], range_id)
         self.solver_options = solver_options
         self.name = name
         self._matrix = matrix
+        self.source_id = source_id
+        self.range_id = range_id
         self.sparse = issparse(matrix)
 
     @classmethod
-    def from_file(cls, path, key=None, solver_options=None, name=None):
+    def from_file(cls, path, key=None, source_id=None, range_id=None, solver_options=None, name=None):
         from pymor.tools.io import load_matrix
         matrix = load_matrix(path, key=key)
-        return cls(matrix, solver_options=solver_options, name=name or key or path)
+        return cls(matrix, solver_options=solver_options, source_id=source_id, range_id=range_id,
+                   name=name or key or path)
+
+    @property
+    def T(self):
+        # TODO: Process solver_options
+        return self.with_(matrix=self._matrix.T, source_id=self.range_id, range_id=self.source_id,
+                          solver_options=None, name=self.name + '_transposed')
 
     def _assemble(self, mu=None):
         pass
@@ -223,15 +251,17 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
     def assemble(self, mu=None):
         return self
 
-    def as_vector(self, mu=None):
-        matrix = self._matrix
-        if matrix.shape[0] != 1 and matrix.shape[1] != 1:
-            raise TypeError('This operator does not represent a vector or linear functional.')
-        return NumpyVectorArray(matrix.ravel(), copy=True)
+    def as_range_array(self, mu=None):
+        assert not self.sparse
+        return self.range.make_array(self._matrix.T.copy())
+
+    def as_source_array(self, mu=None):
+        assert not self.sparse
+        return self.source.make_array(self._matrix.copy())
 
     def apply(self, U, mu=None):
         assert U in self.source
-        return NumpyVectorArray(self._matrix.dot(U.data.T).T, copy=False)
+        return self.range.make_array(self._matrix.dot(U.data.T).T)
 
     def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         assert U in self.range
@@ -241,7 +271,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             PrU = range_product.apply(U).data
         else:
             PrU = U.data
-        ATPrU = NumpyVectorArray(self._matrix.T.dot(PrU.T).T, copy=False)
+        ATPrU = self.source.make_array(self._matrix.T.dot(PrU.T).T)
         if source_product:
             return source_product.apply_inverse(ATPrU)
         else:
@@ -252,7 +282,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
         if V.dim == 0:
             if self.source.dim == 0 or least_squares:
-                return NumpyVectorArray(np.zeros((len(V), self.source.dim)))
+                return self.source.make_array(np.zeros((len(V), self.source.dim)))
             else:
                 raise InversionError
 
@@ -266,7 +296,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                 self.logger.warn('Least squares solver selected but "least_squares == False"')
 
         try:
-            return NumpyVectorArray(_apply_inverse(self._matrix, V.data, options=options))
+            return self.source.make_array(_apply_inverse(self._matrix, V.data, options=options))
         except InversionError as e:
             if least_squares and options:
                 solver_type = options if isinstance(options, str) else options['type']
@@ -285,7 +315,8 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                                                  least_squares=least_squares)
         else:
             options = {'inverse': self.solver_options.get('inverse_adjoint') if self.solver_options else None}
-            adjoint_op = NumpyMatrixOperator(self._matrix.T, solver_options=options)
+            adjoint_op = NumpyMatrixOperator(self._matrix.T, source_id=self.range.id, range_id=self.source.id,
+                                             solver_options=options)
             return adjoint_op.apply_inverse(U, mu=mu, least_squares=least_squares)
 
     def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
@@ -319,7 +350,10 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         assert dim_range is None or dim_range <= self.range.dim
         name = name or '{}_projected_to_subbasis'.format(self.name)
         # copy instead of just slicing the matrix to ensure contiguous memory
-        return NumpyMatrixOperator(self._matrix[:dim_range, :dim_source].copy(), solver_options=self.solver_options,
+        return NumpyMatrixOperator(self._matrix[:dim_range, :dim_source].copy(),
+                                   source_id=self.source.id,
+                                   range_id=self.range.id,
+                                   solver_options=self.solver_options,
                                    name=name)
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
@@ -372,7 +406,10 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                     matrix += (op._matrix * c)
                 except NotImplementedError:
                     matrix = matrix + (op._matrix * c)
-        return NumpyMatrixOperator(matrix, solver_options=solver_options)
+        return NumpyMatrixOperator(matrix,
+                                   source_id=self.source.id,
+                                   range_id=self.range.id,
+                                   solver_options=solver_options)
 
     def __getstate__(self):
         if hasattr(self._matrix, 'factorization'):  # remove unplicklable SuperLU factorization
@@ -978,9 +1015,8 @@ def _apply_inverse(matrix, V, options=None, check_finite=True):
         logger = getLogger('pymor.operators.numpy._apply_inverse')
         logger.warn('You have selected a (potentially slow) generic solver for a NumPy matrix operator!')
         from pymor.operators.numpy import NumpyMatrixOperator
-        from pymor.vectorarrays.numpy import NumpyVectorArray
         return genericsolvers.apply_inverse(NumpyMatrixOperator(matrix),
-                                            NumpyVectorArray(V, copy=False),
+                                            NumpyVectorSpace.make_array(V),
                                             options=options).data
     else:
         raise ValueError('Unknown solver type')

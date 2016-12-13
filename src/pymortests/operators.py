@@ -31,7 +31,7 @@ def test_selection_op():
         name = "foo"
     )
     x = np.linspace(-1., 1., num=3)
-    vx = NumpyVectorArray(x[:, np.newaxis])
+    vx = p1.source.make_array(x[:, np.newaxis])
     assert np.allclose(p1.apply(vx,mu=0).data, s1.apply(vx,mu=0).data)
 
     s2 = SelectionOperator(
@@ -55,7 +55,7 @@ def test_lincomb_op():
     p12 = p1 + p2
     p0 = p1 - p1
     x = np.linspace(-1., 1., num=3)
-    vx = NumpyVectorArray(x[:, np.newaxis])
+    vx = p1.source.make_array((x[:, np.newaxis]))
     assert np.allclose(p0.apply(vx).data, [0.])
     assert np.allclose(p12.apply(vx).data, (x * x + x)[:, np.newaxis])
     assert np.allclose((p1 * 2.).apply(vx).data, (x * 2.)[:, np.newaxis])
@@ -64,9 +64,9 @@ def test_lincomb_op():
     with pytest.raises(TypeError):
         p2.as_vector()
     p1.as_vector()
-    assert almost_equal(p1.as_vector(), p1.apply(NumpyVectorArray(1.)))
+    assert almost_equal(p1.as_vector(), p1.apply(p1.source.make_array([1.])))
 
-    basis = NumpyVectorArray([1.])
+    basis = p1.source.make_array([1.])
     for p in (p1, p2, p12):
         projected = p.projected(basis, basis)
         pa = projected.apply(vx)
@@ -125,6 +125,28 @@ def test_apply_adjoint(operator_with_arrays):
         Uind = op.apply_adjoint(V[ind], mu=mu)
         assert np.all(almost_equal(Uind, U[ind]))
         assert np.all(almost_equal(Uind, op.apply_adjoint(V[ind], mu=mu)))
+
+
+def test_apply_adjoint2(operator_with_arrays):
+    op, mu, U, V = operator_with_arrays
+    if not op.linear:
+        return
+    try:
+        op.apply_adjoint(V, mu=mu)
+    except NotImplementedError:
+        return
+    assert np.allclose(V.dot(op.apply(U, mu=mu)), op.apply_adjoint(V, mu=mu).dot(U))
+
+
+def test_T(operator_with_arrays):
+    op, mu, U, V = operator_with_arrays
+    if not op.linear:
+        return
+    try:
+        op.T.apply(V, mu=mu)
+    except NotImplementedError:
+        return
+    assert np.allclose(V.dot(op.apply(U, mu=mu)), op.T.apply(V, mu=mu).dot(U))
 
 
 def test_apply_adjoint_2(operator_with_arrays):
@@ -200,8 +222,8 @@ def test_projected(operator_with_arrays):
     op_UV = op.projected(V, U)
     np.random.seed(4711 + U.dim + len(V))
     coeffs = np.random.random(len(U))
-    X = op_UV.apply(NumpyVectorArray(coeffs, copy=False), mu=mu)
-    Y = NumpyVectorArray(V.dot(op.apply(U.lincomb(coeffs), mu=mu)).T, copy=False)
+    X = op_UV.apply(op_UV.source.make_array(coeffs), mu=mu)
+    Y = op_UV.range.make_array(V.dot(op.apply(U.lincomb(coeffs), mu=mu)).T)
     assert np.all(almost_equal(X, Y))
 
 
@@ -213,7 +235,7 @@ def test_projected_2(operator_with_arrays):
     op_V_U = op_V.projected(None, U)
     op_UV = op.projected(V, U)
     np.random.seed(4711 + U.dim + len(V))
-    W = NumpyVectorArray(np.random.random(len(U)), copy=False)
+    W = op_UV.source.make_array(np.random.random(len(U)))
     Y0 = op_UV.apply(W, mu=mu)
     Y1 = op_U_V.apply(W, mu=mu)
     Y2 = op_V_U.apply(W, mu=mu)
@@ -226,8 +248,8 @@ def test_projected_with_product(operator_with_arrays_and_products):
     op_UV = op.projected(V, U, product=rp)
     np.random.seed(4711 + U.dim + len(V))
     coeffs = np.random.random(len(U))
-    X = op_UV.apply(NumpyVectorArray(coeffs, copy=False), mu=mu)
-    Y = NumpyVectorArray(rp.apply2(op.apply(U.lincomb(coeffs), mu=mu), V), copy=False)
+    X = op_UV.apply(op_UV.source.make_array(coeffs), mu=mu)
+    Y = op_UV.range.make_array(rp.apply2(op.apply(U.lincomb(coeffs), mu=mu), V))
     assert np.all(almost_equal(X, Y))
 
 
@@ -239,7 +261,7 @@ def test_projected_with_product_2(operator_with_arrays_and_products):
     op_V_U = op_V.projected(None, U)
     op_UV = op.projected(V, U, product=rp)
     np.random.seed(4711 + U.dim + len(V))
-    W = NumpyVectorArray(np.random.random(len(U)), copy=False)
+    W = op_UV.source.make_array(np.random.random(len(U)))
     Y0 = op_UV.apply(W, mu=mu)
     Y1 = op_U_V.apply(W, mu=mu)
     Y2 = op_V_U.apply(W, mu=mu)
@@ -278,6 +300,6 @@ def test_restricted(operator_with_arrays):
             rop, source_dofs = op.restricted(components)
         except NotImplementedError:
             return
-        op_U = NumpyVectorArray(op.apply(U, mu=mu).components(components))
-        rop_U = rop.apply(NumpyVectorArray(U.components(source_dofs)), mu=mu)
+        op_U = rop.range.make_array(op.apply(U, mu=mu).components(components))
+        rop_U = rop.apply(rop.source.make_array(U.components(source_dofs)), mu=mu)
         assert np.all(almost_equal(op_U, rop_U))
