@@ -177,9 +177,13 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
     if sigma is None:
         sigma = np.logspace(-1, 1, r)
     if b is None:
-        b = discretization.B.source.make_array(np.ones((r, discretization.m)))
+        # for the full order model we cannot assume that the source of B
+        # is a NumpyVectorSpace, so we have to use 'from_data' here
+        b = discretization.B.source.from_data(np.ones((r, discretization.m)))
     if c is None:
-        c = discretization.C.range.make_array(np.ones((r, discretization.p)))
+        # for the full order model we cannot assume that the range of C
+        # is a NumpyVectorSpace, so we have to use 'from_data' here
+        c = discretization.C.range.from_data(np.ones((r, discretization.p)))
 
     if verbose:
         if compute_errors:
