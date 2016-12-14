@@ -61,7 +61,7 @@ def bt(discretization, r=None, tol=None, typ='lyap', me_solver=None, method='bfs
     assert r is None or 0 < r < discretization.n
     assert method in ('sr', 'bfsr')
 
-    sv, U, V = discretization.sv_U_V(typ, me_solver=me_solver)
+    # compute gramian factors
     cf = discretization.gramian(typ, 'cf', me_solver=me_solver)
     of = discretization.gramian(typ, 'of', me_solver=me_solver)
 
@@ -69,6 +69,10 @@ def bt(discretization, r=None, tol=None, typ='lyap', me_solver=None, method='bfs
         raise ValueError('r needs to be smaller than the sizes of Gramian factors.' +
                          ' Try reducing the tolerance in the low-rank Lyapunov equation solver.')
 
+    # compute "Hankel" singular values and vectors
+    sv, U, V = discretization.sv_U_V(typ, me_solver=me_solver)
+
+    # find reduced order if tol is specified
     if tol is not None:
         bounds = np.zeros((discretization.n,))
         sv_reverse = np.zeros((discretization.n,))
@@ -84,9 +88,9 @@ def bt(discretization, r=None, tol=None, typ='lyap', me_solver=None, method='bfs
         r_tol = np.argmax(bounds <= tol) + 1
         r = r_tol if r is None else min([r, r_tol])
 
+    # compute projection matrices and find the reduced model
     V = cf.lincomb(V[:r])
     W = of.lincomb(U[:r])
-
     if method == 'sr':
         alpha = 1 / np.sqrt(sv[:r])
         V.scal(alpha)

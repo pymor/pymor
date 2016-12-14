@@ -5,7 +5,9 @@
 import numpy as np
 import scipy.linalg as spla
 
+from pymor.algorithms.to_matrix import to_matrix
 from pymor.discretizations.iosys import LTISystem
+from pymor.operators.constructions import IdentityOperator
 
 
 def interpolation(discretization, sigma, b, c):
@@ -31,10 +33,12 @@ def interpolation(discretization, sigma, b, c):
     assert isinstance(b, np.ndarray) and b.shape == (discretization.m, r)
     assert isinstance(c, np.ndarray) and c.shape == (discretization.p, r)
 
+    # rescale tangential directions (could avoid overflow or underflow)
     for i in range(r):
         b[:, i] /= spla.norm(b[:, i])
         c[:, i] /= spla.norm(c[:, i])
 
+    # matrices of the interpolatory LTI system
     Er = np.empty((r, r), dtype=complex)
     Ar = np.empty((r, r), dtype=complex)
     Br = np.empty((r, discretization.m), dtype=complex)
@@ -54,6 +58,7 @@ def interpolation(discretization, sigma, b, c):
         Br[i, :] = Hs[i].T.dot(c[:, i])
         Cr[:, i] = Hs[i].dot(b[:, i])
 
+    # transform the system to have real matrices
     T = np.zeros((r, r), dtype=complex)
     for i in range(r):
         if sigma[i].imag == 0:
@@ -68,7 +73,6 @@ def interpolation(discretization, sigma, b, c):
                 T[i, j] = 1
                 T[j, i] = -1j
                 T[j, j] = 1j
-
     Er = (T.dot(Er).dot(T.conj().T)).real
     Ar = (T.dot(Ar).dot(T.conj().T)).real
     Br = (T.dot(Br)).real
@@ -77,8 +81,8 @@ def interpolation(discretization, sigma, b, c):
     return LTISystem.from_matrices(Ar, Br, Cr, D=None, E=Er, cont_time=discretization.cont_time)
 
 
-def tf_irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_sigma_in_rhp=True,
-            conv_crit='rel_sigma'):
+def tf_irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_sigma_in_rhp=False,
+            conv_crit='rel_sigma_change'):
     """Reduce using TF-IRKA.
 
     .. [AG12] C. A. Beattie, S. Gugercin, Realization-independent
@@ -112,13 +116,13 @@ def tf_irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, 
     verbose
         Should consecutive distances be printed.
     force_sigma_in_rhp
-        If `True`, new interpolation points are always in the right
-        half-plane. Otherwise, they are reflections of reduced order model's
-        poles.
+        If 'False`, new interpolation are reflections of reduced order
+        model's poles. Otherwise, they are always in the right
+        half-plane.
     conv_crit
         Convergence criterion:
-            - `'rel_sigma'`: relative change in interpolation points
-            - `'rel_H2'`: relative H_2 distance of reduced order models
+            - `'rel_sigma_change'`: relative change in interpolation points
+            - `'rel_H2_dist'`: relative H_2 distance of reduced order models
 
     Returns
     -------
@@ -133,12 +137,16 @@ def tf_irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, 
         - interpolation points from all iterations `Sigma`, and
         - right and left tangential directions `R` and `L`.
     """
+    if not discretization.cont_time:
+        raise NotImplementedError
     assert r > 0
     assert sigma is None or len(sigma) == r
     assert b is None or isinstance(b, np.ndarray) and b.shape == (discretization.m, r)
     assert c is None or isinstance(c, np.ndarray) and c.shape == (discretization.p, r)
-    assert conv_crit in ('rel_sigma', 'rel_H2')
+    assert conv_crit in ('rel_sigma_change', 'rel_H2_dist')
 
+    # basic choice for initial interpolation points and tangential
+    # directions
     if sigma is None:
         sigma = np.logspace(-1, 1, r)
     if b is None:
@@ -154,19 +162,26 @@ def tf_irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, 
     Sigma = [np.array(sigma)]
     R = [b]
     L = [c]
+    # main loop
     for it in range(maxit):
+        # interpolatory reduced order model
         rom = interpolation(discretization, sigma, b, c)
 
-        sigma, Y, X = spla.eig(rom.A._matrix, rom.E._matrix, left=True, right=True)
+        # new interpolation points
+        if isinstance(rom.E, IdentityOperator):
+            sigma, Y, X = spla.eig(to_matrix(rom.A), left=True, right=True)
+        else:
+            sigma, Y, X = spla.eig(to_matrix(rom.A), to_matrix(rom.E), left=True, right=True)
         if force_sigma_in_rhp:
             sigma = np.array([np.abs(s.real) + s.imag * 1j for s in sigma])
         else:
             sigma *= -1
         Sigma.append(sigma)
 
-        if conv_crit == 'rel_sigma':
+        # compute convergence criterion
+        if conv_crit == 'rel_sigma_change':
             dist.append(np.max(np.abs((Sigma[-2] - Sigma[-1]) / Sigma[-2])))
-        elif conv_crit == 'rel_H2':
+        elif conv_crit == 'rel_H2_dist':
             if it == 0:
                 rom_new = rom
                 dist.append(np.inf)
@@ -183,14 +198,17 @@ def tf_irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, 
         if verbose:
             print('{:4d} | {:15.9e}'.format(it + 1, dist[-1]))
 
+        # new tangential directions
         b = rom.B._matrix.T.dot(Y.conj())
         c = rom.C._matrix.dot(X)
         R.append(b)
         L.append(c)
 
+        # check if convergence criterion is satisfied
         if dist[-1] < tol:
             break
 
+    # final reduced order model
     rom = interpolation(discretization, sigma, b, c)
     reduction_data = {'dist': dist, 'Sigma': Sigma, 'R': R, 'L': L}
 

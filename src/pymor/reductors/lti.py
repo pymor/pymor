@@ -5,9 +5,10 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.arnoldi import arnoldi, arnoldi_tangential
+from pymor.algorithms.arnoldi import arnoldi
 from pymor.algorithms.gram_schmidt import gram_schmidt
-from pymor.operators.constructions import LincombOperator
+from pymor.algorithms.to_matrix import to_matrix
+from pymor.operators.constructions import IdentityOperator, LincombOperator
 from pymor.reductors.basic import reduce_generic_pg
 
 
@@ -28,6 +29,7 @@ def interpolation(discretization, sigma, b, c, use_arnoldi=False):
         `discretization.C.range`.
     use_arnoldi
         Should the Arnoldi process be used for rational interpolation.
+        Available only for SISO systems. Otherwise, it is ignored.
 
     Returns
     -------
@@ -43,22 +45,17 @@ def interpolation(discretization, sigma, b, c, use_arnoldi=False):
     assert b in discretization.B.source and len(b) == r
     assert c in discretization.C.range and len(c) == r
 
-    if use_arnoldi:
-        if discretization.m == 1:
-            V = arnoldi(discretization.A, discretization.E, discretization.B, sigma)
-        else:
-            V = arnoldi_tangential(discretization.A, discretization.E, discretization.B, sigma, b)
-        if discretization.p == 1:
-            W = arnoldi(discretization.A, discretization.E, discretization.C, sigma, trans=True)
-        else:
-            W = arnoldi_tangential(discretization.A, discretization.E, discretization.C, sigma, c, trans=True)
+    if use_arnoldi and discretization.m == 1 and discretization.p == 1:
+        V = arnoldi(discretization.A, discretization.E, discretization.B, sigma)
+        W = arnoldi(discretization.A, discretization.E, discretization.C, sigma, trans=True)
     else:
+        # rescale tangential directions (could avoid overflow or underflow)
         b.scal(1 / b.l2_norm())
         c.scal(1 / c.l2_norm())
 
+        # compute projection matrices
         V = discretization.A.source.empty(reserve=r)
         W = discretization.A.source.empty(reserve=r)
-
         for i in range(r):
             if sigma[i].imag == 0:
                 sEmA = LincombOperator((discretization.E, discretization.A), (sigma[i].real, -1))
@@ -90,8 +87,8 @@ def interpolation(discretization, sigma, b, c, use_arnoldi=False):
     return rom, rc, reduction_data
 
 
-def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_sigma_in_rhp=True,
-         use_arnoldi=False, conv_crit='rel_sigma', compute_errors=False):
+def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_sigma_in_rhp=False,
+         use_arnoldi=False, conv_crit='rel_sigma_change', compute_errors=False):
     r"""Reduce using IRKA.
 
     .. [GAB08] S. Gugercin, A. C. Antoulas, C. A. Beattie,
@@ -132,16 +129,17 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
     verbose
         Should consecutive distances be printed.
     force_sigma_in_rhp
-        If `True`, new interpolation points are always in the right
-        half-plane. Otherwise, they are reflections of reduced order model's
-        poles.
+        If 'False`, new interpolation are reflections of reduced order
+        model's poles. Otherwise, they are always in the right
+        half-plane.
     use_arnoldi
         Should the Arnoldi process be used for rational interpolation.
+        Available only for SISO systems. Otherwise, it is ignored.
     conv_crit
         Convergence criterion:
-            - `'rel_sigma'`: relative change in interpolation points
-            - `'max_sin_PG'`: maximum of sines in Petrov-Galerkin subspaces
-            - `'rel_H2'`: relative H_2 distance of reduced order models
+            - `'rel_sigma_change'`: relative change in interpolation points
+            - `'subspace_sin'`: maximum of sines of Petrov-Galerkin subspaces
+            - `'rel_H2_dist'`: relative H_2 distance of reduced order models
     compute_errors
         Should the relative :math:`\mathcal{H}_2`-errors of intermediate
         reduced order models be computed.
@@ -168,12 +166,16 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
         - relative :math:`\mathcal{H}_2`-errors `errors` (if
           `compute_errors` is `True`).
     """
+    if not discretization.cont_time:
+        raise NotImplementedError
     assert 0 < r < discretization.n
     assert sigma is None or len(sigma) == r
     assert b is None or b in discretization.B.source and len(b) == r
     assert c is None or c in discretization.C.range and len(c) == r
-    assert conv_crit in ('rel_sigma', 'max_sin_PG', 'rel_H2')
+    assert conv_crit in ('rel_sigma_change', 'subspace_sin', 'rel_H2_dist')
 
+    # basic choice for initial interpolation points and tangential
+    # directions
     if sigma is None:
         sigma = np.logspace(-1, 1, r)
     if b is None:
@@ -199,7 +201,9 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
     L = [c]
     if compute_errors:
         errors = []
+    # main loop
     for it in range(maxit):
+        # interpolatory reduced order model
         rom, rc, reduction_data = interpolation(discretization, sigma, b, c, use_arnoldi=use_arnoldi)
 
         if compute_errors:
@@ -210,16 +214,21 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
                 rel_H2_err = np.inf
             errors.append(rel_H2_err)
 
-        sigma, Y, X = spla.eig(rom.A._matrix, rom.E._matrix, left=True, right=True)
+        # new interpolation points
+        if isinstance(rom.E, IdentityOperator):
+            sigma, Y, X = spla.eig(to_matrix(rom.A), left=True, right=True)
+        else:
+            sigma, Y, X = spla.eig(to_matrix(rom.A), to_matrix(rom.E), left=True, right=True)
         if force_sigma_in_rhp:
             sigma = np.array([np.abs(s.real) + s.imag * 1j for s in sigma])
         else:
             sigma *= -1
         Sigma.append(sigma)
 
-        if conv_crit == 'rel_sigma':
+        # compute convergence criterion
+        if conv_crit == 'rel_sigma_change':
             dist.append(spla.norm((Sigma[-2] - Sigma[-1]) / Sigma[-2], ord=np.inf))
-        elif conv_crit == 'max_sin_PG':
+        elif conv_crit == 'subspace_sin':
             if it == 0:
                 V_new = reduction_data['V'].data.T
                 W_new = reduction_data['W'].data.T
@@ -232,7 +241,7 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
                 sinV = spla.norm(V_new - V_old.dot(V_old.T.dot(V_new)), ord=2)
                 sinW = spla.norm(W_new - W_old.dot(W_old.T.dot(W_new)), ord=2)
                 dist.append(np.max([sinV, sinW]))
-        elif conv_crit == 'rel_H2':
+        elif conv_crit == 'rel_H2_dist':
             if it == 0:
                 rom_new = rom
                 dist.append(np.inf)
@@ -252,6 +261,7 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
             else:
                 print('{:4d} | {:15.9e}'.format(it + 1, dist[-1]))
 
+        # new tangential directions
         Y = rom.B.range.make_array(Y.conj().T)
         X = rom.C.source.make_array(X.T)
         b = rom.B.apply_adjoint(Y)
@@ -259,9 +269,11 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
         R.append(b)
         L.append(c)
 
+        # check if convergence criterion is satisfied
         if dist[-1] < tol:
             break
 
+    # final reduced order model
     rom, rc, reduction_data = interpolation(discretization, sigma, b, c, use_arnoldi=use_arnoldi)
 
     reduction_data.update({'dist': dist, 'Sigma': Sigma, 'R': R, 'L': L})
