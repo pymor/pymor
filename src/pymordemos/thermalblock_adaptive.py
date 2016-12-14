@@ -75,7 +75,7 @@ from docopt import docopt
 from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension
 from pymor.algorithms.adaptivegreedy import adaptive_greedy
 from pymor.algorithms.error import reduction_error_analysis
-from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
+from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.core.pickle import dump
 from pymor.discretizers.elliptic import discretize_elliptic_cg
@@ -105,14 +105,13 @@ def thermalblock_demo(args):
     print('Solving on TriaGrid(({0},{0}))'.format(args['--grid']))
 
     print('Setup Problem ...')
-    problem = ThermalBlockProblem(num_blocks=(2, 2))
+    problem = thermal_block_problem(num_blocks=(2, 2))
     functionals = [ExpressionParameterFunctional('diffusion[0]', {'diffusion': (2,)}),
                    ExpressionParameterFunctional('diffusion[1]**2', {'diffusion': (2,)}),
                    ExpressionParameterFunctional('diffusion[0]', {'diffusion': (2,)}),
                    ExpressionParameterFunctional('diffusion[1]', {'diffusion': (2,)})]
     problem = EllipticProblem(domain=problem.domain,
-                              diffusion_functions=problem.diffusion_functions,
-                              diffusion_functionals=functionals,
+                              diffusion=problem.diffusion.with_(coefficients=functionals),
                               rhs=problem.rhs,
                               parameter_space=CubicParameterSpace({'diffusion': (2,)}, 0.1, 1.))
 

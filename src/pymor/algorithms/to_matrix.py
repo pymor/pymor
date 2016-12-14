@@ -64,7 +64,7 @@ def _to_matrix(op, format, mapping, mu):
             for j in range(op.num_source_blocks):
                 if op_blocks[i, j] is None:
                     if format is None:
-                        mat_blocks[i].append(np.zeros((op.range.subtype[i].dim, op.source.subtype[j].dim)))
+                        mat_blocks[i].append(np.zeros((op.range.subspaces[i].dim, op.source.subspaces[j].dim)))
                     else:
                         mat_blocks[i].append(None)
                 else:

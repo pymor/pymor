@@ -2,27 +2,29 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from numbers import Number
-
 import numpy as np
 
 from pymor.core.exceptions import InversionError
 from pymor.operators.numpy import NumpyMatrixOperator, _apply_inverse
-from pymor.vectorarrays.interfaces import VectorSpace
-from pymor.vectorarrays.list import ListVectorArray, NumpyVector
-from pymor.vectorarrays.numpy import NumpyVectorArray
+from pymor.vectorarrays.list import NumpyListVectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
     """Variant of |NumpyMatrixOperator| using |ListVectorArray| instead of |NumpyVectorArray|."""
 
-    def __init__(self, matrix, functional=False, vector=False, solver_options=None, name=None):
+    def __init__(self, matrix, functional=False, vector=False, source_id=None, range_id=None,
+                 solver_options=None, name=None):
         assert not (functional and vector)
-        super().__init__(matrix, solver_options=solver_options, name=name)
-        if not vector:
-            self.source = VectorSpace(ListVectorArray, (NumpyVector, matrix.shape[1]))
-        if not functional:
-            self.range = VectorSpace(ListVectorArray, (NumpyVector, matrix.shape[0]))
+        super().__init__(matrix, source_id=source_id, range_id=range_id, solver_options=solver_options, name=name)
+        if vector:
+            self.source = NumpyVectorSpace(1, source_id)
+        else:
+            self.source = NumpyListVectorSpace(matrix.shape[1], source_id)
+        if functional:
+            self.range = NumpyVectorSpace(1, range_id)
+        else:
+            self.range = NumpyListVectorSpace(matrix.shape[0], range_id)
         self.functional = functional
         self.vector = vector
 
@@ -31,15 +33,14 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
 
         if self.vector:
             V = super().apply(U, mu=mu)
-            return ListVectorArray([NumpyVector(v, copy=False) for v in V.data],
-                                   subtype=self.range.subtype)
+            return self.range.from_data(V.data)
 
         V = [self._matrix.dot(v._array) for v in U._list]
 
         if self.functional:
-            return NumpyVectorArray(V) if len(V) > 0 else self.range.empty()
+            return self.range.make_array(np.array(V)) if len(V) > 0 else self.range.empty()
         else:
-            return ListVectorArray([NumpyVector(v, copy=False) for v in V], subtype=self.range.subtype)
+            return self.range.make_array(V)
 
     def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
         raise NotImplementedError
@@ -50,8 +51,7 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
 
         if V.dim == 0:
             if self.source.dim == 0 and least_squares:
-                return ListVectorArray([NumpyVector(np.zeros(0), copy=False) for _ in range(len(V))],
-                                       subtype=self.source.subtype)
+                return self.source.make_array([np.zeros(0) for _ in range(len(V))])
             else:
                 raise InversionError
 
@@ -65,11 +65,9 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
                 self.logger.warn('Least squares solver selected but "least_squares == False"')
 
         try:
-            return ListVectorArray([NumpyVector(_apply_inverse(self._matrix, v._array.reshape((1, -1)),
-                                                               options=options).ravel(),
-                                                copy=False)
-                                    for v in V._list],
-                                   subtype=self.source.subtype)
+            return self.source.make_array([_apply_inverse(self._matrix, v._array.reshape((1, -1)),
+                                                          options=options).ravel()
+                                           for v in V._list])
         except InversionError as e:
             if least_squares and options:
                 solver_type = options if isinstance(options, str) else options['type']
@@ -79,14 +77,18 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
                     raise InversionError(msg)
             raise e
 
-    def as_vector(self, mu=None):
-        if self.source.dim != 1 and self.range.dim != 1:
-            raise TypeError('This operator does not represent a vector or linear functional.')
-        return ListVectorArray([NumpyVector(self._matrix.ravel(), copy=True)])
+    def as_range_array(self, mu=None):
+        assert not self.sparse
+        return self.range.make_array(list(self._matrix.T.copy()))
+
+    def as_source_array(self, mu=None):
+        assert not self.sparse
+        return self.source.make_array(list(self._matrix.copy()))
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         lincomb = super().assemble_lincomb(operators, coefficients)
         if lincomb is None:
             return None
         else:
-            return NumpyListVectorArrayMatrixOperator(lincomb._matrix, solver_options=solver_options, name=name)
+            return NumpyListVectorArrayMatrixOperator(lincomb._matrix, source_id=self.source.id, range_id=self.range.id,
+                                                      solver_options=solver_options, name=name)

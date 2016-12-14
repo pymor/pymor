@@ -5,7 +5,7 @@
 import numpy as np
 
 from pymor.core.interfaces import BasicInterface
-from pymor.vectorarrays.numpy import NumpyVectorArray
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class GenericRBReconstructor(BasicInterface):
@@ -16,7 +16,8 @@ class GenericRBReconstructor(BasicInterface):
 
     def reconstruct(self, U):
         """Reconstruct high-dimensional vector from reduced vector `U`."""
-        assert isinstance(U, NumpyVectorArray)
+        RB = self.RB
+        assert U in NumpyVectorSpace(len(RB), RB.space.id)
         return self.RB.lincomb(U.data)
 
     def restricted_to_subbasis(self, dim):
@@ -25,7 +26,8 @@ class GenericRBReconstructor(BasicInterface):
         return GenericRBReconstructor(self.RB[:dim])
 
 
-def reduce_generic_rb(discretization, RB, vector_product=None, disable_caching=True, extends=None):
+def reduce_generic_rb(discretization, RB, orthogonal_projection=('initial_data',), product=None,
+                      disable_caching=True, extends=None):
     """Generic reduced basis reductor.
 
     Replaces each |Operator| of the given |Discretization| with the Galerkin
@@ -37,11 +39,13 @@ def reduce_generic_rb(discretization, RB, vector_product=None, disable_caching=T
         The |Discretization| which is to be reduced.
     RB
         |VectorArray| containing the reduced basis on which to project.
-    vector_product
-        Inner product for the projection of vector-like |Operators|.
-        (A typical vector-like operator would be the `initial_data`
-        |Operator| of an |InstationaryDiscretization| holding
-        the initial data of a Cauchy problem.)
+    orthogonal_projection
+        List of keys in `discretization.operators` for which the corresponding |Operator|
+        should be orthogonally projected (i.e. operators which map to vectors in
+        contrast to bilinear forms which map to functionals).
+    product
+        Inner product for the projection of the |Operators| given by
+        `orthogonal_projection`.
     disable_caching
         If `True`, caching of solutions is disabled for the reduced |Discretization|.
     extends
@@ -64,25 +68,19 @@ def reduce_generic_rb(discretization, RB, vector_product=None, disable_caching=T
     if RB is None:
         RB = discretization.solution_space.empty()
 
-    projected_operators = {k: op.projected(range_basis=RB, source_basis=RB, product=None) if op else None
-                           for k, op in discretization.operators.items()}
-    projected_functionals = {k: f.projected(range_basis=None, source_basis=RB, product=None) if f else None
-                             for k, f in discretization.functionals.items()}
-    projected_vector_operators = {k: (op.projected(range_basis=RB, source_basis=None, product=vector_product) if op
-                                      else None)
-                                  for k, op in discretization.vector_operators.items()}
+    def project_operator(k, op):
+        return op.projected(range_basis=RB if RB in op.range else None,
+                            source_basis=RB if RB in op.source else None,
+                            product=product if k in orthogonal_projection else None)
 
-    if discretization.products is not None:
-        projected_products = {k: p.projected(range_basis=RB, source_basis=RB)
-                              for k, p in discretization.products.items()}
-    else:
-        projected_products = None
+    projected_operators = {k: project_operator(k, op) if op else None for k, op in discretization.operators.items()}
+
+    projected_products = {k: project_operator(k, p) for k, p in discretization.products.items()}
 
     cache_region = None if disable_caching else discretization.caching
 
-    rd = discretization.with_(operators=projected_operators, functionals=projected_functionals,
-                              vector_operators=projected_vector_operators,
-                              products=projected_products, visualizer=None, estimator=None,
+    rd = discretization.with_(operators=projected_operators, products=projected_products,
+                              visualizer=None, estimator=None,
                               cache_region=cache_region, name=discretization.name + '_reduced')
     rd.disable_logging()
     rc = GenericRBReconstructor(RB)
@@ -100,10 +98,10 @@ class SubbasisReconstructor(BasicInterface):
 
     def reconstruct(self, U):
         """Reconstruct high-dimensional vector from reduced vector `U`."""
-        assert isinstance(U, NumpyVectorArray)
+        assert isinstance(U.space, NumpyVectorSpace)
         UU = np.zeros((len(U), self.dim))
         UU[:, :self.dim_subbasis] = U.data
-        UU = NumpyVectorArray(UU, copy=False)
+        UU = NumpyVectorSpace.make_array(UU, U.space.id)
         if self.old_recontructor:
             return self.old_recontructor.reconstruct(UU)
         else:
@@ -136,18 +134,13 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
         Reconstructor for `rd`.
     """
 
-    projected_operators = {k: op.projected_to_subbasis(dim_range=dim, dim_source=dim) if op is not None else None
-                           for k, op in discretization.operators.items()}
-    projected_functionals = {k: f.projected_to_subbasis(dim_range=None, dim_source=dim) if f is not None else None
-                             for k, f in discretization.functionals.items()}
-    projected_vector_operators = {k: op.projected_to_subbasis(dim_range=dim, dim_source=None) if op else None
-                                  for k, op in discretization.vector_operators.items()}
+    def project_operator(op):
+        return op.projected_to_subbasis(dim_range=dim if op.range == discretization.solution_space else None,
+                                        dim_source=dim if op.source == discretization.solution_space else None)
 
-    if discretization.products is not None:
-        projected_products = {k: op.projected_to_subbasis(dim_range=dim, dim_source=dim)
-                              for k, op in discretization.products.items()}
-    else:
-        projected_products = None
+    projected_operators = {k: project_operator(op) if op else None for k, op in discretization.operators.items()}
+
+    projected_products = {k: project_operator(op) for k, op in discretization.products.items()}
 
     if hasattr(discretization, 'estimator') and hasattr(discretization.estimator, 'restricted_to_subbasis'):
         estimator = discretization.estimator.restricted_to_subbasis(dim, discretization=discretization)
@@ -163,9 +156,8 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
     else:
         estimator = None
 
-    rd = discretization.with_(operators=projected_operators, functionals=projected_functionals,
-                              vector_operators=projected_vector_operators,
-                              products=projected_products, visualizer=None, estimator=estimator,
+    rd = discretization.with_(operators=projected_operators, products=projected_products,
+                              visualizer=None, estimator=estimator,
                               name=discretization.name + '_reduced_to_subbasis')
     rd.disable_logging()
 
@@ -210,17 +202,11 @@ def reduce_generic_pg(discretization, V, W, use_default=None):
 
     use_default = use_default or []
 
-    projected_ss_operators = {k: op.projected(range_basis=W, source_basis=V) if op and k not in use_default else None
-                              for k, op in discretization.ss_operators.items()}
-    projected_is_operators = {k: op.projected(range_basis=W, source_basis=None) if op and k not in use_default else None
-                              for k, op in discretization.is_operators.items()}
-    projected_so_operators = {k: op.projected(range_basis=None, source_basis=V) if op and k not in use_default else None
-                              for k, op in discretization.so_operators.items()}
-    projected_io_operators = discretization.io_operators
+    projected_ops = {k: op.projected(range_basis=W if W in op.range else None,
+                                     source_basis=V if V in op.source else None) if op and k not in use_default else None
+                     for k, op in discretization.operators.items()}
 
-    rd = discretization.with_(ss_operators=projected_ss_operators, is_operators=projected_is_operators,
-                              so_operators=projected_so_operators, io_operators=projected_io_operators,
-                              cont_time=discretization.cont_time)
+    rd = discretization.with_(operators=projected_ops)
     rd.disable_logging()
     rc = GenericRBReconstructor(V)
 

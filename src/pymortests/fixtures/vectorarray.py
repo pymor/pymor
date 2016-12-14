@@ -6,9 +6,9 @@ from itertools import product
 import numpy as np
 import pytest
 
-from pymor.vectorarrays.block import BlockVectorArray
-from pymor.vectorarrays.numpy import NumpyVectorArray
-from pymor.vectorarrays.list import NumpyVector, ListVectorArray
+from pymor.vectorarrays.block import BlockVectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymor.vectorarrays.list import NumpyListVectorSpace
 from pymor.vectorarrays.fenics import HAVE_FENICS
 try:
     from pydealii.pymor.vectorarray import HAVE_DEALII
@@ -24,18 +24,18 @@ def random_integers(count, seed):
 
 def numpy_vector_array_factory(length, dim, seed):
     np.random.seed(seed)
-    return NumpyVectorArray(np.random.random((length, dim)), copy=False)
+    return NumpyVectorSpace.from_data(np.random.random((length, dim)))
 
 
 def numpy_list_vector_array_factory(length, dim, seed):
     np.random.seed(seed)
-    return ListVectorArray([NumpyVector(v, copy=False) for v in np.random.random((length, dim))],
-                           subtype=(NumpyVector, dim), copy=False)
+    return NumpyListVectorSpace.from_data(np.random.random((length, dim)))
 
 
 def block_vector_array_factory(length, dims, seed):
-    return BlockVectorArray([numpy_vector_array_factory(length, dim, seed + i) for i, dim in enumerate(dims)],
-                            copy=False)
+    return BlockVectorSpace([NumpyVectorSpace(dim) for dim in dims]).from_data(
+        numpy_vector_array_factory(length, sum(dims), seed).data
+    )
 
 if HAVE_FENICS:
     import dolfin as df

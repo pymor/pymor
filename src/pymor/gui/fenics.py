@@ -13,20 +13,18 @@ if HAVE_FENICS:
     import numpy as np
 
     from pymor.core.interfaces import BasicInterface
-    from pymor.vectorarrays.fenics import FenicsVectorSpace
 
     class FenicsVisualizer(BasicInterface):
         """Visualize a FEniCS grid function.
 
         Parameters
         ----------
-        function_space
-            The FEniCS `FunctionSpace` for which we want to visualize DOF vectors.
+        space
+            The `FenicsVectorSpace` for which we want to visualize DOF vectors.
         """
 
-        def __init__(self, function_space):
-            self.function_space = function_space
-            self.space = FenicsVectorSpace(function_space)
+        def __init__(self, space):
+            self.space = space
 
         def visualize(self, U, discretization, title='', legend=None, filename=None, block=True,
                       separate_colorbars=True):
@@ -62,7 +60,7 @@ if HAVE_FENICS:
                 assert not isinstance(U, tuple)
                 assert U in self.space
                 f = df.File(filename)
-                function = df.Function(self.function_space)
+                function = df.Function(self.space.V)
                 if legend:
                     function.rename(legend, legend)
                 for u in U._list:
@@ -86,7 +84,7 @@ if HAVE_FENICS:
                         vmax = max(vmax, vec.max())
 
                 for i, u in enumerate(U):
-                    function = df.Function(self.function_space)
+                    function = df.Function(self.space.V)
                     function.vector()[:] = u._list[0].impl
                     if legend:
                         tit = title + ' -- ' if title else ''

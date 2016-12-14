@@ -1,0 +1,3 @@
+pytest-cov
+check-manifest
+python-coveralls

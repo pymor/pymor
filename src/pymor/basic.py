@@ -19,10 +19,11 @@ from pymor.algorithms.newton import newton
 from pymor.algorithms.pod import pod
 
 from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
-from pymor.analyticalproblems.burgers import BurgersProblem, Burgers2DProblem
+from pymor.analyticalproblems.burgers import burgers_problem, burgers_problem_2d
 from pymor.analyticalproblems.elliptic import EllipticProblem
-from pymor.analyticalproblems.parabolic import ParabolicProblem
-from pymor.analyticalproblems.thermalblock import ThermalBlockProblem
+from pymor.analyticalproblems.helmholtz import helmholtz_problem
+from pymor.analyticalproblems.instationary import InstationaryProblem
+from pymor.analyticalproblems.thermalblock import thermal_block_problem
 
 from pymor.core.cache import clear_caches, enable_caching, disable_caching
 from pymor.core.defaults import print_defaults, write_defaults_to_file, load_defaults_from_file, set_defaults
@@ -70,6 +71,5 @@ from pymor.reductors.parabolic import reduce_parabolic
 from pymor.tools.random import new_random_state
 
 from pymor.vectorarrays.constructions import cat_arrays
-from pymor.vectorarrays.interfaces import VectorSpace
-from pymor.vectorarrays.list import ListVectorArray
-from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
+from pymor.vectorarrays.list import ListVectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorSpace

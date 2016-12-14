@@ -20,14 +20,14 @@ are the following:
     3. Logging can be disabled and re-enabled for each *instance* using the
        :meth:`BasicInterface.disable_logging` and :meth:`BasicInterface.enable_logging`
        methods.
-    5. :meth:`BasicInterface.uid` provides a unique id for each instance. While
+    4. :meth:`BasicInterface.uid` provides a unique id for each instance. While
        `id(obj)` is only guaranteed to be unique among all living Python objects,
        :meth:`BasicInterface.uid` will be (almost) unique among all pyMOR objects
        that have ever existed, including previous runs of the application. This
        is achieved by building the id from a uuid4 which is newly created for
        each pyMOR run and a counter which is increased for any object that requests
        an uid.
-    6. If not set by the user to another value, :attr:`BasicInterface.name` is
+    5. If not set by the user to another value, :attr:`BasicInterface.name` is
        set to the name of the object's class.
 
 
@@ -267,6 +267,28 @@ if PY2:
 else:
     abstractclassmethod = abc.abstractclassmethod
     abstractstaticmethod = abc.abstractstaticmethod
+
+
+class classinstancemethod:
+
+    def __init__(self, cls_meth):
+        self.cls_meth = cls_meth
+
+    def __get__(self, instance, cls):
+        if cls is None:
+            return self
+        if instance is None:
+            def the_class_method(*args, **kwargs):
+                return self.cls_meth(cls, *args, **kwargs)
+            return the_class_method
+        else:
+            def the_instance_method(*args, **kwargs):
+                return self.inst_meth(instance, *args, **kwargs)
+            return the_instance_method
+
+    def instancemethod(self, inst_meth):
+        self.inst_meth = inst_meth
+        return self
 
 
 class ImmutableMeta(UberMeta):

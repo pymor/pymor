@@ -2,6 +2,7 @@
 .PHONY: README.txt README.html pylint test
 
 all: 
+	./dependencies.py
 
 # PyPI wants ReStructured text
 README.txt: README.md

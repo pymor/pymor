@@ -10,7 +10,7 @@ from pymor.operators.constructions import LincombOperator, induced_norm
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.reductors.basic import reduce_generic_rb
 from pymor.reductors.residual import reduce_residual
-from pymor.vectorarrays.numpy import NumpyVectorArray
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 def reduce_coercive(discretization, RB, product=None, coercivity_estimator=None,
@@ -202,12 +202,12 @@ def reduce_coercive_simple(discretization, RB, product=None, coercivity_estimato
     elif not d.rhs.parametric:
         R_R = space.empty(reserve=1)
         RR_R = space.empty(reserve=1)
-        append_vector(d.rhs.as_vector(), R_R, RR_R)
+        append_vector(d.rhs.as_source_array(), R_R, RR_R)
     else:
         R_R = space.empty(reserve=len(d.rhs.operators))
         RR_R = space.empty(reserve=len(d.rhs.operators))
         for op in d.rhs.operators:
-            append_vector(op.as_vector(), R_R, RR_R)
+            append_vector(op.as_source_array(), R_R, RR_R)
 
     if len(RB) == 0:
         R_Os = [space.empty()]
@@ -276,7 +276,7 @@ class ReduceCoerciveSimpleEstimator(ImmutableInterface):
 
         C = np.hstack((CR, np.dot(CO[..., np.newaxis], U.data).ravel()))
 
-        est = self.norm(NumpyVectorArray(C))
+        est = self.norm(NumpyVectorSpace.make_array(C))
         if self.coercivity_estimator:
             est /= self.coercivity_estimator(mu)
 

@@ -11,24 +11,25 @@ from pymor.operators.cg import L2ProductP1
 from pymortests.base import runmodule
 from pymor.grids.tria import TriaGrid
 from pymor.grids.boundaryinfos import AllDirichletBoundaryInfo
-from pymor.vectorarrays.numpy import NumpyVectorArray
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 def test_induced():
     grid = TriaGrid(num_intervals=(10, 10))
     boundary_info = AllDirichletBoundaryInfo(grid)
     product = L2ProductP1(grid, boundary_info)
-    zero = NumpyVectorArray(np.zeros(grid.size(2)))
+    zero = product.source.zeros()
     norm = induced_norm(product)
     value = norm(zero)
     np.testing.assert_almost_equal(value, 0.0)
 
+
 def test_gram_schmidt():
     for i in (1, 32):
-        b = NumpyVectorArray(np.identity(i, dtype=np.float))
+        b = NumpyVectorSpace.from_data(np.identity(i, dtype=np.float))
         a = gram_schmidt(b)
         assert np.all(almost_equal(b, a))
-    c = NumpyVectorArray([[1.0, 0], [0., 0]])
+    c = NumpyVectorSpace.from_data([[1.0, 0], [0., 0]])
     a = gram_schmidt(c)
     assert (a.data == np.array([[1.0, 0]])).all()
 

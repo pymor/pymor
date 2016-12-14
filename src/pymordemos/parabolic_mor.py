@@ -45,26 +45,32 @@ DT = 1. / NT
 def discretize_pymor():
 
     # setup analytical problem
-    problem = ParabolicProblem(
-        domain=RectDomain(top='dirichlet', bottom='neumann'),
+    problem = InstationaryProblem(
 
-        diffusion_functions=[ConstantFunction(1., dim_domain=2),
-                             ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * (x[..., 1] < 0.7) * 1.',
-                                                dim_domain=2),
-                             ExpressionFunction('(x[..., 0] > 0.35) * (x[..., 0] < 0.40) * (x[..., 1] > 0.3) * 1. + ' +
-                                                '(x[..., 0] > 0.60) * (x[..., 0] < 0.65) * (x[..., 1] > 0.3) * 1.',
-                                                dim_domain=2)],
+        EllipticProblem(
+            domain=RectDomain(top='dirichlet', bottom='neumann'),
 
-        diffusion_functionals=[1.,
-                               100. - 1.,
-                               ExpressionParameterFunctional('top - 1.', {'top': 0})],
+            diffusion=LincombFunction(
+                [ConstantFunction(1., dim_domain=2),
+                 ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * (x[..., 1] < 0.7) * 1.',
+                                    dim_domain=2),
+                 ExpressionFunction('(x[..., 0] > 0.35) * (x[..., 0] < 0.40) * (x[..., 1] > 0.3) * 1. + ' +
+                                    '(x[..., 0] > 0.60) * (x[..., 0] < 0.65) * (x[..., 1] > 0.3) * 1.',
+                                    dim_domain=2)],
+                [1.,
+                 100. - 1.,
+                 ExpressionParameterFunctional('top - 1.', {'top': 0})]
+            ),
 
-        rhs=ConstantFunction(value=0., dim_domain=2),
+            rhs=ConstantFunction(value=0., dim_domain=2),
 
-        dirichlet_data=ConstantFunction(value=0., dim_domain=2),
+            dirichlet_data=ConstantFunction(value=0., dim_domain=2),
 
-        neumann_data=ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * -1000.',
-                                        dim_domain=2),
+            neumann_data=ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * -1000.',
+                                            dim_domain=2),
+        ),
+
+        T=1.,
 
         initial_data=ExpressionFunction('(x[..., 0] > 0.45) * (x[..., 0] < 0.55) * (x[..., 1] < 0.7) * 10.',
                                         dim_domain=2),
@@ -73,8 +79,7 @@ def discretize_pymor():
     )
 
     # discretize using continuous finite elements
-    grid, bi = discretize_domain_default(problem.domain, diameter=1. / GRID_INTERVALS, grid_type=TriaGrid)
-    d, _ = discretize_parabolic_cg(analytical_problem=problem, grid=grid, boundary_info=bi, nt=NT)
+    d, _ = discretize_parabolic_cg(analytical_problem=problem, diameter=1./GRID_INTERVALS, nt=NT)
     d.enable_caching('persistent')
 
     return d
@@ -85,7 +90,7 @@ def discretize_fenics():
 
     if mpi.parallel:
         from pymor.discretizations.mpi import mpi_wrap_discretization
-        return mpi_wrap_discretization(_discretize_fenics, use_with=True, pickle_subtypes=False)
+        return mpi_wrap_discretization(_discretize_fenics, use_with=True, pickle_local_spaces=False)
     else:
         return _discretize_fenics()
 
@@ -145,12 +150,12 @@ def _discretize_fenics():
 
     from pymor.gui.fenics import FenicsVisualizer
     from pymor.operators.fenics import FenicsMatrixOperator
-    from pymor.vectorarrays.fenics import FenicsVector
+    from pymor.vectorarrays.fenics import FenicsVectorSpace
 
     d = InstationaryDiscretization(
         T=1.,
 
-        initial_data=ListVectorArray([FenicsVector(u0, V)]),
+        initial_data=FenicsVectorSpace(V).make_array([u0]),
 
         operator=LincombOperator([FenicsMatrixOperator(mat0, V, V),
                                   FenicsMatrixOperator(h1_0_mat, V, V),
@@ -161,7 +166,7 @@ def _discretize_fenics():
                                   100. - 1.,
                                   ExpressionParameterFunctional('top - 1.', {'top': 0})]),
 
-        rhs=VectorFunctional(ListVectorArray([FenicsVector(f, V)])),
+        rhs=VectorFunctional(FenicsVectorSpace(V).make_array([f])),
 
         mass=FenicsMatrixOperator(l2_0_mat, V, V, name='l2'),
 
@@ -174,7 +179,7 @@ def _discretize_fenics():
 
         parameter_space=CubicParameterSpace({'top': 0}, minimum=1, maximum=100.),
 
-        visualizer=FenicsVisualizer(V)
+        visualizer=FenicsVisualizer(FenicsVectorSpace(V))
     )
 
     return d

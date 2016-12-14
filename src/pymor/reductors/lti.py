@@ -56,8 +56,8 @@ def interpolation(discretization, sigma, b, c, use_arnoldi=False):
         b.scal(1 / b.l2_norm())
         c.scal(1 / c.l2_norm())
 
-        V = discretization.A.source.type.make_array(discretization.A.source.subtype, reserve=r)
-        W = discretization.A.source.type.make_array(discretization.A.source.subtype, reserve=r)
+        V = discretization.A.source.empty(reserve=r)
+        W = discretization.A.source.empty(reserve=r)
 
         for i in range(r):
             if sigma[i].imag == 0:
@@ -177,8 +177,12 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
     if sigma is None:
         sigma = np.logspace(-1, 1, r)
     if b is None:
+        # for the full order model we cannot assume that the source of B
+        # is a NumpyVectorSpace, so we have to use 'from_data' here
         b = discretization.B.source.from_data(np.ones((r, discretization.m)))
     if c is None:
+        # for the full order model we cannot assume that the range of C
+        # is a NumpyVectorSpace, so we have to use 'from_data' here
         c = discretization.C.range.from_data(np.ones((r, discretization.p)))
 
     if verbose:
@@ -248,8 +252,8 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
             else:
                 print('{:4d} | {:15.9e}'.format(it + 1, dist[-1]))
 
-        Y = rom.B.source.from_data(Y.conj().T)
-        X = rom.C.range.from_data(X.T)
+        Y = rom.B.range.make_array(Y.conj().T)
+        X = rom.C.source.make_array(X.T)
         b = rom.B.apply_adjoint(Y)
         c = rom.C.apply(X)
         R.append(b)
