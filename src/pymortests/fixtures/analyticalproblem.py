@@ -43,7 +43,8 @@ picklable_elliptic_problems = \
 
 
 non_picklable_elliptic_problems = \
-    [EllipticProblem(rhs=ConstantFunction(dim_domain=2, value=21.),
+    [EllipticProblem(domain=RectDomain(),
+                     rhs=ConstantFunction(dim_domain=2, value=21.),
                      diffusion=LincombFunction(
                          [GenericFunction(dim_domain=2, mapping=lambda X, p=p: X[..., 0]**p)
                           for p in range(5)],

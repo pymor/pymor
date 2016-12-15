@@ -17,7 +17,7 @@ from pymortests.fixtures.analyticalproblem import (picklable_thermalblock_proble
 picklable_discretizaion_generators = \
         [lambda p=p, d=d: discretize_stationary_cg(p, diameter=d)[0]
          for p, d in product(picklable_thermalblock_problems, [1./50., 1./100.])] + \
-        [lambda p=p, d=d: discretize_instationary_fv(p, diameter=d)[0]
+        [lambda p=p, d=d: discretize_instationary_fv(p, diameter=d, nt=100)[0]
          for p, d in product(burgers_problems, [1./10., 1./15.])] + \
         [lambda p=p: discretize_stationary_from_disk(parameter_file=p)
          for p in (resource_filename('pymortests', 'testdata/parameter_stationary.ini'),)] + \
