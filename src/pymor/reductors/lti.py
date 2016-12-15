@@ -6,14 +6,14 @@ import numpy as np
 import scipy.linalg as spla
 
 from pymor.algorithms.arnoldi import arnoldi
-from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.sylvester import solve_sylv_schur
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.operators.constructions import IdentityOperator, LincombOperator
 from pymor.reductors.basic import reduce_generic_pg
 
 
-def interpolation(discretization, sigma, b, c, use_arnoldi=False):
+def interpolation(discretization, sigma, b, c, method='orth', use_arnoldi=False):
     """Tangential Hermite interpolation.
 
     Parameters
@@ -28,6 +28,13 @@ def interpolation(discretization, sigma, b, c, use_arnoldi=False):
     c
         Left tangential directions, |VectorArray| of length `r` from
         `discretization.C.range`.
+    method
+        Method of projection the discretization:
+
+        - `'orth'`: projection matrices are orthogonalized with respect
+            to the Euclidean inner product
+        - `'biorth'`: projection matrices are biorthogolized with
+            respect to the E product
     use_arnoldi
         Should the Arnoldi process be used for rational interpolation.
         Available only for SISO systems. Otherwise, it is ignored.
@@ -45,10 +52,12 @@ def interpolation(discretization, sigma, b, c, use_arnoldi=False):
     r = len(sigma)
     assert b in discretization.B.source and len(b) == r
     assert c in discretization.C.range and len(c) == r
+    assert method in ('orth', 'biorth')
 
     if use_arnoldi and discretization.m == 1 and discretization.p == 1:
         V = arnoldi(discretization.A, discretization.E, discretization.B, sigma)
         W = arnoldi(discretization.A, discretization.E, discretization.C, sigma, trans=True)
+        rom, rc, _ = reduce_generic_pg(discretization, V, W)
     else:
         # rescale tangential directions (could avoid overflow or underflow)
         b.scal(1 / b.l2_norm())
@@ -79,17 +88,21 @@ def interpolation(discretization, sigma, b, c, use_arnoldi=False):
                 W.append(w.real)
                 W.append(w.imag)
 
-        V = gram_schmidt(V, atol=0, rtol=0)
-        W = gram_schmidt(W, atol=0, rtol=0)
+        if method == 'orth':
+            V = gram_schmidt(V, atol=0, rtol=0)
+            W = gram_schmidt(W, atol=0, rtol=0)
+            rom, rc, _ = reduce_generic_pg(discretization, V, W)
+        elif method == 'biorth':
+            V, W = gram_schmidt_biorth(V, W, product=discretization.E)
+            rom, rc, _ = reduce_generic_pg(discretization, V, W, use_default=['E'])
 
-    rom, rc, _ = reduce_generic_pg(discretization, V, W)
     reduction_data = {'V': V, 'W': W}
 
     return rom, rc, reduction_data
 
 
 def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_sigma_in_rhp=False,
-         use_arnoldi=False, conv_crit='rel_sigma_change', compute_errors=False):
+         method='orth', use_arnoldi=False, conv_crit='rel_sigma_change', compute_errors=False):
     r"""Reduce using IRKA.
 
     .. [GAB08] S. Gugercin, A. C. Antoulas, C. A. Beattie,
@@ -133,6 +146,9 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
         If 'False`, new interpolation are reflections of reduced order
         model's poles. Otherwise, they are always in the right
         half-plane.
+    method
+        Method of projection the discretization (see
+        :func:`pymor.reductors.lti.interpolation`_).
     use_arnoldi
         Should the Arnoldi process be used for rational interpolation.
         Available only for SISO systems. Otherwise, it is ignored.
@@ -173,6 +189,7 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
     assert sigma is None or len(sigma) == r
     assert b is None or b in discretization.B.source and len(b) == r
     assert c is None or c in discretization.C.range and len(c) == r
+    assert method in ('orth', 'biorth')
     assert conv_crit in ('rel_sigma_change', 'subspace_sin', 'rel_H2_dist')
 
     # basic choice for initial interpolation points and tangential
@@ -205,7 +222,7 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
     # main loop
     for it in range(maxit):
         # interpolatory reduced order model
-        rom, rc, reduction_data = interpolation(discretization, sigma, b, c, use_arnoldi=use_arnoldi)
+        rom, rc, reduction_data = interpolation(discretization, sigma, b, c, method=method, use_arnoldi=use_arnoldi)
 
         if compute_errors:
             err = discretization - rom
@@ -275,7 +292,7 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
             break
 
     # final reduced order model
-    rom, rc, reduction_data = interpolation(discretization, sigma, b, c, use_arnoldi=use_arnoldi)
+    rom, rc, reduction_data = interpolation(discretization, sigma, b, c, method=method, use_arnoldi=use_arnoldi)
 
     reduction_data.update({'dist': dist, 'Sigma': Sigma, 'R': R, 'L': L})
     if compute_errors:
@@ -284,7 +301,8 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
     return rom, rc, reduction_data
 
 
-def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, conv_crit='rel_sigma', compute_errors=False):
+def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, method='orth', conv_crit='rel_sigma',
+         compute_errors=False):
     """Reduce using TSIA (Two Sided Iteration Algorithm).
 
     In exact arithmetic, TSIA is equivalent to IRKA (under some
@@ -311,6 +329,13 @@ def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, conv_crit='re
         Maximum number of iterations.
     verbose
         Should convergence criterion during iterations be printed.
+    method
+        Method of projection the discretization:
+
+        - `'orth'`: projection matrices are orthogonalized with respect
+            to the Euclidean inner product
+        - `'biorth'`: projection matrices are biorthogolized with
+            respect to the E product
     conv_crit
         Convergence criterion:
             - `'rel_sigma'`: relative change in interpolation points
@@ -355,16 +380,22 @@ def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, conv_crit='re
                             E=discretization.E, Er=rom0.E,
                             B=discretization.B, Br=rom0.B,
                             C=discretization.C, Cr=rom0.C)
-    V = gram_schmidt(V, atol=0, rtol=0)
-    W = gram_schmidt(W, atol=0, rtol=0)
+    if method == 'orth':
+        V = gram_schmidt(V, atol=0, rtol=0)
+        W = gram_schmidt(W, atol=0, rtol=0)
+    elif method == 'biorth':
+        V, W = gram_schmidt_biorth(V, W, product=discretization.E)
 
     if conv_crit == 'rel_sigma':
-        sigma = spla.eigvals(rom0.A._matrix, rom0.E._matrix)
+        sigma = rom0.poles()
     dist = []
     if compute_errors:
         errors = []
     for it in range(maxit):
-        rom, rc, reduction_data = reduce_generic_pg(discretization, V, W)
+        if method == 'orth':
+            rom, rc, _ = reduce_generic_pg(discretization, V, W)
+        elif method == 'biorth':
+            rom, rc, _ = reduce_generic_pg(discretization, V, W, use_default=['E'])
 
         if compute_errors:
             err = discretization - rom
@@ -375,7 +406,7 @@ def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, conv_crit='re
             errors.append(rel_H2_err)
 
         if conv_crit == 'rel_sigma':
-            sigma_old, sigma = sigma, spla.eigvals(rom.A._matrix, rom.E._matrix)
+            sigma_old, sigma = sigma, rom.poles()
             try:
                 dist.append(spla.norm((sigma_old - sigma) / sigma_old, ord=np.inf))
             except:
@@ -415,15 +446,21 @@ def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, conv_crit='re
                                 E=discretization.E, Er=rom.E,
                                 B=discretization.B, Br=rom.B,
                                 C=discretization.C, Cr=rom.C)
-        V = gram_schmidt(V, atol=0, rtol=0)
-        W = gram_schmidt(W, atol=0, rtol=0)
+        if method == 'orth':
+            V = gram_schmidt(V, atol=0, rtol=0)
+            W = gram_schmidt(W, atol=0, rtol=0)
+        elif method == 'biorth':
+            V, W = gram_schmidt_biorth(V, W, product=discretization.E)
 
         if dist[-1] < tol:
             break
 
-    rom, rc, reduction_data = reduce_generic_pg(discretization, V, W)
+    if method == 'orth':
+        rom, rc, _ = reduce_generic_pg(discretization, V, W)
+    elif method == 'biorth':
+        rom, rc, _ = reduce_generic_pg(discretization, V, W, use_default=['E'])
 
-    reduction_data['dist'] = dist
+    reduction_data = {'V': V, 'W': W, 'dist': dist}
     if compute_errors:
         reduction_data['errors'] = errors
 

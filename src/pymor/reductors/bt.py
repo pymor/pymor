@@ -4,11 +4,11 @@
 
 import numpy as np
 
-from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.reductors.basic import reduce_generic_pg
 
 
-def bt(discretization, r=None, tol=None, typ='lyap', method='bfsr'):
+def bt(discretization, r=None, tol=None, typ='lyap', method='sr'):
     r"""Reduce using the Balanced Truncation method to order `r` or with tolerance `tol`.
 
     .. [A05]  A. C. Antoulas, Approximation of Large-Scale Dynamical
@@ -38,8 +38,14 @@ def bt(discretization, r=None, tol=None, typ='lyap', method='bfsr'):
     method
         Projection method used:
 
-        - `'sr'`: square root method
-        - `'bfsr'`: balancing-free square root method
+        - `'sr'`: square root method (default, since standard in
+            literature)
+        - `'bfsr'`: balancing-free square root method (avoids scaling
+            by singular values and orthogonalizes the projection
+            matrices, which might make it more accurate than the square
+            root method)
+        - `'biorth'`: like the balancing-free square root method,
+            except it biorthogonalizes the projection matrices
 
     Returns
     -------
@@ -55,7 +61,7 @@ def bt(discretization, r=None, tol=None, typ='lyap', method='bfsr'):
     """
     assert r is not None or tol is not None
     assert r is None or 0 < r < discretization.n
-    assert method in ('sr', 'bfsr')
+    assert method in ('sr', 'bfsr', 'biorth')
 
     # compute gramian factors
     cf = discretization.gramian(typ, 'cf')
@@ -96,6 +102,9 @@ def bt(discretization, r=None, tol=None, typ='lyap', method='bfsr'):
         V = gram_schmidt(V, atol=0, rtol=0)
         W = gram_schmidt(W, atol=0, rtol=0)
         rom, rc, _ = reduce_generic_pg(discretization, V, W)
+    elif method == 'biorth':
+        V, W = gram_schmidt_biorth(V, W, product=discretization.E)
+        rom, rc, _ = reduce_generic_pg(discretization, V, W, use_default=['E'])
 
     reduction_data = {'V': V, 'W': W}
 
