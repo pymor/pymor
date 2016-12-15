@@ -51,6 +51,6 @@ class InstationaryProblem(ImmutableInterface):
         self.with_arguments = self._own_with_arguments.union(stationary_part.with_arguments)
 
     def with_(self, **kwargs):
-        arguments = {kwargs.pop(k, getattr(self, k)) for k in self._own_with_arguments}
+        arguments = {k: kwargs.pop(k, getattr(self, k)) for k in self._own_with_arguments}
         arguments['stationary_part'] = arguments['stationary_part'].with_(**kwargs)
         return InstationaryProblem(**arguments)
