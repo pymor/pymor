@@ -70,11 +70,11 @@ numpy_matrix_operator_generators = \
 
 def thermalblock_factory(xblocks, yblocks, diameter, seed):
     from pymor.analyticalproblems.thermalblock import thermal_block_problem
-    from pymor.discretizers.elliptic import discretize_elliptic_cg
+    from pymor.discretizers.cg import discretize_stationary_cg
     from pymor.functions.basic import GenericFunction
     from pymor.operators.cg import InterpolationOperator
     p = thermal_block_problem((xblocks, yblocks))
-    d, d_data = discretize_elliptic_cg(p, diameter)
+    d, d_data = discretize_stationary_cg(p, diameter)
     f = GenericFunction(lambda X, mu: X[..., 0]**mu['exp'] + X[..., 1],
                         dim_domain=2, parameter_type={'exp': ()})
     iop = InterpolationOperator(d_data['grid'], f)

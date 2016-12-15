@@ -29,7 +29,7 @@ from docopt import docopt
 import numpy as np
 
 from pymor.analyticalproblems.elliptic import EllipticProblem
-from pymor.discretizers.elliptic import discretize_elliptic_cg
+from pymor.discretizers.cg import discretize_stationary_cg
 from pymor.discretizers.fv import discretize_stationary_fv
 from pymor.domaindescriptions.polygonal import CircularSectorDomain
 from pymor.functions.basic import ConstantFunction, ExpressionFunction
@@ -50,7 +50,7 @@ def elliptic_gmsh_demo(args):
     )
 
     print('Discretize ...')
-    discretizer = discretize_stationary_fv if args['--fv'] else discretize_elliptic_cg
+    discretizer = discretize_stationary_fv if args['--fv'] else discretize_stationary_cg
     discretization, data = discretizer(analytical_problem=problem, diameter=args['CLSCALE'])
 
     print('Solve ...')

@@ -2,19 +2,25 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitEulerTimeStepper
 from pymor.analyticalproblems.elliptic import EllipticProblem
-from pymor.discretizations.basic import StationaryDiscretization
+from pymor.analyticalproblems.instationary import InstationaryProblem
+from pymor.discretizations.basic import StationaryDiscretization, InstationaryDiscretization
 from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.functions.basic import LincombFunction
 from pymor.grids.boundaryinfos import EmptyBoundaryInfo
 from pymor.grids.referenceelements import line, triangle, square
 from pymor.gui.qt import PatchVisualizer, Matplotlib1DVisualizer
-from pymor.operators import cg, fv
+from pymor.operators.cg import (DiffusionOperatorP1, DiffusionOperatorQ1,
+                                AdvectionOperatorP1, AdvectionOperatorQ1,
+                                L2ProductP1, L2ProductQ1,
+                                L2ProductFunctionalP1, L2ProductFunctionalQ1,
+                                RobinBoundaryOperator, InterpolationOperator)
 from pymor.operators.constructions import LincombOperator
 
 
-def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer=None,
-                           grid=None, boundary_info=None):
+def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretizer=None,
+                             grid=None, boundary_info=None):
     """Discretizes an |EllipticProblem| using finite elements.
 
     Parameters
@@ -52,7 +58,8 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
 
     p = analytical_problem
 
-    if not (p.nonlinear_advection == p.nonlinear_advection_derivative == p.nonlinear_reaction == None):
+    if not (p.nonlinear_advection == p.nonlinear_advection_derivative ==
+            p.nonlinear_reaction == p.nonlinear_reaction_derivative == None):
         raise NotImplementedError
 
     if grid is None:
@@ -65,15 +72,15 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
     assert grid.reference_element in (line, triangle, square)
 
     if grid.reference_element is square:
-        DiffusionOperator = cg.DiffusionOperatorQ1
-        AdvectionOperator = cg.AdvectionOperatorQ1
-        ReactionOperator = cg.L2ProductQ1
-        Functional = cg.L2ProductFunctionalQ1
+        DiffusionOperator = DiffusionOperatorQ1
+        AdvectionOperator = AdvectionOperatorQ1
+        ReactionOperator  = L2ProductQ1
+        Functional = L2ProductFunctionalQ1
     else:
-        DiffusionOperator = cg.DiffusionOperatorP1
-        AdvectionOperator = cg.AdvectionOperatorP1
-        ReactionOperator = cg.L2ProductP1
-        Functional = cg.L2ProductFunctionalP1
+        DiffusionOperator = DiffusionOperatorP1
+        AdvectionOperator = AdvectionOperatorP1
+        ReactionOperator  = L2ProductP1
+        Functional = L2ProductFunctionalP1
 
     Li = [DiffusionOperator(grid, boundary_info, diffusion_constant=0, name='boundary_part')]
     coefficients = [1.]
@@ -113,7 +120,9 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
 
     # robin boundaries
     if p.robin_data is not None:
-        Li += [cg.RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data, order=2, name='robin')]
+        if grid.reference_element is square:
+            raise NotImplementedError
+        Li += [RobinBoundaryOperator(grid, boundary_info, robin_data=p.robin_data, order=2, name='robin')]
         coefficients.append(1.)
 
     L = LincombOperator(operators=Li, coefficients=coefficients, name='ellipticOperator')
@@ -127,7 +136,7 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
     else:
         visualizer = None
 
-    Prod = cg.L2ProductQ1 if grid.reference_element is square else cg.L2ProductP1
+    Prod = L2ProductQ1 if grid.reference_element is square else L2ProductP1
     empty_bi = EmptyBoundaryInfo(grid)
     l2_product = Prod(grid, empty_bi, name='l2')
     l2_0_product = Prod(grid, boundary_info, dirichlet_clear_columns=True, name='l2_0')
@@ -146,3 +155,79 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
                                               parameter_space=parameter_space, name='{}_CG'.format(p.name))
 
     return discretization, {'grid': grid, 'boundary_info': boundary_info}
+
+
+def discretize_instationary_cg(analytical_problem, diameter=None, domain_discretizer=None,
+                               grid=None, boundary_info=None, num_values=None, time_stepper=None, nt=None):
+    """Discretizes an |InstationaryProblem| with an |EllipticProblem| as stationary part
+    using finite elements.
+
+    Parameters
+    ----------
+    analytical_problem
+        The |InstationaryProblem| to discretize.
+    diameter
+        If not `None`, `diameter` is passed as an argument to the `domain_discretizer`.
+    domain_discretizer
+        Discretizer to be used for discretizing the analytical domain. This has
+        to be a function `domain_discretizer(domain_description, diameter, ...)`.
+        If `None`, |discretize_domain_default| is used.
+    grid
+        Instead of using a domain discretizer, the |Grid| can also be passed directly
+        using this parameter.
+    boundary_info
+        A |BoundaryInfo| specifying the boundary types of the grid boundary entities.
+        Must be provided if `grid` is specified.
+    num_values
+        The number of returned vectors of the solution trajectory. If `None`, each
+        intermediate vector that is calculated is returned.
+    time_stepper
+        The :class:`time-stepper <pymor.algorithms.timestepping.TimeStepperInterface>`
+        to be used by :class:`~pymor.discretizations.basic.InstationaryDiscretization.solve`.
+    nt
+        If `time_stepper` is not specified, the number of time steps for implicit
+        Euler time stepping.
+
+    Returns
+    -------
+    discretization
+        The |Discretization| that has been generated.
+    data
+        Dictionary with the following entries:
+
+            :grid:           The generated |Grid|.
+            :boundary_info:  The generated |BoundaryInfo|.
+    """
+
+    assert isinstance(analytical_problem, InstationaryProblem)
+    assert isinstance(analytical_problem.stationary_part, EllipticProblem)
+    assert grid is None or boundary_info is not None
+    assert boundary_info is None or grid is not None
+    assert grid is None or domain_discretizer is None
+    assert (time_stepper is None) != (nt is None)
+
+    p = analytical_problem
+
+    d, data = discretize_stationary_cg(p.stationary_part, diameter=diameter, domain_discretizer=domain_discretizer,
+                                       grid=grid, boundary_info=boundary_info)
+
+    if p.initial_data.parametric:
+        I = InterpolationOperator(data['grid'], p.initial_data)
+    else:
+        I = p.initial_data.evaluate(data['grid'].centers(data['grid'].dim))
+        I = d.solution_space.make_array(I)
+
+    if time_stepper is None:
+        if p.stationary_part.diffusion is None:
+            time_stepper = ExplicitEulerTimeStepper(nt=nt)
+        else:
+            time_stepper = ImplicitEulerTimeStepper(nt=nt)
+
+    mass = d.l2_0_product
+
+    discretization = InstationaryDiscretization(operator=d.operator, rhs=d.rhs, mass=mass, initial_data=I, T=p.T,
+                                                products=d.products, time_stepper=time_stepper,
+                                                parameter_space=p.parameter_space, visualizer=d.visualizer,
+                                                num_values=num_values, name='{}_CG'.format(p.name))
+
+    return discretization, data

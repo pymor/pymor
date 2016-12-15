@@ -9,7 +9,7 @@ from pymor.gui.qt import visualize_patch, stop_gui_processes
 import pytest
 import numpy as np
 from pymor.analyticalproblems.elliptic import EllipticProblem
-from pymor.discretizers.elliptic import discretize_elliptic_cg
+from pymor.discretizers.cg import discretize_stationary_cg
 from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.grids.rect import RectGrid
 from pymor.core.exceptions import PySideMissing
@@ -33,7 +33,7 @@ def test_visualize_patch(backend_gridtype):
     diffusion = GenericFunction(lambda X: np.ones(X.shape[:-1]), dim)  # NOQA
     problem = EllipticProblem(domain=domain, rhs=rhs, dirichlet_data=dirichlet, diffusion=diffusion)
     grid, bi = discretize_domain_default(problem.domain, grid_type=gridtype)
-    discretization, data = discretize_elliptic_cg(analytical_problem=problem, grid=grid, boundary_info=bi)
+    discretization, data = discretize_stationary_cg(analytical_problem=problem, grid=grid, boundary_info=bi)
     U = discretization.solve()
     try:
         visualize_patch(data['grid'], U=U, backend=backend)
