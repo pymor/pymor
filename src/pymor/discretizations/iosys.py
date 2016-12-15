@@ -5,7 +5,6 @@
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
-import scipy as sp
 import scipy.linalg as spla
 import scipy.sparse as sps
 
@@ -102,13 +101,13 @@ class InputOutputSystem(DiscretizationBase):
         Parameters
         ----------
         sys_list
-            A single |LTISystem| or a list of |LTISystems|.
+            A single system or a list of systems.
         plot_style_list
             A string or a list of strings of the same length as `sys_list`.
 
             If `None`, matplotlib defaults are used.
         w
-            Frequencies at which to compute the transfer function.
+            Frequencies at which to evaluate the transfer function(s).
         ord
             The order of the norm used to compute the magnitude (the default is
             the Frobenius norm).
@@ -125,7 +124,7 @@ class InputOutputSystem(DiscretizationBase):
             Matplotlib axes.
         """
         assert isinstance(sys_list, InputOutputSystem) or all(isinstance(sys, InputOutputSystem) for sys in sys_list)
-        if isinstance(sys_list, LTISystem):
+        if isinstance(sys_list, InputOutputSystem):
             sys_list = (sys_list,)
 
         assert (plot_style_list is None or isinstance(plot_style_list, str) and len(sys_list) == 1 or
@@ -376,8 +375,8 @@ class LTISystem(InputOutputSystem):
                            [None, other.A]])
         B = BlockOperator.vstack((Concatenation(self.B, other.D),
                                   other.B))
-        C = BlockOperator.hstack((self.C, Concatenation(self.D,
-                                  other.C)))
+        C = BlockOperator.hstack((self.C,
+                                  Concatenation(self.D, other.C)))
         D = Concatenation(self.D, other.D)
         E = BlockDiagonalOperator((self.E, other.E))
 
@@ -494,6 +493,10 @@ class LTISystem(InputOutputSystem):
             If `None`, then the default tolerance is used. Otherwise, it should
             be a positive float and the Gramian factor is recomputed (if it was
             already computed).
+
+        Returns
+        -------
+        Gramian factor as a |VectorArray| from `self.A.source`.
         """
         assert isinstance(typ, (str, tuple))
         assert isinstance(subtyp, str)
@@ -548,6 +551,15 @@ class LTISystem(InputOutputSystem):
             The matrix equation solver to use (see
             :func:`pymor.algorithms.lyapunov.solve_lyap` or
             :func:`pymor.algorithms.riccati.solve_ricc`).
+
+        Returns
+        -------
+        sv
+            One-dimensional |NumPy array| of singular values.
+        Uh
+            |NumPy array| of left singluar vectors.
+        Vh
+            |NumPy array| of right singluar vectors.
         """
         cf = self.gramian(typ, 'cf', me_solver=me_solver)
         of = self.gramian(typ, 'of', me_solver=me_solver)
@@ -557,23 +569,35 @@ class LTISystem(InputOutputSystem):
 
     @cached
     def norm(self, name='H2', me_solver=None):
-        """Compute a norm of the |LTISystem|.
+        r"""Compute a norm of the |LTISystem|.
 
         Parameters
         ----------
         name
-            The name of the norm (`'H2'`, `'Hinf'`, `'Hinf_fpeak'`, `'Hankel'`).
+            The name of the norm:
+
+            - `'H2'`: :math:`\mathcal{H}_2`-norm,
+            - `'Hinf'`: :math:`\mathcal{H}_\infty`-norm,
+            - `'Hinf_fpeak'`: :math:`\mathcal{H}_\infty`-norm
+                and the maximizing frequency,
+            - `'Hankel'`: Hankel norm (maximal singular value).
+        me_solver
+            The matrix equation solver to use (see
+            :func:`pymor.algorithms.lyapunov.solve_lyap`) if
+            :math:`\mathcal{H}_2`-norm needs to be computed.
+
+        Returns
+        -------
+        System norm.
         """
         if name == 'H2':
             B, C = self.B, self.C
-
             if self.m <= self.p:
                 cf = self.gramian('lyap', 'cf', me_solver=me_solver)
                 return np.sqrt(C.apply(cf).l2_norm2().sum())
             else:
                 of = self.gramian('lyap', 'of', me_solver=me_solver)
                 return np.sqrt(B.apply_adjoint(of).l2_norm2().sum())
-
         elif name == 'Hinf_fpeak':
             from slycot import ab13dd
             dico = 'C' if self.cont_time else 'D'
@@ -662,9 +686,9 @@ class SecondOrderSystem(InputOutputSystem):
     Parameters
     ----------
     M
-        The |Operator| M or `None` (then M is assumed to be identity).
+        The |Operator| M.
     D
-        The |Operator| D or `None` (then D is assumed to be zero).
+        The |Operator| D.
     K
         The |Operator| K.
     B
@@ -672,7 +696,7 @@ class SecondOrderSystem(InputOutputSystem):
     Cp
         The |Operator| Cp.
     Cv
-        The |Operator| Cv.
+        The |Operator| Cv or `None` (then Cv is assumed to be zero).
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
     cache_region
@@ -704,25 +728,164 @@ class SecondOrderSystem(InputOutputSystem):
 
     special_operators = frozenset({'M', 'D', 'K', 'B', 'Cp', 'Cv'})
 
-    def __init__(self, K, B, Cp, Cv, M=None, D=None,
+    def __init__(self, M, D, K, B, Cp, Cv=None,
                  cont_time=True, cache_region='memory', name=None):
 
-        M = M or IdentityOperator(K.source)
-        D = D or ZeroOperator(K.source, K.range)
+        Cv = Cv or ZeroOperator(Cp.source, Cp.range)
 
-        assert K.linear and K.source == K.range and K.source.id == 'STATE'
-        assert B.linear and B.range == K.source and B.source.id == 'INPUT'
-        assert Cp.linear and Cp.source == K.range and Cp.range.id == 'OUTPUT'
-        assert Cv.linear and Cv.source == K.range
-        assert Cp.range == Cv.range
-        assert M.linear and M.source == M.range == K.source
-        assert D.linear and D.source == D.range == K.source
+        assert M.linear and M.source == M.range and M.source.id == 'STATE'
+        assert D.linear and D.source == D.range == M.source
+        assert K.linear and K.source == K.range == M.source
+        assert B.linear and B.range == M.source and B.source.id == 'INPUT'
+        assert Cp.linear and Cp.source == M.range and Cp.range.id == 'OUTPUT'
+        assert Cv.linear and Cv.source == M.range and Cv.range == Cp.range
         assert cont_time in (True, False)
 
         super().__init__(B.source.dim, Cp.range.dim, cont_time=cont_time, cache_region=cache_region, name=name,
-                         K=K, B=B, Cp=Cp, Cv=Cv, M=M, D=D)
+                         M=M, D=D, K=K, B=B, Cp=Cp, Cv=Cv)
 
-        self.n = K.source.dim
+        self.n = M.source.dim
+
+    @classmethod
+    def from_matrices(cls, M, D, K, B, Cp, Cv=None, cont_time=True):
+        """Create a second order system from matrices.
+
+        Parameters
+        ----------
+        M
+            The |NumPy array| or |SciPy spmatrix| M.
+        D
+            The |NumPy array| or |SciPy spmatrix| D.
+        K
+            The |NumPy array| or |SciPy spmatrix| K.
+        B
+            The |NumPy array| or |SciPy spmatrix| B.
+        Cp
+            The |NumPy array| or |SciPy spmatrix| Cp.
+        Cv
+            The |NumPy array| or |SciPy spmatrix| Cv or `None` (then Cv
+            is assumed to be zero).
+        cont_time
+            `True` if the system is continuous-time, otherwise `False`.
+
+        Returns
+        -------
+        lti
+            The |LTISystem| with operators A, B, C, D, and E.
+        """
+        assert isinstance(M, (np.ndarray, sps.spmatrix))
+        assert isinstance(D, (np.ndarray, sps.spmatrix))
+        assert isinstance(K, (np.ndarray, sps.spmatrix))
+        assert isinstance(B, (np.ndarray, sps.spmatrix))
+        assert isinstance(Cp, (np.ndarray, sps.spmatrix))
+        assert Cv is None or isinstance(Cv, (np.ndarray, sps.spmatrix))
+
+        M = NumpyMatrixOperator(M, source_id='STATE', range_id='STATE')
+        D = NumpyMatrixOperator(D, source_id='STATE', range_id='STATE')
+        K = NumpyMatrixOperator(K, source_id='STATE', range_id='STATE')
+        B = NumpyMatrixOperator(B, source_id='INPUT', range_id='STATE')
+        Cp = NumpyMatrixOperator(Cp, source_id='STATE', range_id='OUTPUT')
+        if Cv is not None:
+            Cv = NumpyMatrixOperator(Cv, source_id='STATE', range_id='OUTPUT')
+
+        return cls(M, D, K, B, Cp, Cv, cont_time=cont_time)
+
+    def to_lti(self, sym=False):
+        r"""Return a first order representation.
+
+        Parameters
+        ----------
+        sym
+            If `False`, the simple representation
+
+            .. math::
+                \begin{bmatrix}
+                    I & 0 \\
+                    0 & M
+                \end{bmatrix}
+                x'(t) & =
+                \begin{bmatrix}
+                    0 & I \\
+                    -K & -D
+                \end{bmatrix}
+                x(t) +
+                \begin{bmatrix}
+                    0 \\
+                    B
+                \end{bmatrix}
+                u(t) \\
+                y(t) & =
+                \begin{bmatrix}
+                    C_p & C_v
+                \end{bmatrix}
+                x(t)
+
+            is returned. Otherwise, a symmetric representation
+
+            .. math::
+                \begin{bmatrix}
+                    -K & 0 \\
+                    0 & M
+                \end{bmatrix}
+                x'(t) & =
+                \begin{bmatrix}
+                    0 & -K \\
+                    -K & -D
+                \end{bmatrix}
+                x(t) +
+                \begin{bmatrix}
+                    0 \\
+                    B
+                \end{bmatrix}
+                u(t) \\
+                y(t) & =
+                \begin{bmatrix}
+                    C_p & C_v
+                \end{bmatrix}
+                x(t)
+
+            is returned.
+
+        Returns
+        -------
+        lti
+            |LTISystem| equivalent to the second order system.
+        """
+        if not sym:
+            return LTISystem(A=BlockOperator([[None, IdentityOperator(self.M.source)],
+                                              [self.K * (-1), self.D * (-1)]],
+                                             source_id='STATE',
+                                             range_id='STATE'),
+                             B=BlockOperator.vstack((ZeroOperator(self.B.source, self.B.range),
+                                                     self.B),
+                                                    source_id='INPUT',
+                                                    range_id='STATE'),
+                             C=BlockOperator.hstack((self.Cp, self.Cv),
+                                                    source_id='STATE',
+                                                    range_id='OUTPUT'),
+                             E=BlockDiagonalOperator((IdentityOperator(self.M.source), self.M),
+                                                     source_id='STATE',
+                                                     range_id='STATE'),
+                             cont_time=self.cont_time,
+                             cache_region=self.cache_region,
+                             name=self.name + '_first_order')
+        else:
+            return LTISystem(A=BlockOperator([[None, self.K * (-1)],
+                                              [self.K * (-1), self.D * (-1)]],
+                                             source_id='STATE',
+                                             range_id='STATE'),
+                             B=BlockOperator.vstack((ZeroOperator(self.B.source, self.B.range)),
+                                                    source_id='INPUT',
+                                                    range_id='STATE'),
+                             C=BlockOperator.hstack((self.Cp, self.Cv),
+                                                    source_id='STATE',
+                                                    range_id='OUTPUT'),
+                             E=BlockDiagonalOperator((self.K * (-1), self.M),
+                                                     source_id='STATE',
+                                                     range_id='STATE'),
+                             cont_time=self.cont_time,
+                             cache_region=self.cache_region,
+                             name=self.name + '_first_order_sym')
 
     def eval_tf(self, s):
         """Evaluate the transfer function.
@@ -766,8 +929,6 @@ class SecondOrderSystem(InputOutputSystem):
     def eval_dtf(self, s):
         """Evaluate the derivative of the transfer function.
 
-        The derivative of the transfer function at :math:`s` is
-
         .. math::
             s C_v (s^2 M + s D + K)^{-1} B
             - (C_p + s C_v) (s^2 M + s D + K)^{-1} (2 s M + D)
@@ -807,11 +968,15 @@ class SecondOrderSystem(InputOutputSystem):
                 Cp.as_source_array() + Cv.as_source_array() * s.conj())))).data.conj()
         return dtfs
 
+    def norm(self, name='H2', me_solver=None):
+        """Compute a system norm."""
+        return self.to_lti().norm(name=name, me_solver=me_solver)
+
 
 class LinearDelaySystem(InputOutputSystem):
     r"""Class for linear delay systems.
 
-    This class describes input-output systems given by
+    This class describes input-state-output systems given by
 
     .. math::
         E x'(t) &= A x(t) + \sum_{i = 1}^q{A_i x(t - \tau_i)} + B u(t) \\
@@ -970,7 +1135,7 @@ class LinearDelaySystem(InputOutputSystem):
 class LinearStochasticSystem(InputOutputSystem):
     r"""Class for linear stochastic systems.
 
-    This class describes input-output systems given by
+    This class describes input-state-output systems given by
 
     .. math::
         E \mathrm{d}x(t) &= A x(t) \mathrm{d}t
