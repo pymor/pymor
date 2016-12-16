@@ -123,3 +123,145 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
                 raise AccuracyError('result not orthogonal (max err={})'.format(err))
 
     return A
+
+
+def gram_schmidt_biorth(V, W, product=None, reiterate=True, reiteration_threshold=1e-1, check=True, check_tol=1e-3,
+                        copy=True):
+    """Biorthonormalize a pair of |VectorArrays| using the biorthonormal Gram-Schmidt process.
+
+    See Algorithm 1 in [BKS11]_.
+
+    .. [BKS11]  P. Benner, M. Köhler, J. Saak,
+                Sparse-Dense Sylvester Equations in :math:`\mathcal{H}_2`-Model Order Reduction,
+                Max Planck Institute Magdeburg Preprint, available from http://www.mpi-magdeburg.mpg.de/preprints/,
+                2011.
+
+    Parameters
+    ----------
+    V, W
+        The |VectorArrays| which are to be biorthonormalized.
+    product
+        The inner product |Operator| w.r.t. which to biorthonormalize.
+        If `None`, the Euclidean product is used.
+    reiterate
+        If `True`, orthonormalize again if the norm of the orthogonalized vector is
+        much smaller than the norm of the original vector.
+    reiteration_threshold
+        If `reiterate` is `True`, re-orthonormalize if the ratio between the norms of
+        the orthogonalized vector and the original vector is smaller than this value.
+    check
+        If `True`, check if the resulting |VectorArray| is really orthonormal.
+    check_tol
+        Tolerance for the check.
+    copy
+        If `True`, create a copy of `V` and `W` instead of modifying `V` and `W` in-place.
+
+
+    Returns
+    -------
+    The biorthonormalized |VectorArrays|.
+    """
+    assert V.space == W.space
+    assert len(V) == len(W)
+
+    logger = getLogger('pymor.algorithms.gram_schmidt.gram_schmidt_biorth')
+
+    if copy:
+        V = V.copy()
+        W = W.copy()
+
+    # main loop
+    for i in range(len(V)):
+        # calculate norm of V[i]
+        if product is None:
+            initial_norm = V[i].l2_norm()[0]
+        else:
+            initial_norm = np.sqrt(product.pairwise_apply2(V[i], V[i]))[0]
+
+        # project V[i]
+        if i == 0:
+            V[0].scal(1 / initial_norm)
+        else:
+            first_iteration = True
+            norm = initial_norm
+            # If reiterate is True, reiterate as long as the norm of the vector changes
+            # strongly during projection.
+            while first_iteration or reiterate and norm / old_norm < reiteration_threshold:
+                if first_iteration:
+                    first_iteration = False
+                else:
+                    logger.info('Projecting vector V[{}] again'.format(i))
+
+                for j in range(i):
+                    # project by (I - V[j] * W[j]^T * E)
+                    if product is None:
+                        p = W[j].pairwise_dot(V[i])[0]
+                    else:
+                        p = product.pairwise_apply2(W[j], V[i])[0]
+                    V[i].axpy(-p, V[j])
+
+                # calculate new norm
+                if product is None:
+                    old_norm, norm = norm, V[i].l2_norm()[0]
+                else:
+                    old_norm, norm = norm, np.sqrt(product.pairwise_apply2(V[i], V[i])[0])
+
+            if norm > 0:
+                V[i].scal(1 / norm)
+
+        # calculate norm of W[i]
+        if product is None:
+            initial_norm = W[i].l2_norm()[0]
+        else:
+            initial_norm = np.sqrt(product.pairwise_apply2(W[i], W[i]))[0]
+
+        # project W[i]
+        if i == 0:
+            W[0].scal(1 / initial_norm)
+        else:
+            first_iteration = True
+            norm = initial_norm
+            # If reiterate is True, reiterate as long as the norm of the vector changes
+            # strongly during projection.
+            while first_iteration or reiterate and norm / old_norm < reiteration_threshold:
+                if first_iteration:
+                    first_iteration = False
+                else:
+                    logger.info('Projecting vector W[{}] again'.format(i))
+
+                for j in range(i):
+                    # project by (I - W[j] * V[j]^T * E)
+                    if product is None:
+                        p = V[j].pairwise_dot(W[i])[0]
+                    else:
+                        p = product.pairwise_apply2(V[j], W[i])[0]
+                    W[i].axpy(-p, W[j])
+
+                # calculate new norm
+                if product is None:
+                    old_norm, norm = norm, W[i].l2_norm()[0]
+                else:
+                    old_norm, norm = norm, np.sqrt(product.pairwise_apply2(W[i], W[i])[0])
+
+            if norm > 0:
+                W[i].scal(1 / norm)
+
+        # rescale V[i]
+        if product is None:
+            p = W[i].pairwise_dot(V[i])[0]
+        else:
+            p = product.pairwise_apply2(W[i], V[i])[0]
+        V[i].scal(1 / p)
+
+    if check:
+        if product:
+            error_matrix = product.apply2(W, V)
+        else:
+            error_matrix = W.dot(V)
+        error_matrix -= np.eye(len(V))
+        if error_matrix.size > 0:
+            err = np.max(np.abs(error_matrix))
+            if err >= check_tol:
+                raise AccuracyError('Result not biorthogonal (max err={})'.format(err))
+
+    return V, W
