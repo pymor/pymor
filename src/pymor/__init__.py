@@ -111,27 +111,27 @@ could not be executed ({})
 finally:
     VERSION = Version(revstring)
 
-print('Loading pyMOR version {}'.format(VERSION))
+__version__ = str(VERSION)
 
 
 import os
 if 'PYMOR_DEFAULTS' in os.environ:
     filename = os.environ['PYMOR_DEFAULTS']
     if filename in ('', 'NONE'):
-        print('Not loading any defaults from config file')
+        print('Not loading any pyMOR defaults from config file')
     else:
         for fn in filename.split(':'):
             if not os.path.exists(fn):
-                raise IOError('Cannot load defaults from file ' + fn)
-            print('Loading defaults from file ' + fn + ' (set by PYMOR_DEFAULTS)')
+                raise IOError('Cannot load pyMOR defaults from file ' + fn)
+            print('Loading pyMOR defaults from file ' + fn + ' (set by PYMOR_DEFAULTS)')
             load_defaults_from_file(fn)
 else:
     filename = os.path.join(os.getcwd(), 'pymor_defaults.py')
     if os.path.exists(filename):
         if os.stat(filename).st_uid != os.getuid():
-            raise IOError('Cannot load defaults from config file ' + filename
+            raise IOError('Cannot load pyMOR defaults from config file ' + filename
                           + ': not owned by user running Python interpreter')
-        print('Loading defaults from file ' + filename)
+        print('Loading pyMOR defaults from file ' + filename)
         load_defaults_from_file(filename)
 
 from pymor.core.logger import set_log_levels, set_log_format
