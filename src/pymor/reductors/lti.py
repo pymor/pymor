@@ -377,6 +377,7 @@ def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, method='orth'
             print('iter | conv. criterion')
             print('-----+----------------')
 
+    # find initial projection matrices
     V, W = solve_sylv_schur(discretization.A, rom0.A,
                             E=discretization.E, Er=rom0.E,
                             B=discretization.B, Br=rom0.B,
@@ -392,7 +393,9 @@ def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, method='orth'
     dist = []
     if compute_errors:
         errors = []
+    # main loop
     for it in range(maxit):
+        # project the full order model
         if method == 'orth':
             rom, rc, _ = reduce_generic_pg(discretization, V, W)
         elif method == 'biorth':
@@ -406,6 +409,7 @@ def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, method='orth'
                 rel_H2_err = np.inf
             errors.append(rel_H2_err)
 
+        # compute convergence criterion
         if conv_crit == 'rel_sigma_change':
             sigma_old, sigma = sigma, rom.poles()
             try:
@@ -443,6 +447,7 @@ def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, method='orth'
             else:
                 print('{:4d} | {:15.9e}'.format(it + 1, dist[-1]))
 
+        # new projection matrices
         V, W = solve_sylv_schur(discretization.A, rom.A,
                                 E=discretization.E, Er=rom.E,
                                 B=discretization.B, Br=rom.B,
@@ -453,9 +458,11 @@ def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, method='orth'
         elif method == 'biorth':
             V, W = gram_schmidt_biorth(V, W, product=discretization.E)
 
+        # check convergence criterion
         if dist[-1] < tol:
             break
 
+    # final reduced order model
     if method == 'orth':
         rom, rc, _ = reduce_generic_pg(discretization, V, W)
     elif method == 'biorth':
