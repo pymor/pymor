@@ -301,7 +301,7 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
     return rom, rc, reduction_data
 
 
-def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, method='orth', conv_crit='rel_sigma',
+def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, method='orth', conv_crit='rel_sigma_change',
          compute_errors=False):
     """Reduce using TSIA (Two Sided Iteration Algorithm).
 
@@ -338,9 +338,9 @@ def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, method='orth'
             respect to the E product
     conv_crit
         Convergence criterion:
-            - `'rel_sigma'`: relative change in interpolation points
-            - `'max_sin_PG'`: maximum of sines in Petrov-Galerkin subspaces
-            - `'rel_H2'`: relative H_2 distance of reduced order models
+            - `'rel_sigma_change'`: relative change in interpolation points
+            - `'subspace_sin'`: maximum of sines of Petrov-Galerkin subspaces
+            - `'rel_H2_dist'`: relative H_2 distance of reduced order models
     compute_errors
         Should the relative :math:`\mathcal{H}_2`-errors of intermediate
         reduced order models be computed.
@@ -366,7 +366,8 @@ def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, method='orth'
     """
     r = rom0.n
     assert 0 < r < discretization.n
-    assert conv_crit in ('rel_sigma', 'max_sin_PG', 'rel_H2')
+    assert method in ('orth', 'biorth')
+    assert conv_crit in ('rel_sigma_change', 'subspace_sin', 'rel_H2_dist')
 
     if verbose:
         if compute_errors:
@@ -386,7 +387,7 @@ def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, method='orth'
     elif method == 'biorth':
         V, W = gram_schmidt_biorth(V, W, product=discretization.E)
 
-    if conv_crit == 'rel_sigma':
+    if conv_crit == 'rel_sigma_change':
         sigma = rom0.poles()
     dist = []
     if compute_errors:
@@ -405,13 +406,13 @@ def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, method='orth'
                 rel_H2_err = np.inf
             errors.append(rel_H2_err)
 
-        if conv_crit == 'rel_sigma':
+        if conv_crit == 'rel_sigma_change':
             sigma_old, sigma = sigma, rom.poles()
             try:
                 dist.append(spla.norm((sigma_old - sigma) / sigma_old, ord=np.inf))
             except:
                 dist.append(np.nan)
-        elif conv_crit == 'max_sin_PG':
+        elif conv_crit == 'subspace_sin':
             if it == 0:
                 V_new = V
                 W_new = W
@@ -422,7 +423,7 @@ def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, method='orth'
                 sinV = spla.norm(V_new - V_old.dot(V_old.T.dot(V_new)), ord=2)
                 sinW = spla.norm(W_new - W_old.dot(W_old.T.dot(W_new)), ord=2)
                 dist.append(np.max([sinV, sinW]))
-        elif conv_crit == 'rel_H2':
+        elif conv_crit == 'rel_H2_dist':
             if it == 0:
                 rom_new = rom
                 dist.append(np.inf)
