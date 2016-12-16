@@ -12,7 +12,6 @@ import shutil
 
 from pymortests.base import runmodule, check_results
 from pymor.core.exceptions import PySideMissing
-from pymor.gui.gl import HAVE_PYSIDE
 from pymor.gui.qt import stop_gui_processes
 
 
@@ -88,8 +87,8 @@ def _run_module(module, args):
 def _skip_if_no_fenics(param):
     _, args = param
     needs_fenics = len([f for f in args if 'fenics' in str(f)]) > 0
-    import pymor.vectorarrays.fenics as fe
-    if needs_fenics and not fe.HAVE_FENICS:
+    from pymor.core.config import config
+    if needs_fenics and not config.HAVE_FENICS:
         pytest.skip('skipped test due to missing Fenics')
 
 

@@ -13,28 +13,13 @@ import math as m
 
 import numpy as np
 
-try:
-    from PySide.QtGui import QSizePolicy, QPainter, QFontMetrics
-    HAVE_PYSIDE = True
-except ImportError:
-    HAVE_PYSIDE = False
+from pymor.core.config import config
 
-try:
-    from PySide.QtOpenGL import QGLWidget
-    HAVE_QTOPENGL = True
-except ImportError:
-    HAVE_QTOPENGL = False
 
-try:
+if config.HAVE_PYSIDE and config.HAVE_QTOPENGL and config.HAVE_GL:
     import OpenGL.GL as gl
-    HAVE_GL = True
-except ImportError:
-    HAVE_GL = False
-
-HAVE_ALL = HAVE_PYSIDE and HAVE_QTOPENGL and HAVE_GL
-
-
-if HAVE_ALL:
+    from PySide.QtGui import QSizePolicy, QPainter, QFontMetrics
+    from PySide.QtOpenGL import QGLWidget
     from ctypes import c_void_p
 
     from pymor.grids.constructions import flatten_grid

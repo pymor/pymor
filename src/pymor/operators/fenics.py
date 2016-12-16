@@ -3,13 +3,10 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-try:
-    import dolfin as df
-    HAVE_FENICS = True
-except ImportError:
-    HAVE_FENICS = False
+from pymor.core.config import config
 
-if HAVE_FENICS:
+if config.HAVE_FENICS:
+    import dolfin as df
     from numbers import Number
 
     from pymor.core.defaults import defaults

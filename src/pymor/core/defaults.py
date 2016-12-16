@@ -69,11 +69,9 @@ import importlib
 import inspect
 import os
 import pkgutil
-import sys
 import textwrap
 
-PY2 = sys.version_info.major == 2
-
+from pymor.core.config import config
 
 _default_container = None
 
@@ -107,7 +105,7 @@ Defaults
             new_docstring += '\n'.join(textwrap.wrap(', '.join(args), 80)) + '\n(see :mod:`pymor.core.defaults`)'
             func.__doc__ = new_docstring
 
-        if PY2:
+        if config.PY2:
             defaults = func.__defaults__
             if not defaults:
                 raise ValueError('Wrapped function has no optional arguments at all!')
@@ -160,7 +158,7 @@ methods of classes!'''.format(path))
         self._update_function_signature(func)
 
     def _update_function_signature(self, func):
-        if PY2:
+        if config.PY2:
             func.__defaults__ = tuple(func.defaultsdict.get(n, v)
                                       for n, v in zip(func.argnames[-len(func.__defaults__):], func.__defaults__))
         else:
@@ -300,10 +298,10 @@ def defaults(*args, **kwargs):
 
         # On Python 2 we have to add the __wrapped__ attribute to the wrapper
         # manually to help IPython find the right source code location
-        if PY2:
+        if config.PY2:
             wrapper.__wrapped__ = func
 
-        if PY2 and int(os.environ.get('PYMOR_WITH_SPHINX', 0)) == 1:
+        if config.PY2 and int(os.environ.get('PYMOR_WITH_SPHINX', 0)) == 1:
             # On Python 2 we have to disable the defaults decorator in order
             # to produce correct function signatures in the API docs
             return func

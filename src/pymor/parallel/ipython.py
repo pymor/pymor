@@ -7,20 +7,17 @@ import os
 import time
 
 
-try:
-    from ipyparallel import Client, TimeoutError
-    HAVE_IPYTHON = True
-except ImportError:
-    try:
-        from IPython.parallel import Client, TimeoutError
-        HAVE_IPYTHON = True
-    except ImportError:
-        HAVE_IPYTHON = False
-
-
+from pymor.core.config import config
 from pymor.core.interfaces import BasicInterface
 from pymor.parallel.basic import WorkerPoolBase
 from pymor.tools.counter import Counter
+
+
+if config.HAVE_IPYTHON:
+    try:
+        from ipyparallel import Client, TimeoutError
+    except ImportError:
+        from IPython.parallel import Client, TimeoutError
 
 
 class new_ipcluster_pool(BasicInterface):

@@ -11,33 +11,29 @@ import math as m
 
 import numpy as np
 
-try:
-    from PySide.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QApplication, QLCDNumber,
-                              QAction, QStyle, QToolBar, QLabel, QFileDialog, QMessageBox)
-    from PySide.QtCore import Qt, QCoreApplication, QTimer
-    HAVE_PYSIDE = True
-except ImportError:
-    HAVE_PYSIDE = False
-
 import multiprocessing
 import os
 import signal
 import time
 
+from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.core.interfaces import BasicInterface
 from pymor.core.logger import getLogger
 from pymor.core.exceptions import PySideMissing
 from pymor.grids.oned import OnedGrid
 from pymor.grids.referenceelements import triangle, square
-from pymor.gui.gl import GLPatchWidget, ColorBarWidget, HAVE_GL, HAVE_QTOPENGL
-from pymor.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget, HAVE_MATPLOTLIB
-from pymor.tools.vtkio import HAVE_PYVTK, write_vtk
+from pymor.gui.gl import GLPatchWidget, ColorBarWidget
+from pymor.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget
+from pymor.tools.vtkio import write_vtk
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
-if HAVE_PYSIDE:
+if config.HAVE_PYSIDE:
+    from PySide.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QApplication, QLCDNumber,
+                              QAction, QStyle, QToolBar, QLabel, QFileDialog, QMessageBox)
+    from PySide.QtCore import Qt, QCoreApplication, QTimer
 
     class PlotMainWindow(QWidget):
         """Base class for plot main windows."""
@@ -249,24 +245,24 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         The number of columns in the visualizer GUI in case multiple plots are displayed
         at the same time.
     """
-    if not HAVE_PYSIDE:
+    if not config.HAVE_PYSIDE:
         raise PySideMissing()
 
     assert backend in {'gl', 'matplotlib'}
 
     if backend == 'gl':
-        if not HAVE_GL:
+        if not config.HAVE_GL:
             logger = getLogger('pymor.gui.qt.visualize_patch')
             logger.warn('import of PyOpenGL failed, falling back to matplotlib; rendering will be slow')
             backend = 'matplotlib'
-        elif not HAVE_QTOPENGL:
+        elif not config.HAVE_QTOPENGL:
             logger = getLogger('pymor.gui.qt.visualize_patch')
             logger.warn('import of PySide.QtOpenGL failed, falling back to matplotlib; rendering will be slow')
             backend = 'matplotlib'
-        if backend == 'matplotlib' and not HAVE_MATPLOTLIB:
+        if backend == 'matplotlib' and not config.HAVE_MATPLOTLIB:
             raise ImportError('cannot visualize: import of matplotlib failed')
     else:
-        if not HAVE_MATPLOTLIB:
+        if not config.HAVE_MATPLOTLIB:
             raise ImportError('cannot visualize: import of matplotlib failed')
 
     # TODO extract class
@@ -369,7 +365,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             self.codim = codim
 
         def save(self):
-            if not HAVE_PYVTK:
+            if not config.HAVE_PYVTK:
                 msg = QMessageBox(QMessageBox.Critical, 'Error', 'VTK output disabled. Pleas install pyvtk.')
                 msg.exec_()
                 return
@@ -416,9 +412,9 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
     block
         If `True`, block execution until the plot window is closed.
     """
-    if not HAVE_PYSIDE:
+    if not config.HAVE_PYSIDE:
         raise PySideMissing()
-    if not HAVE_MATPLOTLIB:
+    if not config.HAVE_MATPLOTLIB:
         raise ImportError('cannot visualize: import of matplotlib failed')
 
     class MainWindow(PlotMainWindow):
