@@ -13,7 +13,7 @@ python setup.py build_ext -i
 if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     export SDIST_DIR=/tmp/pymor_sdist/
     # this fails on PRs, so skip it
-    if [[ "${TRAVIS_PULL_REQUEST}" != "false" ]] ; then
+    if [[ "${TRAVIS_PULL_REQUEST}" == "false" ]] ; then
       sudo pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
       sudo pip uninstall  -y pymor
     fi
