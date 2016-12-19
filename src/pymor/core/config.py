@@ -89,11 +89,14 @@ class Config:
 
         return getattr(self, name)
 
-    def __dir__(self):
-        keys = set(super().__dir__())
+    def __dir__(self, old=False):
+        if self.PY2:
+            keys = set(dir(type(self))).union(self.__dict__.keys())
+        else:
+            keys = set(super().__dir__())
         keys.update('HAVE_' + package for package in _PACKAGES)
         keys.update(package + '_VERSION' for package in _PACKAGES)
-        return keys
+        return list(keys)
 
     def __repr__(self):
         status = {p: (lambda v: 'missing' if not v else 'present' if v is True else v)(getattr(self, p + '_VERSION'))
