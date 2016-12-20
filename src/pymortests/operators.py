@@ -162,7 +162,7 @@ def test_apply_inverse(operator_with_arrays):
         assert np.all(almost_equal(VV, V[ind], atol=1e-10, rtol=1e-3))
 
 
-def test_apply_inverse_adjoint(operator_with_arrays):
+def test_apply_inverse_transpose(operator_with_arrays):
     op, mu, U, _ = operator_with_arrays
     if not op.linear:
         return
@@ -170,7 +170,7 @@ def test_apply_inverse_adjoint(operator_with_arrays):
         if len(U[ind]) == 0:
             continue
         try:
-            V = op.apply_inverse_adjoint(U[ind], mu=mu)
+            V = op.apply_inverse_transpose(U[ind], mu=mu)
         except InversionError:
             return
         assert V in op.range

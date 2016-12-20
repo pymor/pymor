@@ -189,16 +189,10 @@ class BlockDiagonalOperator(BlockOperator):
 
         return self.source.make_array(U_blocks)
 
-    def apply_inverse_adjoint(self, U, mu=None, source_product=None, range_product=None, least_squares=False):
+    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
         assert U in self.source
-        assert source_product is None or source_product.source == source_product.range == self.source
-        assert range_product is None or range_product.source == range_product.range == self.range
 
-        if source_product or range_product:
-            return super().apply_inverse_adjoint(
-                U, mu=mu, source_product=source_product, range_product=range_product)
-
-        V_blocks = [self._blocks[i, i].apply_inverse_adjoint(U.block(i), mu=mu, least_squares=least_squares)
+        V_blocks = [self._blocks[i, i].apply_inverse_transpose(U.block(i), mu=mu, least_squares=least_squares)
                     for i in range(self.num_source_blocks)]
 
         return self.range.make_array(V_blocks)

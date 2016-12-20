@@ -26,8 +26,8 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
         :'inverse':           solver options used for
                               :meth:`~OperatorInterface.apply_inverse`
-        :'inverse_adjoint':   solver options used for
-                              :meth:`~OperatorInterface.apply_inverse_adjoint`
+        :'inverse_transpose': solver options used for
+                              :meth:`~OperatorInterface.apply_inverse_transpose`
         :'jacobian':          solver options for the operators returned
                               by :meth:`~OperatorInterface.jacobian`
                               (has no effect for linear operators)
@@ -187,20 +187,15 @@ class OperatorInterface(ImmutableInterface, Parametric):
         pass
 
     @abstractmethod
-    def apply_inverse_adjoint(self, U, mu=None, source_product=None, range_product=None,
-                              least_squares=False):
-        """Apply the inverse adjoint operator.
+    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+        """Apply the inverse transpose operator.
 
         Parameters
         ----------
         U
-            |VectorArray| of vectors to which the inverse adjoint operator is applied.
+            |VectorArray| of vectors to which the inverse transpose operator is applied.
         mu
-            The |Parameter| for which to evaluate the inverse adjoint operator.
-        source_product
-            See :meth:`~OperatorInterface.apply_adjoint`.
-        range_product
-            See :meth:`~OperatorInterface.apply_adjoint`.
+            The |Parameter| for which to evaluate the inverse transpose operator.
         least_squares
             If `True`, solve the least squares problem::
 
@@ -216,7 +211,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
         Returns
         -------
-        |VectorArray| of the inverse adjoint operator evaluations.
+        |VectorArray| of the inverse transpose operator evaluations.
 
         Raises
         ------

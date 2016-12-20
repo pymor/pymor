@@ -136,30 +136,19 @@ class OperatorBase(OperatorInterface):
                     raise InversionError(e)
             return R
 
-    def apply_inverse_adjoint(self, U, mu=None, source_product=None, range_product=None,
-                              least_squares=False):
+    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
         from pymor.operators.constructions import FixedParameterOperator
         assembled_op = self.assemble(mu)
         if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
-            return assembled_op.apply_inverse_adjoint(U, source_product=source_product,
-                                                      range_product=range_product, least_squares=least_squares)
-        elif source_product or range_product:
-            if source_product:
-                U = source_product.apply(U)
-            # maybe there is a better implementation for source_product == None and range_product == None
-            V = self.apply_inverse_adjoint(U, mu=mu, least_squares=least_squares)
-            if range_product:
-                return range_product.apply_inverse(V)
-            else:
-                return V
+            return assembled_op.apply_inverse_transpose(U, least_squares=least_squares)
         else:
             if not self.linear:
                 raise NotImplementedError
-            # use generic solver for the adjoint operator
+            # use generic solver for the transpose operator
             from pymor.operators.constructions import AdjointOperator
-            options = {'inverse': self.solver_options.get('inverse_adjoint') if self.solver_options else None}
-            adjoint_op = AdjointOperator(self, with_apply_inverse=False, solver_options=options)
-            return adjoint_op.apply_inverse(U, mu=mu, least_squares=least_squares)
+            options = {'inverse': self.solver_options.get('inverse_transpose') if self.solver_options else None}
+            transpose_op = AdjointOperator(self, with_apply_inverse=False, solver_options=options)
+            return transpose_op.apply_inverse(U, mu=mu, least_squares=least_squares)
 
     def as_range_array(self, mu=None):
         assert isinstance(self.source, NumpyVectorSpace)

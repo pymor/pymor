@@ -111,7 +111,7 @@ def test_blk_diag_apply_inverse():
     w = np.hstack((wva.block(0).data, wva.block(1).data))
     assert np.allclose(spla.solve(C, v), w)
 
-def test_blk_diag_apply_inverse_adjoint():
+def test_blk_diag_apply_inverse_transpose():
     np.random.seed(0)
 
     A = np.random.randn(2, 2)
@@ -128,6 +128,6 @@ def test_blk_diag_apply_inverse_adjoint():
     v2va = NumpyVectorSpace.from_data(v2)
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
-    wva = Cop.apply_inverse_adjoint(vva)
+    wva = Cop.apply_inverse_transpose(vva)
     w = np.hstack((wva.block(0).data, wva.block(1).data))
     assert np.allclose(spla.solve(C.T, v), w)
