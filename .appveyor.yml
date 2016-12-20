@@ -6,19 +6,19 @@ environment:
 
     - PYTHON_VERSION: "2.7" # currently 2.7.12
       PYTHON_ARCH: "32"
-      CONDA: "C:\Miniconda"
+      CONDA: "C:\\Miniconda"
 
     - PYTHON_VERSION: "2.7" # currently 2.7.12
       PYTHON_ARCH: "64"
-      CONDA: "C:\Miniconda-x64"
+      CONDA: "C:\\Miniconda-x64"
 
     - PYTHON_VERSION: "3.4" # currently 3.4.4
       PYTHON_ARCH: "32"
-      CONDA: "C:\Miniconda3"
+      CONDA: "C:\\Miniconda3"
 
     - PYTHON_VERSION: "3.4" # currently 3.4.4
       PYTHON_ARCH: "64"
-      CONDA: "C:\Miniconda3-x64"
+      CONDA: "C:\\Miniconda3-x64"
 
 
 
