@@ -79,11 +79,11 @@ class OperatorBase(OperatorInterface):
             self.name, self.source.dim, self.range.dim, self.parameter_type,
             self.__class__.__name__)
 
-    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
+    def apply_transpose(self, V, mu=None):
         if self.linear:
             raise NotImplementedError
         else:
-            raise ValueError('Trying to apply adjoint of nonlinear operator.')
+            raise ValueError('Trying to apply transpose of nonlinear operator.')
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         from pymor.operators.constructions import FixedParameterOperator
@@ -167,7 +167,7 @@ class OperatorBase(OperatorInterface):
 
     def as_source_array(self, mu=None):
         assert isinstance(self.range, NumpyVectorSpace)
-        return self.apply_adjoint(self.range.make_array(np.eye(self.range.dim)), mu=mu)
+        return self.apply_transpose(self.range.make_array(np.eye(self.range.dim)), mu=mu)
 
     def projected(self, range_basis, source_basis, product=None, name=None):
         name = name or '{}_projected'.format(self.name)
@@ -180,7 +180,7 @@ class OperatorBase(OperatorInterface):
                     return self
                 else:
                     try:
-                        V = self.apply_adjoint(range_basis, range_product=product)
+                        V = self.apply_transpose(product.apply(range_basis) if product else range_basis)
                     except NotImplementedError:
                         return ProjectedOperator(self, range_basis, None, product, name=name)
                     if isinstance(self.source, NumpyVectorSpace):

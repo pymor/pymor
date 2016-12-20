@@ -24,8 +24,8 @@ class GenericOperator(OperatorBase):
     def apply(self, U, mu=None):
         return self.op.apply(U, mu=mu)
 
-    def apply_adjoint(self, U, mu=None):
-        return self.op.apply_adjoint(U, mu=mu)
+    def apply_transpose(self, V, mu=None):
+        return self.op.apply_transpose(V, mu=mu)
 
 
 @pytest.fixture(params=pymor.algorithms.genericsolvers.options().keys())

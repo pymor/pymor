@@ -103,27 +103,20 @@ class BlockOperator(OperatorBase):
 
         return self.range.make_array(V_blocks)
 
-    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
-        assert U in self.range
-        assert source_product is None or source_product.source == source_product.range == self.source
-        assert range_product is None or range_product.source == range_product.range == self.range
+    def apply_transpose(self, V, mu=None):
+        assert V in self.range
 
-        if range_product is not None:
-            U = range_product.apply(U)
-
-        V_blocks = [None for j in range(self.num_source_blocks)]
+        U_blocks = [None for j in range(self.num_source_blocks)]
         for (i, j), op in np.ndenumerate(self._blocks):
-            Vj = op.apply_adjoint(U.block(i), mu=mu)
-            if V_blocks[j] is None:
-                V_blocks[j] = Vj
+            Uj = op.apply_transpose(V.block(i), mu=mu)
+            if U_blocks[j] is None:
+                U_blocks[j] = Uj
             else:
-                V_blocks[j] += Vj
+                U_blocks[j] += Uj
 
-        V = self.source.make_array(V_blocks)
-        if source_product is not None:
-            V = source_product.apply_inverse(V)
+        U = self.source.make_array(U_blocks)
 
-        return V
+        return U
 
     def assemble(self, mu=None):
         blocks = np.empty(self._blocks.shape, dtype=object)
@@ -179,21 +172,14 @@ class BlockDiagonalOperator(BlockOperator):
 
         return self.range.make_array(V_blocks)
 
-    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
-        assert U in self.range
-        assert source_product is None or source_product.source == source_product.range == self.source
-        assert range_product is None or range_product.source == range_product.range == self.range
+    def apply_transpose(self, V, mu=None):
+        assert V in self.range
 
-        if range_product is not None:
-            U = range_product.apply(U)
+        U_blocks = [self._blocks[i, i].apply_transpose(V.block(i), mu=mu) for i in range(self.num_source_blocks)]
 
-        V_blocks = [self._blocks[i, i].apply_adjoint(U.block(i), mu=mu) for i in range(self.num_source_blocks)]
+        U = self.source.make_array(U_blocks)
 
-        V = self.source.make_array(V_blocks)
-        if source_product is not None:
-            V = source_product.apply_inverse(V)
-
-        return V
+        return U
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         assert V in self.range

@@ -38,21 +38,12 @@ if HAVE_FENICS:
                 self.matrix.mult(u.impl, r.impl)
             return R
 
-        def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
-            assert U in self.range
-            assert source_product is None or source_product.source == source_product.range == self.source
-            assert range_product is None or range_product.source == range_product.range == self.range
-            if range_product:
-                PrU = range_product.apply(U)._list
-            else:
-                PrU = U._list
-            ATPrU = self.source.zeros(len(PrU))
-            for u, r in zip(PrU, ATPrU._list):
-                self.matrix.transpmult(u.impl, r.impl)
-            if source_product:
-                return source_product.apply_inverse(ATPrU)
-            else:
-                return ATPrU
+        def apply_transpose(self, V, mu=None):
+            assert V in self.range
+            U = self.source.zeros(len(V))
+            for v, u in zip(V._list, U._list):
+                self.matrix.transpmult(v.impl, u.impl)
+            return U
 
         def apply_inverse(self, V, mu=None, least_squares=False):
             assert V in self.range

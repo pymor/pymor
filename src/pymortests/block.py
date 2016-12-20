@@ -55,7 +55,7 @@ def test_apply():
     w = np.hstack((wva.block(0).data, wva.block(1).data))
     assert np.allclose(A.dot(v), w)
 
-def test_apply_adjoint():
+def test_apply_transpose():
     np.random.seed(0)
 
     A11 = np.random.randn(2, 3)
@@ -76,7 +76,7 @@ def test_apply_adjoint():
     v2va = NumpyVectorSpace.from_data(v2)
     vva = BlockVectorSpace.make_array((v1va, v2va))
 
-    wva = Aop.apply_adjoint(vva)
+    wva = Aop.apply_transpose(vva)
     w = np.hstack((wva.block(0).data, wva.block(1).data))
     assert np.allclose(A.T.dot(v), w)
 

@@ -111,31 +111,31 @@ def test_pairwise_apply2(operator_with_arrays):
         assert np.allclose(M, M2)
 
 
-def test_apply_adjoint(operator_with_arrays):
+def test_apply_transpose(operator_with_arrays):
     op, mu, _, V = operator_with_arrays
     if not op.linear:
         return
     try:
-        U = op.apply_adjoint(V, mu=mu)
+        U = op.apply_transpose(V, mu=mu)
     except NotImplementedError:
         return
     assert U in op.source
     assert len(V) == len(U)
     for ind in list(valid_inds(V, 3)) + [[]]:
-        Uind = op.apply_adjoint(V[ind], mu=mu)
+        Uind = op.apply_transpose(V[ind], mu=mu)
         assert np.all(almost_equal(Uind, U[ind]))
-        assert np.all(almost_equal(Uind, op.apply_adjoint(V[ind], mu=mu)))
+        assert np.all(almost_equal(Uind, op.apply_transpose(V[ind], mu=mu)))
 
 
-def test_apply_adjoint2(operator_with_arrays):
+def test_apply_transpose_2(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     if not op.linear:
         return
     try:
-        op.apply_adjoint(V, mu=mu)
+        ATV = op.apply_transpose(V, mu=mu)
     except NotImplementedError:
         return
-    assert np.allclose(V.dot(op.apply(U, mu=mu)), op.apply_adjoint(V, mu=mu).dot(U))
+    assert np.allclose(V.dot(op.apply(U, mu=mu)), ATV.dot(U))
 
 
 def test_T(operator_with_arrays):
@@ -147,28 +147,6 @@ def test_T(operator_with_arrays):
     except NotImplementedError:
         return
     assert np.allclose(V.dot(op.apply(U, mu=mu)), op.T.apply(V, mu=mu).dot(U))
-
-
-def test_apply_adjoint_2(operator_with_arrays):
-    op, mu, U, V = operator_with_arrays
-    if not op.linear:
-        return
-    try:
-        ATV = op.apply_adjoint(V, mu=mu)
-    except NotImplementedError:
-        return
-    assert np.allclose(V.dot(op.apply(U, mu=mu)), ATV.dot(U))
-
-
-def test_apply_adjoint_2_with_products(operator_with_arrays_and_products):
-    op, mu, U, V, sp, rp = operator_with_arrays_and_products
-    if not op.linear:
-        return
-    try:
-        ATV = op.apply_adjoint(V, mu=mu, source_product=sp, range_product=rp)
-    except NotImplementedError:
-        return
-    assert np.allclose(rp.apply2(V, op.apply(U, mu=mu)), sp.apply2(ATV, U))
 
 
 def test_apply_inverse(operator_with_arrays):
@@ -197,25 +175,9 @@ def test_apply_inverse_adjoint(operator_with_arrays):
             return
         assert V in op.range
         assert len(V) == U.len_ind(ind)
-        UU = op.apply_adjoint(V, mu=mu)
+        UU = op.apply_transpose(V, mu=mu)
         assert np.all(almost_equal(UU, U[ind], atol=1e-10, rtol=1e-3))
 
-
-def test_apply_inverse_adjoint_with_products(operator_with_arrays_and_products):
-    op, mu, U, _, sp, rp = operator_with_arrays_and_products
-    if not op.linear:
-        return
-    for ind in valid_inds(U):
-        if len(U[ind]) == 0:
-            continue
-        try:
-            V = op.apply_inverse_adjoint(U[ind], mu=mu, source_product=sp, range_product=rp)
-        except InversionError:
-            return
-        assert V in op.range
-        assert len(V) == U.len_ind(ind)
-        UU = op.apply_adjoint(V, mu=mu, source_product=sp, range_product=rp)
-        assert np.all(almost_equal(UU, U[ind], atol=1e-10, rtol=1e-3))
 
 def test_projected(operator_with_arrays):
     op, mu, U, V = operator_with_arrays

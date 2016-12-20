@@ -43,34 +43,34 @@ class NumpyGenericOperator(OperatorBase):
 
         If `parameter_type` is not `None`, the function has to have the signature
         `mapping(U, mu)`.
-    adjoint_mapping
-        The adjoint function to wrap. If `parameter_type` is `None`, the function is of
-        the form `adjoint_mapping(U)` and is expected to be vectorized. In particular::
+    transpose_mapping
+        The transpsoe function to wrap. If `parameter_type` is `None`, the function is of
+        the form `transpose_mapping(U)` and is expected to be vectorized. In particular::
 
-            adjoint_mapping(U).shape == U.shape[:-1] + (dim_source,).
+            transpose_mapping(U).shape == U.shape[:-1] + (dim_source,).
 
         If `parameter_type` is not `None`, the function has to have the signature
-        `adjoint_mapping(U, mu)`.
+        `transpose_mapping(U, mu)`.
     dim_source
         Dimension of the operator's source.
     dim_range
         Dimension of the operator's range.
     linear
-        Set to `True` if the provided `mapping` and `adjoint_mapping` are linear.
+        Set to `True` if the provided `mapping` and `transpose_mapping` are linear.
     parameter_type
         The |ParameterType| of the |Parameters| the mapping accepts.
     name
         Name of the operator.
     """
 
-    def __init__(self, mapping, adjoint_mapping=None, dim_source=1, dim_range=1, linear=False, parameter_type=None,
+    def __init__(self, mapping, transpose_mapping=None, dim_source=1, dim_range=1, linear=False, parameter_type=None,
                  source_id=None, range_id=None, solver_options=None, name=None):
         self.source = NumpyVectorSpace(dim_source, source_id)
         self.range = NumpyVectorSpace(dim_range, range_id)
         self.solver_options = solver_options
         self.name = name
         self._mapping = mapping
-        self._adjoint_mapping = adjoint_mapping
+        self._transpose_mapping = transpose_mapping
         self.linear = linear
         if parameter_type is not None:
             self.build_parameter_type(parameter_type)
@@ -85,23 +85,16 @@ class NumpyGenericOperator(OperatorBase):
         else:
             return self.range.make_array(self._mapping(U.data))
 
-    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
-        if self._adjoint_mapping is None:
-            raise ValueError('NumpyGenericOperator: adjoint mapping was not defined.')
-        assert U in self.range
-        if range_product:
-            PrU = range_product.apply(U).data
-        else:
-            PrU = U.data
+    def apply_transpose(self, V, mu=None):
+        if self._transpose_mapping is None:
+            raise ValueError('NumpyGenericOperator: transpose mapping was not defined.')
+        assert V in self.range
+        V = V.data
         if self.parametric:
             mu = self.parse_parameter(mu)
-            ATPrU = self.source.make_array(self._adjoint_mapping(PrU, mu=mu))
+            return self.source.make_array(self._transpose_mapping(V, mu=mu))
         else:
-            ATPrU = self.source.make_array(self._adjoint_mapping(PrU))
-        if source_product:
-            return source_product.apply_inverse(ATPrU)
-        else:
-            return ATPrU
+            return self.source.make_array(self._transpose_mapping(V))
 
 
 class NumpyMatrixBasedOperator(OperatorBase):
@@ -167,8 +160,8 @@ class NumpyMatrixBasedOperator(OperatorBase):
     def apply(self, U, mu=None):
         return self.assemble(mu).apply(U)
 
-    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
-        return self.assemble(mu).apply_adjoint(U, source_product=source_product, range_product=range_product)
+    def apply_transpose(self, V, mu=None):
+        return self.assemble(mu).apply_transpose(V)
 
     def as_range_array(self, mu=None):
         return self.assemble(mu).as_range_array()
@@ -263,19 +256,9 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         assert U in self.source
         return self.range.make_array(self._matrix.dot(U.data.T).T)
 
-    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
-        assert U in self.range
-        assert source_product is None or source_product.source == source_product.range == self.source
-        assert range_product is None or range_product.source == range_product.range == self.range
-        if range_product:
-            PrU = range_product.apply(U).data
-        else:
-            PrU = U.data
-        ATPrU = self.source.make_array(self._matrix.T.dot(PrU.T).T)
-        if source_product:
-            return source_product.apply_inverse(ATPrU)
-        else:
-            return ATPrU
+    def apply_transpose(self, V, mu=None):
+        assert V in self.range
+        return self.source.make_array(self._matrix.T.dot(V.data.T).T)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         assert V in self.range
