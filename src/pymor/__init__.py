@@ -11,6 +11,7 @@ try:
 except ImportError:
     pass
 
+from pymor.core.config import config
 from pymor.core.defaults import load_defaults_from_file
 
 

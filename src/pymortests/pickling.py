@@ -5,15 +5,13 @@
 
 import numpy as np
 from scipy.sparse import issparse
-import sys
 from types import FunctionType, MethodType
 
+from pymor.core.config import config
 from pymor.core.interfaces import BasicInterface
 from pymor.core.pickle import dumps, loads, dumps_function, PicklingError
 from pymor.grids.subgrid import SubGrid
 from pymor.operators.numpy import NumpyMatrixBasedOperator
-
-PY2 = sys.version_info.major == 2
 
 is_equal_ignored_attributes = \
     ((SubGrid, {'_uid', '_CacheableInterface__cache_region', '_SubGrid__parent_grid'}),
@@ -78,7 +76,7 @@ def assert_is_equal(first, second):
             for k, u in first.items():
                 _assert_is_equal(u, second.get(k))
         elif isinstance(first, FunctionType):
-            if PY2:
+            if config.PY2:
                 for k in ['__closure__', '__code__', '__dict__', '__doc__', '__name__']:
                     _assert_is_equal(getattr(first, k), getattr(second, k))
             else:

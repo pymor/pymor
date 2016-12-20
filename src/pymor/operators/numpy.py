@@ -21,6 +21,7 @@ from scipy.sparse import issparse
 from scipy.io import mmwrite, savemat
 
 from pymor.algorithms import genericsolvers
+from pymor.core.config import config
 from pymor.core.defaults import defaults, defaults_sid
 from pymor.core.exceptions import InversionError
 from pymor.core.interfaces import abstractmethod
@@ -422,18 +423,6 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
 import scipy.version
 from scipy.sparse.linalg import bicgstab, spsolve, splu, spilu, lgmres, lsqr, LinearOperator
-try:
-    from scipy.sparse.linalg import lsmr
-    HAVE_SCIPY_LSMR = True
-except ImportError:
-    HAVE_SCIPY_LSMR = False
-
-try:
-    import pyamg
-    HAVE_PYAMG = True
-except ImportError:
-    HAVE_PYAMG = False
-
 
 _dense_options = None
 _dense_options_sid = None
@@ -497,7 +486,7 @@ def dense_options(default_solver='solve',
           'pyamg_sa_accel', 'pyamg_sa_tol', 'pyamg_sa_maxiter',
           sid_ignore=('least_squares_lsmr_show', 'least_squares_lsqr_show', 'pyamg_verb'))
 def sparse_options(default_solver='spsolve',
-                   default_least_squares_solver='least_squares_lsmr' if HAVE_SCIPY_LSMR else 'least_squares_generic_lsmr',
+                   default_least_squares_solver='least_squares_lsmr' if config.HAVE_SCIPY_LSMR else 'least_squares_generic_lsmr',
                    bicgstab_tol=1e-15,
                    bicgstab_maxiter=None,
                    spilu_drop_tol=1e-4,
@@ -699,7 +688,7 @@ def sparse_options(default_solver='spsolve',
                                     'iter_lim': least_squares_lsqr_iter_lim,
                                     'show': least_squares_lsqr_show}))
 
-    if HAVE_SCIPY_LSMR:
+    if config.HAVE_SCIPY_LSMR:
         opts += (('least_squares_lsmr', {'type': 'least_squares_lsmr',
                                          'damp': least_squares_lsmr_damp,
                                          'atol': least_squares_lsmr_atol,
@@ -708,7 +697,7 @@ def sparse_options(default_solver='spsolve',
                                          'maxiter': least_squares_lsmr_maxiter,
                                          'show': least_squares_lsmr_show}),)
 
-    if HAVE_PYAMG:
+    if config.HAVE_PYAMG:
         opts += (('pyamg',    {'type': 'pyamg',
                                'tol': pyamg_tol,
                                'maxiter': pyamg_maxiter}),
@@ -943,6 +932,7 @@ def _apply_inverse(matrix, V, options=None, check_finite=True):
                 raise InversionError('lgmres failed to converge after {} iterations'.format(info))
             assert info == 0
     elif options['type'] == 'least_squares_lsmr':
+        from scipy.sparse.linalg import lsmr
         for i, VV in enumerate(V):
             R[i], info, itn, _, _, _, _, _ = lsmr(matrix, VV,
                                                   damp=options['damp'],
@@ -967,6 +957,7 @@ def _apply_inverse(matrix, V, options=None, check_finite=True):
             if info == 7:
                 raise InversionError('lsmr failed to converge after {} iterations'.format(itn))
     elif options['type'] == 'pyamg':
+        import pyamg
         if len(V) > 0:
             V_iter = iter(enumerate(V))
             R[0], ml = pyamg.solve(matrix, next(V_iter)[1],
@@ -979,6 +970,7 @@ def _apply_inverse(matrix, V, options=None, check_finite=True):
                                    maxiter=options['maxiter'],
                                    existing_solver=ml)
     elif options['type'] == 'pyamg-rs':
+        import pyamg
         ml = pyamg.ruge_stuben_solver(matrix,
                                       strength=options['strength'],
                                       CF=options['CF'],
@@ -994,6 +986,7 @@ def _apply_inverse(matrix, V, options=None, check_finite=True):
                             cycle=options['cycle'],
                             accel=options['accel'])
     elif options['type'] == 'pyamg-sa':
+        import pyamg
         ml = pyamg.smoothed_aggregation_solver(matrix,
                                                symmetry=options['symmetry'],
                                                strength=options['strength'],
