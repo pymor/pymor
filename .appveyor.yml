@@ -21,14 +21,6 @@ environment:
       PYTHON_ARCH: "64"
       CONDA: "C:\\Miniconda3-x64"
 
-    - PYTHON_VERSION: "3.5" # currently 3.5.4
-      PYTHON_ARCH: "32"
-      CONDA: "C:\\Miniconda35"
-
-    - PYTHON_VERSION: "3.5" # currently 3.5.4
-      PYTHON_ARCH: "64"
-      CONDA: "C:\\Miniconda35-x64"
-
 
 
 install:
@@ -60,6 +52,7 @@ install:
   # target Python version and architecture
   - pip install -r requirements.txt
   - pip install -r requirements-travis.txt
+  - pip install -r requirements-optional.txt
 
 build_script:
   # Build the compiled extension
