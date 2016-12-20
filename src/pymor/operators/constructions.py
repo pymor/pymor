@@ -57,7 +57,9 @@ class LincombOperator(OperatorBase):
 
     @property
     def T(self):
-        return self.with_(operators=[op.T for op in self.operators],
+        options = {'inverse': self.solver_options.get('inverse_transpose'),
+                   'inverse_transpose': self.solver_options.get('inverse')} if self.solver_options else None
+        return self.with_(operators=[op.T for op in self.operators], solver_options=options,
                           name=self.name + '_transposed')
 
     def evaluate_coefficients(self, mu):
@@ -259,7 +261,10 @@ class Concatenation(OperatorBase):
 
     @property
     def T(self):
-        return type(self)(self.first.T, self.second.T, name=self.name + '_transposed')
+        options = {'inverse': self.solver_options.get('inverse_transpose'),
+                   'inverse_transpose': self.solver_options.get('inverse')} if self.solver_options else None
+        return type(self)(self.first.T, self.second.T, solver_options=options,
+                          name=self.name + '_transposed')
 
     def apply(self, U, mu=None):
         mu = self.parse_parameter(mu)
@@ -804,8 +809,10 @@ class AdjointOperator(OperatorBase):
         if not self.source_product and not self.range_product:
             return self.operator
         else:
+            options = {'inverse': self.solver_options.get('inverse_transpose'),
+                       'inverse_transpose': self.solver_options.get('inverse')} if self.solver_options else None
             return AdjointOperator(self.operator.T, source_product=self.range_product,
-                                   range_product=self.source_product)
+                                   range_product=self.source_product, solver_options=options)
 
     def apply(self, U, mu=None):
         assert U in self.source

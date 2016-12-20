@@ -234,9 +234,10 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 
     @property
     def T(self):
-        # TODO: Process solver_options
+        options = {'inverse': self.solver_options.get('inverse_transpose'),
+                   'inverse_transpose': self.solver_options.get('inverse')} if self.solver_options else None
         return self.with_(matrix=self._matrix.T, source_id=self.range_id, range_id=self.source_id,
-                          solver_options=None, name=self.name + '_transposed')
+                          solver_options=options, name=self.name + '_transposed')
 
     def _assemble(self, mu=None):
         pass

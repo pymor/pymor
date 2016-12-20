@@ -266,8 +266,10 @@ class ProjectedOperator(OperatorBase):
         if self.product:
             return super().T
         else:
+            options = {'inverse': self.solver_options.get('inverse_transpose'),
+                       'inverse_transpose': self.solver_options.get('inverse')} if self.solver_options else None
             return ProjectedOperator(self.operator.T, self.source_basis, self.range_basis,
-                                     name=self.name + '_transposed')
+                                     solver_options=options, name=self.name + '_transposed')
 
     def apply(self, U, mu=None):
         mu = self.parse_parameter(mu)
