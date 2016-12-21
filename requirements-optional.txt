@@ -1,3 +1,4 @@
+-r requirements.txt
 https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz
 ipyparallel
 ipython>=3.0
