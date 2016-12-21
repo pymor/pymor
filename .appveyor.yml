@@ -16,18 +16,43 @@ environment:
     - PYTHON_VERSION: "3.4" # currently 3.4.3
       PYTHON_ARCH: "32"
       CONDA: "C:\\Miniconda3"
+      MARKER: "slow"
 
     - PYTHON_VERSION: "3.4" # currently 3.4.3
       PYTHON_ARCH: "64"
       CONDA: "C:\\Miniconda3-x64"
+      MARKER: "slow"
 
     - PYTHON_VERSION: "3.5" # currently 3.5.1
       PYTHON_ARCH: "32"
       CONDA: "C:\\Miniconda35"
+      MARKER: "slow"
 
     - PYTHON_VERSION: "3.5" # currently 3.5.1
       PYTHON_ARCH: "64"
       CONDA: "C:\\Miniconda35-x64"
+      MARKER: "slow"
+
+    - PYTHON_VERSION: "3.4" # currently 3.4.3
+      PYTHON_ARCH: "32"
+      CONDA: "C:\\Miniconda3"
+      MARKER: "not slow"
+
+    - PYTHON_VERSION: "3.4" # currently 3.4.3
+      PYTHON_ARCH: "64"
+      CONDA: "C:\\Miniconda3-x64"
+      MARKER: "not slow"
+
+    - PYTHON_VERSION: "3.5" # currently 3.5.1
+      PYTHON_ARCH: "32"
+      CONDA: "C:\\Miniconda35"
+      MARKER: "not slow"
+
+    - PYTHON_VERSION: "3.5" # currently 3.5.1
+      PYTHON_ARCH: "64"
+      CONDA: "C:\\Miniconda35-x64"
+      MARKER: "not slow"
+
 
 
 
@@ -69,7 +94,7 @@ build_script:
 test_script:
   # Run the project tests
   - "set PYTHONPATH=%cd%\\src;%PYTHONPATH%"
-  - py.test
+  - py.test -r sxX -k "%MARKER%"
 
 #after_test:
   # If tests are successful, create binary packages for the project.
