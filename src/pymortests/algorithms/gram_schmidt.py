@@ -44,6 +44,8 @@ def test_gram_schmidt_biorth(vector_array):
         return
     l = len(U) // 2
     l = min((l, U.dim - 1))
+    if l < 1:
+        return
     U1 = U[:l].copy()
     U2 = U[l:2 * l].copy()
 
@@ -53,8 +55,9 @@ def test_gram_schmidt_biorth(vector_array):
     assert np.all(almost_equal(U1, V1))
     assert np.all(almost_equal(U2, V2))
     assert np.allclose(A2.dot(A1), np.eye(len(A1)))
-    assert np.all(almost_equal(U1, A1.lincomb(U1.dot(A2)), rtol=1e-9))
-    assert np.all(almost_equal(U2, A2.lincomb(U2.dot(A1)), rtol=1e-9))
+    c = np.linalg.cond(A1.data) * np.linalg.cond(A2.data)
+    assert np.all(almost_equal(U1, A1.lincomb(U1.dot(A2)), rtol=c * 1e-14))
+    assert np.all(almost_equal(U2, A2.lincomb(U2.dot(A1)), rtol=c * 1e-14))
 
     B1, B2 = gram_schmidt_biorth(U1, U2, copy=False)
     assert np.all(almost_equal(A1, B1))
@@ -63,12 +66,14 @@ def test_gram_schmidt_biorth(vector_array):
     assert np.all(almost_equal(A2, U2))
 
 
-def test_gram_schmidt_with_product_biorth(operator_with_arrays_and_products):
+def test_gram_schmidt_biorth_with_product(operator_with_arrays_and_products):
     _, _, U, _, p, _ = operator_with_arrays_and_products
     if U.dim < 2:
         return
     l = len(U) // 2
     l = min((l, U.dim - 1))
+    if l < 1:
+        return
     U1 = U[:l].copy()
     U2 = U[l:2 * l].copy()
 
@@ -78,8 +83,9 @@ def test_gram_schmidt_with_product_biorth(operator_with_arrays_and_products):
     assert np.all(almost_equal(U1, V1))
     assert np.all(almost_equal(U2, V2))
     assert np.allclose(p.apply2(A2, A1), np.eye(len(A1)))
-    assert np.all(almost_equal(U1, A1.lincomb(p.apply2(U1, A2)), rtol=1e-9))
-    assert np.all(almost_equal(U2, A2.lincomb(p.apply2(U2, A1)), rtol=1e-9))
+    c = np.linalg.cond(A1.data) * np.linalg.cond(p.apply(A2).data)
+    assert np.all(almost_equal(U1, A1.lincomb(p.apply2(U1, A2)), rtol=c * 1e-14))
+    assert np.all(almost_equal(U2, A2.lincomb(p.apply2(U2, A1)), rtol=c * 1e-14))
 
     B1, B2 = gram_schmidt_biorth(U1, U2, product=p, copy=False)
     assert np.all(almost_equal(A1, B1))
