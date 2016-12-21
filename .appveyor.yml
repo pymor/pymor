@@ -5,21 +5,29 @@ environment:
     # See: http://www.appveyor.com/docs/installed-software#python
 
     # building pymor extensions fails on 2.7 currently
-    #- PYTHON_VERSION: "2.7" # currently 2.7.12
+    #- PYTHON_VERSION: "2.7" # currently 2.7.11
       #PYTHON_ARCH: "32"
       #CONDA: "C:\\Miniconda"
 
-    #- PYTHON_VERSION: "2.7" # currently 2.7.12
+    #- PYTHON_VERSION: "2.7" # currently 2.7.11
       #PYTHON_ARCH: "64"
       #CONDA: "C:\\Miniconda-x64"
 
-    - PYTHON_VERSION: "3.4" # currently 3.4.4
+    - PYTHON_VERSION: "3.4" # currently 3.4.3
       PYTHON_ARCH: "32"
       CONDA: "C:\\Miniconda3"
 
-    - PYTHON_VERSION: "3.4" # currently 3.4.4
+    - PYTHON_VERSION: "3.4" # currently 3.4.3
       PYTHON_ARCH: "64"
       CONDA: "C:\\Miniconda3-x64"
+
+    - PYTHON_VERSION: "3.5" # currently 3.5.1
+      PYTHON_ARCH: "32"
+      CONDA: "C:\\Miniconda35"
+
+    - PYTHON_VERSION: "3.5" # currently 3.5.1
+      PYTHON_ARCH: "64"
+      CONDA: "C:\\Miniconda35-x64"
 
 
 
