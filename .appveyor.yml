@@ -53,49 +53,36 @@ environment:
       CONDA: "C:\\Miniconda35-x64"
       MARKER: "not slow"
 
-
-
-
 install:
   # If there is a newer build queued for the same PR, cancel this one.
   # The AppVeyor 'rollout builds' option is supposed to serve the same
   # purpose but it is problematic because it tends to cancel builds pushed
   # directly to master instead of just PR builds (or the converse).
   # credits: JuliaLang developers.
-  - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
+    - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
         https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=50).builds | `
         Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
           throw "There are newer queued builds for this pull request, failing early." }
-
-  - "set PATH=%CONDA%;%CONDA%\\Scripts;%PATH%"
-  - conda config --set always_yes yes --set changeps1 no
-  - conda update -q conda
-  - conda info -a
-  - "conda create -q -n test-environment python=%PYTHON_VERSION% numpy scipy nose"
-  # virtualenv activation
-  - activate test-environment
-
-  # Check that we have the expected version and architecture for Python
-  - "python --version"
-  - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
-
-  # Install the build dependencies of the project. If some dependencies contain
-  # compiled extensions and are not provided as pre-built wheel packages,
-  # pip will build them from source using the MSVC compiler matching the
-  # target Python version and architecture
-  - conda install -c conda-forge pyside=1.2.4
-  - pip install -r requirements.txt
-  - pip install -r requirements-travis.txt
-  - pip install -r requirements-optional.txt
+    - set PATH=%CONDA%;%CONDA%\Scripts;%PATH%
+    - conda config --set always_yes yes --set changeps1 no
+    - conda update -q conda
+    - conda install numpy pip
+    - for /f %%i in (requirements.txt requirements-optional.txt requirements-travis.txt) do (
+                conda install %%i 1> nul 2>&1 & echo %%i
+            )
+    - for /f %%i in (requirements.txt requirements-optional.txt requirements-travis.txt) do (
+                pip install %%i 1> nul 2>&1 & echo %%i
+            )
 
 build_script:
-  # Build the compiled extension
-  - python setup.py build_ext -i
+    - set PATH=%CONDA%;%CONDA%\Scripts;%PATH%
+    - pip freeze
+    - set PYTHONPATH=%cd%\src;%PYTHONPATH%;
+    - python setup.py build_ext -i
 
 test_script:
-  # Run the project tests
-  - "set PYTHONPATH=%cd%\\src;%PYTHONPATH%"
-  - py.test -r sxX -k "%MARKER%"
+    - set PYTHONPATH=%cd%\src;%PYTHONPATH%;
+    - py.test -r sxX -k "%MARKER%"
 
 #after_test:
   # If tests are successful, create binary packages for the project.
