@@ -182,7 +182,8 @@ def test_analyze_pickle4():
     finally:
         shutil.rmtree(d)
 
-
+@pytest.mark.skipif('win' in sys.platform,
+                    reason='ipython cluster start stalls indefinitely on win32')
 def test_thermalblock_ipython(demo_args):
     if demo_args[0] != 'pymordemos.thermalblock':
         return
