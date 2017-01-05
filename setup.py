@@ -114,8 +114,8 @@ class build_py27(_build_py):
         except OSError:
             # fallback for .egg installs
             fixers = ['lib3to2.fixes.fix_{}'.format(s) for s in ('absimport', 'annotations', 'bitlength', 'bool',
-                'bytes', 'classdecorator', 'collections', 'dctsetcomp', 'division', 'except', 'features', 
-                'fullargspec', 'funcattrs', 'getcwd', 'imports', 'imports2', 'input', 'int', 'intern', 'itertools', 
+                'bytes', 'classdecorator', 'collections', 'dctsetcomp', 'division', 'except', 'features',
+                'fullargspec', 'funcattrs', 'getcwd', 'imports', 'imports2', 'input', 'int', 'intern', 'itertools',
                 'kwargs', 'memoryview', 'metaclass', 'methodattrs', 'newstyle', 'next', 'numliterals', 'open', 'print',
                 'printfunction', 'raise', 'range', 'reduce', 'setliteral', 'str', 'super', 'throw', 'unittest',
                 'unpacking', 'with')]
@@ -124,7 +124,7 @@ class build_py27(_build_py):
                 'fix_unittest', 'fix_absimport', 'fix_dctsetcomp', 'fix_setliteral', 'fix_with', 'fix_open'):
             fixers.remove('lib3to2.fixes.{}'.format(fix))
         fixers.append('fix_pymor_futures')
-        print(fixers) 
+        print(fixers)
         self.rtool = lib3to2.main.StdoutRefactoringTool(
             fixers,
             None,
@@ -132,8 +132,8 @@ class build_py27(_build_py):
             True,
             False
         )
-        self.rtool.refactor_dir('src', write=True) 
-        self.rtool.refactor_dir('docs', write=True) 
+        self.rtool.refactor_dir('src', write=True)
+        self.rtool.refactor_dir('docs', write=True)
         open(checkpoint_fn, 'wta').write('converted')
 
 cmdclass = {}
