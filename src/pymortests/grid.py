@@ -8,6 +8,8 @@ from itertools import product
 import numpy as np
 import pytest
 
+from pymor.core.exceptions import PySideMissing
+from pymor.gui.qt import stop_gui_processes
 from pymortests.fixtures.grid import grid, grids_with_visualize
 from pymortests.pickling import assert_picklable_without_dumps_function
 
@@ -429,6 +431,22 @@ def test_pickle(grid):
 
 
 def test_visualize(grids_with_visualize):
-    codim = 2
-    U = np.ones(grid.size(codim))
-    grids_with_visualize.visualize(U, codim)
+    import sys
+    sys._called_from_test = True
+
+    def nop(*args, **kwargs):
+        pass
+    try:
+        from matplotlib import pyplot
+        pyplot.show = nop
+    except ImportError:
+        pass
+
+    try:
+        g = grids_with_visualize
+        U = np.ones(g.size(g.dim))
+        g.visualize(U, g.dim)
+    except PySideMissing:
+        pytest.xfail("PySide missing")
+    finally:
+        stop_gui_processes()
