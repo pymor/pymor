@@ -335,9 +335,7 @@ def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
     ###########################################
 
     # FEniCS wrappers
-    from pymor.gui.fenics import FenicsVisualizer
-    from pymor.operators.fenics import FenicsMatrixOperator
-    from pymor.vectorarrays.fenics import FenicsVectorSpace
+    from pymor.bindings.fenics import FenicsVectorSpace, FenicsMatrixOperator, FenicsVisualizer
 
     # generic pyMOR classes
     from pymor.discretizations.basic import StationaryDiscretization
