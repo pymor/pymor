@@ -7,7 +7,7 @@ import pytest
 
 from pymor.algorithms.basic import almost_equal
 from pymor.core.exceptions import InversionError
-from pymor.operators.constructions import SelectionOperator
+from pymor.operators.constructions import SelectionOperator, InverseOperator, InverseTransposeOperator
 from pymor.parameters.base import ParameterType
 from pymor.parameters.functionals import GenericParameterFunctional
 from pymor.vectorarrays.numpy import NumpyVectorArray
@@ -285,3 +285,48 @@ def test_restricted(operator_with_arrays):
         op_U = rop.range.make_array(op.apply(U, mu=mu).components(components))
         rop_U = rop.apply(rop.source.make_array(U.components(source_dofs)), mu=mu)
         assert np.all(almost_equal(op_U, rop_U))
+
+
+def test_InverseOperator(operator_with_arrays):
+    op, mu, U, V = operator_with_arrays
+    inv = InverseOperator(op)
+    try:
+        assert np.all(almost_equal(inv.apply(V, mu=mu), op.apply_inverse(V, mu=mu)))
+    except InversionError:
+        pass
+    try:
+        assert np.all(almost_equal(inv.apply_inverse(U, mu=mu), op.apply(U, mu=mu)))
+    except InversionError:
+        pass
+    if op.linear:
+        try:
+            assert np.all(almost_equal(inv.apply_transpose(U, mu=mu), op.apply_inverse_transpose(U, mu=mu)))
+        except (InversionError, NotImplementedError):
+            pass
+        try:
+            assert np.all(almost_equal(inv.apply_inverse_transpose(V, mu=mu), op.apply_transpose(V, mu=mu)))
+        except (InversionError, NotImplementedError):
+            pass
+
+
+def test_InverseTransposeOperator(operator_with_arrays):
+    op, mu, U, V = operator_with_arrays
+    if not op.linear:
+        return
+    inv = InverseTransposeOperator(op)
+    try:
+        assert np.all(almost_equal(inv.apply(U, mu=mu), op.apply_inverse_transpose(U, mu=mu)))
+    except (InversionError, NotImplementedError):
+        pass
+    try:
+        assert np.all(almost_equal(inv.apply_inverse(V, mu=mu), op.apply_transpose(V, mu=mu)))
+    except (InversionError, NotImplementedError):
+        pass
+    try:
+        assert np.all(almost_equal(inv.apply_transpose(V, mu=mu), op.apply_inverse(V, mu=mu)))
+    except (InversionError, NotImplementedError):
+        pass
+    try:
+        assert np.all(almost_equal(inv.apply_inverse_transpose(U, mu=mu), op.apply(U, mu=mu)))
+    except (InversionError, NotImplementedError):
+        pass
