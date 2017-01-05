@@ -42,6 +42,8 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
         Tolerance for the check.
     copy
         If `True`, create a copy of `A` instead of modifying `A` in-place.
+    find_duplicates
+        unused
 
 
     Returns
