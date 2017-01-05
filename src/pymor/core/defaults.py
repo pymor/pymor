@@ -110,6 +110,7 @@ Defaults
             if not defaults:
                 raise ValueError('Wrapped function has no optional arguments at all!')
             defaults = list(defaults)
+            # note getargspec here isn't actually deprecated since this branch is py2 only
             argspec = inspect.getargspec(func)
             argnames = argspec.args
 

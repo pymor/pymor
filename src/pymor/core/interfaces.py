@@ -155,6 +155,7 @@ class UberMeta(abc.ABCMeta):
 
         if config.PY2:
             try:
+                # note getargspec here isn't actually deprecated since this branch is py2 only
                 args, varargs, keywords, defaults = inspect.getargspec(c.__init__)
                 assert args[0] == 'self'
                 c._init_arguments = tuple(args[1:])
