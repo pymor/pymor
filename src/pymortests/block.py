@@ -10,6 +10,7 @@ from pymor.operators.block import BlockOperator, BlockDiagonalOperator
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
+
 def test_hstack():
     np.random.seed(0)
     A = np.random.randn(2, 3)
@@ -20,6 +21,7 @@ def test_hstack():
     assert Cop.source.dim == 7
     assert Cop.range.dim == 2
 
+
 def test_vstack():
     np.random.seed(0)
     A = np.random.randn(2, 3)
@@ -29,6 +31,7 @@ def test_vstack():
     Cop = BlockOperator.vstack((Aop, Bop))
     assert Cop.source.dim == 3
     assert Cop.range.dim == 6
+
 
 def test_apply():
     np.random.seed(0)
@@ -80,6 +83,7 @@ def test_apply_transpose():
     w = np.hstack((wva.block(0).data, wva.block(1).data))
     assert np.allclose(A.T.dot(v), w)
 
+
 def test_block_diagonal():
     np.random.seed(0)
     A = np.random.randn(2, 3)
@@ -89,6 +93,7 @@ def test_block_diagonal():
     Cop = BlockDiagonalOperator((Aop, Bop))
     assert Cop.source.dim == 8
     assert Cop.range.dim == 6
+
 
 def test_blk_diag_apply_inverse():
     np.random.seed(0)
@@ -110,6 +115,7 @@ def test_blk_diag_apply_inverse():
     wva = Cop.apply_inverse(vva)
     w = np.hstack((wva.block(0).data, wva.block(1).data))
     assert np.allclose(spla.solve(C, v), w)
+
 
 def test_blk_diag_apply_inverse_transpose():
     np.random.seed(0)

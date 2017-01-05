@@ -291,6 +291,8 @@ thermalblock_fixedparam_operator_with_arrays_and_products_generators = \
 
 
 num_misc_operators = 10
+
+
 def misc_operator_with_arrays_and_products_factory(n):
     if n == 0:
         from pymor.operators.constructions import ComponentProjection
@@ -353,6 +355,8 @@ def misc_operator_with_arrays_and_products_factory(n):
 
 
 num_unpicklable_misc_operators = 1
+
+
 def unpicklable_misc_operator_with_arrays_and_products_factory(n):
     if n == 0:
         from pymor.operators.numpy import NumpyGenericOperator

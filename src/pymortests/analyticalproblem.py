@@ -9,5 +9,6 @@ from pymortests.pickling import assert_picklable, assert_picklable_without_dumps
 def test_pickle(analytical_problem):
     assert_picklable(analytical_problem)
 
+
 def test_pickle_without_dumps_function(picklable_analytical_problem):
     assert_picklable_without_dumps_function(picklable_analytical_problem)

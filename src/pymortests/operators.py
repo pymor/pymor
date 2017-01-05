@@ -22,32 +22,33 @@ def test_selection_op():
     p1 = MonomOperator(1)
     select_rhs_functional = GenericParameterFunctional(
         lambda x: round(float(x["nrrhs"])), 
-        ParameterType({"nrrhs" : ()})
+        ParameterType({"nrrhs": ()})
     )
     s1 = SelectionOperator(
-        operators = [p1], 
-        boundaries = [], 
-        parameter_functional = select_rhs_functional,
-        name = "foo"
+        operators=[p1],
+        boundaries=[],
+        parameter_functional=select_rhs_functional,
+        name="foo"
     )
     x = np.linspace(-1., 1., num=3)
     vx = p1.source.make_array(x[:, np.newaxis])
     assert np.allclose(p1.apply(vx,mu=0).data, s1.apply(vx,mu=0).data)
 
     s2 = SelectionOperator(
-        operators = [p1,p1,p1,p1],
-        boundaries = [-3, 3, 7],
-        parameter_functional = select_rhs_functional,
-        name = "Bar"
+        operators=[p1,p1,p1,p1],
+        boundaries=[-3, 3, 7],
+        parameter_functional=select_rhs_functional,
+        name="Bar"
     )
 
-    assert s2._get_operator_number({"nrrhs":-4}) == 0
-    assert s2._get_operator_number({"nrrhs":-3}) == 0
-    assert s2._get_operator_number({"nrrhs":-2}) == 1
-    assert s2._get_operator_number({"nrrhs":3}) == 1
-    assert s2._get_operator_number({"nrrhs":4}) == 2
-    assert s2._get_operator_number({"nrrhs":7}) == 2
-    assert s2._get_operator_number({"nrrhs":9}) == 3
+    assert s2._get_operator_number({"nrrhs": -4}) == 0
+    assert s2._get_operator_number({"nrrhs": -3}) == 0
+    assert s2._get_operator_number({"nrrhs": -2}) == 1
+    assert s2._get_operator_number({"nrrhs": 3}) == 1
+    assert s2._get_operator_number({"nrrhs": 4}) == 2
+    assert s2._get_operator_number({"nrrhs": 7}) == 2
+    assert s2._get_operator_number({"nrrhs": 9}) == 3
+
 
 def test_lincomb_op():
     p1 = MonomOperator(1)
@@ -197,6 +198,7 @@ def test_apply_inverse_transpose(operator_with_arrays):
         assert len(V) == U.len_ind(ind)
         UU = op.apply_transpose(V, mu=mu)
         assert np.all(almost_equal(UU, U[ind], atol=1e-10, rtol=1e-3))
+
 
 
 def test_projected(operator_with_arrays):

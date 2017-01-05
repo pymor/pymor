@@ -176,6 +176,7 @@ if config.HAVE_PYSIDE:
 
 _launch_qt_app_pids = set()
 
+
 def _launch_qt_app(main_window_factory, block):
     """Wrapper to display plot in a separate process."""
 

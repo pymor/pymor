@@ -14,6 +14,7 @@ from pymor.grids.rect import RectGrid
 from pymor.tools import timing
 import pymor.core
 
+
 class Test_Interface(TestInterface):
 
     def testImplementorlist(self):

@@ -69,6 +69,7 @@ def _write_vtu_series(grid, coordinates, connectivity, data, filename_base, last
         group.addFile(filepath=fn, sim_time=i)
     group.save()
 
+
 def write_vtk(grid, data, filename_base, codim=2, binary_vtk=True, last_step=None):
     """Output grid-associated data in (legacy) vtk format
 
