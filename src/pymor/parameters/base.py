@@ -380,7 +380,7 @@ class Parametric(object):
         assert all(getattr(mu.get(k, None), 'shape', None) == v for k, v in self.parameter_type.items())
         return Parameter({k: mu[k] for k in self.parameter_type})
 
-    def build_parameter_type(self, *args, **kwargs):
+    def build_parameter_type(self, *args, provides=None, **kwargs):
         """Builds the |ParameterType| of the object. Should be called by :meth:`__init__`.
 
         The |ParameterType| of a |Parametric| object is determined by the parameter components
@@ -411,7 +411,7 @@ class Parametric(object):
             itself. The parameter components listed here will not become part of the object's
             |ParameterType|.
         """
-        provides = kwargs.pop('provides', {})
+        provides = provides or {}
         my_parameter_type = {}
 
         def check_shapes(shape1, shape2):
