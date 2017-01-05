@@ -8,7 +8,7 @@ from itertools import product
 import numpy as np
 import pytest
 
-from pymortests.fixtures.grid import grid
+from pymortests.fixtures.grid import grid,
 from pymortests.pickling import assert_picklable_without_dumps_function
 
 
@@ -426,3 +426,9 @@ def test_boundaries_entries(grid):
 
 def test_pickle(grid):
     assert_picklable_without_dumps_function(grid)
+
+
+def test_visualize(grids_with_visualize):
+    codim = 2
+    U = np.ones(grid.size(codim))
+    grids_with_visualize.visualize(U, codim)
