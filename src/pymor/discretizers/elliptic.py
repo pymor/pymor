@@ -62,12 +62,12 @@ def discretize_elliptic_cg(analytical_problem, diameter=None, domain_discretizer
     if grid.reference_element is square:
         DiffusionOperator = cg.DiffusionOperatorQ1
         AdvectionOperator = cg.AdvectionOperatorQ1
-        ReactionOperator  = cg.L2ProductQ1
+        ReactionOperator = cg.L2ProductQ1
         Functional = cg.L2ProductFunctionalQ1
     else:
         DiffusionOperator = cg.DiffusionOperatorP1
         AdvectionOperator = cg.AdvectionOperatorP1
-        ReactionOperator  = cg.L2ProductP1
+        ReactionOperator = cg.L2ProductP1
         Functional = cg.L2ProductFunctionalP1
 
     p = analytical_problem

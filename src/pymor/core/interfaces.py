@@ -85,6 +85,7 @@ from pymor.core.exceptions import ConstError, SIDGenerationError
 DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_WITH_SPHINX', 0)) == 1
 NoneType = type(None)
 
+
 class UID(object):
     '''Provides unique, quickly computed ids by combinding a session UUID4 with a counter.'''
 

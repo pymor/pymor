@@ -12,7 +12,8 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymor.vectorarrays.list import NumpyListVectorSpace
 
 
-import os; TRAVIS = os.getenv('TRAVIS') == 'true'
+import os
+TRAVIS = os.getenv('TRAVIS') == 'true'
 
 
 def random_integers(count, seed):
@@ -81,6 +82,7 @@ if config.HAVE_DEALII:
         for v, a in zip(U._list, np.random.random((length, dim))):
             v.impl[:] = a
         return U
+
 
 def vector_array_from_empty_reserve(v, reserve):
     if reserve == 0:
@@ -206,7 +208,6 @@ dealii_vector_array_pair_with_different_dim_generators = \
                                                      dealii_vector_array_factory(l2, d2, s2))
      for l, l2, d1, d2, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_different_dim] \
     if config.HAVE_DEALII else []
-
 
 
 @pytest.fixture(params=numpy_vector_array_generators + numpy_list_vector_array_generators +

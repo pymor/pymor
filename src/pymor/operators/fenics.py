@@ -64,8 +64,8 @@ if config.HAVE_FENICS:
             for op, c in zip(operators[1:], coefficients[1:]):
                 if isinstance(op, ZeroOperator):
                     continue
-                matrix.axpy(c, op.matrix, False)  # in general, we cannot assume the same nonzero pattern for
-                                                  # all matrices. how to improve this?
+                # in general, we cannot assume the same nonzero pattern for all matrices. how to improve this?
+                matrix.axpy(c, op.matrix, False)
 
             return FenicsMatrixOperator(matrix, self.source.V, self.range.V, name=name)
 

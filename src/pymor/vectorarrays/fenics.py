@@ -65,10 +65,9 @@ if config.HAVE_FENICS:
             return x.array()
 
         def amax(self):
-            A = np.abs(self.impl.array())  # there seems to be no way in the interface to
-                                           # compute amax without making a copy. also,
-                                           # we need to check how things behave in the MPI
-                                           # parallel case.
+            A = np.abs(self.impl.array())
+            # there seems to be no way in the interface to compute amax without making a copy. also,
+            # we need to check how things behave in the MPI parallel case.
             max_ind = np.argmax(A)
             max_val = A[max_ind]
             return max_ind, max_val

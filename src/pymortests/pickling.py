@@ -23,6 +23,7 @@ is_equal_dispatch_table = {}
 
 def func_with_closure_generator():
     x = 42
+
     def func_with_closure():
         print(x)
     return func_with_closure

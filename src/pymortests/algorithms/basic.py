@@ -163,8 +163,8 @@ def test_almost_equal_wrong_ind(compatible_vector_array_pair):
     v1, v2 = compatible_vector_array_pair
     for ind1, ind2 in invalid_ind_pairs(v1, v2):
         for n in ['sup', 'l1', 'l2']:
-            if (ind1 is None and len(v1) == 1 or isinstance(ind1, Number) or hasattr(ind1, '__len__') and len(ind1) == 1 or
-                ind2 is None and len(v2) == 1 or isinstance(ind2, Number) or hasattr(ind2, '__len__') and len(ind2) == 1):  # NOQA
+            if (ind1 is None and len(v1) == 1 or isinstance(ind1, Number) or hasattr(ind1, '__len__') and len(ind1) == 1 or  # NOQA
+                ind2 is None and len(v2) == 1 or isinstance(ind2, Number) or hasattr(ind2, '__len__') and len(ind2) == 1):   # NOQA
                 continue
             c1, c2 = v1.copy(), v2.copy()
             with pytest.raises(Exception):

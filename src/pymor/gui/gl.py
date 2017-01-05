@@ -92,8 +92,8 @@ if config.HAVE_PYSIDE and config.HAVE_QTOPENGL and config.HAVE_GL:
             cmap = get_cmap(name)
         except ValueError:
             from pymor.core.logger import getLogger
-            if name != 'viridis': # this is our default which might not exist for older matplotlib so a warning would be
-                                  # annoying
+            # this is our default which might not exist for older matplotlib so a warning would be annoying
+            if name != 'viridis':
                 getLogger('pymor.gui.gl.colormap_texture').warn('Unknown colormap {}, using default colormap'.format(name))
             cmap = get_cmap()
         colormap[:] = cmap(np.linspace(0., 1., resolution))
