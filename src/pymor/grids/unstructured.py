@@ -45,6 +45,8 @@ class UnstructuredTriangleGrid(AffineGridInterface):
         self.__embeddings = (TRANS, SHIFTS)
         self.__subentities = (np.arange(len(faces), dtype=np.int32).reshape(-1, 1), edges, faces)
         self.__sizes = (len(faces), num_edges, len(vertices))
+        self.domain = np.array([[np.min(vertices[:, 0]), np.min(vertices[:, 1])],
+                                [np.max(vertices[:, 0]), np.max(vertices[:, 1])]])
 
     def size(self, codim=0):
         assert 0 <= codim <= 2, 'Invalid codimension'
@@ -83,13 +85,13 @@ class UnstructuredTriangleGrid(AffineGridInterface):
         """
         from pymor.gui.qt import visualize_patch
         from pymor.vectorarrays.interfaces import VectorArrayInterface
-        from pymor.vectorarrays.numpy import NumpyVectorArray
+        from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
         if isinstance(U, (np.ndarray, VectorArrayInterface)):
             U = (U,)
         assert all(isinstance(u, (np.ndarray, VectorArrayInterface)) for u in U)
-        U = tuple(NumpyVectorArray(u) if isinstance(u, np.ndarray) else
+        U = tuple(NumpyVectorSpace.make_array(u) if isinstance(u, np.ndarray) else
                   u if isinstance(u, NumpyVectorArray) else
-                  NumpyVectorArray(u.data)
+                  NumpyVectorSpace.make_array(u.data)
                   for u in U)
         bounding_box = kwargs.pop('bounding_box', self.domain)
         visualize_patch(self, U, codim=codim, bounding_box=bounding_box, **kwargs)
