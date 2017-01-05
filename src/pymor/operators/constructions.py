@@ -985,6 +985,8 @@ def induced_norm(product, raise_negative=True, tol=1e-10, name=None):
         If `True`, raise an exception if calculated norm is negative.
     tol
         See above.
+    name
+        optional, if None product's name is used
 
     Returns
     -------
