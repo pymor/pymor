@@ -42,7 +42,7 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
         else:
             return self.range.make_array(V)
 
-    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
+    def apply_transpose(self, V, mu=None):
         raise NotImplementedError
 
     def apply_inverse(self, V, mu=None, least_squares=False):

@@ -26,8 +26,8 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
         :'inverse':           solver options used for
                               :meth:`~OperatorInterface.apply_inverse`
-        :'inverse_adjoint':   solver options used for
-                              :meth:`~OperatorInterface.apply_inverse_adjoint`
+        :'inverse_transpose': solver options used for
+                              :meth:`~OperatorInterface.apply_inverse_transpose`
         :'jacobian':          solver options for the operators returned
                               by :meth:`~OperatorInterface.jacobian`
                               (has no effect for linear operators)
@@ -47,9 +47,9 @@ class OperatorInterface(ImmutableInterface, Parametric):
     range
         The range |VectorSpace|.
     T
-        The transposed operator, i.e. ::
+        The transpose operator, i.e. ::
 
-            self.T.apply(V, mu) == self.apply_adjoint(V, mu)
+            self.T.apply(V, mu) == self.apply_transpose(V, mu)
 
         for all V, mu.
     """
@@ -127,39 +127,28 @@ class OperatorInterface(ImmutableInterface, Parametric):
         pass
 
     @abstractmethod
-    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
-        """Apply the adjoint operator.
+    def apply_transpose(self, V, mu=None):
+        """Apply the transpose operator.
 
-        For a linear operator `op` the adjoint `op^*` of `op` is given by::
+        For any given linear |Operator| `op`, |Parameter| `mu` and
+        |VectorArrays| `U`, `V` in the :attr:`~OperatorInterface.source`
+        resp. :attr:`~OperatorInterface.range` we have::
 
-            (op^*(v), u)_s = (v, op(u))_r,
+            op.apply_transpose(V, mu).dot(U) == V.dot(op.apply(U, mu))
 
-        where `( , )_s` and `( , )_r` denote the inner products on the source
-        and range space of `op`. If `op` and the two products are given by the
-        matrices `M`, `P_s` and `P_r`, then::
-
-            op^*(v) = P_s^(-1) * M^T * P_r * v,
-
-        with `M^T` denoting the transposed of `M`. Thus, if `( , )_s` and `( , )_r`
-        are the Euclidean inner products, `op^*v` is simply given by multiplication of
-        the matrix of `op` with `v` from the left.
+        Thus, when `op` is represented by a matrix `M`, `apply_transpose` is
+        given by left-multplication of `M` with `V`.
 
         Parameters
         ----------
-        U
-            |VectorArray| of vectors to which the adjoint operator is applied.
+        V
+            |VectorArray| of vectors to which the transpose operator is applied.
         mu
-            The |Parameter| for which to apply the adjoint operator.
-        source_product
-            The inner product |Operator| on the source space.
-            If `None`, the Euclidean product is chosen.
-        range_product
-            The inner product |Operator| on the range space.
-            If `None`, the Euclidean product is chosen.
+            The |Parameter| for which to apply the transpose operator.
 
         Returns
         -------
-        |VectorArray| of the adjoint operator evaluations.
+        |VectorArray| of the transpose operator evaluations.
         """
         pass
 
@@ -198,20 +187,15 @@ class OperatorInterface(ImmutableInterface, Parametric):
         pass
 
     @abstractmethod
-    def apply_inverse_adjoint(self, U, mu=None, source_product=None, range_product=None,
-                              least_squares=False):
-        """Apply the inverse adjoint operator.
+    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+        """Apply the inverse transpose operator.
 
         Parameters
         ----------
         U
-            |VectorArray| of vectors to which the inverse adjoint operator is applied.
+            |VectorArray| of vectors to which the inverse transpose operator is applied.
         mu
-            The |Parameter| for which to evaluate the inverse adjoint operator.
-        source_product
-            See :meth:`~OperatorInterface.apply_adjoint`.
-        range_product
-            See :meth:`~OperatorInterface.apply_adjoint`.
+            The |Parameter| for which to evaluate the inverse transpose operator.
         least_squares
             If `True`, solve the least squares problem::
 
@@ -227,7 +211,7 @@ class OperatorInterface(ImmutableInterface, Parametric):
 
         Returns
         -------
-        |VectorArray| of the inverse adjoint operator evaluations.
+        |VectorArray| of the inverse transpose operator evaluations.
 
         Raises
         ------

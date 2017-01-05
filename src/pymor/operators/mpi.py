@@ -116,19 +116,15 @@ class MPIOperator(OperatorBase):
         V = V if self.range.id is None else V.obj_id
         return mpi.call(mpi.method_call, self.obj_id, 'pairwise_apply2', V, U, mu=mu)
 
-    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
-        assert U in self.range
+    def apply_transpose(self, V, mu=None):
+        assert V in self.range
         mu = self.parse_parameter(mu)
-        U = U if self.range.id is None else U.obj_id
-        source_product = source_product and source_product.obj_id
-        range_product = range_product and range_product.obj_id
+        V = V if self.range.id is None else V.obj_id
         if self.source.id is None:
-            return mpi.call(mpi.method_call, self.obj_id, 'apply_adjoint',
-                            U, mu=mu, source_product=source_product, range_product=range_product)
+            return mpi.call(mpi.method_call, self.obj_id, 'apply_transpose', V, mu=mu)
         else:
             return self.source.make_array(
-                mpi.call(mpi.method_call_manage, self.obj_id, 'apply_adjoint',
-                         U, mu=mu, source_product=source_product, range_product=range_product)
+                mpi.call(mpi.method_call_manage, self.obj_id, 'apply_transpose', V, mu=mu)
             )
 
     def apply_inverse(self, V, mu=None, least_squares=False):

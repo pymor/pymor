@@ -57,7 +57,9 @@ class LincombOperator(OperatorBase):
 
     @property
     def T(self):
-        return self.with_(operators=[op.T for op in self.operators],
+        options = {'inverse': self.solver_options.get('inverse_transpose'),
+                   'inverse_transpose': self.solver_options.get('inverse')} if self.solver_options else None
+        return self.with_(operators=[op.T for op in self.operators], solver_options=options,
                           name=self.name + '_transposed')
 
     def evaluate_coefficients(self, mu):
@@ -120,24 +122,20 @@ class LincombOperator(OperatorBase):
             R += c * op.pairwise_apply2(V, U, mu=mu)
         return R
 
-    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
+    def apply_transpose(self, V, mu=None):
         if hasattr(self, '_assembled_operator'):
             if self._defaults_sid == defaults_sid():
-                return self._assembled_operator.apply_adjoint(U, source_product=source_product,
-                                                              range_product=range_product)
+                return self._assembled_operator.apply_transpose(V)
             else:
-                return self.assemble().apply_adjoint(U, source_product=source_product,
-                                                     range_product=range_product)
+                return self.assemble().apply_transpose(V)
         elif self._try_assemble:
-            return self.assemble().apply_adjoint(U, source_product=source_product,
-                                                 range_product=range_product)
+            return self.assemble().apply_transpose(V)
+
         coeffs = self.evaluate_coefficients(mu)
-        R = self.operators[0].apply_adjoint(U, mu=mu, source_product=source_product,
-                                            range_product=range_product)
+        R = self.operators[0].apply_transpose(V, mu=mu)
         R.scal(coeffs[0])
         for op, c in zip(self.operators[1:], coeffs[1:]):
-            R.axpy(c, op.apply_adjoint(U, mu=mu, source_product=source_product,
-                                       range_product=range_product))
+            R.axpy(c, op.apply_transpose(V, mu=mu))
         return R
 
     def assemble(self, mu=None):
@@ -263,16 +261,18 @@ class Concatenation(OperatorBase):
 
     @property
     def T(self):
-        return type(self)(self.first.T, self.second.T, name=self.name + '_transposed')
+        options = {'inverse': self.solver_options.get('inverse_transpose'),
+                   'inverse_transpose': self.solver_options.get('inverse')} if self.solver_options else None
+        return type(self)(self.first.T, self.second.T, solver_options=options,
+                          name=self.name + '_transposed')
 
     def apply(self, U, mu=None):
         mu = self.parse_parameter(mu)
         return self.second.apply(self.first.apply(U, mu=mu), mu=mu)
 
-    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
+    def apply_transpose(self, V, mu=None):
         mu = self.parse_parameter(mu)
-        return self.first.apply_adjoint(self.second.apply_adjoint(U, mu=mu, range_product=range_product),
-                                        mu=mu, source_product=source_product)
+        return self.first.apply_transpose(self.second.apply_transpose(V, mu=mu), mu=mu)
 
     def jacobian(self, U, mu=None):
         assert len(U) == 1
@@ -365,32 +365,17 @@ class IdentityOperator(OperatorBase):
         assert U in self.source
         return U.copy()
 
-    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
-        assert U in self.range
-        assert source_product is None or source_product.source == source_product.range == self.source
-        assert range_product is None or range_product.source == range_product.range == self.range
-        if range_product:
-            PrU = range_product.apply(U)
-        else:
-            PrU = U.copy()
-        if source_product:
-            return source_product.apply_inverse(PrU)
-        else:
-            return PrU
+    def apply_transpose(self, V, mu=None):
+        assert V in self.range
+        return V.copy()
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         assert V in self.range
         return V.copy()
 
-    def apply_inverse_adjoint(self, U, mu=None, source_product=None, range_product=None, least_squares=False):
-        if source_product or range_product:
-            return super().apply_inverse_adjoint(U, mu=mu,
-                                                 source_product=source_product,
-                                                 range_product=range_product,
-                                                 least_squares=least_squares)
-        else:
-            assert U in self.source
-            return U.copy()
+    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+        assert U in self.source
+        return U.copy()
 
     def assemble(self, mu=None):
         return self
@@ -505,9 +490,9 @@ class ZeroOperator(OperatorBase):
         assert U in self.source
         return self.range.zeros(len(U))
 
-    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
-        assert U in self.range
-        return self.source.zeros(len(U))
+    def apply_transpose(self, V, mu=None):
+        assert V in self.range
+        return self.source.zeros(len(V))
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         assert V in self.range
@@ -515,7 +500,7 @@ class ZeroOperator(OperatorBase):
             raise InversionError
         return self.source.zeros(len(V))
 
-    def apply_inverse_adjoint(self, U, mu=None, source_product=None, range_product=None, least_squares=False):
+    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
         assert U in self.source
         if not least_squares:
             raise InversionError
@@ -596,39 +581,16 @@ class VectorArrayOperator(OperatorBase):
         else:
             return self.range.make_array(U.dot(self._array))
 
-    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
-        assert U in self.range
-        assert source_product is None or source_product.source == source_product.range == self.source
-        assert range_product is None or range_product.source == range_product.range == self.range
+    def apply_transpose(self, V, mu=None):
+        assert V in self.range
         if not self.transposed:
-            if range_product:
-                ATPrU = self.source.make_array(range_product.apply2(self._array, U).T)
-            else:
-                ATPrU = self.source.make_array(self._array.dot(U).T)
-            if source_product:
-                return source_product.apply_inverse(ATPrU)
-            else:
-                return ATPrU
+            return self.source.make_array(self._array.dot(V).T)
         else:
-            if range_product:
-                PrU = range_product.apply(U)
-            else:
-                PrU = U
-            ATPrU = self._array.lincomb(PrU.data)
-            if source_product:
-                return source_product.apply_inverse(ATPrU)
-            else:
-                return ATPrU
+            return self._array.lincomb(V.data)
 
-    def apply_inverse_adjoint(self, U, mu=None, source_product=None, range_product=None, least_squares=False):
-        if source_product or range_product:
-            return super().apply_inverse_adjoint(U, mu=mu,
-                                                 source_product=source_product,
-                                                 range_product=range_product,
-                                                 least_squares=least_squares)
-        else:
-            adjoint_op = VectorArrayOperator(self._array, transposed=not self.transposed)
-            return adjoint_op.apply_inverse(U, mu=mu, least_squares=least_squares)
+    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+        transpose_op = VectorArrayOperator(self._array, transposed=not self.transposed)
+        return transpose_op.apply_inverse(U, mu=mu, least_squares=least_squares)
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
 
@@ -768,18 +730,14 @@ class FixedParameterOperator(OperatorBase):
     def apply(self, U, mu=None):
         return self.operator.apply(U, mu=self.mu)
 
-    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
-        return self.operator.apply_adjoint(U, mu=self.mu,
-                                           source_product=source_product, range_product=range_product)
+    def apply_transpose(self, V, mu=None):
+        return self.operator.apply_transpose(V, mu=self.mu)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         return self.operator.apply_inverse(V, mu=self.mu, least_squares=least_squares)
 
-    def apply_inverse_adjoint(self, U, mu=None, source_product=None, range_product=None, least_squares=False):
-        return self.operator.apply_inverse_adjoint(U, mu=self.mu,
-                                                   source_product=source_product,
-                                                   range_product=range_product,
-                                                   least_squares=least_squares)
+    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+        return self.operator.apply_inverse_transpose(U, mu=self.mu, least_squares=least_squares)
 
     def jacobian(self, U, mu=None):
         return self.operator.jacobian(U, mu=self.mu)
@@ -792,7 +750,19 @@ class FixedParameterOperator(OperatorBase):
 class AdjointOperator(OperatorBase):
     """Represents the adjoint of a given linear |Operator|.
 
-    See :meth:`~pymor.operators.interfaces.OperatorInterface.apply_adjoint`.
+    For a linear |Operator| `op` the adjoint `op^*` of `op` is given by::
+
+        (op^*(v), u)_s = (v, op(u))_r,
+
+    where `( , )_s` and `( , )_r` denote the inner products on the source
+    and range space of `op`. If two products are given by `P_s` and `P_r`, then::
+
+        op^*(v) = P_s^(-1) o op.T o P_r,
+
+    Thus, if `( , )_s` and `( , )_r` are the Euclidean inner products,
+    `op^*v` is simply given by applycation of the
+    :attr:transpose <pymor.operators.interface.OperatorInterface.T>`
+    |Operator|.
 
     Parameters
     ----------
@@ -808,10 +778,10 @@ class AdjointOperator(OperatorBase):
         If not `None`, name of the operator.
     with_apply_inverse
         If `True`, provide own :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse`
-        and :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse_adjoint`
+        and :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse_transpose`
         implementations by calling these methods on the given `operator`.
         (Is set to `False` in the default implementation of
-        and :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse_adjoint`.)
+        and :meth:`~pymor.operators.interfaces.OperatorInterface.apply_inverse_transpose`.)
     solver_options
         When `with_apply_inverse` is `False`, the |solver_options| to use for
         the `apply_inverse` default implementation.
@@ -839,58 +809,51 @@ class AdjointOperator(OperatorBase):
         if not self.source_product and not self.range_product:
             return self.operator
         else:
-            return super().T
+            options = {'inverse': self.solver_options.get('inverse_transpose'),
+                       'inverse_transpose': self.solver_options.get('inverse')} if self.solver_options else None
+            return AdjointOperator(self.operator.T, source_product=self.range_product,
+                                   range_product=self.source_product, solver_options=options)
 
     def apply(self, U, mu=None):
-        return self.operator.apply_adjoint(U, mu=mu,
-                                           source_product=self.source_product, range_product=self.range_product)
+        assert U in self.source
+        if self.range_product:
+            U = self.range_product.apply(U)
+        V = self.operator.apply_transpose(U, mu=mu)
+        if self.source_product:
+            V = self.source_product.apply_inverse(V)
+        return V
 
-    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
-        if range_product != self.source_product:
-            if range_product:
-                U = range_product.apply(U)
-            if self.source_product:
-                U = self.source_product.apply_inverse(U)
-
-        U = self.operator.apply(U, mu=mu)
-
-        if source_product != self.range_product:
-            if self.range_product:
-                U = self.range_product.apply(U)
-            if source_product:
-                U = source_product.apply_inverse(U)
-
+    def apply_transpose(self, V, mu=None):
+        assert V in self.range
+        if self.source_product:
+            V = self.source_product.apply_inverse(V)
+        U = self.operator.apply(V, mu=mu)
+        if self.range_product:
+            U = self.range_product.apply(U)
         return U
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         if not self.with_apply_inverse:
             return super().apply_inverse(V, mu=mu, least_squares=least_squares)
 
-        return self.operator.apply_inverse_adjoint(V, mu=mu,
-                                                   source_product=self.source_product,
-                                                   range_product=self.range_product,
-                                                   least_squares=least_squares)
+        assert V in self.range
+        if self.source_product:
+            V = self.source_product(V)
+        U = self.operator.apply_inverse_transpose(V, mu=mu, least_squares=least_squares)
+        if self.range_product:
+            U = self.range_product.apply_inverse(U)
+        return U
 
-    def apply_inverse_adjoint(self, U, mu=None, source_product=None, range_product=None, least_squares=False):
+    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
         if not self.with_apply_inverse:
-            return super().apply_inverse_adjoint(U, mu=mu,
-                                                 source_product=source_product,
-                                                 range_product=range_product,
-                                                 least_squares=least_squares)
+            return super().apply_inverse_transpose(U, mu=mu, least_squares=least_squares)
 
         assert U in self.source
-        if source_product and source_product != self.range_product:
-            U = source_product.apply(U)
-        if self.range_product and source_product != self.range_product:
+        if self.range_product:
             U = self.range_product.apply_inverse(U)
-
         V = self.operator.apply_inverse(U, mu=mu, least_squares=least_squares)
-
-        if self.source_product and self.source_product != range_product:
+        if self.source_product:
             V = self.source_product.apply(V)
-        if range_product and self.source_product != range_product:
-            V = range_product.apply_inverse(V)
-
         return V
 
     def projected(self, range_basis, source_basis, product=None, name=None):
@@ -976,10 +939,10 @@ class SelectionOperator(OperatorBase):
         operator_number = self._get_operator_number(mu)
         return self.operators[operator_number].apply(U, mu=mu)
 
-    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
+    def apply_transpose(self, V, mu=None):
         mu = self.parse_parameter(mu)
         op = self.operators[self._get_operator_number(mu)]
-        return op.apply_adjoint(U, mu=mu, source_product=source_product, range_product=range_product)
+        return op.apply_transpose(V, mu=mu)
 
     def as_range_array(self, mu=None):
         mu = self.parse_parameter(mu)
