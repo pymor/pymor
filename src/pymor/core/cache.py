@@ -86,6 +86,10 @@ def cleanup_non_persisten_regions():
             region.clear()
 
 
+def _safe_filename(old_name):
+    return ''.join(x for x in old_name if (x.isalnum() or x in '._- '))
+
+
 class CacheRegion(object):
     """Base class for all pyMOR cache regions.
 
@@ -193,7 +197,7 @@ class SQLiteRegion(CacheRegion):
             raise RuntimeError('Cache is corrupt!')
 
     def set(self, key, value):
-        fd, file_path = tempfile.mkstemp('.dat', datetime.datetime.now().isoformat()[:-7] + '-', self.path)
+        fd, file_path = tempfile.mkstemp('.dat', _safe_filename(datetime.datetime.now().isoformat()[:-7]) + '-', self.path)
         filename = os.path.basename(file_path)
         with os.fdopen(fd, 'wb') as f:
             dump(value, f)
