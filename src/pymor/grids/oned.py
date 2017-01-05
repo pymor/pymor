@@ -95,12 +95,12 @@ class OnedGrid(AffineGridWithOrthogonalCentersInterface):
         """
         from pymor.gui.qt import visualize_matplotlib_1d
         from pymor.vectorarrays.interfaces import VectorArrayInterface
-        from pymor.vectorarrays.numpy import NumpyVectorArray
+        from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
         if isinstance(U, (np.ndarray, VectorArrayInterface)):
             U = (U,)
         assert all(isinstance(u, (np.ndarray, VectorArrayInterface)) for u in U)
-        U = tuple(NumpyVectorArray(u) if isinstance(u, np.ndarray) else
+        U = tuple(NumpyVectorSpace.make_array(u) if isinstance(u, np.ndarray) else
                   u if isinstance(u, NumpyVectorArray) else
-                  NumpyVectorArray(u.data)
+                  NumpyVectorSpace.make_array(u.data)
                   for u in U)
         visualize_matplotlib_1d(self, U, codim=codim, **kwargs)

@@ -230,13 +230,13 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
         """
         from pymor.gui.qt import visualize_patch
         from pymor.vectorarrays.interfaces import VectorArrayInterface
-        from pymor.vectorarrays.numpy import NumpyVectorArray
+        from pymor.vectorarrays.numpy import NumpyVectorSpace, NumpyVectorArray
         if isinstance(U, (np.ndarray, VectorArrayInterface)):
             U = (U,)
         assert all(isinstance(u, (np.ndarray, VectorArrayInterface)) for u in U)
-        U = tuple(NumpyVectorArray(u) if isinstance(u, np.ndarray) else
+        U = tuple(NumpyVectorSpace.make_array(u) if isinstance(u, np.ndarray) else
                   u if isinstance(u, NumpyVectorArray) else
-                  NumpyVectorArray(u.data)
+                  NumpyVectorSpace.make_array(u.data)
                   for u in U)
         bounding_box = kwargs.pop('bounding_box', self.domain)
         visualize_patch(self, U, codim=codim, bounding_box=bounding_box, **kwargs)
