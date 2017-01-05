@@ -238,7 +238,7 @@ methods of classes!'''.format(path))
 _default_container = DefaultContainer()
 
 
-def defaults(*args, sid_ignore=(), qualname=None, **kwargs):
+def defaults(*args, sid_ignore=(), qualname=None):
     """Function decorator for marking function arguments as user-configurable defaults.
 
     If a function decorated with :func:`defaults` is called, the values of the marked
@@ -271,10 +271,7 @@ def defaults(*args, sid_ignore=(), qualname=None, **kwargs):
         method has to be provided, as this name cannot be derived at decoration
         time in Python 2.
     """
-    # FIXME this will have to be adapted for Python 3
-
     assert all(isinstance(arg, str) for arg in args)
-    assert set(kwargs.keys()) != set()
 
     def the_decorator(func):
 
