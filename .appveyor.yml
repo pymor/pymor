@@ -70,7 +70,7 @@ install:
     - for /f %%i in (requirements.txt requirements-optional.txt requirements-travis.txt ) do (
                 conda install %%i 1> nul 2>&1 & pip install %%i 1> nul 2>&1 & echo %%i
             )
-    - pip install -r .requirements-pyside.txt
+    - pip install --only-binary --no-index --find-links https://pymor.github.io/wheels/ pyside & echo pyside
 
 build_script:
     - set PATH=%CONDA%;%CONDA%\Scripts;%PATH%
