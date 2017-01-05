@@ -80,8 +80,7 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
                    [domain_description.domain[1][0], domain_description.domain[0][1]],
                    domain_description.domain[1].tolist(),
                    [domain_description.domain[0][0], domain_description.domain[1][1]]]]
-        boundary_types = {}
-        boundary_types[domain_description.bottom] = [1]
+        boundary_types = {domain_description.bottom: [1]}
         if domain_description.right not in boundary_types:
             boundary_types[domain_description.right] = [2]
         else:
