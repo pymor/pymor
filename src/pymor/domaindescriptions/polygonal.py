@@ -32,7 +32,8 @@ class PolygonalDomain(DomainDescriptionInterface):
 
     dim = 2
 
-    def __init__(self, points, boundary_types, holes=[]):
+    def __init__(self, points, boundary_types, holes=None):
+        holes = holes or []
         self.points = points
         self.holes = holes
 

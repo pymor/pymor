@@ -23,7 +23,9 @@ class BitmapFunction(FunctionBase):
     dim_domain = 2
     shape_range = ()
 
-    def __init__(self, filename, bounding_box=[[0., 0.], [1., 1.]], range=[0., 1.]):
+    def __init__(self, filename, bounding_box=None, range=None):
+        bounding_box = bounding_box or [[0., 0.], [1., 1.]]
+        range = range or [0., 1.]
         try:
             from PIL import Image
         except ImportError:
