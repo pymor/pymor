@@ -64,7 +64,7 @@ THERMALBLOCK_GUI_ARGS = (
 )
 
 BURGERS_EI_ARGS = (
-    ('burgers_ei', [1, 2, 2, 5, 2, 5]),
+    ('burgers_ei', [1, 2, 2, 5, 2, 5, '--plot-ei-err']),
 )
 
 PARABOLIC_MOR_ARGS = (
