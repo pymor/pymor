@@ -5,133 +5,105 @@
 
 """This module contains some iterative linear solvers which only use the |Operator| interface"""
 
-from collections import OrderedDict
-
 import numpy as np
 
-from pymor.core.defaults import defaults, defaults_sid
+from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.core.logger import getLogger
 
 
-_options = None
-_options_sid = None
-
-
-@defaults('default_solver', 'default_least_squares_solver', 'generic_lgmres_tol', 'generic_lgmres_maxiter',
-          'generic_lgmres_inner_m', 'generic_lgmres_outer_k', 'least_squares_generic_lsmr_damp',
-          'least_squares_generic_lsmr_atol', 'least_squares_generic_lsmr_btol', 'least_squares_generic_lsmr_conlim',
-          'least_squares_generic_lsmr_maxiter', 'least_squares_generic_lsmr_show',
-          'least_squares_generic_lsqr_atol', 'least_squares_generic_lsqr_btol', 'least_squares_generic_lsqr_conlim',
-          'least_squares_generic_lsqr_iter_lim', 'least_squares_generic_lsqr_show',
-          sid_ignore=('least_squares_generic_lsmr_show', 'least_squares_generic_lsqr_show'))
-def options(default_solver='generic_lgmres',
-            default_least_squares_solver='least_squares_generic_lsmr',
-            generic_lgmres_tol=1e-5,
-            generic_lgmres_maxiter=1000,
-            generic_lgmres_inner_m=39,
-            generic_lgmres_outer_k=3,
-            least_squares_generic_lsmr_damp=0.0,
-            least_squares_generic_lsmr_atol=1e-6,
-            least_squares_generic_lsmr_btol=1e-6,
-            least_squares_generic_lsmr_conlim=1e8,
-            least_squares_generic_lsmr_maxiter=None,
-            least_squares_generic_lsmr_show=False,
-            least_squares_generic_lsqr_damp=0.0,
-            least_squares_generic_lsqr_atol=1e-6,
-            least_squares_generic_lsqr_btol=1e-6,
-            least_squares_generic_lsqr_conlim=1e8,
-            least_squares_generic_lsqr_iter_lim=None,
-            least_squares_generic_lsqr_show=False):
-    """Returns |solver_options| (with default values) for arbitrary linear |Operators|.
+@defaults('lgmres_tol', 'lgmres_maxiter',
+          'lgmres_inner_m', 'lgmres_outer_k', 'least_squares_lsmr_damp',
+          'least_squares_lsmr_atol', 'least_squares_lsmr_btol', 'least_squares_lsmr_conlim',
+          'least_squares_lsmr_maxiter', 'least_squares_lsmr_show',
+          'least_squares_lsqr_atol', 'least_squares_lsqr_btol', 'least_squares_lsqr_conlim',
+          'least_squares_lsqr_iter_lim', 'least_squares_lsqr_show',
+          sid_ignore=('least_squares_lsmr_show', 'least_squares_lsqr_show'))
+def solver_options(lgmres_tol=1e-5,
+                   lgmres_maxiter=1000,
+                   lgmres_inner_m=39,
+                   lgmres_outer_k=3,
+                   least_squares_lsmr_damp=0.0,
+                   least_squares_lsmr_atol=1e-6,
+                   least_squares_lsmr_btol=1e-6,
+                   least_squares_lsmr_conlim=1e8,
+                   least_squares_lsmr_maxiter=None,
+                   least_squares_lsmr_show=False,
+                   least_squares_lsqr_damp=0.0,
+                   least_squares_lsqr_atol=1e-6,
+                   least_squares_lsqr_btol=1e-6,
+                   least_squares_lsqr_conlim=1e8,
+                   least_squares_lsqr_iter_lim=None,
+                   least_squares_lsqr_show=False):
+    """Returns available solvers with default |solver_options|.
 
     Parameters
     ----------
-    default_solver
-        Default solver to use (generic_lgmres, least_squares_generic_lsmr, least_squares_generic_lsqr).
-    default_least_squares_solver
-        Default solver to use for least squares problems (least_squares_generic_lsmr,
-        least_squares_generic_lsqr).
-    generic_lgmres_tol
+    lgmres_tol
         See :func:`scipy.sparse.linalg.lgmres`.
-    generic_lgmres_maxiter
+    lgmres_maxiter
         See :func:`scipy.sparse.linalg.lgmres`.
-    generic_lgmres_inner_m
+    lgmres_inner_m
         See :func:`scipy.sparse.linalg.lgmres`.
-    generic_lgmres_outer_k
+    lgmres_outer_k
         See :func:`scipy.sparse.linalg.lgmres`.
-    least_squares_generic_lsmr_damp
+    least_squares_lsmr_damp
         See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_generic_lsmr_atol
+    least_squares_lsmr_atol
         See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_generic_lsmr_btol
+    least_squares_lsmr_btol
         See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_generic_lsmr_conlim
+    least_squares_lsmr_conlim
         See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_generic_lsmr_maxiter
+    least_squares_lsmr_maxiter
         See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_generic_lsmr_show
+    least_squares_lsmr_show
         See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_generic_lsqr_damp
+    least_squares_lsqr_damp
         See :func:`scipy.sparse.linalg.lsqr`.
-    least_squares_generic_lsqr_atol
+    least_squares_lsqr_atol
         See :func:`scipy.sparse.linalg.lsqr`.
-    least_squares_generic_lsqr_btol
+    least_squares_lsqr_btol
         See :func:`scipy.sparse.linalg.lsqr`.
-    least_squares_generic_lsqr_conlim
+    least_squares_lsqr_conlim
         See :func:`scipy.sparse.linalg.lsqr`.
-    least_squares_generic_lsqr_iter_lim
+    least_squares_lsqr_iter_lim
         See :func:`scipy.sparse.linalg.lsqr`.
-    least_squares_generic_lsqr_show
+    least_squares_lsqr_show
         See :func:`scipy.sparse.linalg.lsqr`.
 
     Returns
     -------
-    A tuple of possible values for |solver_options|.
+    A dict of available solvers with default |solver_options|.
     """
 
-    assert default_least_squares_solver.startswith('least_squares')
-
-    global _options, _options_sid
-    if _options and _options_sid == defaults_sid():
-        return _options
-    opts = (('generic_lgmres', {'type': 'generic_lgmres',
-                                'tol': generic_lgmres_tol,
-                                'maxiter': generic_lgmres_maxiter,
-                                'inner_m': generic_lgmres_inner_m,
-                                'outer_k': generic_lgmres_outer_k}),
-            ('least_squares_generic_lsmr', {'type': 'least_squares_generic_lsmr',
-                                            'damp': least_squares_generic_lsmr_damp,
-                                            'atol': least_squares_generic_lsmr_atol,
-                                            'btol': least_squares_generic_lsmr_btol,
-                                            'conlim': least_squares_generic_lsmr_conlim,
-                                            'maxiter': least_squares_generic_lsmr_maxiter,
-                                            'show': least_squares_generic_lsmr_show}),
-            ('least_squares_generic_lsqr', {'type': 'least_squares_generic_lsqr',
-                                            'damp': least_squares_generic_lsqr_damp,
-                                            'atol': least_squares_generic_lsqr_atol,
-                                            'btol': least_squares_generic_lsqr_btol,
-                                            'conlim': least_squares_generic_lsqr_conlim,
-                                            'iter_lim': least_squares_generic_lsqr_iter_lim,
-                                            'show': least_squares_generic_lsqr_show}))
-    opts = OrderedDict(opts)
-    def_opt = opts.pop(default_solver)
-    if default_least_squares_solver != default_solver:
-        def_ls_opt = opts.pop(default_least_squares_solver)
-        _options = OrderedDict(((default_solver, def_opt),
-                                (default_least_squares_solver, def_ls_opt)))
-    else:
-        _options = OrderedDict(((default_solver, def_opt),))
-    _options.update(opts)
-    _options_sid = defaults_sid()
-    return _options
+    return {'generic_lgmres': {'type': 'generic_lgmres',
+                               'tol': lgmres_tol,
+                               'maxiter': lgmres_maxiter,
+                               'inner_m': lgmres_inner_m,
+                               'outer_k': lgmres_outer_k},
+            'generic_least_squares_lsmr': {'type': 'generic_least_squares_lsmr',
+                                           'damp': least_squares_lsmr_damp,
+                                           'atol': least_squares_lsmr_atol,
+                                           'btol': least_squares_lsmr_btol,
+                                           'conlim': least_squares_lsmr_conlim,
+                                           'maxiter': least_squares_lsmr_maxiter,
+                                           'show': least_squares_lsmr_show},
+            'generic_least_squares_lsqr': {'type': 'generic_least_squares_lsqr',
+                                           'damp': least_squares_lsqr_damp,
+                                           'atol': least_squares_lsqr_atol,
+                                           'btol': least_squares_lsqr_btol,
+                                           'conlim': least_squares_lsqr_conlim,
+                                           'iter_lim': least_squares_lsqr_iter_lim,
+                                           'show': least_squares_lsqr_show}}
 
 
-@defaults('check_finite')
-def apply_inverse(op, rhs, options=None, check_finite=True):
+@defaults('check_finite', 'default_solver', 'default_least_squares_solver')
+def apply_inverse(op, rhs, options=None, least_squares=False, check_finite=True,
+                  default_solver='generic_lgmres', default_least_squares_solver='generic_least_squares_lsmr'):
     """Solve linear equation system.
 
-    Applies the inverse of `op` to the vectors in `rhs`.
+    Applies the inverse of `op` to the vectors in `rhs` using a generic iterative solver.
 
     Parameters
     ----------
@@ -140,33 +112,21 @@ def apply_inverse(op, rhs, options=None, check_finite=True):
     rhs
         |VectorArray| of right-hand sides for the equation system.
     options
-        The solver options to use. (See :func:`options`.)
+        The |solver_options| to use (see :func:`solver_options`).
     check_finite
-        wheter or not to check if the l2_norms of the result |VectorArray| are all finite
+        Test if solution only containes finite values.
+    default_solver
+        Default solver to use (generic_lgmres, generic_least_squares_lsmr, generic_least_squares_lsqr).
+    default_least_squares_solver
+        Default solver to use for least squares problems (generic_least_squares_lsmr,
+        generic_least_squares_lsqr).
+
     Returns
     -------
     |VectorArray| of the solution vectors.
     """
 
-    def_opts = globals()['options']()
-
-    if options is None:
-        options = next(iter(def_opts.values()))
-    elif isinstance(options, str):
-        if options == 'least_squares':
-            for k, v in def_opts.items():
-                if k.startswith('least_squares'):
-                    options = v
-                    break
-            assert not isinstance(options, str)
-        else:
-            options = def_opts[options]
-    else:
-        assert 'type' in options and options['type'] in def_opts \
-            and options.keys() <= def_opts[options['type']].keys()
-        user_options = options
-        options = def_opts[user_options['type']]
-        options.update(user_options)
+    options = _parse_options(options, solver_options(), default_solver, default_least_squares_solver, least_squares)
 
     R = op.source.empty(reserve=len(rhs))
 
@@ -181,7 +141,7 @@ def apply_inverse(op, rhs, options=None, check_finite=True):
                 raise InversionError('lgmres failed to converge after {} iterations'.format(info))
             assert info == 0
             R.append(r)
-    elif options['type'] == 'least_squares_generic_lsmr':
+    elif options['type'] == 'generic_least_squares_lsmr':
         for i in range(len(rhs)):
             r, info, itn, _, _, _, _, _ = lsmr(op, rhs[i],
                                                damp=options['damp'],
@@ -195,7 +155,7 @@ def apply_inverse(op, rhs, options=None, check_finite=True):
                 raise InversionError('lsmr failed to converge after {} iterations'.format(itn))
             getLogger('pymor.algorithms.genericsolvers.lsmr').info('Converged after {} iterations'.format(itn))
             R.append(r)
-    elif options['type'] == 'least_squares_generic_lsqr':
+    elif options['type'] == 'generic_least_squares_lsqr':
         for i in range(len(rhs)):
             r, info, itn, _, _, _, _, _, _ = lsqr(op, rhs[i],
                                                   damp=options['damp'],
@@ -217,6 +177,28 @@ def apply_inverse(op, rhs, options=None, check_finite=True):
             raise InversionError('Result contains non-finite values')
 
     return R
+
+
+def _parse_options(options, default_options, default_solver, default_least_squares_solver, least_squares):
+    if options is None:
+        options = default_options[default_least_squares_solver] if least_squares else default_options[default_solver]
+    elif isinstance(options, str):
+        options = default_options[options]
+    else:
+        assert 'type' in options and options['type'] in default_options \
+            and options.keys() <= default_options[options['type']].keys()
+        user_options = options
+        options = default_options[user_options['type']]
+        options.update(user_options)
+
+    if least_squares != ('least_squares' in options['type']):
+        logger = getLogger('foo')
+        if least_squares:
+            logger.warn('Non-least squares solver selected for least squares problem.')
+        else:
+            logger.warn('Least squares solver selected for non-least squares probelm.')
+
+    return options
 
 
 # The following code is an adapted version of

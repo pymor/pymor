@@ -7,8 +7,9 @@ from scipy.sparse import diags
 import pytest
 
 import pymor.algorithms.genericsolvers
+from pymor.core.config import config
 from pymor.operators.basic import OperatorBase
-from pymor.operators.numpy import NumpyMatrixOperator, sparse_options, dense_options
+from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
@@ -28,17 +29,19 @@ class GenericOperator(OperatorBase):
         return self.op.apply_transpose(V, mu=mu)
 
 
-@pytest.fixture(params=pymor.algorithms.genericsolvers.options().keys())
+@pytest.fixture(params=pymor.algorithms.genericsolvers.solver_options().keys())
 def generic_solver(request):
     return {'inverse': request.param}
 
+all_sparse_solvers = set(pymor.algorithms.genericsolvers.solver_options().keys())
+from pymor.bindings.scipy import solver_options as scipy_solver_options
+all_sparse_solvers.update(scipy_solver_options().keys())
+if config.HAVE_PYAMG:
+    from pymor.bindings.pyamg import solver_options as pyamg_solver_options
+    all_sparse_solvers.update(pyamg_solver_options().keys())
 
-@pytest.fixture(params=dense_options().keys())
-def numpy_dense_solver(request):
-    return {'inverse': request.param}
 
-
-@pytest.fixture(params=sparse_options().keys())
+@pytest.fixture(params=all_sparse_solvers)
 def numpy_sparse_solver(request):
     return {'inverse': request.param}
 
@@ -50,8 +53,8 @@ def test_generic_solvers(generic_solver):
     assert ((op.apply(solution) - rhs).l2_norm() / rhs.l2_norm())[0] < 1e-8
 
 
-def test_numpy_dense_solvers(numpy_dense_solver):
-    op = NumpyMatrixOperator(np.eye(10) * np.arange(1, 11), solver_options=numpy_dense_solver)
+def test_numpy_dense_solvers():
+    op = NumpyMatrixOperator(np.eye(10) * np.arange(1, 11))
     rhs = op.range.make_array(np.ones(10))
     solution = op.apply_inverse(rhs)
     assert ((op.apply(solution) - rhs).l2_norm() / rhs.l2_norm())[0] < 1e-8
