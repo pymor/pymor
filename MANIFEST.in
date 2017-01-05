@@ -25,3 +25,4 @@ recursive-include docs Makefile
 
 include *.md
 include *.py
+include versioneer.py

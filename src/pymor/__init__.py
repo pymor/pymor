@@ -71,48 +71,13 @@ class Version(object):
         return 'Version({})'.format(str(self))
 
 
-NO_VERSIONSTRING = '0.0.0-0-0'
-NO_VERSION = Version(NO_VERSIONSTRING)
+if 'PYMOR_DEB_VERSION' in os.environ:
+    revstring = os.environ['PYMOR_DEB_VERSION']
+else:
+    import pymor.version as _version
+    revstring = _version.get_versions()['version']
 
-try:
-    if 'PYMOR_DEB_VERSION' in os.environ:
-        revstring = os.environ['PYMOR_DEB_VERSION']
-    else:
-        import pymor.version as _version
-
-        revstring = getattr(_version, 'revstring', NO_VERSIONSTRING)
-except ImportError:
-    import os.path
-    import subprocess
-
-    try:
-        revstring = subprocess.check_output(['git', 'describe', '--tags', '--candidates', '20', '--match', '*.*.*'],
-                                            cwd=os.path.dirname(__file__), universal_newlines=True)
-    except subprocess.CalledProcessError as e:
-        import sys
-
-        sys.stderr.write('''Warning: Could not determine current pyMOR version.
-Failed to import pymor.version and 'git describe --tags --candidates 20 --match *.*.*'
-returned
-
-{}
-
-(return code: {})
-'''.format(e.output, e.returncode))
-        revstring = NO_VERSIONSTRING
-    except OSError as e:
-        import sys
-
-        sys.stderr.write('''Warning: Could not determine current pyMOR version.
-Failed to import pymor.version and 'git describe --tags --candidates 20 --match *.*.*'
-could not be executed ({})
-
-'''.format(e.strerror))
-        revstring = NO_VERSIONSTRING
-finally:
-    VERSION = Version(revstring)
-
-__version__ = str(VERSION)
+__version__ = str(revstring)
 
 
 import os
