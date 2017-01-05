@@ -815,6 +815,16 @@ def test_mul_wrong_factor(vector_array):
         _ = v * v
 
 
+def test_rmul(vector_array):
+    v = vector_array
+    c = v.copy()
+    for a in (-1, -3, 0, 1, 23):
+        cc = v.copy()
+        cc.scal(a)
+        assert np.all(almost_equal((a * v), cc))
+        assert np.all(almost_equal(v, c))
+
+
 def test_imul(vector_array):
     v = vector_array
     for a in (-1, -3, 0, 1, 23):
