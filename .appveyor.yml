@@ -67,12 +67,10 @@ install:
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
     - conda install numpy pip
-    - for /f %%i in (requirements.txt requirements-optional.txt requirements-travis.txt) do (
-                conda install %%i 1> nul 2>&1 & echo %%i
+    - for /f %%i in (requirements.txt requirements-optional.txt requirements-travis.txt ) do (
+                conda install %%i 1> nul 2>&1 & pip install %%i 1> nul 2>&1 & echo %%i
             )
-    - for /f %%i in (requirements.txt requirements-optional.txt requirements-travis.txt) do (
-                pip install %%i 1> nul 2>&1 & echo %%i
-            )
+    - pip install -r .requirements-pyside.txt
 
 build_script:
     - set PATH=%CONDA%;%CONDA%\Scripts;%PATH%
