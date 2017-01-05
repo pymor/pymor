@@ -186,6 +186,8 @@ class NumpyMatrixBasedOperator(OperatorBase):
             is used.
         output_format
             Output file format. Either `matlab` or `matrixmarket`.
+        mu
+            the parameter, or None, to assemble the to be exported matrix for
         """
         assert output_format in {'matlab', 'matrixmarket'}
         matrix = self.assemble(mu)._matrix
@@ -319,7 +321,8 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             Dimension of the range subbasis.
         dim_source
             Dimension of the source subbasis.
-
+        name
+            optional name for the returned |Operator|
         Returns
         -------
         The projected |Operator|.
@@ -540,6 +543,8 @@ def sparse_options(default_solver='spsolve',
     spilu_permc_spec
         See :func:`scipy.sparse.linalg.spilu`.
     spsolve_permc_spec
+        See :func:`scipy.sparse.linalg.spsolve`.
+    spsolve_keep_factorization
         See :func:`scipy.sparse.linalg.spsolve`.
     lgmres_tol
         See :func:`scipy.sparse.linalg.lgmres`.

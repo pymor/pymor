@@ -32,8 +32,6 @@ def helmholtz_problem(domain=RectDomain(), rhs=None, parameter_range=(0., 100.),
         |Function| providing the Dirichlet boundary values.
     neumann_data
         |Function| providing the Neumann boundary values.
-    name
-        Name of the problem.
     """
 
     return EllipticProblem(

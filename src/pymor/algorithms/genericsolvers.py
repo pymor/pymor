@@ -141,7 +141,8 @@ def apply_inverse(op, rhs, options=None, check_finite=True):
         |VectorArray| of right-hand sides for the equation system.
     options
         The solver options to use. (See :func:`options`.)
-
+    check_finite
+        wheter or not to check if the l2_norms of the result |VectorArray| are all finite
     Returns
     -------
     |VectorArray| of the solution vectors.
