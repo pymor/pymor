@@ -140,10 +140,12 @@ def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, 
 
             # form line_loops (polygonal chains), create ids and write them to file.
             line_loops = [[point_ids[str(p)] for p in ps] for ps in points]
-            line_loop_ids = list(range(len(lines)+1, len(lines)+len(line_loops)+1))
+            line_loop_ids = range(len(lines)+1, len(lines)+len(line_loops)+1)
             for ll_id, ll in zip(line_loop_ids, line_loops):
                 geo_file.write('Line Loop('+str(ll_id)+')'+' = '+str(ll).replace('[', '{').replace(']', '}')+';\n')
 
+            # set this here explicitly to workaround a 3to2 fixer issue for range
+            line_loop_ids = list(line_loop_ids)
             # create the surface defined by line loops, starting with the exterior and then the holes.
             geo_file.write('Plane Surface(' + str(line_loop_ids[0]+1) + ')' + ' = '
                            + str(line_loop_ids).replace('[', '{').replace(']', '}') + ';\n')
