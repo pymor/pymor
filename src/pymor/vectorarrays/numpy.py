@@ -470,7 +470,6 @@ class NumpyVectorArrayView(NumpyVectorArray):
 
     def amax(self):
         return self.base.amax(_ind=self.ind)
-        raise NotImplementedError
 
     def __add__(self, other):
         if isinstance(other, _INDEXTYPES):
