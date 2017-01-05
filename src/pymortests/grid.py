@@ -8,7 +8,7 @@ from itertools import product
 import numpy as np
 import pytest
 
-from pymortests.fixtures.grid import grid,
+from pymortests.fixtures.grid import grid, grids_with_visualize
 from pymortests.pickling import assert_picklable_without_dumps_function
 
 
