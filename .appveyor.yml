@@ -18,40 +18,40 @@ environment:
       CONDA: "C:\\Miniconda3"
       MARKER: "slow"
 
-    - PYTHON_VERSION: "3.4" # currently 3.4.3
-      PYTHON_ARCH: "64"
-      CONDA: "C:\\Miniconda3-x64"
-      MARKER: "slow"
+    #- PYTHON_VERSION: "3.4" # currently 3.4.3
+      #PYTHON_ARCH: "64"
+      #CONDA: "C:\\Miniconda3-x64"
+      #MARKER: "slow"
 
     - PYTHON_VERSION: "3.5" # currently 3.5.1
       PYTHON_ARCH: "32"
       CONDA: "C:\\Miniconda35"
       MARKER: "slow"
 
-    - PYTHON_VERSION: "3.5" # currently 3.5.1
-      PYTHON_ARCH: "64"
-      CONDA: "C:\\Miniconda35-x64"
-      MARKER: "slow"
+    #- PYTHON_VERSION: "3.5" # currently 3.5.1
+      #PYTHON_ARCH: "64"
+      #CONDA: "C:\\Miniconda35-x64"
+      #MARKER: "slow"
 
     - PYTHON_VERSION: "3.4" # currently 3.4.3
       PYTHON_ARCH: "32"
       CONDA: "C:\\Miniconda3"
       MARKER: "not slow"
 
-    - PYTHON_VERSION: "3.4" # currently 3.4.3
-      PYTHON_ARCH: "64"
-      CONDA: "C:\\Miniconda3-x64"
-      MARKER: "not slow"
+    #- PYTHON_VERSION: "3.4" # currently 3.4.3
+      #PYTHON_ARCH: "64"
+      #CONDA: "C:\\Miniconda3-x64"
+      #MARKER: "not slow"
 
     - PYTHON_VERSION: "3.5" # currently 3.5.1
       PYTHON_ARCH: "32"
       CONDA: "C:\\Miniconda35"
       MARKER: "not slow"
 
-    - PYTHON_VERSION: "3.5" # currently 3.5.1
-      PYTHON_ARCH: "64"
-      CONDA: "C:\\Miniconda35-x64"
-      MARKER: "not slow"
+    #- PYTHON_VERSION: "3.5" # currently 3.5.1
+      #PYTHON_ARCH: "64"
+      #CONDA: "C:\\Miniconda35-x64"
+      #MARKER: "not slow"
 
 install:
   # If there is a newer build queued for the same PR, cancel this one.
@@ -67,10 +67,10 @@ install:
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
     - conda install numpy pip
+    - pip install --only-binary --no-index --find-links https://pymor.github.io/wheels/ pyside & echo pyside
     - for /f %%i in (requirements.txt requirements-optional.txt requirements-travis.txt ) do (
                 conda install %%i 1> nul 2>&1 & pip install %%i 1> nul 2>&1 & echo %%i
             )
-    - pip install --only-binary --no-index --find-links https://pymor.github.io/wheels/ pyside & echo pyside
 
 build_script:
     - set PATH=%CONDA%;%CONDA%\Scripts;%PATH%
