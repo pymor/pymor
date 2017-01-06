@@ -17,7 +17,6 @@ from pymortests.fixtures.vectorarray import \
      picklable_vector_array_without_reserve, picklable_vector_array)
 from pymortests.pickling import assert_picklable_without_dumps_function
 
-pytestmark = pytest.mark.slow
 
 def ind_complement(v, ind):
     if isinstance(ind, _INDEXTYPES):

@@ -28,7 +28,7 @@ elif [ "${PYTEST_MARKER}" == "MPI" ] ; then
     xvfb-run -a mpirun --allow-run-as-root -n 2 python src/pymortests/mpi_run_demo_tests.py
 else
     # this runs in pytest in a fake, auto numbered, X Server
-    xvfb-run -a py.test -r sxX -k "${PYTEST_MARKER}"
+    xvfb-run -a py.test -r sxX
     COVERALLS_REPO_TOKEN=${COVERALLS_TOKEN} coveralls
 fi
 
