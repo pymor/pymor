@@ -16,7 +16,7 @@ environment:
     - PYTHON_VERSION: "3.4" # currently 3.4.3
       PYTHON_ARCH: "32"
       CONDA: "C:\\Miniconda3"
-      MARKER: "slow"
+      MARKER: "None"
 
     #- PYTHON_VERSION: "3.4" # currently 3.4.3
       #PYTHON_ARCH: "64"
@@ -26,32 +26,14 @@ environment:
     - PYTHON_VERSION: "3.5" # currently 3.5.1
       PYTHON_ARCH: "32"
       CONDA: "C:\\Miniconda35"
-      MARKER: "slow"
+      MARKER: "None"
 
     #- PYTHON_VERSION: "3.5" # currently 3.5.1
       #PYTHON_ARCH: "64"
       #CONDA: "C:\\Miniconda35-x64"
       #MARKER: "slow"
 
-    - PYTHON_VERSION: "3.4" # currently 3.4.3
-      PYTHON_ARCH: "32"
-      CONDA: "C:\\Miniconda3"
-      MARKER: "not slow"
 
-    #- PYTHON_VERSION: "3.4" # currently 3.4.3
-      #PYTHON_ARCH: "64"
-      #CONDA: "C:\\Miniconda3-x64"
-      #MARKER: "not slow"
-
-    - PYTHON_VERSION: "3.5" # currently 3.5.1
-      PYTHON_ARCH: "32"
-      CONDA: "C:\\Miniconda35"
-      MARKER: "not slow"
-
-    #- PYTHON_VERSION: "3.5" # currently 3.5.1
-      #PYTHON_ARCH: "64"
-      #CONDA: "C:\\Miniconda35-x64"
-      #MARKER: "not slow"
 
 install:
   # If there is a newer build queued for the same PR, cancel this one.
@@ -80,7 +62,7 @@ build_script:
 
 test_script:
     - set PYTHONPATH=%cd%\src;%PYTHONPATH%;
-    - py.test -r sxX -k "%MARKER%"
+    - py.test -r sxX
 
 #after_test:
   # If tests are successful, create binary packages for the project.
