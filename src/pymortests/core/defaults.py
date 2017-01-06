@@ -1,10 +1,10 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-
-from tempfile import NamedTemporaryFile
-
+import os
+from tempfile import mkdtemp
 import pytest
+import shutil
 
 from pymor.core.defaults import defaults, set_defaults, print_defaults, load_defaults_from_file, write_defaults_to_file
 
@@ -35,8 +35,9 @@ def test_print_defaults():
 
 
 def test_write_defaults_to_file():
-    with NamedTemporaryFile() as f:
-        write_defaults_to_file(f.name)
+    tmp_dir = mkdtemp()
+    write_defaults_to_file(os.path.join(tmp_dir, 'defaults.py'))
+    shutil.rmtree(tmp_dir)
 
 
 def test_load_defaults_from_file():
