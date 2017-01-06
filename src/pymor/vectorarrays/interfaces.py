@@ -392,6 +392,8 @@ class VectorArrayInterface(BasicInterface):
         result.scal(other)
         return result
 
+    __rmul__ = __mul__
+
     def __imul__(self, other):
         """In-place product by a scalar."""
         self.scal(other)

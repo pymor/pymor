@@ -486,3 +486,9 @@ class OperatorInterface(ImmutableInterface, Parametric):
     def __mul__(self, other):
         """Product of operator by a scalar."""
         pass
+
+    def __rmul__(self, other):
+        return self * other
+
+    def __neg__(self):
+        return self * (-1.)

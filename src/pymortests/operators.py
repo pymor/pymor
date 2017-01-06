@@ -92,6 +92,26 @@ def test_apply(operator_with_arrays):
         assert np.all(almost_equal(Vind, op.apply(U[ind], mu=mu)))
 
 
+def test_mul(operator_with_arrays):
+    op, mu, U, _ = operator_with_arrays
+    V = op.apply(U, mu=mu)
+    for a in (0., 1., -1., 0.3):
+        assert np.all(almost_equal(V * a, (op * a).apply(U, mu=mu)))
+
+
+def test_rmul(operator_with_arrays):
+    op, mu, U, _ = operator_with_arrays
+    V = op.apply(U, mu=mu)
+    for a in (0., 1., -1., 0.3):
+        assert np.all(almost_equal(a * V, (op * a).apply(U, mu=mu)))
+
+
+def test_neg(operator_with_arrays):
+    op, mu, U, _ = operator_with_arrays
+    V = op.apply(U, mu=mu)
+    assert np.all(almost_equal(-V, (-op).apply(U, mu=mu)))
+
+
 def test_apply2(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     for U_ind in valid_inds(U):
