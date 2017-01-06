@@ -447,8 +447,8 @@ class VectorArrayInterface(BasicInterface):
         if type(ind) is slice:
             ind = range(*ind.indices(len(self)))
             if type(ind_ind) is slice:
-                if config.PY2:  # Currently we do not convert range to xrange, so ind is a list
-                    return ind[ind_ind]
+                if config.PY2:  # make ind a list since is xrange is not sliceable
+                    return list(ind)[ind_ind]
                 else:
                     result = ind[ind_ind]
                     return slice(result.start, result.stop, result.step)
