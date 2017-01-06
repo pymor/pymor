@@ -53,6 +53,7 @@ install:
     - for /f %%i in (requirements.txt requirements-optional.txt requirements-travis.txt ) do (
                 conda install %%i 1> nul 2>&1 & pip install %%i 1> nul 2>&1 & echo %%i
             )
+    - curl -fsS -o gmsh.zip http://gmsh.info/bin/Windows/gmsh-2.16.0-Windows32.zip && 7z x gmsh.zip -o%CONDA%\Scripts
 
 build_script:
     - set PATH=%CONDA%;%CONDA%\Scripts;%PATH%
