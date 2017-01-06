@@ -115,7 +115,6 @@ finally:
 __version__ = str(VERSION)
 
 
-import os
 if 'PYMOR_DEFAULTS' in os.environ:
     filename = os.environ['PYMOR_DEFAULTS']
     if filename in ('', 'NONE'):

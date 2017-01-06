@@ -323,7 +323,6 @@ def reduction_error_analysis(reduced_discretization, discretization=None, recons
 
 
 def _compute_errors(mu, d, rd, rc, estimator, error_norms, condition, custom, basis_sizes):
-    import numpy as np
     import sys
 
     print('.', end='')
