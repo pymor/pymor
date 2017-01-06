@@ -115,7 +115,7 @@ External Packages
 Defaults
 --------
 See pymor.core.defaults.print_defaults.
-'''[1:].format(self.version, self.PYTHON_VESRION, '-' * max(map(len, package_info)),
+'''[1:].format(self.version, self.PYTHON_VERSION, '-' * max(map(len, package_info)),
                '\n'.join(package_info))
         return info
 

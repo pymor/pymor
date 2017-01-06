@@ -474,7 +474,7 @@ def render(pieces, style):
             "date": pieces.get("date")}
 
 
-def get_versions(version_default='0.0.0-0-0'):
+def get_versions():
     """Get version information or return default if unable to do so."""
     # I am in _version.py, which lives at ROOT/VERSIONFILE_SOURCE. If we have
     # __file__, we can work backwards from there to the root. Some
@@ -483,6 +483,7 @@ def get_versions(version_default='0.0.0-0-0'):
 
     cfg = get_config()
     verbose = cfg.verbose
+    version_default = '0.unknown'
 
     try:
         return git_versions_from_keywords(get_keywords(), cfg.tag_prefix,

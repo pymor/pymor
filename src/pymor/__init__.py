@@ -15,62 +15,6 @@ from pymor.core.config import config
 from pymor.core.defaults import load_defaults_from_file
 
 
-class Version(object):
-    def __init__(self, revstring):
-
-        # special casing for debian versions like '0.1.3~precise~ppa9'
-        if '~' in revstring:
-            revstring = revstring[:revstring.index('~')]
-        revstringparts = revstring.strip().split('-')
-        if len(revstringparts) not in (1, 3):
-            raise ValueError('Invalid revstring: ' + revstring)
-        if len(revstringparts) == 3:
-            self.distance = int(revstringparts[1])
-            self.shorthash = revstringparts[2]
-        else:
-            self.distance = 0
-            self.shorthash = ''
-
-        version_parts = revstringparts[0].split('.')
-        if version_parts[-1].find('rc') >= 0:
-            s = version_parts[-1].split('rc')
-            if len(s) != 2:
-                raise ValueError('Invalid revstring')
-            version_parts[-1] = s[0]
-            self.rc_number = int(s[1])
-            self.has_rc_number = True
-        else:
-            self.rc_number = 0
-            self.has_rc_number = False
-
-        self.version = tuple(int(x) for x in version_parts)
-        self.full_version = self.version + (self.rc_number,)
-
-    def __eq__(self, other):
-        if not isinstance(other, Version):
-            other = Version(other)
-        return self.version == other.version and self.rc_number == other.rc_number and self.distance == other.distance
-
-    def __lt__(self, other):
-        if not isinstance(other, Version):
-            other = Version(other)
-        return self.full_version < other.full_version
-
-    def __gt__(self, other):
-        if not isinstance(other, Version):
-            other = Version(other)
-        return self.full_version > other.full_version
-
-    def __str__(self):
-        git_part = '-{}-{}'.format(self.distance, self.shorthash) if self.distance else ''
-        version_part = '.'.join(map(str, self.version))
-        rc_part = 'rc{}'.format(self.rc_number) if self.has_rc_number else ''
-        return version_part + rc_part + git_part
-
-    def __repr__(self):
-        return 'Version({})'.format(str(self))
-
-
 if 'PYMOR_DEB_VERSION' in os.environ:
     revstring = os.environ['PYMOR_DEB_VERSION']
 else:
@@ -78,7 +22,6 @@ else:
     revstring = _version.get_versions()['version']
 
 __version__ = str(revstring)
-
 
 import os
 if 'PYMOR_DEFAULTS' in os.environ:
