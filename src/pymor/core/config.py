@@ -57,12 +57,12 @@ class Config:
     def __init__(self):
         self.PY2 = sys.version_info.major == 2
         self.PY3 = sys.version_info.major == 3
-        self.PYTHON_VESRION = '{}.{}.{}'.format(sys.version_info.major, sys.version_info.minor, sys.version_info.micro)
+        self.PYTHON_VERSION = '{}.{}.{}'.format(sys.version_info.major, sys.version_info.minor, sys.version_info.micro)
 
     @property
     def version(self):
-        from pymor import VERSION
-        return VERSION
+        from pymor import __version__
+        return __version__
 
     def __getattr__(self, name):
         if name.startswith('HAVE_'):
