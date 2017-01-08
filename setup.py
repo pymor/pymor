@@ -12,6 +12,7 @@ from setuptools.command.test import test as TestCommand
 from distutils.extension import Extension
 from distutils.command.build_py import build_py as _build_py
 import itertools
+import versioneer
 
 import dependencies
 
@@ -76,26 +77,6 @@ def _numpy_monkey():
 
     build_src.build_src.generate_a_pyrex_source = generate_a_pyrex_source
 
-
-def write_version():
-    filename = os.path.join(os.path.dirname(__file__), 'src', 'pymor', 'version.py')
-    try:
-        if 'PYMOR_DEB_VERSION' in os.environ:
-            revstring = os.environ['PYMOR_DEB_VERSION']
-        else:
-            revstring = subprocess.check_output(['git', 'describe',
-                                                 '--tags', '--candidates', '20', '--match', '*.*.*']).decode().strip()
-        with open(filename, 'w') as out:
-            out.write('revstring = \'{}\''.format(revstring))
-    except:
-        if os.path.exists(filename):
-            loc = {}
-            exec(compile(open(filename).read(), filename, 'exec'), loc, loc)
-            revstring = loc['revstring']
-        else:
-            revstring = '0.0.0-0-0'
-    return revstring
-
 # When building under python 2.7, run refactorings from lib3to2
 class build_py27(_build_py):
     def __init__(self, *args, **kwargs):
@@ -114,8 +95,8 @@ class build_py27(_build_py):
         except OSError:
             # fallback for .egg installs
             fixers = ['lib3to2.fixes.fix_{}'.format(s) for s in ('absimport', 'annotations', 'bitlength', 'bool',
-                'bytes', 'classdecorator', 'collections', 'dctsetcomp', 'division', 'except', 'features', 
-                'fullargspec', 'funcattrs', 'getcwd', 'imports', 'imports2', 'input', 'int', 'intern', 'itertools', 
+                'bytes', 'classdecorator', 'collections', 'dctsetcomp', 'division', 'except', 'features',
+                'fullargspec', 'funcattrs', 'getcwd', 'imports', 'imports2', 'input', 'int', 'intern', 'itertools',
                 'kwargs', 'memoryview', 'metaclass', 'methodattrs', 'newstyle', 'next', 'numliterals', 'open', 'print',
                 'printfunction', 'raise', 'range', 'reduce', 'setliteral', 'str', 'super', 'throw', 'unittest',
                 'unpacking', 'with')]
@@ -124,7 +105,7 @@ class build_py27(_build_py):
                 'fix_unittest', 'fix_absimport', 'fix_dctsetcomp', 'fix_setliteral', 'fix_with', 'fix_open'):
             fixers.remove('lib3to2.fixes.{}'.format(fix))
         fixers.append('fix_pymor_futures')
-        print(fixers) 
+        print(fixers)
         self.rtool = lib3to2.main.StdoutRefactoringTool(
             fixers,
             None,
@@ -132,11 +113,11 @@ class build_py27(_build_py):
             True,
             False
         )
-        self.rtool.refactor_dir('src', write=True) 
-        self.rtool.refactor_dir('docs', write=True) 
+        self.rtool.refactor_dir('src', write=True)
+        self.rtool.refactor_dir('docs', write=True)
         open(checkpoint_fn, 'wta').write('converted')
 
-cmdclass = {}
+cmdclass = versioneer.get_cmdclass()
 if sys.version_info[0] < 3:
     setup_requires.insert(0, '3to2')
     # cmdclass allows you to override the distutils commands that are
@@ -223,11 +204,10 @@ def _missing(names):
 
 
 def setup_package():
-    revstring = write_version()
 
     _setup(
         name='pymor',
-        version=revstring,
+        version=versioneer.get_version(),
         author='pyMOR developers',
         author_email='pymor-dev@listserv.uni-muenster.de',
         maintainer='Rene Milk',
