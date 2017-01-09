@@ -48,12 +48,15 @@ install:
     - set PATH=%CONDA%;%CONDA%\Scripts;%PATH%
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
-    - conda install numpy pip
-    - pip install --only-binary --no-index --find-links https://pymor.github.io/wheels/ pyside & echo pyside
+    # hardcode a few installs that don't succeed otherwise
+    - conda install numpy pip m2-unzip
+    - pip install --only-binary --no-index --find-links https://pymor.github.io/wheels/ pyside
+    - if [%PYTHON_VERSION%] == [3.4] ( conda remove numpy && pip install numpy && pip install https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz)
+
     - for /f %%i in (requirements.txt requirements-optional.txt requirements-travis.txt ) do (
                 conda install %%i 1> nul 2>&1 & pip install %%i 1> nul 2>&1 & echo %%i
             )
-    - curl -fsS -o gmsh.zip http://gmsh.info/bin/Windows/gmsh-2.16.0-Windows32.zip && 7z x gmsh.zip -o%CONDA%\Scripts
+    - curl -fsS -o gmsh.zip http://gmsh.info/bin/Windows/gmsh-2.16.0-Windows32.zip && unzip -j gmsh.zip -d %CONDA%\Scripts
 
 build_script:
     - set PATH=%CONDA%;%CONDA%\Scripts;%PATH%
