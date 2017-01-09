@@ -39,6 +39,7 @@ from functools import partial
 import numpy as np
 import OpenGL
 
+
 OpenGL.ERROR_ON_COPY = True
 
 from pymor.core.exceptions import PySideMissing
@@ -51,8 +52,10 @@ from pymor.algorithms.greedy import greedy
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.discretizers.elliptic import discretize_elliptic_cg
 from pymor.gui.gl import ColorBarWidget, GLPatchWidget
+from pymor.gui.matplotlib import MatplotlibPatchWidget
 from pymor.reductors.coercive import reduce_coercive_simple
 from pymor import gui
+from pymor.core import config
 
 
 PARAM_STEPS = 10
@@ -89,10 +92,14 @@ class SimPanel(QtGui.QWidget):
         super().__init__(parent)
         self.sim = sim
         box = QtGui.QHBoxLayout()
-        self.solution = GLPatchWidget(self, self.sim.grid, vmin=0., vmax=0.8)
-        self.bar = ColorBarWidget(self, vmin=0., vmax=0.8)
-        box.addWidget(self.solution, 2)
-        box.addWidget(self.bar, 2)
+        if config._windows_platform():
+            self.solution = MatplotlibPatchWidget(self, self.sim.grid, vmin=0., vmax=0.8)
+            box.addWidget(self.solution, 2)
+        else:
+            self.solution = GLPatchWidget(self, self.sim.grid, vmin=0., vmax=0.8)
+            self.bar = ColorBarWidget(self, vmin=0., vmax=0.8)
+            box.addWidget(self.solution, 2)
+            box.addWidget(self.bar, 2)
         self.param_panel = ParamRuler(self, sim)
         box.addWidget(self.param_panel)
         self.setLayout(box)
