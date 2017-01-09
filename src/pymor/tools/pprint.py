@@ -13,6 +13,8 @@ def format_array(array, compact_print=False):
 
     Parameters
     ----------
+    array
+        the |NumPy array| to be formatted
     compact_print
         If `True`, return a shorter version of string representation.
 

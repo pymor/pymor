@@ -141,7 +141,8 @@ def apply_inverse(op, rhs, options=None, check_finite=True):
         |VectorArray| of right-hand sides for the equation system.
     options
         The solver options to use. (See :func:`options`.)
-
+    check_finite
+        wheter or not to check if the l2_norms of the result |VectorArray| are all finite
     Returns
     -------
     |VectorArray| of the solution vectors.
@@ -526,7 +527,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
 
     if beta > 0:
         u.scal(1/beta)
-        v = A.apply_adjoint(u)
+        v = A.apply_transpose(u)
         alfa = v.l2_norm()[0]
 
     if alfa > 0:
@@ -575,7 +576,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
         if beta > 0:
             u.scal(1/beta)
             anorm = np.sqrt(anorm**2 + alfa**2 + beta**2 + damp**2)
-            v = A.apply_adjoint(u) - v * beta
+            v = A.apply_transpose(u) - v * beta
             alfa = v.l2_norm()[0]
             if alfa > 0:
                 v.scal(1 / alfa)
@@ -781,7 +782,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
 
     if beta > 0:
         u.scal(1 / beta)
-        v = A.apply_adjoint(u)
+        v = A.apply_transpose(u)
         alpha = v.l2_norm()[0]
 
     if alpha > 0:
@@ -860,7 +861,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
 
         if beta > 0:
             u.scal(1 / beta)
-            v = A.apply_adjoint(u) - v * beta
+            v = A.apply_transpose(u) - v * beta
             alpha = v.l2_norm()[0]
             if alpha > 0:
                 v.scal(1 / alpha)

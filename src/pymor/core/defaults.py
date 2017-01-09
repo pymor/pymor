@@ -110,6 +110,7 @@ Defaults
             if not defaults:
                 raise ValueError('Wrapped function has no optional arguments at all!')
             defaults = list(defaults)
+            # note getargspec here isn't actually deprecated since this branch is py2 only
             argspec = inspect.getargspec(func)
             argnames = argspec.args
 
@@ -237,7 +238,7 @@ methods of classes!'''.format(path))
 _default_container = DefaultContainer()
 
 
-def defaults(*args, **kwargs):
+def defaults(*args, sid_ignore=(), qualname=None):
     """Function decorator for marking function arguments as user-configurable defaults.
 
     If a function decorated with :func:`defaults` is called, the values of the marked
@@ -270,12 +271,7 @@ def defaults(*args, **kwargs):
         method has to be provided, as this name cannot be derived at decoration
         time in Python 2.
     """
-    # FIXME this will have to be adapted for Python 3
-
     assert all(isinstance(arg, str) for arg in args)
-    assert set(kwargs.keys()) <= {'sid_ignore', 'qualname'}
-    sid_ignore = kwargs.get('sid_ignore', ())
-    qualname = kwargs.get('qualname', None)
 
     def the_decorator(func):
 
@@ -286,15 +282,15 @@ def defaults(*args, **kwargs):
         _default_container._add_defaults_for_function(func, args=args, sid_ignore=sid_ignore, qualname=qualname)
 
         @functools.wraps(func, updated=())  # ensure that __signature__ is not copied
-        def wrapper(*args, **kwargs):
-            for k, v in zip(func.argnames, args):
-                if k in kwargs:
+        def wrapper(*wrapper_args, **wrapper_kwargs):
+            for k, v in zip(func.argnames, wrapper_args):
+                if k in wrapper_kwargs:
                     raise TypeError("{} got multiple values for argument '{}'"
                                     .format(func.__name__, k))
-                kwargs[k] = v
-            kwargs = {k: v if v is not None else func.defaultsdict.get(k, None) for k, v in kwargs.items()}
-            kwargs = dict(func.defaultsdict, **kwargs)
-            return func(**kwargs)
+                wrapper_kwargs[k] = v
+            wrapper_kwargs = {k: v if v is not None else func.defaultsdict.get(k, None) for k, v in wrapper_kwargs.items()}
+            wrapper_kwargs = dict(func.defaultsdict, **wrapper_kwargs)
+            return func(**wrapper_kwargs)
 
         # On Python 2 we have to add the __wrapped__ attribute to the wrapper
         # manually to help IPython find the right source code location

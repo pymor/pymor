@@ -459,8 +459,8 @@ def reduce_adaptive_greedy(d, reductor, validation_mus,
 
     # generate summary
     real_rb_size = rd.solution_space.dim
-    validation_mus += 1  # the validation set consists of `validation_mus` random parameters
-                         # plus the centers of the adaptive sample set cells
+    # the validation set consists of `validation_mus` random parameters plus the centers of the adaptive sample set cells
+    validation_mus += 1
     summary = '''Adaptive greedy basis generation:
    initial size of validation set:  {validation_mus}
    error estimator used:            {use_estimator}

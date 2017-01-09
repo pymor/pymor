@@ -63,12 +63,12 @@ class Config:
     def __init__(self):
         self.PY2 = sys.version_info.major == 2
         self.PY3 = sys.version_info.major == 3
-        self.PYTHON_VESRION = '{}.{}.{}'.format(sys.version_info.major, sys.version_info.minor, sys.version_info.micro)
+        self.PYTHON_VERSION = '{}.{}.{}'.format(sys.version_info.major, sys.version_info.minor, sys.version_info.micro)
 
     @property
     def version(self):
-        from pymor import VERSION
-        return VERSION
+        from pymor import __version__
+        return __version__
 
     def __getattr__(self, name):
         if name.startswith('HAVE_'):
@@ -121,7 +121,7 @@ External Packages
 Defaults
 --------
 See pymor.core.defaults.print_defaults.
-'''[1:].format(self.version, self.PYTHON_VESRION, '-' * max(map(len, package_info)),
+'''[1:].format(self.version, self.PYTHON_VERSION, '-' * max(map(len, package_info)),
                '\n'.join(package_info))
         return info
 

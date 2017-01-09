@@ -14,6 +14,7 @@ from pymor.grids.rect import RectGrid
 from pymor.tools import timing
 import pymor.core
 
+
 class Test_Interface(TestInterface):
 
     def testImplementorlist(self):
@@ -55,8 +56,8 @@ class Test_Interface(TestInterface):
         assert inst.abstract_static_method() == 0
 
     def testVersion(self):
-        assert pymor.VERSION > pymor.NO_VERSION
-        assert isinstance(pymor.VERSION, pymor.Version)
+        assert 'unknown' not in pymor.__version__
+        assert '?' not in pymor.__version__
 
 
 @SubclassForImplemetorsOf(ImmutableInterface)

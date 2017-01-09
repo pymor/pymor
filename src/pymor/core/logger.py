@@ -209,7 +209,7 @@ dummy_logger = DummyLogger()
 
 
 @defaults('levels', sid_ignore=('levels',))
-def set_log_levels(levels={'pymor': 'INFO'}):
+def set_log_levels(levels=None):
     """Set log levels for pyMOR's logging facility.
 
     Parameters
@@ -219,6 +219,7 @@ def set_log_levels(levels={'pymor': 'INFO'}):
         values are the log levels to set for the loggers of the given names
         (see :meth:`~logging.Logger.setLevel`).
     """
+    levels = levels or {'pymor': 'INFO'}
     for k, v in levels.items():
         getLogger(k).setLevel(v)
 

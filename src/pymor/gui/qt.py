@@ -29,8 +29,7 @@ from pymor.gui.gl import GLPatchWidget, ColorBarWidget
 from pymor.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget
 from pymor.tools.vtkio import write_vtk
 from pymor.vectorarrays.interfaces import VectorArrayInterface
-from pymor.vectorarrays.numpy import NumpyVectorArray
-
+from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
 
 if config.HAVE_PYSIDE:
     from PySide.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QApplication, QLCDNumber,
@@ -178,6 +177,7 @@ if config.HAVE_PYSIDE:
 
 
 _launch_qt_app_pids = set()
+
 
 
 def _doit():
@@ -382,10 +382,10 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             base_name = filename.split('.vtu')[0].split('.vtk')[0].split('.pvd')[0]
             if base_name:
                 if len(self.U) == 1:
-                    write_vtk(self.grid, NumpyVectorArray(self.U[0], copy=False), base_name, codim=self.codim)
+                    write_vtk(self.grid, NumpyVectorSpace.make_array(self.U[0]), base_name, codim=self.codim)
                 else:
                     for i, u in enumerate(self.U):
-                        write_vtk(self.grid, NumpyVectorArray(u, copy=False), '{}-{}'.format(base_name, i),
+                        write_vtk(self.grid, NumpyVectorSpace.make_array(u), '{}-{}'.format(base_name, i),
                                   codim=self.codim)
 
     _launch_qt_app(lambda: MainWindow(grid, U, bounding_box, codim, title=title, legend=legend,

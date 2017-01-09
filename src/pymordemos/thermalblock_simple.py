@@ -209,7 +209,6 @@ def main():
     MODEL, ALG, SNAPSHOTS, RBSIZE, TEST = sys.argv[1:]
     MODEL, ALG, SNAPSHOTS, RBSIZE, TEST = MODEL.lower(), ALG.lower(), int(SNAPSHOTS), int(RBSIZE), int(TEST)
 
-
     # discretize
     ############
     if MODEL == 'pymor':
@@ -219,13 +218,11 @@ def main():
     else:
         raise NotImplementedError
 
-
     # select reduction algorithm with error estimator
     #################################################
     coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', d.parameter_type)
     reductor = partial(reduce_coercive,
                        product=d.h1_0_semi_product, coercivity_estimator=coercivity_estimator)
-
 
     # generate reduced model
     ########################
@@ -240,13 +237,11 @@ def main():
     else:
         raise NotImplementedError
 
-
     # evaluate the reduction error
     ##############################
     results = reduction_error_analysis(rd, discretization=d, reconstructor=rc, estimator=True,
                                        error_norms=[d.h1_0_semi_norm], condition=True,
                                        test_mus=TEST, random_seed=999, plot=True)
-
 
     # show results
     ##############
@@ -254,14 +249,12 @@ def main():
     import matplotlib.pyplot
     matplotlib.pyplot.show(results['figure'])
 
-
     # write results to disk
     #######################
     from pymor.core.pickle import dump
     dump(rd, open('reduced_model.out', 'wb'))
     results.pop('figure')  # matplotlib figures cannot be serialized
     dump(results, open('results.out', 'wb'))
-
 
     # visualize reduction error for worst-approximated mu
     #####################################################

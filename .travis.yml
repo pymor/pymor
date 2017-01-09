@@ -38,16 +38,13 @@ branches:
 
 matrix:
   include:
-    - env: PYTEST_MARKER="not slow" DOCKER_TAG="2.7"
-    - env: PYTEST_MARKER="slow" DOCKER_TAG="2.7"
+    - env: PYTEST_MARKER="None" DOCKER_TAG="2.7"
     - env: PYTEST_MARKER="PIP_ONLY" DOCKER_TAG="2.7"
     - env: PYTEST_MARKER="MPI" DOCKER_TAG="2.7"
-    - env: PYTEST_MARKER="not slow" DOCKER_TAG="3.4"
-    - env: PYTEST_MARKER="slow" DOCKER_TAG="3.4"
+    - env: PYTEST_MARKER="None" DOCKER_TAG="3.4"
     - env: PYTEST_MARKER="PIP_ONLY" DOCKER_TAG="3.4"
     - env: PYTEST_MARKER="MPI" DOCKER_TAG="3.4"
-    - env: PYTEST_MARKER="not slow" DOCKER_TAG="3.5"
-    - env: PYTEST_MARKER="slow" DOCKER_TAG="3.5"
+    - env: PYTEST_MARKER="None" DOCKER_TAG="3.5"
     - env: PYTEST_MARKER="PIP_ONLY" DOCKER_TAG="3.5"
     - env: PYTEST_MARKER="MPI" DOCKER_TAG="3.5"
 

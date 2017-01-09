@@ -57,7 +57,7 @@ def _load(path, key=None):
         elif len(data) == 0:
             raise IOError('No data contained in NPY file {}'.format(path))
         elif len(data) > 1:
-            raise IOError('More than one object stored in NPY file {}'.format(key, path))
+            raise IOError('More than one object stored in NPY file {} for key {}'.format(path, key))
         else:
             matrix = next(iter(data.values()))
     else:

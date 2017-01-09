@@ -69,6 +69,7 @@ def _write_vtu_series(grid, coordinates, connectivity, data, filename_base, last
         group.addFile(filepath=fn, sim_time=i)
     group.save()
 
+
 def write_vtk(grid, data, filename_base, codim=2, binary_vtk=True, last_step=None):
     """Output grid-associated data in (legacy) vtk format
 
@@ -80,10 +81,12 @@ def write_vtk(grid, data, filename_base, codim=2, binary_vtk=True, last_step=Non
     data
         VectorArrayInterface instance with either cell (ie one datapoint per codim 0 entity)
         or vertex (ie one datapoint per codim 2 entity) data in each array element
-
+    codim
+        the codimension associated with the data
     filename_base
         common component for output files in timeseries
-
+    binary_vtk
+        if false, output files contain human readable inline ascii data, else appended binary
     last_step
         if set must be <= len(data) to restrict output of timeseries
     """

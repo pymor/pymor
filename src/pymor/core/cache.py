@@ -386,6 +386,7 @@ class CacheableInterface(ImmutableInterface):
             return method(*args, **kwargs)
 
         if config.PY2:
+            # note getargspec here isn't actually deprecated since this branch is py2 only
             argspec = inspect.getargspec(method)
             if argspec.varargs is not None:
                 raise NotImplementedError
@@ -441,6 +442,7 @@ def cached(function):
     """Decorator to make a method of `CacheableInterface` actually cached."""
 
     if config.PY2:
+        # note getargspec here isn't actually deprecated since this branch is py2 only
         argspec = inspect.getargspec(function)
         if argspec.varargs is not None:
             raise NotImplementedError

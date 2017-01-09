@@ -18,6 +18,7 @@ from pymortests.fixtures.vectorarray import \
 from pymortests.pickling import assert_picklable_without_dumps_function
 
 
+
 def ind_complement(v, ind):
     if isinstance(ind, _INDEXTYPES):
         ind = [ind]
@@ -487,7 +488,7 @@ def test_pairwise_dot(compatible_vector_array_pair):
         assert isinstance(r, np.ndarray)
         assert r.shape == (v1.len_ind(ind1),)
         r2 = v2[ind2].pairwise_dot(v1[ind1])
-        assert np.allclose,(r, r2)
+        assert np.allclose, (r, r2)
         assert np.all(r <= v1[ind1].l2_norm() * v2[ind2].l2_norm() * (1. + 1e-10))
         if hasattr(v1, 'data'):
             assert np.allclose(r, np.sum(indexed(v1.data, ind1) * indexed(v2.data, ind2), axis=1))
@@ -812,6 +813,16 @@ def test_mul_wrong_factor(vector_array):
     v = vector_array
     with pytest.raises(Exception):
         _ = v * v
+
+
+def test_rmul(vector_array):
+    v = vector_array
+    c = v.copy()
+    for a in (-1, -3, 0, 1, 23):
+        cc = v.copy()
+        cc.scal(a)
+        assert np.all(almost_equal((a * v), cc))
+        assert np.all(almost_equal(v, c))
 
 
 def test_imul(vector_array):

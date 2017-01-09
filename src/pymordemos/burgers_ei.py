@@ -182,7 +182,8 @@ def main(args):
         dofs = ei_discretization.operator.interpolation_dofs
         U[dofs] = np.arange(1, len(dofs) + 1)
         U[ei_discretization.operator.source_dofs] += int(len(dofs)/2)
-        discretization.visualize(NumpyVectorArray(U), title='Interpolation DOFs')
+        discretization.visualize(discretization.solution_space.make_array(U),
+                                 title='Interpolation DOFs')
 
     print('RB generation ...')
 

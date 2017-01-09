@@ -79,11 +79,11 @@ class OperatorBase(OperatorInterface):
             self.name, self.source.dim, self.range.dim, self.parameter_type,
             self.__class__.__name__)
 
-    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
+    def apply_transpose(self, V, mu=None):
         if self.linear:
             raise NotImplementedError
         else:
-            raise ValueError('Trying to apply adjoint of nonlinear operator.')
+            raise ValueError('Trying to apply transpose of nonlinear operator.')
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         from pymor.operators.constructions import FixedParameterOperator
@@ -136,30 +136,19 @@ class OperatorBase(OperatorInterface):
                     raise InversionError(e)
             return R
 
-    def apply_inverse_adjoint(self, U, mu=None, source_product=None, range_product=None,
-                              least_squares=False):
+    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
         from pymor.operators.constructions import FixedParameterOperator
         assembled_op = self.assemble(mu)
         if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
-            return assembled_op.apply_inverse_adjoint(U, source_product=source_product,
-                                                      range_product=range_product, least_squares=least_squares)
-        elif source_product or range_product:
-            if source_product:
-                U = source_product.apply(U)
-            # maybe there is a better implementation for source_product == None and range_product == None
-            V = self.apply_inverse_adjoint(U, mu=mu, least_squares=least_squares)
-            if range_product:
-                return range_product.apply_inverse(V)
-            else:
-                return V
+            return assembled_op.apply_inverse_transpose(U, least_squares=least_squares)
         else:
             if not self.linear:
                 raise NotImplementedError
-            # use generic solver for the adjoint operator
+            # use generic solver for the transpose operator
             from pymor.operators.constructions import AdjointOperator
-            options = {'inverse': self.solver_options.get('inverse_adjoint') if self.solver_options else None}
-            adjoint_op = AdjointOperator(self, with_apply_inverse=False, solver_options=options)
-            return adjoint_op.apply_inverse(U, mu=mu, least_squares=least_squares)
+            options = {'inverse': self.solver_options.get('inverse_transpose') if self.solver_options else None}
+            transpose_op = AdjointOperator(self, with_apply_inverse=False, solver_options=options)
+            return transpose_op.apply_inverse(U, mu=mu, least_squares=least_squares)
 
     def as_range_array(self, mu=None):
         assert isinstance(self.source, NumpyVectorSpace)
@@ -167,7 +156,7 @@ class OperatorBase(OperatorInterface):
 
     def as_source_array(self, mu=None):
         assert isinstance(self.range, NumpyVectorSpace)
-        return self.apply_adjoint(self.range.make_array(np.eye(self.range.dim)), mu=mu)
+        return self.apply_transpose(self.range.make_array(np.eye(self.range.dim)), mu=mu)
 
     def projected(self, range_basis, source_basis, product=None, name=None):
         name = name or '{}_projected'.format(self.name)
@@ -180,7 +169,7 @@ class OperatorBase(OperatorInterface):
                     return self
                 else:
                     try:
-                        V = self.apply_adjoint(range_basis, range_product=product)
+                        V = self.apply_transpose(product.apply(range_basis) if product else range_basis)
                     except NotImplementedError:
                         return ProjectedOperator(self, range_basis, None, product, name=name)
                     if isinstance(self.source, NumpyVectorSpace):
@@ -277,8 +266,10 @@ class ProjectedOperator(OperatorBase):
         if self.product:
             return super().T
         else:
+            options = {'inverse': self.solver_options.get('inverse_transpose'),
+                       'inverse_transpose': self.solver_options.get('inverse')} if self.solver_options else None
             return ProjectedOperator(self.operator.T, self.source_basis, self.range_basis,
-                                     name=self.name + '_transposed')
+                                     solver_options=options, name=self.name + '_transposed')
 
     def apply(self, U, mu=None):
         mu = self.parse_parameter(mu)

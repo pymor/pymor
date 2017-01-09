@@ -244,14 +244,12 @@ def main(BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST):
     else:
         raise NotImplementedError
 
-
     # select reduction algorithm with error estimator
     #################################################
     coercivity_estimator = ExpressionParameterFunctional('1.', d.parameter_type)
     reductor = partial(reduce_parabolic,
                        product=d.h1_0_semi_product,
                        coercivity_estimator=coercivity_estimator)
-
 
     # generate reduced model
     ########################
@@ -264,7 +262,6 @@ def main(BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST):
     else:
         raise NotImplementedError
 
-
     # evaluate the reduction error
     ##############################
     results = reduction_error_analysis(
@@ -274,13 +271,11 @@ def main(BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST):
         condition=False, test_mus=TEST, random_seed=999, plot=True
     )
 
-
     # show results
     ##############
     print(results['summary'])
     import matplotlib.pyplot as plt
     plt.show(results['figure'])
-
 
     # write results to disk
     #######################
@@ -288,7 +283,6 @@ def main(BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST):
     dump(rd, open('reduced_model.out', 'wb'))
     results.pop('figure')  # matplotlib figures cannot be serialized
     dump(results, open('results.out', 'wb'))
-
 
     # visualize reduction error for worst-approximated mu
     #####################################################
