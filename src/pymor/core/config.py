@@ -15,10 +15,16 @@ def _get_fenics_version():
     return version
 
 
+def _windows_platform():
+    return sys.platform == 'win32' or sys.platform == 'cygwin'
+
+
 def _get_matplotlib_version():
     import matplotlib
     # matplotlib's default is to use PyQt for Qt4 bindings. However, we use PySide ..
     matplotlib.rcParams['backend.qt4'] = 'PySide'
+    if _windows_platform():
+        matplotlib.use('Qt4Agg')
     return matplotlib.__version__
 
 
