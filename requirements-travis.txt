@@ -2,3 +2,4 @@ pytest-cov
 check-manifest
 python-coveralls
 pytest-travis-fold
+pytest-xvfb
