@@ -3,12 +3,12 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-from scipy.sparse import diags
 import pytest
+from scipy.sparse import diags
 
 import pymor.algorithms.genericsolvers
 from pymor.operators.basic import OperatorBase
-from pymor.operators.numpy import NumpyMatrixOperator, sparse_options, dense_options
+from pymor.operators.numpy import NumpyMatrixOperator, dense_options, sparse_options
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 

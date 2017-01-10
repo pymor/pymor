@@ -101,4 +101,3 @@ def write_vtk(grid, data, filename_base, codim=2, binary_vtk=True, last_step=Non
     x, y, z = coordinates[:, 0].copy(), coordinates[:, 1].copy(), np.zeros(coordinates[:, 1].size)
     _write_vtu_series(grid, coordinates=(x, y, z), connectivity=subentities, data=data.data,
                       filename_base=filename_base, last_step=last_step, is_cell_data=(codim == 0))
-

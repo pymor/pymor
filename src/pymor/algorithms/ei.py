@@ -15,8 +15,8 @@ a single function call.
 
 import numpy as np
 
-from pymor.core.logger import getLogger
 from pymor.algorithms.pod import pod
+from pymor.core.logger import getLogger
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.parallel.dummy import dummy_pool
 from pymor.parallel.interfaces import RemoteObjectInterface

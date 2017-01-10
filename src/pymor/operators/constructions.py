@@ -9,14 +9,14 @@ from itertools import chain
 
 import numpy as np
 
-from pymor.core.defaults import defaults_sid, defaults
+from pymor.core.defaults import defaults, defaults_sid
 from pymor.core.exceptions import InversionError
 from pymor.core.interfaces import ImmutableInterface
 from pymor.operators.basic import OperatorBase
 from pymor.operators.interfaces import OperatorInterface
 from pymor.parameters.base import Parametric
 from pymor.parameters.interfaces import ParameterFunctionalInterface
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _INDEXTYPES
+from pymor.vectorarrays.interfaces import _INDEXTYPES, VectorArrayInterface, VectorSpaceInterface
 from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
 
 

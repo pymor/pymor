@@ -2,22 +2,21 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from math import sin, pi, exp
-import numpy as np
-import pytest
 import itertools
+from math import exp, pi, sin
 from tempfile import NamedTemporaryFile
 
-from pymortests.base import TestInterface, runmodule
-from pymortests.fixtures.grid import rect_or_tria_grid
-from pymortests.base import polynomials
+import numpy as np
+import pytest
+
+from pymor.tools import timing
 from pymor.tools.deprecated import Deprecated
-from pymor.tools.quadratures import GaussQuadratures
 from pymor.tools.floatcmp import float_cmp, float_cmp_all
+from pymor.tools.quadratures import GaussQuadratures
 from pymor.tools.vtkio import write_vtk
 from pymor.vectorarrays.numpy import NumpyVectorSpace
-from pymor.tools import timing
-
+from pymortests.base import TestInterface, polynomials, runmodule
+from pymortests.fixtures.grid import rect_or_tria_grid
 
 FUNCTIONS = (('sin(2x pi)', lambda x: sin(2 * x * pi), 0),
              ('e^x', lambda x: exp(x), exp(1) - exp(0)))

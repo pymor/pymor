@@ -25,8 +25,8 @@ Options:
     --nt=COUNT   Number of time steps [default: 100].
 """
 
-from docopt import docopt
 import numpy as np
+from docopt import docopt
 
 from pymor.basic import *
 

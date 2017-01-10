@@ -5,8 +5,8 @@
 import numpy as np
 
 from pymor.algorithms.image import estimate_image_hierarchical
-from pymor.core.interfaces import ImmutableInterface
 from pymor.core.exceptions import ImageCollectionError
+from pymor.core.interfaces import ImmutableInterface
 from pymor.core.logger import getLogger
 from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import induced_norm

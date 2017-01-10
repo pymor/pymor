@@ -27,9 +27,9 @@ Arguments:
   TEST       Number of parameters for stochastic error estimation.
 """
 
-from pymor.basic import *        # most common pyMOR functions and classes
-from functools import partial    # fix parameters of given function
+from functools import partial  # fix parameters of given function
 
+from pymor.basic import *  # most common pyMOR functions and classes
 
 # parameters for high-dimensional models
 XBLOCKS = 2

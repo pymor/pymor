@@ -2,10 +2,10 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.core.interfaces import BasicInterface
-from pymortests.base import (TestInterface, _load_all)
-
 import pytest
+
+from pymor.core.interfaces import BasicInterface
+from pymortests.base import TestInterface, _load_all
 
 
 def implementors(interface_type):

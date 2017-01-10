@@ -37,8 +37,8 @@ Options:
 import sys
 import time
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from docopt import docopt
 
 from pymor.core.pickle import load

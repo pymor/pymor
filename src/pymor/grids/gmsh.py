@@ -2,10 +2,10 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+import time
 from collections import defaultdict
 
 import numpy as np
-import time
 
 from pymor.core.exceptions import GmshError
 from pymor.core.logger import getLogger

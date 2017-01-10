@@ -9,7 +9,7 @@ import numpy as np
 from scipy.sparse import coo_matrix, csc_matrix
 
 from pymor.functions.interfaces import FunctionInterface
-from pymor.grids.referenceelements import triangle, line, square
+from pymor.grids.referenceelements import line, square, triangle
 from pymor.operators.numpy import NumpyMatrixBasedOperator
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 

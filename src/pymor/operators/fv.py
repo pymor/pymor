@@ -11,11 +11,11 @@ from scipy.sparse import coo_matrix, csc_matrix, dia_matrix
 from pymor.core.defaults import defaults
 from pymor.core.interfaces import ImmutableInterface, abstractmethod
 from pymor.functions.interfaces import FunctionInterface
-from pymor.grids.interfaces import AffineGridWithOrthogonalCentersInterface
 from pymor.grids.boundaryinfos import SubGridBoundaryInfo
+from pymor.grids.interfaces import AffineGridWithOrthogonalCentersInterface
 from pymor.grids.subgrid import SubGrid
 from pymor.operators.basic import OperatorBase
-from pymor.operators.constructions import Concatenation, ComponentProjection
+from pymor.operators.constructions import ComponentProjection, Concatenation
 from pymor.operators.numpy import NumpyMatrixBasedOperator, NumpyMatrixOperator
 from pymor.parameters.base import Parametric
 from pymor.tools.inplace import iadd_masked, isub_masked

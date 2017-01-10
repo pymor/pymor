@@ -8,7 +8,7 @@ from scipy.sparse import issparse
 
 from pymor.core import NUMPY_INDEX_QUIRK
 from pymor.core.interfaces import classinstancemethod
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _INDEXTYPES
+from pymor.vectorarrays.interfaces import _INDEXTYPES, VectorArrayInterface, VectorSpaceInterface
 
 
 class NumpyVectorArray(VectorArrayInterface):

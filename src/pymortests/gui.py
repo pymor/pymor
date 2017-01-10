@@ -2,21 +2,21 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.grids.oned import OnedGrid
 from time import sleep
-from pymor.gui.qt import visualize_patch, stop_gui_processes
 
-import pytest
 import numpy as np
-from pymor.analyticalproblems.elliptic import EllipticProblem
-from pymor.discretizers.elliptic import discretize_elliptic_cg
-from pymor.domaindiscretizers.default import discretize_domain_default
-from pymor.grids.rect import RectGrid
-from pymor.core.exceptions import PySideMissing
+import pytest
 
-from pymortests.base import runmodule
-from pymor.domaindescriptions.basic import RectDomain, LineDomain
+from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.core.exceptions import PySideMissing
+from pymor.discretizers.elliptic import discretize_elliptic_cg
+from pymor.domaindescriptions.basic import LineDomain, RectDomain
+from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.functions.basic import GenericFunction
+from pymor.grids.oned import OnedGrid
+from pymor.grids.rect import RectGrid
+from pymor.gui.qt import stop_gui_processes, visualize_patch
+from pymortests.base import runmodule
 
 
 @pytest.fixture(params=(('matplotlib', RectGrid), ('gl', RectGrid), ('matplotlib', OnedGrid)))

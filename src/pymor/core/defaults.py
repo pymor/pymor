@@ -63,13 +63,13 @@ used to specify the path of a configuration file. If empty or set to
    of any mathematical algorithm.
 """
 
-from collections import defaultdict, OrderedDict
 import functools
 import importlib
 import inspect
 import os
 import pkgutil
 import textwrap
+from collections import OrderedDict, defaultdict
 
 from pymor.core.config import config
 

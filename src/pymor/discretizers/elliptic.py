@@ -7,8 +7,8 @@ from pymor.discretizations.basic import StationaryDiscretization
 from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.functions.basic import LincombFunction
 from pymor.grids.boundaryinfos import EmptyBoundaryInfo
-from pymor.grids.referenceelements import line, triangle, square
-from pymor.gui.qt import PatchVisualizer, Matplotlib1DVisualizer
+from pymor.grids.referenceelements import line, square, triangle
+from pymor.gui.qt import Matplotlib1DVisualizer, PatchVisualizer
 from pymor.operators import cg, fv
 from pymor.operators.constructions import LincombOperator
 

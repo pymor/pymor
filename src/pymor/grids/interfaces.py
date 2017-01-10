@@ -4,11 +4,10 @@
 
 import numpy as np
 
-from pymor.core.interfaces import abstractmethod
 from pymor.core.cache import CacheableInterface, cached
-from pymor.grids.defaultimpl import (ConformalTopologicalGridDefaultImplementations,
-                                     ReferenceElementDefaultImplementations,
-                                     AffineGridDefaultImplementations,)
+from pymor.core.interfaces import abstractmethod
+from pymor.grids.defaultimpl import (AffineGridDefaultImplementations, ConformalTopologicalGridDefaultImplementations,
+                                     ReferenceElementDefaultImplementations)
 
 
 class ConformalTopologicalGridInterface(ConformalTopologicalGridDefaultImplementations, CacheableInterface):

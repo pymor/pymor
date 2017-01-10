@@ -22,13 +22,12 @@ Arguments:
   TEST       Number of test parameters for reduction error estimation.
 """
 
-from functools import partial    # fix parameters of given function
+from functools import partial  # fix parameters of given function
 
 import numpy as np
 
-from pymor.basic import *        # most common pyMOR functions and classes
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
-
+from pymor.basic import *  # most common pyMOR functions and classes
 
 # parameters for high-dimensional models
 GRID_INTERVALS = 100

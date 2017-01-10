@@ -5,8 +5,7 @@
 import logging
 
 import pymor.core as core
-from pymortests.base import (runmodule,)
-
+from pymortests.base import runmodule
 from pymortests.fixtures.generic import basicinterface_subclass
 
 

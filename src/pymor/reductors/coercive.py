@@ -4,8 +4,8 @@
 
 import numpy as np
 
-from pymor.core.logger import getLogger
 from pymor.core.interfaces import ImmutableInterface
+from pymor.core.logger import getLogger
 from pymor.operators.constructions import LincombOperator, induced_norm
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.reductors.basic import reduce_generic_rb

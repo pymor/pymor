@@ -14,7 +14,6 @@ from pymor.grids.subgrid import SubGrid
 from pymor.grids.tria import TriaGrid
 from pymor.grids.unstructured import UnstructuredTriangleGrid
 
-
 rect_grid_generators = [lambda arg=arg, kwargs=kwargs: RectGrid(arg, **kwargs) for arg, kwargs in
                         [((2, 4), {}),
                          ((1, 1), {}),

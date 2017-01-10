@@ -9,9 +9,8 @@ from pymor.analyticalproblems.burgers import burgers_problem, burgers_problem_2d
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.analyticalproblems.helmholtz import helmholtz_problem
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
-from pymor.functions.basic import GenericFunction, ConstantFunction, LincombFunction
+from pymor.functions.basic import ConstantFunction, GenericFunction, LincombFunction
 from pymor.parameters.functionals import ExpressionParameterFunctional
-
 
 picklable_thermalblock_problems = \
     [thermal_block_problem(),

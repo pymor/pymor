@@ -4,7 +4,6 @@
 
 from itertools import chain
 
-
 from pymor.parallel.basic import WorkerPoolBase
 from pymor.tools import mpi
 

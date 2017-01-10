@@ -2,17 +2,17 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+import os
 from itertools import product
+
 import numpy as np
 import pytest
 
 from pymor.core.config import config
 from pymor.vectorarrays.block import BlockVectorSpace
-from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymor.vectorarrays.list import NumpyListVectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
-
-import os
 TRAVIS = os.getenv('TRAVIS') == 'true'
 
 

@@ -2,17 +2,17 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-import tempfile
 import collections
 import os
 import subprocess
+import tempfile
 import time
 
+from pymor.core.exceptions import GmshError
+from pymor.core.logger import getLogger
 from pymor.domaindescriptions.basic import RectDomain
 from pymor.domaindescriptions.polygonal import PolygonalDomain
 from pymor.grids.gmsh import load_gmsh
-from pymor.core.exceptions import GmshError
-from pymor.core.logger import getLogger
 
 
 def discretize_gmsh(domain_description=None, geo_file=None, geo_file_path=None, msh_file_path=None,

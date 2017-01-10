@@ -5,8 +5,8 @@
 
 import numpy as np
 
-from pymor.core.interfaces import BasicInterface, abstractmethod, abstractclassmethod, classinstancemethod
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _INDEXTYPES
+from pymor.core.interfaces import BasicInterface, abstractclassmethod, abstractmethod, classinstancemethod
+from pymor.vectorarrays.interfaces import _INDEXTYPES, VectorArrayInterface, VectorSpaceInterface
 
 
 class VectorInterface(BasicInterface):

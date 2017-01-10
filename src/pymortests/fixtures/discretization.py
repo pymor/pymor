@@ -8,11 +8,10 @@ import pytest
 from pkg_resources import resource_filename
 
 from pymor.discretizers.advection import discretize_nonlinear_instationary_advection_fv
-from pymor.discretizers.disk import discretize_stationary_from_disk, discretize_instationary_from_disk
+from pymor.discretizers.disk import discretize_instationary_from_disk, discretize_stationary_from_disk
 from pymor.discretizers.elliptic import discretize_elliptic_cg
-from pymortests.fixtures.analyticalproblem import (picklable_thermalblock_problems, non_picklable_thermalblock_problems,
-                                                   burgers_problems)
-
+from pymortests.fixtures.analyticalproblem import (burgers_problems, non_picklable_thermalblock_problems,
+                                                   picklable_thermalblock_problems)
 
 picklable_discretizaion_generators = \
         [lambda p=p, d=d: discretize_elliptic_cg(p, diameter=d)[0]

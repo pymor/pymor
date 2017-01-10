@@ -4,11 +4,11 @@
 
 import numpy as np
 
-from pymor.discretizers.elliptic import discretize_elliptic_cg, discretize_elliptic_fv
+from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.discretizations.basic import InstationaryDiscretization
-from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
+from pymor.discretizers.elliptic import discretize_elliptic_cg, discretize_elliptic_fv
 from pymor.operators.cg import InterpolationOperator
 from pymor.operators.numpy import NumpyGenericOperator
 

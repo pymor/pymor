@@ -4,7 +4,6 @@
 
 from pymor.operators.constructions import LincombOperator
 from pymor.operators.numpy import NumpyMatrixOperator
-
 from pymor.playground.operators.numpy import NumpyListVectorArrayMatrixOperator
 
 

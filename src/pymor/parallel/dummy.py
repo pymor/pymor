@@ -5,7 +5,7 @@
 from copy import deepcopy
 
 from pymor.core.interfaces import ImmutableInterface
-from pymor.parallel.interfaces import WorkerPoolInterface, RemoteObjectInterface
+from pymor.parallel.interfaces import RemoteObjectInterface, WorkerPoolInterface
 
 
 class DummyPool(WorkerPoolInterface):

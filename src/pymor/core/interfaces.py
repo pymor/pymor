@@ -63,24 +63,27 @@ functionality:
 """
 
 import abc
-try:
-    from cPickle import dumps, HIGHEST_PROTOCOL
-except ImportError:
-    from pickle import dumps, HIGHEST_PROTOCOL
-from copyreg import dispatch_table
 import hashlib
 import inspect
 import itertools
 import os
 import time
-from types import FunctionType, BuiltinFunctionType
 import uuid
+from copyreg import dispatch_table
+from types import BuiltinFunctionType, FunctionType
 
 import numpy as np
 
 from pymor.core import backports, logger
 from pymor.core.config import config
 from pymor.core.exceptions import ConstError, SIDGenerationError
+
+try:
+    from cPickle import dumps, HIGHEST_PROTOCOL
+except ImportError:
+    from pickle import dumps, HIGHEST_PROTOCOL
+
+
 
 DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_WITH_SPHINX', 0)) == 1
 NoneType = type(None)

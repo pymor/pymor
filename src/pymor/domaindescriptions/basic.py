@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from pymor.domaindescriptions.interfaces import DomainDescriptionInterface, KNOWN_BOUNDARY_TYPES
+from pymor.domaindescriptions.interfaces import KNOWN_BOUNDARY_TYPES, DomainDescriptionInterface
 
 
 class RectDomain(DomainDescriptionInterface):

@@ -4,12 +4,12 @@
 
 import numpy as np
 
+from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 from pymor.core.interfaces import ImmutableInterface
 from pymor.core.logger import getLogger
-from pymor.reductors.basic import reduce_generic_rb
-from pymor.reductors.residual import reduce_residual, reduce_implicit_euler_residual
 from pymor.operators.constructions import IdentityOperator
-from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
+from pymor.reductors.basic import reduce_generic_rb
+from pymor.reductors.residual import reduce_implicit_euler_residual, reduce_residual
 
 
 def reduce_parabolic(discretization, RB, product=None, coercivity_estimator=None,

@@ -8,12 +8,11 @@ from pymor.algorithms.timestepping import ExplicitEulerTimeStepper
 from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
 from pymor.discretizations.basic import InstationaryDiscretization
 from pymor.domaindiscretizers.default import discretize_domain_default
-from pymor.gui.qt import PatchVisualizer, Matplotlib1DVisualizer
+from pymor.gui.qt import Matplotlib1DVisualizer, PatchVisualizer
+from pymor.operators.fv import (L2Product, L2ProductFunctional, nonlinear_advection_engquist_osher_operator,
+                                nonlinear_advection_lax_friedrichs_operator,
+                                nonlinear_advection_simplified_engquist_osher_operator)
 from pymor.operators.numpy import NumpyGenericOperator
-from pymor.operators.fv import (nonlinear_advection_lax_friedrichs_operator,
-                                nonlinear_advection_engquist_osher_operator,
-                                nonlinear_advection_simplified_engquist_osher_operator,
-                                L2Product, L2ProductFunctional)
 
 
 def discretize_nonlinear_instationary_advection_fv(analytical_problem, diameter=None, nt=100, num_flux='lax_friedrichs',

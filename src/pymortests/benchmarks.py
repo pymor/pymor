@@ -4,6 +4,5 @@
 
 from pymortests.base import runmodule
 
-
 if __name__ == "__main__":
     runmodule(filename=__file__)

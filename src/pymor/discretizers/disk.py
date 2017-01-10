@@ -3,18 +3,17 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-import os.path
 import configparser
+import os.path
 
 import numpy as np
 
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
-from pymor.discretizations.basic import StationaryDiscretization
-from pymor.discretizations.basic import InstationaryDiscretization
+from pymor.discretizations.basic import InstationaryDiscretization, StationaryDiscretization
 from pymor.operators.constructions import LincombOperator
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.parameters.spaces import CubicParameterSpace
 from pymor.parameters.functionals import ExpressionParameterFunctional
+from pymor.parameters.spaces import CubicParameterSpace
 
 
 def discretize_stationary_from_disk(parameter_file):

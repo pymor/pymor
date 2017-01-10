@@ -5,7 +5,6 @@
 
 from pymor.core.config import config
 
-
 if config.HAVE_FENICS:
     import dolfin as df
     import numpy as np

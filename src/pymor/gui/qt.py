@@ -8,22 +8,21 @@ for the `Qt <http://www.qt-project.org>`_ widget toolkit for the GUI.
 """
 
 import math as m
-
-import numpy as np
-
 import multiprocessing
 import os
 import signal
 import time
 
+import numpy as np
+
 from pymor.core.config import config
 from pymor.core.defaults import defaults
+from pymor.core.exceptions import PySideMissing
 from pymor.core.interfaces import BasicInterface
 from pymor.core.logger import getLogger
-from pymor.core.exceptions import PySideMissing
 from pymor.grids.oned import OnedGrid
-from pymor.grids.referenceelements import triangle, square
-from pymor.gui.gl import GLPatchWidget, ColorBarWidget
+from pymor.grids.referenceelements import square, triangle
+from pymor.gui.gl import ColorBarWidget, GLPatchWidget
 from pymor.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget
 from pymor.tools.vtkio import write_vtk
 from pymor.vectorarrays.interfaces import VectorArrayInterface

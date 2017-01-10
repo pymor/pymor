@@ -7,10 +7,9 @@ import pytest
 
 from pymor.core.pickle import dumps, loads
 from pymor.functions.basic import ConstantFunction, GenericFunction
-from pymortests.fixtures.function import function, picklable_function, function_argument
+from pymortests.fixtures.function import function, function_argument, picklable_function
 from pymortests.fixtures.parameter import parameters_of_type
 from pymortests.pickling import assert_picklable, assert_picklable_without_dumps_function
-
 
 # monkey np.testing.assert_allclose to behave the same as np.allclose
 # for some reason, the default atol of np.testing.assert_allclose is 0

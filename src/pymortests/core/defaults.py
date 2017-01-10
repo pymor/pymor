@@ -6,7 +6,7 @@ from tempfile import NamedTemporaryFile
 
 import pytest
 
-from pymor.core.defaults import defaults, set_defaults, print_defaults, load_defaults_from_file, write_defaults_to_file
+from pymor.core.defaults import defaults, load_defaults_from_file, print_defaults, set_defaults, write_defaults_to_file
 
 
 @defaults('c', 'd')

@@ -83,9 +83,9 @@ Options:
   --greedy-without-estimator      Do not use error estimator for basis generation.
 """
 
-from functools import partial
 import sys
 import time
+from functools import partial
 
 from docopt import docopt
 

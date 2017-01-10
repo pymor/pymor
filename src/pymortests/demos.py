@@ -3,17 +3,17 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import os
-import pymordemos
 import runpy
-import sys
-import pytest
-from tempfile import mkdtemp
 import shutil
+import sys
+from tempfile import mkdtemp
 
-from pymortests.base import runmodule, check_results
+import pytest
+
+import pymordemos
 from pymor.core.exceptions import PySideMissing
 from pymor.gui.qt import stop_gui_processes
-
+from pymortests.base import check_results, runmodule
 
 DISCRETIZATION_ARGS = (
     ('elliptic', [0, 0, 0, 0]),

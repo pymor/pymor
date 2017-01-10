@@ -3,11 +3,9 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
-
 import pytest
 
-from pymor.functions.basic import ConstantFunction, GenericFunction, ExpressionFunction
-
+from pymor.functions.basic import ConstantFunction, ExpressionFunction, GenericFunction
 
 constant_functions = \
     [ConstantFunction(),
