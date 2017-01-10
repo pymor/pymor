@@ -747,6 +747,90 @@ class FixedParameterOperator(OperatorBase):
         return self.with_(operator=op), source_dofs
 
 
+class InverseOperator(OperatorBase):
+    """Represents the inverse of a given |Operator|.
+
+    Parameters
+    ----------
+    operator
+        The |Operator| of which the inverse is formed.
+    name
+        If not `None`, name of the operator.
+    """
+
+    def __init__(self, operator, name=None):
+        assert isinstance(operator, OperatorInterface)
+        self.build_parameter_type(operator)
+        self.source = operator.range
+        self.range = operator.source
+        self.operator = operator
+        self.linear = operator.linear
+        self.name = name or operator.name + '_inverse'
+
+    @property
+    def T(self):
+        return InverseTransposeOperator(self.operator)
+
+    def apply(self, U, mu=None):
+        assert U in self.source
+        return self.operator.apply_inverse(U, mu=mu)
+
+    def apply_transpose(self, V, mu=None):
+        assert V in self.range
+        return self.operator.apply_inverse_transpose(V, mu=mu)
+
+    def apply_inverse(self, V, mu=None, least_squares=False):
+        assert V in self.range
+        return self.operator.apply(V, mu=mu)
+
+    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+        assert U in self.source
+        return self.operator.apply_transpose(U, mu=mu)
+
+
+class InverseTransposeOperator(OperatorBase):
+    """Represents the inverse transpose of a given |Operator|.
+
+    Parameters
+    ----------
+    operator
+        The |Operator| of which the inverse transpose is formed.
+    name
+        If not `None`, name of the operator.
+    """
+
+    linear = True
+
+    def __init__(self, operator, name=None):
+        assert isinstance(operator, OperatorInterface)
+        assert operator.linear
+        self.build_parameter_type(operator)
+        self.source = operator.source
+        self.range = operator.range
+        self.operator = operator
+        self.name = name or operator.name + '_inverse_transpose'
+
+    @property
+    def T(self):
+        return InverseOperator(self.operator)
+
+    def apply(self, U, mu=None):
+        assert U in self.source
+        return self.operator.apply_inverse_transpose(U, mu=mu)
+
+    def apply_transpose(self, V, mu=None):
+        assert V in self.range
+        return self.operator.apply_inverse(V, mu=mu)
+
+    def apply_inverse(self, V, mu=None, least_squares=False):
+        assert V in self.range
+        return self.operator.apply_transpose(V, mu=mu)
+
+    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+        assert U in self.source
+        return self.operator.apply(U, mu=mu)
+
+
 class AdjointOperator(OperatorBase):
     """Represents the adjoint of a given linear |Operator|.
 
