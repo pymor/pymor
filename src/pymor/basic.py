@@ -12,7 +12,7 @@ from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension, pod_basis_extension
 from pymor.algorithms.ei import interpolate_operators, ei_greedy, deim
 from pymor.algorithms.error import reduction_error_analysis
-from pymor.algorithms.gram_schmidt import gram_schmidt
+from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.greedy import greedy
 from pymor.algorithms.adaptivegreedy import adaptive_greedy
 from pymor.algorithms.newton import newton
