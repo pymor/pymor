@@ -3,7 +3,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.domaindescriptions.basic import RectDomain
 from pymor.functions.basic import ConstantFunction, LincombFunction
 from pymor.parameters.functionals import ExpressionParameterFunctional
@@ -34,7 +34,7 @@ def helmholtz_problem(domain=RectDomain(), rhs=None, parameter_range=(0., 100.),
         |Function| providing the Neumann boundary values.
     """
 
-    return EllipticProblem(
+    return StationaryProblem(
 
         domain=domain,
 

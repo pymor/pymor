@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitEulerTimeStepper
-from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.discretizations.basic import StationaryDiscretization, InstationaryDiscretization
 from pymor.domaindiscretizers.default import discretize_domain_default
@@ -21,12 +21,12 @@ from pymor.operators.constructions import LincombOperator
 
 def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretizer=None,
                              grid=None, boundary_info=None):
-    """Discretizes an |EllipticProblem| using finite elements.
+    """Discretizes an |StationaryProblem| using finite elements.
 
     Parameters
     ----------
     analytical_problem
-        The |EllipticProblem| to discretize.
+        The |StationaryProblem| to discretize.
     diameter
         If not `None`, `diameter` is passed as an argument to the `domain_discretizer`.
     domain_discretizer
@@ -51,7 +51,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
             :boundary_info:  The generated |BoundaryInfo|.
     """
 
-    assert isinstance(analytical_problem, EllipticProblem)
+    assert isinstance(analytical_problem, StationaryProblem)
     assert grid is None or boundary_info is not None
     assert boundary_info is None or grid is not None
     assert grid is None or domain_discretizer is None
@@ -159,7 +159,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
 def discretize_instationary_cg(analytical_problem, diameter=None, domain_discretizer=None,
                                grid=None, boundary_info=None, num_values=None, time_stepper=None, nt=None):
-    """Discretizes an |InstationaryProblem| with an |EllipticProblem| as stationary part
+    """Discretizes an |InstationaryProblem| with an |StationaryProblem| as stationary part
     using finite elements.
 
     Parameters
@@ -200,7 +200,7 @@ def discretize_instationary_cg(analytical_problem, diameter=None, domain_discret
     """
 
     assert isinstance(analytical_problem, InstationaryProblem)
-    assert isinstance(analytical_problem.stationary_part, EllipticProblem)
+    assert isinstance(analytical_problem.stationary_part, StationaryProblem)
     assert grid is None or boundary_info is not None
     assert boundary_info is None or grid is not None
     assert grid is None or domain_discretizer is None

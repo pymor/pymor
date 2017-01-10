@@ -47,7 +47,7 @@ def discretize_pymor():
     # setup analytical problem
     problem = InstationaryProblem(
 
-        EllipticProblem(
+        StationaryProblem(
             domain=RectDomain(top='dirichlet', bottom='neumann'),
 
             diffusion=LincombFunction(

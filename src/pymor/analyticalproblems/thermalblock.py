@@ -5,7 +5,7 @@
 
 from itertools import product
 
-from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.domaindescriptions.basic import RectDomain
 from pymor.functions.basic import ConstantFunction, ExpressionFunction, LincombFunction
 from pymor.parameters.functionals import ProjectionParameterFunctional
@@ -61,7 +61,7 @@ def thermal_block_problem(num_blocks=(3, 3), parameter_range=(0.1, 1)):
                                   2, (), {}, {'ix': ix, 'iy': iy, 'dx': 1. / num_blocks[0], 'dy': 1. / num_blocks[1]},
                                   name='diffusion_{}_{}'.format(ix, iy))
 
-    return EllipticProblem(
+    return StationaryProblem(
 
         domain=RectDomain(),
 

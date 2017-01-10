@@ -19,7 +19,7 @@ from pymor.algorithms.newton import newton
 from pymor.algorithms.pod import pod
 
 from pymor.analyticalproblems.burgers import burgers_problem, burgers_problem_2d
-from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.helmholtz import helmholtz_problem
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.analyticalproblems.thermalblock import thermal_block_problem

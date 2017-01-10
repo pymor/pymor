@@ -8,7 +8,7 @@ import numpy as np
 from pymor.core.interfaces import ImmutableInterface
 
 
-class EllipticProblem(ImmutableInterface):
+class StationaryProblem(ImmutableInterface):
     """Linear elliptic problem description.
 
     The problem consists in solving ::

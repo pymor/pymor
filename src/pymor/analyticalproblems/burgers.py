@@ -5,7 +5,7 @@
 
 import numpy as np
 
-from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.domaindescriptions.basic import LineDomain, RectDomain, TorusDomain, CircleDomain
 from pymor.functions.basic import ConstantFunction, ExpressionFunction
@@ -46,7 +46,7 @@ def burgers_problem(v=1., circle=True, initial_data_type='sin', parameter_range=
 
     return InstationaryProblem(
 
-        EllipticProblem(
+        StationaryProblem(
             domain=CircleDomain([0, 2]) if circle else LineDomain([0, 2], right=None),
 
             dirichlet_data=dirichlet_data,
@@ -106,7 +106,7 @@ def burgers_problem_2d(vx=1., vy=1., torus=True, initial_data_type='sin', parame
 
     return InstationaryProblem(
 
-        EllipticProblem(
+        StationaryProblem(
             domain=TorusDomain([[0, 0], [2, 1]]) if torus else RectDomain([[0, 0], [2, 1]], right=None, top=None),
 
             dirichlet_data=dirichlet_data,

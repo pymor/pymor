@@ -32,7 +32,7 @@ import math as m
 from docopt import docopt
 import numpy as np
 
-from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.discretizers.cg import discretize_stationary_cg
 from pymor.discretizers.fv import discretize_stationary_fv
 from pymor.domaindescriptions.basic import RectDomain
@@ -76,7 +76,7 @@ def elliptic_demo(args):
         print('Solving on {0}'.format(grid_name))
 
         print('Setup problem ...')
-        problem = EllipticProblem(
+        problem = StationaryProblem(
             domain=domain,
             diffusion=ConstantFunction(1, dim_domain=2),
             rhs=rhs,

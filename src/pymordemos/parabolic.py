@@ -42,7 +42,7 @@ def parabolic_demo(args):
         args['TOP'] = float(args['TOP'])
         problem = InstationaryProblem(
 
-            EllipticProblem(
+            StationaryProblem(
                 domain=RectDomain(top='dirichlet', bottom='neumann'),
 
                 diffusion=LincombFunction(
@@ -76,7 +76,7 @@ def parabolic_demo(args):
         args['SPEED'] = float(args['SPEED'])
         problem = InstationaryProblem(
 
-            EllipticProblem(
+            StationaryProblem(
                 domain=RectDomain(),
 
                 diffusion=ConstantFunction(0.01, dim_domain=2),

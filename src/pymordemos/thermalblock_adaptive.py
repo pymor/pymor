@@ -76,7 +76,7 @@ from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmid
 from pymor.algorithms.adaptivegreedy import adaptive_greedy
 from pymor.algorithms.error import reduction_error_analysis
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
-from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.core.pickle import dump
 from pymor.discretizers.cg import discretize_stationary_cg
 from pymor.parameters.functionals import ExpressionParameterFunctional
@@ -110,7 +110,7 @@ def thermalblock_demo(args):
                    ExpressionParameterFunctional('diffusion[1]**2', {'diffusion': (2,)}),
                    ExpressionParameterFunctional('diffusion[0]', {'diffusion': (2,)}),
                    ExpressionParameterFunctional('diffusion[1]', {'diffusion': (2,)})]
-    problem = EllipticProblem(domain=problem.domain,
+    problem = StationaryProblem(domain=problem.domain,
                               diffusion=problem.diffusion.with_(coefficients=functionals),
                               rhs=problem.rhs,
                               parameter_space=CubicParameterSpace({'diffusion': (2,)}, 0.1, 1.))

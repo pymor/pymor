@@ -21,7 +21,7 @@ Options:
 
 from docopt import docopt
 
-from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.discretizers.cg import discretize_stationary_cg
 from pymor.discretizers.fv import discretize_stationary_fv
 from pymor.domaindescriptions.basic import LineDomain
@@ -49,7 +49,7 @@ def elliptic_oned_demo(args):
     print('Solving on OnedGrid(({0},{0}))'.format(args['N']))
 
     print('Setup Problem ...')
-    problem = EllipticProblem(
+    problem = StationaryProblem(
         domain=LineDomain(),
         rhs=rhs,
         diffusion=LincombFunction([d0, d1], [f0, f1]),

@@ -6,7 +6,7 @@ import pytest
 
 from pymor.domaindescriptions.basic import RectDomain
 from pymor.analyticalproblems.burgers import burgers_problem, burgers_problem_2d
-from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.helmholtz import helmholtz_problem
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.functions.basic import GenericFunction, ConstantFunction, LincombFunction
@@ -38,12 +38,12 @@ burgers_problems = \
 
 
 picklable_elliptic_problems = \
-    [EllipticProblem(domain=RectDomain(), rhs=ConstantFunction(dim_domain=2, value=1.)),
+    [StationaryProblem(domain=RectDomain(), rhs=ConstantFunction(dim_domain=2, value=1.)),
      helmholtz_problem()]
 
 
 non_picklable_elliptic_problems = \
-    [EllipticProblem(domain=RectDomain(),
+    [StationaryProblem(domain=RectDomain(),
                      rhs=ConstantFunction(dim_domain=2, value=21.),
                      diffusion=LincombFunction(
                          [GenericFunction(dim_domain=2, mapping=lambda X, p=p: X[..., 0]**p)
