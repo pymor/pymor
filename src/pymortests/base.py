@@ -3,14 +3,15 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import hashlib
-import pprint
-import pkgutil
 import os
+import pkgutil
+import pprint
 import sys
+from math import factorial
+from pickle import dump, dumps, load
+
 import numpy as np
 from numpy.polynomial.polynomial import Polynomial
-from math import factorial
-from pickle import dumps, dump, load
 from pkg_resources import resource_filename, resource_stream
 
 from pymor.core import logger

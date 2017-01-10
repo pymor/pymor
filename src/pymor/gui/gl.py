@@ -15,7 +15,6 @@ import numpy as np
 
 from pymor.core.config import config
 
-
 if config.HAVE_PYSIDE and config.HAVE_QTOPENGL and config.HAVE_GL:
     import OpenGL.GL as gl
     from PySide.QtGui import QSizePolicy, QPainter, QFontMetrics

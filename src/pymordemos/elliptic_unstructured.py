@@ -25,8 +25,8 @@ Options:
     --fv         Use finite volume discretization instead of finite elements.
 """
 
-from docopt import docopt
 import numpy as np
+from docopt import docopt
 
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.discretizers.elliptic import discretize_elliptic_cg, discretize_elliptic_fv

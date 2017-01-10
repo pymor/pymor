@@ -72,16 +72,16 @@ from functools import partial
 
 from docopt import docopt
 
-from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension
 from pymor.algorithms.adaptivegreedy import adaptive_greedy
+from pymor.algorithms.basisextension import gram_schmidt_basis_extension, trivial_basis_extension
 from pymor.algorithms.error import reduction_error_analysis
-from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.core.pickle import dump
 from pymor.discretizers.elliptic import discretize_elliptic_cg
+from pymor.parallel.default import new_parallel_pool
 from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace
-from pymor.parallel.default import new_parallel_pool
 from pymor.reductors.coercive import reduce_coercive, reduce_coercive_simple
 
 

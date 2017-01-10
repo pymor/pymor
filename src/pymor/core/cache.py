@@ -63,7 +63,6 @@ A cache region can be emptied using :meth:`CacheRegion.clear`. The function
 """
 
 import atexit
-from collections import OrderedDict
 import datetime
 import functools
 import getpass
@@ -71,6 +70,7 @@ import inspect
 import os
 import sqlite3
 import tempfile
+from collections import OrderedDict
 from types import MethodType
 
 from pymor.core.config import config

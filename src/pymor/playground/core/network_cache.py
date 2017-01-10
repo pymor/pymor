@@ -2,10 +2,10 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+import base64
+import datetime
 import os
 import sqlite3
-import datetime
-import base64
 import xmlrpc.client
 from xmlrpc.server import SimpleXMLRPCServer
 

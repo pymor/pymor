@@ -6,9 +6,8 @@
 import numpy as np
 from scipy.linalg import solve_triangular
 
-
 from pymor.operators.basic import OperatorBase
-from pymor.operators.constructions import VectorArrayOperator, Concatenation, ComponentProjection, ZeroOperator
+from pymor.operators.constructions import ComponentProjection, Concatenation, VectorArrayOperator, ZeroOperator
 from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.interfaces import VectorArrayInterface

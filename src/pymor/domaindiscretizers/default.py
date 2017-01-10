@@ -3,9 +3,10 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import math as m
+
 import numpy as np
 
-from pymor.domaindescriptions.basic import RectDomain, CylindricalDomain, TorusDomain, LineDomain, CircleDomain
+from pymor.domaindescriptions.basic import CircleDomain, CylindricalDomain, LineDomain, RectDomain, TorusDomain
 from pymor.domaindescriptions.polygonal import PolygonalDomain
 from pymor.grids.boundaryinfos import BoundaryInfoFromIndicators, EmptyBoundaryInfo
 from pymor.grids.oned import OnedGrid

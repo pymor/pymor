@@ -2,10 +2,11 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+import random
+from math import exp, sin
+
 import numpy as np
 import pytest
-import random
-from math import sin, exp
 
 from pymortests.base import runmodule
 

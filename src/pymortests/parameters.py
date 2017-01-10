@@ -2,11 +2,10 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.parameters.spaces import CubicParameterSpace
-from pymortests.base import runmodule
-
 import pytest
 
+from pymor.parameters.spaces import CubicParameterSpace
+from pymortests.base import runmodule
 
 num_samples = 100
 

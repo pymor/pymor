@@ -3,13 +3,14 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from types import FunctionType, MethodType
+
 import numpy as np
 from scipy.sparse import issparse
-from types import FunctionType, MethodType
 
 from pymor.core.config import config
 from pymor.core.interfaces import BasicInterface
-from pymor.core.pickle import dumps, loads, dumps_function, PicklingError
+from pymor.core.pickle import PicklingError, dumps, dumps_function, loads
 from pymor.grids.subgrid import SubGrid
 from pymor.operators.numpy import NumpyMatrixBasedOperator
 

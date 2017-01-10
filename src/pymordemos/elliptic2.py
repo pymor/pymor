@@ -25,7 +25,7 @@ from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.discretizers.elliptic import discretize_elliptic_cg, discretize_elliptic_fv
 from pymor.domaindescriptions.basic import RectDomain
 from pymor.functions.basic import ExpressionFunction, LincombFunction
-from pymor.parameters.functionals import ProjectionParameterFunctional, ExpressionParameterFunctional
+from pymor.parameters.functionals import ExpressionParameterFunctional, ProjectionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace
 
 

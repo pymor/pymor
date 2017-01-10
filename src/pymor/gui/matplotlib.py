@@ -13,7 +13,6 @@ import numpy as np
 
 from pymor.core.config import config
 
-
 if config.HAVE_PYSIDE and config.HAVE_MATPLOTLIB:
     from PySide.QtGui import QSizePolicy
 

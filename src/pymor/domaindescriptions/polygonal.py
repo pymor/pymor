@@ -2,10 +2,11 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+import collections
+
 import numpy as np
 
-import collections
-from pymor.domaindescriptions.interfaces import DomainDescriptionInterface, KNOWN_BOUNDARY_TYPES
+from pymor.domaindescriptions.interfaces import KNOWN_BOUNDARY_TYPES, DomainDescriptionInterface
 
 
 class PolygonalDomain(DomainDescriptionInterface):

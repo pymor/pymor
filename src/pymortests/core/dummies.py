@@ -2,9 +2,9 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.core.interfaces import (BasicInterface, abstractmethod)
-from pymor.core.cache import CacheableInterface, cached
 from pymor.core import interfaces
+from pymor.core.cache import CacheableInterface, cached
+from pymor.core.interfaces import BasicInterface, abstractmethod
 
 
 class BoundaryInterface(interfaces.BasicInterface):

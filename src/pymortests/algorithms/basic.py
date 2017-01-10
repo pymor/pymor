@@ -4,16 +4,17 @@
 
 from numbers import Number
 
-import pytest
 import numpy as np
+import pytest
 
 from pymor.algorithms.basic import almost_equal
 from pymor.operators.constructions import induced_norm
-from pymortests.fixtures.vectorarray import \
-    (vector_array_without_reserve, vector_array, compatible_vector_array_pair_without_reserve,
-     compatible_vector_array_pair, incompatible_vector_array_pair)
 from pymortests.fixtures.operator import operator_with_arrays_and_products
-from pymortests.vectorarray import valid_inds, valid_inds_of_same_length, invalid_ind_pairs, indexed
+from pymortests.fixtures.vectorarray import (compatible_vector_array_pair_without_reserve, vector_array,
+                                             vector_array_without_reserve)
+from pymortests.vectorarray import indexed, invalid_ind_pairs, valid_inds, valid_inds_of_same_length
+
+     compatible_vector_array_pair, incompatible_vector_array_pair)
 
 
 def test_almost_equal(compatible_vector_array_pair):

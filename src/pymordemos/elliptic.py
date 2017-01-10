@@ -29,14 +29,15 @@ Options:
 """
 
 import math as m
-from docopt import docopt
+
 import numpy as np
+from docopt import docopt
 
 from pymor.analyticalproblems.elliptic import EllipticProblem
 from pymor.discretizers.elliptic import discretize_elliptic_cg, discretize_elliptic_fv
 from pymor.domaindescriptions.basic import RectDomain
 from pymor.domaindiscretizers.default import discretize_domain_default
-from pymor.functions.basic import ExpressionFunction, ConstantFunction
+from pymor.functions.basic import ConstantFunction, ExpressionFunction
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
 

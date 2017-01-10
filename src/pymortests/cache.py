@@ -2,11 +2,11 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-import time
 import os
-from uuid import uuid4
+import time
 from datetime import datetime
 from tempfile import gettempdir
+from uuid import uuid4
 
 from pymor.core import cache
 from pymortests.base import TestInterface, runmodule

@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 
-from pymor.core.config import config, _PACKAGES
+from pymor.core.config import _PACKAGES, config
 
 
 def test_repr():

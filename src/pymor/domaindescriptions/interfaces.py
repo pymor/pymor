@@ -4,7 +4,6 @@
 
 from pymor.core.interfaces import ImmutableInterface
 
-
 KNOWN_BOUNDARY_TYPES = {'dirichlet', 'neumann', 'robin'}
 
 

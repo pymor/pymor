@@ -4,9 +4,9 @@
 
 import numpy as np
 
+from pymor.grids._unstructured import compute_edges
 from pymor.grids.interfaces import AffineGridInterface
 from pymor.grids.referenceelements import triangle
-from pymor.grids._unstructured import compute_edges
 
 
 class UnstructuredTriangleGrid(AffineGridInterface):

@@ -3,8 +3,8 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from numbers import Number
 import time
+from numbers import Number
 
 import numpy as np
 

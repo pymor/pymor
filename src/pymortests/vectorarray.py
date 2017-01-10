@@ -2,20 +2,21 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from itertools import product, chain
+from itertools import chain, product
 from numbers import Number
 
-import pytest
 import numpy as np
+import pytest
 
 from pymor.algorithms.basic import almost_equal
 from pymor.core import NUMPY_INDEX_QUIRK
-from pymor.vectorarrays.interfaces import VectorSpaceInterface, _INDEXTYPES
-from pymortests.fixtures.vectorarray import \
-    (vector_array_without_reserve, vector_array, compatible_vector_array_pair_without_reserve,
+from pymor.vectorarrays.interfaces import _INDEXTYPES, VectorSpaceInterface
+from pymortests.fixtures.vectorarray import (compatible_vector_array_pair_without_reserve, vector_array,
+                                             vector_array_without_reserve)
+from pymortests.pickling import assert_picklable_without_dumps_function
+
      compatible_vector_array_pair, incompatible_vector_array_pair,
      picklable_vector_array_without_reserve, picklable_vector_array)
-from pymortests.pickling import assert_picklable_without_dumps_function
 
 
 

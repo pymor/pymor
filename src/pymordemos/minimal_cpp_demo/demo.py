@@ -9,11 +9,10 @@ from pymor.algorithms.timestepping import ExplicitEulerTimeStepper
 from pymor.discretizations.basic import InstationaryDiscretization
 from pymor.grids.oned import OnedGrid
 from pymor.gui.qt import Matplotlib1DVisualizer
-from pymor.operators.constructions import VectorFunctional, LincombOperator
+from pymor.operators.constructions import LincombOperator, VectorFunctional
 from pymor.parameters.functionals import ProjectionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace
 from pymor.reductors.basic import reduce_generic_rb
-
 # import wrapped classes
 from wrapper import WrappedDiffusionOperator
 

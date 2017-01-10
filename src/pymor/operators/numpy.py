@@ -17,8 +17,10 @@ from functools import reduce
 
 import numpy as np
 import scipy.sparse
-from scipy.sparse import issparse
+import scipy.version
 from scipy.io import mmwrite, savemat
+from scipy.sparse import issparse
+from scipy.sparse.linalg import LinearOperator, bicgstab, lgmres, lsqr, spilu, splu, spsolve
 
 from pymor.algorithms import genericsolvers
 from pymor.core.config import config
@@ -401,8 +403,6 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
 ####################################################################################################
 
 
-import scipy.version
-from scipy.sparse.linalg import bicgstab, spsolve, splu, spilu, lgmres, lsqr, LinearOperator
 
 _dense_options = None
 _dense_options_sid = None

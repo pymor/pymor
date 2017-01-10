@@ -4,10 +4,11 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from numbers import Number
+
 import numpy as np
 
 from pymor.core.interfaces import classinstancemethod
-from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _INDEXTYPES
+from pymor.vectorarrays.interfaces import _INDEXTYPES, VectorArrayInterface, VectorSpaceInterface
 
 
 class BlockVectorArray(VectorArrayInterface):

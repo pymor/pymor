@@ -7,7 +7,7 @@
 import weakref
 
 from pymor.core.interfaces import ImmutableInterface
-from pymor.parallel.interfaces import WorkerPoolInterface, RemoteObjectInterface
+from pymor.parallel.interfaces import RemoteObjectInterface, WorkerPoolInterface
 
 
 class WorkerPoolDefaultImplementations(object):

@@ -6,7 +6,7 @@
 import numpy as np
 
 from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
-from pymor.domaindescriptions.basic import LineDomain, RectDomain, TorusDomain, CircleDomain
+from pymor.domaindescriptions.basic import CircleDomain, LineDomain, RectDomain, TorusDomain
 from pymor.functions.basic import ConstantFunction, ExpressionFunction
 from pymor.parameters.spaces import CubicParameterSpace
 

@@ -76,17 +76,17 @@ Options:
   --ipython-profile=PROFILE       IPython profile to use for parallelization.
 """
 
-import sys
 import math as m
+import sys
 import time
 from functools import partial
 
 import numpy as np
 from docopt import docopt
 
-from pymor.algorithms.greedy import greedy
 from pymor.algorithms.basisextension import pod_basis_extension
 from pymor.algorithms.ei import interpolate_operators
+from pymor.algorithms.greedy import greedy
 from pymor.analyticalproblems.burgers import burgers_problem_2d
 from pymor.discretizers.advection import discretize_nonlinear_instationary_advection_fv
 from pymor.domaindiscretizers.default import discretize_domain_default

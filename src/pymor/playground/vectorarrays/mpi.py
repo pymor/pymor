@@ -7,8 +7,8 @@ from numbers import Number
 import numpy as np
 
 from pymor.tools import mpi
-from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymor.vectorarrays.mpi import MPIVectorSpaceAutoComm
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 def random_array(dims, length, seed):

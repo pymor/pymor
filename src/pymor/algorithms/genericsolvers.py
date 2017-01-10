@@ -13,7 +13,6 @@ from pymor.core.defaults import defaults, defaults_sid
 from pymor.core.exceptions import InversionError
 from pymor.core.logger import getLogger
 
-
 _options = None
 _options_sid = None
 

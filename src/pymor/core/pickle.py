@@ -14,25 +14,27 @@ since the implementation of :func:`dumps_function` uses non-portable
 implementation details of CPython to achieve its goals.
 """
 
-import marshal
 import opcode
+# on CPython provide pickling methods which use
+# dumps_function in case pickling of a function fails
+import platform
+from io import BytesIO as IOtype
 from types import CodeType, FunctionType, ModuleType
+
+import marshal
+from pymor.core.config import config
+
 try:
     import cPickle as pickle
 except ImportError:
     import pickle as pickle
-from io import BytesIO as IOtype
 
-from pymor.core.config import config
 
 PicklingError = pickle.PicklingError
 UnpicklingError = pickle.UnpicklingError
 PROTOCOL = pickle.HIGHEST_PROTOCOL
 
 
-# on CPython provide pickling methods which use
-# dumps_function in case pickling of a function fails
-import platform
 if platform.python_implementation() == 'CPython':
 
     def dump(obj, file, protocol=None):

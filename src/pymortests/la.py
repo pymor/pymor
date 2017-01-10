@@ -6,12 +6,12 @@ import numpy as np
 
 from pymor.algorithms.basic import almost_equal
 from pymor.algorithms.gram_schmidt import gram_schmidt
-from pymor.operators.constructions import induced_norm
-from pymor.operators.cg import L2ProductP1
-from pymortests.base import runmodule
-from pymor.grids.tria import TriaGrid
 from pymor.grids.boundaryinfos import AllDirichletBoundaryInfo
+from pymor.grids.tria import TriaGrid
+from pymor.operators.cg import L2ProductP1
+from pymor.operators.constructions import induced_norm
 from pymor.vectorarrays.numpy import NumpyVectorSpace
+from pymortests.base import runmodule
 
 
 def test_induced():

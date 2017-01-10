@@ -2,16 +2,14 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from itertools import chain
 import os
 import time
-
+from itertools import chain
 
 from pymor.core.config import config
 from pymor.core.interfaces import BasicInterface
 from pymor.parallel.basic import WorkerPoolBase
 from pymor.tools.counter import Counter
-
 
 if config.HAVE_IPYTHON:
     try:
