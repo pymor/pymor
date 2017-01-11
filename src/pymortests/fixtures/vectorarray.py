@@ -38,7 +38,7 @@ def block_vector_array_factory(length, dims, seed):
 
 if config.HAVE_FENICS:
     import dolfin as df
-    from pymor.vectorarrays.fenics import FenicsVectorSpace
+    from pymor.bindings.fenics import FenicsVectorSpace
 
     fenics_spaces = [df.FunctionSpace(df.UnitSquareMesh(ni, ni), 'Lagrange', 1)
                      for ni in [1, 10, 32, 100]]

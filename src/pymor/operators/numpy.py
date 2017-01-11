@@ -12,7 +12,6 @@
     |NumPy arrays| as an |Operator|.
 """
 
-from collections import OrderedDict
 from functools import reduce
 
 import numpy as np
@@ -20,7 +19,6 @@ import scipy.sparse
 from scipy.sparse import issparse
 from scipy.io import mmwrite, savemat
 
-from pymor.algorithms import genericsolvers
 from pymor.core.config import config
 from pymor.core.defaults import defaults, defaults_sid
 from pymor.core.exceptions import InversionError
@@ -187,7 +185,7 @@ class NumpyMatrixBasedOperator(OperatorBase):
         output_format
             Output file format. Either `matlab` or `matrixmarket`.
         mu
-            the parameter, or None, to assemble the to be exported matrix for
+            The |Parameter| to assemble the to be exported matrix for.
         """
         assert output_format in {'matlab', 'matrixmarket'}
         matrix = self.assemble(mu)._matrix
@@ -264,7 +262,44 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         assert V in self.range
         return self.source.make_array(self._matrix.T.dot(V.data.T).T)
 
-    def apply_inverse(self, V, mu=None, least_squares=False):
+    @defaults('check_finite', 'default_sparse_solver_backend',
+              qualname='pymor.operators.numpy.NumpyMatrixOperator.apply_inverse')
+    def apply_inverse(self, V, mu=None, least_squares=False, check_finite=True,
+                      default_sparse_solver_backend='scipy'):
+        """Apply the inverse operator.
+
+        Parameters
+        ----------
+        V
+            |VectorArray| of vectors to which the inverse operator is applied.
+        mu
+            The |Parameter| for which to evaluate the inverse operator.
+        least_squares
+            If `True`, solve the least squares problem::
+
+                u = argmin ||op(u) - v||_2.
+
+            Since for an invertible operator the least squares solution agrees
+            with the result of the application of the inverse operator,
+            setting this option should, in general, have no effect on the result
+            for those operators. However, note that when no appropriate
+            |solver_options| are set for the operator, most implementations
+            will choose a least squares solver by default which may be
+            undesirable.
+        check_finite
+            Test if solution only containes finite values.
+        default_solver
+            Default sparse solver backend to use (scipy, pyamg, generic).
+
+        Returns
+        -------
+        |VectorArray| of the inverse operator evaluations.
+
+        Raises
+        ------
+        InversionError
+            The operator could not be inverted.
+        """
         assert V in self.range
 
         if V.dim == 0:
@@ -273,25 +308,49 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
             else:
                 raise InversionError
 
-        options = (self.solver_options.get('inverse') if self.solver_options else
-                   'least_squares' if least_squares else
-                   None)
+        options = self.solver_options.get('inverse') if self.solver_options else None
+        assert self.sparse or not options
 
-        if options and not least_squares:
-            solver_type = options if isinstance(options, str) else options['type']
-            if solver_type.startswith('least_squares'):
-                self.logger.warn('Least squares solver selected but "least_squares == False"')
+        if self.sparse:
+            if options:
+                solver = options if isinstance(options, str) else options['type']
+                backend = solver.split('_')[0]
+            else:
+                backend = default_sparse_solver_backend
 
-        try:
-            return self.source.make_array(_apply_inverse(self._matrix, V.data, options=options))
-        except InversionError as e:
-            if least_squares and options:
-                solver_type = options if isinstance(options, str) else options['type']
-                if not solver_type.startswith('least_squares'):
-                    msg = str(e) \
-                        + '\nNote: linear solver was selected for solving least squares problem (maybe not invertible?)'
-                    raise InversionError(msg)
-            raise e
+            if backend == 'scipy':
+                from pymor.bindings.scipy import apply_inverse as apply_inverse_impl
+            elif backend == 'pyamg':
+                if not config.HAVE_PYAMG:
+                    raise RuntimeError('PyAMG support not enabled.')
+                from pymor.bindings.pyamg import apply_inverse as apply_inverse_impl
+            elif backend == 'generic':
+                logger = getLogger('pymor.bindings.scipy.scipy_apply_inverse')
+                logger.warn('You have selected a (potentially slow) generic solver for a NumPy matrix operator!')
+                from pymor.algorithms.genericsolvers import apply_inverse as apply_inverse_impl
+            else:
+                raise NotImplementedError
+
+            return apply_inverse_impl(self, V, options=options, least_squares=least_squares, check_finite=check_finite)
+
+        else:
+            if least_squares:
+                try:
+                    R, _, _, _ = np.linalg.lstsq(self._matrix, V.data.T)
+                except np.linalg.LinAlgError as e:
+                    raise InversionError('{}: {}'.format(str(type(e)), str(e)))
+                R = R.T
+            else:
+                try:
+                    R = np.linalg.solve(self._matrix, V.data.T).T
+                except np.linalg.LinAlgError as e:
+                    raise InversionError('{}: {}'.format(str(type(e)), str(e)))
+
+            if check_finite:
+                if not np.isfinite(np.sum(R)):
+                    raise InversionError('Result contains non-finite values')
+
+            return self.source.make_array(R)
 
     def apply_inverse_transpose(self, U, mu=None, least_squares=False):
         options = {'inverse': self.solver_options.get('inverse_transpose') if self.solver_options else None}
@@ -396,617 +455,3 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         if hasattr(self._matrix, 'factorization'):  # remove unplicklable SuperLU factorization
             del self._matrix.factorization
         return self.__dict__
-
-
-####################################################################################################
-
-
-import scipy.version
-from scipy.sparse.linalg import bicgstab, spsolve, splu, spilu, lgmres, lsqr, LinearOperator
-
-_dense_options = None
-_dense_options_sid = None
-_sparse_options = None
-_sparse_options_sid = None
-
-
-@defaults('default_solver', 'default_least_squares_solver', 'least_squares_lstsq_rcond')
-def dense_options(default_solver='solve',
-                  default_least_squares_solver='least_squares_lstsq',
-                  least_squares_lstsq_rcond=-1.):
-    """Returns possible |solver_options| (with default values) for dense |NumPy| matricies.
-
-    Parameters
-    ----------
-    default_solver
-        Default dense solver to use (solve, least_squares_lstsq, generic_lgmres,
-        least_squares_generic_lsmr, least_squares_generic_lsqr).
-    default_least_squares_solver
-        Default solver to use for least squares problems (least_squares_lstsq,
-        least_squares_generic_lsmr, least_squares_generic_lsqr).
-    least_squares_lstsq_rcond
-        See :func:`numpy.linalg.lstsq`.
-
-    Returns
-    -------
-    A tuple of possible values for |solver_options|.
-    """
-
-    assert default_least_squares_solver.startswith('least_squares')
-
-    opts = (('solve',               {'type': 'solve'}),
-            ('least_squares_lstsq', {'type': 'least_squares_lstsq',
-                                     'rcond': least_squares_lstsq_rcond}))
-    opts = OrderedDict(opts)
-    opts.update(genericsolvers.options())
-    def_opt = opts.pop(default_solver)
-    if default_least_squares_solver != default_solver:
-        def_ls_opt = opts.pop(default_least_squares_solver)
-        ordered_opts = OrderedDict(((default_solver, def_opt),
-                                    (default_least_squares_solver, def_ls_opt)))
-    else:
-        ordered_opts = OrderedDict(((default_solver, def_opt),))
-    ordered_opts.update(opts)
-    return ordered_opts
-
-
-@defaults('default_solver', 'default_least_squares_solver', 'bicgstab_tol', 'bicgstab_maxiter', 'spilu_drop_tol',
-          'spilu_fill_factor', 'spilu_drop_rule', 'spilu_permc_spec', 'spsolve_permc_spec',
-          'spsolve_keep_factorization',
-          'lgmres_tol', 'lgmres_maxiter', 'lgmres_inner_m', 'lgmres_outer_k', 'least_squares_lsmr_damp',
-          'least_squares_lsmr_atol', 'least_squares_lsmr_btol', 'least_squares_lsmr_conlim',
-          'least_squares_lsmr_maxiter', 'least_squares_lsmr_show', 'least_squares_lsqr_atol',
-          'least_squares_lsqr_btol', 'least_squares_lsqr_conlim', 'least_squares_lsqr_iter_lim',
-          'least_squares_lsqr_show', 'pyamg_tol', 'pyamg_maxiter', 'pyamg_verb', 'pyamg_rs_strength', 'pyamg_rs_CF',
-          'pyamg_rs_postsmoother', 'pyamg_rs_max_levels', 'pyamg_rs_max_coarse', 'pyamg_rs_coarse_solver',
-          'pyamg_rs_cycle', 'pyamg_rs_accel', 'pyamg_rs_tol', 'pyamg_rs_maxiter',
-          'pyamg_sa_symmetry', 'pyamg_sa_strength', 'pyamg_sa_aggregate', 'pyamg_sa_smooth',
-          'pyamg_sa_presmoother', 'pyamg_sa_postsmoother', 'pyamg_sa_improve_candidates', 'pyamg_sa_max_levels',
-          'pyamg_sa_max_coarse', 'pyamg_sa_diagonal_dominance', 'pyamg_sa_coarse_solver', 'pyamg_sa_cycle',
-          'pyamg_sa_accel', 'pyamg_sa_tol', 'pyamg_sa_maxiter',
-          sid_ignore=('least_squares_lsmr_show', 'least_squares_lsqr_show', 'pyamg_verb'))
-def sparse_options(default_solver='spsolve',
-                   default_least_squares_solver='least_squares_lsmr' if config.HAVE_SCIPY_LSMR else 'least_squares_generic_lsmr',
-                   bicgstab_tol=1e-15,
-                   bicgstab_maxiter=None,
-                   spilu_drop_tol=1e-4,
-                   spilu_fill_factor=10,
-                   spilu_drop_rule='basic,area',
-                   spilu_permc_spec='COLAMD',
-                   spsolve_permc_spec='COLAMD',
-                   spsolve_keep_factorization=True,
-                   lgmres_tol=1e-5,
-                   lgmres_maxiter=1000,
-                   lgmres_inner_m=39,
-                   lgmres_outer_k=3,
-                   least_squares_lsmr_damp=0.0,
-                   least_squares_lsmr_atol=1e-6,
-                   least_squares_lsmr_btol=1e-6,
-                   least_squares_lsmr_conlim=1e8,
-                   least_squares_lsmr_maxiter=None,
-                   least_squares_lsmr_show=False,
-                   least_squares_lsqr_damp=0.0,
-                   least_squares_lsqr_atol=1e-6,
-                   least_squares_lsqr_btol=1e-6,
-                   least_squares_lsqr_conlim=1e8,
-                   least_squares_lsqr_iter_lim=None,
-                   least_squares_lsqr_show=False,
-                   pyamg_tol=1e-5,
-                   pyamg_maxiter=400,
-                   pyamg_verb=False,
-                   pyamg_rs_strength=('classical', {'theta': 0.25}),
-                   pyamg_rs_CF='RS',
-                   pyamg_rs_presmoother=('gauss_seidel', {'sweep': 'symmetric'}),
-                   pyamg_rs_postsmoother=('gauss_seidel', {'sweep': 'symmetric'}),
-                   pyamg_rs_max_levels=10,
-                   pyamg_rs_max_coarse=500,
-                   pyamg_rs_coarse_solver='pinv2',
-                   pyamg_rs_cycle='V',
-                   pyamg_rs_accel=None,
-                   pyamg_rs_tol=1e-5,
-                   pyamg_rs_maxiter=100,
-                   pyamg_sa_symmetry='hermitian',
-                   pyamg_sa_strength='symmetric',
-                   pyamg_sa_aggregate='standard',
-                   pyamg_sa_smooth=('jacobi', {'omega': 4.0/3.0}),
-                   pyamg_sa_presmoother=('block_gauss_seidel', {'sweep': 'symmetric'}),
-                   pyamg_sa_postsmoother=('block_gauss_seidel', {'sweep': 'symmetric'}),
-                   pyamg_sa_improve_candidates=(('block_gauss_seidel', {'sweep': 'symmetric', 'iterations': 4}), None),
-                   pyamg_sa_max_levels=10,
-                   pyamg_sa_max_coarse=500,
-                   pyamg_sa_diagonal_dominance=False,
-                   pyamg_sa_coarse_solver='pinv2',
-                   pyamg_sa_cycle='V',
-                   pyamg_sa_accel=None,
-                   pyamg_sa_tol=1e-5,
-                   pyamg_sa_maxiter=100):
-    """Returns possible |solver_options| (with default values) for sparse |NumPy| matricies.
-
-    Parameters
-    ----------
-    default_solver
-        Default sparse solver to use (spsolve, bicgstab, bicgstab_spilu, pyamg,
-        pyamg_rs, pyamg_sa, generic_lgmres, least_squares_lsmr, least_squares_lsqr).
-    default_least_squares_solver
-        Default solver to use for least squares problems (least_squares_lsmr,
-        least_squares_lsqr).
-    bicgstab_tol
-        See :func:`scipy.sparse.linalg.bicgstab`.
-    bicgstab_maxiter
-        See :func:`scipy.sparse.linalg.bicgstab`.
-    spilu_drop_tol
-        See :func:`scipy.sparse.linalg.spilu`.
-    spilu_fill_factor
-        See :func:`scipy.sparse.linalg.spilu`.
-    spilu_drop_rule
-        See :func:`scipy.sparse.linalg.spilu`.
-    spilu_permc_spec
-        See :func:`scipy.sparse.linalg.spilu`.
-    spsolve_permc_spec
-        See :func:`scipy.sparse.linalg.spsolve`.
-    spsolve_keep_factorization
-        See :func:`scipy.sparse.linalg.spsolve`.
-    lgmres_tol
-        See :func:`scipy.sparse.linalg.lgmres`.
-    lgmres_maxiter
-        See :func:`scipy.sparse.linalg.lgmres`.
-    lgmres_inner_m
-        See :func:`scipy.sparse.linalg.lgmres`.
-    lgmres_outer_k
-        See :func:`scipy.sparse.linalg.lgmres`.
-    least_squares_lsmr_damp
-        See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_lsmr_atol
-        See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_lsmr_btol
-        See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_lsmr_conlim
-        See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_lsmr_maxiter
-        See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_lsmr_show
-        See :func:`scipy.sparse.linalg.lsmr`.
-    least_squares_lsqr_damp
-        See :func:`scipy.sparse.linalg.lsqr`.
-    least_squares_lsqr_atol
-        See :func:`scipy.sparse.linalg.lsqr`.
-    least_squares_lsqr_btol
-        See :func:`scipy.sparse.linalg.lsqr`.
-    least_squares_lsqr_conlim
-        See :func:`scipy.sparse.linalg.lsqr`.
-    least_squares_lsqr_iter_lim
-        See :func:`scipy.sparse.linalg.lsqr`.
-    least_squares_lsqr_show
-        See :func:`scipy.sparse.linalg.lsqr`.
-    pyamg_tol
-        Tolerance for `PyAMG <http://pyamg.github.io/>`_ blackbox solver.
-    pyamg_maxiter
-        Maximum iterations for `PyAMG <http://pyamg.github.io/>`_ blackbox solver.
-    pyamg_verb
-        Verbosity flag for `PyAMG <http://pyamg.github.io/>`_ blackbox solver.
-    pyamg_rs_strength
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Ruge-Stuben solver.
-    pyamg_rs_CF
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Ruge-Stuben solver.
-    pyamg_rs_presmoother
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Ruge-Stuben solver.
-    pyamg_rs_postsmoother
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Ruge-Stuben solver.
-    pyamg_rs_max_levels
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Ruge-Stuben solver.
-    pyamg_rs_max_coarse
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Ruge-Stuben solver.
-    pyamg_rs_coarse_solver
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Ruge-Stuben solver.
-    pyamg_rs_cycle
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Ruge-Stuben solver.
-    pyamg_rs_accel
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Ruge-Stuben solver.
-    pyamg_rs_tol
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Ruge-Stuben solver.
-    pyamg_rs_maxiter
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Ruge-Stuben solver.
-    pyamg_sa_symmetry
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Smoothed-Aggregation solver.
-    pyamg_sa_strength
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Smoothed-Aggregation solver.
-    pyamg_sa_aggregate
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Smoothed-Aggregation solver.
-    pyamg_sa_smooth
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Smoothed-Aggregation solver.
-    pyamg_sa_presmoother
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Smoothed-Aggregation solver.
-    pyamg_sa_postsmoother
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Smoothed-Aggregation solver.
-    pyamg_sa_improve_candidates
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Smoothed-Aggregation solver.
-    pyamg_sa_max_levels
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Smoothed-Aggregation solver.
-    pyamg_sa_max_coarse
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Smoothed-Aggregation solver.
-    pyamg_sa_diagonal_dominance
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Smoothed-Aggregation solver.
-    pyamg_sa_coarse_solver
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Smoothed-Aggregation solver.
-    pyamg_sa_cycle
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Smoothed-Aggregation solver.
-    pyamg_sa_accel
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Smoothed-Aggregation solver.
-    pyamg_sa_tol
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Smoothed-Aggregation solver.
-    pyamg_sa_maxiter
-        Parameter for `PyAMG <http://pyamg.github.io/>`_ Smoothed-Aggregation solver.
-
-    Returns
-    -------
-    A tuple of all possible |solver_options|.
-    """
-
-    assert default_least_squares_solver.startswith('least_squares')
-
-    opts = (('bicgstab_spilu',     {'type': 'bicgstab_spilu',
-                                    'tol': bicgstab_tol,
-                                    'maxiter': bicgstab_maxiter,
-                                    'spilu_drop_tol': spilu_drop_tol,
-                                    'spilu_fill_factor': spilu_fill_factor,
-                                    'spilu_drop_rule': spilu_drop_rule,
-                                    'spilu_permc_spec': spilu_permc_spec}),
-            ('bicgstab',           {'type': 'bicgstab',
-                                    'tol': bicgstab_tol,
-                                    'maxiter': bicgstab_maxiter}),
-            ('spsolve',            {'type': 'spsolve',
-                                    'permc_spec': spsolve_permc_spec,
-                                    'keep_factorization': spsolve_keep_factorization}),
-            ('lgmres',             {'type': 'lgmres',
-                                    'tol': lgmres_tol,
-                                    'maxiter': lgmres_maxiter,
-                                    'inner_m': lgmres_inner_m,
-                                    'outer_k': lgmres_outer_k}),
-            ('least_squares_lsqr', {'type': 'least_squares_lsqr',
-                                    'damp': least_squares_lsqr_damp,
-                                    'atol': least_squares_lsqr_atol,
-                                    'btol': least_squares_lsqr_btol,
-                                    'conlim': least_squares_lsqr_conlim,
-                                    'iter_lim': least_squares_lsqr_iter_lim,
-                                    'show': least_squares_lsqr_show}))
-
-    if config.HAVE_SCIPY_LSMR:
-        opts += (('least_squares_lsmr', {'type': 'least_squares_lsmr',
-                                         'damp': least_squares_lsmr_damp,
-                                         'atol': least_squares_lsmr_atol,
-                                         'btol': least_squares_lsmr_btol,
-                                         'conlim': least_squares_lsmr_conlim,
-                                         'maxiter': least_squares_lsmr_maxiter,
-                                         'show': least_squares_lsmr_show}),)
-
-    if config.HAVE_PYAMG:
-        opts += (('pyamg',    {'type': 'pyamg',
-                               'tol': pyamg_tol,
-                               'maxiter': pyamg_maxiter}),
-                 ('pyamg-rs', {'type': 'pyamg-rs',
-                               'strength': pyamg_rs_strength,
-                               'CF': pyamg_rs_CF,
-                               'presmoother': pyamg_rs_presmoother,
-                               'postsmoother': pyamg_rs_postsmoother,
-                               'max_levels': pyamg_rs_max_levels,
-                               'max_coarse': pyamg_rs_max_coarse,
-                               'coarse_solver': pyamg_rs_coarse_solver,
-                               'cycle': pyamg_rs_cycle,
-                               'accel': pyamg_rs_accel,
-                               'tol': pyamg_rs_tol,
-                               'maxiter': pyamg_rs_maxiter}),
-                 ('pyamg-sa', {'type': 'pyamg-sa',
-                               'symmetry': pyamg_sa_symmetry,
-                               'strength': pyamg_sa_strength,
-                               'aggregate': pyamg_sa_aggregate,
-                               'smooth': pyamg_sa_smooth,
-                               'presmoother': pyamg_sa_presmoother,
-                               'postsmoother': pyamg_sa_postsmoother,
-                               'improve_candidates': pyamg_sa_improve_candidates,
-                               'max_levels': pyamg_sa_max_levels,
-                               'max_coarse': pyamg_sa_max_coarse,
-                               'diagonal_dominance': pyamg_sa_diagonal_dominance,
-                               'coarse_solver': pyamg_sa_coarse_solver,
-                               'cycle': pyamg_sa_cycle,
-                               'accel': pyamg_sa_accel,
-                               'tol': pyamg_sa_tol,
-                               'maxiter': pyamg_sa_maxiter}))
-    opts = OrderedDict(opts)
-    opts.update(genericsolvers.options())
-    def_opt = opts.pop(default_solver)
-    if default_least_squares_solver != default_solver:
-        def_ls_opt = opts.pop(default_least_squares_solver)
-        ordered_opts = OrderedDict(((default_solver, def_opt),
-                                    (default_least_squares_solver, def_ls_opt)))
-    else:
-        ordered_opts = OrderedDict(((default_solver, def_opt),))
-    ordered_opts.update(opts)
-    return ordered_opts
-
-
-def _options(matrix=None, sparse=None):
-    """Returns possible |solver_options| (with default values) for a given |NumPy| matrix.
-
-    See :func:`dense_options` for documentation of all possible options for
-    dense matrices.
-
-    See :func:`sparse_options` for documentation of all possible options for
-    sparse matrices.
-
-    Parameters
-    ----------
-    matrix
-        The matrix for which to return the options.
-    sparse
-        Instead of providing a matrix via the `matrix` argument,
-        `sparse` can be set to `True` or `False` to request the
-        invert options for sparse or dense matrices.
-
-    Returns
-    -------
-    A tuple of all possible |solver_options|.
-    """
-    global _dense_options, _dense_options_sid, _sparse_options, _sparse_options_sid
-    assert (matrix is None) != (sparse is None)
-    sparse = sparse if sparse is not None else issparse(matrix)
-    if sparse:
-        if not _sparse_options or _sparse_options_sid != defaults_sid():
-            _sparse_options = sparse_options()
-            _sparse_options_sid = defaults_sid()
-            return _sparse_options
-        else:
-            return _sparse_options
-    else:
-        if not _dense_options or _dense_options_sid != defaults_sid():
-            _dense_options = dense_options()
-            _dense_options_sid = defaults_sid()
-            return _dense_options
-        else:
-            return _dense_options
-
-
-@defaults('check_finite')
-def _apply_inverse(matrix, V, options=None, check_finite=True):
-    """Solve linear equation system.
-
-    Applies the inverse of `matrix` to the row vectors in `V`.
-
-    See :func:`dense_options` for documentation of all possible options for
-    sparse matrices.
-
-    See :func:`sparse_options` for documentation of all possible options for
-    sparse matrices.
-
-    This method is called by :meth:`NumpyMatrixOperator.apply_inverse`
-    and usually should not be used directly.
-
-    Parameters
-    ----------
-    matrix
-        The left-hand side of the linear equation systems to
-        solve as a |NumPy| matrix.
-    V
-        2-dimensional |NumPy array| containing as row vectors
-        the right-hand sides of the linear equation systems to
-        solve.
-    options
-        The solver options to use. (See :func:`_options`.)
-
-    Returns
-    -------
-    |NumPy array| of the solution vectors.
-    """
-
-    default_options = _options(matrix)
-
-    if options is None:
-        options = next(iter(default_options.values()))
-    elif isinstance(options, str):
-        if options == 'least_squares':
-            for k, v in default_options.items():
-                if k.startswith('least_squares'):
-                    options = v
-                    break
-            assert not isinstance(options, str)
-        else:
-            options = default_options[options]
-    else:
-        assert 'type' in options and options['type'] in default_options \
-            and options.keys() <= default_options[options['type']].keys()
-        user_options = options
-        options = default_options[user_options['type']]
-        options.update(user_options)
-
-    promoted_type = np.promote_types(matrix.dtype, V.dtype)
-    R = np.empty((len(V), matrix.shape[1]), dtype=promoted_type)
-
-    if options['type'] == 'solve':
-        for i, VV in enumerate(V):
-            try:
-                R[i] = np.linalg.solve(matrix, VV)
-            except np.linalg.LinAlgError as e:
-                raise InversionError('{}: {}'.format(str(type(e)), str(e)))
-    elif options['type'] == 'least_squares_lstsq':
-        for i, VV in enumerate(V):
-            try:
-                R[i], _, _, _ = np.linalg.lstsq(matrix, VV, rcond=options['rcond'])
-            except np.linalg.LinAlgError as e:
-                raise InversionError('{}: {}'.format(str(type(e)), str(e)))
-    elif options['type'] == 'bicgstab':
-        for i, VV in enumerate(V):
-            R[i], info = bicgstab(matrix, VV, tol=options['tol'], maxiter=options['maxiter'])
-            if info != 0:
-                if info > 0:
-                    raise InversionError('bicgstab failed to converge after {} iterations'.format(info))
-                else:
-                    raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
-                                         format(info))
-    elif options['type'] == 'bicgstab_spilu':
-        # workaround for https://github.com/pymor/pymor/issues/171
-        try:
-            ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
-                        drop_rule=options['spilu_drop_rule'], permc_spec=options['spilu_permc_spec'])
-        except TypeError as t:
-            logger = getLogger('pymor.operators.numpy._apply_inverse')
-            logger.error("ignoring drop_rule in ilu factorization")
-            ilu = spilu(matrix, drop_tol=options['spilu_drop_tol'], fill_factor=options['spilu_fill_factor'],
-                        permc_spec=options['spilu_permc_spec'])
-        precond = LinearOperator(matrix.shape, ilu.solve)
-        for i, VV in enumerate(V):
-            R[i], info = bicgstab(matrix, VV, tol=options['tol'], maxiter=options['maxiter'], M=precond)
-            if info != 0:
-                if info > 0:
-                    raise InversionError('bicgstab failed to converge after {} iterations'.format(info))
-                else:
-                    raise InversionError('bicgstab failed with error code {} (illegal input or breakdown)'.
-                                         format(info))
-    elif options['type'] == 'spsolve':
-        try:
-            # maybe remove unusable factorization:
-            if hasattr(matrix, 'factorization'):
-                fdtype = matrix.factorizationdtype
-                if not np.can_cast(V.dtype, fdtype, casting='safe'):
-                    del matrix.factorization
-
-            if list(map(int, scipy.version.version.split('.'))) >= [0, 14, 0]:
-                if hasattr(matrix, 'factorization'):
-                    # we may use a complex factorization of a real matrix to
-                    # apply it to a real vector. In that case, we downcast
-                    # the result here, removing the imaginary part,
-                    # which should be zero.
-                    R = matrix.factorization.solve(V.T).T.astype(promoted_type, copy=False)
-                elif options['keep_factorization']:
-                    # the matrix is always converted to the promoted type.
-                    # if matrix.dtype == promoted_type, this is a no_op
-                    matrix.factorization = splu(matrix_astype_nocopy(matrix, promoted_type), permc_spec=options['permc_spec'])
-                    matrix.factorizationdtype = promoted_type
-                    R = matrix.factorization.solve(V.T).T
-                else:
-                    # the matrix is always converted to the promoted type.
-                    # if matrix.dtype == promoted_type, this is a no_op
-                    R = spsolve(matrix_astype_nocopy(matrix, promoted_type), V.T, permc_spec=options['permc_spec']).T
-            else:
-                # see if-part for documentation
-                if hasattr(matrix, 'factorization'):
-                    for i, VV in enumerate(V):
-                        R[i] = matrix.factorization.solve(VV).astype(promoted_type, copy=False)
-                elif options['keep_factorization']:
-                    matrix.factorization = splu(matrix_astype_nocopy(matrix, promoted_type), permc_spec=options['permc_spec'])
-                    matrix.factorizationdtype = promoted_type
-                    for i, VV in enumerate(V):
-                        R[i] = matrix.factorization.solve(VV)
-                elif len(V) > 1:
-                    factorization = splu(matrix_astype_nocopy(matrix, promoted_type), permc_spec=options['permc_spec'])
-                    for i, VV in enumerate(V):
-                        R[i] = factorization.solve(VV)
-                else:
-                    R = spsolve(matrix_astype_nocopy(matrix, promoted_type), V.T, permc_spec=options['permc_spec']).reshape((1, -1))
-        except RuntimeError as e:
-            raise InversionError(e)
-    elif options['type'] == 'lgmres':
-        for i, VV in enumerate(V):
-            R[i], info = lgmres(matrix, VV,
-                                tol=options['tol'],
-                                maxiter=options['maxiter'],
-                                inner_m=options['inner_m'],
-                                outer_k=options['outer_k'])
-            if info > 0:
-                raise InversionError('lgmres failed to converge after {} iterations'.format(info))
-            assert info == 0
-    elif options['type'] == 'least_squares_lsmr':
-        from scipy.sparse.linalg import lsmr
-        for i, VV in enumerate(V):
-            R[i], info, itn, _, _, _, _, _ = lsmr(matrix, VV,
-                                                  damp=options['damp'],
-                                                  atol=options['atol'],
-                                                  btol=options['btol'],
-                                                  conlim=options['conlim'],
-                                                  maxiter=options['maxiter'],
-                                                  show=options['show'])
-            assert 0 <= info <= 7
-            if info == 7:
-                raise InversionError('lsmr failed to converge after {} iterations'.format(itn))
-    elif options['type'] == 'least_squares_lsqr':
-        for i, VV in enumerate(V):
-            R[i], info, itn, _, _, _, _, _, _, _ = lsqr(matrix, VV,
-                                                        damp=options['damp'],
-                                                        atol=options['atol'],
-                                                        btol=options['btol'],
-                                                        conlim=options['conlim'],
-                                                        iter_lim=options['iter_lim'],
-                                                        show=options['show'])
-            assert 0 <= info <= 7
-            if info == 7:
-                raise InversionError('lsmr failed to converge after {} iterations'.format(itn))
-    elif options['type'] == 'pyamg':
-        import pyamg
-        if len(V) > 0:
-            V_iter = iter(enumerate(V))
-            R[0], ml = pyamg.solve(matrix, next(V_iter)[1],
-                                   tol=options['tol'],
-                                   maxiter=options['maxiter'],
-                                   return_solver=True)
-            for i, VV in V_iter:
-                R[i] = pyamg.solve(matrix, VV,
-                                   tol=options['tol'],
-                                   maxiter=options['maxiter'],
-                                   existing_solver=ml)
-    elif options['type'] == 'pyamg-rs':
-        import pyamg
-        ml = pyamg.ruge_stuben_solver(matrix,
-                                      strength=options['strength'],
-                                      CF=options['CF'],
-                                      presmoother=options['presmoother'],
-                                      postsmoother=options['postsmoother'],
-                                      max_levels=options['max_levels'],
-                                      max_coarse=options['max_coarse'],
-                                      coarse_solver=options['coarse_solver'])
-        for i, VV in enumerate(V):
-            R[i] = ml.solve(VV,
-                            tol=options['tol'],
-                            maxiter=options['maxiter'],
-                            cycle=options['cycle'],
-                            accel=options['accel'])
-    elif options['type'] == 'pyamg-sa':
-        import pyamg
-        ml = pyamg.smoothed_aggregation_solver(matrix,
-                                               symmetry=options['symmetry'],
-                                               strength=options['strength'],
-                                               aggregate=options['aggregate'],
-                                               smooth=options['smooth'],
-                                               presmoother=options['presmoother'],
-                                               postsmoother=options['postsmoother'],
-                                               improve_candidates=options['improve_candidates'],
-                                               max_levels=options['max_levels'],
-                                               max_coarse=options['max_coarse'],
-                                               diagonal_dominance=options['diagonal_dominance'])
-        for i, VV in enumerate(V):
-            R[i] = ml.solve(VV,
-                            tol=options['tol'],
-                            maxiter=options['maxiter'],
-                            cycle=options['cycle'],
-                            accel=options['accel'])
-    elif options['type'].startswith('generic') or options['type'].startswith('least_squares_generic'):
-        logger = getLogger('pymor.operators.numpy._apply_inverse')
-        logger.warn('You have selected a (potentially slow) generic solver for a NumPy matrix operator!')
-        from pymor.operators.numpy import NumpyMatrixOperator
-        return genericsolvers.apply_inverse(NumpyMatrixOperator(matrix),
-                                            NumpyVectorSpace.make_array(V),
-                                            options=options).data
-    else:
-        raise ValueError('Unknown solver type')
-
-    if check_finite:
-        if not np.isfinite(np.sum(R)):
-            raise InversionError('Result contains non-finite values')
-
-    return R
-
-
-# unfortunately, this is necessary, as scipy does not
-# forward the copy=False argument in its csc_matrix.astype function
-def matrix_astype_nocopy(matrix, dtype):
-    if matrix.dtype == dtype:
-        return matrix
-    else:
-        return matrix.astype(dtype)
