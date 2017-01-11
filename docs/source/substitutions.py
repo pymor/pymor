@@ -60,9 +60,8 @@ common = '''
 
 .. |CacheRegion| replace:: :class:`~pymor.core.cache.CacheRegion`
 
-.. |EllipticProblem| replace:: :class:`~pymor.analyticalproblems.elliptic.EllipticProblem`
+.. |StationaryProblem| replace:: :class:`~pymor.analyticalproblems.elliptic.StationaryProblem`
 .. |InstationaryProblem| replace:: :class:`~pymor.analyticalproblems.instationary.InstationaryProblem`
-.. |InstationaryAdvectionProblem| replace:: :class:`~pymor.analyticalproblems.advection.InstationaryAdvectionProblem`
 
 .. |RectDomain| replace:: :class:`~pymor.domaindescriptions.basic.RectDomain`
 .. |PolygonalDomain| replace:: :class:`~pymor.domaindescriptions.polygonal.PolygonalDomain`
