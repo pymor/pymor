@@ -53,10 +53,10 @@ def burgers_problem(v=1., circle=True, initial_data_type='sin', parameter_range=
 
             rhs=None,
 
-            nonlinear_advection=ExpressionFunction('sign(x) * abs(x)**exponent * v',
+            nonlinear_advection=ExpressionFunction('abs(x)**exponent * v',
                                                    1, (1,), {'exponent': ()}, {'v': v}),
 
-            nonlinear_advection_derivative=ExpressionFunction('exponent * sign(x) * abs(x)**(exponent-1) * v',
+            nonlinear_advection_derivative=ExpressionFunction('exponent * abs(x)**(exponent-1) * sign(x) * v',
                                                               1, (1,), {'exponent': ()}, {'v': v}),
         ),
 
@@ -113,10 +113,10 @@ def burgers_problem_2d(vx=1., vy=1., torus=True, initial_data_type='sin', parame
 
             rhs=None,
 
-            nonlinear_advection=ExpressionFunction("sign(x) * abs(x)**exponent * v",
+            nonlinear_advection=ExpressionFunction("abs(x)**exponent * v",
                                                    1, (2,), {'exponent': ()}, {'v': np.array([vx, vy])}),
 
-            nonlinear_advection_derivative=ExpressionFunction("exponent * sign(x) * abs(x)**(exponent-1) * v",
+            nonlinear_advection_derivative=ExpressionFunction("exponent * abs(x)**(exponent-1) * sign(x) * v",
                                                               1, (2,), {'exponent': ()}, {'v': np.array([vx, vy])}),
         ),
 
