@@ -8,7 +8,9 @@ from itertools import product
 import numpy as np
 import pytest
 
-from pymortests.fixtures.grid import grid
+from pymor.core.exceptions import PySideMissing
+from pymor.gui.qt import stop_gui_processes
+from pymortests.fixtures.grid import grid, grids_with_visualize
 from pymortests.pickling import assert_picklable_without_dumps_function
 
 
@@ -426,3 +428,25 @@ def test_boundaries_entries(grid):
 
 def test_pickle(grid):
     assert_picklable_without_dumps_function(grid)
+
+
+def test_visualize(grids_with_visualize):
+    import sys
+    sys._called_from_test = True
+
+    def nop(*args, **kwargs):
+        pass
+    try:
+        from matplotlib import pyplot
+        pyplot.show = nop
+    except ImportError:
+        pass
+
+    try:
+        g = grids_with_visualize
+        U = np.ones(g.size(g.dim))
+        g.visualize(U, g.dim)
+    except PySideMissing:
+        pytest.xfail("PySide missing")
+    finally:
+        stop_gui_processes()

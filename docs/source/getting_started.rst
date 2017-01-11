@@ -130,11 +130,11 @@ to represent the affine decomposition, instantiating a
 :class:`~pymor.operators.cg.L2ProductFunctionalP1` as right hand side, and
 putting it all together into a |StationaryDiscretization|. However, since
 :meth:`~pymor.analyticalproblems.thermalblock.thermal_block_problem` returns
-a :class:`~pymor.analyticalproblems.elliptic.EllipticProblem`, we can use
+a :class:`~pymor.analyticalproblems.elliptic.StationaryProblem`, we can use
 a predifined *discretizer* to do the work for us. In this case, we use
-:func:`~pymor.discretizers.elliptic.discretize_elliptic_cg`:
+:func:`~pymor.discretizers.cg.discretize_stationary_cg`:
 
->>> d, d_data = discretize_elliptic_cg(p, diameter=1. / 100.)
+>>> d, d_data = discretize_stationary_cg(p, diameter=1. / 100.)
 
 ``d`` is the |StationaryDiscretization| which has been created for us,
 whereas ``d_data`` contains some additional data, in this case the |Grid|

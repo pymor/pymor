@@ -21,8 +21,9 @@ Options:
 
 from docopt import docopt
 
-from pymor.analyticalproblems.elliptic import EllipticProblem
-from pymor.discretizers.elliptic import discretize_elliptic_cg, discretize_elliptic_fv
+from pymor.analyticalproblems.elliptic import StationaryProblem
+from pymor.discretizers.cg import discretize_stationary_cg
+from pymor.discretizers.fv import discretize_stationary_fv
 from pymor.domaindescriptions.basic import LineDomain
 from pymor.functions.basic import ExpressionFunction, ConstantFunction, LincombFunction
 from pymor.parameters.functionals import ProjectionParameterFunctional, ExpressionParameterFunctional
@@ -48,7 +49,7 @@ def elliptic_oned_demo(args):
     print('Solving on OnedGrid(({0},{0}))'.format(args['N']))
 
     print('Setup Problem ...')
-    problem = EllipticProblem(
+    problem = StationaryProblem(
         domain=LineDomain(),
         rhs=rhs,
         diffusion=LincombFunction([d0, d1], [f0, f1]),
@@ -57,7 +58,7 @@ def elliptic_oned_demo(args):
     )
 
     print('Discretize ...')
-    discretizer = discretize_elliptic_fv if args['--fv'] else discretize_elliptic_cg
+    discretizer = discretize_stationary_fv if args['--fv'] else discretize_stationary_cg
     discretization, _ = discretizer(problem, diameter=1 / args['N'])
 
     print('The parameter type is {}'.format(discretization.parameter_type))

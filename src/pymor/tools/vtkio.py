@@ -2,18 +2,15 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-try:
-    from evtk.hl import gridToVTK, pointsToVTK, _addDataToFile, _appendDataToFile
-    from evtk.vtk import VtkGroup, VtkFile, VtkUnstructuredGrid, VtkVertex, VtkTriangle, VtkQuad
-
-    HAVE_PYVTK = True
-except ImportError:
-    HAVE_PYVTK = False
-
 import numpy as np
 
+from pymor.core.config import config
 from pymor.grids import referenceelements
 from pymor.grids.constructions import flatten_grid
+
+if config.HAVE_PYVTK:
+    from evtk.hl import _addDataToFile, _appendDataToFile
+    from evtk.vtk import VtkGroup, VtkFile, VtkUnstructuredGrid, VtkTriangle, VtkQuad
 
 
 def _write_vtu_series(grid, coordinates, connectivity, data, filename_base, last_step, is_cell_data):
@@ -72,6 +69,7 @@ def _write_vtu_series(grid, coordinates, connectivity, data, filename_base, last
         group.addFile(filepath=fn, sim_time=i)
     group.save()
 
+
 def write_vtk(grid, data, filename_base, codim=2, binary_vtk=True, last_step=None):
     """Output grid-associated data in (legacy) vtk format
 
@@ -83,14 +81,16 @@ def write_vtk(grid, data, filename_base, codim=2, binary_vtk=True, last_step=Non
     data
         VectorArrayInterface instance with either cell (ie one datapoint per codim 0 entity)
         or vertex (ie one datapoint per codim 2 entity) data in each array element
-
+    codim
+        the codimension associated with the data
     filename_base
         common component for output files in timeseries
-
+    binary_vtk
+        if false, output files contain human readable inline ascii data, else appended binary
     last_step
         if set must be <= len(data) to restrict output of timeseries
     """
-    if not HAVE_PYVTK:
+    if not config.HAVE_PYVTK:
         raise ImportError('could not import pyevtk')
     if grid.dim != 2:
         raise NotImplementedError

@@ -5,7 +5,7 @@
 import numpy as np
 
 from pymor.core.exceptions import InversionError
-from pymor.operators.numpy import NumpyMatrixOperator, _apply_inverse
+from pymor.operators.numpy import NumpyMatrixOperator
 from pymor.vectorarrays.list import NumpyListVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -42,7 +42,7 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
         else:
             return self.range.make_array(V)
 
-    def apply_adjoint(self, U, mu=None, source_product=None, range_product=None):
+    def apply_transpose(self, V, mu=None):
         raise NotImplementedError
 
     def apply_inverse(self, V, mu=None, least_squares=False):
@@ -55,27 +55,11 @@ class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
             else:
                 raise InversionError
 
-        options = (self.solver_options.get('inverse') if self.solver_options else
-                   'least_squares' if least_squares else
-                   None)
+        op = NumpyMatrixOperator(self._matrix, solver_options=self.solver_options)
 
-        if options and not least_squares:
-            solver_type = options if isinstance(options, str) else options['type']
-            if solver_type.startswith('least_squares'):
-                self.logger.warn('Least squares solver selected but "least_squares == False"')
-
-        try:
-            return self.source.make_array([_apply_inverse(self._matrix, v._array.reshape((1, -1)),
-                                                          options=options).ravel()
-                                           for v in V._list])
-        except InversionError as e:
-            if least_squares and options:
-                solver_type = options if isinstance(options, str) else options['type']
-                if not solver_type.startswith('least_squares'):
-                    msg = str(e) \
-                        + '\nNote: linear solver was selected for solving least squares problem (maybe not invertible?)'
-                    raise InversionError(msg)
-            raise e
+        return self.source.make_array([op.apply_inverse(NumpyVectorSpace.make_array(v._array),
+                                                        least_squares=least_squares).data.ravel()
+                                       for v in V._list])
 
     def as_range_array(self, mu=None):
         assert not self.sparse

@@ -62,6 +62,7 @@ def test_complex():
     Cva[0].axpy(1j, Dva)
     assert np.iscomplexobj(Cva.data)
 
+
 def test_real_imag():
     A = np.array([[1 + 2j, 3 + 4j],
                   [5 + 6j, 7 + 8j],
@@ -78,6 +79,7 @@ def test_real_imag():
             k += 1
             assert Cva.data[i, j] == k
 
+
 def test_scal():
     v = np.array([[1, 2, 3],
                   [4, 5, 6]], dtype=float)
@@ -90,6 +92,7 @@ def test_scal():
             k += 1
             assert v.data[i, j] == k * 1j
 
+
 def test_axpy():
     x = NumpyVectorSpace.from_data(np.array([1.]))
     y = NumpyVectorSpace.from_data(np.array([1.]))
@@ -101,11 +104,13 @@ def test_axpy():
     y.axpy(-1, x)
     assert y.data[0, 0] == -1j
 
+
 def test_dot():
     x = NumpyVectorSpace.from_data(np.array([1 + 1j]))
     y = NumpyVectorSpace.from_data(np.array([1 - 1j]))
     z = x.dot(y)
     assert z[0, 0] == 2j
+
 
 def test_pairwise_dot():
     x = NumpyVectorSpace.from_data(np.array([1 + 1j]))

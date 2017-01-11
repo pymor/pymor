@@ -4,9 +4,9 @@
 
 import pytest
 
-from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
+from pymor.domaindescriptions.basic import RectDomain
 from pymor.analyticalproblems.burgers import burgers_problem, burgers_problem_2d
-from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.helmholtz import helmholtz_problem
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.functions.basic import GenericFunction, ConstantFunction, LincombFunction
@@ -38,12 +38,13 @@ burgers_problems = \
 
 
 picklable_elliptic_problems = \
-    [EllipticProblem(),
+    [StationaryProblem(domain=RectDomain(), rhs=ConstantFunction(dim_domain=2, value=1.)),
      helmholtz_problem()]
 
 
 non_picklable_elliptic_problems = \
-    [EllipticProblem(rhs=ConstantFunction(dim_domain=2, value=21.),
+    [StationaryProblem(domain=RectDomain(),
+                     rhs=ConstantFunction(dim_domain=2, value=21.),
                      diffusion=LincombFunction(
                          [GenericFunction(dim_domain=2, mapping=lambda X, p=p: X[..., 0]**p)
                           for p in range(5)],
@@ -55,27 +56,11 @@ non_picklable_elliptic_problems = \
 elliptic_problems = picklable_thermalblock_problems + non_picklable_elliptic_problems
 
 
-picklable_advection_problems = \
-    [InstationaryAdvectionProblem()]
-
-
-non_picklable_advection_problems = \
-    [InstationaryAdvectionProblem(rhs=ConstantFunction(dim_domain=2, value=42.),
-                                  flux_function=GenericFunction(dim_domain=1, shape_range=(2,),
-                                                                mapping=lambda X: X**2 + X),
-                                  flux_function_derivative=GenericFunction(dim_domain=1, shape_range=(2,),
-                                                                           mapping=lambda X: X * 2))]
-
-
-advection_problems = picklable_advection_problems + non_picklable_advection_problems
-
-
-@pytest.fixture(params=elliptic_problems + advection_problems + thermalblock_problems + burgers_problems)
+@pytest.fixture(params=elliptic_problems + thermalblock_problems + burgers_problems)
 def analytical_problem(request):
     return request.param
 
 
-@pytest.fixture(params=picklable_elliptic_problems + picklable_advection_problems
-                       + picklable_thermalblock_problems + burgers_problems)
+@pytest.fixture(params=picklable_elliptic_problems + picklable_thermalblock_problems + burgers_problems)
 def picklable_analytical_problem(request):
     return request.param

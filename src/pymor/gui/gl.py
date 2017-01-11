@@ -13,28 +13,13 @@ import math as m
 
 import numpy as np
 
-try:
-    from PySide.QtGui import QSizePolicy, QPainter, QFontMetrics
-    HAVE_PYSIDE = True
-except ImportError:
-    HAVE_PYSIDE = False
+from pymor.core.config import config
 
-try:
-    from PySide.QtOpenGL import QGLWidget
-    HAVE_QTOPENGL = True
-except ImportError:
-    HAVE_QTOPENGL = False
 
-try:
+if config.HAVE_PYSIDE and config.HAVE_QTOPENGL and config.HAVE_GL:
     import OpenGL.GL as gl
-    HAVE_GL = True
-except ImportError:
-    HAVE_GL = False
-
-HAVE_ALL = HAVE_PYSIDE and HAVE_QTOPENGL and HAVE_GL
-
-
-if HAVE_ALL:
+    from PySide.QtGui import QSizePolicy, QPainter, QFontMetrics
+    from PySide.QtOpenGL import QGLWidget
     from ctypes import c_void_p
 
     from pymor.grids.constructions import flatten_grid
@@ -107,8 +92,8 @@ if HAVE_ALL:
             cmap = get_cmap(name)
         except ValueError:
             from pymor.core.logger import getLogger
-            if name != 'viridis': # this is our default which might not exist for older matplotlib so a warning would be
-                                  # annoying
+            # this is our default which might not exist for older matplotlib so a warning would be annoying
+            if name != 'viridis':
                 getLogger('pymor.gui.gl.colormap_texture').warn('Unknown colormap {}, using default colormap'.format(name))
             cmap = get_cmap()
         colormap[:] = cmap(np.linspace(0., 1., resolution))

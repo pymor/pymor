@@ -76,9 +76,9 @@ from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmid
 from pymor.algorithms.adaptivegreedy import adaptive_greedy
 from pymor.algorithms.error import reduction_error_analysis
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
-from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.core.pickle import dump
-from pymor.discretizers.elliptic import discretize_elliptic_cg
+from pymor.discretizers.cg import discretize_stationary_cg
 from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace
 from pymor.parallel.default import new_parallel_pool
@@ -110,13 +110,13 @@ def thermalblock_demo(args):
                    ExpressionParameterFunctional('diffusion[1]**2', {'diffusion': (2,)}),
                    ExpressionParameterFunctional('diffusion[0]', {'diffusion': (2,)}),
                    ExpressionParameterFunctional('diffusion[1]', {'diffusion': (2,)})]
-    problem = EllipticProblem(domain=problem.domain,
+    problem = StationaryProblem(domain=problem.domain,
                               diffusion=problem.diffusion.with_(coefficients=functionals),
                               rhs=problem.rhs,
                               parameter_space=CubicParameterSpace({'diffusion': (2,)}, 0.1, 1.))
 
     print('Discretize ...')
-    discretization, _ = discretize_elliptic_cg(problem, diameter=1. / args['--grid'])
+    discretization, _ = discretize_stationary_cg(problem, diameter=1. / args['--grid'])
 
     if args['--list-vector-array']:
         from pymor.playground.discretizers.numpylistvectorarray import convert_to_numpy_list_vector_array

@@ -42,7 +42,7 @@ def parabolic_demo(args):
         args['TOP'] = float(args['TOP'])
         problem = InstationaryProblem(
 
-            EllipticProblem(
+            StationaryProblem(
                 domain=RectDomain(top='dirichlet', bottom='neumann'),
 
                 diffusion=LincombFunction(
@@ -76,7 +76,7 @@ def parabolic_demo(args):
         args['SPEED'] = float(args['SPEED'])
         problem = InstationaryProblem(
 
-            EllipticProblem(
+            StationaryProblem(
                 domain=RectDomain(),
 
                 diffusion=ConstantFunction(0.01, dim_domain=2),
@@ -105,7 +105,7 @@ def parabolic_demo(args):
     else:
         grid, bi = discretize_domain_default(problem.stationary_part.domain, diameter=1. / args['--grid'],
                                              grid_type=TriaGrid)
-    discretizer = discretize_parabolic_fv if args['--fv'] else discretize_parabolic_cg
+    discretizer = discretize_instationary_fv if args['--fv'] else discretize_instationary_cg
     discretization, _ = discretizer(analytical_problem=problem, grid=grid, boundary_info=bi, nt=args['--nt'])
 
     print('The parameter type is {}'.format(discretization.parameter_type))

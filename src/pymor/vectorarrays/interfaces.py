@@ -8,6 +8,7 @@ import sys
 
 import numpy as np
 
+from pymor.core.config import config
 from pymor.core.interfaces import BasicInterface, ImmutableInterface, abstractmethod
 
 
@@ -16,7 +17,6 @@ def _numpy_version_older(version_tuple):
     return np_tuple < version_tuple
 
 _INDEXTYPES = (Number,) if not _numpy_version_older((1, 9)) else (Number, np.intp)
-PY2 = sys.version_info.major == 2
 
 
 class VectorArrayInterface(BasicInterface):
@@ -392,6 +392,8 @@ class VectorArrayInterface(BasicInterface):
         result.scal(other)
         return result
 
+    __rmul__ = __mul__
+
     def __imul__(self, other):
         """In-place product by a scalar."""
         self.scal(other)
@@ -447,8 +449,8 @@ class VectorArrayInterface(BasicInterface):
         if type(ind) is slice:
             ind = range(*ind.indices(len(self)))
             if type(ind_ind) is slice:
-                if PY2:  # Currently we do not convert range to xrange, so ind is a list
-                    return ind[ind_ind]
+                if config.PY2:  # make ind a list since is xrange is not sliceable
+                    return list(ind)[ind_ind]
                 else:
                     result = ind[ind_ind]
                     return slice(result.start, result.stop, result.step)

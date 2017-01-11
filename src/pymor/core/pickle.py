@@ -23,9 +23,7 @@ except ImportError:
     import pickle as pickle
 from io import BytesIO as IOtype
 
-import sys
-
-PY2 = sys.version_info.major == 2
+from pymor.core.config import config
 
 PicklingError = pickle.PicklingError
 UnpicklingError = pickle.UnpicklingError
@@ -78,7 +76,7 @@ def _generate_opcode(code_object):
     HAVE_ARGUMENT = opcode.HAVE_ARGUMENT
     EXTENDED_ARG = opcode.EXTENDED_ARG
 
-    if PY2:
+    if config.PY2:
         codebytes = bytearray(code_object.co_code)
     else:
         codebytes = code_object.co_code
@@ -157,7 +155,7 @@ def dumps_function(function):
     # note that global names in function.func_code can also refer to builtins ...
     globals_ = {k: wrap_modules(func_globals[k]) for k in _global_names(function.__code__) if k in func_globals}
 
-    if PY2:
+    if config.PY2:
         return dumps((function.__name__, code, globals_, function.__defaults__, closure, function.__dict__,
                       function.__doc__))
     else:
@@ -167,7 +165,7 @@ def dumps_function(function):
 
 def loads_function(s):
     '''Restores a function serialized with :func:`dumps_function`.'''
-    if PY2:
+    if config.PY2:
         name, code, globals_, defaults, closure, func_dict, doc = loads(s)
     else:
         name, code, globals_, defaults, closure, func_dict, doc, qualname, kwdefaults, annotations = loads(s)
@@ -184,7 +182,7 @@ def loads_function(s):
     r = FunctionType(code, globals_, name, defaults, closure)
     r.__dict__ = func_dict
     r.__doc__ = doc
-    if not PY2:
+    if not config.PY2:
         r.__qualname__ = qualname
         r.__kwdefaults__ = kwdefaults
         r.__annotations__ = annotations

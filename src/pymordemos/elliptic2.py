@@ -21,8 +21,9 @@ Options:
 
 from docopt import docopt
 
-from pymor.analyticalproblems.elliptic import EllipticProblem
-from pymor.discretizers.elliptic import discretize_elliptic_cg, discretize_elliptic_fv
+from pymor.analyticalproblems.elliptic import StationaryProblem
+from pymor.discretizers.cg import discretize_stationary_cg
+from pymor.discretizers.fv import discretize_stationary_fv
 from pymor.domaindescriptions.basic import RectDomain
 from pymor.functions.basic import ExpressionFunction, LincombFunction
 from pymor.parameters.functionals import ProjectionParameterFunctional, ExpressionParameterFunctional
@@ -41,7 +42,7 @@ def elliptic2_demo(args):
     print('Solving on TriaGrid(({0},{0}))'.format(args['N']))
 
     print('Setup Problem ...')
-    problem = EllipticProblem(
+    problem = StationaryProblem(
         domain=RectDomain(),
         rhs=rhs,
         diffusion=LincombFunction(
@@ -52,7 +53,7 @@ def elliptic2_demo(args):
         name='2DProblem')
 
     print('Discretize ...')
-    discretizer = discretize_elliptic_fv if args['--fv'] else discretize_elliptic_cg
+    discretizer = discretize_stationary_fv if args['--fv'] else discretize_stationary_cg
     discretization, _ = discretizer(problem, diameter=1. / args['N'])
 
     print('The parameter type is {}'.format(discretization.parameter_type))

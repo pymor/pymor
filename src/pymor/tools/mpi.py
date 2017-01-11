@@ -53,13 +53,13 @@ first argument.
 
 import sys
 
+from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.core.pickle import dumps, loads
 
-try:
+if config.HAVE_MPI:
     import mpi4py
     from mpi4py import MPI
-    HAVE_MPI = True
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
@@ -70,10 +70,8 @@ try:
         MPI.pickle.PROTOCOL = pymor.core.pickle.PROTOCOL
         MPI.pickle.loads = pymor.core.pickle.loads
         MPI.pickle.dumps = pymor.core.pickle.dumps
-
-except ImportError:
+else:
     mpi4py_version = []
-    HAVE_MPI = False
     rank = 0
     size = 1
     finished = True
@@ -353,7 +351,7 @@ def remove_object(obj_id):
 
 
 if __name__ == '__main__':
-    assert HAVE_MPI
+    assert config.HAVE_MPI
     if rank0:
         if len(sys.argv) >= 2:
             filename = sys.argv[1]

@@ -36,7 +36,7 @@ def _run_config(tm, clone_dir, commit):
 
 
 docker_tags = ['2.7', '3.4', '3.5']
-pytest_marker = ["not slow", "slow", "PIP_ONLY", "MPI"]
+pytest_marker = [None, "PIP_ONLY", "MPI"]
 slug = 'pymor/pymor'
 commit = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
 

@@ -11,23 +11,11 @@ Instead, use :meth:`~pymor.gui.qt.visualize_matplotlib_1d` or
 
 import numpy as np
 
-try:
+from pymor.core.config import config
+
+
+if config.HAVE_PYSIDE and config.HAVE_MATPLOTLIB:
     from PySide.QtGui import QSizePolicy
-    HAVE_PYSIDE = True
-except ImportError:
-    HAVE_PYSIDE = False
-
-# matplotlib's default is to use PyQt for Qt4 bindings. However, we use PySide ..
-try:
-    import matplotlib
-    HAVE_MATPLOTLIB = True
-except ImportError:
-    HAVE_MATPLOTLIB = False
-
-HAVE_ALL = HAVE_PYSIDE and HAVE_MATPLOTLIB
-
-if HAVE_ALL:
-    matplotlib.rcParams['backend.qt4'] = 'PySide'
 
     from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 

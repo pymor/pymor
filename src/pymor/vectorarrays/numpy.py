@@ -62,7 +62,7 @@ class NumpyVectorArray(VectorArrayInterface):
         if type(ind) is slice:
             ind = set(range(*ind.indices(self._len)))
         elif not hasattr(ind, '__len__'):
-            ind = set([ind if 0 <= ind else self._len+ind])
+            ind = {ind if 0 <= ind else self._len + ind}
         else:
             l = self._len
             ind = set(i if 0 <= i else l+i for i in ind)
@@ -470,7 +470,6 @@ class NumpyVectorArrayView(NumpyVectorArray):
 
     def amax(self):
         return self.base.amax(_ind=self.ind)
-        raise NotImplementedError
 
     def __add__(self, other):
         if isinstance(other, _INDEXTYPES):

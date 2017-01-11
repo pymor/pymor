@@ -219,8 +219,8 @@ class ListVectorArray(VectorArrayInterface):
     :class:`ListVectorSpace`.
 
     For an example, see :class:`NumpyVector`, :class:`NumpyListVectorSpace`
-    or :class:`~pymor.vectorarrays.fenics.FenicsVector`,
-    :class:`~pymor.vectorarrays.fenics.FenicsVectorSpace`.
+    or :class:`~pymor.bindings.fenics.FenicsVector`,
+    :class:`~pymor.bindings.fenics.FenicsVectorSpace`.
     """
 
     _NONE = ()
