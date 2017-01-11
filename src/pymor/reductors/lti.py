@@ -63,8 +63,8 @@ def interpolation(discretization, sigma, b, c, use_arnoldi=False):
                 Bb = discretization.B.apply(b.real[i])
                 V.append(sEmA.apply_inverse(Bb))
 
-                CTc = discretization.C.apply_adjoint(c.real[i])
-                W.append(sEmA.apply_inverse_adjoint(CTc))
+                CTc = discretization.C.apply_transpose(c.real[i])
+                W.append(sEmA.apply_inverse_transpose(CTc))
             elif sigma[i].imag > 0:
                 sEmA = LincombOperator((discretization.E, discretization.A), (sigma[i], -1))
 
@@ -73,8 +73,8 @@ def interpolation(discretization, sigma, b, c, use_arnoldi=False):
                 V.append(v.real)
                 V.append(v.imag)
 
-                CTc = discretization.C.apply_adjoint(c[i])
-                w = sEmA.apply_inverse_adjoint(CTc)
+                CTc = discretization.C.apply_transpose(c[i])
+                w = sEmA.apply_inverse_transpose(CTc)
                 W.append(w.real)
                 W.append(w.imag)
 
@@ -264,7 +264,7 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
         # new tangential directions
         Y = rom.B.range.make_array(Y.conj().T)
         X = rom.C.source.make_array(X.T)
-        b = rom.B.apply_adjoint(Y)
+        b = rom.B.apply_transpose(Y)
         c = rom.C.apply(X)
         R.append(b)
         L.append(c)

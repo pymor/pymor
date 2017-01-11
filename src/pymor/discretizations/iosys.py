@@ -422,7 +422,7 @@ class LTISystem(InputOutputSystem):
         if self.m <= self.p:
             tfs = C.apply(sEmA.apply_inverse(B.as_range_array())).data.T
         else:
-            tfs = B.apply_adjoint(sEmA.apply_inverse_adjoint(C.as_source_array())).data.conj()
+            tfs = B.apply_transpose(sEmA.apply_inverse_transpose(C.as_source_array())).data.conj()
         if not isinstance(D, ZeroOperator):
             if self.m <= self.p:
                 tfs += D.as_range_array().data.T
@@ -462,7 +462,7 @@ class LTISystem(InputOutputSystem):
         if self.m <= self.p:
             dtfs = -C.apply(sEmA.apply_inverse(E.apply(sEmA.apply_inverse(B.as_range_array())))).data.T
         else:
-            dtfs = B.apply_adjoint(sEmA.apply_inverse_adjoint(E.apply_adjoint(sEmA.apply_inverse_adjoint(
+            dtfs = B.apply_transpose(sEmA.apply_inverse_transpose(E.apply_transpose(sEmA.apply_inverse_transpose(
                 C.as_source_array())))).data.conj()
         return dtfs
 
@@ -597,7 +597,7 @@ class LTISystem(InputOutputSystem):
                 return np.sqrt(C.apply(cf).l2_norm2().sum())
             else:
                 of = self.gramian('lyap', 'of', me_solver=me_solver)
-                return np.sqrt(B.apply_adjoint(of).l2_norm2().sum())
+                return np.sqrt(B.apply_transpose(of).l2_norm2().sum())
         elif name == 'Hinf_fpeak':
             from slycot import ab13dd
             dico = 'C' if self.cont_time else 'D'
@@ -922,8 +922,8 @@ class SecondOrderSystem(InputOutputSystem):
             CppsCv = LincombOperator((Cp, Cv), (1, s))
             tfs = CppsCv.apply(s2MpsDpK.apply_inverse(B.as_range_array())).data.T
         else:
-            tfs = B.apply_adjoint(s2MpsDpK.apply_inverse_adjoint(Cp.as_source_array() +
-                                                                 Cv.as_source_array() * s.conj())).data.conj()
+            tfs = B.apply_transpose(s2MpsDpK.apply_inverse_transpose(Cp.as_source_array() +
+                                                                     Cv.as_source_array() * s.conj())).data.conj()
         return tfs
 
     def eval_dtf(self, s):
@@ -963,8 +963,8 @@ class SecondOrderSystem(InputOutputSystem):
             CppsCv = LincombOperator((Cp, Cv), (1, s))
             dtfs -= CppsCv.apply(s2MpsDpK.apply_inverse(sM2pD.apply(s2MpsDpK.apply_inverse(B.as_range_array())))).data.T
         else:
-            dtfs = B.apply_adjoint(s2MpsDpK.apply_inverse_adjoint(Cv.as_source_array())).data.conj() * s
-            dtfs -= B.apply_adjoint(s2MpsDpK.apply_inverse_adjoint(sM2pD.apply_adjoint(s2MpsDpK.apply_inverse_adjoint(
+            dtfs = B.apply_transpose(s2MpsDpK.apply_inverse_transpose(Cv.as_source_array())).data.conj() * s
+            dtfs -= B.apply_transpose(s2MpsDpK.apply_inverse_transpose(sM2pD.apply_transpose(s2MpsDpK.apply_inverse_transpose(
                 Cp.as_source_array() + Cv.as_source_array() * s.conj())))).data.conj()
         return dtfs
 
@@ -1087,7 +1087,7 @@ class LinearDelaySystem(InputOutputSystem):
         if self.m <= self.p:
             tfs = C.apply(middle.apply_inverse(B.as_range_array())).data.T
         else:
-            tfs = B.apply_adjoint(middle.apply_inverse_adjoint(C.as_source_array())).data.conj()
+            tfs = B.apply_transpose(middle.apply_inverse_transpose(C.as_source_array())).data.conj()
         return tfs
 
     def eval_dtf(self, s):
@@ -1127,8 +1127,8 @@ class LinearDelaySystem(InputOutputSystem):
             dtfs = C.apply(left_and_right.apply_inverse(middle.apply(left_and_right.apply_inverse(
                 B.as_range_array())))).data.T
         else:
-            dtfs = B.apply_adjoint(left_and_right.apply_inverse_adjoint(middle.apply_adjoint(
-                left_and_right.apply_inverse_adjointi(C.as_source_array())))).data.conj()
+            dtfs = B.apply_transpose(left_and_right.apply_inverse_transpose(middle.apply_transpose(
+                left_and_right.apply_inverse_transpose(C.as_source_array())))).data.conj()
         return dtfs
 
 

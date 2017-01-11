@@ -70,14 +70,14 @@ def arnoldi(A, E, b, sigma, trans=False):
             if not trans:
                 v = sEmA.apply_inverse(v)
             else:
-                v = sEmA.apply_inverse_adjoint(v)
+                v = sEmA.apply_inverse_transpose(v)
 
             if i > 0:
                 v_norm_orig = v.l2_norm()[0]
                 Vop = VectorArrayOperator(V)
-                v -= Vop.apply(Vop.apply_adjoint(v))
+                v -= Vop.apply(Vop.apply_transpose(v))
                 if v.l2_norm()[0] < v_norm_orig / 10:
-                    v -= Vop.apply(Vop.apply_adjoint(v))
+                    v -= Vop.apply(Vop.apply_transpose(v))
             v.scal(1 / v.l2_norm()[0])
             V.append(v)
         elif sigma[i].imag > 0:
@@ -86,24 +86,24 @@ def arnoldi(A, E, b, sigma, trans=False):
             if not trans:
                 v = sEmA.apply_inverse(v)
             else:
-                v = sEmA.apply_inverse_adjoint(v)
+                v = sEmA.apply_inverse_transpose(v)
 
             v1 = v.real
             if i > 0:
                 v1_norm_orig = v1.l2_norm()[0]
                 Vop = VectorArrayOperator(V)
-                v1 -= Vop.apply(Vop.apply_adjoint(v1))
+                v1 -= Vop.apply(Vop.apply_transpose(v1))
                 if v1.l2_norm()[0] < v1_norm_orig / 10:
-                    v1 -= Vop.apply(Vop.apply_adjoint(v1))
+                    v1 -= Vop.apply(Vop.apply_transpose(v1))
             v1.scal(1 / v1.l2_norm()[0])
             V.append(v1)
 
             v2 = v.imag
             v2_norm_orig = v2.l2_norm()[0]
             Vop = VectorArrayOperator(V)
-            v2 -= Vop.apply(Vop.apply_adjoint(v2))
+            v2 -= Vop.apply(Vop.apply_transpose(v2))
             if v2.l2_norm()[0] < v2_norm_orig / 10:
-                v2 -= Vop.apply(Vop.apply_adjoint(v2))
+                v2 -= Vop.apply(Vop.apply_transpose(v2))
             v2.scal(1 / v2.l2_norm()[0])
             V.append(v2)
 

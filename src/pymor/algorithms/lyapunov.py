@@ -61,7 +61,7 @@ try:
             if op == pymess.MESS_OP_NONE:
                 x = self.A.apply(y)
             else:
-                x = self.A.apply_adjoint(y)
+                x = self.A.apply_transpose(y)
             return np.matrix(x.data).T
 
         def EX_apply(self, op, y):
@@ -72,7 +72,7 @@ try:
             if op == pymess.MESS_OP_NONE:
                 x = self.E.apply(y)
             else:
-                x = self.E.apply_adjoint(y)
+                x = self.E.apply_transpose(y)
             return np.matrix(x.data).T
 
         def AINV_apply(self, op, y):
@@ -80,7 +80,7 @@ try:
             if op == pymess.MESS_OP_NONE:
                 x = self.A.apply_inverse(y)
             else:
-                x = self.A.apply_inverse_adjoint(y)
+                x = self.A.apply_inverse_transpose(y)
             return np.matrix(x.data).T
 
         def EINV_apply(self, op, y):
@@ -91,7 +91,7 @@ try:
             if op == pymess.MESS_OP_NONE:
                 x = self.E.apply_inverse(y)
             else:
-                x = self.E.apply_inverse_adjoint(y)
+                x = self.E.apply_inverse_transpose(y)
             return np.matrix(x.data).T
 
         def ApEX_apply(self, op, p, idx_p, y):
@@ -103,11 +103,11 @@ try:
                 else:
                     x += p * self.E.apply(y)
             else:
-                x = self.A.apply_adjoint(y)
+                x = self.A.apply_transpose(y)
                 if self.E is None:
                     x += p.conjugate() * y
                 else:
-                    x += p.conjugate() * self.E.apply_adjoint(y)
+                    x += p.conjugate() * self.E.apply_transpose(y)
             return np.matrix(x.data).T
 
         def ApEINV_apply(self, op, p, idx_p, y):
@@ -122,7 +122,7 @@ try:
             if op == pymess.MESS_OP_NONE:
                 x = ApE.apply_inverse(y)
             else:
-                x = ApE.apply_inverse_adjoint(y)
+                x = ApE.apply_inverse_transpose(y)
             return np.matrix(x.data).T
 
         def parameter(self, arp_p, arp_m, B=None, K=None):
