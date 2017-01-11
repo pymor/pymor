@@ -18,6 +18,8 @@ import time
 
 import sys
 
+import psutil
+
 from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.core.interfaces import BasicInterface
@@ -176,11 +178,10 @@ if config.HAVE_PYSIDE:
                 self.slider.setValue(ind)
 
 
-_launch_qt_app_pids = set()
+_launch_qt_processes = set()
 
 
-
-def _doit():
+def _doit(main_window_factory):
     try:
         app = QApplication([])
     except RuntimeError:
@@ -188,6 +189,7 @@ def _doit():
     main_window = main_window_factory()
     main_window.show()
     app.exec_()
+
 
 def _launch_qt_app(main_window_factory, block):
     """Wrapper to display plot in a separate process."""
@@ -198,18 +200,21 @@ def _launch_qt_app(main_window_factory, block):
     else:
         p = multiprocessing.Process(target=_doit)
         p.start()
-        _launch_qt_app_pids.add(p.pid)
+        _launch_qt_processes.add(psutil.Process(p.pid))
 
 
 def stop_gui_processes():
-    for p in multiprocessing.active_children():
-        if p.pid in _launch_qt_app_pids:
-            try:
-                # kill is needed on linux, term on win32
-                sig = getattr(signal, 'SIGKILL', signal.SIGTERM)
-                os.kill(p.pid, sig)
-            except OSError:
-                pass
+    active_pids = {p.pid for p in multiprocessing.active_children()}
+    kill_procs = [pr for pr in _launch_qt_processes if pr.pid in active_pids]
+    for p in kill_procs:
+        try:
+            # active_children apparently contains false positives sometimes
+            p.terminate()
+        except psutil.NoSuchProcess:
+            pass
+    gone, still_alive = psutil.wait_procs(kill_procs, timeout=1)
+    for p in still_alive:
+        p.kill()
 
 
 def _default_backend():
