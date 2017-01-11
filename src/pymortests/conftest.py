@@ -41,7 +41,7 @@ class ExecutionTimeCSV:
         self._elapsed_times[item.name] = str(stopped - self._elapsed_times[item.name])
 
     @pytest.hookimpl()
-    def pytest_terminal_summary(self, terminalreporter, exitstatus):
+    def pytest_terminal_summary(self, *args, **kwargs):
         with open(self._filename, 'w') as csvfile:
             writer = DictWriter(csvfile, fieldnames=self._elapsed_times.keys())
             writer.writeheader()
