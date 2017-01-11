@@ -53,18 +53,11 @@ def burgers_problem(v=1., circle=True, initial_data_type='sin', parameter_range=
 
             rhs=None,
 
-            nonlinear_advection=ExpressionFunction('x**exponent * v',
+            nonlinear_advection=ExpressionFunction('sign(x) * abs(x)**exponent * v',
                                                    1, (1,), {'exponent': ()}, {'v': v}),
 
-            nonlinear_advection_derivative=ExpressionFunction('exponent * x**(exponent-1) * v',
+            nonlinear_advection_derivative=ExpressionFunction('exponent * sign(x) * abs(x)**(exponent-1) * v',
                                                               1, (1,), {'exponent': ()}, {'v': v}),
-
-            # # old definition:
-            # nonlinear_advection=ExpressionFunction('sign(x) * abs(x)**exponent * v',
-            #                                        1, (1,), {'exponent': ()}, {'v': v}),
-            #
-            # nonlinear_advection_derivative=ExpressionFunction('exponent * sign(x) * abs(x)**(exponent-1) * v',
-            #                                                   1, (1,), {'exponent': ()}, {'v': v}),
         ),
 
         T=0.3,
@@ -120,18 +113,11 @@ def burgers_problem_2d(vx=1., vy=1., torus=True, initial_data_type='sin', parame
 
             rhs=None,
 
-            nonlinear_advection=ExpressionFunction("x**exponent * v",
+            nonlinear_advection=ExpressionFunction("sign(x) * abs(x)**exponent * v",
                                                    1, (2,), {'exponent': ()}, {'v': np.array([vx, vy])}),
 
-            nonlinear_advection_derivative=ExpressionFunction("exponent * x**(exponent-1) * v",
+            nonlinear_advection_derivative=ExpressionFunction("exponent * sign(x) * abs(x)**(exponent-1) * v",
                                                               1, (2,), {'exponent': ()}, {'v': np.array([vx, vy])}),
-
-            # # old definition:
-            # nonlinear_advection=ExpressionFunction("sign(x) * abs(x)**exponent * v",
-            #                                        1, (2,), {'exponent': ()}, {'v': np.array([vx, vy])}),
-            #
-            # nonlinear_advection_derivative=ExpressionFunction("exponent * sign(x) * abs(x)**(exponent-1) * v",
-            #                                                   1, (2,), {'exponent': ()}, {'v': np.array([vx, vy])}),
         ),
 
         initial_data=initial_data,
