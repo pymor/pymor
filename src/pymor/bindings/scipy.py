@@ -9,10 +9,12 @@ import scipy.version
 from scipy.sparse.linalg import bicgstab, spsolve, splu, spilu, lgmres, lsqr, LinearOperator
 
 from pymor.algorithms.genericsolvers import _parse_options
+from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.core.logger import getLogger
+from pymor.operators.interfaces import OperatorInterface
 from pymor.operators.numpy import NumpyMatrixOperator
 
 
@@ -308,3 +310,273 @@ def matrix_astype_nocopy(matrix, dtype):
         return matrix
     else:
         return matrix.astype(dtype)
+
+
+def solve_lyap(A, E, B, trans=False, me_solver='scipy', tol=None):
+    """Find a factor of the solution of a Lyapunov equation.
+
+    Returns factor :math:`Z` such that :math:`Z Z^T` is approximately
+    the solution :math:`X` of a Lyapunov equation (if E is `None`).
+
+    .. math::
+        A X + X A^T + B B^T = 0
+
+    or generalized Lyapunov equation
+
+    .. math::
+        A X E^T + E X A^T + B B^T = 0.
+
+    If trans is `True`, then solve (if E is `None`)
+
+    .. math::
+        A^T X + X A + B^T B = 0
+
+    or
+
+    .. math::
+        A^T X E + E^T X A + B^T B = 0.
+
+    Parameters
+    ----------
+    A
+        The |Operator| A.
+    E
+        The |Operator| E or `None`.
+    B
+        The |Operator| B.
+    trans
+        If the dual equation needs to be solved.
+    me_solver
+        Solver to use (must be `'scipy'`).
+    tol
+        Tolerance parameter (ignored).
+
+    Returns
+    -------
+    Z
+        Low-rank factor of the Lyapunov equation solution, |VectorArray| from `A.source`.
+    """
+    _solve_lyap_check_args(A, E, B, trans)
+    assert me_solver == 'scipy'
+
+    if E is not None:
+        raise NotImplementedError()
+    import scipy.linalg as spla
+    A_mat = to_matrix(A)
+    B_mat = to_matrix(B)
+    if not trans:
+        X = spla.solve_lyapunov(A_mat, -B_mat.dot(B_mat.T))
+    else:
+        X = spla.solve_lyapunov(A_mat.T, -B_mat.T.dot(B_mat))
+
+    Z = cholp(X, copy=False)
+    Z = A.source.from_data(np.array(Z).T)
+
+    return Z
+
+
+def _solve_lyap_check_args(A, E, B, trans=False):
+    assert isinstance(A, OperatorInterface) and A.linear
+    assert A.source == A.range
+    assert isinstance(B, OperatorInterface) and B.linear
+    assert not trans and B.range == A.source or trans and B.source == A.source
+    assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source
+
+
+def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
+               trans=False, me_solver='scipy', tol=None):
+    """Find a factor of the solution of a Riccati equation using solve_continuous_are.
+
+    Returns factor :math:`Z` such that :math:`Z Z^T` is approximately the
+    solution :math:`X` of a Riccati equation
+
+    .. math::
+        A^T X E + E^T X A - E^T X B R^{-1} B^T X E + Q = 0.
+
+    If E in `None`, it is taken to be the identity matrix.
+    Q can instead be given as C^T * C. In this case, Q needs to be `None`, and
+    C not `None`.
+    B * R^{-1} B^T can instead be given by G. In this case, B and R need to be
+    `None`, and G not `None`.
+    If R and G are `None`, then R is taken to be the identity matrix.
+    If trans is `True`, then the dual Riccati equation is solved
+
+    .. math::
+        A X E^T + E X A^T - E X C^T R^{-1} C X E^T + Q = 0,
+
+    where Q can be replaced by B * B^T and C^T * R^{-1} * C by G.
+
+    Parameters
+    ----------
+    A
+        The |Operator| A.
+    B
+        The |Operator| B or `None`.
+    E
+        The |Operator| E or `None`.
+    Q
+        The |Operator| Q or `None`.
+    C
+        The |Operator| C or `None`.
+    R
+        The |Operator| R or `None`.
+    D
+        The |Operator| D or `None`.
+    G
+        The |Operator| G or `None`.
+    L
+        The |Operator| L or `None`.
+    trans
+        If the dual equation needs to be solved.
+    me_solver
+        Solver to use (must be `'scipy'`).
+    tol
+        Tolerance parameter (ignored).
+
+    Returns
+    -------
+    Z
+        Low-rank factor of the Riccati equation solution,
+        |VectorArray| from `A.source`.
+    """
+
+    _solve_ricc_check_args(A, E, B, Q, C, R, G, trans)
+    assert me_solver == 'scipy'
+
+    if E is not None or G is not None:
+        raise NotImplementedError()
+
+    import scipy.linalg as spla
+    A_mat = to_matrix(A)
+    B_mat = to_matrix(B) if B else None
+    C_mat = to_matrix(C) if C else None
+    Q_mat = to_matrix(Q) if Q else None
+    R_mat = to_matrix(R) if R else None
+
+    if R is None:
+        if not trans:
+            R_mat = np.eye(B.source.dim)
+        else:
+            R_mat = np.eye(C.range.dim)
+    if not trans:
+        if Q is None:
+            Q_mat = C_mat.T.dot(C_mat)
+        X = spla.solve_continuous_are(A_mat, B_mat, Q_mat, R_mat)
+    else:
+        if Q is None:
+            Q_mat = B_mat.dot(B_mat.T)
+        X = spla.solve_continuous_are(A_mat.T, C_mat.T, Q_mat, R_mat)
+
+    Z = cholp(X, copy=False)
+    Z = A.source.from_data(np.array(Z).T)
+
+    return Z
+
+
+def _solve_ricc_check_args(A, E, B, Q, C, R, G, trans):
+    assert isinstance(A, OperatorInterface) and A.linear
+    assert A.source == A.range
+    if E is not None:
+        assert isinstance(E, OperatorInterface) and E.linear
+        assert E.source == E.range == A.source
+    if not trans:
+        if C is not None:
+            assert Q is None
+            assert isinstance(C, OperatorInterface) and C.linear
+            assert C.source == A.source
+        else:
+            assert isinstance(Q, OperatorInterface) and Q.linear
+            assert Q.source == Q.range == A.source
+        if G is not None:
+            assert B is None and R is None
+            assert isinstance(G, OperatorInterface) and G.linear
+            assert G.source == G.range == A.source
+        else:
+            assert isinstance(B, OperatorInterface) and B.linear
+            assert B.range == A.source
+            if R is not None:
+                assert isinstance(R, OperatorInterface) and R.linear
+                assert R.source == R.range == B.source
+    else:
+        if B is not None:
+            assert Q is None
+            assert isinstance(B, OperatorInterface) and B.linear
+            assert B.range == A.source
+        else:
+            assert isinstance(Q, OperatorInterface) and Q.linear
+            assert Q.source == Q.range == A.source
+        if G is not None:
+            assert C is None and R is None
+            assert isinstance(G, OperatorInterface) and G.linear
+            assert G.source == G.range == A.source
+        else:
+            assert C is not None
+            assert isinstance(C, OperatorInterface) and C.linear
+            assert C.source == A.source
+            if R is not None:
+                assert isinstance(R, OperatorInterface) and R.linear
+                assert R.source == R.range == C.range
+
+
+def cholp(A, copy=True):
+    """Low-rank approximation using pivoted Cholesky decomposition
+
+    .. note::
+        Should be replaced with LAPACK routine DPSTRF (when it becomes available in NumPy).
+
+    .. [H02] N. J. Higham, Accuracy and Stability of Numerical Algorithms,
+             Second edition, Society for Industrial and Applied Mathematics,
+             Philadelphia, PA, 2002; sec. 10.3.
+
+    Parameters
+    ----------
+    A
+        Symmetric positive semidefinite matrix as |NumPy array|.
+    copy
+        Should A be copied.
+    """
+    assert isinstance(A, np.ndarray)
+    assert A.shape[0] == A.shape[1]
+
+    if copy:
+        A = A.copy()
+
+    n = A.shape[0]
+    piv = np.arange(n)
+    I = 0
+
+    for i in range(n):
+        d = A.diagonal()
+        j = np.argmax(d[i:])
+        j += i
+        a_max = d[j]
+        if i == 0:
+            a_max_1 = a_max
+        elif a_max <= 0.5 * n * np.finfo(float).eps * a_max_1:
+            I = i
+            break
+
+        # Symmetric row/column permutation.
+        if j != i:
+            A[:, [i, j]] = A[:, [j, i]]
+            A[[i, j], :] = A[[j, i], :]
+            piv[[i, j]] = piv[[j, i]]
+
+        A[i, i] = np.sqrt(A[i, i])
+        if i == n:
+            break
+        A[i + 1:, i] /= A[i, i]
+
+        # For simplicity update the whole of the remaining submatrix (rather
+        # than just the upper triangle).
+        A[i + 1:, i + 1:] -= np.outer(A[i + 1:, i], A[i + 1:, i])
+
+    L = np.tril(A)
+    if I > 0:
+        L = L[:, :I]
+    ipiv = np.arange(n)
+    for i, j in enumerate(piv):
+        ipiv[j] = i
+    L = L[ipiv, :]
+
+    return L

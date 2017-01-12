@@ -42,12 +42,14 @@ _PACKAGES = {
     'MPI': lambda: import_module('mpi4py.MPI') and import_module('mpi4py').__version__,
     'NUMPY': lambda: import_module('numpy').__version__,
     'PYAMG': lambda: import_module('pyamg.version').full_version,
+    'PYMESS': lambda: bool(import_module('pymess')),
     'PYSIDE': lambda: import_module('PySide.QtGui') and import_module('PySide.QtCore').__version__,
     'PYTEST': lambda: import_module('pytest').__version__,
     'PYVTK': lambda: bool(import_module('evtk')),
     'QTOPENGL': lambda: bool(import_module('PySide.QtOpenGL')),
     'SCIPY': lambda: import_module('scipy').__version__,
     'SCIPY_LSMR': lambda: hasattr(import_module('scipy.sparse.linalg'), 'lsmr'),
+    'SLYCOT': lambda: bool(import_module('slycot')),
     'SPHINX': lambda: import_module('sphinx').__version__,
 }
 
