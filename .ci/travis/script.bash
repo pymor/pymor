@@ -25,7 +25,7 @@ if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     pushd ${SDIST_DIR}
     sudo pip install $(ls ${SDIST_DIR})
     popd
-    xvfb-run -a py.test -r sxX --pyargs pymortests -c .installed_pytest.ini -k "not slow"
+    xvfb-run -a py.test -r sxX --pyargs pymortests -c .ci/installed_pytest.ini
     COVERALLS_REPO_TOKEN=${COVERALLS_TOKEN} coveralls
 elif [ "${PYTEST_MARKER}" == "MPI" ] ; then
     xvfb-run -a mpirun --allow-run-as-root -n 2 python src/pymortests/mpi_run_demo_tests.py

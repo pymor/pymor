@@ -27,7 +27,7 @@ def _run_config(tm, clone_dir, commit):
         with NamedTemporaryFile('wt') as envfile:
             envfile.write(env_tpl.format(marker, slug, commit))
             cmd = ['docker', 'run', '--env-file', envfile.name, '-v', '{}:/src'.format(os.getcwd()),
-                   image, './.travis.script.bash']
+                   image, './.ci/travis/script.bash']
             try:
                 _ = subprocess.check_call(cmd)
             except subprocess.CalledProcessError as err:
