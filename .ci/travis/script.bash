@@ -1,5 +1,8 @@
 #!/bin/bash
 
+PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
+cd "${PYMOR_ROOT}"
+
 # any failure here should fail the whole test
 set -e
 
