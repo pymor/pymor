@@ -247,7 +247,7 @@ def parse_arguments(args):
 
 def discretize_pymor(xblocks, yblocks, grid_num_intervals, use_list_vector_array):
     from pymor.analyticalproblems.thermalblock import thermal_block_problem
-    from pymor.discretizers.elliptic import discretize_elliptic_cg
+    from pymor.discretizers.cg import discretize_stationary_cg
     from pymor.playground.discretizers.numpylistvectorarray import convert_to_numpy_list_vector_array
 
     print('Discretize ...')
@@ -255,7 +255,7 @@ def discretize_pymor(xblocks, yblocks, grid_num_intervals, use_list_vector_array
     problem = thermal_block_problem(num_blocks=(xblocks, yblocks))
 
     # discretize using continuous finite elements
-    d, _ = discretize_elliptic_cg(problem, diameter=1. / grid_num_intervals)
+    d, _ = discretize_stationary_cg(problem, diameter=1. / grid_num_intervals)
 
     if use_list_vector_array:
         d = convert_to_numpy_list_vector_array(d)
@@ -335,9 +335,7 @@ def _discretize_fenics(xblocks, yblocks, grid_num_intervals, element_order):
     ###########################################
 
     # FEniCS wrappers
-    from pymor.gui.fenics import FenicsVisualizer
-    from pymor.operators.fenics import FenicsMatrixOperator
-    from pymor.vectorarrays.fenics import FenicsVectorSpace
+    from pymor.bindings.fenics import FenicsVectorSpace, FenicsMatrixOperator, FenicsVisualizer
 
     # generic pyMOR classes
     from pymor.discretizations.basic import StationaryDiscretization

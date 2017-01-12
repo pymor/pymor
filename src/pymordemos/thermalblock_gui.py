@@ -50,7 +50,7 @@ except ImportError as e:
 from pymor.algorithms.basisextension import gram_schmidt_basis_extension
 from pymor.algorithms.greedy import greedy
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
-from pymor.discretizers.elliptic import discretize_elliptic_cg
+from pymor.discretizers.cg import discretize_stationary_cg
 from pymor.gui.gl import ColorBarWidget, GLPatchWidget
 from pymor.gui.matplotlib import MatplotlibPatchWidget
 from pymor.reductors.coercive import reduce_coercive_simple
@@ -154,7 +154,7 @@ class SimBase(object):
         self.first = True
         self.problem = thermal_block_problem(num_blocks=(args['XBLOCKS'], args['YBLOCKS']),
                                              parameter_range=(PARAM_MIN, PARAM_MAX))
-        self.discretization, pack = discretize_elliptic_cg(self.problem, diameter=1. / args['--grid'])
+        self.discretization, pack = discretize_stationary_cg(self.problem, diameter=1. / args['--grid'])
         self.grid = pack['grid']
 
 

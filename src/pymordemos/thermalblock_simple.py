@@ -49,7 +49,7 @@ def discretize_pymor():
     problem = thermal_block_problem(num_blocks=(XBLOCKS, YBLOCKS))
 
     # discretize using continuous finite elements
-    d, _ = discretize_elliptic_cg(problem, diameter=1. / GRID_INTERVALS)
+    d, _ = discretize_stationary_cg(problem, diameter=1. / GRID_INTERVALS)
 
     return d
 
@@ -111,9 +111,7 @@ def _discretize_fenics():
     ###########################################
 
     # FEniCS wrappers
-    from pymor.gui.fenics import FenicsVisualizer
-    from pymor.operators.fenics import FenicsMatrixOperator
-    from pymor.vectorarrays.fenics import FenicsVectorSpace
+    from pymor.bindings.fenics import FenicsVectorSpace, FenicsMatrixOperator, FenicsVisualizer
 
     # define parameter functionals (same as in pymor.analyticalproblems.thermalblock)
     parameter_functionals = [ProjectionParameterFunctional(component_name='diffusion',

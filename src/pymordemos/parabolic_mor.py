@@ -47,7 +47,7 @@ def discretize_pymor():
     # setup analytical problem
     problem = InstationaryProblem(
 
-        EllipticProblem(
+        StationaryProblem(
             domain=RectDomain(top='dirichlet', bottom='neumann'),
 
             diffusion=LincombFunction(
@@ -79,7 +79,7 @@ def discretize_pymor():
     )
 
     # discretize using continuous finite elements
-    d, _ = discretize_parabolic_cg(analytical_problem=problem, diameter=1./GRID_INTERVALS, nt=NT)
+    d, _ = discretize_instationary_cg(analytical_problem=problem, diameter=1./GRID_INTERVALS, nt=NT)
     d.enable_caching('persistent')
 
     return d
@@ -148,9 +148,7 @@ def _discretize_fenics():
     # wrap everything as a pyMOR discretization
     ###########################################
 
-    from pymor.gui.fenics import FenicsVisualizer
-    from pymor.operators.fenics import FenicsMatrixOperator
-    from pymor.vectorarrays.fenics import FenicsVectorSpace
+    from pymor.bindings.fenics import FenicsVectorSpace, FenicsMatrixOperator, FenicsVisualizer
 
     d = InstationaryDiscretization(
         T=1.,

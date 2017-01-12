@@ -91,26 +91,8 @@ class OperatorBase(OperatorInterface):
         if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
             return assembled_op.apply_inverse(V, least_squares=least_squares)
         elif self.linear:
-            options = (self.solver_options.get('inverse') if self.solver_options else
-                       'least_squares' if least_squares else
-                       None)
-
-            if options and not least_squares:
-                solver_type = options if isinstance(options, str) else options['type']
-                if solver_type.startswith('least_squares'):
-                    self.logger.warn('Least squares solver selected but "least_squares == False"')
-
-            try:
-                return genericsolvers.apply_inverse(assembled_op, V, options=options)
-            except InversionError as e:
-                if least_squares and options:
-                    solver_type = options if isinstance(options, str) else options['type']
-                    if not solver_type.startswith('least_squares'):
-                        msg = str(e) \
-                            + '\nNote: linear solver was selected for solving least squares problem ' \
-                            + '(maybe not invertible?)'
-                        raise InversionError(msg)
-                raise e
+            options = self.solver_options.get('inverse') if self.solver_options else None
+            return genericsolvers.apply_inverse(assembled_op, V, options=options, least_squares=least_squares)
         else:
             from pymor.algorithms.newton import newton
             from pymor.core.exceptions import NewtonError

@@ -18,9 +18,8 @@ from pymor.algorithms.adaptivegreedy import adaptive_greedy
 from pymor.algorithms.newton import newton
 from pymor.algorithms.pod import pod
 
-from pymor.analyticalproblems.advection import InstationaryAdvectionProblem
 from pymor.analyticalproblems.burgers import burgers_problem, burgers_problem_2d
-from pymor.analyticalproblems.elliptic import EllipticProblem
+from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.helmholtz import helmholtz_problem
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
@@ -37,9 +36,8 @@ from pymor.domaindescriptions.polygonal import DiscDomain, CircularSectorDomain,
 
 from pymor.domaindiscretizers.default import discretize_domain_default
 
-from pymor.discretizers.advection import discretize_nonlinear_instationary_advection_fv
-from pymor.discretizers.elliptic import discretize_elliptic_cg, discretize_elliptic_fv
-from pymor.discretizers.parabolic import discretize_parabolic_cg, discretize_parabolic_fv
+from pymor.discretizers.cg import discretize_stationary_cg, discretize_instationary_cg
+from pymor.discretizers.fv import discretize_stationary_fv, discretize_instationary_fv
 
 from pymor.functions.basic import ConstantFunction, GenericFunction, ExpressionFunction, LincombFunction
 from pymor.functions.bitmap import BitmapFunction

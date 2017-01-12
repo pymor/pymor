@@ -173,7 +173,7 @@ we provide bindings for the following solver libraries:
 * [FEniCS](http://fenicsproject.org)
 
     MPI-compatible wrapper classes for dolfin linear algebra data structures are
-    shipped with pyMOR (`pymor.vectorarrays.fenics`, `pymor.operators.fenics`).
+    shipped with pyMOR (`pymor.bindings.fenics`).
     For an example see `pymordemos.thermalbock`, `pymordemos.thermalblock_simple`.
 
 * [deal.II](https://dealii.org)

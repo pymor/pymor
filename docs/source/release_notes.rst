@@ -138,7 +138,7 @@ Improvements to pyMOR's discretizaion tookit
 
 - :class:`EllipticProblems <pymor.analyticalproblems.elliptic.EllipticProblem>`
   can now also contain advection and reaction terms in addition to the diffusion part.
-  :meth:`~pymor.discretizers.elliptic.discretize_elliptic_cg` has been
+  :meth:`~pymor.discretizers.cg.discretize_elliptic_cg` has been
   extended accordingly `[#211] <https://github.com/pymor/pymor/pull/211>`_.
 
 - The :mod:`continuous Galerkin <pymor.operators.cg>` module has been extended to
