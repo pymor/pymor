@@ -8,10 +8,10 @@ import numpy as np
 import scipy.linalg as spla
 import scipy.sparse as sps
 
-from pymor.algorithms.lyapunov import solve_lyap
-from pymor.algorithms.riccati import solve_ricc
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.cache import cached
+from pymor.core.config import config
+from pymor.core.defaults import defaults
 from pymor.discretizations.basic import DiscretizationBase
 from pymor.operators.block import BlockOperator, BlockDiagonalOperator
 from pymor.operators.constructions import Concatenation, IdentityOperator, LincombOperator, ZeroOperator
@@ -157,6 +157,11 @@ class InputOutputSystem(DiscretizationBase):
         return fig, ax
 
 
+_DEFAULT_ME_SOLVER = 'slycot' if config.HAVE_SLYCOT else \
+                     'pymess' if config.HAVE_PYMESS else \
+                     'scipy'
+
+
 class LTISystem(InputOutputSystem):
     r"""Class for linear time-invariant systems.
 
@@ -217,7 +222,8 @@ class LTISystem(InputOutputSystem):
 
     special_operators = frozenset({'A', 'B', 'C', 'D', 'E'})
 
-    def __init__(self, A, B, C, D=None, E=None, cont_time=True, cache_region='memory', name=None):
+    def __init__(self, A, B, C, D=None, E=None, cont_time=True, solver_options=None,
+                 cache_region='memory', name=None):
 
         D = D or ZeroOperator(B.source, C.range)
         E = E or IdentityOperator(A.source)
@@ -228,11 +234,13 @@ class LTISystem(InputOutputSystem):
         assert D.linear and D.source == B.source and D.range == C.range
         assert E.linear and E.source == E.range == A.source
         assert cont_time in (True, False)
+        assert solver_options is None or solver_options.keys() <= {'lyap', 'ricc'}
 
         super().__init__(B.source.dim, C.range.dim, cont_time=cont_time, cache_region=cache_region, name=name,
                          A=A, B=B, C=C, D=D, E=E)
 
         self.n = A.source.dim
+        self.solver_options = solver_options
 
     @classmethod
     def from_matrices(cls, A, B, C, D=None, E=None, cont_time=True):
@@ -466,8 +474,32 @@ class LTISystem(InputOutputSystem):
                 C.as_source_array())))).data.conj()
         return dtfs
 
+    @defaults('default_solver', qualname='pymor.discretizations.iosys.LTISystem._lyap_solver')
+    def _lyap_solver(self, default_solver=_DEFAULT_ME_SOLVER):
+        solver = self.solver_options.get('lyap', default_solver) if self.solver_options else default_solver
+        if solver == 'scipy':
+            from pymor.bindings.scipy import solve_lyap as solve_lyap_impl
+        elif solver == 'slycot':
+            from pymor.bindings.slycot import solve_lyap as solve_lyap_impl
+        elif solver.startswith('pymess'):
+            from pymor.bindings.pymess import solve_lyap as solve_lyap_impl
+            solve_lyap_impl = solve_lyap_impl.partial(me_solver=solver)
+        return solve_lyap_impl
+
+    @defaults('default_solver', qualname='pymor.discretizations.iosys.LTISystem._ricc_solver')
+    def _ricc_solver(self, default_solver=_DEFAULT_ME_SOLVER):
+        solver = self.solver_options.get('ricc', default_solver) if self.solver_options else default_solver
+        if solver == 'scipy':
+            from pymor.bindings.scipy import solve_ricc as solve_ricc_impl
+        elif solver == 'slycot':
+            from pymor.bindings.slycot import solve_ricc as solve_ricc_impl
+        elif solver.startswith('pymess'):
+            from pymor.bindings.pymess import solve_ricc as solve_ricc_impl
+            solve_ricc_impl = solve_ricc_impl.partial(me_solver=solver)
+        return solve_ricc_impl
+
     @cached
-    def gramian(self, typ, subtyp, me_solver=None, tol=None):
+    def gramian(self, typ, subtyp, tol=None):
         """Compute a Gramian.
 
         Parameters
@@ -483,10 +515,6 @@ class LTISystem(InputOutputSystem):
 
             - `'cf'`: controllability Gramian factor,
             - `'of'`: observability Gramian factor.
-        me_solver
-            The matrix equation solver to use (see
-            :func:`pymor.algorithms.lyapunov.solve_lyap` or
-            :func:`pymor.algorithms.riccati.solve_ricc`).
         tol
             The tolerance parameter for the low-rank matrix equation solver.
 
@@ -511,16 +539,16 @@ class LTISystem(InputOutputSystem):
 
         if typ == 'lyap':
             if subtyp == 'cf':
-                return solve_lyap(A, E, B, trans=False, me_solver=me_solver, tol=tol)
+                return self._lyap_solver()(A, E, B, trans=False, tol=tol)
             elif subtyp == 'of':
-                return solve_lyap(A, E, C, trans=True, me_solver=me_solver, tol=tol)
+                return self._lyap_solver()(A, E, C, trans=True, tol=tol)
             else:
                 raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for 'lyap' type.")
         elif typ == 'lqg':
             if subtyp == 'cf':
-                return solve_ricc(A, E=E, B=B, C=C, trans=True, me_solver=me_solver, tol=tol)
+                return self._ricc_solver()(A, E=E, B=B, C=C, trans=True, tol=tol)
             elif subtyp == 'of':
-                return solve_ricc(A, E=E, B=B, C=C, trans=False, me_solver=me_solver, tol=tol)
+                return self._ricc_solver()(A, E=E, B=B, C=C, trans=False, tol=tol)
             else:
                 raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for 'lqg' type.")
         elif isinstance(typ, tuple) and typ[0] == 'br':
@@ -528,18 +556,18 @@ class LTISystem(InputOutputSystem):
             assert typ[1] > 0
             c = 1 / np.sqrt(typ[1])
             if subtyp == 'cf':
-                return solve_ricc(A, E=E, B=B * c, C=C * c, R=IdentityOperator(C.range) * (-1),
-                                  trans=True, me_solver=me_solver, tol=tol)
+                return self.ricc_solver()(A, E=E, B=B * c, C=C * c, R=IdentityOperator(C.range) * (-1),
+                                          trans=True, tol=tol)
             elif subtyp == 'of':
-                return solve_ricc(A, E=E, B=B * c, C=C * c, R=IdentityOperator(B.source) * (-1),
-                                  trans=False, me_solver=me_solver, tol=tol)
+                return self.ricc_solver()(A, E=E, B=B * c, C=C * c, R=IdentityOperator(B.source) * (-1),
+                                          trans=False, tol=tol)
             else:
                 raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for ('br', gamma) type.")
         else:
             raise NotImplementedError("Only 'lyap', 'lqg', and ('br', gamma) types are available.")
 
     @cached
-    def sv_U_V(self, typ, me_solver=None):
+    def sv_U_V(self, typ):
         """Compute singular values and vectors.
 
         Parameters
@@ -547,10 +575,6 @@ class LTISystem(InputOutputSystem):
         typ
             The type of the Gramian (see
             :func:`~pymor.discretizations.iosys.LTISystem.gramian`).
-        me_solver
-            The matrix equation solver to use (see
-            :func:`pymor.algorithms.lyapunov.solve_lyap` or
-            :func:`pymor.algorithms.riccati.solve_ricc`).
 
         Returns
         -------
@@ -561,14 +585,14 @@ class LTISystem(InputOutputSystem):
         Vh
             |NumPy array| of right singluar vectors.
         """
-        cf = self.gramian(typ, 'cf', me_solver=me_solver)
-        of = self.gramian(typ, 'of', me_solver=me_solver)
+        cf = self.gramian(typ, 'cf')
+        of = self.gramian(typ, 'of')
 
         U, sv, Vh = spla.svd(self.E.apply2(of, cf))
         return sv, U.T, Vh
 
     @cached
-    def norm(self, name='H2', me_solver=None):
+    def norm(self, name='H2'):
         r"""Compute a norm of the |LTISystem|.
 
         Parameters
@@ -581,10 +605,6 @@ class LTISystem(InputOutputSystem):
             - `'Hinf_fpeak'`: :math:`\mathcal{H}_\infty`-norm
                 and the maximizing frequency,
             - `'Hankel'`: Hankel norm (maximal singular value).
-        me_solver
-            The matrix equation solver to use (see
-            :func:`pymor.algorithms.lyapunov.solve_lyap`) if
-            :math:`\mathcal{H}_2`-norm needs to be computed.
 
         Returns
         -------
@@ -593,10 +613,10 @@ class LTISystem(InputOutputSystem):
         if name == 'H2':
             B, C = self.B, self.C
             if self.m <= self.p:
-                cf = self.gramian('lyap', 'cf', me_solver=me_solver)
+                cf = self.gramian('lyap', 'cf')
                 return np.sqrt(C.apply(cf).l2_norm2().sum())
             else:
-                of = self.gramian('lyap', 'of', me_solver=me_solver)
+                of = self.gramian('lyap', 'of')
                 return np.sqrt(B.apply_transpose(of).l2_norm2().sum())
         elif name == 'Hinf_fpeak':
             from slycot import ab13dd
@@ -608,9 +628,9 @@ class LTISystem(InputOutputSystem):
             Hinf, fpeak = ab13dd(dico, jobe, equil, jobd, self.n, self.m, self.p, A, E, B, C, D)
             return Hinf, fpeak
         elif name == 'Hinf':
-            return self.norm('Hinf_fpeak', me_solver=me_solver)[0]
+            return self.norm('Hinf_fpeak')[0]
         elif name == 'Hankel':
-            return self.sv_U_V('lyap', me_solver=me_solver)[0][0]
+            return self.sv_U_V('lyap')[0][0]
         else:
             raise NotImplementedError('Only H2, Hinf, and Hankel norms are implemented.')
 
@@ -968,9 +988,9 @@ class SecondOrderSystem(InputOutputSystem):
                 Cp.as_source_array() + Cv.as_source_array() * s.conj())))).data.conj()
         return dtfs
 
-    def norm(self, name='H2', me_solver=None):
+    def norm(self, name='H2'):
         """Compute a system norm."""
-        return self.to_lti().norm(name=name, me_solver=me_solver)
+        return self.to_lti().norm(name=name)
 
 
 class LinearDelaySystem(InputOutputSystem):

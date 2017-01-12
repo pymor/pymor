@@ -8,7 +8,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt
 from pymor.reductors.basic import reduce_generic_pg
 
 
-def bt(discretization, r=None, tol=None, typ='lyap', me_solver=None, method='bfsr'):
+def bt(discretization, r=None, tol=None, typ='lyap', method='bfsr'):
     r"""Reduce using the Balanced Truncation method to order `r` or with tolerance `tol`.
 
     .. [A05]  A. C. Antoulas, Approximation of Large-Scale Dynamical
@@ -35,10 +35,6 @@ def bt(discretization, r=None, tol=None, typ='lyap', me_solver=None, method='bfs
     typ
         Type of the Gramian (see
         :func:`pymor.discretizations.iosys.LTISystem.gramian`).
-    me_solver
-        Matrix equation solver to use (see
-        :func:`pymor.algorithms.lyapunov.solve_lyap` or
-        :func:`pymor.algorithms.riccati.solve_ricc`).
     method
         Projection method used:
 
@@ -62,15 +58,15 @@ def bt(discretization, r=None, tol=None, typ='lyap', me_solver=None, method='bfs
     assert method in ('sr', 'bfsr')
 
     # compute gramian factors
-    cf = discretization.gramian(typ, 'cf', me_solver=me_solver)
-    of = discretization.gramian(typ, 'of', me_solver=me_solver)
+    cf = discretization.gramian(typ, 'cf')
+    of = discretization.gramian(typ, 'of')
 
     if r is not None and r > min([len(cf), len(of)]):
         raise ValueError('r needs to be smaller than the sizes of Gramian factors.' +
                          ' Try reducing the tolerance in the low-rank Lyapunov equation solver.')
 
     # compute "Hankel" singular values and vectors
-    sv, U, V = discretization.sv_U_V(typ, me_solver=me_solver)
+    sv, U, V = discretization.sv_U_V(typ)
 
     # find reduced order if tol is specified
     if tol is not None:
