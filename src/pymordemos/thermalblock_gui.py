@@ -92,7 +92,7 @@ class SimPanel(QtGui.QWidget):
         super().__init__(parent)
         self.sim = sim
         box = QtGui.QHBoxLayout()
-        if config._windows_platform():
+        if config.is_windows_platform():
             self.solution = MatplotlibPatchWidget(self, self.sim.grid, vmin=0., vmax=0.8)
             box.addWidget(self.solution, 2)
         else:
