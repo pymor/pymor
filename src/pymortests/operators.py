@@ -330,7 +330,7 @@ def test_InverseTransposeOperator(operator_with_arrays):
         # this is the default
         rtol = atol = 1e-14
     try:
-        assert np.all(almost_equal(inv.apply(U, mu=mu), op.apply_inverse_transpose(U, mu=mu)
+        assert np.all(almost_equal(inv.apply(U, mu=mu), op.apply_inverse_transpose(U, mu=mu),
                                    rtol=rtol, atol=atol))
     except (InversionError, NotImplementedError):
         pass
