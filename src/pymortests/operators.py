@@ -324,8 +324,14 @@ def test_InverseTransposeOperator(operator_with_arrays):
     if not op.linear:
         return
     inv = InverseTransposeOperator(op)
+    if is_windows_platform() and 'Block' in op.__class__.__name__:
+        rtol = atol = 2e-13
+    else:
+        # this is the default
+        rtol = atol = 1e-14
     try:
-        assert np.all(almost_equal(inv.apply(U, mu=mu), op.apply_inverse_transpose(U, mu=mu)))
+        assert np.all(almost_equal(inv.apply(U, mu=mu), op.apply_inverse_transpose(U, mu=mu)
+                                   rtol=rtol, atol=atol))
     except (InversionError, NotImplementedError):
         pass
     try:
