@@ -15,9 +15,7 @@ import multiprocessing
 import os
 import signal
 import time
-
 import sys
-
 import psutil
 
 from pymor.core.config import config
@@ -194,11 +192,20 @@ def _doit(main_window_factory):
 def _launch_qt_app(main_window_factory, block):
     """Wrapper to display plot in a separate process."""
 
+    def doit():
+        try:
+            app = QApplication([])
+        except RuntimeError:
+            app = QCoreApplication.instance()
+        main_window = main_window_factory()
+        main_window.show()
+        app.exec_()
+
     import sys
     if block and not getattr(sys, '_called_from_test', False):
-        _doit()
+        doit()
     else:
-        p = multiprocessing.Process(target=_doit)
+        p = multiprocessing.Process(target=doit)
         p.start()
         _launch_qt_processes.add(psutil.Process(p.pid))
 
@@ -217,13 +224,9 @@ def stop_gui_processes():
         p.kill()
 
 
-def _default_backend():
-    return 'gl' if 'win' not in sys.platform else 'matplotlib'
-
-
 @defaults('backend', sid_ignore=('backend',))
 def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None, legend=None,
-                    separate_colorbars=False, rescale_colorbars=False, backend=_default_backend(), block=False, columns=2):
+                    separate_colorbars=False, rescale_colorbars=False, backend='gl', block=False, columns=2):
     """Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
 
     The grid's |ReferenceElement| must be the triangle or square. The data can either

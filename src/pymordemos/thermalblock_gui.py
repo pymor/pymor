@@ -39,7 +39,6 @@ from functools import partial
 import numpy as np
 import OpenGL
 
-
 OpenGL.ERROR_ON_COPY = True
 
 from pymor.core.exceptions import PySideMissing
@@ -52,10 +51,8 @@ from pymor.algorithms.greedy import greedy
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.discretizers.cg import discretize_stationary_cg
 from pymor.gui.gl import ColorBarWidget, GLPatchWidget
-from pymor.gui.matplotlib import MatplotlibPatchWidget
 from pymor.reductors.coercive import reduce_coercive_simple
 from pymor import gui
-from pymor.core import config
 
 
 PARAM_STEPS = 10
