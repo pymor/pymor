@@ -35,7 +35,8 @@ from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
 if config.HAVE_PYSIDE:
     from PySide.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QApplication, QLCDNumber,
                               QAction, QStyle, QToolBar, QLabel, QFileDialog, QMessageBox)
-    from PySide.QtCore import Qt, QCoreApplication, QTimer
+    from PySide.QtCore import Qt, QCoreApplication, QTimer, SLOT
+
 
     class PlotMainWindow(QWidget):
         """Base class for plot main windows."""
@@ -189,6 +190,8 @@ def _launch_qt_app(main_window_factory, block):
         except RuntimeError:
             app = QCoreApplication.instance()
         main_window = factory()
+        if getattr(sys, '_called_from_test', False) and is_windows_platform():
+            QTimer.singleShot(500, app, SLOT('quit()'))
         main_window.show()
         app.exec_()
 
