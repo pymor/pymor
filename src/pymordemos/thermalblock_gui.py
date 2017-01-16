@@ -39,6 +39,9 @@ from functools import partial
 import numpy as np
 import OpenGL
 
+from pymor.core.config import is_windows_platform
+from pymor.gui.matplotlib import MatplotlibPatchWidget
+
 OpenGL.ERROR_ON_COPY = True
 
 from pymor.core.exceptions import PySideMissing
@@ -89,7 +92,7 @@ class SimPanel(QtGui.QWidget):
         super().__init__(parent)
         self.sim = sim
         box = QtGui.QHBoxLayout()
-        if config.is_windows_platform():
+        if is_windows_platform():
             self.solution = MatplotlibPatchWidget(self, self.sim.grid, vmin=0., vmax=0.8)
             box.addWidget(self.solution, 2)
         else:

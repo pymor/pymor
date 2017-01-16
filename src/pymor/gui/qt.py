@@ -19,6 +19,7 @@ import sys
 import psutil
 
 from pymor.core.config import config
+from pymor.core.config import is_windows_platform
 from pymor.core.defaults import defaults
 from pymor.core.interfaces import BasicInterface
 from pymor.core.logger import getLogger
@@ -179,33 +180,23 @@ if config.HAVE_PYSIDE:
 _launch_qt_processes = set()
 
 
-def _doit(main_window_factory):
-    try:
-        app = QApplication([])
-    except RuntimeError:
-        app = QCoreApplication.instance()
-    main_window = main_window_factory()
-    main_window.show()
-    app.exec_()
-
-
 def _launch_qt_app(main_window_factory, block):
     """Wrapper to display plot in a separate process."""
 
-    def doit():
+    def _doit(factory):
         try:
             app = QApplication([])
         except RuntimeError:
             app = QCoreApplication.instance()
-        main_window = main_window_factory()
+        main_window = factory()
         main_window.show()
         app.exec_()
 
     import sys
-    if block and not getattr(sys, '_called_from_test', False):
-        doit()
+    if (block and not getattr(sys, '_called_from_test', False)) or is_windows_platform():
+        _doit(main_window_factory)
     else:
-        p = multiprocessing.Process(target=doit)
+        p = multiprocessing.Process(target=_doit, args=(main_window_factory,))
         p.start()
         _launch_qt_processes.add(psutil.Process(p.pid))
 
