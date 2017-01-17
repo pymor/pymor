@@ -336,7 +336,7 @@ class AdaptiveSampleSet(BasicInterface):
         values = self.ranges[:, 0] + self.dimensions * list(map(float, vertex))
         mu = Parameter({})
         for k, shape in self.parameter_type.items():
-            count = np.prod(shape)
+            count = np.prod(shape, dtype=int)
             head, values = values[:count], values[count:]
             mu[k] = np.array(head).reshape(shape)
         return mu
