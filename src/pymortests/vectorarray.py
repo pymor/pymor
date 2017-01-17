@@ -80,9 +80,9 @@ def valid_inds_of_same_length(v1, v2):
         yield 0, 0
         yield len(v1) - 1, len(v2) - 1
         yield [0], 0
-        yield (range(int(min(len(v1), len(v2))/2)),) * 2
+        yield (range(int(min(len(v1), len(v2))//2)),) * 2
         np.random.seed(len(v1) * len(v2))
-        for count in np.linspace(0, min(len(v1), len(v2)), 3):
+        for count in np.linspace(0, min(len(v1), len(v2)), 3).astype(int):
             yield (list(np.random.randint(0, len(v1), size=count)),
                    list(np.random.randint(0, len(v2), size=count)))
         yield None, np.random.randint(0, len(v2), size=len(v1))

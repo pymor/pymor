@@ -203,7 +203,7 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
     @cached
     def orthogonal_centers(self):
         embeddings = self.embeddings(0)
-        ne4 = len(embeddings[0]) / 4
+        ne4 = len(embeddings[0]) // 4
         if self.x0_diameter > self.x1_diameter:
             x0_fac = (self.x1_diameter / 2) ** 2 / (3 * (self.x0_diameter / 2) ** 2)
             x1_fac = 1./3.
