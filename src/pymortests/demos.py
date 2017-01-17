@@ -13,7 +13,9 @@ import shutil
 from pymortests.base import runmodule, check_results
 from pymor.core.exceptions import PySideMissing
 from pymor.gui.qt import stop_gui_processes
+from pymor.core.config import is_windows_platform
 
+pytestmark = pytest.mark.skipif(is_windows_platform(), reason='interpreter crashes')
 
 DISCRETIZATION_ARGS = (
     ('elliptic', [0, 0, 0, 0]),
@@ -182,8 +184,7 @@ def test_analyze_pickle4():
     finally:
         shutil.rmtree(d)
 
-@pytest.mark.skipif('win' in sys.platform,
-                    reason='ipython cluster start stalls indefinitely on win32')
+
 def test_thermalblock_ipython(demo_args):
     if demo_args[0] != 'pymordemos.thermalblock':
         return
