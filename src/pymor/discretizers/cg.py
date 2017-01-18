@@ -127,7 +127,8 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
 
     L = LincombOperator(operators=Li, coefficients=coefficients, name='ellipticOperator')
 
-    F = Functional(grid, p.rhs, boundary_info, dirichlet_data=p.dirichlet_data, neumann_data=p.neumann_data)
+    rhs = p.rhs or ConstantFunction(0., dim_domain=p.domain.dim)
+    F = Functional(grid, rhs, boundary_info, dirichlet_data=p.dirichlet_data, neumann_data=p.neumann_data)
 
     if grid.reference_element in (triangle, square):
         visualizer = PatchVisualizer(grid=grid, bounding_box=grid.bounding_box(), codim=2)
