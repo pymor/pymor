@@ -28,15 +28,12 @@ Options:
     --rect       Use RectGrid instead of TriaGrid.
 """
 
-import math as m
 from docopt import docopt
-import numpy as np
 
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.discretizers.cg import discretize_stationary_cg
 from pymor.discretizers.fv import discretize_stationary_fv
 from pymor.domaindescriptions.basic import RectDomain
-from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.functions.basic import ExpressionFunction, ConstantFunction
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
@@ -85,12 +82,12 @@ def elliptic_demo(args):
         )
 
         print('Discretize ...')
-        if args['--rect']:
-            grid, bi = discretize_domain_default(problem.domain, diameter=m.sqrt(2) / n, grid_type=RectGrid)
-        else:
-            grid, bi = discretize_domain_default(problem.domain, diameter=1. / n, grid_type=TriaGrid)
         discretizer = discretize_stationary_fv if args['--fv'] else discretize_stationary_cg
-        discretization, _ = discretizer(analytical_problem=problem, grid=grid, boundary_info=bi)
+        discretization, _ = discretizer(
+            analytical_problem=problem,
+            grid_type=RectGrid if args['--rect'] else TriaGrid,
+            diameter=np.sqrt(2) / n if args['--rect'] else 1. / n
+        )
 
         print('Solve ...')
         U = discretization.solve()

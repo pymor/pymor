@@ -99,14 +99,13 @@ def parabolic_demo(args):
         )
 
     print('Discretize ...')
-    if args['--rect']:
-        grid, bi = discretize_domain_default(problem.stationary_part.domain, diameter=np.sqrt(2) / args['--grid'],
-                                             grid_type=RectGrid)
-    else:
-        grid, bi = discretize_domain_default(problem.stationary_part.domain, diameter=1. / args['--grid'],
-                                             grid_type=TriaGrid)
     discretizer = discretize_instationary_fv if args['--fv'] else discretize_instationary_cg
-    discretization, _ = discretizer(analytical_problem=problem, grid=grid, boundary_info=bi, nt=args['--nt'])
+    discretization, _ = discretizer(
+        analytical_problem=problem,
+        grid_type=RectGrid if args['--rect'] else TriaGrid,
+        diameter=np.sqrt(2) / args['--grid'] if args['--rect'] else 1. / args['--grid'],
+        nt=args['--nt']
+    )
 
     print('The parameter type is {}'.format(discretization.parameter_type))
 
