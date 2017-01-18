@@ -173,6 +173,12 @@ class TriaGrid(AffineGridWithOrthogonalCentersInterface):
                         x0ni=self.x0_num_intervals, x1ni=self.x1_num_intervals,
                         elements=self.size(0), edges=self.size(1), vertices=self.size(2)))
 
+    def __repr__(self):
+        return 'TriaGrid({}, {}, {}, {})'.format(
+            self.num_intervals, self.domain,
+            self.identify_left_right, self.identify_bottom_top
+        )
+
     def size(self, codim=0):
         assert 0 <= codim <= 2, 'Invalid codimension'
         return self.__sizes[codim]
