@@ -2,6 +2,8 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from functools import partial
+
 import numpy as np
 
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitEulerTimeStepper
@@ -22,7 +24,7 @@ from pymor.operators.fv import (DiffusionOperator, LinearAdvectionLaxFriedrichs,
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretizer=None,
+def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretizer=None, grid_type=None,
                              num_flux='lax_friedrichs', lxf_lambda=1., eo_gausspoints=5, eo_intervals=1,
                              grid=None, boundary_info=None):
     """Discretizes an |StationaryProblem| using the finite volume method.
@@ -37,6 +39,9 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
         Discretizer to be used for discretizing the analytical domain. This has
         to be a function `domain_discretizer(domain_description, diameter, ...)`.
         If `None`, |discretize_domain_default| is used.
+    grid_type
+        If not `None`, this parameter is forwarded to `domain_discretizer` to specify
+        the type of the generated |Grid|.
     num_flux
         The numerical flux to use in the finite volume formulation. Allowed
         values are `'lax_friedrichs'`, `'engquist_osher'`, `'simplified_engquist_osher'`
@@ -72,6 +77,7 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
     assert grid is None or boundary_info is not None
     assert boundary_info is None or grid is not None
     assert grid is None or domain_discretizer is None
+    assert grid_type is None or grid is None
 
     p = analytical_problem
 
@@ -80,6 +86,8 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
 
     if grid is None:
         domain_discretizer = domain_discretizer or discretize_domain_default
+        if grid_type:
+            domain_discretizer = partial(domain_discretizer, grid_type=grid_type)
         if diameter is None:
             grid, boundary_info = domain_discretizer(analytical_problem.domain)
         else:
@@ -186,7 +194,7 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
     return discretization, {'grid': grid, 'boundary_info': boundary_info}
 
 
-def discretize_instationary_fv(analytical_problem, diameter=None, domain_discretizer=None,
+def discretize_instationary_fv(analytical_problem, diameter=None, domain_discretizer=None, grid_type=None,
                                num_flux='lax_friedrichs', lxf_lambda=1., eo_gausspoints=5, eo_intervals=1,
                                grid=None, boundary_info=None, num_values=None, time_stepper=None, nt=None):
     """Discretizes an |InstationaryProblem| with an |StationaryProblem| as stationary part
@@ -203,6 +211,9 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
         to be a function `domain_discretizer(domain_description, diameter, ...)`.
         If further arguments should be passed to the discretizer, use
         :func:`functools.partial`. If `None`, |discretize_domain_default| is used.
+    grid_type
+        If not `None`, this parameter is forwarded to `domain_discretizer` to specify
+        the type of the generated |Grid|.
     num_flux
         The numerical flux to use in the finite volume formulation. Allowed
         values are `'lax_friedrichs'`, `'engquist_osher'`, `'simplified_engquist_osher'`
@@ -253,8 +264,9 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
     p = analytical_problem
 
     d, data = discretize_stationary_fv(p.stationary_part, diameter=diameter, domain_discretizer=domain_discretizer,
-                                       num_flux=num_flux, lxf_lambda=lxf_lambda, eo_gausspoints=eo_gausspoints,
-                                       eo_intervals=eo_intervals, grid=grid, boundary_info=boundary_info)
+                                       grid_type=grid_type, num_flux=num_flux, lxf_lambda=lxf_lambda,
+                                       eo_gausspoints=eo_gausspoints, eo_intervals=eo_intervals, grid=grid,
+                                       boundary_info=boundary_info)
     grid = data['grid']
 
     if p.initial_data.parametric:

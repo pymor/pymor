@@ -43,13 +43,11 @@ Options:
 import sys
 import math as m
 import time
-from functools import partial
 
 from docopt import docopt
 
 from pymor.analyticalproblems.burgers import burgers_problem_2d
 from pymor.discretizers.fv import discretize_instationary_fv
-from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
 
@@ -70,8 +68,6 @@ def burgers_demo(args):
     args['EXP'] = float(args['EXP'])
 
     print('Setup Problem ...')
-    grid_type_map = {'rect': RectGrid, 'tria': TriaGrid}
-    domain_discretizer = partial(discretize_domain_default, grid_type=grid_type_map[args['--grid-type']])
     problem = burgers_problem_2d(vx=args['--vx'], vy=args['--vy'], initial_data_type=args['--initial-data'],
                                  parameter_range=(0, 1e42), torus=not args['--not-periodic'])
 
@@ -79,25 +75,23 @@ def burgers_demo(args):
     if args['--grid-type'] == 'rect':
         args['--grid'] *= 1. / m.sqrt(2)
     discretization, data = discretize_instationary_fv(
-        problem, diameter=1. / args['--grid'],
-        num_flux=args['--num-flux'], lxf_lambda=args['--lxf-lambda'],
-        nt=args['--nt'], domain_discretizer=domain_discretizer
+        problem,
+        diameter=1. / args['--grid'],
+        grid_type=RectGrid if args['--grid-type'] == 'rect' else TriaGrid,
+        num_flux=args['--num-flux'],
+        lxf_lambda=args['--lxf-lambda'],
+        nt=args['--nt']
     )
     print(discretization.operator.grid)
 
     print('The parameter type is {}'.format(discretization.parameter_type))
 
     mu = args['EXP']
-    # U = discretization.solve(0)
     print('Solving for exponent = {} ... '.format(mu))
     sys.stdout.flush()
-    # pr = cProfile.Profile()
-    # pr.enable()
     tic = time.time()
     U = discretization.solve(mu)
-    # pr.disable()
     print('Solving took {}s'.format(time.time() - tic))
-    # pr.dump_stats('bla')
     discretization.visualize(U)
 
 if __name__ == '__main__':

@@ -7,6 +7,6 @@ mpi4py
 pyamg
 pyopengl
 -r .requirements-pyside.txt
-pytest
+pytest>=3.0
 pytest-cov
 pillow

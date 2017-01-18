@@ -204,7 +204,7 @@ class Square(ReferenceElementInterface):
                 p = self._quadrature_order_map[order]
             else:
                 assert npoints in self._quadrature_npoints, 'not implemented with {} points'.format(npoints)
-                p = np.where(self._quadrature_npoints == npoints)[0]
+                p = np.where(self._quadrature_npoints == npoints)[0][0]
             return self._quadrature_points[p], self._quadrature_weights[p]
         else:
             raise NotImplementedError('quadrature_type must be "default" or "tensored_gauss"')

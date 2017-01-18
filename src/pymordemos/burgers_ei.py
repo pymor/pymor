@@ -89,12 +89,10 @@ from pymor.algorithms.basisextension import pod_basis_extension
 from pymor.algorithms.ei import interpolate_operators
 from pymor.analyticalproblems.burgers import burgers_problem_2d
 from pymor.discretizers.fv import discretize_instationary_fv
-from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
 from pymor.parallel.default import new_parallel_pool
 from pymor.reductors.basic import reduce_generic_rb, reduce_to_subbasis
-from pymor.vectorarrays.numpy import NumpyVectorArray
 
 
 def main(args):
@@ -124,8 +122,6 @@ def main(args):
     args['RBSIZE'] = int(args['RBSIZE'])
 
     print('Setup Problem ...')
-    grid_type_map = {'rect': RectGrid, 'tria': TriaGrid}
-    domain_discretizer = partial(discretize_domain_default, grid_type=grid_type_map[args['--grid-type']])
     problem = burgers_problem_2d(vx=args['--vx'], vy=args['--vy'], initial_data_type=args['--initial-data'],
                                  parameter_range=(args['EXP_MIN'], args['EXP_MAX']), torus=not args['--not-periodic'])
 
@@ -133,9 +129,12 @@ def main(args):
     if args['--grid-type'] == 'rect':
         args['--grid'] *= 1. / m.sqrt(2)
     discretization, _ = discretize_instationary_fv(
-        problem, diameter=1. / args['--grid'],
-        num_flux=args['--num-flux'], lxf_lambda=args['--lxf-lambda'],
-        nt=args['--nt'], domain_discretizer=domain_discretizer
+        problem,
+        diameter=1. / args['--grid'],
+        grid_type=RectGrid if args['--grid-type'] == 'rect' else TriaGrid,
+        num_flux=args['--num-flux'],
+        lxf_lambda=args['--lxf-lambda'],
+        nt=args['--nt']
     )
 
     if args['--cache-region'] != 'none':
