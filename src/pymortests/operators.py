@@ -313,8 +313,7 @@ def test_InverseOperator(operator_with_arrays):
             pass
         try:
             assert np.all(almost_equal(inv.apply_inverse_transpose(V, mu=mu), op.apply_transpose(V, mu=mu),
-                                       rtol=rtol, atol=atol
-                                       ))
+                                       rtol=rtol, atol=atol))
         except (InversionError, NotImplementedError):
             pass
 
@@ -335,17 +334,17 @@ def test_InverseTransposeOperator(operator_with_arrays):
     except (InversionError, NotImplementedError):
         pass
     try:
-        assert np.all(almost_equal(inv.apply_inverse(V, mu=mu), op.apply_transpose(V, mu=mu)),
-                                   rtol=rtol, atol=atol)
+        assert np.all(almost_equal(inv.apply_inverse(V, mu=mu), op.apply_transpose(V, mu=mu),
+                                   rtol=rtol, atol=atol))
     except (InversionError, NotImplementedError):
         pass
     try:
-        assert np.all(almost_equal(inv.apply_transpose(V, mu=mu), op.apply_inverse(V, mu=mu)),
-                                   rtol=rtol, atol=atol)
+        assert np.all(almost_equal(inv.apply_transpose(V, mu=mu), op.apply_inverse(V, mu=mu),
+                                   rtol=rtol, atol=atol))
     except (InversionError, NotImplementedError):
         pass
     try:
-        assert np.all(almost_equal(inv.apply_inverse_transpose(U, mu=mu), op.apply(U, mu=mu)),
-                                   rtol=rtol, atol=atol)
+        assert np.all(almost_equal(inv.apply_inverse_transpose(U, mu=mu), op.apply(U, mu=mu),
+                                   rtol=rtol, atol=atol))
     except (InversionError, NotImplementedError):
         pass
