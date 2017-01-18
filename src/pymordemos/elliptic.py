@@ -29,6 +29,7 @@ Options:
 """
 
 from docopt import docopt
+import numpy as np
 
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.discretizers.cg import discretize_stationary_cg
@@ -68,34 +69,30 @@ def elliptic_demo(args):
     neumann = neumanns[args['NEUMANN-NUMBER']]
     domain = domains[args['NEUMANN-COUNT']]
 
+    problem = StationaryProblem(
+        domain=domain,
+        diffusion=ConstantFunction(1, dim_domain=2),
+        rhs=rhs,
+        dirichlet_data=dirichlet,
+        neumann_data=neumann
+    )
+
     for n in [32, 128]:
-        grid_name = '{1}(({0},{0}))'.format(n, 'RectGrid' if args['--rect'] else 'TriaGrid')
-        print('Solving on {0}'.format(grid_name))
-
-        print('Setup problem ...')
-        problem = StationaryProblem(
-            domain=domain,
-            diffusion=ConstantFunction(1, dim_domain=2),
-            rhs=rhs,
-            dirichlet_data=dirichlet,
-            neumann_data=neumann
-        )
-
         print('Discretize ...')
         discretizer = discretize_stationary_fv if args['--fv'] else discretize_stationary_cg
-        discretization, _ = discretizer(
+        discretization, data = discretizer(
             analytical_problem=problem,
             grid_type=RectGrid if args['--rect'] else TriaGrid,
             diameter=np.sqrt(2) / n if args['--rect'] else 1. / n
         )
+        grid = data['grid']
+        print(grid)
+        print()
 
         print('Solve ...')
         U = discretization.solve()
-
-        print('Plot ...')
-        discretization.visualize(U, title=grid_name)
-
-        print('')
+        discretization.visualize(U, title=repr(grid))
+        print()
 
 
 if __name__ == '__main__':
