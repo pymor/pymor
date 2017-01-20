@@ -556,11 +556,11 @@ class LTISystem(InputOutputSystem):
             assert typ[1] > 0
             c = 1 / np.sqrt(typ[1])
             if subtyp == 'cf':
-                return self.ricc_solver()(A, E=E, B=B * c, C=C * c, R=IdentityOperator(C.range) * (-1),
-                                          trans=True, tol=tol)
+                return self._ricc_solver()(A, E=E, B=B * c, C=C * c, R=IdentityOperator(C.range) * (-1),
+                                           trans=True, tol=tol)
             elif subtyp == 'of':
-                return self.ricc_solver()(A, E=E, B=B * c, C=C * c, R=IdentityOperator(B.source) * (-1),
-                                          trans=False, tol=tol)
+                return self._ricc_solver()(A, E=E, B=B * c, C=C * c, R=IdentityOperator(B.source) * (-1),
+                                           trans=False, tol=tol)
             else:
                 raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for ('br', gamma) type.")
         else:
