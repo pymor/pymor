@@ -9,12 +9,30 @@ if config.HAVE_PYMESS:
     import numpy as np
     import pymess
 
+    from pymor.algorithms.genericsolvers import _parse_options
     from pymor.algorithms.to_matrix import to_matrix
     from pymor.bindings.scipy import _solve_lyap_check_args, _solve_ricc_check_args
+    from pymor.core.defaults import defaults
     from pymor.operators.constructions import IdentityOperator, LincombOperator
 
 
-    def solve_lyap(A, E, B, trans=False, me_solver='pymess', tol=None):
+    def lyap_solver_options():
+        """Returns available Lyapunov equation solvers with default |solver_options| for the pymess backend.
+
+        Returns
+        -------
+        A dict of available solvers with default |solver_options|.
+        """
+
+        return {'pymess':       {'type': 'pymess',
+                                 'tol': None},
+                'pymess_lyap':  {'type': 'pymess_lyap'},
+                'pymess_lradi': {'type': 'pymess_lradi',
+                                 'tol': None}}
+
+
+    @defaults('default_solver')
+    def solve_lyap(A, E, B, trans=False, options=None, default_solver='pymess'):
         """Find a factor of the solution of a Lyapunov equation.
 
         Returns factor :math:`Z` such that :math:`Z Z^T` is approximately
@@ -48,12 +66,10 @@ if config.HAVE_PYMESS:
             The |Operator| B.
         trans
             If the dual equation needs to be solved.
-        me_solver
-            Solver to use ('pymess', 'pymess_lyap', 'pymess_lradi').
-            If `me_solver` is `'pymess'`, the specific solver is chosen
-            depending on the size of the problem.
-        tol
-            Tolerance parameter for pymess_lradi solver.
+        options
+            The |solver_options| to use (see :func:`lyap_solver_options`).
+        default_solver
+            The solver to use when no `options` are specified (pymess, pymess_lyap, pymess_lradi).
 
         Returns
         -------
@@ -61,15 +77,15 @@ if config.HAVE_PYMESS:
             Low-rank factor of the Lyapunov equation solution, |VectorArray| from `A.source`.
         """
         _solve_lyap_check_args(A, E, B, trans)
-        assert me_solver in ('pymess', 'pymess_lyap', 'pymess_lradi')
+        options = _parse_options(options, lyap_solver_options(), default_solver, None, False)
 
-        if me_solver == 'pymess':
+        if options['type'] == 'pymess':
             if A.source.dim >= 1000:
-                me_solver = 'pymess_lradi'
+                options = dict(options, type='pymess_lradi')  # do not modify original dict!
             else:
-                me_solver = 'pymess_lyap'
+                options = dict(options, type='pymess_lyap')  # do not modify original dict!
 
-        if me_solver == 'pymess_lyap':
+        if options['type'] == 'pymess_lyap':
             A_mat = to_matrix(A) if A.source.dim < 1000 else to_matrix(A, format='csc')
             if E is not None:
                 E_mat = to_matrix(E) if E.source.dim < 1000 else to_matrix(E, format='csc')
@@ -84,13 +100,13 @@ if config.HAVE_PYMESS:
                     Z = pymess.lyap(A_mat.T, None, B_mat.T)
                 else:
                     Z = pymess.lyap(A_mat.T, E_mat.T, B_mat.T)
-        elif me_solver == 'pymess_lradi':
+        elif options['type'] == 'pymess_lradi':
             opts = pymess.options()
             opts.adi.shifts.paratype = pymess.MESS_LRCFADI_PARA_ADAPTIVE_V
             if trans:
                 opts.type = pymess.MESS_OP_TRANSPOSE
-            if tol is not None:
-                opts.rel_change_tol = tol
+            if options['tol'] is not None:
+                opts.rel_change_tol = tol = options['tol']
                 opts.adi.res2_tol = tol
                 opts.adi.res2c_tol = tol
             eqn = LyapunovEquation(opts, A, E, B)
@@ -101,8 +117,24 @@ if config.HAVE_PYMESS:
         return Z
 
 
+    def ricc_solver_options():
+        """Returns available Riccati equation solvers with default |solver_options| for the pymess backend.
+
+        Returns
+        -------
+        A dict of available solvers with default |solver_options|.
+        """
+
+        return {'pymess':      {'type': 'pymess',
+                                'tol': None},
+                'pymess_care': {'type': 'pymess_care'},
+                'pymess_lrnm': {'type': 'pymess_lrnm',
+                                'tol': None}}
+
+
+    @defaults('default_solver')
     def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
-                   trans=False, me_solver='pymess', tol=None):
+                   trans=False, options=None, default_solver='pymess'):
         """Find a factor of the solution of a Riccati equation
 
         Returns factor :math:`Z` such that :math:`Z Z^T` is approximately the
@@ -146,12 +178,10 @@ if config.HAVE_PYMESS:
             The |Operator| L or `None`.
         trans
             If the dual equation needs to be solved.
-        me_solver
-            Method to use ('pymess', 'pymess_care', 'pymess_lrnm').
-            If `me_solver` is `'pymess'`, the specific solver is chosen
-            depending on the size of the problem.
-        tol
-            Tolerance parameter for pymess_lrnm solver.
+        options
+            The |solver_options| to use (see :func:`ricc_solver_options`).
+        default_solver
+            The solver to use when no `options` are specified (pymess, pymess_care, pymess_lrnm).
 
         Returns
         -------
@@ -160,15 +190,15 @@ if config.HAVE_PYMESS:
             |VectorArray| from `A.source`.
         """
         _solve_ricc_check_args(A, E, B, Q, C, R, G, trans)
-        assert me_solver in {'pymess', 'pymess_care', 'pymess_lrnm'}
+        options = _parse_options(options, ricc_solver_options(), default_solver, None, False)
 
-        if me_solver == 'pymess':
+        if options['type'] == 'pymess':
             if A.source.dim >= 1000:
-                me_solver = 'pymess_lrnm'
+                options = dict(options, type='pymess_lrnm')  # do not modify original dict!
             else:
-                me_solver = 'pymess_care'
+                options = dict(options, type='pymess_care')  # do not modify original dict!
 
-        if me_solver == 'pymess_care':
+        if options['type'] == 'pymess_care':
             if Q is not None or R is not None or G is not None:
                 raise NotImplementedError()
             A_mat = to_matrix(A)
@@ -182,15 +212,15 @@ if config.HAVE_PYMESS:
                     Z = pymess.care(A_mat.T, None, C_mat.T, B_mat.T)
                 else:
                     Z = pymess.care(A_mat.T, E_mat.T, C_mat.T, B_mat.T)
-        elif me_solver == 'pymess_lrnm':
+        elif options['type'] == 'pymess_lrnm':
             if Q is not None or R is not None or G is not None:
                 raise NotImplementedError()
             opts = pymess.options()
             opts.adi.shifts.paratype = pymess.MESS_LRCFADI_PARA_ADAPTIVE_V
             if not trans:
                 opts.type = pymess.MESS_OP_TRANSPOSE
-            if tol is not None:
-                opts.rel_change_tol = tol
+            if options['tol'] is not None:
+                opts.rel_change_tol = tol = options['tol']
                 opts.adi.res2_tol = tol
                 opts.adi.res2c_tol = tol
             eqn = RiccatiEquation(opts, A, E, B, C)

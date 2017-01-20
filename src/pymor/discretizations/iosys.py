@@ -4,6 +4,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+from functools import partial
+
 import numpy as np
 import scipy.linalg as spla
 import scipy.sparse as sps
@@ -157,9 +159,9 @@ class InputOutputSystem(DiscretizationBase):
         return fig, ax
 
 
-_DEFAULT_ME_SOLVER = 'pymess' if config.HAVE_PYMESS else \
-                     'slycot' if config.HAVE_SLYCOT else \
-                     'scipy'
+_DEFAULT_ME_SOLVER_BACKEND = 'pymess' if config.HAVE_PYMESS else \
+                             'slycot' if config.HAVE_SLYCOT else \
+                             'scipy'
 
 
 class LTISystem(InputOutputSystem):
@@ -474,32 +476,44 @@ class LTISystem(InputOutputSystem):
                 C.as_source_array())))).data.conj()
         return dtfs
 
-    @defaults('default_solver', qualname='pymor.discretizations.iosys.LTISystem._lyap_solver')
-    def _lyap_solver(self, default_solver=_DEFAULT_ME_SOLVER):
-        solver = self.solver_options.get('lyap', default_solver) if self.solver_options else default_solver
-        if solver == 'scipy':
+    @defaults('default_solver_backend', qualname='pymor.discretizations.iosys.LTISystem._lyap_solver')
+    def _lyap_solver(self, default_solver_backend=_DEFAULT_ME_SOLVER_BACKEND):
+        options = self.solver_options.get('lyap') if self.solver_options else None
+        if options:
+            solver = options if isinstance(options, str) else options['type']
+            backend = solver.split('_')[0]
+        else:
+            backend = default_solver_backend
+        if backend == 'scipy':
             from pymor.bindings.scipy import solve_lyap as solve_lyap_impl
-        elif solver == 'slycot':
+        elif backend == 'slycot':
             from pymor.bindings.slycot import solve_lyap as solve_lyap_impl
-        elif solver.startswith('pymess'):
+        elif backend == 'pymess':
             from pymor.bindings.pymess import solve_lyap as solve_lyap_impl
-            solve_lyap_impl = solve_lyap_impl.partial(me_solver=solver)
-        return solve_lyap_impl
+        else:
+            raise NotImplementedError
+        return partial(solve_lyap_impl, options=options)
 
-    @defaults('default_solver', qualname='pymor.discretizations.iosys.LTISystem._ricc_solver')
-    def _ricc_solver(self, default_solver=_DEFAULT_ME_SOLVER):
-        solver = self.solver_options.get('ricc', default_solver) if self.solver_options else default_solver
-        if solver == 'scipy':
+    @defaults('default_solver_backend', qualname='pymor.discretizations.iosys.LTISystem._ricc_solver')
+    def _ricc_solver(self, default_solver_backend=_DEFAULT_ME_SOLVER_BACKEND):
+        options = self.solver_options.get('ricc') if self.solver_options else None
+        if options:
+            solver = options if isinstance(options, str) else options['type']
+            backend = solver.split('_')[0]
+        else:
+            backend = default_solver_backend
+        if backend == 'scipy':
             from pymor.bindings.scipy import solve_ricc as solve_ricc_impl
-        elif solver == 'slycot':
+        elif backend == 'slycot':
             from pymor.bindings.slycot import solve_ricc as solve_ricc_impl
-        elif solver.startswith('pymess'):
+        elif backend == 'pymess':
             from pymor.bindings.pymess import solve_ricc as solve_ricc_impl
-            solve_ricc_impl = solve_ricc_impl.partial(me_solver=solver)
-        return solve_ricc_impl
+        else:
+            raise NotImplementedError
+        return partial(solve_ricc_impl, options=options)
 
     @cached
-    def gramian(self, typ, subtyp, tol=None):
+    def gramian(self, typ, subtyp):
         """Compute a Gramian.
 
         Parameters
@@ -515,12 +529,6 @@ class LTISystem(InputOutputSystem):
 
             - `'cf'`: controllability Gramian factor,
             - `'of'`: observability Gramian factor.
-        tol
-            The tolerance parameter for the low-rank matrix equation solver.
-
-            If `None`, then the default tolerance is used. Otherwise, it should
-            be a positive float and the Gramian factor is recomputed (if it was
-            already computed).
 
         Returns
         -------
@@ -539,16 +547,16 @@ class LTISystem(InputOutputSystem):
 
         if typ == 'lyap':
             if subtyp == 'cf':
-                return self._lyap_solver()(A, E, B, trans=False, tol=tol)
+                return self._lyap_solver()(A, E, B, trans=False)
             elif subtyp == 'of':
-                return self._lyap_solver()(A, E, C, trans=True, tol=tol)
+                return self._lyap_solver()(A, E, C, trans=True)
             else:
                 raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for 'lyap' type.")
         elif typ == 'lqg':
             if subtyp == 'cf':
-                return self._ricc_solver()(A, E=E, B=B, C=C, trans=True, tol=tol)
+                return self._ricc_solver()(A, E=E, B=B, C=C, trans=True)
             elif subtyp == 'of':
-                return self._ricc_solver()(A, E=E, B=B, C=C, trans=False, tol=tol)
+                return self._ricc_solver()(A, E=E, B=B, C=C, trans=False)
             else:
                 raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for 'lqg' type.")
         elif isinstance(typ, tuple) and typ[0] == 'br':
@@ -556,11 +564,9 @@ class LTISystem(InputOutputSystem):
             assert typ[1] > 0
             c = 1 / np.sqrt(typ[1])
             if subtyp == 'cf':
-                return self._ricc_solver()(A, E=E, B=B * c, C=C * c, R=IdentityOperator(C.range) * (-1),
-                                           trans=True, tol=tol)
+                return self._ricc_solver()(A, E=E, B=B * c, C=C * c, R=IdentityOperator(C.range) * (-1), trans=True)
             elif subtyp == 'of':
-                return self._ricc_solver()(A, E=E, B=B * c, C=C * c, R=IdentityOperator(B.source) * (-1),
-                                           trans=False, tol=tol)
+                return self._ricc_solver()(A, E=E, B=B * c, C=C * c, R=IdentityOperator(B.source) * (-1), trans=False)
             else:
                 raise NotImplementedError("Only 'cf' and 'of' subtypes are possible for ('br', gamma) type.")
         else:

@@ -312,7 +312,18 @@ def matrix_astype_nocopy(matrix, dtype):
         return matrix.astype(dtype)
 
 
-def solve_lyap(A, E, B, trans=False, me_solver='scipy', tol=None):
+def lyap_solver_options():
+    """Returns available Lyapunov equation solvers with default |solver_options| for the SciPy backend.
+
+    Returns
+    -------
+    A dict of available solvers with default |solver_options|.
+    """
+
+    return {'scipy': {'type': 'scipy'}}
+
+
+def solve_lyap(A, E, B, trans=False, options=None):
     """Find a factor of the solution of a Lyapunov equation.
 
     Returns factor :math:`Z` such that :math:`Z Z^T` is approximately
@@ -346,10 +357,8 @@ def solve_lyap(A, E, B, trans=False, me_solver='scipy', tol=None):
         The |Operator| B.
     trans
         If the dual equation needs to be solved.
-    me_solver
-        Solver to use (must be `'scipy'`).
-    tol
-        Tolerance parameter (ignored).
+    options
+        The |solver_options| to use (see :func:`lyap_solver_options`).
 
     Returns
     -------
@@ -357,7 +366,8 @@ def solve_lyap(A, E, B, trans=False, me_solver='scipy', tol=None):
         Low-rank factor of the Lyapunov equation solution, |VectorArray| from `A.source`.
     """
     _solve_lyap_check_args(A, E, B, trans)
-    assert me_solver == 'scipy'
+    options = _parse_options(options, lyap_solver_options(), 'scipy', None, False)
+    assert options['type'] == 'scipy'
 
     if E is not None:
         raise NotImplementedError()
@@ -383,8 +393,19 @@ def _solve_lyap_check_args(A, E, B, trans=False):
     assert E is None or isinstance(E, OperatorInterface) and E.linear and E.source == E.range == A.source
 
 
+def ricc_solver_options():
+    """Returns available Riccati equation solvers with default |solver_options| for the SciPy backend.
+
+    Returns
+    -------
+    A dict of available solvers with default |solver_options|.
+    """
+
+    return {'scipy': {'type': 'scipy'}}
+
+
 def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
-               trans=False, me_solver='scipy', tol=None):
+               trans=False, options=None):
     """Find a factor of the solution of a Riccati equation using solve_continuous_are.
 
     Returns factor :math:`Z` such that :math:`Z Z^T` is approximately the
@@ -428,10 +449,8 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
         The |Operator| L or `None`.
     trans
         If the dual equation needs to be solved.
-    me_solver
-        Solver to use (must be `'scipy'`).
-    tol
-        Tolerance parameter (ignored).
+    options
+        The |solver_options| to use (see :func:`ricc_solver_options`).
 
     Returns
     -------
@@ -441,7 +460,8 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
     """
 
     _solve_ricc_check_args(A, E, B, Q, C, R, G, trans)
-    assert me_solver == 'scipy'
+    options = _parse_options(options, lyap_solver_options(), 'scipy', None, False)
+    assert options['type'] == 'scipy'
 
     if E is not None or G is not None:
         raise NotImplementedError()

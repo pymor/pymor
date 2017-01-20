@@ -8,11 +8,23 @@ from pymor.core.config import config
 if config.HAVE_SLYCOT:
     import numpy as np
 
+    from pymor.algorithms.genericsolvers import _parse_options
     from pymor.algorithms.to_matrix import to_matrix
     from pymor.bindings.scipy import _solve_lyap_check_args, _solve_ricc_check_args
 
 
-    def solve_lyap(A, E, B, trans=False, me_solver='slycot', tol=None):
+    def lyap_solver_options():
+        """Returns available Lyapunov equation solvers with default |solver_options| for the Slycot backend.
+
+        Returns
+        -------
+        A dict of available solvers with default |solver_options|.
+        """
+
+        return {'slycot': {'type': 'slycot'}}
+
+
+    def solve_lyap(A, E, B, trans=False, options=None):
         """Find a factor of the solution of a Lyapunov equation.
 
         Returns factor :math:`Z` such that :math:`Z Z^T` is approximately
@@ -46,10 +58,8 @@ if config.HAVE_SLYCOT:
             The |Operator| B.
         trans
             If the dual equation needs to be solved.
-        me_solver
-            Solver to use (must be `'slycot'`).
-        tol
-            Tolerance parameter (ignored).
+        options
+            The |solver_options| to use (see :func:`lyap_solver_options`).
 
         Returns
         -------
@@ -57,7 +67,8 @@ if config.HAVE_SLYCOT:
             Low-rank factor of the Lyapunov equation solution, |VectorArray| from `A.source`.
         """
         _solve_lyap_check_args(A, E, B, trans)
-        assert me_solver == 'slycot'
+        options = _parse_options(options, lyap_solver_options(), 'slycot', None, False)
+        assert options['type'] == 'slycot'
 
         import slycot
         A_mat = to_matrix(A)
@@ -95,8 +106,18 @@ if config.HAVE_SLYCOT:
         return Z
 
 
-    def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None, trans=False,
-                   me_solver='slycot', tol=None):
+    def ricc_solver_options():
+        """Returns available Riccati equation solvers with default |solver_options| for the SciPy backend.
+
+        Returns
+        -------
+        A dict of available solvers with default |solver_options|.
+        """
+
+        return {'slycot': {'type': 'slycot'}}
+
+
+    def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None, trans=False, options=None):
         """Find a factor of the solution of a Riccati equation
 
         Returns factor :math:`Z` such that :math:`Z Z^T` is approximately the
@@ -140,10 +161,8 @@ if config.HAVE_SLYCOT:
             The |Operator| L or `None`.
         trans
             If the dual equation needs to be solved.
-        me_solver
-            Solver to use (must be `'slycot'`).
-        tol
-            Tolerance parameter (ignored).
+        options
+            The |solver_options| to use (see :func:`ricc_solver_options`).
 
         Returns
         -------
@@ -152,7 +171,8 @@ if config.HAVE_SLYCOT:
             |VectorArray| from `A.source`.
         """
         _solve_ricc_check_args(A, E, B, Q, C, R, G, trans)
-        assert me_solver == 'slycot'
+        options = _parse_options(options, ricc_solver_options(), 'slycot', None, False)
+        assert options['type'] == 'slycot'
 
         import slycot
         A_mat = to_matrix(A)
