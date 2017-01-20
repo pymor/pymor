@@ -157,8 +157,8 @@ class InputOutputSystem(DiscretizationBase):
         return fig, ax
 
 
-_DEFAULT_ME_SOLVER = 'slycot' if config.HAVE_SLYCOT else \
-                     'pymess' if config.HAVE_PYMESS else \
+_DEFAULT_ME_SOLVER = 'pymess' if config.HAVE_PYMESS else \
+                     'slycot' if config.HAVE_SLYCOT else \
                      'scipy'
 
 
