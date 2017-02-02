@@ -13,7 +13,7 @@ if config.HAVE_DUNEXT:
 
 
     class DuneXTVector(VectorInterface):
-        """Wraps a FEniCS vector to make it usable with ListVectorArray."""
+        """Wraps a vector from dune-xt-la to make it usable with ListVectorArray."""
 
         def __init__(self, impl):
             self.impl = impl
@@ -23,7 +23,7 @@ if config.HAVE_DUNEXT:
             return np.frombuffer(self.impl)
 
         def copy(self, deep=False):
-            return DuneXTVector(self.impl.copy())
+            return DuneXTVector(self.impl.copy(deep))
 
         def scal(self, alpha):
             self.impl.scal(alpha)
@@ -51,7 +51,8 @@ if config.HAVE_DUNEXT:
             return np.array([impl[i] for i in component_indices])
 
         def amax(self):
-            raise NotImplementedError
+            _amax = self.impl.amax()
+            return _amax[0], _amax[1]
 
         def __add__(self, other):
             return DuneXTVector(self.impl + other.impl)
