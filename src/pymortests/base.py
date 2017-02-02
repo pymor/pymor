@@ -74,7 +74,8 @@ def runmodule(filename):
 
 def polynomials(max_order):
     for n in range(max_order + 1):
-        f = lambda x: np.power(x, n)
+        def f(x):
+            return np.power(x, n)
 
         def deri(k):
             if k > n:
@@ -144,7 +145,6 @@ def check_results(test_name, params, results, *args):
         assert False, \
             'No results found for test {} ({}), saved current results. Remember to check in {}.'.format(
                 test_name, params, filename)
-
 
     for k, (atol, rtol) in keys.items():
         if not np.all(np.allclose(old_results[k], results[k], atol=atol, rtol=rtol)):

@@ -48,7 +48,7 @@ from functools import partial
 from docopt import docopt
 
 from pymor.analyticalproblems.burgers import burgers_problem_2d
-from pymor.discretizers.advection import discretize_nonlinear_instationary_advection_fv
+from pymor.discretizers.fv import discretize_instationary_fv
 from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
@@ -76,12 +76,13 @@ def burgers_demo(args):
                                  parameter_range=(0, 1e42), torus=not args['--not-periodic'])
 
     print('Discretize ...')
-    discretizer = discretize_nonlinear_instationary_advection_fv
     if args['--grid-type'] == 'rect':
         args['--grid'] *= 1. / m.sqrt(2)
-    discretization, data = discretizer(problem, diameter=1. / args['--grid'],
-                                       num_flux=args['--num-flux'], lxf_lambda=args['--lxf-lambda'],
-                                       nt=args['--nt'], domain_discretizer=domain_discretizer)
+    discretization, data = discretize_instationary_fv(
+        problem, diameter=1. / args['--grid'],
+        num_flux=args['--num-flux'], lxf_lambda=args['--lxf-lambda'],
+        nt=args['--nt'], domain_discretizer=domain_discretizer
+    )
     print(discretization.operator.grid)
 
     print('The parameter type is {}'.format(discretization.parameter_type))

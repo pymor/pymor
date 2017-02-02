@@ -7,7 +7,7 @@ import pytest
 
 from pymor.algorithms.basic import almost_equal
 from pymor.core.exceptions import InversionError
-from pymor.operators.constructions import SelectionOperator
+from pymor.operators.constructions import SelectionOperator, InverseOperator, InverseTransposeOperator
 from pymor.parameters.base import ParameterType
 from pymor.parameters.functionals import GenericParameterFunctional
 from pymor.vectorarrays.numpy import NumpyVectorArray
@@ -22,32 +22,33 @@ def test_selection_op():
     p1 = MonomOperator(1)
     select_rhs_functional = GenericParameterFunctional(
         lambda x: round(float(x["nrrhs"])), 
-        ParameterType({"nrrhs" : ()})
+        ParameterType({"nrrhs": ()})
     )
     s1 = SelectionOperator(
-        operators = [p1], 
-        boundaries = [], 
-        parameter_functional = select_rhs_functional,
-        name = "foo"
+        operators=[p1],
+        boundaries=[],
+        parameter_functional=select_rhs_functional,
+        name="foo"
     )
     x = np.linspace(-1., 1., num=3)
     vx = p1.source.make_array(x[:, np.newaxis])
     assert np.allclose(p1.apply(vx,mu=0).data, s1.apply(vx,mu=0).data)
 
     s2 = SelectionOperator(
-        operators = [p1,p1,p1,p1],
-        boundaries = [-3, 3, 7],
-        parameter_functional = select_rhs_functional,
-        name = "Bar"
+        operators=[p1,p1,p1,p1],
+        boundaries=[-3, 3, 7],
+        parameter_functional=select_rhs_functional,
+        name="Bar"
     )
 
-    assert s2._get_operator_number({"nrrhs":-4}) == 0
-    assert s2._get_operator_number({"nrrhs":-3}) == 0
-    assert s2._get_operator_number({"nrrhs":-2}) == 1
-    assert s2._get_operator_number({"nrrhs":3}) == 1
-    assert s2._get_operator_number({"nrrhs":4}) == 2
-    assert s2._get_operator_number({"nrrhs":7}) == 2
-    assert s2._get_operator_number({"nrrhs":9}) == 3
+    assert s2._get_operator_number({"nrrhs": -4}) == 0
+    assert s2._get_operator_number({"nrrhs": -3}) == 0
+    assert s2._get_operator_number({"nrrhs": -2}) == 1
+    assert s2._get_operator_number({"nrrhs": 3}) == 1
+    assert s2._get_operator_number({"nrrhs": 4}) == 2
+    assert s2._get_operator_number({"nrrhs": 7}) == 2
+    assert s2._get_operator_number({"nrrhs": 9}) == 3
+
 
 def test_lincomb_op():
     p1 = MonomOperator(1)
@@ -92,6 +93,26 @@ def test_apply(operator_with_arrays):
         assert np.all(almost_equal(Vind, op.apply(U[ind], mu=mu)))
 
 
+def test_mul(operator_with_arrays):
+    op, mu, U, _ = operator_with_arrays
+    V = op.apply(U, mu=mu)
+    for a in (0., 1., -1., 0.3):
+        assert np.all(almost_equal(V * a, (op * a).apply(U, mu=mu)))
+
+
+def test_rmul(operator_with_arrays):
+    op, mu, U, _ = operator_with_arrays
+    V = op.apply(U, mu=mu)
+    for a in (0., 1., -1., 0.3):
+        assert np.all(almost_equal(a * V, (op * a).apply(U, mu=mu)))
+
+
+def test_neg(operator_with_arrays):
+    op, mu, U, _ = operator_with_arrays
+    V = op.apply(U, mu=mu)
+    assert np.all(almost_equal(-V, (-op).apply(U, mu=mu)))
+
+
 def test_apply2(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     for U_ind in valid_inds(U):
@@ -111,31 +132,31 @@ def test_pairwise_apply2(operator_with_arrays):
         assert np.allclose(M, M2)
 
 
-def test_apply_adjoint(operator_with_arrays):
+def test_apply_transpose(operator_with_arrays):
     op, mu, _, V = operator_with_arrays
     if not op.linear:
         return
     try:
-        U = op.apply_adjoint(V, mu=mu)
+        U = op.apply_transpose(V, mu=mu)
     except NotImplementedError:
         return
     assert U in op.source
     assert len(V) == len(U)
     for ind in list(valid_inds(V, 3)) + [[]]:
-        Uind = op.apply_adjoint(V[ind], mu=mu)
+        Uind = op.apply_transpose(V[ind], mu=mu)
         assert np.all(almost_equal(Uind, U[ind]))
-        assert np.all(almost_equal(Uind, op.apply_adjoint(V[ind], mu=mu)))
+        assert np.all(almost_equal(Uind, op.apply_transpose(V[ind], mu=mu)))
 
 
-def test_apply_adjoint2(operator_with_arrays):
+def test_apply_transpose_2(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     if not op.linear:
         return
     try:
-        op.apply_adjoint(V, mu=mu)
+        ATV = op.apply_transpose(V, mu=mu)
     except NotImplementedError:
         return
-    assert np.allclose(V.dot(op.apply(U, mu=mu)), op.apply_adjoint(V, mu=mu).dot(U))
+    assert np.allclose(V.dot(op.apply(U, mu=mu)), ATV.dot(U))
 
 
 def test_T(operator_with_arrays):
@@ -147,28 +168,6 @@ def test_T(operator_with_arrays):
     except NotImplementedError:
         return
     assert np.allclose(V.dot(op.apply(U, mu=mu)), op.T.apply(V, mu=mu).dot(U))
-
-
-def test_apply_adjoint_2(operator_with_arrays):
-    op, mu, U, V = operator_with_arrays
-    if not op.linear:
-        return
-    try:
-        ATV = op.apply_adjoint(V, mu=mu)
-    except NotImplementedError:
-        return
-    assert np.allclose(V.dot(op.apply(U, mu=mu)), ATV.dot(U))
-
-
-def test_apply_adjoint_2_with_products(operator_with_arrays_and_products):
-    op, mu, U, V, sp, rp = operator_with_arrays_and_products
-    if not op.linear:
-        return
-    try:
-        ATV = op.apply_adjoint(V, mu=mu, source_product=sp, range_product=rp)
-    except NotImplementedError:
-        return
-    assert np.allclose(rp.apply2(V, op.apply(U, mu=mu)), sp.apply2(ATV, U))
 
 
 def test_apply_inverse(operator_with_arrays):
@@ -184,7 +183,7 @@ def test_apply_inverse(operator_with_arrays):
         assert np.all(almost_equal(VV, V[ind], atol=1e-10, rtol=1e-3))
 
 
-def test_apply_inverse_adjoint(operator_with_arrays):
+def test_apply_inverse_transpose(operator_with_arrays):
     op, mu, U, _ = operator_with_arrays
     if not op.linear:
         return
@@ -192,30 +191,15 @@ def test_apply_inverse_adjoint(operator_with_arrays):
         if len(U[ind]) == 0:
             continue
         try:
-            V = op.apply_inverse_adjoint(U[ind], mu=mu)
+            V = op.apply_inverse_transpose(U[ind], mu=mu)
         except InversionError:
             return
         assert V in op.range
         assert len(V) == U.len_ind(ind)
-        UU = op.apply_adjoint(V, mu=mu)
+        UU = op.apply_transpose(V, mu=mu)
         assert np.all(almost_equal(UU, U[ind], atol=1e-10, rtol=1e-3))
 
 
-def test_apply_inverse_adjoint_with_products(operator_with_arrays_and_products):
-    op, mu, U, _, sp, rp = operator_with_arrays_and_products
-    if not op.linear:
-        return
-    for ind in valid_inds(U):
-        if len(U[ind]) == 0:
-            continue
-        try:
-            V = op.apply_inverse_adjoint(U[ind], mu=mu, source_product=sp, range_product=rp)
-        except InversionError:
-            return
-        assert V in op.range
-        assert len(V) == U.len_ind(ind)
-        UU = op.apply_adjoint(V, mu=mu, source_product=sp, range_product=rp)
-        assert np.all(almost_equal(UU, U[ind], atol=1e-10, rtol=1e-3))
 
 def test_projected(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
@@ -303,3 +287,48 @@ def test_restricted(operator_with_arrays):
         op_U = rop.range.make_array(op.apply(U, mu=mu).components(components))
         rop_U = rop.apply(rop.source.make_array(U.components(source_dofs)), mu=mu)
         assert np.all(almost_equal(op_U, rop_U))
+
+
+def test_InverseOperator(operator_with_arrays):
+    op, mu, U, V = operator_with_arrays
+    inv = InverseOperator(op)
+    try:
+        assert np.all(almost_equal(inv.apply(V, mu=mu), op.apply_inverse(V, mu=mu)))
+    except InversionError:
+        pass
+    try:
+        assert np.all(almost_equal(inv.apply_inverse(U, mu=mu), op.apply(U, mu=mu)))
+    except InversionError:
+        pass
+    if op.linear:
+        try:
+            assert np.all(almost_equal(inv.apply_transpose(U, mu=mu), op.apply_inverse_transpose(U, mu=mu)))
+        except (InversionError, NotImplementedError):
+            pass
+        try:
+            assert np.all(almost_equal(inv.apply_inverse_transpose(V, mu=mu), op.apply_transpose(V, mu=mu)))
+        except (InversionError, NotImplementedError):
+            pass
+
+
+def test_InverseTransposeOperator(operator_with_arrays):
+    op, mu, U, V = operator_with_arrays
+    if not op.linear:
+        return
+    inv = InverseTransposeOperator(op)
+    try:
+        assert np.all(almost_equal(inv.apply(U, mu=mu), op.apply_inverse_transpose(U, mu=mu)))
+    except (InversionError, NotImplementedError):
+        pass
+    try:
+        assert np.all(almost_equal(inv.apply_inverse(V, mu=mu), op.apply_transpose(V, mu=mu)))
+    except (InversionError, NotImplementedError):
+        pass
+    try:
+        assert np.all(almost_equal(inv.apply_transpose(V, mu=mu), op.apply_inverse(V, mu=mu)))
+    except (InversionError, NotImplementedError):
+        pass
+    try:
+        assert np.all(almost_equal(inv.apply_inverse_transpose(U, mu=mu), op.apply(U, mu=mu)))
+    except (InversionError, NotImplementedError):
+        pass

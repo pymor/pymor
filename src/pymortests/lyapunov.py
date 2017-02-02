@@ -10,7 +10,6 @@ import scipy.sparse as sps
 from scipy import stats
 
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.algorithms.lyapunov import solve_lyap
 
 import pytest
 
@@ -65,7 +64,14 @@ def test_cgf_dense(n, m, me_solver):
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
 
-    Zva = solve_lyap(Aop, None, Bop, me_solver=me_solver)
+    if me_solver == 'scipy':
+        from pymor.bindings.scipy import solve_lyap
+    elif me_solver == 'slycot':
+        from pymor.bindings.slycot import solve_lyap
+    elif me_solver.startswith('pymess'):
+        from pymor.bindings.pymess import solve_lyap
+
+    Zva = solve_lyap(Aop, None, Bop, options={'type': me_solver})
     Z = Zva.data.T
 
     assert len(Zva) <= n
@@ -91,7 +97,14 @@ def test_cgf_dense_E(n, m, me_solver):
     Eop = NumpyMatrixOperator(E)
     Bop = NumpyMatrixOperator(B)
 
-    Zva = solve_lyap(Aop, Eop, Bop, me_solver=me_solver)
+    if me_solver == 'scipy':
+        from pymor.bindings.scipy import solve_lyap
+    elif me_solver == 'slycot':
+        from pymor.bindings.slycot import solve_lyap
+    elif me_solver.startswith('pymess'):
+        from pymor.bindings.pymess import solve_lyap
+
+    Zva = solve_lyap(Aop, Eop, Bop, options={'type': me_solver})
     Z = Zva.data.T
 
     assert len(Zva) <= n
@@ -110,7 +123,14 @@ def test_cgf_sparse(n, m, me_solver):
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
 
-    Zva = solve_lyap(Aop, None, Bop, me_solver=me_solver)
+    if me_solver == 'scipy':
+        from pymor.bindings.scipy import solve_lyap
+    elif me_solver == 'slycot':
+        from pymor.bindings.slycot import solve_lyap
+    elif me_solver.startswith('pymess'):
+        from pymor.bindings.pymess import solve_lyap
+
+    Zva = solve_lyap(Aop, None, Bop, options={'type': me_solver})
     Z = Zva.data.T
 
     assert len(Zva) <= n
@@ -136,7 +156,14 @@ def test_cgf_sparse_E(n, m, me_solver):
     Eop = NumpyMatrixOperator(E)
     Bop = NumpyMatrixOperator(B)
 
-    Zva = solve_lyap(Aop, Eop, Bop, me_solver=me_solver)
+    if me_solver == 'scipy':
+        from pymor.bindings.scipy import solve_lyap
+    elif me_solver == 'slycot':
+        from pymor.bindings.slycot import solve_lyap
+    elif me_solver.startswith('pymess'):
+        from pymor.bindings.pymess import solve_lyap
+
+    Zva = solve_lyap(Aop, Eop, Bop, options={'type': me_solver})
     Z = Zva.data.T
 
     assert len(Zva) <= n
@@ -154,7 +181,14 @@ def test_ogf_dense(n, p, me_solver):
     Aop = NumpyMatrixOperator(A)
     Cop = NumpyMatrixOperator(C)
 
-    Zva = solve_lyap(Aop, None, Cop, trans=True, me_solver=me_solver)
+    if me_solver == 'scipy':
+        from pymor.bindings.scipy import solve_lyap
+    elif me_solver == 'slycot':
+        from pymor.bindings.slycot import solve_lyap
+    elif me_solver.startswith('pymess'):
+        from pymor.bindings.pymess import solve_lyap
+
+    Zva = solve_lyap(Aop, None, Cop, trans=True, options={'type': me_solver})
     Z = Zva.data.T
 
     assert len(Zva) <= n
@@ -180,7 +214,14 @@ def test_ogf_dense_E(n, p, me_solver):
     Eop = NumpyMatrixOperator(E)
     Cop = NumpyMatrixOperator(C)
 
-    Zva = solve_lyap(Aop, Eop, Cop, trans=True, me_solver=me_solver)
+    if me_solver == 'scipy':
+        from pymor.bindings.scipy import solve_lyap
+    elif me_solver == 'slycot':
+        from pymor.bindings.slycot import solve_lyap
+    elif me_solver.startswith('pymess'):
+        from pymor.bindings.pymess import solve_lyap
+
+    Zva = solve_lyap(Aop, Eop, Cop, trans=True, options={'type': me_solver})
     Z = Zva.data.T
 
     assert len(Zva) <= n
@@ -199,7 +240,14 @@ def test_ogf_sparse(n, p, me_solver):
     Aop = NumpyMatrixOperator(A)
     Cop = NumpyMatrixOperator(C)
 
-    Zva = solve_lyap(Aop, None, Cop, trans=True, me_solver=me_solver)
+    if me_solver == 'scipy':
+        from pymor.bindings.scipy import solve_lyap
+    elif me_solver == 'slycot':
+        from pymor.bindings.slycot import solve_lyap
+    elif me_solver.startswith('pymess'):
+        from pymor.bindings.pymess import solve_lyap
+
+    Zva = solve_lyap(Aop, None, Cop, trans=True, options={'type': me_solver})
     Z = Zva.data.T
 
     assert len(Zva) <= n
@@ -225,7 +273,14 @@ def test_ogf_sparse_E(n, p, me_solver):
     Eop = NumpyMatrixOperator(E)
     Cop = NumpyMatrixOperator(C)
 
-    Zva = solve_lyap(Aop, Eop, Cop, trans=True, me_solver=me_solver)
+    if me_solver == 'scipy':
+        from pymor.bindings.scipy import solve_lyap
+    elif me_solver == 'slycot':
+        from pymor.bindings.slycot import solve_lyap
+    elif me_solver.startswith('pymess'):
+        from pymor.bindings.pymess import solve_lyap
+
+    Zva = solve_lyap(Aop, Eop, Cop, trans=True, options={'type': me_solver})
     Z = Zva.data.T
 
     assert len(Zva) <= n

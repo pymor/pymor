@@ -9,7 +9,6 @@ import scipy.linalg as spla
 import scipy.sparse as sps
 
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.algorithms.riccati import solve_ricc
 
 import pytest
 
@@ -63,7 +62,8 @@ def test_scipy(n, m, p):
     Cop = NumpyMatrixOperator(C)
     Rop = NumpyMatrixOperator(R)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, R=Rop, me_solver='scipy')
+    from pymor.bindings.scipy import solve_ricc
+    Z = solve_ricc(Aop, B=Bop, C=Cop, R=Rop)
 
     assert len(Z) <= n
 
@@ -91,7 +91,8 @@ def test_scipy_trans(n, m, p):
     Cop = NumpyMatrixOperator(C)
     Rop = NumpyMatrixOperator(R)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, R=Rop, trans=True, me_solver='scipy')
+    from pymor.bindings.scipy import solve_ricc
+    Z = solve_ricc(Aop, B=Bop, C=Cop, R=Rop, trans=True)
 
     assert len(Z) <= n
 
@@ -117,7 +118,8 @@ def test_pymess(n, m, p, me_solver):
     Bop = NumpyMatrixOperator(B)
     Cop = NumpyMatrixOperator(C)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, me_solver=me_solver)
+    from pymor.bindings.pymess import solve_ricc
+    Z = solve_ricc(Aop, B=Bop, C=Cop, default_solver=me_solver)
 
     assert len(Z) <= n
 
@@ -141,7 +143,8 @@ def test_pymess_trans(n, m, p, me_solver):
     Bop = NumpyMatrixOperator(B)
     Cop = NumpyMatrixOperator(C)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, trans=True, me_solver=me_solver)
+    from pymor.bindings.pymess import solve_ricc
+    Z = solve_ricc(Aop, B=Bop, C=Cop, trans=True, default_solver=me_solver)
 
     assert len(Z) <= n
 
@@ -166,7 +169,8 @@ def test_pymess_E(n, m, p, me_solver):
     Cop = NumpyMatrixOperator(C)
     Eop = NumpyMatrixOperator(E)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, me_solver=me_solver)
+    from pymor.bindings.pymess import solve_ricc
+    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, default_solver=me_solver)
 
     assert len(Z) <= n
 
@@ -194,7 +198,8 @@ def test_pymess_E_trans(n, m, p, me_solver):
     Cop = NumpyMatrixOperator(C)
     Eop = NumpyMatrixOperator(E)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, trans=True, me_solver=me_solver)
+    from pymor.bindings.pymess import solve_ricc
+    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, trans=True, default_solver=me_solver)
 
     assert len(Z) <= n
 
@@ -221,7 +226,8 @@ def test_slycot(n, m, p):
     Bop = NumpyMatrixOperator(B)
     Cop = NumpyMatrixOperator(C)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, me_solver='slycot')
+    from pymor.bindings.slycot import solve_ricc
+    Z = solve_ricc(Aop, B=Bop, C=Cop)
 
     assert len(Z) <= n
 
@@ -245,7 +251,8 @@ def test_slycot_trans(n, m, p):
     Bop = NumpyMatrixOperator(B)
     Cop = NumpyMatrixOperator(C)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, trans=True, me_solver='slycot')
+    from pymor.bindings.slycot import solve_ricc
+    Z = solve_ricc(Aop, B=Bop, C=Cop, trans=True)
 
     assert len(Z) <= n
 
@@ -271,7 +278,8 @@ def test_slycot_E(n, m, p):
     Cop = NumpyMatrixOperator(C)
     Eop = NumpyMatrixOperator(E)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, me_solver='slycot')
+    from pymor.bindings.slycot import solve_ricc
+    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop)
 
     assert len(Z) <= n
 
@@ -300,7 +308,8 @@ def test_slycot_E_trans(n, m, p):
     Cop = NumpyMatrixOperator(C)
     Eop = NumpyMatrixOperator(E)
 
-    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, trans=True, me_solver='slycot')
+    from pymor.bindings.slycot import solve_ricc
+    Z = solve_ricc(Aop, B=Bop, C=Cop, E=Eop, trans=True)
 
     assert len(Z) <= n
 

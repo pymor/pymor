@@ -162,8 +162,8 @@ the following solver libraries:
 -   FEniCS
 
     MPI-compatible wrapper classes for dolfin linear algebra data
-    structures are shipped with pyMOR (pymor.vectorarrays.fenics,
-    pymor.operators.fenics). For an example see pymordemos.thermalbock,
+    structures are shipped with pyMOR (pymor.bindings.fenics).
+    For an example see pymordemos.thermalbock,
     pymordemos.thermalblock_simple.
 
 -   deal.II

@@ -204,8 +204,7 @@ def reduction_error_analysis(reduced_discretization, discretization=None, recons
     result['mus'] = test_mus = np.array(test_mus)
     result['basis_sizes'] = basis_sizes
 
-    summary = []
-    summary.append(('number of samples', str(len(test_mus))))
+    summary = [('number of samples', str(len(test_mus)))]
 
     if error_norms:
         result['norms'] = norms = np.array(norms)
@@ -324,7 +323,6 @@ def reduction_error_analysis(reduced_discretization, discretization=None, recons
 
 
 def _compute_errors(mu, d, rd, rc, estimator, error_norms, condition, custom, basis_sizes):
-    import numpy as np
     import sys
 
     print('.', end='')

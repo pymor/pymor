@@ -70,15 +70,13 @@ import getpass
 import inspect
 import os
 import sqlite3
-import sys
 import tempfile
 from types import MethodType
 
+from pymor.core.config import config
 from pymor.core.defaults import defaults, defaults_sid
 from pymor.core.interfaces import ImmutableInterface, generate_sid
 from pymor.core.pickle import dump, load
-
-PY2 = sys.version_info.major == 2
 
 
 @atexit.register
@@ -383,7 +381,8 @@ class CacheableInterface(ImmutableInterface):
         if _caching_disabled or self.cache_region is None:
             return method(*args, **kwargs)
 
-        if PY2:
+        if config.PY2:
+            # note getargspec here isn't actually deprecated since this branch is py2 only
             argspec = inspect.getargspec(method)
             if argspec.varargs is not None:
                 raise NotImplementedError
@@ -438,7 +437,8 @@ class CacheableInterface(ImmutableInterface):
 def cached(function):
     """Decorator to make a method of `CacheableInterface` actually cached."""
 
-    if PY2:
+    if config.PY2:
+        # note getargspec here isn't actually deprecated since this branch is py2 only
         argspec = inspect.getargspec(function)
         if argspec.varargs is not None:
             raise NotImplementedError
@@ -459,7 +459,7 @@ def cached(function):
             return function(self, *args, **kwargs)
         return self._cached_method_call(function, True, argnames, defaults, args, kwargs)
 
-    if PY2:
+    if config.PY2:
         wrapper.__wrapped__ = function
 
     return wrapper

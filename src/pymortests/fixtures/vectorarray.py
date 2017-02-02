@@ -6,16 +6,15 @@ from itertools import product
 import numpy as np
 import pytest
 
+from pymor.core.config import config
 from pymor.vectorarrays.block import BlockVectorSpace
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 from pymor.vectorarrays.list import NumpyListVectorSpace
-from pymor.vectorarrays.fenics import HAVE_FENICS
-try:
-    from pydealii.pymor.vectorarray import HAVE_DEALII
-except ImportError as _:
-    HAVE_DEALII = False
 
-import os; TRAVIS = os.getenv('TRAVIS') == 'true'
+
+import os
+TRAVIS = os.getenv('TRAVIS') == 'true'
+
 
 def random_integers(count, seed):
     np.random.seed(seed)
@@ -37,9 +36,9 @@ def block_vector_array_factory(length, dims, seed):
         numpy_vector_array_factory(length, sum(dims), seed).data
     )
 
-if HAVE_FENICS:
+if config.HAVE_FENICS:
     import dolfin as df
-    from pymor.vectorarrays.fenics import FenicsVectorSpace
+    from pymor.bindings.fenics import FenicsVectorSpace
 
     fenics_spaces = [df.FunctionSpace(df.UnitSquareMesh(ni, ni), 'Lagrange', 1)
                      for ni in [1, 10, 32, 100]]
@@ -74,7 +73,7 @@ if HAVE_FENICS:
             random_integers(5, 1235)))  # seed2
 
 
-if HAVE_DEALII:
+if config.HAVE_DEALII:
     from pydealii.pymor.vectorarray import DealIIVectorSpace
 
     def dealii_vector_array_factory(length, dim, seed):
@@ -83,6 +82,7 @@ if HAVE_DEALII:
         for v, a in zip(U._list, np.random.random((length, dim))):
             v.impl[:] = a
         return U
+
 
 def vector_array_from_empty_reserve(v, reserve):
     if reserve == 0:
@@ -149,11 +149,11 @@ block_vector_array_generators = \
 
 fenics_vector_array_generators = \
     [lambda args=args: fenics_vector_array_factory(*args) for args in fenics_vector_array_factory_arguments] \
-    if HAVE_FENICS else []
+    if config.HAVE_FENICS else []
 
 dealii_vector_array_generators = \
     [lambda args=args: dealii_vector_array_factory(*args) for args in numpy_vector_array_factory_arguments] \
-    if HAVE_DEALII else []
+    if config.HAVE_DEALII else []
 
 numpy_vector_array_pair_with_same_dim_generators = \
     [lambda l=l, l2=l2, d=d, s1=s1, s2=s2: (numpy_vector_array_factory(l, d, s1),
@@ -174,13 +174,13 @@ fenics_vector_array_pair_with_same_dim_generators = \
     [lambda l=l, l2=l2, d=d, s1=s1, s2=s2: (fenics_vector_array_factory(l, d, s1),
                                             fenics_vector_array_factory(l2, d, s2))
      for l, l2, d, s1, s2 in fenics_vector_array_factory_arguments_pairs_with_same_dim] \
-    if HAVE_FENICS else []
+    if config.HAVE_FENICS else []
 
 dealii_vector_array_pair_with_same_dim_generators = \
     [lambda l=l, l2=l2, d=d, s1=s1, s2=s2: (dealii_vector_array_factory(l, d, s1),
                                             dealii_vector_array_factory(l2, d, s2))
      for l, l2, d, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_same_dim] \
-    if HAVE_DEALII else []
+    if config.HAVE_DEALII else []
 
 numpy_vector_array_pair_with_different_dim_generators = \
     [lambda l=l, l2=l2, d1=d1, d2=d2, s1=s1, s2=s2: (numpy_vector_array_factory(l, d1, s1),
@@ -201,14 +201,13 @@ fenics_vector_array_pair_with_different_dim_generators = \
     [lambda l=l, l2=l2, d1=d1, d2=d2, s1=s1, s2=s2: (fenics_vector_array_factory(l, d1, s1),
                                                      fenics_vector_array_factory(l2, d2, s2))
      for l, l2, d1, d2, s1, s2 in fenics_vector_array_factory_arguments_pairs_with_different_dim] \
-    if HAVE_FENICS else []
+    if config.HAVE_FENICS else []
 
 dealii_vector_array_pair_with_different_dim_generators = \
     [lambda l=l, l2=l2, d1=d1, d2=d2, s1=s1, s2=s2: (dealii_vector_array_factory(l, d1, s1),
                                                      dealii_vector_array_factory(l2, d2, s2))
      for l, l2, d1, d2, s1, s2 in numpy_vector_array_factory_arguments_pairs_with_different_dim] \
-    if HAVE_DEALII else []
-
+    if config.HAVE_DEALII else []
 
 
 @pytest.fixture(params=numpy_vector_array_generators + numpy_list_vector_array_generators +

@@ -70,11 +70,11 @@ numpy_matrix_operator_generators = \
 
 def thermalblock_factory(xblocks, yblocks, diameter, seed):
     from pymor.analyticalproblems.thermalblock import thermal_block_problem
-    from pymor.discretizers.elliptic import discretize_elliptic_cg
+    from pymor.discretizers.cg import discretize_stationary_cg
     from pymor.functions.basic import GenericFunction
     from pymor.operators.cg import InterpolationOperator
     p = thermal_block_problem((xblocks, yblocks))
-    d, d_data = discretize_elliptic_cg(p, diameter)
+    d, d_data = discretize_stationary_cg(p, diameter)
     f = GenericFunction(lambda X, mu: X[..., 0]**mu['exp'] + X[..., 1],
                         dim_domain=2, parameter_type={'exp': ()})
     iop = InterpolationOperator(d_data['grid'], f)
@@ -291,6 +291,8 @@ thermalblock_fixedparam_operator_with_arrays_and_products_generators = \
 
 
 num_misc_operators = 10
+
+
 def misc_operator_with_arrays_and_products_factory(n):
     if n == 0:
         from pymor.operators.constructions import ComponentProjection
@@ -353,12 +355,14 @@ def misc_operator_with_arrays_and_products_factory(n):
 
 
 num_unpicklable_misc_operators = 1
+
+
 def unpicklable_misc_operator_with_arrays_and_products_factory(n):
     if n == 0:
         from pymor.operators.numpy import NumpyGenericOperator
         op, _, U, V, sp, rp = numpy_matrix_operator_with_arrays_and_products_factory(100, 20, 4, 3, n)
         mat = op._matrix
-        op2 = NumpyGenericOperator(mapping=lambda U: mat.dot(U.T).T, adjoint_mapping=lambda U: mat.T.dot(U.T).T,
+        op2 = NumpyGenericOperator(mapping=lambda U: mat.dot(U.T).T, transpose_mapping=lambda U: mat.T.dot(U.T).T,
                                    dim_source=100, dim_range=20, linear=True)
         return op2, _, U, V, sp, rp
     else:

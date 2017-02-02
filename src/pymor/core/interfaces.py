@@ -75,16 +75,16 @@ import os
 import time
 from types import FunctionType, BuiltinFunctionType
 import uuid
-import sys
 
 import numpy as np
 
 from pymor.core import backports, logger
+from pymor.core.config import config
 from pymor.core.exceptions import ConstError, SIDGenerationError
 
-PY2 = sys.version_info.major == 2
 DONT_COPY_DOCSTRINGS = int(os.environ.get('PYMOR_WITH_SPHINX', 0)) == 1
 NoneType = type(None)
+
 
 class UID(object):
     '''Provides unique, quickly computed ids by combinding a session UUID4 with a counter.'''
@@ -154,8 +154,9 @@ class UberMeta(abc.ABCMeta):
 
         c = abc.ABCMeta.__new__(cls, classname, bases, classdict)
 
-        if PY2:
+        if config.PY2:
             try:
+                # note getargspec here isn't actually deprecated since this branch is py2 only
                 args, varargs, keywords, defaults = inspect.getargspec(c.__init__)
                 assert args[0] == 'self'
                 c._init_arguments = tuple(args[1:])
@@ -260,7 +261,7 @@ class BasicInterface(object, metaclass=UberMeta):
 abstractmethod = abc.abstractmethod
 abstractproperty = abc.abstractproperty
 
-if PY2:
+if config.PY2:
     # backport path for issue5867
     abstractclassmethod = backports.abstractclassmethod
     abstractstaticmethod = backports.abstractstaticmethod
@@ -468,7 +469,7 @@ def generate_sid(obj, debug=False):
 
 # Helper classes for generate_sid
 
-if PY2:
+if config.PY2:
     import __builtin__
     STRING_TYPES = (str, __builtin__.unicode)
 else:

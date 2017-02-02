@@ -76,7 +76,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
 
         if len(interpolation_dofs) > 0:
             try:
-                self.restricted_operator, self.source_dofs  = operator.restricted(interpolation_dofs)
+                self.restricted_operator, self.source_dofs = operator.restricted(interpolation_dofs)
             except NotImplementedError:
                 self.logger.warn('Operator has no "restricted" method. The full operator will be evaluated.')
                 self.operator = operator

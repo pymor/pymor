@@ -581,7 +581,7 @@ class ReactionOperator(NumpyMatrixBasedOperator):
 
     def __init__(self, grid, reaction_coefficient, solver_options=None, name=None):
         assert reaction_coefficient.dim_domain == grid.dim and reaction_coefficient.shape_range == ()
-        self.source = self.range = NumpyVectorSpace(grid.size(0))
+        self.source = self.range = FVVectorSpace(grid)
         self.grid = grid
         self.reaction_coefficient = reaction_coefficient
         self.solver_options = solver_options
@@ -594,6 +594,38 @@ class ReactionOperator(NumpyMatrixBasedOperator):
                        shape=(self.grid.size(0),) * 2)
 
         return A
+
+
+class NonlinearReactionOperator(OperatorBase):
+
+    linear = False
+
+    def __init__(self, grid, reaction_function, reaction_function_derivative=None, space_id='STATE', name=None):
+        self.grid = grid
+        self.reaction_function = reaction_function
+        self.reaction_function_derivative = reaction_function_derivative
+        self.build_parameter_type(reaction_function, reaction_function_derivative)
+        self.space_id = space_id
+        self.name = name
+        self.source = self.range = FVVectorSpace(grid, space_id)
+
+    def apply(self, U, ind=None, mu=None):
+        assert U in self.source
+
+        R = U.data if ind is None else U.data[ind]
+        R = self.reaction_function.evaluate(R.reshape(R.shape + (1,)), mu=mu)
+
+        return self.range.make_array(R)
+
+    def jacobian(self, U, mu=None):
+        if self.reaction_function_derivative is None:
+            raise NotImplementedError
+
+        U = U.data
+        A = dia_matrix((self.reaction_function_derivative.evaluate(U.reshape(U.shape + (1,)), mu=mu), [0]),
+                       shape=(self.grid.size(0),) * 2)
+
+        return NumpyMatrixOperator(A, source_id=self.source.id, range_id=self.range.id)
 
 
 class L2ProductFunctional(NumpyMatrixBasedOperator):
