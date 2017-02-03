@@ -35,9 +35,6 @@ def parabolic_demo(args):
     args['--nt'] = int(args['--nt'])
     args['--grid'] = int(args['--grid'])
 
-    grid_name = '{1}(({0},{0}))'.format(args['--grid'], 'RectGrid' if args['--rect'] else 'TriaGrid')
-    print('Solving on {0}'.format(grid_name))
-
     if args['heat']:
         args['TOP'] = float(args['TOP'])
         problem = InstationaryProblem(
@@ -99,21 +96,20 @@ def parabolic_demo(args):
         )
 
     print('Discretize ...')
-    if args['--rect']:
-        grid, bi = discretize_domain_default(problem.stationary_part.domain, diameter=np.sqrt(2) / args['--grid'],
-                                             grid_type=RectGrid)
-    else:
-        grid, bi = discretize_domain_default(problem.stationary_part.domain, diameter=1. / args['--grid'],
-                                             grid_type=TriaGrid)
     discretizer = discretize_instationary_fv if args['--fv'] else discretize_instationary_cg
-    discretization, _ = discretizer(analytical_problem=problem, grid=grid, boundary_info=bi, nt=args['--nt'])
+    discretization, data = discretizer(
+        analytical_problem=problem,
+        grid_type=RectGrid if args['--rect'] else TriaGrid,
+        diameter=np.sqrt(2) / args['--grid'] if args['--rect'] else 1. / args['--grid'],
+        nt=args['--nt']
+    )
+    grid = data['grid']
+    print(grid)
+    print()
 
-    print('The parameter type is {}'.format(discretization.parameter_type))
-
+    print('Solve ...')
     U = discretization.solve({'top': args['TOP']} if args['heat'] else {'speed': args['SPEED']})
-
-    print('Plot ...')
-    discretization.visualize(U, title=grid_name)
+    discretization.visualize(U, title='Solution')
 
     print('')
 

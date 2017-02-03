@@ -76,7 +76,6 @@ from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmid
 from pymor.algorithms.adaptivegreedy import adaptive_greedy
 from pymor.algorithms.error import reduction_error_analysis
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
-from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.core.pickle import dump
 from pymor.discretizers.cg import discretize_stationary_cg
 from pymor.parameters.functionals import ExpressionParameterFunctional
@@ -102,18 +101,15 @@ def thermalblock_demo(args):
     args['--gamma'] = float(args['--gamma'])
     args['--theta'] = float(args['--theta'])
 
-    print('Solving on TriaGrid(({0},{0}))'.format(args['--grid']))
-
-    print('Setup Problem ...')
     problem = thermal_block_problem(num_blocks=(2, 2))
     functionals = [ExpressionParameterFunctional('diffusion[0]', {'diffusion': (2,)}),
                    ExpressionParameterFunctional('diffusion[1]**2', {'diffusion': (2,)}),
                    ExpressionParameterFunctional('diffusion[0]', {'diffusion': (2,)}),
                    ExpressionParameterFunctional('diffusion[1]', {'diffusion': (2,)})]
-    problem = StationaryProblem(domain=problem.domain,
-                              diffusion=problem.diffusion.with_(coefficients=functionals),
-                              rhs=problem.rhs,
-                              parameter_space=CubicParameterSpace({'diffusion': (2,)}, 0.1, 1.))
+    problem = problem.with_(
+        diffusion=problem.diffusion.with_(coefficients=functionals),
+        parameter_space=CubicParameterSpace({'diffusion': (2,)}, 0.1, 1.)
+    )
 
     print('Discretize ...')
     discretization, _ = discretize_stationary_cg(problem, diameter=1. / args['--grid'])
@@ -124,8 +120,6 @@ def thermalblock_demo(args):
 
     if args['--cache-region'] != 'none':
         discretization.enable_caching(args['--cache-region'])
-
-    print('The parameter type is {}'.format(discretization.parameter_type))
 
     if args['--plot-solutions']:
         print('Showing some solutions')
@@ -141,24 +135,32 @@ def thermalblock_demo(args):
     print('RB generation ...')
 
     product = discretization.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
-    coercivity_estimator=ExpressionParameterFunctional('min([diffusion[0], diffusion[1]**2])', discretization.parameter_type)
+    coercivity_estimator = ExpressionParameterFunctional('min([diffusion[0], diffusion[1]**2])',
+                                                         discretization.parameter_type)
     reductors = {'residual_basis': partial(reduce_coercive, product=product,
-                                   coercivity_estimator=coercivity_estimator),
+                                           coercivity_estimator=coercivity_estimator),
                  'traditional': partial(reduce_coercive_simple, product=product,
                                         coercivity_estimator=coercivity_estimator)}
     reductor = reductors[args['--reductor']]
     extension_algorithms = {'trivial': trivial_basis_extension,
                             'gram_schmidt': gram_schmidt_basis_extension,
-                            'h1_gram_schmidt': partial(gram_schmidt_basis_extension, product=discretization.h1_0_semi_product)}
+                            'h1_gram_schmidt': partial(gram_schmidt_basis_extension,
+                                                       product=discretization.h1_0_semi_product)}
     extension_algorithm = extension_algorithms[args['--extension-alg']]
 
     pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
-    greedy_data = adaptive_greedy(discretization, reductor,
-                                  validation_mus=args['--validation-mus'], rho=args['--rho'], gamma=args['--gamma'],
-                                  theta=args['--theta'],
-                                  use_estimator=not args['--without-estimator'], error_norm=discretization.h1_0_semi_norm,
-                                  extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'],
-                                  visualize=args['--visualize-refinement'])
+    greedy_data = adaptive_greedy(
+        discretization, reductor,
+        validation_mus=args['--validation-mus'],
+        rho=args['--rho'],
+        gamma=args['--gamma'],
+        theta=args['--theta'],
+        use_estimator=not args['--without-estimator'],
+        error_norm=discretization.h1_0_semi_norm,
+        extension_algorithm=extension_algorithm,
+        max_extensions=args['RBSIZE'],
+        visualize=args['--visualize-refinement']
+    )
 
     rb_discretization, reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
 

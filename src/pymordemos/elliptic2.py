@@ -39,9 +39,6 @@ def elliptic2_demo(args):
             ExpressionFunction('(x[..., 0] - 0.5)**2 * 1000', 2, ())]
     rhs = rhss[args['PROBLEM-NUMBER']]
 
-    print('Solving on TriaGrid(({0},{0}))'.format(args['N']))
-
-    print('Setup Problem ...')
     problem = StationaryProblem(
         domain=RectDomain(),
         rhs=rhs,
@@ -50,20 +47,21 @@ def elliptic2_demo(args):
             [ProjectionParameterFunctional('diffusionl', 0), ExpressionParameterFunctional('1', {})]
         ),
         parameter_space=CubicParameterSpace({'diffusionl': 0}, 0.1, 1),
-        name='2DProblem')
+        name='2DProblem'
+    )
 
     print('Discretize ...')
     discretizer = discretize_stationary_fv if args['--fv'] else discretize_stationary_cg
     discretization, _ = discretizer(problem, diameter=1. / args['N'])
+    print(discretization.rhs.grid)
+    print()
 
-    print('The parameter type is {}'.format(discretization.parameter_type))
-
+    print('Solve ...')
     U = discretization.solution_space.empty()
     for mu in discretization.parameter_space.sample_uniformly(10):
         U.append(discretization.solve(mu))
-
-    print('Plot ...')
     discretization.visualize(U, title='Solution for diffusionl in [0.1, 1]')
+
 
 if __name__ == '__main__':
     args = docopt(__doc__)

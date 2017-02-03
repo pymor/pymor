@@ -46,9 +46,6 @@ def elliptic_oned_demo(args):
     f0 = ProjectionParameterFunctional('diffusionl', 0)
     f1 = ExpressionParameterFunctional('1', {})
 
-    print('Solving on OnedGrid(({0},{0}))'.format(args['N']))
-
-    print('Setup Problem ...')
     problem = StationaryProblem(
         domain=LineDomain(),
         rhs=rhs,
@@ -59,15 +56,14 @@ def elliptic_oned_demo(args):
 
     print('Discretize ...')
     discretizer = discretize_stationary_fv if args['--fv'] else discretize_stationary_cg
-    discretization, _ = discretizer(problem, diameter=1 / args['N'])
+    discretization, data = discretizer(problem, diameter=1 / args['N'])
+    print(data['grid'])
+    print()
 
-    print('The parameter type is {}'.format(discretization.parameter_type))
-
+    print('Solve ...')
     U = discretization.solution_space.empty()
     for mu in parameter_space.sample_uniformly(10):
         U.append(discretization.solve(mu))
-
-    print('Plot ...')
     discretization.visualize(U, title='Solution for diffusionl in [0.1, 1]')
 
 
