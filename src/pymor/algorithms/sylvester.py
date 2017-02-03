@@ -127,16 +127,16 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
         W = A.source.empty(reserve=r)
 
         Cr2 = Cr.lincomb(Z.T)
-        CTCr2 = C.apply_adjoint(Cr2)
+        CTCr2 = C.apply_transpose(Cr2)
         for i in range(r):
             rhs = -CTCr2[i].copy()
             if i > 0:
                 if Er is not None:
-                    rhs -= A.apply_adjoint(W.lincomb(TEr[:i, i]))
-                rhs -= E.apply_adjoint(W.lincomb(TAr[:i, i]))
+                    rhs -= A.apply_transpose(W.lincomb(TEr[:i, i]))
+                rhs -= E.apply_transpose(W.lincomb(TAr[:i, i]))
             TErii = 1 if Er is None else TEr[i, i]
             eAaE = LincombOperator([A, E], [TErii, TAr[i, i]])
-            W.append(eAaE.apply_inverse_adjoint(rhs))
+            W.append(eAaE.apply_inverse_transpose(rhs))
 
         W = W.lincomb(Q.conjugate())
         W = W.real
