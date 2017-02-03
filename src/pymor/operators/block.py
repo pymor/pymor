@@ -65,7 +65,7 @@ class BlockOperator(OperatorBase):
     @property
     def T(self):
         return type(self)(np.vectorize(lambda op: op.T if op else None)(self._blocks.T),
-                          source_id=self.range_id, range_id=self.source.id)
+                          source_id=self.range.id, range_id=self.source.id)
 
     @classmethod
     def hstack(cls, operators, source_id='STATE', range_id='STATE'):
