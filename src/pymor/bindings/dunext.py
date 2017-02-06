@@ -125,6 +125,8 @@ if config.HAVE_DUNEXT:
             self.matrix = matrix
             self.solver_options = solver_options
             self.name = name
+            self.source_id = source_id  # for with_ support
+            self.range_id = range_id
 
         def apply(self, U, mu=None):
             assert U in self.source
@@ -137,7 +139,20 @@ if config.HAVE_DUNEXT:
             raise NotImplementedError
 
         def apply_inverse(self, V, mu=None, least_squares=False):
-            raise NotImplementedError
+            assert V in self.range
+            if least_squares:
+                raise NotImplementedError
+
+            from dune.xt.la import make_solver
+            solver = make_solver(self.matrix)
+            R = self.source.zeros(len(V))
+            options = self.solver_options.get('inverse') if self.solver_options else None
+            for v, r in zip(V._list, R._list):
+                if options:
+                    solver.apply(v.impl, r.impl, options)
+                else:
+                    solver.apply(v.impl, r.impl)
+            return R
 
         def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
             if not all(isinstance(op, (DuneXTMatrixOperator, ZeroOperator)) for op in operators):
