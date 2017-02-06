@@ -31,6 +31,16 @@ def _get_ipython_version():
         return getattr(IPython.parallel, '__version__', True)
 
 
+def _get_slycot_version():
+    from slycot.version import version
+    if list(map(int, version.split('.'))) < [0, 3, 1]:
+        import warnings
+        warnings.warn('Slycot support disabled (version 0.3.1 or higher required).')
+        return False
+    else:
+        return version
+
+
 _PACKAGES = {
     'CYTHON': lambda: import_module('cython').__version__,
     'DEALII': lambda: import_module('pydealii'),
@@ -49,7 +59,7 @@ _PACKAGES = {
     'QTOPENGL': lambda: bool(import_module('PySide.QtOpenGL')),
     'SCIPY': lambda: import_module('scipy').__version__,
     'SCIPY_LSMR': lambda: hasattr(import_module('scipy.sparse.linalg'), 'lsmr'),
-    'SLYCOT': lambda: bool(import_module('slycot')),
+    'SLYCOT': lambda: _get_slycot_version(),
     'SPHINX': lambda: import_module('sphinx').__version__,
 }
 
