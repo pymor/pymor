@@ -95,6 +95,7 @@ _PACKAGES = {
     'DEALII': lambda: bool(import_module('pydealii')),
     'DOCOPT': lambda: import_module('docopt').__version__,
     'DUNEXT': lambda: bool(import_module('dune.xt.la')),
+    'DUNEGDT': lambda: bool(import_module('dune.gdt')),
     'FENICS': _get_fenics_version,
     'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,
     'IPYTHON': _get_ipython_version,
