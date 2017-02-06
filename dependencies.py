@@ -14,7 +14,8 @@ install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
                     'mpi4py': 'required for pymor.tools.mpi and pymor.parallel.mpi',
                     'https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz': 'writing vtk output',
                     'pytest': 'testing framework required to execute unit tests',
-                    'pyside': 'solution visualization for builtin discretizations'}
+                    'pyside': 'solution visualization for builtin discretizations',
+                    'slycot>=0.3.1': 'python wrapper for the SLICOT control and systems library'}
 
 import_names = {'ipython': 'IPython',
                 'pytest-cache': 'pytest_cache',

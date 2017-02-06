@@ -1,4 +1,5 @@
 https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz
+https://github.com/python-control/Slycot/archive/master.zip
 ipyparallel
 ipython>=3.0
 matplotlib
