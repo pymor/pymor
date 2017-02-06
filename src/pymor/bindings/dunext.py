@@ -9,6 +9,8 @@ from pymor.core.config import config
 if config.HAVE_DUNEXT:
     import numpy as np
 
+    from pymor.operators.basic import OperatorBase
+    from pymor.operators.constructions import ZeroOperator
     from pymor.vectorarrays.list import VectorInterface, ListVectorSpace
 
 
@@ -110,3 +112,46 @@ if config.HAVE_DUNEXT:
         @classmethod
         def space_from_vector_obj(cls, vec, id_):
             return cls(type(vec), len(vec), id_)
+
+
+    class DuneXTMatrixOperator(OperatorBase):
+        """Wraps a dune-xt-la matrix as an |Operator|."""
+
+        linear = True
+
+        def __init__(self, matrix, source_id='STATE', range_id='STATE', solver_options=None, name=None):
+            self.source = DuneXTVectorSpace(matrix.vector_type(), matrix.cols(), source_id)
+            self.range = DuneXTVectorSpace(matrix.vector_type(), matrix.rows(), range_id)
+            self.matrix = matrix
+            self.solver_options = solver_options
+            self.name = name
+
+        def apply(self, U, mu=None):
+            assert U in self.source
+            R = self.range.zeros(len(U))
+            for u, r in zip(U._list, R._list):
+                self.matrix.mv(u.impl, r.impl)
+            return R
+
+        def apply_transpose(self, V, mu=None):
+            raise NotImplementedError
+
+        def apply_inverse(self, V, mu=None, least_squares=False):
+            raise NotImplementedError
+
+        def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
+            if not all(isinstance(op, (DuneXTMatrixOperator, ZeroOperator)) for op in operators):
+                return None
+
+            if isinstance(operators[0], ZeroOperator):
+                return operators[1].assemble_lincomb(operators[1:], coefficients[1:],
+                                                     solver_options=solver_options, name=name)
+
+            matrix = operators[0].matrix.copy()
+            matrix.scal(coefficients[0])
+            for op, c in zip(operators[1:], coefficients[1:]):
+                if isinstance(op, ZeroOperator):
+                    continue
+                matrix.axpy(c, op.matrix)
+
+            return DuneXTMatrixOperator(matrix, self.source.id, self.range.id, solver_options=solver_options, name=name)
