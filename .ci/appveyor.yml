@@ -18,22 +18,25 @@ environment:
       CONDA: "C:\\Miniconda3"
       MARKER: "not grid"
 
-    #- PYTHON_VERSION: "3.4" # currently 3.4.3
-      #PYTHON_ARCH: "32"
-      #CONDA: "C:\\Miniconda3"
-      #MARKER: "grid"
+    - PYTHON_VERSION: "3.4" # currently 3.4.3
+      PYTHON_ARCH: "32"
+      CONDA: "C:\\Miniconda3"
+      MARKER: "grid"
 
     - PYTHON_VERSION: "3.5" # currently 3.5.1
       PYTHON_ARCH: "32"
       CONDA: "C:\\Miniconda35"
       MARKER: "not grid"
 
-    #- PYTHON_VERSION: "3.5" # currently 3.5.1
-      #PYTHON_ARCH: "32"
-      #CONDA: "C:\\Miniconda35"
-      #MARKER: "grid"
+    - PYTHON_VERSION: "3.5" # currently 3.5.1
+      PYTHON_ARCH: "32"
+      CONDA: "C:\\Miniconda35"
+      MARKER: "grid"
 
-
+matrix:
+  allow_failures:
+    - MARKER: "grid"
+    - MARKER: "not grid"
 
 install:
   # If there is a newer build queued for the same PR, cancel this one.
