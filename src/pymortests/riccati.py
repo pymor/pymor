@@ -179,7 +179,7 @@ def test_pymess_E(n, m, p, me_solver):
     assert len(Z) <= n
 
     ATZ = A.T.dot(Z.data.T)
-    ZTE = E.T.dot(Z.data.T).T  # Z.data.dot(E)
+    ZTE = E.T.dot(Z.data.T).T
     ATXE = ATZ.dot(ZTE)
     ZTB = Z.data.dot(B)
     ETXB = E.T.dot(Z.data.T).dot(ZTB)
@@ -209,7 +209,7 @@ def test_pymess_E_trans(n, m, p, me_solver):
     assert len(Z) <= n
 
     AZ = A.dot(Z.data.T)
-    ZTET = E.dot(Z.data.T).T  # Z.data.dot(E.T)
+    ZTET = E.dot(Z.data.T).T
     AXET = AZ.dot(ZTET)
     ZTCT = Z.data.dot(C.T)
     EXCT = E.dot(Z.data.T).dot(ZTCT)
@@ -223,7 +223,6 @@ def test_pymess_E_trans(n, m, p, me_solver):
 @pytest.mark.parametrize('p', p_list)
 def test_slycot(n, m, p):
     np.random.seed(0)
-    # A = np.random.randn(n, n) - n * np.eye(n)
     A = diff_conv_1d_fd(n, 1, 1)
     B = np.random.randn(n, m)
     C = np.random.randn(p, n)
@@ -240,7 +239,7 @@ def test_slycot(n, m, p):
     ATX = A.T.dot(Z.data.T).dot(Z.data)
     XB = Z.data.T.dot(Z.data.dot(B))
     CTC = C.T.dot(C)
-    assert fro_norm(ATX + ATX.T - XB.dot(XB.T) + CTC) / fro_norm(CTC) < 1e-10
+    assert fro_norm(ATX + ATX.T - XB.dot(XB.T) + CTC) / fro_norm(CTC) < 1e-8
 
 
 @pytest.mark.skipif(not config.HAVE_SLYCOT, reason='slycot not available')
@@ -249,7 +248,6 @@ def test_slycot(n, m, p):
 @pytest.mark.parametrize('p', p_list)
 def test_slycot_trans(n, m, p):
     np.random.seed(0)
-    # A = np.random.randn(n, n) - n * np.eye(n)
     A = diff_conv_1d_fd(n, 1, 1)
     B = np.random.randn(n, m)
     C = np.random.randn(p, n)
@@ -266,7 +264,7 @@ def test_slycot_trans(n, m, p):
     AX = A.dot(Z.data.T).dot(Z.data)
     XCT = Z.data.T.dot(Z.data.dot(C.T))
     BBT = B.dot(B.T)
-    assert fro_norm(AX + AX.T - XCT.dot(XCT.T) + BBT) / fro_norm(BBT) < 1e-10
+    assert fro_norm(AX + AX.T - XCT.dot(XCT.T) + BBT) / fro_norm(BBT) < 1e-8
 
 
 @pytest.mark.skipif(not config.HAVE_SLYCOT, reason='slycot not available')
@@ -275,11 +273,9 @@ def test_slycot_trans(n, m, p):
 @pytest.mark.parametrize('p', p_list)
 def test_slycot_E(n, m, p):
     np.random.seed(0)
-    # A = np.random.randn(n, n) - n * np.eye(n)
     A, E = diff_conv_1d_fem(n, 1, 1)
     B = np.random.randn(n, m)
     C = np.random.randn(p, n)
-    # E = np.random.randn(n, n) + n * np.eye(n)
 
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
@@ -292,12 +288,12 @@ def test_slycot_E(n, m, p):
     assert len(Z) <= n
 
     ATZ = A.T.dot(Z.data.T)
-    ZTE = E.T.dot(Z.data.T).T  # Z.data.dot(E)
+    ZTE = E.T.dot(Z.data.T).T
     ATXE = ATZ.dot(ZTE)
     ZTB = Z.data.dot(B)
     ETXB = E.T.dot(Z.data.T).dot(ZTB)
     CTC = C.T.dot(C)
-    assert fro_norm(ATXE + ATXE.T - ETXB.dot(ETXB.T) + CTC) / fro_norm(CTC) < 1e-10
+    assert fro_norm(ATXE + ATXE.T - ETXB.dot(ETXB.T) + CTC) / fro_norm(CTC) < 1e-8
 
 
 @pytest.mark.skipif(not config.HAVE_SLYCOT, reason='slycot not available')
@@ -306,11 +302,9 @@ def test_slycot_E(n, m, p):
 @pytest.mark.parametrize('p', p_list)
 def test_slycot_E_trans(n, m, p):
     np.random.seed(0)
-    # A = np.random.randn(n, n) - n * np.eye(n)
     A, E = diff_conv_1d_fem(n, 1, 1)
     B = np.random.randn(n, m)
     C = np.random.randn(p, n)
-    # E = np.random.randn(n, n) + n * np.eye(n)
 
     Aop = NumpyMatrixOperator(A)
     Bop = NumpyMatrixOperator(B)
@@ -323,9 +317,9 @@ def test_slycot_E_trans(n, m, p):
     assert len(Z) <= n
 
     AZ = A.dot(Z.data.T)
-    ZTET = E.dot(Z.data.T).T  # Z.data.dot(E.T)
+    ZTET = E.dot(Z.data.T).T
     AXET = AZ.dot(ZTET)
     ZTCT = Z.data.dot(C.T)
     EXCT = E.dot(Z.data.T).dot(ZTCT)
     BBT = B.dot(B.T)
-    assert fro_norm(AXET + AXET.T - EXCT.dot(EXCT.T) + BBT) / fro_norm(BBT) < 1e-10
+    assert fro_norm(AXET + AXET.T - EXCT.dot(EXCT.T) + BBT) / fro_norm(BBT) < 1e-8
