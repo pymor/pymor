@@ -292,11 +292,7 @@ def test_restricted(operator_with_arrays):
 def test_InverseOperator(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     inv = InverseOperator(op)
-    if is_windows_platform() and 'Block' in op.__class__.__name__:
-        rtol = atol = 2e-13
-    else:
-        # this is the default
-        rtol = atol = 1e-14
+    rtol = atol = 1e-12
     try:
         assert np.all(almost_equal(inv.apply(V, mu=mu), op.apply_inverse(V, mu=mu), rtol=rtol, atol=atol))
     except InversionError:
@@ -323,11 +319,7 @@ def test_InverseTransposeOperator(operator_with_arrays):
     if not op.linear:
         return
     inv = InverseTransposeOperator(op)
-    if is_windows_platform() and 'Block' in op.__class__.__name__:
-        rtol = atol = 2e-13
-    else:
-        # this is the default
-        rtol = atol = 1e-14
+    rtol = atol = 1e-12
     try:
         assert np.all(almost_equal(inv.apply(U, mu=mu), op.apply_inverse_transpose(U, mu=mu),
                                    rtol=rtol, atol=atol))
