@@ -97,7 +97,7 @@ class OperatorBase(OperatorInterface):
             from pymor.algorithms.newton import newton
             from pymor.core.exceptions import NewtonError
 
-            options = self.solver_options
+            options = self.solver_options.get('inverse') if self.solver_options else None
             if options:
                 if isinstance(options, str):
                     assert options == 'newton'
