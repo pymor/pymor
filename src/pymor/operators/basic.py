@@ -113,7 +113,7 @@ class OperatorBase(OperatorInterface):
             R = V.empty(reserve=len(V))
             for i in range(len(V)):
                 try:
-                    R.append(newton(self, V[i], **options)[0])
+                    R.append(newton(self, V[i], mu=mu, **options)[0])
                 except NewtonError as e:
                     raise InversionError(e)
             return R
