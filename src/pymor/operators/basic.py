@@ -306,6 +306,8 @@ class ProjectedOperator(OperatorBase):
 
     def assemble(self, mu=None):
         op = self.operator.assemble(mu=mu)
+        if op == self.operator:  # avoid infinite recursion in apply_inverse default impl
+            return self
         pop = op.projected(range_basis=self.range_basis, source_basis=self.source_basis,
                            product=self.product, name=self.name + '_assembled')
         if self.solver_options:
