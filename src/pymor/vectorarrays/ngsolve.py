@@ -13,8 +13,7 @@ if HAVE_NGSOLVE:
     from ngsolve import BaseVector
     import numpy as np
 
-    from pymor.vectorarrays.interfaces import VectorSpace
-    from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorArray
+    from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorSpace
 
 
     class NGSolveVector(CopyOnWriteVector):
@@ -33,20 +32,6 @@ if HAVE_NGSOLVE:
             new_impl.data = self.impl
             self.impl = new_impl
             self._array = new_impl.FV().NumPy()
-
-        @classmethod
-        def make_zeros(cls, subtype):
-            impl = BaseVector(subtype)
-            impl.FV().NumPy()[:] = 0
-            return cls(impl)
-
-        @property
-        def dim(self):
-            return self.impl.size
-
-        @property
-        def subtype(self):
-            return self.impl.size
 
         @property
         def data(self):
@@ -80,5 +65,22 @@ if HAVE_NGSOLVE:
             return max_ind, max_val
 
 
-    def NGSolveVectorSpace(dim):
-        return VectorSpace(ListVectorArray, (NGSolveVector, dim))
+    class NGSolveVectorSpace(ListVectorSpace):
+
+        def __init__(self, dim, id_='STATE'):
+            self.dim = dim
+            self.id = id_
+
+        def __eq__(self, other):
+            return type(other) is NGSolveVectorSpace and self.dim == other.dim and self.id == other.id
+
+        def __hash__(self):
+            return hash(self.dim) + hash(self.id)
+
+        def zero_vector(self):
+            impl = BaseVector(self.dim)
+            impl.FV().NumPy()[:] = 0
+            return NGSolveVector(impl)
+
+        def make_vector(self, obj):
+            return NGSolveVector(obj)
