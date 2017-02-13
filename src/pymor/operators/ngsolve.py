@@ -3,13 +3,10 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-try:
-    import ngsolve
-    HAVE_NGSOLVE = True
-except ImportError:
-    HAVE_NGSOLVE = False
+from pymor.core.config import config
 
-if HAVE_NGSOLVE:
+if config.HAVE_NGSOLVE:
+    import ngsolve
     from pymor.operators.basic import OperatorBase
     from pymor.operators.constructions import ZeroOperator
     from pymor.vectorarrays.ngsolve import NGSolveVectorSpace

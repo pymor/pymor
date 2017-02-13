@@ -40,6 +40,7 @@ _PACKAGES = {
     'IPYTHON': _get_ipython_version,
     'MATPLOTLIB': _get_matplotlib_version,
     'MPI': lambda: import_module('mpi4py.MPI') and import_module('mpi4py').__version__,
+    'NGSOLVE': lambda: bool(import_module('ngsolve')),
     'NUMPY': lambda: import_module('numpy').__version__,
     'PYAMG': lambda: import_module('pyamg.version').full_version,
     'PYSIDE': lambda: import_module('PySide.QtGui') and import_module('PySide.QtCore').__version__,

@@ -3,13 +3,9 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-try:
-    import ngsolve
-    HAVE_NGSOLVE = True
-except ImportError:
-    HAVE_NGSOLVE = False
+from pymor.core.config import config
 
-if HAVE_NGSOLVE:
+if config.HAVE_NGSOLVE:
     from ngsolve import BaseVector
     import numpy as np
 
