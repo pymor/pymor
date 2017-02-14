@@ -6,21 +6,16 @@
 from pymor.core.config import config
 
 if config.HAVE_NGSOLVE:
-    import os
-    from tempfile import NamedTemporaryFile
-    from threading import Thread
-
+    import ngsolve as ngs
     from pymor.core.interfaces import ImmutableInterface
-    from pymor.core.pickle import dump
     from pymor.vectorarrays.interfaces import VectorArrayInterface
     from pymor.vectorarrays.ngsolve import NGSolveVectorSpace
-
-    NGSOLVE_VISUALIZE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ngsolve_visualize.py')
 
     class NGSolveVisualizer(ImmutableInterface):
         """Visualize an NGSolve grid function."""
 
-        def __init__(self, fespace):
+        def __init__(self, mesh, fespace):
+            self.mesh = mesh
             self.fespace = fespace
             self.space = NGSolveVectorSpace(fespace.ndof)
 
@@ -42,21 +37,11 @@ if config.HAVE_NGSOLVE:
             if not separate_colorbars:
                 raise NotImplementedError
 
-            thread = NGSolveVisualizerThread((self.fespace, U, legend))
-            thread.start()
-            if block:
-                thread.join()
+            grid_functions = []
+            for u in U:
+                gf = ngs.GridFunction(self.fespace)
+                gf.vec.data = u._list[0].impl
+                grid_functions.append(gf)
 
-
-    class NGSolveVisualizerThread(Thread):
-
-        def __init__(self, data):
-            super().__init__()
-            self.data = data
-
-        def run(self):
-            with NamedTemporaryFile() as f:
-                dump(self.data, f)
-                del(self.data)
-                f.flush()
-                os.system('NGSOLVE_VISUALIZE_FILE={} netgen {}'.format(f.name, NGSOLVE_VISUALIZE_PATH))
+            for gf, name in zip(grid_functions, legend):
+                ngs.Draw(gf, self.mesh, name=name)
