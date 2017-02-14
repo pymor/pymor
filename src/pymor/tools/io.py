@@ -38,7 +38,9 @@ def _mmread(path, key=None):
         raise IOError('Cannot specify "key" for Matrix Market file')
     try:
         matrix = mmread(path)
-        return matrix.tocsc()
+        if issparse(matrix):
+            matrix = matrix.tocsc()
+        return matrix
     except Exception as e:
         raise IOError(e)
 
