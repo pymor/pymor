@@ -192,8 +192,7 @@ def discretize_ngsolve():
             a.Assemble()
             mats.append(a.mat)
 
-    from pymor.gui.ngsolve import NGSolveVisualizer
-    from pymor.operators.ngsolve import NGSolveMatrixOperator
+    from pymor.bindings.ngsolve import NGSolveMatrixOperator, NGSolveVisualizer
 
     op = LincombOperator([NGSolveMatrixOperator(m, V.FreeDofs()) for m in mats],
                          [ProjectionParameterFunctional('diffusion', (len(coeffs),), (i,)) for i in range(len(coeffs))])
