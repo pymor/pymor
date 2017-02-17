@@ -4,6 +4,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.config import config
+from pymor.core.defaults import defaults
 
 if config.HAVE_NGSOLVE:
     import ngsolve as ngs
