@@ -188,22 +188,23 @@ def discretize_ngsolve():
         for c in coeffs:
             diffusion = CoefficientFunction(c)
             a = BilinearForm(V, symmetric=False)
-            a += SymbolicBFI(diffusion * grad(u) * grad(v), definedon=np.where(np.array(c) == 1))
+            a += SymbolicBFI(diffusion * grad(u) * grad(v), definedon=(np.where(np.array(c) == 1)[0] + 1).tolist())
             a.Assemble()
             mats.append(a.mat)
 
-    from pymor.bindings.ngsolve import NGSolveMatrixOperator, NGSolveVisualizer
+    from pymor.bindings.ngsolve import NGSolveVectorSpace, NGSolveMatrixOperator, NGSolveVisualizer
 
-    op = LincombOperator([NGSolveMatrixOperator(m, V.FreeDofs()) for m in mats],
+    space = NGSolveVectorSpace(V)
+    op = LincombOperator([NGSolveMatrixOperator(m, space, space) for m in mats],
                          [ProjectionParameterFunctional('diffusion', (len(coeffs),), (i,)) for i in range(len(coeffs))])
 
     h1_0_op = op.assemble([1] * len(coeffs)).with_(name='h1_0_semi')
 
-    F = op.range.zeros()
-    F._list[0].impl.data = f.vec
+    F = space.zeros()
+    F._list[0].impl.vec.data = f.vec
     F = VectorFunctional(F)
 
-    return StationaryDiscretization(op, F, visualizer=NGSolveVisualizer(V),
+    return StationaryDiscretization(op, F, visualizer=NGSolveVisualizer(mesh, V),
                                     products={'h1_0_semi': h1_0_op},
                                     parameter_space=CubicParameterSpace(op.parameter_type, 0.1, 1.))
 
