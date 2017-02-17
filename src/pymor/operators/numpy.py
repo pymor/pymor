@@ -247,11 +247,9 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         return self
 
     def as_range_array(self, mu=None):
-        assert not self.sparse
         return self.range.make_array(self._matrix.T.copy())
 
     def as_source_array(self, mu=None):
-        assert not self.sparse
         return self.source.make_array(self._matrix.copy())
 
     def apply(self, U, mu=None):

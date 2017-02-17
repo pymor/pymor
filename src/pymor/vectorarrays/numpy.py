@@ -334,6 +334,9 @@ class NumpyVectorSpace(VectorSpaceInterface):
     def __eq__(self, other):
         return type(other) is type(self) and self.dim == other.dim and self.id == other.id
 
+    def __hash__(self):
+        return hash(self.dim) + hash(self.id)
+
     def zeros(self, count=1, reserve=0):
         assert count >= 0
         assert reserve >= 0

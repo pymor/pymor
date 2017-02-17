@@ -97,7 +97,7 @@ class OperatorBase(OperatorInterface):
             from pymor.algorithms.newton import newton
             from pymor.core.exceptions import NewtonError
 
-            options = self.solver_options
+            options = self.solver_options.get('inverse') if self.solver_options else None
             if options:
                 if isinstance(options, str):
                     assert options == 'newton'
@@ -113,7 +113,7 @@ class OperatorBase(OperatorInterface):
             R = V.empty(reserve=len(V))
             for i in range(len(V)):
                 try:
-                    R.append(newton(self, V[i], **options)[0])
+                    R.append(newton(self, V[i], mu=mu, **options)[0])
                 except NewtonError as e:
                     raise InversionError(e)
             return R
@@ -306,6 +306,8 @@ class ProjectedOperator(OperatorBase):
 
     def assemble(self, mu=None):
         op = self.operator.assemble(mu=mu)
+        if op == self.operator:  # avoid infinite recursion in apply_inverse default impl
+            return self
         pop = op.projected(range_basis=self.range_basis, source_basis=self.source_basis,
                            product=self.product, name=self.name + '_assembled')
         if self.solver_options:
