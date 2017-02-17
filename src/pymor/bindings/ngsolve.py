@@ -96,17 +96,18 @@ if config.HAVE_NGSOLVE:
 
         linear = True
 
-        def __init__(self, matrix, range, source, name=None):
+        def __init__(self, matrix, range, source, solver_options=None, name=None):
             self.range = range
             self.source = source
             self.matrix = matrix
+            self.solver_options = solver_options
             self.name = name
 
         def apply(self, U, mu=None):
             assert U in self.source
             R = self.range.zeros(len(U))
             for u, r in zip(U._list, R._list):
-                self.matrix.Mult(u.impl.vec, r.impl.vec) #, 1.)
+                self.matrix.Mult(u.impl.vec, r.impl.vec)
             return R
 
         def apply_transpose(self, V, mu=None):
@@ -114,16 +115,18 @@ if config.HAVE_NGSOLVE:
             U = self.source.zeros(len(V))
             mat = self.matrix.Transpose()
             for v, u in zip(V._list, U._list):
-                mat.Mult(v.impl.vec, u.impl.vec) #, 1.)
+                mat.Mult(v.impl.vec, u.impl.vec)
             return U
 
-        def apply_inverse(self, V, mu=None, least_squares=False):
+        @defaults('default_solver')
+        def apply_inverse(self, V, mu=None, least_squares=False, default_solver=''):
             assert V in self.range
             if least_squares:
                 raise NotImplementedError
+            solver = self.solver_options.get('inverse', default_solver) if self.solver_options else default_solver
             R = self.source.zeros(len(V))
             with ngs.TaskManager():
-                inv = self.matrix.Inverse(self.source.V.FreeDofs())
+                inv = self.matrix.Inverse(self.source.V.FreeDofs(), inverse=solver)
                 for r, v in zip(R._list, V._list):
                     r.impl.vec.data = inv * v.impl.vec
             return R
@@ -131,7 +134,6 @@ if config.HAVE_NGSOLVE:
         def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
             if not all(isinstance(op, (NGSolveMatrixOperator, ZeroOperator)) for op in operators):
                 return None
-            assert not solver_options
 
             matrix = operators[0].matrix.CreateMatrix()
             matrix.AsVector().data = float(coefficients[0]) * matrix.AsVector()
@@ -139,7 +141,7 @@ if config.HAVE_NGSOLVE:
                 if isinstance(op, ZeroOperator):
                     continue
                 matrix.AsVector().data += float(c) * op.matrix.AsVector()
-            return NGSolveMatrixOperator(matrix, self.range, self.source, name=name)
+            return NGSolveMatrixOperator(matrix, self.range, self.source, solver_options=solver_options, name=name)
 
 
     class NGSolveVisualizer(ImmutableInterface):
