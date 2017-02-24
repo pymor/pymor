@@ -68,6 +68,8 @@ class NumpyVectorArray(VectorArray):
         return self._len
 
     def __getitem__(self, ind):
+        if isinstance(ind, Number) and (ind >= self._len or ind < -self._len):
+            raise IndexError('VectorArray index out of range')
         return NumpyVectorArrayView(self, ind)
 
     def __delitem__(self, ind):
@@ -460,7 +462,10 @@ class NumpyVectorArrayView(NumpyVectorArray):
         return self.base.len_ind(self.ind)
 
     def __getitem__(self, ind):
-        return self.base[self.base.sub_index(self.ind, ind)]
+        try:
+            return self.base[self.base.sub_index(self.ind, ind)]
+        except IndexError:
+            raise IndexError('VectorArray index out of range')
 
     def __delitem__(self):
         raise ValueError('Cannot remove from NumpyVectorArrayView')
