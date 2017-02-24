@@ -14,6 +14,7 @@ if config.HAVE_NGSOLVE:
     from pymor.operators.basic import OperatorBase
     from pymor.operators.constructions import ZeroOperator
     from pymor.vectorarrays.interfaces import VectorArrayInterface
+    from pymor.vectorarrays.numpy import NumpyVectorSpace
     from pymor.vectorarrays.list import CopyOnWriteVector, ListVectorSpace
 
 
@@ -147,6 +148,10 @@ if config.HAVE_NGSOLVE:
                     continue
                 matrix.AsVector().data += float(c) * op.matrix.AsVector()
             return NGSolveMatrixOperator(matrix, self.range, self.source, solver_options=solver_options, name=name)
+
+        def as_dof_array(self):
+            return NumpyVectorSpace.make_array(self.matrix.AsVector().FV().NumPy())
+
 
 
     class NGSolveVisualizer(ImmutableInterface):
