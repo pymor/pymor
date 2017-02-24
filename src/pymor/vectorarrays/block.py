@@ -206,6 +206,14 @@ class BlockVectorSpace(VectorSpaceInterface):
         assert all(block in subspace for block, subspace in zip(obj, self.subspaces))
         return BlockVectorArray(obj, self)
 
+    def make_block_diagonal_array(self, obj):
+        assert len(obj) == len(self.subspaces)
+        assert all(block in subspace for block, subspace in zip(obj, self.subspaces))
+        U = self.empty(reserve=sum(len(UU) for UU in obj))
+        for i, UU in enumerate(obj):
+            U.append(self.make_array([s.zeros(len(UU)) if j != i else UU for j, s in enumerate(self.subspaces)]))
+        return U
+
     def from_data(self, data):
         if data.ndim == 1:
             data = data.reshape(1, -1)
