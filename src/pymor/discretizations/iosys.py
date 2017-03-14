@@ -224,8 +224,8 @@ class LTISystem(InputOutputSystem):
 
     special_operators = frozenset({'A', 'B', 'C', 'D', 'E'})
 
-    def __init__(self, A, B, C, D=None, E=None, cont_time=True, solver_options=None,
-                 cache_region='memory', name=None):
+    def __init__(self, A, B, C, D=None, E=None, cont_time=True,
+                 solver_options=None, cache_region='memory', name=None):
 
         D = D or ZeroOperator(B.source, C.range)
         E = E or IdentityOperator(A.source)
@@ -245,7 +245,8 @@ class LTISystem(InputOutputSystem):
         self.solver_options = solver_options
 
     @classmethod
-    def from_matrices(cls, A, B, C, D=None, E=None, cont_time=True):
+    def from_matrices(cls, A, B, C, D=None, E=None, cont_time=True,
+                      solver_options=None, cache_region='memory', name=None):
         """Create |LTISystem| from matrices.
 
         Parameters
@@ -284,10 +285,12 @@ class LTISystem(InputOutputSystem):
         if E is not None:
             E = NumpyMatrixOperator(E, source_id='STATE', range_id='STATE')
 
-        return cls(A, B, C, D, E, cont_time=cont_time)
+        return cls(A, B, C, D, E, cont_time=cont_time,
+                   solver_options=solver_options, cache_region=cache_region, name=name)
 
     @classmethod
-    def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, cont_time=True):
+    def from_files(cls, A_file, B_file, C_file, D_file=None, E_file=None, cont_time=True,
+                   solver_options=None, cache_region='memory', name=None):
         """Create |LTISystem| from matrices stored in separate files.
 
         Parameters
@@ -318,10 +321,12 @@ class LTISystem(InputOutputSystem):
         D = load_matrix(D_file) if D_file is not None else None
         E = load_matrix(E_file) if E_file is not None else None
 
-        return cls.from_matrices(A, B, C, D, E, cont_time=cont_time)
+        return cls.from_matrices(A, B, C, D, E, cont_time=cont_time,
+                                 solver_options=solver_options, cache_region=cache_region, name=name)
 
     @classmethod
-    def from_mat_file(cls, file_name, cont_time=True):
+    def from_mat_file(cls, file_name, cont_time=True,
+                      solver_options=None, cache_region='memory', name=None):
         """Create |LTISystem| from matrices stored in a .mat file.
 
         Parameters
@@ -348,10 +353,12 @@ class LTISystem(InputOutputSystem):
         D = mat_dict['D'] if 'D' in mat_dict else None
         E = mat_dict['E'] if 'E' in mat_dict else None
 
-        return cls.from_matrices(A, B, C, D, E, cont_time=cont_time)
+        return cls.from_matrices(A, B, C, D, E, cont_time=cont_time,
+                                 solver_options=solver_options, cache_region=cache_region, name=name)
 
     @classmethod
-    def from_abcde_files(cls, files_basename, cont_time=True):
+    def from_abcde_files(cls, files_basename, cont_time=True,
+                         solver_options=None, cache_region='memory', name=None):
         """Create |LTISystem| from matrices stored in a .[ABCDE] files.
 
         Parameters
@@ -375,7 +382,8 @@ class LTISystem(InputOutputSystem):
         D = load_matrix(files_basename + '.D') if os.path.isfile(files_basename + '.D') else None
         E = load_matrix(files_basename + '.E') if os.path.isfile(files_basename + '.E') else None
 
-        return cls.from_matrices(A, B, C, D, E, cont_time=cont_time)
+        return cls.from_matrices(A, B, C, D, E, cont_time=cont_time,
+                                 solver_options=solver_options, cache_region=cache_region, name=name)
 
     def __mul__(self, other):
         """Multiply (cascade) two |LTISystems|."""
