@@ -781,6 +781,32 @@ class FixedParameterOperator(ProxyOperator):
         return self.operator.jacobian(U, mu=self.mu)
 
 
+class LinearOperator(ProxyOperator):
+    """Mark the wrapped |Operator| to be linear."""
+
+    def __init__(self, operator, name=None):
+        super().__init__(operator, name)
+        self.linear = True
+
+
+class AffineOperator(ProxyOperator):
+    """Decompose an affine |Operator| into affine_shift and linear_part. """
+
+    def __init__(self, operator, name=None):
+        if operator.parametric:
+            raise NotImplementedError
+        super().__init__(operator, name)
+        self.affine_shift = ConstantOperator(operator.apply(operator.source.zeros()), source=operator.source)
+        self.linear_part = LinearOperator(operator - self.affine_shift, name=operator.name + '_linear_part')
+
+    def projected(self, range_basis, source_basis, product=None, name=None):
+        return (self.affine_shift + self.linear_part).projected(
+            range_basis, source_basis, product=product, name=name
+        )
+
+    def jacobian(self, U, mu=None):
+        return self.linear_part.jacobian(U, mu)
+
 
 class InverseOperator(OperatorBase):
     """Represents the inverse of a given |Operator|.
