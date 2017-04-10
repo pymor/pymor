@@ -700,7 +700,53 @@ class VectorFunctional(VectorArrayOperator):
             super().__init__(product.apply(vector), transposed=True, name=name)
 
 
-class FixedParameterOperator(OperatorBase):
+class ProxyOperator(OperatorBase):
+    """Forwards all interface calls to given |Operator|.
+
+    Mainly useful as base class for other |Operator| implementations.
+
+    Parameters
+    ----------
+    operator
+        The |Operator| to wrap.
+    name
+        Name of the wrapping operator.
+    """
+
+    def __init__(self, operator, name=None):
+        assert isinstance(operator, OperatorInterface)
+        self.source = operator.source
+        self.range = operator.range
+        self.operator = operator
+        self.linear = operator.linear
+        self.name = name
+        self.build_parameter_type(operator)
+
+    @property
+    def T(self):
+        return self.with_(operator=self.operator.T, name=self.name + '_transposed')
+
+    def apply(self, U, mu=None):
+        return self.operator.apply(U, mu=mu)
+
+    def apply_transpose(self, V, mu=None):
+        return self.operator.apply_transpose(V, mu=mu)
+
+    def apply_inverse(self, V, mu=None, least_squares=False):
+        return self.operator.apply_inverse(V, mu=mu, least_squares=least_squares)
+
+    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+        return self.operator.apply_inverse_transpose(U, mu=mu, least_squares=least_squares)
+
+    def jacobian(self, U, mu=None):
+        return self.operator.jacobian(U, mu=mu)
+
+    def restricted(self, dofs):
+        op, source_dofs = self.operator.restricted(dofs)
+        return self.with_(operator=op), source_dofs
+
+
+class FixedParameterOperator(ProxyOperator):
     """Makes an |Operator| |Parameter|-independent by setting a fixed |Parameter|.
 
     Parameters
@@ -714,18 +760,10 @@ class FixedParameterOperator(OperatorBase):
     """
 
     def __init__(self, operator, mu=None, name=None):
-        assert isinstance(operator, OperatorInterface)
+        super().__init__(operator, name)
         assert operator.parse_parameter(mu) or True
-        self.source = operator.source
-        self.range = operator.range
-        self.operator = operator
         self.mu = mu.copy()
-        self.linear = operator.linear
-        self.name = name
-
-    @property
-    def T(self):
-        return self.with_(operator=self.operator.T, name=self.name + '_transposed')
+        self.build_parameter_type()
 
     def apply(self, U, mu=None):
         return self.operator.apply(U, mu=self.mu)
@@ -742,9 +780,6 @@ class FixedParameterOperator(OperatorBase):
     def jacobian(self, U, mu=None):
         return self.operator.jacobian(U, mu=self.mu)
 
-    def restricted(self, dofs):
-        op, source_dofs = self.operator.restricted(dofs)
-        return self.with_(operator=op), source_dofs
 
 
 class InverseOperator(OperatorBase):
