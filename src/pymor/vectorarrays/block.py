@@ -31,6 +31,14 @@ class BlockVectorArray(VectorArrayInterface):
     def data(self):
         return np.hstack([block.data for block in self._blocks])
 
+    @property
+    def real(self):
+        return BlockVectorArray([block.real for block in self._blocks], self.space)
+
+    @property
+    def imag(self):
+        return BlockVectorArray([block.imag for block in self._blocks], self.space)
+
     def block(self, ind):
         """
         Returns a copy of each block (no slicing).
