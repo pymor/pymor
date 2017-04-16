@@ -141,7 +141,6 @@ class LincombOperator(OperatorBase):
                 return self.assemble().apply_transpose(V)
         elif self._try_assemble:
             return self.assemble().apply_transpose(V)
-
         coeffs = self.evaluate_coefficients(mu)
         R = self.operators[0].apply_transpose(V, mu=mu)
         R.scal(coeffs[0])
@@ -1165,7 +1164,7 @@ class InducedNorm(ImmutableInterface, Parametric):
         self.build_parameter_type(product)
 
     def __call__(self, U, mu=None):
-        norm_squared = self.product.pairwise_apply2(U, U, mu=mu)
+        norm_squared = self.product.pairwise_apply2(U, U, mu=mu).real
         if self.tol > 0:
             norm_squared = np.where(np.logical_and(0 > norm_squared, norm_squared > - self.tol),
                                     0, norm_squared)
