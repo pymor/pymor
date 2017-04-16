@@ -42,11 +42,11 @@ class NumpyVectorArray(VectorArrayInterface):
 
     @property
     def real(self):
-        return NumpyVectorArray(self._array[:self._len].real.copy(), self.space)
+        return NumpyVectorArray(self.data.real.copy(), self.space)
 
     @property
     def imag(self):
-        return NumpyVectorArray(self._array[:self._len].imag, self.space)
+        return NumpyVectorArray(self.data.imag.copy(), self.space)
 
     def __len__(self):
         return self._len
