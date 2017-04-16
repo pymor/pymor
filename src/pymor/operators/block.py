@@ -139,9 +139,9 @@ class BlockOperator(OperatorBase):
                     return None
             return self.__class__(blocks)
         else:
-            if coefficients[0] == 1:
+            c = coefficients[0]
+            if c == 1:
                 return self
-            c = coefficients[0].real if coefficients[0].imag == 0 else coefficients[0]
             for (i, j) in np.ndindex(self._blocks.shape):
                 blocks[i, j] = self._blocks[i, j] * c
             return self.__class__(blocks)
@@ -224,9 +224,9 @@ class BlockDiagonalOperator(BlockOperator):
                     return None
             return self.__class__(blocks)
         else:
-            if coefficients[0] == 1:
+            c = coefficients[0]
+            if c == 1:
                 return self
-            c = coefficients[0].real if coefficients[0].imag == 0 else coefficients[0]
             for i in range(self.num_source_blocks):
                 blocks[i] = self._blocks[i, i] * c
             return self.__class__(blocks)
