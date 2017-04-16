@@ -475,7 +475,6 @@ class NumpyVectorArrayView(NumpyVectorArray):
 
     def l2_norm2(self):
         return self.base.l2_norm2(_ind=self.ind)
-        pass
 
     def sup_norm(self):
         return self.base.sup_norm(_ind=self.ind)
