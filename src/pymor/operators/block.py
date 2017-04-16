@@ -167,34 +167,24 @@ class BlockDiagonalOperator(BlockOperator):
 
     def apply(self, U, mu=None):
         assert U in self.source
-
         V_blocks = [self._blocks[i, i].apply(U.block(i), mu=mu) for i in range(self.num_range_blocks)]
-
         return self.range.make_array(V_blocks)
 
     def apply_transpose(self, V, mu=None):
         assert V in self.range
-
         U_blocks = [self._blocks[i, i].apply_transpose(V.block(i), mu=mu) for i in range(self.num_source_blocks)]
-
-        U = self.source.make_array(U_blocks)
-
-        return U
+        return self.source.make_array(U_blocks)
 
     def apply_inverse(self, V, mu=None, least_squares=False):
         assert V in self.range
-
         U_blocks = [self._blocks[i, i].apply_inverse(V.block(i), mu=mu, least_squares=least_squares)
                     for i in range(self.num_source_blocks)]
-
         return self.source.make_array(U_blocks)
 
     def apply_inverse_transpose(self, U, mu=None, least_squares=False):
         assert U in self.source
-
         V_blocks = [self._blocks[i, i].apply_inverse_transpose(U.block(i), mu=mu, least_squares=least_squares)
                     for i in range(self.num_source_blocks)]
-
         return self.range.make_array(V_blocks)
 
     def assemble(self, mu=None):
