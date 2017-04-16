@@ -5,6 +5,7 @@
 
 """Module containing some constructions to obtain new operators from old ones."""
 
+from functools import reduce
 from itertools import chain
 
 import numpy as np
@@ -101,10 +102,15 @@ class LincombOperator(OperatorBase):
         elif self._try_assemble:
             return self.assemble().apply2(V, U)
         coeffs = self.evaluate_coefficients(mu)
-        R = self.operators[0].apply2(V, U, mu=mu)
-        R *= coeffs[0]
-        for op, c in zip(self.operators[1:], coeffs[1:]):
-            R += c * op.apply2(V, U, mu=mu)
+        matrices = [op.apply2(V, U, mu=mu) for op in self.operators]
+        coeffs_dtype = reduce(np.promote_types, (type(c) for c in coeffs))
+        matrices_dtype = reduce(np.promote_types, (m.dtype for m in matrices))
+        common_dtype = np.promote_types(coeffs_dtype, matrices_dtype)
+        R = coeffs[0] * matrices[0]
+        if R.dtype != common_dtype:
+            R = R.astype(common_dtype)
+        for m, c in zip(matrices[1:], coeffs[1:]):
+            R += c * m
         return R
 
     def pairwise_apply2(self, V, U, mu=None):
@@ -116,10 +122,15 @@ class LincombOperator(OperatorBase):
         elif self._try_assemble:
             return self.assemble().pairwise_apply2(V, U)
         coeffs = self.evaluate_coefficients(mu)
-        R = self.operators[0].pairwise_apply2(V, U, mu=mu)
-        R *= coeffs[0]
-        for op, c in zip(self.operators[1:], coeffs[1:]):
-            R += c * op.pairwise_apply2(V, U, mu=mu)
+        vectors = [op.pairwise_apply2(V, U, mu=mu) for op in self.operators]
+        coeffs_dtype = reduce(np.promote_types, (type(c) for c in coeffs))
+        vectors_dtype = reduce(np.promote_types, (v.dtype for v in vectors))
+        common_dtype = np.promote_types(coeffs_dtype, vectors_dtype)
+        R = coeffs[0] * vectors[0]
+        if R.dtype != common_dtype:
+            R = R.astype(common_dtype)
+        for v, c in zip(vectors[1:], coeffs[1:]):
+            R += c * v
         return R
 
     def apply_transpose(self, V, mu=None):
