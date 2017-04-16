@@ -3,7 +3,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""Burgers demo.
+"""Solves Burgers' equation in 2D. See analyticalproblems for more details on the Burgers' equation.
 
 Solves a two-dimensional Burgers-type equation. See pymor.analyticalproblems.burgers for more details.
 

@@ -3,7 +3,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-"""Burgers with EI demo.
+"""MOR demo of Burgers' equation. This demo makes use of the empirical interpolation method (EI) to resolve non-linearities.
 
 Model order reduction of a two-dimensional Burgers-type equation
 (see pymor.analyticalproblems.burgers) using the reduced basis method
