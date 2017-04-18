@@ -83,7 +83,6 @@ if config.HAVE_DUNEXT:
             return self * (-1)
 
 
-
     class DuneXTVectorSpace(ListVectorSpace):
 
         def __init__(self, vector_type, dim, id_='STATE'):
@@ -162,8 +161,10 @@ if config.HAVE_DUNEXT:
                 return operators[1].assemble_lincomb(operators[1:], coefficients[1:],
                                                      solver_options=solver_options, name=name)
 
-            matrix = operators[0].matrix.copy()
-            matrix.scal(coefficients[0])
+            if coefficients[0] == 1:
+                matrix = operators[0].matrix.copy()
+            else:
+                matrix = operators[0].matrix * coefficients[0]
             for op, c in zip(operators[1:], coefficients[1:]):
                 if isinstance(op, ZeroOperator):
                     continue
