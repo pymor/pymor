@@ -356,44 +356,6 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                                            solver_options=options)
         return transpose_op.apply_inverse(U, mu=mu, least_squares=least_squares)
 
-    def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
-        """Project the operator to a subbasis.
-
-        The purpose of this method is to further project an operator that has been
-        obtained through :meth:`~pymor.operators.interfaces.OperatorInterface.projected`
-        to subbases of the original projection bases, i.e. ::
-
-            op.projected(r_basis, s_basis, prod).projected_to_subbasis(dim_range, dim_source)
-
-        should be the same as ::
-
-            op.projected(r_basis[:dim_range], s_basis[:dim_source], prod)
-
-        For a |NumpyMatrixOperator| this amounts to extracting the upper-left
-        (dim_range, dim_source) corner of the matrix it wraps.
-
-        Parameters
-        ----------
-        dim_range
-            Dimension of the range subbasis.
-        dim_source
-            Dimension of the source subbasis.
-        name
-            optional name for the returned |Operator|
-        Returns
-        -------
-        The projected |Operator|.
-        """
-        assert dim_source is None or dim_source <= self.source.dim
-        assert dim_range is None or dim_range <= self.range.dim
-        name = name or '{}_projected_to_subbasis'.format(self.name)
-        # copy instead of just slicing the matrix to ensure contiguous memory
-        return NumpyMatrixOperator(self._matrix[:dim_range, :dim_source].copy(),
-                                   source_id=self.source.id,
-                                   range_id=self.range.id,
-                                   solver_options=self.solver_options,
-                                   name=name)
-
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         if not all(isinstance(op, (NumpyMatrixOperator, ZeroOperator, IdentityOperator)) for op in operators):
             return None

@@ -206,26 +206,6 @@ class LincombOperator(OperatorBase):
     def as_source_array(self, mu=None):
         return self._as_array(True, mu)
 
-    def projected(self, range_basis, source_basis, product=None, name=None):
-        if hasattr(self, '_assembled_operator'):
-            if self._defaults_sid == defaults_sid():
-                return self._assembled_operator.projected(range_basis, source_basis, product, name)
-            else:
-                return self.assemble().projected(range_basis, source_basis, product, name)
-        elif self._try_assemble:
-            return self.assemble().projected(range_basis, source_basis, product, name)
-        proj_operators = [op.projected(range_basis=range_basis, source_basis=source_basis, product=product)
-                          for op in self.operators]
-        return self.with_(operators=proj_operators, name=name or self.name + '_projected')
-
-    def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
-        """See :meth:`pymor.operators.numpy.NumpyMatrixOperator.projected_to_subbasis`."""
-        assert dim_source is None or dim_source <= self.source.dim
-        assert dim_range is None or dim_range <= self.range.dim
-        proj_operators = [op.projected_to_subbasis(dim_range=dim_range, dim_source=dim_source)
-                          for op in self.operators]
-        return self.with_(operators=proj_operators, name=name or '{}_projected_to_subbasis'.format(self.name))
-
     def __getstate__(self):
         d = self.__dict__.copy()
         if '_assembled_operator' in d:
@@ -290,16 +270,6 @@ class Concatenation(OperatorBase):
             return restricted_second, first_source_dofs
         else:
             return Concatenation(restricted_second, restricted_first), first_source_dofs
-
-    def projected(self, range_basis, source_basis, product=None, name=None):
-        if not self.parametric and self.linear:
-            return super().projected(range_basis, source_basis, product=product, name=name)
-        projected_first = self.first.projected(None, source_basis, product=None)
-        if isinstance(projected_first, VectorArrayOperator) and not projected_first.transposed:
-            return self.second.projected(range_basis, projected_first._array, product=product, name=name)
-        else:
-            projected_second = self.second.projected(range_basis, None, product=product)
-            return Concatenation(projected_second, projected_first, name=name or self.name + '_projected')
 
 
 class ComponentProjection(OperatorBase):
@@ -429,35 +399,10 @@ class ConstantOperator(OperatorBase):
         assert len(U) == 1
         return ZeroOperator(self.source, self.range, name=self.name + '_jacobian')
 
-    def projected(self, range_basis, source_basis, product=None, name=None):
-        assert source_basis is None or source_basis in self.source
-        assert range_basis is None or range_basis in self.range
-        assert product is None or product.source == product.range == self.range
-        if range_basis is not None:
-            if product:
-                projected_value = NumpyVectorSpace.make_array(product.apply2(range_basis, self._value).T, self.range.id)
-            else:
-                projected_value = NumpyVectorSpace.make_array(range_basis.dot(self._value).T, self.range.id)
-        else:
-            projected_value = self._value
-        if source_basis is None:
-            return ConstantOperator(projected_value, self.source, name=self.name + '_projected')
-        else:
-            return ConstantOperator(projected_value, NumpyVectorSpace(len(source_basis), self.source.id),
-                                    name=self.name + '_projected')
-
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
         restricted_value = NumpyVectorSpace.make_array(self._value.components(dofs))
         return ConstantOperator(restricted_value, NumpyVectorSpace(len(dofs))), dofs
-
-    def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
-        assert dim_source is None or (self.source.type is NumpyVectorArray and dim_source <= self.source.dim)
-        assert dim_range is None or (self.range.type is NumpyVectorArray and dim_range <= self.range.dim)
-        name = name or '{}_projected_to_subbasis'.format(self.name)
-        source = self.source if dim_source is None else NumpyVectorSpace(dim_source, self.source.id)
-        value = self._value if dim_range is None else NumpyVectorSpace(self._value.data[:, :dim_range], self.range.id)
-        return ConstantOperator(value, source, name=name)
 
 
 class ZeroOperator(OperatorBase):
@@ -505,22 +450,6 @@ class ZeroOperator(OperatorBase):
         if not least_squares:
             raise InversionError
         return self.range.zeros(len(U))
-
-    def projected(self, range_basis, source_basis, product=None, name=None):
-        assert source_basis is None or source_basis in self.source
-        assert range_basis is None or range_basis in self.range
-        assert product is None or product.source == product.range == self.range
-        if source_basis is not None and range_basis is not None:
-            from pymor.operators.numpy import NumpyMatrixOperator
-            return NumpyMatrixOperator(np.zeros((len(range_basis), len(source_basis))),
-                                       source_id=self.source.id, range_id=self.range.id,
-                                       name=self.name + '_projected')
-        else:
-            new_source = (NumpyVectorSpace(len(source_basis), self.source.id) if source_basis is not None else
-                          self.source)
-            new_range = (NumpyVectorSpace(len(range_basis), self.range.id) if range_basis is not None else
-                         self.range)
-            return ZeroOperator(new_source, new_range, name=self.name + '_projected')
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         assert operators[0] is self
@@ -799,11 +728,6 @@ class AffineOperator(ProxyOperator):
         self.affine_shift = ConstantOperator(operator.apply(operator.source.zeros()), source=operator.source)
         self.linear_part = LinearOperator(operator - self.affine_shift, name=operator.name + '_linear_part')
 
-    def projected(self, range_basis, source_basis, product=None, name=None):
-        return (self.affine_shift + self.linear_part).projected(
-            range_basis, source_basis, product=product, name=name
-        )
-
     def jacobian(self, U, mu=None):
         return self.linear_part.jacobian(U, mu)
 
@@ -1001,22 +925,6 @@ class AdjointOperator(OperatorBase):
             V = self.source_product.apply(V)
         return V
 
-    def projected(self, range_basis, source_basis, product=None, name=None):
-        if range_basis is not None:
-            if product is not None:
-                range_basis = product.apply(range_basis)
-            if self.source_product:
-                range_basis = self.source_product.apply_inverse(range_basis)
-
-        if source_basis is not None and self.range_product:
-            source_basis = self.range_product.apply(source_basis)
-
-        operator = self.operator.projected(source_basis, range_basis)
-        range_product = self.range_product if source_basis is None else None
-        source_product = self.source_product if range_basis is None else None
-        return AdjointOperator(operator, source_product=source_product, range_product=range_product,
-                               name=name or self.name + '_projected')
-
 
 class SelectionOperator(OperatorBase):
     """An |Operator| selected from a list of |Operators|.
@@ -1098,12 +1006,6 @@ class SelectionOperator(OperatorBase):
         mu = self.parse_parameter(mu)
         operator_number = self._get_operator_number(mu)
         return self.operators[operator_number].as_source_array(mu=mu)
-
-    def projected(self, range_basis, source_basis, product=None, name=None):
-        projected_operators = [op.projected(range_basis, source_basis, product=product, name=name)
-                               for op in self.operators]
-        return SelectionOperator(projected_operators, self.parameter_functional, self.boundaries,
-                                 name or self.name + '_projected')
 
 
 @defaults('raise_negative', 'tol')

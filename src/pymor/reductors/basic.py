@@ -4,6 +4,7 @@
 
 import numpy as np
 
+from pymor.algorithms.projection import project, project_to_subbasis
 from pymor.core.interfaces import BasicInterface
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -69,9 +70,10 @@ def reduce_generic_rb(discretization, RB, orthogonal_projection=('initial_data',
         RB = discretization.solution_space.empty()
 
     def project_operator(k, op):
-        return op.projected(range_basis=RB if RB in op.range else None,
-                            source_basis=RB if RB in op.source else None,
-                            product=product if k in orthogonal_projection else None)
+        return project(op,
+                       range_basis=RB if RB in op.range else None,
+                       source_basis=RB if RB in op.source else None,
+                       product=product if k in orthogonal_projection else None)
 
     projected_operators = {k: project_operator(k, op) if op else None for k, op in discretization.operators.items()}
 
@@ -135,8 +137,9 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
     """
 
     def project_operator(op):
-        return op.projected_to_subbasis(dim_range=dim if op.range == discretization.solution_space else None,
-                                        dim_source=dim if op.source == discretization.solution_space else None)
+        return project_to_subbasis(op,
+                                     dim_range=dim if op.range == discretization.solution_space else None,
+                                     dim_source=dim if op.source == discretization.solution_space else None)
 
     projected_operators = {k: project_operator(op) if op else None for k, op in discretization.operators.items()}
 
