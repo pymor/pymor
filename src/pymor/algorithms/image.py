@@ -2,12 +2,11 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-import numpy as np
-
 from pymor.algorithms.gram_schmidt import gram_schmidt
-from pymor.core.exceptions import ImageCollectionError
+from pymor.algorithms.rules import RuleTable, rule
+from pymor.core.exceptions import ImageCollectionError, NoMatchingRuleError
 from pymor.core.logger import getLogger
-from pymor.operators.constructions import AdjointOperator, Concatenation, LincombOperator, SelectionOperator
+from pymor.operators.constructions import Concatenation, LincombOperator, SelectionOperator
 from pymor.operators.ei import EmpiricalInterpolatedOperator
 from pymor.operators.interfaces import OperatorInterface
 from pymor.vectorarrays.interfaces import VectorArrayInterface
@@ -84,42 +83,21 @@ def estimate_image(operators=(), vectors=(),
     assert domain is None or domain_space is None or domain in domain_space
     assert product is None or product.source == product.range == image_space
 
-    def collect_operator_ranges(op, source, image):
-        if op.linear and not op.parametric:
-            image.append(op.apply(source))
-        elif isinstance(op, (LincombOperator, SelectionOperator)):
-            for o in op.operators:
-                collect_operator_ranges(o, source, image)
-        elif isinstance(op, EmpiricalInterpolatedOperator):
-            if hasattr(op, 'collateral_basis') and not extends:
-                image.append(op.collateral_basis)
-        elif isinstance(op, Concatenation):
-            firstrange = op.first.range.empty()
-            collect_operator_ranges(op.first, source, firstrange)
-            collect_operator_ranges(op.second, firstrange, image)
-        else:
-            raise ImageCollectionError(op)
-
-    def collect_vector_ranges(op, image):
-        if isinstance(op, VectorArrayInterface):
-            image.append(op)
-        elif op.linear and not op.parametric:
-            image.append(op.as_range_array())
-        elif isinstance(op, (LincombOperator, SelectionOperator)):
-            for o in op.operators:
-                collect_vector_ranges(o, image)
-        else:
-            raise ImageCollectionError(op)
-
     image = image_space.empty()
     if not extends:
         for v in vectors:
-            collect_vector_ranges(v, image)
+            try:
+                CollectVectorRangeRules.apply(v, image)
+            except NoMatchingRuleError as e:
+                raise ImageCollectionError(e)
 
     if operators and domain is None:
         domain = domain_space.empty()
     for op in operators:
-        collect_operator_ranges(op, domain, image)
+        try:
+            CollectOperatorRangeRules.apply(op, domain, image, extends)
+        except NoMatchingRuleError as e:
+            raise ImageCollectionError(e)
 
     if riesz_representatives and product:
         image = product.apply_inverse(image)
@@ -235,3 +213,42 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
             image_dims.append(len(image))
 
     return image, image_dims
+
+
+class CollectOperatorRangeRules(RuleTable):
+
+    @rule(lambda op: op.linear and not op.parametric)
+    def linear_operator(self, op, source, image, extends):
+        image.append(op.apply(source))
+
+    @rule((LincombOperator, SelectionOperator))
+    def LincombOperator(self, op, source, image, extends):
+        for o in op.operators:
+            self.apply(o, source, image, extends)
+
+    @rule(EmpiricalInterpolatedOperator)
+    def EmpiricalInterpolatedOperator(self, op, source, image, extends):
+        if hasattr(op, 'collateral_basis') and not extends:
+            image.append(op.collateral_basis)
+
+    @rule(Concatenation)
+    def Concatenation(self, op, source, image, extends):
+        firstrange = op.first.range.empty()
+        self.apply(op.first, source, firstrange, extends)
+        self.apply(op.second, firstrange, image, extends)
+
+
+class CollectVectorRangeRules(RuleTable):
+
+    @rule(VectorArrayInterface)
+    def VectorArray(self, obj, image):
+        image.append(obj)
+
+    @rule(lambda op: op.linear and not op.parametric)
+    def linear_vector_operator(self, op, image):
+        image.append(op.as_range_array())
+
+    @rule((LincombOperator, SelectionOperator))
+    def LincombOperator(self, op, image):
+        for o in op.operators:
+            self.apply(o, image)
