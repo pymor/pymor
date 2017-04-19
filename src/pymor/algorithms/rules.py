@@ -3,6 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.exceptions import NoMatchingRuleError, RuleNotMatchingError
+from pymor.core.interfaces import classinstancemethod
 
 
 class rule():
@@ -10,7 +11,7 @@ class rule():
 
     def __init__(self, condition, condition_description=None):
         self.condition = \
-                condition if isinstance(condition, tuple) else (condition,) if isinstance(condition, type) else condition
+            condition if isinstance(condition, tuple) else (condition,) if isinstance(condition, type) else condition
         self.condition_description = condition_description
         self._rule_nr = self._rules_created[0]
         self._rules_created[0] += 1
@@ -85,12 +86,23 @@ class RuleTableMeta(type):
 
 class RuleTable(metaclass=RuleTableMeta):
 
-    @classmethod
+    def __init__(self):
+        self._cache = {}
+
+    @classinstancemethod
     def apply(cls, obj, *args, **kwargs):
-        for r in cls._rules:
+        return cls().apply(obj, *args, **kwargs)
+
+    @apply.instancemethod
+    def apply(self, obj, *args, **kwargs):
+        if obj in self._cache:
+            return self._cache[obj]
+        for r in self._rules:
             if r.matches(obj):
                 try:
-                    return r.action(cls, obj, *args, **kwargs)
+                    result = r.action(self, obj, *args, **kwargs)
+                    self._cache[obj] = result
+                    return result
                 except RuleNotMatchingError:
                     pass
 
