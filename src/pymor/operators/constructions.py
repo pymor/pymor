@@ -148,6 +148,13 @@ class LincombOperator(OperatorBase):
     def as_source_array(self, mu=None):
         return self._as_array(True, mu)
 
+    def map_children(self, func, *args, return_new_object=True, **kwargs):
+        new_operators = [func(op, *args, **kwargs) for op in self.operators]
+        if return_new_object:
+            return self.with_(operators=new_operators)
+        else:
+            return new_operators
+
 
 class Concatenation(OperatorBase):
     """|Operator| representing the concatenation of two |Operators|.
@@ -206,6 +213,14 @@ class Concatenation(OperatorBase):
             return restricted_second, first_source_dofs
         else:
             return Concatenation(restricted_second, restricted_first), first_source_dofs
+
+    def map_children(self, func, *args, return_new_object=True, **kwargs):
+        new_first = func(self.first, *args, **kwargs)
+        new_second = func(self.second, *args, **kwargs)
+        if return_new_object:
+            return self.with_(first=new_first, second=new_second)
+        else:
+            return new_second, new_first
 
 
 class ComponentProjection(OperatorBase):
@@ -610,6 +625,13 @@ class ProxyOperator(OperatorBase):
         op, source_dofs = self.operator.restricted(dofs)
         return self.with_(operator=op), source_dofs
 
+    def map_children(self, func, *args, return_new_object=True, **kwargs):
+        new_operator = func(self.operator, *args, **kwargs)
+        if return_new_object:
+            return self.with_(operator=new_operator)
+        else:
+            return new_operator
+
 
 class FixedParameterOperator(ProxyOperator):
     """Makes an |Operator| |Parameter|-independent by setting a fixed |Parameter|.
@@ -667,6 +689,14 @@ class AffineOperator(ProxyOperator):
     def jacobian(self, U, mu=None):
         return self.linear_part.jacobian(U, mu)
 
+    def map_children(self, func, *args, return_new_object=True, **kwargs):
+        new_affine_shift = func(self.affine_shift, *args, **kwargs)
+        new_linear_part = func(self.linear_part, *args, **kwargs)
+        if return_new_object:
+            return self.with_(affine_shift=new_affine_shift, linear_part=new_linear_part)
+        else:
+            return new_affine_shift, new_linear_part
+
 
 class InverseOperator(OperatorBase):
     """Represents the inverse of a given |Operator|.
@@ -707,6 +737,13 @@ class InverseOperator(OperatorBase):
     def apply_inverse_transpose(self, U, mu=None, least_squares=False):
         assert U in self.source
         return self.operator.apply_transpose(U, mu=mu)
+
+    def map_children(self, func, *args, return_new_object=True, **kwargs):
+        new_operator = func(self.operator, *args, **kwargs)
+        if return_new_object:
+            return self.with_(operator=new_operator)
+        else:
+            return new_operator
 
 
 class InverseTransposeOperator(OperatorBase):
@@ -750,6 +787,13 @@ class InverseTransposeOperator(OperatorBase):
     def apply_inverse_transpose(self, U, mu=None, least_squares=False):
         assert U in self.source
         return self.operator.apply(U, mu=mu)
+
+    def map_children(self, func, *args, return_new_object=True, **kwargs):
+        new_operator = func(self.operator, *args, **kwargs)
+        if return_new_object:
+            return self.with_(operator=new_operator)
+        else:
+            return new_operator
 
 
 class AdjointOperator(OperatorBase):
@@ -861,6 +905,13 @@ class AdjointOperator(OperatorBase):
             V = self.source_product.apply(V)
         return V
 
+    def map_children(self, func, *args, return_new_object=True, **kwargs):
+        new_operator = func(self.operator, *args, **kwargs)
+        if return_new_object:
+            return self.with_(operator=new_operator)
+        else:
+            return new_operator
+
 
 class SelectionOperator(OperatorBase):
     """An |Operator| selected from a list of |Operators|.
@@ -942,6 +993,13 @@ class SelectionOperator(OperatorBase):
         mu = self.parse_parameter(mu)
         operator_number = self._get_operator_number(mu)
         return self.operators[operator_number].as_source_array(mu=mu)
+
+    def map_children(self, func, *args, return_new_object=True, **kwargs):
+        new_operators = [func(op, *args, **kwargs) for op in self.operators]
+        if return_new_object:
+            return self.with_(operators=new_operators)
+        else:
+            return new_operators
 
 
 @defaults('raise_negative', 'tol')
