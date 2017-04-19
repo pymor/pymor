@@ -26,7 +26,7 @@ class PreAssembleRules(RuleTable):
     @rule((LincombOperator, SelectionOperator))
     def LincombOrSeclectionOperator(self, op, *args, **kwargs):
         """replace sub-operators"""
-        new_operators = [self.apply(op, *args, **kwargs) for op in op.operators]
+        new_operators = [self.apply(o, *args, **kwargs) for o in op.operators]
         if any(o_new is not o_old for o_new, o_old in zip(new_operators, op.operators)):
             op = op.with_(operators=new_operators)
         if not op.parametric:

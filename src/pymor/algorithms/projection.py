@@ -119,8 +119,8 @@ class ProjectRules(RuleTable):
     @rule(LincombOperator)
     def LincombOperator(self, op, range_basis, source_basis, product=None):
         """recursively project sub-operators"""
-        proj_operators = [self.apply(op, range_basis=range_basis, source_basis=source_basis, product=product)
-                          for op in op.operators]
+        proj_operators = [self.apply(o, range_basis=range_basis, source_basis=source_basis, product=product)
+                          for o in op.operators]
         return op.with_(operators=proj_operators)
 
     @rule(Concatenation)
@@ -190,8 +190,8 @@ class ProjectRules(RuleTable):
     @rule(SelectionOperator)
     def SelectionOperator(self, op, range_basis, source_basis, product=None):
         """recursively project sub-operators"""
-        projected_operators = [self.apply(op, range_basis, source_basis, product=product)
-                               for op in op.operators]
+        projected_operators = [self.apply(o, range_basis, source_basis, product=product)
+                               for o in op.operators]
         return SelectionOperator(projected_operators, op.parameter_functional, op.boundaries,
                                  op.name + '_projected')
 
@@ -261,8 +261,8 @@ class ProjectToSubbasisRules(RuleTable):
 
     @rule(LincombOperator)
     def LincombOperator(self, op, dim_range=None, dim_source=None):
-        proj_operators = [self.apply(op, dim_range=dim_range, dim_source=dim_source)
-                          for op in op.operators]
+        proj_operators = [self.apply(o, dim_range=dim_range, dim_source=dim_source)
+                          for o in op.operators]
         return op.with_(operators=proj_operators, name='{}_projected_to_subbasis'.format(op.name))
 
     @rule(NumpyMatrixOperator)
