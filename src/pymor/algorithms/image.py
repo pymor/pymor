@@ -218,21 +218,21 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
 class CollectOperatorRangeRules(RuleTable):
 
     @match_generic(lambda op: op.linear and not op.parametric)
-    def linear_operator(self, op, source, image, extends):
+    def action_apply_operator(self, op, source, image, extends):
         image.append(op.apply(source))
 
     @match_class(LincombOperator, SelectionOperator)
-    def LincombOperator(self, op, source, image, extends):
+    def action_recurse(self, op, source, image, extends):
         for o in op.operators:
             self.apply(o, source, image, extends)
 
     @match_class(EmpiricalInterpolatedOperator)
-    def EmpiricalInterpolatedOperator(self, op, source, image, extends):
+    def action_EmpiricalInterpolatedOperator(self, op, source, image, extends):
         if hasattr(op, 'collateral_basis') and not extends:
             image.append(op.collateral_basis)
 
     @match_class(Concatenation)
-    def Concatenation(self, op, source, image, extends):
+    def action_Concatenation(self, op, source, image, extends):
         firstrange = op.first.range.empty()
         self.apply(op.first, source, firstrange, extends)
         self.apply(op.second, firstrange, image, extends)
@@ -241,14 +241,14 @@ class CollectOperatorRangeRules(RuleTable):
 class CollectVectorRangeRules(RuleTable):
 
     @match_class(VectorArrayInterface)
-    def VectorArray(self, obj, image):
+    def action_VectorArray(self, obj, image):
         image.append(obj)
 
     @match_generic(lambda op: op.linear and not op.parametric)
-    def linear_vector_operator(self, op, image):
+    def action_as_range_array(self, op, image):
         image.append(op.as_range_array())
 
     @match_class(LincombOperator, SelectionOperator)
-    def LincombOperator(self, op, image):
+    def action_recurse(self, op, image):
         for o in op.operators:
             self.apply(o, image)

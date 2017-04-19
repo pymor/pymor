@@ -35,7 +35,7 @@ class rule():
 
     @property
     def action_description(self):
-        return self.action.__doc__ or 'n.a.'
+        return self.action.__doc__ or self.action.__name__[len('action_'):]
 
     @property
     def source(self):
@@ -91,6 +91,8 @@ class RuleTableMeta(type):
         rules = []
         for k, v in dct.items():
             if isinstance(v, rule):
+                if not k.startswith('action_'):
+                    raise ValueError('Rule definition names have to start with "action_"')
                 v.name = k
                 rules.append(v)
         rules = tuple(sorted(rules, key=lambda r: r._rule_nr))

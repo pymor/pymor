@@ -17,15 +17,13 @@ def preassemble(obj):
 class PreAssembleRules(RuleTable):
 
     @match_class(DiscretizationInterface)
-    def Discretization(self, d, *args, **kwargs):
-        """replace operators"""
+    def action_Discretization(self, d, *args, **kwargs):
         new_operators = {k: self.apply(v, *args, **kwargs) if v else v for k, v in d.operators.items()}
         new_products = {k: self.apply(v, *args, **kwargs) if v else v for k, v in d.products.items()}
         return d.with_(operators=new_operators, products=new_products)
 
     @match_class(LincombOperator, SelectionOperator)
-    def LincombOrSeclectionOperator(self, op, *args, **kwargs):
-        """replace sub-operators"""
+    def action_LincombOrSeclectionOperator(self, op, *args, **kwargs):
         new_operators = [self.apply(o, *args, **kwargs) for o in op.operators]
         if any(o_new is not o_old for o_new, o_old in zip(new_operators, op.operators)):
             op = op.with_(operators=new_operators)
@@ -34,22 +32,19 @@ class PreAssembleRules(RuleTable):
         return op
 
     @match_class(Concatenation)
-    def Concatenation(self, op, *args, **kwargs):
-        """replace sub-operators"""
+    def action_Concatenation(self, op, *args, **kwargs):
         new_first = self.apply(op.first, *args, **kwargs)
         new_second = self.apply(op.second, *args, **kwargs)
         return op.with_(first=new_first, second=new_second)
 
     @match_class(AffineOperator)
-    def AffineOperator(self, op, *args, **kwargs):
-        """replace sub-operators"""
+    def action_AffineOperator(self, op, *args, **kwargs):
         new_affine_shift = self.apply(op.affine_shift, *args, **kwargs)
         new_linear_part = self.apply(op.linear_part, *args, **kwargs)
         return op.with_(affine_shift=new_affine_shift, linear_part=new_linear_part)
 
     @match_class(AdjointOperator, ProjectedOperator)
-    def AdjointOperator(self, op, *args, **kwargs):
-        """replace sub-operators"""
+    def action_AdjointOperator(self, op, *args, **kwargs):
         new_operator = self.apply(op.operator, *args, **kwargs)
         if new_operator is op.operator:
             return op
@@ -59,11 +54,9 @@ class PreAssembleRules(RuleTable):
             return op.with_(operator=new_operator)
 
     @match_generic(lambda op: not op.parametric, 'non-parametric operator')
-    def non_parametric(self, op):
-        """replace with assembled operator"""
+    def action_assemble(self, op):
         return op.assemble()
 
     @match_class(OperatorInterface)
-    def identity(self, op, *args, **kwargs):
-        """do nothing"""
+    def action_identity(self, op):
         return op
