@@ -69,6 +69,35 @@ def project(op, range_basis, source_basis, product=None):
 
 class ProjectRules(RuleTable):
 
+    @match_class(ZeroOperator)
+    def action_ZeroOperator(self, op, range_basis, source_basis, product=None):
+        if source_basis is not None and range_basis is not None:
+            from pymor.operators.numpy import NumpyMatrixOperator
+            return NumpyMatrixOperator(np.zeros((len(range_basis), len(source_basis))),
+                                       source_id=op.source.id, range_id=op.range.id,
+                                       name=op.name)
+        else:
+            new_source = (NumpyVectorSpace(len(source_basis), op.source.id) if source_basis is not None else
+                          op.source)
+            new_range = (NumpyVectorSpace(len(range_basis), op.range.id) if range_basis is not None else
+                         op.range)
+            return ZeroOperator(new_source, new_range, name=op.name)
+
+    @match_class(ConstantOperator)
+    def action_ConstantOperator(self, op, range_basis, source_basis, product=None):
+        if range_basis is not None:
+            if product:
+                projected_value = NumpyVectorSpace.make_array(product.apply2(range_basis, op._value).T, op.range.id)
+            else:
+                projected_value = NumpyVectorSpace.make_array(range_basis.dot(op._value).T, op.range.id)
+        else:
+            projected_value = op._value
+        if source_basis is None:
+            return ConstantOperator(projected_value, op.source, name=op.name)
+        else:
+            return ConstantOperator(projected_value, NumpyVectorSpace(len(source_basis), op.source.id),
+                                    name=op.name)
+
     @match_generic(lambda op: op.linear and not op.parametric, 'linear and not parametric')
     def action_apply_basis(self, op, range_basis, source_basis, product=None):
         if source_basis is None:
@@ -125,35 +154,6 @@ class ProjectRules(RuleTable):
         else:
             projected_second = self.apply(op.second, range_basis, None, product=product)
             return Concatenation(projected_second, projected_first, name=op.name)
-
-    @match_class(ConstantOperator)
-    def action_ConstantOperator(self, op, range_basis, source_basis, product=None):
-        if range_basis is not None:
-            if product:
-                projected_value = NumpyVectorSpace.make_array(product.apply2(range_basis, op._value).T, op.range.id)
-            else:
-                projected_value = NumpyVectorSpace.make_array(range_basis.dot(op._value).T, op.range.id)
-        else:
-            projected_value = op._value
-        if source_basis is None:
-            return ConstantOperator(projected_value, op.source, name=op.name + '_projected')
-        else:
-            return ConstantOperator(projected_value, NumpyVectorSpace(len(source_basis), op.source.id),
-                                    name=op.name + '_projected')
-
-    @match_class(ZeroOperator)
-    def action_ZeroOperator(self, op, range_basis, source_basis, product=None):
-        if source_basis is not None and range_basis is not None:
-            from pymor.operators.numpy import NumpyMatrixOperator
-            return NumpyMatrixOperator(np.zeros((len(range_basis), len(source_basis))),
-                                       source_id=op.source.id, range_id=op.range.id,
-                                       name=op.name + '_projected')
-        else:
-            new_source = (NumpyVectorSpace(len(source_basis), op.source.id) if source_basis is not None else
-                          op.source)
-            new_range = (NumpyVectorSpace(len(range_basis), op.range.id) if range_basis is not None else
-                         op.range)
-            return ZeroOperator(new_source, new_range, name=op.name + '_projected')
 
     @match_class(AdjointOperator)
     def action_AdjointOperator(self, op, range_basis, source_basis, product=None):
