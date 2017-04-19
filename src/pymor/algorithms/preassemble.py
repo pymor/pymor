@@ -2,7 +2,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-from pymor.algorithms.rules import RuleTable, rule
+from pymor.algorithms.rules import RuleTable, match_class, match_generic
 from pymor.discretizations.interfaces import DiscretizationInterface
 from pymor.operators.basic import ProjectedOperator
 from pymor.operators.constructions import (LincombOperator, Concatenation,
@@ -16,14 +16,14 @@ def preassemble(obj):
 
 class PreAssembleRules(RuleTable):
 
-    @rule(DiscretizationInterface)
+    @match_class(DiscretizationInterface)
     def Discretization(self, d, *args, **kwargs):
         """replace operators"""
         new_operators = {k: self.apply(v, *args, **kwargs) if v else v for k, v in d.operators.items()}
         new_products = {k: self.apply(v, *args, **kwargs) if v else v for k, v in d.products.items()}
         return d.with_(operators=new_operators, products=new_products)
 
-    @rule((LincombOperator, SelectionOperator))
+    @match_class(LincombOperator, SelectionOperator)
     def LincombOrSeclectionOperator(self, op, *args, **kwargs):
         """replace sub-operators"""
         new_operators = [self.apply(o, *args, **kwargs) for o in op.operators]
@@ -33,21 +33,21 @@ class PreAssembleRules(RuleTable):
             op = op.assemble()
         return op
 
-    @rule(Concatenation)
+    @match_class(Concatenation)
     def Concatenation(self, op, *args, **kwargs):
         """replace sub-operators"""
         new_first = self.apply(op.first, *args, **kwargs)
         new_second = self.apply(op.second, *args, **kwargs)
         return op.with_(first=new_first, second=new_second)
 
-    @rule(AffineOperator)
+    @match_class(AffineOperator)
     def AffineOperator(self, op, *args, **kwargs):
         """replace sub-operators"""
         new_affine_shift = self.apply(op.affine_shift, *args, **kwargs)
         new_linear_part = self.apply(op.linear_part, *args, **kwargs)
         return op.with_(affine_shift=new_affine_shift, linear_part=new_linear_part)
 
-    @rule((AdjointOperator, ProjectedOperator))
+    @match_class(AdjointOperator, ProjectedOperator)
     def AdjointOperator(self, op, *args, **kwargs):
         """replace sub-operators"""
         new_operator = self.apply(op.operator, *args, **kwargs)
@@ -58,12 +58,12 @@ class PreAssembleRules(RuleTable):
         else:
             return op.with_(operator=new_operator)
 
-    @rule(lambda op: not op.parametric, 'non-parametric operator')
+    @match_generic(lambda op: not op.parametric, 'non-parametric operator')
     def non_parametric(self, op):
         """replace with assembled operator"""
         return op.assemble()
 
-    @rule(OperatorInterface)
+    @match_class(OperatorInterface)
     def identity(self, op, *args, **kwargs):
         """do nothing"""
         return op

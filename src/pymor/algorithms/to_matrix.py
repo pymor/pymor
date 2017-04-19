@@ -9,7 +9,7 @@ import scipy.linalg as spla
 import scipy.sparse as sps
 import scipy.sparse.linalg as spsla
 
-from pymor.algorithms.rules import RuleTable, rule
+from pymor.algorithms.rules import RuleTable, match_class
 from pymor.operators.block import BlockOperator
 from pymor.operators.constructions import (AdjointOperator, ComponentProjection, Concatenation, IdentityOperator,
                                            LincombOperator, VectorArrayOperator, ZeroOperator)
@@ -50,7 +50,7 @@ def to_matrix(op, format=None, mu=None):
 
 class ToMatrixRules(RuleTable):
 
-    @rule(NumpyMatrixOperator)
+    @match_class(NumpyMatrixOperator)
     def NumpyMatrixOperator(self, op, format, mapping, mu):
         if format is None:
             if not op.sparse:
@@ -60,7 +60,7 @@ class ToMatrixRules(RuleTable):
         else:
             return mapping[format](op._matrix)
 
-    @rule(BlockOperator)
+    @match_class(BlockOperator)
     def BlockOperator(self, op, format, mapping, mu):
         op_blocks = op._blocks
         mat_blocks = [[] for i in range(op.num_range_blocks)]
@@ -78,7 +78,7 @@ class ToMatrixRules(RuleTable):
         else:
             return sps.bmat(mat_blocks, format=format)
 
-    @rule(AdjointOperator)
+    @match_class(AdjointOperator)
     def AdjointOperator(self, op, format, mapping, mu):
         res = self.apply(op.operator, format, mapping, mu).T
         if op.range_product is not None:
@@ -90,7 +90,7 @@ class ToMatrixRules(RuleTable):
                 res = spsla.spsolve(self.apply(op.source_product, format, mapping, mu), res)
         return res
 
-    @rule(ComponentProjection)
+    @match_class(ComponentProjection)
     def ComponentProjection(self, op, format, mapping, mu):
         if format is None:
             res = np.zeros((op.range.dim, op.source.dim))
@@ -104,18 +104,18 @@ class ToMatrixRules(RuleTable):
             res = res.asformat(format)
         return res
 
-    @rule(Concatenation)
+    @match_class(Concatenation)
     def Concatenation(self, op, format, mapping, mu):
         return self.apply(op.second, format, mapping, mu).dot(self.apply(op.first, format, mapping, mu))
 
-    @rule(IdentityOperator)
+    @match_class(IdentityOperator)
     def IdentityOperator(self, op, format, mapping, mu):
         if format is None:
             return np.eye(op.source.dim)
         else:
             return sps.eye(op.source.dim, format=format)
 
-    @rule(LincombOperator)
+    @match_class(LincombOperator)
     def LincombOperator(self, op, format, mapping, mu):
         op_coefficients = op.evaluate_coefficients(mu)
         res = op_coefficients[0] * self.apply(op.operators[0], format, mapping, mu)
@@ -123,14 +123,14 @@ class ToMatrixRules(RuleTable):
             res = res + op_coefficients[i] * self.apply(op.operators[i], format, mapping, mu)
         return res
 
-    @rule(VectorArrayOperator)
+    @match_class(VectorArrayOperator)
     def VectorArrayOperator(self, op, format, mapping, mu):
         res = op._array.data if op.transposed else op._array.data.T
         if format is not None:
             res = mapping[format](res)
         return res
 
-    @rule(ZeroOperator)
+    @match_class(ZeroOperator)
     def ZeroOperator(self, op, format, mapping, mu):
         if format is None:
             return np.zeros((op.range.dim, op.source.dim))

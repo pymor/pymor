@@ -3,16 +3,13 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.exceptions import NoMatchingRuleError, RuleNotMatchingError
-from pymor.core.interfaces import classinstancemethod
+from pymor.core.interfaces import abstractmethod, classinstancemethod
 
 
 class rule():
     _rules_created = [0]
 
-    def __init__(self, condition, condition_description=None):
-        self.condition = \
-            condition if isinstance(condition, tuple) else (condition,) if isinstance(condition, type) else condition
-        self.condition_description = condition_description
+    def __init__(self):
         self._rule_nr = self._rules_created[0]
         self._rules_created[0] += 1
 
@@ -20,8 +17,12 @@ class rule():
         self.action = action
         return self
 
+    @abstractmethod
     def matches(self, obj):
-        return isinstance(obj, self.condition) if isinstance(self.condition, tuple) else self.condition(obj)
+        pass
+
+    condition_description = None
+    condition_type = None
 
     def __repr__(self):
         try:
@@ -31,6 +32,10 @@ class rule():
             return highlight(self.source, PythonLexer(), Terminal256Formatter(style='native'))
         except ImportError:
             return self.source
+
+    @property
+    def action_description(self):
+        return self.action.__doc__ or 'n.a.'
 
     @property
     def source(self):
@@ -52,6 +57,34 @@ class rule():
         return ''.join(lines)
 
 
+class match_class(rule):
+
+    condition_type = 'CLASS'
+
+    def __init__(self, *classes):
+        super().__init__()
+        if not classes:
+            raise ValueError('At least one class is required')
+        self.classes = classes
+        self.condition_description = ', '.join(c.__name__ for c in classes)
+
+    def matches(self, obj):
+        return isinstance(obj, self.classes)
+
+
+class match_generic(rule):
+
+    condition_type = 'GENERIC'
+
+    def __init__(self, condition, condition_description=None):
+        super().__init__()
+        self.condition = condition
+        self.condition_description = condition_description or 'n.a.'
+
+    def matches(self, obj):
+        return self.condition(obj)
+
+
 class RuleTableMeta(type):
     def __new__(cls, name, parents, dct):
         assert 'rules' not in dct
@@ -66,13 +99,12 @@ class RuleTableMeta(type):
         return super().__new__(cls, name, parents, dct)
 
     def __repr__(cls):
-        rows = [['Pos', 'Type', 'Condition Description', 'Action Description']]
+        rows = [['Pos', 'Match Type', 'Condition', 'Action Name / Action Description', 'Stop']]
         for i, r in enumerate(cls._rules):
             rows.append([str(i),
-                         'CLASS' if isinstance(r.condition, tuple) else 'GENERIC',
-                         ', '.join(c.__name__ for c in r.condition) if isinstance(r.condition, tuple) else
-                         (r.condition_description or str(r.condition)),
-                         r.action.__doc__ or 'n.a.'])
+                         r.condition_type,
+                         r.condition_description,
+                         r.action_description])
         column_widths = [max(map(len, c)) for c in zip(*rows)]
         rows.insert(1, ['-' * cw for cw in column_widths])
         return '\n'.join('  '.join('{:<{}}'.format(c, cw) for c, cw in zip(r, column_widths))
@@ -97,6 +129,7 @@ class RuleTable(metaclass=RuleTableMeta):
     def apply(self, obj, *args, **kwargs):
         if obj in self._cache:
             return self._cache[obj]
+
         for r in self._rules:
             if r.matches(obj):
                 try:

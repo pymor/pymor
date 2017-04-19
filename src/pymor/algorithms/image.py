@@ -3,7 +3,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.algorithms.gram_schmidt import gram_schmidt
-from pymor.algorithms.rules import RuleTable, rule
+from pymor.algorithms.rules import RuleTable, match_class, match_generic
 from pymor.core.exceptions import ImageCollectionError, NoMatchingRuleError
 from pymor.core.logger import getLogger
 from pymor.operators.constructions import Concatenation, LincombOperator, SelectionOperator
@@ -217,21 +217,21 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
 
 class CollectOperatorRangeRules(RuleTable):
 
-    @rule(lambda op: op.linear and not op.parametric)
+    @match_generic(lambda op: op.linear and not op.parametric)
     def linear_operator(self, op, source, image, extends):
         image.append(op.apply(source))
 
-    @rule((LincombOperator, SelectionOperator))
+    @match_class(LincombOperator, SelectionOperator)
     def LincombOperator(self, op, source, image, extends):
         for o in op.operators:
             self.apply(o, source, image, extends)
 
-    @rule(EmpiricalInterpolatedOperator)
+    @match_class(EmpiricalInterpolatedOperator)
     def EmpiricalInterpolatedOperator(self, op, source, image, extends):
         if hasattr(op, 'collateral_basis') and not extends:
             image.append(op.collateral_basis)
 
-    @rule(Concatenation)
+    @match_class(Concatenation)
     def Concatenation(self, op, source, image, extends):
         firstrange = op.first.range.empty()
         self.apply(op.first, source, firstrange, extends)
@@ -240,15 +240,15 @@ class CollectOperatorRangeRules(RuleTable):
 
 class CollectVectorRangeRules(RuleTable):
 
-    @rule(VectorArrayInterface)
+    @match_class(VectorArrayInterface)
     def VectorArray(self, obj, image):
         image.append(obj)
 
-    @rule(lambda op: op.linear and not op.parametric)
+    @match_generic(lambda op: op.linear and not op.parametric)
     def linear_vector_operator(self, op, image):
         image.append(op.as_range_array())
 
-    @rule((LincombOperator, SelectionOperator))
+    @match_class(LincombOperator, SelectionOperator)
     def LincombOperator(self, op, image):
         for o in op.operators:
             self.apply(o, image)
