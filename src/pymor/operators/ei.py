@@ -204,3 +204,21 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
         else:
             assert not options
             return VectorArrayOperator(M)
+
+    def with_cb_dim(self, dim):
+        assert dim <= self.restricted_operator.range.dim
+
+        interpolation_matrix = self.interpolation_matrix[:dim, :dim]
+
+        restricted_operator, source_dofs = self.restricted_operator.restricted(np.arange(dim))
+
+        old_pcb = self.projected_collateral_basis
+        projected_collateral_basis = NumpyVectorSpace.make_array(old_pcb.data[:dim, :dim], old_pcb.space.id)
+
+        old_sbd = self.source_basis_dofs
+        source_basis_dofs = NumpyVectorSpace.make_array(old_sbd.data[:, source_dofs])
+
+        return ProjectedEmpiciralInterpolatedOperator(restricted_operator, interpolation_matrix,
+                                                      source_basis_dofs, projected_collateral_basis, self.triangular,
+                                                      self.source.id, solver_options=self.solver_options,
+                                                      name=self.name)
