@@ -84,10 +84,10 @@ class ProjectRules(RuleTable):
                     return NumpyMatrixOperator(V.data,
                                                source_id=op.source.id,
                                                range_id=op.range.id,
-                                               name=op.name + '_projected')
+                                               name=op.name)
                 else:
                     from pymor.operators.constructions import VectorArrayOperator
-                    return VectorArrayOperator(V, transposed=True, space_id=op.range.id, name=op.name + '_projected')
+                    return VectorArrayOperator(V, transposed=True, space_id=op.range.id, name=op.name)
         else:
             if range_basis is None:
                 V = op.apply(source_basis)
@@ -96,24 +96,23 @@ class ProjectRules(RuleTable):
                     return NumpyMatrixOperator(V.data.T,
                                                source_id=op.source.id,
                                                range_id=op.range.id,
-                                               name=op.name + '_projected')
+                                               name=op.name)
                 else:
                     from pymor.operators.constructions import VectorArrayOperator
-                    return VectorArrayOperator(V, transposed=False, space_id=op.source.id, name=op.name +
-                                               '_projected')
+                    return VectorArrayOperator(V, transposed=False, space_id=op.source.id, name=op.name)
             elif product is None:
                 from pymor.operators.numpy import NumpyMatrixOperator
                 return NumpyMatrixOperator(op.apply2(range_basis, source_basis),
                                            source_id=op.source.id,
                                            range_id=op.range.id,
-                                           name=op.name + '_projected')
+                                           name=op.name)
             else:
                 from pymor.operators.numpy import NumpyMatrixOperator
                 V = op.apply(source_basis)
                 return NumpyMatrixOperator(product.apply2(range_basis, V),
                                            source_id=op.source.id,
                                            range_id=op.range.id,
-                                           name=op.name + '_projected')
+                                           name=op.name)
 
     @match_class(LincombOperator)
     def action_LincombOperator(self, op, range_basis, source_basis, product=None):
@@ -184,7 +183,7 @@ class ProjectRules(RuleTable):
         range_product = op.range_product if source_basis is None else None
         source_product = op.source_product if range_basis is None else None
         return AdjointOperator(operator, source_product=source_product, range_product=range_product,
-                               name=op.name + '_projected')
+                               name=op.name)
 
     @match_class(SelectionOperator)
     def SelectionOperator(self, op, range_basis, source_basis, product=None):
@@ -197,7 +196,7 @@ class ProjectRules(RuleTable):
     @match_class(EmpiricalInterpolatedOperator)
     def action_EmpiricalInterpolatedOperator(self, op, range_basis, source_basis, product=None):
         if len(op.interpolation_dofs) == 0:
-            return self.apply(ZeroOperator(op.source, op.range, op.name + '_projected'), range_basis, source_basis, product)
+            return self.apply(ZeroOperator(op.source, op.range, op.name), range_basis, source_basis, product)
         elif not hasattr(op, 'restricted_operator') or source_basis is None:
             raise RuleNotMatchingError('Has no restricted operator or source_basis is None')
         else:
@@ -215,7 +214,7 @@ class ProjectRules(RuleTable):
             return ProjectedEmpiciralInterpolatedOperator(op.restricted_operator, op.interpolation_matrix,
                                                           NumpyVectorSpace.make_array(source_basis.components(op.source_dofs)),
                                                           projected_collateral_basis, op.triangular,
-                                                          op.source.id, None, op.name + '_projected')
+                                                          op.source.id, None, op.name)
 
     @match_class(OperatorInterface)
     def action_generic_projection(self, op, range_basis, source_basis, product=None):
@@ -261,30 +260,27 @@ class ProjectToSubbasisRules(RuleTable):
     def action_recurse(self, op, dim_range=None, dim_source=None):
         proj_operators = [self.apply(o, dim_range=dim_range, dim_source=dim_source)
                           for o in op.operators]
-        return op.with_(operators=proj_operators, name='{}_projected_to_subbasis'.format(op.name))
+        return op.with_(operators=proj_operators)
 
     @match_class(NumpyMatrixOperator)
     def action_NumpyMatrixOperator(self, op, dim_range=None, dim_source=None):
-        name = '{}_projected_to_subbasis'.format(op.name)
         # copy instead of just slicing the matrix to ensure contiguous memory
         return NumpyMatrixOperator(op._matrix[:dim_range, :dim_source].copy(),
                                    source_id=op.source.id,
                                    range_id=op.range.id,
                                    solver_options=op.solver_options,
-                                   name=name)
+                                   name=op.name)
 
     @match_class(ConstantOperator)
     def action_ConstantOperator(self, op, dim_range=None, dim_source=None):
-        name = '{}_projected_to_subbasis'.format(op.name)
         source = op.source if dim_source is None else NumpyVectorSpace(dim_source, op.source.id)
         value = op._value if dim_range is None else NumpyVectorSpace(op._value.data[:, :dim_range], op.range.id)
-        return ConstantOperator(value, source, name=name)
+        return ConstantOperator(value, source, name=op.name)
 
     @match_class(ProjectedEmpiciralInterpolatedOperator)
     def action_ProjectedEmpiciralInterpolatedOperator(self, op, dim_range=None, dim_source=None):
         if not isinstance(op.projected_collateral_basis.space, NumpyVectorSpace):
             raise NotImplementedError
-        name = '{}_projected_to_subbasis'.format(op.name)
 
         restricted_operator = op.restricted_operator
 
@@ -297,7 +293,7 @@ class ProjectToSubbasisRules(RuleTable):
 
         return ProjectedEmpiciralInterpolatedOperator(restricted_operator, op.interpolation_matrix,
                                                       source_basis_dofs, projected_collateral_basis, op.triangular,
-                                                      op.source.id, solver_options=op.solver_options, name=name)
+                                                      op.source.id, solver_options=op.solver_options, name=op.name)
 
     @match_class(ProjectedOperator)
     def action_ProjectedOperator(self, op, dim_range=None, dim_source=None):

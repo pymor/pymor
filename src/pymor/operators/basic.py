@@ -182,7 +182,7 @@ class ProjectedOperator(OperatorBase):
         self.source = NumpyVectorSpace(len(source_basis), operator.source.id) if source_basis is not None else operator.source
         self.range = NumpyVectorSpace(len(range_basis), operator.range.id) if range_basis is not None else operator.range
         self.solver_options = solver_options
-        self.name = operator.name + '_projected'
+        self.name = operator.name
         self.operator = operator
         self.source_basis = source_basis.copy() if source_basis is not None else None
         self.range_basis = range_basis.copy() if range_basis is not None else None
