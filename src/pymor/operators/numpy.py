@@ -20,7 +20,7 @@ from scipy.sparse import issparse
 from scipy.io import mmwrite, savemat
 
 from pymor.core.config import config
-from pymor.core.defaults import defaults, defaults_sid
+from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.core.interfaces import abstractmethod
 from pymor.core.logger import getLogger
@@ -132,29 +132,10 @@ class NumpyMatrixBasedOperator(OperatorBase):
         -------
         The assembled parameter independent |Operator|.
         """
-        if hasattr(self, '_assembled_operator'):
-            if self._defaults_sid != defaults_sid():
-                self.logger.warn('Re-assembling since state of global defaults has changed.')
-                op = self._assembled_operator = NumpyMatrixOperator(self._assemble(),
-                                                                    source_id=self.source.id,
-                                                                    range_id=self.range.id,
-                                                                    solver_options=self.solver_options)
-                self._defaults_sid = defaults_sid()
-                return op
-            else:
-                return self._assembled_operator
-        elif not self.parameter_type:
-            op = self._assembled_operator = NumpyMatrixOperator(self._assemble(),
-                                                                source_id=self.source.id,
-                                                                range_id=self.range.id,
-                                                                solver_options=self.solver_options)
-            self._defaults_sid = defaults_sid()
-            return op
-        else:
-            return NumpyMatrixOperator(self._assemble(self.parse_parameter(mu)),
-                                       source_id=self.source.id,
-                                       range_id=self.range.id,
-                                       solver_options=self.solver_options)
+        return NumpyMatrixOperator(self._assemble(self.parse_parameter(mu)),
+                                   source_id=self.source.id,
+                                   range_id=self.range.id,
+                                   solver_options=self.solver_options)
 
     def apply(self, U, mu=None):
         return self.assemble(mu).apply(U)
@@ -194,12 +175,6 @@ class NumpyMatrixBasedOperator(OperatorBase):
             savemat(filename, {matrix_name: matrix})
         else:
             mmwrite(filename, matrix, comment=matrix_name)
-
-    def __getstate__(self):
-        d = self.__dict__.copy()
-        if '_assembled_operator' in d:
-            del d['_assembled_operator']
-        return d
 
 
 class NumpyMatrixOperator(NumpyMatrixBasedOperator):

@@ -9,7 +9,7 @@ from itertools import chain
 
 import numpy as np
 
-from pymor.core.defaults import defaults_sid, defaults
+from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.core.interfaces import ImmutableInterface
 from pymor.operators.basic import OperatorBase
@@ -17,7 +17,7 @@ from pymor.operators.interfaces import OperatorInterface
 from pymor.parameters.base import Parametric
 from pymor.parameters.interfaces import ParameterFunctionalInterface
 from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _INDEXTYPES
-from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class LincombOperator(OperatorBase):
@@ -53,7 +53,6 @@ class LincombOperator(OperatorBase):
         self.name = name
         self.build_parameter_type(*chain(operators,
                                          (f for f in coefficients if isinstance(f, ParameterFunctionalInterface))))
-        self._try_assemble = not self.parametric
 
     @property
     def T(self):
@@ -78,13 +77,6 @@ class LincombOperator(OperatorBase):
         return [c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients]
 
     def apply(self, U, mu=None):
-        if hasattr(self, '_assembled_operator'):
-            if self._defaults_sid == defaults_sid():
-                return self._assembled_operator.apply(U)
-            else:
-                return self.assemble().apply(U)
-        elif self._try_assemble:
-            return self.assemble().apply(U)
         coeffs = self.evaluate_coefficients(mu)
         R = self.operators[0].apply(U, mu=mu)
         R.scal(coeffs[0])
@@ -93,13 +85,6 @@ class LincombOperator(OperatorBase):
         return R
 
     def apply2(self, V, U, mu=None):
-        if hasattr(self, '_assembled_operator'):
-            if self._defaults_sid == defaults_sid():
-                return self._assembled_operator.apply2(V, U)
-            else:
-                return self.assemble().apply2(V, U)
-        elif self._try_assemble:
-            return self.assemble().apply2(V, U)
         coeffs = self.evaluate_coefficients(mu)
         R = self.operators[0].apply2(V, U, mu=mu)
         R *= coeffs[0]
@@ -108,13 +93,6 @@ class LincombOperator(OperatorBase):
         return R
 
     def pairwise_apply2(self, V, U, mu=None):
-        if hasattr(self, '_assembled_operator'):
-            if self._defaults_sid == defaults_sid():
-                return self._assembled_operator.pairwise_apply2(V, U)
-            else:
-                return self.assemble().pairwise_apply2(V, U)
-        elif self._try_assemble:
-            return self.assemble().pairwise_apply2(V, U)
         coeffs = self.evaluate_coefficients(mu)
         R = self.operators[0].pairwise_apply2(V, U, mu=mu)
         R *= coeffs[0]
@@ -123,14 +101,6 @@ class LincombOperator(OperatorBase):
         return R
 
     def apply_transpose(self, V, mu=None):
-        if hasattr(self, '_assembled_operator'):
-            if self._defaults_sid == defaults_sid():
-                return self._assembled_operator.apply_transpose(V)
-            else:
-                return self.assemble().apply_transpose(V)
-        elif self._try_assemble:
-            return self.assemble().apply_transpose(V)
-
         coeffs = self.evaluate_coefficients(mu)
         R = self.operators[0].apply_transpose(V, mu=mu)
         R.scal(coeffs[0])
@@ -139,24 +109,11 @@ class LincombOperator(OperatorBase):
         return R
 
     def assemble(self, mu=None):
-        if hasattr(self, '_assembled_operator'):
-            if self._defaults_sid == defaults_sid():
-                return self._assembled_operator
-            else:
-                self.logger.warn('Re-assembling since state of global defaults has changed.')
         operators = [op.assemble(mu) for op in self.operators]
         coefficients = self.evaluate_coefficients(mu)
         op = operators[0].assemble_lincomb(operators, coefficients, solver_options=self.solver_options,
                                            name=self.name + '_assembled')
-        if not self.parametric:
-            if op:
-                self._assembled_operator = op
-                self._defaults_sid = defaults_sid()
-                return op
-            else:
-                self._try_assemble = False
-                return self
-        elif op:
+        if op:
             return op
         else:
             return LincombOperator(operators, coefficients, solver_options=self.solver_options,
@@ -165,13 +122,6 @@ class LincombOperator(OperatorBase):
     def jacobian(self, U, mu=None):
         if self.linear:
             return self.assemble(mu)
-        if hasattr(self, '_assembled_operator'):
-            if self._defaults_sid == defaults_sid():
-                return self._assembled_operator.jacobian(U)
-            else:
-                return self.assemble().jacobian(U)
-        elif self._try_assemble:
-            return self.assemble().jacobian(U)
         jacobians = [op.jacobian(U, mu) for op in self.operators]
         coefficients = self.evaluate_coefficients(mu)
         options = self.solver_options.get('jacobian') if self.solver_options else None
@@ -184,14 +134,6 @@ class LincombOperator(OperatorBase):
             return jac
 
     def _as_array(self, source, mu):
-        if hasattr(self, '_assembled_operator'):
-            if self._defaults_sid == defaults_sid():
-                return self._assembled_operator.as_source_array() if source \
-                    else self._assembled_operator.as_range_array()
-            else:
-                return self.assemble().as_source_array() if source else self.assemble().as_range_array()
-        elif self._try_assemble:
-            return self.assemble().as_source_array() if source else self.assemble().as_range_array()
         coefficients = np.array(self.evaluate_coefficients(mu))
         arrays = [op.as_source_array(mu) if source else op.as_range_array(mu) for op in self.operators]
         R = arrays[0]
@@ -205,12 +147,6 @@ class LincombOperator(OperatorBase):
 
     def as_source_array(self, mu=None):
         return self._as_array(True, mu)
-
-    def __getstate__(self):
-        d = self.__dict__.copy()
-        if '_assembled_operator' in d:
-            del d['_assembled_operator']
-        return d
 
 
 class Concatenation(OperatorBase):
