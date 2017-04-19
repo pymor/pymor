@@ -16,6 +16,13 @@ def preassemble(obj):
 
 class PreAssembleRules(RuleTable):
 
+    @rule(DiscretizationInterface)
+    def Discretization(self, d, *args, **kwargs):
+        """replace operators"""
+        new_operators = {k: self.apply(v, *args, **kwargs) if v else v for k, v in d.operators.items()}
+        new_products = {k: self.apply(v, *args, **kwargs) if v else v for k, v in d.products.items()}
+        return d.with_(operators=new_operators, products=new_products)
+
     @rule((LincombOperator, SelectionOperator))
     def LincombOrSeclectionOperator(self, op, *args, **kwargs):
         """replace sub-operators"""
@@ -60,10 +67,3 @@ class PreAssembleRules(RuleTable):
     def identity(self, op, *args, **kwargs):
         """do nothing"""
         return op
-
-    @rule(DiscretizationInterface)
-    def Discretization(self, d, *args, **kwargs):
-        """replace operators"""
-        new_operators = {k: self.apply(v, *args, **kwargs) if v else v for k, v in d.operators.items()}
-        new_products = {k: self.apply(v, *args, **kwargs) if v else v for k, v in d.products.items()}
-        return d.with_(operators=new_operators, products=new_products)
