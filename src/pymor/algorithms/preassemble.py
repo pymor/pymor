@@ -16,32 +16,17 @@ def preassemble(obj):
 
 class PreAssembleRules(RuleTable):
 
-    @match_class(DiscretizationInterface)
-    def action_Discretization(self, d, *args, **kwargs):
-        new_operators = {k: self.apply(v, *args, **kwargs) if v else v for k, v in d.operators.items()}
-        new_products = {k: self.apply(v, *args, **kwargs) if v else v for k, v in d.products.items()}
-        return d.with_(operators=new_operators, products=new_products)
+    @match_class(DiscretizationInterface, AffineOperator, Concatenation, SelectionOperator)
+    def action_recurse(self, op):
+        return self.replace_children(op)
 
-    @match_class(LincombOperator, SelectionOperator)
-    def action_LincombOrSeclectionOperator(self, op, *args, **kwargs):
-        new_operators = [self.apply(o, *args, **kwargs) for o in op.operators]
-        if any(o_new is not o_old for o_new, o_old in zip(new_operators, op.operators)):
-            op = op.with_(operators=new_operators)
+    @match_class(LincombOperator)
+    def action_recurse_and_assemble(self, op):
+        op = self.replace_children(op)
         if not op.parametric:
-            op = op.assemble()
-        return op
-
-    @match_class(Concatenation)
-    def action_Concatenation(self, op, *args, **kwargs):
-        new_first = self.apply(op.first, *args, **kwargs)
-        new_second = self.apply(op.second, *args, **kwargs)
-        return op.with_(first=new_first, second=new_second)
-
-    @match_class(AffineOperator)
-    def action_AffineOperator(self, op, *args, **kwargs):
-        new_affine_shift = self.apply(op.affine_shift, *args, **kwargs)
-        new_linear_part = self.apply(op.linear_part, *args, **kwargs)
-        return op.with_(affine_shift=new_affine_shift, linear_part=new_linear_part)
+            return op.assemble()
+        else:
+            return op
 
     @match_class(AdjointOperator, ProjectedOperator)
     def action_AdjointOperator(self, op, *args, **kwargs):

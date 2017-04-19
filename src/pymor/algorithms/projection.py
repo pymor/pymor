@@ -114,13 +114,6 @@ class ProjectRules(RuleTable):
                                            range_id=op.range.id,
                                            name=op.name)
 
-    @match_class(LincombOperator)
-    def action_LincombOperator(self, op, range_basis, source_basis, product=None):
-        """recursively project sub-operators"""
-        proj_operators = [self.apply(o, range_basis=range_basis, source_basis=source_basis, product=product)
-                          for o in op.operators]
-        return op.with_(operators=proj_operators)
-
     @match_class(Concatenation)
     def action_Concatenation(self, op, range_basis, source_basis, product=None):
         """project linear non-parametric Concatenations"""
@@ -131,7 +124,7 @@ class ProjectRules(RuleTable):
             return self.apply(op.second, range_basis, projected_first._array, product=product)
         else:
             projected_second = self.apply(op.second, range_basis, None, product=product)
-            return Concatenation(projected_second, projected_first, name=op.name + '_projected')
+            return Concatenation(projected_second, projected_first, name=op.name)
 
     @match_class(ConstantOperator)
     def action_ConstantOperator(self, op, range_basis, source_basis, product=None):
@@ -162,12 +155,6 @@ class ProjectRules(RuleTable):
                          op.range)
             return ZeroOperator(new_source, new_range, name=op.name + '_projected')
 
-    @match_class(AffineOperator)
-    def action_AffineOperator(self, op, range_basis, source_basis, product=None):
-        """recursively project affine shift and linear part"""
-        return self.apply(op.affine_shift + op.linear_part,
-                          range_basis, source_basis, product=product)
-
     @match_class(AdjointOperator)
     def action_AdjointOperator(self, op, range_basis, source_basis, product=None):
         if range_basis is not None:
@@ -184,14 +171,6 @@ class ProjectRules(RuleTable):
         source_product = op.source_product if range_basis is None else None
         return AdjointOperator(operator, source_product=source_product, range_product=range_product,
                                name=op.name)
-
-    @match_class(SelectionOperator)
-    def SelectionOperator(self, op, range_basis, source_basis, product=None):
-        """recursively project sub-operators"""
-        projected_operators = [self.apply(o, range_basis, source_basis, product=product)
-                               for o in op.operators]
-        return SelectionOperator(projected_operators, op.parameter_functional, op.boundaries,
-                                 op.name + '_projected')
 
     @match_class(EmpiricalInterpolatedOperator)
     def action_EmpiricalInterpolatedOperator(self, op, range_basis, source_basis, product=None):
@@ -215,6 +194,10 @@ class ProjectRules(RuleTable):
                                                           NumpyVectorSpace.make_array(source_basis.components(op.source_dofs)),
                                                           projected_collateral_basis, op.triangular,
                                                           op.source.id, None, op.name)
+
+    @match_class(LincombOperator, SelectionOperator, AffineOperator)
+    def action_recurse(self, op, range_basis, source_basis, product=None):
+        return self.replace_children(op, range_basis, source_basis, product)
 
     @match_class(OperatorInterface)
     def action_generic_projection(self, op, range_basis, source_basis, product=None):
@@ -258,9 +241,7 @@ class ProjectToSubbasisRules(RuleTable):
 
     @match_class(LincombOperator)
     def action_recurse(self, op, dim_range=None, dim_source=None):
-        proj_operators = [self.apply(o, dim_range=dim_range, dim_source=dim_source)
-                          for o in op.operators]
-        return op.with_(operators=proj_operators)
+        return self.replace_children(op, dim_range, dim_source)
 
     @match_class(NumpyMatrixOperator)
     def action_NumpyMatrixOperator(self, op, dim_range=None, dim_source=None):

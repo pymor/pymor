@@ -223,8 +223,7 @@ class CollectOperatorRangeRules(RuleTable):
 
     @match_class(LincombOperator, SelectionOperator)
     def action_recurse(self, op, source, image, extends):
-        for o in op.operators:
-            self.apply(o, source, image, extends)
+        self.apply_children(op, source, image, extends)
 
     @match_class(EmpiricalInterpolatedOperator)
     def action_EmpiricalInterpolatedOperator(self, op, source, image, extends):
@@ -250,5 +249,4 @@ class CollectVectorRangeRules(RuleTable):
 
     @match_class(LincombOperator, SelectionOperator)
     def action_recurse(self, op, image):
-        for o in op.operators:
-            self.apply(o, image)
+        self.apply_children(op, image)
