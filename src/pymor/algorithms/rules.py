@@ -142,3 +142,19 @@ class RuleTable(metaclass=RuleTableMeta):
                     pass
 
         raise NoMatchingRuleError('No rule could be applied to {}'.format(obj))
+
+    @classinstancemethod
+    def apply_children(cls, obj, *args, **kwargs):
+        return cls().apply_children(obj, *args, **kwargs)
+
+    @apply_children.instancemethod
+    def apply_children(self, obj, *args, **kwargs):
+        return obj.map_children(self.apply, *args, return_new_object=False, **kwargs)
+
+    @classinstancemethod
+    def replace_children(cls, obj, *args, **kwargs):
+        return cls().replace_children(obj, *args, **kwargs)
+
+    @replace_children.instancemethod
+    def replace_children(self, obj, *args, **kwargs):
+        return obj.map_children(self.apply, *args, return_new_object=True, **kwargs)
