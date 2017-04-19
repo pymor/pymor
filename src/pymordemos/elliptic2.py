@@ -52,8 +52,8 @@ def elliptic2_demo(args):
 
     print('Discretize ...')
     discretizer = discretize_stationary_fv if args['--fv'] else discretize_stationary_cg
-    discretization, _ = discretizer(problem, diameter=1. / args['N'])
-    print(discretization.rhs.grid)
+    discretization, data = discretizer(problem, diameter=1. / args['N'])
+    print(data['grid'])
     print()
 
     print('Solve ...')
