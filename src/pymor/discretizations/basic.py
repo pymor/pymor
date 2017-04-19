@@ -106,6 +106,14 @@ class DiscretizationBase(DiscretizationInterface):
         else:
             raise NotImplementedError('Discretization has no estimator.')
 
+    def map_children(self, func, *args, return_new_object=True, **kwargs):
+        new_operators = {k: func(v, *args, **kwargs) if v else v for k, v in self.operators.items()}
+        new_products = {k: func(v, *args, **kwargs) if v else v for k, v in self.products.items()}
+        if return_new_object:
+            return self.with_(operators=new_operators, products=new_products)
+        else:
+            return new_operators, new_products
+
 
 class StationaryDiscretization(DiscretizationBase):
     """Generic class for discretizations of stationary problems.
