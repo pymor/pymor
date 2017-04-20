@@ -159,11 +159,11 @@ class RuleTable(metaclass=RuleTableMeta):
         for child in children:
             c = getattr(obj, child)
             if isinstance(c, Mapping):
-                result[child] = {k: self.apply(v, *args, **kwargs) for k, v in c.items()}
+                result[child] = {k: self.apply(v, *args, **kwargs) if v is not None else v for k, v in c.items()}
             elif isinstance(c, Iterable):
-                result[child] = tuple(self.apply(v, *args, **kwargs) for v in c)
+                result[child] = tuple(self.apply(v, *args, **kwargs) if v is not None else v for v in c)
             else:
-                result[child] = self.apply(c, *args, **kwargs)
+                result[child] = self.apply(c, *args, **kwargs) if c is not None else c
         return result
 
     @classinstancemethod
