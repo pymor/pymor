@@ -2,8 +2,11 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from collections import Iterable, Mapping, OrderedDict
+
 from pymor.core.exceptions import NoMatchingRuleError, RuleNotMatchingError
 from pymor.core.interfaces import abstractmethod, classinstancemethod
+from pymor.operators.interfaces import OperatorInterface
 
 
 class rule():
@@ -146,17 +149,71 @@ class RuleTable(metaclass=RuleTableMeta):
         raise NoMatchingRuleError('No rule could be applied to {}'.format(obj))
 
     @classinstancemethod
-    def apply_children(cls, obj, *args, **kwargs):
-        return cls().apply_children(obj, *args, **kwargs)
+    def map_children(cls, obj, *args, children=None, **kwargs):
+        return cls().map_children(obj, *args, children=children, **kwargs)
 
-    @apply_children.instancemethod
-    def apply_children(self, obj, *args, **kwargs):
-        return obj.map_children(self.apply, *args, return_new_object=False, **kwargs)
+    @map_children.instancemethod
+    def map_children(self, obj, *args, children=None, **kwargs):
+        children = children or self.get_children(obj)
+        result = {}
+        for child in children:
+            c = getattr(obj, child)
+            if isinstance(c, Mapping):
+                result[child] = {k: self.apply(v, *args, **kwargs) for k, v in c.items()}
+            elif isinstance(c, Iterable):
+                result[child] = tuple(self.apply(v, *args, **kwargs) for v in c)
+            else:
+                result[child] = self.apply(c, *args, **kwargs)
+        return result
 
     @classinstancemethod
-    def replace_children(cls, obj, *args, **kwargs):
-        return cls().replace_children(obj, *args, **kwargs)
+    def apply_children(cls, obj, *args, children=None, **kwargs):
+        return cls().apply_children(obj, *args, children=children, **kwargs)
+
+    @apply_children.instancemethod
+    def apply_children(self, obj, *args, children=None, **kwargs):
+        self.map_children(obj, *args, children=children, **kwargs)
+
+    @classinstancemethod
+    def replace_children(cls, obj, *args, children=None, **kwargs):
+        return cls().replace_children(obj, *args, children=children, **kwargs)
 
     @replace_children.instancemethod
-    def replace_children(self, obj, *args, **kwargs):
-        return obj.map_children(self.apply, *args, return_new_object=True, **kwargs)
+    def replace_children(self, obj, *args, children=None, **kwargs):
+        return obj.with_(**self.map_children(obj, *args, children=children, **kwargs))
+
+    @classmethod
+    def get_children(cls, obj):
+        children = set()
+        for k in obj.with_arguments:
+            try:
+                v = getattr(obj, k)
+                if (isinstance(v, OperatorInterface) or
+                    isinstance(v, Mapping) and all(isinstance(vv, OperatorInterface) or vv is None for vv in v.values()) or
+                    isinstance(v, Iterable) and type(v) is not str and all(isinstance(vv, OperatorInterface) or vv is None for vv in v)):
+                    children.add(k)
+            except AttributeError:
+                pass
+        return children
+
+
+def print_children(obj):
+    def build_tree(obj):
+
+        def process_child(child):
+            c = getattr(obj, child)
+            if isinstance(c, Mapping):
+                return child, OrderedDict((k + ': ' + v.name, build_tree(v)) for k, v in sorted(c.items()))
+            elif isinstance(c, Iterable):
+                return child, OrderedDict((str(i) + ': ' + v.name, build_tree(v)) for i, v in enumerate(c))
+            else:
+                return child + ': ' + c.name, build_tree(c)
+
+        return OrderedDict(process_child(child) for child in sorted(RuleTable.get_children(obj)))
+
+    try:
+        from asciitree import LeftAligned
+        print(LeftAligned()({obj.name: build_tree(obj)}))
+    except ImportError:
+        from pprint import pprint
+        pprint({obj.name: build_tree(obj)})
