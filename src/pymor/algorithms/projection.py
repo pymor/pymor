@@ -195,7 +195,11 @@ class ProjectRules(RuleTable):
                                                           projected_collateral_basis, op.triangular,
                                                           op.source.id, None, op.name)
 
-    @match_class(LincombOperator, SelectionOperator, AffineOperator)
+    @match_class(AffineOperator)
+    def action_AffineOperator(self, op, range_basis, source_basis, product=None):
+        return self.apply(op.affine_shift + op.linear_part, range_basis, source_basis, product)
+
+    @match_class(LincombOperator, SelectionOperator)
     def action_recurse(self, op, range_basis, source_basis, product=None):
         return self.replace_children(op, range_basis, source_basis, product)
 
