@@ -89,7 +89,7 @@ class RuleTableMeta(type):
     def __new__(cls, name, parents, dct):
         assert 'rules' not in dct
         rules = []
-        if not {p.__name__ for p in parents} <= {'RuleTable'}:
+        if not {p.__name__ for p in parents} <= {'RuleTable', 'object'}:
             raise NotImplementedError('Inheritance for RuleTables not implemented yet.')
         for k, v in dct.items():
             if isinstance(v, rule):
