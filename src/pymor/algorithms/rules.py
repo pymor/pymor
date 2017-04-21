@@ -7,6 +7,7 @@ from collections import Iterable, Mapping, OrderedDict
 from pymor.core.exceptions import NoMatchingRuleError, RuleNotMatchingError
 from pymor.core.interfaces import abstractmethod, classinstancemethod
 from pymor.operators.interfaces import OperatorInterface
+from pymor.tools.table import format_table
 
 
 class rule():
@@ -112,10 +113,7 @@ class RuleTableMeta(type):
                          r.condition_type,
                          r.condition_description,
                          r.action_description])
-        column_widths = [max(map(len, c)) for c in zip(*rows)]
-        rows.insert(1, ['-' * cw for cw in column_widths])
-        return '\n'.join('  '.join('{:<{}}'.format(c, cw) for c, cw in zip(r, column_widths))
-                         for r in rows)
+        return format_table(rows)
 
     def __getitem__(cls, idx):
         return cls._rules[idx]
