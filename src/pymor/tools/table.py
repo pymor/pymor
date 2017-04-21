@@ -19,7 +19,7 @@ def format_table(rows, width='AUTO', title=None):
             width = get_terminal_size()[0] - 1
         except ImportError:
             width = 1000000
-    rows = rows.copy()
+    rows = list(rows)
     column_widths = [max(map(len, c)) for c in zip(*rows)]
     if sum(column_widths) + 2*(len(column_widths) - 1) > width:
         largest_column = np.argmax(column_widths)
