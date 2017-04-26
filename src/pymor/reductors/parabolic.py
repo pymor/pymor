@@ -5,16 +5,14 @@
 import numpy as np
 
 from pymor.core.interfaces import ImmutableInterface
-from pymor.core.logger import getLogger
-from pymor.reductors.basic import reduce_generic_rb
-from pymor.reductors.residual import reduce_residual, reduce_implicit_euler_residual
+from pymor.reductors.basic import GenericRBReductor
+from pymor.reductors.residual import ResidualReductor, ImplicitEulerResidualReductor
 from pymor.operators.constructions import IdentityOperator
 from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 
 
-def reduce_parabolic(discretization, RB, product=None, coercivity_estimator=None,
-                     disable_caching=True, extends=None):
-    r"""Reductor for parabolic equations.
+class ParabolicRBReductor(GenericRBReductor):
+    r"""Reduced Basis Reductor for parabolic equations.
 
     This reductor uses :meth:`~pymor.reductors.basic.reduce_generic_rb` for the actual
     RB-projection. The only addition is the assembly of an error estimator which
@@ -83,42 +81,41 @@ def reduce_parabolic(discretization, RB, product=None, coercivity_estimator=None
         Additional data produced by the reduction process (compare the
         `extends` parameter).
     """
+    def __init__(self, d, RB=None, product=None, coercivity_estimator=None, disable_caching=True):
+        assert isinstance(d.time_stepper, ImplicitEulerTimeStepper)
+        super().__init__(d, RB, product=product, disable_caching=disable_caching)
+        self.coercivity_estimator = coercivity_estimator
 
-    assert extends is None or len(extends) == 3
-    assert isinstance(discretization.time_stepper, ImplicitEulerTimeStepper)
-
-    logger = getLogger('pymor.reductors.parabolic.reduce_parabolic')
-
-    old_residual_data = extends[2].pop('residual') if extends else None
-    old_initial_resdidual_data = extends[2].pop('initial_residual') if extends else None
-
-    with logger.block('RB projection ...'):
-        rd, rc, data = reduce_generic_rb(discretization, RB, product=product,
-                                         disable_caching=disable_caching, extends=extends)
-
-    dt = discretization.T / discretization.time_stepper.nt
-
-    with logger.block('Assembling error estimator ...'):
-        residual, residual_reconstructor, residual_data = reduce_implicit_euler_residual(
-            discretization.operator, discretization.mass, dt, discretization.rhs,
-            RB, product=product, extends=old_residual_data
+        self.residual_reductor = ImplicitEulerResidualReductor(
+            self.RB,
+            d.operator,
+            d.mass,
+            d.T / d.time_stepper.nt,
+            functional=d.rhs,
+            product=product
         )
 
-        initial_residual, initial_residual_reconstructor, initial_residual_data = reduce_residual(
-            IdentityOperator(discretization.solution_space), discretization.initial_data, RB,
-            product=discretization.l2_product, extends=old_initial_resdidual_data
+        self.initial_residual_reductor = ResidualReductor(
+            self.RB,
+            IdentityOperator(d.solution_space),
+            d.initial_data,
+            product=d.l2_product
         )
 
-    estimator = ReduceParabolicEstimator(residual, residual_data.get('residual_range_dims', None),
-                                         initial_residual, initial_residual_data.get('residual_range_dims', None),
-                                         coercivity_estimator)
+    def reduce(self):
+        with self.logger.block('RB projection ...'):
+            rd = super().reduce()
 
-    rd = rd.with_(estimator=estimator)
+        with self.logger.block('Assembling error estimator ...'):
+            residual = self.residual_reductor.reduce()
+            initial_residual = self.initial_residual_reductor.reduce()
 
-    data.update(residual=(residual, residual_reconstructor, residual_data),
-                initial_residual=(initial_residual, initial_residual_reconstructor, initial_residual_data))
+            estimator = ReduceParabolicEstimator(residual, self.residual_reductor.residual_range_dims,
+                                                 initial_residual, self.initial_residual_reductor.residual_range_dims,
+                                                 self.coercivity_estimator)
+            rd = rd.with_(estimator=estimator)
 
-    return rd, rc, data
+        return rd
 
 
 class ReduceParabolicEstimator(ImmutableInterface):

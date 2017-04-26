@@ -39,11 +39,8 @@ Options:
   --cache-region=REGION           Name of cache region to use for caching solution snapshots
                                   (none, memory, disk, persistent) [default: none].
 
-  --estimator-norm=NORM           Norm (euclidean, h1) in which to calculate the residual
-                                  [default: h1].
-
-  --extension-alg=ALG             Basis extension algorithm (trivial, gram_schmidt, h1_gram_schmidt)
-                                  to be used [default: h1_gram_schmidt].
+  --extension-alg=ALG             Basis extension algorithm (trivial, gram_schmidt)
+                                  to be used [default: gram_schmidt].
 
   --fenics                        Use FEniCS discretization.
 
@@ -71,8 +68,8 @@ Options:
 
   --plot-error-sequence           Plot reduction error vs. basis size.
 
-  --pod-product=PROD              Inner product w.r.t. with to compute the pod (euclidean, h1)
-                                  [default: h1].
+  --product=PROD                  Product (euclidean, h1) w.r.t. which to orthonormalize
+                                  and calculate Riesz representatives [default: h1].
 
   --reductor=RED                  Reductor (error estimator) to choose (traditional, residual_basis)
                                   [default: residual_basis]
@@ -83,7 +80,6 @@ Options:
   --greedy-without-estimator      Do not use error estimator for basis generation.
 """
 
-from functools import partial
 import sys
 import time
 
@@ -127,41 +123,39 @@ def main(args):
     coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', d.parameter_type)
 
     # inner product for computation of Riesz representatives
-    product = d.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
+    product = d.h1_0_semi_product if args['--product'] == 'h1' else None
 
     if args['--reductor'] == 'residual_basis':
-        from pymor.reductors.coercive import reduce_coercive
-        reductor = partial(reduce_coercive, product=product,
-                           coercivity_estimator=coercivity_estimator)
+        from pymor.reductors.coercive import CoerciveRBReductor
+        reductor = CoerciveRBReductor(d, product=product, coercivity_estimator=coercivity_estimator)
     elif args['--reductor'] == 'traditional':
-        from pymor.reductors.coercive import reduce_coercive_simple
-        reductor = partial(reduce_coercive_simple, product=product,
-                           coercivity_estimator=coercivity_estimator)
+        from pymor.reductors.coercive import SimpleCoerciveRBReductor
+        reductor = SimpleCoerciveRBReductor(d, product=product, coercivity_estimator=coercivity_estimator)
     else:
         assert False  # this should never happen
 
     if args['--alg'] == 'naive':
-        rd, rc, red_summary = reduce_naive(d=d, reductor=reductor, basis_size=args['RBSIZE'])
+        rd, red_summary = reduce_naive(d=d, reductor=reductor, basis_size=args['RBSIZE'])
     elif args['--alg'] == 'greedy':
         parallel = not (args['--fenics'] and args['--greedy-without-estimator'])  # cannot pickle FEniCS discretization
-        rd, rc, red_summary = reduce_greedy(d=d, reductor=reductor, snapshots_per_block=args['SNAPSHOTS'],
-                                            extension_alg_name=args['--extension-alg'],
-                                            max_extensions=args['RBSIZE'],
-                                            use_estimator=not args['--greedy-without-estimator'],
-                                            pool=pool if parallel else None)
+        rd, red_summary = reduce_greedy(d=d, reductor=reductor, snapshots_per_block=args['SNAPSHOTS'],
+                                        extension_alg_name=args['--extension-alg'],
+                                        max_extensions=args['RBSIZE'],
+                                        use_estimator=not args['--greedy-without-estimator'],
+                                        pool=pool if parallel else None)
     elif args['--alg'] == 'adaptive_greedy':
         parallel = not (args['--fenics'] and args['--greedy-without-estimator'])  # cannot pickle FEniCS discretization
-        rd, rc, red_summary = reduce_adaptive_greedy(d=d, reductor=reductor, validation_mus=args['SNAPSHOTS'],
-                                                     extension_alg_name=args['--extension-alg'],
-                                                     max_extensions=args['RBSIZE'],
-                                                     use_estimator=not args['--greedy-without-estimator'],
-                                                     rho=args['--adaptive-greedy-rho'],
-                                                     gamma=args['--adaptive-greedy-gamma'],
-                                                     theta=args['--adaptive-greedy-theta'],
-                                                     pool=pool if parallel else None)
+        rd, red_summary = reduce_adaptive_greedy(d=d, reductor=reductor, validation_mus=args['SNAPSHOTS'],
+                                                 extension_alg_name=args['--extension-alg'],
+                                                 max_extensions=args['RBSIZE'],
+                                                 use_estimator=not args['--greedy-without-estimator'],
+                                                 rho=args['--adaptive-greedy-rho'],
+                                                 gamma=args['--adaptive-greedy-gamma'],
+                                                 theta=args['--adaptive-greedy-theta'],
+                                                 pool=pool if parallel else None)
     elif args['--alg'] == 'pod':
-        rd, rc, red_summary = reduce_pod(d=d, reductor=reductor, snapshots_per_block=args['SNAPSHOTS'],
-                                         basis_size=args['RBSIZE'], product_name=args['--pod-product'])
+        rd, red_summary = reduce_pod(d=d, reductor=reductor, snapshots_per_block=args['SNAPSHOTS'],
+                                     basis_size=args['RBSIZE'])
     else:
         assert False  # this should never happen
 
@@ -173,13 +167,13 @@ def main(args):
             print('Writing detailed discretization and reconstructor to file {} ...'
                   .format(args['--pickle'] + '_detailed'))
             with open(args['--pickle'] + '_detailed', 'wb') as f:
-                dump((d, rc), f)
+                dump((d, reductor), f)
 
     print('\nSearching for maximum error on random snapshots ...')
 
     results = reduction_error_analysis(rd,
                                        discretization=d,
-                                       reconstructor=rc,
+                                       reductor=reductor,
                                        estimator=True,
                                        error_norms=(d.h1_0_semi_norm, d.l2_norm),
                                        condition=True,
@@ -201,7 +195,7 @@ def main(args):
     if args['--plot-err']:
         mumax = results['max_error_mus'][0, -1]
         U = d.solve(mumax)
-        URB = rc.reconstruct(rd.solve(mumax))
+        URB = reductor.reconstruct(rd.solve(mumax))
         d.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
                     title='Maximum Error Solution', separate_colorbars=True, block=True)
 
@@ -220,19 +214,18 @@ def parse_arguments(args):
     args['--adaptive-greedy-theta'] = float(args['--adaptive-greedy-theta'])
     args['--alg'] = args['--alg'].lower()
     args['--cache-region'] = args['--cache-region'].lower()
-    args['--estimator-norm'] = args['--estimator-norm'].lower()
     args['--extension-alg'] = args['--extension-alg'].lower()
     args['--grid'] = int(args['--grid'])
     args['--ipython-engines'] = int(args['--ipython-engines'])
     args['--order'] = int(args['--order'])
+    args['--product'] = args['--product'].lower()
     args['--reductor'] = args['--reductor'].lower()
     args['--test'] = int(args['--test'])
 
     assert args['--alg'] in {'naive', 'greedy', 'adaptive_greedy', 'pod'}
     assert args['--cache-region'] in {'none', 'memory', 'disk', 'persistent'}
-    assert args['--estimator-norm'] in {'euclidean', 'h1'}
     assert args['--extension-alg'] in {'trivial', 'gram_schmidt', 'h1_gram_schmidt'}
-    assert args['--pod-product'] in {'euclidean', 'h1'}
+    assert args['--product'] in {'euclidean', 'h1'}
     assert args['--reductor'] in {'traditional', 'residual_basis'}
 
     if args['--fenics']:
@@ -376,11 +369,10 @@ def reduce_naive(d, reductor, basis_size):
 
     training_set = d.parameter_space.sample_randomly(basis_size)
 
-    snapshots = d.operator.source.empty()
     for mu in training_set:
-        snapshots.append(d.solve(mu))
+        reductor.extend_basis(d.solve(mu), 'trivial')
 
-    rd, rc, _ = reductor(d, snapshots)
+    rd = reductor.reduce()
 
     elapsed_time = time.time() - tic
 
@@ -389,32 +381,21 @@ def reduce_naive(d, reductor, basis_size):
    elapsed time:   {elapsed_time}
 '''.format(**locals())
 
-    return rd, rc, summary
+    return rd, summary
 
 
 def reduce_greedy(d, reductor, snapshots_per_block,
                   extension_alg_name, max_extensions, use_estimator, pool):
 
-    from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension
     from pymor.algorithms.greedy import greedy
-
-    # choose basis extension algorithm
-    if extension_alg_name == 'trivial':
-        extension_algorithm = trivial_basis_extension
-    elif extension_alg_name == 'gram_schmidt':
-        extension_algorithm = gram_schmidt_basis_extension
-    elif extension_alg_name == 'h1_gram_schmidt':
-        extension_algorithm = partial(gram_schmidt_basis_extension, product=d.h1_0_semi_product)
-    else:
-        assert False
 
     # run greedy
     training_set = d.parameter_space.sample_uniformly(snapshots_per_block)
     greedy_data = greedy(d, reductor, training_set,
                          use_estimator=use_estimator, error_norm=d.h1_0_semi_norm,
-                         extension_algorithm=extension_algorithm, max_extensions=max_extensions,
+                         extension_params={'method': extension_alg_name}, max_extensions=max_extensions,
                          pool=pool)
-    rd, rc = greedy_data['reduced_discretization'], greedy_data['reconstructor']
+    rd = greedy_data['reduced_discretization']
 
     # generate summary
     real_rb_size = rd.solution_space.dim
@@ -428,32 +409,21 @@ def reduce_greedy(d, reductor, snapshots_per_block,
    elapsed time:           {greedy_data[time]}
 '''.format(**locals())
 
-    return rd, rc, summary
+    return rd, summary
 
 
 def reduce_adaptive_greedy(d, reductor, validation_mus,
                            extension_alg_name, max_extensions, use_estimator,
                            rho, gamma, theta, pool):
 
-    from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension
     from pymor.algorithms.adaptivegreedy import adaptive_greedy
-
-    # choose basis extension algorithm
-    if extension_alg_name == 'trivial':
-        extension_algorithm = trivial_basis_extension
-    elif extension_alg_name == 'gram_schmidt':
-        extension_algorithm = gram_schmidt_basis_extension
-    elif extension_alg_name == 'h1_gram_schmidt':
-        extension_algorithm = partial(gram_schmidt_basis_extension, product=d.h1_0_semi_product)
-    else:
-        assert False
 
     # run greedy
     greedy_data = adaptive_greedy(d, reductor, validation_mus=-validation_mus,
                                   use_estimator=use_estimator, error_norm=d.h1_0_semi_norm,
-                                  extension_algorithm=extension_algorithm, max_extensions=max_extensions,
+                                  extension_params={'method': extension_alg_name}, max_extensions=max_extensions,
                                   rho=rho, gamma=gamma, theta=theta, pool=pool)
-    rd, rc = greedy_data['reduced_discretization'], greedy_data['reconstructor']
+    rd = greedy_data['reduced_discretization']
 
     # generate summary
     real_rb_size = rd.solution_space.dim
@@ -468,10 +438,10 @@ def reduce_adaptive_greedy(d, reductor, validation_mus,
    elapsed time:                    {greedy_data[time]}
 '''.format(**locals())
 
-    return rd, rc, summary
+    return rd, summary
 
 
-def reduce_pod(d, reductor, snapshots_per_block, product_name, basis_size):
+def reduce_pod(d, reductor, snapshots_per_block, basis_size):
     from pymor.algorithms.pod import pod
 
     tic = time.time()
@@ -483,18 +453,12 @@ def reduce_pod(d, reductor, snapshots_per_block, product_name, basis_size):
     for mu in training_set:
         snapshots.append(d.solve(mu))
 
-    if product_name == 'h1':
-        pod_product = d.h1_0_semi_product
-    elif product_name == 'euclidean':
-        pod_product = None
-    else:
-        assert False
-
     print('Performing POD ...')
-    basis, singular_values = pod(snapshots, modes=basis_size, product=pod_product)
+    basis, singular_values = pod(snapshots, modes=basis_size, product=reductor.product)
 
     print('Reducing ...')
-    rd, rc, _ = reductor(d, basis)
+    reductor.extend_basis(basis, 'trivial')
+    rd = reductor.reduce()
 
     elapsed_time = time.time() - tic
 
@@ -503,13 +467,12 @@ def reduce_pod(d, reductor, snapshots_per_block, product_name, basis_size):
     training_set_size = len(training_set)
     summary = '''POD basis generation:
    size of training set:   {training_set_size}
-   inner product for POD:  {product_name}
    prescribed basis size:  {basis_size}
    actual basis size:      {real_rb_size}
    elapsed time:           {elapsed_time}
 '''.format(**locals())
 
-    return rd, rc, summary
+    return rd, summary
 
 
 if __name__ == '__main__':

@@ -4,21 +4,18 @@
 
 import numpy as np
 
-from pymor.core.logger import getLogger
 from pymor.core.interfaces import ImmutableInterface
 from pymor.operators.constructions import LincombOperator, induced_norm
 from pymor.operators.numpy import NumpyMatrixOperator
-from pymor.reductors.basic import reduce_generic_rb
-from pymor.reductors.residual import reduce_residual
+from pymor.reductors.basic import GenericRBReductor
+from pymor.reductors.residual import ResidualReductor
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
-def reduce_coercive(discretization, RB, product=None, coercivity_estimator=None,
-                    disable_caching=True, extends=None):
-    """Reductor for |StationaryDiscretizations| with coercive linear operator.
+class CoerciveRBReductor(GenericRBReductor):
+    """Reduced Basis reductor for |StationaryDiscretizations| with coercive linear operator.
 
-    This reductor uses :meth:`~pymor.reductors.basic.reduce_generic_rb` for the actual
-    reduce basis projection. The only addition is an error estimator which evaluates the
+    The only addition tor GenericRBReductor is an error estimator which evaluates the
     dual norm of the residual with respect to a given inner product. For the reduction
     of the residual we use :func:`~pymor.reductors.residual.reduce_residual` for
     improved numerical stability [BEOR14]_.
@@ -30,13 +27,18 @@ def reduce_coercive(discretization, RB, product=None, coercivity_estimator=None,
 
     Parameters
     ----------
-    discretization
+    d
         The |Discretization| which is to be reduced.
     RB
-        |VectorArray| containing the reduced basis on which to project.
+        |VectorArray| containing the (initial) reduced basis on which to project.
+    orthogonal_projection
+        List of keys in `d.operators` for which the corresponding |Operator|
+        should be orthogonally projected (i.e. operators which map to vectors in
+        contrast to bilinear forms which map to functionals).
     product
-        Inner product |Operator| used to calculate Riesz representative of the
-        residual. If `None`, the Euclidean product is used.
+        Inner product for the projection of the |Operators| given by
+        `orthogonal_projection` and for the computation of Riesz representatives
+        of the residual. If `None`, the Euclidean product is used.
     coercivity_estimator
         `None` or a |Parameterfunctional| returning a lower bound for the coercivity
         constant of the given problem. Note that the computed error estimate is only
@@ -44,46 +46,30 @@ def reduce_coercive(discretization, RB, product=None, coercivity_estimator=None,
         estimate is specified.
     disable_caching
         If `True`, caching of solutions is disabled for the reduced |Discretization|.
-    extends
-        Set by :meth:`~pymor.algorithms.greedy.greedy` to the result of the
-        last reduction in case the basis extension was `hierarchic` (used to prevent
-        re-computation of residual range basis vectors already obtained from previous
-        reductions).
-
-    Returns
-    -------
-    rd
-        The reduced |Discretization|.
-    rc
-        The :class:`reconstructor <GenericRBReconstructor>` providing a
-        `reconstruct(U)` method which reconstructs high-dimensional solutions
-        from solutions `U` of the reduced |Discretization|.
-    reduction_data
-        Additional data produced by the reduction process (compare the
-        `extends` parameter).
     """
 
-    assert extends is None or len(extends) == 3
+    def __init__(self, d, RB=None, orthogonal_projection=('initial_data',), product=None,
+                 coercivity_estimator=None, disable_caching=True):
+        super().__init__(d, RB,
+                         orthogonal_projection=orthogonal_projection,
+                         product=product,
+                         disable_caching=disable_caching)
+        self.coercivity_estimator = coercivity_estimator
+        self.residual_reductor = ResidualReductor(self.RB, self.d.operator, self.d.rhs,
+                                                  product=product)
 
-    logger = getLogger('pymor.reductors.coercive.reduce_coercive')
+    def reduce(self):
+        with self.logger.block('RB projection ...'):
+            rd = super().reduce()
 
-    old_residual_data = extends[2].pop('residual') if extends else None
+        with self.logger.block('Assembling error estimator ...'):
+            residual = self.residual_reductor.reduce()
 
-    with logger.block('RB projection ...'):
-        rd, rc, data = reduce_generic_rb(discretization, RB, disable_caching=disable_caching, extends=extends)
+            estimator = ReduceCoerciveEstimator(residual, self.residual_reductor.residual_range_dims.copy(),
+                                                self.coercivity_estimator)
+            rd = rd.with_(estimator=estimator)
 
-    with logger.block('Assembling error estimator ...'):
-        residual, residual_reconstructor, residual_data \
-            = reduce_residual(discretization.operator, discretization.rhs, RB,
-                              product=product, extends=old_residual_data)
-
-    estimator = ReduceCoerciveEstimator(residual, residual_data.get('residual_range_dims', None), coercivity_estimator)
-
-    rd = rd.with_(estimator=estimator)
-
-    data.update(residual=(residual, residual_reconstructor, residual_data))
-
-    return rd, rc, data
+        return rd
 
 
 class ReduceCoerciveEstimator(ImmutableInterface):
@@ -114,8 +100,7 @@ class ReduceCoerciveEstimator(ImmutableInterface):
                                            self.coercivity_estimator)
 
 
-def reduce_coercive_simple(discretization, RB, product=None, coercivity_estimator=None,
-                           disable_caching=True, extends=None):
+class SimpleCoerciveRBReductor(GenericRBReductor):
     """Reductor for linear |StationaryDiscretizations| with affinely decomposed operator and rhs.
 
     .. note::
@@ -129,13 +114,18 @@ def reduce_coercive_simple(discretization, RB, product=None, coercivity_estimato
 
     Parameters
     ----------
-    discretization
+    d
         The |Discretization| which is to be reduced.
     RB
-        |VectorArray| containing the reduced basis on which to project.
+        |VectorArray| containing the (initial) reduced basis on which to project.
+    orthogonal_projection
+        List of keys in `d.operators` for which the corresponding |Operator|
+        should be orthogonally projected (i.e. operators which map to vectors in
+        contrast to bilinear forms which map to functionals).
     product
-        Inner product |Operator| used to calculate the Riesz representative of the
-        residual. If `None`, the Euclidean product is used.
+        Inner product for the projection of the |Operators| given by
+        `orthogonal_projection` and for the computation of Riesz representatives
+        of the residual. If `None`, the Euclidean product is used.
     coercivity_estimator
         `None` or a |Parameterfunctional| returning a lower bound for the coercivity
         constant of the given problem. Note that the computed error estimate is only
@@ -143,110 +133,101 @@ def reduce_coercive_simple(discretization, RB, product=None, coercivity_estimato
         estimate is specified.
     disable_caching
         If `True`, caching of solutions is disabled for the reduced |Discretization|.
-    extends
-        Set by :meth:`~pymor.algorithms.greedy.greedy` to the result of the
-        last reduction in case the basis extension was `hierarchic` (used to prevent
-        re-computation of residual range basis vectors already obtained from previous
-        reductions).
-
-    Returns
-    -------
-    rd
-        The reduced |Discretization|.
-    rc
-        The :class:`reconstructor <GenericRBReconstructor>` providing a
-        `reconstruct(U)` method which reconstructs high-dimensional solutions
-        from solutions `U` of the reduced |Discretization|.
-    reduction_data
-        Additional data produced by the reduction process (compare the
-        `extends` parameter).
     """
 
-    # assert isinstance(discretization, StationaryDiscretization)
-    assert discretization.linear
-    assert isinstance(discretization.operator, LincombOperator)
-    assert all(not op.parametric for op in discretization.operator.operators)
-    if discretization.rhs.parametric:
-        assert isinstance(discretization.rhs, LincombOperator)
-        assert all(not op.parametric for op in discretization.rhs.operators)
-    assert extends is None or len(extends) == 3
+    def __init__(self, d, RB=None, orthogonal_projection=('initial_data',), product=None,
+                 coercivity_estimator=None, disable_caching=True):
+        assert d.linear
+        assert isinstance(d.operator, LincombOperator)
+        assert all(not op.parametric for op in d.operator.operators)
+        if d.rhs.parametric:
+            assert isinstance(d.rhs, LincombOperator)
+            assert all(not op.parametric for op in d.rhs.operators)
 
-    d = discretization
-    rd, rc, data = reduce_generic_rb(d, RB, disable_caching=disable_caching, extends=extends)
-    if extends:
-        old_data = extends[2]
-        old_RB_size = len(extends[1].RB)
-    else:
-        old_RB_size = 0
+        super().__init__(d, RB,
+                         orthogonal_projection=orthogonal_projection,
+                         product=product,
+                         disable_caching=disable_caching)
+        self.coercivity_estimator = coercivity_estimator
+        self.residual_reductor = ResidualReductor(self.RB, self.d.operator, self.d.rhs,
+                                                  product=product)
+        self.extends = None
 
-    # compute data for estimator
-    space = d.operator.source
-
-    # compute the Riesz representative of (U, .)_L2 with respect to product
-    def riesz_representative(U):
-        if product is None:
-            return U.copy()
+    def reduce(self):
+        d, RB, extends = self.d, self.RB, self.extends
+        rd = super().reduce()
+        if extends:
+            old_RB_size = extends[0]
+            old_data = extends[1]
         else:
-            return product.apply_inverse(U)
+            old_RB_size = 0
 
-    def append_vector(U, R, RR):
-        RR.append(riesz_representative(U), remove_from_other=True)
-        R.append(U, remove_from_other=True)
+        # compute data for estimator
+        space = d.operator.source
 
-    # compute all components of the residual
-    if RB is None:
-        RB = discretization.solution_space.empty()
+        # compute the Riesz representative of (U, .)_L2 with respect to product
+        def riesz_representative(U):
+            if self.product is None:
+                return U.copy()
+            else:
+                return self.product.apply_inverse(U)
 
-    if extends:
-        R_R, RR_R = old_data['R_R'], old_data['RR_R']
-    elif not d.rhs.parametric:
-        R_R = space.empty(reserve=1)
-        RR_R = space.empty(reserve=1)
-        append_vector(d.rhs.as_source_array(), R_R, RR_R)
-    else:
-        R_R = space.empty(reserve=len(d.rhs.operators))
-        RR_R = space.empty(reserve=len(d.rhs.operators))
-        for op in d.rhs.operators:
-            append_vector(op.as_source_array(), R_R, RR_R)
+        def append_vector(U, R, RR):
+            RR.append(riesz_representative(U), remove_from_other=True)
+            R.append(U, remove_from_other=True)
 
-    if len(RB) == 0:
-        R_Os = [space.empty()]
-        RR_Os = [space.empty()]
-    elif not d.operator.parametric:
-        R_Os = [space.empty(reserve=len(RB))]
-        RR_Os = [space.empty(reserve=len(RB))]
-        for i in range(len(RB)):
-            append_vector(-d.operator.apply(RB[i]), R_Os[0], RR_Os[0])
-    else:
-        R_Os = [space.empty(reserve=len(RB)) for _ in range(len(d.operator.operators))]
-        RR_Os = [space.empty(reserve=len(RB)) for _ in range(len(d.operator.operators))]
-        if old_RB_size > 0:
-            for op, R_O, RR_O, old_R_O, old_RR_O in zip(d.operator.operators, R_Os, RR_Os,
-                                                         old_data['R_Os'], old_data['RR_Os']):
-                R_O.append(old_R_O)
-                RR_O.append(old_RR_O)
-        for op, R_O, RR_O in zip(d.operator.operators, R_Os, RR_Os):
-            for i in range(old_RB_size, len(RB)):
-                append_vector(-op.apply(RB[i]), R_O, RR_O)
+        # compute all components of the residual
+        if extends:
+            R_R, RR_R = old_data['R_R'], old_data['RR_R']
+        elif not d.rhs.parametric:
+            R_R = space.empty(reserve=1)
+            RR_R = space.empty(reserve=1)
+            append_vector(d.rhs.as_source_array(), R_R, RR_R)
+        else:
+            R_R = space.empty(reserve=len(d.rhs.operators))
+            RR_R = space.empty(reserve=len(d.rhs.operators))
+            for op in d.rhs.operators:
+                append_vector(op.as_source_array(), R_R, RR_R)
 
-    # compute Gram matrix of the residuals
-    R_RR = RR_R.dot(R_R)
-    R_RO = np.hstack([RR_R.dot(R_O) for R_O in R_Os])
-    R_OO = np.vstack([np.hstack([RR_O.dot(R_O) for R_O in R_Os]) for RR_O in RR_Os])
+        if len(RB) == 0:
+            R_Os = [space.empty()]
+            RR_Os = [space.empty()]
+        elif not d.operator.parametric:
+            R_Os = [space.empty(reserve=len(RB))]
+            RR_Os = [space.empty(reserve=len(RB))]
+            for i in range(len(RB)):
+                append_vector(-d.operator.apply(RB[i]), R_Os[0], RR_Os[0])
+        else:
+            R_Os = [space.empty(reserve=len(RB)) for _ in range(len(d.operator.operators))]
+            RR_Os = [space.empty(reserve=len(RB)) for _ in range(len(d.operator.operators))]
+            if old_RB_size > 0:
+                for op, R_O, RR_O, old_R_O, old_RR_O in zip(d.operator.operators, R_Os, RR_Os,
+                                                             old_data['R_Os'], old_data['RR_Os']):
+                    R_O.append(old_R_O)
+                    RR_O.append(old_RR_O)
+            for op, R_O, RR_O in zip(d.operator.operators, R_Os, RR_Os):
+                for i in range(old_RB_size, len(RB)):
+                    append_vector(-op.apply(RB[i]), R_O, RR_O)
 
-    estimator_matrix = np.empty((len(R_RR) + len(R_OO),) * 2)
-    estimator_matrix[:len(R_RR), :len(R_RR)] = R_RR
-    estimator_matrix[len(R_RR):, len(R_RR):] = R_OO
-    estimator_matrix[:len(R_RR), len(R_RR):] = R_RO
-    estimator_matrix[len(R_RR):, :len(R_RR)] = R_RO.T
+        # compute Gram matrix of the residuals
+        R_RR = RR_R.dot(R_R)
+        R_RO = np.hstack([RR_R.dot(R_O) for R_O in R_Os])
+        R_OO = np.vstack([np.hstack([RR_O.dot(R_O) for R_O in R_Os]) for RR_O in RR_Os])
 
-    estimator_matrix = NumpyMatrixOperator(estimator_matrix)
+        estimator_matrix = np.empty((len(R_RR) + len(R_OO),) * 2)
+        estimator_matrix[:len(R_RR), :len(R_RR)] = R_RR
+        estimator_matrix[len(R_RR):, len(R_RR):] = R_OO
+        estimator_matrix[:len(R_RR), len(R_RR):] = R_RO
+        estimator_matrix[len(R_RR):, :len(R_RR)] = R_RO.T
 
-    estimator = ReduceCoerciveSimpleEstimator(estimator_matrix, coercivity_estimator)
-    rd = rd.with_(estimator=estimator)
-    data.update(R_R=R_R, RR_R=RR_R, R_Os=R_Os, RR_Os=RR_Os)
+        estimator_matrix = NumpyMatrixOperator(estimator_matrix)
 
-    return rd, rc, data
+        estimator = ReduceCoerciveSimpleEstimator(estimator_matrix, self.coercivity_estimator)
+        rd = rd.with_(estimator=estimator)
+
+        self.extends = (len(RB), dict(R_R=R_R, RR_R=RR_R, R_Os=R_Os, RR_Os=RR_Os))
+
+        return rd
 
 
 class ReduceCoerciveSimpleEstimator(ImmutableInterface):
