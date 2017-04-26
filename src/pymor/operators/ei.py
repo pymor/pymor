@@ -213,7 +213,7 @@ class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
         restricted_operator, source_dofs = self.restricted_operator.restricted(np.arange(dim))
 
         old_pcb = self.projected_collateral_basis
-        projected_collateral_basis = NumpyVectorSpace.make_array(old_pcb.data[:dim, :dim], old_pcb.space.id)
+        projected_collateral_basis = NumpyVectorSpace.make_array(old_pcb.data[:dim, :], old_pcb.space.id)
 
         old_sbd = self.source_basis_dofs
         source_basis_dofs = NumpyVectorSpace.make_array(old_sbd.data[:, source_dofs])
