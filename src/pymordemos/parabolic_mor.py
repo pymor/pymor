@@ -204,7 +204,7 @@ def reduce_adaptive_greedy(d, reductor, validation_mus, basis_size):
     pool = new_parallel_pool()
 
     greedy_data = adaptive_greedy(d, reductor, validation_mus=validation_mus,
-                                  extension_parame={'method': 'pod'}, max_extensions=basis_size,
+                                  extension_params={'method': 'pod'}, max_extensions=basis_size,
                                   pool=pool)
 
     return greedy_data['reduced_discretization']
