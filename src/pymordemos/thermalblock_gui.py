@@ -43,7 +43,7 @@ OpenGL.ERROR_ON_COPY = True
 
 from pymor.core.exceptions import QtMissing
 try:
-    from Qt import QtGui, QtWidgets
+    from Qt import QtWidgets
 except ImportError as e:
     raise QtMissing()
 from pymor.algorithms.basisextension import gram_schmidt_basis_extension
@@ -191,7 +191,7 @@ if __name__ == '__main__':
     args = docopt(__doc__)
     testing = args['--testing']
     if not testing:
-        app = QtGui.QApplication(sys.argv)
+        app = QtWidgets.QApplication(sys.argv)
         win = RBGui(args)
         win.show()
         sys.exit(app.exec_())
