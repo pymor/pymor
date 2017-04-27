@@ -41,11 +41,11 @@ import OpenGL
 
 OpenGL.ERROR_ON_COPY = True
 
-from pymor.core.exceptions import PySideMissing
+from pymor.core.exceptions import QtMissing
 try:
-    from PySide import QtGui
+    from Qt import QtGui
 except ImportError as e:
-    raise PySideMissing()
+    raise QtMissing()
 from pymor.algorithms.basisextension import gram_schmidt_basis_extension
 from pymor.algorithms.greedy import greedy
 from pymor.analyticalproblems.thermalblock import thermal_block_problem

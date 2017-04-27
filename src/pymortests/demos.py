@@ -11,7 +11,7 @@ from tempfile import mkdtemp
 import shutil
 
 from pymortests.base import runmodule, check_results
-from pymor.core.exceptions import PySideMissing
+from pymor.core.exceptions import QtMissing
 from pymor.gui.qt import stop_gui_processes
 
 
@@ -125,8 +125,8 @@ def _test_demo(demo):
     result = None
     try:
         result = demo()
-    except PySideMissing:
-        pytest.xfail("PySide missing")
+    except QtMissing:
+        pytest.xfail("Qt missing")
     finally:
         stop_gui_processes()
         from pymor.parallel.default import _cleanup

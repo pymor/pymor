@@ -16,10 +16,11 @@ import numpy as np
 from pymor.core.config import config
 
 
-if config.HAVE_PYSIDE and config.HAVE_QTOPENGL and config.HAVE_GL:
+if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
     import OpenGL.GL as gl
-    from PySide.QtGui import QSizePolicy, QPainter, QFontMetrics
-    from PySide.QtOpenGL import QGLWidget
+    from Qt.QtWidgets import QSizePolicy
+    from Qt.QtGui import QPainter, QFontMetrics
+    from Qt.QtOpenGL import QGLWidget
     from ctypes import c_void_p
 
     from pymor.grids.constructions import flatten_grid

@@ -14,8 +14,8 @@ import numpy as np
 from pymor.core.config import config
 
 
-if config.HAVE_PYSIDE and config.HAVE_MATPLOTLIB:
-    from PySide.QtGui import QSizePolicy
+if config.HAVE_QT and config.HAVE_MATPLOTLIB:
+    from Qt.QtWidgets import QSizePolicy
 
     from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 
