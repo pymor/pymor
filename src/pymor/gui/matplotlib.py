@@ -110,25 +110,29 @@ if config.HAVE_QT and config.HAVE_MATPLOTLIB:
             self.setParent(parent)
             self.setMinimumSize(300, 300)
             self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
+            a = self.figure.gca()
+            if self.codim == 2:
+                self.p = a.tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
+                                     np.zeros(len(self.coordinates)),
+                                     vmin=self.vmin, vmax=self.vmax, shading='gouraud')
+            else:
+                self.p = a.tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
+                                     facecolors=np.zeros(len(self.subentities)),
+                                     vmin=self.vmin, vmax=self.vmax, shading='flat')
+            self.figure.colorbar(self.p)
 
         def set(self, U, vmin=None, vmax=None):
             self.vmin = self.vmin if vmin is None else vmin
             self.vmax = self.vmax if vmax is None else vmax
             U = np.array(U)
-            f = self.figure
-            f.clear()
-            a = f.gca()
+            p = self.p
             if self.codim == 2:
-                p = a.tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities, U,
-                                vmin=self.vmin, vmax=self.vmax, shading='flat')
+                p.set_array(U)
             elif self.reference_element is triangle:
-                p = a.tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities, facecolors=U,
-                                vmin=self.vmin, vmax=self.vmax, shading='flat')
+                p.set_array(U)
             else:
-                p = a.tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
-                                facecolors=np.tile(U, 2), vmin=self.vmin, vmax=self.vmax, shading='flat')
-
-            self.figure.colorbar(p)
+                p.set_array(np.tile(U, 2))
+            p.set_clim(self.vmin, self.vmax)
             self.draw()
 
 else:
