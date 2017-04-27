@@ -5,7 +5,7 @@
 from collections import Iterable, Mapping, OrderedDict
 
 from pymor.core.exceptions import NoMatchingRuleError, RuleNotMatchingError
-from pymor.core.interfaces import abstractmethod, classinstancemethod
+from pymor.core.interfaces import BasicInterface, UberMeta, abstractmethod, classinstancemethod
 from pymor.operators.interfaces import OperatorInterface
 from pymor.tools.table import format_table
 
@@ -89,11 +89,11 @@ class match_generic(rule):
         return self.condition(obj)
 
 
-class RuleTableMeta(type):
+class RuleTableMeta(UberMeta):
     def __new__(cls, name, parents, dct):
         assert 'rules' not in dct
         rules = []
-        if not {p.__name__ for p in parents} <= {'RuleTable', 'object'}:
+        if not {p.__name__ for p in parents} <= {'RuleTable', 'BasicInterface'}:
             raise NotImplementedError('Inheritance for RuleTables not implemented yet.')
         for k, v in dct.items():
             if isinstance(v, rule):
@@ -121,7 +121,7 @@ class RuleTableMeta(type):
     __str__ = __repr__
 
 
-class RuleTable(metaclass=RuleTableMeta):
+class RuleTable(BasicInterface, metaclass=RuleTableMeta):
 
     def __init__(self):
         self._cache = {}
