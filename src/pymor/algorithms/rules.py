@@ -46,7 +46,7 @@ class rule():
             from pygments import highlight
             from pygments.lexers import PythonLexer
             from pygments.formatters import Terminal256Formatter
-            return highlight(self.source, PythonLexer(), Terminal256Formatter(style='native'))
+            return highlight(self.source, PythonLexer(), Terminal256Formatter())
         except ImportError:
             return self.source
 
