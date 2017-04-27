@@ -127,14 +127,14 @@ class RuleTableMeta(UberMeta):
                     raise ValueError('Rule definition names have to start with "action_"')
                 v.name = k
                 rules.append(v)
-        rules = tuple(sorted(rules, key=lambda r: r._rule_nr))
-        dct['_rules'] = rules
+        rules = list(sorted(rules, key=lambda r: r._rule_nr))
+        dct['rules'] = rules
 
         return super().__new__(cls, name, parents, dct)
 
     def __repr__(cls):
         rows = [['Pos', 'Match Type', 'Condition', 'Action Name / Action Description', 'Stop']]
-        for i, r in enumerate(cls._rules):
+        for i, r in enumerate(cls.rules):
             rows.append([str(i),
                          r.condition_type,
                          r.condition_description,
@@ -142,7 +142,7 @@ class RuleTableMeta(UberMeta):
         return format_table(rows)
 
     def __getitem__(cls, idx):
-        return cls._rules[idx]
+        return cls.rules[idx]
 
     __str__ = __repr__
 
@@ -211,7 +211,7 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
         if obj in self._cache:
             return self._cache[obj]
 
-        for r in self._rules:
+        for r in self.rules:
             if r.matches(obj):
                 try:
                     result = r.action(self, obj, *args, **kwargs)
