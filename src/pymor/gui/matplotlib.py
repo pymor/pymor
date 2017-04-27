@@ -17,7 +17,13 @@ from pymor.core.config import config
 if config.HAVE_QT and config.HAVE_MATPLOTLIB:
     from Qt.QtWidgets import QSizePolicy
 
-    from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+    import Qt
+    if Qt.__qt_version__[0] == '4':
+        from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+    elif Qt.__qt_version__[0] == '5':
+        from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+    else:
+        raise NotImplementedError
 
     from matplotlib.figure import Figure
 
