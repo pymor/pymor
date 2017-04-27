@@ -168,6 +168,7 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
 
     def __init__(self):
         self._cache = {}
+        self.rules = list(self.rules)  # make a copy of the list of rules
 
     @classinstancemethod
     def apply(cls, obj, *args, **kwargs):
