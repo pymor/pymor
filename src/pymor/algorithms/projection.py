@@ -18,7 +18,7 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 def project(op, range_basis, source_basis, product=None):
-    """Project an operator to subspaces of its source and range space.
+    """Petrov-Galerkin projection of a given |Operator|.
 
     Given an inner product `( ⋅, ⋅)`, source vectors `b_1, ..., b_N`
     and range vectors `c_1, ..., c_M`, the projection `op_proj` of `op`
@@ -36,13 +36,13 @@ def project(op, range_basis, source_basis, product=None):
     From another point of view, if `op` is viewed as a bilinear form
     (see :meth:`apply2`) and `( ⋅, ⋅ )` is the Euclidean inner
     product, then `op_proj` represents the matrix of the bilinear form restricted
-    `span(b_i) / spanc(c_i)` (w.r.t. the `b_i/c_i` bases).
+    to `span(b_i) / span(c_i)` (w.r.t. the `b_i/c_i` bases).
 
-    How the projected operator is realized will depend on the implementation
-    of the operator to project.  While a projected |NumpyMatrixOperator| will
+    How the projection is realized will depend on the given |Operator|.
+    While a projected |NumpyMatrixOperator| will
     again be a |NumpyMatrixOperator|, only a generic
     :class:`~pymor.operators.basic.ProjectedOperator` can be returned
-    in general.
+    in general. The exact algorithm is specified in :class:`ProjectRules`.
 
     Parameters
     ----------
@@ -68,6 +68,7 @@ def project(op, range_basis, source_basis, product=None):
 
 
 class ProjectRules(RuleTable):
+    """|RuleTable| for the :func:`project` algorithm."""
 
     @match_class(ZeroOperator)
     def action_ZeroOperator(self, op, range_basis, source_basis, product=None):
@@ -210,11 +211,10 @@ class ProjectRules(RuleTable):
 
 
 def project_to_subbasis(op, dim_range=None, dim_source=None):
-    """Project the operator to a subbasis.
+    """Project given already projected |Operator| to a subbasis.
 
     The purpose of this method is to further project an operator that has been
-    obtained through :meth:`~pymor.operators.interfaces.OperatorInterface.projected`
-    to subbases of the original projection bases, i.e. ::
+    obtained through :meth:`project` to subbases of the original projection bases, i.e. ::
 
         project_to_subbasis(project(op, r_basis, s_basis, prod), dim_range, dim_source)
 
@@ -223,7 +223,9 @@ def project_to_subbasis(op, dim_range=None, dim_source=None):
         project(op, r_basis[:dim_range], s_basis[:dim_source], prod)
 
     For a |NumpyMatrixOperator| this amounts to extracting the upper-left
-    (dim_range, dim_source) corner of the matrix it wraps.
+    (dim_range, dim_source) corner of its matrix.
+
+    The subbasis projection algorithm is specified in :class:`ProjectToSubbasisRules`.
 
     Parameters
     ----------
@@ -231,6 +233,7 @@ def project_to_subbasis(op, dim_range=None, dim_source=None):
         Dimension of the range subbasis.
     dim_source
         Dimension of the source subbasis.
+
     Returns
     -------
     The projected |Operator|.
@@ -242,6 +245,7 @@ def project_to_subbasis(op, dim_range=None, dim_source=None):
 
 
 class ProjectToSubbasisRules(RuleTable):
+    """|RuleTable| for the :func:`project_to_subbasis` algorithm."""
 
     @match_class(LincombOperator)
     def action_recurse(self, op, dim_range=None, dim_source=None):

@@ -30,7 +30,8 @@ def estimate_image(operators=(), vectors=(),
     - `v.as_range_array(mu)` for all |Operators| in `vectors` and all possible |Parameters| `mu`.
 
     The algorithm will try to choose `image` as small as possible. However, no optimality
-    is guaranteed.
+    is guaranteed. The image estimation algorithm is specified by :class:`CollectOperatorRangeRules`
+    and :class:`CollectVectorRangeRules`.
 
     Parameters
     ----------
@@ -216,6 +217,7 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
 
 
 class CollectOperatorRangeRules(RuleTable):
+    """|RuleTable| for the :func:`estimate_image` algorithm."""
 
     @match_generic(lambda op: op.linear and not op.parametric)
     def action_apply_operator(self, op, source, image, extends):
@@ -238,6 +240,7 @@ class CollectOperatorRangeRules(RuleTable):
 
 
 class CollectVectorRangeRules(RuleTable):
+    """|RuleTable| for the :func:`estimate_image` algorithm."""
 
     @match_class(VectorArrayInterface)
     def action_VectorArray(self, obj, image):

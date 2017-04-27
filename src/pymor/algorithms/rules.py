@@ -11,6 +11,18 @@ from pymor.tools.table import format_table
 
 
 class rule():
+    """Decorator to make a method a rule in a given |RuleTable|.
+
+    The decorated function will become the :attr:`action` to
+    perform in case the rule :meth:`matches`.
+    Matching conditions are specified by subclassing and
+    overriding the :meth:`matches` method.
+
+    Attributes
+    ----------
+    action
+        Method to call in case the rule matches.
+    """
     _rules_created = [0]
 
     def __init__(self):
@@ -23,6 +35,7 @@ class rule():
 
     @abstractmethod
     def matches(self, obj):
+        """Returns True if given object matches the condition."""
         pass
 
     condition_description = None
@@ -62,6 +75,7 @@ class rule():
 
 
 class match_class(rule):
+    """|rule| that matches when obj is instance of one of the given classes."""
 
     condition_type = 'CLASS'
 
@@ -77,6 +91,17 @@ class match_class(rule):
 
 
 class match_generic(rule):
+    """|rule| with matching condition given by an arbitrary function.
+
+    Parameters
+    ----------
+    condition
+        Function of one argument which checks if given object
+        matches condition.
+    condition_description
+        Optional string describing the condition implemented by
+        `condition`.
+    """
 
     condition_type = 'GENERIC'
 
@@ -90,6 +115,7 @@ class match_generic(rule):
 
 
 class RuleTableMeta(UberMeta):
+    """Meta class for |RuleTable|."""
     def __new__(cls, name, parents, dct):
         assert 'rules' not in dct
         rules = []
@@ -122,12 +148,62 @@ class RuleTableMeta(UberMeta):
 
 
 class RuleTable(BasicInterface, metaclass=RuleTableMeta):
+    """Define algorithm by a table of match conditions and corresponding actions.
+
+    |RuleTable| manages a table of |rules|, stored in the `rules`
+    attributes, which can be :meth:`applied <apply>` to given
+    objects.
+
+    A new table is created by subclassing |RuleTable| and defining
+    new methods which are decorated with :class:`match_class`,
+    :class:`match_generic` or another :class:`rule` subclass.
+    The order of the method definitions determines the order in
+    which the defined |rules| are applied.
+
+    Attributes
+    ----------
+    rules
+        `list` of all defined |rules|.
+    """
 
     def __init__(self):
         self._cache = {}
 
     @classinstancemethod
     def apply(cls, obj, *args, **kwargs):
+        """Sequentially apply rules to given object.
+
+        This method iterates over all rules of the given |RuleTable|.
+        For each |rule|, it is checked if it :meth:`~rule.matches` the given
+        object. If `False`, the next |rule| in the table is considered.
+        If `True` the corresponding :attr:`~rule.action` is executed with
+        `obj`, `*args` and `**kwargs` as parameters. If execution of
+        :attr:`~action` raises :class:`~pymor.core.exceptions.RuleNotMatchingError`,
+        the rule is considered as not matching, and execution continues
+        with evaluation of the next rule. Otherwise, execution is stopped
+        and the return value of :attr:`rule.action` is returned to the caller.
+
+        If no |rule| matches, a :class:`~pymor.core.exceptions.NoMatchingRuleError`
+        is raised.
+
+        Parameters
+        ----------
+        obj
+            The object to apply the |RuleTable| to.
+        args
+            Positional arguments for the :attr:`~rule.action`.
+        kwargs
+            Keyword arguments for the :attr:`~rule.action`.
+
+        Returns
+        -------
+        Return value of the action of the first matching |rule| in the table.
+
+        Raises
+        ------
+        NoMatchingRuleError
+            No |rule| could be applied to the given object.
+        """
         return cls().apply(obj, *args, **kwargs)
 
     @apply.instancemethod
@@ -147,11 +223,34 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
         raise NoMatchingRuleError('No rule could be applied to {}'.format(obj))
 
     @classinstancemethod
-    def map_children(cls, obj, *args, children=None, **kwargs):
-        return cls().map_children(obj, *args, children=children, **kwargs)
+    def apply_children(cls, obj, *args, children=None, **kwargs):
+        """Apply rules to all children of the given object.
 
-    @map_children.instancemethod
-    def map_children(self, obj, *args, children=None, **kwargs):
+        This method calls :meth:`apply` to each child of
+        the given object. The children of the object are either provided
+        by the `children` parameter or authomatically infered by the
+        :meth:`get_children` method.
+
+        Parameters
+        ----------
+        obj
+            The object to apply the |RuleTable| to.
+        args
+            Positional arguments for the :attr:`~rule.action`.
+        children
+            `None` or a list of attribute names defining the children
+            to consider.
+        kwargs
+            Keyword arguments for the :attr:`~rule.action`.
+
+        Returns
+        -------
+        Result of :meth:`apply` for all given children.
+        """
+        return cls().apply_children(obj, *args, children=children, **kwargs)
+
+    @apply_children.instancemethod
+    def apply_children(self, obj, *args, children=None, **kwargs):
         children = children or self.get_children(obj)
         result = {}
         for child in children:
@@ -165,23 +264,30 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
         return result
 
     @classinstancemethod
-    def apply_children(cls, obj, *args, children=None, **kwargs):
-        return cls().apply_children(obj, *args, children=children, **kwargs)
-
-    @apply_children.instancemethod
-    def apply_children(self, obj, *args, children=None, **kwargs):
-        self.map_children(obj, *args, children=children, **kwargs)
-
-    @classinstancemethod
     def replace_children(cls, obj, *args, children=None, **kwargs):
+        """Replace children of object according to rule table.
+
+        Same as :meth:`apply_children`, but additionally calls
+        `obj.with_` to replace the children of `obj` with the
+        result of the corresponding :meth:`apply` call.
+        """
         return cls().replace_children(obj, *args, children=children, **kwargs)
 
     @replace_children.instancemethod
     def replace_children(self, obj, *args, children=None, **kwargs):
-        return obj.with_(**self.map_children(obj, *args, children=children, **kwargs))
+        return obj.with_(**self.apply_children(obj, *args, children=children, **kwargs))
 
     @classmethod
     def get_children(cls, obj):
+        """Determine children of given object.
+
+        This method returns a list of the names of all
+        attributes `a`, for which one of the folling is true:
+
+            1. `a` is an |Operator|.
+            2. `a` is a `mapping` and each of its values is either an |Operator| or `None`.
+            3. `a` is an `iterable` and each of its elements is either an |Operator| or `None`.
+        """
         children = set()
         for k in obj.with_arguments:
             try:

@@ -34,7 +34,7 @@ def reduce_residual(operator, rhs=None, RB=None, product=None, extends=None):
     `residual_range` for this range space and then returns the Petrov-Galerkin projection ::
 
         projected_residual
-            === residual.projected(range_basis=residual_range, source_basis=RB)
+            === project(residual, range_basis=residual_range, source_basis=RB)
 
     of the residual operator. Given a reduced basis coefficient vector `u`, w.r.t.
     `RB`, the (dual) norm of the residual can then be computed as ::

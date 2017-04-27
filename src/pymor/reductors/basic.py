@@ -22,7 +22,7 @@ class GenericRBReconstructor(BasicInterface):
         return self.RB.lincomb(U.data)
 
     def restricted_to_subbasis(self, dim):
-        """See :meth:`~pymor.operators.numpy.NumpyMatrixOperator.projected_to_subbasis`."""
+        """See :meth:`~pymor.algorithms.projection.project_to_subbasis`."""
         assert dim <= len(self.RB)
         return GenericRBReconstructor(self.RB[:dim])
 
@@ -113,7 +113,7 @@ class SubbasisReconstructor(BasicInterface):
 def reduce_to_subbasis(discretization, dim, reconstructor=None):
     """Further reduce a |Discretization| to the subbasis formed by the first `dim` basis vectors.
 
-    This is achieved by calling :meth:`~pymor.operators.numpy.NumpyMatrixOperator.projected_to_subbasis`
+    This is achieved by calling :meth:`~pymor.algorithms.projection.project_to_subbasis`
     for each operator of the given |Discretization|. Additionally, if a reconstructor
     for the |Discretization| is provided, its :meth:`restricted_to_subbasis` method is also
     called to obtain a reconstructor for the further reduced |Discretization|. Otherwise

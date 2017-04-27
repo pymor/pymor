@@ -94,11 +94,7 @@ operating on objects of the following types:
     When such a linear combination is |assembled|, |assemble_lincomb|
     is called to ensure that, for instance, linear combinations of operators
     represented by a matrix lead to a new operator holding the linear
-    combination of the matrices. The |projected| method is used to perform the
-    reduced basis projection of a given operator.  While each operator in pyMOR
-    can be |projected|, specializations of this method ensure that, if
-    possible, the projected operator will no longer depend on high-dimensional
-    data.
+    combination of the matrices.
 
     Default implementations for many methods of the operator interface can be
     found in |OperatorBase|. Base classes for |NumPy|-based operators can be
@@ -113,7 +109,6 @@ operating on objects of the following types:
     .. |assemble_lincomb| replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.assemble_lincomb`
     .. |as_vector|         replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.as_vector`
     .. |linear|            replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.linear`
-    .. |projected|         replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.projected`
     .. |range|             replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.range`
     .. |source|            replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.source`
 

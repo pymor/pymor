@@ -202,7 +202,7 @@ def test_apply_inverse_transpose(operator_with_arrays):
 
 
 
-def test_projected(operator_with_arrays):
+def test_project(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     op_UV = project(op, V, U)
     np.random.seed(4711 + U.dim + len(V))
@@ -212,7 +212,7 @@ def test_projected(operator_with_arrays):
     assert np.all(almost_equal(X, Y))
 
 
-def test_projected_2(operator_with_arrays):
+def test_project_2(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     op_U = project(op, None, U)
     op_V = project(op, V, None)
@@ -228,7 +228,7 @@ def test_projected_2(operator_with_arrays):
     assert np.all(almost_equal(Y0, Y2))
 
 
-def test_projected_with_product(operator_with_arrays_and_products):
+def test_project_with_product(operator_with_arrays_and_products):
     op, mu, U, V, sp, rp = operator_with_arrays_and_products
     op_UV = project(op, V, U, product=rp)
     np.random.seed(4711 + U.dim + len(V))
@@ -238,7 +238,7 @@ def test_projected_with_product(operator_with_arrays_and_products):
     assert np.all(almost_equal(X, Y))
 
 
-def test_projected_with_product_2(operator_with_arrays_and_products):
+def test_project_with_product_2(operator_with_arrays_and_products):
     op, mu, U, V, sp, rp = operator_with_arrays_and_products
     op_U = project(op, None, U)
     op_V = project(op, V, None, product=rp)

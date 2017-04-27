@@ -142,10 +142,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
 
 
 class ProjectedEmpiciralInterpolatedOperator(OperatorBase):
-    """A projected |EmpiricalInterpolatedOperator|.
-
-    Not intended to be used directly. Instead use :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
-    """
+    """A projected |EmpiricalInterpolatedOperator|."""
 
     def __init__(self, restricted_operator, interpolation_matrix, source_basis_dofs,
                  projected_collateral_basis, triangular, source_id, solver_options=None, name=None):
