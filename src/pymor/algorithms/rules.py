@@ -171,6 +171,26 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
         self.rules = list(self.rules)  # make a copy of the list of rules
 
     @classinstancemethod
+    def insert_rule(cls, index, rule_):
+        assert isinstance(rule_, rule)
+        cls.rules.insert(index, rule_)
+
+    @insert_rule.instancemethod
+    def insert_rule(self, index, rule_):
+        assert isinstance(rule_, rule)
+        self.rules.insert(index, rule_)
+
+    @classinstancemethod
+    def append_rule(cls, rule_):
+        assert isinstance(rule_, rule)
+        cls.rules.append(rule_)
+
+    @append_rule.instancemethod
+    def append_rule(self, rule_):
+        assert isinstance(rule_, rule)
+        self.rules.append(rule_)
+
+    @classinstancemethod
     def apply(cls, obj, *args, **kwargs):
         """Sequentially apply rules to given object.
 
