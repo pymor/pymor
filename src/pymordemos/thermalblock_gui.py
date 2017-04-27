@@ -43,7 +43,7 @@ OpenGL.ERROR_ON_COPY = True
 
 from pymor.core.exceptions import QtMissing
 try:
-    from Qt import QtGui
+    from Qt import QtGui, QtWidgets
 except ImportError as e:
     raise QtMissing()
 from pymor.algorithms.basisextension import gram_schmidt_basis_extension
@@ -60,16 +60,16 @@ PARAM_MIN = 0.1
 PARAM_MAX = 1
 
 
-class ParamRuler(QtGui.QWidget):
+class ParamRuler(QtWidgets.QWidget):
     def __init__(self, parent, sim):
         super().__init__(parent)
         self.sim = sim
         self.setMinimumSize(200, 100)
-        box = QtGui.QGridLayout()
+        box = QtWidgets.QGridLayout()
         self.spins = []
         for j in range(args['YBLOCKS']):
             for i in range(args['XBLOCKS']):
-                spin = QtGui.QDoubleSpinBox()
+                spin = QtWidgets.QDoubleSpinBox()
                 spin.setRange(PARAM_MIN, PARAM_MAX)
                 spin.setSingleStep((PARAM_MAX - PARAM_MIN) / PARAM_STEPS)
                 spin.setValue(PARAM_MIN)
@@ -84,11 +84,11 @@ class ParamRuler(QtGui.QWidget):
 
 
 # noinspection PyShadowingNames
-class SimPanel(QtGui.QWidget):
+class SimPanel(QtWidgets.QWidget):
     def __init__(self, parent, sim):
         super().__init__(parent)
         self.sim = sim
-        box = QtGui.QHBoxLayout()
+        box = QtWidgets.QHBoxLayout()
         self.solution = GLPatchWidget(self, self.sim.grid, vmin=0., vmax=0.8)
         self.bar = ColorBarWidget(self, vmin=0., vmax=0.8)
         box.addWidget(self.solution, 2)
@@ -111,11 +111,11 @@ class SimPanel(QtGui.QWidget):
         print('Drawtime {}'.format(time.time() - tic))
 
 
-class AllPanel(QtGui.QWidget):
+class AllPanel(QtWidgets.QWidget):
     def __init__(self, parent, reduced_sim, detailed_sim):
         super().__init__(parent)
 
-        box = QtGui.QVBoxLayout()
+        box = QtWidgets.QVBoxLayout()
         self.reduced_panel = SimPanel(self, reduced_sim)
         self.detailed_panel = SimPanel(self, detailed_sim)
         box.addWidget(self.reduced_panel)
@@ -124,7 +124,7 @@ class AllPanel(QtGui.QWidget):
 
 
 # noinspection PyShadowingNames
-class RBGui(QtGui.QMainWindow):
+class RBGui(QtWidgets.QMainWindow):
     def __init__(self, args):
         super().__init__()
         args['XBLOCKS'] = int(args['XBLOCKS'])
