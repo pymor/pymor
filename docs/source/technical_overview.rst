@@ -310,10 +310,7 @@ The Reduction Process
 
 The reduction process in pyMOR is handled by so called :mod:`~pymor.reductors`
 which take arbitrary |Discretizations| and additional data (e.g. the reduced
-basis) to create reduced |Discretizations| along with reconstructor classes
-which allow to transform solution vectors of the reduced |Discretization| back
-to vectors of the solution space of the high-dimensional |Discretization| (e.g.
-by linear combination with the reduced basis). If proper offline/online
+basis) to create reduced |Discretizations|. If proper offline/online
 decomposition is achieved by the reductor, the reduced |Discretization| will
 not store any high-dimensional data. Note that there is no inherent distinction
 between low- and high-dimensional |Discretizations| in pyMOR. The only
@@ -324,15 +321,14 @@ This observation is particularly apparent in the case of the classical
 reduced basis method: the operators and functionals of a given discrete problem
 are projected onto the reduced basis space whereas the structure of the problem
 (i.e. the type of |Discretization| containing the operators) stays the same.
-pyMOR reflects this fact by offering with
-:func:`~pymor.reductors.basic.reduce_generic_rb` a generic algorithm which can
-be used to RB-project any discretization available to pyMOR. It should be noted
-however that this reductor is only able to efficiently
+pyMOR reflects this fact by offering with :class:`~pymor.reductors.basic.GenericRBReductor`
+a generic algorithm which can be used to RB-project any discretization available to pyMOR.
+It should be noted however that this reductor is only able to efficiently
 offline/online-decompose affinely |Parameter|-dependent linear problems.
 Non-linear problems or such with no affine |Parameter| dependence require
 additional techniques such as :mod:`empirical interpolation <pymor.algorithms.ei>`.
 
 If you want to further dive into the inner workings of pyMOR, we highly
-recommend to study the source code of
-:func:`~pymor.reductors.basic.reduce_generic_rb` and to step through calls of
-this method with a Python debugger, such as `ipdb <https://pypi.python.org/pypi/ipdb>`_.
+recommend to study the source code of :class:`~pymor.reductors.basic.GenericRBReductor`
+and to step through calls of this method with a Python debugger, such as 
+`ipdb <https://pypi.python.org/pypi/ipdb>`_.
