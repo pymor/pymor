@@ -13,7 +13,7 @@ from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.functions.basic import ConstantFunction, LincombFunction
 from pymor.grids.boundaryinfos import EmptyBoundaryInfo
 from pymor.grids.referenceelements import line, triangle, square
-from pymor.gui.qt import PatchVisualizer, Matplotlib1DVisualizer
+from pymor.gui.visualizers import PatchVisualizer, OnedVisualizer
 from pymor.operators.cg import (DiffusionOperatorP1, DiffusionOperatorQ1,
                                 AdvectionOperatorP1, AdvectionOperatorQ1,
                                 L2ProductP1, L2ProductQ1,
@@ -145,7 +145,7 @@ def discretize_stationary_cg(analytical_problem, diameter=None, domain_discretiz
     if grid.reference_element in (triangle, square):
         visualizer = PatchVisualizer(grid=grid, bounding_box=grid.bounding_box(), codim=2)
     elif grid.reference_element is line:
-        visualizer = Matplotlib1DVisualizer(grid=grid, codim=1)
+        visualizer = OnedVisualizer(grid=grid, codim=1)
     else:
         visualizer = None
 
