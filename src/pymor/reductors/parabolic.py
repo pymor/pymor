@@ -110,15 +110,15 @@ class ParabolicRBReductor(GenericRBReductor):
             residual = self.residual_reductor.reduce()
             initial_residual = self.initial_residual_reductor.reduce()
 
-            estimator = ReduceParabolicEstimator(residual, self.residual_reductor.residual_range_dims,
-                                                 initial_residual, self.initial_residual_reductor.residual_range_dims,
-                                                 self.coercivity_estimator)
+            estimator = ParabolicRBEstimator(residual, self.residual_reductor.residual_range_dims,
+                                             initial_residual, self.initial_residual_reductor.residual_range_dims,
+                                             self.coercivity_estimator)
             rd = rd.with_(estimator=estimator)
 
         return rd
 
 
-class ReduceParabolicEstimator(ImmutableInterface):
+class ParabolicRBEstimator(ImmutableInterface):
     """Instantiated by :func:`reduce_parabolic`.
 
     Not to be used directly.
@@ -151,11 +151,11 @@ class ReduceParabolicEstimator(ImmutableInterface):
             residual = self.residual.projected_to_subbasis(residual_range_dims[-1], dim)
             initial_residual_range_dims = self.initial_residual_range_dims[:dim + 1]
             initial_residual = self.initial_residual.projected_to_subbasis(initial_residual_range_dims[-1], dim)
-            return ReduceParabolicEstimator(residual, residual_range_dims,
-                                            initial_residual, initial_residual_range_dims,
-                                            self.coercivity_estimator)
+            return ParabolicRBEstimator(residual, residual_range_dims,
+                                        initial_residual, initial_residual_range_dims,
+                                        self.coercivity_estimator)
         else:
             self.logger.warn('Cannot efficiently reduce to subbasis')
-            return ReduceParabolicEstimator(self.residual.projected_to_subbasis(None, dim), None,
-                                            self.initial_residual.projected_to_subbasis(None, dim), None,
-                                            self.coercivity_estimator)
+            return ParabolicRBEstimator(self.residual.projected_to_subbasis(None, dim), None,
+                                        self.initial_residual.projected_to_subbasis(None, dim), None,
+                                        self.coercivity_estimator)
