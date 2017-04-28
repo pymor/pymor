@@ -12,24 +12,6 @@ from pymor.core.exceptions import ExtensionError
 from pymor.core.interfaces import BasicInterface
 
 
-class GenericRBReconstructor(BasicInterface):
-    """Simple reconstructor forming linear combinations with a reduced basis."""
-
-    def __init__(self, RB):
-        self.RB = RB.copy()
-
-    def reconstruct(self, U):
-        """Reconstruct high-dimensional vector from reduced vector `U`."""
-        RB = self.RB
-        assert U in NumpyVectorSpace(len(RB), RB.space.id)
-        return self.RB.lincomb(U.data)
-
-    def restricted_to_subbasis(self, dim):
-        """See :meth:`~pymor.algorithms.projection.project_to_subbasis`."""
-        assert dim <= len(self.RB)
-        return GenericRBReconstructor(self.RB[:dim])
-
-
 class GenericRBReductor(BasicInterface):
     """Generic reduced basis reductor.
 

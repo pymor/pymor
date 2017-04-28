@@ -8,10 +8,8 @@ from pymor.algorithms.image import estimate_image_hierarchical
 from pymor.algorithms.projection import project, project_to_subbasis
 from pymor.core.interfaces import BasicInterface
 from pymor.core.exceptions import ImageCollectionError
-from pymor.core.logger import getLogger
 from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import induced_norm
-from pymor.reductors.basic import GenericRBReconstructor
 
 
 class ResidualReductor(BasicInterface):
