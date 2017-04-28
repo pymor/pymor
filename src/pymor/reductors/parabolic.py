@@ -62,8 +62,6 @@ class ParabolicRBReductor(GenericRBReductor):
     coercivity_estimator
         `None` or a |Parameterfunctional| returning a lower bound :math:`C_a(\mu)`
         for the coercivity constant of `discretization.operator` w.r.t. `product`.
-    disable_caching
-        If `True`, caching of solutions is disabled for the reduced |Discretization|.
     extends
         Set by :meth:`~pymor.algorithms.greedy.greedy` to the result of the
         last reduction in case the basis extension was `hierarchic` (used to prevent
@@ -81,9 +79,9 @@ class ParabolicRBReductor(GenericRBReductor):
         Additional data produced by the reduction process (compare the
         `extends` parameter).
     """
-    def __init__(self, d, RB=None, product=None, coercivity_estimator=None, disable_caching=True):
+    def __init__(self, d, RB=None, product=None, coercivity_estimator=None):
         assert isinstance(d.time_stepper, ImplicitEulerTimeStepper)
-        super().__init__(d, RB, product=product, disable_caching=disable_caching)
+        super().__init__(d, RB, product=product)
         self.coercivity_estimator = coercivity_estimator
 
         self.residual_reductor = ImplicitEulerResidualReductor(

@@ -31,17 +31,13 @@ class GenericRBReductor(BasicInterface):
     product
         Inner product for the projection of the |Operators| given by
         `orthogonal_projection`.
-    disable_caching
-        If `True`, caching of solutions is disabled for the reduced |Discretization|.
     """
 
-    def __init__(self, d, RB=None, orthogonal_projection=('initial_data',), product=None,
-                 disable_caching=True):
+    def __init__(self, d, RB=None, orthogonal_projection=('initial_data',), product=None):
         self.d = d
         self.RB = d.solution_space.empty() if RB is None else RB
         self.orthogonal_projection = orthogonal_projection
         self.product = product
-        self.disable_caching = disable_caching
 
     def reduce(self):
         """Perform the reduced basis projection.
@@ -65,11 +61,9 @@ class GenericRBReductor(BasicInterface):
 
         projected_products = {k: project_operator(k, p) for k, p in d.products.items()}
 
-        cache_region = None if self.disable_caching else d.caching
-
         rd = d.with_(operators=projected_operators, products=projected_products,
                      visualizer=None, estimator=None,
-                     cache_region=cache_region, name=d.name + '_reduced')
+                     cache_region=None, name=d.name + '_reduced')
         rd.disable_logging()
 
         return rd

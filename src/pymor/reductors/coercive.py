@@ -44,16 +44,13 @@ class CoerciveRBReductor(GenericRBReductor):
         constant of the given problem. Note that the computed error estimate is only
         guaranteed to be an upper bound for the error when an appropriate coercivity
         estimate is specified.
-    disable_caching
-        If `True`, caching of solutions is disabled for the reduced |Discretization|.
     """
 
     def __init__(self, d, RB=None, orthogonal_projection=('initial_data',), product=None,
-                 coercivity_estimator=None, disable_caching=True):
+                 coercivity_estimator=None):
         super().__init__(d, RB,
                          orthogonal_projection=orthogonal_projection,
-                         product=product,
-                         disable_caching=disable_caching)
+                         product=product)
         self.coercivity_estimator = coercivity_estimator
         self.residual_reductor = ResidualReductor(self.RB, self.d.operator, self.d.rhs,
                                                   product=product)
@@ -131,12 +128,10 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
         constant of the given problem. Note that the computed error estimate is only
         guaranteed to be an upper bound for the error when an appropriate coercivity
         estimate is specified.
-    disable_caching
-        If `True`, caching of solutions is disabled for the reduced |Discretization|.
     """
 
     def __init__(self, d, RB=None, orthogonal_projection=('initial_data',), product=None,
-                 coercivity_estimator=None, disable_caching=True):
+                 coercivity_estimator=None):
         assert d.linear
         assert isinstance(d.operator, LincombOperator)
         assert all(not op.parametric for op in d.operator.operators)
@@ -146,8 +141,7 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
 
         super().__init__(d, RB,
                          orthogonal_projection=orthogonal_projection,
-                         product=product,
-                         disable_caching=disable_caching)
+                         product=product)
         self.coercivity_estimator = coercivity_estimator
         self.residual_reductor = ResidualReductor(self.RB, self.d.operator, self.d.rhs,
                                                   product=product)
