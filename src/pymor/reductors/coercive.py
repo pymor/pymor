@@ -202,7 +202,7 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
             RR_Os = [space.empty(reserve=len(RB)) for _ in range(len(d.operator.operators))]
             if old_RB_size > 0:
                 for op, R_O, RR_O, old_R_O, old_RR_O in zip(d.operator.operators, R_Os, RR_Os,
-                                                             old_data['R_Os'], old_data['RR_Os']):
+                                                            old_data['R_Os'], old_data['RR_Os']):
                     R_O.append(old_R_O)
                     RR_O.append(old_RR_O)
             for op, R_O, RR_O in zip(d.operator.operators, R_Os, RR_Os):
@@ -222,7 +222,7 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
 
         estimator_matrix = NumpyMatrixOperator(estimator_matrix)
 
-        estimator = ReduceCoerciveSimpleEstimator(estimator_matrix, self.coercivity_estimator)
+        estimator = SimpleCoerciveRBEstimator(estimator_matrix, self.coercivity_estimator)
         rd = rd.with_(estimator=estimator)
 
         self.extends = (len(RB), dict(R_R=R_R, RR_R=RR_R, R_Os=R_Os, RR_Os=RR_Os))
@@ -230,7 +230,7 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
         return rd
 
 
-class ReduceCoerciveSimpleEstimator(ImmutableInterface):
+class SimpleCoerciveRBEstimator(ImmutableInterface):
     """Instantiated by :meth:`reduce_coercive_simple`.
 
     Not to be used directly.
@@ -273,4 +273,4 @@ class ReduceCoerciveSimpleEstimator(ImmutableInterface):
                                  ((np.arange(co)*old_dim)[..., np.newaxis] + np.arange(dim)).ravel() + cr))
         matrix = self.estimator_matrix._matrix[indices, :][:, indices]
 
-        return ReduceCoerciveSimpleEstimator(NumpyMatrixOperator(matrix), self.coercivity_estimator)
+        return SimpleCoerciveRBEstimator(NumpyMatrixOperator(matrix), self.coercivity_estimator)
