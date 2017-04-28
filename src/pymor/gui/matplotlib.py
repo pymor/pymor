@@ -5,8 +5,6 @@
 """ This module provides a widgets for displaying plots of
 scalar data assigned to one- and two-dimensional grids using
 :mod:`matplotlib`. This widget is not intended to be used directly.
-Instead, use :meth:`~pymor.gui.qt.visualize_matplotlib_1d` or
-:class:`~pymor.gui.qt.Matplotlib1DVisualizer`.
 """
 
 import numpy as np
@@ -16,7 +14,8 @@ from pymor.core.config import config
 
 class MatplotlibPatchAxes:
 
-    def __init__(self, figure, grid, bounding_box=None, vmin=None, vmax=None, codim=2):
+    def __init__(self, figure, grid, bounding_box=None, vmin=None, vmax=None, codim=2,
+                 colorbar=True):
         assert grid.reference_element in (triangle, square)
         assert grid.dim == 2
         assert codim in (0, 2)
@@ -39,7 +38,8 @@ class MatplotlibPatchAxes:
             self.p = a.tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
                                  facecolors=np.zeros(len(self.subentities)),
                                  vmin=self.vmin, vmax=self.vmax, shading='flat')
-        figure.colorbar(self.p, ax=a)
+        if colorbar:
+            figure.colorbar(self.p, ax=a)
 
     def set(self, U, vmin=None, vmax=None):
         self.vmin = self.vmin if vmin is None else vmin
