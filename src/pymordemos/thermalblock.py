@@ -59,7 +59,7 @@ Options:
   --order=ORDER                   Polynomial order of the Lagrange finite elements to use in FEniCS
                                   discretization [default: 1].
 
-  --pickle=PREFIX                 Pickle reduced discretizaion, as well as reconstructor and high-dimensional
+  --pickle=PREFIX                 Pickle reduced discretizaion, as well as reductor and high-dimensional
                                   discretization to files with this prefix.
 
   --plot-err                      Plot error.
@@ -164,7 +164,7 @@ def main(args):
         with open(args['--pickle'] + '_reduced', 'wb') as f:
             dump(rd, f)
         if not args['--fenics']:  # FEniCS data structures do not support serialization
-            print('Writing detailed discretization and reconstructor to file {} ...'
+            print('Writing detailed discretization and reductor to file {} ...'
                   .format(args['--pickle'] + '_detailed'))
             with open(args['--pickle'] + '_detailed', 'wb') as f:
                 dump((d, reductor), f)
