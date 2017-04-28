@@ -17,7 +17,7 @@ from pymor.parameters.spaces import CubicParameterSpace
 
 
 def adaptive_greedy(discretization, reductor, parameter_space=None,
-                    initial_basis=None, use_estimator=True, error_norm=None,
+                    use_estimator=True, error_norm=None,
                     target_error=None, max_extensions=None,
                     validation_mus=0, rho=1.1, gamma=0.2, theta=0.,
                     extension_params=None, visualize=False, visualize_vertex_size=80,
@@ -48,8 +48,6 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
     parameter_space
         The |ParameterSpace| for which to compute the reduced model. If `None`,
         the parameter space of the `discretization` is used.
-    initial_basis
-        See :func:`~pymor.algorithms.greedy.greedy`.
     use_estimator
         See :func:`~pymor.algorithms.greedy.greedy`.
     error_norm
@@ -90,10 +88,8 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
     -------
     Dict with the following fields:
 
-        :basis:                  The reduced basis.
         :reduced_discretization: The reduced |Discretization| obtained for the
                                  computed basis.
-        :reconstructor:          Reconstructor for `reduced_discretization`.
         :extensions:             Number of greedy iterations.
         :max_errs:               Sequence of maximum errors during the greedy run.
         :max_err_mus:            The parameters corresponding to `max_errs`.

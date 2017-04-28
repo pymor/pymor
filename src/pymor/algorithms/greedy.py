@@ -30,15 +30,11 @@ def greedy(discretization, reductor, samples, use_estimator=True, error_norm=Non
         The |Discretization| to reduce.
     reductor
         Reductor for reducing the given |Discretization|. This has to be a
-        function of the form `reductor(discretization, basis, extends=None)`.
-        The method has to return a tuple
-        `(reduced_discretization, reconstructor, reduction_data)`.
-        In case the last basis extension was `hierarchic` (see
-        `extension_algorithm`), the extends argument is set to
-        `(last_reduced_discretization, last_reconstructor, last_reduction_data)`
-        which can be used by the reductor to speed up the reduction
-        process. For an example see
-        :func:`~pymor.reductors.coercive.reduce_coercive`.
+        an object with a `reduce` method, such that `reductor.reduce()`
+        yields the reduced discretization, and an `exted_basis` method,
+        such that `reductor.extend_basis(U, copy_U=False, **extension_params)`
+        extends the current reduced basis by the vectors contained in `U`.
+        For an example see :class:`~pymor.reductors.coercive.CoerciveRBReductor`.
     samples
         The set of |Parameter| samples on which to perform the greedy search.
     use_estimator
@@ -66,10 +62,8 @@ def greedy(discretization, reductor, samples, use_estimator=True, error_norm=Non
     -------
     Dict with the following fields:
 
-        :basis:                  The reduced basis.
         :reduced_discretization: The reduced |Discretization| obtained for the
                                  computed basis.
-        :reconstructor:          Reconstructor for `reduced_discretization`.
         :max_errs:               Sequence of maximum errors during the greedy run.
         :max_err_mus:            The parameters corresponding to `max_errs`.
         :extensions:             Number of performed basis extensions.
@@ -114,7 +108,8 @@ def greedy(discretization, reductor, samples, use_estimator=True, error_norm=Non
 
             with logger.block('Estimating errors ...'):
                 if use_estimator:
-                    errors, mus = list(zip(*pool.apply(_estimate, rd=rd, d=None, reductor=None, samples=samples, error_norm=None)))
+                    errors, mus = list(zip(*pool.apply(_estimate, rd=rd, d=None, reductor=None,
+                                                       samples=samples, error_norm=None)))
                 else:
                     errors, mus = list(zip(*pool.apply(_estimate, rd=rd, d=discretization, reductor=reductor,
                                                        samples=samples, error_norm=error_norm)))
