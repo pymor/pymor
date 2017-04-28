@@ -14,7 +14,7 @@ from pymor.algorithms.timestepping import ImplicitEulerTimeStepper
 class ParabolicRBReductor(GenericRBReductor):
     r"""Reduced Basis Reductor for parabolic equations.
 
-    This reductor uses :meth:`~pymor.reductors.basic.reduce_generic_rb` for the actual
+    This reductor uses :class:`~pymor.reductors.basic.GenericRBReductor` for the actual
     RB-projection. The only addition is the assembly of an error estimator which
     bounds the discrete l2-in time / energy-in space error similar to [GP05]_, [HO08]_
     as follows:
@@ -62,22 +62,6 @@ class ParabolicRBReductor(GenericRBReductor):
     coercivity_estimator
         `None` or a |Parameterfunctional| returning a lower bound :math:`C_a(\mu)`
         for the coercivity constant of `discretization.operator` w.r.t. `product`.
-    extends
-        Set by :meth:`~pymor.algorithms.greedy.greedy` to the result of the
-        last reduction in case the basis extension was `hierarchic` (used to prevent
-        re-computation of residual range basis vectors already obtained from previous
-        reductions).
-
-    Returns
-    -------
-    rd
-        The reduced |Discretization|.
-    rc
-        The reconstructor providing a `reconstruct(U)` method which reconstructs
-        high-dimensional solutions from solutions `U` of the reduced |Discretization|.
-    reduction_data
-        Additional data produced by the reduction process (compare the
-        `extends` parameter).
     """
     def __init__(self, d, RB=None, product=None, coercivity_estimator=None):
         assert isinstance(d.time_stepper, ImplicitEulerTimeStepper)
@@ -117,7 +101,7 @@ class ParabolicRBReductor(GenericRBReductor):
 
 
 class ParabolicRBEstimator(ImmutableInterface):
-    """Instantiated by :func:`reduce_parabolic`.
+    """Instantiated by :class:`ParabolicRBReductor`.
 
     Not to be used directly.
     """

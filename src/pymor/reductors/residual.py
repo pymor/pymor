@@ -25,7 +25,7 @@ class ResidualReductor(BasicInterface):
         residual.apply(U, mu)
             == product.apply_inverse(operator.apply(U, mu) - rhs.as_vector(mu))
 
-    Given a basis `RB` of a subspace of the source space of `operator`, this method
+    Given a basis `RB` of a subspace of the source space of `operator`, this reductor
     uses :func:`~pymor.algorithms.image.estimate_image_hierarchical` to determine
     a low-dimensional subspace containing the image of the subspace under
     `residual` (resp. `riesz_residual`), computes an orthonormal basis
@@ -122,7 +122,7 @@ class ResidualReductor(BasicInterface):
 
 
 class ResidualOperator(OperatorBase):
-    """Returned by :func:`reduce_residual`."""
+    """Instantiated by :class:`ResidualReductor`."""
 
     def __init__(self, operator, rhs, rhs_is_functional=True, name=None):
         self.source = operator.source
@@ -154,7 +154,7 @@ class ResidualOperator(OperatorBase):
 
 
 class NonProjectedResidualOperator(ResidualOperator):
-    """Returned by :func:`reduce_residual`.
+    """Instantiated by :class:`ResidualReductor`.
 
     Not to be used directly.
     """
@@ -201,9 +201,9 @@ class ImplicitEulerResidualReductor(BasicInterface):
 
         projected_riesz_residual.apply(u, u_old, mu).l2_norm()
 
-    Moreover, a `reconstructor` is provided such that ::
+    Moreover, a `reconstruct` method is provided such that ::
 
-        reconstructor.reconstruct(projected_riesz_residual.apply(u, u_old, mu))
+        residual_reductor.reconstruct(projected_riesz_residual.apply(u, u_old, mu))
             == riesz_residual.apply(RB.lincomb(u), RB.lincomb(u_old), mu)
 
     Parameters
@@ -275,7 +275,7 @@ class ImplicitEulerResidualReductor(BasicInterface):
 
 
 class ImplicitEulerResidualOperator(OperatorBase):
-    """Returned by :func:`reduce_implicit_euler_residual`."""
+    """Instantiated by :class:`ImplicitEulerResidualReductor`."""
 
     def __init__(self, operator, mass, functional, dt, name=None):
         self.source = operator.source
@@ -309,7 +309,7 @@ class ImplicitEulerResidualOperator(OperatorBase):
 
 
 class NonProjectedImplicitEulerResidualOperator(ImplicitEulerResidualOperator):
-    """Returned by :func:`reduce_implicit_euler_residual`.
+    """Instantiated by :class:`ImplicitEulerResidualReductor`.
 
     Not to be used directly.
     """

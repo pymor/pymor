@@ -15,10 +15,11 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 class CoerciveRBReductor(GenericRBReductor):
     """Reduced Basis reductor for |StationaryDiscretizations| with coercive linear operator.
 
-    The only addition tor GenericRBReductor is an error estimator which evaluates the
-    dual norm of the residual with respect to a given inner product. For the reduction
-    of the residual we use :func:`~pymor.reductors.residual.reduce_residual` for
-    improved numerical stability [BEOR14]_.
+    The only addition to :class:`~pymor.reductors.basic.GenericRBReductor` is an error
+    estimator which evaluates the dual norm of the residual with respect to a given inner
+    product. For the reduction of the residual we use
+    :class:`~pymor.reductors.residual.ResidualReductor` for improved numerical stability
+    [BEOR14]_.
 
     .. [BEOR14] A. Buhr, C. Engwer, M. Ohlberger, S. Rave, A Numerically Stable A
                 Posteriori Error Estimator for Reduced Basis Approximations of Elliptic
@@ -30,7 +31,7 @@ class CoerciveRBReductor(GenericRBReductor):
     d
         The |Discretization| which is to be reduced.
     RB
-        |VectorArray| containing the (initial) reduced basis on which to project.
+        |VectorArray| containing the reduced basis on which to project.
     orthogonal_projection
         List of keys in `d.operators` for which the corresponding |Operator|
         should be orthogonally projected (i.e. operators which map to vectors in
@@ -70,7 +71,7 @@ class CoerciveRBReductor(GenericRBReductor):
 
 
 class CoerciveRBEstimator(ImmutableInterface):
-    """Instantiated by :meth:`reduce_coercive`.
+    """Instantiated by :class:`CoerciveRBReductor`.
 
     Not to be used directly.
     """
@@ -101,20 +102,19 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
     """Reductor for linear |StationaryDiscretizations| with affinely decomposed operator and rhs.
 
     .. note::
-       The reductor :func:`reduce_coercive` can be used for arbitrary coercive
+       The reductor :class:`CoerciveRBReductor` can be used for arbitrary coercive
        |StationaryDiscretizations| and offers an improved error estimator
        with better numerical stability.
 
-    This reductor uses :meth:`~pymor.reductors.basic.reduce_generic_rb` for the actual
-    reduced basis projection. The only addition is an error estimator. The estimator
-    evaluates the norm of the residual with respect to a given inner product.
+    The only addition is to :class:`~pymor.reductors.basic.GenericRBReductor` is an error
+    estimator, which evaluates the norm of the residual with respect to a given inner product.
 
     Parameters
     ----------
     d
         The |Discretization| which is to be reduced.
     RB
-        |VectorArray| containing the (initial) reduced basis on which to project.
+        |VectorArray| containing the reduced basis on which to project.
     orthogonal_projection
         List of keys in `d.operators` for which the corresponding |Operator|
         should be orthogonally projected (i.e. operators which map to vectors in
@@ -225,7 +225,7 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
 
 
 class SimpleCoerciveRBEstimator(ImmutableInterface):
-    """Instantiated by :meth:`reduce_coercive_simple`.
+    """Instantiated by :class:`SimpleCoerciveRBReductor`.
 
     Not to be used directly.
     """

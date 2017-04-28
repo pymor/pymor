@@ -23,7 +23,7 @@ class GenericRBReductor(BasicInterface):
     d
         The |Discretization| which is to be reduced.
     RB
-        |VectorArray| containing the (initial) reduced basis on which to project.
+        |VectorArray| containing the reduced basis on which to project.
     orthogonal_projection
         List of keys in `d.operators` for which the corresponding |Operator|
         should be orthogonally projected (i.e. operators which map to vectors in
@@ -44,8 +44,7 @@ class GenericRBReductor(BasicInterface):
 
         Returns
         -------
-        rd
-            The reduced |Discretization|.
+        The reduced |Discretization|.
         """
 
         d = self.d
@@ -73,29 +72,43 @@ class GenericRBReductor(BasicInterface):
         return self.RB[:u.dim].lincomb(u.data)
 
     def extend_basis(self, U, method='gram_schmidt', pod_modes=1, pod_orthonormalize=True, copy_U=True):
-        """Extend basis by simply appending the new vectors.
-
-        We check if the new vectors are already contained in the basis, but we do
-        not check for linear independence.
+        """Extend basis by new vectors.
 
         Parameters
         ----------
         U
             |VectorArray| containing the new basis vectors.
         method
-            Basis extension method to use ('trivial', 'gram_schmidt', 'pod')
+            Basis extension method to use. The following methods are available:
+
+                :trivial:      Vectors in `U` are appended to the basis. Duplicate vectors
+                               in the sense of :func:`~pymor.algorithms.basic.almost_equal`
+                               are removed.
+                :gram_schmidt: New basis vectors are orthonormalized w.r.t. to the old
+                               basis using the :func:`~pymor.algorithms.gram_schmidt.gram_schmidt`
+                               algorithm.
+                :pod:          Append the first POD modes of the defects of the projections
+                               of the vectors in U onto the existing basis
+                               (e.g. for use in POD-Greedy algorithm).
+
+            .. warning::
+                In case of the `'gram_schmidt'` and `'pod'` extension methods, the existing reduced
+                basis is assumed to be orthonormal w.r.t. the given inner product.
+
         pod_modes
-            Number of POD modes that shall be appended to the basis.
+            In case `method == 'pod'`, the number of POD modes that shall be appended to
+            the basis.
         pod_orthonormalize
-            If `True`, re-orthonormalize the new basis vectors obtained by the POD
-            in order to improve numerical accuracy.
+            If `True` and `method == 'pod'`, re-orthonormalize the new basis vectors obtained
+            by the POD in order to improve numerical accuracy.
         copy_U
-            If `copy_U` is `False`, the new basis vectors are removed from `U`.
+            If `copy_U` is `False`, the new basis vectors might be removed from `U`.
 
         Raises
         ------
         ExtensionError
-            Raised when all vectors in `U` are already contained in the basis.
+            Raised when the selected extension method does not yield a basis of increased
+            dimension.
         """
         assert method in ('trivial', 'gram_schmidt', 'pod')
 
@@ -130,10 +143,7 @@ def reduce_to_subbasis(d, dim):
     """Further reduce a |Discretization| to the subbasis formed by the first `dim` basis vectors.
 
     This is achieved by calling :meth:`~pymor.algorithms.projection.project_to_subbasis`
-    for each operator of the given |Discretization|. Additionally, if a reconstructor
-    for the |Discretization| is provided, its :meth:`restricted_to_subbasis` method is also
-    called to obtain a reconstructor for the further reduced |Discretization|. Otherwise
-    :class:`SubbasisReconstructor` is used (which will be less efficient).
+    for each operator of the given |Discretization|.
 
     Parameters
     ----------
@@ -144,8 +154,7 @@ def reduce_to_subbasis(d, dim):
 
     Returns
     -------
-    rd
-        The further reduced |Discretization|.
+    The further reduced |Discretization|.
     """
 
     def project_operator(op):
