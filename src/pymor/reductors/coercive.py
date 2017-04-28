@@ -65,14 +65,14 @@ class CoerciveRBReductor(GenericRBReductor):
         with self.logger.block('Assembling error estimator ...'):
             residual = self.residual_reductor.reduce()
 
-            estimator = ReduceCoerciveEstimator(residual, self.residual_reductor.residual_range_dims.copy(),
-                                                self.coercivity_estimator)
+            estimator = CoerciveRBEstimator(residual, self.residual_reductor.residual_range_dims.copy(),
+                                            self.coercivity_estimator)
             rd = rd.with_(estimator=estimator)
 
         return rd
 
 
-class ReduceCoerciveEstimator(ImmutableInterface):
+class CoerciveRBEstimator(ImmutableInterface):
     """Instantiated by :meth:`reduce_coercive`.
 
     Not to be used directly.
@@ -93,11 +93,11 @@ class ReduceCoerciveEstimator(ImmutableInterface):
         if self.residual_range_dims:
             residual_range_dims = self.residual_range_dims[:dim + 1]
             residual = self.residual.projected_to_subbasis(residual_range_dims[-1], dim)
-            return ReduceCoerciveEstimator(residual, residual_range_dims, self.coercivity_estimator)
+            return CoerciveRBEstimator(residual, residual_range_dims, self.coercivity_estimator)
         else:
             self.logger.warn('Cannot efficiently reduce to subbasis')
-            return ReduceCoerciveEstimator(self.residual.projected_to_subbasis(None, dim), None,
-                                           self.coercivity_estimator)
+            return CoerciveRBEstimator(self.residual.projected_to_subbasis(None, dim), None,
+                                       self.coercivity_estimator)
 
 
 class SimpleCoerciveRBReductor(GenericRBReductor):
