@@ -4,6 +4,7 @@
 
 import numpy as np
 
+from pymor.core.config import config
 from pymor.gui.matplotlib import MatplotlibPatchAxes
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 
@@ -43,10 +44,17 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     """
 
     assert isinstance(U, VectorArrayInterface) and hasattr(U, 'data') \
-        or (isinstance(U, tuple) and all(isinstance(u, VectorArrayInterface) and hasattr(u, 'data') for u in U)
-            and all(len(u) == len(U[0]) for u in U))
+        or (isinstance(U, tuple) and
+            all(isinstance(u, VectorArrayInterface) and hasattr(u, 'data') for u in U) and
+            all(len(u) == len(U[0]) for u in U))
     U = (U.data.astype(np.float64, copy=False),) if hasattr(U, 'data') else \
         tuple(u.data.astype(np.float64, copy=False) for u in U)
+
+    if not config.HAVE_MATPLOTLIB:
+        raise ImportError('cannot visualize: import of matplotlib failed')
+    if not config.HAVE_IPYWIDGETS and len(U[0]) > 1:
+        raise ImportError('cannot visualize: import of ipywidgets failed')
+
     if isinstance(legend, str):
         legend = (legend,)
     assert legend is None or isinstance(legend, tuple) and len(legend) == len(U)
