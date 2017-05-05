@@ -205,8 +205,9 @@ def reduce_generic_pg(discretization, V, W, use_default=None):
 
     use_default = use_default or []
 
-    projected_ops = {k: op.projected(range_basis=W if W in op.range else None,
-                                     source_basis=V if V in op.source else None) if op and k not in use_default else None
+    projected_ops = {k: project(op,
+                                range_basis=W if W in op.range else None,
+                                source_basis=V if V in op.source else None) if op and k not in use_default else None
                      for k, op in discretization.operators.items()}
 
     rd = discretization.with_(operators=projected_ops)
