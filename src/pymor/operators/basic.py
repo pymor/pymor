@@ -140,58 +140,6 @@ class OperatorBase(OperatorInterface):
         assert isinstance(self.range, NumpyVectorSpace)
         return self.apply_transpose(self.range.make_array(np.eye(self.range.dim)), mu=mu)
 
-    def projected(self, range_basis, source_basis, product=None, name=None):
-        name = name or '{}_projected'.format(self.name)
-        if self.linear and not self.parametric:
-            assert source_basis is None or source_basis in self.source
-            assert range_basis is None or range_basis in self.range
-            assert product is None or product.source == product.range == self.range
-            if source_basis is None:
-                if range_basis is None:
-                    return self
-                else:
-                    try:
-                        V = self.apply_transpose(product.apply(range_basis) if product else range_basis)
-                    except NotImplementedError:
-                        return ProjectedOperator(self, range_basis, None, product, name=name)
-                    if isinstance(self.source, NumpyVectorSpace):
-                        from pymor.operators.numpy import NumpyMatrixOperator
-                        return NumpyMatrixOperator(V.data,
-                                                   source_id=self.source.id,
-                                                   range_id=self.range.id,
-                                                   name=name)
-                    else:
-                        from pymor.operators.constructions import VectorArrayOperator
-                        return VectorArrayOperator(V, transposed=True, space_id=self.range.id, name=name)
-            else:
-                if range_basis is None:
-                    V = self.apply(source_basis)
-                    if isinstance(self.range, NumpyVectorSpace):
-                        from pymor.operators.numpy import NumpyMatrixOperator
-                        return NumpyMatrixOperator(V.data.T,
-                                                   source_id=self.source.id,
-                                                   range_id=self.range.id,
-                                                   name=name)
-                    else:
-                        from pymor.operators.constructions import VectorArrayOperator
-                        return VectorArrayOperator(V, transposed=False, space_id=self.source.id, name=name)
-                elif product is None:
-                    from pymor.operators.numpy import NumpyMatrixOperator
-                    return NumpyMatrixOperator(self.apply2(range_basis, source_basis),
-                                               source_id=self.source.id,
-                                               range_id=self.range.id,
-                                               name=name)
-                else:
-                    from pymor.operators.numpy import NumpyMatrixOperator
-                    V = self.apply(source_basis)
-                    return NumpyMatrixOperator(product.apply2(range_basis, V),
-                                               source_id=self.source.id,
-                                               range_id=self.range.id,
-                                               name=name)
-        else:
-            self.logger.warn('Using inefficient generic projection operator')
-            return ProjectedOperator(self, range_basis, source_basis, product, name=name)
-
 
 class ProjectedOperator(OperatorBase):
     """Generic |Operator| representing the projection of an |Operator| to a subspace.
@@ -217,13 +165,11 @@ class ProjectedOperator(OperatorBase):
         See :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
     product
         See :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
-    name
-        Name of the projected operator.
     """
 
     linear = False
 
-    def __init__(self, operator, range_basis, source_basis, product=None, solver_options=None, name=None):
+    def __init__(self, operator, range_basis, source_basis, product=None, solver_options=None):
         assert isinstance(operator, OperatorInterface)
         assert source_basis is None or source_basis in operator.source
         assert range_basis is None or range_basis in operator.range
@@ -236,7 +182,7 @@ class ProjectedOperator(OperatorBase):
         self.source = NumpyVectorSpace(len(source_basis), operator.source.id) if source_basis is not None else operator.source
         self.range = NumpyVectorSpace(len(range_basis), operator.range.id) if range_basis is not None else operator.range
         self.solver_options = solver_options
-        self.name = name
+        self.name = operator.name
         self.operator = operator
         self.source_basis = source_basis.copy() if source_basis is not None else None
         self.range_basis = range_basis.copy() if range_basis is not None else None
@@ -250,8 +196,7 @@ class ProjectedOperator(OperatorBase):
         else:
             options = {'inverse': self.solver_options.get('inverse_transpose'),
                        'inverse_transpose': self.solver_options.get('inverse')} if self.solver_options else None
-            return ProjectedOperator(self.operator.T, self.source_basis, self.range_basis,
-                                     solver_options=options, name=self.name + '_transposed')
+            return ProjectedOperator(self.operator.T, self.source_basis, self.range_basis, solver_options=options)
 
     def apply(self, U, mu=None):
         mu = self.parse_parameter(mu)
@@ -273,20 +218,6 @@ class ProjectedOperator(OperatorBase):
                 V = self.operator.apply(UU, mu=mu)
                 return self.range.make_array(self.product.apply2(V, self.range_basis))
 
-    def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
-        """See :meth:`NumpyMatrixOperator.projected_to_subbasis`."""
-        assert dim_source is None or dim_source <= self.source.dim
-        assert dim_range is None or dim_range <= self.range.dim
-        assert dim_source is None or self.source_basis is not None, 'not implemented'
-        assert dim_range is None or self.range_basis is not None, 'not implemented'
-        name = name or '{}_projected_to_subbasis'.format(self.name)
-        source_basis = self.source_basis if dim_source is None \
-            else self.source_basis[:dim_source]
-        range_basis = self.range_basis if dim_range is None \
-            else self.range_basis[:dim_range]
-        return ProjectedOperator(self.operator, range_basis, source_basis, product=None,
-                                 solver_options=self.solver_options, name=name)
-
     def jacobian(self, U, mu=None):
         if self.linear:
             return self.assemble(mu)
@@ -296,8 +227,9 @@ class ProjectedOperator(OperatorBase):
             J = self.operator.jacobian(U, mu=mu)
         else:
             J = self.operator.jacobian(self.source_basis.lincomb(U.data), mu=mu)
-        pop = J.projected(range_basis=self.range_basis, source_basis=self.source_basis,
-                          product=self.product, name=self.name + '_jacobian')
+        from pymor.algorithms.projection import project
+        pop = project(J, range_basis=self.range_basis, source_basis=self.source_basis,
+                      product=self.product, name=self.name + '_jacobian')
         if self.solver_options:
             options = self.solver_options.get('jacobian')
             if options:
@@ -308,8 +240,9 @@ class ProjectedOperator(OperatorBase):
         op = self.operator.assemble(mu=mu)
         if op == self.operator:  # avoid infinite recursion in apply_inverse default impl
             return self
-        pop = op.projected(range_basis=self.range_basis, source_basis=self.source_basis,
-                           product=self.product, name=self.name + '_assembled')
+        from pymor.algorithms.projection import project
+        pop = project(op, range_basis=self.range_basis, source_basis=self.source_basis,
+                      product=self.product, name=self.name + '_assembled')
         if self.solver_options:
             pop = pop.with_(solver_options=self.solver_options)
         return pop

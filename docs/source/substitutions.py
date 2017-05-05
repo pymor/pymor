@@ -127,6 +127,10 @@ common = '''
 
 .. |solver_options| replace:: :attr:`~pymor.operators.interfaces.OperatorInterface.solver_options`
 
+.. |RuleTable| replace:: :class:`~pymor.algorithms.rules.RuleTable`
+.. |rule| replace:: :class:`~pymor.algorithms.rules.rule`
+.. |rules| replace:: :class:`rules <pymor.algorithms.rules.rule>`
+
 '''
 
 substitutions = interfaces + common

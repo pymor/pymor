@@ -72,6 +72,8 @@ import pkgutil
 import textwrap
 
 from pymor.core.config import config
+from pymor.tools.table import format_table
+
 
 _default_container = None
 
@@ -359,36 +361,15 @@ def print_defaults(import_all=True, shorten_paths=2):
             keys[int(i)].append('.'.join(k_parts))
         values[int(i)].append(repr(v))
         comments[int(i)].append(c)
-    key_width = max(max([0] + list(map(len, ks))) for ks in keys)
-    value_width = max(max([0] + list(map(len, vls))) for vls in values)
     key_string = 'path (shortened)' if shorten_paths else 'path'
-    header = '''
-{:{key_width}}   {:{value_width}}   source'''[1:].format(key_string, 'value',
-                                                         key_width=key_width, value_width=value_width)
-    header_width = len(header)
 
     for i, (ks, vls, cs) in enumerate(zip(keys, values, comments)):
-
         description = 'defaults not affecting state id calculation' if i else 'defaults affecting state id calcuation'
-        print('=' * header_width)
-        print('{:^{width}}'.format(description, width=header_width))
-        print()
-        print(header)
-        print('=' * header_width)
-
-        lks = ks[0].split('.')[:-1] if ks else ''
-        for k, v, c in zip(ks, vls, cs):
-
-            ks = k.split('.')[:-1]
-            if lks != ks:
-                print('')
-            lks = ks
-
-            print('{:{key_width}}   {:{value_width}}   {}'.format(k, v, c,
-                                                                  key_width=key_width,
-                                                                  value_width=value_width))
-
-        print()
+        rows = [[key_string, 'value', 'source']] + list(zip(ks, vls, cs))
+        print(format_table(rows, title=description))
+        if not i:
+            print()
+            print()
         print()
 
 

@@ -208,7 +208,7 @@ def main(args):
     def error_analysis(N, M):
         print('N = {}, M = {}: '.format(N, M), end='')
         rd, rc, _ = reduce_to_subbasis(rb_discretization, N, reconstructor)
-        rd = rd.with_(operator=rd.operator.projected_to_subbasis(dim_collateral=M))
+        rd = rd.with_(operator=rd.operator.with_cb_dim(M))
         l2_err_max = -1
         mumax = None
         for mu in mus:

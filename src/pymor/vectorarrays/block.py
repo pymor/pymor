@@ -174,6 +174,9 @@ class BlockVectorSpace(VectorSpaceInterface):
                 len(self.subspaces) == len(other.subspaces) and
                 all(space == other_space for space, other_space in zip(self.subspaces, other.subspaces)))
 
+    def __hash__(self):
+        return sum(hash(s) for s in self.subspaces) + hash(self.id)
+
     @property
     def dim(self):
         return sum(subspace.dim for subspace in self.subspaces)

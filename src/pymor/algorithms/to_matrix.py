@@ -9,6 +9,7 @@ import scipy.linalg as spla
 import scipy.sparse as sps
 import scipy.sparse.linalg as spsla
 
+from pymor.algorithms.rules import RuleTable, match_class
 from pymor.operators.block import BlockOperator
 from pymor.operators.constructions import (AdjointOperator, ComponentProjection, Concatenation, IdentityOperator,
                                            LincombOperator, VectorArrayOperator, ZeroOperator)
@@ -45,19 +46,23 @@ def to_matrix(op, format=None, mu=None):
         'dok': sps.dok_matrix,
         'lil': sps.lil_matrix
     }
-    return _to_matrix(op, format, mapping, mu)
+    return ToMatrixRules.apply(op, format, mapping, mu)
 
 
-def _to_matrix(op, format, mapping, mu):
-    if isinstance(op, NumpyMatrixOperator):
+class ToMatrixRules(RuleTable):
+
+    @match_class(NumpyMatrixOperator)
+    def action_NumpyMatrixOperator(self, op, format, mapping, mu):
         if format is None:
             if not op.sparse:
-                res = op._matrix
+                return op._matrix
             else:
-                res = op._matrix.toarray()
+                return op._matrix.toarray()
         else:
-            res = mapping[format](op._matrix)
-    elif isinstance(op, BlockOperator):
+            return mapping[format](op._matrix)
+
+    @match_class(BlockOperator)
+    def action_BlockOperator(self, op, format, mapping, mu):
         op_blocks = op._blocks
         mat_blocks = [[] for i in range(op.num_range_blocks)]
         for i in range(op.num_range_blocks):
@@ -68,21 +73,26 @@ def _to_matrix(op, format, mapping, mu):
                     else:
                         mat_blocks[i].append(None)
                 else:
-                    mat_blocks[i].append(_to_matrix(op_blocks[i, j], format, mapping, mu))
+                    mat_blocks[i].append(self.apply(op_blocks[i, j], format, mapping, mu))
         if format is None:
-            res = np.array(np.bmat(mat_blocks))
+            return np.array(np.bmat(mat_blocks))
         else:
-            res = sps.bmat(mat_blocks, format=format)
-    elif isinstance(op, AdjointOperator):
-        res = _to_matrix(op.operator, format, mapping, mu).T
+            return sps.bmat(mat_blocks, format=format)
+
+    @match_class(AdjointOperator)
+    def action_AdjointOperator(self, op, format, mapping, mu):
+        res = self.apply(op.operator, format, mapping, mu).T
         if op.range_product is not None:
-            res = res.dot(_to_matrix(op.range_product, format, mapping, mu))
+            res = res.dot(self.apply(op.range_product, format, mapping, mu))
         if op.source_product is not None:
             if format is None:
-                res = spla.solve(_to_matrix(op.source_product, format, mapping, mu), res)
+                res = spla.solve(self.apply(op.source_product, format, mapping, mu), res)
             else:
-                res = spsla.spsolve(_to_matrix(op.source_product, format, mapping, mu), res)
-    elif isinstance(op, ComponentProjection):
+                res = spsla.spsolve(self.apply(op.source_product, format, mapping, mu), res)
+        return res
+
+    @match_class(ComponentProjection)
+    def action_ComponentProjection(self, op, format, mapping, mu):
         if format is None:
             res = np.zeros((op.range.dim, op.source.dim))
             for i, j in enumerate(op.components):
@@ -93,27 +103,37 @@ def _to_matrix(op, format, mapping, mu):
             j = op.components
             res = sps.coo_matrix((data, (i, j)), shape=(op.range.dim, op.source.dim))
             res = res.asformat(format)
-    elif isinstance(op, Concatenation):
-        res = _to_matrix(op.second, format, mapping, mu).dot(_to_matrix(op.first, format, mapping, mu))
-    elif isinstance(op, IdentityOperator):
+        return res
+
+    @match_class(Concatenation)
+    def action_Concatenation(self, op, format, mapping, mu):
+        return self.apply(op.second, format, mapping, mu).dot(self.apply(op.first, format, mapping, mu))
+
+    @match_class(IdentityOperator)
+    def action_IdentityOperator(self, op, format, mapping, mu):
         if format is None:
-            res = np.eye(op.source.dim)
+            return np.eye(op.source.dim)
         else:
-            res = sps.eye(op.source.dim, format=format)
-    elif isinstance(op, LincombOperator):
+            return sps.eye(op.source.dim, format=format)
+
+    @match_class(LincombOperator)
+    def action_LincombOperator(self, op, format, mapping, mu):
         op_coefficients = op.evaluate_coefficients(mu)
-        res = op_coefficients[0] * _to_matrix(op.operators[0], format, mapping, mu)
+        res = op_coefficients[0] * self.apply(op.operators[0], format, mapping, mu)
         for i in range(1, len(op.operators)):
-            res = res + op_coefficients[i] * _to_matrix(op.operators[i], format, mapping, mu)
-    elif isinstance(op, VectorArrayOperator):
+            res = res + op_coefficients[i] * self.apply(op.operators[i], format, mapping, mu)
+        return res
+
+    @match_class(VectorArrayOperator)
+    def action_VectorArrayOperator(self, op, format, mapping, mu):
         res = op._array.data if op.transposed else op._array.data.T
         if format is not None:
             res = mapping[format](res)
-    elif isinstance(op, ZeroOperator):
+        return res
+
+    @match_class(ZeroOperator)
+    def action_ZeroOperator(self, op, format, mapping, mu):
         if format is None:
-            res = np.zeros((op.range.dim, op.source.dim))
+            return np.zeros((op.range.dim, op.source.dim))
         else:
-            res = mapping[format]((op.range.dim, op.source.dim))
-    else:
-        raise ValueError('Encountered unsupported operator type {}'.format(type(op)))
-    return res
+            return mapping[format]((op.range.dim, op.source.dim))
