@@ -24,7 +24,7 @@ def test_complex():
     # assemble_lincomb
     assert not np.iscomplexobj(Aop.assemble_lincomb((Iop, Bop), (1, 1))._matrix)
     assert not np.iscomplexobj(Aop.assemble_lincomb((Aop, Bop), (1, 1))._matrix)
-    assert not np.iscomplexobj(Aop.assemble_lincomb((Aop, Bop), (1 + 0j, 1 + 0j))._matrix)
+    assert np.iscomplexobj(Aop.assemble_lincomb((Aop, Bop), (1 + 0j, 1 + 0j))._matrix)
     assert np.iscomplexobj(Aop.assemble_lincomb((Aop, Bop), (1j, 1))._matrix)
     assert np.iscomplexobj(Aop.assemble_lincomb((Bop, Aop), (1, 1j))._matrix)
 
