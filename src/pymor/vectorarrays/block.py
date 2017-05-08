@@ -3,6 +3,7 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+from functools import reduce
 from numbers import Number
 import numpy as np
 
@@ -29,6 +30,14 @@ class BlockVectorArray(VectorArrayInterface):
     @property
     def data(self):
         return np.hstack([block.data for block in self._blocks])
+
+    @property
+    def real(self):
+        return BlockVectorArray([block.real for block in self._blocks], self.space)
+
+    @property
+    def imag(self):
+        return BlockVectorArray([block.imag for block in self._blocks], self.space)
 
     def block(self, ind):
         """
@@ -84,7 +93,8 @@ class BlockVectorArray(VectorArrayInterface):
         assert other in self.space
         dots = [block.dot(other_block) for block, other_block in zip(self._blocks, other._blocks)]
         assert all([dot.shape == dots[0].shape for dot in dots])
-        ret = np.zeros(dots[0].shape)
+        common_dtype = reduce(np.promote_types, (dot.dtype for dot in dots))
+        ret = np.zeros(dots[0].shape, dtype=common_dtype)
         for dot in dots:
             ret += dot
         return ret
@@ -94,7 +104,8 @@ class BlockVectorArray(VectorArrayInterface):
         dots = [block.pairwise_dot(other_block)
                 for block, other_block in zip(self._blocks, other._blocks)]
         assert all([dot.shape == dots[0].shape for dot in dots])
-        ret = np.zeros(dots[0].shape)
+        common_dtype = reduce(np.promote_types, (dot.dtype for dot in dots))
+        ret = np.zeros(dots[0].shape, dtype=common_dtype)
         for dot in dots:
             ret += dot
         return ret

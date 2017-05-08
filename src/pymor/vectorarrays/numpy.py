@@ -42,11 +42,11 @@ class NumpyVectorArray(VectorArrayInterface):
 
     @property
     def real(self):
-        return NumpyVectorArray(self._array[:self._len].real.copy(), self.space)
+        return NumpyVectorArray(self.data.real.copy(), self.space)
 
     @property
     def imag(self):
-        return NumpyVectorArray(self._array[:self._len].imag, self.space)
+        return NumpyVectorArray(self.data.imag.copy(), self.space)
 
     def __len__(self):
         return self._len
@@ -281,6 +281,10 @@ class NumpyVectorArray(VectorArrayInterface):
         assert self.dim == other.dim
         if self._refcount[0] > 1:
             self._deep_copy()
+        other_dtype = other.base._array.dtype if other.is_view else other._array.dtype
+        common_dtype = np.promote_types(self._array.dtype, other_dtype)
+        if self._array.dtype != common_dtype:
+            self._array = self._array.astype(common_dtype)
         self._array[:self._len] += other.base._array[other.ind] if other.is_view else other._array[:other._len]
         return self
 
@@ -296,6 +300,10 @@ class NumpyVectorArray(VectorArrayInterface):
         assert self.dim == other.dim
         if self._refcount[0] > 1:
             self._deep_copy()
+        other_dtype = other.base._array.dtype if other.is_view else other._array.dtype
+        common_dtype = np.promote_types(self._array.dtype, other_dtype)
+        if self._array.dtype != common_dtype:
+            self._array = self._array.astype(common_dtype)
         self._array[:self._len] -= other.base._array[other.ind] if other.is_view else other._array[:other._len]
         return self
 
@@ -309,6 +317,10 @@ class NumpyVectorArray(VectorArrayInterface):
             or isinstance(other, np.ndarray) and other.shape == (len(self),)
         if self._refcount[0] > 1:
             self._deep_copy()
+        other_dtype = other.dtype if isinstance(other, np.ndarray) else type(other)
+        common_dtype = np.promote_types(self._array.dtype, other_dtype)
+        if self._array.dtype != common_dtype:
+            self._array = self._array.astype(common_dtype)
         self._array[:self._len] *= other
         return self
 
@@ -463,7 +475,6 @@ class NumpyVectorArrayView(NumpyVectorArray):
 
     def l2_norm2(self):
         return self.base.l2_norm2(_ind=self.ind)
-        pass
 
     def sup_norm(self):
         return self.base.sup_norm(_ind=self.ind)
@@ -488,6 +499,10 @@ class NumpyVectorArrayView(NumpyVectorArray):
         assert self.base.check_ind_unique(self.ind)
         if self.base._refcount[0] > 1:
             self._deep_copy()
+        other_dtype = other.base._array.dtype if other.is_view else other._array.dtype
+        common_dtype = np.promote_types(self.base._array.dtype, other_dtype)
+        if self.base._array.dtype != common_dtype:
+            self.base._array = self.base._array.astype(common_dtype)
         self.base.array[self.ind] += other.base._array[other.ind] if other.is_view else other._array[:other._len]
         return self
 
@@ -504,6 +519,10 @@ class NumpyVectorArrayView(NumpyVectorArray):
         assert self.base.check_ind_unique(self.ind)
         if self.base._refcount[0] > 1:
             self._deep_copy()
+        other_dtype = other.base._array.dtype if other.is_view else other._array.dtype
+        common_dtype = np.promote_types(self.base._array.dtype, other_dtype)
+        if self.base._array.dtype != common_dtype:
+            self.base._array = self.base._array.astype(common_dtype)
         self.base._array[self.ind] -= other.base._array[other.ind] if other.is_view else other._array[:other._len]
         return self
 
@@ -518,6 +537,10 @@ class NumpyVectorArrayView(NumpyVectorArray):
         assert self.base.check_ind_unique(self.ind)
         if self.base._refcount[0] > 1:
             self._deep_copy()
+        other_dtype = other.dtype if isinstance(other, np.ndarray) else type(other)
+        common_dtype = np.promote_types(self.base._array.dtype, other_dtype)
+        if self.base._array.dtype != common_dtype:
+            self.base._array = self.base._array.astype(common_dtype)
         self.base._array[self.ind] *= other
         return self
 
