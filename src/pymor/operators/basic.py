@@ -151,20 +151,19 @@ class ProjectedOperator(OperatorBase):
     performed, so this operator is mainly useful for testing before implementing
     offline/online decomposition for a specific application.
 
-    This operator is instantiated in the default implementation of
-    :meth:`~pymor.operators.interfaces.OperatorInterface.projected` in
-    :class:`OperatorBase` for parametric or nonlinear operators.
+    This operator is instantiated in :func:`pymor.algorithms.projection.project`
+    as a default implementation for parametric or nonlinear operators.
 
     Parameters
     ----------
     operator
         The |Operator| to project.
     source_basis
-        See :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
+        See :func:`pymor.algorithms.projection.project`.
     range_basis
-        See :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
+        See :func:`pymor.algorithms.projection.project`.
     product
-        See :meth:`~pymor.operators.interfaces.OperatorInterface.projected`.
+        See :func:`pymor.algorithms.projection.project`.
     """
 
     linear = False
