@@ -20,7 +20,7 @@ from scipy.sparse import issparse
 from scipy.io import mmwrite, savemat
 
 from pymor.core.config import config
-from pymor.core.defaults import defaults, defaults_sid
+from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.core.interfaces import abstractmethod
 from pymor.core.logger import getLogger
@@ -132,29 +132,10 @@ class NumpyMatrixBasedOperator(OperatorBase):
         -------
         The assembled parameter independent |Operator|.
         """
-        if hasattr(self, '_assembled_operator'):
-            if self._defaults_sid != defaults_sid():
-                self.logger.warn('Re-assembling since state of global defaults has changed.')
-                op = self._assembled_operator = NumpyMatrixOperator(self._assemble(),
-                                                                    source_id=self.source.id,
-                                                                    range_id=self.range.id,
-                                                                    solver_options=self.solver_options)
-                self._defaults_sid = defaults_sid()
-                return op
-            else:
-                return self._assembled_operator
-        elif not self.parameter_type:
-            op = self._assembled_operator = NumpyMatrixOperator(self._assemble(),
-                                                                source_id=self.source.id,
-                                                                range_id=self.range.id,
-                                                                solver_options=self.solver_options)
-            self._defaults_sid = defaults_sid()
-            return op
-        else:
-            return NumpyMatrixOperator(self._assemble(self.parse_parameter(mu)),
-                                       source_id=self.source.id,
-                                       range_id=self.range.id,
-                                       solver_options=self.solver_options)
+        return NumpyMatrixOperator(self._assemble(self.parse_parameter(mu)),
+                                   source_id=self.source.id,
+                                   range_id=self.range.id,
+                                   solver_options=self.solver_options)
 
     def apply(self, U, mu=None):
         return self.assemble(mu).apply(U)
@@ -194,12 +175,6 @@ class NumpyMatrixBasedOperator(OperatorBase):
             savemat(filename, {matrix_name: matrix})
         else:
             mmwrite(filename, matrix, comment=matrix_name)
-
-    def __getstate__(self):
-        d = self.__dict__.copy()
-        if '_assembled_operator' in d:
-            del d['_assembled_operator']
-        return d
 
 
 class NumpyMatrixOperator(NumpyMatrixBasedOperator):
@@ -355,44 +330,6 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
         transpose_op = NumpyMatrixOperator(self._matrix.T, source_id=self.range.id, range_id=self.source.id,
                                            solver_options=options)
         return transpose_op.apply_inverse(U, mu=mu, least_squares=least_squares)
-
-    def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
-        """Project the operator to a subbasis.
-
-        The purpose of this method is to further project an operator that has been
-        obtained through :meth:`~pymor.operators.interfaces.OperatorInterface.projected`
-        to subbases of the original projection bases, i.e. ::
-
-            op.projected(r_basis, s_basis, prod).projected_to_subbasis(dim_range, dim_source)
-
-        should be the same as ::
-
-            op.projected(r_basis[:dim_range], s_basis[:dim_source], prod)
-
-        For a |NumpyMatrixOperator| this amounts to extracting the upper-left
-        (dim_range, dim_source) corner of the matrix it wraps.
-
-        Parameters
-        ----------
-        dim_range
-            Dimension of the range subbasis.
-        dim_source
-            Dimension of the source subbasis.
-        name
-            optional name for the returned |Operator|
-        Returns
-        -------
-        The projected |Operator|.
-        """
-        assert dim_source is None or dim_source <= self.source.dim
-        assert dim_range is None or dim_range <= self.range.dim
-        name = name or '{}_projected_to_subbasis'.format(self.name)
-        # copy instead of just slicing the matrix to ensure contiguous memory
-        return NumpyMatrixOperator(self._matrix[:dim_range, :dim_source].copy(),
-                                   source_id=self.source.id,
-                                   range_id=self.range.id,
-                                   solver_options=self.solver_options,
-                                   name=name)
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         if not all(isinstance(op, (NumpyMatrixOperator, ZeroOperator, IdentityOperator)) for op in operators):

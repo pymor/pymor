@@ -54,3 +54,10 @@ class PySideMissing(ImportError):
     def __init__(self, msg=None):
         msg = msg or 'cannot visualize: import of PySide failed'
         super().__init__(msg)
+
+
+class RuleNotMatchingError(NotImplementedError):
+    pass
+
+class NoMatchingRuleError(NotImplementedError):
+    pass

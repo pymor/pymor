@@ -9,6 +9,7 @@ import numpy as np
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper, ImplicitEulerTimeStepper
 from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.instationary import InstationaryProblem
+from pymor.algorithms.preassemble import preassemble as preassemble_
 from pymor.discretizations.basic import StationaryDiscretization, InstationaryDiscretization
 from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.functions.basic import LincombFunction
@@ -26,7 +27,7 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretizer=None, grid_type=None,
                              num_flux='lax_friedrichs', lxf_lambda=1., eo_gausspoints=5, eo_intervals=1,
-                             grid=None, boundary_info=None):
+                             grid=None, boundary_info=None, preassemble=True):
     """Discretizes an |StationaryProblem| using the finite volume method.
 
     Parameters
@@ -61,6 +62,8 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
     boundary_info
         A |BoundaryInfo| specifying the boundary types of the grid boundary entities.
         Must be provided if `grid` is specified.
+    preassemble
+        If `True`, preassemble all operators in the resulting |Discretization|.
 
     Returns
     -------
@@ -191,12 +194,19 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
     discretization = StationaryDiscretization(L, F, products=products, visualizer=visualizer,
                                               parameter_space=parameter_space, name='{}_FV'.format(p.name))
 
-    return discretization, {'grid': grid, 'boundary_info': boundary_info}
+    data = {'grid': grid, 'boundary_info': boundary_info}
+
+    if preassemble:
+        data['unassembled_discretization'] = discretization
+        discretization = preassemble_(discretization)
+
+    return discretization, data
 
 
 def discretize_instationary_fv(analytical_problem, diameter=None, domain_discretizer=None, grid_type=None,
                                num_flux='lax_friedrichs', lxf_lambda=1., eo_gausspoints=5, eo_intervals=1,
-                               grid=None, boundary_info=None, num_values=None, time_stepper=None, nt=None):
+                               grid=None, boundary_info=None, num_values=None, time_stepper=None, nt=None,
+                               preassemble=True):
     """Discretizes an |InstationaryProblem| with an |StationaryProblem| as stationary part
     using the finite volume method.
 
@@ -242,6 +252,8 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
     nt
         If `time_stepper` is not specified, the number of time steps for implicit
         Euler time stepping.
+    preassemble
+        If `True`, preassemble all operators in the resulting |Discretization|.
 
     Returns
     -------
@@ -294,5 +306,9 @@ def discretize_instationary_fv(analytical_problem, diameter=None, domain_discret
                                                 products=d.products, time_stepper=time_stepper,
                                                 parameter_space=p.parameter_space, visualizer=d.visualizer,
                                                 num_values=num_values, name='{}_FV'.format(p.name))
+
+    if preassemble:
+        data['unassembled_discretization'] = discretization
+        discretization = preassemble_(discretization)
 
     return discretization, data
