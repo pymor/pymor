@@ -68,6 +68,7 @@ try:
 except ImportError:
     from pickle import dumps, HIGHEST_PROTOCOL
 from copyreg import dispatch_table
+from functools import wraps
 import hashlib
 import inspect
 import itertools
@@ -279,15 +280,18 @@ class classinstancemethod:
         if cls is None:
             return self
         if instance is None:
+            @wraps(self.cls_meth)
             def the_class_method(*args, **kwargs):
                 return self.cls_meth(cls, *args, **kwargs)
             return the_class_method
         else:
+            @wraps(self.inst_meth)
             def the_instance_method(*args, **kwargs):
                 return self.inst_meth(instance, *args, **kwargs)
             return the_instance_method
 
     def instancemethod(self, inst_meth):
+        inst_meth.__doc__ = inst_meth.__doc__ or self.cls_meth.__doc__
         self.inst_meth = inst_meth
         return self
 
