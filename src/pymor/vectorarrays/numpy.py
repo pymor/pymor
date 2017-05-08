@@ -499,6 +499,10 @@ class NumpyVectorArrayView(NumpyVectorArray):
         assert self.base.check_ind_unique(self.ind)
         if self.base._refcount[0] > 1:
             self._deep_copy()
+        other_dtype = other.base._array.dtype if other.is_view else other._array.dtype
+        common_dtype = np.promote_types(self.base._array.dtype, other_dtype)
+        if self.base._array.dtype != common_dtype:
+            self.base._array = self.base._array.astype(common_dtype)
         self.base.array[self.ind] += other.base._array[other.ind] if other.is_view else other._array[:other._len]
         return self
 
@@ -515,6 +519,10 @@ class NumpyVectorArrayView(NumpyVectorArray):
         assert self.base.check_ind_unique(self.ind)
         if self.base._refcount[0] > 1:
             self._deep_copy()
+        other_dtype = other.base._array.dtype if other.is_view else other._array.dtype
+        common_dtype = np.promote_types(self.base._array.dtype, other_dtype)
+        if self.base._array.dtype != common_dtype:
+            self.base._array = self.base._array.astype(common_dtype)
         self.base._array[self.ind] -= other.base._array[other.ind] if other.is_view else other._array[:other._len]
         return self
 
@@ -529,6 +537,10 @@ class NumpyVectorArrayView(NumpyVectorArray):
         assert self.base.check_ind_unique(self.ind)
         if self.base._refcount[0] > 1:
             self._deep_copy()
+        other_dtype = other.dtype if isinstance(other, np.ndarray) else type(other)
+        common_dtype = np.promote_types(self.base._array.dtype, other_dtype)
+        if self.base._array.dtype != common_dtype:
+            self.base._array = self.base._array.astype(common_dtype)
         self.base._array[self.ind] *= other
         return self
 
