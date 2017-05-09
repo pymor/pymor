@@ -245,7 +245,7 @@ class InstationaryDiscretization(DiscretizationBase):
         The final time T.
     initial_data
         The intial data u_0 given by a vector-like |Operator|. The same
-        as `vector_operators['initial_data']`.
+        as `operators['initial_data']`.
     operator
         The |Operator| L. The same as `operators['operator']`.
     rhs
