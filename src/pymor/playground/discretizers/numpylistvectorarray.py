@@ -22,7 +22,7 @@ def convert_to_numpy_list_vector_array(d):
         elif not op.parametric:
             op = op.assemble()
             if isinstance(op, NumpyMatrixOperator):
-                return NumpyListVectorArrayMatrixOperator(op._matrix, functional=functional, vector=vector,
+                return NumpyListVectorArrayMatrixOperator(op._matrix,
                                                           source_id=op.source.id, range_id=op.range.id,
                                                           name=op.name)
             else:
@@ -31,9 +31,6 @@ def convert_to_numpy_list_vector_array(d):
             raise NotImplementedError
 
     operators = {k: convert_operator(v) for k, v in d.operators.items()}
-    functionals = {k: convert_operator(v, functional=True) for k, v in d.functionals.items()}
-    vector_operators = {k: convert_operator(v, vector=True) for k, v in d.vector_operators.items()}
     products = {k: convert_operator(v) for k, v in d.products.items()}
 
-    return d.with_(operators=operators, functionals=functionals, vector_operators=vector_operators,
-                   products=products)
+    return d.with_(operators=operators, products=products)
