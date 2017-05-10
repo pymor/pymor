@@ -49,10 +49,10 @@ class ImageCollectionError(Exception):
         self.op = op
 
 
-class PySideMissing(ImportError):
-    """Raise me where having importable PySide is non-optional"""
+class QtMissing(ImportError):
+    """Raise me where having importable Qt bindings is non-optional"""
     def __init__(self, msg=None):
-        msg = msg or 'cannot visualize: import of PySide failed'
+        msg = msg or 'cannot visualize: import of Qt bindings failed'
         super().__init__(msg)
 
 
