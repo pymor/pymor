@@ -191,7 +191,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         self.robin_data = robin_data
         self.order = order
         self.name = name
-        self.build_parameter_type(function, dirichlet_data)
+        self.build_parameter_type(function, dirichlet_data, neumann_data)
 
     def _assemble(self, mu=None):
         g = self.grid
