@@ -1,4 +1,0 @@
-# this is a seperate file, referenced in requirements-optional.txt,
-# because pip does not accept the necessary options per-requirement
---only-binary --no-index --find-links https://pymor.github.io/wheels/
-PySide

@@ -6,7 +6,9 @@ matplotlib
 mpi4py
 pyamg
 pyopengl
--r .requirements-pyside.txt
+qtpy
+PySide ; python_version < '3.5'
+PyQt ; python_version >= '3.5'
 pytest>=3.0
 pytest-cov
 pillow
