@@ -27,9 +27,13 @@ if os.environ.get('READTHEDOCS', None) == 'True':
         def __getattr__(cls, name):
             if name in ('__file__', '__path__'):
                 return '/dev/null'
+            elif name in ('__binding__', '__binding_version__'):
+                return ''
+            elif name == '__qt_version__':
+                return '5'
             elif name in cls.__dict__:
                 return cls.__dict__.get(name)
-            elif name == 'QtGui':
+            elif name == 'QtWidgets':
                 return Mock()
             elif name[0] == name[0].upper():
                 mockType = type(name, (), {})
@@ -46,7 +50,7 @@ if os.environ.get('READTHEDOCS', None) == 'True':
                     'dogpile.cache.compat',
                     'Qt', 'Qt.QtGui', 'Qt.QtCore', 'Qt.QtOpenGL', 'Qt.QtWidgets',
                     'OpenGL', 'OpenGL.GL',
-                    'matplotlib', 'matplotlib.backends', 'matplotlib.backends.backend_qt4agg', 'matplotlib.figure',
+                    'matplotlib', 'matplotlib.backends', 'matplotlib.backends.backend_qt4agg', 'matplotlib.backends.backend_qt5agg', 'matplotlib.figure',
                     'matplotlib.pyplot',
                     'pyvtk',
                     'IPython',
