@@ -2,6 +2,15 @@
 # Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
+"""This module provides plotting support inside the Jupyter notebook.
+
+To use these routines you first have to execute ::
+
+        %matplotlib notebook
+
+inside the given notebook.
+"""
+
 import numpy as np
 
 from pymor.core.config import config
