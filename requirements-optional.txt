@@ -8,7 +8,7 @@ pyamg
 pyopengl
 qtpy
 PySide ; python_version < '3.5'
-PyQt ; python_version >= '3.5'
+PyQt5 ; python_version >= '3.5'
 pytest>=3.0
 pytest-cov
 pillow
