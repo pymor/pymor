@@ -8,7 +8,7 @@ from pymor.algorithms.pod import pod
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper
 from pymor.discretizations.basic import InstationaryDiscretization
 from pymor.grids.oned import OnedGrid
-from pymor.gui.qt import Matplotlib1DVisualizer
+from pymor.gui.visualizers import OnedVisualizer
 from pymor.operators.constructions import VectorFunctional, LincombOperator
 from pymor.parameters.functionals import ProjectionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace
@@ -38,7 +38,7 @@ def discretize(n, nt, blocks):
 
     # hack together a visualizer ...
     grid = OnedGrid(domain=(0, 1), num_intervals=n)
-    visualizer = Matplotlib1DVisualizer(grid)
+    visualizer = OnedVisualizer(grid)
 
     time_stepper = ExplicitEulerTimeStepper(nt)
     parameter_space = CubicParameterSpace(operator.parameter_type, 0.1, 1)
