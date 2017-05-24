@@ -1,9 +1,10 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
 
+from pymor.algorithms.projection import project, project_to_subbasis
 from pymor.core.interfaces import BasicInterface
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -21,7 +22,7 @@ class GenericRBReconstructor(BasicInterface):
         return self.RB.lincomb(U.data)
 
     def restricted_to_subbasis(self, dim):
-        """See :meth:`~pymor.operators.numpy.NumpyMatrixOperator.projected_to_subbasis`."""
+        """See :meth:`~pymor.algorithms.projection.project_to_subbasis`."""
         assert dim <= len(self.RB)
         return GenericRBReconstructor(self.RB[:dim])
 
@@ -69,9 +70,10 @@ def reduce_generic_rb(discretization, RB, orthogonal_projection=('initial_data',
         RB = discretization.solution_space.empty()
 
     def project_operator(k, op):
-        return op.projected(range_basis=RB if RB in op.range else None,
-                            source_basis=RB if RB in op.source else None,
-                            product=product if k in orthogonal_projection else None)
+        return project(op,
+                       range_basis=RB if RB in op.range else None,
+                       source_basis=RB if RB in op.source else None,
+                       product=product if k in orthogonal_projection else None)
 
     projected_operators = {k: project_operator(k, op) if op else None for k, op in discretization.operators.items()}
 
@@ -111,7 +113,7 @@ class SubbasisReconstructor(BasicInterface):
 def reduce_to_subbasis(discretization, dim, reconstructor=None):
     """Further reduce a |Discretization| to the subbasis formed by the first `dim` basis vectors.
 
-    This is achieved by calling :meth:`~pymor.operators.numpy.NumpyMatrixOperator.projected_to_subbasis`
+    This is achieved by calling :meth:`~pymor.algorithms.projection.project_to_subbasis`
     for each operator of the given |Discretization|. Additionally, if a reconstructor
     for the |Discretization| is provided, its :meth:`restricted_to_subbasis` method is also
     called to obtain a reconstructor for the further reduced |Discretization|. Otherwise
@@ -135,8 +137,9 @@ def reduce_to_subbasis(discretization, dim, reconstructor=None):
     """
 
     def project_operator(op):
-        return op.projected_to_subbasis(dim_range=dim if op.range == discretization.solution_space else None,
-                                        dim_source=dim if op.source == discretization.solution_space else None)
+        return project_to_subbasis(op,
+                                     dim_range=dim if op.range == discretization.solution_space else None,
+                                     dim_source=dim if op.source == discretization.solution_space else None)
 
     projected_operators = {k: project_operator(op) if op else None for k, op in discretization.operators.items()}
 

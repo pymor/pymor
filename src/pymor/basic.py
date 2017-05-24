@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """This module imports some commonly used methods and classes.
@@ -17,6 +17,8 @@ from pymor.algorithms.greedy import greedy
 from pymor.algorithms.adaptivegreedy import adaptive_greedy
 from pymor.algorithms.newton import newton
 from pymor.algorithms.pod import pod
+from pymor.algorithms.preassemble import preassemble
+from pymor.algorithms.projection import project, project_to_subbasis
 
 from pymor.analyticalproblems.burgers import burgers_problem, burgers_problem_2d
 from pymor.analyticalproblems.elliptic import StationaryProblem

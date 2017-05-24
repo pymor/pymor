@@ -1,29 +1,76 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """ This module provides a widgets for displaying plots of
 scalar data assigned to one- and two-dimensional grids using
 :mod:`matplotlib`. This widget is not intended to be used directly.
-Instead, use :meth:`~pymor.gui.qt.visualize_matplotlib_1d` or
-:class:`~pymor.gui.qt.Matplotlib1DVisualizer`.
 """
 
 import numpy as np
 
 from pymor.core.config import config
+from pymor.grids.constructions import flatten_grid
+from pymor.grids.referenceelements import triangle, square
 
 
-if config.HAVE_PYSIDE and config.HAVE_MATPLOTLIB:
-    from PySide.QtGui import QSizePolicy
+class MatplotlibPatchAxes:
 
-    from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+    def __init__(self, figure, grid, bounding_box=None, vmin=None, vmax=None, codim=2,
+                 colorbar=True):
+        assert grid.reference_element in (triangle, square)
+        assert grid.dim == 2
+        assert codim in (0, 2)
+
+        subentities, coordinates, entity_map = flatten_grid(grid)
+        self.subentities = subentities if grid.reference_element is triangle \
+            else np.vstack((subentities[:, 0:3], subentities[:, [2, 3, 0]]))
+        self.coordinates = coordinates
+        self.entity_map = entity_map
+        self.reference_element = grid.reference_element
+        self.vmin = vmin
+        self.vmax = vmax
+        self.codim = codim
+        a = figure.gca()
+        if self.codim == 2:
+            self.p = a.tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
+                                 np.zeros(len(self.coordinates)),
+                                 vmin=self.vmin, vmax=self.vmax, shading='gouraud')
+        else:
+            self.p = a.tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
+                                 facecolors=np.zeros(len(self.subentities)),
+                                 vmin=self.vmin, vmax=self.vmax, shading='flat')
+        if colorbar:
+            figure.colorbar(self.p, ax=a)
+
+    def set(self, U, vmin=None, vmax=None):
+        self.vmin = self.vmin if vmin is None else vmin
+        self.vmax = self.vmax if vmax is None else vmax
+        U = np.array(U)
+        p = self.p
+        if self.codim == 2:
+            p.set_array(U)
+        elif self.reference_element is triangle:
+            p.set_array(U)
+        else:
+            p.set_array(np.tile(U, 2))
+        p.set_clim(self.vmin, self.vmax)
+
+
+if config.HAVE_QT and config.HAVE_MATPLOTLIB:
+    from Qt.QtWidgets import QSizePolicy
+
+    import Qt
+    if Qt.__qt_version__[0] == '4':
+        from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+    elif Qt.__qt_version__[0] == '5':
+        from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+    else:
+        raise NotImplementedError
 
     from matplotlib.figure import Figure
 
-    from pymor.grids.constructions import flatten_grid
     from pymor.grids.oned import OnedGrid
-    from pymor.grids.referenceelements import triangle, square
 
     # noinspection PyShadowingNames
     class Matplotlib1DWidget(FigureCanvas):
@@ -92,37 +139,14 @@ if config.HAVE_PYSIDE and config.HAVE_MATPLOTLIB:
             self.figure = Figure(dpi=dpi)
             super().__init__(self.figure)
 
-            subentities, coordinates, entity_map = flatten_grid(grid)
-            self.subentities = subentities if grid.reference_element is triangle \
-                else np.vstack((subentities[:, 0:3], subentities[:, [2, 3, 0]]))
-            self.coordinates = coordinates
-            self.entity_map = entity_map
-            self.reference_element = grid.reference_element
-            self.vmin = vmin
-            self.vmax = vmax
-            self.codim = codim
             self.setParent(parent)
             self.setMinimumSize(300, 300)
             self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
 
-        def set(self, U, vmin=None, vmax=None):
-            self.vmin = self.vmin if vmin is None else vmin
-            self.vmax = self.vmax if vmax is None else vmax
-            U = np.array(U)
-            f = self.figure
-            f.clear()
-            a = f.gca()
-            if self.codim == 2:
-                p = a.tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities, U,
-                                vmin=self.vmin, vmax=self.vmax, shading='flat')
-            elif self.reference_element is triangle:
-                p = a.tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities, facecolors=U,
-                                vmin=self.vmin, vmax=self.vmax, shading='flat')
-            else:
-                p = a.tripcolor(self.coordinates[:, 0], self.coordinates[:, 1], self.subentities,
-                                facecolors=np.tile(U, 2), vmin=self.vmin, vmax=self.vmax, shading='flat')
+            self.patch_axes = MatplotlibPatchAxes(self.figure, grid, bounding_box, vmin, vmax, codim)
 
-            self.figure.colorbar(p)
+        def set(self, U, vmin=None, vmax=None):
+            self.patch_axes.set(U, vmin, vmax)
             self.draw()
 
 else:

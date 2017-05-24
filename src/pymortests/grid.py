@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pickle import dumps, loads
@@ -8,7 +8,7 @@ from itertools import product
 import numpy as np
 import pytest
 
-from pymor.core.exceptions import PySideMissing
+from pymor.core.exceptions import QtMissing
 from pymor.gui.qt import stop_gui_processes
 from pymortests.fixtures.grid import grid, grids_with_visualize
 from pymortests.pickling import assert_picklable_without_dumps_function
@@ -446,7 +446,7 @@ def test_visualize(grids_with_visualize):
         g = grids_with_visualize
         U = np.ones(g.size(g.dim))
         g.visualize(U, g.dim)
-    except PySideMissing:
-        pytest.xfail("PySide missing")
+    except QtMissing:
+        pytest.xfail("Qt missing")
     finally:
         stop_gui_processes()

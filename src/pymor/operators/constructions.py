@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """Module containing some constructions to obtain new operators from old ones."""
 
+from functools import reduce
 from itertools import chain
 
 import numpy as np
 
-from pymor.core.defaults import defaults_sid, defaults
+from pymor.core.defaults import defaults
 from pymor.core.exceptions import InversionError
 from pymor.core.interfaces import ImmutableInterface
 from pymor.operators.basic import OperatorBase
@@ -17,7 +18,7 @@ from pymor.operators.interfaces import OperatorInterface
 from pymor.parameters.base import Parametric
 from pymor.parameters.interfaces import ParameterFunctionalInterface
 from pymor.vectorarrays.interfaces import VectorArrayInterface, VectorSpaceInterface, _INDEXTYPES
-from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 
 class LincombOperator(OperatorBase):
@@ -53,7 +54,6 @@ class LincombOperator(OperatorBase):
         self.name = name
         self.build_parameter_type(*chain(operators,
                                          (f for f in coefficients if isinstance(f, ParameterFunctionalInterface))))
-        self._try_assemble = not self.parametric
 
     @property
     def T(self):
@@ -78,13 +78,6 @@ class LincombOperator(OperatorBase):
         return [c.evaluate(mu) if hasattr(c, 'evaluate') else c for c in self.coefficients]
 
     def apply(self, U, mu=None):
-        if hasattr(self, '_assembled_operator'):
-            if self._defaults_sid == defaults_sid():
-                return self._assembled_operator.apply(U)
-            else:
-                return self.assemble().apply(U)
-        elif self._try_assemble:
-            return self.assemble().apply(U)
         coeffs = self.evaluate_coefficients(mu)
         R = self.operators[0].apply(U, mu=mu)
         R.scal(coeffs[0])
@@ -93,44 +86,32 @@ class LincombOperator(OperatorBase):
         return R
 
     def apply2(self, V, U, mu=None):
-        if hasattr(self, '_assembled_operator'):
-            if self._defaults_sid == defaults_sid():
-                return self._assembled_operator.apply2(V, U)
-            else:
-                return self.assemble().apply2(V, U)
-        elif self._try_assemble:
-            return self.assemble().apply2(V, U)
         coeffs = self.evaluate_coefficients(mu)
-        R = self.operators[0].apply2(V, U, mu=mu)
-        R *= coeffs[0]
-        for op, c in zip(self.operators[1:], coeffs[1:]):
-            R += c * op.apply2(V, U, mu=mu)
+        matrices = [op.apply2(V, U, mu=mu) for op in self.operators]
+        coeffs_dtype = reduce(np.promote_types, (type(c) for c in coeffs))
+        matrices_dtype = reduce(np.promote_types, (m.dtype for m in matrices))
+        common_dtype = np.promote_types(coeffs_dtype, matrices_dtype)
+        R = coeffs[0] * matrices[0]
+        if R.dtype != common_dtype:
+            R = R.astype(common_dtype)
+        for m, c in zip(matrices[1:], coeffs[1:]):
+            R += c * m
         return R
 
     def pairwise_apply2(self, V, U, mu=None):
-        if hasattr(self, '_assembled_operator'):
-            if self._defaults_sid == defaults_sid():
-                return self._assembled_operator.pairwise_apply2(V, U)
-            else:
-                return self.assemble().pairwise_apply2(V, U)
-        elif self._try_assemble:
-            return self.assemble().pairwise_apply2(V, U)
         coeffs = self.evaluate_coefficients(mu)
-        R = self.operators[0].pairwise_apply2(V, U, mu=mu)
-        R *= coeffs[0]
-        for op, c in zip(self.operators[1:], coeffs[1:]):
-            R += c * op.pairwise_apply2(V, U, mu=mu)
+        vectors = [op.pairwise_apply2(V, U, mu=mu) for op in self.operators]
+        coeffs_dtype = reduce(np.promote_types, (type(c) for c in coeffs))
+        vectors_dtype = reduce(np.promote_types, (v.dtype for v in vectors))
+        common_dtype = np.promote_types(coeffs_dtype, vectors_dtype)
+        R = coeffs[0] * vectors[0]
+        if R.dtype != common_dtype:
+            R = R.astype(common_dtype)
+        for v, c in zip(vectors[1:], coeffs[1:]):
+            R += c * v
         return R
 
     def apply_transpose(self, V, mu=None):
-        if hasattr(self, '_assembled_operator'):
-            if self._defaults_sid == defaults_sid():
-                return self._assembled_operator.apply_transpose(V)
-            else:
-                return self.assemble().apply_transpose(V)
-        elif self._try_assemble:
-            return self.assemble().apply_transpose(V)
-
         coeffs = self.evaluate_coefficients(mu)
         R = self.operators[0].apply_transpose(V, mu=mu)
         R.scal(coeffs[0])
@@ -139,24 +120,11 @@ class LincombOperator(OperatorBase):
         return R
 
     def assemble(self, mu=None):
-        if hasattr(self, '_assembled_operator'):
-            if self._defaults_sid == defaults_sid():
-                return self._assembled_operator
-            else:
-                self.logger.warn('Re-assembling since state of global defaults has changed.')
         operators = [op.assemble(mu) for op in self.operators]
         coefficients = self.evaluate_coefficients(mu)
         op = operators[0].assemble_lincomb(operators, coefficients, solver_options=self.solver_options,
                                            name=self.name + '_assembled')
-        if not self.parametric:
-            if op:
-                self._assembled_operator = op
-                self._defaults_sid = defaults_sid()
-                return op
-            else:
-                self._try_assemble = False
-                return self
-        elif op:
+        if op:
             return op
         else:
             return LincombOperator(operators, coefficients, solver_options=self.solver_options,
@@ -165,13 +133,6 @@ class LincombOperator(OperatorBase):
     def jacobian(self, U, mu=None):
         if self.linear:
             return self.assemble(mu)
-        if hasattr(self, '_assembled_operator'):
-            if self._defaults_sid == defaults_sid():
-                return self._assembled_operator.jacobian(U)
-            else:
-                return self.assemble().jacobian(U)
-        elif self._try_assemble:
-            return self.assemble().jacobian(U)
         jacobians = [op.jacobian(U, mu) for op in self.operators]
         coefficients = self.evaluate_coefficients(mu)
         options = self.solver_options.get('jacobian') if self.solver_options else None
@@ -184,14 +145,6 @@ class LincombOperator(OperatorBase):
             return jac
 
     def _as_array(self, source, mu):
-        if hasattr(self, '_assembled_operator'):
-            if self._defaults_sid == defaults_sid():
-                return self._assembled_operator.as_source_array() if source \
-                    else self._assembled_operator.as_range_array()
-            else:
-                return self.assemble().as_source_array() if source else self.assemble().as_range_array()
-        elif self._try_assemble:
-            return self.assemble().as_source_array() if source else self.assemble().as_range_array()
         coefficients = np.array(self.evaluate_coefficients(mu))
         arrays = [op.as_source_array(mu) if source else op.as_range_array(mu) for op in self.operators]
         R = arrays[0]
@@ -205,32 +158,6 @@ class LincombOperator(OperatorBase):
 
     def as_source_array(self, mu=None):
         return self._as_array(True, mu)
-
-    def projected(self, range_basis, source_basis, product=None, name=None):
-        if hasattr(self, '_assembled_operator'):
-            if self._defaults_sid == defaults_sid():
-                return self._assembled_operator.projected(range_basis, source_basis, product, name)
-            else:
-                return self.assemble().projected(range_basis, source_basis, product, name)
-        elif self._try_assemble:
-            return self.assemble().projected(range_basis, source_basis, product, name)
-        proj_operators = [op.projected(range_basis=range_basis, source_basis=source_basis, product=product)
-                          for op in self.operators]
-        return self.with_(operators=proj_operators, name=name or self.name + '_projected')
-
-    def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
-        """See :meth:`pymor.operators.numpy.NumpyMatrixOperator.projected_to_subbasis`."""
-        assert dim_source is None or dim_source <= self.source.dim
-        assert dim_range is None or dim_range <= self.range.dim
-        proj_operators = [op.projected_to_subbasis(dim_range=dim_range, dim_source=dim_source)
-                          for op in self.operators]
-        return self.with_(operators=proj_operators, name=name or '{}_projected_to_subbasis'.format(self.name))
-
-    def __getstate__(self):
-        d = self.__dict__.copy()
-        if '_assembled_operator' in d:
-            del d['_assembled_operator']
-        return d
 
 
 class Concatenation(OperatorBase):
@@ -290,16 +217,6 @@ class Concatenation(OperatorBase):
             return restricted_second, first_source_dofs
         else:
             return Concatenation(restricted_second, restricted_first), first_source_dofs
-
-    def projected(self, range_basis, source_basis, product=None, name=None):
-        if not self.parametric and self.linear:
-            return super().projected(range_basis, source_basis, product=product, name=name)
-        projected_first = self.first.projected(None, source_basis, product=None)
-        if isinstance(projected_first, VectorArrayOperator) and not projected_first.transposed:
-            return self.second.projected(range_basis, projected_first._array, product=product, name=name)
-        else:
-            projected_second = self.second.projected(range_basis, None, product=product)
-            return Concatenation(projected_second, projected_first, name=name or self.name + '_projected')
 
 
 class ComponentProjection(OperatorBase):
@@ -429,35 +346,10 @@ class ConstantOperator(OperatorBase):
         assert len(U) == 1
         return ZeroOperator(self.source, self.range, name=self.name + '_jacobian')
 
-    def projected(self, range_basis, source_basis, product=None, name=None):
-        assert source_basis is None or source_basis in self.source
-        assert range_basis is None or range_basis in self.range
-        assert product is None or product.source == product.range == self.range
-        if range_basis is not None:
-            if product:
-                projected_value = NumpyVectorSpace.make_array(product.apply2(range_basis, self._value).T, self.range.id)
-            else:
-                projected_value = NumpyVectorSpace.make_array(range_basis.dot(self._value).T, self.range.id)
-        else:
-            projected_value = self._value
-        if source_basis is None:
-            return ConstantOperator(projected_value, self.source, name=self.name + '_projected')
-        else:
-            return ConstantOperator(projected_value, NumpyVectorSpace(len(source_basis), self.source.id),
-                                    name=self.name + '_projected')
-
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
         restricted_value = NumpyVectorSpace.make_array(self._value.components(dofs))
         return ConstantOperator(restricted_value, NumpyVectorSpace(len(dofs))), dofs
-
-    def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
-        assert dim_source is None or (self.source.type is NumpyVectorArray and dim_source <= self.source.dim)
-        assert dim_range is None or (self.range.type is NumpyVectorArray and dim_range <= self.range.dim)
-        name = name or '{}_projected_to_subbasis'.format(self.name)
-        source = self.source if dim_source is None else NumpyVectorSpace(dim_source, self.source.id)
-        value = self._value if dim_range is None else NumpyVectorSpace(self._value.data[:, :dim_range], self.range.id)
-        return ConstantOperator(value, source, name=name)
 
 
 class ZeroOperator(OperatorBase):
@@ -505,22 +397,6 @@ class ZeroOperator(OperatorBase):
         if not least_squares:
             raise InversionError
         return self.range.zeros(len(U))
-
-    def projected(self, range_basis, source_basis, product=None, name=None):
-        assert source_basis is None or source_basis in self.source
-        assert range_basis is None or range_basis in self.range
-        assert product is None or product.source == product.range == self.range
-        if source_basis is not None and range_basis is not None:
-            from pymor.operators.numpy import NumpyMatrixOperator
-            return NumpyMatrixOperator(np.zeros((len(range_basis), len(source_basis))),
-                                       source_id=self.source.id, range_id=self.range.id,
-                                       name=self.name + '_projected')
-        else:
-            new_source = (NumpyVectorSpace(len(source_basis), self.source.id) if source_basis is not None else
-                          self.source)
-            new_range = (NumpyVectorSpace(len(range_basis), self.range.id) if range_basis is not None else
-                         self.range)
-            return ZeroOperator(new_source, new_range, name=self.name + '_projected')
 
     def assemble_lincomb(self, operators, coefficients, solver_options=None, name=None):
         assert operators[0] is self
@@ -700,7 +576,53 @@ class VectorFunctional(VectorArrayOperator):
             super().__init__(product.apply(vector), transposed=True, name=name)
 
 
-class FixedParameterOperator(OperatorBase):
+class ProxyOperator(OperatorBase):
+    """Forwards all interface calls to given |Operator|.
+
+    Mainly useful as base class for other |Operator| implementations.
+
+    Parameters
+    ----------
+    operator
+        The |Operator| to wrap.
+    name
+        Name of the wrapping operator.
+    """
+
+    def __init__(self, operator, name=None):
+        assert isinstance(operator, OperatorInterface)
+        self.source = operator.source
+        self.range = operator.range
+        self.operator = operator
+        self.linear = operator.linear
+        self.name = name
+        self.build_parameter_type(operator)
+
+    @property
+    def T(self):
+        return self.with_(operator=self.operator.T, name=self.name + '_transposed')
+
+    def apply(self, U, mu=None):
+        return self.operator.apply(U, mu=mu)
+
+    def apply_transpose(self, V, mu=None):
+        return self.operator.apply_transpose(V, mu=mu)
+
+    def apply_inverse(self, V, mu=None, least_squares=False):
+        return self.operator.apply_inverse(V, mu=mu, least_squares=least_squares)
+
+    def apply_inverse_transpose(self, U, mu=None, least_squares=False):
+        return self.operator.apply_inverse_transpose(U, mu=mu, least_squares=least_squares)
+
+    def jacobian(self, U, mu=None):
+        return self.operator.jacobian(U, mu=mu)
+
+    def restricted(self, dofs):
+        op, source_dofs = self.operator.restricted(dofs)
+        return self.with_(operator=op), source_dofs
+
+
+class FixedParameterOperator(ProxyOperator):
     """Makes an |Operator| |Parameter|-independent by setting a fixed |Parameter|.
 
     Parameters
@@ -714,18 +636,10 @@ class FixedParameterOperator(OperatorBase):
     """
 
     def __init__(self, operator, mu=None, name=None):
-        assert isinstance(operator, OperatorInterface)
+        super().__init__(operator, name)
         assert operator.parse_parameter(mu) or True
-        self.source = operator.source
-        self.range = operator.range
-        self.operator = operator
         self.mu = mu.copy()
-        self.linear = operator.linear
-        self.name = name
-
-    @property
-    def T(self):
-        return self.with_(operator=self.operator.T, name=self.name + '_transposed')
+        self.build_parameter_type()
 
     def apply(self, U, mu=None):
         return self.operator.apply(U, mu=self.mu)
@@ -742,9 +656,27 @@ class FixedParameterOperator(OperatorBase):
     def jacobian(self, U, mu=None):
         return self.operator.jacobian(U, mu=self.mu)
 
-    def restricted(self, dofs):
-        op, source_dofs = self.operator.restricted(dofs)
-        return self.with_(operator=op), source_dofs
+
+class LinearOperator(ProxyOperator):
+    """Mark the wrapped |Operator| to be linear."""
+
+    def __init__(self, operator, name=None):
+        super().__init__(operator, name)
+        self.linear = True
+
+
+class AffineOperator(ProxyOperator):
+    """Decompose an affine |Operator| into affine_shift and linear_part. """
+
+    def __init__(self, operator, name=None):
+        if operator.parametric:
+            raise NotImplementedError
+        super().__init__(operator, name)
+        self.affine_shift = ConstantOperator(operator.apply(operator.source.zeros()), source=operator.source)
+        self.linear_part = LinearOperator(operator - self.affine_shift, name=operator.name + '_linear_part')
+
+    def jacobian(self, U, mu=None):
+        return self.linear_part.jacobian(U, mu)
 
 
 class InverseOperator(OperatorBase):
@@ -940,22 +872,6 @@ class AdjointOperator(OperatorBase):
             V = self.source_product.apply(V)
         return V
 
-    def projected(self, range_basis, source_basis, product=None, name=None):
-        if range_basis is not None:
-            if product is not None:
-                range_basis = product.apply(range_basis)
-            if self.source_product:
-                range_basis = self.source_product.apply_inverse(range_basis)
-
-        if source_basis is not None and self.range_product:
-            source_basis = self.range_product.apply(source_basis)
-
-        operator = self.operator.projected(source_basis, range_basis)
-        range_product = self.range_product if source_basis is None else None
-        source_product = self.source_product if range_basis is None else None
-        return AdjointOperator(operator, source_product=source_product, range_product=range_product,
-                               name=name or self.name + '_projected')
-
 
 class SelectionOperator(OperatorBase):
     """An |Operator| selected from a list of |Operators|.
@@ -1038,12 +954,6 @@ class SelectionOperator(OperatorBase):
         operator_number = self._get_operator_number(mu)
         return self.operators[operator_number].as_source_array(mu=mu)
 
-    def projected(self, range_basis, source_basis, product=None, name=None):
-        projected_operators = [op.projected(range_basis, source_basis, product=product, name=name)
-                               for op in self.operators]
-        return SelectionOperator(projected_operators, self.parameter_functional, self.boundaries,
-                                 name or self.name + '_projected')
-
 
 @defaults('raise_negative', 'tol')
 def induced_norm(product, raise_negative=True, tol=1e-10, name=None):
@@ -1093,7 +1003,7 @@ class InducedNorm(ImmutableInterface, Parametric):
         self.build_parameter_type(product)
 
     def __call__(self, U, mu=None):
-        norm_squared = self.product.pairwise_apply2(U, U, mu=mu)
+        norm_squared = self.product.pairwise_apply2(U, U, mu=mu).real
         if self.tol > 0:
             norm_squared = np.where(np.logical_and(0 > norm_squared, norm_squared > - self.tol),
                                     0, norm_squared)

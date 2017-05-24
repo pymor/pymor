@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from importlib import import_module
@@ -19,15 +19,8 @@ def is_windows_platform():
     return sys.platform == 'win32' or sys.platform == 'cygwin'
 
 
-def _get_matplotlib_version():
-    import matplotlib
-    # matplotlib's default is to use PyQt for Qt4 bindings. However, we use PySide ..
-    matplotlib.rcParams['backend.qt4'] = 'PySide'
     if is_windows_platform():
         matplotlib.use('Qt4Agg')
-    return matplotlib.__version__
-
-
 def _get_ipython_version():
     try:
         import ipyparallel
@@ -37,6 +30,11 @@ def _get_ipython_version():
         return getattr(IPython.parallel, '__version__', True)
 
 
+def _get_qt_version():
+    import Qt
+    return Qt.__binding__ + ' ' + Qt.__binding_version__
+
+
 _PACKAGES = {
     'CYTHON': lambda: import_module('cython').__version__,
     'DEALII': lambda: import_module('pydealii'),
@@ -44,14 +42,15 @@ _PACKAGES = {
     'FENICS': _get_fenics_version,
     'GL': lambda: import_module('OpenGL.GL') and import_module('OpenGL').__version__,
     'IPYTHON': _get_ipython_version,
-    'MATPLOTLIB': _get_matplotlib_version,
+    'MATPLOTLIB': lambda: import_module('matplotlib').__version__,
+    'IPYWIDGETS': lambda: import_module('ipywidgets').__version__,
     'MPI': lambda: import_module('mpi4py.MPI') and import_module('mpi4py').__version__,
     'NUMPY': lambda: import_module('numpy').__version__,
     'PYAMG': lambda: import_module('pyamg.version').full_version,
-    'PYSIDE': lambda: import_module('PySide.QtGui') and import_module('PySide.QtCore').__version__,
     'PYTEST': lambda: import_module('pytest').__version__,
     'PYVTK': lambda: bool(import_module('evtk')),
-    'QTOPENGL': lambda: bool(import_module('PySide.QtOpenGL')),
+    'QT': _get_qt_version,
+    'QTOPENGL': lambda: bool(import_module('Qt.QtOpenGL')),
     'SCIPY': lambda: import_module('scipy').__version__,
     'SCIPY_LSMR': lambda: hasattr(import_module('scipy.sparse.linalg'), 'lsmr'),
     'SPHINX': lambda: import_module('sphinx').__version__,

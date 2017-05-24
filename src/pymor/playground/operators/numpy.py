@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
@@ -13,10 +13,12 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 class NumpyListVectorArrayMatrixOperator(NumpyMatrixOperator):
     """Variant of |NumpyMatrixOperator| using |ListVectorArray| instead of |NumpyVectorArray|."""
 
-    def __init__(self, matrix, functional=False, vector=False, source_id=None, range_id=None,
-                 solver_options=None, name=None):
-        assert not (functional and vector)
+    def __init__(self, matrix, source_id=None, range_id=None, solver_options=None, name=None):
         super().__init__(matrix, source_id=source_id, range_id=range_id, solver_options=solver_options, name=name)
+        functional = self.range_id is None
+        vector = self.source_id is None
+        if functional and vector:
+            raise NotImplementedError
         if vector:
             self.source = NumpyVectorSpace(1, source_id)
         else:

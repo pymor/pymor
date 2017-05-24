@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 from scipy.io import loadmat, mmread
 from scipy.sparse import issparse
@@ -41,7 +41,9 @@ def _mmread(path, key=None):
         raise IOError('Cannot specify "key" for Matrix Market file')
     try:
         matrix = mmread(path)
-        return matrix.tocsc()
+        if issparse(matrix):
+            matrix = matrix.tocsc()
+        return matrix
     except Exception as e:
         raise IOError(e)
 

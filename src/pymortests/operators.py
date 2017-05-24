@@ -1,11 +1,12 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
 import pytest
 
 from pymor.algorithms.basic import almost_equal
+from pymor.algorithms.projection import project
 from pymor.core.exceptions import InversionError
 from pymor.operators.constructions import SelectionOperator, InverseOperator, InverseTransposeOperator
 from pymor.parameters.base import ParameterType
@@ -69,7 +70,7 @@ def test_lincomb_op():
 
     basis = p1.source.make_array([1.])
     for p in (p1, p2, p12):
-        projected = p.projected(basis, basis)
+        projected = project(p, basis, basis)
         pa = projected.apply(vx)
         assert almost_equal(pa, p.apply(vx)).all()
 
@@ -201,9 +202,9 @@ def test_apply_inverse_transpose(operator_with_arrays):
 
 
 
-def test_projected(operator_with_arrays):
+def test_project(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
-    op_UV = op.projected(V, U)
+    op_UV = project(op, V, U)
     np.random.seed(4711 + U.dim + len(V))
     coeffs = np.random.random(len(U))
     X = op_UV.apply(op_UV.source.make_array(coeffs), mu=mu)
@@ -211,13 +212,13 @@ def test_projected(operator_with_arrays):
     assert np.all(almost_equal(X, Y))
 
 
-def test_projected_2(operator_with_arrays):
+def test_project_2(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
-    op_U = op.projected(None, U)
-    op_V = op.projected(V, None)
-    op_U_V = op_U.projected(V, None)
-    op_V_U = op_V.projected(None, U)
-    op_UV = op.projected(V, U)
+    op_U = project(op, None, U)
+    op_V = project(op, V, None)
+    op_U_V = project(op_U, V, None)
+    op_V_U = project(op_V, None, U)
+    op_UV = project(op, V, U)
     np.random.seed(4711 + U.dim + len(V))
     W = op_UV.source.make_array(np.random.random(len(U)))
     Y0 = op_UV.apply(W, mu=mu)
@@ -227,9 +228,9 @@ def test_projected_2(operator_with_arrays):
     assert np.all(almost_equal(Y0, Y2))
 
 
-def test_projected_with_product(operator_with_arrays_and_products):
+def test_project_with_product(operator_with_arrays_and_products):
     op, mu, U, V, sp, rp = operator_with_arrays_and_products
-    op_UV = op.projected(V, U, product=rp)
+    op_UV = project(op, V, U, product=rp)
     np.random.seed(4711 + U.dim + len(V))
     coeffs = np.random.random(len(U))
     X = op_UV.apply(op_UV.source.make_array(coeffs), mu=mu)
@@ -237,13 +238,13 @@ def test_projected_with_product(operator_with_arrays_and_products):
     assert np.all(almost_equal(X, Y))
 
 
-def test_projected_with_product_2(operator_with_arrays_and_products):
+def test_project_with_product_2(operator_with_arrays_and_products):
     op, mu, U, V, sp, rp = operator_with_arrays_and_products
-    op_U = op.projected(None, U)
-    op_V = op.projected(V, None, product=rp)
-    op_U_V = op_U.projected(V, None, product=rp)
-    op_V_U = op_V.projected(None, U)
-    op_UV = op.projected(V, U, product=rp)
+    op_U = project(op, None, U)
+    op_V = project(op, V, None, product=rp)
+    op_U_V = project(op_U, V, None, product=rp)
+    op_V_U = project(op_V, None, U)
+    op_UV = project(op, V, U, product=rp)
     np.random.seed(4711 + U.dim + len(V))
     W = op_UV.source.make_array(np.random.random(len(U)))
     Y0 = op_UV.apply(W, mu=mu)
