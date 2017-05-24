@@ -15,7 +15,7 @@ scientific computing stack are provided for getting started quickly.
 License
 -------
 
-Copyright 2013-2016 pyMOR developers and contributors. All rights
+Copyright 2013-2017 pyMOR developers and contributors. All rights
 reserved.
 
 Redistribution and use in source and binary forms, with or without
