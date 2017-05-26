@@ -31,7 +31,7 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 if config.HAVE_QT:
     from Qt.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QApplication, QLCDNumber,
                               QAction, QStyle, QToolBar, QLabel, QFileDialog, QMessageBox)
-    from Qt.QtCore import Qt, QCoreApplication, QTimer, SLOT
+    from Qt.QtCore import Qt, QCoreApplication, QTimer, Slot
 
 
     class PlotMainWindow(QWidget):
@@ -187,7 +187,7 @@ def _launch_qt_app(main_window_factory, block):
             app = QCoreApplication.instance()
         main_window = factory()
         if getattr(sys, '_called_from_test', False) and is_windows_platform():
-            QTimer.singleShot(500, app, SLOT('quit()'))
+            QTimer.singleShot(500, app, Slot('quit()'))
         main_window.show()
         app.exec_()
 
