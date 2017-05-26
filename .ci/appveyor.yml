@@ -5,15 +5,15 @@ environment:
     # See: http://www.appveyor.com/docs/installed-software#python
 
     # building pymor extensions fails on 2.7 currently
-    - PYTHON_VERSION: "2.7" # currently 2.7.11
-      PYTHON_ARCH: "32"
-      CONDA: "C:\\Miniconda"
-      MARKER: "not grid"
+    #- PYTHON_VERSION: "2.7" # currently 2.7.11
+      #PYTHON_ARCH: "32"
+      #CONDA: "C:\\Miniconda"
+      #MARKER: "not grid"
 
-    - PYTHON_VERSION: "2.7" # currently 2.7.11
-      PYTHON_ARCH: "32"
-      CONDA: "C:\\Miniconda"
-      MARKER: "grid"
+    #- PYTHON_VERSION: "2.7" # currently 2.7.11
+      #PYTHON_ARCH: "32"
+      #CONDA: "C:\\Miniconda"
+      #MARKER: "grid"
 
     - PYTHON_VERSION: "3.4" # currently 3.4.3
       PYTHON_ARCH: "32"
@@ -35,10 +35,6 @@ environment:
       CONDA: "C:\\Miniconda35"
       MARKER: "grid"
 
-matrix:
-  allow_failures:
-    - MARKER: "grid"
-    - MARKER: "not grid"
 
 install:
   # If there is a newer build queued for the same PR, cancel this one.
