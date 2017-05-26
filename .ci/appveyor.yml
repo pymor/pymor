@@ -19,21 +19,25 @@ environment:
       PYTHON_ARCH: "32"
       CONDA: "C:\\Miniconda3"
       MARKER: "not grid"
+      QT_API: "pyqt5"
 
     - PYTHON_VERSION: "3.4" # currently 3.4.3
       PYTHON_ARCH: "32"
       CONDA: "C:\\Miniconda3"
       MARKER: "grid"
+      QT_API: "pyqt5"
 
     - PYTHON_VERSION: "3.5" # currently 3.5.1
       PYTHON_ARCH: "32"
       CONDA: "C:\\Miniconda35"
       MARKER: "not grid"
+      QT_API: "pyqt5"
 
     - PYTHON_VERSION: "3.5" # currently 3.5.1
       PYTHON_ARCH: "32"
       CONDA: "C:\\Miniconda35"
       MARKER: "grid"
+      QT_API: "pyqt5"
 
 
 install:
@@ -51,7 +55,6 @@ install:
     - conda update -q conda
     # hardcode a few installs that don't succeed otherwise
     - conda install numpy pip m2-unzip
-    - pip install --only-binary --no-index --find-links https://pymor.github.io/wheels/ pyside
     - conda install -c anaconda pyqt=5.6.0
     - if [%PYTHON_VERSION%] == [3.4] ( conda remove numpy && pip install numpy && pip install https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz)
 
