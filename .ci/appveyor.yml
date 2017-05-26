@@ -39,6 +39,10 @@ environment:
       MARKER: "grid"
       QT_API: "pyqt5"
 
+matrix:
+  allow_failures:
+    - MARKER: "grid"
+      CONDA: "C:\\Miniconda35"
 
 install:
   # If there is a newer build queued for the same PR, cancel this one.
