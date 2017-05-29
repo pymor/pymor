@@ -54,7 +54,7 @@ import jinja2
 import sys
 from itertools import product
 tpl = jinja2.Template(tpl)
-pythons = ['2.7', '3.4', '3.5']
+pythons = ['2.7', '3.4', '3.5', '3.6']
 marker = [None, "PIP_ONLY", "MPI"]
 with open(os.path.join(os.path.dirname(__file__), 'travis.yml'), 'wt') as yml:
     matrix = product(pythons, marker)
