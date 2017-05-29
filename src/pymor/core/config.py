@@ -15,6 +15,12 @@ def _get_fenics_version():
     return version
 
 
+def is_windows_platform():
+    return sys.platform == 'win32' or sys.platform == 'cygwin'
+
+
+    if is_windows_platform():
+        matplotlib.use('Qt4Agg')
 def _get_ipython_version():
     try:
         import ipyparallel

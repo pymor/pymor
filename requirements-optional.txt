@@ -1,3 +1,4 @@
+-r requirements.txt
 https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz
 ipyparallel
 ipython>=3.0
@@ -5,9 +6,9 @@ matplotlib
 mpi4py
 pyamg
 pyopengl
-pyside ; python_version == '2.7'
-https://pymor.github.io/wheels/PySide-1.2.2-cp34-cp34m-linux_x86_64.whl ; python_version == '3.4'
-https://pymor.github.io/wheels/PySide-1.2.2-cp35-cp35m-linux_x86_64.whl ; python_version == '3.5'
+qtpy
+PySide ; python_version < '3.5'
+PyQt5 ; python_version >= '3.5'
 pytest>=3.0
 pytest-cov
 pillow

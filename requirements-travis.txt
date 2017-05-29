@@ -1,3 +1,4 @@
+-r requirements.txt
 pytest-cov
 check-manifest
 python-coveralls

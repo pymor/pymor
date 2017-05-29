@@ -14,8 +14,11 @@ import numpy as np
 import multiprocessing
 import os
 import signal
+import sys
+import psutil
 
 from pymor.core.config import config
+from pymor.core.config import is_windows_platform
 from pymor.core.defaults import defaults
 from pymor.core.logger import getLogger
 from pymor.core.exceptions import QtMissing
@@ -28,7 +31,8 @@ from pymor.vectorarrays.numpy import NumpyVectorSpace
 if config.HAVE_QT:
     from Qt.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QApplication, QLCDNumber,
                               QAction, QStyle, QToolBar, QLabel, QFileDialog, QMessageBox)
-    from Qt.QtCore import Qt, QCoreApplication, QTimer
+    from Qt.QtCore import Qt, QCoreApplication, QTimer, Slot
+
 
     class PlotMainWindow(QWidget):
         """Base class for plot main windows."""
@@ -170,37 +174,44 @@ if config.HAVE_QT:
                 self.slider.setValue(ind)
 
 
-_launch_qt_app_pids = set()
+_launch_qt_processes = set()
 
 
 def _launch_qt_app(main_window_factory, block):
     """Wrapper to display plot in a separate process."""
 
-    def doit():
+    def _doit(factory):
         try:
             app = QApplication([])
         except RuntimeError:
             app = QCoreApplication.instance()
-        main_window = main_window_factory()
+        main_window = factory()
+        if getattr(sys, '_called_from_test', False) and is_windows_platform():
+            QTimer.singleShot(500, app, Slot('quit()'))
         main_window.show()
         app.exec_()
 
     import sys
-    if block and not getattr(sys, '_called_from_test', False):
-        doit()
+    if (block and not getattr(sys, '_called_from_test', False)) or is_windows_platform():
+        _doit(main_window_factory)
     else:
-        p = multiprocessing.Process(target=doit)
+        p = multiprocessing.Process(target=_doit, args=(main_window_factory,))
         p.start()
-        _launch_qt_app_pids.add(p.pid)
+        _launch_qt_processes.add(psutil.Process(p.pid))
 
 
 def stop_gui_processes():
-    for p in multiprocessing.active_children():
-        if p.pid in _launch_qt_app_pids:
-            try:
-                os.kill(p.pid, signal.SIGKILL)
-            except OSError:
-                pass
+    active_pids = {p.pid for p in multiprocessing.active_children()}
+    kill_procs = [pr for pr in _launch_qt_processes if pr.pid in active_pids]
+    for p in kill_procs:
+        try:
+            # active_children apparently contains false positives sometimes
+            p.terminate()
+        except psutil.NoSuchProcess:
+            pass
+    gone, still_alive = psutil.wait_procs(kill_procs, timeout=1)
+    for p in still_alive:
+        p.kill()
 
 
 @defaults('backend', sid_ignore=('backend',))

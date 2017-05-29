@@ -115,7 +115,7 @@ class build_py27(_build_py):
         )
         self.rtool.refactor_dir('src', write=True)
         self.rtool.refactor_dir('docs', write=True)
-        open(checkpoint_fn, 'wta').write('converted')
+        open(checkpoint_fn, 'wt').write('converted')
 
 cmdclass = versioneer.get_cmdclass()
 if sys.version_info[0] < 3:

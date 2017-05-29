@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 
 from pymor.grids.interfaces import ReferenceElementInterface
+from pymortests.base import runmodule
 from pymortests.fixtures.grid import grid, grid_with_orthogonal_centers
 
 # monkey np.testing.assert_allclose to behave the same as np.allclose
@@ -307,3 +308,6 @@ def test_orthogonal_centers(grid_with_orthogonal_centers):
         SEGMENT = C[SUE[s, 0]] - C[SUE[s, 1]]
         SPROD = EMB[s].dot(SEGMENT)
         np.testing.assert_allclose(SPROD, 0)
+
+if __name__ == "__main__":
+    runmodule(filename=__file__)
