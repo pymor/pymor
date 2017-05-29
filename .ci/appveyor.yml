@@ -32,6 +32,7 @@ environment:
       CONDA: "C:\\Miniconda35"
       MARKER: "not grid"
       QT_API: "pyqt5"
+      ALLOW_FAIL: "true"
 
     - PYTHON_VERSION: "3.5" # currently 3.5.1
       PYTHON_ARCH: "32"
@@ -41,8 +42,7 @@ environment:
 
 matrix:
   allow_failures:
-    - MARKER: "grid"
-      CONDA: "C:\\Miniconda35"
+    - ALLOW_FAIL: "true"
 
 install:
   # If there is a newer build queued for the same PR, cancel this one.
