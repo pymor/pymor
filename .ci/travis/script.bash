@@ -6,6 +6,9 @@ cd "${PYMOR_ROOT}"
 # any failure here should fail the whole test
 set -e
 
+# check if requirements files are up-to-date
+./dependencies.py && git diff --exit-code
+
 # most of these should be baked into the docker image already
 sudo pip install -r requirements.txt
 sudo pip install -r requirements-travis.txt
