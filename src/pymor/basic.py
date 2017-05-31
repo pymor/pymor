@@ -63,7 +63,7 @@ from pymor.parameters.functionals import (ProjectionParameterFunctional, Generic
                                           ExpressionParameterFunctional)
 from pymor.parameters.spaces import CubicParameterSpace
 
-from pymor.reductors.basic import GenericRBReductor, reduce_to_subbasis
+from pymor.reductors.basic import GenericRBReductor
 from pymor.reductors.coercive import CoerciveRBReductor, SimpleCoerciveRBReductor
 from pymor.reductors.parabolic import ParabolicRBReductor
 

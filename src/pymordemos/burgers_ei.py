@@ -90,7 +90,7 @@ from pymor.discretizers.fv import discretize_instationary_fv
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
 from pymor.parallel.default import new_parallel_pool
-from pymor.reductors.basic import GenericRBReductor, reduce_to_subbasis
+from pymor.reductors.basic import GenericRBReductor
 
 
 def main(args):
@@ -202,7 +202,7 @@ def main(args):
 
     def error_analysis(N, M):
         print('N = {}, M = {}: '.format(N, M), end='')
-        rd = reduce_to_subbasis(rb_discretization, N)
+        rd = reductor.reduce(N)
         rd = rd.with_(operator=rd.operator.with_cb_dim(M))
         l2_err_max = -1
         mumax = None

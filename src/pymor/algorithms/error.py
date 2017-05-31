@@ -11,10 +11,9 @@ import numpy as np
 from pymor.core.logger import getLogger
 from pymor.discretizations.basic import StationaryDiscretization
 from pymor.parallel.dummy import dummy_pool
-from pymor.reductors.basic import reduce_to_subbasis
 
 
-def reduction_error_analysis(reduced_discretization, discretization=None, reductor=None,
+def reduction_error_analysis(reduced_discretization, discretization, reductor,
                              test_mus=10, basis_sizes=0, random_seed=None,
                              estimator=True, condition=False, error_norms=(), error_norm_names=None,
                              estimator_norm_index=0, custom=(),
@@ -30,11 +29,9 @@ def reduction_error_analysis(reduced_discretization, discretization=None, reduct
     reduced_discretization
         The reduced |Discretization|.
     discretization
-        The high-dimensional |Discretization|. Must be specified if
-        `error_norms` are given.
+        The high-dimensional |Discretization|.
     reductor
-        The reductor which has created `reduced_discretization`. Must be specified
-        if `error_norms` are given.
+        The reductor which has created `reduced_discretization`.
     test_mus
         Either a list of |Parameters| to compute the errors for, or
         the number of parameters which are sampled randomly from
@@ -43,9 +40,8 @@ def reduction_error_analysis(reduced_discretization, discretization=None, reduct
         Either a list of reduced basis dimensions to consider, or
         the number of dimensions (which are then selected equidistantly,
         always including the maximum reduced space dimension).
-        The dimensions are input for `~pymor.reductors.basic.reduce_to_subbasis`
-        to quickly obtain smaller reduced |Discretizations| from
-        `rb_discretization`.
+        The dimensions are input for the `dim`-Parameter of
+        `reductor.reduce()`.
     random_seed
         If `test_mus` is a number, use this value as random seed
         for drawing the |Parameters|.
@@ -196,7 +192,7 @@ def reduction_error_analysis(reduced_discretization, discretization=None, reduct
         error_norm_names = tuple(norm.name for norm in error_norms)
 
     norms, estimates, errors, conditions, custom_values = \
-        list(zip(*pool.map(_compute_errors, test_mus, d=d, rd=rd, reductor=reductor, estimator=estimator,
+        list(zip(*pool.map(_compute_errors, test_mus, d=d, reductor=reductor, estimator=estimator,
                       error_norms=error_norms, condition=condition, custom=custom, basis_sizes=basis_sizes)))
     print()
 
@@ -322,7 +318,7 @@ def reduction_error_analysis(reduced_discretization, discretization=None, reduct
     return result
 
 
-def _compute_errors(mu, d, rd, reductor, estimator, error_norms, condition, custom, basis_sizes):
+def _compute_errors(mu, d, reductor, estimator, error_norms, condition, custom, basis_sizes):
     import sys
 
     print('.', end='')
@@ -345,10 +341,10 @@ def _compute_errors(mu, d, rd, reductor, estimator, error_norms, condition, cust
             norms[i_norm] = n
 
     for i_N, N in enumerate(basis_sizes):
-        rrd = reduce_to_subbasis(rd, N)
-        u = rrd.solve(mu)
+        rd = reductor.reduce(dim=N)
+        u = rd.solve(mu)
         if estimator:
-            e = rrd.estimate(u, mu)
+            e = rd.estimate(u, mu)
             e = e[0] if hasattr(e, '__len__') else e
             estimates[i_N] = e
         if d and reductor:
@@ -358,9 +354,9 @@ def _compute_errors(mu, d, rd, reductor, estimator, error_norms, condition, cust
                 e = e[0] if hasattr(e, '__len__') else e
                 errors[i_norm, i_N] = e
         if condition:
-            conditions[i_N] = np.linalg.cond(rrd.operator.assemble(mu)._matrix) if N > 0 else 0.
+            conditions[i_N] = np.linalg.cond(rd.operator.assemble(mu)._matrix) if N > 0 else 0.
         for i_custom, cust in enumerate(custom):
-            c = cust(reduced_discretization=rrd,
+            c = cust(reduced_discretization=rd,
                      discretization=d,
                      reductor=reductor,
                      mu=mu,

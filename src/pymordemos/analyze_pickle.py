@@ -42,7 +42,6 @@ import matplotlib.pyplot as plt
 from docopt import docopt
 
 from pymor.core.pickle import load
-from pymor.reductors.basic import reduce_to_subbasis
 
 
 def analyze_pickle_histogram(args):
@@ -169,13 +168,11 @@ def analyze_pickle_convergence(args):
     print('Loading reduced discretization ...')
     rb_discretization = load(open(args['REDUCED_DATA'], 'rb'))
 
-    if args['--detailed']:
-        print('Loading high-dimensional data ...')
-        discretization, reductor = load(open(args['--detailed'], 'rb'))
-        discretization.enable_caching('disk')
-
-    if not hasattr(rb_discretization, 'estimate') and not args['--detailed']:
-        raise ValueError('Nothing to do! (Neither estimates nor true error can be computed.)')
+    if not args['--detailed']:
+        raise ValueError('High-dimensional data file must be specified.')
+    print('Loading high-dimensional data ...')
+    discretization, reductor = load(open(args['--detailed'], 'rb'))
+    discretization.enable_caching('disk')
 
     dim = rb_discretization.solution_space.dim
     if args['--ndim']:
@@ -190,7 +187,7 @@ def analyze_pickle_convergence(args):
     T_SOLVES = []
     T_ESTS = []
     for N in dims:
-        rd = reduce_to_subbasis(rb_discretization, N)
+        rd = reductor.reduce(dim=N)
         print('N = {:3} '.format(N), end='')
         us = []
         print('solve ', end='')
@@ -212,17 +209,16 @@ def analyze_pickle_convergence(args):
             ESTS.append(max(ests))
             T_ESTS.append((time.time() - start) * 1000. / len(mus))
 
-        if args['--detailed']:
-            print('errors', end='')
-            sys.stdout.flush()
-            errs = []
-            for u, mu in zip(us, mus):
-                err = discretization.solve(mu) - reductor.reconstruct(u)
-                if args['--error-norm']:
-                    errs.append(np.max(getattr(discretization, args['--error-norm'] + '_norm')(err)))
-                else:
-                    errs.append(np.max(err.l2_norm()))
-            ERRS.append(max(errs))
+        print('errors', end='')
+        sys.stdout.flush()
+        errs = []
+        for u, mu in zip(us, mus):
+            err = discretization.solve(mu) - reductor.reconstruct(u)
+            if args['--error-norm']:
+                errs.append(np.max(getattr(discretization, args['--error-norm'] + '_norm')(err)))
+            else:
+                errs.append(np.max(err.l2_norm()))
+        ERRS.append(max(errs))
 
         print()
 
@@ -236,8 +232,7 @@ def analyze_pickle_convergence(args):
     plt.subplot(1, 2, 1)
     if hasattr(rb_discretization, 'estimate'):
         plt.semilogy(dims, ESTS, label='max. estimate')
-    if args['--detailed']:
-        plt.semilogy(dims, ERRS, label='max. error')
+    plt.semilogy(dims, ERRS, label='max. error')
     plt.xlabel('dimension')
     plt.legend()
 

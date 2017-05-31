@@ -84,9 +84,9 @@ class ParabolicRBReductor(GenericRBReductor):
             product=d.l2_product
         )
 
-    def reduce(self):
+    def _reduce(self):
         with self.logger.block('RB projection ...'):
-            rd = super().reduce()
+            rd = super()._reduce()
 
         with self.logger.block('Assembling error estimator ...'):
             residual = self.residual_reductor.reduce()

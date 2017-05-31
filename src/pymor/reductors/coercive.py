@@ -56,9 +56,9 @@ class CoerciveRBReductor(GenericRBReductor):
         self.residual_reductor = ResidualReductor(self.RB, self.d.operator, self.d.rhs,
                                                   product=product)
 
-    def reduce(self):
+    def _reduce(self):
         with self.logger.block('RB projection ...'):
-            rd = super().reduce()
+            rd = super()._reduce()
 
         with self.logger.block('Assembling error estimator ...'):
             residual = self.residual_reductor.reduce()
@@ -147,9 +147,9 @@ class SimpleCoerciveRBReductor(GenericRBReductor):
                                                   product=product)
         self.extends = None
 
-    def reduce(self):
+    def _reduce(self):
         d, RB, extends = self.d, self.RB, self.extends
-        rd = super().reduce()
+        rd = super()._reduce()
         if extends:
             old_RB_size = extends[0]
             old_data = extends[1]

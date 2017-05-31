@@ -36,16 +36,36 @@ class GenericRBReductor(BasicInterface):
     def __init__(self, d, RB=None, orthogonal_projection=('initial_data',), product=None):
         self.d = d
         self.RB = d.solution_space.empty() if RB is None else RB
+        assert self.RB in d.solution_space
         self.orthogonal_projection = orthogonal_projection
         self.product = product
+        self._last_rd = None
 
-    def reduce(self):
+    def reduce(self, dim=None):
         """Perform the reduced basis projection.
+
+        Parameters
+        ----------
+        dim
+            If specified, the desired reduced state dimension. Must not be larger than the
+            current reduced basis dimension.
 
         Returns
         -------
         The reduced |Discretization|.
         """
+        if dim is None:
+            dim = len(self.RB)
+        if dim > len(self.RB):
+            raise ValueError('Specified reduced state dimension larger than reduced basis')
+        if self._last_rd is None or dim > self._last_rd.solution_space.dim:
+            self._last_rd = self._reduce()
+        if dim == self._last_rd.solution_space.dim:
+            return self._last_rd
+        else:
+            return self._reduce_to_subbasis(dim)
+
+    def _reduce(self):
 
         d = self.d
         RB = self.RB
@@ -66,6 +86,28 @@ class GenericRBReductor(BasicInterface):
         rd.disable_logging()
 
         return rd
+
+    def _reduce_to_subbasis(self, dim):
+        rd = self._last_rd
+
+        def project_operator(op):
+            return project_to_subbasis(op,
+                                       dim_range=dim if op.range == rd.solution_space else None,
+                                       dim_source=dim if op.source == rd.solution_space else None)
+
+        projected_operators = {k: project_operator(op) if op else None for k, op in rd.operators.items()}
+
+        projected_products = {k: project_operator(op) for k, op in rd.products.items()}
+
+        if hasattr(rd, 'estimator'):
+            estimator = rd.estimator.restricted_to_subbasis(dim, discretization=rd)
+        else:
+            estimator = None
+
+        rrd = rd.with_(operators=projected_operators, products=projected_products, estimator=estimator,
+                       visualizer=None, name=rd.name + '_reduced_to_subbasis')
+
+        return rrd
 
     def reconstruct(self, u):
         """Reconstruct high-dimensional vector from reduced vector `u`."""
@@ -137,43 +179,3 @@ class GenericRBReductor(BasicInterface):
 
         if len(self.RB) <= basis_length:
             raise ExtensionError
-
-
-def reduce_to_subbasis(d, dim):
-    """Further reduce a |Discretization| to the subbasis formed by the first `dim` basis vectors.
-
-    This is achieved by calling :meth:`~pymor.algorithms.projection.project_to_subbasis`
-    for each operator of the given |Discretization|.
-
-    Parameters
-    ----------
-    d
-        The |Discretization| to further reduce.
-    dim
-        The dimension of the subbasis.
-
-    Returns
-    -------
-    The further reduced |Discretization|.
-    """
-
-    def project_operator(op):
-        return project_to_subbasis(op,
-                                   dim_range=dim if op.range == d.solution_space else None,
-                                   dim_source=dim if op.source == d.solution_space else None)
-
-    projected_operators = {k: project_operator(op) if op else None for k, op in d.operators.items()}
-
-    projected_products = {k: project_operator(op) for k, op in d.products.items()}
-
-    if hasattr(d.estimator, 'restricted_to_subbasis'):
-        estimator = d.estimator.restricted_to_subbasis(dim, discretization=d)
-    else:
-        estimator = None
-
-    rd = d.with_(operators=projected_operators, products=projected_products,
-                 visualizer=None, estimator=estimator,
-                 name=d.name + '_reduced_to_subbasis')
-    rd.disable_logging()
-
-    return rd
