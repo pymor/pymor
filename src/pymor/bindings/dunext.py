@@ -119,8 +119,8 @@ if config.HAVE_DUNEXT:
         linear = True
 
         def __init__(self, matrix, source_id='STATE', range_id='STATE', solver_options=None, name=None):
-            self.source = DuneXTVectorSpace(matrix.vector_type(), matrix.cols(), source_id)
-            self.range = DuneXTVectorSpace(matrix.vector_type(), matrix.rows(), range_id)
+            self.source = DuneXTVectorSpace(matrix.vector_type(), matrix.cols, source_id)
+            self.range = DuneXTVectorSpace(matrix.vector_type(), matrix.rows, range_id)
             self.matrix = matrix
             self.solver_options = solver_options
             self.name = name

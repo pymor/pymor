@@ -13,12 +13,12 @@ if config.HAVE_DUNEGDT:
     import subprocess
     from tempfile import mkstemp
 
-    from dune.gdt import make_const_discrete_function
+    from dune.gdt import make_discrete_function
 
     from pymor.core.interfaces import ImmutableInterface
     from pymor.bindings.dunext import DuneXTVector
     from pymor.grids.rect import RectGrid
-    from pymor.gui.qt import PatchVisualizer
+    from pymor.gui.visualizers import PatchVisualizer
     from pymor.vectorarrays.list import NumpyVector, NumpyListVectorSpace, ListVectorArray
 
 
@@ -38,7 +38,7 @@ if config.HAVE_DUNEGDT:
                       rescale_colorbars=False, block=None, filename=None, columns=2):
 
             def visualize_single(vec, vec_name, f_name):
-                discrete_function = make_const_discrete_function(self.space, vec, vec_name)
+                discrete_function = make_discrete_function(self.space, vec, vec_name)
                 discrete_function.visualize(f_name[:-4])
 
             suffix = '.vtp' if self.space.dimDomain == 1 else '.vtu'
