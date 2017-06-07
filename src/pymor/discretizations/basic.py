@@ -62,7 +62,7 @@ class DiscretizationBase(DiscretizationInterface):
 
         if 'operators' in kwargs:
             # extract special operators from provided operators dict
-            operators = kwargs['operators']
+            operators = kwargs['operators'].copy()
             for on in self.special_operators:
                 if on in operators:
                     assert on not in kwargs or kwargs[on] == operators[on]
