@@ -719,7 +719,7 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
 
             if bi.has_neumann and self.neumann_data is not None:
                 neumann_mask = bi.neumann_mask(1)
-                FLUXES[neumann_mask] -= VOLS[neumann_mask] * self.neumann_data(centers[neumann_mask])
+                FLUXES[neumann_mask] -= VOLS[neumann_mask] * self.neumann_data(centers[neumann_mask], mu=mu)
 
             F_INTS += np.bincount(SE_I0, weights=FLUXES, minlength=len(F_INTS))
 
