@@ -241,7 +241,7 @@ class ProjectedOperator(OperatorBase):
             return self
         from pymor.algorithms.projection import project
         pop = project(op, range_basis=self.range_basis, source_basis=self.source_basis,
-                      product=self.product, name=self.name + '_assembled')
+                      product=self.product)
         if self.solver_options:
             pop = pop.with_(solver_options=self.solver_options)
         return pop
