@@ -104,8 +104,6 @@ common = '''
 .. |Parameters| replace:: :class:`Parameters <pymor.parameters.base.Parameter>`
 .. |Parametric| replace:: :class:`~pymor.parameters.base.Parametric`
 
-.. |reduce_generic_rb| replace:: :func:`~pymor.reductors.basic.reduce_generic_rb`
-
 .. |LTISystem| replace:: :class:`~pymor.discretizations.iosys.LTISystem`
 .. |LTISystems| replace:: :class:`LTISystems <pymor.discretizations.iosys.LTISystem>`
 

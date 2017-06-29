@@ -24,7 +24,7 @@ class DiscretizationInterface(CacheableInterface, Parametric):
         `True` if the discretization describes a linear problem.
     operators
         Dictionary of all |Operators| contained in the discretization
-        (see :func:`pymor.reductors.basic.reduce_generic_rb` for a usage
+        (see :class:`~pymor.reductors.basic.GenericRBReductor` for a usage
         example).
     products
         Same as |Operators| but for inner product operators associated with the
