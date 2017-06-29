@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
@@ -17,7 +17,7 @@ from pymortests.fixtures.operator import (operator, operator_with_arrays, operat
                                           picklable_operator)
 from pymortests.pickling import assert_picklable, assert_picklable_without_dumps_function
 from pymortests.vectorarray import valid_inds, valid_inds_of_same_length, invalid_inds
-
+from pymor.core.config import is_windows_platform
 
 def test_selection_op():
     p1 = MonomOperator(1)
@@ -293,21 +293,24 @@ def test_restricted(operator_with_arrays):
 def test_InverseOperator(operator_with_arrays):
     op, mu, U, V = operator_with_arrays
     inv = InverseOperator(op)
+    rtol = atol = 1e-12
     try:
-        assert np.all(almost_equal(inv.apply(V, mu=mu), op.apply_inverse(V, mu=mu)))
+        assert np.all(almost_equal(inv.apply(V, mu=mu), op.apply_inverse(V, mu=mu), rtol=rtol, atol=atol))
     except InversionError:
         pass
     try:
-        assert np.all(almost_equal(inv.apply_inverse(U, mu=mu), op.apply(U, mu=mu)))
+        assert np.all(almost_equal(inv.apply_inverse(U, mu=mu), op.apply(U, mu=mu), rtol=rtol, atol=atol))
     except InversionError:
         pass
     if op.linear:
         try:
-            assert np.all(almost_equal(inv.apply_transpose(U, mu=mu), op.apply_inverse_transpose(U, mu=mu)))
+            assert np.all(almost_equal(inv.apply_transpose(U, mu=mu), op.apply_inverse_transpose(U, mu=mu),
+                                       rtol=rtol, atol=atol))
         except (InversionError, NotImplementedError):
             pass
         try:
-            assert np.all(almost_equal(inv.apply_inverse_transpose(V, mu=mu), op.apply_transpose(V, mu=mu)))
+            assert np.all(almost_equal(inv.apply_inverse_transpose(V, mu=mu), op.apply_transpose(V, mu=mu),
+                                       rtol=rtol, atol=atol))
         except (InversionError, NotImplementedError):
             pass
 
@@ -317,19 +320,24 @@ def test_InverseTransposeOperator(operator_with_arrays):
     if not op.linear:
         return
     inv = InverseTransposeOperator(op)
+    rtol = atol = 1e-12
     try:
-        assert np.all(almost_equal(inv.apply(U, mu=mu), op.apply_inverse_transpose(U, mu=mu)))
+        assert np.all(almost_equal(inv.apply(U, mu=mu), op.apply_inverse_transpose(U, mu=mu),
+                                   rtol=rtol, atol=atol))
     except (InversionError, NotImplementedError):
         pass
     try:
-        assert np.all(almost_equal(inv.apply_inverse(V, mu=mu), op.apply_transpose(V, mu=mu)))
+        assert np.all(almost_equal(inv.apply_inverse(V, mu=mu), op.apply_transpose(V, mu=mu),
+                                   rtol=rtol, atol=atol))
     except (InversionError, NotImplementedError):
         pass
     try:
-        assert np.all(almost_equal(inv.apply_transpose(V, mu=mu), op.apply_inverse(V, mu=mu)))
+        assert np.all(almost_equal(inv.apply_transpose(V, mu=mu), op.apply_inverse(V, mu=mu),
+                                   rtol=rtol, atol=atol))
     except (InversionError, NotImplementedError):
         pass
     try:
-        assert np.all(almost_equal(inv.apply_inverse_transpose(U, mu=mu), op.apply(U, mu=mu)))
+        assert np.all(almost_equal(inv.apply_inverse_transpose(U, mu=mu), op.apply(U, mu=mu),
+                                   rtol=rtol, atol=atol))
     except (InversionError, NotImplementedError):
         pass

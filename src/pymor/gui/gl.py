@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """ This module provides a widget for displaying patch plots of
@@ -16,10 +16,11 @@ import numpy as np
 from pymor.core.config import config
 
 
-if config.HAVE_PYSIDE and config.HAVE_QTOPENGL and config.HAVE_GL:
+if config.HAVE_QT and config.HAVE_QTOPENGL and config.HAVE_GL:
     import OpenGL.GL as gl
-    from PySide.QtGui import QSizePolicy, QPainter, QFontMetrics
-    from PySide.QtOpenGL import QGLWidget
+    from Qt.QtWidgets import QSizePolicy
+    from Qt.QtGui import QPainter, QFontMetrics
+    from Qt.QtOpenGL import QGLWidget
     from ctypes import c_void_p
 
     from pymor.grids.constructions import flatten_grid

@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """This module provides the caching facilities of pyMOR.
@@ -86,6 +86,10 @@ def cleanup_non_persisten_regions():
             region.clear()
 
 
+def _safe_filename(old_name):
+    return ''.join(x for x in old_name if (x.isalnum() or x in '._- '))
+
+
 class CacheRegion(object):
     """Base class for all pyMOR cache regions.
 
@@ -165,17 +169,22 @@ class SQLiteRegion(CacheRegion):
         self.bytes_written = 0
         if not os.path.exists(path):
             os.mkdir(path)
-            self.conn = conn = sqlite3.connect(os.path.join(path, 'pymor_cache.db'))
-            c = conn.cursor()
+
+        self.conn = conn = sqlite3.connect(os.path.join(path, 'pymor_cache.db'))
+        c = conn.cursor()
+
+        # check if table is properly initialized
+        c.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        tables = c.fetchall()
+        if not any(t[0] == 'entries' for t in tables):
             c.execute('''CREATE TABLE entries
                          (id INTEGER PRIMARY KEY, key TEXT UNIQUE, filename TEXT, size INT)''')
             conn.commit()
+
+        if persistent:
+            self.housekeeping()
         else:
-            self.conn = sqlite3.connect(os.path.join(path, 'pymor_cache.db'))
-            if persistent:
-                self.housekeeping()
-            else:
-                self.clear()
+            self.clear()
 
     def get(self, key):
         c = self.conn.cursor()
@@ -193,7 +202,7 @@ class SQLiteRegion(CacheRegion):
             raise RuntimeError('Cache is corrupt!')
 
     def set(self, key, value):
-        fd, file_path = tempfile.mkstemp('.dat', datetime.datetime.now().isoformat()[:-7] + '-', self.path)
+        fd, file_path = tempfile.mkstemp('.dat', _safe_filename(datetime.datetime.now().isoformat()[:-7]) + '-', self.path)
         filename = os.path.basename(file_path)
         with os.fdopen(fd, 'wb') as f:
             dump(value, f)

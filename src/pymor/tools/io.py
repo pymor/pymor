@@ -1,10 +1,13 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-
 from scipy.io import loadmat, mmread
 from scipy.sparse import issparse
 import numpy as np
+import tempfile
+import os
+from contextlib import contextmanager
+import shutil
 
 from pymor.core.logger import getLogger
 
@@ -110,3 +113,19 @@ def load_matrix(path, key=None):
             pass
 
     raise IOError('Could not load file {} (key = {})'.format(path, key))
+
+
+@contextmanager
+def SafeTemporaryFileName(name=None, parent_dir=None):
+    """Cross Platform safe equivalent of re-opening a NamedTemporaryFile
+    Creates an automatically cleaned up temporary directory with a single file therein.
+
+    name: filename component, defaults to 'temp_file'
+    dir: the parent dir of the new tmp dir. defaults to tempfile.gettempdir()
+    """
+    parent_dir = parent_dir or tempfile.gettempdir()
+    name = name or 'temp_file'
+    dirname = tempfile.mkdtemp(dir=parent_dir)
+    path = os.path.join(dirname, name)
+    yield path
+    shutil.rmtree(dirname)

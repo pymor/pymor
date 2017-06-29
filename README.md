@@ -11,7 +11,7 @@ NumPy/SciPy scientific computing stack are provided for getting started
 quickly.
 
 [![Docs](https://readthedocs.org/projects/pymor/badge/?version=latest)](http://pymor.readthedocs.org/en/latest)
-[![Docs](https://readthedocs.org/projects/pymor/badge/?version=0.4.x)](http://pymor.readthedocs.org/en/0.4.x)
+[![Docs](https://readthedocs.org/projects/pymor/badge/?version=0.4.2)](http://pymor.readthedocs.org/en/0.4.2)
 [![DOI](https://zenodo.org/badge/9220688.svg)](https://zenodo.org/badge/latestdoi/9220688)
 [![Build Status](https://travis-ci.org/pymor/pymor.png?branch=master)](https://travis-ci.org/pymor/pymor)
 [![Coverage Status](https://coveralls.io/repos/pymor/pymor/badge.png)](https://coveralls.io/r/pymor/pymor)
@@ -20,7 +20,7 @@ quickly.
 License
 -------
 
-Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
 following conditions are met:

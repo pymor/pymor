@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import os
@@ -11,8 +11,9 @@ from tempfile import mkdtemp
 import shutil
 
 from pymortests.base import runmodule, check_results
-from pymor.core.exceptions import PySideMissing
+from pymor.core.exceptions import QtMissing
 from pymor.gui.qt import stop_gui_processes
+from pymor.core.config import is_windows_platform
 
 
 DISCRETIZATION_ARGS = (
@@ -125,8 +126,8 @@ def _test_demo(demo):
     result = None
     try:
         result = demo()
-    except PySideMissing:
-        pytest.xfail("PySide missing")
+    except QtMissing:
+        pytest.xfail("Qt missing")
     finally:
         stop_gui_processes()
         from pymor.parallel.default import _cleanup
@@ -182,7 +183,7 @@ def test_analyze_pickle4():
     finally:
         shutil.rmtree(d)
 
-
+@pytest.mark.skipif(is_windows_platform(), reason='hangs indefinitely')
 def test_thermalblock_ipython(demo_args):
     if demo_args[0] != 'pymordemos.thermalblock':
         return

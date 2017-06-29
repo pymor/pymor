@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """This module contains pyMOR's logging facilities.
@@ -10,7 +10,6 @@ Logging can be configured via the :func:`set_log_format` and
 :func:`set_log_levels` methods.
 """
 
-import curses
 import logging
 import os
 import time
@@ -65,6 +64,7 @@ class ColoredFormatter(logging.Formatter):
             self.use_color = False
         else:
             try:
+                import curses
                 curses.setupterm()
                 self.use_color = curses.tigetnum("colors") > 1
             except Exception:

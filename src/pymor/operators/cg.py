@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """ This module provides some operators for continuous finite element discretizations."""
@@ -191,7 +191,7 @@ class L2ProductFunctionalQ1(NumpyMatrixBasedOperator):
         self.robin_data = robin_data
         self.order = order
         self.name = name
-        self.build_parameter_type(function, dirichlet_data)
+        self.build_parameter_type(function, dirichlet_data, neumann_data)
 
     def _assemble(self, mu=None):
         g = self.grid

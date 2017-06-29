@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.algorithms.timestepping import TimeStepperInterface
@@ -62,7 +62,7 @@ class DiscretizationBase(DiscretizationInterface):
 
         if 'operators' in kwargs:
             # extract special operators from provided operators dict
-            operators = kwargs['operators']
+            operators = kwargs['operators'].copy()
             for on in self.special_operators:
                 if on in operators:
                     assert on not in kwargs or kwargs[on] == operators[on]
@@ -245,7 +245,7 @@ class InstationaryDiscretization(DiscretizationBase):
         The final time T.
     initial_data
         The intial data u_0 given by a vector-like |Operator|. The same
-        as `vector_operators['initial_data']`.
+        as `operators['initial_data']`.
     operator
         The |Operator| L. The same as `operators['operator']`.
     rhs

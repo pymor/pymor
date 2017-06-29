@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.grids.oned import OnedGrid
@@ -12,7 +12,7 @@ from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.discretizers.cg import discretize_stationary_cg
 from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.grids.rect import RectGrid
-from pymor.core.exceptions import PySideMissing
+from pymor.core.exceptions import QtMissing
 
 from pymortests.base import runmodule
 from pymor.domaindescriptions.basic import RectDomain, LineDomain
@@ -37,8 +37,8 @@ def test_visualize_patch(backend_gridtype):
     U = discretization.solve()
     try:
         visualize_patch(data['grid'], U=U, backend=backend)
-    except PySideMissing as ie:
-        pytest.xfail("PySide missing")
+    except QtMissing as ie:
+        pytest.xfail("Qt missing")
     finally:
         stop_gui_processes()
 
