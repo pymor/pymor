@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """This module provides base classes from which most classes in pyMOR inherit.
@@ -68,6 +68,7 @@ try:
 except ImportError:
     from pickle import dumps, HIGHEST_PROTOCOL
 from copyreg import dispatch_table
+from functools import wraps
 import hashlib
 import inspect
 import itertools
@@ -279,15 +280,18 @@ class classinstancemethod:
         if cls is None:
             return self
         if instance is None:
+            @wraps(self.cls_meth)
             def the_class_method(*args, **kwargs):
                 return self.cls_meth(cls, *args, **kwargs)
             return the_class_method
         else:
+            @wraps(self.inst_meth)
             def the_instance_method(*args, **kwargs):
                 return self.inst_meth(instance, *args, **kwargs)
             return the_instance_method
 
     def instancemethod(self, inst_meth):
+        inst_meth.__doc__ = inst_meth.__doc__ or self.cls_meth.__doc__
         self.inst_meth = inst_meth
         return self
 
@@ -307,6 +311,20 @@ class ImmutableMeta(UberMeta):
 
         c._implements_reduce = ('__reduce__' in classdict or '__reduce_ex__' in classdict
                                 or any(getattr(base, '_implements_reduce', False) for base in bases))
+
+        # set __signature__ attribute on newly created class c to ensure that
+        # inspect.signature(c) returns the signature of its __init__ arguments and not
+        # the signature of ImmutableMeta.__call__
+        if config.PY3:
+            sig = inspect.signature(c.__init__)
+            c.__signature__ = sig.replace(parameters=tuple(sig.parameters.values())[1:])
+        else:
+            try:
+                from IPython.utils.signatures import signature
+                sig = signature(c.__init__)
+                c.__signature__ = sig.replace(parameters=tuple(sig.parameters.values())[1:])
+            except ImportError:
+                pass
         return c
 
     def _call(self, *args, **kwargs):
@@ -361,6 +379,10 @@ class ImmutableInterface(BasicInterface, metaclass=ImmutableMeta):
     sid_ignore = frozenset({'_locked', '_logger', '_name', '_uid', '_sid_contains_cycles', 'sid'})
 
     _locked = False
+
+    # we need to define __init__, otherwise the Python 2 signature hack will fail
+    def __init__(self):
+        pass
 
     def __setattr__(self, key, value):
         """depending on _locked state I delegate the setattr call to object or

@@ -1,10 +1,10 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """ This module provides a few methods and classes for visualizing data
-associated to grids. We use the `PySide <http://www.pyside.org>`_ bindings
-for the `Qt <http://www.qt-project.org>`_ widget toolkit for the GUI.
+associated to grids. We use the the `Qt <http://www.qt-project.org>`_ widget
+toolkit for the GUI.
 """
 
 import math as m
@@ -14,25 +14,25 @@ import numpy as np
 import multiprocessing
 import os
 import signal
-import time
+import sys
+import psutil
 
 from pymor.core.config import config
+from pymor.core.config import is_windows_platform
 from pymor.core.defaults import defaults
-from pymor.core.interfaces import BasicInterface
 from pymor.core.logger import getLogger
-from pymor.core.exceptions import PySideMissing
-from pymor.grids.oned import OnedGrid
-from pymor.grids.referenceelements import triangle, square
+from pymor.core.exceptions import QtMissing
 from pymor.gui.gl import GLPatchWidget, ColorBarWidget
 from pymor.gui.matplotlib import Matplotlib1DWidget, MatplotlibPatchWidget
 from pymor.tools.vtkio import write_vtk
 from pymor.vectorarrays.interfaces import VectorArrayInterface
-from pymor.vectorarrays.numpy import NumpyVectorArray, NumpyVectorSpace
+from pymor.vectorarrays.numpy import NumpyVectorSpace
 
-if config.HAVE_PYSIDE:
-    from PySide.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QApplication, QLCDNumber,
+if config.HAVE_QT:
+    from Qt.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QApplication, QLCDNumber,
                               QAction, QStyle, QToolBar, QLabel, QFileDialog, QMessageBox)
-    from PySide.QtCore import Qt, QCoreApplication, QTimer
+    from Qt.QtCore import Qt, QCoreApplication, QTimer, Slot
+
 
     class PlotMainWindow(QWidget):
         """Base class for plot main windows."""
@@ -174,37 +174,44 @@ if config.HAVE_PYSIDE:
                 self.slider.setValue(ind)
 
 
-_launch_qt_app_pids = set()
+_launch_qt_processes = set()
 
 
 def _launch_qt_app(main_window_factory, block):
     """Wrapper to display plot in a separate process."""
 
-    def doit():
+    def _doit(factory):
         try:
             app = QApplication([])
         except RuntimeError:
             app = QCoreApplication.instance()
-        main_window = main_window_factory()
+        main_window = factory()
+        if getattr(sys, '_called_from_test', False) and is_windows_platform():
+            QTimer.singleShot(500, app, Slot('quit()'))
         main_window.show()
         app.exec_()
 
     import sys
-    if block and not getattr(sys, '_called_from_test', False):
-        doit()
+    if (block and not getattr(sys, '_called_from_test', False)) or is_windows_platform():
+        _doit(main_window_factory)
     else:
-        p = multiprocessing.Process(target=doit)
+        p = multiprocessing.Process(target=_doit, args=(main_window_factory,))
         p.start()
-        _launch_qt_app_pids.add(p.pid)
+        _launch_qt_processes.add(psutil.Process(p.pid))
 
 
 def stop_gui_processes():
-    for p in multiprocessing.active_children():
-        if p.pid in _launch_qt_app_pids:
-            try:
-                os.kill(p.pid, signal.SIGKILL)
-            except OSError:
-                pass
+    active_pids = {p.pid for p in multiprocessing.active_children()}
+    kill_procs = [pr for pr in _launch_qt_processes if pr.pid in active_pids]
+    for p in kill_procs:
+        try:
+            # active_children apparently contains false positives sometimes
+            p.terminate()
+        except psutil.NoSuchProcess:
+            pass
+    gone, still_alive = psutil.wait_procs(kill_procs, timeout=1)
+    for p in still_alive:
+        p.kill()
 
 
 @defaults('backend', sid_ignore=('backend',))
@@ -245,8 +252,8 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
         The number of columns in the visualizer GUI in case multiple plots are displayed
         at the same time.
     """
-    if not config.HAVE_PYSIDE:
-        raise PySideMissing()
+    if not config.HAVE_QT:
+        raise QtMissing()
 
     assert backend in {'gl', 'matplotlib'}
 
@@ -257,7 +264,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             backend = 'matplotlib'
         elif not config.HAVE_QTOPENGL:
             logger = getLogger('pymor.gui.qt.visualize_patch')
-            logger.warn('import of PySide.QtOpenGL failed, falling back to matplotlib; rendering will be slow')
+            logger.warn('import of Qt.QtOpenGL failed, falling back to matplotlib; rendering will be slow')
             backend = 'matplotlib'
         if backend == 'matplotlib' and not config.HAVE_MATPLOTLIB:
             raise ImportError('cannot visualize: import of matplotlib failed')
@@ -412,8 +419,8 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
     block
         If `True`, block execution until the plot window is closed.
     """
-    if not config.HAVE_PYSIDE:
-        raise PySideMissing()
+    if not config.HAVE_QT:
+        raise QtMissing()
     if not config.HAVE_MATPLOTLIB:
         raise ImportError('cannot visualize: import of matplotlib failed')
 
@@ -434,129 +441,3 @@ def visualize_matplotlib_1d(grid, U, codim=1, title=None, legend=None, separate_
             self.grid = grid
 
     _launch_qt_app(lambda: MainWindow(grid, U, codim, title=title, legend=legend, separate_plots=separate_plots), block)
-
-
-class PatchVisualizer(BasicInterface):
-    """Visualize scalar data associated to a two-dimensional |Grid| as a patch plot.
-
-    The grid's |ReferenceElement| must be the triangle or square. The data can either
-    be attached to the faces or vertices of the grid.
-
-    Parameters
-    ----------
-    grid
-        The underlying |Grid|.
-    bounding_box
-        A bounding box in which the grid is contained.
-    codim
-        The codimension of the entities the data in `U` is attached to (either 0 or 2).
-    backend
-        Plot backend to use ('gl' or 'matplotlib').
-    block
-        If `True`, block execution until the plot window is closed.
-    """
-
-    def __init__(self, grid, bounding_box=([0, 0], [1, 1]), codim=2, backend=None, block=False):
-        assert grid.reference_element in (triangle, square)
-        assert grid.dim == 2
-        assert codim in (0, 2)
-        self.grid = grid
-        self.bounding_box = bounding_box
-        self.codim = codim
-        self.backend = backend
-        self.block = block
-
-    def visualize(self, U, discretization, title=None, legend=None, separate_colorbars=False,
-                  rescale_colorbars=False, block=None, filename=None, columns=2):
-        """Visualize the provided data.
-
-        Parameters
-        ----------
-        U
-            |VectorArray| of the data to visualize. If `len(U) > 1`, the data is visualized
-            as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
-            provided, in which case a subplot is created for each entry of the tuple. The
-            lengths of all arrays have to agree.
-        discretization
-            Filled in :meth:`pymor.discretizations.DiscretizationBase.visualize` (ignored).
-        title
-            Title of the plot.
-        legend
-            Description of the data that is plotted. Most useful if `U` is a tuple in which
-            case `legend` has to be a tuple of strings of the same length.
-        separate_colorbars
-            If `True`, use separate colorbars for each subplot.
-        rescale_colorbars
-            If `True`, rescale colorbars to data in each frame.
-        block
-            If `True`, block execution until the plot window is closed. If `None`, use the
-            default provided during instantiation.
-        filename
-            If specified, write the data to a VTK-file using
-            :func:`pymor.tools.vtkio.write_vtk` instead of displaying it.
-        columns
-            The number of columns in the visualizer GUI in case multiple plots are displayed
-            at the same time.
-        """
-        assert isinstance(U, VectorArrayInterface) and hasattr(U, 'data') \
-            or (isinstance(U, tuple) and all(isinstance(u, VectorArrayInterface) and hasattr(u, 'data') for u in U)
-                and all(len(u) == len(U[0]) for u in U))
-        if filename:
-            if not isinstance(U, tuple):
-                write_vtk(self.grid, U, filename, codim=self.codim)
-            else:
-                for i, u in enumerate(U):
-                    write_vtk(self.grid, u, '{}-{}'.format(filename, i), codim=self.codim)
-        else:
-            block = self.block if block is None else block
-            visualize_patch(self.grid, U, bounding_box=self.bounding_box, codim=self.codim, title=title,
-                            legend=legend, separate_colorbars=separate_colorbars, rescale_colorbars=rescale_colorbars,
-                            backend=self.backend, block=block, columns=columns)
-
-
-class Matplotlib1DVisualizer(BasicInterface):
-    """Visualize scalar data associated to a one-dimensional |Grid| as a plot.
-
-    The grid's |ReferenceElement| must be the line. The data can either
-    be attached to the subintervals or vertices of the grid.
-
-    Parameters
-    ----------
-    grid
-        The underlying |Grid|.
-    codim
-        The codimension of the entities the data in `U` is attached to (either 0 or 1).
-    block
-        If `True`, block execution until the plot window is closed.
-    """
-
-    def __init__(self, grid, codim=1, block=False):
-        assert isinstance(grid, OnedGrid)
-        assert codim in (0, 1)
-        self.grid = grid
-        self.codim = codim
-        self.block = block
-
-    def visualize(self, U, discretization, title=None, legend=None, block=None):
-        """Visualize the provided data.
-
-        Parameters
-        ----------
-        U
-            |VectorArray| of the data to visualize. If `len(U) > 1`, the data is visualized
-            as a time series of plots. Alternatively, a tuple of |VectorArrays| can be
-            provided, in which case several plots are made into the same axes. The
-            lengths of all arrays have to agree.
-        discretization
-            Filled in by :meth:`pymor.discretizations.DiscretizationBase.visualize` (ignored).
-        title
-            Title of the plot.
-        legend
-            Description of the data that is plotted. Most useful if `U` is a tuple in which
-            case `legend` has to be a tuple of strings of the same length.
-        block
-            If `True`, block execution until the plot window is closed. If `None`, use the
-            default provided during instantiation.
-        """
-        block = self.block if block is None else block
-        visualize_matplotlib_1d(self.grid, U, codim=self.codim, title=title, legend=legend, block=block)

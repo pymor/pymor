@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """Burgers with EI demo.
@@ -208,7 +208,7 @@ def main(args):
     def error_analysis(N, M):
         print('N = {}, M = {}: '.format(N, M), end='')
         rd, rc, _ = reduce_to_subbasis(rb_discretization, N, reconstructor)
-        rd = rd.with_(operator=rd.operator.projected_to_subbasis(dim_collateral=M))
+        rd = rd.with_(operator=rd.operator.with_cb_dim(M))
         l2_err_max = -1
         mumax = None
         for mu in mus:

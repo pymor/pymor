@@ -1,13 +1,13 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from math import sin, pi, exp
 import numpy as np
 import pytest
 import itertools
-from tempfile import NamedTemporaryFile
 
+from pymor.tools.io import SafeTemporaryFileName
 from pymortests.base import TestInterface, runmodule
 from pymortests.fixtures.grid import rect_or_tria_grid
 from pymortests.base import polynomials
@@ -90,12 +90,12 @@ def test_vtkio(rect_or_tria_grid):
     steps = 4
     for dim in range(1, 2):
         for codim, data in enumerate((NumpyVectorSpace.from_data(np.zeros((steps, grid.size(c)))) for c in range(grid.dim+1))):
-            with NamedTemporaryFile('wb') as out:
+            with SafeTemporaryFileName('wb') as out_name:
                 if codim == 1:
                     with pytest.raises(NotImplementedError):
-                        write_vtk(grid, data, out.name, codim=codim)
+                        write_vtk(grid, data, out_name, codim=codim)
                 else:
-                    write_vtk(grid, data, out.name, codim=codim)
+                    write_vtk(grid, data, out_name, codim=codim)
 
 
 class TestTiming(TestInterface):

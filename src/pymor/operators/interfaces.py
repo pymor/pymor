@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from pymor.core.interfaces import ImmutableInterface, abstractmethod
@@ -385,56 +385,6 @@ class OperatorInterface(ImmutableInterface, Parametric):
         The assembled |Operator| if assembly is possible, otherwise `None`.
         """
         return None
-
-    @abstractmethod
-    def projected(self, range_basis, source_basis, product=None, name=None):
-        """Project the operator to subspaces of the source and range space.
-
-        Given an inner product `( ⋅, ⋅)`, source vectors `b_1, ..., b_N`
-        and range vectors `c_1, ..., c_M`, the projection `op_proj` of `op`
-        is defined by ::
-
-            [ op_proj(e_j) ]_i = ( c_i, op(b_j) )
-
-        for all i,j, where `e_j` denotes the j-th canonical basis vector of R^N.
-
-        In particular, if the `c_i` are orthonormal w.r.t. the given product,
-        then `op_proj` is the coordinate representation w.r.t. the `b_i/c_i` bases
-        of the restriction of `op` to `span(b_i)` concatenated with the
-        orthogonal projection onto `span(c_i)`.
-
-        From another point of view, if `op` is viewed as a bilinear form
-        (see :meth:`apply2`) and `( ⋅, ⋅ )` is the Euclidean inner
-        product, then `op_proj` represents the matrix of the bilinear form restricted
-        `span(b_i) / spanc(c_i)` (w.r.t. the `b_i/c_i` bases).
-
-        How the projected operator is realized will depend on the implementation
-        of the operator to project.  While a projected |NumpyMatrixOperator| will
-        again be a |NumpyMatrixOperator|, only a generic
-        :class:`~pymor.operators.basic.ProjectedOperator` can be returned
-        in general.
-
-        A default implementation is provided in |OperatorBase|.
-
-        Parameters
-        ----------
-        range_basis
-            The vectors `c_1, ..., c_M` as a |VectorArray|. If `None`, no
-            projection in the range space is performed.
-        source_basis
-            The vectors `b_1, ..., b_N` as a |VectorArray| or `None`. If `None`,
-            no restriction of the source space is performed.
-        product
-            An |Operator| representing the inner product.  If `None`, the
-            Euclidean inner product is chosen.
-        name
-            Name of the projected operator.
-
-        Returns
-        -------
-        The projected |Operator| `op_proj`.
-        """
-        pass
 
     def restricted(self, dofs):
         """Restrict the operator range to a given set of degrees of freedom.

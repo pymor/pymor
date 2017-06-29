@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """Simple demonstration of solving the Poisson equation in 2D using pyMOR's builtin discretizations.
@@ -52,8 +52,8 @@ def elliptic2_demo(args):
 
     print('Discretize ...')
     discretizer = discretize_stationary_fv if args['--fv'] else discretize_stationary_cg
-    discretization, _ = discretizer(problem, diameter=1. / args['N'])
-    print(discretization.rhs.grid)
+    discretization, data = discretizer(problem, diameter=1. / args['N'])
+    print(data['grid'])
     print()
 
     print('Solve ...')

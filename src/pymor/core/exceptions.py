@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import warnings
@@ -49,8 +49,15 @@ class ImageCollectionError(Exception):
         self.op = op
 
 
-class PySideMissing(ImportError):
-    """Raise me where having importable PySide is non-optional"""
+class QtMissing(ImportError):
+    """Raise me where having importable Qt bindings is non-optional"""
     def __init__(self, msg=None):
-        msg = msg or 'cannot visualize: import of PySide failed'
+        msg = msg or 'cannot visualize: import of Qt bindings failed'
         super().__init__(msg)
+
+
+class RuleNotMatchingError(NotImplementedError):
+    pass
+
+class NoMatchingRuleError(NotImplementedError):
+    pass

@@ -1,10 +1,11 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
 
 from pymor.algorithms.image import estimate_image_hierarchical
+from pymor.algorithms.projection import project, project_to_subbasis
 from pymor.core.interfaces import ImmutableInterface
 from pymor.core.exceptions import ImageCollectionError
 from pymor.core.logger import getLogger
@@ -33,7 +34,7 @@ def reduce_residual(operator, rhs=None, RB=None, product=None, extends=None):
     `residual_range` for this range space and then returns the Petrov-Galerkin projection ::
 
         projected_residual
-            === residual.projected(range_basis=residual_range, source_basis=RB)
+            === project(residual, range_basis=residual_range, source_basis=RB)
 
     of the residual operator. Given a reduced basis coefficient vector `u`, w.r.t.
     `RB`, the (dual) norm of the residual can then be computed as ::
@@ -111,18 +112,18 @@ def reduce_residual(operator, rhs=None, RB=None, product=None, extends=None):
                                             riesz_representatives=rhs_is_functional)
         except ImageCollectionError as e:
             logger.warn('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
-            operator = operator.projected(None, RB)
+            operator = project(operator, None, RB)
             return (NonProjectedResidualOperator(operator, rhs, rhs_is_functional, product),
                     NonProjectedReconstructor(product),
                     {})
 
     with logger.block('Projecting residual operator ...'):
         if rhs_is_functional:
-            operator = operator.projected(residual_range, RB, product=None)  # the product cancels out.
-            rhs = rhs.projected(None, residual_range, product=None)
+            operator = project(operator, residual_range, RB, product=None)  # the product cancels out.
+            rhs = project(rhs, None, residual_range, product=None)
         else:
-            operator = operator.projected(residual_range, RB, product=product)
-            rhs = rhs.projected(residual_range, None, product=product)
+            operator = project(operator, residual_range, RB, product=product)
+            rhs = project(rhs, residual_range, None, product=product)
 
     return (ResidualOperator(operator, rhs, rhs_is_functional),
             GenericRBReconstructor(residual_range),
@@ -154,10 +155,10 @@ class ResidualOperator(OperatorBase):
 
     def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
         if self.rhs_is_functional:
-            rhs = self.rhs.projected_to_subbasis(None, dim_range)
+            rhs = project_to_subbasis(self.rhs, None, dim_range)
         else:
-            rhs = self.rhs.projected_to_subbasis(dim_range, None)
-        return ResidualOperator(self.operator.projected_to_subbasis(dim_range, dim_source), rhs,
+            rhs = project_to_subbasis(self.rhs, dim_range, None)
+        return ResidualOperator(project_to_subbasis(self.operator, dim_range, dim_source), rhs,
                                 self.rhs_is_functional, name=name)
 
 
@@ -183,7 +184,7 @@ class NonProjectedResidualOperator(ResidualOperator):
             return R
 
     def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
-        return self.with_(operator=self.operator.projected_to_subbasis(None, dim_source))
+        return self.with_(operator=project_to_subbasis(self.operator, None, dim_source))
 
 
 class NonProjectedReconstructor(ImmutableInterface):
@@ -286,16 +287,16 @@ def reduce_implicit_euler_residual(operator, mass, dt, functional=None, RB=None,
                                             orthonormalize=True, product=product, riesz_representatives=True)
         except ImageCollectionError as e:
             logger.warn('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
-            operator = operator.projected(None, RB)
-            mass = mass.projected(None, RB)
+            operator = project(operator, None, RB)
+            mass = project(mass, None, RB)
             return (NonProjectedImplicitEulerResidualOperator(operator, mass, functional, dt, product),
                     NonProjectedReconstructor(product),
                     {})
 
     with logger.block('Projecting residual operator ...'):
-        operator = operator.projected(residual_range, RB, product=None)  # the product always cancels out.
-        mass = mass.projected(residual_range, RB, product=None)
-        functional = functional.projected(None, residual_range, product=None)
+        operator = project(operator, residual_range, RB, product=None)  # the product always cancels out.
+        mass = project(mass, residual_range, RB, product=None)
+        functional = project(functional, None, residual_range, product=None)
 
     return (ImplicitEulerResidualOperator(operator, mass, functional, dt),
             GenericRBReconstructor(residual_range),
@@ -329,9 +330,9 @@ class ImplicitEulerResidualOperator(OperatorBase):
         return V
 
     def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
-        return ImplicitEulerResidualOperator(self.operator.projected_to_subbasis(dim_range, dim_source),
-                                             self.mass.projected_to_subbasis(dim_range, dim_source),
-                                             self.functional.projected_to_subbasis(None, dim_range),
+        return ImplicitEulerResidualOperator(project_to_subbasis(self.operator, dim_range, dim_source),
+                                             project_to_subbasis(self.mass, dim_range, dim_source),
+                                             project_to_subbasis(self.functional, None, dim_range),
                                              self.dt,
                                              name=name)
 
@@ -355,5 +356,5 @@ class NonProjectedImplicitEulerResidualOperator(ImplicitEulerResidualOperator):
             return R
 
     def projected_to_subbasis(self, dim_range=None, dim_source=None, name=None):
-        return self.with_(operator=self.operator.projected_to_subbasis(None, dim_source),
-                          mass=self.mass.projected_to_subbasis(None, dim_source))
+        return self.with_(operator=project_to_subbasis(self.operator, None, dim_source),
+                          mass=project_to_subbasis(self.mass, None, dim_source))
