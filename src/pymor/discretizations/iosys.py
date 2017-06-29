@@ -196,6 +196,17 @@ class LTISystem(InputOutputSystem):
         The |Operator| E or `None` (then E is assumed to be identity).
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
+    estimator
+        An error estimator for the problem. This can be any object with
+        an `estimate(U, mu, discretization)` method. If `estimator` is
+        not `None`, an `estimate(U, mu)` method is added to the
+        discretization which will call `estimator.estimate(U, mu, self)`.
+    visualizer
+        A visualizer for the problem. This can be any object with
+        a `visualize(U, discretization, ...)` method. If `visualizer`
+        is not `None`, a `visualize(U, *args, **kwargs)` method is added
+        to the discretization which forwards its arguments to the
+        visualizer's `visualize` method.
     cache_region
         `None` or name of the cache region to use. See
         :mod:`pymor.core.cache`.
@@ -225,7 +236,8 @@ class LTISystem(InputOutputSystem):
     special_operators = frozenset({'A', 'B', 'C', 'D', 'E'})
 
     def __init__(self, A, B, C, D=None, E=None, cont_time=True,
-                 solver_options=None, cache_region='memory', name=None):
+                 solver_options=None, estimator=None, visualizer=None,
+                 cache_region='memory', name=None):
 
         D = D or ZeroOperator(B.source, C.range)
         E = E or IdentityOperator(A.source)
@@ -238,9 +250,12 @@ class LTISystem(InputOutputSystem):
         assert cont_time in (True, False)
         assert solver_options is None or solver_options.keys() <= {'lyap', 'ricc'}
 
-        super().__init__(B.source.dim, C.range.dim, cont_time=cont_time, cache_region=cache_region, name=name,
+        super().__init__(B.source.dim, C.range.dim, cont_time=cont_time,
+                         estimator=estimator, visualizer=visualizer,
+                         cache_region=cache_region, name=name,
                          A=A, B=B, C=C, D=D, E=E)
 
+        self.solution_space = A.source
         self.n = A.source.dim
         self.solver_options = solver_options
 
@@ -733,6 +748,17 @@ class SecondOrderSystem(InputOutputSystem):
         The |Operator| Cv or `None` (then Cv is assumed to be zero).
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
+    estimator
+        An error estimator for the problem. This can be any object with
+        an `estimate(U, mu, discretization)` method. If `estimator` is
+        not `None`, an `estimate(U, mu)` method is added to the
+        discretization which will call `estimator.estimate(U, mu, self)`.
+    visualizer
+        A visualizer for the problem. This can be any object with
+        a `visualize(U, discretization, ...)` method. If `visualizer`
+        is not `None`, a `visualize(U, *args, **kwargs)` method is added
+        to the discretization which forwards its arguments to the
+        visualizer's `visualize` method.
     cache_region
         `None` or name of the cache region to use. See
         :mod:`pymor.core.cache`.
@@ -762,8 +788,9 @@ class SecondOrderSystem(InputOutputSystem):
 
     special_operators = frozenset({'M', 'D', 'K', 'B', 'Cp', 'Cv'})
 
-    def __init__(self, M, D, K, B, Cp, Cv=None,
-                 cont_time=True, cache_region='memory', name=None):
+    def __init__(self, M, D, K, B, Cp, Cv=None, cont_time=True,
+                 estimator=None, visualizer=None,
+                 cache_region='memory', name=None):
 
         Cv = Cv or ZeroOperator(Cp.source, Cp.range)
 
@@ -775,7 +802,9 @@ class SecondOrderSystem(InputOutputSystem):
         assert Cv.linear and Cv.source == M.range and Cv.range == Cp.range
         assert cont_time in (True, False)
 
-        super().__init__(B.source.dim, Cp.range.dim, cont_time=cont_time, cache_region=cache_region, name=name,
+        super().__init__(B.source.dim, Cp.range.dim, cont_time=cont_time,
+                         estimator=estimator, visualizer=visualizer,
+                         cache_region=cache_region, name=name,
                          M=M, D=D, K=K, B=B, Cp=Cp, Cv=Cv)
 
         self.n = M.source.dim
@@ -1041,6 +1070,17 @@ class LinearDelaySystem(InputOutputSystem):
         The |Operator| C.
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
+    estimator
+        An error estimator for the problem. This can be any object with
+        an `estimate(U, mu, discretization)` method. If `estimator` is
+        not `None`, an `estimate(U, mu)` method is added to the
+        discretization which will call `estimator.estimate(U, mu, self)`.
+    visualizer
+        A visualizer for the problem. This can be any object with
+        a `visualize(U, discretization, ...)` method. If `visualizer`
+        is not `None`, a `visualize(U, *args, **kwargs)` method is added
+        to the discretization which forwards its arguments to the
+        visualizer's `visualize` method.
     cache_region
         `None` or name of the cache region to use. See
         :mod:`pymor.core.cache`.
@@ -1069,7 +1109,8 @@ class LinearDelaySystem(InputOutputSystem):
     linear = True
     special_operators = frozenset({'A', 'Ad', 'B', 'C', 'E'})
 
-    def __init__(self, A, Ad, tau, B, C, E=None, cont_time=True, cache_region='memory', name=None):
+    def __init__(self, A, Ad, tau, B, C, E=None, cont_time=True,
+                 estimator=None, visualizer=None, cache_region='memory', name=None):
 
         E = E or IdentityOperator(A.source)
 
@@ -1082,8 +1123,11 @@ class LinearDelaySystem(InputOutputSystem):
         assert E.linear and E.source == E.range == A.source
         assert cont_time in (True, False)
 
-        super().__init__(m=B.source.dim, p=C.range.dim, cont_time=cont_time, cache_region=cache_region, name=name,
+        super().__init__(m=B.source.dim, p=C.range.dim, cont_time=cont_time,
+                         estimator=estimator, visualizer=visualizer,
+                         cache_region=cache_region, name=name,
                          A=A, Ad=Ad, B=B, C=C, E=E)
+        self.solution_space = A.source
         self.tau = tau
         self.n = A.source.dim
         self.q = len(Ad)
@@ -1201,6 +1245,17 @@ class LinearStochasticSystem(InputOutputSystem):
         The |Operator| C.
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
+    estimator
+        An error estimator for the problem. This can be any object with
+        an `estimate(U, mu, discretization)` method. If `estimator` is
+        not `None`, an `estimate(U, mu)` method is added to the
+        discretization which will call `estimator.estimate(U, mu, self)`.
+    visualizer
+        A visualizer for the problem. This can be any object with
+        a `visualize(U, discretization, ...)` method. If `visualizer`
+        is not `None`, a `visualize(U, *args, **kwargs)` method is added
+        to the discretization which forwards its arguments to the
+        visualizer's `visualize` method.
     cache_region
         `None` or name of the cache region to use. See
         :mod:`pymor.core.cache`.
@@ -1230,7 +1285,9 @@ class LinearStochasticSystem(InputOutputSystem):
     linear = True
     special_operators = frozenset({'A', 'As', 'B', 'C', 'E'})
 
-    def __init__(self, A, As, tau, B, C, E=None, cont_time=True, cache_region='memory', name=None):
+    def __init__(self, A, As, tau, B, C, E=None, cont_time=True,
+                 estimator=None, visualizer=None,
+                 cache_region='memory', name=None):
 
         E = E or IdentityOperator(A.source)
 
@@ -1243,9 +1300,12 @@ class LinearStochasticSystem(InputOutputSystem):
         assert E.linear and E.source == E.range == A.source
         assert cont_time in (True, False)
 
-        super().__init__(m=B.source.dim, p=C.range.dim, cont_time=cont_time, cache_region=cache_region, name=name,
+        super().__init__(m=B.source.dim, p=C.range.dim, cont_time=cont_time,
+                         estimator=estimator, visualizer=visualizer,
+                         cache_region=cache_region, name=name,
                          A=A, As=As, B=B, C=C, E=E)
 
+        self.solution_space = A.source
         self.n = A.source.dim
         self.q = len(As)
         self.tau = tau
@@ -1284,6 +1344,17 @@ class BilinearSystem(InputOutputSystem):
         The |Operator| C.
     cont_time
         `True` if the system is continuous-time, otherwise `False`.
+    estimator
+        An error estimator for the problem. This can be any object with
+        an `estimate(U, mu, discretization)` method. If `estimator` is
+        not `None`, an `estimate(U, mu)` method is added to the
+        discretization which will call `estimator.estimate(U, mu, self)`.
+    visualizer
+        A visualizer for the problem. This can be any object with
+        a `visualize(U, discretization, ...)` method. If `visualizer`
+        is not `None`, a `visualize(U, *args, **kwargs)` method is added
+        to the discretization which forwards its arguments to the
+        visualizer's `visualize` method.
     cache_region
         `None` or name of the cache region to use. See
         :mod:`pymor.core.cache`.
@@ -1325,4 +1396,5 @@ class BilinearSystem(InputOutputSystem):
         super().__init__(m=B.source.dim, p=C.range.dim, cont_time=cont_time, cache_region=cache_region, name=name,
                          A=A, N=N, B=B, C=C, E=E)
 
+        self.solution_space = A.source
         self.n = A.source.dim
