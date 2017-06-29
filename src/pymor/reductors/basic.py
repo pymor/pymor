@@ -181,7 +181,7 @@ class GenericRBReductor(BasicInterface):
             raise ExtensionError
 
 
-def reduce_generic_pg(discretization, V, W, use_default=None):
+class GenericPGReductor(BasicInterface):
     """Generic Petrov-Galerkin reductor.
 
     Replaces each |Operator| of the given |Discretization| with the projection
@@ -189,7 +189,7 @@ def reduce_generic_pg(discretization, V, W, use_default=None):
 
     Parameters
     ----------
-    discretization
+    d
         The |Discretization| which is to be reduced.
     V
         |VectorArray| containing the right projection matrix.
@@ -197,29 +197,40 @@ def reduce_generic_pg(discretization, V, W, use_default=None):
         |VectorArray| containing the left projection matrix.
     use_default
         Iterable of keys of |Operators| that should not be projected,
-        but a default value in `discretization.with_` is to be used.
-
-    Returns
-    -------
-    rd
-        The reduced |Discretization|.
-    rc
-        The reconstructor providing a `reconstruct(U)` method which reconstructs
-        high-dimensional solutions from solutions `U` of the reduced |Discretization|.
-    reduction_data
-        Additional data produced by the reduction process. Currently empty.
+        but a default value in `d.with_` is to be used.
     """
-    assert len(V) == len(W)
 
-    use_default = use_default or []
+    def __init__(self, d, V, W, use_default=None):
+        assert len(V) == len(W)
+        assert V in d.solution_space
+        self.d = d
+        self.V = V
+        self.W = W
+        self.use_default = use_default
+        self._last_rd = None
 
-    projected_ops = {k: project(op,
-                                range_basis=W if W in op.range else None,
-                                source_basis=V if V in op.source else None) if op and k not in use_default else None
-                     for k, op in discretization.operators.items()}
+    def reduce(self):
+        """Perform the Petrov-Galerkin projection.
 
-    rd = discretization.with_(operators=projected_ops)
-    rd.disable_logging()
-    rc = GenericRBReconstructor(V)
+        Returns
+        -------
+        The reduced |Discretization|.
+        """
+        d, V, W = self.d, self.V, self.W
+        use_default = self.use_default or []
 
-    return rd, rc, {}
+        projected_ops = {k: project(op,
+                                    range_basis=W if W in op.range else None,
+                                    source_basis=V if V in op.source else None) if op and k not in use_default else None
+                         for k, op in d.operators.items()}
+
+        rd = d.with_(operators=projected_ops,
+                     visualizer=None, estimator=None,
+                     cache_region=None, name=d.name + '_reduced')
+        rd.disable_logging()
+
+        return rd
+
+    def reconstruct(self, u):
+        """Reconstruct high-dimensional vector from reduced vector `u`."""
+        return self.V[:u.dim].lincomb(u.data)

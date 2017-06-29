@@ -88,7 +88,7 @@ if __name__ == '__main__':
 
     # Balanced Truncation
     r = 5
-    rom_bt, _, _ = bt(lti, r, tol=1e-5)
+    rom_bt, _ = bt(lti, r, tol=1e-5)
     print('H_2-norm of the BT ROM:       {}'.format(rom_bt.norm()))
     print('H_inf-norm of the BT ROM:     {}'.format(rom_bt.norm('Hinf')))
     err_bt = lti - rom_bt

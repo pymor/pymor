@@ -11,7 +11,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.sylvester import solve_sylv_schur
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.operators.constructions import IdentityOperator, LincombOperator
-from pymor.reductors.basic import reduce_generic_pg
+from pymor.reductors.basic import GenericPGReductor
 
 
 def interpolation(discretization, sigma, b, c, method='orth', use_arnoldi=False):
@@ -44,11 +44,9 @@ def interpolation(discretization, sigma, b, c, method='orth', use_arnoldi=False)
     -------
     rom
         Reduced |LTISystem| model.
-    rc
-        Reconstructor of full state.
-    reduction_data
-        Dictionary of additional data produced by the reduction process.
-        Contains projection matrices `V` and `W`,
+    reductor
+        Reductor holding the projection matrices `V` and `W` used
+        to compute the reduced order model.
     """
     r = len(sigma)
     assert b in discretization.B.source and len(b) == r
@@ -58,7 +56,7 @@ def interpolation(discretization, sigma, b, c, method='orth', use_arnoldi=False)
     if use_arnoldi and discretization.m == 1 and discretization.p == 1:
         V = arnoldi(discretization.A, discretization.E, discretization.B, sigma)
         W = arnoldi(discretization.A, discretization.E, discretization.C, sigma, trans=True)
-        rom, rc, _ = reduce_generic_pg(discretization, V, W)
+        reductor = GenericPGReductor(discretization, V, W)
     else:
         # rescale tangential directions (could avoid overflow or underflow)
         b.scal(1 / b.l2_norm())
@@ -92,14 +90,14 @@ def interpolation(discretization, sigma, b, c, method='orth', use_arnoldi=False)
         if method == 'orth':
             V = gram_schmidt(V, atol=0, rtol=0)
             W = gram_schmidt(W, atol=0, rtol=0)
-            rom, rc, _ = reduce_generic_pg(discretization, V, W)
+            reductor = GenericPGReductor(discretization, V, W)
         elif method == 'biorth':
             V, W = gram_schmidt_biorth(V, W, product=discretization.E)
-            rom, rc, _ = reduce_generic_pg(discretization, V, W, use_default=['E'])
+            reductor = GenericPGReductor(discretization, V, W, use_default=['E'])
 
-    reduction_data = {'V': V, 'W': W}
+    rom = reductor.reduce()
 
-    return rom, rc, reduction_data
+    return rom, reductor
 
 
 def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_sigma_in_rhp=False,
@@ -170,13 +168,13 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
     -------
     rom
         Reduced |LTISystem| model.
-    rc
-        Reconstructor of full state.
+    reductor
+        Reductor holding the projection matrices `V` and `W` used
+        to compute the reduced order model.
     reduction_data
         Dictionary of additional data produced by the reduction process.
         Contains:
 
-        - projection matrices `V` and `W`,
         - distances between interpolation points in subsequent iterations
           `dist`,
         - interpolation points from all iterations `Sigma`,
@@ -223,7 +221,7 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
     # main loop
     for it in range(maxit):
         # interpolatory reduced order model
-        rom, rc, reduction_data = interpolation(discretization, sigma, b, c, method=method, use_arnoldi=use_arnoldi)
+        rom, reductor = interpolation(discretization, sigma, b, c, method=method, use_arnoldi=use_arnoldi)
 
         if compute_errors:
             err = discretization - rom
@@ -249,14 +247,14 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
             dist.append(spla.norm((Sigma[-2] - Sigma[-1]) / Sigma[-2], ord=np.inf))
         elif conv_crit == 'subspace_sin':
             if it == 0:
-                V_new = reduction_data['V'].data.T
-                W_new = reduction_data['W'].data.T
+                V_new = reductor['V'].data.T
+                W_new = reductor['W'].data.T
                 dist.append(1)
             else:
                 V_old = V_new
                 W_old = W_new
-                V_new = reduction_data['V'].data.T
-                W_new = reduction_data['W'].data.T
+                V_new = reductor['V'].data.T
+                W_new = reductor['W'].data.T
                 sinV = spla.norm(V_new - V_old.dot(V_old.T.dot(V_new)), ord=2)
                 sinW = spla.norm(W_new - W_old.dot(W_old.T.dot(W_new)), ord=2)
                 dist.append(np.max([sinV, sinW]))
@@ -293,13 +291,13 @@ def irka(discretization, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, ver
             break
 
     # final reduced order model
-    rom, rc, reduction_data = interpolation(discretization, sigma, b, c, method=method, use_arnoldi=use_arnoldi)
+    rom, reductor = interpolation(discretization, sigma, b, c, method=method, use_arnoldi=use_arnoldi)
 
-    reduction_data.update({'dist': dist, 'Sigma': Sigma, 'R': R, 'L': L})
+    reduction_data = {'dist': dist, 'Sigma': Sigma, 'R': R, 'L': L}
     if compute_errors:
         reduction_data['errors'] = errors
 
-    return rom, rc, reduction_data
+    return rom, reductor, reduction_data
 
 
 def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, method='orth', conv_crit='rel_sigma_change',
@@ -354,13 +352,13 @@ def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, method='orth'
     -------
     rom
         Reduced |LTISystem| model.
-    rc
-        Reconstructor of full state.
+    reductor
+        Reductor holding the projection matrices `V` and `W` used
+        to compute the reduced order model.
     reduction_data
         Dictionary of additional data produced by the reduction process.
         Contains:
 
-        - projection matrices `V` and `W`,
         - convergence criterion in iterations `dist`,
         - relative :math:`\mathcal{H}_2`-errors `errors` (if
           `compute_errors` is `True`).
@@ -398,9 +396,11 @@ def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, method='orth'
     for it in range(maxit):
         # project the full order model
         if method == 'orth':
-            rom, rc, _ = reduce_generic_pg(discretization, V, W)
+            reductor = GenericPGReductor(discretization, V, W)
         elif method == 'biorth':
-            rom, rc, _ = reduce_generic_pg(discretization, V, W, use_default=['E'])
+            reductor = GenericPGReductor(discretization, V, W, use_default=['E'])
+
+        rom = reductor.reduce()
 
         if compute_errors:
             err = discretization - rom
@@ -465,12 +465,14 @@ def tsia(discretization, rom0, tol=1e-4, maxit=100, verbose=False, method='orth'
 
     # final reduced order model
     if method == 'orth':
-        rom, rc, _ = reduce_generic_pg(discretization, V, W)
+        reductor = GenericPGReductor(discretization, V, W)
     elif method == 'biorth':
-        rom, rc, _ = reduce_generic_pg(discretization, V, W, use_default=['E'])
+        reductor = GenericPGReductor(discretization, V, W, use_default=['E'])
 
-    reduction_data = {'V': V, 'W': W, 'dist': dist}
+    rom = reductor.reduce()
+
+    reduction_data = {'dist': dist}
     if compute_errors:
         reduction_data['errors'] = errors
 
-    return rom, rc, reduction_data
+    return rom, reductor, reduction_data

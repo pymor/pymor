@@ -5,7 +5,7 @@
 import numpy as np
 
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
-from pymor.reductors.basic import reduce_generic_pg
+from pymor.reductors.basic import GenericPGReductor
 
 
 def bt(discretization, r=None, tol=None, typ='lyap', method='sr'):
@@ -51,13 +51,9 @@ def bt(discretization, r=None, tol=None, typ='lyap', method='sr'):
     -------
     rom
         Reduced |LTISystem|.
-    rc
-        The reconstructor providing a `reconstruct(U)` method which
-        reconstructs high-dimensional solutions from solutions `U` of the
-        reduced |LTISystem|.
-    reduction_data
-        Dictionary of additional data produced by the reduction process.
-        Contains projection matrices `V` and `W`.
+    reductor
+        Reductor holding the projection matrices `V` and `W` used
+        to compute the reduced order model.
     """
     assert r is not None or tol is not None
     assert r is None or 0 < r < discretization.n
@@ -97,15 +93,15 @@ def bt(discretization, r=None, tol=None, typ='lyap', method='sr'):
         alpha = 1 / np.sqrt(sv[:r])
         V.scal(alpha)
         W.scal(alpha)
-        rom, rc, _ = reduce_generic_pg(discretization, V, W, use_default=['E'])
+        reductor = GenericPGReductor(discretization, V, W, use_default=['E'])
     elif method == 'bfsr':
         V = gram_schmidt(V, atol=0, rtol=0)
         W = gram_schmidt(W, atol=0, rtol=0)
-        rom, rc, _ = reduce_generic_pg(discretization, V, W)
+        reductor = GenericPGReductor(discretization, V, W)
     elif method == 'biorth':
         V, W = gram_schmidt_biorth(V, W, product=discretization.E)
-        rom, rc, _ = reduce_generic_pg(discretization, V, W, use_default=['E'])
+        reductor = GenericPGReductor(discretization, V, W, use_default=['E'])
 
-    reduction_data = {'V': V, 'W': W}
+    rom = reductor.reduce()
 
-    return rom, rc, reduction_data
+    return rom, reductor
