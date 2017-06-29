@@ -176,7 +176,6 @@ class GenericPGReductor(BasicInterface):
     """
 
     def __init__(self, d, V, W, use_default=None):
-        assert len(V) == len(W)
         assert V in d.solution_space
         self.d = d
         self.V = V
