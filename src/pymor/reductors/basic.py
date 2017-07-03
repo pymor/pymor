@@ -99,7 +99,7 @@ class GenericRBReductor(BasicInterface):
 
         projected_products = {k: project_operator(op) for k, op in rd.products.items()}
 
-        if hasattr(rd, 'estimator'):
+        if rd.estimator:
             estimator = rd.estimator.restricted_to_subbasis(dim, discretization=rd)
         else:
             estimator = None
