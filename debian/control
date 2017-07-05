@@ -2,68 +2,24 @@ Source: pymor
 Section: math
 Priority: extra
 Maintainer: Rene Milk <rene.milk@uni-muenster.de>
-Build-Depends: debhelper (>= 8.0.0), python-pip, python-virtualenv, python-numpy,
-  python-scipy, python-pytest, python-pyside, python-setuptools,
-  cython, python-sphinx, python-sympy, python-matplotlib,
-  python-opengl, python-docopt, python-evtk,
-  python-dev, python3, dh-make, python3-pytest-cov, python-pytest-cov,
-  python-docutils, texlive-latex-extra, dvipng,
+Build-Depends: debhelper (>= 8.0.0),
+  python3, dh-make, python3-pytest-cov,
+  texlive-latex-extra, dvipng,
   python3-scipy, python3-pytest, python3-pyside, python3-setuptools,
   cython3, python3-sphinx, python3-sympy, python3-matplotlib,
-  python3-opengl, python-docopt, python3-evtk, python-3to2,
+  python3-opengl, python3-evtk,
   python3-dev, python3-pip, python3-virtualenv, python3-numpy,
-  python3-docutils, python-pytest-runner,  python3-pytest-runner
+  python3-docutils, python3-pytest-runner
 Standards-Version: 3.9.4
 Homepage: http://pymor.org
 #Vcs-Git: git://git.debian.org/collab-maint/pymor-base.git
 Vcs-Browser: https://github.com/pymor/pymor/tree/0.4.x
 
-Package: python-pymor
-Architecture: any
-Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends},
-  python-pip, python-virtualenv, python-numpy,
-  python-scipy, python-pytest, python-pyside,
-  cython, python-matplotlib, python-opengl, python-3to2,
-  python-docopt, python-evtk, python-pytest-runner,
-  python-dev, python, python-mpi4py, mpi-default-dev
-Suggests: python-pymor-doc
-Description: makes pyMOR importable system-wide + dependency tracking
-  pyMOR is a software library developed at the University of Münster for building model order reduction applications
-  with the Python programming language. Its main focus lies on the application of reduced basis methods to
-  parameterized partial differential equations. All algorithms in pyMOR are formulated in terms of abstract interfaces
-  for seamless integration with external high-dimensional PDE solvers. Moreover, pure Python implementations of finite
-  element and finite volume discretizations using the NumPy/SciPy scientific computing stack are provided for getting
-  started quickly.
-
-Package: python-pymor-demos
-Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, ${python:Depends} , python, python-pymor, ipython, python-tk, python-matplotlib, python-opengl
-Suggests: python-pymor-doc
-Description: makes all included demos launchable via "pymor-demo" script
-  pyMOR is a software library developed at the University of Münster for building model order reduction applications
-  with the Python programming language. Its main focus lies on the application of reduced basis methods to
-  parameterized partial differential equations. All algorithms in pyMOR are formulated in terms of abstract interfaces
-  for seamless integration with external high-dimensional PDE solvers. Moreover, pure Python implementations of finite
-  element and finite volume discretizations using the NumPy/SciPy scientific computing stack are provided for getting
-  started quickly.
-
-Package: python-pymor-doc
-Architecture: all
-Section: doc
-Depends: ${misc:Depends}, python-sphinx, ${sphinxdoc:Depends}
-Description: auto-generated sphinx-html documenttaion for python-pymor
-  pyMOR is a software library developed at the University of Münster for building model order reduction applications
-  with the Python programming language. Its main focus lies on the application of reduced basis methods to
-  parameterized partial differential equations. All algorithms in pyMOR are formulated in terms of abstract interfaces
-  for seamless integration with external high-dimensional PDE solvers. Moreover, pure Python implementations of finite
-  element and finite volume discretizations using the NumPy/SciPy scientific computing stack are provided for getting
-  started quickly.
-
 Package: python3-pymor
 Architecture: any
 Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends},
   python3-pip, python3-virtualenv, python3-numpy,
-  python3-scipy, python-pytest, python3-pyside,
+  python3-scipy, python3-pyside, python3-setuptools,
   cython3, python3-matplotlib, python3-opengl,
   python3-docopt, python3-evtk, python3-pytest-runner,
   python3-dev, python3, python3-mpi4py, mpi-default-dev
