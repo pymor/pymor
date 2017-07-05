@@ -17,7 +17,7 @@ Vcs-Browser: https://github.com/pymor/pymor/tree/0.4.x
 
 Package: python3-pymor
 Architecture: any
-Depends: ${misc:Depends}, ${python:Depends}, ${shlibs:Depends},
+Depends: ${misc:Depends},  ${shlibs:Depends},
   python3-pip, python3-virtualenv, python3-numpy,
   python3-scipy, python3-pyside, python3-setuptools,
   cython3, python3-matplotlib, python3-opengl,
@@ -34,7 +34,7 @@ Description: makes pyMOR importable system-wide + dependency tracking
 
 Package: python3-pymor-demos
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, ${python:Depends}, python3, python3-pymor, ipython3, python3-tk, python3-matplotlib,
+Depends: ${misc:Depends}, ${shlibs:Depends},  python3, python3-pymor, ipython3, python3-tk, python3-matplotlib,
   python3-opengl
 Suggests: python3-pymor-doc
 Description: makes all included demos launchable via "pymor-demo" script
