@@ -21,7 +21,7 @@ builddir := $(shell python -c '$(buildscript)')
 export PYMOR_DEB_VERSION=$(shell dpkg-parsechangelog | sed -n -e 's/^Version: //p')
 
 %:
-	dh $@ --with sphinxdoc,python2
+	dh $@ --with sphinxdoc,python3,python2 --buildsystem=pybuild
 
 override_dh_auto_install:
 	python setup.py install --root=debian/pymor --install-layout=deb
