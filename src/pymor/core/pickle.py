@@ -72,7 +72,7 @@ else:
 # The following method is a slightly modified version of
 # a recipe from the "Python Cookbook", 3rd edition.
 
-def _generate_opcode(code_object):
+def _generate_opcode_old(code_object):
     HAVE_ARGUMENT = opcode.HAVE_ARGUMENT
     EXTENDED_ARG = opcode.EXTENDED_ARG
 
@@ -96,6 +96,15 @@ def _generate_opcode(code_object):
         else:
             oparg = None
         yield (op, oparg)
+
+
+def _generate_opcode(code_object):
+    import dis
+    if hasattr(dis, 'get_instructions'):
+        for ins in dis.get_instructions(code_object):
+            yield (ins.opcode, ins.arg)
+    else: # python < 3.4
+        yield from _generate_opcode_old(code_object)
 
 
 def _global_names(code_object):
