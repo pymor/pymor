@@ -167,7 +167,8 @@ def test_analyze_pickle3():
     try:
         test_demos(('pymordemos.thermalblock', ['--pickle=' + os.path.join(d, 'data'), 2, 2, 2, 10]))
         test_demos(('pymordemos.analyze_pickle',
-                   ['convergence', '--error-norm=h1_0_semi', os.path.join(d, 'data_reduced'), 10]))
+                   ['convergence', '--detailed=' + os.path.join(d, 'data_detailed'),
+                    '--error-norm=h1_0_semi', os.path.join(d, 'data_reduced'), 10]))
     finally:
         shutil.rmtree(d)
 
