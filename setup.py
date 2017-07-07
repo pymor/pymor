@@ -189,18 +189,29 @@ def _setup(**kwargs):
     return setup(**kwargs)
 
 
+def _strip_markers(name):
+    for m in ';<>=':
+        try:
+            i = name.index(m)
+            name = name[:i].strip()
+        except ValueError:
+            continue
+    return name
+
+
 def _missing(names):
     for name in names:
+        stripped_name = _strip_markers(name)
         try:
-            __import__(name)
+            __import__(stripped_name)
         except ImportError:
-            if name in dependencies.import_names:
+            if stripped_name in dependencies.import_names:
                 try:
-                    __import__(dependencies.import_names[name])
+                    __import__(dependencies.import_names[stripped_name])
                 except ImportError:
-                    yield name
+                    yield name, dependencies.import_names[stripped_name]
             else:
-                yield name
+                yield name, stripped_name
 
 
 def setup_package():
@@ -235,19 +246,20 @@ def setup_package():
         cmdclass=cmdclass,
     )
 
-    missing = list(_missing(install_suggests.keys()))
+    missing = dict(_missing(install_suggests.keys()))
     if len(missing):
         import textwrap
         print('\n' + '*' * 79 + '\n')
         print('There are some suggested packages missing:\n')
-        col_width = max(map(len, missing)) + 3
-        for package in sorted(missing):
+        col_width = max(map(len, missing.values())) + 3
+        for package in sorted(missing.keys()):
             description = textwrap.wrap(install_suggests[package], 79 - col_width)
-            print('{:{}}'.format(package + ':', col_width) + description[0])
+            print('{:{}}'.format(missing[package] + ': ', col_width) + description[0])
             for d in description[1:]:
                 print(' ' * col_width + d)
             print()
-        print("\ntry: 'for pname in {}; do pip install $pname; done'".format(' '.join(missing)))
+        suggests = ['\'{}\' '.format(_strip_markers(m)) for m in missing.keys()]
+        print("\ntry: 'for pname in {}; do pip install $pname; done'".format(''.join(suggests)))
         print('\n' + '*' * 79 + '\n')
 
 

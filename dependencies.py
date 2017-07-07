@@ -31,6 +31,10 @@ import_names = {'ipython': 'IPython',
                 'pytest-flakes': 'pytest_flakes',
                 'pytest-pep8': 'pytest_pep8',
                 'pyopengl': 'OpenGL',
+                'https://bitbucket.org/pauloh/pyevtk/get/tip.tar.gz': 'evtk',
+                'https://pymor.github.io/wheels/PySide-1.2.2-cp34-cp34m-linux_x86_64.whl': 'PySide',
+                'https://pymor.github.io/wheels/PySide-1.2.2-cp33-cp33m-linux_x86_64.whl': 'PySide',
+                'https://pymor.github.io/wheels/PySide-1.2.2-cp27-cp27m-linux_x86_64.whl': 'PySide',
                 'pyside': 'PySide'}
 
 if __name__ == '__main__':
