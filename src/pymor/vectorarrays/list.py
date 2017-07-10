@@ -46,11 +46,8 @@ class VectorInterface(BasicInterface):
         pass
 
     def sup_norm(self):
-        if self.dim == 0:
-            return 0.
-        else:
-            _, max_val = self.amax()
-            return max_val
+        _, max_val = self.amax()
+        return max_val
 
     @abstractmethod
     def components(self, component_indices):
@@ -358,7 +355,10 @@ class ListVectorArray(VectorArrayInterface):
         return np.array([v.l2_norm2() for v in self._list])
 
     def sup_norm(self):
-        return np.array([v.sup_norm() for v in self._list])
+        if self.dim == 0:
+            return np.zeros(len(self))
+        else:
+            return np.array([v.sup_norm() for v in self._list])
 
     def components(self, component_indices):
         assert isinstance(component_indices, list) and (len(component_indices) == 0 or min(component_indices) >= 0) \
