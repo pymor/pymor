@@ -9,7 +9,7 @@ Build-Depends: debhelper (>= 8.0.0),
   cython3, python3-sphinx, python3-sympy, python3-matplotlib,
   python3-opengl, python3-evtk,
   python3-dev, python3-pip, python3-virtualenv, python3-numpy,
-  python3-docutils, python3-pytest-runner
+  python3-docutils, python3-pytest-runner (>= 2.9)
 Standards-Version: 3.9.4
 Homepage: http://pymor.org
 #Vcs-Git: git://git.debian.org/collab-maint/pymor-base.git
@@ -21,7 +21,7 @@ Depends: ${misc:Depends},  ${shlibs:Depends},
   python3-pip, python3-virtualenv, python3-numpy,
   python3-scipy, python3-pyside, python3-setuptools,
   cython3, python3-matplotlib, python3-opengl,
-  python3-docopt, python3-evtk, python3-pytest-runner,
+  python3-docopt, python3-evtk, python3-pytest-runner (>= 2.9),
   python3-dev, python3, python3-mpi4py, mpi-default-dev
 Suggests: python3-pymor-doc
 Description: makes pyMOR importable system-wide + dependency tracking
