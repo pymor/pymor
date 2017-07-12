@@ -253,3 +253,9 @@ class CollectVectorRangeRules(RuleTable):
     @match_class(LincombOperator, SelectionOperator)
     def action_recurse(self, op, image):
         self.apply_children(op, image)
+
+    @match_class(Concatenation)
+    def action_Concatenation(self, op, image):
+        firstrange = op.first.range.empty()
+        self.apply(op.first, firstrange)
+        CollectOperatorRangeRules.apply(op.second, firstrange, image, False)
