@@ -153,7 +153,7 @@ class ProjectRules(RuleTable):
             if product:
                 range_basis = product.apply(range_basis)
             V = op.second.apply_transpose(range_basis)
-            return self.apply(op.first, V, source_basis, product=product)
+            return self.apply(op.first, V, source_basis)
         else:
             projected_first = self.apply(op.first, None, source_basis, product=None)
             projected_second = self.apply(op.second, range_basis, None, product=product)
