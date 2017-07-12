@@ -146,13 +146,16 @@ class ProjectRules(RuleTable):
 
     @match_class(Concatenation)
     def action_Concatenation(self, op, range_basis, source_basis, product=None):
-        """project linear non-parametric Concatenations"""
-        if op.parametric or not op.linear:
-            raise RuleNotMatchingError('Only implemented for non-parametric linear Concatenations')
-        projected_first = self.apply(op.first, None, source_basis, product=None)
-        if isinstance(projected_first, VectorArrayOperator) and not projected_first.transposed:
-            return self.apply(op.second, range_basis, projected_first._array, product=product)
+        if source_basis is not None and op.first.linear and not op.first.parametric:
+            V = op.first.apply(source_basis)
+            return self.apply(op.second, range_basis, V, product=product)
+        elif range_basis is not None and op.second.linear and not op.second.parametric:
+            if product:
+                range_basis = product.apply(range_basis)
+            V = op.second.apply_transpose(range_basis)
+            return self.apply(op.first, V, source_basis, product=product)
         else:
+            projected_first = self.apply(op.first, None, source_basis, product=None)
             projected_second = self.apply(op.second, range_basis, None, product=product)
             return Concatenation(projected_second, projected_first, name=op.name)
 
