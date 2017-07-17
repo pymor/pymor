@@ -208,6 +208,7 @@ def setup_package():
         setup_requires=setup_requires,
         tests_require=tests_require,
         install_requires=install_requires,
+        extras_require = dependencies.extras(),
         classifiers=['Development Status :: 4 - Beta',
                      'License :: OSI Approved :: BSD License',
                      'Programming Language :: Python :: 2.7',
