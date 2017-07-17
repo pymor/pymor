@@ -189,31 +189,6 @@ def _setup(**kwargs):
     return setup(**kwargs)
 
 
-def _strip_markers(name):
-    for m in ';<>=':
-        try:
-            i = name.index(m)
-            name = name[:i].strip()
-        except ValueError:
-            continue
-    return name
-
-
-def _missing(names):
-    for name in names:
-        stripped_name = _strip_markers(name)
-        try:
-            __import__(stripped_name)
-        except ImportError:
-            if stripped_name in dependencies.import_names:
-                try:
-                    __import__(dependencies.import_names[stripped_name])
-                except ImportError:
-                    yield name, dependencies.import_names[stripped_name]
-            else:
-                yield name, stripped_name
-
-
 def setup_package():
 
     _setup(
@@ -246,7 +221,7 @@ def setup_package():
         cmdclass=cmdclass,
     )
 
-    missing = dict(_missing(install_suggests.keys()))
+    missing = dict(set(dependencies.missing(install_suggests.keys())))
     if len(missing):
         import textwrap
         print('\n' + '*' * 79 + '\n')
@@ -258,7 +233,7 @@ def setup_package():
             for d in description[1:]:
                 print(' ' * col_width + d)
             print()
-        suggests = ['\'{}\' '.format(_strip_markers(m)) for m in missing.keys()]
+        suggests = ['\'{}\' '.format(dependencies.strip_markers(m)) for m in missing.keys()]
         print("\ntry: 'for pname in {}; do pip install $pname; done'".format(''.join(suggests)))
         print('\n' + '*' * 79 + '\n')
 
