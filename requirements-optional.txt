@@ -15,4 +15,4 @@ pyamg
 pyopengl
 pyside; python_version < "3.5" and "linux" not in sys_platform
 pytest-cov
-pytest>=3.0
+pytest>=3.1
