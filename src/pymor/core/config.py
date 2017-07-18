@@ -5,6 +5,13 @@
 from importlib import import_module
 import sys
 
+def _can_import(module):
+    try:
+        import_module(module)
+        return True
+    except ImportError:
+        pass
+    return False
 
 def _get_fenics_version():
     import dolfin as df
@@ -48,7 +55,7 @@ _PACKAGES = {
     'NUMPY': lambda: import_module('numpy').__version__,
     'PYAMG': lambda: import_module('pyamg.version').full_version,
     'PYTEST': lambda: import_module('pytest').__version__,
-    'PYVTK': lambda: bool(import_module('evtk')),
+    'PYVTK': lambda: _can_import('evtk') or _can_import('pyevtk'),
     'QT': _get_qt_version,
     'QTOPENGL': lambda: bool(import_module('Qt.QtOpenGL')),
     'SCIPY': lambda: import_module('scipy').__version__,
