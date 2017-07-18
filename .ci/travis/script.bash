@@ -28,7 +28,7 @@ if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     # this fails on PRs, so skip it
     if [[ "${TRAVIS_PULL_REQUEST}" == "false" ]] ; then
       sudo pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
-      sudo pip uninstall  -y pymor
+      sudo pip uninstall -y pymor
     fi
     python setup.py sdist -d ${SDIST_DIR}/ --format=gztar
     check-manifest -p python ${PWD}
@@ -39,6 +39,12 @@ if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     try_coveralls
 elif [ "${PYTEST_MARKER}" == "MPI" ] ; then
     xvfb-run -a mpirun --allow-run-as-root -n 2 python src/pymortests/mpi_run_demo_tests.py
+elif [ "${PYTEST_MARKER}" == "NUMPY" ] ; then
+    sudo pip uninstall -y numpy
+    sudo pip install git+https://github.com/numpy/numpy@master
+    # there seems to be no way of really overwriting -p no:warnings from setup.cfg
+    sed -i -e 's/\-p\ no\:warnings//g' setup.cfg
+    xvfb-run -a py.test -W once::DeprecationWarning -W once::PendingDeprecationWarning -r sxX --junitxml=test_results_${PYMOR_VERSION}.xml
 else
     # this runs in pytest in a fake, auto numbered, X Server
     xvfb-run -a py.test -r sxX --junitxml=test_results.xml
