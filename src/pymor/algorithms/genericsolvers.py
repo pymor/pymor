@@ -194,9 +194,9 @@ def _parse_options(options, default_options, default_solver, default_least_squar
     if least_squares != ('least_squares' in options['type']):
         logger = getLogger('foo')
         if least_squares:
-            logger.warn('Non-least squares solver selected for least squares problem.')
+            logger.warning('Non-least squares solver selected for least squares problem.')
         else:
-            logger.warn('Least squares solver selected for non-least squares probelm.')
+            logger.warning('Least squares solver selected for non-least squares probelm.')
 
     return options
 

@@ -268,7 +268,7 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
                     break
             extensions += 1
             if 'hierarchic' not in extension_data:
-                logger.warn('Extension algorithm does not report if extension was hierarchic. Assuming it was\'nt ..')
+                logger.warning('Extension algorithm does not report if extension was hierarchic. Assuming it was\'nt ..')
                 hierarchic = False
             else:
                 hierarchic = extension_data['hierarchic']

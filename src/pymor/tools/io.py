@@ -103,7 +103,7 @@ def load_matrix(path, key=None):
         logger.info(file_type + ' file detected.')
         return loader(path, key)
 
-    logger.warn('Could not detect file format. Trying all loaders ...')
+    logger.warning('Could not detect file format. Trying all loaders ...')
 
     loaders = [_loadmat, _mmread, _loadtxt, _load]
     for loader in loaders:

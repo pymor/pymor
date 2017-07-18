@@ -111,7 +111,7 @@ def reduce_residual(operator, rhs=None, RB=None, product=None, extends=None):
                                             orthonormalize=True, product=product,
                                             riesz_representatives=rhs_is_functional)
         except ImageCollectionError as e:
-            logger.warn('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
+            logger.warning('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
             operator = project(operator, None, RB)
             return (NonProjectedResidualOperator(operator, rhs, rhs_is_functional, product),
                     NonProjectedReconstructor(product),
@@ -286,7 +286,7 @@ def reduce_implicit_euler_residual(operator, mass, dt, functional=None, RB=None,
                 estimate_image_hierarchical([operator, mass], [functional.T], RB, (residual_range, residual_range_dims),
                                             orthonormalize=True, product=product, riesz_representatives=True)
         except ImageCollectionError as e:
-            logger.warn('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
+            logger.warning('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
             operator = project(operator, None, RB)
             mass = project(mass, None, RB)
             return (NonProjectedImplicitEulerResidualOperator(operator, mass, functional, dt, product),
