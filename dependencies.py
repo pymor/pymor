@@ -4,7 +4,7 @@
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 _EVTK = 'https://bitbucket.org/renemilk/pyevtk/get/tip.tar.gz'
-_PYSIDE = {'2.7': 'https://pymor.github.io/wheels/PySide-1.2.2-cp27-cp27m-linux_x86_64.whl',
+_PYSIDE = {'2.7': 'https://pymor.github.io/wheels/PySide-1.2.2-cp27-none-linux_x86_64.whl',
            '3.3': 'https://pymor.github.io/wheels/PySide-1.2.2-cp33-cp33m-linux_x86_64.whl',
            '3.4': 'https://pymor.github.io/wheels/PySide-1.2.4-cp34-cp34m-linux_x86_64.whl'}
 
