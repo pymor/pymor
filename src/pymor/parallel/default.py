@@ -28,7 +28,7 @@ def new_parallel_pool(ipython_num_engines=None, ipython_profile=None, allow_mpi=
     global _pool
     if _pool:
         logger = getLogger('pymor.parallel.default.new_parallel_pool')
-        logger.warn('new_parallel_pool already called; returning old pool (this might not be what you want).')
+        logger.warning('new_parallel_pool already called; returning old pool (this might not be what you want).')
         return _pool[1]
     if ipython_num_engines or ipython_profile:
         from pymor.parallel.ipython import new_ipcluster_pool
