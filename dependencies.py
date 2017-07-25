@@ -3,7 +3,6 @@
 # Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-_EVTK = 'https://bitbucket.org/renemilk/pyevtk/get/tip.tar.gz'
 _PYSIDE = {'2.7': 'https://pymor.github.io/wheels/PySide-1.2.2-cp27-none-linux_x86_64.whl',
            '3.3': 'https://pymor.github.io/wheels/PySide-1.2.2-cp33-cp33m-linux_x86_64.whl',
            '3.4': 'https://pymor.github.io/wheels/PySide-1.2.4-cp34-cp34m-linux_x86_64.whl'}
@@ -23,7 +22,7 @@ install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
                     'pyopengl': 'fast solution visualization for builtin discretizations (PySide also required)',
                     'pyamg': 'algebraic multigrid solvers',
                     'mpi4py': 'required for pymor.tools.mpi and pymor.parallel.mpi',
-                    _EVTK: 'writing vtk output',
+                    'pyevtk>=1.0.2': 'writing vtk output',
                     'pytest>=3.0': 'testing framework required to execute unit tests',
                     _pyside('3.4'): _QT_COMMENT,
                     _pyside('3.3'): _QT_COMMENT,
@@ -43,7 +42,6 @@ import_names = {'ipython': 'IPython',
                 'pytest-flakes': 'pytest_flakes',
                 'pytest-pep8': 'pytest_pep8',
                 'pyopengl': 'OpenGL',
-                _EVTK: 'pyevtk',
                 _pyside('3.4', marker=False): 'PySide',
                 _pyside('3.3', marker=False): 'PySide',
                 _pyside('2.7', marker=False): 'PySide',
