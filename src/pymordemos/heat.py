@@ -26,7 +26,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from pymor.discretizations.iosys import LTISystem
-from pymor.reductors.bt import bt
+from pymor.reductors.bt import BT
 from pymor.reductors.lti import irka
 
 import logging
@@ -88,7 +88,8 @@ if __name__ == '__main__':
 
     # Balanced Truncation
     r = 5
-    rom_bt, _ = bt(lti, r, tol=1e-5)
+    reductor = BT(lti)
+    rom_bt = reductor.reduce(r, tol=1e-5)
     print('H_2-norm of the BT ROM:       {}'.format(rom_bt.norm()))
     print('H_inf-norm of the BT ROM:     {}'.format(rom_bt.norm('Hinf')))
     err_bt = lti - rom_bt

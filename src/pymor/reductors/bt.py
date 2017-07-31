@@ -8,100 +8,174 @@ from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.reductors.basic import GenericPGReductor
 
 
-def bt(discretization, r=None, tol=None, typ='lyap', method='sr'):
-    r"""Reduce using the Balanced Truncation method to order `r` or with tolerance `tol`.
-
-    .. [A05]  A. C. Antoulas, Approximation of Large-Scale Dynamical
-              Systems,
-              SIAM, 2005.
-    .. [MG91] D. Mustafa, K. Glover, Controller Reduction by
-              :math:`\mathcal{H}_\infty`-Balanced Truncation,
-              IEEE Transactions on Automatic Control, 36(6), 668-682, 1991.
-    .. [OJ88] P. C. Opdenacker, E. A. Jonckheere, A Contraction Mapping
-              Preserving Balanced Reduction Scheme and Its Infinity Norm
-              Error Bounds,
-              IEEE Transactions on Circuits and Systems, 35(2), 184-189,
-              1988.
+class GenericBT(GenericPGReductor):
+    """Generic Balanced Truncation reductor.
 
     Parameters
     ----------
-    discretization
-        The |LTISystem| which is to be reduced.
-    r
-        Order of the reduced model if `tol` is `None`, maximum order if
-        `tol` is specified.
-    tol
-        Tolerance for the error bound if `r` is `None`.
-    typ
-        Type of the Gramian (see
-        :func:`pymor.discretizations.iosys.LTISystem.gramian`).
-    method
-        Projection method used:
-
-        - `'sr'`: square root method (default, since standard in
-            literature)
-        - `'bfsr'`: balancing-free square root method (avoids scaling
-            by singular values and orthogonalizes the projection
-            matrices, which might make it more accurate than the square
-            root method)
-        - `'biorth'`: like the balancing-free square root method,
-            except it biorthogonalizes the projection matrices
-
-    Returns
-    -------
-    rom
-        Reduced |LTISystem|.
-    reductor
-        Reductor holding the projection matrices `V` and `W` used
-        to compute the reduced order model.
+    d
+        The system which is to be reduced.
     """
-    assert r is not None or tol is not None
-    assert r is None or 0 < r < discretization.n
-    assert method in ('sr', 'bfsr', 'biorth')
+    def __init__(self, d):
+        self.d = d
+        self.V = None
+        self.W = None
+        self.typ = None
 
-    # compute gramian factors
-    cf = discretization.gramian(typ, 'cf')
-    of = discretization.gramian(typ, 'of')
+    def _compute_gramians(self):
+        """Returns low-rank factors of Gramians."""
+        self.cf = self.d.gramian(self.typ, 'cf')
+        self.of = self.d.gramian(self.typ, 'of')
 
-    if r is not None and r > min([len(cf), len(of)]):
-        raise ValueError('r needs to be smaller than the sizes of Gramian factors.' +
-                         ' Try reducing the tolerance in the low-rank Lyapunov equation solver.')
+    def _compute_sv_U_V(self):
+        """Returns singular values and vectors."""
+        self.sv, self.sU, self.sV = self.d.sv_U_V(self.typ)
 
-    # compute "Hankel" singular values and vectors
-    sv, U, V = discretization.sv_U_V(typ)
+    def _compute_error_bounds(self):
+        """Returns error bounds for all possible reduced orders."""
+        raise NotImplementedError()
 
-    # find reduced order if tol is specified
-    if tol is not None:
-        bounds = np.zeros((discretization.n,))
-        sv_reverse = np.zeros((discretization.n,))
-        sv_reverse[:len(sv)] = sv
-        sv_reverse[len(sv):] = sv[-1]
-        sv_reverse = sv_reverse[-1:0:-1]
-        if typ == 'lyap':
-            bounds[:-1] = 2 * sv_reverse.cumsum()[::-1]
-        elif typ == 'lqg':
-            bounds[:-1] = 2 * (sv_reverse / np.sqrt(1 + sv_reverse ** 2)).cumsum()[::-1]
-        elif isinstance(typ, tuple) and typ[0] == 'br':
-            bounds[:-1] = 2 * typ[1] * sv_reverse.cumsum()[::-1]
-        r_tol = np.argmax(bounds <= tol) + 1
-        r = r_tol if r is None else min([r, r_tol])
+    def reduce(self, r=None, tol=None, method='sr'):
+        """Generic Balanced Truncation.
 
-    # compute projection matrices and find the reduced model
-    V = cf.lincomb(V[:r])
-    W = of.lincomb(U[:r])
-    if method == 'sr':
-        alpha = 1 / np.sqrt(sv[:r])
-        V.scal(alpha)
-        W.scal(alpha)
-        reductor = GenericPGReductor(discretization, V, W, use_default=['E'])
-    elif method == 'bfsr':
-        V = gram_schmidt(V, atol=0, rtol=0)
-        W = gram_schmidt(W, atol=0, rtol=0)
-        reductor = GenericPGReductor(discretization, V, W)
-    elif method == 'biorth':
-        V, W = gram_schmidt_biorth(V, W, product=discretization.E)
-        reductor = GenericPGReductor(discretization, V, W, use_default=['E'])
+        Parameters
+        ----------
+        r
+            Order of the reduced model if `tol` is `None`, maximum order if
+            `tol` is specified.
+        tol
+            Tolerance for the error bound if `r` is `None`.
+        method
+            Projection method used:
 
-    rom = reductor.reduce()
+                - `'sr'`: square root method (default, since standard in
+                    literature)
+                - `'bfsr'`: balancing-free square root method (avoids scaling
+                    by singular values and orthogonalizes the projection
+                    matrices, which might make it more accurate than the square
+                    root method)
+                - `'biorth'`: like the balancing-free square root method,
+                    except it biorthogonalizes the projection matrices
 
-    return rom, reductor
+        Returns
+        -------
+        rd
+            Reduced system.
+        """
+        assert r is not None or tol is not None
+        assert r is None or 0 < r < self.d.n
+        assert method in ('sr', 'bfsr', 'biorth')
+
+        self._compute_gramians()
+        self._compute_sv_U_V()
+
+        # find reduced order if tol is specified
+        if tol is not None:
+            self._compute_error_bounds()
+            r_tol = np.argmax(self.bounds <= tol) + 1
+            r = r_tol if r is None else min([r, r_tol])
+
+        if r > min([len(self.cf), len(self.of)]):
+            raise ValueError('r needs to be smaller than the sizes of Gramian factors.' +
+                            ' Try reducing the tolerance in the low-rank matrix equation solver.')
+
+        # compute projection matrices and find the reduced model
+        self.V = self.cf.lincomb(self.sV[:r])
+        self.W = self.of.lincomb(self.sU[:r])
+        if method == 'sr':
+            alpha = 1 / np.sqrt(self.sv[:r])
+            self.V.scal(alpha)
+            self.W.scal(alpha)
+            self.use_default = ['E']
+            rd = self._project()
+        elif method == 'bfsr':
+            self.V = gram_schmidt(self.V, atol=0, rtol=0)
+            self.W = gram_schmidt(self.W, atol=0, rtol=0)
+            self.use_default = None
+            rd = self._project()
+        elif method == 'biorth':
+            self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.d.E)
+            self.use_default = ['E']
+            rd = self._project()
+
+        return rd
+
+    extend_source_basis = None
+    extend_range_basis = None
+
+
+class BT(GenericBT):
+    """Standard (Lyapunov) Balanced Truncation reductor.
+
+    .. [A05] A. C. Antoulas, Approximation of Large-Scale Dynamical Systems,
+            SIAM, 2005.
+
+    Parameters
+    ----------
+    d
+        The system which is to be reduced.
+    """
+    def __init__(self, d):
+        super().__init__(d)
+        self.typ = 'lyap'
+
+    def _compute_error_bounds(self):
+        self.bounds = np.zeros((self.d.n,))
+        for i in range(self.d.n - 2, -1, -1):
+            svi = self.sv[i + 1] if i < len(self.sv) else self.sv[-1]
+            self.bounds[i] = self.bounds[i + 1] + svi
+        self.bounds *= 2
+
+
+class LQGBT(GenericBT):
+    r"""Linear Quadratic Gaussian (LQG) Balanced Truncation reductor.
+
+    .. [A05] A. C. Antoulas, Approximation of Large-Scale Dynamical Systems,
+             SIAM, 2005.
+    .. [MG91] D. Mustafa, K. Glover, Controller Reduction by
+              :math:`\mathcal{H}_\infty`-Balanced Truncation,
+              IEEE Transactions on Automatic Control, 36(6), 668-682, 1991.
+
+    Parameters
+    ----------
+    d
+        The system which is to be reduced.
+    """
+    def __init__(self, d):
+        super().__init__(d)
+        self.typ = 'lqg'
+
+    def _compute_error_bounds(self):
+        self.bounds = np.zeros((self.d.n,))
+        for i in range(self.d.n - 2, -1, -1):
+            svi = self.sv[i + 1] if i < len(self.sv) else self.sv[-1]
+            self.bounds[i] = self.bounds[i + 1] + svi / np.sqrt(1 + svi ** 2)
+        self.bounds *= 2
+
+
+class BRBT(GenericBT):
+    """Bounded Real (BR) Balanced Truncation reductor.
+
+    .. [OJ88] P. C. Opdenacker, E. A. Jonckheere, A Contraction Mapping
+              Preserving Balanced Reduction Scheme and Its Infinity Norm Error
+              Bounds,
+              IEEE Transactions on Circuits and Systems, 35(2), 184-189, 1988.
+
+    Parameters
+    ----------
+    d
+        The system which is to be reduced.
+    gamma
+        Upper bound for the :math:`\mathcal{H}_\infty`-norm.
+    """
+    def __init__(self, d, gamma):
+        super().__init__(d)
+        self.typ = ('br', gamma)
+        self.gamma = gamma
+
+    def _compute_error_bounds(self, sv):
+        self.bounds = np.zeros((self.d.n,))
+        for i in range(self.d.n - 2, -1, -1):
+            svi = self.sv[i + 1] if i < len(self.sv) else self.sv[-1]
+            self.bounds[i] = self.bounds[i + 1] + svi
+        self.bounds *= 2 * self.gamma
