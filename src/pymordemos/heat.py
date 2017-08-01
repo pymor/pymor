@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 
 from pymor.discretizations.iosys import LTISystem
 from pymor.reductors.bt import BT
-from pymor.reductors.lti import irka
+from pymor.reductors.lti import IRKA
 
 import logging
 logging.getLogger('pymor.algorithms.gram_schmidt.gram_schmidt').setLevel(logging.ERROR)
@@ -110,11 +110,12 @@ if __name__ == '__main__':
     sigma = np.logspace(-1, 3, r)
     tol = 1e-4
     maxit = 100
-    rom_irka, _, reduction_data_irka = irka(lti, r, sigma, tol=tol, maxit=maxit, verbose=True, compute_errors=True)
+    irka_reductor = IRKA(lti)
+    rom_irka = irka_reductor.reduce(r, sigma, tol=tol, maxit=maxit, verbose=True, compute_errors=True)
 
     # Shift distances
     fig, ax = plt.subplots()
-    ax.semilogy(reduction_data_irka['dist'], '.-')
+    ax.semilogy(irka_reductor.dist, '.-')
     ax.set_title('Distances between shifts in IRKA iterations')
     plt.show()
 
