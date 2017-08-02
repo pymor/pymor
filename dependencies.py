@@ -13,7 +13,8 @@ def _pyside(rev, marker=True):
     return '{}'.format(_PYSIDE[rev])
 
 _QT_COMMENT = 'solution visualization for builtin discretizations'
-tests_require = ['pytest>=3.2', 'pytest-cov', 'pytest-xdist']
+_PYTEST = 'pytest>=3.2'
+tests_require = [_PYTEST, 'pytest-cov', 'pytest-xdist']
 install_requires = ['cython>=0.20.1', 'numpy>=1.8.1', 'scipy>=0.13.3', 'Sphinx>=1.4.0', 'docopt', 'Qt.py>=1.0.0b3']
 setup_requires = ['pytest-runner>=2.9', 'cython>=0.20.1', 'numpy>=1.8.1']
 install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
@@ -23,7 +24,7 @@ install_suggests = {'ipython>=3.0': 'an enhanced interactive python shell',
                     'pyamg': 'algebraic multigrid solvers',
                     'mpi4py': 'required for pymor.tools.mpi and pymor.parallel.mpi',
                     'pyevtk>=1.1': 'writing vtk output',
-                    'pytest>=3.1': 'testing framework required to execute unit tests',
+                    _PYTEST: 'testing framework required to execute unit tests',
                     _pyside('3.4'): _QT_COMMENT,
                     _pyside('3.3'): _QT_COMMENT,
                     _pyside('2.7'): _QT_COMMENT,
