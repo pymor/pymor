@@ -9,7 +9,7 @@ from functools import partial
 
 env_tpl = '''
 PYTEST_MARKER="{}"
-TRAVIS_REPO_SLUG={}
+TRAVIS_REPO_SLUG="pymor/pymor"
 TRAVIS_PULL_REQUEST="false"
 TRAVIS_COMMIT={}
 '''
@@ -25,7 +25,7 @@ def _run_config(tm, clone_dir, commit):
         image = 'pymor/testing:{}'.format(tag)
         subprocess.check_call(['docker', 'pull', image])
         with NamedTemporaryFile('wt') as envfile:
-            envfile.write(env_tpl.format(marker, slug, commit))
+            envfile.write(env_tpl.format(marker, commit))
             cmd = ['docker', 'run', '--env-file', envfile.name, '-v', '{}:/src'.format(os.getcwd()),
                    image, './.ci/travis/script.bash']
             try:
@@ -37,12 +37,11 @@ def _run_config(tm, clone_dir, commit):
 
 docker_tags = ['2.7', '3.4', '3.5']
 pytest_marker = [None, "PIP_ONLY", "MPI"]
-slug = 'pymor/pymor'
 commit = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
 
 with TemporaryDirectory() as clone_tmp:
     clone_dir = os.path.join(clone_tmp, 'pymor')
-    subprocess.check_call(['git', 'clone', 'https://github.com/{}.git'.format(slug), clone_dir])
+    subprocess.check_call(['git', 'clone', os.getcwd(), clone_dir])
     run_configs = partial(_run_config, clone_dir=clone_dir, commit=commit)
     cpus = int(cpu_count()/2)
     with Pool(processes=cpus) as pool:
