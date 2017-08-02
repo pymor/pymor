@@ -22,6 +22,9 @@ function try_coveralls {
     fi
 }
 
+#allow xdist to work by fixing parametrization order
+export PYTHONHASHSEED=0
+
 python setup.py build_ext -i
 if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     export SDIST_DIR=/tmp/pymor_sdist/

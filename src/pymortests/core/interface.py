@@ -2,13 +2,12 @@
 # Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
-import os
-import tempfile
+import importlib
 import pytest
 
 from pymor.core.interfaces import (ImmutableInterface, abstractstaticmethod, abstractclassmethod)
 from pymor.core import exceptions
-from pymortests.base import TestInterface, runmodule, SubclassForImplemetorsOf
+from pymortests.base import TestInterface, runmodule, subclassForImplemetorsOf
 from pymortests.core.dummies import *   # NOQA
 from pymor.grids.rect import RectGrid
 from pymor.tools import timing
@@ -60,7 +59,6 @@ class Test_Interface(TestInterface):
         assert '?' not in pymor.__version__
 
 
-@SubclassForImplemetorsOf(ImmutableInterface)
 class WithcopyInterface(TestInterface):
 
     def test_with_(self):
@@ -77,8 +75,10 @@ class WithcopyInterface(TestInterface):
         except exceptions.ConstError:
             pass
 
-# this needs to go into every module that wants to use dynamically generated types, ie. testcases, below the test code
-from pymor.core.dynamic import *   # NOQA
+
+def test_withcopy_implementors():
+    for TestType in subclassForImplemetorsOf(ImmutableInterface, WithcopyInterface):
+        TestType().test_with_()
 
 if __name__ == "__main__":
     runmodule(filename=__file__)
