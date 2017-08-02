@@ -3,4 +3,5 @@
 check-manifest
 pytest-cov
 pytest-travis-fold
+pytest-xdist
 python-coveralls
