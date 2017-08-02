@@ -15,5 +15,4 @@ pyevtk>=1.1
 pyopengl
 pyside; python_version < "3.5" and "linux" not in sys_platform
 pytest-cov
-pytest-xdist
 pytest>=3.2
