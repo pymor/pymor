@@ -40,9 +40,8 @@ if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
 elif [ "${PYTEST_MARKER}" == "MPI" ] ; then
     xvfb-run -a mpirun --allow-run-as-root -n 2 python src/pymortests/mpi_run_demo_tests.py
 else
-    PYMOR_VERSION=$(python -c 'import pymor;print(pymor.__version__)')
     # this runs in pytest in a fake, auto numbered, X Server
-    xvfb-run -a py.test -r sxX --junitxml=test_results_${PYMOR_VERSION}.xml
+    xvfb-run -a py.test -r sxX --junitxml=test_results.xml
     try_coveralls
 fi
 

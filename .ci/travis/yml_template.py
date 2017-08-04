@@ -19,14 +19,15 @@ before_script:
     - export ENV_FILE=${HOME}/env
     - printenv | \grep TRAVIS > ${ENV_FILE}
     - printenv | \grep PYTEST_MARKER >> ${ENV_FILE}
+    - printenv | \grep encrypted >> ${ENV_FILE}
     - export DOCKER_RUN="docker run -e LOCAL_USER_ID=$(id -u) --env-file ${ENV_FILE} -v ${TRAVIS_BUILD_DIR}:/src ${IMAGE}"
 
 script:
     - ${DOCKER_RUN} /src/.ci/travis/script.bash
 
 # runs independent of 'script' failure/success
-#after_script:
-    #- ${DOCKER_RUN} /src/.ci/travis/after_script.bash
+after_script:
+    - ${DOCKER_RUN} /src/.ci/travis/after_script.bash
 
 notifications:
   email:
