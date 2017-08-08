@@ -63,7 +63,7 @@ class CoerciveRBReductor(GenericRBReductor):
         with self.logger.block('Assembling error estimator ...'):
             residual = self.residual_reductor.reduce()
 
-            estimator = CoerciveRBEstimator(residual, self.residual_reductor.residual_range_dims.copy(),
+            estimator = CoerciveRBEstimator(residual, tuple(self.residual_reductor.residual_range_dims),
                                             self.coercivity_estimator)
             rd = rd.with_(estimator=estimator)
 
