@@ -182,7 +182,7 @@ if config.HAVE_FENICS:
 
 
     @defaults('solver', 'preconditioner')
-    def _solver_options(solver='bicgstab', preconditioner='amg'):
+    def _solver_options(solver='default', preconditioner='default'):
         return {'solver': solver, 'preconditioner': preconditioner}
 
 
