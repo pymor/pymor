@@ -20,29 +20,33 @@ environment:
       CONDA: "C:\\Miniconda3"
       MARKER: "not grid"
       QT_API: "pyqt5"
+      ALLOW_FAIL: true
 
     - PYTHON_VERSION: "3.4" # currently 3.4.3
       PYTHON_ARCH: "32"
       CONDA: "C:\\Miniconda3"
       MARKER: "grid"
       QT_API: "pyqt5"
+      ALLOW_FAIL: true
 
     - PYTHON_VERSION: "3.5" # currently 3.5.1
       PYTHON_ARCH: "32"
       CONDA: "C:\\Miniconda35"
       MARKER: "not grid"
       QT_API: "pyqt5"
-      ALLOW_FAIL: "true"
+      ALLOW_FAIL: true
 
     - PYTHON_VERSION: "3.5" # currently 3.5.1
       PYTHON_ARCH: "32"
       CONDA: "C:\\Miniconda35"
       MARKER: "grid"
       QT_API: "pyqt5"
+      ALLOW_FAIL: true
 
 matrix:
   allow_failures:
-    - ALLOW_FAIL: "true"
+    # every matrix entry where 'ALLOW_FAIL: true' is in is allowed to fail
+    - ALLOW_FAIL: true
 
 install:
   # If there is a newer build queued for the same PR, cancel this one.
