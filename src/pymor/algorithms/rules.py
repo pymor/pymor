@@ -241,7 +241,7 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
                 except RuleNotMatchingError:
                     pass
 
-        raise NoMatchingRuleError('No rule could be applied to {}'.format(obj))
+        raise NoMatchingRuleError(obj)
 
     @classinstancemethod
     def apply_children(cls, obj, *args, children=None, **kwargs):

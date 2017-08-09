@@ -1,12 +1,10 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
 # Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
-
-from tempfile import NamedTemporaryFile
-
 import pytest
 
 from pymor.core.defaults import defaults, set_defaults, print_defaults, load_defaults_from_file, write_defaults_to_file
+from pymor.tools.io import SafeTemporaryFileName
 
 
 @defaults('c', 'd')
@@ -35,11 +33,11 @@ def test_print_defaults():
 
 
 def test_write_defaults_to_file():
-    with NamedTemporaryFile() as f:
-        write_defaults_to_file(f.name)
+    with SafeTemporaryFileName('defaults.py') as filename:
+        write_defaults_to_file(filename)
 
 
 def test_load_defaults_from_file():
-    with NamedTemporaryFile() as f:
-        write_defaults_to_file(f.name)
-        load_defaults_from_file(f.name)
+    with SafeTemporaryFileName('defaults.py') as filename:
+        write_defaults_to_file(filename)
+        load_defaults_from_file(filename)

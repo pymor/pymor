@@ -22,6 +22,7 @@ try:
 except ImportError:
     import pickle as pickle
 from io import BytesIO as IOtype
+import sys
 
 from pymor.core.config import config
 
@@ -72,7 +73,7 @@ else:
 # The following method is a slightly modified version of
 # a recipe from the "Python Cookbook", 3rd edition.
 
-def _generate_opcode(code_object):
+def _generate_opcode_old(code_object):
     HAVE_ARGUMENT = opcode.HAVE_ARGUMENT
     EXTENDED_ARG = opcode.EXTENDED_ARG
 
@@ -97,6 +98,19 @@ def _generate_opcode(code_object):
             oparg = None
         yield (op, oparg)
 
+
+def _generate_opcode_new(code_object):
+    import dis
+    for ins in dis.get_instructions(code_object):
+        yield (ins.opcode, ins.arg)
+
+if (sys.version_info.major, sys.version_info.minor) < (3, 4):
+    # cleverer dispatch via 'yield from' at runtime will
+    # not work due to it missing from < 3.4 and not being
+    # transformed by 3to2
+    _generate_opcode = _generate_opcode_old
+else:
+    _generate_opcode = _generate_opcode_new
 
 def _global_names(code_object):
     '''Return all names in code_object.co_names which are used in a LOAD_GLOBAL statement.'''

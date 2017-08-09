@@ -9,8 +9,12 @@ from pymor.grids import referenceelements
 from pymor.grids.constructions import flatten_grid
 
 if config.HAVE_PYVTK:
-    from evtk.hl import _addDataToFile, _appendDataToFile
-    from evtk.vtk import VtkGroup, VtkFile, VtkUnstructuredGrid, VtkTriangle, VtkQuad
+    try:
+        from evtk.hl import _addDataToFile, _appendDataToFile
+        from evtk.vtk import VtkGroup, VtkFile, VtkUnstructuredGrid, VtkTriangle, VtkQuad
+    except ImportError:
+        from pyevtk.hl import _addDataToFile, _appendDataToFile
+        from pyevtk.vtk import VtkGroup, VtkFile, VtkUnstructuredGrid, VtkTriangle, VtkQuad
 
 
 def _write_vtu_series(grid, coordinates, connectivity, data, filename_base, last_step, is_cell_data):

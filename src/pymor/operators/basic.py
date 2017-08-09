@@ -241,7 +241,16 @@ class ProjectedOperator(OperatorBase):
             return self
         from pymor.algorithms.projection import project
         pop = project(op, range_basis=self.range_basis, source_basis=self.source_basis,
-                      product=self.product, name=self.name + '_assembled')
+                      product=self.product)
         if self.solver_options:
             pop = pop.with_(solver_options=self.solver_options)
         return pop
+
+    def apply_transpose(self, V, mu=None):
+        assert V in self.range
+        if self.range_basis is not None:
+            V = self.range_basis.lincomb(V.data)
+        U = self.operator.apply_transpose(V, mu)
+        if self.source_basis is not None:
+            U = self.source.make_array(U.dot(self.source_basis))
+        return U

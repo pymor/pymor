@@ -10,7 +10,6 @@ Logging can be configured via the :func:`set_log_format` and
 :func:`set_log_levels` methods.
 """
 
-import curses
 import logging
 import os
 import time
@@ -65,6 +64,7 @@ class ColoredFormatter(logging.Formatter):
             self.use_color = False
         else:
             try:
+                import curses
                 curses.setupterm()
                 self.use_color = curses.tigetnum("colors") > 1
             except Exception:
