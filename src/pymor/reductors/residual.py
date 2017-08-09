@@ -32,7 +32,7 @@ class ResidualReductor(BasicInterface):
     `residual_range` for this range space and then returns the Petrov-Galerkin projection ::
 
         projected_residual
-            === project(residual, range_basis=residual_range, source_basis=RB)
+            == project(residual, range_basis=residual_range, source_basis=RB)
 
     of the residual operator. Given a reduced basis coefficient vector `u`, w.r.t.
     `RB`, the (dual) norm of the residual can then be computed as ::
@@ -92,7 +92,7 @@ class ResidualReductor(BasicInterface):
                                                     orthonormalize=True, product=self.product,
                                                     riesz_representatives=rhs_is_functional)
                 except ImageCollectionError as e:
-                    self.logger.warn('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
+                    self.logger.warning('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
                     self.residual_range = False
 
         if self.residual_range is False:
@@ -194,7 +194,7 @@ class ImplicitEulerResidualReductor(BasicInterface):
     returns the Petrov-Galerkin projection ::
 
         projected_riesz_residual
-            === riesz_residual.projected(range_basis=residual_range, source_basis=RB)
+            == riesz_residual.projected(range_basis=residual_range, source_basis=RB)
 
     of the `riesz_residual` operator. Given reduced basis coefficient vectors `u` and `u_old`,
     the dual norm of the residual can then be computed as ::
@@ -247,7 +247,7 @@ class ImplicitEulerResidualReductor(BasicInterface):
                                                     orthonormalize=True, product=self.product,
                                                     riesz_representatives=True)
                 except ImageCollectionError as e:
-                    self.logger.warn('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
+                    self.logger.warning('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
                     self.residual_range = False
 
         if self.residual_range is False:

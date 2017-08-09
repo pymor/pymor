@@ -137,7 +137,7 @@ class ParabolicRBEstimator(ImmutableInterface):
                                         initial_residual, initial_residual_range_dims,
                                         self.coercivity_estimator)
         else:
-            self.logger.warn('Cannot efficiently reduce to subbasis')
+            self.logger.warning('Cannot efficiently reduce to subbasis')
             return ParabolicRBEstimator(self.residual.projected_to_subbasis(None, dim), None,
                                         self.initial_residual.projected_to_subbasis(None, dim), None,
                                         self.coercivity_estimator)
