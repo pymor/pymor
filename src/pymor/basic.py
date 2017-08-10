@@ -9,7 +9,6 @@ to have the most important parts of pyMOR directly available.
 """
 
 from pymor.algorithms.basic import almost_equal
-from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension, pod_basis_extension
 from pymor.algorithms.ei import interpolate_operators, ei_greedy, deim
 from pymor.algorithms.error import reduction_error_analysis
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
@@ -64,9 +63,9 @@ from pymor.parameters.functionals import (ProjectionParameterFunctional, Generic
                                           ExpressionParameterFunctional)
 from pymor.parameters.spaces import CubicParameterSpace
 
-from pymor.reductors.basic import reduce_generic_rb, reduce_to_subbasis
-from pymor.reductors.coercive import reduce_coercive, reduce_coercive_simple
-from pymor.reductors.parabolic import reduce_parabolic
+from pymor.reductors.basic import GenericRBReductor
+from pymor.reductors.coercive import CoerciveRBReductor, SimpleCoerciveRBReductor
+from pymor.reductors.parabolic import ParabolicRBReductor
 
 from pymor.tools.random import new_random_state
 

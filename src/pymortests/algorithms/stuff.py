@@ -7,7 +7,6 @@ import pytest
 
 from pymortests.base import runmodule, MonomOperator
 from pymor.algorithms.newton import newton, NewtonError
-import pymor.algorithms.basisextension as bxt
 from pymor.tools.floatcmp import float_cmp
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
@@ -29,21 +28,6 @@ def test_newton_fail():
     with pytest.raises(NewtonError):
         _ = _newton(0, maxiter=10, stagnation_threshold=np.inf)
 
-
-@pytest.fixture(params=('pod_basis_extension', 'gram_schmidt_basis_extension', 'trivial_basis_extension'))
-def extension_alg(request):
-    return getattr(bxt, request.param)
-
-
-def test_ext(extension_alg):
-    size = 5
-    ident = np.identity(size)
-    current = ident[0]
-    for i in range(1, size):
-        c = NumpyVectorSpace.from_data(current)
-        n, _ = extension_alg(c, NumpyVectorSpace.from_data(ident[i]))
-        assert np.allclose(n.data, ident[0:i+1])
-        current = ident[0:i+1]
 
 if __name__ == "__main__":
     runmodule(filename=__file__)

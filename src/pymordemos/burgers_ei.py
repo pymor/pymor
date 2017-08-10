@@ -79,20 +79,18 @@ Options:
 import sys
 import math as m
 import time
-from functools import partial
 
 import numpy as np
 from docopt import docopt
 
 from pymor.algorithms.greedy import greedy
-from pymor.algorithms.basisextension import pod_basis_extension
 from pymor.algorithms.ei import interpolate_operators
 from pymor.analyticalproblems.burgers import burgers_problem_2d
 from pymor.discretizers.fv import discretize_instationary_fv
 from pymor.grids.rect import RectGrid
 from pymor.grids.tria import TriaGrid
 from pymor.parallel.default import new_parallel_pool
-from pymor.reductors.basic import reduce_generic_rb, reduce_to_subbasis
+from pymor.reductors.basic import GenericRBReductor
 
 
 def main(args):
@@ -187,17 +185,14 @@ def main(args):
 
     print('RB generation ...')
 
-    def reductor(discretization, rb, extends=None):
-        return reduce_generic_rb(ei_discretization, rb, extends=extends)
-
-    extension_algorithm = partial(pod_basis_extension)
+    reductor = GenericRBReductor(ei_discretization)
 
     greedy_data = greedy(discretization, reductor, discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
                          use_estimator=False, error_norm=lambda U: np.max(discretization.l2_norm(U)),
-                         extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'],
+                         extension_params={'method': 'pod'}, max_extensions=args['RBSIZE'],
                          pool=pool)
 
-    rb_discretization, reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
+    rb_discretization = greedy_data['reduced_discretization']
 
     print('\nSearching for maximum error on random snapshots ...')
 
@@ -207,7 +202,7 @@ def main(args):
 
     def error_analysis(N, M):
         print('N = {}, M = {}: '.format(N, M), end='')
-        rd, rc, _ = reduce_to_subbasis(rb_discretization, N, reconstructor)
+        rd = reductor.reduce(N)
         rd = rd.with_(operator=rd.operator.with_cb_dim(M))
         l2_err_max = -1
         mumax = None
@@ -215,7 +210,7 @@ def main(args):
             print('.', end='')
             sys.stdout.flush()
             u = rd.solve(mu)
-            URB = rc.reconstruct(u)
+            URB = reductor.reconstruct(u)
             U = discretization.solve(mu)
             l2_err = np.max(discretization.l2_norm(U - URB))
             l2_err = np.inf if not np.isfinite(l2_err) else l2_err
@@ -226,7 +221,7 @@ def main(args):
         return l2_err_max, mumax
     error_analysis = np.frompyfunc(error_analysis, 2, 2)
 
-    real_rb_size = len(greedy_data['basis'])
+    real_rb_size = len(reductor.RB)
     real_cb_size = len(ei_data['basis'])
     if args['--plot-error-landscape']:
         N_count = min(real_rb_size - 1, args['--plot-error-landscape-N'])
@@ -289,7 +284,7 @@ def main(args):
         plt.show()
     if args['--plot-err']:
         U = discretization.solve(mumax)
-        URB = reconstructor.reconstruct(rb_discretization.solve(mumax))
+        URB = reductor.reconstruct(rb_discretization.solve(mumax))
         discretization.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
                                  title='Maximum Error Solution', separate_colorbars=True)
 

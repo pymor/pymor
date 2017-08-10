@@ -7,7 +7,6 @@ from fractions import Fraction
 import numpy as np
 import time
 
-from pymor.algorithms.basisextension import gram_schmidt_basis_extension
 from pymor.core.exceptions import ExtensionError
 from pymor.core.interfaces import BasicInterface
 from pymor.core.logger import getLogger
@@ -18,10 +17,11 @@ from pymor.parameters.spaces import CubicParameterSpace
 
 
 def adaptive_greedy(discretization, reductor, parameter_space=None,
-                    initial_basis=None, use_estimator=True, error_norm=None,
-                    extension_algorithm=gram_schmidt_basis_extension, target_error=None, max_extensions=None,
+                    use_estimator=True, error_norm=None,
+                    target_error=None, max_extensions=None,
                     validation_mus=0, rho=1.1, gamma=0.2, theta=0.,
-                    visualize=False, visualize_vertex_size=80, pool=dummy_pool):
+                    extension_params=None, visualize=False, visualize_vertex_size=80,
+                    pool=dummy_pool):
     """Greedy basis generation algorithm with adaptively refined training set.
 
     This method extends pyMOR's default :func:`~pymor.algorithms.greedy.greedy`
@@ -48,13 +48,9 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
     parameter_space
         The |ParameterSpace| for which to compute the reduced model. If `None`,
         the parameter space of the `discretization` is used.
-    initial_basis
-        See :func:`~pymor.algorithms.greedy.greedy`.
     use_estimator
         See :func:`~pymor.algorithms.greedy.greedy`.
     error_norm
-        See :func:`~pymor.algorithms.greedy.greedy`.
-    extension_algorithm
         See :func:`~pymor.algorithms.greedy.greedy`.
     target_error
         See :func:`~pymor.algorithms.greedy.greedy`.
@@ -78,6 +74,8 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
     theta
         Ratio of training set elements to select for refinement.
         (One element is always refined.)
+    extension_params
+        See :func:`~pymor.algorithms.greedy.greedy`.
     visualize
         If `True`, visualize the refinement indicators. (Only available
         for 2 and 3 dimensional parameter spaces.)
@@ -90,10 +88,8 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
     -------
     Dict with the following fields:
 
-        :basis:                  The reduced basis.
         :reduced_discretization: The reduced |Discretization| obtained for the
                                  computed basis.
-        :reconstructor:          Reconstructor for `reduced_discretization`.
         :extensions:             Number of greedy iterations.
         :max_errs:               Sequence of maximum errors during the greedy run.
         :max_err_mus:            The parameters corresponding to `max_errs`.
@@ -105,11 +101,13 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
         :reduction_data:         Reduction data returned by the last reductor call.
     """
 
+    extension_params = extension_params or {}
+
     def estimate(mus):
         if use_estimator:
             errors = pool.map(_estimate, mus, rd=rd)
         else:
-            errors = pool.map(_estimate, mus, rd=rd, d=d, rc=rc, error_norm=error_norm)
+            errors = pool.map(_estimate, mus, rd=rd, d=d, reductor=reductor, error_norm=error_norm)
         # most error_norms will return an array of length 1 instead of a number, so we extract the numbers
         # if necessary
         return np.array([x[0] if hasattr(x, '__len__') else x for x in errors])
@@ -132,9 +130,6 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
 
         # initial setup for main loop
         d = discretization
-        basis = initial_basis
-        rd, rc, reduction_data = None, None, None
-        hierarchic = False
 
         # setup training and validation sets
         parameter_space = parameter_space or d.parameter_space
@@ -158,8 +153,7 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
 
         while True:  # main loop
             with logger.block('Reducing ...'):
-                rd, rc, reduction_data = reductor(discretization, basis) if not hierarchic \
-                    else reductor(discretization, basis, extends=(rd, rc, reduction_data))
+                rd = reductor.reduce()
 
             current_refinements = 0
             while True:  # estimate reduction errors and refine training set until no overfitting is detected
@@ -259,19 +253,14 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
 
             # basis extension
             with logger.block('Computing solution snapshot for mu = {} ...'.format(max_err_mu)):
-                U = discretization.solve(max_err_mu)
+                U = d.solve(max_err_mu)
             with logger.block('Extending basis with solution snapshot ...'):
                 try:
-                    basis, extension_data = extension_algorithm(basis, U)
+                    reductor.extend_basis(U, copy_U=False, **extension_params)
                 except ExtensionError:
                     logger.info('Extension failed. Stopping now.')
                     break
             extensions += 1
-            if 'hierarchic' not in extension_data:
-                logger.warning('Extension algorithm does not report if extension was hierarchic. Assuming it was\'nt ..')
-                hierarchic = False
-            else:
-                hierarchic = extension_data['hierarchic']
 
             logger.info('')
 
@@ -279,27 +268,26 @@ def adaptive_greedy(discretization, reductor, parameter_space=None,
             if max_extensions is not None and extensions >= max_extensions:
                 logger.info('Maximum number of {} extensions reached.'.format(max_extensions))
                 with logger.block('Reducing once more ...'):
-                    rd, rc, reduction_data = reductor(discretization, basis) if not hierarchic \
-                        else reductor(discretization, basis, extends=(rd, rc, reduction_data))
+                    rd = reductor.reduce()
                 break
 
     tictoc = time.time() - tic
     logger.info('Greedy search took {} seconds'.format(tictoc))
-    return {'basis': basis, 'reduced_discretization': rd, 'reconstructor': rc,
+    return {'reduced_discretization': rd,
             'max_errs': max_errs, 'max_err_mus': max_err_mus, 'extensions': extensions,
             'max_val_errs': max_val_errs, 'max_val_err_mus': max_val_err_mus,
             'refinements': refinements, 'training_set_sizes': training_set_sizes,
-            'time': tictoc, 'reduction_data': reduction_data}
+            'time': tictoc}
 
 
-def _estimate(mu, rd=None, d=None, rc=None, error_norm=None):
+def _estimate(mu, rd=None, d=None, reductor=None, error_norm=None):
     """Called by :func:`adaptive_greedy`."""
     if d is None:
         return rd.estimate(rd.solve(mu), mu)
     elif error_norm is not None:
-        return error_norm(d.solve(mu) - rc.reconstruct(rd.solve(mu)))
+        return error_norm(d.solve(mu) - reductor.reconstruct(rd.solve(mu)))
     else:
-        return (d.solve(mu) - rc.reconstruct(rd.solve(mu))).l2_norm()
+        return (d.solve(mu) - reductor.reconstruct(rd.solve(mu))).l2_norm()
 
 
 class AdaptiveSampleSet(BasicInterface):

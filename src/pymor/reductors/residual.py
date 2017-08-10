@@ -6,15 +6,13 @@ import numpy as np
 
 from pymor.algorithms.image import estimate_image_hierarchical
 from pymor.algorithms.projection import project, project_to_subbasis
-from pymor.core.interfaces import ImmutableInterface
+from pymor.core.interfaces import BasicInterface
 from pymor.core.exceptions import ImageCollectionError
-from pymor.core.logger import getLogger
 from pymor.operators.basic import OperatorBase
 from pymor.operators.constructions import induced_norm
-from pymor.reductors.basic import GenericRBReconstructor
 
 
-def reduce_residual(operator, rhs=None, RB=None, product=None, extends=None):
+class ResidualReductor(BasicInterface):
     """Generic reduced basis residual reductor.
 
     Given an operator and a right-hand side, the residual is given by::
@@ -27,111 +25,104 @@ def reduce_residual(operator, rhs=None, RB=None, product=None, extends=None):
         residual.apply(U, mu)
             == product.apply_inverse(operator.apply(U, mu) - rhs.as_vector(mu))
 
-    Given a basis `RB` of a subspace of the source space of `operator`, this method
+    Given a basis `RB` of a subspace of the source space of `operator`, this reductor
     uses :func:`~pymor.algorithms.image.estimate_image_hierarchical` to determine
     a low-dimensional subspace containing the image of the subspace under
     `residual` (resp. `riesz_residual`), computes an orthonormal basis
     `residual_range` for this range space and then returns the Petrov-Galerkin projection ::
 
         projected_residual
-            === project(residual, range_basis=residual_range, source_basis=RB)
+            == project(residual, range_basis=residual_range, source_basis=RB)
 
     of the residual operator. Given a reduced basis coefficient vector `u`, w.r.t.
     `RB`, the (dual) norm of the residual can then be computed as ::
 
         projected_residual.apply(u, mu).l2_norm()
 
-    Moreover, a `reconstructor` is provided such that ::
+    Moreover, a `reconstruct` method is provided such that ::
 
-        reconstructor.reconstruct(projected_residual.apply(u, mu))
+        residual_reductor.reconstruct(projected_residual.apply(u, mu))
             == residual.apply(RB.lincomb(u), mu)
 
     Parameters
     ----------
+    RB
+        |VectorArray| containing a basis of the reduced space onto which to project.
     operator
         See definition of `residual`.
     rhs
         See definition of `residual`. If `None`, zero right-hand side is assumed.
-    RB
-        |VectorArray| containing a basis of the reduced space onto which to project.
     product
         Inner product |Operator| w.r.t. which to orthonormalize and w.r.t. which to
         compute the Riesz representatives in case `rhs` is a functional.
-    extends
-        Set by :meth:`~pymor.algorithms.greedy.greedy` to the result of the
-        last reduction in case the basis extension was `hierarchic` (used to prevent
-        re-computation of `residual_range` basis vectors already obtained from previous
-        reductions).
-
-    Returns
-    -------
-    projected_residual
-        See above.
-    reconstructor
-        See above.
-    reduction_data
-        Additional data produced by the reduction process (compare the `extends` parameter).
     """
-    assert rhs is None \
-        or (rhs.range.is_scalar and rhs.source == operator.range and rhs.linear) \
-        or (rhs.source.is_scalar and rhs.range == operator.range and rhs.linear)
-    assert RB is None or RB in operator.source
-    assert product is None or product.source == product.range == operator.range
-    assert extends is None or len(extends) == 3
 
-    # Note that it is possible that rhs.source == rhs.range, nameley if both
-    # are one-dimensional NumpyVectorSpaces which agree with the range of
-    # operator. Usually, this should not happen, since at least one of these
-    # spaces should have an id which is different from the id of operator.range.
-    # However, even if it happens but rhs is actually a vector, we are on
-    # the safe side, since first computing the Riesz representatives does not
-    # change anything in one-dimensional spaces, and it does not matter whether
-    # we project from the left or from the right.
-    rhs_is_functional = (rhs.source == operator.range)
+    def __init__(self, RB, operator, rhs=None, product=None):
+        assert RB in operator.source
+        assert rhs is None \
+            or (rhs.range.is_scalar and rhs.source == operator.range and rhs.linear) \
+            or (rhs.source.is_scalar and rhs.range == operator.range and rhs.linear)
+        assert product is None or product.source == product.range == operator.range
 
-    logger = getLogger('pymor.reductors.residual.reduce_residual')
+        self.RB = RB
+        self.operator = operator
+        self.rhs = rhs
+        self.product = product
+        self.residual_range = operator.range.empty()
+        self.residual_range_dims = []
 
-    if RB is None:
-        RB = operator.source.empty()
+    def reduce(self):
+        # Note that it is possible that rhs.source == rhs.range, nameley if both
+        # are one-dimensional NumpyVectorSpaces which agree with the range of
+        # operator. Usually, this should not happen, since at least one of these
+        # spaces should have an id which is different from the id of operator.range.
+        # However, even if it happens but rhs is actually a vector, we are on
+        # the safe side, since first computing the Riesz representatives does not
+        # change anything in one-dimensional spaces, and it does not matter whether
+        # we project from the left or from the right.
+        rhs_is_functional = (self.rhs.source == self.operator.range)
 
-    if extends and isinstance(extends[0], NonProjectedResidualOperator):
-        extends = None
-    if extends:
-        residual_range = extends[1].RB
-        residual_range_dims = list(extends[2]['residual_range_dims'])
-    else:
-        residual_range = operator.range.empty()
-        residual_range_dims = []
+        if self.residual_range is not False:
+            with self.logger.block('Estimating residual range ...'):
+                try:
+                    self.residual_range, self.residual_range_dims = \
+                        estimate_image_hierarchical([self.operator], [self.rhs.T if rhs_is_functional else self.rhs],
+                                                    self.RB,
+                                                    (self.residual_range, self.residual_range_dims),
+                                                    orthonormalize=True, product=self.product,
+                                                    riesz_representatives=rhs_is_functional)
+                except ImageCollectionError as e:
+                    self.logger.warning('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
+                    self.residual_range = False
 
-    with logger.block('Estimating residual range ...'):
-        try:
-            residual_range, residual_range_dims = \
-                estimate_image_hierarchical([operator], [rhs.T if rhs_is_functional else rhs], RB,
-                                            (residual_range, residual_range_dims),
-                                            orthonormalize=True, product=product,
-                                            riesz_representatives=rhs_is_functional)
-        except ImageCollectionError as e:
-            logger.warning('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
-            operator = project(operator, None, RB)
-            return (NonProjectedResidualOperator(operator, rhs, rhs_is_functional, product),
-                    NonProjectedReconstructor(product),
-                    {})
+        if self.residual_range is False:
+            operator = project(self.operator, None, self.RB)
+            return NonProjectedResidualOperator(operator, self.rhs, rhs_is_functional, self.product)
 
-    with logger.block('Projecting residual operator ...'):
-        if rhs_is_functional:
-            operator = project(operator, residual_range, RB, product=None)  # the product cancels out.
-            rhs = project(rhs, None, residual_range, product=None)
+        with self.logger.block('Projecting residual operator ...'):
+            if rhs_is_functional:
+                operator = project(self.operator, self.residual_range, self.RB, product=None)  # the product cancels out.
+                rhs = project(self.rhs, None, self.residual_range, product=None)
+            else:
+                operator = project(self.operator, self.residual_range, self.RB, product=self.product)
+                rhs = project(self.rhs, self.residual_range, None, product=self.product)
+
+        return ResidualOperator(operator, rhs, rhs_is_functional)
+
+    def reconstruct(self, u):
+        """Reconstruct high-dimensional residual vector from reduced vector `u`."""
+        if self.residual_range is False:
+            if self.product:
+                norm = induced_norm(self.product)
+                return u * (u.l2_norm() / norm(u))[0]
+            else:
+                return u
         else:
-            operator = project(operator, residual_range, RB, product=product)
-            rhs = project(rhs, residual_range, None, product=product)
-
-    return (ResidualOperator(operator, rhs, rhs_is_functional),
-            GenericRBReconstructor(residual_range),
-            {'residual_range_dims': residual_range_dims})
+            return self.residual_range[:u.dim].lincomb(u.data)
 
 
 class ResidualOperator(OperatorBase):
-    """Returned by :func:`reduce_residual`."""
+    """Instantiated by :class:`ResidualReductor`."""
 
     def __init__(self, operator, rhs, rhs_is_functional=True, name=None):
         self.source = operator.source
@@ -163,7 +154,7 @@ class ResidualOperator(OperatorBase):
 
 
 class NonProjectedResidualOperator(ResidualOperator):
-    """Returned by :func:`reduce_residual`.
+    """Instantiated by :class:`ResidualReductor`.
 
     Not to be used directly.
     """
@@ -187,23 +178,7 @@ class NonProjectedResidualOperator(ResidualOperator):
         return self.with_(operator=project_to_subbasis(self.operator, None, dim_source))
 
 
-class NonProjectedReconstructor(ImmutableInterface):
-    """Returned by :func:`reduce_residual`.
-
-    Not to be used directly.
-    """
-
-    def __init__(self, product):
-        self.norm = induced_norm(product) if product else None
-
-    def reconstruct(self, U):
-        if self.norm:
-            return U * (U.l2_norm() / self.norm(U))[0]
-        else:
-            return U
-
-
-def reduce_implicit_euler_residual(operator, mass, dt, functional=None, RB=None, product=None, extends=None):
+class ImplicitEulerResidualReductor(BasicInterface):
     """Reduced basis residual reductor with mass operator for implicit Euler timestepping.
 
     Given an operator, mass and a functional, the concatenation of residual operator
@@ -219,16 +194,16 @@ def reduce_implicit_euler_residual(operator, mass, dt, functional=None, RB=None,
     returns the Petrov-Galerkin projection ::
 
         projected_riesz_residual
-            === riesz_residual.projected(range_basis=residual_range, source_basis=RB)
+            == riesz_residual.projected(range_basis=residual_range, source_basis=RB)
 
     of the `riesz_residual` operator. Given reduced basis coefficient vectors `u` and `u_old`,
     the dual norm of the residual can then be computed as ::
 
         projected_riesz_residual.apply(u, u_old, mu).l2_norm()
 
-    Moreover, a `reconstructor` is provided such that ::
+    Moreover, a `reconstruct` method is provided such that ::
 
-        reconstructor.reconstruct(projected_riesz_residual.apply(u, u_old, mu))
+        residual_reductor.reconstruct(projected_riesz_residual.apply(u, u_old, mu))
             == riesz_residual.apply(RB.lincomb(u), RB.lincomb(u_old), mu)
 
     Parameters
@@ -245,66 +220,62 @@ def reduce_implicit_euler_residual(operator, mass, dt, functional=None, RB=None,
         |VectorArray| containing a basis of the reduced space onto which to project.
     product
         Inner product |Operator| w.r.t. which to compute the Riesz representatives.
-    extends
-        Set by :meth:`~pymor.algorithms.greedy.greedy` to the result of the
-        last reduction in case the basis extension was `hierarchic` (used to prevent
-        re-computation of `residual_range` basis vectors already obtained from previous
-        reductions).
-
-    Returns
-    -------
-    projected_riesz_residual
-        See above.
-    reconstructor
-        See above.
-    reduction_data
-        Additional data produced by the reduction process (compare the `extends` parameter).
     """
-    assert functional is None \
-        or functional.range.is_scalar and functional.source == operator.source and functional.linear
-    assert RB is None or RB in operator.source
-    assert product is None or product.source == product.range == operator.range
-    assert extends is None or len(extends) == 3
+    def __init__(self, RB, operator, mass, dt, functional=None, product=None):
+        assert RB in operator.source
+        assert functional is None \
+            or functional.range.is_scalar and functional.source == operator.source and functional.linear
+        assert product is None or product.source == product.range == operator.range
 
-    logger = getLogger('pymor.reductors.residual.reduce_implicit_euler_residual')
+        self.RB = RB
+        self.operator = operator
+        self.mass = mass
+        self.dt = dt
+        self.functional = functional
+        self.product = product
+        self.residual_range = operator.range.empty()
+        self.residual_range_dims = []
 
-    if RB is None:
-        RB = operator.source.empty()
+    def reduce(self):
+        if self.residual_range is not False:
+            with self.logger.block('Estimating residual range ...'):
+                try:
+                    self.residual_range, self.residual_range_dims = \
+                        estimate_image_hierarchical([self.operator, self.mass], [self.functional.T],
+                                                    self.RB,
+                                                    (self.residual_range, self.residual_range_dims),
+                                                    orthonormalize=True, product=self.product,
+                                                    riesz_representatives=True)
+                except ImageCollectionError as e:
+                    self.logger.warning('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
+                    self.residual_range = False
 
-    if extends and isinstance(extends[0], NonProjectedImplicitEulerResidualOperator):
-        extends = None
-    if extends:
-        residual_range = extends[1].RB
-        residual_range_dims = list(extends[2]['residual_range_dims'])
-    else:
-        residual_range = operator.range.empty()
-        residual_range_dims = []
+        if self.residual_range is False:
+            operator = project(self.operator, None, self.RB)
+            mass = project(self.mass, None, self.RB)
+            return NonProjectedImplicitEulerResidualOperator(operator, mass, self.functional, self.dt, self.product)
 
-    with logger.block('Estimating residual range ...'):
-        try:
-            residual_range, residual_range_dims = \
-                estimate_image_hierarchical([operator, mass], [functional.T], RB, (residual_range, residual_range_dims),
-                                            orthonormalize=True, product=product, riesz_representatives=True)
-        except ImageCollectionError as e:
-            logger.warning('Cannot compute range of {}. Evaluation will be slow.'.format(e.op))
-            operator = project(operator, None, RB)
-            mass = project(mass, None, RB)
-            return (NonProjectedImplicitEulerResidualOperator(operator, mass, functional, dt, product),
-                    NonProjectedReconstructor(product),
-                    {})
+        with self.logger.block('Projecting residual operator ...'):
+            operator = project(self.operator, self.residual_range, self.RB, product=None)  # the product always cancels out.
+            mass = project(self.mass, self.residual_range, self.RB, product=None)
+            functional = project(self.functional, None, self.residual_range, product=None)
 
-    with logger.block('Projecting residual operator ...'):
-        operator = project(operator, residual_range, RB, product=None)  # the product always cancels out.
-        mass = project(mass, residual_range, RB, product=None)
-        functional = project(functional, None, residual_range, product=None)
+        return ImplicitEulerResidualOperator(operator, mass, functional, self.dt)
 
-    return (ImplicitEulerResidualOperator(operator, mass, functional, dt),
-            GenericRBReconstructor(residual_range),
-            {'residual_range_dims': residual_range_dims})
+    def reconstruct(self, u):
+        """Reconstruct high-dimensional residual vector from reduced vector `u`."""
+        if self.residual_range is False:
+            if self.product:
+                norm = induced_norm(self.product)
+                return u * (u.l2_norm() / norm(u))[0]
+            else:
+                return u
+        else:
+            return self.residual_range[:u.dim].lincomb(u.data)
 
 
 class ImplicitEulerResidualOperator(OperatorBase):
-    """Returned by :func:`reduce_implicit_euler_residual`."""
+    """Instantiated by :class:`ImplicitEulerResidualReductor`."""
 
     def __init__(self, operator, mass, functional, dt, name=None):
         self.source = operator.source
@@ -338,7 +309,7 @@ class ImplicitEulerResidualOperator(OperatorBase):
 
 
 class NonProjectedImplicitEulerResidualOperator(ImplicitEulerResidualOperator):
-    """Returned by :func:`reduce_implicit_euler_residual`.
+    """Instantiated by :class:`ImplicitEulerResidualReductor`.
 
     Not to be used directly.
     """
