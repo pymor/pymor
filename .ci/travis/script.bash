@@ -22,6 +22,9 @@ function try_coveralls {
     fi
 }
 
+#allow xdist to work by fixing parametrization order
+export PYTHONHASHSEED=0
+
 python setup.py build_ext -i
 if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     export SDIST_DIR=/tmp/pymor_sdist/
@@ -35,7 +38,13 @@ if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     pushd ${SDIST_DIR}
     sudo pip install $(ls ${SDIST_DIR})
     popd
-    xvfb-run -a py.test -r sxX --pyargs pymortests -c .ci/installed_pytest.ini
+    # there are some extremely mystical errors with py2 + xdist on travis
+    if [[ "$(python -c 'import platform ; print(platform.python_version_tuple()[0])')" == "2" ]] ; then
+        xvfb-run -a py.test -r sxX --pyargs pymortests -c .ci/installed_pytest.ini
+    else
+        xvfb-run -a py.test -n auto -r sxX --pyargs pymortests -c .ci/installed_pytest.ini
+    fi
+
     try_coveralls
 elif [ "${PYTEST_MARKER}" == "MPI" ] ; then
     xvfb-run -a mpirun --allow-run-as-root -n 2 python src/pymortests/mpi_run_demo_tests.py
@@ -47,7 +56,7 @@ elif [ "${PYTEST_MARKER}" == "NUMPY" ] ; then
     xvfb-run -a py.test -W once::DeprecationWarning -W once::PendingDeprecationWarning -r sxX --junitxml=test_results_${PYMOR_VERSION}.xml
 else
     # this runs in pytest in a fake, auto numbered, X Server
-    xvfb-run -a py.test -r sxX --junitxml=test_results.xml
+    xvfb-run -a py.test -n auto -r sxX --junitxml=test_results.xml
     try_coveralls
 fi
 
