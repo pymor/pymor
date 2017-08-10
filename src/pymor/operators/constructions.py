@@ -7,6 +7,7 @@
 
 from functools import reduce
 from itertools import chain
+from numbers import Number
 
 import numpy as np
 
@@ -158,6 +159,29 @@ class LincombOperator(OperatorBase):
 
     def as_source_array(self, mu=None):
         return self._as_array(True, mu)
+
+    def __add__(self, other):
+        if self.name != 'LincombOperator':
+            if isinstance(other, LincombOperator) and other.name == 'LincombOperator':
+                return LincombOperator((self,) + other.operators,
+                                       (1.,) + other.coefficients)
+            else:
+                return LincombOperator((self, other), (1., 1.))
+        elif isinstance(other, LincombOperator) and other.name == 'LincombOperator':
+            return LincombOperator(self.operators + other.operators,
+                                   self.coefficients + other.coefficients,
+                                   solver_options=self.solver_options)
+        else:
+            return LincombOperator(self.operators + (other,),
+                                   self.coefficients + (1.,),
+                                   solver_options=self.solver_options)
+
+    def __mul__(self, other):
+        assert isinstance(other, (Number, ParameterFunctionalInterface))
+        if self.name != 'LincombOperator':
+            return LincombOperator((self,), (other,))
+        else:
+            return self.with_(coefficients=tuple(c * other for c in self.coefficients))
 
 
 class Concatenation(OperatorBase):

@@ -427,10 +427,8 @@ class OperatorInterface(ImmutableInterface, Parametric):
         """Sum of two operators."""
         pass
 
-    @abstractmethod
-    def __radd__(self, other):
-        """Sum of two operators."""
-        pass
+    def __sub__(self, other):
+        return self * (- other)
 
     @abstractmethod
     def __mul__(self, other):
