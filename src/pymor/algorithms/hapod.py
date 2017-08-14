@@ -120,7 +120,7 @@ def dist_hapod(num_slices, snapshots, eps, omega, product=None):
 def inc_vectorarray_hapod(steps, U, eps, omega, product=None):
     chunk_size = ceil(len(U) / steps)
     slices = range(0, len(U), chunk_size)
-    return inc_hapod(steps,
+    return inc_hapod(len(slices),
                      lambda i: U[slices[i]: slices[i]+chunk_size],
                      eps, omega, product=product)
 
@@ -128,6 +128,6 @@ def inc_vectorarray_hapod(steps, U, eps, omega, product=None):
 def dist_vectorarray_hapod(num_slices, U, eps, omega, product=None):
     chunk_size = ceil(len(U) / num_slices)
     slices = range(0, len(U), chunk_size)
-    return dist_hapod(num_slices,
+    return dist_hapod(len(slices),
                       lambda i: U[slices[i]: slices[i]+chunk_size],
                       eps, omega, product=product)
