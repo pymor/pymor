@@ -131,3 +131,41 @@ def dist_vectorarray_hapod(num_slices, U, eps, omega, product=None):
     return dist_hapod(len(slices),
                       lambda i: U[slices[i]: slices[i]+chunk_size],
                       eps, omega, product=product)
+
+
+if __name__ == '__main__':
+    from time import time
+
+    from pymor.basic import *
+    from pymor.algorithms.hapod import *
+    from pymor.tools.table import format_table
+
+    p = burgers_problem_2d()
+    d, _ = discretize_instationary_fv(p, nt=400)
+
+    U = d.solution_space.empty()
+    for mu in d.parameter_space.sample_randomly(5):
+        U.append(d.solve(mu))
+
+    tic = time()
+    pod_modes = pod(U, l2_err=1e-2 * np.sqrt(len(U)), product=d.l2_product, check=False)[0]
+    pod_time = time() - tic
+
+    tic = time()
+    dist_modes = dist_vectorarray_hapod(10, U, 1e-2, 0.75, product=d.l2_product)[0]
+    dist_time = time() - tic
+
+    tic = time()
+    inc_modes = inc_vectorarray_hapod(100, U, 1e-2, 0.75, product=d.l2_product)[0]
+    inc_time = time() - tic
+
+    print('Snapshot matrix: {} x {}'.format(U.dim, len(U)))
+    print(format_table([
+        ['Method', 'Error', 'Modes', 'Time'],
+        ['POD', np.linalg.norm(d.l2_norm(U-pod_modes.lincomb(d.l2_product.apply2(U, pod_modes)))/np.sqrt(len(U))),
+         len(pod_modes), pod_time],
+        ['DIST HAPOD', np.linalg.norm(d.l2_norm(U-dist_modes.lincomb(d.l2_product.apply2(U, dist_modes)))/np.sqrt(len(U))),
+         len(dist_modes), dist_time],
+        ['INC HAPOD', np.linalg.norm(d.l2_norm(U-inc_modes.lincomb(d.l2_product.apply2(U, inc_modes)))/np.sqrt(len(U))),
+         len(inc_modes), inc_time]]
+    ))
