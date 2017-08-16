@@ -87,16 +87,16 @@ class GenericBT(GenericPGReductor):
             self.V.scal(alpha)
             self.W.scal(alpha)
             self.use_default = ['E']
-            rd = self._project()
+            rd = super().reduce()
         elif method == 'bfsr':
             self.V = gram_schmidt(self.V, atol=0, rtol=0)
             self.W = gram_schmidt(self.W, atol=0, rtol=0)
             self.use_default = None
-            rd = self._project()
+            rd = super().reduce()
         elif method == 'biorth':
             self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=self.d.E)
             self.use_default = ['E']
-            rd = self._project()
+            rd = super().reduce()
 
         return rd
 

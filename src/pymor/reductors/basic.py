@@ -190,9 +190,6 @@ class GenericPGReductor(BasicInterface):
         -------
         The reduced |Discretization|.
         """
-        return self._project()
-
-    def _project(self):
         d, V, W = self.d, self.V, self.W
         use_default = self.use_default or []
 

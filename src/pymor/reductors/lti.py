@@ -107,7 +107,7 @@ class BitangHermInterp(GenericPGReductor):
                 self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=d.E)
                 self.use_default = ['E']
 
-        rd = self._project()
+        rd = super().reduce()
         return rd
 
     extend_source_basis = None
@@ -411,7 +411,7 @@ class TSIA(GenericPGReductor):
         # main loop
         for it in range(maxit):
             # project the full order model
-            rd = self._project()
+            rd = super().reduce()
 
             if compute_errors:
                 err = d - rd
@@ -475,7 +475,7 @@ class TSIA(GenericPGReductor):
                 break
 
         # final reduced order model
-        rd = self._project()
+        rd = super().reduce()
 
         return rd
 
