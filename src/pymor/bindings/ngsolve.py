@@ -149,8 +149,9 @@ if config.HAVE_NGSOLVE:
                 matrix.AsVector().data += float(c) * op.matrix.AsVector()
             return NGSolveMatrixOperator(matrix, self.range, self.source, solver_options=solver_options, name=name)
 
-        def as_dof_array(self):
-            return NumpyVectorSpace.make_array(self.matrix.AsVector().FV().NumPy())
+        def as_vector(self, copy=True):
+            vec = self.matrix.AsVector().FV().NumPy()
+            return NumpyVectorSpace.make_array(vec.copy() if copy else vec)
 
 
 
