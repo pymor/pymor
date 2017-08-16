@@ -14,7 +14,7 @@ from pymor.operators.constructions import IdentityOperator, LincombOperator
 from pymor.reductors.basic import GenericPGReductor
 
 
-class BitangHermInterp(GenericPGReductor):
+class BitangHermInterpReductor(GenericPGReductor):
     """Bitangential Hermite interpolation reductor.
 
     .. [ABG10] A. C. Antoulas, C. A. Beattie, S. Gugercin, Interpolatory
@@ -114,7 +114,7 @@ class BitangHermInterp(GenericPGReductor):
     extend_range_basis = None
 
 
-class IRKA(GenericPGReductor):
+class IRKAReductor(GenericPGReductor):
     """Iterative Rational Krylov Algorithm reductor.
 
     Parameters
@@ -228,7 +228,7 @@ class IRKA(GenericPGReductor):
         self.R = [b]
         self.L = [c]
         self.errors = [] if compute_errors else None
-        interp_reductor = BitangHermInterp(d)
+        interp_reductor = BitangHermInterpReductor(d)
         # main loop
         for it in range(maxit):
             # interpolatory reduced order model
@@ -312,7 +312,7 @@ class IRKA(GenericPGReductor):
     extend_range_basis = None
 
 
-class TSIA(GenericPGReductor):
+class TSIAReductor(GenericPGReductor):
     """Two-Sided Iteration Algorithm reductor.
 
     Parameters

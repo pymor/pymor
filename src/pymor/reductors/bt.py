@@ -8,7 +8,7 @@ from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.reductors.basic import GenericPGReductor
 
 
-class GenericBT(GenericPGReductor):
+class GenericBTReductor(GenericPGReductor):
     """Generic Balanced Truncation reductor.
 
     Parameters
@@ -104,7 +104,7 @@ class GenericBT(GenericPGReductor):
     extend_range_basis = None
 
 
-class BT(GenericBT):
+class BTReductor(GenericBTReductor):
     """Standard (Lyapunov) Balanced Truncation reductor.
 
     .. [A05] A. C. Antoulas, Approximation of Large-Scale Dynamical Systems,
@@ -127,7 +127,7 @@ class BT(GenericBT):
         self.bounds *= 2
 
 
-class LQGBT(GenericBT):
+class LQGBTReductor(GenericBTReductor):
     r"""Linear Quadratic Gaussian (LQG) Balanced Truncation reductor.
 
     .. [A05] A. C. Antoulas, Approximation of Large-Scale Dynamical Systems,
@@ -153,7 +153,7 @@ class LQGBT(GenericBT):
         self.bounds *= 2
 
 
-class BRBT(GenericBT):
+class BRBTReductor(GenericBTReductor):
     """Bounded Real (BR) Balanced Truncation reductor.
 
     .. [OJ88] P. C. Opdenacker, E. A. Jonckheere, A Contraction Mapping

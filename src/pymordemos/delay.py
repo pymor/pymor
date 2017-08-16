@@ -15,7 +15,7 @@ import scipy.linalg as spla
 import matplotlib.pyplot as plt
 
 from pymor.discretizations.iosys import TF
-from pymor.reductors.tf import TFInterp, TF_IRKA
+from pymor.reductors.tf import TFInterpReductor, TF_IRKAReductor
 
 if __name__ == '__main__':
     tau = 0.1
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     c = np.ones((1, r))
     tol = 1e-3
     maxit = 1000
-    tf_irka_reductor = TF_IRKA(tf)
+    tf_irka_reductor = TF_IRKAReductor(tf)
     rom = tf_irka_reductor.reduce(r, sigma, b, c, tol, maxit, verbose=True)
 
     sigmas = tf_irka_reductor.sigmas
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     sigma_ss = list(sigmas[-1]) + [0]
     b_ss = np.ones((1, r + 1))
     c_ss = np.ones((1, r + 1))
-    interp_reductor = TFInterp(tf)
+    interp_reductor = TFInterpReductor(tf)
     rom_ss = interp_reductor.reduce(sigma_ss, b_ss, c_ss)
 
     # step response

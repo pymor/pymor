@@ -11,7 +11,7 @@ from pymor.discretizations.iosys import LTISystem
 from pymor.operators.constructions import IdentityOperator
 
 
-class TFInterp(BasicInterface):
+class TFInterpReductor(BasicInterface):
     """Loewner bitangential Hermite interpolation reductor.
 
     Parameters
@@ -94,7 +94,7 @@ class TFInterp(BasicInterface):
         return LTISystem.from_matrices(Ar, Br, Cr, D=None, E=Er, cont_time=d.cont_time)
 
 
-class TF_IRKA(BasicInterface):
+class TF_IRKAReductor(BasicInterface):
     """Realization-independent IRKA reductor.
 
     .. [AG12] C. A. Beattie, S. Gugercin, Realization-independent
@@ -187,7 +187,7 @@ class TF_IRKA(BasicInterface):
         self.sigmas = [np.array(sigma)]
         self.R = [b]
         self.L = [c]
-        interp_reductor = TFInterp(d)
+        interp_reductor = TFInterpReductor(d)
         # main loop
         for it in range(maxit):
             # interpolatory reduced order model

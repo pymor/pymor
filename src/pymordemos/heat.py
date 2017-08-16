@@ -26,8 +26,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from pymor.discretizations.iosys import LTISystem
-from pymor.reductors.bt import BT
-from pymor.reductors.lti import IRKA
+from pymor.reductors.bt import BTReductor
+from pymor.reductors.lti import IRKAReductor
 
 import logging
 logging.getLogger('pymor.algorithms.gram_schmidt.gram_schmidt').setLevel(logging.ERROR)
@@ -88,7 +88,7 @@ if __name__ == '__main__':
 
     # Balanced Truncation
     r = 5
-    reductor = BT(lti)
+    reductor = BTReductor(lti)
     rom_bt = reductor.reduce(r, tol=1e-5)
     print('H_2-norm of the BT ROM:       {}'.format(rom_bt.norm()))
     print('H_inf-norm of the BT ROM:     {}'.format(rom_bt.norm('Hinf')))
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     sigma = np.logspace(-1, 3, r)
     tol = 1e-4
     maxit = 100
-    irka_reductor = IRKA(lti)
+    irka_reductor = IRKAReductor(lti)
     rom_irka = irka_reductor.reduce(r, sigma, tol=tol, maxit=maxit, verbose=True, compute_errors=True)
 
     # Shift distances
