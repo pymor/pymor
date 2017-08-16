@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """Modified thermalblock demo using adaptive greedy basis generation algorithm.
@@ -17,17 +17,14 @@ Arguments:
 Options:
   -h, --help                 Show this message.
 
-  --estimator-norm=NORM      Norm (trivial, h1) in which to calculate the residual
-                             [default: h1].
-
   --without-estimator        Do not use error estimator for basis generation.
 
-  --extension-alg=ALG        Basis extension algorithm (trivial, gram_schmidt, h1_gram_schmidt)
-                             to be used [default: h1_gram_schmidt].
+  --extension-alg=ALG        Basis extension algorithm (trivial, gram_schmidt)
+                             to be used [default: gram_schmidt].
 
   --grid=NI                  Use grid with 2*NI*NI elements [default: 100].
 
-  --pickle=PREFIX            Pickle reduced discretizaion, as well as reconstructor and high-dimensional
+  --pickle=PREFIX            Pickle reduced discretizaion, as well as reductor and high-dimensional
                              discretization to files with this prefix.
 
   -p, --plot-err             Plot error.
@@ -35,6 +32,9 @@ Options:
   --plot-solutions           Plot some example solutions.
 
   --plot-error-sequence      Plot reduction error vs. basis size.
+
+  --product=PROD             Product (euclidean, h1) w.r.t. which to orthonormalize
+                             and calculate Riesz representatives [default: h1].
 
   --reductor=RED             Reductor (error estimator) to choose (traditional, residual_basis)
                              [default: residual_basis]
@@ -68,11 +68,9 @@ Options:
 """
 
 import sys
-from functools import partial
 
 from docopt import docopt
 
-from pymor.algorithms.basisextension import trivial_basis_extension, gram_schmidt_basis_extension
 from pymor.algorithms.adaptivegreedy import adaptive_greedy
 from pymor.algorithms.error import reduction_error_analysis
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
@@ -81,7 +79,7 @@ from pymor.discretizers.cg import discretize_stationary_cg
 from pymor.parameters.functionals import ExpressionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace
 from pymor.parallel.default import new_parallel_pool
-from pymor.reductors.coercive import reduce_coercive, reduce_coercive_simple
+from pymor.reductors.coercive import CoerciveRBReductor, SimpleCoerciveRBReductor
 
 
 def thermalblock_demo(args):
@@ -89,10 +87,10 @@ def thermalblock_demo(args):
     args['RBSIZE'] = int(args['RBSIZE'])
     args['--test'] = int(args['--test'])
     args['--ipython-engines'] = int(args['--ipython-engines'])
-    args['--estimator-norm'] = args['--estimator-norm'].lower()
-    assert args['--estimator-norm'] in {'trivial', 'h1'}
     args['--extension-alg'] = args['--extension-alg'].lower()
-    assert args['--extension-alg'] in {'trivial', 'gram_schmidt', 'h1_gram_schmidt'}
+    assert args['--extension-alg'] in {'trivial', 'gram_schmidt'}
+    args['--product'] = args['--product'].lower()
+    assert args['--product'] in {'trivial', 'h1'}
     args['--reductor'] = args['--reductor'].lower()
     assert args['--reductor'] in {'traditional', 'residual_basis'}
     args['--cache-region'] = args['--cache-region'].lower()
@@ -134,19 +132,14 @@ def thermalblock_demo(args):
 
     print('RB generation ...')
 
-    product = discretization.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
+    product = discretization.h1_0_semi_product if args['--product'] == 'h1' else None
     coercivity_estimator = ExpressionParameterFunctional('min([diffusion[0], diffusion[1]**2])',
                                                          discretization.parameter_type)
-    reductors = {'residual_basis': partial(reduce_coercive, product=product,
-                                           coercivity_estimator=coercivity_estimator),
-                 'traditional': partial(reduce_coercive_simple, product=product,
-                                        coercivity_estimator=coercivity_estimator)}
+    reductors = {'residual_basis': CoerciveRBReductor(discretization, product=product,
+                                                      coercivity_estimator=coercivity_estimator),
+                 'traditional': SimpleCoerciveRBReductor(discretization, product=product,
+                                                         coercivity_estimator=coercivity_estimator)}
     reductor = reductors[args['--reductor']]
-    extension_algorithms = {'trivial': trivial_basis_extension,
-                            'gram_schmidt': gram_schmidt_basis_extension,
-                            'h1_gram_schmidt': partial(gram_schmidt_basis_extension,
-                                                       product=discretization.h1_0_semi_product)}
-    extension_algorithm = extension_algorithms[args['--extension-alg']]
 
     pool = new_parallel_pool(ipython_num_engines=args['--ipython-engines'], ipython_profile=args['--ipython-profile'])
     greedy_data = adaptive_greedy(
@@ -157,26 +150,25 @@ def thermalblock_demo(args):
         theta=args['--theta'],
         use_estimator=not args['--without-estimator'],
         error_norm=discretization.h1_0_semi_norm,
-        extension_algorithm=extension_algorithm,
         max_extensions=args['RBSIZE'],
         visualize=args['--visualize-refinement']
     )
 
-    rb_discretization, reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
+    rb_discretization = greedy_data['reduced_discretization']
 
     if args['--pickle']:
         print('\nWriting reduced discretization to file {} ...'.format(args['--pickle'] + '_reduced'))
         with open(args['--pickle'] + '_reduced', 'wb') as f:
             dump(rb_discretization, f)
-        print('Writing detailed discretization and reconstructor to file {} ...'.format(args['--pickle'] + '_detailed'))
+        print('Writing detailed discretization and reductor to file {} ...'.format(args['--pickle'] + '_detailed'))
         with open(args['--pickle'] + '_detailed', 'wb') as f:
-            dump((discretization, reconstructor), f)
+            dump((discretization, reductor), f)
 
     print('\nSearching for maximum error on random snapshots ...')
 
     results = reduction_error_analysis(rb_discretization,
                                        discretization=discretization,
-                                       reconstructor=reconstructor,
+                                       reductor=reductor,
                                        estimator=True,
                                        error_norms=(discretization.h1_0_semi_norm,),
                                        condition=True,
@@ -196,8 +188,8 @@ Problem:
 
 Greedy basis generation:
    estimator disabled:                 {args[--without-estimator]}
-   estimator norm:                     {args[--estimator-norm]}
    extension method:                   {args[--extension-alg]}
+   product:                            {args[--product]}
    prescribed basis size:              {args[RBSIZE]}
    actual basis size:                  {real_rb_size}
    elapsed time:                       {greedy_data[time]}
@@ -212,7 +204,7 @@ Greedy basis generation:
     if args['--plot-err']:
         mumax = results['max_error_mus'][0, -1]
         U = discretization.solve(mumax)
-        URB = reconstructor.reconstruct(rb_discretization.solve(mumax))
+        URB = reductor.reconstruct(rb_discretization.solve(mumax))
         discretization.visualize((U, URB, U - URB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
                                  title='Maximum Error Solution', separate_colorbars=True, block=True)
 

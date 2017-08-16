@@ -15,7 +15,7 @@ import scipy.linalg as spla
 import matplotlib.pyplot as plt
 
 from pymor.discretizations.iosys import TF
-from pymor.reductors.tf import interpolation, tf_irka
+from pymor.reductors.tf import TFInterpReductor, TF_IRKAReductor
 
 if __name__ == '__main__':
     tau = 0.1
@@ -37,11 +37,12 @@ if __name__ == '__main__':
     c = np.ones((1, r))
     tol = 1e-3
     maxit = 1000
-    rom, reduction_data = tf_irka(tf, r, sigma, b, c, tol, maxit, verbose=True)
+    tf_irka_reductor = TF_IRKAReductor(tf)
+    rom = tf_irka_reductor.reduce(r, sigma, b, c, tol, maxit, verbose=True)
 
-    Sigma = reduction_data['Sigma']
+    sigmas = tf_irka_reductor.sigmas
     fig, ax = plt.subplots()
-    ax.plot(Sigma[-1].real, Sigma[-1].imag, '.')
+    ax.plot(sigmas[-1].real, sigmas[-1].imag, '.')
     ax.set_title('Final interpolation points of TF-IRKA')
     ax.set_xlabel('Re')
     ax.set_ylabel('Im')
@@ -76,10 +77,11 @@ if __name__ == '__main__':
     plt.show()
 
     # match steady state (add interpolation point at 0)
-    sigma_ss = list(Sigma[-1]) + [0]
+    sigma_ss = list(sigmas[-1]) + [0]
     b_ss = np.ones((1, r + 1))
     c_ss = np.ones((1, r + 1))
-    rom_ss = interpolation(tf, sigma_ss, b_ss, c_ss)
+    interp_reductor = TFInterpReductor(tf)
+    rom_ss = interp_reductor.reduce(sigma_ss, b_ss, c_ss)
 
     # step response
     E_ss = rom_ss.E._matrix

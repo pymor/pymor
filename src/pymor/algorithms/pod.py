@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
@@ -14,8 +14,8 @@ from pymor.tools.floatcmp import float_cmp_all
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 
 
-@defaults('rtol', 'atol', 'l2_mean_err', 'symmetrize', 'orthonormalize', 'check', 'check_tol')
-def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_mean_err=0.,
+@defaults('rtol', 'atol', 'l2_err', 'symmetrize', 'orthonormalize', 'check', 'check_tol')
+def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_err=0.,
         symmetrize=False, orthonormalize=True, check=True, check_tol=1e-10):
     """Proper orthogonal decomposition of `A`.
 
@@ -39,11 +39,11 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_mean_err=0.,
         value are ignored.
     atol
         Singular values smaller than this value are ignored.
-    l2_mean_err
-        Do not return more modes than needed to bound the mean l2-approximation
+    l2_err
+        Do not return more modes than needed to bound the l2-approximation
         error by this value. I.e. the number of returned modes is at most ::
 
-            argmin_N { 1 / len(A) * sum_{n=N+1}^{infty} s_n^2 <= l2_mean_err^2 }
+            argmin_N { sum_{n=N+1}^{infty} s_n^2 <= l2_err^2 }
 
         where `s_n` denotes the n-th singular value.
     symmetrize
@@ -79,7 +79,7 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_mean_err=0.,
             B *= 0.5
 
     with logger.block('Computing eigenvalue decomposition ...'):
-        eigvals = None if (modes is None or l2_mean_err > 0.) else (len(B) - modes, len(B) - 1)
+        eigvals = None if (modes is None or l2_err > 0.) else (len(B) - modes, len(B) - 1)
 
         EVALS, EVECS = eigh(B, overwrite_a=True, turbo=True, eigvals=eigvals)
         EVALS = EVALS[::-1]
@@ -92,7 +92,7 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_mean_err=0.,
         last_above_tol = above_tol[-1]
 
         errs = np.concatenate((np.cumsum(EVALS[::-1])[::-1], [0.]))
-        below_err = np.where(errs <= l2_mean_err**2 * len(A))[0]
+        below_err = np.where(errs <= l2_err**2)[0]
         first_below_err = below_err[0]
 
         selected_modes = min(first_below_err, last_above_tol + 1)

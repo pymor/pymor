@@ -15,7 +15,7 @@ scientific computing stack are provided for getting started quickly.
 License
 -------
 
-Copyright 2013-2016 pyMOR developers and contributors. All rights
+Copyright 2013-2017 pyMOR developers and contributors. All rights
 reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -162,9 +162,8 @@ the following solver libraries:
 -   FEniCS
 
     MPI-compatible wrapper classes for dolfin linear algebra data
-    structures are shipped with pyMOR (pymor.bindings.fenics).
-    For an example see pymordemos.thermalbock,
-    pymordemos.thermalblock_simple.
+    structures are shipped with pyMOR (pymor.bindings.fenics). For an
+    example see pymordemos.thermalbock, pymordemos.thermalblock_simple.
 
 -   deal.II
 

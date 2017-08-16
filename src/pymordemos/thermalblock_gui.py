@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """Thermalblock with GUI demo
 
 Usage:
-  thermalblock_gui.py [-h] [--estimator-norm=NORM] [--grid=NI] [--testing]
+  thermalblock_gui.py [-h] [--product=PROD] [--grid=NI] [--testing]
                   [--help] XBLOCKS YBLOCKS SNAPSHOTS RBSIZE
 
 
@@ -22,10 +22,10 @@ Arguments:
 
 
 Options:
-  --estimator-norm=NORM  Norm (trivial, h1) in which to calculate the residual
-                         [default: h1].
-
   --grid=NI              Use grid with 2*NI*NI elements [default: 60].
+
+  --product=PROD         Product (euclidean, h1) w.r.t. which to orthonormalize
+                         and calculate Riesz representatives [default: h1].
 
   --testing              load the gui and exit right away (for functional testing)
 
@@ -35,23 +35,24 @@ Options:
 import sys
 from docopt import docopt
 import time
-from functools import partial
 import numpy as np
 import OpenGL
 
+from pymor.core.config import is_windows_platform
+from pymor.gui.matplotlib import MatplotlibPatchWidget
+
 OpenGL.ERROR_ON_COPY = True
 
-from pymor.core.exceptions import PySideMissing
+from pymor.core.exceptions import QtMissing
 try:
-    from PySide import QtGui
+    from Qt import QtWidgets
 except ImportError as e:
-    raise PySideMissing()
-from pymor.algorithms.basisextension import gram_schmidt_basis_extension
+    raise QtMissing()
 from pymor.algorithms.greedy import greedy
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
 from pymor.discretizers.cg import discretize_stationary_cg
 from pymor.gui.gl import ColorBarWidget, GLPatchWidget
-from pymor.reductors.coercive import reduce_coercive_simple
+from pymor.reductors.coercive import CoerciveRBReductor
 from pymor import gui
 
 
@@ -60,16 +61,16 @@ PARAM_MIN = 0.1
 PARAM_MAX = 1
 
 
-class ParamRuler(QtGui.QWidget):
+class ParamRuler(QtWidgets.QWidget):
     def __init__(self, parent, sim):
         super().__init__(parent)
         self.sim = sim
         self.setMinimumSize(200, 100)
-        box = QtGui.QGridLayout()
+        box = QtWidgets.QGridLayout()
         self.spins = []
         for j in range(args['YBLOCKS']):
             for i in range(args['XBLOCKS']):
-                spin = QtGui.QDoubleSpinBox()
+                spin = QtWidgets.QDoubleSpinBox()
                 spin.setRange(PARAM_MIN, PARAM_MAX)
                 spin.setSingleStep((PARAM_MAX - PARAM_MIN) / PARAM_STEPS)
                 spin.setValue(PARAM_MIN)
@@ -84,15 +85,19 @@ class ParamRuler(QtGui.QWidget):
 
 
 # noinspection PyShadowingNames
-class SimPanel(QtGui.QWidget):
+class SimPanel(QtWidgets.QWidget):
     def __init__(self, parent, sim):
         super().__init__(parent)
         self.sim = sim
-        box = QtGui.QHBoxLayout()
-        self.solution = GLPatchWidget(self, self.sim.grid, vmin=0., vmax=0.8)
-        self.bar = ColorBarWidget(self, vmin=0., vmax=0.8)
-        box.addWidget(self.solution, 2)
-        box.addWidget(self.bar, 2)
+        box = QtWidgets.QHBoxLayout()
+        if is_windows_platform():
+            self.solution = MatplotlibPatchWidget(self, self.sim.grid, vmin=0., vmax=0.8)
+            box.addWidget(self.solution, 2)
+        else:
+            self.solution = GLPatchWidget(self, self.sim.grid, vmin=0., vmax=0.8)
+            self.bar = ColorBarWidget(self, vmin=0., vmax=0.8)
+            box.addWidget(self.solution, 2)
+            box.addWidget(self.bar, 2)
         self.param_panel = ParamRuler(self, sim)
         box.addWidget(self.param_panel)
         self.setLayout(box)
@@ -111,11 +116,11 @@ class SimPanel(QtGui.QWidget):
         print('Drawtime {}'.format(time.time() - tic))
 
 
-class AllPanel(QtGui.QWidget):
+class AllPanel(QtWidgets.QWidget):
     def __init__(self, parent, reduced_sim, detailed_sim):
         super().__init__(parent)
 
-        box = QtGui.QVBoxLayout()
+        box = QtWidgets.QVBoxLayout()
         self.reduced_panel = SimPanel(self, reduced_sim)
         self.detailed_panel = SimPanel(self, detailed_sim)
         box.addWidget(self.reduced_panel)
@@ -124,7 +129,7 @@ class AllPanel(QtGui.QWidget):
 
 
 # noinspection PyShadowingNames
-class RBGui(QtGui.QMainWindow):
+class RBGui(QtWidgets.QMainWindow):
     def __init__(self, args):
         super().__init__()
         args['XBLOCKS'] = int(args['XBLOCKS'])
@@ -132,8 +137,8 @@ class RBGui(QtGui.QMainWindow):
         args['--grid'] = int(args['--grid'])
         args['SNAPSHOTS'] = int(args['SNAPSHOTS'])
         args['RBSIZE'] = int(args['RBSIZE'])
-        args['--estimator-norm'] = args['--estimator-norm'].lower()
-        assert args['--estimator-norm'] in {'trivial', 'h1'}
+        args['--product'] = args['--product'].lower()
+        assert args['--product'] in {'trivial', 'h1'}
         reduced = ReducedSim(args)
         detailed = DetailedSim(args)
         self.panel = AllPanel(self, reduced, detailed)
@@ -160,20 +165,19 @@ class ReducedSim(SimBase):
     def _first(self):
         args = self.args
         product = self.discretization.h1_0_semi_product if args['--estimator-norm'] == 'h1' else None
-        reductor = partial(reduce_coercive_simple, product=product)
-        extension_algorithm = partial(gram_schmidt_basis_extension, product=self.discretization.h1_0_semi_product)
+        reductor = CoerciveRBReductor(product=product)
 
         greedy_data = greedy(self.discretization, reductor,
                              self.discretization.parameter_space.sample_uniformly(args['SNAPSHOTS']),
                              use_estimator=True, error_norm=self.discretization.h1_0_semi_norm,
-                             extension_algorithm=extension_algorithm, max_extensions=args['RBSIZE'])
-        self.rb_discretization, self.reconstructor = greedy_data['reduced_discretization'], greedy_data['reconstructor']
+                             max_extensions=args['RBSIZE'])
+        self.rb_discretization, self.reductor = greedy_data['reduced_discretization'], reductor
         self.first = False
 
     def solve(self, mu):
         if self.first:
             self._first()
-        return self.reconstructor.reconstruct(self.rb_discretization.solve(mu))
+        return self.reductor.reconstruct(self.rb_discretization.solve(mu))
 
 
 # noinspection PyShadowingNames
@@ -191,7 +195,7 @@ if __name__ == '__main__':
     args = docopt(__doc__)
     testing = args['--testing']
     if not testing:
-        app = QtGui.QApplication(sys.argv)
+        app = QtWidgets.QApplication(sys.argv)
         win = RBGui(args)
         win.show()
         sys.exit(app.exec_())

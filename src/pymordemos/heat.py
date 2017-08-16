@@ -26,8 +26,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from pymor.discretizations.iosys import LTISystem
-from pymor.reductors.bt import bt
-from pymor.reductors.lti import irka
+from pymor.reductors.bt import BTReductor
+from pymor.reductors.lti import IRKAReductor
 
 import logging
 logging.getLogger('pymor.algorithms.gram_schmidt.gram_schmidt').setLevel(logging.ERROR)
@@ -88,7 +88,8 @@ if __name__ == '__main__':
 
     # Balanced Truncation
     r = 5
-    rom_bt, _, _ = bt(lti, r, tol=1e-5)
+    reductor = BTReductor(lti)
+    rom_bt = reductor.reduce(r, tol=1e-5)
     print('H_2-norm of the BT ROM:       {}'.format(rom_bt.norm()))
     print('H_inf-norm of the BT ROM:     {}'.format(rom_bt.norm('Hinf')))
     err_bt = lti - rom_bt
@@ -109,11 +110,12 @@ if __name__ == '__main__':
     sigma = np.logspace(-1, 3, r)
     tol = 1e-4
     maxit = 100
-    rom_irka, _, reduction_data_irka = irka(lti, r, sigma, tol=tol, maxit=maxit, verbose=True, compute_errors=True)
+    irka_reductor = IRKAReductor(lti)
+    rom_irka = irka_reductor.reduce(r, sigma, tol=tol, maxit=maxit, verbose=True, compute_errors=True)
 
     # Shift distances
     fig, ax = plt.subplots()
-    ax.semilogy(reduction_data_irka['dist'], '.-')
+    ax.semilogy(irka_reductor.dist, '.-')
     ax.set_title('Distances between shifts in IRKA iterations')
     plt.show()
 

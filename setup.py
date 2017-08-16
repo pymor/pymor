@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import sys
@@ -115,7 +115,7 @@ class build_py27(_build_py):
         )
         self.rtool.refactor_dir('src', write=True)
         self.rtool.refactor_dir('docs', write=True)
-        open(checkpoint_fn, 'wta').write('converted')
+        open(checkpoint_fn, 'wt').write('converted')
 
 cmdclass = versioneer.get_cmdclass()
 if sys.version_info[0] < 3:

@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 from functools import partial
@@ -14,7 +14,7 @@ from pymor.discretizations.basic import StationaryDiscretization, InstationaryDi
 from pymor.domaindiscretizers.default import discretize_domain_default
 from pymor.functions.basic import LincombFunction
 from pymor.grids.referenceelements import line, triangle, square
-from pymor.gui.qt import PatchVisualizer, Matplotlib1DVisualizer
+from pymor.gui.visualizers import PatchVisualizer, OnedVisualizer
 from pymor.operators.constructions import LincombOperator, ZeroOperator
 from pymor.operators.numpy import NumpyGenericOperator
 from pymor.operators.fv import (DiffusionOperator, LinearAdvectionLaxFriedrichs, ReactionOperator,
@@ -182,7 +182,7 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
     if grid.reference_element in (triangle, square):
         visualizer = PatchVisualizer(grid=grid, bounding_box=grid.bounding_box(), codim=0)
     elif grid.reference_element is line:
-        visualizer = Matplotlib1DVisualizer(grid=grid, codim=0)
+        visualizer = OnedVisualizer(grid=grid, codim=0)
     else:
         visualizer = None
 

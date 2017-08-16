@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """Reduced basis approximation of the heat equation.
@@ -191,26 +191,23 @@ def _discretize_fenics():
 def reduce_greedy(d, reductor, snapshots, basis_size):
 
     training_set = d.parameter_space.sample_uniformly(snapshots)
-    extension_algorithm = partial(pod_basis_extension, product=d.h1_0_semi_product)
     pool = new_parallel_pool()
 
-    greedy_data = greedy(d, reductor, training_set,
-                         extension_algorithm=extension_algorithm, max_extensions=basis_size,
-                         pool=pool)
+    greedy_data = greedy(d, reductor, training_set, max_extensions=basis_size, pool=pool,
+                         extension_params={'method': 'pod'})
 
-    return greedy_data['reduced_discretization'], greedy_data['reconstructor']
+    return greedy_data['reduced_discretization']
 
 
 def reduce_adaptive_greedy(d, reductor, validation_mus, basis_size):
 
-    extension_algorithm = partial(pod_basis_extension, product=d.h1_0_semi_product)
     pool = new_parallel_pool()
 
     greedy_data = adaptive_greedy(d, reductor, validation_mus=validation_mus,
-                                  extension_algorithm=extension_algorithm, max_extensions=basis_size,
+                                  extension_params={'method': 'pod'}, max_extensions=basis_size,
                                   pool=pool)
 
-    return greedy_data['reduced_discretization'], greedy_data['reconstructor']
+    return greedy_data['reduced_discretization']
 
 
 def reduce_pod(d, reductor, snapshots, basis_size):
@@ -222,10 +219,11 @@ def reduce_pod(d, reductor, snapshots, basis_size):
         snapshots.append(d.solve(mu))
 
     basis, singular_values = pod(snapshots, modes=basis_size, product=d.h1_0_semi_product)
+    reductor.extend_basis(basis, 'trivial')
 
-    rd, rc, _ = reductor(d, basis)
+    rd = reductor.reduce()
 
-    return rd, rc
+    return rd
 
 
 ####################################################################################################
@@ -245,25 +243,23 @@ def main(BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST):
     # select reduction algorithm with error estimator
     #################################################
     coercivity_estimator = ExpressionParameterFunctional('1.', d.parameter_type)
-    reductor = partial(reduce_parabolic,
-                       product=d.h1_0_semi_product,
-                       coercivity_estimator=coercivity_estimator)
+    reductor = ParabolicRBReductor(d, product=d.h1_0_semi_product, coercivity_estimator=coercivity_estimator)
 
     # generate reduced model
     ########################
     if ALG == 'greedy':
-        rd, rc = reduce_greedy(d, reductor, SNAPSHOTS, RBSIZE)
+        rd = reduce_greedy(d, reductor, SNAPSHOTS, RBSIZE)
     elif ALG == 'adaptive_greedy':
-        rd, rc = reduce_adaptive_greedy(d, reductor, SNAPSHOTS, RBSIZE)
+        rd = reduce_adaptive_greedy(d, reductor, SNAPSHOTS, RBSIZE)
     elif ALG == 'pod':
-        rd, rc = reduce_pod(d, reductor, SNAPSHOTS, RBSIZE)
+        rd = reduce_pod(d, reductor, SNAPSHOTS, RBSIZE)
     else:
         raise NotImplementedError
 
     # evaluate the reduction error
     ##############################
     results = reduction_error_analysis(
-        rd, discretization=d, reconstructor=rc, estimator=True,
+        rd, discretization=d, reductor=reductor, estimator=True,
         error_norms=[lambda U: DT * np.sqrt(np.sum(d.h1_0_semi_norm(U)[1:]**2))],
         error_norm_names=['l^2-h^1'],
         condition=False, test_mus=TEST, random_seed=999, plot=True
@@ -286,7 +282,7 @@ def main(BACKEND, ALG, SNAPSHOTS, RBSIZE, TEST):
     #####################################################
     mumax = results['max_error_mus'][0, -1]
     U = d.solve(mumax)
-    U_RB = rc.reconstruct(rd.solve(mumax))
+    U_RB = reductor.reconstruct(rd.solve(mumax))
     if BACKEND == 'fenics':  # right now the fenics visualizer does not support time trajectories
         U = U[len(U) - 1].copy()
         U_RB = U_RB[len(U_RB) - 1].copy()

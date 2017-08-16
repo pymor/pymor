@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
@@ -8,11 +8,11 @@ from pymor.algorithms.pod import pod
 from pymor.algorithms.timestepping import ExplicitEulerTimeStepper
 from pymor.discretizations.basic import InstationaryDiscretization
 from pymor.grids.oned import OnedGrid
-from pymor.gui.qt import Matplotlib1DVisualizer
+from pymor.gui.visualizers import OnedVisualizer
 from pymor.operators.constructions import VectorFunctional, LincombOperator
 from pymor.parameters.functionals import ProjectionParameterFunctional
 from pymor.parameters.spaces import CubicParameterSpace
-from pymor.reductors.basic import reduce_generic_rb
+from pymor.reductors.basic import GenericRBReductor
 
 # import wrapped classes
 from wrapper import WrappedDiffusionOperator
@@ -38,7 +38,7 @@ def discretize(n, nt, blocks):
 
     # hack together a visualizer ...
     grid = OnedGrid(domain=(0, 1), num_intervals=n)
-    visualizer = Matplotlib1DVisualizer(grid)
+    visualizer = OnedVisualizer(grid)
 
     time_stepper = ExplicitEulerTimeStepper(nt)
     parameter_space = CubicParameterSpace(operator.parameter_type, 0.1, 1)
@@ -61,13 +61,14 @@ for mu in d.parameter_space.sample_uniformly(2):
 reduced_basis = pod(snapshots, 4)[0]
 
 # reduce the model
-rd, rc, _ = reduce_generic_rb(d, reduced_basis)
+reductor = GenericRBReductor(d, reduced_basis)
+rd = reductor.reduce()
 
 # stochastic error estimation
 mu_max = None
 err_max = -1.
 for mu in d.parameter_space.sample_randomly(10):
-    U_RB = (rc.reconstruct(rd.solve(mu)))
+    U_RB = (reductor.reconstruct(rd.solve(mu)))
     U = d.solve(mu)
     err = np.max((U_RB-U).l2_norm())
     if err > err_max:
@@ -75,7 +76,7 @@ for mu in d.parameter_space.sample_randomly(10):
         mu_max = mu
 
 # visualize maximum error solution
-U_RB = (rc.reconstruct(rd.solve(mu_max)))
+U_RB = (reductor.reconstruct(rd.solve(mu_max)))
 U = d.solve(mu_max)
 d.visualize((U_RB, U), title='mu = {}'.format(mu), legend=('reduced', 'detailed'))
 d.visualize((U-U_RB), title='mu = {}'.format(mu), legend=('error'))

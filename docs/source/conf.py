@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import sys, os, re
@@ -27,9 +27,13 @@ if os.environ.get('READTHEDOCS', None) == 'True':
         def __getattr__(cls, name):
             if name in ('__file__', '__path__'):
                 return '/dev/null'
+            elif name in ('__binding__', '__binding_version__'):
+                return ''
+            elif name == '__qt_version__':
+                return '5'
             elif name in cls.__dict__:
                 return cls.__dict__.get(name)
-            elif name == 'QtGui':
+            elif name == 'QtWidgets':
                 return Mock()
             elif name[0] == name[0].upper():
                 mockType = type(name, (), {})
@@ -44,9 +48,9 @@ if os.environ.get('READTHEDOCS', None) == 'True':
                     'docopt',
                     'dogpile', 'dogpile.cache', 'dogpile.cache.backends', 'dogpile.cache.backends.file',
                     'dogpile.cache.compat',
-                    'PySide', 'PySide.QtGui', 'PySide.QtCore', 'PySide.QtOpenGL',
-                    'OpenGL', 'OpenGL.GL',
-                    'matplotlib', 'matplotlib.backends', 'matplotlib.backends.backend_qt4agg', 'matplotlib.figure',
+                    'Qt', 'Qt.QtGui', 'Qt.QtCore', 'Qt.QtOpenGL', 'Qt.QtWidgets',
+                    'OpenGL', 'OpenGL.GL', 'psutil',
+                    'matplotlib', 'matplotlib.backends', 'matplotlib.backends.backend_qt4agg', 'matplotlib.backends.backend_qt5agg', 'matplotlib.figure',
                     'matplotlib.pyplot',
                     'pyvtk',
                     'IPython',
@@ -112,7 +116,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'pyMOR'
-copyright = '2012-2016, the pyMOR AUTHORS'
+copyright = '2013-2017 pyMOR developers and contributors'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.

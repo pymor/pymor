@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 """ This module provides some operators for finite volume discretizations."""
@@ -719,7 +719,7 @@ class L2ProductFunctional(NumpyMatrixBasedOperator):
 
             if bi.has_neumann and self.neumann_data is not None:
                 neumann_mask = bi.neumann_mask(1)
-                FLUXES[neumann_mask] -= VOLS[neumann_mask] * self.neumann_data(centers[neumann_mask])
+                FLUXES[neumann_mask] -= VOLS[neumann_mask] * self.neumann_data(centers[neumann_mask], mu=mu)
 
             F_INTS += np.bincount(SE_I0, weights=FLUXES, minlength=len(F_INTS))
 

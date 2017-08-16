@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 # flake8: noqa
@@ -103,8 +103,6 @@ common = '''
 .. |Parameter| replace:: :class:`~pymor.parameters.base.Parameter`
 .. |Parameters| replace:: :class:`Parameters <pymor.parameters.base.Parameter>`
 .. |Parametric| replace:: :class:`~pymor.parameters.base.Parametric`
-
-.. |reduce_generic_rb| replace:: :func:`~pymor.reductors.basic.reduce_generic_rb`
 
 .. |LTISystem| replace:: :class:`~pymor.discretizations.iosys.LTISystem`
 .. |LTISystems| replace:: :class:`LTISystems <pymor.discretizations.iosys.LTISystem>`
