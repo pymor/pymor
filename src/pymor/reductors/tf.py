@@ -7,6 +7,7 @@ import scipy.linalg as spla
 
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.interfaces import BasicInterface
+from pymor.core.logger import getLogger
 from pymor.discretizations.iosys import LTISystem
 from pymor.operators.constructions import IdentityOperator
 
@@ -110,8 +111,8 @@ class TF_IRKAReductor(BasicInterface):
     def __init__(self, d):
         self.d = d
 
-    def reduce(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_sigma_in_rhp=False,
-                conv_crit='rel_sigma_change'):
+    def reduce(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, force_sigma_in_rhp=False,
+               conv_crit='rel_sigma_change'):
         """Reduce using TF-IRKA.
 
         Parameters
@@ -137,8 +138,6 @@ class TF_IRKAReductor(BasicInterface):
             Tolerance for the largest change in interpolation points.
         maxit
             Maximum number of iterations.
-        verbose
-            Should consecutive distances be printed.
         force_sigma_in_rhp
             If 'False`, new interpolation are reflections of reduced order
             model's poles. Otherwise, they are always in the right
@@ -171,6 +170,9 @@ class TF_IRKAReductor(BasicInterface):
         assert c is None or isinstance(c, np.ndarray) and c.shape == (d.p, r)
         assert conv_crit in ('rel_sigma_change', 'rel_H2_dist')
 
+        logger = getLogger('pymor.reductors.tf.TF_IRKAReductor.reduce')
+        logger.info('Starting TF-IRKA')
+
         # basic choice for initial interpolation points and tangential directions
         if sigma is None:
             sigma = np.logspace(-1, 1, r)
@@ -179,9 +181,8 @@ class TF_IRKAReductor(BasicInterface):
         if c is None:
             c = np.ones((d.p, r))
 
-        if verbose:
-            print('iter | conv. criterion')
-            print('-----+----------------')
+        logger.info('iter | conv. criterion')
+        logger.info('-----+----------------')
 
         self.dist = []
         self.sigmas = [np.array(sigma)]
@@ -221,8 +222,7 @@ class TF_IRKAReductor(BasicInterface):
                         rel_H2_dist = np.inf
                     self.dist.append(rel_H2_dist)
 
-            if verbose:
-                print('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
+            logger.info('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
 
             # new tangential directions
             b = rd.B._matrix.T.dot(Y.conj())

@@ -10,6 +10,7 @@ from pymor.algorithms.arnoldi import arnoldi
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.sylvester import solve_sylv_schur
 from pymor.algorithms.to_matrix import to_matrix
+from pymor.core.logger import getLogger
 from pymor.operators.constructions import IdentityOperator, LincombOperator
 from pymor.reductors.basic import GenericPGReductor
 
@@ -125,7 +126,7 @@ class IRKAReductor(GenericPGReductor):
     def __init__(self, d):
         self.d = d
 
-    def reduce(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, verbose=False, force_sigma_in_rhp=False,
+    def reduce(self, r, sigma=None, b=None, c=None, tol=1e-4, maxit=100, force_sigma_in_rhp=False,
                method='orth', use_arnoldi=False, conv_crit='rel_sigma_change', compute_errors=False):
         r"""Reduce using IRKA.
 
@@ -162,8 +163,6 @@ class IRKAReductor(GenericPGReductor):
             Tolerance for the largest change in interpolation points.
         maxit
             Maximum number of iterations.
-        verbose
-            Should consecutive distances be printed.
         force_sigma_in_rhp
             If 'False`, new interpolation are reflections of reduced order
             model's poles. Otherwise, they are always in the right
@@ -207,6 +206,9 @@ class IRKAReductor(GenericPGReductor):
         assert method in ('orth', 'biorth')
         assert conv_crit in ('rel_sigma_change', 'subspace_sin', 'rel_H2_dist')
 
+        logger = getLogger('pymor.reductors.lti.IRKAReductor.reduce')
+        logger.info('Starting IRKA')
+
         # basic choice for initial interpolation points and tangential directions
         if sigma is None:
             sigma = np.logspace(-1, 1, r)
@@ -215,13 +217,12 @@ class IRKAReductor(GenericPGReductor):
         if c is None:
             c = d.C.range.from_data(np.ones((r, d.p)))
 
-        if verbose:
-            if compute_errors:
-                print('iter | conv. criterion | rel. H_2-error')
-                print('-----+-----------------+----------------')
-            else:
-                print('iter | conv. criterion')
-                print('-----+----------------')
+        if compute_errors:
+            logger.info('iter | conv. criterion | rel. H_2-error')
+            logger.info('-----+-----------------+----------------')
+        else:
+            logger.info('iter | conv. criterion')
+            logger.info('-----+----------------')
 
         self.dist = []
         self.sigmas = [np.array(sigma)]
@@ -283,11 +284,10 @@ class IRKAReductor(GenericPGReductor):
                         rel_H2_dist = np.inf
                     self.dist.append(rel_H2_dist)
 
-            if verbose:
-                if compute_errors:
-                    print('{:4d} | {:15.9e} | {:15.9e}'.format(it + 1, self.dist[-1], rel_H2_err))
-                else:
-                    print('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
+            if compute_errors:
+                logger.info('{:4d} | {:15.9e} | {:15.9e}'.format(it + 1, self.dist[-1], rel_H2_err))
+            else:
+                logger.info('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
 
             # new tangential directions
             Y = rd.B.range.make_array(Y.conj().T)
@@ -323,7 +323,7 @@ class TSIAReductor(GenericPGReductor):
     def __init__(self, d):
         self.d = d
 
-    def reduce(self, rd0, tol=1e-4, maxit=100, verbose=False, method='orth', conv_crit='rel_sigma_change',
+    def reduce(self, rd0, tol=1e-4, maxit=100, method='orth', conv_crit='rel_sigma_change',
                compute_errors=False):
         """Reduce using TSIA.
 
@@ -349,8 +349,6 @@ class TSIAReductor(GenericPGReductor):
             Tolerance for the convergence criterion.
         maxit
             Maximum number of iterations.
-        verbose
-            Should convergence criterion during iterations be printed.
         method
             Method of projection the d:
 
@@ -383,13 +381,15 @@ class TSIAReductor(GenericPGReductor):
         assert method in ('orth', 'biorth')
         assert conv_crit in ('rel_sigma_change', 'subspace_sin', 'rel_H2_dist')
 
-        if verbose:
-            if compute_errors:
-                print('iter | conv. criterion | rel. H_2-error')
-                print('-----+-----------------+----------------')
-            else:
-                print('iter | conv. criterion')
-                print('-----+----------------')
+        logger = getLogger('pymor.reductors.lti.TSIAReductor.reduce')
+        logger.info('Starting TSIA')
+
+        if compute_errors:
+            logger.info('iter | conv. criterion | rel. H_2-error')
+            logger.info('-----+-----------------+----------------')
+        else:
+            logger.info('iter | conv. criterion')
+            logger.info('-----+----------------')
 
         # find initial projection matrices
         self.V, self.W = solve_sylv_schur(d.A, rd0.A,
@@ -453,11 +453,10 @@ class TSIAReductor(GenericPGReductor):
                         rel_H2_dist = np.inf
                     self.dist.append(rel_H2_dist)
 
-            if verbose:
-                if compute_errors:
-                    print('{:4d} | {:15.9e} | {:15.9e}'.format(it + 1, self.dist[-1], rel_H2_err))
-                else:
-                    print('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
+            if compute_errors:
+                logger.info('{:4d} | {:15.9e} | {:15.9e}'.format(it + 1, self.dist[-1], rel_H2_err))
+            else:
+                logger.info('{:4d} | {:15.9e}'.format(it + 1, self.dist[-1]))
 
             # new projection matrices
             self.V, self.W = solve_sylv_schur(d.A, rd.A,

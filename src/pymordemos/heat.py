@@ -111,7 +111,7 @@ if __name__ == '__main__':
     tol = 1e-4
     maxit = 100
     irka_reductor = IRKAReductor(lti)
-    rom_irka = irka_reductor.reduce(r, sigma, tol=tol, maxit=maxit, verbose=True, compute_errors=True)
+    rom_irka = irka_reductor.reduce(r, sigma, tol=tol, maxit=maxit, compute_errors=True)
 
     # Shift distances
     fig, ax = plt.subplots()
