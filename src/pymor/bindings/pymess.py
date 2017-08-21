@@ -15,7 +15,6 @@ if config.HAVE_PYMESS:
     from pymor.core.defaults import defaults
     from pymor.operators.constructions import IdentityOperator, LincombOperator
 
-
     def lyap_solver_options():
         """Returns available Lyapunov equation solvers with default |solver_options| for the pymess backend.
 
@@ -23,13 +22,14 @@ if config.HAVE_PYMESS:
         -------
         A dict of available solvers with default |solver_options|.
         """
+        opts = pymess.options()
+        opts.adi.shifts.paratype = pymess.MESS_LRCFADI_PARA_ADAPTIVE_V
 
         return {'pymess':       {'type': 'pymess',
-                                 'tol': None},
+                                 'opts': opts},
                 'pymess_lyap':  {'type': 'pymess_lyap'},
                 'pymess_lradi': {'type': 'pymess_lradi',
-                                 'tol': None}}
-
+                                 'opts': opts}}
 
     @defaults('default_solver')
     def solve_lyap(A, E, B, trans=False, options=None, default_solver='pymess'):
@@ -100,21 +100,17 @@ if config.HAVE_PYMESS:
                 else:
                     Z = pymess.lyap(A_mat.T, E_mat.T, B_mat.T)
         elif options['type'] == 'pymess_lradi':
-            opts = pymess.options()
-            opts.adi.shifts.paratype = pymess.MESS_LRCFADI_PARA_ADAPTIVE_V
+            opts = options['opts']
             if trans:
                 opts.type = pymess.MESS_OP_TRANSPOSE
-            if options['tol'] is not None:
-                opts.rel_change_tol = tol = options['tol']
-                opts.adi.res2_tol = tol
-                opts.adi.res2c_tol = tol
+            else:
+                opts.type = pymess.MESS_OP_NONE
             eqn = LyapunovEquation(opts, A, E, B)
             Z, status = pymess.lradi(eqn, opts)
 
         Z = A.source.from_data(np.array(Z).T)
 
         return Z
-
 
     def ricc_solver_options():
         """Returns available Riccati equation solvers with default |solver_options| for the pymess backend.
@@ -123,13 +119,14 @@ if config.HAVE_PYMESS:
         -------
         A dict of available solvers with default |solver_options|.
         """
+        opts = pymess.options()
+        opts.adi.shifts.paratype = pymess.MESS_LRCFADI_PARA_ADAPTIVE_V
 
         return {'pymess':      {'type': 'pymess',
-                                'tol': None},
+                                'opts': opts},
                 'pymess_care': {'type': 'pymess_care'},
                 'pymess_lrnm': {'type': 'pymess_lrnm',
-                                'tol': None}}
-
+                                'opts': opts}}
 
     @defaults('default_solver')
     def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
@@ -217,21 +214,17 @@ if config.HAVE_PYMESS:
         elif options['type'] == 'pymess_lrnm':
             if Q is not None or R is not None or G is not None:
                 raise NotImplementedError()
-            opts = pymess.options()
-            opts.adi.shifts.paratype = pymess.MESS_LRCFADI_PARA_ADAPTIVE_V
+            opts = options['opts']
             if not trans:
                 opts.type = pymess.MESS_OP_TRANSPOSE
-            if options['tol'] is not None:
-                opts.rel_change_tol = tol = options['tol']
-                opts.adi.res2_tol = tol
-                opts.adi.res2c_tol = tol
+            else:
+                opts.type = pymess.MESS_OP_NONE
             eqn = RiccatiEquation(opts, A, E, B, C)
             Z, status = pymess.lrnm(eqn, opts)
 
         Z = A.source.from_data(np.array(Z).T)
 
         return Z
-
 
     class LyapunovEquation(pymess.equation):
         r"""Lyapunov equation class for pymess
@@ -346,7 +339,6 @@ if config.HAVE_PYMESS:
 
         def parameter(self, arp_p, arp_m, B=None, K=None):
             return None
-
 
     class RiccatiEquation(pymess.equation):
         r"""Riccati equation class for pymess
