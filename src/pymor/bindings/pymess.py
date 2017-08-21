@@ -89,12 +89,11 @@ if config.HAVE_PYMESS:
             A_mat = to_matrix(A) if A.source.dim < 1000 else to_matrix(A, format='csc')
             if E is not None:
                 E_mat = to_matrix(E) if E.source.dim < 1000 else to_matrix(E, format='csc')
+            else:
+                E_mat = None
             B_mat = to_matrix(B)
             if not trans:
-                if E is None:
-                    Z = pymess.lyap(A_mat, None, B_mat)
-                else:
-                    Z = pymess.lyap(A_mat, E_mat, B_mat)
+                Z = pymess.lyap(A_mat, E_mat, B_mat)
             else:
                 if E is None:
                     Z = pymess.lyap(A_mat.T, None, B_mat.T)
@@ -201,8 +200,11 @@ if config.HAVE_PYMESS:
         if options['type'] == 'pymess_care':
             if Q is not None or R is not None or G is not None:
                 raise NotImplementedError()
-            A_mat = to_matrix(A)
-            E_mat = to_matrix(E) if E else None
+            A_mat = to_matrix(A) if A.source.dim < 1000 else to_matrix(A, format='csc')
+            if E is not None:
+                E_mat = to_matrix(E) if E.source.dim < 1000 else to_matrix(E, format='csc')
+            else:
+                E_mat = None
             B_mat = to_matrix(B) if B else None
             C_mat = to_matrix(C) if C else None
             if not trans:
