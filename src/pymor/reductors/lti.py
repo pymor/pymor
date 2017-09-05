@@ -6,113 +6,13 @@
 import numpy as np
 import scipy.linalg as spla
 
-from pymor.algorithms.arnoldi import arnoldi
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
 from pymor.algorithms.sylvester import solve_sylv_schur
 from pymor.algorithms.to_matrix import to_matrix
 from pymor.core.logger import getLogger
-from pymor.operators.constructions import IdentityOperator, LincombOperator
+from pymor.operators.constructions import IdentityOperator
 from pymor.reductors.basic import GenericPGReductor
-
-
-class BitangHermInterpReductor(GenericPGReductor):
-    """Bitangential Hermite interpolation reductor.
-
-    .. [ABG10] A. C. Antoulas, C. A. Beattie, S. Gugercin, Interpolatory
-               model reduction of large-scale dynamical systems,
-               Efficient Modeling and Control of Large-Scale Systems,
-               Springer-Verlag, 2010.
-
-    Parameters
-    ----------
-    d
-        |LTISystem|.
-    """
-    def __init__(self, d):
-        self.d = d
-
-    def reduce(self, sigma, b, c, method='orth', use_arnoldi=False):
-        """Bitangential Hermite interpolation.
-
-        Parameters
-        ----------
-        sigma
-            Interpolation points (closed under conjugation), list of length `r`.
-        b
-            Right tangential directions, |VectorArray| of length `r` from
-            `d.B.source`.
-        c
-            Left tangential directions, |VectorArray| of length `r` from
-            `d.C.range`.
-        method
-            Method of projection:
-
-                - `'orth'`: projection matrices are orthogonalized with respect
-                    to the Euclidean inner product
-                - `'biorth'`: projection matrices are biorthogolized with
-                    respect to the E product
-        use_arnoldi
-            Should the Arnoldi process be used for rational interpolation.
-            Available only for SISO systems. Otherwise, it is ignored.
-
-        Returns
-        -------
-        rd
-            Reduced |LTISystem| model.
-        """
-        d = self.d
-        r = len(sigma)
-        assert b in d.B.source and len(b) == r
-        assert c in d.C.range and len(c) == r
-        assert method in ('orth', 'biorth')
-
-        if use_arnoldi and d.m == 1 and d.p == 1:
-            self.V = arnoldi(d.A, d.E, d.B, sigma)
-            self.W = arnoldi(d.A, d.E, d.C, sigma, trans=True)
-            self.use_default = None
-        else:
-            # rescale tangential directions (could avoid overflow or underflow)
-            b.scal(1 / b.l2_norm())
-            c.scal(1 / c.l2_norm())
-
-            # compute projection matrices
-            self.V = d.A.source.empty(reserve=r)
-            self.W = d.A.source.empty(reserve=r)
-            for i in range(r):
-                if sigma[i].imag == 0:
-                    sEmA = LincombOperator((d.E, d.A), (sigma[i].real, -1))
-
-                    Bb = d.B.apply(b.real[i])
-                    self.V.append(sEmA.apply_inverse(Bb))
-
-                    CTc = d.C.apply_transpose(c.real[i])
-                    self.W.append(sEmA.apply_inverse_transpose(CTc))
-                elif sigma[i].imag > 0:
-                    sEmA = LincombOperator((d.E, d.A), (sigma[i], -1))
-
-                    Bb = d.B.apply(b[i])
-                    v = sEmA.apply_inverse(Bb)
-                    self.V.append(v.real)
-                    self.V.append(v.imag)
-
-                    CTc = d.C.apply_transpose(c[i])
-                    w = sEmA.apply_inverse_transpose(CTc)
-                    self.W.append(w.real)
-                    self.W.append(w.imag)
-
-            if method == 'orth':
-                self.V = gram_schmidt(self.V, atol=0, rtol=0)
-                self.W = gram_schmidt(self.W, atol=0, rtol=0)
-                self.use_default = None
-            elif method == 'biorth':
-                self.V, self.W = gram_schmidt_biorth(self.V, self.W, product=d.E)
-                self.use_default = ['E']
-
-        rd = super().reduce()
-        return rd
-
-    extend_source_basis = None
-    extend_range_basis = None
+from pymor.reductors.interpolation import LTI_BHIReductor
 
 
 class IRKAReductor(GenericPGReductor):
@@ -236,7 +136,7 @@ class IRKAReductor(GenericPGReductor):
         self.R = [b]
         self.L = [c]
         self.errors = [] if compute_errors else None
-        interp_reductor = BitangHermInterpReductor(d)
+        interp_reductor = LTI_BHIReductor(d)
         # main loop
         for it in range(maxit):
             # interpolatory reduced order model
