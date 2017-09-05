@@ -69,11 +69,11 @@ class InputOutputSystem(DiscretizationBase):
         return self + (-other)
 
     def eval_tf(self, s, mu=None):
-        """Evaluate the transfer function of the system."""
+        """Evaluate the transfer function."""
         raise NotImplementedError
 
     def eval_dtf(self, s, mu=None):
-        """Evaluate the derivative of the transfer function of the system."""
+        """Evaluate the derivative of the transfer function."""
         raise NotImplementedError
 
     @cached
@@ -105,14 +105,15 @@ class InputOutputSystem(DiscretizationBase):
         sys_list
             A single system or a list of systems.
         plot_style_list
-            A string or a list of strings of the same length as `sys_list`.
+            A string or a list of strings of the same length as
+            `sys_list`.
 
             If `None`, matplotlib defaults are used.
         w
             Frequencies at which to evaluate the transfer function(s).
         ord
-            The order of the norm used to compute the magnitude (the default is
-            the Frobenius norm).
+            The order of the norm used to compute the magnitude (the
+            default is the Frobenius norm).
         dB
             Should the magnitude be in dB on the plot.
         Hz
@@ -179,8 +180,8 @@ class LTISystem(InputOutputSystem):
         E x(k + 1) &= A x(k) + B u(k) \\
           y(k)     &= C x(k) + D u(k)
 
-    if discrete-time, where :math:`A`, :math:`B`, :math:`C`, :math:`D`, and
-    :math:`E` are linear operators.
+    if discrete-time, where :math:`A`, :math:`B`, :math:`C`, :math:`D`,
+    and :math:`E` are linear operators.
 
     Parameters
     ----------
@@ -200,7 +201,8 @@ class LTISystem(InputOutputSystem):
         An error estimator for the problem. This can be any object with
         an `estimate(U, mu, discretization)` method. If `estimator` is
         not `None`, an `estimate(U, mu)` method is added to the
-        discretization which will call `estimator.estimate(U, mu, self)`.
+        discretization which will call
+        `estimator.estimate(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
         a `visualize(U, discretization, ...)` method. If `visualizer`
@@ -273,11 +275,11 @@ class LTISystem(InputOutputSystem):
         C
             The |NumPy array| or |SciPy spmatrix| C.
         D
-            The |NumPy array| or |SciPy spmatrix| D or `None` (then D is assumed
-            to be zero).
+            The |NumPy array| or |SciPy spmatrix| D or `None` (then D is
+            assumed to be zero).
         E
-            The |NumPy array| or |SciPy spmatrix| E or `None` (then E is assumed
-            to be identity).
+            The |NumPy array| or |SciPy spmatrix| E or `None` (then E is
+            assumed to be identity).
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
 
@@ -317,9 +319,11 @@ class LTISystem(InputOutputSystem):
         C_file
             The name of the file (with extension) containing C.
         D_file
-            `None` or the name of the file (with extension) containing D.
+            `None` or the name of the file (with extension) containing
+            D.
         E_file
-            `None` or the name of the file (with extension) containing E.
+            `None` or the name of the file (with extension) containing
+            E.
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
 
@@ -347,8 +351,8 @@ class LTISystem(InputOutputSystem):
         Parameters
         ----------
         file_name
-            The name of the .mat file (extension .mat does not need to be
-            included) containing A, B, C, and optionally D and E.
+            The name of the .mat file (extension .mat does not need to
+            be included) containing A, B, C, and optionally D and E.
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
 
@@ -379,7 +383,8 @@ class LTISystem(InputOutputSystem):
         Parameters
         ----------
         files_basename
-            The basename of files containing A, B, C, and optionally D and E.
+            The basename of files containing A, B, C, and optionally D
+            and E.
         cont_time
             `True` if the system is continuous-time, otherwise `False`.
 
@@ -431,8 +436,8 @@ class LTISystem(InputOutputSystem):
             C (s E - A)^{-1} B + D.
 
         .. note::
-            We assume that either the number of inputs or the number of outputs
-            is small compared to the order of the system, e.g. less than 10.
+            We assume that either the number of inputs or the number of
+            outputs is much smaller than the order of the system.
 
         Parameters
         ----------
@@ -442,8 +447,8 @@ class LTISystem(InputOutputSystem):
         Returns
         -------
         tfs
-            Transfer function evaluated at the complex number `s`, |NumPy array|
-            of shape `(self.p, self.m)`.
+            Transfer function evaluated at the complex number `s`,
+            |NumPy array| of shape `(self.p, self.m)`.
         """
         A = self.A
         B = self.B
@@ -472,8 +477,8 @@ class LTISystem(InputOutputSystem):
             -C (s E - A)^{-1} E (s E - A)^{-1} B.
 
         .. note::
-            We assume that either the number of inputs or the number of outputs
-            is small compared to the order of the system, e.g. less than 10.
+            We assume that either the number of inputs or the number of
+            outputs is much smaller than the order of the system.
 
         Parameters
         ----------
@@ -483,8 +488,8 @@ class LTISystem(InputOutputSystem):
         Returns
         -------
         dtfs
-            Derivative of transfer function evaluated at the complex number `s`,
-            |NumPy array| of shape `(self.p, self.m)`.
+            Derivative of transfer function evaluated at the complex
+            number `s`, |NumPy array| of shape `(self.p, self.m)`.
         """
         A = self.A
         B = self.B
@@ -546,7 +551,8 @@ class LTISystem(InputOutputSystem):
 
             - `'lyap'`: Lyapunov Gramian,
             - `'lqg'`: LQG Gramian,
-            - `('br', gamma)`: Bounded Real Gramian with parameter gamma.
+            - `('br', gamma)`: Bounded Real Gramian with parameter
+              gamma.
         subtyp
             The subtype of the Gramian:
 
@@ -665,10 +671,10 @@ class LTISystem(InputOutputSystem):
 
 
 class TF(InputOutputSystem):
-    """Class for input-output systems represented by a transfer function.
+    """Class for systems represented by a transfer function.
 
-    This class describes input-output systems given by a transfer function
-    :math:`H(s)`.
+    This class describes input-output systems given by a transfer
+    function :math:`H(s)`.
 
     Parameters
     ----------
@@ -752,7 +758,8 @@ class SecondOrderSystem(InputOutputSystem):
         An error estimator for the problem. This can be any object with
         an `estimate(U, mu, discretization)` method. If `estimator` is
         not `None`, an `estimate(U, mu)` method is added to the
-        discretization which will call `estimator.estimate(U, mu, self)`.
+        discretization which will call
+        `estimator.estimate(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
         a `visualize(U, discretization, ...)` method. If `visualizer`
@@ -853,102 +860,57 @@ class SecondOrderSystem(InputOutputSystem):
 
         return cls(M, D, K, B, Cp, Cv, cont_time=cont_time)
 
-    def to_lti(self, sym=False):
+    def to_lti(self):
         r"""Return a first order representation.
 
-        Parameters
-        ----------
-        sym
-            If `False`, the simple representation
+        The first order representation
 
-            .. math::
-                \begin{bmatrix}
-                    I & 0 \\
-                    0 & M
-                \end{bmatrix}
-                x'(t) & =
-                \begin{bmatrix}
-                    0 & I \\
-                    -K & -D
-                \end{bmatrix}
-                x(t) +
-                \begin{bmatrix}
-                    0 \\
-                    B
-                \end{bmatrix}
-                u(t) \\
-                y(t) & =
-                \begin{bmatrix}
-                    C_p & C_v
-                \end{bmatrix}
-                x(t)
+        .. math::
+            \begin{bmatrix}
+                I & 0 \\
+                0 & M
+            \end{bmatrix}
+            x'(t) & =
+            \begin{bmatrix}
+                0 & I \\
+                -K & -D
+            \end{bmatrix}
+            x(t) +
+            \begin{bmatrix}
+                0 \\
+                B
+            \end{bmatrix}
+            u(t) \\
+            y(t) & =
+            \begin{bmatrix}
+                C_p & C_v
+            \end{bmatrix}
+            x(t)
 
-            is returned. Otherwise, a symmetric representation
-
-            .. math::
-                \begin{bmatrix}
-                    -K & 0 \\
-                    0 & M
-                \end{bmatrix}
-                x'(t) & =
-                \begin{bmatrix}
-                    0 & -K \\
-                    -K & -D
-                \end{bmatrix}
-                x(t) +
-                \begin{bmatrix}
-                    0 \\
-                    B
-                \end{bmatrix}
-                u(t) \\
-                y(t) & =
-                \begin{bmatrix}
-                    C_p & C_v
-                \end{bmatrix}
-                x(t)
-
-            is returned.
+        is returned.
 
         Returns
         -------
         lti
             |LTISystem| equivalent to the second order system.
         """
-        if not sym:
-            return LTISystem(A=BlockOperator([[None, IdentityOperator(self.M.source)],
-                                              [self.K * (-1), self.D * (-1)]],
-                                             source_id='STATE',
-                                             range_id='STATE'),
-                             B=BlockOperator.vstack((ZeroOperator(self.B.source, self.B.range),
-                                                     self.B),
-                                                    source_id='INPUT',
-                                                    range_id='STATE'),
-                             C=BlockOperator.hstack((self.Cp, self.Cv),
-                                                    source_id='STATE',
-                                                    range_id='OUTPUT'),
-                             E=BlockDiagonalOperator((IdentityOperator(self.M.source), self.M),
-                                                     source_id='STATE',
-                                                     range_id='STATE'),
-                             cont_time=self.cont_time,
-                             cache_region=self.cache_region,
-                             name=self.name + '_first_order')
-        else:
-            return LTISystem(A=BlockOperator([[None, self.K * (-1)],
-                                              [self.K * (-1), self.D * (-1)]],
-                                             source_id='STATE',
-                                             range_id='STATE'),
-                             B=BlockOperator.vstack((ZeroOperator(self.B.source, self.B.range)),
-                                                    source_id='INPUT',
-                                                    range_id='STATE'),
-                             C=BlockOperator.hstack((self.Cp, self.Cv),
-                                                    source_id='STATE',
-                                                    range_id='OUTPUT'),
-                             E=BlockDiagonalOperator((self.K * (-1), self.M),
-                                                     source_id='STATE',
-                                                     range_id='STATE'),
-                             cont_time=self.cont_time,
-                             cache_region=self.cache_region,
-                             name=self.name + '_first_order_sym')
+        return LTISystem(A=BlockOperator([[None, IdentityOperator(self.M.source)],
+                                          [self.K * (-1), self.D * (-1)]],
+                                         source_id='STATE',
+                                         range_id='STATE'),
+                         B=BlockOperator.vstack((ZeroOperator(self.B.source, self.B.range),
+                                                 self.B),
+                                                source_id='INPUT',
+                                                range_id='STATE'),
+                         C=BlockOperator.hstack((self.Cp, self.Cv),
+                                                source_id='STATE',
+                                                range_id='OUTPUT'),
+                         E=BlockDiagonalOperator((IdentityOperator(self.M.source), self.M),
+                                                 source_id='STATE',
+                                                 range_id='STATE'),
+                         cont_time=self.cont_time,
+                         cache_region=self.cache_region,
+                         name=self.name + '_first_order')
 
     def eval_tf(self, s):
         """Evaluate the transfer function.
@@ -959,8 +921,8 @@ class SecondOrderSystem(InputOutputSystem):
             (C_p + s C_v) (s^2 M + s D + K)^{-1} B.
 
         .. note::
-            We assume that either the number of inputs or the number of outputs
-            is small compared to the order of the system, e.g. less than 10.
+            We assume that either the number of inputs or the number of
+            outputs is much smaller than the order of the system.
 
         Parameters
         ----------
@@ -970,8 +932,8 @@ class SecondOrderSystem(InputOutputSystem):
         Returns
         -------
         tfs
-            Transfer function evaluated at the complex number `s`, |NumPy array|
-            of shape `(self.p, self.m)`.
+            Transfer function evaluated at the complex number `s`,
+            |NumPy array| of shape `(self.p, self.m)`.
         """
         M = self.M
         D = self.D
@@ -998,8 +960,8 @@ class SecondOrderSystem(InputOutputSystem):
                 (s^2 M + s D + K)^{-1} B.
 
         .. note::
-            We assume that either the number of inputs or the number of outputs
-            is small compared to the order of the system, e.g. less than 10.
+            We assume that either the number of inputs or the number of
+            outputs is much smaller than the order of the system.
 
         Parameters
         ----------
@@ -1009,8 +971,8 @@ class SecondOrderSystem(InputOutputSystem):
         Returns
         -------
         dtfs
-            Derivative of transfer function evaluated at the complex number `s`,
-            |NumPy array| of shape `(self.p, self.m)`.
+            Derivative of transfer function evaluated at the complex
+            number `s`, |NumPy array| of shape `(self.p, self.m)`.
         """
         M = self.M
         D = self.D
@@ -1027,8 +989,8 @@ class SecondOrderSystem(InputOutputSystem):
             dtfs -= CppsCv.apply(s2MpsDpK.apply_inverse(sM2pD.apply(s2MpsDpK.apply_inverse(B.as_range_array())))).data.T
         else:
             dtfs = B.apply_transpose(s2MpsDpK.apply_inverse_transpose(Cv.as_source_array())).data.conj() * s
-            dtfs -= B.apply_transpose(s2MpsDpK.apply_inverse_transpose(sM2pD.apply_transpose(s2MpsDpK.apply_inverse_transpose(
-                Cp.as_source_array() + Cv.as_source_array() * s.conj())))).data.conj()
+            dtfs -= B.apply_transpose(s2MpsDpK.apply_inverse_transpose(sM2pD.apply_transpose(
+                s2MpsDpK.apply_inverse_transpose(Cp.as_source_array() + Cv.as_source_array() * s.conj())))).data.conj()
         return dtfs
 
     def norm(self, name='H2'):
@@ -1042,17 +1004,21 @@ class LinearDelaySystem(InputOutputSystem):
     This class describes input-state-output systems given by
 
     .. math::
-        E x'(t) &= A x(t) + \sum_{i = 1}^q{A_i x(t - \tau_i)} + B u(t) \\
-           y(t) &= C x(t)
+        E x'(t)
+        & = A x(t) + \sum_{i = 1}^q{A_i x(t - \tau_i)} + B u(t) \\
+        y(t)
+        & = C x(t)
 
     if continuous-time, or
 
     .. math::
-        E x(k + 1) &= A x(k) + \sum_{i = 1}^q{A_i x(k - \tau_i)} + B u(k) \\
-              y(k) &= C x(k)
+        E x(k + 1)
+        & = A x(k) + \sum_{i = 1}^q{A_i x(k - \tau_i)} + B u(k) \\
+        y(k)
+        &= C x(k)
 
-    if discrete-time, where :math:`E`, :math:`A`, :math:`A_i`, :math:`B`,
-    and :math:`C` are linear operators.
+    if discrete-time, where :math:`E`, :math:`A`, :math:`A_i`,
+    :math:`B`, and :math:`C` are linear operators.
 
     Parameters
     ----------
@@ -1074,7 +1040,8 @@ class LinearDelaySystem(InputOutputSystem):
         An error estimator for the problem. This can be any object with
         an `estimate(U, mu, discretization)` method. If `estimator` is
         not `None`, an `estimate(U, mu)` method is added to the
-        discretization which will call `estimator.estimate(U, mu, self)`.
+        discretization which will call
+        `estimator.estimate(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
         a `visualize(U, discretization, ...)` method. If `visualizer`
@@ -1138,11 +1105,12 @@ class LinearDelaySystem(InputOutputSystem):
         The transfer function at :math:`s` is
 
         .. math::
-            C \left(s E - A - \sum_{i = 1}^q{e^{-\tau_i s} A_i}\right)^{-1} B.
+            C \left(s E - A
+                - \sum_{i = 1}^q{e^{-\tau_i s} A_i}\right)^{-1} B.
 
         .. note::
-            We assume that either the number of inputs or the number of outputs
-            is small compared to the order of the system, e.g. less than 10.
+            We assume that either the number of inputs or the number of
+            outputs is much smaller than the order of the system.
 
         Parameters
         ----------
@@ -1152,8 +1120,8 @@ class LinearDelaySystem(InputOutputSystem):
         Returns
         -------
         tfs
-            Transfer function evaluated at the complex number `s`, |NumPy array|
-            of shape `(self.p, self.m)`.
+            Transfer function evaluated at the complex number `s`,
+            |NumPy array| of shape `(self.p, self.m)`.
         """
         E = self.E
         A = self.A
@@ -1174,13 +1142,16 @@ class LinearDelaySystem(InputOutputSystem):
         The derivative of the transfer function at :math:`s` is
 
         .. math::
-            -C \left(s E - A - \sum_{i = 1}^q{e^{-\tau_i s} A_i}\right)^{-1}
-                \left(E + \sum_{i = 1}^q{\tau_i e^{-\tau_i s} A_i}\right)
-                \left(s E - A - \sum_{i = 1}^q{e^{-\tau_i s} A_i}\right)^{-1} B.
+            -C \left(s E - A
+                    - \sum_{i = 1}^q{e^{-\tau_i s} A_i}\right)^{-1}
+                \left(E
+                    + \sum_{i = 1}^q{\tau_i e^{-\tau_i s} A_i}\right)
+                \left(s E - A
+                    - \sum_{i = 1}^q{e^{-\tau_i s} A_i}\right)^{-1} B.
 
         .. note::
-            We assume that either the number of inputs or the number of outputs
-            is small compared to the order of the system, e.g. less than 10.
+            We assume that either the number of inputs or the number of
+            outputs is much smaller than the order of the system.
 
         Parameters
         ----------
@@ -1190,8 +1161,8 @@ class LinearDelaySystem(InputOutputSystem):
         Returns
         -------
         dtfs
-            Derivative of transfer function evaluated at the complex number `s`,
-            |NumPy array| of shape `(self.p, self.m)`.
+            Derivative of transfer function evaluated at the complex
+            number `s`, |NumPy array| of shape `(self.p, self.m)`.
         """
         E = self.E
         A = self.A
@@ -1216,20 +1187,28 @@ class LinearStochasticSystem(InputOutputSystem):
     This class describes input-state-output systems given by
 
     .. math::
-        E \mathrm{d}x(t) &= A x(t) \mathrm{d}t
-                            + \sum_{i = 1}^q{A_i x(t) \mathrm{d}\omega_i(t)}
-                            + B u(t) \mathrm{d}t \\
-                    y(t) &= C x(t)
+        E \mathrm{d}x(t)
+        & =
+            A x(t) \mathrm{d}t
+            + \sum_{i = 1}^q{A_i x(t) \mathrm{d}\omega_i(t)}
+            + B u(t) \mathrm{d}t \\
+        y(t)
+        & = C x(t)
 
     if continuous-time, or
 
     .. math::
-        E x(k + 1) &= A x(k) + \sum_{i = 1}^q{A_i x(k) \omega_i(k)} + B u(k) \\
-              y(k) &= C x(k)
+        E x(k + 1)
+        & =
+            A x(k)
+            + \sum_{i = 1}^q{A_i x(k) \omega_i(k)}
+            + B u(k) \\
+        y(k)
+        & = C x(k)
 
-    if discrete-time, where :math:`E`, :math:`A`, :math:`A_i`, :math:`B`,
-    and :math:`C` are linear operators and :math:`\omega_i` are stochastic
-    processes.
+    if discrete-time, where :math:`E`, :math:`A`, :math:`A_i`,
+    :math:`B`, and :math:`C` are linear operators and :math:`\omega_i`
+    are stochastic processes.
 
     Parameters
     ----------
@@ -1249,7 +1228,8 @@ class LinearStochasticSystem(InputOutputSystem):
         An error estimator for the problem. This can be any object with
         an `estimate(U, mu, discretization)` method. If `estimator` is
         not `None`, an `estimate(U, mu)` method is added to the
-        discretization which will call `estimator.estimate(U, mu, self)`.
+        discretization which will call
+        `estimator.estimate(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
         a `visualize(U, discretization, ...)` method. If `visualizer`
@@ -1317,18 +1297,28 @@ class BilinearSystem(InputOutputSystem):
     This class describes input-output systems given by
 
     .. math::
-        E x'(t) &= A x(t) + \sum_{i = 1}^m{N_i x(t) u_i(t)} + B u(t) \\
-           y(t) &= C x(t)
+        E x'(t)
+        & =
+            A x(t)
+            + \sum_{i = 1}^m{N_i x(t) u_i(t)}
+            + B u(t) \\
+        y(t)
+        & = C x(t)
 
     if continuous-time, or
 
     .. math::
-        E x(k + 1) &= A x(k) + \sum_{i = 1}^m{N_i x(k) u_i(k)} + B u(k) \\
-              y(k) &= C x(k)
+        E x(k + 1)
+        & =
+            A x(k)
+            + \sum_{i = 1}^m{N_i x(k) u_i(k)}
+            + B u(k) \\
+        y(k)
+        & = C x(k)
 
-    if discrete-time, where :math:`E`, :math:`A`, :math:`N_i`, :math:`B`,
-    and :math:`C` are linear operators and :math:`m` is the number of
-    inputs.
+    if discrete-time, where :math:`E`, :math:`A`, :math:`N_i`,
+    :math:`B`, and :math:`C` are linear operators and :math:`m` is the
+    number of inputs.
 
     Parameters
     ----------
@@ -1348,7 +1338,8 @@ class BilinearSystem(InputOutputSystem):
         An error estimator for the problem. This can be any object with
         an `estimate(U, mu, discretization)` method. If `estimator` is
         not `None`, an `estimate(U, mu)` method is added to the
-        discretization which will call `estimator.estimate(U, mu, self)`.
+        discretization which will call
+        `estimator.estimate(U, mu, self)`.
     visualizer
         A visualizer for the problem. This can be any object with
         a `visualize(U, discretization, ...)` method. If `visualizer`

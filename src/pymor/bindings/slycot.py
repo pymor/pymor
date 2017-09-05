@@ -12,7 +12,6 @@ if config.HAVE_SLYCOT:
     from pymor.algorithms.to_matrix import to_matrix
     from pymor.bindings.scipy import _solve_lyap_check_args, _solve_ricc_check_args
 
-
     def lyap_solver_options():
         """Returns available Lyapunov equation solvers with default |solver_options| for the Slycot backend.
 
@@ -22,7 +21,6 @@ if config.HAVE_SLYCOT:
         """
 
         return {'slycot': {'type': 'slycot'}}
-
 
     def solve_lyap(A, E, B, trans=False, options=None):
         """Find a factor of the solution of a Lyapunov equation.
@@ -105,7 +103,6 @@ if config.HAVE_SLYCOT:
 
         return Z
 
-
     def ricc_solver_options():
         """Returns available Riccati equation solvers with default |solver_options| for the SciPy backend.
 
@@ -115,7 +112,6 @@ if config.HAVE_SLYCOT:
         """
 
         return {'slycot': {'type': 'slycot'}}
-
 
     def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None, trans=False, options=None):
         """Find a factor of the solution of a Riccati equation

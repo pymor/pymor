@@ -41,8 +41,8 @@ class GenericBTReductor(GenericPGReductor):
         Parameters
         ----------
         r
-            Order of the reduced model if `tol` is `None`, maximum order if
-            `tol` is specified.
+            Order of the reduced model if `tol` is `None`, maximum order
+            if `tol` is specified.
         tol
             Tolerance for the error bound if `r` is `None`.
         method
@@ -50,12 +50,13 @@ class GenericBTReductor(GenericPGReductor):
 
                 - `'sr'`: square root method (default, since standard in
                     literature)
-                - `'bfsr'`: balancing-free square root method (avoids scaling
-                    by singular values and orthogonalizes the projection
-                    matrices, which might make it more accurate than the square
-                    root method)
-                - `'biorth'`: like the balancing-free square root method,
-                    except it biorthogonalizes the projection matrices
+                - `'bfsr'`: balancing-free square root method (avoids
+                    scaling by singular values and orthogonalizes the
+                    projection matrices, which might make it more
+                    accurate than the square root method)
+                - `'biorth'`: like the balancing-free square root
+                    method, except it biorthogonalizes the projection
+                    matrices
 
         Returns
         -------
@@ -77,7 +78,7 @@ class GenericBTReductor(GenericPGReductor):
 
         if r > min([len(self.cf), len(self.of)]):
             raise ValueError('r needs to be smaller than the sizes of Gramian factors.' +
-                            ' Try reducing the tolerance in the low-rank matrix equation solver.')
+                             ' Try reducing the tolerance in the low-rank matrix equation solver.')
 
         # compute projection matrices and find the reduced model
         self.V = self.cf.lincomb(self.sV[:r])
@@ -107,8 +108,9 @@ class GenericBTReductor(GenericPGReductor):
 class BTReductor(GenericBTReductor):
     """Standard (Lyapunov) Balanced Truncation reductor.
 
-    .. [A05] A. C. Antoulas, Approximation of Large-Scale Dynamical Systems,
-            SIAM, 2005.
+    .. [A05] A. C. Antoulas, Approximation of Large-Scale Dynamical
+             Systems,
+             SIAM, 2005.
 
     Parameters
     ----------
@@ -130,11 +132,13 @@ class BTReductor(GenericBTReductor):
 class LQGBTReductor(GenericBTReductor):
     r"""Linear Quadratic Gaussian (LQG) Balanced Truncation reductor.
 
-    .. [A05] A. C. Antoulas, Approximation of Large-Scale Dynamical Systems,
+    .. [A05] A. C. Antoulas, Approximation of Large-Scale Dynamical
+             Systems,
              SIAM, 2005.
     .. [MG91] D. Mustafa, K. Glover, Controller Reduction by
               :math:`\mathcal{H}_\infty`-Balanced Truncation,
-              IEEE Transactions on Automatic Control, 36(6), 668-682, 1991.
+              IEEE Transactions on Automatic Control, 36(6), 668-682,
+              1991.
 
     Parameters
     ----------
@@ -157,9 +161,10 @@ class BRBTReductor(GenericBTReductor):
     """Bounded Real (BR) Balanced Truncation reductor.
 
     .. [OJ88] P. C. Opdenacker, E. A. Jonckheere, A Contraction Mapping
-              Preserving Balanced Reduction Scheme and Its Infinity Norm Error
-              Bounds,
-              IEEE Transactions on Circuits and Systems, 35(2), 184-189, 1988.
+              Preserving Balanced Reduction Scheme and Its Infinity Norm
+              Error Bounds,
+              IEEE Transactions on Circuits and Systems, 35(2), 184-189,
+              1988.
 
     Parameters
     ----------

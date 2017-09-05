@@ -131,12 +131,13 @@ class IRKAReductor(GenericPGReductor):
         r"""Reduce using IRKA.
 
         .. [GAB08] S. Gugercin, A. C. Antoulas, C. A. Beattie,
-                :math:`\mathcal{H}_2` model reduction for large-scale linear
-                dynamical systems,
+                :math:`\mathcal{H}_2` model reduction for large-scale
+                linear dynamical systems,
                 SIAM Journal on Matrix Analysis and Applications, 30(2),
                 609-638, 2008.
-        .. [ABG10] A. C. Antoulas, C. A. Beattie, S. Gugercin, Interpolatory
-                model reduction of large-scale dynamical systems,
+        .. [ABG10] A. C. Antoulas, C. A. Beattie, S. Gugercin,
+                Interpolatory model reduction of large-scale dynamical
+                systems,
                 Efficient Modeling and Control of Large-Scale Systems,
                 Springer-Verlag, 2010.
 
@@ -145,18 +146,19 @@ class IRKAReductor(GenericPGReductor):
         r
             Order of the reduced order model.
         sigma
-            Initial interpolation points (closed under conjugation), list of
-            length `r`.
+            Initial interpolation points (closed under conjugation),
+            list of length `r`.
 
-            If `None`, interpolation points are log-spaced between 0.1 and 10.
+            If `None`, interpolation points are log-spaced between 0.1
+            and 10.
         b
-            Initial right tangential directions, |VectorArray| of length `r`
-            from `d.B.source`.
+            Initial right tangential directions, |VectorArray| of length
+            `r` from `d.B.source`.
 
             If `None`, `b` is chosen with all ones.
         c
-            Initial left tangential directions, |VectorArray| of length `r` from
-            `d.C.range`.
+            Initial left tangential directions, |VectorArray| of length
+            `r` from `d.C.range`.
 
             If `None`, `c` is chosen with all ones.
         tol
@@ -164,32 +166,36 @@ class IRKAReductor(GenericPGReductor):
         maxit
             Maximum number of iterations.
         force_sigma_in_rhp
-            If 'False`, new interpolation are reflections of reduced order
-            model's poles. Otherwise, they are always in the right
+            If 'False`, new interpolation are reflections of reduced
+            order model's poles. Otherwise, they are always in the right
             half-plane.
         method
             Method of projection:
 
-                - `'orth'`: projection matrices are orthogonalized with respect
-                    to the Euclidean inner product
-                - `'biorth'`: projection matrices are biorthogolized with
-                    respect to the E product
+                - `'orth'`: projection matrices are orthogonalized with
+                    respect to the Euclidean inner product
+                - `'biorth'`: projection matrices are biorthogolized
+                    with respect to the E product
         use_arnoldi
-            Should the Arnoldi process be used for rational interpolation.
-            Available only for SISO systems. Otherwise, it is ignored.
+            Should the Arnoldi process be used for rational
+            interpolation. Available only for SISO systems. Otherwise,
+            it is ignored.
         conv_crit
             Convergence criterion:
 
-                - `'rel_sigma_change'`: relative change in interpolation points
-                - `'subspace_sin'`: maximum of sines of Petrov-Galerkin subspaces
-                - `'rel_H2_dist'`: relative H_2 distance of reduced order models
+                - `'rel_sigma_change'`: relative change in interpolation
+                  points
+                - `'subspace_sin'`: maximum of sines of Petrov-Galerkin
+                  subspaces
+                - `'rel_H2_dist'`: relative H_2 distance of reduced
+                  order models
         compute_errors
-            Should the relative :math:`\mathcal{H}_2`-errors of intermediate
-            reduced order models be computed.
+            Should the relative :math:`\mathcal{H}_2`-errors of
+            intermediate reduced order models be computed.
 
             .. warning::
-                Computing :math:`\mathcal{H}_2`-errors is expensive. Use this
-                option only if necessary.
+                Computing :math:`\mathcal{H}_2`-errors is expensive. Use
+                this option only if necessary.
 
         Returns
         -------
@@ -209,7 +215,8 @@ class IRKAReductor(GenericPGReductor):
         logger = getLogger('pymor.reductors.lti.IRKAReductor.reduce')
         logger.info('Starting IRKA')
 
-        # basic choice for initial interpolation points and tangential directions
+        # basic choice for initial interpolation points and tangential
+        # directions
         if sigma is None:
             sigma = np.logspace(-1, 1, r)
         if b is None:
@@ -328,17 +335,17 @@ class TSIAReductor(GenericPGReductor):
         """Reduce using TSIA.
 
         In exact arithmetic, TSIA is equivalent to IRKA (under some
-        assumptions on the poles of the reduced model). The main difference
-        in implementation is that TSIA computes the Schur decomposition of
-        the reduced matrices, while IRKA computes the eigenvalue
-        decomposition. Therefore, TSIA might behave better for non-normal
-        reduced matrices.
+        assumptions on the poles of the reduced model). The main
+        difference in implementation is that TSIA computes the Schur
+        decomposition of the reduced matrices, while IRKA computes the
+        eigenvalue decomposition. Therefore, TSIA might behave better
+        for non-normal reduced matrices.
 
-        .. [BKS11]  P. Benner, M. Köhler, J. Saak,
-                    Sparse-Dense Sylvester Equations in
-                    :math:`\mathcal{H}_2`-Model Order Reduction,
-                    Max Planck Institute Magdeburg Preprint, available from
-                    http://www.mpi-magdeburg.mpg.de/preprints/,
+        .. [BKS11] P. Benner, M. Köhler, J. Saak, Sparse-Dense Sylvester
+                    Equations in :math:`\mathcal{H}_2`-Model Order
+                    Reduction,
+                    Max Planck Institute Magdeburg Preprint, available
+                    from http://www.mpi-magdeburg.mpg.de/preprints/,
                     2011.
 
         Parameters
@@ -350,25 +357,28 @@ class TSIAReductor(GenericPGReductor):
         maxit
             Maximum number of iterations.
         method
-            Method of projection the d:
+            Method of projection:
 
-                - `'orth'`: projection matrices are orthogonalized with respect
-                    to the Euclidean inner product
-                - `'biorth'`: projection matrices are biorthogolized with
-                    respect to the E product
+                - `'orth'`: projection matrices are orthogonalized with
+                    respect to the Euclidean inner product
+                - `'biorth'`: projection matrices are biorthogolized
+                    with respect to the E product
         conv_crit
             Convergence criterion:
 
-                - `'rel_sigma_change'`: relative change in interpolation points
-                - `'subspace_sin'`: maximum of sines of Petrov-Galerkin subspaces
-                - `'rel_H2_dist'`: relative H_2 distance of reduced order models
+                - `'rel_sigma_change'`: relative change in interpolation
+                  points
+                - `'subspace_sin'`: maximum of sines of Petrov-Galerkin
+                  subspaces
+                - `'rel_H2_dist'`: relative H_2 distance of reduced
+                  order models
         compute_errors
-            Should the relative :math:`\mathcal{H}_2`-errors of intermediate
-            reduced order models be computed.
+            Should the relative :math:`\mathcal{H}_2`-errors of
+            intermediate reduced order models be computed.
 
             .. warning::
-                Computing :math:`\mathcal{H}_2`-errors is expensive. Use this
-                option only if necessary.
+                Computing :math:`\mathcal{H}_2`-errors is expensive. Use
+                this option only if necessary.
 
         Returns
         -------
@@ -430,12 +440,12 @@ class TSIAReductor(GenericPGReductor):
                     self.dist.append(np.nan)
             elif conv_crit == 'subspace_sin':
                 if it == 0:
-                    V_new = self.V
-                    W_new = self.W
+                    V_new = self.V.data.T
+                    W_new = self.W.data.T
                     self.dist.append(1)
                 if it > 0:
-                    V_old, V_new = V_new, self.V
-                    W_old, W_new = W_new, self.W
+                    V_old, V_new = V_new, self.V.data.T
+                    W_old, W_new = W_new, self.W.data.T
                     sinV = spla.norm(V_new - V_old.dot(V_old.T.dot(V_new)), ord=2)
                     sinW = spla.norm(W_new - W_old.dot(W_old.T.dot(W_new)), ord=2)
                     self.dist.append(np.max([sinV, sinW]))

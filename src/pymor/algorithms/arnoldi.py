@@ -8,8 +8,8 @@ from pymor.operators.constructions import LincombOperator, VectorArrayOperator
 def arnoldi(A, E, b, sigma, trans=False):
     r"""Rational Arnoldi algorithm.
 
-    If `trans == False`, using Arnoldi process, computes a real orthonormal
-    basis for the rational Krylov subspace
+    If `trans == False`, using Arnoldi process, computes a real
+    orthonormal basis for the rational Krylov subspace
 
     .. math::
         \span\{(\sigma_1 E - A)^{-1} b, (\sigma_2 E - A)^{-1} b, \ldots,
@@ -18,11 +18,11 @@ def arnoldi(A, E, b, sigma, trans=False):
     otherwise, computes the same for
 
     .. math::
-        \span\{(\sigma_1 E - A)^{-*} b^*, (\sigma_2 E - A)^{-*} b^*, \ldots,
-        (\sigma_r E - A)^{-*} b^*\}.
+        \span\{(\sigma_1 E - A)^{-*} b^*, (\sigma_2 E - A)^{-*} b^*,
+        \ldots, (\sigma_r E - A)^{-*} b^*\}.
 
-    Interpolation points in `sigma` are allowed to repeat (in any order).
-    Then, in the above expression,
+    Interpolation points in `sigma` are allowed to repeat (in any
+    order). Then, in the above expression,
 
     .. math::
         \underbrace{(\sigma_i E - A)^{-1} b, \ldots,
@@ -43,8 +43,8 @@ def arnoldi(A, E, b, sigma, trans=False):
     E
         Real |Operator| E.
     b
-        Real vector-like operator (if trans is False) or functional
-        (if trans is True).
+        Real vector-like operator (if trans is False) or functional (if
+        trans is True).
     sigma
         Interpolation points (closed under conjugation).
     trans

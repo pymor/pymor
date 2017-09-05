@@ -23,12 +23,14 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
     .. math::
         A^T W E_r + E^T W A_r + C^T C_r = 0
 
-    or both using (generalized) Schur decomposition [BKS11]_, if the necessary parameters are given.
+    or both using (generalized) Schur decomposition [BKS11]_, if the
+    necessary parameters are given.
 
-    .. [BKS11]  P. Benner, M. Köhler, J. Saak,
-                Sparse-Dense Sylvester Equations in :math:`\mathcal{H}_2`-Model Order Reduction,
-                Max Planck Institute Magdeburg Preprint, available from http://www.mpi-magdeburg.mpg.de/preprints/,
-                2011.
+    .. [BKS11] P. Benner, M. Köhler, J. Saak, Sparse-Dense Sylvester
+                Equations in :math:`\mathcal{H}_2`-Model Order
+                Reduction,
+                Max Planck Institute Magdeburg Preprint, available from
+                http://www.mpi-magdeburg.mpg.de/preprints/, 2011.
 
     Parameters
     ----------
@@ -52,9 +54,11 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
     Returns
     -------
     V
-        Returned if `B` and `Br` are given, |VectorArray| from `A.source`.
+        Returned if `B` and `Br` are given, |VectorArray| from
+        `A.source`.
     W
-        Returned if `C` and `Cr` are given, |VectorArray| from `A.source`.
+        Returned if `C` and `Cr` are given, |VectorArray| from
+        `A.source`.
 
     Raises
     ------

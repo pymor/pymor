@@ -23,6 +23,7 @@ where :math:`u(t)` is the input and :math:`y(t)` is the output.
 from __future__ import absolute_import, division, print_function
 
 import numpy as np
+import scipy.sparse as sps
 import matplotlib.pyplot as plt
 
 from pymor.discretizations.iosys import LTISystem
@@ -37,17 +38,15 @@ if __name__ == '__main__':
     n = 100
 
     # assemble A, B, and C
-    A = np.zeros((n, n))
-    a = n * (n - 1)
-    b = (n - 1) ** 2
-    A[0, 0] = -2 * a
-    A[0, 1] = 2 * b
-    for i in range(1, n - 1):
-        A[i, i - 1] = b
-        A[i, i] = -2 * b
-        A[i, i + 1] = b
-    A[-1, -1] = -2 * a
-    A[-1, -2] = 2 * b
+    A = sps.diags([n * [-2 * (n - 1) ** 2],
+                   (n - 1) * [(n - 1) ** 2],
+                   (n - 1) * [(n - 1) ** 2]],
+                  [0, -1, 1],
+                  format='csc')
+    A[0, 0] = -2 * n * (n - 1)
+    A[0, 1] *= 2
+    A[-1, -1] = -2 * n * (n - 1)
+    A[-1, -2] *= 2
 
     B = np.zeros((n, 1))
     B[0, 0] = 2 * (n - 1)

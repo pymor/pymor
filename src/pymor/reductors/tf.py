@@ -29,7 +29,8 @@ class TFInterpReductor(BasicInterface):
         Parameters
         ----------
         sigma
-            Interpolation points (closed under conjugation), list of length `r`.
+            Interpolation points (closed under conjugation), list of
+            length `r`.
         b
             Right tangential directions, |NumPy array| of shape
             `(d.m, r)`.
@@ -47,7 +48,7 @@ class TFInterpReductor(BasicInterface):
         assert isinstance(b, np.ndarray) and b.shape == (d.m, r)
         assert isinstance(c, np.ndarray) and c.shape == (d.p, r)
 
-        # rescale tangential directions (could avoid overflow or underflow)
+        # rescale tangential directions (to avoid overflow or underflow)
         for i in range(r):
             b[:, i] /= spla.norm(b[:, i])
             c[:, i] /= spla.norm(c[:, i])
@@ -120,10 +121,11 @@ class TF_IRKAReductor(BasicInterface):
         r
             Order of the reduced order model.
         sigma
-            Initial interpolation points (closed under conjugation), list of
-            length `r`.
+            Initial interpolation points (closed under conjugation),
+            list of length `r`.
 
-            If `None`, interpolation points are log-spaced between 0.1 and 10.
+            If `None`, interpolation points are log-spaced between 0.1
+            and 10.
         b
             Initial right tangential directions, |NumPy array| of shape
             `(d.m, r)`.
@@ -139,27 +141,21 @@ class TF_IRKAReductor(BasicInterface):
         maxit
             Maximum number of iterations.
         force_sigma_in_rhp
-            If 'False`, new interpolation are reflections of reduced order
-            model's poles. Otherwise, they are always in the right
+            If 'False`, new interpolation are reflections of reduced
+            order model's poles. Otherwise, they are always in the right
             half-plane.
         conv_crit
             Convergence criterion:
 
-                - `'rel_sigma_change'`: relative change in interpolation points
-                - `'rel_H2_dist'`: relative H_2 distance of reduced order models
+                - `'rel_sigma_change'`: relative change in interpolation
+                  points
+                - `'rel_H2_dist'`: relative H_2 distance of reduced
+                  order models
 
         Returns
         -------
         rd
             Reduced |LTISystem| model.
-        reduction_data
-            Dictionary of additional data produced by the reduction process.
-            Contains:
-
-            - distances between interpolation points in subsequent iterations
-            `dist`,
-            - interpolation points from all iterations `Sigma`, and
-            - right and left tangential directions `R` and `L`.
         """
         d = self.d
         if not d.cont_time:
@@ -173,7 +169,8 @@ class TF_IRKAReductor(BasicInterface):
         logger = getLogger('pymor.reductors.tf.TF_IRKAReductor.reduce')
         logger.info('Starting TF-IRKA')
 
-        # basic choice for initial interpolation points and tangential directions
+        # basic choice for initial interpolation points and tangential
+        # directions
         if sigma is None:
             sigma = np.logspace(-1, 1, r)
         if b is None:
