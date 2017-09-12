@@ -58,6 +58,7 @@ THERMALBLOCK_ADAPTIVE_ARGS = (
 THERMALBLOCK_SIMPLE_ARGS = (
     ('thermalblock_simple', ['pymor', 'naive', 2, 10, 10]),
     ('thermalblock_simple', ['fenics', 'greedy', 2, 10, 10]),
+    ('thermalblock_simple', ['ngsolve', 'greedy', 2, 10, 10]),
 )
 
 THERMALBLOCK_GUI_ARGS = (
@@ -85,23 +86,24 @@ def _run_module(module, args):
     return runpy.run_module(module, init_globals=None, run_name='__main__', alter_sys=True)
 
 
-def _skip_if_no_fenics(param):
+def _skip_if_no_solver(param):
     _, args = param
-    needs_fenics = len([f for f in args if 'fenics' in str(f)]) > 0
-    from pymor.core.config import config
-    if needs_fenics and not config.HAVE_FENICS:
-        pytest.skip('skipped test due to missing Fenics')
+    for solver in ['fenics', 'ngsolve']:
+        needs_solver = len([f for f in args if solver in str(f)]) > 0
+        from pymor.core.config import config
+        if needs_solver and not getattr(config, 'HAVE_' + solver.upper()):
+            pytest.skip('skipped test due to missing ' + solver)
 
 
 @pytest.fixture(params=DEMO_ARGS)
 def demo_args(request):
-    _skip_if_no_fenics(request.param)
+    _skip_if_no_solver(request.param)
     return request.param
 
 
 @pytest.fixture(params=THERMALBLOCK_ARGS)
 def thermalblock_args(request):
-    _skip_if_no_fenics(request.param)
+    _skip_if_no_solver(request.param)
     return request.param
 
 
