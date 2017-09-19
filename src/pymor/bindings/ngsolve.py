@@ -79,7 +79,11 @@ if config.HAVE_NGSOLVE:
 
         @property
         def value_dim(self):
-            return self.V.TrialFunction().dim
+            u = self.V.TrialFunction()
+            if isinstance(u, list):
+                return u[0].dim
+            else:
+                return u.dim
 
         @property
         def dim(self):
