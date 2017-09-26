@@ -43,7 +43,7 @@ class RectDomain(DomainDescriptionInterface):
         assert domain[0][1] <= domain[1][1]
         for bt in (left, right, top, bottom):
             if bt is not None and bt not in KNOWN_BOUNDARY_TYPES:
-                self.logger.warn('Unknown boundary type: {}'.format(bt))
+                self.logger.warning('Unknown boundary type: {}'.format(bt))
         self.boundary_types = frozenset({left, right, top, bottom})
         self.left = left
         self.right = right
@@ -112,7 +112,7 @@ class CylindricalDomain(DomainDescriptionInterface):
         assert domain[0][1] <= domain[1][1]
         for bt in (top, bottom):
             if bt is not None and bt not in KNOWN_BOUNDARY_TYPES:
-                self.logger.warn('Unknown boundary type: {}'.format(bt))
+                self.logger.warning('Unknown boundary type: {}'.format(bt))
         self.boundary_types = frozenset({top, bottom})
         self.top = top
         self.bottom = bottom
@@ -226,7 +226,7 @@ class LineDomain(DomainDescriptionInterface):
         assert domain[0] <= domain[1]
         for bt in (left, right):
             if bt is not None and bt not in KNOWN_BOUNDARY_TYPES:
-                self.logger.warn('Unknown boundary type: {}'.format(bt))
+                self.logger.warning('Unknown boundary type: {}'.format(bt))
         self.boundary_types = frozenset({left, right})
         self.left = left
         self.right = right

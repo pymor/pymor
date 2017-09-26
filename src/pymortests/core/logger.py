@@ -14,7 +14,7 @@ def exercise_logger(logger):
     for lvl in [getattr(logging, lvl) for lvl in ['WARN', 'ERROR', 'DEBUG', 'INFO']]:
         logger.setLevel(lvl)
         assert logger.isEnabledFor(lvl)
-    for verb in ['warn', 'error', 'debug', 'info']:
+    for verb in ['warning', 'error', 'debug', 'info']:
         getattr(logger, verb)('{} -- logger {}'.format(verb, str(logger)))
 
 

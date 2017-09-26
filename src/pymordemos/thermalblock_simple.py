@@ -28,7 +28,6 @@ Arguments:
 """
 
 from pymor.basic import *        # most common pyMOR functions and classes
-from functools import partial    # fix parameters of given function
 
 
 # parameters for high-dimensional models
@@ -218,38 +217,37 @@ def reduce_naive(d, reductor, basis_size):
 
     training_set = d.parameter_space.sample_randomly(basis_size)
 
-    snapshots = d.operator.source.empty()
     for mu in training_set:
-        snapshots.append(d.solve(mu))
+        reductor.extend_basis(d.solve(mu), 'trivial')
 
-    rd, rc, _ = reductor(d, snapshots)
+    rd = reductor.reduce()
 
-    return rd, rc
+    return rd
 
 
 def reduce_greedy(d, reductor, snapshots, basis_size):
 
     training_set = d.parameter_space.sample_uniformly(snapshots)
-    extension_algorithm = partial(gram_schmidt_basis_extension, product=d.h1_0_semi_product)
     pool = new_parallel_pool()
 
     greedy_data = greedy(d, reductor, training_set,
-                         extension_algorithm=extension_algorithm, max_extensions=basis_size,
+                         extension_params={'method': 'gram_schmidt'},
+                         max_extensions=basis_size,
                          pool=pool)
 
-    return greedy_data['reduced_discretization'], greedy_data['reconstructor']
+    return greedy_data['reduced_discretization']
 
 
 def reduce_adaptive_greedy(d, reductor, validation_mus, basis_size):
 
-    extension_algorithm = partial(gram_schmidt_basis_extension, product=d.h1_0_semi_product)
     pool = new_parallel_pool()
 
     greedy_data = adaptive_greedy(d, reductor, validation_mus=-validation_mus,
-                                  extension_algorithm=extension_algorithm, max_extensions=basis_size,
+                                  extension_params={'method': 'gram_schmidt'},
+                                  max_extensions=basis_size,
                                   pool=pool)
 
-    return greedy_data['reduced_discretization'], greedy_data['reconstructor']
+    return greedy_data['reduced_discretization']
 
 
 def reduce_pod(d, reductor, snapshots, basis_size):
@@ -260,11 +258,12 @@ def reduce_pod(d, reductor, snapshots, basis_size):
     for mu in training_set:
         snapshots.append(d.solve(mu))
 
-    basis, singular_values = pod(snapshots, modes=basis_size, product=d.h1_0_semi_product)
+    basis, singular_values = pod(snapshots, modes=basis_size, product=reductor.product)
+    reductor.extend_basis(basis, 'trivial')
 
-    rd, rc, _ = reductor(d, basis)
+    rd = reductor.reduce()
 
-    return rd, rc
+    return rd
 
 
 ####################################################################################################
@@ -295,25 +294,24 @@ def main():
     # select reduction algorithm with error estimator
     #################################################
     coercivity_estimator = ExpressionParameterFunctional('min(diffusion)', d.parameter_type)
-    reductor = partial(reduce_coercive,
-                       product=d.h1_0_semi_product, coercivity_estimator=coercivity_estimator)
+    reductor = CoerciveRBReductor(d, product=d.h1_0_semi_product, coercivity_estimator=coercivity_estimator)
 
     # generate reduced model
     ########################
     if ALG == 'naive':
-        rd, rc = reduce_naive(d, reductor, RBSIZE)
+        rd = reduce_naive(d, reductor, RBSIZE)
     elif ALG == 'greedy':
-        rd, rc = reduce_greedy(d, reductor, SNAPSHOTS, RBSIZE)
+        rd = reduce_greedy(d, reductor, SNAPSHOTS, RBSIZE)
     elif ALG == 'adaptive_greedy':
-        rd, rc = reduce_adaptive_greedy(d, reductor, SNAPSHOTS, RBSIZE)
+        rd = reduce_adaptive_greedy(d, reductor, SNAPSHOTS, RBSIZE)
     elif ALG == 'pod':
-        rd, rc = reduce_pod(d, reductor, SNAPSHOTS, RBSIZE)
+        rd = reduce_pod(d, reductor, SNAPSHOTS, RBSIZE)
     else:
         raise NotImplementedError
 
     # evaluate the reduction error
     ##############################
-    results = reduction_error_analysis(rd, discretization=d, reconstructor=rc, estimator=True,
+    results = reduction_error_analysis(rd, discretization=d, reductor=reductor, estimator=True,
                                        error_norms=[d.h1_0_semi_norm], condition=True,
                                        test_mus=TEST, random_seed=999, plot=True)
 
@@ -334,7 +332,7 @@ def main():
     #####################################################
     mumax = results['max_error_mus'][0, -1]
     U = d.solve(mumax)
-    U_RB = rc.reconstruct(rd.solve(mumax))
+    U_RB = reductor.reconstruct(rd.solve(mumax))
     d.visualize((U, U_RB, U - U_RB), legend=('Detailed Solution', 'Reduced Solution', 'Error'),
                 separate_colorbars=True, block=True)
 

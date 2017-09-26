@@ -90,7 +90,7 @@ def estimate_image(operators=(), vectors=(),
             try:
                 CollectVectorRangeRules.apply(v, image)
             except NoMatchingRuleError as e:
-                raise ImageCollectionError(e)
+                raise ImageCollectionError(e.obj)
 
     if operators and domain is None:
         domain = domain_space.empty()
@@ -98,7 +98,7 @@ def estimate_image(operators=(), vectors=(),
         try:
             CollectOperatorRangeRules.apply(op, domain, image, extends)
         except NoMatchingRuleError as e:
-            raise ImageCollectionError(e)
+            raise ImageCollectionError(e.obj)
 
     if riesz_representatives and product:
         image = product.apply_inverse(image)
@@ -253,3 +253,9 @@ class CollectVectorRangeRules(RuleTable):
     @match_class(LincombOperator, SelectionOperator)
     def action_recurse(self, op, image):
         self.apply_children(op, image)
+
+    @match_class(Concatenation)
+    def action_Concatenation(self, op, image):
+        firstrange = op.first.range.empty()
+        self.apply(op.first, firstrange)
+        CollectOperatorRangeRules.apply(op.second, firstrange, image, False)

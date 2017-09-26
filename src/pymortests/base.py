@@ -43,8 +43,8 @@ def _load_all():
         raise ImportError(__name__)
 
 
-def SubclassForImplemetorsOf(InterfaceType):
-    """A decorator that dynamically creates subclasses of the decorated base test class
+def subclassForImplemetorsOf(InterfaceType, TestCase):
+    """dynamically creates subclasses of the decorated base test class
     for all implementors of a given Interface
     """
     try:
@@ -52,18 +52,11 @@ def SubclassForImplemetorsOf(InterfaceType):
     except ImportError:
         pass
 
-    def decorate(TestCase):
-        """saves a new type called cname with correct bases and class dict in globals"""
-        import pymor.core.dynamic
 
-        test_types = set([T for T in InterfaceType.implementors(True) if not (T.has_interface_name()
-                                                                              or issubclass(T, TestInterface))])
-        for Type in test_types:
-            cname = 'Test_{}_{}'.format(Type.__name__, TestCase.__name__.replace('Interface', ''))
-            pymor.core.dynamic.__dict__[cname] = type(cname, (TestCase,), {'Type': Type})
-        return TestCase
-
-    return decorate
+    test_types = set(sorted([T for T in InterfaceType.implementors(True) if not (T.has_interface_name() or issubclass(T, TestInterface))], key=lambda g: g.__name__))
+    for Type in test_types:
+        cname = 'DynamicTest_{}_{}'.format(Type.__name__, TestCase.__name__.replace('Interface', ''))
+        yield type(cname, (TestCase,), {'Type': Type})
 
 
 def runmodule(filename):

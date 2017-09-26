@@ -317,7 +317,7 @@ def _import_all(package_name='pymor'):
         def onerror(name):
             from pymor.core.logger import getLogger
             logger = getLogger('pymor.core.defaults._import_all')
-            logger.warn('Failed to import ' + name)
+            logger.warning('Failed to import ' + name)
 
         for p in pkgutil.walk_packages(package.__path__, package_name + '.', onerror=onerror):
             try:
@@ -325,7 +325,7 @@ def _import_all(package_name='pymor'):
             except ImportError:
                 from pymor.core.logger import getLogger
                 logger = getLogger('pymor.core.defaults._import_all')
-                logger.warn('Failed to import ' + p[1])
+                logger.warning('Failed to import ' + p[1])
 
 
 def print_defaults(import_all=True, shorten_paths=2):

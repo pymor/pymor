@@ -78,7 +78,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
             try:
                 self.restricted_operator, self.source_dofs = operator.restricted(interpolation_dofs)
             except NotImplementedError:
-                self.logger.warn('Operator has no "restricted" method. The full operator will be evaluated.')
+                self.logger.warning('Operator has no "restricted" method. The full operator will be evaluated.')
                 self.operator = operator
             interpolation_matrix = collateral_basis.components(interpolation_dofs).T
             self.interpolation_matrix = interpolation_matrix

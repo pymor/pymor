@@ -104,8 +104,6 @@ common = '''
 .. |Parameters| replace:: :class:`Parameters <pymor.parameters.base.Parameter>`
 .. |Parametric| replace:: :class:`~pymor.parameters.base.Parametric`
 
-.. |reduce_generic_rb| replace:: :func:`~pymor.reductors.basic.reduce_generic_rb`
-
 .. |NumPy| replace:: :mod:`NumPy <numpy>`
 .. |NumPy array| replace:: :class:`NumPy array <numpy.ndarray>`
 .. |NumPy arrays| replace:: :class:`NumPy arrays <numpy.ndarray>`
