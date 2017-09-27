@@ -14,6 +14,7 @@ from pymortests.base import runmodule, check_results
 from pymor.core.exceptions import QtMissing
 from pymor.gui.qt import stop_gui_processes
 from pymor.core.config import is_windows_platform
+from pymor.tools.mpi import parallel
 
 
 DISCRETIZATION_ARGS = (
@@ -27,7 +28,6 @@ DISCRETIZATION_ARGS = (
     ('elliptic', ['--fv', 0, 0, 2, 1]),
     ('elliptic2', [1, 20]),
     ('elliptic2', ['--fv', 1, 20]),
-    ('elliptic_unstructured', [6., 16, 1e-1]),
     ('elliptic_oned', [1, 20]),
     ('elliptic_oned', ['--fv', 1, 20]),
     ('burgers', ['--num-flux=lax_friedrichs', '0.1']),
@@ -40,6 +40,9 @@ DISCRETIZATION_ARGS = (
     ('parabolic', ['dar', 1]),
     ('parabolic', ['dar', '--rect', 1]),
 )
+
+if not parallel:
+    DISCRETIZATION_ARGS += (('elliptic_unstructured', [6., 16, 1e-1]),)
 
 THERMALBLOCK_ARGS = (
     ('thermalblock', ['--plot-solutions', '--plot-err', '--plot-error-sequence', 2, 2, 3, 5]),
