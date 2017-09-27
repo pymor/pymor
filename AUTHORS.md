@@ -14,6 +14,10 @@
     * support for advection, reaction terms and Robin boundary data
       in ParabolicProblem
 
+* Christoph Lehrenfeld, lehrenfeld@math.uni-goettingen.de
+    * contributions to NGSolve wrappers
+    * NGSolve model in thermalblock_simple.py
+
 
 ## pyMOR 0.4
 
