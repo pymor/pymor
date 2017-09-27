@@ -187,6 +187,13 @@ we provide bindings for the following solver libraries:
     [dune-hdd](https://users.dune-project.org/projects/dune-hdd/wiki) discretizations
     for use with pyMOR.
 
+* [NGSolve](https://ngsolve.org)
+
+    Wrapper classes for the NGSolve finite element library are shipped with pyMOR
+    (`pymor.bindings.ngsolve`).
+    For an example see `pymordemos.thermalblock_simple`.
+
+
 Do not hesitate to contact
 [us](http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev) if you
 need help with the integration of your PDE solver.
