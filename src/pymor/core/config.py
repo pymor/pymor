@@ -52,6 +52,7 @@ _PACKAGES = {
     'MATPLOTLIB': lambda: import_module('matplotlib').__version__,
     'IPYWIDGETS': lambda: import_module('ipywidgets').__version__,
     'MPI': lambda: import_module('mpi4py.MPI') and import_module('mpi4py').__version__,
+    'NGSOLVE': lambda: bool(import_module('ngsolve')),
     'NUMPY': lambda: import_module('numpy').__version__,
     'PYAMG': lambda: import_module('pyamg.version').full_version,
     'PYTEST': lambda: import_module('pytest').__version__,

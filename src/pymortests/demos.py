@@ -14,6 +14,7 @@ from pymortests.base import runmodule, check_results
 from pymor.core.exceptions import QtMissing
 from pymor.gui.qt import stop_gui_processes
 from pymor.core.config import is_windows_platform
+from pymor.tools.mpi import parallel
 
 
 DISCRETIZATION_ARGS = (
@@ -27,7 +28,6 @@ DISCRETIZATION_ARGS = (
     ('elliptic', ['--fv', 0, 0, 2, 1]),
     ('elliptic2', [1, 20]),
     ('elliptic2', ['--fv', 1, 20]),
-    ('elliptic_unstructured', [6., 16, 1e-1]),
     ('elliptic_oned', [1, 20]),
     ('elliptic_oned', ['--fv', 1, 20]),
     ('burgers', ['--num-flux=lax_friedrichs', '0.1']),
@@ -40,6 +40,9 @@ DISCRETIZATION_ARGS = (
     ('parabolic', ['dar', 1]),
     ('parabolic', ['dar', '--rect', 1]),
 )
+
+if not parallel:
+    DISCRETIZATION_ARGS += (('elliptic_unstructured', [6., 16, 1e-1]),)
 
 THERMALBLOCK_ARGS = (
     ('thermalblock', ['--plot-solutions', '--plot-err', '--plot-error-sequence', 2, 2, 3, 5]),
@@ -58,6 +61,7 @@ THERMALBLOCK_ADAPTIVE_ARGS = (
 THERMALBLOCK_SIMPLE_ARGS = (
     ('thermalblock_simple', ['pymor', 'naive', 2, 10, 10]),
     ('thermalblock_simple', ['fenics', 'greedy', 2, 10, 10]),
+    ('thermalblock_simple', ['ngsolve', 'greedy', 2, 10, 10]),
 )
 
 THERMALBLOCK_GUI_ARGS = (
@@ -85,23 +89,29 @@ def _run_module(module, args):
     return runpy.run_module(module, init_globals=None, run_name='__main__', alter_sys=True)
 
 
-def _skip_if_no_fenics(param):
+def _skip_if_no_solver(param):
     _, args = param
-    needs_fenics = len([f for f in args if 'fenics' in str(f)]) > 0
     from pymor.core.config import config
-    if needs_fenics and not config.HAVE_FENICS:
-        pytest.skip('skipped test due to missing Fenics')
+    # for this combo ngsolve is sure to be in the docker image
+    must_have_ngsolve = os.environ.get('DOCKER_NGSOLVE', False)
+    for solver in ['fenics', 'ngsolve']:
+        needs_solver = len([f for f in args if solver in str(f)]) > 0
+        has_solver = getattr(config, 'HAVE_' + solver.upper())
+        if needs_solver and not has_solver:
+            if solver != 'ngsolve' or not must_have_ngsolve:
+                pytest.skip('skipped test due to missing ' + solver)
+
 
 
 @pytest.fixture(params=DEMO_ARGS)
 def demo_args(request):
-    _skip_if_no_fenics(request.param)
+    _skip_if_no_solver(request.param)
     return request.param
 
 
 @pytest.fixture(params=THERMALBLOCK_ARGS)
 def thermalblock_args(request):
-    _skip_if_no_fenics(request.param)
+    _skip_if_no_solver(request.param)
     return request.param
 
 

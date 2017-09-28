@@ -1,5 +1,7 @@
-pyMOR - Model Order Reduction with Python
-=========================================
+
+
+PYMOR - MODEL ORDER REDUCTION WITH PYTHON
+
 
 pyMOR is a software library for building model order reduction
 applications with the Python programming language. Its main focus lies
@@ -12,8 +14,8 @@ scientific computing stack are provided for getting started quickly.
 
 [Docs] [Docs] [DOI] [Build Status] [Coverage Status]
 
+
 License
--------
 
 Copyright 2013-2017 pyMOR developers and contributors. All rights
 reserved.
@@ -48,8 +50,8 @@ source software projects:
 
 See these files for more information.
 
+
 Citing
-------
 
 If you use pyMOR for academic work, please consider citing our
 publication:
@@ -58,8 +60,8 @@ publication:
     pyMOR - Generic Algorithms and Interfaces for Model Order Reduction
     SIAM J. Sci. Comput., 38(5), pp. S194-S216
 
+
 Distribution Packages
----------------------
 
 Packages for Ubuntu are available via our PPA:
 
@@ -77,8 +79,8 @@ Demo applications and documentation are packaged separately:
 The latter makes a pymor-demo script available, which can be used to run
 all installed demos.
 
+
 Installation via pip
---------------------
 
 pyMOR can also easily be installed via the pip command:
 
@@ -124,12 +126,12 @@ Debian-based systems, try:
 
 Again, all these dependencies can also be installed directly via pip.
 
-Warning: Ubuntu 16.04 currently ships broken mpi4py packages which will
+WARNING: Ubuntu 16.04 currently ships broken mpi4py packages which will
 cause pyMOR to fail at import time. Fixed packages can be found in the
 pyMOR PPA.
 
+
 Documentation
--------------
 
 Documentation is available online at Read the Docs or offline in the
 python-pymor-doc package.
@@ -141,8 +143,8 @@ To build the documentation yourself, execute
 inside the root directory of the pyMOR source tree. This will generate
 HTML documentation in docs/_build/html.
 
+
 External PDE solvers
---------------------
 
 pyMOR has been designed with easy integration of external PDE solvers in
 mind.
@@ -171,14 +173,20 @@ the following solver libraries:
 
 -   DUNE
 
-    dune-pymor automatically wraps dune-hdd discretizations for use with
-    pyMOR.
+    dune-pymor automatically wraps dune-hdd discretizations for use
+    with pyMOR.
+
+-   NGSolve
+
+    Wrapper classes for the NGSolve finite element library are shipped
+    with pyMOR (pymor.bindings.ngsolve). For an example see
+    pymordemos.thermalblock_simple.
 
 Do not hesitate to contact us if you need help with the integration of
 your PDE solver.
 
+
 Setting up an Environment for pyMOR Development
------------------------------------------------
 
 First make sure that all dependencies are installed. This can be easily
 achieved by first installing pyMOR with its dependencies as described
@@ -212,8 +220,8 @@ Here, PYTHON_ROOT is either '/usr', '$HOME/.local' or the root of your
 virtual environment. Finally, build the Cython extension modules as
 described in the next section.
 
+
 Cython extension modules
-------------------------
 
 pyMOR uses Cython extension modules to speed up numerical algorithms
 which cannot be efficiently expressed using NumPy idioms. The source
@@ -231,8 +239,8 @@ method of setup.py. Calling
 will then build the extension module and place it into your pyMOR source
 tree.
 
+
 Tests
------
 
 pyMOR uses pytest for unit testing. To run the test suite, simply
 execute make test in the base directory of the pyMOR repository. This
@@ -243,11 +251,10 @@ also enable pyflakes and pep8 checks.
 All tests are contained within the src/pymortests directory and can be
 run individually by executing py.test src/pymortests/the_module.py.
 
+
 Contact
--------
 
 Should you have any questions regarding pyMOR or wish to contribute, do
 not hestitate to contact us via our development mailing list:
 
 http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev
-

@@ -9,7 +9,7 @@ Usage:
   thermalblock_simple.py [options] MODEL ALG SNAPSHOTS RBSIZE TEST
 
 Arguments:
-  MODEL      High-dimensional model (pymor, fenics).
+  MODEL      High-dimensional model (pymor, fenics, ngsolve).
 
   ALG        The model reduction algorithm to use
              (naive, greedy, adaptive_greedy, pod).
@@ -31,10 +31,11 @@ from pymor.basic import *        # most common pyMOR functions and classes
 
 
 # parameters for high-dimensional models
-XBLOCKS = 2
-YBLOCKS = 2
-GRID_INTERVALS = 100
+XBLOCKS = 2             # pyMOR/FEniCS
+YBLOCKS = 2             # pyMOR/FEniCS
+GRID_INTERVALS = 100    # pyMOR/FEniCS
 FENICS_ORDER = 2
+NGS_ORDER = 4
 
 
 ####################################################################################################
@@ -134,6 +135,79 @@ def _discretize_fenics():
     return d
 
 
+def discretize_ngsolve():
+    from ngsolve import (ngsglobals, Mesh, H1, CoefficientFunction, LinearForm, SymbolicLFI,
+                         BilinearForm, SymbolicBFI, grad, TaskManager)
+    from netgen.csg import CSGeometry, OrthoBrick, Pnt
+    import numpy as np
+
+    ngsglobals.msg_level = 1
+
+    geo = CSGeometry()
+    obox = OrthoBrick(Pnt(-1, -1, -1), Pnt(1, 1, 1)).bc("outer")
+
+    b = []
+    b.append(OrthoBrick(Pnt(-1, -1, -1), Pnt(0.0, 0.0, 0.0)).mat("mat1").bc("inner"))
+    b.append(OrthoBrick(Pnt(-1,  0, -1), Pnt(0.0, 1.0, 0.0)).mat("mat2").bc("inner"))
+    b.append(OrthoBrick(Pnt(0,  -1, -1), Pnt(1.0, 0.0, 0.0)).mat("mat3").bc("inner"))
+    b.append(OrthoBrick(Pnt(0,   0, -1), Pnt(1.0, 1.0, 0.0)).mat("mat4").bc("inner"))
+    b.append(OrthoBrick(Pnt(-1, -1,  0), Pnt(0.0, 0.0, 1.0)).mat("mat5").bc("inner"))
+    b.append(OrthoBrick(Pnt(-1,  0,  0), Pnt(0.0, 1.0, 1.0)).mat("mat6").bc("inner"))
+    b.append(OrthoBrick(Pnt(0,  -1,  0), Pnt(1.0, 0.0, 1.0)).mat("mat7").bc("inner"))
+    b.append(OrthoBrick(Pnt(0,   0,  0), Pnt(1.0, 1.0, 1.0)).mat("mat8").bc("inner"))
+    box = (obox - b[0] - b[1] - b[2] - b[3] - b[4] - b[5] - b[6] - b[7])
+
+    geo.Add(box)
+    for bi in b:
+        geo.Add(bi)
+    # domain 0 is empty!
+
+    mesh = Mesh(geo.GenerateMesh(maxh=0.3))
+
+    # H1-conforming finite element space
+    V = H1(mesh, order=NGS_ORDER, dirichlet="outer")
+    v = V.TestFunction()
+    u = V.TrialFunction()
+
+    # Coeff as array: variable coefficient function (one CoefFct. per domain):
+    sourcefct = CoefficientFunction([1 for i in range(9)])
+
+    with TaskManager():
+        # the right hand side
+        f = LinearForm(V)
+        f += SymbolicLFI(sourcefct * v)
+        f.Assemble()
+
+        # the bilinear-form
+        mats = []
+        coeffs = [[0, 1, 0, 0, 0, 0, 0, 0, 1],
+                  [0, 0, 1, 0, 0, 0, 0, 1, 0],
+                  [0, 0, 0, 1, 0, 0, 1, 0, 0],
+                  [0, 0, 0, 0, 1, 1, 0, 0, 0]]
+        for c in coeffs:
+            diffusion = CoefficientFunction(c)
+            a = BilinearForm(V, symmetric=False)
+            a += SymbolicBFI(diffusion * grad(u) * grad(v), definedon=(np.where(np.array(c) == 1)[0] + 1).tolist())
+            a.Assemble()
+            mats.append(a.mat)
+
+    from pymor.bindings.ngsolve import NGSolveVectorSpace, NGSolveMatrixOperator, NGSolveVisualizer
+
+    space = NGSolveVectorSpace(V)
+    op = LincombOperator([NGSolveMatrixOperator(m, space, space) for m in mats],
+                         [ProjectionParameterFunctional('diffusion', (len(coeffs),), (i,)) for i in range(len(coeffs))])
+
+    h1_0_op = op.assemble([1] * len(coeffs)).with_(name='h1_0_semi')
+
+    F = space.zeros()
+    F._list[0].impl.vec.data = f.vec
+    F = VectorFunctional(F)
+
+    return StationaryDiscretization(op, F, visualizer=NGSolveVisualizer(mesh, V),
+                                    products={'h1_0_semi': h1_0_op},
+                                    parameter_space=CubicParameterSpace(op.parameter_type, 0.1, 1.))
+
+
 ####################################################################################################
 # Reduction algorithms                                                                             #
 ####################################################################################################
@@ -212,6 +286,8 @@ def main():
         d = discretize_pymor()
     elif MODEL == 'fenics':
         d = discretize_fenics()
+    elif MODEL == 'ngsolve':
+        d = discretize_ngsolve()
     else:
         raise NotImplementedError
 
