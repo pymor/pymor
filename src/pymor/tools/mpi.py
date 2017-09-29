@@ -67,7 +67,7 @@ if config.HAVE_MPI:
     size = comm.Get_size()
     finished = False
     mpi4py_version = Version(mpi4py.__version__)
-    if mpi4py_version >= Version('2.0'):
+    if mpi4py_version == Version('2.0'):
         import pymor.core.pickle
         MPI.pickle.PROTOCOL = pymor.core.pickle.PROTOCOL
         MPI.pickle.loads = pymor.core.pickle.loads
@@ -101,7 +101,7 @@ def event_loop_settings(auto_launch=True):
     return {'auto_launch': auto_launch}
 
 
-if mpi4py_version >= Version('2.0'):
+if mpi4py_version == Version('2.0'):
     def event_loop():
         """Launches an MPI-based event loop.
 
