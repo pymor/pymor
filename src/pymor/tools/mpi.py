@@ -53,6 +53,8 @@ first argument.
 
 import sys
 
+from packaging.version import Version
+
 from pymor.core.config import config
 from pymor.core.defaults import defaults
 from pymor.core.pickle import dumps, loads
@@ -64,14 +66,14 @@ if config.HAVE_MPI:
     rank = comm.Get_rank()
     size = comm.Get_size()
     finished = False
-    mpi4py_version = list(map(int, mpi4py.__version__.split('.')))
-    if mpi4py_version >= [2, 0]:
+    mpi4py_version = Version(mpi4py.__version__)
+    if mpi4py_version >= Version('2.0'):
         import pymor.core.pickle
         MPI.pickle.PROTOCOL = pymor.core.pickle.PROTOCOL
         MPI.pickle.loads = pymor.core.pickle.loads
         MPI.pickle.dumps = pymor.core.pickle.dumps
 else:
-    mpi4py_version = []
+    mpi4py_version = Version('0.0')
     rank = 0
     size = 1
     finished = True
@@ -99,7 +101,7 @@ def event_loop_settings(auto_launch=True):
     return {'auto_launch': auto_launch}
 
 
-if mpi4py_version >= [2, 0]:
+if mpi4py_version >= Version('2.0'):
     def event_loop():
         """Launches an MPI-based event loop.
 
