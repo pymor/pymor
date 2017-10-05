@@ -59,6 +59,44 @@ def strip_markers(name):
     return name
 
 
+def extras():
+    import pkg_resources
+    import itertools
+    def _ex(name):
+        # no environment specifiers or wheel URI etc are allowed in extras
+        name = strip_markers(name)
+        try:
+            next(pkg_resources.parse_requirements(name))
+        except pkg_resources.RequirementParseError:
+            name = import_names[name]
+        return name
+
+    def _candidates():
+        # skip those which aren't needed in our current environment (py ver, platform)
+        for pkg in set(itertools.chain(doc_requires, tests_require, install_suggests.keys())):
+            try:
+                marker = next(pkg_resources.parse_requirements(pkg)).marker
+                if marker is None or marker.evaluate():
+                    yield pkg
+            except pkg_resources.RequirementParseError:
+                # try to fake a package to get the marker parsed
+                clean = _ex(pkg)
+                stripped = strip_markers(pkg)
+                fake_pkg = 'pip ' + pkg.replace(stripped, '')
+                try:
+                    marker = next(pkg_resources.parse_requirements(fake_pkg)).marker
+                    if marker is None or marker.evaluate():
+                        yield pkg
+                except pkg_resources.RequirementParseError:
+                    continue
+
+    full = [_ex(f) for f in _candidates()]
+    return {
+        'full':  full,
+        'travis':  travis_requires,
+    }
+
+
 def missing(names):
     for name in names:
         stripped_name = strip_markers(name)

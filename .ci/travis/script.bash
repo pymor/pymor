@@ -32,6 +32,8 @@ if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     if [[ "${TRAVIS_PULL_REQUEST}" == "false" ]] ; then
       sudo pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}
       sudo pip uninstall -y pymor
+      sudo pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}#egg=pymor[full]
+      sudo pip uninstall -y pymor
     fi
     python setup.py sdist -d ${SDIST_DIR}/ --format=gztar
     check-manifest -p python ${PWD}

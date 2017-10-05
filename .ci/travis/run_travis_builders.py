@@ -38,13 +38,13 @@ def _run_config(tm, clone_dir, commit):
             print(lg.decode())
 
 
-docker_tags = ['2.7', ]
-pytest_marker = [ "PIP_ONLY", ]
+docker_tags = ['2.7', '3.4', '3.5', '3.6']
+pytest_marker = ["None", 'PIP_ONLY', 'MPI']
 commit = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
-
+variations = list(product(docker_tags, pytest_marker)) + [('3.6', 'NUMPY')]
 with TemporaryDirectory() as clone_tmp:
     clone_dir = os.path.join(clone_tmp, 'pymor')
     subprocess.check_call(['git', 'clone', os.getcwd(), clone_dir])
     run_configs = partial(_run_config, clone_dir=clone_dir, commit=commit)
-    for tm in product(docker_tags, pytest_marker):
+    for tm in variations:
         run_configs(tm)
