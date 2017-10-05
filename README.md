@@ -86,14 +86,20 @@ Installation via pip
 pyMOR can also easily be installed via the [pip](https://pip.pypa.io/en/stable/)
 command:
 
-    pip install [--user] pymor
+    pip install numpy cython
+    pip install pymor[full]
 
-This will install the latest release of pyMOR on your system. If you pass the
-optional `--user` argument, pyMOR will only be installed for your local user,
-not requiring administrator privileges. To install the latest development version
+This will install the latest release of pyMOR on your system with all optional
+dependencies. Use
+
+    pip install pymor
+
+for an installation with minimal dependencies. Passing the optional `--user`
+argument, pyMOR will only be installed for your local user, not requiring
+administrator privileges. To install the latest development version
 of pyMOR, execute
 
-    pip install [--user] git+https://github.com/pymor/pymor
+    pip install git+https://github.com/pymor/pymor#egg=pymor[full]
 
 which will require that the [git](https://git-scm.com/) version control system is
 installed on your system.
@@ -103,7 +109,7 @@ might break (this is usually announced on our
 [mailing list](http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev)),
 so you might prefer to install pyMOR from the current release branch:
 
-    pip install [--user] git+https://github.com/pymor/pymor@0.4.x
+    pip install git+https://github.com/pymor/pymor@0.4.x#egg=pymor[full]
 
 Release branches will always stay stable and will only receive bugfix commits
 after the corresponding release has been made.
