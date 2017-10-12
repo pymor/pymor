@@ -5,14 +5,17 @@ all:
 	./dependencies.py
 
 # PyPI wants ReStructured text
-README.txt: README.md
+README.rst: README.md
 	pandoc -f markdown_github -t rst $< > $@
 
 # I want HTML (to preview the formatting :))
 README.html: README.md
 	pandoc -f markdown_github -t html $< > $@
 
-README: README.txt README.html
+README.txt: README.md
+	pandoc -f markdown_github -t plain $< > $@
+
+README: README.txt README.html README.rst
 
 pep8:
 	pep8 ./src
