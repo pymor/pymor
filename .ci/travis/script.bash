@@ -37,7 +37,7 @@ if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     fi
 
     # README sanity
-    pip install readme_renderer rstcheck
+    sudo pip install readme_renderer rstcheck
     python setup.py check -r -s
     rstcheck README.txt
 
