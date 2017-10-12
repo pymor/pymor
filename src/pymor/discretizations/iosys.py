@@ -670,7 +670,7 @@ class LTISystem(InputOutputSystem):
             raise NotImplementedError('Only H2, Hinf, and Hankel norms are implemented.')
 
 
-class TF(InputOutputSystem):
+class TransferFunction(InputOutputSystem):
     """Class for systems represented by a transfer function.
 
     This class describes input-output systems given by a transfer

@@ -14,7 +14,7 @@ import numpy as np
 import scipy.linalg as spla
 import matplotlib.pyplot as plt
 
-from pymor.discretizations.iosys import TF
+from pymor.discretizations.iosys import TransferFunction
 from pymor.reductors.tf import TFInterpReductor, TF_IRKAReductor
 
 if __name__ == '__main__':
@@ -26,7 +26,7 @@ if __name__ == '__main__':
     def dH(s):
         return np.array([[-(tau * s + tau + 1) * np.exp(-s) / (tau * s + 1) ** 2]])
 
-    tf = TF(1, 1, H, dH)
+    tf = TransferFunction(1, 1, H, dH)
 
     w = np.logspace(-1, 3, 1000)
     tfw = tf.bode(w)
