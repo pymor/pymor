@@ -18,8 +18,8 @@ using the
 NumPy/SciPy scientific computing stack are provided for getting started
 quickly.
 
-[Docs]
-[Docs]
+[Latest Docs]
+[Release Docs]
 [DOI]
 [Build Status]
 [Coverage Status]

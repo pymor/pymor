@@ -17,8 +17,8 @@ pyMOR - Model Order Reduction with Python
   started
 | quickly.
 
-| |Docs|
-| |Docs|
+| |Latest Docs|
+| |Release Docs|
 | |DOI|
 | |Build Status|
 | |Coverage Status|
@@ -373,9 +373,9 @@ Contact
 
 http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev
 
-.. |Docs| image:: https://readthedocs.org/projects/pymor/badge/?version=latest
+.. |Latest Docs| image:: https://readthedocs.org/projects/pymor/badge/?version=latest
    :target: http://pymor.readthedocs.org/en/latest
-.. |Docs| image:: https://readthedocs.org/projects/pymor/badge/?version=0.4.2
+.. |Release Docs| image:: https://readthedocs.org/projects/pymor/badge/?version=0.4.2
    :target: http://pymor.readthedocs.org/en/0.4.2
 .. |DOI| image:: https://zenodo.org/badge/9220688.svg
    :target: https://zenodo.org/badge/latestdoi/9220688

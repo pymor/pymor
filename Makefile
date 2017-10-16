@@ -1,7 +1,7 @@
 PYMOR_DOCKER_TAG?=3.6
 PYMOR_PYTEST_MARKER?=None
 
-.PHONY: README.txt README.html pylint test
+.PHONY: README.rst README.txt README.html pylint test
 
 all:
 	./dependencies.py
