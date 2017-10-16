@@ -1,18 +1,23 @@
+PYMOR_DOCKER_TAG?=3.6
+PYMOR_PYTEST_MARKER?=None
 
-.PHONY: README.txt README.html pylint test
+.PHONY: README.rst README.txt README.html pylint test
 
 all:
 	./dependencies.py
 
 # PyPI wants ReStructured text
-README.txt: README.md
-	pandoc -f markdown -t plain $< > $@
+README.rst: README.md
+	pandoc -f markdown_github -t rst $< > $@
 
 # I want HTML (to preview the formatting :))
 README.html: README.md
-	pandoc -f markdown -t html $< > $@
+	pandoc -f markdown_github -t html $< > $@
 
-README: README.txt README.html
+README.txt: README.md
+	pandoc -f markdown_github -t plain $< > $@
+
+README: README.txt README.html README.rst
 
 pep8:
 	pep8 ./src
@@ -22,6 +27,12 @@ flake8:
 
 test:
 	python setup.py test
+
+dockertest:
+	PYMOR_DOCKER_TAG=$(PYMOR_DOCKER_TAG) PYMOR_PYTEST_MARKER=$(PYMOR_PYTEST_MARKER) ./.ci/travis/run_travis_builders.py
+
+dockertestfull:
+	./.ci/travis/run_travis_builders.py
 
 fasttest:
 	PYTEST_MARKER="not slow" python setup.py test

@@ -35,6 +35,12 @@ if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
       sudo pip install git+https://github.com/${TRAVIS_REPO_SLUG}.git@${TRAVIS_COMMIT}#egg=pymor[full]
       sudo pip uninstall -y pymor
     fi
+
+    # README sanity
+    sudo pip install readme_renderer rstcheck
+    python setup.py check -r -s
+    rstcheck README.txt
+
     python setup.py sdist -d ${SDIST_DIR}/ --format=gztar
     check-manifest -p python ${PWD}
     pushd ${SDIST_DIR}

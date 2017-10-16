@@ -7,6 +7,7 @@ from multiprocessing import Pool, cpu_count
 from itertools import product
 from functools import partial
 import docker
+from envparse import env
 
 def _run_config(tm, clone_dir, commit):
     tag, marker = tm
@@ -38,8 +39,8 @@ def _run_config(tm, clone_dir, commit):
             print(lg.decode())
 
 
-docker_tags = ['2.7', '3.4', '3.5', '3.6']
-pytest_marker = ["None", 'PIP_ONLY', 'MPI']
+docker_tags = env.list('PYMOR_DOCKER_TAG', default=['2.7', '3.4', '3.5', '3.6'])
+pytest_marker = env.list('PYMOR_PYTEST_MARKER', default=["None", 'PIP_ONLY', 'MPI'])
 commit = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
 variations = list(product(docker_tags, pytest_marker)) + [('3.6', 'NUMPY')]
 with TemporaryDirectory() as clone_tmp:

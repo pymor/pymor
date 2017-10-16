@@ -10,8 +10,8 @@ implementations of finite element and finite volume discretizations using the
 NumPy/SciPy scientific computing stack are provided for getting started
 quickly.
 
-[![Docs](https://readthedocs.org/projects/pymor/badge/?version=latest)](http://pymor.readthedocs.org/en/latest)
-[![Docs](https://readthedocs.org/projects/pymor/badge/?version=0.4.2)](http://pymor.readthedocs.org/en/0.4.2)
+[![Latest Docs](https://readthedocs.org/projects/pymor/badge/?version=latest)](http://pymor.readthedocs.org/en/latest)
+[![Release Docs](https://readthedocs.org/projects/pymor/badge/?version=0.4.2)](http://pymor.readthedocs.org/en/0.4.2)
 [![DOI](https://zenodo.org/badge/9220688.svg)](https://zenodo.org/badge/latestdoi/9220688)
 [![Build Status](https://travis-ci.org/pymor/pymor.png?branch=master)](https://travis-ci.org/pymor/pymor)
 [![Coverage Status](https://coveralls.io/repos/pymor/pymor/badge.png)](https://coveralls.io/r/pymor/pymor)
@@ -50,7 +50,7 @@ See these files for more information.
 Citing
 ------
 
-If you use pyMOR for academic work, please consider citing our 
+If you use pyMOR for academic work, please consider citing our
 [publication](https://epubs.siam.org/doi/abs/10.1137/15M1026614):
 
 	R. Milk, S. Rave, F. Schindler
@@ -68,7 +68,7 @@ Packages for Ubuntu are available via our
     sudo apt-get update
     sudo apt-get install python-pymor
 
-Daily snapshots are available via the 
+Daily snapshots are available via the
 [pymor/daily PPA](https://launchpad.net/~pymor/+archive/daily).
 
 Demo applications and documentation are packaged separately:
@@ -151,7 +151,7 @@ or offline in the `python-pymor-doc` package.
 To build the documentation yourself, execute
 
     make doc
-    
+
 inside the root directory of the pyMOR source tree. This will generate HTML
 documentation in `docs/_build/html`.
 
@@ -165,12 +165,12 @@ in mind.
 A basic approach is to use the solver only to generate high-dimensional
 system matrices which are then read by pyMOR from disk (`pymor.discretizers.disk`).
 Another possibility is to steer the solver via an appropriate network
-protocol. 
+protocol.
 
-Whenever possible, we recommend to recompile the solver as a 
-Python extension module which gives pyMOR direct access to the solver without 
-any communication overhead. A basic example using 
-[pybindgen](https://github.com/gjcarneiro/pybindgen) can be found in 
+Whenever possible, we recommend to recompile the solver as a
+Python extension module which gives pyMOR direct access to the solver without
+any communication overhead. A basic example using
+[pybindgen](https://github.com/gjcarneiro/pybindgen) can be found in
 `src/pymordemos/minimal_cpp_demo`. A more elaborate nonlinear example
 using [Boost.Python](http://www.boost.org/) can be found
 [here](https://github.com/pymor/dune-burgers-demo). Moreover,
@@ -277,7 +277,7 @@ individually by executing `py.test src/pymortests/the_module.py`.
 Contact
 -------
 
-Should you have any questions regarding pyMOR or wish to contribute, 
+Should you have any questions regarding pyMOR or wish to contribute,
 do not hestitate to contact us via our development mailing list:
 
 <http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev>

@@ -204,7 +204,7 @@ def setup_package():
         scripts=['src/pymor-demo', 'distribute_setup.py', 'dependencies.py'],
         url='http://pymor.org',
         description=' ',
-        long_description=open('README.txt').read(),
+        long_description=open('README.rst').read(),
         setup_requires=setup_requires,
         tests_require=tests_require,
         install_requires=install_requires,
