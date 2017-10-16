@@ -1,3 +1,5 @@
+PYMOR_DOCKER_TAG?=3.6
+PYMOR_PYTEST_MARKER?=None
 
 .PHONY: README.txt README.html pylint test
 
@@ -25,6 +27,12 @@ flake8:
 
 test:
 	python setup.py test
+
+dockertest:
+	PYMOR_DOCKER_TAG=$(PYMOR_DOCKER_TAG) PYMOR_PYTEST_MARKER=$(PYMOR_PYTEST_MARKER) ./.ci/travis/run_travis_builders.py
+
+dockertestfull:
+	./.ci/travis/run_travis_builders.py
 
 fasttest:
 	PYTEST_MARKER="not slow" python setup.py test
