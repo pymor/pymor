@@ -1,5 +1,5 @@
 # This file is part of the pyMOR project (http://www.pymor.org).
-# Copyright 2013-2016 pyMOR developers and contributors. All rights reserved.
+# Copyright 2013-2017 pyMOR developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 
 import numpy as np
@@ -57,6 +57,7 @@ def test_apply():
     wva = Aop.apply(vva)
     w = np.hstack((wva.block(0).data, wva.block(1).data))
     assert np.allclose(A.dot(v), w)
+
 
 def test_apply_transpose():
     np.random.seed(0)

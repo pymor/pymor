@@ -15,7 +15,6 @@ import multiprocessing
 import os
 import signal
 import sys
-import psutil
 
 from pymor.core.config import config
 from pymor.core.config import is_windows_platform
@@ -192,6 +191,7 @@ def _launch_qt_app(main_window_factory, block):
         app.exec_()
 
     import sys
+    import psutil
     if (block and not getattr(sys, '_called_from_test', False)) or is_windows_platform():
         _doit(main_window_factory)
     else:
@@ -201,6 +201,7 @@ def _launch_qt_app(main_window_factory, block):
 
 
 def stop_gui_processes():
+    import psutil
     active_pids = {p.pid for p in multiprocessing.active_children()}
     kill_procs = [pr for pr in _launch_qt_processes if pr.pid in active_pids]
     for p in kill_procs:
@@ -260,11 +261,11 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
     if backend == 'gl':
         if not config.HAVE_GL:
             logger = getLogger('pymor.gui.qt.visualize_patch')
-            logger.warn('import of PyOpenGL failed, falling back to matplotlib; rendering will be slow')
+            logger.warning('import of PyOpenGL failed, falling back to matplotlib; rendering will be slow')
             backend = 'matplotlib'
         elif not config.HAVE_QTOPENGL:
             logger = getLogger('pymor.gui.qt.visualize_patch')
-            logger.warn('import of Qt.QtOpenGL failed, falling back to matplotlib; rendering will be slow')
+            logger.warning('import of Qt.QtOpenGL failed, falling back to matplotlib; rendering will be slow')
             backend = 'matplotlib'
         if backend == 'matplotlib' and not config.HAVE_MATPLOTLIB:
             raise ImportError('cannot visualize: import of matplotlib failed')

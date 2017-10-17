@@ -9,16 +9,20 @@ from pymor.grids import referenceelements
 from pymor.grids.constructions import flatten_grid
 
 if config.HAVE_PYVTK:
-    from evtk.hl import _addDataToFile, _appendDataToFile
-    from evtk.vtk import VtkGroup, VtkFile, VtkUnstructuredGrid, VtkTriangle, VtkQuad
+    try:
+        from evtk.hl import _addDataToFile, _appendDataToFile
+        from evtk.vtk import VtkGroup, VtkFile, VtkUnstructuredGrid, VtkTriangle, VtkQuad
+    except ImportError:
+        from pyevtk.hl import _addDataToFile, _appendDataToFile
+        from pyevtk.vtk import VtkGroup, VtkFile, VtkUnstructuredGrid, VtkTriangle, VtkQuad
 
 
 def _write_vtu_series(grid, coordinates, connectivity, data, filename_base, last_step, is_cell_data):
     steps = last_step + 1 if last_step is not None else len(data)
     fn_tpl = "{}_{:08d}"
 
-    npoints = grid.size(2)
-    ncells = grid.size(0)
+    npoints = len(coordinates[0])
+    ncells = len(connectivity)
 
     ref = grid.reference_element
     if ref is ref is referenceelements.triangle:
@@ -98,7 +102,7 @@ def write_vtk(grid, data, filename_base, codim=2, binary_vtk=True, last_step=Non
         raise NotImplementedError
 
     subentities, coordinates, entity_map = flatten_grid(grid)
+    data = data.data if codim == 0 else data.data[:, entity_map].copy()
     x, y, z = coordinates[:, 0].copy(), coordinates[:, 1].copy(), np.zeros(coordinates[:, 1].size)
-    _write_vtu_series(grid, coordinates=(x, y, z), connectivity=subentities, data=data.data,
+    _write_vtu_series(grid, coordinates=(x, y, z), connectivity=subentities, data=data,
                       filename_base=filename_base, last_step=last_step, is_cell_data=(codim == 0))
-

@@ -32,7 +32,7 @@ class BitmapFunction(FunctionBase):
             raise ImportError("PIL is needed for loading images. Try 'pip install pillow'")
         img = Image.open(filename)
         if not img.mode == "L":
-            self.logger.warn("Image " + filename + " not in grayscale mode. Convertig to grayscale.")
+            self.logger.warning("Image " + filename + " not in grayscale mode. Convertig to grayscale.")
             img = img.convert('L')
         self.bitmap = np.array(img).T[:, ::-1]
         self.bounding_box = bounding_box

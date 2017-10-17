@@ -1,0 +1,2 @@
+# ignore due to false positives (lintian bug 805597)
+python3-pymor-demos binary: python-script-but-no-python-dep

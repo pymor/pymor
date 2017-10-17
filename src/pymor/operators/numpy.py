@@ -299,7 +299,7 @@ class NumpyMatrixOperator(NumpyMatrixBasedOperator):
                 from pymor.bindings.pyamg import apply_inverse as apply_inverse_impl
             elif backend == 'generic':
                 logger = getLogger('pymor.bindings.scipy.scipy_apply_inverse')
-                logger.warn('You have selected a (potentially slow) generic solver for a NumPy matrix operator!')
+                logger.warning('You have selected a (potentially slow) generic solver for a NumPy matrix operator!')
                 from pymor.algorithms.genericsolvers import apply_inverse as apply_inverse_impl
             else:
                 raise NotImplementedError

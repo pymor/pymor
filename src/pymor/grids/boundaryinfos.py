@@ -81,7 +81,7 @@ class SubGridBoundaryInfo(BoundaryInfoInterface):
 
     def __init__(self, subgrid, grid, grid_boundary_info, new_boundary_type=None):
         if new_boundary_type is not None and new_boundary_type not in KNOWN_BOUNDARY_TYPES:
-            self.logger.warn('Unknown boundary type: {}'.format(new_boundary_type))
+            self.logger.warning('Unknown boundary type: {}'.format(new_boundary_type))
 
         boundary_types = grid_boundary_info.boundary_types
         has_new_boundaries = False

@@ -172,6 +172,9 @@ class ExpressionFunction(GenericFunction):
         The shape of the values returned by the expression.
     parameter_type
         The |ParameterType| the expression accepts.
+    values
+        Dictionary of additional constants that can be used in `expression`
+        with their corresponding value.
     name
         The name of the function.
     """

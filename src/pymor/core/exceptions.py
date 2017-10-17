@@ -59,5 +59,8 @@ class QtMissing(ImportError):
 class RuleNotMatchingError(NotImplementedError):
     pass
 
+
 class NoMatchingRuleError(NotImplementedError):
-    pass
+    def __init__(self, obj):
+        super().__init__('No rule could be applied to {}'.format(obj))
+        self.obj = obj
