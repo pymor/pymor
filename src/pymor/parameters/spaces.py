@@ -96,7 +96,9 @@ class CubicParameterSpace(ParameterSpaceInterface):
         ranges = self.ranges
         random_state = random_state or new_random_state(seed)
         get_param = lambda: Parameter(((k, random_state.uniform(ranges[k][0], ranges[k][1], shp))
-                                       for k, shp in self.parameter_type.items()))
+                                       for k, shp in sorted(self.parameter_type.items())))
+        # sorted is needed to ensure that the sampling of parameter components happens in an
+        # deterministic order
         if count is None:
             def param_generator():
                 while True:
