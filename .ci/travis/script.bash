@@ -46,12 +46,7 @@ if [ "${PYTEST_MARKER}" == "PIP_ONLY" ] ; then
     pushd ${SDIST_DIR}
     sudo pip install $(ls ${SDIST_DIR})
     popd
-    # there are some extremely mystical errors with py2 + xdist on travis
-    if [[ "$(python -c 'import platform ; print(platform.python_version_tuple()[0])')" == "2" ]] ; then
-        xvfb-run -a py.test -r sxX --pyargs pymortests -c .ci/installed_pytest.ini
-    else
-        xvfb-run -a py.test -n auto -r sxX --pyargs pymortests -c .ci/installed_pytest.ini
-    fi
+    xvfb-run -a py.test -r sxX --pyargs pymortests -c .ci/installed_pytest.ini
 
     try_coveralls
 elif [ "${PYTEST_MARKER}" == "MPI" ] ; then
@@ -64,7 +59,7 @@ elif [ "${PYTEST_MARKER}" == "NUMPY" ] ; then
     xvfb-run -a py.test -W once::DeprecationWarning -W once::PendingDeprecationWarning -r sxX --junitxml=test_results_${PYMOR_VERSION}.xml
 else
     # this runs in pytest in a fake, auto numbered, X Server
-    xvfb-run -a py.test -n auto -r sxX --junitxml=test_results.xml
+    xvfb-run -a py.test -r sxX --junitxml=test_results.xml
     try_coveralls
 fi
 
