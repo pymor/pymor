@@ -170,6 +170,16 @@ class StationaryDiscretization(DiscretizationBase):
         self.solution_space = self.operator.source
         self.parameter_space = parameter_space
 
+    def as_generic_type(self):
+        if type(self) is StationaryDiscretization:
+            return self
+        operators = {k: o for k, o in self.operators.items() if not k in self.special_operators}
+        return StationaryDiscretization(
+            self.operator, self.rhs, self.products, operators,
+            self.parameter_space, self.estimator, self.visualizer, self.cache_region, self.name
+        )
+
+
     def _solve(self, mu=None):
         mu = self.parse_parameter(mu)
 
@@ -286,6 +296,17 @@ class InstationaryDiscretization(DiscretizationBase):
         self.parameter_space = parameter_space
         if hasattr(time_stepper, 'nt'):
             self.add_with_arguments = self.add_with_arguments | {'time_stepper_nt'}
+
+    def as_generic_type(self):
+        if type(self) is StationaryDiscretization:
+            return self
+        operators = {k: o for k, o in self.operators.items() if not k in self.special_operators}
+        return InstationaryDiscretization(
+            self.T, self.initial_data, self.operator, self.rhs, self.mass, self.time_stepper, self.num_values,
+            self.products, operators, self.parameter_space, self.estimator, self.visualizer,
+            self.cache_region, self.name
+        )
+
 
     def with_(self, **kwargs):
         assert set(kwargs.keys()) <= self.with_arguments
