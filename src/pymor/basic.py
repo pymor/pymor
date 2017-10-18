@@ -24,6 +24,7 @@ from pymor.analyticalproblems.elliptic import StationaryProblem
 from pymor.analyticalproblems.helmholtz import helmholtz_problem
 from pymor.analyticalproblems.instationary import InstationaryProblem
 from pymor.analyticalproblems.thermalblock import thermal_block_problem
+from pymor.analyticalproblems.text import text_problem
 
 from pymor.core.cache import clear_caches, enable_caching, disable_caching
 from pymor.core.defaults import print_defaults, write_defaults_to_file, load_defaults_from_file, set_defaults
