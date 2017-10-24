@@ -23,7 +23,7 @@ def text_problem(text='pyMOR', font_name=None):
     for filename in font_list:
         try:
             font = ImageFont.truetype(filename, 64)  # load some font from file of given size
-        except OSError:
+        except (OSError, IOError):
             pass
     if font is None:
         raise ValueError('Could not load TrueType font')
