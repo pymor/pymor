@@ -15,7 +15,7 @@ def _can_import(module):
 
 def _get_fenics_version():
     import dolfin as df
-    version = list(map(int, df.__version__.split('.')))
+    version = list(map(int, df.__version__.split('.')[0:3]))
     if version[:2] != [1, 6]:
         import warnings
         warnings.warn('FEniCS support has only been tested with dolfin 1.6.')
