@@ -7,7 +7,7 @@ cd "${PYMOR_ROOT}"
 set -e
 
 # check if requirements files are up-to-date
-./dependencies.py && git diff --exit-code
+./dependencies.py && git diff --exit-code requirements*
 
 # most of these should be baked into the docker image already
 sudo pip install -r requirements.txt
