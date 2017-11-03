@@ -48,7 +48,7 @@ if os.environ.get('READTHEDOCS', None) == 'True':
                     'docopt',
                     'dogpile', 'dogpile.cache', 'dogpile.cache.backends', 'dogpile.cache.backends.file',
                     'dogpile.cache.compat',
-                    'Qt', 'Qt.QtGui', 'Qt.QtCore', 'Qt.QtOpenGL', 'Qt.QtWidgets',
+                    'qtpy', 'qtpy.QtGui', 'qtpy.QtCore', 'qtpy.QtOpenGL', 'qtpy.QtWidgets',
                     'OpenGL', 'OpenGL.GL', 'psutil',
                     'matplotlib', 'matplotlib.backends', 'matplotlib.backends.backend_qt4agg', 'matplotlib.backends.backend_qt5agg', 'matplotlib.figure',
                     'matplotlib.pyplot',
