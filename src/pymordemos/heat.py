@@ -62,7 +62,7 @@ if __name__ == '__main__':
     print('p = {}'.format(lti.p))
 
     # System poles
-    poles = lti.poles()
+    poles = lti.poles(force_dense='True')
     fig, ax = plt.subplots()
     ax.plot(poles.real, poles.imag, '.')
     ax.set_title('System poles')

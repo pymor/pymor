@@ -421,11 +421,30 @@ class LTISystem(InputOutputSystem):
         return self.__class__(A, B, C, D, E, cont_time=self.cont_time)
 
     @cached
-    def poles(self):
-        """Compute system poles."""
-        A = to_matrix(self.A, format='dense')
-        E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E, format='dense')
-        return spla.eigvals(A, E)
+    def poles(self, force_dense=False):
+        """Compute system poles.
+
+        Parameters
+        ----------
+        force_dense
+            Should `to_matrix` with `format='dense'` be used.
+        """
+        if not force_dense:
+            if not (isinstance(self.A, NumpyMatrixOperator) and not self.A.sparse):
+                raise TypeError('Expected A to be NumpyMatrixOperator with dense matrix. '
+                                'Set force_dense=True to convert it to a dense matrix.')
+            if not ((isinstance(self.E, NumpyMatrixOperator) and not self.E.sparse) or
+                    isinstance(self.E, IdentityOperator)):
+                raise TypeError('Expected E to be NumpyMatrixOperator with dense matrix or IdentityOperator. '
+                                'Set force_dense=True to convert it to a dense matrix.')
+            if isinstance(self.E, IdentityOperator):
+                return spla.eigvals(self.A._matrix)
+            else:
+                return spla.eigvals(self.A._matrix, self.E._matrix)
+        else:
+            A = to_matrix(self.A, format='dense')
+            E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E, format='dense')
+            return spla.eigvals(A, E)
 
     def eval_tf(self, s):
         """Evaluate the transfer function.
