@@ -152,9 +152,10 @@ class IRKAReductor(GenericPGReductor):
 
             # new interpolation points
             if isinstance(rd.E, IdentityOperator):
-                sigma, Y, X = spla.eig(to_matrix(rd.A), left=True, right=True)
+                sigma, Y, X = spla.eig(to_matrix(rd.A, format='dense'), left=True, right=True)
             else:
-                sigma, Y, X = spla.eig(to_matrix(rd.A), to_matrix(rd.E), left=True, right=True)
+                sigma, Y, X = spla.eig(to_matrix(rd.A, format='dense'), to_matrix(rd.E, format='dense'),
+                                       left=True, right=True)
             if force_sigma_in_rhp:
                 sigma = np.array([np.abs(s.real) + s.imag * 1j for s in sigma])
             else:
