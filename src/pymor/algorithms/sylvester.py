@@ -91,10 +91,10 @@ def solve_sylv_schur(A, Ar, E=None, Er=None, B=None, Br=None, C=None, Cr=None):
         assert C.range == Cr.range
 
     # convert reduced operators
-    Ar = to_matrix(Ar)
+    Ar = to_matrix(Ar, format='dense')
     r = Ar.shape[0]
     if Er is not None:
-        Er = to_matrix(Er)
+        Er = to_matrix(Er, format='dense')
     if Br is not None:
         Br = Br.as_source_array()
     if Cr is not None:
