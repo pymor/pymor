@@ -423,8 +423,8 @@ class LTISystem(InputOutputSystem):
     @cached
     def poles(self):
         """Compute system poles."""
-        A = to_matrix(self.A)
-        E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E)
+        A = to_matrix(self.A, format='dense')
+        E = None if isinstance(self.E, IdentityOperator) else to_matrix(self.E, format='dense')
         return spla.eigvals(A, E)
 
     def eval_tf(self, s):
@@ -659,7 +659,8 @@ class LTISystem(InputOutputSystem):
             jobe = 'I' if isinstance(self.E, IdentityOperator) else 'G'
             equil = 'S'
             jobd = 'Z' if isinstance(self.D, ZeroOperator) else 'D'
-            A, B, C, D, E = map(to_matrix, (self.A, self.B, self.C, self.D, self.E))
+            A, B, C, D, E = map(lambda op: to_matrix(op, format='dense'),
+                                (self.A, self.B, self.C, self.D, self.E))
             Hinf, fpeak = ab13dd(dico, jobe, equil, jobd, self.n, self.m, self.p, A, E, B, C, D)
             return Hinf, fpeak
         elif name == 'Hinf':
