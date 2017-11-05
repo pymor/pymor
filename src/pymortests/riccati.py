@@ -31,7 +31,7 @@ def diff_conv_1d_fd(n, a, b):
     diagonals = [-a * 2 * (n + 1) ** 2 * np.ones((n,)),
                  (a * (n + 1) ** 2 + b * (n + 1) / 2) * np.ones((n - 1,)),
                  (a * (n + 1) ** 2 - b * (n + 1) / 2) * np.ones((n - 1,))]
-    A = sps.diags(diagonals, [0, -1, 1])
+    A = sps.diags(diagonals, [0, -1, 1], format='csc')
     return A
 
 
@@ -39,11 +39,11 @@ def diff_conv_1d_fem(n, a, b):
     diagonals = [-a * 2 * (n + 1) ** 2 * np.ones((n,)),
                  (a * (n + 1) ** 2 + b * (n + 1) / 2) * np.ones((n - 1,)),
                  (a * (n + 1) ** 2 - b * (n + 1) / 2) * np.ones((n - 1,))]
-    A = sps.diags(diagonals, [0, -1, 1])
+    A = sps.diags(diagonals, [0, -1, 1], format='csc')
     diagonals = [2 / 3 * np.ones((n,)),
                  1 / 6 * np.ones((n - 1,)),
                  1 / 6 * np.ones((n - 1,))]
-    E = sps.diags(diagonals, [0, -1, 1])
+    E = sps.diags(diagonals, [0, -1, 1], format='csc')
     return A, E
 
 
