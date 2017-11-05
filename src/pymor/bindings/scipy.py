@@ -372,12 +372,12 @@ def solve_lyap(A, E, B, trans=False, options=None):
     if E is not None:
         raise NotImplementedError()
     import scipy.linalg as spla
-    A_mat = to_matrix(A)
-    B_mat = to_matrix(B)
+    A_mat = to_matrix(A, format='dense')
+    B_mat = to_matrix(B, format='dense')
     if not trans:
-        X = spla.solve_lyapunov(A_mat, -B_mat.dot(B_mat.T))
+        X = spla.solve_continuous_lyapunov(A_mat, -B_mat.dot(B_mat.T))
     else:
-        X = spla.solve_lyapunov(A_mat.T, -B_mat.T.dot(B_mat))
+        X = spla.solve_continuous_lyapunov(A_mat.T, -B_mat.T.dot(B_mat))
 
     Z = cholp(X, copy=False)
     Z = A.source.from_data(np.array(Z).T)
@@ -467,11 +467,11 @@ def solve_ricc(A, E=None, B=None, Q=None, C=None, R=None, G=None,
         raise NotImplementedError()
 
     import scipy.linalg as spla
-    A_mat = to_matrix(A)
-    B_mat = to_matrix(B) if B else None
-    C_mat = to_matrix(C) if C else None
-    Q_mat = to_matrix(Q) if Q else None
-    R_mat = to_matrix(R) if R else None
+    A_mat = to_matrix(A, format='dense')
+    B_mat = to_matrix(B, format='dense') if B else None
+    C_mat = to_matrix(C, format='dense') if C else None
+    Q_mat = to_matrix(Q, format='dense') if Q else None
+    R_mat = to_matrix(R, format='dense') if R else None
 
     if R is None:
         if not trans:

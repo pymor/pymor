@@ -69,10 +69,10 @@ if config.HAVE_SLYCOT:
         assert options['type'] == 'slycot'
 
         import slycot
-        A_mat = to_matrix(A)
+        A_mat = to_matrix(A, format='dense')
         if E is not None:
-            E_mat = to_matrix(E)
-        B_mat = to_matrix(B)
+            E_mat = to_matrix(E, format='dense')
+        B_mat = to_matrix(B, format='dense')
 
         n = A_mat.shape[0]
         if not trans:
@@ -171,12 +171,12 @@ if config.HAVE_SLYCOT:
         assert options['type'] == 'slycot'
 
         import slycot
-        A_mat = to_matrix(A)
-        B_mat = to_matrix(B) if B else None
-        C_mat = to_matrix(C) if C else None
-        R_mat = to_matrix(R) if R else None
-        G_mat = to_matrix(G) if G else None
-        Q_mat = to_matrix(Q) if Q else None
+        A_mat = to_matrix(A, format='dense')
+        B_mat = to_matrix(B, format='dense') if B else None
+        C_mat = to_matrix(C, format='dense') if C else None
+        R_mat = to_matrix(R, format='dense') if R else None
+        G_mat = to_matrix(G, format='dense') if G else None
+        Q_mat = to_matrix(Q, format='dense') if Q else None
 
         n = A_mat.shape[0]
         dico = 'C'
@@ -201,7 +201,7 @@ if config.HAVE_SLYCOT:
                     Q_mat = B_mat.dot(B_mat.T)
                 X = slycot.sb02md(n, A_mat.T, G_mat, Q_mat, dico)[0]
         else:
-            E_mat = to_matrix(E) if E else None
+            E_mat = to_matrix(E, format='dense') if E else None
             jobb = 'B' if G is None else 'B'
             fact = 'C' if Q is None else 'N'
             uplo = 'U'

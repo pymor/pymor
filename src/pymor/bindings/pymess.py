@@ -22,7 +22,7 @@ if config.HAVE_PYMESS:
         -------
         A dict of available solvers with default |solver_options|.
         """
-        opts = pymess.options()
+        opts = pymess.Options()
         opts.adi.shifts.paratype = pymess.MESS_LRCFADI_PARA_ADAPTIVE_V
 
         return {'pymess':       {'type': 'pymess',
@@ -86,12 +86,12 @@ if config.HAVE_PYMESS:
                 options = dict(options, type='pymess_lyap')  # do not modify original dict!
 
         if options['type'] == 'pymess_lyap':
-            A_mat = to_matrix(A) if A.source.dim < 1000 else to_matrix(A, format='csc')
+            A_mat = to_matrix(A, format='dense') if A.source.dim < 1000 else to_matrix(A)
             if E is not None:
-                E_mat = to_matrix(E) if E.source.dim < 1000 else to_matrix(E, format='csc')
+                E_mat = to_matrix(E, format='dense') if A.source.dim < 1000 else to_matrix(E)
             else:
                 E_mat = None
-            B_mat = to_matrix(B)
+            B_mat = to_matrix(B, format='dense')
             if not trans:
                 Z = pymess.lyap(A_mat, E_mat, B_mat)
             else:
@@ -119,7 +119,7 @@ if config.HAVE_PYMESS:
         -------
         A dict of available solvers with default |solver_options|.
         """
-        opts = pymess.options()
+        opts = pymess.Options()
         opts.adi.shifts.paratype = pymess.MESS_LRCFADI_PARA_ADAPTIVE_V
 
         return {'pymess':      {'type': 'pymess',
@@ -197,13 +197,13 @@ if config.HAVE_PYMESS:
         if options['type'] == 'pymess_care':
             if Q is not None or R is not None or G is not None:
                 raise NotImplementedError()
-            A_mat = to_matrix(A) if A.source.dim < 1000 else to_matrix(A, format='csc')
+            A_mat = to_matrix(A, format='dense') if A.source.dim < 1000 else to_matrix(A)
             if E is not None:
-                E_mat = to_matrix(E) if E.source.dim < 1000 else to_matrix(E, format='csc')
+                E_mat = to_matrix(E, format='dense') if A.source.dim < 1000 else to_matrix(E)
             else:
                 E_mat = None
-            B_mat = to_matrix(B) if B else None
-            C_mat = to_matrix(C) if C else None
+            B_mat = to_matrix(B, format='dense') if B else None
+            C_mat = to_matrix(C, format='dense') if C else None
             if not trans:
                 Z = pymess.care(A_mat, E_mat, B_mat, C_mat)
             else:
@@ -226,7 +226,7 @@ if config.HAVE_PYMESS:
 
         return Z
 
-    class LyapunovEquation(pymess.equation):
+    class LyapunovEquation(pymess.Equation):
         r"""Lyapunov equation class for pymess
 
         Represents a Lyapunov equation
@@ -250,7 +250,7 @@ if config.HAVE_PYMESS:
         Parameters
         ----------
         opt
-            pymess options structure.
+            pymess Options structure.
         A
             The |Operator| A.
         E
@@ -259,88 +259,88 @@ if config.HAVE_PYMESS:
             The |Operator| B.
         """
         def __init__(self, opt, A, E, B):
-            super().__init__(name='lyap_eqn', opt=opt, dim=A.source.dim)
+            super().__init__(name='LyapunovEquation', opt=opt, dim=A.source.dim)
 
-            self.A = A
-            self.E = E
-            self.RHS = to_matrix(B)
+            self.a = A
+            self.e = E
+            self.rhs = to_matrix(B, format='dense')
             if opt.type == pymess.MESS_OP_TRANSPOSE:
-                self.RHS = self.RHS.T
+                self.rhs = self.rhs.T
             self.p = []
 
-        def AX_apply(self, op, y):
-            y = self.A.source.from_data(np.array(y).T)
+        def ax_apply(self, op, y):
+            y = self.a.source.from_data(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
-                x = self.A.apply(y)
+                x = self.a.apply(y)
             else:
-                x = self.A.apply_transpose(y)
+                x = self.a.apply_transpose(y)
             return np.matrix(x.data).T
 
-        def EX_apply(self, op, y):
-            if self.E is None:
+        def ex_apply(self, op, y):
+            if self.e is None:
                 return y
 
-            y = self.A.source.from_data(np.array(y).T)
+            y = self.a.source.from_data(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
-                x = self.E.apply(y)
+                x = self.e.apply(y)
             else:
-                x = self.E.apply_transpose(y)
+                x = self.e.apply_transpose(y)
             return np.matrix(x.data).T
 
-        def AINV_apply(self, op, y):
-            y = self.A.source.from_data(np.array(y).T)
+        def ainv_apply(self, op, y):
+            y = self.a.source.from_data(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
-                x = self.A.apply_inverse(y)
+                x = self.a.apply_inverse(y)
             else:
-                x = self.A.apply_inverse_transpose(y)
+                x = self.a.apply_inverse_transpose(y)
             return np.matrix(x.data).T
 
-        def EINV_apply(self, op, y):
-            if self.E is None:
+        def einv_apply(self, op, y):
+            if self.e is None:
                 return y
 
-            y = self.A.source.from_data(np.array(y).T)
+            y = self.a.source.from_data(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
-                x = self.E.apply_inverse(y)
+                x = self.e.apply_inverse(y)
             else:
-                x = self.E.apply_inverse_transpose(y)
+                x = self.e.apply_inverse_transpose(y)
             return np.matrix(x.data).T
 
-        def ApEX_apply(self, op, p, idx_p, y):
-            y = self.A.source.from_data(np.array(y).T)
+        def apex_apply(self, op, p, idx_p, y):
+            y = self.a.source.from_data(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
-                x = self.A.apply(y)
-                if self.E is None:
+                x = self.a.apply(y)
+                if self.e is None:
                     x += p * y
                 else:
-                    x += p * self.E.apply(y)
+                    x += p * self.e.apply(y)
             else:
-                x = self.A.apply_transpose(y)
-                if self.E is None:
+                x = self.a.apply_transpose(y)
+                if self.e is None:
                     x += p.conjugate() * y
                 else:
-                    x += p.conjugate() * self.E.apply_transpose(y)
+                    x += p.conjugate() * self.e.apply_transpose(y)
             return np.matrix(x.data).T
 
-        def ApEINV_apply(self, op, p, idx_p, y):
-            y = self.A.source.from_data(np.array(y).T)
-            E = IdentityOperator(self.A.source) if self.E is None else self.E
+        def apeinv_apply(self, op, p, idx_p, y):
+            y = self.a.source.from_data(np.array(y).T)
+            e = IdentityOperator(self.a.source) if self.e is None else self.e
 
             if p.imag == 0:
-                ApE = LincombOperator((self.A, E), (1, p.real))
+                ape = LincombOperator((self.a, e), (1, p.real))
             else:
-                ApE = LincombOperator((self.A, E), (1, p))
+                ape = LincombOperator((self.a, e), (1, p))
 
             if op == pymess.MESS_OP_NONE:
-                x = ApE.apply_inverse(y)
+                x = ape.apply_inverse(y)
             else:
-                x = ApE.apply_inverse_transpose(y)
+                x = ape.apply_inverse_transpose(y)
             return np.matrix(x.data).T
 
         def parameter(self, arp_p, arp_m, B=None, K=None):
             return None
 
-    class RiccatiEquation(pymess.equation):
+    class RiccatiEquation(pymess.Equation):
         r"""Riccati equation class for pymess
 
         Represents a Riccati equation
@@ -364,7 +364,7 @@ if config.HAVE_PYMESS:
         Parameters
         ----------
         opt
-            pymess options structure.
+            pymess Options structure.
         A
             The |Operator| A.
         E
@@ -375,82 +375,82 @@ if config.HAVE_PYMESS:
             The |Operator| C.
         """
         def __init__(self, opt, A, E, B, C):
-            super().__init__(name='ricc_eqn', opt=opt, dim=A.source.dim)
+            super().__init__(name='RiccatiEquation', opt=opt, dim=A.source.dim)
 
-            self.A = A
-            self.E = E
-            self.B = to_matrix(B)
-            self.C = to_matrix(C)
-            self.RHS = self.B if opt.type == pymess.MESS_OP_NONE else self.C.T
+            self.a = A
+            self.e = E
+            self.b = to_matrix(B, format='dense')
+            self.c = to_matrix(C, format='dense')
+            self.rhs = self.b if opt.type == pymess.MESS_OP_NONE else self.c.T
             self.p = []
 
-        def AX_apply(self, op, y):
-            y = self.A.source.from_data(np.array(y).T)
+        def ax_apply(self, op, y):
+            y = self.a.source.from_data(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
-                x = self.A.apply(y)
+                x = self.a.apply(y)
             else:
-                x = self.A.apply_transpose(y)
+                x = self.a.apply_transpose(y)
             return np.matrix(x.data).T
 
-        def EX_apply(self, op, y):
-            if self.E is None:
+        def ex_apply(self, op, y):
+            if self.e is None:
                 return y
 
-            y = self.A.source.from_data(np.array(y).T)
+            y = self.a.source.from_data(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
-                x = self.E.apply(y)
+                x = self.e.apply(y)
             else:
-                x = self.E.apply_transpose(y)
+                x = self.e.apply_transpose(y)
             return np.matrix(x.data).T
 
-        def AINV_apply(self, op, y):
-            y = self.A.source.from_data(np.array(y).T)
+        def ainv_apply(self, op, y):
+            y = self.a.source.from_data(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
-                x = self.A.apply_inverse(y)
+                x = self.a.apply_inverse(y)
             else:
-                x = self.A.apply_inverse_transpose(y)
+                x = self.a.apply_inverse_transpose(y)
             return np.matrix(x.data).T
 
-        def EINV_apply(self, op, y):
-            if self.E is None:
+        def einv_apply(self, op, y):
+            if self.e is None:
                 return y
 
-            y = self.A.source.from_data(np.array(y).T)
+            y = self.a.source.from_data(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
-                x = self.E.apply_inverse(y)
+                x = self.e.apply_inverse(y)
             else:
-                x = self.E.apply_inverse_transpose(y)
+                x = self.e.apply_inverse_transpose(y)
             return np.matrix(x.data).T
 
-        def ApEX_apply(self, op, p, idx_p, y):
-            y = self.A.source.from_data(np.array(y).T)
+        def apex_apply(self, op, p, idx_p, y):
+            y = self.a.source.from_data(np.array(y).T)
             if op == pymess.MESS_OP_NONE:
-                x = self.A.apply(y)
-                if self.E is None:
+                x = self.a.apply(y)
+                if self.e is None:
                     x += p * y
                 else:
-                    x += p * self.E.apply(y)
+                    x += p * self.e.apply(y)
             else:
-                x = self.A.apply_transpose(y)
-                if self.E is None:
+                x = self.a.apply_transpose(y)
+                if self.e is None:
                     x += p.conjugate() * y
                 else:
-                    x += p.conjugate() * self.E.apply_transpose(y)
+                    x += p.conjugate() * self.e.apply_transpose(y)
             return np.matrix(x.data).T
 
-        def ApEINV_apply(self, op, p, idx_p, y):
-            y = self.A.source.from_data(np.array(y).T)
-            E = IdentityOperator(self.A.source) if self.E is None else self.E
+        def apeinv_apply(self, op, p, idx_p, y):
+            y = self.a.source.from_data(np.array(y).T)
+            e = IdentityOperator(self.a.source) if self.e is None else self.e
 
             if p.imag == 0:
-                ApE = LincombOperator((self.A, E), (1, p.real))
+                ape = LincombOperator((self.a, e), (1, p.real))
             else:
-                ApE = LincombOperator((self.A, E), (1, p))
+                ape = LincombOperator((self.a, e), (1, p))
 
             if op == pymess.MESS_OP_NONE:
-                x = ApE.apply_inverse(y)
+                x = ape.apply_inverse(y)
             else:
-                x = ApE.apply_inverse_transpose(y)
+                x = ape.apply_inverse_transpose(y)
             return np.matrix(x.data).T
 
         def parameter(self, arp_p, arp_m, B=None, K=None):
