@@ -122,11 +122,7 @@ class BTReductor(GenericBTReductor):
         self.typ = 'lyap'
 
     def _compute_error_bounds(self):
-        self.bounds = np.zeros((self.d.n,))
-        for i in range(self.d.n - 2, -1, -1):
-            svi = self.sv[i + 1] if i < len(self.sv) else self.sv[-1]
-            self.bounds[i] = self.bounds[i + 1] + svi
-        self.bounds *= 2
+        self.bounds = 2 * self.sv[:0:-1].cumsum()[::-1]
 
 
 class LQGBTReductor(GenericBTReductor):
@@ -150,11 +146,7 @@ class LQGBTReductor(GenericBTReductor):
         self.typ = 'lqg'
 
     def _compute_error_bounds(self):
-        self.bounds = np.zeros((self.d.n,))
-        for i in range(self.d.n - 2, -1, -1):
-            svi = self.sv[i + 1] if i < len(self.sv) else self.sv[-1]
-            self.bounds[i] = self.bounds[i + 1] + svi / np.sqrt(1 + svi ** 2)
-        self.bounds *= 2
+        self.bounds = 2 * (self.sv[:0:-1] / np.sqrt(1 + self.sv[:0:-1] ** 2)).cumsum()[::-1]
 
 
 class BRBTReductor(GenericBTReductor):
@@ -179,8 +171,4 @@ class BRBTReductor(GenericBTReductor):
         self.gamma = gamma
 
     def _compute_error_bounds(self, sv):
-        self.bounds = np.zeros((self.d.n,))
-        for i in range(self.d.n - 2, -1, -1):
-            svi = self.sv[i + 1] if i < len(self.sv) else self.sv[-1]
-            self.bounds[i] = self.bounds[i + 1] + svi
-        self.bounds *= 2 * self.gamma
+        self.bounds = 2 * self.gamma * self.sv[:0:-1].cumsum()[::-1]
