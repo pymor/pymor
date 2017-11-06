@@ -22,7 +22,6 @@ quickly.
 [Release Docs]
 [DOI]
 [Build Status]
-[Coverage Status]
 
 
 License

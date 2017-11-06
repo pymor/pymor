@@ -21,7 +21,6 @@ pyMOR - Model Order Reduction with Python
 | |Release Docs|
 | |DOI|
 | |Build Status|
-| |Coverage Status|
 
 License
 -------
@@ -381,5 +380,3 @@ http://listserv.uni-muenster.de/mailman/listinfo/pymor-dev
    :target: https://zenodo.org/badge/latestdoi/9220688
 .. |Build Status| image:: https://travis-ci.org/pymor/pymor.png?branch=master
    :target: https://travis-ci.org/pymor/pymor
-.. |Coverage Status| image:: https://coveralls.io/repos/pymor/pymor/badge.png
-   :target: https://coveralls.io/r/pymor/pymor
