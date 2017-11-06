@@ -9,7 +9,7 @@ Usage:
   thermalblock_simple.py [options] MODEL ALG SNAPSHOTS RBSIZE TEST
 
 Arguments:
-  MODEL      High-dimensional model (pymor, fenics, ngsolve).
+  MODEL      High-dimensional model (pymor, fenics, ngsolve, pymor-text).
 
   ALG        The model reduction algorithm to use
              (naive, greedy, adaptive_greedy, pod).
@@ -36,6 +36,7 @@ YBLOCKS = 2             # pyMOR/FEniCS
 GRID_INTERVALS = 100    # pyMOR/FEniCS
 FENICS_ORDER = 2
 NGS_ORDER = 4
+TEXT = 'pyMOR'
 
 
 ####################################################################################################
@@ -208,6 +209,17 @@ def discretize_ngsolve():
                                     parameter_space=CubicParameterSpace(op.parameter_type, 0.1, 1.))
 
 
+def discretize_pymor_text():
+
+    # setup analytical problem
+    problem = text_problem(TEXT)
+
+    # discretize using continuous finite elements
+    d, _ = discretize_stationary_cg(problem, diameter=1.)
+
+    return d
+
+
 ####################################################################################################
 # Reduction algorithms                                                                             #
 ####################################################################################################
@@ -288,6 +300,8 @@ def main():
         d = discretize_fenics()
     elif MODEL == 'ngsolve':
         d = discretize_ngsolve()
+    elif MODEL == 'pymor-text':
+        d = discretize_pymor_text()
     else:
         raise NotImplementedError
 

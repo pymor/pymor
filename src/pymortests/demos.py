@@ -62,6 +62,7 @@ THERMALBLOCK_SIMPLE_ARGS = (
     ('thermalblock_simple', ['pymor', 'naive', 2, 10, 10]),
     ('thermalblock_simple', ['fenics', 'greedy', 2, 10, 10]),
     ('thermalblock_simple', ['ngsolve', 'greedy', 2, 10, 10]),
+    ('thermalblock_simple', ['pymor-text', 'adaptive_greedy', -1, 3, 3]),
 )
 
 THERMALBLOCK_GUI_ARGS = (
