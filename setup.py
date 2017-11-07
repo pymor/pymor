@@ -13,6 +13,7 @@ from distutils.extension import Extension
 from distutils.command.build_py import build_py as _build_py
 import itertools
 import versioneer
+import pprint
 
 import dependencies
 
@@ -126,7 +127,7 @@ if sys.version_info[0] < 3:
     # 3to2 refactoring on each python file as its copied to the build
     # directory.
     cmdclass['build_py'] = build_py27
-    print(cmdclass)
+    pprint.pprint(cmdclass)
 
 # (Under python3 no commands are replaced, so the default command classes are used.)
 
