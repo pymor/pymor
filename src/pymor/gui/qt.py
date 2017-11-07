@@ -28,9 +28,9 @@ from pymor.vectorarrays.interfaces import VectorArrayInterface
 from pymor.vectorarrays.numpy import NumpyVectorSpace
 
 if config.HAVE_QT:
-    from qtpy.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QApplication, QLCDNumber,
+    from Qt.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QSlider, QApplication, QLCDNumber,
                               QAction, QStyle, QToolBar, QLabel, QFileDialog, QMessageBox)
-    from qtpy.QtCore import Qt, QCoreApplication, QTimer, Slot
+    from Qt.QtCore import Qt, QCoreApplication, QTimer, Slot
 
 
     class PlotMainWindow(QWidget):
@@ -265,7 +265,7 @@ def visualize_patch(grid, U, bounding_box=([0, 0], [1, 1]), codim=2, title=None,
             backend = 'matplotlib'
         elif not config.HAVE_QTOPENGL:
             logger = getLogger('pymor.gui.qt.visualize_patch')
-            logger.warning('import of qtpy.QtOpenGL failed, falling back to matplotlib; rendering will be slow')
+            logger.warning('import of Qt.QtOpenGL failed, falling back to matplotlib; rendering will be slow')
             backend = 'matplotlib'
         if backend == 'matplotlib' and not config.HAVE_MATPLOTLIB:
             raise ImportError('cannot visualize: import of matplotlib failed')
