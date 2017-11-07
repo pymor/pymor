@@ -93,7 +93,7 @@ def extras():
                     continue
 
     return {
-        'most': [_ex(f) for f in _candidates(blacklist=needs_extra_compile_setup)],
+        'full-nompi': [_ex(f) for f in _candidates(blacklist=needs_extra_compile_setup)],
         'full': [_ex(f) for f in _candidates(blacklist=[])],
         'travis':  travis_requires,
     }
