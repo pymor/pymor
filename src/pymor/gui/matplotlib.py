@@ -58,13 +58,12 @@ class MatplotlibPatchAxes:
 
 
 if config.HAVE_QT and config.HAVE_MATPLOTLIB:
-    import qtpy
-    from qtpy.QtWidgets import QSizePolicy
+    from Qt.QtWidgets import QSizePolicy
 
-    qt_version = qtpy.QT_VERSION.split('.')
-    if qt_version[0] == '4':
+    import Qt
+    if Qt.__qt_version__[0] == '4':
         from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-    elif qt_version[0] == '5':
+    elif Qt.__qt_version__[0] == '5':
         from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     else:
         raise NotImplementedError

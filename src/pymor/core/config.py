@@ -38,19 +38,9 @@ def _get_ipython_version():
 
 
 def _get_qt_version():
-    try:
-        import qtpy
-        return qtpy.API + ' ' + qtpy.QT_VERSION
-    # the actual exception is defined in qtpy's init itself
-    except Exception:
-        raise ImportError('No Qt bindings installed')
+    import Qt
+    return Qt.__binding__ + ' ' + Qt.__binding_version__
 
-def _have_qtpy_opengl():
-    try:
-        import qtpy.QtOpenGL
-        return True
-    except Exception:
-        return False
 
 _PACKAGES = {
     'CYTHON': lambda: import_module('cython').__version__,
@@ -68,7 +58,7 @@ _PACKAGES = {
     'PYTEST': lambda: import_module('pytest').__version__,
     'PYVTK': lambda: _can_import('evtk') or _can_import('pyevtk'),
     'QT': _get_qt_version,
-    'QTOPENGL': lambda: _have_qtpy_opengl,
+    'QTOPENGL': lambda: bool(import_module('Qt.QtOpenGL')),
     'SCIPY': lambda: import_module('scipy').__version__,
     'SCIPY_LSMR': lambda: hasattr(import_module('scipy.sparse.linalg'), 'lsmr'),
     'SPHINX': lambda: import_module('sphinx').__version__,
