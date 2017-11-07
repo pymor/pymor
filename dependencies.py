@@ -94,7 +94,7 @@ def extras():
 
     return {
         'most': [_ex(f) for f in _candidates(blacklist=needs_extra_compile_setup)],
-        'full': [_ex(f) for f in _candidates(blacklist=[])]
+        'full': [_ex(f) for f in _candidates(blacklist=[])],
         'travis':  travis_requires,
     }
 
