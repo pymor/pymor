@@ -6,17 +6,14 @@
 from numbers import Number
 import sys
 
+from packaging.version import Version
 import numpy as np
 
 from pymor.core.config import config
 from pymor.core.interfaces import BasicInterface, ImmutableInterface, abstractmethod
 
 
-def _numpy_version_older(version_tuple):
-    np_tuple = tuple(int(p) for p in np.__version__.split('.')[:3])
-    return np_tuple < version_tuple
-
-_INDEXTYPES = (Number,) if not _numpy_version_older((1, 9)) else (Number, np.intp)
+_INDEXTYPES = (Number,) if Version(np.__version__) >= Version('1.9') else (Number, np.intp)
 
 
 class VectorArrayInterface(BasicInterface):
