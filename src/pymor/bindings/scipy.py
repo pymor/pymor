@@ -5,6 +5,7 @@
 
 
 import numpy as np
+from packaging.version import Version
 import scipy.version
 from scipy.sparse.linalg import bicgstab, spsolve, splu, spilu, lgmres, lsqr, LinearOperator
 
@@ -221,7 +222,7 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
                 if not np.can_cast(V.dtype, fdtype, casting='safe'):
                     del matrix.factorization
 
-            if list(map(int, scipy.version.version.split('.'))) >= [0, 14, 0]:
+            if Version(scipy.version.version) >= Version('0.14'):
                 if hasattr(matrix, 'factorization'):
                     # we may use a complex factorization of a real matrix to
                     # apply it to a real vector. In that case, we downcast
