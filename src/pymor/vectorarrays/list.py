@@ -320,7 +320,9 @@ class ListVectorArray(VectorArrayInterface):
         assert len(self._list) == len(other)
         return np.array([a.dot(b) for a, b in zip(self._list, other._list)])
 
-    def gramian(self):
+    def gramian(self, product=None):
+        if product is not None:
+            super().gramian(product)
         l = len(self._list)
         R = np.empty((l, l))
         for i in range(l):

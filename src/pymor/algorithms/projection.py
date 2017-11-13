@@ -87,10 +87,7 @@ class ProjectRules(RuleTable):
     @match_class(ConstantOperator)
     def action_ConstantOperator(self, op, range_basis, source_basis, product=None):
         if range_basis is not None:
-            if product:
-                projected_value = NumpyVectorSpace.make_array(product.apply2(range_basis, op._value).T, op.range.id)
-            else:
-                projected_value = NumpyVectorSpace.make_array(range_basis.dot(op._value).T, op.range.id)
+            projected_value = NumpyVectorSpace.make_array(range_basis.inner(op._value, product).T, op.range.id)
         else:
             projected_value = op._value
         if source_basis is None:
@@ -184,13 +181,9 @@ class ProjectRules(RuleTable):
             raise RuleNotMatchingError('Has no restricted operator or source_basis is None')
         else:
             if range_basis is not None:
-                if product is None:
-                    projected_collateral_basis = NumpyVectorSpace.make_array(op.collateral_basis.dot(range_basis),
-                                                                             op.range.id)
-                else:
-                    projected_collateral_basis = NumpyVectorSpace.make_array(product.apply2(op.collateral_basis,
-                                                                                            range_basis),
-                                                                             op.range.id)
+                projected_collateral_basis = NumpyVectorSpace.make_array(op.collateral_basis.inner(range_basis,
+                                                                                                   product),
+                                                                         op.range.id)
             else:
                 projected_collateral_basis = op.collateral_basis
 

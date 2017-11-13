@@ -230,6 +230,12 @@ class VectorArrayInterface(BasicInterface):
         """
         pass
 
+    def inner(self, other, product=None):
+        if product is None:
+            return self.dot(other)
+        else:
+            return product.apply2(self, other)
+
     @abstractmethod
     def pairwise_dot(self, other):
         """Returns the pairwise inner products between |VectorArray| elements.
@@ -247,6 +253,12 @@ class VectorArrayInterface(BasicInterface):
 
         """
         pass
+
+    def pairwise_inner(self, other, product=None):
+        if product is None:
+            return self.pairwise_dot(other)
+        else:
+            return product.pairwise_apply2(self, other)
 
     @abstractmethod
     def lincomb(self, coefficients):
@@ -271,6 +283,18 @@ class VectorArrayInterface(BasicInterface):
             result[0] = ∑ self[j] * coefficients[j].
         """
         pass
+
+    def norm(self, product=None):
+        if product is None:
+            return self.l2_norm()
+        else:
+            return np.sqrt(product.pairwise_apply2(self, self))
+
+    def norm2(self, product=None):
+        if product is None:
+            return self.l2_norm2()
+        else:
+            return product.pairwise_apply2(self, self)
 
     @abstractmethod
     def l1_norm(self):
@@ -351,9 +375,9 @@ class VectorArrayInterface(BasicInterface):
         """
         pass
 
-    def gramian(self):
-        """Shorthand for `self.dot(self)`."""
-        return self.dot(self)
+    def gramian(self, product=None):
+        """Shorthand for `self.inner(self, product)`."""
+        return self.inner(self, product)
 
     def __add__(self, other):
         """The pairwise sum of two |VectorArrays|."""
