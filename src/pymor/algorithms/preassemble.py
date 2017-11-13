@@ -11,7 +11,7 @@ from pymor.operators.interfaces import OperatorInterface
 
 
 def preassemble(obj):
-    return PreAssembleRules.apply(obj)
+    return PreAssembleRules().apply(obj)
 
 
 class PreAssembleRules(RuleTable):

@@ -64,7 +64,7 @@ def project(op, range_basis, source_basis, product=None):
     assert range_basis is None or range_basis in op.range
     assert product is None or product.source == product.range == op.range
 
-    return ProjectRules.apply(op, range_basis, source_basis, product=product)
+    return ProjectRules().apply(op, range_basis, source_basis, product=product)
 
 
 class ProjectRules(RuleTable):
@@ -244,7 +244,7 @@ def project_to_subbasis(op, dim_range=None, dim_source=None):
     assert dim_source is None or (isinstance(op.source, NumpyVectorSpace) and dim_source <= op.source.dim)
     assert dim_range is None or (isinstance(op.range, NumpyVectorSpace) and dim_range <= op.range.dim)
 
-    return ProjectToSubbasisRules.apply(op, dim_range, dim_source)
+    return ProjectToSubbasisRules().apply(op, dim_range, dim_source)
 
 
 class ProjectToSubbasisRules(RuleTable):

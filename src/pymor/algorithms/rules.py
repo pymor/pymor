@@ -190,8 +190,7 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
         assert isinstance(rule_, rule)
         self.rules.append(rule_)
 
-    @classinstancemethod
-    def apply(cls, obj, *args, **kwargs):
+    def apply(self, obj, *args, **kwargs):
         """Sequentially apply rules to given object.
 
         This method iterates over all rules of the given |RuleTable|.
@@ -225,10 +224,6 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
         NoMatchingRuleError
             No |rule| could be applied to the given object.
         """
-        return cls().apply(obj, *args, **kwargs)
-
-    @apply.instancemethod
-    def apply(self, obj, *args, **kwargs):
         if obj in self._cache:
             return self._cache[obj]
 
@@ -243,8 +238,7 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
 
         raise NoMatchingRuleError(obj)
 
-    @classinstancemethod
-    def apply_children(cls, obj, *args, children=None, **kwargs):
+    def apply_children(self, obj, *args, children=None, **kwargs):
         """Apply rules to all children of the given object.
 
         This method calls :meth:`apply` to each child of
@@ -268,10 +262,6 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
         -------
         Result of :meth:`apply` for all given children.
         """
-        return cls().apply_children(obj, *args, children=children, **kwargs)
-
-    @apply_children.instancemethod
-    def apply_children(self, obj, *args, children=None, **kwargs):
         children = children or self.get_children(obj)
         result = {}
         for child in children:
@@ -284,18 +274,13 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
                 result[child] = self.apply(c, *args, **kwargs) if c is not None else c
         return result
 
-    @classinstancemethod
-    def replace_children(cls, obj, *args, children=None, **kwargs):
+    def replace_children(self, obj, *args, children=None, **kwargs):
         """Replace children of object according to rule table.
 
         Same as :meth:`apply_children`, but additionally calls
         `obj.with_` to replace the children of `obj` with the
         result of the corresponding :meth:`apply` call.
         """
-        return cls().replace_children(obj, *args, children=children, **kwargs)
-
-    @replace_children.instancemethod
-    def replace_children(self, obj, *args, children=None, **kwargs):
         return obj.with_(**self.apply_children(obj, *args, children=children, **kwargs))
 
     @classmethod
