@@ -190,18 +190,18 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
         assert isinstance(rule_, rule)
         self.rules.append(rule_)
 
-    def apply(self, obj, *args, **kwargs):
+    def apply(self, obj):
         """Sequentially apply rules to given object.
 
         This method iterates over all rules of the given |RuleTable|.
         For each |rule|, it is checked if it :meth:`~rule.matches` the given
         object. If `False`, the next |rule| in the table is considered.
         If `True` the corresponding :attr:`~rule.action` is executed with
-        `obj`, `*args` and `**kwargs` as parameters. If execution of
-        :attr:`~action` raises :class:`~pymor.core.exceptions.RuleNotMatchingError`,
-        the rule is considered as not matching, and execution continues
-        with evaluation of the next rule. Otherwise, execution is stopped
-        and the return value of :attr:`rule.action` is returned to the caller.
+        `obj` as parameter. If execution of :attr:`~action` raises
+        :class:`~pymor.core.exceptions.RuleNotMatchingError`, the rule is
+        considered as not matching, and execution continues with evaluation
+        of the next rule. Otherwise, execution is stopped and the return value
+        of :attr:`rule.action` is returned to the caller.
 
         If no |rule| matches, a :class:`~pymor.core.exceptions.NoMatchingRuleError`
         is raised.
@@ -210,10 +210,6 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
         ----------
         obj
             The object to apply the |RuleTable| to.
-        args
-            Positional arguments for the :attr:`~rule.action`.
-        kwargs
-            Keyword arguments for the :attr:`~rule.action`.
 
         Returns
         -------
@@ -230,7 +226,7 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
         for r in self.rules:
             if r.matches(obj):
                 try:
-                    result = r.action(self, obj, *args, **kwargs)
+                    result = r.action(self, obj)
                     self._cache[obj] = result
                     return result
                 except RuleNotMatchingError:
@@ -238,7 +234,7 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
 
         raise NoMatchingRuleError(obj)
 
-    def apply_children(self, obj, *args, children=None, **kwargs):
+    def apply_children(self, obj, children=None):
         """Apply rules to all children of the given object.
 
         This method calls :meth:`apply` to each child of
@@ -250,13 +246,9 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
         ----------
         obj
             The object to apply the |RuleTable| to.
-        args
-            Positional arguments for the :attr:`~rule.action`.
         children
             `None` or a list of attribute names defining the children
             to consider.
-        kwargs
-            Keyword arguments for the :attr:`~rule.action`.
 
         Returns
         -------
@@ -267,21 +259,21 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
         for child in children:
             c = getattr(obj, child)
             if isinstance(c, Mapping):
-                result[child] = {k: self.apply(v, *args, **kwargs) if v is not None else v for k, v in c.items()}
+                result[child] = {k: self.apply(v) if v is not None else v for k, v in c.items()}
             elif isinstance(c, Iterable):
-                result[child] = tuple(self.apply(v, *args, **kwargs) if v is not None else v for v in c)
+                result[child] = tuple(self.apply(v) if v is not None else v for v in c)
             else:
-                result[child] = self.apply(c, *args, **kwargs) if c is not None else c
+                result[child] = self.apply(c) if c is not None else c
         return result
 
-    def replace_children(self, obj, *args, children=None, **kwargs):
+    def replace_children(self, obj, children=None):
         """Replace children of object according to rule table.
 
         Same as :meth:`apply_children`, but additionally calls
         `obj.with_` to replace the children of `obj` with the
         result of the corresponding :meth:`apply` call.
         """
-        return obj.with_(**self.apply_children(obj, *args, children=children, **kwargs))
+        return obj.with_(**self.apply_children(obj, children=children))
 
     @classmethod
     def get_children(cls, obj):

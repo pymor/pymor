@@ -29,8 +29,8 @@ class PreAssembleRules(RuleTable):
             return op
 
     @match_class(AdjointOperator, ProjectedOperator)
-    def action_AdjointOperator(self, op, *args, **kwargs):
-        new_operator = self.apply(op.operator, *args, **kwargs)
+    def action_AdjointOperator(self, op):
+        new_operator = self.apply(op.operator)
         if new_operator is op.operator:
             return op
         elif not (op.source_product or op.range_product):

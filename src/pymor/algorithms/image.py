@@ -88,7 +88,7 @@ def estimate_image(operators=(), vectors=(),
     if not extends:
         for v in vectors:
             try:
-                CollectVectorRangeRules().apply(v, image)
+                CollectVectorRangeRules(image).apply(v)
             except NoMatchingRuleError as e:
                 raise ImageCollectionError(e.obj)
 
@@ -96,7 +96,7 @@ def estimate_image(operators=(), vectors=(),
         domain = domain_space.empty()
     for op in operators:
         try:
-            CollectOperatorRangeRules().apply(op, domain, image, extends)
+            CollectOperatorRangeRules(domain, image, extends).apply(op)
         except NoMatchingRuleError as e:
             raise ImageCollectionError(e.obj)
 
@@ -219,43 +219,52 @@ def estimate_image_hierarchical(operators=(), vectors=(), domain=None, extends=N
 class CollectOperatorRangeRules(RuleTable):
     """|RuleTable| for the :func:`estimate_image` algorithm."""
 
+    def __init__(self, source, image, extends):
+        super().__init__()
+        self.source, self.image, self.extends = \
+            source, image, extends
+
     @match_generic(lambda op: op.linear and not op.parametric)
-    def action_apply_operator(self, op, source, image, extends):
-        image.append(op.apply(source))
+    def action_apply_operator(self, op):
+        self.image.append(op.apply(self.source))
 
     @match_class(LincombOperator, SelectionOperator)
-    def action_recurse(self, op, source, image, extends):
-        self.apply_children(op, source, image, extends)
+    def action_recurse(self, op):
+        self.apply_children(op)
 
     @match_class(EmpiricalInterpolatedOperator)
-    def action_EmpiricalInterpolatedOperator(self, op, source, image, extends):
+    def action_EmpiricalInterpolatedOperator(self, op):
         if hasattr(op, 'collateral_basis') and not extends:
-            image.append(op.collateral_basis)
+            self.image.append(op.collateral_basis)
 
     @match_class(Concatenation)
-    def action_Concatenation(self, op, source, image, extends):
+    def action_Concatenation(self, op):
         firstrange = op.first.range.empty()
-        self.apply(op.first, source, firstrange, extends)
-        self.apply(op.second, firstrange, image, extends)
+        type(self)(self.source, firstrange, self.extends).apply(op.first)
+        type(self)(firstrange, self.image, self.extends).apply(op.second)
 
 
 class CollectVectorRangeRules(RuleTable):
     """|RuleTable| for the :func:`estimate_image` algorithm."""
 
+    def __init__(self, image):
+        super().__init__()
+        self.image = image
+
     @match_class(VectorArrayInterface)
-    def action_VectorArray(self, obj, image):
-        image.append(obj)
+    def action_VectorArray(self, obj):
+        self.image.append(obj)
 
     @match_generic(lambda op: op.linear and not op.parametric)
-    def action_as_range_array(self, op, image):
-        image.append(op.as_range_array())
+    def action_as_range_array(self, op):
+        self.image.append(op.as_range_array())
 
     @match_class(LincombOperator, SelectionOperator)
-    def action_recurse(self, op, image):
-        self.apply_children(op, image)
+    def action_recurse(self, op):
+        self.apply_children(op)
 
     @match_class(Concatenation)
-    def action_Concatenation(self, op, image):
+    def action_Concatenation(self, op):
         firstrange = op.first.range.empty()
-        self.apply(op.first, firstrange)
-        CollectOperatorRangeRules.apply(op.second, firstrange, image, False)
+        type(self)(firstrange).apply(op.first)
+        CollectOperatorRangeRules(firstrange, self.image, False).apply(op.second)
