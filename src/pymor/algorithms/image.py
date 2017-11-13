@@ -86,17 +86,19 @@ def estimate_image(operators=(), vectors=(),
 
     image = image_space.empty()
     if not extends:
+        rules = CollectVectorRangeRules(image)
         for v in vectors:
             try:
-                CollectVectorRangeRules(image).apply(v)
+                rules.apply(v)
             except NoMatchingRuleError as e:
                 raise ImageCollectionError(e.obj)
 
     if operators and domain is None:
         domain = domain_space.empty()
     for op in operators:
+        rules = CollectOperatorRangeRules(domain, image, extends)
         try:
-            CollectOperatorRangeRules(domain, image, extends).apply(op)
+            rules.apply(op)
         except NoMatchingRuleError as e:
             raise ImageCollectionError(e.obj)
 
