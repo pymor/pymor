@@ -71,7 +71,7 @@ class ProjectRules(RuleTable):
     """|RuleTable| for the :func:`project` algorithm."""
 
     def __init__(self, range_basis, source_basis, product):
-        super().__init__()
+        super().__init__(use_caching=True)
         self.range_basis, self.source_basis, self.product = \
             range_basis, source_basis, product
 
@@ -262,7 +262,7 @@ class ProjectToSubbasisRules(RuleTable):
     """|RuleTable| for the :func:`project_to_subbasis` algorithm."""
 
     def __init__(self, dim_range, dim_source):
-        super().__init__()
+        super().__init__(use_caching=True)
         self.dim_range, self.dim_source = dim_range, dim_source
 
     @match_class(LincombOperator)

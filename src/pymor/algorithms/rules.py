@@ -160,13 +160,19 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
     The order of the method definitions determines the order in
     which the defined |rules| are applied.
 
+    Parameters
+    ----------
+    use_caching
+        If `True`, cache results of :meth:`apply`.
+
     Attributes
     ----------
     rules
         `list` of all defined |rules|.
     """
 
-    def __init__(self):
+    def __init__(self, use_caching=False):
+        self.use_caching = use_caching
         self._cache = {}
         self.rules = list(self.rules)  # make a copy of the list of rules
 
@@ -220,7 +226,7 @@ class RuleTable(BasicInterface, metaclass=RuleTableMeta):
         NoMatchingRuleError
             No |rule| could be applied to the given object.
         """
-        if obj in self._cache:
+        if self.use_caching and obj in self._cache:
             return self._cache[obj]
 
         for r in self.rules:

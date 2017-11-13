@@ -16,6 +16,9 @@ def preassemble(obj):
 
 class PreAssembleRules(RuleTable):
 
+    def __init__(self):
+        super().__init__(use_caching=True)
+
     @match_class(DiscretizationInterface, AffineOperator, Concatenation, SelectionOperator)
     def action_recurse(self, op):
         return self.replace_children(op)

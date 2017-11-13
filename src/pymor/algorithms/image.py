@@ -220,7 +220,7 @@ class CollectOperatorRangeRules(RuleTable):
     """|RuleTable| for the :func:`estimate_image` algorithm."""
 
     def __init__(self, source, image, extends):
-        super().__init__()
+        super().__init__(use_caching=True)
         self.source, self.image, self.extends = \
             source, image, extends
 
@@ -248,7 +248,7 @@ class CollectVectorRangeRules(RuleTable):
     """|RuleTable| for the :func:`estimate_image` algorithm."""
 
     def __init__(self, image):
-        super().__init__()
+        super().__init__(use_caching=True)
         self.image = image
 
     @match_class(VectorArrayInterface)
