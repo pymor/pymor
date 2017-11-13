@@ -221,7 +221,7 @@ class ProjectRules(RuleTable):
     @match_class(OperatorInterface)
     def action_generic_projection(self, op):
         op.logger.warning('Using inefficient generic projection operator')
-        return ProjectedOperator(op)
+        return ProjectedOperator(op, self.range_basis, self.source_basis, self.product)
 
 
 def project_to_subbasis(op, dim_range=None, dim_source=None):

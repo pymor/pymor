@@ -38,13 +38,18 @@ def to_matrix(op, format=None, mu=None):
     """
     assert format is None or format in ('dense', 'bsr', 'coo', 'csc', 'csr', 'dia', 'dok', 'lil')
     op = op.assemble(mu)
-    return ToMatrixRules.apply(op, format, mu)
+    return ToMatrixRules(format, mu).apply(op)
 
 
 class ToMatrixRules(RuleTable):
 
+    def __init__(self, format, mu):
+        super().__init__()
+        self.format, self.mu = format, mu
+
     @match_class(NumpyMatrixOperator)
-    def action_NumpyMatrixOperator(self, op, format, mu):
+    def action_NumpyMatrixOperator(self, op):
+        format = self.format
         if format is None:
             return op._matrix
         elif format == 'dense':
@@ -59,13 +64,14 @@ class ToMatrixRules(RuleTable):
                 return op._matrix.asformat(format)
 
     @match_class(BlockOperator)
-    def action_BlockOperator(self, op, format, mu):
+    def action_BlockOperator(self, op):
+        format, mu = self.format, self.mu
         op_blocks = op._blocks
         mat_blocks = [[] for i in range(op.num_range_blocks)]
         is_dense = True
         for i in range(op.num_range_blocks):
             for j in range(op.num_source_blocks):
-                mat_ij = self.apply(op_blocks[i, j], format, mu)
+                mat_ij = self.apply(op_blocks[i, j])
                 if sps.issparse(mat_ij):
                     is_dense = False
                 mat_blocks[i].append(mat_ij)
@@ -75,16 +81,17 @@ class ToMatrixRules(RuleTable):
             return sps.bmat(mat_blocks, format=format)
 
     @match_class(AdjointOperator)
-    def action_AdjointOperator(self, op, format, mu):
-        res = self.apply(op.operator, format, mu).T
+    def action_AdjointOperator(self, op):
+        format = self.format
+        res = self.apply(op.operator).T
         if op.range_product is not None:
-            range_product = self.apply(op.range_product, format, mu)
+            range_product = self.apply(op.range_product)
             if format is None and not sps.issparse(res) and sps.issparse(range_product):
                 res = range_product.T.dot(res.T).T
             else:
                 res = res.dot(range_product)
         if op.source_product is not None:
-            source_product = self.apply(op.source_product, format, mu)
+            source_product = self.apply(op.source_product)
             if not sps.issparse(source_product):
                 res = spla.solve(source_product, res)
             else:
@@ -94,7 +101,8 @@ class ToMatrixRules(RuleTable):
         return res
 
     @match_class(ComponentProjection)
-    def action_ComponentProjection(self, op, format, mu):
+    def action_ComponentProjection(self, op):
+        format = self.format
         if format == 'dense':
             res = np.zeros((op.range.dim, op.source.dim))
             for i, j in enumerate(op.components):
@@ -108,38 +116,41 @@ class ToMatrixRules(RuleTable):
         return res
 
     @match_class(Concatenation)
-    def action_Concatenation(self, op, format, mu):
-        first = self.apply(op.first, format, mu)
-        second = self.apply(op.second, format, mu)
-        if format is None and not sps.issparse(second) and sps.issparse(first):
+    def action_Concatenation(self, op):
+        first = self.apply(op.first)
+        second = self.apply(op.second)
+        if self.format is None and not sps.issparse(second) and sps.issparse(first):
             return first.T.dot(second.T).T
         else:
             return second.dot(first)
 
     @match_class(IdentityOperator)
-    def action_IdentityOperator(self, op, format, mu):
+    def action_IdentityOperator(self, op):
+        format = self.format
         if format == 'dense':
             return np.eye(op.source.dim)
         else:
             return sps.eye(op.source.dim, format=format if format else 'csc')
 
     @match_class(LincombOperator)
-    def action_LincombOperator(self, op, format, mu):
-        op_coefficients = op.evaluate_coefficients(mu)
-        res = op_coefficients[0] * self.apply(op.operators[0], format, mu)
+    def action_LincombOperator(self, op):
+        op_coefficients = op.evaluate_coefficients(self.mu)
+        res = op_coefficients[0] * self.apply(op.operators[0])
         for i in range(1, len(op.operators)):
-            res = res + op_coefficients[i] * self.apply(op.operators[i], format, mu)
+            res = res + op_coefficients[i] * self.apply(op.operators[i])
         return res
 
     @match_class(VectorArrayOperator)
-    def action_VectorArrayOperator(self, op, format, mu):
+    def action_VectorArrayOperator(self, op):
+        format = self.format
         res = op._array.data if op.transposed else op._array.data.T
         if format is not None and format != 'dense':
             res = getattr(sps, format + '_matrix')(res)
         return res
 
     @match_class(ZeroOperator)
-    def action_ZeroOperator(self, op, format, mu):
+    def action_ZeroOperator(self, op):
+        format = self.format
         if format is None:
             return sps.csc_matrix((op.range.dim, op.source.dim))
         elif format == 'dense':
