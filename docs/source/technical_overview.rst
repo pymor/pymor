@@ -65,7 +65,7 @@ operating on objects of the following types:
     .. |empty|            replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.empty`
     .. |id|               replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.id`
     .. |indexed|          replace:: :meth:`indexed <pymor.vectorarrays.interfaces.VectorArrayInterface.__getitem__>`
-    .. |inner products|   replace:: :meth:`inner products <pymor.vectorarrays.interfaces.VectorArrayInterface.dot>`
+    .. |inner products|   replace:: :meth:`inner products <pymor.vectorarrays.interfaces.VectorArrayInterface.inner>`
     .. |lincomb|          replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.lincomb`
     .. |make_array|       replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.make_array`
     .. |removed|          replace:: :meth:`deleted <pymor.vectorarrays.interfaces.VectorArrayInterface.__delitem__>`

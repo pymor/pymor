@@ -231,6 +231,11 @@ class VectorArrayInterface(BasicInterface):
         pass
 
     def inner(self, other, product=None):
+        """Inner products w.r.t. given product |Operator|.
+
+        Equivalent to `self.dot(other)` if `product` is None,
+        else equivalent to `product.apply2(self, other)`.
+        """
         if product is None:
             return self.dot(other)
         else:
@@ -255,6 +260,11 @@ class VectorArrayInterface(BasicInterface):
         pass
 
     def pairwise_inner(self, other, product=None):
+        """Pairwise inner products w.r.t. given product |Operator|.
+
+        Equivalent to `self.pairwise_dot(other)` if `product` is None,
+        else equivalent to `product.pairwise_apply2(self, other)`.
+        """
         if product is None:
             return self.pairwise_dot(other)
         else:
@@ -285,12 +295,22 @@ class VectorArrayInterface(BasicInterface):
         pass
 
     def norm(self, product=None):
+        """Norm w.r.t. given inner product |Operator|.
+
+        Equivalent to `self.l2_norm()` if `product` is None,
+        else equivalent to `np.sqrt(product.pairwise_apply2(self, self))`.
+        """
         if product is None:
             return self.l2_norm()
         else:
             return np.sqrt(product.pairwise_apply2(self, self))
 
     def norm2(self, product=None):
+        """Squared norm w.r.t. given inner product |Operator|.
+
+        Equivalent to `self.l2_norm()` if `product` is None,
+        else equivalent to `product.pairwise_apply2(self, self)`.
+        """
         if product is None:
             return self.l2_norm2()
         else:
