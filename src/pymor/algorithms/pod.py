@@ -111,8 +111,7 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_err=0.,
 
     if check:
         logger.info('Checking orthonormality ...')
-        if not product and not float_cmp_all(POD.dot(POD), np.eye(len(POD)),
-                                             atol=check_tol, rtol=0.):
+        if not float_cmp_all(POD.inner(POD, product), np.eye(len(POD)), atol=check_tol, rtol=0.):
             err = np.max(np.abs(POD.inner(POD, product) - np.eye(len(POD))))
             raise AccuracyError('result not orthogonal (max err={})'.format(err))
         if len(POD) < len(EVECS):
