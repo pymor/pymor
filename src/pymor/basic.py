@@ -8,7 +8,7 @@ You can use ``from pymor.basic import *`` in interactive session
 to have the most important parts of pyMOR directly available.
 """
 
-from pymor.algorithms.basic import almost_equal
+from pymor.algorithms.basic import almost_equal, relative_error, project_array
 from pymor.algorithms.ei import interpolate_operators, ei_greedy, deim
 from pymor.algorithms.error import reduction_error_analysis
 from pymor.algorithms.gram_schmidt import gram_schmidt, gram_schmidt_biorth
