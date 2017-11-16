@@ -61,10 +61,7 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
     remove = []
     for i in range(offset, len(A)):
         # first calculate norm
-        if product is None:
-            initial_norm = A[i].l2_norm()[0]
-        else:
-            initial_norm = np.sqrt(product.pairwise_apply2(A[i], A[i]))[0]
+        initial_norm = A[i].norm(product)[0]
 
         if initial_norm < atol:
             logger.info("Removing vector {} of norm {}".format(i, initial_norm))
@@ -90,17 +87,11 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
                 for j in range(i):
                     if j in remove:
                         continue
-                    if product is None:
-                        p = A[i].pairwise_dot(A[j])[0]
-                    else:
-                        p = product.pairwise_apply2(A[i], A[j])[0]
+                    p = A[i].pairwise_inner(A[j], product)[0]
                     A[i].axpy(-p, A[j])
 
                 # calculate new norm
-                if product is None:
-                    old_norm, norm = norm, A[i].l2_norm()[0]
-                else:
-                    old_norm, norm = norm, np.sqrt(product.pairwise_apply2(A[i], A[i])[0])
+                old_norm, norm = norm, A[i].norm(product)[0]
 
                 # remove vector if it got too small:
                 if norm / initial_norm < rtol:
@@ -115,10 +106,7 @@ def gram_schmidt(A, product=None, atol=1e-13, rtol=1e-13, offset=0, find_duplica
         del A[remove]
 
     if check:
-        if product:
-            error_matrix = product.apply2(A[offset:len(A)], A)
-        else:
-            error_matrix = A[offset:len(A)].dot(A)
+        error_matrix = A[offset:len(A)].inner(A, product)
         error_matrix[:len(A) - offset, offset:len(A)] -= np.eye(len(A) - offset)
         if error_matrix.size > 0:
             err = np.max(np.abs(error_matrix))
@@ -176,10 +164,7 @@ def gram_schmidt_biorth(V, W, product=None, reiterate=True, reiteration_threshol
     # main loop
     for i in range(len(V)):
         # calculate norm of V[i]
-        if product is None:
-            initial_norm = V[i].l2_norm()[0]
-        else:
-            initial_norm = np.sqrt(product.pairwise_apply2(V[i], V[i]))[0]
+        initial_norm = V[i].norm(product)[0]
 
         # project V[i]
         if i == 0:
@@ -197,26 +182,17 @@ def gram_schmidt_biorth(V, W, product=None, reiterate=True, reiteration_threshol
 
                 for j in range(i):
                     # project by (I - V[j] * W[j]^T * E)
-                    if product is None:
-                        p = W[j].pairwise_dot(V[i])[0]
-                    else:
-                        p = product.pairwise_apply2(W[j], V[i])[0]
+                    p = W[j].pairwise_inner(V[i], product)[0]
                     V[i].axpy(-p, V[j])
 
                 # calculate new norm
-                if product is None:
-                    old_norm, norm = norm, V[i].l2_norm()[0]
-                else:
-                    old_norm, norm = norm, np.sqrt(product.pairwise_apply2(V[i], V[i])[0])
+                old_norm, norm = norm, V[i].norm(product)[0]
 
             if norm > 0:
                 V[i].scal(1 / norm)
 
         # calculate norm of W[i]
-        if product is None:
-            initial_norm = W[i].l2_norm()[0]
-        else:
-            initial_norm = np.sqrt(product.pairwise_apply2(W[i], W[i]))[0]
+        initial_norm = W[i].norm(product)[0]
 
         # project W[i]
         if i == 0:
@@ -234,33 +210,21 @@ def gram_schmidt_biorth(V, W, product=None, reiterate=True, reiteration_threshol
 
                 for j in range(i):
                     # project by (I - W[j] * V[j]^T * E)
-                    if product is None:
-                        p = V[j].pairwise_dot(W[i])[0]
-                    else:
-                        p = product.pairwise_apply2(V[j], W[i])[0]
+                    p = V[j].pairwise_inner(W[i], product)[0]
                     W[i].axpy(-p, W[j])
 
                 # calculate new norm
-                if product is None:
-                    old_norm, norm = norm, W[i].l2_norm()[0]
-                else:
-                    old_norm, norm = norm, np.sqrt(product.pairwise_apply2(W[i], W[i])[0])
+                old_norm, norm = norm, W[i].norm(product)[0]
 
             if norm > 0:
                 W[i].scal(1 / norm)
 
         # rescale V[i]
-        if product is None:
-            p = W[i].pairwise_dot(V[i])[0]
-        else:
-            p = product.pairwise_apply2(W[i], V[i])[0]
+        p = W[i].pairwise_inner(V[i], product)[0]
         V[i].scal(1 / p)
 
     if check:
-        if product:
-            error_matrix = product.apply2(W, V)
-        else:
-            error_matrix = W.dot(V)
+        error_matrix = W.inner(V, product)
         error_matrix -= np.eye(len(V))
         if error_matrix.size > 0:
             err = np.max(np.abs(error_matrix))

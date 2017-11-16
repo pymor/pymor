@@ -72,7 +72,7 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_err=0.,
     logger = getLogger('pymor.algorithms.pod.pod')
 
     with logger.block('Computing Gramian ({} vectors) ...'.format(len(A))):
-        B = A.gramian() if product is None else product.apply2(A, A)
+        B = A.gramian(product)
 
         if symmetrize:     # according to rbmatlab this is necessary due to rounding
             B = B + B.T
@@ -111,13 +111,8 @@ def pod(A, modes=None, product=None, rtol=4e-8, atol=0., l2_err=0.,
 
     if check:
         logger.info('Checking orthonormality ...')
-        if not product and not float_cmp_all(POD.dot(POD), np.eye(len(POD)),
-                                             atol=check_tol, rtol=0.):
-            err = np.max(np.abs(POD.dot(POD) - np.eye(len(POD))))
-            raise AccuracyError('result not orthogonal (max err={})'.format(err))
-        elif product and not float_cmp_all(product.apply2(POD, POD), np.eye(len(POD)),
-                                           atol=check_tol, rtol=0.):
-            err = np.max(np.abs(product.apply2(POD, POD) - np.eye(len(POD))))
+        if not float_cmp_all(POD.inner(POD, product), np.eye(len(POD)), atol=check_tol, rtol=0.):
+            err = np.max(np.abs(POD.inner(POD, product) - np.eye(len(POD))))
             raise AccuracyError('result not orthogonal (max err={})'.format(err))
         if len(POD) < len(EVECS):
             raise AccuracyError('additional orthonormalization removed basis vectors')

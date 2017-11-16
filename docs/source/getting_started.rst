@@ -270,7 +270,7 @@ the H1-product. For this we use the :meth:`~pymor.operators.interfaces.OperatorI
 method:
 
 >>> import numpy as np
->>> gram_matrix = d.h1_product.apply2(reductor.RB, reductor.RB)
+>>> gram_matrix = RB.gramian(d.h1_product)
 >>> print(np.max(np.abs(gram_matrix - np.eye(32))))
 5.86218898944e-14
 
@@ -297,7 +297,7 @@ Finally we compute the reduction error and display the reduced solution along wi
 the detailed solution and the error:
 
 >>> ERR = U - U_red
->>> print(d.h1_norm(ERR))
+>>> print(ERR.norm(d.h1_product))
 [ 0.00944595]
 >>> d.visualize((U, U_red, ERR),
 ...             legend=('Detailed', 'Reduced', 'Error'),
