@@ -308,7 +308,7 @@ class VectorArrayInterface(BasicInterface):
     def norm2(self, product=None):
         """Squared norm w.r.t. given inner product |Operator|.
 
-        Equivalent to `self.l2_norm()` if `product` is None,
+        Equivalent to `self.l2_norm2()` if `product` is None,
         else equivalent to `product.pairwise_apply2(self, self)`.
         """
         if product is None:
