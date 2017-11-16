@@ -322,7 +322,7 @@ class ListVectorArray(VectorArrayInterface):
 
     def gramian(self, product=None):
         if product is not None:
-            super().gramian(product)
+            return super().gramian(product)
         l = len(self._list)
         R = np.empty((l, l))
         for i in range(l):
