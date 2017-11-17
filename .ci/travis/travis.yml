@@ -67,7 +67,7 @@ jobs:
   - stage: test
     env: PYTEST_MARKER="MPI" DOCKER_TAG="3.6"
 
-    - stage: deploy
+  - stage: deploy
     script: ./.ci/travis/deploy.bash
     # overwrite other global/matrix settings
     before_script: true

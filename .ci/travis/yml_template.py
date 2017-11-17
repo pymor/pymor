@@ -55,7 +55,7 @@ jobs:
     env: PYTEST_MARKER="{{m}}" DOCKER_TAG="{{py}}"
 {%- endfor %}
 
-    - stage: deploy
+  - stage: deploy
     script: ./.ci/travis/deploy.bash
     # overwrite other global/matrix settings
     before_script: true

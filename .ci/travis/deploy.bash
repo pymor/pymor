@@ -12,8 +12,11 @@ fi
 PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
 cd "${PYMOR_ROOT}"
 
+rm -rf ~/.ssh
+ls -l ${PYMOR_ROOT}/.ci/travis/wheels.deploy.key.rsa.enc
+
 ./.ci/travis/init_sshkey.bash "${encrypted_a599472c800f_key}" "${encrypted_a599472c800f_iv}" \
-    ${PYMOR_ROOT}/.ci/travis/wheels.deploy
+    ${PYMOR_ROOT}/.ci/travis/wheels.deploy.key
 
 mkdir -p ${BUILDER_WHEELHOUSE}
 git clone git@github.com:pymor/wheels.pymor.org ${REPODIR}
