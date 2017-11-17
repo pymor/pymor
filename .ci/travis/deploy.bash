@@ -1,24 +1,40 @@
 #!/bin/bash
 
-set -e
-REPODIR=${HOME}/wheels
+set -eu
+
+BUILDER_WHEELHOUSE=/tmp/wheelhouse
+if [ ${TRAVIS_BRANCH} = master ] ; then
+    REPODIR=${HOME}/wheels
+else
+    REPODIR=${HOME}/wheels/branches/${TRAVIS_BRANCH}/
+fi
+
+PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
+cd "${PYMOR_ROOT}"
+
 ./.ci/travis/init_sshkey.bash "${encrypted_a599472c800f_key}" "${encrypted_a599472c800f_iv}" \
     ${PYMOR_ROOT}/.ci/travis/wheels.deploy
 
+mkdir -p ${BUILDER_WHEELHOUSE}
 git clone git@github.com:pymor/wheels.pymor.org ${REPODIR}
 for py in 2.7 3.5 3.6 ; do
-    BUILDER_IMAGE=pymor/manylinux:py${REV}
+    BUILDER_IMAGE=pymor/manylinux:py${py}
+    git clean -xdf
+    docker pull ${BUILDER_IMAGE} 1> /dev/null
     docker run --rm  -t -e LOCAL_USER_ID=$(id -u)  \
-		-v ${PWD}:/io ${BUILDER_IMAGE} /usr/local/bin/build-wheels.sh
+        -v ${BUILDER_WHEELHOUSE}:/io/wheelhouse \
+        -v ${PYMOR_ROOT}:/io/pymor ${BUILDER_IMAGE} /usr/local/bin/build-wheels.sh 1> /dev/null
+    rsync -a ${BUILDER_WHEELHOUSE}/pymor*manylinux*.whl ${REPODIR}/
 done
 
-if [ ${TRAVIS_BRANCH} = master ] ; then
-    cp ${PWD}/wheelhouse/pymor*manylinux*.whl ${REPODIR}/
-else
-    cp ${PWD}/wheelhouse/pymor*manylinux*.whl ${REPODIR}/${TRAVIS_BRANCH}
-fi
+set +u
+pip install jinja2
 
 cd ${REPODIR}
 find . -name "*.whl" | xargs git add
-git commit -m "[deploy] wheels for ${TRAVIS_COMMIT}"
+make index
+git config user.name "pyMOR Bot"
+git config user.email "travis@pymor.org"
+git commit -am "[deploy] wheels for ${TRAVIS_COMMIT}"
+git pull --rebase
 git push
