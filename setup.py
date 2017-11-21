@@ -5,10 +5,8 @@
 
 import sys
 import os
-import subprocess
 
 from setuptools import find_packages
-from setuptools.command.test import test as TestCommand
 from distutils.extension import Extension
 from distutils.command.build_py import build_py as _build_py
 import itertools
@@ -77,6 +75,7 @@ def _numpy_monkey():
 
     build_src.build_src.generate_a_pyrex_source = generate_a_pyrex_source
 
+
 # When building under python 2.7, run refactorings from lib3to2
 class build_py27(_build_py):
     def __init__(self, *args, **kwargs):
@@ -117,6 +116,7 @@ class build_py27(_build_py):
         self.rtool.refactor_dir('docs', write=True)
         open(checkpoint_fn, 'wt').write('converted')
 
+
 cmdclass = versioneer.get_cmdclass()
 if sys.version_info[0] < 3:
     setup_requires.insert(0, '3to2')
@@ -142,8 +142,8 @@ def _testdatafiles():
             testdata.add(relFile)
     return list(testdata)
 
-def _setup(**kwargs):
 
+def _setup(**kwargs):
     # the following hack is taken from scipy's setup.py
     # https://github.com/scipy/scipy
     if (len(sys.argv) >= 2 and
@@ -175,7 +175,7 @@ def _setup(**kwargs):
     # duplication is necessary since Manifest sometime is only regarded in sdist, package_data in bdist
     # all filenames need to be relative to their package root, not the source root
     kwargs['package_data'] = {'pymor': [f.replace('src/pymor/', '') for f in itertools.chain(*[i.sources for i in ext_modules])],
-                                'pymortests': _testdatafiles()}
+                              'pymortests': _testdatafiles()}
 
     kwargs['cmdclass'] = cmdclass
     kwargs['ext_modules'] = ext_modules
@@ -221,22 +221,6 @@ def setup_package():
         zip_safe=False,
         cmdclass=cmdclass,
     )
-
-    missing = dict(set(dependencies.missing(install_suggests.keys())))
-    if len(missing):
-        import textwrap
-        print('\n' + '*' * 79 + '\n')
-        print('There are some suggested packages missing:\n')
-        col_width = max(map(len, missing.values())) + 3
-        for package in sorted(missing.keys()):
-            description = textwrap.wrap(install_suggests[package], 79 - col_width)
-            print('{:{}}'.format(missing[package] + ': ', col_width) + description[0])
-            for d in description[1:]:
-                print(' ' * col_width + d)
-            print()
-        suggests = ['\'{}\' '.format(dependencies.strip_markers(m)) for m in missing.keys()]
-        print("\ntry: 'for pname in {}; do pip install $pname; done'".format(''.join(suggests)))
-        print('\n' + '*' * 79 + '\n')
 
 
 if __name__ == '__main__':
