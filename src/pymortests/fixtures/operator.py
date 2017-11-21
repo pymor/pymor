@@ -109,7 +109,7 @@ def thermalblock_identity_factory(xblocks, yblocks, diameter, seed):
 def thermalblock_zero_factory(xblocks, yblocks, diameter, seed):
     from pymor.operators.constructions import ZeroOperator
     _, _, U, V, sp, rp = thermalblock_factory(xblocks, yblocks, diameter, seed)
-    return ZeroOperator(U.space, V.space), None, U, V, sp, rp
+    return ZeroOperator(V.space, U.space), None, U, V, sp, rp
 
 
 def thermalblock_constant_factory(xblocks, yblocks, diameter, seed):

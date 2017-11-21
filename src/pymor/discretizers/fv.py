@@ -173,7 +173,7 @@ def discretize_stationary_fv(analytical_problem, diameter=None, domain_discretiz
 
     # rhs
     if len(F_coefficients) == 0:
-        F = ZeroOperator(L.range, NumpyVectorSpace(1))
+        F = ZeroOperator(NumpyVectorSpace(1), L.range)
     elif len(F_coefficients) == 1 and F_coefficients[0] == 1.:
         F = F[0]
     else:

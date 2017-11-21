@@ -344,7 +344,7 @@ class ConstantOperator(OperatorBase):
     def jacobian(self, U, mu=None):
         assert U in self.source
         assert len(U) == 1
-        return ZeroOperator(self.source, self.range, name=self.name + '_jacobian')
+        return ZeroOperator(self.range, self.source, name=self.name + '_jacobian')
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
@@ -357,26 +357,26 @@ class ZeroOperator(OperatorBase):
 
     Parameters
     ----------
-    source
-        Source |VectorSpace| of the operator.
     range
         Range |VectorSpace| of the operator.
+    source
+        Source |VectorSpace| of the operator.
     name
         Name of the operator.
     """
 
     linear = True
 
-    def __init__(self, source, range, name=None):
-        assert isinstance(source, VectorSpaceInterface)
+    def __init__(self, range, source, name=None):
         assert isinstance(range, VectorSpaceInterface)
+        assert isinstance(source, VectorSpaceInterface)
         self.source = source
         self.range = range
         self.name = name
 
     @property
     def T(self):
-        return type(self)(self.range, self.source, name=self.name + '_transposed')
+        return type(self)(self.source, self.range, name=self.name + '_transposed')
 
     def apply(self, U, mu=None):
         assert U in self.source
@@ -408,7 +408,7 @@ class ZeroOperator(OperatorBase):
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
-        return ZeroOperator(NumpyVectorSpace(0), NumpyVectorSpace(len(dofs))), np.array([], dtype=np.int32)
+        return ZeroOperator(NumpyVectorSpace(len(dofs)), NumpyVectorSpace(0)), np.array([], dtype=np.int32)
 
 
 class VectorArrayOperator(OperatorBase):
