@@ -21,7 +21,7 @@ ls -l ${PYMOR_ROOT}/.ci/travis/wheels.deploy.key.rsa.enc
 mkdir -p ${BUILDER_WHEELHOUSE}
 git clone git@github.com:pymor/wheels.pymor.org ${REPODIR}
 for py in 2.7 3.5 3.6 ; do
-    BUILDER_IMAGE=pymor/manylinux:py${py}
+    BUILDER_IMAGE=pymor/wheelbuilder:py${py}
     git clean -xdf
     docker pull ${BUILDER_IMAGE} 1> /dev/null
     docker run --rm  -t -e LOCAL_USER_ID=$(id -u)  \
