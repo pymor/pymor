@@ -172,7 +172,7 @@ def main(args):
     print('\nSearching for maximum error on random snapshots ...')
 
     results = reduction_error_analysis(rd,
-                                       discretization=d,
+                                       d=d,
                                        reductor=reductor,
                                        estimator=True,
                                        error_norms=(d.h1_0_semi_norm, d.l2_norm),
@@ -395,7 +395,7 @@ def reduce_greedy(d, reductor, snapshots_per_block,
                          use_estimator=use_estimator, error_norm=d.h1_0_semi_norm,
                          extension_params={'method': extension_alg_name}, max_extensions=max_extensions,
                          pool=pool)
-    rd = greedy_data['reduced_discretization']
+    rd = greedy_data['rd']
 
     # generate summary
     real_rb_size = rd.solution_space.dim
@@ -423,7 +423,7 @@ def reduce_adaptive_greedy(d, reductor, validation_mus,
                                   use_estimator=use_estimator, error_norm=d.h1_0_semi_norm,
                                   extension_params={'method': extension_alg_name}, max_extensions=max_extensions,
                                   rho=rho, gamma=gamma, theta=theta, pool=pool)
-    rd = greedy_data['reduced_discretization']
+    rd = greedy_data['rd']
 
     # generate summary
     real_rb_size = rd.solution_space.dim

@@ -237,7 +237,7 @@ def deim(U, modes=None, error_norm=None, product=None):
     return interpolation_dofs, collateral_basis, data
 
 
-def interpolate_operators(discretization, operator_names, parameter_sample, error_norm=None,
+def interpolate_operators(d, operator_names, parameter_sample, error_norm=None,
                           atol=None, rtol=None, max_interpolation_dofs=None, pool=dummy_pool):
     """Empirical operator interpolation using the EI-Greedy algorithm.
 
@@ -253,7 +253,7 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
 
     Parameters
     ----------
-    discretization
+    d
         The |Discretization| whose |Operators| will be interpolated.
     operator_names
         List of keys in the `operators` dict of the discretization. The corresponding
@@ -273,7 +273,7 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
 
     Returns
     -------
-    ei_discretization
+    ei_d
         |Discretization| with |Operators| given by `operator_names` replaced by
         |EmpiricalInterpolatedOperators|.
     data
@@ -289,17 +289,17 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
 
     logger = getLogger('pymor.algorithms.ei.interpolate_operators')
     with RemoteObjectManager() as rom:
-        operators = [discretization.operators[operator_name] for operator_name in operator_names]
+        operators = [d.operators[operator_name] for operator_name in operator_names]
         with logger.block('Computing operator evaluations on solution snapshots ...'):
             if pool:
                 logger.info('Using pool of {} workers for parallel evaluation'.format(len(pool)))
-                evaluations = rom.manage(pool.push(discretization.solution_space.empty()))
+                evaluations = rom.manage(pool.push(d.solution_space.empty()))
                 pool.map(_interpolate_operators_build_evaluations, parameter_sample,
-                         d=discretization, operators=operators, evaluations=evaluations)
+                         d=d, operators=operators, evaluations=evaluations)
             else:
                 evaluations = operators[0].range.empty()
                 for mu in parameter_sample:
-                    U = discretization.solve(mu)
+                    U = d.solve(mu)
                     for op in operators:
                         evaluations.append(op.apply(U, mu=mu))
 
@@ -310,12 +310,12 @@ def interpolate_operators(discretization, operator_names, parameter_sample, erro
 
     ei_operators = {name: EmpiricalInterpolatedOperator(operator, dofs, basis, triangular=True)
                     for name, operator in zip(operator_names, operators)}
-    operators_dict = discretization.operators.copy()
+    operators_dict = d.operators.copy()
     operators_dict.update(ei_operators)
-    ei_discretization = discretization.with_(operators=operators_dict, name='{}_ei'.format(discretization.name))
+    ei_d = d.with_(operators=operators_dict, name='{}_ei'.format(d.name))
 
     data.update({'dofs': dofs, 'basis': basis})
-    return ei_discretization, data
+    return ei_d, data
 
 
 def _interpolate_operators_build_evaluations(mu, d=None, operators=None, evaluations=None):

@@ -48,37 +48,37 @@ def analyze_pickle_histogram(args):
     args['SAMPLES'] = int(args['SAMPLES'])
 
     print('Loading reduced discretization ...')
-    rb_discretization = load(open(args['REDUCED_DATA'], 'rb'))
+    rd = load(open(args['REDUCED_DATA'], 'rb'))
 
-    mus = rb_discretization.parameter_space.sample_randomly(args['SAMPLES'])
+    mus = rd.parameter_space.sample_randomly(args['SAMPLES'])
     us = []
     for mu in mus:
         print('Solving reduced for {} ... '.format(mu), end='')
         sys.stdout.flush()
-        us.append(rb_discretization.solve(mu))
+        us.append(rd.solve(mu))
         print('done')
 
     print()
 
-    if hasattr(rb_discretization, 'estimate'):
+    if hasattr(rd, 'estimate'):
         ests = []
         for u, mu in zip(us, mus):
             print('Estimating error for {} ... '.format(mu), end='')
             sys.stdout.flush()
-            ests.append(rb_discretization.estimate(u, mu=mu))
+            ests.append(rd.estimate(u, mu=mu))
             print('done')
 
     if args['--detailed']:
         print('Loading high-dimensional data ...')
-        discretization, reductor = load(open(args['--detailed'], 'rb'))
+        d, reductor = load(open(args['--detailed'], 'rb'))
 
         errs = []
         for u, mu in zip(us, mus):
             print('Calculating error for {} ... '.format(mu))
             sys.stdout.flush()
-            err = discretization.solve(mu) - reductor.reconstruct(u)
+            err = d.solve(mu) - reductor.reconstruct(u)
             if args['--error-norm']:
-                errs.append(np.max(getattr(discretization, args['--error-norm'] + '_norm')(err)))
+                errs.append(np.max(getattr(d, args['--error-norm'] + '_norm')(err)))
             else:
                 errs.append(np.max(err.l2_norm()))
             print('done')
@@ -90,7 +90,7 @@ def analyze_pickle_histogram(args):
     except AttributeError:
         pass  # plt.style is only available in newer matplotlib versions
 
-    if hasattr(rb_discretization, 'estimate') and args['--detailed']:
+    if hasattr(rd, 'estimate') and args['--detailed']:
 
         # setup axes
         left, width = 0.1, 0.65
@@ -132,7 +132,7 @@ def analyze_pickle_histogram(args):
 
         plt.show()
 
-    elif hasattr(rb_discretization, 'estimate'):
+    elif hasattr(rd, 'estimate'):
 
         total_min = min(ests) * 0.9
         total_max = max(ests) * 1.1
@@ -166,21 +166,21 @@ def analyze_pickle_convergence(args):
     args['SAMPLES'] = int(args['SAMPLES'])
 
     print('Loading reduced discretization ...')
-    rb_discretization = load(open(args['REDUCED_DATA'], 'rb'))
+    rd = load(open(args['REDUCED_DATA'], 'rb'))
 
     if not args['--detailed']:
         raise ValueError('High-dimensional data file must be specified.')
     print('Loading high-dimensional data ...')
-    discretization, reductor = load(open(args['--detailed'], 'rb'))
-    discretization.enable_caching('disk')
+    d, reductor = load(open(args['--detailed'], 'rb'))
+    d.enable_caching('disk')
 
-    dim = rb_discretization.solution_space.dim
+    dim = rd.solution_space.dim
     if args['--ndim']:
         dims = np.linspace(0, dim, args['--ndim'], dtype=np.int)
     else:
         dims = np.arange(dim + 1)
 
-    mus = rb_discretization.parameter_space.sample_randomly(args['SAMPLES'])
+    mus = rd.parameter_space.sample_randomly(args['SAMPLES'])
 
     ESTS = []
     ERRS = []
@@ -199,7 +199,7 @@ def analyze_pickle_convergence(args):
 
         print('estimate ', end='')
         sys.stdout.flush()
-        if hasattr(rb_discretization, 'estimate'):
+        if hasattr(rd, 'estimate'):
             ests = []
             start = time.time()
             for u, mu in zip(us, mus):
@@ -213,9 +213,9 @@ def analyze_pickle_convergence(args):
         sys.stdout.flush()
         errs = []
         for u, mu in zip(us, mus):
-            err = discretization.solve(mu) - reductor.reconstruct(u)
+            err = d.solve(mu) - reductor.reconstruct(u)
             if args['--error-norm']:
-                errs.append(np.max(getattr(discretization, args['--error-norm'] + '_norm')(err)))
+                errs.append(np.max(getattr(d, args['--error-norm'] + '_norm')(err)))
             else:
                 errs.append(np.max(err.l2_norm()))
         ERRS.append(max(errs))
@@ -230,7 +230,7 @@ def analyze_pickle_convergence(args):
         pass  # plt.style is only available in newer matplotlib versions
 
     plt.subplot(1, 2, 1)
-    if hasattr(rb_discretization, 'estimate'):
+    if hasattr(rd, 'estimate'):
         plt.semilogy(dims, ESTS, label='max. estimate')
     plt.semilogy(dims, ERRS, label='max. error')
     plt.xlabel('dimension')
@@ -238,7 +238,7 @@ def analyze_pickle_convergence(args):
 
     plt.subplot(1, 2, 2)
     plt.plot(dims, T_SOLVES, label='avg. solve time')
-    if hasattr(rb_discretization, 'estimate'):
+    if hasattr(rd, 'estimate'):
         plt.plot(dims, T_ESTS, label='avg. estimate time')
     plt.xlabel('dimension')
     plt.ylabel('milliseconds')

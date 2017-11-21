@@ -247,12 +247,12 @@ obtain. ``greedy_data`` is a dictionary containing various data that has
 been generated during the run of the algorithm:
 
 >>> print(greedy_data.keys())
-dict_keys(['reduced_discretization', 'max_errs', 'extensions', 'max_err_mus', 'time'])
+dict_keys(['rd', 'max_errs', 'extensions', 'max_err_mus', 'time'])
 
-The most important items is ``'reduced_discretization'`` which holds the
-reduced |Discretization| obtained from applying our reductor with the final reduced basis.
+The most important items is ``'rd'`` which holds the reduced |Discretization|
+obtained from applying our reductor with the final reduced basis.
 
->>> rd = greedy_data['reduced_discretization']
+>>> rd = greedy_data['rd']
 
 All vectors in pyMOR are stored in so called |VectorArrays|. For example
 the solution ``U`` computed above is given as a |VectorArray| of length 1.
