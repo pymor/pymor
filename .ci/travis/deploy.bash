@@ -3,12 +3,7 @@
 set -eu
 
 BUILDER_WHEELHOUSE=/tmp/wheelhouse
-if [ ${TRAVIS_BRANCH} = master ] ; then
-    REPODIR=${HOME}/wheels
-else
-    REPODIR=${HOME}/wheels/branches/${TRAVIS_BRANCH}/
-fi
-
+REPODIR=${HOME}/wheels
 PYMOR_ROOT="$(cd "$(dirname ${BASH_SOURCE[0]})" ; cd ../../ ; pwd -P )"
 cd "${PYMOR_ROOT}"
 
@@ -27,15 +22,13 @@ for py in 2.7 3.5 3.6 ; do
     docker run --rm  -t -e LOCAL_USER_ID=$(id -u)  \
         -v ${BUILDER_WHEELHOUSE}:/io/wheelhouse \
         -v ${PYMOR_ROOT}:/io/pymor ${BUILDER_IMAGE} /usr/local/bin/build-wheels.sh 1> /dev/null
-    rsync -a ${BUILDER_WHEELHOUSE}/pymor*manylinux*.whl ${REPODIR}/
+    ${REPODIR}/add_wheels.py ${TRAVIS_BRANCH} ${BUILDER_WHEELHOUSE}/pymor*manylinux*.whl
 done
 
 set +u
 pip install jinja2
 
 cd ${REPODIR}
-find . -name "*.whl" | xargs git add
-make index
 git config user.name "pyMOR Bot"
 git config user.email "travis@pymor.org"
 git commit -am "[deploy] wheels for ${TRAVIS_COMMIT}"
