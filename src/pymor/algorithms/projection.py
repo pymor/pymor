@@ -188,7 +188,7 @@ class ProjectRules(RuleTable):
                 projected_collateral_basis = op.collateral_basis
 
             return ProjectedEmpiciralInterpolatedOperator(op.restricted_operator, op.interpolation_matrix,
-                                                          NumpyVectorSpace.make_array(source_basis.components(op.source_dofs)),
+                                                          NumpyVectorSpace.make_array(source_basis.dofs(op.source_dofs)),
                                                           projected_collateral_basis, op.triangular,
                                                           op.source.id, None, op.name)
 

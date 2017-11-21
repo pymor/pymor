@@ -280,13 +280,13 @@ def test_restricted(operator_with_arrays):
         return
     np.random.seed(4711 + U.dim)
     for num in [0, 1, 3, 7]:
-        components = np.random.randint(0, op.range.dim, num)
+        dofs = np.random.randint(0, op.range.dim, num)
         try:
-            rop, source_dofs = op.restricted(components)
+            rop, source_dofs = op.restricted(dofs)
         except NotImplementedError:
             return
-        op_U = rop.range.make_array(op.apply(U, mu=mu).components(components))
-        rop_U = rop.apply(rop.source.make_array(U.components(source_dofs)), mu=mu)
+        op_U = rop.range.make_array(op.apply(U, mu=mu).dofs(dofs))
+        rop_U = rop.apply(rop.source.make_array(U.dofs(source_dofs)), mu=mu)
         assert np.all(almost_equal(op_U, rop_U))
 
 

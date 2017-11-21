@@ -58,14 +58,14 @@ if config.HAVE_FENICS:
         def sup_norm(self):
             return self.impl.norm('linf')
 
-        def components(self, component_indices):
-            component_indices = np.array(component_indices, dtype=np.intc)
-            if len(component_indices) == 0:
+        def dofs(self, dof_indices):
+            dof_indices = np.array(dof_indices, dtype=np.intc)
+            if len(dof_indices) == 0:
                 return np.array([], dtype=np.intc)
-            assert 0 <= np.min(component_indices)
-            assert np.max(component_indices) < self.impl.size()
+            assert 0 <= np.min(dof_indices)
+            assert np.max(dof_indices) < self.impl.size()
             x = df.Vector()
-            self.impl.gather(x, component_indices)
+            self.impl.gather(x, dof_indices)
             return x.array()
 
         def amax(self):

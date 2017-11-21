@@ -245,7 +245,7 @@ class ComponentProjection(OperatorBase):
 
     def apply(self, U, mu=None):
         assert U in self.source
-        return self.range.make_array(U.components(self.components))
+        return self.range.make_array(U.dofs(self.components))
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
@@ -348,7 +348,7 @@ class ConstantOperator(OperatorBase):
 
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
-        restricted_value = NumpyVectorSpace.make_array(self._value.components(dofs))
+        restricted_value = NumpyVectorSpace.make_array(self._value.dofs(dofs))
         return ConstantOperator(restricted_value, NumpyVectorSpace(len(dofs))), dofs
 
 
@@ -498,7 +498,7 @@ class VectorArrayOperator(OperatorBase):
     def restricted(self, dofs):
         assert all(0 <= c < self.range.dim for c in dofs)
         if not self.transposed:
-            restricted_value = NumpyVectorSpace.make_array(self._array.components(dofs))
+            restricted_value = NumpyVectorSpace.make_array(self._array.dofs(dofs))
             return VectorArrayOperator(restricted_value, False), np.arange(self.source.dim, dtype=np.int32)
         else:
             raise NotImplementedError

@@ -123,7 +123,7 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
         if new_dof in interpolation_dofs:
             logger.info('DOF {} selected twice for interplation! Stopping extension loop.'.format(new_dof))
             break
-        new_dof_value = new_vec.components([new_dof])[0, 0]
+        new_dof_value = new_vec.dofs([new_dof])[0, 0]
         if new_dof_value == 0.:
             logger.info('DOF {} selected for interpolation has zero maximum error! Stopping extension loop.'
                         .format(new_dof))
@@ -134,13 +134,13 @@ def ei_greedy(U, error_norm=None, atol=None, rtol=None, max_interpolation_dofs=N
         max_errs.append(max_err)
 
         # update U and ERR
-        new_dof_values = U.components([new_dof])
+        new_dof_values = U.dofs([new_dof])
         U.axpy(-new_dof_values[:, 0], new_vec)
         errs = ERR.l2_norm() if error_norm is None else error_norm(ERR)
         max_err_ind = np.argmax(errs)
         max_err = errs[max_err_ind]
 
-    interpolation_matrix = collateral_basis.components(interpolation_dofs).T
+    interpolation_matrix = collateral_basis.dofs(interpolation_dofs).T
     triangularity_errors = np.abs(interpolation_matrix - np.tril(interpolation_matrix))
     for d in range(1, len(interpolation_matrix) + 1):
         triangularity_errs.append(np.max(triangularity_errors[:d, :d]))
@@ -203,7 +203,7 @@ def deim(U, modes=None, error_norm=None, product=None):
 
         if len(interpolation_dofs) > 0:
             coefficients = np.linalg.solve(interpolation_matrix,
-                                           collateral_basis[i].components(interpolation_dofs).T).T
+                                           collateral_basis[i].dofs(interpolation_dofs).T).T
             U_interpolated = collateral_basis[:len(interpolation_dofs)].lincomb(coefficients)
             ERR = collateral_basis[i].copy()
             ERR -= U_interpolated
@@ -222,7 +222,7 @@ def deim(U, modes=None, error_norm=None, product=None):
             break
 
         interpolation_dofs = np.hstack((interpolation_dofs, new_dof))
-        interpolation_matrix = collateral_basis[:len(interpolation_dofs)].components(interpolation_dofs).T
+        interpolation_matrix = collateral_basis[:len(interpolation_dofs)].dofs(interpolation_dofs).T
         errs.append(err)
 
         logger.info('')
@@ -369,7 +369,7 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
             if new_dof in interpolation_dofs:
                 logger.info('DOF {} selected twice for interplation! Stopping extension loop.'.format(new_dof))
                 break
-            new_dof_value = new_vec.components([new_dof])[0, 0]
+            new_dof_value = new_vec.dofs([new_dof])[0, 0]
             if new_dof_value == 0.:
                 logger.info('DOF {} selected for interpolation has zero maximum error! Stopping extension loop.'
                             .format(new_dof))
@@ -383,7 +383,7 @@ def _parallel_ei_greedy(U, pool, error_norm=None, atol=None, rtol=None, max_inte
             max_err_ind = np.argmax(errs)
             max_err = errs[max_err_ind]
 
-    interpolation_matrix = collateral_basis.components(interpolation_dofs).T
+    interpolation_matrix = collateral_basis.dofs(interpolation_dofs).T
     triangularity_errors = np.abs(interpolation_matrix - np.tril(interpolation_matrix))
     for d in range(1, len(interpolation_matrix) + 1):
         triangularity_errs.append(np.max(triangularity_errors[:d, :d]))
@@ -420,7 +420,7 @@ def _parallel_ei_greedy_update(new_vec=None, new_dof=None, data=None):
     U = data['U']
     error_norm = data['error_norm']
 
-    new_dof_values = U.components([new_dof])
+    new_dof_values = U.dofs([new_dof])
     U.axpy(-new_dof_values[:, 0], new_vec)
 
     errs = U.l2_norm() if error_norm is None else error_norm(U)

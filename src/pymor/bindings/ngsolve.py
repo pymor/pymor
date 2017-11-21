@@ -55,8 +55,8 @@ if config.HAVE_NGSOLVE:
         def l2_norm2(self):
             return self.impl.vec.Norm() ** 2
 
-        def components(self, component_indices):
-            return self.data[component_indices]
+        def dofs(self, dof_indices):
+            return self.data[dof_indices]
 
         def amax(self):
             A = np.abs(self.data)

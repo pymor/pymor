@@ -538,7 +538,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
         print(head1, head2)
         test1 = 1
         test2 = alfa / beta
-        str1 = '%6g %12.5e' % (itn, x.components([0])[0])
+        str1 = '%6g %12.5e' % (itn, x.dofs([0])[0])
         str2 = ' %10.3e %10.3e' % (r1norm, r2norm)
         str3 = '  %8.1e %8.1e' % (test1, test2)
         print(str1, str2, str3)
@@ -676,7 +676,7 @@ def lsqr(A, b, damp=0.0, atol=1e-8, btol=1e-8, conlim=1e8,
 
         if prnt:
             if show:
-                str1 = '%6g %12.5e' % (itn, x.components([0])[0])
+                str1 = '%6g %12.5e' % (itn, x.dofs([0])[0])
                 str2 = ' %10.3e %10.3e' % (r1norm, r2norm)
                 str3 = '  %8.1e %8.1e' % (test1, test2)
                 str4 = ' %8.1e %8.1e' % (anorm, acond)
@@ -824,7 +824,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
         print(hdg1, hdg2)
         test1 = 1
         test2 = alpha / beta
-        str1 = '%6g %12.5e' % (itn, x.components([0])[0])
+        str1 = '%6g %12.5e' % (itn, x.dofs([0])[0])
         str2 = ' %10.3e %10.3e' % (normr, normar)
         str3 = '  %8.1e %8.1e' % (test1, test2)
         print(''.join([str1, str2, str3]))
@@ -970,7 +970,7 @@ def lsmr(A, b, damp=0.0, atol=1e-6, btol=1e-6, conlim=1e8,
                     print(' ')
                     print(hdg1, hdg2)
                 pcount = pcount + 1
-                str1 = '%6g %12.5e' % (itn, x.components([0])[0])
+                str1 = '%6g %12.5e' % (itn, x.dofs([0])[0])
                 str2 = ' %10.3e %10.3e' % (normr, normar)
                 str3 = '  %8.1e %8.1e' % (test1, test2)
                 str4 = ' %8.1e %8.1e' % (normA, condA)

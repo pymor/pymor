@@ -50,7 +50,7 @@ class VectorInterface(BasicInterface):
         return max_val
 
     @abstractmethod
-    def components(self, component_indices):
+    def dofs(self, dof_indices):
         pass
 
     @abstractmethod
@@ -194,8 +194,8 @@ class NumpyVector(CopyOnWriteVector):
     def l2_norm2(self):
         return np.sum((self._array * self._array.conj()).real)
 
-    def components(self, component_indices):
-        return self._array[component_indices]
+    def dofs(self, dof_indices):
+        return self._array[dof_indices]
 
     def amax(self):
         A = np.abs(self._array)
@@ -362,17 +362,17 @@ class ListVectorArray(VectorArrayInterface):
         else:
             return np.array([v.sup_norm() for v in self._list])
 
-    def components(self, component_indices):
-        assert isinstance(component_indices, list) and (len(component_indices) == 0 or min(component_indices) >= 0) \
-            or (isinstance(component_indices, np.ndarray) and component_indices.ndim == 1
-                and (len(component_indices) == 0 or np.min(component_indices) >= 0))
+    def dofs(self, dof_indices):
+        assert isinstance(dof_indices, list) and (len(dof_indices) == 0 or min(dof_indices) >= 0) \
+            or (isinstance(dof_indices, np.ndarray) and dof_indices.ndim == 1
+                and (len(dof_indices) == 0 or np.min(dof_indices) >= 0))
 
-        R = np.empty((len(self), len(component_indices)))
+        R = np.empty((len(self), len(dof_indices)))
 
-        assert len(self) > 0 or len(component_indices) == 0 or max(component_indices) < self.dim
+        assert len(self) > 0 or len(dof_indices) == 0 or max(dof_indices) < self.dim
 
         for k, v in enumerate(self._list):
-            R[k] = v.components(component_indices)
+            R[k] = v.dofs(dof_indices)
 
         return R
 
