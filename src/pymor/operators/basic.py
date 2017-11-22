@@ -8,7 +8,7 @@ from numbers import Number
 import numpy as np
 
 from pymor.algorithms import genericsolvers
-from pymor.core.exceptions import InversionError
+from pymor.core.exceptions import InversionError, LinAlgError
 from pymor.operators.interfaces import OperatorInterface
 from pymor.vectorarrays.interfaces import VectorArrayInterface
 from pymor.vectorarrays.numpy import NumpyVectorSpace
@@ -81,7 +81,7 @@ class OperatorBase(OperatorInterface):
 
     def apply_transpose(self, V, mu=None):
         if self.linear:
-            raise NotImplementedError
+            raise LinAlgError('Operator not linear.')
         else:
             raise ValueError('Trying to apply transpose of nonlinear operator.')
 
@@ -120,12 +120,12 @@ class OperatorBase(OperatorInterface):
 
     def apply_inverse_transpose(self, U, mu=None, least_squares=False):
         from pymor.operators.constructions import FixedParameterOperator
+        if not self.linear:
+            raise LinAlgError('Operator not linear.')
         assembled_op = self.assemble(mu)
         if assembled_op != self and not isinstance(assembled_op, FixedParameterOperator):
             return assembled_op.apply_inverse_transpose(U, least_squares=least_squares)
         else:
-            if not self.linear:
-                raise NotImplementedError
             # use generic solver for the transpose operator
             from pymor.operators.constructions import AdjointOperator
             options = {'inverse': self.solver_options.get('inverse_transpose') if self.solver_options else None}
