@@ -82,7 +82,7 @@ class ProjectRules(RuleTable):
                           op.source)
             new_range = (NumpyVectorSpace(len(range_basis), op.range.id) if range_basis is not None else
                          op.range)
-            return ZeroOperator(new_source, new_range, name=op.name)
+            return ZeroOperator(new_range, new_source, name=op.name)
 
     @match_class(ConstantOperator)
     def action_ConstantOperator(self, op, range_basis, source_basis, product=None):
@@ -176,7 +176,7 @@ class ProjectRules(RuleTable):
     @match_class(EmpiricalInterpolatedOperator)
     def action_EmpiricalInterpolatedOperator(self, op, range_basis, source_basis, product=None):
         if len(op.interpolation_dofs) == 0:
-            return self.apply(ZeroOperator(op.source, op.range, op.name), range_basis, source_basis, product)
+            return self.apply(ZeroOperator(op.range, op.source, op.name), range_basis, source_basis, product)
         elif not hasattr(op, 'restricted_operator') or source_basis is None:
             raise RuleNotMatchingError('Has no restricted operator or source_basis is None')
         else:

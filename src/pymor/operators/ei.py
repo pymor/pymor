@@ -114,7 +114,7 @@ class EmpiricalInterpolatedOperator(OperatorBase):
                                            source_id=self.source.id, range_id=self.range.id,
                                            name=self.name + '_jacobian')
             else:
-                return ZeroOperator(self.source, self.range, name=self.name + '_jacobian')
+                return ZeroOperator(self.range, self.source, name=self.name + '_jacobian')
         elif hasattr(self, 'operator'):
             return EmpiricalInterpolatedOperator(self.operator.jacobian(U, mu=mu), self.interpolation_dofs,
                                                  self.collateral_basis, self.triangular,

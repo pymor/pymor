@@ -219,5 +219,5 @@ def test_to_matrix_ZeroOperator():
     m = 4
     Z = np.zeros((n, m))
 
-    Zop = ZeroOperator(NumpyVectorSpace(m), NumpyVectorSpace(n))
+    Zop = ZeroOperator(NumpyVectorSpace(n), NumpyVectorSpace(m))
     assert_type_and_allclose(Z, Zop, 'sparse')
