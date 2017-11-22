@@ -351,6 +351,9 @@ class ConstantOperator(OperatorBase):
         restricted_value = NumpyVectorSpace.make_array(self._value.components(dofs))
         return ConstantOperator(restricted_value, NumpyVectorSpace(len(dofs))), dofs
 
+    def apply_inverse(self, V, mu=None, least_squares=False):
+        raise InversionError('ConstantOperator is not invertible.')
+
 
 class ZeroOperator(OperatorBase):
     """The |Operator| which maps every vector to zero.
