@@ -6,6 +6,7 @@
 """Module containing some basic but generic linear algebra algorithms."""
 
 import numpy as np
+import scipy
 
 from pymor.core.defaults import defaults
 from pymor.operators.constructions import induced_norm
@@ -99,5 +100,5 @@ def project_array(U, basis, product=None, orthonormal=True):
     else:
         gramian = basis.gramian(product)
         rhs = basis.inner(U, product)
-        coeffs = np.linalg.solve(gramian, rhs).T
+        coeffs = scipy.linalg.solve(gramian, rhs, sym_pos=True, overwrite_a=True, overwrite_b=True).T
         return basis.lincomb(coeffs)
