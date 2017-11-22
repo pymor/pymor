@@ -175,13 +175,16 @@ def apply_inverse(op, V, options=None, least_squares=False, check_finite=True,
     |VectorArray| of the solution vectors.
     """
 
-    assert isinstance(op, NumpyMatrixOperator)
-    # TODO Use to_matrix(op) after sparse format issue has been resolved.
     assert V in op.range
+
+    if isinstance(op, NumpyMatrixOperator):
+        matrix = op._matrix
+    else:
+        from pymor.algorithms.to_matrix import to_matrix
+        matrix = to_matrix(op)
 
     options = _parse_options(options, solver_options(), default_solver, default_least_squares_solver, least_squares)
 
-    matrix = op._matrix
     V = V.data
     promoted_type = np.promote_types(matrix.dtype, V.dtype)
     R = np.empty((len(V), matrix.shape[1]), dtype=promoted_type)
