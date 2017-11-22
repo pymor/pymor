@@ -393,8 +393,8 @@ class OperatorInterface(ImmutableInterface, Parametric):
         operator along with an array `source_dofs` such that for any
         |VectorArray| `U` in `self.source` the following is true::
 
-            self.apply(U, mu).components(dofs)
-                == restricted_op.apply(NumpyVectorArray(U.components(source_dofs)), mu))
+            self.apply(U, mu).dofs(dofs)
+                == restricted_op.apply(NumpyVectorArray(U.dofs(source_dofs)), mu))
 
         Such an operator is mainly useful for
         :class:`empirical interpolation <pymor.operators.ei.EmpiricalInterpolatedOperator>`

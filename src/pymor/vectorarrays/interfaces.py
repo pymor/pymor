@@ -364,34 +364,33 @@ class VectorArrayInterface(BasicInterface):
             return max_val
 
     @abstractmethod
-    def components(self, component_indices):
-        """Extract components of the vectors contained in the array.
+    def dofs(self, dof_indices):
+        """Extract DOFs of the vectors contained in the array.
 
         Parameters
         ----------
-        component_indices
-            List or 1D |NumPy array| of indices of the vector components that are to
-            be returned.
+        dof_indices
+            List or 1D |NumPy array| of indices of the DOFs that are to be returned.
 
         Returns
         -------
-        A |NumPy array| `result` such that `result[i, j]` is the `component_indices[j]`-th
-        component of the `i`-th vector of the array.
+        A |NumPy array| `result` such that `result[i, j]` is the `dof_indices[j]`-th
+        DOF of the `i`-th vector of the array.
         """
         pass
 
     @abstractmethod
     def amax(self):
-        """The maximum absolute value of the vectors contained in the array.
+        """The maximum absolute value of the DOFs contained in the array.
 
         Returns
         -------
         max_ind
-            |NumPy array| containing for each vector an index at which the maximum is
+            |NumPy array| containing for each vector a DOF index at which the maximum is
             attained.
         max_val
             |NumPy array| containing for each vector the maximum absolute value of its
-            components.
+            DOFs.
         """
         pass
 

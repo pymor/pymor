@@ -18,7 +18,7 @@ operating on objects of the following types:
     array: vectors can be |scaled| in-place, the BLAS |axpy| operation is
     supported and |inner products| between vectors can be formed. Linear
     combinations of vectors can be formed using the |lincomb| method. Moreover,
-    various norms can be computed and selected |components| of the vectors can
+    various norms can be computed and selected |dofs| of the vectors can
     be extracted for :mod:`empirical interpolation <pymor.algorithms.ei>`.
     To act on subsets of vectors of an array, arrays can be |indexed|, returning
     a new |VectorArray| which acts as a view onto the respective vectors in the
@@ -59,7 +59,7 @@ operating on objects of the following types:
     .. |apply|            replace:: :meth:`~pymor.operators.interfaces.OperatorInterface.apply`
     .. |appended|         replace:: :meth:`appended <pymor.vectorarrays.interfaces.VectorArrayInterface.append>`
     .. |axpy|             replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.axpy`
-    .. |components|       replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.components`
+    .. |dofs|             replace:: :meth:`~pymor.vectorarrays.interfaces.VectorArrayInterface.dofs`
     .. |copied|           replace:: :meth:`copied <pymor.vectorarrays.interfaces.VectorArrayInterface.copy>`
     .. |dimension|        replace:: :attr:`dimension <pymor.vectorarrays.interfaces.VectorArrayInterface.dim>`
     .. |empty|            replace:: :meth:`~pymor.vectorarrays.interfaces.VectorSpaceInterface.empty`

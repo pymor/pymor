@@ -48,7 +48,7 @@ class WrappedVector(CopyOnWriteVector):
     def sup_norm(self):
         raise NotImplementedError
 
-    def components(self, component_indices):
+    def dofs(self, dof_indices):
         raise NotImplementedError
 
     def amax(self):

@@ -128,13 +128,13 @@ def test_to_matrix_AdjointOperator():
 
 
 def test_to_matrix_ComponentProjection():
-    components = np.array([0, 1, 2, 4, 8])
+    dofs = np.array([0, 1, 2, 4, 8])
     n = 10
-    A = np.zeros((len(components), n))
-    A[range(len(components)), components] = 1
+    A = np.zeros((len(dofs), n))
+    A[range(len(dofs)), dofs] = 1
 
     source = NumpyVectorSpace(n)
-    Aop = ComponentProjection(components, source)
+    Aop = ComponentProjection(dofs, source)
     assert_type_and_allclose(A, Aop, 'sparse')
 
 
