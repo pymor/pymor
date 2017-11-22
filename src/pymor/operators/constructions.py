@@ -352,7 +352,9 @@ class ConstantOperator(OperatorBase):
         return ConstantOperator(restricted_value, NumpyVectorSpace(len(dofs))), dofs
 
     def apply_inverse(self, V, mu=None, least_squares=False):
-        raise InversionError('ConstantOperator is not invertible.')
+        if not least_squares:
+            raise InversionError('ConstantOperator is not invertible.')
+        return self.source.zeros(len(V))
 
 
 class ZeroOperator(OperatorBase):
